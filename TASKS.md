@@ -6321,3 +6321,32 @@ option. Then where has the ability to refresh all images gone?"
   gives `alpha <b>beta</b> gamma` with the box's own `b` still 0, and it
   survives the blur; with the box merely selected, Bold takes it from
   `b:0` to `b:1` as before.
+
+- [x] **T291 - A type based on a heading IS a heading.**
+  Found mapping the registry for the variations feature (T292), and
+  already shipped.
+  *Done 2026-09-05.* `isHeadingStyle` answers for the built-in four out
+  of the **HEADING_STYLES literal**, so `STYLE_DEFAULTS.title/h1/h2/h3`
+  carry no `head` key. `addCustomType` builds a new type by copying
+  STYLE_FIELDS -- which includes `head` -- off its base. There was
+  nothing there to copy, so a type based on Heading 1 came out with
+  `head` undefined and `isHeadingStyle` said **false**.
+  It then dropped out of the outline (`headLevel`), out of "apply to all
+  headings" (`headingStyles`), out of the talk panel's heading size
+  bucket (`talkVarFor`) and out of standardise's heading rule --
+  silently, until you found the "Heading" toggle in the style editor.
+  The comment above `addCustomType` has claimed the opposite since
+  2026-08-22: "`head` travels too now: a style based on Heading 2 is a
+  heading, and the old list quietly said otherwise". It did not, for
+  exactly the four bases anyone builds a heading from.
+  Asked of `isHeadingStyle` rather than of the field, so the predicate
+  and the copy loop can never disagree again.
+  **Tested by RUNNING it.** No substring assertion could have caught
+  this -- every line reads correctly on its own, and the bug is that one
+  of them had nothing to find. `tests/helpers_js.py` has had `lift_fn`
+  for this since the pptx work and three tests used it; the new test
+  lifts the nine declarations this question lives in, builds all seven
+  base types in a real JS engine and asserts each answers the same as
+  its base. Reverting the one-line fix makes it fail with "a type based
+  on 'h1' answers isHeadingStyle=False but its base answers True",
+  which is the sentence the old suite could not say.

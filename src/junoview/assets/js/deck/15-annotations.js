@@ -2712,6 +2712,18 @@
        heading, and the old list quietly said otherwise */
     STYLE_FIELDS.forEach(function(k){
       if(b[k]!==undefined) t[k]=b[k];});
+    /* ...except it did not, for the four bases anyone actually builds a
+       heading from. isHeadingStyle answers for title/h1/h2/h3 out of the
+       HEADING_STYLES LITERAL, so those four carry no `head` key for the
+       loop above to find, and a type based on one came out with head
+       undefined -- not a heading. It dropped out of the outline, out of
+       "apply to all headings", out of the talk panel's heading size
+       bucket and out of standardise's heading rule, silently, until you
+       found the "Heading" toggle in the style editor. The comment above
+       has been claiming otherwise since 2026-08-22.
+       Asked of isHeadingStyle rather than of the field, so the two can
+       never disagree again (T291). */
+    if(isHeadingStyle(base)) t.head=1;
     customTypes().push(t);
     syncCustomTypes();
     return t;
