@@ -6739,3 +6739,33 @@ option. Then where has the ability to refresh all images gone?"
   `liveCardHtml` has had since T20: with the notebook shut it was
   reading the deck's own kept table and calling it a source read, which
   silently reverted numbers hand-edited through the chart data dialog.
+
+- [x] **T308 - the Images tab inventories all four kinds, and tells the
+  truth about the one picture that really is a sym link.**
+  The user (2026-09-05): "most of the images, e.g. from notebooks **or
+  paths** can dissapear as they are kind of a sim lin."
+  *Done 2026-09-05.* `imgSurvey` feeds BOTH image surfaces and since
+  T299 the Images tab is where every durability decision is made -- and
+  it recognised exactly two shapes. Flip books (whose frames each carry
+  a ref) and charts (which keep their source table card's ref) fell
+  through it, so a deck whose figures are all flip books read "No
+  pictures or figures on this slide" from the tab whose whole job is
+  telling you what can go missing. Each page is now its own row carrying
+  its OWN ref, so the number, the refresh, the live switch and the
+  commit chip act on that page rather than on whichever one the book
+  happens to be showing.
+  And a picture has THREE states, not two. The "A path or a link" door
+  calls `placeImage(p,0)` with no link argument, so the address lands in
+  `a.src` and nothing else records it -- which makes it the only
+  genuinely sym-linked picture in the app, re-read from its address on
+  every render. The pane called it "pasted or dropped, no file to
+  reload": wrong on both halves, about exactly the class the user said
+  they lose. `picState` names them -- `link` (the address IS the
+  picture), `file` (bytes plus a handle to re-read them), `kept` (bytes
+  and nothing else) -- the row says which, the Refresh verb no longer
+  refuses the one picture that most needs it, and `linkedImages` counts
+  a linked picture so the deck-wide verb stops saying a slide has
+  "nothing with a source to re-read".
+  *Verified by running imgSurvey:* a slide holding an image, a linked
+  picture, a file-backed picture, a cell, a three-page flip book and a
+  chart yields 8 rows. It used to yield 2.

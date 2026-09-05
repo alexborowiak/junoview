@@ -1204,7 +1204,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-# 2026-09-05, T297-T307. A placed figure captures its own pixels
+# 2026-09-05, T297-T308. A placed figure captures its own pixels
 # own pixels -- embedCapture/embedIfAbsent, from all four gestures
 # that give a frame a ref -- and the capture persists (embSaveSoon);
 # cloneBody and cellFacets read that kept copy BEFORE the open card
@@ -1225,9 +1225,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the source verbs per kind: figOrder stops memoising an empty
 # answer, provRefs gives a flip book all its pages, and a chart
 # refreshes through chartResyncOne rather than snapshotting its
-# source table.
-EXPECTED_MD5 = "7d860e531f6fa4647fb1b07ea5f379b8"
-EXPECTED_BYTES = 3694095
+# source table. T308 widens imgSurvey to all four kinds (flip
+# pages and charts were invisible) and gives a picture three
+# states -- link / file / kept -- so the address-src picture,
+# the only real sym link in the app, stops being labelled
+# pasted-and-unreadable.
+EXPECTED_MD5 = "1ea573c8c88e1947c98136a3962a25e6"
+EXPECTED_BYTES = 3697226
 
 
 def _render_example() -> str:

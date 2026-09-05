@@ -62,7 +62,12 @@ def test_a_picture_can_be_re_read_from_the_file_it_came_from(out):
     # T280: takes an optional slide index; undefined is the whole deck
     assert "function linkedImages(only){" in out
     assert "function refreshLinkedImages(list){" in out
-    assert "if(a&&a.k==='image'&&a.fkey) out.push" in out
+    # T308: ...and an ADDRESS is a source too. It is the only picture in
+    # the deck that is genuinely re-read on every render, so leaving it
+    # out told a slide whose only content was a linked picture that it
+    # had "nothing with a source to re-read".
+    assert ("        if(a&&a.k==='image'&&(a.fkey||picState(a)==='link'))\n"
+            "          out.push({si:si,ai:ai,a:a});});") in out
     # inserted through showOpenFilePicker, because the <input type=file>
     # can only ever hand back the bytes
     assert ("if(!window.showOpenFilePicker){imgFile.value='';"

@@ -222,11 +222,16 @@ def test_refresh_is_one_figure_and_says_so(out):
     many things." The per-row verb names its scope in the tooltip."""
     assert "  function imgRefreshRow(r){" in out
     assert "      refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);" in out
-    assert "    if(!resyncFigure(a2)){" in out
+    # T307: on the source the ROW names, so a flip book's other pages are
+    # not refreshed through whichever one happens to be showing
+    assert "    if(!resyncFigure(a2,r.ref)){" in out
     assert "\\u2014 only this one'" in out
-    # a picture with no file behind it says so instead of failing silently
-    assert ("      if(!a2.fkey){toast('This picture was pasted or dropped "
-            "— there is '") in out
+    # T308: only the genuinely sourceless picture is refused, and it is
+    # told why in terms of what that means -- the deck holds the only
+    # copy, so there is nothing to re-read AND nothing to lose
+    assert "      if(picState(a2)==='kept'){" in out
+    assert ("        toast('This picture was pasted or dropped, so the deck "
+            "holds the '") in out
 
 
 def test_the_live_switch_says_what_it_will_do_on_hover(out):
@@ -840,3 +845,123 @@ def test_a_chart_with_no_notebook_does_not_call_the_snapshot_a_source(out):
     body = out[out.index("  function chartRowsOfCard(ref){"):]
     body = body[:body.index("  function chartResyncOne(a){")]
     assert "      if(!cardEl(ref)) return null;" in body
+
+
+# ---------------------------------------------------------------- T308
+
+
+def test_a_picture_has_three_states_not_two(out):
+    """The user's complaint names two sources: "images, e.g. from
+    notebooks OR PATHS". The path one is the only genuinely sym-linked
+    picture in the app -- a.src IS the address and the browser re-reads
+    it on every render -- and the Images pane described it as "pasted or
+    dropped, no file to reload", which is wrong on both halves.
+
+    The discriminator is the src: everything the app embeds is a data:
+    URI, and the path door leaves the address there instead."""
+    assert "  function picState(a){" in out
+    assert ("    var s=String(a.src||'');\n"
+            "    if(s&&s.indexOf('data:')!==0) return 'link';\n"
+            "    return a.fkey?'file':'kept';") in out
+    # and the row says which one it is
+    assert "        var st=picState(a);" in out
+    assert "          from:st==='link'?String(a.src)" in out
+
+
+def test_the_inventory_covers_all_four_kinds(out):
+    """imgSurvey feeds BOTH image surfaces, and since T299 the Images tab
+    is where every durability decision is made. Flip books and charts
+    fell through it entirely, so a deck whose figures are all flip books
+    read "No pictures or figures on this slide" from the tab whose whole
+    job is telling you what can go missing."""
+    assert "      else if(a.k==='flip'){" in out
+    assert "          if(f&&f.ref) rows.push(imgFigRow(si,ai,a,f.ref,fi));" in out
+    assert "      else if(a.k==='chart'&&a.ref) rows.push(imgFigRow(si,ai,a,a.ref));" \
+        in out
+    # a page names itself, and acts on ITS ref rather than on whichever
+    # page the book is showing
+    assert "    if(a.k==='flip'){r.fi=fi;r.kind='Page '+((fi|0)+1);}" in out
+    assert "    else if(a.k==='chart') r.kind='Chart';" in out
+
+
+def test_the_row_acts_on_its_own_source(out):
+    """imgActs read `r.a.ref`, which is undefined on a flip book and the
+    source TABLE's ref on a chart -- so the number, the live switch and
+    the commit chip showed nothing for a book and the wrong thing for a
+    chart."""
+    assert "    var ref=r.ref||((r.kind==='Figure')&&r.a.ref);" in out
+
+
+_SURVEY_STUBS = """
+var pres={slides:[]};
+function resolveRef(r){return {nb:String(r).split('::')[0]};}
+function flipFrames(a){return a.frames||[];}
+"""
+
+
+def _survey_run(script):
+    from helpers_js import js_engine, lift_fn
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    cmd, env = eng
+    src = assets.deck_js()
+    body = "\n".join(lift_fn(src, f)
+                     for f in ("imgSurvey", "imgFigRow", "picState"))
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "run.js"
+        p.write_text(_SURVEY_STUBS + body + "\n" + script, encoding="utf-8")
+        r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
+                           env=env, timeout=60)
+        assert r.returncode == 0, r.stderr[:2000]
+        line = [ln for ln in r.stdout.splitlines() if ln.startswith("{")][-1]
+        return json.loads(line)
+
+
+def test_the_inventory_really_lists_all_four_kinds():
+    """Run it. The review proved the old one broken the same way: a slide
+    holding an image, a cell, a three-page flip book and a chart produced
+    two rows, so the tab that exists to say what can go missing said
+    nothing about two of the four things that can."""
+    got = _survey_run("""
+      pres.slides=[{annots:[
+        {k:'image',src:'data:image/png;base64,AA'},
+        {k:'image',src:'https://example.com/a.png'},
+        {k:'image',src:'data:image/png;base64,BB',fkey:'imgfile:1',
+         fname:'chart.png'},
+        {k:'cell',ref:'nb::c1'},
+        {k:'flip',at:0,frames:[{ref:'nb::f1'},{ref:'nb::f2'},{ref:'nb::f3'}]},
+        {k:'chart',ref:'nb::t1'}
+      ]}];
+      var rows=imgSurvey(0);
+      console.log(JSON.stringify({
+        n:rows.length,
+        kinds:rows.map(function(r){return r.kind;}),
+        pics:rows.filter(function(r){return r.pic;})
+                 .map(function(r){return r.pic;}),
+        refs:rows.map(function(r){return r.ref||null;})
+      }));
+    """)
+    # three pictures, one cell, three flip pages, one chart
+    assert got["n"] == 8
+    assert got["kinds"] == ["Picture", "Picture", "Picture", "Figure",
+                            "Page 1", "Page 2", "Page 3", "Chart"]
+    # and each picture is named by what it actually is
+    assert got["pics"] == ["kept", "link", "file"]
+    # every page carries its OWN ref, not the book's showing one
+    assert got["refs"][4:7] == ["nb::f1", "nb::f2", "nb::f3"]
+
+
+def test_a_linked_picture_is_described_as_a_link():
+    """The address IS the picture -- there is no copy in the deck -- and
+    the pane used to call it "pasted or dropped, no file to reload"."""
+    got = _survey_run("""
+      pres.slides=[{annots:[
+        {k:'image',src:'https://example.com/plot.png'},
+        {k:'image',src:'data:image/png;base64,BB'}
+      ]}];
+      var rows=imgSurvey(0);
+      console.log(JSON.stringify({from:rows.map(function(r){return r.from;})}));
+    """)
+    assert got["from"][0] == "https://example.com/plot.png"
+    assert "only copy" in got["from"][1]

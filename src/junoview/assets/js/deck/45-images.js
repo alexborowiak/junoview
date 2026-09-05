@@ -51,7 +51,12 @@
     (pres.slides||[]).forEach(function(sl,si){
       if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
-        if(a&&a.k==='image'&&a.fkey) out.push({si:si,ai:ai,a:a});});
+        /* T308: an address is a source too -- the only one that is
+           re-read on every render. Leaving it out told a slide whose
+           only content was a linked picture that it had "nothing with a
+           source to re-read". */
+        if(a&&a.k==='image'&&(a.fkey||picState(a)==='link'))
+          out.push({si:si,ai:ai,a:a});});
     });
     return out;
   }
@@ -209,16 +214,59 @@
     if(!s) return rows;
     (s.annots||[]).forEach(function(a,ai){
       if(!a) return;
-      if(a.k==='image')
-        rows.push({si:si,ai:ai,a:a,kind:'Picture',
-          from:a.fname||'pasted or dropped — no file to reload'});
-      else if(a.k==='cell'&&a.ref){
-        var ci=resolveRef(a.ref);
-        rows.push({si:si,ai:ai,a:a,kind:'Figure',
-          from:(ci&&(ci.stem||ci.nb))||String(a.ref)});
+      if(a.k==='image'){
+        var st=picState(a);
+        rows.push({si:si,ai:ai,a:a,kind:'Picture',pic:st,
+          from:st==='link'?String(a.src)
+            :st==='file'?(a.fname||'a file on this computer')
+            :'pasted or dropped — the deck holds the only copy'});
       }
+      else if(a.k==='cell'&&a.ref) rows.push(imgFigRow(si,ai,a,a.ref));
+      /* T308: A BOOK IS AS MANY FIGURES AS IT HAS PAGES, and a chart
+         has a source too. Both were invisible here, in both surfaces,
+         while provRef has always said they have one -- so a deck whose
+         figures are all flip books read "No pictures or figures on this
+         slide" from the tab whose whole job since T299 is telling you
+         what can go missing. */
+      else if(a.k==='flip'){
+        flipFrames(a).forEach(function(f,fi){
+          if(f&&f.ref) rows.push(imgFigRow(si,ai,a,f.ref,fi));
+        });
+      }
+      else if(a.k==='chart'&&a.ref) rows.push(imgFigRow(si,ai,a,a.ref));
     });
     return rows;
+  }
+  /* one figure row, whatever is carrying it. `fi` is the page of a flip
+     book, so the row can name itself and act on ITS ref rather than on
+     whichever page the book happens to be showing. */
+  function imgFigRow(si,ai,a,ref,fi){
+    var ci=resolveRef(ref);
+    var r={si:si,ai:ai,a:a,ref:ref,kind:'Figure',
+      from:(ci&&(ci.stem||ci.nb))||String(ref)};
+    if(a.k==='flip'){r.fi=fi;r.kind='Page '+((fi|0)+1);}
+    else if(a.k==='chart') r.kind='Chart';
+    return r;
+  }
+  /* T308: WHAT A PICTURE ACTUALLY IS. Three states, not two:
+
+       link  a.src is an ADDRESS. The browser re-reads it on every
+             render, so this is the one genuinely sym-linked picture in
+             the app -- and the one the pane used to call "pasted or
+             dropped, no file to reload", which is wrong on both halves.
+       file  a.src is the bytes AND a.fkey names the file they came
+             from, so it can be re-read but cannot go missing.
+       kept  a.src is the bytes and nothing else. It cannot be re-read
+             and it cannot go missing.
+
+     The discriminator is the src itself: everything the app embeds is a
+     data: URI, and the path door (placeImage(p,0) with no link) leaves
+     the address there instead. */
+  function picState(a){
+    if(!a||a.k!=='image') return '';
+    var s=String(a.src||'');
+    if(s&&s.indexOf('data:')!==0) return 'link';
+    return a.fkey?'file':'kept';
   }
   /* T299: WHICH FIGURE THIS IS, AND THE THINGS YOU CAN DO TO IT.
      Everything about a picture's SOURCE now answers on its row here --
@@ -260,12 +308,19 @@
     var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
     if(!a2) return;
     if(a2.k==='image'){
-      if(!a2.fkey){toast('This picture was pasted or dropped — there is '
-        +'no file to re-read');return;}
+      /* T308: the wording used to say "pasted or dropped" to the one
+         picture that is neither -- an address is exactly the thing that
+         CAN be re-read, and the only picture in the deck that can go
+         missing. Only the third state is genuinely sourceless. */
+      if(picState(a2)==='kept'){
+        toast('This picture was pasted or dropped, so the deck holds the '
+          +'only copy — there is no file to re-read, and nothing to lose');
+        return;
+      }
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
       return;
     }
-    if(!resyncFigure(a2)){
+    if(!resyncFigure(a2,r.ref)){
       toast('Its notebook is not open, so there is nothing newer to '
         +'read — the copy in the deck is being shown');
       return;
@@ -298,7 +353,10 @@
         e.stopPropagation();e.preventDefault();fn();});
       acts.appendChild(b);return b;
     }
-    var ref=(r.kind==='Figure')&&r.a.ref;
+    /* T308: the ROW's ref. A flip book has one per page and a chart
+       keeps its table's, so reading r.a.ref here showed nothing for a
+       book and the wrong thing for a chart. */
+    var ref=r.ref||((r.kind==='Figure')&&r.a.ref);
     if(ref){
       var num=figNumber(ref);
       if(num){
@@ -307,11 +365,15 @@
         acts.appendChild(sp);
       }
     }
-    act('Refresh',r.kind==='Figure'
+    act('Refresh',ref
       ?('Re-read this figure from ' + r.from + ' and keep the new copy '
         + '\u2014 only this one')
-      :(r.a.fkey?('Re-read this picture from '+r.from)
-        :'Pasted or dropped, so there is no file to re-read'),
+      :r.pic==='link'
+        ?('Re-read this picture from '+r.from+' \u2014 it is loaded from '
+          +'that address every time, so this is the only copy the deck '
+          +'will ever have of it')
+      :r.pic==='file'?('Re-read this picture from '+r.from)
+      :'Pasted or dropped, so the deck holds the only copy',
       function(){imgRefreshRow(r);});
     if(ref){
       var live=(typeof refIsLive==='function')&&refIsLive(ref);
