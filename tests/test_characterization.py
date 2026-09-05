@@ -1204,7 +1204,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-# 2026-09-05, T297-T302: chrome only. A placed figure captures its
+# 2026-09-05, T297-T305. A placed figure captures its own pixels
 # own pixels -- embedCapture/embedIfAbsent, from all four gestures
 # that give a frame a ref -- and the capture persists (embSaveSoon);
 # cloneBody and cellFacets read that kept copy BEFORE the open card
@@ -1216,9 +1216,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # toastUndo from both the row Refresh and the deck-wide update.
 # cloneBody takes a `fromLive` flag so the staleness comparison,
 # the capture it feeds and a chart re-reading its table still ask
-# the NOTEBOOK rather than the frame.
-EXPECTED_MD5 = "c1ba42b14723c99281e14b61463c2c6b"
-EXPECTED_BYTES = 3683042
+# the NOTEBOOK rather than the frame. T303-T305 then carry the
+# kept-copy rule to every surface that missed it: paneImgSrc (so
+# the strip, overview, outline and history match the slide), the
+# code facet via frameCode, figFonts, frameSnaps; pres.live joins
+# histState/histRestore, deck_schema and plainIfSingle; and
+# defaultPres captures the deck nobody placed.
+EXPECTED_MD5 = "70deabdd6343c4b662a36af93d29ca47"
+EXPECTED_BYTES = 3690025
 
 
 def _render_example() -> str:

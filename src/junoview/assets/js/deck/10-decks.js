@@ -383,9 +383,24 @@
       Object.keys(p.live).forEach(function(k){
         if(p.live[k]) out.live[ns(k)||k]=1;});
     if(p.emb&&typeof p.emb==='object'){
+      /* T305: A COPY THIS SESSION ALREADY HOLDS IS THE FRESHER ONE.
+         EMBED is session-global and keyed by ref, not per deck, and
+         this absorb had no existence check -- unlike its sibling, the
+         IndexedDB rehydrate, whose comment already states the rule.
+         So importing a .junoview that shares a ref with the deck you
+         have open silently replaced your kept pixels with the file's,
+         with no toast and no way back; and it fired before every one
+         of importDeckText's bail-outs, so even a deck that was NOT
+         imported -- a startup restore of one you already have, or one
+         the localStorage budget dropped -- overwrote them. Two decks
+         in one project file holding different snapshots of one ref did
+         it at page load, before any UI existed. */
       Object.keys(p.emb).forEach(function(k){
         var e=p.emb[k];
-        if(e&&typeof e.html==='string'&&e.html) embStore(ns(k)||k,e);
+        if(!e||typeof e.html!=='string'||!e.html) return;
+        var key=ns(k)||k;
+        if(EMBED[key]&&EMBED[key].html) return;
+        embStore(key,e);
       });
       embSaveSoon();
     }
@@ -568,7 +583,23 @@
     });
     return out;
   }
-  function defaultPres(){return {name:'presentation',slides:autoSlides(false)};}
+  /* T305: THE DECK NOBODY PLACED STILL HAS TO KEEP ITS PIXELS.
+     autoSlides builds one slide per figure straight out of SHELLITEMS,
+     so the deck a first-time user is handed held N refs and no copies:
+     the four placement doors T297/T300 closed are doors this path never
+     goes through. Edit one box and markDirty writes a refs-only draft;
+     close the notebook or open the page elsewhere and every slide is
+     blank. Capturing here covers all five callers at once, and the
+     notebook is open by construction -- autoSlides read it to build
+     these refs a line ago. */
+  function defaultPres(){
+    var p={name:'presentation',slides:autoSlides(false)};
+    (p.slides||[]).forEach(function(s){
+      (s.annots||[]).forEach(function(a){
+        if(typeof embedIfAbsent==='function') embedIfAbsent(a);});
+    });
+    return p;
+  }
 
   var pres=null, source='auto', mode='view', cur=0, activePane=0;
   function loadPresentation(name){
@@ -877,6 +908,19 @@
          does not record a phantom step. */
       masters:(pres.masters&&Object.keys(pres.masters).length)
         ?pres.masters:null,
+      /* T304: WHICH FIGURES ARE LIVE LINKS IS AN EDIT. T301's own
+         comment describes this trap for EMBED -- a change that leaves
+         `pres` untouched makes histPush's `st===histSnap` return early,
+         so NO entry is pushed and Ctrl+Z rewinds whatever came before
+         instead. T298's new key walked straight back into it from the
+         other side: setRefLive DOES mutate pres.live, but histState did
+         not serialise it, so the snapshot was identical and the same
+         early return fired. Flip a figure to Live, press Ctrl+Z, and
+         the text box you moved a minute ago jumps back while the switch
+         stays flipped. Empty-serialises-as-null like its neighbours,
+         because setRefLive creates pres.live={} lazily and merely
+         turning a link off must not record a phantom step. */
+      live:(pres.live&&Object.keys(pres.live).length)?pres.live:null,
       /* the cut NAMES are content; which cut you happen to be
          rehearsing is not, and lives in a session variable (T24) */
       cuts:(pres.cuts&&Object.keys(pres.cuts).length)?pres.cuts:null,
@@ -925,7 +969,7 @@
        design-level key could. d.layouts is always emitted and [] is
        truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','layouts','page','pageBg','cropMarks']
+     'guides','masters','layouts','page','pageBg','cropMarks','live']
       .forEach(function(k){
         if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
@@ -1123,9 +1167,42 @@
     /* per-output fold stubs are filter chrome, not content */
     $$('.ot-stub',b).forEach(function(n){n.remove();});
     $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
+    /* T303: only a LIVE clone is a "previous figure". This line sits
+       in the live-card branch, which a kept ref now returns before
+       reaching -- so the snapshot stopped being taken, which is right.
+       But liveCardHtml passes fromLive=1 to answer the staleness
+       question, and that re-armed it behind the user's back: pressing
+       Previous figure on a kept frame then put a picture on the slide
+       that the slide had never shown. The staleness probe is not a
+       render and must not leave a trail. */
     var it=resolveRef(ref);
-    if(it) frameSnaps[it.ns]=b.outerHTML;
+    if(it&&!fromLive) frameSnaps[it.ns]=b.outerHTML;
     return b;
+  }
+  /* T303: THE CODE FACET WAS STILL A SYM LINK. T298 taught cloneBody
+     to prefer the deck's kept copy and left cloneCode alone, so a
+     placed CODE frame still read the open notebook: re-run it and the
+     code on a finished slide rewrote itself -- the very loss T298
+     shipped to stop -- and splitFrame exists precisely to put a code
+     frame BESIDE a figure frame, so kept and live sat on one slide.
+     Closing the notebook changed a finished slide too, since the kept
+     copy was only the fallback.
+
+     The preference lives HERE and not inside cloneCode because
+     cloneCode has five callers and two of them -- openVFull and the
+     review step box -- show a NOTEBOOK cell's code, not a deck frame.
+     Making cloneCode kept-first would have quietly switched those to
+     the deck's snapshot while the notebook was open. */
+  function frameCode(ref){
+    if(!refIsLive(ref)){
+      var e=embFor(ref);
+      if(e&&e.code){
+        var t=document.createElement('template');t.innerHTML=e.code;
+        var n=t.content.firstElementChild;
+        if(n) return stripIds(n.cloneNode(true));
+      }
+    }
+    return cloneCode(ref);
   }
   function cloneCode(ref){
     var c=cardEl(ref);
@@ -1206,10 +1283,12 @@
     var f=cellFacets(ref);
     if(!part||part==='auto'||!hasFacet(f,part)) part=autoPart(f);
     var b;
-    if(part==='code') b=cloneCode(ref)||cloneBody(ref);
+    if(part==='code') b=frameCode(ref)||cloneBody(ref);
     else {
       b=cloneBody(ref);
-      b=b?applyPartFilter(b,part):cloneCode(ref);
+      /* a figure/output frame whose kept body is null falls through to
+         the code, and that fallback must obey the same preference */
+      b=b?applyPartFilter(b,part):frameCode(ref);
     }
     if(b) frameNodeCache[key]=b.cloneNode(true);
     return b;

@@ -2155,6 +2155,11 @@
             'Put them back',
             function(){
               var back=embRestore(touched);
+              /* T305: embRestore unlinks what it restores, so a switch
+                 reading "Live link" after the toast says the opposite
+                 turns the live link ON when pressed. renderImgPane
+                 no-ops on a closed pane, so this is free. */
+              if(typeof imgPaneRefresh==='function') imgPaneRefresh();
               toast(back.n
                 ?('Back to the figures from before \u2014 '+back.n
                   +' of them'+(back.unlinked?(', and '

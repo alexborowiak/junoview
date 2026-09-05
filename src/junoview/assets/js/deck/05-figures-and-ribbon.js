@@ -48,7 +48,13 @@
     var body=null;
     try{
       var el=cardEl(a.ref);
-      body=el?el.querySelector('.cardbody'):embBody(a.ref);
+      /* T303: the same body the frame renders. figLint decides WHICH
+         frames are figures from the kept copy (cellFacets) and then
+         reported their typefaces from the notebook, so "2 figures use
+         different type sizes from the rest" could be a sentence about
+         a figure nobody can see. */
+      var keptB=refIsLive(a.ref)?null:embBody(a.ref);
+      body=keptB||(el?el.querySelector('.cardbody'):embBody(a.ref));
     }catch(e){body=null;}
     if(!body) return null;
     var svg=body.querySelector&&body.querySelector('svg');

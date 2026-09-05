@@ -110,6 +110,10 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                    "file. Membership is the slide's `cuts` list."),
     "emb": (dict, "The deck's own copy of every placed card, so it shows "
                   "its figures with no notebook and no network."),
+    "live": (dict, "{ref: 1} for the figures the author asked to load "
+                   "from the notebook every time instead of showing the "
+                   "kept copy. Absence means kept, which is what every "
+                   "deck written before this key wants."),
 }
 
 #: Slide-level keys.

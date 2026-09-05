@@ -1611,8 +1611,18 @@
     });
     return ed;
   }
+  /* T303: THE INDEX HAS TO MATCH THE DECK. This read the live card
+     first -- the order T298 inverted in cloneBody -- and it is
+     miniDiagram's cell branch, so the film strip, the slide overview,
+     the outline sheet, the history rows, the layout-card previews, the
+     saved-arrangement thumbnails and the trace overview all repainted
+     with the notebook's current figure while the slide kept the old
+     one. Inside a single miniDiagram the flip branch already used
+     framePart (kept) and this one did not, so one thumbnail was drawn
+     from two sources. */
   function paneImgSrc(ref){
-    var card=ref?(cardEl(ref)||embBody(ref)):null;
+    var kept=(!ref||refIsLive(ref))?null:embBody(ref);
+    var card=ref?(kept||cardEl(ref)||embBody(ref)):null;
     var img=card?$('.figframe img',card):null;
     return img?img.getAttribute('src'):null;
   }

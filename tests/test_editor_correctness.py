@@ -1528,7 +1528,12 @@ def test_undo_can_see_the_whole_presentation_not_just_its_slides(out):
     # design-level key could.
     assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
             "     'guides','masters','layouts','page','pageBg',") in out
-    assert "'cropMarks']\n      .forEach(function(k){" in out
+    # T304: 'live' joins the list. setRefLive DOES mutate pres.live, so
+    # unlike a resync this looks like a normal edit -- but histState did
+    # not serialise it, the snapshot came out identical, and histPush's
+    # `st===histSnap` early return meant no undo entry at all. Ctrl+Z
+    # after flipping a figure to Live rewound the edit before it.
+    assert "'cropMarks','live']\n      .forEach(function(k){" in out
     # an empty styles object and no styles object are the same deck, or
     # merely READING a style records a phantom undo step
     assert "(pres.styles&&Object.keys(pres.styles).length)" in out

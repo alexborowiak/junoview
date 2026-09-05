@@ -55,9 +55,27 @@
         s.panes=(s.panes||[]).map(strip);
         (s.annots||[]).forEach(function(a){
           if(a.k==='cell'&&a.ref) a.ref=strip(a.ref);
+          /* a flip book's frames are refs too, and they were already
+             being stripped nowhere -- see the same omission normPres
+             had to fix (10-decks.js:262) */
+          if(a.k==='flip'&&Array.isArray(a.frames))
+            a.frames.forEach(function(f){
+              if(f&&f.ref) f.ref=strip(f.ref);});
         });
         if(Array.isArray(s.hidden)) s.hidden=s.hidden.map(strip);
         return s;});
+      /* T304: LIVENESS IS KEYED BY REF, so it has to be stripped with
+         the refs. embedAssets runs after this and keys `emb` by the
+         now-bare ref, so leaving `live` namespaced made the two halves
+         of every single-notebook .junoview.html disagree about the same
+         figure -- and refIsLive would answer "kept" for a ref the
+         author had explicitly made live. */
+      if(c.live&&typeof c.live==='object'){
+        var lv={};
+        Object.keys(c.live).forEach(function(k){
+          if(c.live[k]) lv[strip(k)]=1;});
+        c.live=lv;
+      }
       return c;});
   }
   function requireName(){
@@ -335,7 +353,11 @@
             var b=cloneBody(ref);
             if(!b) return;
             var e={title:it.title||'',kind:it.kind||'',html:b.outerHTML};
-            var cc=it.hasCode?cloneCode(ref):null;
+            /* T303: html comes from cloneBody (kept) so the code must
+               come from the same preference, or a deliberate save
+               quietly advances half of the snapshot -- and embStore's
+               guard compares only html, so it files no way back */
+            var cc=it.hasCode?frameCode(ref):null;
             if(cc) e.code=cc.outerHTML;
             emb[ref]=e;
             embStore(normRef(ref),e);   /* keep the session copy fresh */

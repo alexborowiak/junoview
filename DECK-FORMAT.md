@@ -35,6 +35,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `components` | dict | {id: {name, w, h, items}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. |
 | `cropMarks` | int | 1 when trim marks are printed outside the page. |
 | `cuts` | dict | {id: {name}}. Named subsets of one deck — a 45-minute version and a 5-minute one in the same file. Membership is the slide's `cuts` list. |
+| `live` | dict | `{ref: 1}` for figures the author made LIVE LINKS: they re-read from the notebook every time the deck opens, instead of showing the copy kept in `emb`. Absence means kept. |
 | `emb` | dict | The deck's own copy of every placed card, so it shows its figures with no notebook and no network. |
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |
 | `folder` | str | The folder the deck is filed under in the rail. |

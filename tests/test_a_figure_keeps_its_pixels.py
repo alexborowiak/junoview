@@ -555,9 +555,15 @@ def test_the_render_and_the_save_still_show_what_the_deck_shows(out):
     both must agree with what is on the slide. A save that re-read the
     notebook would be the danger the user reported, happening quietly on
     Ctrl+S."""
-    assert "    if(part==='code') b=cloneCode(ref)||cloneBody(ref);" in out
-    assert "      b=cloneBody(ref);\n      b=b?applyPartFilter(b,part)" in out
+    assert "      b=cloneBody(ref);\n" in out
     assert "            var b=cloneBody(ref);\n            if(!b) return;" in out
+    # T303: the code facet goes through frameCode, which applies the same
+    # kept-first preference. cloneCode itself stays live-first, because
+    # two of its five callers -- openVFull and the review step box --
+    # show a NOTEBOOK cell's code rather than a deck frame.
+    assert "    if(part==='code') b=frameCode(ref)||cloneBody(ref);" in out
+    assert "      b=b?applyPartFilter(b,part):frameCode(ref);" in out
+    assert "            var cc=it.hasCode?frameCode(ref):null;" in out
 
 
 def test_a_write_that_changes_nothing_is_not_a_step_to_undo():
@@ -572,3 +578,206 @@ def test_a_write_that_changes_nothing_is_not_a_step_to_undo():
       console.log(JSON.stringify({prev:EMBPREV['nb::a'].html}));
     """)
     assert got == {"prev": "<i>OLD</i>"}, "the identical re-save kept the way back"
+
+
+# ---------------------------------------------------------- T303-T305
+#
+# An adversarial review of T297-T302 found that "the kept copy is what
+# you see" was true of cloneBody and of almost nothing else. Each of
+# these is a surface that still read the notebook, or a place the new
+# deck key fell through.
+
+
+def test_the_thumbnails_match_the_slide(out):
+    """paneImgSrc read the live card first -- the order T298 inverted --
+    and it is miniDiagram's cell branch. So the film strip, the slide
+    overview, the outline sheet, the history rows, the layout-card
+    previews, the saved-arrangement thumbnails and the trace overview
+    all repainted with the notebook's current figure while the slide
+    kept the old one. An index that does not match the deck has failed
+    at the one job it has."""
+    assert ("  function paneImgSrc(ref){\n"
+            "    var kept=(!ref||refIsLive(ref))?null:embBody(ref);\n"
+            "    var card=ref?(kept||cardEl(ref)||embBody(ref)):null;") in out
+
+
+def test_the_code_facet_is_kept_too(out):
+    """A placed CODE frame was still a sym link: re-run the notebook and
+    the code on a finished slide rewrote itself. splitFrame exists to put
+    a code frame beside a figure frame, so kept and live sat on one
+    slide -- and closing the notebook changed a finished slide, because
+    the kept code was only ever the fallback."""
+    assert "  function frameCode(ref){" in out
+    assert "    if(!refIsLive(ref)){\n      var e=embFor(ref);\n" in out
+    assert "      if(e&&e.code){" in out
+
+
+def test_the_notebook_review_surfaces_stay_live(out):
+    """cloneCode has five callers and two of them -- openVFull and the
+    review step box -- show a NOTEBOOK cell's code, not a deck frame.
+    Putting the preference inside cloneCode would have switched those to
+    the deck's snapshot while the notebook was open, which is why it
+    lives in frameCode instead."""
+    body = out[out.index("  function cloneCode(ref){"):]
+    body = body[:body.index("  /* a cell can contribute")]
+    assert "refIsLive" not in body, "cloneCode must stay live-first"
+    assert "    var c=cardEl(ref);" in body
+
+
+def test_the_staleness_probe_leaves_no_trail(out):
+    """frameSnaps feeds "Previous figure". The line sits in cloneBody's
+    live branch, which a kept ref now returns before reaching -- right in
+    itself. But liveCardHtml passes fromLive=1 to answer the staleness
+    question, and that re-armed it: pressing Previous figure on a kept
+    frame then put a picture on the slide the slide had never shown."""
+    assert "    if(it&&!fromLive) frameSnaps[it.ns]=b.outerHTML;" in out
+
+
+def test_the_figure_lint_reads_the_figure_it_judged(out):
+    """figLint decided WHICH frames are figures from the kept copy
+    (through cellFacets) and then reported their typefaces from the
+    notebook -- so "2 figures use different type sizes from the rest"
+    could be a sentence about a figure nobody can see."""
+    assert "      var keptB=refIsLive(a.ref)?null:embBody(a.ref);" in out
+    assert "      body=keptB||(el?el.querySelector('.cardbody')" in out
+
+
+def test_flipping_a_figure_to_live_is_undoable(out):
+    """T301's own comment describes this trap for EMBED. T298's new key
+    walked into it from the other side: setRefLive DOES mutate pres.live,
+    but histState did not serialise it, so the snapshot was identical and
+    histPush's `st===histSnap` early return fired -- no undo entry, and
+    Ctrl+Z rewound the edit before it while the switch stayed flipped."""
+    assert ("      live:(pres.live&&Object.keys(pres.live).length)"
+            "?pres.live:null,") in out
+    assert "'cropMarks','live']\n      .forEach(function(k){" in out
+
+
+def test_the_liveness_map_is_stripped_with_the_refs_it_names(out):
+    """plainIfSingle strips the single-notebook stem from every ref on
+    the way into a .junoview.html, and embedAssets then keys `emb` by the
+    bare ref. Leaving `live` namespaced made the two halves of the file
+    disagree about the same figure, and refIsLive answered "kept" for one
+    the author had explicitly made live."""
+    assert "      if(c.live&&typeof c.live==='object'){" in out
+    assert "          if(c.live[k]) lv[strip(k)]=1;});" in out
+    # the same omission normPres had to fix: a flip book's frames are
+    # refs too, and they were being stripped nowhere
+    assert ("          if(a.k==='flip'&&Array.isArray(a.frames))\n"
+            "            a.frames.forEach(function(f){\n"
+            "              if(f&&f.ref) f.ref=strip(f.ref);});") in out
+
+
+def test_the_deck_nobody_placed_keeps_its_pixels_too(out):
+    """autoSlides builds one slide per figure straight out of SHELLITEMS,
+    so the deck a first-time user is handed went through none of the four
+    placement doors: N refs, no copies. Close the notebook and every
+    slide is blank -- the reported complaint verbatim, for the deck
+    nobody placed."""
+    assert "    var p={name:'presentation',slides:autoSlides(false)};" in out
+    assert ("      (s.annots||[]).forEach(function(a){\n"
+            "        if(typeof embedIfAbsent==='function') embedIfAbsent(a);"
+            "});") in out
+
+
+def test_an_import_does_not_overwrite_a_copy_you_already_hold(out):
+    """EMBED is session-global and keyed by ref, not per deck. normPres's
+    absorb had no existence check, unlike its sibling the IndexedDB
+    rehydrate -- and it runs before every one of importDeckText's
+    bail-outs, so even a deck that was NOT imported could replace your
+    kept pixels, with no toast and no way back."""
+    assert ("        var key=ns(k)||k;\n"
+            "        if(EMBED[key]&&EMBED[key].html) return;") in out
+
+
+def test_the_images_pane_agrees_with_the_toast(out):
+    """embRestore unlinks what it restores. Without a repaint, a switch
+    still reading "Live link" after the toast said the opposite turns the
+    live link ON when pressed."""
+    assert ("              if(typeof imgPaneRefresh==='function') "
+            "imgPaneRefresh();") in out
+
+
+# cloneBody is the single most-called function in this change, and a
+# substring suite cannot see a ReferenceError in it. One did ship: the
+# T303 edit removed `var it=resolveRef(ref)` while leaving the line that
+# reads `it`, so every live-path render threw. ~840 green tests, a clean
+# JS syntax check, and the figure simply did not draw. Driving found it
+# in one page load. This runs the function.
+
+_BODY_STUBS = """
+var pres={live:{}}, frameSnaps={}, CALLS=[];
+function normRef(r){return r?String(r):null;}
+function resolveRef(r){return {ns:normRef(r)};}
+function node(tag){
+  return {tag:tag, outerHTML:'<'+tag+'>',
+          cloneNode:function(){return this;},
+          classList:{remove:function(){}}, style:{}};
+}
+var KEPT=null, LIVE=null;
+function embBody(r){return KEPT;}
+function cardEl(r){return LIVE?{card:1}:null;}
+function stripIds(n){return n;}
+function $(sel,root){CALLS.push(sel); return LIVE;}
+function $$(sel,root){return [];}
+"""
+
+
+def _body_run(script):
+    from helpers_js import js_engine, lift_fn
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    cmd, env = eng
+    src = assets.deck_js()
+    body = "\n".join(lift_fn(src, f) for f in ("refIsLive", "cloneBody"))
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "run.js"
+        p.write_text(_BODY_STUBS + body + "\n" + script, encoding="utf-8")
+        r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
+                           env=env, timeout=60)
+        assert r.returncode == 0, r.stderr[:2000]
+        line = [ln for ln in r.stdout.splitlines() if ln.startswith("{")][-1]
+        return json.loads(line)
+
+
+def test_clone_body_runs_and_picks_the_kept_copy():
+    """The decision, executed. Kept wins when a snapshot exists; the live
+    card is still the fallback when none does; and fromLive reaches the
+    notebook past a snapshot that exists."""
+    got = _body_run("""
+      var out={};
+      KEPT=node('kept'); LIVE=node('live');
+      out.keptWins=cloneBody('nb::a').tag;
+      out.fromLiveBypasses=cloneBody('nb::a',1).tag;
+      pres.live['nb::a']=1;
+      out.liveRefReadsTheCard=cloneBody('nb::a').tag;
+      delete pres.live['nb::a'];
+      KEPT=null;
+      out.noSnapshotFallsBack=cloneBody('nb::a').tag;
+      LIVE=null;
+      out.neitherIsNull=cloneBody('nb::a');
+      console.log(JSON.stringify(out));
+    """)
+    assert got["keptWins"] == "kept"
+    assert got["fromLiveBypasses"] == "live"
+    assert got["liveRefReadsTheCard"] == "live"
+    # a stale figure beats a blank one
+    assert got["noSnapshotFallsBack"] == "live"
+    assert got["neitherIsNull"] is None
+
+
+def test_the_staleness_probe_records_no_previous_figure():
+    """frameSnaps feeds "Previous figure". A render fills it; the
+    staleness probe -- which passes fromLive=1 and is not a render --
+    must not, or pressing Previous figure puts a picture on the slide
+    that the slide never showed."""
+    got = _body_run("""
+      KEPT=null; LIVE=node('live');
+      cloneBody('nb::a',1);
+      var afterProbe=Object.keys(frameSnaps).length;
+      cloneBody('nb::a');
+      console.log(JSON.stringify({afterProbe:afterProbe,
+        afterRender:Object.keys(frameSnaps).length}));
+    """)
+    assert got == {"afterProbe": 0, "afterRender": 1}

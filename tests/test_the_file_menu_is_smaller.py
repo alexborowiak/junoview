@@ -56,8 +56,10 @@ def test_auto_build_is_gone(out):
         assert gone not in out, gone
     # the function it called is still what a NEW deck is built from
     assert "  function autoSlides(withDocs){" in out
-    assert "  function defaultPres(){return {name:'presentation'," \
-        "slides:autoSlides(false)};}" in out
+    # T305: defaultPres also captures the pixels of the refs autoSlides
+    # just built, because the deck a first-time user is handed goes
+    # through none of the four placement doors
+    assert "    var p={name:'presentation',slides:autoSlides(false)};" in out
 
 
 def test_history_and_checkpoint_are_home_buttons():

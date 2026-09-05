@@ -6650,3 +6650,60 @@ option. Then where has the ability to refresh all images gone?"
   flag, because the frame and the saved file must agree with what is on
   the slide -- a save that re-read the notebook would be the reported
   danger happening quietly on Ctrl+S. Found by driving it.
+
+- [x] **T303 - the kept copy wins EVERYWHERE, not just in cloneBody.**
+  *Done 2026-09-05.* An adversarial review of T297-T302 found that "the
+  kept copy is what you see" was true of `cloneBody` and of almost
+  nothing else. `paneImgSrc` still read the live card first, and it is
+  miniDiagram's cell branch -- so the film strip, the slide overview,
+  the outline sheet, the history rows, the layout-card previews, the
+  saved-arrangement thumbnails and the trace overview all repainted with
+  the notebook's current figure while the slide kept the old one. Inside
+  one miniDiagram the flip branch already used framePart and the cell
+  branch did not, so a single thumbnail was drawn from two sources. An
+  index that does not match the deck has failed at its only job.
+  The CODE facet was still a sym link outright: re-run a notebook and
+  the code on a finished slide rewrote itself, and `splitFrame` exists
+  to put a code frame beside a figure frame, so kept and live sat
+  together. The preference went into a new `frameCode` rather than into
+  `cloneCode`, because two of cloneCode's five callers -- `openVFull`
+  and the review step box -- show a NOTEBOOK cell's code and must stay
+  live. `embedAssets` takes the code from the same place, or a
+  deliberate save advances half the snapshot with no way back (embStore
+  compares only html). `figFonts` decided WHICH frames were figures from
+  the kept copy and then reported their typefaces from the notebook.
+  And `frameSnaps` was being re-armed by the staleness probe, so
+  "Previous figure" could put a picture on the slide that the slide had
+  never shown.
+
+- [x] **T304 - pres.live is a deck key like any other.**
+  *Done 2026-09-05.* T301's own comment describes the trap for EMBED --
+  a change histState cannot see means histPush's `st===histSnap` pushes
+  NO undo entry, so Ctrl+Z rewinds whatever came before. T298's new key
+  walked into it from the other side: `setRefLive` really does mutate
+  `pres.live`, but histState did not serialise it, so the snapshot came
+  out identical and the same early return fired. It is in histState and
+  histRestore now, in `deck_schema.DECK_KEYS` and DECK-FORMAT.md (until
+  today `validate_deck` warned on every deck the build saves, because
+  they all carry `live`), and `plainIfSingle` strips the stem from its
+  keys -- leaving them namespaced made the two halves of every
+  single-notebook .junoview.html disagree about the same figure. That
+  same function was also not stripping flip-book frame refs at all.
+
+- [x] **T305 - the last three ways a kept copy went missing.**
+  *Done 2026-09-05.* `defaultPres` builds one slide per figure straight
+  out of SHELLITEMS, so the deck a first-time user is handed went
+  through none of the four placement doors: N refs, no pixels. It
+  captures now, which covers all five callers at once. normPres's absorb
+  had no existence check, unlike its sibling the IndexedDB rehydrate --
+  and it runs before every one of importDeckText's bail-outs, so a deck
+  that was not even imported could replace the open deck's kept pixels
+  with no toast and no way back. And the deck-wide "Put them back" left
+  the Images pane showing "Live link" for rows the restore had just
+  unlinked, so pressing that switch turned the live link back ON.
+
+  *A ReferenceError shipped inside T303 and the suite did not see it:*
+  the edit dropped `var it=resolveRef(ref)` while leaving the line that
+  reads `it`, so every live-path render threw. 840 green tests, a clean
+  JS syntax check, and the figure simply did not draw. One page load
+  found it. `cloneBody` now has an EXECUTING test.
