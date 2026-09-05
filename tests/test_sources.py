@@ -602,12 +602,12 @@ def test_an_oversized_figure_keeps_its_path_rather_than_doubling(tmp_path):
 
     big = tmp_path / "big.png"
     big.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 64)
-    old = sources._EMBED_CAP
+    old = sources.EMBED_CAP
     try:
-        sources._EMBED_CAP = 8
+        sources.EMBED_CAP = 8
         body = sources._img_body("big.png", "A", tmp_path)
     finally:
-        sources._EMBED_CAP = old
+        sources.EMBED_CAP = old
     assert 'src="big.png"' in body
 
 

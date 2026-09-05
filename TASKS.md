@@ -6827,3 +6827,51 @@ option. Then where has the ability to refresh all images gone?"
   -- Show (Notes / Layers), Keep up to date (Update / Images) -- is a
   strip of equal tiles, and this is now the same: both report
   h56 t75 w72.
+
+- [x] **T312 - /api/readimage: a picture from a path on this computer.**
+  *Done 2026-09-05.* The Insert menu's "A path or a link" promised "Any
+  address this page can load — a file path or a URL", and the path half
+  could never work: every spelling of a computer path resolves to a
+  `file:` URL, and an http document may not load one as a subresource.
+  Verified in the running app -- a bare `C:\...` in an `<img>` fires
+  onerror with "Not allowed to load local resource".
+  THE GATE IS THE POINT. Every other content-returning route is held to
+  a suffix or a name (.ipynb, SOURCE_SUFFIXES, `*.junoview*`), and a
+  route returning whatever bytes it was pointed at would be the first
+  with none -- taking what a page can read from ten document extensions
+  to every file the account can open, bytes that then persist into
+  junoview_project.json and every exported deck. Held to `IMG_MIME` it
+  adds no reach at all: `/api/open` already makes the server read an
+  arbitrary absolute-path image and base64 it into the page, because
+  that is how a .md or .tex embeds its figures. So: suffix in IMG_MIME,
+  size within EMBED_CAP (the same 20 MB the .tex embedder uses), and the
+  first bytes must agree with the suffix -- SVG parsed instead, since it
+  has no magic number and is the one image format that is also a
+  document. No root sandbox, deliberately: a deck legitimately draws on
+  a figure in a sibling folder, and no existing route confines a path.
+  A web address is NOT proxied. https already loads in an `<img>`;
+  reading it server-side would buy only the embed half and cost a
+  readable SSRF from loopback. That is a separate feature or none.
+  IMG_MIME/NOT_AN_IMAGE/EMBED_CAP lost their underscores rather than
+  cross a subpackage boundary claiming a privacy they no longer have.
+
+- [x] **T313 - a picture from a path is kept, and can go back to it.**
+  *Done 2026-09-05.* In app mode the door now READS the file and keeps
+  the bytes, with the address beside them on `a.psrc` -- which is the
+  user's ask for this class exactly: "all images should be embedded into
+  the thing, but should have the option to refreshed from the path".
+  `picState` gains a fourth answer, `path`, and the door's wording and
+  its prompt differ by mode, because only the app can read a file.
+  It also fixes a bug T308 shipped: widening `linkedImages` to include
+  address-backed pictures was right, but `refreshLinkedImages` knew one
+  way to fetch -- `idbGet(a.fkey)` -- so every one of them was reported
+  "could not be read" on every refresh, having never been tried. Where
+  the bytes come from is one function now.
+  And `shrinkDataUrl` passes `IMG_VIEW_EDGE`, which its own comment
+  ("exactly as the insert path does") had always claimed: without it a
+  refreshed picture came back at the 2400px fallback, heavier than the
+  one it replaced.
+  *Verified live:* a bare path in an `<img>` is BROKEN; typed into the
+  door it lands as `data:image/png;base64` and the row reads
+  "Re-read this picture from logo.png". Changing the file on disk and
+  pressing Refresh took the picture from 262 to 154 characters.

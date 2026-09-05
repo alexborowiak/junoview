@@ -15,6 +15,7 @@ import re
 import secrets
 import time
 import urllib.parse
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,14 @@ from ..notebook.loader import (
 )
 from ..notebook.parser import parse_notebook
 from ..notebook.presentations import as_presentations
-from ..notebook.sources import SOURCE_SUFFIXES, doc_from_bytes, doc_from_text
+from ..notebook.sources import (
+    EMBED_CAP,
+    IMG_MIME,
+    NOT_AN_IMAGE,
+    SOURCE_SUFFIXES,
+    doc_from_bytes,
+    doc_from_text,
+)
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
@@ -40,6 +48,92 @@ from .vcs import (
     _git_show_bytes,
     _git_show_notebook,
 )
+
+#: The first bytes each format must start with. A suffix is what the user
+#: typed; this is what the file actually is, and the two disagreeing is how
+#: a mistyped path ships the wrong file's bytes into a deck that then gets
+#: shared. SVG has no magic number, so it is checked by parsing instead;
+#: webp and avif are containers whose heads are not a fixed prefix, and are
+#: the known gap (a test names them, so a third cannot join them quietly).
+_IMG_MAGIC = {
+    "image/png": [b"\x89PNG\r\n\x1a\n"],
+    "image/jpeg": [b"\xff\xd8\xff"],
+    "image/gif": [b"GIF87a", b"GIF89a"],
+    "image/bmp": [b"BM"],
+}
+
+
+def resolve_image_path(root: Path, raw: str) -> Path:
+    """A path that must be an IMAGE, small enough to embed.
+
+    THE GATE IS THE POINT. Every other content-returning route is held to
+    a suffix or a name -- .ipynb, SOURCE_SUFFIXES, ``*.junoview*`` -- and
+    a route that returned whatever bytes it was pointed at would be the
+    first with none, taking what a page can read from ten document
+    extensions to every file the account can open. Held to ``IMG_MIME``
+    it adds no reach at all: ``/api/open`` already makes the server read
+    an arbitrary absolute-path image and base64 it into the page, because
+    that is how a .md or .tex embeds its figures.
+
+    No root sandbox, deliberately: a deck legitimately draws on a figure
+    in a sibling folder or on a share, and no existing route confines a
+    path either.
+    """
+    f = Path(raw).expanduser()
+    if not f.is_absolute():
+        f = root / f
+    f = f.resolve()
+    if not f.exists() or not f.is_file():
+        raise FileNotFoundError(f"{f} not found")
+    mime = IMG_MIME.get(f.suffix.lower())
+    if not mime:
+        what = NOT_AN_IMAGE.get(f.suffix.lower())
+        raise ValueError(
+            f"{f.name} is {what} \u2014 not a picture a deck can carry"
+            if what else f"{f.name} is not a picture this can read")
+    size = f.stat().st_size
+    if size > EMBED_CAP:
+        raise ValueError(
+            f"{f.name} is {size // (1024 * 1024)} MB, over the "
+            f"{EMBED_CAP // (1024 * 1024)} MB a deck will carry")
+    return f
+
+
+def read_image_at(root: Path, raw_path: Any) -> dict:
+    """Hand back ONE picture as a data URI, so the deck can keep the bytes
+    rather than an address that only resolves on this machine.
+
+    A path in an ``<img>`` cannot work from the app: every spelling of a
+    computer path resolves to a ``file:`` URL, and an http document may
+    not load one as a subresource. So the Insert menu's "a file path or a
+    URL" was telling the truth about half of itself; this is the other
+    half, and it is also what lets such a picture be EMBEDDED.
+    """
+    raw = str(raw_path or "").strip().strip('"')
+    if not raw:
+        raise ValueError("no path given")
+    if is_url(raw):
+        # http(s) already loads in an <img>; fetching it HERE would make
+        # the server a proxy reachable from the page, which is a new
+        # capability and a readable SSRF from loopback, not this one.
+        raise ValueError(
+            "a web address is loaded by the page itself, not read from disk")
+    f = resolve_image_path(root, raw)
+    mime = IMG_MIME[f.suffix.lower()]
+    data = f.read_bytes()
+    heads = _IMG_MAGIC.get(mime)
+    if heads and not any(data.startswith(h) for h in heads):
+        raise ValueError(
+            f"{f.name} is named like {mime.split('/')[-1]} but its "
+            "contents are not")
+    if mime == "image/svg+xml":
+        try:
+            ET.fromstring(data)
+        except Exception as e:              # noqa: BLE001 -- shown in the UI
+            raise ValueError(f"{f.name} is not valid SVG: {e}") from e
+    return {"name": f.name, "path": str(f),
+            "src": f"data:{mime};base64,"
+                   + base64.b64encode(data).decode("ascii")}
 
 
 def _make_handler(state: _AppState):
@@ -121,6 +215,8 @@ def _make_handler(state: _AppState):
             try:
                 if url.path == "/api/open":
                     self._json(self._open_nb(body))
+                elif url.path == "/api/readimage":
+                    self._json(self._read_image(body))
                 elif url.path == "/api/readdeck":
                     self._json(self._read_deck(body))
                 elif url.path == "/api/parse":
@@ -163,6 +259,9 @@ def _make_handler(state: _AppState):
                 self._json({"error": str(e)}, 404)
             except Exception as e:          # noqa: BLE001 -- surfaced in UI
                 self._json({"error": f"{type(e).__name__}: {e}"}, 400)
+
+        def _read_image(self, body: dict) -> dict:
+            return read_image_at(state.root, body.get("path"))
 
         def _read_deck(self, body: dict) -> dict:
             """Hand back a saved .junoview presentation file's TEXT — the

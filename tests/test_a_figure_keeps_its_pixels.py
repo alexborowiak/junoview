@@ -858,11 +858,14 @@ def test_a_picture_has_three_states_not_two(out):
     dropped, no file to reload", which is wrong on both halves.
 
     The discriminator is the src: everything the app embeds is a data:
-    URI, and the path door leaves the address there instead."""
+    URI, and the path door leaves the address there instead. T313 adds a
+    fourth, which is what the user actually asked for: embedded, and
+    still holding the address it was read from."""
     assert "  function picState(a){" in out
     assert ("    var s=String(a.src||'');\n"
-            "    if(s&&s.indexOf('data:')!==0) return 'link';\n"
-            "    return a.fkey?'file':'kept';") in out
+            "    if(s&&s.indexOf('data:')!==0) return 'link';") in out
+    assert "    if(a.psrc) return 'path';" in out
+    assert "    return a.fkey?'file':'kept';" in out
     # and the row says which one it is
     assert "        var st=picState(a);" in out
     assert "          from:st==='link'?String(a.src)" in out
@@ -1024,3 +1027,63 @@ def test_a_long_path_keeps_its_filename():
     assert got["long"].startswith("C:/a/very/lon")
     assert chr(0x2026) in got["long"], "the middle is elided, not the end"
     assert got["len"] <= 53
+
+
+# ---------------------------------------------------------------- T313
+
+
+def test_a_path_picture_is_read_and_kept(out):
+    """Every spelling of a computer path resolves to a file: URL, and an
+    http document may not load one as a subresource -- so the Insert
+    menu's "a file path or a URL" produced a broken picture, in the app
+    where it was typed, for the whole path half of itself."""
+    assert "  function placeFromAddress(addr){" in out
+    assert r'    var isUrl=/^https?:\/\//i.test(addr);' in out
+    assert "    APP.api('/api/readimage',{path:addr}).then(function(r){" in out
+    # the bytes go through the SAME funnel the file picker uses, or the
+    # draft this lands in outgrows localStorage
+    assert "      return shrinkDataUrl(r.src).then(function(small){" in out
+    assert "        placeImage(small,0,null,r.src!==small?r.src:null);" in out
+    # ...and the address rides on the annotation so Refresh can go back
+    assert "          a.psrc=addr;" in out
+
+
+def test_a_web_address_stays_a_link(out):
+    """https already loads in an <img>. Reading it server-side would buy
+    only the embed half and cost a proxy reachable from the page."""
+    assert "    if(isUrl||!picCanEmbed()){" in out
+    assert "      placeImage(addr,0);" in out
+
+
+def test_the_door_promises_only_what_this_mode_can_do(out):
+    """The same door ships in app mode, the web build and both static
+    exports, and only app mode can read a file. A control that is offered
+    but cannot work is the capability-without-a-door failure in
+    reverse."""
+    assert "  function picCanEmbed(){return APP.mode==='app';}" in out
+    assert "      picCanEmbed()\n        ? 'A file on this computer" in out
+    assert "        : 'A web address this page can load." in out
+    assert ("        var p=prompt(picCanEmbed()\n"
+            "          ? 'Path or link to a picture:'\n"
+            "          : 'Link to a picture (a web address):','');") in out
+
+
+def test_every_linked_picture_can_actually_be_read(out):
+    """T308 widened linkedImages to include address-backed pictures --
+    correctly, an address IS a source -- but refreshLinkedImages knew one
+    way to fetch, idbGet(a.fkey). An address picture has no fkey, so
+    idbGet(undefined) rejected and every one of them was reported "could
+    not be read" on every refresh, having never been tried."""
+    assert "    function picBytes(a){" in out
+    assert "      var addr=picAddr(a);\n      if(addr&&!a.fkey){" in out
+    assert "        return APP.api('/api/readimage',{path:addr})" in out
+    # the landing half stays one shared body
+    assert "        return picBytes(e.a)" in out
+
+
+def test_a_refreshed_picture_is_not_heavier_than_the_one_it_replaces(out):
+    """shrinkDataUrl's own comment promises "exactly as the insert path
+    does", but it passed no edge -- so it fell back to IMG_MAX_EDGE
+    (2400) while both insert doors and paste pass IMG_VIEW_EDGE (1600)."""
+    assert ("      probe.onload=function(){res(shrinkImage(probe,src,"
+            "IMG_VIEW_EDGE));};") in out

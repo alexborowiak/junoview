@@ -40,7 +40,12 @@
   function shrinkDataUrl(src){
     return new Promise(function(res){
       var probe=new Image();
-      probe.onload=function(){res(shrinkImage(probe,src));};
+      /* T313: the SAME edge the two insert doors and paste pass
+         (IMG_VIEW_EDGE, 1600). Omitting it fell back to IMG_MAX_EDGE
+         (2400), so a refreshed picture came back heavier than the one
+         it replaced -- the opposite of what this function's own comment
+         promises. */
+      probe.onload=function(){res(shrinkImage(probe,src,IMG_VIEW_EDGE));};
       probe.onerror=function(){res(src);};
       probe.src=src;
     });
@@ -68,17 +73,35 @@
     var items=list||linkedImages();
     if(!items.length) return Promise.resolve({ok:0,lost:[]});
     var ok=0,lost=[];
+    /* T313: WHERE THE BYTES COME FROM, in one place. T308 widened
+       linkedImages to include address-backed pictures -- correctly, an
+       address is a source -- but this reduce knew exactly one way to
+       fetch: idbGet(e.a.fkey). An address picture has no fkey, so
+       idbGet(undefined) rejected and EVERY one of them was reported
+       "could not be read" on every refresh. The landing half below
+       (shrink, swap a.src, move the original) is unchanged and shared. */
+    function picBytes(a){
+      var addr=picAddr(a);
+      if(addr&&!a.fkey){
+        if(!picCanEmbed())
+          return Promise.reject(new Error('needs the Junoview app'));
+        return APP.api('/api/readimage',{path:addr})
+          .then(function(r){
+            if(!r||!r.src) throw new Error('no picture came back');
+            return r.src;
+          });
+      }
+      return idbGet(a.fkey).then(function(h){
+        if(!h) throw 0;
+        return permAsk(h).then(function(granted){
+          if(!granted) throw 0;
+          return h.getFile();
+        });
+      }).then(function(f){return readAsDataURL(f);});
+    }
     return items.reduce(function(chain,e){
       return chain.then(function(){
-        return idbGet(e.a.fkey).then(function(h){
-          if(!h) throw 0;
-          return permAsk(h).then(function(granted){
-            if(!granted) throw 0;
-            return h.getFile();
-          });
-        }).then(function(f){
-          return readAsDataURL(f);
-        }).then(function(src){
+        return picBytes(e.a).then(function(src){
           return shrinkDataUrl(src).then(function(small){
             return {full:src,small:small};});
         }).then(function(r){
@@ -218,6 +241,7 @@
         var st=picState(a);
         rows.push({si:si,ai:ai,a:a,kind:'Picture',pic:st,
           from:st==='link'?String(a.src)
+            :st==='path'?String(a.psrc)
             :st==='file'?(a.fname||'a file on this computer')
             :'pasted or dropped — the deck holds the only copy'});
       }
@@ -278,8 +302,24 @@
     if(!a||a.k!=='image') return '';
     var s=String(a.src||'');
     if(s&&s.indexOf('data:')!==0) return 'link';
+    /* T313: EMBEDDED, AND STILL KNOWS WHERE IT CAME FROM. Once the
+       bytes are in a.src the address is no longer visible in it, so it
+       is kept beside them -- which is the whole of the user's ask for
+       this class: "all images should be embedded into the thing, but
+       should have the option to refreshed from the path". */
+    if(a.psrc) return 'path';
     return a.fkey?'file':'kept';
   }
+  /* the address a picture can be re-read from, whichever way it holds
+     one: typed-and-embedded, or still living at it */
+  function picAddr(a){
+    if(!a||a.k!=='image') return '';
+    if(a.psrc) return String(a.psrc);
+    return picState(a)==='link'?String(a.src||''):'';
+  }
+  /* app mode can read a path off the disk; nothing else can, so nothing
+     else offers to */
+  function picCanEmbed(){return APP.mode==='app';}
   /* T299: WHICH FIGURE THIS IS, AND THE THINGS YOU CAN DO TO IT.
      Everything about a picture's SOURCE now answers on its row here --
      the number, the commit, the refresh and the live-link switch
@@ -327,6 +367,12 @@
       if(picState(a2)==='kept'){
         toast('This picture was pasted or dropped, so the deck holds the '
           +'only copy — there is no file to re-read, and nothing to lose');
+        return;
+      }
+      if(picState(a2)==='link'&&!picCanEmbed()){
+        toast('This picture is loaded from '+picAddr(a2)+' every time the '
+          +'deck opens, so it is always as current as that address is.',
+          7000);
         return;
       }
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
@@ -377,13 +423,16 @@
         acts.appendChild(sp);
       }
     }
+    /* T313: one arm per state, because each one means something
+       different by "refresh" */
     act('Refresh',ref
       ?('Re-read this figure from ' + r.from + ' and keep the new copy '
         + '\u2014 only this one')
-      :r.pic==='link'
-        ?('Re-read this picture from '+r.from+' \u2014 it is loaded from '
-          +'that address every time, so this is the only copy the deck '
-          +'will ever have of it')
+      :r.pic==='path'?('Re-read this picture from '+r.from+' and keep the '
+        +'new copy \u2014 only this one')
+      :r.pic==='link'?('Loaded from '+r.from+' every time the deck opens. '
+        +'Nothing is stored, so there is nothing to refresh \u2014 press '
+        +'to read it into the deck instead.')
       :r.pic==='file'?('Re-read this picture from '+r.from)
       :'Pasted or dropped, so the deck holds the only copy',
       function(){imgRefreshRow(r);});
@@ -601,6 +650,46 @@
       refreshImagesReport(hits);
     });
   })();
+  /* T313: A PATH IS READ, A URL IS LINKED.
+     Every spelling of a computer path resolves to a file: URL, and an
+     http document may not load one as a subresource -- so the door's
+     old promise of "a file path or a URL" produced a broken picture,
+     in the app where it was typed, for the whole path half of itself.
+     In app mode the server reads it (gated to images, magic-checked,
+     capped) and the bytes are kept with the address beside them; a web
+     address stays a link, because it already works and proxying it
+     would make the server reachable as one. */
+  function placeFromAddress(addr){
+    var isUrl=/^https?:\/\//i.test(addr);
+    if(isUrl||!picCanEmbed()){
+      if(!isUrl&&!picCanEmbed())
+        toast('A file on this computer can only be read by the Junoview '
+          +'app. Here, use a web address — or Insert \u203a Picture to '
+          +'choose the file.',7000);
+      placeImage(addr,0);
+      return;
+    }
+    toast('Reading '+addr+'\u2026');
+    APP.api('/api/readimage',{path:addr}).then(function(r){
+      if(!r||!r.src) throw new Error('no picture came back');
+      return shrinkDataUrl(r.src).then(function(small){
+        placeImage(small,0,null,r.src!==small?r.src:null);
+        /* the address rides on the annotation, so the row can show it
+           and Refresh can go back to it */
+        var s=pres.slides[cur],a=s&&(s.annots||[])[selAnnot];
+        if(a&&a.k==='image'){
+          a.psrc=addr;
+          if(r.path) a.ppath=r.path;
+          if(r.name) a.fname=r.name;
+          markDirty();
+        }
+        toast('Kept in the deck, and it remembers '+(r.name||addr));
+        imgPaneRefresh();
+      });
+    }).catch(function(e){
+      toast('Could not read that: '+((e&&e.message)||e),7000);
+    });
+  }
   /* `full` is the ORIGINAL bytes when `src` is a shrunken copy of them.
      One funnel: three different doors insert a picture (the file picker,
      the <input> fallback and the paste), and putting the original aside
@@ -1022,13 +1111,19 @@
       'Paste a screenshot or a copied image straight into this frame',
       function(){objInto=idx;pasteObjImage();}],
      [bic('link'),'A path or a link',
-      'Any address this page can load — a file path or a URL. The '
-      +'address is what is kept, so the picture stays exactly as '
-      +'portable as the address is',
+      picCanEmbed()
+        ? 'A file on this computer or a web address. A file is READ and '
+          +'kept in the deck, and remembers where it came from so you '
+          +'can re-read it; a web address is loaded every time.'
+        : 'A web address this page can load. The address is what is '
+          +'kept, so the picture stays exactly as portable as the '
+          +'address is — opening the deck elsewhere re-fetches it.',
       function(){
-        var p=prompt('Path or link to a picture:','');
+        var p=prompt(picCanEmbed()
+          ? 'Path or link to a picture:'
+          : 'Link to a picture (a web address):','');
         if(!p||!p.trim()) return;
-        objInto=idx;placeImage(p.trim(),0);}]
+        objInto=idx;placeFromAddress(p.trim());}]
     ].forEach(function(r){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';

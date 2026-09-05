@@ -115,17 +115,20 @@ def _html_out(payload: str, ot: str = "print") -> RenderedOutput:
 #: is the ORDINARY case in a LaTeX project, and putting it in an <img>
 #: renders a broken-image icon while the test that "covered" it only ever
 #: asserted the string survived (T101).
-_IMG_MIME = {
+#: PUBLIC because the app server reads it too: /api/readimage is
+#: gated on exactly this table, and a second list of image suffixes
+#: living in routes.py would be the two drifting apart by design.
+IMG_MIME = {
     ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
     ".gif": "image/gif", ".webp": "image/webp", ".avif": "image/avif",
     ".bmp": "image/bmp", ".svg": "image/svg+xml",
 }
-_NOT_AN_IMAGE = {".pdf": "PDF", ".eps": "EPS", ".ps": "PostScript"}
+NOT_AN_IMAGE = {".pdf": "PDF", ".eps": "EPS", ".ps": "PostScript"}
 
 #: Above this, keep the path rather than inline the bytes. A figure this
 #: large is a scan or a mistake, and either way doubling it into base64
 #: hurts more than a missing picture does.
-_EMBED_CAP = 20 * 1024 * 1024
+EMBED_CAP = 20 * 1024 * 1024
 
 #: Suffix order for \includegraphics{fig/trend}, which LaTeX writes
 #: without one. pdflatex prefers PDF; the browser cannot draw it, so the
@@ -181,17 +184,17 @@ def _img_body(src: str, alt: str, base: Path | None) -> str:
     found = _find_asset(src, base)
     name = html.escape(Path(src).name)
     if found is not None:
-        kind = _NOT_AN_IMAGE.get(found.suffix.lower())
+        kind = NOT_AN_IMAGE.get(found.suffix.lower())
         if kind:
             return (f'<div class="src-nofig">{name} is a {kind} figure, '
                     "which a browser cannot draw. It is still beside the "
                     "document.</div>")
-        mime = _IMG_MIME.get(found.suffix.lower())
+        mime = IMG_MIME.get(found.suffix.lower())
         try:
             size = found.stat().st_size
         except OSError:
-            size = _EMBED_CAP + 1
-        if mime and size <= _EMBED_CAP:
+            size = EMBED_CAP + 1
+        if mime and size <= EMBED_CAP:
             try:
                 raw = found.read_bytes()
             except OSError:
@@ -200,8 +203,8 @@ def _img_body(src: str, alt: str, base: Path | None) -> str:
                 b64 = base64.b64encode(raw).decode("ascii")
                 return (f'<img src="data:{mime};base64,{b64}" '
                         f'alt="{esc_alt}" loading="lazy">')
-    elif _NOT_AN_IMAGE.get(Path(src).suffix.lower()):
-        kind = _NOT_AN_IMAGE[Path(src).suffix.lower()]
+    elif NOT_AN_IMAGE.get(Path(src).suffix.lower()):
+        kind = NOT_AN_IMAGE[Path(src).suffix.lower()]
         return (f'<div class="src-nofig">{name} is a {kind} figure, '
                 "which a browser cannot draw.</div>")
     return (f'<img src="{html.escape(src, quote=True)}" '
