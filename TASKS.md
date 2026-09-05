@@ -5797,3 +5797,56 @@ option. Then where has the ability to refresh all images gone?"
   holds 200px and the thumbnail 144x82 throughout, and `scrollWidth >
   clientWidth` is false on every tab at both sizes -- the ribbon is
   never clipped, which is the invariant the whole mechanism exists for.
+
+- [x] **T273 - Words and controls that say nothing come off three
+  surfaces.**
+  The user (2026-09-05), three times in one message: "Why does the new
+  presentation on the home tab say 'no notebook needed', I fucking told
+  you to get rid of dumb fucking text like that - it clutters the page";
+  "why is the word text there twice. PLEASE PLEASE PLEASe remove
+  unnecessary text that makes it really hard to look at"; "Can you get
+  rid of the 'Open notebooks' button above the thumbnails. That is not
+  needed anymore."
+  *Done 2026-09-05.* One complaint, three places.
+  **The front door.** `No notebook needed` is gone from the New
+  presentation card. T264 trimmed that line rather than cutting it and
+  T266 re-reviewed and kept it, so this reverses two prior decisions on
+  purpose: "New presentation" is a complete label and the hint adds no
+  fact the front door does not already imply. The T240 contract narrows
+  rather than breaks -- same box, same icon, same title, and a second
+  line ONLY where there is a fact the title does not carry, which is
+  still true of the drop hint on Open (T77, the user's own ask) and of
+  what Paste means on URL. The card keeps its 78px so the row does not
+  go ragged again; the title just centres in it.
+  **The colour row printed each word twice.** `showFmt` renames the
+  door to "Text ▾" for a text box, and the quick-swatch run two controls
+  along carried a hard-coded `Text` caption -- so the row read
+  "Text ▾ | Fill ▾ | Text ●●●●●● | Fill ●●●●●●". The caption was inert
+  (no listener, no state) and was a lie for anything that is not text:
+  the door becomes "Border ▾" or "Line ▾" for a shape, an arrow or a
+  drawing, and that run shows for all of them. **Each run now sits
+  behind its own door** -- Text, its colours, Fill, its colours -- so
+  adjacency names it, once, and it is renamed along with the door. All
+  eight alternative ribbon layouts now name the run beside its door too,
+  or `rbnRestGroup` would separate them and the run would lose its name
+  where the caption used to hold it.
+  **And the empty RECENTLY USED heading in the same screenshot** was a
+  real defect, not a quirk: `.sw-recrow` had no `flex-wrap`, while
+  `.sw-menu .fmt-lab` gives the heading `flex:0 0 100%` and the chips
+  are `flex:none` -- so the heading took the whole row and pushed all
+  seven chips out past the right edge of a 216px card. Every time.
+  Driven after the fix with three colours used: the chips wrap under the
+  heading at x=12 inside the card, and none is outside it.
+  **The strip's "Open notebooks".** Off the row. Nothing is orphaned:
+  it ran `openPresNbs(true)`, which SKIPS the notebooks already open,
+  and Refresh all is `openPresNbs(false)`, a strict superset that opens
+  the closed ones and re-reads the rest; each closed row in the list
+  above also opens its own on click. Refresh all comes out of the More
+  menu onto the row, because a row holding nothing but More is the
+  standing complaint. The empty-state door (JVUX-11) is a different
+  button and stays -- without it that state names an action with
+  nothing to click.
+  The two tests that were supposed to guard this were both passing
+  accidentally: they asserted the string "Open notebooks", which also
+  occurs in help.html, in page.html's rail and in the empty-state door.
+  They pin the build line now.

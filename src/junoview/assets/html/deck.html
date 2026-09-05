@@ -1654,6 +1654,25 @@
                     style="background:#16202b" title="Ink" aria-label="Ink"></button>
                 </div>
               </span>
+              <!-- T273: BEHIND ITS OWN DOOR, AND SO IT NEEDS NO CAPTION.
+                   This run used to sit after BOTH doors, with a
+                   cell-lab caption naming it in front of it --
+                   so the row read "Text ▾ | Fill ▾ | Text ●●● | Fill
+                   ●●●" and printed each word twice (2026-09-05, user,
+                   of the colour menu: "why is the word text there
+                   twice. PLEASE PLEASE PLEASe remove unnecessary text
+                   that makes it really hard to look at").
+                   The caption was also a hard-coded lie for anything
+                   that is not text: showFmt renames the door to
+                   "Border ▾" or "Line ▾" for a shape, an arrow or a
+                   drawing, and this run shows for all of them. Now the
+                   door names the run that follows it, once, and is
+                   renamed with it. -->
+              <span class="rbn-cell rbn-seg qk-cell" id="fmt-txquick" hidden
+                role="group" aria-label="Text colour"
+                title="The colours you used most recently. The door to
+ the left of them holds every other colour">
+              </span>
               <span class="sh-drop" id="fmt-fillcolwrap">
                 <button class="dbtn etm" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
@@ -1692,17 +1711,10 @@
                    the same list the door shows under "Recently
                    used", so the row and the door are one thing seen
                    twice rather than two rival palettes. -->
-              <span class="rbn-cell rbn-seg qk-cell" id="fmt-txquick" hidden
-                role="group" aria-label="Text colour"
-                title="The colours you used most recently, on the
- words. Colour ▾ beside it holds every other colour">
-                <span class="cell-lab">Text</span>
-              </span>
               <span class="rbn-cell rbn-seg qk-cell" id="fmt-bgquick" hidden
                 role="group" aria-label="Fill colour"
-                title="The colours you used most recently, behind
- them. Fill ▾ beside it holds every other colour">
-                <span class="cell-lab">Fill</span>
+                title="The colours you used most recently, behind the
+ words. The door to the left of them holds every other colour">
               </span>
             </span>
             <span class="rbn-lab">Font</span>

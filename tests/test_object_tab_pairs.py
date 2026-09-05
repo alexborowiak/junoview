@@ -30,13 +30,24 @@ def test_font_and_paragraph_are_two_groups_with_deliberate_pairs():
     it: "there should be a text style (e.g. colour, fill, font, font
     size), then a text idk something else that has the (list, paragraph
     left, spacing)". How the letters look is Font; how the block is set
-    is Paragraph. The colour doors moved into Font with their swatches."""
+    is Paragraph. The colour doors moved into Font with their swatches.
+
+    T273 paired each quick run with its OWN door -- Text, its colours,
+    Fill, its colours -- rather than standing both doors together and
+    both runs after them. That arrangement needed a caption in front of
+    each run to say which was which, and the caption printed a word the
+    door beside it had already printed (and lied outright for a shape,
+    where showFmt renames the door to "Border"). Adjacency is the label
+    now, so the order is what the test has to hold."""
     html = assets.deck_html()
     font = _ids(_row(html, "Font"))
     order = ["fmt-font", "fmt-sizecell", "fmt-stylewrap-tx", "tx-run-style",
-             "fmt-txcolwrap", "fmt-fillcolwrap", "fmt-txquick", "fmt-bgquick"]
+             "fmt-txcolwrap", "fmt-txquick", "fmt-fillcolwrap", "fmt-bgquick"]
     at = [font.index(i) for i in order]
     assert at == sorted(at), order
+    # ...and neither run carries a caption any more
+    assert '<span class="cell-lab">Text</span>' not in html
+    assert '<span class="cell-lab">Fill</span>' not in html
     para = _ids(_row(html, "Paragraph"))
     # bullets over numbers, the alignment run over Spacing, then Paragraph
     order2 = ["fmt-bullets", "fmt-numbers", "tx-run-align", "fmt-lhwrap",

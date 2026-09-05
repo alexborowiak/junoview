@@ -501,13 +501,22 @@ def test_the_notebook_block_stops_squeezing_the_thumbnails(out):
     cures, none of which loses the list itself -- it is the way back and
     the open/closed state (2026-08-20).
     """
-    # ONE action row: Open notebooks, then More for the once-a-session rest
-    assert "acts.appendChild(ob);nbBody.appendChild(acts);" in out
+    # ONE action row: Refresh all, then More for the once-a-session rest.
+    # T273 took "Open notebooks" off it (2026-09-05, user: "not needed
+    # anymore"). Refresh all inherited its job -- openPresNbs(false) opens
+    # the closed notebooks as well as re-reading the open ones -- and came
+    # out of the More menu to take the row, because a row holding nothing
+    # but More is the standing complaint.
+    assert "acts.appendChild(rb);nbBody.appendChild(acts);" in out
+    assert "ob.innerHTML=bic('open')+' Open notebooks';" not in out
+    # ...but the EMPTY-state door (JVUX-11) is a different button and stays:
+    # without it that state names an action with nothing to click
+    assert "ob2.className='dbtn dc-nbs-open';" in out
     assert "mb.innerHTML=bic('menu')+' More';" in out
     assert "acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;" in out
     assert "dc-nbacts-stack" not in out           # the stacked trio is gone
     # ...the actions are not: same words, same app-only treatment
-    for label in ("Open notebooks", "Refresh all", "Lock all figures",
+    for label in ("Refresh all", "Lock all figures",
                   "Unlock all", "Load locked versions"):
         assert label in out
     assert "la.disabled=!appMode;" in out and "ua.disabled=!appMode;" in out

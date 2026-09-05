@@ -176,7 +176,12 @@ def test_presentation_notebooks_live_in_the_left_column_only(out):
     assert 'id="dc-nbs-btn"' not in out and 'id="nbspane"' not in out
     assert 'id="dc-nbs-menu"' not in out
     assert "function renderNbsMenu" in out and "function openPresNbs" in out
-    assert "Refresh all" in out and "Open notebooks" in out
+    assert "Refresh all" in out
+    # T273: the action row's "Open notebooks" is gone (2026-09-05). Pinned
+    # on the BUILD LINE, not the words -- "Open notebooks" still occurs in
+    # help.html, in page.html's rail and in the empty-state door, so a bare
+    # substring check here passed no matter what this row did.
+    assert "ob.innerHTML=bic('open')+' Open notebooks';" not in out
 
 
 def test_notebooks_button_replaces_inline_chip_strip(out):

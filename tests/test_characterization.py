@@ -1127,6 +1127,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T273: chrome only. The front door loses 'No notebook
+# needed'; each colour quick-run moves behind its own door and loses its
+# caption (and the eight ribbon layouts name it beside that door);
+# .sw-recrow learns to wrap; the deck column's 'Open notebooks' comes
+# off and Refresh all takes the row.
 # 2026-09-05, T270-T272: chrome only, the document half is unchanged.
 # The QAT Close handler grows the second rung of the Escape ladder
 # plus overlayCloseAll (T270); #fmt-hist and #fmt-crop-caret join
@@ -1134,8 +1139,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "08bf685c79d99bdf52a267fcf47dd79f"
-EXPECTED_BYTES = 3599076
+EXPECTED_MD5 = "3220355ff1bfbd1d9241944a679a5c7f"
+EXPECTED_BYTES = 3601990
 
 
 def _render_example() -> str:

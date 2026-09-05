@@ -1977,10 +1977,14 @@ select#fmt-font[hidden]{display:none;}
 /* recent colours, newest first — filled from the custom picker's history
    whenever a colour menu opens (2026-08-19, user: recents should be in
    the colour menus, not buried in the picker) */
-.sw-recrow{display:flex;align-items:center;gap:7px;}
+/* T273: WRAP, like .sw-tokrow below. `.sw-menu .fmt-lab` gives the
+   heading `flex:0 0 100%` -- basis 100%, shrink 0 -- and the chips are
+   `flex:none`, so on a nowrap row the heading took the whole width and
+   pushed all seven chips out past the right edge of a 216px card. The
+   popup showed a RECENTLY USED heading with nothing under it, every
+   time (2026-09-05, from the user's screenshot). */
+.sw-recrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
 .sw-recrow[hidden]{display:none!important;}
-.sw-reclab{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
-  text-transform:uppercase;color:#7e93a4;flex:none;}
 .sw-rc{width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
   border:2px solid #ffffff30;flex:none;}
 /* custom-colour swatch: a rainbow chip that opens the full picker */
@@ -5066,6 +5070,9 @@ body.light .dg-num input{background:var(--input-bg);
 .qk-sw{width:15px;height:15px;border-radius:50%;padding:0;flex:none;
   cursor:pointer;border:1.5px solid #ffffff33;margin-right:3px;}
 .qk-cell>.qk-sw:last-child{margin-right:5px;}
+/* T273: the caption used to give the cell its left inset; with the
+   caption gone the first chip would touch the segment border. */
+.qk-cell>.qk-sw:first-child{margin-left:5px;}
 .qk-sw:hover{border-color:#fff;transform:scale(1.14);}
 .qk-sw.on{border-color:#fff;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent);}

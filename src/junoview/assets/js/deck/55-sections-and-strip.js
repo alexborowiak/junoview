@@ -615,7 +615,10 @@
       if(missingOnly&&n.open) return;
       if(n.openable){APP.openPath(n.path);acted++;} else cannot++;
     });
-    var verb=missingOnly?'Opening ':'Reloading ';
+    /* T273: the surviving caller passes FALSE and now does both jobs
+       -- it opens what is closed as well as re-reading what is open --
+       so the unscoped word is the honest one. */
+    var verb=missingOnly?'Opening ':'Opening and reloading ';
     if(!acted&&!cannot)
       toast(missingOnly?'All notebooks are already open':'Nothing to reload');
     else if(!acted)
@@ -823,16 +826,22 @@
     });
     if(nbsCanOpen()){
       var acts=document.createElement('div');acts.className='dc-nbacts';
-      var ob=document.createElement('button');ob.className='dbtn';
-      ob.innerHTML=bic('open')+' Open notebooks';
-      ob.title='Open every notebook this presentation uses that is not '
-        +'already open';
-      ob.addEventListener('click',function(){openPresNbs(true);});
+      /* T273: "Open notebooks" is gone from this row (2026-09-05, user:
+         "Can you get rid of the 'Open notebooks' button above the
+         thumbnails. That is not needed anymore.").
+         Nothing is orphaned. It ran openPresNbs(TRUE), which skips the
+         notebooks already open -- and Refresh all is openPresNbs(FALSE),
+         a strict superset: it opens the closed ones and re-reads the
+         rest. Each closed row in the list above also opens its own
+         notebook on click. So the capability keeps two doors, and the
+         row keeps a worded action rather than being left holding
+         nothing but More, which is the standing complaint. */
       var rb=document.createElement('button');rb.className='dbtn';
       rb.innerHTML=bic('reload')+' Refresh all';
-      rb.title='Reload every notebook this presentation uses from disk / URL';
+      rb.title='Open every notebook this presentation uses that is not '
+        +'already open, and re-read the rest from disk / URL';
       rb.addEventListener('click',function(){openPresNbs(false);});
-      acts.appendChild(ob);nbBody.appendChild(acts);
+      acts.appendChild(rb);nbBody.appendChild(acts);
       /* FOUR ROWS BECAME ONE. Refresh all and the three lock actions are
          once-a-session verbs, and the lock three HAD to stack full width
          -- their labels are phrases, not words (2026-08-21) -- so four
@@ -845,7 +854,7 @@
       mb.innerHTML=bic('menu')+' More';
       mb.setAttribute('aria-haspopup','true');
       mb.setAttribute('aria-expanded','false');
-      mb.title='Refresh every notebook, and lock or unlock every figure';
+      mb.title='Lock or unlock every figure';
       acts.appendChild(mb);
       /* shown everywhere, working only in the app - see the per-figure
          Lock button for why (2026-08-20) */
@@ -853,7 +862,6 @@
         var appMode=(APP.mode==='app');
         var acts2=document.createElement('div');
         acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;
-        acts2.appendChild(rb);
         var la=document.createElement('button');la.className='dbtn';
         la.disabled=!appMode;
         la.innerHTML=bic('lock')+' Lock all figures';

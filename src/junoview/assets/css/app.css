@@ -812,6 +812,12 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
 /* T264: making a presentation is its own thing, so it takes the row;
    the two below it are both "open a notebook" and read as a pair */
 .welcome-btns .wc-wide{grid-column:1 / -1;}
+/* T273: a card with no second line is not a two-row box. It keeps the
+   78px the others have -- shrinking it to its one line would put back
+   the ragged, differently-sized row T240 removed -- but the title sits
+   in the middle of it rather than on top of 30px of dead air. */
+.welcome-btns .dbtn:not(:has(.wc-h)){grid-template-rows:auto;
+  align-content:center;}
 .welcome-btns .dbtn.primary{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:var(--on-accent-deep);
   box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 20%,transparent);}
