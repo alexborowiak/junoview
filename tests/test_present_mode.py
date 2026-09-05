@@ -323,7 +323,15 @@ def test_the_clock_starts_and_stops_where_present_mode_does(out):
     is taken in go() before the render rather than after it.
     """
     assert "var startingTalk=(m==='view'&&mode!=='view');" in out
-    assert "if(startingTalk) rehStart();" in out
+    assert "    if(startingTalk){\n      rehStart();" in out
+    # T285: and the PRESENTER's clock, which is a different number.
+    # presStart was set when the presenter WINDOW opened, so it counted
+    # however long you spent dragging that window to the second screen
+    # before pressing Play -- and the behind/ahead badge reads off it.
+    assert "      if(typeof presTimerStart==='function') presTimerStart();" in out
+    assert "  function presTimerStart(){" in out
+    assert ("    if(!presStart&&typeof rehOn!=='undefined'&&rehOn) "
+            "presStart=Date.now();") in out
     assert "else if(endingTalk){\n      rehStop();lateFrom=-1;" in out
     assert "rehSlideChanged();" in out
     assert out.index("rehSlideChanged();") < out.index("    refresh();\n"

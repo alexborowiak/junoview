@@ -1030,7 +1030,12 @@
     if(m==='view') flushDraftWrite();
     /* a rehearsal is exactly "present mode, from when it starts to when
        it ends" -- so it begins and ends where the mode does (T29) */
-    if(startingTalk) rehStart();
+    if(startingTalk){
+      rehStart();
+      /* T285: and the presenter's own clock, which is a different
+         number from the rehearsal's and was starting too early */
+      if(typeof presTimerStart==='function') presTimerStart();
+    }
     else if(endingTalk){
       rehStop();lateFrom=-1;
       /* the panel belongs to the run; the SETTINGS survive it, because a
@@ -2057,6 +2062,19 @@
          swallows it so the browser's save dialog never covers a talk. */
       e.preventDefault();
       if(mode!=='view'){var sb2=$('#dc-save');if(sb2) sb2.click();}
+    }
+    else if((e.ctrlKey||e.metaKey)&&(e.key==='p'||e.key==='P')
+            &&!deckEl.hidden){
+      /* T285: PDF is this product's most-used way out, and Ctrl+P went
+         to the browser -- which prints the EDITOR: the ribbon, the
+         strip, the panes, and the one slide that happened to be on the
+         stage. printDeck builds the real print root (every slide at the
+         page's true size, crop marks, the background forced through
+         print-color-adjust) and File > Print already calls it.
+         Guarded on the deck being open, so Ctrl+P over the notebook
+         still prints the notebook. */
+      e.preventDefault();
+      if(typeof printDeck==='function') printDeck();
     }
     else if((e.ctrlKey||e.metaKey)&&e.key==='F1'&&mode==='edit'){
       /* PowerPoint's own shortcut for the same thing (2026-08-20) */

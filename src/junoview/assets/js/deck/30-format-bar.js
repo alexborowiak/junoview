@@ -2025,6 +2025,14 @@
       return (out&&out.length<String(dataUrl||'').length)?out:dataUrl;
     }catch(e){return dataUrl;}
   }
+  /* T285: the same landing used by paste, exposed so a DROP can use
+     it. app.js's window drop handler filtered to notebooks and decks,
+     so a PNG dropped on a slide raised the "Drop .ipynb files" sheet
+     and was then discarded in silence. */
+  window.SemApp.deckDropImage=function(file){
+    if(deckEl.hidden||mode!=='edit') return false;
+    return pasteImageFile(file);
+  };
   function pasteImageFile(file){
     if(!file) return false;
     var fr=new FileReader();

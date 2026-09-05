@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T285: chrome only. Ctrl+P reaches printDeck, the
+# presenter clock starts from presTimerStart beside rehStart, and an
+# image dropped on a slide lands on it through SemApp.deckDropImage.
 # 2026-09-05, T284: chrome only, and the largest of these by count --
 # 194 color: declarations in deck.css move from raw hex onto the ink and
 # semantic tokens they had been copied from, so the ten colour schemes
@@ -1169,8 +1172,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "c35af62edbb8ed79ee242be9c10414d5"
-EXPECTED_BYTES = 3631921
+EXPECTED_MD5 = "f4d8defd78cfe8c1c083ba3d224b5754"
+EXPECTED_BYTES = 3634762
 
 
 def _render_example() -> str:

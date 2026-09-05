@@ -1459,6 +1459,16 @@
      where there is not; both are just "here is the state" one way and
      "do this" the other. */
   var presWin=null,presCh=null,presStart=0,presPaused=0,presPauseAt=0;
+  /* T285: THE CLOCK STARTS WITH THE TALK. presStart was set when the
+     presenter WINDOW opened, so the elapsed time was already however
+     long you spent dragging that window to the second screen and
+     lining it up before you pressed Play -- and the behind/ahead badge
+     is read straight off it. Called from the one place that knows a
+     talk has begun (setUIMode's startingTalk branch, beside
+     rehStart). */
+  function presTimerStart(){
+    presStart=Date.now();presPaused=0;presPauseAt=0;
+  }
   function presChannel(){
     if(presCh) return presCh;
     try{
@@ -1717,7 +1727,9 @@
     w.document.open();
     w.document.write(presenterHtml());
     w.document.close();
-    if(!presStart) presStart=Date.now();
+    /* T285: only if a talk is already running. Opening the presenter
+       view is setup, not the talk -- see presTimerStart. */
+    if(!presStart&&typeof rehOn!=='undefined'&&rehOn) presStart=Date.now();
     var d=w.document;
     function send(m){
       /* same-window handle first: it always works, channel or not */

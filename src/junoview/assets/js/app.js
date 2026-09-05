@@ -6697,6 +6697,22 @@
       if(hint) hint.hidden=true;
       var files=Array.prototype.slice.call(
         (e.dataTransfer||{}).files||[]);
+      /* T285: AN IMAGE DROPPED ON A SLIDE LANDS ON THE SLIDE. This
+         handler filtered to decks and to SRC_RE sources, so a PNG
+         matched neither -- and the only thing that had happened was the
+         full-window "Drop .ipynb files" sheet, which then went away
+         again. Silently discarding a file the user aimed at the canvas
+         is the worse failure the SRC_RE note below warns about, one
+         file type further on. Only while the editor is up: dropped on
+         the notebook view an image still has nowhere to go, and saying
+         nothing there is at least honest. */
+      var imgs=files.filter(function(f){
+        return /^image\//.test(f.type||'');});
+      if(imgs.length&&APP.deckDropImage){
+        var took=0;
+        imgs.forEach(function(f){if(APP.deckDropImage(f)) took++;});
+        if(took) return;
+      }
       /* a dropped saved presentation imports, in either mode */
       files.filter(function(f){return isDeckPath(f.name);})
         .forEach(function(f){

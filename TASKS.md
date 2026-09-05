@@ -6160,3 +6160,34 @@ option. Then where has the ability to refresh all images gone?"
   It is the shape the review asked for: 781 substring assertions could
   not see this whole class, and one loop over the source finds it in a
   second.
+
+- [x] **T285 - Three places where the obvious thing did not happen.**
+  From the 2026-09-05 review's ordered plan. None of these is exotic:
+  they are the keystroke, the clock and the gesture a person tries
+  first.
+  **Ctrl+P printed the editor.** PDF is this product's most-used way
+  out, and Ctrl+P went to the browser, which prints the ribbon, the
+  strip, the panes and whichever single slide was on the stage.
+  `printDeck` -- which builds the real print root, every slide at the
+  page's true size with crop marks and the background forced through
+  `print-color-adjust` -- was already what File ▸ Print called. It is
+  bound now, guarded on the deck being open so Ctrl+P over the notebook
+  still prints the notebook.
+  **The presenter's clock started too early.** `presStart` was set when
+  the presenter WINDOW opened, so the elapsed time already included
+  however long you spent dragging that window onto the second screen and
+  lining it up -- and the behind/ahead badge reads straight off it. It
+  starts from `presTimerStart()`, called beside `rehStart()` in the one
+  branch that knows a talk has begun.
+  **An image dropped on a slide was discarded in silence.** The window
+  drop handler filtered to decks and to `SRC_RE` sources; a PNG matched
+  neither, so the full-window "Drop .ipynb files" sheet appeared, went
+  away, and nothing happened -- the worse failure the `SRC_RE` note
+  beside it warns about, one file type further on. It lands on the slide
+  now, through the same `pasteImageFile` a paste uses, and only while
+  the editor is up.
+  Driven on a web build: the dropped PNG takes the slide's image count
+  0 -> 1, and Ctrl+P preventDefaults and reaches print. On a rendered
+  export the drop handler is not wired at all -- it sits behind
+  `APP.mode==='app'||APP.mode==='web'` -- which cost a confusing twenty
+  minutes and is correct: there is nothing to open there.
