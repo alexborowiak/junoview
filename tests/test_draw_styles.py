@@ -172,7 +172,22 @@ def test_one_button_size_with_colour_carrying_emphasis(out):
     # one shared height for everything, with no exception carved out for
     # a class nothing uses any more
     assert ".rbn-row>.dbtn,.rbn-row .sh-drop>.dbtn," in out
-    assert "height:26px;box-sizing:border-box;}" in out
+    # T310: ...AND a joined run. The complaint came back on 2026-09-05
+    # ("Button spacing and sizing still weird") because .rbn-cell is a
+    # fixed 30px, so align-items:stretch pushed the segments inside a run
+    # to 29px while every button beside them sat at 26 -- nine of them
+    # across Design and Animation, standing 3px proud of their own row.
+    # The run itself takes the canonical height and its segments fill it,
+    # so the two cannot drift apart again at any density rung. Measured
+    # live afterwards: the run and its five row-mates all report
+    # h=26, top=107.7, bottom=133.7.
+    assert (".rbn-row .dc-menuwrap>.dbtn,\n"
+            ".rbn-row>.rbn-cell.rbn-seg{height:26px;box-sizing:border-box;\n"
+            "  align-self:center;}") in out
+    # and nothing re-introduces a second height for a segment
+    seg = out[out.index(".edit-tools .rbn-row>.rbn-cell.rbn-seg{"):]
+    seg = seg[:seg.index("body.th-colorful .edit-tools .rbn-row>.rbn-cell.rbn-seg{")]
+    assert "height:" not in seg, seg[:200]
     assert ".dbtn.rbn-ico{display:flex;align-items:center;" in out
     assert "width:26px;height:26px;" in out
     # no rbn-big survives in the ribbon at all: Present, the one accented

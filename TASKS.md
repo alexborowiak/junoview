@@ -6795,3 +6795,24 @@ option. Then where has the ability to refresh all images gone?"
   cuts off exactly the half that names the notebook; the full path is
   the hover. *Verified live:* with no notebook open at all the row still
   reads `C:\Users\...\nbroot\example_climate_analysis.ipynb`.
+
+- [x] **T310 - a joined run is as tall as a loose button.**
+  The user (2026-09-05): "Button spacing and sizing still weird."
+  *Done 2026-09-05.* `.rbn-cell` is a fixed 30px so that a dropdown
+  wrapper fills its grid track, and `align-items:stretch` then pushed
+  the segments inside a joined run to 29px -- while every ribbon button
+  NOT in a cell is held to 26px by one rule at deck.css:1309. Nine
+  buttons across Design (Tight / Normal / Airy) and Animation therefore
+  stood 3px proud of the row they were on, which is what made the row
+  read as ragged. Measured across all seven tabs first: 26px everywhere,
+  56px for the tiles, and those nine at 29 were the only outliers.
+  The run now takes the canonical height itself and its segments fill
+  it, so the two cannot drift apart again at any density rung -- the
+  earlier attempt, rebuilding a segment's box from a borderless button
+  plus the run's own border, still landed a pixel short and was thrown
+  away. *Measured after:* the run and its five row-mates all report
+  h=26, top=107.7, bottom=133.7.
+  This is the second time this complaint has come back (2026-08-07: "so
+  many sizes, and they don't align"), so
+  `test_one_button_size_with_colour_carrying_emphasis` now also refuses
+  any `height:` inside the run's own rule block.

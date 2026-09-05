@@ -1306,8 +1306,18 @@ body.slide-editing .apptop{display:none;}
    density ladder, which made the ladder read as though it still had a
    lever it had not had for ten days (2026-08-17 audit). --- */
 /* every ribbon button is the same height and sits on the same baseline */
+/* THE HEIGHT OF A RIBBON BUTTON, in one place. A joined run is on this
+   list too (T310): .rbn-cell is a fixed 30px so a dropdown wrapper fills
+   its grid track, and align-items:stretch then pushed the segments
+   inside a run to 29px while every button beside them sat at 26 --
+   nine buttons across Design and Animation standing 3px proud of their
+   own row ("Button spacing and sizing still weird", 2026-09-05). The
+   RUN takes the canonical height and its segments fill it, so the two
+   cannot drift apart again at any density rung. */
 .rbn-row>.dbtn,.rbn-row .sh-drop>.dbtn,
-.rbn-row .dc-menuwrap>.dbtn{height:26px;box-sizing:border-box;}
+.rbn-row .dc-menuwrap>.dbtn,
+.rbn-row>.rbn-cell.rbn-seg{height:26px;box-sizing:border-box;
+  align-self:center;}
 /* two or three small buttons stacked in the height of one big one */
 .rbn-stack{display:flex;flex-direction:column;gap:3px;
   justify-content:center;}
