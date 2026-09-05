@@ -5895,3 +5895,57 @@ option. Then where has the ability to refresh all images gone?"
   matching means "look like this one" and should never clear a NAME the
   target chose, or it means "be this one" and should. The first reads
   right, and is a one-line guard; the user should say which.
+
+- [x] **T276 - A slide template says what its boxes ARE.**
+  The user (2026-09-05): "Inserting new slides some of the layouts don't
+  have the boxes as the correct types, like heading are not of type
+  heading."
+  *Done 2026-09-05.* `a.style` -- a name from STYLE_DEFAULTS -- is the
+  editor's ONLY vocabulary of "heading", and the LAYOUTS catalogue
+  described its text slots with geometry and a LOOK and nothing else.
+  Not one of the fourteen slide slots carried it, so a Title placeholder
+  was 5%-of-page bold text: the outline, "apply to all headings", the
+  standardiser and the .pptx export could not tell it from a bold
+  sentence. The machinery was one call away -- `textBorn` already stamps
+  Insert ▸ "Heading 1 box" -- and its own comment asserted the false
+  premise that made this bug: "a template already says what its boxes
+  are". It does now.
+  **Sizes moved onto the style's own number in the same edit**, because
+  a box stamped `h1` at 4.4 when Heading 1 is 5.0 is reported as drift
+  by `stdMatchesStyle` the moment it is created, which is a worse answer
+  than being untyped. Title 7 -> 7.2, Section 8 -> 7.2, body 3 and 2.8
+  -> 2.6, the Text/panel title 4.4 -> 5.0.
+  **The reuse branch deliberately does not stamp.** applyLayout pairs
+  EXISTING boxes to new slots by ordinal position, so typing there would
+  make a body paragraph a Title merely because it came first.
+  The layout BUILDER had the same hole -- its palette is literally
+  called Title / Heading / Body text and threw the role away -- and both
+  places that seed a new board bypassed the palette entirely. All three
+  carry it now.
+  Driven live over all ten layouts that carry text: every text box used
+  to arrive `(NONE)`; they now arrive `title @7.2`, `h1 @5` and
+  `body @2.6` exactly as the slot says.
+
+- [ ] **T277 - There is no Subtitle type.**
+  Found doing T276. The built-in seven are title / h1 / h2 / h3 / body /
+  small / caption. The Title layout's "Subtitle" slot, and every poster's
+  author-and-affiliation line, have nowhere semantically right to land:
+  the four heading types are all bold, and body/small are body copy. The
+  slot is left UNTYPED rather than mistyped, and the test pins that it
+  is the only untyped one.
+  An eighth built-in (~3.4, not bold) reaches into BUILTIN_STYLE_IDS,
+  STYLE_ORDER, every style set, the type strip and the Design rail --
+  worth doing, but it is a decision about the deck's type ladder rather
+  than a bug fix.
+
+- [ ] **T278 - The poster templates cannot be typed until the seed
+  survives a style set.**
+  Also found doing T276, and why the poster half was left alone. A
+  poster's type scale is the PAGE's, not the 16:9 ladder's -- 1.9% of an
+  A0 is a section heading where Heading 2 is 3.8 -- so stamping the
+  built-in names on poster slots would make every poster read as drift
+  from the moment it was created. Doing it properly means seeding
+  `pres.styles` from the template the first time it is applied; but
+  `applyStyleSet` ends with `pres.styles=next`, a wholesale REPLACE, so
+  one click of any style set (or `autoStyleDeck`) discards the seed.
+  The seeding and the replace have to be reconciled first.

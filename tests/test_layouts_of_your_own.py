@@ -53,7 +53,13 @@ def test_the_builder_is_a_board_some_slots_and_a_name(out):
     assert "  layoutBuilderBoot();" in out
     # four kinds of slot, and what each becomes
     assert "  var LB_SLOTS=[" in out
-    assert "    ['title','Title',{k:'text',w:88,h:12,text:'Title',size:5,b:1}]," in out
+    # T276: each slot carries the ROLE it names, or the palette offers
+    # "Title" and "Heading" and builds boxes that are neither
+    assert ("    ['title','Title',{k:'text',w:88,h:12,text:'Title',"
+            "size:5,b:1,\n      style:'h1'}],") in out
+    assert "style:'h2'}]," in out and "style:'body'}]," in out
+    # ...and it survives the trip onto the board
+    assert "          if(base.style) it.style=base.style;" in out
     assert "    ['cell','Figure panel',{k:'cell',w:44,h:50}]" in out
     # drag to move, grip to resize, both in page percent
     assert "addEventListener('pointerdown',function(e){drag(e,'move');});" in out

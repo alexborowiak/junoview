@@ -92,32 +92,58 @@
      notebook-card frames (k:'cell') and plain text boxes (k:'text', with a
      placeholder + size). A title slide is simply two text boxes; there is no
      special title mode. h on a text slot is only used to draw the picker
-     preview (the real text box auto-sizes to its content). */
+     preview (the real text box auto-sizes to its content).
+
+     T276: a text slot also declares WHAT IT IS, in `style` -- the deck's
+     only vocabulary of "heading" (STYLE_DEFAULTS: title/h1/h2/h3/body/
+     small/caption). It was missing from all fourteen slide slots, so a
+     Title placeholder was merely 5%-of-page bold text and nothing
+     downstream -- the outline, "apply to all headings", the standardiser,
+     the pptx export -- could tell it from a bold sentence (2026-09-05,
+     user: "Inserting new slides some of the layouts don't have the boxes
+     as the correct types, like heading are not of type heading").
+     Sizes moved onto the style's own number in the same edit. A box
+     stamped `h1` at 4.4 when Heading 1 is 5.0 is reported as drift by
+     stdMatchesStyle the moment it is created, which is a worse answer
+     than being untyped.
+     The POSTER templates below are deliberately left alone: their type
+     scale is the page's, not the 16:9 ladder's -- 1.9% of an A0 is a
+     section heading where Heading 2 is 3.8 -- so stamping the built-in
+     names on them would make every poster read as drift. That needs the
+     deck's own style overrides seeded from the template, which does not
+     survive applyStyleSet's wholesale replace. Recorded as T278. */
   var LAYOUTS=[
     {id:'title',label:'Title',items:[
-      {k:'text',x:12,y:33,w:76,h:16,text:'Presentation title',size:7,b:1,
-        align:'center'},
-      {k:'text',x:12,y:55,w:76,h:8,text:'Subtitle',size:3.4,align:'center'}]},
-    {id:'section',label:'Section',items:[
-      {k:'text',x:8,y:41,w:84,h:18,text:'Section',size:8,b:1,
+      {k:'text',x:12,y:33,w:76,h:16,text:'Presentation title',size:7.2,
+        b:1,align:'center',style:'title'},
+      /* THE SUBTITLE HAS NO HOME IN THE SEVEN and is deliberately left
+         untyped. title/h1/h2/h3 are all bold, body and small are body
+         copy; a subtitle is neither, and inventing an eighth built-in
+         reaches into BUILTIN_STYLE_IDS, every style set, the type strip
+         and the Design rail. Recorded as T277 rather than guessed at. */
+      {k:'text',x:12,y:55,w:76,h:8,text:'Subtitle',size:3.4,
         align:'center'}]},
+    {id:'section',label:'Section',items:[
+      {k:'text',x:8,y:41,w:84,h:18,text:'Section',size:7.2,b:1,
+        align:'center',style:'title'}]},
     {id:'title-body',label:'Title + text',items:[
-      {k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1},
-      {k:'text',x:6,y:24,w:88,h:64,text:'Body text',size:3}]},
+      {k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1,style:'h1'},
+      {k:'text',x:6,y:24,w:88,h:64,text:'Body text',size:2.6,
+        style:'body'}]},
     {id:'full',label:'One panel',items:[
       {k:'cell',x:3,y:4,w:94,h:91}]},
     {id:'title-full',label:'Title + panel',items:[
-      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:4,y:20,w:92,h:76}]},
     {id:'halves',label:'Two panels',items:[
       {k:'cell',x:2,y:7,w:47.5,h:86},{k:'cell',x:50.5,y:7,w:47.5,h:86}]},
     {id:'title-halves',label:'Title + two',items:[
-      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:3,y:20,w:46.5,h:76},{k:'cell',x:50.5,y:20,w:46.5,h:76}]},
     {id:'rows',label:'Stacked',items:[
       {k:'cell',x:6,y:2,w:88,h:47},{k:'cell',x:6,y:51,w:88,h:47}]},
     {id:'title-rows',label:'Title + stack',items:[
-      {k:'text',x:5,y:4,w:90,h:10,text:'Title',size:5,b:1},
+      {k:'text',x:5,y:4,w:90,h:10,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:6,y:17,w:88,h:39},{k:'cell',x:6,y:58,w:88,h:39}]},
     {id:'quarters',label:'Four panels',items:[
       {k:'cell',x:2,y:2,w:47.5,h:47},{k:'cell',x:50.5,y:2,w:47.5,h:47},
@@ -125,18 +151,20 @@
     /* NAMED FOR EVERYTHING ON THEM (T193): both of these carry a title
        too, which "Text | panel" did not say */
     {id:'text-cell',label:'Title + text + panel',items:[
-      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
-      {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:3},
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
+      {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:2.6,style:'body'},
       {k:'cell',x:49,y:20,w:47,h:76}]},
     {id:'cell-text',label:'Title + panel + text',items:[
-      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:4,y:20,w:47,h:76},
-      {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:3}]},
+      {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:2.6,
+        style:'body'}]},
     {id:'cell-above',label:'Panel / text',items:[
       {k:'cell',x:4,y:4,w:92,h:62},
-      {k:'text',x:6,y:70,w:88,h:26,text:'Body text',size:2.8}]},
+      {k:'text',x:6,y:70,w:88,h:26,text:'Body text',size:2.6,
+        style:'body'}]},
     {id:'text-above',label:'Text / panel',items:[
-      {k:'text',x:6,y:5,w:88,h:14,text:'Title',size:4.4,b:1},
+      {k:'text',x:6,y:5,w:88,h:14,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:4,y:22,w:92,h:74}]},
     {id:'blank',label:'Blank',items:[]},
     /* ---- POSTER templates -------------------------------------------
@@ -419,12 +447,27 @@
         if(t){t.x=it.x;t.y=it.y;t.w=it.w;
           if(!t.text) t.text=it.text||'Text';
           next.push(t);
-        } else next.push({k:'text',x:it.x,y:it.y,w:it.w,
-          /* NO baked colour: the default lives in CSS so the page
-             theme decides — a stamped '#ffffff' made template text
-             white-on-white on light posters (2026-08-05 review) */
-          text:it.text||'Text',size:it.size||2.8,
-          bg:0,align:it.align||'left',b:it.b?1:0});
+        } else {
+          var nb={k:'text',x:it.x,y:it.y,w:it.w,
+            /* NO baked colour: the default lives in CSS so the page
+               theme decides — a stamped '#ffffff' made template text
+               white-on-white on light posters (2026-08-05 review) */
+            text:it.text||'Text',size:it.size||2.8,
+            bg:0,align:it.align||'left',b:it.b?1:0};
+          /* T276: AND WHAT THE SLOT SAYS IT IS. Written straight onto the
+             box rather than through applyStyleTo, which would overwrite
+             the template's own size, align and weight with the style's
+             defaults -- the template's LOOK wins, only the NAME is being
+             added. Guarded on the registry knowing the id so a deck-
+             authored layout cannot mint a type this deck has never heard
+             of.
+             The REUSE branch above deliberately does not do this: it
+             pairs old boxes to new slots by ORDINAL POSITION, so
+             stamping there would type a body paragraph as a Title
+             merely because it happened to come first. */
+          if(it.style&&styleDef(it.style)) nb.style=it.style;
+          next.push(nb);
+        }
       }
     });
     /* don't lose placed cards / typed text beyond the template's slots */

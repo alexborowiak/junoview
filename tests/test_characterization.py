@@ -1127,6 +1127,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T276: chrome only. The fourteen slide-template text slots
+# declare their type in `style` and take the size that type means; the
+# layout builder's palette and both of its board seeds carry the role
+# too, and applyLayout stamps it onto a newly created box.
 # 2026-09-05, T274: chrome only. pasteTextBox takes a keepType flag and
 # restores the copied box's style and look from a one-slot memory of the
 # last in-box copy, recorded on copy/cut inside the text editor.
@@ -1142,8 +1146,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "9bd06e35ed3855815c45c1513f33c9db"
-EXPECTED_BYTES = 3604403
+EXPECTED_MD5 = "3772a8ade82e98554b4f8e708055a076"
+EXPECTED_BYTES = 3607651
 
 
 def _render_example() -> str:

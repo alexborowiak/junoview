@@ -21,10 +21,17 @@
      the picker draws its thumbnail with the same layIcon the built-ins
      use. There is no second code path; the catalogue simply got longer
      and part of it is yours. */
+  /* T276: a slot carries its ROLE, so a layout you design produces real
+     Titles and Headings rather than boxes that merely look like them.
+     'Title' here is the slide's top-level heading, so it is h1 --
+     'title' is reserved for the deck's own title slide. */
   var LB_SLOTS=[
-    ['title','Title',{k:'text',w:88,h:12,text:'Title',size:5,b:1}],
-    ['head','Heading',{k:'text',w:80,h:9,text:'Heading',size:3.6,b:1}],
-    ['body','Body text',{k:'text',w:80,h:30,text:'Body text',size:2.8}],
+    ['title','Title',{k:'text',w:88,h:12,text:'Title',size:5,b:1,
+      style:'h1'}],
+    ['head','Heading',{k:'text',w:80,h:9,text:'Heading',size:3.8,b:1,
+      style:'h2'}],
+    ['body','Body text',{k:'text',w:80,h:30,text:'Body text',size:2.6,
+      style:'body'}],
     ['cell','Figure panel',{k:'cell',w:44,h:50}]
   ];
   var lbItems=[],lbSel=-1,lbName='',lbEdit='';
@@ -121,6 +128,9 @@
         if(base.k!=='cell'){
           it.text=base.text;it.size=base.size;
           if(base.b) it.b=1;
+          /* T276: and WHAT IT IS, or the palette names roles the layout
+             it builds does not carry */
+          if(base.style) it.style=base.style;
         }
         lbItems.push(it);lbSel=lbItems.length-1;lbRender();
       });
@@ -256,7 +266,8 @@
     if(!lbEdit&&!lbItems.length){
       /* a layout that starts empty is a blank page you have to furnish;
          starting from a title is the shape almost every slide has */
-      lbItems=[{k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1}];
+      lbItems=[{k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1,
+        style:'h1'}];   /* T276: typed, like LB_SLOTS' own Title */
       lbName='';lbSel=0;
     }
     lbRender();
@@ -271,7 +282,8 @@
     var n=$('#lay-make-new');
     if(n) n.addEventListener('click',function(){
       lbEdit='';lbName='';lbSel=0;
-      lbItems=[{k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1}];
+      lbItems=[{k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1,
+        style:'h1'}];   /* T276: typed, like LB_SLOTS' own Title */
       lbRender();
     });
   }
