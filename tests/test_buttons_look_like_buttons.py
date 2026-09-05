@@ -72,7 +72,7 @@ def test_the_words_on_the_ribbon_can_be_read(out):
     density rung touches a font size any more: the ladder trades space,
     then folds a group, and the words stay the size they are."""
     assert (".rbn-lab{font-family:var(--sans);font-size:11.5px;letter-spacing:0;\n"
-            "  text-transform:none;color:#8ea3b5;") in out
+            "  text-transform:none;color:var(--chrome-ink-2);") in out
     assert (".dbtn.rbn-sm{display:flex;align-items:center;gap:6px;padding:3px 8px;\n"
             "  font-family:var(--sans);font-size:12px;") in out
     i = out.index("the compaction ladder. Every stage trades SPACE")

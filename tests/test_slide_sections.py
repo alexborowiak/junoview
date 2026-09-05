@@ -753,8 +753,9 @@ def test_the_strip_spells_out_optional_and_not_shown(out):
     assert "mark('opt','optional'" in film
     assert "mark('cut','not shown'" in film
     assert "?'Not shown in the “'" in film
-    assert ".film-row.opt .film-mark.opt{color:#f0a848;}" in out
-    assert ".film-mark.cut{color:#9aabba;}" in out
+    # T284: the amber literal is --warning, which every theme redefines
+    assert ".film-row.opt .film-mark.opt{color:var(--warning);}" in out
+    assert ".film-mark.cut{color:var(--chrome-ink-2);}" in out
     assert ".film-row.cut:not(.current) .mini-diagram" in out
     assert ".film-row.cut:not(.current) .film-t" in out
     assert ".film-row.cut:not(.current) .film-n" in out

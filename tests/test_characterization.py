@@ -1127,6 +1127,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T284: chrome only, and the largest of these by count --
+# 194 color: declarations in deck.css move from raw hex onto the ink and
+# semantic tokens they had been copied from, so the ten colour schemes
+# can each say what muted ink means. Slightly dims a few greys in the
+# default dark theme, which is the point: six near-identical values
+# become one.
 # 2026-09-05, T283: chrome only. A new deck asks where it will be kept
 # -- project, a folder, or this browser with the quota warning -- once,
 # and chooseSaveFolder becomes the one implementation the prompt and the
@@ -1163,8 +1169,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "35ab33e4583a88a5f506e49db149c48a"
-EXPECTED_BYTES = 3629523
+EXPECTED_MD5 = "c35af62edbb8ed79ee242be9c10414d5"
+EXPECTED_BYTES = 3631921
 
 
 def _render_example() -> str:

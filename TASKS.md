@@ -6127,3 +6127,36 @@ option. Then where has the ability to refresh all images gone?"
   the two web-mode options (This project correctly absent); choosing
   This browser closes it, toasts the warning and where to change it,
   writes `savetarget=browser`, and a second New does not ask again.
+
+- [x] **T284 - The deck's muted ink comes from a token, not a literal.**
+  From the 2026-09-05 review's blind-spot pass: "There are ten colour
+  schemes, not two -- and the review only ever said light."
+  *Done 2026-09-05.* `core.css` defines ten schemes. A rule that writes
+  a raw hex `color:` keeps that colour in all ten, so **128 rules** were
+  unreadable in every light one. The tell is that the commonest literal,
+  `#7e93a4` (32 rules), IS `--chrome-ink-2`'s dark value character for
+  character: the value had been pasted where the name belonged, and then
+  copied, with five near-identical neighbours accumulating beside it
+  (`#7d93a6`, `#8ba0b2`, `#8ea3b5`, `#9fb3c4`, `#8aa0b0` ...).
+  194 `color:` declarations move onto `--chrome-ink`, `--chrome-ink-2`,
+  `--chrome-ink-3`, `--warning`, `--danger`, `--cyan` and
+  `--cyan-deep` -- all of which every scheme already redefines. Only
+  `color:` is touched: not `background-color`, not `border-color`, and
+  not the white ink that belongs on the accent fills those rules paint
+  under themselves.
+  Measured before and after, against `--chrome-1` in `body.light`:
+  `.hd-lab` 1.92:1 -> 7.45, `.rbn-lab` 2.32 -> 6.93, `.cell-lab`
+  2.32 -> 7.45, `.fmt-lab` 2.83 -> 7.45, `.et-hint` 2.83 -> 5.11. One
+  rule is left with a literal, `.sp-step.tied`'s purple, which is
+  neither a warning nor an accent; it gets a `body.light` value rather
+  than a twelfth entry in every scheme.
+  **This does change the default dark theme slightly**, and that is the
+  point: six near-identical greys were six accidents, and collapsing
+  them onto one token makes them one decision. The largest single shift
+  is `#8ba0b2` -> `#7e93a4`, about 13 units per channel, a mild dimming.
+  Guarded by `tests/test_muted_ink_is_a_token.py`, which COMPUTES the
+  contrast over the stylesheet rather than listing selectors -- the
+  failure mode is "somebody adds one more", and a list cannot see that.
+  It is the shape the review asked for: 781 substring assertions could
+  not see this whole class, and one loop over the source finds it in a
+  second.

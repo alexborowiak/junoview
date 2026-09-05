@@ -46,7 +46,8 @@ def test_thumbnails_view_shows_thumbnails(out):
 
 def test_a_slide_number_can_be_read(out):
     assert (".film-label .film-n{font-family:var(--mono);font-size:12.5px;\n"
-            "  color:#8ea3b5;width:22px;flex:none;text-align:right;}") in out
+            "  color:var(--chrome-ink-2);width:22px;flex:none;"
+            "text-align:right;}") in out
 
 
 def test_notes_and_optional_have_doors(out):
