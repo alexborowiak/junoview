@@ -4940,6 +4940,23 @@ body.light .dbtn.dbtn-accent{color:var(--ink);}
 .img-th .bic{width:18px;height:18px;opacity:.7;}
 .img-mid{flex:1;min-width:0;}
 .img-t{font-size:12px;}
+/* T299: the source line under the path — the figure's number, its
+   commit, and the verbs. Low-weight words on their own row rather than
+   more glyphs beside the lock. */
+/* T301: the one toast you can answer */
+.toast-act{font:inherit;font-size:11px;margin-left:8px;padding:2px 8px;
+  border:1px solid var(--accent);border-radius:5px;background:transparent;
+  color:var(--accent);cursor:pointer;}
+.toast-act:hover{background:var(--accent);color:var(--chrome-1);}
+.img-acts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;
+  margin-top:3px;}
+.img-num{font-size:10px;color:var(--chrome-ink-3);
+  font-variant-numeric:tabular-nums;}
+.img-act{font:inherit;font-size:10px;line-height:1.4;padding:1px 6px;
+  border:1px solid var(--chrome-line);border-radius:4px;
+  background:var(--chrome-2);color:var(--chrome-ink-2);cursor:pointer;}
+.img-act:hover{background:var(--chrome-3);color:var(--chrome-ink);}
+.img-act.on{border-color:var(--accent);color:var(--accent);}
 .img-from{font-family:var(--mono);font-size:10px;color:var(--chrome-ink-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 body.light .img-row{color:var(--ink-2);}
@@ -8256,6 +8273,12 @@ body.light .seq-cell b{color:var(--ink);}
 .sa-n{font-family:var(--sans);font-size:11.5px;font-weight:400;
   line-height:1.45;color:var(--chrome-ink-3);white-space:normal;}
 .save-ask .sa-opt:hover .sa-n{color:var(--chrome-ink-2);}
+/* T296: the one answer that can lose your work reads as the fallback it
+   is. Amber, not red: choosing it is a reasonable thing to do and
+   nothing is broken -- it is the same distinction the style check makes
+   (T279), and the same token. */
+.save-ask .sa-opt.sa-warn{border-left:2px solid var(--warning);}
+.save-ask .sa-opt.sa-warn .sa-t{color:var(--warning);}
 .chart-ta{width:100%;min-height:150px;resize:vertical;
   font-family:var(--mono);font-size:11.5px;line-height:1.5;
   color:#dbe7ef;background:#0d1722;border:1px solid #ffffff22;
@@ -29657,13 +29680,71 @@ window.JunoPptx = (function () {
     }
     return e._node;
   }
+  /* T301: WHAT THE REFRESH IS ABOUT TO DESTROY, KEPT FOR ONE STEP.
+     This store has one slot per ref and no history, and nothing else in
+     the deck can put a figure back: histState (the undo snapshot) does
+     not carry EMBED, so Ctrl+Z cannot recover one -- and worse, a
+     resync changes nothing inside `pres`, so histPush's `st===histSnap`
+     early return means NO undo entry is pushed at all and Ctrl+Z
+     silently rewinds whatever slide edit came before. The version
+     timeline is refs-only for the same reason. Until today the only
+     recovery was reloading the page before the 20-second autosave wrote
+     the bad copy over the good one on disk, which is an accident rather
+     than a feature -- and T297 made that window shorter, not longer, by
+     persisting every capture.
+
+     One step deep, in memory, per ref. Not a history: the thing being
+     answered is "I have lost too many things" (2026-09-05), and the
+     answer to that is the click you just made, taken back. */
+  var EMBPREV={};
   function embStore(key,e){
+    /* a write that changes nothing is not a step to undo: embedAssets
+       re-stores what it just read on every deliberate save, and each of
+       those would otherwise overwrite the one slot that holds the copy
+       a real refresh replaced */
+    if(EMBED[key]&&EMBED[key].html
+       &&EMBED[key].html!==String(e.html||''))
+      EMBPREV[key]={title:EMBED[key].title,kind:EMBED[key].kind,
+        html:EMBED[key].html,code:EMBED[key].code||''};
     EMBED[key]={title:String(e.title||''),kind:String(e.kind||''),
       html:String(e.html||''),code:typeof e.code==='string'?e.code:''};
     delete embItems[key];
     /* invalidation point 3 (see frameNodeCache): a frame rendered from
        the OLD embedded copy of this ref must rebuild from the new one */
     dropFrameCache(key);
+  }
+  /* the other half: put back what the named refs replaced. Returns
+     {n, unlinked} -- how many actually had something to go back to, so
+     a caller can say nothing rather than claim a restore it did not
+     make, and how many stopped being live links on the way.
+
+     THE UNLINKING IS THE POINT, not a side effect. "Put it back" is a
+     promise about what you SEE, and a live link renders from the
+     notebook -- so restoring the snapshot under one changed the store
+     and nothing on the screen, and the toast said it had worked. Found
+     by driving it: a 74,606-character figure was replaced by a 122-
+     character one, "Put them back" reported success, and the wrong
+     figure stayed on the slide. Undo and "always show me the notebook's
+     current version" are in direct conflict; the click just made is the
+     more explicit of the two, and the caller says so. */
+  function embRestore(keys){
+    var n=0,unlinked=0;
+    (keys||Object.keys(EMBPREV)).forEach(function(k){
+      var p=EMBPREV[k]; if(!p||!p.html) return;
+      EMBED[k]={title:p.title,kind:p.kind,html:p.html,code:p.code||''};
+      delete embItems[k];
+      if(refIsLive(k)){setRefLive(k,0);unlinked++;}
+      dropFrameCache(k);
+      delete EMBPREV[k];
+      n++;
+    });
+    if(n){
+      embSaveSoon();
+      var l=stage.querySelector('.annot-layer');
+      if(l&&pres.slides[cur]) renderAnnots(l,pres.slides[cur]);
+      markDirty();
+    }
+    return {n:n,unlinked:unlinked};
   }
   function embSaveSoon(){
     clearTimeout(embSaveT);
@@ -29904,6 +29985,16 @@ window.JunoPptx = (function () {
        absorbed into the session store (and IndexedDB) here, so frames
        still render when the notebook never opens — while drafts written
        on every edit stay ref-sized. Keys are namespaced like refs are. */
+    /* T298: WHICH FIGURES ARE LIVE LINKS. Ref-keyed and namespaced
+       exactly as the emb keys below are, so the two agree about what
+       "this figure" means after a notebook is re-registered. Absence
+       means KEPT, which is what every deck written before today wants:
+       they already hold snapshots, and rendering those is the whole
+       point of having them. */
+    out.live={};
+    if(p.live&&typeof p.live==='object')
+      Object.keys(p.live).forEach(function(k){
+        if(p.live[k]) out.live[ns(k)||k]=1;});
     if(p.emb&&typeof p.emb==='object'){
       Object.keys(p.emb).forEach(function(k){
         var e=p.emb[k];
@@ -30584,11 +30675,51 @@ window.JunoPptx = (function () {
     Object.keys(frameNodeCache).forEach(function(k){
       if(k.indexOf(pfx)===0) delete frameNodeCache[k];});
   }
-  function cloneBody(ref){
+  /* T298: A FIGURE IS A KEPT COPY UNLESS YOU ASK FOR A LIVE LINK.
+     cloneBody read the OPEN CARD first and the deck's own copy only as
+     a fallback, so a notebook re-run silently rewrote slides that were
+     finished -- the second half of "I have lost too many things"
+     (2026-09-05). The kept copy now wins, and the notebook is what you
+     go BACK to, deliberately, through Refresh.
+
+     Liveness is per-REF rather than per-box on purpose: two frames
+     showing the same cell cannot sensibly disagree about whether that
+     cell is live, and the refresh, the provenance and the git pin are
+     all keyed by ref already. */
+  function refIsLive(ref){
+    if(!ref||!pres||!pres.live) return false;
+    if(pres.live[ref]) return true;
+    var n=normRef(ref);
+    return !!(n&&pres.live[n]);
+  }
+  function setRefLive(ref,on){
+    if(!ref||!pres) return;
+    if(!pres.live) pres.live={};
+    var k=normRef(ref)||ref;
+    if(on) pres.live[k]=1; else {delete pres.live[k];delete pres.live[ref];}
+    /* invalidation point 4: the frame is cached by ref, and which SOURCE
+       it was built from is exactly what just changed */
+    dropFrameCache(k);
+    if(k!==ref) dropFrameCache(ref);
+  }
+  /* T302: `fromLive` asks the NOTEBOOK, not the frame. Three callers
+     need that and only that -- the staleness comparison, the capture it
+     feeds, and a chart re-reading its table -- and after T298 they were
+     all silently answered with the kept copy instead, so nothing was
+     ever stale, "Update figures" reported "every figure already
+     matches" against a notebook that had visibly moved on, and the
+     refresh it would have run had nothing new to store. Found by
+     driving it, not by reading it. */
+  function cloneBody(ref,fromLive){
+    /* the deck's own copy, already filter-stripped at capture time */
+    if(!fromLive&&!refIsLive(ref)){
+      var kept=embBody(ref);
+      if(kept) return stripIds(kept.cloneNode(true));
+    }
     var c=cardEl(ref);
     if(!c){
-      /* notebook not open: fall back to the copy embedded in the deck
-         (already filter-stripped at capture time) */
+      /* no live card either: the copy embedded in the deck is all there
+         is, and for a live link that is still better than a blank */
       var eb=embBody(ref);
       return eb?stripIds(eb.cloneNode(true)):null;
     }
@@ -30624,7 +30755,13 @@ window.JunoPptx = (function () {
   /* a cell can contribute several things to a slide: its CODE, its
      FIGURE(s) and its printed OUTPUT. A frame shows one 'part'. */
   function cellFacets(ref){
-    var card=cardEl(ref);
+    /* T298: ASK THE BODY THE FRAME WILL ACTUALLY RENDER. Reading the
+       live card here while cloneBody rendered the kept copy would let a
+       re-run notebook that gained a plot make the frame choose part
+       'figure' from a snapshot that has no figure in it -- an empty
+       frame with no way to see why. */
+    var kept=refIsLive(ref)?null:embBody(ref);
+    var card=kept?null:cardEl(ref);
     var it=resolveRef(ref);
     var f={code:!!(it&&it.hasCode),figure:false,output:false};
     var body=null;
@@ -30632,7 +30769,7 @@ window.JunoPptx = (function () {
       if(!f.code&&card.querySelector('.codeinner')) f.code=true;
       body=$('.cardbody',card);
     } else {
-      body=embBody(ref);   /* the deck's own copy is a cardbody too */
+      body=kept||embBody(ref);   /* the deck's own copy is a cardbody too */
     }
     if(body){
       /* live embeds (plotly/bokeh/vega/folium) are figures too */
@@ -41294,6 +41431,9 @@ window.JunoPptx = (function () {
     a.frames.push({ref:ref});
     /* land on the frame just added, so Done leaves you looking at it */
     a.at=a.frames.length-1;
+    /* T300: and keep its pixels, like every other placement door --
+       provRef reads the SELECTED frame, which is the one just pushed */
+    if(typeof embedIfAbsent==='function') embedIfAbsent(a);
     pickAdded++;markDirty(true);syncPickbar();
   }
   function endPick(ref){
@@ -41304,11 +41444,21 @@ window.JunoPptx = (function () {
     if(ref!==undefined&&idx>=0){
       var s=pres.slides[cur];
       var a=s&&(s.annots||[])[idx];
-      if(a&&a.k==='cell'){a.ref=ref;markDirty();}
+      /* T300: the picker is a placement door too. There are four of
+         them (this pair, pickAdd above and the strip's click-to-place)
+         and only one of them capturing would have been the same bug
+         with a smaller blast radius. */
+      if(a&&a.k==='cell'){
+        a.ref=ref;
+        if(typeof embedIfAbsent==='function') embedIfAbsent(a);
+        markDirty();
+      }
       else if(a&&a.k==='flip'){
         a.frames=flipFrames(a).slice();
         a.frames.push({ref:ref});
-        a.at=a.frames.length-1;markDirty();
+        a.at=a.frames.length-1;
+        if(typeof embedIfAbsent==='function') embedIfAbsent(a);
+        markDirty();
       }
     }
     /* a multi-pick has been writing frames as it went with markDirty(true)
@@ -45778,10 +45928,37 @@ window.JunoPptx = (function () {
         if(!quiet) toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
         return {n:0,reread:reread,bad:bad,tried:0};
       }
-      var n=cn;
-      list.forEach(function(p){if(resyncFigure(p.a)) n++;});
-      if(!quiet) toast(resyncMsg(reread,bad,n,list.length),
-        bad.length?7000:0);
+      var n=cn,touched=[];
+      list.forEach(function(p){
+        if(!resyncFigure(p.a)) return;
+        n++;
+        var k=normRef(provRef(p.a));
+        if(k) touched.push(k);
+      });
+      /* T301: THE BUTTON THE USER LEARNED TO FEAR. It rewrites every
+         stale figure in the deck at once, nothing else in the editor can
+         put one back, and it does not even leave an undo entry -- so
+         Ctrl+Z after it rewinds the previous slide edit instead
+         (2026-09-05: "just too dangerous and I have lost too many
+         things"). The verb is unchanged; what changes is that the
+         sentence announcing it now ends in a way out. */
+      if(!quiet){
+        if(touched.length)
+          toastUndo(resyncMsg(reread,bad,n,list.length),
+            'Put them back',
+            function(){
+              var back=embRestore(touched);
+              toast(back.n
+                ?('Back to the figures from before \u2014 '+back.n
+                  +' of them'+(back.unlinked?(', and '
+                    +(back.unlinked===back.n?'they are':
+                      back.unlinked+' are')
+                    +' kept copies again rather than live links'):''))
+                :'Nothing left to put back');
+            },bad.length?12000:9000);
+        else toast(resyncMsg(reread,bad,n,list.length),
+          bad.length?7000:0);
+      }
       return {n:n,reread:reread,bad:bad,tried:list.length};
     });
   }
@@ -45808,7 +45985,7 @@ window.JunoPptx = (function () {
   function liveCardHtml(ref){
     try{
       if(!cardEl(ref)) return '';
-      var b=cloneBody(ref);
+      var b=cloneBody(ref,1);      /* the NOTEBOOK's answer (T302) */
       return b?b.outerHTML:'';
     }catch(e){return '';}
   }
@@ -45932,17 +46109,47 @@ window.JunoPptx = (function () {
   /* T20. The snapshot is replaced; the ANNOTATION is not touched at all,
      which is why position, crop and size survive by construction rather
      than by being carefully copied back. */
-  function resyncFigure(a){
-    var p=provOf(a);
-    if(!p||!p.live) return 0;
-    var html=liveCardHtml(p.ref);
+  /* T297: THE ONE PLACE A LIVE CARD BECOMES A KEPT COPY.
+     EMBED used to be written on a DELIBERATE save (embedAssets) or an
+     import and nowhere else, so a deck that had only ever autosaved
+     carried REFERENCES and no pixels: close the notebook, move the
+     file, and every figure on it went blank (2026-09-05, user: "most
+     of the images, e.g. from notebooks or paths can dissapear as they
+     are kind of a sim lin").
+
+     And embStore writes MEMORY only -- embSaveSoon is what reaches
+     IndexedDB. resyncFigure never called it, so even a deliberate
+     per-figure refresh was gone on the next reload. Both halves live
+     here now, so there is one answer to "is this kept" rather than one
+     per caller. */
+  function embedCapture(ref,live){
+    if(!ref||!live) return 0;
+    var html=liveCardHtml(ref);
     if(!html) return 0;
     /* the same record shape the save path writes, keyed the same way —
        one snapshot format, not two */
-    var e={title:p.live.title||'',kind:p.live.kind||'',html:html};
-    var cc=p.live.hasCode?cloneCode(p.ref):null;
+    var e={title:live.title||'',kind:live.kind||'',html:html};
+    var cc=live.hasCode?cloneCode(ref):null;
     if(cc) e.code=cc.outerHTML;
-    embStore(normRef(p.ref)||p.ref,e);
+    embStore(normRef(ref)||ref,e);
+    embSaveSoon();
+    return 1;
+  }
+  /* PLACEMENT, and every other moment the deck first learns of a ref.
+     Deliberately does NOT overwrite a copy we already hold: dropping
+     the same figure onto a second slide must not silently re-read the
+     notebook underneath the first one. Re-reading is what the explicit
+     refresh is for, and it asks first. */
+  function embedIfAbsent(a){
+    var ref=provRef(a);
+    if(!ref||embFor(ref)) return 0;
+    var p=provOf(a);
+    return (p&&p.live)?embedCapture(p.ref,p.live):0;
+  }
+  function resyncFigure(a){
+    var p=provOf(a);
+    if(!p||!p.live) return 0;
+    if(!embedCapture(p.ref,p.live)) return 0;
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,pres.slides[cur]);
@@ -48797,6 +49004,133 @@ window.JunoPptx = (function () {
     });
     return rows;
   }
+  /* T299: WHICH FIGURE THIS IS, AND THE THINGS YOU CAN DO TO IT.
+     Everything about a picture's SOURCE now answers on its row here --
+     the number, the commit, the refresh and the live-link switch
+     (2026-09-05, user: "All these optoins should be in the images tab
+     btw"). Words, not another glyph: the line is full width, and three
+     more unlabelled chips beside the lock would be four mysteries in a
+     260px pane. */
+  var figOrderMemo={};
+  function figOrder(stem){
+    if(figOrderMemo[stem]) return figOrderMemo[stem];
+    var out=[];
+    (SHELLITEMS[stem]||[]).forEach(function(k){
+      try{if(cellFacets(k).figure) out.push(k);}catch(e){}
+    });
+    figOrderMemo[stem]=out;
+    return out;
+  }
+  /* "the image number" (2026-09-05) counted the way a person counts
+     them: among the notebook's figures, not among all its cards. Empty
+     when the notebook is shut -- an ordinal we cannot check is worse
+     than none. */
+  function figNumber(ref){
+    var n=normRef(ref)||String(ref||''),pr=splitRef(n);
+    if(!pr[0]) return '';
+    var ord=figOrder(pr[0]),i=ord.indexOf(n);
+    return i<0?'':('figure '+(i+1)+' of '+ord.length);
+  }
+  function imgRefreshRow(r){
+    var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+    if(!a2) return;
+    if(a2.k==='image'){
+      if(!a2.fkey){toast('This picture was pasted or dropped — there is '
+        +'no file to re-read');return;}
+      refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
+      return;
+    }
+    if(!resyncFigure(a2)){
+      toast('Its notebook is not open, so there is nothing newer to '
+        +'read — the copy in the deck is being shown');
+      return;
+    }
+    /* T301: one figure, and the way back out of it */
+    var k=normRef(provRef(a2));
+    toastUndo('Re-read from the notebook, and kept.','Put it back',
+      function(){
+        var back=embRestore(k?[k]:[]);
+        toast(back.n
+          ?('Back to the figure from before'
+            +(back.unlinked?' \u2014 and it is a kept copy again, not a '
+              +'live link':''))
+          :'Nothing left to put back');
+        imgPaneRefresh();
+      });
+    imgPaneRefresh();
+  }
+  function imgPaneRefresh(){
+    renderImgPane();
+    var ov=$('#img-ov'); if(ov&&!ov.hidden) renderImgOverview();
+  }
+  function imgActs(r){
+    var acts=document.createElement('div');acts.className='img-acts';
+    function act(label,title,fn,on){
+      var b=document.createElement('button');
+      b.type='button';b.className='img-act'+(on?' on':'');
+      b.textContent=label;b.title=title;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();fn();});
+      acts.appendChild(b);return b;
+    }
+    var ref=(r.kind==='Figure')&&r.a.ref;
+    if(ref){
+      var num=figNumber(ref);
+      if(num){
+        var sp=document.createElement('span');
+        sp.className='img-num';sp.textContent=num;
+        acts.appendChild(sp);
+      }
+    }
+    act('Refresh',r.kind==='Figure'
+      ?('Re-read this figure from ' + r.from + ' and keep the new copy '
+        + '\u2014 only this one')
+      :(r.a.fkey?('Re-read this picture from '+r.from)
+        :'Pasted or dropped, so there is no file to re-read'),
+      function(){imgRefreshRow(r);});
+    if(ref){
+      var live=(typeof refIsLive==='function')&&refIsLive(ref);
+      act(live?'Live link':'Kept',
+        live
+          ?('Loads from the notebook every time this deck opens. If the '
+            +'notebook moves or changes, so does this figure. Click to '
+            +'keep the copy that is in the deck instead.')
+          :('The copy in the deck is what you see, so it cannot go '
+            +'missing. Click to make it a live link that re-reads from '
+            +'the notebook every time.'),
+        function(){
+          setRefLive(ref,!refIsLive(ref));
+          markDirty();
+          var l=stage.querySelector('.annot-layer');
+          if(l) renderAnnots(l,pres.slides[cur]);
+          imgPaneRefresh();
+        },live);
+      /* the git commit, and the one verb that moves it (2026-09-05:
+         "with another option of update to current git commit"). App
+         mode only, because a pin needs a repository to point into. */
+      if(APP.mode==='app'){
+        var lv=r.a.lockver&&r.a.lockver.commit;
+        act(lv?String(lv):'Pin to commit',
+          lv?('Pinned to commit '+lv+(r.a.lockver.msg
+              ?(' \u201c'+r.a.lockver.msg+'\u201d'):'')
+             +' \u2014 click to move it to the notebook\u2019s current '
+             +'commit')
+            :'Record which commit of the notebook this figure came from',
+          function(){
+            var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+            if(!a2) return;
+            lockFrame(a2).then(function(ok){
+              if(!ok) return;
+              markDirty();
+              var l=stage.querySelector('.annot-layer');
+              if(l) renderAnnots(l,pres.slides[cur]);
+              imgPaneRefresh();
+            });
+          },!!lv);
+      }
+    }
+    return acts;
+  }
   /* one row: thumbnail, kind, where from, the pin. `after` runs once
      the row has taken you to the thing (the full-screen view closes) */
   function imgRow(r,after){
@@ -48814,6 +49148,7 @@ window.JunoPptx = (function () {
     var f=document.createElement('div');f.className='img-from';
     f.textContent=r.from;f.title=r.from;
     mid.appendChild(f);
+    mid.appendChild(imgActs(r));
     row.appendChild(mid);
     var lm=lockMode(r.a);
     var lk=document.createElement('button');
@@ -52439,7 +52774,7 @@ window.JunoPptx = (function () {
     /* the LIVE card's table, read off the open shell the same way the
        provenance pane compares bodies (T20) */
     try{
-      var b=cloneBody(ref); if(!b) return null;
+      var b=cloneBody(ref,1); if(!b) return null;   /* live (T302) */
       var t=b.querySelector('table'); if(!t) return null;
       return [].map.call(t.querySelectorAll('tr'),function(tr){
         return [].map.call(tr.querySelectorAll('th,td'),function(c){
@@ -59805,6 +60140,9 @@ window.JunoPptx = (function () {
     }
     e.preventDefault();e.stopPropagation();
     target.ref=ref;
+    /* T297: keep the pixels NOW, while the notebook is definitely open
+       -- this click is the only moment we can be sure of that */
+    if(typeof embedIfAbsent==='function') embedIfAbsent(target);
     activePane=-1;   /* disarm: adding again needs a fresh frame selection */
     markDirty();refresh();
     card.classList.add('target-flash');
@@ -60103,6 +60441,21 @@ window.JunoPptx = (function () {
     /* a warning about lost work has to outlast a confirmation of saved
        work, so the duration is a parameter now (2026-08-22) */
     toastTimer=setTimeout(function(){t.hidden=true;},ms||3600);
+  }
+  /* T301: a toast that can be acted on. `toast` is text-only and
+     stays that way -- this is for the one case where the message is
+     "something was replaced" and the only useful reply is "put it
+     back". Longer by default, because a reply needs reading time. */
+  function toastUndo(msg,label,fn,ms){
+    var t=$('#deck-toast'); if(!t){toast(msg);return;}
+    t.textContent=msg+' ';
+    var b=document.createElement('button');
+    b.type='button';b.className='toast-act';b.textContent=label;
+    b.addEventListener('click',function(){t.hidden=true;fn();});
+    t.appendChild(b);
+    t.hidden=false;
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){t.hidden=true;},ms||9000);
   }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
@@ -60714,13 +61067,24 @@ window.JunoPptx = (function () {
       row('A folder on this computer','Pick it once. Every presentation '
         +'after this one saves itself there too, with nothing to answer '
         +'and no size limit.',function(){chooseSaveFolder();});
-    row('This browser','Kept in this browser only \u2014 clearing site '
-      +'data loses it, and a deck with figures can fill the space a '
-      +'browser allows.',function(){
+    /* T296: FOR NOW, AND IT SAYS SO. This read as a third peer choice
+       when it is the one answer that can lose your work -- and it is
+       still the right default for somebody who just wants to start
+       (2026-09-05, user: "an option 'keep in browser memory for now' or
+       something with a warning attached to that"). The label carries
+       the provisional, the note carries the warning, and the row is
+       marked so it does not look like the two that keep a file. */
+    var br=row('Keep it in this browser for now',
+      'Nothing is written to a file. Clearing your browser\u2019s site '
+      +'data loses the deck, and one with figures can fill the space a '
+      +'browser allows. Change it beside Save whenever you like.',
+      function(){
       setTarget('browser');
-      toast('Kept in this browser. Change it beside Save \u2014 a '
-        +'folder on your computer has no size limit.',6000);
+      toast('Kept in this browser for now \u2014 nothing is on disk. '
+        +'Change it beside Save; a folder on your computer has no size '
+        +'limit and cannot be cleared by accident.',7000);
     });
+    if(br) br.classList.add('sa-warn');
     deckEl.appendChild(m);
     /* AFTER the click that opened the deck has finished bubbling. New
        presentation is reached BY a click -- the front door's New, the
