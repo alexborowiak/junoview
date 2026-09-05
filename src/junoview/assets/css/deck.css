@@ -1474,6 +1474,11 @@ body.light .dbtn.dbtn-accent{color:var(--ink);}
 /* T299: the source line under the path — the figure's number, its
    commit, and the verbs. Low-weight words on their own row rather than
    more glyphs beside the lock. */
+/* T301: the one toast you can answer */
+.toast-act{font:inherit;font-size:11px;margin-left:8px;padding:2px 8px;
+  border:1px solid var(--accent);border-radius:5px;background:transparent;
+  color:var(--accent);cursor:pointer;}
+.toast-act:hover{background:var(--accent);color:var(--chrome-1);}
 .img-acts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;
   margin-top:3px;}
 .img-num{font-size:10px;color:var(--chrome-ink-3);

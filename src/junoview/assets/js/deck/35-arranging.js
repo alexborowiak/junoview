@@ -2135,10 +2135,37 @@
         if(!quiet) toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
         return {n:0,reread:reread,bad:bad,tried:0};
       }
-      var n=cn;
-      list.forEach(function(p){if(resyncFigure(p.a)) n++;});
-      if(!quiet) toast(resyncMsg(reread,bad,n,list.length),
-        bad.length?7000:0);
+      var n=cn,touched=[];
+      list.forEach(function(p){
+        if(!resyncFigure(p.a)) return;
+        n++;
+        var k=normRef(provRef(p.a));
+        if(k) touched.push(k);
+      });
+      /* T301: THE BUTTON THE USER LEARNED TO FEAR. It rewrites every
+         stale figure in the deck at once, nothing else in the editor can
+         put one back, and it does not even leave an undo entry -- so
+         Ctrl+Z after it rewinds the previous slide edit instead
+         (2026-09-05: "just too dangerous and I have lost too many
+         things"). The verb is unchanged; what changes is that the
+         sentence announcing it now ends in a way out. */
+      if(!quiet){
+        if(touched.length)
+          toastUndo(resyncMsg(reread,bad,n,list.length),
+            'Put them back',
+            function(){
+              var back=embRestore(touched);
+              toast(back.n
+                ?('Back to the figures from before \u2014 '+back.n
+                  +' of them'+(back.unlinked?(', and '
+                    +(back.unlinked===back.n?'they are':
+                      back.unlinked+' are')
+                    +' kept copies again rather than live links'):''))
+                :'Nothing left to put back');
+            },bad.length?12000:9000);
+        else toast(resyncMsg(reread,bad,n,list.length),
+          bad.length?7000:0);
+      }
       return {n:n,reread:reread,bad:bad,tried:list.length};
     });
   }
@@ -2165,7 +2192,7 @@
   function liveCardHtml(ref){
     try{
       if(!cardEl(ref)) return '';
-      var b=cloneBody(ref);
+      var b=cloneBody(ref,1);      /* the NOTEBOOK's answer (T302) */
       return b?b.outerHTML:'';
     }catch(e){return '';}
   }

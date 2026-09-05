@@ -313,7 +313,14 @@ def test_a_failed_source_read_is_never_reported_as_up_to_date(out):
     # because there is one #deck-toast and the two used to race for it.
     assert ("if(!quiet) toast(resyncMsg(reread,bad,0,0),"
             "bad.length?7000:0);") in out
-    assert "      if(!quiet) toast(resyncMsg(reread,bad,n,list.length)," in out
+    # T301: the run that CHANGED something says the same sentence through
+    # toastUndo, which ends it in a way back -- the deck-wide button is
+    # the one the user learned to fear. The run that changed nothing has
+    # nothing to offer and stays a plain toast. Both still behind
+    # `if(!quiet)`, and both still built by resyncMsg.
+    assert "          toastUndo(resyncMsg(reread,bad,n,list.length)," in out
+    assert "        else toast(resyncMsg(reread,bad,n,list.length)," in out
+    assert "      if(!quiet){\n        if(touched.length)" in out
 
 
 def test_the_provenance_pane_has_a_ribbon_door_and_wears_icons(out):

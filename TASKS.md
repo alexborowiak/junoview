@@ -6608,3 +6608,45 @@ option. Then where has the ability to refresh all images gone?"
   in the `--date` format arrived as a replacement character and rode
   into the saved `lockver.date`. ASCII on the wire, separator added in
   Python.
+
+- [x] **T301 - a refresh keeps the copy it replaced, and hands it back.**
+  The user (2026-09-05): "The update figures button that applies to all
+  where it is right nwo is just too dangerous and I have lost too many
+  things."
+  *Done 2026-09-05.* The mapping pass found why that sentence is
+  literally true. The snapshot store has one slot per ref and no
+  history; `histState` does not carry EMBED, so Ctrl+Z cannot recover a
+  figure -- and worse, a resync changes nothing inside `pres`, so
+  `histPush`'s `st===histSnap` early return means NO undo entry is
+  pushed at all and Ctrl+Z silently rewinds whatever slide edit came
+  before. The version timeline is refs-only for the same reason. The
+  only recovery was reloading the page before the 20-second autosave
+  wrote the bad copy over the good one -- an accident, not a feature,
+  and T297 shortened that window rather than lengthening it. `embStore`
+  now keeps what it displaces (`EMBPREV`, one step, in memory),
+  `embRestore` hands it back, and both the row Refresh and the deck-wide
+  update end their sentence in a way out. A write that changes nothing
+  does not consume the slot, so saving twice after a bad refresh cannot
+  quietly throw away the way back. *Verified live:* the deck-wide button
+  replaced a 74,606-character figure with a 122-character one and "Put
+  them back" restored it.
+  Driving it also found that restoring under a LIVE link changed the
+  store and nothing on the screen while reporting success -- undo and
+  "always show me the notebook's current version" are in direct
+  conflict, so the restore unlinks and says so.
+
+- [x] **T302 - "what does the notebook say" is not "what does this frame
+  show", and T298 collapsed them.**
+  *Done 2026-09-05.* Three callers mean the NOTEBOOK: the staleness
+  comparison (`liveCardHtml`), the capture it feeds, and a chart
+  re-reading its table. All three went through `cloneBody`, which T298
+  had just taught to prefer the kept copy -- so `provState` compared the
+  kept copy against itself, nothing was ever stale, "Update figures"
+  answered "every figure already matches" against a notebook that had
+  visibly moved on, and the refresh it would have run had nothing new to
+  store. The whole refresh feature was dead, silently, and every test in
+  the file still passed. `cloneBody(ref, fromLive)` separates the two
+  questions; `framePart` and `embedAssets` deliberately do NOT pass the
+  flag, because the frame and the saved file must agree with what is on
+  the slide -- a save that re-read the notebook would be the reported
+  danger happening quietly on Ctrl+S. Found by driving it.

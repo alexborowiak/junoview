@@ -261,7 +261,18 @@
         +'read — the copy in the deck is being shown');
       return;
     }
-    toast('Re-read from the notebook, and kept');
+    /* T301: one figure, and the way back out of it */
+    var k=normRef(provRef(a2));
+    toastUndo('Re-read from the notebook, and kept.','Put it back',
+      function(){
+        var back=embRestore(k?[k]:[]);
+        toast(back.n
+          ?('Back to the figure from before'
+            +(back.unlinked?' \u2014 and it is a kept copy again, not a '
+              +'live link':''))
+          :'Nothing left to put back');
+        imgPaneRefresh();
+      });
     imgPaneRefresh();
   }
   function imgPaneRefresh(){

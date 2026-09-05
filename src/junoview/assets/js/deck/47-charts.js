@@ -365,7 +365,7 @@
     /* the LIVE card's table, read off the open shell the same way the
        provenance pane compares bodies (T20) */
     try{
-      var b=cloneBody(ref); if(!b) return null;
+      var b=cloneBody(ref,1); if(!b) return null;   /* live (T302) */
       var t=b.querySelector('table'); if(!t) return null;
       return [].map.call(t.querySelectorAll('tr'),function(tr){
         return [].map.call(tr.querySelectorAll('th,td'),function(c){

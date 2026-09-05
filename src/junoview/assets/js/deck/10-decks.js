@@ -67,13 +67,71 @@
     }
     return e._node;
   }
+  /* T301: WHAT THE REFRESH IS ABOUT TO DESTROY, KEPT FOR ONE STEP.
+     This store has one slot per ref and no history, and nothing else in
+     the deck can put a figure back: histState (the undo snapshot) does
+     not carry EMBED, so Ctrl+Z cannot recover one -- and worse, a
+     resync changes nothing inside `pres`, so histPush's `st===histSnap`
+     early return means NO undo entry is pushed at all and Ctrl+Z
+     silently rewinds whatever slide edit came before. The version
+     timeline is refs-only for the same reason. Until today the only
+     recovery was reloading the page before the 20-second autosave wrote
+     the bad copy over the good one on disk, which is an accident rather
+     than a feature -- and T297 made that window shorter, not longer, by
+     persisting every capture.
+
+     One step deep, in memory, per ref. Not a history: the thing being
+     answered is "I have lost too many things" (2026-09-05), and the
+     answer to that is the click you just made, taken back. */
+  var EMBPREV={};
   function embStore(key,e){
+    /* a write that changes nothing is not a step to undo: embedAssets
+       re-stores what it just read on every deliberate save, and each of
+       those would otherwise overwrite the one slot that holds the copy
+       a real refresh replaced */
+    if(EMBED[key]&&EMBED[key].html
+       &&EMBED[key].html!==String(e.html||''))
+      EMBPREV[key]={title:EMBED[key].title,kind:EMBED[key].kind,
+        html:EMBED[key].html,code:EMBED[key].code||''};
     EMBED[key]={title:String(e.title||''),kind:String(e.kind||''),
       html:String(e.html||''),code:typeof e.code==='string'?e.code:''};
     delete embItems[key];
     /* invalidation point 3 (see frameNodeCache): a frame rendered from
        the OLD embedded copy of this ref must rebuild from the new one */
     dropFrameCache(key);
+  }
+  /* the other half: put back what the named refs replaced. Returns
+     {n, unlinked} -- how many actually had something to go back to, so
+     a caller can say nothing rather than claim a restore it did not
+     make, and how many stopped being live links on the way.
+
+     THE UNLINKING IS THE POINT, not a side effect. "Put it back" is a
+     promise about what you SEE, and a live link renders from the
+     notebook -- so restoring the snapshot under one changed the store
+     and nothing on the screen, and the toast said it had worked. Found
+     by driving it: a 74,606-character figure was replaced by a 122-
+     character one, "Put them back" reported success, and the wrong
+     figure stayed on the slide. Undo and "always show me the notebook's
+     current version" are in direct conflict; the click just made is the
+     more explicit of the two, and the caller says so. */
+  function embRestore(keys){
+    var n=0,unlinked=0;
+    (keys||Object.keys(EMBPREV)).forEach(function(k){
+      var p=EMBPREV[k]; if(!p||!p.html) return;
+      EMBED[k]={title:p.title,kind:p.kind,html:p.html,code:p.code||''};
+      delete embItems[k];
+      if(refIsLive(k)){setRefLive(k,0);unlinked++;}
+      dropFrameCache(k);
+      delete EMBPREV[k];
+      n++;
+    });
+    if(n){
+      embSaveSoon();
+      var l=stage.querySelector('.annot-layer');
+      if(l&&pres.slides[cur]) renderAnnots(l,pres.slides[cur]);
+      markDirty();
+    }
+    return {n:n,unlinked:unlinked};
   }
   function embSaveSoon(){
     clearTimeout(embSaveT);
@@ -1031,9 +1089,17 @@
     dropFrameCache(k);
     if(k!==ref) dropFrameCache(ref);
   }
-  function cloneBody(ref){
+  /* T302: `fromLive` asks the NOTEBOOK, not the frame. Three callers
+     need that and only that -- the staleness comparison, the capture it
+     feeds, and a chart re-reading its table -- and after T298 they were
+     all silently answered with the kept copy instead, so nothing was
+     ever stale, "Update figures" reported "every figure already
+     matches" against a notebook that had visibly moved on, and the
+     refresh it would have run had nothing new to store. Found by
+     driving it, not by reading it. */
+  function cloneBody(ref,fromLive){
     /* the deck's own copy, already filter-stripped at capture time */
-    if(!refIsLive(ref)){
+    if(!fromLive&&!refIsLive(ref)){
       var kept=embBody(ref);
       if(kept) return stripIds(kept.cloneNode(true));
     }

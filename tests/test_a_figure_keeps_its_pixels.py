@@ -140,7 +140,7 @@ def test_the_kept_copy_is_read_before_the_open_card(out):
     """cloneBody's order IS the feature. The live card is still the
     fallback when the deck holds no snapshot -- an old deck, or a
     capture that failed -- because a stale figure beats a blank one."""
-    assert ("    if(!refIsLive(ref)){\n"
+    assert ("    if(!fromLive&&!refIsLive(ref)){\n"
             "      var kept=embBody(ref);\n"
             "      if(kept) return stripIds(kept.cloneNode(true));\n"
             "    }\n"
@@ -343,3 +343,232 @@ def test_the_commit_date_is_not_mangled_on_the_way_out():
     assert '"--date=format:%d %b %Y @ %H:%M"' in src
     assert '.replace(" @ ", " \u00b7 ")' in src
     assert "%d %b %Y \u00b7 %H:%M" not in src, "the separator is back on the wire"
+
+
+# --------------------------------------------------------------- T301
+
+_STORE_STUBS = """
+var EMBED={},embItems={},pres={slides:[],live:{}},cur=0,saved=0,dirty=0;
+var stage={querySelector:function(){return null;}};
+function dropFrameCache(){}
+function embSaveSoon(){saved++;}
+function markDirty(){dirty++;}
+function renderAnnots(){}
+function normRef(r){return r?String(r):null;}
+"""
+
+
+def _store_run(script):
+    from helpers_js import js_engine, lift_fn
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    cmd, env = eng
+    src = assets.deck_js()
+    body = "\n".join(lift_fn(src, f) for f in
+                     ("embStore", "embRestore", "refIsLive", "setRefLive"))
+    # EMBPREV is declared beside embStore, not inside it
+    pre = _STORE_STUBS + "var EMBPREV={};\n" + body + "\n"
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "run.js"
+        p.write_text(pre + script, encoding="utf-8")
+        r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
+                           env=env, timeout=60)
+        assert r.returncode == 0, r.stderr[:2000]
+        line = [ln for ln in r.stdout.splitlines() if ln.startswith("{")][-1]
+        return json.loads(line)
+
+
+def test_a_refresh_keeps_the_copy_it_replaced():
+    """embStore assigns straight over the one slot this store has per
+    ref. Nothing else in the deck can put a figure back: histState does
+    not carry EMBED, and a resync changes nothing inside `pres`, so
+    histPush's early return means no undo entry is pushed AT ALL and
+    Ctrl+Z rewinds the previous slide edit instead."""
+    got = _store_run("""
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>OLD</i>'});
+      var afterFirst=EMBPREV['nb::a']||null;
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      console.log(JSON.stringify({
+        firstWriteKeptNothing:afterFirst,
+        now:EMBED['nb::a'].html,
+        prev:EMBPREV['nb::a'].html
+      }));
+    """)
+    # the FIRST write has nothing to displace, so it remembers nothing
+    assert got["firstWriteKeptNothing"] is None
+    assert got["now"] == "<i>NEW</i>"
+    assert got["prev"] == "<i>OLD</i>"
+
+
+def test_putting_it_back_restores_and_persists():
+    """The restore has to reach the disk too: embStore writes memory,
+    and the 20-second autosave was already writing the bad copy over
+    the good one."""
+    got = _store_run("""
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>OLD</i>'});
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      var n=embRestore(['nb::a']);
+      console.log(JSON.stringify({
+        n:n.n, html:EMBED['nb::a'].html,
+        prevGone:!EMBPREV['nb::a'], persisted:saved, dirtied:dirty
+      }));
+    """)
+    assert got == {"n": 1, "html": "<i>OLD</i>", "prevGone": True,
+                   "persisted": 1, "dirtied": 1}
+
+
+def test_putting_back_twice_does_nothing_the_second_time():
+    """One step deep, not a history. The second press must say nothing
+    rather than claim a restore it did not make -- and must not put the
+    figure back to something older still."""
+    got = _store_run("""
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>OLD</i>'});
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      embRestore(['nb::a']);
+      var second=embRestore(['nb::a']);
+      console.log(JSON.stringify({second:second.n,html:EMBED['nb::a'].html}));
+    """)
+    assert got == {"second": 0, "html": "<i>OLD</i>"}
+
+
+def test_a_ref_with_nothing_behind_it_is_not_counted():
+    """embRestore's count is what the toast reports. Counting a ref that
+    had nothing to go back to would promise a recovery that did not
+    happen."""
+    got = _store_run("""
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>ONLY</i>'});
+      console.log(JSON.stringify({
+        n:embRestore(['nb::a','nb::never']).n,
+        untouched:EMBED['nb::a'].html, persisted:saved}));
+    """)
+    assert got["n"] == 0
+    assert got["untouched"] == "<i>ONLY</i>"
+    assert got["persisted"] == 0, "nothing changed, so nothing is written"
+
+
+def test_the_deck_wide_update_ends_in_a_way_out(out):
+    """The user, 2026-09-05: "The update figures button that applies to
+    all where it is right nwo is just too dangerous and I have lost too
+    many things." The verb is unchanged; the sentence announcing it now
+    ends in a way back."""
+    assert "  function toastUndo(msg,label,fn,ms){" in out
+    assert "          toastUndo(resyncMsg(reread,bad,n,list.length)," in out
+    assert "            'Put them back'," in out
+    assert "              var back=embRestore(touched);" in out
+    # ...and the per-row refresh, which is the safe one, still offers it
+    assert ("    toastUndo('Re-read from the notebook, and kept.',"
+            "'Put it back'," in out)
+    # a run that changed nothing says so with a plain toast
+    assert "        else toast(resyncMsg(reread,bad,n,list.length)," in out
+
+
+def test_the_refresh_reports_only_what_it_actually_changed(out):
+    """`touched` is built from the resyncs that RETURNED 1, not from the
+    stale list -- a figure whose notebook went away mid-run has nothing
+    to put back and must not be offered."""
+    assert ("      list.forEach(function(p){\n"
+            "        if(!resyncFigure(p.a)) return;\n"
+            "        n++;\n"
+            "        var k=normRef(provRef(p.a));\n"
+            "        if(k) touched.push(k);\n"
+            "      });") in out
+    assert "        if(touched.length)" in out
+
+
+def test_putting_back_a_live_link_actually_changes_what_you_see():
+    """Found by driving, not by reading. "Put it back" is a promise
+    about what you SEE, and a live link renders from the notebook -- so
+    restoring the snapshot under one changed the store and nothing on
+    the screen, while the toast reported success.
+
+    A 74,606-character figure was replaced by a 122-character one, the
+    undo said it had worked, and the wrong figure stayed on the slide.
+    Undo and "always show me the notebook's current version" are in
+    direct conflict; the click just made is the more explicit of the
+    two, so the restore unlinks -- and reports that it did, because a
+    silent mode change is its own surprise."""
+    got = _store_run("""
+      pres={slides:[],live:{}};
+      setRefLive('nb::a',1);
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>OLD</i>'});
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      var r=embRestore(['nb::a']);
+      console.log(JSON.stringify({
+        n:r.n, unlinked:r.unlinked,
+        stillLive:refIsLive('nb::a'), html:EMBED['nb::a'].html}));
+    """)
+    assert got == {"n": 1, "unlinked": 1, "stillLive": False,
+                   "html": "<i>OLD</i>"}
+
+
+def test_a_kept_figure_restored_reports_no_unlinking():
+    """The common case must not claim a mode change that did not
+    happen."""
+    got = _store_run("""
+      pres={slides:[],live:{}};
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>OLD</i>'});
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      var r=embRestore(['nb::a']);
+      console.log(JSON.stringify({n:r.n,unlinked:r.unlinked}));
+    """)
+    assert got == {"n": 1, "unlinked": 0}
+
+
+def test_both_undo_toasts_read_the_new_shape(out):
+    """embRestore returns {n, unlinked}; a caller still treating it as a
+    number would report "Back to the figures" for a restore of nothing,
+    because {} is truthy."""
+    assert "              var back=embRestore(touched);" in out
+    assert "              toast(back.n" in out
+    assert "        var back=embRestore(k?[k]:[]);" in out
+    assert "        toast(back.n" in out
+    # and each says so when the mode changed under them
+    assert ("+' kept copies again rather than live links'):''))") in out
+    assert ("            +(back.unlinked?' \\u2014 and it is a kept copy "
+            "again, not a '") in out
+
+
+# --------------------------------------------------------------- T302
+
+
+def test_asking_the_notebook_is_a_different_question(out):
+    """T298 made cloneBody prefer the kept copy, and three callers that
+    mean "what does the NOTEBOOK say" went through it: the staleness
+    comparison, the capture it feeds, and a chart re-reading its table.
+
+    So provState compared the kept copy against the kept copy, nothing
+    was ever stale, "Update figures" answered "every figure already
+    matches" against a notebook that had visibly moved on, and the
+    refresh had nothing new to store. The whole refresh feature was
+    dead. Driving it caught this; no substring assertion in this file
+    would have."""
+    assert "  function cloneBody(ref,fromLive){" in out
+    assert "    if(!fromLive&&!refIsLive(ref)){" in out
+    assert "      var b=cloneBody(ref,1);      /* the NOTEBOOK's answer" in out
+    assert "      var b=cloneBody(ref,1); if(!b) return null;   /* live" in out
+
+
+def test_the_render_and_the_save_still_show_what_the_deck_shows(out):
+    """framePart and embedAssets deliberately do NOT pass the flag: one
+    draws the frame and the other writes the self-contained file, and
+    both must agree with what is on the slide. A save that re-read the
+    notebook would be the danger the user reported, happening quietly on
+    Ctrl+S."""
+    assert "    if(part==='code') b=cloneCode(ref)||cloneBody(ref);" in out
+    assert "      b=cloneBody(ref);\n      b=b?applyPartFilter(b,part)" in out
+    assert "            var b=cloneBody(ref);\n            if(!b) return;" in out
+
+
+def test_a_write_that_changes_nothing_is_not_a_step_to_undo():
+    """embedAssets re-stores what it just read on every deliberate save.
+    Each of those would otherwise overwrite the one slot holding the
+    copy a real refresh replaced -- so saving twice after a bad refresh
+    would quietly throw away the way back."""
+    got = _store_run("""
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>OLD</i>'});
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      embStore('nb::a',{title:'t',kind:'figure',html:'<i>NEW</i>'});
+      console.log(JSON.stringify({prev:EMBPREV['nb::a'].html}));
+    """)
+    assert got == {"prev": "<i>OLD</i>"}, "the identical re-save kept the way back"

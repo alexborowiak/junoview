@@ -11,6 +11,21 @@
        work, so the duration is a parameter now (2026-08-22) */
     toastTimer=setTimeout(function(){t.hidden=true;},ms||3600);
   }
+  /* T301: a toast that can be acted on. `toast` is text-only and
+     stays that way -- this is for the one case where the message is
+     "something was replaced" and the only useful reply is "put it
+     back". Longer by default, because a reply needs reading time. */
+  function toastUndo(msg,label,fn,ms){
+    var t=$('#deck-toast'); if(!t){toast(msg);return;}
+    t.textContent=msg+' ';
+    var b=document.createElement('button');
+    b.type='button';b.className='toast-act';b.textContent=label;
+    b.addEventListener('click',function(){t.hidden=true;fn();});
+    t.appendChild(b);
+    t.hidden=false;
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){t.hidden=true;},ms||9000);
+  }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
       .map(function(p){var c=deep(p);delete c.origin;return c;});
