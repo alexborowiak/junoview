@@ -1127,6 +1127,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T281: chrome only. The Picture group leads with the path
+# and Refresh from file, ahead of Crop and Caption.
 # 2026-09-05, T280: chrome only. Update figures and Reload pictures
 # become one Update tile with a scope menu; five source walkers take an
 # optional slide index and both halves report through one sentence.
@@ -1153,8 +1155,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "a5270199825d7a526dd11e3aa969ba17"
-EXPECTED_BYTES = 3621436
+EXPECTED_MD5 = "ad2890c4790e0265ed1994f805e82da7"
+EXPECTED_BYTES = 3622532
 
 
 def _render_example() -> str:

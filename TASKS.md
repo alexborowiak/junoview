@@ -6026,3 +6026,26 @@ option. Then where has the ability to refresh all images gone?"
   Driven at 1440x900: the group reads Update ▾ | Images; the deck-wide
   run says "7 figures updated on the presentation" and the slide-scoped
   run "1 figure updated on this slide"; the third row opens the pane.
+
+- [x] **T281 - An image's Object tab leads with where it came from.**
+  The user (2026-09-05): "The object view for each image should have as
+  the first thing as the path, then a lock, then a refresh from path."
+  *Done 2026-09-05.* The path sat fourth, after Crop, Caption and
+  Refresh from file. It is the first question you have of a picture you
+  did not place five seconds ago, and the controls that follow it --
+  keep it as it is, read it again -- only mean anything once you know
+  what "it" points at. The row now reads **path, Refresh from file,
+  Crop, Caption, Source ▾**: the same three things in the same order as
+  the Images pane's own rows.
+  **The lock is deliberately not moved into that run.** "Lock in place"
+  (`#fmt-lock`) is shown for every single-object selection, not just
+  pictures -- so putting it in this group, which is otherwise all
+  picture controls and correctly hides for a rectangle, would make a
+  "Picture" group appear for shapes, arrows and text boxes. It stays
+  paired with Lock aspect ratio in the placement group, where T208 put
+  it. The only other lock, `#fmt-lockver`, is shown for notebook
+  figures only and never for an image.
+  *Open:* if the wanted arrangement really is the Images pane's triplet
+  on the ribbon -- path, lock, refresh, together -- the honest way is a
+  picture-scoped lock control rather than moving the shared one. Say the
+  word and it is a small addition.

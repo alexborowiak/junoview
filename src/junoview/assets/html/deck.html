@@ -1992,6 +1992,28 @@
                 title="Put figures in this flip book — from a
  notebook or from your computer — and reorder or name the ones it
  already has"><i data-ic="plus"></i><span>Add</span></button>
+              <!-- T281: WHERE IT CAME FROM LEADS (2026-09-05, user: "The
+                   object view for each image should have as the first
+                   thing as the path, then a lock, then a refresh from
+                   path"). The path was buried after Crop, Caption and
+                   Refresh; it is the first question you have of a
+                   picture you did not place five seconds ago, and the
+                   two controls that follow it -- keep it as it is, read
+                   it again -- only make sense once you know what "it"
+                   points at. Same three things, same order, as the
+                   Images pane's own rows.
+                   Lock in place is NOT moved in here: it shows for every
+                   single-object selection, so this group -- which is
+                   otherwise entirely picture controls and hides for a
+                   rectangle -- would start appearing for shapes, arrows
+                   and text boxes. It stays paired with Lock aspect ratio
+                   in the placement group (T208). -->
+              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
+                title="Where this came from"></span>
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came from.
+ If that file has moved, the picture is left exactly as it is"
+                ><i data-ic="reload"></i> Refresh from file</button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
@@ -2009,12 +2031,6 @@
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
  same button unties it"><i data-ic="caption"></i> Caption</button>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came from.
- If that file has moved, the picture is left exactly as it is"
-                ><i data-ic="reload"></i> Refresh from file</button>
-              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
-                title="Where this came from"></span>
               <span class="sh-drop opt-drop" id="fmt-srcwrap">
                 <button class="dbtn etm" id="fmt-src" aria-haspopup="true"
                   aria-expanded="false"
