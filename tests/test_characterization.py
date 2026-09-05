@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T287: chrome only. cmpPush re-derives capOfIdx, so
+# "Push this look" no longer deletes the figure-caption tie from the
+# component definition.
 # 2026-09-05, T286: chrome only. histAgainstPicked records whether the
 # comparison was CHOSEN, so T269 default cannot become sticky and hide
 # the per-slide restore buttons for the rest of the session.
@@ -1175,8 +1178,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "7e734a20f95d363a83801339a1312dee"
-EXPECTED_BYTES = 3636297
+EXPECTED_MD5 = "a5e11f937a212c9a25cc35d6f85301fa"
+EXPECTED_BYTES = 3637185
 
 
 def _render_example() -> str:

@@ -799,6 +799,23 @@
       if(a.nohead) it.nohead=a.nohead;
       return it;
     });
+    /* T287: AND THE FIGURE-CAPTION TIE, WHICH THIS USED TO DROP.
+       cmpMake derives `capOfIdx` -- which item in the definition each
+       caption belongs to -- and cmpPlace reads it to mint a fresh
+       cap/capOf pair per placement. But this function rebuilds
+       `def.items` from scratch and never re-derived it, so the FIRST
+       press of "Push this look" silently deleted the tie from the
+       definition. Every instance placed afterwards got an untied
+       caption, which renders '[not a caption]' (35-arranging.js).
+       Same derivation as cmpMake's, over this function's own list. */
+    var capMember={};
+    mine.forEach(function(x,n){
+      if(x.a&&x.a.cap) capMember[x.a.cap]=n;});
+    mine.forEach(function(x,n){
+      if(!x.a||!x.a.capOf) return;
+      var fn=capMember[x.a.capOf];
+      if(fn!=null&&fn!==n&&def.items[n]) def.items[n].capOfIdx=fn;
+    });
     return cmpSyncAll(id,si,inst);
   }
   /* re-stamp every OTHER instance from the definition. The origin is the

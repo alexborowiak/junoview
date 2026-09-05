@@ -2727,6 +2727,13 @@ def test_a_component_keeps_the_caption_tie(out):
     # ...and the definition still does not carry the ids themselves
     assert "'cap'" not in out[out.index("var MATCH_PROPS=["):
                               out.index("var MATCH_PROPS=[") + 400]
+    # T287: and "Push this look" re-derives it. cmpPush rebuilds
+    # def.items from scratch, so the FIRST push silently deleted the tie
+    # and every instance placed afterwards rendered '[not a caption]'.
+    push = out.split("  function cmpPush(id,si,inst){")[1]
+    push = push.split("    return cmpSyncAll(id,si,inst);")[0]
+    assert "capOfIdx" in push, "cmpPush drops the figure-caption tie"
+    assert "      if(fn!=null&&fn!==n&&def.items[n]) def.items[n].capOfIdx=fn;" in push
 
 
 def test_the_figure_lint_reads_the_sizes_it_collects_and_knows_trims(out):

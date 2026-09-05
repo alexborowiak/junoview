@@ -6217,3 +6217,19 @@ option. Then where has the ability to refresh all images gone?"
   too, or the default would reinstate itself on the next click.
   A value with two sources cannot answer a question about which source
   it came from. That is the whole bug.
+
+- [x] **T287 - "Push this look" stops deleting the figure-caption tie.**
+  From the 2026-09-05 review's ordered plan.
+  *Done 2026-09-05.* `cmpMake` derives `capOfIdx` -- which member of a
+  component definition each caption belongs to -- and `cmpPlace` reads
+  it to mint a fresh `cap`/`capOf` pair per placement, because an id in
+  a definition would give every instance the same one (T58).
+  `cmpPush` rebuilds `def.items` from scratch and never re-derived it.
+  So the FIRST press of "Push this look" silently deleted the tie from
+  the definition, and every instance placed afterwards arrived with an
+  untied caption -- which renders **[not a caption]**, the exact string
+  35-arranging.js records as the symptom of a caption whose figure has
+  gone. The look was pushed and a relationship went with it.
+  Same derivation as `cmpMake`'s, over `cmpPush`'s own list. The
+  definition still carries no ids, only the index -- that part was
+  right and is unchanged.
