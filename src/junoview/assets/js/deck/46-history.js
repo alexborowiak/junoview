@@ -310,10 +310,29 @@
      An overlay, like the overview map and the notes editor: it wants the
      screen while you are comparing and none of it after. */
   var histSel='', histAgainst='', histView='slide', histAllSlides=false;
+  /* T286: DID YOU PICK ONE, OR DID WE? T269 gave the newest version a
+     default comparison -- the version before it -- because reading it
+     against "the deck you are editing" made the panel open on "no
+     difference" every single time. Its own comment says the default is
+     "only ever applied when nothing has been picked by hand", and that
+     was the intent; but the code asked `if(histAgainst) return
+     histAgainst;`, and the default it had just written IS a non-empty
+     histAgainst. So after the panel had opened once, every later click
+     inherited that stale id, histAgainst was never empty again, and the
+     per-slide "Put it back" / "Use the old one" buttons -- which appear
+     only when comparing against the live deck -- were unreachable for
+     the rest of the session. A fact the code needs has to be stored,
+     not inferred from a value that has two sources. */
+  var histAgainstPicked=false;
   function histPanelClose(){
     var ov=$('#deck-history');
     if(ov) ov.remove();
     document.removeEventListener('keydown',histPanelKey,true);
+    /* T286: a comparison you chose belongs to the visit you chose it
+       in. Kept across a close, the next open would come back reading
+       one old version against another with no per-slide restore, which
+       is the state this fix exists to get out of. */
+    histAgainst='';histAgainstPicked=false;
   }
   function histPanelKey(e){
     if(!$('#deck-history')) return;
@@ -689,7 +708,7 @@
      Only ever applied when nothing has been picked by hand: choosing a
      comparison from the dropdown and then clicking about must keep it. */
   function histAutoAgainst(ix,ent){
-    if(histAgainst) return histAgainst;
+    if(histAgainstPicked) return histAgainst;
     if(!ix||ix.length<2||!ent) return '';
     if(ent.id!==ix[ix.length-1].id) return '';
     return ix[ix.length-2].id;
@@ -723,7 +742,12 @@
     });
     sel.value=histAgainst;
     sel.addEventListener('change',function(){
-      histAgainst=sel.value;histCompare(ov,ent);});
+      /* the ONE place a comparison is chosen by hand (T286). Picking
+         "now (the deck you are editing)" back off the list is a choice
+         too, and has to stick, or the default would immediately
+         reinstate itself on the next click. */
+      histAgainst=sel.value;histAgainstPicked=true;
+      histCompare(ov,ent);});
     wrap.appendChild(sel);
     return wrap;
   }

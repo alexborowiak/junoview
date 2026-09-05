@@ -25,12 +25,44 @@ from __future__ import annotations
 from junoview import assets
 
 
+def test_the_default_comparison_cannot_become_sticky():
+    """T286, and the bug T269 shipped with the default it introduced.
+
+    The panel opens on the newest version, so histAutoAgainst writes a
+    comparison. Ask  next time and you cannot tell that
+    choice from this one -- so every later click inherited it,
+    histAgainst was never empty again, and the per-slide "Put it back" /
+    "Use the old one" buttons, which render only when comparing against
+    the LIVE deck, were gone for the rest of the session.
+
+    Three things have to hold together, which is why they are one test:
+    the flag exists, only the dropdown sets it, and closing the panel
+    clears both.
+    """
+    js = assets.deck_js()
+    assert "  var histAgainstPicked=false;" in js
+    # set in exactly one place: the dropdown
+    assert js.count("histAgainstPicked=true") == 1
+    assert "      histAgainst=sel.value;histAgainstPicked=true;" in js
+    # and the restore buttons still key off the live-deck comparison
+    assert "if(r.a&&!histAgainst&&(r.st==='removed'||r.st==='changed')){" in js
+    # a comparison belongs to the visit it was chosen in
+    close = js.split("  function histPanelClose(){")[1].split("\n  }")[0]
+    assert "histAgainst='';histAgainstPicked=false;" in close
+
+
 def test_the_newest_version_is_read_against_the_one_before_it():
     js = assets.deck_js()
     assert "  function histAutoAgainst(ix,ent){" in js
     fn = js.split("  function histAutoAgainst(ix,ent){")[1].split("\n  }")[0]
-    # an explicit choice always wins
-    assert "if(histAgainst) return histAgainst;" in fn
+    # an explicit choice always wins -- and T286 made "explicit" a fact
+    # the code stores rather than one it infers. Asking "if(histAgainst)"
+    # could not tell a choice from the default this function had just
+    # written, so after one open the default became sticky and the
+    # per-slide restore buttons, which need histAgainst empty, were
+    # unreachable for the rest of the session.
+    assert "if(histAgainstPicked) return histAgainst;" in fn
+    assert "if(histAgainst) return histAgainst;" not in fn
     # only the newest entry is redirected
     assert "if(ent.id!==ix[ix.length-1].id) return '';" in fn
     assert "return ix[ix.length-2].id;" in fn

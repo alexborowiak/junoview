@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T286: chrome only. histAgainstPicked records whether the
+# comparison was CHOSEN, so T269 default cannot become sticky and hide
+# the per-slide restore buttons for the rest of the session.
 # 2026-09-05, T285: chrome only. Ctrl+P reaches printDeck, the
 # presenter clock starts from presTimerStart beside rehStart, and an
 # image dropped on a slide lands on it through SemApp.deckDropImage.
@@ -1172,8 +1175,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "f4d8defd78cfe8c1c083ba3d224b5754"
-EXPECTED_BYTES = 3634762
+EXPECTED_MD5 = "7e734a20f95d363a83801339a1312dee"
+EXPECTED_BYTES = 3636297
 
 
 def _render_example() -> str:

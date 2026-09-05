@@ -6191,3 +6191,29 @@ option. Then where has the ability to refresh all images gone?"
   export the drop handler is not wired at all -- it sits behind
   `APP.mode==='app'||APP.mode==='web'` -- which cost a confusing twenty
   minutes and is correct: there is nothing to open there.
+
+- [x] **T286 - "You picked a comparison" is a fact, not something to
+  infer.**
+  From the 2026-09-05 review's ordered plan, and it is a regression T269
+  shipped the day before with the default it introduced.
+  *Done 2026-09-05.* T269 gave the newest version a default comparison
+  -- the version before it -- because reading it against "the deck you
+  are editing" made the panel open on "no difference" every time. Its
+  comment says the default is "only ever applied when nothing has been
+  picked by hand", and that was the intent. But the code asked
+  `if(histAgainst) return histAgainst;`, and the default it had just
+  written IS a non-empty `histAgainst`.
+  So the panel opens on the newest version, writes a comparison, and
+  from then on every click inherits it. `histAgainst` is never empty
+  again -- and the per-slide **Put it back** / **Use the old one**
+  buttons render only when comparing against the LIVE deck
+  (`if(r.a&&!histAgainst&&...)`, and rightly: against another version
+  there is nothing to put a slide into). They were unreachable for the
+  rest of the session.
+  `histAgainstPicked` is set in exactly one place, the dropdown's change
+  handler, and cleared with `histAgainst` when the panel closes -- a
+  comparison you chose belongs to the visit you chose it in. Picking
+  "now (the deck you are editing)" back off the list counts as a choice
+  too, or the default would reinstate itself on the next click.
+  A value with two sources cannot answer a question about which source
+  it came from. That is the whole bug.

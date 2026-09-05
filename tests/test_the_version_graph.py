@@ -120,7 +120,9 @@ def test_any_two_versions_can_be_compared(out):
     editing."""
     assert "  function histAgainstPicker(ov,ent){" in out
     assert "    o0.value='';o0.textContent='now (the deck you are editing)';" in out
-    assert "      histAgainst=sel.value;histCompare(ov,ent);});" in out
+    # T286: and picking one is recorded as a choice, so the auto-default
+    # cannot reinstate itself on the next click
+    assert "      histAgainst=sel.value;histAgainstPicked=true;" in out
     assert ("    var wantB=histAgainst?snapRead("
             "histAgainst):Promise.resolve(null);") in out
     # putting ONE slide back only means anything against the live deck
