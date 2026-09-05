@@ -2474,23 +2474,44 @@
   }
   function dgGhostsFor(board,id){
     $$('.dg-real,.dg-other',board).forEach(function(n){n.remove();});
+    /* T279: the board drew every wearer of the style identically -- same
+       1px amber box, same title of just "slide N" -- so it was a map of
+       WHERE they are and said nothing about whether any of them had
+       stopped keeping to the style. Read the verdict off the same
+       predicate the Fix-mismatched-text screen uses, once per repaint. */
+    var def=(typeof styleDef==='function')?styleDef(id):null;
+    var off=0;
     dgBoardSlides().forEach(function(e){
       (e.sl.annots||[]).forEach(function(a){
         if(!a||a.hide) return;
         var mine=(a.k==='text'&&a.style===id);
         if(!mine&&!dgShowOthers) return;
+        var bad=!!(mine&&def&&typeof stdMatchesStyle==='function'
+          &&!stdMatchesStyle(a,def));
+        if(bad) off++;
         var b=document.createElement('div');
-        b.className=mine?'dg-real':'dg-other';
+        b.className=(mine?'dg-real':'dg-other')+(bad?' dg-off':'');
         b.style.left=(a.x||0)+'%';
         b.style.top=(a.y||0)+'%';
         b.style.width=Math.max(1.5,(a.w||10))+'%';
         b.style.height=Math.max(1.5,(a.h||6))+'%';
         b.style.borderColor=mine?'':dgKindCol(a);
         b.title=(mine?'':(annotLabel(a)+' — '))
-          +'slide '+(e.si+1);
+          +'slide '+(e.si+1)
+          +(bad?' — wears this style but no longer matches it':'');
         board.appendChild(b);
       });
     });
+    /* and say so in words as well as in weight, because a board you have
+       to compare box-borders across is not an answer */
+    var note=board.parentNode
+      &&board.parentNode.querySelector('.dg-offnote');
+    if(note){
+      note.textContent=off
+        ?(off+' of these no longer match the style')
+        :'';
+      note.hidden=!off;
+    }
   }
   function dgBoard(host,id){
     var rec=dgStyleRec(id);
@@ -2515,9 +2536,15 @@
     grip.title='Drag to set how wide this type is by default';
     ghost.appendChild(grip);
     paint();
-    dgGhostsFor(board,id);
     board.appendChild(ghost);
     host.appendChild(board);
+    /* T279: the count in words, beside the board. Appended to the same
+       host BEFORE the ghosts are drawn, because dgGhostsFor writes into
+       it and looks for it as a sibling of the board. */
+    var offnote=document.createElement('div');
+    offnote.className='dg-offnote';offnote.hidden=true;
+    host.appendChild(offnote);
+    dgGhostsFor(board,id);
     /* the key, and the switch that turns the rest of the page on */
     var key=document.createElement('div');key.className='dg-key';
     var ck=document.createElement('label');ck.className='dg-keyck';

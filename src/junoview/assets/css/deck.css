@@ -266,6 +266,18 @@ body.light .find-mode.on{color:var(--ink);}
   color:#f0a848;background:color-mix(in srgb,var(--chrome-0,#0b141d) 82%,
     transparent);border-radius:3px;padding:0 4px;pointer-events:none;
   white-space:nowrap;}
+/* ---------- the box the style check just took you to (T279) ----------
+   EDIT MODE ONLY, the same rule .an-overflowing above follows: a note to
+   the author, never ink on the page. The ordinary selection ring is what
+   EVERY click puts on a box, so landing on one told you nothing about
+   why you had been sent there. Removed after a beat by the chip that
+   added it. */
+.deck.editing .an-item.an-mismatch{
+  outline:2px solid #f0a848;outline-offset:3px;
+  box-shadow:0 0 0 6px color-mix(in srgb,#f0a848 22%,transparent);
+  border-radius:2px;}
+@media print{.an-item.an-mismatch{outline:none!important;
+  box-shadow:none!important;}}
 @media print{.an-overflowing{outline:none!important;}
   .an-overflowing::after{display:none!important;}}
 #print-root .an-overflowing{outline:none!important;}
@@ -3114,6 +3126,19 @@ body.light .oh-h{color:var(--ink-3);}
   padding:1px 7px;cursor:pointer;max-width:100%;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
 .std-chip:hover{border-color:var(--cyan);color:#fff;}
+/* T279: WHICH ONE DISAGREES. A band card lists the whole band, because
+   the fix moves all of it -- so the ones that differ have to be told
+   apart from the ones that do not, and they lead. Weight and a badge,
+   NOT a new hue: the note at the top of this section records that this
+   screen never uses the red preflight uses, because nothing it finds is
+   broken. Amber is already this screen's word for "look at this". */
+.std-chip.std-odd{border-color:#f0a848;color:#f7d9a8;
+  background:color-mix(in srgb,#f0a848 16%,transparent);font-weight:600;}
+.std-chip.std-odd::before{content:"! ";font-weight:700;}
+.std-chip.std-ok{opacity:.5;}
+.std-chip.std-ok:hover{opacity:1;}
+body.light .std-chip.std-odd{color:#7a4b00;
+  background:color-mix(in srgb,#f0a848 22%,transparent);}
 .std-do{align-self:flex-start;font-size:11px;padding:3px 9px;}
 .std-do2{opacity:.8;}
 body.light .std-h{color:var(--ink);}
@@ -3261,6 +3286,19 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    style, and on request everything else, one colour per kind. */
 .dg-real{position:absolute;border:1px solid rgba(240,168,72,.55);
   border-radius:3px;background:rgba(240,168,72,.07);pointer-events:none;}
+/* T279: a box that WEARS this style and no longer keeps to it. Two
+   channels, not one -- double-weight border and a corner badge -- so it
+   survives a colour-blind reader and the light theme, and so it cannot
+   be confused with .dg-ghost, which is the style's own default position
+   and is amber-dashed. */
+.dg-real.dg-off{border-width:2px;border-style:solid;
+  border-color:rgba(240,168,72,.95);
+  background:color-mix(in srgb,#f0a848 16%,transparent);}
+.dg-real.dg-off::after{content:"!";position:absolute;top:-1px;right:2px;
+  font:700 9px var(--sans);color:#f0a848;line-height:1;}
+.dg-offnote{margin-top:6px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;color:#f0a848;}
+.dg-offnote[hidden]{display:none!important;}
 .dg-other{position:absolute;border:1px dashed currentColor;
   border-radius:3px;opacity:.55;pointer-events:none;
   border-color:#8aa0b0;}

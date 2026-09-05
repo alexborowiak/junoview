@@ -1127,6 +1127,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T279: chrome only. The Fix-mismatched-text chips mark and
+# lead with the boxes that actually differ and say what differs; clicking
+# one rings that box on the slide; the Style system board marks a wearer
+# that no longer matches and counts them in words.
 # 2026-09-05, T276: chrome only. The fourteen slide-template text slots
 # declare their type in `style` and take the size that type means; the
 # layout builder's palette and both of its board seeds carry the role
@@ -1146,8 +1150,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "3772a8ade82e98554b4f8e708055a076"
-EXPECTED_BYTES = 3607651
+EXPECTED_MD5 = "d873044338fd0d3793ed28a5e46dfb54"
+EXPECTED_BYTES = 3614448
 
 
 def _render_example() -> str:

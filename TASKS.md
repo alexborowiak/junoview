@@ -5949,3 +5949,41 @@ option. Then where has the ability to refresh all images gone?"
   `applyStyleSet` ends with `pres.styles=next`, a wholesale REPLACE, so
   one click of any style set (or `autoStyleDeck`) discards the seed.
   The seeding and the replace have to be reconciled first.
+
+- [x] **T279 - The style check points at the odd one out.**
+  The user (2026-09-05), with a screenshot: "the style system isn't
+  helpful as you can't tell which boxes are not matching with the rest."
+  *Done 2026-09-05.* First, what the amber in the screenshot IS: it is
+  the Style system board's ordinary chrome -- `.dg-ghost`, the style's
+  default position, and `.dg-real`, one box per wearer. Neither carried
+  a verdict, so it is a map of WHERE they are. That is half the answer.
+  **The chips were the other half, and the real defect.** `stdRow`'s
+  chip loop reads `(f.g?f.g.odd:(f.odd||f.list))`. A `named` or `geom`
+  finding carries `f.odd` and lists only the offenders -- but a BAND
+  finding has no `f.odd`, so it fell through to `f.list` and drew every
+  box in the band, agreeing and disagreeing alike, as identical grey
+  pills titled "Go to it". On a hand-built deck the band card is most of
+  the screen. So the card said "1 has a different size" over a row of
+  three chips that would not say which.
+  The offenders now lead, are marked, and each says what is different
+  about that box -- "23 pt, where most are 22 pt". Nothing is
+  recomputed: `f.inner` already carries the verdict the head and the why
+  are written from (T268). The conforming ones are muted rather than
+  hidden, because the fix moves the whole band and you still need to see
+  what it will touch.
+  **Clicking a chip now rings the box.** The ordinary selection ring is
+  what every click puts on a box, so landing on one told you nothing
+  about why you had been sent. Deferred one beat: `go()` renders and
+  `selectAnnot` renders again, and a class added between them is thrown
+  away by the second -- the "one change renders twice" trap. Driven, the
+  mark landed on zero boxes until it was deferred.
+  **And the board marks a wearer that has drifted**, double-weight with
+  a badge, plus a line in words underneath saying how many. Read off the
+  same `stdMatchesStyle` the other screen uses.
+  All of it stays in amber. deck.css records the rule -- "never the red
+  preflight uses, because nothing this finds is broken" -- so the odd
+  one is told apart by WEIGHT and a badge, which also survives a
+  colour-blind reader and the light theme.
+  Driven on a three-slide fixture at 22/22/23 pt: the odd chip leads,
+  reads "23 pt, where most are 22 pt", takes you to slide 3 and rings
+  that box in 2px amber, which clears itself after a beat.

@@ -675,12 +675,49 @@
     var w=document.createElement('div');
     w.className='std-why';w.textContent=f.why;box.appendChild(w);
     var who=document.createElement('div');who.className='std-who';
-    (f.g?f.g.odd:(f.odd||f.list)).slice(0,12).forEach(function(p){
+    /* WHICH ONES ACTUALLY DISAGREE (T279). A `named` or `geom` card lists
+       f.odd -- the offenders and nobody else -- but a BAND card has no
+       f.odd, so this fell through to f.list and drew every box in the
+       band, agreeing and disagreeing alike, as identical grey pills. On
+       a hand-built deck the band card is most of the screen, so most of
+       what you saw was a row of chips that would not tell you which one
+       the head was talking about (2026-09-05, user: "the style system
+       isn't helpful as you can't tell which boxes are not matching with
+       the rest").
+       Nothing is recomputed: f.inner already carries the verdict the
+       head and the why are written from (T268). */
+    var oddSet={},oddWhy={};
+    (f.inner||[]).forEach(function(r){
+      r.odd.forEach(function(p){
+        var k=p.si+':'+p.ai;
+        oddSet[k]=1;
+        /* the sentence the card already knows, per box: "22 pt, where
+           most are 24 pt" -- so the chip answers "what about it?" on
+           hover instead of sending you to go and look */
+        var line=stdShow(r.prop,r.prop.get(p.a))+', where most are '
+          +stdShow(r.prop,r.mode);
+        oddWhy[k]=oddWhy[k]?(oddWhy[k]+'; '+line):line;
+      });
+    });
+    var chips=(f.g?f.g.odd:(f.odd||f.list)).slice();
+    var anyOdd=Object.keys(oddSet).length>0;
+    /* offenders first: the card is an offer to fix THEM, so they are
+       what the eye should land on */
+    if(anyOdd) chips.sort(function(p,q){
+      return (oddSet[q.si+':'+q.ai]?1:0)-(oddSet[p.si+':'+p.ai]?1:0);});
+    chips.slice(0,12).forEach(function(p){
+      var k=p.si+':'+p.ai,bad=anyOdd?!!oddSet[k]:true;
       var c=document.createElement('button');
-      c.className='std-chip';
+      /* a `named`/`geom` card lists only offenders, so everything on it
+         is marked; a band card marks the ones that differ and mutes the
+         rest rather than hiding them -- the fix moves the whole band, so
+         you still need to see what it will touch */
+      c.className='std-chip '+(bad?'std-odd':'std-ok');
       c.textContent=(p.si+1)+' · '
         +(p.fixed?(p.ai==='t'?'title':'subtitle'):annotLabel(p.a));
-      c.title='Go to it';
+      c.title=bad?((oddWhy[k]||'This is the one that differs')
+        +' — click to go to it')
+        :'This one matches the rest — click to go to it';
       c.addEventListener('click',function(){
         /* go() clears the selection and re-renders, so the layer this box
            lives on does not exist until after it returns */
@@ -688,6 +725,28 @@
         if(typeof p.ai==='number'){
           var l=stage.querySelector('.annot-layer');
           if(l) selectAnnot(l,p.ai);
+          /* AND SAY WHICH ONE, ON THE SLIDE. The ordinary selection ring
+             is what every click puts on a box, so landing on one told
+             you nothing about why you were sent.
+             AFTER the paint, not during it. go() renders and selectAnnot
+             renders again, and a class added between the two is thrown
+             away by the second -- the "one change renders twice" trap
+             this codebase has hit before. Driven: marked=0 until the
+             mark was deferred. The element is re-queried inside the
+             timeout for the same reason, and found by data-idx rather
+             than child index, because renderAnnots puts two <svg> layers
+             in first so the layer's children never line up with the
+             annots array. */
+          if(bad) setTimeout(function(){
+            var l2=stage.querySelector('.annot-layer'); if(!l2) return;
+            $$('.an-mismatch',l2).forEach(function(n){
+              n.classList.remove('an-mismatch');});
+            var el=l2.querySelector('.an-item[data-idx="'+p.ai+'"]');
+            if(!el) return;
+            el.classList.add('an-mismatch');
+            setTimeout(function(){
+              el.classList.remove('an-mismatch');},2600);
+          },80);
         }
       });
       who.appendChild(c);
