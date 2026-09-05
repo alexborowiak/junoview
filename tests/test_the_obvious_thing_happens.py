@@ -7,6 +7,25 @@ are the keystroke, the clock and the gesture a person tries first.
 from __future__ import annotations
 
 
+def test_the_browser_is_offered_as_a_temporary_answer(out):
+    """T296. T283 put three destinations in the first-run prompt as
+    peers, but one of them is the only answer that can lose your work --
+    and it is still the right default for somebody who just wants to
+    start (2026-09-05, user: "an option keep in browser memory for now
+    or something with a warning attached to that").
+
+    The label carries the provisional, the note carries the warning, and
+    the row is marked so it does not look like the two that keep a file.
+    Amber and not red, because choosing it is reasonable and nothing is
+    broken -- the same distinction, and the same token, as T279."""
+    assert "    var br=row('Keep it in this browser for now'," in out
+    assert "      'Nothing is written to a file." in out
+    assert "    if(br) br.classList.add('sa-warn');" in out
+    assert ".save-ask .sa-opt.sa-warn{border-left:2px solid var(--warning);}" in out
+    # ...and the two that DO keep a file are not marked
+    assert "      row('This project'" in out
+
+
 def test_ctrl_p_prints_the_deck_not_the_editor(out):
     """PDF is this product's most-used way out, and Ctrl+P went to the
     browser -- which prints the EDITOR: the ribbon, the strip, the panes

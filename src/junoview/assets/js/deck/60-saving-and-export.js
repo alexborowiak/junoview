@@ -621,13 +621,24 @@
       row('A folder on this computer','Pick it once. Every presentation '
         +'after this one saves itself there too, with nothing to answer '
         +'and no size limit.',function(){chooseSaveFolder();});
-    row('This browser','Kept in this browser only \u2014 clearing site '
-      +'data loses it, and a deck with figures can fill the space a '
-      +'browser allows.',function(){
+    /* T296: FOR NOW, AND IT SAYS SO. This read as a third peer choice
+       when it is the one answer that can lose your work -- and it is
+       still the right default for somebody who just wants to start
+       (2026-09-05, user: "an option 'keep in browser memory for now' or
+       something with a warning attached to that"). The label carries
+       the provisional, the note carries the warning, and the row is
+       marked so it does not look like the two that keep a file. */
+    var br=row('Keep it in this browser for now',
+      'Nothing is written to a file. Clearing your browser\u2019s site '
+      +'data loses the deck, and one with figures can fill the space a '
+      +'browser allows. Change it beside Save whenever you like.',
+      function(){
       setTarget('browser');
-      toast('Kept in this browser. Change it beside Save \u2014 a '
-        +'folder on your computer has no size limit.',6000);
+      toast('Kept in this browser for now \u2014 nothing is on disk. '
+        +'Change it beside Save; a folder on your computer has no size '
+        +'limit and cannot be cleared by accident.',7000);
     });
+    if(br) br.classList.add('sa-warn');
     deckEl.appendChild(m);
     /* AFTER the click that opened the deck has finished bubbling. New
        presentation is reached BY a click -- the front door's New, the

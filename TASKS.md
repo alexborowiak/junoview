@@ -6515,3 +6515,20 @@ option. Then where has the ability to refresh all images gone?"
   all -- "three Heading 1 boxes, two wearing variations" is correctly
   not drift, which the parented-type model buys with no code because
   `standardise()` buckets by exact `a.style`.
+
+- [x] **T296 - "Keep it in this browser for now" says both halves.**
+  The user (2026-09-05): "there needs to be a prompt to store locally
+  not always store on browser. When creating a new presentation this
+  should prompt of where you want to save with an option 'keep in
+  browser memory for now' or something with a warning attached to that."
+  *Done 2026-09-05.* The prompt itself is T283 and already shipped; what
+  it got wrong was the framing. It offered three destinations as PEERS,
+  and one of them is the only answer that can lose your work -- while
+  still being the right default for somebody who just wants to start.
+  The label carries the provisional ("**for now**"), the note carries
+  the warning in full -- nothing is written to a file, clearing site
+  data loses the deck, a deck with figures can fill the space a browser
+  allows -- and the row is marked so it does not look like the two that
+  keep a file. Amber and not red: choosing it is a reasonable thing to
+  do and nothing is broken, which is the same distinction and the same
+  token T279 settled for the style check.

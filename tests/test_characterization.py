@@ -1127,6 +1127,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T296: chrome only. The save prompt words the browser
+# option as provisional and marks it as the fallback it is.
 # 2026-09-05, T295: chrome only. The Style system rail groups each type
 # with its variations and puts the style colour on a chip, since the row
 # name is deliberately left uncoloured.
@@ -1202,8 +1204,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "a84f5c54ccfaf59dc6512e27d097c96c"
-EXPECTED_BYTES = 3665982
+EXPECTED_MD5 = "13a8644459817b64da04b02622ed2ccd"
+EXPECTED_BYTES = 3667053
 
 
 def _render_example() -> str:
