@@ -1111,6 +1111,52 @@
          because styleOrder appends -- with nothing saying what it was a
          variation OF. Each parent is followed by its own variations,
          indented, and the flat list is what is left over. */
+      /* T317: THE READY-MADE ONES, drawn as specimens in the colours
+         they would resolve to on THIS deck, under the heading they
+         would vary. A preset that has already been made is not
+         offered twice -- its variation is listed above like any
+         other. */
+      function presetRows(base){
+        PRESET_LOOKS.forEach(function(look){
+          if(presetVariantOf(base,look)) return;
+          if(look.id==='by-section'
+             &&!(pres.sections&&Object.keys(pres.sections).length)) return;
+          var b=document.createElement('button');
+          b.className='dbtn vw-opt jv-styleopt jv-stylevar jv-preset';
+          var t=document.createElement('span');
+          t.className='jv-stylename';
+          t.textContent=look.label;
+          var d=styleDef(base)||{},dd=look.delta;
+          t.style.fontWeight=(dd.b===0?0:(dd.b||d.b))?'700':'400';
+          if(d.i) t.style.fontStyle='italic';
+          if(d.font) t.style.fontFamily=d.font;
+          t.style.fontSize=Math.max(11,Math.min(21,(d.size||2.6)*3.1))+'px';
+          var col=tokVal(dd.color||d.color||'');
+          if(col) t.style.color=col;
+          specimenGround(t,{bg:dd.bg,bdc:dd.bdc});
+          b.appendChild(t);
+          var n=document.createElement('span');
+          n.className='jv-stylesz';n.textContent=look.note;
+          b.appendChild(n);
+          b.title='Make \u201c'+look.label+'\u201d a variation of '
+            +(d.label||base)+' and give it to the selected box. It keeps '
+            +'following '+(d.label||base)+' for everything else.';
+          b.addEventListener('click',function(e){
+            e.stopPropagation();
+            var vid=ensurePresetLook(base,look);
+            if(!vid){toast('Could not make that variation');return;}
+            var n2=0;
+            fmtApply(function(x){
+              if(x.k==='text'){applyStyleTo(x,vid);n2++;}});
+            markDirty();renderSlide();showFmt();
+            menu.hidden=true;
+            toast('\u201c'+look.label+'\u201d is now a variation of '
+              +(d.label||base)+(n2?' \u2014 on '+n2+' box'+(n2===1?'':'es'):'')
+              +'. Find it in the Style system to give it to more.',6000);
+          });
+          menu.appendChild(b);
+        });
+      }
       var listed={};
       styleOrder().forEach(function(id){
         if(listed[id]||parentOf(id)) return;
@@ -1119,6 +1165,7 @@
           if(listed[v]) return;
           listed[v]=1;styleRow(v,true);
         });
+        if(isHeadingStyle(id)) presetRows(id);
       });
       styleOrder().forEach(function(id){
         if(listed[id]) return;      /* an orphaned variation, if any */

@@ -3735,6 +3735,10 @@ body.light .ar-row:hover,body.light .ar-srow:hover{
    A gallery, not a menu: every card is SET IN the type it offers, because
    a look is chosen by looking (2026-08-22). */
 .ss-box{width:min(880px,95vw);}
+/* T317: a ready-made look reads as an offer, not a thing you already
+   have -- dotted edge, and the note where the point size would be */
+.jv-preset{border-style:dashed;opacity:.92;}
+.jv-preset:hover{opacity:1;}
 /* T315: the two bands of the gallery, and a theme card's palette */
 .ss-band{font-family:var(--sans);font-size:11px;letter-spacing:.06em;
   text-transform:uppercase;color:var(--chrome-ink-3);margin:10px 0 4px;}

@@ -2697,6 +2697,60 @@
        small:{color:'@ink',bg:'@surface',bdc:'@line'},
        caption:{color:'@quiet',bg:'none',bdc:'none'}}}
   ];
+  /* ---- T317: READY-MADE LOOKS FOR A HEADING -----------------------
+     (2026-09-06, user: "there should be some that already exist, like
+     'business', 'exciting', or something like that idk, and some that
+     have different colours per section".)
+
+     A preset is a VARIATION that does not exist until it is asked for.
+     Each row in the Text styles menu names a delta; the first click
+     mints the variation (addVariant, T292) with exactly that delta and
+     stamps the box; from then on it is an ordinary variation -- it has
+     a rail row and a swatch chip in the Style system, it follows its
+     parent for everything the delta does not say, and deleting it is
+     the same as deleting any other. Nothing is added to a deck that
+     never clicks.
+
+     Every colour is a '@name' reference, so a preset resolves against
+     whatever colour theme the deck wears (T315) rather than fixing a
+     hex -- "Business" under Paper colours is Paper's heading and box,
+     not a slate that ignores the theme. */
+  var PRESET_LOOKS=[
+    {id:'business',label:'Business',
+     note:'boxed, in the heading colour',
+     delta:{color:'@heading',bg:'@surface',bdc:'@line'}},
+    {id:'exciting',label:'Exciting',
+     note:'the warm colour, unboxed',
+     delta:{color:'@warm',bg:'none',bdc:'none'}},
+    {id:'accent',label:'Accent',
+     note:'the accent colour',
+     delta:{color:'@accent'}},
+    {id:'quiet',label:'Quiet',
+     note:'the quiet colour, not bold',
+     delta:{color:'@quiet',b:0}},
+    {id:'by-section',label:'By section',
+     note:'takes its section\u2019s colour',
+     delta:{color:'@section'}}
+  ];
+  /* the variation this preset already made under this parent, if any:
+     by (parent, label), which is what the user sees and what makes a
+     second click on the same row a no-op rather than a second copy */
+  function presetVariantOf(base,look){
+    var hit=null;
+    variantsOf(base).forEach(function(v){
+      var d=styleDef(v);
+      if(d&&d.label===look.label) hit=v;
+    });
+    return hit;
+  }
+  function ensurePresetLook(base,look){
+    var have=presetVariantOf(base,look);
+    if(have) return have;
+    var v=addVariant(look.label,base);
+    if(!v) return null;
+    deckStyles()[v.id]=deep(look.delta);
+    return v.id;
+  }
   var THEMEKEY='jv-deck-colours:';
   function myColourThemes(){
     try{

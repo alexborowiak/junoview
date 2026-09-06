@@ -6946,6 +6946,26 @@ option. Then where has the ability to refresh all images gone?"
   automatic colour. *Verified live:* one heading duplicated into a
   second section is #4fb3d9 in Intro and #f0a848 in Methods.
 
+- [x] **T317 - ready-made looks under every heading, one click each.**
+  The user (2026-09-06): "there should be some that already exist, like
+  'business', 'exciting', or something like that idk, and some that have
+  different colours per section".
+  *Done 2026-09-06.* A preset is a VARIATION that does not exist until it
+  is asked for. Each dashed row in the Text styles menu -- Business,
+  Exciting, Accent, Quiet, By section -- names a delta; the first click
+  mints the variation (addVariant, T292) with exactly that delta and
+  stamps the box; from then on it is an ordinary variation with a rail
+  row and a chip in the Style system, following its parent for
+  everything the delta does not say. Nothing is added to a deck that
+  never clicks, a second click finds the one already made by (parent,
+  label), and 'By section' is offered only once the deck has a section
+  to follow. Every colour is a '@name' reference, so "Business" under
+  Paper colours is Paper's heading and box, not a slate that ignores the
+  theme (T315). *Verified live:* the rows sit under Title, Heading 1 and
+  Heading 2; clicking Business on the Title box gave it the surface
+  ground and the line edge, and on reopening the menu it was an ordinary
+  variation of Title while the other families still offered it.
+
 ## Group 14 - the 2026-09-06 list
 
 The user's own backlog, filed verbatim (their number, their difficulty),
