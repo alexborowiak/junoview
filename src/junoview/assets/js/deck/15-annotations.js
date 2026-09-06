@@ -2218,9 +2218,15 @@
      all: there is one radius and one gap for the whole deck, so they go
      onto the slide as CSS custom properties and every shape picks them
      up without storing anything. */
+  /* T315: FOUR MORE NAMES, so a colour theme can say where the page,
+     a box, a heading and an edge come from. The defaults reproduce the
+     look every deck has today, so a deck written before this key
+     renders unchanged and a theme is only ever a different answer to
+     the same ten questions. */
   var TOKENS_DEFAULT={
     c:{accent:'#39a9c0',warm:'#ff6b57',lift:'#f0a848',
-       calm:'#46a892',ink:'#ffffff',quiet:'#8aa0b0'},
+       calm:'#46a892',ink:'#ffffff',quiet:'#8aa0b0',
+       page:'#0b141d',surface:'#16273a',heading:'#ffffff',line:'#8aa0b0'},
     rad:4,      /* px, the corner of a drawn box */
     gap:3       /* % of the page, the rhythm the arrange verbs use */
   };
@@ -2239,7 +2245,8 @@
   var STYLE_FIELDS=['b','i','font','color','align','lh','pspace',
     'head','bg','bdc'];
   var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
-    calm:'Calm',ink:'Ink',quiet:'Quiet'};
+    calm:'Calm',ink:'Ink',quiet:'Quiet',
+    page:'Page',surface:'Box',heading:'Heading',line:'Edge'};
   function tokens(){
     var t=(pres&&pres.tokens)||{};
     var out={c:{},rad:TOKENS_DEFAULT.rad,gap:TOKENS_DEFAULT.gap};
@@ -2253,6 +2260,13 @@
   }
   function tokRef(v){
     return (typeof v==='string'&&v.charAt(0)==='@')?v.slice(1):'';
+  }
+  /* T315: resolve against a given palette -- a theme card has to be
+     painted with the theme's OWN colours, not the deck's current ones */
+  function tokValIn(v,c){
+    var k=tokRef(v);
+    if(!k) return v;
+    return (c&&c[k])||TOKENS_DEFAULT.c[k]||'#39a9c0';
   }
   /* THE one resolver. Identity for anything that is not a reference. */
   function tokVal(v){
@@ -2542,6 +2556,153 @@
        h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
        caption:{size:1.25,i:1,color:'#8aa0b0'}}}
   ];
+  /* ---- T315: COLOUR THEMES ---------------------------------------
+     (2026-09-06, user: "there should be themes that you can create, and
+     that already exists, that apply to all texts, e.g. one that is
+     called business that has something like slate grey background on
+     all text boxes, and like a deep blue heading ... Colour themes to
+     go throughout, and for each individual item".)
+
+     A SECOND AXIS beside the style sets, not a seventh set. A set is the
+     TYPE -- sizes, weights, faces -- and every one of the six is colour
+     neutral. A theme is the COLOUR: a palette of the ten deck tokens,
+     plus which token each built-in style wears for its ink, its ground
+     and its edge. The two are independent on purpose: Editorial type
+     under Business colours is a real choice, and N sets times M themes
+     as one list would not be.
+
+     A theme never writes a literal into a style. Every colour a style
+     says is '@name', and the palette says what the name means -- so
+     applying a second theme re-resolves every box, and a variation
+     (which keeps only its own delta, T292) survives and re-resolves too.
+     Built-in themes name ALL ten tokens and all seven built-in styles,
+     so "a theme means what it says" needs no zero-fill list. */
+  var COLOUR_THEMES=[
+    {id:'business',label:'Business',
+     note:'Slate boxes, deep-blue headings, a light page.',
+     page:'@page',
+     tokens:{c:{page:'#eef1f4',surface:'#d9dee5',heading:'#1c3d6e',
+       ink:'#1f2933',accent:'#2f6db5',line:'#b9c2cc',quiet:'#5f6f80',
+       warm:'#c0392b',lift:'#d98e04',calm:'#2e8b6f'}},
+     styles:{
+       title:{color:'@heading',bg:'@surface',bdc:'@line'},
+       h1:{color:'@heading',bg:'@surface',bdc:'@line'},
+       h2:{color:'@heading',bg:'@surface',bdc:'@line'},
+       h3:{color:'@heading',bg:'@surface',bdc:'@line'},
+       body:{color:'@ink',bg:'@surface',bdc:'@line'},
+       small:{color:'@ink',bg:'@surface',bdc:'@line'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}},
+    {id:'exciting',label:'Exciting',
+     note:'A dark page, hot headings, nothing boxed in.',
+     page:'@page',
+     tokens:{c:{page:'#120a1f',surface:'#1f1233',heading:'#ff6b57',
+       ink:'#f6f0ff',accent:'#ffb347',line:'#5a3d8a',quiet:'#b39ddb',
+       warm:'#ff4d6d',lift:'#ffd166',calm:'#4dd0e1'}},
+     styles:{
+       title:{color:'@heading',bg:'none',bdc:'none'},
+       h1:{color:'@heading',bg:'none',bdc:'none'},
+       h2:{color:'@accent',bg:'none',bdc:'none'},
+       h3:{color:'@accent',bg:'none',bdc:'none'},
+       body:{color:'@ink',bg:'none',bdc:'none'},
+       small:{color:'@ink',bg:'none',bdc:'none'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}},
+    {id:'paper',label:'Paper',
+     note:'Near-white page, near-black ink, one quiet accent.',
+     page:'@page',
+     tokens:{c:{page:'#fbfaf6',surface:'#f1efe8',heading:'#1a1a1a',
+       ink:'#2b2b2b',accent:'#8a5a2b',line:'#d8d3c6',quiet:'#7a7468',
+       warm:'#b5473a',lift:'#c98a2a',calm:'#4f7f6a'}},
+     styles:{
+       title:{color:'@heading',bg:'none',bdc:'none'},
+       h1:{color:'@heading',bg:'none',bdc:'none'},
+       h2:{color:'@heading',bg:'none',bdc:'none'},
+       h3:{color:'@accent',bg:'none',bdc:'none'},
+       body:{color:'@ink',bg:'none',bdc:'none'},
+       small:{color:'@ink',bg:'none',bdc:'none'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}},
+    {id:'midnight',label:'Midnight',
+     note:'The built-in dark page, with boxed body text.',
+     page:'@page',
+     tokens:{c:{page:'#0b141d',surface:'#16273a',heading:'#ffffff',
+       ink:'#e6eef5',accent:'#39a9c0',line:'#2c4257',quiet:'#8aa0b0',
+       warm:'#ff6b57',lift:'#f0a848',calm:'#46a892'}},
+     styles:{
+       title:{color:'@heading',bg:'none',bdc:'none'},
+       h1:{color:'@heading',bg:'none',bdc:'none'},
+       h2:{color:'@accent',bg:'none',bdc:'none'},
+       h3:{color:'@accent',bg:'none',bdc:'none'},
+       body:{color:'@ink',bg:'@surface',bdc:'@line'},
+       small:{color:'@ink',bg:'@surface',bdc:'@line'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}}
+  ];
+  var THEMEKEY='jv-deck-colours:';
+  function myColourThemes(){
+    try{
+      var l=JSON.parse(lsGet(THEMEKEY+SCOPE)||'[]');
+      return Array.isArray(l)?l:[];
+    }catch(e){return [];}
+  }
+  function saveMyColourThemes(list){
+    lsSet(THEMEKEY+SCOPE,JSON.stringify(list));
+  }
+  function allColourThemes(){
+    return COLOUR_THEMES.concat(myColourThemes());
+  }
+  function colourThemeById(id){
+    var hit=null;
+    allColourThemes().forEach(function(t){if(t&&t.id===id) hit=t;});
+    return hit;
+  }
+  /* the palette a theme resolves against: its own over the defaults,
+     so a saved theme that named eight tokens still answers all ten */
+  function themePalette(t){
+    var c={};
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){c[k]=TOKENS_DEFAULT.c[k];});
+    if(t&&t.tokens&&t.tokens.c)
+      Object.keys(t.tokens.c).forEach(function(k){
+        if(t.tokens.c[k]) c[k]=t.tokens.c[k];});
+    return c;
+  }
+  /* apply a theme: the palette REPLACES (a colour the theme does not
+     name is the built-in one, not whatever the last theme left), the
+     colour fields of every ROOT style are written or cleared, a
+     variation keeps its own delta, and every wearer is re-stamped. The
+     type -- size, weight, face -- is not touched: that is the set's. */
+  function applyColourTheme(id){
+    var t=colourThemeById(id); if(!t) return 0;
+    pres.tokens=deep(t.tokens||{});
+    var st=deckStyles();
+    styleOrder().forEach(function(k){
+      if(parentOf(k)) return;
+      var src=(t.styles||{})[k];
+      var rec=st[k]||(st[k]={});
+      if(STYLE_DEFAULTS[k]&&!rec.label) rec.label=STYLE_DEFAULTS[k].label;
+      ['color','bg','bdc'].forEach(function(p){
+        if(src&&src[p]) rec[p]=src[p]; else delete rec[p];});
+    });
+    if(t.page) pres.pageBg=t.page; else delete pres.pageBg;
+    if(typeof applyPageBg==='function') applyPageBg();
+    return restyleAll(null);
+  }
+  /* a theme of your own: the RESOLVED palette, so every name is present
+     even on a deck that only ever changed one, and the colour fields of
+     each root style as they stand */
+  function saveColourTheme(nm){
+    var st={};
+    styleOrder().forEach(function(id){
+      if(parentOf(id)) return;
+      var d=styleDef(id); if(!d) return;
+      var o={};
+      ['color','bg','bdc'].forEach(function(p){if(d[p]) o[p]=d[p];});
+      if(Object.keys(o).length) st[id]=o;
+    });
+    var t={id:'ct'+Date.now().toString(36),label:nm,
+      note:'Saved from \u201c'+(pres.name||'a deck')+'\u201d.',
+      page:pres.pageBg||'',tokens:{c:tokens().c,rad:tokens().rad,
+      gap:tokens().gap},styles:st};
+    var list=myColourThemes();list.push(t);saveMyColourThemes(list);
+    return t;
+  }
   /* sets you saved yourself live in localStorage rather than on the deck:
      the whole point of naming a look is using it on the NEXT presentation
      too, and anything on `pres` travels with one file only. */

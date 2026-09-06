@@ -6898,6 +6898,33 @@ option. Then where has the ability to refresh all images gone?"
   `tokens:deep(tokens())` on a saved set, and bg/bdc in stdMatchesStyle
   and stdAdopt.
 
+- [x] **T315 - colour themes: a palette for the whole deck, beside the
+  type.**
+  The user (2026-09-06): "there should be themes that you can create, and
+  that already exists, that apply to all texts, e.g. one that is called
+  business that has something like slate grey background on all text
+  boxes, and like a deep blue heading ... Colour themes to go throughout,
+  and for each individual item."
+  *Done 2026-09-06.* A SECOND AXIS beside the style sets, not a seventh
+  set: a set is the type and every one of the six is colour neutral; a
+  theme is a palette of the deck tokens plus which token each built-in
+  style wears for its ink, ground and edge. Four tokens joined the six
+  (page, box, heading, edge) with defaults that reproduce today's look,
+  so an old deck renders unchanged. A theme never writes a literal into a
+  style -- every colour it says is '@name' -- so applying another theme
+  re-resolves every box, and a variation keeps its own delta and
+  re-resolves too. Four built-ins (Business, Exciting, Paper, Midnight),
+  each naming every token and every style, each checked for contrast
+  from the resolved hexes; `saveColourTheme` keeps the resolved palette
+  so a theme of your own means the same thing on the next deck.
+  The door: a Style sets button on the Text tab's row (the gallery used
+  to hide as the first row of the Text styles menu), a Colour themes band
+  in the gallery with cards painted from each theme's OWN palette, a
+  Save-these-colours button, and a Style sets button on the Design
+  screen. *Verified live:* the button sits at h26 on its row; applying
+  Business turned the page #eef1f4, boxed both text boxes in #d9dee5 with
+  a #b9c2cc edge under #1c3d6e headings, and Ctrl+Z put the page back.
+
 ## Group 14 - the 2026-09-06 list
 
 The user's own backlog, filed verbatim (their number, their difficulty),

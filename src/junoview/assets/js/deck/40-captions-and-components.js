@@ -1159,6 +1159,72 @@
       });
       return c;
     }
+    /* T315: A THEME CARD -- five chips from the theme's OWN palette
+       (page, box, heading, ink, accent), so a colour is chosen by
+       looking, and painted with tokValIn rather than tokVal because
+       the deck's current palette is exactly what it is not. */
+    function themeCard(t){
+      var c=document.createElement('button');
+      c.className='ss-card ss-theme';c.type='button';
+      var pal=themePalette(t);
+      var h=document.createElement('div');h.className='ss-name';
+      h.textContent=t.label;
+      if(t.mine){
+        var chip=document.createElement('span');
+        chip.className='ss-mine';chip.textContent='yours';
+        h.appendChild(chip);
+      }
+      c.appendChild(h);
+      var sw=document.createElement('div');sw.className='ss-chips';
+      sw.style.background=pal.page;
+      ['surface','heading','ink','accent','quiet'].forEach(function(k){
+        var s=document.createElement('span');
+        s.className='ss-chip';s.style.background=pal[k];
+        s.title=(TOKEN_LABELS[k]||k)+' '+pal[k];
+        sw.appendChild(s);
+      });
+      /* one specimen line in the theme's heading and body colours,
+         on the theme's page, over the theme's box */
+      var spec=document.createElement('div');spec.className='ss-tspec';
+      spec.style.background=pal.page;
+      var hd=(t.styles||{}).h1||{},bd=(t.styles||{}).body||{};
+      var l1=document.createElement('div');l1.textContent='A heading';
+      l1.style.color=tokValIn(hd.color||'@heading',pal);
+      l1.style.fontWeight='700';
+      if(hd.bg&&hd.bg!=='none'){l1.style.background=tokValIn(hd.bg,pal);
+        l1.style.padding='1px 6px';l1.style.borderRadius='4px';}
+      var l2=document.createElement('div');l2.textContent='Body text';
+      l2.style.color=tokValIn(bd.color||'@ink',pal);
+      if(bd.bg&&bd.bg!=='none'){l2.style.background=tokValIn(bd.bg,pal);
+        l2.style.padding='1px 6px';l2.style.borderRadius='4px';}
+      spec.appendChild(l1);spec.appendChild(l2);
+      c.appendChild(sw);c.appendChild(spec);
+      var note=document.createElement('div');
+      note.className='ss-note';note.textContent=t.note||'';
+      c.appendChild(note);
+      if(t.mine){
+        var x=document.createElement('span');
+        x.className='ss-del';x.innerHTML=bic('exit');
+        x.title='Forget this theme';
+        x.addEventListener('click',function(e){
+          e.stopPropagation();
+          saveMyColourThemes(myColourThemes().filter(function(m){
+            return m.id!==t.id;}));
+          build();
+        });
+        c.appendChild(x);
+      }
+      c.addEventListener('click',function(){
+        var n=applyColourTheme(t.id);
+        markDirty();refresh();build();
+        toast('\u201c'+t.label+'\u201d colours applied'
+          +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
+            +'undoes it.':' \u2014 the page and the deck\u2019s colours '
+            +'changed; nothing here wears a named style yet, so pick a '
+            +'style set above to recolour the text too.'),6000);
+      });
+      return c;
+    }
     function build(){
       var g=$('#ss-grid'); if(!g) return;
       g.innerHTML='';
@@ -1166,6 +1232,13 @@
       myStyleSets().forEach(function(t){
         var m=deep(t);m.mine=1;
         g.appendChild(card(m));});
+      var cg=$('#ss-cgrid');
+      if(cg){
+        cg.innerHTML='';
+        COLOUR_THEMES.forEach(function(t){cg.appendChild(themeCard(t));});
+        myColourThemes().forEach(function(t){
+          var m=deep(t);m.mine=1;cg.appendChild(themeCard(m));});
+      }
       var w=$('#ss-what'),n=unstyledCount();
       if(w) w.textContent=n
         ? (n+' text box'+(n===1?'':'es')+' on this deck wear no named '
@@ -1213,6 +1286,25 @@
       build();
       toast('“'+nm+'” saved — it is offered on every deck you open here');
     });
+    var cs=$('#ss-csave');
+    if(cs) cs.addEventListener('click',function(e){
+      e.stopPropagation();
+      var nm=prompt('Call this colour theme:','My colours');
+      if(nm==null) return;
+      nm=nm.trim(); if(!nm) return;
+      saveColourTheme(nm);
+      build();
+      toast('\u201c'+nm+'\u201d saved \u2014 it is offered on every deck '
+        +'you open here');
+    });
+    /* T315: THE DOOR ON THE ROW. The gallery was reachable only as the
+       first row of the Text styles menu -- a look you pick once, hidden
+       behind a menu you open to tune one style (the standing
+       complaint). One button, words and an icon, in the group that
+       already owns the deck's type. */
+    var rb=$('#dsg-sets');
+    if(rb) rb.addEventListener('click',function(e){
+      e.stopPropagation();open();});
     window.SemDeckStyleSets=open;
   })();
   /* ---- ONE SLIDE'S LAYOUT, GIVEN TO SEVERAL ----------------------------

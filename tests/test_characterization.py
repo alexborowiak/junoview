@@ -1362,8 +1362,45 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # door: styleFromBox for the two promote gestures, specimenGround on
 # every specimen, STYLE_FIELDS in applyStyleSet's spell-out, tokens
 # in a saved set, and the standardiser compares the ground.
-EXPECTED_MD5 = "4780e6dd1bdd88c80c476ac6af7736e8"
-EXPECTED_BYTES = 3708569
+# 2026-09-05/06, T297-T315. A placed figure captures its own pixels
+# own pixels -- embedCapture/embedIfAbsent, from all four gestures
+# that give a frame a ref -- and the capture persists (embSaveSoon);
+# cloneBody and cellFacets read that kept copy BEFORE the open card
+# unless the ref is marked live (refIsLive/setRefLive, pres.live);
+# and the Images rows grow a source line -- figure number, refresh,
+# the live-link switch and the git commit -- with .img-acts/
+# .img-act/.img-num beside .img-from. embStore keeps the copy it
+# replaces (EMBPREV) and embRestore hands it back, offered by a
+# toastUndo from both the row Refresh and the deck-wide update.
+# cloneBody takes a `fromLive` flag so the staleness comparison,
+# the capture it feeds and a chart re-reading its table still ask
+# the NOTEBOOK rather than the frame. T303-T305 then carry the
+# kept-copy rule to every surface that missed it: paneImgSrc (so
+# the strip, overview, outline and history match the slide), the
+# code facet via frameCode, figFonts, frameSnaps; pres.live joins
+# histState/histRestore, deck_schema and plainIfSingle; and
+# defaultPres captures the deck nobody placed. T306-T307 then fix
+# the source verbs per kind: figOrder stops memoising an empty
+# answer, provRefs gives a flip book all its pages, and a chart
+# refreshes through chartResyncOne rather than snapshotting its
+# source table. T308 widens imgSurvey to all four kinds (flip
+# pages and charts were invisible) and gives a picture three
+# states -- link / file / kept -- so the address-src picture,
+# the only real sym link in the app, stops being labelled
+# pasted-and-unreadable. T309 records the notebook's path on the
+# figure (noteSource -> a.nbpath, per flip frame) so the row can
+# show where it came from once the tab is shut. T310 puts a joined
+# run on the one rule that says how tall a ribbon button is: a
+# fixed-30px .rbn-cell had been stretching its segments to 29px
+# beside 26px neighbours. T314 makes a style's bg/bdc reach every
+# door: styleFromBox for the two promote gestures, specimenGround on
+# every specimen, STYLE_FIELDS in applyStyleSet's spell-out, tokens
+# in a saved set, and the standardiser compares the ground. T315 adds
+# COLOUR_THEMES beside STYLE_SETS (four more tokens, tokValIn,
+# applyColourTheme, saveColourTheme), a Colours band and #ss-csave in
+# the gallery, and a #dsg-sets ribbon button in every layout.
+EXPECTED_MD5 = "e6fe93414c0928231da933fd766c2cd8"
+EXPECTED_BYTES = 3722070
 
 
 def _render_example() -> str:

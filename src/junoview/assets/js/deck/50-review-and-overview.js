@@ -2945,6 +2945,10 @@
     ov.innerHTML='<div class="dh-head">'
       +'<span class="dh-t">Design of “'+esc(pres.name||'this deck')
       +'”</span><span class="deck-spring"></span>'
+      /* T315: the screen whose job is "what is the standard" had no
+         way to pick one */
+      +'<button class="dbtn" id="dg-sets">'+bic('styles')
+      +' Style sets\u2026</button>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
       +' Fix mismatched text</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'

@@ -1945,7 +1945,10 @@ def test_design_tokens_have_a_permanent_design_door(out):
     # what the things are; since T208 it is the Palette, and its tooltip
     # says what a named colour is ("what does colours and spacing do?")
     assert '<svg class="bic"' in tokens and "Deck colours &#9662;" in tokens
-    assert "The six colours this deck shares" in tokens
+    # T315: ten now -- page, box, heading and edge joined the six so a
+    # colour theme can say where each comes from; the count left the
+    # sentence rather than being kept true by hand
+    assert "The colours this deck shares" in tokens
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out

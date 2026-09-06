@@ -860,7 +860,7 @@
     recentColors().forEach(function(s){
       if(out.length>=6||seen[s]) return;
       seen[s]=1;out.push(s);});
-    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+    Object.keys(tokens().c).forEach(function(k){
       var ref='@'+k;
       if(out.length>=6||seen[ref]) return;
       seen[ref]=1;out.push(ref);});

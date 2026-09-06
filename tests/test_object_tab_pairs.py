@@ -111,7 +111,10 @@ def test_the_palette_door_says_what_a_named_colour_is():
     btn = html[i:html.index("</button>", i)]
     # T215: a door with a chevron like Background, named for what it holds
     assert "Deck colours &#9662;" in btn
-    assert "The six colours this deck shares" in btn
+    # T315: ten now -- page, box, heading and edge joined the six so a
+    # colour theme can say where each comes from; the count left the
+    # sentence rather than being kept true by hand
+    assert "The colours this deck shares" in btn
     assert "every box wearing it changes too" in btn
     js = assets.deck_js()
     # on the overlay stack, so Escape and an outside click close it

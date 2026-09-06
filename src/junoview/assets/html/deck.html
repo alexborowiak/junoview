@@ -715,6 +715,13 @@
                    because it is not type (colours, radius, spacing);
                    Standardise stays out because it is a CHECK, and the
                    button the user went looking for (T87). -->
+              <!-- T315: the whole look, one click from the row. The
+                   gallery of style sets and colour themes used to hide
+                   as the first row of the Text styles menu. -->
+              <button class="dbtn rbn-sm" id="dsg-sets"
+                title="Ready-made looks for the whole deck: style sets
+ (type) and colour themes (a palette for page, boxes, headings and
+ ink), and any you saved"><i data-ic="styles"></i> Style sets&#8230;</button>
               <span class="sh-drop" id="dsg-stylewrap">
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
@@ -750,7 +757,7 @@
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
                 aria-haspopup="true" aria-expanded="false"
-                title="The six colours this deck shares. Any box can wear one
+                title="The colours this deck shares. Any box can wear one
  (the Deck row at the top of its colour menu); change a colour here and
  every box wearing it changes too"
                 ><i data-ic="palette"></i> Deck colours &#9662;</button>
@@ -2956,7 +2963,14 @@
         ><i data-ic="exit"></i></button>
     </div>
     <div class="aa-what" id="ss-what"></div>
+    <div class="ss-band">Type</div>
     <div class="ss-grid" id="ss-grid"></div>
+    <!-- T315: colour is the other axis. A set is type, a theme is a
+         palette plus which colour each style wears; the two are chosen
+         independently, so Editorial type under Business colours is one
+         click each rather than a card that does not exist. -->
+    <div class="ss-band">Colour themes</div>
+    <div class="ss-grid" id="ss-cgrid"></div>
     <div class="aa-foot">
       <!-- the switch that makes this work on a deck that has never used a
            named style: name the boxes by what they already look like
@@ -2965,6 +2979,8 @@
         <input type="checkbox" id="ss-auto" checked>
         Name the text that has no style yet, from its size</label>
       <span class="deck-spring"></span>
+      <button class="dbtn" id="ss-csave">Save this deck&#8217;s colours as a
+        theme&#8230;</button>
       <button class="dbtn" id="ss-save">Save this deck&#8217;s type as a
         set&#8230;</button>
       <button class="dbtn" id="ss-cancel">Close</button>
