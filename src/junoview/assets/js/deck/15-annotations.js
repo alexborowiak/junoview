@@ -651,6 +651,18 @@
              standing rule is that a plain click advances -- that is
              the gesture a talk runs on -- so this claims the object
              itself and nothing else, exactly as tapzoom does. */
+          /* T321: A CLIP CLAIMS ITS OWN CLICKS. With controls showing
+             the element handles them; without, a click toggles play.
+             Either way the talk does not advance under a film. */
+          var mvc=e.target.closest&&e.target.closest('.an-video');
+          if(mvc){
+            e.stopPropagation();
+            var me=mvc.querySelector('.an-mediael');
+            if(me&&!me.controls){
+              if(me.paused) me.play().catch(function(){}); else me.pause();
+            }
+            return;
+          }
           var lk=e.target.closest&&e.target.closest('.an-linked');
           if(lk&&followLink(lk)){e.stopPropagation();return;}
           if(spotEl){closeSpot();return;}

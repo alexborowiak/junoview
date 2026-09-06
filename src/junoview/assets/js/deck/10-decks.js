@@ -409,6 +409,10 @@
       });
       embSaveSoon();
     }
+    /* T321: the clips ride the same rule as `emb` -- absorbed into the
+       session store and IndexedDB on the way in, never kept on `out` */
+    if(p.media&&typeof p.media==='object'&&typeof mediaAbsorb==='function')
+      mediaAbsorb(p);
     return out;
   }
   function registerShell(stem,data){
@@ -621,10 +625,16 @@
        read is in flight. */
     histSeed();
     var d=loadDraft(name);
-    if(d){pres=d;source='draft';histReset();return;}
-    var s=savedByName(name);
-    if(s){pres=normPres(deep(s));source='saved';histReset();return;}
-    pres=defaultPres();source='auto';histReset();
+    if(d){pres=d;source='draft';}
+    else {
+      var s=savedByName(name);
+      if(s){pres=normPres(deep(s));source='saved';}
+      else {pres=defaultPres();source='auto';}
+    }
+    histReset();
+    /* T321: the deck's clips into the session cache, so a save made
+       before any of its slides was looked at still carries them */
+    if(typeof mediaWarm==='function') mediaWarm(pres);
   }
   /* which presentation the page opens with. Called from THE BOOT
      SEQUENCE at the end of the file — never from here: loadPresentation

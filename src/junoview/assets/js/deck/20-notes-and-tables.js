@@ -2488,6 +2488,29 @@
                 +'Hold Shift to stretch it'));
             im.appendChild(mkRotate());}}
         layer.appendChild(im);
+      } else if(a.k==='video'){
+        /* T321: a clip. The element plays from a blob: URL minted from
+           the deck's own store; inside a print root (a standalone
+           export) the bytes go inline so the file plays anywhere. */
+        var mv=document.createElement('div');
+        mv.className='an-item an-video'+(a.audio?' an-audio':'')
+          +(selAnnot===i?' sel':'');
+        var apv=anchorPos(a,a.w,a.h);
+        mv.style.left=apv.x+'%';mv.style.top=apv.y+'%';
+        mv.style.width=(a.w||40)+'%';mv.style.height=(a.h||22)+'%';
+        applyCommon(mv,a);
+        mv.setAttribute('data-idx',i);
+        var inlineSrc=!!(layer.closest&&layer.closest('#print-root'));
+        mv.appendChild(mediaElement(a,i,editing,inlineSrc));
+        if(editing){
+          var chip=document.createElement('div');
+          chip.className='an-mediachip';
+          chip.textContent=(a.audio?'\u266a ':'\u25b6 ')+mediaLabel(a);
+          mv.appendChild(chip);
+          mv.appendChild(mkResize('Drag to resize the clip'));
+          mv.appendChild(mkRotate());
+        }
+        layer.appendChild(mv);
       } else if(a.k==='flip'){
         var fr=flipFrames(a),at=flipAtNow(s,a),fdef=fr[at]||null;
         var fl=document.createElement('div');

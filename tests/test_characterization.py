@@ -1484,7 +1484,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (Business, Exciting, Accent, Quiet, By section) as dashed rows under
 # each heading family in the Text styles menu, minted lazily as
 # variations on first click.
-# 2026-09-05/06, T297-T320. A placed figure captures its own pixels
+# 2026-09-05/06, T297-T321. A placed figure captures its own pixels
 # own pixels -- embedCapture/embedIfAbsent, from all four gestures
 # that give a frame a ref -- and the capture persists (embSaveSoon);
 # cloneBody and cellFacets read that kept copy BEFORE the open card
@@ -1536,8 +1536,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors, booted from THE BOOT SEQUENCE) turns it into slides, and
 # the File menu, the launcher's New menu, the window drop, the Open
 # dialog and the web loader each grow a .pptx door.
-EXPECTED_MD5 = "7710dff000653ab88cf713dfc11da875"
-EXPECTED_BYTES = 3765290
+EXPECTED_MD5 = "56982a4b0d061b6110f3eeba246bc7d5"
+EXPECTED_BYTES = 3799382
 
 
 def _render_example() -> str:

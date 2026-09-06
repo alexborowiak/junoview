@@ -281,6 +281,15 @@ def as_presentations(obj: Any) -> list:
                    and isinstance(v.get("html"), str) and v["html"]}
             if emb:
                 entry["emb"] = emb
+        # the clips (T321): the same contract as emb -- written by the
+        # editor at save time, shape-checked here, never rebuilt
+        if isinstance(p.get("media"), dict):
+            media = {k: v for k, v in p["media"].items()
+                     if isinstance(k, str)
+                     and isinstance(v, dict)
+                     and isinstance(v.get("src"), str) and v["src"]}
+            if media:
+                entry["media"] = media
         out.append(entry)
     return out
 

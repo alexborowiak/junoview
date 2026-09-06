@@ -1232,6 +1232,13 @@
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
                 ><i data-ic="image"></i> Image</button>
+              <!-- T321: a clip is a picture that plays. It is kept in
+                   this browser's store and in every self-contained
+                   save, so the deck plays with no file beside it. -->
+              <button class="dbtn rbn-sm" id="et-media"
+                title="Add a video or audio clip from your computer. It
+ plays in the show, trims in the Clip pane and travels with the deck"
+                ><i data-ic="film"></i> Video / audio</button>
               <button class="dbtn et rbn-sm" id="et-flip" data-tool="flip"
                 aria-pressed="false"
                 title="Draw a flip book: one box holding many figures, with
@@ -1316,6 +1323,8 @@
  It takes a colour, a weight and a line style like any other stroke"
                 ><i data-ic="pen"></i> Draw</button>
               <input type="file" id="img-file" accept="image/*" hidden>
+              <input type="file" id="media-file" accept="video/*,audio/*"
+                hidden>
               <!-- MULTIPLE, unlike the single-image one above it: filling a
                    flip book twelve frames deep one file dialog at a time
                    is how a feature goes unused (2026-08-22) -->
@@ -2106,6 +2115,14 @@
                   >&#9662;</button>
                 <div class="sh-menu" id="fmt-crop-menu" hidden></div>
               </span>
+              <!-- T321: the clip's own window -- trim, poster frame and
+                   the four playback switches -->
+              <span class="sh-drop" id="fmt-mediawrap" hidden>
+                <button class="dbtn etm" id="fmt-media"
+                  title="Trim the clip, pick its poster frame, and choose
+ whether it shows controls, plays on arrival, loops or is muted"
+                  ><i data-ic="film"></i> Clip options</button>
+              </span>
               <button class="dbtn etm" id="fmt-caption" hidden
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
@@ -2451,6 +2468,49 @@
            of an A0. Same shell as Layers and Where-this-came-from; the
            fields copy Notes & timing, which is the one pane in the app
            that already does typed numbers properly (T65). -->
+      <!-- T321: THE CLIP PANE. A preview you can scrub, so "start
+           here" and "this frame is the poster" are one click each;
+           the numbers beside it for when you know them. -->
+      <aside class="selpane mediapane" id="mediapane" hidden>
+        <div class="selpane-h"><span>Clip</span>
+          <button class="dbtn dc-icon" id="mediapane-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="selpane-list" id="mediapane-body">
+          <div class="np-lab md-name" id="md-name">&mdash;</div>
+          <video class="md-preview" id="md-preview" controls playsinline
+            preload="metadata"></video>
+          <label class="np-lab" for="md-start">Play from (seconds)</label>
+          <div class="np-row"><input id="md-start" class="np-goal"
+            type="number" min="0" step="0.1" placeholder="0">
+            <button class="dbtn" id="md-start-now"
+              title="Use where the preview is paused">Now</button></div>
+          <label class="np-lab" for="md-end">Stop at (seconds)</label>
+          <div class="np-row"><input id="md-end" class="np-goal"
+            type="number" min="0" step="0.1" placeholder="end">
+            <button class="dbtn" id="md-end-now"
+              title="Use where the preview is paused">Now</button></div>
+          <div class="np-lab">Poster frame</div>
+          <div class="np-row md-btns">
+            <button class="dbtn" id="md-poster-now"
+              title="The frame the preview is paused on becomes the still
+ the clip shows before it plays"><i data-ic="image"></i> This frame</button>
+            <button class="dbtn" id="md-poster-file"
+              title="A picture from your computer as the poster"
+              ><i data-ic="open"></i> From a picture&#8230;</button>
+            <input type="file" id="md-poster-input" accept="image/*" hidden>
+          </div>
+          <label class="np-lab md-check"><input type="checkbox" id="md-ctrl">
+            Show playback controls</label>
+          <label class="np-lab md-check"><input type="checkbox" id="md-auto">
+            Play when it arrives</label>
+          <label class="np-lab md-check"><input type="checkbox" id="md-loop">
+            Loop</label>
+          <label class="np-lab md-check"><input type="checkbox" id="md-mute">
+            Muted</label>
+          <div class="np-lab md-info" id="md-info"></div>
+        </div>
+      </aside>
       <aside class="selpane sizepane" id="sizepane" hidden>
         <div class="selpane-h"><span>Size &amp; position</span>
           <button class="dbtn dc-icon" id="sizepane-close"

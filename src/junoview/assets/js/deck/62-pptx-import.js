@@ -143,6 +143,16 @@
       else if(it.fill){a.fill=1;a.fillc=it.fill;}
       st=PPT_DASH[it.dash];
       if(st&&st!=='solid') a.style=st;
+    } else if(it.t==='video'){
+      /* T321: the bytes ride on `src` until pptxSettleImages moves them
+         into the media store and leaves a vkey behind */
+      if(!it.src) return null;
+      a={k:'video',x:it.x,y:it.y,w:it.w,h:it.h,src:it.src,
+        mime:it.mime||'',poster:it.poster||''};
+      if(it.audio) a.audio=1;
+      if(!it.name&&it.clipName)
+        a.name=String(it.clipName).replace(/\.[A-Za-z0-9]+$/,'');
+      if(it.alt) a.alt=String(it.alt);
     } else if(it.t==='image'){
       if(!it.src) return null;
       a={k:'image',x:it.x,y:it.y,w:it.w,h:it.h,src:it.src};
@@ -254,6 +264,21 @@
     var jobs=[];
     (pr.slides||[]).forEach(function(sl){
       (sl.annots||[]).forEach(function(a){
+        if(a&&a.k==='video'&&a.src){
+          /* T321: into the store, off the item; the probe fills in what
+             the .pptx did not say (length, and a poster if none came) */
+          var key=mediaKeyNew(),vsrc=a.src,kind=a.audio?'audio':'video';
+          mediaPut(key,{src:vsrc,mime:String(a.mime||''),
+            name:String(a.name||'')});
+          a.vkey=key;delete a.src;delete a.mime;
+          jobs.push(mediaProbe(vsrc,kind).then(function(info){
+            if(info.dur) a.dur=Math.round(info.dur*100)/100;
+            if(!a.poster&&info.poster) a.poster=info.poster;
+          }).catch(function(){}));
+          if(a.poster) jobs.push(shrinkDataUrl(a.poster).then(function(sm){
+            if(sm) a.poster=sm;}).catch(function(){}));
+          return;
+        }
         if(!a||a.k!=='image'||!a.src) return;
         var full=a.src;
         jobs.push(shrinkDataUrl(full).then(function(small){

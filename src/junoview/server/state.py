@@ -163,18 +163,26 @@ def _keep_embedded(old: list, new: list) -> list:
     def key(p):
         return p.get("name") if isinstance(p, dict) else None
 
-    held = {}
+    # T321: the clips (`media`) ride the same rule. A lean autosave omits
+    # them for the same reason it omits `emb`, and losing a video because
+    # you typed a word is the same failure one key over.
+    held: dict = {}
     for p in old or []:
         k = key(p)
-        if k and isinstance(p.get("emb"), dict) and p["emb"]:
-            held[k] = p["emb"]
+        if not k:
+            continue
+        for f in ("emb", "media"):
+            if isinstance(p.get(f), dict) and p[f]:
+                held.setdefault(k, {})[f] = p[f]
     if not held:
         return new
     out = []
     for p in new or []:
         k = key(p)
-        if isinstance(p, dict) and k in held and "emb" not in p:
-            p = {**p, "emb": held[k]}
+        if isinstance(p, dict) and k in held:
+            add = {f: v for f, v in held[k].items() if f not in p}
+            if add:
+                p = {**p, **add}
         out.append(p)
     return out
 

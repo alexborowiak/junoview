@@ -7032,7 +7032,27 @@ first. Ticked in the commit that ships each.
   links http/https/mailto only. Found and fixed in passing: the web
   build's `sr.web_parse_b64` (T113's .xlsx door) was never reachable
   through the package's lazy loader.
-- [ ] **T321 (list 2, H) Native video and audio** with trimming, poster frames, playback controls, offline copies and export support.
+- [x] **T321 (list 2, H) Native video and audio** with trimming, poster frames, playback controls, offline copies and export support.
+  Done 2026-09-06. A `video` item (`vkey`, `poster`, `dur`, `trim`,
+  `audio`, `ctrl`/`auto`/`loop`/`mute`) whose bytes never sit in `pres`:
+  they live under `vkey` in the picture-original IndexedDB store (MEDIA
+  is the session cache) and ride into every self-contained save as
+  `p.media`, absorbed back into the store by normPres -- the `emb`
+  contract one key over, and the server's `_keep_embedded` carries it
+  across lean autosaves. `49-media.js`: Insert > Video / audio (and a
+  drop on the slide), an off-screen probe for length, frame size and a
+  first poster, a blob: URL per clip for playback, trim enforced by the
+  element's own clock, a mid-slide rebuild resuming where the clip was,
+  a click on a clip never advancing the talk, and the Clip pane on the
+  Object tab (a scrubbable preview, Play from / Stop at with "Now"
+  buttons, poster from the paused frame or a picture, the four
+  switches). Exports: pptx.js writes PowerPoint's own media shape
+  (videoFile/audioFile + p14:media + ppaction://media, the poster as the
+  blip; an audio clip on a generated tile), the T320 reader brings it
+  back (round-trip tested), the standalone HTML gets the bytes inline
+  and plays, and PDF shows the poster. Not done, recorded: a clip is not
+  removed from IndexedDB when its last item is deleted; the deliberate
+  Save rewrites every clip each time (the same as `emb`).
 - [ ] **T322 (list 3, H) Advanced chart editor**: stacked charts, secondary axes, log axes, error bars, confidence bands, labels, trend lines, per-series editing.
 - [ ] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".
 - [ ] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.

@@ -934,6 +934,7 @@
        slide that is actually on screen. */
     setTimeout(autoArm,0);
     selAnnot=null;selSet=[];   /* never carry a selection across slides */
+    mediaForget();             /* the next slide's clips start afresh (T321) */
     /* MEASURE BEFORE THE REBUILD. renderSlide empties the stage, so the
        outgoing geometry has to be taken here or it is gone (T27). */
     captureFlip(prev);

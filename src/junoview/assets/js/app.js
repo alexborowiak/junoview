@@ -6760,6 +6760,14 @@
         imgs.forEach(function(f){if(APP.deckDropImage(f)) took++;});
         if(took) return;
       }
+      /* T321: a video or audio file dropped on a slide lands on it */
+      var clips=files.filter(function(f){
+        return /^(video|audio)\//.test(f.type||'');});
+      if(clips.length&&APP.deckDropMedia){
+        var tookM=0;
+        clips.forEach(function(f){if(APP.deckDropMedia(f)) tookM++;});
+        if(tookM) return;
+      }
       /* T320: a PowerPoint deck dropped anywhere imports, either mode */
       files.filter(function(f){return isPptxPath(f.name);})
         .forEach(function(f){

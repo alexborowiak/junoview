@@ -2127,6 +2127,7 @@
        user: "also be able to rename layers") */
     if(a.name) return a.name;
     if(a.k==='image') return 'Image';
+    if(a.k==='video') return mediaLabel(a);
     if(a.k==='flip'){
       var nf=flipFrames(a).length;
       return 'Flip book \u2014 '+(nf?(nf+' figure'+(nf===1?'':'s')):'empty');
@@ -2153,7 +2154,7 @@
      enumerates sibling selectors again, so a new pane cannot fork the
      list a tenth time. */
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
-    'imgpane',
+    'imgpane','mediapane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
@@ -3060,7 +3061,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'imgpane',
+   'imgpane','mediapane',
    'stdpane','tidypane','objhist','provpane','flippane','sizepane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){

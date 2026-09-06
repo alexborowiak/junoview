@@ -76,6 +76,15 @@ _MAGIC = {
     "image/bmp": [b"BM"],
 }
 _METAFILES = (".emf", ".wmf")
+#: The clips a browser can play (T321). wmv/avi/wma are PowerPoint's own
+#: and no browser has them; they are named in the report instead.
+_CLIP_MIME = {
+    ".mp4": "video/mp4", ".m4v": "video/mp4", ".webm": "video/webm",
+    ".mov": "video/quicktime", ".ogv": "video/ogg", ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4", ".wav": "audio/wav", ".ogg": "audio/ogg",
+    ".oga": "audio/ogg", ".weba": "audio/webm", ".aac": "audio/aac",
+    ".flac": "audio/flac",
+}
 
 #: OOXML preset geometry -> the editor's shape id. Anything else arrives
 #: as a rectangle and is named in the loss report.
@@ -169,8 +178,14 @@ _LOST_TEXT = {
               "left out",
     "picbad": "{n} picture{s} whose bytes are not the format they claim "
               "— left out",
-    "media": "{n} video or audio clip{s} — the poster frame arrives "
-             "as a picture; the clip itself does not",
+    "media": "{n} video or audio clip{s} whose file is missing from the "
+             "deck — the poster frame arrives as a picture; the clip does "
+             "not",
+    "medialink": "{n} video or audio clip{s} linked to a file outside "
+                 "the deck — the poster frame arrives as a picture; the "
+                 "clip does not",
+    "mediafmt": "{n} clip{s} in a format no browser plays ({kinds}) — the "
+                "poster frame arrives as a picture; the clip does not",
     "chartkind": "{n} chart{s} of a kind this cannot read ({kinds}) — "
                  "left out; save {it} as a picture in PowerPoint and "
                  "place that",
@@ -1183,9 +1198,13 @@ class _SlideReader:
         if box is None:
             return
         nvpr = el.find("./p:nvPicPr/p:nvPr", NS)
-        if nvpr is not None and (nvpr.find("a:videoFile", NS) is not None
-                                 or nvpr.find("a:audioFile", NS) is not None):
-            self.lost.add("media")
+        clip = None
+        if nvpr is not None:
+            vf = nvpr.find("a:videoFile", NS)
+            af = nvpr.find("a:audioFile", NS)
+            mel = vf if vf is not None else af
+            if mel is not None:
+                clip = self._clip(mel, af is not None)
         blip = el.find("./p:blipFill/a:blip", NS)
         if blip is None:
             return
@@ -1195,10 +1214,17 @@ class _SlideReader:
                 self.lost.add("piclink")
             return
         src = self._media(rid)
-        if not src:
+        if not src and not clip:
             return
         item: dict[str, Any] = dict(box)
-        item.update({"t": "image", "src": src})
+        if clip:
+            # T321: a clip the browser can play travels whole -- its
+            # bytes, its poster and which of the two it is
+            item.update({"t": "video", "src": clip["src"],
+                         "mime": clip["mime"], "poster": src,
+                         "audio": clip["audio"], "clipName": clip["name"]})
+        else:
+            item.update({"t": "image", "src": src})
         cnv = el.find("./p:nvPicPr/p:cNvPr", NS)
         if cnv is not None and cnv.get("descr"):
             item["alt"] = cnv.get("descr")
@@ -1212,6 +1238,44 @@ class _SlideReader:
         if am is not None:
             item["op"] = round(_int(am.get("amt"), 100000) / 100000, 3)
         self._push(el, item)
+
+    def _clip(self, el: ET.Element, audio: bool) -> dict | None:
+        """The bytes of a video or audio clip (T321), or None with the
+        reason counted. Held to the containers a browser plays, checked
+        by their heads where they have one."""
+        rid = el.get(f"{{{_R}}}link") or el.get(f"{{{_R}}}embed")
+        rel = self.pkg.rels(self.part).get(rid or "")
+        if not rel:
+            self.lost.add("media")
+            return None
+        typ, tgt, ext = rel
+        if ext or not self.pkg.has(tgt):
+            self.lost.add("medialink")
+            return None
+        suffix = posixpath.splitext(tgt)[1].lower()
+        mime = _CLIP_MIME.get(suffix)
+        if not mime:
+            self.lost.add("mediafmt", suffix.lstrip(".") or "unknown")
+            return None
+        data = self.pkg.read(tgt)
+        ok = True
+        if suffix in (".mp4", ".m4v", ".m4a"):
+            ok = data[4:8] == b"ftyp"
+        elif suffix in (".webm", ".weba"):
+            ok = data.startswith(b"\x1a\x45\xdf\xa3")
+        elif suffix == ".wav":
+            ok = data.startswith(b"RIFF")
+        elif suffix in (".ogg", ".oga", ".ogv"):
+            ok = data.startswith(b"OggS")
+        elif suffix == ".mp3":
+            ok = data.startswith(b"ID3") or data[:1] == b"\xff"
+        if not ok:
+            self.lost.add("mediafmt", suffix.lstrip("."))
+            return None
+        return {"src": f"data:{mime};base64,"
+                       + base64.b64encode(data).decode("ascii"),
+                "mime": mime, "audio": audio,
+                "name": posixpath.basename(tgt)}
 
     def _media(self, rid: str) -> str:
         rel = self.pkg.rels(self.part).get(rid)

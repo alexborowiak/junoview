@@ -232,6 +232,11 @@ window.JunoPptx = (function () {
     }
     var ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg',
       'image/gif': 'gif', 'image/svg+xml': 'svg', 'image/webp': 'webp',
+      /* clips (T321): the suffix PowerPoint expects for each container */
+      'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov',
+      'video/ogg': 'ogv', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a',
+      'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/ogg': 'ogg',
+      'audio/webm': 'weba', 'audio/aac': 'aac', 'audio/flac': 'flac',
     }[mime] || 'png';
     return { ext: ext, mime: mime, bytes: bytes };
   }
@@ -468,6 +473,31 @@ window.JunoPptx = (function () {
       + '<p:spPr>' + xfrm(geo, page)
       + '<a:prstGeom prst="' + geom + '"><a:avLst/></a:prstGeom>'
       + '</p:spPr></p:pic>';
+  }
+
+  /* A VIDEO OR AUDIO CLIP (T321): PowerPoint's own media picture. The
+     poster frame is the blip everyone sees; the clip rides in ppt/media
+     and is named TWICE -- once as the 2006 videoFile/audioFile link every
+     reader understands, once as the 2010 p14:media embed PowerPoint
+     itself writes, which is the half that makes it PLAY in PowerPoint
+     2010 and later. The ppaction://media click is what PowerPoint puts
+     on its own media shapes, so a click in the show plays it. */
+  var P14_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
+  function mediaShape(item, id, rids, page) {
+    var tag = item.audio ? 'audioFile' : 'videoFile';
+    return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
+      + esc(item.name || ((item.audio ? 'Audio ' : 'Video ') + id)) + '"'
+      + descrAttr(item) + '>'
+      + '<a:hlinkClick r:id="" action="ppaction://media"/></p:cNvPr>'
+      + '<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>'
+      + '<p:nvPr><a:' + tag + ' r:link="' + rids.link + '"/>'
+      + '<p:extLst><p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}">'
+      + '<p14:media xmlns:p14="' + P14_NS + '" r:embed="' + rids.media
+      + '"/></p:ext></p:extLst></p:nvPr></p:nvPicPr>'
+      + '<p:blipFill><a:blip r:embed="' + rids.poster + '"/>'
+      + '<a:stretch><a:fillRect/></a:stretch></p:blipFill>'
+      + '<p:spPr>' + xfrm(item, page)
+      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
   }
 
   /* declared below picShape, which reads it: `var` hoists and
@@ -977,6 +1007,29 @@ window.JunoPptx = (function () {
           rels.push({ id: rid, type: DOC_NS + '/relationships/image',
             target: '../media/' + name });
           body += picShape(item, id, rid, page);
+        } else if (item.t === 'video') {
+          /* the clip AND its poster are both media parts; three rels
+             name them (T321). No poster means no shape PowerPoint can
+             draw, so the item is counted rather than half-written. */
+          var clip = dataUri(item.src), post = dataUri(item.poster);
+          if (!clip || !post) { skipped++; return; }
+          var mname = 'media' + (media.length + 1) + '.' + clip.ext;
+          media.push({ name: mname, mime: clip.mime, bytes: clip.bytes });
+          extensions[clip.ext] = clip.mime;
+          var pname = 'image' + (media.length + 1) + '.' + post.ext;
+          media.push({ name: pname, mime: post.mime, bytes: post.bytes });
+          extensions[post.ext] = post.mime;
+          var base = rels.length;
+          var rids = { link: 'rId' + (base + 1), media: 'rId' + (base + 2),
+            poster: 'rId' + (base + 3) };
+          rels.push({ id: rids.link, type: DOC_NS + '/relationships/'
+            + (item.audio ? 'audio' : 'video'), target: '../media/' + mname });
+          rels.push({ id: rids.media,
+            type: 'http://schemas.microsoft.com/office/2007/relationships/media',
+            target: '../media/' + mname });
+          rels.push({ id: rids.poster, type: DOC_NS + '/relationships/image',
+            target: '../media/' + pname });
+          body += mediaShape(item, id, rids, page);
         } else if (item.t === 'table') {
           var tbl = tableShape(item, id, page);
           if (tbl) body += tbl; else skipped++;

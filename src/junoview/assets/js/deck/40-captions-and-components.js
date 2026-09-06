@@ -53,7 +53,7 @@
      numbering three different ways. */
   function isFigure(a){
     if(!a) return false;
-    if(a.k==='image'||a.k==='flip') return true;
+    if(a.k==='image'||a.k==='flip'||a.k==='video') return true;
     return a.k==='cell'&&partOf(a)==='figure';
   }
   function tieCaption(figIdx,capIdx){

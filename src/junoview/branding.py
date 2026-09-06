@@ -161,6 +161,10 @@ _ICON_PATHS = {
     "image": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
              '<circle cx="5.7" cy="6.4" r="1.1"/>'
              '<path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/>',
+    # a strip of film with a play mark: video and audio (T321)
+    "film": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
+            '<path d="M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14'
+            'M11.4 10H14"/><path d="M7 6.3v3.4L9.7 8Z"/>',
     "layouts": '<rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/>'
                '<rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/>'
                '<rect x="2" y="8.8" width="12" height="4.6" rx=".8"/>',

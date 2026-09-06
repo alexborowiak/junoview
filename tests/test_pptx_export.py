@@ -184,7 +184,7 @@ def test_anchored_boxes_export_at_their_page_position(out):
     """
     assert ("var PPTX_DIMS={text:[34,8],image:[30,24],rect:[20,14],"
             "draw:[10,10],") in out
-    assert "table:[40,20],flip:[40,32],cell:[30,24]};" in out
+    assert "table:[40,20],flip:[40,32],cell:[30,24],video:[40,22]};" in out
     assert "function pptxBox(a,centred){" in out
     assert "var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);" in out
     items = out[out.index("function pptxItems(s,note,ink,layer){"):

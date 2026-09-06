@@ -37,6 +37,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `cuts` | dict | {id: {name}}. Named subsets of one deck — a 45-minute version and a 5-minute one in the same file. Membership is the slide's `cuts` list. |
 | `live` | dict | `{ref: 1}` for figures the author made LIVE LINKS: they re-read from the notebook every time the deck opens, instead of showing the copy kept in `emb`. Absence means kept. |
 | `emb` | dict | The deck's own copy of every placed card, so it shows its figures with no notebook and no network. |
+| `media` | dict | The deck's own copy of every video or audio clip placed on it — `{key: {src, mime, name}}` — so a saved deck plays with no file beside it. |
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |
 | `folder` | str | The folder the deck is filed under in the rail. |
 | `foot` | dict | Running footer. |
@@ -122,6 +123,7 @@ optional and defaulted.
 | `draw` | `x`, `y` | A freehand stroke: a box plus points normalised inside it. |
 | `flip` | `x`, `y` | A flip book: several figures stepped through in place. |
 | `image` | `x`, `y` | A placed picture, carried as a data URI. |
+| `video` | `x`, `y` | A video or audio clip. `vkey` names its bytes in the deck's `media` store; `poster` is the still shown before it plays; `trim` `{s, e}` the seconds it plays between; `audio` 1 for a sound-only clip; `ctrl`, `auto`, `loop`, `mute` are its playback switches. It exports as a real PowerPoint media shape. |
 | `rect` | `x`, `y` | A drawn shape; `shape` picks which one. |
 | `table` | `x`, `y` | Rows of plain strings, not HTML. |
 | `chart` | `x`, `y` | A native chart: `ct` (bar/line/scatter/pie), `cats`, and `series` [{name, ys, color}] carry the numbers; `ref` links it to the table card it was born from. It exports as a real PowerPoint chart. |

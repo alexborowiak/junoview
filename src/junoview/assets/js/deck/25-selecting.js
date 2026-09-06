@@ -24,6 +24,7 @@
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
     '#fmt-shapewrap':'rect',
     '#fmt-cropwrap':'image cell',
+    '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
     '#fmt-figures':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
@@ -118,6 +119,7 @@
        24-snapshot history walks during a slider preview, and this does
        no walking (T65). */
     if(typeof sizePaneSync==='function') sizePaneSync();
+    if(typeof mediaPaneSync==='function') mediaPaneSync();
     var hp=$('#objhist');
     var pp=$('#provpane');
     var histOpen=!!hp&&!hp.hidden,provOpen=!!pp&&!pp.hidden;

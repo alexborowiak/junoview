@@ -372,6 +372,9 @@
         });
       });
       if(Object.keys(emb).length) p.emb=emb;
+      /* T321: the clips, from the session store -- the one copy a
+         self-contained save can be made from */
+      if(typeof mediaEmbed==='function') mediaEmbed(p);
     });
     /* how much rode along, for the save messages: embedding is automatic
        and was therefore INVISIBLE — with nothing ever saying the figures
@@ -1605,7 +1608,7 @@
      so the default is resolved HERE — baking a plain '#ffffff' would put
      white text on a white poster, the exact bug the live view already had. */
   var PPTX_DIMS={text:[34,8],image:[30,24],rect:[20,14],draw:[10,10],
-    table:[40,20],flip:[40,32],cell:[30,24]};
+    table:[40,20],flip:[40,32],cell:[30,24],video:[40,22]};
   function pptxBox(a,centred){
     var d=centred?[80,8]:(PPTX_DIMS[a.k]||[0,0]);
     var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);
@@ -1693,6 +1696,16 @@
           /* a path crop has no preset to become, so it is not sent */
           crop:(a.crop&&!a.crop.path)?a.crop:null,
           cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''});
+        else note.skipped++;
+      } else if(a.k==='video'){
+        /* T321: the clip and its poster travel as PowerPoint's own
+           media shape. The bytes were fetched by pptxOriginals; an
+           audio clip has no frame, so it is given a tile to stand on. */
+        var vsrc=note.orig&&note.orig[a.vkey];
+        var vpost=a.poster||(a.audio?mediaTile(a):'');
+        if(vsrc&&vpost) items.push({t:'video',x:box.x,y:box.y,w:box.w,
+          h:box.h,rot:a.rot,op:a.op,src:vsrc,poster:vpost,
+          audio:!!a.audio,name:a.name||'',alt:a.alt});
         else note.skipped++;
       } else if(a.k==='rect'){
         /* `a.fill` is a BOOLEAN — "tint with my own line colour" — so the
@@ -1915,6 +1928,12 @@
         if(!a) return;
         if(a.k==='image') want(a);
         else if(a.k==='flip'&&Array.isArray(a.frames)) a.frames.forEach(want);
+        /* T321: a clip's bytes, keyed by its vkey */
+        else if(a.k==='video'&&a.vkey&&out[a.vkey]===undefined){
+          out[a.vkey]=null;
+          jobs.push(mediaGet(a.vkey).then(function(r){
+            if(r&&r.src) out[a.vkey]=r.src;}));
+        }
       });
     });
     if(!jobs.length) return Promise.resolve(out);

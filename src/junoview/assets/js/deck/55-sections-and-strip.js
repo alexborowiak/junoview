@@ -2551,6 +2551,8 @@
           window.SemDeckTalk.zoom(e.key==='-'?1/1.12:e.key==='0'?0:1.12);
         return;
       }
+      /* T321: the space bar on a focused clip is play/pause, not next */
+      if(tag==='video'||tag==='audio') return;
       if(e.key==='ArrowRight'||e.key==='PageDown'
          ||(e.key===' '&&tag!=='button')){e.preventDefault();advance();}
       else if(e.key==='ArrowLeft'||e.key==='PageUp'){

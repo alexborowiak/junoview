@@ -113,6 +113,10 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                    "file. Membership is the slide's `cuts` list."),
     "emb": (dict, "The deck's own copy of every placed card, so it shows "
                   "its figures with no notebook and no network."),
+    "media": (dict, "{key: {src, mime, name}}. The deck's own copy of "
+                    "every video and audio clip placed on it, so a saved "
+                    "deck plays with no file beside it. Written at save "
+                    "time; absorbed into the browser's store on load."),
     "live": (dict, "{ref: 1} for the figures the author asked to load "
                    "from the notebook every time instead of showing the "
                    "kept copy. Absence means kept, which is what every "
@@ -287,6 +291,12 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                          "by `ref`."),
     "rect": (("x", "y"), "A drawn shape; `shape` picks which one."),
     "image": (("x", "y"), "A placed picture, carried as a data URI."),
+    "video": (("x", "y"), "A video or audio clip. `vkey` names its bytes "
+                          "in the deck's media store, `poster` is the "
+                          "still shown before it plays, `trim` {s, e} the "
+                          "seconds it plays between, `audio` 1 for a "
+                          "sound-only clip; `ctrl`, `auto`, `loop` and "
+                          "`mute` are its playback switches."),
     "arrow": (("x1", "y1", "x2", "y2"),
               "A line or arrow — two endpoints, not a box."),
     "draw": (("x", "y"), "A freehand stroke: a box plus points "
