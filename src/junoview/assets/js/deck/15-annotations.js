@@ -2579,7 +2579,13 @@
          Caption is italic (2026-08-22, caught in the browser). Writing a
          falsy value makes applyStyleTo's `if(d.i) … else delete` clear it,
          so a set means exactly what it says and nothing more. */
-      ['b','i','font','color','lh','pspace'].forEach(function(p){
+      /* T314: the ONE list (STYLE_FIELDS), not a hand-kept six that
+         stopped at pspace. `bg` and `bdc` joined the vocabulary on
+         2026-09-03 and never joined this loop, so a set that said
+         nothing about backgrounds left the previous set's slate boxes
+         standing under its own headings. Zero is safe for every field:
+         applyStyleTo deletes on falsy, and align has no else at all. */
+      STYLE_FIELDS.forEach(function(p){
         if(o[p]===undefined) o[p]=0;});
       next[k]=o;
     });
@@ -2776,6 +2782,39 @@
      bold" as well as "navy".
      Declared here, beside addVariant, because two doors build a
      variation and one of them must not be a second copy of this. */
+  /* T314: WHAT A BOX LOOKS LIKE, said the way a style says it.
+     "Update the style from this box" and "Apply this look to ALL
+     headings" each rebuilt the style by hand from four fields, so
+     promoting a box you had painted slate silently deleted its own
+     background -- the exact gesture a person uses to BUILD a colour
+     look. applyStyleTo maps a style's `bg` onto a.bg/a.bgc; this reads
+     it back through the same mapping, as variantDeltaFrom already did. */
+  function styleFromBox(a){
+    var o={};
+    if(!a) return o;
+    if(a.b) o.b=1;
+    if(a.i) o.i=1;
+    if(a.font) o.font=a.font;
+    if(a.color) o.color=a.color;
+    if(a.align) o.align=a.align;
+    if(a.lh) o.lh=a.lh;
+    if(a.pspace) o.pspace=a.pspace;
+    var bg=(a.bg===0)?'none':(a.bg?(a.bgc||''):'');
+    if(bg) o.bg=bg;
+    if(a.bdc) o.bdc=a.bdc;
+    return o;
+  }
+  /* a specimen is chosen by looking, so a style with a ground shows it
+     -- the gallery card, the menu row, the window row and the design
+     rail all painted colour and face and never the box behind them */
+  function specimenGround(el,d){
+    if(!el||!d) return;
+    if(d.bg&&d.bg!=='none'){
+      el.style.background=tokVal(d.bg);
+      el.style.padding='1px 6px';el.style.borderRadius='4px';
+    }
+    if(d.bdc&&d.bdc!=='none') el.style.border='1px solid '+tokVal(d.bdc);
+  }
   function variantDeltaFrom(a,parentId,want){
     var p=styleDef(parentId)||{},o={};
     function take(k){return !want||want[k];}

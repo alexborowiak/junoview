@@ -6875,3 +6875,75 @@ option. Then where has the ability to refresh all images gone?"
   door it lands as `data:image/png;base64` and the row reads
   "Re-read this picture from logo.png". Changing the file on disk and
   pressing Refresh took the picture from 262 to 154 characters.
+
+- [x] **T314 - a style's background and edge reach every door that reads a
+  style.**
+  The user (2026-09-06): "themes ... that apply to all texts, e.g. one that
+  is called business that has something like slate grey background on all
+  text boxes, and like a deep blue heading".
+  *Done 2026-09-06.* Both halves were already style fields -- `bg` and
+  `bdc` joined STYLE_FIELDS on 2026-09-03, applyStyleTo bakes them and the
+  renderer draws them. What was missing: six consumers written before that
+  day never learned them, so the very gestures a person uses to BUILD a
+  colour look stripped it. "Update the style from this box" and "Apply
+  this look to ALL headings" rebuilt the override by hand from four fields
+  (promoting a hand-painted slate box deleted its own slate);
+  applyStyleSet's spell-out loop was a hand-kept six that stopped at
+  pspace (a set that said nothing about backgrounds left the previous
+  set's boxes standing); every specimen -- gallery card, menu row, window
+  row, design rail -- painted colour and face and never the box behind
+  them; a saved set carried '@accent' without what accent meant; and the
+  standardiser never compared the ground. One read-back (`styleFromBox`),
+  one specimen painter (`specimenGround`), STYLE_FIELDS in the loop,
+  `tokens:deep(tokens())` on a saved set, and bg/bdc in stdMatchesStyle
+  and stdAdopt.
+
+## Group 14 - the 2026-09-06 list
+
+The user's own backlog, filed verbatim (their number, their difficulty),
+after "Once having done those" -- the colour themes (T315), section colour
+(T316), preset heading looks (T317) and slide versions (T318-T319) go
+first. Ticked in the commit that ships each.
+
+- [ ] **T320 (list 1, H) PowerPoint import** preserving editable text, shapes, notes, charts, images and as much animation as possible.
+- [ ] **T321 (list 2, H) Native video and audio** with trimming, poster frames, playback controls, offline copies and export support.
+- [ ] **T322 (list 3, H) Advanced chart editor**: stacked charts, secondary axes, log axes, error bars, confidence bands, labels, trend lines, per-series editing.
+- [ ] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".
+- [ ] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.
+- [ ] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.
+- [ ] **T326 (list 7, M) Equation numbering and cross-references.**
+- [ ] **T327 (list 8, M) Custom font management**: local install, missing-font warnings, fallbacks, export packaging.
+- [ ] **T328 (list 9, M) Visual refresh approval**: old and new figure side by side before a source update is accepted.
+- [ ] **T329 (list 10, L/M) Automatic agenda/contents slides** from sections; editable; updates as the deck changes.
+- [ ] **T330 (list 11, M) Handout export**: 1/2/3/6-up, speaker notes, writing space, section breaks.
+- [ ] **T331 (list 12, L) Command palette** for actions, tools and navigation, not only content search.
+- [ ] **T332 (list 13, M) Glossary and terminology checker**: inconsistent names, unexplained abbreviations, first-use problems.
+- [ ] **T333 (list 14, M) Linked numeric labels**: values, units, rounding and dates that update from source data.
+- [ ] **T334 (list 15, M/H) Slide dependency graph**: which slides, figures and text depend on which cells or notebooks.
+- [ ] **T335 (list 16, M) Return stack for reused slides**: jump back to the place that linked to the current slide.
+- [ ] **T336 (list 17, H) Full interactive audience export**: builds, flipbooks, links, animations, accessibility.
+- [ ] **T337 (list 18, M) Automatic fallback package**: static export plus resume-at-current-slide if the interactive deck fails.
+- [ ] **T338 (list 19, M) Style provenance inspector**: which properties come from family, variation, local override or token.
+- [ ] **T339 (list 20, M) Inline character styles**: emphasis, code, warnings, quotations, inline maths.
+- [ ] **T340 (list 21, M) Named styles for charts, tables, shapes and animations.**
+- [ ] **T341 (list 22, H) Versioned brand packages**: fonts, logos, tokens, components, masters, layouts, migration previews.
+- [ ] **T342 (list 23, H) Responsive constraints and reflow** on page size, aspect ratio or text length change.
+- [ ] **T343 (list 24, H) Scalable components with optional slots** and local overrides that survive updates.
+- [ ] **T344 (list 25, H) True master/layout placeholders** whose geometry and roles inherit live.
+- [ ] **T345 (list 26, M) Optical alignment tools** (perceived, not merely geometric).
+- [ ] **T346 (list 27, M) Plot-aware design diagnostics**: legends, axes, labels, data regions, concrete fixes.
+- [ ] **T347 (list 28, H) Multi-panel scientific figure editor**: panel labels, shared axes, alignment, spacing.
+- [ ] **T348 (list 29, M) Semantic colour registry**: the same entity gets the same colour across charts and slides.
+- [ ] **T349 (list 30, H) Linked chart viewports**: shared zoom, pan, filters, time ranges.
+- [ ] **T350 (list 31, H) Data-anchored callouts** that stay attached to a point, bar, region or threshold.
+- [ ] **T351 (list 32, H) Selective deck regeneration after source changes**, with affected-slide report and accept/skip.
+- [ ] **T352 (list 33, H) Cross-notebook result library**: tags, previews, provenance, search, reuse.
+- [ ] **T353 (list 34, M/H) Animated equation derivations**: substitutions, cancellations, transformations step by step.
+- [ ] **T354 (list 35, M) Code walkthrough mode**: staged line highlighting, output focus, synchronised explanation.
+- [ ] **T355 (list 36, H) Precomputed parameter sliders** driving several linked figures through stored states.
+- [ ] **T356 (list 37, M/H) Audience-level variants**: beginner, specialist and executive explanations of one slide.
+- [ ] **T357 (list 38, H) Claim/evidence graph**: claims, figures, sources, caveats, counterarguments.
+- [ ] **T358 (list 39, M) Argument/story editor**: slide purpose, takeaway, evidence and transition fields.
+- [ ] **T359 (list 40, L/M) Speaker-role and handoff cues** for multi-person talks.
+- [ ] **T360 (list, H) Infinite canvas story map**: the whole argument spatially before presenting it linearly.
+- [ ] **T361 (list 59, H) Result constellation**: figures, notebooks, claims and sources as an explorable map.

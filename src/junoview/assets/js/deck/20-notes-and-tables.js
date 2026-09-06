@@ -633,6 +633,7 @@
         spec.style.fontSize=Math.max(11,Math.min(22,d.size*3.1))+'px';
         if(d.color) spec.style.color=tokVal(d.color);
         if(d.font) spec.style.fontFamily=fontCss(d.font);
+        specimenGround(spec,d);
         row.appendChild(spec);
         var sz=document.createElement('span');sz.className='stm-sz';
         sz.textContent=Math.round(d.size*5.4)+' pt';

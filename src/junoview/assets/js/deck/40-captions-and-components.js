@@ -1126,6 +1126,7 @@
         if(d.font) ln.style.fontFamily=fontCss(d.font);
         if(d.color) ln.style.color=tokVal(d.color);
         if(d.lh) ln.style.lineHeight=d.lh;
+        specimenGround(ln,d);       /* T314: a colour set is chosen by looking */
         spec.appendChild(ln);
       });
       c.appendChild(spec);
@@ -1199,8 +1200,15 @@
         st[id]=o;
       });
       var list=myStyleSets();
+      /* T314: AND THE PALETTE. A style's colour may be '@accent', and a
+         saved set that carried the name without what it meant resolved
+         to the NEXT deck's accent, or the default teal. tokens() is the
+         resolved palette, so every name is present even on a deck that
+         only ever changed one -- and applyStyleSet has honoured a set's
+         tokens since T12, on a branch nothing reached until now. */
       list.push({id:'ss'+Date.now().toString(36),label:nm,
-        note:'Saved from “'+(pres.name||'a deck')+'”.',styles:st});
+        note:'Saved from “'+(pres.name||'a deck')+'”.',styles:st,
+        tokens:deep(tokens())});
       saveMyStyleSets(list);
       build();
       toast('“'+nm+'” saved — it is offered on every deck you open here');

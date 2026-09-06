@@ -51,7 +51,11 @@ def test_a_set_means_what_it_says_and_nothing_more(out):
     clear it.
     """
     body = out.split("function applyStyleSet(id){")[1].split("\n  }")[0]
-    assert "['b','i','font','color','lh','pspace'].forEach(function(p){" in body
+    # T314: the ONE list, not a hand-kept six that stopped at pspace --
+    # bg and bdc joined STYLE_FIELDS on 2026-09-03 and never joined this
+    # loop, so a set that said nothing about backgrounds left the previous
+    # set's boxes standing under its own headings
+    assert "STYLE_FIELDS.forEach(function(p){" in body
     assert "if(o[p]===undefined) o[p]=0;" in body
 
 

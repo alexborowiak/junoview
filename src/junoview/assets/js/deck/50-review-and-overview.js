@@ -2437,6 +2437,15 @@
       ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
       b.appendChild(nm);
       if(chip) b.appendChild(chip);
+      /* T314: the ground, as a second chip -- the name itself is left
+         unpainted here on purpose (see above) */
+      if(d.bg&&d.bg!=='none'){
+        var chipBg=document.createElement('span');
+        chipBg.className='dg-swatch dg-swatch-bg';
+        chipBg.style.background=tokVal(d.bg);
+        chipBg.title='Background '+tokVal(d.bg);
+        b.appendChild(chipBg);
+      }
       b.appendChild(ct);
       var par=isVar?parentOf(id):'';
       b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'

@@ -1092,6 +1092,7 @@
         if(d.font) t.style.fontFamily=d.font;
         t.style.fontSize=Math.max(11,Math.min(21,d.size*3.1))+'px';
         if(d.color) t.style.color=tokVal(d.color);
+        specimenGround(t,d);
         b.appendChild(t);
         var n=document.createElement('span');
         n.className='jv-stylesz';
@@ -1181,10 +1182,9 @@
            custom heading silently stops being one the first time anyone
            updates it from a box (2026-08-22) */
         if(STYLE_DEFAULTS[a3.style].head) d3.head=1;
-        if(a3.b) d3.b=1;
-        if(a3.i) d3.i=1;
-        if(a3.font) d3.font=a3.font;
-        if(a3.color) d3.color=a3.color;
+        /* T314: every look field, through the one read-back */
+        var look3=styleFromBox(a3);
+        Object.keys(look3).forEach(function(k){d3[k]=look3[k];});
         deckStyles()[a3.style]=d3;
         restyleDeck([a3.style]);
         menu.hidden=true;
@@ -1194,8 +1194,9 @@
       var all=document.createElement('button');
       all.className='dbtn vw-opt';
       all.innerHTML=bic('inherit')+' Apply this look to ALL headings';
-      all.title='Push this box\u2019s weight, font and colour to Title '
-        +'and Headings 1\u20133, keeping each one\u2019s own size';
+      all.title='Push this box\u2019s weight, font, colour, background '
+        +'and edge to Title and Headings 1\u20133, keeping each one\u2019s '
+        +'own size';
       all.addEventListener('click',function(e){
         e.stopPropagation();
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
@@ -1212,10 +1213,10 @@
              thing this does not flatten */
           d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;
           d4.label=STYLE_DEFAULTS[id].label;
-          if(a4.b) d4.b=1; else delete d4.b;
-          if(a4.i) d4.i=1; else delete d4.i;
-          if(a4.font) d4.font=a4.font; else delete d4.font;
-          if(a4.color) d4.color=a4.color; else delete d4.color;
+          /* T314: the box's ground and edge travel with its colour */
+          var look4=styleFromBox(a4);
+          ['b','i','font','color','bg','bdc'].forEach(function(k){
+            if(look4[k]!==undefined) d4[k]=look4[k]; else delete d4[k];});
           deckStyles()[id]=d4;
         });
         restyleDeck(headingStyles());

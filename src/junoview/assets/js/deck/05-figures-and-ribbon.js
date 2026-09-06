@@ -524,6 +524,9 @@
     if((a.align||'')!==(d.align||'')) return false;
     if(Math.abs((a.lh||0)-(d.lh||0))>0.02) return false;
     if(Math.abs((a.pspace||0)-(d.pspace||0))>0.02) return false;
+    /* T314: a box that lost its style's background is a mismatch */
+    if(((a.bg===0)?'none':(a.bg?(a.bgc||''):''))!==(d.bg||'')) return false;
+    if((a.bdc||'')!==(d.bdc||'')) return false;
     return true;
   }
   /* T268: what the two values ARE. "2 of 7 differ" told you a count and
@@ -637,8 +640,10 @@
     var id=band.suggest,d=styleDef(id),o={label:d.label,size:band.size};
     if(isHeadingStyle(id)&&BUILTIN_STYLE_IDS.indexOf(id)<0) o.head=1;
     [['b',1],['i',1],['font',''],['color',''],['align',''],
-     ['lh',0],['pspace',0]].forEach(function(pr){
+     ['lh',0],['pspace',0],['bg',''],['bdc','']].forEach(function(pr){
       var m=stdMode(band.boxes,function(p){
+        /* T314: bg is a.bg/a.bgc, read through applyStyleTo's mapping */
+        if(pr[0]==='bg') return (p.a.bg===0)?'none':(p.a.bg?(p.a.bgc||''):'');
         return pr[0]==='color'?stdCol(p.a):(p.a[pr[0]]||pr[1]&&0||'');});
       if(!m) return;
       var v=m.v;
