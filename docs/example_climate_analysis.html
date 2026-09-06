@@ -7204,6 +7204,18 @@ body.light .ar-row:hover,body.light .ar-srow:hover{
    A gallery, not a menu: every card is SET IN the type it offers, because
    a look is chosen by looking (2026-08-22). */
 .ss-box{width:min(880px,95vw);}
+/* T317: a ready-made look reads as an offer, not a thing you already
+   have -- dotted edge, and the note where the point size would be */
+.jv-preset{border-style:dashed;opacity:.92;}
+.jv-preset:hover{opacity:1;}
+/* T315: the two bands of the gallery, and a theme card's palette */
+.ss-band{font-family:var(--sans);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--chrome-ink-3);margin:10px 0 4px;}
+.ss-chips{display:flex;gap:4px;padding:6px;border-radius:6px;margin:6px 0;}
+.ss-chip{flex:1 1 0;height:14px;border-radius:3px;
+  border:1px solid #00000033;}
+.ss-tspec{padding:6px 8px;border-radius:6px;font-family:var(--sans);
+  font-size:12px;line-height:1.5;}
 .ss-grid{display:grid;gap:9px;overflow-y:auto;max-height:62vh;
   grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
   padding:1px;}
@@ -7372,6 +7384,11 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .film-sec-fold{background:none;border:none;color:var(--chrome-ink-2);cursor:pointer;
   font-size:10px;padding:1px 3px;border-radius:4px;flex:none;line-height:1;}
 .film-sec-fold:hover{background:#ffffff14;color:#fff;}
+/* T316: the section's colour, on its divider */
+.film-sec-dot{flex:none;width:10px;height:10px;border-radius:50%;
+  border:1px solid #ffffff55;padding:0;cursor:pointer;}
+.film-sec-dot:hover{transform:scale(1.25);}
+.sw.sw-sec{outline:1px dashed #ffffff66;outline-offset:1px;}
 .film-sec-t{flex:1;min-width:0;font-family:var(--mono);font-size:9.5px;
   letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -12696,6 +12713,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    because it is not type (colours, radius, spacing);
                    Standardise stays out because it is a CHECK, and the
                    button the user went looking for (T87). -->
+              <!-- T315: the whole look, one click from the row. The
+                   gallery of style sets and colour themes used to hide
+                   as the first row of the Text styles menu. -->
+              <button class="dbtn rbn-sm" id="dsg-sets"
+                title="Ready-made looks for the whole deck: style sets
+ (type) and colour themes (a palette for page, boxes, headings and
+ ink), and any you saved"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style sets&#8230;</button>
               <span class="sh-drop" id="dsg-stylewrap">
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
@@ -12731,7 +12755,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
                 aria-haspopup="true" aria-expanded="false"
-                title="The six colours this deck shares. Any box can wear one
+                title="The colours this deck shares. Any box can wear one
  (the Deck row at the top of its colour menu); change a colour here and
  every box wearing it changes too"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Deck colours &#9662;</button>
@@ -14937,7 +14961,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
     </div>
     <div class="aa-what" id="ss-what"></div>
+    <div class="ss-band">Type</div>
     <div class="ss-grid" id="ss-grid"></div>
+    <!-- T315: colour is the other axis. A set is type, a theme is a
+         palette plus which colour each style wears; the two are chosen
+         independently, so Editorial type under Business colours is one
+         click each rather than a card that does not exist. -->
+    <div class="ss-band">Colour themes</div>
+    <div class="ss-grid" id="ss-cgrid"></div>
     <div class="aa-foot">
       <!-- the switch that makes this work on a deck that has never used a
            named style: name the boxes by what they already look like
@@ -14946,6 +14977,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         <input type="checkbox" id="ss-auto" checked>
         Name the text that has no style yet, from its size</label>
       <span class="deck-spring"></span>
+      <button class="dbtn" id="ss-csave">Save this deck&#8217;s colours as a
+        theme&#8230;</button>
       <button class="dbtn" id="ss-save">Save this deck&#8217;s type as a
         set&#8230;</button>
       <button class="dbtn" id="ss-cancel">Close</button>
@@ -26008,6 +26041,9 @@ window.JunoPptx = (function () {
     if((a.align||'')!==(d.align||'')) return false;
     if(Math.abs((a.lh||0)-(d.lh||0))>0.02) return false;
     if(Math.abs((a.pspace||0)-(d.pspace||0))>0.02) return false;
+    /* T314: a box that lost its style's background is a mismatch */
+    if(((a.bg===0)?'none':(a.bg?(a.bgc||''):''))!==(d.bg||'')) return false;
+    if((a.bdc||'')!==(d.bdc||'')) return false;
     return true;
   }
   /* T268: what the two values ARE. "2 of 7 differ" told you a count and
@@ -26121,8 +26157,10 @@ window.JunoPptx = (function () {
     var id=band.suggest,d=styleDef(id),o={label:d.label,size:band.size};
     if(isHeadingStyle(id)&&BUILTIN_STYLE_IDS.indexOf(id)<0) o.head=1;
     [['b',1],['i',1],['font',''],['color',''],['align',''],
-     ['lh',0],['pspace',0]].forEach(function(pr){
+     ['lh',0],['pspace',0],['bg',''],['bdc','']].forEach(function(pr){
       var m=stdMode(band.boxes,function(p){
+        /* T314: bg is a.bg/a.bgc, read through applyStyleTo's mapping */
+        if(pr[0]==='bg') return (p.a.bg===0)?'none':(p.a.bg?(p.a.bgc||''):'');
         return pr[0]==='color'?stdCol(p.a):(p.a[pr[0]]||pr[1]&&0||'');});
       if(!m) return;
       var v=m.v;
@@ -29253,7 +29291,7 @@ window.JunoPptx = (function () {
       {id:'of-setup',label:'Slide setup',tab:'design',
        items:['page-strip-frame','lay-drop','dsg-tidy','bg-drop']},
       {id:'of-type',label:'Type',tab:'design',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'of-view',label:'View',tab:'design',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -29279,7 +29317,7 @@ window.JunoPptx = (function () {
       {id:'dk-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'dk-type',label:'Type styles',tab:'deck',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'dk-view',label:'View',tab:'deck',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -29375,7 +29413,7 @@ window.JunoPptx = (function () {
       {id:'s1-page',label:'Page',tab:'deck',
        items:['page-strip-frame','bg-drop']},
       {id:'s1-type',label:'Type',tab:'deck',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'s1-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
@@ -29394,7 +29432,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','et-image','shape-strip-frame','dc-line','et-table',
          'et-flip','et-arrow','et-cancel']},
       {id:'day-look',label:'Deck look',tab:'start',
-       items:['lay-drop','dsg-tidy','bg-drop','dsg-stylewrap','dsg-tokens']},
+       items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-stylewrap','dsg-tokens']},
       {id:'day-show',label:'Present',tab:'start',
        items:['vw-full','notes-btn']},
       {id:'day-text',label:'Text',tab:'format',
@@ -29444,7 +29482,7 @@ window.JunoPptx = (function () {
       {id:'j3-furniture',label:'Page furniture',tab:'page',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'j3-type',label:'Type',tab:'page',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'j3-guides',label:'Workspace',tab:'page',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
@@ -29504,7 +29542,7 @@ window.JunoPptx = (function () {
          'fmt-parts','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
          'et-table','et-flip','et-arrow','et-cancel']},
       {id:'one-text',label:'Text',tab:'all',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std','fmt-stylewrap-tx','fmt-font',
          'fmt-szwrap','fmt-smaller','fmt-bigger','fmt-bold',
          'fmt-ital','fmt-under','fmt-strike','fmt-eqedit','fmt-mdedit',
@@ -29574,7 +29612,7 @@ window.JunoPptx = (function () {
       {id:'mi-furn',label:'Furniture',tab:'mi-board',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'mi-type',label:'Type',tab:'mi-board',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'mi-view',label:'View',tab:'mi-board',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -29630,7 +29668,7 @@ window.JunoPptx = (function () {
       {id:'tt-page',label:'Page',tab:'tt-more',
        items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'tt-type',label:'Type',tab:'tt-more',
-       items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'tt-anim',label:'Animate',tab:'tt-more',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
@@ -29986,6 +30024,8 @@ window.JunoPptx = (function () {
         /* a section's default arrival, which is what makes T23's
            "section transitions" a real thing rather than a note */
         if(typeof d.trans==='string'&&d.trans) keep[k].trans=d.trans;
+        /* T316: a section's own colour, when the author chose one */
+        if(/^#[0-9a-f]{6}$/i.test(d.color||'')) keep[k].color=d.color;
         anySec=true;
       });
       if(anySec) out.sections=keep;
@@ -30480,9 +30520,11 @@ window.JunoPptx = (function () {
       out=out||{};
       /* the NAME and the arrival are content; whether a section is
          folded is a way of looking at the strip and stays out (T23) */
-      out[k]=(m[k].trans)
-        ?{name:(m[k].name)||'Untitled section',trans:m[k].trans}
-        :((m[k].name)||'Untitled section');
+      if(m[k].trans||m[k].color){
+        out[k]={name:(m[k].name)||'Untitled section'};
+        if(m[k].trans) out[k].trans=m[k].trans;
+        if(m[k].color) out[k].color=m[k].color;   /* T316 */
+      } else out[k]=(m[k].name)||'Untitled section';
     });
     return out;
   }
@@ -30633,9 +30675,10 @@ window.JunoPptx = (function () {
       Object.keys(d.sections).forEach(function(k){
         var v=d.sections[k];
         pres.sections[k]=(v&&typeof v==='object')
-          ?{name:v.name||'Untitled section',trans:v.trans}
+          ?{name:v.name||'Untitled section',trans:v.trans,color:v.color}
           :{name:v};
         if(!pres.sections[k].trans) delete pres.sections[k].trans;
+        if(!pres.sections[k].color) delete pres.sections[k].color;
         if(was[k]&&was[k].fold) pres.sections[k].fold=1;
       });
     } else delete pres.sections;
@@ -34014,9 +34057,15 @@ window.JunoPptx = (function () {
      all: there is one radius and one gap for the whole deck, so they go
      onto the slide as CSS custom properties and every shape picks them
      up without storing anything. */
+  /* T315: FOUR MORE NAMES, so a colour theme can say where the page,
+     a box, a heading and an edge come from. The defaults reproduce the
+     look every deck has today, so a deck written before this key
+     renders unchanged and a theme is only ever a different answer to
+     the same ten questions. */
   var TOKENS_DEFAULT={
     c:{accent:'#39a9c0',warm:'#ff6b57',lift:'#f0a848',
-       calm:'#46a892',ink:'#ffffff',quiet:'#8aa0b0'},
+       calm:'#46a892',ink:'#ffffff',quiet:'#8aa0b0',
+       page:'#0b141d',surface:'#16273a',heading:'#ffffff',line:'#8aa0b0'},
     rad:4,      /* px, the corner of a drawn box */
     gap:3       /* % of the page, the rhythm the arrange verbs use */
   };
@@ -34035,7 +34084,45 @@ window.JunoPptx = (function () {
   var STYLE_FIELDS=['b','i','font','color','align','lh','pspace',
     'head','bg','bdc'];
   var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
-    calm:'Calm',ink:'Ink',quiet:'Quiet'};
+    calm:'Calm',ink:'Ink',quiet:'Quiet',
+    page:'Page',surface:'Box',heading:'Heading',line:'Edge',
+    section:'Section colour'};
+  /* ---- T316: A COLOUR THAT DEPENDS ON THE SECTION -------------------
+     (2026-09-06, user: "some that have different colours per section".)
+
+     '@section' is a reserved reference, not a key of the palette: it
+     is resolved when a slide is PAINTED, from the section that slide is
+     in, so a box holds the reference and never a stamped colour. Move
+     the slide to another section and it repaints; delete a section and
+     the survivors renumber; nothing has to be re-stamped and no
+     membership verb has to remember to. The exporters get a concrete
+     hex through the same tokVal they already call.
+
+     Six hues because the deck already speaks in six -- the chart
+     palette is the dark column, chosen for >= 6.5:1 on the built-in
+     page, and each has a partner for a light page. A seventh section
+     wraps. A section can also be given ITS OWN colour, which wins. */
+  var SECTION_HUES=[['#4fb3d9','#0b6f86'],['#f0a848','#a04a00'],
+    ['#8fd18a','#256d3a'],['#e07a9a','#a8265c'],
+    ['#b39ddb','#5d3aa8'],['#f2d16b','#7a5a00']];
+  /* the slide being painted right now: set by the render funnels and
+     the exporters, read only by the '@section' branch of tokVal */
+  var paintSlide=null;
+  function sectionOrdinal(id){
+    if(!id||typeof sectionRuns!=='function') return -1;
+    var runs=sectionRuns().filter(function(r){return r.id;});
+    for(var i=0;i<runs.length;i++) if(runs[i].id===id) return i;
+    return -1;
+  }
+  function sectionColorFor(sl){
+    var id=sl&&sl.sec; if(!id) return '';
+    var d=(pres&&pres.sections||{})[id];
+    if(d&&/^#[0-9a-f]{6}$/i.test(d.color||'')) return d.color;
+    var k=sectionOrdinal(id); if(k<0) return '';
+    var bg=(sl.bg)||(pres&&pres.pageBg)||'#0b141d';
+    var light=(typeof pageIsLight==='function')?pageIsLight(bg):false;
+    return SECTION_HUES[k%SECTION_HUES.length][light?1:0];
+  }
   function tokens(){
     var t=(pres&&pres.tokens)||{};
     var out={c:{},rad:TOKENS_DEFAULT.rad,gap:TOKENS_DEFAULT.gap};
@@ -34050,10 +34137,23 @@ window.JunoPptx = (function () {
   function tokRef(v){
     return (typeof v==='string'&&v.charAt(0)==='@')?v.slice(1):'';
   }
+  /* T315: resolve against a given palette -- a theme card has to be
+     painted with the theme's OWN colours, not the deck's current ones */
+  function tokValIn(v,c){
+    var k=tokRef(v);
+    if(!k) return v;
+    return (c&&c[k])||TOKENS_DEFAULT.c[k]||'#39a9c0';
+  }
   /* THE one resolver. Identity for anything that is not a reference. */
   function tokVal(v){
     var k=tokRef(v);
     if(!k) return v;
+    /* T316: '' on a slide in no section means "the page's ink" at
+       every `if(a.color) ... tokVal(a.color)` site, which is the
+       honest answer for a heading that asked to follow a section it
+       is not in */
+    if(k==='section')
+      return sectionColorFor(paintSlide||(pres&&pres.slides||[])[cur])||'';
     var c=tokens().c;
     return c[k]||TOKENS_DEFAULT.c[k]||'#39a9c0';
   }
@@ -34157,6 +34257,25 @@ window.JunoPptx = (function () {
           if(isFill) applyFillColor('@'+k); else applyTextColor('@'+k);});
         row.appendChild(b);
       });
+      /* T316: THE DOOR ON THE ROW. One chip that means "whichever
+         colour this slide's section has": a box given it follows the
+         section, and "Update the style from this box" or "New
+         variation of Heading 1" then carries it into a style. Text
+         only -- a fill that changed colour per section is not a thing
+         anyone asked for. */
+      if(!isFill&&pres&&pres.sections&&Object.keys(pres.sections).length){
+        var sb=document.createElement('button');
+        sb.className='sw sw-tok sw-sec';
+        sb.setAttribute('data-c','@section');
+        sb.style.background=tokVal('@section')||'#8aa0b0';
+        sb.title='Section colour \u2014 whichever colour this slide\u2019s '
+          +'section has. Move the slide and it follows.';
+        sb.setAttribute('aria-label','Section colour (deck colour)');
+        sb.addEventListener('mousedown',function(e){
+          if(activeTextEditable()) e.preventDefault();});
+        sb.addEventListener('click',function(){applyTextColor('@section');});
+        row.appendChild(sb);
+      }
     });
   }
   /* the editor for the registry itself */
@@ -34338,6 +34457,207 @@ window.JunoPptx = (function () {
        h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
        caption:{size:1.25,i:1,color:'#8aa0b0'}}}
   ];
+  /* ---- T315: COLOUR THEMES ---------------------------------------
+     (2026-09-06, user: "there should be themes that you can create, and
+     that already exists, that apply to all texts, e.g. one that is
+     called business that has something like slate grey background on
+     all text boxes, and like a deep blue heading ... Colour themes to
+     go throughout, and for each individual item".)
+
+     A SECOND AXIS beside the style sets, not a seventh set. A set is the
+     TYPE -- sizes, weights, faces -- and every one of the six is colour
+     neutral. A theme is the COLOUR: a palette of the ten deck tokens,
+     plus which token each built-in style wears for its ink, its ground
+     and its edge. The two are independent on purpose: Editorial type
+     under Business colours is a real choice, and N sets times M themes
+     as one list would not be.
+
+     A theme never writes a literal into a style. Every colour a style
+     says is '@name', and the palette says what the name means -- so
+     applying a second theme re-resolves every box, and a variation
+     (which keeps only its own delta, T292) survives and re-resolves too.
+     Built-in themes name ALL ten tokens and all seven built-in styles,
+     so "a theme means what it says" needs no zero-fill list. */
+  var COLOUR_THEMES=[
+    {id:'business',label:'Business',
+     note:'Slate boxes, deep-blue headings, a light page.',
+     page:'@page',
+     tokens:{c:{page:'#eef1f4',surface:'#d9dee5',heading:'#1c3d6e',
+       ink:'#1f2933',accent:'#2f6db5',line:'#b9c2cc',quiet:'#5f6f80',
+       warm:'#c0392b',lift:'#d98e04',calm:'#2e8b6f'}},
+     styles:{
+       title:{color:'@heading',bg:'@surface',bdc:'@line'},
+       h1:{color:'@heading',bg:'@surface',bdc:'@line'},
+       h2:{color:'@heading',bg:'@surface',bdc:'@line'},
+       h3:{color:'@heading',bg:'@surface',bdc:'@line'},
+       body:{color:'@ink',bg:'@surface',bdc:'@line'},
+       small:{color:'@ink',bg:'@surface',bdc:'@line'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}},
+    {id:'exciting',label:'Exciting',
+     note:'A dark page, hot headings, nothing boxed in.',
+     page:'@page',
+     tokens:{c:{page:'#120a1f',surface:'#1f1233',heading:'#ff6b57',
+       ink:'#f6f0ff',accent:'#ffb347',line:'#5a3d8a',quiet:'#b39ddb',
+       warm:'#ff4d6d',lift:'#ffd166',calm:'#4dd0e1'}},
+     styles:{
+       title:{color:'@heading',bg:'none',bdc:'none'},
+       h1:{color:'@heading',bg:'none',bdc:'none'},
+       h2:{color:'@accent',bg:'none',bdc:'none'},
+       h3:{color:'@accent',bg:'none',bdc:'none'},
+       body:{color:'@ink',bg:'none',bdc:'none'},
+       small:{color:'@ink',bg:'none',bdc:'none'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}},
+    {id:'paper',label:'Paper',
+     note:'Near-white page, near-black ink, one quiet accent.',
+     page:'@page',
+     tokens:{c:{page:'#fbfaf6',surface:'#f1efe8',heading:'#1a1a1a',
+       ink:'#2b2b2b',accent:'#8a5a2b',line:'#d8d3c6',quiet:'#7a7468',
+       warm:'#b5473a',lift:'#c98a2a',calm:'#4f7f6a'}},
+     styles:{
+       title:{color:'@heading',bg:'none',bdc:'none'},
+       h1:{color:'@heading',bg:'none',bdc:'none'},
+       h2:{color:'@heading',bg:'none',bdc:'none'},
+       h3:{color:'@accent',bg:'none',bdc:'none'},
+       body:{color:'@ink',bg:'none',bdc:'none'},
+       small:{color:'@ink',bg:'none',bdc:'none'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}},
+    {id:'midnight',label:'Midnight',
+     note:'The built-in dark page, with boxed body text.',
+     page:'@page',
+     tokens:{c:{page:'#0b141d',surface:'#16273a',heading:'#ffffff',
+       ink:'#e6eef5',accent:'#39a9c0',line:'#2c4257',quiet:'#8aa0b0',
+       warm:'#ff6b57',lift:'#f0a848',calm:'#46a892'}},
+     styles:{
+       title:{color:'@heading',bg:'none',bdc:'none'},
+       h1:{color:'@heading',bg:'none',bdc:'none'},
+       h2:{color:'@accent',bg:'none',bdc:'none'},
+       h3:{color:'@accent',bg:'none',bdc:'none'},
+       body:{color:'@ink',bg:'@surface',bdc:'@line'},
+       small:{color:'@ink',bg:'@surface',bdc:'@line'},
+       caption:{color:'@quiet',bg:'none',bdc:'none'}}}
+  ];
+  /* ---- T317: READY-MADE LOOKS FOR A HEADING -----------------------
+     (2026-09-06, user: "there should be some that already exist, like
+     'business', 'exciting', or something like that idk, and some that
+     have different colours per section".)
+
+     A preset is a VARIATION that does not exist until it is asked for.
+     Each row in the Text styles menu names a delta; the first click
+     mints the variation (addVariant, T292) with exactly that delta and
+     stamps the box; from then on it is an ordinary variation -- it has
+     a rail row and a swatch chip in the Style system, it follows its
+     parent for everything the delta does not say, and deleting it is
+     the same as deleting any other. Nothing is added to a deck that
+     never clicks.
+
+     Every colour is a '@name' reference, so a preset resolves against
+     whatever colour theme the deck wears (T315) rather than fixing a
+     hex -- "Business" under Paper colours is Paper's heading and box,
+     not a slate that ignores the theme. */
+  var PRESET_LOOKS=[
+    {id:'business',label:'Business',
+     note:'boxed, in the heading colour',
+     delta:{color:'@heading',bg:'@surface',bdc:'@line'}},
+    {id:'exciting',label:'Exciting',
+     note:'the warm colour, unboxed',
+     delta:{color:'@warm',bg:'none',bdc:'none'}},
+    {id:'accent',label:'Accent',
+     note:'the accent colour',
+     delta:{color:'@accent'}},
+    {id:'quiet',label:'Quiet',
+     note:'the quiet colour, not bold',
+     delta:{color:'@quiet',b:0}},
+    {id:'by-section',label:'By section',
+     note:'takes its section\u2019s colour',
+     delta:{color:'@section'}}
+  ];
+  /* the variation this preset already made under this parent, if any:
+     by (parent, label), which is what the user sees and what makes a
+     second click on the same row a no-op rather than a second copy */
+  function presetVariantOf(base,look){
+    var hit=null;
+    variantsOf(base).forEach(function(v){
+      var d=styleDef(v);
+      if(d&&d.label===look.label) hit=v;
+    });
+    return hit;
+  }
+  function ensurePresetLook(base,look){
+    var have=presetVariantOf(base,look);
+    if(have) return have;
+    var v=addVariant(look.label,base);
+    if(!v) return null;
+    deckStyles()[v.id]=deep(look.delta);
+    return v.id;
+  }
+  var THEMEKEY='jv-deck-colours:';
+  function myColourThemes(){
+    try{
+      var l=JSON.parse(lsGet(THEMEKEY+SCOPE)||'[]');
+      return Array.isArray(l)?l:[];
+    }catch(e){return [];}
+  }
+  function saveMyColourThemes(list){
+    lsSet(THEMEKEY+SCOPE,JSON.stringify(list));
+  }
+  function allColourThemes(){
+    return COLOUR_THEMES.concat(myColourThemes());
+  }
+  function colourThemeById(id){
+    var hit=null;
+    allColourThemes().forEach(function(t){if(t&&t.id===id) hit=t;});
+    return hit;
+  }
+  /* the palette a theme resolves against: its own over the defaults,
+     so a saved theme that named eight tokens still answers all ten */
+  function themePalette(t){
+    var c={};
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){c[k]=TOKENS_DEFAULT.c[k];});
+    if(t&&t.tokens&&t.tokens.c)
+      Object.keys(t.tokens.c).forEach(function(k){
+        if(t.tokens.c[k]) c[k]=t.tokens.c[k];});
+    return c;
+  }
+  /* apply a theme: the palette REPLACES (a colour the theme does not
+     name is the built-in one, not whatever the last theme left), the
+     colour fields of every ROOT style are written or cleared, a
+     variation keeps its own delta, and every wearer is re-stamped. The
+     type -- size, weight, face -- is not touched: that is the set's. */
+  function applyColourTheme(id){
+    var t=colourThemeById(id); if(!t) return 0;
+    pres.tokens=deep(t.tokens||{});
+    var st=deckStyles();
+    styleOrder().forEach(function(k){
+      if(parentOf(k)) return;
+      var src=(t.styles||{})[k];
+      var rec=st[k]||(st[k]={});
+      if(STYLE_DEFAULTS[k]&&!rec.label) rec.label=STYLE_DEFAULTS[k].label;
+      ['color','bg','bdc'].forEach(function(p){
+        if(src&&src[p]) rec[p]=src[p]; else delete rec[p];});
+    });
+    if(t.page) pres.pageBg=t.page; else delete pres.pageBg;
+    if(typeof applyPageBg==='function') applyPageBg();
+    return restyleAll(null);
+  }
+  /* a theme of your own: the RESOLVED palette, so every name is present
+     even on a deck that only ever changed one, and the colour fields of
+     each root style as they stand */
+  function saveColourTheme(nm){
+    var st={};
+    styleOrder().forEach(function(id){
+      if(parentOf(id)) return;
+      var d=styleDef(id); if(!d) return;
+      var o={};
+      ['color','bg','bdc'].forEach(function(p){if(d[p]) o[p]=d[p];});
+      if(Object.keys(o).length) st[id]=o;
+    });
+    var t={id:'ct'+Date.now().toString(36),label:nm,
+      note:'Saved from \u201c'+(pres.name||'a deck')+'\u201d.',
+      page:pres.pageBg||'',tokens:{c:tokens().c,rad:tokens().rad,
+      gap:tokens().gap},styles:st};
+    var list=myColourThemes();list.push(t);saveMyColourThemes(list);
+    return t;
+  }
   /* sets you saved yourself live in localStorage rather than on the deck:
      the whole point of naming a look is using it on the NEXT presentation
      too, and anything on `pres` travels with one file only. */
@@ -34375,7 +34695,13 @@ window.JunoPptx = (function () {
          Caption is italic (2026-08-22, caught in the browser). Writing a
          falsy value makes applyStyleTo's `if(d.i) … else delete` clear it,
          so a set means exactly what it says and nothing more. */
-      ['b','i','font','color','lh','pspace'].forEach(function(p){
+      /* T314: the ONE list (STYLE_FIELDS), not a hand-kept six that
+         stopped at pspace. `bg` and `bdc` joined the vocabulary on
+         2026-09-03 and never joined this loop, so a set that said
+         nothing about backgrounds left the previous set's slate boxes
+         standing under its own headings. Zero is safe for every field:
+         applyStyleTo deletes on falsy, and align has no else at all. */
+      STYLE_FIELDS.forEach(function(p){
         if(o[p]===undefined) o[p]=0;});
       next[k]=o;
     });
@@ -34572,6 +34898,39 @@ window.JunoPptx = (function () {
      bold" as well as "navy".
      Declared here, beside addVariant, because two doors build a
      variation and one of them must not be a second copy of this. */
+  /* T314: WHAT A BOX LOOKS LIKE, said the way a style says it.
+     "Update the style from this box" and "Apply this look to ALL
+     headings" each rebuilt the style by hand from four fields, so
+     promoting a box you had painted slate silently deleted its own
+     background -- the exact gesture a person uses to BUILD a colour
+     look. applyStyleTo maps a style's `bg` onto a.bg/a.bgc; this reads
+     it back through the same mapping, as variantDeltaFrom already did. */
+  function styleFromBox(a){
+    var o={};
+    if(!a) return o;
+    if(a.b) o.b=1;
+    if(a.i) o.i=1;
+    if(a.font) o.font=a.font;
+    if(a.color) o.color=a.color;
+    if(a.align) o.align=a.align;
+    if(a.lh) o.lh=a.lh;
+    if(a.pspace) o.pspace=a.pspace;
+    var bg=(a.bg===0)?'none':(a.bg?(a.bgc||''):'');
+    if(bg) o.bg=bg;
+    if(a.bdc) o.bdc=a.bdc;
+    return o;
+  }
+  /* a specimen is chosen by looking, so a style with a ground shows it
+     -- the gallery card, the menu row, the window row and the design
+     rail all painted colour and face and never the box behind them */
+  function specimenGround(el,d){
+    if(!el||!d) return;
+    if(d.bg&&d.bg!=='none'){
+      el.style.background=tokVal(d.bg);
+      el.style.padding='1px 6px';el.style.borderRadius='4px';
+    }
+    if(d.bdc&&d.bdc!=='none') el.style.border='1px solid '+tokVal(d.bdc);
+  }
   function variantDeltaFrom(a,parentId,want){
     var p=styleDef(parentId)||{},o={};
     function take(k){return !want||want[k];}
@@ -36134,6 +36493,7 @@ window.JunoPptx = (function () {
         spec.style.fontSize=Math.max(11,Math.min(22,d.size*3.1))+'px';
         if(d.color) spec.style.color=tokVal(d.color);
         if(d.font) spec.style.fontFamily=fontCss(d.font);
+        specimenGround(spec,d);
         row.appendChild(spec);
         var sz=document.createElement('span');sz.className='stm-sz';
         sz.textContent=Math.round(d.size*5.4)+' pt';
@@ -37430,6 +37790,9 @@ window.JunoPptx = (function () {
        OBJECT LOOKED LIKE. Idempotent, and it re-mints a duplicate, so
        no copy site has to remember to strip one. */
     ensureOids(s);
+    /* T316: which slide '@section' resolves against. A master-synth
+       slide is not in pres.slides and must not clobber the wearer's. */
+    if(s&&(pres.slides||[]).indexOf(s)>=0) paintSlide=s;
     var editing=(mode==='edit');
     /* removing a focused node fires no blur in Chrome or Firefox, so
        without this every rebuild — a slide change, a notebook refresh,
@@ -42349,7 +42712,7 @@ window.JunoPptx = (function () {
     recentColors().forEach(function(s){
       if(out.length>=6||seen[s]) return;
       seen[s]=1;out.push(s);});
-    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+    Object.keys(tokens().c).forEach(function(k){
       var ref='@'+k;
       if(out.length>=6||seen[ref]) return;
       seen[ref]=1;out.push(ref);});
@@ -42581,6 +42944,7 @@ window.JunoPptx = (function () {
         if(d.font) t.style.fontFamily=d.font;
         t.style.fontSize=Math.max(11,Math.min(21,d.size*3.1))+'px';
         if(d.color) t.style.color=tokVal(d.color);
+        specimenGround(t,d);
         b.appendChild(t);
         var n=document.createElement('span');
         n.className='jv-stylesz';
@@ -42599,6 +42963,52 @@ window.JunoPptx = (function () {
          because styleOrder appends -- with nothing saying what it was a
          variation OF. Each parent is followed by its own variations,
          indented, and the flat list is what is left over. */
+      /* T317: THE READY-MADE ONES, drawn as specimens in the colours
+         they would resolve to on THIS deck, under the heading they
+         would vary. A preset that has already been made is not
+         offered twice -- its variation is listed above like any
+         other. */
+      function presetRows(base){
+        PRESET_LOOKS.forEach(function(look){
+          if(presetVariantOf(base,look)) return;
+          if(look.id==='by-section'
+             &&!(pres.sections&&Object.keys(pres.sections).length)) return;
+          var b=document.createElement('button');
+          b.className='dbtn vw-opt jv-styleopt jv-stylevar jv-preset';
+          var t=document.createElement('span');
+          t.className='jv-stylename';
+          t.textContent=look.label;
+          var d=styleDef(base)||{},dd=look.delta;
+          t.style.fontWeight=(dd.b===0?0:(dd.b||d.b))?'700':'400';
+          if(d.i) t.style.fontStyle='italic';
+          if(d.font) t.style.fontFamily=d.font;
+          t.style.fontSize=Math.max(11,Math.min(21,(d.size||2.6)*3.1))+'px';
+          var col=tokVal(dd.color||d.color||'');
+          if(col) t.style.color=col;
+          specimenGround(t,{bg:dd.bg,bdc:dd.bdc});
+          b.appendChild(t);
+          var n=document.createElement('span');
+          n.className='jv-stylesz';n.textContent=look.note;
+          b.appendChild(n);
+          b.title='Make \u201c'+look.label+'\u201d a variation of '
+            +(d.label||base)+' and give it to the selected box. It keeps '
+            +'following '+(d.label||base)+' for everything else.';
+          b.addEventListener('click',function(e){
+            e.stopPropagation();
+            var vid=ensurePresetLook(base,look);
+            if(!vid){toast('Could not make that variation');return;}
+            var n2=0;
+            fmtApply(function(x){
+              if(x.k==='text'){applyStyleTo(x,vid);n2++;}});
+            markDirty();renderSlide();showFmt();
+            menu.hidden=true;
+            toast('\u201c'+look.label+'\u201d is now a variation of '
+              +(d.label||base)+(n2?' \u2014 on '+n2+' box'+(n2===1?'':'es'):'')
+              +'. Find it in the Style system to give it to more.',6000);
+          });
+          menu.appendChild(b);
+        });
+      }
       var listed={};
       styleOrder().forEach(function(id){
         if(listed[id]||parentOf(id)) return;
@@ -42607,6 +43017,7 @@ window.JunoPptx = (function () {
           if(listed[v]) return;
           listed[v]=1;styleRow(v,true);
         });
+        if(isHeadingStyle(id)) presetRows(id);
       });
       styleOrder().forEach(function(id){
         if(listed[id]) return;      /* an orphaned variation, if any */
@@ -42670,10 +43081,9 @@ window.JunoPptx = (function () {
            custom heading silently stops being one the first time anyone
            updates it from a box (2026-08-22) */
         if(STYLE_DEFAULTS[a3.style].head) d3.head=1;
-        if(a3.b) d3.b=1;
-        if(a3.i) d3.i=1;
-        if(a3.font) d3.font=a3.font;
-        if(a3.color) d3.color=a3.color;
+        /* T314: every look field, through the one read-back */
+        var look3=styleFromBox(a3);
+        Object.keys(look3).forEach(function(k){d3[k]=look3[k];});
         deckStyles()[a3.style]=d3;
         restyleDeck([a3.style]);
         menu.hidden=true;
@@ -42683,8 +43093,9 @@ window.JunoPptx = (function () {
       var all=document.createElement('button');
       all.className='dbtn vw-opt';
       all.innerHTML=bic('inherit')+' Apply this look to ALL headings';
-      all.title='Push this box\u2019s weight, font and colour to Title '
-        +'and Headings 1\u20133, keeping each one\u2019s own size';
+      all.title='Push this box\u2019s weight, font, colour, background '
+        +'and edge to Title and Headings 1\u20133, keeping each one\u2019s '
+        +'own size';
       all.addEventListener('click',function(e){
         e.stopPropagation();
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
@@ -42701,10 +43112,10 @@ window.JunoPptx = (function () {
              thing this does not flatten */
           d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;
           d4.label=STYLE_DEFAULTS[id].label;
-          if(a4.b) d4.b=1; else delete d4.b;
-          if(a4.i) d4.i=1; else delete d4.i;
-          if(a4.font) d4.font=a4.font; else delete d4.font;
-          if(a4.color) d4.color=a4.color; else delete d4.color;
+          /* T314: the box's ground and edge travel with its colour */
+          var look4=styleFromBox(a4);
+          ['b','i','font','color','bg','bdc'].forEach(function(k){
+            if(look4[k]!==undefined) d4[k]=look4[k]; else delete d4[k];});
           deckStyles()[id]=d4;
         });
         restyleDeck(headingStyles());
@@ -47732,6 +48143,7 @@ window.JunoPptx = (function () {
         if(d.font) ln.style.fontFamily=fontCss(d.font);
         if(d.color) ln.style.color=tokVal(d.color);
         if(d.lh) ln.style.lineHeight=d.lh;
+        specimenGround(ln,d);       /* T314: a colour set is chosen by looking */
         spec.appendChild(ln);
       });
       c.appendChild(spec);
@@ -47764,6 +48176,72 @@ window.JunoPptx = (function () {
       });
       return c;
     }
+    /* T315: A THEME CARD -- five chips from the theme's OWN palette
+       (page, box, heading, ink, accent), so a colour is chosen by
+       looking, and painted with tokValIn rather than tokVal because
+       the deck's current palette is exactly what it is not. */
+    function themeCard(t){
+      var c=document.createElement('button');
+      c.className='ss-card ss-theme';c.type='button';
+      var pal=themePalette(t);
+      var h=document.createElement('div');h.className='ss-name';
+      h.textContent=t.label;
+      if(t.mine){
+        var chip=document.createElement('span');
+        chip.className='ss-mine';chip.textContent='yours';
+        h.appendChild(chip);
+      }
+      c.appendChild(h);
+      var sw=document.createElement('div');sw.className='ss-chips';
+      sw.style.background=pal.page;
+      ['surface','heading','ink','accent','quiet'].forEach(function(k){
+        var s=document.createElement('span');
+        s.className='ss-chip';s.style.background=pal[k];
+        s.title=(TOKEN_LABELS[k]||k)+' '+pal[k];
+        sw.appendChild(s);
+      });
+      /* one specimen line in the theme's heading and body colours,
+         on the theme's page, over the theme's box */
+      var spec=document.createElement('div');spec.className='ss-tspec';
+      spec.style.background=pal.page;
+      var hd=(t.styles||{}).h1||{},bd=(t.styles||{}).body||{};
+      var l1=document.createElement('div');l1.textContent='A heading';
+      l1.style.color=tokValIn(hd.color||'@heading',pal);
+      l1.style.fontWeight='700';
+      if(hd.bg&&hd.bg!=='none'){l1.style.background=tokValIn(hd.bg,pal);
+        l1.style.padding='1px 6px';l1.style.borderRadius='4px';}
+      var l2=document.createElement('div');l2.textContent='Body text';
+      l2.style.color=tokValIn(bd.color||'@ink',pal);
+      if(bd.bg&&bd.bg!=='none'){l2.style.background=tokValIn(bd.bg,pal);
+        l2.style.padding='1px 6px';l2.style.borderRadius='4px';}
+      spec.appendChild(l1);spec.appendChild(l2);
+      c.appendChild(sw);c.appendChild(spec);
+      var note=document.createElement('div');
+      note.className='ss-note';note.textContent=t.note||'';
+      c.appendChild(note);
+      if(t.mine){
+        var x=document.createElement('span');
+        x.className='ss-del';x.innerHTML=bic('exit');
+        x.title='Forget this theme';
+        x.addEventListener('click',function(e){
+          e.stopPropagation();
+          saveMyColourThemes(myColourThemes().filter(function(m){
+            return m.id!==t.id;}));
+          build();
+        });
+        c.appendChild(x);
+      }
+      c.addEventListener('click',function(){
+        var n=applyColourTheme(t.id);
+        markDirty();refresh();build();
+        toast('\u201c'+t.label+'\u201d colours applied'
+          +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
+            +'undoes it.':' \u2014 the page and the deck\u2019s colours '
+            +'changed; nothing here wears a named style yet, so pick a '
+            +'style set above to recolour the text too.'),6000);
+      });
+      return c;
+    }
     function build(){
       var g=$('#ss-grid'); if(!g) return;
       g.innerHTML='';
@@ -47771,6 +48249,13 @@ window.JunoPptx = (function () {
       myStyleSets().forEach(function(t){
         var m=deep(t);m.mine=1;
         g.appendChild(card(m));});
+      var cg=$('#ss-cgrid');
+      if(cg){
+        cg.innerHTML='';
+        COLOUR_THEMES.forEach(function(t){cg.appendChild(themeCard(t));});
+        myColourThemes().forEach(function(t){
+          var m=deep(t);m.mine=1;cg.appendChild(themeCard(m));});
+      }
       var w=$('#ss-what'),n=unstyledCount();
       if(w) w.textContent=n
         ? (n+' text box'+(n===1?'':'es')+' on this deck wear no named '
@@ -47805,12 +48290,38 @@ window.JunoPptx = (function () {
         st[id]=o;
       });
       var list=myStyleSets();
+      /* T314: AND THE PALETTE. A style's colour may be '@accent', and a
+         saved set that carried the name without what it meant resolved
+         to the NEXT deck's accent, or the default teal. tokens() is the
+         resolved palette, so every name is present even on a deck that
+         only ever changed one -- and applyStyleSet has honoured a set's
+         tokens since T12, on a branch nothing reached until now. */
       list.push({id:'ss'+Date.now().toString(36),label:nm,
-        note:'Saved from “'+(pres.name||'a deck')+'”.',styles:st});
+        note:'Saved from “'+(pres.name||'a deck')+'”.',styles:st,
+        tokens:deep(tokens())});
       saveMyStyleSets(list);
       build();
       toast('“'+nm+'” saved — it is offered on every deck you open here');
     });
+    var cs=$('#ss-csave');
+    if(cs) cs.addEventListener('click',function(e){
+      e.stopPropagation();
+      var nm=prompt('Call this colour theme:','My colours');
+      if(nm==null) return;
+      nm=nm.trim(); if(!nm) return;
+      saveColourTheme(nm);
+      build();
+      toast('\u201c'+nm+'\u201d saved \u2014 it is offered on every deck '
+        +'you open here');
+    });
+    /* T315: THE DOOR ON THE ROW. The gallery was reachable only as the
+       first row of the Text styles menu -- a look you pick once, hidden
+       behind a menu you open to tune one style (the standing
+       complaint). One button, words and an icon, in the group that
+       already owns the deck's type. */
+    var rb=$('#dsg-sets');
+    if(rb) rb.addEventListener('click',function(e){
+      e.stopPropagation();open();});
     window.SemDeckStyleSets=open;
   })();
   /* ---- ONE SLIDE'S LAYOUT, GIVEN TO SEVERAL ----------------------------
@@ -51449,6 +51960,16 @@ window.JunoPptx = (function () {
       var b=$(transBtnId(t[0]));
       if(b) b.setAttribute('aria-pressed',(now===t[0]).toString());
     });
+  }
+  /* T316: a section's own colour. '' puts it back on the automatic
+     cycle. refresh, because a heading wearing '@section' has to repaint
+     and the strip's dot has to follow. */
+  function setSectionColor(id,hex){
+    var m=(pres.sections||{})[id]; if(!m) return;
+    if(/^#[0-9a-f]{6}$/i.test(hex||'')) m.color=hex; else delete m.color;
+    markDirty();refresh();
+    toast(m.color?('This section\u2019s colour is '+m.color)
+      :'This section is back on the automatic colour');
   }
   function setSectionTrans(id,kind){
     var m=(pres.sections||{})[id]; if(!m) return;
@@ -56900,6 +57421,15 @@ window.JunoPptx = (function () {
       ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
       b.appendChild(nm);
       if(chip) b.appendChild(chip);
+      /* T314: the ground, as a second chip -- the name itself is left
+         unpainted here on purpose (see above) */
+      if(d.bg&&d.bg!=='none'){
+        var chipBg=document.createElement('span');
+        chipBg.className='dg-swatch dg-swatch-bg';
+        chipBg.style.background=tokVal(d.bg);
+        chipBg.title='Background '+tokVal(d.bg);
+        b.appendChild(chipBg);
+      }
       b.appendChild(ct);
       var par=isVar?parentOf(id):'';
       b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
@@ -57399,6 +57929,10 @@ window.JunoPptx = (function () {
     ov.innerHTML='<div class="dh-head">'
       +'<span class="dh-t">Design of “'+esc(pres.name||'this deck')
       +'”</span><span class="deck-spring"></span>'
+      /* T315: the screen whose job is "what is the standard" had no
+         way to pick one */
+      +'<button class="dbtn" id="dg-sets">'+bic('styles')
+      +' Style sets\u2026</button>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
       +' Fix mismatched text</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
@@ -57430,6 +57964,7 @@ window.JunoPptx = (function () {
     var d=document.createElement('span');
     d.className='mini-diagram free';
     if(!s) return d;
+    if((pres.slides||[]).indexOf(s)>=0) paintSlide=s;   /* T316 */
     /* the slide's own background, so a recoloured slide reads as one */
     if(s.bg) d.style.background=tokVal(s.bg);
     var annots=s.annots||[];
@@ -57773,7 +58308,8 @@ window.JunoPptx = (function () {
       id=(sl[i]&&sl[i].sec)||'';
       if(!last||last.id!==id){
         last={id:id,name:id?secName(id):'',at:i,n:0,
-          fold:!!(id&&(pres.sections||{})[id]&&pres.sections[id].fold)};
+          fold:!!(id&&(pres.sections||{})[id]&&pres.sections[id].fold),
+          color:(id&&(pres.sections||{})[id]&&pres.sections[id].color)||''};
         out.push(last);
       }
       last.n++;
@@ -57819,7 +58355,10 @@ window.JunoPptx = (function () {
       if(((pres.slides[i].sec)||'')!==was) break;
       pres.slides[i].sec=id;
     }
-    normSections();markDirty();renderFilm();
+    /* T316: refresh, not renderFilm -- every other membership verb
+       ends in refresh(), and a heading wearing '@section' has to
+       repaint the moment the section it now sits in exists */
+    normSections();markDirty();refresh();
   }
   function renameSection(id){
     /* prompt(), not an inline edit on the row. The row's own click
@@ -57829,8 +58368,10 @@ window.JunoPptx = (function () {
     var v=prompt('Name this section:',secName(id));
     if(v==null) return;
     v=v.trim(); if(!v) return;
-    secMap()[id]={name:v,fold:(pres.sections[id]||{}).fold};
-    if(!pres.sections[id].fold) delete pres.sections[id].fold;
+    /* T316: in place, so the arrival and the colour survive a rename
+       (the rebuild here was already dropping `trans`) */
+    var rec=secMap()[id]||(secMap()[id]={});
+    rec.name=v;
     markDirty();renderFilm();
   }
   function foldSection(id,on){
@@ -58284,6 +58825,28 @@ window.JunoPptx = (function () {
     f.addEventListener('click',function(e){
       e.stopPropagation();foldSection(r.id,!r.fold);});
     el.appendChild(f);
+    /* T316: the section's colour, as a dot before its name. Visible
+       on every divider, so the cycle is discoverable without a menu;
+       click to choose one, and the divider's menu puts it back. */
+    var dot=document.createElement('button');
+    dot.className='film-sec-dot';dot.type='button';
+    var sc=sectionColorFor(pres.slides[r.at]||{sec:r.id});
+    dot.style.background=sc||'transparent';
+    dot.title=(r.color?'This section\u2019s own colour':'Automatic section '
+      +'colour')+' \u2014 click to choose one';
+    dot.setAttribute('aria-label','Section colour');
+    dot.addEventListener('click',function(e){
+      e.stopPropagation();
+      var inp=document.createElement('input');
+      inp.type='color';inp.value=/^#[0-9a-f]{6}$/i.test(sc)?sc:'#4fb3d9';
+      inp.style.position='fixed';inp.style.opacity='0';
+      inp.addEventListener('change',function(){
+        setSectionColor(r.id,inp.value);inp.remove();});
+      inp.addEventListener('blur',function(){setTimeout(function(){
+        if(inp.parentNode) inp.remove();},300);});
+      document.body.appendChild(inp);inp.click();
+    });
+    el.appendChild(dot);
     var t=document.createElement('span');
     t.className='film-sec-t';t.textContent=r.name;el.appendChild(t);
     var n=document.createElement('span');
@@ -58557,6 +59120,11 @@ window.JunoPptx = (function () {
     if(run){
       menuHead(m,'this section');
       row('Rename…',function(){renameSection(run.id);},null,'pen');
+      if(run.color)
+        row('Back to the automatic colour',function(){
+          setSectionColor(run.id,'');},
+          'Drop this section\u2019s own colour and take its turn in '
+          +'the cycle again');
       row(run.fold?'▾ Show these slides':'▸ Hide these slides',
         function(){foldSection(run.id,!run.fold);});
       /* THE UNIT VERBS (T23): the whole run moves and copies as one
@@ -62768,6 +63336,7 @@ window.JunoPptx = (function () {
     var lost=[];
     outputSlides().forEach(function(ent){
       note.frame=ent.f;
+      paintSlide=ent.s;                                     /* T316 */
       pptxItems(ent.s,note,'#ffffff',null);
       note.frame=null;
     });
@@ -62845,6 +63414,7 @@ window.JunoPptx = (function () {
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
         note.frame=ent.f;
+        paintSlide=ent.s;                                   /* T316 */
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
         /* the master's look is BAKED into the export (T115): furniture
