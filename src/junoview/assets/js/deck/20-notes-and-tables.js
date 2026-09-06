@@ -1930,6 +1930,9 @@
        OBJECT LOOKED LIKE. Idempotent, and it re-mints a duplicate, so
        no copy site has to remember to strip one. */
     ensureOids(s);
+    /* T316: which slide '@section' resolves against. A master-synth
+       slide is not in pres.slides and must not clobber the wearer's. */
+    if(s&&(pres.slides||[]).indexOf(s)>=0) paintSlide=s;
     var editing=(mode==='edit');
     /* removing a focused node fires no blur in Chrome or Firefox, so
        without this every rebuild — a slide change, a notebook refresh,

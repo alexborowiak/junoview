@@ -6925,6 +6925,27 @@ option. Then where has the ability to refresh all images gone?"
   Business turned the page #eef1f4, boxed both text boxes in #d9dee5 with
   a #b9c2cc edge under #1c3d6e headings, and Ctrl+Z put the page back.
 
+- [x] **T316 - '@section': a colour that depends on the section.**
+  The user (2026-09-06): "some that have different colours per section".
+  *Done 2026-09-06.* A reserved reference, not a key of the palette: it
+  is resolved when a slide is PAINTED, from the section that slide is in,
+  so a box holds the reference and never a stamped colour. Move the slide
+  and it repaints; delete a section and the survivors renumber; nothing
+  is re-stamped and no membership verb has to remember to. The exporters
+  get a concrete hex through the same tokVal they already call, because
+  the two pptx passes set the slide being painted exactly as the two
+  render funnels do. Six hues because the deck already speaks in six --
+  the chart palette is the dark column, each with a partner for a light
+  page (pageIsLight picks) -- and a section can be given ITS OWN colour,
+  which wins and travels (normPres, secNames, histRestore; the Python
+  side carries sections wholesale). renameSection edits in place now,
+  which also stops it dropping `trans` as it did; newSection ends in
+  refresh() like every other membership verb. Three doors, none on the
+  ribbon: a chip in the text colour menu's deck row, a dot on every
+  divider (click to choose), and the divider menu's way back to the
+  automatic colour. *Verified live:* one heading duplicated into a
+  second section is #4fb3d9 in Intro and #f0a848 in Methods.
+
 ## Group 14 - the 2026-09-06 list
 
 The user's own backlog, filed verbatim (their number, their difficulty),

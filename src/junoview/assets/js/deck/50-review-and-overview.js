@@ -2980,6 +2980,7 @@
     var d=document.createElement('span');
     d.className='mini-diagram free';
     if(!s) return d;
+    if((pres.slides||[]).indexOf(s)>=0) paintSlide=s;   /* T316 */
     /* the slide's own background, so a recoloured slide reads as one */
     if(s.bg) d.style.background=tokVal(s.bg);
     var annots=s.annots||[];
@@ -3323,7 +3324,8 @@
       id=(sl[i]&&sl[i].sec)||'';
       if(!last||last.id!==id){
         last={id:id,name:id?secName(id):'',at:i,n:0,
-          fold:!!(id&&(pres.sections||{})[id]&&pres.sections[id].fold)};
+          fold:!!(id&&(pres.sections||{})[id]&&pres.sections[id].fold),
+          color:(id&&(pres.sections||{})[id]&&pres.sections[id].color)||''};
         out.push(last);
       }
       last.n++;
@@ -3369,7 +3371,10 @@
       if(((pres.slides[i].sec)||'')!==was) break;
       pres.slides[i].sec=id;
     }
-    normSections();markDirty();renderFilm();
+    /* T316: refresh, not renderFilm -- every other membership verb
+       ends in refresh(), and a heading wearing '@section' has to
+       repaint the moment the section it now sits in exists */
+    normSections();markDirty();refresh();
   }
   function renameSection(id){
     /* prompt(), not an inline edit on the row. The row's own click
@@ -3379,8 +3384,10 @@
     var v=prompt('Name this section:',secName(id));
     if(v==null) return;
     v=v.trim(); if(!v) return;
-    secMap()[id]={name:v,fold:(pres.sections[id]||{}).fold};
-    if(!pres.sections[id].fold) delete pres.sections[id].fold;
+    /* T316: in place, so the arrival and the colour survive a rename
+       (the rebuild here was already dropping `trans`) */
+    var rec=secMap()[id]||(secMap()[id]={});
+    rec.name=v;
     markDirty();renderFilm();
   }
   function foldSection(id,on){

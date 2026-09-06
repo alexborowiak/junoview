@@ -135,6 +135,28 @@
     f.addEventListener('click',function(e){
       e.stopPropagation();foldSection(r.id,!r.fold);});
     el.appendChild(f);
+    /* T316: the section's colour, as a dot before its name. Visible
+       on every divider, so the cycle is discoverable without a menu;
+       click to choose one, and the divider's menu puts it back. */
+    var dot=document.createElement('button');
+    dot.className='film-sec-dot';dot.type='button';
+    var sc=sectionColorFor(pres.slides[r.at]||{sec:r.id});
+    dot.style.background=sc||'transparent';
+    dot.title=(r.color?'This section\u2019s own colour':'Automatic section '
+      +'colour')+' \u2014 click to choose one';
+    dot.setAttribute('aria-label','Section colour');
+    dot.addEventListener('click',function(e){
+      e.stopPropagation();
+      var inp=document.createElement('input');
+      inp.type='color';inp.value=/^#[0-9a-f]{6}$/i.test(sc)?sc:'#4fb3d9';
+      inp.style.position='fixed';inp.style.opacity='0';
+      inp.addEventListener('change',function(){
+        setSectionColor(r.id,inp.value);inp.remove();});
+      inp.addEventListener('blur',function(){setTimeout(function(){
+        if(inp.parentNode) inp.remove();},300);});
+      document.body.appendChild(inp);inp.click();
+    });
+    el.appendChild(dot);
     var t=document.createElement('span');
     t.className='film-sec-t';t.textContent=r.name;el.appendChild(t);
     var n=document.createElement('span');
@@ -408,6 +430,11 @@
     if(run){
       menuHead(m,'this section');
       row('Rename…',function(){renameSection(run.id);},null,'pen');
+      if(run.color)
+        row('Back to the automatic colour',function(){
+          setSectionColor(run.id,'');},
+          'Drop this section\u2019s own colour and take its turn in '
+          +'the cycle again');
       row(run.fold?'▾ Show these slides':'▸ Hide these slides',
         function(){foldSection(run.id,!run.fold);});
       /* THE UNIT VERBS (T23): the whole run moves and copies as one

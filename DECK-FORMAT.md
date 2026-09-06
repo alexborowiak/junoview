@@ -52,7 +52,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `pageBg` | str | The page's own background colour. |
 | `layouts` | list | Slide layouts this deck designed: [{id, label, items}], each item a slot rect in page percent. They join the built-in catalogue in the New slide gallery and Change layout; a slide names the one it wears in its `lay`. |
 | `masters` | dict | {id: {name, bg, cmp, pos}}: looks slides inherit live. `bg` is the wearers' background (the slide's own still wins), `cmp` names the component drawn behind their content, `pos` its corner. Membership is the slide's `mast` tag. |
-| `sections` | dict | {id: {name, fold}}. Membership is the slide's `sec` tag; the ORDER is read back off the slide list and never stored. |
+| `sections` | dict | {id: {name, fold, trans, color}}. Membership is the slide's `sec` tag; the ORDER is read back off the slide list and never stored. `color` is the section's own colour when the author chose one; a box wearing `@section` otherwise takes the section's turn in the built-in cycle, resolved when the slide is painted. |
 | `showNums` | int | 1 when slide numbers are drawn. |
 | `slides` | list | The slides, in order. The order IS the story. |
 | `style` | dict | For a view: its saved styling. |

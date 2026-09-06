@@ -89,9 +89,12 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                        "(the slide's own still wins), `cmp` names the "
                        "component drawn behind their content, `pos` its "
                        "corner. Membership is the slide's `mast` tag."),
-    "sections": (dict, "{id: {name, fold}}. Membership is the slide's "
-                       "`sec` tag; the ORDER is read back off the slide "
-                       "list and never stored."),
+    "sections": (dict, "{id: {name, fold, trans, color}}. Membership is "
+                       "the slide's `sec` tag; the ORDER is read back off "
+                       "the slide list and never stored. `color` is the "
+                       "section's own colour when the author chose one; "
+                       "without it a box wearing '@section' takes the "
+                       "section's turn in the built-in cycle."),
     "guides": (dict, "The guides you drew on this page: {x, y} lists of "
                      "line positions and `b` of [x, y, w, h] boxes, all "
                      "in page percentages. An editing aid -- never "

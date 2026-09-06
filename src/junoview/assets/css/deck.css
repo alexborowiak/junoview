@@ -3911,6 +3911,11 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .film-sec-fold{background:none;border:none;color:var(--chrome-ink-2);cursor:pointer;
   font-size:10px;padding:1px 3px;border-radius:4px;flex:none;line-height:1;}
 .film-sec-fold:hover{background:#ffffff14;color:#fff;}
+/* T316: the section's colour, on its divider */
+.film-sec-dot{flex:none;width:10px;height:10px;border-radius:50%;
+  border:1px solid #ffffff55;padding:0;cursor:pointer;}
+.film-sec-dot:hover{transform:scale(1.25);}
+.sw.sw-sec{outline:1px dashed #ffffff66;outline-offset:1px;}
 .film-sec-t{flex:1;min-width:0;font-family:var(--mono);font-size:9.5px;
   letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}

@@ -2476,6 +2476,16 @@
       if(b) b.setAttribute('aria-pressed',(now===t[0]).toString());
     });
   }
+  /* T316: a section's own colour. '' puts it back on the automatic
+     cycle. refresh, because a heading wearing '@section' has to repaint
+     and the strip's dot has to follow. */
+  function setSectionColor(id,hex){
+    var m=(pres.sections||{})[id]; if(!m) return;
+    if(/^#[0-9a-f]{6}$/i.test(hex||'')) m.color=hex; else delete m.color;
+    markDirty();refresh();
+    toast(m.color?('This section\u2019s colour is '+m.color)
+      :'This section is back on the automatic colour');
+  }
   function setSectionTrans(id,kind){
     var m=(pres.sections||{})[id]; if(!m) return;
     if(kind) m.trans=kind; else delete m.trans;

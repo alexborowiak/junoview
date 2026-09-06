@@ -2246,7 +2246,44 @@
     'head','bg','bdc'];
   var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
     calm:'Calm',ink:'Ink',quiet:'Quiet',
-    page:'Page',surface:'Box',heading:'Heading',line:'Edge'};
+    page:'Page',surface:'Box',heading:'Heading',line:'Edge',
+    section:'Section colour'};
+  /* ---- T316: A COLOUR THAT DEPENDS ON THE SECTION -------------------
+     (2026-09-06, user: "some that have different colours per section".)
+
+     '@section' is a reserved reference, not a key of the palette: it
+     is resolved when a slide is PAINTED, from the section that slide is
+     in, so a box holds the reference and never a stamped colour. Move
+     the slide to another section and it repaints; delete a section and
+     the survivors renumber; nothing has to be re-stamped and no
+     membership verb has to remember to. The exporters get a concrete
+     hex through the same tokVal they already call.
+
+     Six hues because the deck already speaks in six -- the chart
+     palette is the dark column, chosen for >= 6.5:1 on the built-in
+     page, and each has a partner for a light page. A seventh section
+     wraps. A section can also be given ITS OWN colour, which wins. */
+  var SECTION_HUES=[['#4fb3d9','#0b6f86'],['#f0a848','#a04a00'],
+    ['#8fd18a','#256d3a'],['#e07a9a','#a8265c'],
+    ['#b39ddb','#5d3aa8'],['#f2d16b','#7a5a00']];
+  /* the slide being painted right now: set by the render funnels and
+     the exporters, read only by the '@section' branch of tokVal */
+  var paintSlide=null;
+  function sectionOrdinal(id){
+    if(!id||typeof sectionRuns!=='function') return -1;
+    var runs=sectionRuns().filter(function(r){return r.id;});
+    for(var i=0;i<runs.length;i++) if(runs[i].id===id) return i;
+    return -1;
+  }
+  function sectionColorFor(sl){
+    var id=sl&&sl.sec; if(!id) return '';
+    var d=(pres&&pres.sections||{})[id];
+    if(d&&/^#[0-9a-f]{6}$/i.test(d.color||'')) return d.color;
+    var k=sectionOrdinal(id); if(k<0) return '';
+    var bg=(sl.bg)||(pres&&pres.pageBg)||'#0b141d';
+    var light=(typeof pageIsLight==='function')?pageIsLight(bg):false;
+    return SECTION_HUES[k%SECTION_HUES.length][light?1:0];
+  }
   function tokens(){
     var t=(pres&&pres.tokens)||{};
     var out={c:{},rad:TOKENS_DEFAULT.rad,gap:TOKENS_DEFAULT.gap};
@@ -2272,6 +2309,12 @@
   function tokVal(v){
     var k=tokRef(v);
     if(!k) return v;
+    /* T316: '' on a slide in no section means "the page's ink" at
+       every `if(a.color) ... tokVal(a.color)` site, which is the
+       honest answer for a heading that asked to follow a section it
+       is not in */
+    if(k==='section')
+      return sectionColorFor(paintSlide||(pres&&pres.slides||[])[cur])||'';
     var c=tokens().c;
     return c[k]||TOKENS_DEFAULT.c[k]||'#39a9c0';
   }
@@ -2375,6 +2418,25 @@
           if(isFill) applyFillColor('@'+k); else applyTextColor('@'+k);});
         row.appendChild(b);
       });
+      /* T316: THE DOOR ON THE ROW. One chip that means "whichever
+         colour this slide's section has": a box given it follows the
+         section, and "Update the style from this box" or "New
+         variation of Heading 1" then carries it into a style. Text
+         only -- a fill that changed colour per section is not a thing
+         anyone asked for. */
+      if(!isFill&&pres&&pres.sections&&Object.keys(pres.sections).length){
+        var sb=document.createElement('button');
+        sb.className='sw sw-tok sw-sec';
+        sb.setAttribute('data-c','@section');
+        sb.style.background=tokVal('@section')||'#8aa0b0';
+        sb.title='Section colour \u2014 whichever colour this slide\u2019s '
+          +'section has. Move the slide and it follows.';
+        sb.setAttribute('aria-label','Section colour (deck colour)');
+        sb.addEventListener('mousedown',function(e){
+          if(activeTextEditable()) e.preventDefault();});
+        sb.addEventListener('click',function(){applyTextColor('@section');});
+        row.appendChild(sb);
+      }
     });
   }
   /* the editor for the registry itself */

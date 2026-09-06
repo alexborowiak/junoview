@@ -1945,6 +1945,7 @@
     var lost=[];
     outputSlides().forEach(function(ent){
       note.frame=ent.f;
+      paintSlide=ent.s;                                     /* T316 */
       pptxItems(ent.s,note,'#ffffff',null);
       note.frame=null;
     });
@@ -2022,6 +2023,7 @@
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
         note.frame=ent.f;
+        paintSlide=ent.s;                                   /* T316 */
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
         /* the master's look is BAKED into the export (T115): furniture

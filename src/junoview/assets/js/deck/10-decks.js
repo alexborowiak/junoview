@@ -345,6 +345,8 @@
         /* a section's default arrival, which is what makes T23's
            "section transitions" a real thing rather than a note */
         if(typeof d.trans==='string'&&d.trans) keep[k].trans=d.trans;
+        /* T316: a section's own colour, when the author chose one */
+        if(/^#[0-9a-f]{6}$/i.test(d.color||'')) keep[k].color=d.color;
         anySec=true;
       });
       if(anySec) out.sections=keep;
@@ -839,9 +841,11 @@
       out=out||{};
       /* the NAME and the arrival are content; whether a section is
          folded is a way of looking at the strip and stays out (T23) */
-      out[k]=(m[k].trans)
-        ?{name:(m[k].name)||'Untitled section',trans:m[k].trans}
-        :((m[k].name)||'Untitled section');
+      if(m[k].trans||m[k].color){
+        out[k]={name:(m[k].name)||'Untitled section'};
+        if(m[k].trans) out[k].trans=m[k].trans;
+        if(m[k].color) out[k].color=m[k].color;   /* T316 */
+      } else out[k]=(m[k].name)||'Untitled section';
     });
     return out;
   }
@@ -992,9 +996,10 @@
       Object.keys(d.sections).forEach(function(k){
         var v=d.sections[k];
         pres.sections[k]=(v&&typeof v==='object')
-          ?{name:v.name||'Untitled section',trans:v.trans}
+          ?{name:v.name||'Untitled section',trans:v.trans,color:v.color}
           :{name:v};
         if(!pres.sections[k].trans) delete pres.sections[k].trans;
+        if(!pres.sections[k].color) delete pres.sections[k].color;
         if(was[k]&&was[k].fold) pres.sections[k].fold=1;
       });
     } else delete pres.sections;
