@@ -210,6 +210,9 @@
            lives on the SLIDE so it survives every splice and drag for
            free — the same argument s.sec makes above (T24). */
         if(s.opt) o.opt=1;
+        /* T318: which version group this slide belongs to -- the first
+           of a contiguous run is the main, so nothing else is stored */
+        if(typeof s.alt==='string'&&s.alt) o.alt=s.alt;
         /* how this slide ARRIVES. Per slide because that is how anyone
            thinks about it, and because a deck-wide setting cannot say
            "this one flies in from the last" (T27). */

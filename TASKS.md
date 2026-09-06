@@ -6966,6 +6966,41 @@ option. Then where has the ability to refresh all images gone?"
   ground and the line edge, and on reopening the menu it was an ordinary
   variation of Title while the other families still offered it.
 
+- [x] **T318 - alternative versions of one slide, one starred.**
+  The user (2026-09-06): "create different version of slides e.g. like
+  the version collapse under one version that is starred and that is the
+  main version that appears in presenter mode or when you click through
+  with arrows, but you can uncollapse and have different versions of the
+  one slide".
+  *Done 2026-09-06.* THE MODEL IS ONE TAG. A group is a contiguous run of
+  slides sharing `alt`; the first of the run is the main and nothing
+  stores that -- starring an alternative moves it to the head, which the
+  ordinary slides snapshot already undoes. Alternatives stay real entries
+  in pres.slides, never nested, so everything that walks the list treats
+  one as a full slide for free, and the four places that must skip it
+  are exactly the four the request names: `slideSkipped` (presenter,
+  arrows, counter, overview dimming, the strip's mark), `outputSlides`
+  (PDF, pptx, standalone HTML), `renderFilm` (collapsed under the main,
+  the slide you are on always showing) and the numbers (`slideNo` /
+  `slideCount`: {n}/{N}, the counter and the strip count mains only).
+  Not `opt` or a cut (session-scoped, and every surface would say
+  "optional"), not `label` (a poster page name), not the history store.
+  `normAlts` runs from normSections: a stray tag becomes a slide of its
+  own, a run of one dissolves, a divider can never split a group.
+  Doors: Home > This slide > New version (always) and a star that shows
+  only when the slide is grouped -- pressed and inert on the main, live
+  on an alternative; the strip's right-click menu carries New version,
+  Make this the main, Name this version, Make it a slide of its own, and
+  Delete it AND its versions. Duplicate never grows a group; deleting the
+  main promotes the next. Five schema touches in one commit. Fold state
+  is session-only and never on the undo stack.
+  *Verified live:* ten entries, "3 / 9"; the alt row sits under its main
+  with "Version 2"; starring swapped them with the count unchanged; the
+  standalone export carried nine slide roots. Driving also found that
+  the Home doors were synced only on boot and their own click, so the
+  star never appeared -- the sync now ends renderFilm, the one repaint
+  every change of `cur` goes through.
+
 ## Group 14 - the 2026-09-06 list
 
 The user's own backlog, filed verbatim (their number, their difficulty),

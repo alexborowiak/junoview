@@ -128,6 +128,12 @@ def as_presentations(obj: Any) -> list:
                 # deck's "20-minute version" back into the full one.
                 if s.get("opt"):
                     slide["opt"] = 1
+                # which version group this slide is in (T318). The first
+                # of a contiguous run sharing it is the main and nothing
+                # else is stored, so a starred slide is just the one at
+                # the head.
+                if isinstance(s.get("alt"), str) and s["alt"].strip():
+                    slide["alt"] = s["alt"].strip()
                 # how this slide ARRIVES -- "", "fade" or "move".
                 # Per-slide because that is how anyone thinks about it
                 # (2026-08-25).

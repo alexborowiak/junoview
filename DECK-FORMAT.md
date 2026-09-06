@@ -80,6 +80,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `layout` | str | Which pane arrangement this slide uses. |
 | `notes` | str | Speaker notes for this slide. |
 | `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
+| `alt` | str | The version group this slide belongs to. A group is a contiguous run sharing it; the FIRST is the main — what the talk and every export show — and the rest are alternatives kept under it. Starring one moves it to the head. |
 | `panes` | list | One card anchor per pane, or null for an empty one. |
 | `rord` | list | The authored reading order: annotation oids, first-to-last. Absent means automatic (top-to-bottom, left-to-right); objects the list does not name read last. |
 | `mast` | str | Which master this slide wears — a look inherited live, never stamped. |

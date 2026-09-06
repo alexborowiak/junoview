@@ -68,7 +68,11 @@ def test_a_divider_row_is_not_a_slide_row(out):
     # array index
     assert "pres.slides.forEach(function(s,i){" in out
     assert "if(head[i]) list.appendChild(secRow(head[i]));" in out
-    assert "num.textContent=(i+1);" in out
+    # T318: the loop is still flat and data-idx is still the array index;
+    # the NUMBER shown counts mains only, so the strip agrees with the
+    # talk and the paper, and a version shows a bullet where a number
+    # would be
+    assert "num.textContent=isAlt?'\\u2022':slideNo(i);" in out
 
 
 def test_the_current_slide_is_drawn_even_inside_a_folded_section(out):
@@ -601,8 +605,10 @@ def test_section_numbering_is_a_choice_not_a_reversal(out):
     assert ".replace(/\\{sn\\}/g,String(sp.n))" in out
     assert ".replace(/\\{sN\\}/g,String(sp.of))" in out
     assert ".replace(/\\{sec\\}/g,sp.name||'')" in out
-    # the deck-wide ones are untouched, and still resolved after
-    assert ".replace(/\\{n\\}/g,String(idx+1))" in out
+    # the deck-wide ones are still resolved after -- and since T318 they
+    # count MAIN slides only, so {n}/{N} on paper agree with the talk
+    assert ".replace(/\\{n\\}/g,String(slideNo(idx)))" in out
+    assert ".replace(/\\{N\\}/g,String(slideCount()))" in out
 
 
 def test_a_cut_is_membership_on_the_slide(out):
@@ -749,7 +755,9 @@ def test_the_strip_spells_out_optional_and_not_shown(out):
     start = out.index("function renderFilm(){")
     film = out[start:out.index("  function clearFilmMarks(){", start)]
     assert "var filmCut=activeCut(),skipped=slideSkipped(i);" in film
-    assert "+(s.opt?' opt':'')+(skipped?' cut':'');" in film
+    # T318: an unstarred version IS skipped by playback but is not "cut"
+    # -- it wears its own mark ("Version 2") rather than "not shown"
+    assert "+(s.opt?' opt':'')+(skipped&&!isAlt?' cut':'')" in film
     assert "mark('opt','optional'" in film
     assert "mark('cut','not shown'" in film
     assert "?'Not shown in the “'" in film

@@ -70,6 +70,124 @@
   /* which section a slide is in, and where in it — the numbers {sn}/{sN}
      resolve to. Derived from the slide list like everything else about
      sections; nothing is stored. */
+  /* ---- T318: ALTERNATIVE VERSIONS OF ONE SLIDE ---------------------
+     (2026-09-06, user: "create different version of slides e.g. like the
+     version collapse under one version that is starred and that is the
+     main version that appears in presenter mode or when you click
+     through with arrows, but you can uncollapse and have different
+     versions of the one slide".)
+
+     THE MODEL IS ONE TAG. A group is a contiguous run of slides sharing
+     `alt` (a group id minted like a section's); the FIRST of the run is
+     the main and nothing stores that -- starring an alternative moves it
+     to the head, which the ordinary slides snapshot already undoes. The
+     alternatives stay real entries in pres.slides, never nested: ~430
+     reads of that list then treat one as a full slide for free (edit,
+     thumbnails, undo, sids, links), and the four places that must skip
+     it are exactly the four the request names -- what plays
+     (slideSkipped), what exports (outputSlides), what the strip shows
+     (renderFilm) and what the numbers count (slideNo).
+
+     Not `opt` or a cut: those skip only after Running late or under a
+     session-scoped cut, and every surface would say "optional". Not
+     `label`: a poster page name that dupSlide deletes on decks. Not the
+     history store: whole-deck snapshots. And "alternative", not
+     "version", in the UI -- "version" already means a cut, a poster
+     page and a history snapshot here.
+
+     Expand/collapse is session state, default collapsed, never a file
+     key: a way of looking at the strip, and Ctrl+Z must never open or
+     close a group. The slide you are ON always shows, because
+     refreshThumb looks its row up by data-idx. */
+  var altSeq=0,altOpen={};
+  function altId(){
+    altSeq++;
+    return 'v'+Date.now().toString(36)+altSeq.toString(36);
+  }
+  /* the run this slide belongs to, or null when it is on its own */
+  function altRun(i){
+    var sl=pres.slides||[],s=sl[i];
+    if(!s||!s.alt) return null;
+    var a=i,b=i;
+    while(a>0&&sl[a-1]&&sl[a-1].alt===s.alt) a--;
+    while(b<sl.length-1&&sl[b+1]&&sl[b+1].alt===s.alt) b++;
+    if(b===a) return null;
+    return {at:a,n:b-a+1,gid:s.alt};
+  }
+  /* an alternative is any member of a run that is not its head */
+  function slideIsAlt(i){
+    var r=altRun(i);
+    return !!(r&&i>r.at);
+  }
+  /* the numbers a person sees count MAINS only, so the strip, the
+     furniture and the counter agree with the talk and with the paper */
+  function slideNo(i){
+    var n=0;
+    for(var k=0;k<=i&&k<(pres.slides||[]).length;k++)
+      if(!slideIsAlt(k)) n++;
+    return n;
+  }
+  function slideCount(){
+    var n=0;
+    (pres.slides||[]).forEach(function(s,k){if(!slideIsAlt(k)) n++;});
+    return n;
+  }
+  /* THE INVARIANT, paid the way normSections pays for sections: a run
+     is contiguous and has at least two members. A tag that reappears
+     after its run has closed is dropped (a stray alternative becomes a
+     slide of its own rather than being teleported); a run of one
+     dissolves; every member takes the head's section so a divider can
+     never split a group. Called from normSections, which every
+     membership verb already ends by calling. */
+  function normAlts(){
+    var sl=pres.slides||[],seen={},closed={},prev='',i,g;
+    for(i=0;i<sl.length;i++){
+      if(!sl[i]) continue;
+      g=sl[i].alt||'';
+      if(g&&g!==prev&&(closed[g]||seen[g])) g='';
+      if(g) seen[g]=(seen[g]||0)+1;
+      if(prev&&prev!==g) closed[prev]=1;
+      if(g) sl[i].alt=g; else delete sl[i].alt;
+      prev=g;
+    }
+    for(i=0;i<sl.length;i++){
+      if(!sl[i]||!sl[i].alt) continue;
+      if(seen[sl[i].alt]<2){delete sl[i].alt;continue;}
+      var r=altRun(i);
+      if(r&&i>r.at){
+        var head=sl[r.at];
+        if(head&&head.sec) sl[i].sec=head.sec; else delete sl[i].sec;
+      }
+    }
+  }
+  /* the verbs */
+  function addVersion(i){
+    var s=pres.slides[i]; if(!s) return;
+    var r=altRun(i);
+    var gid=(r&&r.gid)||s.alt||altId();
+    if(!s.alt) s.alt=gid;
+    var cp=deep(s);
+    cp.alt=gid;delete cp.sid;
+    var n=(r?r.n:1)+1;
+    cp.label='Version '+n;
+    var at=r?(r.at+r.n):(i+1);
+    pres.slides.splice(at,0,cp);
+    altOpen[gid]=1;
+    cur=at;activePane=-1;selAnnot=null;selSet=[];
+    normSections();markDirty();refresh();
+    toast('\u201c'+cp.label+'\u201d added \u2014 the talk still shows '
+      +'the starred one. Right-click a version to make it the main.',6000);
+  }
+  function starVersion(i){
+    var r=altRun(i); if(!r||i===r.at) return;
+    var keep=pres.slides[i];
+    var s=pres.slides.splice(i,1)[0];
+    pres.slides.splice(r.at,0,s);
+    cur=pres.slides.indexOf(keep);
+    normSections();markDirty();refresh();
+    toast('\u201c'+(s.label||slideTitle(s)||'This version')+'\u201d is the '
+      +'main version now \u2014 it is what the talk shows. Ctrl+Z undoes it.');
+  }
   function sectionPos(i){
     var runs=sectionRuns();
     for(var k=0;k<runs.length;k++){
@@ -220,11 +338,16 @@
          where you are standing, and it is also the row refreshThumb goes
          looking for on every edit — hide it and the live thumbnail dies */
       if(fold[i]&&i!==cur) return;
+      /* T318: an alternative hides under its main unless the group is
+         open -- or it is the slide you are on, for the same reason */
+      var ar=altRun(i),isAlt=!!(ar&&i>ar.at);
+      if(isAlt&&!altOpen[ar.gid]&&i!==cur) return;
       var filmCut=activeCut(),skipped=slideSkipped(i);
       var row=document.createElement('div');
       row.className='film-row'+(i===cur?' current':'')
         +(fold[i]?' peek':'')+(s.sec?' in-sec':'')
-        +(s.opt?' opt':'')+(skipped?' cut':'');
+        +(s.opt?' opt':'')+(skipped&&!isAlt?' cut':'')
+        +(isAlt?' alt':'')+(ar&&!isAlt?' has-alt':'');
       row.dataset.idx=i;
       row.draggable=true;
       var rowTips=['Drag to reorder'];
@@ -254,7 +377,10 @@
       row.dataset.lvl=headLevel(s);
       var lbl=document.createElement('div');lbl.className='film-label';
       var num=document.createElement('span');num.className='film-n';
-      num.textContent=(i+1);lbl.appendChild(num);
+      /* T318: mains are numbered as the talk counts them; an
+         alternative shows its name where a number would be */
+      num.textContent=isAlt?'\u2022':slideNo(i);
+      lbl.appendChild(num);
       if(i===cur&&mode==='create'&&s.layout!=='title'){
         /* notebook view: the current slide IS the big inline pane editor
            (paired with your visible notebook cells to fill it). In slide
@@ -278,6 +404,30 @@
         marks.appendChild(tag);
       }
       if(s.opt) mark('opt','optional','Running late can skip this slide');
+      /* T318: the main wears the group's pill, and the pill IS the
+         fold toggle -- secRow's chevron in the marks row's clothes,
+         not a control over the thumbnail (T228). An alternative says
+         what it is instead of "not shown". */
+      if(ar&&!isAlt){
+        var open=!!altOpen[ar.gid];
+        var pill=document.createElement('button');
+        pill.type='button';
+        pill.className='film-mark alt-pill';
+        pill.textContent=(open?'\u25be ':'\u25b8 ')+(ar.n-1)
+          +' version'+(ar.n===2?'':'s');
+        pill.title=(open?'Hide':'Show')+' the other version'
+          +(ar.n===2?'':'s')+' of this slide. The starred one is what '
+          +'the talk shows.';
+        pill.addEventListener('click',function(e){
+          e.stopPropagation();
+          if(open) delete altOpen[ar.gid]; else altOpen[ar.gid]=1;
+          renderFilm();
+        });
+        marks.appendChild(pill);
+      }
+      if(isAlt) mark('alt',s.label||('Version '+(i-ar.at+1)),
+        'A version of slide '+slideNo(ar.at)+'. The talk shows the '
+        +'starred one; right-click to make this the main.');
       /* T76: the numbered bubbles on the slide now show only while the
          Timeline pane is open, so the STRIP is what tells you a slide is
          animated at all. A COUNT, not a dot — "three builds" is the thing
@@ -296,7 +446,7 @@
       if(nbuild) mark('anim','▸'+nbuild,
         nbuild+(nbuild===1?' click':' clicks')+' to walk this slide'
         +'\nOpen Insert ▸ Animations to see the order');
-      if(skipped) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
+      if(skipped&&!isAlt) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'
         :'Skipped by Running late');
@@ -322,6 +472,12 @@
       row.appendChild(lbl);
       list.appendChild(row);
     });
+    /* T318: the Home doors follow the slide you are ON. Synced here,
+       at the end of the one repaint every change of `cur` goes through
+       -- the strip click, the arrows, go(), undo -- rather than in
+       renderCreate, which the strip's own click does not reach
+       (driven: the star stayed in the main's state on an alternative). */
+    if(typeof syncHomeDoors==='function') syncHomeDoors();
   }
   function clearFilmMarks(){
     $$('#film-list .film-row.drop-above,#film-list .film-row.drop-below,'
@@ -475,8 +631,43 @@
       floatAt(m,ev);
       return;
     }
-    menuHead(m,poster?'this page':'slide '+(i+1));
-    row('§ Start a section here',function(){newSection(i,'New section');},
+    var ar0=altRun(i),isAlt0=!!(ar0&&i>ar0.at);
+    menuHead(m,poster?'this page':(isAlt0?'a version of slide '+slideNo(ar0.at)
+      :'slide '+slideNo(i)));
+    if(!poster){
+      /* T318: the version verbs, on the thing being versioned */
+      row('New version of this slide',function(){addVersion(i);},
+        'A copy, kept under this slide as an alternative. The talk keeps '
+        +'showing the starred one until you change that.','copy');
+      if(isAlt0){
+        row('\u2605 Make this the main version',function(){starVersion(i);},
+          'The talk, the arrows and every export show this one instead',
+          'star');
+        row('Name this version\u2026',function(){
+          var s2=pres.slides[i]; if(!s2) return;
+          var v=prompt('Name this version:',s2.label||'');
+          if(v==null) return;
+          v=v.trim();
+          if(v) s2.label=v; else delete s2.label;
+          markDirty();renderFilm();
+        },null,'pen');
+        row('Make it a slide of its own',function(){
+          var s3=pres.slides[i]; if(!s3) return;
+          var moved=pres.slides.splice(i,1)[0];
+          var to=ar0.at+ar0.n-1;
+          delete moved.alt;
+          pres.slides.splice(to,0,moved);
+          cur=to;normSections();markDirty();refresh();
+        },'Take it out of the group and put it after, as an ordinary slide');
+      } else if(ar0){
+        row((altOpen[ar0.gid]?'\u25be Hide':'\u25b8 Show')+' its '+(ar0.n-1)
+          +' version'+(ar0.n===2?'':'s'),function(){
+          if(altOpen[ar0.gid]) delete altOpen[ar0.gid]; else altOpen[ar0.gid]=1;
+          renderFilm();
+        });
+      }
+    }
+    if(!isAlt0) row('§ Start a section here',function(){newSection(i,'New section');},
       'Everything from here down to the next divider goes in it');
     var runs=sectionRuns().filter(function(r){return r.id;});
     if(runs.length){
@@ -551,7 +742,17 @@
       markDirty();renderFilm();
     },null,'pen');
     row('Duplicate',function(){dupSlide(i);},null,'copy');
-    row('Delete',function(){delSlide(i);},null,'exit');
+    if(ar0&&!isAlt0)
+      row('Delete it AND its '+(ar0.n-1)+' version'+(ar0.n===2?'':'s'),
+        function(){
+          if(confirm('Delete this slide and all '+(ar0.n-1)+' of its versions?')){
+            pres.slides.splice(ar0.at,ar0.n);
+            if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
+            activePane=-1;normSections();markDirty();refresh();
+          }
+        },null,'exit');
+    row(ar0&&!isAlt0?'Delete just this one (the next version becomes the main)'
+      :'Delete',function(){delSlide(i);},null,'exit');
     floatAt(m,ev);
   }
   /* floatMenu positions against an element's rect; a context menu has
@@ -938,6 +1139,11 @@
       var add=$('#film-add'); if(add) add.click();});
     b=$('#hm-dupslide');
     if(b) b.addEventListener('click',function(){dupSlide(cur);});
+    /* T318 */
+    b=$('#hm-version');
+    if(b) b.addEventListener('click',function(){addVersion(cur);});
+    b=$('#hm-main');
+    if(b) b.addEventListener('click',function(){starVersion(cur);});
     b=$('#hm-delslide');
     if(b) b.addEventListener('click',function(){delSlide(cur);});
     b=$('#hm-match');
@@ -967,6 +1173,13 @@
     normSections();markDirty();refresh();
   }
   function delSlide(i){
+    /* T318: deleting a main promotes the next version; a group left
+       with one member dissolves in normAlts. Say so. */
+    var ar=altRun(i);
+    if(ar&&i===ar.at&&ar.n>1){
+      var nx=pres.slides[i+1];
+      toast('\u201c'+(nx.label||'Version 2')+'\u201d is the main version now');
+    }
     pres.slides.splice(i,1);
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;
@@ -980,9 +1193,15 @@
     var cp=deep(s);
     if(pageOf().poster) cp.label=nextVersionName();
     else delete cp.label;
-    pres.slides.splice(i+1,0,cp);
-    cur=i+1;activePane=-1;selAnnot=null;selSet=[];
-    markDirty();refresh();
+    /* T318: Duplicate never grows a group -- New version is the verb
+       that does. The copy is an ordinary slide placed after the whole
+       group, or it would land inside the run and become a version. */
+    delete cp.alt;delete cp.sid;
+    var ar=altRun(i);
+    var at=ar?(ar.at+ar.n):(i+1);
+    pres.slides.splice(at,0,cp);
+    cur=at;activePane=-1;selAnnot=null;selSet=[];
+    normSections();markDirty();refresh();
   }
 
   /* ---------- mode switching ---------- */
@@ -1292,6 +1511,11 @@
   function outputSlides(){
     var all=[];
     (pres.slides||[]).forEach(function(s,i){
+      /* T318: exports show the main version only. This list never
+         consulted slideSkipped -- deliberately, so a rehearsal cut does
+         not silently trim a PDF -- so the deck-state half of the test
+         is asked here directly. */
+      if(slideIsAlt(i)) return;
       /* A FLIP BOOK EXPLODES ON THE WAY OUT. This is the whole payoff:
          the complaint was "heaps of new slides each with a new figure",
          so the editor keeps ONE slide with the figures stacked inside it
@@ -1721,6 +1945,20 @@
     syncHomeDoors();
   }
   function syncHomeDoors(){
+    /* T318: the star shows only when the current slide is grouped, so
+       a versionless deck's ribbon is unchanged; pressed and inert on
+       the main, live on an alternative */
+    var st=$('#hm-main');
+    if(st){
+      var r=altRun(cur),isA=!!(r&&cur>r.at);
+      st.hidden=!r;
+      st.disabled=!!(r&&!isA);
+      st.setAttribute('aria-pressed',(r&&!isA)?'true':'false');
+      st.title=!r?'':(isA
+        ?'Make this the main version \u2014 the talk, the arrows and every '
+          +'export show it instead'
+        :'This is the main version: it is what the talk shows');
+    }
     var o=$('#hm-optional'); if(!o) return;
     var s=(pres&&pres.slides)?pres.slides[cur]:null;
     var on=!!(s&&s.opt);

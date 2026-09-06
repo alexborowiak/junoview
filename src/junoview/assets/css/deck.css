@@ -3928,6 +3928,16 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 /* slides inside a section step in, so the run is visible without having
    to read the divider each time */
 .film-row.in-sec{margin-left:7px;}
+/* T318: a version sits under its main, one step further in and dimmed;
+   the one you are editing is full strength. The main's pill is the fold
+   toggle, drawn as a mark so it is never over the thumbnail. */
+.film-row.alt{margin-left:18px;opacity:.72;}
+.film-row.alt.current{opacity:1;}
+.film-row.alt .film-n{color:var(--chrome-ink-3);}
+.film-mark.alt-pill{cursor:pointer;background:none;border:1px solid
+  var(--chrome-line);color:var(--chrome-ink-2);font:inherit;padding:0 5px;}
+.film-mark.alt-pill:hover{color:var(--chrome-ink);}
+.film-mark.alt{color:var(--accent);}
 /* the current slide is drawn even inside a COLLAPSED section — it is
    where you are standing, and refreshThumb goes looking for its row on
    every edit. Dimmed so it reads as a peek out of a closed drawer. */

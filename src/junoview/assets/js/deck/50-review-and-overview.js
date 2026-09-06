@@ -828,6 +828,10 @@
   function slideSkipped(i){
     var sl=(pres.slides||[])[i];
     if(!sl) return false;
+    /* T318: an unstarred alternative is never part of the show -- the
+       presenter, the arrows, the counter, the overview dimming and the
+       strip's mark all read this one predicate */
+    if(slideIsAlt(i)) return true;
     if(!inCut(sl,activeCut())) return true;
     if(lateFrom>=0&&i>lateFrom&&sl.opt) return true;
     return false;
@@ -3356,6 +3360,7 @@
       Object.keys(m).forEach(function(k){if(!seen[k]) delete m[k];});
       if(!Object.keys(m).length) delete pres.sections;
     }
+    if(typeof normAlts==='function') normAlts();   /* T318 */
   }
   /* the five verbs. Everything that touches sections goes through one of
      these, so normSections() is guaranteed to have run before markDirty

@@ -381,8 +381,9 @@
     if(down) down.hidden=!(hasTrace&&atTop);
     if(up) up.hidden=!(hasTrace&&!atTop);
     var c=$('#deck-count');
+    /* T318: mains only, the number the talk and the paper agree on */
     if(c) c.textContent=pres.slides.length
-      ?((cur+1)+' / '+pres.slides.length):'0 / 0';
+      ?(slideNo(cur)+' / '+slideCount()):'0 / 0';
   }
   function scrollToTrace(){
     var tr=stage.querySelector('.vtrace');
@@ -451,8 +452,8 @@
       .replace(/\{sn\}/g,String(sp.n))
       .replace(/\{sN\}/g,String(sp.of))
       .replace(/\{sec\}/g,sp.name||'')
-      .replace(/\{n\}/g,String(idx+1))
-      .replace(/\{N\}/g,String((pres.slides||[]).length))
+      .replace(/\{n\}/g,String(slideNo(idx)))
+      .replace(/\{N\}/g,String(slideCount()))
       .replace(/\{name\}/g,pres.name||'')
       .replace(/\{date\}/g,new Date().toLocaleDateString());
   }
