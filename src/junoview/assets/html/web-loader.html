@@ -196,6 +196,12 @@ window.addEventListener('beforeinstallprompt',function(e){
         py.globals.set('_wtext',b64);
         py.globals.set('_wtaken',JSON.stringify(taken||[]));
         return py.runPython('sr.web_parse_b64(_wname,_wtext,_wtaken)');
+      },
+      // a PowerPoint deck (T320): bytes in, the editor's spec out as JSON
+      importPptx:function(name,b64){
+        py.globals.set('_wname',String(name));
+        py.globals.set('_wtext',b64);
+        return py.runPython('sr.web_import_pptx_b64(_wname,_wtext)');
       }
     };
     document.dispatchEvent(new Event('sem:pyready'));

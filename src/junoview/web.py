@@ -28,6 +28,7 @@ from ._write import write_text
 from .branding import FAVICON, LOGO_SVG
 from .notebook.loader import stem_for
 from .notebook.parser import parse_notebook
+from .notebook.pptx_read import read_pptx_b64
 from .notebook.sources import doc_from_bytes, doc_from_text
 from .render.page import render_page, render_shell
 
@@ -54,6 +55,14 @@ def web_parse_b64(name: str, b64: str, taken_json: str = "[]") -> str:
     base64 because a workbook has no text to hand over."""
     doc = doc_from_bytes(name, base64.b64decode(b64))
     return _web_finish(doc, name, taken_json)
+
+
+def web_import_pptx_b64(name: str, b64: str) -> str:
+    """A PowerPoint deck dropped on the web build (T320): the reader's
+    answer -- the editor's own item spec plus what was lost -- as JSON,
+    for the deck's specToPres. The same function the app's
+    ``/api/importpptx`` calls, so the two doors cannot drift."""
+    return json.dumps(read_pptx_b64(name, b64), ensure_ascii=False)
 
 
 def _web_finish(doc, name: str, taken_json: str) -> str:

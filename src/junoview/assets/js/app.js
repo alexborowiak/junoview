@@ -5947,6 +5947,11 @@
     return /\.junoview(\.html)?$/i
       .test(String(p||'').split('?')[0].split('#')[0]);
   }
+  /* T320: a PowerPoint deck, which IMPORTS (as a copy) rather than opens */
+  function isPptxPath(p){
+    return /\.(pptx|potx|ppsx|pptm)$/i
+      .test(String(p||'').split('?')[0].split('#')[0]);
+  }
   /* hand text to the deck importer (deck.js) — the same importer behind
      "+ New… → Open a .junoview file…", so every road in behaves alike */
   function importDeckTextSafe(txt,label){
@@ -5977,7 +5982,41 @@
         +'file and drop it here instead.');
     });
   }
+  /* T320: a .pptx by URL -- the web build, or a link pasted into the
+     app's Open dialog -- is fetched as bytes and handed to the same
+     importer a dropped file reaches */
+  function fetchPptxUrl(url){
+    url=normNbUrl(url);
+    setDlgBusy(true);
+    fetch(url,{cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.blob();
+    }).then(function(b){
+      setDlgBusy(false);hideDlg();
+      var nm=decodeURIComponent(
+        url.split('?')[0].split('/').pop()||'deck.pptx');
+      if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
+      else alert('The presentation editor has not loaded yet — '
+        +'try again in a moment.');
+    }).catch(function(e){
+      setDlgBusy(false);
+      alert('Could not fetch '+url+'\n'+((e&&e.message)||e));
+    });
+  }
   function openPath(path){
+    /* T320: a PowerPoint deck imports from the same places, as a copy */
+    if(isPptxPath(path)){
+      if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
+      if(APP.mode!=='app') return;
+      if(!APP.deckImportPptxPath){
+        alert('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+        return;
+      }
+      hideDlg();
+      APP.deckImportPptxPath(path);
+      return;
+    }
     /* saved presentations open from the SAME places notebooks do — the
        folder listing, a pasted path, a GitHub link (2026-08-20, user: on
        disk they carry the browser's icon and there was no way in) */
@@ -6148,6 +6187,10 @@
     Array.prototype.slice.call(files||[]).forEach(function(f){
       if(isDeckPath(f.name)){
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      } else if(isPptxPath(f.name)){
+        /* T320: the same importer the drop and the launcher reach */
+        if(APP.deckImportPptx) APP.deckImportPptx(f);
+        hideDlg();
       } else if(BIN_RE.test(f.name)){
         fileB64(f).then(function(b){webParseB64(f.name,b);});
       } else if(SRC_RE.test(f.name)){
@@ -6376,7 +6419,10 @@
       (j.decks||[]).forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i deck';
         b.innerHTML='<span class="ic">'+bic('present')+'</span>';
-        b.title='Open this saved Junoview presentation';
+        b.title=(n.kind==='PowerPoint')
+          ?'Import this PowerPoint deck as a new presentation (a copy '
+            +'— the .pptx is not changed)'
+          :'Open this saved Junoview presentation';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
@@ -6657,7 +6703,8 @@
          treated as a folder to browse. Before T100 only .ipynb took the
          first branch, so typing `paper.tex` tried to list it as a
          directory and reported that it is not a folder. */
-      if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)) openPath(v);
+      if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)||isPptxPath(v))
+        openPath(v);
       else listDir(v);
     }
     if(inp) inp.addEventListener('keydown',function(e){
@@ -6713,6 +6760,13 @@
         imgs.forEach(function(f){if(APP.deckDropImage(f)) took++;});
         if(took) return;
       }
+      /* T320: a PowerPoint deck dropped anywhere imports, either mode */
+      files.filter(function(f){return isPptxPath(f.name);})
+        .forEach(function(f){
+          if(APP.deckImportPptx) APP.deckImportPptx(f);
+          else alert('The presentation editor has not loaded yet — '
+            +'try again in a moment.');
+        });
       /* a dropped saved presentation imports, in either mode */
       files.filter(function(f){return isDeckPath(f.name);})
         .forEach(function(f){

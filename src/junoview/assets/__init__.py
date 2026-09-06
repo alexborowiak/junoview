@@ -87,6 +87,7 @@ DECK_PARTS = (
     "52-layout-builder",
     "55-sections-and-strip",
     "60-saving-and-export",
+    "62-pptx-import",
     "99-boot",
 )
 

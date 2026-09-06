@@ -16,6 +16,7 @@ from pathlib import Path
 from .._write import write_text
 from ..notebook.loader import doc_from_url, is_url, load_doc, stem_for
 from ..notebook.parser import parse_notebook
+from ..notebook.pptx_read import is_pptx_name
 from ..notebook.presentations import as_presentations
 from ..notebook.sources import source_label
 from ..render.page import render_page
@@ -213,6 +214,13 @@ def _list_dir(raw: str) -> dict:
                 kb = max(1, p.stat().st_size // 1024)
                 decks.append({"name": name, "path": str(p),
                               "size": f"{kb} KB"})
+            elif is_pptx_name(name):
+                # T320: a PowerPoint deck imports from this dialog too.
+                # Listed WITH the decks, carrying its kind, because that
+                # is the shelf a person looks on for a presentation.
+                kb = max(1, p.stat().st_size // 1024)
+                decks.append({"name": name, "path": str(p),
+                              "size": f"{kb} KB", "kind": "PowerPoint"})
             elif source_label(name):
                 # every OTHER source the producer table knows: Markdown,
                 # Quarto, LaTeX, csv/tsv. They parsed from the CLI and

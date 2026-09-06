@@ -468,7 +468,9 @@ def test_every_door_in_app_js_asks_the_same_question():
     assert "files.filter(function(f){return SRC_RE.test(f.name);})" in js
     assert r"/\.ipynb$/i.test(f.name)" not in js
     # the typed path in the Open dialog
-    assert "if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)) openPath(v);" in js
+    # (a .pptx joined the line in T320; SRC_RE is still the question)
+    assert ("if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)||isPptxPath(v))\n"
+            "        openPath(v);") in js
     # and app mode posts the file's text, so /api/parse can dispatch
     assert "api('/api/parse',{name:f.name,text:txt})" in js
 

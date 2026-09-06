@@ -28,6 +28,12 @@ from ..notebook.loader import (
     stem_for,
 )
 from ..notebook.parser import parse_notebook
+from ..notebook.pptx_read import (
+    PPTX_CAP,
+    is_pptx_name,
+    read_pptx,
+    read_pptx_b64,
+)
 from ..notebook.presentations import as_presentations
 from ..notebook.sources import (
     EMBED_CAP,
@@ -136,6 +142,39 @@ def read_image_at(root: Path, raw_path: Any) -> dict:
                    + base64.b64encode(data).decode("ascii")}
 
 
+def read_pptx_at(root: Path, raw_path: Any) -> dict:
+    """ONE PowerPoint deck from a path on this computer, as the editor's
+    own item spec plus what was lost (T320) -- for a .pptx row in the
+    Open dialog or a path typed into it.
+
+    Held to the PowerPoint suffixes the way read_image_at is held to
+    IMG_MIME: a route that read whatever it was pointed at would be the
+    first with no gate. The file is never written to.
+    """
+    raw = str(raw_path or "").strip().strip('"')
+    if not raw:
+        raise ValueError("no path given")
+    if is_url(raw):
+        raise ValueError(
+            "a web address is fetched by the page itself, not read from disk")
+    f = Path(raw).expanduser()
+    if not f.is_absolute():
+        f = root / f
+    f = f.resolve()
+    if not is_pptx_name(f.name):
+        raise ValueError(f"{f.name} is not a PowerPoint file (.pptx)")
+    if not f.exists() or not f.is_file():
+        raise FileNotFoundError(f"{f} not found")
+    size = f.stat().st_size
+    if size > PPTX_CAP:
+        raise ValueError(
+            f"{f.name} is {size // (1024 * 1024)} MB, over the "
+            f"{PPTX_CAP // (1024 * 1024)} MB this will read")
+    got = read_pptx(f.read_bytes(), f.name)
+    return {"name": f.name, "path": str(f), "spec": got["spec"],
+            "lost": got["lost"]}
+
+
 def _make_handler(state: _AppState):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *args):       # keep the terminal quiet
@@ -219,6 +258,10 @@ def _make_handler(state: _AppState):
                     self._json(self._read_image(body))
                 elif url.path == "/api/readdeck":
                     self._json(self._read_deck(body))
+                elif url.path == "/api/readpptx":
+                    self._json(self._read_pptx(body))
+                elif url.path == "/api/importpptx":
+                    self._json(self._import_pptx(body))
                 elif url.path == "/api/parse":
                     self._json(self._parse_nb(body))
                 elif url.path == "/api/save":
@@ -262,6 +305,15 @@ def _make_handler(state: _AppState):
 
         def _read_image(self, body: dict) -> dict:
             return read_image_at(state.root, body.get("path"))
+
+        def _read_pptx(self, body: dict) -> dict:
+            return read_pptx_at(state.root, body.get("path"))
+
+        def _import_pptx(self, body: dict) -> dict:
+            """A .pptx the browser holds (picked, dropped) -- its bytes
+            come up as base64 and go back down as the spec (T320)."""
+            return read_pptx_b64(str(body.get("name") or ""),
+                                 str(body.get("b64") or ""))
 
         def _read_deck(self, body: dict) -> dict:
             """Hand back a saved .junoview presentation file's TEXT — the

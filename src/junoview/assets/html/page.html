@@ -314,6 +314,12 @@
       <button class="pr-mi" data-for="deckfile"
         title="Open a .junoview.html presentation saved on your computer">
         Open a .junoview file&#8230;</button>
+      <!-- T320: the other deck on disk. It imports as a new
+           presentation; the .pptx is not changed. -->
+      <button class="pr-mi" data-for="pptxfile"
+        title="Bring a PowerPoint deck in as a new presentation &mdash;
+ text, shapes, pictures, tables, charts, notes and builds come across">
+        Import a PowerPoint file&#8230;</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -768,7 +774,7 @@
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
 <input type="file" id="fileinput"
-  accept=".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv,.junoview,.html"
+  accept=".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv,.junoview,.html,.pptx"
   multiple hidden>
 <aside class="selpane varspane" id="varspane" hidden>
   <div class="selpane-h"><span>Variables</span>
@@ -777,6 +783,7 @@
   <div class="selpane-list" id="varspane-body"></div>
 </aside>
 <input type="file" id="deckfile" accept=".junoview,.json,.html" hidden>
+<input type="file" id="pptxfile" accept=".pptx,.potx,.ppsx,.pptm" hidden>
 {deck_shell}
 <script type="application/json" id="app-data">{app_data}</script>
 <!-- window.SemIcons — the branding.py icon table for DOM built at

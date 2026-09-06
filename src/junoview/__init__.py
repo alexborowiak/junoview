@@ -62,7 +62,8 @@ __all__ = [
     "render_page", "render_shell", "render_html",
     "build_graph_svg", "highlight_python", "md_to_html",
     # entry points (imported lazily via __getattr__)
-    "run_app", "build_web", "web_parse", "main",
+    "run_app", "build_web", "web_parse", "web_parse_b64",
+    "web_import_pptx_b64", "main",
 ]
 
 
@@ -75,7 +76,8 @@ def __getattr__(name: str):
     if name == "run_app":
         from .server.app import run_app
         return run_app
-    if name in ("build_web", "web_parse"):
+    if name in ("build_web", "web_parse", "web_parse_b64",
+                "web_import_pptx_b64"):
         from . import web
         return getattr(web, name)
     if name == "main":

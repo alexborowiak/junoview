@@ -7008,7 +7008,30 @@ after "Once having done those" -- the colour themes (T315), section colour
 (T316), preset heading looks (T317) and slide versions (T318-T319) go
 first. Ticked in the commit that ships each.
 
-- [ ] **T320 (list 1, H) PowerPoint import** preserving editable text, shapes, notes, charts, images and as much animation as possible.
+- [x] **T320 (list 1, H) PowerPoint import** preserving editable text, shapes, notes, charts, images and as much animation as possible.
+  Done 2026-09-06. A stdlib reader (`notebook/pptx_read.py`: zipfile +
+  ElementTree, no python-pptx) answers in the spec `pptx.js` WRITES, so
+  the exporter's seam is the importer's and a deck round-trips in a
+  test. Text keeps per-run bold/italic/colour and bullets through the
+  deck's own rich model (`a.html`, `a.list`) rather than Markdown;
+  shapes, connectors (heads, dashes, curves), freeforms, pictures
+  (bytes, alt, crop, opacity), tables, native charts (bar/line/scatter/
+  pie with cached values), speaker notes, sections, hidden slides
+  (Optional), hyperlinks and slide jumps, and the click timing of
+  entrances and exits all come across; SmartArt arrives as its words.
+  Placeholders inherit geometry and text styles from layout and master;
+  scheme colours resolve through the theme and clrMap. The loss report
+  (metafiles, unreadable chart kinds, OLE, motion paths, unknown
+  transitions, indented levels...) is shown BEFORE the deck lands, the
+  export dialog's twin. Doors: File > Import PowerPoint, the launcher's
+  New > Import a PowerPoint file, a .pptx dropped on the window, a .pptx
+  row or typed path in the Open dialog (`/api/readpptx`), Choose files
+  and a .pptx URL in the web build (`semPy.importPptx`); the app posts
+  a picked file to `/api/importpptx`. Gates: 64 MB input, part and
+  inflation caps, DOCTYPE refused, media through IMG_MIME + magic,
+  links http/https/mailto only. Found and fixed in passing: the web
+  build's `sr.web_parse_b64` (T113's .xlsx door) was never reachable
+  through the package's lazy loader.
 - [ ] **T321 (list 2, H) Native video and audio** with trimming, poster frames, playback controls, offline copies and export support.
 - [ ] **T322 (list 3, H) Advanced chart editor**: stacked charts, secondary axes, log axes, error bars, confidence bands, labels, trend lines, per-series editing.
 - [ ] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".

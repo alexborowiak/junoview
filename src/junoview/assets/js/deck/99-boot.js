@@ -57,6 +57,7 @@
   flipFxBoot();               /* how a flip book's page turns (T234) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
+  pptxImportBoot();           /* PowerPoint in: File, launcher, drop (T320) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
