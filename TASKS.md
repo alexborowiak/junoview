@@ -7093,3 +7093,22 @@ first. Ticked in the commit that ships each.
 - [ ] **T359 (list 40, L/M) Speaker-role and handoff cues** for multi-person talks.
 - [ ] **T360 (list, H) Infinite canvas story map**: the whole argument spatially before presenting it linearly.
 - [ ] **T361 (list 59, H) Result constellation**: figures, notebooks, claims and sources as an explorable map.
+- [x] **T362 - Slides from the notebook viewer.** The user (2026-09-06):
+  "we also need the auto generate presentations from notebooks but this
+  should be just in the notebook viewer now. And there should be From
+  all / From just this section / From just favourites. Presentation
+  should be just markdown, headings and images ... using the section
+  headings as titles for slides, and images and md".
+  *Done 2026-09-06.* Two doors in the VIEWER, none in the deck: New >
+  Slides from this notebook... opens a three-way chooser (whole
+  notebook / the section on screen / the cells you pinned or flagged),
+  and every section heading carries a quiet `slides` word beside `hide
+  section`. app.js builds the PLAN (`autoPlan`: it owns the sections,
+  the marks and the notebook on screen); `11-autodeck.js` turns it into
+  slides (`autoDeckBuild`, pure and tested): the heading as an h1 title
+  on every slide of its section, at most one markdown block and one
+  figure per slide (side by side when both, full width alone), more
+  running on under the same heading; sections with neither are
+  skipped. Items are notebook cell frames with provenance, captured at
+  once. It is always a NEW presentation -- T236 removed the old
+  Auto-build precisely because it replaced the deck you had.

@@ -320,6 +320,22 @@
         title="Bring a PowerPoint deck in as a new presentation &mdash;
  text, shapes, pictures, tables, charts, notes and builds come across">
         Import a PowerPoint file&#8230;</button>
+      <!-- T362: the notebook laid out as slides -- every section, the
+           one on screen, or the cells you marked -->
+      <button class="pr-mi" data-for="pr-autoslides"
+        title="A new presentation made from the notebook on screen: each
+ section heading a slide title, its markdown and figures beneath">
+        Slides from this notebook&#8230;</button>
+    </div>
+    <div class="pr-newmenu auto-menu" id="auto-menu" hidden>
+      <button class="pr-mi" data-scope="all"
+        title="Every section with markdown or figures, in order"
+        >From the whole notebook</button>
+      <button class="pr-mi" data-scope="section" id="auto-menu-sec"
+        title="Only the section you are reading">From this section</button>
+      <button class="pr-mi" data-scope="marks"
+        title="Only the cells you pinned or flagged (star, heart, flag)"
+        >From the cells you marked</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -343,6 +359,10 @@
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><i data-ic="open"></i></span>
     <span class="pr-t">+ New folder</span></button>
+  <button class="pr-btn" hidden id="pr-autoslides"
+    title="Slides from this notebook">
+    <span class="pr-ico"><i data-ic="newdeck"></i></span>
+    <span class="pr-t">Slides from this notebook</span></button>
   <!-- the two panel controls as a pair: collapse it, or let it hide
        itself. Neither is "pin" — nothing is being pinned. -->
   <div class="pr-foot">

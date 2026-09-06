@@ -231,6 +231,7 @@ def test_a_self_contained_save_carries_every_clip_once():
     src = assets.deck_js()
     script = ("var MEDIA={'med:a':{src:'data:video/mp4;base64,AAAA',"
               "mime:'video/mp4',name:'a.mp4'}};\n"
+              + lift_fn(src, "mediaStore") + "\n"
               + lift_fn(src, "mediaEmbed") + "\n"
               "var p={slides:[{annots:[{k:'video',vkey:'med:a'},"
               "{k:'image',src:'x'}]},{annots:[{k:'video',vkey:'med:a'},"
@@ -256,7 +257,10 @@ def test_a_self_contained_save_carries_every_clip_once():
 def test_the_bytes_never_sit_in_pres_but_ride_every_save(out):
     """The store, the absorb on the way in, the embed on the way out --
     and the render branch reading from the store, never from the item."""
-    assert "  var MEDIA={};" in out
+    # made on first touch: normPres absorbs `media` at eval time, before
+    # 49-media.js's own line has run
+    assert "  var MEDIA;\n  function mediaStore(){return MEDIA||(MEDIA={});}" in out
+    assert "MEDIA[" not in out.split("function mediaStore(){")[1]
     norm = out.split("function normPres(p,stem){")[1].split(
         "\n  function registerShell(")[0]
     assert "mediaAbsorb(p);" in norm

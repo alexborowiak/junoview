@@ -672,6 +672,15 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .sectionhead:hover .sec-hideall,.sec-hideall:focus-visible{opacity:.65;}
 .sec-hideall:hover{opacity:1;background:var(--paper-2);
   border-color:var(--line);color:var(--ink-2);}
+/* T362: the same quiet word, one action over -- a section into slides */
+.sec-slides{flex:none;background:none;border:1px solid transparent;
+  color:var(--ink-3);cursor:pointer;font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;line-height:1;padding:5px 8px;
+  border-radius:5px;opacity:0;white-space:nowrap;
+  transition:opacity .12s,background .12s,border-color .12s;}
+.sectionhead:hover .sec-slides,.sec-slides:focus-visible{opacity:.65;}
+.sec-slides:hover{opacity:1;background:var(--paper-2);
+  border-color:var(--line);color:var(--ink-2);}
 /* collapsed folds the section's cards away; the header stays clickable */
 .section.sec-collapsed .card{display:none;}
 .section.sec-collapsed .sectionhead{margin-bottom:0;}

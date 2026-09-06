@@ -447,6 +447,12 @@ def render_sections(doc: Document) -> str:
             f'title="Hide this whole section — the heading and every card '
             f'in it (restore it from the sidebar)" '
             f'aria-label="Hide this whole section">hide section</button>'
+            # T362: slides from just this section -- its heading as the
+            # title, its markdown and figures beneath
+            f'<button class="sec-slides" data-sec="{sid}" '
+            f'title="Make a new presentation from this section: the heading '
+            f'as the title, its markdown and figures on the slides" '
+            f'aria-label="Slides from this section">slides</button>'
             f'</div>{cards}</section>')
     return "".join(sections_html)
 

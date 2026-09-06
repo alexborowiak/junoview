@@ -4389,6 +4389,13 @@
         setSecOff(b.dataset.sec,true);   /* heading AND every card */
       });
     });
+    $$('.sec-slides',shell).forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        /* T362: this section alone, as a new presentation */
+        autoSlidesFrom(shell.dataset.nb||APP.active,'section',b.dataset.sec);
+      });
+    });
     $$('.navsec-eye',shell).forEach(function(sp){
       var toggle=function(e){
         e.preventDefault();e.stopPropagation();
@@ -4829,6 +4836,110 @@
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&!panel.hidden) closePanel();});
   }
+  /* ---- SLIDES FROM THE NOTEBOOK (T362) --------------------------------
+     The user: "auto generate presentations from notebooks but this
+     should be just in the notebook viewer now ... From all / From just
+     this section / From just favourites ... using the section headings
+     as titles for slides, and images and md".
+     The viewer owns what is in scope -- the sections, the marks and the
+     notebook on screen -- so it builds the PLAN; the deck turns it into
+     slides (11-autodeck.js, autoDeckBuild). Three scopes, one shape. */
+  function autoPlan(stem,scope,sid){
+    var sh=APP.shells[stem];
+    if(!sh||!sh.data) return null;
+    var data=sh.data,secs=data.sections||[],items=data.items||[];
+    function keep(it){
+      return it.kind==='note'||it.kind==='figure'||it.kind==='diagnostic';
+    }
+    function take(it){
+      if(!keep(it)) return false;
+      if(scope==='section') return it.section===sid;
+      if(scope==='marks'){var st=markOf(stem,it.card);return !!(st.p||st.f);}
+      return true;
+    }
+    var sec=secs.filter(function(s){return s.id===sid;})[0];
+    var base=String(data.title||stem||'notebook');
+    var plan={name:scope==='section'?String((sec&&sec.title)||base)
+        :scope==='marks'?(base+' \u2014 marked cells'):base,
+      stem:stem,scope:scope,
+      scopeLabel:scope==='section'
+        ?('the section \u201c'+String((sec&&sec.title)||'')+'\u201d')
+        :scope==='marks'?'the cells you marked':'the whole notebook',
+      sections:[]};
+    secs.forEach(function(s){
+      if(scope==='section'&&s.id!==sid) return;
+      var its=items.filter(function(it){
+        return it.section===s.id&&take(it);
+      }).map(function(it){
+        return {ref:stem+'::'+it.anchor,kind:it.kind,title:it.title||''};
+      });
+      if(its.length) plan.sections.push({title:s.title||'',items:its});
+    });
+    return plan;
+  }
+  function autoSlidesFrom(stem,scope,sid){
+    var plan=autoPlan(stem,scope,sid);
+    if(!plan){
+      alert('Open a notebook first \u2014 the slides are made from its '
+        +'sections.');
+      return;
+    }
+    if(!APP.deckAuto){
+      alert('The presentation editor has not loaded yet \u2014 try again '
+        +'in a moment.');
+      return;
+    }
+    if(!plan.sections.length){
+      alert(scope==='marks'
+        ?'None of the cells you pinned or flagged is markdown or a figure '
+          +'\u2014 mark some first.'
+        :'No markdown or figure cells to make slides from here.');
+      return;
+    }
+    APP.deckAuto(plan);
+  }
+  /* the section on screen: the sidebar's highlighted row, else the first */
+  function autoCurrentSection(stem){
+    var sh=APP.shells[stem]; if(!sh) return null;
+    var act=sh.el.querySelector('.navsec.active');
+    var secs=(sh.data&&sh.data.sections)||[];
+    var sid=act?act.dataset.sec:(secs[0]||{}).id;
+    return secs.filter(function(s){return s.id===sid;})[0]||null;
+  }
+  function autoMenuOpen(){
+    var m=$('#auto-menu'); if(!m) return;
+    var stem=APP.active||APP.order[0];
+    if(!stem){
+      alert('Open a notebook first \u2014 the slides are made from its '
+        +'sections.');
+      return;
+    }
+    var sec=autoCurrentSection(stem);
+    var row=$('#auto-menu-sec');
+    if(row){
+      row.textContent='From this section'+(sec?' \u2014 '+sec.title:'');
+      row.dataset.sec=sec?sec.id:'';
+      row.disabled=!sec;
+    }
+    /* deferred: the click that opened it is still on its way to the
+       document, where the closer below listens */
+    setTimeout(function(){m.hidden=false;},0);
+  }
+  (function(){
+    var b=$('#pr-autoslides'),m=$('#auto-menu');
+    if(!b||!m) return;
+    b.addEventListener('click',function(e){
+      e.stopPropagation();autoMenuOpen();});
+    $$('.pr-mi',m).forEach(function(mi){
+      mi.addEventListener('click',function(e){
+        e.stopPropagation();m.hidden=true;
+        var stem=APP.active||APP.order[0];
+        autoSlidesFrom(stem,mi.dataset.scope,mi.dataset.sec||'');
+      });
+    });
+    document.addEventListener('click',function(e){
+      if(!m.hidden&&!m.contains(e.target)) m.hidden=true;});
+  })();
   function initShell(shell){
     var data={};
     var de=$('.nb-data',shell);

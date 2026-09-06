@@ -26,7 +26,15 @@
      called from THE BOOT SEQUENCE. */
 
   /* ---- THE MEDIA STORE ---------------------------------------------- */
-  var MEDIA={};            /* vkey -> {src, mime, name}: this session's copy */
+  /* vkey -> {src, mime, name}: this session's copy. NO initialiser here:
+     normPres absorbs a saved deck's `media` while the IIFE is still being
+     evaluated (10-decks normalises the page's presentations at eval
+     time, long before this line runs), and a hoisted `var` is undefined
+     until its own line executes -- so `mediaStore()[k]=...` there threw and
+     killed the whole deck (2026-09-06, caught live). The store is made
+     on first touch, whichever part touches it first. */
+  var MEDIA;
+  function mediaStore(){return MEDIA||(MEDIA={});}
   var MEDIA_URL={};        /* vkey -> blob: URL, minted once */
   var MEDIA_CAP=200*1024*1024;      /* refused above this */
   var MEDIA_WARN=25*1024*1024;      /* placed, but you are told */
@@ -35,15 +43,15 @@
     return 'med:'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   }
   function mediaPut(key,rec){
-    MEDIA[key]=rec;
+    mediaStore()[key]=rec;
     return idbPut(key,rec).catch(function(){});
   }
   function mediaGet(key){
     if(!key) return Promise.resolve(null);
-    if(MEDIA[key]) return Promise.resolve(MEDIA[key]);
+    if(mediaStore()[key]) return Promise.resolve(mediaStore()[key]);
     return idbGet(key).then(function(v){
-      if(v&&typeof v.src==='string'&&v.src) MEDIA[key]=v;
-      return MEDIA[key]||null;
+      if(v&&typeof v.src==='string'&&v.src) mediaStore()[key]=v;
+      return mediaStore()[key]||null;
     }).catch(function(){return null;});
   }
   function dataUriBytes(src){
@@ -56,7 +64,7 @@
   /* a blob: URL is what the element plays from: a 40 MB data URI on a
      src attribute is a 40 MB string the DOM holds for the page's life */
   function mediaBlobUrl(key){
-    var rec=MEDIA[key];
+    var rec=mediaStore()[key];
     if(!rec) return '';
     if(MEDIA_URL[key]) return MEDIA_URL[key];
     var d=dataUriBytes(rec.src);
@@ -105,7 +113,7 @@
     (p.slides||[]).forEach(function(sl){
       (sl.annots||[]).forEach(function(a){
         if(!a||a.k!=='video'||!a.vkey||out[a.vkey]) return;
-        var rec=MEDIA[a.vkey];
+        var rec=mediaStore()[a.vkey];
         if(!rec||!rec.src) return;
         out[a.vkey]={src:rec.src,mime:rec.mime||'',name:rec.name||''};
         n++;
@@ -121,7 +129,7 @@
     Object.keys(p.media).forEach(function(k){
       var r=p.media[k];
       if(!r||typeof r.src!=='string'||!r.src) return;
-      if(MEDIA[k]&&MEDIA[k].src) return;
+      if(mediaStore()[k]&&mediaStore()[k].src) return;
       mediaPut(k,{src:r.src,mime:String(r.mime||''),name:String(r.name||'')});
     });
   }
@@ -132,7 +140,7 @@
     var seen={};
     ((p&&p.slides)||[]).forEach(function(sl){
       (sl.annots||[]).forEach(function(a){
-        if(!a||a.k!=='video'||!a.vkey||MEDIA[a.vkey]||seen[a.vkey]) return;
+        if(!a||a.k!=='video'||!a.vkey||mediaStore()[a.vkey]||seen[a.vkey]) return;
         seen[a.vkey]=1;
         mediaGet(a.vkey).then(function(r){
           if(!r) return;
@@ -150,7 +158,7 @@
     var n=0,seen={};
     ((p&&p.slides)||[]).forEach(function(sl){
       (sl.annots||[]).forEach(function(a){
-        if(a&&a.k==='video'&&a.vkey&&!MEDIA[a.vkey]&&!seen[a.vkey]){
+        if(a&&a.k==='video'&&a.vkey&&!mediaStore()[a.vkey]&&!seen[a.vkey]){
           seen[a.vkey]=1;n++;}
       });
     });
@@ -272,7 +280,7 @@
     if(a.mute) v.muted=true;
     v.controls=!editing&&a.ctrl!==0;
     v.setAttribute('aria-label',a.alt||a.name||(a.audio?'Audio clip':'Video'));
-    var rec=MEDIA[a.vkey];
+    var rec=mediaStore()[a.vkey];
     if(inline){if(rec) v.src=rec.src;}      /* a standalone export */
     else if(rec) v.src=mediaBlobUrl(a.vkey);
     else if(a.vkey) mediaGet(a.vkey).then(function(r){
@@ -357,12 +365,12 @@
     if(pv){
       if(pv.dataset.vkey!==a.vkey){
         pv.dataset.vkey=a.vkey;
-        pv.src=MEDIA[a.vkey]?mediaBlobUrl(a.vkey):'';
+        pv.src=mediaStore()[a.vkey]?mediaBlobUrl(a.vkey):'';
         if(a.poster) pv.poster=a.poster; else pv.removeAttribute('poster');
       }
       pv.classList.toggle('md-audio',!!a.audio);
     }
-    var info=$('#md-info'),rec=MEDIA[a.vkey];
+    var info=$('#md-info'),rec=mediaStore()[a.vkey];
     if(info) info.textContent=rec
       ?('Stored offline in this deck — '
         +Math.round(rec.src.length*0.75/1024)+' KB'
@@ -455,7 +463,7 @@
       if(deckEl.hidden||mode!=='edit') return false;
       return placeMediaFile(file);
     };
-    window.SemDeckMedia={place:placeMediaFile,store:MEDIA,
+    window.SemDeckMedia={place:placeMediaFile,store:mediaStore(),
       trimOf:mediaTrimOf,warm:function(){mediaWarm(pres);}};
     mediaWarm(pres);
   }

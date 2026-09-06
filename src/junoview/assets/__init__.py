@@ -72,6 +72,7 @@ DECK_PARTS = (
     "05-figures-and-ribbon",
     "07-ribbon-layouts",
     "10-decks",
+    "11-autodeck",
     "15-annotations",
     "17-text-builds",
     "20-notes-and-tables",
