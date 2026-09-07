@@ -22424,7 +22424,16 @@ window.JunoPptx = (function () {
     this.add(name, utf8(text));
   };
 
-  Zip.prototype.blob = function () {
+  /* T323: BYTES, not a Blob. An embedded chart workbook is a zip that
+     has to become a MEMBER of this zip, and Blob has no synchronous way
+     back to its bytes. blob() is the same archive wrapped for download. */
+  Zip.prototype.blob = function (mime) {
+    return new Blob([this.bytes()], { type: mime
+      || 'application/vnd.openxmlformats-officedocument.presentationml'
+        + '.presentation' });
+  };
+
+  Zip.prototype.bytes = function () {
     var chunks = [], central = [], offset = 0, self = this;
 
     function num(value, bytes) {
@@ -22469,8 +22478,13 @@ window.JunoPptx = (function () {
       num(centralSize, 4), num(offset, 4), num(0, 2),
     ];
 
-    return new Blob(chunks.concat(central).concat(end),
-      { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+    var parts = chunks.concat(central).concat(end);
+    var total = 0, i;
+    for (i = 0; i < parts.length; i++) total += parts[i].length;
+    var out = new Uint8Array(total), at = 0;
+    for (i = 0; i < parts.length; i++) { out.set(parts[i], at);
+      at += parts[i].length; }
+    return out;
   };
 
   /* ------------------------------------------------------------- helpers */
@@ -23073,6 +23087,88 @@ window.JunoPptx = (function () {
     }
     return out;
   }
+  /* ---- THE EMBEDDED WORKBOOK (T323) --------------------------------
+     PowerPoint renders and restyles a chart from the caches alone --
+     which is why T117 shipped without this -- but "Edit Data" opens the
+     chart's own SHEET, and a chart with no sheet opens an empty one:
+     the numbers you typed in Junoview are not there to edit, and the
+     first edit on the other side overwrites the lot. So every chart now
+     carries a real .xlsx, whose grid is exactly the grid the c:f
+     formulas already claim: A1 blank, the series names along row 1, the
+     categories down column A, the values under their names, and each
+     error series in the column chartSerExtras points at.
+
+     Written with the same Zip as the .pptx itself (a zip inside a zip,
+     which is why Zip grew bytes()), and deterministically, so the same
+     deck still exports byte-identically. Strings go out inline rather
+     than through a sharedStrings part: one fewer part to keep in step,
+     and the sheet is small by construction. */
+  var XL_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  function xlCell(ref, v, isNum) {
+    if (v === '' || v == null) return '<c r="' + ref + '"/>';
+    if (isNum) {
+      var n = Number(v);
+      return '<c r="' + ref + '"><v>' + (isFinite(n) ? n : 0) + '</v></c>';
+    }
+    return '<c r="' + ref + '" t="inlineStr"><is><t xml:space="preserve">'
+      + esc(String(v)) + '</t></is></c>';
+  }
+  function chartWorkbook(item) {
+    var series = item.series || [];
+    var cats = item.cats || [];
+    /* the categories are numbers on a numeric scatter and words
+       everywhere else -- the same split chartXml's caches make */
+    var catNum = item.ct === 'scatter' && item.numeric;
+    var cols = [];      /* {col, head, ys} in sheet order, after A */
+    series.forEach(function (se, i) {
+      cols.push({ col: chartCol(i), head: se.name, ys: se.ys || [] });
+    });
+    series.forEach(function (se, i) {
+      if (!se.err || !se.err.length) return;
+      cols.push({ col: chartCol(series.length + i),
+        head: se.name + ' ±',
+        ys: se.err.map(function (e) { return e == null ? 0 : e; }) });
+    });
+    var n = cats.length;
+    cols.forEach(function (c) { n = Math.max(n, c.ys.length); });
+    var rows = ['<row r="1">' + xlCell('A1', '')
+      + cols.map(function (c) {
+        return xlCell(c.col + '1', c.head, false);
+      }).join('') + '</row>'];
+    for (var r = 0; r < n; r++) {
+      rows.push('<row r="' + (r + 2) + '">'
+        + xlCell('A' + (r + 2), cats[r] == null ? '' : cats[r], catNum)
+        + cols.map(function (c) {
+          return xlCell(c.col + (r + 2),
+            c.ys[r] == null ? '' : c.ys[r], true);
+        }).join('') + '</row>');
+    }
+    var z = new Zip();
+    z.addText('[Content_Types].xml', XML_HEAD
+      + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/'
+      + 'content-types"><Default Extension="rels" ContentType="application/'
+      + 'vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + '<Override PartName="/xl/workbook.xml" ContentType="application/'
+      + 'vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+      + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType='
+      + '"application/vnd.openxmlformats-officedocument.spreadsheetml.'
+      + 'worksheet+xml"/></Types>');
+    z.addText('_rels/.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/officeDocument',
+        target: 'xl/workbook.xml' }]));
+    z.addText('xl/workbook.xml', XML_HEAD
+      + '<workbook xmlns="' + XL_NS + '" xmlns:r="' + DOC_NS
+      + '/relationships"><sheets><sheet name="Sheet1" sheetId="1" '
+      + 'r:id="rId1"/></sheets></workbook>');
+    z.addText('xl/_rels/workbook.xml.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/worksheet',
+        target: 'worksheets/sheet1.xml' }]));
+    z.addText('xl/worksheets/sheet1.xml', XML_HEAD
+      + '<worksheet xmlns="' + XL_NS + '"><sheetData>' + rows.join('')
+      + '</sheetData></worksheet>');
+    return z.bytes();
+  }
   function chartXml(item) {
     var fill = function (c) {
       return '<c:spPr>' + solidFill(c, null, '4FB3D9') + '</c:spPr>';
@@ -23205,6 +23301,13 @@ window.JunoPptx = (function () {
       + '<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr>'
       + solidFill(item.ink, null, 'DBE7EF')
       + '</a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>'
+      /* T323: WHERE THE NUMBERS LIVE. CT_ChartSpace puts externalData
+         after txPr and before printSettings; autoUpdate 0 because the
+         sheet is a copy of the deck's numbers, not a link to a file on
+         somebody's disk. rId1 is safe -- every part has its own
+         relationship namespace, and a chart part has no other rel. */
+      + '<c:externalData r:id="rId1"><c:autoUpdate val="0"/>'
+      + '</c:externalData>'
       + '</c:chartSpace>';
   }
 
@@ -23505,7 +23608,7 @@ window.JunoPptx = (function () {
           var vis = (item.series || []).filter(function (se) {
             return se && !se.hide; });
           if (!vis.length) { skipped++; return; }
-          charts.push(chartXml(item));
+          charts.push({ xml: chartXml(item), book: chartWorkbook(item) });
           var crid = 'rIdC' + charts.length;
           rels.push({ id: crid, type: DOC_NS + '/relationships/chart',
             target: '../charts/chart' + charts.length + '.xml' });
@@ -23580,7 +23683,15 @@ window.JunoPptx = (function () {
     }
     media.forEach(function (m) { zip.add('ppt/media/' + m.name, m.bytes); });
     charts.forEach(function (x, i) {
-      zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x);
+      zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x.xml);
+      /* T323: the chart's own workbook, and the first rels part a chart
+         part has ever had. The name is the one PowerPoint writes for its
+         own charts, so the Edit Data button finds what it expects. */
+      var wbName = 'Microsoft_Excel_Sheet' + (i + 1) + '.xlsx';
+      zip.add('ppt/embeddings/' + wbName, x.book);
+      zip.addText('ppt/charts/_rels/chart' + (i + 1) + '.xml.rels',
+        relsDoc([{ id: 'rId1', type: DOC_NS + '/relationships/package',
+          target: '../embeddings/' + wbName }]));
     });
 
     zip.addText('ppt/slideLayouts/slideLayout1.xml',
@@ -23659,7 +23770,10 @@ window.JunoPptx = (function () {
 
     var defaults = '<Default Extension="rels" ContentType="application/'
       + 'vnd.openxmlformats-package.relationships+xml"/>'
-      + '<Default Extension="xml" ContentType="application/xml"/>';
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + (charts.length ? '<Default Extension="xlsx" ContentType="'
+        + 'application/vnd.openxmlformats-officedocument.spreadsheetml'
+        + '.sheet"/>' : '');
     Object.keys(extensions).forEach(function (ext) {
       defaults += '<Default Extension="' + ext + '" ContentType="'
         + extensions[ext] + '"/>';
