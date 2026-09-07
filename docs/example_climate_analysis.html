@@ -1681,13 +1681,25 @@ body.presrail-min{--presrail-w:46px;}
    pushed the whole bar onto a second row */
 .abgrp[hidden]{display:none!important;}
 .abgrp-row{display:flex;align-items:flex-start;gap:5px;flex:1;}
-/* + Open is one button in its own section, so it takes the full height */
-#ab-file .abgrp-row{align-items:stretch;}
-/* the chain matters: the row stretches the .fgrp (cross axis), but inside
-   the .fgrp the button's height is the MAIN axis — so it needs flex:1 or
-   it just sits at its natural 28px */
+/* ---- T365: NO HOLES HERE EITHER ------------------------------------
+   2026-09-07, user: "there are weird gaps and spaces everywhere". The
+   deck ribbon's two shapes of gap are on this bar as well, and the cure
+   is the same principle: ONE height for every control, and a column
+   that does not fill the band is CENTRED in it rather than pinned to
+   the top with the leftover underneath.
+
+   Measured before: "Markdown On" sat at the top of the Filters group
+   with 33px of nothing under it (it is the one filter with no Choose
+   beneath it); the App group was one row of 34px buttons -- the only
+   34px controls on a 28px bar -- with 27px of nothing under all four;
+   and Open was 30px beside a 28px docked file bar. */
+.appbar .abgrp-row{align-items:stretch;}
+.appbar .fgrp{justify-content:center;}
+/* + Open is one button in its own section. It used to be told to fill
+   the band on its own, which made it 30px on a 28px bar the moment
+   T364 docked the file controls under it. */
 #ab-file .abgrp-row .fgrp{flex:1;}
-#ab-file .abgrp-row .toggle{height:auto;min-height:28px;flex:1;}
+#ab-file .abgrp-row .toggle{height:28px;min-height:28px;flex:none;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
    screen is the same idea, and the two stack the way Raw and Tree do. */
@@ -1703,8 +1715,15 @@ body.presrail-min{--presrail-w:46px;}
    groups with a ragged bottom edge. Width comes from the column
    (align-items:stretch), so there is nothing to keep in sync by hand. */
 #pt-filter-btn,#ck-filter-btn,#ot-filter-btn{width:100%;flex:none;}
-#ab-app .btn-grp{flex:none;gap:5px;}
+/* T365: TWO ROWS OF TWO, not one row of four. As a single row this
+   group left 27px of the band empty under every one of its buttons,
+   and its four wide controls were 300px of a bar that was already
+   scrolling sideways; paired up it fills the band and gives 133px
+   back. Same grid as the deck ribbon's groups, for the same reason. */
+#ab-app .btn-grp{display:grid;grid-auto-flow:column;
+  grid-template-rows:28px 28px;gap:4px 5px;align-items:stretch;}
 #ab-app .btn-grp>*{flex:none;}
+.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{height:28px;}
 /* the app group (theme / support / help) sits at the RIGHT END of the
    ribbon, pushed there by an auto margin. It lived on the tab row while
    the ribbon wrapped — as the last ribbon group it was the first thing
@@ -1737,8 +1756,11 @@ body.presrail-min{--presrail-w:46px;}
    its button (see fitRibbon's caller). */
 .abgrp.grp-empty{display:none!important;}
 /* Present spans two rows: centre its content in the taller box */
-#ab-view #doc-present,#ab-view #doc-full{
+#ab-view #doc-present,#ab-view #doc-full,#ab-view #doc-autoslides{
   justify-content:center;align-items:center;}
+/* a stack of one centres in the band rather than sitting at its top --
+   the same rule the rest of the bar got in T365 */
+.vw-stack{justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -1813,6 +1835,10 @@ body.tree-mode #copy-grp{display:none!important;}
    longest label it can hold ("Document"), because the Tree button renames
    itself and a wider word would shove Present sideways — the same fixed
    slot the filter state words use, for the same reason (2026-07-30) */
+/* min-width, not width: it is the FLOOR that stops the group shifting
+   sideways when the Tree button renames itself "Document". A wider
+   word in one stack simply makes that stack wider, which is what every
+   other column on this bar does too. */
 .vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
   min-width:92px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
@@ -3377,6 +3403,11 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
   border-radius:9px;padding:5px;display:flex;flex-direction:column;
   gap:2px;box-shadow:0 12px 32px #0008;}
 .pr-newmenu[hidden]{display:none;}
+/* T365: the slides chooser, opened from the ribbon instead of the rail.
+   Fixed like .ckfilter-menu, for the same reason -- the header is
+   sticky, so a menu inside it paints behind the page. */
+.pr-newmenu.auto-float{position:fixed;left:auto;right:auto;width:280px;
+  z-index:200;}
 .pr-mi{background:none;border:1px solid transparent;border-radius:6px;
   padding:6px 10px;text-align:left;cursor:pointer;color:#c9d6e2;
   font-family:var(--sans);font-size:12px;}
@@ -8754,6 +8785,30 @@ body.light .dg-num input{background:var(--input-bg);
 .rbn-row>.rbn-cell,.rbn-row>.sh-drop,.rbn-row>.dc-menuwrap,
 .rbn-row>.strip-frame,.rbn-row>.fx-strip{justify-self:stretch;}
 .rbn-row>.rbn-cell.rbn-seg{justify-self:start;}
+/* ---- T365: NO HOLES, NO RAGGED COLUMNS ------------------------------
+   2026-09-07, user: "there are weird gaps and spaces everywhere ... I
+   have told you about this like 40 fucking times."
+
+   TWO shapes of gap, measured on all seven tabs. Both are set by
+   sizeRibbonGroups(), which is the one place that already knows how
+   many cells a group has and re-runs on every path that re-fits the
+   ribbon.
+
+   .rbn-odd -- the last cell when the count is ODD. Column-major flow
+   over two rows leaves it at the top of a column with 37px of nothing
+   under it, fenced by the group's dividers into a visible rectangle.
+   It takes the whole column and centres in it, so the space it does
+   not need sits evenly above and below rather than as a notch below.
+
+   .rbn-fit -- both halves of a column whose two members can be
+   widened without looking absurd. The track is already max-content
+   wide; without this the narrower button stops short and leaves a
+   notch, which is the ragged right edge in twenty-two columns. It is
+   set in PAIRS, and never on a pair containing a joined run: a run is
+   as wide as all its segments, and stretching a plain button to that
+   is exactly the "why is tidy page huge?" of 2026-09-03. */
+.rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}
+.rbn-row>.rbn-fit{justify-self:stretch;}
 /* Background is a tall tile now, so its menu hangs off a 72px door */
 #bg-drop.rbn-tall,#hm-updwrap.rbn-tall{justify-self:start;}
 /* T280: the merged Update tile is the same shape as the two it replaced */
@@ -9192,6 +9247,23 @@ window.MathJax = {
     <button class="toggle" id="doc-full" aria-pressed="false"
       title="Fill the display with Junoview (Esc to leave)"
       ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span class="btxt">Full screen</span></button>
+    </span>
+    <!-- T365: MAKE SLIDES, ON THE ROW (2026-09-07, user: "where was the
+         autogenerate presentation in the notebook view????"). T362 built
+         it and gave it two doors, both hard to find from the notebook
+         itself: presentations rail > New > "Slides from this
+         notebook..." (a menu, in a rail that collapses) and a small
+         "slides" word on each section heading. It belongs beside
+         Present, which is the other control that turns this notebook
+         into a talk, and it opens T362's own three-scope chooser
+         directly rather than a menu that opens another menu. -->
+    <span class="vw-stack">
+    <button class="toggle" id="doc-autoslides"
+      aria-haspopup="menu" aria-expanded="false"
+      title="Build a presentation from this notebook &mdash; section
+ headings become slide titles, with their markdown and figures beneath"
+      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/><path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg><span class="btxt">Make slides
+      &#9662;</span></button>
     </span>
     </span></span><span class="abgrp-lab">View</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
@@ -12449,7 +12521,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     <span class="dc-menuwrap">
       <button class="dbtn qat-btn qat-auto" id="qat-auto" hidden
         aria-haspopup="true" aria-expanded="false"></button>
-      <div class="dc-menu" id="auto-menu" hidden></div>
+      <!-- T365: #qat-auto-menu, not #auto-menu. page.html's three-scope
+           slides chooser wore that id too and both are in one document,
+           so getElementById returned the chooser: pressing Autosave
+           emptied it and refilled it with "Every 5 seconds", and
+           "Slides from this notebook" was dead for the rest of the
+           session. Named after the button it belongs to. -->
+      <div class="dc-menu" id="qat-auto-menu" hidden></div>
     </span>
     <!-- ONE cell, like the zoom stepper: undo and redo are the same
          decision in two directions and must never end up on different
@@ -12832,15 +12910,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
-              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
+              <button class="dbtn rbn-sm" id="dsg-tidy"
+                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
+              <!-- T365: LAST, and a column of its own. Four segments make
+                   this run 276px, and while it sat mid-group it was the
+                   other half of a column with a 127px button in it -- a
+                   149px ragged edge, and the pair that T280 could not
+                   make share a width without blowing the button up
+                   ("why is tidy page huge?"). Spanning both rows it
+                   owns its column, so Saved layouts pairs with Tidy
+                   page and every column in this group comes out even. -->
+              <div class="rbn-cell rbn-seg lay-tidy rbn-tall" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
               <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
               <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
               <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
               </div>
-              <button class="dbtn rbn-sm" id="dsg-tidy"
-                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
@@ -13255,7 +13341,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <span class="rbn-grp rbn-trans" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
-              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
+              <!-- T365: a column of its own. Three segments make this
+                   268px and its only neighbour is a 90px button, which
+                   was a 178px ragged edge down the middle of the group. -->
+              <span class="rbn-cell rbn-seg rbn-tall" id="trans-run" role="group"
                 aria-label="How this slide arrives">
                 <span class="cell-lab">This slide</span>
                 <button class="dbtn rbn-sm" id="trans-cut"
@@ -20471,7 +20560,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     var sid=act?act.dataset.sec:(secs[0]||{}).id;
     return secs.filter(function(s){return s.id===sid;})[0]||null;
   }
-  function autoMenuOpen(){
+  function autoMenuOpen(anchor){
     var m=$('#auto-menu'); if(!m) return;
     var stem=APP.active||APP.order[0];
     if(!stem){
@@ -20486,15 +20575,33 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       row.dataset.sec=sec?sec.id:'';
       row.disabled=!sec;
     }
+    /* T365: the same chooser, hung off whichever door opened it. In
+       the rail it is an absolutely-positioned block inside the rail;
+       from the ribbon it has to float, like every other menu the bar
+       drops, because the header is sticky. */
+    if(anchor){
+      m.classList.add('auto-float');
+      var r=anchor.getBoundingClientRect();
+      m.style.top=(r.bottom+6)+'px';
+      m.style.left=Math.max(6,
+        Math.min(r.left,window.innerWidth-286))+'px';
+    } else {
+      m.classList.remove('auto-float');
+      m.style.top='';m.style.left='';
+    }
     /* deferred: the click that opened it is still on its way to the
        document, where the closer below listens */
     setTimeout(function(){m.hidden=false;},0);
   }
   (function(){
     var b=$('#pr-autoslides'),m=$('#auto-menu');
-    if(!b||!m) return;
-    b.addEventListener('click',function(e){
+    if(!m) return;
+    if(b) b.addEventListener('click',function(e){
       e.stopPropagation();autoMenuOpen();});
+    /* T365: the door on the notebook's own ribbon */
+    var rb=$('#doc-autoslides');
+    if(rb) rb.addEventListener('click',function(e){
+      e.stopPropagation();autoMenuOpen(rb);});
     $$('.pr-mi',m).forEach(function(mi){
       mi.addEventListener('click',function(e){
         e.stopPropagation();m.hidden=true;
@@ -41598,27 +41705,71 @@ window.JunoPptx = (function () {
      own VIEW label and printed on top of it (2026-08-16). Owning the count
      in one function that fitEditRibbon also calls makes it self-healing:
      any path that re-fits the ribbon re-counts it first. */
+  /* T365: can this cell be widened to its column without reading as a
+     mistake? A plain button or a dropdown wrapper can -- both are one
+     label in one box. A joined run, a strip, a fixed tile cannot. */
+  function rbnCanFit(c){
+    if(c.classList.contains('sh-drop')
+       ||c.classList.contains('dc-menuwrap')) return true;
+    return c.classList.contains('dbtn')
+      &&!c.classList.contains('big-tile');
+  }
   function sizeRibbonGroups(){
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp',bar).forEach(function(g){
       var row=g.querySelector('.rbn-row'); if(!row) return;
-      var n=0;
+      var n=0,last=null,buf=[],pairs=[];
+      /* T365: the cells fill DOWN then across, so consecutive single
+         cells pair off into columns and a spanning control resets the
+         pairing (it takes the next whole column for itself) */
+      function flushPairs(){
+        while(buf.length>=2) pairs.push([buf.shift(),buf.shift()]);
+        buf.length=0;
+      }
       [].slice.call(row.children).forEach(function(c){
-        if(c.hidden) return;
-        /* a wrapper counts as the one cell it contributes */
-        if(c.classList.contains('sh-drop')||c.classList.contains('dc-menuwrap')){
-          var b=c.querySelector('.dbtn');
-          if(b&&!b.hidden) n++;
-          return;
-        }
+        c.classList.remove('rbn-odd');
+        c.classList.remove('rbn-fit');
+        /* T365: `.rbn-hid` is how a customised ribbon layout hides a
+           control (applyRibbonPrefs; deck.css makes it
+           display:none!important). It is not the `hidden` attribute,
+           so this count -- and the parity built on it -- was wrong for
+           anyone who had switched a button off. */
+        if(c.hidden||c.classList.contains('rbn-hid')) return;
         /* a control that spans BOTH rows is worth two cells, or a group
            made of nothing but stacks asks for half the columns it needs
            and pushes the overflow into an implicit third row */
-        n+=(c.classList.contains('rbn-stack')
-            ||c.classList.contains('rbn-big')
-            ||c.classList.contains('rbn-tall'))?2:1;
+        if(c.classList.contains('rbn-stack')
+           ||c.classList.contains('rbn-big')
+           ||c.classList.contains('rbn-tall')){
+          n+=2;last=null;flushPairs();return;
+        }
+        /* a wrapper counts as the one cell it contributes */
+        if(c.classList.contains('sh-drop')||c.classList.contains('dc-menuwrap')){
+          var b=c.querySelector('.dbtn');
+          if(b&&!b.hidden){n++;last=c;buf.push(c);}
+          return;
+        }
+        n+=1;last=c;buf.push(c);
       });
-      row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));
+      flushPairs();
+      /* T365: --rbn-cols is gone. Nothing read it -- no rule in any of
+         the five stylesheets -- which is what the T207 comment above
+         .rbn-row already says: "The column count is no longer a
+         variable anything sets." Placement is grid-auto-flow:column
+         against two 30px tracks, and `n` is now used for the parity
+         below rather than for a property nobody consumed. */
+      /* T365: both halves of a column share its width -- but only where
+         widening is not absurd. A joined run is as wide as all of its
+         segments; stretching a plain button to that is the "why is tidy
+         page huge?" of 2026-09-03, so a pair holding one is left alone
+         and the markup gives such runs a column of their own instead. */
+      pairs.forEach(function(p){
+        if(rbnCanFit(p[0])&&rbnCanFit(p[1])){
+          p[0].classList.add('rbn-fit');p[1].classList.add('rbn-fit');}
+      });
+      /* ...and the odd one out fills the band rather than hanging at
+         the top of it with a hole underneath */
+      if(n%2===1&&last) last.classList.add('rbn-odd');
     });
   }
   function fmtApply(fn,quiet){
@@ -52664,7 +52815,19 @@ window.JunoPptx = (function () {
     [[bic('cellcard'),'A figure from a notebook',
       'Any figure, table or note in an open notebook. This is what the '
       +'frame always did; now it is one answer among several',
-      function(){objInto=-1;startPick(idx);}],
+      function(){
+        objInto=-1;
+        /* T365: with no notebook open the picker had nothing to pick
+           from, and the door that used to sit above the thumbnails
+           ("Open notebooks...") has gone with the rest of that block.
+           Asking for a figure IS asking for a notebook, so this opens
+           one rather than showing you an empty page. */
+        if(!(APP.order&&APP.order.length)){
+          var tb=$('#tab-open');
+          if(tb){toast('Open a notebook to pick a figure from');tb.click();
+            return;}
+        }
+        startPick(idx);}],
      [bic('image'),'A picture from this computer',
       'Choose an image file. Junoview keeps a link to the file where the '
       +'browser allows it, so Refresh can re-read it later',
@@ -62820,10 +62983,19 @@ window.JunoPptx = (function () {
   }
   function renderPresNbs(){
     var nbs=presNbs(pres);
-    /* the column shows the list whenever this build can DO anything with
-       notebooks; the bare static export has none at all */
+    /* T365: the column carries the list when there IS a list, and
+       otherwise nothing at all (2026-09-07, user: "remove the 'open
+       notebooks' from the top of the fucking thumbnails. I said that
+       should not be a god damn fucking thing").
+       It used to show whenever the build could open notebooks, which
+       in the app is always -- so a new presentation opened with 117px
+       of sentence and a button standing in front of its thumbnails.
+       T78's rule decides it: everything above the thumbnails is height
+       the thumbnails do not get. The way IN to a notebook is where you
+       ask for one -- draw a Notebook cell frame and its chooser opens
+       one for you (45-images.js, openObjSrc). */
     var col=$('#dc-nbs');
-    if(col) col.hidden=!(nbs.length||nbsCanOpen());
+    if(col) col.hidden=!nbs.length;
     buildNbsInto(col,true);
   }
   /* ---- "notebooks in this presentation" popover: open all / refresh all ----
@@ -62994,23 +63166,12 @@ window.JunoPptx = (function () {
     if(!m) return;
     m.innerHTML='';
     var info=nbInfo();
-    if(!info.length){
-      /* the state used to NAME an action and offer no door (JVUX-11):
-         "add cells from your notebooks" with nothing to click. The
-         worded button is the same Open the tab strip carries. */
-      m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; '
-        +'open one and its figures become things you can place.</div>';
-      if(nbsCanOpen()){
-        var ob2=document.createElement('button');
-        ob2.className='dbtn dc-nbs-open';
-        ob2.innerHTML=(bic('open')||'')+' Open notebooks\u2026';
-        ob2.addEventListener('click',function(e){
-          e.stopPropagation();
-          var tb=$('#tab-open'); if(tb) tb.click();
-        });
-        m.appendChild(ob2);
-      }
-      return;}
+    /* T365: no empty state. There was a sentence here ("No notebooks
+       yet -- open one and its figures become things you can place")
+       and an "Open notebooks..." button under it; renderPresNbs hides
+       the whole block instead, so the thumbnails start at the top of
+       the column. */
+    if(!info.length) return;
     var h=document.createElement('div');h.className='dc-nbs-menuh';
     h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
     if(column){
@@ -63982,6 +64143,12 @@ window.JunoPptx = (function () {
         ?'Make this the main version \u2014 the talk, the arrows and every '
           +'export show it instead'
         :'This is the main version: it is what the talk shows');
+      /* T365: showing Main takes "This slide" from four cells to five,
+         which is an odd count -- a hole, and a whole extra column the
+         width ladder has not judged. Re-fit rather than let either go
+         stale (this is the same self-healing rule the comment above
+         sizeRibbonGroups states, applied at the path that broke it). */
+      if(typeof fitEditRibbon==='function') fitEditRibbon();
     }
     var o=$('#hm-optional'); if(!o) return;
     var s=(pres&&pres.slides)?pres.slides[cur]:null;
@@ -65809,7 +65976,7 @@ window.JunoPptx = (function () {
      and had never had a menu behind it (T70). Floated like every other
      menu in this bar, so the qat's scroll floor cannot clip it. */
   (function(){
-    var btn=$('#qat-auto'),menu=$('#auto-menu');
+    var btn=$('#qat-auto'),menu=$('#qat-auto-menu');
     if(!btn||!menu) return;
     function close(){overlayHide(menu);}
     function build(){
