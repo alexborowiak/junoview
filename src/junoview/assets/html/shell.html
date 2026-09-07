@@ -18,14 +18,21 @@
       {doctitle}
       <div class="railmeta">{meta}</div>
       <div class="railfile">
+        <!-- T364: "Info", not "File info": this bar is docked under
+             the ribbon's File heading, and saying the word twice is
+             exactly the clutter the user keeps pointing at. -->
         <button class="rf-btn rf-info" type="button"
           title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open"><i data-ic="info"></i>File info
+ and every earlier version you can open"><i data-ic="info"></i>Info
           &#9662;</button>
+        <!-- T364: it wears its word now. In the sidebar it was a
+             small glyph beside a wide File info; docked in the ribbon
+             it is a ribbon button, and this project has rejected
+             icon-only buttons twice. -->
         <button class="rf-btn rf-reload" type="button"
           aria-label="Reload this notebook"
           title="Reload this notebook from
- disk"><i data-ic="reload"></i></button>
+ disk"><i data-ic="reload"></i>Reload</button>
         <!-- shown only while something IS hidden: a permanent button for a
              state you are usually not in is clutter -->
         <button class="rf-btn rf-unhide" type="button" hidden

@@ -89,17 +89,22 @@ def test_new_poster_has_a_door_that_does_not_collapse(out):
     assert "      APP.deckNewPoster();" in out
 
 
-def test_the_drop_hint_is_still_said_exactly_once():
-    """T77 added it at the user's own request and it is the only place
-    the first screen says drag-and-drop works, and which formats parse.
-    It travels with Open rather than going with the card."""
+def test_the_drop_hint_is_on_the_door_it_describes():
+    """T77 added it at the user's own request and it is still the only
+    place the first screen says drag-and-drop works, and which formats
+    parse. T364 took it off the page and put it on Open, because that
+    is what it is a fact about (2026-09-07, user: "The open screen
+    still has way to much text ... this is so confusing to look at")."""
     web = _web()
-    assert "<p class=\"welcome-drop\">" not in web
-    # counted on the MARKUP string, not the bare class name: the page
-    # inlines app.css, which names the class four more times
-    assert web.count('class="wj-drop welcome-drop"') == 1
-    assert 'class="wj-drop welcome-drop"' in web
-    assert ".ipynb" in web
+    css = assets.load("css/app.css")
+    assert "welcome-drop" not in web
+    assert "wj-drop" not in web
+    # a rule matching nothing is a rule the next reader has to disprove
+    assert ".wj-drop{" not in css
+    assert ".welcome-drop{" not in css
+    # the words themselves survive, on the button
+    assert "Open .ipynb, .md, .tex or .csv from this computer" in web
+    assert "or drop them anywhere in this window" in web
 
 
 def test_the_card_grid_and_its_rules_are_gone_together():
@@ -128,4 +133,4 @@ def test_the_links_row_is_the_same_type_as_the_rest():
     css = assets.load("css/app.css")
     assert (".welcome-links{margin-top:20px;font-family:var(--sans);"
             "font-size:13px;") in css
-    assert ".wj-drop{font-family:var(--sans);font-size:11.5px;" in css
+    assert ".wj-none{font-family:var(--mono);font-size:11px;" in css

@@ -20,12 +20,17 @@
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <div class="appbar">
-    <!-- File info + reload live at the top of the sidebar, beside the
-         notebook they describe; only Open belongs to the app itself -->
+    <!-- T364: File info, Reload and Show all hidden are RIBBON controls
+         (2026-09-07, user: "move the file into stuff and the refresh out
+         of the side bar and into the ribbon"). #file-dock is where the
+         ACTIVE notebook's own .railfile bar is parked -- the node moves,
+         it is not rebuilt, so wireFileInfo's handlers stay live and each
+         notebook keeps its own bar. See dockFileBar(). -->
     <span class="abgrp" id="ab-file"><span class="abgrp-row"><span class="fgrp" id="file-grp">
       <button class="toggle primary" id="tab-open" hidden
         title="Open a notebook (.ipynb) from your computer or a
  URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
+      <span class="fgrp-row" id="file-dock"></span>
     </span></span><span class="abgrp-lab">File</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
@@ -62,6 +67,17 @@
         title="Choose which printed output you see — print, dataset,
  result, error — each with its own On / Fold / Off"
         ><i data-ic="types"></i><span class="btxt">Choose</span></button>
+    </span>
+    <!-- T364: SHOW ONLY WHAT YOU MARKED, on the row (2026-09-07, user:
+         "where is the button that has just the just show the pinned or
+         hearted etc. I hate it being in the side bar. That sucks
+         shit."). T257 put these chips in the sidebar beside a list of
+         the marked cells; both that list and the chips are gone from
+         there. Filled by renderMarkGate() and hidden while this
+         notebook has no marks at all -- a chip for a mark you have
+         never used is a chip that empties the page. -->
+    <span class="fgrp" id="marks-grp" hidden>
+      <span class="fgrp-row" id="marks-row"></span>
     </span></span><span class="abgrp-lab">Filters</span></span>
     <!-- this middle pair carries filt-div too: it vanishes with the
          filter sections in Tree view, and the measured filters slot
@@ -71,11 +87,8 @@
     <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
-        title="Choose WHICH sections the filters above act on — select the
- headings and sub-headings to include, change the filters, then select a
- different set and filter those differently. Each section remembers its
- own filters."
-        ><i data-ic="scope"></i><span class="btxt">Sections: All</span></button>
+        title="Which sections the filters act on"
+        ><i data-ic="scope"></i><span class="btxt">All sections</span></button>
       <button class="toggle sub" id="filters-reset"
         title="Put every filter — and every per-section change — in THIS
  notebook back to the defaults"><i data-ic="reset"></i><span class="btxt">Reset</span></button>
@@ -154,9 +167,22 @@
  collapse and hide cell by cell. Toggle back for the narrative document."
       ><i data-ic="tree"></i><span class="btxt">Tree</span></button>
     </span>
+    <!-- T364: FULL SCREEN, ANYWHERE (2026-09-07, user: "there needs to
+         be a universal full screen button somewhere so whole thing can
+         always be full screen"). The deck has had one beside Present
+         since T216, at the user's own asking; the viewer had only
+         Present, which changes WHAT you are looking at as well as how
+         big it is. Stacked under Present rather than added to the App
+         group: it is the same idea as its neighbour, and a sixth button
+         over there cost the bar 90px it does not have. -->
+    <span class="vw-stack">
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
  exit."><i data-ic="present"></i><span class="btxt">Present</span></button>
+    <button class="toggle" id="doc-full" aria-pressed="false"
+      title="Fill the display with Junoview (Esc to leave)"
+      ><i data-ic="expand"></i><span class="btxt">Full screen</span></button>
+    </span>
     </span></span><span class="abgrp-lab">View</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
@@ -498,6 +524,12 @@
         <span class="wl-sep">&middot;</span></span>
         <a href="#" id="welcome-help">How to use</a>
         <span class="wl-sep">&middot;</span>
+        <!-- T364: the ribbon is hidden on this screen (body.welcoming),
+             so the App group's Full screen cannot be reached from here.
+             Going full screen at the door is the point: it stays that
+             way as you open a notebook. -->
+        <a href="#" id="welcome-full">Full screen</a>
+        <span class="wl-sep">&middot;</span>
         <a href="{kofi}" target="_blank"
           rel="noopener">Support &#9829;</a>
         <!-- web build only. Shown whenever this IS the web build and
@@ -551,7 +583,7 @@
         <section class="wj-col" id="wj-pres">
           <h2 class="wj-h"><i data-ic="present"></i> Presentations
             <button class="wj-new" id="welcome-new" type="button"
-              title="Start a new presentation. No notebook needed"
+              title="New presentation"
               ><i data-ic="newdeck"></i> New</button></h2>
           <div class="wpres" id="welcome-pres" hidden></div>
           <div class="wj-none" id="wj-none-pres" hidden>Nothing yet</div>
@@ -559,8 +591,7 @@
         <section class="wj-col" id="wj-post">
           <h2 class="wj-h"><i data-ic="pagep"></i> Posters
             <button class="wj-new" id="welcome-newpost" type="button"
-              title="Start a new poster &mdash; an A0 portrait page.
- Change the size under Page, the layout under Layouts"
+              title="New poster &mdash; an A0 portrait page"
               ><i data-ic="newposter"></i> New</button></h2>
           <div class="wpres" id="welcome-post" hidden></div>
           <div class="wj-none" id="wj-none-post" hidden>Nothing yet</div>
@@ -571,8 +602,9 @@
               title="Open a notebook from a GitHub or other URL"
               ><i data-ic="link"></i> URL</button>
             <button class="wj-new" id="welcome-open" type="button"
-              title="Open .ipynb, .md, .tex or .csv files from this
- computer"><i data-ic="open"></i> Open</button></h2>
+              title="Open .ipynb, .md, .tex or .csv from this computer
+ &mdash; or drop them anywhere in this window"
+              ><i data-ic="open"></i> Open</button></h2>
           <!-- T241: WHAT YOU HAD OPEN IS AN OFFER (2026-09-04, user:
                "I do not like how it automatically opens what was last
                open. That is too aggressive. Just have options to open
@@ -580,13 +612,11 @@
                is just not acted on until you say so. -->
           <div class="recent" id="welcome-last" hidden></div>
           <div class="recent" id="welcome-recent" hidden></div>
-          <!-- T77's drop hint, which the Open card used to carry. It is
-               the only place the first screen says drag-and-drop works
-               and which formats parse, so it moves with Open rather
-               than going with the card. -->
-          <div class="wj-drop welcome-drop">&hellip; or drop
-            <b>.ipynb</b>, <b>.md</b>, <b>.tex</b> or <b>.csv</b>
-            anywhere in this window</div>
+          <!-- T364: T77's drop hint is on the Open button now. The
+               user, 2026-09-07: "The open screen still has way to much
+               text ... this is so confusing to look at." What formats
+               parse and that you may drop them is a fact about Open,
+               and it belongs on Open. -->
         </section>
       </div>
       <div class="welcome-scrollcue" aria-hidden="true">How it works

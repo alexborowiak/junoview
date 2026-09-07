@@ -25,8 +25,9 @@ def test_a_card_carries_a_pin_and_a_mark():
     code = inspect.getsource(items)
     assert 'class="cell-pin"' in code
     assert 'class="cell-mark" type="button" data-mark=""' in code
-    # ...and the sidebar has somewhere to list them
-    assert '<div class="navmarks" hidden></div>' in code
+    # T364: and NOWHERE to list them. The sidebar block this test used
+    # to pin is gone; the mark is drawn on the cell's own outline row.
+    assert "navmarks" not in code
 
 
 def test_pinned_means_the_filters_do_not_reach_it():
@@ -68,17 +69,30 @@ def test_the_mark_cycles_and_is_kept():
     assert "    if(Object.keys(m).length) all[stem]=m; else delete all[stem];" in app
 
 
-def test_they_are_listed_in_the_side_menu():
+def test_the_mark_rides_the_row_the_cell_already_has():
+    """T364 (2026-09-07, user: "the heart and star should [not] have
+    them move to the top just have the symbols appear next to them
+    where they are in the side bar, things moving around all over the
+    place is fucking confusing").
+
+    T242 copied every marked cell into a "pinned & marked" list above
+    the sections, so marking one made it appear in two places at once.
+    Now paintMark puts the symbol on the outline row that cell already
+    has, and nothing moves."""
     app = assets.app_js()
     assert "  function renderMarks(shell,stem){" in app
-    assert "    h.textContent='pinned & marked';" in app
-    # pinned first
-    assert ("    rows.sort(function(a,b){return (b.st.p?1:0)-(a.st.p?1:0);});"
-            in app)
-    # a mark left over from a notebook that no longer has that cell is skipped
-    assert ("      if(!nav) return;                 "
-            "/* a mark from an older notebook */") in app
+    assert "h.textContent='pinned & marked';" not in app
+    assert "shell.querySelector('.navmarks')" not in app
+    assert "navmark-ic" not in app
+    # the symbol, on the row, next to the eye
+    assert "      var mk=nav.querySelector('.navitem-mk');" in app
+    assert ("          nav.insertBefore(mk,nav.querySelector"
+            "('.navitem-eye'));") in app
+    # both facts show when a cell is pinned AND marked
+    assert "        if(st.p) mk.appendChild(glyph('pin','mk-i-pin'));" in app
+    assert "        if(st.f) mk.appendChild(glyph(st.f,'mk-i-'+st.f));" in app
     css = assets.load("css/core.css")
-    assert ".navmarks{display:flex;flex-direction:column;" in css
-    assert ".navmarks[hidden]{display:none;}" in css
+    assert ".navitem-mk{flex:none;display:flex;align-items:center;" in css
+    assert ".mk-i-pin{color:var(--cyan);}" in css
+    assert ".mk-i-star{color:var(--amber,#f0a848);}" in css
     assert ".card.is-pinned{border-left:3px solid var(--cyan-deep);}" in css

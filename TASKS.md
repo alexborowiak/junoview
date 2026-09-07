@@ -7246,3 +7246,29 @@ first. Ticked in the commit that ships each.
   weight and slant, falling back to the style. And one bubble for the
   whole board names every object under the pointer with its slide,
   each name a button that closes the screen and goes there.
+- [x] **T364 - Controls, not words.** The user (2026-09-07), on the
+  filter ribbon, the sidebar and the front door: "Why does filter have
+  all this text? People know what filter sections means????? Also the
+  button says too fucking much"; "the apply to button is so stupidly
+  big, it will fit when this smaller"; "where is the button that has
+  just the just show the pinned or hearted etc. I hate it being in the
+  side bar. That sucks shit"; "the heart and star should [not] have
+  them move to the top just have the symbols appear next to them where
+  they are in the side bar, things moving around all over the place is
+  fucking confusing"; "move the file into stuff and the refresh out of
+  the side bar and into the ribbon"; "there needs to be a universal
+  full screen button somewhere so whole thing can always be full
+  screen"; "The open screen still has way to much text."
+  *Done 2026-09-07.* The Apply-to button says only which sections and
+  went 246px to 131px; its menu lost a heading and a paragraph. The
+  mark gate is `#marks-grp` in the Filters group, chips only for the
+  marks a notebook actually uses, and the sidebar stops copying marked
+  cells to a list at the top: `paintMark` draws the symbol on the
+  outline row the cell already has, in the mark's own colour. The
+  notebook's own `.railfile` docks into `#file-dock` beside Open, node
+  and handlers intact, its panel floated to `<body>`; Reload wears its
+  word and File info is just Info under a heading that says File. Full
+  screen sits under Present, where the deck has had one since T216, and
+  in the welcome links row because the ribbon is hidden there. The
+  front door's drop hint is Open's tooltip. The card row the user asked
+  about was already gone in T282 -- their screenshot was a stale build.

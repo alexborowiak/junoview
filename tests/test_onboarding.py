@@ -82,11 +82,13 @@ def test_welcome_tour_reel_is_deferred_and_laid_out_in_column(out):
 def test_welcome_open_button_and_getting_started_steps(out):
     """The open-local-files call to action survives HTML reflow, and the
     getting-started steps moved to the bottom (seen on scroll)."""
-    # T282: the words are on the Notebooks section's door now, and the
-    # formats it takes are the drop hint under it
+    # T282: the words are on the Notebooks section's door now; T364
+    # put the formats and the drop hint on that door too, instead of a
+    # line of prose under it
     flat = re.sub(r"\s+", " ", out)
     assert 'class="wj-new" id="welcome-open"' in out
-    assert "Open .ipynb, .md, .tex or .csv files from this computer" in flat
+    assert ("Open .ipynb, .md, .tex or .csv from this computer "
+            "&mdash; or drop them anywhere in this window") in flat
     web_page = _web_page()
     assert ('class="welcome-more"' in web_page
             and web_page.count('class="ws-n"') == 4)

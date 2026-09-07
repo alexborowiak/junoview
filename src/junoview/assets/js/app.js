@@ -439,7 +439,8 @@
        the OLD notebook's type overrides into the NEW notebook's state
        (2026-08-04, adversarial review). */
     closeFilterMenus();
-    renderTypeButtons();renderScopeBtn();
+    dockFileBar();
+    renderTypeButtons();renderScopeBtn();renderMarkGate();
     updateHash();
     document.dispatchEvent(new CustomEvent('sem:activate',
       {detail:{stem:stem}}));
@@ -658,11 +659,15 @@
        setting; what it actually decides is which sections the filter
        buttons act on (2026-09-04, user: "the section filtering is
        kind of confusing and hard to use"). */
-    var lab=(!tot||n===tot)?'all sections'
-      :(n?(n+' of '+tot+' sections'):'no sections');
+    /* T364 (2026-09-07, user: "the apply to button is so stupidly
+       big, it will fit when this smaller"). The group above it is
+       already headed "Apply to" and the icon is a scope: the button
+       only has to say WHICH, and 246px of it said so three times. */
+    var lab=(!tot||n===tot)?'All sections'
+      :(n?(n+' of '+tot):'None');
     /* write the LABEL, not innerHTML — innerHTML= wiped the scope icon
        (and the .btxt span the ribbon compaction stages hide) */
-    setBtnText(b,'Filters act on: '+lab+' ▾');
+    setBtnText(b,lab+' ▾');
     b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
@@ -812,20 +817,11 @@
     var m=$('#sec-scope-menu'); if(!m) return;
     m.innerHTML='';
     var nodes=scopeTree();
-    var h=document.createElement('div');h.className='ckf-h';
-    h.textContent='the filters act on these sections';
-    m.appendChild(h);
-    /* T243: SAY WHAT THE THING IS. The menu named itself "apply the
-       filters to" and then showed a tree; nothing said that each
-       section keeps its own filters, which is the whole point of
-       being able to pick them. */
-    var why=document.createElement('div');
-    why.className='ckf-why';
-    why.textContent='Tick the sections you want the Plots, Markdown, '
-      +'Code and Output buttons to change. Each section remembers its '
-      +'own, so you can hide code in one chapter and keep it in the '
-      +'next.';
-    m.appendChild(why);
+    /* T364: no heading and no paragraph. T243 put both here to
+       explain what picking sections does; the user, 2026-09-07:
+       "Why does filter have all this text? People know what filter
+       sections means?????" The tree, the two bulk buttons and the
+       count say the whole thing. */
     /* T243: both directions. "Select all" alone meant picking ONE
        section was a click on every other one. */
     var bulk=document.createElement('div');
@@ -3389,6 +3385,37 @@
   var wHelp=$('#welcome-help');
   if(wHelp) wHelp.addEventListener('click',function(e){
     e.preventDefault();showHelp();});
+  /* ---- T364: FULL SCREEN, ANYWHERE ----------------------------------
+     Two doors for the one behaviour, because the ribbon is hidden on
+     the welcome screen and that is exactly where you want to set it.
+     The target is documentElement, not the document feed: this is
+     about the WINDOW, and the deck, the welcome and the viewer all
+     have to come with it. The LABEL never changes -- aria-pressed and
+     the tooltip carry the state -- because a button that grows a word
+     when you press it is a button that shoves the ribbon along. */
+  var fullBtn=$('#doc-full');
+  function syncFullBtn(){
+    var on=!!document.fullscreenElement;
+    if(fullBtn){
+      fullBtn.setAttribute('aria-pressed',on?'true':'false');
+      fullBtn.title=on?'Leave full screen (Esc)'
+        :'Fill the display with Junoview (Esc to leave)';
+    }
+  }
+  function toggleFull(){
+    try{
+      if(document.fullscreenElement) document.exitFullscreen();
+      else if(document.documentElement.requestFullscreen)
+        document.documentElement.requestFullscreen();
+    }catch(e){}
+  }
+  APP.toggleFull=toggleFull;
+  if(fullBtn) fullBtn.addEventListener('click',toggleFull);
+  var wFull=$('#welcome-full');
+  if(wFull) wFull.addEventListener('click',function(e){
+    e.preventDefault();toggleFull();});
+  document.addEventListener('fullscreenchange',syncFullBtn);
+  syncFullBtn();
   var helpClose=$('#help-close');
   if(helpClose) helpClose.addEventListener('click',hideHelp);
   if(helpDlg) helpDlg.addEventListener('click',function(e){
@@ -4069,6 +4096,63 @@
     if(v) all[stem]=v; else delete all[stem];
     try{localStorage.setItem(ONLYKEY,JSON.stringify(all));}catch(e){}
   }
+  /* T364: THE GATE IS A RIBBON CONTROL --------------------------------
+     2026-09-07, user: "where is the button that has just the just show
+     the pinned or hearted etc. I hate it being in the side bar. That
+     sucks shit." The chips are ribbon buttons now, in the Filters group
+     they act with, and they still only appear for a mark this notebook
+     actually uses. Counted off the OUTLINE, so a mark left behind by a
+     notebook that no longer has that cell is not counted. */
+  function markCounts(shell,stem){
+    var m=marksFor(stem),have={pin:0,star:0,heart:0,flag:0},any=0;
+    Object.keys(m).forEach(function(id){
+      if(!shell.querySelector('.navitem[data-item="'+id+'"]')) return;
+      var st=m[id]||{};
+      if(st.p){have.pin++;any++;}
+      if(st.f){have[st.f]=(have[st.f]||0)+1;any++;}
+    });
+    have.any=any;
+    return have;
+  }
+  function renderMarkGate(){
+    var host=$('#marks-grp'),row=$('#marks-row');
+    if(!host||!row) return;
+    row.innerHTML='';
+    var stem=APP.active||'',sh=stem&&APP.shells[stem];
+    if(!sh||!sh.el){host.hidden=true;return;}
+    var have=markCounts(sh.el,stem),only=onlyFor(stem);
+    host.hidden=!have.any;
+    if(!have.any){
+      /* the last mark just went: a gate pointing at nothing would empty
+         the whole notebook with no visible cause */
+      if(only){setOnly(stem,'');applyFilters();}
+      return;
+    }
+    if(only&&!have[only]){setOnly(stem,'');only='';}
+    function chip(k,ic,lab,n){
+      var b=document.createElement('button');
+      b.type='button';
+      b.className='toggle sub mkchip';
+      b.dataset.only=k;
+      b.setAttribute('aria-pressed',only===k?'true':'false');
+      b.title=k?('Show only the '+n+' cell'+(n===1?'':'s')+' you '
+        +(k==='pin'?'pinned':'marked '+k))
+        :'Show every cell again';
+      b.innerHTML=bic(ic)+'<span class="btxt">'+lab
+        +(k?(' '+n):'')+'</span>';
+      b.addEventListener('click',function(){
+        setOnly(stem,only===k?'':k);
+        renderMarkGate();applyFilters();
+      });
+      return b;
+    }
+    ONLY_KINDS.forEach(function(o){
+      if(have[o.k]) row.appendChild(chip(o.k,o.ic,o.lab,have[o.k]));});
+    /* the way out, on the row, while there is something to get out of.
+       Pressing the lit chip is the other one. */
+    if(only) row.appendChild(chip('','cellcard','All',0));
+  }
+  APP.renderMarkGate=renderMarkGate;
   /* does this card carry the mark the gate is set to? Read off the card's
      own classes, which paintMark has already put there, so the gate needs
      no second source of truth. */
@@ -4088,6 +4172,33 @@
       MARK_KINDS.forEach(function(k){
         el.classList.toggle('mk-'+k,st.f===k);});
     });
+    /* T364: the symbol goes on the outline row this cell ALREADY has
+       (2026-09-07, user: "just have the symbols appear next to them
+       where they are in the side bar, things moving around all over
+       the place is fucking confusing"). Both symbols when a cell is
+       pinned AND marked: they are two different facts about it. */
+    if(nav){
+      var mk=nav.querySelector('.navitem-mk');
+      if(!st.p&&!st.f){ if(mk) nav.removeChild(mk); }
+      else{
+        if(!mk){
+          mk=document.createElement('span');
+          mk.className='navitem-mk';
+          nav.insertBefore(mk,nav.querySelector('.navitem-eye'));
+        }
+        mk.innerHTML='';
+        function glyph(g,cls){
+          var s=document.createElement('span');
+          s.className='mk-i '+cls;
+          s.innerHTML=bic(g);
+          return s;
+        }
+        if(st.p) mk.appendChild(glyph('pin','mk-i-pin'));
+        if(st.f) mk.appendChild(glyph(st.f,'mk-i-'+st.f));
+        mk.title=(st.p?'Pinned':'')+(st.p&&st.f?', ':'')
+          +(st.f?('marked '+st.f):'');
+      }
+    }
     if(card){
       var pb=card.querySelector('.cell-pin');
       if(pb){
@@ -4110,82 +4221,17 @@
       }
     }
   }
-  /* the list at the top of the sidebar: pinned first, then marked */
+  /* T364: NOTHING IS HOISTED TO THE TOP OF THE SIDEBAR. T242 copied
+     every marked cell into a "pinned & marked" list above the sections
+     and T257 hung the gate under it; the user, 2026-09-07: "the heart
+     and star should [not] have them move to the top just have the
+     symbols appear next to them where they are in the side bar, things
+     moving around all over the place is fucking confusing." The symbol
+     rides the outline row the cell already has (paintMark), and the
+     gate is a ribbon control (renderMarkGate). What is left here is
+     keeping that gate in step with the marks. */
   function renderMarks(shell,stem){
-    var host=shell.querySelector('.navmarks'); if(!host) return;
-    var m=marksFor(stem),ids=Object.keys(m);
-    host.innerHTML='';
-    var rows=[];
-    ids.forEach(function(id){
-      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
-      if(!nav) return;                 /* a mark from an older notebook */
-      rows.push({id:id,st:m[id],
-        title:(nav.querySelector('.navitem-t')||nav).textContent});
-    });
-    rows.sort(function(a,b){return (b.st.p?1:0)-(a.st.p?1:0);});
-    host.hidden=!rows.length;
-    if(!rows.length){
-      /* the last mark just went: a gate pointing at nothing would empty
-         the whole notebook with no visible cause */
-      if(onlyFor(stem)){setOnly(stem,'');applyFilters();}
-      return;
-    }
-    /* which marks this notebook actually has — a chip for a mark you
-       have never used is a chip that empties the page */
-    var have={pin:0,star:0,heart:0,flag:0};
-    rows.forEach(function(r){
-      if(r.st.p) have.pin++;
-      if(r.st.f) have[r.st.f]=(have[r.st.f]||0)+1;});
-    var only=onlyFor(stem);
-    if(only&&!have[only]){setOnly(stem,'');only='';}
-    var h=document.createElement('div');
-    h.className='navmarks-h';
-    h.textContent='pinned & marked';
-    host.appendChild(h);
-    /* T257: the gate lives here, with the marks it acts on. Words plus
-       icons, and "All" is always present so the way back out is on the
-       row rather than a state you have to remember how to undo. */
-    var bar=document.createElement('div');
-    bar.className='navonly';
-    bar.setAttribute('role','group');
-    bar.setAttribute('aria-label','Show only marked cells');
-    function chip(k,ic,lab,n){
-      var b=document.createElement('button');
-      b.type='button';
-      b.className='navonly-b'+(only===k?' on':'');
-      b.dataset.only=k;
-      b.setAttribute('aria-pressed',only===k?'true':'false');
-      b.title=k?('Show only the '+n+' cell'+(n===1?'':'s')+' you '
-        +(k==='pin'?'pinned':'marked '+k))
-        :'Show every cell again';
-      b.innerHTML=bic(ic)+'<span class="navonly-t">'+lab
-        +(k?(' '+n):'')+'</span>';
-      b.addEventListener('click',function(){
-        setOnly(stem,only===k?'':k);
-        renderMarks(shell,stem);applyFilters();
-      });
-      return b;
-    }
-    /* "All" wears an icon too — words plus icons is the rule for every
-       button, and a bare word among four iconed chips reads as a label */
-    bar.appendChild(chip('','cellcard','All',0));
-    ONLY_KINDS.forEach(function(o){
-      if(have[o.k]) bar.appendChild(chip(o.k,o.ic,o.lab,have[o.k]));});
-    host.appendChild(bar);
-    rows.forEach(function(r){
-      var a=document.createElement('a');
-      a.className='navmark'+(r.st.p?' is-pinned':'')
-        +(r.st.f?(' mk-'+r.st.f):'');
-      a.href='#card-'+r.id;
-      a.title=(r.st.p?'Pinned':'Marked')+': '+r.title;
-      var ic=document.createElement('span');
-      ic.className='navmark-ic';
-      ic.innerHTML=bic(r.st.p?'pin':(r.st.f||'star'));
-      var t=document.createElement('span');
-      t.className='navmark-t';t.textContent=r.title;
-      a.appendChild(ic);a.appendChild(t);
-      host.appendChild(a);
-    });
+    if(stem===(APP.active||'')) renderMarkGate();
   }
   function wireCardBehaviors(shell,stem){
     /* ---- code toggles ---- */
@@ -4312,7 +4358,9 @@
        they are revealed each one's own eye still works, which is how you
        un-hide just the one you actually wanted back. ---- */
     function syncUnhideBtn(sh){
-      var b=sh.querySelector('.rf-unhide'); if(!b) return;
+      /* T364: the bar this button lives on may be docked in the ribbon */
+      var bar=rfBarFor(sh);
+      var b=bar&&bar.querySelector('.rf-unhide'); if(!b) return;
       var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
         +'.content .card.cell-off').length;
       var on=sh.classList.contains('reveal-hidden');
@@ -4592,9 +4640,41 @@
         });
       });
   }
+  /* ---- T364: THE FILE BAR IS DOCKED IN THE RIBBON ---------------------
+     2026-09-07, user: "move the file into stuff and the refresh out of
+     the side bar and into the ribbon." The bar is still the SHELL's --
+     one per notebook, wired once by wireFileInfo -- so the active one
+     is moved into #file-dock and the others are put back in their own
+     railhead. Moving rather than rebuilding is what keeps every handler
+     and each notebook's own path live. */
+  function rfBarFor(shellEl){
+    if(!shellEl) return null;
+    var own=shellEl.querySelector('.railfile');
+    if(own) return own;
+    var dock=$('#file-dock');
+    if(!dock) return null;
+    return dock.querySelector('.railfile[data-nb="'
+      +(shellEl.dataset.nb||'')+'"]');
+  }
+  function dockFileBar(){
+    var dock=$('#file-dock'); if(!dock) return;
+    /* whatever is parked here belongs to some other notebook now */
+    $$('.railfile',dock).forEach(function(b){
+      var sh=APP.shells[b.dataset.nb||''];
+      var head=sh&&sh.el&&sh.el.querySelector('.railhead');
+      if(head) head.appendChild(b);
+      else if(b.parentNode) b.parentNode.removeChild(b);
+    });
+    var cur=APP.active&&APP.shells[APP.active];
+    if(!cur||!cur.el) return;
+    var bar=cur.el.querySelector('.railfile');
+    if(!bar) return;
+    bar.dataset.nb=APP.active;
+    dock.appendChild(bar);
+  }
   /* ---- File info: where this notebook came from. The path, the git
      commit it is sitting on, and the way in to every earlier version —
-     all in one place at the top of the sidebar, with Reload beside it. */
+     all in one place, with Reload beside it. */
   function wireFileInfo(shell,stem){
     var bar=$('.railfile',shell),panel=$('.rf-panel',shell);
     if(!bar||!panel) return;
@@ -4643,6 +4723,22 @@
     function closePanel(){
       panel.hidden=true;
       if(info) info.setAttribute('aria-expanded','false');
+    }
+    /* T364: the button is in the ribbon now, so the panel cannot stay in
+       the railhead it was written under. It goes to <body> and is placed
+       under whichever button opened it -- fixed, like every other menu
+       this bar drops (.ckfilter-menu), because the header is sticky and
+       a panel inside it paints behind the page. */
+    function placePanel(){
+      if(!info) return;
+      if(panel.parentNode!==document.body){
+        document.body.appendChild(panel);
+        panel.classList.add('rf-float');
+      }
+      var r=info.getBoundingClientRect();
+      panel.style.top=(r.bottom+6)+'px';
+      panel.style.left=Math.max(6,
+        Math.min(r.left,window.innerWidth-306))+'px';
     }
     function fill(){
       panel.innerHTML='';
@@ -4821,6 +4917,7 @@
     }
     function toggle(){
       var open=panel.hidden;
+      if(open) placePanel();
       panel.hidden=!open;
       if(info) info.setAttribute('aria-expanded',open.toString());
       if(open) fill();
@@ -4947,6 +5044,7 @@
     var stem=shell.dataset.nb||data.stem||('nb-'+(APP.order.length+1));
     mdClampScan(shell);
     wireFileInfo(shell,stem);
+    if(stem===(APP.active||'')) dockFileBar();
 
     /* ---- filename + path bar at the top of the document ---- */
     var db=$('.docbar',shell);

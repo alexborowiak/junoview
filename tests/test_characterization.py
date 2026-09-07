@@ -1536,8 +1536,33 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors, booted from THE BOOT SEQUENCE) turns it into slides, and
 # the File menu, the launcher's New menu, the window drop, the Open
 # dialog and the web loader each grow a .pptx door.
-EXPECTED_MD5 = "d235c4cef128a73121170f32561e134d"
-EXPECTED_BYTES = 3914530
+# T321-T325 and T362 then land on the same page: 49-media.js (a lazy
+# clip store, because normPres absorbs at script-evaluation time),
+# 47-charts.js (stacks, second axes, log scales, error bars, bands,
+# labels and trend lines, with stacking beating a log y), a chart's
+# own workbook, 21-table-columns.js (inferred column types, formats,
+# conditional fills, groups), 23-citations.js ([@key] resolved at
+# paint time like {fig:} and @section before it) and 11-autodeck.js
+# (a notebook laid out as slides from the viewer, in three scopes).
+#
+# T363-T364 are the 2026-09-07 pass over the words on the screen.
+# T363: a text tile is its own NAME set in its own type, one line at
+# 26px in two rows; the Design board's ghost says 'default place';
+# its real boxes group by where they sit, with the slide numbers as
+# chips; three headings and three paragraphs become one line; the
+# Text column draws each box's own colour, ground and face; and one
+# bubble names every object under the pointer with its slide.
+# T364 moves controls rather than words: the Apply-to button says
+# only which sections ('All sections'), its menu drops its heading
+# and its paragraph, the mark gate leaves the sidebar for a #marks-grp
+# in the Filters group (and the sidebar stops hoisting marked cells
+# to a list -- paintMark draws .navitem-mk on the row the cell
+# already has), the notebook's own .railfile docks into #file-dock
+# beside Open with its panel floated to <body>, Full screen joins
+# Present in the View group and the welcome links row, and the front
+# door's drop hint becomes Open's tooltip.
+EXPECTED_MD5 = "9eb808b2faae8c33e2ae75f534534a22"
+EXPECTED_BYTES = 3920995
 
 
 def _render_example() -> str:

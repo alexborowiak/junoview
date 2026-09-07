@@ -107,10 +107,10 @@ body.presrail-min{--presrail-w:46px;}
    it just sits at its natural 28px */
 #ab-file .abgrp-row .fgrp{flex:1;}
 #ab-file .abgrp-row .toggle{height:auto;min-height:28px;flex:1;}
-/* Present is the important control in its section and had dead space
-   under it, so it spans both rows beside the Raw/Tree stack */
+/* Present had dead space under it, so T-era CSS let it span both rows
+   beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
+   screen is the same idea, and the two stack the way Raw and Tree do. */
 #ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
-#ab-view #doc-present{height:auto;min-height:28px;}
 /* T260: Help used to be icon-only, and this rule squared it off. It has
    carried the word "Help" since; with the square kept, the word simply
    painted outside the 28px box and over its neighbour. Sized by its
@@ -156,7 +156,8 @@ body.presrail-min{--presrail-w:46px;}
    its button (see fitRibbon's caller). */
 .abgrp.grp-empty{display:none!important;}
 /* Present spans two rows: centre its content in the taller box */
-#ab-view #doc-present{justify-content:center;align-items:center;}
+#ab-view #doc-present,#ab-view #doc-full{
+  justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -657,17 +658,12 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);
   color:var(--cyan-deep);font-family:var(--mono);font-size:15px;font-weight:600;
   display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
-/* the drop hint: the same words, one fewer band on the first screen.
-   T282 put it under the Notebooks section's Open door -- .wj-drop sets
-   the type, this sets the colour and kills the margin. (The old comment
-   here promised a flex-basis:100% that T240's grid had already
-   removed.) */
-.welcome-drop{display:block;font-weight:400;color:var(--ink-3);margin:0;}
-.welcome-drop b{color:var(--ink-2);}
-/* T240 made the drop hint one card's second line, in that card's own
-   type. T282 moved it under the Notebooks section's Open door, where
-   .wj-drop sets that type -- so this rule, which selected inside the
-   deleted card grid, went with it. */
+/* T364: the drop hint is not a line on this screen any more. What
+   formats parse and that you may drop them is a fact about Open, so it
+   is Open's tooltip (2026-09-07, user: "The open screen still has way
+   to much text"). T240 made it a card's second line, T282 moved it
+   under the Notebooks section's door; this takes the words off the
+   page altogether, and their five style rules with them. */
 /* ---- "jump back in": the two things you might be coming back to ----
    Recent notebooks and the presentations built from them, side by side.
    Both columns hide themselves when empty, and the band with them --
@@ -722,10 +718,8 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .wj-none{font-family:var(--mono);font-size:11px;color:var(--ink-3);
   padding:2px 1px;}
 .wj-none[hidden]{display:none;}
-.wj-drop{font-family:var(--sans);font-size:11.5px;line-height:1.45;
-  color:var(--ink-3);margin-top:2px;}
 body:not(.light) .wj-new{background:var(--paper);}
-body:not(.light) .wj-none,body:not(.light) .wj-drop{color:var(--ink-3);}
+body:not(.light) .wj-none{color:var(--ink-3);}
 .recent,.wpres{display:flex;flex-direction:column;gap:6px;min-width:0;}
 .recent[hidden],.wpres[hidden]{display:none;}
 .recent-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
@@ -787,8 +781,6 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
    It opened collapsed (one row on a ten-section notebook), offered only
    Select all, and made the whole row the selector with a 9px chevron
    inside it as the expander -- two gestures in one target. */
-.ckf-why{font-family:var(--sans);font-size:11.5px;line-height:1.5;
-  color:var(--ink-3);padding:2px 10px 8px;}
 .ckf-bulk{display:flex;align-items:center;gap:6px;padding:0 8px 8px;
   border-bottom:1px solid var(--line);margin-bottom:6px;}
 .ckf-bulk .ckf-all{margin:0;}
@@ -1115,6 +1107,22 @@ body:not(.light) .ot-stub:hover{color:var(--cyan);}
 /* the labelled dimension of the Plot-types menu */
 .ckf-dot.pt-sw-titled{background:#6cc08f;}
 .ckf-dot.pt-sw-untitled{background:#5f7386;}
+/* T364: the mark gate, in the Filters group. Ribbon buttons, so they
+   take the bar's one height and one baseline rather than inventing a
+   third; the pressed one is coloured by the mark it stands for, not by
+   one generic accent, which is how you tell at a glance which gate is
+   shut (2026-09-07, user: "I hate it being in the side bar"). */
+.mkchip[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 18%,transparent);}
+.mkchip[data-only="star"][aria-pressed="true"]{
+  border-color:var(--amber,#f0a848);color:var(--amber,#f0a848);
+  background:color-mix(in srgb,#f0a848 16%,transparent);}
+.mkchip[data-only="heart"][aria-pressed="true"]{
+  border-color:#e0757c;color:#e0757c;
+  background:color-mix(in srgb,#e0757c 16%,transparent);}
+.mkchip[data-only="flag"][aria-pressed="true"]{
+  border-color:#5fc4ac;color:#5fc4ac;
+  background:color-mix(in srgb,#5fc4ac 16%,transparent);}
 /* "Apply to" scope picker: the section tree, tier-indented + tickable */
 .scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
   overflow-y:auto;}
@@ -1464,8 +1472,6 @@ body:not(.light) .welcome-note b{color:var(--accent);}
    The reel's own rules live once, above. */
 body:not(.light) .welcome-steps li{color:var(--ink-2);}
 body:not(.light) .ws-n{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
-body:not(.light) .welcome-drop{color:var(--ink-3);}
-body:not(.light) .welcome-drop b{color:var(--ink-2);}
 body:not(.light) .recent-i{background:var(--paper);
   border-color:var(--line);color:var(--accent);}
 body:not(.light) .recent-i:hover{background:color-mix(in srgb,

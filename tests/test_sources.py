@@ -485,7 +485,9 @@ def test_the_doors_say_what_they_accept():
     js, page = assets.app_js(), assets.page_template()
     assert ".md/.tex/" in js or "notebook/.md/.tex/" in js
     assert "Markdown, LaTeX or csv files anywhere" in js
-    assert "<b>.md</b>" in page
+    # T364: the front door says it on Open's own tooltip rather than in
+    # a line of prose under the section
+    assert "Open .ipynb, .md, .tex or .csv from this computer" in page
     assert "accept=\".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv," in page
 
 

@@ -12,34 +12,68 @@ from __future__ import annotations
 
 import re
 
+from junoview import assets
 from junoview.notebook.parser import parse_notebook
 from junoview.render.items import render_nav, render_raw
 from junoview.render.page import render_html
 
 
 def test_ribbon_group_counts(out):
-    """File + 4 type filters + scope/reset + copy + figure & text size.
+    """File + 4 type filters + the mark gate + scope/reset + copy +
+    figure & text size.
 
-    7 filter/scope groups + 2 tree-view groups (fold, width); the 2 size
+    8 filter/scope groups + 2 tree-view groups (fold, width); the 2 size
     steppers carry ``fgrp-h`` and are counted separately. The ribbon is
-    organised into LABELLED sections.
+    organised into LABELLED sections. T364 added the mark gate
+    (``#marks-grp``) inside the Filters section.
     """
-    assert out.count('class="fgrp"') == 9
+    assert out.count('class="fgrp"') == 10
     assert out.count('class="fgrp fgrp-h"') == 2
     assert out.count('class="abgrp-lab"') == 7   # + Tree (tree view only)
     assert 'class="abgrp" id="ab-filters"' in out
 
 
-def test_ribbon_leads_with_open_and_leaves_file_info_to_sidebar(out):
-    """Open / File / Reload lead the ribbon, at full size.
+def test_ribbon_leads_with_open_and_the_file_bar_docks_beside_it(out):
+    """Open leads the ribbon, and File info / Reload / Show all hidden
+    dock next to it.
 
-    File info + reload live in the SIDEBAR, beside the notebook they
-    describe, rather than being duplicated in the ribbon.
+    T364 (2026-09-07, user: "move the file into stuff and the refresh
+    out of the side bar and into the ribbon"). The bar is not
+    duplicated: the ACTIVE notebook's own ``.railfile`` node is moved
+    into ``#file-dock``, so wireFileInfo's handlers stay live and each
+    notebook keeps its own paths.
     """
     assert 'class="toggle primary" id="tab-open"' in out
-    assert 'id="file-info-btn"' not in out   # they live in the sidebar
     assert (out.index('id="tab-open"') < out.index('id="tv-plots"'))
-    assert "rf-btn rf-info" in out and "rf-btn rf-reload" in out
+    assert '<span class="fgrp-row" id="file-dock"></span>' in out
+    # the bar is still authored in the shell, and moved
+    shell = assets.load("html/shell.html")
+    assert "rf-btn rf-info" in shell and "rf-btn rf-reload" in shell
+    app = assets.app_js()
+    assert "  function dockFileBar(){" in app
+    assert "    bar.dataset.nb=APP.active;" in app
+    assert "    dock.appendChild(bar);" in app
+    # ...and "Show all hidden" is found wherever its bar is parked
+    assert "      var bar=rfBarFor(sh);" in app
+
+
+def test_full_screen_is_reachable_from_everywhere(out):
+    """T364 (2026-09-07, user: "there needs to be a universal full
+    screen button somewhere so whole thing can always be full screen").
+
+    The deck has had one since T216. The viewer had only Present, which
+    changes what you are looking at as well as how big it is. Two doors,
+    because the ribbon is hidden on the welcome screen and that is
+    exactly where you want to set it.
+    """
+    assert '<button class="toggle" id="doc-full" aria-pressed="false"' in out
+    assert '<a href="#" id="welcome-full">Full screen</a>' in out
+    app = assets.app_js()
+    assert "  function toggleFull(){" in app
+    # the WINDOW, not the document feed: the deck and the welcome come too
+    assert ("      else if(document.documentElement.requestFullscreen)"
+            in app)
+    assert "  document.addEventListener('fullscreenchange',syncFullBtn);" in app
 
 
 def test_scope_copy_and_zoom_controls_are_full_size(out):

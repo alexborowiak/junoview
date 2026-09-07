@@ -255,10 +255,12 @@ def render_item(item: Item, sec_id: str = "") -> str:
 
 
 def render_nav(doc: Document) -> str:
-    parts = ['<nav class="nav" aria-label="Analysis sections">',
-             # T242: what you pinned and what you marked, above the
-             # sections -- filled by app.js, hidden while it is empty
-             '<div class="navmarks" hidden></div>']
+    # T364: no "pinned & marked" block. T242 listed every marked cell
+    # here, above the sections; the mark is drawn on the cell's own
+    # outline row instead, and the gate that picks them lives in the
+    # ribbon (2026-09-07, user: "things moving around all over the
+    # place is fucking confusing").
+    parts = ['<nav class="nav" aria-label="Analysis sections">']
     # key: one entry per item kind (incl. code subtypes) present, GROUPED
     # (markdown | plots | code | output) with a divider between groups — so the
     # two "print" dots (a CODE cell that prints vs a printed VALUE) read apart.

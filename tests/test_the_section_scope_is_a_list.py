@@ -10,21 +10,20 @@ row was the tick and a 9px chevron inside it was the expander, which is
 two gestures in one target with nothing saying which is which; and
 neither the button ("Sections: All") nor the menu said what it decided.
 
+T364 (2026-09-07) took the last of those back the other way: the
+button read "Filters act on: all sections" under a group already
+headed "Apply to", and the menu opened with a heading and a paragraph
+about how per-section filters work. The user: "the apply to button is
+so stupidly big" and "People know what filter sections means?????"
+
 Driven on the example notebook: ten rows with ten tick boxes, "10 of 10
-ticked", Select none took it to "Filters act on: no sections", and one
-tick to "1 of 10 sections".
+ticked", Select none took the button to "None", and one tick to
+"1 of 10".
 """
 
 from __future__ import annotations
 
 from junoview import assets
-
-
-def test_the_button_says_what_it_decides():
-    app = assets.app_js()
-    assert "    var lab=(!tot||n===tot)?'all sections'" in app
-    assert "      :(n?(n+' of '+tot+' sections'):'no sections');" in app
-    assert "Filters act on: '+lab+' \u25be'" in app
 
 
 def test_it_opens_showing_the_sections():
@@ -53,9 +52,27 @@ def test_the_tick_is_a_thing_you_can_see():
     assert ".scope-row.part .scope-box{border-color:var(--cyan-deep);}" in css
 
 
-def test_the_menu_says_what_the_thing_is():
+def test_the_menu_does_not_explain_itself():
+    """T364 (2026-09-07, user: "Why does filter have all this text?
+    People know what filter sections means?????"). T243 gave this menu
+    a heading and a paragraph about how per-section filters work. Both
+    are gone: the tree, the two bulk buttons and the count are the
+    whole thing."""
     app = assets.app_js()
-    assert "    h.textContent='the filters act on these sections';" in app
-    assert "why.className='ckf-why';" in app
-    assert ("      +'own, so you can hide code in one chapter and keep it "
-            "in the '") in app
+    assert "the filters act on these sections" not in app
+    assert "ckf-why" not in app
+    assert "so you can hide code in one chapter" not in app
+    # what is left is the tree and the two ways to fill it
+    assert "    bulkBtn('Select all'," in app
+    assert "    bulkBtn('Select none'," in app
+
+
+def test_the_scope_button_says_only_which():
+    """The group is headed "Apply to" and the icon is a scope, so the
+    button carries the answer and nothing else (2026-09-07, user: "the
+    apply to button is so stupidly big")."""
+    app = assets.app_js()
+    assert "'Filters act on: '" not in app
+    assert "    setBtnText(b,lab+' \u25be');" in app
+    assert "    var lab=(!tot||n===tot)?'All sections'" in app
+    assert "      :(n?(n+' of '+tot):'None');" in app
