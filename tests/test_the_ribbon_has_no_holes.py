@@ -137,3 +137,30 @@ def test_the_app_group_is_two_rows_of_two():
     assert ("#ab-app .btn-grp{display:grid;grid-auto-flow:column;\n"
             "  grid-template-rows:28px 28px;gap:4px 5px;"
             "align-items:stretch;}") in css
+
+
+def test_no_two_controls_wear_the_same_id():
+    """deck.html is injected into page.html, so their ids share ONE
+    namespace at runtime and neither file's author can see the other's.
+
+    #auto-menu was on both the deck's Autosave dropdown and T362's
+    three-scope slides chooser. getElementById returns the first in
+    document order -- the chooser -- so pressing "Autosave 2s" emptied
+    it and refilled it with "Every 5 seconds", and "Slides from this
+    notebook" was dead for the rest of the session. Nothing threw and
+    the suite stayed green: the feature works right up until you press
+    the other button, which is why only an audit found it.
+
+    Reproduced live on 2026-09-07 before the fix (the chooser's three
+    scope rows went to zero) and after (they stayed at three).
+    """
+    import collections
+    import re
+
+    markup = assets.page_template() + assets.deck_html() + assets.help_html()
+    ids = re.findall(r'\bid="([A-Za-z0-9_:-]+)"', markup)
+    dupes = sorted(i for i, n in collections.Counter(ids).items() if n > 1)
+    assert not dupes, (
+        "these ids are used more than once across page.html, deck.html and "
+        f"help.html, which are ONE document at runtime: {dupes}"
+    )
