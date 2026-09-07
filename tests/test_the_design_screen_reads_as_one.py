@@ -102,7 +102,10 @@ def test_the_slide_column_has_select_all_and_unselect_all(out):
     assert "    pickBtn('Unselect all','Clear every picked slide',function(){" in out
     # Select all takes what the column is showing, which its scope decides
     assert "        if(dgInScope(dgSheetScope,i)) dgSheetPick[i]=1;});" in out
-    assert "      ?(dgPickedCount()+' picked')" in out
+    # T367: "none picked - everything counts" meant "you have picked no
+    # slides, so the table covers all of them"; it says that now
+    assert "      ?(dgPickedCount()+' of these slides')" in out
+    assert "      :'all slides';" in out
     assert ".dg-picks{display:flex;align-items:center;gap:6px;" in out
 
 
@@ -116,7 +119,7 @@ def test_apply_is_for_the_selection_and_has_no_scope_of_its_own(out):
     assert "    function putWhat(){" in out
     assert "      if(m.how==='ticked') return m.ws.length+' ticked box'" in out
     assert "          ?'No boxes wear this style'" in out
-    assert "          :'None of what you selected wears this style');" in out
+    assert "          :'None of what you selected wears this style')" in out
     # ...and the put row is the button alone now
     assert "    putRow.appendChild(put);" in out
     assert "    putSync();" in out

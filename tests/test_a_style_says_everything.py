@@ -70,10 +70,24 @@ def test_the_screen_shows_the_numbers_not_just_the_drag(out):
     assert ".dg-nums{display:flex;gap:14px;align-items:center;" in out
 
 
-def test_the_put_button_says_apply(out):
-    # (T231: the count is whatever the selection is)
-    assert "?(bic('align')+' Apply to '+esc(putWhat()))" in out
+def test_the_put_button_names_the_place_it_moves_them_to(out):
+    """T367: it moved every box onto "the default place", a rectangle
+    dragged on the board. The user, 2026-09-07: "there are many
+    different styles of headings for depending on the slide ... I don't
+    think that should be a thing the default for any."
+
+    So the target is a GROUP of boxes that already share a place, picked
+    on the board, and the button says how many are NOT there yet. With
+    nothing picked it says which half is missing rather than going grey
+    for two different reasons.
+    """
+    assert "      var tgt=dgPickedPlace(id);" in out
+    assert ("            ?(bic('align')+' Move the other '+others.length"
+            "+' box'") in out
+    assert "          ?'Pick a place above to match'" in out
+    assert "            :'They are all in this place already'));" in out
     assert "    function putWhat(){" in out
     # the old wording survives only where it is quoted as history
     assert "' Put '" not in out
     assert "+' of them there')" not in out
+    assert "' Apply to '+esc(putWhat())" not in out

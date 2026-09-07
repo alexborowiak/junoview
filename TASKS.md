@@ -7317,3 +7317,25 @@ first. Ticked in the commit that ships each.
   editor opens EMPTY so the first keystroke is the first word, and the
   first real character clears the flag. Leaving without typing puts the
   hint back rather than letting the empty-box rule delete the slot.
+- [x] **T367 - A colour is named for its job, and a heading has no
+  default place.** The user (2026-09-07), five complaints about the
+  style surface: "what is 'warm', 'lift', 'calm', what is this even
+  referring to? ... I have told you so many times that the text doesn't
+  make sense up the top"; "down the right hand side, don't put an object
+  type (e.g. citations) if it isn't used"; "'none picked- everything
+  counts', the fucking fuck this text mean?"; "In the text styles what
+  even is the default place for a heading? ... I don't think that should
+  be a thing the default for any? Like it just shows you where they all
+  are, and then you can click on one and it highlights in the table
+  below ... then you can make the others match that one."
+  *Done 2026-09-07.* Five deck colours are named for what they do (Body
+  text, Page background, Box background, Heading text, Lines and edges)
+  and the five with no job sit under "colours you can put on things"
+  with the unused ones behind one row. The panel's note names the panel.
+  An object kind the deck has none of is not listed. The slide picker
+  says "all slides". And the board's dashed "default place" is gone with
+  the drag behind it: the groups are buttons, the picked one lights its
+  rows in the table, and Apply moves the others onto that group.
+  *Still open from the same message:* swappable variations under each
+  heading, a new slide picking up the chosen style, and previews in the
+  Mismatched-text cards.

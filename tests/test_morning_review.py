@@ -58,7 +58,11 @@ def test_the_words_the_review_asked_for(out):
     # is wearing one yet (2026-09-04, user: "I have never once
     # understood the actual purpose of this and there is a lot of text,
     # but none of it means anything to me").
-    assert "      ?'Change one and every box wearing it changes with it.'" in out
+    # T367: the note says what the panel IS, not how the cascade works
+    # -- you cannot explain the mechanism to somebody who does not yet
+    # know what the rows are (2026-09-07, user: "I have told you so many
+    # times that the text doesn't make sense up the top")
+    assert "s colours. Change one here and everything using it '" in out
 
 
 def test_the_masters_panel_is_a_panel(out):

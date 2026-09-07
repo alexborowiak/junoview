@@ -1598,8 +1598,20 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # drawn faint while you edit, drawn nowhere in the show or any
 # export, opening the editor EMPTY so the first keystroke is the
 # first word, and clearing the flag the moment you type.
-EXPECTED_MD5 = "1b6ccd7c3799793f7a7a2ad620c737a3"
-EXPECTED_BYTES = 3931874
+# T367 answers a run of complaints about the style surface. A deck
+# colour is named for its JOB -- Body text, Page background, Box
+# background, Heading text, Lines and edges -- and the five with no
+# job sit under 'colours you can put on things', the unused ones
+# behind one row. The panel's note names the panel instead of
+# explaining the cascade. The object kinds a deck has none of are
+# not listed at all. 'none picked - everything counts' is 'all
+# slides'. And the Design board's dashed rectangle is gone with the
+# drag behind it: a heading has no default place, it has the places
+# it is in, so the groups are buttons, the picked one lights its own
+# rows in the table, and Apply moves the others onto THAT group
+# rather than onto a rectangle nobody chose.
+EXPECTED_MD5 = "050ccee12b88cdbd617fb930f0fbf8a3"
+EXPECTED_BYTES = 3936722
 
 
 def _render_example() -> str:

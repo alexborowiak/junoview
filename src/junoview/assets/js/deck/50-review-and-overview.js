@@ -2134,10 +2134,14 @@
     tbl.style.setProperty('--dgt-cols',heads.length);
     rows.forEach(function(r){
       var on=!!dgMarked[dgRowKey(r)];
+      /* T367: "you can click on one and it highlights in the table
+         below". The table is a CSS grid, so a row is lit cell by cell. */
+      var inPl=!!(dgPlacePick&&dgPlaceKey(r.a)===dgPlacePick);
       var cells=[];
       function cell(node,cls){
         var c=document.createElement('div');
-        c.className='dgt-c'+(cls?' '+cls:'')+(on?' on':'');
+        c.className='dgt-c'+(cls?' '+cls:'')+(on?' on':'')
+          +(inPl?' dgt-inplace':'');
         if(typeof node==='string') c.textContent=node;
         else if(node) c.appendChild(node);
         cells.push(c);
@@ -2275,9 +2279,13 @@
     }).disabled=!dgPickedAny();
     var pc=document.createElement('span');
     pc.className='dg-pickn';
+    /* T367: 2026-09-07, user: "'none picked- everything counts', the
+       fucking fuck this text mean?" It meant "you have picked no
+       slides, so the table below covers all of them", which is what it
+       says now. */
     pc.textContent=dgPickedAny()
-      ?(dgPickedCount()+' picked')
-      :'none picked — everything counts';
+      ?(dgPickedCount()+' of these slides')
+      :'all slides';
     picks.appendChild(pc);
     body.appendChild(picks);
     var sheet=document.createElement('div');
@@ -2423,6 +2431,15 @@
     function q(v){return Math.round((+v||0)/2)*2;}
     return q(a.x)+','+q(a.y)+','+q(a.w);
   }
+  /* T367: which place the others are matched to. A group key, not a
+     rectangle -- the standard is one of your own slides. */
+  var dgPlacePick='';
+  function dgPickedPlace(id){
+    var hit=null;
+    dgPlaceGroups(id).forEach(function(g){
+      if(!hit&&g.key===dgPlacePick) hit=g;});
+    return hit;
+  }
   function dgPlaceGroups(id){
     var by={},order=[];
     dgWearers(id).forEach(function(w){
@@ -2441,12 +2458,27 @@
     groups.forEach(function(g,gi){
       var wrap=document.createElement('div');
       wrap.className='dg-place';
-      var head=document.createElement('span');
-      head.className='dg-placehead';
+      /* T367: THE GROUP IS THE CHOICE. Click it and its boxes light up
+         in the table below and it becomes the one the others are moved
+         onto -- "you can click on one and it highlights in the table
+         below ... then you can make the others match that one". */
+      var head=document.createElement('button');
+      head.type='button';
+      head.className='dg-placehead'+(dgPlacePick===g.key?' on':'');
       head.textContent='Group '+(gi+1)+' \u2014 '+g.ws.length+' box'
         +(g.ws.length===1?'':'es')+' at '+Math.round(g.a.x||0)+', '
         +Math.round(g.a.y||0);
+      head.title=dgPlacePick===g.key
+        ?'The others get moved here. Click again to unpick it.'
+        :'Pick this place: its boxes light up below, and the rest can be '
+          +'moved onto it';
+      head.addEventListener('click',function(e){
+        e.stopPropagation();
+        dgPlacePick=(dgPlacePick===g.key)?'':g.key;
+        dgBodyKeep($('#deck-design'));
+      });
       wrap.appendChild(head);
+      if(dgPlacePick===g.key) wrap.className='dg-place on';
       var list=document.createElement('span');
       list.className='dg-placeslides';
       g.ws.forEach(function(w){
@@ -2575,7 +2607,14 @@
       var was=dgSel; dgSel=key;
       var n2=dgRows().length;
       dgSel=was;
-      ct2.textContent=n2?String(n2):'none';
+      /* T367: a kind this deck has none of is not a row (2026-09-07,
+         user: "don't put an object type (e.g. citations) if it isn't
+         used"). It listed all seven always, so most decks read as a
+         column of "none" with the two kinds you actually have buried in
+         it. The one it is showing stays, whatever its count, or
+         choosing an empty kind would make its own row vanish. */
+      if(!n2&&key!==dgSel) return;
+      ct2.textContent=String(n2);
       b2.appendChild(nm2);b2.appendChild(ct2);
       b2.title=pr[1]+' in this deck'+(n2?(': '+n2):': none yet');
       b2.addEventListener('click',function(){
@@ -2666,31 +2705,18 @@
     }
   }
   function dgBoard(host,id){
-    var rec=dgStyleRec(id);
     var board=document.createElement('div');
     board.className='dg-board';
     var page=pageOf();
     board.style.aspectRatio=(page.mm[0]/page.mm[1]).toFixed(4);
-    var ghost=document.createElement('div');
-    ghost.className='dg-ghost';
-    function paint(){
-      ghost.style.left=(rec.x!=null?rec.x:8)+'%';
-      ghost.style.top=(rec.y!=null?rec.y:6)+'%';
-      ghost.style.width=(rec.w!=null?rec.w:60)+'%';
-    }
-    var lab=document.createElement('span');
-    lab.className='dg-ghostlab';
-    /* "Oh is the Title one like the prototype of where I am moving one
-       to?" -- it was, and nothing said so. Now it does. */
-    lab.textContent='default place';
-    dgSpecimen(lab,id);
-    ghost.appendChild(lab);
-    var grip=document.createElement('span');
-    grip.className='dg-ghostgrip';
-    grip.title='Drag to set how wide this type is by default';
-    ghost.appendChild(grip);
-    paint();
-    board.appendChild(ghost);
+    /* T367: NO DASHED RECTANGLE. It was "the default place" a type gets
+       when you Apply -- dragged here and stamped onto every box in the
+       deck. The user, 2026-09-07: "there are many different styles of
+       headings for depending on the slide ... I don't think that should
+       be a thing the default for any." A Heading 1 on a section divider
+       and a Heading 1 over two panels share no correct position, so the
+       rectangle was a guess and Apply overwrote a real decision with
+       it. What the board shows is where these boxes ARE. */
     host.appendChild(board);
     /* T279: the count in words, beside the board. Appended to the same
        host BEFORE the ghosts are drawn, because dgGhostsFor writes into
@@ -2754,32 +2780,6 @@
     dgKeyList(key,id);
     host.appendChild(key);
 
-    function drag(ev,mode){
-      ev.preventDefault();ev.stopPropagation();
-      var r=board.getBoundingClientRect();
-      var x0=ev.clientX,y0=ev.clientY;
-      var sx=(rec.x!=null?rec.x:8),sy=(rec.y!=null?rec.y:6);
-      var sw=(rec.w!=null?rec.w:60);
-      function mv(e2){
-        var dx=(e2.clientX-x0)/(r.width||1)*100;
-        var dy=(e2.clientY-y0)/(r.height||1)*100;
-        if(mode==='w') rec.w=Math.max(6,Math.min(100,Math.round(sw+dx)));
-        else {
-          rec.x=Math.max(0,Math.min(98,Math.round(sx+dx)));
-          rec.y=Math.max(0,Math.min(98,Math.round(sy+dy)));
-        }
-        paint();
-      }
-      function up(){
-        document.removeEventListener('pointermove',mv);
-        document.removeEventListener('pointerup',up);
-        markDirty();dgBody($('#deck-design'));
-      }
-      document.addEventListener('pointermove',mv);
-      document.addEventListener('pointerup',up);
-    }
-    ghost.addEventListener('pointerdown',function(e){drag(e,'xy');});
-    grip.addEventListener('pointerdown',function(e){drag(e,'w');});
   }
   function dgSectionHead(host,text,sub){
     var h=document.createElement('div');
@@ -3017,28 +3017,41 @@
          to action */
       /* T223: "the button says 'put all 8 of them there', what the
          heck. Do you think about writing? 'Apply to all'" */
-      put.innerHTML=ws.length
-        ?(bic('align')+' Apply to '+esc(putWhat()))
-        :(m.how==='all'
+      /* T367: the target is a GROUP you picked on the board, not a
+         rectangle nobody chose. With nothing picked there is nothing to
+         match to, and the button says which half is missing rather than
+         going grey for two different reasons. */
+      var tgt=dgPickedPlace(id);
+      var others=tgt
+        ?ws.filter(function(w){return dgPlaceKey(w.a)!==tgt.key;}):[];
+      put.innerHTML=!ws.length
+        ?(m.how==='all'
           ?'No boxes wear this style'
-          :'None of what you selected wears this style');
-      put.classList.toggle('primary',!!ws.length);
-      put.disabled=!ws.length;
-      put.title=ws.length
-        ?('Move '+putWhat()+' onto that rectangle. Ctrl+Z undoes the lot.'
+          :'None of what you selected wears this style')
+        :(!tgt
+          ?'Pick a place above to match'
+          :(others.length
+            ?(bic('align')+' Move the other '+others.length+' box'
+              +(others.length===1?'':'es')+' here')
+            :'They are all in this place already'));
+      put.classList.toggle('primary',!!others.length);
+      put.disabled=!others.length;
+      put.title=others.length
+        ?('Move them onto the place you picked. Ctrl+Z undoes the lot.'
           +(m.how==='all'
             ?' Tick rows in the table, or pick slides on the right, to '
               +'do fewer.':''))
-        :'Nothing selected wears this type';
+        :(ws.length&&!tgt?'Click a group above first':'');
     }
     put.addEventListener('click',function(){
+      var tgt=dgPickedPlace(id); if(!tgt) return;
       var n=0;
       inScope().forEach(function(w){
-        w.a.x=(rec.x!=null?rec.x:8);
-        w.a.y=(rec.y!=null?rec.y:6);
-        w.a.w=(rec.w!=null?rec.w:60);
-        /* an anchored box measures from its anchor, so a default
-           position has to clear the anchor or it lands somewhere else */
+        if(dgPlaceKey(w.a)===tgt.key) return;
+        w.a.x=tgt.a.x;w.a.y=tgt.a.y;
+        if(tgt.a.w!=null) w.a.w=tgt.a.w;
+        /* an anchored box measures from its anchor, so a moved box has
+           to clear the anchor or it lands somewhere else */
         delete w.a.anch;
         n++;
       });

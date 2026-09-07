@@ -2233,10 +2233,20 @@
      saying, which is why they are not just absent-or-set. */
   var STYLE_FIELDS=['b','i','font','color','align','lh','pspace',
     'head','bg','bdc'];
+  /* T367: NAMED FOR THE JOB, NOT FOR THE SLOT (2026-09-07, user: "what
+     is 'warm', 'lift', 'calm', what is this even referring to?"). Five
+     of these ARE the deck -- the page it is printed on, the words on
+     it, the headings, the boxes, the lines -- and saying so is the
+     whole difference between a palette you can reason about and ten
+     abstract names. The other five have no job: they are colours you
+     can put on anything, which is a true and useful thing to be, and
+     TOKEN_SPARE says which are which so the panel can group them. */
   var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
-    calm:'Calm',ink:'Ink',quiet:'Quiet',
-    page:'Page',surface:'Box',heading:'Heading',line:'Edge',
+    calm:'Calm',ink:'Body text',quiet:'Quiet',
+    page:'Page background',surface:'Box background',
+    heading:'Heading text',line:'Lines and edges',
     section:'Section colour'};
+  var TOKEN_SPARE={accent:1,warm:1,lift:1,calm:1,quiet:1};
   /* ---- T316: A COLOUR THAT DEPENDS ON THE SECTION -------------------
      (2026-09-06, user: "some that have different colours per section".)
 
@@ -2444,12 +2454,19 @@
       var u=tokUses(k);return !!(u.boxes||u.slides||u.other);});
     var note=document.createElement('div');
     note.className='ff-none';
+    /* T367: what the panel IS, not how the mechanism works. T208 asked
+       for an explanation here and T265 gave it the mechanism; the user,
+       2026-09-07: "I have told you so many times that the text doesn't
+       make sense up the top. I have never understood this." You cannot
+       explain the cascade to somebody who does not yet know what the
+       rows are. */
     note.textContent=anyUse
-      ?'Change one and every box wearing it changes with it.'
-      :'Nothing wears these yet \u2014 give a box one from the Deck row '
-        +'at the top of its colour menu, then change it here.';
+      ?'The deck\u2019s colours. Change one here and everything using it '
+        +'changes.'
+      :'The deck\u2019s colours. Nothing uses them yet \u2014 pick one from '
+        +'the Deck row at the top of any colour menu.';
     m.appendChild(note);
-    Object.keys(t.c).forEach(function(k){
+    function tokRow(k){
       var row=document.createElement('div');row.className='ff-row';
       var sw=document.createElement('span');
       sw.className='sw sw-tok';sw.style.background=t.c[k];
@@ -2457,8 +2474,8 @@
       var nm=document.createElement('span');
       nm.className='tok-nm';nm.textContent=TOKEN_LABELS[k]||k;
       row.appendChild(nm);
-      /* T265: what this colour is actually on. Without it the six rows
-         are six abstract names and changing one is an act of faith. */
+      /* T265: what this colour is actually on. Without it the rows are
+         abstract names and changing one is an act of faith. */
       var use=document.createElement('span');
       var u=tokUses(k);
       use.className='tok-use'+((u.boxes||u.slides||u.other)?'':' tok-none');
@@ -2473,9 +2490,44 @@
         sw.style.background=inp.value;
       });
       row.appendChild(inp);
-      m.appendChild(row);
-    });
-    menuHead(m,'shape corner');
+      return row;
+    }
+    /* T367: TWO LISTS, because these are two different kinds of thing
+       and running them together is why the panel never made sense
+       (2026-09-07, user: "what is 'warm', 'lift', 'calm', what is this
+       even referring to?"). Five of them ARE the deck -- its page, its
+       words, its headings, its boxes, its lines -- and changing one
+       changes the look of everything. The other five have no job at
+       all: they are colours you can put on something, and until you do
+       they mean nothing, which is exactly what the user could not get
+       from a row labelled "Lift". */
+    var jobs=[],spare=[];
+    Object.keys(t.c).forEach(function(k){
+      (TOKEN_SPARE[k]?spare:jobs).push(k);});
+    jobs.forEach(function(k){m.appendChild(tokRow(k));});
+    if(spare.length){
+      menuHead(m,'colours you can put on things');
+      var used=[],idle=[];
+      spare.forEach(function(k){
+        var u=tokUses(k);
+        ((u.boxes||u.slides||u.other)?used:idle).push(k);});
+      used.forEach(function(k){m.appendChild(tokRow(k));});
+      /* the ones nothing wears are hidden until asked for -- a list of
+         "not used yet" is the clutter the user keeps pointing at */
+      if(idle.length){
+        var more=document.createElement('button');
+        more.className='ff-more';more.type='button';
+        more.textContent=idle.length+' more, unused';
+        more.title='Colours nothing in this deck is using yet';
+        more.addEventListener('click',function(e){
+          e.stopPropagation();
+          more.remove();
+          idle.forEach(function(k){m.insertBefore(tokRow(k),cornerHead);});
+        });
+        m.appendChild(more);
+      }
+    }
+    var cornerHead=menuHead(m,'shape corner');
     var rr=document.createElement('div');rr.className='ff-row';
     var rl=document.createElement('span');
     rl.className='tok-nm';rl.textContent='Corner radius';

@@ -305,6 +305,13 @@ body.light .tok-nm{color:var(--ink-2);}
   font-family:var(--mono);font-size:10px;letter-spacing:.04em;
   color:var(--chrome-ink-3,#8ea2b3);}
 .tok-use.tok-none{opacity:.55;font-style:italic;}
+/* T367: the spare colours nothing is wearing, behind one row. A list of
+   "not used yet" is the clutter the user keeps pointing at. */
+.ff-more{display:block;width:100%;text-align:left;background:none;
+  border:1px dashed var(--chrome-line,#ffffff26);border-radius:6px;
+  color:var(--chrome-ink-3,#8ea2b3);font-family:var(--sans);
+  font-size:11px;padding:5px 9px;margin:2px 0 0;cursor:pointer;}
+.ff-more:hover{border-color:var(--cyan);color:var(--chrome-ink);}
 .sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px;
   width:100%;padding-bottom:3px;margin-bottom:2px;
   border-bottom:1px solid #ffffff14;}
@@ -3455,6 +3462,11 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    and the slides in it as chips you can press. */
 .dg-place{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:baseline;
   gap:4px 8px;padding:4px 0;border-top:1px solid #ffffff12;}
+/* T367: the group you picked, and the rows it owns */
+.dg-place.on{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.dg-placehead.on{color:var(--cyan);}
+.dgt-c.dgt-inplace{background:color-mix(in srgb,var(--accent) 12%,transparent);}
 .dg-placehead{font-size:11px;opacity:.85;flex:0 0 auto;}
 .dg-placeslides{display:flex;flex-wrap:wrap;gap:3px;}
 .dg-slidechip{font-family:var(--mono);font-size:10px;line-height:1;

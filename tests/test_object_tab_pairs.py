@@ -130,9 +130,11 @@ def test_the_palette_door_says_what_a_named_colour_is():
     # is wearing one yet (2026-09-04, user: "I have never once
     # understood the actual purpose of this and there is a lot of text,
     # but none of it means anything to me").
-    assert "      ?'Change one and every box wearing it changes with it.'" in js
+    # T367: see test_morning_review -- the note names the panel now
+    assert "s colours. Change one here and everything using it '" in js
     # the source carries the em dash as a \u escape, so match it literally
-    empty = ":'Nothing wears these yet " + chr(92) + "u2014 give a box one"
+    empty = ("s colours. Nothing uses them yet " + chr(92)
+             + "u2014 pick one from '")
     assert empty in js
     # ...and each row says what that colour is on
     assert "  function tokUses(k){" in js
