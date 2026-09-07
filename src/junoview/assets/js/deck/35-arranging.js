@@ -2690,6 +2690,11 @@
      says so — a silently wrong number is the failure this replaces. */
   function figSubst(txt,a,map){
     var t=String(txt||'');
+    /* T325: a citation resolves wherever a figure number does. Both are
+       paint-time substitutions of a marker into a number that comes from
+       ORDER, so they belong on the same funnel -- every text box, note,
+       caption and flip page already comes through here. */
+    if(typeof citeSubst==='function') t=citeSubst(t);
     if(t.indexOf('{fig')<0) return t;
     map=map||figNumbers();
     return t.replace(/\{fig(?::([A-Za-z0-9_]+))?\}/g,function(_,id){

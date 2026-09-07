@@ -2180,6 +2180,24 @@ select#fmt-font[hidden]{display:none;}
 .tablepane .tp-col{width:26px;height:22px;padding:0;flex:none;
   border:1px solid #ffffff26;border-radius:4px;background:none;
   cursor:pointer;}
+/* T325: the citations pane. One entry a row, its number first so the
+   list reads as the bibliography it will become. */
+.citepane .ct-row{flex-wrap:wrap;gap:4px;align-items:baseline;}
+.citepane .ct-entry{padding:5px 0;border-top:1px solid #ffffff12;}
+.citepane .ct-num{flex:none;font-family:var(--mono);font-size:11px;
+  opacity:.8;min-width:26px;}
+.citepane .ct-ref{flex:1 1 100%;font-size:11px;line-height:1.45;}
+.citepane .ct-btn{font-size:11px;padding:2px 7px;}
+.citepane .ct-btn.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 55%,
+  transparent);color:#fff;}
+.citepane .ct-hint,.citepane .ct-warn{text-transform:none;
+  letter-spacing:0;font-size:11px;line-height:1.45;}
+.citepane .ct-warn{color:var(--coral,#ff6b57);opacity:.95;}
+/* the footnote strip a slide's citations land in */
+.slide-citefoot{position:absolute;left:4%;right:4%;bottom:1.2%;
+  font-size:0.9em;opacity:.7;line-height:1.35;pointer-events:none;
+  text-align:left;}
 .tablepane .tp-hint{opacity:.75;font-size:11px;text-transform:none;
   letter-spacing:0;line-height:1.4;}
 .chartpane .cp-hint{opacity:.75;font-size:11px;text-transform:none;

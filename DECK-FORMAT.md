@@ -38,6 +38,8 @@ supported state, and the editor marks it rather than forbidding it.
 | `live` | dict | `{ref: 1}` for figures the author made LIVE LINKS: they re-read from the notebook every time the deck opens, instead of showing the copy kept in `emb`. Absence means kept. |
 | `emb` | dict | The deck's own copy of every placed card, so it shows its figures with no notebook and no network. |
 | `media` | dict | The deck's own copy of every video or audio clip placed on it — `{key: {src, mime, name}}` — so a saved deck plays with no file beside it. |
+| `bib` | dict | The deck's bibliography, `{cite key: {type, author, year, title, journal, doi, …}}`, read from BibTeX or looked up by DOI. `[@key]` (or `\cite{key}`) in any text resolves against it **at paint time**, so the numbers come from where the slides sit and reordering the deck renumbers everything. |
+| `cite` | dict | How this deck cites: `style` is `'num'` or `'ay'` (author-year); `foot` 1 puts each slide's references along its bottom edge. |
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |
 | `folder` | str | The folder the deck is filed under in the rail. |
 | `foot` | dict | Running footer. |

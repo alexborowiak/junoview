@@ -113,6 +113,16 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                    "file. Membership is the slide's `cuts` list."),
     "emb": (dict, "The deck's own copy of every placed card, so it shows "
                   "its figures with no notebook and no network."),
+    "bib": (dict, "{cite key: {type, author, year, title, journal, "
+                  "doi, ...}}. The deck's own bibliography, read from a "
+                  "BibTeX file or looked up by DOI. A citation `[@key]` "
+                  "in any text resolves against it AT PAINT TIME, so "
+                  "the numbers come from where the slides sit and "
+                  "reordering the deck renumbers everything."),
+    "cite": (dict, "How this deck cites: `style` is 'num' (a number in "
+                   "the text, a numbered list at the back) or 'ay' "
+                   "(author and year); `foot` 1 puts the references a "
+                   "slide cites along its bottom edge."),
     "media": (dict, "{key: {src, mime, name}}. The deck's own copy of "
                     "every video and audio clip placed on it, so a saved "
                     "deck plays with no file beside it. Written at save "

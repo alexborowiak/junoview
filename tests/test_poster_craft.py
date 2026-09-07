@@ -452,7 +452,8 @@ def test_your_guides_survive_being_re_opened(out):
     (2026-08-29).
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters','bib','cite']\n"
+            "      .forEach(function(k){") in out
 
 
 def test_the_slides_group_reads_in_the_order_asked_for(out):

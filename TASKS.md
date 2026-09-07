@@ -7144,7 +7144,28 @@ first. Ticked in the commit that ships each.
   consumer the table the SLIDE shows -- formatted, with the group row on
   top and the footer underneath -- and pptx.js merges the group row for
   real with gridSpan/hMerge.
-- [ ] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.
+- [x] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.
+  Done 2026-09-07, closing a gap the LaTeX reader had already written
+  down: "`\cite` has nowhere to resolve to -- a .bib is a second input
+  file and load_doc has no slot for one". The DECK is the slot.
+  `pres.bib` is a library keyed by cite key and rides the deck like
+  `styles` and `tokens`; `pres.cite` is the style.
+  A citation RESOLVES AT PAINT TIME, on the same funnel `{fig:id}`
+  already uses (figSubst), because a number comes from ORDER: `[@key]`
+  (and `\cite{key}`) becomes [1] as it is drawn, numbered by first
+  appearance walking the deck, so moving a slide renumbers every marker
+  with no edit anywhere and nothing can go stale. An alternative version
+  of a slide never claims a number; an unknown key renders as `?key`
+  rather than vanishing, and the missing ones are listable.
+  BibTeX in (a small forgiving reader -- braces, quotes, the TeX that
+  turns up in a title -- counting what it cannot read rather than
+  guessing); two styles, numbered and author-year; a references box that
+  DRAWS the bibliography so it is right the moment a citation moves; and
+  a footnote strip along a slide's bottom edge, painted with the rest of
+  the furniture. DOI lookup is `/api/doi`, the ONLY outbound fetch this
+  server makes: held to doi.org, to a validated DOI shape, to BibTeX
+  content negotiation, 15s and 64 KB -- a lookup, not a proxy -- and the
+  button says plainly that it needs the app.
 - [ ] **T326 (list 7, M) Equation numbering and cross-references.**
 - [ ] **T327 (list 8, M) Custom font management**: local install, missing-font warnings, fallbacks, export packaging.
 - [ ] **T328 (list 9, M) Visual refresh approval**: old and new figure side by side before a source update is accepted.

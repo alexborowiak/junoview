@@ -462,8 +462,21 @@
     /* idempotent: applyZoom calls this again on every resize so the
        furniture rescales with the page, and appending a second copy every
        time would stack watermarks (2026-08-20) */
-    $$('.slide-wmark,.slide-head,.slide-foot,.slide-mast',slideEl)
-      .forEach(function(n){n.remove();});
+    $$('.slide-wmark,.slide-head,.slide-foot,.slide-mast,.slide-citefoot',
+      slideEl).forEach(function(n){n.remove();});
+    /* T325: the references THIS slide cites, along its bottom edge, in
+       the deck's own numbering. Furniture rather than an item: nobody
+       placed it, it is not selectable, and it has to rescale with the
+       page like the footer does. */
+    if(typeof citeFootFor==='function'){
+      var cfoot=citeFootFor((pres.slides||[])[idx]);
+      if(cfoot){
+        var cf=document.createElement('div');
+        cf.className='slide-citefoot';
+        cf.textContent=cfoot;
+        slideEl.appendChild(cf);
+      }
+    }
     /* the MASTER's furniture (T115), behind everything like the
        watermark: resolved from the component definition on every
        paint, so editing the component updates every wearer with no

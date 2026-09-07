@@ -250,7 +250,10 @@ def test_the_gallery_has_two_bands_and_a_door_on_the_row(out):
     assert "COLOUR_THEMES.forEach(function(t){cg.appendChild(themeCard(t));});" in out
     assert "    var rb=$('#dsg-sets');" in out
     # every ribbon layout lists it in the type group
-    assert out.count("items:['dsg-sets','dsg-stylewrap','dsg-tokens'") >= 7
+    # T325 put the Citations door between the two (a deck's references
+    # are a deck-wide thing, like its style sets and its tokens)
+    assert out.count(
+        "items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens'") >= 7
     # and the Design screen, whose job is "what is the standard", can pick one
     assert 'id="dg-sets">' in out
 

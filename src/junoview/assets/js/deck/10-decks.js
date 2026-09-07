@@ -369,8 +369,14 @@
        JSON. T4 shipped that; T52 made it worse by putting guides in the
        undo snapshot and writing a comment saying they belong to the
        deck (2026-08-29). */
+    /* T325: `bib` (the deck's own bibliography) and `cite` (how it
+       cites) join the list. KEEP THIS A CLEAN ARRAY LITERAL -- the
+       schema parity test reads these names straight out of it to learn
+       what normPres keeps, and a comment between the brackets hides
+       every one of them from it. */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides','masters'].forEach(function(k){
+     'components','cuts','guides','masters','bib','cite']
+      .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are

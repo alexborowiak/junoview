@@ -14,7 +14,9 @@ import json
 import re
 import secrets
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
@@ -175,6 +177,55 @@ def read_pptx_at(root: Path, raw_path: Any) -> dict:
             "lost": got["lost"]}
 
 
+#: A DOI is "10." then a registrant and a slash and a suffix. The route
+#: below builds a doi.org URL out of one, so the shape is the gate: it
+#: is the difference between a lookup and an open proxy.
+_DOI_RE = re.compile(r"^10\.\d{4,9}/[^\s?#]+$")
+#: doi.org answers content negotiation with BibTeX, which is exactly the
+#: format the deck already reads. 64 KB is far more than any entry.
+DOI_CAP = 64 * 1024
+
+
+def fetch_doi(doi: str) -> dict:
+    """One DOI -> its BibTeX, from doi.org.
+
+    THE ONLY OUTBOUND FETCH THIS SERVER MAKES, and it is worth naming
+    why it is allowed: everything else here reads the user's own disk,
+    and the standing rule is that a rendered deck touches the network
+    only for the pinned CDNs. A citation lookup cannot be done offline,
+    the user asks for it by typing a DOI, and the reach is held to one
+    host and one URL shape -- so it is a lookup, not a proxy the page
+    could be talked into pointing anywhere.
+    """
+    d = str(doi or "").strip()
+    d = re.sub(r"^https?://(dx\.)?doi\.org/", "", d, flags=re.I)
+    d = re.sub(r"^doi:\s*", "", d, flags=re.I)
+    if not _DOI_RE.match(d):
+        raise ValueError(
+            f"{d or 'that'} is not a DOI -- they start \"10.\" and then "
+            "a slash")
+    url = "https://doi.org/" + urllib.parse.quote(d, safe="/:._-()")
+    req = urllib.request.Request(url, headers={
+        "Accept": "application/x-bibtex; charset=utf-8",
+        "User-Agent": "Junoview/citation-lookup",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            raw = resp.read(DOI_CAP + 1)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise ValueError(f"doi.org does not know {d}") from e
+        raise ValueError(f"doi.org answered {e.code}") from e
+    except OSError as e:
+        raise ValueError(f"could not reach doi.org: {e}") from e
+    if len(raw) > DOI_CAP:
+        raise ValueError("doi.org sent more than a citation could be")
+    text = raw.decode("utf-8", errors="replace")
+    if "@" not in text:
+        raise ValueError("doi.org sent no BibTeX for that DOI")
+    return {"doi": d, "bibtex": text}
+
+
 def _make_handler(state: _AppState):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *args):       # keep the terminal quiet
@@ -258,6 +309,8 @@ def _make_handler(state: _AppState):
                     self._json(self._read_image(body))
                 elif url.path == "/api/readdeck":
                     self._json(self._read_deck(body))
+                elif url.path == "/api/doi":
+                    self._json(fetch_doi(str(body.get("doi") or "")))
                 elif url.path == "/api/readpptx":
                     self._json(self._read_pptx(body))
                 elif url.path == "/api/importpptx":

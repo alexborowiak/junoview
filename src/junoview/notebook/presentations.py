@@ -267,7 +267,7 @@ def as_presentations(obj: Any) -> list:
         # explicitly opted out of.
         for key in ("wmark", "head", "foot", "styles", "sections",
                     "tokens", "components", "cuts", "guides", "masters",
-                    "live"):
+                    "live", "bib", "cite"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

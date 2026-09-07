@@ -77,6 +77,7 @@ DECK_PARTS = (
     "17-text-builds",
     "20-notes-and-tables",
     "21-table-columns",
+    "23-citations",
     "25-selecting",
     "30-format-bar",
     "35-arranging",

@@ -730,6 +730,13 @@
                 title="Ready-made looks for the whole deck: style sets
  (type) and colour themes (a palette for page, boxes, headings and
  ink), and any you saved"><i data-ic="styles"></i> Style sets&#8230;</button>
+              <!-- T325: the deck's bibliography is a deck-wide thing,
+                   like its style sets and its tokens -->
+              <button class="dbtn rbn-sm" id="dsg-cites"
+                title="This deck&#8217;s references: import a .bib, add one
+ by DOI, choose numbered or author-year, and insert a references box.
+ Cite in any text box as [@key]"
+                ><i data-ic="doc"></i> Citations&#8230;</button>
               <span class="sh-drop" id="dsg-stylewrap">
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
@@ -1324,6 +1331,8 @@
                 ><i data-ic="pen"></i> Draw</button>
               <input type="file" id="img-file" accept="image/*" hidden>
               <input type="file" id="media-file" accept="video/*,audio/*"
+                hidden>
+              <input type="file" id="bibfile" accept=".bib,.bibtex,.txt"
                 hidden>
               <!-- MULTIPLE, unlike the single-image one above it: filling a
                    flip book twelve frames deep one file dialog at a time
@@ -2490,6 +2499,14 @@
            the numbers beside it for when you know them. -->
       <!-- T322: THE CHART PANE, rebuilt from the item on every sync -->
       <!-- T324: THE TABLE PANE, one column at a time -->
+      <!-- T325: THE CITATIONS PANE -->
+      <aside class="selpane citepane" id="citepane" hidden>
+        <div class="selpane-h"><span>Citations</span>
+          <button class="dbtn dc-icon" id="citepane-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="selpane-list" id="citepane-body"></div>
+      </aside>
       <aside class="selpane tablepane" id="tablepane" hidden>
         <div class="selpane-h"><span>Columns</span>
           <button class="dbtn dc-icon" id="tablepane-close"

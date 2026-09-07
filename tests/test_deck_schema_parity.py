@@ -114,6 +114,12 @@ DECK_SENTINELS = {
     # (T298). Ref-keyed; absence means kept, which is what every deck
     # written before it wants.
     "live": {"demo::clim": 1},
+    # the deck's own bibliography and how it cites (T325). A citation
+    # resolves against `bib` at paint time, so losing the key on a save
+    # would turn every reference in the deck into "?key".
+    "bib": {"smith2020": {"type": "article", "author": "Smith, J.",
+                          "year": "2020", "title": "On blocking"}},
+    "cite": {"style": "ay", "foot": 1},
 }
 
 SLIDE_SENTINELS = {

@@ -761,7 +761,8 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # `tokens` joined them for the same reason (T12): a deck that has
     # forgotten what "@accent" means renders the fallback instead
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters','bib','cite']\n"
+            "      .forEach(function(k){") in out
 
 
 def test_equations_reuse_the_text_box_and_mathjax(out):
@@ -1760,7 +1761,10 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     # put animBoot() and its note in the sequence. What it guards is
     # that the door wiring stays near the top of the tail and ahead of
     # the ribbon restore -- so assert that ordering directly too.
-    assert "\n  initReuseDoors();" in _boot[:2600]
+    # the window tracks the sequence's LENGTH, which grows every time a
+    # feature earns a boot call (T321, T322, T324 and T325 each added
+    # one ahead of this). What it guards is the ORDER, asserted next.
+    assert "\n  initReuseDoors();" in _boot[:3000]
     assert _boot.index("\n  initReuseDoors();") < _boot.index(
         "  /* the ribbon you kept: applied once here, at the tail")
 
@@ -1963,7 +1967,8 @@ def test_the_deck_registry_survives_a_save(out):
     sentinel for it.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters','bib','cite']\n"
+            "      .forEach(function(k){") in out
     # undo reaches it too: a token change repaints every item that
     # references it, so it is an edit like any other
     assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
@@ -2130,7 +2135,8 @@ def test_the_component_library_is_deck_level_and_survives(out):
     obvious.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters','bib','cite']\n"
+            "      .forEach(function(k){") in out
     assert "components:(pres.components&&Object.keys(pres.components).length)" \
         in out
 
@@ -2328,7 +2334,10 @@ def test_a_figure_number_is_never_stored(out):
     assert "function figNumbers(){" in out
     assert "function figSubst(txt,a,map){" in out
     # read off the page being shown (T165) -- still never stored
-    assert "?(_pg.t||''):figSubst(_pg.t,a,_figMap);" in out
+    # T325: a references box DRAWS the bibliography instead, so the
+    # ordinary path is the second arm of the same expression -- and the
+    # figure number is still never stored either way
+    assert "          :(a.bib?bibListText():figSubst(_pg.t,a,_figMap));" in out
     # a reference to a figure that has gone says so, rather than
     # rendering a wrong number
     # three misses, said apart: a caption whose figure was deleted or

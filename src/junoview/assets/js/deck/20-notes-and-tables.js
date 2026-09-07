@@ -2349,10 +2349,14 @@
            figure showing now -- it renders its first page and the pass
            at the end of renderAnnots takes it off the slide. */
         var _pn=textAt(s,a),_pi=(_pn<0?0:_pn),_pg=textPage(a,_pi);
+        /* T325: a REFERENCES BOX draws the bibliography rather than
+           storing it, so it is right the moment a citation is added,
+           removed or moved and there is nothing to regenerate. */
         var showTx=(editing&&document.activeElement
                     &&d2.contains(document.activeElement))
-          ?(_pg.t||''):figSubst(_pg.t,a,_figMap);
-        var showHtml=_pg.h?figSubst(_pg.h,a,_figMap):null;
+          ?(_pg.t||'')
+          :(a.bib?bibListText():figSubst(_pg.t,a,_figMap));
+        var showHtml=(a.bib||!_pg.h)?null:figSubst(_pg.h,a,_figMap);
         var tx2,lst=listOf(a);
         if(lst){
           /* the ELEMENT carries the marker style and a.html carries only

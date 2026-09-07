@@ -1536,8 +1536,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors, booted from THE BOOT SEQUENCE) turns it into slides, and
 # the File menu, the launcher's New menu, the window drop, the Open
 # dialog and the web loader each grow a .pptx door.
-EXPECTED_MD5 = "d4bc1689cec341fe0412dd1469bebef4"
-EXPECTED_BYTES = 3883401
+EXPECTED_MD5 = "9328c85db8a8c4ce329ef41edd36805b"
+EXPECTED_BYTES = 3906293
 
 
 def _render_example() -> str:
