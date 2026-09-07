@@ -1102,7 +1102,19 @@
     [[bic('cellcard'),'A figure from a notebook',
       'Any figure, table or note in an open notebook. This is what the '
       +'frame always did; now it is one answer among several',
-      function(){objInto=-1;startPick(idx);}],
+      function(){
+        objInto=-1;
+        /* T365: with no notebook open the picker had nothing to pick
+           from, and the door that used to sit above the thumbnails
+           ("Open notebooks...") has gone with the rest of that block.
+           Asking for a figure IS asking for a notebook, so this opens
+           one rather than showing you an empty page. */
+        if(!(APP.order&&APP.order.length)){
+          var tb=$('#tab-open');
+          if(tb){toast('Open a notebook to pick a figure from');tb.click();
+            return;}
+        }
+        startPick(idx);}],
      [bic('image'),'A picture from this computer',
       'Choose an image file. Junoview keeps a link to the file where the '
       +'browser allows it, so Refresh can re-read it later',

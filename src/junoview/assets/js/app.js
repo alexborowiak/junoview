@@ -5003,7 +5003,7 @@
     var sid=act?act.dataset.sec:(secs[0]||{}).id;
     return secs.filter(function(s){return s.id===sid;})[0]||null;
   }
-  function autoMenuOpen(){
+  function autoMenuOpen(anchor){
     var m=$('#auto-menu'); if(!m) return;
     var stem=APP.active||APP.order[0];
     if(!stem){
@@ -5018,15 +5018,33 @@
       row.dataset.sec=sec?sec.id:'';
       row.disabled=!sec;
     }
+    /* T365: the same chooser, hung off whichever door opened it. In
+       the rail it is an absolutely-positioned block inside the rail;
+       from the ribbon it has to float, like every other menu the bar
+       drops, because the header is sticky. */
+    if(anchor){
+      m.classList.add('auto-float');
+      var r=anchor.getBoundingClientRect();
+      m.style.top=(r.bottom+6)+'px';
+      m.style.left=Math.max(6,
+        Math.min(r.left,window.innerWidth-286))+'px';
+    } else {
+      m.classList.remove('auto-float');
+      m.style.top='';m.style.left='';
+    }
     /* deferred: the click that opened it is still on its way to the
        document, where the closer below listens */
     setTimeout(function(){m.hidden=false;},0);
   }
   (function(){
     var b=$('#pr-autoslides'),m=$('#auto-menu');
-    if(!b||!m) return;
-    b.addEventListener('click',function(e){
+    if(!m) return;
+    if(b) b.addEventListener('click',function(e){
       e.stopPropagation();autoMenuOpen();});
+    /* T365: the door on the notebook's own ribbon */
+    var rb=$('#doc-autoslides');
+    if(rb) rb.addEventListener('click',function(e){
+      e.stopPropagation();autoMenuOpen(rb);});
     $$('.pr-mi',m).forEach(function(mi){
       mi.addEventListener('click',function(e){
         e.stopPropagation();m.hidden=true;

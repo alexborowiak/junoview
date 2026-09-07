@@ -509,9 +509,24 @@ def test_the_notebook_block_stops_squeezing_the_thumbnails(out):
     # but More is the standing complaint.
     assert "acts.appendChild(rb);nbBody.appendChild(acts);" in out
     assert "ob.innerHTML=bic('open')+' Open notebooks';" not in out
-    # ...but the EMPTY-state door (JVUX-11) is a different button and stays:
-    # without it that state names an action with nothing to click
-    assert "ob2.className='dbtn dc-nbs-open';" in out
+    # T365: and the EMPTY state is gone too (2026-09-07, user: "remove
+    # the 'open notebooks' from the top of the fucking thumbnails. I said
+    # that should not be a god damn fucking thing"). JVUX-11 gave that
+    # state a door because it named an action with nothing to click; the
+    # answer now is that the state does not exist -- the block appears
+    # only when the presentation has notebooks to list, so a new deck's
+    # thumbnails start at the top of the column, which is T78's own rule.
+    assert "ob2.className='dbtn dc-nbs-open';" not in out
+    assert "No notebooks yet" not in out
+    # .dc-nbs-empty survives: it still styles the "open / refresh is
+    # available in the Junoview app" note the web build shows under a
+    # list it cannot act on. Only the NO-NOTEBOOKS state went.
+    assert "note.textContent='Open / refresh is available in the Junoview app.';" in out
+    assert "    if(!info.length) return;" in out
+    assert "    if(col) col.hidden=!nbs.length;" in out
+    # the way IN is where you ask for a figure
+    assert "        if(!(APP.order&&APP.order.length)){" in out
+    assert "          if(tb){toast('Open a notebook to pick a figure from');" in out
     assert "mb.innerHTML=bic('menu')+' More';" in out
     assert "acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;" in out
     assert "dc-nbacts-stack" not in out           # the stacked trio is gone

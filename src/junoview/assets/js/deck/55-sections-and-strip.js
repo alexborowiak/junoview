@@ -796,10 +796,19 @@
   }
   function renderPresNbs(){
     var nbs=presNbs(pres);
-    /* the column shows the list whenever this build can DO anything with
-       notebooks; the bare static export has none at all */
+    /* T365: the column carries the list when there IS a list, and
+       otherwise nothing at all (2026-09-07, user: "remove the 'open
+       notebooks' from the top of the fucking thumbnails. I said that
+       should not be a god damn fucking thing").
+       It used to show whenever the build could open notebooks, which
+       in the app is always -- so a new presentation opened with 117px
+       of sentence and a button standing in front of its thumbnails.
+       T78's rule decides it: everything above the thumbnails is height
+       the thumbnails do not get. The way IN to a notebook is where you
+       ask for one -- draw a Notebook cell frame and its chooser opens
+       one for you (45-images.js, openObjSrc). */
     var col=$('#dc-nbs');
-    if(col) col.hidden=!(nbs.length||nbsCanOpen());
+    if(col) col.hidden=!nbs.length;
     buildNbsInto(col,true);
   }
   /* ---- "notebooks in this presentation" popover: open all / refresh all ----
@@ -970,23 +979,12 @@
     if(!m) return;
     m.innerHTML='';
     var info=nbInfo();
-    if(!info.length){
-      /* the state used to NAME an action and offer no door (JVUX-11):
-         "add cells from your notebooks" with nothing to click. The
-         worded button is the same Open the tab strip carries. */
-      m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; '
-        +'open one and its figures become things you can place.</div>';
-      if(nbsCanOpen()){
-        var ob2=document.createElement('button');
-        ob2.className='dbtn dc-nbs-open';
-        ob2.innerHTML=(bic('open')||'')+' Open notebooks\u2026';
-        ob2.addEventListener('click',function(e){
-          e.stopPropagation();
-          var tb=$('#tab-open'); if(tb) tb.click();
-        });
-        m.appendChild(ob2);
-      }
-      return;}
+    /* T365: no empty state. There was a sentence here ("No notebooks
+       yet -- open one and its figures become things you can place")
+       and an "Open notebooks..." button under it; renderPresNbs hides
+       the whole block instead, so the thumbnails start at the top of
+       the column. */
+    if(!info.length) return;
     var h=document.createElement('div');h.className='dc-nbs-menuh';
     h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
     if(column){
@@ -1958,6 +1956,12 @@
         ?'Make this the main version \u2014 the talk, the arrows and every '
           +'export show it instead'
         :'This is the main version: it is what the talk shows');
+      /* T365: showing Main takes "This slide" from four cells to five,
+         which is an odd count -- a hole, and a whole extra column the
+         width ladder has not judged. Re-fit rather than let either go
+         stale (this is the same self-healing rule the comment above
+         sizeRibbonGroups states, applied at the path that broke it). */
+      if(typeof fitEditRibbon==='function') fitEditRibbon();
     }
     var o=$('#hm-optional'); if(!o) return;
     var s=(pres&&pres.slides)?pres.slides[cur]:null;

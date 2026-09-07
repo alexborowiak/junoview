@@ -836,7 +836,7 @@
      and had never had a menu behind it (T70). Floated like every other
      menu in this bar, so the qat's scroll floor cannot clip it. */
   (function(){
-    var btn=$('#qat-auto'),menu=$('#auto-menu');
+    var btn=$('#qat-auto'),menu=$('#qat-auto-menu');
     if(!btn||!menu) return;
     function close(){overlayHide(menu);}
     function build(){

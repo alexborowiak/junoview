@@ -33,7 +33,13 @@ def test_the_three_bad_pairs_are_paired_now():
     assert slide.index("bg-drop") < slide.index("page-strip-frame")
     assert "dsg-tidy" not in slide
     lay = _ids(_row(html, "Layout"))
-    assert lay.index("hm-lay-tidy") < lay.index("dsg-tidy")
+    # T365 put the Spacing run LAST and gave it a column of its own: four
+    # segments make it 276px, and while it sat mid-group it was the other
+    # half of a column with a 127px button, a 149px ragged edge. Tidy page
+    # pairs with Saved layouts now and every column comes out even.
+    assert lay.index("dsg-tidy") < lay.index("hm-lay-tidy")
+    assert 'id="hm-lay-tidy"' in html
+    assert 'class="rbn-cell rbn-seg lay-tidy rbn-tall"' in html
     furn = _ids(_row(html, "Page furniture"))
     assert furn[:4] == ["dc-head", "dc-foot", "dc-wmark", "dc-nums"]
     # the Object tab's own Animation group went in T220 -- an entrance is

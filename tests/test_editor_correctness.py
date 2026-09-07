@@ -969,8 +969,9 @@ def test_a_two_row_cell_is_counted_as_two(out):
     same trap the View group fell into on 2026-08-16, from the other side
     (2026-08-17).
     """
-    assert "n+=(c.classList.contains('rbn-stack')" in out
-    assert "||c.classList.contains('rbn-tall'))?2:1;" in out
+    assert "        if(c.classList.contains('rbn-stack')" in out
+    assert "           ||c.classList.contains('rbn-tall')){" in out
+    assert "          n+=2;last=null;flushPairs();return;" in out
 
 
 def test_ribbon_group_columns_are_counted_before_every_fit(out):

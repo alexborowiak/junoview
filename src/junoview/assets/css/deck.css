@@ -5281,6 +5281,30 @@ body.light .dg-num input{background:var(--input-bg);
 .rbn-row>.rbn-cell,.rbn-row>.sh-drop,.rbn-row>.dc-menuwrap,
 .rbn-row>.strip-frame,.rbn-row>.fx-strip{justify-self:stretch;}
 .rbn-row>.rbn-cell.rbn-seg{justify-self:start;}
+/* ---- T365: NO HOLES, NO RAGGED COLUMNS ------------------------------
+   2026-09-07, user: "there are weird gaps and spaces everywhere ... I
+   have told you about this like 40 fucking times."
+
+   TWO shapes of gap, measured on all seven tabs. Both are set by
+   sizeRibbonGroups(), which is the one place that already knows how
+   many cells a group has and re-runs on every path that re-fits the
+   ribbon.
+
+   .rbn-odd -- the last cell when the count is ODD. Column-major flow
+   over two rows leaves it at the top of a column with 37px of nothing
+   under it, fenced by the group's dividers into a visible rectangle.
+   It takes the whole column and centres in it, so the space it does
+   not need sits evenly above and below rather than as a notch below.
+
+   .rbn-fit -- both halves of a column whose two members can be
+   widened without looking absurd. The track is already max-content
+   wide; without this the narrower button stops short and leaves a
+   notch, which is the ragged right edge in twenty-two columns. It is
+   set in PAIRS, and never on a pair containing a joined run: a run is
+   as wide as all its segments, and stretching a plain button to that
+   is exactly the "why is tidy page huge?" of 2026-09-03. */
+.rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}
+.rbn-row>.rbn-fit{justify-self:stretch;}
 /* Background is a tall tile now, so its menu hangs off a 72px door */
 #bg-drop.rbn-tall,#hm-updwrap.rbn-tall{justify-self:start;}
 /* T280: the merged Update tile is the same shape as the two it replaced */

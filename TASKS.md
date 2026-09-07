@@ -7272,3 +7272,31 @@ first. Ticked in the commit that ships each.
   in the welcome links row because the ribbon is hidden there. The
   front door's drop hint is Open's tooltip. The card row the user asked
   about was already gone in T282 -- their screenshot was a stale build.
+- [x] **T365 - The ribbon's arithmetic, and two doors.** The user
+  (2026-09-07): "Do you ever understand what I mean by the buttons are
+  cursed. Like there are weird gaps and spaces everywhere? ... I have
+  told you about this like 40 fucking times. WHy is it still fucked.";
+  "remove the 'open noteboks' from the top of the fucking thumbnails. I
+  said that should not be a god damn fucking thing."; "Also where was
+  the autogenerate presentatino in the notebook view????"
+  *Done 2026-09-07.* The gaps were arithmetic, measured before they
+  were touched. `.rbn-row` is a two-row column-major grid, so an ODD
+  cell count always left the last column half empty: a 26px control
+  with 37px of nothing under it, fenced by the group's dividers into a
+  visible hole, in seven groups at full width. And T207's promise that
+  "the two buttons that share a column share a width" was never kept --
+  `justify-items:start` left the narrower one short in twenty-two
+  columns, from 2px to 178px. `sizeRibbonGroups` marks the odd trailing
+  cell `rbn-odd` (spans the band, centres in it) and each stretchable
+  pair `rbn-fit`, never a pair holding a joined run: that is T280's
+  "why is tidy page huge?" from the other side, so the Spacing run and
+  the transition run take a column of their own instead. The viewer's
+  bar had both diseases too -- Markdown pinned above a 33px hole, an
+  App group of 34px buttons on a 28px bar with 27px empty under them --
+  and is now one height throughout with the App group two rows of two,
+  which hands back 133px. `#dc-nbs` stands down when the presentation
+  lists no notebooks, so a new deck's thumbnails start at the top of
+  the column rather than behind 117px of sentence and an Open notebooks
+  button; asking for a figure opens a notebook when none is open. And
+  `#doc-autoslides` puts "Make slides" beside Present, opening T362's
+  three-scope chooser from the notebook it reads.

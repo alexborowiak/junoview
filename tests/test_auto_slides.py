@@ -159,11 +159,44 @@ def test_the_viewer_owns_the_doors(out):
     assert "Slides from this notebook" in assets.help_html()
 
 
+def test_the_door_is_on_the_ribbon_of_the_notebook_it_reads():
+    """T365 (2026-09-07, user: "Also where was the autogenerate
+    presentation in the notebook view????").
+
+    T362 gave this two doors and both are hard to find from the notebook
+    you are reading: presentations rail > New > "Slides from this
+    notebook..." is a menu inside a rail that collapses, which is the
+    standing complaint about this app, and the per-section one is a
+    small "slides" word beside "hide section". So the viewer's own
+    ribbon carries it, next to Present -- the other control that turns
+    this notebook into a talk -- and one press opens T362's three-scope
+    chooser rather than a menu that opens another menu.
+    """
+    page = assets.page_template()
+    assert '<button class="toggle" id="doc-autoslides"' in page
+    assert "Make slides" in page
+    # beside Present, in the View group -- not a menu of its own
+    assert page.index('id="doc-present"') < page.index('id="doc-autoslides"')
+    assert (page.index('id="doc-autoslides"')
+            < page.index('<span class="abgrp-lab">View</span>'))
+    app = assets.app_js()
+    assert "    var rb=$('#doc-autoslides');" in app
+    assert "      e.stopPropagation();autoMenuOpen(rb);});" in app
+    # the same chooser, floated under whichever door opened it
+    assert "      m.classList.add('auto-float');" in app
+    assert "      m.classList.remove('auto-float');" in app
+    css = assets.load("css/app.css")
+    assert (".pr-newmenu.auto-float{position:fixed;left:auto;right:auto;"
+            "width:280px;\n  z-index:200;}") in css
+    # the rail's door still works, and is now optional rather than assumed
+    assert "    if(b) b.addEventListener('click',function(e){" in app
+
+
 def test_the_section_row_names_the_section_on_screen():
     """'From this section' says WHICH section before you click it."""
     app = assets.app_js()
     cur = app.split("function autoCurrentSection(stem){")[1].split("\n  }")[0]
     assert "querySelector('.navsec.active')" in cur
-    body = app.split("function autoMenuOpen(){")[1].split("\n  }")[0]
+    body = app.split("function autoMenuOpen(anchor){")[1].split("\n  }")[0]
     assert "var sec=autoCurrentSection(stem);" in body
     assert "From this section" in body

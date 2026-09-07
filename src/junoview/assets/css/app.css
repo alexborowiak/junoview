@@ -100,13 +100,25 @@ body.presrail-min{--presrail-w:46px;}
    pushed the whole bar onto a second row */
 .abgrp[hidden]{display:none!important;}
 .abgrp-row{display:flex;align-items:flex-start;gap:5px;flex:1;}
-/* + Open is one button in its own section, so it takes the full height */
-#ab-file .abgrp-row{align-items:stretch;}
-/* the chain matters: the row stretches the .fgrp (cross axis), but inside
-   the .fgrp the button's height is the MAIN axis — so it needs flex:1 or
-   it just sits at its natural 28px */
+/* ---- T365: NO HOLES HERE EITHER ------------------------------------
+   2026-09-07, user: "there are weird gaps and spaces everywhere". The
+   deck ribbon's two shapes of gap are on this bar as well, and the cure
+   is the same principle: ONE height for every control, and a column
+   that does not fill the band is CENTRED in it rather than pinned to
+   the top with the leftover underneath.
+
+   Measured before: "Markdown On" sat at the top of the Filters group
+   with 33px of nothing under it (it is the one filter with no Choose
+   beneath it); the App group was one row of 34px buttons -- the only
+   34px controls on a 28px bar -- with 27px of nothing under all four;
+   and Open was 30px beside a 28px docked file bar. */
+.appbar .abgrp-row{align-items:stretch;}
+.appbar .fgrp{justify-content:center;}
+/* + Open is one button in its own section. It used to be told to fill
+   the band on its own, which made it 30px on a 28px bar the moment
+   T364 docked the file controls under it. */
 #ab-file .abgrp-row .fgrp{flex:1;}
-#ab-file .abgrp-row .toggle{height:auto;min-height:28px;flex:1;}
+#ab-file .abgrp-row .toggle{height:28px;min-height:28px;flex:none;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
    screen is the same idea, and the two stack the way Raw and Tree do. */
@@ -122,8 +134,15 @@ body.presrail-min{--presrail-w:46px;}
    groups with a ragged bottom edge. Width comes from the column
    (align-items:stretch), so there is nothing to keep in sync by hand. */
 #pt-filter-btn,#ck-filter-btn,#ot-filter-btn{width:100%;flex:none;}
-#ab-app .btn-grp{flex:none;gap:5px;}
+/* T365: TWO ROWS OF TWO, not one row of four. As a single row this
+   group left 27px of the band empty under every one of its buttons,
+   and its four wide controls were 300px of a bar that was already
+   scrolling sideways; paired up it fills the band and gives 133px
+   back. Same grid as the deck ribbon's groups, for the same reason. */
+#ab-app .btn-grp{display:grid;grid-auto-flow:column;
+  grid-template-rows:28px 28px;gap:4px 5px;align-items:stretch;}
 #ab-app .btn-grp>*{flex:none;}
+.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{height:28px;}
 /* the app group (theme / support / help) sits at the RIGHT END of the
    ribbon, pushed there by an auto margin. It lived on the tab row while
    the ribbon wrapped — as the last ribbon group it was the first thing
@@ -156,8 +175,11 @@ body.presrail-min{--presrail-w:46px;}
    its button (see fitRibbon's caller). */
 .abgrp.grp-empty{display:none!important;}
 /* Present spans two rows: centre its content in the taller box */
-#ab-view #doc-present,#ab-view #doc-full{
+#ab-view #doc-present,#ab-view #doc-full,#ab-view #doc-autoslides{
   justify-content:center;align-items:center;}
+/* a stack of one centres in the band rather than sitting at its top --
+   the same rule the rest of the bar got in T365 */
+.vw-stack{justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -232,6 +254,10 @@ body.tree-mode #copy-grp{display:none!important;}
    longest label it can hold ("Document"), because the Tree button renames
    itself and a wider word would shove Present sideways — the same fixed
    slot the filter state words use, for the same reason (2026-07-30) */
+/* min-width, not width: it is the FLOOR that stops the group shifting
+   sideways when the Tree button renames itself "Document". A wider
+   word in one stack simply makes that stack wider, which is what every
+   other column on this bar does too. */
 .vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
   min-width:92px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
@@ -1796,6 +1822,11 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
   border-radius:9px;padding:5px;display:flex;flex-direction:column;
   gap:2px;box-shadow:0 12px 32px #0008;}
 .pr-newmenu[hidden]{display:none;}
+/* T365: the slides chooser, opened from the ribbon instead of the rail.
+   Fixed like .ckfilter-menu, for the same reason -- the header is
+   sticky, so a menu inside it paints behind the page. */
+.pr-newmenu.auto-float{position:fixed;left:auto;right:auto;width:280px;
+  z-index:200;}
 .pr-mi{background:none;border:1px solid transparent;border-radius:6px;
   padding:6px 10px;text-align:left;cursor:pointer;color:#c9d6e2;
   font-family:var(--sans);font-size:12px;}

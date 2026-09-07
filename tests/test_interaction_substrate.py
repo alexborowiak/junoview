@@ -129,7 +129,8 @@ def test_chart_and_masters_have_first_class_doors():
     out = _out()
     assert "var ic2=$('#ins-chart');" not in out
     assert "var dm2=$('#dsg-masters');" in out
-    assert "ob2.className='dbtn dc-nbs-open';" in out
+    # T365 removed the empty-state block above the thumbnails entirely
+    assert "ob2.className='dbtn dc-nbs-open';" not in out
 
 def test_the_file_menu_has_named_sections_and_a_warned_tail():
     """T143 / JVUX-07, driven live: named headings with the two

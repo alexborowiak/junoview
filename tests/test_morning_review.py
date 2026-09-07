@@ -34,7 +34,9 @@ def test_design_and_animation_are_ordered_as_asked(out):
     assert ".rbn-build{order:3;}" in out and ".rbn-order{order:4;}" in out
     html = assets.deck_html()
     lay = _row(html, "Layout")
-    assert lay.index("hm-lay-tidy") < lay.index("dsg-tidy")     # Spacing over Tidy page
+    # T365: the Spacing run is last and spans its own column, so Tidy page
+    # pairs with Saved layouts instead of hanging beside a 276px run
+    assert lay.index("dsg-tidy") < lay.index("hm-lay-tidy")
     assert "dsg-tidy" not in _row(html, "Slide")
 
 

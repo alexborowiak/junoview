@@ -1561,8 +1561,37 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # beside Open with its panel floated to <body>, Full screen joins
 # Present in the View group and the welcome links row, and the front
 # door's drop hint becomes Open's tooltip.
-EXPECTED_MD5 = "9eb808b2faae8c33e2ae75f534534a22"
-EXPECTED_BYTES = 3920995
+# T365 is the ribbon's arithmetic. .rbn-row is a two-row column-major
+# grid, so an ODD cell count always left the last column half empty --
+# a 26px control with 37px of nothing under it, fenced by the group's
+# dividers into a visible hole, in seven groups at full width. And
+# T207's promise that "the two buttons that share a column share a
+# width" was never true: justify-items:start left the narrower one
+# short in twenty-two columns. sizeRibbonGroups() now marks the odd
+# trailing cell .rbn-odd (span the band, centre in it) and each
+# stretchable pair .rbn-fit, never a pair holding a joined run --
+# that is T280's "why is tidy page huge?" from the other side, so
+# the Spacing run and the transition run take a column of their own
+# instead. The viewer's bar had the same two: Markdown pinned above
+# a 33px hole, and an App group of 34px buttons on a 28px bar with
+# 27px empty beneath them, now two rows of two. #dc-nbs stands down
+# when the presentation lists no notebooks, so a new deck's
+# thumbnails start at the top of the column instead of behind 117px
+# of sentence and an Open notebooks button. And #doc-autoslides puts
+# "Make slides" beside Present, opening T362's three-scope chooser
+# from the notebook it reads rather than from a menu in a rail.
+# The adversarial pass over that then found the bug measuring could
+# not: #auto-menu was a DUPLICATE ID, worn by deck.html's Autosave
+# dropdown and page.html's three-scope chooser in one document, so
+# pressing Autosave emptied the chooser and refilled it with
+# "Every 5 seconds" for the rest of the session. The deck's is
+# #qat-auto-menu now. With it: syncHomeDoors re-fits when it reveals
+# Main (which takes This slide from four cells to five, an odd count
+# and a fresh hole); sizeRibbonGroups counts .rbn-hid as hidden, so a
+# customised ribbon's parity is right; and --rbn-cols is gone, having
+# been written by that function and read by no rule anywhere.
+EXPECTED_MD5 = "bc437d101fe1ac3840f966d9fcdca85b"
+EXPECTED_BYTES = 3930891
 
 
 def _render_example() -> str:

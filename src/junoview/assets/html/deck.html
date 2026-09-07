@@ -217,7 +217,13 @@
     <span class="dc-menuwrap">
       <button class="dbtn qat-btn qat-auto" id="qat-auto" hidden
         aria-haspopup="true" aria-expanded="false"></button>
-      <div class="dc-menu" id="auto-menu" hidden></div>
+      <!-- T365: #qat-auto-menu, not #auto-menu. page.html's three-scope
+           slides chooser wore that id too and both are in one document,
+           so getElementById returned the chooser: pressing Autosave
+           emptied it and refilled it with "Every 5 seconds", and
+           "Slides from this notebook" was dead for the rest of the
+           session. Named after the button it belongs to. -->
+      <div class="dc-menu" id="qat-auto-menu" hidden></div>
     </span>
     <!-- ONE cell, like the zoom stepper: undo and redo are the same
          decision in two directions and must never end up on different
@@ -600,15 +606,23 @@
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <i data-ic="objects"></i> Saved layouts&#8230;</button>
-              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
+              <button class="dbtn rbn-sm" id="dsg-tidy"
+                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><i data-ic="align"></i> Tidy page</button>
+              <!-- T365: LAST, and a column of its own. Four segments make
+                   this run 276px, and while it sat mid-group it was the
+                   other half of a column with a 127px button in it -- a
+                   149px ragged edge, and the pair that T280 could not
+                   make share a width without blowing the button up
+                   ("why is tidy page huge?"). Spanning both rows it
+                   owns its column, so Saved layouts pairs with Tidy
+                   page and every column in this group comes out even. -->
+              <div class="rbn-cell rbn-seg lay-tidy rbn-tall" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
               <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i> Tight</button>
               <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><i data-ic="spacing"></i> Normal</button>
               <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><i data-ic="expand"></i> Airy</button>
               </div>
-              <button class="dbtn rbn-sm" id="dsg-tidy"
-                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><i data-ic="align"></i> Tidy page</button>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
@@ -1023,7 +1037,10 @@
           <span class="rbn-grp rbn-trans" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
-              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
+              <!-- T365: a column of its own. Three segments make this
+                   268px and its only neighbour is a 90px button, which
+                   was a 178px ragged edge down the middle of the group. -->
+              <span class="rbn-cell rbn-seg rbn-tall" id="trans-run" role="group"
                 aria-label="How this slide arrives">
                 <span class="cell-lab">This slide</span>
                 <button class="dbtn rbn-sm" id="trans-cut"

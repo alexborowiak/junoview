@@ -787,27 +787,71 @@
      own VIEW label and printed on top of it (2026-08-16). Owning the count
      in one function that fitEditRibbon also calls makes it self-healing:
      any path that re-fits the ribbon re-counts it first. */
+  /* T365: can this cell be widened to its column without reading as a
+     mistake? A plain button or a dropdown wrapper can -- both are one
+     label in one box. A joined run, a strip, a fixed tile cannot. */
+  function rbnCanFit(c){
+    if(c.classList.contains('sh-drop')
+       ||c.classList.contains('dc-menuwrap')) return true;
+    return c.classList.contains('dbtn')
+      &&!c.classList.contains('big-tile');
+  }
   function sizeRibbonGroups(){
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp',bar).forEach(function(g){
       var row=g.querySelector('.rbn-row'); if(!row) return;
-      var n=0;
+      var n=0,last=null,buf=[],pairs=[];
+      /* T365: the cells fill DOWN then across, so consecutive single
+         cells pair off into columns and a spanning control resets the
+         pairing (it takes the next whole column for itself) */
+      function flushPairs(){
+        while(buf.length>=2) pairs.push([buf.shift(),buf.shift()]);
+        buf.length=0;
+      }
       [].slice.call(row.children).forEach(function(c){
-        if(c.hidden) return;
-        /* a wrapper counts as the one cell it contributes */
-        if(c.classList.contains('sh-drop')||c.classList.contains('dc-menuwrap')){
-          var b=c.querySelector('.dbtn');
-          if(b&&!b.hidden) n++;
-          return;
-        }
+        c.classList.remove('rbn-odd');
+        c.classList.remove('rbn-fit');
+        /* T365: `.rbn-hid` is how a customised ribbon layout hides a
+           control (applyRibbonPrefs; deck.css makes it
+           display:none!important). It is not the `hidden` attribute,
+           so this count -- and the parity built on it -- was wrong for
+           anyone who had switched a button off. */
+        if(c.hidden||c.classList.contains('rbn-hid')) return;
         /* a control that spans BOTH rows is worth two cells, or a group
            made of nothing but stacks asks for half the columns it needs
            and pushes the overflow into an implicit third row */
-        n+=(c.classList.contains('rbn-stack')
-            ||c.classList.contains('rbn-big')
-            ||c.classList.contains('rbn-tall'))?2:1;
+        if(c.classList.contains('rbn-stack')
+           ||c.classList.contains('rbn-big')
+           ||c.classList.contains('rbn-tall')){
+          n+=2;last=null;flushPairs();return;
+        }
+        /* a wrapper counts as the one cell it contributes */
+        if(c.classList.contains('sh-drop')||c.classList.contains('dc-menuwrap')){
+          var b=c.querySelector('.dbtn');
+          if(b&&!b.hidden){n++;last=c;buf.push(c);}
+          return;
+        }
+        n+=1;last=c;buf.push(c);
       });
-      row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));
+      flushPairs();
+      /* T365: --rbn-cols is gone. Nothing read it -- no rule in any of
+         the five stylesheets -- which is what the T207 comment above
+         .rbn-row already says: "The column count is no longer a
+         variable anything sets." Placement is grid-auto-flow:column
+         against two 30px tracks, and `n` is now used for the parity
+         below rather than for a property nobody consumed. */
+      /* T365: both halves of a column share its width -- but only where
+         widening is not absurd. A joined run is as wide as all of its
+         segments; stretching a plain button to that is the "why is tidy
+         page huge?" of 2026-09-03, so a pair holding one is left alone
+         and the markup gives such runs a column of their own instead. */
+      pairs.forEach(function(p){
+        if(rbnCanFit(p[0])&&rbnCanFit(p[1])){
+          p[0].classList.add('rbn-fit');p[1].classList.add('rbn-fit');}
+      });
+      /* ...and the odd one out fills the band rather than hanging at
+         the top of it with a hole underneath */
+      if(n%2===1&&last) last.classList.add('rbn-odd');
     });
   }
   function fmtApply(fn,quiet){

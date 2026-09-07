@@ -197,7 +197,11 @@ def test_notebooks_button_replaces_inline_chip_strip(out):
     # a button in front of it renamed itself Open/Refresh notebooks,
     # promising an action it no longer performed (2026-08-18). Since
     # 2026-08-20 there is no button: the column IS the list.
-    assert "col.hidden=!(nbs.length||nbsCanOpen());" in out
+    # T365: ...and it stands down whenever there is no list to show, not
+    # merely in the export build (2026-09-07, user: "remove the 'open
+    # notebooks' from the top of the fucking thumbnails"). A new deck
+    # showed 117px of sentence-and-button in front of its thumbnails.
+    assert "    if(col) col.hidden=!nbs.length;" in out
     assert "btn.textContent=(anyOpen" not in out
     assert "Refresh notebooks" not in out
     # 2026-08-19: a notebooks strip is BACK at the top of the left
