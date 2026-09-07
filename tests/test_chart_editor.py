@@ -31,8 +31,8 @@ _STUBS = """
 var CHART_PALETTE=['#4fb3d9','#f0a848','#8fd18a','#e07a9a','#b39ddb','#f2d16b'];
 """
 _FNS = ("chartStep", "chartScale", "chartTicks", "chartPos", "chartLinFit",
-        "chartStackTops", "chartFmt", "chartParse", "chartFromRows",
-        "chartCsvOf")
+        "chartStackTops", "chartFmt", "chartParse", "chartShownSeries",
+        "chartFromRows", "chartCsvOf")
 
 
 def _run(script: str):
@@ -165,13 +165,85 @@ def test_parse_normalises_the_switches():
       console.log(JSON.stringify({d:d,pct:chartParse({stack:'pct'}).stack}));
     """)
     d = got["d"]
+    # ylog is False: this is a stacked BAR chart, and stacking wins
     assert (d["stack"], d["ylog"], d["labels"], d["xlab"]) == (
-        "std", True, True, "Month")
+        "std", False, True, "Month")
     a, b = d["series"]
     assert a["axis"] == "y2" and a["trend"] == "linear" and a["ct"] == "line"
     assert a["hide"] == 1 and a["err"] == [0.5, None]
     assert "axis" not in b and "trend" not in b
     assert got["pct"] == "pct"
+
+
+def test_stacking_wins_over_a_log_axis_everywhere():
+    """Set both and the renderer, the pane and the exporter used to give
+    three different answers: the plot drew clustered, the pane showed
+    Stacked pressed, and the .pptx went out stacked WITH a log axis
+    (2026-09-07 review). chartParse decides it once, for everybody."""
+    got = _run("""
+      var bar=chartParse({k:'chart',ct:'bar',stack:1,ylog:1});
+      var line=chartParse({k:'chart',ct:'line',stack:1,ylog:1});
+      console.log(JSON.stringify({bar:[bar.stack,bar.ylog],
+        line:[line.stack,line.ylog]}));
+    """)
+    assert got["bar"] == ["std", False]
+    # only a BAR chart stacks, so a line chart keeps its log axis
+    assert got["line"] == ["std", True]
+
+
+def test_the_numbers_under_the_ticks_tell_them_apart():
+    """chartFmt capped at two decimals, so an axis of 0, 0.005, 0.01,
+    0.015 read 0, 0, 0.01, 0.01 -- four gridlines, two labels, and the
+    chart unreadable (2026-09-07 review, the one high-severity finding).
+    Given the spacing it is read at, it keeps the places that separate
+    one tick from the next."""
+    got = _run("""
+      var sc=chartScale([0.002,0.004,0.006,0.008],{});
+      console.log(JSON.stringify({
+        ticks:chartTicks(sc).map(function(t){return chartFmt(t,sc.step);}),
+        coarse:[chartFmt(1234,50),chartFmt(12.34,5),chartFmt(0.5,0.5)],
+        free:[chartFmt(0.002),chartFmt(0.0001234),chartFmt(0),
+              chartFmt(1234.5),chartFmt(null)]}));
+    """)
+    # four distinct labels, where the two-decimal cap gave "0", "0",
+    # "0.01", "0.01" over four different gridlines
+    assert got["ticks"] == ["0.002", "0.004", "0.006", "0.008"]
+    # a coarse step needs no decimals: ticks five apart read as integers
+    assert got["coarse"] == ["1234", "12", "0.5"]
+    # with no spacing to go on -- a data label, a log decade -- three
+    # significant figures
+    assert got["free"] == ["0.002", "0.000123", "0", "1230", ""]
+
+
+def test_a_hidden_series_is_not_a_build_stop():
+    """chartSvg draws no group for a hidden series, so counting it spent
+    a click of the slow reveal on nothing at all."""
+    got = _run("""
+      var a={k:'chart',ct:'line',cats:['a'],series:[
+        {name:'A',ys:[1]},{name:'B',ys:[2],hide:1},{name:'C',ys:[3]}]};
+      console.log(JSON.stringify({
+        shown:chartShownSeries(a).map(function(s){return s.name;}),
+        all:chartParse(a).series.length}));
+    """)
+    assert got["shown"] == ["A", "C"]
+    assert got["all"] == 3          # the pane still lists every series
+
+
+def test_a_lone_band_column_keeps_its_numbers():
+    """A "Name hi" with no "Name lo" was folded into a band and the band
+    then thrown away for being half a pair -- so a column you typed
+    vanished, numbers and all (2026-09-07 review)."""
+    got = _run("""
+      var rows=[['','Temp','Temp hi'],['Jan','10','12'],['Feb','11','13']];
+      var d=chartFromRows(rows);
+      console.log(JSON.stringify({
+        names:d.series.map(function(s){return s.name;}),
+        ys:d.series.map(function(s){return s.ys;}),
+        bands:d.series.map(function(s){return !!s.band;})}));
+    """)
+    assert got["names"] == ["Temp", "Temp hi"]
+    assert got["ys"] == [[10, 11], [12, 13]]
+    assert got["bands"] == [False, False]
 
 
 # ------------------------------------------------------------ the export
@@ -182,7 +254,7 @@ SPEC = {
     "slides": [{"bg": "#0b141d", "trans": "", "notes": "", "items": [
         {"t": "chart", "x": 5, "y": 5, "w": 80, "h": 60, "ct": "bar",
          "cats": ["a", "b", "c"], "numeric": False, "title": "Mixed",
-         "leg": True, "ink": "#ffffff", "stack": "std", "ylog": True,
+         "leg": True, "ink": "#ffffff", "stack": "std",
          "labels": True, "xlab": "Month", "ylab": "mm", "y2lab": "°C",
          "series": [
              {"name": "Rain", "ys": [1, 2, 3], "color": "#4fb3d9",
@@ -194,6 +266,13 @@ SPEC = {
              {"name": "Ghost", "ys": [5, 5, 5], "color": "#000000",
               "hide": 1},
          ]},
+        # a second, UNSTACKED chart carries the log axis: stacking and a
+        # log scale cannot both be honoured, so they are pinned apart
+        {"t": "chart", "x": 5, "y": 70, "w": 40, "h": 25, "ct": "line",
+         "cats": ["a", "b"], "numeric": False, "title": "Log",
+         "leg": False, "ink": "#ffffff", "ylog": True,
+         "series": [{"name": "Decay", "ys": [1, 100],
+                     "color": "#4fb3d9"}]},
     ]}]}
 
 
@@ -205,16 +284,21 @@ def written():
     import io
     import zipfile
     data, report = build_pptx(json.loads(json.dumps(SPEC)))
-    xml = zipfile.ZipFile(io.BytesIO(data)).read(
-        "ppt/charts/chart1.xml").decode("utf-8")
-    return data, report, xml
+    z = zipfile.ZipFile(io.BytesIO(data))
+    xml = z.read("ppt/charts/chart1.xml").decode("utf-8")
+    log = z.read("ppt/charts/chart2.xml").decode("utf-8")
+    return data, report, xml, log
 
 
 def test_every_switch_is_real_chart_xml(written):
-    data, report, xml = written
+    data, report, xml, log = written
     assert report["skipped"] == 0
     assert '<c:grouping val="stacked"/>' in xml and '<c:overlap val="100"/>' in xml
-    assert '<c:logBase val="10"/>' in xml
+    # the log axis rides on the UNSTACKED chart beside it: a stack is a
+    # sum of parts and a log axis has no addition on it, so a stacked
+    # chart never writes logBase (2026-09-07 review)
+    assert '<c:logBase val="10"/>' in log
+    assert '<c:logBase' not in xml
     assert '<c:showVal val="1"/>' in xml
     assert '<c:trendlineType val="linear"/>' in xml
     assert '<c:errBars><c:errDir val="y"/>' in xml
@@ -233,13 +317,16 @@ def test_every_switch_is_real_chart_xml(written):
 
 
 def test_the_switches_come_back_through_the_reader(written):
-    data, _, _ = written
+    data, _, _, _ = written
     got = read_pptx(data, "x.pptx")
     assert got["lost"] == []
-    ch = [it for it in got["spec"]["slides"][0]["items"]
-          if it["t"] == "chart"][0]
+    charts = [it for it in got["spec"]["slides"][0]["items"]
+              if it["t"] == "chart"]
+    ch, logch = charts
     assert ch["ct"] == "bar" and ch["stack"] == "std"
-    assert ch["ylog"] is True and ch["labels"] is True
+    assert ch["ylog"] is False and ch["labels"] is True
+    # ...and the unstacked one keeps its log axis across the trip
+    assert logch["ylog"] is True and logch["ct"] == "line"
     assert (ch["xlab"], ch["ylab"], ch["y2lab"]) == ("Month", "mm", "°C")
     by = {s["name"]: s for s in ch["series"]}
     assert set(by) == {"Rain", "Snow", "Temp"}

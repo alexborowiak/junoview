@@ -2141,7 +2141,8 @@ select#fmt-font[hidden]{display:none;}
 .md-preview{width:100%;max-height:160px;background:#000;border-radius:4px;
   display:block;margin:4px 0 8px;}
 .md-preview.md-audio{max-height:40px;}
-.mediapane .md-check{display:flex;align-items:center;gap:8px;
+.mediapane .md-check,.chartpane .md-check{display:flex;align-items:center;
+  gap:8px;
   text-transform:none;letter-spacing:0;}
 .mediapane .md-btns{gap:6px;flex-wrap:wrap;}
 .mediapane .md-info{opacity:.75;font-size:11px;}

@@ -638,8 +638,18 @@ window.JunoPptx = (function () {
           + '</c:v></c:pt>';
       }).join('') + '</c:numCache>';
   }
-  function chartCol(i) {   /* 0 -> B, 1 -> C ... data starts beside cats */
-    return String.fromCharCode(66 + i);
+  /* 0 -> B, 1 -> C ... the data starts beside the categories in column
+     A. Arithmetic rather than 66+i since T322 put the error columns at
+     series.length + i: a chart of thirteen series with error bars ran
+     off the end of the alphabet and wrote "[" into a c:f formula
+     (2026-09-07 review). */
+  function chartCol(i) {
+    var n = i + 1, s = '';
+    do {
+      s = String.fromCharCode(65 + (n % 26)) + s;
+      n = Math.floor(n / 26) - 1;
+    } while (n >= 0);
+    return s;
   }
   function chartSerHead(item, si) {
     var se = item.series[si];
@@ -669,7 +679,8 @@ window.JunoPptx = (function () {
     var x = '<c:' + xTag + '><c:axId val="111111111"/>' + chartScaling(false)
       + '<c:delete val="0"/><c:axPos val="b"/>' + chartAxTitle(item.xlab)
       + '<c:crossAx val="222222222"/></c:' + xTag + '>';
-    var y = '<c:valAx><c:axId val="222222222"/>' + chartScaling(!!item.ylog)
+    var y = '<c:valAx><c:axId val="222222222"/>'
+      + chartScaling(!!item.ylog && !item.stack)
       + '<c:delete val="0"/><c:axPos val="l"/>' + chartAxTitle(item.ylab)
       + '<c:crossAx val="111111111"/></c:valAx>';
     if (!hasY2) return x + y;
@@ -726,9 +737,14 @@ window.JunoPptx = (function () {
     };
     var body = '';
     if (item.ct === 'pie') {
+      /* the pie plots the first VISIBLE series, so its name has to come
+         from that one too -- chartSerHead(item, 0) named the hidden one
+         over the visible one's values (2026-09-07 review) */
+      var pieAt = series.indexOf(all[0]);
+      if (pieAt < 0) pieAt = 0;
       var se0 = all[0] || series[0] || { ys: [] };
       body = '<c:pieChart><c:varyColors val="1"/><c:ser>'
-        + chartSerHead(item, 0)
+        + chartSerHead(item, pieAt)
         + (item.labels ? '<c:dLbls><c:showLegendKey val="0"/>'
           + '<c:showVal val="0"/><c:showCatName val="0"/>'
           + '<c:showSerName val="0"/><c:showPercent val="1"/>'
@@ -787,6 +803,12 @@ window.JunoPptx = (function () {
       }
       var prim = all.filter(function (se) { return se.axis !== 'y2'; });
       var sec = all.filter(function (se) { return se.axis === 'y2'; });
+      /* A CHART WHOSE EVERY SERIES SITS ON THE RIGHT still has only one
+         axis to draw against: writing the primary pair with no series on
+         it is an axis PowerPoint has nothing to put there (2026-09-07
+         review). So when nothing is on the left, the right becomes the
+         left and the second pair is never written. */
+      if (!prim.length && sec.length) { prim = sec; sec = []; hasY2 = false; }
       var groups = [];
       if (item.ct === 'scatter' && item.numeric) {
         groups.push(scatterGroup(prim, false), scatterGroup(sec, true));
@@ -1119,7 +1141,11 @@ window.JunoPptx = (function () {
           var tbl = tableShape(item, id, page);
           if (tbl) body += tbl; else skipped++;
         } else if (item.t === 'chart') {
-          if (!item.series || !item.series.length) { skipped++; return; }
+          /* VISIBLE series, not any series: an all-hidden chart used to
+             write a plotArea with no chart group in it (2026-09-07) */
+          var vis = (item.series || []).filter(function (se) {
+            return se && !se.hide; });
+          if (!vis.length) { skipped++; return; }
           charts.push(chartXml(item));
           var crid = 'rIdC' + charts.length;
           rels.push({ id: crid, type: DOC_NS + '/relationships/chart',

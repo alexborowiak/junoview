@@ -189,6 +189,9 @@ def test_a_series_build_takes_one_stop_per_series(out):
     pal = re.search(r"var CHART_PALETTE=\[[^\]]*\];", out, re.S).group(0)
     body = "\n".join([pal,
                       lift_fn(out, "chartParse"),
+                      # a hidden series is not addressable, so the count
+                      # goes through the shown-only filter (2026-09-07)
+                      lift_fn(out, "chartShownSeries"),
                       lift_fn(out, "chartSeriesCount"),
                       lift_fn(out, "flipFrames"),
                       lift_fn(out, "textPages"),

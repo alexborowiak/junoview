@@ -64,12 +64,22 @@
     var n=cats.length;
     series.forEach(function(se){n=Math.max(n,se.ys.length);});
     while(cats.length<n) cats.push(String(cats.length+1));
+    var stack=(a&&a.stack==='pct')?'pct':((a&&a.stack)?'std':'');
+    var ylog=!!(a&&a.ylog);
+    if(stack&&(a&&a.ct||'bar')==='bar') ylog=false;
     return {cats:cats,series:series,
       numeric:n>0&&cats.every(function(c){
         return c!==''&&isFinite(Number(c));}),
-      /* T322: the chart-wide switches, normalised */
-      stack:(a&&a.stack==='pct')?'pct':((a&&a.stack)?'std':''),
-      ylog:!!(a&&a.ylog),labels:!!(a&&a.labels),
+      /* T322: the chart-wide switches, normalised. STACKING WINS OVER
+         A LOG AXIS, decided here and nowhere else: a stack is a sum of
+         parts and a log axis has no addition on it, so the two cannot
+         both be honoured. The renderer used to drop the stacking
+         silently while the pane showed it pressed and the .pptx went
+         out stacked -- three surfaces, three answers (found by the
+         2026-09-07 review of 030392a). Now every reader of chartParse
+         gets the same one, and the pane says which lost. */
+      stack:stack,
+      ylog:ylog,labels:!!(a&&a.labels),
       xlab:String((a&&a.xlab)||''),ylab:String((a&&a.ylab)||''),
       y2lab:String((a&&a.y2lab)||'')};
   }
@@ -157,12 +167,25 @@
       return seg;
     });
   }
-  function chartFmt(v){
+  /* A NUMBER IS FORMATTED AGAINST ITS NEIGHBOUR, not against zero.
+     Given the spacing it is being read at -- an axis step -- this keeps
+     exactly the places that tell one tick from the next, so an axis of
+     0, 0.005, 0.01, 0.015 reads as itself instead of 0, 0, 0.01, 0.01
+     (2026-09-07 review; the pre-T322 tick code printed three places and
+     T322 replaced it with two). With no spacing to go on -- a data
+     label, a log decade -- it keeps three significant figures, which is
+     what a label on a mark wants. */
+  function chartFmt(v,step){
     if(v==null||!isFinite(v)) return '';
-    var a=Math.abs(v);
-    var r=a>=100?Math.round(v):a>=10?Math.round(v*10)/10
-      :Math.round(v*100)/100;
-    return String(r);
+    var s=Math.abs(+step||0);
+    if(s>0){
+      var dp=Math.max(0,Math.min(6,
+        Math.ceil(-Math.log(s)/Math.LN10)));
+      var p=Math.pow(10,dp);
+      return String(Math.round(v*p)/p);
+    }
+    if(v===0) return '0';
+    return String(Number(v.toPrecision(3)));
   }
   function svgEl(tag){
     return document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -183,9 +206,18 @@
      about how many clicks a chart is worth (T160). Pie is excluded: its
      slices are CATEGORIES, and "reveal one category at a time" is a
      different feature with a different meaning. */
+  /* HIDDEN SERIES ARE NOT ADDRESSABLE. chartSvg draws no <g> for one,
+     so counting it here spent a click of the slow reveal on nothing at
+     all -- the audience pressed space and the plot did not change
+     (2026-09-07 review). Hiding a series therefore shortens the build,
+     which is the only honest answer; a tie naming a hidden series stops
+     resolving and fails OPEN, like every other unresolvable tie. */
+  function chartShownSeries(a){
+    return chartParse(a).series.filter(function(se){return !se.hide;});
+  }
   function chartSeriesCount(a){
     if(!a||a.k!=='chart'||a.ct==='pie') return 0;
-    return chartParse(a).series.length;
+    return chartShownSeries(a).length;
   }
   /* THE NAMES, in build order, and the one place they are read off.
      drawChart, the tie picker and seriesShows all address a series by
@@ -196,7 +228,7 @@
      is excluded above: its slices are categories, not series. */
   function chartSeriesNames(a){
     if(!a||a.k!=='chart'||a.ct==='pie') return [];
-    return chartParse(a).series.map(function(se){return se.name;});
+    return chartShownSeries(a).map(function(se){return se.name;});
   }
   function chartSvg(a){
     var d=chartParse(a);
@@ -318,11 +350,15 @@
        it, a log axis when asked, and a stacked scale that is the sum of
        the stack, not the tallest member. Error bars and bands are part
        of the data's extent, so nothing is clipped. */
+    /* the x each point sits at, hoisted above the scale: the trend
+       line's endpoints depend on it, and the scale has to cover them */
     var isBar=(a.ct==='bar');
+    var xsPre=d.numeric&&!isBar
+      ?d.cats.map(function(c){return Number(c);}):null;
     var barSeries=shown.filter(function(se){
       return !(isBar&&se.ct==='line');});
     var lineOver=isBar?shown.filter(function(se){return se.ct==='line';}):[];
-    var stacked=isBar&&!!d.stack&&!d.ylog;
+    var stacked=isBar&&!!d.stack;      /* d.ylog is already false then */
     var n=d.cats.length;
     function extent(list){
       var vals=[];
@@ -332,9 +368,29 @@
           if(se.err&&se.err[i]!=null){vals.push(v-se.err[i]);vals.push(v+se.err[i]);}
           if(se.band){vals.push(se.band.lo[i]);vals.push(se.band.hi[i]);}
         });
+        /* the FITTED ends too: a regression line runs past the points
+           it was fitted to, so an axis sized to the points alone drew
+           it across the category labels (2026-09-07 review) */
+        if(se.trend&&se.ys.length>1){
+          var xv=se.ys.map(function(_,i){return xsPre?xsPre[i]:i;});
+          var ft=chartLinFit(xv,se.ys);
+          if(ft){
+            vals.push(ft.m*xv[0]+ft.b);
+            vals.push(ft.m*xv[xv.length-1]+ft.b);
+          }
+        }
       });
       return vals;
     }
+    /* WHAT A STACK CANNOT SHOW. A band and a trend line both describe a
+       series' own values, and a stacked segment is not drawn at its own
+       values -- it is drawn at a running total. Drawing them anyway put
+       a band in data units over an axis in cumulative units, which
+       washed the whole plot (2026-09-07 review). So they stand down on
+       a stack and the pane says so. An error bar CAN be honest, around
+       the segment's top, except on a 100% stack where the segment is a
+       share and the error is not. */
+    var stackErrOK=stacked&&d.stack!=='pct';
     var prim=shown.filter(function(se){return se.axis!=='y2';});
     var sec=shown.filter(function(se){return se.axis==='y2';});
     var segs=null,pvals;
@@ -342,8 +398,16 @@
       var stackSeries=barSeries.filter(function(se){return se.axis!=='y2';});
       segs=chartStackTops(stackSeries,n,d.stack==='pct');
       pvals=[];
-      segs.forEach(function(sg){sg.forEach(function(s2){
-        pvals.push(s2.y0);pvals.push(s2.y1);});});
+      segs.forEach(function(sg,si2){
+        var es=stackSeries[si2];
+        sg.forEach(function(s2,i2){
+          pvals.push(s2.y0);pvals.push(s2.y1);
+          /* an error bar on a stacked segment is drawn around the
+             segment's TOP, so the axis has to reach it */
+          if(stackErrOK&&es&&es.err&&es.err[i2]!=null){
+            pvals.push(s2.y1-es.err[i2]);pvals.push(s2.y1+es.err[i2]);}
+        });
+      });
       pvals=pvals.concat(extent(lineOver.filter(function(se){
         return se.axis!=='y2';})));
     } else pvals=extent(prim);
@@ -361,11 +425,13 @@
       gl.setAttribute('y1',Y(g));gl.setAttribute('y2',Y(g));
       gl.setAttribute('stroke',g===0?dim:grid);
       gSkel.appendChild(gl);
-      gSkel.appendChild(svgText(L-5,Y(g)+3,chartFmt(g),9,dim,'end'));
+      gSkel.appendChild(svgText(L-5,Y(g)+3,chartFmt(g,scY.step),9,dim,
+        'end'));
     });
     if(scY2) chartTicks(scY2).forEach(function(g){
       var f=chartPos(scY2,g),yy=B-f*(B-T);
-      gSkel.appendChild(svgText(R+5,yy+3,chartFmt(g),9,dim,'start'));
+      gSkel.appendChild(svgText(R+5,yy+3,chartFmt(g,scY2.step),9,dim,
+        'start'));
     });
     /* axis titles */
     if(d.ylab){
@@ -394,7 +460,8 @@
       var xstep=chartStep(xhi-xlo);
       for(var xv=Math.ceil(xlo/xstep)*xstep;xv<=xhi+xstep/2;xv+=xstep){
         var px=L+(xv-xlo)/(xhi-xlo)*(R-L);
-        gSkel.appendChild(svgText(px,B+13,chartFmt(xv),9,dim,'middle'));
+        gSkel.appendChild(svgText(px,B+13,chartFmt(xv,xstep),9,dim,
+          'middle'));
       }
     } else {
       d.cats.forEach(function(c,i){
@@ -404,7 +471,7 @@
     }
     /* ---- the marks --------------------------------------------------- */
     function band(se){
-      if(!se.band) return;
+      if(!se.band||stacked) return;
       var pts=[],back=[];
       se.ys.forEach(function(v,i){
         var yh=Y(se.band.hi[i],se),ylo=Y(se.band.lo[i],se);
@@ -436,7 +503,7 @@
       });
     }
     function trend(se,xAt){
-      if(!se.trend) return;
+      if(!se.trend||stacked) return;
       var xv=se.ys.map(function(_,i){return xs?xs[i]:i;});
       var fit=chartLinFit(xv,se.ys);
       if(!fit) return;
@@ -450,10 +517,15 @@
       ln.setAttribute('stroke-dasharray','5 3');
       seriesG(se.name).appendChild(ln);
     }
-    function label(se,x,y,v,above){
+    /* `where`: true above the mark, 'mid' on it, false below. The
+       stacked branch used false and added its own +4, so a label landed
+       15px under its segment's centre -- on the series below it, for
+       any segment shorter than about 30px (2026-09-07 review). */
+    function label(se,x,y,v,where){
       if(!d.labels||!isFinite(y)) return;
+      var yy=where===true?y-4:where==='mid'?y+3:y+11;
       seriesG(se.name).appendChild(
-        svgText(x,above?y-4:y+11,chartFmt(v),9,ink,'middle'));
+        svgText(x,yy,chartFmt(v),9,ink,'middle'));
     }
     function lineOf(se,xAt){
       var gl2=seriesG(se.name);
@@ -498,6 +570,7 @@
         var bw0=gw*0.72;
         stackSeries2.forEach(function(se,si){
           var gb=seriesG(se.name);
+          var xMid=function(i){return L+i*gw+gw*0.14+bw0/2;};
           segs[si].forEach(function(sg,i){
             var y0=Y(sg.y0),y1=Y(sg.y1);
             if(!isFinite(y0)||!isFinite(y1)) return;
@@ -508,8 +581,22 @@
             b.setAttribute('height',Math.max(0.5,Math.abs(y1-y0)));
             b.setAttribute('fill',se.color);
             gb.appendChild(b);
-            if(sg.v) label(se,L+i*gw+gw*0.14+bw0/2,(y0+y1)/2+4,
-              d.stack==='pct'?Math.round(sg.v):se.ys[i],false);
+            if(sg.v) label(se,xMid(i),(y0+y1)/2,
+              d.stack==='pct'?Math.round(sg.v):se.ys[i],'mid');
+            /* around the segment's top, in the stack's own units */
+            if(stackErrOK&&se.err&&se.err[i]!=null&&se.err[i]>0){
+              var ea=Y(sg.y1-se.err[i]),eb2=Y(sg.y1+se.err[i]);
+              if(isFinite(ea)&&isFinite(eb2)){
+                var el2=svgEl('path');
+                el2.setAttribute('d','M'+xMid(i)+' '+ea+'V'+eb2
+                  +'M'+(xMid(i)-4)+' '+ea+'h8M'+(xMid(i)-4)+' '+eb2+'h8');
+                el2.setAttribute('stroke',ink);
+                el2.setAttribute('stroke-width',1);
+                el2.setAttribute('fill','none');
+                el2.setAttribute('opacity','0.8');
+                gb.appendChild(el2);
+              }
+            }
           });
         });
         /* a y2 bar in a stacked chart stands beside the stack */
@@ -642,20 +729,36 @@
        its own, so nothing typed is ever thrown away. */
     var byName={};
     series.forEach(function(se){byName[se.name]=se;});
-    var keep=[];
-    series.forEach(function(se){
+    function helperOf(se){
       var m=/^(.*\S)\s*(\u00b1|\+\/-|err|lo|hi)$/i.exec(se.name);
       var base=m?byName[m[1]]:null;
-      if(!base||base===se){keep.push(se);return;}
-      var kind=m[2].toLowerCase();
-      if(kind==='lo'||kind==='hi'){
-        base.band=base.band||{lo:[],hi:[]};
-        base.band[kind]=se.ys.slice();
-      } else base.err=se.ys.slice();
+      return (base&&base!==se)?{base:base,kind:m[2].toLowerCase()}:null;
+    }
+    /* A BAND NEEDS BOTH HALVES. "Name hi" alone used to be folded in and
+       then thrown away when the pair came up short, taking its numbers
+       with it -- a column you typed simply disappeared (2026-09-07
+       review). Half a band is not a helper at all; it stays a series. */
+    var pairs={};
+    series.forEach(function(se){
+      var h=helperOf(se);
+      if(!h||(h.kind!=='lo'&&h.kind!=='hi')) return;
+      (pairs[h.base.name]=pairs[h.base.name]||{})[h.kind]=1;
+    });
+    var keep=[];
+    series.forEach(function(se){
+      var h=helperOf(se);
+      if(!h){keep.push(se);return;}
+      if(h.kind==='lo'||h.kind==='hi'){
+        var p=pairs[h.base.name];
+        if(!p||!p.lo||!p.hi){keep.push(se);return;}
+        h.base.band=h.base.band||{lo:[],hi:[]};
+        h.base.band[h.kind]=se.ys.slice();
+        return;
+      }
+      h.base.err=se.ys.slice();
     });
     keep.forEach(function(se,i){
       se.color=CHART_PALETTE[i%CHART_PALETTE.length];
-      if(se.band&&(!se.band.lo.length||!se.band.hi.length)) delete se.band;
     });
     series=keep;
     if(!series.length) return null;
@@ -912,11 +1015,17 @@
     if(!a||a.k!=='chart'||!a.ref) return 0;
     var data=chartFromRows(chartRowsOfCard(a.ref));
     if(!data) return 0;
-    var before=JSON.stringify([chartParse(a).cats,
-      chartParse(a).series.map(function(se){return se.ys;})]);
-    var after=JSON.stringify([data.cats,
-      data.series.map(function(se){return se.ys;})]);
-    if(before===after) return 0;
+    /* names, error bars and bands are part of "has the table changed":
+       comparing the values alone let a helper-column-only or a
+       rename-only edit report no change, so "Refresh from table" said
+       the table had not moved while the plot showed the old error bars
+       (2026-09-07 review) */
+    function sig(cats,ss){
+      return JSON.stringify([cats,ss.map(function(se){
+        return [se.name,se.ys,se.err||null,se.band||null];})]);
+    }
+    var p0=chartParse(a);
+    if(sig(p0.cats,p0.series)===sig(data.cats,data.series)) return 0;
     /* the author's per-series choices survive a refresh by NAME: the
        colour (T123), and since T322 the axis, the trend line, a line
        drawn over the bars and being hidden -- err/band come from the
@@ -974,10 +1083,27 @@
         x.tie.at=now;
     });
   }
+  /* WHILE YOU ARE USING IT, THE PANE DOES NOT REBUILD ITSELF. Every
+     write renders the slide, renderSlide syncs the inspector panes, and
+     this function empties its own body -- so the first `input` of a
+     colour drag deleted the well under the pointer, and a text field's
+     `change` deleted the button whose click had caused the blur
+     (2026-09-07 review). A rebuild while the pane holds focus is
+     deferred to the moment it loses it, unless the SUBJECT changed, in
+     which case what is on screen is about the wrong object and has to
+     go. */
+  var chartPaneAt=null;
+  function chartPaneBusy(){
+    var p=$('#chartpane');
+    return !!(p&&!p.hidden&&p.contains(document.activeElement)
+      &&document.activeElement!==document.body);
+  }
   function chartPaneSync(){
     var p=$('#chartpane'); if(!p||p.hidden) return;
     var body=$('#chartpane-body'); if(!body) return;
     var a=chartPaneItem();
+    if(a&&a===chartPaneAt&&chartPaneBusy()) return;
+    chartPaneAt=a;
     body.innerHTML='';
     function lab(t){
       var l=document.createElement('div');l.className='np-lab';
@@ -1038,8 +1164,14 @@
             o[0]==='pct'?'Every stack scaled to 100%':'');
         });
     }
-    if(!isPie) check('Logarithmic value axis',a.ylog,function(a2,on){
-      if(on) a2.ylog=1; else delete a2.ylog;});
+    if(!isPie){
+      check('Logarithmic value axis',a.ylog,function(a2,on){
+        if(on) a2.ylog=1; else delete a2.ylog;});
+      if(a.ylog&&isBar&&a.stack)
+        lab('Stacking wins: a stack is a sum of parts and a log axis '
+          +'has no addition on it, so this chart is drawn, exported and '
+          +'counted stacked.').className='np-lab cp-hint';
+    }
     check(isPie?'Slice labels (per cent)':'Data labels',a.labels,
       function(a2,on){if(on) a2.labels=1; else delete a2.labels;});
     check('Legend',a.leg!==0,function(a2,on){
@@ -1059,12 +1191,31 @@
     (a.series||[]).forEach(function(se,si){
       if(!se) return;
       var r=row();r.className+=' cp-series';
+      if(isPie){
+        /* a pie's slices are categories and take the palette in order,
+           so a per-series colour well here would control nothing */
+        var pd=document.createElement('span');
+        pd.className='cp-tags';
+        pd.textContent='slices take the deck\u2019s chart palette';
+        r.appendChild(pd);
+      }
       var ci=document.createElement('input');ci.type='color';
+      ci.hidden=!!isPie;
       ci.className='cp-col';ci.title='Colour';
       ci.value=/^#[0-9a-f]{6}$/i.test(se.color||'')
         ?se.color:CHART_PALETTE[si%CHART_PALETTE.length];
+      /* the drag PREVIEWS on the slide and the release is what the
+         history keeps: one snapshot per colour chosen, not one per
+         pointer move */
       ci.addEventListener('input',function(){
-        se.color=ci.value;markDirty();renderSlide();});
+        se.color=ci.value;
+        var l2=stage.querySelector('.annot-layer'),s2=pres.slides[cur];
+        if(l2&&s2) renderAnnots(l2,s2);
+      });
+      ci.addEventListener('change',function(){
+        chartPaneWrite(function(a2){
+          var s2=ser(a2,si); if(s2) s2.color=ci.value;});
+      });
       r.appendChild(ci);
       var nm=document.createElement('input');nm.type='text';
       nm.className='np-goal cp-name';nm.value=se.name||('Series '+(si+1));
@@ -1105,6 +1256,11 @@
         tg.textContent=tags.join(' \u00b7 ');r.appendChild(tg);
       }
     });
+    if(isBar&&a.stack&&(a.series||[]).some(function(se){
+      return se&&(se.band||se.trend);}))
+      lab('Stacked: bands and trend lines are not drawn \u2014 both '
+        +'describe a series\u2019 own values, and a stacked segment is '
+        +'drawn at a running total.').className='np-lab cp-hint';
     lab('Error bars and bands come from the numbers: a column '
       +'\u201cName \u00b1\u201d is Name\u2019s error bar, \u201cName lo\u201d '
       +'and \u201cName hi\u201d its band.').className='np-lab cp-hint';

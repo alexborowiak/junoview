@@ -209,6 +209,9 @@ _LOST_TEXT = {
     "hiddenobj": "{n} object{s} PowerPoint had hidden — left out",
     "merged": "{n} merged table cell{s} — split back into single "
               "cells",
+    "asymerr": "{n} chart series with different error above and below "
+               "— this deck has one error per point, so the upper one "
+               "is kept",
     "curve": "{n} freehand curve{s} drawn with straight segments",
     "hidden": "{n} hidden slide{s} — imported as Optional, which "
               "Running late can skip",
@@ -1434,10 +1437,16 @@ class _SlideReader:
             if not t.endswith("Chart"):
                 continue
             if t not in kinds:
+                # ONE group this cannot read is not the whole chart:
+                # returning here threw away the bars of a bar chart
+                # because a stray group beside them was a radar
+                # (2026-09-07 review). Count it and read the rest.
                 self.lost.add("chartkind", t.replace("Chart", ""))
-                return
+                continue
             kind = kinds[t]
-            if not ct:
+            # a bar group decides the kind even when a line group (the
+            # line drawn OVER the bars) was written first
+            if not ct or (kind == "bar" and ct == "line"):
                 ct = kind
             grouping = node.find("c:grouping", NS)
             if kind == "bar" and grouping is not None and not stack:
@@ -1484,11 +1493,18 @@ class _SlideReader:
                 eb = ser.find("c:errBars", NS)
                 if eb is not None:
                     plus = _chart_pts(eb.find("c:plus", NS))
+                    minus = _chart_pts(eb.find("c:minus", NS))
                     if plus:
                         se["err"] = [_num(v) for v in plus]
-                dl = ser.find("./c:dLbls/c:showVal", NS)
-                if dl is not None and dl.get("val") == "1":
-                    labels = True
+                        # this deck has ONE error per point, so an
+                        # asymmetric bar cannot be carried whole; the
+                        # up-bar is kept and the difference is said
+                        if minus and minus != plus:
+                            self.lost.add("asymerr")
+                for path in ("./c:dLbls/c:showVal", "./c:dLbls/c:showPercent"):
+                    dl = ser.find(path, NS)
+                    if dl is not None and dl.get("val") == "1":
+                        labels = True
                 series.append(se)
         if not ct:
             return

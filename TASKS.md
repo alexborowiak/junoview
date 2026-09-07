@@ -7071,6 +7071,35 @@ first. Ticked in the commit that ships each.
   errBars, axis titles -- and the T320 reader brings them back
   (round-trip tested). Bands have no PowerPoint twin and are counted in
   the export dialog.
+  *Reviewed 2026-09-07* (five adversarial lenses over the commit, each
+  finding put to two skeptics). Nine defects found and fixed in the
+  follow-up: **chartFmt** capped at two decimals, so an axis of 0 /
+  0.005 / 0.01 / 0.015 read 0 / 0 / 0.01 / 0.01 -- it now formats
+  against the spacing it is read at, and against three significant
+  figures where there is no spacing (a label, a log decade);
+  **stacking and a log axis** gave three surfaces three answers (the
+  plot drew clustered, the pane showed Stacked, the .pptx went out
+  stacked with logBase) -- chartParse decides it once and the pane says
+  which lost; a **hidden series** still cost a click of the series
+  reveal that revealed nothing; the **stacked branch** drew neither
+  error bars nor trend lines and drew bands at raw values against a
+  cumulative axis -- it now draws error bars around each segment's top
+  (except on a 100% stack) and stands the other two down with a stated
+  reason; the **axis now covers a trend line's fitted ends**, which run
+  past the data and were painted outside the frame; a **stacked
+  segment's label** sat 15px below its own centre, on the series
+  beneath; a lone **"Name hi"** helper column was folded into a band and
+  then discarded, numbers and all; **chartResyncOne** compared only cats
+  and values, so a helper-column or rename-only edit reported "the table
+  has not changed"; the **Chart pane** rebuilt itself from renderSlide
+  and so destroyed the colour well under the pointer and swallowed the
+  click after a text edit. Also: **chartCol** ran off the end of the
+  alphabet at thirteen series with error bars, an all-hidden chart
+  exported an empty plotArea, a chart with every series on the right
+  left the primary axis pair with nothing on it, a pie whose first
+  series was hidden took the hidden one's name, and the reader threw
+  away a whole chart over one unreadable group, lost a pie's labels and
+  said nothing about asymmetric error bars.
 - [ ] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".
 - [ ] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.
 - [ ] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.
