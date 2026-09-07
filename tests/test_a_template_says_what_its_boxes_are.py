@@ -69,8 +69,19 @@ def test_apply_layout_stamps_the_type_onto_a_new_box(out):
     """Written straight onto the box, never through applyStyleTo -- that
     would overwrite the template's own size, align and weight with the
     style's defaults. The template's LOOK wins; only the NAME is added.
+
+    T368: and the name is the one you CHOSE for that slot. A layout
+    names the base type -- title, h1, body -- so a variation you made
+    and used everywhere still left every new slide on the plain parent
+    (2026-09-07, user: "When you select a text style, new slides don't
+    get applied with it"). ``pres.slot`` redirects the slot, and is set
+    from the type's own page in the Style system.
     """
-    assert "          if(it.style&&styleDef(it.style)) nb.style=it.style;" in out
+    assert "          var sid=it.style;" in out
+    assert ("          if(sid&&pres.slot&&pres.slot[sid]"
+            "&&styleDef(pres.slot[sid]))") in out
+    assert "            sid=pres.slot[sid];" in out
+    assert "          if(sid&&styleDef(sid)) nb.style=sid;" in out
     assert "          next.push(nb);" in out
 
 

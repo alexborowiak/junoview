@@ -478,7 +478,17 @@
              pairs old boxes to new slots by ORDINAL POSITION, so
              stamping there would type a body paragraph as a Title
              merely because it happened to come first. */
-          if(it.style&&styleDef(it.style)) nb.style=it.style;
+          /* T368: ...and the one you CHOSE for that slot, if you have
+             chosen one (2026-09-07, user: "When you select a text style,
+             new slides don't get applied with it"). A layout names the
+             base type -- title, h1, body -- so a variation you made and
+             used everywhere still left every new slide on the plain
+             parent. pres.slot is the redirection, set on the type's own
+             page in the Style system. */
+          var sid=it.style;
+          if(sid&&pres.slot&&pres.slot[sid]&&styleDef(pres.slot[sid]))
+            sid=pres.slot[sid];
+          if(sid&&styleDef(sid)) nb.style=sid;
           next.push(nb);
         }
       }

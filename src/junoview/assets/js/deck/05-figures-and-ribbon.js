@@ -724,8 +724,42 @@
          rest rather than hiding them -- the fix moves the whole band, so
          you still need to see what it will touch */
       c.className='std-chip '+(bad?'std-odd':'std-ok');
-      c.textContent=(p.si+1)+' · '
-        +(p.fixed?(p.ai==='t'?'title':'subtitle'):annotLabel(p.a));
+      /* T368: THE BOX, NOT ITS KIND (2026-09-07, user: "it is hard to
+         tell what any of these are as there are not previews of
+         anything"). The card is about how these boxes LOOK, and it was
+         listing them by their type -- three identical grey chips
+         reading "Text - Presentation title". Each chip is a specimen of
+         its own box now: its words, in its own colour, ground, face,
+         weight and slant, with the style's answer where the box has
+         none of its own. Same treatment as the Style system's Text
+         column (T363), for the same reason. */
+      var sn=document.createElement('span');
+      sn.className='std-chipn';
+      sn.textContent=String(p.si+1);
+      c.appendChild(sn);
+      var sp=document.createElement('span');
+      sp.className='std-chiptx';
+      var sl0=(pres.slides||[])[p.si]||{};
+      var words=p.fixed
+        ?String((p.ai==='t'?sl0.title:sl0.sub)||'')
+        :String((p.a&&p.a.text)||'');
+      words=words.replace(/\s+/g,' ').trim();
+      sp.textContent=words
+        ||(p.fixed?(p.ai==='t'?'title':'subtitle'):annotLabel(p.a));
+      if(!words) sp.className+=' std-chipempty';
+      if(!p.fixed&&p.a){
+        var st0=(p.a.style&&typeof styleDef==='function')
+          ?styleDef(p.a.style):null;
+        var col0=p.a.color||(st0&&st0.color);
+        var bg0=(p.a.bg!==0)&&(p.a.bgc||(st0&&st0.bg));
+        var fam0=p.a.font||(st0&&st0.font);
+        if(col0) sp.style.color=tokVal(col0);
+        if(bg0&&bg0!=='none') sp.style.background=tokVal(bg0);
+        if(fam0) sp.style.fontFamily=fontCss(fam0);
+        if(p.a.b||(st0&&st0.b)) sp.style.fontWeight='700';
+        if(p.a.i||(st0&&st0.i)) sp.style.fontStyle='italic';
+      }
+      c.appendChild(sp);
       c.title=bad?((oddWhy[k]||'This is the one that differs')
         +' — click to go to it')
         :'This one matches the rest — click to go to it';

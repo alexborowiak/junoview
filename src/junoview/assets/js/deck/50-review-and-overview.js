@@ -2704,6 +2704,106 @@
       note.hidden=!off;
     }
   }
+  /* ---- T368: THE LOOKS THIS TYPE COMES IN ---------------------------
+     2026-09-07, user: "when going to heading 1, it would be cool if
+     there was like different styles of that etc. that people can change
+     between".
+
+     T317's ready-made looks existed and were only ever drawn in the
+     Text-styles dropdown, which needs a box selected -- so the screen
+     whose job is the type system offered none of them. Here they are on
+     the type's own page: the variations that exist, then the ones you
+     could make, each a specimen of what it would look like on THIS
+     deck. A variation is a type in its own right, so making one puts a
+     row in the rail and you swap by choosing it. */
+  function dgLooks(host,id,ov){
+    /* only a BASE type has variations; a variation is one */
+    if(typeof variantsOf!=='function'||typeof parentOf!=='function') return;
+    if(parentOf(id)) return;
+    var have=variantsOf(id)||[];
+    var offer=(typeof PRESET_LOOKS!=='undefined'?PRESET_LOOKS:[])
+      .filter(function(look){
+        if(typeof presetVariantOf==='function'&&presetVariantOf(id,look))
+          return false;
+        if(look.id==='by-section'
+           &&!(pres.sections&&Object.keys(pres.sections).length)) return false;
+        return true;
+      });
+    if(!have.length&&!offer.length) return;
+    var wrap=document.createElement('div');
+    wrap.className='dg-looks';
+    var lab=document.createElement('span');
+    lab.className='dg-lookslab';
+    lab.textContent=(d0(id).label||id)+' comes in';
+    wrap.appendChild(lab);
+    have.forEach(function(v){
+      var b=document.createElement('button');
+      b.className='dbtn dg-look on';
+      b.textContent=(d0(v).label||v);
+      dgSpecimen(b,v);
+      b.title='Go to this variation';
+      b.addEventListener('click',function(){
+        dgSel=v;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+      wrap.appendChild(b);
+    });
+    /* T368: WHICH ONE A NEW SLIDE GETS. A layout's slots name the base
+       type, so a variation you made and used everywhere still left the
+       next new slide on the plain parent (2026-09-07, user: "When you
+       select a text style, new slides don't get applied with it"). */
+    if(have.length){
+      var now=(pres.slot&&pres.slot[id])||id;
+      var pick=document.createElement('select');
+      pick.className='dg-slotpick';
+      [id].concat(have).forEach(function(v){
+        var o=document.createElement('option');
+        o.value=v;o.textContent=(d0(v).label||v);
+        if(v===now) o.selected=true;
+        pick.appendChild(o);
+      });
+      pick.title='Which of these a new slide\u2019s '+(d0(id).label||id)
+        +' box is given';
+      pick.addEventListener('change',function(){
+        pres.slot=pres.slot||{};
+        if(pick.value===id) delete pres.slot[id];
+        else pres.slot[id]=pick.value;
+        if(!Object.keys(pres.slot).length) delete pres.slot;
+        markDirty();
+        toast('New slides get '+(d0(pick.value).label||pick.value));
+      });
+      var pl=document.createElement('span');
+      pl.className='dg-lookslab';pl.textContent='new slides get';
+      wrap.appendChild(pl);
+      wrap.appendChild(pick);
+    }
+    offer.forEach(function(look){
+      var b=document.createElement('button');
+      b.className='dbtn dg-look dg-lookadd';
+      b.textContent=look.label;
+      /* a specimen of what it WOULD be: the parent's face and size with
+         the look's own colours over it, resolved against this deck */
+      var d=d0(id),dd=look.delta;
+      b.style.fontWeight=(dd.b===0?0:(dd.b||d.b))?'700':'400';
+      if(d.i) b.style.fontStyle='italic';
+      if(d.font) b.style.fontFamily=fontCss(d.font);
+      var col=tokVal(dd.color||d.color||'');
+      if(col) b.style.color=col;
+      if(dd.bg&&dd.bg!=='none') b.style.background=tokVal(dd.bg);
+      if(dd.bdc&&dd.bdc!=='none') b.style.borderColor=tokVal(dd.bdc);
+      b.title='Make \u201c'+look.label+'\u201d a variation of '
+        +(d.label||id)+' \u2014 '+look.note+'. It keeps following '
+        +(d.label||id)+' for everything else.';
+      b.addEventListener('click',function(){
+        if(typeof ensurePresetLook!=='function') return;
+        var vid=ensurePresetLook(id,look);
+        if(!vid){toast('Could not make that variation');return;}
+        markDirty();
+        dgSel=vid;dgMatchArm=false;dgRail(ov);dgBody(ov);
+      });
+      wrap.appendChild(b);
+    });
+    host.appendChild(wrap);
+  }
+  function d0(id){return styleDef(id)||{};}
   function dgBoard(host,id){
     var board=document.createElement('div');
     board.className='dg-board';
@@ -2825,6 +2925,7 @@
     spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
     if(!d.color) spec.style.color=tokVal('@ink');
     body.appendChild(spec);
+    dgLooks(body,id,ov);
 
     var row=document.createElement('div');row.className='dg-ctrls';
     /* T230: CLUSTERS, NOT ONE LONG ROW. Thirteen controls sat in one

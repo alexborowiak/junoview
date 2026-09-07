@@ -3269,10 +3269,19 @@ body.light .oh-h{color:var(--ink-3);}
 .std-why{font-size:11px;color:var(--chrome-ink-2);line-height:1.45;}
 .std-who{display:flex;flex-wrap:wrap;gap:3px;}
 .std-chip{background:#ffffff10;border:1px solid #ffffff1f;color:var(--chrome-ink-2);
-  border-radius:10px;font-family:var(--mono);font-size:9.5px;
-  padding:1px 7px;cursor:pointer;max-width:100%;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;}
+  border-radius:10px;font-family:var(--sans);font-size:11.5px;
+  padding:2px 8px;cursor:pointer;max-width:100%;overflow:hidden;
+  white-space:nowrap;display:flex;align-items:center;
+  min-width:0;flex:1 1 190px;text-align:left;}
 .std-chip:hover{border-color:var(--cyan);color:#fff;}
+/* T368: the chip is a specimen of its box. The slide number keeps its
+   own quiet mono lane so the words are the thing you read, and the
+   words elide rather than stretch the card. */
+.std-chipn{flex:none;font-family:var(--mono);font-size:9.5px;
+  opacity:.7;padding-right:7px;}
+.std-chiptx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;border-radius:3px;padding:0 3px;}
+.std-chiptx.std-chipempty{opacity:.55;font-style:italic;}
 /* T279: WHICH ONE DISAGREES. A band card lists the whole band, because
    the fix moves all of it -- so the ones that differ have to be told
    apart from the ones that do not, and they lead. Weight and a badge,
@@ -4803,6 +4812,19 @@ body.light .dg-swatch{border-color:#00000026;}
 .dg-col{width:30px;height:26px;padding:0;border:1px solid #ffffff26;
   border-radius:6px;background:transparent;cursor:pointer;}
 /* the board: a slide, and a rectangle you drag on it */
+/* T368: the looks a type comes in, on the type's own page */
+.dg-looks{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  margin:2px 0 10px;}
+.dg-lookslab{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--chrome-ink-3,#8ea2b3);
+  padding-right:4px;}
+.dg-look{font-size:12.5px;padding:3px 10px;border-radius:7px;}
+.dg-look.dg-lookadd{border-style:dashed;}
+.dg-look.on{border-color:var(--cyan);}
+.dg-slotpick{font-family:var(--sans);font-size:12px;
+  background:var(--btn-bg,#ffffff0e);color:var(--chrome-ink);
+  border:1px solid var(--chrome-line,#ffffff26);border-radius:6px;
+  padding:3px 6px;}
 .dg-board{position:relative;width:min(560px,100%);
   background:#ffffff0a;border:1px solid #ffffff1f;border-radius:6px;
   margin:4px 0 10px;overflow:hidden;}

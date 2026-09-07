@@ -452,7 +452,7 @@ def test_your_guides_survive_being_re_opened(out):
     (2026-08-29).
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters','bib','cite']\n"
+            "     'components','cuts','guides','masters','bib','cite','slot']\n"
             "      .forEach(function(k){") in out
 
 

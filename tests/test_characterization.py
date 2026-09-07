@@ -1610,8 +1610,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # it is in, so the groups are buttons, the picked one lights its own
 # rows in the table, and Apply moves the others onto THAT group
 # rather than onto a rectangle nobody chose.
-EXPECTED_MD5 = "050ccee12b88cdbd617fb930f0fbf8a3"
-EXPECTED_BYTES = 3936722
+# T368 finishes that message. A Mismatched-text chip is a specimen of
+# its own box -- its words in its own colour, ground, face and weight
+# -- instead of three identical chips reading its KIND. The ready-made
+# looks T317 built are on the type's own page in the Style system,
+# beside the variations that exist, rather than only in a dropdown that
+# needs a box selected. And pres.slot says which of a type's variations
+# a new slide's box is given, so a look you chose survives the next
+# New slide -- carried by normPres and by as_presentations.
+EXPECTED_MD5 = "da4b4b8b463d8d92cd12fc9ce714eda6"
+EXPECTED_BYTES = 3944770
 
 
 def _render_example() -> str:

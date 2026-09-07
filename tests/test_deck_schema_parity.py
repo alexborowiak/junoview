@@ -120,6 +120,9 @@ DECK_SENTINELS = {
     "bib": {"smith2020": {"type": "article", "author": "Smith, J.",
                           "year": "2020", "title": "On blocking"}},
     "cite": {"style": "ay", "foot": 1},
+    # T368: which type a layout slot actually gets, so a variation you
+    # chose survives into the next new slide
+    "slot": {"h1": "t7"},
 }
 
 SLIDE_SENTINELS = {

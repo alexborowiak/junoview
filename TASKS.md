@@ -7339,3 +7339,18 @@ first. Ticked in the commit that ships each.
   *Still open from the same message:* swappable variations under each
   heading, a new slide picking up the chosen style, and previews in the
   Mismatched-text cards.
+- [x] **T368 - Previews, looks, and a style that sticks.** The last three
+  of the 2026-09-07 style complaints: "The 'fix' mismatched text thing is
+  aweful as it is hard to tell what any of these are as there are not
+  previews of anything"; "There is still no heading 1 styles, like when
+  going to heading 1, it would be cool if there was like different styles
+  of that etc. that people can change between"; "When you select a text
+  style, new slides don't get applied with it."
+  *Done 2026-09-07.* A Mismatched-text chip is a specimen of its own box
+  -- its words in its own colour, ground, face and weight -- instead of
+  three identical chips naming its kind. T317's ready-made looks moved
+  onto the type's own page in the Style system ("Heading 1 comes in"),
+  beside the variations that exist, rather than living only in a dropdown
+  that needs a box selected. And `pres.slot` says which variation a new
+  slide's box is given, set by one picker and carried by normPres and
+  as_presentations.

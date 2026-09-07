@@ -301,7 +301,7 @@ def test_the_doors(out):
     assert ".slide-citefoot" in out
     assert "var cfoot=citeFootFor((pres.slides||[])[idx]);" in out
     # the deck carries the library and the style
-    assert ("     'components','cuts','guides','masters','bib','cite']\n"
+    assert ("     'components','cuts','guides','masters','bib','cite','slot']\n"
             "      .forEach(function(k){") in out
     css = assets.deck_css()
     for cls in (".citepane .ct-entry", ".citepane .ct-warn",

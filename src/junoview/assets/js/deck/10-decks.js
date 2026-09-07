@@ -370,12 +370,14 @@
        undo snapshot and writing a comment saying they belong to the
        deck (2026-08-29). */
     /* T325: `bib` (the deck's own bibliography) and `cite` (how it
-       cites) join the list. KEEP THIS A CLEAN ARRAY LITERAL -- the
+       cites) join the list, and T368 adds `slot` -- which type a
+       layout's slot actually gets, so a variation you chose survives
+       into the next new slide. KEEP THIS A CLEAN ARRAY LITERAL -- the
        schema parity test reads these names straight out of it to learn
        what normPres keeps, and a comment between the brackets hides
        every one of them from it. */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides','masters','bib','cite']
+     'components','cuts','guides','masters','bib','cite','slot']
       .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
