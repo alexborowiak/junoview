@@ -152,8 +152,10 @@ def test_a_chart_refresh_carries_author_intent_across_by_name(out):
     changing underneath it.
     """
     assert "var old={};chartParse(a).series.forEach(function(se){" in out
-    assert "old[se.name]=se.color;});" in out
-    assert "if(old[se.name]) se.color=old[se.name];});" in out
+    assert "old[se.name]=se;});" in out
+    assert "if(o.color) se.color=o.color;" in out
+    # T322: the switches ride the same match
+    assert "['axis','trend','ct','hide'].forEach(function(k){" in out
 
 
 def test_a_series_build_takes_one_stop_per_series(out):

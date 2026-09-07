@@ -25,6 +25,7 @@
     '#fmt-shapewrap':'rect',
     '#fmt-cropwrap':'image cell',
     '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
+    '#fmt-chartwrap':'chart',         /* the Chart pane's door (T322) */
     '#fmt-figures':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
@@ -120,6 +121,7 @@
        no walking (T65). */
     if(typeof sizePaneSync==='function') sizePaneSync();
     if(typeof mediaPaneSync==='function') mediaPaneSync();
+    if(typeof chartPaneSync==='function') chartPaneSync();
     var hp=$('#objhist');
     var pp=$('#provpane');
     var histOpen=!!hp&&!hp.hidden,provOpen=!!pp&&!pp.hidden;
@@ -2348,6 +2350,12 @@
             window.SemDeckChart.dataDlg(ci[0]);},
             'The numbers behind this chart, one row per category. '
             +'Editing them unlinks the chart from its table.','pen');
+          /* T322: everything else a chart can be asked */
+          row('Chart options\u2026','',function(){
+            window.SemDeckChart.pane(true);},
+            'Stacking, log and second axes, data labels, axis titles, '
+            +'trend lines, and each series\u2019 colour, name and axis',
+            'plots');
           row(ca.leg===0?'Show the legend':'Hide the legend','',
             function(){
               if(ca.leg===0) delete ca.leg; else ca.leg=0;

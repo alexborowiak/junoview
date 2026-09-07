@@ -1403,47 +1403,95 @@ class _SlideReader:
                  "pieChart": "pie", "pie3DChart": "pie",
                  "doughnutChart": "pie", "areaChart": "line",
                  "area3DChart": "line"}
-        ct, node = "", None
-        for ch in plot:
-            t = _local(ch.tag)
-            if t.endswith("Chart"):
-                if t in kinds:
-                    ct, node = kinds[t], ch
-                    break
+        # T322: which value axis sits on the right, and which axes carry
+        # a log scale or a title -- read once, then each GROUP of series
+        # is placed against the axes it names
+        right: set[str] = set()
+        ylog = False
+        titles = {"b": "", "l": "", "r": ""}
+        for ax in plot:
+            t = _local(ax.tag)
+            if t not in ("valAx", "catAx", "dateAx"):
+                continue
+            aid = ax.find("c:axId", NS)
+            pos = ax.find("c:axPos", NS)
+            p = (pos.get("val") if pos is not None else "") or ""
+            if t == "valAx" and p == "r" and aid is not None:
+                right.add(aid.get("val") or "")
+            if t == "valAx" and p == "l" and (
+                    ax.find("./c:scaling/c:logBase", NS) is not None):
+                ylog = True
+            ttl = _chart_text(ax.find("./c:title/c:tx", NS))
+            if ttl and p in titles and not titles[p]:
+                titles[p] = ttl
+        ct = ""
+        cats: list[str] = []
+        series: list[dict] = []
+        stack = ""
+        labels = False
+        for node in plot:
+            t = _local(node.tag)
+            if not t.endswith("Chart"):
+                continue
+            if t not in kinds:
                 self.lost.add("chartkind", t.replace("Chart", ""))
                 return
-        if node is None:
+            kind = kinds[t]
+            if not ct:
+                ct = kind
+            grouping = node.find("c:grouping", NS)
+            if kind == "bar" and grouping is not None and not stack:
+                g = grouping.get("val") or ""
+                stack = ("pct" if g == "percentStacked"
+                         else "std" if g == "stacked" else "")
+            on_right = any((ax.get("val") or "") in right
+                           for ax in node.findall("c:axId", NS))
+            for ser in node.findall("c:ser", NS):
+                name = _chart_text(ser.find("c:tx", NS)) or (
+                    f"Series {len(series) + 1}")
+                cat = ser.find("c:cat", NS)
+                if cat is None:
+                    cat = ser.find("c:xVal", NS)
+                val = ser.find("c:val", NS)
+                if val is None:
+                    val = ser.find("c:yVal", NS)
+                c = _chart_pts(cat)
+                ys = _chart_pts(val)
+                if not ys:
+                    continue
+                if len(c) > len(cats):
+                    cats = c
+                color = ""
+                sppr = ser.find("c:spPr", NS)
+                if sppr is not None:
+                    fill = sppr.find("a:solidFill", NS)
+                    if fill is None:
+                        ln = sppr.find("a:ln", NS)
+                        fill = (ln.find("a:solidFill", NS)
+                                if ln is not None else None)
+                    if fill is not None:
+                        color = self.ctx.color(fill)[0]
+                se: dict[str, Any] = {"name": name,
+                                      "ys": [_num(v) for v in ys]}
+                if color:
+                    se["color"] = color
+                if on_right:
+                    se["axis"] = "y2"
+                if ct == "bar" and kind == "line":
+                    se["ct"] = "line"
+                if ser.find("c:trendline", NS) is not None:
+                    se["trend"] = "linear"
+                eb = ser.find("c:errBars", NS)
+                if eb is not None:
+                    plus = _chart_pts(eb.find("c:plus", NS))
+                    if plus:
+                        se["err"] = [_num(v) for v in plus]
+                dl = ser.find("./c:dLbls/c:showVal", NS)
+                if dl is not None and dl.get("val") == "1":
+                    labels = True
+                series.append(se)
+        if not ct:
             return
-        cats: list[str] = []
-        series = []
-        for si, ser in enumerate(node.findall("c:ser", NS)):
-            name = _chart_text(ser.find("c:tx", NS)) or f"Series {si + 1}"
-            cat = ser.find("c:cat", NS)
-            if cat is None:
-                cat = ser.find("c:xVal", NS)
-            val = ser.find("c:val", NS)
-            if val is None:
-                val = ser.find("c:yVal", NS)
-            c = _chart_pts(cat)
-            ys = _chart_pts(val)
-            if not ys:
-                continue
-            if len(c) > len(cats):
-                cats = c
-            color = ""
-            sppr = ser.find("c:spPr", NS)
-            if sppr is not None:
-                fill = sppr.find("a:solidFill", NS)
-                if fill is None:
-                    ln = sppr.find("a:ln", NS)
-                    fill = ln.find("a:solidFill", NS) if ln is not None else None
-                if fill is not None:
-                    color = self.ctx.color(fill)[0]
-            se: dict[str, Any] = {"name": name,
-                                  "ys": [_num(v) for v in ys]}
-            if color:
-                se["color"] = color
-            series.append(se)
         if not series:
             self.lost.add("chartcache")
             return
@@ -1451,7 +1499,10 @@ class _SlideReader:
         item: dict[str, Any] = dict(box)
         item.update({"t": "chart", "ct": ct, "cats": cats, "series": series,
                      "title": title,
-                     "leg": root.find("./c:chart/c:legend", NS) is not None})
+                     "leg": root.find("./c:chart/c:legend", NS) is not None,
+                     "stack": stack, "ylog": ylog, "labels": labels,
+                     "xlab": titles["b"], "ylab": titles["l"],
+                     "y2lab": titles["r"]})
         self._push(el, item)
 
     def _smartart(self, el: ET.Element, box: dict, gd: ET.Element) -> None:

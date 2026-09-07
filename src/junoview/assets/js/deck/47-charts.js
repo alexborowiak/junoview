@@ -35,25 +35,134 @@
   function chartParse(a){
     var cats=(Array.isArray(a&&a.cats)?a.cats:[]).map(function(c){
       return String(c==null?'':c);});
+    function nums(arr){
+      return (Array.isArray(arr)?arr:[]).map(function(v){
+        var n=Number(v);return isFinite(n)?n:0;});
+    }
+    function numsOrNull(arr){
+      return (Array.isArray(arr)?arr:[]).map(function(v){
+        if(v==null||v==='') return null;
+        var n=Number(v);return isFinite(n)?n:null;});
+    }
     var series=(Array.isArray(a&&a.series)?a.series:[])
       .map(function(se,si){
-        return {name:String((se&&se.name)||('Series '+(si+1))),
-          ys:(Array.isArray(se&&se.ys)?se.ys:[]).map(function(v){
-            var n=Number(v);return isFinite(n)?n:0;}),
+        var o={name:String((se&&se.name)||('Series '+(si+1))),
+          ys:nums(se&&se.ys),
           color:(se&&se.color)||CHART_PALETTE[si%CHART_PALETTE.length]};
+        /* T322: what a series may also carry -- a second axis, a
+           trend line, a line drawn over a bar chart, error bars, a
+           confidence band, and being hidden from the plot */
+        if(se&&se.axis==='y2') o.axis='y2';
+        if(se&&se.trend) o.trend='linear';
+        if(se&&se.ct==='line') o.ct='line';
+        if(se&&se.hide) o.hide=1;
+        if(se&&Array.isArray(se.err)&&se.err.length) o.err=numsOrNull(se.err);
+        if(se&&se.band&&Array.isArray(se.band.lo)&&Array.isArray(se.band.hi))
+          o.band={lo:numsOrNull(se.band.lo),hi:numsOrNull(se.band.hi)};
+        return o;
       }).filter(function(se){return se.ys.length;});
     var n=cats.length;
     series.forEach(function(se){n=Math.max(n,se.ys.length);});
     while(cats.length<n) cats.push(String(cats.length+1));
     return {cats:cats,series:series,
       numeric:n>0&&cats.every(function(c){
-        return c!==''&&isFinite(Number(c));})};
+        return c!==''&&isFinite(Number(c));}),
+      /* T322: the chart-wide switches, normalised */
+      stack:(a&&a.stack==='pct')?'pct':((a&&a.stack)?'std':''),
+      ylog:!!(a&&a.ylog),labels:!!(a&&a.labels),
+      xlab:String((a&&a.xlab)||''),ylab:String((a&&a.ylab)||''),
+      y2lab:String((a&&a.y2lab)||'')};
   }
   function chartStep(range){
     if(!(range>0)) return 1;
     var raw=range/4,mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10));
     var r=raw/mag;
     return (r>=5?10:r>=2?5:r>=1?2:1)*mag;
+  }
+  /* ---- THE ARITHMETIC (T322), pure so a test can run it ------------ */
+  /* the y scale for a set of values: linear from the data, zero forced
+     when asked (a bar's length IS its value), or log10 over the positive
+     values with the axis snapped to whole decades */
+  function chartScale(vals,opts){
+    opts=opts||{};
+    var lo=Infinity,hi=-Infinity;
+    (vals||[]).forEach(function(v){
+      if(v==null||!isFinite(v)) return;
+      if(opts.log&&v<=0) return;
+      if(v<lo) lo=v; if(v>hi) hi=v;
+    });
+    if(!isFinite(lo)||!isFinite(hi)){lo=opts.log?1:0;hi=opts.log?10:1;}
+    if(opts.log){
+      var da=Math.floor(Math.log(lo)/Math.LN10+1e-9);
+      var db=Math.ceil(Math.log(hi)/Math.LN10-1e-9);
+      if(db<=da) db=da+1;
+      return {lo:Math.pow(10,da),hi:Math.pow(10,db),step:0,log:true,
+        decades:[da,db]};
+    }
+    if(opts.zero){if(lo>0) lo=0; if(hi<0) hi=0;}
+    if(hi===lo){lo-=0.5;hi+=0.5;}
+    var step=chartStep(hi-lo);
+    lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
+    return {lo:lo,hi:hi,step:step,log:false};
+  }
+  function chartTicks(sc){
+    var out=[];
+    if(sc.log){
+      for(var d=sc.decades[0];d<=sc.decades[1];d++) out.push(Math.pow(10,d));
+      return out;
+    }
+    for(var g=sc.lo;g<=sc.hi+sc.step/2;g+=sc.step)
+      out.push(Math.round(g*1e6)/1e6);
+    return out;
+  }
+  /* where a value sits along its axis, 0..1; NaN when it cannot be
+     placed (a non-positive value on a log axis) */
+  function chartPos(sc,v){
+    if(v==null||!isFinite(v)) return NaN;
+    if(sc.log){
+      if(!(v>0)) return NaN;
+      return (Math.log(v)-Math.log(sc.lo))/(Math.log(sc.hi)-Math.log(sc.lo));
+    }
+    return (v-sc.lo)/(sc.hi-sc.lo);
+  }
+  /* least squares y = m x + b over the finite pairs, or null */
+  function chartLinFit(xs,ys){
+    var n=0,sx=0,sy=0,sxx=0,sxy=0;
+    for(var i=0;i<xs.length&&i<ys.length;i++){
+      var x=+xs[i],y=+ys[i];
+      if(!isFinite(x)||!isFinite(y)) continue;
+      n++;sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;
+    }
+    if(n<2) return null;
+    var den=n*sxx-sx*sx;
+    if(!den) return null;
+    var m=(n*sxy-sx*sy)/den;
+    return {m:m,b:(sy-m*sx)/n,n:n};
+  }
+  /* stacked bars: each series' segment per category, positives piling
+     up and negatives piling down; `pct` scales every stack to 100 */
+  function chartStackTops(series,n,pct){
+    var up=[],down=[],tot=[],i;
+    for(i=0;i<n;i++){up[i]=0;down[i]=0;tot[i]=0;}
+    if(pct) series.forEach(function(se){
+      for(i=0;i<n;i++) tot[i]+=Math.abs(+se.ys[i]||0);});
+    return series.map(function(se){
+      var seg=[];
+      for(i=0;i<n;i++){
+        var v=+se.ys[i]||0;
+        if(pct) v=tot[i]?v/tot[i]*100:0;
+        if(v>=0){seg[i]={y0:up[i],y1:up[i]+v,v:v};up[i]+=v;}
+        else{seg[i]={y0:down[i],y1:down[i]+v,v:v};down[i]+=v;}
+      }
+      return seg;
+    });
+  }
+  function chartFmt(v){
+    if(v==null||!isFinite(v)) return '';
+    var a=Math.abs(v);
+    var r=a>=100?Math.round(v):a>=10?Math.round(v*10)/10
+      :Math.round(v*100)/100;
+    return String(r);
   }
   function svgEl(tag){
     return document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -145,17 +254,22 @@
     var ink=lightPg?'#0b141d':'#dbe7ef';
     var dim=lightPg?'#4a5b68':'#8aa0b0';
     var grid=lightPg?'#4a5b6833':'#8aa0b033';
-    var legend=(a.leg!==0)&&(d.series.length>1||a.ct==='pie');
-    var T=(a.title?30:12),B=H-(legend?48:30),L=46,R=W-12;
+    /* T322: a hidden series keeps its place in the data (ties and
+       builds still count it) but draws nothing */
+    var shown=d.series.filter(function(se){return !se.hide;});
+    var legend=(a.leg!==0)&&(shown.length>1||a.ct==='pie');
+    var hasY2=a.ct!=='pie'&&shown.some(function(se){return se.axis==='y2';});
+    var T=(a.title?30:12),B=H-(legend?48:30)-(d.xlab?14:0);
+    var L=46+(d.ylab?16:0),R=W-12-(hasY2?(d.y2lab?56:40):0);
     if(a.title) gSkel.appendChild(
       svgText(W/2,19,String(a.title),15,ink,'middle'));
-    if(!d.series.length){
+    if(!shown.length){
       svg.appendChild(svgText(W/2,H/2,'No data — right-click '
         +'→ Edit data…',12,dim,'middle'));
       return svg;
     }
     if(a.ct==='pie'){
-      var ys=d.series[0].ys.map(function(v){return Math.max(0,v);});
+      var ys=shown[0].ys.map(function(v){return Math.max(0,v);});
       var tot=ys.reduce(function(x,y){return x+y;},0)||1;
       var cx=W/2,cy=(T+B)/2,r=Math.min(R-L,B-T)/2;
       var a0=-Math.PI/2;
@@ -169,6 +283,12 @@
           +x1+' '+y1+' Z');
         p.setAttribute('fill',CHART_PALETTE[i%CHART_PALETTE.length]);
         svg.appendChild(p);
+        /* T322: a slice's share, when labels are on */
+        if(d.labels&&v>0){
+          var am=(a0+a1)/2,lr=r*0.62;
+          svg.appendChild(svgText(cx+lr*Math.cos(am),cy+lr*Math.sin(am)+4,
+            Math.round(v/tot*100)+'%',10,'#fff','middle'));
+        }
         a0=a1;
       });
       /* a pie's legend is its categories, one colour each */
@@ -185,7 +305,7 @@
       });
       return svg;
     }
-    /* shared y scale for bar / line / scatter.
+    /* ---- THE SCALES (T322) -----------------------------------------
        T288: FROM THE DATA. It started at 0..1 and only ever widened, so
        a series of 95..105 got an axis of 0..105 and drew as a flat line
        in the top tenth of the plot -- the shape of the data, which is
@@ -193,28 +313,74 @@
        Zero is still forced for BARS, where it is not a preference: a
        bar's length IS its value, and a bar chart cut off above zero
        misstates every comparison on it. A line or a scatter says where
-       the points are, and cropping to them is the honest scale. */
-    var lo=Infinity,hi=-Infinity;
-    d.series.forEach(function(se){se.ys.forEach(function(v){
-      if(!isFinite(v)) return;
-      if(v<lo) lo=v; if(v>hi) hi=v;});});
-    if(!isFinite(lo)||!isFinite(hi)){lo=0;hi=1;}
-    if(a.ct==='bar'){if(lo>0) lo=0; if(hi<0) hi=0;}
-    if(hi===lo){lo-=0.5;hi+=0.5;}
-    var step=chartStep(hi-lo);
-    lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
-    function Y(v){return B-(v-lo)/(hi-lo)*(B-T);}
-    for(var g=lo;g<=hi+step/2;g+=step){
+       the points are, and cropping to them is the honest scale.
+       Now with a second axis on the right for the series that ask for
+       it, a log axis when asked, and a stacked scale that is the sum of
+       the stack, not the tallest member. Error bars and bands are part
+       of the data's extent, so nothing is clipped. */
+    var isBar=(a.ct==='bar');
+    var barSeries=shown.filter(function(se){
+      return !(isBar&&se.ct==='line');});
+    var lineOver=isBar?shown.filter(function(se){return se.ct==='line';}):[];
+    var stacked=isBar&&!!d.stack&&!d.ylog;
+    var n=d.cats.length;
+    function extent(list){
+      var vals=[];
+      list.forEach(function(se){
+        se.ys.forEach(function(v,i){
+          vals.push(v);
+          if(se.err&&se.err[i]!=null){vals.push(v-se.err[i]);vals.push(v+se.err[i]);}
+          if(se.band){vals.push(se.band.lo[i]);vals.push(se.band.hi[i]);}
+        });
+      });
+      return vals;
+    }
+    var prim=shown.filter(function(se){return se.axis!=='y2';});
+    var sec=shown.filter(function(se){return se.axis==='y2';});
+    var segs=null,pvals;
+    if(stacked){
+      var stackSeries=barSeries.filter(function(se){return se.axis!=='y2';});
+      segs=chartStackTops(stackSeries,n,d.stack==='pct');
+      pvals=[];
+      segs.forEach(function(sg){sg.forEach(function(s2){
+        pvals.push(s2.y0);pvals.push(s2.y1);});});
+      pvals=pvals.concat(extent(lineOver.filter(function(se){
+        return se.axis!=='y2';})));
+    } else pvals=extent(prim);
+    var scY=chartScale(pvals,{log:d.ylog,zero:isBar&&!d.ylog});
+    var scY2=hasY2?chartScale(extent(sec),{log:false,zero:isBar}):null;
+    function Y(v,se){
+      var sc=(se&&se.axis==='y2')?scY2:scY;
+      var f=chartPos(sc,v);
+      return isFinite(f)?B-f*(B-T):NaN;
+    }
+    var yZero=isFinite(Y(0))?Y(0):B;
+    chartTicks(scY).forEach(function(g){
       var gl=svgEl('line');
       gl.setAttribute('x1',L);gl.setAttribute('x2',R);
       gl.setAttribute('y1',Y(g));gl.setAttribute('y2',Y(g));
       gl.setAttribute('stroke',g===0?dim:grid);
       gSkel.appendChild(gl);
-      gSkel.appendChild(svgText(L-5,Y(g)+3,
-        String(Math.round(g*1000)/1000),9,dim,'end'));
+      gSkel.appendChild(svgText(L-5,Y(g)+3,chartFmt(g),9,dim,'end'));
+    });
+    if(scY2) chartTicks(scY2).forEach(function(g){
+      var f=chartPos(scY2,g),yy=B-f*(B-T);
+      gSkel.appendChild(svgText(R+5,yy+3,chartFmt(g),9,dim,'start'));
+    });
+    /* axis titles */
+    if(d.ylab){
+      var yl=svgText(0,0,d.ylab,10,dim,'middle');
+      yl.setAttribute('transform','translate(11,'+((T+B)/2)+') rotate(-90)');
+      gSkel.appendChild(yl);
     }
-    var n=d.cats.length;
-    var xs=d.numeric&&a.ct!=='bar'
+    if(d.y2lab&&hasY2){
+      var yl2=svgText(0,0,d.y2lab,10,dim,'middle');
+      yl2.setAttribute('transform','translate('+(W-8)+','+((T+B)/2)
+        +') rotate(90)');
+      gSkel.appendChild(yl2);
+    }
+    if(d.xlab) gSkel.appendChild(svgText((L+R)/2,B+27,d.xlab,10,dim,'middle'));
+    var xs=d.numeric&&!isBar
       ?d.cats.map(function(c){return Number(c);}):null;
     var xlo=xs?Math.min.apply(null,xs):0;
     var xhi=xs?Math.max.apply(null,xs):Math.max(1,n-1);
@@ -228,8 +394,7 @@
       var xstep=chartStep(xhi-xlo);
       for(var xv=Math.ceil(xlo/xstep)*xstep;xv<=xhi+xstep/2;xv+=xstep){
         var px=L+(xv-xlo)/(xhi-xlo)*(R-L);
-        gSkel.appendChild(svgText(px,B+13,
-          String(Math.round(xv*1000)/1000),9,dim,'middle'));
+        gSkel.appendChild(svgText(px,B+13,chartFmt(xv),9,dim,'middle'));
       }
     } else {
       d.cats.forEach(function(c,i){
@@ -237,52 +402,164 @@
           c.length>9?c.slice(0,8)+'…':c,9,dim,'middle'));
       });
     }
-    if(a.ct==='line'){
-      d.series.forEach(function(se){
-        var pl=svgEl('polyline');
-        pl.setAttribute('points',se.ys.map(function(v,i){
-          return X(i)+','+Y(v);}).join(' '));
-        pl.setAttribute('fill','none');
-        pl.setAttribute('stroke',se.color);
-        pl.setAttribute('stroke-width',2);
-        var gl2=seriesG(se.name);
-        gl2.appendChild(pl);
-        se.ys.forEach(function(v,i){
-          var c=svgEl('circle');
-          c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
-          c.setAttribute('r',2.6);c.setAttribute('fill',se.color);
-          gl2.appendChild(c);
-        });
+    /* ---- the marks --------------------------------------------------- */
+    function band(se){
+      if(!se.band) return;
+      var pts=[],back=[];
+      se.ys.forEach(function(v,i){
+        var yh=Y(se.band.hi[i],se),ylo=Y(se.band.lo[i],se);
+        if(!isFinite(yh)||!isFinite(ylo)) return;
+        pts.push(X(i)+','+yh);back.unshift(X(i)+','+ylo);
       });
+      if(pts.length<2) return;
+      var pg2=svgEl('polygon');
+      pg2.setAttribute('points',pts.concat(back).join(' '));
+      pg2.setAttribute('fill',se.color);
+      pg2.setAttribute('fill-opacity','0.18');
+      pg2.setAttribute('stroke','none');
+      seriesG(se.name).appendChild(pg2);
+    }
+    function errBars(se,xAt){
+      if(!se.err) return;
+      var g=seriesG(se.name);
+      se.ys.forEach(function(v,i){
+        var e=se.err[i];
+        if(e==null||!(e>0)) return;
+        var y1=Y(v-e,se),y2=Y(v+e,se),x=xAt(i);
+        if(!isFinite(y1)||!isFinite(y2)) return;
+        var ln=svgEl('path');
+        ln.setAttribute('d','M'+x+' '+y1+'V'+y2+'M'+(x-4)+' '+y1+'h8'
+          +'M'+(x-4)+' '+y2+'h8');
+        ln.setAttribute('stroke',ink);ln.setAttribute('stroke-width',1);
+        ln.setAttribute('fill','none');ln.setAttribute('opacity','0.8');
+        g.appendChild(ln);
+      });
+    }
+    function trend(se,xAt){
+      if(!se.trend) return;
+      var xv=se.ys.map(function(_,i){return xs?xs[i]:i;});
+      var fit=chartLinFit(xv,se.ys);
+      if(!fit) return;
+      var i0=0,i1=se.ys.length-1;
+      var ya=Y(fit.m*xv[i0]+fit.b,se),yb=Y(fit.m*xv[i1]+fit.b,se);
+      if(!isFinite(ya)||!isFinite(yb)) return;
+      var ln=svgEl('line');
+      ln.setAttribute('x1',xAt(i0));ln.setAttribute('y1',ya);
+      ln.setAttribute('x2',xAt(i1));ln.setAttribute('y2',yb);
+      ln.setAttribute('stroke',se.color);ln.setAttribute('stroke-width',1.5);
+      ln.setAttribute('stroke-dasharray','5 3');
+      seriesG(se.name).appendChild(ln);
+    }
+    function label(se,x,y,v,above){
+      if(!d.labels||!isFinite(y)) return;
+      seriesG(se.name).appendChild(
+        svgText(x,above?y-4:y+11,chartFmt(v),9,ink,'middle'));
+    }
+    function lineOf(se,xAt){
+      var gl2=seriesG(se.name);
+      var pl=svgEl('polyline');
+      var pts=[];
+      se.ys.forEach(function(v,i){
+        var y=Y(v,se); if(isFinite(y)) pts.push(xAt(i)+','+y);});
+      pl.setAttribute('points',pts.join(' '));
+      pl.setAttribute('fill','none');
+      pl.setAttribute('stroke',se.color);
+      pl.setAttribute('stroke-width',2);
+      gl2.appendChild(pl);
+      se.ys.forEach(function(v,i){
+        var y=Y(v,se); if(!isFinite(y)) return;
+        var c=svgEl('circle');
+        c.setAttribute('cx',xAt(i));c.setAttribute('cy',y);
+        c.setAttribute('r',2.6);c.setAttribute('fill',se.color);
+        gl2.appendChild(c);
+        label(se,xAt(i),y,v,true);
+      });
+    }
+    shown.forEach(band);                     /* bands sit behind everything */
+    if(a.ct==='line'){
+      shown.forEach(function(se){lineOf(se,X);errBars(se,X);trend(se,X);});
     } else if(a.ct==='scatter'){
-      d.series.forEach(function(se){
+      shown.forEach(function(se){
         var gs=seriesG(se.name);
         se.ys.forEach(function(v,i){
+          var y=Y(v,se); if(!isFinite(y)) return;
           var c=svgEl('circle');
-          c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
+          c.setAttribute('cx',X(i));c.setAttribute('cy',y);
           c.setAttribute('r',3.4);c.setAttribute('fill',se.color);
           gs.appendChild(c);
+          label(se,X(i),y,v,true);
         });
+        errBars(se,X);trend(se,X);
       });
     } else {   /* bar, the default */
-      var ns=d.series.length,gw=(R-L)/n,bw=gw*0.72/ns;
-      d.series.forEach(function(se,si){
-        var gb=seriesG(se.name);
-        se.ys.forEach(function(v,i){
-          var x=L+i*gw+gw*0.14+si*bw;
-          var b=svgEl('rect');
-          b.setAttribute('x',x);
-          b.setAttribute('y',Math.min(Y(v),Y(0)));
-          b.setAttribute('width',Math.max(1,bw-1));
-          b.setAttribute('height',Math.max(0.5,Math.abs(Y(v)-Y(0))));
-          b.setAttribute('fill',se.color);
-          gb.appendChild(b);
+      var gw=(R-L)/n;
+      if(stacked){
+        var stackSeries2=barSeries.filter(function(se){return se.axis!=='y2';});
+        var bw0=gw*0.72;
+        stackSeries2.forEach(function(se,si){
+          var gb=seriesG(se.name);
+          segs[si].forEach(function(sg,i){
+            var y0=Y(sg.y0),y1=Y(sg.y1);
+            if(!isFinite(y0)||!isFinite(y1)) return;
+            var b=svgEl('rect');
+            b.setAttribute('x',L+i*gw+gw*0.14);
+            b.setAttribute('y',Math.min(y0,y1));
+            b.setAttribute('width',Math.max(1,bw0-1));
+            b.setAttribute('height',Math.max(0.5,Math.abs(y1-y0)));
+            b.setAttribute('fill',se.color);
+            gb.appendChild(b);
+            if(sg.v) label(se,L+i*gw+gw*0.14+bw0/2,(y0+y1)/2+4,
+              d.stack==='pct'?Math.round(sg.v):se.ys[i],false);
+          });
         });
-      });
+        /* a y2 bar in a stacked chart stands beside the stack */
+        barSeries.filter(function(se){return se.axis==='y2';})
+          .forEach(function(se){
+            var gb=seriesG(se.name),bw2=gw*0.2;
+            se.ys.forEach(function(v,i){
+              var y=Y(v,se),z=Y(0,se); if(!isFinite(y)) return;
+              var b=svgEl('rect');
+              b.setAttribute('x',L+i*gw+gw*0.86-bw2);
+              b.setAttribute('y',Math.min(y,z));
+              b.setAttribute('width',Math.max(1,bw2-1));
+              b.setAttribute('height',Math.max(0.5,Math.abs(y-z)));
+              b.setAttribute('fill',se.color);
+              gb.appendChild(b);
+            });
+          });
+      } else {
+        var ns=barSeries.length||1,bw=gw*0.72/ns;
+        barSeries.forEach(function(se,si){
+          var gb=seriesG(se.name);
+          var xAt=function(i){return L+i*gw+gw*0.14+si*bw+bw/2;};
+          se.ys.forEach(function(v,i){
+            var y=Y(v,se);
+            var z=se.axis==='y2'?Y(0,se):yZero;
+            if(!isFinite(z)) z=B;
+            if(!isFinite(y)){
+              /* a value the axis cannot place (log, non-positive) */
+              if(d.ylog&&!(v>0)) return;
+              y=B;
+            }
+            var b=svgEl('rect');
+            b.setAttribute('x',xAt(i)-bw/2);
+            b.setAttribute('y',Math.min(y,z));
+            b.setAttribute('width',Math.max(1,bw-1));
+            b.setAttribute('height',Math.max(0.5,Math.abs(y-z)));
+            b.setAttribute('fill',se.color);
+            gb.appendChild(b);
+            label(se,xAt(i),Math.min(y,z),v,true);
+          });
+          errBars(se,xAt);trend(se,xAt);
+        });
+      }
+      /* T322: a line drawn OVER the bars -- the combo chart -- on its
+         own axis when it asks for one */
+      lineOver.forEach(function(se){lineOf(se,X);errBars(se,X);trend(se,X);});
     }
     if(legend){
       var lx2=L;
-      d.series.forEach(function(se){
+      shown.forEach(function(se){
         var sw2=svgEl('rect');
         sw2.setAttribute('x',lx2);sw2.setAttribute('y',H-22);
         sw2.setAttribute('width',10);sw2.setAttribute('height',10);
@@ -293,8 +570,9 @@
            series, so nothing reflows as they arrive. */
         var gL=seriesG(se.name);
         gL.appendChild(sw2);
-        gL.appendChild(svgText(lx2+14,H-13,se.name,10,dim));
-        lx2+=14+Math.max(34,se.name.length*6)+10;
+        var nm=se.name+(se.axis==='y2'?' (right)':'');
+        gL.appendChild(svgText(lx2+14,H-13,nm,10,dim));
+        lx2+=14+Math.max(34,nm.length*6)+10;
       });
     }
     return svg;
@@ -358,6 +636,28 @@
     });
     series=series.filter(function(se){
       return se.ys.some(function(v){return v!==0;})||se.ys.length;});
+    /* T322: HELPER COLUMNS. "Temp ±" is Temp's error bar, "Temp lo" and
+       "Temp hi" its confidence band; each folds into the series it names
+       and leaves the plot. A helper naming no series stays a series of
+       its own, so nothing typed is ever thrown away. */
+    var byName={};
+    series.forEach(function(se){byName[se.name]=se;});
+    var keep=[];
+    series.forEach(function(se){
+      var m=/^(.*\S)\s*(\u00b1|\+\/-|err|lo|hi)$/i.exec(se.name);
+      var base=m?byName[m[1]]:null;
+      if(!base||base===se){keep.push(se);return;}
+      var kind=m[2].toLowerCase();
+      if(kind==='lo'||kind==='hi'){
+        base.band=base.band||{lo:[],hi:[]};
+        base.band[kind]=se.ys.slice();
+      } else base.err=se.ys.slice();
+    });
+    keep.forEach(function(se,i){
+      se.color=CHART_PALETTE[i%CHART_PALETTE.length];
+      if(se.band&&(!se.band.lo.length||!se.band.hi.length)) delete se.band;
+    });
+    series=keep;
     if(!series.length) return null;
     return {cats:cats,series:series};
   }
@@ -403,11 +703,26 @@
   /* ---- editing the numbers ------------------------------------------- */
   function chartCsvOf(a){
     var d=chartParse(a);
-    var out=[[''].concat(d.series.map(function(se){return se.name;}))
-      .join(', ')];
+    /* T322: the helper columns go back out beside their series, so the
+       dialog round-trips what the pane shows */
+    var head=[''],cols=[];
+    d.series.forEach(function(se){
+      head.push(se.name);
+      cols.push(function(i){return se.ys[i]==null?'':se.ys[i];});
+      if(se.err){
+        head.push(se.name+' \u00b1');
+        cols.push(function(i){return se.err[i]==null?'':se.err[i];});
+      }
+      if(se.band){
+        head.push(se.name+' lo');
+        cols.push(function(i){return se.band.lo[i]==null?'':se.band.lo[i];});
+        head.push(se.name+' hi');
+        cols.push(function(i){return se.band.hi[i]==null?'':se.band.hi[i];});
+      }
+    });
+    var out=[head.join(', ')];
     d.cats.forEach(function(c,i){
-      out.push([c].concat(d.series.map(function(se){
-        return se.ys[i]==null?'':se.ys[i];})).join(', '));
+      out.push([c].concat(cols.map(function(f){return f(i);})).join(', '));
     });
     return out.join('\n');
   }
@@ -425,7 +740,9 @@
     var note=document.createElement('div');note.className='rd-note';
     note.textContent='One row per category. The first row names the '
       +'series, the first column is the category (numbers make a '
-      +'numeric axis for line and scatter).';
+      +'numeric axis for line and scatter). A column \u201cName \u00b1\u201d '
+      +'is Name\u2019s error bar; \u201cName lo\u201d and \u201cName hi\u201d '
+      +'are its band.';
     p.appendChild(note);
     var ta=document.createElement('textarea');
     ta.className='chart-ta';
@@ -443,11 +760,16 @@
       var data=chartFromRows(rows);
       if(!data){toast('Could not read that — a header row plus '
         +'at least one data row, comma-separated');return;}
-      /* keep each series' colour where the name survives the edit */
-      var old={};chartParse(a).series.forEach(function(se){
-        old[se.name]=se.color;});
+      /* keep each series' colour -- and, T322, its own switches --
+         where the name survives the edit */
+      var old={};(a.series||[]).forEach(function(se){
+        if(se&&se.name) old[se.name]=se;});
       data.series.forEach(function(se){
-        if(old[se.name]) se.color=old[se.name];});
+        var o=old[se.name]; if(!o) return;
+        if(o.color) se.color=o.color;
+        ['axis','trend','ct','hide'].forEach(function(k){
+          if(o[k]) se[k]=o[k];});
+      });
       /* A TIE POINTS AT A SERIES BY NAME (T162), and a hand edit can
          rename or drop one. The tie then fails OPEN -- the item shows
          all the time rather than vanishing -- but silently reverting to
@@ -595,10 +917,18 @@
     var after=JSON.stringify([data.cats,
       data.series.map(function(se){return se.ys;})]);
     if(before===after) return 0;
+    /* the author's per-series choices survive a refresh by NAME: the
+       colour (T123), and since T322 the axis, the trend line, a line
+       drawn over the bars and being hidden -- err/band come from the
+       table's own helper columns, so they are the table's to give */
     var old={};chartParse(a).series.forEach(function(se){
-      old[se.name]=se.color;});
+      old[se.name]=se;});
     data.series.forEach(function(se){
-      if(old[se.name]) se.color=old[se.name];});
+      var o=old[se.name]; if(!o) return;
+      if(o.color) se.color=o.color;
+      ['axis','trend','ct','hide'].forEach(function(k){
+        if(o[k]) se[k]=o[k];});
+    });
     a.cats=data.cats;a.series=data.series;
     return 1;
   }
@@ -611,8 +941,193 @@
     if(nn){markDirty();refresh();}
     return nn;
   }
+  /* ---- THE CHART PANE (T322) ------------------------------------------
+     The user's list, item 3: "Advanced chart editor: stacked charts,
+     secondary axes, log axes, error bars, confidence bands, labels,
+     trend lines, per-series editing". The right-click menu kept the
+     four kinds and the numbers; everything else a chart can be asked
+     lives here, one pane, rebuilt from the item on every sync so it can
+     never disagree with the slide. Error bars and bands come in through
+     the NUMBERS (helper columns), because they are numbers; the pane
+     says so and shows which series carry them. */
+  function chartPaneItem(){
+    var s=pres.slides[cur];
+    var a=(s&&typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+    return (a&&a.k==='chart')?a:null;
+  }
+  function showChartPane(on){
+    var p=$('#chartpane'); if(!p) return;
+    if(on){paneShow('chartpane');chartPaneSync();}
+    else paneHide('chartpane');
+  }
+  function chartPaneWrite(fn){
+    var a=chartPaneItem(); if(!a) return;
+    fn(a);
+    markDirty();renderSlide();chartPaneSync();
+  }
+  /* ties and series builds address a series by NAME; a rename moves them */
+  function chartRenameTies(a,was,now){
+    if(!a||!a.oid||was===now) return;
+    var s=pres.slides[cur]; if(!s) return;
+    (s.annots||[]).forEach(function(x){
+      if(x&&x.tie&&x.tie.to==='series'&&x.tie.id===a.oid&&x.tie.at===was)
+        x.tie.at=now;
+    });
+  }
+  function chartPaneSync(){
+    var p=$('#chartpane'); if(!p||p.hidden) return;
+    var body=$('#chartpane-body'); if(!body) return;
+    var a=chartPaneItem();
+    body.innerHTML='';
+    function lab(t){
+      var l=document.createElement('div');l.className='np-lab';
+      l.textContent=t;body.appendChild(l);return l;
+    }
+    if(!a){lab('Select a chart on the slide');return;}
+    function row(){
+      var r=document.createElement('div');r.className='np-row cp-row';
+      body.appendChild(r);return r;
+    }
+    function text(host,val,ph,fn){
+      var i=document.createElement('input');
+      i.className='np-goal cp-text';i.type='text';
+      i.value=val||'';i.placeholder=ph||'';
+      /* the canvas owns arrows, Delete and the tool keys */
+      i.addEventListener('keydown',function(e){
+        e.stopPropagation();if(e.key==='Enter') i.blur();});
+      i.addEventListener('change',function(){
+        chartPaneWrite(function(a2){fn(a2,i.value.trim());});});
+      host.appendChild(i);return i;
+    }
+    function check(label,on,fn){
+      var l=document.createElement('label');
+      l.className='np-lab md-check cp-check';
+      var c=document.createElement('input');c.type='checkbox';c.checked=!!on;
+      c.addEventListener('change',function(){
+        chartPaneWrite(function(a2){fn(a2,c.checked);});});
+      l.appendChild(c);l.appendChild(document.createTextNode(' '+label));
+      body.appendChild(l);return c;
+    }
+    function btn(host,label,on,fn,title){
+      var b=document.createElement('button');
+      b.className='dbtn cp-btn'+(on?' on':'');b.textContent=label;
+      if(title) b.title=title;
+      b.setAttribute('aria-pressed',(!!on).toString());
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      host.appendChild(b);return b;
+    }
+    function ser(a2,si){return (a2.series||[])[si];}
+    lab('Title');
+    text(row(),a.title,'none',function(a2,v){
+      if(v) a2.title=v; else delete a2.title;});
+    lab('Kind');
+    var kr=row();
+    CHART_TYPES.forEach(function(t){
+      btn(kr,t[1],(a.ct||'bar')===t[0],function(){
+        chartPaneWrite(function(a2){a2.ct=t[0];});});
+    });
+    var isBar=(a.ct||'bar')==='bar',isPie=a.ct==='pie';
+    if(isBar){
+      lab('Stacking');
+      var sr=row(),now=a.stack==='pct'?'pct':(a.stack?'std':'');
+      [['','Side by side'],['std','Stacked'],['pct','100%']].forEach(
+        function(o){
+          btn(sr,o[1],now===o[0],function(){
+            chartPaneWrite(function(a2){
+              if(o[0]) a2.stack=o[0]; else delete a2.stack;});},
+            o[0]==='pct'?'Every stack scaled to 100%':'');
+        });
+    }
+    if(!isPie) check('Logarithmic value axis',a.ylog,function(a2,on){
+      if(on) a2.ylog=1; else delete a2.ylog;});
+    check(isPie?'Slice labels (per cent)':'Data labels',a.labels,
+      function(a2,on){if(on) a2.labels=1; else delete a2.labels;});
+    check('Legend',a.leg!==0,function(a2,on){
+      if(on) delete a2.leg; else a2.leg=0;});
+    if(!isPie){
+      lab('Axis titles');
+      var ar=row();
+      text(ar,a.xlab,'x axis',function(a2,v){
+        if(v) a2.xlab=v; else delete a2.xlab;});
+      text(ar,a.ylab,'y axis',function(a2,v){
+        if(v) a2.ylab=v; else delete a2.ylab;});
+      if((a.series||[]).some(function(se){return se&&se.axis==='y2';}))
+        text(row(),a.y2lab,'right axis',function(a2,v){
+          if(v) a2.y2lab=v; else delete a2.y2lab;});
+    }
+    lab('Series');
+    (a.series||[]).forEach(function(se,si){
+      if(!se) return;
+      var r=row();r.className+=' cp-series';
+      var ci=document.createElement('input');ci.type='color';
+      ci.className='cp-col';ci.title='Colour';
+      ci.value=/^#[0-9a-f]{6}$/i.test(se.color||'')
+        ?se.color:CHART_PALETTE[si%CHART_PALETTE.length];
+      ci.addEventListener('input',function(){
+        se.color=ci.value;markDirty();renderSlide();});
+      r.appendChild(ci);
+      var nm=document.createElement('input');nm.type='text';
+      nm.className='np-goal cp-name';nm.value=se.name||('Series '+(si+1));
+      nm.title='Rename the series (ties and builds follow the name)';
+      nm.addEventListener('keydown',function(e){
+        e.stopPropagation();if(e.key==='Enter') nm.blur();});
+      nm.addEventListener('change',function(){
+        chartPaneWrite(function(a2){
+          var s2=ser(a2,si); if(!s2) return;
+          var was=s2.name;s2.name=nm.value.trim()||was;
+          chartRenameTies(a2,was,s2.name);
+        });
+      });
+      r.appendChild(nm);
+      if(!isPie){
+        btn(r,se.axis==='y2'?'Right':'Left',se.axis==='y2',function(){
+          chartPaneWrite(function(a2){var s2=ser(a2,si); if(!s2) return;
+            if(s2.axis==='y2') delete s2.axis; else s2.axis='y2';});},
+          'Which value axis this series is read against');
+        if(isBar) btn(r,'Line',se.ct==='line',function(){
+          chartPaneWrite(function(a2){var s2=ser(a2,si); if(!s2) return;
+            if(s2.ct==='line') delete s2.ct; else s2.ct='line';});},
+          'Draw this series as a line over the bars');
+        btn(r,'Trend',!!se.trend,function(){
+          chartPaneWrite(function(a2){var s2=ser(a2,si); if(!s2) return;
+            if(s2.trend) delete s2.trend; else s2.trend='linear';});},
+          'A least-squares line through this series');
+      }
+      btn(r,se.hide?'Hidden':'Shown',!se.hide,function(){
+        chartPaneWrite(function(a2){var s2=ser(a2,si); if(!s2) return;
+          if(s2.hide) delete s2.hide; else s2.hide=1;});},
+        'Hide this series from the plot (it stays in the numbers)');
+      var tags=[];
+      if(se.err) tags.push('\u00b1 error bars');
+      if(se.band) tags.push('band');
+      if(tags.length){
+        var tg=document.createElement('span');tg.className='cp-tags';
+        tg.textContent=tags.join(' \u00b7 ');r.appendChild(tg);
+      }
+    });
+    lab('Error bars and bands come from the numbers: a column '
+      +'\u201cName \u00b1\u201d is Name\u2019s error bar, \u201cName lo\u201d '
+      +'and \u201cName hi\u201d its band.').className='np-lab cp-hint';
+    var br=row();
+    btn(br,'Edit numbers\u2026',false,function(){
+      if(typeof selAnnot==='number') chartDataDlg(selAnnot);},
+      'One row per category; helper columns for \u00b1 / lo / hi');
+    if(a.ref) btn(br,'Refresh from table',false,function(){
+      var n=chartResyncOne(a);
+      if(n){markDirty();refresh();chartPaneSync();
+        toast('Numbers refreshed from the table');}
+      else toast('The table has not changed');},
+      'Re-read the numbers from the table this chart came from');
+  }
+  function chartBoot(){
+    var fb=$('#fmt-chart'),p=$('#chartpane');
+    if(fb&&p) fb.addEventListener('click',function(){showChartPane(p.hidden);});
+    var cl=$('#chartpane-close');
+    if(cl) cl.addEventListener('click',function(){showChartPane(false);});
+  }
   window.SemDeckChart={place:placeChart,dataOf:chartDataOf,
     fromRows:chartFromRows,dataDlg:chartDataDlg,resync:chartResyncAll,
     seriesCount:chartSeriesCount,seriesNames:chartSeriesNames,
-    tieDlg:openSeriesTie,
+    tieDlg:openSeriesTie,pane:showChartPane,
+    scale:chartScale,fit:chartLinFit,stacks:chartStackTops,
     svg:chartSvg};

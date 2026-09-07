@@ -648,75 +648,160 @@ window.JunoPptx = (function () {
       + '<c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>'
       + esc(se.name) + '</c:v></c:pt></c:strCache></c:strRef></c:tx>';
   }
-  function chartAxes(item) {
+  /* ---- axes (T322): the primary pair, and a second pair on the right
+     when any series asks for it; a log scale and a title per axis. The
+     order inside an axis is the schema's: axId, scaling, delete, axPos,
+     title, crossAx, crosses. The right-hand pair keeps a hidden
+     category axis of its own, which is how PowerPoint itself writes a
+     secondary axis. */
+  function chartAxTitle(t) {
+    return t ? '<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r>'
+      + '<a:t>' + esc(t) + '</a:t></a:r></a:p></c:rich></c:tx>'
+      + '<c:overlay val="0"/></c:title>' : '';
+  }
+  function chartScaling(log) {
+    return '<c:scaling>' + (log ? '<c:logBase val="10"/>' : '')
+      + '<c:orientation val="minMax"/></c:scaling>';
+  }
+  function chartAxes(item, hasY2) {
     var cat = item.ct === 'scatter' && item.numeric;
-    return '<c:' + (cat ? 'valAx' : 'catAx') + '>'
-      + '<c:axId val="111111111"/><c:scaling>'
-      + '<c:orientation val="minMax"/></c:scaling><c:delete val="0"/>'
-      + '<c:axPos val="b"/><c:crossAx val="222222222"/>'
-      + '</c:' + (cat ? 'valAx' : 'catAx') + '>'
-      + '<c:valAx><c:axId val="222222222"/><c:scaling>'
-      + '<c:orientation val="minMax"/></c:scaling><c:delete val="0"/>'
-      + '<c:axPos val="l"/><c:crossAx val="111111111"/></c:valAx>';
+    var xTag = cat ? 'valAx' : 'catAx';
+    var x = '<c:' + xTag + '><c:axId val="111111111"/>' + chartScaling(false)
+      + '<c:delete val="0"/><c:axPos val="b"/>' + chartAxTitle(item.xlab)
+      + '<c:crossAx val="222222222"/></c:' + xTag + '>';
+    var y = '<c:valAx><c:axId val="222222222"/>' + chartScaling(!!item.ylog)
+      + '<c:delete val="0"/><c:axPos val="l"/>' + chartAxTitle(item.ylab)
+      + '<c:crossAx val="111111111"/></c:valAx>';
+    if (!hasY2) return x + y;
+    var x2 = '<c:' + xTag + '><c:axId val="333333333"/>' + chartScaling(false)
+      + '<c:delete val="1"/><c:axPos val="b"/><c:crossAx val="444444444"/>'
+      + '</c:' + xTag + '>';
+    var y2 = '<c:valAx><c:axId val="444444444"/>' + chartScaling(false)
+      + '<c:delete val="0"/><c:axPos val="r"/>' + chartAxTitle(item.y2lab)
+      + '<c:crossAx val="333333333"/><c:crosses val="max"/></c:valAx>';
+    return x + y + x2 + y2;
+  }
+  /* what a series may carry besides its numbers (T322): data labels, a
+     linear trend line, custom error bars -- in the schema's order, which
+     puts all three between the series' look and its values */
+  function chartSerExtras(item, se, col) {
+    var out = '';
+    if (item.labels) out += '<c:dLbls><c:showLegendKey val="0"/>'
+      + '<c:showVal val="1"/><c:showCatName val="0"/>'
+      + '<c:showSerName val="0"/><c:showPercent val="0"/>'
+      + '<c:showBubbleSize val="0"/></c:dLbls>';
+    if (se.trend) out += '<c:trendline><c:trendlineType val="linear"/>'
+      + '<c:dispRSqr val="0"/><c:dispEq val="0"/></c:trendline>';
+    if (se.err && se.err.length) {
+      var errs = se.err.map(function (e) { return e == null ? 0 : e; });
+      out += '<c:errBars><c:errDir val="y"/><c:errBarType val="both"/>'
+        + '<c:errValType val="cust"/><c:noEndCap val="0"/>'
+        + '<c:plus><c:numRef>' + chartNumCache(col, errs)
+        + '</c:numRef></c:plus>'
+        + '<c:minus><c:numRef>' + chartNumCache(col, errs)
+        + '</c:numRef></c:minus></c:errBars>';
+    }
+    return out;
   }
   function chartXml(item) {
     var fill = function (c) {
       return '<c:spPr>' + solidFill(c, null, '4FB3D9') + '</c:spPr>';
     };
+    var series = item.series || [];
+    var all = series.filter(function (se) { return !se.hide; });
+    var hasY2 = item.ct !== 'pie'
+      && all.some(function (se) { return se.axis === 'y2'; });
+    var axIds = function (y2) {
+      return y2 ? '<c:axId val="333333333"/><c:axId val="444444444"/>'
+        : '<c:axId val="111111111"/><c:axId val="222222222"/>';
+    };
+    var idx = function (se) { return series.indexOf(se); };
+    /* error columns sit beyond the data columns of the imagined sheet */
+    var errCol = function (se) { return chartCol(series.length + idx(se)); };
+    var cats = '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+      + '</c:strRef></c:cat>';
+    var val = function (se) {
+      return '<c:val><c:numRef>' + chartNumCache(chartCol(idx(se)), se.ys)
+        + '</c:numRef></c:val>';
+    };
     var body = '';
     if (item.ct === 'pie') {
-      var se0 = item.series[0] || { ys: [] };
+      var se0 = all[0] || series[0] || { ys: [] };
       body = '<c:pieChart><c:varyColors val="1"/><c:ser>'
         + chartSerHead(item, 0)
-        + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
-        + '</c:strRef></c:cat><c:val><c:numRef>'
-        + chartNumCache('B', se0.ys) + '</c:numRef></c:val>'
-        + '</c:ser></c:pieChart>';
-    } else if (item.ct === 'scatter' && item.numeric) {
-      body = '<c:scatterChart><c:scatterStyle val="marker"/>'
-        + '<c:varyColors val="0"/>'
-        + item.series.map(function (se, si) {
-          return '<c:ser>' + chartSerHead(item, si) + fill(se.color)
-            + '<c:xVal><c:numRef>' + chartNumCache('A', item.cats)
-            + '</c:numRef></c:xVal><c:yVal><c:numRef>'
-            + chartNumCache(chartCol(si), se.ys)
-            + '</c:numRef></c:yVal></c:ser>';
-        }).join('')
-        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
-        + '</c:scatterChart>';
-    } else if (item.ct === 'line' || item.ct === 'scatter') {
-      /* a scatter over WORD categories has no x numbers to plot, so it
-         leaves as a marker-only line chart -- same picture */
-      var mk = item.ct === 'scatter'
-        ? '<c:spPr><a:ln w="28575"><a:noFill/></a:ln></c:spPr>' : '';
-      body = '<c:lineChart><c:grouping val="standard"/>'
-        + '<c:varyColors val="0"/>'
-        + item.series.map(function (se, si) {
-          return '<c:ser>' + chartSerHead(item, si)
-            + (item.ct === 'scatter' ? mk : fill(se.color))
-            + '<c:marker><c:symbol val="circle"/><c:size val="5"/>'
-            + fill(se.color) + '</c:marker>'
-            + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
-            + '</c:strRef></c:cat><c:val><c:numRef>'
-            + chartNumCache(chartCol(si), se.ys)
-            + '</c:numRef></c:val><c:smooth val="0"/></c:ser>';
-        }).join('')
-        + '<c:marker val="1"/>'
-        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
-        + '</c:lineChart>';
+        + (item.labels ? '<c:dLbls><c:showLegendKey val="0"/>'
+          + '<c:showVal val="0"/><c:showCatName val="0"/>'
+          + '<c:showSerName val="0"/><c:showPercent val="1"/>'
+          + '<c:showBubbleSize val="0"/></c:dLbls>' : '')
+        + cats + '<c:val><c:numRef>' + chartNumCache('B', se0.ys)
+        + '</c:numRef></c:val></c:ser></c:pieChart>';
     } else {
-      body = '<c:barChart><c:barDir val="col"/>'
-        + '<c:grouping val="clustered"/><c:varyColors val="0"/>'
-        + item.series.map(function (se, si) {
-          return '<c:ser>' + chartSerHead(item, si) + fill(se.color)
-            + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
-            + '</c:strRef></c:cat><c:val><c:numRef>'
-            + chartNumCache(chartCol(si), se.ys)
-            + '</c:numRef></c:val></c:ser>';
-        }).join('')
-        + '<c:gapWidth val="60"/>'
-        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
-        + '</c:barChart>';
+      /* one GROUP per (kind, axis) pair: bars on the left axis, lines
+         drawn over them, and the right-axis members of each -- every
+         group non-empty, every one pointing at its own axes */
+      var stacked = item.stack === 'pct' ? 'percentStacked'
+        : item.stack ? 'stacked' : 'clustered';
+      function barGroup(list, y2) {
+        if (!list.length) return '';
+        return '<c:barChart><c:barDir val="col"/><c:grouping val="'
+          + stacked + '"/><c:varyColors val="0"/>'
+          + list.map(function (se) {
+            return '<c:ser>' + chartSerHead(item, idx(se)) + fill(se.color)
+              + chartSerExtras(item, se, errCol(se)) + cats + val(se)
+              + '</c:ser>';
+          }).join('')
+          + '<c:gapWidth val="60"/>'
+          + (item.stack ? '<c:overlap val="100"/>' : '')
+          + axIds(y2) + '</c:barChart>';
+      }
+      function lineGroup(list, y2, markerOnly) {
+        if (!list.length) return '';
+        /* a scatter over WORD categories has no x numbers to plot, so it
+           leaves as a marker-only line chart -- same picture */
+        var mk = '<c:spPr><a:ln w="28575"><a:noFill/></a:ln></c:spPr>';
+        return '<c:lineChart><c:grouping val="standard"/>'
+          + '<c:varyColors val="0"/>'
+          + list.map(function (se) {
+            return '<c:ser>' + chartSerHead(item, idx(se))
+              + (markerOnly ? mk : fill(se.color))
+              + '<c:marker><c:symbol val="circle"/><c:size val="5"/>'
+              + fill(se.color) + '</c:marker>'
+              + chartSerExtras(item, se, errCol(se)) + cats + val(se)
+              + '<c:smooth val="0"/></c:ser>';
+          }).join('')
+          + '<c:marker val="1"/>' + axIds(y2) + '</c:lineChart>';
+      }
+      function scatterGroup(list, y2) {
+        if (!list.length) return '';
+        return '<c:scatterChart><c:scatterStyle val="marker"/>'
+          + '<c:varyColors val="0"/>'
+          + list.map(function (se) {
+            return '<c:ser>' + chartSerHead(item, idx(se)) + fill(se.color)
+              + chartSerExtras(item, se, errCol(se))
+              + '<c:xVal><c:numRef>' + chartNumCache('A', item.cats)
+              + '</c:numRef></c:xVal><c:yVal><c:numRef>'
+              + chartNumCache(chartCol(idx(se)), se.ys)
+              + '</c:numRef></c:yVal></c:ser>';
+          }).join('')
+          + axIds(y2) + '</c:scatterChart>';
+      }
+      var prim = all.filter(function (se) { return se.axis !== 'y2'; });
+      var sec = all.filter(function (se) { return se.axis === 'y2'; });
+      var groups = [];
+      if (item.ct === 'scatter' && item.numeric) {
+        groups.push(scatterGroup(prim, false), scatterGroup(sec, true));
+      } else if (item.ct === 'line' || item.ct === 'scatter') {
+        var mo = item.ct === 'scatter';
+        groups.push(lineGroup(prim, false, mo), lineGroup(sec, true, mo));
+      } else {
+        var isLine = function (se) { return se.ct === 'line'; };
+        var notLine = function (se) { return se.ct !== 'line'; };
+        groups.push(barGroup(prim.filter(notLine), false),
+          lineGroup(prim.filter(isLine), false, false),
+          barGroup(sec.filter(notLine), true),
+          lineGroup(sec.filter(isLine), true, false));
+      }
+      body = groups.join('');
     }
     var title = item.title
       ? '<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r>'
@@ -730,7 +815,7 @@ window.JunoPptx = (function () {
       + 'http://schemas.openxmlformats.org/officeDocument/2006/'
       + 'relationships"><c:chart>' + title
       + '<c:plotArea><c:layout/>' + body
-      + (item.ct === 'pie' ? '' : chartAxes(item))
+      + (item.ct === 'pie' ? '' : chartAxes(item, hasY2))
       + '</c:plotArea>'
       + (item.leg ? '<c:legend><c:legendPos val="b"/>'
         + '<c:overlay val="0"/></c:legend>' : '')

@@ -1750,11 +1750,23 @@
            restyle and recolour \u2014 the point of T117. chartParse
            resolves palette colours so a re-export stays consistent. */
         var cd=chartParse(a);
+        /* T322: the switches travel as real chart XML; a confidence
+           band has no PowerPoint twin and is counted instead */
+        cd.series.forEach(function(se){
+          if(se.band&&!se.hide) note.bands=(note.bands|0)+1;});
         items.push({t:'chart',x:box.x,y:box.y,w:box.w,h:box.h,
           ct:a.ct||'bar',cats:cd.cats,
           series:cd.series.map(function(se){
-            return {name:se.name,ys:se.ys,color:se.color};}),
-          numeric:cd.numeric,title:a.title||'',leg:a.leg!==0,ink:ink});
+            var o={name:se.name,ys:se.ys,color:se.color};
+            if(se.axis) o.axis=se.axis;
+            if(se.trend) o.trend='linear';
+            if(se.ct) o.ct=se.ct;
+            if(se.hide) o.hide=1;
+            if(se.err) o.err=se.err;
+            return o;}),
+          numeric:cd.numeric,title:a.title||'',leg:a.leg!==0,ink:ink,
+          stack:cd.stack,ylog:cd.ylog,labels:cd.labels,
+          xlab:cd.xlab,ylab:cd.ylab,y2lab:cd.y2lab});
       } else if(a.k==='flip'){
         /* the frame this exported page is FOR. pptxItems is handed the
            slide plus, for an exploded page, which frame it represents —
@@ -1984,6 +1996,9 @@
     if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
       +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
       +'is not');
+    if(note.bands) lost.push(note.bands+' confidence band'
+      +(note.bands===1?'':'s')+' on a chart — PowerPoint has no band, '
+      +'so the line arrives without it');
     /* builds TRAVEL now (T110) \u2014 what is still approximate is
        the entrance on the two effects PowerPoint spells differently */
     var soft=0;

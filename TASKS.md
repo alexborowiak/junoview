@@ -7053,7 +7053,24 @@ first. Ticked in the commit that ships each.
   and plays, and PDF shows the poster. Not done, recorded: a clip is not
   removed from IndexedDB when its last item is deleted; the deliberate
   Save rewrites every clip each time (the same as `emb`).
-- [ ] **T322 (list 3, H) Advanced chart editor**: stacked charts, secondary axes, log axes, error bars, confidence bands, labels, trend lines, per-series editing.
+- [x] **T322 (list 3, H) Advanced chart editor**: stacked charts, secondary axes, log axes, error bars, confidence bands, labels, trend lines, per-series editing.
+  Done 2026-09-06. The chart item grows switches -- `stack` (1/'pct'),
+  `ylog`, `labels`, `xlab`/`ylab`/`y2lab` -- and each series `axis`
+  ('y2'), `trend`, `ct` ('line' over bars), `hide`, `err` and `band`.
+  chartSvg draws all of it on one fixed frame (a right-hand scale, log
+  decades, stacked segments, error caps, translucent bands, dashed
+  least-squares trend lines, value labels, combo lines over bars); the
+  arithmetic (`chartScale`, `chartTicks`, `chartLinFit`,
+  `chartStackTops`) is pure and tested. Error bars and bands come in
+  through the numbers dialog as helper columns ("Name ±", "Name lo",
+  "Name hi") and go back out the same way. A Chart pane on the Object
+  tab (and a right-click row) holds the rest, per series included; a
+  rename moves the ties that name the series. pptx.js writes real chart
+  XML for every switch -- grouping stacked/percentStacked, logBase, a
+  second valAx on the right with its own group, dLbls, trendline, custom
+  errBars, axis titles -- and the T320 reader brings them back
+  (round-trip tested). Bands have no PowerPoint twin and are counted in
+  the export dialog.
 - [ ] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".
 - [ ] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.
 - [ ] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.

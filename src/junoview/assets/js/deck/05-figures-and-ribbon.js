@@ -2154,7 +2154,7 @@
      enumerates sibling selectors again, so a new pane cannot fork the
      list a tenth time. */
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
-    'imgpane','mediapane',
+    'imgpane','mediapane','chartpane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
@@ -3061,7 +3061,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'imgpane','mediapane',
+   'imgpane','mediapane','chartpane',
    'stdpane','tidypane','objhist','provpane','flippane','sizepane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){

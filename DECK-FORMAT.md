@@ -126,7 +126,7 @@ optional and defaulted.
 | `video` | `x`, `y` | A video or audio clip. `vkey` names its bytes in the deck's `media` store; `poster` is the still shown before it plays; `trim` `{s, e}` the seconds it plays between; `audio` 1 for a sound-only clip; `ctrl`, `auto`, `loop`, `mute` are its playback switches. It exports as a real PowerPoint media shape. |
 | `rect` | `x`, `y` | A drawn shape; `shape` picks which one. |
 | `table` | `x`, `y` | Rows of plain strings, not HTML. |
-| `chart` | `x`, `y` | A native chart: `ct` (bar/line/scatter/pie), `cats`, and `series` [{name, ys, color}] carry the numbers; `ref` links it to the table card it was born from. It exports as a real PowerPoint chart. |
+| `chart` | `x`, `y` | A native chart: `ct` (bar/line/scatter/pie), `cats`, and `series` [{name, ys, color}] carry the numbers; `ref` links it to the table card it was born from. A series may add `axis` (`'y2'`, read against a right-hand axis), `trend` (`'linear'`), `ct` (`'line'`, drawn over the bars), `hide`, `err` (one error per point) and `band` (`{lo, hi}`); the chart may add `stack` (1 or `'pct'`), `ylog`, `labels`, and the axis titles `xlab`, `ylab`, `y2lab`. It exports as a real PowerPoint chart, switches included (a band has no PowerPoint twin). |
 | `text` | `x`, `y` | A text box. Auto-heights from its words, so it has no required h. |
 
 ### Fields any item may carry

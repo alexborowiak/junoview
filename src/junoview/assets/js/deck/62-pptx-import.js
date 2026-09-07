@@ -187,9 +187,19 @@
         cats:it.cats||[],series:it.series.map(function(se){
           var o={name:String(se.name||''),ys:se.ys||[]};
           if(se.color) o.color=se.color;
+          /* T322: a series' own switches, as the reader found them */
+          if(se.axis==='y2') o.axis='y2';
+          if(se.trend) o.trend='linear';
+          if(se.ct==='line') o.ct='line';
+          if(Array.isArray(se.err)&&se.err.length) o.err=se.err;
           return o;})};
       if(it.title) a.title=String(it.title);
       if(it.leg===false) a.leg=0;
+      if(it.stack) a.stack=(it.stack==='pct')?'pct':1;
+      if(it.ylog) a.ylog=1;
+      if(it.labels) a.labels=1;
+      ['xlab','ylab','y2lab'].forEach(function(k){
+        if(it[k]) a[k]=String(it[k]);});
     }
     if(!a) return null;
     if(it.rot&&a.k!=='arrow') a.rot=it.rot;

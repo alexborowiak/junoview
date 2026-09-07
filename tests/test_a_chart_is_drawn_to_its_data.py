@@ -20,11 +20,16 @@ def test_the_scale_comes_from_the_data(out):
     """It started at 0..1 and only ever widened, so a 95..105 series got
     an axis of 0..105 and drew as a flat line -- the shape of the data,
     which is the entire reason for a chart, was gone."""
-    assert "    var lo=Infinity,hi=-Infinity;" in out
-    assert "      if(!isFinite(v)) return;" in out
-    assert "    if(!isFinite(lo)||!isFinite(hi)){lo=0;hi=1;}" in out
+    # T322 moved the scale into chartScale (pure, run by
+    # test_chart_editor); the three rules are the same, spelled once
+    scale = out.split("  function chartScale(vals,opts){")[1].split(
+        "\n  }")[0]
+    assert "    var lo=Infinity,hi=-Infinity;" in scale
+    assert "      if(v==null||!isFinite(v)) return;" in scale
+    assert ("    if(!isFinite(lo)||!isFinite(hi)){lo=opts.log?1:0;"
+            "hi=opts.log?10:1;}") in scale
     # a single-valued series still gets a band rather than a zero range
-    assert "    if(hi===lo){lo-=0.5;hi+=0.5;}" in out
+    assert "    if(hi===lo){lo-=0.5;hi+=0.5;}" in scale
     assert "var lo=0,hi=1;" not in out
 
 
@@ -32,7 +37,12 @@ def test_but_a_bar_still_starts_at_zero(out):
     """Not a preference. A bar's length IS its value, so a bar chart cut
     off above zero misstates every comparison on it. A line or a scatter
     says where the points are, and cropping to them is honest."""
-    assert "    if(a.ct==='bar'){if(lo>0) lo=0; if(hi<0) hi=0;}" in out
+    scale = out.split("  function chartScale(vals,opts){")[1].split(
+        "\n  }")[0]
+    assert "    if(opts.zero){if(lo>0) lo=0; if(hi<0) hi=0;}" in scale
+    # ...and the renderer asks for zero exactly when it draws bars (a log
+    # axis has no zero to force)
+    assert "var scY=chartScale(pvals,{log:d.ylog,zero:isBar&&!d.ylog});" in out
 
 
 def test_the_chart_takes_the_pages_ink_not_the_editors(out):

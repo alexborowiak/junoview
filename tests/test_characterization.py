@@ -1484,7 +1484,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (Business, Exciting, Accent, Quiet, By section) as dashed rows under
 # each heading family in the Text styles menu, minted lazily as
 # variations on first click.
-# 2026-09-05/06, T297-T362. A placed figure captures its own pixels
+# 2026-09-05/07, T297-T362 and T322. A placed figure captures its own pixels
 # own pixels -- embedCapture/embedIfAbsent, from all four gestures
 # that give a frame a ref -- and the capture persists (embSaveSoon);
 # cloneBody and cellFacets read that kept copy BEFORE the open card
@@ -1536,7 +1536,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors, booted from THE BOOT SEQUENCE) turns it into slides, and
 # the File menu, the launcher's New menu, the window drop, the Open
 # dialog and the web loader each grow a .pptx door.
-# 2026-09-05/06, T297-T362. A placed figure captures its own pixels
+# 2026-09-05/07, T297-T362 and T322. A placed figure captures its own pixels
 # own pixels -- embedCapture/embedIfAbsent, from all four gestures
 # that give a frame a ref -- and the capture persists (embSaveSoon);
 # cloneBody and cellFacets read that kept copy BEFORE the open card
@@ -1588,8 +1588,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors, booted from THE BOOT SEQUENCE) turns it into slides, and
 # the File menu, the launcher's New menu, the window drop, the Open
 # dialog and the web loader each grow a .pptx door.
-EXPECTED_MD5 = "3c584e138a488702c74f62b8003a1289"
-EXPECTED_BYTES = 3813300
+EXPECTED_MD5 = "d10ad7f3e293435f6230bbf6b51f7f11"
+EXPECTED_BYTES = 3843903
 
 
 def _render_example() -> str:

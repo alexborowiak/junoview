@@ -2117,6 +2117,14 @@
               </span>
               <!-- T321: the clip's own window -- trim, poster frame and
                    the four playback switches -->
+              <!-- T322: everything a chart can be asked beyond its kind
+                   and its numbers -->
+              <span class="sh-drop" id="fmt-chartwrap" hidden>
+                <button class="dbtn etm" id="fmt-chart"
+                  title="Kind, stacking, log and second axes, data labels,
+ axis titles, trend lines, and each series&#8217; colour, name and axis"
+                  ><i data-ic="plots"></i> Chart options</button>
+              </span>
               <span class="sh-drop" id="fmt-mediawrap" hidden>
                 <button class="dbtn etm" id="fmt-media"
                   title="Trim the clip, pick its poster frame, and choose
@@ -2471,6 +2479,14 @@
       <!-- T321: THE CLIP PANE. A preview you can scrub, so "start
            here" and "this frame is the poster" are one click each;
            the numbers beside it for when you know them. -->
+      <!-- T322: THE CHART PANE, rebuilt from the item on every sync -->
+      <aside class="selpane chartpane" id="chartpane" hidden>
+        <div class="selpane-h"><span>Chart</span>
+          <button class="dbtn dc-icon" id="chartpane-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="selpane-list" id="chartpane-body"></div>
+      </aside>
       <aside class="selpane mediapane" id="mediapane" hidden>
         <div class="selpane-h"><span>Clip</span>
           <button class="dbtn dc-icon" id="mediapane-close"
