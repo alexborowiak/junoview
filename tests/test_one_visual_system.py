@@ -14,12 +14,20 @@ from __future__ import annotations
 
 def test_every_tall_control_is_the_one_tile(out):
     """72 wide, 24px icon (22 until T219), 56 tall -- alone or in a
-    frame over a bar."""
+    frame over a bar.
+
+    THE TEXT TILES ARE THE ONE EXCEPTION, and deliberately so
+    (2026-09-07, user: "The headings are really important. Being able to
+    make these is important. Either make the box longer, or make each
+    half as high and have two rows"). Their name IS their specimen, so
+    they are one line of type rather than a glyph over a word, and they
+    wrap into two short rows in the height one tall row took.
+    """
     assert ".fx-tile{width:72px;display:flex;flex-direction:column;" in out
     assert ".fx-tile .bic{width:24px;height:24px;}" in out
     for rule in (".lay-strip .dbtn.lay{flex:0 0 72px;",
                  ".shape-strip .fx-tile{flex:0 0 72px;",
-                 ".tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 72px;",
+                 ".page-strip .fx-tile{flex:0 0 72px;",
                  ".big-strip .fx-tile{height:56px;}",
                  ".rbn-row>.fx-strip.big-strip{align-items:center;}",
                  ".rbn-row>#hm-newslide.big-tile{width:72px;height:56px;align-self:center;}",

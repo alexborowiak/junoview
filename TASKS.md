@@ -7221,3 +7221,28 @@ first. Ticked in the commit that ships each.
   skipped. Items are notebook cell frames with provenance, captured at
   once. It is always a NEW presentation -- T236 removed the old
   Auto-build precisely because it replaced the deck you had.
+- [x] **T363 - The Style system says where things are.** The user
+  (2026-09-07), on the type strip and the Design screen behind it:
+  "The headings are really important ... you don't need the Aa I
+  reckon, just the Title, Heading 1 in the text style"; "What is one
+  box outline with Title and the other is yellow? ... Oh is the Title
+  one like the prototype of where I am moving one to? ... should just
+  have how many are in each place (and some indication of which
+  slides), like group 1"; "There is soooo much unnecessary text here
+  ... just one short description at the top. No text above the
+  thumbnails as well"; "put the 'text' row as what it looks like in
+  the slide ... should be a preview of the text"; "when hovering above
+  an object it should give an information bubble that is like 'chart
+  from slide 7' and clicking on it takes you to that slide."
+  *Done 2026-09-07.* The Aa is gone and the NAME is the specimen, set
+  in its own type, so a tile is one line at 26px and the eight types
+  sit in two rows in the height one row took. The dashed rectangle on
+  the board now reads `default place`, which is what it always was.
+  The real boxes are grouped by where they sit (rounded to 2%, biggest
+  group first): "Group 1 - 3 boxes at 8, 6" over the slide numbers as
+  chips you can press. Three headings and three paragraphs became one
+  line; every control says what it is by being what it is. Each cell
+  of the Text column draws in its own box's colour, ground, face,
+  weight and slant, falling back to the style. And one bubble for the
+  whole board names every object under the pointer with its slide,
+  each name a button that closes the screen and goes there.

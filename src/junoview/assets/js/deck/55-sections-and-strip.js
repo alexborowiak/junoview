@@ -2158,17 +2158,25 @@
         b.dataset.style=r[0];
         /* the plain tile keeps the door older code and tests know */
         if(!r[0]) b.setAttribute('data-tool','text');
-        var ic=document.createElement('span');ic.className='tx-tile-a';
-        ic.textContent='Aa';
+        /* THE NAME IS THE SPECIMEN (2026-09-07, user: "You don't
+           need the Aa I reckon, just the Title, Heading 1 in the text
+           style"). An "Aa" beside the word said the same thing twice
+           and cost the height that made these tiles two lines tall --
+           and a heading is the thing people reach for most. So the
+           WORD wears the type, the tile is one line, and the strip
+           wraps into two short rows instead of one tall one. */
+        var t=document.createElement('span');
+        t.className='tx-tile-n';t.textContent=r[1];
         if(r[2]){
-          ic.style.fontWeight=r[2].b?'700':'400';
-          if(r[2].i) ic.style.fontStyle='italic';
-          ic.style.fontSize=Math.max(11,Math.min(22,r[2].size*3.2))+'px';
-          if(r[2].color) ic.style.color=tokVal(r[2].color);
-          if(r[2].font) ic.style.fontFamily=fontCss(r[2].font);
+          t.style.fontWeight=r[2].b?'700':'400';
+          if(r[2].i) t.style.fontStyle='italic';
+          if(r[2].color) t.style.color=tokVal(r[2].color);
+          if(r[2].font) t.style.fontFamily=fontCss(r[2].font);
+          /* the ladder, compressed: a title still reads bigger than a
+             heading, without a 40px tile */
+          t.style.fontSize=Math.max(11,Math.min(17,
+            10.5+(r[2].size||2.6)*0.85))+'px';
         }
-        b.appendChild(ic);
-        var t=document.createElement('span');t.textContent=r[1];
         b.appendChild(t);
         b.title=r[0]
           ?('Draw a '+r[1]+' box'

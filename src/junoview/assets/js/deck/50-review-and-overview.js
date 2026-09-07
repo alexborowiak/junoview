@@ -2159,6 +2159,24 @@
         ti.type='text';ti.className='dgt-tx';
         ti.value=String(r.a.text||'');
         ti.title='The words in this box. Enter commits it.';
+        /* 2026-09-07: "please put the 'text' row as what it looks like
+           in the slide ... should be a preview of the text." A column
+           of identical grey inputs said nothing about which box was
+           which; each is a specimen of its own box now, falling back to
+           the style where the box says nothing itself. */
+        (function(){
+          var st=(r.a.style&&typeof styleDef==='function')
+            ?styleDef(r.a.style):null;
+          var col=r.a.color||(st&&st.color);
+          var bg=(r.a.bg!==0)&&(r.a.bgc||(st&&st.bg));
+          var fam=r.a.font||(st&&st.font);
+          if(col) ti.style.color=tokVal(col);
+          if(bg) ti.style.background=tokVal(bg);
+          if(fam) ti.style.fontFamily=fontCss(fam);
+          if(r.a.b||(st&&st.b)) ti.style.fontWeight='700';
+          if(r.a.i||(st&&st.i)) ti.style.fontStyle='italic';
+          if(r.a.align) ti.style.textAlign=r.a.align;
+        })();
         ti.addEventListener('click',function(e){e.stopPropagation();});
         ti.addEventListener('keydown',function(e){
           e.stopPropagation();
@@ -2388,12 +2406,67 @@
   }
   /* what each colour on the board means, and only for the kinds that
      are actually there */
+  /* WHERE THEY ACTUALLY ARE, GROUPED (2026-09-07, user: "What is one
+     box outline with Title and the other is yellow? ... should just
+     have how many are in each place (and some indication of which
+     slides), like group 1, then below they are grouped into those
+     groups so you can [see] which slides they are").
+     The board drew one dashed rectangle (the default this type is given
+     when you Apply) and a filled one per real box, and nothing said
+     which was which. It now says so in words, and the real boxes are
+     GROUPED by the place they sit in -- so "these nine are all in the
+     same spot, these two are somewhere else" is readable without
+     comparing rectangles by eye. Rounded to the nearest 2% because a
+     box nudged by a pixel is in the same place as far as anyone
+     looking at a deck is concerned. */
+  function dgPlaceKey(a){
+    function q(v){return Math.round((+v||0)/2)*2;}
+    return q(a.x)+','+q(a.y)+','+q(a.w);
+  }
+  function dgPlaceGroups(id){
+    var by={},order=[];
+    dgWearers(id).forEach(function(w){
+      if(dgPickedAny()&&!dgSheetPick[w.s]) return;
+      var k=dgPlaceKey(w.a);
+      if(!by[k]){by[k]={key:k,a:w.a,ws:[]};order.push(k);}
+      by[k].ws.push(w);
+    });
+    /* the biggest group first: it is the one that IS the standard */
+    return order.map(function(k){return by[k];}).sort(function(x,y){
+      return y.ws.length-x.ws.length;});
+  }
   function dgKeyList(key,id){
-    $$('.dg-keyit',key).forEach(function(n){n.remove();});
-    var mine=document.createElement('span');
-    mine.className='dg-keyit dg-keymine';
-    mine.textContent=(styleDef(id)||{}).label||id;
-    key.appendChild(mine);
+    $$('.dg-keyit,.dg-place',key).forEach(function(n){n.remove();});
+    var groups=dgPlaceGroups(id);
+    groups.forEach(function(g,gi){
+      var wrap=document.createElement('div');
+      wrap.className='dg-place';
+      var head=document.createElement('span');
+      head.className='dg-placehead';
+      head.textContent='Group '+(gi+1)+' \u2014 '+g.ws.length+' box'
+        +(g.ws.length===1?'':'es')+' at '+Math.round(g.a.x||0)+', '
+        +Math.round(g.a.y||0);
+      wrap.appendChild(head);
+      var list=document.createElement('span');
+      list.className='dg-placeslides';
+      g.ws.forEach(function(w){
+        var s=document.createElement('button');
+        s.className='dg-slidechip';
+        s.textContent=(w.s+1);
+        s.title='Slide '+(w.s+1)+' \u2014 go to it';
+        s.addEventListener('click',function(e){
+          e.stopPropagation();dgClose();go(w.s);});
+        list.appendChild(s);
+      });
+      wrap.appendChild(list);
+      key.appendChild(wrap);
+    });
+    if(!groups.length){
+      var none=document.createElement('span');
+      none.className='dg-keyit';
+      none.textContent='No box wears this type yet';
+      key.appendChild(none);
+    }
     if(!dgShowOthers) return;
     var seen={};
     dgBoardSlides().forEach(function(e){
@@ -2568,9 +2641,16 @@
         b.style.width=Math.max(1.5,(a.w||10))+'%';
         b.style.height=Math.max(1.5,(a.h||6))+'%';
         b.style.borderColor=mine?'':dgKindCol(a);
-        b.title=(mine?'':(annotLabel(a)+' — '))
-          +'slide '+(e.si+1)
-          +(bad?' — wears this style but no longer matches it':'');
+        /* 2026-09-07: "when hovering above an object it should give an
+           information bubble that is like 'chart from slide 7' and
+           clicking on it takes you to that slide. Or if many gives you
+           a list of them all." A title attribute says it after a
+           second's wait and cannot be clicked, so the board grew a real
+           bubble instead -- see dgBoard. */
+        b.dataset.si=e.si;
+        b.dataset.what=(mine?((styleDef(id)||{}).label||id):annotLabel(a))
+          +' — slide '+(e.si+1)
+          +(bad?' — no longer matches this style':'');
         board.appendChild(b);
       });
     });
@@ -2600,7 +2680,9 @@
     }
     var lab=document.createElement('span');
     lab.className='dg-ghostlab';
-    lab.textContent=(styleDef(id)||{}).label||id;
+    /* "Oh is the Title one like the prototype of where I am moving one
+       to?" -- it was, and nothing said so. Now it does. */
+    lab.textContent='default place';
     dgSpecimen(lab,id);
     ghost.appendChild(lab);
     var grip=document.createElement('span');
@@ -2617,6 +2699,44 @@
     offnote.className='dg-offnote';offnote.hidden=true;
     host.appendChild(offnote);
     dgGhostsFor(board,id);
+    /* ONE bubble for the whole board, moved and filled on hover -- a
+       node per object would be hundreds of them on a real deck. Every
+       object under the pointer is named, because "which of these am I
+       pointing at" is exactly the question a board of overlapping
+       rectangles raises, and each name is a button to its slide. */
+    var bub=document.createElement('div');
+    bub.className='dg-bub';bub.hidden=true;
+    host.appendChild(bub);
+    board.addEventListener('mousemove',function(ev){
+      var r=board.getBoundingClientRect();
+      var hits=$$('.dg-real,.dg-other',board).filter(function(n){
+        var q=n.getBoundingClientRect();
+        return ev.clientX>=q.left&&ev.clientX<=q.right
+          &&ev.clientY>=q.top&&ev.clientY<=q.bottom;
+      });
+      if(!hits.length){bub.hidden=true;return;}
+      bub.innerHTML='';
+      hits.slice(0,8).forEach(function(n){
+        var line=document.createElement('button');
+        line.className='dg-bubline';
+        line.textContent=n.dataset.what||'';
+        line.addEventListener('click',function(e2){
+          e2.stopPropagation();dgClose();go(+n.dataset.si||0);});
+        bub.appendChild(line);
+      });
+      if(hits.length>8){
+        var more=document.createElement('span');
+        more.className='dg-bubmore';
+        more.textContent='and '+(hits.length-8)+' more here';
+        bub.appendChild(more);
+      }
+      bub.hidden=false;
+      var bw=bub.offsetWidth||160;
+      bub.style.left=Math.max(0,Math.min(r.width-bw,
+        ev.clientX-r.left+12))+'px';
+      bub.style.top=Math.max(0,ev.clientY-r.top+14)+'px';
+    });
+    board.addEventListener('mouseleave',function(){bub.hidden=true;});
     /* the key, and the switch that turns the rest of the page on */
     var key=document.createElement('div');key.className='dg-key';
     var ck=document.createElement('label');ck.className='dg-keyck';
@@ -2629,8 +2749,7 @@
     });
     ck.appendChild(box);
     ck.appendChild(document.createTextNode(' Show everything else'));
-    ck.title='Draw every other object on these slides too, so you can '
-      +'see what this type would land on';
+    ck.title='Draw every other object on these slides too';
     key.appendChild(ck);
     dgKeyList(key,id);
     host.appendChild(key);
@@ -2679,11 +2798,7 @@
     var id=dgSel,d=styleDef(id);
     /* T224: an object kind has no look to edit -- it has a table */
     if(dgIsObj()){
-      dgSectionHead(body,'Every '+dgKindLabel().toLowerCase()
-        +' in this deck',
-        'Tick the ones you want to line up, then Match style of and '
-        +'click the one they should follow. Or type a number straight '
-        +'into the table.');
+      dgSectionHead(body,dgKindLabel()+' \u2014 every one in this deck');
       dgTable(body,ov);
       dgSheet(body,ov);
       return;
@@ -2693,9 +2808,14 @@
     var rec=dgStyleRec(id);
     var wear=dgWearers(id);
 
-    /* ---- how it looks ---- */
-    dgSectionHead(body,'How “'+(d.label||id)+'” looks',
-      'Changes every box with this style, on every slide.');
+    /* ---- how it looks ----
+       ONE line for the whole screen, and no other prose on it
+       (2026-09-07, user: "There is soooo much unnecessary text here. I
+       think almost all text is unnecessary, just one short description
+       at the top"). Every control below says what it is by being what
+       it is. */
+    dgSectionHead(body,(d.label||id)
+      +' \u2014 changes every box wearing it, on every slide');
     var spec=document.createElement('div');
     spec.className='dg-spec';
     spec.textContent='The quick brown fox jumps over the lazy dog';
@@ -2820,11 +2940,6 @@
     (cur_||row).appendChild(rst);
     body.appendChild(row);
 
-    /* ---- where it sits ---- */
-    dgSectionHead(body,'Where “'+(d.label||id)+'” sits',
-      'Drag the box to set where this type goes by default, and its '
-      +'right edge to set the width. Nothing on the slides moves until '
-      +'you press the button below.');
     dgBoard(body,id);
     /* ---- T223: THE NUMBERS, TOO ------------------------------------
        Dragging sets it roughly; typing sets it exactly, and it is the
@@ -2936,10 +3051,6 @@
     putSync();
     body.appendChild(putRow);
 
-    /* ---- T224: every box of this type, in a table ---- */
-    dgSectionHead(body,'Every \u201c'+(d.label||id)+'\u201d in this deck',
-      'Type into a row to change one box. Tick several and use Match '
-      +'style of to bring them into line.');
     dgTable(body,ov);
     dgSheet(body,ov);
   }

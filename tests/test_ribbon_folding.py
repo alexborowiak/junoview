@@ -50,16 +50,21 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
 
 
 def test_insert_is_tiles_a_named_cell_and_a_drawing_group(out):
-    """T188. The kinds of text box are tiles in the row (a specimen
-    "Aa" over the name, lit while armed, click again to put the tool
-    down); Notebook cell has its name back; Chart is gone from the
-    ribbon; and the armed mode is a group of its own with its name, a
-    short hint and Cancel.
+    """T188. The kinds of text box are tiles in the row (lit while
+    armed, click again to put the tool down); Notebook cell has its name
+    back; Chart is gone from the ribbon; and the armed mode is a group
+    of its own with its name, a short hint and Cancel.
+
+    The specimen used to be an "Aa" over the name. It is the NAME now
+    (2026-09-07, user: "You don't need the Aa I reckon, just the Title,
+    Heading 1 in the text style") -- which says the same thing in half
+    the height, and the height is what a heading tile needed.
     """
     assert 'id="tx-strip"' in out and "function txStripBoot(){" in out
     assert "  txStripBoot();" in out
     assert "b.className='fx-tile tx-tile';" in out
-    assert "ic.textContent='Aa';" in out
+    assert "t.className='tx-tile-n';t.textContent=r[1];" in out
+    assert "ic.textContent='Aa';" not in out
     # the registry tells the strip when a type comes or goes
     assert "if(typeof txStripSync==='function') txStripSync(true);" in out
     # setTool lights the armed tile and shows the Drawing group

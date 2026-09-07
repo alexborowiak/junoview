@@ -1537,10 +1537,25 @@ body.light .img-row{color:var(--ink-2);}
 .rbn-row .lay-tidy{height:30px;}
 /* three page sizes in sight and the rest a scroll or the chevron away
    (T204): Design has to seat Layout in front of this group */
-.tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 72px;
-  scroll-snap-align:start;}
-.tx-tile-a{display:flex;align-items:center;justify-content:center;
-  height:22px;line-height:1;font-size:16px;font-family:var(--sans);}
+.page-strip .fx-tile{flex:0 0 72px;scroll-snap-align:start;}
+/* THE TEXT TILES ARE HALF-HEIGHT AND WRAP (2026-09-07, user: "The
+   headings are really important. Being able to make these is
+   important. Either make the box longer, or make each half as high and
+   have two rows"). The name IS the specimen now, so a tile is one line
+   of type and two rows fit in the height one row used to take. */
+/* .strip-frame sets every tile 56px tall and 72px wide, and it sits
+   LATER in this file -- so at equal specificity it won and these never
+   shrank. Named through the frame to beat it, deliberately, because
+   this strip is the one place a tile is a line of type rather than a
+   glyph over a word. */
+.strip-frame>.tx-strip{flex-wrap:wrap;align-content:center;
+  gap:4px;max-height:60px;}
+.strip-frame .tx-strip .fx-tile{height:26px;flex:0 0 auto;
+  width:auto;min-width:58px;max-width:104px;
+  flex-direction:row;padding:0 8px;gap:0;scroll-snap-align:start;}
+.tx-tile-n{display:block;line-height:1.05;font-family:var(--sans);
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
 /* T190: the page-size tiles, each drawn at its own proportion */
 .page-ico{display:block;border:1.5px solid currentColor;border-radius:2px;
   opacity:.85;box-sizing:border-box;}
@@ -3432,6 +3447,30 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-keyit{display:inline-flex;align-items:center;gap:5px;}
 .dg-keyit::before{content:"";width:11px;height:11px;border-radius:3px;
   border:1px dashed var(--dg-kc,#8aa0b0);}
+/* WHERE THEY ARE, GROUPED (2026-09-07). One row per place, its count,
+   and the slides in it as chips you can press. */
+.dg-place{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:baseline;
+  gap:4px 8px;padding:4px 0;border-top:1px solid #ffffff12;}
+.dg-placehead{font-size:11px;opacity:.85;flex:0 0 auto;}
+.dg-placeslides{display:flex;flex-wrap:wrap;gap:3px;}
+.dg-slidechip{font-family:var(--mono);font-size:10px;line-height:1;
+  padding:2px 5px;border-radius:4px;cursor:pointer;color:#c9d6e2;
+  background:none;border:1px solid #ffffff26;}
+.dg-slidechip:hover{border-color:color-mix(in srgb,var(--accent) 55%,
+  transparent);background:color-mix(in srgb,var(--accent) 14%,
+  transparent);color:#fff;}
+/* the board's own bubble: what is under the pointer, and a way there */
+.dg-bub{position:absolute;z-index:30;min-width:120px;max-width:230px;
+  display:flex;flex-direction:column;gap:2px;padding:4px;
+  background:var(--chrome-2,#16273a);border:1px solid #ffffff2e;
+  border-radius:7px;box-shadow:0 10px 26px #0009;}
+.dg-bubline{text-align:left;font-family:var(--sans);font-size:11px;
+  line-height:1.25;padding:3px 6px;border-radius:4px;cursor:pointer;
+  color:#dce6ee;background:none;border:1px solid transparent;}
+.dg-bubline:hover{background:color-mix(in srgb,var(--accent) 18%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 45%,
+  transparent);color:#fff;}
+.dg-bubmore{font-size:10px;opacity:.7;padding:0 6px 2px;}
 .dg-keyit.dg-keymine::before{border:2px solid var(--amber,#f0a848);
   background:rgba(240,168,72,.18);}
 /* the numbers under the board are a captioned group, not three loose
@@ -5026,8 +5065,13 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 /* a strip's width is a whole number of tiles: four, or three for the
    page sizes, so no tile is ever cut at the edge */
 .strip-frame>.fx-strip,.strip-frame>.fx-strip.lay-strip,
-.strip-frame>.fx-strip.shape-strip,.strip-frame>.fx-strip.tx-strip{
+.strip-frame>.fx-strip.shape-strip{
   width:calc(4 * 72px + 3 * 4px + 8px);}
+/* the text tiles are as wide as their NAMES since 2026-09-07, so a
+   whole number of 72px tiles no longer describes this strip. Wide
+   enough that the eight built-in types fall in two rows; a deck with
+   more scrolls, and the frame's own arrows move it. */
+.strip-frame>.fx-strip.tx-strip{width:calc(5 * 72px + 4 * 4px + 8px);}
 .strip-frame>.fx-strip.page-strip{width:calc(3 * 72px + 2 * 4px + 8px);}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
