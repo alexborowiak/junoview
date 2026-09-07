@@ -301,7 +301,19 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
               "A line or arrow — two endpoints, not a box."),
     "draw": (("x", "y"), "A freehand stroke: a box plus points "
                          "normalised inside it."),
-    "table": (("x", "y"), "Rows of plain strings, not HTML."),
+    "table": (("x", "y"), "Rows of plain strings, not HTML. A column "
+                          "may say what it HOLDS in `ctype[i]` -- `t` "
+                          "('num' or 'text', absent means read it from "
+                          "the cells), `dp` decimals, `thou` a "
+                          "thousands separator, `pre`/`suf` around each "
+                          "number, `align` -- and from that follows how "
+                          "it lines up and reads. `calc[i]` names a "
+                          "footer function (sum, mean, min, max, "
+                          "count) computed at draw time; `rules[i]` is "
+                          "its conditional format ({kind: 'scale' | "
+                          "'above' | 'below', at, color}); `groups` is "
+                          "a spanning row above the header, a list of "
+                          "{at, n, text}."),
     "chart": (("x", "y"), "A native chart: `ct` (bar/line/scatter/pie), "
                           "`cats`, and `series` [{name, ys, color}] "
                           "carry the numbers; `ref` links it to the "

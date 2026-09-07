@@ -60,6 +60,7 @@
   pptxImportBoot();           /* PowerPoint in: File, launcher, drop (T320) */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   chartBoot();                /* the Chart pane's door (T322) */
+  tablePaneBoot();            /* the Table pane's door (T324) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */

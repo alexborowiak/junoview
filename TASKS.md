@@ -7120,7 +7120,30 @@ first. Ticked in the commit that ships each.
   (`_chart_book`), through `sheet_rows` -- the SpreadsheetML walk
   `parse_workbook` has used since T113, given a public name rather than
   a second copy. A chart with neither is named in the loss report.
-- [ ] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.
+- [x] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.
+  Done 2026-09-07. Six requests, ONE idea: **a column knows what it
+  holds**, and the alignment, the decimals, the units, the colours and
+  the footer all follow from the type -- so the model is one array
+  beside `cols` (`ctype[i]` = {t, dp, thou, pre, suf, align}) rather
+  than six new keys. The type is **inferred** when it is not set (a
+  column with numbers in it and no words is numeric; one blank cell is
+  a gap, not a word), because these tables mostly come out of a
+  rendered notebook and nobody should have to declare six columns
+  before a number lines up. A numeric column right-aligns and pads
+  every cell to the same decimals, which IS decimal alignment; it takes
+  a thousands separator and a prefix/suffix for units; a cell it cannot
+  read as a number is left exactly as typed. `calc[i]` names a footer
+  function (sum, mean, min, max, count), computed at draw time and
+  never stored, wearing the column's own format. `rules[i]` colours the
+  cells -- a scale across the column's own range, or a threshold above
+  or below a number. `groups` is the spanning row above the header, and
+  it is always exactly as wide as the table. Doors: a Columns button on
+  the Object tab and a right-click row, opening a Table pane that shows
+  one column at a time (and does not rebuild itself under the pointer,
+  which is T322's review lesson). Exports: `tableViewRows` hands every
+  consumer the table the SLIDE shows -- formatted, with the group row on
+  top and the footer underneath -- and pptx.js merges the group row for
+  real with gridSpan/hMerge.
 - [ ] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.
 - [ ] **T326 (list 7, M) Equation numbering and cross-references.**
 - [ ] **T327 (list 8, M) Custom font management**: local install, missing-font warnings, fallbacks, export packaging.

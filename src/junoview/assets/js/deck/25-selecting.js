@@ -26,6 +26,7 @@
     '#fmt-cropwrap':'image cell',
     '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
     '#fmt-chartwrap':'chart',         /* the Chart pane's door (T322) */
+    '#fmt-tablewrap':'table',         /* the Table pane's door (T324) */
     '#fmt-figures':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
@@ -122,6 +123,7 @@
     if(typeof sizePaneSync==='function') sizePaneSync();
     if(typeof mediaPaneSync==='function') mediaPaneSync();
     if(typeof chartPaneSync==='function') chartPaneSync();
+    if(typeof tablePaneSync==='function') tablePaneSync();
     var hp=$('#objhist');
     var pp=$('#provpane');
     var histOpen=!!hp&&!hp.hidden,provOpen=!!pp&&!pp.hidden;
@@ -2338,6 +2340,15 @@
         if(ci.length!==1) return;
         var ca=(pres.slides[cur].annots||[])[ci[0]];
         if(!ca) return;
+        if(ca.k==='table'){
+          /* T324: what each column holds, and everything that follows */
+          menuHead(m,'table');
+          row('Columns\u2026','',function(){
+            window.SemDeckTable.pane(true);},
+            'What each column holds \u2014 numbers or text \u2014 and so '
+            +'how it lines up, its decimals, its units, its footer and '
+            +'its colours','table');
+        }
         if(ca.k==='chart'){
           menuHead(m,'chart');
           CHART_TYPES.forEach(function(t){

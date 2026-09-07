@@ -379,20 +379,40 @@ window.JunoPptx = (function () {
             + solidFill(item.color, null, 'FFFFFF') + '</a:ln' + side + '>';
         }).join('')
       : '';
+    /* T324: A MERGED HEADER IS A REAL MERGE. `spans` describes the
+       GROUP row a structured table puts above its header -- "2020" over
+       three months -- and OOXML spells a span as gridSpan on the first
+       cell plus hMerge="1" on the ones it swallows, which have to be
+       written and left empty rather than omitted. */
+    var spans = (item.spans && item.spans.length) ? item.spans : null;
     var body = rows.map(function (row, ri) {
-      var head = item.thead && ri === 0;
+      var head = item.thead && ri === 0 && !spans;
+      var groupRow = !!spans && ri === 0;
       var cells = [];
-      var ci;
+      var ci, span = 0, eaten = 0;
       for (ci = 0; ci < nCols; ci++) {
-        var val = row[ci] == null ? '' : String(row[ci]);
+        var merged = false;
+        if (groupRow) {
+          if (eaten <= 0) { eaten = Math.max(1, spans[span++] | 0); }
+          else { merged = true; }
+          eaten--;
+        }
+        var val = merged ? '' : (row[ci] == null ? '' : String(row[ci]));
         var run = { sizePct: item.sizePct, color: item.color,
-          font: item.font, b: head };
+          font: item.font, b: head || groupRow };
         var para = val
           ? '<a:p><a:pPr algn="l"/><a:r>' + runProps(run, page, 'rPr')
             + '<a:t>' + esc(val) + '</a:t></a:r></a:p>'
           : '<a:p><a:pPr algn="l"/>' + runProps(run, page, 'endParaRPr')
             + '</a:p>';
-        cells.push('<a:tc><a:txBody><a:bodyPr/><a:lstStyle/>' + para
+        var attr = merged ? ' hMerge="1"' : '';
+        if (groupRow && !merged) {
+          /* how many this one swallows: the span just consumed */
+          var n = Math.max(1, spans[span - 1] | 0);
+          if (n > 1) attr = ' gridSpan="' + n + '"';
+        }
+        cells.push('<a:tc' + attr + '><a:txBody><a:bodyPr/><a:lstStyle/>'
+          + para
           + '</a:txBody><a:tcPr marL="45720" marR="45720" marT="27432" '
           + 'marB="27432">' + border + '</a:tcPr></a:tc>');
       }
@@ -401,7 +421,7 @@ window.JunoPptx = (function () {
     /* firstRow="1" is what makes PowerPoint's own table styles bold the
        header; the run is bolded above as well so it looks right even with
        the style stripped */
-    var tblPr = '<a:tblPr firstRow="' + (item.thead ? 1 : 0)
+    var tblPr = '<a:tblPr firstRow="' + ((item.thead || spans) ? 1 : 0)
       + '" bandRow="1"/>';
     return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="' + id
       + '" name="' + esc('Table ' + id) + '"/><p:cNvGraphicFramePr/>'

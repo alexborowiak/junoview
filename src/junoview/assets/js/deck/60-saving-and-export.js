@@ -1739,10 +1739,15 @@
            for it rather than flattening a table into a grid of
            rectangles - which is not much of an export for anyone who
            then wants to edit the deck (2026-08-20) */
+        /* T324: the FORMATTED rows, with the group row on top and the
+           footer underneath -- the .pptx shows the table the slide
+           shows, rather than the raw cells with the structure dropped */
+        var tgs=tableGroups(a);
         items.push({t:'table',x:box.x,y:box.y,w:box.w,h:box.h,
-          rot:a.rot,op:a.op,rows:tableRows(a).map(function(r){
-            return r.map(function(v){return v==null?'':String(v);});}),
+          rot:a.rot,op:a.op,rows:tableViewRows(a),
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
+          /* the spans of the group row, so PowerPoint merges it too */
+          spans:tgs?tgs.map(function(g){return g.n;}):null,
           sizePct:a.size||2.2,color:tokVal(a.color)||ink,
           font:fontPpt(a.font)});
       } else if(a.k==='chart'){

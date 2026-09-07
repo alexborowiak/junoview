@@ -2119,6 +2119,15 @@
                    the four playback switches -->
               <!-- T322: everything a chart can be asked beyond its kind
                    and its numbers -->
+              <!-- T324: what each column of a table holds, and
+                   everything that follows from it -->
+              <span class="sh-drop" id="fmt-tablewrap" hidden>
+                <button class="dbtn etm" id="fmt-table"
+                  title="What each column holds &mdash; numbers or text
+ &mdash; and so how it lines up, how many decimals it shows, its units,
+ its footer and its colours"
+                  ><i data-ic="table"></i> Columns</button>
+              </span>
               <span class="sh-drop" id="fmt-chartwrap" hidden>
                 <button class="dbtn etm" id="fmt-chart"
                   title="Kind, stacking, log and second axes, data labels,
@@ -2480,6 +2489,14 @@
            here" and "this frame is the poster" are one click each;
            the numbers beside it for when you know them. -->
       <!-- T322: THE CHART PANE, rebuilt from the item on every sync -->
+      <!-- T324: THE TABLE PANE, one column at a time -->
+      <aside class="selpane tablepane" id="tablepane" hidden>
+        <div class="selpane-h"><span>Columns</span>
+          <button class="dbtn dc-icon" id="tablepane-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="selpane-list" id="tablepane-body"></div>
+      </aside>
       <aside class="selpane chartpane" id="chartpane" hidden>
         <div class="selpane-h"><span>Chart</span>
           <button class="dbtn dc-icon" id="chartpane-close"

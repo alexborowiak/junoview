@@ -1685,19 +1685,51 @@
       var c=document.createElement('col');
       c.style.width=w+'%';cg.appendChild(c);});
     tbl.appendChild(cg);
+    /* T324: what each column HOLDS, and everything that follows from it
+       -- the alignment, the decimals, the unit, the colour rule and the
+       footer. Computed once per draw, never stored, so editing a cell
+       moves all five and none of them can go stale. */
+    var metas=tableColMeta(a);
+    var ranges=metas.map(function(m,ci){
+      return (tableRuleOf(a,ci)||{}).kind==='scale'
+        ?tableColRange(a,ci,tableBodyFrom(a)):null;});
+    var groups=tableGroups(a);
+    if(groups){
+      var gtr=document.createElement('tr');
+      gtr.className='an-tbl-head an-tbl-grouprow';
+      groups.forEach(function(g){
+        var gth=document.createElement('th');
+        gth.colSpan=g.n;gth.textContent=g.text;
+        if(!g.text) gth.className='an-tbl-gapgroup';
+        gtr.appendChild(gth);
+      });
+      tbl.appendChild(gtr);
+    }
     /* an even share each, as a HINT: a browser treats a row height as a
        minimum, so short rows sit on the grid the box was drawn to and a
        long one still grows rather than clipping its own words */
-    var rowPct=(100/rows.length).toFixed(4)+'%';
+    var drawn=rows.length+(groups?1:0)+(tableHasCalc(a)?1:0);
+    var rowPct=(100/Math.max(1,drawn)).toFixed(4)+'%';
     rows.forEach(function(row,ri){
       var tr=document.createElement('tr');
       tr.style.height=rowPct;
       if(a.thead&&ri===0) tr.className='an-tbl-head';
       row.forEach(function(val,ci){
-        var td=document.createElement(
-          (a.thead&&ri===0)?'th':'td');
-        td.textContent=val==null?'':String(val);
+        var isHead=(a.thead&&ri===0);
+        var td=document.createElement(isHead?'th':'td');
+        var m=metas[ci]||{};
+        td.textContent=isHead?(val==null?'':String(val))
+          :tableFmtCell(val,m);
+        /* the box's own alignment still wins where it is set; a numeric
+           column falls to the right, which with a shared number of
+           decimals IS alignment on the point */
         if(a.align) td.style.textAlign=a.align;
+        else if(!isHead&&m.align) td.style.textAlign=m.align;
+        if(!isHead){
+          var fill=tableRuleFill(a,ci,val,ranges[ci]);
+          if(fill) td.style.background=fill;
+          if(m.t==='num') td.classList.add('an-tbl-num');
+        }
         if(editing){
           td.dataset.r=ri;td.dataset.c=ci;
           /* the WHOLE table drags from any cell; only a double-click puts
@@ -1711,6 +1743,21 @@
       });
       tbl.appendChild(tr);
     });
+    /* the footer, computed from the cells above it every time */
+    var calc=tableCalcRow(a,metas);
+    if(calc){
+      var ctr=document.createElement('tr');
+      ctr.className='an-tbl-calc';
+      ctr.style.height=rowPct;
+      calc.forEach(function(v,ci){
+        var ctd=document.createElement('td');
+        ctd.textContent=v;
+        if(a.align) ctd.style.textAlign=a.align;
+        else if((metas[ci]||{}).align) ctd.style.textAlign=metas[ci].align;
+        ctr.appendChild(ctd);
+      });
+      tbl.appendChild(ctr);
+    }
     host.appendChild(tbl);
     if(editing){
       host.appendChild(mkResize());
