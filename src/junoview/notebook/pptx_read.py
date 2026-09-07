@@ -39,7 +39,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from typing import Any
 
-from .sources import EMBED_CAP, IMG_MIME
+from .sources import EMBED_CAP, IMG_MIME, sheet_rows
 
 __all__ = ["PPTX_CAP", "PPTX_SUFFIXES", "is_pptx_name", "read_pptx",
            "read_pptx_b64"]
@@ -189,8 +189,8 @@ _LOST_TEXT = {
     "chartkind": "{n} chart{s} of a kind this cannot read ({kinds}) — "
                  "left out; save {it} as a picture in PowerPoint and "
                  "place that",
-    "chartcache": "{n} chart{s} with no values cached in the file — "
-                  "left out",
+    "chartcache": "{n} chart{s} with neither cached values nor a "
+                  "workbook beside them — left out",
     "ole": "{n} embedded object{s} (Excel sheets, equations or other "
            "documents) — left out",
     "smartart": "SmartArt on {n} slide{s} — its words arrive as a "
@@ -1509,6 +1509,14 @@ class _SlideReader:
         if not ct:
             return
         if not series:
+            # T323: THE NUMBERS MAY BE IN THE WORKBOOK. A chart carries
+            # its values twice -- cached in the XML, and in the .xlsx
+            # behind "Edit Data" -- and a tool that strips the caches
+            # (or a deck saved by one) leaves only the second. The grid
+            # is the one this exporter writes and PowerPoint expects:
+            # names along row 1, categories down column A.
+            cats, series = self._chart_book(part, root)
+        if not series:
             self.lost.add("chartcache")
             return
         title = _chart_text(root.find("./c:chart/c:title/c:tx", NS))
@@ -1520,6 +1528,32 @@ class _SlideReader:
                      "xlab": titles["b"], "ylab": titles["l"],
                      "y2lab": titles["r"]})
         self._push(el, item)
+
+    def _chart_book(self, part: str,
+                    root: ET.Element) -> tuple[list[str], list[dict]]:
+        """The chart's embedded workbook, as (categories, series)."""
+        ext = root.find("./c:externalData", NS)
+        rid = ext.get(f"{{{_R}}}id") if ext is not None else None
+        tgt = self.pkg.target(part, rid)
+        if not tgt or not self.pkg.has(tgt):
+            return [], []
+        data = self.pkg.read(tgt)
+        if len(data) > EMBED_CAP:
+            return [], []
+        try:
+            rows = sheet_rows(data)
+        except Exception:                      # noqa: BLE001 -- reported
+            return [], []
+        if len(rows) < 2 or len(rows[0]) < 2:
+            return [], []
+        heads = rows[0][1:]
+        cats = [r[0] for r in rows[1:]]
+        out: list[dict] = []
+        for i, head in enumerate(heads):
+            ys = [_num(r[i + 1]) if i + 1 < len(r) else 0.0
+                  for r in rows[1:]]
+            out.append({"name": head or f"Series {i + 1}", "ys": ys})
+        return cats, out
 
     def _smartart(self, el: ET.Element, box: dict, gd: ET.Element) -> None:
         ids = gd.find("dgm:relIds", NS)

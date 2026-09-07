@@ -7100,7 +7100,26 @@ first. Ticked in the commit that ships each.
   series was hidden took the hidden one's name, and the reader threw
   away a whole chart over one unreadable group, lost a pie's labels and
   said nothing about asymmetric error bars.
-- [ ] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".
+- [x] **T323 (list 4, H) Embedded chart workbooks** for PowerPoint's "Edit Data".
+  Done 2026-09-07, closing the cut T117 recorded ("no embedded workbook
+  part ... only its 'Edit Data' sheet needs the workbook, and that is a
+  second file format"). Every exported chart now carries a real .xlsx at
+  `ppt/embeddings/Microsoft_Excel_Sheet{n}.xlsx`, named by the first
+  rels part a chart part has ever had (`/relationships/package`) and
+  pointed at by `<c:externalData>` after `c:txPr`, where CT_ChartSpace
+  puts it. The grid is the one the `c:f` formulas have always claimed --
+  names along row 1, categories down column A, values under their names,
+  each error series in the column `chartSerExtras` points at -- so Edit
+  Data opens the numbers you actually typed instead of an empty sheet
+  whose first edit overwrites the chart. `Zip` grew `bytes()` because an
+  .xlsx is a zip that has to become a member of the .pptx zip; strings
+  go out inline, so there is no sharedStrings part to keep in step, and
+  the export is still byte-identical run to run.
+  The reader closes the loop: a chart whose caches another tool stripped
+  now has its numbers read out of the workbook beside it
+  (`_chart_book`), through `sheet_rows` -- the SpreadsheetML walk
+  `parse_workbook` has used since T113, given a public name rather than
+  a second copy. A chart with neither is named in the loss report.
 - [ ] **T324 (list 5, M) Structured tables**: column types, decimal alignment, number formats, conditional formatting, merged headers, formulas.
 - [ ] **T325 (list 6, M) Citation and bibliography manager**: BibTeX, DOI lookup, numbered references, footnotes, citation styles.
 - [ ] **T326 (list 7, M) Equation numbering and cross-references.**

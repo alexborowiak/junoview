@@ -828,6 +828,43 @@ def _xl_rows(root, shared: list[str]) -> list[list[str]]:
     return [r + [""] * (width - len(r)) for r in rows]
 
 
+def sheet_rows(data: bytes, sheet: str | None = None) -> list[list[str]]:
+    """The cells of one worksheet of an .xlsx, as rows of strings.
+
+    Public because the chart reader (T323) needs exactly this and a
+    second copy of the SpreadsheetML walk is how two readers start
+    disagreeing about what a cell is. `sheet` names a worksheet; absent,
+    the first one wins.
+    """
+    z = zipfile.ZipFile(io.BytesIO(data))
+    shared: list[str] = []
+    if "xl/sharedStrings.xml" in z.namelist():
+        shared = [_xl_text(si)
+                  for si in ET.fromstring(z.read("xl/sharedStrings.xml"))
+                  if _xl_local(si.tag) == "si"]
+    rels: dict[str, str] = {}
+    if "xl/_rels/workbook.xml.rels" in z.namelist():
+        for rel in ET.fromstring(z.read("xl/_rels/workbook.xml.rels")):
+            rels[rel.get("Id") or ""] = rel.get("Target") or ""
+    rid_attr = ("{http://schemas.openxmlformats.org/officeDocument"
+                "/2006/relationships}id")
+    target = ""
+    wb = ET.fromstring(z.read("xl/workbook.xml"))
+    for el in wb.iter():
+        if _xl_local(el.tag) != "sheet":
+            continue
+        if sheet and (el.get("name") or "") != sheet:
+            continue
+        t = rels.get(el.get(rid_attr) or "", "")
+        t = (t[1:] if t.startswith("/") else posixpath.normpath("xl/" + t))
+        if t in z.namelist():
+            target = t
+            break
+    if not target:
+        return []
+    return _xl_rows(ET.fromstring(z.read(target)), shared)
+
+
 def parse_workbook(data: bytes, title: str | None = None,
                    base: Path | None = None) -> Document:
     """A .xlsx into one table card per worksheet, values only."""
