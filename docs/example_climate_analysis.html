@@ -192,8 +192,17 @@ body.prrail-auto .railnbs{display:flex;}
 .railnbs-add:hover{background:color-mix(in srgb,var(--accent) 12%,
   transparent);}
 /* where this notebook came from: path + git commit + earlier versions,
-   with the reload button beside it (it used to hide on the tab) */
+   with the reload button beside it (it used to hide on the tab).
+   T364: it is DOCKED in the ribbon's File group now, and the margin
+   that spaced it under the notebook's name goes when it is. */
 .railfile{display:flex;gap:4px;margin-top:11px;}
+#file-dock .railfile{margin-top:0;gap:3px;}
+/* the ribbon has ONE height and one baseline; a docked bar that keeps
+   its sidebar metrics is exactly how that rule gets broken quietly */
+#file-dock .rf-btn{height:28px;box-sizing:border-box;padding:0 7px;
+  font-size:10.5px;flex:none;white-space:nowrap;}
+#file-dock .rf-info{flex:none;max-width:150px;}
+#file-dock .rf-reload{font-size:11px;padding:0 8px;}
 .rf-btn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
   border:1px solid var(--btn-border);background:var(--btn-bg);
   color:var(--btn-ink);
@@ -296,6 +305,12 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 .rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
   border-radius:7px;padding:9px 10px;background:var(--surface-hover);}
 .rf-panel[hidden]{display:none;}
+/* T364: opened from the ribbon it hangs off <body>, like every other
+   menu the bar drops -- the header is sticky, so a panel inside it
+   paints behind the page */
+.rf-panel.rf-float{position:fixed;z-index:200;width:300px;margin-top:0;
+  background:var(--chrome-2);box-shadow:0 12px 40px var(--shadow);
+  max-height:min(70vh,560px);overflow-y:auto;}
 .rf-row{display:flex;flex-direction:column;gap:1px;margin-bottom:8px;
   min-width:0;}
 .rf-row:last-child{margin-bottom:0;}
@@ -873,46 +888,20 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   transition:opacity .15s,background .15s;}
 .card:hover .cell-eye,.cell-eye:focus-visible{opacity:.55;}
 .cell-eye:hover{opacity:1;background:var(--paper-2);}
-/* ...and the list of them, above the sections. A mark you cannot find
-   again is a mark for nothing. */
-.navmarks{display:flex;flex-direction:column;gap:1px;
-  padding:0 6px 8px;margin-bottom:6px;
-  border-bottom:1px solid var(--chrome-line,#ffffff14);}
-.navmarks[hidden]{display:none;}
-.navmarks-h{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--chrome-ink-3,#7d93a6);
-  padding:4px 4px 5px;}
-.navmark{display:flex;align-items:center;gap:8px;padding:4px 6px;
-  border-radius:5px;text-decoration:none;font-size:12.5px;
-  color:var(--chrome-ink-2);}
-.navmark:hover{color:var(--chrome-ink);background:#ffffff08;}
-.navmark-ic{flex:none;display:flex;line-height:0;opacity:.75;}
-.navmark-ic svg{width:12px;height:12px;}
-.navmark-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
-.navmark.is-pinned .navmark-ic{color:var(--cyan);opacity:1;}
-.navmark.mk-star .navmark-ic{color:var(--amber,#f0a848);opacity:1;}
-.navmark.mk-heart .navmark-ic{color:#e0757c;opacity:1;}
-.navmark.mk-flag .navmark-ic{color:#5fc4ac;opacity:1;}
-/* T257: "show only" -- the gate, on the row with the marks it acts on.
-   Chips WRAP here on purpose: this is a sidebar block, not the ribbon,
-   and the never-wrap rule is about the toolbar. Every chip is a word
-   plus its icon; "All" is always there, so getting back out is a
-   button rather than something you have to remember. */
-.navonly{display:flex;flex-wrap:wrap;gap:4px;padding:2px 4px 7px;}
-.navonly-b{display:inline-flex;align-items:center;gap:4px;
-  font-family:var(--mono);font-size:10.5px;line-height:1;
-  padding:4px 7px;border-radius:5px;cursor:pointer;white-space:nowrap;
-  border:1px solid var(--chrome-line,#ffffff22);
-  background:var(--btn-bg,#ffffff0e);color:var(--chrome-ink-3,#8ea2b3);}
-.navonly-b:hover{border-color:var(--cyan);color:var(--chrome-ink,#e7eff5);}
-.navonly-b .bic{width:11px;height:11px;flex:none;}
-.navonly-b.on{border-color:var(--cyan);color:var(--cyan);
-  background:var(--selection,#238aa02e);}
-.navonly-b[data-only="star"].on{border-color:var(--amber,#f0a848);
-  color:var(--amber,#f0a848);}
-.navonly-b[data-only="heart"].on{border-color:#e0757c;color:#e0757c;}
-.navonly-b[data-only="flag"].on{border-color:#5fc4ac;color:#5fc4ac;}
+/* T364: ...and the mark sits on the row the cell ALREADY has, rather
+   than copying that cell into a list above the sections. Both symbols
+   show when a cell is pinned AND marked: they are two different facts
+   about it, and the colour is the mark's own so the row reads at a
+   glance (2026-09-07, user: "just have the symbols appear next to them
+   where they are in the side bar"). */
+.navitem-mk{flex:none;display:flex;align-items:center;gap:3px;
+  line-height:0;}
+.navitem-mk .mk-i{display:flex;line-height:0;}
+.navitem-mk .bic{width:11px;height:11px;}
+.mk-i-pin{color:var(--cyan);}
+.mk-i-star{color:var(--amber,#f0a848);}
+.mk-i-heart{color:#e0757c;}
+.mk-i-flag{color:#5fc4ac;}
 /* code fully hidden: the code tucked under figures disappears too */
 .codewrap.code-off{display:none;}
 .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
@@ -1699,10 +1688,10 @@ body.presrail-min{--presrail-w:46px;}
    it just sits at its natural 28px */
 #ab-file .abgrp-row .fgrp{flex:1;}
 #ab-file .abgrp-row .toggle{height:auto;min-height:28px;flex:1;}
-/* Present is the important control in its section and had dead space
-   under it, so it spans both rows beside the Raw/Tree stack */
+/* Present had dead space under it, so T-era CSS let it span both rows
+   beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
+   screen is the same idea, and the two stack the way Raw and Tree do. */
 #ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
-#ab-view #doc-present{height:auto;min-height:28px;}
 /* T260: Help used to be icon-only, and this rule squared it off. It has
    carried the word "Help" since; with the square kept, the word simply
    painted outside the 28px box and over its neighbour. Sized by its
@@ -1748,7 +1737,8 @@ body.presrail-min{--presrail-w:46px;}
    its button (see fitRibbon's caller). */
 .abgrp.grp-empty{display:none!important;}
 /* Present spans two rows: centre its content in the taller box */
-#ab-view #doc-present{justify-content:center;align-items:center;}
+#ab-view #doc-present,#ab-view #doc-full{
+  justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -2249,17 +2239,12 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);
   color:var(--cyan-deep);font-family:var(--mono);font-size:15px;font-weight:600;
   display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
-/* the drop hint: the same words, one fewer band on the first screen.
-   T282 put it under the Notebooks section's Open door -- .wj-drop sets
-   the type, this sets the colour and kills the margin. (The old comment
-   here promised a flex-basis:100% that T240's grid had already
-   removed.) */
-.welcome-drop{display:block;font-weight:400;color:var(--ink-3);margin:0;}
-.welcome-drop b{color:var(--ink-2);}
-/* T240 made the drop hint one card's second line, in that card's own
-   type. T282 moved it under the Notebooks section's Open door, where
-   .wj-drop sets that type -- so this rule, which selected inside the
-   deleted card grid, went with it. */
+/* T364: the drop hint is not a line on this screen any more. What
+   formats parse and that you may drop them is a fact about Open, so it
+   is Open's tooltip (2026-09-07, user: "The open screen still has way
+   to much text"). T240 made it a card's second line, T282 moved it
+   under the Notebooks section's door; this takes the words off the
+   page altogether, and their five style rules with them. */
 /* ---- "jump back in": the two things you might be coming back to ----
    Recent notebooks and the presentations built from them, side by side.
    Both columns hide themselves when empty, and the band with them --
@@ -2314,10 +2299,8 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .wj-none{font-family:var(--mono);font-size:11px;color:var(--ink-3);
   padding:2px 1px;}
 .wj-none[hidden]{display:none;}
-.wj-drop{font-family:var(--sans);font-size:11.5px;line-height:1.45;
-  color:var(--ink-3);margin-top:2px;}
 body:not(.light) .wj-new{background:var(--paper);}
-body:not(.light) .wj-none,body:not(.light) .wj-drop{color:var(--ink-3);}
+body:not(.light) .wj-none{color:var(--ink-3);}
 .recent,.wpres{display:flex;flex-direction:column;gap:6px;min-width:0;}
 .recent[hidden],.wpres[hidden]{display:none;}
 .recent-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
@@ -2379,8 +2362,6 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
    It opened collapsed (one row on a ten-section notebook), offered only
    Select all, and made the whole row the selector with a 9px chevron
    inside it as the expander -- two gestures in one target. */
-.ckf-why{font-family:var(--sans);font-size:11.5px;line-height:1.5;
-  color:var(--ink-3);padding:2px 10px 8px;}
 .ckf-bulk{display:flex;align-items:center;gap:6px;padding:0 8px 8px;
   border-bottom:1px solid var(--line);margin-bottom:6px;}
 .ckf-bulk .ckf-all{margin:0;}
@@ -2707,6 +2688,22 @@ body:not(.light) .ot-stub:hover{color:var(--cyan);}
 /* the labelled dimension of the Plot-types menu */
 .ckf-dot.pt-sw-titled{background:#6cc08f;}
 .ckf-dot.pt-sw-untitled{background:#5f7386;}
+/* T364: the mark gate, in the Filters group. Ribbon buttons, so they
+   take the bar's one height and one baseline rather than inventing a
+   third; the pressed one is coloured by the mark it stands for, not by
+   one generic accent, which is how you tell at a glance which gate is
+   shut (2026-09-07, user: "I hate it being in the side bar"). */
+.mkchip[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 18%,transparent);}
+.mkchip[data-only="star"][aria-pressed="true"]{
+  border-color:var(--amber,#f0a848);color:var(--amber,#f0a848);
+  background:color-mix(in srgb,#f0a848 16%,transparent);}
+.mkchip[data-only="heart"][aria-pressed="true"]{
+  border-color:#e0757c;color:#e0757c;
+  background:color-mix(in srgb,#e0757c 16%,transparent);}
+.mkchip[data-only="flag"][aria-pressed="true"]{
+  border-color:#5fc4ac;color:#5fc4ac;
+  background:color-mix(in srgb,#5fc4ac 16%,transparent);}
 /* "Apply to" scope picker: the section tree, tier-indented + tickable */
 .scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
   overflow-y:auto;}
@@ -3056,8 +3053,6 @@ body:not(.light) .welcome-note b{color:var(--accent);}
    The reel's own rules live once, above. */
 body:not(.light) .welcome-steps li{color:var(--ink-2);}
 body:not(.light) .ws-n{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
-body:not(.light) .welcome-drop{color:var(--ink-3);}
-body:not(.light) .welcome-drop b{color:var(--ink-2);}
 body:not(.light) .recent-i{background:var(--paper);
   border-color:var(--line);color:var(--accent);}
 body:not(.light) .recent-i:hover{background:color-mix(in srgb,
@@ -5015,10 +5010,25 @@ body.light .img-row{color:var(--ink-2);}
 .rbn-row .lay-tidy{height:30px;}
 /* three page sizes in sight and the rest a scroll or the chevron away
    (T204): Design has to seat Layout in front of this group */
-.tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 72px;
-  scroll-snap-align:start;}
-.tx-tile-a{display:flex;align-items:center;justify-content:center;
-  height:22px;line-height:1;font-size:16px;font-family:var(--sans);}
+.page-strip .fx-tile{flex:0 0 72px;scroll-snap-align:start;}
+/* THE TEXT TILES ARE HALF-HEIGHT AND WRAP (2026-09-07, user: "The
+   headings are really important. Being able to make these is
+   important. Either make the box longer, or make each half as high and
+   have two rows"). The name IS the specimen now, so a tile is one line
+   of type and two rows fit in the height one row used to take. */
+/* .strip-frame sets every tile 56px tall and 72px wide, and it sits
+   LATER in this file -- so at equal specificity it won and these never
+   shrank. Named through the frame to beat it, deliberately, because
+   this strip is the one place a tile is a line of type rather than a
+   glyph over a word. */
+.strip-frame>.tx-strip{flex-wrap:wrap;align-content:center;
+  gap:4px;max-height:60px;}
+.strip-frame .tx-strip .fx-tile{height:26px;flex:0 0 auto;
+  width:auto;min-width:58px;max-width:104px;
+  flex-direction:row;padding:0 8px;gap:0;scroll-snap-align:start;}
+.tx-tile-n{display:block;line-height:1.05;font-family:var(--sans);
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
 /* T190: the page-size tiles, each drawn at its own proportion */
 .page-ico{display:block;border:1.5px solid currentColor;border-radius:2px;
   opacity:.85;box-sizing:border-box;}
@@ -5658,6 +5668,24 @@ select#fmt-font[hidden]{display:none;}
 .tablepane .tp-col{width:26px;height:22px;padding:0;flex:none;
   border:1px solid #ffffff26;border-radius:4px;background:none;
   cursor:pointer;}
+/* T325: the citations pane. One entry a row, its number first so the
+   list reads as the bibliography it will become. */
+.citepane .ct-row{flex-wrap:wrap;gap:4px;align-items:baseline;}
+.citepane .ct-entry{padding:5px 0;border-top:1px solid #ffffff12;}
+.citepane .ct-num{flex:none;font-family:var(--mono);font-size:11px;
+  opacity:.8;min-width:26px;}
+.citepane .ct-ref{flex:1 1 100%;font-size:11px;line-height:1.45;}
+.citepane .ct-btn{font-size:11px;padding:2px 7px;}
+.citepane .ct-btn.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 55%,
+  transparent);color:#fff;}
+.citepane .ct-hint,.citepane .ct-warn{text-transform:none;
+  letter-spacing:0;font-size:11px;line-height:1.45;}
+.citepane .ct-warn{color:var(--coral,#ff6b57);opacity:.95;}
+/* the footnote strip a slide's citations land in */
+.slide-citefoot{position:absolute;left:4%;right:4%;bottom:1.2%;
+  font-size:0.9em;opacity:.7;line-height:1.35;pointer-events:none;
+  text-align:left;}
 .tablepane .tp-hint{opacity:.75;font-size:11px;text-transform:none;
   letter-spacing:0;line-height:1.4;}
 .chartpane .cp-hint{opacity:.75;font-size:11px;text-transform:none;
@@ -6892,6 +6920,30 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-keyit{display:inline-flex;align-items:center;gap:5px;}
 .dg-keyit::before{content:"";width:11px;height:11px;border-radius:3px;
   border:1px dashed var(--dg-kc,#8aa0b0);}
+/* WHERE THEY ARE, GROUPED (2026-09-07). One row per place, its count,
+   and the slides in it as chips you can press. */
+.dg-place{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:baseline;
+  gap:4px 8px;padding:4px 0;border-top:1px solid #ffffff12;}
+.dg-placehead{font-size:11px;opacity:.85;flex:0 0 auto;}
+.dg-placeslides{display:flex;flex-wrap:wrap;gap:3px;}
+.dg-slidechip{font-family:var(--mono);font-size:10px;line-height:1;
+  padding:2px 5px;border-radius:4px;cursor:pointer;color:#c9d6e2;
+  background:none;border:1px solid #ffffff26;}
+.dg-slidechip:hover{border-color:color-mix(in srgb,var(--accent) 55%,
+  transparent);background:color-mix(in srgb,var(--accent) 14%,
+  transparent);color:#fff;}
+/* the board's own bubble: what is under the pointer, and a way there */
+.dg-bub{position:absolute;z-index:30;min-width:120px;max-width:230px;
+  display:flex;flex-direction:column;gap:2px;padding:4px;
+  background:var(--chrome-2,#16273a);border:1px solid #ffffff2e;
+  border-radius:7px;box-shadow:0 10px 26px #0009;}
+.dg-bubline{text-align:left;font-family:var(--sans);font-size:11px;
+  line-height:1.25;padding:3px 6px;border-radius:4px;cursor:pointer;
+  color:#dce6ee;background:none;border:1px solid transparent;}
+.dg-bubline:hover{background:color-mix(in srgb,var(--accent) 18%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 45%,
+  transparent);color:#fff;}
+.dg-bubmore{font-size:10px;opacity:.7;padding:0 6px 2px;}
 .dg-keyit.dg-keymine::before{border:2px solid var(--amber,#f0a848);
   background:rgba(240,168,72,.18);}
 /* the numbers under the board are a captioned group, not three loose
@@ -8486,8 +8538,13 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 /* a strip's width is a whole number of tiles: four, or three for the
    page sizes, so no tile is ever cut at the edge */
 .strip-frame>.fx-strip,.strip-frame>.fx-strip.lay-strip,
-.strip-frame>.fx-strip.shape-strip,.strip-frame>.fx-strip.tx-strip{
+.strip-frame>.fx-strip.shape-strip{
   width:calc(4 * 72px + 3 * 4px + 8px);}
+/* the text tiles are as wide as their NAMES since 2026-09-07, so a
+   whole number of 72px tiles no longer describes this strip. Wide
+   enough that the eight built-in types fall in two rows; a deck with
+   more scrolls, and the frame's own arrows move it. */
+.strip-frame>.fx-strip.tx-strip{width:calc(5 * 72px + 4 * 4px + 8px);}
 .strip-frame>.fx-strip.page-strip{width:calc(3 * 72px + 2 * 4px + 8px);}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
@@ -8973,12 +9030,17 @@ window.MathJax = {
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <div class="appbar">
-    <!-- File info + reload live at the top of the sidebar, beside the
-         notebook they describe; only Open belongs to the app itself -->
+    <!-- T364: File info, Reload and Show all hidden are RIBBON controls
+         (2026-09-07, user: "move the file into stuff and the refresh out
+         of the side bar and into the ribbon"). #file-dock is where the
+         ACTIVE notebook's own .railfile bar is parked -- the node moves,
+         it is not rebuilt, so wireFileInfo's handlers stay live and each
+         notebook keeps its own bar. See dockFileBar(). -->
     <span class="abgrp" id="ab-file"><span class="abgrp-row"><span class="fgrp" id="file-grp">
       <button class="toggle primary" id="tab-open" hidden
         title="Open a notebook (.ipynb) from your computer or a
  URL"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg><span class="btxt">Open</span></button>
+      <span class="fgrp-row" id="file-dock"></span>
     </span></span><span class="abgrp-lab">File</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
@@ -9015,6 +9077,17 @@ window.MathJax = {
         title="Choose which printed output you see — print, dataset,
  result, error — each with its own On / Fold / Off"
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Choose</span></button>
+    </span>
+    <!-- T364: SHOW ONLY WHAT YOU MARKED, on the row (2026-09-07, user:
+         "where is the button that has just the just show the pinned or
+         hearted etc. I hate it being in the side bar. That sucks
+         shit."). T257 put these chips in the sidebar beside a list of
+         the marked cells; both that list and the chips are gone from
+         there. Filled by renderMarkGate() and hidden while this
+         notebook has no marks at all -- a chip for a mark you have
+         never used is a chip that empties the page. -->
+    <span class="fgrp" id="marks-grp" hidden>
+      <span class="fgrp-row" id="marks-row"></span>
     </span></span><span class="abgrp-lab">Filters</span></span>
     <!-- this middle pair carries filt-div too: it vanishes with the
          filter sections in Tree view, and the measured filters slot
@@ -9024,11 +9097,8 @@ window.MathJax = {
     <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
-        title="Choose WHICH sections the filters above act on — select the
- headings and sub-headings to include, change the filters, then select a
- different set and filter those differently. Each section remembers its
- own filters."
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg><span class="btxt">Sections: All</span></button>
+        title="Which sections the filters act on"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg><span class="btxt">All sections</span></button>
       <button class="toggle sub" id="filters-reset"
         title="Put every filter — and every per-section change — in THIS
  notebook back to the defaults"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/></svg><span class="btxt">Reset</span></button>
@@ -9107,9 +9177,22 @@ window.MathJax = {
  collapse and hide cell by cell. Toggle back for the narrative document."
       ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/><rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/><rect x="10" y="11" width="4.4" height="3.2" rx=".8"/><path d="M8 5v3.2M3.8 11V8.2h8.4V11"/></svg><span class="btxt">Tree</span></button>
     </span>
+    <!-- T364: FULL SCREEN, ANYWHERE (2026-09-07, user: "there needs to
+         be a universal full screen button somewhere so whole thing can
+         always be full screen"). The deck has had one beside Present
+         since T216, at the user's own asking; the viewer had only
+         Present, which changes WHAT you are looking at as well as how
+         big it is. Stacked under Present rather than added to the App
+         group: it is the same idea as its neighbour, and a sixth button
+         over there cost the bar 90px it does not have. -->
+    <span class="vw-stack">
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
  exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg><span class="btxt">Present</span></button>
+    <button class="toggle" id="doc-full" aria-pressed="false"
+      title="Fill the display with Junoview (Esc to leave)"
+      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span class="btxt">Full screen</span></button>
+    </span>
     </span></span><span class="abgrp-lab">View</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
@@ -9393,14 +9476,21 @@ window.MathJax = {
       <div class="raildoct" title="The notebook’s first heading">Southern Hemisphere blocking &amp; ENSO diagnostics</div>
       <div class="railmeta">7 figures · 1 datasets · 10 sections</div>
       <div class="railfile">
+        <!-- T364: "Info", not "File info": this bar is docked under
+             the ribbon's File heading, and saying the word twice is
+             exactly the clutter the user keeps pointing at. -->
         <button class="rf-btn rf-info" type="button"
           title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/><path d="M8 4.9v.1"/></svg>File info
+ and every earlier version you can open"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/><path d="M8 4.9v.1"/></svg>Info
           &#9662;</button>
+        <!-- T364: it wears its word now. In the sidebar it was a
+             small glyph beside a wide File info; docked in the ribbon
+             it is a ribbon button, and this project has rejected
+             icon-only buttons twice. -->
         <button class="rf-btn rf-reload" type="button"
           aria-label="Reload this notebook"
           title="Reload this notebook from
- disk"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg></button>
+ disk"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg>Reload</button>
         <!-- shown only while something IS hidden: a permanent button for a
              state you are usually not in is clutter -->
         <button class="rf-btn rf-unhide" type="button" hidden
@@ -9410,7 +9500,7 @@ window.MathJax = {
       <div class="rf-panel" hidden></div>
     </div>
     
-    <nav class="nav" aria-label="Analysis sections"><div class="navmarks" hidden></div><div class="navkey"><span class="navkey-h">key</span><span class="nk k-note"><span class="dot"></span>markdown</span><span class="navkey-div" aria-hidden="true"></span><span class="nk k-figure"><span class="dot"></span>figure</span><span class="navkey-div" aria-hidden="true"></span><span class="nk k-code"><span class="dot"></span>code</span><span class="nk k-transform"><span class="dot"></span>transform</span><span class="nk ckmain-data"><span class="dot"></span>data</span><span class="nk ckmain-print"><span class="dot"></span>print</span></div><div class="navsec-row navsec-l1" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics" data-level="1"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-southern-hemisphere-blocking-enso-diagnostics" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics"><span class="navsec-t">Southern Hemisphere blocking &amp; ENSO diagnostics</span><span class="navsec-c">7</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l1" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics"><a class="navitem k-note" href="#card-note" data-item="note"><span class="dot"></span><span class="navitem-t">Southern Hemisphere blocking &amp; ENSO diagnostics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-dataset" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-dataset" data-sec="sec-dataset"><span class="navsec-t">Dataset</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-dataset"><a class="navitem k-note" href="#card-note-2" data-item="note-2"><span class="dot"></span><span class="navitem-t">Dataset</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-code" href="#card-imports-plotting-style" data-item="imports-plotting-style"><span class="dot"></span><span class="navitem-t">Imports &amp; plotting style</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-grid" data-item="grid"><span class="dot"></span><span class="navitem-t">Grid &amp; time axis</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-modes" data-item="modes"><span class="dot"></span><span class="navitem-t">Synthetic climatology &amp; variability modes</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-dataset ckmain-data" href="#card-z500" data-item="z500"><span class="dot"></span><span class="navitem-t">Daily Z500 field, Southern Hemisphere (synthetic)</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-metric ckmain-print" href="#card-coverage" data-item="coverage"><span class="dot"></span><span class="navitem-t">Temporal &amp; spatial coverage</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-transforms" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-transforms" data-sec="sec-transforms"><span class="navsec-t">Transforms</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-transforms"><a class="navitem k-note" href="#card-note-3" data-item="note-3"><span class="dot"></span><span class="navitem-t">Transforms</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-clim" data-item="clim"><span class="dot"></span><span class="navitem-t">Day-of-year climatology</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-anom" data-item="anom"><span class="dot"></span><span class="navitem-t">Seasonal-cycle removal -&gt; daily anomalies</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-blocking-diagnostics" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-blocking-diagnostics" data-sec="sec-blocking-diagnostics"><span class="navsec-t">Blocking diagnostics</span><span class="navsec-c">4</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-blocking-diagnostics"><a class="navitem k-note" href="#card-note-4" data-item="note-4"><span class="dot"></span><span class="navitem-t">Blocking diagnostics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Climatology</div><a class="navitem k-figure" href="#card-clim-map" data-item="clim-map"><span class="dot"></span><span class="navitem-t">DJF mean Z500 and the climatological ridge</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-the-blocking-index" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-the-blocking-index" data-sec="sec-the-blocking-index"><span class="navsec-t">The blocking index</span><span class="navsec-c">2</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-the-blocking-index"><a class="navitem k-note" href="#card-note-5" data-item="note-5"><span class="dot"></span><span class="navitem-t">The blocking index</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Blocking frequency</div><a class="navitem k-transform" href="#card-tasman" data-item="tasman"><span class="dot"></span><span class="navitem-t">Tasman sector box-mean series</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-blockidx" data-item="blockidx"><span class="dot"></span><span class="navitem-t">Blocking threshold &amp; DJF frequency</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-block-freq" data-item="block-freq"><span class="dot"></span><span class="navitem-t">Tasman blocking frequency by austral summer</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-metric ckmain-print" href="#card-block-stat" data-item="block-stat"><span class="dot"></span><span class="navitem-t">Blocking summary statistics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Regional composite</div><a class="navitem k-figure" href="#card-block-comp" data-item="block-comp"><span class="dot"></span><span class="navitem-t">Composite Z500 anomaly on blocked days</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-zonal-mean-evolution" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-zonal-mean-evolution" data-sec="sec-zonal-mean-evolution"><span class="navsec-t">Zonal-mean evolution</span><span class="navsec-c">1</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-zonal-mean-evolution"><a class="navitem k-note" href="#card-note-6" data-item="note-6"><span class="dot"></span><span class="navitem-t">Zonal-mean evolution</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-zonal-hov" data-item="zonal-hov"><span class="dot"></span><span class="navitem-t">Zonal-mean Z500 anomaly (time-latitude)</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-enso-diagnostics" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-enso-diagnostics" data-sec="sec-enso-diagnostics"><span class="navsec-t">ENSO diagnostics</span><span class="navsec-c">3</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-enso-diagnostics"><a class="navitem k-transform" href="#card-enso-idx" data-item="enso-idx"><span class="dot"></span><span class="navitem-t">Project anomalies onto the ENSO pattern</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-index-construction" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-index-construction" data-sec="sec-index-construction"><span class="navsec-t">Index construction</span><span class="navsec-c">3</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-index-construction"><a class="navitem k-note" href="#card-note-7" data-item="note-7"><span class="dot"></span><span class="navitem-t">Index construction</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-nino34" data-item="nino34"><span class="dot"></span><span class="navitem-t">ENSO index from the leading SH anomaly mode</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Teleconnections</div><a class="navitem k-figure" href="#card-enso-comp" data-item="enso-comp"><span class="dot"></span><span class="navitem-t">Warm-phase teleconnection composite</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-enso-spec" data-item="enso-spec"><span class="dot"></span><span class="navitem-t">Power spectrum of the ENSO index</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-interpretation" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-interpretation" data-sec="sec-interpretation"><span class="navsec-t">Interpretation</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-interpretation"><a class="navitem k-note" href="#card-note-8" data-item="note-8"><span class="dot"></span><span class="navitem-t">Interpretation</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-caveats" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-caveats" data-sec="sec-caveats"><span class="navsec-t">Caveats</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-caveats"><a class="navitem k-note" href="#card-note-9" data-item="note-9"><span class="dot"></span><span class="navitem-t">Caveats</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div></nav>
+    <nav class="nav" aria-label="Analysis sections"><div class="navkey"><span class="navkey-h">key</span><span class="nk k-note"><span class="dot"></span>markdown</span><span class="navkey-div" aria-hidden="true"></span><span class="nk k-figure"><span class="dot"></span>figure</span><span class="navkey-div" aria-hidden="true"></span><span class="nk k-code"><span class="dot"></span>code</span><span class="nk k-transform"><span class="dot"></span>transform</span><span class="nk ckmain-data"><span class="dot"></span>data</span><span class="nk ckmain-print"><span class="dot"></span>print</span></div><div class="navsec-row navsec-l1" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics" data-level="1"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-southern-hemisphere-blocking-enso-diagnostics" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics"><span class="navsec-t">Southern Hemisphere blocking &amp; ENSO diagnostics</span><span class="navsec-c">7</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l1" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics"><a class="navitem k-note" href="#card-note" data-item="note"><span class="dot"></span><span class="navitem-t">Southern Hemisphere blocking &amp; ENSO diagnostics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-dataset" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-dataset" data-sec="sec-dataset"><span class="navsec-t">Dataset</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-dataset"><a class="navitem k-note" href="#card-note-2" data-item="note-2"><span class="dot"></span><span class="navitem-t">Dataset</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-code" href="#card-imports-plotting-style" data-item="imports-plotting-style"><span class="dot"></span><span class="navitem-t">Imports &amp; plotting style</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-grid" data-item="grid"><span class="dot"></span><span class="navitem-t">Grid &amp; time axis</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-modes" data-item="modes"><span class="dot"></span><span class="navitem-t">Synthetic climatology &amp; variability modes</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-dataset ckmain-data" href="#card-z500" data-item="z500"><span class="dot"></span><span class="navitem-t">Daily Z500 field, Southern Hemisphere (synthetic)</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-metric ckmain-print" href="#card-coverage" data-item="coverage"><span class="dot"></span><span class="navitem-t">Temporal &amp; spatial coverage</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-transforms" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-transforms" data-sec="sec-transforms"><span class="navsec-t">Transforms</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-transforms"><a class="navitem k-note" href="#card-note-3" data-item="note-3"><span class="dot"></span><span class="navitem-t">Transforms</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-clim" data-item="clim"><span class="dot"></span><span class="navitem-t">Day-of-year climatology</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-anom" data-item="anom"><span class="dot"></span><span class="navitem-t">Seasonal-cycle removal -&gt; daily anomalies</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-blocking-diagnostics" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-blocking-diagnostics" data-sec="sec-blocking-diagnostics"><span class="navsec-t">Blocking diagnostics</span><span class="navsec-c">4</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-blocking-diagnostics"><a class="navitem k-note" href="#card-note-4" data-item="note-4"><span class="dot"></span><span class="navitem-t">Blocking diagnostics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Climatology</div><a class="navitem k-figure" href="#card-clim-map" data-item="clim-map"><span class="dot"></span><span class="navitem-t">DJF mean Z500 and the climatological ridge</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-the-blocking-index" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-the-blocking-index" data-sec="sec-the-blocking-index"><span class="navsec-t">The blocking index</span><span class="navsec-c">2</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-the-blocking-index"><a class="navitem k-note" href="#card-note-5" data-item="note-5"><span class="dot"></span><span class="navitem-t">The blocking index</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Blocking frequency</div><a class="navitem k-transform" href="#card-tasman" data-item="tasman"><span class="dot"></span><span class="navitem-t">Tasman sector box-mean series</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-transform" href="#card-blockidx" data-item="blockidx"><span class="dot"></span><span class="navitem-t">Blocking threshold &amp; DJF frequency</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-block-freq" data-item="block-freq"><span class="dot"></span><span class="navitem-t">Tasman blocking frequency by austral summer</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-metric ckmain-print" href="#card-block-stat" data-item="block-stat"><span class="dot"></span><span class="navitem-t">Blocking summary statistics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Regional composite</div><a class="navitem k-figure" href="#card-block-comp" data-item="block-comp"><span class="dot"></span><span class="navitem-t">Composite Z500 anomaly on blocked days</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-zonal-mean-evolution" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-zonal-mean-evolution" data-sec="sec-zonal-mean-evolution"><span class="navsec-t">Zonal-mean evolution</span><span class="navsec-c">1</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-zonal-mean-evolution"><a class="navitem k-note" href="#card-note-6" data-item="note-6"><span class="dot"></span><span class="navitem-t">Zonal-mean evolution</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-zonal-hov" data-item="zonal-hov"><span class="dot"></span><span class="navitem-t">Zonal-mean Z500 anomaly (time-latitude)</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-enso-diagnostics" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-enso-diagnostics" data-sec="sec-enso-diagnostics"><span class="navsec-t">ENSO diagnostics</span><span class="navsec-c">3</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-enso-diagnostics"><a class="navitem k-transform" href="#card-enso-idx" data-item="enso-idx"><span class="dot"></span><span class="navitem-t">Project anomalies onto the ENSO pattern</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-index-construction" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-index-construction" data-sec="sec-index-construction"><span class="navsec-t">Index construction</span><span class="navsec-c">3</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-index-construction"><a class="navitem k-note" href="#card-note-7" data-item="note-7"><span class="dot"></span><span class="navitem-t">Index construction</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-nino34" data-item="nino34"><span class="dot"></span><span class="navitem-t">ENSO index from the leading SH anomaly mode</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><div class="navsub">Teleconnections</div><a class="navitem k-figure" href="#card-enso-comp" data-item="enso-comp"><span class="dot"></span><span class="navitem-t">Warm-phase teleconnection composite</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a><a class="navitem k-figure" href="#card-enso-spec" data-item="enso-spec"><span class="dot"></span><span class="navitem-t">Power spectrum of the ENSO index</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l2" data-sec="sec-interpretation" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-interpretation" data-sec="sec-interpretation"><span class="navsec-t">Interpretation</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l2" data-sec="sec-interpretation"><a class="navitem k-note" href="#card-note-8" data-item="note-8"><span class="dot"></span><span class="navitem-t">Interpretation</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div><div class="navsec-row navsec-l3" data-sec="sec-caveats" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-caveats" data-sec="sec-caveats"><span class="navsec-t">Caveats</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show just this heading" aria-label="Hide or show just this heading"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span><span class="navsec-hideall" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg></span></div><div class="navitems navitems-l3" data-sec="sec-caveats"><a class="navitem k-note" href="#card-note-9" data-item="note-9"><span class="dot"></span><span class="navitem-t">Caveats</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg></span></a></div></nav>
     <div class="varpanel" hidden><div class="var-controls"><input class="var-filter" type="search" placeholder="filter" aria-label="Filter variables by name"><div class="var-order" role="group" aria-label="Arrange variables"><button class="varord-btn active" data-vorder="order" title="In the order they are first defined">order</button><button class="varord-btn" data-vorder="type" title="Grouped by what they are">type</button></div></div><div class="varlist"><div class="varrow" data-i="0" data-group="imports" data-name="np"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where np is defined">np</a><span class="var-type vg-imports" title="module">module</span><span class="var-count" title="read in 4 later cells">4</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="1" data-group="imports" data-name="pd"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where pd is defined">pd</a><span class="var-type vg-imports" title="module">module</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="2" data-group="imports" data-name="xr"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where xr is defined">xr</a><span class="var-type vg-imports" title="module">module</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a></div></div><div class="varrow" data-i="3" data-group="imports" data-name="plt"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where plt is defined">plt</a><span class="var-type vg-imports" title="module">module</span><span class="var-count" title="read in 7 later cells">7</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a><a class="var-use" href="#card-block-freq" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Tasman blocking frequency by austral summer</span></a><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a><a class="var-use" href="#card-nino34" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">ENSO index from the leading SH anomaly mode</span></a><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Warm-phase teleconnection composite</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="4" data-group="computed" data-name="rng"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where rng is defined">rng</a><span class="var-type vg-computed" title="default_rng()">default_rng()</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="5" data-group="constants" data-name="ink"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where INK is defined">INK</a><span class="var-type vg-constants" title="str">str</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-nino34" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">ENSO index from the leading SH anomaly mode</span></a></div></div><div class="varrow" data-i="6" data-group="constants" data-name="cyan"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where CYAN is defined">CYAN</a><span class="var-type vg-constants" title="str">str</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-block-freq" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Tasman blocking frequency by austral summer</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="7" data-group="constants" data-name="amber"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-imports-plotting-style" title="Jump to where AMBER is defined">AMBER</a><span class="var-type vg-constants" title="str">str</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-imports-plotting-style" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Imports &amp; plotting style</span></a><a class="var-use" href="#card-block-freq" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Tasman blocking frequency by austral summer</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="8" data-group="data" data-name="lat"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-grid" title="Jump to where lat is defined">lat</a><span class="var-type vg-data" title="array">array</span><span class="var-count" title="read in 6 later cells">6</span></div><div class="var-uses" hidden><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-coverage" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Temporal &amp; spatial coverage</span></a><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a></div></div><div class="varrow" data-i="9" data-group="data" data-name="lon"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-grid" title="Jump to where lon is defined">lon</a><span class="var-type vg-data" title="array">array</span><span class="var-count" title="read in 5 later cells">5</span></div><div class="var-uses" hidden><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-coverage" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Temporal &amp; spatial coverage</span></a><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a></div></div><div class="varrow" data-i="10" data-group="computed" data-name="time"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-grid" title="Jump to where time is defined">time</a><span class="var-type vg-computed" title="date_range()">date_range()</span><span class="var-count" title="read in 3 later cells">3</span></div><div class="var-uses" hidden><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-coverage" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Temporal &amp; spatial coverage</span></a></div></div><div class="varrow" data-i="11" data-group="other" data-name="doy"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-grid" title="Jump to where doy is defined">doy</a><span class="var-type vg-other" title="value">value</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="12" data-group="constants" data-name="lon"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-grid" title="Jump to where LON is defined">LON</a><span class="var-type vg-constants" title="value">value</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="13" data-group="constants" data-name="lat"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-grid" title="Jump to where LAT is defined">LAT</a><span class="var-type vg-constants" title="value">value</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-grid" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Grid &amp; time axis</span></a><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="14" data-group="computed" data-name="base"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where base is defined">base</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="15" data-group="computed" data-name="wave3"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where wave3 is defined">wave3</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="16" data-group="data" data-name="clim_doy"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where clim_doy is defined">clim_doy</a><span class="var-type vg-data" title="array">array</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="17" data-group="computed" data-name="d"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where d is defined">d</a><span class="var-type vg-computed" title="loop item">loop item</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="18" data-group="computed" data-name="seasonal"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where seasonal is defined">seasonal</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="19" data-group="computed" data-name="t_yr"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where t_yr is defined">t_yr</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a></div></div><div class="varrow" data-i="20" data-group="computed" data-name="enso"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where enso is defined">enso</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="21" data-group="computed" data-name="enso_pattern"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where enso_pattern is defined">enso_pattern</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a></div></div><div class="varrow" data-i="22" data-group="computed" data-name="block_days"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where block_days is defined">block_days</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="23" data-group="computed" data-name="blob"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-modes" title="Jump to where blob is defined">blob</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-modes" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Synthetic climatology &amp; variability modes</span></a><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="24" data-group="computed" data-name="anom"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-z500" title="Jump to where anom is defined">anom</a><span class="var-type vg-computed" title="astype()">astype()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="25" data-group="computed" data-name="z"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-z500" title="Jump to where z is defined">z</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a></div></div><div class="varrow" data-i="26" data-group="data" data-name="ds"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-z500" title="Jump to where ds is defined">ds</a><span class="var-type vg-data" title="Dataset">Dataset</span><span class="var-count" title="read in 4 later cells">4</span></div><div class="var-uses" hidden><a class="var-use" href="#card-z500" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Daily Z500 field, Southern Hemisphere (synthetic)</span></a><a class="var-use" href="#card-coverage" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Temporal &amp; spatial coverage</span></a><a class="var-use" href="#card-clim" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Day-of-year climatology</span></a><a class="var-use" href="#card-anom" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Seasonal-cycle removal -&gt; daily anomalies</span></a><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a></div></div><div class="varrow" data-i="27" data-group="computed" data-name="clim"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-clim" title="Jump to where clim is defined">clim</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-clim" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Day-of-year climatology</span></a><a class="var-use" href="#card-anom" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Seasonal-cycle removal -&gt; daily anomalies</span></a></div></div><div class="varrow" data-i="28" data-group="computed" data-name="z_anom"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-anom" title="Jump to where z_anom is defined">z_anom</a><span class="var-type vg-computed" title="rename()">rename()</span><span class="var-count" title="read in 5 later cells">5</span></div><div class="var-uses" hidden><a class="var-use" href="#card-anom" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Seasonal-cycle removal -&gt; daily anomalies</span></a><a class="var-use" href="#card-tasman" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Tasman sector box-mean series</span></a><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Warm-phase teleconnection composite</span></a></div></div><div class="varrow" data-i="29" data-group="computed" data-name="djf"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-clim-map" title="Jump to where djf is defined">djf</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a></div></div><div class="varrow" data-i="30" data-group="plotting" data-name="fig"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-clim-map" title="Jump to where fig is defined">fig</a><span class="var-type vg-plotting" title="Figure">Figure</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a><a class="var-use" href="#card-block-freq" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Tasman blocking frequency by austral summer</span></a><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a><a class="var-use" href="#card-nino34" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">ENSO index from the leading SH anomaly mode</span></a><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Warm-phase teleconnection composite</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="31" data-group="plotting" data-name="ax"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-clim-map" title="Jump to where ax is defined">ax</a><span class="var-type vg-plotting" title="Axes">Axes</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a><a class="var-use" href="#card-block-freq" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Tasman blocking frequency by austral summer</span></a><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a><a class="var-use" href="#card-nino34" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">ENSO index from the leading SH anomaly mode</span></a><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Warm-phase teleconnection composite</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="32" data-group="computed" data-name="cf"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-clim-map" title="Jump to where cf is defined">cf</a><span class="var-type vg-computed" title="contourf()">contourf()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-clim-map" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">DJF mean Z500 and the climatological ridge</span></a></div></div><div class="varrow" data-i="33" data-group="computed" data-name="box"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-tasman" title="Jump to where box is defined">box</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-tasman" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Tasman sector box-mean series</span></a><a class="var-use" href="#card-blockidx" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Blocking threshold &amp; DJF frequency</span></a></div></div><div class="varrow" data-i="34" data-group="computed" data-name="blocked"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-blockidx" title="Jump to where blocked is defined">blocked</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-blockidx" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Blocking threshold &amp; DJF frequency</span></a><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a></div></div><div class="varrow" data-i="35" data-group="computed" data-name="freq"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-blockidx" title="Jump to where freq is defined">freq</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-blockidx" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Blocking threshold &amp; DJF frequency</span></a><a class="var-use" href="#card-block-freq" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Tasman blocking frequency by austral summer</span></a><a class="var-use" href="#card-block-stat" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Blocking summary statistics</span></a></div></div><div class="varrow" data-i="36" data-group="computed" data-name="comp"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-block-comp" title="Jump to where comp is defined">comp</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a></div></div><div class="varrow" data-i="37" data-group="computed" data-name="pc"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-block-comp" title="Jump to where pc is defined">pc</a><span class="var-type vg-computed" title="plot_anom_map()">plot_anom_map()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-block-comp" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Composite Z500 anomaly on blocked days</span></a><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-redefined">redefined</span><span class="vu-t">Warm-phase teleconnection composite</span></a></div></div><div class="varrow" data-i="38" data-group="computed" data-name="zm"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-zonal-hov" title="Jump to where zm is defined">zm</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a></div></div><div class="varrow" data-i="39" data-group="computed" data-name="zm_mon"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-zonal-hov" title="Jump to where zm_mon is defined">zm_mon</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a></div></div><div class="varrow" data-i="40" data-group="values" data-name="vmax"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-zonal-hov" title="Jump to where vmax is defined">vmax</a><span class="var-type vg-values" title="number">number</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-zonal-hov" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Zonal-mean Z500 anomaly (time-latitude)</span></a></div></div><div class="varrow" data-i="41" data-group="data" data-name="pat"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-idx" title="Jump to where pat is defined">pat</a><span class="var-type vg-data" title="DataArray">DataArray</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a></div></div><div class="varrow" data-i="42" data-group="computed" data-name="idx"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-idx" title="Jump to where idx is defined">idx</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="read in 1 later cell">1</span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Warm-phase teleconnection composite</span></a></div></div><div class="varrow" data-i="43" data-group="computed" data-name="idx_m"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-idx" title="Jump to where idx_m is defined">idx_m</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="read in 2 later cells">2</span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-idx" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Project anomalies onto the ENSO pattern</span></a><a class="var-use" href="#card-nino34" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">ENSO index from the leading SH anomaly mode</span></a><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-used">used</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="44" data-group="computed" data-name="warm"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-comp" title="Jump to where warm is defined">warm</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Warm-phase teleconnection composite</span></a></div></div><div class="varrow" data-i="45" data-group="computed" data-name="tele"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-comp" title="Jump to where tele is defined">tele</a><span class="var-type vg-computed" title="mean()">mean()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-comp" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Warm-phase teleconnection composite</span></a></div></div><div class="varrow" data-i="46" data-group="other" data-name="x"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-spec" title="Jump to where x is defined">x</a><span class="var-type vg-other" title="value">value</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="47" data-group="computed" data-name="freqs"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-spec" title="Jump to where freqs is defined">freqs</a><span class="var-type vg-computed" title="rfftfreq()">rfftfreq()</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="48" data-group="computed" data-name="power"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-spec" title="Jump to where power is defined">power</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div><div class="varrow" data-i="49" data-group="computed" data-name="mask"><div class="var-line"><button class="var-chev" aria-expanded="false" title="Show every cell that defines or uses this variable">›</button><a class="var-name" href="#card-enso-spec" title="Jump to where mask is defined">mask</a><span class="var-type vg-computed" title="expression">expression</span><span class="var-count" title="never read after its definition"></span></div><div class="var-uses" hidden><a class="var-use" href="#card-enso-spec" title="Jump to this cell"><span class="vu-tag vu-defined">defined</span><span class="vu-t">Power spectrum of the ENSO index</span></a></div></div></div><div class="var-empty" hidden>No variables match.</div></div>
     <div class="railgraph"><div class="railgraph-h"><span class="eyebrow">analysis graph</span><button class="rg-collapse" aria-expanded="true" title="Collapse graph">–</button></div><div class="railgraph-b"><svg viewBox="0 0 268 530" width="100%" height="530" class="provsvg" role="img" aria-label="Analysis provenance graph"><path class="provedge" d="M 134.0 41.0 C 134.0 58.0 134.0 58.0 134.0 75.0" data-from="grid" data-to="modes"/><path class="provedge" d="M 134.0 41.0 C 134.0 90.0 134.0 90.0 134.0 139.0" data-from="grid" data-to="z500"/><path class="provedge" d="M 134.0 105.0 C 134.0 122.0 134.0 122.0 134.0 139.0" data-from="modes" data-to="z500"/><path class="provedge" d="M 134.0 169.0 C 134.0 186.0 55.3 186.0 55.3 203.0" data-from="z500" data-to="coverage"/><path class="provedge" d="M 134.0 169.0 C 134.0 186.0 134.0 186.0 134.0 203.0" data-from="z500" data-to="clim"/><path class="provedge" d="M 134.0 233.0 C 134.0 250.0 134.0 250.0 134.0 267.0" data-from="clim" data-to="anom"/><path class="provedge" d="M 134.0 169.0 C 134.0 186.0 212.7 186.0 212.7 203.0" data-from="z500" data-to="clim_map"/><path class="provedge" d="M 134.0 297.0 C 134.0 314.0 55.3 314.0 55.3 331.0" data-from="anom" data-to="tasman"/><path class="provedge" d="M 55.3 361.0 C 55.3 378.0 45.5 378.0 45.5 395.0" data-from="tasman" data-to="blockidx"/><path class="provedge" d="M 45.5 425.0 C 45.5 442.0 55.3 442.0 55.3 459.0" data-from="blockidx" data-to="block_freq"/><path class="provedge" d="M 45.5 425.0 C 45.5 442.0 134.0 442.0 134.0 459.0" data-from="blockidx" data-to="block_stat"/><path class="provedge" d="M 134.0 297.0 C 134.0 378.0 212.7 378.0 212.7 459.0" data-from="anom" data-to="block_comp"/><path class="provedge" d="M 45.5 425.0 C 45.5 442.0 212.7 442.0 212.7 459.0" data-from="blockidx" data-to="block_comp"/><path class="provedge" d="M 134.0 297.0 C 134.0 314.0 134.0 314.0 134.0 331.0" data-from="anom" data-to="zonal_hov"/><path class="provedge" d="M 134.0 297.0 C 134.0 314.0 212.7 314.0 212.7 331.0" data-from="anom" data-to="enso_idx"/><path class="provedge" d="M 134.0 105.0 C 134.0 218.0 212.7 218.0 212.7 331.0" data-from="modes" data-to="enso_idx"/><path class="provedge" d="M 212.7 361.0 C 212.7 378.0 104.5 378.0 104.5 395.0" data-from="enso_idx" data-to="nino34"/><path class="provedge" d="M 134.0 297.0 C 134.0 346.0 163.5 346.0 163.5 395.0" data-from="anom" data-to="enso_comp"/><path class="provedge" d="M 212.7 361.0 C 212.7 378.0 163.5 378.0 163.5 395.0" data-from="enso_idx" data-to="enso_comp"/><path class="provedge" d="M 212.7 361.0 C 212.7 378.0 222.5 378.0 222.5 395.0" data-from="enso_idx" data-to="enso_spec"/><g class="provnode" data-node="grid" data-target="grid" tabindex="0" role="button" aria-label="Go to Grid &amp; time axis"><rect x="105.0" y="11.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="30.0" text-anchor="middle">grid</text></g><g class="provnode" data-node="modes" data-target="modes" tabindex="0" role="button" aria-label="Go to Synthetic climatology &amp; variability modes"><rect x="105.0" y="75.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="94.0" text-anchor="middle">modes</text></g><g class="provnode" data-node="z500" data-target="z500" tabindex="0" role="button" aria-label="Go to Daily Z500 field, Southern Hemisphere (synthetic)"><rect x="105.0" y="139.0" rx="5" width="58.0" height="30" fill="#2f6f9e"/><text x="134.0" y="158.0" text-anchor="middle">z500</text></g><g class="provnode" data-node="coverage" data-target="coverage" tabindex="0" role="button" aria-label="Go to Temporal &amp; spatial coverage"><rect x="18.5" y="203.0" rx="5" width="73.6" height="30" fill="#2c8c7d"/><text x="55.3" y="222.0" text-anchor="middle">coverage</text></g><g class="provnode" data-node="clim" data-target="clim" tabindex="0" role="button" aria-label="Go to Day-of-year climatology"><rect x="105.0" y="203.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="222.0" text-anchor="middle">clim</text></g><g class="provnode" data-node="anom" data-target="anom" tabindex="0" role="button" aria-label="Go to Seasonal-cycle removal -&gt; daily anomalies"><rect x="105.0" y="267.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="286.0" text-anchor="middle">anom</text></g><g class="provnode" data-node="clim_map" data-target="clim-map" tabindex="0" role="button" aria-label="Go to DJF mean Z500 and the climatological ridge"><rect x="175.9" y="203.0" rx="5" width="73.6" height="30" fill="#2f9bb0"/><text x="212.7" y="222.0" text-anchor="middle">clim_map</text></g><g class="provnode" data-node="tasman" data-target="tasman" tabindex="0" role="button" aria-label="Go to Tasman sector box-mean series"><rect x="25.7" y="331.0" rx="5" width="59.2" height="30" fill="#3b5566"/><text x="55.3" y="350.0" text-anchor="middle">tasman</text></g><g class="provnode" data-node="blockidx" data-target="blockidx" tabindex="0" role="button" aria-label="Go to Blocking threshold &amp; DJF frequency"><rect x="8.7" y="395.0" rx="5" width="73.6" height="30" fill="#3b5566"/><text x="45.5" y="414.0" text-anchor="middle">blockidx</text></g><g class="provnode" data-node="block_freq" data-target="block-freq" tabindex="0" role="button" aria-label="Go to Tasman blocking frequency by austral summer"><rect x="11.3" y="459.0" rx="5" width="88.0" height="30" fill="#2f9bb0"/><text x="55.3" y="478.0" text-anchor="middle">block_freq</text></g><g class="provnode" data-node="block_stat" data-target="block-stat" tabindex="0" role="button" aria-label="Go to Blocking summary statistics"><rect x="90.0" y="459.0" rx="5" width="88.0" height="30" fill="#2c8c7d"/><text x="134.0" y="478.0" text-anchor="middle">block_stat</text></g><g class="provnode" data-node="block_comp" data-target="block-comp" tabindex="0" role="button" aria-label="Go to Composite Z500 anomaly on blocked days"><rect x="168.7" y="459.0" rx="5" width="88.0" height="30" fill="#2f9bb0"/><text x="212.7" y="478.0" text-anchor="middle">block_comp</text></g><g class="provnode" data-node="zonal_hov" data-target="zonal-hov" tabindex="0" role="button" aria-label="Go to Zonal-mean Z500 anomaly (time-latitude)"><rect x="93.6" y="331.0" rx="5" width="80.8" height="30" fill="#2f9bb0"/><text x="134.0" y="350.0" text-anchor="middle">zonal_hov</text></g><g class="provnode" data-node="enso_idx" data-target="enso-idx" tabindex="0" role="button" aria-label="Go to Project anomalies onto the ENSO pattern"><rect x="175.9" y="331.0" rx="5" width="73.6" height="30" fill="#3b5566"/><text x="212.7" y="350.0" text-anchor="middle">enso_idx</text></g><g class="provnode" data-node="nino34" data-target="nino34" tabindex="0" role="button" aria-label="Go to ENSO index from the leading SH anomaly mode"><rect x="74.9" y="395.0" rx="5" width="59.2" height="30" fill="#2f9bb0"/><text x="104.5" y="414.0" text-anchor="middle">nino34</text></g><g class="provnode" data-node="enso_comp" data-target="enso-comp" tabindex="0" role="button" aria-label="Go to Warm-phase teleconnection composite"><rect x="123.1" y="395.0" rx="5" width="80.8" height="30" fill="#2f9bb0"/><text x="163.5" y="414.0" text-anchor="middle">enso_comp</text></g><g class="provnode" data-node="enso_spec" data-target="enso-spec" tabindex="0" role="button" aria-label="Go to Power spectrum of the ENSO index"><rect x="182.1" y="395.0" rx="5" width="80.8" height="30" fill="#2f9bb0"/><text x="222.5" y="414.0" text-anchor="middle">enso_spec</text></g></svg></div></div>
   </aside>
@@ -11137,6 +11227,12 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
         <span class="wl-sep">&middot;</span></span>
         <a href="#" id="welcome-help">How to use</a>
         <span class="wl-sep">&middot;</span>
+        <!-- T364: the ribbon is hidden on this screen (body.welcoming),
+             so the App group's Full screen cannot be reached from here.
+             Going full screen at the door is the point: it stays that
+             way as you open a notebook. -->
+        <a href="#" id="welcome-full">Full screen</a>
+        <span class="wl-sep">&middot;</span>
         <a href="https://ko-fi.com/plotline" target="_blank"
           rel="noopener">Support &#9829;</a>
         <!-- web build only. Shown whenever this IS the web build and
@@ -11190,7 +11286,7 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
         <section class="wj-col" id="wj-pres">
           <h2 class="wj-h"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg> Presentations
             <button class="wj-new" id="welcome-new" type="button"
-              title="Start a new presentation. No notebook needed"
+              title="New presentation"
               ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/><path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg> New</button></h2>
           <div class="wpres" id="welcome-pres" hidden></div>
           <div class="wj-none" id="wj-none-pres" hidden>Nothing yet</div>
@@ -11198,8 +11294,7 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
         <section class="wj-col" id="wj-post">
           <h2 class="wj-h"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4" y="1.8" width="8" height="12.4" rx="1"/></svg> Posters
             <button class="wj-new" id="welcome-newpost" type="button"
-              title="Start a new poster &mdash; an A0 portrait page.
- Change the size under Page, the layout under Layouts"
+              title="New poster &mdash; an A0 portrait page"
               ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/><path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg> New</button></h2>
           <div class="wpres" id="welcome-post" hidden></div>
           <div class="wj-none" id="wj-none-post" hidden>Nothing yet</div>
@@ -11210,8 +11305,9 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
               title="Open a notebook from a GitHub or other URL"
               ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9"/><path d="M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9"/></svg> URL</button>
             <button class="wj-new" id="welcome-open" type="button"
-              title="Open .ipynb, .md, .tex or .csv files from this
- computer"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Open</button></h2>
+              title="Open .ipynb, .md, .tex or .csv from this computer
+ &mdash; or drop them anywhere in this window"
+              ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Open</button></h2>
           <!-- T241: WHAT YOU HAD OPEN IS AN OFFER (2026-09-04, user:
                "I do not like how it automatically opens what was last
                open. That is too aggressive. Just have options to open
@@ -11219,13 +11315,11 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
                is just not acted on until you say so. -->
           <div class="recent" id="welcome-last" hidden></div>
           <div class="recent" id="welcome-recent" hidden></div>
-          <!-- T77's drop hint, which the Open card used to carry. It is
-               the only place the first screen says drag-and-drop works
-               and which formats parse, so it moves with Open rather
-               than going with the card. -->
-          <div class="wj-drop welcome-drop">&hellip; or drop
-            <b>.ipynb</b>, <b>.md</b>, <b>.tex</b> or <b>.csv</b>
-            anywhere in this window</div>
+          <!-- T364: T77's drop hint is on the Open button now. The
+               user, 2026-09-07: "The open screen still has way to much
+               text ... this is so confusing to look at." What formats
+               parse and that you may drop them is a fact about Open,
+               and it belongs on Open. -->
         </section>
       </div>
       <div class="welcome-scrollcue" aria-hidden="true">How it works
@@ -12868,6 +12962,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Ready-made looks for the whole deck: style sets
  (type) and colour themes (a palette for page, boxes, headings and
  ink), and any you saved"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style sets&#8230;</button>
+              <!-- T325: the deck's bibliography is a deck-wide thing,
+                   like its style sets and its tokens -->
+              <button class="dbtn rbn-sm" id="dsg-cites"
+                title="This deck&#8217;s references: import a .bib, add one
+ by DOI, choose numbered or author-year, and insert a references box.
+ Cite in any text box as [@key]"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Citations&#8230;</button>
               <span class="sh-drop" id="dsg-stylewrap">
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
@@ -13462,6 +13563,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.6c2.6.4 4-1 4.6-2.4"/><path d="m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z"/></svg> Draw</button>
               <input type="file" id="img-file" accept="image/*" hidden>
               <input type="file" id="media-file" accept="video/*,audio/*"
+                hidden>
+              <input type="file" id="bibfile" accept=".bib,.bibtex,.txt"
                 hidden>
               <!-- MULTIPLE, unlike the single-image one above it: filling a
                    flip book twelve frames deep one file dialog at a time
@@ -14628,6 +14731,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
            the numbers beside it for when you know them. -->
       <!-- T322: THE CHART PANE, rebuilt from the item on every sync -->
       <!-- T324: THE TABLE PANE, one column at a time -->
+      <!-- T325: THE CITATIONS PANE -->
+      <aside class="selpane citepane" id="citepane" hidden>
+        <div class="selpane-h"><span>Citations</span>
+          <button class="dbtn dc-icon" id="citepane-close"
+            aria-label="Close"
+            title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
+        <div class="selpane-list" id="citepane-body"></div>
+      </aside>
       <aside class="selpane tablepane" id="tablepane" hidden>
         <div class="selpane-h"><span>Columns</span>
           <button class="dbtn dc-icon" id="tablepane-close"
@@ -15796,7 +15907,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
        the OLD notebook's type overrides into the NEW notebook's state
        (2026-08-04, adversarial review). */
     closeFilterMenus();
-    renderTypeButtons();renderScopeBtn();
+    dockFileBar();
+    renderTypeButtons();renderScopeBtn();renderMarkGate();
     updateHash();
     document.dispatchEvent(new CustomEvent('sem:activate',
       {detail:{stem:stem}}));
@@ -16015,11 +16127,15 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
        setting; what it actually decides is which sections the filter
        buttons act on (2026-09-04, user: "the section filtering is
        kind of confusing and hard to use"). */
-    var lab=(!tot||n===tot)?'all sections'
-      :(n?(n+' of '+tot+' sections'):'no sections');
+    /* T364 (2026-09-07, user: "the apply to button is so stupidly
+       big, it will fit when this smaller"). The group above it is
+       already headed "Apply to" and the icon is a scope: the button
+       only has to say WHICH, and 246px of it said so three times. */
+    var lab=(!tot||n===tot)?'All sections'
+      :(n?(n+' of '+tot):'None');
     /* write the LABEL, not innerHTML — innerHTML= wiped the scope icon
        (and the .btxt span the ribbon compaction stages hide) */
-    setBtnText(b,'Filters act on: '+lab+' ▾');
+    setBtnText(b,lab+' ▾');
     b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
@@ -16169,20 +16285,11 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     var m=$('#sec-scope-menu'); if(!m) return;
     m.innerHTML='';
     var nodes=scopeTree();
-    var h=document.createElement('div');h.className='ckf-h';
-    h.textContent='the filters act on these sections';
-    m.appendChild(h);
-    /* T243: SAY WHAT THE THING IS. The menu named itself "apply the
-       filters to" and then showed a tree; nothing said that each
-       section keeps its own filters, which is the whole point of
-       being able to pick them. */
-    var why=document.createElement('div');
-    why.className='ckf-why';
-    why.textContent='Tick the sections you want the Plots, Markdown, '
-      +'Code and Output buttons to change. Each section remembers its '
-      +'own, so you can hide code in one chapter and keep it in the '
-      +'next.';
-    m.appendChild(why);
+    /* T364: no heading and no paragraph. T243 put both here to
+       explain what picking sections does; the user, 2026-09-07:
+       "Why does filter have all this text? People know what filter
+       sections means?????" The tree, the two bulk buttons and the
+       count say the whole thing. */
     /* T243: both directions. "Select all" alone meant picking ONE
        section was a click on every other one. */
     var bulk=document.createElement('div');
@@ -18746,6 +18853,37 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
   var wHelp=$('#welcome-help');
   if(wHelp) wHelp.addEventListener('click',function(e){
     e.preventDefault();showHelp();});
+  /* ---- T364: FULL SCREEN, ANYWHERE ----------------------------------
+     Two doors for the one behaviour, because the ribbon is hidden on
+     the welcome screen and that is exactly where you want to set it.
+     The target is documentElement, not the document feed: this is
+     about the WINDOW, and the deck, the welcome and the viewer all
+     have to come with it. The LABEL never changes -- aria-pressed and
+     the tooltip carry the state -- because a button that grows a word
+     when you press it is a button that shoves the ribbon along. */
+  var fullBtn=$('#doc-full');
+  function syncFullBtn(){
+    var on=!!document.fullscreenElement;
+    if(fullBtn){
+      fullBtn.setAttribute('aria-pressed',on?'true':'false');
+      fullBtn.title=on?'Leave full screen (Esc)'
+        :'Fill the display with Junoview (Esc to leave)';
+    }
+  }
+  function toggleFull(){
+    try{
+      if(document.fullscreenElement) document.exitFullscreen();
+      else if(document.documentElement.requestFullscreen)
+        document.documentElement.requestFullscreen();
+    }catch(e){}
+  }
+  APP.toggleFull=toggleFull;
+  if(fullBtn) fullBtn.addEventListener('click',toggleFull);
+  var wFull=$('#welcome-full');
+  if(wFull) wFull.addEventListener('click',function(e){
+    e.preventDefault();toggleFull();});
+  document.addEventListener('fullscreenchange',syncFullBtn);
+  syncFullBtn();
   var helpClose=$('#help-close');
   if(helpClose) helpClose.addEventListener('click',hideHelp);
   if(helpDlg) helpDlg.addEventListener('click',function(e){
@@ -19426,6 +19564,63 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     if(v) all[stem]=v; else delete all[stem];
     try{localStorage.setItem(ONLYKEY,JSON.stringify(all));}catch(e){}
   }
+  /* T364: THE GATE IS A RIBBON CONTROL --------------------------------
+     2026-09-07, user: "where is the button that has just the just show
+     the pinned or hearted etc. I hate it being in the side bar. That
+     sucks shit." The chips are ribbon buttons now, in the Filters group
+     they act with, and they still only appear for a mark this notebook
+     actually uses. Counted off the OUTLINE, so a mark left behind by a
+     notebook that no longer has that cell is not counted. */
+  function markCounts(shell,stem){
+    var m=marksFor(stem),have={pin:0,star:0,heart:0,flag:0},any=0;
+    Object.keys(m).forEach(function(id){
+      if(!shell.querySelector('.navitem[data-item="'+id+'"]')) return;
+      var st=m[id]||{};
+      if(st.p){have.pin++;any++;}
+      if(st.f){have[st.f]=(have[st.f]||0)+1;any++;}
+    });
+    have.any=any;
+    return have;
+  }
+  function renderMarkGate(){
+    var host=$('#marks-grp'),row=$('#marks-row');
+    if(!host||!row) return;
+    row.innerHTML='';
+    var stem=APP.active||'',sh=stem&&APP.shells[stem];
+    if(!sh||!sh.el){host.hidden=true;return;}
+    var have=markCounts(sh.el,stem),only=onlyFor(stem);
+    host.hidden=!have.any;
+    if(!have.any){
+      /* the last mark just went: a gate pointing at nothing would empty
+         the whole notebook with no visible cause */
+      if(only){setOnly(stem,'');applyFilters();}
+      return;
+    }
+    if(only&&!have[only]){setOnly(stem,'');only='';}
+    function chip(k,ic,lab,n){
+      var b=document.createElement('button');
+      b.type='button';
+      b.className='toggle sub mkchip';
+      b.dataset.only=k;
+      b.setAttribute('aria-pressed',only===k?'true':'false');
+      b.title=k?('Show only the '+n+' cell'+(n===1?'':'s')+' you '
+        +(k==='pin'?'pinned':'marked '+k))
+        :'Show every cell again';
+      b.innerHTML=bic(ic)+'<span class="btxt">'+lab
+        +(k?(' '+n):'')+'</span>';
+      b.addEventListener('click',function(){
+        setOnly(stem,only===k?'':k);
+        renderMarkGate();applyFilters();
+      });
+      return b;
+    }
+    ONLY_KINDS.forEach(function(o){
+      if(have[o.k]) row.appendChild(chip(o.k,o.ic,o.lab,have[o.k]));});
+    /* the way out, on the row, while there is something to get out of.
+       Pressing the lit chip is the other one. */
+    if(only) row.appendChild(chip('','cellcard','All',0));
+  }
+  APP.renderMarkGate=renderMarkGate;
   /* does this card carry the mark the gate is set to? Read off the card's
      own classes, which paintMark has already put there, so the gate needs
      no second source of truth. */
@@ -19445,6 +19640,33 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       MARK_KINDS.forEach(function(k){
         el.classList.toggle('mk-'+k,st.f===k);});
     });
+    /* T364: the symbol goes on the outline row this cell ALREADY has
+       (2026-09-07, user: "just have the symbols appear next to them
+       where they are in the side bar, things moving around all over
+       the place is fucking confusing"). Both symbols when a cell is
+       pinned AND marked: they are two different facts about it. */
+    if(nav){
+      var mk=nav.querySelector('.navitem-mk');
+      if(!st.p&&!st.f){ if(mk) nav.removeChild(mk); }
+      else{
+        if(!mk){
+          mk=document.createElement('span');
+          mk.className='navitem-mk';
+          nav.insertBefore(mk,nav.querySelector('.navitem-eye'));
+        }
+        mk.innerHTML='';
+        function glyph(g,cls){
+          var s=document.createElement('span');
+          s.className='mk-i '+cls;
+          s.innerHTML=bic(g);
+          return s;
+        }
+        if(st.p) mk.appendChild(glyph('pin','mk-i-pin'));
+        if(st.f) mk.appendChild(glyph(st.f,'mk-i-'+st.f));
+        mk.title=(st.p?'Pinned':'')+(st.p&&st.f?', ':'')
+          +(st.f?('marked '+st.f):'');
+      }
+    }
     if(card){
       var pb=card.querySelector('.cell-pin');
       if(pb){
@@ -19467,82 +19689,17 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       }
     }
   }
-  /* the list at the top of the sidebar: pinned first, then marked */
+  /* T364: NOTHING IS HOISTED TO THE TOP OF THE SIDEBAR. T242 copied
+     every marked cell into a "pinned & marked" list above the sections
+     and T257 hung the gate under it; the user, 2026-09-07: "the heart
+     and star should [not] have them move to the top just have the
+     symbols appear next to them where they are in the side bar, things
+     moving around all over the place is fucking confusing." The symbol
+     rides the outline row the cell already has (paintMark), and the
+     gate is a ribbon control (renderMarkGate). What is left here is
+     keeping that gate in step with the marks. */
   function renderMarks(shell,stem){
-    var host=shell.querySelector('.navmarks'); if(!host) return;
-    var m=marksFor(stem),ids=Object.keys(m);
-    host.innerHTML='';
-    var rows=[];
-    ids.forEach(function(id){
-      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
-      if(!nav) return;                 /* a mark from an older notebook */
-      rows.push({id:id,st:m[id],
-        title:(nav.querySelector('.navitem-t')||nav).textContent});
-    });
-    rows.sort(function(a,b){return (b.st.p?1:0)-(a.st.p?1:0);});
-    host.hidden=!rows.length;
-    if(!rows.length){
-      /* the last mark just went: a gate pointing at nothing would empty
-         the whole notebook with no visible cause */
-      if(onlyFor(stem)){setOnly(stem,'');applyFilters();}
-      return;
-    }
-    /* which marks this notebook actually has — a chip for a mark you
-       have never used is a chip that empties the page */
-    var have={pin:0,star:0,heart:0,flag:0};
-    rows.forEach(function(r){
-      if(r.st.p) have.pin++;
-      if(r.st.f) have[r.st.f]=(have[r.st.f]||0)+1;});
-    var only=onlyFor(stem);
-    if(only&&!have[only]){setOnly(stem,'');only='';}
-    var h=document.createElement('div');
-    h.className='navmarks-h';
-    h.textContent='pinned & marked';
-    host.appendChild(h);
-    /* T257: the gate lives here, with the marks it acts on. Words plus
-       icons, and "All" is always present so the way back out is on the
-       row rather than a state you have to remember how to undo. */
-    var bar=document.createElement('div');
-    bar.className='navonly';
-    bar.setAttribute('role','group');
-    bar.setAttribute('aria-label','Show only marked cells');
-    function chip(k,ic,lab,n){
-      var b=document.createElement('button');
-      b.type='button';
-      b.className='navonly-b'+(only===k?' on':'');
-      b.dataset.only=k;
-      b.setAttribute('aria-pressed',only===k?'true':'false');
-      b.title=k?('Show only the '+n+' cell'+(n===1?'':'s')+' you '
-        +(k==='pin'?'pinned':'marked '+k))
-        :'Show every cell again';
-      b.innerHTML=bic(ic)+'<span class="navonly-t">'+lab
-        +(k?(' '+n):'')+'</span>';
-      b.addEventListener('click',function(){
-        setOnly(stem,only===k?'':k);
-        renderMarks(shell,stem);applyFilters();
-      });
-      return b;
-    }
-    /* "All" wears an icon too — words plus icons is the rule for every
-       button, and a bare word among four iconed chips reads as a label */
-    bar.appendChild(chip('','cellcard','All',0));
-    ONLY_KINDS.forEach(function(o){
-      if(have[o.k]) bar.appendChild(chip(o.k,o.ic,o.lab,have[o.k]));});
-    host.appendChild(bar);
-    rows.forEach(function(r){
-      var a=document.createElement('a');
-      a.className='navmark'+(r.st.p?' is-pinned':'')
-        +(r.st.f?(' mk-'+r.st.f):'');
-      a.href='#card-'+r.id;
-      a.title=(r.st.p?'Pinned':'Marked')+': '+r.title;
-      var ic=document.createElement('span');
-      ic.className='navmark-ic';
-      ic.innerHTML=bic(r.st.p?'pin':(r.st.f||'star'));
-      var t=document.createElement('span');
-      t.className='navmark-t';t.textContent=r.title;
-      a.appendChild(ic);a.appendChild(t);
-      host.appendChild(a);
-    });
+    if(stem===(APP.active||'')) renderMarkGate();
   }
   function wireCardBehaviors(shell,stem){
     /* ---- code toggles ---- */
@@ -19669,7 +19826,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
        they are revealed each one's own eye still works, which is how you
        un-hide just the one you actually wanted back. ---- */
     function syncUnhideBtn(sh){
-      var b=sh.querySelector('.rf-unhide'); if(!b) return;
+      /* T364: the bar this button lives on may be docked in the ribbon */
+      var bar=rfBarFor(sh);
+      var b=bar&&bar.querySelector('.rf-unhide'); if(!b) return;
       var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
         +'.content .card.cell-off').length;
       var on=sh.classList.contains('reveal-hidden');
@@ -19949,9 +20108,41 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         });
       });
   }
+  /* ---- T364: THE FILE BAR IS DOCKED IN THE RIBBON ---------------------
+     2026-09-07, user: "move the file into stuff and the refresh out of
+     the side bar and into the ribbon." The bar is still the SHELL's --
+     one per notebook, wired once by wireFileInfo -- so the active one
+     is moved into #file-dock and the others are put back in their own
+     railhead. Moving rather than rebuilding is what keeps every handler
+     and each notebook's own path live. */
+  function rfBarFor(shellEl){
+    if(!shellEl) return null;
+    var own=shellEl.querySelector('.railfile');
+    if(own) return own;
+    var dock=$('#file-dock');
+    if(!dock) return null;
+    return dock.querySelector('.railfile[data-nb="'
+      +(shellEl.dataset.nb||'')+'"]');
+  }
+  function dockFileBar(){
+    var dock=$('#file-dock'); if(!dock) return;
+    /* whatever is parked here belongs to some other notebook now */
+    $$('.railfile',dock).forEach(function(b){
+      var sh=APP.shells[b.dataset.nb||''];
+      var head=sh&&sh.el&&sh.el.querySelector('.railhead');
+      if(head) head.appendChild(b);
+      else if(b.parentNode) b.parentNode.removeChild(b);
+    });
+    var cur=APP.active&&APP.shells[APP.active];
+    if(!cur||!cur.el) return;
+    var bar=cur.el.querySelector('.railfile');
+    if(!bar) return;
+    bar.dataset.nb=APP.active;
+    dock.appendChild(bar);
+  }
   /* ---- File info: where this notebook came from. The path, the git
      commit it is sitting on, and the way in to every earlier version —
-     all in one place at the top of the sidebar, with Reload beside it. */
+     all in one place, with Reload beside it. */
   function wireFileInfo(shell,stem){
     var bar=$('.railfile',shell),panel=$('.rf-panel',shell);
     if(!bar||!panel) return;
@@ -20000,6 +20191,22 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     function closePanel(){
       panel.hidden=true;
       if(info) info.setAttribute('aria-expanded','false');
+    }
+    /* T364: the button is in the ribbon now, so the panel cannot stay in
+       the railhead it was written under. It goes to <body> and is placed
+       under whichever button opened it -- fixed, like every other menu
+       this bar drops (.ckfilter-menu), because the header is sticky and
+       a panel inside it paints behind the page. */
+    function placePanel(){
+      if(!info) return;
+      if(panel.parentNode!==document.body){
+        document.body.appendChild(panel);
+        panel.classList.add('rf-float');
+      }
+      var r=info.getBoundingClientRect();
+      panel.style.top=(r.bottom+6)+'px';
+      panel.style.left=Math.max(6,
+        Math.min(r.left,window.innerWidth-306))+'px';
     }
     function fill(){
       panel.innerHTML='';
@@ -20178,6 +20385,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     }
     function toggle(){
       var open=panel.hidden;
+      if(open) placePanel();
       panel.hidden=!open;
       if(info) info.setAttribute('aria-expanded',open.toString());
       if(open) fill();
@@ -20304,6 +20512,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     var stem=shell.dataset.nb||data.stem||('nb-'+(APP.order.length+1));
     mdClampScan(shell);
     wireFileInfo(shell,stem);
+    if(stem===(APP.active||'')) dockFileBar();
 
     /* ---- filename + path bar at the top of the document ---- */
     var db=$('.docbar',shell);
@@ -28392,7 +28601,7 @@ window.JunoPptx = (function () {
      enumerates sibling selectors again, so a new pane cannot fork the
      list a tenth time. */
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
-    'imgpane','mediapane','chartpane','tablepane',
+    'imgpane','mediapane','chartpane','tablepane','citepane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
@@ -29299,7 +29508,7 @@ window.JunoPptx = (function () {
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'imgpane','mediapane','chartpane','tablepane',
+   'imgpane','mediapane','chartpane','tablepane','citepane',
    'stdpane','tidypane','objhist','provpane','flippane','sizepane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
@@ -30013,7 +30222,7 @@ window.JunoPptx = (function () {
       {id:'of-setup',label:'Slide setup',tab:'design',
        items:['page-strip-frame','lay-drop','dsg-tidy','bg-drop']},
       {id:'of-type',label:'Type',tab:'design',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'of-view',label:'View',tab:'design',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -30039,7 +30248,7 @@ window.JunoPptx = (function () {
       {id:'dk-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'dk-type',label:'Type styles',tab:'deck',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'dk-view',label:'View',tab:'deck',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -30135,7 +30344,7 @@ window.JunoPptx = (function () {
       {id:'s1-page',label:'Page',tab:'deck',
        items:['page-strip-frame','bg-drop']},
       {id:'s1-type',label:'Type',tab:'deck',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'s1-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
@@ -30154,7 +30363,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','et-image','et-media','shape-strip-frame','dc-line','et-table',
          'et-flip','et-arrow','et-cancel']},
       {id:'day-look',label:'Deck look',tab:'start',
-       items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-stylewrap','dsg-tokens']},
+       items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens']},
       {id:'day-show',label:'Present',tab:'start',
        items:['vw-full','notes-btn']},
       {id:'day-text',label:'Text',tab:'format',
@@ -30204,7 +30413,7 @@ window.JunoPptx = (function () {
       {id:'j3-furniture',label:'Page furniture',tab:'page',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'j3-type',label:'Type',tab:'page',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'j3-guides',label:'Workspace',tab:'page',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
@@ -30264,7 +30473,7 @@ window.JunoPptx = (function () {
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
          'et-table','et-flip','et-arrow','et-cancel']},
       {id:'one-text',label:'Text',tab:'all',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std','fmt-stylewrap-tx','fmt-font',
          'fmt-szwrap','fmt-smaller','fmt-bigger','fmt-bold',
          'fmt-ital','fmt-under','fmt-strike','fmt-eqedit','fmt-mdedit',
@@ -30334,7 +30543,7 @@ window.JunoPptx = (function () {
       {id:'mi-furn',label:'Furniture',tab:'mi-board',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'mi-type',label:'Type',tab:'mi-board',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'mi-view',label:'View',tab:'mi-board',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -30390,7 +30599,7 @@ window.JunoPptx = (function () {
       {id:'tt-page',label:'Page',tab:'tt-more',
        items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'tt-type',label:'Type',tab:'tt-more',
-       items:['dsg-sets','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'tt-anim',label:'Animate',tab:'tt-more',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
@@ -30770,8 +30979,14 @@ window.JunoPptx = (function () {
        JSON. T4 shipped that; T52 made it worse by putting guides in the
        undo snapshot and writing a comment saying they belong to the
        deck (2026-08-29). */
+    /* T325: `bib` (the deck's own bibliography) and `cite` (how it
+       cites) join the list. KEEP THIS A CLEAN ARRAY LITERAL -- the
+       schema parity test reads these names straight out of it to learn
+       what normPres keeps, and a comment between the brackets hides
+       every one of them from it. */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides','masters'].forEach(function(k){
+     'components','cuts','guides','masters','bib','cite']
+      .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
@@ -33129,8 +33344,21 @@ window.JunoPptx = (function () {
     /* idempotent: applyZoom calls this again on every resize so the
        furniture rescales with the page, and appending a second copy every
        time would stack watermarks (2026-08-20) */
-    $$('.slide-wmark,.slide-head,.slide-foot,.slide-mast',slideEl)
-      .forEach(function(n){n.remove();});
+    $$('.slide-wmark,.slide-head,.slide-foot,.slide-mast,.slide-citefoot',
+      slideEl).forEach(function(n){n.remove();});
+    /* T325: the references THIS slide cites, along its bottom edge, in
+       the deck's own numbering. Furniture rather than an item: nobody
+       placed it, it is not selectable, and it has to rescale with the
+       page like the footer does. */
+    if(typeof citeFootFor==='function'){
+      var cfoot=citeFootFor((pres.slides||[])[idx]);
+      if(cfoot){
+        var cf=document.createElement('div');
+        cf.className='slide-citefoot';
+        cf.textContent=cfoot;
+        slideEl.appendChild(cf);
+      }
+    }
     /* the MASTER's furniture (T115), behind everything like the
        watermark: resolved from the component definition on every
        paint, so editing the component updates every wearer with no
@@ -39050,10 +39278,14 @@ window.JunoPptx = (function () {
            figure showing now -- it renders its first page and the pass
            at the end of renderAnnots takes it off the slide. */
         var _pn=textAt(s,a),_pi=(_pn<0?0:_pn),_pg=textPage(a,_pi);
+        /* T325: a REFERENCES BOX draws the bibliography rather than
+           storing it, so it is right the moment a citation is added,
+           removed or moved and there is nothing to regenerate. */
         var showTx=(editing&&document.activeElement
                     &&d2.contains(document.activeElement))
-          ?(_pg.t||''):figSubst(_pg.t,a,_figMap);
-        var showHtml=_pg.h?figSubst(_pg.h,a,_figMap):null;
+          ?(_pg.t||'')
+          :(a.bib?bibListText():figSubst(_pg.t,a,_figMap));
+        var showHtml=(a.bib||!_pg.h)?null:figSubst(_pg.h,a,_figMap);
         var tx2,lst=listOf(a);
         if(lst){
           /* the ELEMENT carries the marker style and a.html carries only
@@ -40105,6 +40337,477 @@ window.JunoPptx = (function () {
     window.SemDeckTable={pane:showTablePane,meta:tableColMeta,
       fmt:tableFmtCell,view:tableViewRows,calc:tableCalcRow,
       num:tableNum,groups:tableGroups};
+  }
+  /* ================================================================
+     23-citations.js — CITATIONS AND A BIBLIOGRAPHY (T325)
+
+     ONE FRAGMENT of deck.js's single IIFE: assets.DECK_PARTS names the
+     order, 00-page.js opens the function and 99-boot.js closes it. It
+     does not parse alone; check the ASSEMBLED file.
+
+     The user's list, item 6: "Citation and bibliography manager:
+     BibTeX, DOI lookup, numbered references, footnotes, citation
+     styles".
+
+     The gap this closes is already written down in the LaTeX reader
+     (notebook/sources.py): "\cite has nowhere to resolve to -- a .bib
+     is a second input file and load_doc has no slot for one -- so a
+     citation stays a key in brackets". The deck is the slot. `pres.bib`
+     is a library of entries keyed by cite key, and it rides the deck
+     the way `styles` and `tokens` do.
+
+     A CITATION IS RESOLVED AT PAINT TIME, never stamped -- the same
+     rule `{fig:id}` (figSubst) and '@section' (T316) already keep, and
+     for the same reason: numbers come from ORDER, and order changes
+     every time a slide moves. So `[@key]` in any text box, note or
+     caption becomes [1] as it is drawn, the numbering is first
+     appearance walking the deck, and reordering the deck renumbers
+     everything with no edit and no stale marker anywhere.
+
+     Nothing here runs at load time: citeBoot() is called from THE BOOT
+     SEQUENCE. */
+
+  /* ---- THE LIBRARY ---------------------------------------------------- */
+  function bibOf(){
+    if(!pres.bib||typeof pres.bib!=='object') pres.bib={};
+    return pres.bib;
+  }
+  function citeCfg(){
+    var c=(pres&&pres.cite)||{};
+    return {style:(c.style==='ay')?'ay':'num',foot:!!c.foot};
+  }
+  /* ---- BIBTEX ---------------------------------------------------------
+     A small, forgiving reader: entries, a key, and field = {braced} or
+     "quoted" or a bare word. It does NOT try to be a TeX engine -- the
+     brace counter is the whole parser -- because what a slide needs out
+     of a .bib is an author, a year and a title, and pretending to more
+     would be a second product. Anything it cannot read is skipped and
+     counted, never guessed at. */
+  /* The two brace characters, as constants, because a LONE '{' inside a
+     string literal is invisible to JavaScript and fatal to the test
+     harness: tests/helpers_js.lift_fn cuts a function out of the
+     assembled deck by counting raw braces, so one unpaired brace in a
+     string swallows everything after it. Naming them keeps every
+     literal in this file balanced. */
+  var BIB_OPEN='{',BIB_CLOSE='}';
+  function bibUnbrace(s){
+    var t=String(s||'').trim();
+    while(/^\{[\s\S]*\}$/.test(t)||/^"[\s\S]*"$/.test(t))
+      t=t.slice(1,-1).trim();
+    /* the TeX that actually turns up in a title */
+    t=t.replace(/\\&/g,'&').replace(/\\%/g,'%').replace(/\\\$/g,'$')
+      .replace(/\\_/g,'_').replace(/\{\\"([aouAOU])\}/g,'$1')
+      .replace(/\\['`^"~=.]\{?([A-Za-z])\}?/g,'$1')
+      .replace(/[{}]/g,'').replace(/~/g,' ')
+      .replace(/\s+/g,' ').trim();
+    return t;
+  }
+  function bibParse(text){
+    var src=String(text||''),out={},bad=0,i=0;
+    while(i<src.length){
+      var at=src.indexOf('@',i);
+      if(at<0) break;
+      var open=src.indexOf(BIB_OPEN,at);
+      if(open<0) break;
+      var type=src.slice(at+1,open).trim().toLowerCase();
+      if(!/^[a-z]+$/.test(type)){i=at+1;continue;}
+      /* the entry is everything to its matching brace */
+      var depth=0,end=-1,j;
+      for(j=open;j<src.length;j++){
+        if(src[j]===BIB_OPEN) depth++;
+        else if(src[j]===BIB_CLOSE){depth--;if(!depth){end=j;break;}}
+      }
+      if(end<0){bad++;break;}
+      var body=src.slice(open+1,end);
+      i=end+1;
+      if(type==='comment'||type==='preamble'||type==='string') continue;
+      var comma=body.indexOf(',');
+      var key=(comma<0?body:body.slice(0,comma)).trim();
+      if(!key){bad++;continue;}
+      var ent={type:type};
+      var rest=comma<0?'':body.slice(comma+1);
+      /* one field at a time, splitting on the commas that are at depth
+         zero -- a comma inside {Smith, J.} is part of the value */
+      var d=0,q=false,start=0,parts=[],k;
+      for(k=0;k<rest.length;k++){
+        var ch=rest[k];
+        if(ch===BIB_OPEN) d++;
+        else if(ch===BIB_CLOSE) d--;
+        else if(ch==='"'&&!d) q=!q;
+        else if(ch===','&&!d&&!q){parts.push(rest.slice(start,k));start=k+1;}
+      }
+      parts.push(rest.slice(start));
+      parts.forEach(function(p){
+        var eq=p.indexOf('=');
+        if(eq<0) return;
+        var name=p.slice(0,eq).trim().toLowerCase();
+        if(!/^[a-z]+$/.test(name)) return;
+        ent[name]=bibUnbrace(p.slice(eq+1));
+      });
+      out[key]=ent;
+    }
+    return {entries:out,bad:bad};
+  }
+  /* ---- WHAT A REFERENCE READS AS -------------------------------------
+     Two styles, because two is what the ask names and what a slide can
+     tell apart: a NUMBER in the text with a numbered list at the back,
+     or the author and the year in the text with an alphabetical list.
+     The list format is the same either way -- authors, year, title,
+     where it appeared -- because a slide's bibliography is read at
+     arm's length and a full house style would be unreadable at that
+     distance. */
+  function bibAuthors(ent){
+    var raw=String((ent&&ent.author)||(ent&&ent.editor)||'').trim();
+    if(!raw) return [];
+    return raw.split(/\s+and\s+/i).map(function(one){
+      var s=one.trim();
+      if(s.indexOf(',')>=0) return s.split(',')[0].trim();
+      var bits=s.split(/\s+/);
+      return bits[bits.length-1];
+    }).filter(Boolean);
+  }
+  function bibYear(ent){
+    var m=/\d{4}/.exec(String((ent&&ent.year)||(ent&&ent.date)||''));
+    return m?m[0]:'';
+  }
+  /* the in-text mark for the author-year style: one name, two names, or
+     the first "et al." -- the convention every style agrees on */
+  function bibShort(ent){
+    var a=bibAuthors(ent),y=bibYear(ent);
+    var who=!a.length?'Anon'
+      :a.length===1?a[0]
+      :a.length===2?(a[0]+' & '+a[1])
+      :(a[0]+' et al.');
+    return who+(y?(' '+y):'');
+  }
+  function bibFormat(ent){
+    if(!ent) return '';
+    var a=bibAuthors(ent),y=bibYear(ent);
+    var who=a.length?(a.length>3?(a[0]+' et al.'):a.join(', ')):'Anon';
+    var bits=[who+(y?(' ('+y+')'):'')];
+    if(ent.title) bits.push(ent.title);
+    var where=ent.journal||ent.booktitle||ent.publisher||ent.school
+      ||ent.institution||'';
+    if(where){
+      var w=where;
+      if(ent.volume) w+=' '+ent.volume;
+      if(ent.pages) w+=', '+String(ent.pages).replace(/--/g,'–');
+      bits.push(w);
+    }
+    if(ent.doi) bits.push('doi:'+ent.doi);
+    else if(ent.url) bits.push(ent.url);
+    return bits.join('. ')+'.';
+  }
+  /* ---- WHERE THE CITATIONS ARE ---------------------------------------
+     `[@key]`, `[@a;@b]` and `\cite{a,b}` -- Pandoc's spelling and
+     LaTeX's, because those are the two anybody pastes in. The scan and
+     the substitution read the SAME regex, so a marker that renders can
+     always be found and a marker that is found always renders. */
+  var CITE_RE=/\[@([^\]\s][^\]]*)\]|\\cite[a-z]*\{([^}]*)\}/g;
+  function citeKeysIn(txt){
+    var out=[],m;
+    CITE_RE.lastIndex=0;
+    while((m=CITE_RE.exec(String(txt||'')))){
+      String(m[1]||m[2]||'').split(/[;,]/).forEach(function(k){
+        var key=k.replace(/^\s*@?\s*/,'').trim();
+        if(key) out.push(key);
+      });
+    }
+    return out;
+  }
+  /* every piece of text on a slide that a citation can hide in */
+  function citeTextsOf(sl){
+    var out=[];
+    if(!sl) return out;
+    if(sl.layout==='title'){out.push(sl.title);out.push(sl.sub);}
+    (sl.annots||[]).forEach(function(a){
+      if(!a) return;
+      if(a.k==='text'&&!a.bib){out.push(a.text);out.push(a.html);}
+      if(a.cap) out.push(a.cap);
+      if(a.caption) out.push(a.caption);
+    });
+    if(sl.notes) out.push(sl.notes);
+    return out;
+  }
+  /* KEY -> NUMBER, by first appearance walking the deck in ORDER. The
+     numbering is a fact about the deck, not about any one box, which is
+     why it is computed here and never written down: move a slide and
+     every marker on every slide renumbers itself. Alternative versions
+     of a slide (T318) are skipped, so a version nobody shows cannot
+     claim reference [1]. */
+  function citeOrder(){
+    var map={},n=0;
+    (pres.slides||[]).forEach(function(sl,i){
+      if(typeof slideIsAlt==='function'&&slideIsAlt(i)) return;
+      citeTextsOf(sl).forEach(function(t){
+        citeKeysIn(t).forEach(function(k){
+          if(!(k in map)) map[k]=++n;
+        });
+      });
+    });
+    return map;
+  }
+  /* the cited keys in order, for the bibliography and the checks */
+  function citeUsed(){
+    var map=citeOrder(),out=[];
+    Object.keys(map).forEach(function(k){out[map[k]-1]=k;});
+    return out.filter(Boolean);
+  }
+  /* the marker, as it is READ. An unknown key is shown as such rather
+     than dropped: a citation that silently vanished would be the worst
+     of the three outcomes, and the review pane can list them. */
+  function citeSubst(txt,map){
+    var t=String(txt||'');
+    if(t.indexOf('[@')<0&&t.indexOf('\\cite')<0) return t;
+    map=map||citeOrder();
+    var cfg=citeCfg(),lib=bibOf();
+    CITE_RE.lastIndex=0;
+    return t.replace(CITE_RE,function(all,a,b){
+      var keys=String(a||b||'').split(/[;,]/).map(function(k){
+        return k.replace(/^\s*@?\s*/,'').trim();}).filter(Boolean);
+      if(!keys.length) return all;
+      var parts=keys.map(function(k){
+        var ent=lib[k];
+        if(!ent) return '?'+k;
+        return (cfg.style==='ay')?bibShort(ent):String(map[k]||'?');
+      });
+      return (cfg.style==='ay')?('('+parts.join('; ')+')')
+        :('['+parts.join(', ')+']');
+    });
+  }
+  /* the keys a deck cites and does not hold -- for the review pane and
+     the pre-print check, which is where a missing source has to surface
+     rather than on the screen behind you */
+  function citeMissing(){
+    var lib=bibOf(),out=[];
+    citeUsed().forEach(function(k){if(!lib[k]) out.push(k);});
+    return out;
+  }
+  /* ---- THE BIBLIOGRAPHY BOX -------------------------------------------
+     A text box with `bib:1` DRAWS the references rather than storing
+     them, so it is right the moment a citation is added, removed or
+     moved, and there is nothing to regenerate. Author-year sorts by
+     name, numeric keeps the order the numbers are in. */
+  function bibListText(){
+    var cfg=citeCfg(),lib=bibOf();
+    var keys=citeUsed().filter(function(k){return lib[k];});
+    if(cfg.style==='ay') keys.sort(function(x,y){
+      return bibShort(lib[x]).localeCompare(bibShort(lib[y]));});
+    if(!keys.length) return '';
+    return keys.map(function(k,i){
+      return (cfg.style==='ay')?bibFormat(lib[k])
+        :((i+1)+'. '+bibFormat(lib[k]));
+    }).join('\n');
+  }
+  /* the footnote strip under a slide (the "footnotes" half): the
+     references THIS slide cites, in the deck's own numbering */
+  function citeFootFor(sl){
+    if(!citeCfg().foot) return '';
+    var map=citeOrder(),lib=bibOf(),seen={},out=[];
+    citeTextsOf(sl).forEach(function(t){
+      citeKeysIn(t).forEach(function(k){
+        if(seen[k]) return;
+        seen[k]=1;
+        var ent=lib[k];
+        if(!ent) return;
+        out.push((citeCfg().style==='ay')?bibFormat(ent)
+          :('['+(map[k]||'?')+'] '+bibFormat(ent)));
+      });
+    });
+    return out.join('   ');
+  }
+
+  /* ---- THE PANE -------------------------------------------------------- */
+  function showCitePane(on){
+    var p=$('#citepane'); if(!p) return;
+    if(on){paneShow('citepane');citePaneSync();}
+    else paneHide('citepane');
+  }
+  var citePaneBusyAt=null;
+  function citePaneBusy(){
+    var p=$('#citepane');
+    return !!(p&&!p.hidden&&p.contains(document.activeElement)
+      &&document.activeElement!==document.body);
+  }
+  function citePaneSync(){
+    var p=$('#citepane'); if(!p||p.hidden) return;
+    var body=$('#citepane-body'); if(!body) return;
+    if(citePaneBusy()&&citePaneBusyAt==='live') return;
+    body.innerHTML='';
+    var lib=bibOf(),cfg=citeCfg(),used=citeOrder();
+    function lab(t,cls){
+      var l=document.createElement('div');
+      l.className='np-lab'+(cls?' '+cls:'');
+      l.textContent=t;body.appendChild(l);return l;
+    }
+    function row(cls){
+      var r=document.createElement('div');
+      r.className='np-row ct-row'+(cls?' '+cls:'');
+      body.appendChild(r);return r;
+    }
+    function btn(host,label,on,fn,title){
+      var b=document.createElement('button');
+      b.className='dbtn ct-btn'+(on?' on':'');b.textContent=label;
+      if(title) b.title=title;
+      b.setAttribute('aria-pressed',(!!on).toString());
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      host.appendChild(b);return b;
+    }
+    lab('Style');
+    var sr=row();
+    [['num','[1] numbered'],['ay','(Smith 2020)']].forEach(function(o){
+      btn(sr,o[1],cfg.style===o[0],function(){
+        pres.cite=pres.cite||{};pres.cite.style=o[0];
+        markDirty();renderSlide();citePaneSync();});
+    });
+    btn(sr,'Footnotes',cfg.foot,function(){
+      pres.cite=pres.cite||{};
+      if(cfg.foot) delete pres.cite.foot; else pres.cite.foot=1;
+      markDirty();renderSlide();citePaneSync();},
+      'Show the references a slide cites along its bottom edge');
+    lab('Library');
+    var lr=row();
+    btn(lr,'Import .bib…',false,function(){
+      var fi=$('#bibfile'); if(fi){fi.value='';fi.click();}},
+      'Read a BibTeX file into this deck');
+    btn(lr,'Add by DOI…',false,citeAddByDoi,
+      APP.mode==='app'
+        ?'Look the DOI up on doi.org and add what it returns'
+        :'Needs the Junoview app: the lookup goes out to doi.org');
+    var miss=citeMissing();
+    if(miss.length) lab('Cited but not in the library: '+miss.join(', ')
+      +'. Import the .bib they came from, or add them by DOI.','ct-warn');
+    var keys=Object.keys(lib).sort(function(x,y){
+      var a=used[x]||9e9,b=used[y]||9e9;
+      return a===b?x.localeCompare(y):a-b;});
+    if(!keys.length){
+      lab('Nothing here yet. Import a .bib, or add one by DOI, then '
+        +'cite it in any text box as [@key].','ct-hint');
+    }
+    keys.forEach(function(k){
+      var r=row('ct-entry');
+      var n=used[k];
+      var num=document.createElement('span');
+      num.className='ct-num';
+      num.textContent=n?('['+n+']'):'–';
+      num.title=n?('Reference '+n+' in this deck'):'Not cited yet';
+      r.appendChild(num);
+      var t=document.createElement('span');
+      t.className='ct-ref';
+      t.textContent=bibFormat(lib[k]);
+      t.title=k;
+      r.appendChild(t);
+      btn(r,'Cite',false,function(){citeInsert(k);},
+        'Put [@'+k+'] into the selected text box');
+      btn(r,'Remove',false,function(){
+        if(n&&!confirm('“'+k+'” is cited '
+          +'in this deck. Remove it from the library anyway? The '
+          +'citation will read ?'+k+' until you add it back.')) return;
+        delete lib[k];markDirty();renderSlide();citePaneSync();},
+        'Take this entry out of the deck’s library');
+    });
+    lab('References box');
+    var br=row();
+    btn(br,'Insert a references box',false,citeInsertBibBox,
+      'A text box that DRAWS the references this deck cites, so it is '
+      +'right the moment a citation moves');
+  }
+  /* put a marker into the selected text box, which is the only place a
+     citation can go */
+  function citeInsert(key){
+    var s=pres.slides[cur];
+    var a=(s&&typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+    if(!a||a.k!=='text'){
+      toast('Select the text box to cite in first');
+      return;
+    }
+    a.text=String(a.text||'')+(a.text?' ':'')+'[@'+key+']';
+    if(a.html) a.html=String(a.html)+' [@'+key+']';
+    markDirty();renderSlide();
+    toast('Cited — the number comes from where the slide sits, so '
+      +'moving the slide renumbers it');
+  }
+  function citeInsertBibBox(){
+    var s=pres.slides[cur]; if(!s) return;
+    s.annots=s.annots||[];
+    s.annots.push({k:'text',x:8,y:20,w:84,h:70,size:1.9,bib:1,text:''});
+    markDirty();
+    setTool('select');
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    toast('A references box — it draws what the deck cites, in '
+      +'order, and stays right on its own');
+  }
+  function citeAddByDoi(){
+    if(APP.mode!=='app'){
+      toast('Looking a DOI up reaches doi.org, so it needs the '
+        +'Junoview app. Import a .bib instead.',6000);
+      return;
+    }
+    var raw=prompt('The DOI (or a doi.org link):','');
+    if(raw==null) return;
+    var doi=String(raw).trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'')
+      .replace(/^doi:\s*/i,'');
+    if(!/^10\.\d{4,9}\/\S+$/.test(doi)){
+      toast('That does not look like a DOI — they start "10." and '
+        +'then a slash',5000);
+      return;
+    }
+    toast('Asking doi.org…');
+    APP.api('/api/doi',{doi:doi}).then(function(j){
+      var got=bibParse(j&&j.bibtex);
+      var keys=Object.keys(got.entries);
+      if(!keys.length){toast('doi.org sent nothing this could read');return;}
+      var lib=bibOf(),added=[];
+      keys.forEach(function(k){
+        if(!lib[k]) added.push(k);
+        lib[k]=got.entries[k];
+      });
+      markDirty();renderSlide();citePaneSync();
+      toast(added.length
+        ?('Added '+added.join(', ')+' — cite it as [@'+added[0]+']')
+        :'Already in the library; the entry was refreshed',6000);
+    }).catch(function(e){
+      toast('DOI lookup failed: '+((e&&e.message)||e),6000);
+    });
+  }
+  function citeImportText(text,name){
+    var got=bibParse(text);
+    var keys=Object.keys(got.entries);
+    if(!keys.length){
+      toast('No BibTeX entries in '+(name||'that file'));
+      return 0;
+    }
+    var lib=bibOf(),fresh=0;
+    keys.forEach(function(k){
+      if(!lib[k]) fresh++;
+      lib[k]=got.entries[k];
+    });
+    markDirty();renderSlide();citePaneSync();
+    toast('Read '+keys.length+' entr'+(keys.length===1?'y':'ies')
+      +' from '+(name||'the file')+(fresh!==keys.length
+        ?(' ('+fresh+' new)'):'')
+      +(got.bad?(' — '+got.bad+' could not be read'):''),6000);
+    return keys.length;
+  }
+  function citeBoot(){
+    var b=$('#dsg-cites');
+    if(b) b.addEventListener('click',function(){
+      var p=$('#citepane');showCitePane(!p||p.hidden);});
+    var cl=$('#citepane-close');
+    if(cl) cl.addEventListener('click',function(){showCitePane(false);});
+    var fi=$('#bibfile');
+    if(fi) fi.addEventListener('change',function(){
+      var f=this.files&&this.files[0];
+      this.value='';
+      if(!f) return;
+      f.text().then(function(t){citeImportText(t,f.name);})
+        .catch(function(e){
+          toast('Could not read '+f.name+': '+((e&&e.message)||e));});
+    });
+    window.SemDeckCite={parse:bibParse,format:bibFormat,short:bibShort,
+      order:citeOrder,subst:citeSubst,keys:citeKeysIn,list:bibListText,
+      missing:citeMissing,pane:showCitePane,importText:citeImportText};
   }
 /* 25-selecting.js — what belongs to what, locks, snapping, the marquee and the canvas menu.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
@@ -48370,6 +49073,11 @@ window.JunoPptx = (function () {
      says so — a silently wrong number is the failure this replaces. */
   function figSubst(txt,a,map){
     var t=String(txt||'');
+    /* T325: a citation resolves wherever a figure number does. Both are
+       paint-time substitutions of a marker into a number that comes from
+       ORDER, so they belong on the same funnel -- every text box, note,
+       caption and flip page already comes through here. */
+    if(typeof citeSubst==='function') t=citeSubst(t);
     if(t.indexOf('{fig')<0) return t;
     map=map||figNumbers();
     return t.replace(/\{fig(?::([A-Za-z0-9_]+))?\}/g,function(_,id){
@@ -59652,6 +60360,24 @@ window.JunoPptx = (function () {
         ti.type='text';ti.className='dgt-tx';
         ti.value=String(r.a.text||'');
         ti.title='The words in this box. Enter commits it.';
+        /* 2026-09-07: "please put the 'text' row as what it looks like
+           in the slide ... should be a preview of the text." A column
+           of identical grey inputs said nothing about which box was
+           which; each is a specimen of its own box now, falling back to
+           the style where the box says nothing itself. */
+        (function(){
+          var st=(r.a.style&&typeof styleDef==='function')
+            ?styleDef(r.a.style):null;
+          var col=r.a.color||(st&&st.color);
+          var bg=(r.a.bg!==0)&&(r.a.bgc||(st&&st.bg));
+          var fam=r.a.font||(st&&st.font);
+          if(col) ti.style.color=tokVal(col);
+          if(bg) ti.style.background=tokVal(bg);
+          if(fam) ti.style.fontFamily=fontCss(fam);
+          if(r.a.b||(st&&st.b)) ti.style.fontWeight='700';
+          if(r.a.i||(st&&st.i)) ti.style.fontStyle='italic';
+          if(r.a.align) ti.style.textAlign=r.a.align;
+        })();
         ti.addEventListener('click',function(e){e.stopPropagation();});
         ti.addEventListener('keydown',function(e){
           e.stopPropagation();
@@ -59881,12 +60607,67 @@ window.JunoPptx = (function () {
   }
   /* what each colour on the board means, and only for the kinds that
      are actually there */
+  /* WHERE THEY ACTUALLY ARE, GROUPED (2026-09-07, user: "What is one
+     box outline with Title and the other is yellow? ... should just
+     have how many are in each place (and some indication of which
+     slides), like group 1, then below they are grouped into those
+     groups so you can [see] which slides they are").
+     The board drew one dashed rectangle (the default this type is given
+     when you Apply) and a filled one per real box, and nothing said
+     which was which. It now says so in words, and the real boxes are
+     GROUPED by the place they sit in -- so "these nine are all in the
+     same spot, these two are somewhere else" is readable without
+     comparing rectangles by eye. Rounded to the nearest 2% because a
+     box nudged by a pixel is in the same place as far as anyone
+     looking at a deck is concerned. */
+  function dgPlaceKey(a){
+    function q(v){return Math.round((+v||0)/2)*2;}
+    return q(a.x)+','+q(a.y)+','+q(a.w);
+  }
+  function dgPlaceGroups(id){
+    var by={},order=[];
+    dgWearers(id).forEach(function(w){
+      if(dgPickedAny()&&!dgSheetPick[w.s]) return;
+      var k=dgPlaceKey(w.a);
+      if(!by[k]){by[k]={key:k,a:w.a,ws:[]};order.push(k);}
+      by[k].ws.push(w);
+    });
+    /* the biggest group first: it is the one that IS the standard */
+    return order.map(function(k){return by[k];}).sort(function(x,y){
+      return y.ws.length-x.ws.length;});
+  }
   function dgKeyList(key,id){
-    $$('.dg-keyit',key).forEach(function(n){n.remove();});
-    var mine=document.createElement('span');
-    mine.className='dg-keyit dg-keymine';
-    mine.textContent=(styleDef(id)||{}).label||id;
-    key.appendChild(mine);
+    $$('.dg-keyit,.dg-place',key).forEach(function(n){n.remove();});
+    var groups=dgPlaceGroups(id);
+    groups.forEach(function(g,gi){
+      var wrap=document.createElement('div');
+      wrap.className='dg-place';
+      var head=document.createElement('span');
+      head.className='dg-placehead';
+      head.textContent='Group '+(gi+1)+' \u2014 '+g.ws.length+' box'
+        +(g.ws.length===1?'':'es')+' at '+Math.round(g.a.x||0)+', '
+        +Math.round(g.a.y||0);
+      wrap.appendChild(head);
+      var list=document.createElement('span');
+      list.className='dg-placeslides';
+      g.ws.forEach(function(w){
+        var s=document.createElement('button');
+        s.className='dg-slidechip';
+        s.textContent=(w.s+1);
+        s.title='Slide '+(w.s+1)+' \u2014 go to it';
+        s.addEventListener('click',function(e){
+          e.stopPropagation();dgClose();go(w.s);});
+        list.appendChild(s);
+      });
+      wrap.appendChild(list);
+      key.appendChild(wrap);
+    });
+    if(!groups.length){
+      var none=document.createElement('span');
+      none.className='dg-keyit';
+      none.textContent='No box wears this type yet';
+      key.appendChild(none);
+    }
     if(!dgShowOthers) return;
     var seen={};
     dgBoardSlides().forEach(function(e){
@@ -60061,9 +60842,16 @@ window.JunoPptx = (function () {
         b.style.width=Math.max(1.5,(a.w||10))+'%';
         b.style.height=Math.max(1.5,(a.h||6))+'%';
         b.style.borderColor=mine?'':dgKindCol(a);
-        b.title=(mine?'':(annotLabel(a)+' — '))
-          +'slide '+(e.si+1)
-          +(bad?' — wears this style but no longer matches it':'');
+        /* 2026-09-07: "when hovering above an object it should give an
+           information bubble that is like 'chart from slide 7' and
+           clicking on it takes you to that slide. Or if many gives you
+           a list of them all." A title attribute says it after a
+           second's wait and cannot be clicked, so the board grew a real
+           bubble instead -- see dgBoard. */
+        b.dataset.si=e.si;
+        b.dataset.what=(mine?((styleDef(id)||{}).label||id):annotLabel(a))
+          +' — slide '+(e.si+1)
+          +(bad?' — no longer matches this style':'');
         board.appendChild(b);
       });
     });
@@ -60093,7 +60881,9 @@ window.JunoPptx = (function () {
     }
     var lab=document.createElement('span');
     lab.className='dg-ghostlab';
-    lab.textContent=(styleDef(id)||{}).label||id;
+    /* "Oh is the Title one like the prototype of where I am moving one
+       to?" -- it was, and nothing said so. Now it does. */
+    lab.textContent='default place';
     dgSpecimen(lab,id);
     ghost.appendChild(lab);
     var grip=document.createElement('span');
@@ -60110,6 +60900,44 @@ window.JunoPptx = (function () {
     offnote.className='dg-offnote';offnote.hidden=true;
     host.appendChild(offnote);
     dgGhostsFor(board,id);
+    /* ONE bubble for the whole board, moved and filled on hover -- a
+       node per object would be hundreds of them on a real deck. Every
+       object under the pointer is named, because "which of these am I
+       pointing at" is exactly the question a board of overlapping
+       rectangles raises, and each name is a button to its slide. */
+    var bub=document.createElement('div');
+    bub.className='dg-bub';bub.hidden=true;
+    host.appendChild(bub);
+    board.addEventListener('mousemove',function(ev){
+      var r=board.getBoundingClientRect();
+      var hits=$$('.dg-real,.dg-other',board).filter(function(n){
+        var q=n.getBoundingClientRect();
+        return ev.clientX>=q.left&&ev.clientX<=q.right
+          &&ev.clientY>=q.top&&ev.clientY<=q.bottom;
+      });
+      if(!hits.length){bub.hidden=true;return;}
+      bub.innerHTML='';
+      hits.slice(0,8).forEach(function(n){
+        var line=document.createElement('button');
+        line.className='dg-bubline';
+        line.textContent=n.dataset.what||'';
+        line.addEventListener('click',function(e2){
+          e2.stopPropagation();dgClose();go(+n.dataset.si||0);});
+        bub.appendChild(line);
+      });
+      if(hits.length>8){
+        var more=document.createElement('span');
+        more.className='dg-bubmore';
+        more.textContent='and '+(hits.length-8)+' more here';
+        bub.appendChild(more);
+      }
+      bub.hidden=false;
+      var bw=bub.offsetWidth||160;
+      bub.style.left=Math.max(0,Math.min(r.width-bw,
+        ev.clientX-r.left+12))+'px';
+      bub.style.top=Math.max(0,ev.clientY-r.top+14)+'px';
+    });
+    board.addEventListener('mouseleave',function(){bub.hidden=true;});
     /* the key, and the switch that turns the rest of the page on */
     var key=document.createElement('div');key.className='dg-key';
     var ck=document.createElement('label');ck.className='dg-keyck';
@@ -60122,8 +60950,7 @@ window.JunoPptx = (function () {
     });
     ck.appendChild(box);
     ck.appendChild(document.createTextNode(' Show everything else'));
-    ck.title='Draw every other object on these slides too, so you can '
-      +'see what this type would land on';
+    ck.title='Draw every other object on these slides too';
     key.appendChild(ck);
     dgKeyList(key,id);
     host.appendChild(key);
@@ -60172,11 +60999,7 @@ window.JunoPptx = (function () {
     var id=dgSel,d=styleDef(id);
     /* T224: an object kind has no look to edit -- it has a table */
     if(dgIsObj()){
-      dgSectionHead(body,'Every '+dgKindLabel().toLowerCase()
-        +' in this deck',
-        'Tick the ones you want to line up, then Match style of and '
-        +'click the one they should follow. Or type a number straight '
-        +'into the table.');
+      dgSectionHead(body,dgKindLabel()+' \u2014 every one in this deck');
       dgTable(body,ov);
       dgSheet(body,ov);
       return;
@@ -60186,9 +61009,14 @@ window.JunoPptx = (function () {
     var rec=dgStyleRec(id);
     var wear=dgWearers(id);
 
-    /* ---- how it looks ---- */
-    dgSectionHead(body,'How “'+(d.label||id)+'” looks',
-      'Changes every box with this style, on every slide.');
+    /* ---- how it looks ----
+       ONE line for the whole screen, and no other prose on it
+       (2026-09-07, user: "There is soooo much unnecessary text here. I
+       think almost all text is unnecessary, just one short description
+       at the top"). Every control below says what it is by being what
+       it is. */
+    dgSectionHead(body,(d.label||id)
+      +' \u2014 changes every box wearing it, on every slide');
     var spec=document.createElement('div');
     spec.className='dg-spec';
     spec.textContent='The quick brown fox jumps over the lazy dog';
@@ -60313,11 +61141,6 @@ window.JunoPptx = (function () {
     (cur_||row).appendChild(rst);
     body.appendChild(row);
 
-    /* ---- where it sits ---- */
-    dgSectionHead(body,'Where “'+(d.label||id)+'” sits',
-      'Drag the box to set where this type goes by default, and its '
-      +'right edge to set the width. Nothing on the slides moves until '
-      +'you press the button below.');
     dgBoard(body,id);
     /* ---- T223: THE NUMBERS, TOO ------------------------------------
        Dragging sets it roughly; typing sets it exactly, and it is the
@@ -60429,10 +61252,6 @@ window.JunoPptx = (function () {
     putSync();
     body.appendChild(putRow);
 
-    /* ---- T224: every box of this type, in a table ---- */
-    dgSectionHead(body,'Every \u201c'+(d.label||id)+'\u201d in this deck',
-      'Type into a row to change one box. Tick several and use Match '
-      +'style of to bring them into line.');
     dgTable(body,ov);
     dgSheet(body,ov);
   }
@@ -63363,17 +64182,25 @@ window.JunoPptx = (function () {
         b.dataset.style=r[0];
         /* the plain tile keeps the door older code and tests know */
         if(!r[0]) b.setAttribute('data-tool','text');
-        var ic=document.createElement('span');ic.className='tx-tile-a';
-        ic.textContent='Aa';
+        /* THE NAME IS THE SPECIMEN (2026-09-07, user: "You don't
+           need the Aa I reckon, just the Title, Heading 1 in the text
+           style"). An "Aa" beside the word said the same thing twice
+           and cost the height that made these tiles two lines tall --
+           and a heading is the thing people reach for most. So the
+           WORD wears the type, the tile is one line, and the strip
+           wraps into two short rows instead of one tall one. */
+        var t=document.createElement('span');
+        t.className='tx-tile-n';t.textContent=r[1];
         if(r[2]){
-          ic.style.fontWeight=r[2].b?'700':'400';
-          if(r[2].i) ic.style.fontStyle='italic';
-          ic.style.fontSize=Math.max(11,Math.min(22,r[2].size*3.2))+'px';
-          if(r[2].color) ic.style.color=tokVal(r[2].color);
-          if(r[2].font) ic.style.fontFamily=fontCss(r[2].font);
+          t.style.fontWeight=r[2].b?'700':'400';
+          if(r[2].i) t.style.fontStyle='italic';
+          if(r[2].color) t.style.color=tokVal(r[2].color);
+          if(r[2].font) t.style.fontFamily=fontCss(r[2].font);
+          /* the ladder, compressed: a title still reads bigger than a
+             heading, without a 40px tile */
+          t.style.fontSize=Math.max(11,Math.min(17,
+            10.5+(r[2].size||2.6)*0.85))+'px';
         }
-        b.appendChild(ic);
-        var t=document.createElement('span');t.textContent=r[1];
         b.appendChild(t);
         b.title=r[0]
           ?('Draw a '+r[1]+' box'
@@ -67554,6 +68381,7 @@ window.JunoPptx = (function () {
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   chartBoot();                /* the Chart pane's door (T322) */
   tablePaneBoot();            /* the Table pane's door (T324) */
+  citeBoot();                 /* the Citations pane's door (T325) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
