@@ -1073,6 +1073,13 @@
     }
     function beginEdit(){
       restoreSource();
+      /* T366: AN EMPTY BOX OPENS EMPTY, and a placeholder is an empty
+         box wearing a hint (getVal answers '' for one). Done here and
+         not only on `focus`, because focus does not fire when the
+         element already holds it -- clicking into a box you are already
+         in left the hint sitting there to be selected and deleted,
+         which is the annoyance being removed. */
+      if(!getVal()) el.textContent='';
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
       el.focus();
       var host=el.closest?el.closest('.an-item'):null;
@@ -1997,13 +2004,6 @@
         if(se&&mode==='edit') checkFigDpi(se);
       },300);
     }
-    /* drop the "empty slide" hint once the slide has any content (placement
-       only re-renders the layer, not the whole slide, so clear it here) */
-    var _host=layer.parentNode;
-    if(_host){
-      var _eh=_host.querySelector('.slide-emptyhint');
-      if(_eh&&(s.annots||[]).length) _eh.remove();
-    }
     /* two svg layers: fat invisible hit-lines UNDER the items (so
        frames stay clickable), visible strokes ON TOP of everything
        (click-transparent) so arrows are never hidden behind frames */
@@ -2357,6 +2357,13 @@
           ?(_pg.t||'')
           :(a.bib?bibListText():figSubst(_pg.t,a,_figMap));
         var showHtml=(a.bib||!_pg.h)?null:figSubst(_pg.h,a,_figMap);
+        /* T366: a placeholder is a hint about the SHAPE of the slide,
+           so it is drawn only where the shape is what you are working
+           on. Anywhere else -- the show, the printed page, a thumbnail,
+           every export -- an untouched slot is empty, because "Body
+           text" printed on a slide is the bug this closes. */
+        var _isPh=!!a.ph;
+        if(_isPh&&mode!=='edit'){showTx='';showHtml=null;}
         var tx2,lst=listOf(a);
         if(lst){
           /* the ELEMENT carries the marker style and a.html carries only
@@ -2396,12 +2403,37 @@
              and the caret, the debounced commit, __jvFlush, the blur
              flush, Tab-to-indent, paste-as-code and the maths and
              markdown re-render gates all keep working untouched. */
+          if(_isPh) tx2.classList.add('an-ph');
           editableText(layer,tx2,
-            function(){return textPage(a,_pi).t;},
+            /* T366: the editor opens EMPTY on a placeholder, so the
+               first keystroke is the first word instead of something
+               to select and delete first. */
+            function(){return a.ph?'':textPage(a,_pi).t;},
             /* rich BOTH ways now. A list used to be saved as plain lines
                only, so bold inside a bullet — or a sub-level — was thrown
                away the moment the box lost focus. */
             function(v,r){
+              /* T366: the first real character makes the words yours.
+                 Leaving without typing puts the placeholder back --
+                 otherwise the empty-box rule below would delete every
+                 slot in a template the moment you clicked through it. */
+              if(a.ph){
+                /* left without typing: the hint goes back. The layer is
+                   not re-rendered by a commit, so the words have to be
+                   put back by hand or the box reads empty until the
+                   next full render -- and the empty-box rule below
+                   would then delete every untouched slot in a template. */
+                if(!String(v||'').trim()){
+                  tx2.textContent=String(textPage(a,_pi).t||'');
+                  return;
+                }
+                delete a.ph;
+                /* committing writes into the element IN PLACE and never
+                   re-renders the layer (see the blur comment above), so
+                   the faint class has to come off here or the words you
+                   just typed stay ghosted until the next full render */
+                tx2.classList.remove('an-ph');
+              }
               textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');
               /* THE WAY OUT OF A LIST. `a.list` is a box-wide flag and
                  the renderer rebuilds a bullet for every line from it,

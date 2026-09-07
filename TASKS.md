@@ -7300,3 +7300,20 @@ first. Ticked in the commit that ships each.
   button; asking for a figure opens a notebook when none is open. And
   `#doc-autoslides` puts "Make slides" beside Present, opening T362's
   three-scope chooser from the notebook it reads.
+- [x] **T366 - An empty slide says nothing, and a template's words are a
+  placeholder.** The user (2026-09-07): "Empty slides do not need to say
+  they are empty!!!! This defeats the purpose. Also goddam stop putting
+  fucking text in places it doesn't need to be, that is so god damn
+  fucking annoying."; "Also text boxes and things appear with text in
+  them, can they appear with that like not real text that is kind of
+  transparent that deleted when you type something".
+  *Done 2026-09-07.* T61 had a blank slide carry a paragraph saying it
+  was blank, with a button under it, on the one surface whose emptiness
+  is the message -- and every door it named sits on the ribbon two
+  inches above. The hint, its three style rules and its render-time
+  cleanup are gone. A template's boxes now arrive holding `ph:1` beside
+  the words: drawn faint while you edit so you can read the shape of
+  the slide, drawn nowhere in the show, in print or in any export, the
+  editor opens EMPTY so the first keystroke is the first word, and the
+  first real character clears the flag. Leaving without typing puts the
+  hint back rather than letting the empty-box rule delete the slot.

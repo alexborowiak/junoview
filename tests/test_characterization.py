@@ -1590,8 +1590,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and a fresh hole); sizeRibbonGroups counts .rbn-hid as hidden, so a
 # customised ribbon's parity is right; and --rbn-cols is gone, having
 # been written by that function and read by no rule anywhere.
-EXPECTED_MD5 = "bc437d101fe1ac3840f966d9fcdca85b"
-EXPECTED_BYTES = 3930891
+# T366 takes words off two surfaces. An empty slide carried a
+# paragraph saying it was empty plus a button (T61); every door it
+# named is on the ribbon two inches above it, so the hint, its three
+# style rules and its render-time cleanup are gone. And a template's
+# boxes now arrive holding a PLACEHOLDER -- ph:1 beside the words --
+# drawn faint while you edit, drawn nowhere in the show or any
+# export, opening the editor EMPTY so the first keystroke is the
+# first word, and clearing the flag the moment you type.
+EXPECTED_MD5 = "1b6ccd7c3799793f7a7a2ad620c737a3"
+EXPECTED_BYTES = 3931874
 
 
 def _render_example() -> str:

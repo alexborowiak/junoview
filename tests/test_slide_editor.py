@@ -2940,19 +2940,27 @@ def test_a_new_slide_is_empty_and_the_frame_asks_what_goes_in_it(out):
     (2026-08-29, user, T61.)
 
     Three parts, and the third is the one that bites. emptySlide() stamps
-    nothing, so the slide SAYS it is empty and offers the door rather
-    than showing a frame nobody asked for -- and .slide-emptyhint, which
-    the stylesheet had dressed in both themes while nothing built it, is
-    finally built. The frame's own door names every source it can take, a
-    path among them. And BOTH roads a picture can arrive by honour the
-    waiting frame: the clipboard row does not go through placeImage, so a
-    single check in a single place would have left that row landing its
-    picture in the middle of the slide while the frame it promised sat
-    empty -- and the unconsumed answer still armed.
+    nothing, so a new slide really is empty rather than showing a frame
+    nobody asked for. The frame's own door names every source it can
+    take, a path among them. And BOTH roads a picture can arrive by
+    honour the waiting frame: the clipboard row does not go through
+    placeImage, so a single check in a single place would have left that
+    row landing its picture in the middle of the slide while the frame
+    it promised sat empty -- and the unconsumed answer still armed.
+
+    T366 removed the third part's other half. T61 also had the empty
+    slide SAY it was empty, in a paragraph on the slide with a button
+    under it; the user, 2026-09-07: "Empty slides do not need to say
+    they are empty!!!! This defeats the purpose. Also goddam stop
+    putting fucking text in places it doesn't need to be." The doors it
+    named are all on the ribbon two inches above the slide.
     """
     assert "return {layout:'blank',panes:[],annots:[]};" in out
     assert "annots:[fullFrame(null)]" not in out
-    assert "eh.className='slide-emptyhint';" in out
+    assert "slide-emptyhint" not in out
+    from junoview import assets
+    css = assets.load("css/deck.css")
+    assert ".slide-emptyhint" not in css
     assert "function openObjSrc(btn,idx){" in out
     for src in ("bic('cellcard')", "bic('image')", "bic('paste')",
                 "bic('link')"):

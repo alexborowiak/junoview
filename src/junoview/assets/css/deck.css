@@ -2463,11 +2463,15 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
    equal specificity — without it this was dead CSS (2026-08-05 review) */
 .page-light .slide-titlefree .ttl-eyebrow{color:#1d7a90;}
 .page-light .an-title{color:#16222c;}
-/* the on-page chrome the first pass missed: figure captions, the empty
-   hint and slide meta were dark-theme greys on a white page */
+/* T366: a placeholder's words. Faint enough to read as a hint about
+   the slide's shape rather than as something written, and never
+   selectable -- the caret arrives in an empty box, so there is nothing
+   here to select. Only ever drawn while editing. */
+.an-ph{opacity:.38;user-select:none;}
+/* the on-page chrome the first pass missed: figure captions and slide
+   meta were dark-theme greys on a white page (the empty-slide hint was
+   the third; T366 took it off the slide entirely) */
 .page-light .an-cellcap{color:#4a5a66;}
-.page-light .slide-emptyhint,.page-light .slide-emptyhint b{
-  color:#6a7a86;}
 .page-light .slide-meta{color:#5a6b78;}
 /* the File-menu page background swatches */
 .dc-pagebg{display:flex;align-items:center;gap:6px;cursor:default;}
@@ -3661,11 +3665,6 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-cellcap{flex:none;font-family:var(--serif);font-size:12.5px;
   color:var(--chrome-ink);padding:0 12px 9px;margin:0;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.slide-emptyhint{position:absolute;inset:0;display:flex;
-  align-items:center;justify-content:center;text-align:center;
-  color:#54677a;font-size:14px;line-height:1.6;margin:0;padding:0 8%;
-  pointer-events:none;}
-.slide-emptyhint b{color:var(--chrome-ink-2);}
 .an-cell .cardbody{flex:1;min-height:0;display:flex;
   flex-direction:column;padding:8px;}
 /* the .cb-fig figure-part wrapper must pass the flex height through in slide

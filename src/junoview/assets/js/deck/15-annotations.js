@@ -595,51 +595,14 @@
       applyPage();
       applyZoom();   /* every mode: playback letterboxes to the page too */
       attachAnnots(slideEl,s);
-      /* AN EMPTY SLIDE SAYS SO, AND OFFERS THE DOOR (T61) --------------
-         emptySlide() no longer stamps a notebook frame, so a new slide
-         really is empty - and a bare canvas with nothing written on it
-         is the other way to get this wrong. The hint is the
-         .slide-emptyhint the stylesheet has always carried rules for
-         (in both themes); renderAnnots drops it the moment the slide
-         holds anything, so placing something never has to re-render the
-         whole slide to be rid of it.
-         HERE, and never in attachAnnots: the thumbnails, the presenter
-         previews and every export come through that one, and none of
-         them is a place to be told how to insert something. */
-      if(mode==='edit'&&s.layout!=='title'&&!(s.annots||[]).length){
-        var eh=document.createElement('p');
-        eh.className='slide-emptyhint';
-        var ehw=document.createElement('span');
-        ehw.innerHTML='<b>This slide is empty.</b><br>Insert an object '
-          +'— a figure from a notebook, a picture on this computer '
-          +'or a path — or draw Text, a Table or a Shape.<br>';
-        var ehb=document.createElement('button');
-        ehb.className='dbtn';ehb.type='button';
-        /* the hint itself is click-through so it can never eat a drag
-           on the canvas; the one button in it has to opt back in */
-        ehb.style.pointerEvents='auto';ehb.style.marginTop='10px';
-        ehb.innerHTML=bic('cellcard')+' Insert object';
-        ehb.title='A figure, table or note from a notebook, a picture '
-          +'on this computer, or a path — you pick which';
-        ehb.addEventListener('click',function(ev){
-          ev.stopPropagation();
-          /* the frame first, then the SAME chooser an empty frame
-             opens - one menu, whichever end you come at it from. It is
-             opened on the new frame's own button because this one is
-             gone the moment refresh() rebuilds the stage. */
-          s.annots=s.annots||[];
-          s.annots.push(fullFrame(null));
-          var at=s.annots.length-1;
-          markDirty();refresh();
-          var l2=stage.querySelector('.annot-layer');
-          var host=l2&&l2.querySelector('.an-cell[data-idx="'+at+'"]');
-          openObjSrc((host&&host.querySelector('.an-cellpick'))
-            ||host||stage,at);
-        });
-        ehw.appendChild(ehb);
-        eh.appendChild(ehw);
-        slideEl.appendChild(eh);
-      }
+      /* T366: AN EMPTY SLIDE SAYS NOTHING. T61 put a paragraph on it
+         -- "This slide is empty", how to insert an object, and a
+         button -- which is a lecture printed on the one surface whose
+         emptiness IS the message (2026-09-07, user: "Empty slides do
+         not need to say they are empty!!!! This defeats the purpose.
+         Also goddam stop putting fucking text in places it doesn't
+         need to be"). Every door it named is on the ribbon two inches
+         above the slide: Notebook cell, Image, Text, Table, Shape. */
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
       /* the annot layer exists only now, and the rulers shade the

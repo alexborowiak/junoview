@@ -445,7 +445,10 @@
       } else {
         var t=texts[ti++];
         if(t){t.x=it.x;t.y=it.y;t.w=it.w;
-          if(!t.text) t.text=it.text||'Text';
+          /* T366: a box that had nothing in it gets the slot's words as
+             a PLACEHOLDER, not as content -- the same as a fresh one
+             below. Without the flag the words would print. */
+          if(!t.text){t.text=it.text||'Text';t.ph=1;}
           next.push(t);
         } else {
           var nb={k:'text',x:it.x,y:it.y,w:it.w,
@@ -453,7 +456,17 @@
                theme decides — a stamped '#ffffff' made template text
                white-on-white on light posters (2026-08-05 review) */
             text:it.text||'Text',size:it.size||2.8,
-            bg:0,align:it.align||'left',b:it.b?1:0};
+            bg:0,align:it.align||'left',b:it.b?1:0,
+            /* T366: A PLACEHOLDER, NOT CONTENT (2026-09-07, user: "text
+               boxes and things appear with text in them, can they appear
+               with that like not real text that is kind of transparent
+               that deleted when you type something"). The words are the
+               slot's own -- "Title", "Body text" -- and until somebody
+               types they are a hint about the shape of the slide, drawn
+               faint here and drawn NOWHERE in the show, in print or in
+               any export. One flag, set in the one place a template's
+               boxes are born, so every layout gets it. */
+            ph:1};
           /* T276: AND WHAT THE SLOT SAYS IT IS. Written straight onto the
              box rather than through applyStyleTo, which would overwrite
              the template's own size, align and weight with the style's

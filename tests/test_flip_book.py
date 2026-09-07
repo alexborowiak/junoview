@@ -333,7 +333,9 @@ def test_a_text_box_can_carry_pages(out):
     # page one is the box itself, never a copy of it
     assert "if(!n) return {t:String(a.text||''),h:a.html||''};" in out
     # the editor reads and writes the page being shown
-    assert "function(){return textPage(a,_pi).t;}," in out
+    # T366: ...and a placeholder opens the editor empty, so the first
+    # keystroke is the first word
+    assert "function(){return a.ph?'':textPage(a,_pi).t;}," in out
     assert "textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');" in out
     # and it walks through the door T160 built for charts, not flipsOn --
     # everything asking "is this a flip book?" must keep getting flip books
