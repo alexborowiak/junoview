@@ -7354,3 +7354,45 @@ first. Ticked in the commit that ships each.
   that needs a box selected. And `pres.slot` says which variation a new
   slide's box is given, set by one picker and carried by normPres and
   as_presentations.
+- [x] **T369 - The buttons are compact, the way PowerPoint's are.** The
+  user (2026-09-08): "fix the buttons so they are compact like power
+  point".
+  *Done 2026-09-08.* The ribbon's measurements were written out between
+  four and sixteen times each -- the band in four rules, the button
+  height in eleven, the tile in sixteen plus three `calc()` strings that
+  multiplied it -- so "one height, one baseline" was a comment rather
+  than a mechanism, and every recurrence of "the buttons are all
+  different sizes" was a rule that had missed one of the copies. They
+  are tokens on `.deck` now (`--rbn-band`, `--rbn-track`, `--rbn-btn-h`,
+  `--rbn-btn-px`, `--rbn-btn-gap`, `--rbn-grp-px`, `--rbn-tile-w/h/gap`)
+  set to PowerPoint's numbers: a 92px bar instead of 106, a 60px band
+  instead of 65, a 64px tile instead of 72, 6px of side padding on a
+  button instead of 8, and ONE spacer between its icon and its word
+  instead of a 6px flex gap stacked on the `.bic` rule's 4px margin.
+  The button KEEPS its 26px height -- that was asked for (2026-08-20,
+  "buttons could also have more height") and shrinking it was never the
+  complaint. The viewer's bar got `--ab-btn-h/px/gap` and the same
+  density.
+  Two rules were making the ribbon WIDER as it tried to shrink. Every
+  rung of the compaction ladder had been written against the old resting
+  size, so from a compacted bar `erc1` and `erc2` were a step UP: the
+  row grew, the ladder climbed to its last rung and then folded groups
+  behind doors at widths where nothing needed to move. And
+  `.rbn-row .dbtn.etm` set 10.5px type at REST, which T219 forbade a
+  rung from doing, so "Duplicate" on Home and "Duplicate" on Object were
+  different sizes. Every rung is a step down from the token now, and
+  `tests/test_ribbon_metrics.py` fails if one is not.
+  Measured live against HEAD at 1366/1440/1560/1920, with and without a
+  selection: the widest tab needs 1213px where it needed 1594, every
+  group is reachable without a fold-away door from about 1500px where it
+  took about 1650, and at 1366 six of the eight tabs sit at full resting
+  density with nothing folded (Home and Object used to compact; Design
+  and Animation folded five groups between them and now fold one each).
+  The viewer's bar is 75px narrower. The narrower tile also exposed a
+  gallery label that had never fitted -- `.lay-lb` was nowrap with an
+  ellipsis and no width to bite on, so "Title + text + panel" grew to
+  97px inside a 72px tile and painted across its neighbour; it wraps
+  inside the tile now.
+  *Not fixed:* the viewer's bar still needs ~1420px and scrolls
+  sideways below that (117px over at 1366, down from 192). That is a
+  count-of-controls problem, not a size one.

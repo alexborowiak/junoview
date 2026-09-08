@@ -37,7 +37,7 @@ def test_add_is_the_first_control_and_a_tile():
     assert 'class="fx-tile big-tile rbn-tall" id="fmt-figures"' in html
     assert "<span>Add</span></button>" in html
     # rbn-tall is what makes it span both rows AND count as two columns
-    assert ".rbn-row>#fmt-figures.big-tile{width:72px;height:56px;" \
+    assert ".rbn-row>#fmt-figures.big-tile{width:var(--rbn-tile-w);" \
         in assets.deck_css()
 
 

@@ -124,9 +124,10 @@ def test_the_viewer_bar_has_one_button_height():
     """34px App buttons on a 28px bar, and a 30px Open beside a 28px
     docked file bar, were the two that had drifted."""
     css = assets.load("css/app.css")
-    assert "#ab-file .abgrp-row .toggle{height:28px;min-height:28px;flex:none;}" in css
-    assert (".appbar #ab-app .toggle,.appbar #ab-app .appbar-link"
-            "{height:28px;}") in css
+    assert ("#ab-file .abgrp-row .toggle{height:var(--ab-btn-h);\n"
+            "  min-height:var(--ab-btn-h);flex:none;}") in css
+    assert (".appbar #ab-app .toggle,.appbar #ab-app .appbar-link{\n"
+            "  height:var(--ab-btn-h);}") in css
 
 
 def test_the_app_group_is_two_rows_of_two():
@@ -135,8 +136,8 @@ def test_the_app_group_is_two_rows_of_two():
     the band and hands 133px back -- which is what paid for Make slides."""
     css = assets.load("css/app.css")
     assert ("#ab-app .btn-grp{display:grid;grid-auto-flow:column;\n"
-            "  grid-template-rows:28px 28px;gap:4px 5px;"
-            "align-items:stretch;}") in css
+            "  grid-template-rows:var(--ab-btn-h) var(--ab-btn-h);"
+            "gap:3px 4px;\n  align-items:stretch;}") in css
 
 
 def test_no_two_controls_wear_the_same_id():

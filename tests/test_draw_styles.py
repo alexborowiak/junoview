@@ -182,14 +182,15 @@ def test_one_button_size_with_colour_carrying_emphasis(out):
     # live afterwards: the run and its five row-mates all report
     # h=26, top=107.7, bottom=133.7.
     assert (".rbn-row .dc-menuwrap>.dbtn,\n"
-            ".rbn-row>.rbn-cell.rbn-seg{height:26px;box-sizing:border-box;\n"
+            ".rbn-row>.rbn-cell.rbn-seg{height:var(--rbn-btn-h);"
+            "box-sizing:border-box;\n"
             "  align-self:center;}") in out
     # and nothing re-introduces a second height for a segment
     seg = out[out.index(".edit-tools .rbn-row>.rbn-cell.rbn-seg{"):]
     seg = seg[:seg.index("body.th-colorful .edit-tools .rbn-row>.rbn-cell.rbn-seg{")]
     assert "height:" not in seg, seg[:200]
     assert ".dbtn.rbn-ico{display:flex;align-items:center;" in out
-    assert "width:26px;height:26px;" in out
+    assert "width:var(--rbn-btn-h);height:var(--rbn-btn-h);" in out
     # no rbn-big survives in the ribbon at all: Present, the one accented
     # control, moved to the top bar, so every ribbon button is identical
     assert 'class="dbtn et rbn-big"' not in out
@@ -233,8 +234,9 @@ def test_button_names_say_what_they_do(out):
     assert 'id="vw-menuwrap"' not in out
     assert ">Show me &#9662;" not in out
     # a constant height means selecting an item cannot shift the canvas
-    # (106px since the rows went to 30, 2026-08-20)
-    assert "height:106px;" in out
+    # (92px since T369 took the air out around the buttons -- which is
+    # what PowerPoint's ribbon body measures)
+    assert "flex:none;height:92px;" in out
     # an empty group must not leave a label hanging over nothing
     assert "var bar=$('#edit-tools'); if(!bar) return;" in out
 
@@ -252,11 +254,11 @@ def test_the_ribbon_never_scrolls_wraps_or_clips(out):
     assert "overflow:hidden" in ribbon
     assert "overflow-x:auto" not in ribbon
     assert "grid-auto-flow:column" in out
-    # 30px rows since 2026-08-20: the 26px target was sized when the
-    # ribbon was one row trying to hold everything and every pixel of
-    # height was contested. Tabs took that pressure off (user: "buttons
-    # could also have more height").
-    assert "grid-template-rows:30px 30px" in out
+    # the track is --rbn-track (28px) and the button in it is
+    # --rbn-btn-h (26px): the button was NOT shrunk by T369 (user, on
+    # 2026-08-20: "buttons could also have more height"), only the air
+    # around it.
+    assert "grid-template-rows:var(--rbn-track) var(--rbn-track);" in out
     assert "grid-row:1/span 2" in out
     # the ladder is density only; no rung may strip an icon or a word
     assert "var ERC=['erc1','erc2','erc3'];" in out
@@ -504,7 +506,8 @@ def test_groups_fill_across_the_rows_not_down_the_columns(out):
     assert "grid-template-columns:repeat(var(--rbn-cols,4),auto);" not in out
     # controls that are one decision stay one cell, so a stepper's minus
     # and plus can never land on different rows
-    assert ".rbn-cell{display:flex;align-items:stretch;gap:3px;height:30px;}" in out
+    assert (".rbn-cell{display:flex;align-items:stretch;gap:3px;"
+            "height:var(--rbn-track);}") in out
 
 
 def test_zoom_reads_as_zoom(out):

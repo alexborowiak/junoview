@@ -154,4 +154,4 @@ def test_the_ribbon_never_wrap_rule_is_untouched():
     """The wrap above is scoped to .navonly, in the sidebar. The app bar
     must still compact rather than wrap (AGENTS.md invariant)."""
     css = assets.load("css/app.css")
-    assert ".appbar{display:flex;align-items:stretch;gap:4px;flex-wrap:nowrap;" in css
+    assert ".appbar{display:flex;align-items:stretch;gap:3px;flex-wrap:nowrap;" in css

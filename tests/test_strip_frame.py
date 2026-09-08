@@ -36,14 +36,21 @@ def test_the_frame_has_an_edge_and_arrows_instead_of_a_scrollbar(out):
     """T207: the gallery the PowerPoint way. One row of whole tiles in
     sight, the rest wrapped beneath, an up/down/more column at the right,
     no scrollbar anywhere ("bit messy with the bottom scroll bar")."""
-    assert ".strip-frame{display:flex;align-items:stretch;height:65px;" in out
+    assert (".strip-frame{display:flex;align-items:stretch;"
+            "height:var(--rbn-band);") in out
     assert "::-webkit-scrollbar" not in out.split(".strip-frame{")[1][:1200]
-    assert (".strip-frame>.fx-strip{height:63px;padding:4px 4px 0;"
-            "box-sizing:border-box;") in out
+    # 2px of padding, not 4: the frame is --rbn-band and the tile inside
+    # it is --rbn-tile-h, so a row still starts at an exact multiple of
+    # --rbn-tile-h + --rbn-tile-gap and the arrows' ROW step (60, in
+    # 55-sections-and-strip.js) still lands on a whole tile.
+    assert (".strip-frame>.fx-strip{height:calc(var(--rbn-band) - 2px);\n"
+            "  padding:2px 4px 0;box-sizing:border-box;") in out
     assert "flex-wrap:wrap;align-content:flex-start;overflow:hidden;" in out
-    assert "width:calc(4 * 72px + 3 * 4px + 8px);}" in out
-    assert (".strip-frame>.fx-strip.page-strip{"
-            "width:calc(3 * 72px + 2 * 4px + 8px);}") in out
+    assert ("width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap)"
+            " + 8px);}") in out
+    assert (".strip-frame>.fx-strip.page-strip{\n"
+            "  width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap)"
+            " + 8px);}") in out
     assert ".strip-nav{flex:none;width:18px;display:flex;flex-direction:column;" in out
     for sid in STRIPS:
         assert f'<button class="strip-prev" type="button" id="{sid}-prev"' in out, sid

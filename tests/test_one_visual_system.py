@@ -23,16 +23,19 @@ def test_every_tall_control_is_the_one_tile(out):
     they are one line of type rather than a glyph over a word, and they
     wrap into two short rows in the height one tall row took.
     """
-    assert ".fx-tile{width:72px;display:flex;flex-direction:column;" in out
+    assert ".fx-tile{width:var(--rbn-tile-w);display:flex;" in out
     assert ".fx-tile .bic{width:24px;height:24px;}" in out
-    for rule in (".lay-strip .dbtn.lay{flex:0 0 72px;",
-                 ".shape-strip .fx-tile{flex:0 0 72px;",
-                 ".page-strip .fx-tile{flex:0 0 72px;",
-                 ".big-strip .fx-tile{height:56px;}",
+    for rule in (".lay-strip .dbtn.lay{flex:0 0 var(--rbn-tile-w);",
+                 ".shape-strip .fx-tile{flex:0 0 var(--rbn-tile-w);",
+                 ".page-strip .fx-tile{flex:0 0 var(--rbn-tile-w);",
+                 ".big-strip .fx-tile{height:var(--rbn-tile-h);}",
                  ".rbn-row>.fx-strip.big-strip{align-items:center;}",
-                 ".rbn-row>#hm-newslide.big-tile{width:72px;height:56px;align-self:center;}",
-                 ".strip-frame>.fx-strip{height:63px;padding:4px 4px 0;",
-                 ".sh-menu.strip-all .fx-strip>*{flex:0 0 auto;height:56px;}"):
+                 ".rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);\n"
+                 "  height:var(--rbn-tile-h);align-self:center;}",
+                 ".strip-frame>.fx-strip{height:calc(var(--rbn-band) - 2px);\n"
+                 "  padding:2px 4px 0;",
+                 ".sh-menu.strip-all .fx-strip>*{flex:0 0 auto;"
+                 "height:var(--rbn-tile-h);}"):
         assert rule in out, rule
     # the tinted "big" face is gone: the tall shape is the emphasis
     assert ".fx-tile.big-tile{width:74px;" not in out

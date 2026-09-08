@@ -18,7 +18,8 @@ def test_a_folded_group_is_the_one_tile_with_its_own_icon(out):
     assert "wrap.className='sh-drop rbn-foldwrap rbn-tall';" in out
     assert "btn.type='button';btn.className='fx-tile big-tile rbn-foldbtn';" in out
     assert "btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')" in out
-    assert ".rbn-foldwrap .fx-tile.rbn-foldbtn{height:56px;width:82px;}" in out
+    assert (".rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);"
+            "width:82px;}") in out
     html = assets.deck_html()
     groups = re.findall(
         r'<span class="rbn-grp[^"]*"(?: id="[a-z-]+")? data-tab="[a-z]+"[^>]*>', html)

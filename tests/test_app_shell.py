@@ -101,16 +101,17 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     a sideways scroll as the only overflow of last resort.
     """
     assert "--appbar-h:88px" in out and "--chrome-h:96px" in out
-    assert ".appbar{display:flex;align-items:stretch;gap:4px;" \
+    assert ".appbar{display:flex;align-items:stretch;gap:3px;" \
         "flex-wrap:nowrap;" in out
     assert "justify-content:flex-start;padding-left:8px;" in out
     assert "overflow-x:auto;scrollbar-width:thin;" in out
     assert "function fitRibbon" in out
-    # dense, PowerPoint-style: 28px is THE ribbon button height
-    assert "flex:none;white-space:nowrap;height:28px;" in out
+    # dense, PowerPoint-style: --ab-btn-h is THE viewer button height
+    assert "--ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}" in out
+    assert "flex:none;white-space:nowrap;height:var(--ab-btn-h);" in out
     # the stages: tighter spacing, then the redundant state words —
     # NEVER the labels. No rule may ever hide .btxt in the ribbon.
-    assert "body.rbc1 .appbar{gap:3px;}" in out
+    assert "body.rbc1 .appbar{gap:2px;}" in out
     # NO stage may hide any words — not labels, not the On/Fold state
     # words (2026-08-04, user twice). rbc2's word-hiding stage is gone.
     assert ".appbar .btxt{display:none" not in out
@@ -191,7 +192,7 @@ def test_ribbon_size_stepper_and_fixed_view_slot(out):
     # the View stack is a FIXED slot: the Tree button renames itself to
     # "Document" and a wider word would shove Present sideways
     assert (
-        ".vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;"
+        ".vw-stack{display:flex;flex-direction:column;gap:3px;flex:none;"
         "\n  min-width:92px;}"
     ) in out
     assert '<span class="btxt">Match document</span></button>' in out
@@ -402,7 +403,7 @@ def test_tree_view_ribbon_disables_filters_and_anchors_right(out):
     assert "function syncTreeRibbon" in out
     # icon-only buttons need a WIDTH floor, not just padding:0 -- with
     # nothing to stop them they were squeezed to 9px in a tight bar
-    assert "width:28px;min-width:28px;flex:none;" in out
+    assert "width:var(--ab-btn-h);min-width:var(--ab-btn-h);flex:none;" in out
     assert "#ab-app .btn-grp>*{flex:none;}" in out
     # Tree view removes the filter and scope sections, and Size / View must
     # not slide into the hole -- the button you use to get back would move

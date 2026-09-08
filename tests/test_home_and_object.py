@@ -52,7 +52,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "ns.annots=deep(arr.annots);" in out
     for tile in ("hm-update", "hm-images"):     # T280: two became one
         assert f'class="fx-tile big-tile" id="{tile}"' in out, tile
-    assert ".big-strip .fx-tile{height:56px;}" in out   # the one tile (T205)
+    assert ".big-strip .fx-tile{height:var(--rbn-tile-h);}" in out  # one tile
     # ...and it never folds: the point of it is to be seen
     assert "&&!g.classList.contains('rbn-sources')" in out
     # the All images pane

@@ -50,12 +50,13 @@ def test_design_stops_looking_hectic(out):
     html = assets.deck_html()
     assert '<span class="sh-drop rbn-tall" id="bg-drop">' in html
     assert '<button class="fx-tile big-tile" id="bg-btn"' in html
-    assert "#bg-drop.rbn-tall>.fx-tile{width:72px;height:56px;" in out
+    assert "#bg-drop.rbn-tall>.fx-tile{width:var(--rbn-tile-w);" in out
     # the strip toggle is a View control now
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(">View</span>")[0]
     assert 'id="vw-versions"' in view
     # a cell is its own width, the way PowerPoint's are
-    assert "  align-items:stretch;justify-items:start;height:65px;}" in out
+    assert ("  align-items:stretch;justify-items:start;"
+            "height:var(--rbn-band);}") in out
     assert (".rbn-row>.rbn-cell,.rbn-row>.sh-drop,.rbn-row>.dc-menuwrap,\n"
             ".rbn-row>.strip-frame,.rbn-row>.fx-strip{justify-self:stretch;}") in out
     assert ".rbn-row>.rbn-cell.rbn-seg{justify-self:start;}" in out
@@ -103,7 +104,7 @@ def test_the_small_things_the_screenshots_showed(out):
     assert "show('#fmt-opcell',!!opw&&!opw.hidden);" in out
     # History is the one tall tile in the Object group
     assert '<button class="fx-tile big-tile" id="fmt-hist"' in html
-    assert ".rbn-row>#fmt-hist.big-tile{width:72px;height:56px;" in out
+    assert ".rbn-row>#fmt-hist.big-tile{width:var(--rbn-tile-w);" in out
 
 
 def test_the_colour_popup_says_whose_colours_they_are(out):

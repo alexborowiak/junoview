@@ -66,7 +66,7 @@ def test_the_icon_only_square_rule_names_only_icon_only_buttons():
     square = square.split("}")[0]
     assert "#theme-btn" not in square
     assert "#support-btn" not in square
-    assert "width:28px" in square, "the size steppers still want a square"
+    assert "width:var(--ab-btn-h)" in square, "steppers still want a square"
     # ...and it is not a selector anywhere else either: it selects nothing.
     # The comment recording why it went is not a selector, so strip
     # comments before looking.
@@ -91,7 +91,7 @@ def test_the_ribbon_still_refuses_to_wrap():
     """The user-confirmed invariant this change must not have bought its
     legibility with (AGENTS.md): the bar compacts, then scrolls."""
     css = assets.load("css/app.css")
-    assert ".appbar{display:flex;align-items:stretch;gap:4px;flex-wrap:nowrap;" in css
+    assert ".appbar{display:flex;align-items:stretch;gap:3px;flex-wrap:nowrap;" in css
     assert "overflow-x:auto" in css
     app = assets.app_js()
     assert "    if(over(bar)||over(sb)) cl.add('rbc1');" in app

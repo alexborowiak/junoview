@@ -63,7 +63,8 @@ def test_a_run_is_one_box_with_its_caption_inside(out):
             "  align-self:stretch;padding:0 8px 0 9px;\n"
             "  border-right:1px solid var(--rbn-btn-bd);}") in out
     # the base cell rule is untouched: a stepper is still one cell
-    assert ".rbn-cell{display:flex;align-items:stretch;gap:3px;height:30px;}" in out
+    assert (".rbn-cell{display:flex;align-items:stretch;gap:3px;"
+            "height:var(--rbn-track);}") in out
 
 
 def test_the_words_on_the_ribbon_can_be_read(out):
@@ -73,15 +74,17 @@ def test_the_words_on_the_ribbon_can_be_read(out):
     then folds a group, and the words stay the size they are."""
     assert (".rbn-lab{font-family:var(--sans);font-size:11.5px;letter-spacing:0;\n"
             "  text-transform:none;color:var(--chrome-ink-2);") in out
-    assert (".dbtn.rbn-sm{display:flex;align-items:center;gap:6px;padding:3px 8px;\n"
+    assert (".dbtn.rbn-sm{display:flex;align-items:center;gap:var(--rbn-btn-gap);\n"
+            "  padding:3px var(--rbn-btn-px);\n"
             "  font-family:var(--sans);font-size:12px;") in out
     i = out.index("the compaction ladder. Every stage trades SPACE")
     ladder = out[i:out.index("/* ---- ...and the changing region pays for it", i)]
     for rule in re.findall(r"\.deck\.erc[^{]*\{[^}]*\}", ladder):
         assert "font-size" not in rule, rule
     assert (".deck.erc-tight .et-fmt .dbtn.rbn-sm,\n"
-            ".deck.erc-tight .et-fmt .rbn-row .dbtn.etm{\n  padding-left:5px;") in out
-    assert ".dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:15px;height:15px;flex:none;}" in out
+            ".deck.erc-tight .et-fmt .rbn-row .dbtn.etm{\n  padding-left:3px;") in out
+    assert (".dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:15px;height:15px;flex:none;\n"
+            "  margin-right:0;}") in out
     assert ".dbtn.etm{padding:5px 9px;font-family:var(--sans);font-size:12px;}" in out
     assert ".rbn-tab{font-family:var(--sans);font-size:13px;letter-spacing:0;" in out
     assert (".rbn-cell .cell-lab{align-self:center;font-family:var(--sans);"

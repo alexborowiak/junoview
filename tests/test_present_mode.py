@@ -86,7 +86,8 @@ def test_present_bar_shares_appbar_toggle_theming_and_sizing(out):
     """
     assert ".appbar .toggle,.present-bar .toggle{" in out
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
-    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:28px" in out
+    assert (".appbar .toggle.sub,.present-bar .toggle.sub"
+            "{height:var(--ab-btn-h);") in out
     assert ".tree-node.expanded{width:min(380px" in out
 
 

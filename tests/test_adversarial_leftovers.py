@@ -71,8 +71,8 @@ def test_no_gallery_scrolls_with_a_scrollbar(out):
                  ".fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;",
                  ".sh-menu.lay-menu{display:block;width:442px;max-height:min(64vh,470px);"):
         assert gone not in out, gone
-    assert (".lay-menu .lay-picker .dbtn.lay{flex:0 0 72px;width:72px;"
-            "height:56px;") in out
+    assert (".lay-menu .lay-picker .dbtn.lay{flex:0 0 var(--rbn-tile-w);\n"
+            "  width:var(--rbn-tile-w);height:var(--rbn-tile-h);") in out
 
 
 def test_every_ribbon_button_has_an_icon_and_a_short_tooltip():

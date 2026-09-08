@@ -805,7 +805,8 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     assert 'rbn-standby rbn-view' not in out
     # the readout renames itself, so it is held to the longest label it can
     # hold -- in characters, so it survives every density rung
-    assert "#zoom-val{min-width:calc(9ch + 18px);justify-content:center;}" in out
+    assert ("#zoom-val{min-width:calc(9ch + 2 * var(--rbn-btn-px) + 2px);\n"
+            "  justify-content:center;}") in out
 
 
 def test_side_toolbar_headings_sit_above_their_section(out):
@@ -937,7 +938,7 @@ def test_undo_and_redo_are_one_cell(out):
     # the pair now travels no further than the top bar, which sizes it
     # once (2026-08-20) instead of the two-way .dc-head/.rbn-cell
     # negotiation it needed while it lived in the column
-    assert ".deck-qat .rbn-cell{height:26px;gap:3px;}" in out
+    assert ".deck-qat .rbn-cell{height:var(--rbn-btn-h);gap:3px;}" in out
 
 
 def test_the_save_readout_lives_under_save(out):

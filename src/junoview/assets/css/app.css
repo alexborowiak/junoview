@@ -1,6 +1,15 @@
 
 :root{--appbar-h:88px;--tabsrow-h:44px;--chrome-h:96px;--dc-w:430px;
-  --presrail-w:176px;}
+  --presrail-w:176px;
+  /* THE VIEWER BAR'S MEASUREMENTS, once (T369). The height was already
+     claimed to be "set exactly once" and was written out in five rules;
+     the padding and the icon gap were written out in eight between them
+     and the compaction rung. The values are the deck ribbon's, so the
+     two bars are one system: a ~14px icon, a 4px gap, the word, and
+     5px of side padding, which is what PowerPoint's small command
+     spends. The height stays 28px -- it is a target, and shrinking it
+     was never the complaint. */
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- row 1: global controls; row 2: notebook + presentation tabs */
@@ -34,7 +43,7 @@ body.presrail-min{--presrail-w:46px;}
    button slid 15px sideways, which is precisely the "buttons move when I
    change view" complaint. Left-aligned, a button's position depends only
    on what is before it (2026-07-30). */
-.appbar{display:flex;align-items:stretch;gap:4px;flex-wrap:nowrap;
+.appbar{display:flex;align-items:stretch;gap:3px;flex-wrap:nowrap;
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
@@ -57,8 +66,9 @@ body.presrail-min{--presrail-w:46px;}
    real ribbon fits everything on one row is small, tightly-packed
    controls with their labels INTACT — never by degrading to icons. */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
-  flex:none;white-space:nowrap;height:28px;box-sizing:border-box;
-  padding:0 7px;line-height:1;font-size:11.5px;gap:5px;}
+  flex:none;white-space:nowrap;height:var(--ab-btn-h);box-sizing:border-box;
+  padding:0 var(--ab-btn-px);line-height:1;font-size:11.5px;
+  gap:var(--ab-btn-gap);}
 /* ---- button icons: the .bic BASE rule moved to core.css (2026-08-23)
    so the widget's scoped bundle gets it too; only app-chrome overrides
    live here. ---- */
@@ -73,7 +83,7 @@ body.presrail-min{--presrail-w:46px;}
    The size steppers are the genuinely icon-only case it was written for. */
 .appbar .toggle.fz-step,.present-bar .toggle.fz-step{
   padding:0;justify-content:center;
-  width:28px;min-width:28px;flex:none;}
+  width:var(--ab-btn-h);min-width:var(--ab-btn-h);flex:none;}
 .btxt{display:inline-block;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
@@ -92,14 +102,14 @@ body.presrail-min{--presrail-w:46px;}
 /* a labelled SECTION of the ribbon: its NAME, then its controls — the
    label reads as a heading for the group below it (2026-07-29: it used to
    sit underneath and read as a caption for whatever came next) */
-.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:4px;
+.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:3px;
   flex:none;}
 /* the house rule again: an author `display:` beats the UA [hidden] rule,
    so every base rule that sets display needs its own [hidden] override —
    without this the tree-only section showed in Document view too and
    pushed the whole bar onto a second row */
 .abgrp[hidden]{display:none!important;}
-.abgrp-row{display:flex;align-items:flex-start;gap:5px;flex:1;}
+.abgrp-row{display:flex;align-items:flex-start;gap:4px;flex:1;}
 /* ---- T365: NO HOLES HERE EITHER ------------------------------------
    2026-09-07, user: "there are weird gaps and spaces everywhere". The
    deck ribbon's two shapes of gap are on this bar as well, and the cure
@@ -118,7 +128,8 @@ body.presrail-min{--presrail-w:46px;}
    the band on its own, which made it 30px on a 28px bar the moment
    T364 docked the file controls under it. */
 #ab-file .abgrp-row .fgrp{flex:1;}
-#ab-file .abgrp-row .toggle{height:28px;min-height:28px;flex:none;}
+#ab-file .abgrp-row .toggle{height:var(--ab-btn-h);
+  min-height:var(--ab-btn-h);flex:none;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
    screen is the same idea, and the two stack the way Raw and Tree do. */
@@ -140,9 +151,11 @@ body.presrail-min{--presrail-w:46px;}
    scrolling sideways; paired up it fills the band and gives 133px
    back. Same grid as the deck ribbon's groups, for the same reason. */
 #ab-app .btn-grp{display:grid;grid-auto-flow:column;
-  grid-template-rows:28px 28px;gap:4px 5px;align-items:stretch;}
+  grid-template-rows:var(--ab-btn-h) var(--ab-btn-h);gap:3px 4px;
+  align-items:stretch;}
 #ab-app .btn-grp>*{flex:none;}
-.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{height:28px;}
+.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{
+  height:var(--ab-btn-h);}
 /* the app group (theme / support / help) sits at the RIGHT END of the
    ribbon, pushed there by an auto margin. It lived on the tab row while
    the ribbon wrapped — as the last ribbon group it was the first thing
@@ -181,22 +194,22 @@ body.presrail-min{--presrail-w:46px;}
    the same rule the rest of the bar got in T365 */
 .vw-stack{justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
-.abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
+.abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:4px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
   line-height:1;opacity:.75;order:-1;}
 body.light .abgrp-lab{color:var(--ink-3);}
 /* buttons that belong together and must wrap as one unit */
-.btn-grp{display:flex;gap:4px;flex:none;align-items:flex-start;
+.btn-grp{display:flex;gap:3px;flex:none;align-items:flex-start;
   position:relative;}
 .btn-grp[hidden]{display:none!important;}
 .fgrp-row{display:flex;gap:3px;align-items:stretch;}
 /* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
    these below their natural width, so the label sat on the border. */
 .fgrp-row .toggle{flex:none;width:auto;justify-content:center;
-  text-align:center;padding-left:10px;padding-right:10px;}
+  text-align:center;padding-left:7px;padding-right:7px;}
 /* square steppers/icons sit beside the thing they act on */
-.fgrp-row .toggle.fz-step{flex:none;width:28px;padding:0;
+.fgrp-row .toggle.fz-step{flex:none;width:var(--ab-btn-h);padding:0;
   justify-content:center;font-size:13px;}
 .fgrp-row .toggle.fz-val{flex:none;width:42px;padding:0;
   justify-content:center;}
@@ -213,8 +226,9 @@ body.light .fgrp-cap{color:var(--ink-3);}
    buttons have same height"). A sub-picker is still visually quieter —
    dimmer text, fainter border, smaller type — but it is never shorter,
    because a short button beside a tall one reads as a broken grid. */
-.appbar .toggle.sub,.present-bar .toggle.sub{height:28px;font-size:10.5px;
-  padding:0 8px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
+.appbar .toggle.sub,.present-bar .toggle.sub{height:var(--ab-btn-h);
+  font-size:10.5px;padding:0 var(--ab-btn-px);
+  color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
 .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
   color:#fff;border-color:var(--cyan);}
 /* both selectors need the body.light prefix — without it the LIGHT rule
@@ -258,7 +272,7 @@ body.tree-mode #copy-grp{display:none!important;}
    sideways when the Tree button renames itself "Document". A wider
    word in one stack simply makes that stack wider, which is what every
    other column on this bar does too. */
-.vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
+.vw-stack{display:flex;flex-direction:column;gap:3px;flex:none;
   min-width:92px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
 .appbar-div{flex:none;width:1px;height:70px;background:#ffffff38;
@@ -277,10 +291,10 @@ body.light .appbar-div{background:var(--chrome-line);}
    without these"). Every act of hiding text to save width has been
    rejected — the bar stays fully worded at every size, and width comes
    from density and, at the very edge, a thin scrollbar. */
-body.rbc1 .appbar{gap:3px;}
+body.rbc1 .appbar{gap:2px;}
 /* not the steppers/values: their fixed square boxes centre themselves */
 body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
-  padding-left:5px;padding-right:5px;}
+  padding-left:3px;padding-right:3px;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;

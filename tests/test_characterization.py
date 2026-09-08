@@ -1618,8 +1618,34 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # needs a box selected. And pres.slot says which of a type's variations
 # a new slide's box is given, so a look you chose survives the next
 # New slide -- carried by normPres and by as_presentations.
-EXPECTED_MD5 = "da4b4b8b463d8d92cd12fc9ce714eda6"
-EXPECTED_BYTES = 3944770
+# T369 makes the buttons compact, the way PowerPoint's are. The
+# ribbon's measurements were written out between four and sixteen
+# times each -- the band in four rules, the button height in eleven,
+# the tile in sixteen plus three calc() strings -- so "one height,
+# one baseline" was a comment rather than a mechanism. They are
+# tokens on .deck now, set to PowerPoint's numbers: the bar is 92px
+# instead of 106, the band 60 instead of 65, a tile 64 wide instead
+# of 72, a button keeps its 26px height and loses 2px of side
+# padding, and its icon has ONE spacer instead of a 6px flex gap
+# stacked on a 4px margin. The same pass gave the viewer bar
+# --ab-btn-h / --ab-btn-px / --ab-btn-gap and the same density.
+# Two rules were making the ribbon WIDER: every rung of the
+# compaction ladder had been written against the old resting size,
+# so erc1 and erc2 were a step UP from a compacted bar; and
+# `.rbn-row .dbtn.etm` set 10.5px type at rest, which T219 forbade a
+# rung from doing and which made "Duplicate" on Object a different
+# size from "Duplicate" on Home. Measured live before and after, at
+# 1366/1440/1560/1920: every ribbon group is reachable without a
+# fold-away door from about 1500px, where it used to take about
+# 1650, and at 1366 six of the eight tabs now sit at full resting
+# density with nothing folded (Home and Object used to compact, and
+# Design and Animation folded five groups between them; they fold
+# one each now). The narrower tile also exposed a gallery label that
+# had never fitted: `.lay-lb` was nowrap with an ellipsis and no width
+# to bite on, so "Title + text + panel" grew to 97px inside a 72px tile
+# and painted across its neighbour. It wraps inside the tile now.
+EXPECTED_MD5 = "a7d4fe12ac0e301f0f53f3785c3b85e3"
+EXPECTED_BYTES = 3950130
 
 
 def _render_example() -> str:
