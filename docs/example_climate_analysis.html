@@ -1581,7 +1581,16 @@ body.th-colorful .pr-btn,body.th-colorful .pr-item{
 </style>
 <style>
 :root{--appbar-h:88px;--tabsrow-h:44px;--chrome-h:96px;--dc-w:430px;
-  --presrail-w:176px;}
+  --presrail-w:176px;
+  /* THE VIEWER BAR'S MEASUREMENTS, once (T369). The height was already
+     claimed to be "set exactly once" and was written out in five rules;
+     the padding and the icon gap were written out in eight between them
+     and the compaction rung. The values are the deck ribbon's, so the
+     two bars are one system: a ~14px icon, a 4px gap, the word, and
+     5px of side padding, which is what PowerPoint's small command
+     spends. The height stays 28px -- it is a target, and shrinking it
+     was never the complaint. */
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- row 1: global controls; row 2: notebook + presentation tabs */
@@ -1615,7 +1624,7 @@ body.presrail-min{--presrail-w:46px;}
    button slid 15px sideways, which is precisely the "buttons move when I
    change view" complaint. Left-aligned, a button's position depends only
    on what is before it (2026-07-30). */
-.appbar{display:flex;align-items:stretch;gap:4px;flex-wrap:nowrap;
+.appbar{display:flex;align-items:stretch;gap:3px;flex-wrap:nowrap;
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
@@ -1638,8 +1647,9 @@ body.presrail-min{--presrail-w:46px;}
    real ribbon fits everything on one row is small, tightly-packed
    controls with their labels INTACT — never by degrading to icons. */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
-  flex:none;white-space:nowrap;height:28px;box-sizing:border-box;
-  padding:0 7px;line-height:1;font-size:11.5px;gap:5px;}
+  flex:none;white-space:nowrap;height:var(--ab-btn-h);box-sizing:border-box;
+  padding:0 var(--ab-btn-px);line-height:1;font-size:11.5px;
+  gap:var(--ab-btn-gap);}
 /* ---- button icons: the .bic BASE rule moved to core.css (2026-08-23)
    so the widget's scoped bundle gets it too; only app-chrome overrides
    live here. ---- */
@@ -1654,7 +1664,7 @@ body.presrail-min{--presrail-w:46px;}
    The size steppers are the genuinely icon-only case it was written for. */
 .appbar .toggle.fz-step,.present-bar .toggle.fz-step{
   padding:0;justify-content:center;
-  width:28px;min-width:28px;flex:none;}
+  width:var(--ab-btn-h);min-width:var(--ab-btn-h);flex:none;}
 .btxt{display:inline-block;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
@@ -1673,14 +1683,14 @@ body.presrail-min{--presrail-w:46px;}
 /* a labelled SECTION of the ribbon: its NAME, then its controls — the
    label reads as a heading for the group below it (2026-07-29: it used to
    sit underneath and read as a caption for whatever came next) */
-.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:4px;
+.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:3px;
   flex:none;}
 /* the house rule again: an author `display:` beats the UA [hidden] rule,
    so every base rule that sets display needs its own [hidden] override —
    without this the tree-only section showed in Document view too and
    pushed the whole bar onto a second row */
 .abgrp[hidden]{display:none!important;}
-.abgrp-row{display:flex;align-items:flex-start;gap:5px;flex:1;}
+.abgrp-row{display:flex;align-items:flex-start;gap:4px;flex:1;}
 /* ---- T365: NO HOLES HERE EITHER ------------------------------------
    2026-09-07, user: "there are weird gaps and spaces everywhere". The
    deck ribbon's two shapes of gap are on this bar as well, and the cure
@@ -1699,7 +1709,8 @@ body.presrail-min{--presrail-w:46px;}
    the band on its own, which made it 30px on a 28px bar the moment
    T364 docked the file controls under it. */
 #ab-file .abgrp-row .fgrp{flex:1;}
-#ab-file .abgrp-row .toggle{height:28px;min-height:28px;flex:none;}
+#ab-file .abgrp-row .toggle{height:var(--ab-btn-h);
+  min-height:var(--ab-btn-h);flex:none;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
    screen is the same idea, and the two stack the way Raw and Tree do. */
@@ -1721,9 +1732,11 @@ body.presrail-min{--presrail-w:46px;}
    scrolling sideways; paired up it fills the band and gives 133px
    back. Same grid as the deck ribbon's groups, for the same reason. */
 #ab-app .btn-grp{display:grid;grid-auto-flow:column;
-  grid-template-rows:28px 28px;gap:4px 5px;align-items:stretch;}
+  grid-template-rows:var(--ab-btn-h) var(--ab-btn-h);gap:3px 4px;
+  align-items:stretch;}
 #ab-app .btn-grp>*{flex:none;}
-.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{height:28px;}
+.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{
+  height:var(--ab-btn-h);}
 /* the app group (theme / support / help) sits at the RIGHT END of the
    ribbon, pushed there by an auto margin. It lived on the tab row while
    the ribbon wrapped — as the last ribbon group it was the first thing
@@ -1762,22 +1775,22 @@ body.presrail-min{--presrail-w:46px;}
    the same rule the rest of the bar got in T365 */
 .vw-stack{justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
-.abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
+.abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:4px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
   line-height:1;opacity:.75;order:-1;}
 body.light .abgrp-lab{color:var(--ink-3);}
 /* buttons that belong together and must wrap as one unit */
-.btn-grp{display:flex;gap:4px;flex:none;align-items:flex-start;
+.btn-grp{display:flex;gap:3px;flex:none;align-items:flex-start;
   position:relative;}
 .btn-grp[hidden]{display:none!important;}
 .fgrp-row{display:flex;gap:3px;align-items:stretch;}
 /* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
    these below their natural width, so the label sat on the border. */
 .fgrp-row .toggle{flex:none;width:auto;justify-content:center;
-  text-align:center;padding-left:10px;padding-right:10px;}
+  text-align:center;padding-left:7px;padding-right:7px;}
 /* square steppers/icons sit beside the thing they act on */
-.fgrp-row .toggle.fz-step{flex:none;width:28px;padding:0;
+.fgrp-row .toggle.fz-step{flex:none;width:var(--ab-btn-h);padding:0;
   justify-content:center;font-size:13px;}
 .fgrp-row .toggle.fz-val{flex:none;width:42px;padding:0;
   justify-content:center;}
@@ -1794,8 +1807,9 @@ body.light .fgrp-cap{color:var(--ink-3);}
    buttons have same height"). A sub-picker is still visually quieter —
    dimmer text, fainter border, smaller type — but it is never shorter,
    because a short button beside a tall one reads as a broken grid. */
-.appbar .toggle.sub,.present-bar .toggle.sub{height:28px;font-size:10.5px;
-  padding:0 8px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
+.appbar .toggle.sub,.present-bar .toggle.sub{height:var(--ab-btn-h);
+  font-size:10.5px;padding:0 var(--ab-btn-px);
+  color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
 .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
   color:#fff;border-color:var(--cyan);}
 /* both selectors need the body.light prefix — without it the LIGHT rule
@@ -1839,7 +1853,7 @@ body.tree-mode #copy-grp{display:none!important;}
    sideways when the Tree button renames itself "Document". A wider
    word in one stack simply makes that stack wider, which is what every
    other column on this bar does too. */
-.vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
+.vw-stack{display:flex;flex-direction:column;gap:3px;flex:none;
   min-width:92px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
 .appbar-div{flex:none;width:1px;height:70px;background:#ffffff38;
@@ -1858,10 +1872,10 @@ body.light .appbar-div{background:var(--chrome-line);}
    without these"). Every act of hiding text to save width has been
    rejected — the bar stays fully worded at every size, and width comes
    from density and, at the very edge, a thin scrollbar. */
-body.rbc1 .appbar{gap:3px;}
+body.rbc1 .appbar{gap:2px;}
 /* not the steppers/values: their fixed square boxes centre themselves */
 body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
-  padding-left:5px;padding-right:5px;}
+  padding-left:3px;padding-right:3px;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;
@@ -3586,9 +3600,9 @@ body.deck-open{overflow:hidden;}
    rungs instead (2026-08-24). */
 .deck-qat .dbtn{padding:4px 9px;white-space:nowrap;flex:none;}
 .deck-qat .rbn-stack{flex-direction:row;align-items:center;gap:6px;}
-.deck-qat .rbn-cell{height:26px;gap:3px;}
+.deck-qat .rbn-cell{height:var(--rbn-btn-h);gap:3px;}
 .deck-qat .dc-menuwrap,.deck-qat .dc-savegrp{display:inline-flex;
-  align-items:center;height:26px;}
+  align-items:center;height:var(--rbn-btn-h);}
 .qat-sep{width:1px;align-self:stretch;margin:3px 3px;
   background:var(--chrome-line);flex:none;}
 .qat-btn{white-space:nowrap;flex:none;}
@@ -4587,9 +4601,18 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   border:1px solid #4d7ea3;border-radius:1px;box-sizing:border-box;}
 .layico2 .li-text{position:absolute;box-sizing:border-box;opacity:.8;
   background:repeating-linear-gradient(#9fb2c2 0 1.5px,transparent 1.5px 4px);}
+/* THE NAME WRAPS INSIDE THE TILE. It was nowrap with an ellipsis, but
+   an ellipsis needs a width to bite on and this span had none: the
+   button is a centred flex column, so "Title + text + panel" simply
+   grew to 97px inside a 72px tile and painted across its neighbour --
+   the T260 failure, in the gallery. max-width pins it to the tile and
+   the words wrap into the room the icon leaves (three 8px lines fit in
+   the 48px a tile has under its 17px icon). overflow:hidden stays as
+   the floor for a name longer than any built-in one; the button also
+   carries the full name as its title. */
 .lay-lb{font-family:var(--mono);font-size:8px;letter-spacing:.02em;
-  color:var(--chrome-ink-2);text-align:center;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;}
+  color:var(--chrome-ink-2);text-align:center;line-height:1.05;
+  max-width:100%;overflow:hidden;}
 .dbtn.lay[aria-pressed="true"] .lay-lb{color:#fff;}
 /* title-slide text inputs */
 .title-editor{display:flex;flex-direction:column;gap:7px;}
@@ -4693,6 +4716,40 @@ body.slide-editing .apptop{display:none;}
    beneath it and nothing marked where one group ended. PowerPoint never
    wraps either. A constant height also means selecting an item can no
    longer shift the canvas. */
+/* ---- THE RIBBON'S MEASUREMENTS, IN ONE PLACE (T369) ------------------
+   Every number below used to be written out between four and sixteen
+   times -- the 65px band in four rules, the 26px button height in
+   eleven, the 72px tile in sixteen plus three calc() strings that
+   multiplied it. "One height, one baseline" was a comment, not a
+   mechanism, and every recurrence of "the buttons are all different
+   sizes" has been a rule that missed one of the copies.
+
+   They are tokens now, so the ribbon has one set of measurements and a
+   density change is one line. The values are PowerPoint's: its ribbon
+   body is ~92px, its small command is a ~16px icon, a ~4px gap, the
+   word, and ~10px of side padding. Ours keeps the 26px button height
+   the user asked for (2026-08-20, "buttons could also have more
+   height") and takes the air out around it instead.
+
+   A test pins these values (tests/test_ribbon_metrics.py): a token the
+   whole sheet reads is only as good as the one place it is stated, and
+   a substring test that has stopped naming any number cannot see it
+   change. ---- */
+.deck{
+  --rbn-btn-h:26px;        /* a worded button, everywhere */
+  --rbn-track:28px;        /* the grid row it is centred in */
+  --rbn-row-gap:4px;       /* between the two tracks */
+  --rbn-band:60px;         /* 2 tracks + the gap: a group's body */
+  --rbn-col-gap:3px;       /* between columns */
+  --rbn-btn-px:6px;        /* a button's side padding */
+  --rbn-btn-gap:4px;       /* its icon to its word */
+  --rbn-grp-px:6px;        /* a group's side padding */
+  --rbn-tile-w:64px;       /* THE tile */
+  --rbn-tile-h:56px;
+  --rbn-tile-gap:4px;      /* and the step the gallery arrows scroll by,
+                              which is --rbn-tile-h + this (ROW in
+                              55-sections-and-strip.js) */
+}
 /* ONE row, and it neither wraps NOR scrolls. Wrapping fragmented groups
    across rows ("just all these rows of things"); a sideways scrollbar was
    rejected just as flatly. So width comes from DENSITY: fitEditRibbon()
@@ -4702,7 +4759,7 @@ body.slide-editing .apptop{display:none;}
    has a whole column to use. */
 .edit-tools.ribbon{display:flex;flex-wrap:nowrap;align-items:stretch;
   gap:0;padding:0 10px;border-bottom:1px solid #ffffff14;
-  background:var(--chrome-1,#0e1926);flex:none;height:106px;
+  background:var(--chrome-1,#0e1926);flex:none;height:92px;
   /* Clip SIDEWAYS only. A plain overflow:hidden also clipped every
      dropdown that opens downward — the Shape menu looked like it was
      rendering behind the canvas when it was really being cut off at the
@@ -4716,9 +4773,12 @@ body.slide-editing .apptop{display:none;}
    (user: rows of identical buttons "just confusing", next to a
    PowerPoint ribbon) — the old version had every group the same shape
    and the same button size, so nothing told you where one ended, what
-   was a primary action, or what was a toggle. */
+   was a primary action, or what was a toggle. Its padding is
+   --rbn-grp-px, and PowerPoint's is about the same: the rule between
+   two groups does the separating, not a wide margin. */
 .rbn-grp{display:flex;flex-direction:column;align-items:center;
-  justify-content:space-between;gap:5px;padding:8px 9px 5px;
+  justify-content:space-between;gap:4px;
+  padding:6px var(--rbn-grp-px) 4px;
   position:relative;min-width:0;flex:none;
   border-right:1px solid #ffffff1c;}
 .rbn-grp:last-child{border-right:none;}
@@ -4744,11 +4804,13 @@ body.slide-editing .apptop{display:none;}
    read it across the rows (2026-08-07, user: "rows not columns"). The
    column COUNT is set per group by fitEditRibbon, which is the only place
    that knows how many controls are currently visible. */
-/* 30px rows, not 26. The controls were sized when the ribbon was one row
-   trying to hold everything and every pixel of height was contested; tabs
-   took that pressure off, and a 26px target is small for a thing you hit
-   all day (2026-08-20, user: "buttons could also have more height"). The
-   two-row grid and its fixed band are unchanged in kind — just taller. */
+/* The track is --rbn-track and the button inside it is --rbn-btn-h,
+   which is deliberately the smaller of the two: the button is a target
+   you hit all day (2026-08-20, user: "buttons could also have more
+   height") and the 2px of track around it is what lets a control that
+   arrives a little taller be absorbed rather than burst the band. T369
+   took the track from 30 to 28 and the band from 65 to 60; the button
+   itself did not move. */
 /* T207: COLUMN-MAJOR, the PowerPoint way (2026-09-02, user: "buttons
    of all shapes and sizes... look at PowerPoint"). Controls fill a
    column top-to-bottom, two to a column, before the next column
@@ -4760,8 +4822,9 @@ body.slide-editing .apptop{display:none;}
    column count is no longer a variable anything sets. */
 .rbn-row{display:grid;grid-auto-flow:column;
   grid-auto-columns:max-content;
-  grid-template-rows:30px 30px;row-gap:5px;column-gap:4px;
-  align-items:stretch;justify-items:start;height:65px;}
+  grid-template-rows:var(--rbn-track) var(--rbn-track);
+  row-gap:var(--rbn-row-gap);column-gap:var(--rbn-col-gap);
+  align-items:stretch;justify-items:start;height:var(--rbn-band);}
 /* the tall things span both rows rather than sitting in one */
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
@@ -4789,14 +4852,15 @@ body.slide-editing .apptop{display:none;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up
    on different rows */
-.rbn-cell{display:flex;align-items:stretch;gap:3px;height:30px;}
+.rbn-cell{display:flex;align-items:stretch;gap:3px;height:var(--rbn-track);}
 /* The readout renames itself from "Zoom 25%" to "Zoom 100%", and it is the
    widest thing in the View group's first column — so without a floor the
    whole group breathed as you zoomed and shoved Output sideways with it.
    Held to the longest label it can hold, in CHARACTERS so it survives
    every density rung, which is the same fix the app bar's view column
    already uses for the Tree button that renames itself. */
-#zoom-val{min-width:calc(9ch + 18px);justify-content:center;}
+#zoom-val{min-width:calc(9ch + 2 * var(--rbn-btn-px) + 2px);
+  justify-content:center;}
 /* T219: the group's name in words you can read from a desk away --
    it was 8.5px spaced capitals (2026-09-03, user: "the words like
    'Slide', 'Layout' and all that are tiny down the bottom") */
@@ -4818,8 +4882,8 @@ body.slide-editing .apptop{display:none;}
    lever it had not had for ten days (2026-08-17 audit). --- */
 /* every ribbon button is the same height and sits on the same baseline */
 /* THE HEIGHT OF A RIBBON BUTTON, in one place. A joined run is on this
-   list too (T310): .rbn-cell is a fixed 30px so a dropdown wrapper fills
-   its grid track, and align-items:stretch then pushed the segments
+   list too (T310): .rbn-cell is a fixed --rbn-track so a dropdown wrapper
+   fills its grid track, and align-items:stretch then pushed the segments
    inside a run to 29px while every button beside them sat at 26 --
    nine buttons across Design and Animation standing 3px proud of their
    own row ("Button spacing and sizing still weird", 2026-09-05). The
@@ -4827,7 +4891,7 @@ body.slide-editing .apptop{display:none;}
    cannot drift apart again at any density rung. */
 .rbn-row>.dbtn,.rbn-row .sh-drop>.dbtn,
 .rbn-row .dc-menuwrap>.dbtn,
-.rbn-row>.rbn-cell.rbn-seg{height:26px;box-sizing:border-box;
+.rbn-row>.rbn-cell.rbn-seg{height:var(--rbn-btn-h);box-sizing:border-box;
   align-self:center;}
 /* two or three small buttons stacked in the height of one big one */
 .rbn-stack{display:flex;flex-direction:column;gap:3px;
@@ -4835,13 +4899,19 @@ body.slide-editing .apptop{display:none;}
 .rbn-stack.rbn-cols{flex-direction:row;align-items:stretch;gap:3px;}
 .rbn-stack .rbn-col{display:flex;flex-direction:column;gap:3px;
   justify-content:center;}
-.dbtn.rbn-sm{display:flex;align-items:center;gap:6px;padding:3px 8px;
+.dbtn.rbn-sm{display:flex;align-items:center;gap:var(--rbn-btn-gap);
+  padding:3px var(--rbn-btn-px);
   font-family:var(--sans);font-size:12px;white-space:nowrap;min-height:0;
   line-height:1.4;}
-.dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:15px;height:15px;flex:none;}
+/* the flex gap is the ONLY spacer here: `.dbtn .bic` also carries
+   margin-right:4px, which stacked on it, so a button with a .bic had
+   10px between icon and word and one with a bare svg had 6px -- two
+   rhythms on one row, and 4px of width on most of the bar. */
+.dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:15px;height:15px;flex:none;
+  margin-right:0;}
 /* a row of icon-only squares, for things whose icon says it all */
 .dbtn.rbn-ico{display:flex;align-items:center;justify-content:center;
-  width:26px;height:26px;padding:0;font-size:12px;}
+  width:var(--rbn-btn-h);height:var(--rbn-btn-h);padding:0;font-size:12px;}
 .dbtn.rbn-ico i,.dbtn.rbn-ico svg{width:14px;height:14px;}
 /* Save + its destination chevron, welded into one split button so they
    read as one decision rather than two rival save controls */
@@ -4909,14 +4979,17 @@ body.slide-editing .apptop{display:none;}
    the way PowerPoint's are, the one that is on lit. Disabled with
    nothing selected. */
 .rbn-row>.rbn-tall{grid-row:1/span 2;}
-.fx-strip{display:flex;gap:4px;align-items:stretch;height:65px;}
+.fx-strip{display:flex;gap:var(--rbn-tile-gap);align-items:stretch;
+  height:var(--rbn-band);}
 /* T205: ONE TILE. Every tall control on the ribbon -- an effect, a
    layout, a shape, a kind of text, a page size, New slide, the three
    Keep up to date doors -- is this one shape at this one size, and
-   56px tall whether it stands alone or sits in a frame over a
+   --rbn-tile-h tall whether it stands alone or sits in a frame over a
    scrollbar (2026-09-02, user: "buttons of all shapes and sizes and
-   configurations all over the place"). */
-.fx-tile{width:72px;display:flex;flex-direction:column;align-items:center;
+   configurations all over the place"). Since T369 it says so in one
+   token rather than in eleven copies of the number. */
+.fx-tile{width:var(--rbn-tile-w);display:flex;flex-direction:column;
+  align-items:center;
   min-width:0;white-space:normal;text-align:center;
   justify-content:center;gap:5px;font-family:var(--sans);font-size:11px;
   line-height:1.1;color:#c9d6e2;background:none;
@@ -4975,10 +5048,10 @@ body.light .dbtn.dbtn-accent{color:var(--ink);}
 /* T202: the Keep up to date tiles -- the effect tiles' shape, wider,
    with a bigger icon ("make them better buttons, like the animation
    'effect', full height") -- and the All images pane's rows */
-.big-strip{gap:4px;}
+.big-strip{gap:var(--rbn-tile-gap);}
 /* a standing tile is the in-frame tile's height, centred in its cell */
 .rbn-row>.fx-strip.big-strip{align-items:center;}
-.big-strip .fx-tile{height:56px;}
+.big-strip .fx-tile{height:var(--rbn-tile-h);}
 .fx-tile.big-tile[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
@@ -5022,16 +5095,17 @@ body.light .img-row{color:var(--ink-2);}
    row out exactly as the ribbon does. */
 .sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;}
 .rbn-foldmenu .rbn-row{height:auto;}
-.rbn-grp.rbn-folded>.rbn-foldwrap{display:flex;height:65px;
+.rbn-grp.rbn-folded>.rbn-foldwrap{display:flex;height:var(--rbn-band);
   align-items:center;}
 /* T188: the text strip. A specimen "Aa" over the type's name; the strip
    scrolls and a tile cut at the edge is the affordance (T171). */
 /* T196/T197: the layout tiles and the shape tiles are strips too */
-.lay-strip .dbtn.lay{flex:0 0 72px;scroll-snap-align:start;display:flex;
-  width:72px;min-width:0;white-space:normal;text-align:center;
+.lay-strip .dbtn.lay{flex:0 0 var(--rbn-tile-w);scroll-snap-align:start;
+  display:flex;width:var(--rbn-tile-w);
+  min-width:0;white-space:normal;text-align:center;
   flex-direction:column;align-items:center;justify-content:center;
   gap:4px;padding:4px 3px;line-height:1.1;}
-.lay-strip .layico2{width:56px;}
+.lay-strip .layico2{width:calc(var(--rbn-tile-w) - 8px);}
 /* the picker writes a heading into each of its homes; the group label
    is the strip's heading */
 .lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}
@@ -5039,29 +5113,28 @@ body.light .img-row{color:var(--ink-2);}
    in the two menus */
 .lay-strip .dbtn.lay[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));}
-.shape-strip .fx-tile{flex:0 0 72px;scroll-snap-align:start;}
+.shape-strip .fx-tile{flex:0 0 var(--rbn-tile-w);scroll-snap-align:start;}
 .shape-strip .fx-tile .sh-ico{width:26px;height:22px;}
 /* the provenance cell on the Object tab (T198): a label over a name */
 .fmt-path{max-width:170px;}
 .fmt-path b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   display:block;max-width:170px;}
-.rbn-row .lay-tidy{height:30px;}
 /* three page sizes in sight and the rest a scroll or the chevron away
    (T204): Design has to seat Layout in front of this group */
-.page-strip .fx-tile{flex:0 0 72px;scroll-snap-align:start;}
+.page-strip .fx-tile{flex:0 0 var(--rbn-tile-w);scroll-snap-align:start;}
 /* THE TEXT TILES ARE HALF-HEIGHT AND WRAP (2026-09-07, user: "The
    headings are really important. Being able to make these is
    important. Either make the box longer, or make each half as high and
    have two rows"). The name IS the specimen now, so a tile is one line
    of type and two rows fit in the height one row used to take. */
-/* .strip-frame sets every tile 56px tall and 72px wide, and it sits
-   LATER in this file -- so at equal specificity it won and these never
-   shrank. Named through the frame to beat it, deliberately, because
+/* .strip-frame sets every tile --rbn-tile-h by --rbn-tile-w, and it
+   sits LATER in this file -- so at equal specificity it won and these
+   never shrank. Named through the frame to beat it, deliberately, because
    this strip is the one place a tile is a line of type rather than a
    glyph over a word. */
 .strip-frame>.tx-strip{flex-wrap:wrap;align-content:center;
-  gap:4px;max-height:60px;}
-.strip-frame .tx-strip .fx-tile{height:26px;flex:0 0 auto;
+  gap:var(--rbn-tile-gap);max-height:calc(var(--rbn-band) - 2px);}
+.strip-frame .tx-strip .fx-tile{height:var(--rbn-btn-h);flex:0 0 auto;
   width:auto;min-width:58px;max-width:104px;
   flex-direction:row;padding:0 8px;gap:0;scroll-snap-align:start;}
 .tx-tile-n{display:block;line-height:1.05;font-family:var(--sans);
@@ -5118,9 +5191,13 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    shrinks its words; it folds a group, and folding is a tall tile
    here since T218. So every rung keeps its padding and gap steps and
    has lost its font-size step. */
-.deck.erc1 .rbn-grp{padding-left:7px;padding-right:7px;}
-.deck.erc1 .rbn-row{gap:4px;}
-.deck.erc2 .dbtn.rbn-sm{padding:2px 7px;gap:5px;}
+/* ...and the row-gap is NOT a step: erc1 used the `gap` shorthand,
+   which reset the row gap too, so from the first rung the changing
+   half's two rows sat closer together than the constant half's -- two
+   baselines on one bar. Column only. */
+.deck.erc1 .rbn-grp{padding-left:4px;padding-right:4px;}
+.deck.erc1 .rbn-row{column-gap:2px;}
+.deck.erc2 .dbtn.rbn-sm{padding:3px 5px;gap:3px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
 /* spend BOX width before type size: on 1366-1440 laptops the ladder ran
    all the way to erc3's small type while the font select sat at its full
@@ -5134,9 +5211,9 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* NO rung hides an icon. Stripping them buys width but costs the whole
    big/small hierarchy — a label-only wall is the same flat wall that was
    rejected, arrived at from the other side. Density only, to the end. */
-.deck.erc3 .rbn-grp{padding-left:5px;padding-right:5px;}
+.deck.erc3 .rbn-grp{padding-left:3px;padding-right:3px;}
 .deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{
-  padding-left:6px;padding-right:6px;}
+  padding-left:4px;padding-right:4px;}
 .deck.erc3 .rbn-row .fmt-range{width:56px;}
 .deck.erc3 .et-fmt .rbn-row select.etm{max-width:68px;}
 .deck.erc3 .et-fmt .rbn-row .fmt-num{width:34px;}
@@ -5145,15 +5222,18 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    its row past the group and over the label */
 .rbn-row .dbtn.etm,.rbn-row .fmt-num,.rbn-row select.etm,
 .rbn-row .fmt-opwrap,.rbn-row .fmt-szwrap,.rbn-row .rbn-partslot{
-  height:26px;box-sizing:border-box;padding-top:0;padding-bottom:0;}
+  height:var(--rbn-btn-h);box-sizing:border-box;
+  padding-top:0;padding-bottom:0;}
 .rbn-row .dbtn.etm{display:inline-flex;align-items:center;
-  justify-content:center;font-size:10.5px;padding-left:8px;
-  padding-right:8px;}
+  justify-content:center;font-size:12px;
+  padding-left:var(--rbn-btn-px);padding-right:var(--rbn-btn-px);}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive
-   carrying the panel's 30px height, which would burst the ribbon's 26px
-   grid rows and push the whole bar taller. */
+   carrying the panel's 30px height, which would burst the ribbon's
+   grid rows and push the whole bar taller. (Dead since the File
+   controls moved to the document bar; kept because applyRibbonLayout
+   can still put a .rbn-file group back.) */
 .rbn-file .dbtn{padding:3px 8px;font-size:10.5px;height:26px;
   box-sizing:border-box;display:inline-flex;align-items:center;
   justify-content:center;line-height:1;white-space:nowrap;}
@@ -5245,7 +5325,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck.erc-tight .rbn-grp{padding-left:2px;padding-right:2px;}
 .deck.erc-tight .rbn-row{column-gap:2px;}
 .deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{
-  padding-left:5px;padding-right:5px;gap:4px;}
+  padding-left:3px;padding-right:3px;gap:3px;}
 /* Narrowing the square glyph buttons (zoom's minus and plus, undo and
    redo) was tried here and measured at zero: none of them is the widest
    control in its grid column, so the column keeps the width of the worded
@@ -5262,11 +5342,13 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    Measured after: File, Slide and View sit at exactly 386/217, 603/197
    and 800/246 with nothing selected, a line selected and a text box
    selected, at 1500px and 1920px. Zero movement. ---- */
-.deck .edit-tools .rbn-grp.rbn-fixed{padding-left:11px;padding-right:11px;}
-.deck .edit-tools .rbn-fixed .rbn-row{column-gap:5px;row-gap:5px;}
+.deck .edit-tools .rbn-grp.rbn-fixed{padding-left:7px;padding-right:7px;}
+.deck .edit-tools .rbn-fixed .rbn-row{
+  column-gap:var(--rbn-col-gap);row-gap:var(--rbn-row-gap);}
 .deck .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  padding-left:8px;padding-right:8px;gap:6px;}
+  padding-left:var(--rbn-btn-px);padding-right:var(--rbn-btn-px);
+  gap:var(--rbn-btn-gap);}
 .deck .edit-tools .rbn-fixed .rbn-stack{gap:3px;}
 /* ...but it still has to answer to the WINDOW. These rungs are keyed on
    the ribbon's width alone (fitEditRibbon's ERCW, set before it measures
@@ -5274,25 +5356,28 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    without — so they can only fire on a resize, never on a click. The
    status readout and the zoom readout are sized in ch, so they follow
    these steps down on their own rather than needing a rung each. */
-.deck.ercw1 .edit-tools .rbn-grp.rbn-fixed{padding-left:8px;padding-right:8px;}
-.deck.ercw1 .edit-tools .rbn-fixed .rbn-row{column-gap:4px;row-gap:4px;}
+.deck.ercw1 .edit-tools .rbn-grp.rbn-fixed{padding-left:5px;padding-right:5px;}
+.deck.ercw1 .edit-tools .rbn-fixed .rbn-row{column-gap:2px;row-gap:4px;}
 .deck.ercw1 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw1 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  padding-left:7px;padding-right:7px;gap:5px;}
-.deck.ercw2 .edit-tools .rbn-grp.rbn-fixed{padding-left:6px;padding-right:6px;}
-.deck.ercw2 .edit-tools .rbn-fixed .rbn-row{column-gap:3px;row-gap:4px;}
+  padding-left:5px;padding-right:5px;gap:4px;}
+.deck.ercw2 .edit-tools .rbn-grp.rbn-fixed{padding-left:4px;padding-right:4px;}
+.deck.ercw2 .edit-tools .rbn-fixed .rbn-row{column-gap:2px;row-gap:4px;}
 .deck.ercw2 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw2 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  padding-left:6px;padding-right:6px;gap:4px;}
-.deck.ercw3 .edit-tools .rbn-grp.rbn-fixed{padding-left:4px;padding-right:4px;}
+  padding-left:4px;padding-right:4px;gap:3px;}
+.deck.ercw3 .edit-tools .rbn-grp.rbn-fixed{padding-left:3px;padding-right:3px;}
 .deck.ercw3 .edit-tools .rbn-fixed .rbn-row{column-gap:2px;row-gap:3px;}
 .deck.ercw3 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw3 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  padding-left:5px;padding-right:5px;gap:4px;}
-.deck.ercw4 .edit-tools .rbn-grp.rbn-fixed{padding-left:3px;padding-right:3px;}
+  padding-left:3px;padding-right:3px;gap:3px;}
+.deck.ercw4 .edit-tools .rbn-grp.rbn-fixed{padding-left:2px;padding-right:2px;}
+/* ercw4 had no .rbn-row rule at all, so the last width rung inherited
+   ercw3's gaps and bought nothing but 1px of group padding. */
+.deck.ercw4 .edit-tools .rbn-fixed .rbn-row{column-gap:2px;row-gap:3px;}
 .deck.ercw4 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw4 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  padding-left:5px;padding-right:5px;}
+  padding-left:3px;padding-right:3px;gap:3px;}
 
 /* ---- ...and the changing region pays for it, with a rung of its own.
    It is relaid out on every selection anyway, so extra density there
@@ -5303,7 +5388,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck.erc-tight .et-fmt .rbn-row{column-gap:2px;}
 .deck.erc-tight .et-fmt .dbtn.rbn-sm,
 .deck.erc-tight .et-fmt .rbn-row .dbtn.etm{
-  padding-left:5px;padding-right:5px;gap:4px;}
+  padding-left:3px;padding-right:3px;gap:3px;}
 .deck.erc-tight .et-fmt .rbn-row .fmt-range{width:56px;}
 /* the boxes you type into rather than read: a font name still shows, a
    point size is at most three digits, and neither needs its resting width
@@ -7292,9 +7377,10 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   overflow:visible;padding:8px;}
 .lay-menu .lay-picker{margin:0;display:flex;flex-wrap:wrap;gap:6px;
   max-height:none;overflow:visible;}
-.lay-menu .lay-picker .dbtn.lay{flex:0 0 72px;width:72px;height:56px;
+.lay-menu .lay-picker .dbtn.lay{flex:0 0 var(--rbn-tile-w);
+  width:var(--rbn-tile-w);height:var(--rbn-tile-h);
   padding:4px 3px;align-items:center;}
-.lay-menu .lay-picker .layico2{width:56px;}
+.lay-menu .lay-picker .layico2{width:calc(var(--rbn-tile-w) - 8px);}
 /* catalog section headings (Slide layouts / Poster layouts) */
 .lay-sec{grid-column:1/-1;font-family:var(--mono);font-size:9px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-ink-3);
@@ -8589,27 +8675,31 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
    right with up, down and "show all". No scrollbar anywhere (2026-09-02,
    user: "bit messy with the bottom scroll bar"). The frame is a box
    with an edge, the tiles inside it are the one 72x56 tile. */
-.strip-frame{display:flex;align-items:stretch;height:65px;
+.strip-frame{display:flex;align-items:stretch;height:var(--rbn-band);
   border:1px solid #ffffff24;border-radius:8px;background:#ffffff06;
   overflow:hidden;}
 /* the STRIP is the scroll box (a fixed height, overflow hidden), so the
    arrows can move scrollTop; the frame only draws the edge */
-.strip-frame>.fx-strip{height:63px;padding:4px 4px 0;box-sizing:border-box;
+.strip-frame>.fx-strip{height:calc(var(--rbn-band) - 2px);
+  padding:2px 4px 0;box-sizing:border-box;
   flex-wrap:wrap;align-content:flex-start;overflow:hidden;
   scroll-behavior:smooth;scroll-snap-type:none;}
-.strip-frame .fx-tile,.strip-frame .dbtn.lay{height:56px;flex:0 0 72px;
+.strip-frame .fx-tile,.strip-frame .dbtn.lay{
+  height:var(--rbn-tile-h);flex:0 0 var(--rbn-tile-w);
   scroll-snap-align:none;}
 /* a strip's width is a whole number of tiles: four, or three for the
    page sizes, so no tile is ever cut at the edge */
 .strip-frame>.fx-strip,.strip-frame>.fx-strip.lay-strip,
 .strip-frame>.fx-strip.shape-strip{
-  width:calc(4 * 72px + 3 * 4px + 8px);}
+  width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
 /* the text tiles are as wide as their NAMES since 2026-09-07, so a
-   whole number of 72px tiles no longer describes this strip. Wide
+   whole number of tiles no longer describes this strip. Wide
    enough that the eight built-in types fall in two rows; a deck with
    more scrolls, and the frame's own arrows move it. */
-.strip-frame>.fx-strip.tx-strip{width:calc(5 * 72px + 4 * 4px + 8px);}
-.strip-frame>.fx-strip.page-strip{width:calc(3 * 72px + 2 * 4px + 8px);}
+.strip-frame>.fx-strip.tx-strip{
+  width:calc(5 * var(--rbn-tile-w) + 4 * var(--rbn-tile-gap) + 8px);}
+.strip-frame>.fx-strip.page-strip{
+  width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap) + 8px);}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
 .strip-nav>button{flex:1 1 0;min-height:0;padding:0;border:0;
@@ -8641,7 +8731,7 @@ body.light .strip-nav>button{color:var(--ink-2);}
 .sh-menu.strip-all .fx-strip{display:flex;flex-wrap:wrap;gap:6px;
   height:auto;width:100%;max-width:none;overflow:visible;padding:0;
   scroll-snap-type:none;}
-.sh-menu.strip-all .fx-strip>*{flex:0 0 auto;height:56px;}
+.sh-menu.strip-all .fx-strip>*{flex:0 0 auto;height:var(--rbn-tile-h);}
 .sh-menu.strip-all .fx-strip>.hd-lab,.sh-menu.strip-all .fx-strip>.lay-sec{
   display:none;}
 body.light .sh-menu.strip-all{background:var(--chrome-2);
@@ -8653,7 +8743,8 @@ body.light .sh-menu.strip-all{background:var(--chrome-2);
    the new slide on the left hand side and make it a full button"). The
    full-screen view is every slide's images under a heading each, the
    headings folding. */
-.rbn-row>#hm-newslide.big-tile{width:72px;height:56px;align-self:center;}
+.rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;}
 .img-ov{position:fixed;inset:0;z-index:400;
   background:var(--chrome-0,#0b141d);color:#c9d6e2;overflow:auto;
   padding:16px 28px 40px;font-family:var(--sans);}
@@ -8842,11 +8933,13 @@ body.light .dg-num input{background:var(--input-bg);
    is exactly the "why is tidy page huge?" of 2026-09-03. */
 .rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}
 .rbn-row>.rbn-fit{justify-self:stretch;}
-/* Background is a tall tile now, so its menu hangs off a 72px door */
+/* Background is a tall tile now, so its menu hangs off a tile-wide door */
 #bg-drop.rbn-tall,#hm-updwrap.rbn-tall{justify-self:start;}
 /* T280: the merged Update tile is the same shape as the two it replaced */
-#hm-updwrap.rbn-tall>.fx-tile{width:72px;height:56px;align-self:center;}
-#bg-drop.rbn-tall>.fx-tile{width:72px;height:56px;align-self:center;}
+#hm-updwrap.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;}
+#bg-drop.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;}
 /* the opacity slider inside its captioned run */
 #fmt-opcell .fmt-opwrap{display:flex;align-items:center;gap:5px;
   padding:0 8px 0 4px;align-self:center;}
@@ -8858,19 +8951,19 @@ body.light .dg-num input{background:var(--input-bg);
 #fmt-sizecell .dbtn.etm{min-width:30px;justify-content:center;
   padding-left:4px;padding-right:4px;}
 /* History is a tall tile in a section of its own (T233) */
-.rbn-row>#fmt-hist.big-tile{width:72px;height:56px;align-self:center;
-  grid-row:1/span 2;}
+.rbn-row>#fmt-hist.big-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;grid-row:1/span 2;}
 /* ---- T234: THE FLIP BOOK'S ONE BIG DOOR, AND ITS PAGE TURN ----------
    "+ Add" is the first control in the Picture group and the same
    height as History: an empty flip book is a hole, and the button that
    fills it should not be the smallest thing on the row. The turn
    itself is one keyframe on the frame that changed -- so it plays in
    the show, in an exported page, and nowhere else. */
-.rbn-row>#fmt-figures.big-tile{width:72px;height:56px;
-  align-self:center;}
+.rbn-row>#fmt-figures.big-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;}
 /* History is a tile on Home too, the same size as the others (T236) */
-.rbn-row>#hm-history.big-tile{width:72px;height:56px;
-  align-self:center;}
+.rbn-row>#hm-history.big-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;}
 /* ---- T239: THE WAY OUT IS ON THE BAR YOU CAN SEE ---------------------
    Two rows, like File over Save beside them: the pair is one errand
    and stacking halves the width it costs the top bar. */
@@ -8920,7 +9013,8 @@ body.light .qk-sw{border-color:var(--border-strong);}
 .edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.dbtn{min-width:30px;
   justify-content:center;}
 /* the typeface, on the row rather than in a window */
-.edit-tools select#fmt-font{max-width:104px;align-self:center;height:26px;}
+.edit-tools select#fmt-font{max-width:104px;align-self:center;
+  height:var(--rbn-btn-h);}
 
 /* ---- T220: THE HISTORY OF ONE OBJECT, FULL SCREEN ---------------------
    The rows the dock pane draws, as cards with room to read. */
@@ -8945,7 +9039,8 @@ body.light .img-ov .oh-row{background:var(--surface-hover);
    This is a mess to look at" (2026-09-03). So every control has a
    surface again, and ONE surface: the same fill, the same 1px edge,
    the same 6px corner, at one height per kind -- a small button is a
-   30px box, a tile is 72 by 56, a run is one box with its segments
+   --rbn-track box, a tile is --rbn-tile-w by --rbn-tile-h, a run is
+   one box with its segments
    divided inside it. What made boxes chaos before T207 was that the
    boxes came in every size; the sizes are settled now, so the box can
    come back. Hover lifts it; pressed fills it with the deep accent. */
@@ -9099,7 +9194,7 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 
 /* ---- T218: the folded door is a tile; the delay's cell --------------------- */
 .rbn-grp.rbn-folded>.rbn-foldwrap{align-items:center;}
-.rbn-foldwrap .fx-tile.rbn-foldbtn{height:56px;width:82px;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);width:82px;}
 .rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
   line-height:1.15;}
 #anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
