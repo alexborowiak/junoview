@@ -7423,3 +7423,19 @@ first. Ticked in the commit that ships each.
   say it, `sizeRibbonGroups` must not COUNT it as two, and the grid must
   not LAY IT OUT as two (`.rbn-row>.rbn-cell.rbn-tall:not(.rbn-odd)`).
   `test_a_cell_never_claims_both_rows` fails if any of the three slips.
+- [x] **T371 - The running app served whatever it read first.**
+  *Done 2026-09-09.* `assets.load` was a plain `@functools.cache`, so a
+  `junoview --app` process served the asset text it had read at its FIRST
+  render for the rest of its life. The frontend has no build step -- the
+  edit loop is "change the file, look at the app" -- so every edit made
+  while the app was open was invisible, and reloading the page did not
+  help because the stale copy was in Python, not the browser. On
+  2026-09-09 that cost an afternoon: T370 was committed, pushed and
+  verified against a fresh server while the app the user actually had
+  open, started three hours earlier, kept painting the old ribbon, so a
+  landed fix looked like it had simply not worked.
+  The cache is keyed on the file's mtime now. A `stat()` per call is
+  nothing against splicing a few hundred KB of asset, and the key still
+  collapses to one entry per file while nothing changes. An installed
+  copy (a wheel, or the zipped web build) has no mtime to read, so the
+  stamp is None and it behaves exactly as the plain cache did.

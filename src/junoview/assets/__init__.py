@@ -25,21 +25,51 @@ __all__ = [
 ]
 
 
+def _resource(relative_path: str):
+    resource = files(__package__)
+    for part in relative_path.split("/"):
+        resource = resource.joinpath(part)
+    return resource
+
+
 @functools.cache
+def _read(relative_path: str, _stamp: object) -> str:
+    """The cached read. ``_stamp`` is part of the key, never used here."""
+    return _resource(relative_path).read_text(encoding="utf-8")
+
+
 def load(relative_path: str) -> str:
     """Return the text of one asset, e.g. ``load("css/core.css")``.
 
     Results are cached: a page render touches every asset, and multi-notebook
     bundles render many pages in one process.
 
+    THE CACHE IS KEYED ON THE FILE'S MTIME, and that is not a nicety. The
+    frontend is plain .css/.js/.html with no build step, so the edit loop is
+    "change the file, look at the app" -- but `junoview --app` is a
+    long-running process, and with a plain @cache it served whatever it had
+    read at its FIRST render for the rest of its life. Reloading the page did
+    not help; the stale copy was in Python, not the browser. On 2026-09-09
+    that cost an afternoon: a ribbon fix was committed, pushed and verified
+    against a fresh server while the app the user actually had open -- started
+    three hours earlier -- kept painting the old layout, so the fix looked
+    like it had simply not worked.
+
+    A stat() per call is nothing against reading and splicing a few hundred KB
+    of asset, and the key still collapses to one entry per file while nothing
+    changes. An installed copy (a wheel, or the zipped web build) has no
+    mtime to read: the stamp is then None and this behaves exactly as the
+    plain cache did.
+
     Text mode is deliberate. Git may check these files out with CRLF endings
     on Windows; universal-newline decoding turns them back into ``\\n`` so the
     rendered HTML is byte-identical on every platform.
     """
-    resource = files(__package__)
-    for part in relative_path.split("/"):
-        resource = resource.joinpath(part)
-    return resource.read_text(encoding="utf-8")
+    try:
+        stamp = _resource(relative_path).stat().st_mtime_ns
+    except (AttributeError, OSError):
+        stamp = None
+    return _read(relative_path, stamp)
 
 
 def core_css() -> str:
