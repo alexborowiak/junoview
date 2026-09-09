@@ -5205,6 +5205,15 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck.erc1 .rbn-grp{padding-left:4px;padding-right:4px;}
 .deck.erc1 .rbn-row{column-gap:2px;}
 .deck.erc2 .dbtn.rbn-sm{padding:3px 5px;gap:3px;}
+/* T372: THE TILE COMPACTS TOO. A worded button gives up padding at
+   every rung, but a tile is a fixed --rbn-tile-w, so a group made of
+   tiles was the one thing on the row the ladder could not shrink --
+   and once Transition and Timing became tile strips that was three
+   groups of the Animation tab. Measured: the tab folded four groups at
+   1600px where the worded version folded two, on a row only 8px wider.
+   The token makes it one line a rung, and no rung touches the type:
+   the label just wraps a little sooner. */
+.deck.erc2{--rbn-tile-w:58px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
 /* spend BOX width before type size: on 1366-1440 laptops the ladder ran
    all the way to erc3's small type while the font select sat at its full
@@ -5329,6 +5338,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    (two columns for its three controls, rather than a third row printed
    over its own label) costs about 60px, so this is most of it back
    (2026-08-16). */
+.deck.erc-tight{--rbn-tile-w:52px;}
 .deck.erc-tight .rbn-grp{padding-left:2px;padding-right:2px;}
 .deck.erc-tight .rbn-row{column-gap:2px;}
 .deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{
@@ -8705,7 +8715,10 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
    more scrolls, and the frame's own arrows move it. */
 .strip-frame>.fx-strip.tx-strip{
   width:calc(5 * var(--rbn-tile-w) + 4 * var(--rbn-tile-gap) + 8px);}
-.strip-frame>.fx-strip.page-strip{
+/* the three-tile strips: page sizes, and T372's transition and timing
+   choices, which have three answers each and no fourth to scroll to */
+.strip-frame>.fx-strip.page-strip,
+.strip-frame>.fx-strip.trans-strip{
   width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap) + 8px);}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
@@ -13480,43 +13493,46 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <span class="rbn-grp rbn-trans" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
-              <!-- T365 gave this run `rbn-tall` to stop a 178px ragged
-                   edge: three segments make it ~230px and its only
-                   neighbour is an 80px button. But a run is one track
-                   high whatever it claims, so the class did not buy two
-                   rows -- it reserved a column for a 26px control and
-                   put the whole group on ONE row of the band, 300px
-                   wide (2026-09-09, user: "one big group that is all
-                   horizontal, and it stretches things out"). T370:
-                   All slides sits UNDER the run instead. The column is
-                   ragged, which is what T365 was avoiding, and that is
-                   the right trade -- widening the button to the run is
-                   the "why is tidy page huge?" of 2026-09-03, and every
-                   other group on this tab is already a wide cell over a
-                   narrow one. -->
-              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
-                aria-label="How this slide arrives">
-                <span class="cell-lab">This slide</span>
-                <button class="dbtn rbn-sm" id="trans-cut"
+              <!-- T372: THE SAME TILE AS THE EFFECT STRIP. Picking how
+                   a slide arrives and picking how an object arrives are
+                   the same kind of choice, and they sit two groups
+                   apart on one tab -- so they are the same control
+                   (2026-09-09, user: "see how the 'arrives' buttons are
+                   different from the 'effect' buttons ... THIS NEEDS TO
+                   BE CONSISTENT").
+                   The ids are unchanged: transRibbonBoot and
+                   transRibbonSync (45-images.js) find these by id and
+                   set aria-pressed, and `.edit-tools .fx-tile
+                   [aria-pressed="true"]` already lights a tile the way
+                   `.on` lights an effect. No nav column: there are
+                   three transitions and there is no fourth to scroll
+                   to. The "This slide" caption went with the run --
+                   the group is named for the slide and the button
+                   beside it says All slides. -->
+              <span class="rbn-tall strip-frame" id="trans-frame">
+                <span class="fx-strip trans-strip" id="trans-strip"
+                  role="group" aria-label="How this slide arrives">
+                <button class="fx-tile" id="trans-cut"
                   aria-pressed="false"
                   title="Nothing &mdash; the next slide is simply
- there"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg> Cut</button>
-                <button class="dbtn rbn-sm" id="trans-fade"
+ there"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg><span>Cut</span></button>
+                <button class="fx-tile" id="trans-fade"
                   aria-pressed="false"
-                  title="A short cross-fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg>
-                  Fade</button>
-                <button class="dbtn rbn-sm" id="trans-move"
+                  title="A short cross-fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg><span
+                  >Fade</span></button>
+                <button class="fx-tile" id="trans-move"
                   aria-pressed="false"
                   title="Anything on both slides slides, grows or
  shrinks from where it was to where it is. Duplicate a slide and move
- something, and this is what you get"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg>
-                  Move</button>
+ something, and this is what you get"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg><span
+                  >Move</span></button>
+                </span>
               </span>
               <button class="dbtn rbn-sm" id="trans-all"
                 title="Give every slide in the deck the transition this
  one has"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All slides</button>
             </span>
-            <span class="rbn-lab">How it arrives</span>
+            <span class="rbn-lab">Transition</span>
           </span>
           <span class="rbn-grp rbn-flipfx" data-tab="animation"
             data-fold-ic="flipbook">
@@ -13610,24 +13626,50 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                the mode's own controls have the row. -->
           <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
-              <span class="rbn-cell rbn-seg" id="anim-start">
-                <button class="dbtn rbn-sm" id="anim-onclick"
+              <!-- T372: tiles, like Effect and like Transition. -->
+              <span class="rbn-tall strip-frame" id="anim-start">
+                <span class="fx-strip trans-strip" id="anim-start-strip"
+                  role="group" aria-label="When this build starts">
+                <button class="fx-tile" id="anim-onclick"
                   aria-pressed="false"
                   title="Starts on its own click"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> On click</button>
-                <button class="dbtn rbn-sm" id="anim-withprev"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg><span>On click</span></button>
+                <button class="fx-tile" id="anim-withprev"
                   aria-pressed="false"
                   title="Starts on the same click as the build before it"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> With previous</button>
-                <button class="dbtn rbn-sm" id="anim-afterprev"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg><span>With previous</span></button>
+                <button class="fx-tile" id="anim-afterprev"
                   aria-pressed="false"
                   title="Starts by itself, this many seconds after the
  build before it &mdash; no click"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> After previous</button>
-
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg><span>After previous</span></button>
+                </span>
               </span>
-              <!-- the delay under the start run (T218), so Timing is two rows
-                   deep whatever is selected -->
+              <!-- T372: tiles, like Effect and like Transition. -->
+              <span class="rbn-tall strip-frame" id="anim-by">
+                <span class="fx-strip trans-strip" id="anim-by-strip"
+                  role="group" aria-label="How much arrives on a click">
+                <button class="fx-tile" id="anim-by-all"
+                  aria-pressed="false"
+                  title="The whole text box on one click"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg><span>Whole box</span></button>
+                <button class="fx-tile" id="anim-by-para"
+                  aria-pressed="false"
+                  title="One click per bullet, or per line you pressed
+ Enter on"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="m3 5.6 2.4 2.4L3 10.4"/></svg><span>By bullet</span></button>
+                <button class="fx-tile" id="anim-by-sent"
+                  aria-pressed="false"
+                  title="One click per sentence"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg><span>By sentence</span></button>
+                </span>
+              </span>
+              <!-- T372: LAST, not second. Beside two full-height strips
+                   the delay is the only single cell, so it has to be
+                   the one sizeRibbonGroups marks `rbn-odd` -- that is
+                   what centres a lone cell in the band instead of
+                   pinning it to row 1 with a hole underneath. A
+                   spanning cell resets the pairing, so it only gets
+                   that mark from the END of the row. -->
               <span class="rbn-cell" id="anim-delaycell">
                 <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
                   title="Seconds after the previous build"><span class="cell-lab">Delay</span>
@@ -13635,20 +13677,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     min="1" max="60" step="1" value="1"
                     aria-label="Seconds after the previous build">
                   <span class="fmt-unit">s</span></span>
-              </span>
-              <span class="rbn-cell rbn-seg" id="anim-by">
-                <button class="dbtn rbn-sm" id="anim-by-all"
-                  aria-pressed="false"
-                  title="The whole text box on one click"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Whole box</button>
-                <button class="dbtn rbn-sm" id="anim-by-para"
-                  aria-pressed="false"
-                  title="One click per bullet, or per line you pressed
- Enter on"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="m3 5.6 2.4 2.4L3 10.4"/></svg> By bullet</button>
-                <button class="dbtn rbn-sm" id="anim-by-sent"
-                  aria-pressed="false"
-                  title="One click per sentence"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> By sentence</button>
               </span>
             </span>
             <span class="rbn-lab" id="anim-timing-lab">Timing &amp; text</span>
@@ -57701,8 +57729,16 @@ window.JunoPptx = (function () {
         b.disabled=!st.on||(p[1]==='with'&&st.si<=0&&st.mode!=='with');
         b.setAttribute('aria-pressed',(st.on&&st.mode===p[1]).toString());
       });
-      var dw=$('#anim-delaywrap'),di=$('#anim-delay');
+      /* T372: the CELL, not just the wrap inside it. While the start
+         choice was a run the delay shared its column and an empty cell
+         cost nothing; beside two full-height tile strips it is a column
+         of its own, so an inapplicable delay was spending 96px of the
+         row on nothing -- enough to fold this very group away at
+         1600px. sizeRibbonGroups skips a hidden cell, so the column
+         goes with it. */
+      var dw=$('#anim-delaywrap'),di=$('#anim-delay'),dc=$('#anim-delaycell');
       if(dw) dw.hidden=!(st.on&&st.mode==='after');
+      if(dc) dc.hidden=!(st.on&&st.mode==='after');
       if(di&&st.on&&st.mode==='after'&&document.activeElement!==di)
         di.value=st.after||1;
       [['anim-by-all',''],['anim-by-para','para'],
