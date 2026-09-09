@@ -37,9 +37,13 @@ def test_the_three_bad_pairs_are_paired_now():
     # segments make it 276px, and while it sat mid-group it was the other
     # half of a column with a 127px button, a 149px ragged edge. Tidy page
     # pairs with Saved layouts now and every column comes out even.
+    # T370 took the `rbn-tall` off: a cell is one track high, so the class
+    # was reserving a row nothing could fill. Being the ODD cell is what
+    # gives it the column and centres it, and sizeRibbonGroups works that
+    # out from the count -- measured identical before and after.
     assert lay.index("dsg-tidy") < lay.index("hm-lay-tidy")
     assert 'id="hm-lay-tidy"' in html
-    assert 'class="rbn-cell rbn-seg lay-tidy rbn-tall"' in html
+    assert 'class="rbn-cell rbn-seg lay-tidy"' in html
     furn = _ids(_row(html, "Page furniture"))
     assert furn[:4] == ["dc-head", "dc-foot", "dc-wmark", "dc-nums"]
     # the Object tab's own Animation group went in T220 -- an entrance is

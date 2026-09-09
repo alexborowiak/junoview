@@ -7396,3 +7396,30 @@ first. Ticked in the commit that ships each.
   *Not fixed:* the viewer's bar still needs ~1420px and scrolls
   sideways below that (117px over at 1366, down from 192). That is a
   count-of-controls problem, not a size one.
+- [x] **T370 - A joined run is one row high, so it may not claim two.**
+  The user (2026-09-09), on the Animation tab: "there are still lots of
+  buttons that are in one big group that is all horizontal, and it
+  stretches things out and doesn't really make sense".
+  *Done 2026-09-09.* `.rbn-cell` is a fixed `--rbn-track` and
+  `.rbn-cell.rbn-seg` a fixed `--rbn-btn-h`, so a cell can never fill
+  two grid rows -- but two of them carried `rbn-tall` anyway.
+  `sizeRibbonGroups` counted each as two cells and the grid gave each a
+  `1/span 2`, so the class reserved a column for a 26px control and left
+  the row beneath it empty. In "How it arrives" that was the whole
+  group: the run and its only neighbour sat end to end on ONE row of a
+  60px band, 300px wide. It was the only group in the ribbon with the
+  fault, on every tab and in every selection state -- which is exactly
+  where the user pointed.
+  T365 had added the class for a reason: a ~230px run over an 80px
+  button is a ragged column, and widening the button to match is the
+  "why is tidy page huge?" of 2026-09-03. That trade is reversed for the
+  run -- All slides sits under it, the band fills and the group is
+  217px -- because every other group on that tab is already a wide cell
+  over a narrow one, so the raggedness costs nothing the eye notices and
+  the horizontal sprawl did. Spacing (`#hm-lay-tidy`) keeps its own
+  column, but by being the ODD cell out, which is what centres a lone
+  cell in the band; measured identical before and after.
+  Guarded in the three places that can drift apart: the markup must not
+  say it, `sizeRibbonGroups` must not COUNT it as two, and the grid must
+  not LAY IT OUT as two (`.rbn-row>.rbn-cell.rbn-tall:not(.rbn-odd)`).
+  `test_a_cell_never_claims_both_rows` fails if any of the three slips.

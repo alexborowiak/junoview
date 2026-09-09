@@ -613,10 +613,14 @@
                    other half of a column with a 127px button in it -- a
                    149px ragged edge, and the pair that T280 could not
                    make share a width without blowing the button up
-                   ("why is tidy page huge?"). Spanning both rows it
-                   owns its column, so Saved layouts pairs with Tidy
-                   page and every column in this group comes out even. -->
-              <div class="rbn-cell rbn-seg lay-tidy rbn-tall" id="hm-lay-tidy"
+                   ("why is tidy page huge?"). It takes a column of its
+                   own so Saved layouts pairs with Tidy page and every
+                   column comes out even -- but by being the ODD cell
+                   out, which is what centres a lone cell in the band.
+                   It used to say `rbn-tall`, which a cell cannot be
+                   (T370): .rbn-cell is one track high, so the class
+                   reserved a second row nothing could fill. -->
+              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
               <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i> Tight</button>
@@ -1037,10 +1041,21 @@
           <span class="rbn-grp rbn-trans" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
-              <!-- T365: a column of its own. Three segments make this
-                   268px and its only neighbour is a 90px button, which
-                   was a 178px ragged edge down the middle of the group. -->
-              <span class="rbn-cell rbn-seg rbn-tall" id="trans-run" role="group"
+              <!-- T365 gave this run `rbn-tall` to stop a 178px ragged
+                   edge: three segments make it ~230px and its only
+                   neighbour is an 80px button. But a run is one track
+                   high whatever it claims, so the class did not buy two
+                   rows -- it reserved a column for a 26px control and
+                   put the whole group on ONE row of the band, 300px
+                   wide (2026-09-09, user: "one big group that is all
+                   horizontal, and it stretches things out"). T370:
+                   All slides sits UNDER the run instead. The column is
+                   ragged, which is what T365 was avoiding, and that is
+                   the right trade -- widening the button to the run is
+                   the "why is tidy page huge?" of 2026-09-03, and every
+                   other group on this tab is already a wide cell over a
+                   narrow one. -->
+              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
                 aria-label="How this slide arrives">
                 <span class="cell-lab">This slide</span>
                 <button class="dbtn rbn-sm" id="trans-cut"

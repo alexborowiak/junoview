@@ -215,3 +215,42 @@ def test_one_type_size_for_a_worded_ribbon_button():
             "  justify-content:center;font-size:12px;") in css
     row = css[css.index(".rbn-row .dbtn.etm,"):css.index(".rbn-row .fmt-range{")]
     assert "10.5px" not in row, row
+
+
+def test_a_cell_never_claims_both_rows():
+    """T370. `.rbn-cell` is one --rbn-track high and `.rbn-cell.rbn-seg`
+    one --rbn-btn-h, so `rbn-tall` on a cell is a claim it cannot
+    honour: the grid reserves a second row for a 26px control and
+    nothing can ever fill it.
+
+    `#trans-run` is how that looked. T365 gave the transition run
+    `rbn-tall` to stop a ragged column, but the run stayed 26px, so
+    "How it arrives" laid its run and its only neighbour end to end on
+    ONE row of the band and came out 300px wide -- 2026-09-09, user:
+    "lots of buttons that are in one big group that is all horizontal,
+    and it stretches things out and doesn't really make sense". With
+    the claim dropped, All slides sits under the run, the band fills
+    and the group is 240px.
+
+    Guarded in three places because two of them can drift apart: the
+    markup must not say it, sizeRibbonGroups must not COUNT it as two
+    cells, and the grid must not lay it out as two rows.
+    """
+    html = assets.deck_html()
+    row = re.compile(r'class="[^"]*\brbn-cell\b[^"]*"')
+    for m in row.finditer(html):
+        assert "rbn-tall" not in m.group(0), m.group(0)
+
+    js = assets.deck_js()
+    assert ("        if(!c.classList.contains('rbn-cell')\n"
+            "           &&(c.classList.contains('rbn-stack')\n"
+            "              ||c.classList.contains('rbn-big')\n"
+            "              ||c.classList.contains('rbn-tall'))){\n"
+            "          n+=2;last=null;flushPairs();return;\n"
+            "        }") in js
+
+    css = assets.deck_css()
+    assert ".rbn-row>.rbn-cell.rbn-tall:not(.rbn-odd){grid-row:auto;}" in css
+    # .rbn-odd keeps its span: that class means "the odd cell out,
+    # centred in the band", which is a span the cell does want
+    assert ".rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}" in css

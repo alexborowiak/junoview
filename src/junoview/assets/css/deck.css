@@ -1309,6 +1309,13 @@ body.slide-editing .apptop{display:none;}
   align-items:stretch;justify-items:start;height:var(--rbn-band);}
 /* the tall things span both rows rather than sitting in one */
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
+/* ...but never a CELL. It is one track high by rule, so a `rbn-tall` on
+   one reserves a row nothing can fill -- how "How it arrives" ended up
+   300px wide on a single row of a 60px band (T370). sizeRibbonGroups
+   counts it as one cell to match. `.rbn-odd` is excepted: that class
+   means "the last cell of an odd group, centred in the band", which is
+   a span the cell really does want. */
+.rbn-row>.rbn-cell.rbn-tall:not(.rbn-odd){grid-row:auto;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
 .rbn-row>.sh-drop,.rbn-row>.dc-menuwrap{display:flex;}
 /* ...and a wrapper whose button is hidden must not KEEP its cell. The

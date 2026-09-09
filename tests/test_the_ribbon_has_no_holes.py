@@ -86,12 +86,28 @@ def test_a_joined_run_is_never_stretched_to_a_column():
     assert ".rbn-row>.rbn-cell.rbn-seg{justify-self:start;}" in css
 
 
-def test_the_two_runs_with_a_narrow_neighbour_take_their_own_column():
-    """A 276px run over a 127px button is a ragged edge no width rule can
-    fix without blowing the button up, so the run gets a column."""
+def test_a_run_with_a_narrow_neighbour_stacks_rather_than_spreads():
+    """A wide run over a narrow button is a ragged column that no width
+    rule can fix without blowing the button up ("why is tidy page
+    huge?", 2026-09-03). T365 answered that by giving the run a column
+    of its own with `rbn-tall`.
+
+    T370 found what that cost. A cell is ONE track high whatever class
+    it wears, so `rbn-tall` bought no second row -- it just reserved a
+    column for a 26px control. In "How it arrives" the run and its only
+    neighbour therefore sat end to end on a single row of a 60px band,
+    300px wide (2026-09-09, user: "one big group that is all horizontal,
+    and it stretches things out and doesn't really make sense").
+
+    So the trade is reversed for the run: All slides sits UNDER it, the
+    band fills, and the group measures 240px. The column is ragged, and
+    that is fine -- every other group on that tab is already a wide cell
+    over a narrow one. Spacing keeps its own column, but by being the
+    odd cell out rather than by claiming a height it cannot have.
+    """
     html = assets.deck_html()
-    assert 'class="rbn-cell rbn-seg lay-tidy rbn-tall" id="hm-lay-tidy"' in html
-    assert ('<span class="rbn-cell rbn-seg rbn-tall" id="trans-run" '
+    assert 'class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"' in html
+    assert ('<span class="rbn-cell rbn-seg" id="trans-run" '
             'role="group"') in html
     # ...and Tidy page pairs with Saved layouts, which is why it moved up
     assert html.index('id="dsg-tidy"') < html.index('id="hm-lay-tidy"')

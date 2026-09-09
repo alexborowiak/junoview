@@ -820,9 +820,15 @@
         /* a control that spans BOTH rows is worth two cells, or a group
            made of nothing but stacks asks for half the columns it needs
            and pushes the overflow into an implicit third row */
-        if(c.classList.contains('rbn-stack')
-           ||c.classList.contains('rbn-big')
-           ||c.classList.contains('rbn-tall')){
+        /* ...but a CELL is one track high by rule (.rbn-cell is
+           --rbn-track, .rbn-seg is --rbn-btn-h), so `rbn-tall` on one is
+           a claim it cannot honour: it reserved a column for a 26px
+           control and left the row under it empty (T370). Counted as
+           the one cell it is, and the grid below is told the same. */
+        if(!c.classList.contains('rbn-cell')
+           &&(c.classList.contains('rbn-stack')
+              ||c.classList.contains('rbn-big')
+              ||c.classList.contains('rbn-tall'))){
           n+=2;last=null;flushPairs();return;
         }
         /* a wrapper counts as the one cell it contributes */

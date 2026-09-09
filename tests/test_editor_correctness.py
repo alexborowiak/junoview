@@ -970,9 +970,13 @@ def test_a_two_row_cell_is_counted_as_two(out):
     same trap the View group fell into on 2026-08-16, from the other side
     (2026-08-17).
     """
-    assert "        if(c.classList.contains('rbn-stack')" in out
-    assert "           ||c.classList.contains('rbn-tall')){" in out
+    assert "           &&(c.classList.contains('rbn-stack')" in out
+    assert "              ||c.classList.contains('rbn-tall'))){" in out
     assert "          n+=2;last=null;flushPairs();return;" in out
+    # ...but NOT a cell: it is one track high by rule, so `rbn-tall` on
+    # one reserved a row nothing could fill (T370, and see
+    # test_a_cell_never_claims_both_rows in test_ribbon_metrics.py)
+    assert "        if(!c.classList.contains('rbn-cell')" in out
 
 
 def test_ribbon_group_columns_are_counted_before_every_fit(out):

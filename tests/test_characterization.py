@@ -1644,8 +1644,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # had never fitted: `.lay-lb` was nowrap with an ellipsis and no width
 # to bite on, so "Title + text + panel" grew to 97px inside a 72px tile
 # and painted across its neighbour. It wraps inside the tile now.
-EXPECTED_MD5 = "a7d4fe12ac0e301f0f53f3785c3b85e3"
-EXPECTED_BYTES = 3950130
+# T370: a joined run is one track high, so it may not claim two rows.
+# `#trans-run` and `#hm-lay-tidy` both carried `rbn-tall`, which reserved
+# a column for a 26px control and left the row under it empty. In "How it
+# arrives" that put the run and its only neighbour end to end on ONE row
+# of a 60px band, 300px wide (2026-09-09, user: "one big group that is
+# all horizontal, and it stretches things out"). All slides sits under
+# the run now: 217px, both rows used, and no group on any tab is a single
+# horizontal strip any more.
+EXPECTED_MD5 = "1880588eb2fbe37f4f2dc545178f1537"
+EXPECTED_BYTES = 3951984
 
 
 def _render_example() -> str:
