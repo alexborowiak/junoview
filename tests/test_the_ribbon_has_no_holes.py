@@ -107,8 +107,11 @@ def test_a_run_with_a_narrow_neighbour_stacks_rather_than_spreads():
     """
     html = assets.deck_html()
     assert 'class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"' in html
-    assert ('<span class="rbn-cell rbn-seg" id="trans-run" '
-            'role="group"') in html
+    # the transition run was the other half of this story until T372,
+    # when it stopped being a run at all: picking how a slide arrives is
+    # the same choice as picking how an object arrives, so it is the
+    # same tile. Spacing is the case that remains.
+    assert 'id="trans-run"' not in html
     # ...and Tidy page pairs with Saved layouts, which is why it moved up
     assert html.index('id="dsg-tidy"') < html.index('id="hm-lay-tidy"')
 

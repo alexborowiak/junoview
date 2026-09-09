@@ -27,15 +27,29 @@ def test_a_folded_group_is_the_one_tile_with_its_own_icon(out):
     assert groups and not bare, bare
 
 
-def test_the_delay_has_a_cell_under_the_start_run():
+def test_the_delay_is_the_last_cell_of_the_timing_row():
+    """It sat between the start run and the by-text run so it could
+    share the start run's column. T372 made both of those full-height
+    tile strips, so there is no column left to share -- and a spanning
+    cell resets sizeRibbonGroups' pairing, so only the LAST single cell
+    in a row can be marked `rbn-odd`. Anywhere but the end and the delay
+    hangs in row 1 with a hole beneath it; measured at y=69 in a band
+    ending at 130 before it was moved.
+
+    It also hides with its own cell now, not just the wrap inside it: an
+    inapplicable delay beside two strips was a column spending 96px on
+    nothing, which folded this very group away at 1600px.
+    """
     html = assets.deck_html()
     start = html.index('id="anim-start"')
-    cell = html.index('id="anim-delaycell"')
     by = html.index('id="anim-by"')
-    assert start < cell < by
+    cell = html.index('id="anim-delaycell"')
+    assert start < by < cell
     delaywrap = html.index('id="anim-delaywrap"')
-    assert cell < delaywrap < by
-    assert '<span class="cell-lab">Delay</span>' in html[delaywrap:by]
+    assert cell < delaywrap
+    assert '<span class="cell-lab">Delay</span>' in html[delaywrap:]
+    js = assets.deck_js()
+    assert "      if(dc) dc.hidden=!(st.on&&st.mode==='after');" in js
 
 
 def test_a_layout_tile_chooses_and_new_slide_adds(out):

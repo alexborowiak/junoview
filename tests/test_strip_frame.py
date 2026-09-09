@@ -48,7 +48,8 @@ def test_the_frame_has_an_edge_and_arrows_instead_of_a_scrollbar(out):
     assert "flex-wrap:wrap;align-content:flex-start;overflow:hidden;" in out
     assert ("width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap)"
             " + 8px);}") in out
-    assert (".strip-frame>.fx-strip.page-strip{\n"
+    assert (".strip-frame>.fx-strip.page-strip,\n"
+            ".strip-frame>.fx-strip.trans-strip{\n"
             "  width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap)"
             " + 8px);}") in out
     assert ".strip-nav{flex:none;width:18px;display:flex;flex-direction:column;" in out

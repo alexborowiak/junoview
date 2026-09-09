@@ -1041,43 +1041,46 @@
           <span class="rbn-grp rbn-trans" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
-              <!-- T365 gave this run `rbn-tall` to stop a 178px ragged
-                   edge: three segments make it ~230px and its only
-                   neighbour is an 80px button. But a run is one track
-                   high whatever it claims, so the class did not buy two
-                   rows -- it reserved a column for a 26px control and
-                   put the whole group on ONE row of the band, 300px
-                   wide (2026-09-09, user: "one big group that is all
-                   horizontal, and it stretches things out"). T370:
-                   All slides sits UNDER the run instead. The column is
-                   ragged, which is what T365 was avoiding, and that is
-                   the right trade -- widening the button to the run is
-                   the "why is tidy page huge?" of 2026-09-03, and every
-                   other group on this tab is already a wide cell over a
-                   narrow one. -->
-              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
-                aria-label="How this slide arrives">
-                <span class="cell-lab">This slide</span>
-                <button class="dbtn rbn-sm" id="trans-cut"
+              <!-- T372: THE SAME TILE AS THE EFFECT STRIP. Picking how
+                   a slide arrives and picking how an object arrives are
+                   the same kind of choice, and they sit two groups
+                   apart on one tab -- so they are the same control
+                   (2026-09-09, user: "see how the 'arrives' buttons are
+                   different from the 'effect' buttons ... THIS NEEDS TO
+                   BE CONSISTENT").
+                   The ids are unchanged: transRibbonBoot and
+                   transRibbonSync (45-images.js) find these by id and
+                   set aria-pressed, and `.edit-tools .fx-tile
+                   [aria-pressed="true"]` already lights a tile the way
+                   `.on` lights an effect. No nav column: there are
+                   three transitions and there is no fourth to scroll
+                   to. The "This slide" caption went with the run --
+                   the group is named for the slide and the button
+                   beside it says All slides. -->
+              <span class="rbn-tall strip-frame" id="trans-frame">
+                <span class="fx-strip trans-strip" id="trans-strip"
+                  role="group" aria-label="How this slide arrives">
+                <button class="fx-tile" id="trans-cut"
                   aria-pressed="false"
                   title="Nothing &mdash; the next slide is simply
- there"><i data-ic="none"></i> Cut</button>
-                <button class="dbtn rbn-sm" id="trans-fade"
+ there"><i data-ic="none"></i><span>Cut</span></button>
+                <button class="fx-tile" id="trans-fade"
                   aria-pressed="false"
-                  title="A short cross-fade"><i data-ic="fade"></i>
-                  Fade</button>
-                <button class="dbtn rbn-sm" id="trans-move"
+                  title="A short cross-fade"><i data-ic="fade"></i><span
+                  >Fade</span></button>
+                <button class="fx-tile" id="trans-move"
                   aria-pressed="false"
                   title="Anything on both slides slides, grows or
  shrinks from where it was to where it is. Duplicate a slide and move
- something, and this is what you get"><i data-ic="swap"></i>
-                  Move</button>
+ something, and this is what you get"><i data-ic="swap"></i><span
+                  >Move</span></button>
+                </span>
               </span>
               <button class="dbtn rbn-sm" id="trans-all"
                 title="Give every slide in the deck the transition this
  one has"><i data-ic="together"></i> All slides</button>
             </span>
-            <span class="rbn-lab">How it arrives</span>
+            <span class="rbn-lab">Transition</span>
           </span>
           <span class="rbn-grp rbn-flipfx" data-tab="animation"
             data-fold-ic="flipbook">
@@ -1171,24 +1174,50 @@
                the mode's own controls have the row. -->
           <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
-              <span class="rbn-cell rbn-seg" id="anim-start">
-                <button class="dbtn rbn-sm" id="anim-onclick"
+              <!-- T372: tiles, like Effect and like Transition. -->
+              <span class="rbn-tall strip-frame" id="anim-start">
+                <span class="fx-strip trans-strip" id="anim-start-strip"
+                  role="group" aria-label="When this build starts">
+                <button class="fx-tile" id="anim-onclick"
                   aria-pressed="false"
                   title="Starts on its own click"
-                  ><i data-ic="locate"></i> On click</button>
-                <button class="dbtn rbn-sm" id="anim-withprev"
+                  ><i data-ic="locate"></i><span>On click</span></button>
+                <button class="fx-tile" id="anim-withprev"
                   aria-pressed="false"
                   title="Starts on the same click as the build before it"
-                  ><i data-ic="together"></i> With previous</button>
-                <button class="dbtn rbn-sm" id="anim-afterprev"
+                  ><i data-ic="together"></i><span>With previous</span></button>
+                <button class="fx-tile" id="anim-afterprev"
                   aria-pressed="false"
                   title="Starts by itself, this many seconds after the
  build before it &mdash; no click"
-                  ><i data-ic="reload"></i> After previous</button>
-
+                  ><i data-ic="reload"></i><span>After previous</span></button>
+                </span>
               </span>
-              <!-- the delay under the start run (T218), so Timing is two rows
-                   deep whatever is selected -->
+              <!-- T372: tiles, like Effect and like Transition. -->
+              <span class="rbn-tall strip-frame" id="anim-by">
+                <span class="fx-strip trans-strip" id="anim-by-strip"
+                  role="group" aria-label="How much arrives on a click">
+                <button class="fx-tile" id="anim-by-all"
+                  aria-pressed="false"
+                  title="The whole text box on one click"
+                  ><i data-ic="text"></i><span>Whole box</span></button>
+                <button class="fx-tile" id="anim-by-para"
+                  aria-pressed="false"
+                  title="One click per bullet, or per line you pressed
+ Enter on"><i data-ic="indent"></i><span>By bullet</span></button>
+                <button class="fx-tile" id="anim-by-sent"
+                  aria-pressed="false"
+                  title="One click per sentence"
+                  ><i data-ic="spacing"></i><span>By sentence</span></button>
+                </span>
+              </span>
+              <!-- T372: LAST, not second. Beside two full-height strips
+                   the delay is the only single cell, so it has to be
+                   the one sizeRibbonGroups marks `rbn-odd` -- that is
+                   what centres a lone cell in the band instead of
+                   pinning it to row 1 with a hole underneath. A
+                   spanning cell resets the pairing, so it only gets
+                   that mark from the END of the row. -->
               <span class="rbn-cell" id="anim-delaycell">
                 <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
                   title="Seconds after the previous build"><span class="cell-lab">Delay</span>
@@ -1196,20 +1225,6 @@
                     min="1" max="60" step="1" value="1"
                     aria-label="Seconds after the previous build">
                   <span class="fmt-unit">s</span></span>
-              </span>
-              <span class="rbn-cell rbn-seg" id="anim-by">
-                <button class="dbtn rbn-sm" id="anim-by-all"
-                  aria-pressed="false"
-                  title="The whole text box on one click"
-                  ><i data-ic="text"></i> Whole box</button>
-                <button class="dbtn rbn-sm" id="anim-by-para"
-                  aria-pressed="false"
-                  title="One click per bullet, or per line you pressed
- Enter on"><i data-ic="indent"></i> By bullet</button>
-                <button class="dbtn rbn-sm" id="anim-by-sent"
-                  aria-pressed="false"
-                  title="One click per sentence"
-                  ><i data-ic="spacing"></i> By sentence</button>
               </span>
             </span>
             <span class="rbn-lab" id="anim-timing-lab">Timing &amp; text</span>

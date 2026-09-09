@@ -7439,3 +7439,30 @@ first. Ticked in the commit that ships each.
   collapses to one entry per file while nothing changes. An installed
   copy (a wheel, or the zipped web build) has no mtime to read, so the
   stamp is None and it behaves exactly as the plain cache did.
+- [x] **T372 - The Animation tab's choices are all the one control.**
+  The user (2026-09-09), with the transition run beside the effect
+  strip: "see how the 'arrives' buttons are different from the 'effect'
+  buttons. MAKE THE 'HOW THIS ARRIVES' AND THE TIMING OPTIONS THE SAME
+  AS THE EFFECT ONES ... THIS NEEDS TO BE CONSISTENT. WHAT DOES 'HOW IT
+  ARRIVES' EVEN MEAN."
+  *Done 2026-09-09.* Three "pick one of these" controls sat on one tab
+  in two species: the entrance effect as a framed strip of icon-over-word
+  tiles, the slide transition and the animation start as runs of small
+  worded buttons. They are all the tile now -- 64x56, icon over word,
+  the chosen one lit -- and every id is unchanged, so `transRibbonBoot`
+  / `transRibbonSync` (45-images.js) and `timingSync` (48-animation.js)
+  drive them without a line changing. "How it arrives" is **Transition**,
+  which is what it is and what PowerPoint calls it.
+  Two things had to follow. The delay field moved to the END of the
+  Timing row and hides with its own cell: beside two full-height strips
+  it is a column of its own, and only the last single cell in a row can
+  be marked `rbn-odd`, so anywhere else it hung in row 1 with a hole
+  under it -- and an inapplicable delay was spending 96px on nothing.
+  And **the tile learned to compact**: `--rbn-tile-w` steps to 58px at
+  erc2 and 52px at erc-tight, because a fixed-width tile was the one
+  thing on the row the density ladder could not shrink. Without that the
+  tab folded four groups at 1600px where the worded version folded two,
+  on a row only 8px wider.
+  A/B'd against HEAD in the busiest state (a text box with an entrance,
+  set to After previous): folds go 4/2/0 to 4/**1**/0 at 1366/1600/1920,
+  and no tile label is clipped at any width.

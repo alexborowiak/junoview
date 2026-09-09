@@ -612,8 +612,16 @@
         b.disabled=!st.on||(p[1]==='with'&&st.si<=0&&st.mode!=='with');
         b.setAttribute('aria-pressed',(st.on&&st.mode===p[1]).toString());
       });
-      var dw=$('#anim-delaywrap'),di=$('#anim-delay');
+      /* T372: the CELL, not just the wrap inside it. While the start
+         choice was a run the delay shared its column and an empty cell
+         cost nothing; beside two full-height tile strips it is a column
+         of its own, so an inapplicable delay was spending 96px of the
+         row on nothing -- enough to fold this very group away at
+         1600px. sizeRibbonGroups skips a hidden cell, so the column
+         goes with it. */
+      var dw=$('#anim-delaywrap'),di=$('#anim-delay'),dc=$('#anim-delaycell');
       if(dw) dw.hidden=!(st.on&&st.mode==='after');
+      if(dc) dc.hidden=!(st.on&&st.mode==='after');
       if(di&&st.on&&st.mode==='after'&&document.activeElement!==di)
         di.value=st.after||1;
       [['anim-by-all',''],['anim-by-para','para'],

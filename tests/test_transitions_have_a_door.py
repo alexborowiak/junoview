@@ -26,7 +26,10 @@ from junoview import assets
 def test_the_three_transitions_are_on_the_animation_tab():
     html = assets.deck_html()
     assert 'class="rbn-grp rbn-trans" data-tab="animation"' in html
-    assert 'id="trans-run"' in html
+    # T372: the same frame-of-tiles as the entrance-effect strip two
+    # groups along, because it is the same kind of choice
+    assert 'class="rbn-tall strip-frame" id="trans-frame"' in html
+    assert 'class="fx-strip trans-strip" id="trans-strip"' in html
     for bid, word in (("trans-cut", "Cut"), ("trans-fade", "Fade"),
                       ("trans-move", "Move")):
         assert f'id="{bid}"' in html, bid
@@ -35,7 +38,11 @@ def test_the_three_transitions_are_on_the_animation_tab():
     # words PLUS icon, never icon-only
     for ic in ("none", "fade", "swap"):
         assert f'<i data-ic="{ic}"></i>' in html, ic
-    assert '<span class="rbn-lab">How it arrives</span>' in html
+    # T372: "How it arrives" named nothing (2026-09-09, user: "WHAT
+    # DOES 'HOW IT ARRIVES' EVEN MEAN"). It is the slide transition, and
+    # Transition is the word PowerPoint uses for it.
+    assert '<span class="rbn-lab">Transition</span>' in html
+    assert "How it arrives" not in html
 
 
 def test_apply_to_all_slides_exists_at_all(out):

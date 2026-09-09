@@ -1652,8 +1652,19 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # all horizontal, and it stretches things out"). All slides sits under
 # the run now: 217px, both rows used, and no group on any tab is a single
 # horizontal strip any more.
-EXPECTED_MD5 = "1880588eb2fbe37f4f2dc545178f1537"
-EXPECTED_BYTES = 3951984
+# T372: the Animation tab's three "pick one of these" controls are one
+# control. The entrance effect was a frame of icon-over-word tiles while
+# the slide transition and the animation start were runs of small worded
+# buttons -- the same kind of choice, on the same tab, in two species
+# (2026-09-09, user: "see how the 'arrives' buttons are different from
+# the 'effect' buttons ... THIS NEEDS TO BE CONSISTENT"). Transition and
+# Timing are tile strips now, every id kept so transRibbonSync and
+# timingSync drive them unchanged. "How it arrives" is "Transition",
+# which is what it is and what PowerPoint calls it. And the tile learned
+# to compact: --rbn-tile-w steps at erc2 and erc-tight, because a fixed
+# tile was the one thing on the row the density ladder could not shrink.
+EXPECTED_MD5 = "cff697c89357d7f27fc782b42809d670"
+EXPECTED_BYTES = 3954317
 
 
 def _render_example() -> str:
