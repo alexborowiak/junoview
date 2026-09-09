@@ -7466,3 +7466,39 @@ first. Ticked in the commit that ships each.
   A/B'd against HEAD in the busiest state (a text box with an entrance,
   set to After previous): folds go 4/2/0 to 4/**1**/0 at 1366/1600/1920,
   and no tile label is clipped at any width.
+- [x] **T373 - Who gets it is a menu, and Spacing is a strip.**
+  The user (2026-09-09): "the all slides thing is weird, that button is
+  still bad. Also, that should be a drop down menu with options, this
+  slide, all slides, in range, sections etc"; and, pointing at Design's
+  Layout group, "Also other menus still have the same issues".
+  *Done 2026-09-09.* "All slides" was one verb on a stranded 26px button
+  beside a 56px tile strip, and it was the only scope on offer. It is a
+  TILE door now -- Background's own idiom, a tile that opens a menu, so
+  it is the shape of the transitions it applies -- and the menu offers
+  **this slide**, **each section by name**, **all slides**, and
+  **Choose slides...**. "In range" lives in that last one: the tick list
+  the Apply-a-look and Match-slides dialogs already use, grouped by
+  section with a tri-state header per section, which expresses a range,
+  a section, several sections or an arbitrary handful. That is why there
+  is no from/to widget anywhere in this product, and this is the fifth
+  caller of the one shell rather than a fifth shape. It keeps its OWN
+  exclusion map, keyed on the slide object, for the reason #ms-dlg does.
+  Every scope writes the SLIDES it names and never a section default:
+  a default and a per-slide override are two switches that cannot both
+  be true and the slide wins, so setting the default on a section whose
+  slides carry their own would look like nothing happened.
+  `pres.sections[id].trans` is untouched, so a default set from the
+  filmstrip menu still governs slides with no answer of their own.
+  **Spacing** left the Layout group, where it was a joined run wedged
+  between five plain buttons and a dropdown -- the group the user
+  pointed at. It is a pick-one-of-three, so it is the tile strip every
+  other pick-one-of-N here is, in a group of its own labelled Spacing
+  (a strip is named by its group label, and that is the only way the
+  word survives losing the run's in-box caption).
+  *Deliberately left alone:* the Object tab's Font, Paragraph and Object
+  runs. Their ids -- `fmt-opwrap` and its neighbours -- are placed BY
+  NAME in eight entries of `RIBBON_LAYOUTS`, so reshaping them silently
+  breaks every alternative ribbon layout. `trans-all` and `hm-lay-tidy`
+  appear in none, which is what made these two safe.
+  Measured after: at 1600 NOTHING folds on any tab (Design used to fold
+  Page furniture); at 1366 the fold counts are unchanged.

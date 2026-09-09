@@ -620,15 +620,31 @@
                    It used to say `rbn-tall`, which a cell cannot be
                    (T370): .rbn-cell is one track high, so the class
                    reserved a second row nothing could fill. -->
-              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
-              aria-label="Arrange what is on this slide">
-              <span class="cell-lab">Spacing</span>
-              <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i> Tight</button>
-              <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><i data-ic="spacing"></i> Normal</button>
-              <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><i data-ic="expand"></i> Airy</button>
-              </div>
             </span>
             <span class="rbn-lab">Layout</span>
+          </span>
+          <!-- T373: SPACING IS ITS OWN GROUP. It was a joined run of
+               small worded buttons wedged between five plain ones
+               inside Layout (2026-09-09, user, pointing at exactly this
+               group: "other menus still have the same issues"). It is
+               a pick-one-of-three, so it is the tile strip every other
+               pick-one-of-N on this ribbon is -- and a strip is named
+               by its GROUP label, which is the only way the word
+               "Spacing" survives losing the run's in-box caption. -->
+          <span class="rbn-grp rbn-spacing" data-tab="design"
+            data-fold-ic="spacing">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="hm-lay-tidy"
+              aria-label="Arrange what is on this slide">
+                <span class="fx-strip trans-strip" id="hm-lay-tidy-strip"
+                  role="group" aria-label="Spacing">
+                <button class="fx-tile" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i><span>Tight</span></button>
+                <button class="fx-tile" data-tidy="normal" title="Space what is on this slide evenly"><i data-ic="spacing"></i><span>Normal</span></button>
+                <button class="fx-tile" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><i data-ic="expand"></i><span>Airy</span></button>
+                </span>
+              </span>
+            </span>
+            <span class="rbn-lab">Spacing</span>
           </span>
           <span class="rbn-grp rbn-apply" data-tab="design" data-fold-ic="forward">
             <span class="rbn-row">
@@ -1076,9 +1092,23 @@
                   >Move</span></button>
                 </span>
               </span>
-              <button class="dbtn rbn-sm" id="trans-all"
-                title="Give every slide in the deck the transition this
- one has"><i data-ic="together"></i> All slides</button>
+              <!-- T373: WHO GETS IT, as a door rather than one verb.
+                   "All slides" was a single 26px worded button stranded
+                   beside a 56px tile strip, and it offered exactly one
+                   of the four answers people want (2026-09-09, user:
+                   "the all slides thing is weird, that button is still
+                   bad. Also, that should be a drop down menu with
+                   options, this slide, all slides, in range, sections
+                   etc"). It is a tile now, the same shape as the
+                   transitions it applies, opening a menu of scopes --
+                   the same idiom as Background (#bg-drop), which is
+                   also a tile that opens a menu. -->
+              <span class="sh-drop rbn-tall" id="trans-scopewrap">
+                <button class="fx-tile" id="trans-scope"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Which slides get this transition"
+                  ><i data-ic="scope"></i><span>Give it to &#9662;</span></button>
+              </span>
             </span>
             <span class="rbn-lab">Transition</span>
           </span>
@@ -3190,6 +3220,42 @@
       <span class="deck-spring"></span>
       <button class="dbtn" id="ms-cancel">Cancel</button>
       <button class="dbtn primary" id="ms-ok">Match</button>
+    </div>
+  </div>
+</div>
+<!-- T373: WHICH SLIDES GET THIS TRANSITION. The fourth answer in the
+     scope menu, and the one that covers "in range" and any mix of
+     sections: the same tick list the Apply-a-look and Match-slides
+     dialogs use, because a list grouped by section with a tri-state
+     header per section already expresses a range, a section, several
+     sections, or an arbitrary handful -- there is no from/to widget
+     anywhere in this product and this is why. It keeps its OWN
+     exclusion map for the reason #ms-dlg keeps its own: two features
+     must never silently share one tick state. -->
+<div class="aa-dlg" id="ts-dlg" hidden role="dialog"
+  aria-label="Which slides get this transition">
+  <div class="aa-box ms-box">
+    <div class="aa-head">
+      <span class="eq-t">Which slides</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="ts-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
+    </div>
+    <div class="aa-what" id="ts-what"></div>
+    <div class="aa-col">
+      <div class="aa-colh">
+        <span class="eq-t">Give it to</span>
+        <span class="deck-spring"></span>
+        <button class="dbtn aa-b" id="ts-all">Use all</button>
+        <button class="dbtn aa-b" id="ts-none">None</button>
+      </div>
+      <div class="aa-scope" id="ts-scope"></div>
+    </div>
+    <div class="aa-foot">
+      <span class="aa-count" id="ts-count"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="ts-cancel">Cancel</button>
+      <button class="dbtn primary" id="ts-ok">Give it</button>
     </div>
   </div>
 </div>

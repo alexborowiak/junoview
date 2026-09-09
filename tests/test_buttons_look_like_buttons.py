@@ -53,7 +53,9 @@ def test_a_run_is_one_box_with_its_caption_inside(out):
     # anim-start and anim-by became Effect-style tile strips in T372 --
     # they are a pick-one-of-three, which is what a tile is for, and
     # they sat two groups from the effect strip looking nothing like it)
-    for cid in ("hm-lay-tidy", "tx-run-style", "tx-run-align"):
+    # (hm-lay-tidy became a tile strip in T373, for the same reason
+    # anim-start and anim-by did in T372: it is a pick-one-of-three)
+    for cid in ("tx-run-style", "tx-run-align"):
         assert re.search(rf'class="rbn-cell rbn-seg[^"]*" id="{cid}"', html), cid
     assert ".lay-tidy{display:grid;grid-template-columns:repeat(3,1fr);" not in out
     assert (".edit-tools .rbn-row>.rbn-cell.rbn-seg{gap:0;background:var(--rbn-btn);"

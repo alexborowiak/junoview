@@ -37,13 +37,13 @@ def test_the_three_bad_pairs_are_paired_now():
     # segments make it 276px, and while it sat mid-group it was the other
     # half of a column with a 127px button, a 149px ragged edge. Tidy page
     # pairs with Saved layouts now and every column comes out even.
-    # T370 took the `rbn-tall` off: a cell is one track high, so the class
-    # was reserving a row nothing could fill. Being the ODD cell is what
-    # gives it the column and centres it, and sizeRibbonGroups works that
-    # out from the count -- measured identical before and after.
-    assert lay.index("dsg-tidy") < lay.index("hm-lay-tidy")
+    # T373: Spacing is not in Layout any more. It is a pick-one-of-three,
+    # so it is the tile strip every other pick-one-of-N is, and a strip is
+    # named by its GROUP label -- which is the only way the word "Spacing"
+    # survives losing the run's in-box caption.
     assert 'id="hm-lay-tidy"' in html
-    assert 'class="rbn-cell rbn-seg lay-tidy"' in html
+    assert 'class="rbn-tall strip-frame" id="hm-lay-tidy"' in html
+    assert "hm-lay-tidy" not in lay
     furn = _ids(_row(html, "Page furniture"))
     assert furn[:4] == ["dc-head", "dc-foot", "dc-wmark", "dc-nums"]
     # the Object tab's own Animation group went in T220 -- an entrance is
@@ -125,7 +125,9 @@ def test_names_and_help_sentences_are_current():
     html = assets.deck_html()
     assert "Lock aspect ratio</button>" in html and "Keep shape</button>" not in html
     assert "Slide master&#8230;</button>" in html
-    assert '<span class="cell-lab">Spacing</span>' in html
+    # T373: the word moved from a caption inside the run to the group's
+    # own label, because the run became a tile strip
+    assert '<span class="rbn-lab">Spacing</span>' in html
     assert 'id="dsg-design-btn"' in html
     help_html = (Path(assets.__file__).parent / "html" / "help.html").read_text(
         encoding="utf-8")

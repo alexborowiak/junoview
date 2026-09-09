@@ -2465,17 +2465,170 @@
         transRibbonSync();
       });
     });
-    var all=$('#trans-all');
-    if(all) all.addEventListener('click',function(e){
-      e.stopPropagation();
-      var sl=(pres.slides||[])[cur]; if(!sl) return;
-      /* the EFFECTIVE one, so "all slides" means what you can see on
-         this slide -- inside a section that may be the section's */
-      var kind=(typeof sl.trans==='string')?sl.trans:transFor(cur);
-      (pres.slides||[]).forEach(function(s2){s2.trans=String(kind);});
-      markDirty();renderFilm();transRibbonSync();
-      toast('Every slide arrives: '+transLabel(kind).toLowerCase());
+    var door=$('#trans-scope');
+    if(door) door.addEventListener('click',function(e){
+      e.stopPropagation();openTransScope(door);});
+  }
+  /* ---- T373: WHO GETS THIS TRANSITION --------------------------------
+     "All slides" was one verb on a stranded 26px button, and it was the
+     only scope on offer (2026-09-09, user: "that should be a drop down
+     menu with options, this slide, all slides, in range, sections
+     etc"). The door is a tile now and this is its menu.
+
+     EVERY scope writes the transition onto each slide it names, exactly
+     as the old All-slides button did. It deliberately does NOT write a
+     section DEFAULT for the section scope: a default and a per-slide
+     override are two switches that cannot both be true, and the slide
+     wins -- so setting the default on a section whose slides carry
+     their own would look like nothing happened. Writing the slides is
+     the answer you can see. `pres.sections[id].trans` stays exactly as
+     it was, so a default set from the filmstrip menu is not disturbed
+     and still governs slides that have no answer of their own. */
+  function transKindNow(){
+    /* the EFFECTIVE one, so a scope means what you can SEE on this
+       slide -- inside a section that may be the section's */
+    var sl=(pres.slides||[])[cur];
+    return (sl&&typeof sl.trans==='string')?sl.trans:transFor(cur);
+  }
+  function transGiveTo(idxs,kind,what){
+    if(!idxs||!idxs.length) return;
+    idxs.forEach(function(i){
+      var s=(pres.slides||[])[i]; if(s) s.trans=String(kind);
     });
+    markDirty();renderFilm();transRibbonSync();
+    toast(what+': '+transLabel(kind).toLowerCase()
+      +(idxs.length>1?'. Ctrl+Z undoes the lot.':''));
+  }
+  function transAllIdxs(){
+    return (pres.slides||[]).map(function(s,i){return i;});
+  }
+  function openTransScope(btn){
+    var old=$('#trans-scope-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu';m.id='trans-scope-menu';
+    var kind=transKindNow();
+    function row(icon,label,fn){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      b.innerHTML=bic(icon)+' ';
+      /* a SECTION NAME is user data and stays a text node */
+      b.appendChild(document.createTextNode(label));
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);fn();});
+      m.appendChild(b);
+      return b;
+    }
+    if(typeof menuHead==='function')
+      menuHead(m,'give \u201c'+transLabel(kind).toLowerCase()+'\u201d to\u2026');
+    row('frame','This slide',function(){
+      transGiveTo([cur],kind,'This slide arrives');});
+    var runs=(typeof sectionRuns==='function')
+      ?sectionRuns().filter(function(r){return r.id;}):[];
+    runs.forEach(function(r){
+      var idxs=[],i;
+      for(i=r.at;i<r.at+r.n;i++) idxs.push(i);
+      row('film',r.name,function(){
+        transGiveTo(idxs,kind,'Every slide in \u201c'+r.name+'\u201d arrives');});
+    });
+    row('together','All slides',function(){
+      transGiveTo(transAllIdxs(),kind,'Every slide arrives');});
+    row('scope','Choose slides\u2026',function(){transScopeDlg(kind);});
+    overlayMount(btn,m);
+  }
+  /* THE TICK LIST, which is where "in range" lives. A from/to pair
+     exists nowhere in this product; the answer everywhere else is a
+     list grouped by section with a tri-state header per section, and
+     that expresses a range, a section, several sections or an arbitrary
+     handful without a fourth widget. Its own exclusion map, keyed on
+     the slide OBJECT rather than its index, for the reason the Apply
+     dialog's is: a splice from move/delete/duplicate would silently
+     re-point an index-keyed set. */
+  function transScopeDlg(kind){
+    var dlg=$('#ts-dlg'); if(!dlg) return;
+    var off=new WeakMap();
+    function has(s){return !!s&&!off.has(s);}
+    function idxs(){
+      var out=[];
+      (pres.slides||[]).forEach(function(s,i){if(has(s)) out.push(i);});
+      return out;
+    }
+    function sync(){
+      var n=idxs().length,c=$('#ts-count'),ok=$('#ts-ok');
+      if(c) c.textContent=n?(n+' slide'+(n===1?'':'s')+' will arrive '
+        +transLabel(kind).toLowerCase()):'No slides chosen';
+      if(ok){ok.disabled=!n;
+        ok.textContent=n?('Give it to '+n+' slide'+(n===1?'':'s')):'Give it';}
+    }
+    function build(){
+      var w=$('#ts-what');
+      if(w) w.textContent='Every one of them arrives '
+        +transLabel(kind).toLowerCase()+'.';
+      var host=$('#ts-scope'); if(!host) return;
+      host.innerHTML='';
+      ((typeof sectionRuns==='function')?sectionRuns():[{id:'',name:'',
+        at:0,n:(pres.slides||[]).length}]).forEach(function(r){
+        var i;
+        if(r.id){
+          var h=document.createElement('div');h.className='aa-sech';
+          var hck=document.createElement('input');hck.type='checkbox';
+          var on=0;
+          for(i=r.at;i<r.at+r.n;i++) if(has(pres.slides[i])) on++;
+          hck.checked=on>0;hck.indeterminate=on>0&&on<r.n;
+          hck.addEventListener('change',function(){
+            for(var j=r.at;j<r.at+r.n;j++){
+              var s2=pres.slides[j]; if(!s2) continue;
+              if(hck.checked) off.delete(s2); else off.set(s2,1);
+            }
+            build();sync();});
+          h.appendChild(hck);
+          var ht=document.createElement('span');
+          ht.textContent=r.name;h.appendChild(ht);
+          host.appendChild(h);
+        }
+        var grid=document.createElement('div');grid.className='aa-grid';
+        for(i=r.at;i<r.at+r.n;i++)(function(i2){
+          var sl=(pres.slides||[])[i2]; if(!sl) return;
+          var lab=document.createElement('label');lab.className='find-ck';
+          var ck=document.createElement('input');ck.type='checkbox';
+          ck.checked=has(sl);
+          ck.addEventListener('change',function(){
+            if(ck.checked) off.delete(sl); else off.set(sl,1);
+            build();sync();});
+          lab.appendChild(ck);
+          var n2=document.createElement('span');
+          n2.className='aa-slide-n';n2.textContent=(i2+1);lab.appendChild(n2);
+          var t2=document.createElement('span');
+          t2.className='aa-slide-t';
+          t2.textContent=(typeof slideTitle==='function')?slideTitle(sl):'';
+          lab.appendChild(t2);
+          lab.title=t2.textContent;
+          grid.appendChild(lab);
+        })(i);
+        host.appendChild(grid);
+      });
+    }
+    function close(){dlg.hidden=true;}
+    function bind(id,fn){
+      var b=$('#'+id); if(!b) return;
+      b.onclick=function(e){e.stopPropagation();fn();};
+    }
+    bind('ts-all',function(){off=new WeakMap();build();sync();});
+    bind('ts-none',function(){
+      (pres.slides||[]).forEach(function(s){off.set(s,1);});build();sync();});
+    bind('ts-close',close);
+    bind('ts-cancel',close);
+    bind('ts-ok',function(){
+      var list=idxs();close();
+      transGiveTo(list,kind,list.length===1?'That slide arrives'
+        :(list.length+' slides arrive'));});
+    /* the canvas listens for Escape and for plain letters, so a dialog
+       on top of it stops the key before it can nudge a shape */
+    dlg.onkeydown=function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}};
+    dlg.onclick=function(e){if(e.target===dlg) close();};
+    build();sync();
+    dlg.hidden=false;
   }
   function transBtnId(kind){
     return '#trans-'+(kind===''?'cut':(kind==='move'?'move':kind));

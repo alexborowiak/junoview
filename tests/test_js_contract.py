@@ -49,6 +49,11 @@ RUNTIME_IDS = {
     # 05-figures-and-ribbon.js builds this popover on demand from the
     # Layers pane build column and removes it on close (T174)
     "step-menu",
+    # The transition scope menu (T373): 45-images.js openTransScope
+    # builds it on open and overlayMount removes it on close, the same
+    # way openMatchMenu builds #match-menu. Its DIALOG (#ts-dlg) is
+    # static markup in deck.html; only the menu is transient.
+    "trans-scope-menu",
     # 47-charts.js builds this popover on demand when you tie an
     # object to a chart SERIES, and removes it on close (T173)
     "series-tie",

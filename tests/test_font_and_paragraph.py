@@ -50,7 +50,8 @@ def test_design_stops_looking_hectic(out):
     html = assets.deck_html()
     assert '<span class="sh-drop rbn-tall" id="bg-drop">' in html
     assert '<button class="fx-tile big-tile" id="bg-btn"' in html
-    assert "#bg-drop.rbn-tall>.fx-tile{width:var(--rbn-tile-w);" in out
+    assert ("#bg-drop.rbn-tall>.fx-tile,#trans-scopewrap.rbn-tall>.fx-tile{\n"
+            "  width:var(--rbn-tile-w);") in out
     # the strip toggle is a View control now
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(">View</span>")[0]
     assert 'id="vw-versions"' in view

@@ -106,14 +106,14 @@ def test_a_run_with_a_narrow_neighbour_stacks_rather_than_spreads():
     odd cell out rather than by claiming a height it cannot have.
     """
     html = assets.deck_html()
-    assert 'class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"' in html
-    # the transition run was the other half of this story until T372,
-    # when it stopped being a run at all: picking how a slide arrives is
-    # the same choice as picking how an object arrives, so it is the
-    # same tile. Spacing is the case that remains.
+    # BOTH runs this test was written about are gone: the transition in
+    # T372 and Spacing in T373, each because it is a pick-one-of-N and
+    # those are tile strips here. What survives is the RULE the two
+    # cases established -- a cell may not claim two rows, and a wide
+    # cell over a narrow one is an ordinary ribbon shape.
     assert 'id="trans-run"' not in html
-    # ...and Tidy page pairs with Saved layouts, which is why it moved up
-    assert html.index('id="dsg-tidy"') < html.index('id="hm-lay-tidy"')
+    assert 'class="rbn-cell rbn-seg lay-tidy"' not in html
+    assert 'class="rbn-tall strip-frame" id="hm-lay-tidy"' in html
 
 
 def test_the_marks_are_cleared_before_they_are_set():

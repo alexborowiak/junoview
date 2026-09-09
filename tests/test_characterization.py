@@ -1663,8 +1663,21 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # which is what it is and what PowerPoint calls it. And the tile learned
 # to compact: --rbn-tile-w steps at erc2 and erc-tight, because a fixed
 # tile was the one thing on the row the density ladder could not shrink.
-EXPECTED_MD5 = "cff697c89357d7f27fc782b42809d670"
-EXPECTED_BYTES = 3954317
+# T373 answers two things at once. "All slides" was one verb on a
+# stranded 26px button beside a 56px tile strip, and the only scope on
+# offer; it is a TILE door now -- Background's idiom, a tile that opens
+# a menu -- offering this slide, each section by name, all slides, and a
+# tick list for anything else. "In range" lives in that tick list, which
+# is the shell the Apply-a-look and Match-slides dialogs already use,
+# because grouped by section with a tri-state header it expresses a
+# range, a section, several sections or an arbitrary handful. Every
+# scope writes the SLIDES it names and deliberately never a section
+# default, which those slides' own answers would beat.
+# And Spacing left the Layout group: it is a pick-one-of-three, so it is
+# the tile strip every other pick-one-of-N on this ribbon is, in a group
+# of its own so the word "Spacing" survives losing the run's caption.
+EXPECTED_MD5 = "9f4ec5c72e774b67cba307da5de3ea51"
+EXPECTED_BYTES = 3965000
 
 
 def _render_example() -> str:

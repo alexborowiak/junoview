@@ -1524,6 +1524,8 @@ body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
 .rbn-show{order:3;}
+/* T373: Spacing follows Layout, which is where it lived as a run */
+.rbn-spacing{order:2;}
 /* on Design (T204): Layout, then Apply to other slides, then Slide */
 /* last, so it is what folds first on a narrow window */
 .rbn-apply{order:1;}
@@ -5435,13 +5437,16 @@ body.light .dg-num input{background:var(--input-bg);
    is exactly the "why is tidy page huge?" of 2026-09-03. */
 .rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}
 .rbn-row>.rbn-fit{justify-self:stretch;}
-/* Background is a tall tile now, so its menu hangs off a tile-wide door */
-#bg-drop.rbn-tall,#hm-updwrap.rbn-tall{justify-self:start;}
+/* Background is a tall tile now, so its menu hangs off a tile-wide door.
+   T373: the transition's scope door is the third of these -- a tile that
+   opens a menu, so it is the same shape as the tiles it applies. */
+#bg-drop.rbn-tall,#hm-updwrap.rbn-tall,
+#trans-scopewrap.rbn-tall{justify-self:start;}
 /* T280: the merged Update tile is the same shape as the two it replaced */
 #hm-updwrap.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
   height:var(--rbn-tile-h);align-self:center;}
-#bg-drop.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;}
+#bg-drop.rbn-tall>.fx-tile,#trans-scopewrap.rbn-tall>.fx-tile{
+  width:var(--rbn-tile-w);height:var(--rbn-tile-h);align-self:center;}
 /* the opacity slider inside its captioned run */
 #fmt-opcell .fmt-opwrap{display:flex;align-items:center;gap:5px;
   padding:0 8px 0 4px;align-self:center;}

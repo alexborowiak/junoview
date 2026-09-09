@@ -34,9 +34,11 @@ def test_design_and_animation_are_ordered_as_asked(out):
     assert ".rbn-build{order:3;}" in out and ".rbn-order{order:4;}" in out
     html = assets.deck_html()
     lay = _row(html, "Layout")
-    # T365: the Spacing run is last and spans its own column, so Tidy page
-    # pairs with Saved layouts instead of hanging beside a 276px run
-    assert lay.index("dsg-tidy") < lay.index("hm-lay-tidy")
+    # T373: Spacing left Layout for a group of its own, so the pairing
+    # this line used to check is now simply six buttons in three columns
+    assert "hm-lay-tidy" not in lay
+    assert "dsg-tidy" in lay
+    assert ".rbn-spacing{order:2;}" in out
     assert "dsg-tidy" not in _row(html, "Slide")
 
 

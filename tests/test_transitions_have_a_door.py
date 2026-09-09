@@ -45,18 +45,59 @@ def test_the_three_transitions_are_on_the_animation_tab():
     assert "How it arrives" not in html
 
 
-def test_apply_to_all_slides_exists_at_all(out):
-    """PowerPoint's own verb, and it was missing everywhere -- the slide
-    menu sets one slide, the section menu sets one section, and there
-    was no way to say "the whole deck"."""
-    assert 'id="trans-all"' in assets.deck_html()
-    assert "    var all=$('#trans-all');" in out
-    # the EFFECTIVE transition, so it means what you can see on this
-    # slide -- inside a section that may be the section's
-    assert ("      var kind=(typeof sl.trans==='string')"
+def test_who_gets_this_transition_is_a_menu_of_scopes(out):
+    """"All slides" was one verb on a stranded 26px button beside a
+    56px tile strip, and it was the only scope on offer (2026-09-09,
+    user: "the all slides thing is weird, that button is still bad.
+    Also, that should be a drop down menu with options, this slide, all
+    slides, in range, sections etc").
+
+    The door is a TILE now -- the same shape as the transitions it
+    applies, the same idiom as Background's tile door -- and it opens a
+    menu: this slide, each section by name, all slides, and a tick list
+    for anything else. "In range" lives in that tick list: grouped by
+    section with a tri-state header per section, it expresses a range,
+    a section, several sections or an arbitrary handful, which is why
+    there is no from/to widget anywhere in this product.
+    """
+    html = assets.deck_html()
+    assert 'id="trans-all"' not in html
+    assert 'class="sh-drop rbn-tall" id="trans-scopewrap"' in html
+    assert 'class="fx-tile" id="trans-scope"' in html
+    assert "Give it to &#9662;" in html
+    assert "    var door=$('#trans-scope');" in out
+    # the EFFECTIVE transition, so a scope means what you can SEE on
+    # this slide -- inside a section that may be the section's
+    assert ("    var sl=(pres.slides||[])[cur];\n"
+            "    return (sl&&typeof sl.trans==='string')"
             "?sl.trans:transFor(cur);") in out
-    assert ("      (pres.slides||[]).forEach("
-            "function(s2){s2.trans=String(kind);});") in out
+    # every scope writes the SLIDES it names; it deliberately does not
+    # set a section default, which the slides' own answers would beat
+    assert "  function transGiveTo(idxs,kind,what){" in out
+    assert "      var s=(pres.slides||[])[i]; if(s) s.trans=String(kind);" in out
+    assert "pres.sections" not in out.split("function transGiveTo")[1][:600]
+    # the four scopes
+    for row in ("'This slide'", "'All slides'", "'Choose slides\\u2026'"):
+        assert row in out, row
+    assert "sectionRuns().filter(function(r){return r.id;})" in out
+
+
+def test_the_scope_tick_list_is_the_shell_the_others_use(out):
+    """A fifth .aa-dlg rather than a fifth SHAPE: the Apply-a-look and
+    Match-slides dialogs already answer "which slides" this way, and
+    #ms-dlg is the precedent for a chooser that keeps its OWN exclusion
+    map so two features cannot share one tick state."""
+    html = assets.deck_html()
+    assert '<div class="aa-dlg" id="ts-dlg" hidden role="dialog"' in html
+    for cid in ("ts-scope", "ts-count", "ts-ok", "ts-cancel", "ts-close",
+                "ts-all", "ts-none", "ts-what"):
+        assert f'id="{cid}"' in html, cid
+    assert "  function transScopeDlg(kind){" in out
+    # keyed on the slide OBJECT, never its index: a splice from
+    # move/delete/duplicate would silently re-point an index-keyed set
+    assert "    var off=new WeakMap();" in out
+    # and the canvas must not see the dialog's keys
+    assert "    dlg.onkeydown=function(e){\n      e.stopPropagation();" in out
 
 
 def test_it_leads_the_tab_and_the_rungless_groups_got_rungs(out):
