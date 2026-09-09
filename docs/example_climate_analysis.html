@@ -4827,6 +4827,13 @@ body.slide-editing .apptop{display:none;}
   align-items:stretch;justify-items:start;height:var(--rbn-band);}
 /* the tall things span both rows rather than sitting in one */
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
+/* ...but never a CELL. It is one track high by rule, so a `rbn-tall` on
+   one reserves a row nothing can fill -- how "How it arrives" ended up
+   300px wide on a single row of a 60px band (T370). sizeRibbonGroups
+   counts it as one cell to match. `.rbn-odd` is excepted: that class
+   means "the last cell of an odd group, centred in the band", which is
+   a span the cell really does want. */
+.rbn-row>.rbn-cell.rbn-tall:not(.rbn-odd){grid-row:auto;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
 .rbn-row>.sh-drop,.rbn-row>.dc-menuwrap{display:flex;}
 /* ...and a wrapper whose button is hidden must not KEEP its cell. The
@@ -13045,10 +13052,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    other half of a column with a 127px button in it -- a
                    149px ragged edge, and the pair that T280 could not
                    make share a width without blowing the button up
-                   ("why is tidy page huge?"). Spanning both rows it
-                   owns its column, so Saved layouts pairs with Tidy
-                   page and every column in this group comes out even. -->
-              <div class="rbn-cell rbn-seg lay-tidy rbn-tall" id="hm-lay-tidy"
+                   ("why is tidy page huge?"). It takes a column of its
+                   own so Saved layouts pairs with Tidy page and every
+                   column comes out even -- but by being the ODD cell
+                   out, which is what centres a lone cell in the band.
+                   It used to say `rbn-tall`, which a cell cannot be
+                   (T370): .rbn-cell is one track high, so the class
+                   reserved a second row nothing could fill. -->
+              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
               <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
@@ -13469,10 +13480,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <span class="rbn-grp rbn-trans" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
-              <!-- T365: a column of its own. Three segments make this
-                   268px and its only neighbour is a 90px button, which
-                   was a 178px ragged edge down the middle of the group. -->
-              <span class="rbn-cell rbn-seg rbn-tall" id="trans-run" role="group"
+              <!-- T365 gave this run `rbn-tall` to stop a 178px ragged
+                   edge: three segments make it ~230px and its only
+                   neighbour is an 80px button. But a run is one track
+                   high whatever it claims, so the class did not buy two
+                   rows -- it reserved a column for a 26px control and
+                   put the whole group on ONE row of the band, 300px
+                   wide (2026-09-09, user: "one big group that is all
+                   horizontal, and it stretches things out"). T370:
+                   All slides sits UNDER the run instead. The column is
+                   ragged, which is what T365 was avoiding, and that is
+                   the right trade -- widening the button to the run is
+                   the "why is tidy page huge?" of 2026-09-03, and every
+                   other group on this tab is already a wide cell over a
+                   narrow one. -->
+              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
                 aria-label="How this slide arrives">
                 <span class="cell-lab">This slide</span>
                 <button class="dbtn rbn-sm" id="trans-cut"
@@ -41972,9 +41994,15 @@ window.JunoPptx = (function () {
         /* a control that spans BOTH rows is worth two cells, or a group
            made of nothing but stacks asks for half the columns it needs
            and pushes the overflow into an implicit third row */
-        if(c.classList.contains('rbn-stack')
-           ||c.classList.contains('rbn-big')
-           ||c.classList.contains('rbn-tall')){
+        /* ...but a CELL is one track high by rule (.rbn-cell is
+           --rbn-track, .rbn-seg is --rbn-btn-h), so `rbn-tall` on one is
+           a claim it cannot honour: it reserved a column for a 26px
+           control and left the row under it empty (T370). Counted as
+           the one cell it is, and the grid below is told the same. */
+        if(!c.classList.contains('rbn-cell')
+           &&(c.classList.contains('rbn-stack')
+              ||c.classList.contains('rbn-big')
+              ||c.classList.contains('rbn-tall'))){
           n+=2;last=null;flushPairs();return;
         }
         /* a wrapper counts as the one cell it contributes */
