@@ -1676,8 +1676,17 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # And Spacing left the Layout group: it is a pick-one-of-three, so it is
 # the tile strip every other pick-one-of-N on this ribbon is, in a group
 # of its own so the word "Spacing" survives losing the run's caption.
-EXPECTED_MD5 = "9f4ec5c72e774b67cba307da5de3ea51"
-EXPECTED_BYTES = 3965000
+# T374: the bullet gutter comes back. `.an-tx.an-ul` padded itself with
+# calc(1.7em + var(--an-ind,0)) -- a UNITLESS zero, which is illegal
+# inside calc() even though `padding-left:0` is fine alone. Arriving
+# through var() that is invalid at computed-value time, so padding-left
+# computed to 0 (measured) and every marker was painted outside the box,
+# on the border under the dashed selection outline. Broken since
+# 2026-08-22; T195's 1.15em -> 1.7em edit changed nothing because the
+# declaration was already dead, which is why the user reported the
+# bullets as STILL in the wrong place. One character: 0 -> 0px.
+EXPECTED_MD5 = "1093147912877f7068e10b543832938f"
+EXPECTED_BYTES = 3965837
 
 
 def _render_example() -> str:

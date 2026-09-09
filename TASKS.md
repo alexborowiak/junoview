@@ -7502,3 +7502,92 @@ first. Ticked in the commit that ships each.
   appear in none, which is what made these two safe.
   Measured after: at 1600 NOTHING folds on any tab (Design used to fold
   Page furniture); at 1366 the fold counts are unchanged.
+
+## Group 17 - the 2026-09-09 list (22 items), triaged
+
+Reported in one message; the order asked for was bugs, then layouts, then
+new features. What follows is the triage, with the diagnosis work behind
+each item so it does not have to be redone.
+
+- [x] **T374 - The bullet gutter, which has not existed since
+  2026-08-22.** The user: "Bullet points still don't sit in right
+  place." `.an-tx.an-ul` padded itself with
+  `calc(1.7em + var(--an-ind,0))`. `--an-ind` is set only on a box with
+  an explicit indent, so nearly every list read `calc(1.7em + 0)` -- and
+  a unitless zero is illegal INSIDE calc(), though `padding-left:0` is
+  fine on its own. Arriving through `var()` that is invalid at
+  computed-value time, which does NOT fall back to the earlier `.an-tx`
+  declaration: padding-left computed to 0, and with
+  `list-style-position:outside` every marker was painted left of the
+  content box, on the border under the dashed selection outline.
+  Measured 0px before, 21.1px after. One character.
+  T195 (2026-09-02) changed 1.15em to 1.7em inside the already-dead
+  declaration, which is why it was reported as STILL wrong -- and
+  `test_the_bullet_marker_sits_inside_the_box` passed throughout,
+  because it pinned the whole declaration AS A STRING and so pinned the
+  bug in place. It asserts the unit now, and fails on any calc() in any
+  stylesheet that falls back to a bare 0.
+
+### Already fixed before the list was written
+The list was composed against an app process that had cached its assets
+(see T371), so four items describe behaviour that current main does not
+have. Verified against HEAD, not assumed:
+- "'How it arrives' ... one huge block that goes on forever horizontal"
+  -- T372/T373. That group is named **Transition** and is a strip of
+  64x56 tiles.
+- "The auto-generate presentation from notebook button wasn't working"
+  -- drives fine: Make slides -> From the whole notebook produced a
+  12-slide deck, no console errors. (The separate complaint about the
+  QUALITY of what it produces is item 21 and is still open.)
+- "The images from notebook button wasn't working" -- Home > Images
+  opens the All-images pane and lists the figure with its path. But see
+  the next section: **Update** in the same group genuinely does fail.
+- Bullets were NOT in this category; they were real (T374).
+
+### Diagnosed, root cause known, not yet fixed
+Each of these was root-caused in the source and, where marked
+(verified), independently re-derived by a second pass:
+- **Autosave bar glitching** (measured live): five controls in
+  `.deck-qat`, including the presentation name, shift **76px** each
+  autosave cycle. The status readout and countdown are variable width
+  and sit before everything else in a flex row, so "unsaved -- saving...
+  | 2s" vs "autosaved to project 15:30 | " shoves its neighbours. Cure
+  is the one already used for `#zoom-val` and the app bar's view column:
+  a fixed slot sized in ch to the longest phrase, and keep the
+  countdown's box reserved when empty.
+- **'-' does not become a bullet** (verified). The handler fires -- its
+  toast appears -- but `renderAnnots` opens with `flushTextEdits()`,
+  which commits the just-emptied element, and the "way out of a list"
+  rule then deletes `a.list` before the layer is rebuilt. A third defect
+  on the same path: `if(!getVal()) el.textContent='';` is written for a
+  `<span>` and, applied to a `<ul>`, deletes the `<li>` the renderer
+  just made, so an empty list loses its marker as you type. (b) cannot
+  be fixed without (c).
+- **Presentations rail auto-hide** (verified root cause; the proposed
+  patch turns a green test red and needs reworking): the peek is driven
+  by a single `mousemove` sample requiring `clientX<=4`, so a fast throw
+  at the edge lands outside the window between samples and never fires.
+- **Close button on a presentation** (verified): from the slide editor
+  it calls `setUIMode('create')`, which does not close anything -- it
+  drops you into the builder. Only a second press on the identically
+  labelled button calls `closeDeck()`. That is the "is broken (where
+  does this land)".
+- **Home button in the deck bar**: `#qat-home` runs the identical
+  journey as the wordmark in the presentations rail, and in the builder
+  the two sit ~10px apart doing the same thing.
+- **Style system shows no text size**: the size IS shown, as a bare
+  "7.2%" in the same currency as the object geometry beside it, with no
+  unit and no use of the word "text"; meanwhile the only labelled,
+  typeable size field on the screen is "Width", an OBJECT's, which
+  nothing has read since T367 removed the default place. So "just size
+  of object" is a fair description of what it offers you to type into.
+- **Home > Keep up to date > Update**: when the deck's source notebook
+  is not open, both of its rows do nothing at all (verified).
+
+### Layout and feature items, not started
+The remaining items -- font-style menus, heading types, the notebook
+menu's length, image/object option ordering and the Arrange group, the
+Source button never being nested, text/slide option sizing, 21pt body
+default, add-to-all-slides with ghosted objects from other slides,
+right-click "make default for this type", and the auto-deck output
+quality -- are untouched.

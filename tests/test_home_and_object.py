@@ -14,11 +14,26 @@ from __future__ import annotations
 
 
 def test_the_bullet_marker_sits_inside_the_box(out):
-    """T195. An outside marker sits about 1em left of its text; at
-    1.15em of padding it was drawn on the box's edge, under the dashed
-    selection line."""
-    assert ".an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}" in out
+    """T195, and the reason it took until T374 to be true.
+
+    An outside marker sits about 1em left of its text, so the list needs
+    a gutter. This test used to pin the whole declaration as a string --
+    including `var(--an-ind,0)`, a UNITLESS zero, which is illegal inside
+    calc() even though `padding-left:0` is fine on its own. Arriving via
+    var() that is invalid at computed-value time, so padding-left computed
+    to 0 and every marker was painted outside the box, on the border under
+    the dashed selection outline. The string assertion passed throughout:
+    it pinned the bug in place, and T195's 1.15em -> 1.7em edit changed
+    nothing because it edited a dead declaration.
+
+    So this asserts the UNIT, which is the part that has to be right.
+    """
+    assert ".an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0px));}" in out
     assert ".an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}" in out
+    # no calc() anywhere may fall back to a bare 0: that is this bug's shape
+    import re
+    for m in re.finditer(r"calc\([^)]*var\(--[a-z-]+,\s*0\)", out):
+        raise AssertionError("unitless 0 fallback inside calc(): " + m.group(0))
 
 
 def test_homes_layout_system_is_groups_and_a_strip(out):

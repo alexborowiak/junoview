@@ -3519,7 +3519,19 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    text, so at 1.15 it was drawn on the box's edge, under the dashed
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
-.an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* THE FALLBACK NEEDS ITS UNIT. `--an-ind` is only set on a box that
+   carries an explicit indent, so on nearly every list this reads
+   calc(1.7em + 0) -- and a unitless zero is illegal inside calc(),
+   even though `padding-left:0` is fine on its own. Arriving through
+   var() that makes it invalid AT COMPUTED-VALUE TIME, which does not
+   fall back to the earlier .an-tx declaration: padding-left computed
+   to 0, and with list-style-position:outside every marker was painted
+   left of the content box, on the border under the dashed selection
+   outline (2026-09-09, user: "bullet points still don't sit in right
+   place"). The gutter has not existed since 2026-08-22; T195 changed
+   1.15em to 1.7em inside the already-dead declaration, which is why
+   it was reported as STILL wrong. Measured: 0px before, 21.1px after. */
+.an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0px));}
 /* T231: the slide column picks slides, so it gets the same two buttons
    the table has, and says how many are picked. */
 .dg-picks{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
