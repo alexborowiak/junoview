@@ -5042,6 +5042,8 @@ body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
 .rbn-show{order:3;}
+/* T373: Spacing follows Layout, which is where it lived as a run */
+.rbn-spacing{order:2;}
 /* on Design (T204): Layout, then Apply to other slides, then Slide */
 /* last, so it is what folds first on a narrow window */
 .rbn-apply{order:1;}
@@ -8953,13 +8955,16 @@ body.light .dg-num input{background:var(--input-bg);
    is exactly the "why is tidy page huge?" of 2026-09-03. */
 .rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}
 .rbn-row>.rbn-fit{justify-self:stretch;}
-/* Background is a tall tile now, so its menu hangs off a tile-wide door */
-#bg-drop.rbn-tall,#hm-updwrap.rbn-tall{justify-self:start;}
+/* Background is a tall tile now, so its menu hangs off a tile-wide door.
+   T373: the transition's scope door is the third of these -- a tile that
+   opens a menu, so it is the same shape as the tiles it applies. */
+#bg-drop.rbn-tall,#hm-updwrap.rbn-tall,
+#trans-scopewrap.rbn-tall{justify-self:start;}
 /* T280: the merged Update tile is the same shape as the two it replaced */
 #hm-updwrap.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
   height:var(--rbn-tile-h);align-self:center;}
-#bg-drop.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;}
+#bg-drop.rbn-tall>.fx-tile,#trans-scopewrap.rbn-tall>.fx-tile{
+  width:var(--rbn-tile-w);height:var(--rbn-tile-h);align-self:center;}
 /* the opacity slider inside its captioned run */
 #fmt-opcell .fmt-opwrap{display:flex;align-items:center;gap:5px;
   padding:0 8px 0 4px;align-self:center;}
@@ -13072,15 +13077,31 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    It used to say `rbn-tall`, which a cell cannot be
                    (T370): .rbn-cell is one track high, so the class
                    reserved a second row nothing could fill. -->
-              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
-              aria-label="Arrange what is on this slide">
-              <span class="cell-lab">Spacing</span>
-              <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
-              <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
-              <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
-              </div>
             </span>
             <span class="rbn-lab">Layout</span>
+          </span>
+          <!-- T373: SPACING IS ITS OWN GROUP. It was a joined run of
+               small worded buttons wedged between five plain ones
+               inside Layout (2026-09-09, user, pointing at exactly this
+               group: "other menus still have the same issues"). It is
+               a pick-one-of-three, so it is the tile strip every other
+               pick-one-of-N on this ribbon is -- and a strip is named
+               by its GROUP label, which is the only way the word
+               "Spacing" survives losing the run's in-box caption. -->
+          <span class="rbn-grp rbn-spacing" data-tab="design"
+            data-fold-ic="spacing">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="hm-lay-tidy"
+              aria-label="Arrange what is on this slide">
+                <span class="fx-strip trans-strip" id="hm-lay-tidy-strip"
+                  role="group" aria-label="Spacing">
+                <button class="fx-tile" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg><span>Tight</span></button>
+                <button class="fx-tile" data-tidy="normal" title="Space what is on this slide evenly"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg><span>Normal</span></button>
+                <button class="fx-tile" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span>Airy</span></button>
+                </span>
+              </span>
+            </span>
+            <span class="rbn-lab">Spacing</span>
           </span>
           <span class="rbn-grp rbn-apply" data-tab="design" data-fold-ic="forward">
             <span class="rbn-row">
@@ -13528,9 +13549,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   >Move</span></button>
                 </span>
               </span>
-              <button class="dbtn rbn-sm" id="trans-all"
-                title="Give every slide in the deck the transition this
- one has"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All slides</button>
+              <!-- T373: WHO GETS IT, as a door rather than one verb.
+                   "All slides" was a single 26px worded button stranded
+                   beside a 56px tile strip, and it offered exactly one
+                   of the four answers people want (2026-09-09, user:
+                   "the all slides thing is weird, that button is still
+                   bad. Also, that should be a drop down menu with
+                   options, this slide, all slides, in range, sections
+                   etc"). It is a tile now, the same shape as the
+                   transitions it applies, opening a menu of scopes --
+                   the same idiom as Background (#bg-drop), which is
+                   also a tile that opens a menu. -->
+              <span class="sh-drop rbn-tall" id="trans-scopewrap">
+                <button class="fx-tile" id="trans-scope"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Which slides get this transition"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg><span>Give it to &#9662;</span></button>
+              </span>
             </span>
             <span class="rbn-lab">Transition</span>
           </span>
@@ -15642,6 +15677,42 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       <span class="deck-spring"></span>
       <button class="dbtn" id="ms-cancel">Cancel</button>
       <button class="dbtn primary" id="ms-ok">Match</button>
+    </div>
+  </div>
+</div>
+<!-- T373: WHICH SLIDES GET THIS TRANSITION. The fourth answer in the
+     scope menu, and the one that covers "in range" and any mix of
+     sections: the same tick list the Apply-a-look and Match-slides
+     dialogs use, because a list grouped by section with a tri-state
+     header per section already expresses a range, a section, several
+     sections, or an arbitrary handful -- there is no from/to widget
+     anywhere in this product and this is why. It keeps its OWN
+     exclusion map for the reason #ms-dlg keeps its own: two features
+     must never silently share one tick state. -->
+<div class="aa-dlg" id="ts-dlg" hidden role="dialog"
+  aria-label="Which slides get this transition">
+  <div class="aa-box ms-box">
+    <div class="aa-head">
+      <span class="eq-t">Which slides</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="ts-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="aa-what" id="ts-what"></div>
+    <div class="aa-col">
+      <div class="aa-colh">
+        <span class="eq-t">Give it to</span>
+        <span class="deck-spring"></span>
+        <button class="dbtn aa-b" id="ts-all">Use all</button>
+        <button class="dbtn aa-b" id="ts-none">None</button>
+      </div>
+      <div class="aa-scope" id="ts-scope"></div>
+    </div>
+    <div class="aa-foot">
+      <span class="aa-count" id="ts-count"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="ts-cancel">Cancel</button>
+      <button class="dbtn primary" id="ts-ok">Give it</button>
     </div>
   </div>
 </div>
@@ -54468,17 +54539,170 @@ window.JunoPptx = (function () {
         transRibbonSync();
       });
     });
-    var all=$('#trans-all');
-    if(all) all.addEventListener('click',function(e){
-      e.stopPropagation();
-      var sl=(pres.slides||[])[cur]; if(!sl) return;
-      /* the EFFECTIVE one, so "all slides" means what you can see on
-         this slide -- inside a section that may be the section's */
-      var kind=(typeof sl.trans==='string')?sl.trans:transFor(cur);
-      (pres.slides||[]).forEach(function(s2){s2.trans=String(kind);});
-      markDirty();renderFilm();transRibbonSync();
-      toast('Every slide arrives: '+transLabel(kind).toLowerCase());
+    var door=$('#trans-scope');
+    if(door) door.addEventListener('click',function(e){
+      e.stopPropagation();openTransScope(door);});
+  }
+  /* ---- T373: WHO GETS THIS TRANSITION --------------------------------
+     "All slides" was one verb on a stranded 26px button, and it was the
+     only scope on offer (2026-09-09, user: "that should be a drop down
+     menu with options, this slide, all slides, in range, sections
+     etc"). The door is a tile now and this is its menu.
+
+     EVERY scope writes the transition onto each slide it names, exactly
+     as the old All-slides button did. It deliberately does NOT write a
+     section DEFAULT for the section scope: a default and a per-slide
+     override are two switches that cannot both be true, and the slide
+     wins -- so setting the default on a section whose slides carry
+     their own would look like nothing happened. Writing the slides is
+     the answer you can see. `pres.sections[id].trans` stays exactly as
+     it was, so a default set from the filmstrip menu is not disturbed
+     and still governs slides that have no answer of their own. */
+  function transKindNow(){
+    /* the EFFECTIVE one, so a scope means what you can SEE on this
+       slide -- inside a section that may be the section's */
+    var sl=(pres.slides||[])[cur];
+    return (sl&&typeof sl.trans==='string')?sl.trans:transFor(cur);
+  }
+  function transGiveTo(idxs,kind,what){
+    if(!idxs||!idxs.length) return;
+    idxs.forEach(function(i){
+      var s=(pres.slides||[])[i]; if(s) s.trans=String(kind);
     });
+    markDirty();renderFilm();transRibbonSync();
+    toast(what+': '+transLabel(kind).toLowerCase()
+      +(idxs.length>1?'. Ctrl+Z undoes the lot.':''));
+  }
+  function transAllIdxs(){
+    return (pres.slides||[]).map(function(s,i){return i;});
+  }
+  function openTransScope(btn){
+    var old=$('#trans-scope-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu';m.id='trans-scope-menu';
+    var kind=transKindNow();
+    function row(icon,label,fn){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      b.innerHTML=bic(icon)+' ';
+      /* a SECTION NAME is user data and stays a text node */
+      b.appendChild(document.createTextNode(label));
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);fn();});
+      m.appendChild(b);
+      return b;
+    }
+    if(typeof menuHead==='function')
+      menuHead(m,'give \u201c'+transLabel(kind).toLowerCase()+'\u201d to\u2026');
+    row('frame','This slide',function(){
+      transGiveTo([cur],kind,'This slide arrives');});
+    var runs=(typeof sectionRuns==='function')
+      ?sectionRuns().filter(function(r){return r.id;}):[];
+    runs.forEach(function(r){
+      var idxs=[],i;
+      for(i=r.at;i<r.at+r.n;i++) idxs.push(i);
+      row('film',r.name,function(){
+        transGiveTo(idxs,kind,'Every slide in \u201c'+r.name+'\u201d arrives');});
+    });
+    row('together','All slides',function(){
+      transGiveTo(transAllIdxs(),kind,'Every slide arrives');});
+    row('scope','Choose slides\u2026',function(){transScopeDlg(kind);});
+    overlayMount(btn,m);
+  }
+  /* THE TICK LIST, which is where "in range" lives. A from/to pair
+     exists nowhere in this product; the answer everywhere else is a
+     list grouped by section with a tri-state header per section, and
+     that expresses a range, a section, several sections or an arbitrary
+     handful without a fourth widget. Its own exclusion map, keyed on
+     the slide OBJECT rather than its index, for the reason the Apply
+     dialog's is: a splice from move/delete/duplicate would silently
+     re-point an index-keyed set. */
+  function transScopeDlg(kind){
+    var dlg=$('#ts-dlg'); if(!dlg) return;
+    var off=new WeakMap();
+    function has(s){return !!s&&!off.has(s);}
+    function idxs(){
+      var out=[];
+      (pres.slides||[]).forEach(function(s,i){if(has(s)) out.push(i);});
+      return out;
+    }
+    function sync(){
+      var n=idxs().length,c=$('#ts-count'),ok=$('#ts-ok');
+      if(c) c.textContent=n?(n+' slide'+(n===1?'':'s')+' will arrive '
+        +transLabel(kind).toLowerCase()):'No slides chosen';
+      if(ok){ok.disabled=!n;
+        ok.textContent=n?('Give it to '+n+' slide'+(n===1?'':'s')):'Give it';}
+    }
+    function build(){
+      var w=$('#ts-what');
+      if(w) w.textContent='Every one of them arrives '
+        +transLabel(kind).toLowerCase()+'.';
+      var host=$('#ts-scope'); if(!host) return;
+      host.innerHTML='';
+      ((typeof sectionRuns==='function')?sectionRuns():[{id:'',name:'',
+        at:0,n:(pres.slides||[]).length}]).forEach(function(r){
+        var i;
+        if(r.id){
+          var h=document.createElement('div');h.className='aa-sech';
+          var hck=document.createElement('input');hck.type='checkbox';
+          var on=0;
+          for(i=r.at;i<r.at+r.n;i++) if(has(pres.slides[i])) on++;
+          hck.checked=on>0;hck.indeterminate=on>0&&on<r.n;
+          hck.addEventListener('change',function(){
+            for(var j=r.at;j<r.at+r.n;j++){
+              var s2=pres.slides[j]; if(!s2) continue;
+              if(hck.checked) off.delete(s2); else off.set(s2,1);
+            }
+            build();sync();});
+          h.appendChild(hck);
+          var ht=document.createElement('span');
+          ht.textContent=r.name;h.appendChild(ht);
+          host.appendChild(h);
+        }
+        var grid=document.createElement('div');grid.className='aa-grid';
+        for(i=r.at;i<r.at+r.n;i++)(function(i2){
+          var sl=(pres.slides||[])[i2]; if(!sl) return;
+          var lab=document.createElement('label');lab.className='find-ck';
+          var ck=document.createElement('input');ck.type='checkbox';
+          ck.checked=has(sl);
+          ck.addEventListener('change',function(){
+            if(ck.checked) off.delete(sl); else off.set(sl,1);
+            build();sync();});
+          lab.appendChild(ck);
+          var n2=document.createElement('span');
+          n2.className='aa-slide-n';n2.textContent=(i2+1);lab.appendChild(n2);
+          var t2=document.createElement('span');
+          t2.className='aa-slide-t';
+          t2.textContent=(typeof slideTitle==='function')?slideTitle(sl):'';
+          lab.appendChild(t2);
+          lab.title=t2.textContent;
+          grid.appendChild(lab);
+        })(i);
+        host.appendChild(grid);
+      });
+    }
+    function close(){dlg.hidden=true;}
+    function bind(id,fn){
+      var b=$('#'+id); if(!b) return;
+      b.onclick=function(e){e.stopPropagation();fn();};
+    }
+    bind('ts-all',function(){off=new WeakMap();build();sync();});
+    bind('ts-none',function(){
+      (pres.slides||[]).forEach(function(s){off.set(s,1);});build();sync();});
+    bind('ts-close',close);
+    bind('ts-cancel',close);
+    bind('ts-ok',function(){
+      var list=idxs();close();
+      transGiveTo(list,kind,list.length===1?'That slide arrives'
+        :(list.length+' slides arrive'));});
+    /* the canvas listens for Escape and for plain letters, so a dialog
+       on top of it stops the key before it can nudge a shape */
+    dlg.onkeydown=function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}};
+    dlg.onclick=function(e){if(e.target===dlg) close();};
+    build();sync();
+    dlg.hidden=false;
   }
   function transBtnId(kind){
     return '#trans-'+(kind===''?'cut':(kind==='move'?'move':kind));
