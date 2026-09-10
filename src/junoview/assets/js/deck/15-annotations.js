@@ -659,6 +659,7 @@
         });
       }
       paintFurniture(slideEl,cur);
+      syncOtherSlideGhosts();
       if(pres.showNums){
         var pn=document.createElement('div');
         pn.className='slide-pageno';
@@ -1752,8 +1753,10 @@
      template already says what its boxes are), and paste (a pasted box
      keeps what it was copied as). */
   function textBorn(p0){
-    var a={k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:2.6,bg:0};
-    if(pendingStyle&&styleDef(pendingStyle)) applyStyleTo(a,pendingStyle);
+    var a={k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:3.9,bg:0};
+    /* Plain text belongs to Body too: changing its default must affect
+       the next box, not only boxes created through the type picker. */
+    applyStyleTo(a,pendingStyle&&styleDef(pendingStyle)?pendingStyle:'body');
     return a;
   }
   function titleProps(s,which){
@@ -2171,7 +2174,10 @@
     h1:     {label:'Heading 1',  size:5.0, b:1},
     h2:     {label:'Heading 2',  size:3.8, b:1},
     h3:     {label:'Heading 3',  size:3.0, b:1},
-    body:   {label:'Body',       size:2.6},
+    /* Body is 21pt by default (size is page-height percent; 3.9*5.4).
+       It remains editable per deck, but new body text should be readable
+       without first opening the style system. */
+    body:   {label:'Body',       size:3.9},
     small:  {label:'Small',      size:2.0},
     caption:{label:'Caption',    size:1.7, i:1, color:'#8aa0b0'}
   };
@@ -2619,7 +2625,7 @@
      note:'Sans throughout, the built-in scale. A safe default.',
      styles:{
        title:{size:7.2,b:1},h1:{size:5.0,b:1},h2:{size:3.8,b:1},
-       h3:{size:3.0,b:1},body:{size:2.6},small:{size:2.0},
+       h3:{size:3.0,b:1},body:{size:3.9},small:{size:2.0},
        caption:{size:1.7,i:1,color:'#8aa0b0'}}},
     {id:'editorial',label:'Editorial',
      note:'Serif headings over a sans body, and room to breathe.',
@@ -2999,7 +3005,7 @@
          and the whole family then reported as drift. A type with no
          parent keeps the old answer -- it has nothing to inherit. */
       if(typeof t.size==='number'&&t.size>0) d.size=t.size;
-      else if(!t.of) d.size=2.6;
+      else if(!t.of) d.size=3.9;
       /* the parent, carried explicitly rather than through STYLE_FIELDS:
          in that list it would also be copied by addCustomType's loop, so
          a plain new type based on a variation would silently become a
@@ -3110,17 +3116,30 @@
   function styleFromBox(a){
     var o={};
     if(!a) return o;
-    if(a.b) o.b=1;
-    if(a.i) o.i=1;
-    if(a.font) o.font=a.font;
-    if(a.color) o.color=a.color;
-    if(a.align) o.align=a.align;
-    if(a.lh) o.lh=a.lh;
-    if(a.pspace) o.pspace=a.pspace;
-    var bg=(a.bg===0)?'none':(a.bg?(a.bgc||''):'');
-    if(bg) o.bg=bg;
-    if(a.bdc) o.bdc=a.bdc;
+    /* Neutral values are decisions too. Without them an unbold heading
+       could never replace the built-in bold default: the missing key
+       simply exposed the old default again. */
+    o.b=a.b?1:0;o.i=a.i?1:0;
+    o.font=a.font||'';o.color=a.color||'';o.align=a.align||'left';
+    o.lh=a.lh||0;o.pspace=a.pspace||0;
+    o.bg=a.bg?(a.bgc||'none'):'none';
+    o.bdc=a.bdc||'none';
     return o;
+  }
+  /* Promote a hand-tuned box into the registry without forcing existing
+     boxes to change. The right-click menu can then offer that registry
+     change separately from applying it to a chosen slide scope. */
+  function promoteStyleFromBox(a,restamp,quiet){
+    if(!a||a.k!=='text'||!a.style||!STYLE_DEFAULTS[a.style]) return false;
+    var id=a.style,d=styleDef(id)||{},out={size:a.size,label:d.label};
+    if(d.head) out.head=1;
+    var look=parentOf(id)?variantDeltaFrom(a,parentOf(id),null)
+      :styleFromBox(a);
+    Object.keys(look).forEach(function(k){out[k]=look[k];});
+    deckStyles()[id]=out;
+    if(restamp) restyleAll([id]);
+    else {markDirty();if(!quiet) refresh();}
+    return true;
   }
   /* a specimen is chosen by looking, so a style with a ground shows it
      -- the gallery card, the menu row, the window row and the design

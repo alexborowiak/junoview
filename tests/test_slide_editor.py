@@ -537,7 +537,7 @@ def test_the_notebook_block_stops_squeezing_the_thumbnails(out):
     assert "la.disabled=!appMode;" in out and "ua.disabled=!appMode;" in out
     # rows AND actions live in one body that scrolls instead of pushing
     assert "nbBody.appendChild(row);" in out
-    assert ".dc-nbs-body{max-height:24vh;overflow-y:auto;}" in out
+    assert ".dc-nbs-body{max-height:min(18vh,190px);overflow-y:auto;}" in out
     assert ".dc-nbs.nbs-folded .dc-nbs-body{display:none;}" in out
     # the fold is a per-browser preference, worded, and keeps the count
     assert "var NBS_FOLD_KEY='junoview-nbs-fold';" in out
@@ -1111,12 +1111,36 @@ def test_paste_here_is_reachable_from_where_you_clicked(out):
     assert "var at=pctPoint(layer,ev);" in out
     assert "row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);}," in out
     assert "openCanvasMenu(layer,s,ev);" in out
+    assert "function repeatSelection(scope){" in out
+    assert "row('All other slides'" in out
+    assert "row('Every slide in this section'" in out
+    assert "row('A slide range\u2026'" in out
+    assert "function promoteStyleFromBox(a,restamp,quiet){" in out
+    assert "row('Use this look for new boxes'" in out
+    assert "row('Apply this look to slides\u2026'" in out
+    assert "row('Save as a named variation\u2026'" in out
     # a right-click picks but never drags -- the menu used to open on top
     # of a move gesture this handler had already started
     assert ('if(ev.button===2\n           '
             "&&!(t.classList&&t.classList.contains('an-endpt'))){") in out
     # ... except on a bend corner, where right-click removes it
     assert "if(ev.altKey||ev.button===2){" in out
+
+
+def test_editing_can_trace_objects_from_other_slides(out):
+    """The View tab exposes a non-interactive cross-slide tracing layer.
+
+    It is deliberately an outline aid rather than another editable canvas;
+    optional ghost fills make dense repeated layouts easier to compare.
+    """
+    assert 'id="vw-other-slides"' in out
+    assert 'id="vw-other-fill"' in out
+    assert "function syncOtherSlideGhosts(){" in out
+    assert "function toggleOtherSlides(){" in out
+    assert "function toggleOtherSlideFills(){" in out
+    assert "className='deck-ghost-slide'" in out
+    assert ".deck-ghost-layer{position:absolute;inset:0;z-index:2;" in out
+    assert ".deck-ghost-slide.is-content{opacity:.14;" in out
 
 
 def test_a_pasted_arrow_brings_its_corners_and_drops_dead_ties(out):
@@ -1363,6 +1387,8 @@ def test_select_by_has_two_doors_and_neither_costs_ribbon_width(out):
     # readable column instead of the 3-column icon grid it inherited
     assert ".canvas-menu{display:block;width:308px;min-width:0;" in out
     assert "overflow-y:auto;overflow-x:hidden;}" in out
+    assert "function arrangeMenuSync(){" in out
+    assert "b.hidden=many&&(n<(three?3:2));" in out
 
 
 def test_find_and_replace_has_a_formatting_half(out):
@@ -3237,6 +3263,7 @@ def test_the_decks_left_edge_is_not_claimed_by_the_inert_rail(out):
     fought. The rail now stands down while the deck is open.
     """
     assert "prrail-peek" in out
+    assert "e.clientX<=14" in out
     # the guard names the deck, and sits in the rail's own listener
     i = out.index("function initRailAuto(")
     block = out[i:i + 1400]

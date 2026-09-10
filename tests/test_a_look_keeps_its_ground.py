@@ -21,9 +21,9 @@ def test_promoting_a_box_keeps_its_background(out):
     four fields. The read-back is the one helper now, and it goes through
     applyStyleTo's own mapping of a style's `bg` onto a.bg/a.bgc."""
     assert "  function styleFromBox(a){" in out
-    assert "    var bg=(a.bg===0)?'none':(a.bg?(a.bgc||''):'');" in out
-    assert "    if(bg) o.bg=bg;" in out
-    assert "    if(a.bdc) o.bdc=a.bdc;" in out
+    assert "    o.bg=a.bg?(a.bgc||'none'):'none';" in out
+    assert "    o.bdc=a.bdc||'none';" in out
+    assert "    o.b=a.b?1:0;o.i=a.i?1:0;" in out
     assert "        var look3=styleFromBox(a3);" in out
     # and the "every heading" door carries the ground with the colour
     assert "          var look4=styleFromBox(a4);" in out

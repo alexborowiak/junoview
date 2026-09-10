@@ -1758,7 +1758,7 @@
      cannot express, and it is a button you press, never something
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
-  var dgSel='title', dgOutline=false;
+  var dgSel='title', dgOutline=false, dgVarOpen={};
   /* the smallest a drag proxy in the outline sheet may be, in page
      percent. A horizontal or vertical line's bounding box is
      zero-thickness and there is nothing to grab; the canvas answers the
@@ -2579,15 +2579,42 @@
     var listed={};
     styleOrder().forEach(function(id){
       if(listed[id]||parentOf(id)) return;
-      listed[id]=1;styleRow(id,false);
-      variantsOf(id).forEach(function(v){
-        if(listed[v]) return;
-        listed[v]=1;styleRow(v,true);
+      /* The rail is a catalogue of types this deck actually uses, not a
+         promise of every built-in role.  Empty Body/Caption rows made the
+         left side look like a second settings menu and hid the real types. */
+      var vars=variantsOf(id).filter(function(v){
+        return dgWearers(v).length||v===dgSel;});
+      listed[id]=1;
+      variantsOf(id).forEach(function(v){listed[v]=1;});
+      if(!dgWearers(id).length&&!vars.length&&id!==dgSel) return;
+      var baseUsed=dgWearers(id).length||id===dgSel;
+      if(baseUsed) styleRow(id,false);
+      else{
+        /* A used variation needs its family label, but an unused parent
+           is not itself a selectable type in this deck. */
+        var family=document.createElement('div');
+        family.className='dg-family-name';
+        family.textContent=(styleDef(id)||{}).label||id;
+        rail.appendChild(family);
+      }
+      if(vars.length){
+        var more=document.createElement('button');
+        more.type='button';more.className='dg-var-toggle';
+        more.textContent=(dgVarOpen[id]?'− Hide ':'+ Show ')
+          +vars.length+' variation'+(vars.length===1?'':'s');
+        more.title='Show the looks that vary '+(styleDef(id)||{}).label;
+        more.addEventListener('click',function(){
+          dgVarOpen[id]=!dgVarOpen[id];dgRail(ov);dgBody(ov);});
+        rail.appendChild(more);
+      }
+      if(!dgVarOpen[id]) return;
+      vars.forEach(function(v){
+        styleRow(v,true);
       });
     });
     styleOrder().forEach(function(id){
       if(listed[id]) return;       /* a variation whose parent has gone */
-      listed[id]=1;styleRow(id,false);
+      if(dgWearers(id).length||id===dgSel) styleRow(id,false);
     });
     /* T224: and the things that are not text. A figure has no style
        registry to edit, but it has a position, a size and a place in
@@ -2956,9 +2983,10 @@
       rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
     var sz=document.createElement('span');
     sz.className='dg-size';
-    sz.textContent=(d.size||2.6).toFixed(1)+'%';
-    sz.title='The type size, as a percentage of the page height — so it '
-      +'means the same thing on a 16:9 slide and an A0 poster';
+    var typePct=d.size||2.6;
+    sz.textContent='Text size '+Math.round(typePct*5.4)+' pt';
+    sz.title=Math.round(typePct*5.4)+' pt text ('+typePct.toFixed(1)
+      +'% of the page height) — the object size is shown separately below';
     (cur_||row).appendChild(sz);
     ctl('+','Bigger',null,function(){
       rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
@@ -3202,7 +3230,18 @@
       if(b) b.click();
     });
     document.addEventListener('keydown',dgKey,true);
-    if(styleOrder().indexOf(dgSel)<0) dgSel=styleOrder()[0]||'title';
+    var usedStyles=styleOrder().filter(function(id){
+      return dgWearers(id).length>0;});
+    if(usedStyles.indexOf(dgSel)<0){
+      if(usedStyles.length) dgSel=usedStyles[0];
+      else {
+        var firstKind=DG_OBJ_KINDS.filter(function(pr){
+          var old=dgSel;dgSel='obj:'+pr[0];
+          var n=dgRows().length;dgSel=old;return n>0;
+        })[0];
+        dgSel=firstKind?('obj:'+firstKind[0]):'obj:image';
+      }
+    }
     dgRail(ov);dgBody(ov);
   }
   window.SemDeckDesign=openDesign;

@@ -128,7 +128,7 @@
         align:'center',style:'title'}]},
     {id:'title-body',label:'Title + text',items:[
       {k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1,style:'h1'},
-      {k:'text',x:6,y:24,w:88,h:64,text:'Body text',size:2.6,
+      {k:'text',x:6,y:24,w:88,h:64,text:'Body text',size:3.9,
         style:'body'}]},
     {id:'full',label:'One panel',items:[
       {k:'cell',x:3,y:4,w:94,h:91}]},
@@ -152,16 +152,16 @@
        too, which "Text | panel" did not say */
     {id:'text-cell',label:'Title + text + panel',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
-      {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:2.6,style:'body'},
+      {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:3.9,style:'body'},
       {k:'cell',x:49,y:20,w:47,h:76}]},
     {id:'cell-text',label:'Title + panel + text',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:4,y:20,w:47,h:76},
-      {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:2.6,
+      {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:3.9,
         style:'body'}]},
     {id:'cell-above',label:'Panel / text',items:[
       {k:'cell',x:4,y:4,w:92,h:62},
-      {k:'text',x:6,y:70,w:88,h:26,text:'Body text',size:2.6,
+      {k:'text',x:6,y:70,w:88,h:26,text:'Body text',size:3.9,
         style:'body'}]},
     {id:'text-above',label:'Text / panel',items:[
       {k:'text',x:6,y:5,w:88,h:14,text:'Title',size:5,b:1,style:'h1'},
@@ -638,6 +638,52 @@
     return PAGE_PRESETS[0];
   }
   var deckZoom=0;               /* 0 = fit-to-window */
+  /* Cross-slide alignment aid. Each source slide goes through the same
+     renderer as the live page, in view mode and inside an inert layer.
+     That keeps anchors, auto-height text, rotations, arrows, crops and
+     figures honest; a second switch chooses outlines or real translucent
+     content. */
+  var otherSlidesOn=false,otherSlidesFill=false;
+  var GHOST_COL=['#55b7ff','#f0a848','#a586e8','#46a892','#e0a5c6',
+    '#39a9c0','#ff6b57','#7fd7c0'];
+  function syncOtherSlideGhosts(){
+    var page=stage&&stage.querySelector('.slide');
+    if(!page) return;
+    var old=page.querySelector('.deck-ghost-layer');
+    if(old) old.remove();
+    if(!otherSlidesOn||mode!=='edit') return;
+    var layer=document.createElement('div');
+    layer.className='deck-ghost-layer';
+    (pres.slides||[]).forEach(function(sl,si){
+      if(si===cur) return;
+      var gl=document.createElement('div');
+      gl.className='deck-ghost-slide'+(otherSlidesFill?' is-content':'');
+      gl.dataset.slide='Slide '+(si+1);
+      gl.style.setProperty('--ghost',GHOST_COL[si%GHOST_COL.length]);
+      var before=mode;
+      try{mode='view';renderAnnots(gl,deep(sl));}finally{mode=before;}
+      /* The renderer quite rightly gives live controls identities. Ghosts
+         are pictures of those controls, never a second set of them. */
+      $$('[id],[contenteditable],[data-idx]',gl).forEach(function(n){
+        n.removeAttribute('id');n.removeAttribute('contenteditable');
+        n.removeAttribute('data-idx');
+      });
+      layer.appendChild(gl);
+    });
+    page.appendChild(layer);
+  }
+  function toggleOtherSlides(){
+    otherSlidesOn=!otherSlidesOn;
+    if(!otherSlidesOn) otherSlidesFill=false;
+    syncOtherSlideGhosts();
+    if(typeof syncViewBtns==='function') syncViewBtns();
+  }
+  function toggleOtherSlideFills(){
+    if(!otherSlidesOn) return;
+    otherSlidesFill=!otherSlidesFill;
+    syncOtherSlideGhosts();
+    if(typeof syncViewBtns==='function') syncViewBtns();
+  }
   /* ---- the PAGE's own background (2026-08-04): pres.pageBg, default
      the classic dark. A light page also flips .page-light, which
      recolours the DEFAULT text/frame chrome — a white A0 the print shop

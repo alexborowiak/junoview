@@ -59,7 +59,9 @@ def test_the_options_are_in_it(out):
 def test_a_flip_book_has_no_colour(out):
     """Nothing renders a.color for one -- applyCommon writes opacity and
     rotation and stops -- so the door did nothing at all."""
-    assert "    var hasInk=(kind!=='image'&&kind!=='flip');" in out
+    assert ("    var hasInk=isText||isTbl||noteCell||kind==='arrow'"
+            "||kind==='rect'" in out)
+    assert "      ||kind==='draw';" in out
     assert "    show('#fmt-txcol-btn',hasInk);" in out
     assert "    show('#fmt-txquick',hasInk);" in out
 

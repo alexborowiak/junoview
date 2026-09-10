@@ -1684,9 +1684,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # on the border under the dashed selection outline. Broken since
 # 2026-08-22; T195's 1.15em -> 1.7em edit changed nothing because the
 # declaration was already dead, which is why the user reported the
-# bullets as STILL in the wrong place. One character: 0 -> 0px.
-EXPECTED_MD5 = "1093147912877f7068e10b543832938f"
-EXPECTED_BYTES = 3965837
+# bullets as STILL in the wrong place. One character: 0 -> 0px. The
+# autosave readout now reserves its slot in the editor chrome as well,
+# preventing save controls from jumping when its text changes.
+EXPECTED_MD5 = "0857d2feae02c22905790411fd303881"
+EXPECTED_BYTES = 3988215
 
 
 def _render_example() -> str:

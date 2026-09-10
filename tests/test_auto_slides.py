@@ -94,8 +94,9 @@ def test_one_markdown_and_one_figure_per_slide_side_by_side():
                          ("nb::fig-2", 50, 18, 45, 76)]
     # a figure with no markdown beside it takes the width
     assert cells(s3) == [("nb::fig-3", 10, 18, 80, 76)]
-    # markdown alone likewise; no title means it starts higher
-    assert cells(pr["slides"][4]) == [("nb::tail-md", 8, 6, 84, 88)]
+    # markdown alone keeps a natural text height rather than expanding
+    # one sentence into a full-slide notebook card
+    assert cells(pr["slides"][4]) == [("nb::tail-md", 8, 6, 84, 18)]
 
 
 def test_a_figure_first_then_its_markdown_still_share_a_slide():
@@ -105,7 +106,33 @@ def test_a_figure_first_then_its_markdown_still_share_a_slide():
     ]}]})
     refs = [[a["ref"] for a in s["annots"] if a["k"] == "cell"]
             for s in pr["slides"]]
-    assert refs == [["n::m", "n::f"], ["n::f2"], ["n::f3"]]
+    assert refs == [["n::f", "n::m"], ["n::f2"], ["n::f3"]]
+
+
+def test_short_markdown_cells_share_a_slide_at_their_natural_height():
+    pr = _build({"name": "x", "sections": [{"title": "S", "items": [
+        {"ref": "n::m1", "kind": "note", "words": 3},
+        {"ref": "n::m2", "kind": "note", "words": 5},
+        {"ref": "n::m3", "kind": "note", "words": 4},
+    ]}]})
+    cells = [a for a in pr["slides"][0]["annots"] if a["k"] == "cell"]
+    assert [a["ref"] for a in cells] == ["n::m1", "n::m2", "n::m3"]
+    assert all(a["h"] < 25 for a in cells)
+    assert [a["part"] for a in cells] == ["output", "output", "output"]
+    assert all(a["autoNote"] == 1 for a in cells)
+
+
+def test_tall_figures_drop_below_markdown_and_animation_is_opt_in():
+    plan = {"name": "x", "animations": True, "sections": [{
+        "title": "S", "items": [
+            {"ref": "n::m", "kind": "note", "words": 10},
+            {"ref": "n::f", "kind": "figure", "aspect": 0.5},
+        ]}]}
+    pr = _build(plan)
+    cells = [a for a in pr["slides"][0]["annots"] if a["k"] == "cell"]
+    assert cells[0]["y"] < cells[1]["y"]
+    assert cells[0]["part"] == "output" and cells[1]["part"] == "figure"
+    assert [a["anim"]["order"] for a in cells] == [0, 1]
 
 
 def test_nothing_in_scope_is_no_slides_at_all():
@@ -125,6 +152,7 @@ def test_the_viewer_owns_the_doors(out):
     assert 'data-for="pr-autoslides"' in page
     assert 'id="pr-autoslides"' in page
     assert 'id="auto-menu" hidden' in page
+    assert 'id="auto-animations"' in page
     for scope in ("all", "section", "marks"):
         assert f'data-scope="{scope}"' in page, scope
     items = (SRC / "render" / "items.py").read_text(encoding="utf-8")
@@ -142,8 +170,9 @@ def test_the_viewer_owns_the_doors(out):
     assert "if(scope==='section') return it.section===sid;" in app
     assert "var st=markOf(stem,it.card);return !!(st.p||st.f);" in app
     # ...and hands the deck refs it can resolve
-    assert "return {ref:stem+'::'+it.anchor,kind:it.kind" in app
+    assert "Object.assign({ref:stem+'::'+it.anchor,kind:it.kind" in app
     assert "APP.deckAuto(plan);" in app
+    assert "plan.animations=!!(anim&&anim.checked);" in app
     # the deck's half: a pure builder, a new presentation, one boot call
     assert "11-autodeck" in assets.DECK_PARTS
     assert "  autoDeckBoot();" in (SRC / "assets" / "js" / "deck"

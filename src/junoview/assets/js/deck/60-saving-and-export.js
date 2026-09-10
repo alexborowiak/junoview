@@ -704,7 +704,7 @@
   var autosaveOn=lsGet(AUTOKEY)!=='0';
   var autoSecs=(function(){
     var n=parseInt(lsGet(AUTOSECKEY),10);
-    return AUTO_STEPS.indexOf(n)>=0?n:2;
+    return AUTO_STEPS.indexOf(n)>=0?n:15;
   })();
   var autoTimer=null,autoDue=0,autoTick=null;
   function autoSecsLabel(s){
@@ -750,8 +750,9 @@
       autoDue=Date.now()+autoSecs*1000;
       autoTimer=setTimeout(autoSaveNow,autoSecs*1000);
       clearInterval(autoTick);
-      autoTick=setInterval(renderAutoTick,1000);
-      renderAutoTick();
+      /* The interval is visible in the label. A seconds countdown made
+         the whole save area twitch once a second and added no useful
+         information while somebody was typing. */
     }
     /* ...AND PUT THE FIGURES BACK. The 1.2s autosave is deliberately
        refs-only, because embedding rewrites megabytes to a synced disk on
@@ -813,9 +814,7 @@
   function renderAutoTick(){
     var t=$('#qat-tick');
     if(!t) return;
-    var left=autoDue?Math.max(0,Math.ceil((autoDue-Date.now())/1000)):0;
-    var txt=left?(' · '+left+'s'):'';
-    if(t.textContent!==txt) t.textContent=txt;
+    t.textContent='';
   }
   /* ONE writer for both doors. secs===0 is "off" and leaves the chosen
      interval remembered, so turning it back on restores it. */

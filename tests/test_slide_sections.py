@@ -229,8 +229,8 @@ def test_a_text_box_can_be_born_wearing_a_type(out):
     """
     assert "var pendingStyle='';" in out
     assert "function textBorn(p0){" in out
-    assert ("if(pendingStyle&&styleDef(pendingStyle)) "
-            "applyStyleTo(a,pendingStyle);") in out
+    assert ("applyStyleTo(a,pendingStyle&&styleDef(pendingStyle)"
+            "?pendingStyle:'body');") in out
     # the caret menu became a strip of tiles in the row (T188): one per
     # kind of box, the plain one keeping the data-tool door, the lit one
     # the armed kind

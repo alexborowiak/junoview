@@ -108,11 +108,14 @@ body.deck-open{overflow:hidden;}
    box"). inline-block centres by line-height exactly as align-items did,
    and gives the ellipsis somewhere to land. */
 .deck-qat .deck-status{display:inline-block;height:24px;line-height:24px;
-  font-size:11px;flex:none;max-width:34ch;overflow:hidden;
+  font-size:11px;flex:none;width:34ch;max-width:34ch;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
-/* the display above outranks the base :empty rule (equal specificity,
-   later in the file), so without this an empty pill draws as a stub */
-.deck-qat .deck-status:empty{display:none;}
+/* Keep the readout's slot even while it is empty.  Autosave changes this
+   text from "unsaved" to "saving" to a destination and back; hiding the
+   whole item for the empty state made every control after Save jump when
+   the state changed.  The slot is only removed by fitQat's deliberate
+   compact rung. */
+.deck-qat .deck-status:empty{visibility:hidden;}
 /* the countdown rewrites itself once a second; a fixed cell keeps the
    button — and so the whole bar — from twitching on every tick */
 .deck-qat .qat-auto .qat-tick{display:inline-block;min-width:4.2ch;
@@ -376,7 +379,7 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
 /* a custom page (poster / portrait) letterboxes in playback too */
 .deck.custom-page .vpage{display:flex;}
 /* the Page dropdown menu */
-.sh-menu.page-menu{display:block;width:252px;padding:6px;}
+.sh-menu.page-menu{display:block;width:300px;padding:6px;}
 .page-menu .page-opt{display:block;width:100%;text-align:left;}
 .page-menu .page-opt[aria-pressed="true"]{color:#fff;
   background:var(--cyan-deep);border-radius:6px;}
@@ -1045,7 +1048,7 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .dc-nbs.nbs-folded .dc-nbs-body{display:none;}
 /* THE ROWS SCROLL RATHER THAN PUSH: a deck built from eight notebooks is
    eight rows, and every one of them used to come off the strip below. */
-.dc-nbs-body{max-height:24vh;overflow-y:auto;}
+.dc-nbs-body{max-height:min(18vh,190px);overflow-y:auto;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
   border-radius:6px;box-sizing:border-box;}
@@ -1727,6 +1730,18 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .rbn-row .dbtn.etm{display:inline-flex;align-items:center;
   justify-content:center;font-size:12px;
   padding-left:var(--rbn-btn-px);padding-right:var(--rbn-btn-px);}
+.et-fmt #fmt-path{order:-2;}
+.et-fmt #fmt-srcwrap{order:-1;}
+/* Selection tools read from the thing itself outwards: source/basic
+   appearance first, then typography, geometry and finally structure. */
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-srcwrap){order:0;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-font-btn){order:1;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-parawrap){order:2;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-linewrap){order:3;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-opwrap){order:4;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-geom-xy){order:5;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:6;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:7;}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive
@@ -1917,8 +1932,8 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    so every handler, state and test keeps addressing the one element it
    always did, and a ribbon layout moves the window as one atom. A tall
    window scrolls; nothing is ever clipped. ---- */
-.sh-menu.opt-panel{display:block;width:auto;min-width:236px;
-  max-width:min(92vw,460px);padding:8px 10px 10px;
+.sh-menu.opt-panel{display:block;width:auto;min-width:320px;
+  max-width:min(94vw,560px);padding:10px 12px 12px;
   max-height:min(72vh,560px);overflow-y:auto;overflow-x:hidden;}
 /* hidden means hidden, whatever display a row or grid asked for */
 .opt-panel [hidden]{display:none!important;}
@@ -1953,6 +1968,15 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
   min-width:224px;}
 .opt-panel.opt-list>.dbtn{width:100%;justify-content:flex-start;
   text-align:left;gap:8px;padding:6px 9px!important;}
+/* Source is the important answer, not a drawer. Keep its provenance
+   actions on the same row as the path and Source label. The existing
+   buttons and handlers are reused; only the containment changes. */
+#fmt-srcwrap.src-flat{display:flex;align-items:center;gap:4px;}
+#fmt-srcwrap.src-flat #fmt-src-menu{position:static;display:flex!important;
+  flex-flow:row nowrap;align-items:center;gap:3px;min-width:0;max-width:none;
+  padding:0;background:none;border:0;box-shadow:none;overflow:visible;}
+#fmt-srcwrap.src-flat #fmt-src-menu>.dbtn{width:auto;min-height:26px;
+  padding:4px 7px!important;font-size:11px!important;}
 /* a chip: one of several answers, and it shows which one is on */
 .dbtn.opt-chip{padding:4px 10px;font-size:11px;line-height:1.4;}
 .dbtn.opt-chip[aria-pressed="true"]{
@@ -1987,7 +2011,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .vw-opt kbd{margin-left:auto;font-family:var(--mono);font-size:9px;
   border:1px solid #ffffff26;border-radius:3px;padding:0 4px;
   color:var(--chrome-ink-2);}
-.sh-menu.align-menu{display:block;width:214px;padding:6px;}
+.sh-menu.align-menu{display:block;width:310px;padding:8px;}
 .align-menu .sh-opt{flex-direction:row;justify-content:flex-start;
   gap:8px;padding:6px 8px;}
 .sh-menu.same-menu{display:block;width:196px;padding:6px;}
@@ -3486,6 +3510,26 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   overflow:visible;pointer-events:none;}
 .deck.editing .annot-layer>svg{pointer-events:auto;}
 .annot-layer>svg.an-svgtop{pointer-events:none!important;z-index:5;}
+/* The current slide stays interactive; other slides are a tracing aid only.
+   Their bounds sit below the live annotation layer and never intercept a
+   click, so turning the aid on cannot steal an edit gesture. */
+.deck-ghost-layer{position:absolute;inset:0;z-index:2;pointer-events:none;}
+.deck-ghost-slide{position:absolute;inset:0;opacity:.7;
+  color:var(--ghost,#55b7ff);}
+.deck-ghost-slide::before{content:attr(data-slide);position:absolute;
+  left:4px;top:4px;z-index:20;padding:2px 4px;border-radius:3px;
+  background:#08111ccc;color:var(--ghost,#55b7ff);
+  font:600 9px/1 var(--mono);}
+.deck-ghost-slide:not(.is-content) .an-item{background:transparent!important;
+  box-shadow:inset 0 0 0 1px var(--ghost,#55b7ff)!important;}
+.deck-ghost-slide:not(.is-content) .an-item>*{visibility:hidden!important;}
+.deck-ghost-slide:not(.is-content)>svg{opacity:.75;filter:saturate(0) brightness(1.7);}
+.deck-ghost-slide.is-content{opacity:.14;filter:saturate(.8);}
+.deck-ghost-box{position:absolute;border:1px dashed currentColor;
+  border-radius:4px;opacity:.72;box-sizing:border-box;}
+.deck-ghost-box.is-filled{opacity:.18;}
+.deck-ghost-box::after{content:attr(data-slide);position:absolute;left:3px;
+  top:2px;font:600 9px/1 var(--mono);color:inherit;opacity:.9;}
 .an-item{pointer-events:none;}
 .deck.editing .an-item{pointer-events:auto;}
 /* the corner is a DECK TOKEN (T12): one value, written onto the slide
@@ -3833,6 +3877,11 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   background:var(--nb-bg,var(--output-paper));
   color:var(--nb-tx,var(--output-ink-2));border-radius:6px;padding:10px 14px;
   font-size:13px;}
+/* Auto-generated decks are for presenting prose, not inspecting notebook
+   cards. Give their markdown a readable size and the slide's normal ink
+   colour instead of the notebook card's deliberately muted output colour. */
+.an-auto-note .note{color:var(--ink,#e6eef5);}
+.an-auto-note .note{font-size:18px;line-height:1.45;}
 /* a recoloured markdown card carries its text colour to every child
    (headings, lists, bold) so the whole note reads in the chosen colour */
 .an-cell[style*="--nb-tx"] .note,
@@ -4373,7 +4422,7 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
    fine; with a family under each heading it can pass the viewport, and
    floatMenu clamps a menu's top edge without ever scrolling it -- so the
    bottom rows were lost with no scrollbar and no error. */
-.sh-menu.style-tx-menu{display:block;width:250px;padding:5px;
+.sh-menu.style-tx-menu{display:block;width:380px;padding:5px;
   max-height:min(68vh,520px);overflow-y:auto;}
 /* a variation sits under the type it varies, and says so by sitting in */
 .style-tx-menu .jv-styleopt.jv-stylevar{padding-left:20px;position:relative;}
@@ -4910,8 +4959,23 @@ body.light .dg-swatch{border-color:#00000026;}
   margin-right:3px;white-space:nowrap;}
 .dg-grplab:empty{display:none;}
 .dg-b{min-width:30px;}
-.dg-size{font-family:var(--mono);font-size:12px;color:#cfe0ec;
-  min-width:48px;text-align:center;}
+.dg-size{font-family:var(--mono);font-size:11px;color:#cfe0ec;
+  min-width:112px;text-align:center;white-space:nowrap;}
+.dg-var-toggle{display:block;width:calc(100% - 12px);margin:2px 6px 4px;
+  padding:3px 8px;border:0;border-left:1px solid #ffffff22;
+  background:none;color:var(--chrome-ink-2);font:11px var(--sans);
+  text-align:left;cursor:pointer;}
+.dg-var-toggle:hover{color:var(--chrome-ink);border-left-color:var(--cyan);}
+.dg-family-name{margin:7px 8px 1px;color:var(--muted);font-size:10px;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.jv-style-family{display:block;border:1px solid #ffffff14;
+  border-radius:7px;margin:4px 0;background:#ffffff04;}
+.jv-style-family>summary{cursor:pointer;list-style:none;padding:7px 9px;
+  font:600 12px var(--sans);color:var(--chrome-ink);}
+.jv-style-family>summary::before{content:'›';display:inline-block;
+  margin-right:7px;transition:transform .12s ease;}
+.jv-style-family[open]>summary::before{transform:rotate(90deg);}
+.jv-style-family>.jv-styleopt{margin:0 6px 5px;width:calc(100% - 12px);}
 .dg-col{width:30px;height:26px;padding:0;border:1px solid #ffffff26;
   border-radius:6px;background:transparent;cursor:pointer;}
 /* the board: a slide, and a rectangle you drag on it */
@@ -5532,7 +5596,7 @@ body.light .qk-sw{border-color:var(--border-strong);}
 .edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.dbtn{min-width:30px;
   justify-content:center;}
 /* the typeface, on the row rather than in a window */
-.edit-tools select#fmt-font{max-width:104px;align-self:center;
+.edit-tools select#fmt-font{min-width:150px;max-width:180px;align-self:center;
   height:var(--rbn-btn-h);}
 
 /* ---- T220: THE HISTORY OF ONE OBJECT, FULL SCREEN ---------------------

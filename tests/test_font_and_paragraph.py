@@ -80,6 +80,10 @@ def test_the_object_tab_is_font_then_paragraph(out):
     # neither group holds the other's controls
     assert "fmt-parawrap" not in font and "fmt-txcolwrap" not in para
     assert ".rbn-fontgrp{order:2;}" in out and ".rbn-paragrp{order:3;}" in out
+    # The long face list is an expandable native menu with meaningful
+    # groups, not one flat wall of names.
+    assert "var fontGroups=[['Common'" in out
+    assert "<optgroup label=\"" in out
 
 
 def test_the_small_things_the_screenshots_showed(out):

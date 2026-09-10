@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import re
 
+from junoview import assets
+
 
 def _window(out: str, wrap_id: str) -> str:
     """The markup of one window, from its wrapper to its panel's end."""
@@ -97,9 +99,11 @@ def test_the_line_window_lays_four_drawn_menus_flat(out):
 
 
 def test_the_source_window_holds_the_provenance_family(out):
-    """Six of a placed figure's buttons were about where it came from.
-    One door; every row closes the window as it acts (data-close),
-    because these are things you do and leave.
+    """Source leads the object row and its provenance actions stay visible.
+
+    The old second-click source drawer made the most important path and
+    refresh actions needlessly hard to find, so the real buttons now share
+    the row with the Source label.
     """
     src = _window(out, "fmt-srcwrap")
     for cid in ("fmt-src", "fmt-src-menu", "fmt-locate", "fmt-prov",
@@ -107,7 +111,13 @@ def test_the_source_window_holds_the_provenance_family(out):
         assert f'id="{cid}"' in src, cid
     # Refresh from file sits on the row beside the path since T198
     assert 'id="fmt-imgrefresh"' not in src and 'id="fmt-imgrefresh"' in out
-    assert 'hidden data-close="1"' in src
+    css = assets.deck_css()
+    assert ".et-fmt #fmt-path{order:-2;}" in css
+    assert ".et-fmt #fmt-srcwrap{order:-1;}" in css
+    assert 'class="sh-drop opt-drop src-flat"' in out
+    assert 'id="fmt-srcwrap"\n                data-flat="1"' in out
+    assert 'data-flat="1"' in src
+    assert "#fmt-srcwrap.src-flat #fmt-src-menu{position:static;" in css
     # Caption and Crop stay OUTSIDE: one creates, one is the common edit
     assert 'id="fmt-caption"' not in src and 'id="fmt-cropwrap"' not in src
 

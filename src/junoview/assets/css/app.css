@@ -65,7 +65,8 @@ body.presrail-min{--presrail-w:46px;}
    DENSE on purpose (2026-08-04, user, pointing at PowerPoint): the way a
    real ribbon fits everything on one row is small, tightly-packed
    controls with their labels INTACT — never by degrading to icons. */
-.appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
+.appbar .toggle,.appbar .appbar-link,.nb-quickbar .toggle,
+.nb-quickbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:var(--ab-btn-h);box-sizing:border-box;
   padding:0 var(--ab-btn-px);line-height:1;font-size:11.5px;
   gap:var(--ab-btn-gap);}
@@ -145,40 +146,8 @@ body.presrail-min{--presrail-w:46px;}
    groups with a ragged bottom edge. Width comes from the column
    (align-items:stretch), so there is nothing to keep in sync by hand. */
 #pt-filter-btn,#ck-filter-btn,#ot-filter-btn{width:100%;flex:none;}
-/* T365: TWO ROWS OF TWO, not one row of four. As a single row this
-   group left 27px of the band empty under every one of its buttons,
-   and its four wide controls were 300px of a bar that was already
-   scrolling sideways; paired up it fills the band and gives 133px
-   back. Same grid as the deck ribbon's groups, for the same reason. */
-#ab-app .btn-grp{display:grid;grid-auto-flow:column;
-  grid-template-rows:var(--ab-btn-h) var(--ab-btn-h);gap:3px 4px;
-  align-items:stretch;}
 #ab-app .btn-grp>*{flex:none;}
-.appbar #ab-app .toggle,.appbar #ab-app .appbar-link{
-  height:var(--ab-btn-h);}
-/* the app group (theme / support / help) sits at the RIGHT END of the
-   ribbon, pushed there by an auto margin. It lived on the tab row while
-   the ribbon wrapped — as the last ribbon group it was the first thing
-   to spill — but floating over the tab strip it read as lost, not
-   placed. The ribbon compacts instead of wrapping now, so it is back
-   among the labelled sections (2026-08-03). When the bar overflows into
-   its scroll fallback the auto margin collapses to 0 on its own. */
-/* packed LEFT like every other group: pinned to the right edge, the
-   whole of a monitor's spare width became one void between View and App,
-   and the three icon squares marooned across it read as lost (2026-08-18,
-   user, on a monitor: "spacing up here is a little weird ... the app
-   buttons are way too small"). Same rule the editor ribbon adopted:
-   leftover space lives at the END, where it reads as room. */
-#ab-app{margin-left:14px;padding-right:8px;}
-/* T260: these were 34px SQUARES holding a word each -- Theme, Support,
-   Find, Help. `.appbar .toggle` is white-space:nowrap with visible
-   overflow, so every label painted straight out of its box and across
-   the next one: driven at 1440x900 the group rendered as overlapping,
-   illegible glyphs, and Help's box started at x=1455 on a 1440 viewport.
-   A worded button is sized by its word. They keep the taller 34px height
-   (2026-08-18, user, on a monitor: "the app buttons are way too small")
-   and the bigger icon. */
-#ab-app .toggle{height:34px;min-width:34px;}
+#ab-app .toggle{min-width:34px;}
 #ab-app .bic{width:17px;height:17px;}
 #ab-file{margin-left:10px;}
 /* T260: Open is hidden unless the page can actually open a file, which a
@@ -279,10 +248,10 @@ body.tree-mode #copy-grp{display:none!important;}
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:var(--chrome-line);}
 /* dark variants of the show/hide toggles */
-.appbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
+.appbar .toggle,.nb-quickbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
 .appbar-link{text-decoration:none;display:inline-flex;
   align-items:center;}
-.appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.appbar .toggle:hover,.nb-quickbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
 /* ---- ribbon COMPACTION (see fitRibbon in app.js): ONE stage, spacing
    only, then the bar scrolls sideways. NO WORDS EVER DISAPPEAR
@@ -314,6 +283,22 @@ body.light .tabsrow .menubtn span,body.light .tabsrow .menubtn span::before,
 body.light .tabsrow .menubtn span::after{background:var(--ink-2);}
 .tabsrow{display:flex;align-items:stretch;height:var(--tabsrow-h);
   background:var(--chrome-1,#0d1a26);}
+/* The old tabs row was nearly empty after notebooks moved to the rail.
+   Reuse its height for navigation and app commands, above the narrower
+   content ribbon. Neither row wraps or drops button labels. */
+.nb-quickbar{order:-1;align-items:center;gap:6px;padding:0 8px;
+  flex:none;overflow-x:auto;scrollbar-width:thin;flex-wrap:nowrap;}
+.nb-quickbar .abgrp{flex-direction:row;align-items:center;gap:7px;}
+.nb-quickbar .abgrp-row{align-items:center;flex:none;}
+.nb-quickbar .abgrp-lab{display:none;}
+.nb-quickbar .vw-stack{flex-direction:row;min-width:0;}
+.nb-quickbar .vw-stack .toggle{width:auto;}
+.nb-quickbar .appbar-flex{display:none;}
+.nb-quickbar .appbar-div{height:22px;margin:0 2px;}
+.nb-quickbar .menubtn{order:-1;width:auto;min-width:28px;
+  height:var(--ab-btn-h);margin:0;padding:0 7px;gap:7px;
+  white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);}
+.nb-quickbar #vars-btn{margin-right:4px;}
 /* tabs line up with the DOCUMENT, not with the outline beneath them —
    the strip starts where the sidebar ends (and slides back when the
    sidebar is toggled off) */
@@ -1847,6 +1832,10 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .pr-mi:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);
   border-color:color-mix(in srgb,var(--accent) 40%,transparent);
   color:#fff;}
+.auto-anim{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;
+  color:#9fb2c2;font-family:var(--sans);font-size:11.5px;line-height:1.3;
+  cursor:pointer;border-bottom:1px solid #ffffff14;margin-bottom:2px;}
+.auto-anim input{margin:1px 0 0;accent-color:var(--accent);}
 /* the bin: invisible until the row is hovered or current, so the rail
    stays quiet; coral on hover because it destroys. A real <button> since
    2026-08-24 (it was a click-wired span), so the UA button chrome is

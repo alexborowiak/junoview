@@ -959,12 +959,18 @@
     });
   }
   function optPanelsClose(){
-    $$('.opt-panel').forEach(function(p){if(!p.hidden) overlayHide(p);});
+    $$('.opt-panel').forEach(function(p){
+      if(p.closest&&p.closest('.opt-drop[data-flat]')) return;
+      if(!p.hidden) overlayHide(p);
+    });
   }
   function optPanelBoot(){
     $$('.opt-drop').forEach(function(w){
       var k=optKids(w),door=k.door,panel=k.panel;
       if(!door||!panel) return;
+      /* Source actions are deliberately visible beside the Source label;
+         they are not a second menu of options hidden behind a button. */
+      if(w.dataset.flat) return;
       door.addEventListener('click',function(e){
         e.stopPropagation();
         if(!panel.hidden){overlayHide(panel);return;}
@@ -1072,6 +1078,7 @@
       var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
       var curId=a&&a.style;
       menuHead(menu,'apply a style');
+      var familyHost=menu;
       function styleRow(id,isVar){
         var d=styleDef(id);
         var b=document.createElement('button');
@@ -1094,17 +1101,21 @@
         if(d.color) t.style.color=tokVal(d.color);
         specimenGround(t,d);
         b.appendChild(t);
-        var n=document.createElement('span');
-        n.className='jv-stylesz';
-        n.textContent=Math.round(d.size*5.4)+' pt';
-        b.appendChild(n);
+        b.title=d.label+' — '+Math.round(d.size*5.4)+' pt, '
+          +(d.font||'Sans')+(d.b?', bold':'')+(d.i?', italic':'')
+          +(d.color?', '+tokVal(d.color):'');
+        b.addEventListener('mouseenter',function(){
+          pvEnd(true);pvShow(function(x){
+            if(x.k==='text') applyStyleTo(x,id);});
+        });
+        b.addEventListener('mouseleave',function(){pvEnd(false);});
         b.addEventListener('click',function(e){
-          e.stopPropagation();
+          e.stopPropagation();pvEnd(true);
           fmtApply(function(x){
             if(x.k==='text') applyStyleTo(x,id);});
           menu.hidden=true;
         });
-        menu.appendChild(b);
+        familyHost.appendChild(b);
       }
       /* T293: A FAMILY READS AS A FAMILY. Every type used to be one flat
          row, so a variation of Heading 1 sat after Caption -- last,
@@ -1135,9 +1146,6 @@
           if(col) t.style.color=col;
           specimenGround(t,{bg:dd.bg,bdc:dd.bdc});
           b.appendChild(t);
-          var n=document.createElement('span');
-          n.className='jv-stylesz';n.textContent=look.note;
-          b.appendChild(n);
           b.title='Make \u201c'+look.label+'\u201d a variation of '
             +(d.label||base)+' and give it to the selected box. It keeps '
             +'following '+(d.label||base)+' for everything else.';
@@ -1154,19 +1162,29 @@
               +(d.label||base)+(n2?' \u2014 on '+n2+' box'+(n2===1?'':'es'):'')
               +'. Find it in the Style system to give it to more.',6000);
           });
-          menu.appendChild(b);
+          familyHost.appendChild(b);
         });
       }
       var listed={};
       styleOrder().forEach(function(id){
         if(listed[id]||parentOf(id)) return;
-        listed[id]=1;styleRow(id,false);
+        listed[id]=1;
+        var family=document.createElement('details');
+        family.className='jv-style-family';
+        var summary=document.createElement('summary');
+        summary.textContent=(styleDef(id)||{}).label||id;
+        dgSpecimen(summary,id);
+        summary.style.color='';
+        summary.title='Expand '+summary.textContent+' and its variations';
+        family.appendChild(summary);menu.appendChild(family);
+        familyHost=family;styleRow(id,false);
         variantsOf(id).forEach(function(v){
           if(listed[v]) return;
           listed[v]=1;styleRow(v,true);
         });
         if(isHeadingStyle(id)) presetRows(id);
       });
+      familyHost=menu;
       styleOrder().forEach(function(id){
         if(listed[id]) return;      /* an orphaned variation, if any */
         listed[id]=1;styleRow(id,false);
@@ -1306,6 +1324,7 @@
       overlayShow(btn,menu);       /* on the stack (T213) */
       floatMenu(btn,menu);
     });
+    menu.addEventListener('mouseleave',function(){pvEnd(false);});
   })();
   /* keep it where it is (T198): the position lock, the same flag the
      Layers pane's pin sets, toggled from the row */
@@ -1640,8 +1659,19 @@
   if(fontSelEl){
     /* the picker is built from FONTS so the list, the canvas and the
        .pptx writer can never drift apart */
-    fontSelEl.innerHTML=FONTS.map(function(f){
-      return '<option value="'+f.id+'">'+esc(f.label)+'</option>';
+    /* Keep the native select (it is keyboard friendly and genuinely
+       expandable), but group the long face list so it reads as a picker
+       rather than a flat wall of names. */
+    var fontGroups=[['Common',['sans','serif','mono','system']],
+      ['Sans serif',['arial','helvetica','calibri','verdana','tahoma',
+        'trebuchet']],
+      ['Serif',['times','georgia','cambria','garamond']],
+      ['Handwritten',['hand']]];
+    fontSelEl.innerHTML=fontGroups.map(function(g){
+      var rows=FONTS.filter(function(f){return g[1].indexOf(f.id)>=0;})
+        .map(function(f){return '<option value="'+f.id+'">'
+          +esc(f.label)+'</option>';}).join('');
+      return '<optgroup label="'+g[0]+'">'+rows+'</optgroup>';
     }).join('')+'<option value="__custom">Other…</option>';
     fontSelEl.addEventListener('change',function(){
       var v=this.value;

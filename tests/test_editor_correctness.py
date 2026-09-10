@@ -957,7 +957,10 @@ def test_the_save_readout_lives_under_save(out):
             "line-height:24px;") in out
     # the display above outranks the base :empty rule, so the empty pill
     # has to be hidden again or it draws as a bare stub
-    assert ".deck-qat .deck-status:empty{display:none;}" in out
+    # The readout reserves a fixed slot so autosave state changes do not
+    # shove Save and the neighbouring controls around; fitQat may still
+    # remove it deliberately at its compact rung.
+    assert ".deck-qat .deck-status:empty{visibility:hidden;}" in out
     assert "var st=$('#deck-status'),bar=$('#edit-tools');" not in out
 
 
@@ -1261,7 +1264,7 @@ def test_open_notebooks_live_in_the_rail(out):
     assert 'id="tabstrip"' in rail
     assert 'id="pr-nblabel"' in rail
     # the header row keeps only the two sidebar toggles
-    row = out.split('class="tabsrow"')[1].split("</div>")[0]
+    row = out.split('class="tabsrow nb-quickbar"')[1].split("</div>")[0]
     assert 'id="tabstrip"' not in row
     assert ".presrail .tabstrip{display:flex;flex-direction:column;" in out
     # a heading over an empty list promises something that is not there
@@ -1445,6 +1448,10 @@ def test_typing_a_dash_makes_a_bullet(out):
     assert "var m=/^\\s*([-*\\u2022]|1[.)])\\s$/.exec(t);" in out
     assert "if(el.classList.contains('an-ul')) return;" in out
     assert "var kind=/^1/.test(m[1])?'number':'bullet';" in out
+    # Rebuilding the layer flushes live editors first. The auto-list path
+    # must disarm the old editor or that flush removes the list it just made.
+    assert "delete el.__jvFlush;" in out
+    assert "el.contentEditable='false';" in out
 
 
 def test_the_scratchpad(out):

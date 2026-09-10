@@ -145,18 +145,19 @@ def test_the_viewer_bar_has_one_button_height():
     css = assets.load("css/app.css")
     assert ("#ab-file .abgrp-row .toggle{height:var(--ab-btn-h);\n"
             "  min-height:var(--ab-btn-h);flex:none;}") in css
-    assert (".appbar #ab-app .toggle,.appbar #ab-app .appbar-link{\n"
-            "  height:var(--ab-btn-h);}") in css
+    buttons = css.split(".nb-quickbar .appbar-link,.present-bar .toggle{")[1]
+    assert "height:var(--ab-btn-h);" in buttons.split("}")[0]
 
 
-def test_the_app_group_is_two_rows_of_two():
-    """One row of four left 27px of the band empty under every button and
-    spent 300px of a bar that was already scrolling; paired up it fills
-    the band and hands 133px back -- which is what paid for Make slides."""
+def test_the_app_group_uses_the_existing_quick_access_row():
+    """View/App no longer consume width in the main content ribbon.
+
+    Reusing the former tabs row saves the whole group's width without
+    adding another band of chrome or dropping the button labels.
+    """
     css = assets.load("css/app.css")
-    assert ("#ab-app .btn-grp{display:grid;grid-auto-flow:column;\n"
-            "  grid-template-rows:var(--ab-btn-h) var(--ab-btn-h);"
-            "gap:3px 4px;\n  align-items:stretch;}") in css
+    assert ".nb-quickbar .vw-stack{flex-direction:row;min-width:0;}" in css
+    assert "overflow-x:auto;scrollbar-width:thin;flex-wrap:nowrap;" in css
 
 
 def test_no_two_controls_wear_the_same_id():

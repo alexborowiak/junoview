@@ -7503,7 +7503,7 @@ first. Ticked in the commit that ships each.
   Measured after: at 1600 NOTHING folds on any tab (Design used to fold
   Page furniture); at 1366 the fold counts are unchanged.
 
-## Group 17 - the 2026-09-09 list (22 items), triaged
+## Group 17 - the 2026-09-09 list (22 items), completed
 
 Reported in one message; the order asked for was bugs, then layouts, then
 new features. What follows is the triage, with the diagnosis work behind
@@ -7528,66 +7528,72 @@ each item so it does not have to be redone.
   bug in place. It asserts the unit now, and fails on any calc() in any
   stylesheet that falls back to a bare 0.
 
-### Already fixed before the list was written
-The list was composed against an app process that had cached its assets
-(see T371), so four items describe behaviour that current main does not
-have. Verified against HEAD, not assumed:
-- "'How it arrives' ... one huge block that goes on forever horizontal"
-  -- T372/T373. That group is named **Transition** and is a strip of
-  64x56 tiles.
-- "The auto-generate presentation from notebook button wasn't working"
-  -- drives fine: Make slides -> From the whole notebook produced a
-  12-slide deck, no console errors. (The separate complaint about the
-  QUALITY of what it produces is item 21 and is still open.)
-- "The images from notebook button wasn't working" -- Home > Images
-  opens the All-images pane and lists the figure with its path. But see
-  the next section: **Update** in the same group genuinely does fail.
-- Bullets were NOT in this category; they were real (T374).
+### Completed 2026-09-10
 
-### Diagnosed, root cause known, not yet fixed
-Each of these was root-caused in the source and, where marked
-(verified), independently re-derived by a second pass:
-- **Autosave bar glitching** (measured live): five controls in
-  `.deck-qat`, including the presentation name, shift **76px** each
-  autosave cycle. The status readout and countdown are variable width
-  and sit before everything else in a flex row, so "unsaved -- saving...
-  | 2s" vs "autosaved to project 15:30 | " shoves its neighbours. Cure
-  is the one already used for `#zoom-val` and the app bar's view column:
-  a fixed slot sized in ch to the longest phrase, and keep the
-  countdown's box reserved when empty.
-- **'-' does not become a bullet** (verified). The handler fires -- its
-  toast appears -- but `renderAnnots` opens with `flushTextEdits()`,
-  which commits the just-emptied element, and the "way out of a list"
-  rule then deletes `a.list` before the layer is rebuilt. A third defect
-  on the same path: `if(!getVal()) el.textContent='';` is written for a
-  `<span>` and, applied to a `<ul>`, deletes the `<li>` the renderer
-  just made, so an empty list loses its marker as you type. (b) cannot
-  be fixed without (c).
-- **Presentations rail auto-hide** (verified root cause; the proposed
-  patch turns a green test red and needs reworking): the peek is driven
-  by a single `mousemove` sample requiring `clientX<=4`, so a fast throw
-  at the edge lands outside the window between samples and never fires.
-- **Close button on a presentation** (verified): from the slide editor
-  it calls `setUIMode('create')`, which does not close anything -- it
-  drops you into the builder. Only a second press on the identically
-  labelled button calls `closeDeck()`. That is the "is broken (where
-  does this land)".
-- **Home button in the deck bar**: `#qat-home` runs the identical
-  journey as the wordmark in the presentations rail, and in the builder
-  the two sit ~10px apart doing the same thing.
-- **Style system shows no text size**: the size IS shown, as a bare
-  "7.2%" in the same currency as the object geometry beside it, with no
-  unit and no use of the word "text"; meanwhile the only labelled,
-  typeable size field on the screen is "Width", an OBJECT's, which
-  nothing has read since T367 removed the default place. So "just size
-  of object" is a fair description of what it offers you to type into.
-- **Home > Keep up to date > Update**: when the deck's source notebook
-  is not open, both of its rows do nothing at all (verified).
+The original message mixed defects, layout work and new features. They are
+kept separately below so every requested outcome remains auditable.
 
-### Layout and feature items, not started
-The remaining items -- font-style menus, heading types, the notebook
-menu's length, image/object option ordering and the Arrange group, the
-Source button never being nested, text/slide option sizing, 21pt body
-default, add-to-all-slides with ghosted objects from other slides,
-right-click "make default for this type", and the auto-deck output
-quality -- are untouched.
+- [x] **1 — Bullet position.** T374 restores a valid list gutter and pins
+  its computed width in a browser test.
+- [x] **2 — Typing `- ` starts a list.** The live editor now disarms before
+  rebuilding, so its flush cannot overwrite the new list state; an empty
+  list also retains its first marker.
+- [x] **3 — Calm autosave.** The default interval is 15 seconds, the
+  second-by-second countdown is gone, and the status has a fixed-width slot
+  so Save and its neighbours do not jump.
+- [x] **4 — Font choices.** The menu is wider and groups the complete font
+  catalogue into expandable Common, Sans, Serif and Handwritten families.
+- [x] **5 — 21pt body default.** Every newly drawn ordinary text box is
+  stamped with the Body style, whose 3.9% page-height size is 21pt.
+- [x] **6 — Repeat and trace across slides.** A selection can be copied to
+  all slides, its section, or a range. View can draw every other slide as
+  inert real outlines, with optional translucent content.
+- [x] **7 — Text size in the Style system.** It is labelled and shown in
+  points; object geometry remains a separate measurement.
+- [x] **8 — Defaults from a box.** Its context menu can use the look for
+  future boxes, apply it to chosen slides/sections/ranges, or save a named
+  variation. Neutral values such as unbold and clear colour are preserved.
+- [x] **9 — Larger option panels.** Text/style and slide/page panels have a
+  wider minimum and maximum instead of squeezing their labels and controls.
+- [x] **10 — Reliable auto-hide rail.** The presentations rail has a 14px
+  edge hit zone, rather than the four-pixel zone fast pointer movement
+  routinely skipped.
+- [x] **11 — Images from notebook.** Home > Images opens the all-images
+  pane and retains the source path needed to reopen a closed notebook.
+- [x] **12 — Make slides button.** Whole notebook, current section and
+  marked-item actions are wired and exercised in the browser.
+- [x] **13 — Understandable heading/style picker.** Only main families show
+  initially; each expands into its variants, rows are visual samples, a
+  tooltip holds the details, and hover previews without committing.
+- [x] **14 — Only used types in the Style-system rail.** Empty text types
+  and empty object kinds are omitted; a used variation does not resurrect
+  its unused parent as a selectable type.
+- [x] **15 — Notebook chrome fits.** View and App commands moved into the
+  existing navigation row, while the notebook list is capped and scrolls
+  inside the rail rather than making the whole menu taller.
+- [x] **16 — Remove Close.** The misleading two-stage presentation Close
+  control is gone. Escape and the existing presentation-exit control keep
+  the unambiguous ways out.
+- [x] **17 — Remove Home.** The duplicate deck Home control and its now-dead
+  icon are gone; the Junoview wordmark remains the single home route.
+- [x] **18 — Better generated presentations.** Markdown uses measured
+  source width/height, short cells pack together, tall figures sit below
+  text, wide figures use their space, source order is retained, and the
+  optional animations reveal each slide's objects in that same order.
+- [x] **19 — Source before image decoration.** Source path and provenance
+  actions are flat, always visible for sourced objects, and lead the object
+  row. Image-only colour controls are hidden and all source-path fallbacks
+  are retained.
+- [x] **20 — Basic-to-advanced object order.** Source/picture, font,
+  paragraph, line, object, geometry, Arrange and history are ordered from
+  common editing to advanced operations.
+- [x] **21 — Clearer Arrange.** The menu is wider, every worded action has
+  an icon, complete forward/backward stack actions are present, and
+  multi-object-only commands hide until enough objects are selected.
+- [x] **22 — Compact arrival controls.** “How it arrives” is now
+  **Transition**, rendered as the same compact tile strip idiom used by the
+  rest of the ribbon rather than one endless horizontal button block.
+
+Verification: the assembled JavaScript parses, the generated 12-slide deck
+and other-slide overlays were exercised in the local browser, and the full
+test suite passes with the deliberate rendered-page characterization change.

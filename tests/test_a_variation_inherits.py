@@ -90,8 +90,8 @@ def test_the_child_wins_where_it_speaks():
 
 
 def test_a_size_less_variation_is_not_body_sized():
-    """syncCustomTypes defaulted a type with no numeric size to 2.6 --
-    Body. That was right while every type was a full copy and exactly
+    """syncCustomTypes defaulted a type with no numeric size to 3.9 --
+    the 21pt Body default. That was right while every type was a full copy and exactly
     wrong for a delta: a variation meaning "Heading 1, but navy" was
     grafted at body size, applyStyleTo shrank every box wearing it, and
     the family then reported as drift."""
@@ -112,8 +112,8 @@ def test_a_size_less_variation_is_not_body_sized():
     """)
     assert got["variantSize"] == 5.0, "a variation inherits its size"
     assert got["stamped"] == 5.0, "and applyStyleTo stamps the resolved one"
-    # a type with NO parent has nothing to inherit and keeps the old answer
-    assert got["orphanSize"] == 2.6
+    # a type with NO parent has nothing to inherit and uses the 21pt default
+    assert got["orphanSize"] == 3.9
     # ...and one deck's types still do not leak into the next
     assert got["gone"] is None
 

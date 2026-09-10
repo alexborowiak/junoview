@@ -1598,6 +1598,22 @@
         return;
       }
       alignSel(what);
+    },function(what){
+      var name=what.indexOf('o:front')===0?'front'
+        :what.indexOf('o:back')===0?'back'
+        :what.indexOf('o:forward')===0?'forward'
+        :what.indexOf('o:backward')===0?'backward'
+        :(what.indexOf('r:')===0||what.indexOf('o:rot')===0)?'reload'
+        :what.indexOf('f:')===0?'swap'
+        :what.indexOf('o:grid')===0?'grid'
+        :what.indexOf('o:row')===0?'spacing'
+        :what.indexOf('m:')===0?'width'
+        :what.indexOf('d:')===0?'spacing'
+        :what.indexOf('g:')===0?'spacing':'align';
+      /* These rows are created after the page-level data-ic replacement
+         pass, so give them their SVG now rather than leaving an empty i. */
+      var i=document.createElement('span');
+      i.className='sh-opt-ic';i.innerHTML=bic(name);return i;
     });
   var arRowBtn=$('#fmt-arline');
   if(arRowBtn) arRowBtn.addEventListener('click',arrangeRow);

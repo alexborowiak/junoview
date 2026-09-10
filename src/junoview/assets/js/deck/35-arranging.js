@@ -264,6 +264,23 @@
       +' — arrows, locked and hidden items don’t count');
     return true;
   }
+  /* The Arrange menu contains both one-object actions and multi-selection
+     actions. Hide the latter until they can do something, so a single
+     selected box does not open a wall of disabled-sounding choices. */
+  function arrangeMenuSync(){
+    var menu=$('#fmt-align-menu'); if(!menu) return;
+    var n=selRects().length;
+    $$('[data-al]',menu).forEach(function(b){
+      var v=b.getAttribute('data-al')||'';
+      var many=v==='o:row'||v==='o:grid'||v.indexOf('m:')===0
+        ||v.indexOf('x:layout')===0
+        ||v.indexOf('d:')===0||v.indexOf('g:')===0
+        ||['left','hcenter','right','top','vmiddle','bottom']
+          .indexOf(v)>=0;
+      var three=v.indexOf('d:')===0;
+      b.hidden=many&&(n<(three?3:2));
+    });
+  }
   function alignSel(edge){
     var items=selRects(); if(needTwo(items,'line up')) return;
     var bb=selBBox(items);
@@ -2087,6 +2104,28 @@
     });
     return Object.keys(stems);
   }
+  /* The stem in a provenance ref is a display identity, not a path.  Keep
+     the path remembered on the placed annotation beside it so a closed
+     notebook can be reopened for an explicit refresh (T374). */
+  function refSourcePaths(only){
+    var paths={};
+    (pres.slides||[]).forEach(function(sl,si){
+      if(only>=0&&si!==only) return;
+      (sl.annots||[]).forEach(function(a){
+        function add(ref,holder){
+          if(!ref||!holder||!holder.nbpath) return;
+          var pr=splitRef(normRef(ref)||String(ref||''));
+          if(pr[0]&&!paths[pr[0]]) paths[pr[0]]=String(holder.nbpath);
+        }
+        if(a&&a.k==='flip'){
+          flipFrames(a).forEach(function(f){add(f&&f.ref,f);});
+        } else if(a){
+          add(provRef(a),a);
+        }
+      });
+    });
+    return paths;
+  }
   /* THE TOAST, and it has to be true in all four outcomes (JVR-01):
      everything current, some updated, some failed, all failed. The
      failure clause comes FIRST and NAMES the sources, because "6
@@ -2129,8 +2168,9 @@
        tab reloads in place, then the comparison runs against what the
        disk actually says. Web mode skips the reload half honestly: a
        dropped file left no handle to re-read. */
+    var sourcePaths=refSourcePaths(only);
     var jobs=refSourceStems(only).map(function(st){
-      return (APP.reloadTab?APP.reloadTab(st)
+      return (APP.reloadTab?APP.reloadTab(st,sourcePaths[st])
         :Promise.resolve({stem:st,ok:false,reason:'notapp'}));
     });
     return Promise.all(jobs).then(function(res){
@@ -2460,6 +2500,12 @@
   (function(){
     var pb=$('#fmt-prov');
     if(pb) pb.addEventListener('click',showProvPane);
+    var source=$('#fmt-src');
+    if(source) source.addEventListener('click',function(){
+      var a=pres.slides[cur]&&annotByIdx(pres.slides[cur],selAnnot);
+      if(typeof provRef==='function'&&provRef(a)) showProvPane();
+      else toast('The source path and refresh actions are beside this label');
+    });
   })();
   /* ---- SIZE AND POSITION, IN NUMBERS (T65) ---------------------------
      "where are all the options that I said, like keep square, and also

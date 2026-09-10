@@ -179,8 +179,8 @@ def test_a_text_box_can_be_inserted_by_kind_again(out):
             "        rows.push([id,styleDef(id).label,styleDef(id)]);});") in out
     # the tile arms the tool for that kind, and textBorn honours it
     assert "          pendingStyle=r[0];\n          setTool('text');" in out
-    assert ("if(pendingStyle&&styleDef(pendingStyle)) "
-            "applyStyleTo(a,pendingStyle);") in out
+    assert ("applyStyleTo(a,pendingStyle&&styleDef(pendingStyle)"
+            "?pendingStyle:'body');") in out
     # a type of your own still gets a tile
     assert "if(typeof txStripSync==='function') txStripSync(true);" in out
 

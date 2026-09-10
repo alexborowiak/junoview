@@ -47,10 +47,10 @@ def test_present_bar_reproduces_the_appbar_ribbon_groups(out):
     assert ("var PB_TOOLS=['#ab-filters','#ab-scope','#ab-size','#ab-view'];"
             in out)
     assert ".appbar-div{flex:none;width:1px;height:70px" in out
-    # 3 plain ribbon dividers (the third closes View off from the
-    # right-aligned App group) + 2 grouping the custom-view styling bar
+    # 2 plain dividers (one is between View/App on the quick-access row)
+    # + 2 grouping the custom-view styling bar
     # (the other 2 carry filt-div and disappear with the filters in tree)
-    assert out.count('class="appbar-div"') == 5
+    assert out.count('class="appbar-div"') == 4
 
 
 def test_present_bar_has_one_fold_button_and_autohide(out):
@@ -84,7 +84,7 @@ def test_present_bar_shares_appbar_toggle_theming_and_sizing(out):
     It used to fall back to the LIGHT styling in dark mode. Sub filter
     buttons are comfortably tall; expanded tree nodes widen.
     """
-    assert ".appbar .toggle,.present-bar .toggle{" in out
+    assert ".appbar .toggle,.nb-quickbar .toggle,.present-bar .toggle{" in out
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
     assert (".appbar .toggle.sub,.present-bar .toggle.sub"
             "{height:var(--ab-btn-h);") in out

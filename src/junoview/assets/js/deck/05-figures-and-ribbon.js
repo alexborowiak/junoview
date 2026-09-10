@@ -1749,6 +1749,12 @@
     /* out of the menu and into the row, so it shows its state too */
     if(sd) sd.setAttribute('aria-pressed',
       deckEl.classList.contains('rbn-side')?'true':'false');
+    var os=$('#vw-other-slides'),of=$('#vw-other-fill');
+    if(os) os.setAttribute('aria-pressed',otherSlidesOn?'true':'false');
+    if(of){
+      of.disabled=!otherSlidesOn;
+      of.setAttribute('aria-pressed',otherSlidesFill?'true':'false');
+    }
   }
   /* ---- the View group folds when the row runs out of width ------------
      The density ladder's last rung says it drops "the one group that is
@@ -1762,6 +1768,7 @@
      opens them as a menu, which is ~300px back — far more than the 66px
      the row was over (2026-08-22). */
   var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
+    ['vw-other-slides','Other slides'],['vw-other-fill','Ghost fills'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
     ['vw-side','Side toolbar'],
     ['vw-check','Review'],['objects-btn','Layers'],['notes-btn','Notes']];
@@ -1967,6 +1974,9 @@
     if(g) g.addEventListener('click',function(){
       guides.grid=!guides.grid;saveGuides();syncViewBtns();
       renderSlide();});
+    var os=$('#vw-other-slides'),of=$('#vw-other-fill');
+    if(os) os.addEventListener('click',function(){toggleOtherSlides();});
+    if(of) of.addEventListener('click',function(){toggleOtherSlideFills();});
     /* SHOW/HIDE, not delete. Only the hiding half says so out loud: a
        guide going away used to mean it was gone, and nothing else in the
        editor makes something invisible without also removing it. */

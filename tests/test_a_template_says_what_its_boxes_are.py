@@ -14,7 +14,7 @@ downstream could tell it from a bold sentence: not the outline, not
 
 Driven live over all ten layouts that carry text, before and after:
 every text box arrived `(NONE)`, and now arrives title @7.2, h1 @5 or
-body @2.6 as the slot says.
+body @3.9 (the 21pt default) as the slot says.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import re
 # the built-in seven, with the size each one means
 STYLE_SIZES = {
     "title": 7.2, "h1": 5.0, "h2": 3.8, "h3": 3.0,
-    "body": 2.6, "small": 2.0, "caption": 1.7,
+    "body": 3.9, "small": 2.0, "caption": 1.7,
 }
 
 

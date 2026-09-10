@@ -357,9 +357,6 @@ _ICON_PATHS = {
     # a five-pointed star: one of the marks you can put on a cell (T242)
     "star": '<path d="m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9'
             ' .7-4-2.9-2.8 4-.6Z"/>',
-    # a roof over a doorway: back to the start screen (T239)
-    "home": '<path d="M2.2 7.6 8 2.6l5.8 5"/>'
-            '<path d="M3.9 8.6v4.8h8.2V8.6"/>',
     # a hooked back-arrow: leave the editor / stop presenting
     "return": '<path d="M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4"/>'
               '<path d="M6.2 6.3 3.3 9.2l2.9 2.9"/>',

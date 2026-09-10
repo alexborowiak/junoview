@@ -1280,6 +1280,15 @@
       if(!a3||a3.k!=='text'||a3.md) return;
       var kind=/^1/.test(m[1])?'number':'bullet';
       el.textContent='';
+      /* The list is created while this editor is still the live content
+         editor.  renderAnnots() flushes live editors before rebuilding;
+         leaving this one armed would immediately write the old "- " back
+         through setVal(), then the list-exit guard would remove a.list.
+         Disarm the detached editor before asking for that rebuild. */
+      delete el.__jvFlush;
+      el.contentEditable='false';
+      var host3=el.closest?el.closest('.an-item'):null;
+      if(host3) host3.classList.remove('an-editing');
       a3.text='';delete a3.html;
       setListStyle(a3,kind);
       markDirty();
@@ -2137,7 +2146,8 @@
         var it=a.ref?resolveRef(a.ref):null;
         var locked=!!(a.lockver&&a.lockver.commit);
         var lkCard=locked?verCardFor(a):null;
-        c.className='an-item an-cell'+((it||locked)?'':' empty')
+        c.className='an-item an-cell'+(a.autoNote?' an-auto-note':'')
+          +((it||locked)?'':' empty')
           +(selAnnot===i?' sel':'');
         var ap3=anchorPos(a,a.w,a.h);
         c.style.left=ap3.x+'%';c.style.top=ap3.y+'%';

@@ -265,7 +265,7 @@ def test_there_is_a_deck_wide_figure_update_and_not_only_a_per_figure_one(out):
     # ...and the click re-reads each referenced tab from DISK first, so
     # "update" means the file, not whatever the open tab happened to hold
     assert "function refSourceStems(only){" in out
-    assert "return (APP.reloadTab?APP.reloadTab(st)" in out
+    assert "return (APP.reloadTab?APP.reloadTab(st,sourcePaths[st])" in out
     assert ":Promise.resolve({stem:st,ok:false,reason:'notapp'}));" in out
     assert "window.SemDeckStaleFigures=staleFigures;" in out
 
@@ -283,7 +283,7 @@ def test_a_failed_source_read_is_never_reported_as_up_to_date(out):
     # the catch no longer erases the error into a bare false. Scoped to
     # reloadTab: the same shape is legitimate elsewhere (image history,
     # save), where false means "did not happen", not "disk says fine".
-    fn = out[out.index("APP.reloadTab=function(stem){"):]
+    fn = out[out.index("APP.reloadTab=function(stem,pathHint){"):]
     fn = fn[:fn.index(chr(10) + "  };")]
     assert ".catch(function(){return false;});" not in fn
     assert "return {stem:stem,ok:false,reason:'failed'," in out
@@ -357,13 +357,16 @@ def test_update_figures_re_reads_the_disk_first(out):
     is not the disk. Web mode skips the reload half honestly: a dropped
     file left no handle to re-read.
     """
-    assert "APP.reloadTab=function(stem){" in out
+    assert "APP.reloadTab=function(stem,pathHint){" in out
     assert "return api('/api/open',{path:path,stem:stem}).then(function(j){" in out
     assert "mountShellHTML(j.shell,j.path||path,true);" in out
+    assert "var path=(sh&&sh.el&&sh.el.dataset.path)||String(pathHint||'');" \
+        in out
     assert "if(!path) return decline('closed');" in out
     assert "if(/^https?:/i.test(path)) return decline('url');" in out
     # the deck side sequences: reload every referenced stem, THEN compare
     assert "var jobs=refSourceStems(only).map(function(st){" in out
+    assert "function refSourcePaths(only){" in out
     assert "return Promise.all(jobs).then(function(res){" in out
     # and the label finally says what the button now does.
     # T236: the door is Home's tile; the File menu copy is gone.

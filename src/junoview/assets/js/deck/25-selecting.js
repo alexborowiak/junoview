@@ -371,6 +371,7 @@
     if(swW&&swL) swL.hidden=swW.hidden;
     /* every drawn menu shows which option the selection is ON */
     if(isNum) syncLineMenus(a);
+    if(typeof arrangeMenuSync==='function') arrangeMenuSync();
     animPaneSync();animRibbonSync();
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
@@ -427,7 +428,8 @@
        -- applyCommon writes opacity and rotation and stops -- so the
        door was a control that did nothing at all (2026-09-04, user:
        "why do flip books even have a colour? What does that do?"). */
-    var hasInk=(kind!=='image'&&kind!=='flip');
+    var hasInk=isText||isTbl||noteCell||kind==='arrow'||kind==='rect'
+      ||kind==='draw';
     show('#fmt-txcol-btn',hasInk);
     show('#fmt-txquick',hasInk);
     if(typeof quickSwatchSync==='function') quickSwatchSync();
@@ -576,10 +578,14 @@
     var pth=$('#fmt-path');
     if(pth){
       var from='';
-      if(kind==='image'&&a.fname) from=a.fname;
-      else if(kind==='cell'&&a.ref){
-        var ci2=resolveRef(a.ref);
-        from=(ci2&&(ci2.stem||ci2.nb))||String(a.ref);
+      if(kind==='image') from=(typeof picAddr==='function'&&picAddr(a))
+        ||a.fname||a.psrc||'';
+      else if(isNum&&provRef(a)){
+        var pref=provRef(a),ci2=resolveRef(pref),po=provOf(a);
+        var ff=(kind==='flip')?(flipFrames(a)[a.at||0]||{}):{};
+        from=a.nbpath||ff.nbpath
+          ||(ci2&&(ci2.nbpath||ci2.stem||ci2.nb))
+          ||(po&&po.saved&&po.saved.nbpath)||String(pref);
       }
       pth.hidden=!from;
       if(from){
@@ -673,6 +679,7 @@
   }
   function syncOptDoors(){
     $$('#edit-tools .opt-drop').forEach(function(w){
+      if(w.dataset.flat) return;
       var door=null,panel=null;
       [].slice.call(w.children).forEach(function(c){
         if(!door&&c.classList.contains('dbtn')) door=c;
@@ -1937,6 +1944,47 @@
     toast(got?'Alt text set':'Marked decorative \u2014 a screen reader '
       +'will skip '+(idxs.length===1?'it':'them'));
   }
+  /* REPEAT ON OTHER SLIDES. This is deliberately a copy, not a linked
+     component: the object can be edited independently after it lands. The
+     three scopes cover the useful readings of "all", while the range prompt
+     keeps a long deck from needing a second slide-picker surface. */
+  function repeatSelection(scope){
+    var source=pres.slides[cur],srcs=(source&&source.annots||[]);
+    var picked=selIdxs().filter(function(i){return srcs[i]&&!lockedAll(srcs[i]);})
+      .map(function(i){return srcs[i];});
+    if(!picked.length){toast('Select an unlocked object first');return;}
+    var targets=[],i;
+    if(scope==='all'){
+      for(i=0;i<(pres.slides||[]).length;i++) if(i!==cur) targets.push(i);
+    } else if(scope==='section'){
+      var sec=source&&source.sec||'';
+      for(i=0;i<(pres.slides||[]).length;i++)
+        if(i!==cur&&(pres.slides[i].sec||'')===sec) targets.push(i);
+    } else {
+      var raw=prompt('Slide range (for example 2-6):','1-'+pres.slides.length);
+      if(raw===null) return;
+      var m=String(raw).trim().match(/^(\d+)\s*(?:-|–|\.\.)\s*(\d+)$/);
+      if(!m){toast('Use a range such as 2-6');return;}
+      var lo=Math.max(1,Math.min(+m[1],+m[2]))-1;
+      var hi=Math.min(pres.slides.length,Math.max(+m[1],+m[2]));
+      for(i=lo;i<hi;i++) if(i!==cur) targets.push(i);
+    }
+    if(!targets.length){toast('There are no other slides in that scope');return;}
+    var n=0;
+    targets.forEach(function(ti){
+      var target=pres.slides[ti];
+      var copies=independentCopies(picked,target,source.grpmeta);
+      copies.forEach(function(cp){
+        if(cp.anim) cp.anim={type:cp.anim.type||'fade',
+          order:nextAnimOrder(target)};
+        target.annots=target.annots||[];target.annots.push(cp);n++;
+      });
+    });
+    if(!n) return;
+    markDirty();refresh();renderFilm();
+    toast(n+' object'+(n===1?'':'s')+' added to '+targets.length
+      +' slide'+(targets.length===1?'':'s')+' — edit each copy freely');
+  }
   /* ---- THE CANVAS RIGHT-CLICK MENU -------------------------------------
      Paste has three answers now (the plain one, in place, here) and a
      ribbon cannot grow three buttons for one verb without becoming the
@@ -2012,6 +2060,15 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      menuHead(m,'repeat on slides');
+      row('All other slides','',function(){repeatSelection('all');},
+        'Copy this selection to every other slide; each copy is independent',
+        'copy');
+      row('Every slide in this section','',function(){repeatSelection('section');},
+        'Copy this selection to the other slides in the current section',
+        'copy');
+      row('A slide range…','',function(){repeatSelection('range');},
+        'Copy this selection to a numbered range of slides','copy');
       /* ALT TEXT (T105). On the right-click menu and nowhere else, for
          the same reason T5's select-by-type is: the ribbon never wraps,
          so a control that applies to one kind of object earns its place
@@ -2530,6 +2587,38 @@
           if(fa.fh) row('Forget the fit height','',
             function(){clearFit(selIdxs()[0]);},
             'Back to a box that simply grows with its words');
+          if(fa.style&&styleDef(fa.style)){
+            menuHead(m,'make default / style for '
+              +styleDef(fa.style).label);
+            row('Use this look for new boxes','',function(){
+              if(promoteStyleFromBox(fa,false))
+                toast('New '+styleDef(fa.style).label
+                  +' boxes will use this look');
+            },'Save this box’s typography and colours as the default for '
+              +styleDef(fa.style).label+'; existing boxes stay as they are',
+              'styles');
+            row('Apply this look to slides…','',function(){
+              if(typeof window.SemDeckApplyDlg==='function')
+                window.SemDeckApplyDlg();
+            },'Choose every slide, one section, or any individual slides. '
+              +'Cancelling changes nothing and does not alter the default',
+              'inherit');
+            row('Save as a named variation…','',function(){
+              var base=fa.style,p=styleDef(base);
+              var nm=prompt('Call this variation of '+p.label+' what?','');
+              if(nm===null) return;
+              nm=String(nm).trim();
+              if(!nm){toast('A variation needs a name');return;}
+              var v=addVariant(nm,base);
+              if(!v){toast('Could not make that variation');return;}
+              var delta=variantDeltaFrom(fa,base,null);
+              if(Object.keys(delta).length) deckStyles()[v.id]=delta;
+              applyStyleTo(fa,v.id);
+              markDirty();refresh();
+              toast('Saved “'+nm+'” as a variation of '+p.label);
+            },'Keep this as a reusable named look. It follows the current '
+              +'type for every property you did not change','plus');
+          }
         }
       }
       if(selIdxs().length===1){

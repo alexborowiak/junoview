@@ -172,7 +172,7 @@ def test_appbar_fills_its_row_with_capped_flexible_spacers(out):
     pools before the right-pinned App group; under pressure the spacers
     collapse to 0 first so compaction sees an unspaced bar.
     """
-    assert out.count('class="appbar-flex') == 10
+    assert out.count('class="appbar-flex') == 8
     assert ".appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}" in out
     # the middle pair leaves with the filter sections in Tree view; the
     # measured filters slot spans (and so compensates for) their width
@@ -242,7 +242,7 @@ def test_top_left_declutter_puts_hamburger_on_the_tab_line(out):
     line, and Open has moved up to the ribbon's file group.
     """
     assert 'class="tabs-label"' not in out
-    assert (out.index('class="tabsrow"') < out.index('id="menubtn"')
+    assert (out.index('class="tabsrow nb-quickbar"') < out.index('id="menubtn"')
             < out.index('id="tabstrip"'))
     assert 'class="tabrow-open"' not in out
     assert ".tabsrow .menubtn" in out
@@ -444,36 +444,20 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
     assert "document.addEventListener('sem:shell'" in out
 
 
-def test_app_buttons_sit_at_the_right_end_of_the_ribbon(out):
-    """Theme / Support / Help are a labelled ribbon group, pushed right.
+def test_app_buttons_share_the_notebook_quick_access_row(out):
+    """The viewer's long ribbon fits by reusing the former tabs row.
 
-    They sat at the right of the TAB ROW while the ribbon still wrapped
-    (as its last group they were the first thing to spill), but floating
-    over the tab strip they read as lost rather than placed. The ribbon
-    compacts instead of wrapping now, so they are back among the other
-    labelled sections -- right-aligned by an auto margin that collapses
-    on its own when the bar overflows into its scroll fallback.
+    View and App commands now sit above the content controls, as in
+    presentations. The row was already 44px tall: moving them adds no
+    header height and retains every button and its word.
     """
-    # the group is the ribbon's last section, after View, before the tabs
+    assert (out.index('class="tabsrow nb-quickbar"')
+            < out.index('id="doc-present"'))
     assert out.index('id="doc-present"') < out.index('id="ab-app"')
-    assert out.index('id="ab-app"') < out.index('class="tabsrow"')
-    # packed LEFT since 2026-08-18: pinned right, a monitor's whole spare
-    # width became one void between View and App and the icon squares read
-    # as lost crumbs -- same rule as the editor ribbon, leftover space
-    # lives at the end
-    assert "#ab-app{margin-left:14px;padding-right:8px;}" in out
-    # T260: they were 34px SQUARES holding a word each. `.appbar .toggle`
-    # is white-space:nowrap with visible overflow, so every label painted
-    # out of its box and across the next one -- driven at 1440x900 the
-    # group rendered as overlapping, illegible glyphs and Help's box
-    # started at x=1455 on a 1440 viewport. A worded button is sized by
-    # its word; the taller 34px height and the bigger icon stay, because
-    # those are what "the app buttons are way too small" asked for.
-    assert "#ab-app .toggle{height:34px;min-width:34px;}" in out
+    assert ".nb-quickbar{order:-1;align-items:center;" in out
+    assert "#ab-app .toggle{min-width:34px;}" in out
     assert "#ab-app .bic{width:17px;height:17px;}" in out
     assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
-    # nothing still styles it for the tab row
-    assert ".tabsrow #ab-app" not in out
     # the group's buttons came with it (the dark/light toggle became a
     # theme in the palette menu, 2026-08-19)
     for button in ('id="scheme-btn"', 'id="support-btn"', 'id="help-btn"'):

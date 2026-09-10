@@ -150,9 +150,11 @@
       </span>
       <span class="fgrp-cap">Text</span>
     </span></span><span class="abgrp-lab">Size</span></span>
-    <span class="appbar-flex" aria-hidden="true"></span>
-    <span class="appbar-div" aria-hidden="true"></span>
-    <span class="appbar-flex" aria-hidden="true"></span>
+  </div>
+  <!-- The former tabs row has room for the notebook's navigation and
+       app commands. Keeping them above the content controls lets the
+       filters and size controls fit at ordinary laptop widths. -->
+  <div class="tabsrow nb-quickbar" aria-label="Notebook navigation and app">
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
@@ -204,12 +206,8 @@
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="appbar-flex" aria-hidden="true"></span>
-    <!-- App: theme / support / help. These sat at the right of the TAB ROW
-         while the ribbon still wrapped — as its last group they were the
-         first thing to spill onto a second line. The ribbon does not wrap
-         any more (it compacts, see fitRibbon), so they are back among the
-         other labelled sections where they read as part of the toolbar
-         instead of floating over the tab strip (2026-08-03). -->
+    <!-- App commands share the quick-access row; the main ribbon is for
+         changing the notebook content that is on screen. -->
     <span class="abgrp" id="ab-app"><span class="abgrp-row">
     <span class="btn-grp">
       <!-- no separate dark/light toggle: light and dark are THEMES in
@@ -237,18 +235,16 @@
       <button class="toggle" id="help-btn"
         title="How to use, and everything this tool can do" aria-label="Help"><i data-ic="help"></i> Help</button>
     </span></span><span class="abgrp-lab">App</span></span>
-  </div>
-  <div class="tabsrow">
     <button class="menubtn" id="menubtn" aria-label="Toggle sections"
       title="Show or hide the section sidebar (table of contents)">
-      <span></span></button>
+      <span></span> Outline</button>
     <!-- beside the hamburger, because they are the same kind of thing:
          two indexes of the document — its sections, its names
          (2026-08-19, user). It replaced a Sections|Variables tab switch
          inside the sidebar and a button up in the View group. -->
     <button class="menubtn vars-menubtn" id="vars-btn" aria-label="Variables" aria-pressed="false"
       title="Every variable in this notebook — filter by type, and click
- a name or use-site to jump to it">x&#178;</button>
+ a name or use-site to jump to it">x&#178; Variables</button>
     <!-- the open-notebooks strip is NOT here any more. A row of
          horizontal tabs is a row of chrome across the top of the document
          whose width runs out at about five notebooks, and the rail beside
@@ -371,6 +367,8 @@
         Slides from this notebook&#8230;</button>
     </div>
     <div class="pr-newmenu auto-menu" id="auto-menu" hidden>
+      <label class="auto-anim"><input type="checkbox" id="auto-animations">
+        Add animations (reveal in notebook order)</label>
       <button class="pr-mi" data-scope="all"
         title="Every section with markdown or figures, in order"
         >From the whole notebook</button>

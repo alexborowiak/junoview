@@ -69,22 +69,6 @@
          group's width, and they are the two halves of the same
          errand. The wrapper stays a plain row inside the builder
          panel's header, which is a one-line bar. -->
-    <!-- T239: THE WAY OUT, WHERE IT WAS ALWAYS BELIEVED TO BE
-         (2026-09-04, user: "there is no home button to go back
-         home"). While you edit, .deck-top is hidden and the
-         presentations rail is minimised AND inert, so #deck-exit
-         down there and the rail’s Notebooks button were both
-         unclickable: there was no way out of the editor at all.
-         Two destinations, because they really are two: Home is the
-         start screen, Close is the builder for this notebook. -->
-    <span class="rbn-stack qat-way">
-      <button class="dbtn qat-btn" id="qat-home"
-        title="Back to the Junoview start screen. Nothing is closed
- or lost"><i data-ic="home"></i> Home</button>
-      <button class="dbtn qat-btn" id="qat-close"
-        title="Leave the slide for the builder, then out to the notebook.
- Nothing is closed or lost"><i data-ic="return"></i> Close</button>
-    </span>
     <span class="rbn-stack">
     <div class="dc-menuwrap">
       <button class="dbtn" id="dc-file" aria-haspopup="true"
@@ -873,8 +857,17 @@
               <button class="dbtn rbn-sm" id="vw-grid"
                 aria-pressed="false"
                 title="A margin box and a grid to lay out against &mdash;
- items snap to both. Guides, not ink: never printed or exported"
+items snap to both. Guides, not ink: never printed or exported"
                 ><i data-ic="grid"></i> Grid <kbd>G</kbd></button>
+              <button class="dbtn rbn-sm" id="vw-other-slides"
+                aria-pressed="false"
+                title="Show the objects on the other slides as faint outlines
+ over this slide, so repeated positions and overlaps are easy to compare"
+                ><i data-ic="outline"></i> Other slides</button>
+              <button class="dbtn rbn-sm" id="vw-other-fill"
+                aria-pressed="false" disabled
+                title="Fill the other-slide outlines with a transparent tint"
+                ><i data-ic="fill"></i> Ghost fills</button>
               <!-- THE GUIDE PAIR, next to the Grid they extend. A guide
                    you drew yourself was reachable only from the canvas
                    right-click row and from the ruler corner - which is
@@ -2230,13 +2223,12 @@
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
  same button unties it"><i data-ic="caption"></i> Caption</button>
-              <span class="sh-drop opt-drop" id="fmt-srcwrap">
-                <button class="dbtn etm" id="fmt-src" aria-haspopup="true"
-                  aria-expanded="false"
+              <span class="sh-drop opt-drop src-flat" id="fmt-srcwrap"
+                data-flat="1">
+                <button class="dbtn etm" id="fmt-src"
                   title="Where this figure came from, and keeping it in step with its notebook"
-                  ><i data-ic="tree"></i> Source &#9662;</button>
-                <div class="sh-menu opt-panel opt-list" id="fmt-src-menu"
-                  hidden data-close="1">
+                  ><i data-ic="tree"></i> Source</button>
+                <div class="sh-menu opt-panel opt-list" id="fmt-src-menu">
               <button class="dbtn etm" id="fmt-locate"
                 title="Jump to this card in its notebook &mdash; see where
  the plot came from"><i data-ic="locate"></i> Locate in notebook</button>

@@ -30,7 +30,7 @@
       style:'h1'}],
     ['head','Heading',{k:'text',w:80,h:9,text:'Heading',size:3.8,b:1,
       style:'h2'}],
-    ['body','Body text',{k:'text',w:80,h:30,text:'Body text',size:2.6,
+    ['body','Body text',{k:'text',w:80,h:30,text:'Body text',size:3.9,
       style:'body'}],
     ['cell','Figure panel',{k:'cell',w:44,h:50}]
   ];

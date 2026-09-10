@@ -31,34 +31,93 @@
     ((plan&&plan.sections)||[]).forEach(function(sec){
       var title=String((sec&&sec.title)||'').trim();
       var items=((sec&&sec.items)||[]).filter(function(it){
-        return it&&it.ref&&AUTO_KINDS[it.kind];});
+        return it&&it.ref&&AUTO_KINDS[it.kind];})
+        .map(function(it,n){return {it:it,seq:n};});
       /* a section with nothing to show is not a slide: twelve code-only
          sections would be twelve empty headings */
       if(!items.length) return;
       function titleBox(){
         return {k:'text',x:5,y:4,w:90,h:11,text:title,size:5,b:1,style:'h1'};
       }
+      function wordsOf(e){
+        var it=e.it;
+        return typeof it.words==='number'&&it.words>0?it.words:0;
+      }
+      function noteHeight(e){
+        var it=e.it,px=+it.sourceHeight||0,lines=+it.lines||0;
+        if(px) return Math.max(8,Math.min(42,px/7.2));
+        if(lines) return Math.max(8,Math.min(42,5+lines*4.2));
+        var n=wordsOf(e);
+        return n?Math.max(8,Math.min(42,6+n*.78)):18;
+      }
+      function noteWidth(e){
+        var px=+e.it.sourceWidth||0;
+        return px?Math.max(48,Math.min(84,px/12.8)):84;
+      }
+      function cell(e,box){
+        var it=e.it,a={k:'cell',ref:it.ref,part:it.part
+          ||(it.kind==='note'?'output':'figure')};
+        Object.keys(box).forEach(function(k){a[k]=box[k];});
+        if(it.nbpath) a.nbpath=it.nbpath;
+        if(it.kind==='note'){
+          a.autoNote=1;
+          /* Notebook prose is presentation copy here, so it starts one
+             comfortable step larger while retaining its source proportions. */
+          a.ts=1.2;
+        }
+        return {a:a,seq:e.seq};
+      }
+      function addCells(annots,cells){
+        cells.sort(function(a,b){return a.seq-b.seq;});
+        cells.forEach(function(p,n){
+          if(plan&&plan.animations) p.a.anim={type:'fade',order:n};
+          annots.push(p.a);
+        });
+      }
       var i=0;
       while(i<items.length){
         var md=null,fig=null;
-        /* up to one of each, in the order they sit in the notebook,
-           stopping the moment a kind would repeat */
-        while(i<items.length){
-          var it=items[i],isFig=(it.kind!=='note');
-          if(isFig&&!fig){fig=it;i++;}
-          else if(!isFig&&!md){md=it;i++;}
-          else break;
+        var first=items[i],next=items[i+1];
+        if(first.it.kind==='note'){
+          md=first;i++;
+          if(next&&next.it.kind!=='note'){fig=next;i++;}
+        } else {
+          fig=first;i++;
+          if(next&&next.it.kind==='note'){md=next;i++;}
         }
         var annots=title?[titleBox()]:[];
         var top=title?18:6,h=title?76:88;
-        if(md&&fig){
-          annots.push({k:'cell',x:5,y:top,w:42,h:h,ref:md.ref});
-          annots.push({k:'cell',x:50,y:top,w:45,h:h,ref:fig.ref});
-        } else if(fig){
-          annots.push({k:'cell',x:10,y:top,w:80,h:h,ref:fig.ref});
-        } else if(md){
-          annots.push({k:'cell',x:8,y:top,w:84,h:h,ref:md.ref});
+        var notes=md?[md]:[],usedH=md?noteHeight(md):0;
+        if(md&&!fig){
+          while(i<items.length&&items[i].it.kind==='note'){
+            var nh2=noteHeight(items[i]);
+            if(usedH+2+nh2>h) break;
+            notes.push(items[i]);usedH+=2+nh2;i++;
+          }
         }
+        var tall=!!(fig&&typeof fig.it.aspect==='number'
+          &&fig.it.aspect<0.82);
+        var placed=[];
+        if(md&&fig&&tall){
+          var mh=Math.min(30,noteHeight(md));
+          placed.push(cell(md,{x:8,y:top,w:84,h:mh}));
+          placed.push(cell(fig,{x:14,y:top+mh+3,w:72,h:h-mh-3}));
+        } else if(md&&fig){
+          placed.push(cell(md,{x:5,y:top,w:42,h:h}));
+          placed.push(cell(fig,{x:50,y:top,w:45,h:h}));
+        } else if(fig){
+          var asp=+fig.it.aspect||1.4,fh=asp>1.9?Math.min(h,54):h;
+          placed.push(cell(fig,{x:tall?20:10,y:top+(h-fh)/2,
+            w:tall?60:80,h:fh}));
+        } else if(notes.length){
+          var y=top;
+          notes.forEach(function(e){
+            var nh=Math.min(h,noteHeight(e)),nw=noteWidth(e);
+            placed.push(cell(e,{x:(100-nw)/2,y:y,w:nw,h:nh}));
+            y+=nh+2;
+          });
+        }
+        addCells(annots,placed);
         pr.slides.push({layout:'blank',panes:[],annots:annots});
       }
     });

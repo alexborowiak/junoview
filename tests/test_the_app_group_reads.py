@@ -41,11 +41,10 @@ from junoview import assets
 
 def test_a_worded_button_is_sized_by_its_word():
     css = assets.load("css/app.css")
-    assert "#ab-app .toggle{height:34px;min-width:34px;}" in css
+    assert "#ab-app .toggle{min-width:34px;}" in css
     # ...not by a square that its word then overflows
     assert "#ab-app .toggle{width:34px;min-width:34px;height:34px;}" not in css
-    # the height and the bigger icon stay: "the app buttons are way too
-    # small" (2026-08-18, user, on a monitor) is a separate finding
+    # The larger icon stays; height is shared with the quick-access row.
     assert "#ab-app .bic{width:17px;height:17px;}" in css
 
 

@@ -3335,7 +3335,12 @@
          visible throughout (syncTopBar). */
       if(document.body.classList.contains('deck-open')) return;
       var peek=document.body.classList.contains('prrail-peek');
-      if(!peek&&e.clientX<=4) document.body.classList.add('prrail-peek');
+      /* A four-pixel trigger is easy to skip between mousemove samples,
+         especially when the pointer is thrown at the edge.  The rail is
+         only 176px wide and already overlays the page, so a modest 14px
+         hit zone makes the reveal dependable without stealing document
+         clicks. */
+      if(!peek&&e.clientX<=14) document.body.classList.add('prrail-peek');
       else if(peek&&e.clientX>Math.max(200,
         (($('#presrail')||{}).getBoundingClientRect
           ?$('#presrail').getBoundingClientRect().right:200)+40))
@@ -4941,10 +4946,85 @@
      The viewer owns what is in scope -- the sections, the marks and the
      notebook on screen -- so it builds the PLAN; the deck turns it into
      slides (11-autodeck.js, autoDeckBuild). Three scopes, one shape. */
+  function autoNoteText(node){
+    if(!node) return '';
+    if(node.nodeType===3) return node.nodeValue||'';
+    var tag=String(node.tagName||'').toLowerCase();
+    if(tag==='br') return '\n';
+    var text=Array.prototype.map.call(node.childNodes||[],autoNoteText)
+      .join('');
+    /* textContent joins adjacent paragraphs without a space. Keep block
+       boundaries even when a note is folded or filtered off screen. */
+    return text+(/^(p|div|li|h[1-6]|pre|blockquote|tr)$/.test(tag)?'\n':'');
+  }
+  function autoFigureSize(el){
+    if(!el) return {width:0,height:0};
+    var w=el.naturalWidth||el.videoWidth||0;
+    var h=el.naturalHeight||el.videoHeight||0;
+    function attr(name){return el.getAttribute?el.getAttribute(name):null;}
+    var vb=String(attr('viewBox')||'').trim().split(/[\s,]+/).map(Number);
+    if(!w&&!h&&vb.length===4){w=vb[2];h=vb[3];}
+    if(!w) w=parseFloat(attr('width'))||0;
+    if(!h) h=parseFloat(attr('height'))||0;
+    var raw=attr('data-plotly');
+    if((!w||!h)&&raw){try{
+      var layout=(JSON.parse(raw)||{}).layout||{};
+      w=Number(layout.width)||w;h=Number(layout.height)||h;
+    }catch(e){}}
+    /* Notebook images are lazy-loaded. Their PNG/GIF header already
+       carries dimensions, so hidden cells need not load to be placed. */
+    var src=String(attr('src')||'');
+    if((!w||!h)&&/^data:image\/(png|gif);base64,/i.test(src)){
+      try{
+        var bytes=atob(src.slice(src.indexOf(',')+1,src.indexOf(',')+65));
+        function byte(i){return bytes.charCodeAt(i)||0;}
+        if(bytes.slice(1,4)==='PNG'&&bytes.length>=24){
+          w=byte(16)*16777216+byte(17)*65536+byte(18)*256+byte(19);
+          h=byte(20)*16777216+byte(21)*65536+byte(22)*256+byte(23);
+        } else if(bytes.slice(0,3)==='GIF'&&bytes.length>=10){
+          w=byte(6)+byte(7)*256;h=byte(8)+byte(9)*256;
+        }
+      }catch(e){}
+    }
+    if((!w||!h)&&el.getBoundingClientRect){
+      var r=el.getBoundingClientRect();w=w||r.width;h=h||r.height;
+    }
+    return {width:isFinite(w)&&w>0?w:0,height:isFinite(h)&&h>0?h:0};
+  }
+  function autoItemMetrics(card,kind){
+    var out={words:0,text:'',lines:0,sourceWidth:0,sourceHeight:0,
+      sourceFontSize:0,aspect:0,part:kind==='note'?'output':'figure'};
+    if(!card) return out;
+    if(kind==='note'){
+      var note=card.querySelector('.note');
+      if(!note) return out;
+      out.text=autoNoteText(note).trim();
+      out.words=out.text?out.text.split(/\s+/).length:0;
+      out.lines=out.text?out.text.split(/\n/).filter(function(s){
+        return !!s.trim();}).length:0;
+      var r=note.getBoundingClientRect();
+      out.sourceWidth=note.clientWidth||r.width||0;
+      out.sourceHeight=Math.max(note.scrollHeight||0,r.height||0);
+      out.sourceFontSize=parseFloat(window.getComputedStyle(note).fontSize)||15;
+    } else {
+      var fig=card.querySelector('.figframe img,.figframe svg,'
+        +'.figframe video,.figframe .plotly-embed');
+      var size=autoFigureSize(fig);
+      out.sourceWidth=size.width;out.sourceHeight=size.height;
+      if(size.width&&size.height) out.aspect=size.width/size.height;
+    }
+    return out;
+  }
   function autoPlan(stem,scope,sid){
     var sh=APP.shells[stem];
     if(!sh||!sh.data) return null;
     var data=sh.data,secs=data.sections||[],items=data.items||[];
+    var cardsById=Object.create(null),cardsByAnchor=Object.create(null);
+    if(sh.el) $$('.card',sh.el).forEach(function(card){
+      cardsById[card.id]=card;
+      if(card.dataset.anchor) cardsByAnchor[card.dataset.anchor]=card;
+    });
+    var nbpath=sh.el&&sh.el.dataset.path||'';
     function keep(it){
       return it.kind==='note'||it.kind==='figure'||it.kind==='diagnostic';
     }
@@ -4968,7 +5048,10 @@
       var its=items.filter(function(it){
         return it.section===s.id&&take(it);
       }).map(function(it){
-        return {ref:stem+'::'+it.anchor,kind:it.kind,title:it.title||''};
+        var card=cardsByAnchor[it.anchor]||cardsById['card-'+it.card];
+        var meta=autoItemMetrics(card,it.kind);
+        return Object.assign({ref:stem+'::'+it.anchor,kind:it.kind,
+          title:it.title||'',nbpath:nbpath},meta);
       });
       if(its.length) plan.sections.push({title:s.title||'',items:its});
     });
@@ -4993,6 +5076,8 @@
         :'No markdown or figure cells to make slides from here.');
       return;
     }
+    var anim=$('#auto-animations');
+    plan.animations=!!(anim&&anim.checked);
     APP.deckAuto(plan);
   }
   /* the section on screen: the sidebar's highlighted row, else the first */
@@ -6301,14 +6386,18 @@
      with reason 'reread' is the only success, 'failed' is the only one a
      user must be told about, and 'notapp' (web mode has no handle to
      re-read), 'closed' and 'url' are honest declines. */
-  APP.reloadTab=function(stem){
+  APP.reloadTab=function(stem,pathHint){
     function decline(reason){
       return Promise.resolve(
         {stem:stem,ok:false,reason:reason,msg:''});
     }
     if(APP.mode!=='app') return decline('notapp');
     var sh=APP.shells[stem];
-    var path=sh&&sh.el&&sh.el.dataset.path;
+    /* A deck can remember the notebook path on the placed annotation even
+       after its source tab was closed.  Accept that path as a deliberate
+       reopen hint so Keep up to date remains useful; callers still pass no
+       hint for sources that never recorded one. */
+    var path=(sh&&sh.el&&sh.el.dataset.path)||String(pathHint||'');
     if(!path) return decline('closed');
     if(/^https?:/i.test(path)) return decline('url');
     return api('/api/open',{path:path,stem:stem}).then(function(j){

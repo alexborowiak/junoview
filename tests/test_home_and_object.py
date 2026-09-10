@@ -123,7 +123,9 @@ def test_where_it_came_from_is_on_the_row(out):
     # (the by-bullet trio went back to the Animation tab in T220)
     for cid in ("fmt-path", "fmt-lock", "fmt-imgrefresh"):
         assert f'id="{cid}"' in out, cid
-    assert "if(kind==='image'&&a.fname) from=a.fname;" in out
+    assert "if(kind==='image') from=(typeof picAddr==='function'&&picAddr(a))" in out
+    assert "||a.fname||a.psrc||'';" in out
+    assert "from=a.nbpath||ff.nbpath" in out
     assert "show('#fmt-lock',isNum,isNum&&pinned(a));" in out
     assert "else if(lockMode(a)==='') a.lock='pos';});" in out
     # governed, so the completeness audit stays quiet
