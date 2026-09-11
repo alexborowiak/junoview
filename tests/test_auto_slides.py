@@ -193,7 +193,9 @@ def test_the_viewer_owns_the_doors(out):
             "||it.kind==='diagnostic';") in app
     # ...scopes on the section id and on the marks store...
     assert "if(scope==='section') return it.section===sid;" in app
-    assert "var st=markOf(stem,it.card);return !!(st.p||st.f);" in app
+    assert "var st=markOf(stem,it.card);" in app
+    assert "var tagged=Array.isArray(st.tags)?st.tags.length:!!st.f;" in app
+    assert "return !!(st.p||tagged);" in app
     # ...and hands the deck refs it can resolve
     assert "Object.assign({ref:stem+'::'+it.anchor,kind:it.kind" in app
     assert "APP.deckAuto(plan);" in app

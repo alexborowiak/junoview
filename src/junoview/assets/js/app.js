@@ -68,12 +68,12 @@
   function refreshChrome(){
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
-    /* T260: ...and so does the group around it. Open is the only thing in
-       the File section, so without this a shared standalone render carried
-       a "File" caption over an empty box and a divider — about 60px of
-       chrome for nothing, on a bar that was already scrolling sideways. */
-    var fileGrp=$('#ab-file');
-    if(fileGrp) fileGrp.classList.toggle('grp-empty',!canOpen);
+    /* Open and the live file provenance deliberately have their own thin
+       utility line ABOVE the notebook controls. A standalone page without
+       an opener therefore hides that whole line, rather than leaving an
+       empty File group or borrowing width from filters. */
+    var fileBar=$('#nb-filebar');
+    if(fileBar) fileBar.hidden=!canOpen&&!APP.active;
     var wel=$('#welcome');
     /* an open presentation owns the window even with no notebook behind
        it — a self-contained deck is a document in its own right */
@@ -1027,7 +1027,7 @@
            bypass below. Pin's promise is that the type and section
            filters cannot reach a cell; this is not one of those -- it
            is you saying which cells you are working with at all, so a
-           pinned cell is out of view under "only starred" like any
+           pinned cell is out of view under a label filter like any
            other. "Only pinned" is the case where the two agree. */
         if(!onlyKeeps(c,only)){
           c.classList.add('is-hidden');
@@ -4043,16 +4043,62 @@
   /* Per-card behaviours, shared by the docs shell and the Plot-trace tab so
      the trace is a genuine subset of the docs with every control live.
      (Nav/graph wiring stays in initShell — the trace tab has no sidebar.) */
-  /* ---- T242: PINNED AND MARKED CELLS ----------------------------------
-     Two marks, one store. PIN means the filters cannot reach this cell:
-     it shows in full whatever they are set to, which is the answer to
-     "I have one cell that has output I want but I don't want the rest"
-     (2026-09-04). MARK is a bookmark -- star, heart or flag -- and both
-     are listed at the top of the sidebar, because a mark you cannot
-     find again is a mark for nothing. Kept per notebook, so the pins
-     you set on an analysis are still there tomorrow. */
+  /* ---- PINNED, REACTED-TO AND CATEGORISED CELLS -----------------------
+     A pin says a cell beats the ordinary content filters. Labels say what
+     the reader thinks of it, and deliberately allow MORE THAN ONE answer:
+     a Heart can also be Tier 1, for example. The former single `f` value
+     is read as a one-item label list so existing notebooks keep every star,
+     heart and flag they already have (2026-09-11). */
   var MARKKEY='semmarks:'+location.pathname;
-  var MARK_KINDS=['star','heart','flag'];
+  var MARK_GROUPS=[
+    {lab:'Reactions',tags:[
+      {k:'star',ic:'star',lab:'Star',short:'Star'},
+      {k:'heart',ic:'heart',lab:'Heart',short:'Heart'},
+      {k:'smile',ic:'smile',lab:'Smile',short:'Smile'},
+      {k:'flag',ic:'flag',lab:'Flag',short:'Flag'}]},
+    {lab:'Categories',tags:[
+      {k:'main',ic:'star',lab:'Main',short:'Main',cat:1},
+      {k:'tier-1',ic:'tag',lab:'Tier 1',short:'T1',cat:1},
+      {k:'tier-2',ic:'tag',lab:'Tier 2',short:'T2',cat:1},
+      {k:'tier-3',ic:'tag',lab:'Tier 3',short:'T3',cat:1},
+      {k:'supplementary',ic:'tag',lab:'Supplementary',short:'Supp',cat:1}]}
+  ];
+  function tagInfo(k){
+    var out=null;
+    MARK_GROUPS.forEach(function(g){g.tags.forEach(function(t){
+      if(!out&&t.k===k) out=t;});});
+    if(!out&&String(k||'').indexOf('custom:')===0){
+      var lab=String(k).slice(7);
+      if(lab) out={k:k,ic:'tag',lab:lab,short:lab,cat:1,custom:1};
+    }
+    return out;
+  }
+  function markTags(st){
+    var raw=st&&Array.isArray(st.tags)?st.tags:(st&&st.f?[st.f]:[]);
+    var out=[];
+    raw.forEach(function(k){
+      if(tagInfo(k)&&out.indexOf(k)<0) out.push(k);});
+    return out;
+  }
+  function customTag(label){
+    var v=String(label||'').replace(/[|:]/g,' ').replace(/\s+/g,' ').trim();
+    return v?'custom:'+v.slice(0,40):'';
+  }
+  function tagGroups(stem,extra){
+    var out=MARK_GROUPS.map(function(g){
+      return {lab:g.lab,tags:g.tags.slice()};});
+    var custom=[];
+    function add(k){
+      var t=tagInfo(k);
+      if(t&&t.custom&&!custom.some(function(x){return x.k===k;}))
+        custom.push(t);
+    }
+    Object.keys(marksFor(stem)).forEach(function(id){
+      markTags(marksFor(stem)[id]).forEach(add);});
+    (extra||[]).forEach(add);
+    if(custom.length) out.push({lab:'Custom labels',tags:custom});
+    return out;
+  }
   function allMarks(){
     try{return JSON.parse(localStorage.getItem(MARKKEY)||'{}')||{};}
     catch(e){return {};}
@@ -4072,53 +4118,159 @@
   }
   function setMarkState(stem,id,next){
     var m=marksFor(stem);
-    if(next&&(next.p||next.f)) m[id]=next; else delete m[id];
+    var tags=markTags(next);
+    if(next&&(next.p||tags.length)) m[id]={p:next.p?1:0,tags:tags};
+    else delete m[id];
     writeMarks(stem,m);
   }
-  /* ---- T257: SHOW ONLY WHAT YOU MARKED --------------------------------
-     "would be good to have options that is - show pinned only, show
-     stars only" (2026-09-04, user). Marking a cell is only half of the
-     thought; the other half is being able to see just those. It is a
-     GATE rather than one more filter: it decides which cells are in
-     play at all, and everything else -- the type filters, the section
-     scope -- then acts within that. Kept per notebook beside the marks
-     themselves, so a notebook you left focused opens focused. */
+  /* ---- FILTER BY LABEL -------------------------------------------------
+     This is a gate before the type filters. Several selected labels use
+     OR: selecting Heart and Tier 1 finds either set rather than silently
+     requiring someone to remember which cells happen to carry both. */
   var ONLYKEY='semmarkonly:'+location.pathname;
-  var ONLY_KINDS=[{k:'pin',ic:'pin',lab:'Pinned'},
-    {k:'star',ic:'star',lab:'Star'},
-    {k:'heart',ic:'heart',lab:'Heart'},
-    {k:'flag',ic:'flag',lab:'Flag'}];
   function allOnly(){
     try{return JSON.parse(localStorage.getItem(ONLYKEY)||'{}')||{};}
     catch(e){return {};}
   }
   function onlyFor(stem){
     var v=allOnly()[stem];
-    return typeof v==='string'?v:'';
+    var raw=Array.isArray(v)?v:(typeof v==='string'&&v?[v]:[]);
+    var out=[];
+    raw.forEach(function(k){
+      if((k==='pin'||tagInfo(k))&&out.indexOf(k)<0) out.push(k);});
+    return out;
   }
   function setOnly(stem,v){
+    var keep=[];
+    (Array.isArray(v)?v:[]).forEach(function(k){
+      if((k==='pin'||tagInfo(k))&&keep.indexOf(k)<0) keep.push(k);});
     var all=allOnly();
-    if(v) all[stem]=v; else delete all[stem];
+    if(keep.length) all[stem]=keep; else delete all[stem];
     try{localStorage.setItem(ONLYKEY,JSON.stringify(all));}catch(e){}
   }
-  /* T364: THE GATE IS A RIBBON CONTROL --------------------------------
-     2026-09-07, user: "where is the button that has just the just show
-     the pinned or hearted etc. I hate it being in the side bar. That
-     sucks shit." The chips are ribbon buttons now, in the Filters group
-     they act with, and they still only appear for a mark this notebook
-     actually uses. Counted off the OUTLINE, so a mark left behind by a
-     notebook that no longer has that cell is not counted. */
+  /* The one Labels button is in the Filters group, never in the sidebar.
+     A full set of chips made the already-wide toolbar expand with every
+     reaction/category in use; this menu scales without doing that. */
   function markCounts(shell,stem){
-    var m=marksFor(stem),have={pin:0,star:0,heart:0,flag:0},any=0;
+    var m=marksFor(stem),have={pin:0},any=0;
+    tagGroups(stem).forEach(function(g){g.tags.forEach(function(t){
+      have[t.k]=0;});});
     Object.keys(m).forEach(function(id){
       if(!shell.querySelector('.navitem[data-item="'+id+'"]')) return;
       var st=m[id]||{};
       if(st.p){have.pin++;any++;}
-      if(st.f){have[st.f]=(have[st.f]||0)+1;any++;}
+      markTags(st).forEach(function(k){have[k]=(have[k]||0)+1;any++;});
     });
     have.any=any;
     return have;
   }
+  var labelMenu=null,labelMenuOwner=null;
+  function closeLabelMenu(){
+    if(labelMenu&&labelMenu.parentNode) labelMenu.parentNode.removeChild(labelMenu);
+    if(labelMenuOwner) labelMenuOwner.setAttribute('aria-expanded','false');
+    labelMenu=null;labelMenuOwner=null;
+  }
+  function placeLabelMenu(owner,m){
+    document.body.appendChild(m);
+    var r=owner.getBoundingClientRect();
+    m.style.top=Math.min(window.innerHeight-m.offsetHeight-6,r.bottom+5)+'px';
+    m.style.left=Math.max(6,Math.min(r.left,window.innerWidth-m.offsetWidth-6))+'px';
+    labelMenu=m;labelMenuOwner=owner;
+    owner.setAttribute('aria-expanded','true');
+  }
+  function labelHead(m,text){
+    var h=document.createElement('div');h.className='mark-menu-h';
+    h.textContent=text;m.appendChild(h);
+  }
+  function labelRow(m,info,on,n,click){
+    var b=document.createElement('button');b.type='button';
+    b.className='mark-menu-row'+(on?' on':'');
+    b.setAttribute('aria-pressed',on?'true':'false');
+    b.innerHTML=bic(info.ic);
+    var name=document.createElement('span');name.className='mark-menu-name';
+    name.textContent=info.lab;b.appendChild(name);
+    if(n!=null){var count=document.createElement('span');
+      count.className='mark-menu-count';count.textContent=n;b.appendChild(count);}
+    var check=document.createElement('span');check.className='mark-menu-check';
+    check.textContent=on?'✓':'';b.appendChild(check);
+    b.addEventListener('click',function(e){e.stopPropagation();click();});
+    m.appendChild(b);
+  }
+  function addLabelGroups(m,stem,picked,counts,change,extra){
+    var groups=tagGroups(stem,extra);
+    groups.forEach(function(g){
+      var tags=g.tags.filter(function(t){return !counts||counts[t.k];});
+      if(!tags.length) return;
+      labelHead(m,g.lab);
+      tags.forEach(function(t){labelRow(m,t,picked.indexOf(t.k)>=0,
+        counts?counts[t.k]:null,function(){change(t.k);});});
+    });
+  }
+  function openLabelFilter(btn,shell,stem,have){
+    if(labelMenuOwner===btn){closeLabelMenu();return;}
+    closeLabelMenu();
+    var m=document.createElement('div');m.className='mark-menu';
+    m.setAttribute('role','menu');
+    labelHead(m,'Show only labelled cells');
+    var picked=onlyFor(stem);
+    if(have.pin) labelRow(m,{k:'pin',ic:'pin',lab:'Pinned'},
+      picked.indexOf('pin')>=0,have.pin,function(){toggle('pin');});
+    function toggle(k){
+      var next=onlyFor(stem),at=next.indexOf(k);
+      if(at>=0) next.splice(at,1);else next.push(k);
+      setOnly(stem,next);renderMarkGate();applyFilters();
+      var again=$('#marks-filter');
+      if(again) openLabelFilter(again,shell,stem,markCounts(shell,stem));
+    }
+    addLabelGroups(m,stem,picked,have,toggle);
+    if(picked.length){
+      var clear=document.createElement('button');clear.type='button';
+      clear.className='mark-menu-row mark-menu-clear';
+      clear.innerHTML=bic('cellcard')+'<span class="mark-menu-name">Show all cells</span>';
+      clear.addEventListener('click',function(e){
+        e.stopPropagation();setOnly(stem,[]);closeLabelMenu();
+        renderMarkGate();applyFilters();});
+      m.appendChild(clear);
+    }
+    placeLabelMenu(btn,m);
+  }
+  function openCellLabels(btn,shell,stem,id){
+    if(labelMenuOwner===btn){closeLabelMenu();return;}
+    closeLabelMenu();
+    var m=document.createElement('div');m.className='mark-menu';
+    m.setAttribute('role','menu');labelHead(m,'Label this cell');
+    var st=markOf(stem,id),picked=markTags(st);
+    function change(k){
+      var next=markTags(markOf(stem,id)),at=next.indexOf(k);
+      if(at>=0) next.splice(at,1);else next.push(k);
+      setMarkState(stem,id,{p:st.p?1:0,tags:next});
+      paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
+      closeLabelMenu();
+      var again=shell.querySelector('#card-'+id+' .cell-mark');
+      if(again) openCellLabels(again,shell,stem,id);
+    }
+    addLabelGroups(m,stem,picked,null,change,picked);
+    var add=document.createElement('button');add.type='button';
+    add.className='mark-menu-row mark-menu-clear';
+    add.innerHTML=bic('plus')+'<span class="mark-menu-name">Add a custom label…</span>';
+    add.addEventListener('click',function(e){
+      e.stopPropagation();
+      var key=customTag(prompt('Name this label:',''));
+      if(!key) return;
+      if(picked.indexOf(key)<0) picked.push(key);
+      setMarkState(stem,id,{p:st.p?1:0,tags:picked});
+      paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
+      closeLabelMenu();
+    });
+    m.appendChild(add);placeLabelMenu(btn,m);
+  }
+  document.addEventListener('click',function(e){
+    if(labelMenu&&!labelMenu.contains(e.target)&&e.target!==labelMenuOwner)
+      closeLabelMenu();
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&labelMenu) closeLabelMenu();
+  });
   function renderMarkGate(){
     var host=$('#marks-grp'),row=$('#marks-row');
     if(!host||!row) return;
@@ -4130,52 +4282,45 @@
     if(!have.any){
       /* the last mark just went: a gate pointing at nothing would empty
          the whole notebook with no visible cause */
-      if(only){setOnly(stem,'');applyFilters();}
+      if(only.length){setOnly(stem,[]);applyFilters();}
       return;
     }
-    if(only&&!have[only]){setOnly(stem,'');only='';}
-    function chip(k,ic,lab,n){
-      var b=document.createElement('button');
-      b.type='button';
-      b.className='toggle sub mkchip';
-      b.dataset.only=k;
-      b.setAttribute('aria-pressed',only===k?'true':'false');
-      b.title=k?('Show only the '+n+' cell'+(n===1?'':'s')+' you '
-        +(k==='pin'?'pinned':'marked '+k))
-        :'Show every cell again';
-      b.innerHTML=bic(ic)+'<span class="btxt">'+lab
-        +(k?(' '+n):'')+'</span>';
-      b.addEventListener('click',function(){
-        setOnly(stem,only===k?'':k);
-        renderMarkGate();applyFilters();
-      });
-      return b;
-    }
-    ONLY_KINDS.forEach(function(o){
-      if(have[o.k]) row.appendChild(chip(o.k,o.ic,o.lab,have[o.k]));});
-    /* the way out, on the row, while there is something to get out of.
-       Pressing the lit chip is the other one. */
-    if(only) row.appendChild(chip('','cellcard','All',0));
+    only=only.filter(function(k){return have[k];});
+    if(only.length!==onlyFor(stem).length) setOnly(stem,only);
+    var b=document.createElement('button');b.type='button';
+    b.id='marks-filter';b.className='toggle sub mark-filter';
+    b.setAttribute('aria-haspopup','menu');
+    b.setAttribute('aria-expanded','false');
+    b.setAttribute('aria-pressed',only.length?'true':'false');
+    b.title=only.length
+      ?('Filtering by '+only.length+' label'+(only.length===1?'':'s')
+        +' — click to change or clear')
+      :'Filter cells by reactions and categories';
+    b.innerHTML=bic('tag')+'<span class="btxt">Labels'
+      +(only.length?' '+only.length:'')+' ▾</span>';
+    b.addEventListener('click',function(e){
+      e.stopPropagation();openLabelFilter(b,sh.el,stem,have);});
+    row.appendChild(b);
   }
   APP.renderMarkGate=renderMarkGate;
-  /* does this card carry the mark the gate is set to? Read off the card's
-     own classes, which paintMark has already put there, so the gate needs
-     no second source of truth. */
   function onlyKeeps(c,only){
-    if(!only) return true;
-    return only==='pin'?c.classList.contains('is-pinned')
-      :c.classList.contains('mk-'+only);
+    if(!only.length) return true;
+    var tags=(c.dataset.marks||'').split('|');
+    return only.some(function(k){return k==='pin'
+      ?c.classList.contains('is-pinned'):tags.indexOf(k)>=0;});
   }
   /* paint one card and its sidebar row from the store */
   function paintMark(shell,stem,id){
     var st=markOf(stem,id);
     var card=shell.querySelector('.card[id="card-'+id+'"]');
     var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
+    var tags=markTags(st);
     [card,nav].forEach(function(el){
       if(!el) return;
       el.classList.toggle('is-pinned',!!st.p);
-      MARK_KINDS.forEach(function(k){
-        el.classList.toggle('mk-'+k,st.f===k);});
+      MARK_GROUPS.forEach(function(g){g.tags.forEach(function(t){
+        el.classList.toggle('mk-'+t.k,tags.indexOf(t.k)>=0);});});
+      el.dataset.marks=tags.join('|');
     });
     /* T364: the symbol goes on the outline row this cell ALREADY has
        (2026-09-07, user: "just have the symbols appear next to them
@@ -4184,7 +4329,7 @@
        pinned AND marked: they are two different facts about it. */
     if(nav){
       var mk=nav.querySelector('.navitem-mk');
-      if(!st.p&&!st.f){ if(mk) nav.removeChild(mk); }
+      if(!st.p&&!tags.length){ if(mk) nav.removeChild(mk); }
       else{
         if(!mk){
           mk=document.createElement('span');
@@ -4195,13 +4340,18 @@
         function glyph(g,cls){
           var s=document.createElement('span');
           s.className='mk-i '+cls;
-          s.innerHTML=bic(g);
+          var info=tagInfo(g);
+          if(info&&info.cat){
+            s.classList.add('mk-i-cat');s.textContent=info.short;
+          } else s.innerHTML=bic(g);
+          s.title=info?info.lab:g;
           return s;
         }
         if(st.p) mk.appendChild(glyph('pin','mk-i-pin'));
-        if(st.f) mk.appendChild(glyph(st.f,'mk-i-'+st.f));
-        mk.title=(st.p?'Pinned':'')+(st.p&&st.f?', ':'')
-          +(st.f?('marked '+st.f):'');
+        tags.forEach(function(k){mk.appendChild(glyph(k,'mk-i-'+k));});
+        mk.title=(st.p?'Pinned':'')
+          +(tags.length?(st.p?', ':'')+tags.map(function(k){
+            return tagInfo(k).lab;}).join(', '):'');
       }
     }
     if(card){
@@ -4215,14 +4365,13 @@
       }
       var mb=card.querySelector('.cell-mark');
       if(mb){
-        mb.dataset.mark=st.f||'';
-        mb.innerHTML=bic(st.f||'star');
-        mb.setAttribute('aria-pressed',st.f?'true':'false');
-        mb.title=st.f
-          ?('Marked '+st.f+' \u2014 click for the next mark, and again '
-            +'to take it off')
-          :'Mark this cell so you can find it again. Clicks cycle: '
-            +'star, heart, flag, none';
+        mb.dataset.mark=tags.join('|');
+        mb.innerHTML=bic(tags.length?tagInfo(tags[0]).ic:'tag');
+        mb.setAttribute('aria-pressed',tags.length?'true':'false');
+        mb.title=tags.length
+          ?('Labels: '+tags.map(function(k){return tagInfo(k).lab;})
+            .join(', ')+' — click to change')
+          :'Label this cell with reactions or categories';
       }
     }
   }
@@ -4274,7 +4423,7 @@
         var card=btn.closest('.card'); if(!card) return;
         var id=card.id.replace(/^card-/,'');
         var st=markOf(stem,id);
-        setMarkState(stem,id,{p:st.p?0:1,f:st.f||''});
+        setMarkState(stem,id,{p:st.p?0:1,tags:markTags(st)});
         if(!st.p) setCellOff(id,false);
         paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
       });
@@ -4284,13 +4433,7 @@
         e.preventDefault();e.stopPropagation();
         var card=btn.closest('.card'); if(!card) return;
         var id=card.id.replace(/^card-/,'');
-        var st=markOf(stem,id);
-        var at=MARK_KINDS.indexOf(st.f||'');
-        var next=MARK_KINDS[at+1]||'';
-        setMarkState(stem,id,{p:st.p||0,f:next});
-        paintMark(shell,stem,id);renderMarks(shell,stem);
-        /* T257: with a gate on, changing a mark changes what is in view */
-        applyFilters();
+        openCellLabels(btn,shell,stem,id);
       });
     });
     Object.keys(marksFor(stem)).forEach(function(id){
@@ -4645,13 +4788,12 @@
         });
       });
   }
-  /* ---- T364: THE FILE BAR IS DOCKED IN THE RIBBON ---------------------
-     2026-09-07, user: "move the file into stuff and the refresh out of
-     the side bar and into the ribbon." The bar is still the SHELL's --
+  /* ---- THE FILE BAR IS DOCKED ABOVE THE NOTEBOOK RIBBON ---------------
+     The bar is still the SHELL's --
      one per notebook, wired once by wireFileInfo -- so the active one
      is moved into #file-dock and the others are put back in their own
-     railhead. Moving rather than rebuilding is what keeps every handler
-     and each notebook's own path live. */
+     railhead. Moving rather than rebuilding keeps every handler and each
+     notebook's own path live (2026-09-11). */
   function rfBarFor(shellEl){
     if(!shellEl) return null;
     var own=shellEl.querySelector('.railfile');
@@ -5040,7 +5182,13 @@
     function take(it){
       if(!keep(it)) return false;
       if(scope==='section') return it.section===sid;
-      if(scope==='marks'){var st=markOf(stem,it.card);return !!(st.p||st.f);}
+      if(scope==='marks'){
+        var st=markOf(stem,it.card);
+        /* autoPlan is deliberately liftable for the metric tests, so use the
+           stored shape directly rather than depending on the label UI helper. */
+        var tagged=Array.isArray(st.tags)?st.tags.length:!!st.f;
+        return !!(st.p||tagged);
+      }
       return true;
     }
     var sec=secs.filter(function(s){return s.id===sid;})[0];
@@ -5080,8 +5228,8 @@
     }
     if(!plan.sections.length){
       alert(scope==='marks'
-        ?'None of the cells you pinned or flagged is markdown or a figure '
-          +'\u2014 mark some first.'
+        ?'None of the cells you pinned or labelled is markdown or a figure '
+          +'\u2014 label some first.'
         :'No markdown or figure cells to make slides from here.');
       return;
     }

@@ -65,7 +65,7 @@ body.presrail-min{--presrail-w:46px;}
    DENSE on purpose (2026-08-04, user, pointing at PowerPoint): the way a
    real ribbon fits everything on one row is small, tightly-packed
    controls with their labels INTACT — never by degrading to icons. */
-.appbar .toggle,.appbar .appbar-link,.nb-quickbar .toggle,
+.appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,.nb-quickbar .toggle,
 .nb-quickbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:var(--ab-btn-h);box-sizing:border-box;
   padding:0 var(--ab-btn-px);line-height:1;font-size:11.5px;
@@ -128,9 +128,14 @@ body.presrail-min{--presrail-w:46px;}
 /* + Open is one button in its own section. It used to be told to fill
    the band on its own, which made it 30px on a 28px bar the moment
    T364 docked the file controls under it. */
-#ab-file .abgrp-row .fgrp{flex:1;}
-#ab-file .abgrp-row .toggle{height:var(--ab-btn-h);
-  min-height:var(--ab-btn-h);flex:none;}
+/* File provenance gets its own compact line above the controls it is not
+   changing. Keeping it out of .appbar gives the filters their width back. */
+.nb-filebar{display:flex;align-items:center;gap:5px;min-height:34px;
+  box-sizing:border-box;padding:3px 8px;background:var(--chrome-1,#0d1a26);
+  border-bottom:1px solid #ffffff12;overflow-x:auto;scrollbar-width:thin;}
+.nb-filebar[hidden]{display:none!important;}
+.nb-filebar #file-dock{min-width:0;}
+.nb-filebar #file-dock .railfile{margin-top:0;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
    screen is the same idea, and the two stack the way Raw and Tree do. */
@@ -149,13 +154,6 @@ body.presrail-min{--presrail-w:46px;}
 #ab-app .btn-grp>*{flex:none;}
 #ab-app .toggle{min-width:34px;}
 #ab-app .bic{width:17px;height:17px;}
-#ab-file{margin-left:10px;}
-/* T260: Open is hidden unless the page can actually open a file, which a
-   shared standalone render cannot. The GROUP stayed either way, so the
-   bar carried a "File" caption over an empty box and a divider -- ~60px
-   of a bar that was already scrolling sideways. JS hides the group with
-   its button (see fitRibbon's caller). */
-.abgrp.grp-empty{display:none!important;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present,#ab-view #doc-full,#ab-view #doc-autoslides{
   justify-content:center;align-items:center;}
@@ -188,9 +186,10 @@ body.light .abgrp-lab{color:var(--ink-3);}
   text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
   line-height:22px;height:22px;white-space:nowrap;}
 body.light .fgrp-cap{color:var(--ink-3);}
-.appbar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
+.appbar .toggle.primary,.nb-filebar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
   color:#04222b;font-weight:600;}
-.appbar .toggle.primary:hover{filter:brightness(1.08);color:#04222b;}
+.appbar .toggle.primary:hover,.nb-filebar .toggle.primary:hover{
+  filter:brightness(1.08);color:#04222b;}
 /* ONE button height across the whole ribbon (2026-07-29, user: "make all
    buttons have same height"). A sub-picker is still visually quieter —
    dimmer text, fainter border, smaller type — but it is never shorter,
@@ -248,10 +247,10 @@ body.tree-mode #copy-grp{display:none!important;}
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:var(--chrome-line);}
 /* dark variants of the show/hide toggles */
-.appbar .toggle,.nb-quickbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
+.appbar .toggle,.nb-filebar .toggle,.nb-quickbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
 .appbar-link{text-decoration:none;display:inline-flex;
   align-items:center;}
-.appbar .toggle:hover,.nb-quickbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.appbar .toggle:hover,.nb-filebar .toggle:hover,.nb-quickbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
 /* ---- ribbon COMPACTION (see fitRibbon in app.js): ONE stage, spacing
    only, then the bar scrolls sideways. NO WORDS EVER DISAPPEAR
@@ -1132,22 +1131,31 @@ body:not(.light) .ot-stub:hover{color:var(--cyan);}
 /* the labelled dimension of the Plot-types menu */
 .ckf-dot.pt-sw-titled{background:#6cc08f;}
 .ckf-dot.pt-sw-untitled{background:#5f7386;}
-/* T364: the mark gate, in the Filters group. Ribbon buttons, so they
-   take the bar's one height and one baseline rather than inventing a
-   third; the pressed one is coloured by the mark it stands for, not by
-   one generic accent, which is how you tell at a glance which gate is
-   shut (2026-09-07, user: "I hate it being in the side bar"). */
-.mkchip[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);
+/* Labels are a single ribbon control: reactions and categories can grow
+   without taking a column each. The grouped menu is shared by card labels
+   and the filter, but only the filter gets this active state. */
+.mark-filter[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);
   background:color-mix(in srgb,var(--accent) 18%,transparent);}
-.mkchip[data-only="star"][aria-pressed="true"]{
-  border-color:var(--amber,#f0a848);color:var(--amber,#f0a848);
-  background:color-mix(in srgb,#f0a848 16%,transparent);}
-.mkchip[data-only="heart"][aria-pressed="true"]{
-  border-color:#e0757c;color:#e0757c;
-  background:color-mix(in srgb,#e0757c 16%,transparent);}
-.mkchip[data-only="flag"][aria-pressed="true"]{
-  border-color:#5fc4ac;color:#5fc4ac;
-  background:color-mix(in srgb,#5fc4ac 16%,transparent);}
+.mark-menu{position:fixed;z-index:210;display:flex;flex-direction:column;
+  min-width:218px;max-width:min(330px,calc(100vw - 12px));padding:7px;
+  gap:3px;border:1px solid #ffffff2a;border-radius:8px;
+  background:var(--chrome-2,#16273a);box-shadow:0 12px 40px #0008;}
+.mark-menu-h{margin:4px 5px 1px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--chrome-ink-2);}
+.mark-menu-row{display:flex;align-items:center;gap:7px;width:100%;padding:6px 7px;
+  border:1px solid transparent;border-radius:5px;background:none;
+  color:var(--chrome-ink,#d7e3ec);font:11px var(--sans);text-align:left;
+  cursor:pointer;}
+.mark-menu-row:hover,.mark-menu-row.on{background:#ffffff12;border-color:#ffffff24;}
+.mark-menu-row.on{color:var(--cyan);}
+.mark-menu-row .bic{width:14px;height:14px;flex:none;}
+.mark-menu-row .mark-menu-name{flex:1;min-width:0;}
+.mark-menu-row .mark-menu-count{font-family:var(--mono);font-size:10px;
+  color:var(--chrome-ink-2);}
+.mark-menu-check{width:14px;text-align:center;flex:none;}
+.mark-menu-clear{margin-top:3px;border-top:1px solid #ffffff1b;padding-top:6px;}
+body.light .nb-filebar{background:var(--chrome-1);border-bottom-color:var(--chrome-line);}
+body.light .mark-menu{background:var(--chrome-2);border-color:var(--line);box-shadow:0 12px 40px #0003;}
 /* "Apply to" scope picker: the section tree, tier-indented + tickable */
 .scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
   overflow-y:auto;}

@@ -9,7 +9,8 @@ comment in branding.py):
 * render/items.py stamps finished markup through ``icon_svg`` (its
   local alias ``_ic``);
 * the scripts read ``window.SemIcons`` / the widget's ``data.icons``
-  through a per-file ``bic('key')`` accessor.
+  through a per-file ``bic('key')`` accessor, or declare an ``ic:'key'``
+  value consumed by a shared picker row.
 
 Two things can rot silently and this file is what makes them loud:
 
@@ -67,7 +68,11 @@ def _used_keys() -> set[str]:
     used |= set(re.findall(r'_ic\("([a-z][a-z0-9-]*)"\)',
                            _read("render/items.py", SRC)))
     for rel in SCRIPTS:
-        used |= set(re.findall(r"bic\('([a-z][a-z0-9-]*)'\)", _read(rel)))
+        script = _read(rel)
+        used |= set(re.findall(r"bic\('([a-z][a-z0-9-]*)'\)", script))
+        # A data-driven picker passes its declared icon to bic(info.ic), so
+        # the consumer is deliberately dynamic rather than one literal call.
+        used |= set(re.findall(r"\bic:'([a-z][a-z0-9-]*)'", script))
     return used
 
 
@@ -79,7 +84,7 @@ def test_every_icon_key_is_used_or_declared_pending():
     # an implausibly small haul means the patterns rotted, not the icons
     assert len(used) > 30, (
         f"only {len(used)} icon keys extracted — the consumption "
-        "patterns (data-ic tokens / _ic(...) / bic(...)) no longer "
+        "patterns (data-ic tokens / _ic(...) / bic(...)/picker icons) no longer "
         "match the sources")
 
     # a bic('typo') returns '' at runtime and nothing complains — THIS

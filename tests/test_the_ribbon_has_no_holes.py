@@ -140,11 +140,13 @@ def test_the_viewer_bar_centres_what_does_not_fill_the_band():
 
 
 def test_the_viewer_bar_has_one_button_height():
-    """34px App buttons on a 28px bar, and a 30px Open beside a 28px
-    docked file bar, were the two that had drifted."""
+    """The main ribbon's buttons share one height; the file utility line
+    has its own deliberately compact docked controls above it."""
     css = assets.load("css/app.css")
-    assert ("#ab-file .abgrp-row .toggle{height:var(--ab-btn-h);\n"
-            "  min-height:var(--ab-btn-h);flex:none;}") in css
+    assert (".nb-filebar{display:flex;align-items:center;gap:5px;min-height:34px;"
+            in css)
+    core = assets.load("css/core.css")
+    assert "#file-dock .rf-btn{height:28px;box-sizing:border-box;" in core
     buttons = css.split(".nb-quickbar .appbar-link,.present-bar .toggle{")[1]
     assert "height:var(--ab-btn-h);" in buttons.split("}")[0]
 

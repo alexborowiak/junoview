@@ -81,6 +81,9 @@ RUNTIME_IDS = {
     # the layout-ideas chooser, built on open and removed on close like
     # the two menus above (35-arranging.js openLayoutIdeas, T131)
     "lay-ideas",
+    # app.js creates the one Labels filter button only once a notebook has
+    # a pin or label; its grouped popover itself has no id (2026-09-11).
+    "marks-filter",
     # the reading-order panel, built on open and removed on close
     # (45-images.js openReadingOrder, T106)
     "rd-order",

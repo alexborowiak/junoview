@@ -1690,9 +1690,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-11 follow-up also separates permanent provenance from foldable
 # picture decoration, corrects measured 21pt auto-slide notes, excludes
 # prose frames from the image survey, and keeps auto-created list editors
-# alive across their replacement node's blur.
-EXPECTED_MD5 = "ecf8acc976a5758ba20f38cd2764a5ff"
-EXPECTED_BYTES = 3991683
+# alive across their replacement node's blur. The later notebook pass moves
+# File/Open provenance into its own utility line and adds the grouped
+# multi-label picker/filter (reactions plus categories), changing the
+# assembled static page deliberately.
+EXPECTED_MD5 = "abc24acf8ef1cd7da4e6ce0104321d76"
+EXPECTED_BYTES = 3997535
 
 
 def _render_example() -> str:

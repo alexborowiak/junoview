@@ -235,17 +235,15 @@ def render_item(item: Item, sec_id: str = "") -> str:
         f'<h3 class="cardtitle{" echo" if item.title_echo else ""}">'
         f'{html.escape(item.title)}</h3>'
         f'{id_tag}{trace_btn}'
-        # T242: the two MARKS a cell can carry. Pin means the filters
-        # cannot reach it -- "I have one cell that has output I want
-        # but I do not want the rest" -- and the mark is a bookmark,
-        # listed at the top of the sidebar so you can get back to it.
+        # Pin means the filters cannot reach a cell. Labels are deliberately
+        # separate and multi-select: reactions and categories belong on the
+        # cell without moving it away from its existing outline row.
         f'<button class="cell-pin" type="button" aria-pressed="false" '
         f'title="Pin this cell: the filters cannot hide it, whatever '
         f'they are set to" aria-label="Pin this cell">{_ic("pin")}</button>'
         f'<button class="cell-mark" type="button" data-mark="" '
-        f'title="Mark this cell so you can find it again. Clicks cycle: '
-        f'star, heart, flag, none" '
-        f'aria-label="Mark this cell">{_ic("star")}</button>'
+        f'title="Label this cell with reactions or categories" '
+        f'aria-label="Label this cell">{_ic("tag")}</button>'
         f'<button class="cell-eye" type="button" '
         f'title="Hide this cell (it stays in the sidebar so you can bring '
         f'it back)" aria-label="Hide this cell">{_ic("eye")}</button>'

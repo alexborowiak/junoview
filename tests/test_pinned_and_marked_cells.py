@@ -8,9 +8,9 @@ see them down on the side menu as well."
 
 Driven on the example notebook: pinning a card and then setting Output
 to Off for the whole notebook left the pinned card's output showing
-while its unpinned peer's output part went `part-off`; the mark button
-cycled star -> heart -> flag -> none; and the sidebar grew a "pinned &
-marked" list, pinned first, that survives a reload.
+while its unpinned peer's output part went `part-off`; the label button
+offers reactions and categories which can be combined on one cell; and
+the symbols stay on the cell's existing sidebar row across a reload.
 """
 
 from __future__ import annotations
@@ -58,11 +58,19 @@ def test_pinning_beats_hiding_by_hand(out):
     assert "        if(!st.p) setCellOff(id,false);" in app
 
 
-def test_the_mark_cycles_and_is_kept():
+def test_labels_are_multi_select_and_are_kept():
     app = assets.app_js()
-    assert "  var MARK_KINDS=['star','heart','flag'];" in app
-    assert "        var at=MARK_KINDS.indexOf(st.f||'');" in app
-    assert "        var next=MARK_KINDS[at+1]||'';" in app
+    assert "  var MARK_GROUPS=[" in app
+    assert "{k:'smile',ic:'smile',lab:'Smile'" in app
+    assert "{k:'main',ic:'star',lab:'Main'" in app
+    for tier in ("tier-1", "tier-2", "tier-3", "supplementary"):
+        assert f"{{k:'{tier}',ic:'tag'" in app
+    assert "function markTags(st){" in app
+    # The former one-value `f` store remains readable so existing labels
+    # do not disappear when the multi-label picker lands.
+    assert "Array.isArray(st.tags)?st.tags:(st&&st.f?[st.f]:[])" in app
+    assert "m[id]={p:next.p?1:0,tags:tags};" in app
+    assert "function customTag(label){" in app
     # per notebook, so the pins on an analysis are there tomorrow
     assert "  var MARKKEY='semmarks:'+location.pathname;" in app
     assert "  function writeMarks(stem,m){" in app
@@ -88,11 +96,14 @@ def test_the_mark_rides_the_row_the_cell_already_has():
     assert "      var mk=nav.querySelector('.navitem-mk');" in app
     assert ("          nav.insertBefore(mk,nav.querySelector"
             "('.navitem-eye'));") in app
-    # both facts show when a cell is pinned AND marked
+    # all facts show when a cell is pinned and has several labels
     assert "        if(st.p) mk.appendChild(glyph('pin','mk-i-pin'));" in app
-    assert "        if(st.f) mk.appendChild(glyph(st.f,'mk-i-'+st.f));" in app
+    nav_tags = "tags.forEach(function(k){mk.appendChild(glyph(k,'mk-i-'+k));});"
+    assert nav_tags in app
     css = assets.load("css/core.css")
     assert ".navitem-mk{flex:none;display:flex;align-items:center;" in css
     assert ".mk-i-pin{color:var(--cyan);}" in css
     assert ".mk-i-star{color:var(--amber,#f0a848);}" in css
+    assert ".mk-i-smile{color:#8fbc68;}" in css
+    assert ".mk-i-cat{font:600 8px/1 var(--mono);" in css
     assert ".card.is-pinned{border-left:3px solid var(--cyan-deep);}" in css

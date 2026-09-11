@@ -7623,3 +7623,19 @@ Verification: the assembled JavaScript parses; dash-to-list, default/repeat,
 the 14-slide generated deck, seven-image inventory, source controls and rail
 auto-hide were exercised in the local Chromium browser. The full repository
 gates are recorded in the completing commit.
+
+### Completed 2026-09-11 — notebook chrome and cell labels
+
+- [x] **T375 — Give notebook file actions their own compact utility line,
+  and turn the one cycling mark into useful labels.** Open, file path,
+  Reload and Show-all-hidden now live in a thin line above the notebook
+  ribbon, freeing the main Filters row from its old File group and its
+  spacer columns. A cell's former cycle is now a multi-select picker:
+  reactions are Star, Heart, Smile and Flag; categories are Main, Tier 1,
+  Tier 2, Tier 3 and Supplementary; a named custom label covers the
+  remaining cases. Labels can be combined (for example Heart + Tier 1),
+  remain on the cell's existing outline row, and legacy star/heart/flag
+  data is read without loss. Filtering is one compact **Labels** menu in
+  Filters, grouped by reactions/categories and showing only labels used in
+  the current notebook; selected labels match with OR semantics. Exercised
+  live with two labelled cells and the combined Heart/Tier 1 filter.

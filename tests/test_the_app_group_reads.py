@@ -73,17 +73,18 @@ def test_the_icon_only_square_rule_names_only_icon_only_buttons():
     assert "#theme-btn" not in rules
 
 
-def test_a_group_with_nothing_in_it_is_not_rendered():
+def test_the_file_utility_line_hides_when_it_has_no_job():
+    page = assets.load("html/page.html")
+    assert '<div class="nb-filebar" id="nb-filebar" hidden>' in page
     css = assets.load("css/app.css")
-    assert ".abgrp.grp-empty{display:none!important;}" in css
+    assert ".nb-filebar[hidden]{display:none!important;}" in css
     app = assets.app_js()
-    assert "    var fileGrp=$('#ab-file');" in app
-    assert ("    if(fileGrp) fileGrp.classList.toggle('grp-empty',!canOpen);"
-            in app)
-    # it hides with the same flag that hides its only button
+    assert "    var fileBar=$('#nb-filebar');" in app
+    assert "if(fileBar) fileBar.hidden=!canOpen&&!APP.active;" in app
+    # Open still hides with the same ability flag as before.
     chrome = app.split("  function refreshChrome(){")[1].split("\n  function ")[0]
     assert "if(openBtn) openBtn.hidden=!canOpen;" in chrome
-    assert "grp-empty" in chrome
+    assert "nb-filebar" in chrome
 
 
 def test_the_ribbon_still_refuses_to_wrap():

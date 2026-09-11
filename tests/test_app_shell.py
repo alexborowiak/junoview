@@ -19,23 +19,23 @@ from junoview.render.page import render_html
 
 
 def test_ribbon_group_counts(out):
-    """File + 4 type filters + the mark gate + scope/reset + copy +
-    figure & text size.
+    """4 type filters + the mark gate + scope/reset + copy + figure &
+    text size. File provenance is in the thin utility line above.
 
     8 filter/scope groups + 2 tree-view groups (fold, width); the 2 size
     steppers carry ``fgrp-h`` and are counted separately. The ribbon is
     organised into LABELLED sections. T364 added the mark gate
     (``#marks-grp``) inside the Filters section.
     """
-    assert out.count('class="fgrp"') == 10
+    assert out.count('class="fgrp"') == 9
     assert out.count('class="fgrp fgrp-h"') == 2
-    assert out.count('class="abgrp-lab"') == 7   # + Tree (tree view only)
+    assert out.count('class="abgrp-lab"') == 6   # + Tree (tree view only)
     assert 'class="abgrp" id="ab-filters"' in out
 
 
-def test_ribbon_leads_with_open_and_the_file_bar_docks_beside_it(out):
-    """Open leads the ribbon, and File info / Reload / Show all hidden
-    dock next to it.
+def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
+    """Open and File info / Reload / Show all hidden are in a compact
+    utility line ABOVE the notebook controls.
 
     T364 (2026-09-07, user: "move the file into stuff and the refresh
     out of the side bar and into the ribbon"). The bar is not
@@ -44,7 +44,8 @@ def test_ribbon_leads_with_open_and_the_file_bar_docks_beside_it(out):
     notebook keeps its own paths.
     """
     assert 'class="toggle primary" id="tab-open"' in out
-    assert (out.index('id="tab-open"') < out.index('id="tv-plots"'))
+    assert (out.index('id="nb-filebar"') < out.index('class="appbar"'))
+    assert (out.index('id="tab-open"') < out.index('class="appbar"'))
     assert '<span class="fgrp-row" id="file-dock"></span>' in out
     # the bar is still authored in the shell, and moved
     shell = assets.load("html/shell.html")
@@ -172,7 +173,9 @@ def test_appbar_fills_its_row_with_capped_flexible_spacers(out):
     pools before the right-pinned App group; under pressure the spacers
     collapse to 0 first so compaction sees an unspaced bar.
     """
-    assert out.count('class="appbar-flex') == 8
+    # File moved into the utility line, taking its two main-bar spacers
+    # with it rather than leaving a decorative hole before Filters.
+    assert out.count('class="appbar-flex') == 6
     assert ".appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}" in out
     # the middle pair leaves with the filter sections in Tree view; the
     # measured filters slot spans (and so compensates for) their width
@@ -182,7 +185,7 @@ def test_appbar_fills_its_row_with_capped_flexible_spacers(out):
 
 def test_ribbon_size_stepper_and_fixed_view_slot(out):
     """The ribbon's size stepper, dividers and fixed-width View stack."""
-    assert out.count('class="appbar-div filt-div"') == 2
+    assert out.count('class="appbar-div filt-div"') == 1
     assert "APP.ribbonSizeStep=function(dir)" in out
     assert "if(!APP.ribbonSizeStep(1)) bumpFigAll(1.15);" in out
     assert "cap.textContent=isTree?'Tree':'Figures'" in out

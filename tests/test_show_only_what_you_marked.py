@@ -1,4 +1,4 @@
-"""Show only the cells you pinned, or starred, or hearted (T257).
+"""Show only cells carrying selected reactions or categories (T257).
 
 The user, 2026-09-04: "The pins are good, and would be good to have
 optins that is - show pinned options only, show starts only."
@@ -20,23 +20,13 @@ Two consequences worth writing down:
   already put there, so the gate has no second source of truth to drift
   from.
 
-T364 (2026-09-07) moved the chips OUT of the sidebar and into the
-Filters group of the ribbon, where the filters they gate already are.
-The user: "where is the button that has just the just show the pinned
-or hearted etc. I hate it being in the side bar. That sucks shit."
-They are ribbon buttons now, so they take the bar's one height and one
-baseline; they still carry a word AND an icon and a count, and still
-only appear for a mark the notebook actually uses -- a chip for a mark
-you have never used is a chip that empties the page. "All" appears
-only while a gate is shut, because at rest it is the state you are
-already in; pressing the lit chip is the other way out.
-
-Driven on the example notebook: with two pins, one star, one heart and
-one flag, four chips appeared in the ribbon; "Pinned" showed exactly
-the two pinned cards of 27, "Star" exactly the one starred card (the
-pinned ones gone with the rest), the All that appeared beside them
-restored all 27, and removing the last hearted mark while "Heart" was
-on released the gate instead of leaving an empty notebook.
+The user asked for several reactions plus practical categorisation
+labels, without making the already-wide toolbar grow again. One compact
+Labels button in the Filters group opens a grouped menu. It offers only
+labels the notebook uses when filtering, while each cell's picker also
+offers the complete set and custom labels. Several selected filters are
+an OR, so Heart plus Tier 1 means either, not only the uncommon cells
+carrying both.
 """
 
 from __future__ import annotations
@@ -49,15 +39,17 @@ def test_the_gate_is_kept_per_notebook():
     assert "  var ONLYKEY='semmarkonly:'+location.pathname;" in app
     assert "  function onlyFor(stem){" in app
     assert "  function setOnly(stem,v){" in app
+    assert "Array.isArray(v)?v:(typeof v==='string'&&v?[v]:[])" in app
 
 
 def test_it_reads_the_marks_off_the_card_itself():
-    """paintMark already stamps is-pinned / mk-star / mk-heart / mk-flag;
-    a second source of truth is a second thing to drift."""
+    """paintMark stamps a compact tags list on the card; filtering does
+    not reimplement the marks store."""
     app = assets.app_js()
     assert "  function onlyKeeps(c,only){" in app
-    assert "    return only==='pin'?c.classList.contains('is-pinned')" in app
-    assert "      :c.classList.contains('mk-'+only);" in app
+    assert "    var tags=(c.dataset.marks||'').split('|');" in app
+    assert "    return only.some(function(k){return k==='pin'" in app
+    assert "?c.classList.contains('is-pinned'):tags.indexOf(k)>=0;});" in app
 
 
 def test_the_gate_runs_before_the_pin_bypass():
@@ -74,12 +66,13 @@ def test_the_gate_runs_before_the_pin_bypass():
     assert "          if(onav) onav.classList.add('nav-hidden');" in app
 
 
-def test_a_chip_only_appears_for_a_mark_the_notebook_uses():
+def test_one_labels_control_only_appears_when_the_notebook_has_labels():
     app = assets.app_js()
-    assert "    var m=marksFor(stem),have={pin:0,star:0,heart:0,flag:0}," in app
-    assert ("      if(have[o.k]) row.appendChild(chip(o.k,o.ic,o.lab,"
-            "have[o.k]));});") in app
-    # ...and the whole group goes when the notebook has no marks at all
+    assert "  function markCounts(shell,stem){" in app
+    assert "    host.hidden=!have.any;" in app
+    assert "b.id='marks-filter';b.className='toggle sub mark-filter';" in app
+    assert "Filter cells by reactions and categories" in app
+    # ...and the whole group goes when the notebook has no labels
     assert "    host.hidden=!have.any;" in app
     # counted off the OUTLINE, so a mark from another notebook does not
     # raise a chip that gates on nothing
@@ -87,8 +80,8 @@ def test_a_chip_only_appears_for_a_mark_the_notebook_uses():
             " return;") in app
 
 
-def test_the_chips_are_in_the_ribbon_with_the_filters_they_gate():
-    """T364: out of the sidebar, into the Filters group."""
+def test_the_labels_menu_is_in_the_ribbon_with_the_filters_it_gates():
+    """It is out of the sidebar, inside the Filters group."""
     app = assets.app_js()
     page = assets.load("html/page.html")
     assert '<span class="fgrp" id="marks-grp" hidden>' in page
@@ -103,51 +96,44 @@ def test_the_chips_are_in_the_ribbon_with_the_filters_they_gate():
             in app)
 
 
-def test_every_chip_is_a_word_plus_an_icon():
-    """Icon-only was rejected twice; a bare word among iconed chips reads
-    as a label rather than a button, so All wears one too."""
+def test_the_labels_control_and_menu_rows_are_words_plus_icons():
     app = assets.app_js()
-    assert "    if(only) row.appendChild(chip('','cellcard','All',0));" in app
-    assert "      b.innerHTML=bic(ic)+'<span class=\"btxt\">'+lab" in app
+    assert "b.innerHTML=bic('tag')+'<span class=\"btxt\">Labels'" in app
+    assert "b.innerHTML=bic(info.ic);" in app
+    assert "name.textContent=info.lab;" in app
 
 
-def test_the_way_back_out_is_on_the_row():
+def test_the_way_back_out_is_in_the_menu():
     app = assets.app_js()
-    assert "        :'Show every cell again';" in app
-    # pressing the chip that is already on is also a way out
-    assert "        setOnly(stem,only===k?'':k);" in app
+    assert "<span class=\"mark-menu-name\">Show all cells</span>" in app
+    assert "setOnly(stem,[]);closeLabelMenu();" in app
 
 
 def test_a_gate_with_nothing_left_to_show_lets_go():
     """Un-marking the last hearted cell while "Heart" is on would
     otherwise empty the notebook with no visible cause."""
     app = assets.app_js()
-    assert "      if(only){setOnly(stem,'');applyFilters();}" in app
-    assert "    if(only&&!have[only]){setOnly(stem,'');only='';}" in app
+    assert "if(only.length){setOnly(stem,[]);applyFilters();}" in app
+    assert "if(only.length!==onlyFor(stem).length) setOnly(stem,only);" in app
 
 
-def test_changing_a_mark_changes_what_is_in_view():
+def test_changing_a_label_changes_what_is_in_view():
     app = assets.app_js()
-    mark = app.split("$$('.cell-mark',shell).forEach(function(btn){")[1]
-    mark = mark.split("    });")[0]
-    assert "applyFilters();" in mark
+    labels = app.split("  function openCellLabels(btn,shell,stem,id){")[1]
+    labels = labels.split("  document.addEventListener('click'", 1)[0]
+    assert "setMarkState(stem,id,{p:st.p?1:0,tags:next});" in labels
+    assert "paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();" in labels
 
 
-def test_the_chip_is_coloured_by_the_mark_it_stands_for():
-    """Not one generic accent: which gate is shut has to read at a
-    glance, and the mark's own colour is what says it."""
+def test_the_menu_is_a_compact_menu_not_a_new_wrapping_ribbon_row():
     css = assets.load("css/app.css")
-    assert ('.mkchip[data-only="star"][aria-pressed="true"]{\n'
-            '  border-color:var(--amber,#f0a848);'
-            'color:var(--amber,#f0a848);') in css
-    assert ('.mkchip[data-only="heart"][aria-pressed="true"]{\n'
-            '  border-color:#e0757c;color:#e0757c;') in css
-    assert ('.mkchip[data-only="flag"][aria-pressed="true"]{\n'
-            '  border-color:#5fc4ac;color:#5fc4ac;') in css
-    # a ribbon button, so it takes the bar's one height rather than
-    # inventing a third
+    assert ".mark-filter[aria-pressed=\"true\"]" in css
+    assert ".mark-menu{position:fixed;" in css
+    assert ".mark-menu-row{display:flex;align-items:center;" in css
     app = assets.app_js()
-    assert "      b.className='toggle sub mkchip';" in app
+    assert "function openLabelFilter(btn,shell,stem,have){" in app
+    assert "function openCellLabels(btn,shell,stem,id){" in app
+    assert "Add a custom label…" in app
 
 
 def test_the_ribbon_never_wrap_rule_is_untouched():

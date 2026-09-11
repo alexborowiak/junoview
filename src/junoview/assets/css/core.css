@@ -180,8 +180,8 @@ body.prrail-auto .railnbs{display:flex;}
   transparent);}
 /* where this notebook came from: path + git commit + earlier versions,
    with the reload button beside it (it used to hide on the tab).
-   T364: it is DOCKED in the ribbon's File group now, and the margin
-   that spaced it under the notebook's name goes when it is. */
+   It is DOCKED above the notebook ribbon, and the margin that spaced it
+   under the notebook's name goes when it is. */
 .railfile{display:flex;gap:4px;margin-top:11px;}
 #file-dock .railfile{margin-top:0;gap:3px;}
 /* the ribbon has ONE height and one baseline; a docked bar that keeps
@@ -875,12 +875,9 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   transition:opacity .15s,background .15s;}
 .card:hover .cell-eye,.cell-eye:focus-visible{opacity:.55;}
 .cell-eye:hover{opacity:1;background:var(--paper-2);}
-/* T364: ...and the mark sits on the row the cell ALREADY has, rather
-   than copying that cell into a list above the sections. Both symbols
-   show when a cell is pinned AND marked: they are two different facts
-   about it, and the colour is the mark's own so the row reads at a
-   glance (2026-09-07, user: "just have the symbols appear next to them
-   where they are in the side bar"). */
+/* Labels sit on the row the cell ALREADY has, rather than copying that
+   cell into a list above the sections. Pin plus any reactions/categories
+   show together: they are different facts about the cell. */
 .navitem-mk{flex:none;display:flex;align-items:center;gap:3px;
   line-height:0;}
 .navitem-mk .mk-i{display:flex;line-height:0;}
@@ -889,6 +886,10 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .mk-i-star{color:var(--amber,#f0a848);}
 .mk-i-heart{color:#e0757c;}
 .mk-i-flag{color:#5fc4ac;}
+.mk-i-smile{color:#8fbc68;}
+.mk-i-main{color:var(--amber,#f0a848);}
+.mk-i-cat{font:600 8px/1 var(--mono);letter-spacing:-.03em;
+  color:#8fb7c8;border:1px solid #8fb7c866;border-radius:3px;padding:1px 2px;}
 /* code fully hidden: the code tucked under figures disappears too */
 .codewrap.code-off{display:none;}
 .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
@@ -1490,7 +1491,7 @@ body.th-colorful[data-theme-zone="object"]{
   --accent:#eea4cc;--accent-deep:#a34276;}
 body.th-colorful[data-theme-zone="present"]{
   --accent:#f18ab1;--accent-deep:#a63c68;}
-body.th-colorful .rbn-grp[data-tab="home"],body.th-colorful #ab-file{
+body.th-colorful .rbn-grp[data-tab="home"],body.th-colorful .nb-filebar{
   --accent:#f2b85b;--accent-deep:#9a5c00;}
 body.th-colorful .rbn-grp[data-tab="images"],
 body.th-colorful .rbn-grp[data-tab="text"],
