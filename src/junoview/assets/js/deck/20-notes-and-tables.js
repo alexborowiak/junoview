@@ -1079,7 +1079,11 @@
          element already holds it -- clicking into a box you are already
          in left the hint sitting there to be selected and deleted,
          which is the annoyance being removed. */
-      if(!getVal()) el.textContent='';
+      /* An empty LIST is not an empty element: its first <li><br></li>
+         is the marker and caret target. Clearing the root here removed
+         that item immediately after dash-to-bullet rebuilt the editor,
+         and the apparently-created box then vanished. */
+      if(!getVal()&&!el.classList.contains('an-ul')) el.textContent='';
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
       el.focus();
       var host=el.closest?el.closest('.an-item'):null;
@@ -1145,7 +1149,10 @@
       if(tool!=='select') el.blur();
     });
     el.addEventListener('focus',function(){
-      if(!getVal()) el.textContent='';
+      /* beginEdit already preserves an empty list's first <li>; focus
+         must make the same distinction or it erases that caret target
+         one event later. */
+      if(!getVal()&&!el.classList.contains('an-ul')) el.textContent='';
     });
     /* THE CARET NEVER ENTERS A BUILD WRAPPER. The pieces a text build is
        cut into are render-time <span>s (17-text-builds.js): typing
@@ -1183,6 +1190,16 @@
     el.addEventListener('blur',function(){
       clearTimeout(typeT);
       delete el.__jvFlush;
+      /* Auto-list replaces this node with a new <ul>/<ol> editor. The
+         detached plain node still receives blur in Chromium; committing
+         its deliberately-cleared contents would immediately remove the
+         list flag and then delete the box. The replacement already owns
+         the model and the caret, so this stale blur has nothing to save. */
+      if(el.__jvSkipBlur){
+        delete el.__jvSkipBlur;
+        endEdit();
+        return;
+      }
       var v=(el.innerText||'').replace(/\r/g,'')
         .replace(/\n+$/,'');
       var r=rich?sanitizeRich(el.innerHTML):null;
@@ -1286,10 +1303,11 @@
          through setVal(), then the list-exit guard would remove a.list.
          Disarm the detached editor before asking for that rebuild. */
       delete el.__jvFlush;
+      el.__jvSkipBlur=1;
       el.contentEditable='false';
       var host3=el.closest?el.closest('.an-item'):null;
       if(host3) host3.classList.remove('an-editing');
-      a3.text='';delete a3.html;
+      a3.text='';delete a3.html;delete a3.ph;
       setListStyle(a3,kind);
       markDirty();
       var l3=stage.querySelector('.annot-layer');

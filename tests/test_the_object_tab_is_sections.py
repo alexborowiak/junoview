@@ -39,21 +39,27 @@ def test_history_has_a_section_of_its_own():
     assert "fmt-hist" not in _ids(_row(html, "Arrange"))
 
 
-def test_the_grab_bag_became_three_sections():
+def test_the_grab_bag_became_focused_sections():
     html = assets.deck_html()
     for ic, lab in (("rulers", "Size &amp; place"), ("cellcard", "Picture"),
-                    ("objects", "Object")):
-        assert f'<span class="rbn-grp" data-tab="object" data-fold-ic="{ic}">' \
-            in html, ic
+                    ("tree", "Source"), ("objects", "Object")):
+        cls = "rbn-sources" if ic == "tree" else (
+            "rbn-picture" if ic == "cellcard" else "")
+        classes = "rbn-grp" + (" " + cls if cls else "")
+        assert re.search(
+            rf'<span class="{classes}" data-tab="object"\s+'
+            rf'data-fold-ic="{ic}">', html), ic
         assert f'<span class="rbn-lab">{lab}</span>' in html, lab
-    place, pic, obj = (_ids(_row(html, x)) for x in
-                       ("Size &amp; place", "Picture", "Object"))
+    place, src, pic, obj = (_ids(_row(html, x)) for x in
+                            ("Size &amp; place", "Source", "Picture", "Object"))
     # where it sits on the page
     assert place == ["fmt-lock", "fmt-lockar", "fmt-geom-xy", "rb-x", "rb-y",
                      "fmt-geom-wh", "rb-w", "rb-h", "fmt-sizepos"], place
-    # what the picture inside it is, and where it came from
-    for cid in ("fmt-figures", "fmt-cropwrap", "fmt-caption", "fmt-imgrefresh",
-                "fmt-path", "fmt-srcwrap", "fmt-parts"):
+    # where it came from is permanently visible and independent of the
+    # picture-decoration group, which is allowed to fold on a laptop
+    for cid in ("fmt-path", "fmt-imgrefresh", "fmt-srcwrap"):
+        assert cid in src, cid
+    for cid in ("fmt-figures", "fmt-cropwrap", "fmt-caption", "fmt-parts"):
         assert cid in pic, cid
     # the object itself
     assert obj.index("fmt-opcell") < obj.index("fmt-cmp-make") \
@@ -65,7 +71,7 @@ def test_every_object_control_still_has_exactly_one_home():
     html = assets.deck_html()
     seen: dict[str, str] = {}
     for lab in ("Arrange", "History", "Font", "Paragraph", "Line &amp; shape",
-                "Size &amp; place", "Picture", "Object", "Table"):
+                "Size &amp; place", "Source", "Picture", "Object", "Table"):
         for cid in _ids(_row(html, lab)):
             assert cid not in seen, (cid, seen.get(cid), lab)
             seen[cid] = lab

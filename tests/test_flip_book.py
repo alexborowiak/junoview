@@ -359,7 +359,7 @@ def test_a_page_can_be_added_and_taken_away(out):
     # offered for ONE text box at a time, and never folded away
     assert "if(pgA&&pgA.k==='text'&&typeof textAddPage==='function'){" in out
     assert "menuHead(m,'flip book');" in out
-    assert "'chart':1,'shows with':1,'flip book':1};" in out
+    assert "'chart':1,'shows with':1,'flip book':1," in out
 
 
 def test_text_pages_and_figures_walk_in_pairs(out):

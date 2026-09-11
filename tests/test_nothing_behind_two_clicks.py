@@ -197,16 +197,15 @@ def test_the_qr_code_feature_is_gone_whole(out):
     assert "Existing decks are unaffected: a QR" in out
 
 
-def test_the_object_tab_kept_its_five_unlabelled_groups(out):
-    """Arrange, Colour, Text, Line & shape, Object -- plus Table. Losing
-    Animation must not have taken anything else with it."""
-    # (three unlabelled since T221 named Font and Paragraph; six since
-    # T233 split Object in three and gave History its own section)
-    assert out.count('class="rbn-grp" data-tab="object"') == 6
+def test_the_object_tab_kept_all_of_its_groups(out):
+    """Losing Animation must not take any of the ten Object groups."""
+    assert len(re.findall(
+        r'class="rbn-grp[^\"]*" data-tab="object"', out
+    )) == 10
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     html = assets.deck_html()
     for lab in ("Arrange", "History", "Font", "Paragraph",
-                "Line &amp; shape", "Size &amp; place", "Picture",
+                "Line &amp; shape", "Size &amp; place", "Source", "Picture",
                 "Object", "Table"):
         assert f'<span class="rbn-lab">{lab}</span>' in html, lab
     assert '<span class="rbn-lab">Colour</span>' not in html

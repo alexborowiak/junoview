@@ -16,10 +16,10 @@
      list, the marks and the notebook on screen -- and hands a PLAN
      here: {name, sections:[{title, items:[{ref, kind}]}]}. This file
      turns the plan into slides: one section heading per slide as its
-     title, the section's markdown and figures placed beneath, a slide
-     holding at most one markdown block and one figure so nothing is
-     shrunk to fit, and a section with several of either running on to
-     further slides under the same heading. Frames, not copies: every
+     title, the section's markdown and figures placed beneath, short
+     prose blocks sharing a slide, and figures sharing only when the
+     prose still fits at the presentation's 21pt body size. Frames, not
+     copies: every
      item is a notebook cell frame with its provenance, captured at once
      (embedIfAbsent) so the deck keeps its pixels when the notebook
      closes (T297/T305). autoDeckBuild is pure so a test can run it;
@@ -43,16 +43,36 @@
         var it=e.it;
         return typeof it.words==='number'&&it.words>0?it.words:0;
       }
-      function noteHeight(e){
+      function noteHeight(e,width){
         var it=e.it,px=+it.sourceHeight||0,lines=+it.lines||0;
-        if(px) return Math.max(8,Math.min(42,px/7.2));
-        if(lines) return Math.max(8,Math.min(42,5+lines*4.2));
-        var n=wordsOf(e);
-        return n?Math.max(8,Math.min(42,6+n*.78)):18;
+        var w=Math.max(1,+width||84),srcW=+it.sourceWidth||0;
+        /* 28 CSS px at the deck's 1280x720 reference is 21pt. Scale the
+           browser-measured notebook block by line height, then account
+           for reflow when it is put beside a figure. This is deliberately
+           allowed past one-slide height: the caller then gives the prose
+           its own slide rather than manufacturing a scrollbar. */
+        var srcFont=+it.sourceFontSize||15;
+        var srcLine=+it.sourceLineHeight||srcFont*1.45;
+        var typeScale=(28*1.35)/srcLine;
+        /* Larger glyphs also consume more horizontal space. Without this
+           second scale a two-line notebook paragraph became five lines on
+           the slide while its frame was only made two lines tall. */
+        var glyphScale=28/srcFont;
+        var wrapScale=srcW?Math.max(1,
+          srcW*glyphScale/(w*12.8)):1;
+        if(px) return Math.max(9,Math.min(88,
+          (px*typeScale*wrapScale+8)/7.2));
+        var n=wordsOf(e),perLine=Math.max(6,Math.floor(w/4.5));
+        var rows=Math.max(lines||0,n?Math.ceil(n/perLine):0);
+        return rows?Math.max(9,Math.min(88,4+rows*5.25)):14;
       }
       function noteWidth(e){
-        var px=+e.it.sourceWidth||0;
-        return px?Math.max(48,Math.min(84,px/12.8)):84;
+        var it=e.it,px=+it.sourceWidth||0;
+        /* Keep approximately the same line breaks after moving from the
+           notebook's body size to the deck's 21pt body size, within the
+           slide's ordinary 8% margins. */
+        var scale=28/(+it.sourceFontSize||15);
+        return px?Math.max(48,Math.min(84,px*scale/12.8)):84;
       }
       function cell(e,box){
         var it=e.it,a={k:'cell',ref:it.ref,part:it.part
@@ -61,9 +81,6 @@
         if(it.nbpath) a.nbpath=it.nbpath;
         if(it.kind==='note'){
           a.autoNote=1;
-          /* Notebook prose is presentation copy here, so it starts one
-             comfortable step larger while retaining its source proportions. */
-          a.ts=1.2;
         }
         return {a:a,seq:e.seq};
       }
@@ -87,23 +104,40 @@
         }
         var annots=title?[titleBox()]:[];
         var top=title?18:6,h=title?76:88;
-        var notes=md?[md]:[],usedH=md?noteHeight(md):0;
+        var tall=!!(fig&&typeof fig.it.aspect==='number'
+          &&fig.it.aspect<0.82);
+        if(md&&fig){
+          var pairH=noteHeight(md,tall?84:42);
+          /* A portrait figure below prose needs a real picture area. A
+             side-by-side pair only needs the prose to fit its column.
+             If it does not, put the first item on this slide and revisit
+             the second next time; decrementing i preserves source order. */
+          var pairFits=tall?pairH<=h-35:pairH<=h;
+          if(!pairFits){
+            if(md.seq<fig.seq) fig=null;
+            else md=null;
+            i--;
+            tall=false;
+          }
+        }
+        var notes=md?[md]:[],usedH=0;
         if(md&&!fig){
+          var firstW=noteWidth(md);
+          usedH=noteHeight(md,firstW);
           while(i<items.length&&items[i].it.kind==='note'){
-            var nh2=noteHeight(items[i]);
+            var nw2=noteWidth(items[i]);
+            var nh2=noteHeight(items[i],nw2);
             if(usedH+2+nh2>h) break;
             notes.push(items[i]);usedH+=2+nh2;i++;
           }
         }
-        var tall=!!(fig&&typeof fig.it.aspect==='number'
-          &&fig.it.aspect<0.82);
         var placed=[];
         if(md&&fig&&tall){
-          var mh=Math.min(30,noteHeight(md));
+          var mh=noteHeight(md,84);
           placed.push(cell(md,{x:8,y:top,w:84,h:mh}));
           placed.push(cell(fig,{x:14,y:top+mh+3,w:72,h:h-mh-3}));
         } else if(md&&fig){
-          placed.push(cell(md,{x:5,y:top,w:42,h:h}));
+          placed.push(cell(md,{x:5,y:top,w:42,h:noteHeight(md,42)}));
           placed.push(cell(fig,{x:50,y:top,w:45,h:h}));
         } else if(fig){
           var asp=+fig.it.aspect||1.4,fh=asp>1.9?Math.min(h,54):h;
@@ -112,7 +146,7 @@
         } else if(notes.length){
           var y=top;
           notes.forEach(function(e){
-            var nh=Math.min(h,noteHeight(e)),nw=noteWidth(e);
+            var nw=noteWidth(e),nh=Math.min(h,noteHeight(e,nw));
             placed.push(cell(e,{x:(100-nw)/2,y:y,w:nw,h:nh}));
             y+=nh+2;
           });

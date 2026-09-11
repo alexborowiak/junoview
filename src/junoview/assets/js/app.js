@@ -4993,7 +4993,8 @@
   }
   function autoItemMetrics(card,kind){
     var out={words:0,text:'',lines:0,sourceWidth:0,sourceHeight:0,
-      sourceFontSize:0,aspect:0,part:kind==='note'?'output':'figure'};
+      sourceFontSize:0,sourceLineHeight:0,aspect:0,
+      part:kind==='note'?'output':'figure'};
     if(!card) return out;
     if(kind==='note'){
       var note=card.querySelector('.note');
@@ -5005,7 +5006,15 @@
       var r=note.getBoundingClientRect();
       out.sourceWidth=note.clientWidth||r.width||0;
       out.sourceHeight=Math.max(note.scrollHeight||0,r.height||0);
-      out.sourceFontSize=parseFloat(window.getComputedStyle(note).fontSize)||15;
+      var ns=window.getComputedStyle(note);
+      out.sourceFontSize=parseFloat(ns.fontSize)||15;
+      /* The generated deck presents this prose at 21pt. Height alone is
+         not enough to predict the box after that change: two notebooks
+         can have the same rendered height at very different line heights.
+         Keep the actual source line box so autoDeckBuild can scale the
+         measured block instead of guessing from its word count. */
+      out.sourceLineHeight=parseFloat(ns.lineHeight)
+        ||out.sourceFontSize*1.45;
     } else {
       var fig=card.querySelector('.figframe img,.figframe svg,'
         +'.figframe video,.figframe .plotly-embed');

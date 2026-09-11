@@ -1686,9 +1686,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # declaration was already dead, which is why the user reported the
 # bullets as STILL in the wrong place. One character: 0 -> 0px. The
 # autosave readout now reserves its slot in the editor chrome as well,
-# preventing save controls from jumping when its text changes.
-EXPECTED_MD5 = "0857d2feae02c22905790411fd303881"
-EXPECTED_BYTES = 3988215
+# preventing save controls from jumping when its text changes. The
+# 2026-09-11 follow-up also separates permanent provenance from foldable
+# picture decoration, corrects measured 21pt auto-slide notes, excludes
+# prose frames from the image survey, and keeps auto-created list editors
+# alive across their replacement node's blur.
+EXPECTED_MD5 = "ecf8acc976a5758ba20f38cd2764a5ff"
+EXPECTED_BYTES = 3991683
 
 
 def _render_example() -> str:

@@ -245,7 +245,11 @@
             :st==='file'?(a.fname||'a file on this computer')
             :'pasted or dropped — the deck holds the only copy'});
       }
-      else if(a.k==='cell'&&a.ref) rows.push(imgFigRow(si,ai,a,a.ref));
+      /* A notebook cell can be prose, code, output or a figure. Only the
+         last is an image: auto-generated markdown frames used to inflate
+         a twelve-slide deck's image inventory to sixteen rows. */
+      else if(a.k==='cell'&&a.ref&&partOf(a)==='figure')
+        rows.push(imgFigRow(si,ai,a,a.ref));
       /* T308: A BOOK IS AS MANY FIGURES AS IT HAS PAGES, and a chart
          has a source too. Both were invisible here, in both surfaces,
          while provRef has always said they have one -- so a deck whose

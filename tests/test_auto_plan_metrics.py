@@ -24,7 +24,7 @@ def _run(body: str) -> object:
     functions = "\n".join(lift_fn(assets.app_js(), name) for name in (
         "autoNoteText", "autoFigureSize", "autoItemMetrics", "autoPlan"))
     setup = """
-var window={getComputedStyle:()=>({fontSize:'18px'})};
+var window={getComputedStyle:()=>({fontSize:'18px',lineHeight:'27px'})};
 function text(value){return {nodeType:3,nodeValue:value};}
 function node(tag,children){return {nodeType:1,tagName:tag,
   childNodes:children||[],clientWidth:600,scrollHeight:72,
@@ -56,6 +56,7 @@ console.log(JSON.stringify(autoItemMetrics(card('m',note),'note')));
     assert result["sourceWidth"] == 600
     assert result["sourceHeight"] == 72
     assert result["sourceFontSize"] == 18
+    assert result["sourceLineHeight"] == 27
     assert result["part"] == "output"
 
 

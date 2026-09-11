@@ -1451,7 +1451,21 @@ def test_typing_a_dash_makes_a_bullet(out):
     # Rebuilding the layer flushes live editors first. The auto-list path
     # must disarm the old editor or that flush removes the list it just made.
     assert "delete el.__jvFlush;" in out
+    assert "if(el.__jvSkipBlur){" in out
+    assert "el.__jvSkipBlur=1;" in out
     assert "el.contentEditable='false';" in out
+    # The rebuilt editor is an empty <ul> with one <li>. Treating it like
+    # an empty plain box clears the marker and deletes the whole object.
+    assert out.count(
+        "if(!getVal()&&!el.classList.contains('an-ul'))"
+    ) == 2
+    assert "a3.text='';delete a3.html;delete a3.ph;" in out
+
+
+def test_requested_right_click_workflows_are_not_hidden_behind_more(out):
+    """Repeat/default are the two workflows the user asked to find there."""
+    assert "'repeat on slides':1" in out
+    assert "!/^make default \\/ style for /.test(t)" in out
 
 
 def test_the_scratchpad(out):

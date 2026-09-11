@@ -115,9 +115,14 @@ def test_the_source_window_holds_the_provenance_family(out):
     assert ".et-fmt #fmt-path{order:-2;}" in css
     assert ".et-fmt #fmt-srcwrap{order:-1;}" in css
     assert 'class="sh-drop opt-drop src-flat"' in out
+    assert 'class="rbn-grp rbn-sources" data-tab="object"' in out
     assert 'id="fmt-srcwrap"\n                data-flat="1"' in out
     assert 'data-flat="1"' in src
-    assert "#fmt-srcwrap.src-flat #fmt-src-menu{position:static;" in css
+    assert ("#fmt-srcwrap.src-flat,#fmt-srcwrap.src-flat #fmt-src-menu{\n"
+            "  display:contents!important;}" in css)
+    assert ('.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-font)'
+            '{order:2;}' in css)
+    assert ".deck.erc-tight .seq-cell:not(.fmt-path) span+span" in css
     # Caption and Crop stay OUTSIDE: one creates, one is the common edit
     assert 'id="fmt-caption"' not in src and 'id="fmt-cropwrap"' not in src
 

@@ -2142,9 +2142,53 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Size &amp; place</span>
           </span>
+          <!-- SOURCE FIRST, AND NEVER FOLDED. The address and every
+               provenance action are useful before picture decoration,
+               and a sourced object must not lose them behind a Picture
+               door just because the window is laptop-sized. -->
+          <span class="rbn-grp rbn-sources" data-tab="object"
+            data-fold-ic="tree">
+            <span class="rbn-row">
+              <!-- T281: WHERE IT CAME FROM LEADS (2026-09-05, user: "The
+                   object view for each image should have as the first
+                   thing as the path, then a lock, then a refresh from
+                   path"). The full address remains in the tooltip; the
+                   visible line keeps both ends of a long path. -->
+              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
+                title="Where this came from"></span>
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came from.
+ If that file has moved, the picture is left exactly as it is"
+                ><i data-ic="reload"></i> Refresh from file</button>
+              <span class="sh-drop opt-drop src-flat" id="fmt-srcwrap"
+                data-flat="1">
+                <button class="dbtn etm" id="fmt-src"
+                  title="Where this figure came from, and keeping it in step with its notebook"
+                  ><i data-ic="tree"></i> Source</button>
+                <div class="sh-menu opt-panel opt-list" id="fmt-src-menu">
+              <button class="dbtn etm" id="fmt-locate"
+                title="Jump to this card in its notebook &mdash; see where
+ the plot came from"><i data-ic="locate"></i> Locate in notebook</button>
+              <button class="dbtn etm" id="fmt-prov"
+                title="The notebook and cell this figure came from, every cell that fed it, and whether the notebook has moved on since"><i data-ic="tree"></i> Where it came from&#8230;</button>
+              <button class="dbtn etm" id="fmt-revert"
+                title="Swap between the live figure and the one from before the last refresh — to rescue a figure a re-run broke"><i data-ic="reset"></i>
+                Previous figure</button>
+              <button class="dbtn etm" id="fmt-lockver"
+                title="Keep this exact figure even when the notebook is re-run — pinned to the notebook’s current version"><i data-ic="lock"></i> Lock figure</button>
+              <button class="dbtn etm" id="fmt-replace"
+                title="Put a different notebook card in this frame"><i data-ic="swap"></i>
+                Replace</button>
+                </div>
+              </span>
+            </span>
+            <span class="rbn-lab">Source</span>
+          </span>
           <!-- THE PICTURE INSIDE IT: what to put there, how much of it
-               to show, what to call it, and where it came from. -->
-          <span class="rbn-grp" data-tab="object" data-fold-ic="cellcard">
+               to show, and what to call it. This group may fold; Source
+               above may not. -->
+          <span class="rbn-grp rbn-picture" data-tab="object"
+            data-fold-ic="cellcard">
             <span class="rbn-row">
               <!-- T234: THE FLIP BOOK’S ONE BIG DOOR. It was a small
                    button called "Figures…" in the middle of a group
@@ -2159,28 +2203,6 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Put figures in this flip book — from a
  notebook or from your computer — and reorder or name the ones it
  already has"><i data-ic="plus"></i><span>Add</span></button>
-              <!-- T281: WHERE IT CAME FROM LEADS (2026-09-05, user: "The
-                   object view for each image should have as the first
-                   thing as the path, then a lock, then a refresh from
-                   path"). The path was buried after Crop, Caption and
-                   Refresh; it is the first question you have of a
-                   picture you did not place five seconds ago, and the
-                   two controls that follow it -- keep it as it is, read
-                   it again -- only make sense once you know what "it"
-                   points at. Same three things, same order, as the
-                   Images pane's own rows.
-                   Lock in place is NOT moved in here: it shows for every
-                   single-object selection, so this group -- which is
-                   otherwise entirely picture controls and hides for a
-                   rectangle -- would start appearing for shapes, arrows
-                   and text boxes. It stays paired with Lock aspect ratio
-                   in the placement group (T208). -->
-              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
-                title="Where this came from"></span>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came from.
- If that file has moved, the picture is left exactly as it is"
-                ><i data-ic="reload"></i> Refresh from file</button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
@@ -2223,32 +2245,6 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
  same button unties it"><i data-ic="caption"></i> Caption</button>
-              <span class="sh-drop opt-drop src-flat" id="fmt-srcwrap"
-                data-flat="1">
-                <button class="dbtn etm" id="fmt-src"
-                  title="Where this figure came from, and keeping it in step with its notebook"
-                  ><i data-ic="tree"></i> Source</button>
-                <div class="sh-menu opt-panel opt-list" id="fmt-src-menu">
-              <button class="dbtn etm" id="fmt-locate"
-                title="Jump to this card in its notebook &mdash; see where
- the plot came from"><i data-ic="locate"></i> Locate in notebook</button>
-              <!-- The pane's only door was a canvas right-click row,
-                   while its three nearest neighbours - Locate, Previous
-                   figure and the version lock - all sit here and are all
-                   notebook-provenance commands for the selected frame
-                   (2026-08-29, T58). -->
-              <button class="dbtn etm" id="fmt-prov"
-                title="The notebook and cell this figure came from, every cell that fed it, and whether the notebook has moved on since"><i data-ic="tree"></i> Where it came from&#8230;</button>
-              <button class="dbtn etm" id="fmt-revert"
-                title="Swap between the live figure and the one from before the last refresh — to rescue a figure a re-run broke"><i data-ic="reset"></i>
-                Previous figure</button>
-              <button class="dbtn etm" id="fmt-lockver"
-                title="Keep this exact figure even when the notebook is re-run — pinned to the notebook’s current version"><i data-ic="lock"></i> Lock figure</button>
-                            <button class="dbtn etm" id="fmt-replace"
-                title="Put a different notebook card in this frame"><i data-ic="swap"></i>
-                Replace</button>
-                </div>
-              </span>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Picture</span>

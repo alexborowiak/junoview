@@ -590,7 +590,8 @@
       pth.hidden=!from;
       if(from){
         pth.innerHTML='<span>From</span><span><b></b></span>';
-        pth.querySelector('b').textContent=from;
+        pth.querySelector('b').textContent=(typeof midElide==='function')
+          ?midElide(String(from),46):from;
         pth.title='From '+from;
       }
     }
@@ -2805,7 +2806,7 @@
      was written to correct. */
   var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
     'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
-    'chart':1,'shows with':1,'flip book':1};
+    'chart':1,'shows with':1,'flip book':1,'repeat on slides':1};
   function cmFold(m){
     m.setAttribute('role','menu');
     $$('button',m).forEach(function(b){
@@ -2817,7 +2818,11 @@
     kids.forEach(function(k){
       if(k.classList&&k.classList.contains('hd-lab')){
         var t=(k.textContent||'').trim().toLowerCase();
-        folding=!CM_KEEP[t]&&!/objects?$/.test(t);
+        /* Repeating and making a default were both explicitly requested
+           as right-click workflows. Leaving either behind More made a
+           working command look absent in the live editor (2026-09-11). */
+        folding=!CM_KEEP[t]&&!/^make default \/ style for /.test(t)
+          &&!/objects?$/.test(t);
       }
       if(folding) more.appendChild(k);
     });

@@ -899,6 +899,7 @@ _SURVEY_STUBS = """
 var pres={slides:[]};
 function resolveRef(r){return {nb:String(r).split('::')[0]};}
 function flipFrames(a){return a.frames||[];}
+function partOf(a){return a.part||'figure';}
 """
 
 
@@ -933,6 +934,7 @@ def test_the_inventory_really_lists_all_four_kinds():
         {k:'image',src:'data:image/png;base64,BB',fkey:'imgfile:1',
          fname:'chart.png'},
         {k:'cell',ref:'nb::c1'},
+        {k:'cell',ref:'nb::markdown',part:'output'},
         {k:'flip',at:0,frames:[{ref:'nb::f1'},{ref:'nb::f2'},{ref:'nb::f3'}]},
         {k:'chart',ref:'nb::t1'}
       ]}];
@@ -945,7 +947,8 @@ def test_the_inventory_really_lists_all_four_kinds():
         refs:rows.map(function(r){return r.ref||null;})
       }));
     """)
-    # three pictures, one cell, three flip pages, one chart
+    # three pictures, one figure cell, three flip pages, one chart. The
+    # notebook markdown frame is prose and therefore not an image row.
     assert got["n"] == 8
     assert got["kinds"] == ["Picture", "Picture", "Picture", "Figure",
                             "Page 1", "Page 2", "Page 3", "Chart"]

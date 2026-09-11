@@ -12,6 +12,8 @@ hardening fixes from the adversarial review.
 
 from __future__ import annotations
 
+import re
+
 from junoview.notebook.presentations import as_presentations
 
 
@@ -603,10 +605,12 @@ def test_the_ribbon_is_tabbed(out):
     assert 'id="rbn-tab-insert"' not in out
     assert ("var TABS=['home','images','text','design','animation','view',\n"
             "    'present','object'];") in out
-    # (three since T221 gave Font and Paragraph classes of their own;
-    # six since T233 split the Object grab-bag in three and gave
-    # History a section of its own)
-    assert out.count('class="rbn-grp" data-tab="object"') == 6
+    # Ten groups: Source is deliberately permanent and separate from the
+    # foldable Picture tools, while Font, Paragraph and Table carry layout
+    # modifier classes of their own (2026-09-11 follow-up audit).
+    assert len(re.findall(
+        r'class="rbn-grp[^\"]*" data-tab="object"', out
+    )) == 10
     assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in out
     assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in out
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
@@ -3473,7 +3477,7 @@ def test_the_shows_with_section_is_not_folded_away(out):
     re-requested twice as though it did not exist -- and left it
     foldable, which put the door behind another door. It is kept now.
     """
-    assert "'chart':1,'shows with':1,'flip book':1};" in out
+    assert "'chart':1,'shows with':1,'flip book':1," in out
 
 
 def test_the_build_list_shows_every_stop_not_only_the_builds(out):

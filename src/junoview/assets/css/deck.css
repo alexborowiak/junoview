@@ -1735,13 +1735,14 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* Selection tools read from the thing itself outwards: source/basic
    appearance first, then typography, geometry and finally structure. */
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-srcwrap){order:0;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-font-btn){order:1;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-parawrap){order:2;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-linewrap){order:3;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-opwrap){order:4;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-geom-xy){order:5;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:6;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:7;}
+.et-fmt .rbn-grp[data-tab="object"].rbn-picture{order:1;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-font){order:2;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-parawrap){order:3;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-linewrap){order:4;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-opwrap){order:5;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-geom-xy){order:6;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:7;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:8;}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive
@@ -1971,10 +1972,8 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* Source is the important answer, not a drawer. Keep its provenance
    actions on the same row as the path and Source label. The existing
    buttons and handlers are reused; only the containment changes. */
-#fmt-srcwrap.src-flat{display:flex;align-items:center;gap:4px;}
-#fmt-srcwrap.src-flat #fmt-src-menu{position:static;display:flex!important;
-  flex-flow:row nowrap;align-items:center;gap:3px;min-width:0;max-width:none;
-  padding:0;background:none;border:0;box-shadow:none;overflow:visible;}
+#fmt-srcwrap.src-flat,#fmt-srcwrap.src-flat #fmt-src-menu{
+  display:contents!important;}
 #fmt-srcwrap.src-flat #fmt-src-menu>.dbtn{width:auto;min-height:26px;
   padding:4px 7px!important;font-size:11px!important;}
 /* a chip: one of several answers, and it shows which one is on */
@@ -3878,10 +3877,15 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   color:var(--nb-tx,var(--output-ink-2));border-radius:6px;padding:10px 14px;
   font-size:13px;}
 /* Auto-generated decks are for presenting prose, not inspecting notebook
-   cards. Give their markdown a readable size and the slide's normal ink
-   colour instead of the notebook card's deliberately muted output colour. */
-.an-auto-note .note{color:var(--ink,#e6eef5);}
-.an-auto-note .note{font-size:18px;line-height:1.45;}
+   cards. At the 1280x720 reference 28px is 21pt: the same Body default as
+   a new text box. Remove the notebook-card paper, padding and scroll frame
+   so a markdown cell reads as slide copy; its measured box is chosen by
+   autoDeckBuild at this line height. Selection chrome still wins in edit. */
+.an-cell.an-auto-note{background:transparent;border-color:transparent;}
+.an-auto-note .cardbody{padding:0;}
+.an-auto-note .note{overflow:hidden;background:transparent;color:#fff;
+  border-radius:0;padding:0 4px;font-size:28px;line-height:1.35;}
+.an-auto-note .note *{color:inherit;}
 /* a recoloured markdown card carries its text colour to every child
    (headings, lists, bold) so the whole note reads in the chosen colour */
 .an-cell[style*="--nb-tx"] .note,
@@ -5040,7 +5044,7 @@ body.light .seq-cell b{color:var(--ink);}
 /* the modifier hints are the first words to go when the row is
    tight -- they explain, the tooltips repeat them, and nothing acts
    on them; the count stays */
-.deck.erc-tight .seq-cell span+span{display:none;}
+.deck.erc-tight .seq-cell:not(.fmt-path) span+span{display:none;}
 .rbn-row>.seq-fx{gap:3px;}
 .rbn-row>.seq-fx .seq-fxb{padding:2px 6px;font-size:10px;gap:4px;}
 /* T171: the effect gallery. Cards are .sh-opt, which is already

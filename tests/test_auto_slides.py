@@ -81,22 +81,21 @@ def test_a_section_heading_titles_every_slide_of_its_section():
 
 
 def test_one_markdown_and_one_figure_per_slide_side_by_side():
-    """Nothing is shrunk to fit: a slide takes at most one of each, the
-    markdown on the left and the figure on the right, and the section's
-    remaining items run on under the same heading."""
+    """A short markdown block keeps its natural 21pt-height beside the
+    figure; the section's remaining items run on under the same heading."""
     pr = _build(PLAN)
     s1, s2, s3 = pr["slides"][:3]
     cells = lambda s: [(a["ref"], a["x"], a["y"], a["w"], a["h"])  # noqa: E731
                        for a in s["annots"] if a["k"] == "cell"]
-    assert cells(s1) == [("nb::intro-md", 5, 18, 42, 76),
+    assert cells(s1) == [("nb::intro-md", 5, 18, 42, 14),
                          ("nb::fig-1", 50, 18, 45, 76)]
-    assert cells(s2) == [("nb::more-md", 5, 18, 42, 76),
+    assert cells(s2) == [("nb::more-md", 5, 18, 42, 14),
                          ("nb::fig-2", 50, 18, 45, 76)]
     # a figure with no markdown beside it takes the width
     assert cells(s3) == [("nb::fig-3", 10, 18, 80, 76)]
     # markdown alone keeps a natural text height rather than expanding
     # one sentence into a full-slide notebook card
-    assert cells(pr["slides"][4]) == [("nb::tail-md", 8, 6, 84, 18)]
+    assert cells(pr["slides"][4]) == [("nb::tail-md", 8, 6, 84, 14)]
 
 
 def test_a_figure_first_then_its_markdown_still_share_a_slide():
@@ -120,6 +119,32 @@ def test_short_markdown_cells_share_a_slide_at_their_natural_height():
     assert all(a["h"] < 25 for a in cells)
     assert [a["part"] for a in cells] == ["output", "output", "output"]
     assert all(a["autoNote"] == 1 for a in cells)
+    assert all("ts" not in a for a in cells)
+
+
+def test_long_markdown_does_not_squeeze_beside_the_next_figure():
+    """Measured prose that would overflow a half-width column gets its
+    own slide; the following figure is revisited, not lost or reordered."""
+    pr = _build({"name": "x", "sections": [{"title": "S", "items": [
+        {"ref": "n::m", "kind": "note", "sourceWidth": 900,
+         "sourceHeight": 310, "sourceFontSize": 15,
+         "sourceLineHeight": 22},
+        {"ref": "n::f", "kind": "figure", "aspect": 1.5},
+    ]}]})
+    refs = [[a["ref"] for a in s["annots"] if a["k"] == "cell"]
+            for s in pr["slides"]]
+    assert refs == [["n::m"], ["n::f"]]
+
+
+def test_measured_markdown_widens_when_its_body_type_gets_larger():
+    pr = _build({"name": "x", "sections": [{"title": "S", "items": [
+        {"ref": "n::m", "kind": "note", "sourceWidth": 600,
+         "sourceHeight": 72, "sourceFontSize": 15,
+         "sourceLineHeight": 22},
+    ]}]})
+    note = [a for a in pr["slides"][0]["annots"] if a["k"] == "cell"][0]
+    assert note["w"] == 84
+    assert note["h"] > 18
 
 
 def test_tall_figures_drop_below_markdown_and_animation_is_opt_in():

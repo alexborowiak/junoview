@@ -70,20 +70,22 @@ def test_arrange_and_object_groups_pair_what_belongs_together():
     assert ids[:4] == ["fmt-dup", "fmt-alignwrap", "fmt-align-btn", "fmt-align-menu"] \
         or ids[:2] == ["fmt-dup", "fmt-alignwrap"]
     assert ids.index("fmt-front") < ids.index("fmt-back") < ids.index("fmt-group")
-    # T233: the Object grab-bag is three sections. Where it sits on
-    # the page keeps the T208 pairing; the picture inside it leads
-    # with what to put there; the object itself is what is left.
+    # Source leads in its own permanent group. Picture decoration may
+    # fold independently without taking provenance or the path with it.
     place = _ids(_row(html, "Size &amp; place"))
     assert place.index("fmt-lock") < place.index("fmt-lockar") \
         < place.index("fmt-geom-xy") < place.index("fmt-geom-wh")
     pic = _ids(_row(html, "Picture"))
     assert pic.index("fmt-figures") < pic.index("fmt-cropwrap") \
-        < pic.index("fmt-caption") < pic.index("fmt-srcwrap")
+        < pic.index("fmt-caption")
+    src = _ids(_row(html, "Source"))
+    assert src.index("fmt-path") < src.index("fmt-imgrefresh") \
+        < src.index("fmt-srcwrap")
     obj = _ids(_row(html, "Object"))
     assert obj.index("fmt-opcell") < obj.index("fmt-cmp-make") \
         < obj.index("fmt-cmp-find")
     # nothing that moved was left behind in the old group
-    for gone in ("fmt-lock", "fmt-cropwrap", "fmt-figures"):
+    for gone in ("fmt-lock", "fmt-cropwrap", "fmt-figures", "fmt-srcwrap"):
         assert gone not in obj, gone
 
 

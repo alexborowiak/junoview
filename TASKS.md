@@ -7594,6 +7594,32 @@ kept separately below so every requested outcome remains auditable.
   **Transition**, rendered as the same compact tile strip idiom used by the
   rest of the ribbon rather than one endless horizontal button block.
 
-Verification: the assembled JavaScript parses, the generated 12-slide deck
-and other-slide overlays were exercised in the local browser, and the full
-test suite passes with the deliberate rendered-page characterization change.
+### Re-audited and corrected 2026-09-11
+
+- The `- ` path was exercised one event at a time in Chromium. The detached
+  plain editor's late blur was still clearing the new list from the model;
+  that stale blur is now explicitly disarmed. The resulting `<ul>` keeps its
+  first editable item, accepts text, and remains a list after blur.
+- Repeat-to-slides and Make-default/style were present but folded into
+  **More**. Both requested context-menu workflows are now first-level; the
+  latter exposes use-for-new, apply-to-slides and save-variation directly.
+- Auto-generated markdown now uses its measured source size at a 21pt body
+  baseline instead of becoming a white, grey, scrolling card. Short notes
+  pack together, prose is reflowed before placement, and tall/narrow figures
+  retain the space their aspect ratio needs. The example now lays out as 14
+  slides rather than forcing its long prose into the old 12-slide plan.
+- The image inventory now counts only actual figure frames, not generated
+  markdown frames. In the example it reports seven images on seven slides.
+- Source and Picture are separate Object-ribbon groups. The source path leads,
+  keeps both its beginning and filename when shortened, and every provenance
+  action is flat; picture decoration no longer pushes it under another menu.
+- The Object ribbon's group selector and CSS now agree on the intended
+  basic-to-advanced order. The ten groups are covered without relying on an
+  exact class string that ignored modifier classes.
+- Presentation-rail auto-hide was exercised outside the editor: the expanded
+  14px left-edge target opens it reliably and leaving the rail closes it.
+
+Verification: the assembled JavaScript parses; dash-to-list, default/repeat,
+the 14-slide generated deck, seven-image inventory, source controls and rail
+auto-hide were exercised in the local Chromium browser. The full repository
+gates are recorded in the completing commit.
