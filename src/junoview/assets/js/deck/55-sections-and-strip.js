@@ -1233,16 +1233,12 @@
     if(tabs) tabs.hidden=(mode!=='edit');
     var xb=$('#deck-exit');
     if(xb){
-      /* say where it GOES. "Back" beside an armed drawing tool reads as
-         the way out of that tool, which is Cancel's job. */
-      var presenting=(mode==='view');
-      xb.innerHTML=presenting?bic('return')+' Stop presenting'
-        :bic('return')+' Close the editor';
-      xb.title=presenting
-        ?'Stop presenting and go back to the builder (Esc). Nothing is '
-          +'closed or lost.'
-        :'Leave the editor and go back to the builder. Nothing is closed '
-          +'or lost.';
+      /* This bar is shown only while presenting. Keeping its wording fixed
+         means it cannot briefly describe a different, destructive-sounding
+         action while the editor changes mode. */
+      xb.innerHTML=bic('return')+' Stop presenting';
+      xb.title='Stop presenting and go back to the builder (Esc). Nothing '
+        +'is closed or lost.';
     }
     syncLateButton();
   }
@@ -1997,14 +1993,22 @@
           prev=frame.querySelector('.strip-prev'),
           next=frame.querySelector('.strip-next');
       if(!strip||!more) return;
-      /* THE GALLERY THE POWERPOINT WAY (T207): one row in sight, the
-         rest wrapped beneath it, an up/down/more column at the right
-         and no scrollbar (2026-09-02, user: "bit messy with the bottom
-         scroll bar"). A step is one row: tile height plus the gap. */
+      /* THE GALLERY THE POWERPOINT WAY (T207): no scrollbar, only a
+         compact back/next/more column. Most galleries wrap below the first
+         row; text types now use the same horizontal full-height tiles as
+         Animation, so their arrows step a tile sideways instead. */
       var ROW=60;
+      var horizontal=strip.classList.contains('tx-strip');
+      function step(){
+        var tile=strip.querySelector('.fx-tile,.dbtn.lay');
+        return horizontal&&tile?Math.round(tile.getBoundingClientRect().width)+4:ROW;
+      }
       function ends(){
         if(!prev||!next) return;
-        var top=strip.scrollTop,max=strip.scrollHeight-strip.clientHeight;
+        var top=horizontal?strip.scrollLeft:strip.scrollTop;
+        var max=horizontal
+          ?strip.scrollWidth-strip.clientWidth
+          :strip.scrollHeight-strip.clientHeight;
         /* dimmed, never disabled: a strip measured while its tab was
            hidden reads zero, and a disabled arrow would swallow the very
            click that would have measured it again */
@@ -2013,11 +2017,13 @@
       }
       if(prev) prev.addEventListener('click',function(e){
         e.stopPropagation();
-        strip.scrollTop=Math.max(0,Math.round(strip.scrollTop/ROW)*ROW-ROW);
+        if(horizontal) strip.scrollLeft=Math.max(0,strip.scrollLeft-step());
+        else strip.scrollTop=Math.max(0,Math.round(strip.scrollTop/ROW)*ROW-ROW);
         setTimeout(ends,0);});
       if(next) next.addEventListener('click',function(e){
         e.stopPropagation();
-        strip.scrollTop=Math.round(strip.scrollTop/ROW)*ROW+ROW;
+        if(horizontal) strip.scrollLeft+=step();
+        else strip.scrollTop=Math.round(strip.scrollTop/ROW)*ROW+ROW;
         setTimeout(ends,0);});
       strip.addEventListener('scroll',ends);
       new MutationObserver(function(){setTimeout(ends,0);})

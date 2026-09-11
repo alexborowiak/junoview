@@ -196,8 +196,9 @@
       syncRibbonGroups();
       return;
     }
-    /* THE TAB FOLLOWS THE SELECTION. Default gives selection-driven
-       controls an Object tab; other ribbon layouts name their own target.
+    /* THE TAB FOLLOWS THE SELECTION. Default opens Style for words and
+       tables, Object for every other selected thing; other ribbon layouts
+       name their own target.
        Clicking a figure while you happened to be elsewhere still has to
        reveal its tools instead of leaving them on a tab you cannot see
        — which is how "the ability to lock cells" appeared to vanish when
@@ -208,7 +209,12 @@
        markup's answer, and a layout that calls its format tab "Object"
        would otherwise send you to a tab that does not exist
        (2026-08-25, ribbon layouts). */
+    var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     var selT=(typeof ribbonSelTab==='function')?ribbonSelTab():'home';
+    /* Default's Style tab is about the selected thing's appearance. A
+       figure or shape still belongs on Object, even though it may expose a
+       Line control on Style too. Custom layouts own their declared target. */
+    if(selT==='style'&&kind!=='text'&&kind!=='table') selT='object';
     /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
        line, before a single control had been revealed — and once a
        layout may give the format groups a tab of their own, that tab is
@@ -240,7 +246,6 @@
        should go back to Insert"). */
     if(wantTab) tabBeforeSel=activeTab();
     justDrew=false;
-    var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
        and alignment controls a text box does (2026-08-20) */
     var isTbl=(kind==='table');

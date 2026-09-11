@@ -1688,11 +1688,10 @@
       'Near-miss alignments, uneven gaps and duplicates');
     var r=standardise();
     cat('Style consistency','whole deck',
-      r.findings.length+figLint().length,
-      bic('scope')+' Open Mismatched text',
+      r.findings.filter(function(f){return f.sev==='warn';}).length+figLint().length,
+      bic('scope')+' Open consistency check',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
-      'Headings, paragraphs, captions and figures that do not match '
-      +'each other, or no longer match the style they were given');
+      'Text and figures that look like they should match but do not');
     cat('Content & wording','whole deck',reviewLints().length,
       bic('doc')+' Export for review\u2026',
       function(){var b3=$('#mi-review'); if(b3) b3.click();},

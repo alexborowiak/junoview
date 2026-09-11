@@ -145,7 +145,7 @@ def test_insert_is_images_and_text(out):
     assert 'id="rbn-tab-text" role="tab" data-tab="text"' in html
     assert 'id="rbn-tab-insert"' not in html
     assert ("var TABS=['home','images','text','design','animation','view',\n"
-            "    'present','object'];") in out
+            "    'present','style','object'];") in out
     # a browser that remembers the old tab lands on the half with the
     # galleries rather than on Home
     assert "      if(t==='insert') t='images';" in out
@@ -160,6 +160,16 @@ def test_insert_is_images_and_text(out):
         assert f'id="{cid}"' in group("Place"), cid
     for cid in ("tx-strip", "et-table", "dc-maths", "dc-md"):
         assert f'id="{cid}"' in group("Write"), cid
+    # Text types and its three other ways to write are full-height tiles,
+    # the same visual language as Animation, not two rows of tiny pills.
+    for cid in ("dc-maths", "dc-md"):
+        assert f'class="fx-tile big-tile rbn-tall" id="{cid}"' in html
+    assert 'class="fx-tile big-tile rbn-tall et" id="et-table"' in html
+    assert (".strip-frame>.fx-strip.tx-strip{flex-wrap:nowrap;align-content:initial;\n"
+            "  overflow-x:hidden;overflow-y:hidden;}") in out
+    assert (".strip-frame .tx-strip .fx-tile{height:var(--rbn-tile-h);\n"
+            "  flex:0 0 var(--rbn-tile-w);") in out
+    assert "var horizontal=strip.classList.contains('tx-strip');" in out
     for cid in ("dc-line", "et-arrow", "dc-draw"):
         assert f'id="{cid}"' in group("Draw"), cid
     # the Drawing group follows whichever half armed the tool
@@ -197,16 +207,19 @@ def test_the_qr_code_feature_is_gone_whole(out):
     assert "Existing decks are unaffected: a QR" in out
 
 
-def test_the_object_tab_kept_all_of_its_groups(out):
-    """Losing Animation must not take any of the ten Object groups."""
+def test_the_contextual_tabs_keep_all_of_their_groups(out):
+    """Losing Animation must not take any contextual format group."""
     assert len(re.findall(
         r'class="rbn-grp[^\"]*" data-tab="object"', out
-    )) == 10
+    )) == 8
+    assert len(re.findall(
+        r'class="rbn-grp[^\"]*" data-tab="style"', out
+    )) == 3
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     html = assets.deck_html()
-    for lab in ("Arrange", "History", "Font", "Paragraph",
-                "Line &amp; shape", "Size &amp; place", "Source", "Picture",
-                "Object", "Table"):
+    for lab in ("Arrange", "History", "Size &amp; place", "Source", "Picture",
+                "Appearance", "Reuse", "Table", "Font", "Paragraph",
+                "Line &amp; shape"):
         assert f'<span class="rbn-lab">{lab}</span>' in html, lab
     assert '<span class="rbn-lab">Colour</span>' not in html
     # every id the two rows name is still exactly one control

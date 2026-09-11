@@ -1,8 +1,8 @@
 """Every sentence names a control by its current name (T210).
 
 Controls were renamed across T176-T209 (the print check became Review,
-Standardise became Fix mismatched text, Colours & spacing became the
-Palette, Set order became Quick animate, the "Saved to" switch became
+Standardise became Check consistency, Colours & spacing became Shared
+colours, Set order became Quick animate, the "Saved to" switch became
 the chevron beside Save). Sentences elsewhere still used the old names,
 which is "stupid names in stupid places" from the other side.
 """
@@ -21,8 +21,8 @@ def test_the_review_centre_and_toasts_use_current_names(out):
                  "Colours & spacing and everything",
                  "guides and the print check lead"):
         assert gone not in out, gone
-    for now in ("' Open Before you print'", "' Open Mismatched text'",
-                "Design \\u2192 Deck colours and everything using it follows.",
+    for now in ("' Open Before you print'", "' Open consistency check'",
+                "Shared colours",
                 "guides and Review lead"):
         assert now in out, now
 
@@ -32,5 +32,5 @@ def test_help_uses_current_names():
         encoding="utf-8")
     assert "<i>Standardise text</i>" not in help_html
     assert "<i>Colours &amp; spacing</i>" not in help_html
-    assert "<i>Fix mismatched text</i>" in help_html
-    assert "<i>Deck colours</i>" in help_html
+    assert "Check consistency</i>" in help_html
+    assert "Shared colours</i>" in help_html

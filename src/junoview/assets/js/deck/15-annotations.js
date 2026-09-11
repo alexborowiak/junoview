@@ -2409,9 +2409,9 @@
         b.setAttribute('data-c','@'+k);
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
-        b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Deck colours and everything using it follows.';
-        b.setAttribute('aria-label',nm+' (deck colour)');
+        b.title=nm+' \u2014 a shared colour. Change it in Home \u2192 '
+          +'Shared colours and everything using it follows.';
+        b.setAttribute('aria-label',nm+' (shared colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
            afterwards is a swatch that looks right and does nothing —
@@ -2436,7 +2436,7 @@
         sb.style.background=tokVal('@section')||'#8aa0b0';
         sb.title='Section colour \u2014 whichever colour this slide\u2019s '
           +'section has. Move the slide and it follows.';
-        sb.setAttribute('aria-label','Section colour (deck colour)');
+        sb.setAttribute('aria-label','Section colour (shared colour)');
         sb.addEventListener('mousedown',function(e){
           if(activeTextEditable()) e.preventDefault();});
         sb.addEventListener('click',function(){applyTextColor('@section');});
@@ -2449,7 +2449,7 @@
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'deck colours');
+    menuHead(m,'shared colours');
     var t=tokens();
     /* T265: the note is ONE line now, and it only appears when it is the
        thing you need. T208 asked for an explanation here ("What does

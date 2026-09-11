@@ -47,9 +47,9 @@ def test_the_words_the_review_asked_for(out):
     assert '<i data-ic="numbers"></i> Page numbers</button>' in html
     assert '><i data-ic="play"></i> Animation pane</button>' in html
     assert "<span>Animation pane</span>" in out
-    assert "Deck colours &#9662;</button>" in out
+    assert "Shared colours</button>" in out
     assert "Palette&#8230;" not in out
-    assert "menuHead(m,'deck colours');" in out
+    assert "menuHead(m,'shared colours');" in out
     # T265 replaced the panel's 195-character paragraph with one line
     # that depends on what is actually there, plus a per-colour count.
     # T208's contract is on the DOOR's tooltip -- "its tooltip says what
@@ -77,7 +77,7 @@ def test_the_present_tab_and_its_buttons(out):
     assert 'id="rbn-tab-present" role="tab" data-tab="present"' in out
     # (Insert became Images and Text in T220)
     assert ("var TABS=['home','images','text','design','animation','view',\n"
-            "    'present','object'];") in out
+            "    'present','style','object'];") in out
     assert "{id:'view',label:'View'},{id:'present',label:'Present'}" in out
     for cid in ("pr-here", "pr-start", "pr-presenter", "pr-talk", "pr-notes",
                 "pr-tap", "pr-trace"):
@@ -117,4 +117,4 @@ def test_mismatched_text_in_plain_words(out):
     assert "act.textContent='Give all '+f.band.boxes.length+' the '" in out
     assert "alt.textContent='Just make them match, no style';" in out
     assert "+'longer match the style'," in out
-    assert "Boxes that look alike should share a named" in out
+    assert "Each card groups text or figures that look like" in out

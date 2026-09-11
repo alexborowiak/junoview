@@ -164,7 +164,7 @@ def test_hiding_a_contextual_control_is_about_the_control(out):
 
 
 def test_the_selection_opens_the_layouts_own_format_tab(out):
-    """Default answers "where do selected-object tools live?" with Object.
+    """Default opens Style for words and Object for other selected things.
 
     Other layouts may call that tab something else, so the selection still
     asks the active layout rather than hard-coding either name.
@@ -174,9 +174,11 @@ def test_the_selection_opens_the_layouts_own_format_tab(out):
     back off it, so selecting appeared to do nothing. Also found in a
     browser.
     """
-    assert "selTab:'object',fromMarkup:true" in out
+    assert "selTab:'style',fromMarkup:true" in out
+    assert "{id:'style',label:'Style'}" in out
     assert "{id:'object',label:'Object'}" in out
     assert "function ribbonSelTab(){" in out
+    assert "if(selT==='style'&&kind!=='text'&&kind!=='table') selT='object';" in out
     assert "var wantTab=(activeTab()!==selT" in out
     assert "if(wantTab) setTab(wantTab,true); else syncRibbonGroups();" in out
     # ...and TRANSIENT, so a tab the selection carried you to is not
@@ -549,9 +551,9 @@ def test_every_markup_tab_sits_inside_the_tablist():
     inside = m.group(1)
     # five since T176 put Animation back on the strip, six since T200's
     # View tab, seven with T216's Present, eight since T220 split Insert
-    # into Images and Text
-    assert inside.count('class="rbn-tab"') == 8, inside.count('class="rbn-tab"')
-    assert html.count('class="rbn-tab"') == 8, "a tab escaped the tablist"
+    # into Images and Text, and nine once Style left Object.
+    assert inside.count('class="rbn-tab"') == 9, inside.count('class="rbn-tab"')
+    assert html.count('class="rbn-tab"') == 9, "a tab escaped the tablist"
     # and the Ribbon layouts door sits with the ribbon's own settings on
     # the right, after Auto-hide, not beside the tabs (T200)
     assert html.index('id="rbn-auto"') < html.index('id="rbn-layouts"') \

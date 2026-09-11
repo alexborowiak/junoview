@@ -28,15 +28,16 @@ def _row(html: str, label: str) -> str:
     return html[html.rfind('<span class="rbn-row">', fmt, lab):lab]
 
 
-def test_the_decks_type_is_on_the_text_tab(out):
-    """Text styles, Deck colours, Style system and Fix mismatched text are
-    all about text, so they sit on the tab called Text rather than under
-    Design."""
-    assert 'class="rbn-grp rbn-type" data-tab="text"' in out
+def test_the_presentation_style_system_is_on_home(out):
+    """Styles, shared colours and consistency span more than typed text."""
+    assert 'class="rbn-grp rbn-type" data-tab="home"' in out
     assert 'class="rbn-grp rbn-type" data-tab="design"' not in out
-    assert '<span class="rbn-lab">The whole deck</span>' in out
+    assert '<span class="rbn-lab">Presentation styles</span>' in out
     for cid in ("dsg-styles", "dsg-tokens", "dsg-std", "dsg-design-btn"):
         assert f'id="{cid}"' in out, cid
+    assert "styles used in this presentation" in out
+    assert ("var ids=styleOrder().filter(function(id){return "
+            "worn[id]||id===openEdit;});") in out
     # Design keeps the four groups that are about the page itself
     for lab in ("Slide", "Layout", "Apply to other slides", "Page furniture"):
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab
@@ -63,11 +64,11 @@ def test_design_stops_looking_hectic(out):
     assert ".rbn-row>.rbn-cell.rbn-seg{justify-self:start;}" in out
 
 
-def test_the_object_tab_is_font_then_paragraph(out):
-    """How the letters look, then how the block is set."""
+def test_the_style_tab_is_font_then_paragraph(out):
+    """Style holds how the letters look, then how the block is set."""
     html = assets.deck_html()
-    assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in html
-    assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in html
+    assert 'class="rbn-grp rbn-fontgrp" data-tab="style"' in html
+    assert 'class="rbn-grp rbn-paragrp" data-tab="style"' in html
     assert '<span class="rbn-lab">Colour</span>' not in html
     font = re.findall(r'\bid="([a-z0-9-]+)"', _row(html, "Font"))
     for cid in ("fmt-font", "fmt-sizecell", "fmt-stylewrap-tx", "tx-run-style",
@@ -79,7 +80,9 @@ def test_the_object_tab_is_font_then_paragraph(out):
         assert cid in para, cid
     # neither group holds the other's controls
     assert "fmt-parawrap" not in font and "fmt-txcolwrap" not in para
-    assert ".rbn-fontgrp{order:2;}" in out and ".rbn-paragrp{order:3;}" in out
+    assert font.index("fmt-font") < font.index("fmt-stylewrap-tx") \
+        < font.index("tx-run-style") < font.index("fmt-sizecell")
+    assert ".rbn-fontgrp{order:0;}" in out and ".rbn-paragrp{order:1;}" in out
     # The long face list is an expandable native menu with meaningful
     # groups, not one flat wall of names.
     assert "var fontGroups=[['Common'" in out
@@ -93,7 +96,8 @@ def test_the_small_things_the_screenshots_showed(out):
     html = assets.deck_html()
     assert 'title="Smaller text">A&#8722;</button>' in html
     assert 'title="Bigger text">A+</button>' in html
-    cell = html[html.index('id="fmt-sizecell"'):html.index('id="fmt-stylewrap-tx"')]
+    i = html.index('id="fmt-sizecell"')
+    cell = html[i:html.index("</span>", i)]
     assert "Smaller</button>" not in cell and "Bigger</button>" not in cell
     # the whole-deck scale rows inside the Text styles window keep their
     # words: they are menu rows, not glyph buttons in a row

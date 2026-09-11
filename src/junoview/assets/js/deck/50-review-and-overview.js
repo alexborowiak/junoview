@@ -3208,7 +3208,7 @@
       +'<button class="dbtn" id="dg-sets">'+bic('styles')
       +' Style sets\u2026</button>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
-      +' Fix mismatched text</button>'
+      +' Check consistency</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dg-main">'
       +'<div class="dg-rail" id="dg-list"></div>'

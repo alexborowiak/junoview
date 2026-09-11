@@ -23,8 +23,8 @@
          drawing tool looks like the way out of that tool, and it is not:
          Cancel is. -->
     <button class="dbtn" id="deck-exit"
-      title="Leave the editor. Nothing is closed or lost."><i data-ic="return"></i>
-        Close the editor</button>
+      title="Stop presenting and return to the builder (Esc)."><i data-ic="return"></i>
+        Stop presenting</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -413,8 +413,10 @@
        groups that ARE showing can be full size.
        The strip is deliberately the same height as a button row and
        carries no second copy of anything: it is a chooser, not chrome.
-       #rbn-tab-object is contextual: it appears when something is selected
-       and is the one named place for controls that change that object. The
+       #rbn-tab-style and #rbn-tab-object are contextual: they appear when
+       something is selected. Style is the small, focused surface for how a
+       thing looks; Object is the equally focused surface for what it is and
+       where it sits. The
        page-level Home tools no longer reshape themselves after an ordinary
        canvas click (2026-08-26, user: "just have an own tab for the
        selected object"). -->
@@ -476,6 +478,9 @@
  the Review, Layers and Notes panes">View</button>
     <button class="rbn-tab" id="rbn-tab-present" role="tab" data-tab="present"
       title="Play the talk, presenter view, notes and timing, talk settings">Present</button>
+    <button class="rbn-tab" id="rbn-tab-style" role="tab" data-tab="style"
+      aria-selected="false"
+      title="Font, colour, paragraphs, lines and shape appearance">Style</button>
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
@@ -717,14 +722,10 @@
                pushing its look outwards, which meant you had to have a box
                of that style on the slide you happened to be on
                (2026-08-20). -->
-          <!-- T221: THE DECK'S TYPE IS TEXT (2026-09-03, user: "with the
-               Text [tab] I mean a lot of other things in there as well:
-               text styles, deck colours, style system, find mismatched
-               text. All of these are text related"). It sat under Design
-               because it is a decision about the whole deck; so is a
-               heading, and the tab that says Text is where a reader
-               looks for it. -->
-          <span class="rbn-grp rbn-type" data-tab="text" data-fold-ic="styles">
+          <!-- PRESENTATION STYLES LIVE ON HOME. They shape text, pictures,
+               colours and layout across the whole presentation, so they are
+               not merely a kind of text to insert (2026-09-11). -->
+          <span class="rbn-grp rbn-type" data-tab="home" data-fold-ic="styles">
             <span class="rbn-row">
               <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
                    styles under design (should this be under design
@@ -793,7 +794,7 @@
                 title="The colours this deck shares. Any box can wear one
  (the Deck row at the top of its colour menu); change a colour here and
  every box wearing it changes too"
-                ><i data-ic="palette"></i> Deck colours &#9662;</button>
+                ><i data-ic="palette"></i> Shared colours</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -802,9 +803,9 @@
                    'standardise text', and checked if all headings
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Find headings, body text, captions and figures that
- do not match across the deck, and fix each with one click"><i data-ic="scope"></i>
-   Fix mismatched text</button>
+                title="Find text or figures that look like they should match
+ but have different formatting. It only suggests a fix; you choose it"><i data-ic="scope"></i>
+   Check consistency</button>
               <!-- the whole-deck type screen was a row inside the Text styles
                    menu: a screen behind a menu behind a door (T212) -->
               <button class="dbtn rbn-sm" id="dsg-design-btn"
@@ -812,7 +813,7 @@
  text looks like, and every slide with a box round each object"
                 ><i data-ic="outline"></i> Style system</button>
             </span>
-            <span class="rbn-lab">The whole deck</span>
+            <span class="rbn-lab">Presentation styles</span>
           </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
@@ -1343,23 +1344,23 @@ items snap to both. Guides, not ink: never printed or exported"
                   role="group" aria-label="Kinds of text box"></span>
                 <span class="strip-nav">
                   <button class="strip-prev" type="button" id="tx-strip-prev"
-                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                    title="Previous text types" aria-label="Previous text types">&#9666;</button>
                   <button class="strip-next" type="button" id="tx-strip-next"
-                    title="Next row" aria-label="Next row">&#9660;</button>
+                    title="More text types" aria-label="More text types">&#9656;</button>
                   <button class="strip-more" type="button" id="tx-strip-more"
                     aria-expanded="false" title="Show all"
                     aria-label="Show every kind of text box">&#9662;</button></span></span>
-              <button class="dbtn rbn-sm" id="dc-maths"
+              <button class="fx-tile big-tile rbn-tall" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
- - it is typeset as you type"><i data-ic="maths"></i> Equation</button>
-              <button class="dbtn rbn-sm" id="dc-md"
+ - it is typeset as you type"><i data-ic="maths"></i><span>Equation</span></button>
+              <button class="fx-tile big-tile rbn-tall" id="dc-md"
                 title="Add a Markdown box - headings, bullets, numbers,
  links, quotes, code and emphasis, typed as text and rendered on the
- slide"><i data-ic="markdown"></i> Markdown</button>
-              <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
+ slide"><i data-ic="markdown"></i><span>Markdown</span></button>
+              <button class="fx-tile big-tile rbn-tall et" id="et-table" data-tool="table"
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
- moves along the row, Enter drops down"><i data-ic="table"></i> Table</button>
+ moves along the row, Enter drops down"><i data-ic="table"></i><span>Table</span></button>
             </span>
             <span class="rbn-lab">Write</span>
           </span>
@@ -1748,7 +1749,7 @@ items snap to both. Guides, not ink: never printed or exported"
                the letters look is one group; how the block is set is the
                next. The colour doors and their quick swatches move in
                here, because a colour is how the letters look. -->
-          <span class="rbn-grp rbn-fontgrp" data-tab="object"
+          <span class="rbn-grp rbn-fontgrp" data-tab="style"
             data-fold-ic="text">
             <span class="rbn-row">
               <!-- T220: THE TYPEFACE AND THE SIZE ARE ON THE ROW.
@@ -1766,19 +1767,6 @@ items snap to both. Guides, not ink: never printed or exported"
                 <option value="system">System</option>
                 <option value="hand">Handwritten</option>
               </select>
-              <span class="rbn-cell rbn-seg" id="fmt-sizecell" hidden
-                role="group" aria-label="Text size">
-                <span class="fmt-szwrap" id="fmt-szwrap" hidden
-                  title="Text size (points)">
-                  <input class="fmt-num" id="fmt-size" type="number"
-                    min="6" max="240" step="1"
-                    aria-label="Text size in points">
-                  <span class="fmt-unit">pt</span></span>
-                <button class="dbtn etm" id="fmt-smaller"
-                  title="Smaller text">A&#8722;</button>
-                <button class="dbtn etm" id="fmt-bigger"
-                  title="Bigger text">A+</button>
-              </span>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
                   aria-haspopup="true" aria-expanded="false"
@@ -1798,6 +1786,22 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Underline"><u>U</u></button>
                 <button class="dbtn etm" id="fmt-strike"
                 title="Strikethrough"><s>S</s></button>
+              </span>
+              <!-- Grid columns fill downward. Keep related decisions in
+                   each column: face over named style, then emphasis over
+                   size (2026-09-11, ribbon-layout correction). -->
+              <span class="rbn-cell rbn-seg" id="fmt-sizecell" hidden
+                role="group" aria-label="Text size">
+                <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                  title="Text size (points)">
+                  <input class="fmt-num" id="fmt-size" type="number"
+                    min="6" max="240" step="1"
+                    aria-label="Text size in points">
+                  <span class="fmt-unit">pt</span></span>
+                <button class="dbtn etm" id="fmt-smaller"
+                  title="Smaller text">A&#8722;</button>
+                <button class="dbtn etm" id="fmt-bigger"
+                  title="Bigger text">A+</button>
               </span>
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn etm" id="fmt-txcol-btn" hidden
@@ -1905,7 +1909,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Font</span>
           </span>
-          <span class="rbn-grp rbn-paragrp" data-tab="object"
+          <span class="rbn-grp rbn-paragrp" data-tab="style"
             data-fold-ic="spacing">
             <span class="rbn-row">
               <!-- T227: each is a split control. The button turns the
@@ -1991,7 +1995,8 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Paragraph</span>
           </span>
-          <span class="rbn-grp" data-tab="object" data-fold-ic="dashes">
+          <span class="rbn-grp rbn-linegrp" data-tab="style"
+            data-fold-ic="dashes">
             <span class="rbn-row">
               <!-- ONE WINDOW FOR THE LINE (T177). Style, Weight, Ends
                    and Route were four dropdown doors stacked in three
@@ -2249,9 +2254,11 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Picture</span>
           </span>
-          <!-- THE OBJECT ITSELF: how see-through it is, and turning it
-               into something you can place again. -->
-          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
+          <!-- APPEARANCE is deliberately not paired with reuse: opacity is
+               an everyday visual change, while clones are a reusable-object
+               workflow that needs a full-height target. -->
+          <span class="rbn-grp rbn-appearance" data-tab="object"
+            data-fold-ic="objects">
             <span class="rbn-row">
               <!-- T221: opacity says what it is. It was an unlabelled
                    slider (2026-09-03, user: "the transparent isn't
@@ -2265,22 +2272,31 @@ items snap to both. Guides, not ink: never printed or exported"
                   min="0" max="100" step="1" aria-label="Opacity percent">
                 <span class="fmt-opval" id="fmt-opval">100%</span></span>
               </span>
+            </span>
+            <span class="rbn-lab">Appearance</span>
+          </span>
+          <span class="rbn-grp rbn-clones" data-tab="object"
+            data-fold-ic="group">
+            <span class="rbn-row">
               <!-- T229: CLONES, WHERE YOU CAN SEE THEM (2026-09-03,
                    user: "where is the clone object features as well
                    and then the ability to see the clones"). Both were
                    rows inside the Layers pane's Actions popover --
                    a menu, in a pane, behind a button. -->
-              <button class="dbtn etm" id="fmt-cmp-make" hidden
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Reuse">
+              <button class="fx-tile big-tile" id="fmt-cmp-make" hidden
                 title="Save the selected items as a named thing you
  can place again. Every copy keeps its own words and its own figure,
  and changing the original changes them all"
                 ><i data-ic="group"></i> Make clones&#8230;</button>
-              <button class="dbtn etm" id="fmt-cmp-find" hidden
+              <button class="fx-tile big-tile" id="fmt-cmp-find" hidden
                 title="Every place in this deck this clone has been
  put — pick one to go there"
                 ><i data-ic="locate"></i> Its clones</button>
+              </span>
             </span>
-            <span class="rbn-lab">Object</span>
+            <span class="rbn-lab">Reuse</span>
           </span>
           <!-- TABLE. Rows and columns are added at the END, which is what
                you want almost every time and needs no cell selected
@@ -2343,7 +2359,7 @@ items snap to both. Guides, not ink: never printed or exported"
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Mismatched text</span>
+        <div class="selpane-h"><span>Style consistency</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
@@ -2352,9 +2368,8 @@ items snap to both. Guides, not ink: never printed or exported"
              things like standardise work... I find the text and how
              it looks confusing"). A check with no sentence saying what
              it checks is a list of complaints. -->
-        <div class="pf-intro">Text that should look the same but does
-          not, and figures placed at different sizes. Each row is one
-          thing to look at; its button fixes only that.</div>
+        <div class="pf-intro">Find text or figures that look like they should
+          match but do not. Nothing changes until you choose a card&rsquo;s fix.</div>
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
@@ -2421,7 +2436,7 @@ items snap to both. Guides, not ink: never printed or exported"
             ><i data-ic="exit"></i> Close</button></div>
         <div class="img-ov-body oh-list" id="oh-ov-body"></div>
       </div>
-      <!-- MISMATCHED TEXT and TIDY PAGE, FULL SCREEN (T209; 2026-09-02,
+      <!-- STYLE CONSISTENCY and TIDY PAGE, FULL SCREEN (T209; 2026-09-02,
            user: "this mismatched text thing is a good idea, but horrible
            execution. It is so small in the side bar. Some of these
            things should not be sidebars but should always open as full
@@ -2430,17 +2445,16 @@ items snap to both. Guides, not ink: never printed or exported"
            view; a fix re-renders it. The panes stay in the markup for
            the pane owner and the tests, but the ribbon doors open these. -->
       <div class="img-ov" id="std-ov" hidden role="dialog"
-        aria-label="Mismatched text">
-        <div class="img-ov-h"><span class="img-ov-t">Mismatched text</span>
+        aria-label="Style consistency">
+        <div class="img-ov-h"><span class="img-ov-t">Style consistency</span>
           <span class="img-ov-sub" id="std-ov-sub"></span>
           <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Boxes that look alike should share a named
-          style, so changing them later is one edit. Each card is one group
-          of boxes, or of figures; its button fixes just that group. A slide
-          chip takes you to the box.</div>
+        <div class="pf-intro">Each card groups text or figures that look like
+          they should match. Use its suggested fix only when that is what you
+          intend.</div>
         <div class="img-ov-body std-list" id="std-ov-body"></div>
       </div>
       <div class="img-ov" id="tidy-ov" hidden role="dialog"

@@ -1694,8 +1694,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # File/Open provenance into its own utility line and adds the grouped
 # multi-label picker/filter (reactions plus categories), changing the
 # assembled static page deliberately.
-EXPECTED_MD5 = "abc24acf8ef1cd7da4e6ce0104321d76"
-EXPECTED_BYTES = 3997535
+EXPECTED_MD5 = "54ebe00213dd33166c2c9d90ed651c0e"
+EXPECTED_BYTES = 3997748
 
 
 def _render_example() -> str:

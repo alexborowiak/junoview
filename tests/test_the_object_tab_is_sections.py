@@ -1,4 +1,4 @@
-"""The Object tab is sections that answer one question each (T233).
+"""Style and Object are sections that answer one question each (T233).
 
 The user, 2026-09-04: "Put object history in it's own little section...
 The object ribbon is still a bit all over the place."
@@ -6,10 +6,9 @@ The object ribbon is still a bit all over the place."
 One group called Object held the two locks, four number boxes, the
 crop, the caption, the flip book's figures, where the picture came
 from, the opacity slider and the clone buttons, so nothing in it looked
-related to anything else. Driven at 1700px and 2100px: six groups for a
-text box (Arrange, History, Font, Paragraph, Size & place, Object), the
-folding ladder takes Object first and Size & place second, and a folded
-group still opens on its own name with its controls inside.
+related to anything else. Style now holds Font, Paragraph and Line & shape;
+Object holds placement, provenance, appearance and reuse. A folded group
+still opens on its own name with its controls inside.
 """
 
 from __future__ import annotations
@@ -41,17 +40,18 @@ def test_history_has_a_section_of_its_own():
 
 def test_the_grab_bag_became_focused_sections():
     html = assets.deck_html()
-    for ic, lab in (("rulers", "Size &amp; place"), ("cellcard", "Picture"),
-                    ("tree", "Source"), ("objects", "Object")):
-        cls = "rbn-sources" if ic == "tree" else (
-            "rbn-picture" if ic == "cellcard" else "")
+    for ic, lab, cls in (("rulers", "Size &amp; place", ""),
+                         ("cellcard", "Picture", "rbn-picture"),
+                         ("tree", "Source", "rbn-sources"),
+                         ("objects", "Appearance", "rbn-appearance"),
+                         ("group", "Reuse", "rbn-clones")):
         classes = "rbn-grp" + (" " + cls if cls else "")
         assert re.search(
             rf'<span class="{classes}" data-tab="object"\s+'
             rf'data-fold-ic="{ic}">', html), ic
         assert f'<span class="rbn-lab">{lab}</span>' in html, lab
-    place, src, pic, obj = (_ids(_row(html, x)) for x in
-                            ("Size &amp; place", "Source", "Picture", "Object"))
+    place, src, pic, appearance, reuse = (_ids(_row(html, x)) for x in
+        ("Size &amp; place", "Source", "Picture", "Appearance", "Reuse"))
     # where it sits on the page
     assert place == ["fmt-lock", "fmt-lockar", "fmt-geom-xy", "rb-x", "rb-y",
                      "fmt-geom-wh", "rb-w", "rb-h", "fmt-sizepos"], place
@@ -61,17 +61,19 @@ def test_the_grab_bag_became_focused_sections():
         assert cid in src, cid
     for cid in ("fmt-figures", "fmt-cropwrap", "fmt-caption", "fmt-parts"):
         assert cid in pic, cid
-    # the object itself
-    assert obj.index("fmt-opcell") < obj.index("fmt-cmp-make") \
-        < obj.index("fmt-cmp-find")
+    # appearance and reuse are separate jobs, so neither makes the other
+    # look like a stray control in a half-full column.
+    assert appearance == ["fmt-opcell", "fmt-opwrap", "fmt-op", "fmt-opval"]
+    assert reuse == ["fmt-cmp-make", "fmt-cmp-find"]
 
 
-def test_every_object_control_still_has_exactly_one_home():
-    """Splitting a group is a move, not a copy."""
+def test_every_format_control_still_has_exactly_one_home():
+    """Splitting the contextual surface is a move, not a copy."""
     html = assets.deck_html()
     seen: dict[str, str] = {}
     for lab in ("Arrange", "History", "Font", "Paragraph", "Line &amp; shape",
-                "Size &amp; place", "Source", "Picture", "Object", "Table"):
+                "Size &amp; place", "Source", "Picture", "Appearance", "Reuse",
+                "Table"):
         for cid in _ids(_row(html, lab)):
             assert cid not in seen, (cid, seen.get(cid), lab)
             seen[cid] = lab
@@ -84,7 +86,6 @@ def test_every_object_control_still_has_exactly_one_home():
 
 
 def test_a_folded_group_is_named_by_its_own_label(out):
-    """Size & place and Object are the two that fold first, so the tile
-    that replaces them has to say which one it is."""
+    """A folded group must still say which focused job it opens."""
     assert "  function rbnFoldOne(){" in out
     assert "    return rbnFoldGroup(gs[gs.length-1]);" in out

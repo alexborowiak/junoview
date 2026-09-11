@@ -1447,8 +1447,12 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
-.rbn-fontgrp{order:2;}
-.rbn-paragrp{order:3;}
+/* The default contextual surface is two tabs, rather than one long tray:
+   Style is how a thing looks; Object is where it is, where it came from,
+   and how it is reused (2026-09-11, ribbon-layout correction). */
+.rbn-fontgrp{order:0;}
+.rbn-paragrp{order:1;}
+.rbn-linegrp{order:2;}
 /* T289: transitions lead the Animation tab, the way the Transitions
    tab leads Animations in PowerPoint. Exit and Page turn are given
    rungs at the same time: without one a group sits at 0 and comes
@@ -1616,24 +1620,18 @@ body.light .img-row{color:var(--ink-2);}
 /* three page sizes in sight and the rest a scroll or the chevron away
    (T204): Design has to seat Layout in front of this group */
 .page-strip .fx-tile{flex:0 0 var(--rbn-tile-w);scroll-snap-align:start;}
-/* THE TEXT TILES ARE HALF-HEIGHT AND WRAP (2026-09-07, user: "The
-   headings are really important. Being able to make these is
-   important. Either make the box longer, or make each half as high and
-   have two rows"). The name IS the specimen now, so a tile is one line
-   of type and two rows fit in the height one row used to take. */
-/* .strip-frame sets every tile --rbn-tile-h by --rbn-tile-w, and it
-   sits LATER in this file -- so at equal specificity it won and these
-   never shrank. Named through the frame to beat it, deliberately, because
-   this strip is the one place a tile is a line of type rather than a
-   glyph over a word. */
-.strip-frame>.tx-strip{flex-wrap:wrap;align-content:center;
-  gap:var(--rbn-tile-gap);max-height:calc(var(--rbn-band) - 2px);}
-.strip-frame .tx-strip .fx-tile{height:var(--rbn-btn-h);flex:0 0 auto;
-  width:auto;min-width:58px;max-width:104px;
-  flex-direction:row;padding:0 8px;gap:0;scroll-snap-align:start;}
-.tx-tile-n{display:block;line-height:1.05;font-family:var(--sans);
+/* TEXT TYPES USE THE SAME FULL-HEIGHT GALLERY AS ANIMATION. A type is a
+   choice you can see, not a row of tiny pills; the first visible tile is
+   the ordinary Text box and the frame's More door exposes every type. */
+.strip-frame>.fx-strip.tx-strip{flex-wrap:nowrap;align-content:initial;
+  overflow-x:hidden;overflow-y:hidden;}
+.strip-frame .tx-strip .fx-tile{height:var(--rbn-tile-h);
+  flex:0 0 var(--rbn-tile-w);width:var(--rbn-tile-w);min-width:0;
+  max-width:none;flex-direction:column;padding:2px 4px;gap:4px;
+  scroll-snap-align:start;}
+.tx-tile-n{display:block;line-height:1.1;font-family:var(--sans);
   max-width:100%;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
+  white-space:normal;}
 /* T190: the page-size tiles, each drawn at its own proportion */
 .page-ico{display:block;border:1.5px solid currentColor;border-radius:2px;
   opacity:.85;box-sizing:border-box;}
@@ -1732,17 +1730,16 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
   padding-left:var(--rbn-btn-px);padding-right:var(--rbn-btn-px);}
 .et-fmt #fmt-path{order:-2;}
 .et-fmt #fmt-srcwrap{order:-1;}
-/* Selection tools read from the thing itself outwards: source/basic
-   appearance first, then typography, geometry and finally structure. */
+/* Object tools read from the thing itself outwards: source/basic
+   appearance first, then geometry and finally structure. Typography and
+   line/shape treatment now belong to the focused Style tab. */
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-srcwrap){order:0;}
 .et-fmt .rbn-grp[data-tab="object"].rbn-picture{order:1;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-font){order:2;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-parawrap){order:3;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-linewrap){order:4;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-opwrap){order:5;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-geom-xy){order:6;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:7;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:8;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-opwrap){order:2;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-geom-xy){order:3;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:4;}
+.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:5;}
+.et-fmt .rbn-grp[data-tab="object"].rbn-clones{order:6;}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive
@@ -2508,7 +2505,8 @@ select#fmt-font[hidden]{display:none;}
 /* the two that hold the picker are wider by its hex box. Scoped to
    them by id because .sw-menu is also the line panel's stroke-WIDTH
    menu -- one class, two meanings, since long before T232. */
-#fmt-txcol-menu,#fmt-fillcol-menu{width:216px;}
+#fmt-txcol-menu,#fmt-fillcol-menu{box-sizing:border-box;
+  width:min(264px,calc(100vw - 12px));}
 .sw-menu .fmt-lab{display:block;flex:0 0 100%;margin:2px 0 -1px;}
 .sw-menu>.sw-tokrow,.sw-menu>.sw-recrow{flex:0 0 100%;}
 /* ---- T237: WHAT CHANGED, IN THREE READINGS ---------------------------
@@ -2549,7 +2547,8 @@ body.light .dh-ch{border-bottom-color:var(--line);}
    card of its own, just a rule and the controls under it. It carries
    hex, rgb and the transparency slider, which is what used to be one
    click further in behind a rainbow chip. */
-.sw-menu>.color-pop.cp-inline{flex:0 0 100%;position:static;width:auto;
+.sw-menu>.color-pop.cp-inline{box-sizing:border-box;flex:0 0 100%;
+  min-width:0;position:static;width:auto;
   background:none;border:none;border-top:1px solid #ffffff1c;
   border-radius:0;box-shadow:none;padding:9px 0 0;margin:3px 0 0;
   gap:7px;}
@@ -4665,6 +4664,8 @@ body.light .stm-edit{background:var(--chrome-1,#f4f7fa);
 body.light .stm-ren{background:var(--input-bg);
   border-color:var(--border-strong);color:var(--ink);}
 .stm-row{display:flex;align-items:center;gap:6px;padding:2px 3px;}
+.stm-empty{padding:7px 4px;color:var(--chrome-ink-2);font-size:11.5px;
+  line-height:1.4;}
 .stm-spec{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;line-height:1.15;}
 .stm-sz{font-family:var(--mono);font-size:9.5px;color:var(--chrome-ink-2);flex:none;}
@@ -5517,6 +5518,11 @@ body.light .dg-num input{background:var(--input-bg);
    is exactly the "why is tidy page huge?" of 2026-09-03. */
 .rbn-row>.rbn-odd{grid-row:1/span 2;align-self:center;}
 .rbn-row>.rbn-fit{justify-self:stretch;}
+/* List and Numbered are a two-cell column. Their text buttons, not just
+   their wrappers, fill the shared width so the caret stays aligned. */
+#fmt-bulletswrap.rbn-fit,#fmt-numberswrap.rbn-fit{width:100%;}
+#fmt-bulletswrap.rbn-fit>#fmt-bullets,
+#fmt-numberswrap.rbn-fit>#fmt-numbers{flex:1;min-width:0;}
 /* Background is a tall tile now, so its menu hangs off a tile-wide door.
    T373: the transition's scope door is the third of these -- a tile that
    opens a menu, so it is the same shape as the tiles it applies. */

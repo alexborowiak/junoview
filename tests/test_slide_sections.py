@@ -433,8 +433,8 @@ def test_nothing_the_check_finds_is_reported_as_an_error(out):
     std = out.split("function standardise(){")[1].split(
         "function renderStdPane(){")[0]
     assert "sev:'err'" not in std
-    assert "Nothing is drifting" in out
-    assert "Your type is consistent." in out
+    assert "No text formatting differences found." in out
+    assert "No clear differences found. Use Style system to name text types." in out
 
 
 # ------------------------------------------------------------- the strip

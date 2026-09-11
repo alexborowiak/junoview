@@ -120,8 +120,8 @@ def test_the_source_window_holds_the_provenance_family(out):
     assert 'data-flat="1"' in src
     assert ("#fmt-srcwrap.src-flat,#fmt-srcwrap.src-flat #fmt-src-menu{\n"
             "  display:contents!important;}" in css)
-    assert ('.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-font)'
-            '{order:2;}' in css)
+    assert ('.rbn-fontgrp{order:0;}' in css
+            and '.rbn-paragrp{order:1;}' in css)
     assert ".deck.erc-tight .seq-cell:not(.fmt-path) span+span" in css
     # Caption and Crop stay OUTSIDE: one creates, one is the common edit
     assert 'id="fmt-caption"' not in src and 'id="fmt-cropwrap"' not in src
@@ -266,9 +266,9 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
     # tab is two: Images keeps Place, Shapes, Draw and Drawing; Text has
     # Write to itself
     assert out.count('data-tab="images" data-fold-ic=') == 4
-    # two since T221 moved the deck's type here ("text styles, deck
-    # colours, style system, find mismatched text... all text related")
-    assert out.count('data-tab="text" data-fold-ic=') == 2
+    # Text is now only its compact write gallery; presentation-wide styles
+    # moved to Home because they also govern colours and non-text objects.
+    assert out.count('data-tab="text" data-fold-ic=') == 1
     assert 'data-tab="insert"' not in out
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it

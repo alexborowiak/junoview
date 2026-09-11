@@ -7639,3 +7639,26 @@ gates are recorded in the completing commit.
   Filters, grouped by reactions/categories and showing only labels used in
   the current notebook; selected labels match with OR semantics. Exercised
   live with two labelled cells and the combined Heart/Tier 1 filter.
+
+### Completed 2026-09-11 — presentation text and style ribbon
+
+- [x] **T376 — Reorganise text editing around clear, roomy groups.** The
+  default context ribbon now opens **Style** for text and **Object** for
+  non-text, so font/paragraph/appearance controls no longer compete with
+  source, reuse, geometry and Arrange. Font family, styles and size follow
+  a readable top-to-bottom order; List and Numbered have matching widths;
+  the colour chooser is constrained to the viewport; and reuse is expressed
+  as large Clone/Find tiles rather than small buttons.
+- [x] **T377 — Make text types a compact gallery and put presentation-wide
+  tools in Home.** Text box, title, headings, body, caption, equation,
+  markdown and table are full-height gallery tiles with the same horizontal
+  More affordance as Animation. **Presentation styles** and **Shared
+  colours** sit on Home, styles only lists types actually used in the deck,
+  and the type picker continues to use expandable families and sample-first
+  rows.
+- [x] **T378 — Make style diagnosis and exits understandable.** “Fix
+  mismatched text” is now **Check consistency**, showing only genuine
+  differences and explicitly saying that it only suggests a fix. Shared
+  colour chips explain that they update all users from Home. The single
+  presentation exit consistently says **Stop presenting**; it never briefly
+  claims to close the editor.

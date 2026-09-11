@@ -41,7 +41,7 @@ def test_font_and_paragraph_are_two_groups_with_deliberate_pairs():
     now, so the order is what the test has to hold."""
     html = assets.deck_html()
     font = _ids(_row(html, "Font"))
-    order = ["fmt-font", "fmt-sizecell", "fmt-stylewrap-tx", "tx-run-style",
+    order = ["fmt-font", "fmt-stylewrap-tx", "tx-run-style", "fmt-sizecell",
              "fmt-txcolwrap", "fmt-txquick", "fmt-fillcolwrap", "fmt-bgquick"]
     at = [font.index(i) for i in order]
     assert at == sorted(at), order
@@ -81,12 +81,13 @@ def test_arrange_and_object_groups_pair_what_belongs_together():
     src = _ids(_row(html, "Source"))
     assert src.index("fmt-path") < src.index("fmt-imgrefresh") \
         < src.index("fmt-srcwrap")
-    obj = _ids(_row(html, "Object"))
-    assert obj.index("fmt-opcell") < obj.index("fmt-cmp-make") \
-        < obj.index("fmt-cmp-find")
-    # nothing that moved was left behind in the old group
+    appearance = _ids(_row(html, "Appearance"))
+    reuse = _ids(_row(html, "Reuse"))
+    assert appearance == ["fmt-opcell", "fmt-opwrap", "fmt-op", "fmt-opval"]
+    assert reuse == ["fmt-cmp-make", "fmt-cmp-find"]
+    # nothing that moved was left behind in either focused group
     for gone in ("fmt-lock", "fmt-cropwrap", "fmt-figures", "fmt-srcwrap"):
-        assert gone not in obj, gone
+        assert gone not in appearance and gone not in reuse, gone
 
 
 def test_a_run_with_nothing_showing_takes_no_column(out):
@@ -111,8 +112,8 @@ def test_the_palette_door_says_what_a_named_colour_is():
     html = assets.deck_html()
     i = html.index('id="dsg-tokens"')
     btn = html[i:html.index("</button>", i)]
-    # T215: a door with a chevron like Background, named for what it holds
-    assert "Deck colours &#9662;" in btn
+    # This is the shared palette, not a whole presentation theme.
+    assert "Shared colours" in btn and "&#9662;" not in btn
     # T315: ten now -- page, box, heading and edge joined the six so a
     # colour theme can say where each comes from; the count left the
     # sentence rather than being kept true by hand

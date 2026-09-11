@@ -2692,7 +2692,7 @@
      The deck announces its active tab instead, and the body carries that
      semantic zone wherever the overlay is mounted (T252). */
   var THEME_ZONES=['home','images','text','design','animation','view',
-    'present','object'];
+    'present','style','object'];
   function setThemeZone(zone){
     if(THEME_ZONES.indexOf(zone)<0) zone='';
     if(zone) document.body.setAttribute('data-theme-zone',zone);

@@ -176,9 +176,9 @@ def test_the_review_centre_fronts_the_five_engines():
     # the engines run DRY for their counts — reuse, not rewrite
     for engine in ("preflight().length", "tidyFindings().length",
                    "reviewLints().length", "staleFigures().length",
-                   "r.findings.length+figLint().length"):
+                   "r.findings.filter(function(f){return "
+                   "f.sev==='warn';}).length+figLint().length"):
         assert engine in out, engine
     # each button opens the EXISTING surface
     assert "paneShow('preflight');renderPreflight();},"
     assert "function(){showTidyPane();}," in out
-

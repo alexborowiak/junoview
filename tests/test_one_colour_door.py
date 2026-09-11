@@ -48,12 +48,13 @@ def test_both_doors_carry_the_transparency_slider(out):
     assert ("  [['#fmt-txcol-btn','#fmt-txcol-menu','text'],\n"
             "   ['#fmt-fillcol-btn','#fmt-fillcol-menu','fill']]") in out
     # and a section, not a card: no border, no shadow, no width of its own
-    assert (".sw-menu>.color-pop.cp-inline{flex:0 0 100%;position:static;"
-            "width:auto;") in out
+    assert (".sw-menu>.color-pop.cp-inline{box-sizing:border-box;flex:0 0 100%;\n"
+            "  min-width:0;position:static;width:auto;") in out
     assert ".cp-recent[hidden]{display:none!important;}" in out
     # ...and only the two colour menus widen for it: .sw-menu is also
     # the line panel's stroke-WIDTH menu
-    assert "#fmt-txcol-menu,#fmt-fillcol-menu{width:216px;}" in out
+    assert ("#fmt-txcol-menu,#fmt-fillcol-menu{box-sizing:border-box;\n"
+            "  width:min(264px,calc(100vw - 12px));}") in out
 
 
 def test_apply_closes_the_menu_it_is_mounted_in(out):

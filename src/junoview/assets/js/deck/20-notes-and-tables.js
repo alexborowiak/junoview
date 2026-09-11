@@ -622,8 +622,22 @@
           window.SemDeckStyleSets();
       });
       list.appendChild(sets);
-      menuHead(list,'this presentation\u2019s type');
-      styleOrder().forEach(function(id){
+      /* This is an editor for styles the presentation actually wears, not
+         a catalogue of every possible heading. The full Style system still
+         lets a reader inspect text and non-text objects together. */
+      var worn={};
+      (pres.slides||[]).forEach(function(sl){
+        (sl.annots||[]).forEach(function(a){
+          if(a&&a.k==='text'&&a.style) worn[a.style]=1;});});
+      var ids=styleOrder().filter(function(id){return worn[id]||id===openEdit;});
+      menuHead(list,'styles used in this presentation');
+      if(!ids.length){
+        var none=document.createElement('div');
+        none.className='stm-empty';
+        none.textContent='No named text styles are used yet.';
+        list.appendChild(none);
+      }
+      ids.forEach(function(id){
         var d=styleDef(id);
         var row=document.createElement('div');row.className='stm-row';
         var spec=document.createElement('span');

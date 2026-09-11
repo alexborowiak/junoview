@@ -11,7 +11,8 @@ from __future__ import annotations
 
 
 def test_the_two_reviews_have_a_full_screen_view_each(out):
-    for oid, title in (("std-ov", "Mismatched text"), ("tidy-ov", "Tidy up this page")):
+    for oid, title in (("std-ov", "Style consistency"),
+                       ("tidy-ov", "Tidy up this page")):
         assert f'<div class="img-ov" id="{oid}" hidden role="dialog"' in out, oid
         assert f'<span class="img-ov-t">{title}</span>' in out, title
         for part in ("sub", "rerun", "close", "body"):

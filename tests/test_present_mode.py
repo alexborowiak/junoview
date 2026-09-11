@@ -84,7 +84,8 @@ def test_present_bar_shares_appbar_toggle_theming_and_sizing(out):
     It used to fall back to the LIGHT styling in dark mode. Sub filter
     buttons are comfortably tall; expanded tree nodes widen.
     """
-    assert ".appbar .toggle,.nb-quickbar .toggle,.present-bar .toggle{" in out
+    assert (".appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,"
+            ".nb-quickbar .toggle,") in out
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
     assert (".appbar .toggle.sub,.present-bar .toggle.sub"
             "{height:var(--ab-btn-h);") in out

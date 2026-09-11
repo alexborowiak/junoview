@@ -580,9 +580,10 @@ def test_the_ribbon_is_tabbed(out):
     unchanged underneath -- with a third of the groups in the row it
     simply almost never has to fire.
 
-    Object is the one named place for selection-driven controls. It appears
-    with a selection and leaves again when it has no controls to offer, so
-    clicking a thing no longer takes Home over and changes its contents.
+    Style and Object split selection-driven controls into appearance and
+    structure. They appear with a selection and leave again when they have
+    no controls to offer, so clicking a thing no longer takes Home over and
+    changes its contents.
     """
     assert 'class="rbn-tabs" id="rbn-tabs"' in out
     # Three page-level tabs since 2026-08-20. Five left two nearly empty
@@ -597,22 +598,25 @@ def test_the_ribbon_is_tabbed(out):
     # ...and View since T200 (2026-09-02, user: "some of the things in
     # home shouldn't be in home then... new tab with these"): Home took
     # the layout system, and the page-looking tools are their own tab
-    # ...and since T220 Insert is two tabs, Images and Text
+    # ...and since T220 Insert is two tabs, Images and Text; Style later
+    # separated visual treatment from the selected object's structure.
     for t in ("home", "images", "text", "design", "animation", "view",
-              "object"):
+              "style", "object"):
         assert f'id="rbn-tab-{t}"' in out, t
         assert f"'{t}'" in out
     assert 'id="rbn-tab-insert"' not in out
     assert ("var TABS=['home','images','text','design','animation','view',\n"
-            "    'present','object'];") in out
-    # Ten groups: Source is deliberately permanent and separate from the
-    # foldable Picture tools, while Font, Paragraph and Table carry layout
-    # modifier classes of their own (2026-09-11 follow-up audit).
+            "    'present','style','object'];") in out
+    # Object keeps source, picture and structural operations; Style keeps
+    # the three appearance groups that used to make Object too crowded.
     assert len(re.findall(
         r'class="rbn-grp[^\"]*" data-tab="object"', out
-    )) == 10
-    assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in out
-    assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in out
+    )) == 8
+    assert len(re.findall(
+        r'class="rbn-grp[^\"]*" data-tab="style"', out
+    )) == 3
+    assert 'class="rbn-grp rbn-fontgrp" data-tab="style"' in out
+    assert 'class="rbn-grp rbn-paragrp" data-tab="style"' in out
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
     # a browser remembering one of the retired tabs lands on its new host
@@ -1045,9 +1049,9 @@ def test_no_group_is_a_heading_over_one_button(out):
     # Animate gained the two builds anyone actually wants
     assert 'id="anim-stagger"' in out and 'id="anim-together"' in out
     assert "function orderedIdx(s2){" in out
-    # Design gained the deck-level type manager -- which moved to the
-    # Text tab in T221, the deck's type being text
-    assert 'class="rbn-grp rbn-type" data-tab="text"' in out
+    # Home carries the deck-level system: it changes text, colours and
+    # other objects, so it is not merely an insertion choice.
+    assert 'class="rbn-grp rbn-type" data-tab="home"' in out
     assert 'id="dsg-styles"' in out
     assert "function scaleStyles(k){" in out
     # `scope` (2026-08-22) is an array of slide indexes, or null/omitted
@@ -1982,18 +1986,15 @@ def test_tokens_resolve_in_previews_gradients_and_every_full_slide(out):
     assert "if(mode==='edit') renderTokenSwatches();" in out
 
 
-def test_design_tokens_have_a_permanent_design_door(out):
+def test_shared_colours_have_a_permanent_home_door(out):
     """A setting for the whole deck cannot require selecting an object
-    merely to reveal its contextual Arrange menu. Its button stays on
-    Design and travels with every ribbon layout like any other control.
+    merely to reveal its contextual Arrange menu. Its button stays on Home
+    with the rest of the presentation-wide style system.
     """
     assert 'id="dsg-tokens"' in out
     tokens = out[out.index('id="dsg-tokens"'):]
     tokens = tokens[:tokens.index("</button>")]
-    # "What is 'design tokens'?????" (2026-09-02, T190): the button says
-    # what the things are; since T208 it is the Palette, and its tooltip
-    # says what a named colour is ("what does colours and spacing do?")
-    assert '<svg class="bic"' in tokens and "Deck colours &#9662;" in tokens
+    assert '<svg class="bic"' in tokens and "Shared colours" in tokens
     # T315: ten now -- page, box, heading and edge joined the six so a
     # colour theme can say where each comes from; the count left the
     # sentence rather than being kept true by hand
@@ -2001,7 +2002,7 @@ def test_design_tokens_have_a_permanent_design_door(out):
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out
-    assert "Design \\u2192 Deck colours" in out
+    assert "Shared colours" in out
 
 
 def test_the_deck_registry_survives_a_save(out):
@@ -2812,28 +2813,20 @@ def test_the_figure_lint_reads_the_sizes_it_collects_and_knows_trims(out):
     assert "o.forEach(function(p){delete p.a.crop;});" in out
 
 
-def test_the_figure_lint_is_named_where_it_is_opened(out):
+def test_the_consistency_check_says_what_it_is_opened_for(out):
     """Its only door was a button called "Standardise text" whose tooltip
     named headings, paragraphs and captions; the pane it opened was
     headed "Standardise text" and its count line counted text boxes
     (2026-08-26 audit, T58).
     """
-    # T267 dropped the ellipsis: the dots mean "this will ask you
-    # for something first", and this opens the full-screen list
-    # straight away (2026-09-04, user, twice in one message: "why
-    # does this have elipsis anyway"). The NAME is what T204 fixed
-    # and it is unchanged.
-    assert "Fix mismatched text</button>" in out   # T204's name for it
-    # the tooltip names the figures too, in plain words since T194
-    assert "and figures placed at different sizes" in out
-    # the one word the ribbon uses, with a line under it saying what the
-    # check checks (T194)
-    assert "<span>Mismatched text</span>" in out
-    assert '<div class="pf-intro">Text that should look the same but does' in out
-    # ...and the count includes them, or a deck whose only problem is its
-    # figures reads "nothing drifting" above a list of figure findings
+    assert "Check consistency</button>" in out
+    assert "Style consistency" in out
+    assert "Find text or figures that look like they should" in out
+    # The count includes figures, while the list suppresses cards that
+    # merely say something already matches.
     assert "var figs=figBoxes().length,fl=figLint().length;" in out
-    assert "var n=r.findings.length+fl;" in out
+    assert "var n=bad.length+fl;" in out
+    assert "these already match" not in out
 
 
 def test_an_empty_bullet_is_not_an_abandoned_box(out):

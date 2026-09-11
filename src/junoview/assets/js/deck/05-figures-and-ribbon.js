@@ -834,68 +834,31 @@
   function renderStdInto(list,head){
     if(!list) return;
     var r=standardise();
-    /* THE FIGURE FINDINGS ARE IN THIS PANE and were not in this count,
-       so a deck whose only problem was its figures read "nothing
-       drifting" above a list of figure findings (2026-08-26 audit,
-       T58) */
     var figs=figBoxes().length,fl=figLint().length;
-    var n=r.findings.length+fl;
+    /* A consistency check is a short list of possible problems, not a
+       report of every thing that already matches. Suggestions for unnamed
+       bands remain available in Style system, where naming a type is the
+       task at hand. */
+    var bad=r.findings.filter(function(f){return f.sev==='warn';});
+    var n=bad.length+fl;
     var what=r.boxes+' text box'+(r.boxes===1?'':'es')
       +(figs?(' · '+figs+' figure'+(figs===1?'':'s')):'');
     if(head) head.textContent=n
-      ?(n+' to look at · '+what):('nothing drifting · '+what);
+      ?(n+' to check · '+what):('no differences found · '+what);
     list.innerHTML='';
-    if(!r.findings.length){
-      /* TWO empty states. Saying "all fine" to a deck that has never used
-         a style would be true about drift and false about the question
-         that was asked, so the unstyled case says what is actually so and
-         offers the names, phrased as an offer rather than a fault. And no
-         'err' severity anywhere: nothing this finds is broken, and a
-         consistency check that shouts is one people stop opening. */
+    if(!bad.length){
       var msg=document.createElement('div');
       msg.className='pf-ok';
-      /* T268: with no text boxes at all -- a deck you have just made --
-         the second branch used to read "Your text falls into 0 sizes;
-         naming them means changing every heading later is one edit
-         instead of 0", which is where a reader decides the screen is
-         broken. */
       msg.textContent=!r.boxes
-        ?('No text boxes yet. This checks the words across your slides '
-          +'against each other, so it has nothing to say until there '
-          +'are some.')
+        ?'No text boxes yet.'
         :r.styled
-        ?('Your type is consistent. Every heading, paragraph and caption '
-          +'across these '+(pres.slides||[]).length+' slides matches the '
-          +'style it wears.')
-        :('Nothing is drifting — but nothing here wears a named style '
-          +'either. Your text falls into '+r.bands.length+' size'
-          +(r.bands.length===1?'':'s')+'; naming them means changing '
-          +'every heading later is one edit instead of '+r.boxes+'.');
+        ?'No text formatting differences found.'
+        :'No clear differences found. Use Style system to name text types.';
       list.appendChild(msg);
-      if(!r.styled) r.bands.forEach(function(b){
-        if(b.boxes.length<2) return;
-        list.appendChild(stdRow({kind:'band',band:b,list:b.boxes,
-          inner:[],sev:'info',
-          head:b.boxes.length+' boxes at '+Math.round(b.size*5.4)+' pt',
-          why:'These look like your '+styleDef(b.suggest).label+'.'}));
-      });
       appendFigLint(list);
       return;
     }
-    /* T268: THE MISMATCHES FIRST, AND ON THEIR OWN. Every band with two
-       or more boxes got a card whether or not anything in it disagreed,
-       so a screen called "Fix mismatched text" opened on cards saying,
-       in words, that these boxes MATCH -- which on a hand-built deck is
-       most of them. The ones that disagree come first now; the ones that
-       merely have no name are an offer, under their own heading, where
-       they read as one. */
-    var bad=r.findings.filter(function(f){return f.sev==='warn';});
-    var ok=r.findings.filter(function(f){return f.sev!=='warn';});
     bad.forEach(function(f){list.appendChild(stdRow(f));});
-    if(ok.length){
-      if(bad.length) menuHead(list,'these already match');
-      ok.forEach(function(f){list.appendChild(stdRow(f));});
-    }
     appendFigLint(list);
   }
   function renderStdOverview(){
@@ -1245,9 +1208,10 @@
      display:none — not visibility — so it costs nothing in the width the
      fit ladder measures. The ladder itself is unchanged, and with a third
      of the groups in the row it now almost never has to fire.
-     Object is where everything selection-driven lives. It is contextual,
-     so Home keeps its page-level meaning instead of growing a different
-     ribbon every time the canvas selection changes (2026-08-26, user). */
+     Style and Object split everything selection-driven into how it looks
+     and what it is. They are contextual, so Home keeps its page-level
+     meaning instead of growing a different ribbon every time the canvas
+     selection changes (2026-08-26; split 2026-09-11). */
   /* Animation is a tab of its own again (T176): a build is something
      you give a slide AFTER it is full, which is the opposite moment
      from Insert. */
@@ -1256,7 +1220,7 @@
   /* ...and Insert is Images and Text (T220): one tab was holding
      four galleries and eleven doors. */
   var TABS=['home','images','text','design','animation','view',
-    'present','object'];
+    'present','style','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
