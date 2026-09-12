@@ -571,6 +571,74 @@
     }catch(e){}
     return out.sort();
   }
+  /* A browser session is not the saved library.  The presentation drawer
+     used while presenting must answer “what do I have open right now?”,
+     while Home only needs the handful recently used across sessions. */
+  var sessionPresentationNames=[];
+  var PRESENT_RECENT_KEY=PFX+'recent-presentations';
+  function presentationByName(name){
+    if(pres&&pres.name===name) return pres;
+    return loadDraft(name)||savedByName(name)||null;
+  }
+  function presentationSummary(name){
+    var p=presentationByName(name);
+    if(!p) return null;
+    return {name:name,slides:((p.slides)||[]).length,
+      poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
+      folder:p.folder||'',draft:!!loadDraft(name)};
+  }
+  function savedRecentPresentationNames(){
+    var names=[];
+    try{names=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
+    if(!Array.isArray(names)) names=[];
+    return names.filter(function(name){return !!presentationByName(name);})
+      .map(presentationSummary).filter(Boolean);
+  }
+  function sessionPresentationRows(){
+    return sessionPresentationNames.map(presentationSummary).filter(Boolean);
+  }
+  function notePresentationOpen(name){
+    if(!name) return;
+    sessionPresentationNames=sessionPresentationNames.filter(function(n){
+      return n!==name;});
+    sessionPresentationNames.unshift(name);
+    var recent=[];
+    try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
+    if(!Array.isArray(recent)) recent=[];
+    recent=recent.filter(function(n){return n!==name;});
+    recent.unshift(name);
+    lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent.slice(0,12)));
+    if(typeof renderDeckPresentationDrawer==='function')
+      renderDeckPresentationDrawer();
+    if(typeof renderPresentationHub==='function') renderPresentationHub();
+  }
+  function renameRememberedPresentation(oldName,newName){
+    function rename(names){
+      return names.map(function(name){
+        return name===oldName?newName:name;
+      }).filter(function(name,index,all){return all.indexOf(name)===index;});
+    }
+    sessionPresentationNames=rename(sessionPresentationNames);
+    var recent=[];
+    try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
+    if(!Array.isArray(recent)) recent=[];
+    lsSet(PRESENT_RECENT_KEY,JSON.stringify(rename(recent).slice(0,12)));
+    if(typeof renderDeckPresentationDrawer==='function')
+      renderDeckPresentationDrawer();
+    if(typeof renderPresentationHub==='function') renderPresentationHub();
+  }
+  function forgetRememberedPresentation(name){
+    sessionPresentationNames=sessionPresentationNames.filter(function(n){
+      return n!==name;});
+    var recent=[];
+    try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
+    if(!Array.isArray(recent)) recent=[];
+    recent=recent.filter(function(n){return n!==name;});
+    lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent));
+    if(typeof renderDeckPresentationDrawer==='function')
+      renderDeckPresentationDrawer();
+    if(typeof renderPresentationHub==='function') renderPresentationHub();
+  }
   function fullFrame(ref){
     var r=PRESETS.full[0];
     return {k:'cell',x:r[0],y:r[1],w:r[2],h:r[3],ref:ref||null};

@@ -1151,19 +1151,27 @@
     if(hit&&APP.mode==='app') scheduleAutosave();
     renderPresTabs();
   }
-  function newFolder(){
+  function newFolder(wanted){
     var list=explicitFolders();
-    var n=1,name='folder';
+    var supplied=typeof wanted==='string'&&wanted.trim();
+    var n=1,name=supplied?wanted.trim():'folder';
     function taken(x){
       return list.indexOf(x)>=0
         ||allSaved().some(function(p){return p.folder===x;});
     }
-    while(taken(name)){n++;name='folder-'+n;}
+    if(supplied&&taken(name)){
+      toast('There is already a folder called “'+name+'”');
+      return null;
+    }
+    while(!supplied&&taken(name)){n++;name='folder-'+n;}
     list.push(name);saveFolders(list);
     renderPresTabs();
-    var h=presstrip.querySelector(
-      '.pr-folder[data-folder="'+name+'"]');
-    if(h) startFolderRename(h,name);
+    if(!supplied){
+      var h=presstrip.querySelector(
+        '.pr-folder[data-folder="'+name+'"]');
+      if(h) startFolderRename(h,name);
+    }
+    return name;
   }
   function renameFolder(oldName,newName){
     newName=(newName||'').trim();
@@ -1412,6 +1420,206 @@
   })();
   var newFoldBtn=document.getElementById('pr-newfold');
   if(newFoldBtn) newFoldBtn.addEventListener('click',newFolder);
+
+  /* ---- PRESENTATION LIBRARY + PRESENTING DRAWER ----------------------
+     The side rail is behind the full-screen deck on purpose: a visible
+     but inert rail traps focus and cannot be clicked.  The deck therefore
+     owns a small drawer for the presentations open in THIS session, and
+     both it and Home share a complete library dialog for recent work,
+     folders, new decks and files. */
+  function presentationKind(p){
+    return p.view?'custom view':p.poster?'poster':'presentation';
+  }
+  function presentationIcon(p){
+    return bic(p.view?'newview':p.poster?'newposter':'newdeck');
+  }
+  function libraryRows(){
+    var names=[],seen={};
+    function add(name){
+      if(!name||seen[name]) return;
+      seen[name]=1;names.push(name);
+    }
+    allSaved().forEach(function(p){add(p.name);});
+    draftNames().forEach(add);
+    if(pres) add(pres.name);
+    return names.map(presentationSummary).filter(Boolean);
+  }
+  function presentationLibraryRow(p,click){
+    var b=document.createElement('button');
+    b.type='button';b.className='presentation-hub-row';
+    b.title='Open '+presentationKind(p)+' “'+p.name+'”';
+    var ic=document.createElement('span');ic.innerHTML=presentationIcon(p);
+    var name=document.createElement('span');name.className='presentation-hub-row-name';
+    name.textContent=p.name;
+    var kind=document.createElement('span');kind.className='presentation-hub-row-kind';
+    kind.textContent=presentationKind(p)+(p.folder?' · '+p.folder:'');
+    b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
+    b.addEventListener('click',click);
+    return b;
+  }
+  function emptyPresentationList(host,text){
+    var e=document.createElement('div');e.className='presentation-hub-empty';
+    e.textContent=text;host.appendChild(e);
+  }
+  /* The hub sits above the full-screen deck as a real modal, rather than
+     merely looking like one.  Keep its keyboard focus out of the deck
+     until it closes; Home has no visible deck, so remember only the
+     inertness this dialog itself introduced. */
+  var presentationHubInertedDeck=false;
+  function presentationHubDeckInert(on){
+    if(!deckEl) return;
+    if(on){
+      if(!deckEl.hidden&&!deckEl.hasAttribute('inert')){
+        deckEl.setAttribute('inert','');
+        deckEl.setAttribute('aria-hidden','true');
+        presentationHubInertedDeck=true;
+      }
+      return;
+    }
+    if(!presentationHubInertedDeck) return;
+    deckEl.removeAttribute('inert');
+    deckEl.removeAttribute('aria-hidden');
+    presentationHubInertedDeck=false;
+  }
+  function renderPresentationHub(){
+    var root=$('#presentation-hub');
+    var recentHost=$('#presentation-hub-recent'),allHost=$('#presentation-hub-all');
+    if(!root||!recentHost||!allHost) return;
+    recentHost.innerHTML='';allHost.innerHTML='';
+    var recent=savedRecentPresentationNames();
+    var all=libraryRows();
+    if(!recent.length) emptyPresentationList(recentHost,
+      'No recent presentations yet. Create one or open a saved deck.');
+    recent.forEach(function(p){
+      recentHost.appendChild(presentationLibraryRow(p,function(){
+        closePresentationHub();choosePresentation(p.name);
+      }));
+    });
+    if(!all.length) emptyPresentationList(allHost,
+      'No saved presentations yet.');
+    all.forEach(function(p){
+      allHost.appendChild(presentationLibraryRow(p,function(){
+        closePresentationHub();choosePresentation(p.name);
+      }));
+    });
+  }
+  function closePresentationHub(){
+    var root=$('#presentation-hub');
+    if(root) root.hidden=true;
+    presentationHubDeckInert(false);
+  }
+  function openPresentationHub(){
+    var root=$('#presentation-hub');if(!root) return;
+    closeDeckPresentationDrawer();
+    renderPresentationHub();root.hidden=false;
+    presentationHubDeckInert(true);
+    setTimeout(function(){
+      var b=$('#presentation-hub-new');if(b) b.focus();},0);
+  }
+  function closeDeckPresentationDrawer(){
+    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    if(d) d.hidden=true;
+    if(b) b.setAttribute('aria-expanded','false');
+  }
+  function openSessionPresentation(name){
+    var p=presentationByName(name);
+    if(!p){toast('That presentation is no longer available.');return;}
+    closeDeckPresentationDrawer();
+    if(pres&&name===pres.name) return;
+    if(isViewPres(p)){choosePresentation(name);return;}
+    if(name!==pres.name){
+      lsSet(PFX+'last',name);loadPresentation(name);cur=0;activePane=-1;
+    }
+    openDeck('view');
+  }
+  function renderDeckPresentationDrawer(){
+    var host=$('#deck-pres-list');if(!host) return;
+    host.innerHTML='';
+    var rows=sessionPresentationRows();
+    if(!rows.length){
+      var e=document.createElement('div');e.className='deck-pres-empty';
+      e.textContent='No presentation has been opened in this session.';
+      host.appendChild(e);return;
+    }
+    rows.forEach(function(p){
+      var b=document.createElement('button');
+      b.type='button';b.className='deck-pres-row'+(p.name===pres.name?' current':'');
+      b.title='Show “'+p.name+'”';
+      var ic=document.createElement('span');ic.innerHTML=presentationIcon(p);
+      var name=document.createElement('span');name.className='deck-pres-row-name';
+      name.textContent=p.name;
+      var kind=document.createElement('span');kind.className='deck-pres-row-kind';
+      kind.textContent=presentationKind(p);
+      b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
+      b.addEventListener('click',function(){openSessionPresentation(p.name);});
+      host.appendChild(b);
+    });
+  }
+  function presentationHubBoot(){
+    var hub=$('#presentation-hub'),drawer=$('#deck-pres-drawer');
+    var drawerOpen=$('#deck-pres-open'),drawerClose=$('#deck-pres-close');
+    var drawerBrowse=$('#deck-pres-browse');
+    if(drawerOpen) drawerOpen.addEventListener('click',function(){
+      if(!drawer) return;
+      drawer.hidden=!drawer.hidden;
+      drawerOpen.setAttribute('aria-expanded',(!drawer.hidden).toString());
+      if(!drawer.hidden) renderDeckPresentationDrawer();
+    });
+    if(drawerClose) drawerClose.addEventListener('click',closeDeckPresentationDrawer);
+    if(drawerBrowse) drawerBrowse.addEventListener('click',openPresentationHub);
+    var close=$('#presentation-hub-close');
+    if(close) close.addEventListener('click',closePresentationHub);
+    if(hub) hub.addEventListener('click',function(e){
+      if(e.target===hub) closePresentationHub();
+    });
+    var newer=$('#presentation-hub-new');
+    if(newer) newer.addEventListener('click',function(){
+      closePresentationHub();newPresentation();
+    });
+    var poster=$('#presentation-hub-poster');
+    if(poster) poster.addEventListener('click',function(){
+      closePresentationHub();newPoster();
+    });
+    var folder=$('#presentation-hub-folder');
+    var form=$('#presentation-hub-folderform');
+    var field=$('#presentation-hub-foldername');
+    if(folder) folder.addEventListener('click',function(){
+      if(!form) return;
+      form.hidden=!form.hidden;
+      if(!form.hidden&&field){field.focus();field.select();}
+    });
+    if(form) form.addEventListener('submit',function(e){
+      e.preventDefault();
+      var name=field&&field.value.trim();
+      if(!name) return;
+      if(newFolder(name)){
+        field.value='';form.hidden=true;renderPresentationHub();
+      }
+    });
+    var file=$('#presentation-hub-file');
+    if(file) file.addEventListener('click',function(){
+      closePresentationHub();var input=$('#deckfile');if(input) input.click();
+    });
+    var pptx=$('#presentation-hub-pptx');
+    if(pptx) pptx.addEventListener('click',function(){
+      closePresentationHub();var input=$('#pptxfile');if(input) input.click();
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key!=='Escape') return;
+      if(hub&&!hub.hidden){e.preventDefault();e.stopPropagation();
+        closePresentationHub();return;}
+      if(drawer&&!drawer.hidden){e.preventDefault();e.stopPropagation();
+        closeDeckPresentationDrawer();}
+    },true);
+    window.SemApp.deckHub=openPresentationHub;
+    window.SemApp.deckNewFolder=function(){
+      openPresentationHub();
+      if(form){form.hidden=false;if(field) field.focus();}
+    };
+    window.SemApp.deckRecentNames=savedRecentPresentationNames;
+    renderPresentationHub();renderDeckPresentationDrawer();
+    if(APP.refreshChrome) APP.refreshChrome();
+  }
   function choosePresentation(nm){
     var A=window.SemApp||{};
     if(nm!==pres.name){

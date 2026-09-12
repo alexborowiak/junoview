@@ -122,30 +122,22 @@ def test_the_front_door_offers_a_presentation_not_only_a_notebook():
     assert 'id="wj-pres"' in web
 
 
-def test_the_front_door_is_three_sections_in_one_order():
-    """T282 (2026-09-05, user: "the home screen should have three
-    sections with the files and a new buttons. Order should be
-    presentation, poster, notebooks grouped together").
-
-    Posters used to be mixed into the presentations list, told apart
-    only by a small icon, and the only door to a new one was in a rail
-    that collapses -- so on a narrow window there was no way to start a
-    poster from the front door at all.
-    """
+def test_the_front_door_is_recent_presentations_and_notebooks():
+    """The start screen now shows recents rather than a permanent copy
+    of the whole presentation library; Open leads to its folders, poster
+    and import actions."""
     web = render_page([], mode="web")
-    for sid in ("wj-pres", "wj-post", "wj-nb"):
+    for sid in ("wj-pres", "wj-nb"):
         assert f'id="{sid}"' in web, sid
-    assert (web.index('id="wj-pres"') < web.index('id="wj-post"')
-            < web.index('id="wj-nb"')), "presentations, posters, notebooks"
-    # each carries its own door, worded and iconned
-    for bid in ("welcome-new", "welcome-newpost", "welcome-open"):
+    assert web.index('id="wj-pres"') < web.index('id="wj-nb"')
+    # Recent work can create a deck or folder, and Open reveals the rest.
+    for bid in ("welcome-presentations", "welcome-new", "welcome-folder",
+                "welcome-open"):
         assert f'class="wj-new" id="{bid}"' in web, bid
     # the card grid it replaces is gone
     assert 'class="welcome-btns"' not in web
-    # ...and a section does NOT hide when it is empty: the header and its
-    # New button are the offer
-    assert 'id="wj-post">' in web
-    assert 'id="wj-none-post"' in web
+    assert 'id="presentation-hub"' in web
+    assert 'id="presentation-hub-poster"' in web
 
 
 def test_the_tagline_leads_with_presenting():

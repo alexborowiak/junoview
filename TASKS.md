@@ -7662,3 +7662,18 @@ gates are recorded in the completing commit.
   colour chips explain that they update all users from Home. The single
   presentation exit consistently says **Stop presenting**; it never briefly
   claims to close the editor.
+
+### Completed 2026-09-12 — delivered notebook and presentation entry points
+
+- [x] **T379 — Make the file, slide-generation and presentation routes
+  match their visible promises.** The file name and path now live with
+  Open / Info / Reload above the notebook ribbon; the duplicate document
+  strip and “Open another notebook” section action are gone. **Create
+  slides** opens one dialog that shows whole-notebook, current-section and
+  marked-cell scopes plus animations before a single commit action. While
+  presenting, a deck-owned drawer shows only presentations opened in this
+  session, with a separate library for recent work, folders, new decks,
+  posters and imports. Home is now a compact recent-presentations launcher
+  rather than a second all-decks rail. The generated `docs` application and
+  climate example were rebuilt in the same change so the served page carries
+  the work.

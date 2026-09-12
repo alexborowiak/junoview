@@ -2377,6 +2377,8 @@
   function deletePresByName(nm){
     if(pres&&nm===pres.name) cancelDraftWrite();
     lsDel(PFX+nm);
+    if(typeof forgetRememberedPresentation==='function')
+      forgetRememberedPresentation(nm);
     /* embedded-in-a-notebook presentations come back on reload — say so,
        whichever door the delete came through */
     var wasEmbedded=nbPres.some(function(p){return p.name===nm;});
@@ -2389,6 +2391,8 @@
       names=names.filter(function(x){return x!==nm;});
       if(names.length) loadPresentation(names[0]);
       else {pres=defaultPres();source='auto';}
+      if(pres&&typeof notePresentationOpen==='function')
+        notePresentationOpen(pres.name);
       cur=0;activePane=-1;
       status();refresh();
     } else renderPresTabs();
@@ -2462,6 +2466,8 @@
        its historical name because restore deliberately preserves `nm`. */
     histRename(old,nm);
     pres.name=nm;
+    if(typeof renameRememberedPresentation==='function')
+      renameRememberedPresentation(old,nm);
     saveProject();
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');

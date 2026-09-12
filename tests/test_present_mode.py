@@ -530,6 +530,35 @@ def test_isolation_and_the_deck_open_class_are_one_expression(out):
     assert "if(full) deckTakeFocus();" in out
 
 
+def test_presenting_has_a_deck_owned_session_drawer_not_an_inert_rail(out):
+    """The global rail remains safely inert behind the deck; the visible
+    substitute is a deck child, populated only from names opened in this
+    session, and has a deliberate route to the saved library."""
+    assert 'id="deck-pres-open"' in out
+    assert 'id="deck-pres-drawer"' in out
+    assert 'id="deck-pres-browse"' in out
+    assert "var sessionPresentationNames=[];" in out
+    assert "function notePresentationOpen(name){" in out
+    assert "function sessionPresentationRows(){" in out
+    assert "function renderDeckPresentationDrawer(){" in out
+    assert "function openSessionPresentation(name){" in out
+    assert "openDeck('view');" in out
+    # Opening the full library while presenting is a real modal too: its
+    # keyboard focus cannot leak into the deck sitting beneath it.
+    assert "function presentationHubDeckInert(on){" in out
+    assert "presentationHubDeckInert(true);" in out
+    assert "presentationHubDeckInert(false);" in out
+    # Names survive the lifetime of the drawer but cannot become dangling
+    # when the presentation is renamed or deleted.
+    assert "function renameRememberedPresentation(oldName,newName){" in out
+    assert "function forgetRememberedPresentation(name){" in out
+    assert "renameRememberedPresentation(old,nm);" in out
+    assert "forgetRememberedPresentation(nm);" in out
+    # The backdrop remains inaccessible instead of being visually revived.
+    assert "'#apptop', '#presrail', '#presrail-show'" in out
+    assert "if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')" in out
+
+
 def test_focus_goes_in_and_comes_back(out):
     """Focus has to GO somewhere when the background stops accepting it,
     or it sits on a control that is now inert and the next Tab restarts

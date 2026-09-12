@@ -256,7 +256,10 @@ def test_chrome_toc_toggle_resizable_builder_dark_doc_no_refresh(out):
     assert 'id="menubtn"' in out and "tocshow" in out
     assert 'id="dc-resize"' in out and "--dc-w" in out
     assert 'id="dc-save"' in out
-    assert 'class="docbar"' in out and 'class="docbar-p"' in out
+    # File identity is in the utility bar above the ribbon, alongside
+    # Open / Info / Reload, not repeated inside each document.
+    assert 'id="nb-file-ident"' in out and 'id="nb-file-path"' in out
+    assert 'class="docbar"' not in out
     assert "body:not(.light) .card" in out
     assert 'id="refresh-btn"' not in out
 

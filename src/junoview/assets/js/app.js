@@ -361,9 +361,9 @@
      visible, so the cost is a handful of rows. */
   function renderRailNbs(){
     var list=tabList();
-    /* nothing to switch to and nothing to open: a list of one, with no
-       way to make it two, is a heading over a fact you already know */
-    var useful=list.length>1||APP.mode==='app'||APP.mode==='web';
+    /* This is a switcher, not another Open control.  One open notebook
+       names no choice, and opening a file belongs in the utility line. */
+    var useful=list.length>1;
     $$('.railnbs').forEach(function(host){
       host.innerHTML='';
       host.hidden=!useful;
@@ -410,14 +410,6 @@
         }
         host.appendChild(b);
       });
-      if(APP.mode==='app'||APP.mode==='web'){
-        var add=document.createElement('button');
-        add.type='button';add.className='railnbs-add';
-        add.textContent='+ Open another notebook…';
-        add.addEventListener('click',function(){
-          var ob=$('#tab-open'); if(ob) ob.click();});
-        host.appendChild(add);
-      }
     });
   }
   function activate(stem){
@@ -4585,13 +4577,6 @@
         setSecOff(b.dataset.sec,true);   /* heading AND every card */
       });
     });
-    $$('.sec-slides',shell).forEach(function(b){
-      b.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        /* T362: this section alone, as a new presentation */
-        autoSlidesFrom(shell.dataset.nb||APP.active,'section',b.dataset.sec);
-      });
-    });
     $$('.navsec-eye',shell).forEach(function(sp){
       var toggle=function(e){
         e.preventDefault();e.stopPropagation();
@@ -4803,8 +4788,30 @@
     return dock.querySelector('.railfile[data-nb="'
       +(shellEl.dataset.nb||'')+'"]');
   }
+  function syncFileBarIdentity(cur){
+    var box=$('#nb-file-ident'),name=$('#nb-file-name'),path=$('#nb-file-path');
+    if(!box||!name||!path) return;
+    if(!cur){
+      box.hidden=true;name.textContent='';path.textContent='';path.title='';
+      return;
+    }
+    var p=String(cur.path||((cur.el||{}).dataset||{}).path||'');
+    var base=p.split('?')[0].split('#')[0].split(/[\\/]/).pop();
+    try{base=decodeURIComponent(base);}catch(e){}
+    base=base||String(cur.label||cur.title||APP.active||'Untitled');
+    name.textContent=base;
+    path.textContent=p;
+    path.title=p||base;
+    box.title=p||base;
+    var railTitle=cur.el&&cur.el.querySelector('.railtitle');
+    if(railTitle) railTitle.title=p||base;
+    box.hidden=false;
+  }
   function dockFileBar(){
-    var dock=$('#file-dock'); if(!dock) return;
+    var dock=$('#file-dock');
+    var cur=APP.active&&APP.shells[APP.active];
+    syncFileBarIdentity(cur);
+    if(!dock) return;
     /* whatever is parked here belongs to some other notebook now */
     $$('.railfile',dock).forEach(function(b){
       var sh=APP.shells[b.dataset.nb||''];
@@ -4812,7 +4819,6 @@
       if(head) head.appendChild(b);
       else if(b.parentNode) b.parentNode.removeChild(b);
     });
-    var cur=APP.active&&APP.shells[APP.active];
     if(!cur||!cur.el) return;
     var bar=cur.el.querySelector('.railfile');
     if(!bar) return;
@@ -5214,7 +5220,7 @@
     });
     return plan;
   }
-  function autoSlidesFrom(stem,scope,sid){
+  function autoSlidesFrom(stem,scope,sid,animations){
     var plan=autoPlan(stem,scope,sid);
     if(!plan){
       alert('Open a notebook first \u2014 the slides are made from its '
@@ -5233,8 +5239,7 @@
         :'No markdown or figure cells to make slides from here.');
       return;
     }
-    var anim=$('#auto-animations');
-    plan.animations=!!(anim&&anim.checked);
+    plan.animations=!!animations;
     APP.deckAuto(plan);
   }
   /* the section on screen: the sidebar's highlighted row, else the first */
@@ -5245,8 +5250,26 @@
     var sid=act?act.dataset.sec:(secs[0]||{}).id;
     return secs.filter(function(s){return s.id===sid;})[0]||null;
   }
-  function autoMenuOpen(anchor){
-    var m=$('#auto-menu'); if(!m) return;
+  var autoDialogStem='',autoDialogSection='';
+  function autoSlidesDialogClose(){
+    var d=$('#auto-slides-dialog'),b=$('#doc-autoslides');
+    if(d) d.hidden=true;
+    if(b) b.setAttribute('aria-expanded','false');
+  }
+  function autoSlidesDialogSummary(){
+    var summary=$('#auto-slides-summary');
+    if(!summary) return;
+    var selected=$('input[name="auto-slides-scope"]:checked');
+    var scope=selected?selected.value:'all';
+    var plan=autoPlan(autoDialogStem,scope,
+      scope==='section'?autoDialogSection:'');
+    var n=plan?(plan.sections||[]).length:0;
+    summary.textContent=n
+      ?(n+' section'+(n===1?'':'s')+' with slide content')
+      :'No slide content in this choice';
+  }
+  function autoSlidesDialogOpen(){
+    var d=$('#auto-slides-dialog'); if(!d) return;
     var stem=APP.active||APP.order[0];
     if(!stem){
       alert('Open a notebook first \u2014 the slides are made from its '
@@ -5254,48 +5277,56 @@
       return;
     }
     var sec=autoCurrentSection(stem);
-    var row=$('#auto-menu-sec');
-    if(row){
-      row.textContent='From this section'+(sec?' \u2014 '+sec.title:'');
-      row.dataset.sec=sec?sec.id:'';
-      row.disabled=!sec;
+    autoDialogStem=stem;autoDialogSection=sec?sec.id:'';
+    var sectionInput=$('#auto-scope-section');
+    var sectionWrap=$('#auto-scope-section-wrap');
+    var sectionLabel=$('#auto-scope-section-label');
+    if(sectionInput) sectionInput.disabled=!sec;
+    if(sectionWrap) sectionWrap.classList.toggle('disabled',!sec);
+    if(sectionLabel) sectionLabel.textContent=sec
+      ?String(sec.title||'Current section')
+      :'No section is selected';
+    if(!sec&&sectionInput&&sectionInput.checked){
+      var all=$('input[name="auto-slides-scope"][value="all"]');
+      if(all) all.checked=true;
     }
-    /* T365: the same chooser, hung off whichever door opened it. In
-       the rail it is an absolutely-positioned block inside the rail;
-       from the ribbon it has to float, like every other menu the bar
-       drops, because the header is sticky. */
-    if(anchor){
-      m.classList.add('auto-float');
-      var r=anchor.getBoundingClientRect();
-      m.style.top=(r.bottom+6)+'px';
-      m.style.left=Math.max(6,
-        Math.min(r.left,window.innerWidth-286))+'px';
-    } else {
-      m.classList.remove('auto-float');
-      m.style.top='';m.style.left='';
-    }
-    /* deferred: the click that opened it is still on its way to the
-       document, where the closer below listens */
-    setTimeout(function(){m.hidden=false;},0);
+    autoSlidesDialogSummary();
+    d.hidden=false;
+    var b=$('#doc-autoslides');
+    if(b) b.setAttribute('aria-expanded','true');
+    setTimeout(function(){
+      var focus=$('#auto-slides-create');if(focus) focus.focus();},0);
   }
   (function(){
-    var b=$('#pr-autoslides'),m=$('#auto-menu');
-    if(!m) return;
-    if(b) b.addEventListener('click',function(e){
-      e.stopPropagation();autoMenuOpen();});
-    /* T365: the door on the notebook's own ribbon */
+    var d=$('#auto-slides-dialog');
+    if(!d) return;
     var rb=$('#doc-autoslides');
     if(rb) rb.addEventListener('click',function(e){
-      e.stopPropagation();autoMenuOpen(rb);});
-    $$('.pr-mi',m).forEach(function(mi){
-      mi.addEventListener('click',function(e){
-        e.stopPropagation();m.hidden=true;
-        var stem=APP.active||APP.order[0];
-        autoSlidesFrom(stem,mi.dataset.scope,mi.dataset.sec||'');
-      });
+      e.preventDefault();autoSlidesDialogOpen();});
+    ['#auto-slides-close','#auto-slides-cancel'].forEach(function(sel){
+      var b=$(sel);if(b) b.addEventListener('click',autoSlidesDialogClose);
     });
-    document.addEventListener('click',function(e){
-      if(!m.hidden&&!m.contains(e.target)) m.hidden=true;});
+    $$('.auto-slides-dialog input[name="auto-slides-scope"]').forEach(
+      function(inp){inp.addEventListener('change',autoSlidesDialogSummary);});
+    var create=$('#auto-slides-create');
+    if(create) create.addEventListener('click',function(){
+      var chosen=$('input[name="auto-slides-scope"]:checked');
+      var scope=chosen?chosen.value:'all';
+      var animationBox=$('#auto-animations');
+      var animations=!!(animationBox&&animationBox.checked);
+      var stem=autoDialogStem||APP.active||APP.order[0];
+      var sid=scope==='section'?autoDialogSection:'';
+      autoSlidesDialogClose();
+      autoSlidesFrom(stem,scope,sid,animations);
+    });
+    d.addEventListener('click',function(e){
+      if(e.target===d) autoSlidesDialogClose();
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&!d.hidden){
+        e.preventDefault();autoSlidesDialogClose();
+      }
+    });
   })();
   function initShell(shell){
     var data={};
@@ -5305,31 +5336,6 @@
     mdClampScan(shell);
     wireFileInfo(shell,stem);
     if(stem===(APP.active||'')) dockFileBar();
-
-    /* ---- filename + path bar at the top of the document ---- */
-    var db=$('.docbar',shell);
-    if(db){
-      var p=shell.dataset.path||'';
-      var nmEl=$('.docbar-nm',db), pEl=$('.docbar-p',db);
-      if(p){
-        var parts=p.split(/[\/\\]/);
-        var base=parts[parts.length-1]||p;
-        base=base.split('?')[0].split('#')[0];
-        try{base=decodeURIComponent(base);}catch(e){}
-        if(nmEl&&base) nmEl.textContent=base;
-        if(pEl){pEl.textContent=p;pEl.dir='ltr';
-          pEl.title=p;}
-        /* the sidebar already names the notebook by its stem; give
-           that name the full path as its tooltip, the way the tab
-           and the docbar do. The stem, not the file name: a rail
-           is 256px wide and "example_climate_analysis.ipynb" in
-           mono wraps mid-word there, which reads worse than the
-           extension reads useful. */
-        var rt=$('.railtitle',shell);
-        if(rt) rt.title=p;
-      } else if(pEl){pEl.textContent='';}
-      db.hidden=false;
-    }
 
     /* ---- reveal on scroll ---- */
     var cards=$$('.card',shell);
@@ -6927,7 +6933,6 @@
       var n=$(id); if(n) n.hidden=shown(list);
     };
     none('#wj-none-pres',$('#welcome-pres'));
-    none('#wj-none-post',$('#welcome-post'));
   }
   /* T241: the notebooks you had open last time, as a row you press.
      One button for the lot, because "where I was" is one thought;
@@ -6995,31 +7000,18 @@
       host.appendChild(b);
     });
   }
-  /* presentations, on the front door. Populated from the deck's own list
-     so a draft, a poster and a custom view all show up exactly as the
-     rail shows them; absent entirely in a static export, where deck.js
-     never registers the hook. */
+  /* Home is intentionally a RECENT list, not a second presentation rail.
+     The full library has its own Open door, where folders, posters and
+     imports do not compete with notebook opening. */
   function renderWelcomePres(){
-    var host=$('#welcome-pres'),phost=$('#welcome-post');
+    var host=$('#welcome-pres');
     if(!host) return;
     host.innerHTML='';
-    if(phost) phost.innerHTML='';
-    var all=[];
-    try{all=(APP.deckNames&&APP.deckNames())||[];}catch(e){all=[];}
-    /* T282: A POSTER IS ITS OWN KIND. It was in this list, told apart
-       only by a small icon, so "the posters I have made" was a thing you
-       had to read a column for. deckNames already flags it. A custom
-       view stays with the presentations: it is a saved deck-shaped
-       thing, and it has no third section of its own. */
-    var list=all.filter(function(p){return !p.poster;});
-    var posters=all.filter(function(p){return !!p.poster;});
+    var list=[];
+    try{list=(APP.deckRecentNames&&APP.deckRecentNames())||[];}catch(e){}
     host.hidden=!list.length;
-    if(phost) phost.hidden=!posters.length;
     syncJump();
-    /* T264: no sub-heading here — the section this sits in is titled
-       "Presentations", and saying it twice is what made the blocks read
-       as peers of the same kind */
-    function row(p,into){
+    function row(p){
       var kind=p.view?'custom view':p.poster?'poster':'presentation';
       var b=document.createElement('button');b.className='recent-i';
       b.type='button';
@@ -7042,10 +7034,9 @@
         if(APP.deckChoose) APP.deckChoose(p.name);
         goHome(false);
       });
-      into.appendChild(b);
+      host.appendChild(b);
     }
-    list.slice(0,6).forEach(function(p){row(p,host);});
-    if(phost) posters.slice(0,6).forEach(function(p){row(p,phost);});
+    list.slice(0,6).forEach(row);
   }
 
   /* ---- the welcome screen's demo reel ---------------------------------
@@ -7133,14 +7124,13 @@
       APP.deckNew();
       goHome(false);
     });
-    /* T282: and the same for a poster, which until now could only be
-       started from the presentations rail -- a panel that collapses, and
-       is collapsed by default on a narrow window. */
-    var wPost=$('#welcome-newpost');
-    if(wPost) wPost.addEventListener('click',function(){
-      if(!APP.deckNewPoster) return;
-      APP.deckNewPoster();
-      goHome(false);
+    var wHub=$('#welcome-presentations');
+    if(wHub) wHub.addEventListener('click',function(){
+      if(APP.deckHub) APP.deckHub();
+    });
+    var wFolder=$('#welcome-folder');
+    if(wFolder) wFolder.addEventListener('click',function(){
+      if(APP.deckNewFolder) APP.deckNewFolder();
     });
     /* same dialog, but landed on the URL path: paste a GitHub link */
     var wUrl=$('#welcome-url');

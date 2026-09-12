@@ -170,24 +170,28 @@ def test_nothing_in_scope_is_no_slides_at_all():
 # ----------------------------------------------------------- the doors
 
 
-def test_the_viewer_owns_the_doors(out):
-    """Two doors in the notebook viewer and none in the deck: the New
-    menu's three-way chooser, and a word on every section heading."""
+def test_the_viewer_owns_one_complete_create_slides_dialog(out):
+    """The user sees every scope and the animation choice before one
+    explicit Create slides action; neither the rail nor a section row is
+    a competing, half-configured route."""
     page = assets.page_template()
-    assert 'data-for="pr-autoslides"' in page
-    assert 'id="pr-autoslides"' in page
-    assert 'id="auto-menu" hidden' in page
+    assert 'id="auto-slides-dialog" hidden' in page
+    assert 'id="auto-slides-create"' in page
     assert 'id="auto-animations"' in page
     for scope in ("all", "section", "marks"):
-        assert f'data-scope="{scope}"' in page, scope
+        assert f'name="auto-slides-scope" value="{scope}"' in page, scope
+    assert 'id="pr-autoslides"' not in page
+    assert 'id="auto-menu"' not in page
     items = (SRC / "render" / "items.py").read_text(encoding="utf-8")
-    assert 'class="sec-slides" data-sec="{sid}"' in items
+    assert 'sec-slides' not in items
     css = assets.core_css()
-    assert ".sectionhead:hover .sec-slides" in css
+    assert '.sec-slides' not in css
     app = assets.app_js()
     assert "function autoPlan(stem,scope,sid){" in app
-    assert "function autoSlidesFrom(stem,scope,sid){" in app
-    assert "$$('.sec-slides',shell).forEach(function(b){" in app
+    assert "function autoSlidesFrom(stem,scope,sid,animations){" in app
+    assert "function autoSlidesDialogOpen(){" in app
+    assert "function autoSlidesDialogClose(){" in app
+    assert "$$('.sec-slides',shell)" not in app
     # the plan filters to the three kinds the slides are made of...
     assert ("return it.kind==='note'||it.kind==='figure'"
             "||it.kind==='diagnostic';") in app
@@ -199,7 +203,12 @@ def test_the_viewer_owns_the_doors(out):
     # ...and hands the deck refs it can resolve
     assert "Object.assign({ref:stem+'::'+it.anchor,kind:it.kind" in app
     assert "APP.deckAuto(plan);" in app
-    assert "plan.animations=!!(anim&&anim.checked);" in app
+    assert "plan.animations=!!animations;" in app
+    # The button route is an actual dialog -> Create handler, not merely
+    # a visible label which can drift away from the builder.
+    assert "e.preventDefault();autoSlidesDialogOpen();" in app
+    assert "var create=$('#auto-slides-create');" in app
+    assert "autoSlidesFrom(stem,scope,sid,animations);" in app
     # the deck's half: a pure builder, a new presentation, one boot call
     assert "11-autodeck" in assets.DECK_PARTS
     assert "  autoDeckBoot();" in (SRC / "assets" / "js" / "deck"
@@ -212,47 +221,38 @@ def test_the_viewer_owns_the_doors(out):
     # never the old Auto-build: the deck's own File menu offers no such row
     deck = assets.deck_html()
     assert 'id="mi-auto-figs"' not in deck and 'id="mi-auto-figdocs"' not in deck
-    assert "Slides from this notebook" in assets.help_html()
+    help_html = assets.help_html()
+    assert "Create slides" in help_html
+    assert "Slides from this notebook" not in help_html
 
 
 def test_the_door_is_on_the_ribbon_of_the_notebook_it_reads():
-    """T365 (2026-09-07, user: "Also where was the autogenerate
-    presentation in the notebook view????").
-
-    T362 gave this two doors and both are hard to find from the notebook
-    you are reading: presentations rail > New > "Slides from this
-    notebook..." is a menu inside a rail that collapses, which is the
-    standing complaint about this app, and the per-section one is a
-    small "slides" word beside "hide section". So the viewer's own
-    ribbon carries it, next to Present -- the other control that turns
-    this notebook into a talk -- and one press opens T362's three-scope
-    chooser rather than a menu that opens another menu.
-    """
+    """Create slides stays next to Present, but no longer hides its
+    choices behind a rail menu or a floating per-section action."""
     page = assets.page_template()
     assert '<button class="toggle" id="doc-autoslides"' in page
-    assert "Make slides" in page
+    assert "Create slides" in page
+    assert 'aria-controls="auto-slides-dialog"' in page
     # beside Present, in the View group -- not a menu of its own
     assert page.index('id="doc-present"') < page.index('id="doc-autoslides"')
     assert (page.index('id="doc-autoslides"')
             < page.index('<span class="abgrp-lab">View</span>'))
     app = assets.app_js()
     assert "    var rb=$('#doc-autoslides');" in app
-    assert "      e.stopPropagation();autoMenuOpen(rb);});" in app
-    # the same chooser, floated under whichever door opened it
-    assert "      m.classList.add('auto-float');" in app
-    assert "      m.classList.remove('auto-float');" in app
+    assert "      e.preventDefault();autoSlidesDialogOpen();});" in app
+    assert "d.addEventListener('click',function(e){" in app
     css = assets.load("css/app.css")
-    assert (".pr-newmenu.auto-float{position:fixed;left:auto;right:auto;"
-            "width:280px;\n  z-index:200;}") in css
-    # the rail's door still works, and is now optional rather than assumed
-    assert "    if(b) b.addEventListener('click',function(e){" in app
+    assert ".auto-slides-dialog{position:fixed;inset:0;z-index:230;" in css
+    assert ".pr-newmenu.auto-float" not in css
 
 
 def test_the_section_row_names_the_section_on_screen():
-    """'From this section' says WHICH section before you click it."""
+    """The This section radio names the active section and disables only
+    that option when the document has none."""
     app = assets.app_js()
     cur = app.split("function autoCurrentSection(stem){")[1].split("\n  }")[0]
     assert "querySelector('.navsec.active')" in cur
-    body = app.split("function autoMenuOpen(anchor){")[1].split("\n  }")[0]
+    body = app.split("function autoSlidesDialogOpen(){")[1].split("\n  }")[0]
     assert "var sec=autoCurrentSection(stem);" in body
-    assert "From this section" in body
+    assert "sectionInput.disabled=!sec;" in body
+    assert "sectionLabel.textContent=sec" in body

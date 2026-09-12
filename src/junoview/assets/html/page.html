@@ -28,6 +28,14 @@
     <button class="toggle primary" id="tab-open" hidden
       title="Open a notebook (.ipynb) from your computer or a
  URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
+    <!-- The file itself belongs with Open / Info / Reload.  Keeping the
+         visible name and the (ellipsised) path here means there is one
+         stable place to answer “what am I looking at?”, rather than a
+         second identity strip inside the document (2026-09-11). -->
+    <span class="nb-file-ident" id="nb-file-ident" hidden>
+      <span class="nb-file-name" id="nb-file-name"></span>
+      <span class="nb-file-path" id="nb-file-path" dir="ltr"></span>
+    </span>
     <span class="fgrp-row" id="file-dock"></span>
   </div>
   <div class="appbar">
@@ -176,22 +184,16 @@
       title="Fill the display with Junoview (Esc to leave)"
       ><i data-ic="expand"></i><span class="btxt">Full screen</span></button>
     </span>
-    <!-- T365: MAKE SLIDES, ON THE ROW (2026-09-07, user: "where was the
-         autogenerate presentation in the notebook view????"). T362 built
-         it and gave it two doors, both hard to find from the notebook
-         itself: presentations rail > New > "Slides from this
-         notebook..." (a menu, in a rail that collapses) and a small
-         "slides" word on each section heading. It belongs beside
-         Present, which is the other control that turns this notebook
-         into a talk, and it opens T362's own three-scope chooser
-         directly rather than a menu that opens another menu. -->
+    <!-- Creating a presentation is one deliberate action.  The dialog
+         shows every choice at once, rather than scattering “from this
+         section” shortcuts across the rail and section headers. -->
     <span class="vw-stack">
     <button class="toggle" id="doc-autoslides"
-      aria-haspopup="menu" aria-expanded="false"
+      aria-haspopup="dialog" aria-expanded="false"
+      aria-controls="auto-slides-dialog"
       title="Build a presentation from this notebook &mdash; section
  headings become slide titles, with their markdown and figures beneath"
-      ><i data-ic="newdeck"></i><span class="btxt">Make slides
-      &#9662;</span></button>
+      ><i data-ic="newdeck"></i><span class="btxt">Create slides</span></button>
     </span>
     </span></span><span class="abgrp-lab">View</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
@@ -278,6 +280,54 @@
 <!-- the style panel is re-parented to <body> when it opens: the header is
      position:sticky, so a panel inside it would paint behind the page -->
 <div class="stylepanel" id="stylepanel" hidden></div>
+<!-- ONE complete route from a notebook to slides.  Scope and animations
+     are intentionally visible together, and the only committing control
+     is Create slides; the former rail menu and per-section word button
+     made it unclear which option would run (2026-09-11). -->
+<div class="auto-slides-dialog" id="auto-slides-dialog" hidden
+  role="dialog" aria-modal="true" aria-labelledby="auto-slides-title">
+  <div class="auto-slides-card">
+    <div class="auto-slides-head">
+      <div>
+        <div class="auto-slides-kicker">presentation</div>
+        <h2 id="auto-slides-title">Create slides</h2>
+      </div>
+      <button class="toggle auto-slides-close" id="auto-slides-close"
+        type="button" title="Cancel"><i data-ic="exit"></i>
+        <span class="btxt">Cancel</span></button>
+    </div>
+    <p class="auto-slides-copy">Choose what to bring across. Slide titles,
+      text and figures keep their notebook order.</p>
+    <fieldset class="auto-slides-scopes">
+      <legend>Use content from</legend>
+      <label class="auto-slide-scope">
+        <input type="radio" name="auto-slides-scope" value="all" checked>
+        <span><b>The whole notebook</b><small>All sections with text or
+          figures</small></span>
+      </label>
+      <label class="auto-slide-scope" id="auto-scope-section-wrap">
+        <input type="radio" name="auto-slides-scope" value="section"
+          id="auto-scope-section">
+        <span><b>This section</b><small id="auto-scope-section-label"></small></span>
+      </label>
+      <label class="auto-slide-scope">
+        <input type="radio" name="auto-slides-scope" value="marks">
+        <span><b>Marked cells</b><small>Pinned or labelled text and
+          figures</small></span>
+      </label>
+    </fieldset>
+    <label class="auto-anim"><input type="checkbox" id="auto-animations">
+      <span><b>Add animations</b><small>Reveal each slide's objects in the
+        same order as the notebook</small></span></label>
+    <div class="auto-slides-foot">
+      <span class="auto-slides-summary" id="auto-slides-summary"></span>
+      <span class="deck-spring"></span>
+      <button class="toggle" id="auto-slides-cancel" type="button">Cancel</button>
+      <button class="toggle primary" id="auto-slides-create" type="button"
+        ><i data-ic="newdeck"></i><span class="btxt">Create slides</span></button>
+    </div>
+  </div>
+</div>
 <nav class="presrail" id="presrail" aria-label="Presentations">
   <!-- the wordmark is the HOME button, the thing everyone tries first
        (2026-08-21, user: "clicking the Junoview logo should take you
@@ -350,24 +400,6 @@
         title="Bring a PowerPoint deck in as a new presentation &mdash;
  text, shapes, pictures, tables, charts, notes and builds come across">
         Import a PowerPoint file&#8230;</button>
-      <!-- T362: the notebook laid out as slides -- every section, the
-           one on screen, or the cells you marked -->
-      <button class="pr-mi" data-for="pr-autoslides"
-        title="A new presentation made from the notebook on screen: each
- section heading a slide title, its markdown and figures beneath">
-        Slides from this notebook&#8230;</button>
-    </div>
-    <div class="pr-newmenu auto-menu" id="auto-menu" hidden>
-      <label class="auto-anim"><input type="checkbox" id="auto-animations">
-        Add animations (reveal in notebook order)</label>
-      <button class="pr-mi" data-scope="all"
-        title="Every section with markdown or figures, in order"
-        >From the whole notebook</button>
-      <button class="pr-mi" data-scope="section" id="auto-menu-sec"
-        title="Only the section you are reading">From this section</button>
-      <button class="pr-mi" data-scope="marks"
-        title="Only the cells you pinned or labelled"
-        >From the cells you marked</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -391,10 +423,6 @@
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><i data-ic="open"></i></span>
     <span class="pr-t">+ New folder</span></button>
-  <button class="pr-btn" hidden id="pr-autoslides"
-    title="Slides from this notebook">
-    <span class="pr-ico"><i data-ic="newdeck"></i></span>
-    <span class="pr-t">Slides from this notebook</span></button>
   <!-- the two panel controls as a pair: collapse it, or let it hide
        itself. Neither is "pin" — nothing is being pinned. -->
   <div class="pr-foot">
@@ -546,61 +574,25 @@
         <span class="wl-sep" id="welcome-install-sep" hidden>&middot;</span>
         <a href="#" id="welcome-install" hidden>Install as an app</a>
       </div>
-      <!-- WHAT YOU WERE DOING, in the two shapes it comes in: the files
-           you had open, and the presentations built out of them. The
-           presentations column is here because the rail that lists them
-           collapses, and once it is away this screen was a dead end for
-           anyone who wanted a deck rather than a notebook (2026-08-21,
-           user: "you can't get to the presentations from here either"). -->
-      <!-- T264: TWO COLUMNS, TWO DIFFERENT THINGS (2026-09-04,
-           user: "why are the presentations and the notebooks kind of
-           mixed together, these are really different features").
-           They were three peers in one auto-fit grid: .welcome-jump was
-           repeat(auto-fit,minmax(240px,1fr)) capped at 660px, which
-           resolves to exactly two columns, so the three blocks flowed
-           notebooks / notebooks / presentations -- and presentations
-           landed under "last time" with dead space beside it, wearing
-           the same 10px mono label as its neighbours. Each kind is its
-           own titled column now, and each column hides when it is
-           empty so a single kind still fills the width. -->
-      <!-- T282: THREE SECTIONS, EACH WITH THE FILES AND ITS OWN NEW
-           (2026-09-05, user: "the home screen should have three
-           sections with the files and a new buttons. Order should be
-           presentation, poster, notebooks grouped together").
-
-           The card row above this is gone, and its three buttons are
-           these three headers: making a presentation belongs beside the
-           presentations, not in a separate grid two inches away that
-           repeats the word. Posters were never a section at all --
-           they were mixed into the presentations list and told apart
-           only by a small icon, while the only door to a new one was
-           in a rail that collapses.
-
-           The ids are unchanged on purpose (#welcome-new, #welcome-open,
-           #welcome-url): their handlers in app.js keep working, and it
-           is the markup and the CSS that moved. #welcome-newpost is the
-           one genuinely new door.
-
-           A section does NOT hide when it is empty any more. An empty
-           Posters section whose header carries "+ New" is the whole
-           point -- hiding it is what left "New poster" reachable only
-           from the rail. -->
+      <!-- The start screen is a launch point, not a second copy of the
+           presentation rail.  It shows the presentations actually used
+           recently; Open opens the full library where folders, posters,
+           imports and every saved presentation belong. -->
       <div class="welcome-jump" id="welcome-jump">
         <section class="wj-col" id="wj-pres">
-          <h2 class="wj-h"><i data-ic="present"></i> Presentations
+          <h2 class="wj-h"><i data-ic="present"></i> Recent presentations
+            <button class="wj-new" id="welcome-presentations" type="button"
+              title="Open presentations, recent work and folders"
+              ><i data-ic="open"></i> Open</button>
             <button class="wj-new" id="welcome-new" type="button"
               title="New presentation"
-              ><i data-ic="newdeck"></i> New</button></h2>
+              ><i data-ic="newdeck"></i> New</button>
+            <button class="wj-new" id="welcome-folder" type="button"
+              title="Create a presentation folder"
+              ><i data-ic="open"></i> Folder</button></h2>
           <div class="wpres" id="welcome-pres" hidden></div>
-          <div class="wj-none" id="wj-none-pres" hidden>Nothing yet</div>
-        </section>
-        <section class="wj-col" id="wj-post">
-          <h2 class="wj-h"><i data-ic="pagep"></i> Posters
-            <button class="wj-new" id="welcome-newpost" type="button"
-              title="New poster &mdash; an A0 portrait page"
-              ><i data-ic="newposter"></i> New</button></h2>
-          <div class="wpres" id="welcome-post" hidden></div>
-          <div class="wj-none" id="wj-none-post" hidden>Nothing yet</div>
+          <div class="wj-none" id="wj-none-pres" hidden>No recent
+            presentations</div>
         </section>
         <section class="wj-col" id="wj-nb">
           <h2 class="wj-h"><i data-ic="nb"></i> Notebooks
@@ -708,6 +700,52 @@
       </figure>
     </div>
   </div>
+</div>
+<!-- A single presentation library is shared by Home and the drawer used
+     while presenting.  Home stays quiet (recent work only); this is the
+     deliberate place for every saved deck, folders, imports and new
+     kinds. -->
+<div class="presentation-hub" id="presentation-hub" hidden
+  role="dialog" aria-modal="true" aria-labelledby="presentation-hub-title">
+  <section class="presentation-hub-card">
+    <header class="presentation-hub-head">
+      <div>
+        <div class="presentation-hub-kicker">presentations</div>
+        <h2 id="presentation-hub-title">Open or create</h2>
+      </div>
+      <button class="dbtn" id="presentation-hub-close" type="button"
+        title="Close"><i data-ic="exit"></i> Close</button>
+    </header>
+    <div class="presentation-hub-actions">
+      <button class="dbtn primary" id="presentation-hub-new" type="button"
+        ><i data-ic="newdeck"></i> New presentation</button>
+      <button class="dbtn" id="presentation-hub-poster" type="button"
+        ><i data-ic="newposter"></i> New poster</button>
+      <button class="dbtn" id="presentation-hub-folder" type="button"
+        ><i data-ic="open"></i> New folder</button>
+      <button class="dbtn" id="presentation-hub-file" type="button"
+        ><i data-ic="open"></i> Open a file</button>
+      <button class="dbtn" id="presentation-hub-pptx" type="button"
+        ><i data-ic="open"></i> Import PowerPoint</button>
+    </div>
+    <form class="presentation-hub-folderform" id="presentation-hub-folderform"
+      hidden>
+      <label for="presentation-hub-foldername">Folder name</label>
+      <input id="presentation-hub-foldername" type="text" maxlength="80"
+        autocomplete="off" placeholder="e.g. Conference 2026">
+      <button class="dbtn primary" type="submit">Create folder</button>
+    </form>
+    <div class="presentation-hub-columns">
+      <section>
+        <h3>Recent</h3>
+        <div class="presentation-hub-list" id="presentation-hub-recent"></div>
+      </section>
+      <section>
+        <h3>All presentations</h3>
+        <div class="presentation-hub-list" id="presentation-hub-all"></div>
+      </section>
+    </div>
+  </section>
 </div>
 <div class="helpdlg" id="helpdlg" hidden>
   <div class="help-box">

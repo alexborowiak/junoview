@@ -1241,6 +1241,8 @@
         +'is closed or lost.';
     }
     syncLateButton();
+    if(typeof renderDeckPresentationDrawer==='function')
+      renderDeckPresentationDrawer();
   }
   function setUIMode(m){
     var startingTalk=(m==='view'&&mode!=='view');
@@ -1281,6 +1283,8 @@
       if(tbn) tbn.setAttribute('aria-expanded','false');
     }
     mode=m;
+    if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
+      closeDeckPresentationDrawer();
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
@@ -1475,6 +1479,8 @@
   }
   function openDeck(m){
     deckEl.hidden=false;
+    if(pres&&typeof notePresentationOpen==='function')
+      notePresentationOpen(pres.name);
     histReset();   /* undo history starts fresh per editing session */
     /* ONE ON ARRIVAL, so "how it was when I sat down" is always
        reachable -- the same rule the notebook's own snapshots follow,
@@ -1550,6 +1556,8 @@
         document.exitFullscreen().catch(function(){});
     }catch(err){}
     closeVFull();
+    if(typeof closeDeckPresentationDrawer==='function')
+      closeDeckPresentationDrawer();
     rbnGalleryClose();
     showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;

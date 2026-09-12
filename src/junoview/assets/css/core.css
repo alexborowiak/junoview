@@ -172,12 +172,6 @@ body.prrail-auto .railnbs{display:flex;}
   font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;
   cursor:pointer;}
 .rnb-x:hover{color:var(--chrome-ink);background:var(--surface-active);}
-.railnbs-add{font-family:var(--mono);font-size:10.5px;color:var(--cyan);
-  background:none;border:1px dashed color-mix(in srgb,var(--accent) 40%,
-  transparent);border-radius:6px;padding:5px 7px;cursor:pointer;
-  text-align:left;margin-top:3px;}
-.railnbs-add:hover{background:color-mix(in srgb,var(--accent) 12%,
-  transparent);}
 /* where this notebook came from: path + git commit + earlier versions,
    with the reload button beside it (it used to hide on the tab).
    It is DOCKED above the notebook ribbon, and the margin that spaced it
@@ -570,17 +564,6 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 47%,transparent));}
 .provnode:focus-visible rect{stroke:var(--cyan);outline:none;}
 
-/* ---------- document identity bar (filename + full path) ---------- */
-.docbar{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
-  padding:2px 0 14px;margin-bottom:6px;border-bottom:1px solid var(--line);}
-.docbar[hidden]{display:none;}
-.docbar-ic{font-size:13px;flex:none;opacity:.7;}
-.docbar-nm{font-size:15px;font-weight:600;color:var(--ink);
-  letter-spacing:-.01em;}
-.docbar-p{font-family:var(--mono);font-size:11px;color:var(--ink-3);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  max-width:100%;min-width:0;flex:1;direction:rtl;text-align:left;}
-.docbar-p:empty{display:none;}
 /* ---------- toolbar ---------- */
 .toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;
   gap:12px;padding:12px 28px;
@@ -686,15 +669,6 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   transition:opacity .12s,background .12s,border-color .12s;}
 .sectionhead:hover .sec-hideall,.sec-hideall:focus-visible{opacity:.65;}
 .sec-hideall:hover{opacity:1;background:var(--paper-2);
-  border-color:var(--line);color:var(--ink-2);}
-/* T362: the same quiet word, one action over -- a section into slides */
-.sec-slides{flex:none;background:none;border:1px solid transparent;
-  color:var(--ink-3);cursor:pointer;font-family:var(--mono);font-size:9px;
-  letter-spacing:.1em;text-transform:uppercase;line-height:1;padding:5px 8px;
-  border-radius:5px;opacity:0;white-space:nowrap;
-  transition:opacity .12s,background .12s,border-color .12s;}
-.sectionhead:hover .sec-slides,.sec-slides:focus-visible{opacity:.65;}
-.sec-slides:hover{opacity:1;background:var(--paper-2);
   border-color:var(--line);color:var(--ink-2);}
 /* collapsed folds the section's cards away; the header stays clickable */
 .section.sec-collapsed .card{display:none;}
@@ -1565,6 +1539,5 @@ body.th-colorful .pr-btn,body.th-colorful .pr-item{
 .navsec-hideall .bic{width:12px;height:12px;vertical-align:-2px;}
 .fz-btn .bic{width:13px;height:13px;display:block;margin:0 auto;}
 .htmltoggle .bic{width:10px;height:10px;vertical-align:-1px;}
-.docbar-ic .bic{width:13px;height:13px;vertical-align:-3px;}
 .plot-trace-btn .bic{width:11px;height:11px;vertical-align:-2px;}
 .cell-eye .bic,.sec-eye .bic{display:block;}

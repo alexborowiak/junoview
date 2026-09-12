@@ -1691,11 +1691,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # picture decoration, corrects measured 21pt auto-slide notes, excludes
 # prose frames from the image survey, and keeps auto-created list editors
 # alive across their replacement node's blur. The later notebook pass moves
-# File/Open provenance into its own utility line and adds the grouped
-# multi-label picker/filter (reactions plus categories), changing the
-# assembled static page deliberately.
-EXPECTED_MD5 = "54ebe00213dd33166c2c9d90ed651c0e"
-EXPECTED_BYTES = 3997748
+# File/Open provenance now includes the active file name and path, and the
+# notebook-to-slides / presentation-library routes have deliberate dialogs
+# rather than scattered partial menus.  These are assembled-page changes.
+EXPECTED_MD5 = "8123123e08ea1e47fb9640f004bae2e3"
+EXPECTED_BYTES = 4016064
 
 
 def _render_example() -> str:

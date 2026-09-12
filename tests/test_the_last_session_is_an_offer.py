@@ -46,11 +46,8 @@ def test_the_offer_is_a_row_on_the_welcome_screen():
             "      +(last.length===1?'':'s')+' you had open';") in app
     # one button for the lot: "where I was" is one thought
     assert "      if(APP.openLastSession) APP.openLastSession();});" in app
-    # ...and the band it sits in knows about it. T264 split that band
-    # into one column per KIND; T282 made those columns the front door
-    # itself, so none of them hides any more -- an empty Posters section
-    # whose header carries "+ New" is the whole point, and hiding it is
-    # what left "New poster" reachable only from a rail that collapses.
+    # The band stays available as the front door even when its Recent
+    # presentations column is empty; the complete library is behind Open.
     assert "    w.hidden=false;" in app
-    assert "    none('#wj-none-post',$('#welcome-post'));" in app
+    assert "    none('#wj-none-pres',$('#welcome-pres'));" in app
     assert "    renderLastSession();\n  }\n  APP.refreshChrome=refreshChrome;" in app

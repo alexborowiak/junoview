@@ -39,13 +39,16 @@ def test_web_mode_page_chrome_and_welcome_hero(out):
     # to offer only ways of opening a notebook, so a presentation was
     # something you reached only after loading one
     assert "Build a presentation, or open a notebook" in web_page
-    # T282: the card grid became three sections, each with its own New
+    # The card grid became a concise Recent presentations + Notebooks
+    # launcher; the full presentation library has its own Open button.
     assert 'class="welcome-jump"' in web_page \
         and 'id="welcome-open"' in web_page
     # ...and "New presentation" is the first section's door, ahead of both
     assert 'id="welcome-new"' in web_page and "'#welcome-new'" in out
     assert "APP.deckNew()" in out
-    assert "'#welcome-newpost'" in out and "APP.deckNewPoster()" in out
+    assert 'id="welcome-presentations"' in web_page
+    assert 'id="presentation-hub-poster"' in web_page
+    assert "APP.deckHub()" in out
     # BOTH open paths are explicit on the welcome: local files and a
     # GitHub/URL button that opens the dialog focused on the URL input
     assert 'id="welcome-url"' in web_page and "'#welcome-url'" in out

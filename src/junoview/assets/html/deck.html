@@ -25,6 +25,14 @@
     <button class="dbtn" id="deck-exit"
       title="Stop presenting and return to the builder (Esc)."><i data-ic="return"></i>
         Stop presenting</button>
+    <!-- The global rail is intentionally inert while a deck fills the
+         screen.  This is its working, deck-owned replacement: it lists
+         only presentations opened in this session and has one explicit
+         route to the full presentation library. -->
+    <button class="dbtn" id="deck-pres-open" type="button"
+      aria-expanded="false" aria-controls="deck-pres-drawer"
+      title="Show presentations opened in this session"
+      ><i data-ic="present"></i> Open presentations</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -42,6 +50,18 @@
         <i data-ic="flag"></i> Running late</button>
     </span>
   </div>
+  <aside class="deck-pres-drawer" id="deck-pres-drawer" hidden
+    aria-label="Open presentations">
+    <div class="deck-pres-drawer-head">
+      <span>Open presentations</span>
+      <button class="dbtn" id="deck-pres-close" type="button"
+        title="Close presentations"><i data-ic="exit"></i> Close</button>
+    </div>
+    <div class="deck-pres-list" id="deck-pres-list"></div>
+    <button class="dbtn deck-pres-browse" id="deck-pres-browse" type="button"
+      title="Open the presentation library, recent work and folders"
+      ><i data-ic="open"></i> Open presentations&hellip;</button>
+  </aside>
   <!-- the left COLUMN is the notebooks content and then the thumbnails,
        and nothing else. File / Save / undo / redo used to sit between
        them; they are document controls and now live in the thin bar
