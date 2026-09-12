@@ -77,12 +77,12 @@ def test_every_layout_places_exactly_the_same_controls(out):
 
 
 def test_deck_wide_commands_are_explicit_in_every_layout(out):
-    """Tokens and page tidy do not belong to an arbitrary rest group.
+    """Deck-wide doors do not belong to an arbitrary rest group.
     Every arrangement places each permanent Design control exactly once,
-    so switching layouts cannot hide or duplicate either door.
+    so switching layouts cannot hide or duplicate a door.
     """
     for lid, ids in _layouts(out):
-        for cid in ("dsg-tokens", "dsg-tidy"):
+        for cid in ("dsg-tokens", "dsg-layout", "dsg-tidy"):
             assert ids.count(cid) == 1, f"{lid} places {cid} {ids.count(cid)}x"
 
 

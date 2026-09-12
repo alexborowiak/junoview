@@ -1694,8 +1694,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # File/Open provenance now includes the active file name and path, and the
 # notebook-to-slides / presentation-library routes have deliberate dialogs
 # rather than scattered partial menus.  These are assembled-page changes.
-EXPECTED_MD5 = "8123123e08ea1e47fb9640f004bae2e3"
-EXPECTED_BYTES = 4016064
+EXPECTED_MD5 = "988672288cba24d5d72bbc936e37637d"
+EXPECTED_BYTES = 4021654
 
 
 def _render_example() -> str:

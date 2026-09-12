@@ -1728,14 +1728,16 @@
      edge — unreachable, because the bar is overflow-x:clip and cannot be
      scrolled (and must stay that way, or every downward dropdown gets cut
      off at the ribbon's edge again; see the comment on .edit-tools).
-     So the group folds instead of vanishing: seven buttons become one that
-     opens them as a menu, which is ~300px back — far more than the 66px
-     the row was over (2026-08-22). */
-  var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
+     So the group folds instead of vanishing: the full-height tiles become
+     one worded button whose menu still drives the real controls
+     (2026-08-22; tiles completed 2026-09-12). */
+  var VIEW_FOLD=[['vw-versions',null],
+    ['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-other-slides','Other slides'],['vw-other-fill','Ghost fills'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
     ['vw-side','Side toolbar'],
-    ['vw-check','Review'],['objects-btn','Layers'],['notes-btn','Notes']];
+    ['vw-check','Review'],['vw-preflight','Print check'],
+    ['objects-btn','Layers'],['notes-btn','Notes']];
   var viewFolded=false,viewWasHidden=null;
   function foldViewGroup(on){
     on=!!on;
@@ -1855,7 +1857,9 @@
       if(!real||(viewWasHidden&&viewWasHidden[p[0]])) return;
       var o=document.createElement('button');
       o.className='dbtn vw-opt';o.type='button';
-      o.textContent=p[1];
+      /* Slides renames itself Versions for posters; use the live word for
+         that contextual control instead of freezing the menu's copy. */
+      o.textContent=p[1]||(real.textContent||'Slides').trim();
       if(real.getAttribute('aria-pressed')==='true'){
         o.setAttribute('aria-pressed','true');
         o.classList.add('on');

@@ -1529,6 +1529,17 @@ body.slide-editing .apptop{display:none;}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
 body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
+/* T380: View used to be twelve ordinary 26px rows floating in a mostly
+   empty tab. They are actions of equal importance, so give each the same
+   full-height icon-over-word tile as Animation and Text. They remain the
+   real independently movable controls — not proxy copies — which keeps
+   custom ribbon layouts, keyboard state and the narrow View menu honest. */
+.rbn-row>.view-tile{width:var(--rbn-tile-w);height:var(--rbn-tile-h);
+  align-self:center;position:relative;grid-row:1/span 2;}
+/* Keyboard hints are useful, but a third flex row made the words stop
+   fitting in a 56px tile. Pin the hint into its corner instead. */
+.view-tile kbd{position:absolute;top:2px;right:3px;font-size:8px;
+  line-height:1;opacity:.62;background:none;border:0;padding:0;}
 /* T186: the build numbers show whenever the Animation tab is up -- the
    tab is about them -- and not only while the order pane or Quick
    animate is (2026-09-02, user: "the animation numbers should appear
@@ -5004,12 +5015,20 @@ body.light .dg-swatch{border-color:#00000026;}
   font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
 .jv-style-family{display:block;border:1px solid #ffffff14;
   border-radius:7px;margin:4px 0;background:#ffffff04;}
-.jv-style-family>summary{cursor:pointer;list-style:none;padding:7px 9px;
-  font:600 12px var(--sans);color:var(--chrome-ink);}
-.jv-style-family>summary::before{content:'›';display:inline-block;
-  margin-right:7px;transition:transform .12s ease;}
-.jv-style-family[open]>summary::before{transform:rotate(90deg);}
-.jv-style-family>.jv-styleopt{margin:0 6px 5px;width:calc(100% - 12px);}
+.jv-style-family-head{display:flex;align-items:stretch;gap:5px;padding:5px;}
+.jv-style-family-head>.jv-styleopt{flex:1 1 auto;width:auto;min-width:0;
+  margin:0;}
+.jv-style-expand{flex:none;width:58px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;padding:3px;
+  font:10px/1.1 var(--sans);color:var(--chrome-ink-2);}
+.jv-style-expand .bic{width:14px;height:14px;}
+.jv-style-expand.on{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
+.jv-style-family-children{border-top:1px solid #ffffff14;padding:5px;}
+.jv-style-family-children[hidden]{display:none!important;}
+.jv-style-family-children>.jv-styleopt{margin:0 0 4px;width:100%;}
+.jv-style-family-children>.jv-styleopt:last-child{margin-bottom:0;}
 .dg-col{width:30px;height:26px;padding:0;border:1px solid #ffffff26;
   border-radius:6px;background:transparent;cursor:pointer;}
 /* the board: a slide, and a rectangle you drag on it */

@@ -46,6 +46,9 @@ TEMPLATES = ["deck.html", "page.html", "shell.html", "help.html"]
 # element itself at runtime. Curated by hand -- a new entry needs a note
 # saying where the element is created, so the next reader can re-verify.
 RUNTIME_IDS = {
+    # 15-annotations.js builds the deck-wide corner/spacing panel when
+    # Home -> Deck layout is opened and removes it when the overlay closes.
+    "deck-layout-pop",
     # 05-figures-and-ribbon.js builds this popover on demand from the
     # Layers pane build column and removes it on close (T174)
     "step-menu",

@@ -5111,6 +5111,17 @@ body.slide-editing .apptop{display:none;}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
 body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
+/* T380: View used to be twelve ordinary 26px rows floating in a mostly
+   empty tab. They are actions of equal importance, so give each the same
+   full-height icon-over-word tile as Animation and Text. They remain the
+   real independently movable controls — not proxy copies — which keeps
+   custom ribbon layouts, keyboard state and the narrow View menu honest. */
+.rbn-row>.view-tile{width:var(--rbn-tile-w);height:var(--rbn-tile-h);
+  align-self:center;position:relative;grid-row:1/span 2;}
+/* Keyboard hints are useful, but a third flex row made the words stop
+   fitting in a 56px tile. Pin the hint into its corner instead. */
+.view-tile kbd{position:absolute;top:2px;right:3px;font-size:8px;
+  line-height:1;opacity:.62;background:none;border:0;padding:0;}
 /* T186: the build numbers show whenever the Animation tab is up -- the
    tab is about them -- and not only while the order pane or Quick
    animate is (2026-09-02, user: "the animation numbers should appear
@@ -8586,12 +8597,20 @@ body.light .dg-swatch{border-color:#00000026;}
   font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
 .jv-style-family{display:block;border:1px solid #ffffff14;
   border-radius:7px;margin:4px 0;background:#ffffff04;}
-.jv-style-family>summary{cursor:pointer;list-style:none;padding:7px 9px;
-  font:600 12px var(--sans);color:var(--chrome-ink);}
-.jv-style-family>summary::before{content:'›';display:inline-block;
-  margin-right:7px;transition:transform .12s ease;}
-.jv-style-family[open]>summary::before{transform:rotate(90deg);}
-.jv-style-family>.jv-styleopt{margin:0 6px 5px;width:calc(100% - 12px);}
+.jv-style-family-head{display:flex;align-items:stretch;gap:5px;padding:5px;}
+.jv-style-family-head>.jv-styleopt{flex:1 1 auto;width:auto;min-width:0;
+  margin:0;}
+.jv-style-expand{flex:none;width:58px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;padding:3px;
+  font:10px/1.1 var(--sans);color:var(--chrome-ink-2);}
+.jv-style-expand .bic{width:14px;height:14px;}
+.jv-style-expand.on{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
+.jv-style-family-children{border-top:1px solid #ffffff14;padding:5px;}
+.jv-style-family-children[hidden]{display:none!important;}
+.jv-style-family-children>.jv-styleopt{margin:0 0 4px;width:100%;}
+.jv-style-family-children>.jv-styleopt:last-child{margin-bottom:0;}
 .dg-col{width:30px;height:26px;padding:0;border:1px solid #ffffff26;
   border-radius:6px;background:transparent;cursor:pointer;}
 /* the board: a slide, and a rectangle you drag on it */
@@ -13471,6 +13490,17 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  (the Deck row at the top of its colour menu); change a colour here and
  every box wearing it changes too"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Shared colours</button>
+              <!-- Radius and arrange spacing used to be appended to the
+                   Shared colours panel. They are deck-wide defaults, but
+                   they are not colours; a panel which changes subject
+                   halfway down is exactly why the colour system felt
+                   mysterious (2026-09-12). Give layout defaults their own
+                   plainly named door beside the other deck-wide tools. -->
+              <button class="dbtn rbn-sm" id="dsg-layout"
+                aria-haspopup="true" aria-expanded="false"
+                title="Deck-wide layout defaults: the corner shape of boxes
+ and the space used when Arrange distributes objects"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Deck layout</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -13521,27 +13551,27 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    thing you do to the WINDOW, not to the page. Its label
                    still follows the page kind: Slides for a deck,
                    Versions for a poster. -->
-              <button class="dbtn rbn-sm" id="vw-versions"
+              <button class="fx-tile view-tile rbn-tall" id="vw-versions"
                 aria-pressed="false" hidden
                 title="Other versions of this poster — drafts and variants.
  Opens the strip; close it again to give the page the whole window"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="8.2" width="11.6" height="5.2" rx="1"/><path d="M3.6 5.8h8.8"/><path d="M5 3.4h6"/></svg> Versions</button>
-              <button class="dbtn rbn-sm" id="vw-rulers"
+              <button class="fx-tile view-tile rbn-tall" id="vw-rulers"
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres
  of the real page. Drag off one to lay down your own guide"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/><path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2"/></svg> Rulers <kbd>R</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-grid"
+              <button class="fx-tile view-tile rbn-tall" id="vw-grid"
                 aria-pressed="false"
                 title="A margin box and a grid to lay out against &mdash;
 items snap to both. Guides, not ink: never printed or exported"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.4 2.4v11.2M10.6 2.4v11.2"/><path d="M2.4 5.4h11.2M2.4 10.6h11.2"/></svg> Grid <kbd>G</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-other-slides"
+              <button class="fx-tile view-tile rbn-tall" id="vw-other-slides"
                 aria-pressed="false"
                 title="Show the objects on the other slides as faint outlines
  over this slide, so repeated positions and overlaps are easy to compare"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.6" width="12.4" height="10.8" rx="1.2"/><path d="M6.2 2.6v10.8"/><path d="M3.2 5.6h1.8M3.2 8h1.8"/></svg> Other slides</button>
-              <button class="dbtn rbn-sm" id="vw-other-fill"
+              <button class="fx-tile view-tile rbn-tall" id="vw-other-fill"
                 aria-pressed="false" disabled
                 title="Fill the other-slide outlines with a transparent tint"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg> Ghost fills</button>
@@ -13554,16 +13584,16 @@ items snap to both. Guides, not ink: never printed or exported"
                    (2026-08-29). Show/hide first, because it governs what
                    the tool draws; both sit with Rulers and Grid, which
                    is where anyone already looks for a guide. -->
-              <button class="dbtn rbn-sm" id="vw-guides"
+              <button class="fx-tile view-tile rbn-tall" id="vw-guides"
                 aria-pressed="true"
                 title="Show or hide the guides you drew — lines dragged off a ruler and guide boxes. Hidden guides do not snap, and they are not deleted"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.6" width="11.6" height="10.8" rx="1"/><path d="M6.2 2.6v10.8" stroke-dasharray="2.4 2"/><path d="M2.2 9.6h11.6" stroke-dasharray="2.4 2"/></svg> Guides <kbd>H</kbd></button>
-              <button class="dbtn rbn-sm et" id="vw-guidebox"
+              <button class="fx-tile view-tile rbn-tall et" id="vw-guidebox"
                 data-tool="guide" aria-pressed="false"
                 title="Draw a guide box to lay out inside. It snaps, and
  is never printed, exported or shown while presenting"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="3.2" width="11.2" height="9.6" rx="1" stroke-dasharray="2.7 2.3"/></svg> Guide box <kbd>B</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-side"
+              <button class="fx-tile view-tile rbn-tall" id="vw-side"
                 aria-pressed="false"
                 title="Stand the toolbar up on the right-hand edge, so the
  page gets the full height of the window. A tall poster needs height far
@@ -13579,7 +13609,7 @@ items snap to both. Guides, not ink: never printed or exported"
                    source freshness were five separately named surfaces;
                    this button opens the centre that counts all five and
                    opens each existing surface from one place. -->
-              <button class="dbtn rbn-sm" id="vw-check"
+              <button class="fx-tile view-tile rbn-tall" id="vw-check"
                 aria-pressed="false"
                 title="Is this ready? Print, layout, style, wording and whether the figures are still current, all checked in one place"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Review</button>
@@ -13587,15 +13617,15 @@ items snap to both. Guides, not ink: never printed or exported"
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
                    else (2026-08-19, user) -->
-              <button class="dbtn rbn-sm" id="vw-preflight"
+              <button class="fx-tile view-tile rbn-tall" id="vw-preflight"
                 title="Whether this page will print well: soft figures,
  things off the page or in the margin, thin contrast, empty frames"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Before you print</button>
-              <button class="dbtn rbn-sm" id="objects-btn"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Print check</button>
+              <button class="fx-tile view-tile rbn-tall" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
-              <button class="dbtn rbn-sm" id="notes-btn"
+              <button class="fx-tile view-tile rbn-tall" id="notes-btn"
                 aria-pressed="false"
                 title="Speaker notes for this slide, and how long you want
  to spend on it. Only you ever see them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/><path d="m9.2 4 2.8 2.8"/></svg>
@@ -13610,18 +13640,17 @@ items snap to both. Guides, not ink: never printed or exported"
                    density ladder ends in a rung whose comment promised to
                    "drop the one group that is not about the selection
                    rather than let the row clip" — but nothing ever
-                   dropped, so on a 1366px laptop with a text box selected
-                   the row ran 66px over and Bold, Italic, Underline and
-                   Layout were clipped away with no scrollbar and no way
-                   to reach them (2026-08-22). Dropping the seven buttons
+                   dropped, so on a 1366px laptop the row ran over and
+                   controls were clipped away with no scrollbar and no way
+                   to reach them (2026-08-22). Dropping the view tiles
                    outright would only move the problem, so at that rung
                    they fold into this one, which opens them as a menu.
                    Filled by openViewMenu(). -->
               <span class="sh-drop" id="vw-morewrap" hidden>
                 <button class="dbtn rbn-sm" id="vw-more"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Rulers, grid, full screen, side toolbar, Review,
- Layers and Notes — folded in here while the window is narrow"
+                  title="The View tools — folded in here while the window
+ is too narrow to show every full-height tile"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg> View &#9662;</button>
                 <div class="sh-menu vw-more-menu" id="vw-more-menu"
                   hidden></div>
@@ -29056,14 +29085,16 @@ window.JunoPptx = (function () {
      edge — unreachable, because the bar is overflow-x:clip and cannot be
      scrolled (and must stay that way, or every downward dropdown gets cut
      off at the ribbon's edge again; see the comment on .edit-tools).
-     So the group folds instead of vanishing: seven buttons become one that
-     opens them as a menu, which is ~300px back — far more than the 66px
-     the row was over (2026-08-22). */
-  var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
+     So the group folds instead of vanishing: the full-height tiles become
+     one worded button whose menu still drives the real controls
+     (2026-08-22; tiles completed 2026-09-12). */
+  var VIEW_FOLD=[['vw-versions',null],
+    ['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-other-slides','Other slides'],['vw-other-fill','Ghost fills'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
     ['vw-side','Side toolbar'],
-    ['vw-check','Review'],['objects-btn','Layers'],['notes-btn','Notes']];
+    ['vw-check','Review'],['vw-preflight','Print check'],
+    ['objects-btn','Layers'],['notes-btn','Notes']];
   var viewFolded=false,viewWasHidden=null;
   function foldViewGroup(on){
     on=!!on;
@@ -29183,7 +29214,9 @@ window.JunoPptx = (function () {
       if(!real||(viewWasHidden&&viewWasHidden[p[0]])) return;
       var o=document.createElement('button');
       o.className='dbtn vw-opt';o.type='button';
-      o.textContent=p[1];
+      /* Slides renames itself Versions for posters; use the live word for
+         that contextual control instead of freezing the menu's copy. */
+      o.textContent=p[1]||(real.textContent||'Slides').trim();
       if(real.getAttribute('aria-pressed')==='true'){
         o.setAttribute('aria-pressed','true');
         o.classList.add('on');
@@ -31112,7 +31145,7 @@ window.JunoPptx = (function () {
       {id:'of-setup',label:'Slide setup',tab:'design',
        items:['page-strip-frame','lay-drop','dsg-tidy','bg-drop']},
       {id:'of-type',label:'Type',tab:'design',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'of-view',label:'View',tab:'design',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -31138,7 +31171,7 @@ window.JunoPptx = (function () {
       {id:'dk-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'dk-type',label:'Type styles',tab:'deck',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'dk-view',label:'View',tab:'deck',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -31234,7 +31267,7 @@ window.JunoPptx = (function () {
       {id:'s1-page',label:'Page',tab:'deck',
        items:['page-strip-frame','bg-drop']},
       {id:'s1-type',label:'Type',tab:'deck',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'s1-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
@@ -31253,7 +31286,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','et-image','et-media','shape-strip-frame','dc-line','et-table',
          'et-flip','et-arrow','et-cancel']},
       {id:'day-look',label:'Deck look',tab:'start',
-       items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens']},
+       items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout']},
       {id:'day-show',label:'Present',tab:'start',
        items:['vw-full','notes-btn']},
       {id:'day-text',label:'Text',tab:'format',
@@ -31303,7 +31336,7 @@ window.JunoPptx = (function () {
       {id:'j3-furniture',label:'Page furniture',tab:'page',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'j3-type',label:'Type',tab:'page',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'j3-guides',label:'Workspace',tab:'page',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
@@ -31363,7 +31396,7 @@ window.JunoPptx = (function () {
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
          'et-table','et-flip','et-arrow','et-cancel']},
       {id:'one-text',label:'Text',tab:'all',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std','fmt-stylewrap-tx','fmt-font',
          'fmt-szwrap','fmt-smaller','fmt-bigger','fmt-bold',
          'fmt-ital','fmt-under','fmt-strike','fmt-eqedit','fmt-mdedit',
@@ -31433,7 +31466,7 @@ window.JunoPptx = (function () {
       {id:'mi-furn',label:'Furniture',tab:'mi-board',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'mi-type',label:'Type',tab:'mi-board',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'mi-view',label:'View',tab:'mi-board',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
@@ -31489,7 +31522,7 @@ window.JunoPptx = (function () {
       {id:'tt-page',label:'Page',tab:'tt-more',
        items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'tt-type',label:'Type',tab:'tt-more',
-       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
+       items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'tt-anim',label:'Animate',tab:'tt-more',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
@@ -36381,6 +36414,8 @@ window.JunoPptx = (function () {
   }
   /* the editor for the registry itself */
   function openTokenPicker(anchor){
+    var layoutPop=$('#deck-layout-pop');
+    if(layoutPop) overlayHide(layoutPop);
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
@@ -36463,12 +36498,40 @@ window.JunoPptx = (function () {
         more.addEventListener('click',function(e){
           e.stopPropagation();
           more.remove();
-          idle.forEach(function(k){m.insertBefore(tokRow(k),cornerHead);});
+          idle.forEach(function(k){m.appendChild(tokRow(k));});
         });
         m.appendChild(more);
       }
     }
-    var cornerHead=menuHead(m,'shape corner');
+    /* Corner and spacing settings have their own Deck layout door. A
+       panel called Shared colours ends when the colours end. */
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    m.hidden=true;
+    overlayShow(anchor,m);
+    floatMenu(anchor||$('#dsg-styles')||$('#edit-tools'),m);
+    new MutationObserver(function(){
+      if(m.hidden&&m.parentNode) m.remove();
+    }).observe(m,{attributes:true,attributeFilter:['hidden']});
+  }
+  /* Deck-wide geometry is useful, just not inside a colour editor. Keep
+     both settings together because each controls spacing shared by many
+     objects rather than the selected object's own size or position. */
+  function openDeckLayoutPicker(anchor){
+    var colours=$('#tok-pop');
+    if(colours) overlayHide(colours);
+    var old=$('#deck-layout-pop');
+    if(old){overlayHide(old);return;}
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu tok-pop deck-layout-pop';
+    m.id='deck-layout-pop';
+    menuHead(m,'deck layout defaults');
+    var note=document.createElement('div');
+    note.className='ff-none';
+    note.textContent='Defaults shared across this deck. Individual object '
+      +'size and position stay in Object.';
+    m.appendChild(note);
+    var t=tokens();
+    menuHead(m,'box corners');
     var rr=document.createElement('div');rr.className='ff-row';
     var rl=document.createElement('span');
     rl.className='tok-nm';rl.textContent='Corner radius';
@@ -36482,8 +36545,10 @@ window.JunoPptx = (function () {
       setToken('rad',null,v);
     });
     rr.appendChild(ri);
+    var ru=document.createElement('span');
+    ru.className='fmt-unit';ru.textContent='px';rr.appendChild(ru);
     m.appendChild(rr);
-    menuHead(m,'spacing');
+    menuHead(m,'arrange spacing');
     var gr=document.createElement('div');gr.className='ff-row';
     var gl=document.createElement('span');
     /* T265: was "Gap the arrange verbs use". "Arrange verbs" is this
@@ -36501,6 +36566,8 @@ window.JunoPptx = (function () {
       setToken('gap',null,v);
     });
     gr.appendChild(gi);
+    var gu=document.createElement('span');
+    gu.className='fmt-unit';gu.textContent='%';gr.appendChild(gu);
     m.appendChild(gr);
     /* inside the editor's layer and on the overlay stack (T208): Escape
        and an outside click close it the way every other menu closes,
@@ -36520,6 +36587,9 @@ window.JunoPptx = (function () {
       var open=$('#tok-pop');
       if(open){overlayHide(open);return;}
       openTokenPicker(this);});
+    var l=$('#dsg-layout');
+    if(l) l.addEventListener('click',function(e){
+      e.stopPropagation();openDeckLayoutPicker(this);});
   })();
   function setToken(kind,key,val){
     pres.tokens=pres.tokens||{};
@@ -46403,20 +46473,42 @@ window.JunoPptx = (function () {
       styleOrder().forEach(function(id){
         if(listed[id]||parentOf(id)) return;
         listed[id]=1;
-        var family=document.createElement('details');
+        var family=document.createElement('div');
         family.className='jv-style-family';
-        var summary=document.createElement('summary');
-        summary.textContent=(styleDef(id)||{}).label||id;
-        dgSpecimen(summary,id);
-        summary.style.color='';
-        summary.title='Expand '+summary.textContent+' and its variations';
-        family.appendChild(summary);menu.appendChild(family);
-        familyHost=family;styleRow(id,false);
+        var head=document.createElement('div');
+        head.className='jv-style-family-head';
+        family.appendChild(head);
+        /* The main specimen is the main action: it previews on hover and
+           applies on click, like every effect in Animation. Previously the
+           family summary could only expand, then repeated this same base
+           style as the first child. */
+        familyHost=head;styleRow(id,false);
+        var children=document.createElement('div');
+        children.className='jv-style-family-children';children.hidden=true;
+        familyHost=children;
         variantsOf(id).forEach(function(v){
           if(listed[v]) return;
           listed[v]=1;styleRow(v,true);
         });
         if(isHeadingStyle(id)) presetRows(id);
+        if(children.childElementCount){
+          var expand=document.createElement('button');
+          expand.type='button';expand.className='dbtn jv-style-expand';
+          expand.setAttribute('aria-expanded','false');
+          expand.innerHTML=bic('styles')+'<span>Looks</span>';
+          expand.title='Show variations of '
+            +((styleDef(id)||{}).label||id);
+          expand.addEventListener('click',function(e){
+            e.stopPropagation();
+            var open=children.hidden;
+            children.hidden=!open;
+            expand.setAttribute('aria-expanded',open?'true':'false');
+            expand.classList.toggle('on',open);
+          });
+          head.appendChild(expand);
+          family.appendChild(children);
+        }
+        menu.appendChild(family);
       });
       familyHost=menu;
       styleOrder().forEach(function(id){
@@ -62608,9 +62700,10 @@ window.JunoPptx = (function () {
        registry to edit, but it has a position, a size and a place in
        the table -- which is what the ask was about (2026-09-03,
        user: "I wanted more than just titles, also images etc"). */
-    var hd=document.createElement('div');
-    hd.className='hd-lab';hd.textContent='everything else';
-    rail.appendChild(hd);
+    /* Do not print a heading for a section with no rows. Text-only decks
+       used to end with a vacant "everything else" label even though the
+       rows beneath it correctly filtered unused object kinds. */
+    var hd=null;
     DG_OBJ_KINDS.forEach(function(pr){
       var key='obj:'+pr[0];
       var b2=document.createElement('button');
@@ -62629,6 +62722,11 @@ window.JunoPptx = (function () {
          it. The one it is showing stays, whatever its count, or
          choosing an empty kind would make its own row vanish. */
       if(!n2&&key!==dgSel) return;
+      if(!hd){
+        hd=document.createElement('div');
+        hd.className='hd-lab';hd.textContent='everything else';
+        rail.appendChild(hd);
+      }
       ct2.textContent=String(n2);
       b2.appendChild(nm2);b2.appendChild(ct2);
       b2.title=pr[1]+' in this deck'+(n2?(': '+n2):': none yet');

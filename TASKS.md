@@ -7643,19 +7643,21 @@ gates are recorded in the completing commit.
 ### Completed 2026-09-11 — presentation text and style ribbon
 
 - [x] **T376 — Reorganise text editing around clear, roomy groups.** The
-  default context ribbon now opens **Style** for text and **Object** for
-  non-text, so font/paragraph/appearance controls no longer compete with
-  source, reuse, geometry and Arrange. Font family, styles and size follow
-  a readable top-to-bottom order; List and Numbered have matching widths;
+  default context ribbon now opens **Style** for text and table appearance,
+  and **Object** for other object structure, so font/paragraph/appearance
+  controls no longer compete with source, reuse, geometry and Arrange.
+  Font family, styles and size follow a readable top-to-bottom order; List
+  and Numbered have matching widths;
   the colour chooser is constrained to the viewport; and reuse is expressed
   as large Clone/Find tiles rather than small buttons.
 - [x] **T377 — Make text types a compact gallery and put presentation-wide
   tools in Home.** Text box, title, headings, body, caption, equation,
   markdown and table are full-height gallery tiles with the same horizontal
   More affordance as Animation. **Presentation styles** and **Shared
-  colours** sit on Home, styles only lists types actually used in the deck,
-  and the type picker continues to use expandable families and sample-first
-  rows.
+  colours** sit on Home, the Style System rail only lists named text-box
+  styles actually worn in the deck, and the type picker uses expandable
+  families and sample-first rows. Title and subtitle remain layout-owned
+  fields rather than being counted as named text-box styles.
 - [x] **T378 — Make style diagnosis and exits understandable.** “Fix
   mismatched text” is now **Check consistency**, showing only genuine
   differences and explicitly saying that it only suggests a fix. Shared
@@ -7677,3 +7679,18 @@ gates are recorded in the completing commit.
   rather than a second all-decks rail. The generated `docs` application and
   climate example were rebuilt in the same change so the served page carries
   the work.
+
+### Completed 2026-09-12 — final presentation ribbon visual pass
+
+- [x] **T380 — Finish the visible View, style-family and deck-default
+  cleanup.** View now uses the same full-height icon-over-word tiles as Text
+  and Animation while keeping every real control independently movable by
+  custom ribbon layouts; the narrow View menu contains every tile. **Shared
+  colours** now ends when its colour rows end, while corner radius and Arrange
+  spacing have a separate, plainly named **Deck layout** door. In the text
+  style picker the visible base specimen itself previews on hover and applies
+  on click, and **Looks** expands only its variants instead of repeating the
+  base style. That Deck layout door is explicitly placed in every saved
+  custom ribbon too; the Style System appends **everything else** only when
+  there is an object kind to put under it. Verified in the rendered editor at
+  laptop and desktop widths as well as through the full repository test suite.

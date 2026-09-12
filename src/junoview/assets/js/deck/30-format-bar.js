@@ -1169,20 +1169,42 @@
       styleOrder().forEach(function(id){
         if(listed[id]||parentOf(id)) return;
         listed[id]=1;
-        var family=document.createElement('details');
+        var family=document.createElement('div');
         family.className='jv-style-family';
-        var summary=document.createElement('summary');
-        summary.textContent=(styleDef(id)||{}).label||id;
-        dgSpecimen(summary,id);
-        summary.style.color='';
-        summary.title='Expand '+summary.textContent+' and its variations';
-        family.appendChild(summary);menu.appendChild(family);
-        familyHost=family;styleRow(id,false);
+        var head=document.createElement('div');
+        head.className='jv-style-family-head';
+        family.appendChild(head);
+        /* The main specimen is the main action: it previews on hover and
+           applies on click, like every effect in Animation. Previously the
+           family summary could only expand, then repeated this same base
+           style as the first child. */
+        familyHost=head;styleRow(id,false);
+        var children=document.createElement('div');
+        children.className='jv-style-family-children';children.hidden=true;
+        familyHost=children;
         variantsOf(id).forEach(function(v){
           if(listed[v]) return;
           listed[v]=1;styleRow(v,true);
         });
         if(isHeadingStyle(id)) presetRows(id);
+        if(children.childElementCount){
+          var expand=document.createElement('button');
+          expand.type='button';expand.className='dbtn jv-style-expand';
+          expand.setAttribute('aria-expanded','false');
+          expand.innerHTML=bic('styles')+'<span>Looks</span>';
+          expand.title='Show variations of '
+            +((styleDef(id)||{}).label||id);
+          expand.addEventListener('click',function(e){
+            e.stopPropagation();
+            var open=children.hidden;
+            children.hidden=!open;
+            expand.setAttribute('aria-expanded',open?'true':'false');
+            expand.classList.toggle('on',open);
+          });
+          head.appendChild(expand);
+          family.appendChild(children);
+        }
+        menu.appendChild(family);
       });
       familyHost=menu;
       styleOrder().forEach(function(id){

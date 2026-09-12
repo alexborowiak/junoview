@@ -2446,6 +2446,8 @@
   }
   /* the editor for the registry itself */
   function openTokenPicker(anchor){
+    var layoutPop=$('#deck-layout-pop');
+    if(layoutPop) overlayHide(layoutPop);
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
@@ -2528,12 +2530,40 @@
         more.addEventListener('click',function(e){
           e.stopPropagation();
           more.remove();
-          idle.forEach(function(k){m.insertBefore(tokRow(k),cornerHead);});
+          idle.forEach(function(k){m.appendChild(tokRow(k));});
         });
         m.appendChild(more);
       }
     }
-    var cornerHead=menuHead(m,'shape corner');
+    /* Corner and spacing settings have their own Deck layout door. A
+       panel called Shared colours ends when the colours end. */
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    m.hidden=true;
+    overlayShow(anchor,m);
+    floatMenu(anchor||$('#dsg-styles')||$('#edit-tools'),m);
+    new MutationObserver(function(){
+      if(m.hidden&&m.parentNode) m.remove();
+    }).observe(m,{attributes:true,attributeFilter:['hidden']});
+  }
+  /* Deck-wide geometry is useful, just not inside a colour editor. Keep
+     both settings together because each controls spacing shared by many
+     objects rather than the selected object's own size or position. */
+  function openDeckLayoutPicker(anchor){
+    var colours=$('#tok-pop');
+    if(colours) overlayHide(colours);
+    var old=$('#deck-layout-pop');
+    if(old){overlayHide(old);return;}
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu tok-pop deck-layout-pop';
+    m.id='deck-layout-pop';
+    menuHead(m,'deck layout defaults');
+    var note=document.createElement('div');
+    note.className='ff-none';
+    note.textContent='Defaults shared across this deck. Individual object '
+      +'size and position stay in Object.';
+    m.appendChild(note);
+    var t=tokens();
+    menuHead(m,'box corners');
     var rr=document.createElement('div');rr.className='ff-row';
     var rl=document.createElement('span');
     rl.className='tok-nm';rl.textContent='Corner radius';
@@ -2547,8 +2577,10 @@
       setToken('rad',null,v);
     });
     rr.appendChild(ri);
+    var ru=document.createElement('span');
+    ru.className='fmt-unit';ru.textContent='px';rr.appendChild(ru);
     m.appendChild(rr);
-    menuHead(m,'spacing');
+    menuHead(m,'arrange spacing');
     var gr=document.createElement('div');gr.className='ff-row';
     var gl=document.createElement('span');
     /* T265: was "Gap the arrange verbs use". "Arrange verbs" is this
@@ -2566,6 +2598,8 @@
       setToken('gap',null,v);
     });
     gr.appendChild(gi);
+    var gu=document.createElement('span');
+    gu.className='fmt-unit';gu.textContent='%';gr.appendChild(gu);
     m.appendChild(gr);
     /* inside the editor's layer and on the overlay stack (T208): Escape
        and an outside click close it the way every other menu closes,
@@ -2585,6 +2619,9 @@
       var open=$('#tok-pop');
       if(open){overlayHide(open);return;}
       openTokenPicker(this);});
+    var l=$('#dsg-layout');
+    if(l) l.addEventListener('click',function(e){
+      e.stopPropagation();openDeckLayoutPicker(this);});
   })();
   function setToken(kind,key,val){
     pres.tokens=pres.tokens||{};

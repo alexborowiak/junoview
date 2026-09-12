@@ -2828,9 +2828,10 @@
        registry to edit, but it has a position, a size and a place in
        the table -- which is what the ask was about (2026-09-03,
        user: "I wanted more than just titles, also images etc"). */
-    var hd=document.createElement('div');
-    hd.className='hd-lab';hd.textContent='everything else';
-    rail.appendChild(hd);
+    /* Do not print a heading for a section with no rows. Text-only decks
+       used to end with a vacant "everything else" label even though the
+       rows beneath it correctly filtered unused object kinds. */
+    var hd=null;
     DG_OBJ_KINDS.forEach(function(pr){
       var key='obj:'+pr[0];
       var b2=document.createElement('button');
@@ -2849,6 +2850,11 @@
          it. The one it is showing stays, whatever its count, or
          choosing an empty kind would make its own row vanish. */
       if(!n2&&key!==dgSel) return;
+      if(!hd){
+        hd=document.createElement('div');
+        hd.className='hd-lab';hd.textContent='everything else';
+        rail.appendChild(hd);
+      }
       ct2.textContent=String(n2);
       b2.appendChild(nm2);b2.appendChild(ct2);
       b2.title=pr[1]+' in this deck'+(n2?(': '+n2):': none yet');

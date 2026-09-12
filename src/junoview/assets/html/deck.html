@@ -815,6 +815,17 @@
  (the Deck row at the top of its colour menu); change a colour here and
  every box wearing it changes too"
                 ><i data-ic="palette"></i> Shared colours</button>
+              <!-- Radius and arrange spacing used to be appended to the
+                   Shared colours panel. They are deck-wide defaults, but
+                   they are not colours; a panel which changes subject
+                   halfway down is exactly why the colour system felt
+                   mysterious (2026-09-12). Give layout defaults their own
+                   plainly named door beside the other deck-wide tools. -->
+              <button class="dbtn rbn-sm" id="dsg-layout"
+                aria-haspopup="true" aria-expanded="false"
+                title="Deck-wide layout defaults: the corner shape of boxes
+ and the space used when Arrange distributes objects"
+                ><i data-ic="layouts"></i> Deck layout</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -865,27 +876,27 @@
                    thing you do to the WINDOW, not to the page. Its label
                    still follows the page kind: Slides for a deck,
                    Versions for a poster. -->
-              <button class="dbtn rbn-sm" id="vw-versions"
+              <button class="fx-tile view-tile rbn-tall" id="vw-versions"
                 aria-pressed="false" hidden
                 title="Other versions of this poster — drafts and variants.
  Opens the strip; close it again to give the page the whole window"
                 ><i data-ic="versions"></i> Versions</button>
-              <button class="dbtn rbn-sm" id="vw-rulers"
+              <button class="fx-tile view-tile rbn-tall" id="vw-rulers"
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres
  of the real page. Drag off one to lay down your own guide"
                 ><i data-ic="rulers"></i> Rulers <kbd>R</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-grid"
+              <button class="fx-tile view-tile rbn-tall" id="vw-grid"
                 aria-pressed="false"
                 title="A margin box and a grid to lay out against &mdash;
 items snap to both. Guides, not ink: never printed or exported"
                 ><i data-ic="grid"></i> Grid <kbd>G</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-other-slides"
+              <button class="fx-tile view-tile rbn-tall" id="vw-other-slides"
                 aria-pressed="false"
                 title="Show the objects on the other slides as faint outlines
  over this slide, so repeated positions and overlaps are easy to compare"
                 ><i data-ic="outline"></i> Other slides</button>
-              <button class="dbtn rbn-sm" id="vw-other-fill"
+              <button class="fx-tile view-tile rbn-tall" id="vw-other-fill"
                 aria-pressed="false" disabled
                 title="Fill the other-slide outlines with a transparent tint"
                 ><i data-ic="fill"></i> Ghost fills</button>
@@ -898,16 +909,16 @@ items snap to both. Guides, not ink: never printed or exported"
                    (2026-08-29). Show/hide first, because it governs what
                    the tool draws; both sit with Rulers and Grid, which
                    is where anyone already looks for a guide. -->
-              <button class="dbtn rbn-sm" id="vw-guides"
+              <button class="fx-tile view-tile rbn-tall" id="vw-guides"
                 aria-pressed="true"
                 title="Show or hide the guides you drew — lines dragged off a ruler and guide boxes. Hidden guides do not snap, and they are not deleted"
                 ><i data-ic="guides"></i> Guides <kbd>H</kbd></button>
-              <button class="dbtn rbn-sm et" id="vw-guidebox"
+              <button class="fx-tile view-tile rbn-tall et" id="vw-guidebox"
                 data-tool="guide" aria-pressed="false"
                 title="Draw a guide box to lay out inside. It snaps, and
  is never printed, exported or shown while presenting"
                 ><i data-ic="frame"></i> Guide box <kbd>B</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-side"
+              <button class="fx-tile view-tile rbn-tall" id="vw-side"
                 aria-pressed="false"
                 title="Stand the toolbar up on the right-hand edge, so the
  page gets the full height of the window. A tall poster needs height far
@@ -923,7 +934,7 @@ items snap to both. Guides, not ink: never printed or exported"
                    source freshness were five separately named surfaces;
                    this button opens the centre that counts all five and
                    opens each existing surface from one place. -->
-              <button class="dbtn rbn-sm" id="vw-check"
+              <button class="fx-tile view-tile rbn-tall" id="vw-check"
                 aria-pressed="false"
                 title="Is this ready? Print, layout, style, wording and whether the figures are still current, all checked in one place"
                 ><i data-ic="flag"></i> Review</button>
@@ -931,15 +942,15 @@ items snap to both. Guides, not ink: never printed or exported"
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
                    else (2026-08-19, user) -->
-              <button class="dbtn rbn-sm" id="vw-preflight"
+              <button class="fx-tile view-tile rbn-tall" id="vw-preflight"
                 title="Whether this page will print well: soft figures,
  things off the page or in the margin, thin contrast, empty frames"
-                ><i data-ic="doc"></i> Before you print</button>
-              <button class="dbtn rbn-sm" id="objects-btn"
+                ><i data-ic="doc"></i> Print check</button>
+              <button class="fx-tile view-tile rbn-tall" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><i data-ic="objects"></i> Layers</button>
-              <button class="dbtn rbn-sm" id="notes-btn"
+              <button class="fx-tile view-tile rbn-tall" id="notes-btn"
                 aria-pressed="false"
                 title="Speaker notes for this slide, and how long you want
  to spend on it. Only you ever see them"><i data-ic="style"></i>
@@ -954,18 +965,17 @@ items snap to both. Guides, not ink: never printed or exported"
                    density ladder ends in a rung whose comment promised to
                    "drop the one group that is not about the selection
                    rather than let the row clip" — but nothing ever
-                   dropped, so on a 1366px laptop with a text box selected
-                   the row ran 66px over and Bold, Italic, Underline and
-                   Layout were clipped away with no scrollbar and no way
-                   to reach them (2026-08-22). Dropping the seven buttons
+                   dropped, so on a 1366px laptop the row ran over and
+                   controls were clipped away with no scrollbar and no way
+                   to reach them (2026-08-22). Dropping the view tiles
                    outright would only move the problem, so at that rung
                    they fold into this one, which opens them as a menu.
                    Filled by openViewMenu(). -->
               <span class="sh-drop" id="vw-morewrap" hidden>
                 <button class="dbtn rbn-sm" id="vw-more"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Rulers, grid, full screen, side toolbar, Review,
- Layers and Notes — folded in here while the window is narrow"
+                  title="The View tools — folded in here while the window
+ is too narrow to show every full-height tile"
                   ><i data-ic="menu"></i> View &#9662;</button>
                 <div class="sh-menu vw-more-menu" id="vw-more-menu"
                   hidden></div>
