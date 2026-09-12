@@ -3589,12 +3589,12 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    amber, and glowing. Behind it, every box that actually wears the
    style, and on request everything else, one colour per kind. */
 .dg-real{position:absolute;border:1px solid rgba(240,168,72,.55);
-  border-radius:3px;background:rgba(240,168,72,.07);pointer-events:none;}
+  border-radius:3px;background:rgba(240,168,72,.07);pointer-events:none;
+  overflow:hidden;}
 /* T279: a box that WEARS this style and no longer keeps to it. Two
    channels, not one -- double-weight border and a corner badge -- so it
-   survives a colour-blind reader and the light theme, and so it cannot
-   be confused with .dg-ghost, which is the style's own default position
-   and is amber-dashed. */
+   survives a colour-blind reader and the light theme. (T367 removed the
+   amber-dashed prototype it also had to differ from.) */
 .dg-real.dg-off{border-width:2px;border-style:solid;
   border-color:rgba(240,168,72,.95);
   background:color-mix(in srgb,#f0a848 16%,transparent);}
@@ -3605,9 +3605,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-offnote[hidden]{display:none!important;}
 .dg-other{position:absolute;border:1px dashed currentColor;
   border-radius:3px;opacity:.55;pointer-events:none;
-  border-color:#8aa0b0;}
-.dg-ghost{box-shadow:0 0 0 1px rgba(240,168,72,.35),
-  0 0 14px rgba(240,168,72,.45);border-width:2px;z-index:3;}
+  border-color:#8aa0b0;overflow:hidden;}
 .dg-key{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   margin:0 0 12px;font-family:var(--sans);font-size:11.5px;
   color:var(--chrome-ink-2);}
@@ -3637,6 +3635,10 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   display:flex;flex-direction:column;gap:2px;padding:4px;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff2e;
   border-radius:7px;box-shadow:0 10px 26px #0009;}
+/* display:flex was beating the hidden attribute, so an EMPTY bubble sat
+   over the key's checkbox from the moment the board was drawn (the
+   "Show everything else" label had a box through it, 2026-09-12) */
+.dg-bub[hidden]{display:none!important;}
 .dg-bubline{text-align:left;font-family:var(--sans);font-size:11px;
   line-height:1.25;padding:3px 6px;border-radius:4px;cursor:pointer;
   color:#dce6ee;background:none;border:1px solid transparent;}
@@ -3646,10 +3648,6 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-bubmore{font-size:10px;opacity:.7;padding:0 6px 2px;}
 .dg-keyit.dg-keymine::before{border:2px solid var(--amber,#f0a848);
   background:rgba(240,168,72,.18);}
-/* the numbers under the board are a captioned group, not three loose
-   fields floating under a picture */
-.dg-nums{border:1px solid #ffffff1c;border-radius:8px;
-  background:#ffffff06;padding:7px 10px;width:max-content;}
 /* the table's boxes were as wide as their column; a percentage never
    needs five digits */
 .dgt-n{max-width:74px;}
@@ -3662,7 +3660,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   color:var(--chrome-ink-2);}
 body.light .dgt-tx{background:var(--input-bg);border-color:var(--border-strong);
   color:var(--ink);}
-body.light .dg-grp,body.light .dg-nums{background:var(--surface-hover);
+body.light .dg-grp{background:var(--surface-hover);
   border-color:var(--line);}
 
 /* ---- T229: THE OBJECT'S HISTORY IS A TABLE ----------------------------
@@ -5012,18 +5010,29 @@ body.light .dg-swatch{border-color:#00000026;}
   background:var(--btn-bg,#ffffff0e);color:var(--chrome-ink);
   border:1px solid var(--chrome-line,#ffffff26);border-radius:6px;
   padding:3px 6px;}
-.dg-board{position:relative;width:min(560px,100%);
-  background:#ffffff0a;border:1px solid #ffffff1f;border-radius:6px;
-  margin:4px 0 10px;overflow:hidden;}
-.dg-ghost{position:absolute;min-height:16px;cursor:move;
-  border:1.5px dashed var(--amber,#f0a848);border-radius:4px;
-  background:rgba(240,168,72,.10);padding:3px 6px;
-  display:flex;align-items:center;touch-action:none;}
-.dg-ghostlab{pointer-events:none;line-height:1.15;overflow:hidden;
-  white-space:nowrap;text-overflow:ellipsis;}
-.dg-ghostgrip{position:absolute;right:-5px;top:50%;width:10px;height:22px;
-  transform:translateY(-50%);border-radius:3px;cursor:ew-resize;
-  background:var(--amber,#f0a848);touch-action:none;}
+/* T384: TWO COLUMNS. How it looks on the left, where its boxes sit on
+   the right; the table of every box runs underneath. One column again
+   when the screen cannot hold two boards' worth. */
+.dg-top{display:grid;grid-template-columns:minmax(300px,1fr) minmax(320px,1.2fr);
+  gap:8px 26px;align-items:start;margin-top:6px;}
+@media (max-width:1180px){.dg-top{grid-template-columns:1fr;}}
+.dg-colh{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--chrome-ink-3,#8ea2b3);
+  margin:0 0 7px;}
+.dg-typecol .dg-ctrls{margin-top:12px;}
+.dg-typecol .dg-spec{white-space:normal;line-height:1.2;}
+.dg-boardwrap{position:relative;}
+/* the board is a slide: the page's own colour, and a size container so
+   the words on it are set in percent of ITS height (cqh), the same
+   currency a style's size is written in */
+.dg-board{position:relative;width:100%;container-type:size;
+  background:var(--page-bg,#ffffff0a);border:1px solid #ffffff2b;
+  border-radius:6px;margin:0 0 8px;overflow:hidden;}
+.dg-realtx{display:block;width:100%;line-height:1.15;overflow:hidden;
+  padding:.5cqh .6cqw;box-sizing:border-box;pointer-events:none;
+  word-break:break-word;}
+.dg-realtx.dg-realempty{opacity:.45;font-style:italic;}
+.dg-other .dg-realtx{opacity:.4;}
 .dg-put{margin-bottom:6px;}
 /* the contact sheet */
 /* the contact sheet, a column down the right-hand side */

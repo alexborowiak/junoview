@@ -7734,3 +7734,19 @@ gates are recorded in the completing commit.
   (named styles, then size bands) with the same specimen chips a finding
   has, each a door to its slide. Review centre, Style system door and
   Help use the name.
+- [x] **T384 — The Style system reads as a slide, in two columns.** The
+  board had lost its visual when T367 took the dashed prototype off it:
+  one amber outline on a grey page, over three "Exactly" number fields
+  nothing read any more, a dead Style sets door, an empty hover bubble
+  sitting across the "Show everything else" checkbox, and nine sections
+  stacked in one scroller (user: "the visual display is gone and
+  confusing; needs a better layout"). The body is now **how it looks**
+  (specimen, looks, the control clusters) beside **where its boxes sit**
+  (the board, its key, the groups and the move), with **Every box wearing
+  it** running full width beneath. The board carries each text box's own
+  words at its own size (container-query units, so a style's percent of
+  the page is percent of the board), one set of words per place, in its
+  colour, face, weight and slant; everything else is drawn by default so
+  the board is the slide; the key says "figure", not "cell". Style sets
+  opens the picker, the Exactly trio and the prototype's CSS are gone,
+  and the bubble hides when told to.

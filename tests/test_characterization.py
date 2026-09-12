@@ -1704,8 +1704,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-12, T383: chrome only. The mismatch check is "Fix mismatched
 # text" again, a tall tile in a Consistency group of its own on Home,
 # and its screen lists what it compared when nothing differs.
-EXPECTED_MD5 = "f77a1e67fe5286f7cdccafeef640b0bf"
-EXPECTED_BYTES = 4009367
+# 2026-09-12, T384: chrome only. The Style system body is two labelled
+# columns over the table, the board carries each box's words at its
+# own size with everything else shown, and the dead Exactly trio and
+# prototype CSS are gone.
+EXPECTED_MD5 = "cbad781d7ba065c16a086506a3659ff4"
+EXPECTED_BYTES = 4012250
 
 
 def _render_example() -> str:

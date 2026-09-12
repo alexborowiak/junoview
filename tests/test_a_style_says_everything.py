@@ -63,11 +63,21 @@ def test_both_style_editors_offer_the_whole_vocabulary(out):
 
 def test_the_screen_shows_the_numbers_not_just_the_drag(out):
     """Dragging sets it roughly; typing sets it exactly, and typing is
-    the only way to make two decks agree."""
-    assert "    var nums=document.createElement('div');nums.className='dg-nums';" in out
-    assert "    [['x','X',8],['y','Y',6],['w','Width',60]].forEach(function(pr){" in out
-    assert "        rec[pr[0]]=Math.round(v*10)/10;" in out
-    assert ".dg-nums{display:flex;gap:14px;align-items:center;" in out
+    the only way to make two decks agree.
+
+    T384: the numbers are the TABLE's X / Y / Width cells, one row per
+    box. The "Exactly" trio under the board wrote a style-level default
+    place that T367 had already stopped applying, so it was three fields
+    with no visual counterpart and no button that read them.
+    """
+    # (the layout builder keeps its own dg-nums trio, at a deeper indent)
+    assert ("\n    var nums=document.createElement('div');"
+            "nums.className='dg-nums';") not in out
+    assert "nlab.textContent='Exactly';" not in out
+    assert "      cell(dgNum(r,'x'),'dgt-num');" in out
+    assert "      cell(dgNum(r,'y'),'dgt-num');" in out
+    assert "      cell(dgNum(r,'w'),'dgt-num');" in out
+    assert "      else r.a[key]=Math.round(v*10)/10;" in out
 
 
 def test_the_put_button_names_the_place_it_moves_them_to(out):

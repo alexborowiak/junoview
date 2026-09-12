@@ -47,25 +47,43 @@ def test_the_headings_are_words_and_the_controls_are_clusters(out):
         assert f"    grp('{name}');" in out, name
     assert ".dg-grp{display:flex;align-items:center;gap:4px;" in out
     assert ".dg-grplab:empty{display:none;}" in out
-    # ...and the three numbers under the board are a captioned group too
-    assert "    nlab.className='dg-grplab';nlab.textContent='Exactly';" in out
-    assert ".dg-nums{border:1px solid #ffffff1c;border-radius:8px;" in out
+    # T384: the "Exactly" trio is gone (dead since T367 removed the
+    # Apply that read it); the body is two labelled columns over a table
+    assert "nlab.textContent='Exactly';" not in out
+    assert "    var top=document.createElement('div');top.className='dg-top';" in out
+    assert "    colHead(left,'how it looks');" in out
+    assert "    colHead(right,'where its boxes sit');" in out
+    assert "    dgSectionHead(body,'Every box wearing it');" in out
+    assert (".dg-top{display:grid;grid-template-columns:minmax(300px,1fr) "
+            "minmax(320px,1.2fr);") in out
+    assert "@media (max-width:1180px){.dg-top{grid-template-columns:1fr;}}" in out
 
 
 def test_the_board_shows_the_real_boxes_not_only_the_master(out):
-    """The dragged rectangle is the default the style stamps. Behind it,
-    every box that actually wears it; and on request everything else,
-    one colour per kind."""
-    assert "  var dgShowOthers=false;" in out
+    """Every box that actually wears the style, and everything else, one
+    colour per kind. T367 took the dragged prototype off the board; T384
+    (2026-09-12, user: "the visual display is gone and confusing") puts
+    the WORDS on it -- each text box carries its own text at its own
+    size, in cqh so a style's percent-of-page is percent-of-board, one
+    set of words per place so fourteen headings at 5,4 are one title and
+    thirteen outlines -- and turns everything else on by default, so the
+    board reads as the slide it is. The key says "figure", not "cell"."""
+    assert "  var dgShowOthers=true;" in out
     assert "  var DG_KIND_COL={text:'#6b9bff',cell:'#f0a848',image:'#a586e8'," in out
     assert "  function dgGhostsFor(board,id){" in out
     assert "        var mine=(a.k==='text'&&a.style===id);" in out
     assert "        if(!mine&&!dgShowOthers) return;" in out
     assert "createTextNode(' Show everything else')" in out
     assert "  function dgKeyList(key,id){" in out
-    # the one in question glows and is thicker
-    assert (".dg-ghost{box-shadow:0 0 0 1px rgba(240,168,72,.35),\n"
-            "  0 0 14px rgba(240,168,72,.45);border-width:2px;z-index:3;}") in out
+    assert "  function dgBoardWords(b,a,def){" in out
+    assert "    t.style.fontSize=size.toFixed(2)+'cqh';" in out
+    assert "        var at=(mine?'m':'o')+a.k+':'+dgPlaceKey(a);" in out
+    assert "      it.textContent=DG_KIND_WORD[k]||k;" in out
+    assert ".dg-board{position:relative;width:100%;container-type:size;" in out
+    # the prototype's CSS went with it
+    assert ".dg-ghost{" not in out
+    # an EMPTY bubble no longer sits over the key: hidden beats flex
+    assert ".dg-bub[hidden]{display:none!important;}" in out
     assert ".dg-real{position:absolute;border:1px solid rgba(240,168,72,.55);" in out
     assert ".dg-other{position:absolute;border:1px dashed currentColor;" in out
     assert ".dg-keyit.dg-keymine::before{border:2px solid var(--amber,#f0a848);" in out
