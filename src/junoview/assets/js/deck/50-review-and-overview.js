@@ -1521,52 +1521,110 @@
     if(d) d.hidden=true;
     if(b) b.setAttribute('aria-expanded','false');
   }
-  function openSessionPresentation(name){
-    var p=presentationByName(name);
-    if(!p){toast('That presentation is no longer available.');return;}
-    closeDeckPresentationDrawer();
-    if(pres&&name===pres.name) return;
-    if(isViewPres(p)){choosePresentation(name);return;}
-    if(name!==pres.name){
-      lsSet(PFX+'last',name);loadPresentation(name);cur=0;activePane=-1;
-    }
-    openDeck('view');
+  /* ---- T382: THE DRAWER IS WHAT IS OPEN NOW ------------------------
+     It listed every presentation opened this session, which reads as a
+     recents list when only one deck is ever on screen (2026-09-12, user:
+     "it should show only open items, not all recents, with a separate
+     recents button"). Open items are the presentation you are showing
+     and the notebooks open in the app -- the things a click can put on
+     screen without opening anything. A notebook row stops the talk and
+     shows that notebook, the way the old column row did. */
+  function openNotebookRows(){
+    var out=[];
+    var A=window.SemApp||{};
+    (A.order||[]).forEach(function(stem){
+      var sh=A.shells&&A.shells[stem]; if(!sh) return;
+      out.push({stem:stem,label:sh.label||stem,path:sh.path||'',
+        kind:sh.kind||'notebook'});
+    });
+    return out;
   }
   function renderDeckPresentationDrawer(){
     var host=$('#deck-pres-list');if(!host) return;
     host.innerHTML='';
-    var rows=sessionPresentationRows();
-    if(!rows.length){
-      var e=document.createElement('div');e.className='deck-pres-empty';
-      e.textContent='No presentation has been opened in this session.';
-      host.appendChild(e);return;
-    }
-    rows.forEach(function(p){
+    function row(cls,icon,name,kind,title,click){
       var b=document.createElement('button');
-      b.type='button';b.className='deck-pres-row'+(p.name===pres.name?' current':'');
-      b.title='Show “'+p.name+'”';
-      var ic=document.createElement('span');ic.innerHTML=presentationIcon(p);
-      var name=document.createElement('span');name.className='deck-pres-row-name';
-      name.textContent=p.name;
-      var kind=document.createElement('span');kind.className='deck-pres-row-kind';
-      kind.textContent=presentationKind(p);
-      b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
-      b.addEventListener('click',function(){openSessionPresentation(p.name);});
+      b.type='button';b.className='deck-pres-row'+(cls?' '+cls:'');
+      b.title=title;
+      var ic=document.createElement('span');ic.innerHTML=icon;
+      var nm=document.createElement('span');nm.className='deck-pres-row-name';
+      nm.textContent=name;
+      var kd=document.createElement('span');kd.className='deck-pres-row-kind';
+      kd.textContent=kind;
+      b.appendChild(ic);b.appendChild(nm);b.appendChild(kd);
+      if(click) b.addEventListener('click',click);
+      else b.disabled=true;
       host.appendChild(b);
+    }
+    var p=presentationSummary(pres.name)||{name:pres.name};
+    row('current',presentationIcon(p),pres.name||'this presentation',
+      presentationKind(p),'The presentation you are showing',null);
+    var nbs=openNotebookRows();
+    nbs.forEach(function(n){
+      row('',bic('doc'),n.label,n.kind,
+        'Stop presenting and show this notebook'+(n.path?(' ('+n.path+')'):''),
+        function(){
+          closeDeckPresentationDrawer();
+          closeDeck();
+          var A=window.SemApp||{};
+          if(A.activate) A.activate(n.stem);
+        });
+    });
+    if(!nbs.length){
+      var e=document.createElement('div');e.className='deck-pres-empty';
+      e.textContent='No notebook is open.';
+      host.appendChild(e);
+    }
+  }
+  function openDeckPresentationDrawer(){
+    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    if(!d) return;
+    renderDeckPresentationDrawer();
+    d.hidden=false;
+    if(b) b.setAttribute('aria-expanded','true');
+  }
+  /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the
+     way the presentations rail does outside the deck (2026-09-12, user:
+     "the auto-hidden sidebar doesn't appear"). The rail's own peek
+     handler returns early under body.deck-open, and deckIsolate has made
+     the rail inert, so nothing answered the edge during a talk. Same
+     14px hit zone as the rail's; it closes when the pointer leaves the
+     drawer by the same 40px margin the column and the present bar use.
+     Presenting only: the editor has its own column and its own peek. */
+  function initDrawerPeek(){
+    document.addEventListener('mousemove',function(e){
+      var d=$('#deck-pres-drawer'); if(!d) return;
+      if(mode!=='view'||deckEl.hidden) return;
+      var hub=$('#presentation-hub');
+      if(hub&&!hub.hidden) return;
+      if(d.hidden){
+        if(e.clientX<=14) openDeckPresentationDrawer();
+        return;
+      }
+      var r=d.getBoundingClientRect();
+      if(e.clientX>r.right+40||e.clientY>r.bottom+40)
+        closeDeckPresentationDrawer();
     });
   }
   function presentationHubBoot(){
     var hub=$('#presentation-hub'),drawer=$('#deck-pres-drawer');
-    var drawerOpen=$('#deck-pres-open'),drawerClose=$('#deck-pres-close');
-    var drawerBrowse=$('#deck-pres-browse');
+    var drawerOpen=$('#deck-pres-open');
+    var drawerBrowse=$('#deck-pres-browse'),drawerRecent=$('#deck-pres-recent');
     if(drawerOpen) drawerOpen.addEventListener('click',function(){
       if(!drawer) return;
-      drawer.hidden=!drawer.hidden;
-      drawerOpen.setAttribute('aria-expanded',(!drawer.hidden).toString());
-      if(!drawer.hidden) renderDeckPresentationDrawer();
+      if(drawer.hidden) openDeckPresentationDrawer();
+      else closeDeckPresentationDrawer();
     });
-    if(drawerClose) drawerClose.addEventListener('click',closeDeckPresentationDrawer);
     if(drawerBrowse) drawerBrowse.addEventListener('click',openPresentationHub);
+    /* the separate Recents door: the same library dialog, opened on its
+       Recent column */
+    if(drawerRecent) drawerRecent.addEventListener('click',function(){
+      openPresentationHub();
+      setTimeout(function(){
+        var first=$('#presentation-hub-recent .presentation-hub-row');
+        if(first) first.focus();},0);
+    });
+    initDrawerPeek();
     var close=$('#presentation-hub-close');
     if(close) close.addEventListener('click',closePresentationHub);
     if(hub) hub.addEventListener('click',function(e){

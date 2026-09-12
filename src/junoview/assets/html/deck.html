@@ -26,13 +26,15 @@
       title="Stop presenting and return to the builder (Esc)."><i data-ic="return"></i>
         Stop presenting</button>
     <!-- The global rail is intentionally inert while a deck fills the
-         screen.  This is its working, deck-owned replacement: it lists
-         only presentations opened in this session and has one explicit
-         route to the full presentation library. -->
+         screen. This is its working, deck-owned replacement: what is open
+         right now (this presentation and the open notebooks), with a
+         Recents door and a route to the whole library. It also slides out
+         when the pointer reaches the left edge (T382). -->
     <button class="dbtn" id="deck-pres-open" type="button"
       aria-expanded="false" aria-controls="deck-pres-drawer"
-      title="Show presentations opened in this session"
-      ><i data-ic="present"></i> Open presentations</button>
+      title="What is open right now: this presentation and your notebooks.
+ It also slides out when you reach the left edge of the screen."
+      ><i data-ic="present"></i> Open now</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -50,17 +52,23 @@
         <i data-ic="flag"></i> Running late</button>
     </span>
   </div>
+  <!-- T382: no Close button. It closed the drawer, not the deck, beside a
+       heading that repeated the words on the button that opened it
+       (2026-09-12, user: "the close button doesn't make sense"). The
+       drawer closes when the pointer leaves it, on Esc, or from the
+       button that opened it. -->
   <aside class="deck-pres-drawer" id="deck-pres-drawer" hidden
-    aria-label="Open presentations">
-    <div class="deck-pres-drawer-head">
-      <span>Open presentations</span>
-      <button class="dbtn" id="deck-pres-close" type="button"
-        title="Close presentations"><i data-ic="exit"></i> Close</button>
-    </div>
+    aria-label="Open now">
+    <div class="deck-pres-drawer-head"><span>Open now</span></div>
     <div class="deck-pres-list" id="deck-pres-list"></div>
-    <button class="dbtn deck-pres-browse" id="deck-pres-browse" type="button"
-      title="Open the presentation library, recent work and folders"
-      ><i data-ic="open"></i> Open presentations&hellip;</button>
+    <div class="deck-pres-doors">
+      <button class="dbtn" id="deck-pres-recent" type="button"
+        title="Presentations you used recently, in any session"
+        ><i data-ic="history"></i> Recents</button>
+      <button class="dbtn" id="deck-pres-browse" type="button"
+        title="Every saved presentation, folders, new decks and imports"
+        ><i data-ic="open"></i> All presentations&hellip;</button>
+    </div>
   </aside>
   <!-- the left COLUMN is the notebooks content and then the thumbnails,
        and nothing else. File / Save / undo / redo used to sit between

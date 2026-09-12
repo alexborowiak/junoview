@@ -27,7 +27,8 @@ body.deck-open{overflow:hidden;}
   flex:none;}
 /* The global presentations rail is inert behind a full-screen deck.  This
    drawer is owned by the deck instead, so it can take focus and remains
-   usable while presenting; it deliberately holds only session-open decks. */
+   usable while presenting; it lists what is open right now: the deck on
+   screen and the open notebooks (T382). */
 .deck-pres-drawer{position:absolute;z-index:35;left:14px;top:58px;
   width:min(340px,calc(100vw - 28px));max-height:calc(100vh - 74px);
   display:flex;flex-direction:column;gap:9px;padding:11px;
@@ -38,7 +39,6 @@ body.deck-open{overflow:hidden;}
   padding-bottom:8px;border-bottom:1px solid var(--chrome-line);
   color:var(--chrome-ink);font:600 11px var(--mono);letter-spacing:.08em;
   text-transform:uppercase;}
-.deck-pres-drawer-head .dbtn{margin-left:auto;}
 .deck-pres-list{display:flex;flex-direction:column;gap:5px;min-height:24px;}
 .deck-pres-row{display:flex;align-items:center;gap:8px;min-width:0;
   padding:8px 9px;border:1px solid var(--chrome-line);border-radius:6px;
@@ -53,7 +53,10 @@ body.deck-open{overflow:hidden;}
   font:9px var(--mono);letter-spacing:.07em;text-transform:uppercase;}
 .deck-pres-empty{padding:8px;border:1px dashed var(--chrome-line);
   border-radius:6px;color:var(--chrome-ink-2);font:11px var(--sans);}
-.deck-pres-browse{align-self:stretch;text-align:left;}
+.deck-pres-doors{display:flex;gap:6px;}
+.deck-pres-doors .dbtn{flex:1 1 auto;min-width:0;justify-content:center;
+  white-space:nowrap;}
+.deck-pres-row[disabled]{cursor:default;}
 .deck-brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
   text-transform:uppercase;color:var(--cyan);}
 .deck-status{font-family:var(--mono);font-size:10px;padding:0 10px;

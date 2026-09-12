@@ -7709,3 +7709,15 @@ gates are recorded in the completing commit.
   locked versions (same words, same app-only reason) and is drawn one
   row per action instead of a three-column grid that wrapped every
   phrase into a four-line cell.
+- [x] **T382 — The presenting drawer is what is open now, and it slides
+  out at the edge.** While presenting, the deck-owned drawer listed every
+  presentation opened this session, which reads as a recents list when
+  only one deck is ever on screen, and it opened only from its button
+  (user: "the auto-hidden sidebar doesn't appear; it should show only
+  open items, not all recents, with a separate recents button"). It now
+  lists the presentation on screen and the notebooks open in the app (a
+  notebook row stops the talk and shows that notebook), slides out when
+  the pointer reaches the left edge and closes when it leaves, has a
+  **Recents** door beside **All presentations…** (both the library
+  dialog), and loses the Close button that closed the drawer rather than
+  the deck under a heading repeating the button that opened it.

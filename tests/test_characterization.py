@@ -1698,8 +1698,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # thumbnails (back link, notebook rows, Refresh all, More) is gone with
 # its builder, fold preference and CSS; the lock trio moves into the
 # Home Update menu, which becomes a one-per-row list.
-EXPECTED_MD5 = "dd6910ce396eccd49a1990dba594fa21"
-EXPECTED_BYTES = 4002258
+# 2026-09-12, T382: chrome only. The presenting drawer lists what is
+# open now, slides out at the left edge, loses its Close button and
+# gains a Recents door.
+EXPECTED_MD5 = "7be8157bc009b1e4142fd311efa1d1ff"
+EXPECTED_BYTES = 4005141
 
 
 def _render_example() -> str:

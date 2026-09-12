@@ -530,19 +530,34 @@ def test_isolation_and_the_deck_open_class_are_one_expression(out):
     assert "if(full) deckTakeFocus();" in out
 
 
-def test_presenting_has_a_deck_owned_session_drawer_not_an_inert_rail(out):
+def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):
     """The global rail remains safely inert behind the deck; the visible
-    substitute is a deck child, populated only from names opened in this
-    session, and has a deliberate route to the saved library."""
+    substitute is a deck child. T382 (2026-09-12, user: "the auto-hidden
+    sidebar doesn't appear; it should show only open items, not all
+    recents, with a separate recents button"): it lists the presentation
+    on screen and the open notebooks -- read live, not a session list --
+    slides out at the left edge while presenting, closes when the pointer
+    leaves it, and has a Recents door beside the route to the library.
+    No Close button: it closed the drawer, not the deck, under a heading
+    that repeated the button that opened it."""
     assert 'id="deck-pres-open"' in out
     assert 'id="deck-pres-drawer"' in out
     assert 'id="deck-pres-browse"' in out
-    assert "var sessionPresentationNames=[];" in out
+    assert 'id="deck-pres-recent"' in out
+    assert 'id="deck-pres-close"' not in out
     assert "function notePresentationOpen(name){" in out
-    assert "function sessionPresentationRows(){" in out
+    assert "var sessionPresentationNames" not in out
+    assert "function sessionPresentationRows" not in out
+    assert "function openNotebookRows(){" in out
     assert "function renderDeckPresentationDrawer(){" in out
-    assert "function openSessionPresentation(name){" in out
-    assert "openDeck('view');" in out
+    assert "function openDeckPresentationDrawer(){" in out
+    # the edge peek, presenting only, the rail's own 14px hit zone
+    assert "  function initDrawerPeek(){" in out
+    assert "      if(mode!=='view'||deckEl.hidden) return;" in out
+    assert "        if(e.clientX<=14) openDeckPresentationDrawer();" in out
+    assert "      if(e.clientX>r.right+40||e.clientY>r.bottom+40)" in out
+    # a notebook row stops the talk and shows that notebook
+    assert "          if(A.activate) A.activate(n.stem);" in out
     # Opening the full library while presenting is a real modal too: its
     # keyboard focus cannot leak into the deck sitting beneath it.
     assert "function presentationHubDeckInert(on){" in out
