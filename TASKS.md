@@ -7721,3 +7721,16 @@ gates are recorded in the completing commit.
   **Recents** door beside **All presentations…** (both the library
   dialog), and loses the Close button that closed the drawer rather than
   the deck under a heading repeating the button that opened it.
+- [x] **T383 — Fix mismatched text is back, on a tile of its own.** T378
+  had renamed it "Check consistency" and left it as the last small button
+  of the Presentation styles row, which folds into one tile at laptop
+  width, so the check was a row inside a menu behind a door (user: "I
+  liked the concept but the execution was always weird; now it's gone").
+  It is a tall tile in a **Consistency** group beside Presentation
+  styles, under the name the user knows, and that one-tile group never
+  folds. The screen is titled the same, its intro says what a card is
+  and that nothing changes until a button is pressed, and when nothing
+  differs it shows its working: one quiet card per group it compared
+  (named styles, then size bands) with the same specimen chips a finding
+  has, each a door to its slide. Review centre, Style system door and
+  Help use the name.

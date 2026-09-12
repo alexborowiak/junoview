@@ -117,4 +117,4 @@ def test_mismatched_text_in_plain_words(out):
     assert "act.textContent='Give all '+f.band.boxes.length+' the '" in out
     assert "alt.textContent='Just make them match, no style';" in out
     assert "+'longer match the style'," in out
-    assert "Each card groups text or figures that look like" in out
+    assert "Each card is a group of text or figures that" in out

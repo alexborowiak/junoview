@@ -1701,8 +1701,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-12, T382: chrome only. The presenting drawer lists what is
 # open now, slides out at the left edge, loses its Close button and
 # gains a Recents door.
-EXPECTED_MD5 = "7be8157bc009b1e4142fd311efa1d1ff"
-EXPECTED_BYTES = 4005141
+# 2026-09-12, T383: chrome only. The mismatch check is "Fix mismatched
+# text" again, a tall tile in a Consistency group of its own on Home,
+# and its screen lists what it compared when nothing differs.
+EXPECTED_MD5 = "f77a1e67fe5286f7cdccafeef640b0bf"
+EXPECTED_BYTES = 4009367
 
 
 def _render_example() -> str:

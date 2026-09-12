@@ -2782,12 +2782,17 @@ def test_the_consistency_check_says_what_it_is_opened_for(out):
     headed "Standardise text" and its count line counted text boxes
     (2026-08-26 audit, T58).
     """
-    assert "Check consistency</button>" in out
-    assert "Style consistency" in out
+    assert "<span>Fix mismatched text</span></button>" in out
+    assert "Fix mismatched text" in out
     assert "Find text or figures that look like they should" in out
     # The count includes figures, while the list suppresses cards that
-    # merely say something already matches.
+    # merely say something already matches...
     assert "var figs=figBoxes().length,fl=figLint().length;" in out
+    # ...and, T383, says what it compared when nothing differs, one
+    # quiet card per group with the same specimen chips a finding has
+    assert "menuHead(list,'compared, and they match');" in out
+    assert "  function stdSpecimenInto(c,p){" in out
+    assert "          row.className='std-find std-checked';" in out
     assert "var n=bad.length+fl;" in out
     assert "these already match" not in out
 

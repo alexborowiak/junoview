@@ -1440,6 +1440,7 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
+.rbn-check{order:5;}       /* T383: the check, beside the styles */
 /* The default contextual surface is two tabs, rather than one long tray:
    Style is how a thing looks; Object is where it is, where it came from,
    and how it is reused (2026-09-11, ribbon-layout correction). */
@@ -3401,6 +3402,11 @@ body.light .oh-h{color:var(--ink-3);}
 .std-chip.std-odd{border-color:#f0a848;color:#f7d9a8;
   background:color-mix(in srgb,#f0a848 16%,transparent);font-weight:600;}
 .std-chip.std-odd::before{content:"! ";font-weight:700;}
+/* T383: a group that was compared and matches -- a quieter card, no
+   button, so the screen shows its working without offering a fix */
+.std-find.std-checked{border-left-color:#46c08a;opacity:.8;}
+.std-find.std-checked .std-chip.std-ok{opacity:.75;}
+.std-more{font-size:11px;color:var(--chrome-ink-2);align-self:center;}
 .std-chip.std-ok{opacity:.5;}
 .std-chip.std-ok:hover{opacity:1;}
 body.light .std-chip.std-odd{color:#7a4b00;
@@ -5336,6 +5342,12 @@ body.light .sh-menu.strip-all{background:var(--chrome-2);
    the new slide on the left hand side and make it a full button"). The
    full-screen view is every slide's images under a heading each, the
    headings folding. */
+/* T383: the check's tile is the fold tile's width -- three words on a
+   64px tile broke into three lines and spilled out */
+.rbn-row>#dsg-std.big-tile{width:82px;
+  height:var(--rbn-tile-h);align-self:center;}
+.rbn-row>#dsg-std.big-tile>span{white-space:normal;text-align:center;
+  line-height:1.15;}
 .rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);
   height:var(--rbn-tile-h);align-self:center;}
 .img-ov{position:fixed;inset:0;z-index:400;

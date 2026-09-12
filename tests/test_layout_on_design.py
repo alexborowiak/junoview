@@ -58,8 +58,16 @@ def test_home_is_make_do_and_keep(out):
 
 
 def test_standardise_says_what_it_does(out):
-    assert "Check consistency</button>" in out
-    assert "<span>Style consistency</span>" in out
+    """T383: it is "Fix mismatched text" again -- the name the user knows
+    it by (2026-09-12: "I liked the concept but the execution was always
+    weird; now it's gone") -- and a tall tile in a group of its own, so a
+    narrow window folding Presentation styles no longer takes it too."""
+    assert "<span>Fix mismatched text</span></button>" in out
+    assert "<span>Fix mismatched text</span>" in out
+    assert '<span class="rbn-grp rbn-check" data-tab="home"' in out
+    assert '<span class="rbn-lab">Consistency</span>' in out
+    assert "&&!g.classList.contains('rbn-check')" in out
+    assert "Check consistency</button>" not in out
     assert "<span>Standardise</span>" not in out
 
 

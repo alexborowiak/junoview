@@ -835,17 +835,10 @@
                 title="Deck-wide layout defaults: the corner shape of boxes
  and the space used when Arrange distributes objects"
                 ><i data-ic="layouts"></i> Deck layout</button>
-              <!-- Both words in full, never abbreviated. This is the one
-                   control in the editor that looks at the deck's type as
-                   a whole rather than at one box, which is what earns it
-                   a button rather than a menu row (2026-08-22, user: "it
-                   would be cool if there was a button that was called
-                   'standardise text', and checked if all headings
-                   paragraphs, captions, are looking the same"). -->
-              <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Find text or figures that look like they should match
- but have different formatting. It only suggests a fix; you choose it"><i data-ic="scope"></i>
-   Check consistency</button>
+              <!-- T383: the mismatch check is no longer a small button in
+                   this row -- it has a group and a tile of its own, next
+                   door, so a narrow window folding this group does not
+                   take it with it. -->
               <!-- the whole-deck type screen was a row inside the Text styles
                    menu: a screen behind a menu behind a door (T212) -->
               <button class="dbtn rbn-sm" id="dsg-design-btn"
@@ -854,6 +847,28 @@
                 ><i data-ic="outline"></i> Style system</button>
             </span>
             <span class="rbn-lab">Presentation styles</span>
+          </span>
+          <!-- T383: THE BUTTON THE USER WENT LOOKING FOR, AGAIN. It was
+               "Standardise text" (2026-08-22: "it would be cool if there
+               was a button that was called 'standardise text', and
+               checked if all headings paragraphs, captions, are looking
+               the same"), then "Fix mismatched text", then T378 renamed it
+               "Check consistency" and left it as the last small button of
+               the Presentation styles row -- which folds into one tile at
+               laptop width, so the check was a row inside a menu behind a
+               door (2026-09-12, user: "I liked the concept but the
+               execution was always weird; now it's gone"). Its own group,
+               its own tall tile, under the name the user knows it by. -->
+          <span class="rbn-grp rbn-check" data-tab="home" data-fold-ic="scope">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile rbn-tall" id="dsg-std"
+                aria-pressed="false"
+                title="Find text or figures that look like they should match
+ but have different formatting, and make them match in one click. It only
+ suggests a fix; you choose it"><i data-ic="scope"></i>
+                <span>Fix mismatched text</span></button>
+            </span>
+            <span class="rbn-lab">Consistency</span>
           </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
@@ -2398,7 +2413,7 @@ items snap to both. Guides, not ink: never printed or exported"
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Style consistency</span>
+        <div class="selpane-h"><span>Fix mismatched text</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
@@ -2484,16 +2499,17 @@ items snap to both. Guides, not ink: never printed or exported"
            view; a fix re-renders it. The panes stay in the markup for
            the pane owner and the tests, but the ribbon doors open these. -->
       <div class="img-ov" id="std-ov" hidden role="dialog"
-        aria-label="Style consistency">
-        <div class="img-ov-h"><span class="img-ov-t">Style consistency</span>
+        aria-label="Fix mismatched text">
+        <div class="img-ov-h"><span class="img-ov-t">Fix mismatched text</span>
           <span class="img-ov-sub" id="std-ov-sub"></span>
           <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Each card groups text or figures that look like
-          they should match. Use its suggested fix only when that is what you
-          intend.</div>
+        <div class="pf-intro">Each card is a group of text or figures that
+          look like they should match but do not, with the odd ones out
+          marked. A card&rsquo;s button makes them match; nothing changes
+          until you press it, and Ctrl+Z puts it back.</div>
         <div class="img-ov-body std-list" id="std-ov-body"></div>
       </div>
       <div class="img-ov" id="tidy-ov" hidden role="dialog"
