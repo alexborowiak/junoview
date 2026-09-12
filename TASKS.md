@@ -7694,3 +7694,18 @@ gates are recorded in the completing commit.
   custom ribbon too; the Style System appends **everything else** only when
   there is an object kind to put under it. Verified in the rendered editor at
   laptop and desktop widths as well as through the full repository test suite.
+
+### Completed 2026-09-12 — four things the user saw on the deployed page
+
+- [x] **T381 — Nothing above the thumbnails, and the Update menu is a
+  list.** The notebook block that led the builder column (a "back to
+  notebooks" header, one row per notebook, Refresh all and a More menu
+  holding the lock verbs) is gone with its builder, fold preference and
+  CSS (user: "the back to notebooks button shouldn't be there, this is
+  now separate from notebooks; the notebook is still listed there;
+  refresh all should be removed, now handled by the update button; the
+  options in the button look poor"). Refreshing is Home > Update, whose
+  menu grew a second section for Lock all figures / Unlock all / Load
+  locked versions (same words, same app-only reason) and is drawn one
+  row per action instead of a three-column grid that wrapped every
+  phrase into a four-line cell.

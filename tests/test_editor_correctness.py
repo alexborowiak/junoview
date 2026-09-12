@@ -667,10 +667,9 @@ def test_the_document_actions_are_in_one_thin_bar_across_the_top(out):
     ribbon groups became one line, and nothing in it changes with the
     selection, so no tab can take it away.
     """
-    # the notebooks CONTENT strip still leads the left column, and its
-    # header row is still the way back
-    assert 'id="dc-nbs"' in out
-    assert "h.addEventListener('click',function(){closeDeck();});" in out
+    # T381: the left column is the thumbnails alone -- the notebooks
+    # strip and its "back" header went on 2026-09-12
+    assert 'id="dc-nbs"' not in out
     # markup order IS the bar's order
     qat = out.split('class="deck-qat"')[1].split('class="rbn-tabs"')[0]
     for cid in ('id="dc-file"', 'id="dc-save"', 'id="dc-undo"',
@@ -1307,9 +1306,10 @@ def test_locking_says_why_it_cannot(out):
     assert "show('#fmt-lockver',isCellRef);" in out
     assert "lvb.disabled=!canLock;" in out
     assert "Not available in a standalone export" in out
-    # ...and the same for Lock all / Unlock all in the notebooks column
-    assert "la.disabled=!appMode;" in out
-    assert "ua.disabled=!appMode;" in out
+    # ...and the same for Lock all / Unlock all, which live in the Home
+    # Update menu since T381 (the notebooks column they sat in is gone)
+    assert "          b.disabled=!appMode;" in out
+    assert "Needs the Junoview app: locking reads git through the local" in out
 
 
 def test_light_themes_re_ink_the_surfaces(out):

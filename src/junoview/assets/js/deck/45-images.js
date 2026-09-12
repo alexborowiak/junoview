@@ -642,6 +642,35 @@
         var ib=$('#hm-images'); if(ib) ib.click();
       });
       hum.appendChild(inv);
+      /* T381: the three lock verbs. They stood behind a More button in
+         the notebook block above the thumbnails; that block is gone, and
+         "keep up to date" is the question they answer -- a locked figure
+         is one an update leaves alone. Same words, same app-only
+         treatment with the reason in the title. */
+      var appMode=(APP.mode==='app');
+      menuHead(hum,'every figure at once');
+      [['lock','Lock all figures',
+        appMode?('Pin every frame to its notebook’s current git commit '
+          +'— updates stop changing them')
+          :('Needs the Junoview app: locking reads git through the local '
+            +'server, and this page was exported as a standalone file.'),
+        function(){lockAllFrames();}],
+       ['unlock','Unlock all',
+        'Every frame follows notebook updates again',
+        function(){unlockAllFrames();}],
+       ['reload','Load locked versions',
+        'Fetch every locked figure’s content from git — the '
+          +'notebooks don’t need to be open',
+        function(){loadLockedVersions();}]]
+        .forEach(function(r){
+          var b=document.createElement('button');
+          b.className='dbtn vw-opt';
+          b.disabled=!appMode;
+          b.innerHTML=bic(r[0])+' '+esc(r[1]);
+          b.title=r[2];
+          b.addEventListener('click',function(){overlayHide(hum);r[3]();});
+          hum.appendChild(b);
+        });
       overlayShow(hub,hum);floatMenu(hub,hum);
     });
     var one=$('#fmt-imgrefresh');

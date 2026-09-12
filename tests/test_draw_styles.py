@@ -390,12 +390,10 @@ def test_document_actions_live_in_the_left_column(out):
     # the notebook list and the thumbnails and nothing else.
     assert 'class="dc-head"' not in out
     assert 'class="deck-qat" id="deck-qat"' in out
-    # Notebooks leads the column
-    # dc-back became the notebooks CONTENT strip (2026-08-19, user: "not
-    # a back button, the content that is currently in the notebooks
-    # button"); its header row is the way back
-    assert 'id="dc-nbs"' in out
-    assert "h.addEventListener('click',function(){closeDeck();});" in out
+    # T381: nothing leads the column any more. The notebooks strip that
+    # did (2026-08-19) went on 2026-09-12 ("this is now separate from
+    # notebooks"); the thumbnails start at the top.
+    assert 'id="dc-nbs"' not in out
 
 
 def test_the_top_bar_always_earns_its_row(out):

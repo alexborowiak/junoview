@@ -1694,8 +1694,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # File/Open provenance now includes the active file name and path, and the
 # notebook-to-slides / presentation-library routes have deliberate dialogs
 # rather than scattered partial menus.  These are assembled-page changes.
-EXPECTED_MD5 = "988672288cba24d5d72bbc936e37637d"
-EXPECTED_BYTES = 4021654
+# 2026-09-12, T381: chrome only. The notebook block above the deck's
+# thumbnails (back link, notebook rows, Refresh all, More) is gone with
+# its builder, fold preference and CSS; the lock trio moves into the
+# Home Update menu, which becomes a one-per-row list.
+EXPECTED_MD5 = "dd6910ce396eccd49a1990dba594fa21"
+EXPECTED_BYTES = 4002258
 
 
 def _render_example() -> str:

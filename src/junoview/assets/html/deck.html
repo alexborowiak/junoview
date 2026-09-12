@@ -352,10 +352,11 @@
   <aside class="deck-create" id="deck-create" hidden>
       <div class="dc-resize" id="dc-resize"
         title="Drag to resize the builder panel"></div>
-      <!-- not a back button: the CONTENT of the notebooks pane — every
-           notebook this presentation uses, with open/refresh — lives at
-           the top of the column; the header row is the way back -->
-      <div class="dc-nbs" id="dc-nbs"></div>
+      <!-- T381: nothing above the thumbnails. The notebook list that
+           used to lead this column (a back link, a row per notebook,
+           Refresh all, More) is gone: a presentation is its own thing,
+           refreshing is Home > Update, and the rail is the way to a
+           notebook (2026-09-12). -->
       <!-- the NAME lives outside .dc-controls: that block is display:none
            while editing, so File → Rename… un-hid an input inside a hidden
            ancestor — 0x0, unfocusable, "renaming doesn't work" in the
@@ -1610,7 +1611,7 @@ items snap to both. Guides, not ink: never printed or exported"
  slides from wherever they came from -- notebooks for figures, files on
  this computer for pictures"><i data-ic="reload"></i>
                     <span>Update &#9662;</span></button>
-                  <div class="sh-menu" id="hm-upd-menu" hidden></div>
+                  <div class="sh-menu upd-menu" id="hm-upd-menu" hidden></div>
                 </span>
                 <button class="fx-tile big-tile" id="hm-images"
                   aria-pressed="false"

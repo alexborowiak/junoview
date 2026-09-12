@@ -1039,45 +1039,6 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .dc-name:has(#pres-name:not([hidden])){padding:10px 14px 9px;
   border-bottom:1px solid #ffffff14;}
 .dc-controls{display:flex;flex-direction:column;gap:9px;}
-/* the "Notebooks" popover: list + open-all / refresh-all */
-.dc-nbs-menu{min-width:252px;max-width:330px;gap:1px;}
-.dc-nbs-menuh{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--chrome-ink-2);padding:6px 9px 5px;}
-.dc-nbs-empty{font-size:11.5px;color:var(--chrome-ink-2);padding:8px 10px;line-height:1.5;}
-.dc-nbrow{display:flex;align-items:center;gap:8px;padding:6px 9px;
-  border-radius:5px;font-size:12px;color:#dce6ee;}
-.dc-nbrow.clickable{cursor:pointer;}
-.dc-nbrow.clickable:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);}
-.dc-nbrow-dot{width:7px;height:7px;border-radius:50%;flex:none;
-  background:#5b7589;}
-.dc-nbrow.open .dc-nbrow-dot{background:#46c08a;}
-.dc-nbrow.avail .dc-nbrow-dot{background:#f0a848;}
-.dc-nbrow.gone .dc-nbrow-dot{background:#8a5a5a;}
-.dc-nbrow-nm{flex:1;font-family:var(--mono);overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;}
-.dc-nbrow.gone .dc-nbrow-nm{color:var(--chrome-ink-2);}
-.dc-nbrow-st{font-family:var(--mono);font-size:9.5px;color:var(--chrome-ink-2);flex:none;}
-.dc-nbacts{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 3px;
-  margin-top:4px;border-top:1px solid #ffffff14;}
-.dc-nbacts .dbtn{flex:1 1 92px;min-width:0;text-align:center;
-  justify-content:center;font-size:11.5px;}
-/* THE LOCK ROW STACKED, and the stack cost the thumbnails three rows of
-   the column (T78). Its three labels are phrases, not words ("Lock all
-   figures", "Load locked versions"), so side by side in a ~280px column
-   they were unreadable and half unclickable (2026-08-21, user: "the lock
-   things can't all be seen") -- one per row, full width, left aligned is
-   still right. They live in the More menu now, where the rows they need
-   are the menu's and not the strip's; .nbs-more-menu carries the rule. */
-/* the notebook block's own header row: way back, count, fold */
-.dc-nbs-head{display:flex;align-items:center;gap:6px;}
-.dc-nbs-head .dc-nbs-menuh{flex:1;min-width:0;}
-.dc-nbs-sum{font-family:var(--mono);font-size:9.5px;color:var(--chrome-ink-2);
-  flex:none;white-space:nowrap;}
-.dbtn.dc-nbs-tog{flex:none;font-size:10.5px;padding:3px 7px;}
-.dc-nbs.nbs-folded .dc-nbs-body{display:none;}
-/* THE ROWS SCROLL RATHER THAN PUSH: a deck built from eight notebooks is
-   eight rows, and every one of them used to come off the strip below. */
-.dc-nbs-body{max-height:min(18vh,190px);overflow-y:auto;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
   border-radius:6px;box-sizing:border-box;}
@@ -2507,12 +2468,6 @@ select#fmt-font[hidden]{display:none;}
    notebooks button is really important — it needs to sit above the slide
    thumbnail part") */
 /* the notebooks content at the column top: pane rows reused verbatim */
-.dc-nbs{display:none;}
-.deck.editing .dc-nbs{display:block;flex:none;padding:8px 8px 6px;
-  border-bottom:1px solid #ffffff14;}
-.dc-nbs .dc-nbs-menuh{cursor:pointer;border-radius:6px;padding:4px 6px;}
-.dc-nbs .dc-nbs-menuh:hover{background:color-mix(in srgb,var(--accent)
-  14%,transparent);color:var(--accent);}
 /* a POSTER keeps the column too now — it is where Notebooks, File and
    Save live; only the slide film is deck-only (hidden for posters by the
    .poster-page .dc-film rule) */
@@ -4528,14 +4483,17 @@ body.jv-spot .deck-stage{pointer-events:none;}
 .sh-menu.match-menu{position:fixed;z-index:220;display:block;
   width:236px;padding:5px;max-height:60vh;overflow-y:auto;}
 .match-menu .vw-opt{width:100%;text-align:left;}
-/* the notebook column's More menu (T78). Both class names are needed:
-   .sh-menu's grid and position:absolute come LATER in this file, so a
-   one-class rule would lose to them and the menu would be clipped by the
-   scrolling body it is built inside. */
-.sh-menu.nbs-more-menu{position:fixed;z-index:220;display:block;
-  width:230px;padding:5px;}
-.nbs-more-menu .dbtn{display:block;width:100%;text-align:left;
+/* T381: the Update menu is a LIST, not .sh-menu's three-column grid.
+   Its rows are phrases ("The whole presentation", "Load locked
+   versions"), and in a 210px grid each wrapped into a four-line cell
+   (2026-09-12, user: "the options in the button look poor"). One per
+   row, full width, left aligned -- the rule the lock trio has always
+   needed, now on the menu they live in. Both class names, because
+   .sh-menu's grid comes later in this file. */
+.sh-menu.upd-menu{display:block;width:250px;padding:5px;}
+.upd-menu .dbtn{display:flex;width:100%;text-align:left;
   white-space:normal;margin-top:3px;}
+.upd-menu .dbtn[disabled]{opacity:.45;}
 /* the folded View group's menu. A row stands in for a toggle button, so
    it has to show the toggle's state — otherwise folding the group would
    lose the one thing a visible toggle was chosen for (2026-08-22). */
@@ -5168,7 +5126,6 @@ body.light .seq-cell b{color:var(--ink);}
 /* T139: the tab wrapper is semantic only */
 .rbn-tabset{display:contents;}
 /* T144: the empty notebook column's worded door */
-.dc-nbs-open{display:block;margin:6px auto 2px;}
 /* T115: masters — the inherited layer, inert behind everything */
 .slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
 /* T215: a PANEL -- block layout (the .sh-menu grid had spread its note

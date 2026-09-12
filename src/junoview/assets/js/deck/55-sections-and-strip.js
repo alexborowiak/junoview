@@ -794,26 +794,17 @@
     });
     return order;
   }
-  function renderPresNbs(){
-    var nbs=presNbs(pres);
-    /* T365: the column carries the list when there IS a list, and
-       otherwise nothing at all (2026-09-07, user: "remove the 'open
-       notebooks' from the top of the fucking thumbnails. I said that
-       should not be a god damn fucking thing").
-       It used to show whenever the build could open notebooks, which
-       in the app is always -- so a new presentation opened with 117px
-       of sentence and a button standing in front of its thumbnails.
-       T78's rule decides it: everything above the thumbnails is height
-       the thumbnails do not get. The way IN to a notebook is where you
-       ask for one -- draw a Notebook cell frame and its chooser opens
-       one for you (45-images.js, openObjSrc). */
-    var col=$('#dc-nbs');
-    if(col) col.hidden=!nbs.length;
-    buildNbsInto(col,true);
-  }
-  /* ---- "notebooks in this presentation" popover: open all / refresh all ----
-     stem -> path resolves from an open shell, else a recent path with the
-     same filename (paths only exist in the app + web builds) */
+  /* T381: NO NOTEBOOK BLOCK ABOVE THE THUMBNAILS. The column used to
+     open with a "back to notebooks" header, one row per notebook, Refresh
+     all and a More menu (2026-09-12, user: "the back to notebooks button
+     shouldn't be there, this is now separate from notebooks; the notebook
+     is still listed there; refresh all should be removed, now handled by
+     the update button"). Refreshing is Home > Update; the three lock verbs
+     live in that same menu; the notebooks rail is the way to a notebook.
+     The column is the thumbnails and nothing else. */
+  /* stem -> path resolves from an open shell, else a recent path with the
+     same filename (paths only exist in the app + web builds); lockAllFrames
+     needs it to ask git about a notebook */
   function pathStem(p){
     var s=String(p||''),parts=s.split(/[\/\\]/),nm=parts[parts.length-1]||s;
     nm=nm.split('?')[0].split('#')[0];
@@ -828,45 +819,6 @@
       if(pathStem(rec[i])===stem) return rec[i];
     return null;
   }
-  /* a path is actually openable only if APP.openPath can act on it: any path
-     in the app (the server resolves it), but ONLY http(s) URLs in the web
-     build (relative recent entries like the bundled demo can't be re-fetched
-     by openPath) */
-  function nbOpenable(path){
-    if(!path) return false;
-    return APP.mode==='web'?/^https?:\/\//i.test(path):true;
-  }
-  function nbInfo(){
-    return presNbs(pres).map(function(stem){
-      var open=APP.order.indexOf(stem)>=0;
-      var path=open?((APP.shells[stem]&&APP.shells[stem].path)||'')
-        :nbPathFor(stem);
-      return {stem:stem,open:open,path:path,openable:nbOpenable(path)};
-    });
-  }
-  function nbsCanOpen(){return APP.mode==='app'||APP.mode==='web';}
-  function openPresNbs(missingOnly){
-    if(!nbsCanOpen()){toast('Opening notebooks needs the Junoview app');return;}
-    var info=nbInfo(),acted=0,cannot=0;
-    info.forEach(function(n){
-      if(missingOnly&&n.open) return;
-      if(n.openable){APP.openPath(n.path);acted++;} else cannot++;
-    });
-    /* T273: the surviving caller passes FALSE and now does both jobs
-       -- it opens what is closed as well as re-reading what is open --
-       so the unscoped word is the honest one. */
-    var verb=missingOnly?'Opening ':'Opening and reloading ';
-    if(!acted&&!cannot)
-      toast(missingOnly?'All notebooks are already open':'Nothing to reload');
-    else if(!acted)
-      toast('Could not '+(missingOnly?'open':'reload')+' those notebooks');
-    else if(cannot)
-      toast(verb+acted+'; '+cannot+' unavailable');
-    else
-      toast(verb+acted+' notebook'+(acted===1?'':'s')+'…');
-    setTimeout(renderNbsMenu,600);   /* refresh statuses, stay open */
-  }
-  function hideNbsMenu(){}   /* nothing floats any more; see renderNbsMenu */
   /* ---- Lock all / Unlock all / prefetch locked versions ---- */
   function allCellAnnots(){
     var out=[];
@@ -940,191 +892,6 @@
       fetchVerCards(groups[k].path,groups[k].commit,
         groups[k].anchors);});
   }
-  /* ONE place the notebook list lives: the top of the left column, on
-     screen the whole time you are editing. There used to be a second copy
-     in a floating pane behind a ribbon button, which is a group's worth of
-     ribbon width spent on something already showing (2026-08-20, user: "so
-     the notebook button can be removed now. Haven't we put all the
-     functionality on the left hand side?"). */
-  function renderNbsMenu(){
-    buildNbsInto($('#dc-nbs'),true);
-  }
-  /* T78: THE COLUMN'S HEIGHT IS THE STRIP'S HEIGHT. Everything above
-     the thumbnails is height the thumbnails do not get, and this block
-     was a header, one row per notebook and FIVE full-width buttons --
-     around 180px of a laptop's column, spent on actions you use once a
-     session (2026-08-29, user: "slide thumbnails seem to be compressed
-     by the buttons that are on the top right ... even though they are
-     above, they seem to compress the thumbnail view"). Three answers,
-     smallest first: the four rare actions fold into one More menu, the
-     rows scroll inside a capped box instead of pushing the strip down,
-     and the whole body folds away from a header that keeps the count.
-     The list still shows by default -- it is the way back and the
-     open/closed state, which is the 2026-08-20 invariant. */
-  var NBS_FOLD_KEY='junoview-nbs-fold';
-  /* a per-BROWSER preference, like the ribbon fold: it says how you like
-     this column, not what the presentation is, so it is not a deck field
-     and needs none of the four places one of those lives in */
-  function nbsFolded(){
-    try{return localStorage.getItem(NBS_FOLD_KEY)==='1';}
-    catch(e){return false;}
-  }
-  function setNbsFolded(v){
-    try{
-      if(v) localStorage.setItem(NBS_FOLD_KEY,'1');
-      else localStorage.removeItem(NBS_FOLD_KEY);
-    }catch(e){}
-  }
-  function buildNbsInto(m,column){
-    if(!m) return;
-    m.innerHTML='';
-    var info=nbInfo();
-    /* T365: no empty state. There was a sentence here ("No notebooks
-       yet -- open one and its figures become things you can place")
-       and an "Open notebooks..." button under it; renderPresNbs hides
-       the whole block instead, so the thumbnails start at the top of
-       the column. */
-    if(!info.length) return;
-    var h=document.createElement('div');h.className='dc-nbs-menuh';
-    h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
-    if(column){
-      h.title='Back to all notebooks. Nothing is closed or lost.';
-      h.addEventListener('click',function(){closeDeck();});
-    }
-    /* the header is a ROW now: the way back on the left, then the count
-       (so folding costs no information) and the fold itself */
-    var head=document.createElement('div');head.className='dc-nbs-head';
-    head.appendChild(h);
-    var nbBody=document.createElement('div');nbBody.className='dc-nbs-body';
-    if(column){
-      var nOpen=0;
-      info.forEach(function(n){if(n.open) nOpen++;});
-      var sum=document.createElement('span');sum.className='dc-nbs-sum';
-      sum.textContent=info.length+' listed · '+nOpen+' open';
-      sum.title=info.length+' notebook'+(info.length===1?'':'s')+' in this '
-        +'presentation, '+nOpen+' of them open';
-      head.appendChild(sum);
-      var tg=document.createElement('button');tg.className='dbtn dc-nbs-tog';
-      var shut=nbsFolded();
-      var paintTog=function(){
-        tg.innerHTML=shut?bic('expand')+' Show':bic('collapse')+' Hide';
-        tg.title=shut
-          ?'Show the notebook list and its actions again'
-          :'Fold the list away and give the height to the thumbnails';
-        tg.setAttribute('aria-expanded',(!shut).toString());
-        m.classList.toggle('nbs-folded',shut);
-      };
-      tg.addEventListener('click',function(e){
-        e.stopPropagation();shut=!shut;setNbsFolded(shut);paintTog();});
-      head.appendChild(tg);
-      paintTog();
-    }
-    m.appendChild(head);
-    m.appendChild(nbBody);
-    info.forEach(function(n){
-      /* openable-but-closed = "avail"; can't be opened here = "gone" */
-      var cls=n.open?'open':(n.openable?'avail':'gone');
-      var row=document.createElement('div');
-      row.className='dc-nbrow '+cls;
-      var dot=document.createElement('span');dot.className='dc-nbrow-dot';
-      var nm=document.createElement('span');nm.className='dc-nbrow-nm';
-      nm.textContent=n.stem;
-      var st=document.createElement('span');st.className='dc-nbrow-st';
-      st.textContent=n.open?'open':(n.openable?'closed':'not found');
-      row.appendChild(dot);row.appendChild(nm);row.appendChild(st);
-      if(n.open){
-        row.classList.add('clickable');
-        row.title='View this notebook';
-        row.addEventListener('click',function(){
-          closeDeck();
-          if(APP.activate) APP.activate(n.stem);
-        });
-      } else if(n.openable){
-        row.title=n.path;row.classList.add('clickable');
-        row.addEventListener('click',function(){
-          /* the pane stays open: you asked to SEE the notebooks, and
-             acting on one row is not done looking (2026-08-18, user:
-             "keep open, only close when clicking cross") */
-          APP.openPath(n.path);
-          setTimeout(renderNbsMenu,600);});
-      } else if(n.path){row.title=n.path;}
-      nbBody.appendChild(row);
-    });
-    if(nbsCanOpen()){
-      var acts=document.createElement('div');acts.className='dc-nbacts';
-      /* T273: "Open notebooks" is gone from this row (2026-09-05, user:
-         "Can you get rid of the 'Open notebooks' button above the
-         thumbnails. That is not needed anymore.").
-         Nothing is orphaned. It ran openPresNbs(TRUE), which skips the
-         notebooks already open -- and Refresh all is openPresNbs(FALSE),
-         a strict superset: it opens the closed ones and re-reads the
-         rest. Each closed row in the list above also opens its own
-         notebook on click. So the capability keeps two doors, and the
-         row keeps a worded action rather than being left holding
-         nothing but More, which is the standing complaint. */
-      var rb=document.createElement('button');rb.className='dbtn';
-      rb.innerHTML=bic('reload')+' Refresh all';
-      rb.title='Open every notebook this presentation uses that is not '
-        +'already open, and re-read the rest from disk / URL';
-      rb.addEventListener('click',function(){openPresNbs(false);});
-      acts.appendChild(rb);nbBody.appendChild(acts);
-      /* FOUR ROWS BECAME ONE. Refresh all and the three lock actions are
-         once-a-session verbs, and the lock three HAD to stack full width
-         -- their labels are phrases, not words (2026-08-21) -- so four
-         rows of buttons stood permanently in front of the thumbnails.
-         They keep their words, their icons and their
-         disabled-with-a-reason treatment; they just wait behind More.
-         The menu floats (position:fixed, set by floatMenu), so the
-         capped scrolling body cannot clip it. */
-      var mb=document.createElement('button');mb.className='dbtn';
-      mb.innerHTML=bic('menu')+' More';
-      mb.setAttribute('aria-haspopup','true');
-      mb.setAttribute('aria-expanded','false');
-      mb.title='Lock or unlock every figure';
-      acts.appendChild(mb);
-      /* shown everywhere, working only in the app - see the per-figure
-         Lock button for why (2026-08-20) */
-      if(true){
-        var appMode=(APP.mode==='app');
-        var acts2=document.createElement('div');
-        acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;
-        var la=document.createElement('button');la.className='dbtn';
-        la.disabled=!appMode;
-        la.innerHTML=bic('lock')+' Lock all figures';
-        la.title=appMode
-          ?('Pin every frame to its notebook\u2019s current git commit '
-            +'\u2014 refreshes stop changing them')
-          :('Needs the Junoview app: locking reads git through the local '
-            +'server, and this page was exported as a standalone file.');
-        la.addEventListener('click',function(){lockAllFrames();});
-        var ua=document.createElement('button');ua.className='dbtn';
-        ua.disabled=!appMode;
-        ua.innerHTML=bic('unlock')+' Unlock all';
-        ua.title='Every frame follows notebook refreshes again';
-        ua.addEventListener('click',function(){unlockAllFrames();});
-        var lv=document.createElement('button');lv.className='dbtn';
-        lv.disabled=!appMode;
-        lv.innerHTML=bic('reload')+' Load locked versions';
-        lv.title='Fetch every locked figure’s content from git — the '
-          +'notebooks don’t need to be open';
-        lv.addEventListener('click',function(){loadLockedVersions();});
-        menuHead(acts2,'every figure at once');
-        acts2.appendChild(la);acts2.appendChild(ua);
-        acts2.appendChild(lv);
-        nbBody.appendChild(acts2);
-        mb.addEventListener('click',function(e){
-          e.stopPropagation();
-          if(!acts2.hidden){overlayHide(acts2);return;}
-          overlayShow(mb,acts2);
-          floatMenu(mb,acts2);
-        });
-      }
-    } else {
-      var note=document.createElement('div');note.className='dc-nbs-empty';
-      note.textContent='Open / refresh is available in the Junoview app.';
-      nbBody.appendChild(note);
-    }
-  }
   /* ---- the Home tab's Slides group -----------------------------------
      The same four actions the thumbnail strip offers on hover, in the
      place you look for them when the strip is scrolled away from the
@@ -1149,7 +916,7 @@
       e.stopPropagation();openMatchMenu(this);});
   })();
   function renderCreate(){
-    renderPresRow();renderControls();renderPresNbs();renderFilm();
+    renderPresRow();renderControls();renderFilm();
     syncFurnBtns();   /* the furniture toggles show their own state */
   }
   function moveSlide(i,d){
