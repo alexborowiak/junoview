@@ -121,6 +121,7 @@ DECK_PARTS = (
     "51-talk-tools",
     "52-layout-builder",
     "53-web-page",
+    "54-scroll-show",
     "55-sections-and-strip",
     "60-saving-and-export",
     "62-pptx-import",

@@ -1713,7 +1713,8 @@
   }
   function presentTabBoot(){
     [['pr-here','pl-here'],['pr-start','pl-start'],
-     ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],
+     ['pr-presenter','pl-presenter'],['pr-scroll','pl-scroll'],
+     ['pr-talk','pl-talk'],
      ['pr-notes','pl-notes'],['pr-timing','pl-notes'],
      ['pr-tap','pl-tap'],['pr-trace','pl-trace']]
       .forEach(function(p){

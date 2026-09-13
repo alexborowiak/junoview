@@ -58,6 +58,7 @@
   motionBoot();               /* wobble / float / pulse (T385) */
   talkToolsBoot();            /* laser, magnifier, black screen (T386) */
   webBoot();                  /* a live web page on a slide (T388) */
+  scrollShowBoot();           /* the scrolling version (T389) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
   pptxImportBoot();           /* PowerPoint in: File, launcher, drop (T320) */

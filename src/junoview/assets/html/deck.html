@@ -322,6 +322,12 @@
           <div class="dc-mhead">present</div>
           <button class="dc-mi" id="pl-here">Play from this slide</button>
           <button class="dc-mi" id="pl-start">Play from the start</button>
+          <!-- T389: every slide on one scrolling page, each animating
+               the first time it scrolls into view and then staying. -->
+          <button class="dc-mi" id="pl-scroll"
+            title="Every slide on one page you scroll through. Each slide's
+ animations play the first time it comes into view, then stay">Play as a
+            scrolling page</button>
           <div class="dc-msep"></div>
           <button class="dc-mi" id="pl-presenter"
             title="Opens a second window with your notes, the next slide
@@ -1568,6 +1574,10 @@ items snap to both. Guides, not ink: never printed or exported"
                   title="A second window with your notes, the next slide and a
  clock. Drag it to the other screen, then play"
                   ><i data-ic="dockright"></i><span>Presenter view</span></button>
+                <button class="fx-tile big-tile" id="pr-scroll"
+                  title="Every slide on one page you scroll through. Each
+ slide's animations play the first time it comes into view, then stay"
+                  ><i data-ic="expand"></i><span>Scrolling page</span></button>
               </span>
             </span>
             <span class="rbn-lab">Play</span>

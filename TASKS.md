@@ -7809,3 +7809,18 @@ gates are recorded in the completing commit.
   lets the page run and talk to its own origin and never navigate this
   window; the notebook sanitiser's no-iframe posture is untouched.
   PowerPoint has no shape for it, so the export says so and counts it.
+- [x] **T389 — The scrolling version of a presentation.** (User: "could
+  there be a continuous scroll version of presentations, with some like
+  'animate as scrolling down', so the animations only appear on first
+  scroll down then just are there after that".) **Play as a scrolling
+  page** on the Present menu and the Present tab opens every slide,
+  fully built, one under the other in an overlay scaled to the window
+  — the same pages the PDF and the standalone export are made of. Each
+  page's animated objects are held back until the page first scrolls
+  into view, then play their own entrance in build order a beat apart
+  and stay; scrolling back replays nothing. Esc closes it, the arrow
+  keys step a page, a counter says where you are. Its own fragment,
+  `54-scroll-show.js`. Found on the way: the export pages carried the
+  editor's dashed selection ring round the selected box's index on
+  every slide (PDF and standalone HTML too); buildPrintRoot now clears
+  the selection while it draws.

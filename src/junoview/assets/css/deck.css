@@ -4911,6 +4911,29 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   text-transform:uppercase;opacity:.75;}
 .tk-note{margin:0;font-size:10px;line-height:1.5;color:var(--chrome-ink-3);}
 @media print{.talkbtn,.talkpane{display:none !important;}}
+/* ---- T389: THE SCROLLING VERSION ---------------------------------------
+   An overlay over the editor; the pages inside are buildPrintRoot's,
+   given back their static flow and scaled with `zoom` to the width. An
+   armed object keeps its entrance's from-state through its delay
+   (fill-mode backwards), so a slide's things arrive a beat apart
+   instead of all popping in before their turn. */
+.deck-scroll{position:fixed;inset:0;z-index:400;display:flex;
+  flex-direction:column;background:#20262c;}
+.deck-scroll-bar{display:flex;align-items:center;gap:12px;padding:8px 14px;
+  background:var(--chrome-1);border-bottom:1px solid var(--chrome-line);
+  color:var(--chrome-ink);flex:none;}
+.deck-scroll-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:600 13px var(--sans);}
+.deck-scroll-n{font:11px var(--mono);color:var(--chrome-ink-2);}
+.deck-scroll-body{flex:1 1 auto;overflow-y:auto;padding:24px 0;}
+.deck-scroll .scroll-root{position:static;left:auto;top:auto;width:auto;
+  z-index:auto;}
+.deck-scroll .print-page{margin:0 auto 24px;box-shadow:0 8px 40px #0008;}
+/* belt and braces: a deferred re-render (text fitting runs a tick
+   later) can put the editor's ring back on a page after buildPrintRoot
+   has stripped it, so no page ever draws one */
+.print-page .sel{outline:none!important;}
+.an-scrollin{animation-fill-mode:backwards!important;}
 /* ---- T386: THE TALK'S TOOLS --------------------------------------------
    All three sit above the deck (z 100) and the spotlight (400) but
    under the drawer's library dialog; none of them take the pointer, so

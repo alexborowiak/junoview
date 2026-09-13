@@ -1718,8 +1718,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # renderer and the many-item spotlight.
 # 2026-09-13, T388: chrome only. The web page kind: its fragment,
 # renderer branch, Insert and Object doors, and CSS.
-EXPECTED_MD5 = "9ab228314aeea88eee36acd3711e76a2"
-EXPECTED_BYTES = 4061303
+# 2026-09-13, T389: chrome only. The scrolling-show fragment, its two
+# doors, its CSS, and buildPrintRoot clearing the selection.
+EXPECTED_MD5 = "5c05966b7f0b76ecdba9933ac4912fb4"
+EXPECTED_BYTES = 4071117
 
 
 def _render_example() -> str:

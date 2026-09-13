@@ -1132,6 +1132,13 @@
     if(old) old.remove();
     var savedMode=mode,savedReveal=revealCount,savedCur=cur;
     mode='view';revealCount=99999;              /* all builds fully revealed */
+    /* T389: THE PAGES ARE A PICTURE OF THE DECK, NOT OF THE EDITOR.
+       renderAnnots marks item selAnnot on WHATEVER slide it draws, so
+       with the first box selected every exported page carried a dashed
+       selection ring round its first box (seen on the scrolling
+       version, but the PDF and the standalone export had it too). */
+    var savedSel=selAnnot,savedSet=selSet;
+    selAnnot=null;selSet=[];
     var root=document.createElement('div');root.id='print-root';
     /* attach the container FIRST (off-screen but laid out) so each slide has a
        real 720px height when its text is sized from the layer — otherwise a
@@ -1225,6 +1232,11 @@
       }
     });
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    selAnnot=savedSel;selSet=savedSet;
+    /* ...and whatever a render path still marked, off: the ring is the
+       editor's, and no page is the editor */
+    $$('.sel,.grpsel',root).forEach(function(el){
+      el.classList.remove('sel','grpsel');});
     /* put the editor back on its own frame, or every flip book on screen
        would be left showing whatever the last exported page wanted */
     flipForce=null;
