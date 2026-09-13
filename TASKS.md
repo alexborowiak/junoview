@@ -7851,3 +7851,9 @@ gates are recorded in the completing commit.
   box arriving in pieces shows the pieces that are out. **Whole slide**
   puts the ordinary editor back; the pictures follow every edit. Its
   own fragment, `56-story.js`; nothing is stored.
+- [x] **T392 — CI collected nothing.** Every test job on `main` was red:
+  two test modules imported a sibling as `tests.…`, which resolves only
+  under `python -m pytest` (the repo root on sys.path) and not under the
+  plain `pytest` CI runs, where `tests/` is on the path as a directory.
+  Both now import the sibling by its bare name, like `helpers` is. Plain
+  `pytest` and `python -m pytest` both pass.
