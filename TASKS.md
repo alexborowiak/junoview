@@ -8008,3 +8008,13 @@ gates are recorded in the completing commit.
   reads an unclamped point now; the drawing tools keep the clamp.
   Playback and every export clip to the page, so a parked object is out
   of the show until it is dragged back.
+- [x] **T408 — A picture pasted onto a flip book is a page of it.** (User:
+  "I wish you could paste images into a flip book.") With a book
+  selected, Ctrl+V dropped the picture on top of the book as a loose
+  image — the one place on the slide a pasted picture obviously
+  belonged, and the one door that could not take it. Now it goes in as
+  the last page and the book turns to it, the same way "+ Pictures…"
+  adds one; a file, a data: URL and a picture at an address all work.
+  The file input's reader was lifted into `flipAddFiles` so both doors
+  keep the original aside the same way. With no book selected the
+  picture lands on the slide as before.

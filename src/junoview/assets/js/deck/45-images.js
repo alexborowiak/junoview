@@ -1070,39 +1070,48 @@
     if(fi) fi.addEventListener('change',function(){
       var a=flipPaneItem(),files=this.files;
       if(!a||!files||!files.length) return;
-      var list=Array.prototype.slice.call(files);
-      var got=[],done=0;
-      list.forEach(function(f,i){
-        var rd=new FileReader();
-        rd.onload=function(){
-          var probe=new Image();
-          probe.onload=function(){
-            var small=shrinkImage(probe,rd.result);
-            got[i]={src:small};
-            /* placeImage was factored out precisely because "putting the
-               original aside in each door is three chances to forget".
-               The flip book is the fourth door, and it forgot
-               (2026-08-26 audit, T58). A frame is not an annot, so it
-               carries its own okey and useOriginals walks frames. */
-            if(rd.result&&rd.result!==small)
-              keepOriginal(got[i],rd.result);
-            fin();};
-          probe.onerror=function(){got[i]={src:rd.result};fin();};
-          probe.src=rd.result;
-        };
-        rd.onerror=function(){got[i]=null;fin();};
-        rd.readAsDataURL(f);
-      });
-      function fin(){
-        if(++done<list.length) return;
-        a.frames=flipFrames(a).slice();
-        got.forEach(function(g){if(g) a.frames.push(g);});
-        a.at=a.frames.length-1;
-        /* ONE history entry for the whole batch */
-        markDirty();renderSlide();renderFlipPane();
-      }
+      flipAddFiles(a,Array.prototype.slice.call(files));
     });
   })();
+  /* FILES BECOME PAGES. The file input's door above and the paste door
+     (30-format-bar.js, T408) both land here, so a picture arrives in a
+     flip book the same way whichever way it came. `done2`, if given,
+     hears how many pages were made once the last file has been read. */
+  function flipAddFiles(a,list,done2){
+    var got=[],done=0;
+    if(!a||!list||!list.length) return;
+    list.forEach(function(f,i){
+      var rd=new FileReader();
+      rd.onload=function(){
+        var probe=new Image();
+        probe.onload=function(){
+          var small=shrinkImage(probe,rd.result);
+          got[i]={src:small};
+          /* placeImage was factored out precisely because "putting the
+             original aside in each door is three chances to forget".
+             The flip book is the fourth door, and it forgot
+             (2026-08-26 audit, T58). A frame is not an annot, so it
+             carries its own okey and useOriginals walks frames. */
+          if(rd.result&&rd.result!==small)
+            keepOriginal(got[i],rd.result);
+          fin();};
+        probe.onerror=function(){got[i]={src:rd.result};fin();};
+        probe.src=rd.result;
+      };
+      rd.onerror=function(){got[i]=null;fin();};
+      rd.readAsDataURL(f);
+    });
+    function fin(){
+      if(++done<list.length) return;
+      a.frames=flipFrames(a).slice();
+      var n=0;
+      got.forEach(function(g){if(g){a.frames.push(g);n++;}});
+      a.at=a.frames.length-1;
+      /* ONE history entry for the whole batch */
+      markDirty();renderSlide();renderFlipPane();
+      if(done2) done2(n);
+    }
+  }
   /* ---- WHAT GOES IN AN OBJECT FRAME ----------------------------------
      An empty frame is a hole of a known size and position; this is the
      menu that fills it. Every row lands in THAT frame rather than
