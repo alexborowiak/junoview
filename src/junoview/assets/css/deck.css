@@ -4302,7 +4302,22 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
    where you are standing, and refreshThumb goes looking for its row on
    every edit. Dimmed so it reads as a peek out of a closed drawer. */
 .film-row.peek{opacity:.72;}
-.film-menu{min-width:210px;}
+/* T399: ONE readable column, like the canvas menu below it. The strip's
+   menu inherited .sh-menu's three-column icon grid, so "New version of
+   this slide" and "Move matching objects" wrapped word by word into
+   tiles beside their headings (2026-09-13, user: "the right click
+   options on a slide look cursed"). */
+.film-menu{display:block;width:300px;min-width:0;
+  max-width:min(340px,92vw);max-height:72vh;
+  overflow-y:auto;overflow-x:hidden;}
+.film-menu .hd-lab{margin-top:6px;}
+.film-menu>.hd-lab:first-child{margin-top:0;}
+.film-menu .vw-opt{width:100%;text-align:left;}
+.film-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);color:#fff;}
+.film-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:9px;opacity:.75;}
+body.light .film-menu .vw-opt.on{color:var(--ink);}
 /* the canvas right-click menu: the film strip's menu is the other
    context menu in the app, so it gets the same width and the same
    left-aligned rows. The one addition is a dead row -- "Nothing copied

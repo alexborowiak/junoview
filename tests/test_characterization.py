@@ -1734,8 +1734,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Support are one menu, the bar outranks the tab strip.
 # 2026-09-13, T398: chrome only. A saved file names the presentation
 # (deck JS).
-EXPECTED_MD5 = "f3f82ec0d70b19152f239f1f4fb4de19"
-EXPECTED_BYTES = 4104268
+# 2026-09-13, T399: chrome only. The slide menu is one column with one
+# heading per group.
+EXPECTED_MD5 = "94543a402b3aeb804d3131c1a1777ac0"
+EXPECTED_BYTES = 4105322
 
 
 def _render_example() -> str:

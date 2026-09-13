@@ -7924,3 +7924,12 @@ gates are recorded in the completing commit.
   rename everything else uses (a taken name stays, and says so), and the
   file written carries the new name rather than the text rendered
   before the pick.
+- [x] **T399 — The slide's right-click menu is a list.** (User: "The
+  right click options on a slide look cursed.") The strip's menu
+  inherited `.sh-menu`'s three-column icon grid, so "New version of
+  this slide" and "Move matching objects" wrapped word by word into
+  tiles beside their headings, and it carried three "this slide"
+  headings, one of them with nothing under it. One readable column now,
+  like the canvas menu: the slide, how it arrives (the current
+  transition marked "on"), which versions, then this slide — optional,
+  move up, move down, duplicate, delete.
