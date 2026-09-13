@@ -180,9 +180,9 @@ LAYOUTS: dict[str, int] = {"full": 1, "halves": 2, "rows": 2,
 
 #: Fields any annot may carry, whatever its kind.
 ANNOT_COMMON: dict[str, tuple[type, str]] = {
-    "hide": (int, "1 to leave this out WHILE EDITING — scaffolding you "
-                  "do not want in the way. It is still drawn in "
-                  "playback and print."),
+    "hide": (int, "1 when this is hidden: not drawn while editing, in "
+                  "playback, in print or in PowerPoint, and it claims no "
+                  "click. A spare kept on the slide."),
     "priv": (int, "1 when only you may see it: drawn on your own screen "
                   "and in the presenter view, never for the audience and "
                   "never in a PDF or a .pptx. Like speaker notes it is "

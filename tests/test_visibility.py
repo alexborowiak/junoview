@@ -477,15 +477,18 @@ def test_one_predicate_decides_who_sees_an_item(out):
     assert "if(a.priv&&!privShown()) return;      /* T31 */" in out
 
 
-def test_hide_and_priv_are_deliberate_opposites(out):
-    """`hide` is hidden from YOU while you work and drawn for everyone
-    afterwards; `priv` is drawn for you and never for anyone else. They
-    sit on adjacent lines because reading them together is the only way
-    either name makes sense.
+def test_hide_and_priv_are_two_different_silences(out):
+    """`hide` is shown to NOBODY -- not you, not the audience, not a PDF
+    (T404; it used to mean "out of my way while editing, still shown to
+    the audience", which nobody read that way); `priv` is drawn for you
+    and never for anyone else. They sit on adjacent lines because
+    reading them together is the only way either name makes sense.
     """
-    assert "if(a.hide&&editing) return;" in out
-    i = out.index("if(a.hide&&editing) return;")
+    anchor = "      if(a.hide) return;\n      /* ...and the other way round"
+    assert anchor in out
+    i = out.index(anchor)
     assert "if(a.priv&&!privShown()) return;" in out[i:i + 400]
+    assert "if(a.hide&&editing) return;" not in out
 
 
 def test_a_private_render_has_to_ask_for_it(out):

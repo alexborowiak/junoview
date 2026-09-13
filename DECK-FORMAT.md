@@ -138,7 +138,7 @@ Whatever its kind, an item may also carry these.
 
 | key | type | what it means |
 | --- | --- | --- |
-| `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
+| `hide` | int | 1 when this is hidden: not drawn while editing, in playback, in print or in PowerPoint, and it claims no click. A spare kept on the slide. |
 | `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
 | `out` | The build order on which this object GOES AWAY again — how one picture replaces another. A peer of `anim`, not part of it, so an object that is simply on the slide can still leave. Absent means it stays; one naming a build that no longer exists is ignored. |
 | `tie` | What this item's arrival is bound to: `{to, id, at, m}` — `to:'series'` binds it to a chart's named SERIES (`id` the chart's `oid`, `at` the series NAME so it survives a data refresh), and `m` is only/from/until as for a flip book. |
@@ -163,9 +163,9 @@ neither is a picture nobody has decided about yet: it falls back to
 whatever the object is already called, because "unlabelled image" helps
 nobody.
 
-`hide` and `priv` are deliberate opposites: one is hidden from **you**
-while you work and shown to everyone afterwards, the other is shown to
-you and hidden from everyone else.
+`hide` and `priv` are two different silences: a hidden object is shown
+to **nobody** — not you, not the audience, not a PDF — while a private
+one is shown to you and hidden from everyone else.
 
 ### Anchoring
 

@@ -1122,7 +1122,7 @@
   function steppersOn(s){
     var out=[];
     ((s&&s.annots)||[]).forEach(function(a,i){
-      if(a&&stopsFor(s,a)>0) out.push({a:a,i:i});});
+      if(a&&!a.hide&&stopsFor(s,a)>0) out.push({a:a,i:i});});   /* T404 */
     return out;
   }
   /* T234: the frame each flip book was last DRAWN at, and WHEN it last
@@ -1628,7 +1628,9 @@
       return {map:{},sub:{},last:{},count:0};
     var seen={};
     (s&&s.annots||[]).forEach(function(a){
-      if(!a||!a.anim) return;
+      /* T404: a hidden object is not on the slide, so it claims no
+         click -- or the show would stop on nothing */
+      if(!a||!a.anim||a.hide) return;
       var o=a.anim.order||0;
       /* the WIDEST claim on this order wins: two boxes on one build, one
          of them split four ways, is four clicks and the other box
@@ -1641,6 +1643,7 @@
        one more click at the end" has to BE a click, or the slide would
        end while the object was still there. */
     (s&&s.annots||[]).forEach(function(a){
+      if(!a||a.hide) return;
       var o=animOut(a);
       if(o!=null&&!(o in seen)) seen[o]=1;});
     var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
@@ -1653,7 +1656,7 @@
   function animSeq(s){
     var by={},order=[];
     (s&&s.annots||[]).forEach(function(a,i){
-      if(a&&a.anim){var o=a.anim.order||0;
+      if(a&&a.anim&&!a.hide){var o=a.anim.order||0;   /* T404 */
         if(!by[o]){by[o]=[];order.push(o);}by[o].push(i);}});
     order.sort(function(x,y){return x-y;});
     return order.map(function(o){return {order:o,items:by[o]};});

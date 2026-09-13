@@ -7971,3 +7971,10 @@ gates are recorded in the completing commit.
   **↓ Later** move it; a flip book's pages are indented rows numbered
   with their click and say they follow the book. The number badges on
   the canvas count the same clicks now (they skipped page turns).
+- [x] **T404 — Hidden is hidden.** (User: "Bug: Hidden object still
+  appear in present mode.") The Layers pane's eye meant "out of my way
+  while editing, still shown to the audience" — DECK-FORMAT called it
+  scaffolding — and nobody read it that way. A hidden object is not on
+  the slide now: not while editing, not in playback, not in print or
+  PowerPoint, and it claims no click. The eye's tooltip, the schema and
+  DECK-FORMAT say so.

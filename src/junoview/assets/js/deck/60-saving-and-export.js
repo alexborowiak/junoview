@@ -1695,6 +1695,7 @@
          note reaching a .pptx is the exact failure T31 exists to
          prevent. */
       if(a.priv) return;
+      if(a.hide) return;   /* T404: hidden is hidden, in PowerPoint too */
       /* an item tied to a figure other than this page's does not belong
          on this page. note.frame is set by the exploding enumerator; with
          no flip book on the slide it is null and nothing is filtered. */

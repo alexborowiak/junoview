@@ -1742,8 +1742,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # their tooltips, and a help paragraph.
 # 2026-09-13, T402: chrome only. The Animation pane as a list of
 # clicks, its CSS, the canvas badge counting the same clicks.
-EXPECTED_MD5 = "82b1637e5d7e335408aa63309cccb7e4"
-EXPECTED_BYTES = 4105852
+# 2026-09-13, T404: chrome only. Hidden is hidden in every mode (deck
+# JS, the eye's tooltip).
+EXPECTED_MD5 = "edab5a56ed81c2a9476866cbe7f38df4"
+EXPECTED_BYTES = 4106628
 
 
 def _render_example() -> str:

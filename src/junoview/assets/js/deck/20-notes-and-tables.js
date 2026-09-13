@@ -1650,7 +1650,7 @@
     var editing=(mode==='edit');
     (s.annots||[]).forEach(function(a,i){
       if(!a||a.k!=='arrow') return;
-      if(a.hide&&editing) return;
+      if(a.hide) return;                     /* T404: hidden is hidden */
       if(a.priv&&!privShown()) return;      /* T31 */
       drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
     });
@@ -1933,7 +1933,7 @@
     if(!layer||!s) return;
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.k!=='text'||!a.fh) return;
-        if(a.hide&&editing) return;
+        if(a.hide) return;                   /* T404: hidden is hidden */
         var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
         if(!el) return;
         var lr=layer.getBoundingClientRect();
@@ -2128,9 +2128,13 @@
     })?figNumbers():null;
     var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
-      /* hidden via the Objects pane: skipped while editing, still
-         rendered in playback / print */
-      if(a.hide&&editing) return;
+      /* T404: HIDDEN IS HIDDEN. The Layers pane's eye used to mean
+         "out of my way while editing, still shown to the audience", and
+         nobody read it that way (2026-09-13, user: "Bug: hidden object
+         still appear in present mode"). A hidden object is not on the
+         slide: not while editing, not in playback, not in print or
+         PowerPoint, and it claims no click (slideBuildSteps). */
+      if(a.hide) return;
       /* ...and the other way round: yours, so NOT rendered in playback,
          print or PowerPoint (T31) */
       if(a.priv&&!privShown()) return;

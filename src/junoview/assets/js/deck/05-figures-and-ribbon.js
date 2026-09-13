@@ -2448,10 +2448,11 @@
       var eye=document.createElement('button');
       eye.className='sp-act'+(a.hide?' on':'');eye.type='button';
       eye.innerHTML=bic('eye');
-      eye.title=a.hide?'Show while editing'
-        :'Hide while editing (still shows when presenting)';
-      eye.setAttribute('aria-label',
-        a.hide?'Show while editing':'Hide while editing');
+      /* T404: hidden means hidden -- from the editor, the show, the PDF
+         and the PowerPoint alike. It is how you keep a spare on a slide. */
+      eye.title=a.hide?'Show it again'
+        :'Hide it: not shown while editing, presenting or in exports';
+      eye.setAttribute('aria-label',a.hide?'Show':'Hide');
       eye.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'hide');});
       r.appendChild(eye);

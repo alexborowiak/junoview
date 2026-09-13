@@ -70,7 +70,9 @@ def test_objects_pane_lists_hides_and_locks(out):
     """OBJECTS PANE (layers v1): list every object, hide-while-editing, lock
     """
     assert 'id="selpane"' in out and 'id="objects-btn"' in out
-    assert "function renderSelPane" in out and "a.hide&&editing" in out
+    # (T404: hidden is hidden everywhere, so the guard lost its "while
+    # editing" half)
+    assert "function renderSelPane" in out and "      if(a.hide) return;" in out
     assert "an-locked" in out and ".sp-row" in out
 
 
