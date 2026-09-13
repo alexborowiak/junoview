@@ -7750,3 +7750,22 @@ gates are recorded in the completing commit.
   the board is the slide; the key says "figure", not "cell". Style sets
   opens the picker, the Exactly trio and the prototype's CSS are gone,
   and the bubble hides when told to.
+- [x] **T385 — More ways to move: three entrances, motion that keeps
+  going, highlight builds, two more page turns.** (User: "the big thing
+  in websites is people having cool animations ... page turn or it flies
+  in and moves the other out of the way; things wobbling and moving; text
+  typing out like a type writer; instead of having text come out one at a
+  time, one dot point is highlighted so you can still have all text
+  out".) The Effect strip gains **Fly in**, **Page turn** and
+  **Typewriter** (words only; the text nodes are emptied and refilled a
+  few characters a tick, bounded at about two and a half seconds, every
+  word put back whole). A **Motion** group on the Animation tab gives an
+  object a loop for as long as it is on the slide in the show — Wobble,
+  Float, Pulse — stored as `motion`, previewed on hover, off under
+  reduced motion like every keyframe. **Highlight** joins Whole box / By
+  bullet / By sentence: the same stops, but nothing is held back — the
+  piece each click is about lights up in the accent and the rest sit
+  quiet (`anim.hl`). A flip book's page can now **Page turn** on its left
+  edge or **Push** in from the right. Driven in Chromium: the title typed
+  out under the click and finished whole; Float put its class on the item
+  in the show and left the editor still.

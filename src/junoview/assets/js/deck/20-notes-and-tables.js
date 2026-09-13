@@ -2910,13 +2910,21 @@
           if(typeof textBy==='function'&&textBy(ba)){
             /* piece j lives on build step st+j, so it is showing exactly
                when its own stop has been taken. Read off the same plan
-               everything else uses -- no second cursor. */
+               everything else uses -- no second cursor.
+               T385: with anim.hl the pieces are never hidden. The one
+               whose stop was just taken is lit, the ones still to come
+               sit quiet, the ones already done are plain. */
+            var hl=!!ba.anim.hl;
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');
               var jp=plan.stop[st+j];
               if(jp==null) jp=st+j;
-              pe.style.visibility=(mode==='view'&&jp>=revealCount)
-                ?'hidden':'';
+              var wait=(mode==='view'&&jp>=revealCount);
+              pe.style.visibility=(wait&&!hl)?'hidden':'';
+              if(hl&&mode==='view'){
+                pe.classList.toggle('an-hl',jp===revealCount-1);
+                pe.classList.toggle('an-hl-wait',wait);
+              }
             });
           }
           if(sp>=revealCount) el.classList.add('an-prebuild');
@@ -2929,9 +2937,25 @@
                replaced the inline rotate(); they now animate `translate`
                and `scale`, which compose with it. An effect that names
                itself must be the effect that plays. */
+            /* T385: the typewriter is for words; anything else fades */
+            atype=(atype==='type'&&ba.k!=='text')?'fade':atype;
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
+            if(atype==='type'&&typeof typeInto==='function') typeInto(el);
           }
         }
+      });
+    }
+    /* ---- T385: MOTION THAT KEEPS GOING. One class per item, in the
+       show only; the editor stays still so a wobbling box can be
+       grabbed. A pass of its own, like the builds above, so no kind's
+       branch can forget it. */
+    if(mode==='view'&&s.annots&&s.annots.some(function(a){
+      return a&&a.motion;})){
+      $$('.an-item[data-idx]',layer).forEach(function(el){
+        var raw=el.getAttribute('data-idx');
+        if(raw==='t'||raw==='s') return;
+        var ma=(s.annots||[])[+raw];
+        if(ma&&ma.motion) el.classList.add('an-move-'+ma.motion);
       });
     }
     /* ---- SHRINK TO FIT, AND SAY SO WHEN IT CANNOT ---------------------

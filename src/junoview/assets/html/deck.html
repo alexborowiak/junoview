@@ -1160,6 +1160,39 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Transition</span>
           </span>
+          <!-- T385: MOTION THAT KEEPS GOING (2026-09-12, user: "things
+               wobbling and moving"). An entrance plays once; these loop
+               while the object is on the slide, in the show only. Tiles,
+               like Effect, because it is the same kind of choice. -->
+          <span class="rbn-grp rbn-motion" data-tab="animation"
+            data-fold-ic="wobble">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="anim-move">
+                <span class="fx-strip trans-strip" id="anim-move-strip"
+                  role="group" aria-label="Motion while on the slide">
+                <button class="fx-tile" id="anim-move-none"
+                  aria-pressed="false" disabled
+                  title="Still, once it has arrived"
+                  ><i data-ic="none"></i><span>Still</span></button>
+                <button class="fx-tile" id="anim-move-wobble"
+                  aria-pressed="false" disabled
+                  title="Rocks gently from side to side the whole time it
+ is on the slide &mdash; hover to see it"
+                  ><i data-ic="wobble"></i><span>Wobble</span></button>
+                <button class="fx-tile" id="anim-move-bob"
+                  aria-pressed="false" disabled
+                  title="Floats slowly up and down &mdash; hover to see it"
+                  ><i data-ic="bob"></i><span>Float</span></button>
+                <button class="fx-tile" id="anim-move-pulse"
+                  aria-pressed="false" disabled
+                  title="Breathes: grows and shrinks a little, over and
+ over &mdash; hover to see it"
+                  ><i data-ic="pulse"></i><span>Pulse</span></button>
+                </span>
+              </span>
+            </span>
+            <span class="rbn-lab">Motion</span>
+          </span>
           <span class="rbn-grp rbn-flipfx" data-tab="animation"
             data-fold-ic="flipbook">
             <span class="rbn-row">
@@ -1182,6 +1215,15 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-pressed="false"
                   title="Each figure grows into
  place"><i data-ic="zoom"></i> Grow</button>
+                <!-- T385 -->
+                <button class="dbtn rbn-sm" id="anim-flip-turn"
+                  aria-pressed="false"
+                  title="Each figure swings in like a page turning
+ on its left edge"><i data-ic="pageturn"></i> Page turn</button>
+                <button class="dbtn rbn-sm" id="anim-flip-push"
+                  aria-pressed="false"
+                  title="Each figure slides in from the right, pushing
+ the last one out of the way"><i data-ic="flyin"></i> Push</button>
               </span>
               <span class="rbn-cell seq-cell" id="anim-flip-say" hidden
                 title="Turning a page is a click, exactly like an
@@ -1287,6 +1329,15 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-pressed="false"
                   title="One click per sentence"
                   ><i data-ic="spacing"></i><span>By sentence</span></button>
+                <!-- T385: the same stops, but nothing is held back --
+                     the piece whose click it is lights up instead
+                     (2026-09-12, user: "one dot point is highlighted so
+                     you can still have all text out"). -->
+                <button class="fx-tile" id="anim-by-hl"
+                  aria-pressed="false"
+                  title="Show every bullet from the start and light up the
+ one each click is about, instead of hiding the rest"
+                  ><i data-ic="star"></i><span>Highlight</span></button>
                 </span>
               </span>
               <!-- T372: LAST, not second. Beside two full-height strips

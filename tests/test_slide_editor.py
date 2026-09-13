@@ -3329,7 +3329,10 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     """
     # located by its CONTENT: the page carries three reduced-motion
     # blocks (core.css's transitions, the .slide guard, and this one)
-    guard = ".an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}"
+    # (T385 added Fly in, Page turn and the three motions to the list)
+    guard = (".an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,"
+             ".an-anim-turn,\n  .an-move-wobble,.an-move-bob,.an-move-pulse"
+             "{animation:none!important;}")
     assert guard in out
     i = out.index(guard)
     assert out.rindex("@media (prefers-reduced-motion:reduce){", 0, i) > 0
@@ -3337,7 +3340,9 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # the window grew when T172's piece CSS landed between them; what
     # this guards is that the guard sits WITH the keyframes rather than
     # paragraphs away, not an exact byte distance
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 2600
+    # (T385's five extra keyframe blocks sit in the same run, so the
+    # window grew once more)
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 4200
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 
@@ -3767,7 +3772,8 @@ def test_the_gallery_previews_on_the_real_object(out):
     # re-adding a class already present does nothing: off, reflow, on
     assert "void el.offsetWidth;" in out
     # animationend is not a safe cleanup, so a timer always runs
-    assert "galPvT=setTimeout(galPreviewStop,900);" in out
+    # (T385: the typewriter preview runs longer than a keyframe)
+    assert "galPvT=setTimeout(galPreviewStop,type==='type'?2800:900);" in out
     assert "b.addEventListener('mouseleave',galPreviewStop);" in out
 
 

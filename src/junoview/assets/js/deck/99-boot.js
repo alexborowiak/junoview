@@ -55,6 +55,7 @@
   cloneDoorsBoot();           /* clones, on the Object tab (T229) */
   transRibbonBoot();          /* how a SLIDE arrives (T289) */
   flipFxBoot();               /* how a flip book's page turns (T234) */
+  motionBoot();               /* wobble / float / pulse (T385) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
   pptxImportBoot();           /* PowerPoint in: File, launcher, drop (T320) */

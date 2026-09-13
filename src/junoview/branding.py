@@ -44,6 +44,18 @@ _ICON_PATHS = {
             '1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/>',
     "reload": '<path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/>'
               '<path d="M13.6 2.2v3.1h-3.1"/>',
+    # T385: three more entrances and three loops
+    "flyin": '<path d="M1.8 8h8.4"/><path d="M7.2 5l3 3-3 3"/>'
+             '<path d="M12.2 3.4h2v9.2h-2"/>',
+    "pageturn": '<path d="M2.4 2.6h11.2v10.8H2.4z"/>'
+                '<path d="M8 2.6c3 2.6 3 8.2 0 10.8"/>'
+                '<path d="M8 2.6c-3 2.6-3 8.2 0 10.8"/>',
+    "typewriter": '<path d="M2.2 11.6h6.6"/><path d="M2.2 8h4"/>'
+                  '<path d="M2.2 4.4h9"/><path d="M11.4 7.6v5.4"/>',
+    "wobble": '<path d="M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1"/>',
+    "bob": '<path d="M8 2.4v11.2"/><path d="M4.8 5.6L8 2.4l3.2 3.2"/>'
+           '<path d="M4.8 10.4L8 13.6l3.2-3.2"/>',
+    "pulse": '<circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/>',
     "info": '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/>'
             '<path d="M8 4.9v.1"/>',
     # filters: one per content type

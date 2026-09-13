@@ -194,6 +194,9 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
     "oid": (str, "This object's durable name, used to follow it through "
                  "its own history and to match it across slides for a "
                  "\"move\" transition."),
+    "motion": (str, "A movement that keeps going while the object is on "
+                    "the slide, in playback only: `wobble`, `bob` or "
+                    "`pulse`. Absent means still."),
     "crop": (dict, "How this picture or figure is cropped. `t`/`r`/`b`/"
                    "`l` trim each edge by a percentage; `shape` names one "
                    "of the preset outlines, drawn INSIDE the trim box so "

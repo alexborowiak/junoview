@@ -1708,8 +1708,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # columns over the table, the board carries each box's words at its
 # own size with everything else shown, and the dead Exactly trio and
 # prototype CSS are gone.
-EXPECTED_MD5 = "cbad781d7ba065c16a086506a3659ff4"
-EXPECTED_BYTES = 4012250
+# 2026-09-13, T385: chrome only. Three more entrances, a Motion group,
+# a Highlight tile and two more page turns on the Animation tab, with
+# their keyframes.
+EXPECTED_MD5 = "68e06f44ab1e53728b9cc8670039dfd2"
+EXPECTED_BYTES = 4027695
 
 
 def _render_example() -> str:

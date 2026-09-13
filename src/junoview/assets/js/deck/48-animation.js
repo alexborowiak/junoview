@@ -56,7 +56,114 @@
      away), U float up -- and every one is PRINTED ON ITS BUTTON,
      because a mode whose shortcuts are invisible has no shortcuts. */
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
-    ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
+    ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G'],
+    /* T385: three more ways in (2026-09-12, user: "the big thing in
+       websites is people having cool animations ... text typing out
+       like a type writer ... page turn or it flies in"). Typewriter is
+       for words: on anything else it plays as a fade. */
+    ['slide','Fly in','L'],['turn','Page turn','P'],
+    ['type','Typewriter','T']];
+  /* ---- T385: MOTION THAT KEEPS GOING --------------------------------
+     An entrance plays once. These loop for as long as the object is on
+     the slide, in the show only (2026-09-12, user: "things wobbling
+     and moving"). Stored as a.motion; the renderer puts one class on
+     the item and the keyframes do the rest, so an exported page keeps
+     it too. Reduced motion turns them off, as it does every keyframe. */
+  var MOTION_FX=[['','None'],['wobble','Wobble'],['bob','Float'],
+    ['pulse','Pulse']];
+  function motionId(v){return '#anim-move-'+(v||'none');}
+  function motionItems(){
+    var s=pres.slides[cur],out=[];
+    selIdxs().forEach(function(i){
+      var x=(s&&s.annots||[])[i]; if(x) out.push(x);});
+    return out;
+  }
+  var motionPvT=null,motionPvEls=[];
+  function motionPreviewStop(){
+    if(motionPvT){clearTimeout(motionPvT);motionPvT=null;}
+    motionPvEls.forEach(function(el){
+      el.classList.remove('an-move-wobble','an-move-bob','an-move-pulse');});
+    motionPvEls=[];
+  }
+  function motionPreview(v){
+    motionPreviewStop();
+    if(!v||!motionOK()) return;
+    var layer=stage&&stage.querySelector('.annot-layer'); if(!layer) return;
+    selIdxs().slice(0,8).forEach(function(i){
+      var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      el.classList.add('an-move-'+v);motionPvEls.push(el);
+    });
+    motionPvT=setTimeout(motionPreviewStop,2400);
+  }
+  function motionBoot(){
+    MOTION_FX.forEach(function(pr){
+      var b=$(motionId(pr[0])); if(!b) return;
+      b.addEventListener('mouseenter',function(){motionPreview(pr[0]);});
+      b.addEventListener('mouseleave',motionPreviewStop);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();motionPreviewStop();
+        var items=motionItems(); if(!items.length) return;
+        items.forEach(function(a){
+          if(pr[0]) a.motion=pr[0]; else delete a.motion;});
+        markDirty();renderSlide();
+        if(typeof animRibbonSync==='function') animRibbonSync();
+      });
+    });
+  }
+  function motionSync(){
+    var items=motionItems(),on=items.length>0;
+    var now=on?(items[0].motion||''):null;
+    MOTION_FX.forEach(function(pr){
+      var b=$(motionId(pr[0])); if(!b) return;
+      b.disabled=!on;
+      b.setAttribute('aria-pressed',(on&&now===pr[0]).toString());
+    });
+  }
+  /* ---- T385: THE TYPEWRITER ------------------------------------------
+     The words are already in the DOM (the model is never split); the
+     effect empties every text node under the item and puts the
+     characters back a few at a time, so bold runs, links and bullets
+     type out in place. Bounded at about two and a half seconds however
+     long the box is, and every text node is restored whole at the end
+     -- or at once if the item leaves the page under it. One run at a
+     time: a re-render mid-way starts again from the newest state. */
+  var typeRun=null;
+  function typeStop(){
+    if(!typeRun) return;
+    clearInterval(typeRun.t);
+    typeRun.nodes.forEach(function(n){n.node.textContent=n.text;});
+    typeRun.el.classList.remove('an-typing');
+    typeRun=null;
+  }
+  function typeInto(el){
+    typeStop();
+    if(!el||!motionOK()) return;
+    var host=el.querySelector('.an-tx')||el;
+    var nodes=[];
+    var walker=document.createTreeWalker(host,NodeFilter.SHOW_TEXT);
+    var n;
+    while((n=walker.nextNode())){
+      if(n.textContent) nodes.push({node:n,text:n.textContent});}
+    var total=0;
+    nodes.forEach(function(x){total+=x.text.length;});
+    if(!total) return;
+    nodes.forEach(function(x){x.node.textContent='';});
+    var per=Math.max(1,Math.ceil(total/100)),shown=0;
+    el.classList.add('an-typing');
+    typeRun={el:el,nodes:nodes,t:0};
+    typeRun.t=setInterval(function(){
+      if(!el.isConnected){typeStop();return;}
+      shown+=per;
+      var left=shown;
+      nodes.forEach(function(x){
+        var take=Math.max(0,Math.min(x.text.length,left));
+        x.node.textContent=x.text.slice(0,take);
+        left-=x.text.length;
+      });
+      if(shown>=total) typeStop();
+    },25);
+  }
   /* ---- T238: DISAPPEAR, WHERE ANIMATION IS -----------------------------
      The exit has existed since T174 and had one door: a popover inside
      the Layers pane's build column (2026-09-04, user: "animations is
@@ -158,7 +265,12 @@
      page alike. The words are SEQ_FX's, minus Appear -- for a page turn
      "appear" and "none" are the same thing. */
   var FLIP_FX=[['','None'],['fade','Fade'],['rise','Float up'],
-    ['zoom','Grow']];
+    ['zoom','Grow'],
+    /* T385: a page that TURNS, and one that pushes the last one out
+       (2026-09-12, user: "one image swapping with another with some
+       kind of animation like a page turn or it flies in and moves the
+       other out of the way") */
+    ['turn','Page turn'],['push','Push']];
   function flipFxWord(v){
     var out='';
     FLIP_FX.forEach(function(p){if(p[0]===v) out=p[1];});
@@ -412,20 +524,25 @@
      exists to delete. Written out, the table is also the one place to
      read what a card looks like. */
   var FX_IC={none:'none',appear:'appear',fade:'fade',rise:'rise',
-    zoom:'zoom'};
+    zoom:'zoom',slide:'flyin',turn:'pageturn',type:'typewriter'};
   function fxIcon(t){
     if(t==='none') return bic('none');
     if(t==='appear') return bic('appear');
     if(t==='rise') return bic('rise');
     if(t==='zoom') return bic('zoom');
+    if(t==='slide') return bic('flyin');
+    if(t==='turn') return bic('pageturn');
+    if(t==='type') return bic('typewriter');
     return bic('fade');
   }
   var galPvEls=[],galPvT=null;
   function galPreviewStop(){
     if(galPvT){clearTimeout(galPvT);galPvT=null;}
     galPvEls.forEach(function(el){
-      el.classList.remove('an-anim-fade','an-anim-rise','an-anim-zoom');});
+      el.classList.remove('an-anim-fade','an-anim-rise','an-anim-zoom',
+        'an-anim-slide','an-anim-turn','an-anim-type');});
     galPvEls=[];
+    typeStop();
   }
   /* the preview runs the REAL keyframe on the REAL object, so what you
      see is what you will get. Nothing is stored, so nothing to undo. */
@@ -448,9 +565,10 @@
       void el.offsetWidth;
       el.classList.add('an-anim-'+type);
       galPvEls.push(el);
+      if(type==='type'&&a.k==='text') typeInto(el);
     });
     /* animationend is not reliable enough to be the only cleanup */
-    galPvT=setTimeout(galPreviewStop,900);
+    galPvT=setTimeout(galPreviewStop,type==='type'?2800:900);
   }
   /* THE STRIP (T182): five tiles in the ribbon's own row, icon over
      word, the one that is on lit. Rebuilt rather than diffed -- five
@@ -598,7 +716,8 @@
       return {on:true,si:si,after:after,shared:shared,
         mode:after?'after':(shared?'with':'click'),
         text:a.k==='text',
-        by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:''};
+        by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:'',
+        hl:!!a.anim.hl};
     }
     function timingSync(){
       var st=timingState(),poster=!!pageOf().poster,armed=seqOn();
@@ -631,6 +750,13 @@
         b.setAttribute('aria-pressed',
           (st.on&&st.text&&st.by===p[1]).toString());
       });
+      /* T385: highlight is a way of arriving piece by piece, so it
+         only means something once the box arrives in pieces */
+      var hb=$('#anim-by-hl');
+      if(hb){
+        hb.disabled=!st.on||!st.text||!st.by;
+        hb.setAttribute('aria-pressed',(st.on&&st.text&&st.hl).toString());
+      }
       var lab=$('#anim-timing-lab');
       if(lab) lab.textContent=(st.on&&st.text)?'Timing & text':'Timing';
     }
@@ -671,6 +797,29 @@
       b.addEventListener('click',function(e){
         e.stopPropagation();setBy(p[1]);});
     });
+    /* ---- T385: HIGHLIGHT, DON'T HIDE ---------------------------------
+       (2026-09-12, user: "instead of having text come out one at a
+       time, something like one dot point is highlighted (larger, or
+       different colour than the others) so you can still have all text
+       out but there is a highlight animation"). The pieces and the
+       stops are exactly Bullet-by-bullet's; only what a stop DOES
+       changes -- nothing is held back, the piece whose stop this is
+       lights up and the rest sit quiet. */
+    var hlb=$('#anim-by-hl');
+    if(hlb) hlb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim) return;
+        if(a.anim.hl) delete a.anim.hl;
+        else {a.anim.hl=1; if(!a.anim.by) a.anim.by='para';}
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it
        resets revealCount for the same reason "One by one" does: the
@@ -682,7 +831,7 @@
         var a=s.annots[i];
         if(!a||a.k!=='text'||!a.anim) return;
         if(by==='para'||by==='sent') a.anim.by=by;
-        else delete a.anim.by;      /* absent IS "all at once" */
+        else {delete a.anim.by;delete a.anim.hl;}  /* absent IS "all at once" */
         n++;
       });
       if(!n) return;
@@ -728,7 +877,8 @@
       } else {
         var eff=document.createElement('div');eff.className='anim-eff';
         [['none','None'],['appear','Appear'],['fade','Fade'],
-         ['rise','Float up'],['zoom','Zoom']].forEach(function(p){
+         ['rise','Float up'],['zoom','Zoom'],['slide','Fly in'],
+         ['turn','Page turn'],['type','Typewriter']].forEach(function(p){
           var b=document.createElement('button');b.className='anim-effb';
           b.textContent=p[1];
           if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
@@ -1056,6 +1206,7 @@
       timingSync();
       flipFxSync();
       animOutSync();
+      motionSync();
       /* T289: the slide transition is a fact about the SLIDE rather than
          the selection, but this is the one sync every path already
          calls -- selection changes, slide changes and markDirty all
