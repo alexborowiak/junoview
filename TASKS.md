@@ -8076,3 +8076,11 @@ gates are recorded in the completing commit.
   object" on the Object tab's "+ Add" door; "Put back" is the reverse.
   The blank leaf says what it is while editing and costs nothing in a
   .pptx. Schema in DECK-FORMAT.md and deck_schema.py.
+- [x] **T412 — The thumbnail strip stays where you scrolled it.** (User:
+  "Everytime you click a slide on the thumbnails, or add a slide or
+  anything it always jumps and moves around the scroll position. It
+  should always stay the same. It always takes you back to the top.")
+  Emptying the strip's list zeroes its scrollTop, and every repaint
+  empties it — a click on a thumbnail, a new slide, an edit. The
+  position is read first and put back after; the current slide is then
+  brought on screen only when it is off it, by the least that does.
