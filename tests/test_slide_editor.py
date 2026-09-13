@@ -3488,10 +3488,10 @@ def test_the_build_list_shows_every_stop_not_only_the_builds(out):
     assert "      stepperRows(plan.tail);" in out
     # a chart contributes its series by NAME, a book its pages by figure
     assert "            chartParse(a).series.forEach(function(se,k){" in out
-    assert "                :('Figure '+(w.k+1)+' of '+fr.length+' \\u00b7 '" in out
+    # (T417: the page's own name, nothing more)
+    assert "                :frameLabel(fr[w.k],w.k);" in out
     # every row carries the click the space bar counts
-    assert ("              row(base+d,[[name,p.i]],fx+' \\u00b7 a page of the "
-            "flip '") in out
+    assert "              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2});" in out
     assert "        var first=(plan.stop[b0]|0)+1;" in out
 
 
@@ -3619,9 +3619,8 @@ def test_a_build_can_run_itself_after_a_pause(out):
     # the delay lands on the whole stop, and 0 takes it back
     assert "if(delay) x.anim.after=delay; else delete x.anim.after;" in out
     # the pane says a stop runs itself, where the order is read
-    # (T402: on the row's detail line)
-    assert ("if(aft) detail+=' \\u00b7 runs by itself '+aft+'s after the "
-            "one before';") in out
+    # (T417: as the row's effect tag, "Fade · after 2 s")
+    assert "if(aft) tag+=' \\u00b7 after '+aft+' s';" in out
 
 
 def test_one_pending_self_advance_and_any_movement_cancels_it(out):

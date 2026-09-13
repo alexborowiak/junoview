@@ -8119,3 +8119,11 @@ gates are recorded in the completing commit.
   Reuse group opens with a "Match…" tile, and a thumbnail's right-click
   menu has "Match this slide to another…" and "Give this slide's layout
   to slides I click…", the same arming the Design door does.
+- [x] **T417 — The Animation pane says less.** (User: "All that text is
+  soo unnecessary … DON'T FILL IT WITH VERBOSE UNNECESSARY TEXT.") The
+  hint paragraph and the per-row explanations are gone. A row is the
+  click number, the name and the effect word; the heading is "5 clicks".
+  A box built in pieces is one row per piece, with the words that
+  appear on that click (user: "Why cannot I see the per dot point for
+  the paragraph"); and the selected thing, when it is not on the list
+  yet, is a dashed row with Appear and By bullet on it.

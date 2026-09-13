@@ -34,16 +34,27 @@ def test_no_second_effect_chooser_in_the_pane(out):
 def test_one_row_per_click_numbered_by_the_space_bar(out):
     start = out.index("    function fxWord(t){")
     body = out[start:out.index("    /* ONE door. There were briefly two", start)]
-    assert "'This slide takes '+total+' click'+(total===1?'':'s')" in body
-    assert "      function row(clickNo,names,detail,opts){" in body
+    # T417: the heading is a count, and a row is number + name + effect
+    assert "h1.textContent=total?(total+' click'+(total===1?'':'s')):'No clicks yet';" \
+        in body
+    assert "      function row(clickNo,names,tag,opts){" in body
+    assert "anim-empty" not in body
+    assert "anim-detail" not in body
     # a build's number comes from flipPlan, so a page turn before it counts
     assert "        var first=(plan.stop[b0]|0)+1;" in body
-    assert "        var last=(plan.stop[b0+nsub-1]|0)+1;" in body
-    assert "row(first===last?first:(first+'\\u2013'+last),names,detail," in body
-    # what a row says
-    assert ("if(nsub>1) detail+=' \\u00b7 '+nsub+' clicks, '"
-            "+(pieces||'in pieces');") in body
-    assert "if(st.items.length>1) detail+=' \\u00b7 together on one click';" in body
+    assert "          var last=(plan.stop[b0+nsub-1]|0)+1;" in body
+    assert "          row(first===last?first:(first+'\\u2013'+last),names," in body
+    # T417: a build in pieces is one row per piece, the words on each
+    assert "          if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});" in body
+    assert "          var pcs=textPieces(pieceA),ii=st.items[0];" in body
+    assert "          for(var k=1;k<nsub;k++)" in body
+    assert "            row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],''," in body
+    # T417: the selected thing that is not on the list yet, with its two
+    # ways onto it
+    assert "        sr.className='anim-step anim-off cur';" in body
+    assert "        var acts=[['Appear',function(){setType('appear');}]];" in body
+    assert ("        if(sa.k==='text') acts.push(['By bullet',"
+            "function(){setBy('para');}]);") in body
     # the mover buttons are words, never a bare arrow
     assert "[['\\u2191 Earlier',-1],['\\u2193 Later',1]].forEach(function(m){" in body
 

@@ -1773,8 +1773,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the one that opens (deck JS).
 # 2026-09-13, T415: chrome only. A download is named after the deck
 # (deck JS).
-EXPECTED_MD5 = "35277424d000c0dbd58919caf76d4941"
-EXPECTED_BYTES = 4145437
+# 2026-09-13, T417: chrome only. The Animation pane says less (deck
+# JS/CSS).
+# 2026-09-13, T418: chrome only. The picture turns with the bullets
+# (deck JS/HTML).
+# 2026-09-13, T417: chrome only. The Animation pane says less (deck
+# JS/CSS).
+EXPECTED_MD5 = "77a9826c6ee8b5b8092bc95bee6d4810"
+EXPECTED_BYTES = 4146488
 
 
 def _render_example() -> str:
