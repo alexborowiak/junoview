@@ -384,8 +384,22 @@
   <div class="pr-label pr-nblabel" id="pr-nblabel">open notebooks</div>
   <div class="tabstrip" id="tabstrip" role="tablist"
     aria-label="Open notebooks"></div>
-  <div class="pr-label">presentations</div>
+  <!-- T394: OPEN presentations, the way the strip above is open
+       notebooks. It listed the whole library, grouped into folders, under
+       a label that read as "your presentations" while Home's Recent
+       column showed one row (2026-09-13, user: "the side bar should only
+       show what is open, not all recents. That should be something
+       separate"). Recents and the library are the two doors beneath. -->
+  <div class="pr-label">open presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
+  <button class="pr-item pr-door" id="pr-recent" type="button"
+    title="Presentations you used recently, in any session">
+    <span class="pr-ico"><i data-ic="history"></i></span>
+    <span class="pr-t">Recents</span></button>
+  <button class="pr-item pr-door" id="pr-library" type="button"
+    title="Every saved presentation, folders, new decks and imports">
+    <span class="pr-ico"><i data-ic="open"></i></span>
+    <span class="pr-t">All presentations&#8230;</span></button>
   <!-- ONE way to make things. Four "+ New ..." buttons in a column were
        most of the rail (2026-08-18, user: "I don't like down the right
        hand side how there is all the new options. Just one new button,

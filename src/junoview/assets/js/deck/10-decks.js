@@ -605,6 +605,7 @@
     recent=recent.filter(function(n){return n!==name;});
     recent.unshift(name);
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent.slice(0,12)));
+    noteSessionOpen(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
     if(typeof renderPresentationHub==='function') renderPresentationHub();
@@ -619,6 +620,7 @@
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(rename(recent).slice(0,12)));
+    renameOpenPresentation(oldName,newName);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
     if(typeof renderPresentationHub==='function') renderPresentationHub();
@@ -629,9 +631,51 @@
     if(!Array.isArray(recent)) recent=[];
     recent=recent.filter(function(n){return n!==name;});
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent));
+    closeOpenPresentation(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
     if(typeof renderPresentationHub==='function') renderPresentationHub();
+  }
+  /* ---- T394: WHAT IS OPEN, as distinct from what is recent -----------
+     The rail listed every saved presentation, every draft and every deck
+     embedded in an open notebook, under a label that said "presentations"
+     -- twenty rows of a notebook's embedded decks on a fresh visit, none
+     of them anything you had opened -- while Home's Recent column showed
+     the one you had (2026-09-13, user: "the side bar shows all recents
+     where the main screen shows no recents???? the side bar should only
+     show what is open, not all recents. That should be something
+     separate"). Open is a TAB LIST: the presentations you have opened in
+     this browser tab, in the order you opened them, each closable, kept
+     in sessionStorage so a reload keeps them and a new tab starts clean --
+     the same life a notebook tab has. Recent and the whole library are
+     the two doors under it. */
+  var OPEN_PRES_KEY='sempres-open:'+SCOPE;
+  function ssGet(k){try{return sessionStorage.getItem(k);}catch(e){return null;}}
+  function ssSet(k,v){try{sessionStorage.setItem(k,v);}catch(e){}}
+  function rawOpenNames(){
+    var names=[];
+    try{names=JSON.parse(ssGet(OPEN_PRES_KEY)||'[]');}catch(e){}
+    return Array.isArray(names)?names:[];
+  }
+  function openPresentationNames(){
+    return rawOpenNames().filter(function(n){return !!presentationByName(n);});
+  }
+  function noteSessionOpen(name){
+    if(!name) return;
+    var names=rawOpenNames();
+    if(names.indexOf(name)<0){
+      names.push(name);
+      ssSet(OPEN_PRES_KEY,JSON.stringify(names));
+    }
+  }
+  function closeOpenPresentation(name){
+    var names=rawOpenNames().filter(function(n){return n!==name;});
+    ssSet(OPEN_PRES_KEY,JSON.stringify(names));
+  }
+  function renameOpenPresentation(oldName,newName){
+    var names=rawOpenNames().map(function(n){return n===oldName?newName:n;});
+    ssSet(OPEN_PRES_KEY,JSON.stringify(names.filter(function(n,i){
+      return names.indexOf(n)===i;})));
   }
   function fullFrame(ref){
     var r=PRESETS.full[0];

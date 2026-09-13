@@ -1110,18 +1110,10 @@
      One item is active at any time: the "Notebooks" button (builder
      closed) or a presentation (builder open editing it). */
   var presstrip=document.getElementById('presstrip');
-  var FOLDKEY='sempresfold:'+SCOPE;
   var FOLDERSKEY='sempresfolders:'+SCOPE;
-  function foldState(){
-    try{return JSON.parse(lsGet(FOLDKEY)||'{}');}catch(e){return {};}
-  }
-  function toggleFold(f){
-    var s=foldState();
-    if(s[f]) delete s[f]; else s[f]=1;
-    lsSet(FOLDKEY,JSON.stringify(s));
-    renderPresTabs();
-  }
-  /* folders exist on their own (created empty, dragged into) */
+  /* folders exist on their own (created empty, dragged into). They are
+     shown in the library dialog since T394; the rail lists only what is
+     open. */
   function explicitFolders(){
     try{
       var l=JSON.parse(lsGet(FOLDERSKEY)||'[]');
@@ -1135,42 +1127,43 @@
     function apply(p){
       if(f) p.folder=f; else delete p.folder;
     }
-    if(nm===pres.name){apply(pres);markDirty();renderPresRow();return;}
+    if(nm===pres.name){apply(pres);markDirty();renderPresRow();}
     var hit=false;
-    projectPres.forEach(function(p){
-      if(p.name===nm){apply(p);hit=true;}});
-    nbPres.forEach(function(p){
-      if(p.name===nm){apply(p);hit=true;}});
-    var raw=lsGet(PFX+nm);
-    if(raw){
-      try{
-        var d=JSON.parse(raw);apply(d);
-        lsSet(PFX+nm,JSON.stringify(d));hit=true;
-      }catch(e){}
+    if(nm!==pres.name){
+      projectPres.forEach(function(p){
+        if(p.name===nm){apply(p);hit=true;}});
+      nbPres.forEach(function(p){
+        if(p.name===nm){apply(p);hit=true;}});
+      var raw=lsGet(PFX+nm);
+      if(raw){
+        try{
+          var d=JSON.parse(raw);apply(d);
+          lsSet(PFX+nm,JSON.stringify(d));hit=true;
+        }catch(e){}
+      }
+      if(hit&&APP.mode==='app') scheduleAutosave();
     }
-    if(hit&&APP.mode==='app') scheduleAutosave();
     renderPresTabs();
+    renderPresentationHub();
   }
   function newFolder(wanted){
-    var list=explicitFolders();
     var supplied=typeof wanted==='string'&&wanted.trim();
-    var n=1,name=supplied?wanted.trim():'folder';
-    function taken(x){
-      return list.indexOf(x)>=0
-        ||allSaved().some(function(p){return p.folder===x;});
+    /* no name yet: ask for one where folders are shown */
+    if(!supplied){
+      if(window.SemApp&&window.SemApp.deckNewFolder)
+        window.SemApp.deckNewFolder();
+      return null;
     }
-    if(supplied&&taken(name)){
+    var list=explicitFolders();
+    var name=wanted.trim();
+    var taken=list.indexOf(name)>=0
+      ||allSaved().some(function(p){return p.folder===name;});
+    if(taken){
       toast('There is already a folder called “'+name+'”');
       return null;
     }
-    while(!supplied&&taken(name)){n++;name='folder-'+n;}
     list.push(name);saveFolders(list);
-    renderPresTabs();
-    if(!supplied){
-      var h=presstrip.querySelector(
-        '.pr-folder[data-folder="'+name+'"]');
-      if(h) startFolderRename(h,name);
-    }
+    renderPresentationHub();
     return name;
   }
   function renameFolder(oldName,newName){
@@ -1181,9 +1174,6 @@
     if(list.indexOf(newName)<0) list.push(newName);
     saveFolders(list.filter(function(x,i){
       return list.indexOf(x)===i;}));
-    var st=foldState();
-    if(st[oldName]){delete st[oldName];st[newName]=1;
-      lsSet(FOLDKEY,JSON.stringify(st));}
     allSaved().concat([pres]).forEach(function(p){
       if(p.folder===oldName) setPresFolder(p.name,newName);
     });
@@ -1191,7 +1181,7 @@
       var d=loadDraft(nm);
       if(d&&d.folder===oldName) setPresFolder(nm,newName);
     });
-    renderPresTabs();
+    renderPresentationHub();
   }
   function deleteFolder(f){
     saveFolders(explicitFolders().filter(function(x){return x!==f;}));
@@ -1202,29 +1192,18 @@
       var d=loadDraft(nm);
       if(d&&d.folder===f) setPresFolder(nm,'');
     });
-    renderPresTabs();
+    renderPresentationHub();
   }
-  function startFolderRename(header,f){
-    var t=header.querySelector('.pr-t');
-    if(!t) return;
-    var inp=document.createElement('input');
-    inp.className='pr-frename';
-    inp.value=f;inp.spellcheck=false;
-    t.replaceWith(inp);
-    inp.focus();inp.select();
-    function commit(){
-      var v=inp.value.trim();
-      if(v&&v!==f) renameFolder(f,v);
-      else renderPresTabs();
-    }
-    inp.addEventListener('keydown',function(e){
-      e.stopPropagation();
-      if(e.key==='Enter') this.blur();
-      if(e.key==='Escape'){this.value=f;this.blur();}
-    });
-    inp.addEventListener('blur',commit);
-    inp.addEventListener('click',function(e){e.stopPropagation();});
-  }
+  /* ---- T394: THE RAIL IS A TAB LIST, NOT THE LIBRARY -------------------
+     It used to be built from allSaved() + draftNames(): every project
+     deck, every draft and every deck embedded in an open notebook, grouped
+     into folders with drag-and-drop filing -- which is a library, and it
+     sat under a label that made it read as "your presentations" while
+     Home's Recent column beside it showed one row. Now it lists what is
+     OPEN (openPresentationNames, 10-decks.js), the way the notebook strip
+     above it lists open notebooks, and two doors under it lead to Recents
+     and to the whole library. The library dialog took the folders and the
+     filing with it (renderPresentationHub). */
   function renderPresTabs(){
     if(!presstrip) return;
     /* the rail's filter is re-applied at the end of this: the strip is
@@ -1232,23 +1211,16 @@
        created while a filter is live would otherwise appear out of
        nowhere in a list that is meant to be showing only matches (T75) */
     presstrip.innerHTML='';
-    var savedList=allSaved();
-    var savedNames=savedList.map(function(p){return p.name;});
-    var byName={};
-    savedList.forEach(function(p){byName[p.name]=p;});
-    var names=savedNames.slice();
-    /* drafts stay listed even while another presentation is open */
-    draftNames().forEach(function(n){
-      if(names.indexOf(n)<0){
-        names.push(n);
-        byName[n]=loadDraft(n)||{name:n};
-      }
-    });
-    if(names.indexOf(pres.name)<0) names.unshift(pres.name);
-    byName[pres.name]=pres;   /* in-memory version wins (live folder) */
+    var savedNames=allSaved().map(function(p){return p.name;});
     var editing=!deckEl.hidden;
+    var names=openPresentationNames();
+    /* the deck on screen is open whatever the list says: a brand-new,
+       never-saved presentation is not yet anywhere the list can find it */
+    if(editing&&pres&&pres.name&&names.indexOf(pres.name)<0)
+      names.push(pres.name);
 
-    function presItem(nm,folder){
+    function presItem(nm){
+      var p=presentationByName(nm)||{name:nm};
       var isCur=nm===pres.name;
       var t=document.createElement('button');
       /* radio model: a row lights up ONLY while its deck is open — back on
@@ -1257,20 +1229,18 @@
         +(savedNames.indexOf(nm)<0?' draftonly':'');
       t.setAttribute('role','tab');
       t.dataset.pres=nm;
-      t.dataset.folder=folder||'';
-      var isPoster=/^a\d/.test(String((byName[nm]&&byName[nm].page)||''));
-      var isView=isViewPres(byName[nm]);
+      var isPoster=/^a\d/.test(String(p.page||''));
+      var isView=isViewPres(p);
       /* a custom view lights up while ITS styling bar is open, not while
          the slide stage is (it never opens the slide stage) */
       var vwOpen=isView&&isCur
         &&document.body.classList.contains('styling');
       if(vwOpen) t.className+=' current editing';
       var kindWord=isView?'custom view':isPoster?'poster':'presentation';
-      t.title=((isCur&&(editing||vwOpen))
+      t.title=(isCur&&(editing||vwOpen))
         ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
         :('Open '+kindWord+' "'+nm+'"'
-          +(isView?' — restyles the notebook itself':' in the builder')))
-        +'\nDrag onto a folder to file it';
+          +(isView?' — restyles the notebook itself':' in the builder'));
       /* the same drawn icons as the "+ New ..." buttons, so a row and the
          button that made it read as the same kind of thing — straight
          from SemIcons, where the "+ New" template tokens also resolve */
@@ -1280,35 +1250,25 @@
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
-      /* delete where the thing IS, not three menu levels away. Shown on
-         hover / while current; confirm() because there is no undo for a
-         deleted presentation. */
-      /* a real <button>, not a click-wired span: focusable, and named
-         for screen readers — the icon is its only visible content
-         (2026-08-24). .pr-del's CSS resets the button chrome. */
+      /* the × CLOSES the row, the way a notebook tab's does: the
+         presentation stays saved and stays in Recents. Deleting is File ›
+         Delete presentation, where a confirm guards it. A real <button>,
+         focusable and named for screen readers (2026-08-24). */
       var del=document.createElement('button');
       del.type='button';
-      del.className='pr-del';del.title='Delete "'+nm+'"';
-      del.setAttribute('aria-label','Delete "'+nm+'"');
+      del.className='pr-del';del.title='Close "'+nm+'" (it stays saved)';
+      del.setAttribute('aria-label','Close "'+nm+'"');
       del.innerHTML=bic('exit')||'&#10005;';
       del.addEventListener('click',function(e){
         e.stopPropagation();e.preventDefault();
-        if(confirm('Delete "'+nm+'"? This cannot be undone.'))
-          deletePresByName(nm);
+        if(isCur&&!deckEl.hidden) closeDeck();
+        if(vwOpen) closeCustomView();
+        closeOpenPresentation(nm);
+        renderPresTabs();
+        if(typeof renderDeckPresentationDrawer==='function')
+          renderDeckPresentationDrawer();
       });
       t.appendChild(del);
-      t.draggable=true;
-      t.addEventListener('dragstart',function(e){
-        draggingPres=nm;
-        t.classList.add('dragging');
-        try{e.dataTransfer.setData('text/plain',nm);}catch(err){}
-        e.dataTransfer.effectAllowed='move';
-      });
-      t.addEventListener('dragend',function(){
-        draggingPres=null;
-        t.classList.remove('dragging');
-        clearDropMarks();
-      });
       t.addEventListener('click',function(){
         if(isCur&&!deckEl.hidden) return;
         if(vwOpen) return;            /* already the open custom view */
@@ -1316,110 +1276,26 @@
       });
       return t;
     }
-
-    /* group by folder; loose items first, then collapsible folders
-       (explicitly created folders show even while empty) */
-    var rootNames=[],folders={},folderOrder=[];
-    explicitFolders().forEach(function(f){
-      folders[f]=[];folderOrder.push(f);
-    });
-    names.forEach(function(nm){
-      var f=(byName[nm]&&byName[nm].folder)||'';
-      if(!f){rootNames.push(nm);return;}
-      if(!folders[f]){folders[f]=[];folderOrder.push(f);}
-      folders[f].push(nm);
-    });
-    rootNames.forEach(function(nm){
-      presstrip.appendChild(presItem(nm,''));});
-    folderOrder.sort().forEach(function(f){
-      var collapsed=!!foldState()[f]
-        &&!(editing&&folders[f].indexOf(pres.name)>=0);
-      var h=document.createElement('div');
-      h.className='pr-folder';
-      h.dataset.folder=f;
-      h.title='Folder "'+f+'" — click to '
-        +(collapsed?'expand':'collapse')
-        +'; drag presentations onto it';
-      h.innerHTML='<span class="pr-fchev">'
-        +(collapsed?'&#9656;':'&#9662;')+'</span>'
-        +'<span class="pr-fico">'+bic('open')+'</span>';
-      var ft=document.createElement('span');ft.className='pr-t';
-      ft.textContent=f;h.appendChild(ft);
-      var fc=document.createElement('span');fc.className='pr-fcount';
-      fc.textContent=folders[f].length;h.appendChild(fc);
-      var ctr=document.createElement('span');ctr.className='pr-fctrl';
-      [[bic('pen'),'Rename folder',function(){startFolderRename(h,f);}],
-       [bic('exit'),'Delete folder (contents move out)',
-        function(){deleteFolder(f);}]].forEach(function(b){
-        var btn=document.createElement('button');
-        btn.innerHTML=b[0];btn.title=b[1];
-        btn.addEventListener('click',function(e){
-          e.stopPropagation();b[2]();});
-        ctr.appendChild(btn);
-      });
-      h.appendChild(ctr);
-      h.addEventListener('click',function(){toggleFold(f);});
-      presstrip.appendChild(h);
-      if(!collapsed) folders[f].forEach(function(nm){
-        var it=presItem(nm,f);
-        it.classList.add('infolder');
-        presstrip.appendChild(it);
-      });
-    });
+    names.forEach(function(nm){presstrip.appendChild(presItem(nm));});
+    if(!names.length){
+      var none=document.createElement('div');
+      none.className='pr-none';
+      none.textContent='nothing open';
+      presstrip.appendChild(none);
+    }
     var docsBtn=document.getElementById('pr-docs');
     if(docsBtn) docsBtn.classList.toggle('current',!editing);
     /* ...and re-applied, now the rows are back (T75) */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
   }
-  /* drag & drop filing: onto a folder header (or an item inside one)
-     files it; onto empty rail space moves it back to the top level */
-  var draggingPres=null;
-  function clearDropMarks(){
-    $$('.pr-folder.dropping',presstrip).forEach(function(el){
-      el.classList.remove('dropping');});
-    var rail=document.getElementById('presrail');
-    if(rail) rail.classList.remove('dropping-root');
-  }
-  (function(){
-    var rail=document.getElementById('presrail');
-    if(!rail) return;
-    rail.addEventListener('dragover',function(e){
-      if(!draggingPres) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
-      clearDropMarks();
-      var h=e.target.closest&&e.target.closest('.pr-folder');
-      if(!h){
-        var it=e.target.closest&&e.target.closest('.pr-item.ptab');
-        if(it&&it.dataset.folder)
-          h=presstrip.querySelector(
-            '.pr-folder[data-folder="'+it.dataset.folder+'"]');
-      }
-      if(h) h.classList.add('dropping');
-      else rail.classList.add('dropping-root');
-    });
-    rail.addEventListener('dragleave',function(e){
-      if(e.target===rail) clearDropMarks();
-    });
-    rail.addEventListener('drop',function(e){
-      if(!draggingPres) return;
-      e.preventDefault();
-      var f='';
-      var h=e.target.closest&&e.target.closest('.pr-folder');
-      if(h) f=h.dataset.folder;
-      else{
-        var it=e.target.closest&&e.target.closest('.pr-item.ptab');
-        if(it) f=it.dataset.folder||'';
-      }
-      var nm=draggingPres;
-      draggingPres=null;
-      clearDropMarks();
-      setPresFolder(nm,f);
-    });
-  })();
+  /* the rail's Folder row opens the library's folder form: a folder is
+     made where folders are shown */
   var newFoldBtn=document.getElementById('pr-newfold');
-  if(newFoldBtn) newFoldBtn.addEventListener('click',newFolder);
+  if(newFoldBtn) newFoldBtn.addEventListener('click',function(){
+    if(window.SemApp&&window.SemApp.deckNewFolder)
+      window.SemApp.deckNewFolder();
+  });
 
   /* ---- PRESENTATION LIBRARY + PRESENTING DRAWER ----------------------
      The side rail is behind the full-screen deck on purpose: a visible
@@ -1481,6 +1357,49 @@
     deckEl.removeAttribute('aria-hidden');
     presentationHubInertedDeck=false;
   }
+  /* T394: the All column is the library proper -- grouped by folder, with
+     the folder verbs (rename, delete) on the heading and drag-and-drop
+     filing between them -- everything the rail used to do before it
+     became the list of what is open. */
+  var draggingPres=null;
+  function hubFolderHead(f,count){
+    var h=document.createElement('div');
+    h.className='presentation-hub-folder';
+    h.dataset.folder=f;
+    h.title='Folder “'+f+'” — drag presentations onto it';
+    var ic=document.createElement('span');ic.innerHTML=bic('open');
+    var t=document.createElement('span');t.className='presentation-hub-folder-name';
+    t.textContent=f;
+    var n=document.createElement('span');n.className='presentation-hub-folder-count';
+    n.textContent=count;
+    h.appendChild(ic);h.appendChild(t);h.appendChild(n);
+    [[bic('pen'),'Rename folder',function(){
+        var v=prompt('Rename the folder:',f);
+        if(v==null) return;
+        renameFolder(f,v);
+      }],
+     [bic('exit'),'Delete folder (its presentations move out)',function(){
+        deleteFolder(f);}]].forEach(function(b){
+      var btn=document.createElement('button');
+      btn.type='button';btn.className='presentation-hub-folder-btn';
+      btn.innerHTML=b[0];btn.title=b[1];btn.setAttribute('aria-label',b[1]);
+      btn.addEventListener('click',function(e){e.stopPropagation();b[2]();});
+      h.appendChild(btn);
+    });
+    h.addEventListener('dragover',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      h.classList.add('dropping');
+    });
+    h.addEventListener('dragleave',function(){h.classList.remove('dropping');});
+    h.addEventListener('drop',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();e.stopPropagation();
+      var nm=draggingPres;draggingPres=null;
+      setPresFolder(nm,f);
+    });
+    return h;
+  }
   function renderPresentationHub(){
     var root=$('#presentation-hub');
     var recentHost=$('#presentation-hub-recent'),allHost=$('#presentation-hub-all');
@@ -1495,12 +1414,64 @@
         closePresentationHub();choosePresentation(p.name);
       }));
     });
-    if(!all.length) emptyPresentationList(allHost,
-      'No saved presentations yet.');
+    /* loose presentations first, then every folder (an explicitly made
+       folder shows even while empty, so there is something to drag onto) */
+    var folders={},order=[];
+    explicitFolders().forEach(function(f){folders[f]=[];order.push(f);});
+    var loose=[];
     all.forEach(function(p){
-      allHost.appendChild(presentationLibraryRow(p,function(){
+      var f=p.folder||'';
+      if(!f){loose.push(p);return;}
+      if(!folders[f]){folders[f]=[];order.push(f);}
+      folders[f].push(p);
+    });
+    function rowFor(p){
+      var b=presentationLibraryRow(p,function(){
         closePresentationHub();choosePresentation(p.name);
-      }));
+      });
+      b.draggable=true;
+      b.addEventListener('dragstart',function(e){
+        draggingPres=p.name;b.classList.add('dragging');
+        try{e.dataTransfer.setData('text/plain',p.name);}catch(err){}
+        e.dataTransfer.effectAllowed='move';
+      });
+      b.addEventListener('dragend',function(){
+        draggingPres=null;b.classList.remove('dragging');
+        allHost.classList.remove('dropping-root');
+        $$('.presentation-hub-folder.dropping',allHost).forEach(function(el){
+          el.classList.remove('dropping');});
+      });
+      return b;
+    }
+    if(!all.length&&!order.length) emptyPresentationList(allHost,
+      'No saved presentations yet.');
+    loose.forEach(function(p){allHost.appendChild(rowFor(p));});
+    order.sort().forEach(function(f){
+      allHost.appendChild(hubFolderHead(f,folders[f].length));
+      folders[f].forEach(function(p){
+        var r=rowFor(p);r.classList.add('infolder');allHost.appendChild(r);
+      });
+    });
+  }
+  /* dropping on the column's own background takes a presentation OUT of
+     its folder; wired once, the column survives every re-render */
+  function hubDropBoot(){
+    var allHost=$('#presentation-hub-all');if(!allHost) return;
+    allHost.addEventListener('dragover',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      if(!(e.target.closest&&e.target.closest('.presentation-hub-folder')))
+        allHost.classList.add('dropping-root');
+    });
+    allHost.addEventListener('dragleave',function(e){
+      if(e.target===allHost) allHost.classList.remove('dropping-root');
+    });
+    allHost.addEventListener('drop',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();
+      var nm=draggingPres;draggingPres=null;
+      allHost.classList.remove('dropping-root');
+      setPresFolder(nm,'');
     });
   }
   function closePresentationHub(){
@@ -1559,6 +1530,17 @@
     var p=presentationSummary(pres.name)||{name:pres.name};
     row('current',presentationIcon(p),pres.name||'this presentation',
       presentationKind(p),'The presentation you are showing',null);
+    /* T394: the OTHER open presentations, the rail's rows, so the drawer
+       is the rail while the rail is behind the deck */
+    openPresentationNames().forEach(function(nm){
+      if(nm===pres.name) return;
+      var q=presentationSummary(nm)||{name:nm};
+      row('',presentationIcon(q),nm,presentationKind(q),
+        'Switch to “'+nm+'”',function(){
+          closeDeckPresentationDrawer();
+          choosePresentation(nm);
+        });
+    });
     var nbs=openNotebookRows();
     nbs.forEach(function(n){
       row('',bic('doc'),n.label,n.kind,
@@ -1625,6 +1607,16 @@
         if(first) first.focus();},0);
     });
     initDrawerPeek();
+    hubDropBoot();
+    /* T394: the rail's two doors under its open list */
+    var railRecent=$('#pr-recent'),railAll=$('#pr-library');
+    if(railRecent) railRecent.addEventListener('click',function(){
+      openPresentationHub();
+      setTimeout(function(){
+        var first=$('#presentation-hub-recent .presentation-hub-row');
+        if(first) first.focus();},0);
+    });
+    if(railAll) railAll.addEventListener('click',openPresentationHub);
     var close=$('#presentation-hub-close');
     if(close) close.addEventListener('click',closePresentationHub);
     if(hub) hub.addEventListener('click',function(e){
@@ -1686,6 +1678,7 @@
       loadPresentation(nm);
       cur=0;activePane=-1;
     }
+    noteSessionOpen(nm);   /* T394: it is open now, whichever kind it is */
     /* a custom view is edited in the document; a deck on the slide stage */
     if(isViewPres(pres)){openCustomView();return;}
     openDeck('edit');   /* land straight in the slide editor */

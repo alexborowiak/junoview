@@ -1724,8 +1724,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # app.js and its CSS.
 # 2026-09-13, T391: chrome only. The animation story fragment, its
 # strip and door, an icon and its CSS.
-EXPECTED_MD5 = "774e7241425c68a3f6f4ccec1c756691"
-EXPECTED_BYTES = 4092872
+# 2026-09-13, T394: chrome only. The rail's open list, its two doors,
+# the library's folder headings and filing, and their CSS.
+EXPECTED_MD5 = "75228e3f1e5a88728f6702b39eec6b5e"
+EXPECTED_BYTES = 4096533
 
 
 def _render_example() -> str:

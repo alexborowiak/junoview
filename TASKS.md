@@ -7866,3 +7866,21 @@ gates are recorded in the completing commit.
   bytes are the 3.11 ones, unchanged). On 3.10, a .csv with a NUL byte:
   3.10's csv module refuses the line, 3.11+ reads through it; the byte
   is dropped before parsing. Full suite green on 3.10, 3.11 and 3.13.
+
+### Completed 2026-09-13 — the second screenshot round
+
+- [x] **T394 — The rail lists what is open.** (User: "the side bar shows
+  all recents where the main screen shows no recents???? Also the side
+  bar should only show what is open, not all recents. That should be
+  something seperate.") The rail was built from every saved deck, every
+  draft and every deck embedded in an open notebook, in folders, under
+  the label "presentations" — twenty rows of a notebook's embedded decks
+  on a fresh visit. It is a tab list now, like the notebook strip above
+  it: the presentations opened in this browser tab, in order, each with
+  an × that closes it (it stays saved, and in Recents), kept in
+  sessionStorage so a reload keeps them and a new tab starts clean, and
+  "nothing open" until one is. Under it, two doors: **Recents** and
+  **All presentations…**, both into the library dialog, whose All column
+  now carries the folders — headings with rename and delete, drag a
+  presentation onto one to file it, onto the column to unfile it. The
+  presenting drawer lists the other open presentations too.
