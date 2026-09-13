@@ -118,6 +118,7 @@ DECK_PARTS = (
     "48-animation",
     "49-media",
     "50-review-and-overview",
+    "51-talk-tools",
     "52-layout-builder",
     "55-sections-and-strip",
     "60-saving-and-export",

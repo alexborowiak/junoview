@@ -4890,6 +4890,21 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   text-transform:uppercase;opacity:.75;}
 .tk-note{margin:0;font-size:10px;line-height:1.5;color:var(--chrome-ink-3);}
 @media print{.talkbtn,.talkpane{display:none !important;}}
+/* ---- T386: THE TALK'S TOOLS --------------------------------------------
+   All three sit above the deck (z 100) and the spotlight (400) but
+   under the drawer's library dialog; none of them take the pointer, so
+   a click still lands on the slide and advances. */
+.jv-laserdot{position:fixed;z-index:420;width:16px;height:16px;
+  margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;
+  background:#ff3b30;box-shadow:0 0 6px 2px #ff3b30aa,0 0 22px 8px #ff3b3055;}
+body.jv-laser .deck-stage{cursor:none;}
+.jv-lens{position:fixed;z-index:420;border-radius:50%;overflow:hidden;
+  pointer-events:none;border:3px solid #ffffffcc;
+  box-shadow:0 0 0 1px #0008,0 18px 48px #000a;background:#000;}
+.jv-lens-in{position:absolute;inset:0;}
+body.jv-lens .deck-stage{cursor:crosshair;}
+.jv-black{position:fixed;inset:0;z-index:430;background:#000;cursor:pointer;}
+.tk-grp .tk-b{flex:1 1 auto;}
 
 /* T64: the free-crop lasso. An overlay over the annot layer, so the
    canvas mousedown handler -- gatekeeper for selection, marquee, resize,

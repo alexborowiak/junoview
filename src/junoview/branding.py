@@ -56,6 +56,10 @@ _ICON_PATHS = {
     "bob": '<path d="M8 2.4v11.2"/><path d="M4.8 5.6L8 2.4l3.2 3.2"/>'
            '<path d="M4.8 10.4L8 13.6l3.2-3.2"/>',
     "pulse": '<circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/>',
+    # T386: the talk's tools
+    "laser": '<circle cx="8" cy="8" r="2.4"/><path d="M8 1.8v2.2"/>'
+             '<path d="M8 12v2.2"/><path d="M1.8 8H4"/><path d="M12 8h2.2"/>',
+    "blackout": '<path d="M2.4 2.4h11.2v11.2H2.4z" fill="currentColor"/>',
     "info": '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/>'
             '<path d="M8 4.9v.1"/>',
     # filters: one per content type

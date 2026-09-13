@@ -1711,8 +1711,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T385: chrome only. Three more entrances, a Motion group,
 # a Highlight tile and two more page turns on the Animation tab, with
 # their keyframes.
-EXPECTED_MD5 = "68e06f44ab1e53728b9cc8670039dfd2"
-EXPECTED_BYTES = 4027695
+# 2026-09-13, T386: chrome only. The talk tools fragment (laser,
+# magnifier, black screen), two Talk panel rows and their CSS.
+EXPECTED_MD5 = "6198bec4a3071e3ee7cd06104e79c0bf"
+EXPECTED_BYTES = 4038656
 
 
 def _render_example() -> str:

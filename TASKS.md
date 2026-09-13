@@ -7769,3 +7769,18 @@ gates are recorded in the completing commit.
   edge or **Push** in from the right. Driven in Chromium: the title typed
   out under the click and finished whole; Float put its class on the item
   in the show and left the editor still.
+- [x] **T386 — The talk's own tools: laser, magnifier, black screen.**
+  (User: "the during presentation features, having something like a
+  magnifying glass that can be swapped to".) A new fragment,
+  `51-talk-tools.js`, booted from the boot sequence. **P** is a red
+  laser dot that follows the pointer; **M** is a round magnifier
+  showing the slide under the pointer at twice the size — a clone of
+  the slide, kept inside the stage so it inherits the talk's type
+  sizes, refreshed by a MutationObserver only while it is up, and put
+  back after every slide change; **B** blacks the screen so the room
+  looks at the speaker. None of the three take the pointer, so a click
+  still advances; Escape puts them all down before the editor's own
+  Escape can read it as "stop presenting"; leaving the show puts them
+  down too; nothing is stored. Each is also a button on the Talk
+  panel. Driven in Chromium: the lens showed a magnified figure and
+  survived a slide change; Esc cleared every tool and kept presenting.

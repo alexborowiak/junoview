@@ -1052,6 +1052,7 @@
     mode=m;
     if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
       closeDeckPresentationDrawer();
+    if(m!=='view'&&typeof talkToolsReset==='function') talkToolsReset();
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
@@ -2271,6 +2272,10 @@
       }
     }
     else if(mode==='view'){
+      /* T386: the laser, the magnifier and the black screen (P, M, B),
+         and Escape puts them down before it does anything else */
+      if(typeof talkToolKey==='function'&&talkToolKey(e)){
+        e.preventDefault();return;}
       /* FIND A SLIDE, MID-TALK. "/" is the type-to-search key everywhere
          else on a keyboard, and the map it opens is the one T26 already
          built -- so this is a door, not a second piece of navigation
