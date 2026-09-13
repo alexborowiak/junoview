@@ -1998,10 +1998,6 @@ body.light .pr-docs:hover{border-color:var(--cyan);}
 body.presrail-min .pr-btn .pr-t{display:none;}
 body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
   justify-content:center;}
-/* folder icon next to folder names */
-.pr-fico{display:flex;align-items:center;color:#7590a5;flex:none;}
-.pr-folder:hover .pr-fico{color:#9fb2c2;}
-body.presrail-min .pr-fico{display:none;}
 /* the two panel controls sit together as a pair at the foot of the rail:
    one collapses it, one makes it slide away by itself */
 /* T262: STACKED, not side by side. #pr-auto used to be pinned to a 34px
@@ -2056,36 +2052,13 @@ body.presrail-hidden .presrail-show{display:block;}
 .presrail-show:hover{color:#fff;border-color:var(--cyan);}
 /* draft-only presentations get an unsaved dot */
 .pr-item.draftonly .pr-t::after{content:" \2022";color:var(--amber);}
-/* presentation folders: real folders — drag items in/out, collapsible */
-.pr-folder{display:flex;align-items:center;gap:7px;width:100%;
-  border:1px solid transparent;background:none;border-radius:7px;
-  padding:7px 10px;margin-top:5px;font-family:var(--mono);font-size:10px;
-  letter-spacing:.1em;text-transform:uppercase;color:#5e7488;
-  cursor:pointer;text-align:left;min-width:0;user-select:none;}
-.pr-folder:hover{background:#ffffff0a;color:#9fb2c2;}
-.pr-folder.dropping{border-color:var(--cyan);background:color-mix(in srgb,var(--accent) 11%,transparent);
-  color:#aadbe8;}
-.pr-folder .pr-t{flex:1;}
-.pr-fchev{flex:none;font-size:9px;}
-.pr-fcount{flex:none;font-size:9px;background:#ffffff10;
-  border-radius:8px;padding:1px 6px;color:#69788a;}
-.pr-fctrl{display:none;gap:2px;flex:none;}
-.pr-folder:hover .pr-fctrl{display:flex;}
-.pr-fctrl button{background:none;border:none;color:#8ba0b2;
-  cursor:pointer;font-size:10px;padding:1px 4px;border-radius:4px;}
-.pr-fctrl button:hover{color:#fff;background:#ffffff14;}
-.pr-frename{width:100%;background:var(--chrome-2,#16273a);border:1px solid var(--cyan);
-  color:#dce6ee;font-family:var(--sans);font-size:12px;padding:3px 7px;
-  border-radius:5px;min-width:0;}
-.pr-frename:focus{outline:none;}
-.pr-item.infolder{padding-left:26px;}
-.pr-item.ptab[draggable="true"]{cursor:grab;}
-.pr-item.ptab.dragging{opacity:.45;}
-.presrail.dropping-root{outline:2px dashed color-mix(in srgb,var(--accent) 40%,transparent);
-  outline-offset:-4px;}
-body.presrail-min .pr-folder .pr-t,
-body.presrail-min .pr-fcount,body.presrail-min .pr-fctrl{display:none;}
-body.presrail-min .pr-folder{justify-content:center;padding:8px 0;}
+/* T394: the rail's rows are what is OPEN, and the two doors under them
+   are dimmer than a row -- ways to more, not things that are here */
+.pr-door{color:#69788a;font-size:11.5px;padding:7px 10px;}
+.pr-door:hover{color:#cdd9e3;}
+.pr-none{padding:6px 10px;color:#4e5f70;font:11px var(--sans);
+  font-style:italic;}
+body.presrail-min .pr-none{display:none;}
 body.presrail-min .pr-item.infolder{padding-left:0;}
 
 .nbshell[hidden]{display:none;}
@@ -2559,6 +2532,29 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;}
 .presentation-hub-empty{padding:9px;color:var(--chrome-ink-2);
   border:1px dashed var(--chrome-line);border-radius:7px;font:11px var(--sans);}
+/* T394: folders live in the library now. A heading is a drop target;
+   its verbs show on hover the way the rail's used to. */
+.presentation-hub-folder{display:flex;align-items:center;gap:7px;
+  margin-top:8px;padding:6px 9px;border:1px dashed transparent;
+  border-radius:7px;color:var(--chrome-ink-2);font:10px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;}
+.presentation-hub-folder .bic{width:13px;height:13px;flex:none;}
+.presentation-hub-folder-name{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.presentation-hub-folder-count{flex:none;font-size:9px;
+  background:#ffffff10;border-radius:8px;padding:1px 6px;}
+.presentation-hub-folder-btn{display:none;background:none;border:none;
+  color:var(--chrome-ink-2);cursor:pointer;padding:2px 4px;border-radius:4px;}
+.presentation-hub-folder-btn .bic{width:9px;height:9px;}
+.presentation-hub-folder:hover .presentation-hub-folder-btn{display:inline-flex;}
+.presentation-hub-folder-btn:hover{color:var(--chrome-ink);background:#ffffff14;}
+.presentation-hub-folder.dropping{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 11%,transparent);}
+.presentation-hub-row.infolder{margin-left:18px;}
+.presentation-hub-row.dragging{opacity:.5;}
+.presentation-hub-list.dropping-root{outline:2px dashed
+  color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:3px;
+  border-radius:7px;}
 @media (max-width:640px){
   .presentation-hub-columns{grid-template-columns:1fr;}
   .presentation-hub-folderform{grid-template-columns:1fr;}
@@ -2945,15 +2941,6 @@ body.light .pr-item.editing{background:var(--accent-deep);
 body.light .pr-item.ptab .pr-ico{color:var(--cyan-deep);}
 body.light .pr-item.editing .pr-ico{color:var(--on-accent-deep);}
 body.light .pr-label{color:var(--cyan-deep);}
-body.light .pr-folder{color:var(--ink-3);}
-body.light .pr-folder:hover{background:var(--surface-hover);
-  color:var(--ink-2);}
-body.light .pr-fico{color:var(--ink-3);}
-body.light .pr-fcount{background:var(--surface-active);color:var(--ink-3);}
-body.light .pr-fctrl button{color:var(--ink-3);}
-body.light .pr-fctrl button:hover{color:var(--ink);
-  background:var(--surface-active);}
-body.light .pr-frename{background:var(--input-bg);color:var(--ink);}
 body.light .pr-btn{background:var(--btn-bg);border-color:var(--btn-border);
   color:var(--ink-2);}
 body.light .pr-btn:hover{border-color:var(--cyan);color:var(--ink);
@@ -3554,7 +3541,7 @@ body.light .vars-menubtn{color:var(--ink-2);}
   vertical-align:-3px;}
 .odlg-i .ic .bic{vertical-align:-3px;}
 .card-addnote .bic{width:13px;height:13px;}
-.pr-fctrl button .bic,.pr-del .bic{width:9px;height:9px;
+.pr-del .bic{width:9px;height:9px;
   vertical-align:-1px;}
 .tn-btn .bic{width:12px;height:12px;}
 .rf-btn .bic{width:12px;height:12px;}
@@ -3622,6 +3609,9 @@ body.deck-open{overflow:hidden;}
   overflow:auto;border:1px solid var(--chrome-line);border-radius:9px;
   background:var(--chrome-2);box-shadow:0 16px 48px #0008;}
 .deck-pres-drawer[hidden]{display:none!important;}
+/* T396: while editing it opens under the thin top bar, over the tab
+   strip and the ribbon, which sit at z-index 131 */
+.deck.editing .deck-pres-drawer{top:40px;z-index:136;}
 .deck-pres-drawer-head{display:flex;align-items:center;gap:8px;
   padding-bottom:8px;border-bottom:1px solid var(--chrome-line);
   color:var(--chrome-ink);font:600 11px var(--mono);letter-spacing:.08em;
@@ -3708,9 +3698,16 @@ body.deck-open{overflow:hidden;}
   background:var(--chrome-line);flex:none;}
 .qat-btn{white-space:nowrap;flex:none;}
 /* the name reads as a title, not a button, until you go near it */
+/* flex:none (T397): every button on this bar is flex:none and the two
+   springs have a zero basis, so the name was the ONE item the bar could
+   shrink -- and it shrank to "pres..." before fitQat ever saw an
+   overflow, with a spring's worth of empty space on either side of it
+   (2026-09-13, user: "There is not enough room for the presentation
+   name"). Now the name keeps its width and the bar's pressure goes where
+   it was designed to go: fitQat's rungs. */
 .qat-name{font-family:var(--sans);font-size:12.5px;color:var(--chrome-ink-2);
   background:none;border:1px solid transparent;border-radius:6px;
-  padding:3px 9px;cursor:text;max-width:34vw;white-space:nowrap;
+  padding:3px 9px;cursor:text;flex:none;max-width:34vw;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;}
 .qat-name:hover{border-color:var(--chrome-line);color:var(--chrome-ink);}
 .qat-name:empty::before{content:"untitled";color:var(--chrome-ink-3);}
@@ -4572,6 +4569,8 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   border-radius:5px;cursor:pointer;transition:background .12s;}
 .dc-mi:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);}
 .dc-msep{height:1px;background:#ffffff14;margin:4px 6px;}
+/* a link can be a row too (Support, in the Help menu: T397) */
+a.dc-mi{display:block;text-decoration:none;}
 /* the "Saved to" picker: a heading + a tick beside the current target */
 .dc-mhead{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
   text-transform:uppercase;color:var(--chrome-ink-2);padding:5px 11px 6px;}
@@ -7877,7 +7876,22 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
    where you are standing, and refreshThumb goes looking for its row on
    every edit. Dimmed so it reads as a peek out of a closed drawer. */
 .film-row.peek{opacity:.72;}
-.film-menu{min-width:210px;}
+/* T399: ONE readable column, like the canvas menu below it. The strip's
+   menu inherited .sh-menu's three-column icon grid, so "New version of
+   this slide" and "Move matching objects" wrapped word by word into
+   tiles beside their headings (2026-09-13, user: "the right click
+   options on a slide look cursed"). */
+.film-menu{display:block;width:300px;min-width:0;
+  max-width:min(340px,92vw);max-height:72vh;
+  overflow-y:auto;overflow-x:hidden;}
+.film-menu .hd-lab{margin-top:6px;}
+.film-menu>.hd-lab:first-child{margin-top:0;}
+.film-menu .vw-opt{width:100%;text-align:left;}
+.film-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);color:#fff;}
+.film-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:9px;opacity:.75;}
+body.light .film-menu .vw-opt.on{color:var(--ink);}
 /* the canvas right-click menu: the film strip's menu is the other
    context menu in the app, so it gets the same width and the same
    left-aligned rows. The one addition is a dead row -- "Nothing copied
@@ -7955,6 +7969,11 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
    (135) and .matchbar (150), so nothing that used to paint over the bar
    stops doing so. */
 .deck-qat,.deck-top,.rbn-tabs{position:relative;z-index:131;}
+/* ...and the top bar OUTRANKS the tab strip (T397). Its menus float at
+   z-index 240 -- inside its own stacking context, which at an equal 131
+   lost to the later tab strip, so the first row of the Help menu sat
+   under Auto-hide and Ribbon layouts. Still under .vfull (135). */
+.deck-qat{z-index:132;}
 @media(max-width:860px){.film-resize{display:none!important;}}
 
 /* ---- how the slides are listed ---------------------------------------
@@ -9925,8 +9944,22 @@ window.MathJax = {
   <div class="pr-label pr-nblabel" id="pr-nblabel">open notebooks</div>
   <div class="tabstrip" id="tabstrip" role="tablist"
     aria-label="Open notebooks"></div>
-  <div class="pr-label">presentations</div>
+  <!-- T394: OPEN presentations, the way the strip above is open
+       notebooks. It listed the whole library, grouped into folders, under
+       a label that read as "your presentations" while Home's Recent
+       column showed one row (2026-09-13, user: "the side bar should only
+       show what is open, not all recents. That should be something
+       separate"). Recents and the library are the two doors beneath. -->
+  <div class="pr-label">open presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
+  <button class="pr-item pr-door" id="pr-recent" type="button"
+    title="Presentations you used recently, in any session">
+    <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/><path d="M8 5.2V8l2.2 1.3"/></svg></span>
+    <span class="pr-t">Recents</span></button>
+  <button class="pr-item pr-door" id="pr-library" type="button"
+    title="Every saved presentation, folders, new decks and imports">
+    <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg></span>
+    <span class="pr-t">All presentations&#8230;</span></button>
   <!-- ONE way to make things. Four "+ New ..." buttons in a column were
        most of the rail (2026-08-18, user: "I don't like down the right
        hand side how there is all the new options. Just one new button,
@@ -12844,9 +12877,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         Stop presenting</button>
     <!-- The global rail is intentionally inert while a deck fills the
          screen. This is its working, deck-owned replacement: what is open
-         right now (this presentation and the open notebooks), with a
-         Recents door and a route to the whole library. It also slides out
-         when the pointer reaches the left edge (T382). -->
+         right now (this presentation, the other open ones and the open
+         notebooks), with a Recents door and a route to the whole library.
+         It also slides out when the pointer reaches the left edge (T382),
+         while editing as well as while presenting (T396). -->
     <button class="dbtn" id="deck-pres-open" type="button"
       aria-expanded="false" aria-controls="deck-pres-drawer"
       title="What is open right now: this presentation and your notebooks.
@@ -12908,6 +12942,27 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
        and forewards button"), and the column is now nothing but the
        notebook content and the thumbnails. -->
   <div class="deck-qat" id="deck-qat" hidden>
+    <!-- T396: THE WAY HOME, ON THE BAR YOU CAN SEE. T374 took a Home
+         button out of here because "the Junoview logo already owns that
+         journey" -- but the logo is on the rail, and the rail is behind
+         the full-screen editor, so from a presentation there was no Home
+         at all (2026-09-13, user: "There needs to be a home button up
+         the top of presentation"). Home goes home; the chevron beside it
+         opens the deck's own list of what is open, which also slides out
+         at the left edge (the rail's job, done by the surface that can
+         take the click). -->
+    <span class="dc-savegrp qat-homegrp">
+      <button class="dbtn qat-btn" id="qat-home" type="button"
+        title="Home — the Junoview start screen. Nothing is closed."
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 8.4 8 3.2l5.6 5.2"/><path d="M4.2 7.4v5.4h7.6V7.4"/><path d="M6.8 12.8V9.6h2.4v3.2"/></svg> Home</button>
+      <button class="dbtn dc-target" id="qat-open" type="button"
+        aria-haspopup="true" aria-expanded="false"
+        aria-controls="deck-pres-drawer" aria-label="What is open"
+        title="What is open: this presentation, the others you have
+ opened, and your notebooks. It also slides out when you reach the left
+ edge of the window.">&#9662;</button>
+    </span>
+    <span class="qat-sep"></span>
     <!-- File OVER Save, one cell two rows deep, the way PowerPoint
          stacks the small controls beside Paste (2026-08-17, user: "the
          save could go below the file"). Stacking them halves the
@@ -13109,12 +13164,26 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         title="Colour scheme — follow system, dark, light, forest,
  colourful, high contrast"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> Theme &#9662;</button>
     </span>
-    <button class="dbtn qat-btn" id="deck-help"
-      title="How to use this, and everything it can do (?)"
-      aria-label="Help"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/><path d="M8.6 12v.1"/></svg> Help</button>
-    <a class="dbtn qat-btn" id="deck-support" aria-label="Support Junoview on Ko-fi" target="_blank" rel="noopener"
-      title="Support Junoview on Ko-fi — funds an online, hosted version
- with accounts"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z"/></svg> Support</a>
+    <!-- T397: Help and Support are ONE menu. With Home at the front the
+         bar had thirteen controls, and the presentation's name -- the
+         one thing on it that is not a control -- was what gave way
+         (2026-09-13, user: "The top bar is too busy ... There is not
+         enough room for the presentation name"). Both stay worded; they
+         are a menu deep, like Theme's schemes. -->
+    <span class="dc-menuwrap" id="deck-helpwrap">
+      <button class="dbtn qat-btn" id="deck-help" aria-haspopup="true"
+        aria-expanded="false" aria-controls="deck-help-menu"
+        title="How to use this, and how to support it"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/><path d="M8.6 12v.1"/></svg> Help &#9662;</button>
+      <div class="dc-menu" id="deck-help-menu" hidden>
+        <button class="dc-mi" id="deck-howto"
+          title="How to use this, and everything it can do (?)">How to
+          use&#8230;</button>
+        <a class="dc-mi" id="deck-support" target="_blank" rel="noopener"
+          title="Support Junoview on Ko-fi — funds an online, hosted
+ version with accounts">Support Junoview &#9829;</a>
+      </div>
+    </span>
     <!-- Present is a SPLIT control: press it to play, press the chevron
          for presenter view — the second screen with your notes, the next
          slide and the clock (2026-08-20, user asked for "the different
@@ -16339,7 +16408,7 @@ items snap to both. Guides, not ink: never printed or exported"
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "home": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 8.4 8 3.2l5.6 5.2\"/><path d=\"M4.2 7.4v5.4h7.6V7.4\"/><path d=\"M6.8 12.8V9.6h2.4v3.2\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -16405,6 +16474,7 @@ items snap to both. Guides, not ink: never printed or exported"
     if(atHome&&APP.deckState&&APP.deckState()&&APP.deckClose) APP.deckClose();
     refreshChrome();
     if(atHome) window.scrollTo(0,0);
+    updateHash();   /* T395: Home is a view, so Back can come back to it */
   }
   APP.goHome=goHome;
   function refreshChrome(){
@@ -16786,15 +16856,27 @@ items snap to both. Guides, not ink: never printed or exported"
      Bookmarkable + survives reload + back/forward, in every mode (hash only,
      so no server routing needed). The deck registers deckState/deckOpen. */
   var initialHash=location.hash, routeReady=false, pendingRoute=null,
-      routeTimer=null;
+      routeTimer=null, lastView=null, applyingRoute=false;
+  /* the VIEW a hash names: everything but a /s<n> slide suffix */
+  function viewOf(h){return String(h||'').replace(/\/s\d+$/i,'');}
   function setHash(h){
-    if(location.hash===h||(!location.hash&&h==='#/')) return;
-    /* replaceState (not location.hash=) so in-app navigation NEVER floods the
-       back stack — the URL always mirrors the view, bookmarkable + reloadable,
-       and Back leaves the app cleanly rather than stepping through tab switches */
-    try{ if(history.replaceState)
-           history.replaceState(null,'',
-             location.pathname+location.search+(h==='#/'?'':h));
+    if(location.hash===h||(!location.hash&&h==='#/')){
+      lastView=viewOf(h);return;
+    }
+    /* T395: a NEW VIEW is a history entry; a move inside one is not.
+       Everything was replaceState so the back stack never flooded, which
+       also meant Back from a presentation left the site (2026-09-13,
+       user: "the back button when you open a presentation doesn't work,
+       it takes you out of the website, when it should take you to what
+       you were on previously"). So Home, a notebook and a presentation
+       each push -- Back returns to the one before -- while stepping
+       through the slides of one presentation still replaces, so Back is
+       never one entry per slide. The first stamp on load replaces too. */
+    var view=viewOf(h),push=!applyingRoute&&lastView!==null&&view!==lastView;
+    lastView=view;
+    var url=location.pathname+location.search+(h==='#/'?'':h);
+    try{ if(push&&history.pushState) history.pushState(null,'',url);
+         else if(history.replaceState) history.replaceState(null,'',url);
          else location.hash=h; }catch(e){}
   }
   function routeParse(hash){
@@ -16810,6 +16892,9 @@ items snap to both. Guides, not ink: never printed or exported"
         +(d.slide!=null?('/s'+(d.slide+1)):''));
       return;
     }
+    /* Home over open notebooks is a view of its own (T395), so Back from
+       a presentation opened from Home lands on Home, not on a notebook */
+    if(atHome&&APP.order.length){setHash('#/home');return;}
     var a=APP.active&&APP.shells[APP.active];
     var stem=a&&a.trace?a.source:APP.active;   /* a trace tab -> its source */
     setHash(stem?('#/doc/'+encodeURIComponent(stem)):'#/');
@@ -16819,7 +16904,19 @@ items snap to both. Guides, not ink: never printed or exported"
      so a programmatic setHash -> hashchange never loops or double-renders */
   function applyHash(hash){
     var parts=routeParse(hash);
-    if(!parts.length) return;
+    var open=APP.deckState&&APP.deckState();
+    if(!parts.length){
+      /* the default view: Back has arrived at the entry stamped on load,
+         so whatever opened since (a presentation, Home) goes away */
+      if(open&&APP.deckClose) APP.deckClose();
+      if(atHome&&APP.order.length) goHome(false);
+      return;
+    }
+    if(parts[0]==='home'){
+      if(open&&APP.deckClose) APP.deckClose();
+      goHome(true);
+      return;
+    }
     if(parts[0]==='pres'&&parts[1]){
       var slide=0;
       if(parts[2]&&/^s\d+$/i.test(parts[2]))
@@ -16833,11 +16930,11 @@ items snap to both. Guides, not ink: never printed or exported"
       }
       if(APP.deckOpen&&!APP.deckOpen(parts[1],slide)) updateHash();
     } else if(parts[0]==='doc'&&parts[1]){
-      var open=APP.deckState&&APP.deckState();
       var ca=APP.shells[APP.active];
       var curStem=ca&&ca.trace?ca.source:APP.active;   /* symmetric w/ updateHash */
-      if(!open&&curStem===parts[1]) return;
+      if(!open&&!atHome&&curStem===parts[1]) return;
       if(open&&APP.deckClose) APP.deckClose();
+      if(atHome) goHome(false);   /* a notebook route is not Home */
       if(APP.shells[parts[1]]) activate(parts[1]);
     }
   }
@@ -16852,7 +16949,7 @@ items snap to both. Guides, not ink: never printed or exported"
   APP.applyInitialRoute=function(){
     routeReady=true;
     var parts=routeParse(initialHash);
-    if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'))
+    if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'||parts[0]==='home'))
       pendingRoute=initialHash;
     tryRoute();
     if(!location.hash) updateHash();   /* stamp the default view */
@@ -16867,7 +16964,13 @@ items snap to both. Guides, not ink: never printed or exported"
   });
   window.addEventListener('hashchange',function(){
     pendingRoute=null;   /* a real navigation supersedes the initial route */
-    applyHash(location.hash);
+    /* Back and Forward land on an entry this code already stamped: the
+       view it names is now the last one, so the next change compares
+       against it and not against where you were before you went back */
+    lastView=viewOf(location.hash||'#/');
+    /* ...and nothing the route applies may push: the entry exists */
+    applyingRoute=true;
+    try{applyHash(location.hash);}finally{applyingRoute=false;}
   });
 
   /* ================= per-notebook document behaviors ================= */
@@ -19843,7 +19946,7 @@ items snap to both. Guides, not ink: never printed or exported"
   /* two doors: the app bar's Help, and the deck editor's — editing hides
      the app bar entirely, so without the second one the help was
      unreachable from inside a presentation (2026-08-20) */
-  ['#help-btn','#deck-help'].forEach(function(sel){
+  ['#help-btn','#deck-howto'].forEach(function(sel){
     var hb=$(sel);
     if(hb) hb.addEventListener('click',showHelp);
   });
@@ -32623,6 +32726,7 @@ window.JunoPptx = (function () {
     recent=recent.filter(function(n){return n!==name;});
     recent.unshift(name);
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent.slice(0,12)));
+    noteSessionOpen(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
     if(typeof renderPresentationHub==='function') renderPresentationHub();
@@ -32637,6 +32741,7 @@ window.JunoPptx = (function () {
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(rename(recent).slice(0,12)));
+    renameOpenPresentation(oldName,newName);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
     if(typeof renderPresentationHub==='function') renderPresentationHub();
@@ -32647,9 +32752,51 @@ window.JunoPptx = (function () {
     if(!Array.isArray(recent)) recent=[];
     recent=recent.filter(function(n){return n!==name;});
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent));
+    closeOpenPresentation(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
     if(typeof renderPresentationHub==='function') renderPresentationHub();
+  }
+  /* ---- T394: WHAT IS OPEN, as distinct from what is recent -----------
+     The rail listed every saved presentation, every draft and every deck
+     embedded in an open notebook, under a label that said "presentations"
+     -- twenty rows of a notebook's embedded decks on a fresh visit, none
+     of them anything you had opened -- while Home's Recent column showed
+     the one you had (2026-09-13, user: "the side bar shows all recents
+     where the main screen shows no recents???? the side bar should only
+     show what is open, not all recents. That should be something
+     separate"). Open is a TAB LIST: the presentations you have opened in
+     this browser tab, in the order you opened them, each closable, kept
+     in sessionStorage so a reload keeps them and a new tab starts clean --
+     the same life a notebook tab has. Recent and the whole library are
+     the two doors under it. */
+  var OPEN_PRES_KEY='sempres-open:'+SCOPE;
+  function ssGet(k){try{return sessionStorage.getItem(k);}catch(e){return null;}}
+  function ssSet(k,v){try{sessionStorage.setItem(k,v);}catch(e){}}
+  function rawOpenNames(){
+    var names=[];
+    try{names=JSON.parse(ssGet(OPEN_PRES_KEY)||'[]');}catch(e){}
+    return Array.isArray(names)?names:[];
+  }
+  function openPresentationNames(){
+    return rawOpenNames().filter(function(n){return !!presentationByName(n);});
+  }
+  function noteSessionOpen(name){
+    if(!name) return;
+    var names=rawOpenNames();
+    if(names.indexOf(name)<0){
+      names.push(name);
+      ssSet(OPEN_PRES_KEY,JSON.stringify(names));
+    }
+  }
+  function closeOpenPresentation(name){
+    var names=rawOpenNames().filter(function(n){return n!==name;});
+    ssSet(OPEN_PRES_KEY,JSON.stringify(names));
+  }
+  function renameOpenPresentation(oldName,newName){
+    var names=rawOpenNames().map(function(n){return n===oldName?newName:n;});
+    ssSet(OPEN_PRES_KEY,JSON.stringify(names.filter(function(n,i){
+      return names.indexOf(n)===i;})));
   }
   function fullFrame(ref){
     var r=PRESETS.full[0];
@@ -62049,18 +62196,10 @@ window.JunoPptx = (function () {
      One item is active at any time: the "Notebooks" button (builder
      closed) or a presentation (builder open editing it). */
   var presstrip=document.getElementById('presstrip');
-  var FOLDKEY='sempresfold:'+SCOPE;
   var FOLDERSKEY='sempresfolders:'+SCOPE;
-  function foldState(){
-    try{return JSON.parse(lsGet(FOLDKEY)||'{}');}catch(e){return {};}
-  }
-  function toggleFold(f){
-    var s=foldState();
-    if(s[f]) delete s[f]; else s[f]=1;
-    lsSet(FOLDKEY,JSON.stringify(s));
-    renderPresTabs();
-  }
-  /* folders exist on their own (created empty, dragged into) */
+  /* folders exist on their own (created empty, dragged into). They are
+     shown in the library dialog since T394; the rail lists only what is
+     open. */
   function explicitFolders(){
     try{
       var l=JSON.parse(lsGet(FOLDERSKEY)||'[]');
@@ -62074,42 +62213,43 @@ window.JunoPptx = (function () {
     function apply(p){
       if(f) p.folder=f; else delete p.folder;
     }
-    if(nm===pres.name){apply(pres);markDirty();renderPresRow();return;}
+    if(nm===pres.name){apply(pres);markDirty();renderPresRow();}
     var hit=false;
-    projectPres.forEach(function(p){
-      if(p.name===nm){apply(p);hit=true;}});
-    nbPres.forEach(function(p){
-      if(p.name===nm){apply(p);hit=true;}});
-    var raw=lsGet(PFX+nm);
-    if(raw){
-      try{
-        var d=JSON.parse(raw);apply(d);
-        lsSet(PFX+nm,JSON.stringify(d));hit=true;
-      }catch(e){}
+    if(nm!==pres.name){
+      projectPres.forEach(function(p){
+        if(p.name===nm){apply(p);hit=true;}});
+      nbPres.forEach(function(p){
+        if(p.name===nm){apply(p);hit=true;}});
+      var raw=lsGet(PFX+nm);
+      if(raw){
+        try{
+          var d=JSON.parse(raw);apply(d);
+          lsSet(PFX+nm,JSON.stringify(d));hit=true;
+        }catch(e){}
+      }
+      if(hit&&APP.mode==='app') scheduleAutosave();
     }
-    if(hit&&APP.mode==='app') scheduleAutosave();
     renderPresTabs();
+    renderPresentationHub();
   }
   function newFolder(wanted){
-    var list=explicitFolders();
     var supplied=typeof wanted==='string'&&wanted.trim();
-    var n=1,name=supplied?wanted.trim():'folder';
-    function taken(x){
-      return list.indexOf(x)>=0
-        ||allSaved().some(function(p){return p.folder===x;});
+    /* no name yet: ask for one where folders are shown */
+    if(!supplied){
+      if(window.SemApp&&window.SemApp.deckNewFolder)
+        window.SemApp.deckNewFolder();
+      return null;
     }
-    if(supplied&&taken(name)){
+    var list=explicitFolders();
+    var name=wanted.trim();
+    var taken=list.indexOf(name)>=0
+      ||allSaved().some(function(p){return p.folder===name;});
+    if(taken){
       toast('There is already a folder called “'+name+'”');
       return null;
     }
-    while(!supplied&&taken(name)){n++;name='folder-'+n;}
     list.push(name);saveFolders(list);
-    renderPresTabs();
-    if(!supplied){
-      var h=presstrip.querySelector(
-        '.pr-folder[data-folder="'+name+'"]');
-      if(h) startFolderRename(h,name);
-    }
+    renderPresentationHub();
     return name;
   }
   function renameFolder(oldName,newName){
@@ -62120,9 +62260,6 @@ window.JunoPptx = (function () {
     if(list.indexOf(newName)<0) list.push(newName);
     saveFolders(list.filter(function(x,i){
       return list.indexOf(x)===i;}));
-    var st=foldState();
-    if(st[oldName]){delete st[oldName];st[newName]=1;
-      lsSet(FOLDKEY,JSON.stringify(st));}
     allSaved().concat([pres]).forEach(function(p){
       if(p.folder===oldName) setPresFolder(p.name,newName);
     });
@@ -62130,7 +62267,7 @@ window.JunoPptx = (function () {
       var d=loadDraft(nm);
       if(d&&d.folder===oldName) setPresFolder(nm,newName);
     });
-    renderPresTabs();
+    renderPresentationHub();
   }
   function deleteFolder(f){
     saveFolders(explicitFolders().filter(function(x){return x!==f;}));
@@ -62141,29 +62278,18 @@ window.JunoPptx = (function () {
       var d=loadDraft(nm);
       if(d&&d.folder===f) setPresFolder(nm,'');
     });
-    renderPresTabs();
+    renderPresentationHub();
   }
-  function startFolderRename(header,f){
-    var t=header.querySelector('.pr-t');
-    if(!t) return;
-    var inp=document.createElement('input');
-    inp.className='pr-frename';
-    inp.value=f;inp.spellcheck=false;
-    t.replaceWith(inp);
-    inp.focus();inp.select();
-    function commit(){
-      var v=inp.value.trim();
-      if(v&&v!==f) renameFolder(f,v);
-      else renderPresTabs();
-    }
-    inp.addEventListener('keydown',function(e){
-      e.stopPropagation();
-      if(e.key==='Enter') this.blur();
-      if(e.key==='Escape'){this.value=f;this.blur();}
-    });
-    inp.addEventListener('blur',commit);
-    inp.addEventListener('click',function(e){e.stopPropagation();});
-  }
+  /* ---- T394: THE RAIL IS A TAB LIST, NOT THE LIBRARY -------------------
+     It used to be built from allSaved() + draftNames(): every project
+     deck, every draft and every deck embedded in an open notebook, grouped
+     into folders with drag-and-drop filing -- which is a library, and it
+     sat under a label that made it read as "your presentations" while
+     Home's Recent column beside it showed one row. Now it lists what is
+     OPEN (openPresentationNames, 10-decks.js), the way the notebook strip
+     above it lists open notebooks, and two doors under it lead to Recents
+     and to the whole library. The library dialog took the folders and the
+     filing with it (renderPresentationHub). */
   function renderPresTabs(){
     if(!presstrip) return;
     /* the rail's filter is re-applied at the end of this: the strip is
@@ -62171,23 +62297,16 @@ window.JunoPptx = (function () {
        created while a filter is live would otherwise appear out of
        nowhere in a list that is meant to be showing only matches (T75) */
     presstrip.innerHTML='';
-    var savedList=allSaved();
-    var savedNames=savedList.map(function(p){return p.name;});
-    var byName={};
-    savedList.forEach(function(p){byName[p.name]=p;});
-    var names=savedNames.slice();
-    /* drafts stay listed even while another presentation is open */
-    draftNames().forEach(function(n){
-      if(names.indexOf(n)<0){
-        names.push(n);
-        byName[n]=loadDraft(n)||{name:n};
-      }
-    });
-    if(names.indexOf(pres.name)<0) names.unshift(pres.name);
-    byName[pres.name]=pres;   /* in-memory version wins (live folder) */
+    var savedNames=allSaved().map(function(p){return p.name;});
     var editing=!deckEl.hidden;
+    var names=openPresentationNames();
+    /* the deck on screen is open whatever the list says: a brand-new,
+       never-saved presentation is not yet anywhere the list can find it */
+    if(editing&&pres&&pres.name&&names.indexOf(pres.name)<0)
+      names.push(pres.name);
 
-    function presItem(nm,folder){
+    function presItem(nm){
+      var p=presentationByName(nm)||{name:nm};
       var isCur=nm===pres.name;
       var t=document.createElement('button');
       /* radio model: a row lights up ONLY while its deck is open — back on
@@ -62196,20 +62315,18 @@ window.JunoPptx = (function () {
         +(savedNames.indexOf(nm)<0?' draftonly':'');
       t.setAttribute('role','tab');
       t.dataset.pres=nm;
-      t.dataset.folder=folder||'';
-      var isPoster=/^a\d/.test(String((byName[nm]&&byName[nm].page)||''));
-      var isView=isViewPres(byName[nm]);
+      var isPoster=/^a\d/.test(String(p.page||''));
+      var isView=isViewPres(p);
       /* a custom view lights up while ITS styling bar is open, not while
          the slide stage is (it never opens the slide stage) */
       var vwOpen=isView&&isCur
         &&document.body.classList.contains('styling');
       if(vwOpen) t.className+=' current editing';
       var kindWord=isView?'custom view':isPoster?'poster':'presentation';
-      t.title=((isCur&&(editing||vwOpen))
-        ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
+      t.title=(isCur&&(editing||vwOpen))
+        ?('Editing "'+nm+'" — Home, in the top bar, goes back')
         :('Open '+kindWord+' "'+nm+'"'
-          +(isView?' — restyles the notebook itself':' in the builder')))
-        +'\nDrag onto a folder to file it';
+          +(isView?' — restyles the notebook itself':' in the builder'));
       /* the same drawn icons as the "+ New ..." buttons, so a row and the
          button that made it read as the same kind of thing — straight
          from SemIcons, where the "+ New" template tokens also resolve */
@@ -62219,35 +62336,25 @@ window.JunoPptx = (function () {
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
-      /* delete where the thing IS, not three menu levels away. Shown on
-         hover / while current; confirm() because there is no undo for a
-         deleted presentation. */
-      /* a real <button>, not a click-wired span: focusable, and named
-         for screen readers — the icon is its only visible content
-         (2026-08-24). .pr-del's CSS resets the button chrome. */
+      /* the × CLOSES the row, the way a notebook tab's does: the
+         presentation stays saved and stays in Recents. Deleting is File ›
+         Delete presentation, where a confirm guards it. A real <button>,
+         focusable and named for screen readers (2026-08-24). */
       var del=document.createElement('button');
       del.type='button';
-      del.className='pr-del';del.title='Delete "'+nm+'"';
-      del.setAttribute('aria-label','Delete "'+nm+'"');
+      del.className='pr-del';del.title='Close "'+nm+'" (it stays saved)';
+      del.setAttribute('aria-label','Close "'+nm+'"');
       del.innerHTML=bic('exit')||'&#10005;';
       del.addEventListener('click',function(e){
         e.stopPropagation();e.preventDefault();
-        if(confirm('Delete "'+nm+'"? This cannot be undone.'))
-          deletePresByName(nm);
+        if(isCur&&!deckEl.hidden) closeDeck();
+        if(vwOpen) closeCustomView();
+        closeOpenPresentation(nm);
+        renderPresTabs();
+        if(typeof renderDeckPresentationDrawer==='function')
+          renderDeckPresentationDrawer();
       });
       t.appendChild(del);
-      t.draggable=true;
-      t.addEventListener('dragstart',function(e){
-        draggingPres=nm;
-        t.classList.add('dragging');
-        try{e.dataTransfer.setData('text/plain',nm);}catch(err){}
-        e.dataTransfer.effectAllowed='move';
-      });
-      t.addEventListener('dragend',function(){
-        draggingPres=null;
-        t.classList.remove('dragging');
-        clearDropMarks();
-      });
       t.addEventListener('click',function(){
         if(isCur&&!deckEl.hidden) return;
         if(vwOpen) return;            /* already the open custom view */
@@ -62255,110 +62362,26 @@ window.JunoPptx = (function () {
       });
       return t;
     }
-
-    /* group by folder; loose items first, then collapsible folders
-       (explicitly created folders show even while empty) */
-    var rootNames=[],folders={},folderOrder=[];
-    explicitFolders().forEach(function(f){
-      folders[f]=[];folderOrder.push(f);
-    });
-    names.forEach(function(nm){
-      var f=(byName[nm]&&byName[nm].folder)||'';
-      if(!f){rootNames.push(nm);return;}
-      if(!folders[f]){folders[f]=[];folderOrder.push(f);}
-      folders[f].push(nm);
-    });
-    rootNames.forEach(function(nm){
-      presstrip.appendChild(presItem(nm,''));});
-    folderOrder.sort().forEach(function(f){
-      var collapsed=!!foldState()[f]
-        &&!(editing&&folders[f].indexOf(pres.name)>=0);
-      var h=document.createElement('div');
-      h.className='pr-folder';
-      h.dataset.folder=f;
-      h.title='Folder "'+f+'" — click to '
-        +(collapsed?'expand':'collapse')
-        +'; drag presentations onto it';
-      h.innerHTML='<span class="pr-fchev">'
-        +(collapsed?'&#9656;':'&#9662;')+'</span>'
-        +'<span class="pr-fico">'+bic('open')+'</span>';
-      var ft=document.createElement('span');ft.className='pr-t';
-      ft.textContent=f;h.appendChild(ft);
-      var fc=document.createElement('span');fc.className='pr-fcount';
-      fc.textContent=folders[f].length;h.appendChild(fc);
-      var ctr=document.createElement('span');ctr.className='pr-fctrl';
-      [[bic('pen'),'Rename folder',function(){startFolderRename(h,f);}],
-       [bic('exit'),'Delete folder (contents move out)',
-        function(){deleteFolder(f);}]].forEach(function(b){
-        var btn=document.createElement('button');
-        btn.innerHTML=b[0];btn.title=b[1];
-        btn.addEventListener('click',function(e){
-          e.stopPropagation();b[2]();});
-        ctr.appendChild(btn);
-      });
-      h.appendChild(ctr);
-      h.addEventListener('click',function(){toggleFold(f);});
-      presstrip.appendChild(h);
-      if(!collapsed) folders[f].forEach(function(nm){
-        var it=presItem(nm,f);
-        it.classList.add('infolder');
-        presstrip.appendChild(it);
-      });
-    });
+    names.forEach(function(nm){presstrip.appendChild(presItem(nm));});
+    if(!names.length){
+      var none=document.createElement('div');
+      none.className='pr-none';
+      none.textContent='nothing open';
+      presstrip.appendChild(none);
+    }
     var docsBtn=document.getElementById('pr-docs');
     if(docsBtn) docsBtn.classList.toggle('current',!editing);
     /* ...and re-applied, now the rows are back (T75) */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
   }
-  /* drag & drop filing: onto a folder header (or an item inside one)
-     files it; onto empty rail space moves it back to the top level */
-  var draggingPres=null;
-  function clearDropMarks(){
-    $$('.pr-folder.dropping',presstrip).forEach(function(el){
-      el.classList.remove('dropping');});
-    var rail=document.getElementById('presrail');
-    if(rail) rail.classList.remove('dropping-root');
-  }
-  (function(){
-    var rail=document.getElementById('presrail');
-    if(!rail) return;
-    rail.addEventListener('dragover',function(e){
-      if(!draggingPres) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
-      clearDropMarks();
-      var h=e.target.closest&&e.target.closest('.pr-folder');
-      if(!h){
-        var it=e.target.closest&&e.target.closest('.pr-item.ptab');
-        if(it&&it.dataset.folder)
-          h=presstrip.querySelector(
-            '.pr-folder[data-folder="'+it.dataset.folder+'"]');
-      }
-      if(h) h.classList.add('dropping');
-      else rail.classList.add('dropping-root');
-    });
-    rail.addEventListener('dragleave',function(e){
-      if(e.target===rail) clearDropMarks();
-    });
-    rail.addEventListener('drop',function(e){
-      if(!draggingPres) return;
-      e.preventDefault();
-      var f='';
-      var h=e.target.closest&&e.target.closest('.pr-folder');
-      if(h) f=h.dataset.folder;
-      else{
-        var it=e.target.closest&&e.target.closest('.pr-item.ptab');
-        if(it) f=it.dataset.folder||'';
-      }
-      var nm=draggingPres;
-      draggingPres=null;
-      clearDropMarks();
-      setPresFolder(nm,f);
-    });
-  })();
+  /* the rail's Folder row opens the library's folder form: a folder is
+     made where folders are shown */
   var newFoldBtn=document.getElementById('pr-newfold');
-  if(newFoldBtn) newFoldBtn.addEventListener('click',newFolder);
+  if(newFoldBtn) newFoldBtn.addEventListener('click',function(){
+    if(window.SemApp&&window.SemApp.deckNewFolder)
+      window.SemApp.deckNewFolder();
+  });
 
   /* ---- PRESENTATION LIBRARY + PRESENTING DRAWER ----------------------
      The side rail is behind the full-screen deck on purpose: a visible
@@ -62420,6 +62443,49 @@ window.JunoPptx = (function () {
     deckEl.removeAttribute('aria-hidden');
     presentationHubInertedDeck=false;
   }
+  /* T394: the All column is the library proper -- grouped by folder, with
+     the folder verbs (rename, delete) on the heading and drag-and-drop
+     filing between them -- everything the rail used to do before it
+     became the list of what is open. */
+  var draggingPres=null;
+  function hubFolderHead(f,count){
+    var h=document.createElement('div');
+    h.className='presentation-hub-folder';
+    h.dataset.folder=f;
+    h.title='Folder “'+f+'” — drag presentations onto it';
+    var ic=document.createElement('span');ic.innerHTML=bic('open');
+    var t=document.createElement('span');t.className='presentation-hub-folder-name';
+    t.textContent=f;
+    var n=document.createElement('span');n.className='presentation-hub-folder-count';
+    n.textContent=count;
+    h.appendChild(ic);h.appendChild(t);h.appendChild(n);
+    [[bic('pen'),'Rename folder',function(){
+        var v=prompt('Rename the folder:',f);
+        if(v==null) return;
+        renameFolder(f,v);
+      }],
+     [bic('exit'),'Delete folder (its presentations move out)',function(){
+        deleteFolder(f);}]].forEach(function(b){
+      var btn=document.createElement('button');
+      btn.type='button';btn.className='presentation-hub-folder-btn';
+      btn.innerHTML=b[0];btn.title=b[1];btn.setAttribute('aria-label',b[1]);
+      btn.addEventListener('click',function(e){e.stopPropagation();b[2]();});
+      h.appendChild(btn);
+    });
+    h.addEventListener('dragover',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      h.classList.add('dropping');
+    });
+    h.addEventListener('dragleave',function(){h.classList.remove('dropping');});
+    h.addEventListener('drop',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();e.stopPropagation();
+      var nm=draggingPres;draggingPres=null;
+      setPresFolder(nm,f);
+    });
+    return h;
+  }
   function renderPresentationHub(){
     var root=$('#presentation-hub');
     var recentHost=$('#presentation-hub-recent'),allHost=$('#presentation-hub-all');
@@ -62434,12 +62500,64 @@ window.JunoPptx = (function () {
         closePresentationHub();choosePresentation(p.name);
       }));
     });
-    if(!all.length) emptyPresentationList(allHost,
-      'No saved presentations yet.');
+    /* loose presentations first, then every folder (an explicitly made
+       folder shows even while empty, so there is something to drag onto) */
+    var folders={},order=[];
+    explicitFolders().forEach(function(f){folders[f]=[];order.push(f);});
+    var loose=[];
     all.forEach(function(p){
-      allHost.appendChild(presentationLibraryRow(p,function(){
+      var f=p.folder||'';
+      if(!f){loose.push(p);return;}
+      if(!folders[f]){folders[f]=[];order.push(f);}
+      folders[f].push(p);
+    });
+    function rowFor(p){
+      var b=presentationLibraryRow(p,function(){
         closePresentationHub();choosePresentation(p.name);
-      }));
+      });
+      b.draggable=true;
+      b.addEventListener('dragstart',function(e){
+        draggingPres=p.name;b.classList.add('dragging');
+        try{e.dataTransfer.setData('text/plain',p.name);}catch(err){}
+        e.dataTransfer.effectAllowed='move';
+      });
+      b.addEventListener('dragend',function(){
+        draggingPres=null;b.classList.remove('dragging');
+        allHost.classList.remove('dropping-root');
+        $$('.presentation-hub-folder.dropping',allHost).forEach(function(el){
+          el.classList.remove('dropping');});
+      });
+      return b;
+    }
+    if(!all.length&&!order.length) emptyPresentationList(allHost,
+      'No saved presentations yet.');
+    loose.forEach(function(p){allHost.appendChild(rowFor(p));});
+    order.sort().forEach(function(f){
+      allHost.appendChild(hubFolderHead(f,folders[f].length));
+      folders[f].forEach(function(p){
+        var r=rowFor(p);r.classList.add('infolder');allHost.appendChild(r);
+      });
+    });
+  }
+  /* dropping on the column's own background takes a presentation OUT of
+     its folder; wired once, the column survives every re-render */
+  function hubDropBoot(){
+    var allHost=$('#presentation-hub-all');if(!allHost) return;
+    allHost.addEventListener('dragover',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      if(!(e.target.closest&&e.target.closest('.presentation-hub-folder')))
+        allHost.classList.add('dropping-root');
+    });
+    allHost.addEventListener('dragleave',function(e){
+      if(e.target===allHost) allHost.classList.remove('dropping-root');
+    });
+    allHost.addEventListener('drop',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();
+      var nm=draggingPres;draggingPres=null;
+      allHost.classList.remove('dropping-root');
+      setPresFolder(nm,'');
     });
   }
   function closePresentationHub(){
@@ -62455,10 +62573,15 @@ window.JunoPptx = (function () {
     setTimeout(function(){
       var b=$('#presentation-hub-new');if(b) b.focus();},0);
   }
+  /* two doors, one drawer: the presenting bar's button and the editing
+     bar's chevron beside Home (T396) both say whether it is open */
+  function drawerDoors(){
+    return [$('#deck-pres-open'),$('#qat-open')].filter(Boolean);
+  }
   function closeDeckPresentationDrawer(){
-    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    var d=$('#deck-pres-drawer');
     if(d) d.hidden=true;
-    if(b) b.setAttribute('aria-expanded','false');
+    drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','false');});
   }
   /* ---- T382: THE DRAWER IS WHAT IS OPEN NOW ------------------------
      It listed every presentation opened this session, which reads as a
@@ -62498,6 +62621,17 @@ window.JunoPptx = (function () {
     var p=presentationSummary(pres.name)||{name:pres.name};
     row('current',presentationIcon(p),pres.name||'this presentation',
       presentationKind(p),'The presentation you are showing',null);
+    /* T394: the OTHER open presentations, the rail's rows, so the drawer
+       is the rail while the rail is behind the deck */
+    openPresentationNames().forEach(function(nm){
+      if(nm===pres.name) return;
+      var q=presentationSummary(nm)||{name:nm};
+      row('',presentationIcon(q),nm,presentationKind(q),
+        'Switch to “'+nm+'”',function(){
+          closeDeckPresentationDrawer();
+          choosePresentation(nm);
+        });
+    });
     var nbs=openNotebookRows();
     nbs.forEach(function(n){
       row('',bic('doc'),n.label,n.kind,
@@ -62516,11 +62650,11 @@ window.JunoPptx = (function () {
     }
   }
   function openDeckPresentationDrawer(){
-    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    var d=$('#deck-pres-drawer');
     if(!d) return;
     renderDeckPresentationDrawer();
     d.hidden=false;
-    if(b) b.setAttribute('aria-expanded','true');
+    drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','true');});
   }
   /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the
      way the presentations rail does outside the deck (2026-09-12, user:
@@ -62529,11 +62663,18 @@ window.JunoPptx = (function () {
      the rail inert, so nothing answered the edge during a talk. Same
      14px hit zone as the rail's; it closes when the pointer leaves the
      drawer by the same 40px margin the column and the present bar use.
-     Presenting only: the editor has its own column and its own peek. */
+     T396: WHILE EDITING TOO. "Presenting only" left the editor with no
+     sidebar at all -- the rail is behind it -- and the user asked for it
+     there in as many words (2026-09-13: "the side bar that shows you all
+     the open presentations doesn't appear in presentation mode"). The
+     one exception is a slide column set to hide itself, which already
+     owns the left edge (initFilmAuto); the chevron beside Home opens the
+     drawer there. */
   function initDrawerPeek(){
     document.addEventListener('mousemove',function(e){
       var d=$('#deck-pres-drawer'); if(!d) return;
-      if(mode!=='view'||deckEl.hidden) return;
+      if(deckEl.hidden||(mode!=='view'&&mode!=='edit')) return;
+      if(mode==='edit'&&filmAutoOn()) return;
       var hub=$('#presentation-hub');
       if(hub&&!hub.hidden) return;
       if(d.hidden){
@@ -62547,12 +62688,20 @@ window.JunoPptx = (function () {
   }
   function presentationHubBoot(){
     var hub=$('#presentation-hub'),drawer=$('#deck-pres-drawer');
-    var drawerOpen=$('#deck-pres-open');
     var drawerBrowse=$('#deck-pres-browse'),drawerRecent=$('#deck-pres-recent');
-    if(drawerOpen) drawerOpen.addEventListener('click',function(){
-      if(!drawer) return;
-      if(drawer.hidden) openDeckPresentationDrawer();
-      else closeDeckPresentationDrawer();
+    drawerDoors().forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!drawer) return;
+        if(drawer.hidden) openDeckPresentationDrawer();
+        else closeDeckPresentationDrawer();
+      });
+    });
+    /* T396: Home from the editor's own bar */
+    var home=$('#qat-home');
+    if(home) home.addEventListener('click',function(){
+      if(window.SemApp&&window.SemApp.goHome) window.SemApp.goHome(true);
+      else closeDeck();
     });
     if(drawerBrowse) drawerBrowse.addEventListener('click',openPresentationHub);
     /* the separate Recents door: the same library dialog, opened on its
@@ -62564,6 +62713,16 @@ window.JunoPptx = (function () {
         if(first) first.focus();},0);
     });
     initDrawerPeek();
+    hubDropBoot();
+    /* T394: the rail's two doors under its open list */
+    var railRecent=$('#pr-recent'),railAll=$('#pr-library');
+    if(railRecent) railRecent.addEventListener('click',function(){
+      openPresentationHub();
+      setTimeout(function(){
+        var first=$('#presentation-hub-recent .presentation-hub-row');
+        if(first) first.focus();},0);
+    });
+    if(railAll) railAll.addEventListener('click',openPresentationHub);
     var close=$('#presentation-hub-close');
     if(close) close.addEventListener('click',closePresentationHub);
     if(hub) hub.addEventListener('click',function(e){
@@ -62625,6 +62784,7 @@ window.JunoPptx = (function () {
       loadPresentation(nm);
       cur=0;activePane=-1;
     }
+    noteSessionOpen(nm);   /* T394: it is open now, whichever kind it is */
     /* a custom view is edited in the document; a deck on the slide stage */
     if(isViewPres(pres)){openCustomView();return;}
     openDeck('edit');   /* land straight in the slide editor */
@@ -66306,13 +66466,17 @@ window.JunoPptx = (function () {
       if(pres.slides[i]&&pres.slides[i].sec)
         row('→ (no section)',function(){moveSlideToSection(i,'');});
     }
-    menuHead(m,poster?'this page':'this slide');
     /* OPTIONAL, and which versions this slide is in (T24). On the SLIDE
        menu because that is where you are looking when you decide a
        slide is a nice-to-have. */
     var oSl=pres.slides[i];
     /* HOW IT ARRIVES (T27). On the slide menu: a transition is a fact
-       about one slide, and this is where you are looking at it. */
+       about one slide, and this is where you are looking at it.
+       T399: ONE heading per group. There were three "this slide"
+       headings, one of them directly above this one with nothing under
+       it, and the menu inherited .sh-menu's three-column icon grid, so
+       every label wrapped into a tile (2026-09-13, user: "the right
+       click options on a slide look cursed"). */
     menuHead(m,'how it arrives'
       +(motionOK()?'':' — not on this machine'));
     var nowT=(oSl&&typeof oSl.trans==='string')?oSl.trans:null;
@@ -66339,11 +66503,6 @@ window.JunoPptx = (function () {
         +(secM.name||'this section')+'\u201d decides');
       if(nowT===null) ub.classList.add('on');
     }
-    menuHead(m,poster?'this page':'this slide');
-    row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
-      toggleOptional(i);},
-      'Running late in present mode skips the optional slides from '
-      +'wherever you have got to');
     var cuts=cutList();
     if(cuts.length){
       menuHead(m,'in these versions');
@@ -66358,6 +66517,10 @@ window.JunoPptx = (function () {
       });
     }
     menuHead(m,poster?'this page':'this slide');
+    row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
+      toggleOptional(i);},
+      'Running late in present mode skips the optional slides from '
+      +'wherever you have got to','flag');
     row('Move it up',function(){moveSlide(i,-1);},null,'prev');
     row('Move it down',function(){moveSlide(i,1);},null,'next');
     if(pageOf().poster) row('Rename this version\u2026',function(){
@@ -68219,6 +68382,15 @@ window.JunoPptx = (function () {
     var b=$(id);
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
+  /* ---- Help menu (T397): How to use, and Support. app.js owns what
+     How to use does; this only opens and closes the menu. ---- */
+  (function(){
+    var h=wireMenuToggle('deck-helpwrap','deck-help','deck-help-menu');
+    if(!h) return;
+    $$('.dc-mi',h.menu).forEach(function(b){
+      b.addEventListener('click',function(){overlayHide(h.menu);});
+    });
+  })();
   menuAction('#mi-new',newPresentation);
   /* ONE rename, reached from the File menu and from the name in the top
      bar. It used to un-hide #pres-name, which lives in .dc-controls — a
@@ -68855,8 +69027,27 @@ window.JunoPptx = (function () {
       /* REMEMBERING the file is best-effort: it must never delay or block
          the save itself, so it runs in the background */
       idbPut(HKEY,h).catch(function(){});
+      followFileName();
       return h;
     });
+  }
+  /* ---- T398: THE FILE'S NAME IS THE PRESENTATION'S NAME ---------------
+     Save as "my talk.junoview.html" and the deck went on being called
+     "presentation-5" everywhere in Junoview -- the rail, the bar, the
+     project file -- so the name you had just chosen was the one name
+     nothing showed (2026-09-13, user: "Saving the presentation as a file
+     name, doesn't change the name in junoview"). The stem of the file
+     you picked becomes the presentation's name, by the one rename
+     everything else uses. A name already taken stays as it was, and the
+     rename says so. */
+  function fileStem(name){
+    return String(name||'').replace(/\.junoview\.html$/i,'')
+      .replace(/\.(html|junoview|json)$/i,'').trim();
+  }
+  function followFileName(){
+    var stem=fileStem(fileName);
+    if(!stem||stem===pres.name) return false;
+    return renamePresentation(stem);
   }
   /* ---- make the saved deck carry its own pictures ---------------------
      Every placed card's rendered body (figures are data: URIs already) is
@@ -69010,6 +69201,12 @@ window.JunoPptx = (function () {
         :(silent?Promise.resolve(null):pickSaveFile())))
       .then(function(h){
         if(!h) return false;
+        /* T398: picking a file may have renamed the deck after it, and
+           the text was rendered before the pick */
+        if(pres.name!==savedName){
+          savedName=pres.name||'untitled';savedSig=deckSaveSig(pres);
+          fileText=junoviewFileHtml();
+        }
         return (silent?permOK(h):permAsk(h)).then(function(ok){
           if(!ok){
             if(!silent) toast('Junoview needs permission to write '
