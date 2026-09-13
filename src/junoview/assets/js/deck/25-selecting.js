@@ -907,6 +907,21 @@
     return {x:Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100)),
             y:Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100))};
   }
+  /* T405: THE SAME POINT, UNCLAMPED, for a MOVE. pctPoint pins the
+     pointer to the page, which is right for drawing a new box and wrong
+     for dragging one: the drag's delta could never carry an object past
+     the page edge, so nothing could be parked beside the slide, though
+     the layer already spills while editing and the stage grows
+     scrollbars for it (2026-09-13, user: "it is useful sometimes to be
+     able to drag objects outside of the slide and leave them there, but
+     that isn't really an option here"). Playback and every export clip
+     to the page, so a parked object is out of the show until it is
+     dragged back. */
+  function pctPointFree(layer,ev){
+    var r=layer.getBoundingClientRect();
+    return {x:(ev.clientX-r.left)/(r.width||1)*100,
+            y:(ev.clientY-r.top)/(r.height||1)*100};
+  }
   /* ---- LOCKS -----------------------------------------------------------
      TWO locks, because there are two different things people mean by the
      word (TASKS T3):
@@ -1177,7 +1192,7 @@
       }
     }
     var a=annotByIdx(s,idx); if(!a) return;
-    var start=pctPoint(layer,ev0);
+    var start=pctPointFree(layer,ev0);   /* T405: a move may leave the page */
     /* drag the whole current selection (group / multi-select) together —
        pinned members stay put, under EITHER lock */
     var movers=selSet.filter(function(i){return typeof i==='number';});
@@ -1242,7 +1257,7 @@
     var movedAny=false;
     function mm(ev){
       movedAny=true;
-      var p=pctPoint(layer,ev);
+      var p=pctPointFree(layer,ev);   /* T405 */
       var dx=p.x-start.x,dy=p.y-start.y;
       var sx=null,sy=null;
       /* CLEARED EVERY MOVE, like sx/sy beside it. It used to be reset

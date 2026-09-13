@@ -1750,8 +1750,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # opposite edge allows (deck JS).
 # 2026-09-13, T406: chrome only. A quiet draft copy and the file-
 # waiting readout (deck JS).
-EXPECTED_MD5 = "4a3b4c27de3f9cdd6192acf09df0efca"
-EXPECTED_BYTES = 4109651
+# 2026-09-13, T405: chrome only. A move reads an unclamped point (deck
+# JS).
+EXPECTED_MD5 = "aaa5322758d587a8fe146ec6021a89ab"
+EXPECTED_BYTES = 4110554
 
 
 def _render_example() -> str:

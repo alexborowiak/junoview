@@ -7999,3 +7999,12 @@ gates are recorded in the completing commit.
   said "unsaved — saving…" for the rest of the session; it now says
   "click Save to choose the file" or "click Save to keep writing
   <file>", with the reason on its tooltip.
+- [x] **T405 — An object can be parked beside the slide.** (User: "it is
+  useful sometimes to be able to drag objects outside of the slide and
+  leave them there, but that isn't really an option here.") The layer
+  already spilled while editing and the stage already grew scrollbars
+  for a stray (2026-08-20), but the drag's pointer was pinned to the
+  page, so its delta could never carry an object past the edge. A move
+  reads an unclamped point now; the drawing tools keep the clamp.
+  Playback and every export clip to the page, so a parked object is out
+  of the show until it is dragged back.
