@@ -1738,8 +1738,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # heading per group.
 # 2026-09-13, T400: chrome only. A picture pastes while typing, from
 # the builder and from HTML (deck JS, help).
-EXPECTED_MD5 = "b8b7ad2e973340088fe7b9827bac5cce"
-EXPECTED_BYTES = 4107915
+# 2026-09-13, T401: chrome only. The text tiles show for any text box,
+# their tooltips, and a help paragraph.
+EXPECTED_MD5 = "f464acb326416be83a0fb584f6f86493"
+EXPECTED_BYTES = 4109607
 
 
 def _render_example() -> str:

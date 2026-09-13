@@ -67,9 +67,11 @@ def test_motion_keeps_going_in_the_show_only(out):
 
 def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert 'id="anim-by-hl"' in out
-    assert "        else {a.anim.hl=1; if(!a.anim.by) a.anim.by='para';}" in out
+    # (T401: a box with no entrance gets one on the way)
+    assert ("        else {var an=ensureAnim(s,a,no);an.hl=1; "
+            "if(!an.by) an.by='para';}") in out
     # whole-box takes the highlight with it: no pieces, nothing to light
-    assert "        else {delete a.anim.by;delete a.anim.hl;}" in out
+    assert "        else if(a.anim){delete a.anim.by;delete a.anim.hl;}" in out
     # the renderer keeps every piece visible and marks the current one
     assert "              pe.style.visibility=(wait&&!hl)?'hidden':'';" in out
     assert "                pe.classList.toggle('an-hl',jp===revealCount-1);" in out
