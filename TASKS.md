@@ -8041,3 +8041,11 @@ gates are recorded in the completing commit.
   "changing the original changes them all" is finally true; "Push this
   look" survives as the manual re-sync. Schema in DECK-FORMAT.md and
   deck_schema.py.
+- [x] **T410 — Clicking a line opens Style, where the Line window is.**
+  (User: "When clicking on a line, it always tries to take me away from
+  line and to the object tab.") showFmt sent every selected thing that
+  was not words or a table to Object — and Object has nothing for a
+  line but arrange and size; its dash, weight, ends and route are the
+  Line window on Style. A line or a pen stroke lands on Style now, and
+  stays there when you are already on it. A shape still goes to Object,
+  where its fill and edge are.

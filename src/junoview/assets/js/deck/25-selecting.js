@@ -217,7 +217,16 @@
     /* Default's Style tab is about the selected thing's appearance. A
        figure or shape still belongs on Object, even though it may expose a
        Line control on Style too. Custom layouts own their declared target. */
-    if(selT==='style'&&kind!=='text'&&kind!=='table') selT='object';
+    /* T410: A LINE IS ITS STROKE (2026-09-13, user: "When clicking on a
+       line, it always tries to take me away from line and to the object
+       tab"). Object has nothing for a line but arrange and size; its
+       dash, weight, ends and route are the Line window on Style. So a
+       line or a pen stroke lands on Style, and stays there when you
+       are already on it. A shape keeps going to Object: its fill and
+       edge are there. */
+    var strokeSel=(kind==='arrow'||kind==='draw');
+    if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)
+      selT='object';
     /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
        line, before a single control had been revealed — and once a
        layout may give the format groups a tab of their own, that tab is
