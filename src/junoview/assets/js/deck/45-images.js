@@ -789,6 +789,7 @@
   function frameLabel(f,i){
     if(!f) return 'Frame '+(i+1);
     if(f.label) return f.label;
+    if(f.own) return 'Page '+(i+1)+' \u2014 its own object';   /* T403 */
     if(f.ref){
       var it=resolveRef(f.ref);
       if(it&&it.title) return it.title;
@@ -834,9 +835,11 @@
     }
     fr.forEach(function(f,i){
       var row=document.createElement('div');
-      row.className='fp-row'+(i===(a.at||0)?' current':'');
+      row.className='fp-row'+(i===(a.at||0)?' current':'')
+        +(f&&f.own?' own':'');   /* T403 */
       var n=document.createElement('span');
       n.className='fp-n';n.textContent=(i+1);
+      if(f&&f.own) n.title='This page is its own object on the slide';
       row.appendChild(n);
       var t=document.createElement('input');
       t.className='fp-t';t.type='text';
@@ -853,12 +856,23 @@
         markDirty();renderFlipPane();});
       row.appendChild(t);
       var ctr=document.createElement('span');ctr.className='fp-ctr';
-      [['↑',function(){flipMove(i,-1);},'Move this figure earlier'],
+      /* T403: out of the book as its own object, and back in */
+      var ownRow=(f&&f.own)
+        ?[bic('link')+' Put back',function(){flipRelink(a,i);},
+          'Put the picture back in the book\u2019s box, as an ordinary '
+          +'page','fp-own']
+        :[bic('unlink')+' Own object',function(){flipUnlink(a,i);},
+          'Take this page out of the book as its own object \u2014 move, '
+          +'resize, fade or crop it on its own. It still shows with '
+          +'this page','fp-own'];
+      [ownRow,
+       ['\u2191',function(){flipMove(i,-1);},'Move this figure earlier'],
        ['↓',function(){flipMove(i,1);},'Move this figure later'],
        [bic('exit'),function(){flipDrop(i);},'Remove this figure']]
         .forEach(function(pr){
           var b=document.createElement('button');
-          b.className='film-mini';b.innerHTML=pr[0];b.title=pr[2];
+          b.className='film-mini'+(pr[3]?' '+pr[3]:'');
+          b.innerHTML=pr[0];b.title=pr[2];
           b.setAttribute('aria-label',pr[2]);
           b.addEventListener('click',function(ev){
             ev.stopPropagation();pr[1]();});
@@ -908,6 +922,101 @@
     flipRemap(a,map);
     a.at=Math.max(0,Math.min(fr.length-1,a.at||0));
     markDirty();renderSlide();renderFlipPane();
+  }
+  /* ---- T403: A PAGE THAT IS ITS OWN OBJECT ----------------------------
+     (2026-09-13, user: "there should be ways to change the size of one
+     and not others, e.g. in object there is like a 'unlink this frame'
+     or something and then individual ones can be moved around and
+     changed opacity and size individually whilst still being part of
+     the book"). A book's pages share one box by design -- the
+     letterbox note in renderAnnots says why. So a page that wants its
+     own place is taken OUT of the box and TIED to it: the picture (or
+     the notebook figure) becomes an ordinary object on the slide that
+     shows with this page only (a.fb/a.fbf, the tie every caption
+     already uses), and the page itself stays in the book as a blank
+     leaf ({own:1}) so the book's click stops, its numbering and every
+     other tie are untouched. Move it, resize it, fade it, crop it: it
+     is an object. "Put back" is the reverse. */
+  function flipOwnObj(s,a,i){
+    var hit=null;
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(hit||!x||!a.fid||x.fb!==a.fid||(x.fbf|0)!==i) return;
+      if(x.k==='image'||x.k==='cell') hit=x;
+    });
+    return hit;
+  }
+  function flipUnlink(a,i){
+    var s=pres.slides[cur]; if(!s||!a) return null;
+    var fr=flipFrames(a).slice(),f=fr[i];
+    if(!f||f.own) return null;
+    if(!a.fid) a.fid=flipId();
+    var o={x:a.x,y:a.y,w:a.w||40,h:a.h||32,fb:a.fid,fbf:i,fbm:'only'};
+    if(f.src){o.k='image';o.src=f.src;if(f.okey) o.okey=f.okey;}
+    else if(f.ref){
+      o.k='cell';o.ref=f.ref;
+      if(f.part) o.part=f.part;
+      if(f.nbpath) o.nbpath=f.nbpath;
+      if(f.lockver) o.lockver=deep(f.lockver);
+      if(a.ts) o.ts=a.ts;
+    } else return null;
+    if(a.op!=null) o.op=a.op;
+    if(a.rot) o.rot=a.rot;
+    var leaf={own:1};
+    if(f.label) leaf.label=f.label;
+    fr[i]=leaf;a.frames=fr;a.at=i;
+    s.annots=s.annots||[];
+    s.annots.push(o);
+    var idx=s.annots.length-1;
+    markDirty();
+    /* the picture's own shape: the frame was letterboxed into the
+       book's box, so the object takes the box the picture filled */
+    if(o.k==='image') fitObjToPicture(o,s);
+    renderSlide();renderFlipPane();
+    var l=stage.querySelector('.annot-layer');
+    if(l) selectAnnot(l,idx);
+    return idx;
+  }
+  function fitObjToPicture(o,s){
+    if(!o||!o.src) return;
+    var im=new Image();
+    im.onload=function(){
+      var nw=im.naturalWidth,nh=im.naturalHeight;
+      if(!nw||!nh||(s.annots||[]).indexOf(o)<0) return;
+      var pg=pageOf(),pw=pg.mm[0],ph=pg.mm[1];
+      var bw=o.w*pw/100,bh=o.h*ph/100,ar=nw/nh;   /* the box, in mm */
+      var fw=bw,fh=bh;
+      if(bw/bh>ar) fw=bh*ar; else fh=bw/ar;
+      o.x=Math.round((o.x+(bw-fw)/2/pw*100)*100)/100;
+      o.y=Math.round((o.y+(bh-fh)/2/ph*100)*100)/100;
+      o.w=Math.round(fw/pw*100*100)/100;
+      o.h=Math.round(fh/ph*100*100)/100;
+      markDirty(true);renderSlide();
+    };
+    im.src=o.src;
+  }
+  function flipRelink(a,i){
+    var s=pres.slides[cur]; if(!s||!a) return false;
+    var fr=flipFrames(a).slice(),f=fr[i];
+    if(!f||!f.own) return false;
+    var o=flipOwnObj(s,a,i);
+    if(!o){toast('Its object is no longer on this slide');return false;}
+    var back={};
+    if(o.k==='image'){back.src=o.src;if(o.okey) back.okey=o.okey;}
+    else {
+      back.ref=o.ref;
+      if(o.part) back.part=o.part;
+      if(o.nbpath) back.nbpath=o.nbpath;
+      if(o.lockver) back.lockver=deep(o.lockver);
+    }
+    if(f.label) back.label=f.label;
+    fr[i]=back;a.frames=fr;a.at=i;
+    var at=s.annots.indexOf(o);
+    if(at>=0) s.annots.splice(at,1);
+    markDirty();renderSlide();renderFlipPane();
+    var l=stage.querySelector('.annot-layer');
+    var bi=s.annots.indexOf(a);
+    if(l&&bi>=0) selectAnnot(l,bi);
+    return true;
   }
   /* ---- TYING AN ITEM TO A FIGURE ---------------------------------------
      "you can tie text to an image in it ... and tie objects and things to
@@ -1032,6 +1141,21 @@
       'Open this book\u2019s pages: drag them into order, give them '
       +'names, and tie text or objects to one of them',
       function(){showFlipPane(true,idx);});
+    /* T403: the page showing, as its own object -- the ask was "in
+       object there is like a 'unlink this frame'", and this door is
+       the Object tab's flip-book door */
+    var bk=(pres.slides[cur].annots||[])[idx];
+    var pgAt=bk?(bk.at||0):0,pgF=bk?flipFrames(bk)[pgAt]:null;
+    if(pgF){
+      menuHead(m,'page '+(pgAt+1)+', the one showing');
+      if(pgF.own) row('Put this page back in the book','link',
+        'The picture goes back into the book\u2019s box as an ordinary '
+        +'page',function(){flipRelink(bk,pgAt);});
+      else row('Make this page its own object','unlink',
+        'Takes it out of the book\u2019s box as an object you can move, '
+        +'resize, fade or crop on its own. It still shows with this '
+        +'page',function(){flipUnlink(bk,pgAt);});
+    }
     deckEl.appendChild(m);
     overlayShow(btn,m);floatMenu(btn,m);
   }

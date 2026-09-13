@@ -1849,7 +1849,10 @@
         if(fsrc) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
           name:(fsel&&fsel.label)||'Figure'});
-        else note.skipped++;
+        /* T403: a page that is its own object is exported AS that
+           object (it is tied to this page), so the blank leaf is not
+           a figure that went missing */
+        else if(!(fsel&&fsel.own)) note.skipped++;
       } else if(a.k==='web'){
         /* T388: PowerPoint has no shape for a live page */
         note.web=(note.web||0)+1;

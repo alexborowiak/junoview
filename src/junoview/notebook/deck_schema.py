@@ -353,7 +353,11 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                           "`labels`, and the axis titles `xlab`, "
                           "`ylab`, `y2lab`."),
     "flip": (("x", "y"), "A flip book: several figures stepped through "
-                         "in place."),
+                         "in place. `frames` is its pages, each {src, "
+                         "okey} (a picture), {ref, part} (a notebook "
+                         "card) or {own: 1} -- a blank leaf whose "
+                         "picture is an object of its own on the slide, "
+                         "tied to this page by fb/fbf (T403)."),
 }
 
 

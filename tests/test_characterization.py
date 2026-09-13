@@ -1762,8 +1762,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T410: chrome only. A line lands on Style (deck JS).
 # 2026-09-13, T411: chrome only. A typed text size on the Style system
 # (deck JS/CSS).
-EXPECTED_MD5 = "56d463edd50b36f194a3c591ee349324"
-EXPECTED_BYTES = 4131320
+# 2026-09-13, T403: chrome only. A flip page as its own object (deck
+# JS/CSS).
+EXPECTED_MD5 = "0d689ce5d6f706ef7f475e9f8a520ef0"
+EXPECTED_BYTES = 4137590
 
 
 def _render_example() -> str:

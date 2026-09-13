@@ -123,7 +123,7 @@ optional and defaulted.
 | `arrow` | `x1`, `y1`, `x2`, `y2` | A line or arrow — two endpoints, not a box. |
 | `cell` | `x`, `y` | A frame showing a card from a notebook, named by `ref`. |
 | `draw` | `x`, `y` | A freehand stroke: a box plus points normalised inside it. |
-| `flip` | `x`, `y` | A flip book: several figures stepped through in place. |
+| `flip` | `x`, `y` | A flip book: several figures stepped through in place. `frames` is its pages, each `{src, okey}` (a picture), `{ref, part}` (a notebook card) or `{own: 1}` — a blank leaf whose picture is an object of its own on the slide, tied to this page by `fb`/`fbf` (T403); a `label` names any of them. `fid` is the book's stable id that ties point at; `at` is the editor's page. |
 | `image` | `x`, `y` | A placed picture, carried as a data URI. |
 | `video` | `x`, `y` | A video or audio clip. `vkey` names its bytes in the deck's `media` store; `poster` is the still shown before it plays; `trim` `{s, e}` the seconds it plays between; `audio` 1 for a sound-only clip; `ctrl`, `auto`, `loop`, `mute` are its playback switches. It exports as a real PowerPoint media shape. |
 | `rect` | `x`, `y` | A drawn shape; `shape` picks which one. |

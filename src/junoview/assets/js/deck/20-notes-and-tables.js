@@ -2754,6 +2754,14 @@
               :'';
             fst.appendChild(fmiss);
           }
+        } else if(fdef&&fdef.own&&editing){
+          /* T403: the page's picture is an object of its own on the
+             slide, tied to this page; the leaf in the book is blank */
+          var fown=document.createElement('div');
+          fown.className='an-flipempty an-flipown';
+          fown.textContent='This page is its own object on the slide '
+            +'\u2014 select it there to move, resize or fade it';
+          fst.appendChild(fown);
         }
         fl.appendChild(fst);
         if(fr.length>1&&a.fbtn){

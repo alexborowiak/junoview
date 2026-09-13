@@ -8060,3 +8060,19 @@ gates are recorded in the completing commit.
   writes points and shows the size a box actually gets when it says
   nothing itself; and the named type's readout is a box you can type
   in.
+- [x] **T403 — A flip-book page can be its own object.** (User: "there
+  should be ways to change the size of one and not others, e.g. in
+  object there is like a 'unlink this frame' or something and then
+  individual ones can be moved around and changed opacity and size
+  individually whilst still being part of the book.") A book's pages
+  share one box by design — the letterbox note in renderAnnots says
+  why. So a page that wants its own place is taken OUT of the box and
+  TIED to it: the picture (or notebook figure) becomes an ordinary
+  object on the slide that shows with this page only — the `fb`/`fbf`
+  tie every caption already uses — and the page stays in the book as a
+  blank leaf (`{own:1}`) so the click stops, the numbering and every
+  other tie are untouched. Move it, resize it, fade it, crop it: it is
+  an object. "Own object" on the pane row and "Make this page its own
+  object" on the Object tab's "+ Add" door; "Put back" is the reverse.
+  The blank leaf says what it is while editing and costs nothing in a
+  .pptx. Schema in DECK-FORMAT.md and deck_schema.py.

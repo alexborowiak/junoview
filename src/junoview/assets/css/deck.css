@@ -3038,6 +3038,12 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 .fp-t:focus{border-color:var(--cyan);background:var(--chrome-0,#0b141d);}
 .fp-ctr{display:none;gap:1px;flex:none;}
 .fp-row:hover .fp-ctr,.fp-row.current .fp-ctr{display:flex;}
+/* T403: a page that is its own object -- its number says so, and the
+   row's verb has words on it, because "take it out of the book" is
+   not a glyph anyone would guess */
+.fp-row.own .fp-n{color:var(--accent);}
+.film-mini.fp-own{white-space:nowrap;}
+.deck.editing .an-flipown{opacity:.7;}
 /* tying an item to a figure lives in this pane rather than the ribbon,
    because it needs the frame LIST visible to mean anything */
 .fp-tie{border-top:1px solid #ffffff14;padding:9px 12px;
