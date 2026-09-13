@@ -165,8 +165,12 @@ def test_copy_cut_paste_including_images_from_the_clipboard(out):
     # or falling apart into unrelated items
     assert "var copies=independentCopies(clipBuf,s,clipGrpMeta);" in out
     assert "delete cp.grp;" not in out
-    # typing into a text box must still paste text, not an annotation
-    assert "e.target.isContentEditable) return;" in out
+    # typing into a text box must still paste text, not an annotation --
+    # and since T400 a PICTURE pasted while typing goes on the slide,
+    # so the caret case returns only when there is no picture
+    assert "    if(e.target.isContentEditable){" in out
+    assert ("      if(!pic) return;\n      e.preventDefault();\n"
+            "      try{e.target.blur();}") in out
 
 
 def test_align_and_distribute_measure_the_visual_rect(out):

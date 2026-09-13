@@ -2379,6 +2379,52 @@
     if(pasteHandled) clearTimeout(pasteHandled);
     pasteHandled=setTimeout(function(){pasteHandled=null;},300);
   }
+  /* ---- T400: THE PICTURE ON THE CLIPBOARD, HOWEVER IT GOT THERE -------
+     (2026-09-13, user: "Images can't be pasted into junoview as well it
+     seems.") Three ways a paste of a picture came to nothing:
+     * the caret was in a text box -- the one place you are most likely
+       to be after drawing something -- and the handler below returned
+       on isContentEditable, so the picture went to the box's own paste,
+       which only knows words;
+     * you were on the builder screen (mode 'create'), which the same
+       line ruled out;
+     * the picture was copied as part of a page selection (a notebook
+       output, a web page) and travels as text/html with an <img> in it,
+       not as an image item.
+     One reader for all of them, and one placer. */
+  function clipboardImage(e){
+    var cd=e.clipboardData; if(!cd) return null;
+    var items=cd.items||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i].type&&items[i].type.indexOf('image/')===0){
+        var f=items[i].getAsFile&&items[i].getAsFile();
+        if(f) return {file:f};
+      }
+    }
+    var files=cd.files||[];
+    for(var j=0;j<files.length;j++)
+      if(files[j].type&&files[j].type.indexOf('image/')===0)
+        return {file:files[j]};
+    var html='';
+    try{html=cd.getData('text/html')||'';}catch(err){}
+    var m=html&&html.match(/<img\b[^>]*\ssrc=["']([^"']+)["']/i);
+    if(m&&/^(data:image\/|https?:\/\/)/i.test(m[1])) return {src:m[1]};
+    return null;
+  }
+  function pasteClipboardImage(pic){
+    if(!pic) return false;
+    if(pic.file) return pasteImageFile(pic.file);
+    if(/^data:/i.test(pic.src)){
+      fetch(pic.src).then(function(r){return r.blob();})
+        .then(function(b){pasteImageFile(b);})
+        .catch(function(){toast('That image could not be read');});
+      return true;
+    }
+    /* a picture that lives at an address: placed by it, the way the
+       Images tab's own URL door does */
+    placeImage(pic.src,0,null);
+    return true;
+  }
   document.addEventListener('paste',function(e){
     /* the Ctrl+V keydown armed a fallback in case this event never comes
        (some engines fire no paste on a non-editable focus) — it did, so
@@ -2388,9 +2434,29 @@
       clearTimeout(pasteHandled);pasteHandled=null;
       e.preventDefault();return;
     }
-    if(deckEl.hidden||mode!=='edit') return;
+    if(deckEl.hidden||mode==='view') return;
     var tag=(e.target.tagName||'').toLowerCase();
-    if(tag==='input'||tag==='textarea'||e.target.isContentEditable) return;
+    if(tag==='input'||tag==='textarea') return;
+    var pic=clipboardImage(e);
+    if(e.target.isContentEditable){
+      /* T400: a picture pasted while typing goes on the SLIDE, beside
+         the box, the way PowerPoint does it; the box closes first so
+         its words are committed. Words still go into the box. */
+      if(!pic) return;
+      e.preventDefault();
+      try{e.target.blur();}catch(err){}
+      pasteClipboardImage(pic);
+      return;
+    }
+    if(mode==='create'){
+      /* T400: the builder screen has no canvas to paste words onto, but
+         a picture can open the editor and land on the current slide */
+      if(!pic) return;
+      e.preventDefault();
+      setUIMode('edit');
+      pasteClipboardImage(pic);
+      return;
+    }
     /* a fresh internal copy left its marker on the OS clipboard — prefer
        the internal buffer over a stale clipboard image (see copySel) */
     var mk='';
@@ -2399,14 +2465,7 @@
     if(clipBuf.length&&mk.indexOf('junoview/items')===0){
       e.preventDefault();pasteBuf();return;
     }
-    var items=(e.clipboardData||{}).items||[];
-    for(var i=0;i<items.length;i++){
-      if(items[i].type&&items[i].type.indexOf('image/')===0){
-        e.preventDefault();
-        pasteImageFile(items[i].getAsFile());
-        return;
-      }
-    }
+    if(pic){e.preventDefault();pasteClipboardImage(pic);return;}
     if(clipBuf.length){e.preventDefault();pasteBuf();return;}
     /* NOTHING USED TO HAPPEN HERE. Ctrl+V with plain text on the
        clipboard and no box open fell off the end of this handler and did

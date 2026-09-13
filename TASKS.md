@@ -7933,3 +7933,14 @@ gates are recorded in the completing commit.
   like the canvas menu: the slide, how it arrives (the current
   transition marked "on"), which versions, then this slide — optional,
   move up, move down, duplicate, delete.
+- [x] **T400 — A picture pastes wherever you are.** (User: "Images
+  can't be pasted into junoview as well it seems.") Ctrl+V with a
+  picture already worked on the canvas, and came to nothing in the three
+  places you are most likely to be: with the caret in a text box (the
+  handler returned on isContentEditable, and the box's own paste only
+  knows words), on the builder screen (mode `create`), and when the
+  picture was copied as part of a page selection — a notebook output, a
+  web page — which travels as HTML with an `<img>` in it rather than as
+  an image item. One reader now finds the picture in any of those
+  shapes; while typing, the box closes and the picture lands on the
+  slide beside it; from the builder the editor opens and takes it.
