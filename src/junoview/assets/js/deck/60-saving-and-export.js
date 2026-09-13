@@ -2301,7 +2301,7 @@
       if(!silent) toast('That file does not look like a saved deck');
       return 0;
     }
-    var imported=0,dropped=0,firstName=null;
+    var imported=0,dropped=0,first=null;
     list.forEach(function(pr){
       if(!pr||!Array.isArray(pr.slides)) return;
       var np=normPres(pr);
@@ -2315,9 +2315,22 @@
          was ignored, so once the draft budget was full every write was
          discarded and the toast still said "Imported N presentations" --
          and the view was then switched to a deck that is not stored. */
-      if(!lsSet(PFX+nm,JSON.stringify(np))){dropped++;return;}
-      if(!firstName) firstName=nm;
-      imported++;
+      var kept=lsSet(PFX+nm,JSON.stringify(np),true);
+      if(kept){
+        imported++;
+        if(!first) first={name:nm,pres:np,kept:true};
+        return;
+      }
+      /* T414: NO ROOM IN THE BROWSER IS NOT "CANNOT OPEN" (2026-09-13,
+         user: "I am trying to open a junoview file from my computer.
+         it will not open ... I have to present it soon"). A deck with
+         a few pasted pictures is bigger than localStorage will take,
+         and this refused to open it at all -- while the one copy that
+         matters, the file, was in hand the whole time. The first deck
+         in the file opens from the object in hand; only the browser
+         copy is what did not fit. */
+      if(!silent&&!first){first={name:nm,pres:np,kept:false};imported++;}
+      else dropped++;
     });
     if(!imported){
       if(!silent)
@@ -2328,17 +2341,26 @@
       return 0;
     }
     if(silent){renderPresTabs();return imported;}
-    lsSet(PFX+'last',firstName);
-    loadPresentation(firstName);
+    if(first.kept){
+      lsSet(PFX+'last',first.name,true);
+      loadPresentation(first.name);
+    } else loadPresentationObj(first.pres);   /* T414 */
     cur=0;activePane=-1;
     /* picked from the launcher: go straight into the editor — the whole
        point of opening a file is to get back to the presentation in it */
     if(deckEl.hidden) openDeck('edit');
     status();refresh();
-    toast('Imported '+imported+' presentation'
-      +(imported>1?'s':'')+' (as drafts)'
-      +(dropped?(' \u2014 '+dropped+' would not fit and '
-        +(dropped>1?'were':'was')+' not kept'):''));
+    if(first.kept)
+      toast('Imported '+imported+' presentation'
+        +(imported>1?'s':'')+' (as drafts)'
+        +(dropped?(' \u2014 '+dropped+' would not fit and '
+          +(dropped>1?'were':'was')+' not kept'):''));
+    else
+      toast('Opened \u2014 too big for a browser copy, so it lives in '
+        +'its file: Save writes it there'
+        +(dropped?(' \u2014 '+dropped+' other'+(dropped>1?'s':'')
+          +' in the file '+(dropped>1?'were':'was')+' not kept'):''),
+        8000);
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
@@ -2380,7 +2402,13 @@
             toast('Opened \u2014 Save now writes back to '+fileName);
           });
         });
-      }).catch(function(){});
+      }).catch(function(e){
+        /* T414: a cancelled picker is silent; anything else is SAID.
+           This swallowed every failure, so a file that would not open
+           gave no clue why. */
+        if(e&&e.name==='AbortError') return;
+        toast('Could not open that file: '+((e&&e.message)||e),9000);
+      });
       return;
     }
     var fi=document.getElementById('deckfile');

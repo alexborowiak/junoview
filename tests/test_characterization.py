@@ -1765,8 +1765,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T403: chrome only. A flip page as its own object (deck
 # JS/CSS).
 # 2026-09-13, T412: chrome only. The strip keeps its scroll (deck JS).
-EXPECTED_MD5 = "7e62ccc49aa7ba95e4c80466cb40f8fa"
-EXPECTED_BYTES = 4139001
+# 2026-09-13, T414: chrome only. A big file still opens; Open means
+# open (deck JS).
+EXPECTED_MD5 = "d31cee103133021e1bae4bd2c94e0001"
+EXPECTED_BYTES = 4142415
 
 
 def _render_example() -> str:

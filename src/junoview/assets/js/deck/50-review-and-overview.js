@@ -1479,13 +1479,29 @@
     if(root) root.hidden=true;
     presentationHubDeckInert(false);
   }
-  function openPresentationHub(){
+  /* T414: OPEN MEANS OPEN (2026-09-13, user: "why when you click open
+     is there all the 'new poster options', like THAT WAS THERE ON THE
+     LAST MENU"). Every door into this dialog is an Open door except the
+     folder one, so the create row shows only when asked for
+     ({create:true}); the rest of the time the dialog is the library,
+     with "Open a file" first. A door wired straight as a click listener
+     passes an event, which is not an options object. */
+  function openPresentationHub(opts){
     var root=$('#presentation-hub');if(!root) return;
+    var create=!!(opts&&opts.create===true);
     closeDeckPresentationDrawer();
     renderPresentationHub();root.hidden=false;
+    ['#presentation-hub-new','#presentation-hub-poster',
+     '#presentation-hub-folder'].forEach(function(id){
+      var b=$(id); if(b) b.hidden=!create;});
+    var ttl=$('#presentation-hub-title');
+    if(ttl) ttl.textContent=create?'Open or create':'Open a presentation';
+    var form=$('#presentation-hub-folderform');
+    if(form&&!create) form.hidden=true;
     presentationHubDeckInert(true);
     setTimeout(function(){
-      var b=$('#presentation-hub-new');if(b) b.focus();},0);
+      var b=$(create?'#presentation-hub-new':'#presentation-hub-file');
+      if(b) b.focus();},0);
   }
   /* two doors, one drawer: the presenting bar's button and the editing
      bar's chevron beside Home (T396) both say whether it is open */
@@ -1668,7 +1684,10 @@
     });
     var file=$('#presentation-hub-file');
     if(file) file.addEventListener('click',function(){
-      closePresentationHub();var input=$('#deckfile');if(input) input.click();
+      /* T414: the same door the rail's row uses -- a real file handle
+         where the browser has one, so Save writes back to the file you
+         opened; the bare <input> only where it does not */
+      closePresentationHub();openDeckFile();
     });
     var pptx=$('#presentation-hub-pptx');
     if(pptx) pptx.addEventListener('click',function(){
@@ -1683,7 +1702,7 @@
     },true);
     window.SemApp.deckHub=openPresentationHub;
     window.SemApp.deckNewFolder=function(){
-      openPresentationHub();
+      openPresentationHub({create:true});
       if(form){form.hidden=false;if(field) field.focus();}
     };
     window.SemApp.deckRecentNames=savedRecentPresentationNames;

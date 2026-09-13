@@ -8084,3 +8084,20 @@ gates are recorded in the completing commit.
   empties it — a click on a thumbnail, a new slide, an edit. The
   position is read first and put back after; the current slide is then
   brought on screen only when it is off it, by the least that does.
+- [x] **T414 — A .junoview file too big for the browser's draft store
+  still opens.** (User: "I am trying to open a junoview file from my
+  computer. it will not open. This is really bad as I have to present
+  it soon.") A deck with a few pasted pictures is bigger than
+  localStorage will take, and importDeckText refused to open it at all
+  — "There was no room to store them" — while the one copy that
+  matters, the file, was in hand the whole time. Reproduced in Chromium
+  with an 11 MB deck. Now the first deck in the file opens from the
+  object in hand (`loadPresentationObj`); only the browser copy is what
+  did not fit, and the toast says so. Also: the library dialog's "Open
+  a file" goes through the real file-handle door so Save writes back to
+  the file you opened; a picker failure is said rather than swallowed;
+  the dialog opened from an Open door no longer leads with New
+  presentation / New poster / New folder (user: "why when you click
+  open is there all the 'new poster options'"); and the readout names
+  the folder an autosave went into, so "autosaved to talk.junoview.html"
+  cannot send you to look in the wrong file.

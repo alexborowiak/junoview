@@ -758,6 +758,20 @@
        before any of its slides was looked at still carries them */
     if(typeof mediaWarm==='function') mediaWarm(pres);
   }
+  /* T414: A DECK OPENED FROM A FILE THAT IS TOO BIG FOR THE DRAFT STORE
+     STILL OPENS -- from the object in hand, with no browser copy. Its
+     home is the file it came from; the caller points Save at it. The
+     same steps as loadPresentation, minus the read from localStorage
+     that had nothing to read. */
+  function loadPresentationObj(np){
+    flushDraftWrite();
+    histHead=null;histBranch='';
+    deckZoom=0;
+    histSeed();
+    pres=np;source='draft';
+    histReset();
+    if(typeof mediaWarm==='function') mediaWarm(pres);
+  }
   /* which presentation the page opens with. Called from THE BOOT
      SEQUENCE at the end of the file — never from here: loadPresentation
      → histReset() → syncCustomTypes() reaches STYLE_DEFAULTS, which is
@@ -796,7 +810,14 @@
   }
   function whereSaved(){
     if(saveTarget==='project') return 'project';
-    if(saveTarget==='file') return fileName||'file';
+    /* T414: WHICH file, and WHERE. An autosave into the default folder
+       writes <name>.junoview.html THERE -- not into a file you opened
+       from somewhere else -- and "autosaved to talk.junoview.html" let
+       you look in the wrong place for your work. */
+    if(saveTarget==='file')
+      return (fileName||'file')
+        +((typeof deckDirName!=='undefined'&&deckDirName&&!fileHandle)
+          ?(' in your '+deckDirName+' folder'):'');
     return 'browser';
   }
   /* ---- the name, in the title bar ------------------------------------
