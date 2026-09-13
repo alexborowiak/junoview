@@ -7978,3 +7978,10 @@ gates are recorded in the completing commit.
   the slide now: not while editing, not in playback, not in print or
   PowerPoint, and it claims no click. The eye's tooltip, the schema and
   DECK-FORMAT say so.
+- [x] **T407 — A crop goes past halfway.** (User: "cropping an object
+  stops halfway, you cannot crop an object more than half way.") Each
+  trim handle was capped at 45%, so the right-hand third of a figure
+  could never be all that was kept. A handle, and the Trim edges % box,
+  may go as far as the opposite edge's trim allows, leaving a 4% sliver
+  of the picture; and a trim is kept to a tenth of a percent rather
+  than a whole one.

@@ -1697,6 +1697,14 @@
       :'Select two or more pictures: when one is enlarged in the show '
         +'they all come up together, side by side';
   }
+  /* how far one edge's trim may go: up to the opposite edge's trim, less
+     the sliver of picture that must remain (T407) */
+  var CROP_KEEP=4;
+  function cropRoom(a,side){
+    var opp={t:'b',b:'t',l:'r',r:'l'}[side];
+    var o=(a&&a.crop&&+a.crop[opp])||0;
+    return Math.max(0,100-o-CROP_KEEP);
+  }
   function mkCropHandles(host,layer,s2,idx){
     var a=s2.annots[idx]; if(!a) return;
     ['t','r','b','l'].forEach(function(side){
@@ -1726,7 +1734,12 @@
           else if(side==='b') v=(r.bottom-e2.clientY)/r.height*100;
           else if(side==='l') v=(e2.clientX-r.left)/r.width*100;
           else v=(r.right-e2.clientX)/r.width*100;
-          v=Math.max(0,Math.min(45,Math.round(v)));
+          /* T407: AS FAR AS THE OTHER EDGE ALLOWS. Each side was capped
+             at 45%, so the right-hand third of a figure could never be
+             all that was kept (2026-09-13, user: "you cannot crop an
+             object more than half way"). A handle may now go up to the
+             opposite trim, leaving CROP_KEEP percent of the picture. */
+          v=Math.max(0,Math.min(cropRoom(a,side),Math.round(v*10)/10));
           a.crop=a.crop||{};
           if(v) a.crop[side]=v; else delete a.crop[side];
           renderAnnots(layer,s2);paintSel(layer);
@@ -1794,14 +1807,16 @@
     var inputs={};
     SIDES.forEach(function(p){
       var inp=document.createElement('input');
-      inp.type='number';inp.min='0';inp.max='45';inp.step='1';
+      inp.type='number';inp.min='0';inp.max=String(100-CROP_KEEP);
+      inp.step='1';
       inp.placeholder=p[1];
       inp.title='Trim the '+p[1]+' edge (% of the frame)';
       inp.addEventListener('click',function(e){e.stopPropagation();});
       inp.addEventListener('input',function(){
-        var v=Math.max(0,Math.min(45,parseFloat(inp.value)||0));
+        var v0=Math.max(0,parseFloat(inp.value)||0);
         fmtApply(function(a){
           a.crop=a.crop||{};
+          var v=Math.min(v0,cropRoom(a,p[0]));   /* T407 */
           if(v) a.crop[p[0]]=v; else delete a.crop[p[0]];
           if(!a.crop.shape&&!a.crop.t&&!a.crop.r&&!a.crop.b&&!a.crop.l)
             delete a.crop;

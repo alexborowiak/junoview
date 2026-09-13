@@ -1744,8 +1744,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # clicks, its CSS, the canvas badge counting the same clicks.
 # 2026-09-13, T404: chrome only. Hidden is hidden in every mode (deck
 # JS, the eye's tooltip).
-EXPECTED_MD5 = "edab5a56ed81c2a9476866cbe7f38df4"
-EXPECTED_BYTES = 4106628
+# 2026-09-13, T407: chrome only. A crop handle goes as far as the
+# opposite edge allows (deck JS).
+# 2026-09-13, T407: chrome only. A crop handle goes as far as the
+# opposite edge allows (deck JS).
+EXPECTED_MD5 = "9d835e2a12da29cc710cdcc824847e57"
+EXPECTED_BYTES = 4107385
 
 
 def _render_example() -> str:
