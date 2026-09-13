@@ -8018,3 +8018,26 @@ gates are recorded in the completing commit.
   The file input's reader was lifted into `flipAddFiles` so both doors
   keep the original aside the same way. With no book selected the
   picture lands on the slide as before.
+- [x] **T409 — Clones you can actually add, and what they share.** (User:
+  "The make clones feature seems to be broken. I tried to clone an
+  object, but it just changed the clone button to say 'Its clones', and
+  then I can't make clones? Also would be cool if there were clones in
+  style and clones in space, and also both. Like I want one image that
+  is going to be across multiple slides and I always want in the one
+  position on them all.") Three things. Making a set turned the only
+  clone door into a list of where the clones were, and placing another
+  lived in the canvas right-click menu alone — the Reuse group has an
+  "Add a clone…" door now (here beside it, on every slide, on every
+  slide after this one), and the canvas menu and the Layers pane open
+  the same menu. A clone placed from the definition had no content —
+  an empty picture — so a clone is now seeded from an existing one
+  (`cmpSeed`), with the ties and ids that name things on that slide
+  left behind. And what the clones share is a choice: `link` on the
+  definition is `look` (as before), `place` (one spot on every slide,
+  `x`/`y` on the definition; each clone keeps its own look) or `both`,
+  chosen when the set is made — a small menu with the name in it, no
+  more prompt() — and changeable from the Add menu. Following is LIVE:
+  markDirty pushes from a selected clone before the history entry, so
+  "changing the original changes them all" is finally true; "Push this
+  look" survives as the manual re-sync. Schema in DECK-FORMAT.md and
+  deck_schema.py.

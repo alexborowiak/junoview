@@ -84,7 +84,7 @@ def test_arrange_and_object_groups_pair_what_belongs_together():
     appearance = _ids(_row(html, "Appearance"))
     reuse = _ids(_row(html, "Reuse"))
     assert appearance == ["fmt-opcell", "fmt-opwrap", "fmt-op", "fmt-opval"]
-    assert reuse == ["fmt-cmp-make", "fmt-cmp-find"]
+    assert reuse == ["fmt-cmp-make", "fmt-cmp-add", "fmt-cmp-find"]
     # nothing that moved was left behind in either focused group
     for gone in ("fmt-lock", "fmt-cropwrap", "fmt-figures", "fmt-srcwrap"):
         assert gone not in appearance and gone not in reuse, gone

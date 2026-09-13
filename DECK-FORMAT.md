@@ -32,7 +32,7 @@ supported state, and the editor marks it rather than forbidding it.
 
 | key | type | what it is |
 | --- | --- | --- |
-| `components` | dict | {id: {name, w, h, items}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. |
+| `components` | dict | {id: {name, w, h, items, link, x, y}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. `link` says what the clones share (T409): absent or `look` is the look and the arrangement, each clone wherever it was put; `place` is one spot on every slide (`x`,`y`, the page corner) with each clone keeping its own look; `both` is everything. |
 | `cropMarks` | int | 1 when trim marks are printed outside the page. |
 | `cuts` | dict | {id: {name}}. Named subsets of one deck — a 45-minute version and a 5-minute one in the same file. Membership is the slide's `cuts` list. |
 | `live` | dict | `{ref: 1}` for figures the author made LIVE LINKS: they re-read from the notebook every time the deck opens, instead of showing the copy kept in `emb`. Absence means kept. |

@@ -105,9 +105,13 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "styles": (dict, "This deck's overrides of the named text types."),
     "tokens": (dict, "The deck's design tokens: {c:{name:colour}, rad, "
                      "gap}. An item referencing one stores '@name'."),
-    "components": (dict, "{id: {name, w, h, items}}. Named groups that "
-                         "can be placed repeatedly; every instance stays "
-                         "linked to the definition."),
+    "components": (dict, "{id: {name, w, h, items, link, x, y}}. Named "
+                         "groups that can be placed repeatedly; every "
+                         "instance stays linked to the definition. link "
+                         "says what the clones share: absent or 'look' "
+                         "(the look and arrangement, each clone wherever "
+                         "it was put), 'place' (one spot, x/y, on every "
+                         "slide; each keeps its own look) or 'both'."),
     "cuts": (dict, "{id: {name}}. Named subsets of one deck — a "
                    "45-minute version and a 5-minute one in the same "
                    "file. Membership is the slide's `cuts` list."),

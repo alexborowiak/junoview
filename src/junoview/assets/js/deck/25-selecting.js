@@ -47,7 +47,7 @@
     /* the Object group's provenance row (T198): where it came from,
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
-    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-find '
+    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-add #fmt-cmp-find '
     /* THE HISTORY TILE, AND WHY THE OBJECT TAB WOULD NOT GO AWAY.
        #fmt-hist (T220's "what this object has been through", given a
        group of its own by T233) is shown by showFmt but appeared in
@@ -610,6 +610,7 @@
     var selCount=selIdxs().length;
     var cmpOn=!!(a&&a.cmp&&a.cinst);
     show('#fmt-cmp-make',isNum&&selCount>=1&&!cmpOn);
+    show('#fmt-cmp-add',cmpOn);   /* T409: the door that was missing */
     show('#fmt-cmp-find',cmpOn);
     var cf=$('#fmt-cmp-find');
     if(cf&&cmpOn&&typeof cmpInstances==='function'){
@@ -2562,6 +2563,10 @@
       if(cInst){
         var cDef=cmpStore()[cInst.cmp];
         var cN=cmpInstances(cInst.cmp).length;
+        /* T409: the door the ribbon has, here too */
+        row('Add a clone\u2026','',function(){cmpAddMenu(null,cInst);},
+          'Another one here, on every slide, or on every slide after '
+          +'this one \u2014 and what the clones share','plus');
         row('Push this look to \u201c'
           +((cDef&&cDef.name)||'the component')+'\u201d','',
           function(){
@@ -2569,8 +2574,9 @@
             toast(k?(k+' other instance'+(k===1?'':'s')+' updated')
               :'Saved \u2014 no other instances yet');},
           'The other '+(cN-1)+' instance'+(cN===2?'':'s')
-          +' take this arrangement and look. Their own words and '
-          +'figures are untouched.');
+          +' take this arrangement and look now. They follow every '
+          +'edit anyway (T409); this is for a deck made before they '
+          +'did. Their own words and figures are untouched.');
         /* WHERE ELSE IS THIS? The section could push a look to every
            other instance and could cut this one loose from them, but it
            could not tell you they existed — the count only ever
@@ -2587,16 +2593,12 @@
           'Turns this instance into ordinary objects. The component and '
           +'its other instances are unaffected.');
       } else if(cSel.length){
-        row('Make a component from '
-          +(cSel.length===1?'this':('these '+cSel.length)),'',
-          function(){
-            var nm=prompt('Name for the component:','FigureCaption');
-            if(!nm) return;
-            var id=cmpDefine(nm.trim(),cSel);
-            if(id) toast('\u201c'+nm.trim()+'\u201d saved \u2014 place '
-              +'it again from this menu');},
-          'Saves the arrangement and look as a named thing you can place '
-          +'again. Each copy keeps its own words and figures.');
+        row('Make clones of '
+          +(cSel.length===1?'this':('these '+cSel.length))+'\u2026','',
+          function(){cmpMakeMenu(null,cSel);},   /* T409 */
+          'Same look, same place, or both \u2014 every copy keeps its '
+          +'own words and figures, and changing one changes them all.',
+          'group');
       }
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];

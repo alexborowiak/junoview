@@ -926,6 +926,9 @@
      undo entry (taken on blur, as before) instead of one per phrase —
      which would evict real slide edits from the 50-deep stack. */
   function markDirty(quiet){
+    /* T409: a committed edit to a clone reaches its clones FIRST, so
+       the history entry and the draft below hold the synced deck */
+    if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
     source='draft';
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */

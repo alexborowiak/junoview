@@ -299,7 +299,20 @@
      5. SCHEMA. `pres.components = {id:{name, w, h, items:[…]}}`. It is
         deck-level, so it rides in normPres, _as_presentations, the undo
         snapshot and DECK-FORMAT.md — the five places T33 exists to make
-        it obvious you have to touch. */
+        it obvious you have to touch.
+
+     6. WHAT THE CLONES SHARE (T409). `link` on the definition: absent
+        or 'look' is the contract above (the look and the arrangement
+        travel; each clone sits wherever you put it); 'place' is one
+        spot on every slide (`x`,`y` on the definition), each clone
+        with its own look; 'both' is everything. And following is LIVE:
+        every committed edit to a clone pushes from that clone
+        (cmpFollowSel, called by markDirty), so "changing the original
+        changes them all" is true of every clone rather than a
+        tooltip's promise -- "Push" survives as the manual re-sync for a
+        deck made before that. A clone placed from another gets that
+        one's CONTENT too (cmpSeed): the definition still holds none,
+        but "one image across multiple slides" needs the image. */
   function cmpStore(){
     if(!pres.components) pres.components={};
     return pres.components;
@@ -321,7 +334,24 @@
      is stored relatively instead. Content is not in MATCH_PROPS at all,
      which is the whole point (see the note above). */
   var CMP_SKIP={x:1,y:1,w:1,h:1,x1:1,y1:1,x2:1,y2:1,mid:1};
-  function cmpDefine(name,idxs){
+  /* T409: the three things a set of clones can share */
+  var CMP_LINKS=[
+    ['look','Same look',
+     'Colour, size, type and arrangement follow; each clone sits '
+     +'wherever you put it'],
+    ['place','Same place',
+     'One spot on every slide \u2014 move or resize one and they all '
+     +'go; each keeps its own look'],
+    ['both','Same look and place',
+     'Everything follows: change any clone and every other one '
+     +'matches']];
+  function cmpLinkOf(def){
+    var l=def&&def.link;
+    return (l==='place'||l==='both')?l:'look';
+  }
+  function cmpHasLook(def){return cmpLinkOf(def)!=='place';}
+  function cmpHasPlace(def){return cmpLinkOf(def)!=='look';}
+  function cmpDefine(name,idxs,link){
     var s2=pres.slides[cur];
     if(!s2||!idxs.length) return null;
     var layer=stage.querySelector('.annot-layer');
@@ -377,7 +407,10 @@
       if(fn!=null&&fn!==n) items[n].capOfIdx=fn;
     });
     var id=nextCmpId();
-    cmpStore()[id]={name:name||'Component',w:W,h:H,items:items};
+    var def={name:name||'Component',w:W,h:H,items:items};
+    /* T409: a place-linked set remembers the spot */
+    if(link==='place'||link==='both'){def.link=link;def.x=bb.l;def.y=bb.t;}
+    cmpStore()[id]=def;
     /* the objects you defined it FROM become its first instance, so the
        thing you were looking at is a component now rather than a copy of
        one sitting beside it */
@@ -603,17 +636,49 @@
     }).observe(p,{attributes:true,attributeFilter:['hidden']});
   }
   window.SemDeckMasters=openMasters;
-  function cmpPlace(id,at){
+  /* T409: A CLONE HAS SOMETHING IN IT. The definition holds a look and
+     an arrangement, never content -- so a clone placed from the
+     definition alone was an empty picture, or a box with no words, and
+     "one image across multiple slides" was exactly the thing it could
+     not do. The content is copied from an instance (the one you are
+     adding from, else the first there is). Ties and ids that name
+     things on that instance's slide do not come along: the caption tie
+     is re-minted below, and a build order, a flip-book tie or an
+     arrow's attached end would point at strangers. */
+  var CMP_NOT_COPIED=['cmp','ci','cinst','cap','capOf','grp','oid','anim',
+    'fb','fbf','fbm','tie','c1','c2','anch','hide'];
+  function cmpSeed(src,it){
+    var a=src?deep(src):{};
+    CMP_NOT_COPIED.forEach(function(p){delete a[p];});
+    a.k=it.k;
+    return a;
+  }
+  /* si: the slide to place on (default: this one). from: {si,inst},
+     the clone whose content the new one starts with. quiet: no
+     history entry and no render -- the caller placing on many slides
+     does both once. */
+  function cmpPlace(id,at,si,from,quiet){
     var def=cmpStore()[id]; if(!def) return 0;
-    var s2=pres.slides[cur]; if(!s2) return 0;
+    if(si==null) si=cur;
+    var s2=pres.slides[si]; if(!s2) return 0;
     s2.annots=s2.annots||[];
-    var W=def.w||20,H=def.h||20;
-    var ox=(at?at.x:50)-W/2,oy=(at?at.y:50)-H/2;
-    ox=Math.max(0,Math.min(100-W,ox));
-    oy=Math.max(0,Math.min(100-H,oy));
+    var W=def.w||20,H=def.h||20,ox,oy;
+    if(cmpHasPlace(def)&&def.x!=null){ox=def.x;oy=def.y||0;}   /* T409 */
+    else {
+      ox=(at?at.x:50)-W/2;oy=(at?at.y:50)-H/2;
+      ox=Math.max(0,Math.min(100-W,ox));
+      oy=Math.max(0,Math.min(100-H,oy));
+    }
+    var src=from||cmpInstances(id)[0]||null,srcBy={};
+    if(src){
+      var ss=(pres.slides||[])[src.si];
+      ((ss&&ss.annots)||[]).forEach(function(x){
+        if(x&&x.cmp===id&&x.cinst===src.inst) srcBy[x.ci]=x;});
+    }
     var inst=nextCinst(),made=[];
     (def.items||[]).forEach(function(it,n){
-      var a={k:it.k,cmp:id,ci:n,cinst:inst};
+      var a=cmpSeed(srcBy[n],it);
+      a.cmp=id;a.ci=n;a.cinst=inst;
       Object.keys(it.props||{}).forEach(function(p){
         a[p]=(typeof it.props[p]==='object'&&it.props[p])
           ?deep(it.props[p]):it.props[p];});
@@ -639,10 +704,231 @@
       }
       ca.capOf=caps[it.capOfIdx];
     });
+    if(quiet) return made.length;
     markDirty();
-    var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s2);selectMany(l,made);}
+    if(si===cur){
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s2);selectMany(l,made);}
+    }
     return made.length;
+  }
+  /* the slides with no clone of this set yet */
+  function cmpFreeSlides(id){
+    var has={};
+    cmpInstances(id).forEach(function(g){has[g.si]=1;});
+    var out=[];
+    (pres.slides||[]).forEach(function(_,si){if(!has[si]) out.push(si);});
+    return out;
+  }
+  /* one clone's box, in page percent, from the model (no layer needed:
+     the instance may be on another slide) */
+  function cmpInstBox(si,id,inst){
+    var sl=(pres.slides||[])[si]; if(!sl) return null;
+    var bb={l:1e9,t:1e9,r:-1e9,b:-1e9},any=false;
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.cmp!==id||a.cinst!==inst) return;
+      var r=(a.k==='arrow')
+        ?{l:Math.min(a.x1,a.x2),r:Math.max(a.x1,a.x2),
+          t:Math.min(a.y1,a.y2),b:Math.max(a.y1,a.y2)}
+        :{l:a.x||0,t:a.y||0,r:(a.x||0)+(a.w||0),b:(a.y||0)+(a.h||0)};
+      bb.l=Math.min(bb.l,r.l);bb.t=Math.min(bb.t,r.t);
+      bb.r=Math.max(bb.r,r.r);bb.b=Math.max(bb.b,r.b);any=true;
+    });
+    return any?bb:null;
+  }
+  /* T409: MORE CLONES, IN ONE GO. 'here' is a second one on this slide
+     a little offset; 'every' and 'after' put one on each slide that has
+     none yet, in the same spot as the one you are adding from. One
+     history entry for the lot. */
+  function cmpPlaceMany(id,where,from){
+    var def=cmpStore()[id]; if(!def) return 0;
+    var bb=cmpInstBox(from.si,id,from.inst);
+    var at=bb?{x:(bb.l+bb.r)/2,y:(bb.t+bb.b)/2}:null;
+    var n=0,made=[];
+    if(where==='here'){
+      var off=(typeof CLONE_OFF==='number')?CLONE_OFF:3;
+      var at2=at?{x:at.x+off,y:at.y+off}:null;
+      var k=cmpPlace(id,at2,cur,from,true);
+      if(k){n=1;var s2=pres.slides[cur];
+        for(var j=s2.annots.length-k;j<s2.annots.length;j++) made.push(j);}
+    } else {
+      cmpFreeSlides(id).forEach(function(si){
+        if(where==='after'&&si<=cur) return;
+        if(cmpPlace(id,at,si,from,true)) n++;
+      });
+    }
+    if(!n) return 0;
+    markDirty();refresh();
+    if(made.length){
+      var l=stage.querySelector('.annot-layer');
+      if(l) selectMany(l,made);
+    }
+    return n;
+  }
+  /* T409: what this set shares, changed after the fact. Going to
+     'place' or 'both' takes the spot from the clone you are standing
+     on, and every other clone moves there now. */
+  function cmpSetLink(id,link,si,inst){
+    var def=cmpStore()[id]; if(!def) return 0;
+    if(link==='place'||link==='both') def.link=link; else delete def.link;
+    if(cmpHasPlace(def)){
+      var bb=cmpInstBox(si,id,inst);
+      if(bb){def.x=bb.l;def.y=bb.t;}
+    } else {delete def.x;delete def.y;}
+    var n=cmpSyncAll(id,si,inst,true);
+    markDirty();
+    if(typeof showFmt==='function') showFmt();
+    return n;
+  }
+  /* T409: LIVE FOLLOWING. markDirty calls this on every committed
+     edit: a clone in the selection pushes to its clones before the
+     history entry and the draft are written, so both hold the synced
+     deck. Guarded, because the push repaints and a repaint may commit. */
+  var cmpFollowing=false;
+  function cmpFollowSel(){
+    if(cmpFollowing||mode!=='edit') return;
+    var s=pres.slides[cur]; if(!s) return;
+    var seen={};
+    selIdxs().forEach(function(i){
+      var a=(s.annots||[])[i];
+      if(!a||!a.cmp||!a.cinst) return;
+      var key=a.cmp+'|'+a.cinst;
+      if(seen[key]||!cmpStore()[a.cmp]) return;
+      seen[key]=1;
+      cmpFollowing=true;
+      try{cmpPush(a.cmp,cur,a.cinst,true);}
+      finally{cmpFollowing=false;}
+    });
+  }
+  /* the repaint a quiet sync does: the SAME layer refilled, never a new
+     one -- callers of markDirty hold the layer they are about to paint
+     the selection on -- and the film strip, which shows other slides */
+  function cmpRepaint(onCur){
+    if(onCur){
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+    }
+    if(typeof renderFilm==='function') renderFilm();
+  }
+  function cmpMenuAtStage(m){
+    m.style.position='fixed';m.style.zIndex='240';
+    m.style.right='auto';m.style.bottom='auto';
+    var sr=stage.getBoundingClientRect();
+    m.style.left=Math.round(Math.max(8,
+      sr.left+sr.width/2-(m.offsetWidth||180)/2))+'px';
+    m.style.top=Math.round(sr.top+40)+'px';
+  }
+  /* T409: MAKING A SET, WITH THE CHOICE IN FRONT OF YOU. A prompt() for
+     the name had nowhere to say what the clones should share, so the
+     door is a small menu: the name, then the three kinds as rows. btn
+     is optional the way cmpInstMenu's is. */
+  function cmpMakeMenu(btn,idxs){
+    var old=$('#cmp-make-menu'); if(old) old.remove();
+    idxs=(idxs||[]).filter(function(i){return typeof i==='number';});
+    if(!idxs.length){toast('Select something first');return;}
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu cmp-menu';m.id='cmp-make-menu';
+    menuHead(m,'make clones of '
+      +(idxs.length===1?'this':('these '+idxs.length)));
+    var nm=document.createElement('input');
+    nm.className='cmp-name';nm.type='text';
+    nm.placeholder='A name \u2014 like Logo, or FigureCaption';
+    nm.setAttribute('aria-label','Name for this set of clones');
+    nm.addEventListener('keydown',function(e){
+      if(e.key==='Escape') return;
+      e.stopPropagation();
+      if(e.key==='Enter'){e.preventDefault();go('look');}
+    });
+    m.appendChild(nm);
+    menuHead(m,'what the clones share');
+    CMP_LINKS.forEach(function(l){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.type='button';
+      b.innerHTML=bic(l[0]==='look'?'swap':l[0]==='place'?'locate':'group')
+        +' '+esc(l[1]);
+      b.title=l[2];
+      b.addEventListener('click',function(e){
+        e.stopPropagation();go(l[0]);});
+      m.appendChild(b);
+    });
+    function go(link){
+      var name=nm.value.trim()||'Clones';
+      overlayDrop(m);
+      var id=cmpDefine(name,idxs,link);
+      if(!id){toast('Nothing there that could be saved');return;}
+      toast('\u201c'+name+'\u201d is a set of clones \u2014 '
+        +'\u201cAdd a clone\u201d puts another on this slide or on '
+        +'every slide');
+      if(typeof renderSelPane==='function') renderSelPane();
+      if(typeof showFmt==='function') showFmt();
+    }
+    overlayMount(btn,m);
+    if(!btn) cmpMenuAtStage(m);
+    try{nm.focus();}catch(err){}
+  }
+  /* T409: ANOTHER CLONE, FROM THE RIBBON (2026-09-13, user: "I tried to
+     clone an object, but it just changed the clone button to say 'Its
+     clones', and then I can't make clones?"). Making the set turned the
+     only clone door into a list of where the clones were, and placing
+     another lived in the canvas right-click menu alone. This is the
+     door: here, on every slide, or on every slide after this one --
+     and what the clones share, changeable after the fact. */
+  function cmpAddMenu(btn,a){
+    var old=$('#cmp-add-menu'); if(old) old.remove();
+    var id=a&&a.cmp,def=id&&cmpStore()[id];
+    if(!def||!a.cinst) return;
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu cmp-menu';m.id='cmp-add-menu';
+    menuHead(m,'add a clone of \u201c'+(def.name||'this')+'\u201d');
+    var from={si:cur,inst:a.cinst};
+    var free=cmpFreeSlides(id);
+    var after=free.filter(function(si){return si>cur;});
+    function row(txt,tip,fn,ic,on){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt'+(on?' on':'');b.type='button';
+      b.innerHTML=(ic?bic(ic)+' ':'')+esc(txt);
+      b.title=tip;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);fn();});
+      m.appendChild(b);
+      return b;
+    }
+    /* place-linked clones share one spot, so a second on the same
+       slide would sit exactly on top of this one */
+    if(!cmpHasPlace(def))
+      row('On this slide, beside it',
+        'A second one here, a little offset \u2014 drag it where you '
+        +'want it',function(){
+          var n=cmpPlaceMany(id,'here',from);
+          toast(n?'Added \u2014 drag it where you want it'
+            :'Nothing was added');
+        },'plus');
+    var eb=row('On every slide \u2014 '+free.length+' to go',
+      'One on every slide that has none yet, in the same spot as this '
+      +'one',function(){
+        var n=cmpPlaceMany(id,'every',from);
+        toast(n?('Added to '+n+' slide'+(n===1?'':'s'))
+          :'Every slide has one already');
+      },'plus');
+    eb.disabled=!free.length;
+    var ab=row('On every slide after this one \u2014 '+after.length
+      +' to go','One on each slide after this that has none yet, in '
+      +'the same spot as this one',function(){
+        var n=cmpPlaceMany(id,'after',from);
+        toast(n?('Added to '+n+' slide'+(n===1?'':'s'))
+          :'Every slide after this one has one already');
+      },'plus');
+    ab.disabled=!after.length;
+    menuHead(m,'what the clones share');
+    CMP_LINKS.forEach(function(l){
+      row(l[1],l[2],function(){
+        var k=cmpSetLink(id,l[0],cur,a.cinst);
+        toast(l[1]+' \u2014 '+(k?(k+' other clone'+(k===1?'':'s')
+          +' updated'):'no other clones yet'));
+      },null,cmpLinkOf(def)===l[0]);
+    });
+    overlayMount(btn,m);
+    if(!btn) cmpMenuAtStage(m);
   }
   function cmpPlaceOne(a,it,ox,oy,W,H){
     var r=it.rel||{};
@@ -679,17 +965,13 @@
     var mk=$('#fmt-cmp-make');
     if(mk) mk.addEventListener('click',function(e){
       e.stopPropagation();
-      var idxs=selIdxs().filter(function(i){return typeof i==='number';});
-      if(!idxs.length){toast('Select something first');return;}
-      var nm=prompt('Name for this set of clones:','FigureCaption');
-      if(nm===null) return;
-      nm=nm.trim(); if(!nm) return;
-      var id=cmpDefine(nm,idxs);
-      toast(id?('\u201c'+nm+'\u201d saved \u2014 place another from '
-        +'the canvas menu, and every copy follows the original')
-        :'Nothing there that could be saved');
-      if(typeof renderSelPane==='function') renderSelPane();
-      if(typeof showFmt==='function') showFmt();
+      cmpMakeMenu(mk,selIdxs());   /* T409: name and kind, one menu */
+    });
+    var ad=$('#fmt-cmp-add');
+    if(ad) ad.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s3=pres.slides[cur],a3=annotByIdx(s3,selAnnot);
+      if(a3&&a3.cmp&&a3.cinst) cmpAddMenu(ad,a3);
     });
     var fd=$('#fmt-cmp-find');
     if(fd) fd.addEventListener('click',function(e){
@@ -756,7 +1038,7 @@
      follows. Content never travels — each instance keeps its own words
      and its own figure, which is the per-instance override the task
      asked for and which MATCH_PROPS gives for free. */
-  function cmpPush(id,si,inst){
+  function cmpPush(id,si,inst,quiet){
     var def=cmpStore()[id]; if(!def) return 0;
     var sl=(pres.slides||[])[si]; if(!sl) return 0;
     var layer=(si===cur)?stage.querySelector('.annot-layer'):null;
@@ -779,6 +1061,7 @@
       bb.r=Math.max(bb.r,r.r);bb.b=Math.max(bb.b,r.b);});
     var W=Math.max(0.01,bb.r-bb.l),H=Math.max(0.01,bb.b-bb.t);
     def.w=W;def.h=H;
+    if(cmpHasPlace(def)){def.x=bb.l;def.y=bb.t;}   /* T409: the spot */
     def.items=mine.map(function(x){
       var a=x.a,it={k:a.k,props:{}};
       MATCH_PROPS.forEach(function(p){
@@ -816,14 +1099,17 @@
       var fn=capMember[x.a.capOf];
       if(fn!=null&&fn!==n&&def.items[n]) def.items[n].capOfIdx=fn;
     });
-    return cmpSyncAll(id,si,inst);
+    return cmpSyncAll(id,si,inst,quiet);
   }
   /* re-stamp every OTHER instance from the definition. The origin is the
      instance's own top-left corner, so an instance you dragged somewhere
-     stays where you dragged it. */
-  function cmpSyncAll(id,skipSi,skipInst){
+     stays where you dragged it -- unless the set is place-linked (T409),
+     when the origin is the definition's spot and every clone goes there.
+     quiet (T409): called from a follow inside markDirty, so no history
+     entry of its own and the repaint keeps the layer that exists. */
+  function cmpSyncAll(id,skipSi,skipInst,quiet){
     var def=cmpStore()[id]; if(!def) return 0;
-    var n=0;
+    var n=0,onCur=false,look=cmpHasLook(def);
     cmpInstances(id).forEach(function(g){
       if(g.si===skipSi&&g.inst===skipInst) return;
       var sl=pres.slides[g.si];
@@ -836,7 +1122,8 @@
       });
       if(!mine.length) return;
       var ox=1e9,oy=1e9;
-      mine.forEach(function(x){
+      if(cmpHasPlace(def)&&def.x!=null){ox=def.x;oy=def.y||0;}
+      else mine.forEach(function(x){
         var a=x.a;
         ox=Math.min(ox,a.k==='arrow'?Math.min(a.x1,a.x2):(a.x||0));
         oy=Math.min(oy,a.k==='arrow'?Math.min(a.y1,a.y2):(a.y||0));
@@ -852,11 +1139,14 @@
         if(hit){
           var a=hit.a;
           /* CONTENT IS NEVER TOUCHED: only the fields the definition
-             carries are written, and content is not among them */
-          Object.keys(it.props||{}).forEach(function(p){
-            a[p]=(typeof it.props[p]==='object'&&it.props[p])
-              ?deep(it.props[p]):it.props[p];});
-          if(it.shape) a.shape=it.shape;
+             carries are written, and content is not among them. A
+             place-linked clone keeps its own look as well (T409). */
+          if(look){
+            Object.keys(it.props||{}).forEach(function(p){
+              a[p]=(typeof it.props[p]==='object'&&it.props[p])
+                ?deep(it.props[p]):it.props[p];});
+            if(it.shape) a.shape=it.shape;
+          }
           cmpPlaceOne(a,it,ox,oy,W,H);
           delete byCi[k];
         } else {
@@ -874,9 +1164,11 @@
         var at=sl.annots.indexOf(byCi[k].a);
         if(at>=0) sl.annots.splice(at,1);
       });
+      if(g.si===cur) onCur=true;
       n++;
     });
-    markDirty();refresh();
+    if(quiet){if(n) cmpRepaint(onCur);}
+    else {markDirty();refresh();}
     return n;
   }
   function cmpDetach(si,inst){

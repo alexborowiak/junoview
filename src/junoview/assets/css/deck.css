@@ -1758,6 +1758,16 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:4;}
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:5;}
 .et-fmt .rbn-grp[data-tab="object"].rbn-clones{order:6;}
+/* T409: the two clone menus -- a name box, and the kind that is on */
+.cmp-menu .cmp-name{display:block;width:100%;box-sizing:border-box;
+  margin:2px 0 6px;padding:5px 7px;font:inherit;font-size:12.5px;
+  color:inherit;background:var(--input-bg);border:1px solid var(--line);
+  border-radius:6px;}
+.cmp-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);color:#fff;}
+.cmp-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:9px;opacity:.8;}
+.cmp-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive

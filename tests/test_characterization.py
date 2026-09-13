@@ -1753,8 +1753,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T405: chrome only. A move reads an unclamped point (deck
 # JS).
 # 2026-09-13, T408: chrome only. Paste into a flip book (deck JS).
-EXPECTED_MD5 = "3322451266ea6b12c79037a9faa94609"
-EXPECTED_BYTES = 4112486
+# 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
+# (deck JS/HTML/CSS).
+# 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
+# (deck JS/HTML/CSS).
+# 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
+# (deck JS/HTML/CSS).
+EXPECTED_MD5 = "40127ca73c562e8105aa66bacfe94744"
+EXPECTED_BYTES = 4126907
 
 
 def _render_example() -> str:

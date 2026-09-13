@@ -2099,7 +2099,7 @@ def test_a_component_stores_the_look_and_never_the_content(out):
     overrides the task asks for (text, image, which card a frame shows)
     are simply the fields MATCH_PROPS has always refused to copy.
     """
-    assert "function cmpDefine(name,idxs){" in out
+    assert "function cmpDefine(name,idxs,link){" in out
     assert "var CMP_SKIP={x:1,y:1,w:1,h:1,x1:1,y1:1,x2:1,y2:1,mid:1};" in out
     assert "      MATCH_PROPS.forEach(function(p){\n        if(CMP_SKIP[p]) return;" \
         in out
@@ -2129,8 +2129,8 @@ def test_pushing_updates_every_other_instance_in_the_deck(out):
     The origin is the instance's own top-left corner, so an instance you
     dragged somewhere stays where you dragged it.
     """
-    assert "function cmpPush(id,si,inst){" in out
-    assert "function cmpSyncAll(id,skipSi,skipInst){" in out
+    assert "function cmpPush(id,si,inst,quiet){" in out
+    assert "function cmpSyncAll(id,skipSi,skipInst,quiet){" in out
     assert "function cmpDetach(si,inst){" in out
     assert "ox=Math.min(ox,a.k==='arrow'?Math.min(a.x1,a.x2):(a.x||0));" in out
     # a definition that gained or lost members takes its instances with
@@ -2140,7 +2140,7 @@ def test_pushing_updates_every_other_instance_in_the_deck(out):
     # An earlier instance can splice a removed member and shift every
     # later index on the same slide. Each turn therefore resolves its
     # instance from the live array instead of cmpInstances' old idxs.
-    sync = out[out.index("function cmpSyncAll(id,skipSi,skipInst){"):
+    sync = out[out.index("function cmpSyncAll(id,skipSi,skipInst,quiet){"):
                out.index("function cmpDetach(si,inst){")]
     assert "g.idxs.map" not in sync
     assert "(sl.annots||[]).forEach(function(a,i){" in sync
@@ -2766,8 +2766,8 @@ def test_a_component_keeps_the_caption_tie(out):
     # T287: and "Push this look" re-derives it. cmpPush rebuilds
     # def.items from scratch, so the FIRST push silently deleted the tie
     # and every instance placed afterwards rendered '[not a caption]'.
-    push = out.split("  function cmpPush(id,si,inst){")[1]
-    push = push.split("    return cmpSyncAll(id,si,inst);")[0]
+    push = out.split("  function cmpPush(id,si,inst,quiet){")[1]
+    push = push.split("    return cmpSyncAll(id,si,inst,quiet);")[0]
     assert "capOfIdx" in push, "cmpPush drops the figure-caption tie"
     assert "      if(fn!=null&&fn!==n&&def.items[n]) def.items[n].capOfIdx=fn;" in push
 
