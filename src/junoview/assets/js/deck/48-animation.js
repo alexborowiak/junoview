@@ -885,219 +885,165 @@
       q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
       renumber(s);commit(s);
     }
+    /* ---- THE PANE IS THE LIST OF CLICKS, AND NOTHING ELSE (T402) -----
+       (2026-09-13, user: "What is up with the animation pane? How am I
+       supposed to use this? I literally can't tell what is going on and
+       how to re-order things. I made a flip book and they are all
+       animated and this is very confusing to look at. Also why are
+       there the animation button options in here as well?")
+       It carried a second effect chooser, a second text-pieces chooser
+       and a second With-previous row -- every one a copy of a ribbon
+       control -- above a list headed "one row per build" whose flip
+       book pages were italic chips truncated to "fa..." under a bare
+       arrow, and whose anchored pages were looked up by the wrong index
+       (build index, not stop index) so a book after a split text box
+       showed no pages at all.
+       Now: one numbered row per click, in the order the space bar takes
+       them. A build row names what arrives, how, and on how many clicks;
+       Earlier and Later move it. A flip book's pages are rows of their
+       own, numbered with their click, and say that they follow the book.
+       The controls live on the ribbon, once. */
+    function fxWord(t){
+      var w='';SEQ_FX.forEach(function(f){if(f[0]===t) w=f[1];});
+      return w||'Fade';
+    }
     function render(){
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var s=pres.slides[cur];
       menu.innerHTML='';
+      var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
+      var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
-      h1.textContent='Entrance effect';menu.appendChild(h1);
-      if(!a||typeof selAnnot!=='number'){
-        var em=document.createElement('div');em.className='anim-empty';
-        em.textContent='Select an item first, then pick an effect.';
-        menu.appendChild(em);
-      } else {
-        var eff=document.createElement('div');eff.className='anim-eff';
-        [['none','None'],['appear','Appear'],['fade','Fade'],
-         ['rise','Float up'],['zoom','Zoom'],['slide','Fly in'],
-         ['turn','Page turn'],['type','Typewriter']].forEach(function(p){
-          var b=document.createElement('button');b.className='anim-effb';
-          b.textContent=p[1];
-          if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
-          b.addEventListener('click',function(e){e.stopPropagation();
-            setType(p[0]);});
-          eff.appendChild(b);});
-        menu.appendChild(eff);
-        /* HOW MUCH ARRIVES AT A TIME (2026-08-30, user: "options for
-           text as well, like the dot point by dot point, line by line,
-           sentence by sentence"). Only a text box has pieces, and only
-           an animated one has anywhere to put them.
-           IN THE PANE, NOT THE RIBBON. Three more word buttons in the
-           Animate group is ~200px of ribbon floor, and by T152 every px
-           of that comes off the slide column's ceiling. This is where
-           the build order already lives and where the selection is
-           already tracked. */
-        if(a.anim&&a.k==='text'){
-          var hb=document.createElement('div');hb.className='anim-h';
-          hb.textContent='How much arrives at a time';
-          menu.appendChild(hb);
-          var gr=document.createElement('div');gr.className='anim-eff';
-          [['','All at once','The whole box on one click.'],
-           ['para','Bullet by bullet',
-            'One click per bullet, or per line you pressed Enter on. '
-            +'Exports to PowerPoint as a paragraph build'],
-           ['sent','Sentence by sentence',
-            'One click per sentence. "Fig. 3", "et al.", "0.05" and '
-            +'initials are left alone; when a cut is in the wrong '
-            +'place, press Enter there and use Bullet by bullet.']
-          ].forEach(function(p){
-            var b=document.createElement('button');
-            b.className='anim-effb';
-            b.textContent=p[1];b.title=p[2];
-            var now=(a.anim.by==='para'||a.anim.by==='sent')
-              ?a.anim.by:'';
-            if(now===p[0]) b.classList.add('on');
+      h1.textContent=total
+        ?('This slide takes '+total+' click'+(total===1?'':'s'))
+        :'Nothing happens on a click yet';
+      menu.appendChild(h1);
+      var hint=document.createElement('div');hint.className='anim-empty';
+      hint.textContent=total
+        ?'One row per click, in order. Click a name to select it on the '
+          +'slide; Earlier and Later move a build. Effects, timing and '
+          +'text pieces are set on the ribbon above.'
+        :'Select something on the slide and pick an effect on the '
+          +'ribbon, or press One per click to build the whole slide.';
+      menu.appendChild(hint);
+      var list=document.createElement('div');list.className='anim-seq';
+      /* one row: its click number (or range), what it is, how it
+         arrives, and for a build the two ways to move it */
+      function row(clickNo,names,detail,opts){
+        opts=opts||{};
+        var r=document.createElement('div');
+        r.className='anim-step'+(opts.sub?' anim-sub':'')+(opts.cur?' cur':'');
+        var n=document.createElement('span');
+        n.className='anim-num'+(String(clickNo).length>2?' wide':'');
+        n.textContent=clickNo;
+        n.title=opts.sub?'The click this page turns on':'The click this arrives on';
+        r.appendChild(n);
+        var body=document.createElement('span');body.className='anim-body';
+        names.forEach(function(p){
+          var nm=document.createElement('button');nm.type='button';
+          nm.className='anim-name';nm.textContent=p[0];
+          nm.title=opts.title||('Select \u201c'+p[0]+'\u201d on the slide');
+          nm.addEventListener('click',function(e){e.stopPropagation();
+            var l=stage.querySelector('.annot-layer');
+            if(l) selectAnnot(l,p[1]); render();});
+          body.appendChild(nm);
+        });
+        if(detail){
+          var d=document.createElement('span');d.className='anim-detail';
+          d.textContent=detail;body.appendChild(d);
+        }
+        r.appendChild(body);
+        if(opts.ctr){
+          var ctr=document.createElement('span');ctr.className='anim-stepctr';
+          [['\u2191 Earlier',-1],['\u2193 Later',1]].forEach(function(m){
+            var b=document.createElement('button');b.type='button';
+            b.className='anim-mini';b.textContent=m[0];
+            b.title=m[1]<0?'Move this build one click earlier'
+              :'Move this build one click later';
+            b.setAttribute('aria-label',b.title);
+            b.disabled=(m[1]<0?opts.si===0:opts.si===seq.length-1);
             b.addEventListener('click',function(e){e.stopPropagation();
-              setBy(p[0]);});
-            gr.appendChild(b);});
-          menu.appendChild(gr);
-          var nby=textBy(a)?textPieceCount(a):1;
-          if(nby>1){
-            var nt=document.createElement('div');
-            nt.className='anim-empty';
-            nt.textContent=nby+' pieces — '+nby+' clicks.'
-              +(((a.anim.type==='rise'||a.anim.type==='zoom')
-                 &&a.anim.by==='sent')
-                ?' A sentence inside a paragraph fades in rather than '
-                 +'moving: a run of words has no box of its own to move.'
-                :'')
-              +(a.arc?' This box is curved, so it arrives whole — '
-                 +'curved text is redrawn as one shape.':'');
-            menu.appendChild(nt);
-          }
+              moveStep(opts.si,m[1]);});
+            ctr.appendChild(b);});
+          r.appendChild(ctr);
         }
-        if(a.anim){
-          var si0=stepOf(s,selAnnot),q0=animSeq(s);
-          var mrow=document.createElement('div');mrow.className='anim-merge';
-          var mb=document.createElement('button');mb.className='anim-mini wide';
-          mb.textContent='↑ Appear with previous';mb.disabled=(si0<=0);
-          mb.title='Reveal this on the same click as the build above';
-          mb.addEventListener('click',function(e){e.stopPropagation();
-            mergeUp();});
-          mrow.appendChild(mb);
-          if(q0[si0]&&q0[si0].items.length>1){
-            var sb=document.createElement('button');sb.className='anim-mini wide';
-            sb.textContent='↓ Own click';
-            sb.addEventListener('click',function(e){e.stopPropagation();
-              splitOwn();});
-            mrow.appendChild(sb);
-          }
-          menu.appendChild(mrow);
-        }
+        list.appendChild(r);
+        return r;
       }
-      var h2=document.createElement('div');h2.className='anim-h';
-      h2.textContent='Build order — one row per build';
-      menu.appendChild(h2);
-      var seq=animSeq(s);
-      /* ---- THE ONE TRUE SEQUENCE (T163) ------------------------------
-         This list used to show anim-order builds ONLY, under a heading
-         that promises "each row is one click". A flip book's frames and
-         (since T160) a chart's series builds are clicks too -- they are
-         in the plan playback walks -- so a slide whose whole reveal was
-         a six-figure book showed "Nothing animated on this slide yet"
-         while the space bar took five presses through it.
-         The stops each build ANCHORS are drawn under it as read-only
-         rows. Read-only on purpose: a frame's place in the sequence is
-         decided by its place in its BOOK, and offering a second way to
-         reorder it here would be two truths about one order. The book's
-         own pane is where frames move. */
-      var plan=flipPlan(s);
-      function stepperRows(list,ps){
+      /* the stops a flip book, a chart or a paged text box takes AFTER
+         the click it arrives on, each on its own numbered row (T163);
+         `base` is what flipPlan says, so the numbers here are the ones
+         the space bar counts */
+      function stepperRows(ps){
         (ps||[]).forEach(function(p){
-          var a=p.a;
-          var subs=[];
+          var a=p.a,base=plan.base[p.i],cur2=(p.i===selAnnot);
+          if(base==null) return;
           if(a.k==='flip'){
-            flipFrames(a).forEach(function(f,fi){
-              if(fi) subs.push(frameLabel(f,fi));});
+            var walk=flipWalk(s,a),fr=flipFrames(a);
+            var fx=flipFxWord(a.fanim)||'Cut';
+            for(var d=1;d<walk.length;d++){
+              var w=walk[d];
+              var name=w.j
+                ?('Page '+(w.j+1)+' of the words beside figure '+(w.k+1))
+                :('Figure '+(w.k+1)+' of '+fr.length+' \u00b7 '
+                  +frameLabel(fr[w.k],w.k));
+              row(base+d,[[name,p.i]],fx+' \u00b7 a page of the flip '
+                +'book, so it keeps the book\u2019s order',
+                {sub:true,cur:cur2,
+                 title:'A page of this flip book. Pages keep the '
+                   +'book\u2019s order; to move one, select the book and '
+                   +'use its panel on the Images tab.'});
+            }
           } else if(a.k==='chart'){
-            chartParse(a).series.forEach(function(se){
-              subs.push(se.name);});
+            chartParse(a).series.forEach(function(se,k){
+              row(base+k+1,[['Series '+(k+1)+' \u00b7 '+se.name,p.i]],
+                'a series of the chart, in the data\u2019s order',
+                {sub:true,cur:cur2,
+                 title:'A series of this chart. The order follows the data.'});
+            });
+          } else if(a.k==='text'){
+            var pg=textPages(a);
+            for(var t=1;t<pg.length;t++)
+              row(base+t,[['Page '+(t+1)+' of '+pg.length+' \u00b7 '
+                +itemLabel(s,p.i),p.i]],'the next page of this text box',
+                {sub:true,cur:cur2,
+                 title:'A page of this text box. Pages keep their order.'});
           }
-          subs.forEach(function(t,ti){
-            var r2=document.createElement('div');
-            r2.className='anim-step anim-sub';
-            var n2=document.createElement('span');
-            n2.className='anim-num anim-subnum';
-            n2.textContent='\u21b3';
-            r2.appendChild(n2);
-            var c2=document.createElement('span');
-            c2.className='anim-chips';
-            var chip=document.createElement('span');
-            chip.className='anim-chip anim-subchip';
-            /* no owner name on a sub-row: the build row directly
-               above IS the owner, and repeating it on every page
-               turned the list into a column of the same six words */
-            chip.textContent=a.k==='flip'
-              ?('figure '+(ti+2)+' of '+flipFrames(a).length
-                +(t?(' \u00b7 '+t):'')
-                +(a.fanim?(' \u00b7 '+flipFxWord(a.fanim).toLowerCase())
-                  :''))
-              :('then '+t);
-            chip.title=a.k==='flip'
-              ?('A page of this flip book \u2014 move it in the book '
-                +'itself, not here')
-              :('A series of this chart \u2014 the order follows the '
-                +'data');
-            c2.appendChild(chip);
-            r2.appendChild(c2);
-            list.appendChild(r2);
-          });
         });
       }
-      if(!seq.length&&!steppersOn(s).length){
-        var e2=document.createElement('div');e2.className='anim-empty';
-        e2.textContent='Nothing animated on this slide yet.';
-        menu.appendChild(e2);
-      } else if(!seq.length){
-        /* steppers but no builds: the slide DOES walk, so say so */
-        var e3=document.createElement('div');e3.className='anim-empty';
-        /* slideStops IS the click count: an item hides while
-           sp>=revealCount and the largest sp is count-1, so `count`
-           presses is what fully builds the slide. Subtracting one here
-           told a two-page text box it took "0 clicks" while the film
-           strip, reading the same function, said 1 (caught by driving
-           it, 2026-09-01). */
-        var nst=slideStops(s);
-        e3.textContent='No entrance effects here, but this slide takes '
-          +nst+' click'+(nst===1?'':'s')+' \u2014 it steps through '
-          +'what is below.';
-        menu.appendChild(e3);
-        var l0=document.createElement('div');l0.className='anim-seq';
-        stepperRows(l0,plan.tail);
-        menu.appendChild(l0);
-      } else {
-        var list=document.createElement('div');list.className='anim-seq';
-        seq.forEach(function(st,si){
-          var row=document.createElement('div');row.className='anim-step';
-          var n=document.createElement('span');n.className='anim-num';
-          n.textContent=(si+1);row.appendChild(n);
-          var chips=document.createElement('span');chips.className='anim-chips';
-          st.items.forEach(function(idx){
-            var c=document.createElement('span');
-            c.className='anim-chip'+(idx===selAnnot?' cur':'');
-            c.textContent=itemLabel(s,idx)+' · '
-              +((s.annots[idx].anim.type)||'fade');
-            /* a stop that RUNS ITSELF says so where the order is read
-               (T169). The number is the wait before it, never a
-               duration -- durations are still fixed in the stylesheet. */
-            var aft=(s.annots[idx].anim.after)|0;
-            if(aft) c.textContent+=' · +'+aft+'s';
-            c.addEventListener('click',function(e){e.stopPropagation();
-              var l=stage.querySelector('.annot-layer');
-              if(l) selectAnnot(l,idx); render();});
-            chips.appendChild(c);});
-          row.appendChild(chips);
-          var ctr=document.createElement('span');ctr.className='anim-stepctr';
-          [['↑',-1],['↓',1]].forEach(function(m){
-            var b=document.createElement('button');b.className='anim-mini';
-            b.textContent=m[0];
-            b.title=m[1]<0?'Move this build earlier':'Move this build later';
-            b.setAttribute('aria-label',b.title);
-            b.disabled=(m[1]<0?si===0:si===seq.length-1);
-            b.addEventListener('click',function(e){e.stopPropagation();
-              moveStep(si,m[1]);});
-            ctr.appendChild(b);});
-          row.appendChild(ctr);
-          list.appendChild(row);
-          stepperRows(list,plan.anch[si]);});
-        /* anything that steps but carries no build of its own lands
-           after every build, exactly as flipPlan lays it out */
-        stepperRows(list,plan.tail);
-        menu.appendChild(list);
-      }
-      /* ...and the way to SAY the order by pointing (T168). Beside
-         the list it rewrites, because that is where you are standing
-         when the order is what you are thinking about. */
+      seq.forEach(function(st,si){
+        var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
+        var first=(plan.stop[b0]|0)+1;
+        var last=(plan.stop[b0+nsub-1]|0)+1;
+        var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
+        var kinds={};
+        st.items.forEach(function(idx){
+          kinds[fxWord(s.annots[idx].anim.type)]=1;});
+        var detail=Object.keys(kinds).join(' / ');
+        var pieces=null;
+        st.items.forEach(function(idx){
+          var a=s.annots[idx];
+          if(textBy(a)&&!pieces)
+            pieces=(a.anim.by==='sent'?'sentence by sentence':'bullet by bullet')
+              +(a.anim.hl?', highlighting each':'');
+        });
+        if(nsub>1) detail+=' \u00b7 '+nsub+' clicks, '+(pieces||'in pieces');
+        if(st.items.length>1) detail+=' \u00b7 together on one click';
+        var aft=0;
+        st.items.forEach(function(idx){
+          var v=(s.annots[idx].anim.after)|0; if(v>aft) aft=v;});
+        if(aft) detail+=' \u00b7 runs by itself '+aft+'s after the one before';
+        row(first===last?first:(first+'\u2013'+last),names,detail,
+          {si:si,ctr:true,cur:st.items.indexOf(selAnnot)>=0});
+        stepperRows(plan.anch[b0]);
+      });
+      /* anything that steps but carries no build of its own lands
+         after every build, exactly as flipPlan lays it out */
+      stepperRows(plan.tail);
+      if(total) menu.appendChild(list);
+      /* ...and the way to SAY the order by pointing (T168), beside the
+         list it rewrites */
       var sq=document.createElement('button');
-      sq.className='anim-mini wide';
+      sq.type='button';sq.className='anim-mini wide';
       sq.innerHTML=bic('stagger')+' Quick animate\u2026';
       sq.title='Then click the objects on the slide one after another, '
         +'in the order they should appear. Shift-click puts one on the '
@@ -1105,15 +1051,6 @@
       sq.addEventListener('click',function(e){e.stopPropagation();
         seqArmStart();});
       menu.appendChild(sq);
-      /* the order "One by one" deals the clicks in (T106) */
-      var rb=document.createElement('button');
-      rb.className='anim-mini wide';
-      rb.textContent='Order on this slide\u2026';
-      rb.title='The order things are numbered and revealed in. Quick '
-        +'animate sets it by clicking; here you nudge one step';
-      rb.addEventListener('click',function(e){e.stopPropagation();
-        if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
-      menu.appendChild(rb);
     }
     /* ONE door. There were briefly two — View's Animations and an
        "Animate" button in an Effects group that renamed itself to the

@@ -472,12 +472,25 @@
   }
   /* write to the remembered file. `silent` = an autosave: never pops a
      permission prompt (there is no user gesture behind it) */
+  /* T406: WHY THE FILE IS NOT BEING WRITTEN, when it is not. An autosave
+     to a file that stands down -- no file chosen yet, or the browser has
+     not re-granted write permission since the reload -- used to stand
+     down silently, so the readout said "unsaved — saving…" forever and
+     the only visible noise was the draft copy's "browser full" toast,
+     which read as "it is saving to the browser instead" (2026-09-13,
+     user: "I think the auto-save is trying to save to browser and not
+     local"). The readout names the reason now, and the one click that
+     fixes it. */
+  var fileWaits='';
   function saveToFile(silent){
     flushTextEdits();
     /* T235: an autosave with no file can still make one, if there is a
        default folder to make it in. Without one it stands down, as it
        always has -- an autosave must never open a file dialog. */
-    if(!fileHandle&&!deckDir&&silent) return Promise.resolve(false);
+    if(!fileHandle&&!deckDir&&silent){
+      fileWaits='pick';status();
+      return Promise.resolve(false);
+    }
     var savedHist=!silent?histCapture():null;
     var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
     var fileText;
@@ -501,12 +514,14 @@
           if(!ok){
             if(!silent) toast('Junoview needs permission to write '
               +(fileName||'that file'));
+            fileWaits='perm';status();   /* T406 */
             return false;
           }
           return h.createWritable().then(function(w){
             return Promise.resolve(w.write(fileText))
               .then(function(){return w.close();});
           }).then(function(){
+            fileWaits='';
             /* the browser copy STAYS. Deleting it made the file the ONLY
                copy, and nothing ever read the file back at startup — save
                to file, close the browser, and the presentation was gone
@@ -1136,7 +1151,11 @@
     var blob=new Blob([junoviewFileHtml()],{type:'text/html'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=(APP.order.length===1?APP.order[0]:'project')
+    /* T415: the deck's own name, not "project" (2026-09-13, user:
+       "downloaded with shit name project.junoview, not the actual
+       name"). The file still holds every deck; it is named after the
+       one you were in. */
+    a.download=(pres.name||(APP.order.length===1?APP.order[0]:'project'))
       +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
@@ -1695,6 +1714,7 @@
          note reaching a .pptx is the exact failure T31 exists to
          prevent. */
       if(a.priv) return;
+      if(a.hide) return;   /* T404: hidden is hidden, in PowerPoint too */
       /* an item tied to a figure other than this page's does not belong
          on this page. note.frame is set by the exploding enumerator; with
          no flip book on the slide it is null and nothing is filtered. */
@@ -1833,7 +1853,10 @@
         if(fsrc) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
           name:(fsel&&fsel.label)||'Figure'});
-        else note.skipped++;
+        /* T403: a page that is its own object is exported AS that
+           object (it is tied to this page), so the blank leaf is not
+           a figure that went missing */
+        else if(!(fsel&&fsel.own)) note.skipped++;
       } else if(a.k==='web'){
         /* T388: PowerPoint has no shape for a live page */
         note.web=(note.web||0)+1;
@@ -2282,7 +2305,7 @@
       if(!silent) toast('That file does not look like a saved deck');
       return 0;
     }
-    var imported=0,dropped=0,firstName=null;
+    var imported=0,dropped=0,first=null,loose=null;
     list.forEach(function(pr){
       if(!pr||!Array.isArray(pr.slides)) return;
       var np=normPres(pr);
@@ -2296,10 +2319,29 @@
          was ignored, so once the draft budget was full every write was
          discarded and the toast still said "Imported N presentations" --
          and the view was then switched to a deck that is not stored. */
-      if(!lsSet(PFX+nm,JSON.stringify(np))){dropped++;return;}
-      if(!firstName) firstName=nm;
-      imported++;
+      var kept=lsSet(PFX+nm,JSON.stringify(np),true);
+      if(kept){
+        imported++;
+        if(!first) first={name:nm,pres:np,kept:true};
+        return;
+      }
+      /* T414: NO ROOM IN THE BROWSER IS NOT "CANNOT OPEN" (2026-09-13,
+         user: "I am trying to open a junoview file from my computer.
+         it will not open ... I have to present it soon"). A deck with
+         a few pasted pictures is bigger than localStorage will take,
+         and this refused to open it at all -- while the one copy that
+         matters, the file, was in hand the whole time. A deck that did
+         not fit opens from the object in hand; only the browser copy
+         is what did not fit. And it is the one that OPENS even when
+         smaller decks in the same file did fit: those are in the
+         library now and lose nothing, while a deck that is nowhere
+         but in this object would be gone with the next click. A file
+         written by Download a copy holds every deck, the current one
+         last, which is exactly how the big one came to be dropped. */
+      if(!silent&&!loose){loose={name:nm,pres:np,kept:false};imported++;}
+      else dropped++;
     });
+    if(loose) first=loose;
     if(!imported){
       if(!silent)
         toast(dropped
@@ -2309,17 +2351,28 @@
       return 0;
     }
     if(silent){renderPresTabs();return imported;}
-    lsSet(PFX+'last',firstName);
-    loadPresentation(firstName);
+    if(first.kept){
+      lsSet(PFX+'last',first.name,true);
+      loadPresentation(first.name);
+    } else loadPresentationObj(first.pres);   /* T414 */
     cur=0;activePane=-1;
     /* picked from the launcher: go straight into the editor — the whole
        point of opening a file is to get back to the presentation in it */
     if(deckEl.hidden) openDeck('edit');
     status();refresh();
-    toast('Imported '+imported+' presentation'
-      +(imported>1?'s':'')+' (as drafts)'
-      +(dropped?(' \u2014 '+dropped+' would not fit and '
-        +(dropped>1?'were':'was')+' not kept'):''));
+    if(first.kept)
+      toast('Imported '+imported+' presentation'
+        +(imported>1?'s':'')+' (as drafts)'
+        +(dropped?(' \u2014 '+dropped+' would not fit and '
+          +(dropped>1?'were':'was')+' not kept'):''));
+    else
+      toast('Opened \u201c'+first.name+'\u201d \u2014 too big for a '
+        +'browser copy, so it lives in its file: Save writes it there'
+        +(imported>1?(' \u2014 '+(imported-1)+' smaller deck'
+          +(imported>2?'s':'')+' from the file went into the library'):'')
+        +(dropped?(' \u2014 '+dropped+' other'+(dropped>1?'s':'')
+          +' in the file '+(dropped>1?'were':'was')+' not kept'):''),
+        9000);
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
@@ -2361,7 +2414,13 @@
             toast('Opened \u2014 Save now writes back to '+fileName);
           });
         });
-      }).catch(function(){});
+      }).catch(function(e){
+        /* T414: a cancelled picker is silent; anything else is SAID.
+           This swallowed every failure, so a file that would not open
+           gave no clue why. */
+        if(e&&e.name==='AbortError') return;
+        toast('Could not open that file: '+((e&&e.message)||e),9000);
+      });
       return;
     }
     var fi=document.getElementById('deckfile');

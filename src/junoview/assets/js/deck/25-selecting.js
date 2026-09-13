@@ -47,7 +47,7 @@
     /* the Object group's provenance row (T198): where it came from,
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
-    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-find '
+    +'#fmt-path #fmt-lock #fmt-match #fmt-cmp-make #fmt-cmp-add #fmt-cmp-find '
     /* THE HISTORY TILE, AND WHY THE OBJECT TAB WOULD NOT GO AWAY.
        #fmt-hist (T220's "what this object has been through", given a
        group of its own by T233) is shown by showFmt but appeared in
@@ -217,7 +217,16 @@
     /* Default's Style tab is about the selected thing's appearance. A
        figure or shape still belongs on Object, even though it may expose a
        Line control on Style too. Custom layouts own their declared target. */
-    if(selT==='style'&&kind!=='text'&&kind!=='table') selT='object';
+    /* T410: A LINE IS ITS STROKE (2026-09-13, user: "When clicking on a
+       line, it always tries to take me away from line and to the object
+       tab"). Object has nothing for a line but arrange and size; its
+       dash, weight, ends and route are the Line window on Style. So a
+       line or a pen stroke lands on Style, and stays there when you
+       are already on it. A shape keeps going to Object: its fill and
+       edge are there. */
+    var strokeSel=(kind==='arrow'||kind==='draw');
+    if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)
+      selT='object';
     /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
        line, before a single control had been revealed — and once a
        layout may give the format groups a tab of their own, that tab is
@@ -609,7 +618,9 @@
     /* T229: making a set of clones, and finding the ones that exist */
     var selCount=selIdxs().length;
     var cmpOn=!!(a&&a.cmp&&a.cinst);
+    show('#fmt-match',isNum&&selCount>=1);   /* T413 */
     show('#fmt-cmp-make',isNum&&selCount>=1&&!cmpOn);
+    show('#fmt-cmp-add',cmpOn);   /* T409: the door that was missing */
     show('#fmt-cmp-find',cmpOn);
     var cf=$('#fmt-cmp-find');
     if(cf&&cmpOn&&typeof cmpInstances==='function'){
@@ -907,6 +918,21 @@
     return {x:Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100)),
             y:Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100))};
   }
+  /* T405: THE SAME POINT, UNCLAMPED, for a MOVE. pctPoint pins the
+     pointer to the page, which is right for drawing a new box and wrong
+     for dragging one: the drag's delta could never carry an object past
+     the page edge, so nothing could be parked beside the slide, though
+     the layer already spills while editing and the stage grows
+     scrollbars for it (2026-09-13, user: "it is useful sometimes to be
+     able to drag objects outside of the slide and leave them there, but
+     that isn't really an option here"). Playback and every export clip
+     to the page, so a parked object is out of the show until it is
+     dragged back. */
+  function pctPointFree(layer,ev){
+    var r=layer.getBoundingClientRect();
+    return {x:(ev.clientX-r.left)/(r.width||1)*100,
+            y:(ev.clientY-r.top)/(r.height||1)*100};
+  }
   /* ---- LOCKS -----------------------------------------------------------
      TWO locks, because there are two different things people mean by the
      word (TASKS T3):
@@ -1177,7 +1203,7 @@
       }
     }
     var a=annotByIdx(s,idx); if(!a) return;
-    var start=pctPoint(layer,ev0);
+    var start=pctPointFree(layer,ev0);   /* T405: a move may leave the page */
     /* drag the whole current selection (group / multi-select) together —
        pinned members stay put, under EITHER lock */
     var movers=selSet.filter(function(i){return typeof i==='number';});
@@ -1242,7 +1268,7 @@
     var movedAny=false;
     function mm(ev){
       movedAny=true;
-      var p=pctPoint(layer,ev);
+      var p=pctPointFree(layer,ev);   /* T405 */
       var dx=p.x-start.x,dy=p.y-start.y;
       var sx=null,sy=null;
       /* CLEARED EVERY MOVE, like sx/sy beside it. It used to be reset
@@ -2547,6 +2573,10 @@
       if(cInst){
         var cDef=cmpStore()[cInst.cmp];
         var cN=cmpInstances(cInst.cmp).length;
+        /* T409: the door the ribbon has, here too */
+        row('Add a clone\u2026','',function(){cmpAddMenu(null,cInst);},
+          'Another one here, on every slide, or on every slide after '
+          +'this one \u2014 and what the clones share','plus');
         row('Push this look to \u201c'
           +((cDef&&cDef.name)||'the component')+'\u201d','',
           function(){
@@ -2554,8 +2584,9 @@
             toast(k?(k+' other instance'+(k===1?'':'s')+' updated')
               :'Saved \u2014 no other instances yet');},
           'The other '+(cN-1)+' instance'+(cN===2?'':'s')
-          +' take this arrangement and look. Their own words and '
-          +'figures are untouched.');
+          +' take this arrangement and look now. They follow every '
+          +'edit anyway (T409); this is for a deck made before they '
+          +'did. Their own words and figures are untouched.');
         /* WHERE ELSE IS THIS? The section could push a look to every
            other instance and could cut this one loose from them, but it
            could not tell you they existed — the count only ever
@@ -2572,16 +2603,12 @@
           'Turns this instance into ordinary objects. The component and '
           +'its other instances are unaffected.');
       } else if(cSel.length){
-        row('Make a component from '
-          +(cSel.length===1?'this':('these '+cSel.length)),'',
-          function(){
-            var nm=prompt('Name for the component:','FigureCaption');
-            if(!nm) return;
-            var id=cmpDefine(nm.trim(),cSel);
-            if(id) toast('\u201c'+nm.trim()+'\u201d saved \u2014 place '
-              +'it again from this menu');},
-          'Saves the arrangement and look as a named thing you can place '
-          +'again. Each copy keeps its own words and figures.');
+        row('Make clones of '
+          +(cSel.length===1?'this':('these '+cSel.length))+'\u2026','',
+          function(){cmpMakeMenu(null,cSel);},   /* T409 */
+          'Same look, same place, or both \u2014 every copy keeps its '
+          +'own words and figures, and changing one changes them all.',
+          'group');
       }
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];

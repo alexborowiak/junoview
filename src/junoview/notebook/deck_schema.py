@@ -105,9 +105,13 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "styles": (dict, "This deck's overrides of the named text types."),
     "tokens": (dict, "The deck's design tokens: {c:{name:colour}, rad, "
                      "gap}. An item referencing one stores '@name'."),
-    "components": (dict, "{id: {name, w, h, items}}. Named groups that "
-                         "can be placed repeatedly; every instance stays "
-                         "linked to the definition."),
+    "components": (dict, "{id: {name, w, h, items, link, x, y}}. Named "
+                         "groups that can be placed repeatedly; every "
+                         "instance stays linked to the definition. link "
+                         "says what the clones share: absent or 'look' "
+                         "(the look and arrangement, each clone wherever "
+                         "it was put), 'place' (one spot, x/y, on every "
+                         "slide; each keeps its own look) or 'both'."),
     "cuts": (dict, "{id: {name}}. Named subsets of one deck — a "
                    "45-minute version and a 5-minute one in the same "
                    "file. Membership is the slide's `cuts` list."),
@@ -180,9 +184,9 @@ LAYOUTS: dict[str, int] = {"full": 1, "halves": 2, "rows": 2,
 
 #: Fields any annot may carry, whatever its kind.
 ANNOT_COMMON: dict[str, tuple[type, str]] = {
-    "hide": (int, "1 to leave this out WHILE EDITING — scaffolding you "
-                  "do not want in the way. It is still drawn in "
-                  "playback and print."),
+    "hide": (int, "1 when this is hidden: not drawn while editing, in "
+                  "playback, in print or in PowerPoint, and it claims no "
+                  "click. A spare kept on the slide."),
     "priv": (int, "1 when only you may see it: drawn on your own screen "
                   "and in the presenter view, never for the audience and "
                   "never in a PDF or a .pptx. Like speaker notes it is "
@@ -349,7 +353,11 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                           "`labels`, and the axis titles `xlab`, "
                           "`ylab`, `y2lab`."),
     "flip": (("x", "y"), "A flip book: several figures stepped through "
-                         "in place."),
+                         "in place. `frames` is its pages, each {src, "
+                         "okey} (a picture), {ref, part} (a notebook "
+                         "card) or {own: 1} -- a blank leaf whose "
+                         "picture is an object of its own on the slide, "
+                         "tied to this page by fb/fbf (T403)."),
 }
 
 

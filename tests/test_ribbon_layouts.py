@@ -178,7 +178,9 @@ def test_the_selection_opens_the_layouts_own_format_tab(out):
     assert "{id:'style',label:'Style'}" in out
     assert "{id:'object',label:'Object'}" in out
     assert "function ribbonSelTab(){" in out
-    assert "if(selT==='style'&&kind!=='text'&&kind!=='table') selT='object';" in out
+    # T410: a line or a pen stroke stays on Style, where its Line window is
+    assert ("if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)\n"
+            "      selT='object';") in out
     assert "var wantTab=(activeTab()!==selT" in out
     assert "if(wantTab) setTab(wantTab,true); else syncRibbonGroups();" in out
     # ...and TRANSIENT, so a tab the selection carried you to is not

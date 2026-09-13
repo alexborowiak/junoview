@@ -5332,6 +5332,16 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:4;}
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:5;}
 .et-fmt .rbn-grp[data-tab="object"].rbn-clones{order:6;}
+/* T409: the two clone menus -- a name box, and the kind that is on */
+.cmp-menu .cmp-name{display:block;width:100%;box-sizing:border-box;
+  margin:2px 0 6px;padding:5px 7px;font:inherit;font-size:12.5px;
+  color:inherit;background:var(--input-bg);border:1px solid var(--line);
+  border-radius:6px;}
+.cmp-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);color:#fff;}
+.cmp-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:9px;opacity:.8;}
+.cmp-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive
@@ -5613,56 +5623,41 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .selpane.animpane .selpane-list{padding:10px 11px;}
 .anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--chrome-ink-2);margin:0 2px 6px;}
-.anim-eff+.anim-h,.anim-merge+.anim-h,.anim-empty+.anim-h{margin-top:13px;}
-.anim-empty{font-size:12px;color:var(--chrome-ink-2);padding:1px 2px 5px;line-height:1.5;}
-.anim-eff{display:flex;flex-wrap:wrap;gap:5px;}
-.anim-effb{flex:1;min-width:52px;background:var(--chrome-2,#16273a);border:1px solid #ffffff1f;
-  color:#cdd9e3;border-radius:7px;padding:7px 6px;font-size:12px;cursor:pointer;
-  font-family:var(--sans);}
-.anim-effb:hover{border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
-.anim-effb.on{background:var(--cyan-deep);border-color:var(--cyan);
-  color:var(--on-accent-deep,#fff);}
-.anim-merge{display:flex;gap:6px;margin-top:8px;}
+.anim-empty{font-size:12px;color:var(--chrome-ink-2);padding:1px 2px 9px;line-height:1.5;}
 .anim-mini{background:var(--chrome-2,#16273a);border:1px solid #ffffff1f;color:#bcccd8;
   border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
-  font-family:var(--sans);}
-.anim-mini.wide{flex:1;}
+  font-family:var(--sans);white-space:nowrap;}
+.anim-mini.wide{flex:1;width:100%;margin-top:10px;}
 .anim-mini:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
 .anim-mini:disabled{opacity:.4;cursor:default;}
+/* T402: ONE ROW PER CLICK. The number is the click the space bar
+   counts; the name is a button that selects the thing on the slide; the
+   detail line says how it arrives. A page of a flip book (or a series
+   of a chart, a page of a text box) is a row of its own, indented, with
+   a hollow number: it has a click but no order of its own. */
 .anim-seq{display:flex;flex-direction:column;gap:4px;}
 .anim-step{display:flex;align-items:center;gap:8px;background:var(--chrome-3,#101c28);
   border:1px solid #ffffff12;border-radius:8px;padding:5px 7px;}
+.anim-step.cur{border-color:var(--cyan);}
 .anim-num{flex:none;width:20px;height:20px;border-radius:50%;
   background:var(--amber);color:#241a05;font-family:var(--mono);font-size:11px;
   font-weight:700;display:flex;align-items:center;justify-content:center;}
 /* a row that costs SEVERAL clicks says so as a range, and a 20px circle
    cannot hold "3–6". Only then -- an ordinary row is untouched. */
 .anim-num.wide{width:auto;min-width:20px;padding:0 6px;border-radius:10px;}
-/* the pieces inside one row: read-only, because the ↑↓ above still
-   move the whole build order and a piece has no order of its own */
-.anim-subs{display:flex;flex-direction:column;gap:2px;margin:3px 0 1px 28px;}
-.anim-sub{display:flex;gap:6px;align-items:baseline;font-size:11px;
-  color:var(--chrome-ink-2);}
-.anim-subn{flex:none;font-family:var(--mono);font-size:10px;color:var(--amber);}
-.anim-subt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
-.anim-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
-.anim-chip{font-size:11px;color:#bcccd8;background:#1c2c3d;border-radius:5px;
-  padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;max-width:150px;}
-.anim-chip.cur{background:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
-/* the stops a build ANCHORS (T163): a flip book's pages, a chart's
-   series. Indented and quieter than a build row because they are
-   READ-ONLY here -- a page's place in the sequence is decided by its
-   place in its book, and a second way to reorder it would be two
-   truths about one order. */
+.anim-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.anim-name{background:none;border:none;padding:0;color:#dce6ee;
+  font:12.5px var(--sans);text-align:left;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.anim-name:hover{color:#fff;text-decoration:underline;}
+.anim-detail{font-size:10.5px;color:var(--chrome-ink-2);line-height:1.35;}
 .anim-step.anim-sub{margin-left:18px;background:var(--chrome-4,#0e1824);
   padding-top:3px;padding-bottom:3px;}
-.anim-num.anim-subnum{background:none;border:none;color:var(--chrome-ink-3);
-  width:14px;height:14px;font-size:11px;}
-.anim-chip.anim-subchip{background:#16232f;color:var(--chrome-ink-2);font-style:italic;}
-.anim-stepctr{flex:none;display:flex;gap:2px;}
-.anim-stepctr .anim-mini{padding:3px 6px;}
+.anim-step.anim-sub .anim-num{background:none;border:1px solid var(--amber);
+  color:var(--amber);font-weight:600;}
+.anim-step.anim-sub .anim-name{font-size:12px;color:#c4d0da;}
+.anim-stepctr{flex:none;display:flex;flex-direction:column;gap:2px;}
+.anim-stepctr .anim-mini{padding:2px 6px;font-size:10.5px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
 
@@ -6617,6 +6612,12 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 .fp-t:focus{border-color:var(--cyan);background:var(--chrome-0,#0b141d);}
 .fp-ctr{display:none;gap:1px;flex:none;}
 .fp-row:hover .fp-ctr,.fp-row.current .fp-ctr{display:flex;}
+/* T403: a page that is its own object -- its number says so, and the
+   row's verb has words on it, because "take it out of the book" is
+   not a glyph anyone would guess */
+.fp-row.own .fp-n{color:var(--accent);}
+.film-mini.fp-own{white-space:nowrap;}
+.deck.editing .an-flipown{opacity:.7;}
 /* tying an item to a figure lives in this pane rather than the ribbon,
    because it needs the frame LIST visible to mean anything */
 .fp-tie{border-top:1px solid #ffffff14;padding:9px 12px;
@@ -9178,6 +9179,12 @@ body.light .lb-name{background:var(--input-bg);
 .dgt{margin:6px 0 18px;}
 .dgt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;
   margin-bottom:8px;}
+/* T411: the size box on the table's bar, and the typed size between a
+   named type's steppers */
+.dgt-szw{display:inline-flex;align-items:center;gap:5px;margin-left:4px;}
+.dgt-szlab{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);}
+.dgt-n.dgt-szin,.dgt-n.dg-sizein{width:58px;}
+.dg-size{display:inline-flex;align-items:center;gap:2px;min-width:0;}
 .dgt-count{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);
   margin-left:auto;}
 .dgt-grid{display:grid;
@@ -15330,11 +15337,34 @@ items snap to both. Guides, not ink: never printed or exported"
                    a menu, in a pane, behind a button. -->
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Reuse">
+              <!-- T413: MATCHING, ON THE RIBBON (2026-09-13, user: "What
+                   happened to the feature of ... making one object
+                   appear the same as another"). The three point-at-it
+                   verbs lived in the canvas right-click menu and the
+                   Layers pane only; a thing you point at needs a door
+                   where you are looking. -->
+              <button class="fx-tile big-tile" id="fmt-match" hidden
+                aria-haspopup="true" aria-expanded="false"
+                title="Give this look to objects you click, take the look
+ of an object you click, or lay these out like a group you click"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match&#8230;</button>
               <button class="fx-tile big-tile" id="fmt-cmp-make" hidden
-                title="Save the selected items as a named thing you
- can place again. Every copy keeps its own words and its own figure,
- and changing the original changes them all"
+                title="Make these a set of clones &#8212; same look,
+ same place on every slide, or both. Change any one and they all
+ follow"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" stroke-dasharray="2.6 2.3"/><rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/><circle cx="10.2" cy="10.2" r="2.1"/></svg> Make clones&#8230;</button>
+              <!-- T409: THE DOOR THAT WAS MISSING (2026-09-13, user: "I
+                   tried to clone an object, but it just changed the
+                   clone button to say 'Its clones', and then I can't
+                   make clones?"). Making the set left only the list of
+                   where the clones were; adding another lived in the
+                   canvas right-click menu alone. -->
+              <button class="fx-tile big-tile" id="fmt-cmp-add" hidden
+                aria-haspopup="true" aria-expanded="false"
+                title="Put another clone of this on this slide, on every
+ slide, or on every slide after this one &#8212; and choose what the
+ clones share"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Add a clone&#8230;</button>
               <button class="fx-tile big-tile" id="fmt-cmp-find" hidden
                 title="Every place in this deck this clone has been
  put — pick one to go there"
@@ -30343,10 +30373,11 @@ window.JunoPptx = (function () {
       var eye=document.createElement('button');
       eye.className='sp-act'+(a.hide?' on':'');eye.type='button';
       eye.innerHTML=bic('eye');
-      eye.title=a.hide?'Show while editing'
-        :'Hide while editing (still shows when presenting)';
-      eye.setAttribute('aria-label',
-        a.hide?'Show while editing':'Hide while editing');
+      /* T404: hidden means hidden -- from the editor, the show, the PDF
+         and the PowerPoint alike. It is how you keep a spare on a slide. */
+      eye.title=a.hide?'Show it again'
+        :'Hide it: not shown while editing, presenting or in exports';
+      eye.setAttribute('aria-label',a.hide?'Show':'Hide');
       eye.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'hide');});
       r.appendChild(eye);
@@ -30504,19 +30535,15 @@ window.JunoPptx = (function () {
        necessarily the item you clicked */
     var prim=(typeof selAnnot==='number')?ann[selAnnot]:null;
     var primInst=(prim&&prim.cmp&&prim.cinst)?prim:null;
-    act(bic('group')+' Make component',
-      'Save the arrangement and look of the selected items as a named '
-      +'thing you can place again. Each copy keeps its own words and '
+    act(bic('group')+' Make clones\u2026',
+      'Make the selected items a set of clones: same look, same place '
+      +'on every slide, or both. Each copy keeps its own words and '
       +'its own figure',selN.length>=1&&!primInst,
-      function(){
-        var nm=prompt('Name for the component:','FigureCaption');
-        if(nm===null) return;
-        nm=nm.trim(); if(!nm) return;
-        var id=cmpDefine(nm,selN);
-        toast(id?('“'+nm+'” saved — place it again from '
-          +'the canvas menu'):'Nothing there that could be saved');
-        renderSelPane();
-      });
+      function(b){cmpMakeMenu(b,selN);});   /* T409 */
+    act(bic('plus')+' Add a clone\u2026',
+      'Another one here, on every slide, or on every slide after this '
+      +'one \u2014 and what the clones share',!!primInst,
+      function(b){cmpAddMenu(b,primInst);});
     act(bic('locate')+' Every instance',
       'Every place in this deck this component has been put — pick '
       +'one to go there',!!primInst,
@@ -32629,7 +32656,13 @@ window.JunoPptx = (function () {
      It reports now, and lsFull records that it happened so the readout
      and the Save button can stop lying. */
   var lsFull=false;
-  function lsSet(k,v){
+  /* `quiet` (T406): the write is a CONVENIENCE COPY -- the deck's real
+     home is a file or the project -- so a full browser is not "that edit
+     was NOT kept" and must not say so (2026-09-13, user: "Still getting
+     error that it can't be saved as browser is full even though rn it
+     is saved to local"). The flag is still recorded, so the readout can
+     tell the truth for a deck whose only home IS the browser. */
+  function lsSet(k,v,quiet){
     try{
       localStorage.setItem(k,v);
       if(lsFull){lsFull=false;if(typeof status==='function') status();}
@@ -32641,7 +32674,7 @@ window.JunoPptx = (function () {
       if(!lsFull){
         lsFull=true;
         if(typeof status==='function') status();
-        if(typeof toast==='function')
+        if(!quiet&&typeof toast==='function')
           toast('This browser is full — that edit was NOT kept. Use '
             +'File › Download a copy, or the \u25be beside Save to keep '
             +'a file on your computer.',9000);
@@ -32676,8 +32709,10 @@ window.JunoPptx = (function () {
   function writeDraftNow(){
     draftT=null;
     if(!pres) return;
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
-    lsSet(PFX+'last',pres.name||'untitled');
+    /* quiet when the browser is not where this deck lives (T406) */
+    var spare=(typeof saveTarget!=='undefined'&&saveTarget!=='browser');
+    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres),spare);
+    lsSet(PFX+'last',pres.name||'untitled',spare);
   }
   function scheduleDraftWrite(){
     if(draftT) clearTimeout(draftT);
@@ -32881,6 +32916,20 @@ window.JunoPptx = (function () {
        before any of its slides was looked at still carries them */
     if(typeof mediaWarm==='function') mediaWarm(pres);
   }
+  /* T414: A DECK OPENED FROM A FILE THAT IS TOO BIG FOR THE DRAFT STORE
+     STILL OPENS -- from the object in hand, with no browser copy. Its
+     home is the file it came from; the caller points Save at it. The
+     same steps as loadPresentation, minus the read from localStorage
+     that had nothing to read. */
+  function loadPresentationObj(np){
+    flushDraftWrite();
+    histHead=null;histBranch='';
+    deckZoom=0;
+    histSeed();
+    pres=np;source='draft';
+    histReset();
+    if(typeof mediaWarm==='function') mediaWarm(pres);
+  }
   /* which presentation the page opens with. Called from THE BOOT
      SEQUENCE at the end of the file — never from here: loadPresentation
      → histReset() → syncCustomTypes() reaches STYLE_DEFAULTS, which is
@@ -32919,7 +32968,14 @@ window.JunoPptx = (function () {
   }
   function whereSaved(){
     if(saveTarget==='project') return 'project';
-    if(saveTarget==='file') return fileName||'file';
+    /* T414: WHICH file, and WHERE. An autosave into the default folder
+       writes <name>.junoview.html THERE -- not into a file you opened
+       from somewhere else -- and "autosaved to talk.junoview.html" let
+       you look in the wrong place for your work. */
+    if(saveTarget==='file')
+      return (fileName||'file')
+        +((typeof deckDirName!=='undefined'&&deckDirName&&!fileHandle)
+          ?(' in your '+deckDirName+' folder'):'');
     return 'browser';
   }
   /* ---- the name, in the title bar ------------------------------------
@@ -32979,6 +33035,24 @@ window.JunoPptx = (function () {
         +'save to a file.';
       return;
     }
+    /* T406: a file that is waiting on ONE click says so, instead of
+       "unsaved \u2014 saving\u2026" for the rest of the session */
+    if(saveTarget==='file'&&typeof fileWaits!=='undefined'&&fileWaits
+       &&source==='draft'){
+      el.textContent=fileWaits==='pick'
+        ?'unsaved \u2014 click Save to choose the file'
+        :'unsaved \u2014 click Save to keep writing '+(fileName||'the file');
+      el.className='deck-status unsaved';
+      el.title=fileWaits==='pick'
+        ?'No file has been chosen yet, and an autosave never opens a '
+          +'file dialog. Press Save once and pick the file; every '
+          +'autosave after that writes to it.'
+        :'After a reload the browser waits for one click before it lets '
+          +'a page write to a file again. Press Save once; every '
+          +'autosave after that writes to '+(fileName||'the file')+'.';
+      markSaveClickable(el);
+      return;
+    }
     if(source==='draft'){
       /* web/static Save writes to the browser but keeps source='draft';
          show a plain 'saved' — the Save button tooltip explains where */
@@ -33031,6 +33105,9 @@ window.JunoPptx = (function () {
      undo entry (taken on blur, as before) instead of one per phrase —
      which would evict real slide edits from the 50-deep stack. */
   function markDirty(quiet){
+    /* T409: a committed edit to a clone reaches its clones FIRST, so
+       the history entry and the draft below hold the synced deck */
+    if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
     source='draft';
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */
@@ -35726,7 +35803,7 @@ window.JunoPptx = (function () {
   function steppersOn(s){
     var out=[];
     ((s&&s.annots)||[]).forEach(function(a,i){
-      if(a&&stopsFor(s,a)>0) out.push({a:a,i:i});});
+      if(a&&!a.hide&&stopsFor(s,a)>0) out.push({a:a,i:i});});   /* T404 */
     return out;
   }
   /* T234: the frame each flip book was last DRAWN at, and WHEN it last
@@ -36232,7 +36309,9 @@ window.JunoPptx = (function () {
       return {map:{},sub:{},last:{},count:0};
     var seen={};
     (s&&s.annots||[]).forEach(function(a){
-      if(!a||!a.anim) return;
+      /* T404: a hidden object is not on the slide, so it claims no
+         click -- or the show would stop on nothing */
+      if(!a||!a.anim||a.hide) return;
       var o=a.anim.order||0;
       /* the WIDEST claim on this order wins: two boxes on one build, one
          of them split four ways, is four clicks and the other box
@@ -36245,6 +36324,7 @@ window.JunoPptx = (function () {
        one more click at the end" has to BE a click, or the slide would
        end while the object was still there. */
     (s&&s.annots||[]).forEach(function(a){
+      if(!a||a.hide) return;
       var o=animOut(a);
       if(o!=null&&!(o in seen)) seen[o]=1;});
     var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
@@ -36257,7 +36337,7 @@ window.JunoPptx = (function () {
   function animSeq(s){
     var by={},order=[];
     (s&&s.annots||[]).forEach(function(a,i){
-      if(a&&a.anim){var o=a.anim.order||0;
+      if(a&&a.anim&&!a.hide){var o=a.anim.order||0;   /* T404 */
         if(!by[o]){by[o]=[];order.push(o);}by[o].push(i);}});
     order.sort(function(x,y){return x-y;});
     return order.map(function(o){return {order:o,items:by[o]};});
@@ -40465,7 +40545,7 @@ window.JunoPptx = (function () {
     var editing=(mode==='edit');
     (s.annots||[]).forEach(function(a,i){
       if(!a||a.k!=='arrow') return;
-      if(a.hide&&editing) return;
+      if(a.hide) return;                     /* T404: hidden is hidden */
       if(a.priv&&!privShown()) return;      /* T31 */
       drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
     });
@@ -40748,7 +40828,7 @@ window.JunoPptx = (function () {
     if(!layer||!s) return;
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.k!=='text'||!a.fh) return;
-        if(a.hide&&editing) return;
+        if(a.hide) return;                   /* T404: hidden is hidden */
         var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
         if(!el) return;
         var lr=layer.getBoundingClientRect();
@@ -40943,9 +41023,13 @@ window.JunoPptx = (function () {
     })?figNumbers():null;
     var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
-      /* hidden via the Objects pane: skipped while editing, still
-         rendered in playback / print */
-      if(a.hide&&editing) return;
+      /* T404: HIDDEN IS HIDDEN. The Layers pane's eye used to mean
+         "out of my way while editing, still shown to the audience", and
+         nobody read it that way (2026-09-13, user: "Bug: hidden object
+         still appear in present mode"). A hidden object is not on the
+         slide: not while editing, not in playback, not in print or
+         PowerPoint, and it claims no click (slideBuildSteps). */
+      if(a.hide) return;
       /* ...and the other way round: yours, so NOT rendered in playback,
          print or PowerPoint (T31) */
       if(a.priv&&!privShown()) return;
@@ -41565,6 +41649,14 @@ window.JunoPptx = (function () {
               :'';
             fst.appendChild(fmiss);
           }
+        } else if(fdef&&fdef.own&&editing){
+          /* T403: the page's picture is an object of its own on the
+             slide, tied to this page; the leaf in the book is blank */
+          var fown=document.createElement('div');
+          fown.className='an-flipempty an-flipown';
+          fown.textContent='This page is its own object on the slide '
+            +'\u2014 select it there to move, resize or fade it';
+          fst.appendChild(fown);
         }
         fl.appendChild(fst);
         if(fr.length>1&&a.fbtn){
@@ -41765,10 +41857,15 @@ window.JunoPptx = (function () {
         var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
         if(st==null) return;
         if(editing){
+          /* T402: the badge is the CLICK the space bar counts, which is
+             what the animation pane numbers -- the build's stop index
+             skipped a flip book's page turns, so a shape after a
+             three-page book wore "5" on the slide and "7" in the pane */
+          var clk=plan.stop[st]; if(clk==null) clk=st;
           var bd=document.createElement('span');
-          bd.className='an-buildno';bd.textContent=(st+1);
-          bd.title='Build '+(st+1)+' — '+(ba.anim.type||'fade')
-            +' (items on the same build appear together)';
+          bd.className='an-buildno';bd.textContent=(clk+1);
+          bd.title='Click '+(clk+1)+' — '+(ba.anim.type||'fade')
+            +' (items on the same click appear together)';
           el.appendChild(bd);
           /* T391: ...and what has not arrived by stop k is not there
              either; a box arriving in pieces shows the pieces that are */
@@ -42917,7 +43014,7 @@ window.JunoPptx = (function () {
     /* the Object group's provenance row (T198): where it came from,
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
-    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-find '
+    +'#fmt-path #fmt-lock #fmt-match #fmt-cmp-make #fmt-cmp-add #fmt-cmp-find '
     /* THE HISTORY TILE, AND WHY THE OBJECT TAB WOULD NOT GO AWAY.
        #fmt-hist (T220's "what this object has been through", given a
        group of its own by T233) is shown by showFmt but appeared in
@@ -43087,7 +43184,16 @@ window.JunoPptx = (function () {
     /* Default's Style tab is about the selected thing's appearance. A
        figure or shape still belongs on Object, even though it may expose a
        Line control on Style too. Custom layouts own their declared target. */
-    if(selT==='style'&&kind!=='text'&&kind!=='table') selT='object';
+    /* T410: A LINE IS ITS STROKE (2026-09-13, user: "When clicking on a
+       line, it always tries to take me away from line and to the object
+       tab"). Object has nothing for a line but arrange and size; its
+       dash, weight, ends and route are the Line window on Style. So a
+       line or a pen stroke lands on Style, and stays there when you
+       are already on it. A shape keeps going to Object: its fill and
+       edge are there. */
+    var strokeSel=(kind==='arrow'||kind==='draw');
+    if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)
+      selT='object';
     /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
        line, before a single control had been revealed — and once a
        layout may give the format groups a tab of their own, that tab is
@@ -43479,7 +43585,9 @@ window.JunoPptx = (function () {
     /* T229: making a set of clones, and finding the ones that exist */
     var selCount=selIdxs().length;
     var cmpOn=!!(a&&a.cmp&&a.cinst);
+    show('#fmt-match',isNum&&selCount>=1);   /* T413 */
     show('#fmt-cmp-make',isNum&&selCount>=1&&!cmpOn);
+    show('#fmt-cmp-add',cmpOn);   /* T409: the door that was missing */
     show('#fmt-cmp-find',cmpOn);
     var cf=$('#fmt-cmp-find');
     if(cf&&cmpOn&&typeof cmpInstances==='function'){
@@ -43777,6 +43885,21 @@ window.JunoPptx = (function () {
     return {x:Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100)),
             y:Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100))};
   }
+  /* T405: THE SAME POINT, UNCLAMPED, for a MOVE. pctPoint pins the
+     pointer to the page, which is right for drawing a new box and wrong
+     for dragging one: the drag's delta could never carry an object past
+     the page edge, so nothing could be parked beside the slide, though
+     the layer already spills while editing and the stage grows
+     scrollbars for it (2026-09-13, user: "it is useful sometimes to be
+     able to drag objects outside of the slide and leave them there, but
+     that isn't really an option here"). Playback and every export clip
+     to the page, so a parked object is out of the show until it is
+     dragged back. */
+  function pctPointFree(layer,ev){
+    var r=layer.getBoundingClientRect();
+    return {x:(ev.clientX-r.left)/(r.width||1)*100,
+            y:(ev.clientY-r.top)/(r.height||1)*100};
+  }
   /* ---- LOCKS -----------------------------------------------------------
      TWO locks, because there are two different things people mean by the
      word (TASKS T3):
@@ -44047,7 +44170,7 @@ window.JunoPptx = (function () {
       }
     }
     var a=annotByIdx(s,idx); if(!a) return;
-    var start=pctPoint(layer,ev0);
+    var start=pctPointFree(layer,ev0);   /* T405: a move may leave the page */
     /* drag the whole current selection (group / multi-select) together —
        pinned members stay put, under EITHER lock */
     var movers=selSet.filter(function(i){return typeof i==='number';});
@@ -44112,7 +44235,7 @@ window.JunoPptx = (function () {
     var movedAny=false;
     function mm(ev){
       movedAny=true;
-      var p=pctPoint(layer,ev);
+      var p=pctPointFree(layer,ev);   /* T405 */
       var dx=p.x-start.x,dy=p.y-start.y;
       var sx=null,sy=null;
       /* CLEARED EVERY MOVE, like sx/sy beside it. It used to be reset
@@ -45417,6 +45540,10 @@ window.JunoPptx = (function () {
       if(cInst){
         var cDef=cmpStore()[cInst.cmp];
         var cN=cmpInstances(cInst.cmp).length;
+        /* T409: the door the ribbon has, here too */
+        row('Add a clone\u2026','',function(){cmpAddMenu(null,cInst);},
+          'Another one here, on every slide, or on every slide after '
+          +'this one \u2014 and what the clones share','plus');
         row('Push this look to \u201c'
           +((cDef&&cDef.name)||'the component')+'\u201d','',
           function(){
@@ -45424,8 +45551,9 @@ window.JunoPptx = (function () {
             toast(k?(k+' other instance'+(k===1?'':'s')+' updated')
               :'Saved \u2014 no other instances yet');},
           'The other '+(cN-1)+' instance'+(cN===2?'':'s')
-          +' take this arrangement and look. Their own words and '
-          +'figures are untouched.');
+          +' take this arrangement and look now. They follow every '
+          +'edit anyway (T409); this is for a deck made before they '
+          +'did. Their own words and figures are untouched.');
         /* WHERE ELSE IS THIS? The section could push a look to every
            other instance and could cut this one loose from them, but it
            could not tell you they existed — the count only ever
@@ -45442,16 +45570,12 @@ window.JunoPptx = (function () {
           'Turns this instance into ordinary objects. The component and '
           +'its other instances are unaffected.');
       } else if(cSel.length){
-        row('Make a component from '
-          +(cSel.length===1?'this':('these '+cSel.length)),'',
-          function(){
-            var nm=prompt('Name for the component:','FigureCaption');
-            if(!nm) return;
-            var id=cmpDefine(nm.trim(),cSel);
-            if(id) toast('\u201c'+nm.trim()+'\u201d saved \u2014 place '
-              +'it again from this menu');},
-          'Saves the arrangement and look as a named thing you can place '
-          +'again. Each copy keeps its own words and figures.');
+        row('Make clones of '
+          +(cSel.length===1?'this':('these '+cSel.length))+'\u2026','',
+          function(){cmpMakeMenu(null,cSel);},   /* T409 */
+          'Same look, same place, or both \u2014 every copy keeps its '
+          +'own words and figures, and changing one changes them all.',
+          'group');
       }
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];
@@ -48546,8 +48670,43 @@ window.JunoPptx = (function () {
     if(m&&/^(data:image\/|https?:\/\/)/i.test(m[1])) return {src:m[1]};
     return null;
   }
+  /* T408: A PICTURE PASTED ONTO A FLIP BOOK IS A PAGE OF IT (2026-09-13,
+     user: "I wish you could paste images into a flip book"). With a
+     book selected, Ctrl+V used to drop the picture on top of the book
+     as a loose image -- the one place on the slide a pasted picture
+     obviously belonged, and the one door that could not take it. Now
+     it goes in as the last page and the book turns to it, the same way
+     "+ Pictures…" adds one. Nothing else about paste changes: with no
+     book selected the picture lands on the slide as before. */
+  function pasteIntoFlip(pic){
+    var bi=(typeof flipSelIdx==='function')?flipSelIdx():null;
+    if(bi===null) return false;
+    var s=pres.slides[cur],bk=s&&(s.annots||[])[bi];
+    if(!bk) return false;
+    function said(n){
+      toast(n?('Pasted as page '+flipFrames(bk).length+' of the flip '
+        +'book'):'That image could not be read');
+    }
+    if(pic.file) flipAddFiles(bk,[pic.file],said);
+    else if(/^data:/i.test(pic.src)){
+      fetch(pic.src).then(function(r){return r.blob();})
+        .then(function(b){flipAddFiles(bk,[b],said);})
+        .catch(function(){said(0);});
+    } else {
+      /* a picture at an address is a page by its address, the way the
+         URL door places one */
+      bk.frames=flipFrames(bk).slice();
+      bk.frames.push({src:pic.src});
+      bk.at=bk.frames.length-1;
+      markDirty();renderSlide();
+      if(typeof renderFlipPane==='function') renderFlipPane();
+      said(1);
+    }
+    return true;
+  }
   function pasteClipboardImage(pic){
     if(!pic) return false;
+    if(pasteIntoFlip(pic)) return true;   /* T408 */
     if(pic.file) return pasteImageFile(pic.file);
     if(/^data:/i.test(pic.src)){
       fetch(pic.src).then(function(r){return r.blob();})
@@ -51761,7 +51920,20 @@ window.JunoPptx = (function () {
      5. SCHEMA. `pres.components = {id:{name, w, h, items:[…]}}`. It is
         deck-level, so it rides in normPres, _as_presentations, the undo
         snapshot and DECK-FORMAT.md — the five places T33 exists to make
-        it obvious you have to touch. */
+        it obvious you have to touch.
+
+     6. WHAT THE CLONES SHARE (T409). `link` on the definition: absent
+        or 'look' is the contract above (the look and the arrangement
+        travel; each clone sits wherever you put it); 'place' is one
+        spot on every slide (`x`,`y` on the definition), each clone
+        with its own look; 'both' is everything. And following is LIVE:
+        every committed edit to a clone pushes from that clone
+        (cmpFollowSel, called by markDirty), so "changing the original
+        changes them all" is true of every clone rather than a
+        tooltip's promise -- "Push" survives as the manual re-sync for a
+        deck made before that. A clone placed from another gets that
+        one's CONTENT too (cmpSeed): the definition still holds none,
+        but "one image across multiple slides" needs the image. */
   function cmpStore(){
     if(!pres.components) pres.components={};
     return pres.components;
@@ -51783,7 +51955,24 @@ window.JunoPptx = (function () {
      is stored relatively instead. Content is not in MATCH_PROPS at all,
      which is the whole point (see the note above). */
   var CMP_SKIP={x:1,y:1,w:1,h:1,x1:1,y1:1,x2:1,y2:1,mid:1};
-  function cmpDefine(name,idxs){
+  /* T409: the three things a set of clones can share */
+  var CMP_LINKS=[
+    ['look','Same look',
+     'Colour, size, type and arrangement follow; each clone sits '
+     +'wherever you put it'],
+    ['place','Same place',
+     'One spot on every slide \u2014 move or resize one and they all '
+     +'go; each keeps its own look'],
+    ['both','Same look and place',
+     'Everything follows: change any clone and every other one '
+     +'matches']];
+  function cmpLinkOf(def){
+    var l=def&&def.link;
+    return (l==='place'||l==='both')?l:'look';
+  }
+  function cmpHasLook(def){return cmpLinkOf(def)!=='place';}
+  function cmpHasPlace(def){return cmpLinkOf(def)!=='look';}
+  function cmpDefine(name,idxs,link){
     var s2=pres.slides[cur];
     if(!s2||!idxs.length) return null;
     var layer=stage.querySelector('.annot-layer');
@@ -51839,7 +52028,10 @@ window.JunoPptx = (function () {
       if(fn!=null&&fn!==n) items[n].capOfIdx=fn;
     });
     var id=nextCmpId();
-    cmpStore()[id]={name:name||'Component',w:W,h:H,items:items};
+    var def={name:name||'Component',w:W,h:H,items:items};
+    /* T409: a place-linked set remembers the spot */
+    if(link==='place'||link==='both'){def.link=link;def.x=bb.l;def.y=bb.t;}
+    cmpStore()[id]=def;
     /* the objects you defined it FROM become its first instance, so the
        thing you were looking at is a component now rather than a copy of
        one sitting beside it */
@@ -52065,17 +52257,49 @@ window.JunoPptx = (function () {
     }).observe(p,{attributes:true,attributeFilter:['hidden']});
   }
   window.SemDeckMasters=openMasters;
-  function cmpPlace(id,at){
+  /* T409: A CLONE HAS SOMETHING IN IT. The definition holds a look and
+     an arrangement, never content -- so a clone placed from the
+     definition alone was an empty picture, or a box with no words, and
+     "one image across multiple slides" was exactly the thing it could
+     not do. The content is copied from an instance (the one you are
+     adding from, else the first there is). Ties and ids that name
+     things on that instance's slide do not come along: the caption tie
+     is re-minted below, and a build order, a flip-book tie or an
+     arrow's attached end would point at strangers. */
+  var CMP_NOT_COPIED=['cmp','ci','cinst','cap','capOf','grp','oid','anim',
+    'fb','fbf','fbm','tie','c1','c2','anch','hide'];
+  function cmpSeed(src,it){
+    var a=src?deep(src):{};
+    CMP_NOT_COPIED.forEach(function(p){delete a[p];});
+    a.k=it.k;
+    return a;
+  }
+  /* si: the slide to place on (default: this one). from: {si,inst},
+     the clone whose content the new one starts with. quiet: no
+     history entry and no render -- the caller placing on many slides
+     does both once. */
+  function cmpPlace(id,at,si,from,quiet){
     var def=cmpStore()[id]; if(!def) return 0;
-    var s2=pres.slides[cur]; if(!s2) return 0;
+    if(si==null) si=cur;
+    var s2=pres.slides[si]; if(!s2) return 0;
     s2.annots=s2.annots||[];
-    var W=def.w||20,H=def.h||20;
-    var ox=(at?at.x:50)-W/2,oy=(at?at.y:50)-H/2;
-    ox=Math.max(0,Math.min(100-W,ox));
-    oy=Math.max(0,Math.min(100-H,oy));
+    var W=def.w||20,H=def.h||20,ox,oy;
+    if(cmpHasPlace(def)&&def.x!=null){ox=def.x;oy=def.y||0;}   /* T409 */
+    else {
+      ox=(at?at.x:50)-W/2;oy=(at?at.y:50)-H/2;
+      ox=Math.max(0,Math.min(100-W,ox));
+      oy=Math.max(0,Math.min(100-H,oy));
+    }
+    var src=from||cmpInstances(id)[0]||null,srcBy={};
+    if(src){
+      var ss=(pres.slides||[])[src.si];
+      ((ss&&ss.annots)||[]).forEach(function(x){
+        if(x&&x.cmp===id&&x.cinst===src.inst) srcBy[x.ci]=x;});
+    }
     var inst=nextCinst(),made=[];
     (def.items||[]).forEach(function(it,n){
-      var a={k:it.k,cmp:id,ci:n,cinst:inst};
+      var a=cmpSeed(srcBy[n],it);
+      a.cmp=id;a.ci=n;a.cinst=inst;
       Object.keys(it.props||{}).forEach(function(p){
         a[p]=(typeof it.props[p]==='object'&&it.props[p])
           ?deep(it.props[p]):it.props[p];});
@@ -52101,10 +52325,231 @@ window.JunoPptx = (function () {
       }
       ca.capOf=caps[it.capOfIdx];
     });
+    if(quiet) return made.length;
     markDirty();
-    var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s2);selectMany(l,made);}
+    if(si===cur){
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s2);selectMany(l,made);}
+    }
     return made.length;
+  }
+  /* the slides with no clone of this set yet */
+  function cmpFreeSlides(id){
+    var has={};
+    cmpInstances(id).forEach(function(g){has[g.si]=1;});
+    var out=[];
+    (pres.slides||[]).forEach(function(_,si){if(!has[si]) out.push(si);});
+    return out;
+  }
+  /* one clone's box, in page percent, from the model (no layer needed:
+     the instance may be on another slide) */
+  function cmpInstBox(si,id,inst){
+    var sl=(pres.slides||[])[si]; if(!sl) return null;
+    var bb={l:1e9,t:1e9,r:-1e9,b:-1e9},any=false;
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.cmp!==id||a.cinst!==inst) return;
+      var r=(a.k==='arrow')
+        ?{l:Math.min(a.x1,a.x2),r:Math.max(a.x1,a.x2),
+          t:Math.min(a.y1,a.y2),b:Math.max(a.y1,a.y2)}
+        :{l:a.x||0,t:a.y||0,r:(a.x||0)+(a.w||0),b:(a.y||0)+(a.h||0)};
+      bb.l=Math.min(bb.l,r.l);bb.t=Math.min(bb.t,r.t);
+      bb.r=Math.max(bb.r,r.r);bb.b=Math.max(bb.b,r.b);any=true;
+    });
+    return any?bb:null;
+  }
+  /* T409: MORE CLONES, IN ONE GO. 'here' is a second one on this slide
+     a little offset; 'every' and 'after' put one on each slide that has
+     none yet, in the same spot as the one you are adding from. One
+     history entry for the lot. */
+  function cmpPlaceMany(id,where,from){
+    var def=cmpStore()[id]; if(!def) return 0;
+    var bb=cmpInstBox(from.si,id,from.inst);
+    var at=bb?{x:(bb.l+bb.r)/2,y:(bb.t+bb.b)/2}:null;
+    var n=0,made=[];
+    if(where==='here'){
+      var off=(typeof CLONE_OFF==='number')?CLONE_OFF:3;
+      var at2=at?{x:at.x+off,y:at.y+off}:null;
+      var k=cmpPlace(id,at2,cur,from,true);
+      if(k){n=1;var s2=pres.slides[cur];
+        for(var j=s2.annots.length-k;j<s2.annots.length;j++) made.push(j);}
+    } else {
+      cmpFreeSlides(id).forEach(function(si){
+        if(where==='after'&&si<=cur) return;
+        if(cmpPlace(id,at,si,from,true)) n++;
+      });
+    }
+    if(!n) return 0;
+    markDirty();refresh();
+    if(made.length){
+      var l=stage.querySelector('.annot-layer');
+      if(l) selectMany(l,made);
+    }
+    return n;
+  }
+  /* T409: what this set shares, changed after the fact. Going to
+     'place' or 'both' takes the spot from the clone you are standing
+     on, and every other clone moves there now. */
+  function cmpSetLink(id,link,si,inst){
+    var def=cmpStore()[id]; if(!def) return 0;
+    if(link==='place'||link==='both') def.link=link; else delete def.link;
+    if(cmpHasPlace(def)){
+      var bb=cmpInstBox(si,id,inst);
+      if(bb){def.x=bb.l;def.y=bb.t;}
+    } else {delete def.x;delete def.y;}
+    var n=cmpSyncAll(id,si,inst,true);
+    markDirty();
+    if(typeof showFmt==='function') showFmt();
+    return n;
+  }
+  /* T409: LIVE FOLLOWING. markDirty calls this on every committed
+     edit: a clone in the selection pushes to its clones before the
+     history entry and the draft are written, so both hold the synced
+     deck. Guarded, because the push repaints and a repaint may commit. */
+  var cmpFollowing=false;
+  function cmpFollowSel(){
+    if(cmpFollowing||mode!=='edit') return;
+    var s=pres.slides[cur]; if(!s) return;
+    var seen={};
+    selIdxs().forEach(function(i){
+      var a=(s.annots||[])[i];
+      if(!a||!a.cmp||!a.cinst) return;
+      var key=a.cmp+'|'+a.cinst;
+      if(seen[key]||!cmpStore()[a.cmp]) return;
+      seen[key]=1;
+      cmpFollowing=true;
+      try{cmpPush(a.cmp,cur,a.cinst,true);}
+      finally{cmpFollowing=false;}
+    });
+  }
+  /* the repaint a quiet sync does: the SAME layer refilled, never a new
+     one -- callers of markDirty hold the layer they are about to paint
+     the selection on -- and the film strip, which shows other slides */
+  function cmpRepaint(onCur){
+    if(onCur){
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+    }
+    if(typeof renderFilm==='function') renderFilm();
+  }
+  function cmpMenuAtStage(m){
+    m.style.position='fixed';m.style.zIndex='240';
+    m.style.right='auto';m.style.bottom='auto';
+    var sr=stage.getBoundingClientRect();
+    m.style.left=Math.round(Math.max(8,
+      sr.left+sr.width/2-(m.offsetWidth||180)/2))+'px';
+    m.style.top=Math.round(sr.top+40)+'px';
+  }
+  /* T409: MAKING A SET, WITH THE CHOICE IN FRONT OF YOU. A prompt() for
+     the name had nowhere to say what the clones should share, so the
+     door is a small menu: the name, then the three kinds as rows. btn
+     is optional the way cmpInstMenu's is. */
+  function cmpMakeMenu(btn,idxs){
+    var old=$('#cmp-make-menu'); if(old) old.remove();
+    idxs=(idxs||[]).filter(function(i){return typeof i==='number';});
+    if(!idxs.length){toast('Select something first');return;}
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu cmp-menu';m.id='cmp-make-menu';
+    menuHead(m,'make clones of '
+      +(idxs.length===1?'this':('these '+idxs.length)));
+    var nm=document.createElement('input');
+    nm.className='cmp-name';nm.type='text';
+    nm.placeholder='A name \u2014 like Logo, or FigureCaption';
+    nm.setAttribute('aria-label','Name for this set of clones');
+    nm.addEventListener('keydown',function(e){
+      if(e.key==='Escape') return;
+      e.stopPropagation();
+      if(e.key==='Enter'){e.preventDefault();go('look');}
+    });
+    m.appendChild(nm);
+    menuHead(m,'what the clones share');
+    CMP_LINKS.forEach(function(l){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.type='button';
+      b.innerHTML=bic(l[0]==='look'?'swap':l[0]==='place'?'locate':'group')
+        +' '+esc(l[1]);
+      b.title=l[2];
+      b.addEventListener('click',function(e){
+        e.stopPropagation();go(l[0]);});
+      m.appendChild(b);
+    });
+    function go(link){
+      var name=nm.value.trim()||'Clones';
+      overlayDrop(m);
+      var id=cmpDefine(name,idxs,link);
+      if(!id){toast('Nothing there that could be saved');return;}
+      toast('\u201c'+name+'\u201d is a set of clones \u2014 '
+        +'\u201cAdd a clone\u201d puts another on this slide or on '
+        +'every slide');
+      if(typeof renderSelPane==='function') renderSelPane();
+      if(typeof showFmt==='function') showFmt();
+    }
+    overlayMount(btn,m);
+    if(!btn) cmpMenuAtStage(m);
+    try{nm.focus();}catch(err){}
+  }
+  /* T409: ANOTHER CLONE, FROM THE RIBBON (2026-09-13, user: "I tried to
+     clone an object, but it just changed the clone button to say 'Its
+     clones', and then I can't make clones?"). Making the set turned the
+     only clone door into a list of where the clones were, and placing
+     another lived in the canvas right-click menu alone. This is the
+     door: here, on every slide, or on every slide after this one --
+     and what the clones share, changeable after the fact. */
+  function cmpAddMenu(btn,a){
+    var old=$('#cmp-add-menu'); if(old) old.remove();
+    var id=a&&a.cmp,def=id&&cmpStore()[id];
+    if(!def||!a.cinst) return;
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu cmp-menu';m.id='cmp-add-menu';
+    menuHead(m,'add a clone of \u201c'+(def.name||'this')+'\u201d');
+    var from={si:cur,inst:a.cinst};
+    var free=cmpFreeSlides(id);
+    var after=free.filter(function(si){return si>cur;});
+    function row(txt,tip,fn,ic,on){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt'+(on?' on':'');b.type='button';
+      b.innerHTML=(ic?bic(ic)+' ':'')+esc(txt);
+      b.title=tip;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);fn();});
+      m.appendChild(b);
+      return b;
+    }
+    /* place-linked clones share one spot, so a second on the same
+       slide would sit exactly on top of this one */
+    if(!cmpHasPlace(def))
+      row('On this slide, beside it',
+        'A second one here, a little offset \u2014 drag it where you '
+        +'want it',function(){
+          var n=cmpPlaceMany(id,'here',from);
+          toast(n?'Added \u2014 drag it where you want it'
+            :'Nothing was added');
+        },'plus');
+    var eb=row('On every slide \u2014 '+free.length+' to go',
+      'One on every slide that has none yet, in the same spot as this '
+      +'one',function(){
+        var n=cmpPlaceMany(id,'every',from);
+        toast(n?('Added to '+n+' slide'+(n===1?'':'s'))
+          :'Every slide has one already');
+      },'plus');
+    eb.disabled=!free.length;
+    var ab=row('On every slide after this one \u2014 '+after.length
+      +' to go','One on each slide after this that has none yet, in '
+      +'the same spot as this one',function(){
+        var n=cmpPlaceMany(id,'after',from);
+        toast(n?('Added to '+n+' slide'+(n===1?'':'s'))
+          :'Every slide after this one has one already');
+      },'plus');
+    ab.disabled=!after.length;
+    menuHead(m,'what the clones share');
+    CMP_LINKS.forEach(function(l){
+      row(l[1],l[2],function(){
+        var k=cmpSetLink(id,l[0],cur,a.cinst);
+        toast(l[1]+' \u2014 '+(k?(k+' other clone'+(k===1?'':'s')
+          +' updated'):'no other clones yet'));
+      },null,cmpLinkOf(def)===l[0]);
+    });
+    overlayMount(btn,m);
+    if(!btn) cmpMenuAtStage(m);
   }
   function cmpPlaceOne(a,it,ox,oy,W,H){
     var r=it.rel||{};
@@ -52138,20 +52583,20 @@ window.JunoPptx = (function () {
   /* T229: the two ribbon doors. They call exactly what the Layers
      pane's rows called; the pane keeps its rows. */
   function cloneDoorsBoot(){
+    /* T413: the Reuse group's first door is the point-at-it menu */
+    var mt=$('#fmt-match');
+    if(mt) mt.addEventListener('click',function(e){
+      e.stopPropagation();matchMenuAt(mt);});
     var mk=$('#fmt-cmp-make');
     if(mk) mk.addEventListener('click',function(e){
       e.stopPropagation();
-      var idxs=selIdxs().filter(function(i){return typeof i==='number';});
-      if(!idxs.length){toast('Select something first');return;}
-      var nm=prompt('Name for this set of clones:','FigureCaption');
-      if(nm===null) return;
-      nm=nm.trim(); if(!nm) return;
-      var id=cmpDefine(nm,idxs);
-      toast(id?('\u201c'+nm+'\u201d saved \u2014 place another from '
-        +'the canvas menu, and every copy follows the original')
-        :'Nothing there that could be saved');
-      if(typeof renderSelPane==='function') renderSelPane();
-      if(typeof showFmt==='function') showFmt();
+      cmpMakeMenu(mk,selIdxs());   /* T409: name and kind, one menu */
+    });
+    var ad=$('#fmt-cmp-add');
+    if(ad) ad.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s3=pres.slides[cur],a3=annotByIdx(s3,selAnnot);
+      if(a3&&a3.cmp&&a3.cinst) cmpAddMenu(ad,a3);
     });
     var fd=$('#fmt-cmp-find');
     if(fd) fd.addEventListener('click',function(e){
@@ -52218,7 +52663,7 @@ window.JunoPptx = (function () {
      follows. Content never travels — each instance keeps its own words
      and its own figure, which is the per-instance override the task
      asked for and which MATCH_PROPS gives for free. */
-  function cmpPush(id,si,inst){
+  function cmpPush(id,si,inst,quiet){
     var def=cmpStore()[id]; if(!def) return 0;
     var sl=(pres.slides||[])[si]; if(!sl) return 0;
     var layer=(si===cur)?stage.querySelector('.annot-layer'):null;
@@ -52241,6 +52686,7 @@ window.JunoPptx = (function () {
       bb.r=Math.max(bb.r,r.r);bb.b=Math.max(bb.b,r.b);});
     var W=Math.max(0.01,bb.r-bb.l),H=Math.max(0.01,bb.b-bb.t);
     def.w=W;def.h=H;
+    if(cmpHasPlace(def)){def.x=bb.l;def.y=bb.t;}   /* T409: the spot */
     def.items=mine.map(function(x){
       var a=x.a,it={k:a.k,props:{}};
       MATCH_PROPS.forEach(function(p){
@@ -52278,14 +52724,17 @@ window.JunoPptx = (function () {
       var fn=capMember[x.a.capOf];
       if(fn!=null&&fn!==n&&def.items[n]) def.items[n].capOfIdx=fn;
     });
-    return cmpSyncAll(id,si,inst);
+    return cmpSyncAll(id,si,inst,quiet);
   }
   /* re-stamp every OTHER instance from the definition. The origin is the
      instance's own top-left corner, so an instance you dragged somewhere
-     stays where you dragged it. */
-  function cmpSyncAll(id,skipSi,skipInst){
+     stays where you dragged it -- unless the set is place-linked (T409),
+     when the origin is the definition's spot and every clone goes there.
+     quiet (T409): called from a follow inside markDirty, so no history
+     entry of its own and the repaint keeps the layer that exists. */
+  function cmpSyncAll(id,skipSi,skipInst,quiet){
     var def=cmpStore()[id]; if(!def) return 0;
-    var n=0;
+    var n=0,onCur=false,look=cmpHasLook(def);
     cmpInstances(id).forEach(function(g){
       if(g.si===skipSi&&g.inst===skipInst) return;
       var sl=pres.slides[g.si];
@@ -52298,7 +52747,8 @@ window.JunoPptx = (function () {
       });
       if(!mine.length) return;
       var ox=1e9,oy=1e9;
-      mine.forEach(function(x){
+      if(cmpHasPlace(def)&&def.x!=null){ox=def.x;oy=def.y||0;}
+      else mine.forEach(function(x){
         var a=x.a;
         ox=Math.min(ox,a.k==='arrow'?Math.min(a.x1,a.x2):(a.x||0));
         oy=Math.min(oy,a.k==='arrow'?Math.min(a.y1,a.y2):(a.y||0));
@@ -52314,11 +52764,14 @@ window.JunoPptx = (function () {
         if(hit){
           var a=hit.a;
           /* CONTENT IS NEVER TOUCHED: only the fields the definition
-             carries are written, and content is not among them */
-          Object.keys(it.props||{}).forEach(function(p){
-            a[p]=(typeof it.props[p]==='object'&&it.props[p])
-              ?deep(it.props[p]):it.props[p];});
-          if(it.shape) a.shape=it.shape;
+             carries are written, and content is not among them. A
+             place-linked clone keeps its own look as well (T409). */
+          if(look){
+            Object.keys(it.props||{}).forEach(function(p){
+              a[p]=(typeof it.props[p]==='object'&&it.props[p])
+                ?deep(it.props[p]):it.props[p];});
+            if(it.shape) a.shape=it.shape;
+          }
           cmpPlaceOne(a,it,ox,oy,W,H);
           delete byCi[k];
         } else {
@@ -52336,9 +52789,11 @@ window.JunoPptx = (function () {
         var at=sl.annots.indexOf(byCi[k].a);
         if(at>=0) sl.annots.splice(at,1);
       });
+      if(g.si===cur) onCur=true;
       n++;
     });
-    markDirty();refresh();
+    if(quiet){if(n) cmpRepaint(onCur);}
+    else {markDirty();refresh();}
     return n;
   }
   function cmpDetach(si,inst){
@@ -54735,6 +55190,7 @@ window.JunoPptx = (function () {
   function frameLabel(f,i){
     if(!f) return 'Frame '+(i+1);
     if(f.label) return f.label;
+    if(f.own) return 'Page '+(i+1)+' \u2014 its own object';   /* T403 */
     if(f.ref){
       var it=resolveRef(f.ref);
       if(it&&it.title) return it.title;
@@ -54780,9 +55236,11 @@ window.JunoPptx = (function () {
     }
     fr.forEach(function(f,i){
       var row=document.createElement('div');
-      row.className='fp-row'+(i===(a.at||0)?' current':'');
+      row.className='fp-row'+(i===(a.at||0)?' current':'')
+        +(f&&f.own?' own':'');   /* T403 */
       var n=document.createElement('span');
       n.className='fp-n';n.textContent=(i+1);
+      if(f&&f.own) n.title='This page is its own object on the slide';
       row.appendChild(n);
       var t=document.createElement('input');
       t.className='fp-t';t.type='text';
@@ -54799,12 +55257,23 @@ window.JunoPptx = (function () {
         markDirty();renderFlipPane();});
       row.appendChild(t);
       var ctr=document.createElement('span');ctr.className='fp-ctr';
-      [['↑',function(){flipMove(i,-1);},'Move this figure earlier'],
+      /* T403: out of the book as its own object, and back in */
+      var ownRow=(f&&f.own)
+        ?[bic('link')+' Put back',function(){flipRelink(a,i);},
+          'Put the picture back in the book\u2019s box, as an ordinary '
+          +'page','fp-own']
+        :[bic('unlink')+' Own object',function(){flipUnlink(a,i);},
+          'Take this page out of the book as its own object \u2014 move, '
+          +'resize, fade or crop it on its own. It still shows with '
+          +'this page','fp-own'];
+      [ownRow,
+       ['\u2191',function(){flipMove(i,-1);},'Move this figure earlier'],
        ['↓',function(){flipMove(i,1);},'Move this figure later'],
        [bic('exit'),function(){flipDrop(i);},'Remove this figure']]
         .forEach(function(pr){
           var b=document.createElement('button');
-          b.className='film-mini';b.innerHTML=pr[0];b.title=pr[2];
+          b.className='film-mini'+(pr[3]?' '+pr[3]:'');
+          b.innerHTML=pr[0];b.title=pr[2];
           b.setAttribute('aria-label',pr[2]);
           b.addEventListener('click',function(ev){
             ev.stopPropagation();pr[1]();});
@@ -54854,6 +55323,101 @@ window.JunoPptx = (function () {
     flipRemap(a,map);
     a.at=Math.max(0,Math.min(fr.length-1,a.at||0));
     markDirty();renderSlide();renderFlipPane();
+  }
+  /* ---- T403: A PAGE THAT IS ITS OWN OBJECT ----------------------------
+     (2026-09-13, user: "there should be ways to change the size of one
+     and not others, e.g. in object there is like a 'unlink this frame'
+     or something and then individual ones can be moved around and
+     changed opacity and size individually whilst still being part of
+     the book"). A book's pages share one box by design -- the
+     letterbox note in renderAnnots says why. So a page that wants its
+     own place is taken OUT of the box and TIED to it: the picture (or
+     the notebook figure) becomes an ordinary object on the slide that
+     shows with this page only (a.fb/a.fbf, the tie every caption
+     already uses), and the page itself stays in the book as a blank
+     leaf ({own:1}) so the book's click stops, its numbering and every
+     other tie are untouched. Move it, resize it, fade it, crop it: it
+     is an object. "Put back" is the reverse. */
+  function flipOwnObj(s,a,i){
+    var hit=null;
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(hit||!x||!a.fid||x.fb!==a.fid||(x.fbf|0)!==i) return;
+      if(x.k==='image'||x.k==='cell') hit=x;
+    });
+    return hit;
+  }
+  function flipUnlink(a,i){
+    var s=pres.slides[cur]; if(!s||!a) return null;
+    var fr=flipFrames(a).slice(),f=fr[i];
+    if(!f||f.own) return null;
+    if(!a.fid) a.fid=flipId();
+    var o={x:a.x,y:a.y,w:a.w||40,h:a.h||32,fb:a.fid,fbf:i,fbm:'only'};
+    if(f.src){o.k='image';o.src=f.src;if(f.okey) o.okey=f.okey;}
+    else if(f.ref){
+      o.k='cell';o.ref=f.ref;
+      if(f.part) o.part=f.part;
+      if(f.nbpath) o.nbpath=f.nbpath;
+      if(f.lockver) o.lockver=deep(f.lockver);
+      if(a.ts) o.ts=a.ts;
+    } else return null;
+    if(a.op!=null) o.op=a.op;
+    if(a.rot) o.rot=a.rot;
+    var leaf={own:1};
+    if(f.label) leaf.label=f.label;
+    fr[i]=leaf;a.frames=fr;a.at=i;
+    s.annots=s.annots||[];
+    s.annots.push(o);
+    var idx=s.annots.length-1;
+    markDirty();
+    /* the picture's own shape: the frame was letterboxed into the
+       book's box, so the object takes the box the picture filled */
+    if(o.k==='image') fitObjToPicture(o,s);
+    renderSlide();renderFlipPane();
+    var l=stage.querySelector('.annot-layer');
+    if(l) selectAnnot(l,idx);
+    return idx;
+  }
+  function fitObjToPicture(o,s){
+    if(!o||!o.src) return;
+    var im=new Image();
+    im.onload=function(){
+      var nw=im.naturalWidth,nh=im.naturalHeight;
+      if(!nw||!nh||(s.annots||[]).indexOf(o)<0) return;
+      var pg=pageOf(),pw=pg.mm[0],ph=pg.mm[1];
+      var bw=o.w*pw/100,bh=o.h*ph/100,ar=nw/nh;   /* the box, in mm */
+      var fw=bw,fh=bh;
+      if(bw/bh>ar) fw=bh*ar; else fh=bw/ar;
+      o.x=Math.round((o.x+(bw-fw)/2/pw*100)*100)/100;
+      o.y=Math.round((o.y+(bh-fh)/2/ph*100)*100)/100;
+      o.w=Math.round(fw/pw*100*100)/100;
+      o.h=Math.round(fh/ph*100*100)/100;
+      markDirty(true);renderSlide();
+    };
+    im.src=o.src;
+  }
+  function flipRelink(a,i){
+    var s=pres.slides[cur]; if(!s||!a) return false;
+    var fr=flipFrames(a).slice(),f=fr[i];
+    if(!f||!f.own) return false;
+    var o=flipOwnObj(s,a,i);
+    if(!o){toast('Its object is no longer on this slide');return false;}
+    var back={};
+    if(o.k==='image'){back.src=o.src;if(o.okey) back.okey=o.okey;}
+    else {
+      back.ref=o.ref;
+      if(o.part) back.part=o.part;
+      if(o.nbpath) back.nbpath=o.nbpath;
+      if(o.lockver) back.lockver=deep(o.lockver);
+    }
+    if(f.label) back.label=f.label;
+    fr[i]=back;a.frames=fr;a.at=i;
+    var at=s.annots.indexOf(o);
+    if(at>=0) s.annots.splice(at,1);
+    markDirty();renderSlide();renderFlipPane();
+    var l=stage.querySelector('.annot-layer');
+    var bi=s.annots.indexOf(a);
+    if(l&&bi>=0) selectAnnot(l,bi);
+    return true;
   }
   /* ---- TYING AN ITEM TO A FIGURE ---------------------------------------
      "you can tie text to an image in it ... and tie objects and things to
@@ -54978,6 +55542,21 @@ window.JunoPptx = (function () {
       'Open this book\u2019s pages: drag them into order, give them '
       +'names, and tie text or objects to one of them',
       function(){showFlipPane(true,idx);});
+    /* T403: the page showing, as its own object -- the ask was "in
+       object there is like a 'unlink this frame'", and this door is
+       the Object tab's flip-book door */
+    var bk=(pres.slides[cur].annots||[])[idx];
+    var pgAt=bk?(bk.at||0):0,pgF=bk?flipFrames(bk)[pgAt]:null;
+    if(pgF){
+      menuHead(m,'page '+(pgAt+1)+', the one showing');
+      if(pgF.own) row('Put this page back in the book','link',
+        'The picture goes back into the book\u2019s box as an ordinary '
+        +'page',function(){flipRelink(bk,pgAt);});
+      else row('Make this page its own object','unlink',
+        'Takes it out of the book\u2019s box as an object you can move, '
+        +'resize, fade or crop on its own. It still shows with this '
+        +'page',function(){flipUnlink(bk,pgAt);});
+    }
     deckEl.appendChild(m);
     overlayShow(btn,m);floatMenu(btn,m);
   }
@@ -55016,39 +55595,48 @@ window.JunoPptx = (function () {
     if(fi) fi.addEventListener('change',function(){
       var a=flipPaneItem(),files=this.files;
       if(!a||!files||!files.length) return;
-      var list=Array.prototype.slice.call(files);
-      var got=[],done=0;
-      list.forEach(function(f,i){
-        var rd=new FileReader();
-        rd.onload=function(){
-          var probe=new Image();
-          probe.onload=function(){
-            var small=shrinkImage(probe,rd.result);
-            got[i]={src:small};
-            /* placeImage was factored out precisely because "putting the
-               original aside in each door is three chances to forget".
-               The flip book is the fourth door, and it forgot
-               (2026-08-26 audit, T58). A frame is not an annot, so it
-               carries its own okey and useOriginals walks frames. */
-            if(rd.result&&rd.result!==small)
-              keepOriginal(got[i],rd.result);
-            fin();};
-          probe.onerror=function(){got[i]={src:rd.result};fin();};
-          probe.src=rd.result;
-        };
-        rd.onerror=function(){got[i]=null;fin();};
-        rd.readAsDataURL(f);
-      });
-      function fin(){
-        if(++done<list.length) return;
-        a.frames=flipFrames(a).slice();
-        got.forEach(function(g){if(g) a.frames.push(g);});
-        a.at=a.frames.length-1;
-        /* ONE history entry for the whole batch */
-        markDirty();renderSlide();renderFlipPane();
-      }
+      flipAddFiles(a,Array.prototype.slice.call(files));
     });
   })();
+  /* FILES BECOME PAGES. The file input's door above and the paste door
+     (30-format-bar.js, T408) both land here, so a picture arrives in a
+     flip book the same way whichever way it came. `done2`, if given,
+     hears how many pages were made once the last file has been read. */
+  function flipAddFiles(a,list,done2){
+    var got=[],done=0;
+    if(!a||!list||!list.length) return;
+    list.forEach(function(f,i){
+      var rd=new FileReader();
+      rd.onload=function(){
+        var probe=new Image();
+        probe.onload=function(){
+          var small=shrinkImage(probe,rd.result);
+          got[i]={src:small};
+          /* placeImage was factored out precisely because "putting the
+             original aside in each door is three chances to forget".
+             The flip book is the fourth door, and it forgot
+             (2026-08-26 audit, T58). A frame is not an annot, so it
+             carries its own okey and useOriginals walks frames. */
+          if(rd.result&&rd.result!==small)
+            keepOriginal(got[i],rd.result);
+          fin();};
+        probe.onerror=function(){got[i]={src:rd.result};fin();};
+        probe.src=rd.result;
+      };
+      rd.onerror=function(){got[i]=null;fin();};
+      rd.readAsDataURL(f);
+    });
+    function fin(){
+      if(++done<list.length) return;
+      a.frames=flipFrames(a).slice();
+      var n=0;
+      got.forEach(function(g){if(g){a.frames.push(g);n++;}});
+      a.at=a.frames.length-1;
+      /* ONE history entry for the whole batch */
+      markDirty();renderSlide();renderFlipPane();
+      if(done2) done2(n);
+    }
+  }
   /* ---- WHAT GOES IN AN OBJECT FRAME ----------------------------------
      An empty frame is a hole of a known size and position; this is the
      menu that fills it. Every row lands in THAT frame rather than
@@ -55643,6 +56231,14 @@ window.JunoPptx = (function () {
       :'Select two or more pictures: when one is enlarged in the show '
         +'they all come up together, side by side';
   }
+  /* how far one edge's trim may go: up to the opposite edge's trim, less
+     the sliver of picture that must remain (T407) */
+  var CROP_KEEP=4;
+  function cropRoom(a,side){
+    var opp={t:'b',b:'t',l:'r',r:'l'}[side];
+    var o=(a&&a.crop&&+a.crop[opp])||0;
+    return Math.max(0,100-o-CROP_KEEP);
+  }
   function mkCropHandles(host,layer,s2,idx){
     var a=s2.annots[idx]; if(!a) return;
     ['t','r','b','l'].forEach(function(side){
@@ -55672,7 +56268,12 @@ window.JunoPptx = (function () {
           else if(side==='b') v=(r.bottom-e2.clientY)/r.height*100;
           else if(side==='l') v=(e2.clientX-r.left)/r.width*100;
           else v=(r.right-e2.clientX)/r.width*100;
-          v=Math.max(0,Math.min(45,Math.round(v)));
+          /* T407: AS FAR AS THE OTHER EDGE ALLOWS. Each side was capped
+             at 45%, so the right-hand third of a figure could never be
+             all that was kept (2026-09-13, user: "you cannot crop an
+             object more than half way"). A handle may now go up to the
+             opposite trim, leaving CROP_KEEP percent of the picture. */
+          v=Math.max(0,Math.min(cropRoom(a,side),Math.round(v*10)/10));
           a.crop=a.crop||{};
           if(v) a.crop[side]=v; else delete a.crop[side];
           renderAnnots(layer,s2);paintSel(layer);
@@ -55740,14 +56341,16 @@ window.JunoPptx = (function () {
     var inputs={};
     SIDES.forEach(function(p){
       var inp=document.createElement('input');
-      inp.type='number';inp.min='0';inp.max='45';inp.step='1';
+      inp.type='number';inp.min='0';inp.max=String(100-CROP_KEEP);
+      inp.step='1';
       inp.placeholder=p[1];
       inp.title='Trim the '+p[1]+' edge (% of the frame)';
       inp.addEventListener('click',function(e){e.stopPropagation();});
       inp.addEventListener('input',function(){
-        var v=Math.max(0,Math.min(45,parseFloat(inp.value)||0));
+        var v0=Math.max(0,parseFloat(inp.value)||0);
         fmtApply(function(a){
           a.crop=a.crop||{};
+          var v=Math.min(v0,cropRoom(a,p[0]));   /* T407 */
           if(v) a.crop[p[0]]=v; else delete a.crop[p[0]];
           if(!a.crop.shape&&!a.crop.t&&!a.crop.r&&!a.crop.b&&!a.crop.l)
             delete a.crop;
@@ -60343,219 +60946,165 @@ window.JunoPptx = (function () {
       q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
       renumber(s);commit(s);
     }
+    /* ---- THE PANE IS THE LIST OF CLICKS, AND NOTHING ELSE (T402) -----
+       (2026-09-13, user: "What is up with the animation pane? How am I
+       supposed to use this? I literally can't tell what is going on and
+       how to re-order things. I made a flip book and they are all
+       animated and this is very confusing to look at. Also why are
+       there the animation button options in here as well?")
+       It carried a second effect chooser, a second text-pieces chooser
+       and a second With-previous row -- every one a copy of a ribbon
+       control -- above a list headed "one row per build" whose flip
+       book pages were italic chips truncated to "fa..." under a bare
+       arrow, and whose anchored pages were looked up by the wrong index
+       (build index, not stop index) so a book after a split text box
+       showed no pages at all.
+       Now: one numbered row per click, in the order the space bar takes
+       them. A build row names what arrives, how, and on how many clicks;
+       Earlier and Later move it. A flip book's pages are rows of their
+       own, numbered with their click, and say that they follow the book.
+       The controls live on the ribbon, once. */
+    function fxWord(t){
+      var w='';SEQ_FX.forEach(function(f){if(f[0]===t) w=f[1];});
+      return w||'Fade';
+    }
     function render(){
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var s=pres.slides[cur];
       menu.innerHTML='';
+      var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
+      var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
-      h1.textContent='Entrance effect';menu.appendChild(h1);
-      if(!a||typeof selAnnot!=='number'){
-        var em=document.createElement('div');em.className='anim-empty';
-        em.textContent='Select an item first, then pick an effect.';
-        menu.appendChild(em);
-      } else {
-        var eff=document.createElement('div');eff.className='anim-eff';
-        [['none','None'],['appear','Appear'],['fade','Fade'],
-         ['rise','Float up'],['zoom','Zoom'],['slide','Fly in'],
-         ['turn','Page turn'],['type','Typewriter']].forEach(function(p){
-          var b=document.createElement('button');b.className='anim-effb';
-          b.textContent=p[1];
-          if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
-          b.addEventListener('click',function(e){e.stopPropagation();
-            setType(p[0]);});
-          eff.appendChild(b);});
-        menu.appendChild(eff);
-        /* HOW MUCH ARRIVES AT A TIME (2026-08-30, user: "options for
-           text as well, like the dot point by dot point, line by line,
-           sentence by sentence"). Only a text box has pieces, and only
-           an animated one has anywhere to put them.
-           IN THE PANE, NOT THE RIBBON. Three more word buttons in the
-           Animate group is ~200px of ribbon floor, and by T152 every px
-           of that comes off the slide column's ceiling. This is where
-           the build order already lives and where the selection is
-           already tracked. */
-        if(a.anim&&a.k==='text'){
-          var hb=document.createElement('div');hb.className='anim-h';
-          hb.textContent='How much arrives at a time';
-          menu.appendChild(hb);
-          var gr=document.createElement('div');gr.className='anim-eff';
-          [['','All at once','The whole box on one click.'],
-           ['para','Bullet by bullet',
-            'One click per bullet, or per line you pressed Enter on. '
-            +'Exports to PowerPoint as a paragraph build'],
-           ['sent','Sentence by sentence',
-            'One click per sentence. "Fig. 3", "et al.", "0.05" and '
-            +'initials are left alone; when a cut is in the wrong '
-            +'place, press Enter there and use Bullet by bullet.']
-          ].forEach(function(p){
-            var b=document.createElement('button');
-            b.className='anim-effb';
-            b.textContent=p[1];b.title=p[2];
-            var now=(a.anim.by==='para'||a.anim.by==='sent')
-              ?a.anim.by:'';
-            if(now===p[0]) b.classList.add('on');
+      h1.textContent=total
+        ?('This slide takes '+total+' click'+(total===1?'':'s'))
+        :'Nothing happens on a click yet';
+      menu.appendChild(h1);
+      var hint=document.createElement('div');hint.className='anim-empty';
+      hint.textContent=total
+        ?'One row per click, in order. Click a name to select it on the '
+          +'slide; Earlier and Later move a build. Effects, timing and '
+          +'text pieces are set on the ribbon above.'
+        :'Select something on the slide and pick an effect on the '
+          +'ribbon, or press One per click to build the whole slide.';
+      menu.appendChild(hint);
+      var list=document.createElement('div');list.className='anim-seq';
+      /* one row: its click number (or range), what it is, how it
+         arrives, and for a build the two ways to move it */
+      function row(clickNo,names,detail,opts){
+        opts=opts||{};
+        var r=document.createElement('div');
+        r.className='anim-step'+(opts.sub?' anim-sub':'')+(opts.cur?' cur':'');
+        var n=document.createElement('span');
+        n.className='anim-num'+(String(clickNo).length>2?' wide':'');
+        n.textContent=clickNo;
+        n.title=opts.sub?'The click this page turns on':'The click this arrives on';
+        r.appendChild(n);
+        var body=document.createElement('span');body.className='anim-body';
+        names.forEach(function(p){
+          var nm=document.createElement('button');nm.type='button';
+          nm.className='anim-name';nm.textContent=p[0];
+          nm.title=opts.title||('Select \u201c'+p[0]+'\u201d on the slide');
+          nm.addEventListener('click',function(e){e.stopPropagation();
+            var l=stage.querySelector('.annot-layer');
+            if(l) selectAnnot(l,p[1]); render();});
+          body.appendChild(nm);
+        });
+        if(detail){
+          var d=document.createElement('span');d.className='anim-detail';
+          d.textContent=detail;body.appendChild(d);
+        }
+        r.appendChild(body);
+        if(opts.ctr){
+          var ctr=document.createElement('span');ctr.className='anim-stepctr';
+          [['\u2191 Earlier',-1],['\u2193 Later',1]].forEach(function(m){
+            var b=document.createElement('button');b.type='button';
+            b.className='anim-mini';b.textContent=m[0];
+            b.title=m[1]<0?'Move this build one click earlier'
+              :'Move this build one click later';
+            b.setAttribute('aria-label',b.title);
+            b.disabled=(m[1]<0?opts.si===0:opts.si===seq.length-1);
             b.addEventListener('click',function(e){e.stopPropagation();
-              setBy(p[0]);});
-            gr.appendChild(b);});
-          menu.appendChild(gr);
-          var nby=textBy(a)?textPieceCount(a):1;
-          if(nby>1){
-            var nt=document.createElement('div');
-            nt.className='anim-empty';
-            nt.textContent=nby+' pieces — '+nby+' clicks.'
-              +(((a.anim.type==='rise'||a.anim.type==='zoom')
-                 &&a.anim.by==='sent')
-                ?' A sentence inside a paragraph fades in rather than '
-                 +'moving: a run of words has no box of its own to move.'
-                :'')
-              +(a.arc?' This box is curved, so it arrives whole — '
-                 +'curved text is redrawn as one shape.':'');
-            menu.appendChild(nt);
-          }
+              moveStep(opts.si,m[1]);});
+            ctr.appendChild(b);});
+          r.appendChild(ctr);
         }
-        if(a.anim){
-          var si0=stepOf(s,selAnnot),q0=animSeq(s);
-          var mrow=document.createElement('div');mrow.className='anim-merge';
-          var mb=document.createElement('button');mb.className='anim-mini wide';
-          mb.textContent='↑ Appear with previous';mb.disabled=(si0<=0);
-          mb.title='Reveal this on the same click as the build above';
-          mb.addEventListener('click',function(e){e.stopPropagation();
-            mergeUp();});
-          mrow.appendChild(mb);
-          if(q0[si0]&&q0[si0].items.length>1){
-            var sb=document.createElement('button');sb.className='anim-mini wide';
-            sb.textContent='↓ Own click';
-            sb.addEventListener('click',function(e){e.stopPropagation();
-              splitOwn();});
-            mrow.appendChild(sb);
-          }
-          menu.appendChild(mrow);
-        }
+        list.appendChild(r);
+        return r;
       }
-      var h2=document.createElement('div');h2.className='anim-h';
-      h2.textContent='Build order — one row per build';
-      menu.appendChild(h2);
-      var seq=animSeq(s);
-      /* ---- THE ONE TRUE SEQUENCE (T163) ------------------------------
-         This list used to show anim-order builds ONLY, under a heading
-         that promises "each row is one click". A flip book's frames and
-         (since T160) a chart's series builds are clicks too -- they are
-         in the plan playback walks -- so a slide whose whole reveal was
-         a six-figure book showed "Nothing animated on this slide yet"
-         while the space bar took five presses through it.
-         The stops each build ANCHORS are drawn under it as read-only
-         rows. Read-only on purpose: a frame's place in the sequence is
-         decided by its place in its BOOK, and offering a second way to
-         reorder it here would be two truths about one order. The book's
-         own pane is where frames move. */
-      var plan=flipPlan(s);
-      function stepperRows(list,ps){
+      /* the stops a flip book, a chart or a paged text box takes AFTER
+         the click it arrives on, each on its own numbered row (T163);
+         `base` is what flipPlan says, so the numbers here are the ones
+         the space bar counts */
+      function stepperRows(ps){
         (ps||[]).forEach(function(p){
-          var a=p.a;
-          var subs=[];
+          var a=p.a,base=plan.base[p.i],cur2=(p.i===selAnnot);
+          if(base==null) return;
           if(a.k==='flip'){
-            flipFrames(a).forEach(function(f,fi){
-              if(fi) subs.push(frameLabel(f,fi));});
+            var walk=flipWalk(s,a),fr=flipFrames(a);
+            var fx=flipFxWord(a.fanim)||'Cut';
+            for(var d=1;d<walk.length;d++){
+              var w=walk[d];
+              var name=w.j
+                ?('Page '+(w.j+1)+' of the words beside figure '+(w.k+1))
+                :('Figure '+(w.k+1)+' of '+fr.length+' \u00b7 '
+                  +frameLabel(fr[w.k],w.k));
+              row(base+d,[[name,p.i]],fx+' \u00b7 a page of the flip '
+                +'book, so it keeps the book\u2019s order',
+                {sub:true,cur:cur2,
+                 title:'A page of this flip book. Pages keep the '
+                   +'book\u2019s order; to move one, select the book and '
+                   +'use its panel on the Images tab.'});
+            }
           } else if(a.k==='chart'){
-            chartParse(a).series.forEach(function(se){
-              subs.push(se.name);});
+            chartParse(a).series.forEach(function(se,k){
+              row(base+k+1,[['Series '+(k+1)+' \u00b7 '+se.name,p.i]],
+                'a series of the chart, in the data\u2019s order',
+                {sub:true,cur:cur2,
+                 title:'A series of this chart. The order follows the data.'});
+            });
+          } else if(a.k==='text'){
+            var pg=textPages(a);
+            for(var t=1;t<pg.length;t++)
+              row(base+t,[['Page '+(t+1)+' of '+pg.length+' \u00b7 '
+                +itemLabel(s,p.i),p.i]],'the next page of this text box',
+                {sub:true,cur:cur2,
+                 title:'A page of this text box. Pages keep their order.'});
           }
-          subs.forEach(function(t,ti){
-            var r2=document.createElement('div');
-            r2.className='anim-step anim-sub';
-            var n2=document.createElement('span');
-            n2.className='anim-num anim-subnum';
-            n2.textContent='\u21b3';
-            r2.appendChild(n2);
-            var c2=document.createElement('span');
-            c2.className='anim-chips';
-            var chip=document.createElement('span');
-            chip.className='anim-chip anim-subchip';
-            /* no owner name on a sub-row: the build row directly
-               above IS the owner, and repeating it on every page
-               turned the list into a column of the same six words */
-            chip.textContent=a.k==='flip'
-              ?('figure '+(ti+2)+' of '+flipFrames(a).length
-                +(t?(' \u00b7 '+t):'')
-                +(a.fanim?(' \u00b7 '+flipFxWord(a.fanim).toLowerCase())
-                  :''))
-              :('then '+t);
-            chip.title=a.k==='flip'
-              ?('A page of this flip book \u2014 move it in the book '
-                +'itself, not here')
-              :('A series of this chart \u2014 the order follows the '
-                +'data');
-            c2.appendChild(chip);
-            r2.appendChild(c2);
-            list.appendChild(r2);
-          });
         });
       }
-      if(!seq.length&&!steppersOn(s).length){
-        var e2=document.createElement('div');e2.className='anim-empty';
-        e2.textContent='Nothing animated on this slide yet.';
-        menu.appendChild(e2);
-      } else if(!seq.length){
-        /* steppers but no builds: the slide DOES walk, so say so */
-        var e3=document.createElement('div');e3.className='anim-empty';
-        /* slideStops IS the click count: an item hides while
-           sp>=revealCount and the largest sp is count-1, so `count`
-           presses is what fully builds the slide. Subtracting one here
-           told a two-page text box it took "0 clicks" while the film
-           strip, reading the same function, said 1 (caught by driving
-           it, 2026-09-01). */
-        var nst=slideStops(s);
-        e3.textContent='No entrance effects here, but this slide takes '
-          +nst+' click'+(nst===1?'':'s')+' \u2014 it steps through '
-          +'what is below.';
-        menu.appendChild(e3);
-        var l0=document.createElement('div');l0.className='anim-seq';
-        stepperRows(l0,plan.tail);
-        menu.appendChild(l0);
-      } else {
-        var list=document.createElement('div');list.className='anim-seq';
-        seq.forEach(function(st,si){
-          var row=document.createElement('div');row.className='anim-step';
-          var n=document.createElement('span');n.className='anim-num';
-          n.textContent=(si+1);row.appendChild(n);
-          var chips=document.createElement('span');chips.className='anim-chips';
-          st.items.forEach(function(idx){
-            var c=document.createElement('span');
-            c.className='anim-chip'+(idx===selAnnot?' cur':'');
-            c.textContent=itemLabel(s,idx)+' · '
-              +((s.annots[idx].anim.type)||'fade');
-            /* a stop that RUNS ITSELF says so where the order is read
-               (T169). The number is the wait before it, never a
-               duration -- durations are still fixed in the stylesheet. */
-            var aft=(s.annots[idx].anim.after)|0;
-            if(aft) c.textContent+=' · +'+aft+'s';
-            c.addEventListener('click',function(e){e.stopPropagation();
-              var l=stage.querySelector('.annot-layer');
-              if(l) selectAnnot(l,idx); render();});
-            chips.appendChild(c);});
-          row.appendChild(chips);
-          var ctr=document.createElement('span');ctr.className='anim-stepctr';
-          [['↑',-1],['↓',1]].forEach(function(m){
-            var b=document.createElement('button');b.className='anim-mini';
-            b.textContent=m[0];
-            b.title=m[1]<0?'Move this build earlier':'Move this build later';
-            b.setAttribute('aria-label',b.title);
-            b.disabled=(m[1]<0?si===0:si===seq.length-1);
-            b.addEventListener('click',function(e){e.stopPropagation();
-              moveStep(si,m[1]);});
-            ctr.appendChild(b);});
-          row.appendChild(ctr);
-          list.appendChild(row);
-          stepperRows(list,plan.anch[si]);});
-        /* anything that steps but carries no build of its own lands
-           after every build, exactly as flipPlan lays it out */
-        stepperRows(list,plan.tail);
-        menu.appendChild(list);
-      }
-      /* ...and the way to SAY the order by pointing (T168). Beside
-         the list it rewrites, because that is where you are standing
-         when the order is what you are thinking about. */
+      seq.forEach(function(st,si){
+        var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
+        var first=(plan.stop[b0]|0)+1;
+        var last=(plan.stop[b0+nsub-1]|0)+1;
+        var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
+        var kinds={};
+        st.items.forEach(function(idx){
+          kinds[fxWord(s.annots[idx].anim.type)]=1;});
+        var detail=Object.keys(kinds).join(' / ');
+        var pieces=null;
+        st.items.forEach(function(idx){
+          var a=s.annots[idx];
+          if(textBy(a)&&!pieces)
+            pieces=(a.anim.by==='sent'?'sentence by sentence':'bullet by bullet')
+              +(a.anim.hl?', highlighting each':'');
+        });
+        if(nsub>1) detail+=' \u00b7 '+nsub+' clicks, '+(pieces||'in pieces');
+        if(st.items.length>1) detail+=' \u00b7 together on one click';
+        var aft=0;
+        st.items.forEach(function(idx){
+          var v=(s.annots[idx].anim.after)|0; if(v>aft) aft=v;});
+        if(aft) detail+=' \u00b7 runs by itself '+aft+'s after the one before';
+        row(first===last?first:(first+'\u2013'+last),names,detail,
+          {si:si,ctr:true,cur:st.items.indexOf(selAnnot)>=0});
+        stepperRows(plan.anch[b0]);
+      });
+      /* anything that steps but carries no build of its own lands
+         after every build, exactly as flipPlan lays it out */
+      stepperRows(plan.tail);
+      if(total) menu.appendChild(list);
+      /* ...and the way to SAY the order by pointing (T168), beside the
+         list it rewrites */
       var sq=document.createElement('button');
-      sq.className='anim-mini wide';
+      sq.type='button';sq.className='anim-mini wide';
       sq.innerHTML=bic('stagger')+' Quick animate\u2026';
       sq.title='Then click the objects on the slide one after another, '
         +'in the order they should appear. Shift-click puts one on the '
@@ -60563,15 +61112,6 @@ window.JunoPptx = (function () {
       sq.addEventListener('click',function(e){e.stopPropagation();
         seqArmStart();});
       menu.appendChild(sq);
-      /* the order "One by one" deals the clicks in (T106) */
-      var rb=document.createElement('button');
-      rb.className='anim-mini wide';
-      rb.textContent='Order on this slide\u2026';
-      rb.title='The order things are numbered and revealed in. Quick '
-        +'animate sets it by clicking; here you nudge one step';
-      rb.addEventListener('click',function(e){e.stopPropagation();
-        if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
-      menu.appendChild(rb);
     }
     /* ONE door. There were briefly two — View's Animations and an
        "Animate" button in an Effects group that renamed itself to the
@@ -62654,13 +63194,29 @@ window.JunoPptx = (function () {
     if(root) root.hidden=true;
     presentationHubDeckInert(false);
   }
-  function openPresentationHub(){
+  /* T414: OPEN MEANS OPEN (2026-09-13, user: "why when you click open
+     is there all the 'new poster options', like THAT WAS THERE ON THE
+     LAST MENU"). Every door into this dialog is an Open door except the
+     folder one, so the create row shows only when asked for
+     ({create:true}); the rest of the time the dialog is the library,
+     with "Open a file" first. A door wired straight as a click listener
+     passes an event, which is not an options object. */
+  function openPresentationHub(opts){
     var root=$('#presentation-hub');if(!root) return;
+    var create=!!(opts&&opts.create===true);
     closeDeckPresentationDrawer();
     renderPresentationHub();root.hidden=false;
+    ['#presentation-hub-new','#presentation-hub-poster',
+     '#presentation-hub-folder'].forEach(function(id){
+      var b=$(id); if(b) b.hidden=!create;});
+    var ttl=$('#presentation-hub-title');
+    if(ttl) ttl.textContent=create?'Open or create':'Open a presentation';
+    var form=$('#presentation-hub-folderform');
+    if(form&&!create) form.hidden=true;
     presentationHubDeckInert(true);
     setTimeout(function(){
-      var b=$('#presentation-hub-new');if(b) b.focus();},0);
+      var b=$(create?'#presentation-hub-new':'#presentation-hub-file');
+      if(b) b.focus();},0);
   }
   /* two doors, one drawer: the presenting bar's button and the editing
      bar's chevron beside Home (T396) both say whether it is open */
@@ -62843,7 +63399,10 @@ window.JunoPptx = (function () {
     });
     var file=$('#presentation-hub-file');
     if(file) file.addEventListener('click',function(){
-      closePresentationHub();var input=$('#deckfile');if(input) input.click();
+      /* T414: the same door the rail's row uses -- a real file handle
+         where the browser has one, so Save writes back to the file you
+         opened; the bare <input> only where it does not */
+      closePresentationHub();openDeckFile();
     });
     var pptx=$('#presentation-hub-pptx');
     if(pptx) pptx.addEventListener('click',function(){
@@ -62858,7 +63417,7 @@ window.JunoPptx = (function () {
     },true);
     window.SemApp.deckHub=openPresentationHub;
     window.SemApp.deckNewFolder=function(){
-      openPresentationHub();
+      openPresentationHub({create:true});
       if(form){form.hidden=false;if(field) field.focus();}
     };
     window.SemApp.deckRecentNames=savedRecentPresentationNames;
@@ -63474,11 +64033,25 @@ window.JunoPptx = (function () {
     if(!v&&fallback) s.title='default';
     return s;
   }
-  function dgNum(r,key,step){
+  /* pt: the cell reads and writes POINTS (T411) -- the unit the ribbon's
+     Text size box and the type screen speak -- and a box that says
+     nothing shows what it gets, greyed, rather than an empty cell. */
+  function dgNum(r,key,step,pt){
     var inp=document.createElement('input');
     inp.type='number';inp.step=step||'0.5';inp.className='dgt-n';
-    inp.value=(r.a[key]!=null)?Math.round(r.a[key]*10)/10:'';
-    inp.title=key.toUpperCase()+' of this box';
+    var v0=r.a[key];
+    if(pt){
+      inp.value=(v0!=null)?Math.round(v0*5.4):'';
+      var st=(r.a.style&&typeof styleDef==='function')
+        ?styleDef(r.a.style):null;
+      var eff=(st&&st.size)||(r.a.k==='table'?2.2:2.6);
+      inp.placeholder=String(Math.round(eff*5.4));
+      inp.title='Text size in points — empty means the type’s '
+        +'own '+Math.round(eff*5.4)+' pt';
+    } else {
+      inp.value=(v0!=null)?Math.round(v0*10)/10:'';
+      inp.title=key.toUpperCase()+' of this box';
+    }
     inp.addEventListener('click',function(e){e.stopPropagation();});
     inp.addEventListener('keydown',function(e){
       e.stopPropagation();
@@ -63487,7 +64060,7 @@ window.JunoPptx = (function () {
     inp.addEventListener('change',function(){
       var v=parseFloat(inp.value);
       if(!isFinite(v)){delete r.a[key];}
-      else r.a[key]=Math.round(v*10)/10;
+      else r.a[key]=pt?Math.round(v/5.4*100)/100:Math.round(v*10)/10;
       if(key==='x'||key==='y') delete r.a.anch;
       markDirty();refresh();renderFilm();
       var ov=$('#deck-design'); if(ov) dgBodyKeep(ov);
@@ -63539,6 +64112,47 @@ window.JunoPptx = (function () {
     what.addEventListener('change',function(){
       dgMatchWhat=what.value;dgBodyKeep(ov);});
     bar.appendChild(what);
+    /* T411: THE SIZE, FOR ALL OF THEM AT ONCE (2026-09-13, user: "Style
+       systems does not have a text size property in the tab. That was
+       half the point of this"). A named type had its size on the left;
+       the plain-text-boxes bucket had only a table with a blank Size
+       cell per row. One box: points, given to the ticked rows, or to
+       every row when none is ticked. */
+    var isTx=!dgIsObj()||dgObjKind()==='text';
+    if(isTx&&rows.length){
+      var szw=document.createElement('span');szw.className='dgt-szw';
+      var szl=document.createElement('span');szl.className='dgt-szlab';
+      szl.textContent='Text size';szw.appendChild(szl);
+      var szi=document.createElement('input');
+      szi.type='number';szi.className='dgt-n dgt-szin';
+      szi.step='1';szi.min='4';szi.max='200';szi.placeholder='pt';
+      szi.title='Points. Enter, or Set, gives it to the ticked boxes '
+        +'— or to every box when none is ticked';
+      var setSize=function(){
+        var pt=parseFloat(szi.value);
+        if(!isFinite(pt)||pt<=0){toast('Type a size in points first');
+          return;}
+        var to=marked.length?marked:rows;
+        to.forEach(function(r){r.a.size=Math.round(pt/5.4*100)/100;});
+        markDirty();refresh();renderFilm();dgBodyKeep(ov);
+        toast(to.length+' box'+(to.length===1?'':'es')+' at '
+          +Math.round(pt)+' pt — Ctrl+Z undoes it');
+      };
+      szi.addEventListener('click',function(e){e.stopPropagation();});
+      szi.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){e.preventDefault();setSize();}
+      });
+      szw.appendChild(szi);
+      var szb=document.createElement('button');
+      szb.className='dbtn dg-b';szb.textContent='Set';
+      szb.title='Give this size to the ticked boxes, or to all of them '
+        +'when none is ticked';
+      szb.addEventListener('click',function(e){
+        e.stopPropagation();setSize();});
+      szw.appendChild(szb);
+      bar.appendChild(szw);
+    }
     var count=document.createElement('span');
     count.className='dgt-count';
     if(dgPickedAny()){
@@ -63570,8 +64184,8 @@ window.JunoPptx = (function () {
     }
     var tbl=document.createElement('div');tbl.className='dgt-grid';
     /* the size and the face are columns whenever the rows are text,
-       whether they were chosen by style or as plain text boxes */
-    var isTx=!dgIsObj()||dgObjKind()==='text';
+       whether they were chosen by style or as plain text boxes (isTx,
+       decided above the bar since T411) */
     /* T230: the first column is the WORDS, and for a plain text box
        you can type in it (2026-09-03, user: "would be good to edit
        the text in here as well"). A box with a list, and anything
@@ -63662,7 +64276,7 @@ window.JunoPptx = (function () {
       cell(dgNum(r,'y'),'dgt-num');
       cell(dgNum(r,'w'),'dgt-num');
       if(isTx){
-        cell(dgNum(r,'size','0.1'),'dgt-num');
+        cell(dgNum(r,'size','1',true),'dgt-num');   /* T411: in pt */
         var f=document.createElement('span');
         f.className='dgt-face';f.textContent=r.a.font||'default';
         cell(f,'dgt-face-c');
@@ -64505,12 +65119,31 @@ window.JunoPptx = (function () {
     grp('Size');
     ctl('−','Smaller',null,function(){
       rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
+    /* T411: a number you can TYPE, between the steppers -- "Text size
+       26 pt" was a readout, and a readout is not a property */
     var sz=document.createElement('span');
     sz.className='dg-size';
     var typePct=d.size||2.6;
-    sz.textContent='Text size '+Math.round(typePct*5.4)+' pt';
-    sz.title=Math.round(typePct*5.4)+' pt text ('+typePct.toFixed(1)
-      +'% of the page height) — the object size is shown separately below';
+    var szIn=document.createElement('input');
+    szIn.type='number';szIn.className='dgt-n dg-sizein';
+    szIn.step='1';szIn.min='4';szIn.max='200';
+    szIn.value=String(Math.round(typePct*5.4));
+    szIn.setAttribute('aria-label','Text size in points');
+    szIn.title=Math.round(typePct*5.4)+' pt text ('+typePct.toFixed(1)
+      +'% of the page height) — type a size in points';
+    szIn.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter'){e.preventDefault();szIn.blur();}
+    });
+    szIn.addEventListener('change',function(){
+      var pt=parseFloat(szIn.value);
+      if(!isFinite(pt)||pt<=0) return;
+      rec.size=Math.max(0.6,Math.min(30,Math.round(pt/5.4*100)/100));
+      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+    });
+    sz.appendChild(szIn);
+    var szU=document.createElement('span');szU.textContent=' pt';
+    sz.appendChild(szU);
     (cur_||row).appendChild(sz);
     ctl('+','Bigger',null,function(){
       rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
@@ -66187,7 +66820,18 @@ window.JunoPptx = (function () {
     return el;
   }
   function renderFilm(){
-    var list=$('#film-list');list.innerHTML='';
+    var list=$('#film-list');
+    /* T412: THE STRIP STAYS WHERE YOU SCROLLED IT (2026-09-13, user:
+       "Everytime you click a slide on the thumbnails, or add a slide
+       or anything it always jumps and moves around the scroll
+       position ... It always takes you back to the top"). Emptying the
+       list zeroes its scrollTop, and every repaint empties it -- a
+       click on a thumbnail, a new slide, an edit. So the position is
+       read first and put back after, and the current slide is then
+       brought on screen only when it is off it, by the least that
+       does (filmKeepCurrent). */
+    var keepTop=list.scrollTop,keepLeft=list.scrollLeft;
+    list.innerHTML='';
     /* the strip rebuilds every row, so a context menu left open is
        holding an index into nodes that no longer exist */
     var om=$('#film-menu'); if(om) om.remove();
@@ -66348,12 +66992,26 @@ window.JunoPptx = (function () {
       row.appendChild(lbl);
       list.appendChild(row);
     });
+    list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */
+    filmKeepCurrent(list);
     /* T318: the Home doors follow the slide you are ON. Synced here,
        at the end of the one repaint every change of `cur` goes through
        -- the strip click, the arrows, go(), undo -- rather than in
        renderCreate, which the strip's own click does not reach
        (driven: the star stayed in the main's state on an alternative). */
     if(typeof syncHomeDoors==='function') syncHomeDoors();
+  }
+  /* T412: the current row, on screen -- and only when it is not. A row
+     you can already see is left exactly where it is; one that is off
+     the edge (a new slide at the end, the arrow keys, undo) comes in by
+     the least that shows it, never to the top. */
+  function filmKeepCurrent(list){
+    var cr=list.querySelector('.film-row.current'); if(!cr) return;
+    var lr=list.getBoundingClientRect(),rr=cr.getBoundingClientRect();
+    if(!lr.height) return;                  /* the strip is not showing */
+    if(rr.top>=lr.top&&rr.bottom<=lr.bottom) return;
+    if(rr.top<lr.top) list.scrollTop-=(lr.top-rr.top);
+    else list.scrollTop+=(rr.bottom-lr.bottom);
   }
   function clearFilmMarks(){
     $$('#film-list .film-row.drop-above,#film-list .film-row.drop-below,'
@@ -66542,6 +67200,25 @@ window.JunoPptx = (function () {
           renderFilm();
         });
       }
+    }
+    /* T413: MATCHING, WHERE THE THUMBNAILS ARE (2026-09-13, user: "What
+       happened to the feature of matching slides"). The Design tab's
+       "Match slide" door arms a click on a thumbnail; these are the same
+       arming, on the thumbnail's own menu, so the feature is found from
+       where the slides are. The slide you right-clicked is the one that
+       takes, or gives, the layout. */
+    if(!poster&&(pres.slides||[]).length>1){
+      var goTo=function(){
+        if(cur!==i){cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();}
+      };
+      row('Match this slide to another\u2026',function(){
+        goTo();armSlideMatch('from');},
+        'Then click the thumbnail this slide should sit like. Positions '
+        +'and sizes travel; the words and figures stay','swap');
+      row('Give this slide\u2019s layout to slides I click\u2026',function(){
+        goTo();armSlideMatch('to');},
+        'Then click each thumbnail that should sit like this one; Esc '
+        +'when you are done','swap');
     }
     if(!isAlt0) row('§ Start a section here',function(){newSection(i,'New section');},
       'Everything from here down to the next divider goes in it');
@@ -69271,12 +69948,25 @@ window.JunoPptx = (function () {
   }
   /* write to the remembered file. `silent` = an autosave: never pops a
      permission prompt (there is no user gesture behind it) */
+  /* T406: WHY THE FILE IS NOT BEING WRITTEN, when it is not. An autosave
+     to a file that stands down -- no file chosen yet, or the browser has
+     not re-granted write permission since the reload -- used to stand
+     down silently, so the readout said "unsaved — saving…" forever and
+     the only visible noise was the draft copy's "browser full" toast,
+     which read as "it is saving to the browser instead" (2026-09-13,
+     user: "I think the auto-save is trying to save to browser and not
+     local"). The readout names the reason now, and the one click that
+     fixes it. */
+  var fileWaits='';
   function saveToFile(silent){
     flushTextEdits();
     /* T235: an autosave with no file can still make one, if there is a
        default folder to make it in. Without one it stands down, as it
        always has -- an autosave must never open a file dialog. */
-    if(!fileHandle&&!deckDir&&silent) return Promise.resolve(false);
+    if(!fileHandle&&!deckDir&&silent){
+      fileWaits='pick';status();
+      return Promise.resolve(false);
+    }
     var savedHist=!silent?histCapture():null;
     var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
     var fileText;
@@ -69300,12 +69990,14 @@ window.JunoPptx = (function () {
           if(!ok){
             if(!silent) toast('Junoview needs permission to write '
               +(fileName||'that file'));
+            fileWaits='perm';status();   /* T406 */
             return false;
           }
           return h.createWritable().then(function(w){
             return Promise.resolve(w.write(fileText))
               .then(function(){return w.close();});
           }).then(function(){
+            fileWaits='';
             /* the browser copy STAYS. Deleting it made the file the ONLY
                copy, and nothing ever read the file back at startup — save
                to file, close the browser, and the presentation was gone
@@ -69935,7 +70627,11 @@ window.JunoPptx = (function () {
     var blob=new Blob([junoviewFileHtml()],{type:'text/html'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=(APP.order.length===1?APP.order[0]:'project')
+    /* T415: the deck's own name, not "project" (2026-09-13, user:
+       "downloaded with shit name project.junoview, not the actual
+       name"). The file still holds every deck; it is named after the
+       one you were in. */
+    a.download=(pres.name||(APP.order.length===1?APP.order[0]:'project'))
       +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
@@ -70494,6 +71190,7 @@ window.JunoPptx = (function () {
          note reaching a .pptx is the exact failure T31 exists to
          prevent. */
       if(a.priv) return;
+      if(a.hide) return;   /* T404: hidden is hidden, in PowerPoint too */
       /* an item tied to a figure other than this page's does not belong
          on this page. note.frame is set by the exploding enumerator; with
          no flip book on the slide it is null and nothing is filtered. */
@@ -70632,7 +71329,10 @@ window.JunoPptx = (function () {
         if(fsrc) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
           name:(fsel&&fsel.label)||'Figure'});
-        else note.skipped++;
+        /* T403: a page that is its own object is exported AS that
+           object (it is tied to this page), so the blank leaf is not
+           a figure that went missing */
+        else if(!(fsel&&fsel.own)) note.skipped++;
       } else if(a.k==='web'){
         /* T388: PowerPoint has no shape for a live page */
         note.web=(note.web||0)+1;
@@ -71081,7 +71781,7 @@ window.JunoPptx = (function () {
       if(!silent) toast('That file does not look like a saved deck');
       return 0;
     }
-    var imported=0,dropped=0,firstName=null;
+    var imported=0,dropped=0,first=null,loose=null;
     list.forEach(function(pr){
       if(!pr||!Array.isArray(pr.slides)) return;
       var np=normPres(pr);
@@ -71095,10 +71795,29 @@ window.JunoPptx = (function () {
          was ignored, so once the draft budget was full every write was
          discarded and the toast still said "Imported N presentations" --
          and the view was then switched to a deck that is not stored. */
-      if(!lsSet(PFX+nm,JSON.stringify(np))){dropped++;return;}
-      if(!firstName) firstName=nm;
-      imported++;
+      var kept=lsSet(PFX+nm,JSON.stringify(np),true);
+      if(kept){
+        imported++;
+        if(!first) first={name:nm,pres:np,kept:true};
+        return;
+      }
+      /* T414: NO ROOM IN THE BROWSER IS NOT "CANNOT OPEN" (2026-09-13,
+         user: "I am trying to open a junoview file from my computer.
+         it will not open ... I have to present it soon"). A deck with
+         a few pasted pictures is bigger than localStorage will take,
+         and this refused to open it at all -- while the one copy that
+         matters, the file, was in hand the whole time. A deck that did
+         not fit opens from the object in hand; only the browser copy
+         is what did not fit. And it is the one that OPENS even when
+         smaller decks in the same file did fit: those are in the
+         library now and lose nothing, while a deck that is nowhere
+         but in this object would be gone with the next click. A file
+         written by Download a copy holds every deck, the current one
+         last, which is exactly how the big one came to be dropped. */
+      if(!silent&&!loose){loose={name:nm,pres:np,kept:false};imported++;}
+      else dropped++;
     });
+    if(loose) first=loose;
     if(!imported){
       if(!silent)
         toast(dropped
@@ -71108,17 +71827,28 @@ window.JunoPptx = (function () {
       return 0;
     }
     if(silent){renderPresTabs();return imported;}
-    lsSet(PFX+'last',firstName);
-    loadPresentation(firstName);
+    if(first.kept){
+      lsSet(PFX+'last',first.name,true);
+      loadPresentation(first.name);
+    } else loadPresentationObj(first.pres);   /* T414 */
     cur=0;activePane=-1;
     /* picked from the launcher: go straight into the editor — the whole
        point of opening a file is to get back to the presentation in it */
     if(deckEl.hidden) openDeck('edit');
     status();refresh();
-    toast('Imported '+imported+' presentation'
-      +(imported>1?'s':'')+' (as drafts)'
-      +(dropped?(' \u2014 '+dropped+' would not fit and '
-        +(dropped>1?'were':'was')+' not kept'):''));
+    if(first.kept)
+      toast('Imported '+imported+' presentation'
+        +(imported>1?'s':'')+' (as drafts)'
+        +(dropped?(' \u2014 '+dropped+' would not fit and '
+          +(dropped>1?'were':'was')+' not kept'):''));
+    else
+      toast('Opened \u201c'+first.name+'\u201d \u2014 too big for a '
+        +'browser copy, so it lives in its file: Save writes it there'
+        +(imported>1?(' \u2014 '+(imported-1)+' smaller deck'
+          +(imported>2?'s':'')+' from the file went into the library'):'')
+        +(dropped?(' \u2014 '+dropped+' other'+(dropped>1?'s':'')
+          +' in the file '+(dropped>1?'were':'was')+' not kept'):''),
+        9000);
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
@@ -71160,7 +71890,13 @@ window.JunoPptx = (function () {
             toast('Opened \u2014 Save now writes back to '+fileName);
           });
         });
-      }).catch(function(){});
+      }).catch(function(e){
+        /* T414: a cancelled picker is silent; anything else is SAID.
+           This swallowed every failure, so a file that would not open
+           gave no clue why. */
+        if(e&&e.name==='AbortError') return;
+        toast('Could not open that file: '+((e&&e.message)||e),9000);
+      });
       return;
     }
     var fi=document.getElementById('deckfile');

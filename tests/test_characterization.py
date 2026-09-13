@@ -1740,8 +1740,41 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the builder and from HTML (deck JS, help).
 # 2026-09-13, T401: chrome only. The text tiles show for any text box,
 # their tooltips, and a help paragraph.
-EXPECTED_MD5 = "f464acb326416be83a0fb584f6f86493"
-EXPECTED_BYTES = 4109607
+# 2026-09-13, T402: chrome only. The Animation pane as a list of
+# clicks, its CSS, the canvas badge counting the same clicks.
+# 2026-09-13, T404: chrome only. Hidden is hidden in every mode (deck
+# JS, the eye's tooltip).
+# 2026-09-13, T407: chrome only. A crop handle goes as far as the
+# opposite edge allows (deck JS).
+# 2026-09-13, T407: chrome only. A crop handle goes as far as the
+# opposite edge allows (deck JS).
+# 2026-09-13, T406: chrome only. A quiet draft copy and the file-
+# waiting readout (deck JS).
+# 2026-09-13, T405: chrome only. A move reads an unclamped point (deck
+# JS).
+# 2026-09-13, T408: chrome only. Paste into a flip book (deck JS).
+# 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
+# (deck JS/HTML/CSS).
+# 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
+# (deck JS/HTML/CSS).
+# 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
+# (deck JS/HTML/CSS).
+# 2026-09-13, T410: chrome only. A line lands on Style (deck JS).
+# 2026-09-13, T411: chrome only. A typed text size on the Style system
+# (deck JS/CSS).
+# 2026-09-13, T403: chrome only. A flip page as its own object (deck
+# JS/CSS).
+# 2026-09-13, T412: chrome only. The strip keeps its scroll (deck JS).
+# 2026-09-13, T414: chrome only. A big file still opens; Open means
+# open (deck JS).
+# 2026-09-13, T413: chrome only. Match doors on the ribbon and the
+# strip (deck JS/HTML).
+# 2026-09-13, T414 again: chrome only. The deck that did not fit is
+# the one that opens (deck JS).
+# 2026-09-13, T415: chrome only. A download is named after the deck
+# (deck JS).
+EXPECTED_MD5 = "35277424d000c0dbd58919caf76d4941"
+EXPECTED_BYTES = 4145437
 
 
 def _render_example() -> str:

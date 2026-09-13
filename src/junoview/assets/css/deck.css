@@ -1758,6 +1758,16 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:4;}
 .et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:5;}
 .et-fmt .rbn-grp[data-tab="object"].rbn-clones{order:6;}
+/* T409: the two clone menus -- a name box, and the kind that is on */
+.cmp-menu .cmp-name{display:block;width:100%;box-sizing:border-box;
+  margin:2px 0 6px;padding:5px 7px;font:inherit;font-size:12.5px;
+  color:inherit;background:var(--input-bg);border:1px solid var(--line);
+  border-radius:6px;}
+.cmp-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);color:#fff;}
+.cmp-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:9px;opacity:.8;}
+.cmp-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 .rbn-row .fmt-range{width:96px;}
 /* The File group is assembled in JS out of nodes that were built for the
    docked panel, so it is sized here rather than in markup. They arrive
@@ -2039,56 +2049,41 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .selpane.animpane .selpane-list{padding:10px 11px;}
 .anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--chrome-ink-2);margin:0 2px 6px;}
-.anim-eff+.anim-h,.anim-merge+.anim-h,.anim-empty+.anim-h{margin-top:13px;}
-.anim-empty{font-size:12px;color:var(--chrome-ink-2);padding:1px 2px 5px;line-height:1.5;}
-.anim-eff{display:flex;flex-wrap:wrap;gap:5px;}
-.anim-effb{flex:1;min-width:52px;background:var(--chrome-2,#16273a);border:1px solid #ffffff1f;
-  color:#cdd9e3;border-radius:7px;padding:7px 6px;font-size:12px;cursor:pointer;
-  font-family:var(--sans);}
-.anim-effb:hover{border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
-.anim-effb.on{background:var(--cyan-deep);border-color:var(--cyan);
-  color:var(--on-accent-deep,#fff);}
-.anim-merge{display:flex;gap:6px;margin-top:8px;}
+.anim-empty{font-size:12px;color:var(--chrome-ink-2);padding:1px 2px 9px;line-height:1.5;}
 .anim-mini{background:var(--chrome-2,#16273a);border:1px solid #ffffff1f;color:#bcccd8;
   border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
-  font-family:var(--sans);}
-.anim-mini.wide{flex:1;}
+  font-family:var(--sans);white-space:nowrap;}
+.anim-mini.wide{flex:1;width:100%;margin-top:10px;}
 .anim-mini:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
 .anim-mini:disabled{opacity:.4;cursor:default;}
+/* T402: ONE ROW PER CLICK. The number is the click the space bar
+   counts; the name is a button that selects the thing on the slide; the
+   detail line says how it arrives. A page of a flip book (or a series
+   of a chart, a page of a text box) is a row of its own, indented, with
+   a hollow number: it has a click but no order of its own. */
 .anim-seq{display:flex;flex-direction:column;gap:4px;}
 .anim-step{display:flex;align-items:center;gap:8px;background:var(--chrome-3,#101c28);
   border:1px solid #ffffff12;border-radius:8px;padding:5px 7px;}
+.anim-step.cur{border-color:var(--cyan);}
 .anim-num{flex:none;width:20px;height:20px;border-radius:50%;
   background:var(--amber);color:#241a05;font-family:var(--mono);font-size:11px;
   font-weight:700;display:flex;align-items:center;justify-content:center;}
 /* a row that costs SEVERAL clicks says so as a range, and a 20px circle
    cannot hold "3–6". Only then -- an ordinary row is untouched. */
 .anim-num.wide{width:auto;min-width:20px;padding:0 6px;border-radius:10px;}
-/* the pieces inside one row: read-only, because the ↑↓ above still
-   move the whole build order and a piece has no order of its own */
-.anim-subs{display:flex;flex-direction:column;gap:2px;margin:3px 0 1px 28px;}
-.anim-sub{display:flex;gap:6px;align-items:baseline;font-size:11px;
-  color:var(--chrome-ink-2);}
-.anim-subn{flex:none;font-family:var(--mono);font-size:10px;color:var(--amber);}
-.anim-subt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
-.anim-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
-.anim-chip{font-size:11px;color:#bcccd8;background:#1c2c3d;border-radius:5px;
-  padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;max-width:150px;}
-.anim-chip.cur{background:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
-/* the stops a build ANCHORS (T163): a flip book's pages, a chart's
-   series. Indented and quieter than a build row because they are
-   READ-ONLY here -- a page's place in the sequence is decided by its
-   place in its book, and a second way to reorder it would be two
-   truths about one order. */
+.anim-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.anim-name{background:none;border:none;padding:0;color:#dce6ee;
+  font:12.5px var(--sans);text-align:left;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.anim-name:hover{color:#fff;text-decoration:underline;}
+.anim-detail{font-size:10.5px;color:var(--chrome-ink-2);line-height:1.35;}
 .anim-step.anim-sub{margin-left:18px;background:var(--chrome-4,#0e1824);
   padding-top:3px;padding-bottom:3px;}
-.anim-num.anim-subnum{background:none;border:none;color:var(--chrome-ink-3);
-  width:14px;height:14px;font-size:11px;}
-.anim-chip.anim-subchip{background:#16232f;color:var(--chrome-ink-2);font-style:italic;}
-.anim-stepctr{flex:none;display:flex;gap:2px;}
-.anim-stepctr .anim-mini{padding:3px 6px;}
+.anim-step.anim-sub .anim-num{background:none;border:1px solid var(--amber);
+  color:var(--amber);font-weight:600;}
+.anim-step.anim-sub .anim-name{font-size:12px;color:#c4d0da;}
+.anim-stepctr{flex:none;display:flex;flex-direction:column;gap:2px;}
+.anim-stepctr .anim-mini{padding:2px 6px;font-size:10.5px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
 
@@ -3043,6 +3038,12 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 .fp-t:focus{border-color:var(--cyan);background:var(--chrome-0,#0b141d);}
 .fp-ctr{display:none;gap:1px;flex:none;}
 .fp-row:hover .fp-ctr,.fp-row.current .fp-ctr{display:flex;}
+/* T403: a page that is its own object -- its number says so, and the
+   row's verb has words on it, because "take it out of the book" is
+   not a glyph anyone would guess */
+.fp-row.own .fp-n{color:var(--accent);}
+.film-mini.fp-own{white-space:nowrap;}
+.deck.editing .an-flipown{opacity:.7;}
 /* tying an item to a figure lives in this pane rather than the ribbon,
    because it needs the frame LIST visible to mean anything */
 .fp-tie{border-top:1px solid #ffffff14;padding:9px 12px;
@@ -5604,6 +5605,12 @@ body.light .lb-name{background:var(--input-bg);
 .dgt{margin:6px 0 18px;}
 .dgt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;
   margin-bottom:8px;}
+/* T411: the size box on the table's bar, and the typed size between a
+   named type's steppers */
+.dgt-szw{display:inline-flex;align-items:center;gap:5px;margin-left:4px;}
+.dgt-szlab{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);}
+.dgt-n.dgt-szin,.dgt-n.dg-sizein{width:58px;}
+.dg-size{display:inline-flex;align-items:center;gap:2px;min-width:0;}
 .dgt-count{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);
   margin-left:auto;}
 .dgt-grid{display:grid;

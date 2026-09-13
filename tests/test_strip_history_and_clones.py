@@ -100,7 +100,9 @@ def test_clones_have_two_doors(out):
     assert "Make clones&#8230;</button>" in html
     assert "  function cloneDoorsBoot(){" in out
     assert "  cloneDoorsBoot();" in out
-    assert "      var id=cmpDefine(nm,idxs);" in out
+    # T409: the name and the kind are one menu, not a prompt()
+    assert ("      cmpMakeMenu(mk,selIdxs());"
+            "   /* T409: name and kind, one menu */") in out
     assert "      if(a2&&a2.cmp) cmpInstMenu(a2.cmp,fd);" in out
     # the count is on the button, so you know there are any
     assert "      cf.innerHTML=bic('locate')+' Its clones ('+cn+')';" in out

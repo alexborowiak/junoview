@@ -78,6 +78,10 @@ RUNTIME_IDS = {
     # shipped in the markup (35-arranging.js openObjMatchMenu and
     # 40-captions-and-components.js openCmpInstMenu).
     "objmatch-menu", "cmp-inst-menu",
+    # T409: the two clone doors' menus, built on open and dropped on
+    # close like cmp-inst-menu (40-captions-and-components.js
+    # cmpMakeMenu and cmpAddMenu)
+    "cmp-make-menu", "cmp-add-menu",
     # "+ Add" on a flip book: 45-images.js flipAddMenu builds it on
     # open and removes it on close, exactly like the canvas menu (T234).
     "flip-add-menu",

@@ -105,5 +105,7 @@ def test_the_turn_is_a_moment_not_a_diff(out):
 
 
 def test_the_animations_list_names_the_effect(out):
-    assert ("                +(a.fanim?(' \\u00b7 '"
-            "+flipFxWord(a.fanim).toLowerCase())") in out
+    # (T402: on each page's own row, with the click it turns on)
+    assert "            var fx=flipFxWord(a.fanim)||'Cut';" in out
+    assert ("              row(base+d,[[name,p.i]],fx+' \\u00b7 a page of the "
+            "flip '") in out

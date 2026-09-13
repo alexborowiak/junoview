@@ -1650,7 +1650,7 @@
     var editing=(mode==='edit');
     (s.annots||[]).forEach(function(a,i){
       if(!a||a.k!=='arrow') return;
-      if(a.hide&&editing) return;
+      if(a.hide) return;                     /* T404: hidden is hidden */
       if(a.priv&&!privShown()) return;      /* T31 */
       drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
     });
@@ -1933,7 +1933,7 @@
     if(!layer||!s) return;
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.k!=='text'||!a.fh) return;
-        if(a.hide&&editing) return;
+        if(a.hide) return;                   /* T404: hidden is hidden */
         var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
         if(!el) return;
         var lr=layer.getBoundingClientRect();
@@ -2128,9 +2128,13 @@
     })?figNumbers():null;
     var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
-      /* hidden via the Objects pane: skipped while editing, still
-         rendered in playback / print */
-      if(a.hide&&editing) return;
+      /* T404: HIDDEN IS HIDDEN. The Layers pane's eye used to mean
+         "out of my way while editing, still shown to the audience", and
+         nobody read it that way (2026-09-13, user: "Bug: hidden object
+         still appear in present mode"). A hidden object is not on the
+         slide: not while editing, not in playback, not in print or
+         PowerPoint, and it claims no click (slideBuildSteps). */
+      if(a.hide) return;
       /* ...and the other way round: yours, so NOT rendered in playback,
          print or PowerPoint (T31) */
       if(a.priv&&!privShown()) return;
@@ -2750,6 +2754,14 @@
               :'';
             fst.appendChild(fmiss);
           }
+        } else if(fdef&&fdef.own&&editing){
+          /* T403: the page's picture is an object of its own on the
+             slide, tied to this page; the leaf in the book is blank */
+          var fown=document.createElement('div');
+          fown.className='an-flipempty an-flipown';
+          fown.textContent='This page is its own object on the slide '
+            +'\u2014 select it there to move, resize or fade it';
+          fst.appendChild(fown);
         }
         fl.appendChild(fst);
         if(fr.length>1&&a.fbtn){
@@ -2950,10 +2962,15 @@
         var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
         if(st==null) return;
         if(editing){
+          /* T402: the badge is the CLICK the space bar counts, which is
+             what the animation pane numbers -- the build's stop index
+             skipped a flip book's page turns, so a shape after a
+             three-page book wore "5" on the slide and "7" in the pane */
+          var clk=plan.stop[st]; if(clk==null) clk=st;
           var bd=document.createElement('span');
-          bd.className='an-buildno';bd.textContent=(st+1);
-          bd.title='Build '+(st+1)+' — '+(ba.anim.type||'fade')
-            +' (items on the same build appear together)';
+          bd.className='an-buildno';bd.textContent=(clk+1);
+          bd.title='Click '+(clk+1)+' — '+(ba.anim.type||'fade')
+            +' (items on the same click appear together)';
           el.appendChild(bd);
           /* T391: ...and what has not arrived by stop k is not there
              either; a box arriving in pieces shows the pieces that are */

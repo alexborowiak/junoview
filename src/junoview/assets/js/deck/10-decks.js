@@ -498,7 +498,13 @@
      It reports now, and lsFull records that it happened so the readout
      and the Save button can stop lying. */
   var lsFull=false;
-  function lsSet(k,v){
+  /* `quiet` (T406): the write is a CONVENIENCE COPY -- the deck's real
+     home is a file or the project -- so a full browser is not "that edit
+     was NOT kept" and must not say so (2026-09-13, user: "Still getting
+     error that it can't be saved as browser is full even though rn it
+     is saved to local"). The flag is still recorded, so the readout can
+     tell the truth for a deck whose only home IS the browser. */
+  function lsSet(k,v,quiet){
     try{
       localStorage.setItem(k,v);
       if(lsFull){lsFull=false;if(typeof status==='function') status();}
@@ -510,7 +516,7 @@
       if(!lsFull){
         lsFull=true;
         if(typeof status==='function') status();
-        if(typeof toast==='function')
+        if(!quiet&&typeof toast==='function')
           toast('This browser is full — that edit was NOT kept. Use '
             +'File › Download a copy, or the \u25be beside Save to keep '
             +'a file on your computer.',9000);
@@ -545,8 +551,10 @@
   function writeDraftNow(){
     draftT=null;
     if(!pres) return;
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
-    lsSet(PFX+'last',pres.name||'untitled');
+    /* quiet when the browser is not where this deck lives (T406) */
+    var spare=(typeof saveTarget!=='undefined'&&saveTarget!=='browser');
+    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres),spare);
+    lsSet(PFX+'last',pres.name||'untitled',spare);
   }
   function scheduleDraftWrite(){
     if(draftT) clearTimeout(draftT);
@@ -750,6 +758,20 @@
        before any of its slides was looked at still carries them */
     if(typeof mediaWarm==='function') mediaWarm(pres);
   }
+  /* T414: A DECK OPENED FROM A FILE THAT IS TOO BIG FOR THE DRAFT STORE
+     STILL OPENS -- from the object in hand, with no browser copy. Its
+     home is the file it came from; the caller points Save at it. The
+     same steps as loadPresentation, minus the read from localStorage
+     that had nothing to read. */
+  function loadPresentationObj(np){
+    flushDraftWrite();
+    histHead=null;histBranch='';
+    deckZoom=0;
+    histSeed();
+    pres=np;source='draft';
+    histReset();
+    if(typeof mediaWarm==='function') mediaWarm(pres);
+  }
   /* which presentation the page opens with. Called from THE BOOT
      SEQUENCE at the end of the file — never from here: loadPresentation
      → histReset() → syncCustomTypes() reaches STYLE_DEFAULTS, which is
@@ -788,7 +810,14 @@
   }
   function whereSaved(){
     if(saveTarget==='project') return 'project';
-    if(saveTarget==='file') return fileName||'file';
+    /* T414: WHICH file, and WHERE. An autosave into the default folder
+       writes <name>.junoview.html THERE -- not into a file you opened
+       from somewhere else -- and "autosaved to talk.junoview.html" let
+       you look in the wrong place for your work. */
+    if(saveTarget==='file')
+      return (fileName||'file')
+        +((typeof deckDirName!=='undefined'&&deckDirName&&!fileHandle)
+          ?(' in your '+deckDirName+' folder'):'');
     return 'browser';
   }
   /* ---- the name, in the title bar ------------------------------------
@@ -848,6 +877,24 @@
         +'save to a file.';
       return;
     }
+    /* T406: a file that is waiting on ONE click says so, instead of
+       "unsaved \u2014 saving\u2026" for the rest of the session */
+    if(saveTarget==='file'&&typeof fileWaits!=='undefined'&&fileWaits
+       &&source==='draft'){
+      el.textContent=fileWaits==='pick'
+        ?'unsaved \u2014 click Save to choose the file'
+        :'unsaved \u2014 click Save to keep writing '+(fileName||'the file');
+      el.className='deck-status unsaved';
+      el.title=fileWaits==='pick'
+        ?'No file has been chosen yet, and an autosave never opens a '
+          +'file dialog. Press Save once and pick the file; every '
+          +'autosave after that writes to it.'
+        :'After a reload the browser waits for one click before it lets '
+          +'a page write to a file again. Press Save once; every '
+          +'autosave after that writes to '+(fileName||'the file')+'.';
+      markSaveClickable(el);
+      return;
+    }
     if(source==='draft'){
       /* web/static Save writes to the browser but keeps source='draft';
          show a plain 'saved' — the Save button tooltip explains where */
@@ -900,6 +947,9 @@
      undo entry (taken on blur, as before) instead of one per phrase —
      which would evict real slide edits from the 50-deep stack. */
   function markDirty(quiet){
+    /* T409: a committed edit to a clone reaches its clones FIRST, so
+       the history entry and the draft below hold the synced deck */
+    if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
     source='draft';
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */

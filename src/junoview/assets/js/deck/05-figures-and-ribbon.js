@@ -2448,10 +2448,11 @@
       var eye=document.createElement('button');
       eye.className='sp-act'+(a.hide?' on':'');eye.type='button';
       eye.innerHTML=bic('eye');
-      eye.title=a.hide?'Show while editing'
-        :'Hide while editing (still shows when presenting)';
-      eye.setAttribute('aria-label',
-        a.hide?'Show while editing':'Hide while editing');
+      /* T404: hidden means hidden -- from the editor, the show, the PDF
+         and the PowerPoint alike. It is how you keep a spare on a slide. */
+      eye.title=a.hide?'Show it again'
+        :'Hide it: not shown while editing, presenting or in exports';
+      eye.setAttribute('aria-label',a.hide?'Show':'Hide');
       eye.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'hide');});
       r.appendChild(eye);
@@ -2609,19 +2610,15 @@
        necessarily the item you clicked */
     var prim=(typeof selAnnot==='number')?ann[selAnnot]:null;
     var primInst=(prim&&prim.cmp&&prim.cinst)?prim:null;
-    act(bic('group')+' Make component',
-      'Save the arrangement and look of the selected items as a named '
-      +'thing you can place again. Each copy keeps its own words and '
+    act(bic('group')+' Make clones\u2026',
+      'Make the selected items a set of clones: same look, same place '
+      +'on every slide, or both. Each copy keeps its own words and '
       +'its own figure',selN.length>=1&&!primInst,
-      function(){
-        var nm=prompt('Name for the component:','FigureCaption');
-        if(nm===null) return;
-        nm=nm.trim(); if(!nm) return;
-        var id=cmpDefine(nm,selN);
-        toast(id?('“'+nm+'” saved — place it again from '
-          +'the canvas menu'):'Nothing there that could be saved');
-        renderSelPane();
-      });
+      function(b){cmpMakeMenu(b,selN);});   /* T409 */
+    act(bic('plus')+' Add a clone\u2026',
+      'Another one here, on every slide, or on every slide after this '
+      +'one \u2014 and what the clones share',!!primInst,
+      function(b){cmpAddMenu(b,primInst);});
     act(bic('locate')+' Every instance',
       'Every place in this deck this component has been put — pick '
       +'one to go there',!!primInst,

@@ -1479,13 +1479,29 @@
     if(root) root.hidden=true;
     presentationHubDeckInert(false);
   }
-  function openPresentationHub(){
+  /* T414: OPEN MEANS OPEN (2026-09-13, user: "why when you click open
+     is there all the 'new poster options', like THAT WAS THERE ON THE
+     LAST MENU"). Every door into this dialog is an Open door except the
+     folder one, so the create row shows only when asked for
+     ({create:true}); the rest of the time the dialog is the library,
+     with "Open a file" first. A door wired straight as a click listener
+     passes an event, which is not an options object. */
+  function openPresentationHub(opts){
     var root=$('#presentation-hub');if(!root) return;
+    var create=!!(opts&&opts.create===true);
     closeDeckPresentationDrawer();
     renderPresentationHub();root.hidden=false;
+    ['#presentation-hub-new','#presentation-hub-poster',
+     '#presentation-hub-folder'].forEach(function(id){
+      var b=$(id); if(b) b.hidden=!create;});
+    var ttl=$('#presentation-hub-title');
+    if(ttl) ttl.textContent=create?'Open or create':'Open a presentation';
+    var form=$('#presentation-hub-folderform');
+    if(form&&!create) form.hidden=true;
     presentationHubDeckInert(true);
     setTimeout(function(){
-      var b=$('#presentation-hub-new');if(b) b.focus();},0);
+      var b=$(create?'#presentation-hub-new':'#presentation-hub-file');
+      if(b) b.focus();},0);
   }
   /* two doors, one drawer: the presenting bar's button and the editing
      bar's chevron beside Home (T396) both say whether it is open */
@@ -1668,7 +1684,10 @@
     });
     var file=$('#presentation-hub-file');
     if(file) file.addEventListener('click',function(){
-      closePresentationHub();var input=$('#deckfile');if(input) input.click();
+      /* T414: the same door the rail's row uses -- a real file handle
+         where the browser has one, so Save writes back to the file you
+         opened; the bare <input> only where it does not */
+      closePresentationHub();openDeckFile();
     });
     var pptx=$('#presentation-hub-pptx');
     if(pptx) pptx.addEventListener('click',function(){
@@ -1683,7 +1702,7 @@
     },true);
     window.SemApp.deckHub=openPresentationHub;
     window.SemApp.deckNewFolder=function(){
-      openPresentationHub();
+      openPresentationHub({create:true});
       if(form){form.hidden=false;if(field) field.focus();}
     };
     window.SemApp.deckRecentNames=savedRecentPresentationNames;
@@ -2299,11 +2318,25 @@
     if(!v&&fallback) s.title='default';
     return s;
   }
-  function dgNum(r,key,step){
+  /* pt: the cell reads and writes POINTS (T411) -- the unit the ribbon's
+     Text size box and the type screen speak -- and a box that says
+     nothing shows what it gets, greyed, rather than an empty cell. */
+  function dgNum(r,key,step,pt){
     var inp=document.createElement('input');
     inp.type='number';inp.step=step||'0.5';inp.className='dgt-n';
-    inp.value=(r.a[key]!=null)?Math.round(r.a[key]*10)/10:'';
-    inp.title=key.toUpperCase()+' of this box';
+    var v0=r.a[key];
+    if(pt){
+      inp.value=(v0!=null)?Math.round(v0*5.4):'';
+      var st=(r.a.style&&typeof styleDef==='function')
+        ?styleDef(r.a.style):null;
+      var eff=(st&&st.size)||(r.a.k==='table'?2.2:2.6);
+      inp.placeholder=String(Math.round(eff*5.4));
+      inp.title='Text size in points — empty means the type’s '
+        +'own '+Math.round(eff*5.4)+' pt';
+    } else {
+      inp.value=(v0!=null)?Math.round(v0*10)/10:'';
+      inp.title=key.toUpperCase()+' of this box';
+    }
     inp.addEventListener('click',function(e){e.stopPropagation();});
     inp.addEventListener('keydown',function(e){
       e.stopPropagation();
@@ -2312,7 +2345,7 @@
     inp.addEventListener('change',function(){
       var v=parseFloat(inp.value);
       if(!isFinite(v)){delete r.a[key];}
-      else r.a[key]=Math.round(v*10)/10;
+      else r.a[key]=pt?Math.round(v/5.4*100)/100:Math.round(v*10)/10;
       if(key==='x'||key==='y') delete r.a.anch;
       markDirty();refresh();renderFilm();
       var ov=$('#deck-design'); if(ov) dgBodyKeep(ov);
@@ -2364,6 +2397,47 @@
     what.addEventListener('change',function(){
       dgMatchWhat=what.value;dgBodyKeep(ov);});
     bar.appendChild(what);
+    /* T411: THE SIZE, FOR ALL OF THEM AT ONCE (2026-09-13, user: "Style
+       systems does not have a text size property in the tab. That was
+       half the point of this"). A named type had its size on the left;
+       the plain-text-boxes bucket had only a table with a blank Size
+       cell per row. One box: points, given to the ticked rows, or to
+       every row when none is ticked. */
+    var isTx=!dgIsObj()||dgObjKind()==='text';
+    if(isTx&&rows.length){
+      var szw=document.createElement('span');szw.className='dgt-szw';
+      var szl=document.createElement('span');szl.className='dgt-szlab';
+      szl.textContent='Text size';szw.appendChild(szl);
+      var szi=document.createElement('input');
+      szi.type='number';szi.className='dgt-n dgt-szin';
+      szi.step='1';szi.min='4';szi.max='200';szi.placeholder='pt';
+      szi.title='Points. Enter, or Set, gives it to the ticked boxes '
+        +'— or to every box when none is ticked';
+      var setSize=function(){
+        var pt=parseFloat(szi.value);
+        if(!isFinite(pt)||pt<=0){toast('Type a size in points first');
+          return;}
+        var to=marked.length?marked:rows;
+        to.forEach(function(r){r.a.size=Math.round(pt/5.4*100)/100;});
+        markDirty();refresh();renderFilm();dgBodyKeep(ov);
+        toast(to.length+' box'+(to.length===1?'':'es')+' at '
+          +Math.round(pt)+' pt — Ctrl+Z undoes it');
+      };
+      szi.addEventListener('click',function(e){e.stopPropagation();});
+      szi.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){e.preventDefault();setSize();}
+      });
+      szw.appendChild(szi);
+      var szb=document.createElement('button');
+      szb.className='dbtn dg-b';szb.textContent='Set';
+      szb.title='Give this size to the ticked boxes, or to all of them '
+        +'when none is ticked';
+      szb.addEventListener('click',function(e){
+        e.stopPropagation();setSize();});
+      szw.appendChild(szb);
+      bar.appendChild(szw);
+    }
     var count=document.createElement('span');
     count.className='dgt-count';
     if(dgPickedAny()){
@@ -2395,8 +2469,8 @@
     }
     var tbl=document.createElement('div');tbl.className='dgt-grid';
     /* the size and the face are columns whenever the rows are text,
-       whether they were chosen by style or as plain text boxes */
-    var isTx=!dgIsObj()||dgObjKind()==='text';
+       whether they were chosen by style or as plain text boxes (isTx,
+       decided above the bar since T411) */
     /* T230: the first column is the WORDS, and for a plain text box
        you can type in it (2026-09-03, user: "would be good to edit
        the text in here as well"). A box with a list, and anything
@@ -2487,7 +2561,7 @@
       cell(dgNum(r,'y'),'dgt-num');
       cell(dgNum(r,'w'),'dgt-num');
       if(isTx){
-        cell(dgNum(r,'size','0.1'),'dgt-num');
+        cell(dgNum(r,'size','1',true),'dgt-num');   /* T411: in pt */
         var f=document.createElement('span');
         f.className='dgt-face';f.textContent=r.a.font||'default';
         cell(f,'dgt-face-c');
@@ -3330,12 +3404,31 @@
     grp('Size');
     ctl('−','Smaller',null,function(){
       rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
+    /* T411: a number you can TYPE, between the steppers -- "Text size
+       26 pt" was a readout, and a readout is not a property */
     var sz=document.createElement('span');
     sz.className='dg-size';
     var typePct=d.size||2.6;
-    sz.textContent='Text size '+Math.round(typePct*5.4)+' pt';
-    sz.title=Math.round(typePct*5.4)+' pt text ('+typePct.toFixed(1)
-      +'% of the page height) — the object size is shown separately below';
+    var szIn=document.createElement('input');
+    szIn.type='number';szIn.className='dgt-n dg-sizein';
+    szIn.step='1';szIn.min='4';szIn.max='200';
+    szIn.value=String(Math.round(typePct*5.4));
+    szIn.setAttribute('aria-label','Text size in points');
+    szIn.title=Math.round(typePct*5.4)+' pt text ('+typePct.toFixed(1)
+      +'% of the page height) — type a size in points';
+    szIn.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter'){e.preventDefault();szIn.blur();}
+    });
+    szIn.addEventListener('change',function(){
+      var pt=parseFloat(szIn.value);
+      if(!isFinite(pt)||pt<=0) return;
+      rec.size=Math.max(0.6,Math.min(30,Math.round(pt/5.4*100)/100));
+      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+    });
+    sz.appendChild(szIn);
+    var szU=document.createElement('span');szU.textContent=' pt';
+    sz.appendChild(szU);
     (cur_||row).appendChild(sz);
     ctl('+','Bigger',null,function(){
       rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});

@@ -7954,3 +7954,168 @@ gates are recorded in the completing commit.
   By sentence or Highlight on a box with no effect gives it Appear on a
   fresh stop, exactly what a first click on the Effect strip does. Help
   describes the flow.
+- [x] **T402 — The Animation pane is the list of clicks.** (User: "What
+  is up with the animation pane? How am I supposed to use this? Like I
+  literally can't tell what is going on and how to re-order things. I
+  made a flip book and they are all animated and this is very confusing
+  to look at. Also why are there the animation button options in here
+  as well?") It carried a second effect chooser, a second text-pieces
+  chooser and a second With-previous row — every one a copy of a ribbon
+  control — above a list headed "one row per build" whose flip-book
+  pages were italic chips truncated to "fa…" under a bare arrow, and
+  whose anchored pages were looked up by the build index rather than
+  the stop index, so a book after a split text box showed no pages at
+  all. Now one numbered row per click, in the order the space bar takes
+  them: a build row names what arrives, how, on how many clicks, and
+  whether it shares the click or runs by itself; **↑ Earlier** and
+  **↓ Later** move it; a flip book's pages are indented rows numbered
+  with their click and say they follow the book. The number badges on
+  the canvas count the same clicks now (they skipped page turns).
+- [x] **T404 — Hidden is hidden.** (User: "Bug: Hidden object still
+  appear in present mode.") The Layers pane's eye meant "out of my way
+  while editing, still shown to the audience" — DECK-FORMAT called it
+  scaffolding — and nobody read it that way. A hidden object is not on
+  the slide now: not while editing, not in playback, not in print or
+  PowerPoint, and it claims no click. The eye's tooltip, the schema and
+  DECK-FORMAT say so.
+- [x] **T407 — A crop goes past halfway.** (User: "cropping an object
+  stops halfway, you cannot crop an object more than half way.") Each
+  trim handle was capped at 45%, so the right-hand third of a figure
+  could never be all that was kept. A handle, and the Trim edges % box,
+  may go as far as the opposite edge's trim allows, leaving a 4% sliver
+  of the picture; and a trim is kept to a tenth of a percent rather
+  than a whole one.
+- [x] **T406 — A file save never cries "browser full".** (User: "Still
+  getting error that it can't be saved as browser is full even though
+  rn it is saved to local … I think the auto-save is trying to save to
+  browser and not local.") Two things. The draft copy in localStorage
+  is written on every edit whatever the save target, and its quota
+  toast said "that edit was NOT kept" about a deck that lives in a
+  file; the copy is quiet now when the browser is not the deck's home,
+  and the "NOT saved — browser full" readout was already only for a
+  deck kept in the browser. And an autosave to a file that stands down
+  — no file chosen yet, or the browser has not re-granted write
+  permission since the reload — stood down silently, so the readout
+  said "unsaved — saving…" for the rest of the session; it now says
+  "click Save to choose the file" or "click Save to keep writing
+  <file>", with the reason on its tooltip.
+- [x] **T405 — An object can be parked beside the slide.** (User: "it is
+  useful sometimes to be able to drag objects outside of the slide and
+  leave them there, but that isn't really an option here.") The layer
+  already spilled while editing and the stage already grew scrollbars
+  for a stray (2026-08-20), but the drag's pointer was pinned to the
+  page, so its delta could never carry an object past the edge. A move
+  reads an unclamped point now; the drawing tools keep the clamp.
+  Playback and every export clip to the page, so a parked object is out
+  of the show until it is dragged back.
+- [x] **T408 — A picture pasted onto a flip book is a page of it.** (User:
+  "I wish you could paste images into a flip book.") With a book
+  selected, Ctrl+V dropped the picture on top of the book as a loose
+  image — the one place on the slide a pasted picture obviously
+  belonged, and the one door that could not take it. Now it goes in as
+  the last page and the book turns to it, the same way "+ Pictures…"
+  adds one; a file, a data: URL and a picture at an address all work.
+  The file input's reader was lifted into `flipAddFiles` so both doors
+  keep the original aside the same way. With no book selected the
+  picture lands on the slide as before.
+- [x] **T409 — Clones you can actually add, and what they share.** (User:
+  "The make clones feature seems to be broken. I tried to clone an
+  object, but it just changed the clone button to say 'Its clones', and
+  then I can't make clones? Also would be cool if there were clones in
+  style and clones in space, and also both. Like I want one image that
+  is going to be across multiple slides and I always want in the one
+  position on them all.") Three things. Making a set turned the only
+  clone door into a list of where the clones were, and placing another
+  lived in the canvas right-click menu alone — the Reuse group has an
+  "Add a clone…" door now (here beside it, on every slide, on every
+  slide after this one), and the canvas menu and the Layers pane open
+  the same menu. A clone placed from the definition had no content —
+  an empty picture — so a clone is now seeded from an existing one
+  (`cmpSeed`), with the ties and ids that name things on that slide
+  left behind. And what the clones share is a choice: `link` on the
+  definition is `look` (as before), `place` (one spot on every slide,
+  `x`/`y` on the definition; each clone keeps its own look) or `both`,
+  chosen when the set is made — a small menu with the name in it, no
+  more prompt() — and changeable from the Add menu. Following is LIVE:
+  markDirty pushes from a selected clone before the history entry, so
+  "changing the original changes them all" is finally true; "Push this
+  look" survives as the manual re-sync. Schema in DECK-FORMAT.md and
+  deck_schema.py.
+- [x] **T410 — Clicking a line opens Style, where the Line window is.**
+  (User: "When clicking on a line, it always tries to take me away from
+  line and to the object tab.") showFmt sent every selected thing that
+  was not words or a table to Object — and Object has nothing for a
+  line but arrange and size; its dash, weight, ends and route are the
+  Line window on Style. A line or a pen stroke lands on Style now, and
+  stays there when you are already on it. A shape still goes to Object,
+  where its fill and edge are.
+- [x] **T411 — The Style system has a text size you can type.** (User:
+  "Style systems does not have a text size property in the tab. That
+  was half the point of this :(") A named type had a "Text size 26 pt"
+  readout between − and + steppers; the plain-text-boxes bucket had
+  only a table, and its Size cell was blank for every box that had not
+  been sized by hand, in a unit nothing else on the screen used. Now
+  the table's bar has a Text size box in points, given to the ticked
+  rows or to every row when none is ticked; a Size cell reads and
+  writes points and shows the size a box actually gets when it says
+  nothing itself; and the named type's readout is a box you can type
+  in.
+- [x] **T403 — A flip-book page can be its own object.** (User: "there
+  should be ways to change the size of one and not others, e.g. in
+  object there is like a 'unlink this frame' or something and then
+  individual ones can be moved around and changed opacity and size
+  individually whilst still being part of the book.") A book's pages
+  share one box by design — the letterbox note in renderAnnots says
+  why. So a page that wants its own place is taken OUT of the box and
+  TIED to it: the picture (or notebook figure) becomes an ordinary
+  object on the slide that shows with this page only — the `fb`/`fbf`
+  tie every caption already uses — and the page stays in the book as a
+  blank leaf (`{own:1}`) so the click stops, the numbering and every
+  other tie are untouched. Move it, resize it, fade it, crop it: it is
+  an object. "Own object" on the pane row and "Make this page its own
+  object" on the Object tab's "+ Add" door; "Put back" is the reverse.
+  The blank leaf says what it is while editing and costs nothing in a
+  .pptx. Schema in DECK-FORMAT.md and deck_schema.py.
+- [x] **T412 — The thumbnail strip stays where you scrolled it.** (User:
+  "Everytime you click a slide on the thumbnails, or add a slide or
+  anything it always jumps and moves around the scroll position. It
+  should always stay the same. It always takes you back to the top.")
+  Emptying the strip's list zeroes its scrollTop, and every repaint
+  empties it — a click on a thumbnail, a new slide, an edit. The
+  position is read first and put back after; the current slide is then
+  brought on screen only when it is off it, by the least that does.
+- [x] **T414 — A .junoview file too big for the browser's draft store
+  still opens.** (User: "I am trying to open a junoview file from my
+  computer. it will not open. This is really bad as I have to present
+  it soon.") A deck with a few pasted pictures is bigger than
+  localStorage will take, and importDeckText refused to open it at all
+  — "There was no room to store them" — while the one copy that
+  matters, the file, was in hand the whole time. Reproduced in Chromium
+  with an 11 MB deck. Now the first deck in the file opens from the
+  object in hand (`loadPresentationObj`); only the browser copy is what
+  did not fit, and the toast says so. Also: the library dialog's "Open
+  a file" goes through the real file-handle door so Save writes back to
+  the file you opened; a picker failure is said rather than swallowed;
+  the dialog opened from an Open door no longer leads with New
+  presentation / New poster / New folder (user: "why when you click
+  open is there all the 'new poster options'"); and the readout names
+  the folder an autosave went into, so "autosaved to talk.junoview.html"
+  cannot send you to look in the wrong file. Second commit: a file
+  written by Download a copy holds every deck, the current one LAST, so
+  the smaller decks fit the draft store, the big one did not, and the
+  old order opened a small one and dropped the big one ("that had only
+  the small version"). A deck that did not fit is now the one that
+  opens; the ones that fit are in the library and lose nothing.
+- [x] **T415 — A download is named after the deck.** (User: "downloaded
+  with shit name project.junoview, not the actual name.") The file
+  still holds every deck; it is named after the one you were in.
+- [x] **T413 — Matching, where you can see it.** (User: "What happened to
+  the feature of matching slides, and also things like making one
+  object appear the same as another.") Both features were alive and
+  hidden: the three point-at-it verbs (give this look to objects you
+  click, take the look of one you click, lay these out like a group you
+  click) lived in the canvas right-click menu and the Layers pane only,
+  and Match slide was a door on the Design tab. Now the Object tab's
+  Reuse group opens with a "Match…" tile, and a thumbnail's right-click
+  menu has "Match this slide to another…" and "Give this slide's layout
+  to slides I click…", the same arming the Design door does.

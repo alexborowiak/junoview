@@ -70,7 +70,9 @@ def test_objects_pane_lists_hides_and_locks(out):
     """OBJECTS PANE (layers v1): list every object, hide-while-editing, lock
     """
     assert 'id="selpane"' in out and 'id="objects-btn"' in out
-    assert "function renderSelPane" in out and "a.hide&&editing" in out
+    # (T404: hidden is hidden everywhere, so the guard lost its "while
+    # editing" half)
+    assert "function renderSelPane" in out and "      if(a.hide) return;" in out
     assert "an-locked" in out and ".sp-row" in out
 
 
@@ -324,8 +326,10 @@ def test_ribbon_groups_crop_picker_and_animation_build_order(out):
     # can share a build so they appear together)
     assert "function cropIcon" in out and "an-cropped" in out
     assert "function slideBuildSteps" in out and "function animSeq" in out
-    assert "anim-pane" in out and "anim-effb" in out
-    assert "['appear','Appear']" in out and "an-anim-fade" in out
+    # (T402: the pane no longer carries its own effect buttons; the
+    # ribbon's Effect strip is the one chooser)
+    assert "anim-pane" in out and "anim-effb" not in out
+    assert "['appear','Appear','A']" in out and "an-anim-fade" in out
 
 
 def test_page_size_preset_and_zoom(out):
@@ -526,7 +530,8 @@ def test_browser_saves_offer_a_way_out(out):
     (2026-08-18). Measured: "saved to browser" readout clickable=true.
     """
     assert "function markSaveClickable(el){" in out
-    assert out.count("markSaveClickable(el);") == 2
+    # (three since T406: the file-waiting readout is a door to Save too)
+    assert out.count("markSaveClickable(el);") == 3
     # clicking SAVES now — it used to open the save-to-file picker, but a
     # thing that says "autosaved" invites saving, not a destination dialog
     # (2026-08-19, user: "clicking the autosave button should save").
@@ -2094,7 +2099,7 @@ def test_a_component_stores_the_look_and_never_the_content(out):
     overrides the task asks for (text, image, which card a frame shows)
     are simply the fields MATCH_PROPS has always refused to copy.
     """
-    assert "function cmpDefine(name,idxs){" in out
+    assert "function cmpDefine(name,idxs,link){" in out
     assert "var CMP_SKIP={x:1,y:1,w:1,h:1,x1:1,y1:1,x2:1,y2:1,mid:1};" in out
     assert "      MATCH_PROPS.forEach(function(p){\n        if(CMP_SKIP[p]) return;" \
         in out
@@ -2124,8 +2129,8 @@ def test_pushing_updates_every_other_instance_in_the_deck(out):
     The origin is the instance's own top-left corner, so an instance you
     dragged somewhere stays where you dragged it.
     """
-    assert "function cmpPush(id,si,inst){" in out
-    assert "function cmpSyncAll(id,skipSi,skipInst){" in out
+    assert "function cmpPush(id,si,inst,quiet){" in out
+    assert "function cmpSyncAll(id,skipSi,skipInst,quiet){" in out
     assert "function cmpDetach(si,inst){" in out
     assert "ox=Math.min(ox,a.k==='arrow'?Math.min(a.x1,a.x2):(a.x||0));" in out
     # a definition that gained or lost members takes its instances with
@@ -2135,7 +2140,7 @@ def test_pushing_updates_every_other_instance_in_the_deck(out):
     # An earlier instance can splice a removed member and shift every
     # later index on the same slide. Each turn therefore resolves its
     # instance from the live array instead of cmpInstances' old idxs.
-    sync = out[out.index("function cmpSyncAll(id,skipSi,skipInst){"):
+    sync = out[out.index("function cmpSyncAll(id,skipSi,skipInst,quiet){"):
                out.index("function cmpDetach(si,inst){")]
     assert "g.idxs.map" not in sync
     assert "(sl.annots||[]).forEach(function(a,i){" in sync
@@ -2761,8 +2766,8 @@ def test_a_component_keeps_the_caption_tie(out):
     # T287: and "Push this look" re-derives it. cmpPush rebuilds
     # def.items from scratch, so the FIRST push silently deleted the tie
     # and every instance placed afterwards rendered '[not a caption]'.
-    push = out.split("  function cmpPush(id,si,inst){")[1]
-    push = push.split("    return cmpSyncAll(id,si,inst);")[0]
+    push = out.split("  function cmpPush(id,si,inst,quiet){")[1]
+    push = push.split("    return cmpSyncAll(id,si,inst,quiet);")[0]
     assert "capOfIdx" in push, "cmpPush drops the figure-caption tie"
     assert "      if(fn!=null&&fn!==n&&def.items[n]) def.items[n].capOfIdx=fn;" in push
 
@@ -3100,7 +3105,8 @@ def test_reading_order_has_a_door_where_you_would_look(out):
     # renamed by T181 -- "what is reading order and why does it look so
     # confusing" -- to say what the panel is: the order on this slide
     ellipsis = "Order on this slide" + "\\" + "u2026"
-    assert out.count(ellipsis) == 2, out.count(ellipsis)
+    # (T402 took the pane's copy away; the canvas menu keeps the door)
+    assert out.count(ellipsis) == 1, out.count(ellipsis)
     assert "menuHead(m,'slide');" in out
 
 
@@ -3472,15 +3478,21 @@ def test_the_build_list_shows_every_stop_not_only_the_builds(out):
     used to disagree.
     """
     assert "return {count:n,stop:stop,base:base,anch:anch,tail:tail};" in out
-    assert "function stepperRows(list,ps){" in out
-    assert "stepperRows(list,plan.anch[si]);" in out
-    assert "stepperRows(list,plan.tail);" in out
-    # a chart contributes its series by NAME, a book its pages
-    assert "chartParse(a).series.forEach(function(se){" in out
-    assert "?('figure '+(ti+2)+' of '+flipFrames(a).length" in out
-    # the empty state distinguishes "nothing" from "no effects, but it steps"
-    assert "if(!seq.length&&!steppersOn(s).length){" in out
-    assert "'No entrance effects here, but this slide takes '" in out
+    # T402: the anchored pages are looked up by the build's STOP index
+    # (steps.map[order]), which is how flipPlan keys them -- the build
+    # index it used before put a book's pages under nothing at all once
+    # a split text box came before it
+    assert "      function stepperRows(ps){" in out
+    assert "        var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;" in out
+    assert "        stepperRows(plan.anch[b0]);" in out
+    assert "      stepperRows(plan.tail);" in out
+    # a chart contributes its series by NAME, a book its pages by figure
+    assert "            chartParse(a).series.forEach(function(se,k){" in out
+    assert "                :('Figure '+(w.k+1)+' of '+fr.length+' \\u00b7 '" in out
+    # every row carries the click the space bar counts
+    assert ("              row(base+d,[[name,p.i]],fx+' \\u00b7 a page of the "
+            "flip '") in out
+    assert "        var first=(plan.stop[b0]|0)+1;" in out
 
 
 def test_a_chart_is_positioned_like_every_other_object(out):
@@ -3607,7 +3619,9 @@ def test_a_build_can_run_itself_after_a_pause(out):
     # the delay lands on the whole stop, and 0 takes it back
     assert "if(delay) x.anim.after=delay; else delete x.anim.after;" in out
     # the pane says a stop runs itself, where the order is read
-    assert "if(aft) c.textContent+=' · +'+aft+'s';" in out
+    # (T402: on the row's detail line)
+    assert ("if(aft) detail+=' \\u00b7 runs by itself '+aft+'s after the "
+            "one before';") in out
 
 
 def test_one_pending_self_advance_and_any_movement_cancels_it(out):
@@ -3802,8 +3816,8 @@ def test_a_text_box_can_arrive_a_bullet_at_a_time(out):
     """
     assert "function textBy(a){" in out
     assert "function splitParts(el,by){" in out
-    assert "['para','Bullet by bullet'," in out
-    assert "['sent','Sentence by sentence'," in out
+    assert "['para','Bullet by bullet']" in out
+    assert "['sent','Sentence by sentence']" in out
     # the split runs at render, never on the stored words
     assert "splitParts(tx2,textBy(a));" in out
     # ...and never under a live caret, or the wrappers land mid-typing

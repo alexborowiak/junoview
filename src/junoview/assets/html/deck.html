@@ -2472,11 +2472,34 @@ items snap to both. Guides, not ink: never printed or exported"
                    a menu, in a pane, behind a button. -->
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Reuse">
+              <!-- T413: MATCHING, ON THE RIBBON (2026-09-13, user: "What
+                   happened to the feature of ... making one object
+                   appear the same as another"). The three point-at-it
+                   verbs lived in the canvas right-click menu and the
+                   Layers pane only; a thing you point at needs a door
+                   where you are looking. -->
+              <button class="fx-tile big-tile" id="fmt-match" hidden
+                aria-haspopup="true" aria-expanded="false"
+                title="Give this look to objects you click, take the look
+ of an object you click, or lay these out like a group you click"
+                ><i data-ic="swap"></i> Match&#8230;</button>
               <button class="fx-tile big-tile" id="fmt-cmp-make" hidden
-                title="Save the selected items as a named thing you
- can place again. Every copy keeps its own words and its own figure,
- and changing the original changes them all"
+                title="Make these a set of clones &#8212; same look,
+ same place on every slide, or both. Change any one and they all
+ follow"
                 ><i data-ic="group"></i> Make clones&#8230;</button>
+              <!-- T409: THE DOOR THAT WAS MISSING (2026-09-13, user: "I
+                   tried to clone an object, but it just changed the
+                   clone button to say 'Its clones', and then I can't
+                   make clones?"). Making the set left only the list of
+                   where the clones were; adding another lived in the
+                   canvas right-click menu alone. -->
+              <button class="fx-tile big-tile" id="fmt-cmp-add" hidden
+                aria-haspopup="true" aria-expanded="false"
+                title="Put another clone of this on this slide, on every
+ slide, or on every slide after this one &#8212; and choose what the
+ clones share"
+                ><i data-ic="plus"></i> Add a clone&#8230;</button>
               <button class="fx-tile big-tile" id="fmt-cmp-find" hidden
                 title="Every place in this deck this clone has been
  put — pick one to go there"

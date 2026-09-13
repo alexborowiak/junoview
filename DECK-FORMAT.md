@@ -32,7 +32,7 @@ supported state, and the editor marks it rather than forbidding it.
 
 | key | type | what it is |
 | --- | --- | --- |
-| `components` | dict | {id: {name, w, h, items}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. |
+| `components` | dict | {id: {name, w, h, items, link, x, y}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. `link` says what the clones share (T409): absent or `look` is the look and the arrangement, each clone wherever it was put; `place` is one spot on every slide (`x`,`y`, the page corner) with each clone keeping its own look; `both` is everything. |
 | `cropMarks` | int | 1 when trim marks are printed outside the page. |
 | `cuts` | dict | {id: {name}}. Named subsets of one deck — a 45-minute version and a 5-minute one in the same file. Membership is the slide's `cuts` list. |
 | `live` | dict | `{ref: 1}` for figures the author made LIVE LINKS: they re-read from the notebook every time the deck opens, instead of showing the copy kept in `emb`. Absence means kept. |
@@ -123,7 +123,7 @@ optional and defaulted.
 | `arrow` | `x1`, `y1`, `x2`, `y2` | A line or arrow — two endpoints, not a box. |
 | `cell` | `x`, `y` | A frame showing a card from a notebook, named by `ref`. |
 | `draw` | `x`, `y` | A freehand stroke: a box plus points normalised inside it. |
-| `flip` | `x`, `y` | A flip book: several figures stepped through in place. |
+| `flip` | `x`, `y` | A flip book: several figures stepped through in place. `frames` is its pages, each `{src, okey}` (a picture), `{ref, part}` (a notebook card) or `{own: 1}` — a blank leaf whose picture is an object of its own on the slide, tied to this page by `fb`/`fbf` (T403); a `label` names any of them. `fid` is the book's stable id that ties point at; `at` is the editor's page. |
 | `image` | `x`, `y` | A placed picture, carried as a data URI. |
 | `video` | `x`, `y` | A video or audio clip. `vkey` names its bytes in the deck's `media` store; `poster` is the still shown before it plays; `trim` `{s, e}` the seconds it plays between; `audio` 1 for a sound-only clip; `ctrl`, `auto`, `loop`, `mute` are its playback switches. It exports as a real PowerPoint media shape. |
 | `rect` | `x`, `y` | A drawn shape; `shape` picks which one. |
@@ -138,7 +138,7 @@ Whatever its kind, an item may also carry these.
 
 | key | type | what it means |
 | --- | --- | --- |
-| `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
+| `hide` | int | 1 when this is hidden: not drawn while editing, in playback, in print or in PowerPoint, and it claims no click. A spare kept on the slide. |
 | `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
 | `out` | The build order on which this object GOES AWAY again — how one picture replaces another. A peer of `anim`, not part of it, so an object that is simply on the slide can still leave. Absent means it stays; one naming a build that no longer exists is ignored. |
 | `tie` | What this item's arrival is bound to: `{to, id, at, m}` — `to:'series'` binds it to a chart's named SERIES (`id` the chart's `oid`, `at` the series NAME so it survives a data refresh), and `m` is only/from/until as for a flip book. |
@@ -163,9 +163,9 @@ neither is a picture nobody has decided about yet: it falls back to
 whatever the object is already called, because "unlabelled image" helps
 nobody.
 
-`hide` and `priv` are deliberate opposites: one is hidden from **you**
-while you work and shown to everyone afterwards, the other is shown to
-you and hidden from everyone else.
+`hide` and `priv` are two different silences: a hidden object is shown
+to **nobody** — not you, not the audience, not a PDF — while a private
+one is shown to you and hidden from everyone else.
 
 ### Anchoring
 

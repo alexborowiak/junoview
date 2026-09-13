@@ -311,7 +311,18 @@
     return el;
   }
   function renderFilm(){
-    var list=$('#film-list');list.innerHTML='';
+    var list=$('#film-list');
+    /* T412: THE STRIP STAYS WHERE YOU SCROLLED IT (2026-09-13, user:
+       "Everytime you click a slide on the thumbnails, or add a slide
+       or anything it always jumps and moves around the scroll
+       position ... It always takes you back to the top"). Emptying the
+       list zeroes its scrollTop, and every repaint empties it -- a
+       click on a thumbnail, a new slide, an edit. So the position is
+       read first and put back after, and the current slide is then
+       brought on screen only when it is off it, by the least that
+       does (filmKeepCurrent). */
+    var keepTop=list.scrollTop,keepLeft=list.scrollLeft;
+    list.innerHTML='';
     /* the strip rebuilds every row, so a context menu left open is
        holding an index into nodes that no longer exist */
     var om=$('#film-menu'); if(om) om.remove();
@@ -472,12 +483,26 @@
       row.appendChild(lbl);
       list.appendChild(row);
     });
+    list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */
+    filmKeepCurrent(list);
     /* T318: the Home doors follow the slide you are ON. Synced here,
        at the end of the one repaint every change of `cur` goes through
        -- the strip click, the arrows, go(), undo -- rather than in
        renderCreate, which the strip's own click does not reach
        (driven: the star stayed in the main's state on an alternative). */
     if(typeof syncHomeDoors==='function') syncHomeDoors();
+  }
+  /* T412: the current row, on screen -- and only when it is not. A row
+     you can already see is left exactly where it is; one that is off
+     the edge (a new slide at the end, the arrow keys, undo) comes in by
+     the least that shows it, never to the top. */
+  function filmKeepCurrent(list){
+    var cr=list.querySelector('.film-row.current'); if(!cr) return;
+    var lr=list.getBoundingClientRect(),rr=cr.getBoundingClientRect();
+    if(!lr.height) return;                  /* the strip is not showing */
+    if(rr.top>=lr.top&&rr.bottom<=lr.bottom) return;
+    if(rr.top<lr.top) list.scrollTop-=(lr.top-rr.top);
+    else list.scrollTop+=(rr.bottom-lr.bottom);
   }
   function clearFilmMarks(){
     $$('#film-list .film-row.drop-above,#film-list .film-row.drop-below,'
@@ -666,6 +691,25 @@
           renderFilm();
         });
       }
+    }
+    /* T413: MATCHING, WHERE THE THUMBNAILS ARE (2026-09-13, user: "What
+       happened to the feature of matching slides"). The Design tab's
+       "Match slide" door arms a click on a thumbnail; these are the same
+       arming, on the thumbnail's own menu, so the feature is found from
+       where the slides are. The slide you right-clicked is the one that
+       takes, or gives, the layout. */
+    if(!poster&&(pres.slides||[]).length>1){
+      var goTo=function(){
+        if(cur!==i){cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();}
+      };
+      row('Match this slide to another\u2026',function(){
+        goTo();armSlideMatch('from');},
+        'Then click the thumbnail this slide should sit like. Positions '
+        +'and sizes travel; the words and figures stay','swap');
+      row('Give this slide\u2019s layout to slides I click\u2026',function(){
+        goTo();armSlideMatch('to');},
+        'Then click each thumbnail that should sit like this one; Esc '
+        +'when you are done','swap');
     }
     if(!isAlt0) row('§ Start a section here',function(){newSection(i,'New section');},
       'Everything from here down to the next divider goes in it');

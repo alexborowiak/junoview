@@ -2411,8 +2411,43 @@
     if(m&&/^(data:image\/|https?:\/\/)/i.test(m[1])) return {src:m[1]};
     return null;
   }
+  /* T408: A PICTURE PASTED ONTO A FLIP BOOK IS A PAGE OF IT (2026-09-13,
+     user: "I wish you could paste images into a flip book"). With a
+     book selected, Ctrl+V used to drop the picture on top of the book
+     as a loose image -- the one place on the slide a pasted picture
+     obviously belonged, and the one door that could not take it. Now
+     it goes in as the last page and the book turns to it, the same way
+     "+ Pictures…" adds one. Nothing else about paste changes: with no
+     book selected the picture lands on the slide as before. */
+  function pasteIntoFlip(pic){
+    var bi=(typeof flipSelIdx==='function')?flipSelIdx():null;
+    if(bi===null) return false;
+    var s=pres.slides[cur],bk=s&&(s.annots||[])[bi];
+    if(!bk) return false;
+    function said(n){
+      toast(n?('Pasted as page '+flipFrames(bk).length+' of the flip '
+        +'book'):'That image could not be read');
+    }
+    if(pic.file) flipAddFiles(bk,[pic.file],said);
+    else if(/^data:/i.test(pic.src)){
+      fetch(pic.src).then(function(r){return r.blob();})
+        .then(function(b){flipAddFiles(bk,[b],said);})
+        .catch(function(){said(0);});
+    } else {
+      /* a picture at an address is a page by its address, the way the
+         URL door places one */
+      bk.frames=flipFrames(bk).slice();
+      bk.frames.push({src:pic.src});
+      bk.at=bk.frames.length-1;
+      markDirty();renderSlide();
+      if(typeof renderFlipPane==='function') renderFlipPane();
+      said(1);
+    }
+    return true;
+  }
   function pasteClipboardImage(pic){
     if(!pic) return false;
+    if(pasteIntoFlip(pic)) return true;   /* T408 */
     if(pic.file) return pasteImageFile(pic.file);
     if(/^data:/i.test(pic.src)){
       fetch(pic.src).then(function(r){return r.blob();})
