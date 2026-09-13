@@ -2932,6 +2932,20 @@
         /* the fade OUT, on the one stop it goes (T238) */
         if(mode==='view'&&animGoing(s,ba))
           el.classList.add('an-anim-out');
+        /* T391: THE STORY. Editing at stop k, an object that has
+           already left is not on the slide -- not dimmed, not there --
+           so what is under it can be reached. Checked before the
+           entrance, because an object that simply sits there can still
+           leave. */
+        var storyK=(editing&&typeof storyAt==='number')?storyAt:null;
+        if(storyK!=null){
+          var oo=animOut(ba);
+          if(oo!=null&&steps.map[oo]!=null){
+            var so=plan.stop[steps.map[oo]];
+            if(so==null) so=steps.map[oo];
+            if(storyK>so) el.classList.add('an-storyout');
+          }
+        }
         if(!ba.anim) return;
         var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
         if(st==null) return;
@@ -2941,6 +2955,19 @@
           bd.title='Build '+(st+1)+' — '+(ba.anim.type||'fade')
             +' (items on the same build appear together)';
           el.appendChild(bd);
+          /* T391: ...and what has not arrived by stop k is not there
+             either; a box arriving in pieces shows the pieces that are */
+          if(storyK!=null){
+            var spk=plan.stop[st]; if(spk==null) spk=st;
+            if(spk>=storyK) el.classList.add('an-storyout');
+            else if(typeof textBy==='function'&&textBy(ba)){
+              $$('[data-part]',el).forEach(function(pe){
+                var j=+pe.getAttribute('data-part');
+                var jp=plan.stop[st+j]; if(jp==null) jp=st+j;
+                pe.style.visibility=(jp>=storyK)?'hidden':'';
+              });
+            }
+          }
         } else if(mode==='view'){
           /* WHICH STOP, not which build number: a flip book with a build
              of its own puts its frames straight after itself, so anything
@@ -2987,7 +3014,8 @@
             /* T385: the typewriter is for words; anything else fades */
             atype=(atype==='type'&&ba.k!=='text')?'fade':atype;
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
-            if(atype==='type'&&typeof typeInto==='function') typeInto(el);
+            if(atype==='type'&&typeof typeInto==='function'
+               &&!(typeof storyPaint!=='undefined'&&storyPaint)) typeInto(el);
           }
         }
       });

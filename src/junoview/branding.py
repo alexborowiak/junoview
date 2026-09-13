@@ -56,6 +56,9 @@ _ICON_PATHS = {
     "bob": '<path d="M8 2.4v11.2"/><path d="M4.8 5.6L8 2.4l3.2 3.2"/>'
            '<path d="M4.8 10.4L8 13.6l3.2-3.2"/>',
     "pulse": '<circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/>',
+    # T391: the animation story -- three frames of a strip
+    "story": '<path d="M1.6 4.2h3.6v7.6H1.6z"/><path d="M6.2 4.2h3.6v7.6H6.2z"/>'
+             '<path d="M10.8 4.2h3.6v7.6h-3.6z"/>',
     # T386: the talk's tools
     "laser": '<circle cx="8" cy="8" r="2.4"/><path d="M8 1.8v2.2"/>'
              '<path d="M8 12v2.2"/><path d="M1.8 8H4"/><path d="M12 8h2.2"/>',

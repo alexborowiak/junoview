@@ -123,6 +123,7 @@ DECK_PARTS = (
     "53-web-page",
     "54-scroll-show",
     "55-sections-and-strip",
+    "56-story",
     "60-saving-and-export",
     "62-pptx-import",
     "99-boot",

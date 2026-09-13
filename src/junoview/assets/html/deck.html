@@ -1240,6 +1240,12 @@ items snap to both. Guides, not ink: never printed or exported"
           </span>
           <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
+              <!-- T391: the story -- the slide at every stop, editable -->
+              <button class="dbtn rbn-sm" id="anim-story"
+                aria-pressed="false"
+                title="One picture per click. Pick one and edit the slide as
+ it is at that point: what has not arrived or has already left is not there"
+                ><i data-ic="story"></i> Story</button>
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Every object on this slide arrives, one per click,
  top to bottom unless you set an order"
@@ -2944,6 +2950,11 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="ruler-corner" id="ruler-corner"
           title="Click, then drag on the page to draw a guide box &mdash; an area to lay out inside. Guides snap, and are never printed, exported or shown while presenting">mm</div>
       </div>
+      <!-- T391: THE ANIMATION STORY. One picture per stop of the slide;
+           click one and the stage shows the slide at that stop, still
+           editable. Built by renderStory; hidden until asked for. -->
+      <div class="story-strip" id="story-strip" hidden
+        role="region" aria-label="Animation story"></div>
       <div class="deck-stage" id="deck-stage"></div>
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"

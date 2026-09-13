@@ -4911,6 +4911,40 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   text-transform:uppercase;opacity:.75;}
 .tk-note{margin:0;font-size:10px;line-height:1.5;color:var(--chrome-ink-3);}
 @media print{.talkbtn,.talkpane{display:none !important;}}
+/* ---- T391: THE ANIMATION STORY -----------------------------------------
+   A strip between the ribbon and the stage. Each stop is a real render
+   of the slide at that stop, scaled with zoom; the one the stage is
+   showing is lit. An object off the stage at this stop is display:none,
+   not opacity 0, so nothing invisible can be picked up by mistake. */
+.story-strip{flex:none;border-bottom:1px solid var(--chrome-line);
+  background:var(--chrome-1);padding:6px 12px 8px;}
+.story-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.story-lab{font:600 11px var(--mono);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
+.story-n{font:11px var(--sans);color:var(--chrome-ink-2);flex:1;}
+.story-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:thin;}
+.story-stop{flex:none;display:flex;flex-direction:column;gap:4px;
+  padding:4px;border:1px solid var(--chrome-line);border-radius:7px;
+  background:#ffffff06;cursor:pointer;color:var(--chrome-ink);
+  text-align:left;width:calc(150px + 8px);}
+.story-stop:hover{border-color:color-mix(in srgb,var(--accent) 55%,transparent);}
+.story-stop.on{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 14%,transparent);}
+.story-pic{position:relative;overflow:hidden;border-radius:4px;
+  background:#0b141d;}
+.story-pic .story-slide{position:absolute;left:0;top:0;pointer-events:none;}
+.story-cap{display:flex;flex-direction:column;gap:1px;
+  font:10.5px/1.25 var(--sans);color:var(--chrome-ink-2);
+  overflow:hidden;}
+.story-cap b{color:var(--chrome-ink);font-weight:600;}
+.story-cap span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.story-paint{position:fixed;left:-99999px;top:0;width:1280px;z-index:-1;}
+.an-item.an-storyout,.an-arrow-line.an-storyout{display:none!important;}
+/* the stage says it is showing a stop, so an empty-looking slide is
+   read as "at this click" and not as "my things are gone" */
+.deck.storying .deck-stage{box-shadow:inset 0 0 0 2px
+  color-mix(in srgb,var(--accent) 45%,transparent);}
 /* ---- T389: THE SCROLLING VERSION ---------------------------------------
    An overlay over the editor; the pages inside are buildPrintRoot's,
    given back their static flow and scaled with `zoom` to the width. An

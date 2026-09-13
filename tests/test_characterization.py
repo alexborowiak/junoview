@@ -1722,8 +1722,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors, its CSS, and buildPrintRoot clearing the selection.
 # 2026-09-13, T390: chrome only. The viewer's Pages group, its code in
 # app.js and its CSS.
-EXPECTED_MD5 = "d783f47619823e52023d4e8e6d89d225"
-EXPECTED_BYTES = 4078973
+# 2026-09-13, T391: chrome only. The animation story fragment, its
+# strip and door, an icon and its CSS.
+EXPECTED_MD5 = "774e7241425c68a3f6f4ccec1c756691"
+EXPECTED_BYTES = 4092872
 
 
 def _render_example() -> str:

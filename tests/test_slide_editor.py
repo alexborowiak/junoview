@@ -1775,8 +1775,9 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     # the ribbon restore -- so assert that ordering directly too.
     # the window tracks the sequence's LENGTH, which grows every time a
     # feature earns a boot call (T321, T322, T324 and T325 each added
-    # one ahead of this). What it guards is the ORDER, asserted next.
-    assert "\n  initReuseDoors();" in _boot[:3000]
+    # one ahead of this; T385-T391 added five more). What it guards is
+    # the ORDER, asserted next.
+    assert "\n  initReuseDoors();" in _boot[:3400]
     assert _boot.index("\n  initReuseDoors();") < _boot.index(
         "  /* the ribbon you kept: applied once here, at the tail")
 

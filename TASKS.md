@@ -7836,3 +7836,18 @@ gates are recorded in the completing commit.
   dimmed, and clicking one turns to its page. Enforced from the one
   filter pass, so the filters still decide what a page holds; kept per
   notebook with the saved layout.
+- [x] **T391 — The animation story: edit the slide at any stop.** (User:
+  "something like the 'animation story', that showed you what the slide
+  looks like during each animation and you can click through — if
+  something disappears it is not there at that point, so then if there
+  are layers of things they are much easier to see where they are and
+  move around".) **Story** on the Animation tab opens a strip above the
+  stage with one picture per stop of the slide — the start, then every
+  click — each painted by the show's own renderer at that stop, with a
+  caption saying who arrives and who leaves. Click one and the stage
+  shows the slide at that stop and stays editable: what has not arrived
+  is not there, what has already left is not there (display:none, so
+  nothing invisible can be picked up), a flip book is on that page, a
+  box arriving in pieces shows the pieces that are out. **Whole slide**
+  puts the ordinary editor back; the pictures follow every edit. Its
+  own fragment, `56-story.js`; nothing is stored.

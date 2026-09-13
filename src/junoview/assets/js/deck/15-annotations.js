@@ -1255,7 +1255,16 @@
       if(slideBook(s)===a) return Math.max(0,Math.min(last,flipForce));
       return Math.max(0,Math.min(last,a.at||0));
     }
-    if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
+    if(mode!=='view'){
+      /* T391: the editor at a stop of the story reads the story's
+         cursor the way the show reads its own */
+      if(typeof storyAt==='number'){
+        var sb=flipBase(s,a);
+        if(sb==null) return 0;
+        return Math.max(0,Math.min(last,storyAt-sb));
+      }
+      return Math.max(0,Math.min(last,a.at||0));
+    }
     var base=flipBase(s,a);
     if(base==null) return 0;
     return Math.max(0,Math.min(last,revealCount-base));

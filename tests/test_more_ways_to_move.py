@@ -39,7 +39,8 @@ def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
     assert "    var per=Math.max(1,Math.ceil(total/100)),shown=0;" in out
     # words only -- on anything else it plays as a fade
     assert "            atype=(atype==='type'&&ba.k!=='text')?'fade':atype;" in out
-    assert ("            if(atype==='type'&&typeof typeInto==='function') "
+    assert ("            if(atype==='type'&&typeof typeInto==='function'\n"
+            "               &&!(typeof storyPaint!=='undefined'&&storyPaint)) "
             "typeInto(el);") in out
     # a stale run is stopped when the element leaves the page
     assert "      if(!el.isConnected){typeStop();return;}" in out

@@ -123,6 +123,9 @@ RUNTIME_IDS = {
     "deck-overview", "ovw-find",
     # The deck-token editor, built on demand: deck.js, DESIGN TOKENS.
     "tok-pop",
+    # The animation story's off-screen paint host, built the first time a
+    # stop is pictured: 56-story.js, THE ANIMATION STORY (T391).
+    "story-paint",
     # The roomy notes editor, an overlay built per open and removed on
     # close: deck.js, THE ROOM TO WRITE THEM IN.
     "deck-notesed",
