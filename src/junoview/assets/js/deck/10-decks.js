@@ -498,7 +498,13 @@
      It reports now, and lsFull records that it happened so the readout
      and the Save button can stop lying. */
   var lsFull=false;
-  function lsSet(k,v){
+  /* `quiet` (T406): the write is a CONVENIENCE COPY -- the deck's real
+     home is a file or the project -- so a full browser is not "that edit
+     was NOT kept" and must not say so (2026-09-13, user: "Still getting
+     error that it can't be saved as browser is full even though rn it
+     is saved to local"). The flag is still recorded, so the readout can
+     tell the truth for a deck whose only home IS the browser. */
+  function lsSet(k,v,quiet){
     try{
       localStorage.setItem(k,v);
       if(lsFull){lsFull=false;if(typeof status==='function') status();}
@@ -510,7 +516,7 @@
       if(!lsFull){
         lsFull=true;
         if(typeof status==='function') status();
-        if(typeof toast==='function')
+        if(!quiet&&typeof toast==='function')
           toast('This browser is full — that edit was NOT kept. Use '
             +'File › Download a copy, or the \u25be beside Save to keep '
             +'a file on your computer.',9000);
@@ -545,8 +551,10 @@
   function writeDraftNow(){
     draftT=null;
     if(!pres) return;
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
-    lsSet(PFX+'last',pres.name||'untitled');
+    /* quiet when the browser is not where this deck lives (T406) */
+    var spare=(typeof saveTarget!=='undefined'&&saveTarget!=='browser');
+    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres),spare);
+    lsSet(PFX+'last',pres.name||'untitled',spare);
   }
   function scheduleDraftWrite(){
     if(draftT) clearTimeout(draftT);
@@ -846,6 +854,24 @@
       el.title='Browser storage is full, so edits are not being kept. '
         +'Use File \u203a Download a copy, or the \u25be beside Save to '
         +'save to a file.';
+      return;
+    }
+    /* T406: a file that is waiting on ONE click says so, instead of
+       "unsaved \u2014 saving\u2026" for the rest of the session */
+    if(saveTarget==='file'&&typeof fileWaits!=='undefined'&&fileWaits
+       &&source==='draft'){
+      el.textContent=fileWaits==='pick'
+        ?'unsaved \u2014 click Save to choose the file'
+        :'unsaved \u2014 click Save to keep writing '+(fileName||'the file');
+      el.className='deck-status unsaved';
+      el.title=fileWaits==='pick'
+        ?'No file has been chosen yet, and an autosave never opens a '
+          +'file dialog. Press Save once and pick the file; every '
+          +'autosave after that writes to it.'
+        :'After a reload the browser waits for one click before it lets '
+          +'a page write to a file again. Press Save once; every '
+          +'autosave after that writes to '+(fileName||'the file')+'.';
+      markSaveClickable(el);
       return;
     }
     if(source==='draft'){

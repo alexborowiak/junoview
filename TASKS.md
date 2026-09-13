@@ -7985,3 +7985,17 @@ gates are recorded in the completing commit.
   may go as far as the opposite edge's trim allows, leaving a 4% sliver
   of the picture; and a trim is kept to a tenth of a percent rather
   than a whole one.
+- [x] **T406 — A file save never cries "browser full".** (User: "Still
+  getting error that it can't be saved as browser is full even though
+  rn it is saved to local … I think the auto-save is trying to save to
+  browser and not local.") Two things. The draft copy in localStorage
+  is written on every edit whatever the save target, and its quota
+  toast said "that edit was NOT kept" about a deck that lives in a
+  file; the copy is quiet now when the browser is not the deck's home,
+  and the "NOT saved — browser full" readout was already only for a
+  deck kept in the browser. And an autosave to a file that stands down
+  — no file chosen yet, or the browser has not re-granted write
+  permission since the reload — stood down silently, so the readout
+  said "unsaved — saving…" for the rest of the session; it now says
+  "click Save to choose the file" or "click Save to keep writing
+  <file>", with the reason on its tooltip.

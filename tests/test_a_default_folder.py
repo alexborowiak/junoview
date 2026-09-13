@@ -47,8 +47,10 @@ def test_junoview_makes_its_own_file_in_there(out):
             "      :(deckDir?folderFile(silent)\n"
             "        :(silent?Promise.resolve(null):pickSaveFile())))") in out
     # an autosave can now mint a file, but still never opens a dialog
-    assert ("    if(!fileHandle&&!deckDir&&silent)"
-            " return Promise.resolve(false);") in out
+    # (T406: it says why on the readout before standing down)
+    assert ("    if(!fileHandle&&!deckDir&&silent){\n"
+            "      fileWaits='pick';status();\n"
+            "      return Promise.resolve(false);") in out
     assert ("    return (silent?permOK(deckDir):permAsk(deckDir))"
             ".then(function(ok){") in out
 

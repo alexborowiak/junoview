@@ -1748,8 +1748,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # opposite edge allows (deck JS).
 # 2026-09-13, T407: chrome only. A crop handle goes as far as the
 # opposite edge allows (deck JS).
-EXPECTED_MD5 = "9d835e2a12da29cc710cdcc824847e57"
-EXPECTED_BYTES = 4107385
+# 2026-09-13, T406: chrome only. A quiet draft copy and the file-
+# waiting readout (deck JS).
+EXPECTED_MD5 = "4a3b4c27de3f9cdd6192acf09df0efca"
+EXPECTED_BYTES = 4109651
 
 
 def _render_example() -> str:

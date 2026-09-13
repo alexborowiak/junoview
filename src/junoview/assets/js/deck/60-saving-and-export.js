@@ -472,12 +472,25 @@
   }
   /* write to the remembered file. `silent` = an autosave: never pops a
      permission prompt (there is no user gesture behind it) */
+  /* T406: WHY THE FILE IS NOT BEING WRITTEN, when it is not. An autosave
+     to a file that stands down -- no file chosen yet, or the browser has
+     not re-granted write permission since the reload -- used to stand
+     down silently, so the readout said "unsaved — saving…" forever and
+     the only visible noise was the draft copy's "browser full" toast,
+     which read as "it is saving to the browser instead" (2026-09-13,
+     user: "I think the auto-save is trying to save to browser and not
+     local"). The readout names the reason now, and the one click that
+     fixes it. */
+  var fileWaits='';
   function saveToFile(silent){
     flushTextEdits();
     /* T235: an autosave with no file can still make one, if there is a
        default folder to make it in. Without one it stands down, as it
        always has -- an autosave must never open a file dialog. */
-    if(!fileHandle&&!deckDir&&silent) return Promise.resolve(false);
+    if(!fileHandle&&!deckDir&&silent){
+      fileWaits='pick';status();
+      return Promise.resolve(false);
+    }
     var savedHist=!silent?histCapture():null;
     var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
     var fileText;
@@ -501,12 +514,14 @@
           if(!ok){
             if(!silent) toast('Junoview needs permission to write '
               +(fileName||'that file'));
+            fileWaits='perm';status();   /* T406 */
             return false;
           }
           return h.createWritable().then(function(w){
             return Promise.resolve(w.write(fileText))
               .then(function(){return w.close();});
           }).then(function(){
+            fileWaits='';
             /* the browser copy STAYS. Deleting it made the file the ONLY
                copy, and nothing ever read the file back at startup — save
                to file, close the browser, and the presentation was gone
