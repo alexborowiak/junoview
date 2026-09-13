@@ -7906,3 +7906,13 @@ gates are recorded in the completing commit.
   drawer also slides out at the left edge while editing, as it did
   while presenting, unless the slide column is set to hide itself and
   already owns that edge.
+- [x] **T397 — The name has room on the bar.** (User: "The top bar is
+  too busy e.g. where the file, save, themes etc. There is not enough
+  room for the presentation name.") Two causes. Every button on the bar
+  is flex:none and the two springs have a zero basis, so the name was
+  the one item the bar could shrink — it shrank to "pres…" before
+  fitQat ever saw an overflow, with empty space either side of it. It
+  is flex:none now, and the bar's pressure goes to fitQat's rungs as
+  designed. And Help and Support were two buttons for one errand: they
+  are one **Help ▾** menu (How to use…, Support Junoview ♥), both still
+  worded.

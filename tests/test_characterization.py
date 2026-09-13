@@ -1730,8 +1730,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # view (app.js).
 # 2026-09-13, T396: chrome only. Home and the open-list chevron on the
 # editor's bar, a house icon, the drawer's editing position.
-EXPECTED_MD5 = "b4f4d8d0503812bfc6e25c897d8e5c9d"
-EXPECTED_BYTES = 4101249
+# 2026-09-13, T397: chrome only. The name keeps its width, Help and
+# Support are one menu, the bar outranks the tab strip.
+EXPECTED_MD5 = "1bd195b71afcfb61fa3cadd4c01127ec"
+EXPECTED_BYTES = 4103075
 
 
 def _render_example() -> str:

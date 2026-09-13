@@ -314,12 +314,26 @@
         title="Colour scheme — follow system, dark, light, forest,
  colourful, high contrast"><i data-ic="theme"></i> Theme &#9662;</button>
     </span>
-    <button class="dbtn qat-btn" id="deck-help"
-      title="How to use this, and everything it can do (?)"
-      aria-label="Help"><i data-ic="help"></i> Help</button>
-    <a class="dbtn qat-btn" id="deck-support" aria-label="Support Junoview on Ko-fi" target="_blank" rel="noopener"
-      title="Support Junoview on Ko-fi — funds an online, hosted version
- with accounts"><i data-ic="heart"></i> Support</a>
+    <!-- T397: Help and Support are ONE menu. With Home at the front the
+         bar had thirteen controls, and the presentation's name -- the
+         one thing on it that is not a control -- was what gave way
+         (2026-09-13, user: "The top bar is too busy ... There is not
+         enough room for the presentation name"). Both stay worded; they
+         are a menu deep, like Theme's schemes. -->
+    <span class="dc-menuwrap" id="deck-helpwrap">
+      <button class="dbtn qat-btn" id="deck-help" aria-haspopup="true"
+        aria-expanded="false" aria-controls="deck-help-menu"
+        title="How to use this, and how to support it"
+        ><i data-ic="help"></i> Help &#9662;</button>
+      <div class="dc-menu" id="deck-help-menu" hidden>
+        <button class="dc-mi" id="deck-howto"
+          title="How to use this, and everything it can do (?)">How to
+          use&#8230;</button>
+        <a class="dc-mi" id="deck-support" target="_blank" rel="noopener"
+          title="Support Junoview on Ko-fi — funds an online, hosted
+ version with accounts">Support Junoview &#9829;</a>
+      </div>
+    </span>
     <!-- Present is a SPLIT control: press it to play, press the chevron
          for presenter view — the second screen with your notes, the next
          slide and the clock (2026-08-20, user asked for "the different

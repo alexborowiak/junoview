@@ -2592,6 +2592,15 @@
     var b=$(id);
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
+  /* ---- Help menu (T397): How to use, and Support. app.js owns what
+     How to use does; this only opens and closes the menu. ---- */
+  (function(){
+    var h=wireMenuToggle('deck-helpwrap','deck-help','deck-help-menu');
+    if(!h) return;
+    $$('.dc-mi',h.menu).forEach(function(b){
+      b.addEventListener('click',function(){overlayHide(h.menu);});
+    });
+  })();
   menuAction('#mi-new',newPresentation);
   /* ONE rename, reached from the File menu and from the name in the top
      bar. It used to un-hide #pres-name, which lives in .dc-controls — a

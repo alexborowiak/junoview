@@ -3535,7 +3535,7 @@
   /* two doors: the app bar's Help, and the deck editor's — editing hides
      the app bar entirely, so without the second one the help was
      unreachable from inside a presentation (2026-08-20) */
-  ['#help-btn','#deck-help'].forEach(function(sel){
+  ['#help-btn','#deck-howto'].forEach(function(sel){
     var hb=$(sel);
     if(hb) hb.addEventListener('click',showHelp);
   });

@@ -124,9 +124,16 @@ body.deck-open{overflow:hidden;}
   background:var(--chrome-line);flex:none;}
 .qat-btn{white-space:nowrap;flex:none;}
 /* the name reads as a title, not a button, until you go near it */
+/* flex:none (T397): every button on this bar is flex:none and the two
+   springs have a zero basis, so the name was the ONE item the bar could
+   shrink -- and it shrank to "pres..." before fitQat ever saw an
+   overflow, with a spring's worth of empty space on either side of it
+   (2026-09-13, user: "There is not enough room for the presentation
+   name"). Now the name keeps its width and the bar's pressure goes where
+   it was designed to go: fitQat's rungs. */
 .qat-name{font-family:var(--sans);font-size:12.5px;color:var(--chrome-ink-2);
   background:none;border:1px solid transparent;border-radius:6px;
-  padding:3px 9px;cursor:text;max-width:34vw;white-space:nowrap;
+  padding:3px 9px;cursor:text;flex:none;max-width:34vw;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;}
 .qat-name:hover{border-color:var(--chrome-line);color:var(--chrome-ink);}
 .qat-name:empty::before{content:"untitled";color:var(--chrome-ink-3);}
@@ -988,6 +995,8 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   border-radius:5px;cursor:pointer;transition:background .12s;}
 .dc-mi:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);}
 .dc-msep{height:1px;background:#ffffff14;margin:4px 6px;}
+/* a link can be a row too (Support, in the Help menu: T397) */
+a.dc-mi{display:block;text-decoration:none;}
 /* the "Saved to" picker: a heading + a tick beside the current target */
 .dc-mhead{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
   text-transform:uppercase;color:var(--chrome-ink-2);padding:5px 11px 6px;}
@@ -4371,6 +4380,11 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
    (135) and .matchbar (150), so nothing that used to paint over the bar
    stops doing so. */
 .deck-qat,.deck-top,.rbn-tabs{position:relative;z-index:131;}
+/* ...and the top bar OUTRANKS the tab strip (T397). Its menus float at
+   z-index 240 -- inside its own stacking context, which at an equal 131
+   lost to the later tab strip, so the first row of the Help menu sat
+   under Auto-hide and Ribbon layouts. Still under .vfull (135). */
+.deck-qat{z-index:132;}
 @media(max-width:860px){.film-resize{display:none!important;}}
 
 /* ---- how the slides are listed ---------------------------------------
