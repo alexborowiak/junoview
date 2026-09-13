@@ -35,6 +35,9 @@ body.deck-open{overflow:hidden;}
   overflow:auto;border:1px solid var(--chrome-line);border-radius:9px;
   background:var(--chrome-2);box-shadow:0 16px 48px #0008;}
 .deck-pres-drawer[hidden]{display:none!important;}
+/* T396: while editing it opens under the thin top bar, over the tab
+   strip and the ribbon, which sit at z-index 131 */
+.deck.editing .deck-pres-drawer{top:40px;z-index:136;}
 .deck-pres-drawer-head{display:flex;align-items:center;gap:8px;
   padding-bottom:8px;border-bottom:1px solid var(--chrome-line);
   color:var(--chrome-ink);font:600 11px var(--mono);letter-spacing:.08em;

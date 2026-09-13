@@ -27,9 +27,10 @@
         Stop presenting</button>
     <!-- The global rail is intentionally inert while a deck fills the
          screen. This is its working, deck-owned replacement: what is open
-         right now (this presentation and the open notebooks), with a
-         Recents door and a route to the whole library. It also slides out
-         when the pointer reaches the left edge (T382). -->
+         right now (this presentation, the other open ones and the open
+         notebooks), with a Recents door and a route to the whole library.
+         It also slides out when the pointer reaches the left edge (T382),
+         while editing as well as while presenting (T396). -->
     <button class="dbtn" id="deck-pres-open" type="button"
       aria-expanded="false" aria-controls="deck-pres-drawer"
       title="What is open right now: this presentation and your notebooks.
@@ -91,6 +92,27 @@
        and forewards button"), and the column is now nothing but the
        notebook content and the thumbnails. -->
   <div class="deck-qat" id="deck-qat" hidden>
+    <!-- T396: THE WAY HOME, ON THE BAR YOU CAN SEE. T374 took a Home
+         button out of here because "the Junoview logo already owns that
+         journey" -- but the logo is on the rail, and the rail is behind
+         the full-screen editor, so from a presentation there was no Home
+         at all (2026-09-13, user: "There needs to be a home button up
+         the top of presentation"). Home goes home; the chevron beside it
+         opens the deck's own list of what is open, which also slides out
+         at the left edge (the rail's job, done by the surface that can
+         take the click). -->
+    <span class="dc-savegrp qat-homegrp">
+      <button class="dbtn qat-btn" id="qat-home" type="button"
+        title="Home — the Junoview start screen. Nothing is closed."
+        ><i data-ic="home"></i> Home</button>
+      <button class="dbtn dc-target" id="qat-open" type="button"
+        aria-haspopup="true" aria-expanded="false"
+        aria-controls="deck-pres-drawer" aria-label="What is open"
+        title="What is open: this presentation, the others you have
+ opened, and your notebooks. It also slides out when you reach the left
+ edge of the window.">&#9662;</button>
+    </span>
+    <span class="qat-sep"></span>
     <!-- File OVER Save, one cell two rows deep, the way PowerPoint
          stacks the small controls beside Paste (2026-08-17, user: "the
          save could go below the file"). Stacking them halves the

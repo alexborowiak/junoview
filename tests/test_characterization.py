@@ -1728,8 +1728,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the library's folder headings and filing, and their CSS.
 # 2026-09-13, T395: chrome only. Routing pushes a history entry per
 # view (app.js).
-EXPECTED_MD5 = "4098181b518bbfe87e79929f31f3ba84"
-EXPECTED_BYTES = 4098436
+# 2026-09-13, T396: chrome only. Home and the open-list chevron on the
+# editor's bar, a house icon, the drawer's editing position.
+EXPECTED_MD5 = "b4f4d8d0503812bfc6e25c897d8e5c9d"
+EXPECTED_BYTES = 4101249
 
 
 def _render_example() -> str:

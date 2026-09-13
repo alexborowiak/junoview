@@ -1,9 +1,15 @@
-"""The editor does not duplicate the app's navigation (T374).
+"""The editor's way out (T374, then T396).
 
 The user, 2026-09-10: the presentation Close button is broken and does
 not need to exist; Home is redundant because the Junoview logo already
 owns that journey. Present mode still needs its explicit exit because
 the application chrome is deliberately absent there.
+
+T396 brought Home back (2026-09-13, user: "There needs to be a home
+button up the top of presentation"): the logo is on the rail, and the
+rail is behind the full-screen editor, so from a presentation there was
+no Home at all. Close stays gone. The chevron beside Home opens the
+deck's own list of what is open.
 """
 
 from __future__ import annotations
@@ -11,11 +17,21 @@ from __future__ import annotations
 from junoview import assets
 
 
-def test_redundant_home_and_close_are_not_in_the_editor_bar():
+def test_home_is_in_the_editor_bar_and_close_is_not():
     html = assets.deck_html()
-    assert 'id="qat-home"' not in html
+    assert ('<button class="dbtn qat-btn" id="qat-home" type="button"' in html)
+    assert '<i data-ic="home"></i> Home</button>' in html
+    assert 'id="qat-open"' in html
     assert 'id="qat-close"' not in html
     assert 'class="rbn-stack qat-way"' not in html
+
+
+def test_home_goes_home_and_the_chevron_opens_the_drawer(out):
+    assert "    var home=$('#qat-home');" in out
+    assert ("      if(window.SemApp&&window.SemApp.goHome) "
+            "window.SemApp.goHome(true);") in out
+    assert "    return [$('#deck-pres-open'),$('#qat-open')].filter(Boolean);" in out
+    assert ".deck.editing .deck-pres-drawer{top:40px;z-index:136;}" in out
 
 
 def test_escape_keeps_the_editor_to_builder_journey(out):

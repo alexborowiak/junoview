@@ -7893,3 +7893,16 @@ gates are recorded in the completing commit.
   so Back is never one entry per slide. Home over open notebooks got a
   route of its own (`#/home`), so a presentation opened from Home goes
   back to Home; Back to the first entry closes whatever opened since.
+- [x] **T396 — Home on the editor's bar, and the open list beside it.**
+  (User: "There needs to be a home button up the top of presentation.
+  The side bar that shows you all the open presentations like in the
+  image above doesn't appear in presentation mode.") T374 had taken
+  Home out of the top bar because the logo owns that journey — but the
+  logo is on the rail, and the rail is behind the full-screen editor, so
+  from a presentation there was no Home at all. **Home** is the first
+  button on the bar now (a house, and the word), and the chevron beside
+  it opens the deck's own "Open now" drawer: this presentation, the
+  other open ones, the open notebooks, Recents, All presentations. The
+  drawer also slides out at the left edge while editing, as it did
+  while presenting, unless the slide column is set to hide itself and
+  already owns that edge.

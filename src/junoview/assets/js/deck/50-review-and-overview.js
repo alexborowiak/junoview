@@ -1238,7 +1238,7 @@
       if(vwOpen) t.className+=' current editing';
       var kindWord=isView?'custom view':isPoster?'poster':'presentation';
       t.title=(isCur&&(editing||vwOpen))
-        ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
+        ?('Editing "'+nm+'" — Home, in the top bar, goes back')
         :('Open '+kindWord+' "'+nm+'"'
           +(isView?' — restyles the notebook itself':' in the builder'));
       /* the same drawn icons as the "+ New ..." buttons, so a row and the
@@ -1487,10 +1487,15 @@
     setTimeout(function(){
       var b=$('#presentation-hub-new');if(b) b.focus();},0);
   }
+  /* two doors, one drawer: the presenting bar's button and the editing
+     bar's chevron beside Home (T396) both say whether it is open */
+  function drawerDoors(){
+    return [$('#deck-pres-open'),$('#qat-open')].filter(Boolean);
+  }
   function closeDeckPresentationDrawer(){
-    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    var d=$('#deck-pres-drawer');
     if(d) d.hidden=true;
-    if(b) b.setAttribute('aria-expanded','false');
+    drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','false');});
   }
   /* ---- T382: THE DRAWER IS WHAT IS OPEN NOW ------------------------
      It listed every presentation opened this session, which reads as a
@@ -1559,11 +1564,11 @@
     }
   }
   function openDeckPresentationDrawer(){
-    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    var d=$('#deck-pres-drawer');
     if(!d) return;
     renderDeckPresentationDrawer();
     d.hidden=false;
-    if(b) b.setAttribute('aria-expanded','true');
+    drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','true');});
   }
   /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the
      way the presentations rail does outside the deck (2026-09-12, user:
@@ -1572,11 +1577,18 @@
      the rail inert, so nothing answered the edge during a talk. Same
      14px hit zone as the rail's; it closes when the pointer leaves the
      drawer by the same 40px margin the column and the present bar use.
-     Presenting only: the editor has its own column and its own peek. */
+     T396: WHILE EDITING TOO. "Presenting only" left the editor with no
+     sidebar at all -- the rail is behind it -- and the user asked for it
+     there in as many words (2026-09-13: "the side bar that shows you all
+     the open presentations doesn't appear in presentation mode"). The
+     one exception is a slide column set to hide itself, which already
+     owns the left edge (initFilmAuto); the chevron beside Home opens the
+     drawer there. */
   function initDrawerPeek(){
     document.addEventListener('mousemove',function(e){
       var d=$('#deck-pres-drawer'); if(!d) return;
-      if(mode!=='view'||deckEl.hidden) return;
+      if(deckEl.hidden||(mode!=='view'&&mode!=='edit')) return;
+      if(mode==='edit'&&filmAutoOn()) return;
       var hub=$('#presentation-hub');
       if(hub&&!hub.hidden) return;
       if(d.hidden){
@@ -1590,12 +1602,20 @@
   }
   function presentationHubBoot(){
     var hub=$('#presentation-hub'),drawer=$('#deck-pres-drawer');
-    var drawerOpen=$('#deck-pres-open');
     var drawerBrowse=$('#deck-pres-browse'),drawerRecent=$('#deck-pres-recent');
-    if(drawerOpen) drawerOpen.addEventListener('click',function(){
-      if(!drawer) return;
-      if(drawer.hidden) openDeckPresentationDrawer();
-      else closeDeckPresentationDrawer();
+    drawerDoors().forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!drawer) return;
+        if(drawer.hidden) openDeckPresentationDrawer();
+        else closeDeckPresentationDrawer();
+      });
+    });
+    /* T396: Home from the editor's own bar */
+    var home=$('#qat-home');
+    if(home) home.addEventListener('click',function(){
+      if(window.SemApp&&window.SemApp.goHome) window.SemApp.goHome(true);
+      else closeDeck();
     });
     if(drawerBrowse) drawerBrowse.addEventListener('click',openPresentationHub);
     /* the separate Recents door: the same library dialog, opened on its
