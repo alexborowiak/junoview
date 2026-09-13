@@ -100,6 +100,23 @@
         ><i data-ic="inherit"></i><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
+    <!-- T390: PAGES. One top-level section at a time, with a way to the
+         page before and after (2026-09-12, user: "could the notebook view
+         have pages ... split into pages"). A way of looking, kept per
+         notebook with the layout; the filters still decide what a page
+         contains. -->
+    <span class="abgrp" id="ab-pages"><span class="abgrp-row"><span class="fgrp" id="pages-grp">
+      <button class="toggle" id="sec-pages" aria-pressed="false"
+        title="Split the notebook into pages, one top-level section each"
+        ><i data-ic="pagep"></i><span class="btxt">Pages</span></button>
+      <span class="fgrp-row" id="pages-nav">
+        <button class="toggle sub" id="sec-prevpage" hidden
+          title="The page before"><i data-ic="prev"></i><span class="btxt">Back</span></button>
+        <button class="toggle sub" id="sec-nextpage" hidden
+          title="The page after"><i data-ic="next"></i><span class="btxt">Next</span></button>
+      </span>
+    </span>
+    </span><span class="abgrp-lab">Pages</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="appbar-flex" aria-hidden="true"></span>

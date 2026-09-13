@@ -7824,3 +7824,15 @@ gates are recorded in the completing commit.
   editor's dashed selection ring round the selected box's index on
   every slide (PDF and standalone HTML too); buildPrintRoot now clears
   the selection while it draws.
+- [x] **T390 — The notebook view, one page at a time.** (User: "could the
+  notebook view have pages; e.g. create page per section, or add page
+  here, so then instead of all at once it could be split into pages".)
+  A **Pages** group on the viewer's ribbon turns the notebook into
+  pages, one per section at the shallowest level that has more than one
+  section (a notebook whose only top heading is its title pages by its
+  chapters, and the title's own cells ride on the first), with the
+  deeper sections under each. Back / Next step through; the button says
+  "Page k of n"; the outline keeps every row with the ones off this page
+  dimmed, and clicking one turns to its page. Enforced from the one
+  filter pass, so the filters still decide what a page holds; kept per
+  notebook with the saved layout.

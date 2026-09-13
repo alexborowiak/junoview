@@ -25,11 +25,12 @@ def test_ribbon_group_counts(out):
     8 filter/scope groups + 2 tree-view groups (fold, width); the 2 size
     steppers carry ``fgrp-h`` and are counted separately. The ribbon is
     organised into LABELLED sections. T364 added the mark gate
-    (``#marks-grp``) inside the Filters section.
+    (``#marks-grp``) inside the Filters section; T390 added the Pages
+    group (``#pages-grp``) and its label.
     """
-    assert out.count('class="fgrp"') == 9
+    assert out.count('class="fgrp"') == 10
     assert out.count('class="fgrp fgrp-h"') == 2
-    assert out.count('class="abgrp-lab"') == 6   # + Tree (tree view only)
+    assert out.count('class="abgrp-lab"') == 7   # + Tree (tree view only)
     assert 'class="abgrp" id="ab-filters"' in out
 
 

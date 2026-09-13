@@ -1720,8 +1720,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # renderer branch, Insert and Object doors, and CSS.
 # 2026-09-13, T389: chrome only. The scrolling-show fragment, its two
 # doors, its CSS, and buildPrintRoot clearing the selection.
-EXPECTED_MD5 = "5c05966b7f0b76ecdba9933ac4912fb4"
-EXPECTED_BYTES = 4071117
+# 2026-09-13, T390: chrome only. The viewer's Pages group, its code in
+# app.js and its CSS.
+EXPECTED_MD5 = "d783f47619823e52023d4e8e6d89d225"
+EXPECTED_BYTES = 4078973
 
 
 def _render_example() -> str:
