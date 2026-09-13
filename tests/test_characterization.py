@@ -1732,8 +1732,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # editor's bar, a house icon, the drawer's editing position.
 # 2026-09-13, T397: chrome only. The name keeps its width, Help and
 # Support are one menu, the bar outranks the tab strip.
-EXPECTED_MD5 = "1bd195b71afcfb61fa3cadd4c01127ec"
-EXPECTED_BYTES = 4103075
+# 2026-09-13, T398: chrome only. A saved file names the presentation
+# (deck JS).
+EXPECTED_MD5 = "f3f82ec0d70b19152f239f1f4fb4de19"
+EXPECTED_BYTES = 4104268
 
 
 def _render_example() -> str:

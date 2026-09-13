@@ -317,8 +317,27 @@
       /* REMEMBERING the file is best-effort: it must never delay or block
          the save itself, so it runs in the background */
       idbPut(HKEY,h).catch(function(){});
+      followFileName();
       return h;
     });
+  }
+  /* ---- T398: THE FILE'S NAME IS THE PRESENTATION'S NAME ---------------
+     Save as "my talk.junoview.html" and the deck went on being called
+     "presentation-5" everywhere in Junoview -- the rail, the bar, the
+     project file -- so the name you had just chosen was the one name
+     nothing showed (2026-09-13, user: "Saving the presentation as a file
+     name, doesn't change the name in junoview"). The stem of the file
+     you picked becomes the presentation's name, by the one rename
+     everything else uses. A name already taken stays as it was, and the
+     rename says so. */
+  function fileStem(name){
+    return String(name||'').replace(/\.junoview\.html$/i,'')
+      .replace(/\.(html|junoview|json)$/i,'').trim();
+  }
+  function followFileName(){
+    var stem=fileStem(fileName);
+    if(!stem||stem===pres.name) return false;
+    return renamePresentation(stem);
   }
   /* ---- make the saved deck carry its own pictures ---------------------
      Every placed card's rendered body (figures are data: URIs already) is
@@ -472,6 +491,12 @@
         :(silent?Promise.resolve(null):pickSaveFile())))
       .then(function(h){
         if(!h) return false;
+        /* T398: picking a file may have renamed the deck after it, and
+           the text was rendered before the pick */
+        if(pres.name!==savedName){
+          savedName=pres.name||'untitled';savedSig=deckSaveSig(pres);
+          fileText=junoviewFileHtml();
+        }
         return (silent?permOK(h):permAsk(h)).then(function(ok){
           if(!ok){
             if(!silent) toast('Junoview needs permission to write '

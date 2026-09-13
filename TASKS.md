@@ -7916,3 +7916,11 @@ gates are recorded in the completing commit.
   designed. And Help and Support were two buttons for one errand: they
   are one **Help ▾** menu (How to use…, Support Junoview ♥), both still
   worded.
+- [x] **T398 — The file's name is the presentation's name.** (User:
+  "Saving the presentation as a file name, doesn't change the name in
+  junoview.") Save as "my talk.junoview.html" and the deck went on being
+  called "presentation-5" in the rail, the bar and the project file. The
+  stem of the file you pick becomes the presentation's name, by the one
+  rename everything else uses (a taken name stays, and says so), and the
+  file written carries the new name rather than the text rendered
+  before the pick.
