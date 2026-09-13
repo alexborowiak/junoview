@@ -768,9 +768,52 @@
         hb.disabled=!st.text;
         hb.setAttribute('aria-pressed',(st.text&&st.hl).toString());
       }
+      /* T418: the flip book that turns with each piece -- offered only
+         for a box built in pieces, on a slide that has a book with
+         pages to turn */
+      var sc=$('#anim-synccell'),ss=$('#anim-sync');
+      if(sc&&ss){
+        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+        var books=(st.text&&st.by&&!poster&&!armed)
+          ?flipsOn(s2).filter(function(p){return flipFrames(p.a).length>1;})
+          :[];
+        sc.hidden=!books.length;
+        if(books.length){
+          var cur3=(a2&&a2.anim&&a2.anim.sync)||'';
+          ss.innerHTML='';
+          var o0=document.createElement('option');
+          o0.value='';o0.textContent='no flip book';ss.appendChild(o0);
+          books.forEach(function(p){
+            if(!p.a.fid) p.a.fid=flipId();
+            var o=document.createElement('option');
+            o.value=p.a.fid;
+            o.textContent=itemLabel(s2,p.i)+' ('+flipFrames(p.a).length
+              +' pages)';
+            if(p.a.fid===cur3) o.selected=true;
+            ss.appendChild(o);
+          });
+          if(!cur3) ss.value='';
+        }
+      }
       var lab=$('#anim-timing-lab');
       if(lab) lab.textContent=st.text?'Timing & text':'Timing';
     }
+    /* T418: figure k with piece k. Set on every selected box built in
+       pieces; '' takes it off. The book keeps whatever entrance it has. */
+    function setSync(fid){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim||!textBy(a)) return;
+        if(fid) a.anim.sync=fid; else delete a.anim.sync;
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    }
+    var ssel=$('#anim-sync');
+    if(ssel) ssel.addEventListener('change',function(){setSync(ssel.value);});
     var ocb=$('#anim-onclick');
     if(ocb) ocb.addEventListener('click',function(e){
       e.stopPropagation();
@@ -1015,7 +1058,14 @@
           if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});
         if(pieceA&&st.items.length===1){
           var pcs=textPieces(pieceA),ii=st.items[0];
-          function pieceName(k){return short(pcs[k]||('Piece '+(k+1)),40);}
+          /* T418: the figure that turns with each piece, on its row */
+          var sfb=pieceA.anim.sync?flipById(s,pieceA.anim.sync):null;
+          var sfr=sfb?flipFrames(sfb):[];
+          function pieceName(k){
+            var t=short(pcs[k]||('Piece '+(k+1)),40);
+            if(sfr[k]) t+=' \u00b7 '+frameLabel(sfr[k],k);
+            return t;
+          }
           row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2});
           for(var k=1;k<nsub;k++)
             row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],'',

@@ -1390,6 +1390,21 @@ items snap to both. Guides, not ink: never printed or exported"
                   ><i data-ic="star"></i><span>Highlight</span></button>
                 </span>
               </span>
+              <!-- T418: THE PICTURE TURNS WITH THE BULLETS (2026-09-13,
+                   user: "I want the image to change in the flip book
+                   as the dot point changes"). For a box built in
+                   pieces, a flip book on the slide whose figure k
+                   shows with piece k, on the same click. -->
+              <span class="rbn-cell" id="anim-synccell" hidden>
+                <span class="fmt-szwrap anim-syncwrap" id="anim-syncwrap"
+                  title="A flip book whose page turns with each piece of
+ this box: figure 1 with the first bullet, figure 2 with the second"
+                  ><span class="cell-lab">Turns</span>
+                  <select class="fp-tiesel anim-syncsel" id="anim-sync"
+                    aria-label="Flip book that turns with each piece">
+                    <option value="">no flip book</option>
+                  </select></span>
+              </span>
               <!-- T372: LAST, not second. Beside two full-height strips
                    the delay is the only single cell, so it has to be
                    the one sizeRibbonGroups marks `rbn-odd` -- that is

@@ -3477,7 +3477,8 @@ def test_the_build_list_shows_every_stop_not_only_the_builds(out):
     marks 4 clicks and the toast says "4 clicks" -- three surfaces that
     used to disagree.
     """
-    assert "return {count:n,stop:stop,base:base,anch:anch,tail:tail};" in out
+    assert ("return {count:n,stop:stop,base:base,anch:anch,tail:tail,"
+            "synced:synced};") in out
     # T402: the anchored pages are looked up by the build's STOP index
     # (steps.map[order]), which is how flipPlan keys them -- the build
     # index it used before put a book's pages under nothing at all once

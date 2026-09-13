@@ -8127,3 +8127,10 @@ gates are recorded in the completing commit.
   appear on that click (user: "Why cannot I see the per dot point for
   the paragraph"); and the selected thing, when it is not on the list
   yet, is a dashed row with Appear and By bullet on it.
+- [x] **T418 — The picture turns with the bullets.** (User: "I want the
+  image to change in the flip book as the dot point changes, but there
+  is no way to split them up.") A text box built in pieces can name a
+  flip book on the slide (`anim.sync`, the book's `fid`; the Turns box
+  in Timing & text): figure k shows with piece k, on the same click,
+  and the book has no clicks of its own. The pane's piece rows name the
+  figure each one turns to. Schema in DECK-FORMAT.md and deck_schema.py.

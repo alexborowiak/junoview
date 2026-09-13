@@ -1779,8 +1779,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (deck JS/HTML).
 # 2026-09-13, T417: chrome only. The Animation pane says less (deck
 # JS/CSS).
-EXPECTED_MD5 = "77a9826c6ee8b5b8092bc95bee6d4810"
-EXPECTED_BYTES = 4146488
+# 2026-09-13, T418: chrome only. The picture turns with the bullets
+# (deck JS/HTML).
+EXPECTED_MD5 = "a74a7e5f792725ea04c1b7de7d42e85e"
+EXPECTED_BYTES = 4150706
 
 
 def _render_example() -> str:

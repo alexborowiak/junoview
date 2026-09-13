@@ -279,6 +279,9 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                    "unit for a WRAPPED line: a wrapped line depends on "
                    "the box width and would change how many clicks the "
                    "slide takes when the box was resized."
+                   " `sync` is the `fid` of a flip book on the same "
+                   "slide whose figure k shows with piece k, on the same "
+                   "click; the book then has no clicks of its own."
                    " `after` is a whole number of seconds: this build "
                    "runs that long after the one before it, with no "
                    "click."),
