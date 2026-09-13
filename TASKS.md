@@ -7784,3 +7784,18 @@ gates are recorded in the completing commit.
   down too; nothing is stored. Each is also a button on the Talk
   panel. Driven in Chromium: the lens showed a magnified figure and
   survived a slide change; Esc cleared every tool and kept presenting.
+- [x] **T387 — Pictures pushed further: a zoom callout, the frame's
+  shape, and pictures that zoom together.** (User: "a zoom on a feature
+  in an image, like a new box gets created with a zoom"; "the way
+  cropping works can be pushed further"; "having images linked so they
+  zoom or change in the same way".) **Zoom callout** on the Picture
+  group: drag a box over part of a picture and three grouped things
+  appear — an outline where you dragged, a line, and a second picture
+  wearing that box as its **window** (`win`, a region of the picture
+  shown filling the callout's box, which is given the window's shape
+  so nothing stretches) arriving with a Grow on a build of its own;
+  PowerPoint gets the window as a source-rect crop. The Crop menu's
+  new **Frame** row trims two opposite edges, centred, to 16:9, 4:3,
+  1:1, 3:2 or 2:3 in the page's own millimetres. **Zoom together**
+  links the selected pictures (`sync`): enlarge one in the show and
+  they all come up side by side at one scale. Driven in Chromium.

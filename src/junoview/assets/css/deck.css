@@ -2256,6 +2256,13 @@ select#fmt-font[hidden]{display:none;}
    FILL first or the mask would only bite letterbox — same rationale as
    the cell rule below. */
 .an-image.an-cropped .an-imgel{object-fit:cover;}
+/* T387: a window onto the picture -- the img is scaled and offset so
+   the window fills the box, and the box clips the rest */
+.an-image.an-win{overflow:hidden;}
+.an-image.an-win .an-imgel{position:absolute;object-fit:fill;max-width:none;}
+.zc-box{position:absolute;border:1.5px dashed var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 14%,transparent);
+  pointer-events:none;}
 .an-imgel{width:100%;height:100%;object-fit:contain;display:block;
   pointer-events:none;border-radius:2px;}
 .deck.editing .an-image{cursor:move;}
@@ -2654,6 +2661,9 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
   grid-column:1/-1;min-width:0;}
 .crop-inset{display:flex;align-items:center;gap:4px;margin-top:6px;
   padding-top:6px;border-top:1px solid #ffffff1a;}
+/* T387: the frame's shape, as a row of ratios */
+.crop-aspect{flex-wrap:wrap;}
+.crop-aspect .dbtn{font-family:var(--mono);font-size:10.5px;padding:2px 7px;}
 .crop-inset .ci-lab{font-family:var(--mono);font-size:9px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--chrome-ink-2);
   flex:none;margin-right:2px;}

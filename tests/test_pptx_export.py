@@ -96,7 +96,9 @@ def test_a_crop_and_a_transition_are_handed_to_the_writer(out):
     exports as an uncropped picture, correctly.
     """
     # a path crop has no preset to become, so it is not sent
-    assert "crop:(a.crop&&!a.crop.path)?a.crop:null" in out
+    # (T387: a window onto the picture is sent as the same source-rect)
+    assert "crop:(a.crop&&!a.crop.path)?a.crop" in out
+    assert "            :(a.win&&a.win.w>0&&a.win.h>0" in out
     assert "cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''" in out
     # transFor is the same answer present mode uses, and ent.i is the
     # SOURCE slide, which matters because a flip book explodes one slide

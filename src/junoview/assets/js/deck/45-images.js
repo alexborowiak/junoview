@@ -1523,6 +1523,180 @@
     toast('Cropped to your outline \u2014 Ctrl+Z undoes it, and Reset '
       +'in the Crop menu clears it');
   }
+  /* ---- T387: A ZOOM CALLOUT ------------------------------------------
+     (2026-09-12, user: "a zoom on a feature in an image, like a new box
+     gets created with a zoom"). Drag a box on the picture; three things
+     appear, grouped: an outline where you dragged, a second picture
+     wearing that box as its window (a.win) so it shows the part
+     enlarged, and a line from one to the other. The callout arrives
+     with a Grow, on a build of its own. Same overlay idea as the free
+     crop: the overlay wants the pointer and nothing else does. */
+  var zcArm=null;
+  function armZoomCall(){
+    var s=pres.slides[cur];
+    var idx=(typeof selAnnot==='number')?selAnnot:null;
+    var a=(idx!=null)&&(s&&s.annots||[])[idx];
+    if(!a||a.k!=='image'||!a.src){toast('Select a picture first');return;}
+    var layer=stage.querySelector('.annot-layer');
+    var host=layer&&layer.querySelector('.an-item[data-idx="'+idx+'"]');
+    if(!layer||!host){toast('Select a picture first');return;}
+    if(zcArm) endZoomCall(false);
+    var ov=document.createElement('div');
+    ov.className='crop-lasso';
+    var box=document.createElement('div');box.className='zc-box';
+    box.hidden=true;ov.appendChild(box);
+    var hint=document.createElement('div');
+    hint.className='cl-hint';
+    hint.textContent='Drag a box over the part to enlarge \u2014 Esc to '
+      +'stop';
+    ov.appendChild(hint);
+    layer.appendChild(ov);
+    zcArm={idx:idx,ov:ov,box:box,host:host,layer:layer,p0:null,p1:null};
+    var hr=host.getBoundingClientRect();
+    function at(ev){
+      return [Math.max(0,Math.min(100,((ev.clientX-hr.left)/(hr.width||1))*100)),
+              Math.max(0,Math.min(100,((ev.clientY-hr.top)/(hr.height||1))*100))];
+    }
+    function paint(){
+      var r=zcRegion(); if(!r){box.hidden=true;return;}
+      var lr=layer.getBoundingClientRect();
+      box.hidden=false;
+      box.style.left=((hr.left-lr.left+r.x/100*hr.width)/lr.width*100)+'%';
+      box.style.top=((hr.top-lr.top+r.y/100*hr.height)/lr.height*100)+'%';
+      box.style.width=(r.w/100*hr.width/lr.width*100)+'%';
+      box.style.height=(r.h/100*hr.height/lr.height*100)+'%';
+    }
+    ov.addEventListener('mousedown',function(ev){
+      ev.preventDefault();ev.stopPropagation();
+      zcArm.p0=at(ev);zcArm.p1=zcArm.p0;paint();
+    });
+    ov.addEventListener('mousemove',function(ev){
+      if(!zcArm||!zcArm.p0) return;
+      zcArm.p1=at(ev);paint();
+    });
+    ov.addEventListener('mouseup',function(ev){
+      ev.preventDefault();ev.stopPropagation();
+      if(!zcArm||!zcArm.p0) return;
+      zcArm.p1=at(ev);endZoomCall(true);
+    });
+    document.addEventListener('keydown',zcKey,true);
+  }
+  function zcRegion(){
+    if(!zcArm||!zcArm.p0||!zcArm.p1) return null;
+    var x=Math.min(zcArm.p0[0],zcArm.p1[0]),y=Math.min(zcArm.p0[1],zcArm.p1[1]);
+    var w=Math.abs(zcArm.p1[0]-zcArm.p0[0]),h=Math.abs(zcArm.p1[1]-zcArm.p0[1]);
+    return {x:x,y:y,w:w,h:h};
+  }
+  function zcKey(e){
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();endZoomCall(false);}
+  }
+  function endZoomCall(commit){
+    if(!zcArm) return;
+    var z=zcArm; zcArm=null;
+    document.removeEventListener('keydown',zcKey,true);
+    if(z.ov&&z.ov.parentNode) z.ov.parentNode.removeChild(z.ov);
+    if(!commit) return;
+    var r=zcRegionOf(z);
+    if(!r||r.w<3||r.h<3){
+      toast('That box was too small to enlarge \u2014 nothing changed');
+      return;
+    }
+    makeZoomCallout(z.idx,r);
+  }
+  function zcRegionOf(z){
+    var x=Math.min(z.p0[0],z.p1[0]),y=Math.min(z.p0[1],z.p1[1]);
+    return {x:Math.round(x*10)/10,y:Math.round(y*10)/10,
+      w:Math.round(Math.abs(z.p1[0]-z.p0[0])*10)/10,
+      h:Math.round(Math.abs(z.p1[1]-z.p0[1])*10)/10};
+  }
+  function makeZoomCallout(idx,win){
+    var s=pres.slides[cur],a=s&&s.annots&&s.annots[idx];
+    if(!a) return;
+    var page=pageOf(),pw=page.mm[0],ph=page.mm[1];
+    var ax=a.x||0,ay=a.y||0,aw=a.w||30,ah=a.h||24;
+    /* the window's shape in millimetres, so the callout's box has the
+       same shape and the picture is not stretched into it */
+    var wmm=aw/100*pw*win.w/100,hmm=ah/100*ph*win.h/100;
+    var wc=Math.max(12,Math.min(34,aw*0.6));
+    var hc=(wc/100*pw*(hmm/wmm))/ph*100;
+    if(hc>60){hc=60;wc=(hc/100*ph*(wmm/hmm))/pw*100;}
+    var gap=2,x,y,side;
+    if(ax+aw+gap+wc<=100){x=ax+aw+gap;side='right';}
+    else if(ax-gap-wc>=0){x=ax-gap-wc;side='left';}
+    else {x=Math.max(0,Math.min(100-wc,ax));side='below';}
+    y=(side==='below')?Math.min(100-hc,ay+ah+gap)
+      :Math.max(0,Math.min(100-hc,ay+ah/2-hc/2));
+    var rx=ax+aw*win.x/100,ry=ay+ah*win.y/100,rw=aw*win.w/100,rh=ah*win.h/100;
+    var col='#39a9c0';
+    var outline={k:'rect',x:rx,y:ry,w:rw,h:rh,color:col};
+    outline.sw=SW_DEFAULT;
+    var call={k:'image',x:x,y:y,w:wc,h:hc,src:a.src,
+      win:{x:win.x,y:win.y,w:win.w,h:win.h},
+      anim:{type:'zoom',order:nextAnimOrder(s)}};
+    if(a.okey) call.okey=a.okey;
+    if(a.alt) call.alt=a.alt;
+    var line=(side==='right')
+      ?{k:'arrow',x1:rx+rw,y1:ry+rh/2,x2:x,y2:y+hc/2}
+      :(side==='left')
+      ?{k:'arrow',x1:rx,y1:ry+rh/2,x2:x+wc,y2:y+hc/2}
+      :{k:'arrow',x1:rx+rw/2,y1:ry+rh,x2:x+wc/2,y2:y};
+    line.nohead=1;line.color=col;line.sw=SW_DEFAULT;
+    var gid=nextGrp(s);
+    outline.grp=gid;line.grp=gid;call.grp=gid;
+    s.annots.push(outline);s.annots.push(line);s.annots.push(call);
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    if(typeof renderFilm==='function') renderFilm();
+    toast('Zoom callout added \u2014 it arrives with a Grow. Ctrl+Z '
+      +'undoes it');
+  }
+  /* ---- T387: PICTURES THAT ZOOM TOGETHER --------------------------------
+     a.sync is a per-slide number, like a.grp: the pictures wearing the
+     same one come up side by side when any of them is enlarged in the
+     show. The button links the selection, or unlinks it when it is
+     already one set. */
+  function syncIdxs(){
+    var s=pres.slides[cur];
+    return selIdxs().filter(function(i){
+      var a=(s&&s.annots||[])[i];
+      return a&&(a.k==='image'||a.k==='cell');});
+  }
+  function linkZoomSel(){
+    var s=pres.slides[cur],idxs=syncIdxs();
+    if(idxs.length<2){toast('Select two or more pictures first');return;}
+    var first=s.annots[idxs[0]].sync;
+    var same=first!=null&&idxs.every(function(i){
+      return s.annots[i].sync===first;});
+    if(same){
+      idxs.forEach(function(i){delete s.annots[i].sync;});
+      toast('These no longer zoom together');
+    } else {
+      var next=0;
+      (s.annots||[]).forEach(function(a){
+        if(a&&a.sync!=null&&a.sync>=next) next=a.sync+1;});
+      idxs.forEach(function(i){s.annots[i].sync=next;});
+      toast(idxs.length+' pictures zoom together now \u2014 enlarge one '
+        +'in the show and they all come up');
+    }
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);paintSel(l);}
+    pictureSync();
+  }
+  function pictureSync(){
+    var b=$('#fmt-linkzoom'); if(!b) return;
+    var s=pres.slides[cur],idxs=syncIdxs();
+    b.disabled=idxs.length<2;
+    var first=idxs.length?s.annots[idxs[0]].sync:null;
+    var on=idxs.length>=2&&first!=null&&idxs.every(function(i){
+      return s.annots[i].sync===first;});
+    b.setAttribute('aria-pressed',on.toString());
+    b.title=on
+      ?'These zoom together. Press to unlink them'
+      :'Select two or more pictures: when one is enlarged in the show '
+        +'they all come up together, side by side';
+  }
   function mkCropHandles(host,layer,s2,idx){
     var a=s2.annots[idx]; if(!a) return;
     ['t','r','b','l'].forEach(function(side){
@@ -1657,6 +1831,44 @@
     });
     row.appendChild(rs);
     menu.appendChild(row);
+    /* ---- T387: THE FRAME'S SHAPE ----------------------------------------
+       (2026-09-12, user: "the way cropping works can be pushed
+       further"). A row of ratios: each trims two opposite edges,
+       centred, so the box shows that shape of the picture -- the
+       trim the four handles would take a minute to get right. */
+    var ar=document.createElement('div');ar.className='crop-inset crop-aspect';
+    var al=document.createElement('span');al.className='ci-lab';
+    al.textContent='Frame';ar.appendChild(al);
+    [['16:9',16/9],['4:3',4/3],['1:1',1],['3:2',1.5],['2:3',2/3]]
+      .forEach(function(pr){
+        var b=document.createElement('button');b.type='button';
+        b.className='dbtn';b.textContent=pr[0];
+        b.title='Trim the edges so the frame is '+pr[0];
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          var page=pageOf();
+          fmtApply(function(a){
+            var R=((a.w||30)/100*page.mm[0])/((a.h||24)/100*page.mm[1]);
+            var c={};
+            if(a.crop&&a.crop.shape) c.shape=a.crop.shape;
+            if(R>pr[1]){c.l=c.r=Math.round((1-pr[1]/R)/2*1000)/10;}
+            else {c.t=c.b=Math.round((1-R/pr[1])/2*1000)/10;}
+            ['t','r','b','l'].forEach(function(k){
+              if(c[k]!=null) c[k]=Math.min(45,c[k]);});
+            a.crop=c;
+          });
+          SIDES.forEach(function(p){inputs[p[0]].value='';});
+        });
+        ar.appendChild(b);
+      });
+    menu.appendChild(ar);
+    /* T387: the callout and the zoom link live on the same group */
+    var zc=$('#fmt-zoomcall');
+    if(zc) zc.addEventListener('click',function(e){
+      e.stopPropagation();armZoomCall();});
+    var lz=$('#fmt-linkzoom');
+    if(lz) lz.addEventListener('click',function(e){
+      e.stopPropagation();linkZoomSel();});
     /* opening the menu shows the SELECTION's current trim */
     btn.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;

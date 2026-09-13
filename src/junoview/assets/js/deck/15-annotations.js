@@ -29,8 +29,92 @@
     setTimeout(function(){if(el.parentNode) el.remove();},220);
     document.body.classList.remove('jv-spot');
   }
+  /* T387: PICTURES THAT ZOOM TOGETHER. An item wearing a.sync brings
+     every item on the slide with the same number: they come up side by
+     side in one spotlight, each as big as its share of the row allows
+     (2026-09-12, user: "having images linked so they zoom or change in
+     the same way"). */
+  function syncMates(item){
+    var s=pres.slides[cur]; if(!s||!item||!item.getAttribute) return [item];
+    var raw=item.getAttribute('data-idx');
+    var a=(s.annots||[])[+raw];
+    if(!a||a.sync==null||raw==='t'||raw==='s') return [item];
+    var layer=item.parentNode,out=[];
+    if(!layer) return [item];
+    $$('.an-item[data-idx]',layer).forEach(function(el){
+      var x=(s.annots||[])[+el.getAttribute('data-idx')];
+      if(x&&x.sync===a.sync&&!el.classList.contains('an-prebuild'))
+        out.push(el);
+    });
+    return out.length>1?out:[item];
+  }
+  function spotClone(item){
+    var clone=item.cloneNode(true);
+    ['.an-resize','.an-rotate','.an-buildno','.an-endpt',
+     '.an-cellbtn','.cellparts','.an-marquee']
+      .forEach(function(sel){
+        Array.prototype.slice.call(clone.querySelectorAll(sel))
+          .forEach(function(n){n.remove();});
+      });
+    clone.classList.remove('sel','grpsel','an-prebuild','an-ingrp');
+    clone.style.position='absolute';
+    clone.style.left='0';clone.style.top='0';
+    clone.style.width='100%';clone.style.height='100%';
+    clone.style.margin='0';
+    return clone;
+  }
+  function spotlightMany(items){
+    closeSpot();
+    var rects=items.map(function(it){return it.getBoundingClientRect();});
+    if(rects.some(function(r){return !r.width||!r.height;})) return;
+    var wrap=document.createElement('div');
+    wrap.className='jv-spot-wrap';
+    var n=items.length,pad=0.86,gap=18;
+    var share=(innerWidth*pad-gap*(n-1))/n;
+    /* one scale for all, so two pictures of the same size stay the same
+       size beside each other */
+    var k=Infinity;
+    rects.forEach(function(r){
+      k=Math.min(k,share/r.width,innerHeight*pad/r.height);});
+    k=Math.max(1,k);
+    var total=0;
+    rects.forEach(function(r){total+=r.width*k;});
+    total+=gap*(n-1);
+    var x0=innerWidth/2-total/2,inners=[];
+    items.forEach(function(it,j){
+      var r=rects[j];
+      var inner=document.createElement('div');
+      inner.className='jv-spot-inner';
+      inner.style.left=r.left+'px';inner.style.top=r.top+'px';
+      inner.style.width=r.width+'px';inner.style.height=r.height+'px';
+      inner.appendChild(spotClone(it));
+      wrap.appendChild(inner);
+      var tw=r.width*k;
+      var cx=(x0+tw/2)-(r.left+r.width/2);
+      var cy=innerHeight/2-(r.top+r.height/2);
+      x0+=tw+gap;
+      inners.push({el:inner,cx:cx,cy:cy});
+    });
+    var x=document.createElement('button');
+    x.className='dbtn jv-spot-x';
+    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.addEventListener('click',function(e){e.stopPropagation();closeSpot();});
+    wrap.appendChild(x);
+    wrap.addEventListener('click',function(e){e.stopPropagation();closeSpot();});
+    document.body.appendChild(wrap);
+    document.body.classList.add('jv-spot');
+    spotEl=wrap;
+    requestAnimationFrame(function(){
+      inners.forEach(function(q){
+        q.el.style.transform='translate('+q.cx+'px,'+q.cy+'px) scale('
+          +k.toFixed(3)+')';});
+      wrap.classList.add('on');
+    });
+  }
   function spotlight(item){
     if(!item||mode!=='view') return;
+    var mates=syncMates(item);
+    if(mates.length>1){spotlightMany(mates);return;}
     closeSpot();
     var r=item.getBoundingClientRect();
     if(!r.width||!r.height) return;

@@ -1692,8 +1692,14 @@
           /* what the picture shows, for PowerPoint's own accessibility
              checker and for a screen reader opening the deck (T105) */
           alt:a.alt,dec:a.dec,
-          /* a path crop has no preset to become, so it is not sent */
-          crop:(a.crop&&!a.crop.path)?a.crop:null,
+          /* a path crop has no preset to become, so it is not sent;
+             T387: a window onto the picture IS a crop in PowerPoint's
+             terms -- srcRect trims the source to the window */
+          crop:(a.crop&&!a.crop.path)?a.crop
+            :(a.win&&a.win.w>0&&a.win.h>0
+              ?{t:a.win.y||0,l:a.win.x||0,
+                r:Math.max(0,100-(a.win.x||0)-a.win.w),
+                b:Math.max(0,100-(a.win.y||0)-a.win.h)}:null),
           cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''});
         else note.skipped++;
       } else if(a.k==='video'){

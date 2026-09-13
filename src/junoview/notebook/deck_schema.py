@@ -194,6 +194,12 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
     "oid": (str, "This object's durable name, used to follow it through "
                  "its own history and to match it across slides for a "
                  "\"move\" transition."),
+    "win": (dict, "Pictures only: a window onto the picture, `{x, y, w, "
+                  "h}` in percent of the picture, shown filling the box. "
+                  "A zoom callout is a picture wearing a window."),
+    "sync": (int, "Pictures and figures that zoom together: every item "
+                  "on the slide with the same number is enlarged "
+                  "alongside this one in playback."),
     "motion": (str, "A movement that keeps going while the object is on "
                     "the slide, in playback only: `wobble`, `bob` or "
                     "`pulse`. Absent means still."),

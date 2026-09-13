@@ -24,6 +24,8 @@
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
     '#fmt-shapewrap':'rect',
     '#fmt-cropwrap':'image cell',
+    '#fmt-zoomcall':'image',          /* T387: a window onto the picture */
+    '#fmt-linkzoom':'image cell',     /* T387: pictures that zoom together */
     '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
     '#fmt-chartwrap':'chart',         /* the Chart pane's door (T322) */
     '#fmt-tablewrap':'table',         /* the Table pane's door (T324) */

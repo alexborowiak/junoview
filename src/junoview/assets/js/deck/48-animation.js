@@ -1207,6 +1207,7 @@
       flipFxSync();
       animOutSync();
       motionSync();
+      if(typeof pictureSync==='function') pictureSync();   /* T387 */
       /* T289: the slide transition is a fact about the SLIDE rather than
          the selection, but this is the one sync every path already
          calls -- selection changes, slide changes and markDirty all

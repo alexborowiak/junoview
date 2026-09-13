@@ -60,6 +60,11 @@ _ICON_PATHS = {
     "laser": '<circle cx="8" cy="8" r="2.4"/><path d="M8 1.8v2.2"/>'
              '<path d="M8 12v2.2"/><path d="M1.8 8H4"/><path d="M12 8h2.2"/>',
     "blackout": '<path d="M2.4 2.4h11.2v11.2H2.4z" fill="currentColor"/>',
+    # T387: a window onto a picture, and pictures that zoom together
+    "callout": '<path d="M1.8 2.6h6.4v5.2H1.8z"/><path d="M3.6 4.4h2.6v1.8H3.6z"/>'
+               '<path d="M8.4 8.4h5.8v5.2H8.4z"/><path d="M6.2 6.2l2.2 2.2"/>',
+    "zoomlink": '<circle cx="5" cy="8" r="3"/><circle cx="11" cy="8" r="3"/>'
+                '<path d="M8 8h0"/><path d="M7.2 6.4l1.6 3.2"/>',
     "info": '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/>'
             '<path d="M8 4.9v.1"/>',
     # filters: one per content type

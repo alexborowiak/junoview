@@ -1713,8 +1713,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # their keyframes.
 # 2026-09-13, T386: chrome only. The talk tools fragment (laser,
 # magnifier, black screen), two Talk panel rows and their CSS.
-EXPECTED_MD5 = "6198bec4a3071e3ee7cd06104e79c0bf"
-EXPECTED_BYTES = 4038656
+# 2026-09-13, T387: chrome only. Zoom callout and Zoom together on the
+# Picture group, the frame-shape row in the Crop menu, the window
+# renderer and the many-item spotlight.
+EXPECTED_MD5 = "85636c6fd642962eac022752be405712"
+EXPECTED_BYTES = 4055161
 
 
 def _render_example() -> str:
