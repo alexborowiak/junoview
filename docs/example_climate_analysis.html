@@ -5650,7 +5650,14 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   font:12.5px var(--sans);text-align:left;cursor:pointer;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .anim-name:hover{color:#fff;text-decoration:underline;}
-.anim-detail{font-size:10.5px;color:var(--chrome-ink-2);line-height:1.35;}
+/* T417: the effect word, at the end of the row; a row for the selected
+   thing that is not on the list yet; its two actions side by side */
+.anim-tag{flex:none;font-size:10.5px;color:var(--chrome-ink-2);
+  white-space:nowrap;}
+.anim-num.off{background:none;border:1px solid #ffffff33;
+  color:var(--chrome-ink-2);}
+.anim-step.anim-off{margin-top:6px;border-style:dashed;}
+.anim-stepctr.row{flex-direction:row;gap:4px;}
 .anim-step.anim-sub{margin-left:18px;background:var(--chrome-4,#0e1824);
   padding-top:3px;padding-bottom:3px;}
 .anim-step.anim-sub .anim-num{background:none;border:1px solid var(--amber);
@@ -14254,6 +14261,21 @@ items snap to both. Guides, not ink: never printed or exported"
  one each click is about, instead of hiding the rest"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z"/></svg><span>Highlight</span></button>
                 </span>
+              </span>
+              <!-- T418: THE PICTURE TURNS WITH THE BULLETS (2026-09-13,
+                   user: "I want the image to change in the flip book
+                   as the dot point changes"). For a box built in
+                   pieces, a flip book on the slide whose figure k
+                   shows with piece k, on the same click. -->
+              <span class="rbn-cell" id="anim-synccell" hidden>
+                <span class="fmt-szwrap anim-syncwrap" id="anim-syncwrap"
+                  title="A flip book whose page turns with each piece of
+ this box: figure 1 with the first bullet, figure 2 with the second"
+                  ><span class="cell-lab">Turns</span>
+                  <select class="fp-tiesel anim-syncsel" id="anim-sync"
+                    aria-label="Flip book that turns with each piece">
+                    <option value="">no flip book</option>
+                  </select></span>
               </span>
               <!-- T372: LAST, not second. Beside two full-height strips
                    the delay is the only single cell, so it has to be
@@ -33012,6 +33034,7 @@ window.JunoPptx = (function () {
     });
   }
   function status(){
+    if(typeof fileSync==='function') fileSync();   /* T416: this deck's file */
     syncQatName();
     /* the bar names what it belongs to; for a poster this is the only
        place the name is shown, since the panel that normally carries it
@@ -33033,6 +33056,21 @@ window.JunoPptx = (function () {
       el.title='Browser storage is full, so edits are not being kept. '
         +'Use File \u203a Download a copy, or the \u25be beside Save to '
         +'save to a file.';
+      return;
+    }
+    /* T416: the remembered file the browser must be allowed to read
+       again -- one click, and the deck in it is back */
+    if(typeof fileWaits!=='undefined'&&fileWaits==='reopen'){
+      var rf=(typeof fileReopen!=='undefined'&&fileReopen&&fileReopen.h
+        &&fileReopen.h.name)||'the file';
+      el.textContent='click to reopen '+rf;
+      /* clickable by its own hand: markSaveClickable only marks a
+         browser-kept deck, and this click is a read, not a save */
+      el.className='deck-status unsaved clickable';
+      el.title='\u201c'+((typeof fileReopen!=='undefined'&&fileReopen
+        &&fileReopen.name)||'the presentation')+'\u201d lives in '+rf
+        +'. After a reload the browser waits for one click before it '
+        +'lets a page read a file again \u2014 this is that click.';
       return;
     }
     /* T406: a file that is waiting on ONE click says so, instead of
@@ -33097,6 +33135,9 @@ window.JunoPptx = (function () {
     var el=$('#deck-status');
     if(el) el.addEventListener('click',function(){
       if(!el.classList.contains('clickable')) return;
+      /* T416: the reopen click is a read, not a save */
+      if(typeof fileWaits!=='undefined'&&fileWaits==='reopen'
+         &&typeof reopenFile==='function'){reopenFile();return;}
       var sb=$('#dc-save'); if(sb) sb.click();
     });
   })();
@@ -35843,8 +35884,21 @@ window.JunoPptx = (function () {
      its frame is revealCount-base[i], clamped. ONE cursor still, and the
      frame still derived from it rather than stored beside it. */
   function flipPlan(s){
-    var steps=slideBuildSteps(s),anch={},tail=[];
+    var steps=slideBuildSteps(s),anch={},tail=[],synced={};
+    /* T418: A FLIP BOOK THAT TURNS WITH THE BULLETS (2026-09-13, user:
+       "I want the image to change in the flip book as the dot point
+       changes"). A text box built in pieces can name a flip book
+       (anim.sync = the book's fid): figure k then shows with piece k,
+       on the same click, and the book has no stops of its own -- its
+       base is the piece build's first stop, so the walk index IS the
+       piece index. Drop the `by`, or the book, and the book is back to
+       its own stops; nothing else about the plan changes. */
+    ((s&&s.annots)||[]).forEach(function(a){
+      if(a&&a.anim&&a.anim.sync&&!a.hide&&textBy(a)&&flipById(s,a.anim.sync))
+        synced[a.anim.sync]=a.anim.order||0;
+    });
     steppersOn(s).forEach(function(p){
+      if(p.a.k==='flip'&&p.a.fid&&synced[p.a.fid]!=null) return;
       var b=(p.a&&p.a.anim)?steps.map[p.a.anim.order||0]:null;
       if(b==null) tail.push(p);
       else (anch[b]||(anch[b]=[])).push(p);
@@ -35859,12 +35913,21 @@ window.JunoPptx = (function () {
       (anch[b]||[]).forEach(frames);
     }
     tail.forEach(frames);
+    steppersOn(s).forEach(function(p){
+      if(!(p.a.k==='flip'&&p.a.fid&&synced[p.a.fid]!=null)) return;
+      var b0=steps.map[synced[p.a.fid]];
+      /* +1: piece k is on screen once revealCount has passed its stop,
+         and the walk index is revealCount minus base -- so figure 1
+         stays up until the first piece arrives, and turns with the
+         second (driven: without it the book was a page ahead) */
+      if(b0!=null) base[p.i]=stop[b0]+1;
+    });
     /* `anch` and `tail` are handed back so the ANIMATIONS PANE can
        show the same sequence playback walks, instead of re-deriving a
        weaker one from slideBuildSteps (T163). They were already computed
        here; throwing them away is what left a flip book's five clicks
        invisible in a panel headed "Build order". */
-    return {count:n,stop:stop,base:base,anch:anch,tail:tail};
+    return {count:n,stop:stop,base:base,anch:anch,tail:tail,synced:synced};
   }
   /* ---- A STOP THAT RUNS ITSELF (T169) -------------------------------
      `a.anim.after` is a whole number of seconds: this build runs that
@@ -60829,9 +60892,52 @@ window.JunoPptx = (function () {
         hb.disabled=!st.text;
         hb.setAttribute('aria-pressed',(st.text&&st.hl).toString());
       }
+      /* T418: the flip book that turns with each piece -- offered only
+         for a box built in pieces, on a slide that has a book with
+         pages to turn */
+      var sc=$('#anim-synccell'),ss=$('#anim-sync');
+      if(sc&&ss){
+        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+        var books=(st.text&&st.by&&!poster&&!armed)
+          ?flipsOn(s2).filter(function(p){return flipFrames(p.a).length>1;})
+          :[];
+        sc.hidden=!books.length;
+        if(books.length){
+          var cur3=(a2&&a2.anim&&a2.anim.sync)||'';
+          ss.innerHTML='';
+          var o0=document.createElement('option');
+          o0.value='';o0.textContent='no flip book';ss.appendChild(o0);
+          books.forEach(function(p){
+            if(!p.a.fid) p.a.fid=flipId();
+            var o=document.createElement('option');
+            o.value=p.a.fid;
+            o.textContent=itemLabel(s2,p.i)+' ('+flipFrames(p.a).length
+              +' pages)';
+            if(p.a.fid===cur3) o.selected=true;
+            ss.appendChild(o);
+          });
+          if(!cur3) ss.value='';
+        }
+      }
       var lab=$('#anim-timing-lab');
       if(lab) lab.textContent=st.text?'Timing & text':'Timing';
     }
+    /* T418: figure k with piece k. Set on every selected box built in
+       pieces; '' takes it off. The book keeps whatever entrance it has. */
+    function setSync(fid){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim||!textBy(a)) return;
+        if(fid) a.anim.sync=fid; else delete a.anim.sync;
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    }
+    var ssel=$('#anim-sync');
+    if(ssel) ssel.addEventListener('change',function(){setSync(ssel.value);});
     var ocb=$('#anim-onclick');
     if(ocb) ocb.addEventListener('click',function(e){
       e.stopPropagation();
@@ -60974,45 +61080,35 @@ window.JunoPptx = (function () {
       var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
       var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
-      h1.textContent=total
-        ?('This slide takes '+total+' click'+(total===1?'':'s'))
-        :'Nothing happens on a click yet';
+      h1.textContent=total?(total+' click'+(total===1?'':'s')):'No clicks yet';
       menu.appendChild(h1);
-      var hint=document.createElement('div');hint.className='anim-empty';
-      hint.textContent=total
-        ?'One row per click, in order. Click a name to select it on the '
-          +'slide; Earlier and Later move a build. Effects, timing and '
-          +'text pieces are set on the ribbon above.'
-        :'Select something on the slide and pick an effect on the '
-          +'ribbon, or press One per click to build the whole slide.';
-      menu.appendChild(hint);
       var list=document.createElement('div');list.className='anim-seq';
-      /* one row: its click number (or range), what it is, how it
-         arrives, and for a build the two ways to move it */
-      function row(clickNo,names,detail,opts){
+      /* T417: ONE LINE PER ROW (2026-09-13, user: "All that text is
+         soo unnecessary ... DON'T FILL IT WITH VERBOSE UNNECESSARY
+         TEXT"). The number, the name, the effect word. Nothing that
+         explains the row: the row is the explanation. */
+      function row(clickNo,names,tag,opts){
         opts=opts||{};
         var r=document.createElement('div');
         r.className='anim-step'+(opts.sub?' anim-sub':'')+(opts.cur?' cur':'');
         var n=document.createElement('span');
         n.className='anim-num'+(String(clickNo).length>2?' wide':'');
         n.textContent=clickNo;
-        n.title=opts.sub?'The click this page turns on':'The click this arrives on';
         r.appendChild(n);
         var body=document.createElement('span');body.className='anim-body';
         names.forEach(function(p){
           var nm=document.createElement('button');nm.type='button';
-          nm.className='anim-name';nm.textContent=p[0];
-          nm.title=opts.title||('Select \u201c'+p[0]+'\u201d on the slide');
+          nm.className='anim-name';nm.textContent=p[0];nm.title=p[0];
           nm.addEventListener('click',function(e){e.stopPropagation();
             var l=stage.querySelector('.annot-layer');
             if(l) selectAnnot(l,p[1]); render();});
           body.appendChild(nm);
         });
-        if(detail){
-          var d=document.createElement('span');d.className='anim-detail';
-          d.textContent=detail;body.appendChild(d);
-        }
         r.appendChild(body);
+        if(tag){
+          var d=document.createElement('span');d.className='anim-tag';
+          d.textContent=tag;r.appendChild(d);
+        }
         if(opts.ctr){
           var ctr=document.createElement('span');ctr.className='anim-stepctr';
           [['\u2191 Earlier',-1],['\u2193 Later',1]].forEach(function(m){
@@ -61043,64 +61139,100 @@ window.JunoPptx = (function () {
             var fx=flipFxWord(a.fanim)||'Cut';
             for(var d=1;d<walk.length;d++){
               var w=walk[d];
-              var name=w.j
-                ?('Page '+(w.j+1)+' of the words beside figure '+(w.k+1))
-                :('Figure '+(w.k+1)+' of '+fr.length+' \u00b7 '
-                  +frameLabel(fr[w.k],w.k));
-              row(base+d,[[name,p.i]],fx+' \u00b7 a page of the flip '
-                +'book, so it keeps the book\u2019s order',
-                {sub:true,cur:cur2,
-                 title:'A page of this flip book. Pages keep the '
-                   +'book\u2019s order; to move one, select the book and '
-                   +'use its panel on the Images tab.'});
+              var name=w.j?('Page '+(w.j+1)+' beside figure '+(w.k+1))
+                :frameLabel(fr[w.k],w.k);
+              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2});
             }
           } else if(a.k==='chart'){
             chartParse(a).series.forEach(function(se,k){
-              row(base+k+1,[['Series '+(k+1)+' \u00b7 '+se.name,p.i]],
-                'a series of the chart, in the data\u2019s order',
-                {sub:true,cur:cur2,
-                 title:'A series of this chart. The order follows the data.'});
+              row(base+k+1,[[se.name,p.i]],'series',{sub:true,cur:cur2});
             });
           } else if(a.k==='text'){
             var pg=textPages(a);
             for(var t=1;t<pg.length;t++)
-              row(base+t,[['Page '+(t+1)+' of '+pg.length+' \u00b7 '
-                +itemLabel(s,p.i),p.i]],'the next page of this text box',
-                {sub:true,cur:cur2,
-                 title:'A page of this text box. Pages keep their order.'});
+              row(base+t,[['Page '+(t+1),p.i]],'page',{sub:true,cur:cur2});
           }
         });
+      }
+      function short(t,n){
+        t=String(t||'').replace(/\s+/g,' ').trim();
+        return t.length>n?(t.slice(0,n-1)+'\u2026'):t;
       }
       seq.forEach(function(st,si){
         var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
         var first=(plan.stop[b0]|0)+1;
-        var last=(plan.stop[b0+nsub-1]|0)+1;
         var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
         var kinds={};
         st.items.forEach(function(idx){
           kinds[fxWord(s.annots[idx].anim.type)]=1;});
-        var detail=Object.keys(kinds).join(' / ');
-        var pieces=null;
-        st.items.forEach(function(idx){
-          var a=s.annots[idx];
-          if(textBy(a)&&!pieces)
-            pieces=(a.anim.by==='sent'?'sentence by sentence':'bullet by bullet')
-              +(a.anim.hl?', highlighting each':'');
-        });
-        if(nsub>1) detail+=' \u00b7 '+nsub+' clicks, '+(pieces||'in pieces');
-        if(st.items.length>1) detail+=' \u00b7 together on one click';
+        var tag=Object.keys(kinds).join('/');
         var aft=0;
         st.items.forEach(function(idx){
           var v=(s.annots[idx].anim.after)|0; if(v>aft) aft=v;});
-        if(aft) detail+=' \u00b7 runs by itself '+aft+'s after the one before';
-        row(first===last?first:(first+'\u2013'+last),names,detail,
-          {si:si,ctr:true,cur:st.items.indexOf(selAnnot)>=0});
+        if(aft) tag+=' \u00b7 after '+aft+' s';
+        var cur2=st.items.indexOf(selAnnot)>=0;
+        /* T417: A BUILD IN PIECES IS ONE ROW PER PIECE (2026-09-13,
+           user: "Why cannot I see the per dot point for the
+           paragraph"). The first piece carries the name's row and the
+           controls; every piece after it is a row of its own, with the
+           words that appear on that click. */
+        var pieceA=null;
+        st.items.forEach(function(idx){
+          var a=s.annots[idx];
+          if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});
+        if(pieceA&&st.items.length===1){
+          var pcs=textPieces(pieceA),ii=st.items[0];
+          /* T418: the figure that turns with each piece, on its row */
+          var sfb=pieceA.anim.sync?flipById(s,pieceA.anim.sync):null;
+          var sfr=sfb?flipFrames(sfb):[];
+          function pieceName(k){
+            var t=short(pcs[k]||('Piece '+(k+1)),40);
+            if(sfr[k]) t+=' \u00b7 '+frameLabel(sfr[k],k);
+            return t;
+          }
+          row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2});
+          for(var k=1;k<nsub;k++)
+            row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],'',
+              {sub:true,cur:cur2});
+        } else {
+          var last=(plan.stop[b0+nsub-1]|0)+1;
+          row(first===last?first:(first+'\u2013'+last),names,
+            tag+(nsub>1?(' \u00b7 '+nsub+' pieces'):''),
+            {si:si,ctr:true,cur:cur2});
+        }
         stepperRows(plan.anch[b0]);
       });
       /* anything that steps but carries no build of its own lands
          after every build, exactly as flipPlan lays it out */
       stepperRows(plan.tail);
       if(total) menu.appendChild(list);
+      /* T417: the thing you have selected, when it is not on the list
+         yet -- with the two ways onto it, so a box with bullets is one
+         click from appearing bullet by bullet */
+      var sa=(typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+      if(sa&&!sa.anim&&!sa.hide&&(sa.k!=='flip'||!flipFrames(sa).length)){
+        var sr=document.createElement('div');
+        sr.className='anim-step anim-off cur';
+        var sn=document.createElement('span');
+        sn.className='anim-num off';sn.textContent='\u2013';
+        sr.appendChild(sn);
+        var sb=document.createElement('span');sb.className='anim-body';
+        var sl=document.createElement('span');sl.className='anim-name';
+        sl.textContent=itemLabel(s,selAnnot);sb.appendChild(sl);
+        sr.appendChild(sb);
+        var sc=document.createElement('span');
+        sc.className='anim-stepctr row';
+        var acts=[['Appear',function(){setType('appear');}]];
+        if(sa.k==='text') acts.push(['By bullet',function(){setBy('para');}]);
+        acts.forEach(function(m){
+          var b=document.createElement('button');b.type='button';
+          b.className='anim-mini';b.textContent=m[0];
+          b.addEventListener('click',function(e){e.stopPropagation();
+            m[1]();render();});
+          sc.appendChild(b);});
+        sr.appendChild(sc);
+        menu.appendChild(sr);
+      }
       /* ...and the way to SAY the order by pointing (T168), beside the
          list it rewrites */
       var sq=document.createElement('button');
@@ -69677,6 +69809,34 @@ window.JunoPptx = (function () {
   if(saveTarget==='project'&&APP.mode!=='app') saveTarget='browser';
   if(saveTarget==='file'&&!canPickFile) saveTarget='browser';
   var fileHandle=null,fileName='';
+  /* ---- T416: A FILE BELONGS TO ONE PRESENTATION -----------------------
+     One remembered handle served every deck: switch to another deck
+     with the target still "file" and the next autosave wrote THAT deck
+     into the first deck's file -- and a deck too big for the draft
+     store, which was nowhere but in that file, was gone from it. So a
+     handle is bound to the deck it was saved from or opened into
+     (fileFor), and fileSync() makes fileHandle/fileName the CURRENT
+     deck's whenever the deck changes, on every status() -- a deck with
+     no file of its own has none, and Save asks, or the folder mints
+     one. The last binding is remembered (HKEY + HNKEY) so the next
+     visit can offer the file back. */
+  var HNKEY='semopts:'+SCOPE+':filefor';
+  var fileFor='',fileHandles={};
+  function bindFile(name,h){
+    fileFor=name||'';
+    fileHandles[fileFor]=h||null;
+    fileHandle=h||null;fileName=h?(h.name||''):'';
+    if(h){idbPut(HKEY,h).catch(function(){});lsSet(HNKEY,fileFor,true);}
+    else {idbDel(HKEY).catch(function(){});lsDel(HNKEY);}
+  }
+  function fileSync(){
+    var nm=(pres&&pres.name)||'';
+    if(nm===fileFor) return;
+    fileFor=nm;
+    var h=fileHandles[nm]||null;
+    fileHandle=h;fileName=h?(h.name||''):'';
+    if(fileWaits!=='reopen') fileWaits='';
+  }
   function idb(){
     return new Promise(function(res,rej){
       var r,done=false;
@@ -69773,8 +69933,8 @@ window.JunoPptx = (function () {
       if(!ok) return null;
       return deckDir.getFileHandle(deckFileName(),{create:true})
         .then(function(h){
-          fileHandle=h;fileName=h.name||deckFileName();
-          idbPut(HKEY,h).catch(function(){});
+          bindFile(pres.name,h);   /* T416: this deck's file */
+          if(!fileName) fileName=deckFileName();
           return h;
         }).catch(function(){return null;});
     });
@@ -69789,10 +69949,9 @@ window.JunoPptx = (function () {
       types:[{description:'Junoview presentation',
         accept:{'text/html':['.html']}}]
     }).then(function(h){
-      fileHandle=h;fileName=h.name||'';
       /* REMEMBERING the file is best-effort: it must never delay or block
-         the save itself, so it runs in the background */
-      idbPut(HKEY,h).catch(function(){});
+         the save itself, so it runs in the background (bindFile, T416) */
+      bindFile(pres.name,h);
       followFileName();
       return h;
     });
@@ -70109,8 +70268,7 @@ window.JunoPptx = (function () {
       if(!d) return false;
       /* a new folder means a new file: forget the old handle, or
          the next save would write the file you just moved away from */
-      fileHandle=null;fileName='';
-      idbDel(HKEY).catch(function(){});
+      bindFile(pres.name,null);
       setTarget('file');
       return saveToFile(false).then(function(){
         toast('Every presentation now saves itself into '
@@ -70538,31 +70696,91 @@ window.JunoPptx = (function () {
     /* a file chosen on an earlier visit is still remembered */
     idbGet(HKEY).then(function(h){
       if(!h) return;
-      fileHandle=h;fileName=h.name||'';
-      /* remembered ≠ active. Only a still-granted write permission keeps
-         the file as the silent autosave target across sessions; without
-         it, saves go to the browser and the file stays one click away
-         (2026-08-18). */
-      return permOK(h).then(function(ok){
-        if(!ok&&saveTarget==='file'){
-          saveTarget='browser';
-          lsSet(TGKEY,'browser');
-          status();
-        }
-        renderTargetBtn();renderSaveBtn();
-      }).then(function(){
-        /* the file is a SOURCE too, not just a target: if it can still be
-           read, restore any presentation the browser no longer lists
-           (2026-08-20, user locked out of a file-saved presentation) */
-        return permReadOK(h).then(function(ok){
-          if(!ok) return;
-          return h.getFile().then(function(f){return f.text();})
-            .then(function(txt){importDeckText(txt,true);});
-        });
-      });
+      return rememberedFileBoot(h,lsGet(HNKEY)||lsGet(PFX+'last')||'');
     }).catch(function(){});
     renderTargetBtn();
   })();
+  /* ---- T416: THE REMEMBERED FILE, ON THE NEXT VISIT --------------------
+     Bound to the deck it was for. Write permission lapsed (it always
+     does after a reload) used to flip the target to the BROWSER --
+     silently, and for a deck that only ever fitted in the file, which
+     is how "saved to local" stopped being true. The target stays
+     "file" and the readout asks for the one click that re-grants it
+     (T406's readout). If the file can be read now, the deck it holds
+     is restored: into the library when it fits, and opened from the
+     object in hand when it is the deck this visit opened on and the
+     store has no copy. If it cannot be read without a click, the
+     readout offers "click to reopen", one click, no dialog. */
+  var fileReopen=null;
+  function deckHas(name){
+    return !!(name&&(lsGet(PFX+name)||savedByName(name)));
+  }
+  function rememberedFileBoot(h,forName){
+    if(!h) return Promise.resolve();
+    forName=forName||'';
+    fileHandles[forName]=h;
+    var mine=(forName===((pres&&pres.name)||''));
+    if(mine){fileHandle=h;fileName=h.name||'';fileFor=forName;}
+    return permOK(h).then(function(ok){
+      if(!ok&&mine&&saveTarget==='file') fileWaits='perm';
+      renderTargetBtn();renderSaveBtn();status();
+    }).then(function(){
+      return permReadOK(h).then(function(ok){
+        if(ok) return h.getFile().then(function(f){return f.text();})
+          .then(function(txt){fileRestore(txt,forName);});
+        fileReopen={h:h,name:forName};
+        if(!deckHas(forName)){fileWaits='reopen';status();}
+      });
+    }).catch(function(){});
+  }
+  window.SemDeckFileBoot=rememberedFileBoot;   /* browser-verification hook */
+  function fileRestore(txt,forName){
+    var obj;
+    try{obj=parseDeckText(txt);}catch(e){return false;}
+    var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+      :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:[];
+    /* everything that fits goes into the library, quietly */
+    importDeckText(txt,true);
+    var hit=null;
+    list.forEach(function(pr){
+      if(!hit&&pr&&Array.isArray(pr.slides)&&(pr.name||'')===forName) hit=pr;});
+    if(!hit||(pres&&pres.name===forName)) return false;
+    /* the deck this visit opened on, or nothing real is open yet */
+    var want=(lsGet(PFX+'last')||'')===forName||!pres||!pres.slides
+      ||source==='auto';
+    if(!want) return false;
+    /* from the library when the silent import could keep it there,
+       else from the object in hand */
+    if(deckHas(forName)){lsSet(PFX+'last',forName,true);loadPresentation(forName);}
+    else {var np=normPres(hit);np.name=forName;loadPresentationObj(np);}
+    fileFor=forName;fileHandle=fileHandles[forName]||null;
+    fileName=fileHandle?(fileHandle.name||''):'';
+    cur=0;activePane=-1;
+    if(saveTarget!=='file') setTarget('file');
+    status();refresh();
+    toast('Reopened \u201c'+forName+'\u201d from '+(fileName||'its file'),
+      6000);
+    return true;
+  }
+  function reopenFile(){
+    if(!fileReopen) return Promise.resolve(false);
+    var h=fileReopen.h,nm=fileReopen.name;
+    return permAsk(h).then(function(ok){
+      if(!ok){
+        toast('Junoview was not allowed to read '+(h.name||'the file'));
+        return false;
+      }
+      return h.getFile().then(function(f){return f.text();})
+        .then(function(txt){
+          fileReopen=null;fileWaits='';
+          if(!fileRestore(txt,nm)){status();toast('Nothing to reopen \u2014 '
+            +'\u201c'+nm+'\u201d is already here');}
+          return true;
+        });
+    }).catch(function(e){
+      toast('Could not reopen: '+((e&&e.message)||e),8000);return false;});
+  }
+  window.SemDeckReopen=reopenFile;   /* browser-verification hook */
 
   /* direct save-into-.ipynb is parked for now (kept for later) */
   var ENABLE_SAVE_TO_IPYNB=false;
@@ -70916,7 +71134,14 @@ window.JunoPptx = (function () {
         +'@media print{body{background:none;}'
         +'.print-page{margin:0;box-shadow:none;}}'
         +'</style></head><body>'
-        +nav+root.outerHTML+'</body></html>';
+        +nav+root.outerHTML
+        /* T416: THE DECK RIDES INSIDE. A standalone page was pictures
+           of slides and nothing else, so the one copy someone kept
+           could never be opened for editing again. The same data block
+           a .junoview.html carries, so Open a file takes this too. */
+        +'<script type="application/json" id="junoview-data">\n'
+        +deckFileText().replace(/</g,'\\u003c')+'\n</scr'+'ipt>'
+        +'</body></html>';
       var blob=new Blob([doc],{type:'text/html'});
       var a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
@@ -71876,16 +72101,12 @@ window.JunoPptx = (function () {
         var h=hs&&hs[0]; if(!h) return;
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
-            importDeckText(txt,false);
-            /* the handle is what makes Save write back to this very file */
-            fileHandle=h;fileName=h.name||f.name||'';
-            /* T261: HKEY, not 'deckFile'. Nothing ever read 'deckFile',
-               so the file you had just opened was forgotten on the next
-               visit -- while any handle left under HKEY by an earlier
-               Save-as WAS restored and became the live target with
-               saveTarget still 'file', so the first autosave after a
-               reload wrote this deck into that other file. */
-            idbPut(HKEY,h).catch(function(){});
+            if(!importDeckText(txt,false)) return;
+            /* the handle is what makes Save write back to this very
+               file -- bound to the deck it opened (T416; T261 before
+               it: HKEY, not 'deckFile', so the next visit remembers) */
+            bindFile(pres.name,h);
+            if(!fileName) fileName=f.name||'';
             setTarget('file');
             toast('Opened \u2014 Save now writes back to '+fileName);
           });
@@ -71911,11 +72132,15 @@ window.JunoPptx = (function () {
       if(!f) return;
       var nm=f.name||'';
       f.text().then(function(txt){
-        importDeckText(txt,false);
+        if(!importDeckText(txt,false)) return;
         /* no handle from an <input>, so we cannot write back to the file
            itself - but the DESTINATION is still "a file on your
-           computer", and the first Save asks where once */
-        fileName=nm;fileHandle=null;
+           computer", and the first Save asks where once. T416: bound to
+           the deck it opened, and the deck takes the file's name the
+           way a picked file gives it (T398). */
+        bindFile(pres.name,null);
+        fileName=nm;
+        followFileName();
         /* T263: ...and it can only ask where if this browser HAS a save
            picker. Without one, pickSaveFile resolves null, so every Save
            and every autosave did nothing at all and said nothing. This
@@ -72035,7 +72260,11 @@ window.JunoPptx = (function () {
        before. Put the complete current state under the new key NOW; the
        debounced markDirty below is redundancy, not the only copy. */
     var moved=deep(pres);moved.name=nm;
-    if(!lsSet(PFX+nm,JSON.stringify(moved))){
+    /* T416: a deck whose home is a FILE is renamed whether or not the
+       browser can keep a draft copy of it -- the file is the copy that
+       matters, and a deck too big for the store could not be renamed
+       at all */
+    if(!lsSet(PFX+nm,JSON.stringify(moved),true)&&saveTarget!=='file'){
       toast('Could not rename — this browser could not keep the moved '
         +'draft. Your presentation is still called “'+old+'”.',9000);
       return false;
@@ -72053,9 +72282,59 @@ window.JunoPptx = (function () {
     if(typeof renameRememberedPresentation==='function')
       renameRememberedPresentation(old,nm);
     saveProject();
+    fileRename(old,nm);   /* T416: the file follows the name */
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');
     return true;
+  }
+  /* ---- T416: THE FILE FOLLOWS THE NAME, the other half of T398 --------
+     (2026-09-13, user: "when you save it as a name the presentation
+     name becomes this and vice-versa"). In the default folder the file
+     is Junoview's own, so it is renamed outright: the new name is
+     written, the old file removed. A file picked elsewhere is moved
+     where the browser can move a file; where it cannot, the old file
+     keeps being written and a toast says which click renames it. */
+  function fileRename(old,nm){
+    var had=(fileHandles[old]!==undefined)||fileFor===old;
+    if(!had) return Promise.resolve(false);
+    var h=fileHandles[old]||null;
+    delete fileHandles[old];fileHandles[nm]=h;
+    if(fileFor===old){fileFor=nm;fileHandle=h;fileName=h?(h.name||''):'';}
+    if(h) lsSet(HNKEY,nm,true);
+    if(!h||fileStem(fileName)===nm) return Promise.resolve(false);
+    var oldFile=fileName,newName=deckFileName();
+    function say(){
+      toast('Still writing '+oldFile+' \u2014 the \u25be beside Save \u203a '
+        +'\u201cA file on your computer\u2026\u201d saves it as '+newName,
+        8000);
+      return false;
+    }
+    function moveOrSay(){
+      if(typeof h.move!=='function') return say();
+      return h.move(newName).then(function(){
+        fileName=h.name||newName;
+        renderTargetBtn();renderSaveBtn();status();
+        toast('The file is '+fileName+' now');
+        return true;
+      }).catch(function(){return say();});
+    }
+    if(!deckDir) return moveOrSay();
+    return deckDir.getFileHandle(oldFile).then(function(oh){
+      return (h.isSameEntry?h.isSameEntry(oh):Promise.resolve(false));
+    }).then(function(same){
+      if(!same) return moveOrSay();
+      return permOK(deckDir).then(function(ok){
+        if(!ok) return say();
+        /* ours: write the new file, then drop the old */
+        bindFile(nm,null);
+        return saveToFile(true).then(function(wrote){
+          if(!wrote) return false;
+          return deckDir.removeEntry(oldFile).catch(function(){})
+            .then(function(){toast('The file is '+fileName+' now');
+              return true;});
+        });
+      });
+    }).catch(function(){return moveOrSay();});
   }
   menuAction('#mi-del',function(){
     deletePresByName(pres.name);
@@ -72845,7 +73124,8 @@ window.JunoPptx = (function () {
       /* the file you opened was a .pptx; the one you will save is not,
          so the destination is "a file on your computer" the way the
          .junoview door sets it, and the first Save asks where once */
-      fileHandle=null;fileName=pr.name+'.junoview.html';
+      bindFile(pres.name,null);   /* T416: this deck, no file yet */
+      fileName=pr.name+'.junoview.html';
       if(canPickFile) setTarget('file');
       toast('Imported '+pr.slides.length+' slide'
         +(pr.slides.length===1?'':'s')+' from '+nm

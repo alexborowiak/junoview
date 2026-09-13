@@ -52,7 +52,10 @@ from junoview import assets
 
 def test_an_opened_file_is_remembered_under_the_key_that_is_read():
     deck = assets.deck_js()
-    assert "            idbPut(HKEY,h).catch(function(){});" in deck
+    # (T416: through bindFile, which writes HKEY for whichever door bound it)
+    assert "            bindFile(pres.name,h);" in deck
+    assert ("    if(h){idbPut(HKEY,h).catch(function(){});"
+            "lsSet(HNKEY,fileFor,true);}") in deck
     # the key nothing read is gone
     assert "idbPut('deckFile'" not in deck
     # ...and HKEY is still what the restore path reads

@@ -854,6 +854,7 @@
     });
   }
   function status(){
+    if(typeof fileSync==='function') fileSync();   /* T416: this deck's file */
     syncQatName();
     /* the bar names what it belongs to; for a poster this is the only
        place the name is shown, since the panel that normally carries it
@@ -875,6 +876,21 @@
       el.title='Browser storage is full, so edits are not being kept. '
         +'Use File \u203a Download a copy, or the \u25be beside Save to '
         +'save to a file.';
+      return;
+    }
+    /* T416: the remembered file the browser must be allowed to read
+       again -- one click, and the deck in it is back */
+    if(typeof fileWaits!=='undefined'&&fileWaits==='reopen'){
+      var rf=(typeof fileReopen!=='undefined'&&fileReopen&&fileReopen.h
+        &&fileReopen.h.name)||'the file';
+      el.textContent='click to reopen '+rf;
+      /* clickable by its own hand: markSaveClickable only marks a
+         browser-kept deck, and this click is a read, not a save */
+      el.className='deck-status unsaved clickable';
+      el.title='\u201c'+((typeof fileReopen!=='undefined'&&fileReopen
+        &&fileReopen.name)||'the presentation')+'\u201d lives in '+rf
+        +'. After a reload the browser waits for one click before it '
+        +'lets a page read a file again \u2014 this is that click.';
       return;
     }
     /* T406: a file that is waiting on ONE click says so, instead of
@@ -939,6 +955,9 @@
     var el=$('#deck-status');
     if(el) el.addEventListener('click',function(){
       if(!el.classList.contains('clickable')) return;
+      /* T416: the reopen click is a read, not a save */
+      if(typeof fileWaits!=='undefined'&&fileWaits==='reopen'
+         &&typeof reopenFile==='function'){reopenFile();return;}
       var sb=$('#dc-save'); if(sb) sb.click();
     });
   })();

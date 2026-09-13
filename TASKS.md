@@ -8119,3 +8119,37 @@ gates are recorded in the completing commit.
   Reuse group opens with a "Match…" tile, and a thumbnail's right-click
   menu has "Match this slide to another…" and "Give this slide's layout
   to slides I click…", the same arming the Design door does.
+- [x] **T417 — The Animation pane says less.** (User: "All that text is
+  soo unnecessary … DON'T FILL IT WITH VERBOSE UNNECESSARY TEXT.") The
+  hint paragraph and the per-row explanations are gone. A row is the
+  click number, the name and the effect word; the heading is "5 clicks".
+  A box built in pieces is one row per piece, with the words that
+  appear on that click (user: "Why cannot I see the per dot point for
+  the paragraph"); and the selected thing, when it is not on the list
+  yet, is a dashed row with Appear and By bullet on it.
+- [x] **T418 — The picture turns with the bullets.** (User: "I want the
+  image to change in the flip book as the dot point changes, but there
+  is no way to split them up.") A text box built in pieces can name a
+  flip book on the slide (`anim.sync`, the book's `fid`; the Turns box
+  in Timing & text): figure k shows with piece k, on the same click,
+  and the book has no clicks of its own. The pane's piece rows name the
+  figure each one turns to. Schema in DECK-FORMAT.md and deck_schema.py.
+- [x] **T416 — Saving, end to end.** (User: "Please make sure all the
+  saving features work - files can be opened; files save to local
+  properly; when you save it as a name the presentation name becomes
+  this and vice-versa.") One remembered file handle served every
+  presentation, so switching decks and autosaving wrote the second deck
+  into the first deck's file — and a deck too big for the draft store,
+  which was nowhere but in that file, was gone from it. A file is bound
+  to the presentation it was saved from or opened into now (`bindFile`,
+  `fileSync` on every readout); a deck with no file of its own has none.
+  After a reload a lapsed write permission no longer flips the target to
+  the browser: the target stays "file", the readout asks for the one
+  click, and the file's deck is restored — into the library when it
+  fits, from the object in hand when it is the deck the visit opened on,
+  or behind "click to reopen" when the browser will not read it yet.
+  Renaming a presentation renames its file (moved in place, or rewritten
+  and the old one removed in the default folder), and a deck whose home
+  is a file is renamed whether or not a draft copy fits. The standalone
+  HTML export carries the deck data, so it can be opened again. Driven
+  in Chromium with a stubbed File System Access API.

@@ -201,6 +201,34 @@
   if(saveTarget==='project'&&APP.mode!=='app') saveTarget='browser';
   if(saveTarget==='file'&&!canPickFile) saveTarget='browser';
   var fileHandle=null,fileName='';
+  /* ---- T416: A FILE BELONGS TO ONE PRESENTATION -----------------------
+     One remembered handle served every deck: switch to another deck
+     with the target still "file" and the next autosave wrote THAT deck
+     into the first deck's file -- and a deck too big for the draft
+     store, which was nowhere but in that file, was gone from it. So a
+     handle is bound to the deck it was saved from or opened into
+     (fileFor), and fileSync() makes fileHandle/fileName the CURRENT
+     deck's whenever the deck changes, on every status() -- a deck with
+     no file of its own has none, and Save asks, or the folder mints
+     one. The last binding is remembered (HKEY + HNKEY) so the next
+     visit can offer the file back. */
+  var HNKEY='semopts:'+SCOPE+':filefor';
+  var fileFor='',fileHandles={};
+  function bindFile(name,h){
+    fileFor=name||'';
+    fileHandles[fileFor]=h||null;
+    fileHandle=h||null;fileName=h?(h.name||''):'';
+    if(h){idbPut(HKEY,h).catch(function(){});lsSet(HNKEY,fileFor,true);}
+    else {idbDel(HKEY).catch(function(){});lsDel(HNKEY);}
+  }
+  function fileSync(){
+    var nm=(pres&&pres.name)||'';
+    if(nm===fileFor) return;
+    fileFor=nm;
+    var h=fileHandles[nm]||null;
+    fileHandle=h;fileName=h?(h.name||''):'';
+    if(fileWaits!=='reopen') fileWaits='';
+  }
   function idb(){
     return new Promise(function(res,rej){
       var r,done=false;
@@ -297,8 +325,8 @@
       if(!ok) return null;
       return deckDir.getFileHandle(deckFileName(),{create:true})
         .then(function(h){
-          fileHandle=h;fileName=h.name||deckFileName();
-          idbPut(HKEY,h).catch(function(){});
+          bindFile(pres.name,h);   /* T416: this deck's file */
+          if(!fileName) fileName=deckFileName();
           return h;
         }).catch(function(){return null;});
     });
@@ -313,10 +341,9 @@
       types:[{description:'Junoview presentation',
         accept:{'text/html':['.html']}}]
     }).then(function(h){
-      fileHandle=h;fileName=h.name||'';
       /* REMEMBERING the file is best-effort: it must never delay or block
-         the save itself, so it runs in the background */
-      idbPut(HKEY,h).catch(function(){});
+         the save itself, so it runs in the background (bindFile, T416) */
+      bindFile(pres.name,h);
       followFileName();
       return h;
     });
@@ -633,8 +660,7 @@
       if(!d) return false;
       /* a new folder means a new file: forget the old handle, or
          the next save would write the file you just moved away from */
-      fileHandle=null;fileName='';
-      idbDel(HKEY).catch(function(){});
+      bindFile(pres.name,null);
       setTarget('file');
       return saveToFile(false).then(function(){
         toast('Every presentation now saves itself into '
@@ -1062,31 +1088,91 @@
     /* a file chosen on an earlier visit is still remembered */
     idbGet(HKEY).then(function(h){
       if(!h) return;
-      fileHandle=h;fileName=h.name||'';
-      /* remembered ≠ active. Only a still-granted write permission keeps
-         the file as the silent autosave target across sessions; without
-         it, saves go to the browser and the file stays one click away
-         (2026-08-18). */
-      return permOK(h).then(function(ok){
-        if(!ok&&saveTarget==='file'){
-          saveTarget='browser';
-          lsSet(TGKEY,'browser');
-          status();
-        }
-        renderTargetBtn();renderSaveBtn();
-      }).then(function(){
-        /* the file is a SOURCE too, not just a target: if it can still be
-           read, restore any presentation the browser no longer lists
-           (2026-08-20, user locked out of a file-saved presentation) */
-        return permReadOK(h).then(function(ok){
-          if(!ok) return;
-          return h.getFile().then(function(f){return f.text();})
-            .then(function(txt){importDeckText(txt,true);});
-        });
-      });
+      return rememberedFileBoot(h,lsGet(HNKEY)||lsGet(PFX+'last')||'');
     }).catch(function(){});
     renderTargetBtn();
   })();
+  /* ---- T416: THE REMEMBERED FILE, ON THE NEXT VISIT --------------------
+     Bound to the deck it was for. Write permission lapsed (it always
+     does after a reload) used to flip the target to the BROWSER --
+     silently, and for a deck that only ever fitted in the file, which
+     is how "saved to local" stopped being true. The target stays
+     "file" and the readout asks for the one click that re-grants it
+     (T406's readout). If the file can be read now, the deck it holds
+     is restored: into the library when it fits, and opened from the
+     object in hand when it is the deck this visit opened on and the
+     store has no copy. If it cannot be read without a click, the
+     readout offers "click to reopen", one click, no dialog. */
+  var fileReopen=null;
+  function deckHas(name){
+    return !!(name&&(lsGet(PFX+name)||savedByName(name)));
+  }
+  function rememberedFileBoot(h,forName){
+    if(!h) return Promise.resolve();
+    forName=forName||'';
+    fileHandles[forName]=h;
+    var mine=(forName===((pres&&pres.name)||''));
+    if(mine){fileHandle=h;fileName=h.name||'';fileFor=forName;}
+    return permOK(h).then(function(ok){
+      if(!ok&&mine&&saveTarget==='file') fileWaits='perm';
+      renderTargetBtn();renderSaveBtn();status();
+    }).then(function(){
+      return permReadOK(h).then(function(ok){
+        if(ok) return h.getFile().then(function(f){return f.text();})
+          .then(function(txt){fileRestore(txt,forName);});
+        fileReopen={h:h,name:forName};
+        if(!deckHas(forName)){fileWaits='reopen';status();}
+      });
+    }).catch(function(){});
+  }
+  window.SemDeckFileBoot=rememberedFileBoot;   /* browser-verification hook */
+  function fileRestore(txt,forName){
+    var obj;
+    try{obj=parseDeckText(txt);}catch(e){return false;}
+    var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+      :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:[];
+    /* everything that fits goes into the library, quietly */
+    importDeckText(txt,true);
+    var hit=null;
+    list.forEach(function(pr){
+      if(!hit&&pr&&Array.isArray(pr.slides)&&(pr.name||'')===forName) hit=pr;});
+    if(!hit||(pres&&pres.name===forName)) return false;
+    /* the deck this visit opened on, or nothing real is open yet */
+    var want=(lsGet(PFX+'last')||'')===forName||!pres||!pres.slides
+      ||source==='auto';
+    if(!want) return false;
+    /* from the library when the silent import could keep it there,
+       else from the object in hand */
+    if(deckHas(forName)){lsSet(PFX+'last',forName,true);loadPresentation(forName);}
+    else {var np=normPres(hit);np.name=forName;loadPresentationObj(np);}
+    fileFor=forName;fileHandle=fileHandles[forName]||null;
+    fileName=fileHandle?(fileHandle.name||''):'';
+    cur=0;activePane=-1;
+    if(saveTarget!=='file') setTarget('file');
+    status();refresh();
+    toast('Reopened \u201c'+forName+'\u201d from '+(fileName||'its file'),
+      6000);
+    return true;
+  }
+  function reopenFile(){
+    if(!fileReopen) return Promise.resolve(false);
+    var h=fileReopen.h,nm=fileReopen.name;
+    return permAsk(h).then(function(ok){
+      if(!ok){
+        toast('Junoview was not allowed to read '+(h.name||'the file'));
+        return false;
+      }
+      return h.getFile().then(function(f){return f.text();})
+        .then(function(txt){
+          fileReopen=null;fileWaits='';
+          if(!fileRestore(txt,nm)){status();toast('Nothing to reopen \u2014 '
+            +'\u201c'+nm+'\u201d is already here');}
+          return true;
+        });
+    }).catch(function(e){
+      toast('Could not reopen: '+((e&&e.message)||e),8000);return false;});
+  }
+  window.SemDeckReopen=reopenFile;   /* browser-verification hook */
 
   /* direct save-into-.ipynb is parked for now (kept for later) */
   var ENABLE_SAVE_TO_IPYNB=false;
@@ -1440,7 +1526,14 @@
         +'@media print{body{background:none;}'
         +'.print-page{margin:0;box-shadow:none;}}'
         +'</style></head><body>'
-        +nav+root.outerHTML+'</body></html>';
+        +nav+root.outerHTML
+        /* T416: THE DECK RIDES INSIDE. A standalone page was pictures
+           of slides and nothing else, so the one copy someone kept
+           could never be opened for editing again. The same data block
+           a .junoview.html carries, so Open a file takes this too. */
+        +'<script type="application/json" id="junoview-data">\n'
+        +deckFileText().replace(/</g,'\\u003c')+'\n</scr'+'ipt>'
+        +'</body></html>';
       var blob=new Blob([doc],{type:'text/html'});
       var a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
@@ -2400,16 +2493,12 @@
         var h=hs&&hs[0]; if(!h) return;
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
-            importDeckText(txt,false);
-            /* the handle is what makes Save write back to this very file */
-            fileHandle=h;fileName=h.name||f.name||'';
-            /* T261: HKEY, not 'deckFile'. Nothing ever read 'deckFile',
-               so the file you had just opened was forgotten on the next
-               visit -- while any handle left under HKEY by an earlier
-               Save-as WAS restored and became the live target with
-               saveTarget still 'file', so the first autosave after a
-               reload wrote this deck into that other file. */
-            idbPut(HKEY,h).catch(function(){});
+            if(!importDeckText(txt,false)) return;
+            /* the handle is what makes Save write back to this very
+               file -- bound to the deck it opened (T416; T261 before
+               it: HKEY, not 'deckFile', so the next visit remembers) */
+            bindFile(pres.name,h);
+            if(!fileName) fileName=f.name||'';
             setTarget('file');
             toast('Opened \u2014 Save now writes back to '+fileName);
           });
@@ -2435,11 +2524,15 @@
       if(!f) return;
       var nm=f.name||'';
       f.text().then(function(txt){
-        importDeckText(txt,false);
+        if(!importDeckText(txt,false)) return;
         /* no handle from an <input>, so we cannot write back to the file
            itself - but the DESTINATION is still "a file on your
-           computer", and the first Save asks where once */
-        fileName=nm;fileHandle=null;
+           computer", and the first Save asks where once. T416: bound to
+           the deck it opened, and the deck takes the file's name the
+           way a picked file gives it (T398). */
+        bindFile(pres.name,null);
+        fileName=nm;
+        followFileName();
         /* T263: ...and it can only ask where if this browser HAS a save
            picker. Without one, pickSaveFile resolves null, so every Save
            and every autosave did nothing at all and said nothing. This
@@ -2559,7 +2652,11 @@
        before. Put the complete current state under the new key NOW; the
        debounced markDirty below is redundancy, not the only copy. */
     var moved=deep(pres);moved.name=nm;
-    if(!lsSet(PFX+nm,JSON.stringify(moved))){
+    /* T416: a deck whose home is a FILE is renamed whether or not the
+       browser can keep a draft copy of it -- the file is the copy that
+       matters, and a deck too big for the store could not be renamed
+       at all */
+    if(!lsSet(PFX+nm,JSON.stringify(moved),true)&&saveTarget!=='file'){
       toast('Could not rename — this browser could not keep the moved '
         +'draft. Your presentation is still called “'+old+'”.',9000);
       return false;
@@ -2577,9 +2674,59 @@
     if(typeof renameRememberedPresentation==='function')
       renameRememberedPresentation(old,nm);
     saveProject();
+    fileRename(old,nm);   /* T416: the file follows the name */
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');
     return true;
+  }
+  /* ---- T416: THE FILE FOLLOWS THE NAME, the other half of T398 --------
+     (2026-09-13, user: "when you save it as a name the presentation
+     name becomes this and vice-versa"). In the default folder the file
+     is Junoview's own, so it is renamed outright: the new name is
+     written, the old file removed. A file picked elsewhere is moved
+     where the browser can move a file; where it cannot, the old file
+     keeps being written and a toast says which click renames it. */
+  function fileRename(old,nm){
+    var had=(fileHandles[old]!==undefined)||fileFor===old;
+    if(!had) return Promise.resolve(false);
+    var h=fileHandles[old]||null;
+    delete fileHandles[old];fileHandles[nm]=h;
+    if(fileFor===old){fileFor=nm;fileHandle=h;fileName=h?(h.name||''):'';}
+    if(h) lsSet(HNKEY,nm,true);
+    if(!h||fileStem(fileName)===nm) return Promise.resolve(false);
+    var oldFile=fileName,newName=deckFileName();
+    function say(){
+      toast('Still writing '+oldFile+' \u2014 the \u25be beside Save \u203a '
+        +'\u201cA file on your computer\u2026\u201d saves it as '+newName,
+        8000);
+      return false;
+    }
+    function moveOrSay(){
+      if(typeof h.move!=='function') return say();
+      return h.move(newName).then(function(){
+        fileName=h.name||newName;
+        renderTargetBtn();renderSaveBtn();status();
+        toast('The file is '+fileName+' now');
+        return true;
+      }).catch(function(){return say();});
+    }
+    if(!deckDir) return moveOrSay();
+    return deckDir.getFileHandle(oldFile).then(function(oh){
+      return (h.isSameEntry?h.isSameEntry(oh):Promise.resolve(false));
+    }).then(function(same){
+      if(!same) return moveOrSay();
+      return permOK(deckDir).then(function(ok){
+        if(!ok) return say();
+        /* ours: write the new file, then drop the old */
+        bindFile(nm,null);
+        return saveToFile(true).then(function(wrote){
+          if(!wrote) return false;
+          return deckDir.removeEntry(oldFile).catch(function(){})
+            .then(function(){toast('The file is '+fileName+' now');
+              return true;});
+        });
+      });
+    }).catch(function(){return moveOrSay();});
   }
   menuAction('#mi-del',function(){
     deletePresByName(pres.name);

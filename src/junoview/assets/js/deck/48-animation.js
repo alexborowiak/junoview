@@ -768,9 +768,52 @@
         hb.disabled=!st.text;
         hb.setAttribute('aria-pressed',(st.text&&st.hl).toString());
       }
+      /* T418: the flip book that turns with each piece -- offered only
+         for a box built in pieces, on a slide that has a book with
+         pages to turn */
+      var sc=$('#anim-synccell'),ss=$('#anim-sync');
+      if(sc&&ss){
+        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+        var books=(st.text&&st.by&&!poster&&!armed)
+          ?flipsOn(s2).filter(function(p){return flipFrames(p.a).length>1;})
+          :[];
+        sc.hidden=!books.length;
+        if(books.length){
+          var cur3=(a2&&a2.anim&&a2.anim.sync)||'';
+          ss.innerHTML='';
+          var o0=document.createElement('option');
+          o0.value='';o0.textContent='no flip book';ss.appendChild(o0);
+          books.forEach(function(p){
+            if(!p.a.fid) p.a.fid=flipId();
+            var o=document.createElement('option');
+            o.value=p.a.fid;
+            o.textContent=itemLabel(s2,p.i)+' ('+flipFrames(p.a).length
+              +' pages)';
+            if(p.a.fid===cur3) o.selected=true;
+            ss.appendChild(o);
+          });
+          if(!cur3) ss.value='';
+        }
+      }
       var lab=$('#anim-timing-lab');
       if(lab) lab.textContent=st.text?'Timing & text':'Timing';
     }
+    /* T418: figure k with piece k. Set on every selected box built in
+       pieces; '' takes it off. The book keeps whatever entrance it has. */
+    function setSync(fid){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim||!textBy(a)) return;
+        if(fid) a.anim.sync=fid; else delete a.anim.sync;
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    }
+    var ssel=$('#anim-sync');
+    if(ssel) ssel.addEventListener('change',function(){setSync(ssel.value);});
     var ocb=$('#anim-onclick');
     if(ocb) ocb.addEventListener('click',function(e){
       e.stopPropagation();
@@ -913,45 +956,35 @@
       var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
       var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
-      h1.textContent=total
-        ?('This slide takes '+total+' click'+(total===1?'':'s'))
-        :'Nothing happens on a click yet';
+      h1.textContent=total?(total+' click'+(total===1?'':'s')):'No clicks yet';
       menu.appendChild(h1);
-      var hint=document.createElement('div');hint.className='anim-empty';
-      hint.textContent=total
-        ?'One row per click, in order. Click a name to select it on the '
-          +'slide; Earlier and Later move a build. Effects, timing and '
-          +'text pieces are set on the ribbon above.'
-        :'Select something on the slide and pick an effect on the '
-          +'ribbon, or press One per click to build the whole slide.';
-      menu.appendChild(hint);
       var list=document.createElement('div');list.className='anim-seq';
-      /* one row: its click number (or range), what it is, how it
-         arrives, and for a build the two ways to move it */
-      function row(clickNo,names,detail,opts){
+      /* T417: ONE LINE PER ROW (2026-09-13, user: "All that text is
+         soo unnecessary ... DON'T FILL IT WITH VERBOSE UNNECESSARY
+         TEXT"). The number, the name, the effect word. Nothing that
+         explains the row: the row is the explanation. */
+      function row(clickNo,names,tag,opts){
         opts=opts||{};
         var r=document.createElement('div');
         r.className='anim-step'+(opts.sub?' anim-sub':'')+(opts.cur?' cur':'');
         var n=document.createElement('span');
         n.className='anim-num'+(String(clickNo).length>2?' wide':'');
         n.textContent=clickNo;
-        n.title=opts.sub?'The click this page turns on':'The click this arrives on';
         r.appendChild(n);
         var body=document.createElement('span');body.className='anim-body';
         names.forEach(function(p){
           var nm=document.createElement('button');nm.type='button';
-          nm.className='anim-name';nm.textContent=p[0];
-          nm.title=opts.title||('Select \u201c'+p[0]+'\u201d on the slide');
+          nm.className='anim-name';nm.textContent=p[0];nm.title=p[0];
           nm.addEventListener('click',function(e){e.stopPropagation();
             var l=stage.querySelector('.annot-layer');
             if(l) selectAnnot(l,p[1]); render();});
           body.appendChild(nm);
         });
-        if(detail){
-          var d=document.createElement('span');d.className='anim-detail';
-          d.textContent=detail;body.appendChild(d);
-        }
         r.appendChild(body);
+        if(tag){
+          var d=document.createElement('span');d.className='anim-tag';
+          d.textContent=tag;r.appendChild(d);
+        }
         if(opts.ctr){
           var ctr=document.createElement('span');ctr.className='anim-stepctr';
           [['\u2191 Earlier',-1],['\u2193 Later',1]].forEach(function(m){
@@ -982,64 +1015,100 @@
             var fx=flipFxWord(a.fanim)||'Cut';
             for(var d=1;d<walk.length;d++){
               var w=walk[d];
-              var name=w.j
-                ?('Page '+(w.j+1)+' of the words beside figure '+(w.k+1))
-                :('Figure '+(w.k+1)+' of '+fr.length+' \u00b7 '
-                  +frameLabel(fr[w.k],w.k));
-              row(base+d,[[name,p.i]],fx+' \u00b7 a page of the flip '
-                +'book, so it keeps the book\u2019s order',
-                {sub:true,cur:cur2,
-                 title:'A page of this flip book. Pages keep the '
-                   +'book\u2019s order; to move one, select the book and '
-                   +'use its panel on the Images tab.'});
+              var name=w.j?('Page '+(w.j+1)+' beside figure '+(w.k+1))
+                :frameLabel(fr[w.k],w.k);
+              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2});
             }
           } else if(a.k==='chart'){
             chartParse(a).series.forEach(function(se,k){
-              row(base+k+1,[['Series '+(k+1)+' \u00b7 '+se.name,p.i]],
-                'a series of the chart, in the data\u2019s order',
-                {sub:true,cur:cur2,
-                 title:'A series of this chart. The order follows the data.'});
+              row(base+k+1,[[se.name,p.i]],'series',{sub:true,cur:cur2});
             });
           } else if(a.k==='text'){
             var pg=textPages(a);
             for(var t=1;t<pg.length;t++)
-              row(base+t,[['Page '+(t+1)+' of '+pg.length+' \u00b7 '
-                +itemLabel(s,p.i),p.i]],'the next page of this text box',
-                {sub:true,cur:cur2,
-                 title:'A page of this text box. Pages keep their order.'});
+              row(base+t,[['Page '+(t+1),p.i]],'page',{sub:true,cur:cur2});
           }
         });
+      }
+      function short(t,n){
+        t=String(t||'').replace(/\s+/g,' ').trim();
+        return t.length>n?(t.slice(0,n-1)+'\u2026'):t;
       }
       seq.forEach(function(st,si){
         var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
         var first=(plan.stop[b0]|0)+1;
-        var last=(plan.stop[b0+nsub-1]|0)+1;
         var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
         var kinds={};
         st.items.forEach(function(idx){
           kinds[fxWord(s.annots[idx].anim.type)]=1;});
-        var detail=Object.keys(kinds).join(' / ');
-        var pieces=null;
-        st.items.forEach(function(idx){
-          var a=s.annots[idx];
-          if(textBy(a)&&!pieces)
-            pieces=(a.anim.by==='sent'?'sentence by sentence':'bullet by bullet')
-              +(a.anim.hl?', highlighting each':'');
-        });
-        if(nsub>1) detail+=' \u00b7 '+nsub+' clicks, '+(pieces||'in pieces');
-        if(st.items.length>1) detail+=' \u00b7 together on one click';
+        var tag=Object.keys(kinds).join('/');
         var aft=0;
         st.items.forEach(function(idx){
           var v=(s.annots[idx].anim.after)|0; if(v>aft) aft=v;});
-        if(aft) detail+=' \u00b7 runs by itself '+aft+'s after the one before';
-        row(first===last?first:(first+'\u2013'+last),names,detail,
-          {si:si,ctr:true,cur:st.items.indexOf(selAnnot)>=0});
+        if(aft) tag+=' \u00b7 after '+aft+' s';
+        var cur2=st.items.indexOf(selAnnot)>=0;
+        /* T417: A BUILD IN PIECES IS ONE ROW PER PIECE (2026-09-13,
+           user: "Why cannot I see the per dot point for the
+           paragraph"). The first piece carries the name's row and the
+           controls; every piece after it is a row of its own, with the
+           words that appear on that click. */
+        var pieceA=null;
+        st.items.forEach(function(idx){
+          var a=s.annots[idx];
+          if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});
+        if(pieceA&&st.items.length===1){
+          var pcs=textPieces(pieceA),ii=st.items[0];
+          /* T418: the figure that turns with each piece, on its row */
+          var sfb=pieceA.anim.sync?flipById(s,pieceA.anim.sync):null;
+          var sfr=sfb?flipFrames(sfb):[];
+          function pieceName(k){
+            var t=short(pcs[k]||('Piece '+(k+1)),40);
+            if(sfr[k]) t+=' \u00b7 '+frameLabel(sfr[k],k);
+            return t;
+          }
+          row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2});
+          for(var k=1;k<nsub;k++)
+            row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],'',
+              {sub:true,cur:cur2});
+        } else {
+          var last=(plan.stop[b0+nsub-1]|0)+1;
+          row(first===last?first:(first+'\u2013'+last),names,
+            tag+(nsub>1?(' \u00b7 '+nsub+' pieces'):''),
+            {si:si,ctr:true,cur:cur2});
+        }
         stepperRows(plan.anch[b0]);
       });
       /* anything that steps but carries no build of its own lands
          after every build, exactly as flipPlan lays it out */
       stepperRows(plan.tail);
       if(total) menu.appendChild(list);
+      /* T417: the thing you have selected, when it is not on the list
+         yet -- with the two ways onto it, so a box with bullets is one
+         click from appearing bullet by bullet */
+      var sa=(typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+      if(sa&&!sa.anim&&!sa.hide&&(sa.k!=='flip'||!flipFrames(sa).length)){
+        var sr=document.createElement('div');
+        sr.className='anim-step anim-off cur';
+        var sn=document.createElement('span');
+        sn.className='anim-num off';sn.textContent='\u2013';
+        sr.appendChild(sn);
+        var sb=document.createElement('span');sb.className='anim-body';
+        var sl=document.createElement('span');sl.className='anim-name';
+        sl.textContent=itemLabel(s,selAnnot);sb.appendChild(sl);
+        sr.appendChild(sb);
+        var sc=document.createElement('span');
+        sc.className='anim-stepctr row';
+        var acts=[['Appear',function(){setType('appear');}]];
+        if(sa.k==='text') acts.push(['By bullet',function(){setBy('para');}]);
+        acts.forEach(function(m){
+          var b=document.createElement('button');b.type='button';
+          b.className='anim-mini';b.textContent=m[0];
+          b.addEventListener('click',function(e){e.stopPropagation();
+            m[1]();render();});
+          sc.appendChild(b);});
+        sr.appendChild(sc);
+        menu.appendChild(sr);
+      }
       /* ...and the way to SAY the order by pointing (T168), beside the
          list it rewrites */
       var sq=document.createElement('button');

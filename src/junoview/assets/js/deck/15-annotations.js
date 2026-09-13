@@ -1162,8 +1162,21 @@
      its frame is revealCount-base[i], clamped. ONE cursor still, and the
      frame still derived from it rather than stored beside it. */
   function flipPlan(s){
-    var steps=slideBuildSteps(s),anch={},tail=[];
+    var steps=slideBuildSteps(s),anch={},tail=[],synced={};
+    /* T418: A FLIP BOOK THAT TURNS WITH THE BULLETS (2026-09-13, user:
+       "I want the image to change in the flip book as the dot point
+       changes"). A text box built in pieces can name a flip book
+       (anim.sync = the book's fid): figure k then shows with piece k,
+       on the same click, and the book has no stops of its own -- its
+       base is the piece build's first stop, so the walk index IS the
+       piece index. Drop the `by`, or the book, and the book is back to
+       its own stops; nothing else about the plan changes. */
+    ((s&&s.annots)||[]).forEach(function(a){
+      if(a&&a.anim&&a.anim.sync&&!a.hide&&textBy(a)&&flipById(s,a.anim.sync))
+        synced[a.anim.sync]=a.anim.order||0;
+    });
     steppersOn(s).forEach(function(p){
+      if(p.a.k==='flip'&&p.a.fid&&synced[p.a.fid]!=null) return;
       var b=(p.a&&p.a.anim)?steps.map[p.a.anim.order||0]:null;
       if(b==null) tail.push(p);
       else (anch[b]||(anch[b]=[])).push(p);
@@ -1178,12 +1191,21 @@
       (anch[b]||[]).forEach(frames);
     }
     tail.forEach(frames);
+    steppersOn(s).forEach(function(p){
+      if(!(p.a.k==='flip'&&p.a.fid&&synced[p.a.fid]!=null)) return;
+      var b0=steps.map[synced[p.a.fid]];
+      /* +1: piece k is on screen once revealCount has passed its stop,
+         and the walk index is revealCount minus base -- so figure 1
+         stays up until the first piece arrives, and turns with the
+         second (driven: without it the book was a page ahead) */
+      if(b0!=null) base[p.i]=stop[b0]+1;
+    });
     /* `anch` and `tail` are handed back so the ANIMATIONS PANE can
        show the same sequence playback walks, instead of re-deriving a
        weaker one from slideBuildSteps (T163). They were already computed
        here; throwing them away is what left a flip book's five clicks
        invisible in a panel headed "Build order". */
-    return {count:n,stop:stop,base:base,anch:anch,tail:tail};
+    return {count:n,stop:stop,base:base,anch:anch,tail:tail,synced:synced};
   }
   /* ---- A STOP THAT RUNS ITSELF (T169) -------------------------------
      `a.anim.after` is a whole number of seconds: this build runs that
