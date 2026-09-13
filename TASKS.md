@@ -8101,3 +8101,13 @@ gates are recorded in the completing commit.
   open is there all the 'new poster options'"); and the readout names
   the folder an autosave went into, so "autosaved to talk.junoview.html"
   cannot send you to look in the wrong file.
+- [x] **T413 — Matching, where you can see it.** (User: "What happened to
+  the feature of matching slides, and also things like making one
+  object appear the same as another.") Both features were alive and
+  hidden: the three point-at-it verbs (give this look to objects you
+  click, take the look of one you click, lay these out like a group you
+  click) lived in the canvas right-click menu and the Layers pane only,
+  and Match slide was a door on the Design tab. Now the Object tab's
+  Reuse group opens with a "Match…" tile, and a thumbnail's right-click
+  menu has "Match this slide to another…" and "Give this slide's layout
+  to slides I click…", the same arming the Design door does.

@@ -1767,8 +1767,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T412: chrome only. The strip keeps its scroll (deck JS).
 # 2026-09-13, T414: chrome only. A big file still opens; Open means
 # open (deck JS).
-EXPECTED_MD5 = "d31cee103133021e1bae4bd2c94e0001"
-EXPECTED_BYTES = 4142415
+# 2026-09-13, T413: chrome only. Match doors on the ribbon and the
+# strip (deck JS/HTML).
+EXPECTED_MD5 = "7c00a4578bb62079ef0562486769271e"
+EXPECTED_BYTES = 4144613
 
 
 def _render_example() -> str:

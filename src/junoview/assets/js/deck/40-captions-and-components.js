@@ -962,6 +962,10 @@
   /* T229: the two ribbon doors. They call exactly what the Layers
      pane's rows called; the pane keeps its rows. */
   function cloneDoorsBoot(){
+    /* T413: the Reuse group's first door is the point-at-it menu */
+    var mt=$('#fmt-match');
+    if(mt) mt.addEventListener('click',function(e){
+      e.stopPropagation();matchMenuAt(mt);});
     var mk=$('#fmt-cmp-make');
     if(mk) mk.addEventListener('click',function(e){
       e.stopPropagation();

@@ -64,7 +64,7 @@ def test_the_grab_bag_became_focused_sections():
     # appearance and reuse are separate jobs, so neither makes the other
     # look like a stray control in a half-full column.
     assert appearance == ["fmt-opcell", "fmt-opwrap", "fmt-op", "fmt-opval"]
-    assert reuse == ["fmt-cmp-make", "fmt-cmp-add", "fmt-cmp-find"]
+    assert reuse == ["fmt-match", "fmt-cmp-make", "fmt-cmp-add", "fmt-cmp-find"]
 
 
 def test_every_format_control_still_has_exactly_one_home():

@@ -47,7 +47,7 @@
     /* the Object group's provenance row (T198): where it came from,
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
-    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-add #fmt-cmp-find '
+    +'#fmt-path #fmt-lock #fmt-match #fmt-cmp-make #fmt-cmp-add #fmt-cmp-find '
     /* THE HISTORY TILE, AND WHY THE OBJECT TAB WOULD NOT GO AWAY.
        #fmt-hist (T220's "what this object has been through", given a
        group of its own by T233) is shown by showFmt but appeared in
@@ -618,6 +618,7 @@
     /* T229: making a set of clones, and finding the ones that exist */
     var selCount=selIdxs().length;
     var cmpOn=!!(a&&a.cmp&&a.cinst);
+    show('#fmt-match',isNum&&selCount>=1);   /* T413 */
     show('#fmt-cmp-make',isNum&&selCount>=1&&!cmpOn);
     show('#fmt-cmp-add',cmpOn);   /* T409: the door that was missing */
     show('#fmt-cmp-find',cmpOn);

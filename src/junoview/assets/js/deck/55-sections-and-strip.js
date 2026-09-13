@@ -692,6 +692,25 @@
         });
       }
     }
+    /* T413: MATCHING, WHERE THE THUMBNAILS ARE (2026-09-13, user: "What
+       happened to the feature of matching slides"). The Design tab's
+       "Match slide" door arms a click on a thumbnail; these are the same
+       arming, on the thumbnail's own menu, so the feature is found from
+       where the slides are. The slide you right-clicked is the one that
+       takes, or gives, the layout. */
+    if(!poster&&(pres.slides||[]).length>1){
+      var goTo=function(){
+        if(cur!==i){cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();}
+      };
+      row('Match this slide to another\u2026',function(){
+        goTo();armSlideMatch('from');},
+        'Then click the thumbnail this slide should sit like. Positions '
+        +'and sizes travel; the words and figures stay','swap');
+      row('Give this slide\u2019s layout to slides I click\u2026',function(){
+        goTo();armSlideMatch('to');},
+        'Then click each thumbnail that should sit like this one; Esc '
+        +'when you are done','swap');
+    }
     if(!isAlt0) row('§ Start a section here',function(){newSection(i,'New section');},
       'Everything from here down to the next divider goes in it');
     var runs=sectionRuns().filter(function(r){return r.id;});
