@@ -160,57 +160,35 @@ def test_presentations_rail_auto_hide_is_off_by_default(out):
     assert "'junoview:presrail:auto'" in out
 
 
-def test_presentation_notebooks_live_in_the_left_column_only(out):
-    """ONE notebooks list, at the top of the left column.
+def test_no_notebook_block_leads_the_left_column(out):
+    """T381: the column is the thumbnails and nothing else.
 
-    It was briefly two: the column's copy (2026-08-19) plus a floating
-    pane behind a ribbon button (2026-08-18). The column is on screen the
-    whole time you edit, so the ribbon button spent a group's worth of
-    width offering something already showing, and the pane it opened
-    covered the page (2026-08-20, user: "so the notebook button can be
-    removed now. Haven't we put all the functionality on the left hand
-    side?"). Button and pane are both gone; open-all / refresh-all live
-    in the column with the list they act on.
+    The notebook list had led it since 2026-08-19 -- a "back to notebooks"
+    header, a row per notebook, Refresh all and a More menu holding the
+    lock verbs. 2026-09-12, user: "the back to notebooks button shouldn't
+    be there, this is now separate from notebooks; the notebook is still
+    listed there; refresh all should be removed, now handled by the update
+    button; the options in the button look poor." So the block, its
+    builder, its fold preference and its floating More menu are all gone.
+    Refreshing is Home > Update, and the lock verbs live in that menu.
     """
-    assert 'id="dc-nbs"' in out
-    assert 'id="dc-nbs-btn"' not in out and 'id="nbspane"' not in out
-    assert 'id="dc-nbs-menu"' not in out
-    assert "function renderNbsMenu" in out and "function openPresNbs" in out
-    assert "Refresh all" in out
-    # T273: the action row's "Open notebooks" is gone (2026-09-05). Pinned
-    # on the BUILD LINE, not the words -- "Open notebooks" still occurs in
-    # help.html, in page.html's rail and in the empty-state door, so a bare
-    # substring check here passed no matter what this row did.
-    assert "ob.innerHTML=bic('open')+' Open notebooks';" not in out
-
-
-def test_notebooks_button_replaces_inline_chip_strip(out):
-    """The Notebooks button (Open/Refresh) + advanced code-type filter.
-
-    The old inline "notebooks" chip strip above the thumbnails is gone.
-    """
-    assert "renderPresNbs" in out
-    # The list itself stands down only where this build can do nothing
-    # with notebooks at all (the bare static export). It used to hide
-    # until the deck had a notebook cell -- undiscoverable on a fresh
-    # deck ("what happened to the open relevant notebooks button") -- and
-    # a button in front of it renamed itself Open/Refresh notebooks,
-    # promising an action it no longer performed (2026-08-18). Since
-    # 2026-08-20 there is no button: the column IS the list.
-    # T365: ...and it stands down whenever there is no list to show, not
-    # merely in the export build (2026-09-07, user: "remove the 'open
-    # notebooks' from the top of the fucking thumbnails"). A new deck
-    # showed 117px of sentence-and-button in front of its thumbnails.
-    assert "    if(col) col.hidden=!nbs.length;" in out
-    assert "btn.textContent=(anyOpen" not in out
-    assert "Refresh notebooks" not in out
-    # 2026-08-19: a notebooks strip is BACK at the top of the left
-    # column, by explicit request ("the content that is currently in the
-    # 'notebooks' button") — the 2026-08-05 objection was to chips above
-    # the THUMBNAILS with no actions; this one is the pane's own content,
-    # header-as-way-back included
-    assert 'id="dc-nbs"' in out
-    assert "buildNbsInto($('#dc-nbs'),true);" in out
+    assert 'id="dc-nbs"' not in out
+    assert "function buildNbsInto" not in out
+    assert "function renderPresNbs" not in out
+    assert "function renderNbsMenu" not in out
+    assert "function openPresNbs" not in out
+    assert "junoview-nbs-fold" not in out
+    assert "nbs-more-menu" not in out
+    # pinned on the BUILD LINE: the words survive in a markup comment
+    assert "bic('reload')+' Refresh all'" not in out
+    assert "Back to all notebooks" not in out
+    # the builder column renders without it
+    assert "    renderPresRow();renderControls();renderFilm();" in out
+    # the lock verbs did not go with it: same words, in the Update menu
+    for label in ("Lock all figures", "Unlock all", "Load locked versions"):
+        assert label in out, label
+    assert "menuHead(hum,'every figure at once');" in out
+    # the advanced code-type filter is unrelated and stays
     assert 'id="ck-filter-btn"' in out and 'id="ck-filter-menu"' in out
 
 

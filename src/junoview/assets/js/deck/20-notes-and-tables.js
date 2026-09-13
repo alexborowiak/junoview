@@ -2601,6 +2601,17 @@
         altAttrs(img,a);
         if(a.crop) im.classList.add('an-cropped');
         applyCrop(img,a);
+        /* T387: A WINDOW ONTO THE PICTURE. a.win names a region of the
+           picture, in percent of the picture, and the box shows THAT,
+           filled -- the picture is scaled so the window fills the box.
+           A zoom callout is an ordinary picture wearing a window. */
+        if(a.win&&a.win.w>0&&a.win.h>0){
+          im.classList.add('an-win');
+          img.style.width=(10000/a.win.w).toFixed(2)+'%';
+          img.style.height=(10000/a.win.h).toFixed(2)+'%';
+          img.style.left=(-(a.win.x||0)*100/a.win.w).toFixed(2)+'%';
+          img.style.top=(-(a.win.y||0)*100/a.win.h).toFixed(2)+'%';
+        }
         im.appendChild(img);
         /* a DRAWN crop has no edges to drag: the outline is the crop,
            and four inset handles over it would claim to move something
@@ -2636,6 +2647,42 @@
           mv.appendChild(mkRotate());
         }
         layer.appendChild(mv);
+      } else if(a.k==='web'){
+        /* T388: a live page. Sandboxed, lazy, and covered while editing
+           so the box can be picked up -- an iframe eats the pointer. */
+        var wb=document.createElement('div');
+        wb.className='an-item an-web'+(selAnnot===i?' sel':'');
+        var apw=anchorPos(a,a.w,a.h);
+        wb.style.left=apw.x+'%';wb.style.top=apw.y+'%';
+        wb.style.width=(a.w||60)+'%';wb.style.height=(a.h||60)+'%';
+        applyCommon(wb,a);
+        wb.setAttribute('data-idx',i);
+        if(webUrlOk(a.url)){
+          var ifr=document.createElement('iframe');
+          ifr.className='an-webframe';
+          ifr.setAttribute('sandbox',WEB_SANDBOX);
+          ifr.setAttribute('loading','lazy');
+          ifr.setAttribute('referrerpolicy','no-referrer');
+          ifr.setAttribute('title',a.name||('Web page: '+webHost(a.url)));
+          ifr.src=a.url;
+          wb.appendChild(ifr);
+        } else {
+          var bad=document.createElement('div');
+          bad.className='an-webempty';
+          bad.textContent='No web address yet';
+          wb.appendChild(bad);
+        }
+        if(editing){
+          var cov=document.createElement('div');
+          cov.className='an-webcover';
+          var lab=document.createElement('span');
+          lab.textContent=webHost(a.url)||'web page';
+          cov.appendChild(lab);
+          wb.appendChild(cov);
+          wb.appendChild(mkResize('Drag to resize the page'));
+          wb.appendChild(mkRotate());
+        }
+        layer.appendChild(wb);
       } else if(a.k==='flip'){
         var fr=flipFrames(a),at=flipAtNow(s,a),fdef=fr[at]||null;
         var fl=document.createElement('div');
@@ -2885,6 +2932,20 @@
         /* the fade OUT, on the one stop it goes (T238) */
         if(mode==='view'&&animGoing(s,ba))
           el.classList.add('an-anim-out');
+        /* T391: THE STORY. Editing at stop k, an object that has
+           already left is not on the slide -- not dimmed, not there --
+           so what is under it can be reached. Checked before the
+           entrance, because an object that simply sits there can still
+           leave. */
+        var storyK=(editing&&typeof storyAt==='number')?storyAt:null;
+        if(storyK!=null){
+          var oo=animOut(ba);
+          if(oo!=null&&steps.map[oo]!=null){
+            var so=plan.stop[steps.map[oo]];
+            if(so==null) so=steps.map[oo];
+            if(storyK>so) el.classList.add('an-storyout');
+          }
+        }
         if(!ba.anim) return;
         var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
         if(st==null) return;
@@ -2894,6 +2955,19 @@
           bd.title='Build '+(st+1)+' — '+(ba.anim.type||'fade')
             +' (items on the same build appear together)';
           el.appendChild(bd);
+          /* T391: ...and what has not arrived by stop k is not there
+             either; a box arriving in pieces shows the pieces that are */
+          if(storyK!=null){
+            var spk=plan.stop[st]; if(spk==null) spk=st;
+            if(spk>=storyK) el.classList.add('an-storyout');
+            else if(typeof textBy==='function'&&textBy(ba)){
+              $$('[data-part]',el).forEach(function(pe){
+                var j=+pe.getAttribute('data-part');
+                var jp=plan.stop[st+j]; if(jp==null) jp=st+j;
+                pe.style.visibility=(jp>=storyK)?'hidden':'';
+              });
+            }
+          }
         } else if(mode==='view'){
           /* WHICH STOP, not which build number: a flip book with a build
              of its own puts its frames straight after itself, so anything
@@ -2910,13 +2984,21 @@
           if(typeof textBy==='function'&&textBy(ba)){
             /* piece j lives on build step st+j, so it is showing exactly
                when its own stop has been taken. Read off the same plan
-               everything else uses -- no second cursor. */
+               everything else uses -- no second cursor.
+               T385: with anim.hl the pieces are never hidden. The one
+               whose stop was just taken is lit, the ones still to come
+               sit quiet, the ones already done are plain. */
+            var hl=!!ba.anim.hl;
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');
               var jp=plan.stop[st+j];
               if(jp==null) jp=st+j;
-              pe.style.visibility=(mode==='view'&&jp>=revealCount)
-                ?'hidden':'';
+              var wait=(mode==='view'&&jp>=revealCount);
+              pe.style.visibility=(wait&&!hl)?'hidden':'';
+              if(hl&&mode==='view'){
+                pe.classList.toggle('an-hl',jp===revealCount-1);
+                pe.classList.toggle('an-hl-wait',wait);
+              }
             });
           }
           if(sp>=revealCount) el.classList.add('an-prebuild');
@@ -2929,9 +3011,26 @@
                replaced the inline rotate(); they now animate `translate`
                and `scale`, which compose with it. An effect that names
                itself must be the effect that plays. */
+            /* T385: the typewriter is for words; anything else fades */
+            atype=(atype==='type'&&ba.k!=='text')?'fade':atype;
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
+            if(atype==='type'&&typeof typeInto==='function'
+               &&!(typeof storyPaint!=='undefined'&&storyPaint)) typeInto(el);
           }
         }
+      });
+    }
+    /* ---- T385: MOTION THAT KEEPS GOING. One class per item, in the
+       show only; the editor stays still so a wobbling box can be
+       grabbed. A pass of its own, like the builds above, so no kind's
+       branch can forget it. */
+    if(mode==='view'&&s.annots&&s.annots.some(function(a){
+      return a&&a.motion;})){
+      $$('.an-item[data-idx]',layer).forEach(function(el){
+        var raw=el.getAttribute('data-idx');
+        if(raw==='t'||raw==='s') return;
+        var ma=(s.annots||[])[+raw];
+        if(ma&&ma.motion) el.classList.add('an-move-'+ma.motion);
       });
     }
     /* ---- SHRINK TO FIT, AND SAY SO WHEN IT CANNOT ---------------------

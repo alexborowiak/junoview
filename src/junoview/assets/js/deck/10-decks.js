@@ -571,10 +571,13 @@
     }catch(e){}
     return out.sort();
   }
-  /* A browser session is not the saved library.  The presentation drawer
-     used while presenting must answer “what do I have open right now?”,
-     while Home only needs the handful recently used across sessions. */
-  var sessionPresentationNames=[];
+  /* A browser session is not the saved library. The drawer used while
+     presenting answers "what do I have open right now?" -- and since T382
+     that is the presentation on screen plus the open notebooks, read live
+     (pres, APP.order), not a list kept here. What IS kept here is the
+     handful recently used across sessions, for Home and the drawer's
+     Recents button (2026-09-12, user: "it should show only open items,
+     not all recents, with a separate recents button"). */
   var PRESENT_RECENT_KEY=PFX+'recent-presentations';
   function presentationByName(name){
     if(pres&&pres.name===name) return pres;
@@ -594,14 +597,8 @@
     return names.filter(function(name){return !!presentationByName(name);})
       .map(presentationSummary).filter(Boolean);
   }
-  function sessionPresentationRows(){
-    return sessionPresentationNames.map(presentationSummary).filter(Boolean);
-  }
   function notePresentationOpen(name){
     if(!name) return;
-    sessionPresentationNames=sessionPresentationNames.filter(function(n){
-      return n!==name;});
-    sessionPresentationNames.unshift(name);
     var recent=[];
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];
@@ -618,7 +615,6 @@
         return name===oldName?newName:name;
       }).filter(function(name,index,all){return all.indexOf(name)===index;});
     }
-    sessionPresentationNames=rename(sessionPresentationNames);
     var recent=[];
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];
@@ -628,8 +624,6 @@
     if(typeof renderPresentationHub==='function') renderPresentationHub();
   }
   function forgetRememberedPresentation(name){
-    sessionPresentationNames=sessionPresentationNames.filter(function(n){
-      return n!==name;});
     var recent=[];
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];

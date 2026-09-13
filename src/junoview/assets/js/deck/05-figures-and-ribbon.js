@@ -613,7 +613,7 @@
             +(g.all.length-g.odd.length)+'. Paging through, they jump.'});
       });
     });
-    return {findings:out,boxes:boxes.length,bands:bands,
+    return {findings:out,boxes:boxes.length,bands:bands,named:named,
       styled:Object.keys(named).length};
   }
   /* ---- THE FIX ---------------------------------------------------------
@@ -678,6 +678,38 @@
     stdFix(g.odd,function(a){a[g.geom]=g.mode;},
       g.odd.length+' box'+(g.odd.length===1?'':'es')+' lined up');
   }
+  /* the slide number and a specimen of the box's own words, in its own
+     colour, ground, face, weight and slant -- shared by the finding cards
+     and the T383 "compared, and they match" rows */
+  function stdSpecimenInto(c,p){
+    var sn=document.createElement('span');
+    sn.className='std-chipn';
+    sn.textContent=String(p.si+1);
+    c.appendChild(sn);
+    var sp=document.createElement('span');
+    sp.className='std-chiptx';
+    var sl0=(pres.slides||[])[p.si]||{};
+    var words=p.fixed
+      ?String((p.ai==='t'?sl0.title:sl0.sub)||'')
+      :String((p.a&&p.a.text)||'');
+    words=words.replace(/\s+/g,' ').trim();
+    sp.textContent=words
+      ||(p.fixed?(p.ai==='t'?'title':'subtitle'):annotLabel(p.a));
+    if(!words) sp.className+=' std-chipempty';
+    if(!p.fixed&&p.a){
+      var st0=(p.a.style&&typeof styleDef==='function')
+        ?styleDef(p.a.style):null;
+      var col0=p.a.color||(st0&&st0.color);
+      var bg0=(p.a.bg!==0)&&(p.a.bgc||(st0&&st0.bg));
+      var fam0=p.a.font||(st0&&st0.font);
+      if(col0) sp.style.color=tokVal(col0);
+      if(bg0&&bg0!=='none') sp.style.background=tokVal(bg0);
+      if(fam0) sp.style.fontFamily=fontCss(fam0);
+      if(p.a.b||(st0&&st0.b)) sp.style.fontWeight='700';
+      if(p.a.i||(st0&&st0.i)) sp.style.fontStyle='italic';
+    }
+    c.appendChild(sp);
+  }
   function stdRow(f){
     var box=document.createElement('div');
     box.className='std-find std-'+f.sev;
@@ -733,33 +765,7 @@
          weight and slant, with the style's answer where the box has
          none of its own. Same treatment as the Style system's Text
          column (T363), for the same reason. */
-      var sn=document.createElement('span');
-      sn.className='std-chipn';
-      sn.textContent=String(p.si+1);
-      c.appendChild(sn);
-      var sp=document.createElement('span');
-      sp.className='std-chiptx';
-      var sl0=(pres.slides||[])[p.si]||{};
-      var words=p.fixed
-        ?String((p.ai==='t'?sl0.title:sl0.sub)||'')
-        :String((p.a&&p.a.text)||'');
-      words=words.replace(/\s+/g,' ').trim();
-      sp.textContent=words
-        ||(p.fixed?(p.ai==='t'?'title':'subtitle'):annotLabel(p.a));
-      if(!words) sp.className+=' std-chipempty';
-      if(!p.fixed&&p.a){
-        var st0=(p.a.style&&typeof styleDef==='function')
-          ?styleDef(p.a.style):null;
-        var col0=p.a.color||(st0&&st0.color);
-        var bg0=(p.a.bg!==0)&&(p.a.bgc||(st0&&st0.bg));
-        var fam0=p.a.font||(st0&&st0.font);
-        if(col0) sp.style.color=tokVal(col0);
-        if(bg0&&bg0!=='none') sp.style.background=tokVal(bg0);
-        if(fam0) sp.style.fontFamily=fontCss(fam0);
-        if(p.a.b||(st0&&st0.b)) sp.style.fontWeight='700';
-        if(p.a.i||(st0&&st0.i)) sp.style.fontStyle='italic';
-      }
-      c.appendChild(sp);
+      stdSpecimenInto(c,p);
       c.title=bad?((oddWhy[k]||'This is the one that differs')
         +' — click to go to it')
         :'This one matches the rest — click to go to it';
@@ -855,6 +861,56 @@
         ?'No text formatting differences found.'
         :'No clear differences found. Use Style system to name text types.';
       list.appendChild(msg);
+      /* T383: SAY WHAT WAS CHECKED. "No differences found" over an empty
+         screen read as a check that had not run (2026-09-12, user: "the
+         execution was always weird"). One quiet line per group it
+         compared -- the named styles, then the size bands -- each with
+         a live specimen, so the screen shows its working without
+         pushing a card for things that already match (T378). */
+      var groups=[];
+      styleOrder().forEach(function(id){
+        var l=r.named&&r.named[id]; if(!l||l.length<2) return;
+        groups.push({label:(styleDef(id)||{}).label||id,boxes:l});
+      });
+      (r.bands||[]).forEach(function(b){
+        if(b.boxes.length<2) return;
+        groups.push({label:b.boxes.length+' boxes at about '
+          +Math.round(b.size*5.4)+' pt',boxes:b.boxes});
+      });
+      if(groups.length){
+        menuHead(list,'compared, and they match');
+        groups.forEach(function(g){
+          var row=document.createElement('div');
+          row.className='std-find std-checked';
+          var h=document.createElement('div');
+          h.className='std-h';
+          h.textContent=g.label+' \u2014 '+g.boxes.length+' boxes match';
+          row.appendChild(h);
+          var who=document.createElement('div');who.className='std-who';
+          g.boxes.slice(0,12).forEach(function(p){
+            var c=document.createElement('button');
+            c.className='std-chip std-ok';
+            stdSpecimenInto(c,p);
+            c.title='Slide '+(p.si+1)+' \u2014 click to go to it';
+            c.addEventListener('click',function(){
+              go(p.si);
+              if(typeof p.ai==='number'){
+                var l=stage.querySelector('.annot-layer');
+                if(l) selectAnnot(l,p.ai);
+              }
+            });
+            who.appendChild(c);
+          });
+          if(g.boxes.length>12){
+            var more=document.createElement('span');
+            more.className='std-more';
+            more.textContent='and '+(g.boxes.length-12)+' more';
+            who.appendChild(more);
+          }
+          row.appendChild(who);
+          list.appendChild(row);
+        });
+      }
       appendFigLint(list);
       return;
     }
@@ -1833,6 +1889,9 @@
         /* Keep up to date never folds (T202: the point of it is to be
            seen) */
         &&!g.classList.contains('rbn-sources')
+        /* T383: one tile folds into one tile -- nothing to gain, and
+           the check would wear a chevron for no reason */
+        &&!g.classList.contains('rbn-check')
         &&!g.classList.contains('rbn-cancel');});
     if(!gs.length) return false;
     gs.sort(function(x,y){
@@ -2140,6 +2199,7 @@
     if(a.name) return a.name;
     if(a.k==='image') return 'Image';
     if(a.k==='video') return mediaLabel(a);
+    if(a.k==='web') return 'Web page \u2014 '+webHost(a.url);
     if(a.k==='flip'){
       var nf=flipFrames(a).length;
       return 'Flip book \u2014 '+(nf?(nf+' figure'+(nf===1?'':'s')):'empty');

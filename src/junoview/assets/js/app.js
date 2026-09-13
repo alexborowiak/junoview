@@ -661,7 +661,126 @@
        (and the .btxt span the ribbon compaction stages hide) */
     setBtnText(b,lab+' ▾');
     b.classList.toggle('on',!!tot&&n!==tot);
+    renderPagesBtn();                   /* T390: the pager sits beside it */
   }
+  /* ---- PAGES: one top-level section at a time (T390) -----------------
+     (2026-09-12, user: "could the notebook view have pages; e.g. create
+     page per section, or add page here, so then instead of all at once
+     it could be split into pages"). A page is a top-level section with
+     every deeper section under it, in document order. Paging is a way
+     of LOOKING, kept per notebook in the saved layout beside the
+     filters: the filters still decide what a page contains, this only
+     decides which page is on screen. Enforced from applyFilters so the
+     two can never disagree; the outline keeps every row, the rows off
+     this page dimmed, and clicking one turns to its page. ---- */
+  var pageBy={};                      /* stem -> section id of the page, '' = off */
+  function pageRuns(sh){
+    var rows=$$('.section',sh),runs=[],count={};
+    rows.forEach(function(s2){
+      var l=+(s2.dataset.level||2);count[l]=(count[l]||0)+1;});
+    /* THE PAGE LEVEL is the shallowest level with more than one
+       section. A notebook whose only top heading is its title would
+       otherwise be one page; its chapters are the level beneath, and
+       the title's own cells ride on the first of them. */
+    var lv=99;
+    Object.keys(count).forEach(function(k){
+      if(count[k]>1&&+k<lv) lv=+k;});
+    if(lv===99&&rows.length) lv=+(rows[0].dataset.level||2);
+    var pending=[];
+    rows.forEach(function(s2){
+      var l=+(s2.dataset.level||2),sid=s2.dataset.sec;
+      if(l<lv&&!runs.length){pending.push(sid);return;}
+      if(l<=lv){
+        var h=s2.querySelector('.sectionhead-txt'),t=sid;
+        if(h) t=Array.prototype.map.call(h.childNodes,function(n){
+          return (n.classList&&n.classList.contains('eyebrow'))
+            ?'':(n.textContent||'');}).join(' ');
+        runs.push({sid:sid,sids:pending.concat([sid]),
+          title:t.replace(/\s+/g,' ').trim().slice(0,60)});
+        pending=[];
+      } else if(runs.length) runs[runs.length-1].sids.push(sid);
+      else pending.push(sid);
+    });
+    if(!runs.length&&pending.length)
+      runs.push({sid:pending[0],sids:pending,title:pending[0]});
+    return runs;
+  }
+  function pageRunOf(runs,sid){
+    for(var i=0;i<runs.length;i++)
+      if(runs[i].sids.indexOf(sid)>=0) return i;
+    return -1;
+  }
+  function pageIndex(stem){
+    var sh=APP.shells[stem]; if(!sh||!sh.el||!pageBy[stem]) return -1;
+    return pageRunOf(pageRuns(sh.el),pageBy[stem]);
+  }
+  function setPage(stem,sid,scroll){
+    if(!stem) return;
+    pageBy[stem]=sid||'';
+    applyFilters();renderPagesBtn();scheduleSaveLayout();
+    if(scroll!==false&&sid){
+      var sh=APP.shells[stem];
+      var sec=sh&&sh.el&&sh.el.querySelector('.section[data-sec="'+sid+'"]');
+      if(sec) sec.scrollIntoView({block:'start'});
+    }
+  }
+  function stepPage(d){
+    var stem=activeStem(),sh=APP.shells[stem]; if(!sh||!sh.el) return;
+    var runs=pageRuns(sh.el); if(!runs.length) return;
+    var i=pageRunOf(runs,pageBy[stem]);
+    var j=Math.max(0,Math.min(runs.length-1,(i<0?0:i)+d));
+    setPage(stem,runs[j].sid);
+  }
+  function togglePages(){
+    var stem=activeStem(),sh=APP.shells[stem]; if(!sh||!sh.el) return;
+    if(pageBy[stem]){setPage(stem,'',false);return;}
+    var runs=pageRuns(sh.el);
+    if(runs.length<2){
+      if(APP.toast) APP.toast('This notebook has one section, so it is one page');
+      return;
+    }
+    /* start on the page you are looking at */
+    var on=sh.el.querySelector('.navsec.active');
+    var i=on?pageRunOf(runs,on.dataset.sec):0;
+    setPage(stem,runs[i<0?0:i].sid);
+  }
+  function renderPagesBtn(){
+    var b=$('#sec-pages'),pv=$('#sec-prevpage'),nx=$('#sec-nextpage');
+    if(!b) return;
+    var stem=activeStem(),sh=APP.shells[stem];
+    var runs=(sh&&sh.el)?pageRuns(sh.el):[];
+    var i=pageRunOf(runs,pageBy[stem]||'');
+    var on=i>=0;
+    setBtnText(b,on?('Page '+(i+1)+' of '+runs.length):'Pages');
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+    b.title=on
+      ?'One section at a time: this is page '+(i+1)+' of '+runs.length
+        +'. Click to see the whole notebook again'
+      :'Split the notebook into pages, one top-level section each';
+    if(pv){pv.disabled=!on||i<=0;pv.hidden=!on;}
+    if(nx){nx.disabled=!on||i>=runs.length-1;nx.hidden=!on;}
+  }
+  /* which sections are OFF this page, for applyFilters: an object of
+     sid -> 1, or null when the notebook is not paged */
+  function pagedOut(sh){
+    var stem=sh.dataset.nb; if(!pageBy[stem]) return null;
+    var runs=pageRuns(sh),i=pageRunOf(runs,pageBy[stem]);
+    if(i<0) return null;
+    var keep={},out={};
+    runs[i].sids.forEach(function(sid){keep[sid]=1;});
+    runs.forEach(function(r){r.sids.forEach(function(sid){
+      if(!keep[sid]) out[sid]=1;});});
+    return out;
+  }
+  function pagesBoot(){
+    var b=$('#sec-pages'),pv=$('#sec-prevpage'),nx=$('#sec-nextpage');
+    if(b) b.addEventListener('click',function(e){e.stopPropagation();togglePages();});
+    if(pv) pv.addEventListener('click',function(e){e.stopPropagation();stepPage(-1);});
+    if(nx) nx.addEventListener('click',function(e){e.stopPropagation();stepPage(1);});
+    renderPagesBtn();
+  }
+  APP.setPage=setPage;
   /* ---- which sections the appbar is currently EDITING, and how to read
      and write their filter state ------------------------------------- */
   function activeStem(){return APP.active||'';}
@@ -1285,10 +1404,13 @@
           nav.classList.toggle('cell-off',off);
         }
       });
+      var pgOut=pagedOut(sh);            /* T390: sections off this page */
       $$('.section',sh).forEach(function(sec){
         /* a section hidden via its eye is a manual state, kept out of the
            filter-driven fold so its (dimmed) sidebar row survives to restore */
         var secOff=sec.classList.contains('sec-off');
+        var paged=!!(pgOut&&pgOut[sec.dataset.sec]);
+        sec.classList.toggle('pg-out',paged);
         var cards=$$('.card',sec);
         /* doc: an empty section header (all its cards hidden) folds away */
         var allGone=cards.length>0&&cards.every(function(c){
@@ -1304,6 +1426,10 @@
           return n.classList.contains('nav-hidden');});
         if(row) row.classList.toggle('nav-hidden',navGone&&!secOff);
         if(items) items.classList.toggle('nav-hidden',navGone&&!secOff);
+        /* T390: off this page -- still in the outline, dimmed, and a
+           door to its page */
+        if(row) row.classList.toggle('nav-paged',paged);
+        if(items) items.classList.toggle('nav-paged',paged);
       });
     });
     renderTypeButtons();
@@ -5408,6 +5534,15 @@
         }
         var id=(a.getAttribute('href')||'').slice(1);
         var el=id?$('[id="'+id+'"]',shell):null;
+        /* T390: a row off the current page turns to its page first */
+        if(el&&pageBy[stem]){
+          var psec=el.closest('.section')||el;
+          var psid=psec.dataset.sec;
+          if(psid&&(pagedOut(shell)||{})[psid]){
+            var pr=pageRuns(shell),pi=pageRunOf(pr,psid);
+            if(pi>=0) setPage(stem,pr[pi].sid,false);
+          }
+        }
         if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
         if(window.innerWidth<=860) closeRail();
       });
@@ -5704,6 +5839,7 @@
        every visit reads as a feature that was taken away */
     st.figall=APP.getFigAll?APP.getFigAll():1;
     st.mdall=APP.getMdAll?APP.getMdAll():1;
+    st.page=pageBy[stem]||'';           /* T390: which page, or '' */
     st.v=1;
     return st;
   }
@@ -5723,6 +5859,7 @@
     invalidateSids();
     if(APP.setFigAll) APP.setFigAll(st.figall||1);
     if(APP.setMdAll) APP.setMdAll(st.mdall||1);
+    pageBy[stem]=st.page||'';           /* T390 */
     $$('.card.has-fig',shell).forEach(function(c){
       c.style.removeProperty('--fz');syncZoomed(c);});
     Object.keys(st.figs||{}).forEach(function(an){
@@ -7381,6 +7518,7 @@
      measure, TOC, tooltip host) are order-safe where they are — each
      only touches what is declared above it — but do not add more. */
   initRailAuto();
+  pagesBoot();                /* one section at a time (T390) */
   /* the loader learnt a newer build took over while this page was
      booting from the cache (T206); the loader's own bar died with the
      document it wrote over, so raise it again here */

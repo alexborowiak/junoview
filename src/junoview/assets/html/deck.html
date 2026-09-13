@@ -26,13 +26,15 @@
       title="Stop presenting and return to the builder (Esc)."><i data-ic="return"></i>
         Stop presenting</button>
     <!-- The global rail is intentionally inert while a deck fills the
-         screen.  This is its working, deck-owned replacement: it lists
-         only presentations opened in this session and has one explicit
-         route to the full presentation library. -->
+         screen. This is its working, deck-owned replacement: what is open
+         right now (this presentation and the open notebooks), with a
+         Recents door and a route to the whole library. It also slides out
+         when the pointer reaches the left edge (T382). -->
     <button class="dbtn" id="deck-pres-open" type="button"
       aria-expanded="false" aria-controls="deck-pres-drawer"
-      title="Show presentations opened in this session"
-      ><i data-ic="present"></i> Open presentations</button>
+      title="What is open right now: this presentation and your notebooks.
+ It also slides out when you reach the left edge of the screen."
+      ><i data-ic="present"></i> Open now</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -50,17 +52,23 @@
         <i data-ic="flag"></i> Running late</button>
     </span>
   </div>
+  <!-- T382: no Close button. It closed the drawer, not the deck, beside a
+       heading that repeated the words on the button that opened it
+       (2026-09-12, user: "the close button doesn't make sense"). The
+       drawer closes when the pointer leaves it, on Esc, or from the
+       button that opened it. -->
   <aside class="deck-pres-drawer" id="deck-pres-drawer" hidden
-    aria-label="Open presentations">
-    <div class="deck-pres-drawer-head">
-      <span>Open presentations</span>
-      <button class="dbtn" id="deck-pres-close" type="button"
-        title="Close presentations"><i data-ic="exit"></i> Close</button>
-    </div>
+    aria-label="Open now">
+    <div class="deck-pres-drawer-head"><span>Open now</span></div>
     <div class="deck-pres-list" id="deck-pres-list"></div>
-    <button class="dbtn deck-pres-browse" id="deck-pres-browse" type="button"
-      title="Open the presentation library, recent work and folders"
-      ><i data-ic="open"></i> Open presentations&hellip;</button>
+    <div class="deck-pres-doors">
+      <button class="dbtn" id="deck-pres-recent" type="button"
+        title="Presentations you used recently, in any session"
+        ><i data-ic="history"></i> Recents</button>
+      <button class="dbtn" id="deck-pres-browse" type="button"
+        title="Every saved presentation, folders, new decks and imports"
+        ><i data-ic="open"></i> All presentations&hellip;</button>
+    </div>
   </aside>
   <!-- the left COLUMN is the notebooks content and then the thumbnails,
        and nothing else. File / Save / undo / redo used to sit between
@@ -314,6 +322,12 @@
           <div class="dc-mhead">present</div>
           <button class="dc-mi" id="pl-here">Play from this slide</button>
           <button class="dc-mi" id="pl-start">Play from the start</button>
+          <!-- T389: every slide on one scrolling page, each animating
+               the first time it scrolls into view and then staying. -->
+          <button class="dc-mi" id="pl-scroll"
+            title="Every slide on one page you scroll through. Each slide's
+ animations play the first time it comes into view, then stay">Play as a
+            scrolling page</button>
           <div class="dc-msep"></div>
           <button class="dc-mi" id="pl-presenter"
             title="Opens a second window with your notes, the next slide
@@ -352,10 +366,11 @@
   <aside class="deck-create" id="deck-create" hidden>
       <div class="dc-resize" id="dc-resize"
         title="Drag to resize the builder panel"></div>
-      <!-- not a back button: the CONTENT of the notebooks pane — every
-           notebook this presentation uses, with open/refresh — lives at
-           the top of the column; the header row is the way back -->
-      <div class="dc-nbs" id="dc-nbs"></div>
+      <!-- T381: nothing above the thumbnails. The notebook list that
+           used to lead this column (a back link, a row per notebook,
+           Refresh all, More) is gone: a presentation is its own thing,
+           refreshing is Home > Update, and the rail is the way to a
+           notebook (2026-09-12). -->
       <!-- the NAME lives outside .dc-controls: that block is display:none
            while editing, so File → Rename… un-hid an input inside a hidden
            ancestor — 0x0, unfocusable, "renaming doesn't work" in the
@@ -826,17 +841,10 @@
                 title="Deck-wide layout defaults: the corner shape of boxes
  and the space used when Arrange distributes objects"
                 ><i data-ic="layouts"></i> Deck layout</button>
-              <!-- Both words in full, never abbreviated. This is the one
-                   control in the editor that looks at the deck's type as
-                   a whole rather than at one box, which is what earns it
-                   a button rather than a menu row (2026-08-22, user: "it
-                   would be cool if there was a button that was called
-                   'standardise text', and checked if all headings
-                   paragraphs, captions, are looking the same"). -->
-              <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Find text or figures that look like they should match
- but have different formatting. It only suggests a fix; you choose it"><i data-ic="scope"></i>
-   Check consistency</button>
+              <!-- T383: the mismatch check is no longer a small button in
+                   this row -- it has a group and a tile of its own, next
+                   door, so a narrow window folding this group does not
+                   take it with it. -->
               <!-- the whole-deck type screen was a row inside the Text styles
                    menu: a screen behind a menu behind a door (T212) -->
               <button class="dbtn rbn-sm" id="dsg-design-btn"
@@ -845,6 +853,28 @@
                 ><i data-ic="outline"></i> Style system</button>
             </span>
             <span class="rbn-lab">Presentation styles</span>
+          </span>
+          <!-- T383: THE BUTTON THE USER WENT LOOKING FOR, AGAIN. It was
+               "Standardise text" (2026-08-22: "it would be cool if there
+               was a button that was called 'standardise text', and
+               checked if all headings paragraphs, captions, are looking
+               the same"), then "Fix mismatched text", then T378 renamed it
+               "Check consistency" and left it as the last small button of
+               the Presentation styles row -- which folds into one tile at
+               laptop width, so the check was a row inside a menu behind a
+               door (2026-09-12, user: "I liked the concept but the
+               execution was always weird; now it's gone"). Its own group,
+               its own tall tile, under the name the user knows it by. -->
+          <span class="rbn-grp rbn-check" data-tab="home" data-fold-ic="scope">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile rbn-tall" id="dsg-std"
+                aria-pressed="false"
+                title="Find text or figures that look like they should match
+ but have different formatting, and make them match in one click. It only
+ suggests a fix; you choose it"><i data-ic="scope"></i>
+                <span>Fix mismatched text</span></button>
+            </span>
+            <span class="rbn-lab">Consistency</span>
           </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
@@ -1136,6 +1166,39 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Transition</span>
           </span>
+          <!-- T385: MOTION THAT KEEPS GOING (2026-09-12, user: "things
+               wobbling and moving"). An entrance plays once; these loop
+               while the object is on the slide, in the show only. Tiles,
+               like Effect, because it is the same kind of choice. -->
+          <span class="rbn-grp rbn-motion" data-tab="animation"
+            data-fold-ic="wobble">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="anim-move">
+                <span class="fx-strip trans-strip" id="anim-move-strip"
+                  role="group" aria-label="Motion while on the slide">
+                <button class="fx-tile" id="anim-move-none"
+                  aria-pressed="false" disabled
+                  title="Still, once it has arrived"
+                  ><i data-ic="none"></i><span>Still</span></button>
+                <button class="fx-tile" id="anim-move-wobble"
+                  aria-pressed="false" disabled
+                  title="Rocks gently from side to side the whole time it
+ is on the slide &mdash; hover to see it"
+                  ><i data-ic="wobble"></i><span>Wobble</span></button>
+                <button class="fx-tile" id="anim-move-bob"
+                  aria-pressed="false" disabled
+                  title="Floats slowly up and down &mdash; hover to see it"
+                  ><i data-ic="bob"></i><span>Float</span></button>
+                <button class="fx-tile" id="anim-move-pulse"
+                  aria-pressed="false" disabled
+                  title="Breathes: grows and shrinks a little, over and
+ over &mdash; hover to see it"
+                  ><i data-ic="pulse"></i><span>Pulse</span></button>
+                </span>
+              </span>
+            </span>
+            <span class="rbn-lab">Motion</span>
+          </span>
           <span class="rbn-grp rbn-flipfx" data-tab="animation"
             data-fold-ic="flipbook">
             <span class="rbn-row">
@@ -1158,6 +1221,15 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-pressed="false"
                   title="Each figure grows into
  place"><i data-ic="zoom"></i> Grow</button>
+                <!-- T385 -->
+                <button class="dbtn rbn-sm" id="anim-flip-turn"
+                  aria-pressed="false"
+                  title="Each figure swings in like a page turning
+ on its left edge"><i data-ic="pageturn"></i> Page turn</button>
+                <button class="dbtn rbn-sm" id="anim-flip-push"
+                  aria-pressed="false"
+                  title="Each figure slides in from the right, pushing
+ the last one out of the way"><i data-ic="flyin"></i> Push</button>
               </span>
               <span class="rbn-cell seq-cell" id="anim-flip-say" hidden
                 title="Turning a page is a click, exactly like an
@@ -1168,6 +1240,12 @@ items snap to both. Guides, not ink: never printed or exported"
           </span>
           <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
+              <!-- T391: the story -- the slide at every stop, editable -->
+              <button class="dbtn rbn-sm" id="anim-story"
+                aria-pressed="false"
+                title="One picture per click. Pick one and edit the slide as
+ it is at that point: what has not arrived or has already left is not there"
+                ><i data-ic="story"></i> Story</button>
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Every object on this slide arrives, one per click,
  top to bottom unless you set an order"
@@ -1263,6 +1341,15 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-pressed="false"
                   title="One click per sentence"
                   ><i data-ic="spacing"></i><span>By sentence</span></button>
+                <!-- T385: the same stops, but nothing is held back --
+                     the piece whose click it is lights up instead
+                     (2026-09-12, user: "one dot point is highlighted so
+                     you can still have all text out"). -->
+                <button class="fx-tile" id="anim-by-hl"
+                  aria-pressed="false"
+                  title="Show every bullet from the start and light up the
+ one each click is about, instead of hiding the rest"
+                  ><i data-ic="star"></i><span>Highlight</span></button>
                 </span>
               </span>
               <!-- T372: LAST, not second. Beside two full-height strips
@@ -1347,6 +1434,12 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Add a video or audio clip from your computer. It
  plays in the show, trims in the Clip pane and travels with the deck"
                 ><i data-ic="film"></i> Video / audio</button>
+              <!-- T388: a live web page, by address. Sandboxed; live in
+                   the show and in an exported page. -->
+              <button class="dbtn rbn-sm" id="et-web"
+                title="Put a live web page on the slide, by its address.
+ It works in the show and in an exported page; PowerPoint cannot hold it"
+                ><i data-ic="link"></i> Web page</button>
               <button class="dbtn et rbn-sm" id="et-flip" data-tool="flip"
                 aria-pressed="false"
                 title="Draw a flip book: one box holding many figures, with
@@ -1487,6 +1580,10 @@ items snap to both. Guides, not ink: never printed or exported"
                   title="A second window with your notes, the next slide and a
  clock. Drag it to the other screen, then play"
                   ><i data-ic="dockright"></i><span>Presenter view</span></button>
+                <button class="fx-tile big-tile" id="pr-scroll"
+                  title="Every slide on one page you scroll through. Each
+ slide's animations play the first time it comes into view, then stay"
+                  ><i data-ic="expand"></i><span>Scrolling page</span></button>
               </span>
             </span>
             <span class="rbn-lab">Play</span>
@@ -1610,7 +1707,7 @@ items snap to both. Guides, not ink: never printed or exported"
  slides from wherever they came from -- notebooks for figures, files on
  this computer for pictures"><i data-ic="reload"></i>
                     <span>Update &#9662;</span></button>
-                  <div class="sh-menu" id="hm-upd-menu" hidden></div>
+                  <div class="sh-menu upd-menu" id="hm-upd-menu" hidden></div>
                 </span>
                 <button class="fx-tile big-tile" id="hm-images"
                   aria-pressed="false"
@@ -2251,6 +2348,28 @@ items snap to both. Guides, not ink: never printed or exported"
                   >&#9662;</button>
                 <div class="sh-menu" id="fmt-crop-menu" hidden></div>
               </span>
+              <!-- T387: A ZOOM CALLOUT (2026-09-12, user: "a zoom on a
+                   feature in an image, like a new box gets created with a
+                   zoom"). Drag a box on the picture; a second picture
+                   showing that part enlarged appears beside it, with the
+                   outline and a line, grouped, arriving with a Grow. -->
+              <button class="dbtn etm" id="fmt-zoomcall" hidden
+                title="Drag a box over part of this picture and a callout
+ showing that part enlarged appears beside it, outlined and joined by a
+ line"><i data-ic="callout"></i> Zoom callout</button>
+              <!-- T387: PICTURES THAT ZOOM TOGETHER (user: "having images
+                   linked so they zoom or change in the same way").
+                   Select two or more; when one is enlarged in the show
+                   (Z, Alt+click, tap) they all come up side by side. -->
+              <!-- T388: the page's address -->
+              <button class="dbtn etm" id="fmt-weburl" hidden
+                title="Change the address this web page shows"
+                ><i data-ic="link"></i> Web address&#8230;</button>
+              <button class="dbtn etm" id="fmt-linkzoom" hidden
+                aria-pressed="false"
+                title="Select two or more pictures: when one is enlarged in
+ the show they all come up together, side by side"
+                ><i data-ic="zoomlink"></i> Zoom together</button>
               <!-- T321: the clip's own window -- trim, poster frame and
                    the four playback switches -->
               <!-- T322: everything a chart can be asked beyond its kind
@@ -2389,7 +2508,7 @@ items snap to both. Guides, not ink: never printed or exported"
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Style consistency</span>
+        <div class="selpane-h"><span>Fix mismatched text</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
@@ -2475,16 +2594,17 @@ items snap to both. Guides, not ink: never printed or exported"
            view; a fix re-renders it. The panes stay in the markup for
            the pane owner and the tests, but the ribbon doors open these. -->
       <div class="img-ov" id="std-ov" hidden role="dialog"
-        aria-label="Style consistency">
-        <div class="img-ov-h"><span class="img-ov-t">Style consistency</span>
+        aria-label="Fix mismatched text">
+        <div class="img-ov-h"><span class="img-ov-t">Fix mismatched text</span>
           <span class="img-ov-sub" id="std-ov-sub"></span>
           <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Each card groups text or figures that look like
-          they should match. Use its suggested fix only when that is what you
-          intend.</div>
+        <div class="pf-intro">Each card is a group of text or figures that
+          look like they should match but do not, with the odd ones out
+          marked. A card&rsquo;s button makes them match; nothing changes
+          until you press it, and Ctrl+Z puts it back.</div>
         <div class="img-ov-body std-list" id="std-ov-body"></div>
       </div>
       <div class="img-ov" id="tidy-ov" hidden role="dialog"
@@ -2830,6 +2950,11 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="ruler-corner" id="ruler-corner"
           title="Click, then drag on the page to draw a guide box &mdash; an area to lay out inside. Guides snap, and are never printed, exported or shown while presenting">mm</div>
       </div>
+      <!-- T391: THE ANIMATION STORY. One picture per stop of the slide;
+           click one and the stage shows the slide at that stop, still
+           editable. Built by renderStory; hidden until asked for. -->
+      <div class="story-strip" id="story-strip" hidden
+        role="region" aria-label="Animation story"></div>
       <div class="deck-stage" id="deck-stage"></div>
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"
@@ -2862,6 +2987,25 @@ items snap to both. Guides, not ink: never printed or exported"
           <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
             ><i data-ic="stagger"></i> Skip animations
             <span class="tk-state">playing</span></button>
+        </div>
+        <!-- T386: the talk's tools. A laser dot, a magnifier, a black
+             screen -- each one key, none of them stored. -->
+        <div class="tk-row">
+          <span class="tk-lab">Pointer</span>
+          <span class="tk-grp">
+            <button class="dbtn tk-b" id="talk-laser" aria-pressed="false"
+              title="A red dot that follows the pointer (P). Click still
+ advances"><i data-ic="laser"></i> Laser</button>
+            <button class="dbtn tk-b" id="talk-lens" aria-pressed="false"
+              title="A magnifier: the slide under the pointer at twice
+ the size (M)"><i data-ic="find"></i> Magnifier</button>
+          </span>
+        </div>
+        <div class="tk-row">
+          <span class="tk-lab">Screen</span>
+          <button class="dbtn tk-b" id="talk-black" aria-pressed="false"
+            title="Black the screen so the room looks at you (B). B, Esc
+ or a click brings the slide back"><i data-ic="blackout"></i> Black screen</button>
         </div>
         <div class="tk-row">
           <span class="tk-lab">Text size</span>

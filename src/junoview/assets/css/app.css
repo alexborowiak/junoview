@@ -170,6 +170,11 @@ body.presrail-min{--presrail-w:46px;}
 .vw-stack{justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:4px;}
+/* T390: a section off the current page is gone from the feed and
+   dimmed in the outline, where its row is the door to its page */
+.section.pg-out{display:none!important;}
+.navsec-row.nav-paged,.navitems.nav-paged{opacity:.4;}
+#pages-nav{display:flex;gap:4px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
   line-height:1;opacity:.75;order:-1;}

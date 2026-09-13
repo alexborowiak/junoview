@@ -7694,3 +7694,175 @@ gates are recorded in the completing commit.
   custom ribbon too; the Style System appends **everything else** only when
   there is an object kind to put under it. Verified in the rendered editor at
   laptop and desktop widths as well as through the full repository test suite.
+
+### Completed 2026-09-12 — four things the user saw on the deployed page
+
+- [x] **T381 — Nothing above the thumbnails, and the Update menu is a
+  list.** The notebook block that led the builder column (a "back to
+  notebooks" header, one row per notebook, Refresh all and a More menu
+  holding the lock verbs) is gone with its builder, fold preference and
+  CSS (user: "the back to notebooks button shouldn't be there, this is
+  now separate from notebooks; the notebook is still listed there;
+  refresh all should be removed, now handled by the update button; the
+  options in the button look poor"). Refreshing is Home > Update, whose
+  menu grew a second section for Lock all figures / Unlock all / Load
+  locked versions (same words, same app-only reason) and is drawn one
+  row per action instead of a three-column grid that wrapped every
+  phrase into a four-line cell.
+- [x] **T382 — The presenting drawer is what is open now, and it slides
+  out at the edge.** While presenting, the deck-owned drawer listed every
+  presentation opened this session, which reads as a recents list when
+  only one deck is ever on screen, and it opened only from its button
+  (user: "the auto-hidden sidebar doesn't appear; it should show only
+  open items, not all recents, with a separate recents button"). It now
+  lists the presentation on screen and the notebooks open in the app (a
+  notebook row stops the talk and shows that notebook), slides out when
+  the pointer reaches the left edge and closes when it leaves, has a
+  **Recents** door beside **All presentations…** (both the library
+  dialog), and loses the Close button that closed the drawer rather than
+  the deck under a heading repeating the button that opened it.
+- [x] **T383 — Fix mismatched text is back, on a tile of its own.** T378
+  had renamed it "Check consistency" and left it as the last small button
+  of the Presentation styles row, which folds into one tile at laptop
+  width, so the check was a row inside a menu behind a door (user: "I
+  liked the concept but the execution was always weird; now it's gone").
+  It is a tall tile in a **Consistency** group beside Presentation
+  styles, under the name the user knows, and that one-tile group never
+  folds. The screen is titled the same, its intro says what a card is
+  and that nothing changes until a button is pressed, and when nothing
+  differs it shows its working: one quiet card per group it compared
+  (named styles, then size bands) with the same specimen chips a finding
+  has, each a door to its slide. Review centre, Style system door and
+  Help use the name.
+- [x] **T384 — The Style system reads as a slide, in two columns.** The
+  board had lost its visual when T367 took the dashed prototype off it:
+  one amber outline on a grey page, over three "Exactly" number fields
+  nothing read any more, a dead Style sets door, an empty hover bubble
+  sitting across the "Show everything else" checkbox, and nine sections
+  stacked in one scroller (user: "the visual display is gone and
+  confusing; needs a better layout"). The body is now **how it looks**
+  (specimen, looks, the control clusters) beside **where its boxes sit**
+  (the board, its key, the groups and the move), with **Every box wearing
+  it** running full width beneath. The board carries each text box's own
+  words at its own size (container-query units, so a style's percent of
+  the page is percent of the board), one set of words per place, in its
+  colour, face, weight and slant; everything else is drawn by default so
+  the board is the slide; the key says "figure", not "cell". Style sets
+  opens the picker, the Exactly trio and the prototype's CSS are gone,
+  and the bubble hides when told to.
+- [x] **T385 — More ways to move: three entrances, motion that keeps
+  going, highlight builds, two more page turns.** (User: "the big thing
+  in websites is people having cool animations ... page turn or it flies
+  in and moves the other out of the way; things wobbling and moving; text
+  typing out like a type writer; instead of having text come out one at a
+  time, one dot point is highlighted so you can still have all text
+  out".) The Effect strip gains **Fly in**, **Page turn** and
+  **Typewriter** (words only; the text nodes are emptied and refilled a
+  few characters a tick, bounded at about two and a half seconds, every
+  word put back whole). A **Motion** group on the Animation tab gives an
+  object a loop for as long as it is on the slide in the show — Wobble,
+  Float, Pulse — stored as `motion`, previewed on hover, off under
+  reduced motion like every keyframe. **Highlight** joins Whole box / By
+  bullet / By sentence: the same stops, but nothing is held back — the
+  piece each click is about lights up in the accent and the rest sit
+  quiet (`anim.hl`). A flip book's page can now **Page turn** on its left
+  edge or **Push** in from the right. Driven in Chromium: the title typed
+  out under the click and finished whole; Float put its class on the item
+  in the show and left the editor still.
+- [x] **T386 — The talk's own tools: laser, magnifier, black screen.**
+  (User: "the during presentation features, having something like a
+  magnifying glass that can be swapped to".) A new fragment,
+  `51-talk-tools.js`, booted from the boot sequence. **P** is a red
+  laser dot that follows the pointer; **M** is a round magnifier
+  showing the slide under the pointer at twice the size — a clone of
+  the slide, kept inside the stage so it inherits the talk's type
+  sizes, refreshed by a MutationObserver only while it is up, and put
+  back after every slide change; **B** blacks the screen so the room
+  looks at the speaker. None of the three take the pointer, so a click
+  still advances; Escape puts them all down before the editor's own
+  Escape can read it as "stop presenting"; leaving the show puts them
+  down too; nothing is stored. Each is also a button on the Talk
+  panel. Driven in Chromium: the lens showed a magnified figure and
+  survived a slide change; Esc cleared every tool and kept presenting.
+- [x] **T387 — Pictures pushed further: a zoom callout, the frame's
+  shape, and pictures that zoom together.** (User: "a zoom on a feature
+  in an image, like a new box gets created with a zoom"; "the way
+  cropping works can be pushed further"; "having images linked so they
+  zoom or change in the same way".) **Zoom callout** on the Picture
+  group: drag a box over part of a picture and three grouped things
+  appear — an outline where you dragged, a line, and a second picture
+  wearing that box as its **window** (`win`, a region of the picture
+  shown filling the callout's box, which is given the window's shape
+  so nothing stretches) arriving with a Grow on a build of its own;
+  PowerPoint gets the window as a source-rect crop. The Crop menu's
+  new **Frame** row trims two opposite edges, centred, to 16:9, 4:3,
+  1:1, 3:2 or 2:3 in the page's own millimetres. **Zoom together**
+  links the selected pictures (`sync`): enlarge one in the show and
+  they all come up side by side at one scale. Driven in Chromium.
+- [x] **T388 — A live web page on a slide.** (User: "maybe web page
+  view, where you can put a full interactive website on there".) A new
+  kind, `web`, carrying only an address (http or https), drawn as a
+  sandboxed iframe — live in the show and in an exported page, covered
+  by a label while editing so the box can be picked up and moved. Its
+  own fragment, `53-web-page.js`: **Web page** on Insert asks for the
+  address, **Web address…** on the Object tab changes it. The sandbox
+  lets the page run and talk to its own origin and never navigate this
+  window; the notebook sanitiser's no-iframe posture is untouched.
+  PowerPoint has no shape for it, so the export says so and counts it.
+- [x] **T389 — The scrolling version of a presentation.** (User: "could
+  there be a continuous scroll version of presentations, with some like
+  'animate as scrolling down', so the animations only appear on first
+  scroll down then just are there after that".) **Play as a scrolling
+  page** on the Present menu and the Present tab opens every slide,
+  fully built, one under the other in an overlay scaled to the window
+  — the same pages the PDF and the standalone export are made of. Each
+  page's animated objects are held back until the page first scrolls
+  into view, then play their own entrance in build order a beat apart
+  and stay; scrolling back replays nothing. Esc closes it, the arrow
+  keys step a page, a counter says where you are. Its own fragment,
+  `54-scroll-show.js`. Found on the way: the export pages carried the
+  editor's dashed selection ring round the selected box's index on
+  every slide (PDF and standalone HTML too); buildPrintRoot now clears
+  the selection while it draws.
+- [x] **T390 — The notebook view, one page at a time.** (User: "could the
+  notebook view have pages; e.g. create page per section, or add page
+  here, so then instead of all at once it could be split into pages".)
+  A **Pages** group on the viewer's ribbon turns the notebook into
+  pages, one per section at the shallowest level that has more than one
+  section (a notebook whose only top heading is its title pages by its
+  chapters, and the title's own cells ride on the first), with the
+  deeper sections under each. Back / Next step through; the button says
+  "Page k of n"; the outline keeps every row with the ones off this page
+  dimmed, and clicking one turns to its page. Enforced from the one
+  filter pass, so the filters still decide what a page holds; kept per
+  notebook with the saved layout.
+- [x] **T391 — The animation story: edit the slide at any stop.** (User:
+  "something like the 'animation story', that showed you what the slide
+  looks like during each animation and you can click through — if
+  something disappears it is not there at that point, so then if there
+  are layers of things they are much easier to see where they are and
+  move around".) **Story** on the Animation tab opens a strip above the
+  stage with one picture per stop of the slide — the start, then every
+  click — each painted by the show's own renderer at that stop, with a
+  caption saying who arrives and who leaves. Click one and the stage
+  shows the slide at that stop and stays editable: what has not arrived
+  is not there, what has already left is not there (display:none, so
+  nothing invisible can be picked up), a flip book is on that page, a
+  box arriving in pieces shows the pieces that are out. **Whole slide**
+  puts the ordinary editor back; the pictures follow every edit. Its
+  own fragment, `56-story.js`; nothing is stored.
+- [x] **T392 — CI collected nothing.** Every test job on `main` was red:
+  two test modules imported a sibling as `tests.…`, which resolves only
+  under `python -m pytest` (the repo root on sys.path) and not under the
+  plain `pytest` CI runs, where `tests/` is on the path as a directory.
+  Both now import the sibling by its bare name, like `helpers` is. Plain
+  `pytest` and `python -m pytest` both pass.
+- [x] **T393 — The same page on every Python CI runs.** With T392 in, one
+  test still failed per interpreter. On 3.13, the byte-for-byte pin of
+  the example page: Python 3.12 (PEP 701) tokenizes an f-string as
+  FSTRING_START, its pieces, FSTRING_END, so `{name}` inside one was
+  coloured as an operator and a name where 3.10/3.11 give one string.
+  The highlighter folds the run back into one string span (the pinned
+  bytes are the 3.11 ones, unchanged). On 3.10, a .csv with a NUL byte:
+  3.10's csv module refuses the line, 3.11+ reads through it; the byte
+  is dropped before parsing. Full suite green on 3.10, 3.11 and 3.13.

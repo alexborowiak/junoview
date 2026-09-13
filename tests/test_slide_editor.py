@@ -485,69 +485,32 @@ def test_rail_has_one_new_button_and_per_row_delete(out):
     assert ".pr-item:hover .pr-del,.pr-item.current .pr-del" in out
 
 
-def test_notebooks_pane_survives_its_own_actions(out):
-    """Clicking a row or Open/Refresh used to close the pane -- the
-    dropdown's habit surviving into the pane. It re-renders and stays;
-    only the cross or the toolbar button closes it (2026-08-18, user).
+def test_the_notebook_block_is_gone_from_above_the_thumbnails(out):
+    """T78 shrank the block, T273 and T365 trimmed it, and T381 removed
+    it (2026-09-12, user: "the back to notebooks button shouldn't be
+    there, this is now separate from notebooks; the notebook is still
+    listed there; refresh all should be removed, now handled by the
+    update button"). Everything above the thumbnails is height the
+    thumbnails do not get, and now nothing is above them.
     """
-    assert "setTimeout(renderNbsMenu,600);" in out
-    assert "APP.openPath(n.path);hideNbsMenu();" not in out
-
-
-def test_the_notebook_block_stops_squeezing_the_thumbnails(out):
-    """T78: everything above the thumbnails is height the thumbnails do
-    not get, and #dc-nbs was a header, a row per notebook and five
-    full-width buttons (2026-08-29, user: "slide thumbnails seem to be
-    compressed by the buttons that are on the top right ... even though
-    they are above, they seem to compress the thumbnail view"). Three
-    cures, none of which loses the list itself -- it is the way back and
-    the open/closed state (2026-08-20).
-    """
-    # ONE action row: Refresh all, then More for the once-a-session rest.
-    # T273 took "Open notebooks" off it (2026-09-05, user: "not needed
-    # anymore"). Refresh all inherited its job -- openPresNbs(false) opens
-    # the closed notebooks as well as re-reading the open ones -- and came
-    # out of the More menu to take the row, because a row holding nothing
-    # but More is the standing complaint.
-    assert "acts.appendChild(rb);nbBody.appendChild(acts);" in out
-    assert "ob.innerHTML=bic('open')+' Open notebooks';" not in out
-    # T365: and the EMPTY state is gone too (2026-09-07, user: "remove
-    # the 'open notebooks' from the top of the fucking thumbnails. I said
-    # that should not be a god damn fucking thing"). JVUX-11 gave that
-    # state a door because it named an action with nothing to click; the
-    # answer now is that the state does not exist -- the block appears
-    # only when the presentation has notebooks to list, so a new deck's
-    # thumbnails start at the top of the column, which is T78's own rule.
-    assert "ob2.className='dbtn dc-nbs-open';" not in out
-    assert "No notebooks yet" not in out
-    # .dc-nbs-empty survives: it still styles the "open / refresh is
-    # available in the Junoview app" note the web build shows under a
-    # list it cannot act on. Only the NO-NOTEBOOKS state went.
-    assert "note.textContent='Open / refresh is available in the Junoview app.';" in out
-    assert "    if(!info.length) return;" in out
-    assert "    if(col) col.hidden=!nbs.length;" in out
-    # the way IN is where you ask for a figure
+    assert 'id="dc-nbs"' not in out
+    assert "function buildNbsInto" not in out
+    assert "setTimeout(renderNbsMenu,600);" not in out
+    assert "mb.innerHTML=bic('menu')+' More';" not in out
+    assert "acts2.className='sh-menu nbs-more-menu';" not in out
+    assert ".dc-nbs-body{" not in out and ".dc-nbrow{" not in out
+    assert "var NBS_FOLD_KEY" not in out
+    # the way IN to a notebook is still where you ask for a figure
     assert "        if(!(APP.order&&APP.order.length)){" in out
     assert "          if(tb){toast('Open a notebook to pick a figure from');" in out
-    assert "mb.innerHTML=bic('menu')+' More';" in out
-    assert "acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;" in out
-    assert "dc-nbacts-stack" not in out           # the stacked trio is gone
-    # ...the actions are not: same words, same app-only treatment
-    for label in ("Refresh all", "Lock all figures",
-                  "Unlock all", "Load locked versions"):
+    # the lock trio kept its words and its app-only treatment, one per
+    # row in the Update menu -- which is a LIST, not .sh-menu's grid
+    for label in ("Lock all figures", "Unlock all", "Load locked versions"):
         assert label in out
-    assert "la.disabled=!appMode;" in out and "ua.disabled=!appMode;" in out
-    # rows AND actions live in one body that scrolls instead of pushing
-    assert "nbBody.appendChild(row);" in out
-    assert ".dc-nbs-body{max-height:min(18vh,190px);overflow-y:auto;}" in out
-    assert ".dc-nbs.nbs-folded .dc-nbs-body{display:none;}" in out
-    # the fold is a per-browser preference, worded, and keeps the count
-    assert "var NBS_FOLD_KEY='junoview-nbs-fold';" in out
-    assert "bic('expand')+' Show':bic('collapse')+' Hide'" in out
-    assert "sum.className='dc-nbs-sum';" in out
-    # the menu's rules must outrank .sh-menu's grid/absolute, which come
-    # LATER in deck.css -- one class would lose and the body would clip it
-    assert ".sh-menu.nbs-more-menu{position:fixed;" in out
+    assert '<div class="sh-menu upd-menu" id="hm-upd-menu" hidden></div>' in out
+    assert ".sh-menu.upd-menu{display:block;width:250px;padding:5px;}" in out
+    assert (".upd-menu .dbtn{display:flex;width:100%;text-align:left;\n"
+            "  white-space:normal;margin-top:3px;}") in out
 
 
 def test_browser_saves_offer_a_way_out(out):
@@ -1812,8 +1775,9 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     # the ribbon restore -- so assert that ordering directly too.
     # the window tracks the sequence's LENGTH, which grows every time a
     # feature earns a boot call (T321, T322, T324 and T325 each added
-    # one ahead of this). What it guards is the ORDER, asserted next.
-    assert "\n  initReuseDoors();" in _boot[:3000]
+    # one ahead of this; T385-T391 added five more). What it guards is
+    # the ORDER, asserted next.
+    assert "\n  initReuseDoors();" in _boot[:3400]
     assert _boot.index("\n  initReuseDoors();") < _boot.index(
         "  /* the ribbon you kept: applied once here, at the tail")
 
@@ -2819,12 +2783,17 @@ def test_the_consistency_check_says_what_it_is_opened_for(out):
     headed "Standardise text" and its count line counted text boxes
     (2026-08-26 audit, T58).
     """
-    assert "Check consistency</button>" in out
-    assert "Style consistency" in out
+    assert "<span>Fix mismatched text</span></button>" in out
+    assert "Fix mismatched text" in out
     assert "Find text or figures that look like they should" in out
     # The count includes figures, while the list suppresses cards that
-    # merely say something already matches.
+    # merely say something already matches...
     assert "var figs=figBoxes().length,fl=figLint().length;" in out
+    # ...and, T383, says what it compared when nothing differs, one
+    # quiet card per group with the same specimen chips a finding has
+    assert "menuHead(list,'compared, and they match');" in out
+    assert "  function stdSpecimenInto(c,p){" in out
+    assert "          row.className='std-find std-checked';" in out
     assert "var n=bad.length+fl;" in out
     assert "these already match" not in out
 
@@ -3361,7 +3330,10 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     """
     # located by its CONTENT: the page carries three reduced-motion
     # blocks (core.css's transitions, the .slide guard, and this one)
-    guard = ".an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}"
+    # (T385 added Fly in, Page turn and the three motions to the list)
+    guard = (".an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,"
+             ".an-anim-turn,\n  .an-move-wobble,.an-move-bob,.an-move-pulse"
+             "{animation:none!important;}")
     assert guard in out
     i = out.index(guard)
     assert out.rindex("@media (prefers-reduced-motion:reduce){", 0, i) > 0
@@ -3369,7 +3341,9 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # the window grew when T172's piece CSS landed between them; what
     # this guards is that the guard sits WITH the keyframes rather than
     # paragraphs away, not an exact byte distance
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 2600
+    # (T385's five extra keyframe blocks sit in the same run, so the
+    # window grew once more)
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 4200
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 
@@ -3799,7 +3773,8 @@ def test_the_gallery_previews_on_the_real_object(out):
     # re-adding a class already present does nothing: off, reflow, on
     assert "void el.offsetWidth;" in out
     # animationend is not a safe cleanup, so a timer always runs
-    assert "galPvT=setTimeout(galPreviewStop,900);" in out
+    # (T385: the typewriter preview runs longer than a keyframe)
+    assert "galPvT=setTimeout(galPreviewStop,type==='type'?2800:900);" in out
     assert "b.addEventListener('mouseleave',galPreviewStop);" in out
 
 

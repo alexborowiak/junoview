@@ -88,7 +88,7 @@ def test_style_family_shows_the_base_specimen_once(out):
 def test_style_system_has_no_empty_everything_else_heading(out):
     """The object heading is appended lazily with its first used kind."""
     rail = out.split("function dgRail(ov){", 1)[1].split(
-        "var dgShowOthers=false;", 1
+        "var dgShowOthers=true;", 1
     )[0]
     assert "var hd=null;" in rail
     assert "if(!hd){" in rail

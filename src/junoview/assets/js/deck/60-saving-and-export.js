@@ -1132,6 +1132,13 @@
     if(old) old.remove();
     var savedMode=mode,savedReveal=revealCount,savedCur=cur;
     mode='view';revealCount=99999;              /* all builds fully revealed */
+    /* T389: THE PAGES ARE A PICTURE OF THE DECK, NOT OF THE EDITOR.
+       renderAnnots marks item selAnnot on WHATEVER slide it draws, so
+       with the first box selected every exported page carried a dashed
+       selection ring round its first box (seen on the scrolling
+       version, but the PDF and the standalone export had it too). */
+    var savedSel=selAnnot,savedSet=selSet;
+    selAnnot=null;selSet=[];
     var root=document.createElement('div');root.id='print-root';
     /* attach the container FIRST (off-screen but laid out) so each slide has a
        real 720px height when its text is sized from the layer — otherwise a
@@ -1225,6 +1232,11 @@
       }
     });
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    selAnnot=savedSel;selSet=savedSet;
+    /* ...and whatever a render path still marked, off: the ring is the
+       editor's, and no page is the editor */
+    $$('.sel,.grpsel',root).forEach(function(el){
+      el.classList.remove('sel','grpsel');});
     /* put the editor back on its own frame, or every flip book on screen
        would be left showing whatever the last exported page wanted */
     flipForce=null;
@@ -1692,8 +1704,14 @@
           /* what the picture shows, for PowerPoint's own accessibility
              checker and for a screen reader opening the deck (T105) */
           alt:a.alt,dec:a.dec,
-          /* a path crop has no preset to become, so it is not sent */
-          crop:(a.crop&&!a.crop.path)?a.crop:null,
+          /* a path crop has no preset to become, so it is not sent;
+             T387: a window onto the picture IS a crop in PowerPoint's
+             terms -- srcRect trims the source to the window */
+          crop:(a.crop&&!a.crop.path)?a.crop
+            :(a.win&&a.win.w>0&&a.win.h>0
+              ?{t:a.win.y||0,l:a.win.x||0,
+                r:Math.max(0,100-(a.win.x||0)-a.win.w),
+                b:Math.max(0,100-(a.win.y||0)-a.win.h)}:null),
           cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''});
         else note.skipped++;
       } else if(a.k==='video'){
@@ -1791,6 +1809,9 @@
           rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
           name:(fsel&&fsel.label)||'Figure'});
         else note.skipped++;
+      } else if(a.k==='web'){
+        /* T388: PowerPoint has no shape for a live page */
+        note.web=(note.web||0)+1;
       } else if(a.k==='cell'){
         var it=a.ref?resolveRef(a.ref):null;
         var node=it?framePart(it.ns,a.part):null;
@@ -1986,6 +2007,9 @@
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
       +(note.skipped===1?'':'s')+' that PowerPoint has no shape for');
+    if(note.web) lost.push(note.web+' live web page'
+      +(note.web===1?'':'s')+' \u2014 PowerPoint cannot embed a page; '
+      +'add a screenshot if it matters');
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
       +'arrive as plain characters');

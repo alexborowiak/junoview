@@ -12,7 +12,10 @@ from junoview import assets
 
 
 def _web() -> str:
-    from tests.test_front_door import render_page
+    # a sibling test module, by its bare name: tests/ is on pytest's path
+    # as a directory (pyproject: pythonpath), and `tests.…` only ever
+    # resolved under `python -m pytest` (2026-09-13, every CI job red)
+    from test_front_door import render_page
     return render_page([], mode="web")
 
 

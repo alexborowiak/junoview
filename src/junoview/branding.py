@@ -44,6 +44,30 @@ _ICON_PATHS = {
             '1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/>',
     "reload": '<path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/>'
               '<path d="M13.6 2.2v3.1h-3.1"/>',
+    # T385: three more entrances and three loops
+    "flyin": '<path d="M1.8 8h8.4"/><path d="M7.2 5l3 3-3 3"/>'
+             '<path d="M12.2 3.4h2v9.2h-2"/>',
+    "pageturn": '<path d="M2.4 2.6h11.2v10.8H2.4z"/>'
+                '<path d="M8 2.6c3 2.6 3 8.2 0 10.8"/>'
+                '<path d="M8 2.6c-3 2.6-3 8.2 0 10.8"/>',
+    "typewriter": '<path d="M2.2 11.6h6.6"/><path d="M2.2 8h4"/>'
+                  '<path d="M2.2 4.4h9"/><path d="M11.4 7.6v5.4"/>',
+    "wobble": '<path d="M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1"/>',
+    "bob": '<path d="M8 2.4v11.2"/><path d="M4.8 5.6L8 2.4l3.2 3.2"/>'
+           '<path d="M4.8 10.4L8 13.6l3.2-3.2"/>',
+    "pulse": '<circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/>',
+    # T391: the animation story -- three frames of a strip
+    "story": '<path d="M1.6 4.2h3.6v7.6H1.6z"/><path d="M6.2 4.2h3.6v7.6H6.2z"/>'
+             '<path d="M10.8 4.2h3.6v7.6h-3.6z"/>',
+    # T386: the talk's tools
+    "laser": '<circle cx="8" cy="8" r="2.4"/><path d="M8 1.8v2.2"/>'
+             '<path d="M8 12v2.2"/><path d="M1.8 8H4"/><path d="M12 8h2.2"/>',
+    "blackout": '<path d="M2.4 2.4h11.2v11.2H2.4z" fill="currentColor"/>',
+    # T387: a window onto a picture, and pictures that zoom together
+    "callout": '<path d="M1.8 2.6h6.4v5.2H1.8z"/><path d="M3.6 4.4h2.6v1.8H3.6z"/>'
+               '<path d="M8.4 8.4h5.8v5.2H8.4z"/><path d="M6.2 6.2l2.2 2.2"/>',
+    "zoomlink": '<circle cx="5" cy="8" r="3"/><circle cx="11" cy="8" r="3"/>'
+                '<path d="M8 8h0"/><path d="M7.2 6.4l1.6 3.2"/>',
     "info": '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/>'
             '<path d="M8 4.9v.1"/>',
     # filters: one per content type

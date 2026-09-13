@@ -1521,52 +1521,110 @@
     if(d) d.hidden=true;
     if(b) b.setAttribute('aria-expanded','false');
   }
-  function openSessionPresentation(name){
-    var p=presentationByName(name);
-    if(!p){toast('That presentation is no longer available.');return;}
-    closeDeckPresentationDrawer();
-    if(pres&&name===pres.name) return;
-    if(isViewPres(p)){choosePresentation(name);return;}
-    if(name!==pres.name){
-      lsSet(PFX+'last',name);loadPresentation(name);cur=0;activePane=-1;
-    }
-    openDeck('view');
+  /* ---- T382: THE DRAWER IS WHAT IS OPEN NOW ------------------------
+     It listed every presentation opened this session, which reads as a
+     recents list when only one deck is ever on screen (2026-09-12, user:
+     "it should show only open items, not all recents, with a separate
+     recents button"). Open items are the presentation you are showing
+     and the notebooks open in the app -- the things a click can put on
+     screen without opening anything. A notebook row stops the talk and
+     shows that notebook, the way the old column row did. */
+  function openNotebookRows(){
+    var out=[];
+    var A=window.SemApp||{};
+    (A.order||[]).forEach(function(stem){
+      var sh=A.shells&&A.shells[stem]; if(!sh) return;
+      out.push({stem:stem,label:sh.label||stem,path:sh.path||'',
+        kind:sh.kind||'notebook'});
+    });
+    return out;
   }
   function renderDeckPresentationDrawer(){
     var host=$('#deck-pres-list');if(!host) return;
     host.innerHTML='';
-    var rows=sessionPresentationRows();
-    if(!rows.length){
-      var e=document.createElement('div');e.className='deck-pres-empty';
-      e.textContent='No presentation has been opened in this session.';
-      host.appendChild(e);return;
-    }
-    rows.forEach(function(p){
+    function row(cls,icon,name,kind,title,click){
       var b=document.createElement('button');
-      b.type='button';b.className='deck-pres-row'+(p.name===pres.name?' current':'');
-      b.title='Show “'+p.name+'”';
-      var ic=document.createElement('span');ic.innerHTML=presentationIcon(p);
-      var name=document.createElement('span');name.className='deck-pres-row-name';
-      name.textContent=p.name;
-      var kind=document.createElement('span');kind.className='deck-pres-row-kind';
-      kind.textContent=presentationKind(p);
-      b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
-      b.addEventListener('click',function(){openSessionPresentation(p.name);});
+      b.type='button';b.className='deck-pres-row'+(cls?' '+cls:'');
+      b.title=title;
+      var ic=document.createElement('span');ic.innerHTML=icon;
+      var nm=document.createElement('span');nm.className='deck-pres-row-name';
+      nm.textContent=name;
+      var kd=document.createElement('span');kd.className='deck-pres-row-kind';
+      kd.textContent=kind;
+      b.appendChild(ic);b.appendChild(nm);b.appendChild(kd);
+      if(click) b.addEventListener('click',click);
+      else b.disabled=true;
       host.appendChild(b);
+    }
+    var p=presentationSummary(pres.name)||{name:pres.name};
+    row('current',presentationIcon(p),pres.name||'this presentation',
+      presentationKind(p),'The presentation you are showing',null);
+    var nbs=openNotebookRows();
+    nbs.forEach(function(n){
+      row('',bic('doc'),n.label,n.kind,
+        'Stop presenting and show this notebook'+(n.path?(' ('+n.path+')'):''),
+        function(){
+          closeDeckPresentationDrawer();
+          closeDeck();
+          var A=window.SemApp||{};
+          if(A.activate) A.activate(n.stem);
+        });
+    });
+    if(!nbs.length){
+      var e=document.createElement('div');e.className='deck-pres-empty';
+      e.textContent='No notebook is open.';
+      host.appendChild(e);
+    }
+  }
+  function openDeckPresentationDrawer(){
+    var d=$('#deck-pres-drawer'),b=$('#deck-pres-open');
+    if(!d) return;
+    renderDeckPresentationDrawer();
+    d.hidden=false;
+    if(b) b.setAttribute('aria-expanded','true');
+  }
+  /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the
+     way the presentations rail does outside the deck (2026-09-12, user:
+     "the auto-hidden sidebar doesn't appear"). The rail's own peek
+     handler returns early under body.deck-open, and deckIsolate has made
+     the rail inert, so nothing answered the edge during a talk. Same
+     14px hit zone as the rail's; it closes when the pointer leaves the
+     drawer by the same 40px margin the column and the present bar use.
+     Presenting only: the editor has its own column and its own peek. */
+  function initDrawerPeek(){
+    document.addEventListener('mousemove',function(e){
+      var d=$('#deck-pres-drawer'); if(!d) return;
+      if(mode!=='view'||deckEl.hidden) return;
+      var hub=$('#presentation-hub');
+      if(hub&&!hub.hidden) return;
+      if(d.hidden){
+        if(e.clientX<=14) openDeckPresentationDrawer();
+        return;
+      }
+      var r=d.getBoundingClientRect();
+      if(e.clientX>r.right+40||e.clientY>r.bottom+40)
+        closeDeckPresentationDrawer();
     });
   }
   function presentationHubBoot(){
     var hub=$('#presentation-hub'),drawer=$('#deck-pres-drawer');
-    var drawerOpen=$('#deck-pres-open'),drawerClose=$('#deck-pres-close');
-    var drawerBrowse=$('#deck-pres-browse');
+    var drawerOpen=$('#deck-pres-open');
+    var drawerBrowse=$('#deck-pres-browse'),drawerRecent=$('#deck-pres-recent');
     if(drawerOpen) drawerOpen.addEventListener('click',function(){
       if(!drawer) return;
-      drawer.hidden=!drawer.hidden;
-      drawerOpen.setAttribute('aria-expanded',(!drawer.hidden).toString());
-      if(!drawer.hidden) renderDeckPresentationDrawer();
+      if(drawer.hidden) openDeckPresentationDrawer();
+      else closeDeckPresentationDrawer();
     });
-    if(drawerClose) drawerClose.addEventListener('click',closeDeckPresentationDrawer);
     if(drawerBrowse) drawerBrowse.addEventListener('click',openPresentationHub);
+    /* the separate Recents door: the same library dialog, opened on its
+       Recent column */
+    if(drawerRecent) drawerRecent.addEventListener('click',function(){
+      openPresentationHub();
+      setTimeout(function(){
+        var first=$('#presentation-hub-recent .presentation-hub-row');
+        if(first) first.focus();},0);
+    });
+    initDrawerPeek();
     var close=$('#presentation-hub-close');
     if(close) close.addEventListener('click',closePresentationHub);
     if(hub) hub.addEventListener('click',function(e){
@@ -2720,7 +2778,7 @@
       var it=document.createElement('span');
       it.className='dg-keyit';
       it.style.setProperty('--dg-kc',DG_KIND_COL[k]||'#8aa0b0');
-      it.textContent=k;
+      it.textContent=DG_KIND_WORD[k]||k;
       key.appendChild(it);
     });
   }
@@ -2881,11 +2939,19 @@
      it now sit every box that actually wears the style, and -- when you
      ask -- everything else on those slides, one colour per kind. So the
      question "will my heading land on the figure" is answered by looking
-     rather than by pressing the button and undoing it. */
-  var dgShowOthers=false;
+     rather than by pressing the button and undoing it.
+     T384: ON by default. With the dashed prototype gone (T367) a board
+     of one amber outline on a grey page was "the visual display is
+     gone" (2026-09-12); the board reads as a slide only when the slide
+     is on it. */
+  var dgShowOthers=true;
   var DG_KIND_COL={text:'#6b9bff',cell:'#f0a848',image:'#a586e8',
     rect:'#46a892',table:'#e0a5c6',flip:'#39a9c0',arrow:'#ff6b57',
     line:'#ff6b57',draw:'#ff6b57',chart:'#7fd7c0'};
+  /* T384: the key said "cell" -- the model's word, not the user's */
+  var DG_KIND_WORD={text:'other text',cell:'figure',image:'picture',
+    rect:'shape',table:'table',flip:'flip book',arrow:'arrow',line:'line',
+    draw:'drawing',chart:'chart'};
   function dgKindCol(a){
     return (a&&DG_KIND_COL[a.k])||'#8aa0b0';
   }
@@ -2897,6 +2963,25 @@
     });
     return out;
   }
+  function dgBoardWords(b,a,def){
+    var st=def||((a.style&&typeof styleDef==='function')
+      ?styleDef(a.style):null)||{};
+    var words=String(a.text||'').replace(/\s+/g,' ').trim();
+    var t=document.createElement('span');
+    t.className='dg-realtx';
+    t.textContent=words||annotLabel(a);
+    if(!words) t.classList.add('dg-realempty');
+    var size=a.size||st.size||2.6;
+    t.style.fontSize=size.toFixed(2)+'cqh';
+    var col=a.color||st.color;
+    t.style.color=tokVal(col||'@ink');
+    var fam=a.font||st.font;
+    if(fam) t.style.fontFamily=fontCss(fam);
+    if(a.b||st.b) t.style.fontWeight='700';
+    if(a.i||st.i) t.style.fontStyle='italic';
+    t.style.textAlign=a.align||st.align||'left';
+    b.appendChild(t);
+  }
   function dgGhostsFor(board,id){
     $$('.dg-real,.dg-other',board).forEach(function(n){n.remove();});
     /* T279: the board drew every wearer of the style identically -- same
@@ -2906,6 +2991,10 @@
        predicate the Fix-mismatched-text screen uses, once per repaint. */
     var def=(typeof styleDef==='function')?styleDef(id):null;
     var off=0;
+    /* T384: ONE SET OF WORDS PER PLACE. Fourteen headings at 5,4 drew
+       fourteen titles on top of each other and read as noise; the first
+       box at a place carries the words, the rest are outlines. */
+    var wordsAt={};
     dgBoardSlides().forEach(function(e){
       (e.sl.annots||[]).forEach(function(a){
         if(!a||a.hide) return;
@@ -2921,6 +3010,19 @@
         b.style.width=Math.max(1.5,(a.w||10))+'%';
         b.style.height=Math.max(1.5,(a.h||6))+'%';
         b.style.borderColor=mine?'':dgKindCol(a);
+        /* T384: THE WORDS, IN THE BOX. An empty amber rectangle said
+           where a heading was and nothing about what it looked like
+           (2026-09-12, user: "the visual display is gone and
+           confusing"). Each text box carries its own words at its own
+           size -- container-query units, so 2.6% of the page height is
+           2.6cqh of the board -- in its colour, face, weight and slant,
+           the way the Fix-mismatched-text chips do. Other text is drawn
+           faint so the board reads as the slide it is. */
+        var at=(mine?'m':'o')+a.k+':'+dgPlaceKey(a);
+        if(a.k==='text'&&!wordsAt[at]){
+          wordsAt[at]=1;
+          dgBoardWords(b,a,mine?def:null);
+        }
         /* 2026-09-07: "when hovering above an object it should give an
            information bubble that is like 'chart from slide 7' and
            clicking on it takes you to that slide. Or if many gives you
@@ -3157,6 +3259,26 @@
        it is. */
     dgSectionHead(body,(d.label||id)
       +' \u2014 changes every box wearing it, on every slide');
+    /* ---- T384: TWO COLUMNS, NOT NINE STACKED SECTIONS -------------
+       (2026-09-12, user: "the style systems box is confusing; needs a
+       better layout"). What the type looks like on the left -- specimen,
+       looks, the control clusters -- and where its boxes sit on the
+       right -- the board, its key, the groups and the move. The table
+       of every box runs full width underneath. The dead "Exactly X / Y
+       / Width" inputs are gone: T367 removed the Apply that read them,
+       and the table's own number cells are where a box is typed into
+       place. */
+    var top=document.createElement('div');top.className='dg-top';
+    var left=document.createElement('div');left.className='dg-typecol';
+    var right=document.createElement('div');right.className='dg-placecol';
+    function colHead(host,text){
+      var h=document.createElement('div');
+      h.className='dg-colh';h.textContent=text;host.appendChild(h);
+    }
+    colHead(left,'how it looks');
+    colHead(right,'where its boxes sit');
+    top.appendChild(left);top.appendChild(right);
+    body.appendChild(top);
     var spec=document.createElement('div');
     spec.className='dg-spec';
     spec.textContent='The quick brown fox jumps over the lazy dog';
@@ -3165,8 +3287,8 @@
        slide will */
     spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
     if(!d.color) spec.style.color=tokVal('@ink');
-    body.appendChild(spec);
-    dgLooks(body,id,ov);
+    left.appendChild(spec);
+    dgLooks(left,id,ov);
 
     var row=document.createElement('div');row.className='dg-ctrls';
     /* T230: CLUSTERS, NOT ONE LONG ROW. Thirteen controls sat in one
@@ -3281,44 +3403,15 @@
       markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
     });
     (cur_||row).appendChild(rst);
-    body.appendChild(row);
+    left.appendChild(row);
 
-    dgBoard(body,id);
-    /* ---- T223: THE NUMBERS, TOO ------------------------------------
-       Dragging sets it roughly; typing sets it exactly, and it is the
-       only way to make two decks agree (2026-09-03, user: "why
-       doesn't it show the x and y position as well, and then things
-       like the size"). Percent of the page, the same currency the
-       whole model uses. */
-    var nums=document.createElement('div');nums.className='dg-nums';
-    var nlab=document.createElement('span');
-    nlab.className='dg-grplab';nlab.textContent='Exactly';
-    nums.appendChild(nlab);
-    [['x','X',8],['y','Y',6],['w','Width',60]].forEach(function(pr){
-      var cell=document.createElement('label');cell.className='dg-num';
-      var lb=document.createElement('span');lb.textContent=pr[1];
-      cell.appendChild(lb);
-      var inp=document.createElement('input');
-      inp.type='number';inp.step='0.5';inp.min='-50';inp.max='150';
-      inp.value=(rec[pr[0]]!=null?rec[pr[0]]:pr[2]);
-      inp.title=pr[1]+' as a percentage of the page';
-      inp.addEventListener('keydown',function(e){
-        e.stopPropagation();
-        if(e.key==='Enter') inp.blur();
-      });
-      inp.addEventListener('change',function(){
-        var v=parseFloat(inp.value);
-        if(!isFinite(v)) return;
-        rec[pr[0]]=Math.round(v*10)/10;
-        markDirty();dgBodyKeep(ov);
-      });
-      cell.appendChild(inp);
-      var pc=document.createElement('span');
-      pc.className='dg-numpc';pc.textContent='%';
-      cell.appendChild(pc);
-      nums.appendChild(cell);
-    });
-    body.appendChild(nums);
+    /* the bubble is placed against the board's own box, so the board
+       needs a positioned parent of its own, not the column with a
+       label above it */
+    var boardWrap=document.createElement('div');
+    boardWrap.className='dg-boardwrap';
+    right.appendChild(boardWrap);
+    dgBoard(boardWrap,id);
     /* the put, scoped (T130): everywhere stays the default, but "these
        headings, in this section" is the sentence the ask was written
        in, and a numeric range covers the rest */
@@ -3405,8 +3498,9 @@
     });
     putRow.appendChild(put);
     putSync();
-    body.appendChild(putRow);
+    right.appendChild(putRow);
 
+    dgSectionHead(body,'Every box wearing it');
     dgTable(body,ov);
     dgSheet(body,ov);
   }
@@ -3422,7 +3516,7 @@
       +'<button class="dbtn" id="dg-sets">'+bic('styles')
       +' Style sets\u2026</button>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
-      +' Check consistency</button>'
+      +' Fix mismatched text</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dg-main">'
       +'<div class="dg-rail" id="dg-list"></div>'
@@ -3435,6 +3529,14 @@
       +'<div class="dg-sheetcol" id="dg-sheetcol"></div></div>';
     document.body.appendChild(ov);
     ov.querySelector('#dg-close').addEventListener('click',dgClose);
+    /* T384: the door had no handler behind it. Same route the ribbon's
+       own Style sets button takes; this screen closes first, because
+       the picker is a dialog over the editor, not over this. */
+    ov.querySelector('#dg-sets').addEventListener('click',function(){
+      dgClose();
+      var sb=$('#dsg-sets');
+      if(sb) sb.click();
+    });
     ov.querySelector('#dg-check').addEventListener('click',function(){
       /* the drift CHECK stays where it is: this surface says what the
          standard is, that pane says who is not keeping to it, and one

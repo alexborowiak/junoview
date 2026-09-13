@@ -21,7 +21,13 @@ cannot check arithmetic.
 from __future__ import annotations
 
 import pytest
-from tests.test_a_custom_heading_is_a_heading import _run
+
+# tests/ is on pytest's path as a DIRECTORY (pyproject: pythonpath), so a
+# sibling module is imported by its bare name, like tests/helpers.py is.
+# `from tests.…` resolved only under `python -m pytest`, which puts the
+# repo root on sys.path; the plain `pytest` CI runs did not, and every
+# job died at collection (2026-09-13).
+from test_a_custom_heading_is_a_heading import _run
 
 
 def _get(script):

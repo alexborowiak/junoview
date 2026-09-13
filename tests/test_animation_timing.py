@@ -46,7 +46,8 @@ def test_how_much_of_a_text_box_arrives_is_on_the_ribbon(out):
         assert f'id="{cid}"' in out, cid
     assert "if(by) by.hidden=poster||armed||!st.text;" in out
     assert "e.stopPropagation();setBy(p[1]);});" in out
-    assert "by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:''};" in out
+    assert "by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:''," in out
+    assert "        hl:!!a.anim.hl};" in out
 
 
 def test_the_numbers_show_whenever_the_animation_tab_is_up(out):

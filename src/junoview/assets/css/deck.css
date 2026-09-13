@@ -27,7 +27,8 @@ body.deck-open{overflow:hidden;}
   flex:none;}
 /* The global presentations rail is inert behind a full-screen deck.  This
    drawer is owned by the deck instead, so it can take focus and remains
-   usable while presenting; it deliberately holds only session-open decks. */
+   usable while presenting; it lists what is open right now: the deck on
+   screen and the open notebooks (T382). */
 .deck-pres-drawer{position:absolute;z-index:35;left:14px;top:58px;
   width:min(340px,calc(100vw - 28px));max-height:calc(100vh - 74px);
   display:flex;flex-direction:column;gap:9px;padding:11px;
@@ -38,7 +39,6 @@ body.deck-open{overflow:hidden;}
   padding-bottom:8px;border-bottom:1px solid var(--chrome-line);
   color:var(--chrome-ink);font:600 11px var(--mono);letter-spacing:.08em;
   text-transform:uppercase;}
-.deck-pres-drawer-head .dbtn{margin-left:auto;}
 .deck-pres-list{display:flex;flex-direction:column;gap:5px;min-height:24px;}
 .deck-pres-row{display:flex;align-items:center;gap:8px;min-width:0;
   padding:8px 9px;border:1px solid var(--chrome-line);border-radius:6px;
@@ -53,7 +53,10 @@ body.deck-open{overflow:hidden;}
   font:9px var(--mono);letter-spacing:.07em;text-transform:uppercase;}
 .deck-pres-empty{padding:8px;border:1px dashed var(--chrome-line);
   border-radius:6px;color:var(--chrome-ink-2);font:11px var(--sans);}
-.deck-pres-browse{align-self:stretch;text-align:left;}
+.deck-pres-doors{display:flex;gap:6px;}
+.deck-pres-doors .dbtn{flex:1 1 auto;min-width:0;justify-content:center;
+  white-space:nowrap;}
+.deck-pres-row[disabled]{cursor:default;}
 .deck-brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
   text-transform:uppercase;color:var(--cyan);}
 .deck-status{font-family:var(--mono);font-size:10px;padding:0 10px;
@@ -1039,45 +1042,6 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .dc-name:has(#pres-name:not([hidden])){padding:10px 14px 9px;
   border-bottom:1px solid #ffffff14;}
 .dc-controls{display:flex;flex-direction:column;gap:9px;}
-/* the "Notebooks" popover: list + open-all / refresh-all */
-.dc-nbs-menu{min-width:252px;max-width:330px;gap:1px;}
-.dc-nbs-menuh{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--chrome-ink-2);padding:6px 9px 5px;}
-.dc-nbs-empty{font-size:11.5px;color:var(--chrome-ink-2);padding:8px 10px;line-height:1.5;}
-.dc-nbrow{display:flex;align-items:center;gap:8px;padding:6px 9px;
-  border-radius:5px;font-size:12px;color:#dce6ee;}
-.dc-nbrow.clickable{cursor:pointer;}
-.dc-nbrow.clickable:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);}
-.dc-nbrow-dot{width:7px;height:7px;border-radius:50%;flex:none;
-  background:#5b7589;}
-.dc-nbrow.open .dc-nbrow-dot{background:#46c08a;}
-.dc-nbrow.avail .dc-nbrow-dot{background:#f0a848;}
-.dc-nbrow.gone .dc-nbrow-dot{background:#8a5a5a;}
-.dc-nbrow-nm{flex:1;font-family:var(--mono);overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;}
-.dc-nbrow.gone .dc-nbrow-nm{color:var(--chrome-ink-2);}
-.dc-nbrow-st{font-family:var(--mono);font-size:9.5px;color:var(--chrome-ink-2);flex:none;}
-.dc-nbacts{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 3px;
-  margin-top:4px;border-top:1px solid #ffffff14;}
-.dc-nbacts .dbtn{flex:1 1 92px;min-width:0;text-align:center;
-  justify-content:center;font-size:11.5px;}
-/* THE LOCK ROW STACKED, and the stack cost the thumbnails three rows of
-   the column (T78). Its three labels are phrases, not words ("Lock all
-   figures", "Load locked versions"), so side by side in a ~280px column
-   they were unreadable and half unclickable (2026-08-21, user: "the lock
-   things can't all be seen") -- one per row, full width, left aligned is
-   still right. They live in the More menu now, where the rows they need
-   are the menu's and not the strip's; .nbs-more-menu carries the rule. */
-/* the notebook block's own header row: way back, count, fold */
-.dc-nbs-head{display:flex;align-items:center;gap:6px;}
-.dc-nbs-head .dc-nbs-menuh{flex:1;min-width:0;}
-.dc-nbs-sum{font-family:var(--mono);font-size:9.5px;color:var(--chrome-ink-2);
-  flex:none;white-space:nowrap;}
-.dbtn.dc-nbs-tog{flex:none;font-size:10.5px;padding:3px 7px;}
-.dc-nbs.nbs-folded .dc-nbs-body{display:none;}
-/* THE ROWS SCROLL RATHER THAN PUSH: a deck built from eight notebooks is
-   eight rows, and every one of them used to come off the strip below. */
-.dc-nbs-body{max-height:min(18vh,190px);overflow-y:auto;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
   border-radius:6px;box-sizing:border-box;}
@@ -1476,6 +1440,7 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
+.rbn-check{order:5;}       /* T383: the check, beside the styles */
 /* The default contextual surface is two tabs, rather than one long tray:
    Style is how a thing looks; Object is where it is, where it came from,
    and how it is reused (2026-09-11, ribbon-layout correction). */
@@ -1492,6 +1457,7 @@ body.slide-editing .apptop{display:none;}
 .rbn-trans{order:0;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
+.rbn-motion{order:3;}     /* T385: after Disappear, before the slide */
 .rbn-flipfx{order:6;}
 /* the Whole slide and Order groups share Animation's rung and follow
    it by source order: the effect first, then the slide, then the order
@@ -2284,12 +2250,30 @@ select#fmt-font[hidden]{display:none;}
 .an-tblgrip:hover{background:color-mix(in srgb,var(--accent) 35%,
   transparent);}
 .an-image{position:absolute;}
+/* T388: a live page. The cover is the editor's handle on it. */
+.an-web{position:absolute;overflow:hidden;background:#fff;
+  border-radius:var(--tk-rad,4px);}
+.an-webframe{width:100%;height:100%;border:0;display:block;}
+.an-webempty{display:flex;align-items:center;justify-content:center;
+  height:100%;color:#44525c;font:12px var(--sans);}
+.an-webcover{position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:6px;cursor:move;
+  background:linear-gradient(transparent 72%,#0009);}
+.an-webcover span{font:10.5px var(--mono);color:#fff;background:#0b141dcc;
+  padding:2px 6px;border-radius:4px;}
 /* CONTAIN by default: cover let any non-proportional resize silently
    clip the picture (2026-08-19, diagnosed+verified in-browser: a 2:1
    stripe resized to 0.4:1 showed ~21% of its width). A crop must still
    FILL first or the mask would only bite letterbox — same rationale as
    the cell rule below. */
 .an-image.an-cropped .an-imgel{object-fit:cover;}
+/* T387: a window onto the picture -- the img is scaled and offset so
+   the window fills the box, and the box clips the rest */
+.an-image.an-win{overflow:hidden;}
+.an-image.an-win .an-imgel{position:absolute;object-fit:fill;max-width:none;}
+.zc-box{position:absolute;border:1.5px dashed var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 14%,transparent);
+  pointer-events:none;}
 .an-imgel{width:100%;height:100%;object-fit:contain;display:block;
   pointer-events:none;border-radius:2px;}
 .deck.editing .an-image{cursor:move;}
@@ -2416,6 +2400,34 @@ select#fmt-font[hidden]{display:none;}
 .an-anim-fade{animation:anIn-fade .45s ease;}
 .an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
 .an-anim-zoom{animation:anIn-zoom .45s ease;}
+/* T385: three more, by the same two rules. Fly in comes from the left;
+   Page turn is a squash from the left edge, which reads as a page
+   swinging open without a perspective on the layer (a perspective
+   there would change the stacking of every item on it); Typewriter is
+   done in JS (typeInto) and only borrows a caret from here. */
+@keyframes anIn-slide{from{opacity:0;translate:-60px 0}}
+@keyframes anIn-turn{from{opacity:.2;scale:.05 1}}
+.an-anim-slide{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1);}
+.an-anim-turn{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1);
+  transform-origin:left center;}
+.an-typing .an-tx::after{content:"\258D";opacity:.8;
+  animation:an-caret .7s steps(1) infinite;}
+@keyframes an-caret{50%{opacity:0}}
+/* T385: HIGHLIGHT, DON'T HIDE. The lit piece takes the accent and a
+   little size from its left edge; the pieces still to come sit quiet.
+   Left origin so a bullet grows away from its dot, not over it. */
+.an-part.an-hl{color:var(--accent,#39a9c0);scale:1.04;
+  transform-origin:left center;transition:scale .25s ease,color .25s ease;
+  display:inline-block;}
+.an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
+/* T385: MOTION THAT KEEPS GOING -- individual properties again, so a
+   rotated item wobbles about its own rotation instead of losing it */
+@keyframes an-wobble{0%,100%{rotate:-2.5deg}50%{rotate:2.5deg}}
+@keyframes an-bob{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@keyframes an-pulse{0%,100%{scale:1}50%{scale:1.05}}
+.an-move-wobble{animation:an-wobble 1.6s ease-in-out infinite;}
+.an-move-bob{animation:an-bob 2.6s ease-in-out infinite;}
+.an-move-pulse{animation:an-pulse 1.8s ease-in-out infinite;}
 /* ---- TEXT BUILDS: the pieces one box arrives in ----------------------
    `.an-part` is a RENDER-TIME wrapper (17-text-builds.js). It never
    reaches the model -- sanitizeRich unwraps it, the caret never enters
@@ -2443,7 +2455,8 @@ select#fmt-font[hidden]{display:none;}
    separate animations for a reader who asked the operating system for
    none. */
 @media (prefers-reduced-motion:reduce){
-  .an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}
+  .an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,.an-anim-turn,
+  .an-move-wobble,.an-move-bob,.an-move-pulse{animation:none!important;}
 }
 /* ...AND THE MACHINE'S ANSWER TO MOTION IS FINAL (T157 / JVC-02). The
    guard sits HERE, beside what it guards, rather than with the unrelated
@@ -2455,7 +2468,8 @@ select#fmt-font[hidden]{display:none;}
    same steps. It cuts instead of animating, which is what the preference
    asks for and not one thing more. */
 @media (prefers-reduced-motion:reduce){
-  .an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}
+  .an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,.an-anim-turn,
+  .an-move-wobble,.an-move-bob,.an-move-pulse{animation:none!important;}
 }
 /* the build-order badge shown in the editor — and ONLY while the Timeline
    pane is open (T76, user: "the animation bubbles that appear are the
@@ -2507,12 +2521,6 @@ select#fmt-font[hidden]{display:none;}
    notebooks button is really important — it needs to sit above the slide
    thumbnail part") */
 /* the notebooks content at the column top: pane rows reused verbatim */
-.dc-nbs{display:none;}
-.deck.editing .dc-nbs{display:block;flex:none;padding:8px 8px 6px;
-  border-bottom:1px solid #ffffff14;}
-.dc-nbs .dc-nbs-menuh{cursor:pointer;border-radius:6px;padding:4px 6px;}
-.dc-nbs .dc-nbs-menuh:hover{background:color-mix(in srgb,var(--accent)
-  14%,transparent);color:var(--accent);}
 /* a POSTER keeps the column too now — it is where Notebooks, File and
    Save live; only the slide film is deck-only (hidden for posters by the
    .poster-page .dc-film rule) */
@@ -2664,6 +2672,9 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
   grid-column:1/-1;min-width:0;}
 .crop-inset{display:flex;align-items:center;gap:4px;margin-top:6px;
   padding-top:6px;border-top:1px solid #ffffff1a;}
+/* T387: the frame's shape, as a row of ratios */
+.crop-aspect{flex-wrap:wrap;}
+.crop-aspect .dbtn{font-family:var(--mono);font-size:10.5px;padding:2px 7px;}
 .crop-inset .ci-lab{font-family:var(--mono);font-size:9px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--chrome-ink-2);
   flex:none;margin-right:2px;}
@@ -3443,6 +3454,11 @@ body.light .oh-h{color:var(--ink-3);}
 .std-chip.std-odd{border-color:#f0a848;color:#f7d9a8;
   background:color-mix(in srgb,#f0a848 16%,transparent);font-weight:600;}
 .std-chip.std-odd::before{content:"! ";font-weight:700;}
+/* T383: a group that was compared and matches -- a quieter card, no
+   button, so the screen shows its working without offering a fix */
+.std-find.std-checked{border-left-color:#46c08a;opacity:.8;}
+.std-find.std-checked .std-chip.std-ok{opacity:.75;}
+.std-more{font-size:11px;color:var(--chrome-ink-2);align-self:center;}
 .std-chip.std-ok{opacity:.5;}
 .std-chip.std-ok:hover{opacity:1;}
 body.light .std-chip.std-odd{color:#7a4b00;
@@ -3625,12 +3641,12 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    amber, and glowing. Behind it, every box that actually wears the
    style, and on request everything else, one colour per kind. */
 .dg-real{position:absolute;border:1px solid rgba(240,168,72,.55);
-  border-radius:3px;background:rgba(240,168,72,.07);pointer-events:none;}
+  border-radius:3px;background:rgba(240,168,72,.07);pointer-events:none;
+  overflow:hidden;}
 /* T279: a box that WEARS this style and no longer keeps to it. Two
    channels, not one -- double-weight border and a corner badge -- so it
-   survives a colour-blind reader and the light theme, and so it cannot
-   be confused with .dg-ghost, which is the style's own default position
-   and is amber-dashed. */
+   survives a colour-blind reader and the light theme. (T367 removed the
+   amber-dashed prototype it also had to differ from.) */
 .dg-real.dg-off{border-width:2px;border-style:solid;
   border-color:rgba(240,168,72,.95);
   background:color-mix(in srgb,#f0a848 16%,transparent);}
@@ -3641,9 +3657,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-offnote[hidden]{display:none!important;}
 .dg-other{position:absolute;border:1px dashed currentColor;
   border-radius:3px;opacity:.55;pointer-events:none;
-  border-color:#8aa0b0;}
-.dg-ghost{box-shadow:0 0 0 1px rgba(240,168,72,.35),
-  0 0 14px rgba(240,168,72,.45);border-width:2px;z-index:3;}
+  border-color:#8aa0b0;overflow:hidden;}
 .dg-key{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   margin:0 0 12px;font-family:var(--sans);font-size:11.5px;
   color:var(--chrome-ink-2);}
@@ -3673,6 +3687,10 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   display:flex;flex-direction:column;gap:2px;padding:4px;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff2e;
   border-radius:7px;box-shadow:0 10px 26px #0009;}
+/* display:flex was beating the hidden attribute, so an EMPTY bubble sat
+   over the key's checkbox from the moment the board was drawn (the
+   "Show everything else" label had a box through it, 2026-09-12) */
+.dg-bub[hidden]{display:none!important;}
 .dg-bubline{text-align:left;font-family:var(--sans);font-size:11px;
   line-height:1.25;padding:3px 6px;border-radius:4px;cursor:pointer;
   color:#dce6ee;background:none;border:1px solid transparent;}
@@ -3682,10 +3700,6 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-bubmore{font-size:10px;opacity:.7;padding:0 6px 2px;}
 .dg-keyit.dg-keymine::before{border:2px solid var(--amber,#f0a848);
   background:rgba(240,168,72,.18);}
-/* the numbers under the board are a captioned group, not three loose
-   fields floating under a picture */
-.dg-nums{border:1px solid #ffffff1c;border-radius:8px;
-  background:#ffffff06;padding:7px 10px;width:max-content;}
 /* the table's boxes were as wide as their column; a percentage never
    needs five digits */
 .dgt-n{max-width:74px;}
@@ -3698,7 +3712,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   color:var(--chrome-ink-2);}
 body.light .dgt-tx{background:var(--input-bg);border-color:var(--border-strong);
   color:var(--ink);}
-body.light .dg-grp,body.light .dg-nums{background:var(--surface-hover);
+body.light .dg-grp{background:var(--surface-hover);
   border-color:var(--line);}
 
 /* ---- T229: THE OBJECT'S HISTORY IS A TABLE ----------------------------
@@ -4528,14 +4542,17 @@ body.jv-spot .deck-stage{pointer-events:none;}
 .sh-menu.match-menu{position:fixed;z-index:220;display:block;
   width:236px;padding:5px;max-height:60vh;overflow-y:auto;}
 .match-menu .vw-opt{width:100%;text-align:left;}
-/* the notebook column's More menu (T78). Both class names are needed:
-   .sh-menu's grid and position:absolute come LATER in this file, so a
-   one-class rule would lose to them and the menu would be clipped by the
-   scrolling body it is built inside. */
-.sh-menu.nbs-more-menu{position:fixed;z-index:220;display:block;
-  width:230px;padding:5px;}
-.nbs-more-menu .dbtn{display:block;width:100%;text-align:left;
+/* T381: the Update menu is a LIST, not .sh-menu's three-column grid.
+   Its rows are phrases ("The whole presentation", "Load locked
+   versions"), and in a 210px grid each wrapped into a four-line cell
+   (2026-09-12, user: "the options in the button look poor"). One per
+   row, full width, left aligned -- the rule the lock trio has always
+   needed, now on the menu they live in. Both class names, because
+   .sh-menu's grid comes later in this file. */
+.sh-menu.upd-menu{display:block;width:250px;padding:5px;}
+.upd-menu .dbtn{display:flex;width:100%;text-align:left;
   white-space:normal;margin-top:3px;}
+.upd-menu .dbtn[disabled]{opacity:.45;}
 /* the folded View group's menu. A row stands in for a toggle button, so
    it has to show the toggle's state — otherwise folding the group would
    lose the one thing a visible toggle was chosen for (2026-08-22). */
@@ -4894,6 +4911,78 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   text-transform:uppercase;opacity:.75;}
 .tk-note{margin:0;font-size:10px;line-height:1.5;color:var(--chrome-ink-3);}
 @media print{.talkbtn,.talkpane{display:none !important;}}
+/* ---- T391: THE ANIMATION STORY -----------------------------------------
+   A strip between the ribbon and the stage. Each stop is a real render
+   of the slide at that stop, scaled with zoom; the one the stage is
+   showing is lit. An object off the stage at this stop is display:none,
+   not opacity 0, so nothing invisible can be picked up by mistake. */
+.story-strip{flex:none;border-bottom:1px solid var(--chrome-line);
+  background:var(--chrome-1);padding:6px 12px 8px;}
+.story-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.story-lab{font:600 11px var(--mono);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
+.story-n{font:11px var(--sans);color:var(--chrome-ink-2);flex:1;}
+.story-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:thin;}
+.story-stop{flex:none;display:flex;flex-direction:column;gap:4px;
+  padding:4px;border:1px solid var(--chrome-line);border-radius:7px;
+  background:#ffffff06;cursor:pointer;color:var(--chrome-ink);
+  text-align:left;width:calc(150px + 8px);}
+.story-stop:hover{border-color:color-mix(in srgb,var(--accent) 55%,transparent);}
+.story-stop.on{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 14%,transparent);}
+.story-pic{position:relative;overflow:hidden;border-radius:4px;
+  background:#0b141d;}
+.story-pic .story-slide{position:absolute;left:0;top:0;pointer-events:none;}
+.story-cap{display:flex;flex-direction:column;gap:1px;
+  font:10.5px/1.25 var(--sans);color:var(--chrome-ink-2);
+  overflow:hidden;}
+.story-cap b{color:var(--chrome-ink);font-weight:600;}
+.story-cap span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.story-paint{position:fixed;left:-99999px;top:0;width:1280px;z-index:-1;}
+.an-item.an-storyout,.an-arrow-line.an-storyout{display:none!important;}
+/* the stage says it is showing a stop, so an empty-looking slide is
+   read as "at this click" and not as "my things are gone" */
+.deck.storying .deck-stage{box-shadow:inset 0 0 0 2px
+  color-mix(in srgb,var(--accent) 45%,transparent);}
+/* ---- T389: THE SCROLLING VERSION ---------------------------------------
+   An overlay over the editor; the pages inside are buildPrintRoot's,
+   given back their static flow and scaled with `zoom` to the width. An
+   armed object keeps its entrance's from-state through its delay
+   (fill-mode backwards), so a slide's things arrive a beat apart
+   instead of all popping in before their turn. */
+.deck-scroll{position:fixed;inset:0;z-index:400;display:flex;
+  flex-direction:column;background:#20262c;}
+.deck-scroll-bar{display:flex;align-items:center;gap:12px;padding:8px 14px;
+  background:var(--chrome-1);border-bottom:1px solid var(--chrome-line);
+  color:var(--chrome-ink);flex:none;}
+.deck-scroll-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:600 13px var(--sans);}
+.deck-scroll-n{font:11px var(--mono);color:var(--chrome-ink-2);}
+.deck-scroll-body{flex:1 1 auto;overflow-y:auto;padding:24px 0;}
+.deck-scroll .scroll-root{position:static;left:auto;top:auto;width:auto;
+  z-index:auto;}
+.deck-scroll .print-page{margin:0 auto 24px;box-shadow:0 8px 40px #0008;}
+/* belt and braces: a deferred re-render (text fitting runs a tick
+   later) can put the editor's ring back on a page after buildPrintRoot
+   has stripped it, so no page ever draws one */
+.print-page .sel{outline:none!important;}
+.an-scrollin{animation-fill-mode:backwards!important;}
+/* ---- T386: THE TALK'S TOOLS --------------------------------------------
+   All three sit above the deck (z 100) and the spotlight (400) but
+   under the drawer's library dialog; none of them take the pointer, so
+   a click still lands on the slide and advances. */
+.jv-laserdot{position:fixed;z-index:420;width:16px;height:16px;
+  margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;
+  background:#ff3b30;box-shadow:0 0 6px 2px #ff3b30aa,0 0 22px 8px #ff3b3055;}
+body.jv-laser .deck-stage{cursor:none;}
+.jv-lens{position:fixed;z-index:420;border-radius:50%;overflow:hidden;
+  pointer-events:none;border:3px solid #ffffffcc;
+  box-shadow:0 0 0 1px #0008,0 18px 48px #000a;background:#000;}
+.jv-lens-in{position:absolute;inset:0;}
+body.jv-lens .deck-stage{cursor:crosshair;}
+.jv-black{position:fixed;inset:0;z-index:430;background:#000;cursor:pointer;}
+.tk-grp .tk-b{flex:1 1 auto;}
 
 /* T64: the free-crop lasso. An overlay over the annot layer, so the
    canvas mousedown handler -- gatekeeper for selection, marquee, resize,
@@ -5045,18 +5134,29 @@ body.light .dg-swatch{border-color:#00000026;}
   background:var(--btn-bg,#ffffff0e);color:var(--chrome-ink);
   border:1px solid var(--chrome-line,#ffffff26);border-radius:6px;
   padding:3px 6px;}
-.dg-board{position:relative;width:min(560px,100%);
-  background:#ffffff0a;border:1px solid #ffffff1f;border-radius:6px;
-  margin:4px 0 10px;overflow:hidden;}
-.dg-ghost{position:absolute;min-height:16px;cursor:move;
-  border:1.5px dashed var(--amber,#f0a848);border-radius:4px;
-  background:rgba(240,168,72,.10);padding:3px 6px;
-  display:flex;align-items:center;touch-action:none;}
-.dg-ghostlab{pointer-events:none;line-height:1.15;overflow:hidden;
-  white-space:nowrap;text-overflow:ellipsis;}
-.dg-ghostgrip{position:absolute;right:-5px;top:50%;width:10px;height:22px;
-  transform:translateY(-50%);border-radius:3px;cursor:ew-resize;
-  background:var(--amber,#f0a848);touch-action:none;}
+/* T384: TWO COLUMNS. How it looks on the left, where its boxes sit on
+   the right; the table of every box runs underneath. One column again
+   when the screen cannot hold two boards' worth. */
+.dg-top{display:grid;grid-template-columns:minmax(300px,1fr) minmax(320px,1.2fr);
+  gap:8px 26px;align-items:start;margin-top:6px;}
+@media (max-width:1180px){.dg-top{grid-template-columns:1fr;}}
+.dg-colh{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--chrome-ink-3,#8ea2b3);
+  margin:0 0 7px;}
+.dg-typecol .dg-ctrls{margin-top:12px;}
+.dg-typecol .dg-spec{white-space:normal;line-height:1.2;}
+.dg-boardwrap{position:relative;}
+/* the board is a slide: the page's own colour, and a size container so
+   the words on it are set in percent of ITS height (cqh), the same
+   currency a style's size is written in */
+.dg-board{position:relative;width:100%;container-type:size;
+  background:var(--page-bg,#ffffff0a);border:1px solid #ffffff2b;
+  border-radius:6px;margin:0 0 8px;overflow:hidden;}
+.dg-realtx{display:block;width:100%;line-height:1.15;overflow:hidden;
+  padding:.5cqh .6cqw;box-sizing:border-box;pointer-events:none;
+  word-break:break-word;}
+.dg-realtx.dg-realempty{opacity:.45;font-style:italic;}
+.dg-other .dg-realtx{opacity:.4;}
 .dg-put{margin-bottom:6px;}
 /* the contact sheet */
 /* the contact sheet, a column down the right-hand side */
@@ -5168,7 +5268,6 @@ body.light .seq-cell b{color:var(--ink);}
 /* T139: the tab wrapper is semantic only */
 .rbn-tabset{display:contents;}
 /* T144: the empty notebook column's worded door */
-.dc-nbs-open{display:block;margin:6px auto 2px;}
 /* T115: masters — the inherited layer, inert behind everything */
 .slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
 /* T215: a PANEL -- block layout (the .sh-menu grid had spread its note
@@ -5333,6 +5432,9 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .strip-frame>.fx-strip.page-strip,
 .strip-frame>.fx-strip.trans-strip{
   width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap) + 8px);}
+/* T385: four ways for a text box to arrive, so that strip is four wide */
+.strip-frame>#anim-by-strip.trans-strip{
+  width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
 .strip-nav>button{flex:1 1 0;min-height:0;padding:0;border:0;
@@ -5376,6 +5478,12 @@ body.light .sh-menu.strip-all{background:var(--chrome-2);
    the new slide on the left hand side and make it a full button"). The
    full-screen view is every slide's images under a heading each, the
    headings folding. */
+/* T383: the check's tile is the fold tile's width -- three words on a
+   64px tile broke into three lines and spilled out */
+.rbn-row>#dsg-std.big-tile{width:82px;
+  height:var(--rbn-tile-h);align-self:center;}
+.rbn-row>#dsg-std.big-tile>span{white-space:normal;text-align:center;
+  line-height:1.15;}
 .rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);
   height:var(--rbn-tile-h);align-self:center;}
 .img-ov{position:fixed;inset:0;z-index:400;
@@ -5627,6 +5735,18 @@ body.light .dg-num input{background:var(--input-bg);
 .an-flipstage.fturn-rise{animation:fturn-rise .34s
   cubic-bezier(.2,.7,.3,1);}
 .an-flipstage.fturn-zoom{animation:fturn-zoom .3s
+  cubic-bezier(.2,.7,.3,1);}
+/* T385: a page that turns on its left edge, and one pushed in from
+   the right. The stage is the inner frame, which applyCommon never
+   rotates, so the transform shorthand is safe here. */
+@keyframes fturn-turn{from{opacity:.3;
+  transform:perspective(900px) rotateY(-85deg);}
+  to{opacity:1;transform:perspective(900px) rotateY(0);}}
+@keyframes fturn-push{from{transform:translateX(100%);}
+  to{transform:none;}}
+.an-flipstage.fturn-turn{animation:fturn-turn .45s
+  cubic-bezier(.2,.7,.3,1);transform-origin:left center;}
+.an-flipstage.fturn-push{animation:fturn-push .4s
   cubic-bezier(.2,.7,.3,1);}
 @media (prefers-reduced-motion: reduce){
   .an-flipstage.fturn{animation:none!important;}}

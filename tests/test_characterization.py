@@ -1694,8 +1694,38 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # File/Open provenance now includes the active file name and path, and the
 # notebook-to-slides / presentation-library routes have deliberate dialogs
 # rather than scattered partial menus.  These are assembled-page changes.
-EXPECTED_MD5 = "988672288cba24d5d72bbc936e37637d"
-EXPECTED_BYTES = 4021654
+# 2026-09-12, T381: chrome only. The notebook block above the deck's
+# thumbnails (back link, notebook rows, Refresh all, More) is gone with
+# its builder, fold preference and CSS; the lock trio moves into the
+# Home Update menu, which becomes a one-per-row list.
+# 2026-09-12, T382: chrome only. The presenting drawer lists what is
+# open now, slides out at the left edge, loses its Close button and
+# gains a Recents door.
+# 2026-09-12, T383: chrome only. The mismatch check is "Fix mismatched
+# text" again, a tall tile in a Consistency group of its own on Home,
+# and its screen lists what it compared when nothing differs.
+# 2026-09-12, T384: chrome only. The Style system body is two labelled
+# columns over the table, the board carries each box's words at its
+# own size with everything else shown, and the dead Exactly trio and
+# prototype CSS are gone.
+# 2026-09-13, T385: chrome only. Three more entrances, a Motion group,
+# a Highlight tile and two more page turns on the Animation tab, with
+# their keyframes.
+# 2026-09-13, T386: chrome only. The talk tools fragment (laser,
+# magnifier, black screen), two Talk panel rows and their CSS.
+# 2026-09-13, T387: chrome only. Zoom callout and Zoom together on the
+# Picture group, the frame-shape row in the Crop menu, the window
+# renderer and the many-item spotlight.
+# 2026-09-13, T388: chrome only. The web page kind: its fragment,
+# renderer branch, Insert and Object doors, and CSS.
+# 2026-09-13, T389: chrome only. The scrolling-show fragment, its two
+# doors, its CSS, and buildPrintRoot clearing the selection.
+# 2026-09-13, T390: chrome only. The viewer's Pages group, its code in
+# app.js and its CSS.
+# 2026-09-13, T391: chrome only. The animation story fragment, its
+# strip and door, an icon and its CSS.
+EXPECTED_MD5 = "774e7241425c68a3f6f4ccec1c756691"
+EXPECTED_BYTES = 4092872
 
 
 def _render_example() -> str:

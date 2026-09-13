@@ -1687,9 +1687,9 @@
       function(){showTidyPane();},
       'Near-miss alignments, uneven gaps and duplicates');
     var r=standardise();
-    cat('Style consistency','whole deck',
+    cat('Fix mismatched text','whole deck',
       r.findings.filter(function(f){return f.sev==='warn';}).length+figLint().length,
-      bic('scope')+' Open consistency check',
+      bic('scope')+' Open Fix mismatched text',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
       'Text and figures that look like they should match but do not');
     cat('Content & wording','whole deck',reviewLints().length,
@@ -2192,6 +2192,7 @@
     if(a.k==='cell') return 'cell:'+(a.ref||'');
     if(a.k==='image') return 'image:'+String(a.src||'').slice(0,64);
     if(a.k==='video') return 'video:'+String(a.vkey||'');
+    if(a.k==='web') return 'web:'+String(a.url||'');
     if(a.k==='rect')
       return 'rect:'+(a.shape||'box')+':'+(a.color||'')+':'+(a.fillc||'');
     if(a.k==='table') return 'table:'+JSON.stringify(a.rows||[]).slice(0,80);
