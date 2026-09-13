@@ -7884,3 +7884,12 @@ gates are recorded in the completing commit.
   now carries the folders — headings with rename and delete, drag a
   presentation onto one to file it, onto the column to unfile it. The
   presenting drawer lists the other open presentations too.
+- [x] **T395 — Back returns to the previous view.** (User: "The back
+  button when you open a presentation doesn't work, it takes you out of
+  the website, when it should take you to what you were on previously.")
+  Every hash change was a replaceState, so Back had nothing to go back
+  to. A new VIEW — Home, a notebook, a presentation — is a history entry
+  now, and a move between the slides of one presentation still replaces,
+  so Back is never one entry per slide. Home over open notebooks got a
+  route of its own (`#/home`), so a presentation opened from Home goes
+  back to Home; Back to the first entry closes whatever opened since.

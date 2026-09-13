@@ -434,9 +434,10 @@ def test_tree_view_ribbon_disables_filters_and_anchors_right(out):
 def test_lineage_sidebar_and_restorable_hash_routing(out):
     """plot-trace tabs get a real sidebar (lineage nav) and Tree view, and
     URL routing gives a unique, restorable hash per view (#/doc/<stem>,
-    #/pres/...).  In-app nav uses replaceState (no back-stack flood); a
-    late-mounting tab (web restore) satisfies a still-pending initial
-    route.
+    #/pres/...).  A move inside one view uses replaceState (no back-stack
+    flood; since T395 a NEW view pushes, so Back returns to the previous
+    one); a late-mounting tab (web restore) satisfies a still-pending
+    initial route.
     """
     assert "aria-label','Plot lineage'" in out.replace('"', "'")
     # URL routing: a unique, restorable hash per view (#/doc/<stem>, #/pres/…)
