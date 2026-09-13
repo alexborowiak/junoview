@@ -1736,8 +1736,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (deck JS).
 # 2026-09-13, T399: chrome only. The slide menu is one column with one
 # heading per group.
-EXPECTED_MD5 = "94543a402b3aeb804d3131c1a1777ac0"
-EXPECTED_BYTES = 4105322
+# 2026-09-13, T400: chrome only. A picture pastes while typing, from
+# the builder and from HTML (deck JS, help).
+EXPECTED_MD5 = "b8b7ad2e973340088fe7b9827bac5cce"
+EXPECTED_BYTES = 4107915
 
 
 def _render_example() -> str:
