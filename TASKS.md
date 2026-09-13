@@ -7857,3 +7857,12 @@ gates are recorded in the completing commit.
   plain `pytest` CI runs, where `tests/` is on the path as a directory.
   Both now import the sibling by its bare name, like `helpers` is. Plain
   `pytest` and `python -m pytest` both pass.
+- [x] **T393 — The same page on every Python CI runs.** With T392 in, one
+  test still failed per interpreter. On 3.13, the byte-for-byte pin of
+  the example page: Python 3.12 (PEP 701) tokenizes an f-string as
+  FSTRING_START, its pieces, FSTRING_END, so `{name}` inside one was
+  coloured as an operator and a name where 3.10/3.11 give one string.
+  The highlighter folds the run back into one string span (the pinned
+  bytes are the 3.11 ones, unchanged). On 3.10, a .csv with a NUL byte:
+  3.10's csv module refuses the line, 3.11+ reads through it; the byte
+  is dropped before parsing. Full suite green on 3.10, 3.11 and 3.13.

@@ -721,6 +721,10 @@ def parse_table(text: str, title: str | None = None,
     colon-delimited.
     """
     body = str(text).replace("\r\n", "\n").replace("\r", "\n")
+    # Python 3.10's csv module refuses a line with a NUL byte in it
+    # ("line contains NUL"); 3.11+ reads through it. A pasted file with a
+    # stray NUL should open everywhere, so drop the byte first.
+    body = body.replace("\x00", "")
     if delim is None:
         head = "\n".join(body.split("\n")[:20])
         counts = {d: head.count(d) for d in (",", "\t", ";", "|")}
