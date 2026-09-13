@@ -1150,7 +1150,10 @@ def test_renaming_is_one_committed_action(out):
     # The new draft must be durable before the only old copy is removed.
     rename = out[out.index("function renamePresentation(nm){"):
                  out.index("menuAction('#mi-del'")]
-    assert "if(!lsSet(PFX+nm,JSON.stringify(moved))){" in rename
+    # (T416: a deck whose home is a file is renamed whether or not the
+    # draft copy fits)
+    assert ("if(!lsSet(PFX+nm,JSON.stringify(moved),true)"
+            "&&saveTarget!=='file'){") in rename
     assert rename.index("if(!lsSet(PFX+nm") < rename.index("lsDel(PFX+old);")
     assert rename.index("histRename(old,nm);") < rename.index("pres.name=nm;")
     # the per-keystroke handler is gone, and BOTH doors call the one
@@ -1380,9 +1383,11 @@ def test_opening_a_file_keeps_saving_to_it(out):
     """
     assert "function openDeckFile(){" in out
     assert "if(window.showOpenFilePicker){" in out
-    assert "fileHandle=h;fileName=h.name||f.name||'';" in out
+    # (T416: bound to the deck it opened)
+    assert ("            bindFile(pres.name,h);\n"
+            "            if(!fileName) fileName=f.name||'';") in out
     # the no-handle path still moves the destination off the browser
-    assert "fileName=nm;fileHandle=null;" in out
+    assert "        bindFile(pres.name,null);\n        fileName=nm;" in out
     assert out.count("setTarget('file');") >= 3
 
 

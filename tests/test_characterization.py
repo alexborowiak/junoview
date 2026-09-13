@@ -1781,8 +1781,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # JS/CSS).
 # 2026-09-13, T418: chrome only. The picture turns with the bullets
 # (deck JS/HTML).
-EXPECTED_MD5 = "a74a7e5f792725ea04c1b7de7d42e85e"
-EXPECTED_BYTES = 4150706
+# 2026-09-13, T416: chrome only. Saving end to end (deck JS).
+EXPECTED_MD5 = "108c3ac195644c03ad9885b339ea6aa6"
+EXPECTED_BYTES = 4158759
 
 
 def _render_example() -> str:

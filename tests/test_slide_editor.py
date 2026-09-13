@@ -530,7 +530,8 @@ def test_browser_saves_offer_a_way_out(out):
     (2026-08-18). Measured: "saved to browser" readout clickable=true.
     """
     assert "function markSaveClickable(el){" in out
-    # (three since T406: the file-waiting readout is a door to Save too)
+    # (three since T406: the file-waiting readout is a door to Save too;
+    # T416's "click to reopen" marks itself, being a read and not a save)
     assert out.count("markSaveClickable(el);") == 3
     # clicking SAVES now — it used to open the save-to-file picker, but a
     # thing that says "autosaved" invites saving, not a destination dialog

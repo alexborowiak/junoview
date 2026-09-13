@@ -8134,3 +8134,22 @@ gates are recorded in the completing commit.
   in Timing & text): figure k shows with piece k, on the same click,
   and the book has no clicks of its own. The pane's piece rows name the
   figure each one turns to. Schema in DECK-FORMAT.md and deck_schema.py.
+- [x] **T416 — Saving, end to end.** (User: "Please make sure all the
+  saving features work - files can be opened; files save to local
+  properly; when you save it as a name the presentation name becomes
+  this and vice-versa.") One remembered file handle served every
+  presentation, so switching decks and autosaving wrote the second deck
+  into the first deck's file — and a deck too big for the draft store,
+  which was nowhere but in that file, was gone from it. A file is bound
+  to the presentation it was saved from or opened into now (`bindFile`,
+  `fileSync` on every readout); a deck with no file of its own has none.
+  After a reload a lapsed write permission no longer flips the target to
+  the browser: the target stays "file", the readout asks for the one
+  click, and the file's deck is restored — into the library when it
+  fits, from the object in hand when it is the deck the visit opened on,
+  or behind "click to reopen" when the browser will not read it yet.
+  Renaming a presentation renames its file (moved in place, or rewritten
+  and the old one removed in the default folder), and a deck whose home
+  is a file is renamed whether or not a draft copy fits. The standalone
+  HTML export carries the deck data, so it can be opened again. Driven
+  in Chromium with a stubbed File System Access API.

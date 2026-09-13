@@ -18,7 +18,7 @@ def test_the_picked_files_stem_becomes_the_name(out):
     assert ("    if(!stem||stem===pres.name) return false;\n"
             "    return renamePresentation(stem);") in out
     # called from the picker, before the handle is handed back
-    assert ("      idbPut(HKEY,h).catch(function(){});\n"
+    assert ("      bindFile(pres.name,h);\n"
             "      followFileName();\n      return h;") in out
 
 

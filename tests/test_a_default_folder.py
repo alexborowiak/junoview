@@ -57,9 +57,10 @@ def test_junoview_makes_its_own_file_in_there(out):
 
 def test_a_new_folder_drops_the_old_file(out):
     """Otherwise the next save writes the file you just moved away from."""
-    assert ("      fileHandle=null;fileName='';\n"
-            "      idbDel(HKEY).catch(function(){});\n"
+    # (T416: one binding call, which forgets the remembered handle too)
+    assert ("      bindFile(pres.name,null);\n"
             "      setTarget('file');") in out
+    assert "    else {idbDel(HKEY).catch(function(){});lsDel(HNKEY);}" in out
 
 
 def test_choosing_the_folder_has_one_implementation(out):

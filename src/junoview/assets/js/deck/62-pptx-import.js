@@ -317,7 +317,8 @@
       /* the file you opened was a .pptx; the one you will save is not,
          so the destination is "a file on your computer" the way the
          .junoview door sets it, and the first Save asks where once */
-      fileHandle=null;fileName=pr.name+'.junoview.html';
+      bindFile(pres.name,null);   /* T416: this deck, no file yet */
+      fileName=pr.name+'.junoview.html';
       if(canPickFile) setTarget('file');
       toast('Imported '+pr.slides.length+' slide'
         +(pr.slides.length===1?'':'s')+' from '+nm
