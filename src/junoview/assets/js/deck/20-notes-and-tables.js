@@ -2950,10 +2950,15 @@
         var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
         if(st==null) return;
         if(editing){
+          /* T402: the badge is the CLICK the space bar counts, which is
+             what the animation pane numbers -- the build's stop index
+             skipped a flip book's page turns, so a shape after a
+             three-page book wore "5" on the slide and "7" in the pane */
+          var clk=plan.stop[st]; if(clk==null) clk=st;
           var bd=document.createElement('span');
-          bd.className='an-buildno';bd.textContent=(st+1);
-          bd.title='Build '+(st+1)+' — '+(ba.anim.type||'fade')
-            +' (items on the same build appear together)';
+          bd.className='an-buildno';bd.textContent=(clk+1);
+          bd.title='Click '+(clk+1)+' — '+(ba.anim.type||'fade')
+            +' (items on the same click appear together)';
           el.appendChild(bd);
           /* T391: ...and what has not arrived by stop k is not there
              either; a box arriving in pieces shows the pieces that are */

@@ -7954,3 +7954,20 @@ gates are recorded in the completing commit.
   By sentence or Highlight on a box with no effect gives it Appear on a
   fresh stop, exactly what a first click on the Effect strip does. Help
   describes the flow.
+- [x] **T402 — The Animation pane is the list of clicks.** (User: "What
+  is up with the animation pane? How am I supposed to use this? Like I
+  literally can't tell what is going on and how to re-order things. I
+  made a flip book and they are all animated and this is very confusing
+  to look at. Also why are there the animation button options in here
+  as well?") It carried a second effect chooser, a second text-pieces
+  chooser and a second With-previous row — every one a copy of a ribbon
+  control — above a list headed "one row per build" whose flip-book
+  pages were italic chips truncated to "fa…" under a bare arrow, and
+  whose anchored pages were looked up by the build index rather than
+  the stop index, so a book after a split text box showed no pages at
+  all. Now one numbered row per click, in the order the space bar takes
+  them: a build row names what arrives, how, on how many clicks, and
+  whether it shares the click or runs by itself; **↑ Earlier** and
+  **↓ Later** move it; a flip book's pages are indented rows numbered
+  with their click and say they follow the book. The number badges on
+  the canvas count the same clicks now (they skipped page turns).

@@ -1740,8 +1740,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the builder and from HTML (deck JS, help).
 # 2026-09-13, T401: chrome only. The text tiles show for any text box,
 # their tooltips, and a help paragraph.
-EXPECTED_MD5 = "f464acb326416be83a0fb584f6f86493"
-EXPECTED_BYTES = 4109607
+# 2026-09-13, T402: chrome only. The Animation pane as a list of
+# clicks, its CSS, the canvas badge counting the same clicks.
+EXPECTED_MD5 = "82b1637e5d7e335408aa63309cccb7e4"
+EXPECTED_BYTES = 4105852
 
 
 def _render_example() -> str:

@@ -25,8 +25,9 @@ def test_the_effect_table_has_the_three_new_ways_in(out):
     # the keyframes obey the two rules: individual properties, no `to`
     assert "@keyframes anIn-slide{from{opacity:0;translate:-60px 0}}" in out
     assert "@keyframes anIn-turn{from{opacity:.2;scale:.05 1}}" in out
-    # the pane's own list agrees with the strip
-    assert "['turn','Page turn'],['type','Typewriter']].forEach(function(p){" in out
+    # the pane names an effect off the same table (T402: it has no list
+    # of its own any more)
+    assert "      var w='';SEQ_FX.forEach(function(f){if(f[0]===t) w=f[1];});" in out
 
 
 def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
