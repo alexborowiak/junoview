@@ -316,6 +316,10 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                           "seconds it plays between, `audio` 1 for a "
                           "sound-only clip; `ctrl`, `auto`, `loop` and "
                           "`mute` are its playback switches."),
+    "web": (("x", "y"), "A live web page: `url` (http or https only) is "
+                        "drawn as a sandboxed iframe, live in playback "
+                        "and in an exported page. PowerPoint has no "
+                        "shape for it."),
     "arrow": (("x1", "y1", "x2", "y2"),
               "A line or arrow — two endpoints, not a box."),
     "draw": (("x", "y"), "A freehand stroke: a box plus points "

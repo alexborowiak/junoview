@@ -7799,3 +7799,13 @@ gates are recorded in the completing commit.
   1:1, 3:2 or 2:3 in the page's own millimetres. **Zoom together**
   links the selected pictures (`sync`): enlarge one in the show and
   they all come up side by side at one scale. Driven in Chromium.
+- [x] **T388 — A live web page on a slide.** (User: "maybe web page
+  view, where you can put a full interactive website on there".) A new
+  kind, `web`, carrying only an address (http or https), drawn as a
+  sandboxed iframe — live in the show and in an exported page, covered
+  by a label while editing so the box can be picked up and moved. Its
+  own fragment, `53-web-page.js`: **Web page** on Insert asks for the
+  address, **Web address…** on the Object tab changes it. The sandbox
+  lets the page run and talk to its own origin and never navigate this
+  window; the notebook sanitiser's no-iframe posture is untouched.
+  PowerPoint has no shape for it, so the export says so and counts it.

@@ -2647,6 +2647,42 @@
           mv.appendChild(mkRotate());
         }
         layer.appendChild(mv);
+      } else if(a.k==='web'){
+        /* T388: a live page. Sandboxed, lazy, and covered while editing
+           so the box can be picked up -- an iframe eats the pointer. */
+        var wb=document.createElement('div');
+        wb.className='an-item an-web'+(selAnnot===i?' sel':'');
+        var apw=anchorPos(a,a.w,a.h);
+        wb.style.left=apw.x+'%';wb.style.top=apw.y+'%';
+        wb.style.width=(a.w||60)+'%';wb.style.height=(a.h||60)+'%';
+        applyCommon(wb,a);
+        wb.setAttribute('data-idx',i);
+        if(webUrlOk(a.url)){
+          var ifr=document.createElement('iframe');
+          ifr.className='an-webframe';
+          ifr.setAttribute('sandbox',WEB_SANDBOX);
+          ifr.setAttribute('loading','lazy');
+          ifr.setAttribute('referrerpolicy','no-referrer');
+          ifr.setAttribute('title',a.name||('Web page: '+webHost(a.url)));
+          ifr.src=a.url;
+          wb.appendChild(ifr);
+        } else {
+          var bad=document.createElement('div');
+          bad.className='an-webempty';
+          bad.textContent='No web address yet';
+          wb.appendChild(bad);
+        }
+        if(editing){
+          var cov=document.createElement('div');
+          cov.className='an-webcover';
+          var lab=document.createElement('span');
+          lab.textContent=webHost(a.url)||'web page';
+          cov.appendChild(lab);
+          wb.appendChild(cov);
+          wb.appendChild(mkResize('Drag to resize the page'));
+          wb.appendChild(mkRotate());
+        }
+        layer.appendChild(wb);
       } else if(a.k==='flip'){
         var fr=flipFrames(a),at=flipAtNow(s,a),fdef=fr[at]||null;
         var fl=document.createElement('div');

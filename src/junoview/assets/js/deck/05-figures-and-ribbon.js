@@ -2199,6 +2199,7 @@
     if(a.name) return a.name;
     if(a.k==='image') return 'Image';
     if(a.k==='video') return mediaLabel(a);
+    if(a.k==='web') return 'Web page \u2014 '+webHost(a.url);
     if(a.k==='flip'){
       var nf=flipFrames(a).length;
       return 'Flip book \u2014 '+(nf?(nf+' figure'+(nf===1?'':'s')):'empty');

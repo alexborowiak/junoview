@@ -1797,6 +1797,9 @@
           rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
           name:(fsel&&fsel.label)||'Figure'});
         else note.skipped++;
+      } else if(a.k==='web'){
+        /* T388: PowerPoint has no shape for a live page */
+        note.web=(note.web||0)+1;
       } else if(a.k==='cell'){
         var it=a.ref?resolveRef(a.ref):null;
         var node=it?framePart(it.ns,a.part):null;
@@ -1992,6 +1995,9 @@
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
       +(note.skipped===1?'':'s')+' that PowerPoint has no shape for');
+    if(note.web) lost.push(note.web+' live web page'
+      +(note.web===1?'':'s')+' \u2014 PowerPoint cannot embed a page; '
+      +'add a screenshot if it matters');
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
       +'arrive as plain characters');

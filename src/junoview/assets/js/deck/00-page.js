@@ -2192,6 +2192,7 @@
     if(a.k==='cell') return 'cell:'+(a.ref||'');
     if(a.k==='image') return 'image:'+String(a.src||'').slice(0,64);
     if(a.k==='video') return 'video:'+String(a.vkey||'');
+    if(a.k==='web') return 'web:'+String(a.url||'');
     if(a.k==='rect')
       return 'rect:'+(a.shape||'box')+':'+(a.color||'')+':'+(a.fillc||'');
     if(a.k==='table') return 'table:'+JSON.stringify(a.rows||[]).slice(0,80);

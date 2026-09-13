@@ -1716,8 +1716,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T387: chrome only. Zoom callout and Zoom together on the
 # Picture group, the frame-shape row in the Crop menu, the window
 # renderer and the many-item spotlight.
-EXPECTED_MD5 = "85636c6fd642962eac022752be405712"
-EXPECTED_BYTES = 4055161
+# 2026-09-13, T388: chrome only. The web page kind: its fragment,
+# renderer branch, Insert and Object doors, and CSS.
+EXPECTED_MD5 = "9ab228314aeea88eee36acd3711e76a2"
+EXPECTED_BYTES = 4061303
 
 
 def _render_example() -> str:

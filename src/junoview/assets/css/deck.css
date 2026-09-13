@@ -2250,6 +2250,17 @@ select#fmt-font[hidden]{display:none;}
 .an-tblgrip:hover{background:color-mix(in srgb,var(--accent) 35%,
   transparent);}
 .an-image{position:absolute;}
+/* T388: a live page. The cover is the editor's handle on it. */
+.an-web{position:absolute;overflow:hidden;background:#fff;
+  border-radius:var(--tk-rad,4px);}
+.an-webframe{width:100%;height:100%;border:0;display:block;}
+.an-webempty{display:flex;align-items:center;justify-content:center;
+  height:100%;color:#44525c;font:12px var(--sans);}
+.an-webcover{position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:6px;cursor:move;
+  background:linear-gradient(transparent 72%,#0009);}
+.an-webcover span{font:10.5px var(--mono);color:#fff;background:#0b141dcc;
+  padding:2px 6px;border-radius:4px;}
 /* CONTAIN by default: cover let any non-proportional resize silently
    clip the picture (2026-08-19, diagnosed+verified in-browser: a 2:1
    stripe resized to 0.4:1 showed ~21% of its width). A crop must still
