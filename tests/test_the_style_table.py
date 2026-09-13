@@ -45,7 +45,9 @@ def test_the_table_is_the_real_annots(out):
     assert "        if(dgAnnotMatches(a)) out.push({si:si,ai:ai,a:a});" in out
     assert "  function dgRowKey(r){return r.si+':'+r.ai;}" in out
     # typing writes straight onto the annot and redraws the page
-    assert "      else r.a[key]=Math.round(v*10)/10;" in out
+    # T411: a size cell writes points; the others still write tenths
+    assert ("      else r.a[key]=pt?Math.round(v/5.4*100)/100"
+            ":Math.round(v*10)/10;") in out
     assert "      if(key==='x'||key==='y') delete r.a.anch;" in out
     assert "      markDirty();refresh();renderFilm();" in out
     # the columns

@@ -77,7 +77,9 @@ def test_the_screen_shows_the_numbers_not_just_the_drag(out):
     assert "      cell(dgNum(r,'x'),'dgt-num');" in out
     assert "      cell(dgNum(r,'y'),'dgt-num');" in out
     assert "      cell(dgNum(r,'w'),'dgt-num');" in out
-    assert "      else r.a[key]=Math.round(v*10)/10;" in out
+    # T411: a size cell writes points; the others still write tenths
+    assert ("      else r.a[key]=pt?Math.round(v/5.4*100)/100"
+            ":Math.round(v*10)/10;") in out
 
 
 def test_the_put_button_names_the_place_it_moves_them_to(out):

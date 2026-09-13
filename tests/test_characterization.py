@@ -1760,8 +1760,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T409: chrome only. Clone doors, link kinds, live follow
 # (deck JS/HTML/CSS).
 # 2026-09-13, T410: chrome only. A line lands on Style (deck JS).
-EXPECTED_MD5 = "852338b1dda3eb3d4a4436bcf1ae50d1"
-EXPECTED_BYTES = 4127428
+# 2026-09-13, T411: chrome only. A typed text size on the Style system
+# (deck JS/CSS).
+EXPECTED_MD5 = "56d463edd50b36f194a3c591ee349324"
+EXPECTED_BYTES = 4131320
 
 
 def _render_example() -> str:

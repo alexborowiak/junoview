@@ -8049,3 +8049,14 @@ gates are recorded in the completing commit.
   Line window on Style. A line or a pen stroke lands on Style now, and
   stays there when you are already on it. A shape still goes to Object,
   where its fill and edge are.
+- [x] **T411 — The Style system has a text size you can type.** (User:
+  "Style systems does not have a text size property in the tab. That
+  was half the point of this :(") A named type had a "Text size 26 pt"
+  readout between − and + steppers; the plain-text-boxes bucket had
+  only a table, and its Size cell was blank for every box that had not
+  been sized by hand, in a unit nothing else on the screen used. Now
+  the table's bar has a Text size box in points, given to the ticked
+  rows or to every row when none is ticked; a Size cell reads and
+  writes points and shows the size a box actually gets when it says
+  nothing itself; and the named type's readout is a box you can type
+  in.

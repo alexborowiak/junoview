@@ -5599,6 +5599,12 @@ body.light .lb-name{background:var(--input-bg);
 .dgt{margin:6px 0 18px;}
 .dgt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;
   margin-bottom:8px;}
+/* T411: the size box on the table's bar, and the typed size between a
+   named type's steppers */
+.dgt-szw{display:inline-flex;align-items:center;gap:5px;margin-left:4px;}
+.dgt-szlab{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);}
+.dgt-n.dgt-szin,.dgt-n.dg-sizein{width:58px;}
+.dg-size{display:inline-flex;align-items:center;gap:2px;min-width:0;}
 .dgt-count{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);
   margin-left:auto;}
 .dgt-grid{display:grid;
