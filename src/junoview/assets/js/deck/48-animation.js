@@ -702,7 +702,14 @@
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       var num=typeof selAnnot==='number';
       var on=!!a&&num&&!!a.anim&&!pageOf().poster&&!seqOn();
-      if(!on) return {on:false,text:!!a&&num&&a.k==='text'&&!!a.anim};
+      /* T401: `text` is "a text box is selected", full stop. It used to
+         also require an animation, so a box on None showed no text
+         tiles at all and the way to a bullet-by-bullet build was
+         invisible (2026-09-13, user: "HOW DOES IT WORK THAT DOT POINT
+         COME OUT ONE AT A TIME???? I CAN'T SEE ANY OF THE OPTIONS FOR
+         TEXT!!!!!"). The tiles show for any text box; picking one gives
+         the box an entrance (setBy). */
+      if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false};
       var q=animSeq(s),si=stepOf(s,selAnnot);
       var after=(a.anim.after)|0,shared=false;
       if(si>=0&&q[si].items.length>1){
@@ -743,22 +750,26 @@
       if(dc) dc.hidden=!(st.on&&st.mode==='after');
       if(di&&st.on&&st.mode==='after'&&document.activeElement!==di)
         di.value=st.after||1;
+      /* T401: live for any selected text box, animated or not -- a box
+         with no entrance IS "whole box", and By bullet is the click
+         that gives it one */
       [['anim-by-all',''],['anim-by-para','para'],
        ['anim-by-sent','sent']].forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
-        b.disabled=!st.on;
+        b.disabled=!st.text;
         b.setAttribute('aria-pressed',
-          (st.on&&st.text&&st.by===p[1]).toString());
+          (st.text&&st.by===p[1]).toString());
       });
-      /* T385: highlight is a way of arriving piece by piece, so it
-         only means something once the box arrives in pieces */
+      /* T385: highlight is a way of arriving piece by piece; T401 lets
+         it be the first click too, and setBy-style it brings the
+         entrance and the bullet split with it */
       var hb=$('#anim-by-hl');
       if(hb){
-        hb.disabled=!st.on||!st.text||!st.by;
-        hb.setAttribute('aria-pressed',(st.on&&st.text&&st.hl).toString());
+        hb.disabled=!st.text;
+        hb.setAttribute('aria-pressed',(st.text&&st.hl).toString());
       }
       var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent=(st.on&&st.text)?'Timing & text':'Timing';
+      if(lab) lab.textContent=st.text?'Timing & text':'Timing';
     }
     var ocb=$('#anim-onclick');
     if(ocb) ocb.addEventListener('click',function(e){
@@ -805,16 +816,24 @@
        stops are exactly Bullet-by-bullet's; only what a stop DOES
        changes -- nothing is held back, the piece whose stop this is
        lights up and the rest sit quiet. */
+    /* T401: A BOX WITH NO ENTRANCE GETS ONE when a piece-wise build is
+       asked of it -- Appear, on a fresh stop, exactly what setType
+       gives a first click on the Effect strip. Asking a plain box to
+       arrive bullet by bullet is asking it to arrive. */
+    function ensureAnim(s,a,no){
+      if(!a.anim) a.anim={type:'appear',order:no};
+      return a.anim;
+    }
     var hlb=$('#anim-by-hl');
     if(hlb) hlb.addEventListener('click',function(e){
       e.stopPropagation();
       var s=pres.slides[cur]; if(!s) return;
-      var n=0;
+      var n=0,no=nextAnimOrder(s);
       selIdxs().forEach(function(i){
         var a=s.annots[i];
-        if(!a||a.k!=='text'||!a.anim) return;
-        if(a.anim.hl) delete a.anim.hl;
-        else {a.anim.hl=1; if(!a.anim.by) a.anim.by='para';}
+        if(!a||a.k!=='text') return;
+        if(a.anim&&a.anim.hl) delete a.anim.hl;
+        else {var an=ensureAnim(s,a,no);an.hl=1; if(!an.by) an.by='para';}
         n++;
       });
       if(!n) return;
@@ -826,12 +845,13 @@
        number of stops on this slide just changed under the cursor. */
     function setBy(by){
       var s=pres.slides[cur]; if(!s) return;
-      var n=0;
+      var n=0,no=nextAnimOrder(s);
       selIdxs().forEach(function(i){
         var a=s.annots[i];
-        if(!a||a.k!=='text'||!a.anim) return;
-        if(by==='para'||by==='sent') a.anim.by=by;
-        else {delete a.anim.by;delete a.anim.hl;}  /* absent IS "all at once" */
+        if(!a||a.k!=='text') return;
+        if(by==='para'||by==='sent') ensureAnim(s,a,no).by=by;
+        else if(a.anim){delete a.anim.by;delete a.anim.hl;}  /* absent IS "all at once" */
+        else return;   /* no entrance and "whole box": nothing to change */
         n++;
       });
       if(!n) return;

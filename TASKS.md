@@ -7944,3 +7944,13 @@ gates are recorded in the completing commit.
   an image item. One reader now finds the picture in any of those
   shapes; while typing, the box closes and the picture lands on the
   slide beside it; from the builder the editor opens and takes it.
+- [x] **T401 — The text tiles show for any text box.** (User: "HOW DOES
+  IT WORK THAT DOT POINT COME OUT ONE AT A TIME???? I CAN'T SEE ANY OF
+  THE OPTIONS FOR TEXT!!!!!") Whole box / By bullet / By sentence /
+  Highlight were hidden until the box already had an entrance, so a
+  text box on None — every box, to begin with — showed no text options
+  at all, and the group said only "Timing". They show for any selected
+  text box now, the group says "Timing & text", and picking By bullet,
+  By sentence or Highlight on a box with no effect gives it Appear on a
+  fresh stop, exactly what a first click on the Effect strip does. Help
+  describes the flow.
