@@ -83,12 +83,12 @@ def test_import_counts_only_what_was_actually_stored():
     # is still not COUNTED as stored -- it opens from the object in hand
     # instead of being refused, and the toast says which happened
     assert "var kept=lsSet(PFX+nm,JSON.stringify(np),true);" in fn
-    assert "var imported=0,dropped=0,first=null;" in fn
-    assert "if(!silent&&!first){first={name:nm,pres:np,kept:false};imported++;}" in fn
+    assert "var imported=0,dropped=0,first=null,loose=null;" in fn
+    assert "if(!silent&&!loose){loose={name:nm,pres:np,kept:false};imported++;}" in fn
     # ...and says so rather than reporting a clean success
     assert "would not fit and " in fn
     assert "There was no room to store them" in fn
-    assert "too big for a browser copy" in fn
+    assert "too big for a '" in fn and "'browser copy, so it lives in its file" in fn
 
 
 def test_a_browser_with_no_save_picker_is_not_told_it_has_one():

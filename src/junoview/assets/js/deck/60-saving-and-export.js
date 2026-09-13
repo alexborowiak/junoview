@@ -2301,7 +2301,7 @@
       if(!silent) toast('That file does not look like a saved deck');
       return 0;
     }
-    var imported=0,dropped=0,first=null;
+    var imported=0,dropped=0,first=null,loose=null;
     list.forEach(function(pr){
       if(!pr||!Array.isArray(pr.slides)) return;
       var np=normPres(pr);
@@ -2326,12 +2326,18 @@
          it will not open ... I have to present it soon"). A deck with
          a few pasted pictures is bigger than localStorage will take,
          and this refused to open it at all -- while the one copy that
-         matters, the file, was in hand the whole time. The first deck
-         in the file opens from the object in hand; only the browser
-         copy is what did not fit. */
-      if(!silent&&!first){first={name:nm,pres:np,kept:false};imported++;}
+         matters, the file, was in hand the whole time. A deck that did
+         not fit opens from the object in hand; only the browser copy
+         is what did not fit. And it is the one that OPENS even when
+         smaller decks in the same file did fit: those are in the
+         library now and lose nothing, while a deck that is nowhere
+         but in this object would be gone with the next click. A file
+         written by Download a copy holds every deck, the current one
+         last, which is exactly how the big one came to be dropped. */
+      if(!silent&&!loose){loose={name:nm,pres:np,kept:false};imported++;}
       else dropped++;
     });
+    if(loose) first=loose;
     if(!imported){
       if(!silent)
         toast(dropped
@@ -2356,11 +2362,13 @@
         +(dropped?(' \u2014 '+dropped+' would not fit and '
           +(dropped>1?'were':'was')+' not kept'):''));
     else
-      toast('Opened \u2014 too big for a browser copy, so it lives in '
-        +'its file: Save writes it there'
+      toast('Opened \u201c'+first.name+'\u201d \u2014 too big for a '
+        +'browser copy, so it lives in its file: Save writes it there'
+        +(imported>1?(' \u2014 '+(imported-1)+' smaller deck'
+          +(imported>2?'s':'')+' from the file went into the library'):'')
         +(dropped?(' \u2014 '+dropped+' other'+(dropped>1?'s':'')
           +' in the file '+(dropped>1?'were':'was')+' not kept'):''),
-        8000);
+        9000);
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */

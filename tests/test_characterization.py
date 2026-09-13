@@ -1769,8 +1769,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # open (deck JS).
 # 2026-09-13, T413: chrome only. Match doors on the ribbon and the
 # strip (deck JS/HTML).
-EXPECTED_MD5 = "7c00a4578bb62079ef0562486769271e"
-EXPECTED_BYTES = 4144613
+# 2026-09-13, T414 again: chrome only. The deck that did not fit is
+# the one that opens (deck JS).
+EXPECTED_MD5 = "c02b998d3ff310a9798304974897807e"
+EXPECTED_BYTES = 4145193
 
 
 def _render_example() -> str:
