@@ -1724,8 +1724,20 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # app.js and its CSS.
 # 2026-09-13, T391: chrome only. The animation story fragment, its
 # strip and door, an icon and its CSS.
-EXPECTED_MD5 = "774e7241425c68a3f6f4ccec1c756691"
-EXPECTED_BYTES = 4092872
+# 2026-09-13, T394: chrome only. The rail's open list, its two doors,
+# the library's folder headings and filing, and their CSS.
+# 2026-09-13, T395: chrome only. Routing pushes a history entry per
+# view (app.js).
+# 2026-09-13, T396: chrome only. Home and the open-list chevron on the
+# editor's bar, a house icon, the drawer's editing position.
+# 2026-09-13, T397: chrome only. The name keeps its width, Help and
+# Support are one menu, the bar outranks the tab strip.
+# 2026-09-13, T398: chrome only. A saved file names the presentation
+# (deck JS).
+# 2026-09-13, T399: chrome only. The slide menu is one column with one
+# heading per group.
+EXPECTED_MD5 = "94543a402b3aeb804d3131c1a1777ac0"
+EXPECTED_BYTES = 4105322
 
 
 def _render_example() -> str:

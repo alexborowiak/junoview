@@ -7866,3 +7866,70 @@ gates are recorded in the completing commit.
   bytes are the 3.11 ones, unchanged). On 3.10, a .csv with a NUL byte:
   3.10's csv module refuses the line, 3.11+ reads through it; the byte
   is dropped before parsing. Full suite green on 3.10, 3.11 and 3.13.
+
+### Completed 2026-09-13 — the second screenshot round
+
+- [x] **T394 — The rail lists what is open.** (User: "the side bar shows
+  all recents where the main screen shows no recents???? Also the side
+  bar should only show what is open, not all recents. That should be
+  something seperate.") The rail was built from every saved deck, every
+  draft and every deck embedded in an open notebook, in folders, under
+  the label "presentations" — twenty rows of a notebook's embedded decks
+  on a fresh visit. It is a tab list now, like the notebook strip above
+  it: the presentations opened in this browser tab, in order, each with
+  an × that closes it (it stays saved, and in Recents), kept in
+  sessionStorage so a reload keeps them and a new tab starts clean, and
+  "nothing open" until one is. Under it, two doors: **Recents** and
+  **All presentations…**, both into the library dialog, whose All column
+  now carries the folders — headings with rename and delete, drag a
+  presentation onto one to file it, onto the column to unfile it. The
+  presenting drawer lists the other open presentations too.
+- [x] **T395 — Back returns to the previous view.** (User: "The back
+  button when you open a presentation doesn't work, it takes you out of
+  the website, when it should take you to what you were on previously.")
+  Every hash change was a replaceState, so Back had nothing to go back
+  to. A new VIEW — Home, a notebook, a presentation — is a history entry
+  now, and a move between the slides of one presentation still replaces,
+  so Back is never one entry per slide. Home over open notebooks got a
+  route of its own (`#/home`), so a presentation opened from Home goes
+  back to Home; Back to the first entry closes whatever opened since.
+- [x] **T396 — Home on the editor's bar, and the open list beside it.**
+  (User: "There needs to be a home button up the top of presentation.
+  The side bar that shows you all the open presentations like in the
+  image above doesn't appear in presentation mode.") T374 had taken
+  Home out of the top bar because the logo owns that journey — but the
+  logo is on the rail, and the rail is behind the full-screen editor, so
+  from a presentation there was no Home at all. **Home** is the first
+  button on the bar now (a house, and the word), and the chevron beside
+  it opens the deck's own "Open now" drawer: this presentation, the
+  other open ones, the open notebooks, Recents, All presentations. The
+  drawer also slides out at the left edge while editing, as it did
+  while presenting, unless the slide column is set to hide itself and
+  already owns that edge.
+- [x] **T397 — The name has room on the bar.** (User: "The top bar is
+  too busy e.g. where the file, save, themes etc. There is not enough
+  room for the presentation name.") Two causes. Every button on the bar
+  is flex:none and the two springs have a zero basis, so the name was
+  the one item the bar could shrink — it shrank to "pres…" before
+  fitQat ever saw an overflow, with empty space either side of it. It
+  is flex:none now, and the bar's pressure goes to fitQat's rungs as
+  designed. And Help and Support were two buttons for one errand: they
+  are one **Help ▾** menu (How to use…, Support Junoview ♥), both still
+  worded.
+- [x] **T398 — The file's name is the presentation's name.** (User:
+  "Saving the presentation as a file name, doesn't change the name in
+  junoview.") Save as "my talk.junoview.html" and the deck went on being
+  called "presentation-5" in the rail, the bar and the project file. The
+  stem of the file you pick becomes the presentation's name, by the one
+  rename everything else uses (a taken name stays, and says so), and the
+  file written carries the new name rather than the text rendered
+  before the pick.
+- [x] **T399 — The slide's right-click menu is a list.** (User: "The
+  right click options on a slide look cursed.") The strip's menu
+  inherited `.sh-menu`'s three-column icon grid, so "New version of
+  this slide" and "Move matching objects" wrapped word by word into
+  tiles beside their headings, and it carried three "this slide"
+  headings, one of them with nothing under it. One readable column now,
+  like the canvas menu: the slide, how it arrives (the current
+  transition marked "on"), which versions, then this slide — optional,
+  move up, move down, duplicate, delete.

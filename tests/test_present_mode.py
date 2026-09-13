@@ -551,9 +551,11 @@ def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):
     assert "function openNotebookRows(){" in out
     assert "function renderDeckPresentationDrawer(){" in out
     assert "function openDeckPresentationDrawer(){" in out
-    # the edge peek, presenting only, the rail's own 14px hit zone
+    # the edge peek, the rail's own 14px hit zone -- while presenting and,
+    # since T396, while editing (unless the slide column owns the edge)
     assert "  function initDrawerPeek(){" in out
-    assert "      if(mode!=='view'||deckEl.hidden) return;" in out
+    assert "      if(deckEl.hidden||(mode!=='view'&&mode!=='edit')) return;" in out
+    assert "      if(mode==='edit'&&filmAutoOn()) return;" in out
     assert "        if(e.clientX<=14) openDeckPresentationDrawer();" in out
     assert "      if(e.clientX>r.right+40||e.clientY>r.bottom+40)" in out
     # a notebook row stops the talk and shows that notebook

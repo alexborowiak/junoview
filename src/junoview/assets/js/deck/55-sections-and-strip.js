@@ -679,13 +679,17 @@
       if(pres.slides[i]&&pres.slides[i].sec)
         row('→ (no section)',function(){moveSlideToSection(i,'');});
     }
-    menuHead(m,poster?'this page':'this slide');
     /* OPTIONAL, and which versions this slide is in (T24). On the SLIDE
        menu because that is where you are looking when you decide a
        slide is a nice-to-have. */
     var oSl=pres.slides[i];
     /* HOW IT ARRIVES (T27). On the slide menu: a transition is a fact
-       about one slide, and this is where you are looking at it. */
+       about one slide, and this is where you are looking at it.
+       T399: ONE heading per group. There were three "this slide"
+       headings, one of them directly above this one with nothing under
+       it, and the menu inherited .sh-menu's three-column icon grid, so
+       every label wrapped into a tile (2026-09-13, user: "the right
+       click options on a slide look cursed"). */
     menuHead(m,'how it arrives'
       +(motionOK()?'':' — not on this machine'));
     var nowT=(oSl&&typeof oSl.trans==='string')?oSl.trans:null;
@@ -712,11 +716,6 @@
         +(secM.name||'this section')+'\u201d decides');
       if(nowT===null) ub.classList.add('on');
     }
-    menuHead(m,poster?'this page':'this slide');
-    row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
-      toggleOptional(i);},
-      'Running late in present mode skips the optional slides from '
-      +'wherever you have got to');
     var cuts=cutList();
     if(cuts.length){
       menuHead(m,'in these versions');
@@ -731,6 +730,10 @@
       });
     }
     menuHead(m,poster?'this page':'this slide');
+    row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
+      toggleOptional(i);},
+      'Running late in present mode skips the optional slides from '
+      +'wherever you have got to','flag');
     row('Move it up',function(){moveSlide(i,-1);},null,'prev');
     row('Move it down',function(){moveSlide(i,1);},null,'next');
     if(pageOf().poster) row('Rename this version\u2026',function(){
@@ -2592,6 +2595,15 @@
     var b=$(id);
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
+  /* ---- Help menu (T397): How to use, and Support. app.js owns what
+     How to use does; this only opens and closes the menu. ---- */
+  (function(){
+    var h=wireMenuToggle('deck-helpwrap','deck-help','deck-help-menu');
+    if(!h) return;
+    $$('.dc-mi',h.menu).forEach(function(b){
+      b.addEventListener('click',function(){overlayHide(h.menu);});
+    });
+  })();
   menuAction('#mi-new',newPresentation);
   /* ONE rename, reached from the File menu and from the name in the top
      bar. It used to un-hide #pres-name, which lives in .dc-controls — a

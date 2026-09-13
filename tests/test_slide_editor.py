@@ -475,6 +475,11 @@ def test_rail_has_one_new_button_and_per_row_delete(out):
     confirm -- deleting no longer means three File-menu levels
     (2026-08-18, user). The originals stay hidden so their handlers keep
     working; the menu rows click them.
+
+    T394: the rail lists what is OPEN now, so its x closes the row the way
+    a notebook tab's does; the confirmed delete stays behind File > Delete
+    presentation (deletePresByName). The .pr-del class and its hover rule
+    carry on unchanged.
     """
     assert 'id="pr-newbtn"' in out and 'id="pr-newmenu"' in out
     for f in ("pr-new", "pr-newpost", "pr-newview", "pr-newfold"):

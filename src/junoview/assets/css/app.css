@@ -441,10 +441,6 @@ body.light .pr-docs:hover{border-color:var(--cyan);}
 body.presrail-min .pr-btn .pr-t{display:none;}
 body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
   justify-content:center;}
-/* folder icon next to folder names */
-.pr-fico{display:flex;align-items:center;color:#7590a5;flex:none;}
-.pr-folder:hover .pr-fico{color:#9fb2c2;}
-body.presrail-min .pr-fico{display:none;}
 /* the two panel controls sit together as a pair at the foot of the rail:
    one collapses it, one makes it slide away by itself */
 /* T262: STACKED, not side by side. #pr-auto used to be pinned to a 34px
@@ -499,36 +495,13 @@ body.presrail-hidden .presrail-show{display:block;}
 .presrail-show:hover{color:#fff;border-color:var(--cyan);}
 /* draft-only presentations get an unsaved dot */
 .pr-item.draftonly .pr-t::after{content:" \2022";color:var(--amber);}
-/* presentation folders: real folders — drag items in/out, collapsible */
-.pr-folder{display:flex;align-items:center;gap:7px;width:100%;
-  border:1px solid transparent;background:none;border-radius:7px;
-  padding:7px 10px;margin-top:5px;font-family:var(--mono);font-size:10px;
-  letter-spacing:.1em;text-transform:uppercase;color:#5e7488;
-  cursor:pointer;text-align:left;min-width:0;user-select:none;}
-.pr-folder:hover{background:#ffffff0a;color:#9fb2c2;}
-.pr-folder.dropping{border-color:var(--cyan);background:color-mix(in srgb,var(--accent) 11%,transparent);
-  color:#aadbe8;}
-.pr-folder .pr-t{flex:1;}
-.pr-fchev{flex:none;font-size:9px;}
-.pr-fcount{flex:none;font-size:9px;background:#ffffff10;
-  border-radius:8px;padding:1px 6px;color:#69788a;}
-.pr-fctrl{display:none;gap:2px;flex:none;}
-.pr-folder:hover .pr-fctrl{display:flex;}
-.pr-fctrl button{background:none;border:none;color:#8ba0b2;
-  cursor:pointer;font-size:10px;padding:1px 4px;border-radius:4px;}
-.pr-fctrl button:hover{color:#fff;background:#ffffff14;}
-.pr-frename{width:100%;background:var(--chrome-2,#16273a);border:1px solid var(--cyan);
-  color:#dce6ee;font-family:var(--sans);font-size:12px;padding:3px 7px;
-  border-radius:5px;min-width:0;}
-.pr-frename:focus{outline:none;}
-.pr-item.infolder{padding-left:26px;}
-.pr-item.ptab[draggable="true"]{cursor:grab;}
-.pr-item.ptab.dragging{opacity:.45;}
-.presrail.dropping-root{outline:2px dashed color-mix(in srgb,var(--accent) 40%,transparent);
-  outline-offset:-4px;}
-body.presrail-min .pr-folder .pr-t,
-body.presrail-min .pr-fcount,body.presrail-min .pr-fctrl{display:none;}
-body.presrail-min .pr-folder{justify-content:center;padding:8px 0;}
+/* T394: the rail's rows are what is OPEN, and the two doors under them
+   are dimmer than a row -- ways to more, not things that are here */
+.pr-door{color:#69788a;font-size:11.5px;padding:7px 10px;}
+.pr-door:hover{color:#cdd9e3;}
+.pr-none{padding:6px 10px;color:#4e5f70;font:11px var(--sans);
+  font-style:italic;}
+body.presrail-min .pr-none{display:none;}
 body.presrail-min .pr-item.infolder{padding-left:0;}
 
 .nbshell[hidden]{display:none;}
@@ -1002,6 +975,29 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;}
 .presentation-hub-empty{padding:9px;color:var(--chrome-ink-2);
   border:1px dashed var(--chrome-line);border-radius:7px;font:11px var(--sans);}
+/* T394: folders live in the library now. A heading is a drop target;
+   its verbs show on hover the way the rail's used to. */
+.presentation-hub-folder{display:flex;align-items:center;gap:7px;
+  margin-top:8px;padding:6px 9px;border:1px dashed transparent;
+  border-radius:7px;color:var(--chrome-ink-2);font:10px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;}
+.presentation-hub-folder .bic{width:13px;height:13px;flex:none;}
+.presentation-hub-folder-name{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.presentation-hub-folder-count{flex:none;font-size:9px;
+  background:#ffffff10;border-radius:8px;padding:1px 6px;}
+.presentation-hub-folder-btn{display:none;background:none;border:none;
+  color:var(--chrome-ink-2);cursor:pointer;padding:2px 4px;border-radius:4px;}
+.presentation-hub-folder-btn .bic{width:9px;height:9px;}
+.presentation-hub-folder:hover .presentation-hub-folder-btn{display:inline-flex;}
+.presentation-hub-folder-btn:hover{color:var(--chrome-ink);background:#ffffff14;}
+.presentation-hub-folder.dropping{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 11%,transparent);}
+.presentation-hub-row.infolder{margin-left:18px;}
+.presentation-hub-row.dragging{opacity:.5;}
+.presentation-hub-list.dropping-root{outline:2px dashed
+  color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:3px;
+  border-radius:7px;}
 @media (max-width:640px){
   .presentation-hub-columns{grid-template-columns:1fr;}
   .presentation-hub-folderform{grid-template-columns:1fr;}
@@ -1388,15 +1384,6 @@ body.light .pr-item.editing{background:var(--accent-deep);
 body.light .pr-item.ptab .pr-ico{color:var(--cyan-deep);}
 body.light .pr-item.editing .pr-ico{color:var(--on-accent-deep);}
 body.light .pr-label{color:var(--cyan-deep);}
-body.light .pr-folder{color:var(--ink-3);}
-body.light .pr-folder:hover{background:var(--surface-hover);
-  color:var(--ink-2);}
-body.light .pr-fico{color:var(--ink-3);}
-body.light .pr-fcount{background:var(--surface-active);color:var(--ink-3);}
-body.light .pr-fctrl button{color:var(--ink-3);}
-body.light .pr-fctrl button:hover{color:var(--ink);
-  background:var(--surface-active);}
-body.light .pr-frename{background:var(--input-bg);color:var(--ink);}
 body.light .pr-btn{background:var(--btn-bg);border-color:var(--btn-border);
   color:var(--ink-2);}
 body.light .pr-btn:hover{border-color:var(--cyan);color:var(--ink);
@@ -1997,7 +1984,7 @@ body.light .vars-menubtn{color:var(--ink-2);}
   vertical-align:-3px;}
 .odlg-i .ic .bic{vertical-align:-3px;}
 .card-addnote .bic{width:13px;height:13px;}
-.pr-fctrl button .bic,.pr-del .bic{width:9px;height:9px;
+.pr-del .bic{width:9px;height:9px;
   vertical-align:-1px;}
 .tn-btn .bic{width:12px;height:12px;}
 .rf-btn .bic{width:12px;height:12px;}

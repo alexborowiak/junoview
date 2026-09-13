@@ -63,6 +63,7 @@
     if(atHome&&APP.deckState&&APP.deckState()&&APP.deckClose) APP.deckClose();
     refreshChrome();
     if(atHome) window.scrollTo(0,0);
+    updateHash();   /* T395: Home is a view, so Back can come back to it */
   }
   APP.goHome=goHome;
   function refreshChrome(){
@@ -444,15 +445,27 @@
      Bookmarkable + survives reload + back/forward, in every mode (hash only,
      so no server routing needed). The deck registers deckState/deckOpen. */
   var initialHash=location.hash, routeReady=false, pendingRoute=null,
-      routeTimer=null;
+      routeTimer=null, lastView=null, applyingRoute=false;
+  /* the VIEW a hash names: everything but a /s<n> slide suffix */
+  function viewOf(h){return String(h||'').replace(/\/s\d+$/i,'');}
   function setHash(h){
-    if(location.hash===h||(!location.hash&&h==='#/')) return;
-    /* replaceState (not location.hash=) so in-app navigation NEVER floods the
-       back stack — the URL always mirrors the view, bookmarkable + reloadable,
-       and Back leaves the app cleanly rather than stepping through tab switches */
-    try{ if(history.replaceState)
-           history.replaceState(null,'',
-             location.pathname+location.search+(h==='#/'?'':h));
+    if(location.hash===h||(!location.hash&&h==='#/')){
+      lastView=viewOf(h);return;
+    }
+    /* T395: a NEW VIEW is a history entry; a move inside one is not.
+       Everything was replaceState so the back stack never flooded, which
+       also meant Back from a presentation left the site (2026-09-13,
+       user: "the back button when you open a presentation doesn't work,
+       it takes you out of the website, when it should take you to what
+       you were on previously"). So Home, a notebook and a presentation
+       each push -- Back returns to the one before -- while stepping
+       through the slides of one presentation still replaces, so Back is
+       never one entry per slide. The first stamp on load replaces too. */
+    var view=viewOf(h),push=!applyingRoute&&lastView!==null&&view!==lastView;
+    lastView=view;
+    var url=location.pathname+location.search+(h==='#/'?'':h);
+    try{ if(push&&history.pushState) history.pushState(null,'',url);
+         else if(history.replaceState) history.replaceState(null,'',url);
          else location.hash=h; }catch(e){}
   }
   function routeParse(hash){
@@ -468,6 +481,9 @@
         +(d.slide!=null?('/s'+(d.slide+1)):''));
       return;
     }
+    /* Home over open notebooks is a view of its own (T395), so Back from
+       a presentation opened from Home lands on Home, not on a notebook */
+    if(atHome&&APP.order.length){setHash('#/home');return;}
     var a=APP.active&&APP.shells[APP.active];
     var stem=a&&a.trace?a.source:APP.active;   /* a trace tab -> its source */
     setHash(stem?('#/doc/'+encodeURIComponent(stem)):'#/');
@@ -477,7 +493,19 @@
      so a programmatic setHash -> hashchange never loops or double-renders */
   function applyHash(hash){
     var parts=routeParse(hash);
-    if(!parts.length) return;
+    var open=APP.deckState&&APP.deckState();
+    if(!parts.length){
+      /* the default view: Back has arrived at the entry stamped on load,
+         so whatever opened since (a presentation, Home) goes away */
+      if(open&&APP.deckClose) APP.deckClose();
+      if(atHome&&APP.order.length) goHome(false);
+      return;
+    }
+    if(parts[0]==='home'){
+      if(open&&APP.deckClose) APP.deckClose();
+      goHome(true);
+      return;
+    }
     if(parts[0]==='pres'&&parts[1]){
       var slide=0;
       if(parts[2]&&/^s\d+$/i.test(parts[2]))
@@ -491,11 +519,11 @@
       }
       if(APP.deckOpen&&!APP.deckOpen(parts[1],slide)) updateHash();
     } else if(parts[0]==='doc'&&parts[1]){
-      var open=APP.deckState&&APP.deckState();
       var ca=APP.shells[APP.active];
       var curStem=ca&&ca.trace?ca.source:APP.active;   /* symmetric w/ updateHash */
-      if(!open&&curStem===parts[1]) return;
+      if(!open&&!atHome&&curStem===parts[1]) return;
       if(open&&APP.deckClose) APP.deckClose();
+      if(atHome) goHome(false);   /* a notebook route is not Home */
       if(APP.shells[parts[1]]) activate(parts[1]);
     }
   }
@@ -510,7 +538,7 @@
   APP.applyInitialRoute=function(){
     routeReady=true;
     var parts=routeParse(initialHash);
-    if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'))
+    if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'||parts[0]==='home'))
       pendingRoute=initialHash;
     tryRoute();
     if(!location.hash) updateHash();   /* stamp the default view */
@@ -525,7 +553,13 @@
   });
   window.addEventListener('hashchange',function(){
     pendingRoute=null;   /* a real navigation supersedes the initial route */
-    applyHash(location.hash);
+    /* Back and Forward land on an entry this code already stamped: the
+       view it names is now the last one, so the next change compares
+       against it and not against where you were before you went back */
+    lastView=viewOf(location.hash||'#/');
+    /* ...and nothing the route applies may push: the entry exists */
+    applyingRoute=true;
+    try{applyHash(location.hash);}finally{applyingRoute=false;}
   });
 
   /* ================= per-notebook document behaviors ================= */
@@ -3501,7 +3535,7 @@
   /* two doors: the app bar's Help, and the deck editor's — editing hides
      the app bar entirely, so without the second one the help was
      unreachable from inside a presentation (2026-08-20) */
-  ['#help-btn','#deck-help'].forEach(function(sel){
+  ['#help-btn','#deck-howto'].forEach(function(sel){
     var hb=$(sel);
     if(hb) hb.addEventListener('click',showHelp);
   });
