@@ -1771,8 +1771,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # strip (deck JS/HTML).
 # 2026-09-13, T414 again: chrome only. The deck that did not fit is
 # the one that opens (deck JS).
-EXPECTED_MD5 = "c02b998d3ff310a9798304974897807e"
-EXPECTED_BYTES = 4145193
+# 2026-09-13, T415: chrome only. A download is named after the deck
+# (deck JS).
+EXPECTED_MD5 = "35277424d000c0dbd58919caf76d4941"
+EXPECTED_BYTES = 4145437
 
 
 def _render_example() -> str:

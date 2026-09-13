@@ -21,13 +21,27 @@ from __future__ import annotations
 
 def test_no_room_in_the_browser_is_not_cannot_open(out):
     assert "      var kept=lsSet(PFX+nm,JSON.stringify(np),true);" in out
-    assert ("      if(!silent&&!first){first={name:nm,pres:np,kept:false};"
+    assert ("      if(!silent&&!loose){loose={name:nm,pres:np,kept:false};"
             "imported++;}") in out
     assert "    } else loadPresentationObj(first.pres);   /* T414 */" in out
     assert "  function loadPresentationObj(np){" in out
     assert "    pres=np;source='draft';" in out
-    assert ("      toast('Opened \\u2014 too big for a browser copy, so it "
-            "lives in '") in out
+    assert ("      toast('Opened \\u201c'+first.name+'\\u201d \\u2014 too big "
+            "for a '") in out
+
+
+def test_the_deck_that_did_not_fit_is_the_one_that_opens(out):
+    """Download a copy writes every deck, the current one last. The
+    smaller ones fit the draft store and are in the library now; the
+    big one is nowhere but in the object in hand, so it is the one that
+    opens -- the old order dropped it and opened a small one."""
+    assert "    var imported=0,dropped=0,first=null,loose=null;" in out
+    assert "    if(loose) first=loose;" in out
+
+
+def test_a_download_is_named_after_the_deck(out):
+    assert ("    a.download=(pres.name||(APP.order.length===1"
+            "?APP.order[0]:'project'))") in out
     # a file that fits still goes through the draft, as before
     assert ("    if(first.kept){\n"
             "      lsSet(PFX+'last',first.name,true);\n"

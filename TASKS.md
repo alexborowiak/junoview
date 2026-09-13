@@ -8100,7 +8100,15 @@ gates are recorded in the completing commit.
   presentation / New poster / New folder (user: "why when you click
   open is there all the 'new poster options'"); and the readout names
   the folder an autosave went into, so "autosaved to talk.junoview.html"
-  cannot send you to look in the wrong file.
+  cannot send you to look in the wrong file. Second commit: a file
+  written by Download a copy holds every deck, the current one LAST, so
+  the smaller decks fit the draft store, the big one did not, and the
+  old order opened a small one and dropped the big one ("that had only
+  the small version"). A deck that did not fit is now the one that
+  opens; the ones that fit are in the library and lose nothing.
+- [x] **T415 — A download is named after the deck.** (User: "downloaded
+  with shit name project.junoview, not the actual name.") The file
+  still holds every deck; it is named after the one you were in.
 - [x] **T413 — Matching, where you can see it.** (User: "What happened to
   the feature of matching slides, and also things like making one
   object appear the same as another.") Both features were alive and

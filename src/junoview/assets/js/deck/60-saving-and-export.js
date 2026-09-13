@@ -1151,7 +1151,11 @@
     var blob=new Blob([junoviewFileHtml()],{type:'text/html'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=(APP.order.length===1?APP.order[0]:'project')
+    /* T415: the deck's own name, not "project" (2026-09-13, user:
+       "downloaded with shit name project.junoview, not the actual
+       name"). The file still holds every deck; it is named after the
+       one you were in. */
+    a.download=(pres.name||(APP.order.length===1?APP.order[0]:'project'))
       +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
