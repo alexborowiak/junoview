@@ -109,4 +109,4 @@ def test_the_animations_list_names_the_effect(out):
     assert "            var fx=flipFxWord(a.fanim)||'Cut';" in out
     # (T417: the effect word is the row's tag, nothing more)
     assert ("              row(base+d,[[name,p.i]],fx,"
-            "{sub:true,cur:cur2,acts:acts});") in out   # T427: a page moves
+            "{sub:true,cur:cur2,acts:acts,\n") in out   # T427: a page moves

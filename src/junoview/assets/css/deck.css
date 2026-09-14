@@ -2103,6 +2103,12 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   justify-content:flex-end;align-items:center;gap:3px;}
 .anim-stepctr.row{flex:none;}
 .anim-updown{display:flex;flex-direction:row;gap:3px;}
+/* T432: rows drag; the landing edge is drawn on the row under the
+   pointer */
+.anim-step[draggable="true"]{cursor:grab;}
+.anim-step.dragging{opacity:.5;}
+.anim-step.drop-above{box-shadow:0 -3px 0 0 var(--cyan);}
+.anim-step.drop-below{box-shadow:0 3px 0 0 var(--cyan);}
 .anim-stepctr .anim-mini{padding:2px 6px;font-size:10.5px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}

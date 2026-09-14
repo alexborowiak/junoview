@@ -3494,7 +3494,7 @@ def test_the_build_list_shows_every_stop_not_only_the_builds(out):
     assert "                :frameLabel(fr[w.k],w.k);" in out
     # every row carries the click the space bar counts
     assert ("              row(base+d,[[name,p.i]],fx,"
-            "{sub:true,cur:cur2,acts:acts});") in out   # T427: a page moves
+            "{sub:true,cur:cur2,acts:acts,\n") in out   # T427: a page moves
     assert "        var first=(plan.stop[b0]|0)+1;" in out
 
 

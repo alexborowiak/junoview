@@ -59,8 +59,9 @@ def test_one_row_per_click_numbered_by_the_space_bar(out):
     # T427: the same three on every build row, built by ctrls()
     assert "            ['\\u2191 Earlier','Move this build one click earlier'," in body
     assert "            ['\\u2193 Later','Move this build one click later'," in body
-    assert ("            ['\\u2715 Remove',"
-            "'Take the animation off: it is just there',") in body
+    assert ("            ['\\u2715 Remove','Take the animation off \\u2014 "
+            "the object '\n"
+            "             +'stays on the slide',") in body
 
 
 def test_a_flip_books_pages_are_rows_with_their_own_click(out):

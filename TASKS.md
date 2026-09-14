@@ -8323,3 +8323,18 @@ gates are recorded in the completing commit.
   pill's wait is over: it went on saying "click to reopen" after a file
   had been opened and saved, and its click then said "nothing to
   reopen".
+- [x] **T432 — The animation pane's Remove takes only the animation;
+  every row drags.** (User, 2026-09-14: "When removing the animation it
+  would remove the image/the dot point, not just remove animation, and
+  the re-ordering didn't work. Also would be good to be able to drag
+  and drop order, not just having to press arrows up and down.") T427's
+  Remove on a page row took the page out of the book and on a bullet
+  row took the bullet out of the text — content, in a pane about
+  clicks. Only the build row has Remove now, and its toast says what
+  stayed on the slide. A bullet move works for lines typed with
+  Shift+Enter (the runs between `<br>`s inside one block, each run
+  keeping its break) as well as for list items and paragraphs. And
+  every row drags onto its siblings: a build onto another click (one
+  move, the list renumbered), a page through its book, a bullet through
+  its text — the build's first row also stands for bullet 0, so a
+  bullet can be dragged to the top. Driven live.
