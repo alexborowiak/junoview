@@ -60,15 +60,38 @@
        button that opened it. -->
   <aside class="deck-pres-drawer" id="deck-pres-drawer" hidden
     aria-label="Open now">
-    <div class="deck-pres-drawer-head"><span>Open now</span></div>
+    <!-- T448: WHERE IT SITS IS YOURS (2026-09-14, user: "the button
+         beside home that is the only way to show what you currently
+         have open is annoying ... Having the side bar before was good
+         when you could have it open all the time or pop it up more
+         easily. Should also be able to make it as a top bar and
+         customise a lot about the way you want things. Needs lots of
+         user flexibility"). A pop-up that peeks from the edge, a rail
+         down the left that stays open, or a strip across the top --
+         remembered, with the sections you want in it. -->
+    <div class="deck-pres-drawer-head"><span>Open now</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="deck-pres-dock" type="button"
+        aria-haspopup="true" aria-expanded="false"
+        aria-label="Where this bar sits, and what it lists"
+        title="Where this bar sits, and what it lists"
+        ><i data-ic="dockright"></i></button>
+      <button class="dbtn dc-icon" id="deck-pres-close" type="button"
+        aria-label="Close this bar"
+        title="Close it. The chevron beside Home opens it again, and it
+ slides out when you reach the left edge"><i data-ic="exit"></i></button>
+    </div>
     <div class="deck-pres-list" id="deck-pres-list"></div>
     <div class="deck-pres-doors">
+      <button class="dbtn" id="deck-pres-new" type="button"
+        title="A new presentation, open beside the others"
+        ><i data-ic="newdeck"></i> New</button>
       <button class="dbtn" id="deck-pres-recent" type="button"
         title="Presentations you used recently, in any session"
         ><i data-ic="history"></i> Recents</button>
       <button class="dbtn" id="deck-pres-browse" type="button"
         title="Every saved presentation, folders, new decks and imports"
-        ><i data-ic="open"></i> All presentations&hellip;</button>
+        ><i data-ic="open"></i> All&hellip;</button>
     </div>
   </aside>
   <!-- the left COLUMN is the notebooks content and then the thumbnails,

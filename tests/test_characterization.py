@@ -1880,8 +1880,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # numbers on them, and Quick animate off the ribbon; new fragment
 # 48b-motion.js plus deck.html, deck.css, branding.py, 20-notes-and-
 # tables.js, 48-animation.js, 05-figures-and-ribbon.js and 99-boot.js.
-EXPECTED_MD5 = "c2e5b73ad652e3ca0c65dba6e6518a4f"
-EXPECTED_BYTES = 4256517
+# T448: the open-items bar gains a head (dock + close), section
+# headings, per-row verbs and the docked-layout CSS
+EXPECTED_MD5 = "22f28dc176f09bfa4b60f393ecd7f6de"
+EXPECTED_BYTES = 4272989
 
 
 def _render_example() -> str:

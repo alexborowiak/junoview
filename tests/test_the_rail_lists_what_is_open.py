@@ -68,10 +68,16 @@ def test_the_library_took_the_folders_and_the_filing(out):
 
 
 def test_the_presenting_drawer_lists_the_other_open_presentations(out):
+    """T448 named the list first and then walked it, so the deck's own
+    name can lead it even before notePresentationOpen has run; the row
+    that is not yours still switches to it."""
     start = out.index("  function renderDeckPresentationDrawer(){")
-    body = out[start:out.index("  function openDeckPresentationDrawer(){", start)]
-    assert "openPresentationNames().forEach(function(nm){" in body
-    assert "'Switch to “'+nm+'”',function(){" in body
+    body = out[start:out.index("  /* the dock menu:", start)]
+    assert "      var names=openPresentationNames().slice();" in body
+    assert ("      if(pres&&pres.name&&names.indexOf(pres.name)<0) "
+            "names.unshift(pres.name);") in body
+    assert "      names.forEach(function(nm){" in body
+    assert "mine?'The presentation you are in':('Switch to “'+nm+'”')," in body
 
 
 def test_the_css_for_doors_and_library_folders(out):

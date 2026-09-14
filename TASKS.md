@@ -8511,3 +8511,26 @@ gates are recorded in the completing commit.
   the movement and its six numbers, seven one-click treatments for the
   whole slide, and the list of clicks underneath. Quick animate is the
   panel's too, and arming it opens the panel. Driven live.
+- [x] **T448 — The open-items bar: where you put it, with the verbs on
+  it.** (User, 2026-09-14: "the button beside home that is the only way
+  to show what you currently have open is annoying. Often people want
+  to swap a lot between presentation and tabs and version (also you
+  can't duplicate a presentation or delete it from the main menu, there
+  is very little controls). Having the side bar before was good when
+  you could have it open all the time or pop it up more easily. Should
+  also be able to make it as a top bar and customise a lot about the
+  way you want things. Needs lots of user flexibility.") Three places
+  it can live, remembered per project: the pop-up it was, a rail down
+  the left, or a strip across the top. A docked bar is not a thing
+  floating over the deck — it becomes a track of the deck's own grid,
+  so the stage measures its own smaller width and the page simply gets
+  smaller, and it never closes under you (the peek stands down, and
+  the X un-docks rather than hiding a rail the layout has made room
+  for). Three sections, each switchable from the same menu: the
+  presentations open in this tab, the notebooks, and this deck's last
+  six saved versions. Every presentation row carries its verbs —
+  switch, duplicate, rename (the one you are in), pin, close, delete —
+  floating over the row's right end so five icons never clip the name;
+  a notebook row switches to it or closes it; a version row opens the
+  history there. Duplicate is new: a deep copy under a free name,
+  open beside the original. Driven live in all three docks.

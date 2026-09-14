@@ -144,6 +144,10 @@ RUNTIME_IDS = {
     # Its overflow warning is also looked up directly so applying a
     # too-wide layout can reveal the remedy above the deck's toast layer.
     "rbn-gallery", "rbn-gal-warn",
+    # The open-items bar's "where it sits" menu, built on open and
+    # removed on close like flip-add-menu: deck/50-review-and-overview.js
+    # barDockMenu (T448).
+    "openbar-menu",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

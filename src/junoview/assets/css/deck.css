@@ -60,6 +60,73 @@ body.deck-open{overflow:hidden;}
 .deck-pres-doors .dbtn{flex:1 1 auto;min-width:0;justify-content:center;
   white-space:nowrap;}
 .deck-pres-row[disabled]{cursor:default;}
+/* ---- T448: THE OPEN-ITEMS BAR, WHERE YOU PUT IT --------------------
+   A pop-up is the rules above. A RAIL sits flush down the left and the
+   stage gives up the width, the way it does for an inspector pane; a
+   STRIP lies across the top and the stage gives up the height. Both
+   drop the pop-up's shadow and its floating corners on the docked edge,
+   because a docked thing is part of the frame, not over it.
+   A docked bar is not positioned OVER the deck at all: it becomes a
+   track of the deck's own grid, so the stage measures its own smaller
+   width and sizeSlideTo fits the page to it -- the same trick that
+   makes .deck.pane-open work, said in grid rather than in padding. */
+.deck{--openbar-w:264px;--openbar-h:104px;}
+.deck-pres-drawer.dock-left,.deck-pres-drawer.dock-top{
+  position:static;max-height:none;border-radius:0;box-shadow:none;}
+/* a rail: a third column, ahead of the slide column and the stage */
+.deck.openbar-left{grid-template-columns:auto auto minmax(0,1fr);}
+.deck.openbar-left>.deck-pres-drawer{grid-column:1;grid-row:2/5;
+  width:var(--openbar-w);min-height:0;border-width:0 1px 0 0;}
+.deck.openbar-left>.deck-create{grid-column:2;}
+.deck.openbar-left>.rbn-tabs,.deck.openbar-left>.edit-tools,
+.deck.openbar-left>.deck-main{grid-column:3;}
+/* a strip: a band of its own under the document bar, full width */
+.deck.openbar-top{grid-template-rows:auto auto auto auto minmax(0,1fr);}
+.deck.openbar-top>.deck-pres-drawer{grid-column:1/-1;grid-row:2;
+  width:auto;max-height:var(--openbar-h);border-width:0 0 1px;}
+.deck.openbar-top>.deck-create{grid-row:3/6;}
+.deck.openbar-top>.rbn-tabs{grid-row:3;}
+.deck.openbar-top>.edit-tools{grid-row:4;}
+.deck.openbar-top>.deck-main{grid-row:5;}
+/* across the top it is a ROW of rows, not a column: the head, the items
+   and the doors flow left to right so the strip stays one band deep */
+.deck-pres-drawer.dock-top{flex-direction:row;align-items:center;
+  gap:12px;padding:7px 12px;overflow-x:auto;}
+.deck-pres-drawer.dock-top .deck-pres-drawer-head{flex:none;
+  padding:0 12px 0 0;border-bottom:0;border-right:1px solid var(--chrome-line);}
+.deck-pres-drawer.dock-top .deck-pres-list{flex-direction:row;flex-wrap:wrap;
+  align-items:center;gap:6px;flex:1;min-width:0;}
+.deck-pres-drawer.dock-top .deck-pres-row{width:auto;max-width:260px;
+  padding:5px 8px;}
+.deck-pres-drawer.dock-top .deck-pres-sec{margin:0;}
+.deck-pres-drawer.dock-top .deck-pres-doors{flex:none;}
+/* a section heading inside the bar, so three lists read as three */
+.deck-pres-sec{margin:5px 0 0;color:var(--chrome-ink-2);
+  font:600 9px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
+/* the verbs on a row. They are quiet until the row is under the pointer,
+   because "very little controls" must not become a wall of icons -- and
+   they FLOAT over the row's right end rather than taking a column of it,
+   so five icons do not clip the name down to "presentat…" on every row
+   whether you are pointing at it or not. */
+.deck-pres-row{position:relative;}
+.deck-pres-acts{display:flex;gap:2px;flex:none;opacity:0;
+  position:absolute;right:5px;top:50%;transform:translateY(-50%);
+  padding-left:14px;border-radius:5px;
+  background:linear-gradient(90deg,transparent,var(--chrome-2) 14px);
+  transition:opacity .12s;}
+.deck-pres-row:hover .deck-pres-acts,
+.deck-pres-row:focus-within .deck-pres-acts,
+.deck-pres-acts:has(.deck-pres-act.on){opacity:1;}
+.deck-pres-act{display:inline-flex;align-items:center;justify-content:center;
+  width:21px;height:21px;padding:0;border:1px solid transparent;
+  border-radius:5px;background:none;color:var(--chrome-ink-2);
+  cursor:pointer;}
+.deck-pres-act:hover{border-color:var(--chrome-line);
+  background:color-mix(in srgb,var(--accent) 22%,transparent);
+  color:var(--chrome-ink);}
+.deck-pres-act.on{color:var(--cyan);opacity:1;}
+.deck-pres-act .bic{width:12px;height:12px;}
+.deck-pres-ver .deck-pres-row-name{color:var(--chrome-ink-2);}
 .deck-brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
   text-transform:uppercase;color:var(--cyan);}
 .deck-status{font-family:var(--mono);font-size:10px;padding:0 10px;

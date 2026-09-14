@@ -1548,8 +1548,14 @@
   function drawerDoors(){
     return [$('#deck-pres-open'),$('#qat-open')].filter(Boolean);
   }
-  function closeDeckPresentationDrawer(){
+  /* T448: a DOCKED bar does not close. Its whole point is staying
+     there, and the pointer wanders off it constantly while you work,
+     so the peek's leave rule and the hub's tidy-up would both shut it
+     under you. The X in its head unpins it (back to a pop-up) rather
+     than hiding a rail the layout has made room for. */
+  function closeDeckPresentationDrawer(force){
     var d=$('#deck-pres-drawer');
+    if(barDocked()&&!force) return;
     if(d) d.hidden=true;
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','false');});
   }
@@ -1571,53 +1577,274 @@
     });
     return out;
   }
+  /* ---- T448: THE OPEN-ITEMS BAR --------------------------------------
+     (2026-09-14, user: "the button beside home that is the only way to
+     show what you currently have open is annoying. Often people want
+     to swap a lot between presentation and tabs and version (also you
+     can't duplicate a presentation or delete it from the main menu,
+     there is very little controls). Having the side bar before was
+     good when you could have it open all the time or pop it up more
+     easily. Should also be able to make it as a top bar and customise
+     a lot about the way you want things. Needs lots of user
+     flexibility.")
+
+     Three places it can live, remembered: a POP-UP that peeks from the
+     left edge and closes when you leave it (what it was), a RAIL down
+     the left that stays open and that the stage makes room for, or a
+     STRIP across the top. Three sections it can list, each switchable:
+     the presentations open in this tab, the notebooks, and this deck's
+     saved versions. And every row carries its verbs -- switch,
+     duplicate, rename, pin, close, delete -- because "there is very
+     little controls" was the other half of the ask. */
+  var OPENBAR_KEY='semopts:'+SCOPE+':openbar';
+  var BAR_DEF={dock:'pop',pres:1,nb:1,vers:1};
+  function barCfg(){
+    var o={};
+    try{o=JSON.parse(lsGet(OPENBAR_KEY)||'{}')||{};}catch(e){}
+    return {dock:(o.dock==='left'||o.dock==='top')?o.dock:'pop',
+      pres:o.pres===0?0:1,nb:o.nb===0?0:1,vers:o.vers===0?0:1};
+  }
+  function barSet(k,v){
+    var c=barCfg();c[k]=v;
+    lsSet(OPENBAR_KEY,JSON.stringify(c));
+    barApply();
+    renderDeckPresentationDrawer();
+  }
+  function barDocked(){return barCfg().dock!=='pop';}
+  /* the deck gives up the room a docked bar takes, the way it does for
+     an inspector pane (syncPaneDock) -- and the page is re-fitted,
+     because the stage just changed size */
+  function barApply(){
+    var d=$('#deck-pres-drawer'); if(!d||!deckEl) return;
+    var c=barCfg();
+    d.classList.toggle('dock-left',c.dock==='left');
+    d.classList.toggle('dock-top',c.dock==='top');
+    deckEl.classList.toggle('openbar-left',c.dock==='left');
+    deckEl.classList.toggle('openbar-top',c.dock==='top');
+    if(c.dock!=='pop'&&d.hidden){d.hidden=false;renderDeckPresentationDrawer();}
+    drawerDoors().forEach(function(b){
+      b.setAttribute('aria-expanded',(!d.hidden).toString());});
+    if(typeof applyZoom==='function') applyZoom();
+  }
+  /* ---- A COPY OF A PRESENTATION (T448) --------------------------------
+     "you can't duplicate a presentation". One deep copy under a free
+     name, into the draft store, open beside the original. */
+  function duplicatePresentation(nm){
+    var src=(pres&&pres.name===nm)?pres:(loadDraft(nm)||savedByName(nm));
+    if(!src){toast('“'+nm+'” is not here to copy');return '';}
+    var base=nm+' copy',name=base,n2=1;
+    while(savedByName(name)||loadDraft(name)){n2++;name=base+' '+n2;}
+    var cp=deep(src);cp.name=name;
+    if(!draftSet(name,JSON.stringify(cp),true)){
+      toast('Could not copy — this browser had no room for it',8000);
+      return '';
+    }
+    noteSessionOpen(name);
+    renderPresTabs();renderDeckPresentationDrawer();
+    if(typeof renderPresentationHub==='function') renderPresentationHub();
+    toast('Copied to “'+name+'” — it is open beside this one');
+    return name;
+  }
+  function barRowActs(host,acts){
+    var w=document.createElement('span');
+    w.className='deck-pres-acts';
+    acts.forEach(function(a){
+      if(!a) return;
+      var b=document.createElement('button');
+      b.type='button';b.className='deck-pres-act'+(a[3]?' on':'');
+      b.innerHTML=a[0];b.title=a[1];
+      b.setAttribute('aria-label',a[1]);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();a[2]();});
+      w.appendChild(b);
+    });
+    host.appendChild(w);
+    return w;
+  }
   function renderDeckPresentationDrawer(){
     var host=$('#deck-pres-list');if(!host) return;
+    var c=barCfg();
     host.innerHTML='';
     function row(cls,icon,name,kind,title,click){
-      var b=document.createElement('button');
-      b.type='button';b.className='deck-pres-row'+(cls?' '+cls:'');
+      var b=document.createElement('div');
+      b.className='deck-pres-row'+(cls?' '+cls:'');
       b.title=title;
+      if(click){
+        b.tabIndex=0;b.setAttribute('role','button');
+        b.addEventListener('click',click);
+        b.addEventListener('keydown',function(e){
+          if(e.key==='Enter'||e.key===' '){e.preventDefault();click(e);}});
+      }
       var ic=document.createElement('span');ic.innerHTML=icon;
       var nm=document.createElement('span');nm.className='deck-pres-row-name';
       nm.textContent=name;
       var kd=document.createElement('span');kd.className='deck-pres-row-kind';
       kd.textContent=kind;
       b.appendChild(ic);b.appendChild(nm);b.appendChild(kd);
-      if(click) b.addEventListener('click',click);
-      else b.disabled=true;
       host.appendChild(b);
+      return b;
     }
-    var p=presentationSummary(pres.name)||{name:pres.name};
-    row('current',presentationIcon(p),pres.name||'this presentation',
-      presentationKind(p),'The presentation you are showing',null);
-    /* T394: the OTHER open presentations, the rail's rows, so the drawer
-       is the rail while the rail is behind the deck */
-    openPresentationNames().forEach(function(nm){
-      if(nm===pres.name) return;
-      var q=presentationSummary(nm)||{name:nm};
-      row('',presentationIcon(q),nm,presentationKind(q),
-        'Switch to “'+nm+'”',function(){
-          closeDeckPresentationDrawer();
-          choosePresentation(nm);
-        });
-    });
-    var nbs=openNotebookRows();
-    nbs.forEach(function(n){
-      row('',bic('doc'),n.label,n.kind,
-        'Stop presenting and show this notebook'+(n.path?(' ('+n.path+')'):''),
-        function(){
-          closeDeckPresentationDrawer();
-          closeDeck();
+    function head(txt){
+      var h=document.createElement('div');
+      h.className='deck-pres-sec';h.textContent=txt;
+      host.appendChild(h);
+    }
+    /* ---- the presentations open in this tab ---- */
+    if(c.pres){
+      head('presentations');
+      var names=openPresentationNames().slice();
+      if(pres&&pres.name&&names.indexOf(pres.name)<0) names.unshift(pres.name);
+      names.forEach(function(nm){
+        var mine=(nm===pres.name);
+        var q=presentationSummary(nm)||{name:nm};
+        var r=row(mine?'current':'',presentationIcon(q),nm,
+          presentationKind(q),
+          mine?'The presentation you are in':('Switch to “'+nm+'”'),
+          mine?null:function(){
+            if(!barDocked()) closeDeckPresentationDrawer();
+            choosePresentation(nm);
+          });
+        var pinned=(typeof isPinnedPresentation==='function')
+          &&isPinnedPresentation(nm);
+        barRowActs(r,[
+          [bic('copy'),'Duplicate “'+nm+'”',function(){
+            duplicatePresentation(nm);}],
+          mine?[bic('text'),'Rename “'+nm+'”',function(){
+            var v=window.prompt('Call this presentation:',nm);
+            if(v&&v.trim()&&typeof renamePresentation==='function')
+              renamePresentation(v.trim());
+            renderDeckPresentationDrawer();
+          }]:null,
+          [bic('pin'),pinned?('Unpin “'+nm+'”')
+            :('Pin “'+nm+'” to the top of Recent'),function(){
+            if(typeof togglePinPresentation==='function')
+              togglePinPresentation(nm);
+            renderDeckPresentationDrawer();
+          },pinned],
+          [bic('exit'),'Close “'+nm+'” (it stays saved)',
+           function(){
+            if(mine&&typeof closeGuard==='function'){
+              closeGuard(nm).then(function(ok){
+                if(!ok) return;
+                closeOpenPresentation(nm);closeDeck();
+                renderPresTabs();renderDeckPresentationDrawer();
+              });
+              return;
+            }
+            closeOpenPresentation(nm);
+            renderPresTabs();renderDeckPresentationDrawer();
+          }],
+          [bic('minus'),'Delete “'+nm+'” for good',function(){
+            if(!window.confirm('Delete “'+nm+'”?\n\nThis cannot '
+              +'be undone.')) return;
+            if(typeof deletePresByName==='function') deletePresByName(nm);
+            renderDeckPresentationDrawer();
+          }]]);
+      });
+      if(!names.length){
+        var e0=document.createElement('div');e0.className='deck-pres-empty';
+        e0.textContent='No presentation is open.';
+        host.appendChild(e0);
+      }
+    }
+    /* ---- the notebooks ---- */
+    if(c.nb){
+      head('notebooks');
+      var nbs=openNotebookRows();
+      nbs.forEach(function(n){
+        var r=row('',bic('doc'),n.label,n.kind,
+          'Stop presenting and show this notebook'
+          +(n.path?(' ('+n.path+')'):''),
+          function(){
+            if(!barDocked()) closeDeckPresentationDrawer();
+            closeDeck();
+            var A=window.SemApp||{};
+            if(A.activate) A.activate(n.stem);
+          });
+        barRowActs(r,[[bic('exit'),'Close this notebook',function(){
           var A=window.SemApp||{};
-          if(A.activate) A.activate(n.stem);
-        });
-    });
-    if(!nbs.length){
-      var e=document.createElement('div');e.className='deck-pres-empty';
-      e.textContent='No notebook is open.';
-      host.appendChild(e);
+          if(A.closeNotebook) A.closeNotebook(n.stem);
+          renderDeckPresentationDrawer();
+        }]]);
+      });
+      if(!nbs.length){
+        var e=document.createElement('div');e.className='deck-pres-empty';
+        e.textContent='No notebook is open.';
+        host.appendChild(e);
+      }
     }
+    /* ---- this deck's saved versions (T448: "and version") ---- */
+    if(c.vers&&typeof histIndex==='function'){
+      head('versions of this presentation');
+      var vh=document.createElement('div');
+      vh.className='deck-pres-empty';vh.textContent='Looking…';
+      host.appendChild(vh);
+      var want=pres&&pres.name;
+      histIndex().then(function(ix){
+        /* the deck may have changed under the promise */
+        if(!pres||pres.name!==want||!vh.parentNode) return;
+        var rows=(ix||[]).slice(-6).reverse();
+        if(!rows.length){
+          vh.textContent='No versions yet — one is kept when you save, '
+            +'open or checkpoint this deck.';
+          return;
+        }
+        vh.remove();
+        rows.forEach(function(v){
+          var when=v.t?new Date(v.t):null;
+          var lab=v.name||v.why||'version';
+          var r=row('',bic('history'),lab,
+            when?(when.getHours()+':'
+              +(when.getMinutes()<10?'0':'')+when.getMinutes()):'',
+            'Open the history on this version',function(){
+              if(!barDocked()) closeDeckPresentationDrawer();
+              if(typeof histSel!=='undefined') histSel=v.id||'';
+              if(typeof openHistory==='function') openHistory();
+            });
+          r.classList.add('deck-pres-ver');
+        });
+      }).catch(function(){
+        if(vh.parentNode) vh.textContent='Versions could not be read.';
+      });
+    }
+  }
+  /* the dock menu: where it sits, and what it lists */
+  function barDockMenu(btn){
+    var old=$('#openbar-menu'); if(old){overlayDrop(old);return;}
+    var m=document.createElement('div');
+    m.className='sh-menu vw-menu';m.id='openbar-menu';
+    var c=barCfg();
+    menuHead(m,'where this bar sits');
+    [['pop','A pop-up',
+      'It opens from the chevron beside Home and when you reach the left '
+      +'edge, and closes when you leave it'],
+     ['left','A rail down the left',
+      'It stays open and the slide makes room for it'],
+     ['top','A strip across the top',
+      'It stays open above the slide']].forEach(function(o){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.type='button';
+      b.innerHTML=bic(o[0]==='top'?'docktop':(o[0]==='left'?'dockright'
+        :'objects'))+' '+esc(o[1]);
+      b.title=o[2];
+      b.setAttribute('aria-pressed',(c.dock===o[0]).toString());
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);barSet('dock',o[0]);});
+      m.appendChild(b);
+    });
+    menuHead(m,'what it lists');
+    [['pres','Presentations'],['nb','Notebooks'],
+     ['vers','Versions']].forEach(function(o){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.type='button';
+      b.innerHTML=bic(c[o[0]]?'eye':'none')+' '+esc(o[1]);
+      b.setAttribute('aria-pressed',(!!c[o[0]]).toString());
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);barSet(o[0],c[o[0]]?0:1);
+      });
+      m.appendChild(b);
+    });
+    overlayMount(btn,m);
   }
   function openDeckPresentationDrawer(){
     var d=$('#deck-pres-drawer');
@@ -1643,6 +1870,8 @@
   function initDrawerPeek(){
     document.addEventListener('mousemove',function(e){
       var d=$('#deck-pres-drawer'); if(!d) return;
+      /* T448: a docked bar is already open and stays open */
+      if(barDocked()) return;
       if(deckEl.hidden||(mode!=='view'&&mode!=='edit')) return;
       if(mode==='edit'&&filmAutoOn()) return;
       var hub=$('#presentation-hub');
@@ -1664,9 +1893,26 @@
         e.stopPropagation();
         if(!drawer) return;
         if(drawer.hidden) openDeckPresentationDrawer();
-        else closeDeckPresentationDrawer();
+        else closeDeckPresentationDrawer(true);
       });
     });
+    /* T448: the bar's own head -- where it sits, a new presentation,
+       and an X that un-docks rather than hides */
+    var dock=$('#deck-pres-dock');
+    if(dock) dock.addEventListener('click',function(e){
+      e.stopPropagation();barDockMenu(dock);});
+    var dnew=$('#deck-pres-new');
+    if(dnew) dnew.addEventListener('click',function(){
+      if(!barDocked()) closeDeckPresentationDrawer();
+      newPresentation();
+    });
+    var dclose=$('#deck-pres-close');
+    if(dclose) dclose.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(barDocked()){barSet('dock','pop');return;}
+      closeDeckPresentationDrawer(true);
+    });
+    barApply();
     /* T396: Home from the editor's own bar */
     var home=$('#qat-home');
     if(home) home.addEventListener('click',function(){
