@@ -385,8 +385,11 @@ def test_slides_have_their_own_background_and_border(out):
     """
     assert 'id="bg-btn"' in out and 'id="bg-menu"' in out
     # slide > master > deck since T115: the slide's colour still wins
+    # T455: the last fallback is the deck's own Page background token,
+    # not a literal -- that hex was why changing it in Deck colours did
+    # nothing. Its default IS this colour, so nothing moves by default.
     assert ("var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)"
-            "||'#0b141d');") in out
+            "||'@page');") in out
     assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
     assert "if(s.border) o.border=deep(s.border);" in out
     assert "(bd.w||4)/SW_REF_H*h" in out

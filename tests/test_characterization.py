@@ -1890,8 +1890,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T453: the ribbon shelf, the verb groups at the right, and Disappear
 # renamed
 # T454: the shelf's row is the scroller, with a fade when it overflows
-EXPECTED_MD5 = "0a8e32cfb599a3dfc89292464fe57fb0"
-EXPECTED_BYTES = 4300409
+# T455: the five deck colours are written onto the slide and the CSS
+# defaults read them
+EXPECTED_MD5 = "7c836f66e0a9c89dd1dd10b01b93523f"
+EXPECTED_BYTES = 4303174
 
 
 def _render_example() -> str:

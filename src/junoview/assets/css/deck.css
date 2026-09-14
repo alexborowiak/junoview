@@ -3914,13 +3914,17 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    as --tk-rad, so every drawn box follows it and none of them stores a
    radius of its own. The literal is the fallback for anything rendered
    outside a slide (a thumbnail, a menu chip). */
-.an-rect{position:absolute;border:3px solid #ff6b57;
+/* T455: the literal is the DEFAULT, --tk-line is the deck's answer when
+   somebody has changed it. Same bargain as --tk-rad above. */
+.an-rect{position:absolute;border:3px solid var(--tk-line,#ff6b57);
   border-radius:var(--tk-rad,4px);}
 .deck.editing .an-rect{cursor:move;}
 .an-rect.sel,.an-text.sel,.an-title.sel,.an-cell.sel{
   outline:2px dashed var(--cyan);outline-offset:3px;}
 .an-text{position:absolute;max-width:60%;font-family:var(--sans);
-  line-height:1.35;color:#fff;background:color-mix(in srgb,var(--chrome-1,#0e1926) 85%,transparent);
+  line-height:1.35;color:var(--tk-ink,#fff);
+  background:color-mix(in srgb,
+    var(--tk-surface,var(--chrome-1,#0e1926)) 85%,transparent);
   border:1px solid #ffffff2e;border-radius:8px;padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
 /* no text-shadow: it was meant to keep bare text legible on any page but
@@ -4148,7 +4152,9 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   cursor:grab;}
 
 /* movable title / subtitle on title slides */
-.an-title{color:#f0f6fa;}   /* default lives HERE so .page-light can win */
+.an-title{color:var(--tk-heading,#f0f6fa);}
+   /* default lives HERE so .page-light can win; T455 lets the deck's
+      Heading text colour override it when one has been chosen */
 .an-title{position:absolute;transform:translate(-50%,-50%);
   max-width:88%;text-align:center;display:flex;gap:.4em;
   align-items:flex-start;justify-content:center;
