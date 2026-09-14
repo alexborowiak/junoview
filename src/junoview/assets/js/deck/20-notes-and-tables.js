@@ -3060,7 +3060,12 @@
         var raw=el.getAttribute('data-idx');
         if(raw==='t'||raw==='s') return;
         var ma=(s.annots||[])[+raw];
-        if(ma&&ma.motion) el.classList.add('an-move-'+ma.motion);
+        if(ma&&ma.motion){
+          el.classList.add('an-move-'+ma.motion);
+          /* T445: and the numbers on it -- speed, how far, easing,
+             when it starts, how many times, which way round */
+          if(typeof motionPaint==='function') motionPaint(el,ma);
+        }
       });
     }
     /* ---- SHRINK TO FIT, AND SAY SO WHEN IT CANNOT ---------------------

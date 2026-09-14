@@ -13,6 +13,8 @@
      visible and lands beside its siblings. The early `return` on missing
      markup is kept verbatim: a poster has no animation group. ---- */
   var animPaneSync=function(){},animPaneClose=function(){};
+  /* T445: opened by arming Quick animate, which now lives in it */
+  var animPaneOpen=function(){};
   /* setType and its re-render live inside animBoot's closure, so the
      GALLERY -- which boots separately -- cannot reach them. Published
      the same way the pane's syncs already are, rather than duplicating
@@ -69,6 +71,8 @@
      and moving"). Stored as a.motion; the renderer puts one class on
      the item and the keyframes do the rest, so an exported page keeps
      it too. Reduced motion turns them off, as it does every keyframe. */
+  /* the ribbon keeps the four commonest; every one of the thirteen,
+     and every number on them, is in the Animation panel (T445) */
   var MOTION_FX=[['','None'],['wobble','Wobble'],['bob','Float'],
     ['pulse','Pulse']];
   function motionId(v){return '#anim-move-'+(v||'none');}
@@ -82,7 +86,18 @@
   function motionPreviewStop(){
     if(motionPvT){clearTimeout(motionPvT);motionPvT=null;}
     motionPvEls.forEach(function(el){
-      el.classList.remove('an-move-wobble','an-move-bob','an-move-pulse');});
+      /* T445: thirteen movements, so the class is found rather than
+         listed; an-mo-preview is what let it play while selected */
+      el.className=el.className.replace(/\ban-move-[a-z]+\b/g,'').trim();
+      el.classList.remove('an-mo-preview');
+      /* ...and the real one is painted back, if it has one */
+      var s=pres.slides[cur],i=+el.getAttribute('data-idx');
+      var a=(s&&s.annots||[])[i];
+      if(a&&a.motion){
+        el.classList.add('an-move-'+a.motion);
+        if(typeof motionPaint==='function') motionPaint(el,a);
+      } else el.style.animation='';
+    });
     motionPvEls=[];
   }
   function motionPreview(v){
@@ -92,7 +107,14 @@
     selIdxs().slice(0,8).forEach(function(i){
       var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
       if(!el) return;
-      el.classList.add('an-move-'+v);motionPvEls.push(el);
+      el.className=el.className.replace(/\ban-move-[a-z]+\b/g,'').trim();
+      el.classList.add('an-move-'+v,'an-mo-preview');
+      /* the object's OWN numbers, so a preview is what you will get */
+      var s2=pres.slides[cur],a2=(s2&&s2.annots||[])[i];
+      if(a2&&a2.motion===v&&typeof motionPaint==='function')
+        motionPaint(el,a2);
+      else el.style.animation='';
+      motionPvEls.push(el);
     });
     motionPvT=setTimeout(motionPreviewStop,2400);
   }
@@ -446,15 +468,17 @@
     renderSlide();seqSync();
   }
   function seqSync(){
-    /* the three CELLS of the ribbon group carry the hidden bit
-       (T180): syncRibbonGroups reads a group's visibility off its
-       controls, so hiding the group itself would not hold */
-    var on=!!seqArm,any=false;
-    ['seq-what','seq-fx','seq-btns'].forEach(function(id){
-      var el=$('#'+id); if(!el) return;
-      any=true;el.hidden=!on;});
-    /* the Timing group stands down while the mode has the row,
-       and comes back with the selection when it ends (T185) */
+    /* T445: THE MODE'S OWN CONTROLS ARE THE PANEL'S NOW. They were
+       three cells on the ribbon (T180), competing for the row at the
+       one moment your attention belongs on the slide -- and the row is
+       exactly what the user said was "getting squashed out of screen".
+       Arming the mode opens the Animation panel; cfgSeq (48b-motion.js)
+       draws the count, the effect chooser and the three verbs there. */
+    var on=!!seqArm;
+    if(on&&typeof animPaneOpen==='function') animPaneOpen();
+    if(typeof animCfgSync==='function') animCfgSync();
+    /* the Timing group stands down while the mode is armed, and comes
+       back with the selection when it ends (T185) */
     if(typeof animRibbonSync==='function') animRibbonSync();
     /* ...and so do the whole-slide shortcuts: they would fight the
        mode, and their group is the width the mode's own controls need
@@ -462,43 +486,7 @@
     var poster=!!(pageOf&&pageOf().poster);
     ['anim-stagger','anim-together','anim-clear'].forEach(function(id){
       var el=$('#'+id); if(el) el.hidden=on||poster;});
-    if(!any) return;
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
-    var w=$('#seq-what'); if(!w||!seqArm) return;
-    var done=seqArm.hits.length;
-    /* two short lines: the count, then the two modifiers. The second
-       line is the first thing the tight rung drops (deck.css), the way
-       the hint text is -- words that explain, not words that act */
-    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b> &middot; click the '
-      +'next thing to appear'
-      +(done?(' &middot; '+done+' placed'):'')+'</span>'
-      +'<span><b>Shift</b>: same click &middot; '
-      +(seqDigit
-        ?('<b>'+seqDigit+'</b> held: '+seqDigit+'s pause')
-        :'<b>1\u20139</b>: pause')+'</span>';
-    /* THE CHOOSER. Rebuilt rather than diffed: five buttons is cheaper
-       to redraw than to reconcile, and it has to follow both the mouse
-       and the keyboard. */
-    var fx=$('#seq-fx');
-    if(fx){
-      fx.innerHTML='';
-      SEQ_FX.forEach(function(f){
-        var b=document.createElement('button');
-        b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');
-        b.type='button';
-        b.setAttribute('aria-pressed',seqType===f[0]?'true':'false');
-        b.innerHTML=bic(f[0])+' '+f[1]+' <kbd>'+f[2]+'</kbd>';
-        b.title=f[1]+' \u2014 press '+f[2]
-          +(f[0]==='none'?'. Clicking then TAKES an animation away.'
-            :'. Every click from now gives this.');
-        b.addEventListener('click',function(e){
-          e.stopPropagation();seqType=f[0];seqSync();});
-        fx.appendChild(b);
-      });
-    }
-    var u=$('#seq-undo'); if(u) u.disabled=!done;
-    var d=$('#seq-done'); if(d) d.textContent=done?('Finish ('+done+')')
-      :'Finish';
   }
   /* ---- THE EFFECT GALLERY (T171) -----------------------------------
      One door, never hidden, opening a row of cards. SEQ_FX is the same
@@ -634,10 +622,8 @@
     menu.addEventListener('mouseleave',galPreviewStop);
   }
   function seqBoot(){
-    var d=$('#seq-done'),c=$('#seq-cancel'),u=$('#seq-undo');
-    if(d) d.addEventListener('click',function(){seqEnd(true);});
-    if(c) c.addEventListener('click',function(){seqEnd(false);});
-    if(u) u.addEventListener('click',function(){seqUndoOne();});
+    /* T445: the three verbs are the panel's buttons now (cfgSeq); the
+       key that gets you out stays here because it is a key */
     /* Escape CANCELS rather than finishing: the key that gets you out of
        a mode should never be the key that commits it. Capture, so an
        overlay's own Escape handler cannot swallow it first. */
@@ -1328,7 +1314,10 @@
        already tracks the selection, which is everything the second
        button ever added. */
     function set(open){
-      if(open){paneShow('animpane');render();}
+      if(open){
+        paneShow('animpane');render();
+        if(typeof animCfgSync==='function') animCfgSync();
+      }
       else paneHide('animpane');
     }
     vbtn.addEventListener('click',function(e){
@@ -1336,8 +1325,14 @@
     if(cl) cl.addEventListener('click',function(){set(false);});
     /* the effect chooser at the top tracks the selection, so an open pane
        has to follow it rather than showing whatever was picked last */
-    animPaneSync=function(){if(!pane.hidden) render();};
+    animPaneSync=function(){
+      if(pane.hidden) return;
+      render();
+      /* T445: the settings above the list follow the selection too */
+      if(typeof animCfgSync==='function') animCfgSync();
+    };
     animPaneClose=function(){set(false);};
+    animPaneOpen=function(){set(true);};
     /* ---- the Animate TAB's own buttons --------------------------------
        "There doesn't seem to be a way to remove animations" (2026-08-20,
        user) — there was one, the None effect, but it was inside a pane

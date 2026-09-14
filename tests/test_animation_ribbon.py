@@ -43,26 +43,29 @@ def test_an_entrance_is_the_animation_tabs_job(out):
     assert 'class="rbn-grp rbn-paragrp" data-tab="style"' in out
 
 
-def test_setting_the_order_happens_in_the_ribbon(out):
-    """T180. The pointing mode's controls were a bar fixed across the
-    top of the window, over the very ribbon it stood in for. They are a
-    group of the Animation tab now: three cells hidden until Set order
-    arms the mode, shown by seqSync, and the ribbon re-fits. The CELLS
-    carry the hidden bit because syncRibbonGroups reads a group's
-    visibility off its controls.
+def test_setting_the_order_happens_in_the_panel(out):
+    """T180 took the pointing mode's controls off a bar fixed across
+    the top of the window and made them a group of the Animation tab.
+    T445 took them off the ribbon too (2026-09-14, user: "the quick
+    animate should pop up as a side panel. too much on the ribbon now
+    and it is getting squashed out of screen"): arming the mode opens
+    the Animation panel, and cfgSeq draws the count, the chooser and
+    the three verbs there, where there is room for all of them.
     """
     assert 'id="seqbar"' not in out
-    assert 'class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation"' in out
-    for cid in ("seq-what", "seq-fx", "seq-btns"):
-        assert f'id="{cid}" hidden' in out, cid
-    assert "['seq-what','seq-fx','seq-btns'].forEach(function(id){" in out
+    assert 'class="rbn-grp rbn-seq"' not in out
+    for gone in ("seq-what", "seq-fx", "seq-btns"):
+        assert f'id="{gone}"' not in out, gone
+    assert "    if(on&&typeof animPaneOpen==='function') animPaneOpen();" in out
+    assert "    if(typeof animCfgSync==='function') animCfgSync();" in out
     assert "if(typeof syncRibbonGroups==='function') syncRibbonGroups();" in out
-    # arming lands you on the tab the controls are on
+    # arming lands you on the tab the door is on
     assert "if(typeof setTab==='function') setTab('animation');" in out
     # the same three verbs, the same keys on the same chooser
-    for cid in ("seq-undo", "seq-done", "seq-cancel"):
-        assert f'id="{cid}"' in out, cid
-    assert "b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');" in out
+    assert "  function cfgSeq(host){" in out
+    assert "    u.addEventListener('click',function(){seqUndoOne();});" in out
+    assert "    d.addEventListener('click',function(){seqEnd(true);});" in out
+    assert "    c.addEventListener('click',function(){seqEnd(false);});" in out
     # a plain name for the door -- a verb, not a sentence
     # ...then "Quick animate", the user's own name for it (T183)
     assert re.search(r"Quick\s+animate</button>", out)
@@ -108,8 +111,8 @@ def test_the_names_say_what_the_buttons_do(out):
     # whose builds they are: "the whole slide options are confusing"
     assert "All together</button>" in out
     assert "Remove all</button>" in out
-    assert "Animation pane</button>" in out   # T215: named for what it is
-    assert '<div class="selpane-h"><span>Animation pane</span>' in out
+    assert "Animation panel</button>" in out   # T445: it is a panel now
+    assert '<div class="selpane-h"><span>Animation</span>' in out
     assert ">Whole slide</span>" in out   # T441: was Everything on the slide
     for gone in ("One by one</button>", "All at once</button>",
                  "Set order</button>", "Animations</button>"):

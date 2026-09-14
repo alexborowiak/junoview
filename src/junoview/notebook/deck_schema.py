@@ -209,8 +209,16 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                   "on the slide with the same number is enlarged "
                   "alongside this one in playback."),
     "motion": (str, "A movement that keeps going while the object is on "
-                    "the slide, in playback only: `wobble`, `bob` or "
-                    "`pulse`. Absent means still."),
+                    "the slide: `wobble`, `bob` (float), `pulse`, "
+                    "`sway`, `shake`, `spin`, `swing`, `breathe`, "
+                    "`jelly`, `drift`, `glow`, `tilt` or `flicker`. "
+                    "Absent means still."),
+    "mo": (dict, "The numbers on that movement, each absent when it is "
+                 "the movement's own: `sp` speed as a multiple of its "
+                 "own pace, `amp` how far as a multiple of its own "
+                 "travel, `ease` a CSS easing, `dl` seconds it waits "
+                 "after arriving, `n` how many cycles (0 is for ever) "
+                 "and `dir` -1 to run the cycle backwards."),
     "crop": (dict, "How this picture or figure is cropped. `t`/`r`/`b`/"
                    "`l` trim each edge by a percentage; `shape` names one "
                    "of the preset outlines, drawn INSIDE the trim box so "

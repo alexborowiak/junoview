@@ -44,6 +44,7 @@
      middle of 45-images.js; a throw in an executing sub-IIFE takes
      the whole deck IIFE with it, which is T133 exactly. */
   animBoot();
+  animCfgBoot();              /* the Animation panel (T445) */
   seqBoot();       /* the sequencing mode's bar (T168) */
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */

@@ -8492,3 +8492,22 @@ gates are recorded in the completing commit.
   Home is painted before the IndexedDB draft store has answered, and
   the recent list drops every name it cannot find yet; the library
   re-rendered after the load and Home did not. It does now.
+- [x] **T445 — The Animation panel, and movement with numbers on it.**
+  (User, 2026-09-14: "the animation need to be able to be configured
+  with a side tab ... the motion things are cool, but it would be cool
+  to have more configurations on these, like speed, and how far they
+  wobble ... this needs to be going really far ... I want this to be
+  able to have lots of automatic things to be able to make slides come
+  alive." And: "the quick animate should pop up as a side panel. too
+  much on the ribbon now.") Thirteen movements, not three, each with a
+  speed, a distance, an easing, a delay, a repeat count and a
+  direction (`a.mo`, every value absent when it is the movement's own,
+  so a deck saved before this is byte-identical). The keyframes
+  multiply their own travel by `--mo-amp`; motionPaint writes the rest
+  into the element's `animation`, composing the entrance in front of
+  it — which retires T446's fifteen pair rules instead of growing them
+  to sixty-five. The panel holds what is selected, how it arrives,
+  when it starts, how much of a text box at a time, when it leaves,
+  the movement and its six numbers, seven one-click treatments for the
+  whole slide, and the list of clicks underneath. Quick animate is the
+  panel's too, and arming it opens the panel. Driven live.

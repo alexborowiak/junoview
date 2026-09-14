@@ -3343,8 +3343,10 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # located by its CONTENT: the page carries three reduced-motion
     # blocks (core.css's transitions, the .slide guard, and this one)
     # (T385 added Fly in, Page turn and the three motions to the list)
+    # (T445: thirteen movements now, so the guard names the class
+    # PREFIX rather than a list that has to be kept true by hand)
     guard = (".an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,"
-             ".an-anim-turn,\n  .an-move-wobble,.an-move-bob,.an-move-pulse"
+             ".an-anim-turn,\n  [class*=\"an-move-\"]"
              "{animation:none!important;}")
     assert guard in out
     i = out.index(guard)
@@ -3354,8 +3356,9 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # this guards is that the guard sits WITH the keyframes rather than
     # paragraphs away, not an exact byte distance
     # (T385's five extra keyframe blocks sit in the same run, so the
-    # window grew once more)
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 4200
+    # window grew once more; T445's ten more movements, each a keyframe
+    # block and a default rule, grew it again)
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 7000
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 
@@ -3538,8 +3541,9 @@ def test_the_animation_feature_answers_to_one_name(out):
     # ...and since T183 the button and the pane it opens share the name
     # the user gives that list: "the animation order"
     # T215: named for what it is, the way PowerPoint's is
-    assert "> Animation pane</button>" in out
-    assert "<span>Animation pane</span>" in out
+    # T445: it is a panel now -- the settings, then the list of clicks
+    assert "> Animation panel</button>" in out
+    assert "<span>Animation</span>" in out
     assert "> Animations</button>" not in out
     # the retired word is gone from everything a user can read
     assert "label:'Timeline'" not in out
@@ -3684,18 +3688,18 @@ def test_the_sequencing_bar_is_named_and_shows_its_keys(out):
     with its key PRINTED ON IT: a mode whose shortcuts are invisible has
     no shortcuts.
     """
-    # ...and since T180 the mode is a GROUP of the Animation tab, named
-    # by its label, with its three cells hidden until Set order arms it
-    assert 'class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation"' in out
-    # ...named by the user themselves: "the quick animations thing with
-    # clicking" (T183)
-    assert '<span class="rbn-lab">Quick animate</span>' in out
-    assert '<span class="rbn-cell seq-fx" id="seq-fx" hidden>' in out
+    # T180 made the mode a group of the Animation tab; T445 made it the
+    # Animation panel's, where there is room for the whole chooser
+    assert 'class="rbn-grp rbn-seq"' not in out
+    assert "  function cfgSeq(host){" in out
+    assert "    cfgHead(host,'quick animate \\u2014 click things in order');" \
+        in out
     # the chooser, its keys, and the state it drives
     assert "var SEQ_FX=[['none','None','N'],['appear','Appear','A']," in out
     assert "['fade','Fade','F'],['rise','Float up','U'],"
     assert "var seqType='fade';" in out
-    assert "b.innerHTML=bic(f[0])+' '+f[1]+' <kbd>'+f[2]+'</kbd>';" in out
+    assert "      cfgChip(row,fxIcon(f[0]),f[1]+' ('+f[2]+')',seqType===f[0]," \
+        in out
     # a letter picks an effect, a digit still sets the delay
     assert "for(var q=0;q<SEQ_FX.length;q++) if(SEQ_FX[q][2]===k){" in out
     # ...and the click writes the CHOSEN effect
@@ -3714,10 +3718,12 @@ def test_the_sequencing_bar_paints_above_the_editor(out):
     `.matchbar` had already solved this at 150 for the same reason, so
     this joins it rather than inventing a third number.
     """
-    # T180 retired the bar altogether: the controls are a ribbon group
-    # now, which paints where the ribbon paints and needs no z-index
+    # T180 retired the bar altogether: the controls were a ribbon group,
+    # and since T445 they are the Animation panel's -- both paint where
+    # their container paints and need no z-index of their own
     assert ".seqbar{" not in out
-    assert ".rbn-grp.rbn-seq{background:" in out
+    assert ".rbn-grp.rbn-seq{background:" not in out
+    assert ".cfg-seqwhat{font-size:12px;" in out
     assert ".matchbar{position:fixed;top:0;left:0;right:0;z-index:150;}" in out
 
 

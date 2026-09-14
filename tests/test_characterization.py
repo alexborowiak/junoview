@@ -1872,8 +1872,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # export.js changes.
 # T449 (2026-09-14): Home repainted after the draft store loads;
 # 10-decks.js changes.
-EXPECTED_MD5 = "ee879958d06a600e28bea0426952a157"
-EXPECTED_BYTES = 4229230
+# T445 (2026-09-14): the Animation panel, thirteen movements with
+# numbers on them, and Quick animate off the ribbon; new fragment
+# 48b-motion.js plus deck.html, deck.css, branding.py, 20-notes-and-
+# tables.js, 48-animation.js, 05-figures-and-ribbon.js, 99-boot.js.
+# T445 (2026-09-14): the Animation panel, thirteen movements with
+# numbers on them, and Quick animate off the ribbon; new fragment
+# 48b-motion.js plus deck.html, deck.css, branding.py, 20-notes-and-
+# tables.js, 48-animation.js, 05-figures-and-ribbon.js and 99-boot.js.
+EXPECTED_MD5 = "c2e5b73ad652e3ca0c65dba6e6518a4f"
+EXPECTED_BYTES = 4256517
 
 
 def _render_example() -> str:

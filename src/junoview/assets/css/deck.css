@@ -1488,7 +1488,6 @@ body.slide-editing .apptop{display:none;}
    things take it in (T176, T182) */
 .rbn-build{order:3;}
 .rbn-order{order:4;}
-.rbn-seq{order:5;}
 /* T182: the effect tiles, in the row. A tall cell spanning both rows
    (rbn-tall counts as two, like a stack), five tiles of icon over word
    the way PowerPoint's are, the one that is on lit. Disabled with
@@ -2071,6 +2070,60 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
   font-family:var(--sans);white-space:nowrap;}
 .anim-mini.wide{flex:1;width:100%;margin-top:10px;}
+/* ---- T445: THE ANIMATION PANEL --------------------------------------
+   Sections of chips and sliders above the list of clicks. Chips wrap
+   because there are thirteen movements and the pane is 232px by
+   default; every slider is label, track and a live readout on one
+   line, so a number you are dragging says what it will be. */
+.anim-cfg{display:block;margin-bottom:10px;}
+.anim-cfg:empty{display:none;}
+.anim-cfg .anim-h{margin-top:10px;}
+.anim-cfg .anim-h:first-child{margin-top:0;}
+.cfg-note{font-size:11.5px;line-height:1.45;color:var(--chrome-ink-2);
+  margin:0 2px 6px;}
+.cfg-who{display:flex;align-items:center;gap:6px;font-size:12.5px;
+  color:#fff;background:var(--chrome-2,#16273a);border-radius:7px;
+  padding:6px 8px;margin-bottom:8px;min-width:0;}
+.cfg-who>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cfg-who .bic{width:13px;height:13px;flex:none;color:var(--cyan);}
+.cfg-more{flex:none;font:9px var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
+.cfg-chips{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px;}
+.cfg-chip{display:inline-flex;align-items:center;gap:4px;
+  background:var(--chrome-3,#101c28);border:1px solid #ffffff1f;
+  color:#bcccd8;border-radius:6px;padding:4px 7px;font-size:11px;
+  font-family:var(--sans);cursor:pointer;min-width:0;}
+.cfg-chip .bic{width:12px;height:12px;flex:none;}
+.cfg-chip>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cfg-chip:hover:not(:disabled){
+  border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
+.cfg-chip.on{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
+.cfg-chip:disabled{opacity:.4;cursor:default;}
+.cfg-range,.cfg-sel{display:flex;align-items:center;gap:6px;
+  margin:0 2px 6px;font-size:11px;color:var(--chrome-ink-2);}
+.cfg-rl{flex:0 0 62px;}
+.cfg-range input[type="range"]{flex:1;min-width:0;accent-color:var(--cyan);
+  height:14px;}
+.cfg-rv{flex:0 0 auto;max-width:96px;font-family:var(--mono);font-size:9.5px;
+  color:var(--cyan);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.cfg-sel select{flex:1;min-width:0;}
+.cfg-acts{margin-top:2px;}
+.cfg-acts .anim-mini{flex:1;}
+.anim-mini.primary{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
+.cfg-seqwhat{font-size:12px;color:#c9d6e2;background:var(--chrome-2,#16273a);
+  border-radius:7px;padding:7px 9px;margin-bottom:6px;}
+.cfg-seqwhat b{color:var(--cyan);}
+body.light .cfg-chip{background:#fff;color:var(--ink-2);}
+body.light .cfg-who,body.light .cfg-seqwhat{background:#fff;
+  color:var(--ink);}
+body.light .cfg-note,body.light .cfg-range,body.light .cfg-sel{
+  color:var(--ink-2);}
+body.light .cfg-rv{color:var(--cyan-deep);}
 .anim-mini:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
 .anim-mini:disabled{opacity:.4;cursor:default;}
 /* T402: ONE ROW PER CLICK. The number is the click the space bar
@@ -2467,15 +2520,69 @@ select#fmt-font[hidden]{display:none;}
 .an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
 /* T385: MOTION THAT KEEPS GOING -- individual properties again, so a
    rotated item wobbles about its own rotation instead of losing it */
-@keyframes an-wobble{0%,100%{rotate:-2.5deg}50%{rotate:2.5deg}}
-@keyframes an-bob{0%,100%{translate:0 0}50%{translate:0 -8px}}
-@keyframes an-pulse{0%,100%{scale:1}50%{scale:1.05}}
+/* T445: HOW FAR IS A NUMBER (2026-09-14, user: "it would be cool to
+   have more configurations on these, like speed, and how far they
+   wobble"). Every keyframe multiplies its own travel by --mo-amp, so
+   one rule per movement covers every amount of it; speed, easing,
+   delay, repeat and direction are the shorthand's own terms and are
+   written onto the element by motionPaint (48b-motion.js). The class
+   rules below are the defaults, for an element nothing has painted. */
+@keyframes an-wobble{0%,100%{rotate:calc(-2.5deg * var(--mo-amp,1))}
+  50%{rotate:calc(2.5deg * var(--mo-amp,1))}}
+@keyframes an-bob{0%,100%{translate:0 0}
+  50%{translate:0 calc(-8px * var(--mo-amp,1))}}
+@keyframes an-pulse{0%,100%{scale:1}
+  50%{scale:calc(1 + .05 * var(--mo-amp,1))}}
+@keyframes an-sway{0%,100%{translate:calc(-10px * var(--mo-amp,1)) 0}
+  50%{translate:calc(10px * var(--mo-amp,1)) 0}}
+@keyframes an-shake{0%,100%{translate:0 0}
+  20%{translate:calc(-4px * var(--mo-amp,1)) 0}
+  40%{translate:calc(4px * var(--mo-amp,1)) 0}
+  60%{translate:calc(-3px * var(--mo-amp,1)) 0}
+  80%{translate:calc(3px * var(--mo-amp,1)) 0}}
+@keyframes an-spin{from{rotate:0deg}to{rotate:360deg}}
+@keyframes an-swing{0%,100%{rotate:calc(-6deg * var(--mo-amp,1))}
+  50%{rotate:calc(6deg * var(--mo-amp,1))}}
+@keyframes an-breathe{0%,100%{opacity:1}
+  50%{opacity:calc(1 - .45 * var(--mo-amp,1))}}
+@keyframes an-jelly{0%,100%{scale:1 1}
+  30%{scale:calc(1 + .08 * var(--mo-amp,1)) calc(1 - .08 * var(--mo-amp,1))}
+  60%{scale:calc(1 - .06 * var(--mo-amp,1)) calc(1 + .06 * var(--mo-amp,1))}}
+@keyframes an-drift{0%,100%{translate:0 0}
+  25%{translate:calc(9px * var(--mo-amp,1)) calc(-6px * var(--mo-amp,1))}
+  50%{translate:calc(12px * var(--mo-amp,1)) calc(5px * var(--mo-amp,1))}
+  75%{translate:calc(-6px * var(--mo-amp,1)) calc(7px * var(--mo-amp,1))}}
+@keyframes an-glow{0%,100%{filter:drop-shadow(0 0 0 transparent)}
+  50%{filter:drop-shadow(0 0 calc(10px * var(--mo-amp,1))
+    var(--accent,#39a9c0))}}
+@keyframes an-tilt{0%,100%{rotate:0deg}
+  50%{rotate:calc(4deg * var(--mo-amp,1))}}
+@keyframes an-flicker{0%,40%,48%,55%,100%{opacity:1}
+  45%{opacity:calc(1 - .7 * var(--mo-amp,1))}
+  52%{opacity:calc(1 - .5 * var(--mo-amp,1))}}
 .an-move-wobble{animation:an-wobble 1.6s ease-in-out infinite;}
 .an-move-bob{animation:an-bob 2.6s ease-in-out infinite;}
 .an-move-pulse{animation:an-pulse 1.8s ease-in-out infinite;}
+.an-move-sway{animation:an-sway 3s ease-in-out infinite;}
+.an-move-shake{animation:an-shake .6s ease-in-out infinite;}
+.an-move-spin{animation:an-spin 6s linear infinite;}
+.an-move-swing{animation:an-swing 2.4s ease-in-out infinite;
+  transform-origin:top center;}
+.an-move-breathe{animation:an-breathe 3.4s ease-in-out infinite;}
+.an-move-jelly{animation:an-jelly 1.4s ease-in-out infinite;}
+.an-move-drift{animation:an-drift 9s linear infinite;}
+.an-move-glow{animation:an-glow 2.2s ease-in-out infinite;}
+.an-move-tilt{animation:an-tilt 2.8s ease-in-out infinite;}
+.an-move-flicker{animation:an-flicker 2.4s linear infinite;}
 /* T446: the selected item stays still in the editor, so it can be
-   grabbed; everything else moves as it will in the show */
-body.slide-editing .an-item.sel[class*="an-move-"]{animation:none;}
+   grabbed; everything else moves as it will in the show.
+   T445: !important, because motionPaint writes the movement into the
+   element's own `animation` and an inline style would otherwise beat
+   this -- and :not(.an-mo-preview), because the one time you DO want
+   the selected item to move is when you are previewing a movement on
+   it, which is what that class marks. */
+body.slide-editing .an-item.sel[class*="an-move-"]:not(.an-mo-preview){
+  animation:none!important;}
 /* ---- TEXT BUILDS: the pieces one box arrives in ----------------------
    `.an-part` is a RENDER-TIME wrapper (17-text-builds.js). It never
    reaches the model -- sanitizeRich unwraps it, the caret never enters
@@ -2504,7 +2611,7 @@ body.slide-editing .an-item.sel[class*="an-move-"]{animation:none;}
    none. */
 @media (prefers-reduced-motion:reduce){
   .an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,.an-anim-turn,
-  .an-move-wobble,.an-move-bob,.an-move-pulse{animation:none!important;}
+  [class*="an-move-"]{animation:none!important;}
 }
 /* ...AND THE MACHINE'S ANSWER TO MOTION IS FINAL (T157 / JVC-02). The
    guard sits HERE, beside what it guards, rather than with the unrelated
@@ -2517,29 +2624,15 @@ body.slide-editing .an-item.sel[class*="an-move-"]{animation:none;}
    asks for and not one thing more. */
 @media (prefers-reduced-motion:reduce){
   .an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,.an-anim-turn,
-  .an-move-wobble,.an-move-bob,.an-move-pulse{animation:none!important;}
+  [class*="an-move-"]{animation:none!important;}
 }
-/* T446: AN ENTRANCE AND A MOTION ON ONE ITEM. Both classes set
-   `animation`, so whichever rule came later in this file won and the
-   other never played -- an item that flew in and wobbled only wobbled.
-   Both, in order: the entrance once, then the motion from where the
-   entrance ended. After the reduced-motion guards, whose !important
-   still wins, so the guard stays beside the keyframes it guards. */
-.an-anim-fade.an-move-wobble{animation:anIn-fade .45s ease,an-wobble 1.6s ease-in-out .45s infinite;}
-.an-anim-fade.an-move-bob{animation:anIn-fade .45s ease,an-bob 2.6s ease-in-out .45s infinite;}
-.an-anim-fade.an-move-pulse{animation:anIn-fade .45s ease,an-pulse 1.8s ease-in-out .45s infinite;}
-.an-anim-rise.an-move-wobble{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .5s infinite;}
-.an-anim-rise.an-move-bob{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .5s infinite;}
-.an-anim-rise.an-move-pulse{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .5s infinite;}
-.an-anim-zoom.an-move-wobble{animation:anIn-zoom .45s ease,an-wobble 1.6s ease-in-out .45s infinite;}
-.an-anim-zoom.an-move-bob{animation:anIn-zoom .45s ease,an-bob 2.6s ease-in-out .45s infinite;}
-.an-anim-zoom.an-move-pulse{animation:anIn-zoom .45s ease,an-pulse 1.8s ease-in-out .45s infinite;}
-.an-anim-slide.an-move-wobble{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .5s infinite;}
-.an-anim-slide.an-move-bob{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .5s infinite;}
-.an-anim-slide.an-move-pulse{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .5s infinite;}
-.an-anim-turn.an-move-wobble{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .55s infinite;}
-.an-anim-turn.an-move-bob{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .55s infinite;}
-.an-anim-turn.an-move-pulse{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .55s infinite;}
+/* T446 shipped fifteen rules here, one per entrance-and-movement
+   pair, because two classes cannot compose one `animation` property.
+   T445 made the movement's numbers per-object, which would have made
+   sixty-five of them -- so motionPaint writes BOTH layers into the
+   element's own `animation` instead, entrance first and the movement
+   delayed to where it ends. The reduced-motion guards above still win:
+   !important beats an inline style. */
 /* the build-order badge shown in the editor — and ONLY while the Timeline
    pane is open (T76, user: "the animation bubbles that appear are the
    worst, like you can't get rid of them").
@@ -5300,8 +5393,6 @@ body.light .dg-swatch{border-color:#00000026;}
    fixed across the top of the window (z-index 150, over the ribbon it
    stood in for); the tint and the rule on its left are what say
    "mode" now that it is a group like any other. */
-.rbn-grp.rbn-seq{background:color-mix(in srgb,var(--accent) 12%,transparent);
-  border-left:2px solid var(--accent);}
 .seq-cell{display:flex;flex-direction:column;justify-content:center;
   font-size:10px;line-height:1.3;white-space:nowrap;color:#c9d6e2;
   padding:0 4px;}
@@ -5312,8 +5403,6 @@ body.light .seq-cell b{color:var(--ink);}
    tight -- they explain, the tooltips repeat them, and nothing acts
    on them; the count stays */
 .deck.erc-tight .seq-cell:not(.fmt-path) span+span{display:none;}
-.rbn-row>.seq-fx{gap:3px;}
-.rbn-row>.seq-fx .seq-fxb{padding:2px 6px;font-size:10px;gap:4px;}
 /* T171: the effect gallery. Cards are .sh-opt, which is already
    icon-over-word, so this only lays them out and gives the popover its
    heading, its scroller and its footer. The strip shows five and a half
