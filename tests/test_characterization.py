@@ -1860,8 +1860,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T437 (2026-09-14): pictures embed by default, link-only is a switch;
 # 45-images.js, 30-format-bar.js, 25-selecting.js, 07-ribbon-
 # layouts.js, 60-saving-and-export.js and deck.html change.
-EXPECTED_MD5 = "2052cae787f9d19d87a03863c388f9ed"
-EXPECTED_BYTES = 4218157
+# T442 (2026-09-14): a maths box reopens in the equation editor;
+# 20-notes-and-tables.js and 25-selecting.js change.
+EXPECTED_MD5 = "886792d12382e7d3fab28d482ea1cec1"
+EXPECTED_BYTES = 4219391
 
 
 def _render_example() -> str:

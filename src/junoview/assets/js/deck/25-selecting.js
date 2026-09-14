@@ -2172,6 +2172,19 @@
             delete lk0.link;markDirty();renderSlide();
             toast('Link removed');},null,'unlink');
       }
+      /* T442: the equation editor, from the menu that knows what you
+         clicked -- the same door the double-click takes */
+      if(selIdxs().length===1){
+        var eq0=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        if(eq0&&typeof isMaths==='function'&&isMaths(eq0)){
+          menuHead(m,'equation');
+          row('Edit the equation\u2026','',function(){
+            if(window.SemDeckEquation) window.SemDeckEquation(selIdxs()[0]);},
+            'Open it in the equation editor \u2014 the palette, the live '
+            +'preview, display or inline. Double-clicking the box does '
+            +'the same','maths');
+        }
+      }
       if(altSel.length){
         var one0=(pres.slides[cur].annots||[])[altSel[0]];
         menuHead(m,'what it shows');

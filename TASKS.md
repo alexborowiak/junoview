@@ -8432,3 +8432,11 @@ gates are recorded in the completing commit.
   pane row and on the Object tab, worded as the size saving it is;
   Refresh re-reads from a file, a path or an address and turns a link
   back into bytes. Driven live.
+- [x] **T442 — An equation goes back into the equation editor.** (User,
+  2026-09-14: "with equations it would be good if you can go back into
+  the equation and edit in the equation editor. Currently you cannot
+  do this.") The Edit equation button on the Text tab was the only way
+  back in, and a double-click — the way into every other box — put a
+  bare caret on the LaTeX instead. A double-click on a maths box opens
+  the equation editor on it, and the right-click menu offers the same
+  under "equation". Driven live.
