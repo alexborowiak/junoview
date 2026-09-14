@@ -1830,9 +1830,52 @@
          Animation, so their arrows step a tile sideways instead. */
       var ROW=60;
       var horizontal=strip.classList.contains('tx-strip');
-      function step(){
-        var tile=strip.querySelector('.fx-tile,.dbtn.lay');
-        return horizontal&&tile?Math.round(tile.getBoundingClientRect().width)+4:ROW;
+      function tiles(){return $$('.fx-tile,.dbtn.lay',strip);}
+      /* T463: the text tiles are each as wide as their name, so a
+         sideways step is "to the next tile that is cut", not one fixed
+         width: next scrolls the first tile past the right edge to the
+         left edge; back scrolls the last tile past the left edge to the
+         right edge. Nothing lands half-shown by the arrows' own doing. */
+      function stepNext(){
+        var sr=strip.getBoundingClientRect(),right=sr.right-4;
+        var ts=tiles();
+        for(var i=0;i<ts.length;i++){
+          var r=ts[i].getBoundingClientRect();
+          if(r.right>right+1){
+            strip.scrollLeft+=Math.round(r.left-sr.left-4);return;}
+        }
+      }
+      function stepPrev(){
+        var sr=strip.getBoundingClientRect(),left=sr.left+4;
+        var ts=tiles();
+        for(var i=ts.length-1;i>=0;i--){
+          var r=ts[i].getBoundingClientRect();
+          if(r.left<left-1){
+            strip.scrollLeft-=Math.round(sr.right-4-r.right);return;}
+        }
+      }
+      /* T463: THE LIT TILE IS IN VIEW. A gallery that scrolls (the
+         layouts, four rows deep; the effects) lit the chosen tile
+         wherever it was, and the row that was showing was whichever
+         you had left it on -- so the choice was a highlight nobody
+         could see (2026-09-15, user: "you cannot really tell which one
+         you selected"). Whenever a tile becomes pressed, and whenever
+         the strip is first shown, its row is scrolled to it -- the
+         way PowerPoint's galleries open on the selected item. */
+      function reveal(){
+        if(!strip.clientHeight) return;
+        var on=strip.querySelector('[aria-pressed="true"]');
+        if(!on||strip.parentNode!==frame) return;
+        var sr=strip.getBoundingClientRect(),r=on.getBoundingClientRect();
+        if(horizontal){
+          if(r.left<sr.left+4) strip.scrollLeft-=Math.round(sr.left+4-r.left);
+          else if(r.right>sr.right-4)
+            strip.scrollLeft+=Math.round(r.right-(sr.right-4));
+        } else {
+          var top=r.top-sr.top+strip.scrollTop-2;
+          strip.scrollTop=Math.round(top/ROW)*ROW;
+        }
+        setTimeout(ends,0);
       }
       function ends(){
         if(!prev||!next) return;
@@ -1848,21 +1891,41 @@
       }
       if(prev) prev.addEventListener('click',function(e){
         e.stopPropagation();
-        if(horizontal) strip.scrollLeft=Math.max(0,strip.scrollLeft-step());
+        if(horizontal) stepPrev();
         else strip.scrollTop=Math.max(0,Math.round(strip.scrollTop/ROW)*ROW-ROW);
         setTimeout(ends,0);});
       if(next) next.addEventListener('click',function(e){
         e.stopPropagation();
-        if(horizontal) strip.scrollLeft+=step();
+        if(horizontal) stepNext();
         else strip.scrollTop=Math.round(strip.scrollTop/ROW)*ROW+ROW;
         setTimeout(ends,0);});
       strip.addEventListener('scroll',ends);
       new MutationObserver(function(){setTimeout(ends,0);})
         .observe(strip,{childList:true});
+      /* a tile NEWLY lit from anywhere -- a pick, a selection change,
+         a reload -- brings its row into view. Newly: the marks are
+         re-set on every refresh, and re-setting the same tile must not
+         drag a strip you have scrolled elsewhere back to it. */
+      var lastOn=null;
+      new MutationObserver(function(ms){
+        for(var i=0;i<ms.length;i++){
+          var t=ms[i].target;
+          if(t.getAttribute&&t.getAttribute('aria-pressed')==='true'){
+            if(t!==lastOn){lastOn=t;setTimeout(reveal,0);}
+            return;}
+        }
+      }).observe(strip,{subtree:true,attributes:true,
+        attributeFilter:['aria-pressed']});
       /* the strip is measured when its tab shows, not at boot when the
-         ribbon is hidden and every height reads zero */
+         ribbon is hidden and every height reads zero -- and the first
+         time it has a height is when the lit tile can be revealed */
+      var shownH=0;
       if(typeof ResizeObserver==='function')
-        new ResizeObserver(function(){ends();}).observe(strip);
+        new ResizeObserver(function(){
+          if(!shownH&&strip.clientHeight) reveal();
+          shownH=strip.clientHeight;
+          ends();
+        }).observe(strip);
       setTimeout(ends,0);
       var panel=null;
       function home(){

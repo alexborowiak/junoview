@@ -16,7 +16,7 @@ from __future__ import annotations
 
 def test_the_button_is_named_for_what_it_does(out):
     assert 'id="et-cell" data-tool="cell"' in out
-    assert " From notebook</button>" in out
+    assert "<span>From notebook</span></button>" in out   # a tile since T463
     assert "        cell:'From notebook',flip:'Flip book',table:'Table'," in out
     assert "Notebook cell</button>" not in out
 

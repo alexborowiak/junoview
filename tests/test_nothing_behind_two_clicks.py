@@ -167,8 +167,11 @@ def test_insert_is_images_and_text(out):
     assert 'class="fx-tile big-tile rbn-tall et" id="et-table"' in html
     assert (".strip-frame>.fx-strip.tx-strip{flex-wrap:nowrap;align-content:initial;\n"
             "  overflow-x:hidden;overflow-y:hidden;}") in out
+    # T463: a text tile is its name's width, never narrower than the tile
     assert (".strip-frame .tx-strip .fx-tile{height:var(--rbn-tile-h);\n"
-            "  flex:0 0 var(--rbn-tile-w);") in out
+            "  flex:0 0 auto;width:min-content;min-width:var(--rbn-tile-w);") in out
+    assert ".tx-tile-n{display:block;line-height:1.1;font-family:var(--sans);\n" \
+        "  white-space:nowrap;}" in out
     assert "var horizontal=strip.classList.contains('tx-strip');" in out
     for cid in ("dc-line", "et-arrow", "dc-draw"):
         assert f'id="{cid}"' in group("Draw"), cid

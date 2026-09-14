@@ -1971,7 +1971,10 @@
        row runs out of room. */
     var compact=g.classList.contains('rbn-compact');
     btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')
-      +'<span>'+esc(name)+' \u25be</span><span class="rbn-foldval"></span>';
+      /* T463: a no-break space before the chevron, so a name the door
+         has to wrap keeps its chevron on the last word rather than
+         dropping it onto a line of its own ("Timing & text" / "\u25be") */
+      +'<span>'+esc(name)+'\u00a0\u25be</span><span class="rbn-foldval"></span>';
     btn.title=compact
       ?(name+' \u2014 click to choose. The current choice is on the '
         +'button')

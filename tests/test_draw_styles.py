@@ -212,7 +212,7 @@ def test_button_names_say_what_they_do(out):
     # cell option, that is gone"): the frame can still hold a picture,
     # but the notebook is what the button is for and the word people
     # look for
-    assert "From notebook</button>" in out   # T440
+    assert "<span>From notebook</span></button>" in out   # T440; a tile since T463
     assert "> Object</button>" not in out
     assert "Text</button>" in out
     assert "Text box</button>" not in out
@@ -478,8 +478,10 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # follows it by source order
     assert ("var TABS=['home','images','text','design','animation','view',\n"
             "    'present','style','object'];") in out
-    # T453 sent the verb groups to the right-hand end (order 8/9)
-    assert ".rbn-build{order:8;margin-left:auto;}" in out
+    # T453 sent the verb groups after the choosers (order 8/9); T463
+    # took away the margin that pushed them to the far edge
+    assert ".rbn-build{order:8;}" in out
+    assert "margin-left:auto" not in out.split(".rbn-build{")[1].split("}")[0]
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more
     assert "rbn-standby" not in out

@@ -1312,6 +1312,11 @@ body.slide-editing .apptop{display:none;}
   --rbn-tile-gap:4px;      /* and the step the gallery arrows scroll by,
                               which is --rbn-tile-h + this (ROW in
                               55-sections-and-strip.js) */
+  --rbn-txstrip-max:684px; /* T463: the text-type strip's ceiling -- its
+                              tiles are name-wide, so it is as wide as
+                              they are up to this, and the ladder lowers
+                              it a rung at a time (the nine built-in
+                              types fit under it at rest) */
 }
 /* ONE row, and it neither wraps NOR scrolls. Wrapping fragmented groups
    across rows ("just all these rows of things"); a sideways scrollbar was
@@ -1418,6 +1423,10 @@ body.slide-editing .apptop{display:none;}
 .rbn-row>.sh-drop.tx-split>.dbtn[data-tool]{flex:1;min-width:0;}
 .rbn-row>.sh-drop.tx-split>.tx-caret{flex:none;padding-left:4px;
   padding-right:4px;}
+/* T463: the split whose button is a TILE (Send it away): the caret is
+   the tile's height, centred beside it, rather than the band's */
+.rbn-row>.sh-drop.tx-split.rbn-tall>.tx-caret{height:var(--rbn-tile-h);
+  align-self:center;}
 .tx-type-menu{min-width:248px;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up
@@ -1529,9 +1538,8 @@ body.slide-editing .apptop{display:none;}
    and spacing on Design follow Page furniture */
 .rbn-decktype{order:6;}
 .rbn-deckwide{order:4;}
-/* T444: the Style system is a tall tile, like History */
-.rbn-row>#dsg-design-btn.big-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;grid-row:1/span 2;}
+/* T444: the Style system is a tall tile, like History (T463: sized by
+   the one standing-tile rule beside .fx-tile) */
 /* The default contextual surface is two tabs, rather than one long tray:
    Style is how a thing looks; Object is where it is, where it came from,
    and how it is reused (2026-09-11, ribbon-layout correction). */
@@ -1550,13 +1558,17 @@ body.slide-editing .apptop{display:none;}
 .rbn-exit{order:3;}
 .rbn-motion{order:4;}     /* T385: after Leaves, before the slide */
 .rbn-flipfx{order:5;}
-/* T453: the choosers lead, the shelf they open into takes the middle,
-   and the two groups of VERBS go to the right-hand end (2026-09-14,
-   user: "put all the ones for whole slide and build order to the right
-   hand side"). They are the buttons you press rather than the options
-   you pick, so they keep a place of their own that no chooser can
-   push around. */
-.rbn-build{order:8;margin-left:auto;}
+/* T453: the choosers lead and the two groups of VERBS follow them
+   (2026-09-14, user: "put all the ones for whole slide and build order
+   to the right hand side"). They are the buttons you press rather than
+   the options you pick, so they keep a place of their own that no
+   chooser can push around. T463: they follow the choosers rather than
+   being pushed to the far edge -- the shelf takes a line of its own
+   (below), so the hole that margin-left:auto left in the middle of the
+   row was buying nothing, and it was the one tab whose groups did not
+   pack from the left (2026-09-15, user: "the animations tab still
+   looks odd"). */
+.rbn-build{order:8;}
 .rbn-order{order:9;}
 /* ---- T453: THE SHELF ------------------------------------------------
    One strip in the ribbon that a chooser's whole row moves into, so the
@@ -1636,9 +1648,21 @@ body.slide-editing .apptop{display:none;}
    scrollbar (2026-09-02, user: "buttons of all shapes and sizes and
    configurations all over the place"). Since T369 it says so in one
    token rather than in eleven copies of the number. */
-.fx-tile{width:var(--rbn-tile-w);display:flex;flex-direction:column;
+/* T463: THE TILE IS NEVER NARROWER THAN ITS LONGEST WORD. One width for
+   every tile was the T205 rule, and it held until the words did not:
+   "Checkpoint…" printed past its own border on Home, "Heading 1" was
+   "Head… 1" on Text, "Make clones…" was "Make clones…" cut in half on
+   Object (2026-09-15, user: "Text not within the box"). PowerPoint's
+   big buttons are label-width -- "Slide Master" is wider than "Reset"
+   -- so a tile is THE tile wide, or its longest word wide, whichever
+   is more. min-content is what makes that one rule: a two-word label
+   still wraps into the tile, and a single word that cannot wrap
+   widens it instead of overflowing it. A tile in a strip keeps its
+   flex-basis, so a gallery stays a whole number of tiles wide. */
+.fx-tile{width:min-content;min-width:var(--rbn-tile-w);
+  display:flex;flex-direction:column;
   align-items:center;
-  min-width:0;white-space:normal;text-align:center;
+  white-space:normal;text-align:center;
   justify-content:center;gap:5px;font-family:var(--sans);font-size:11px;
   line-height:1.1;color:#c9d6e2;background:none;
   border:1px solid #ffffff1f;border-radius:6px;cursor:pointer;
@@ -1652,13 +1676,31 @@ body.slide-editing .apptop{display:none;}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
 body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
+/* ...and ONE rule for a tile that stands in the row: --rbn-tile-h tall
+   and centred in the band, whether it is the tall control itself or
+   the tile inside a menu's wrapper. This was eight copies -- one per
+   id -- and three tiles (Equation, Markdown, Table) had no copy at all
+   and stood 60px tall beside their 56px neighbours. */
+.rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{
+  height:var(--rbn-tile-h);align-self:center;}
+/* T441's readout, on any tile: the current choice under the word. A
+   tile carrying one closes its gaps so icon, word and choice all fit
+   the height; pressed, the choice takes the tile's own ink. */
+.fx-tile>.rbn-foldval{display:block;font:600 10px var(--mono);
+  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.fx-tile>.rbn-foldval[hidden]{display:none;}
+.fx-tile.has-val{gap:2px;}
+.fx-tile.has-val>span:first-of-type{white-space:nowrap;}
+.fx-tile.on>.rbn-foldval,.fx-tile[aria-pressed="true"]>.rbn-foldval{
+  color:inherit;}
+body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
 /* T380: View used to be twelve ordinary 26px rows floating in a mostly
    empty tab. They are actions of equal importance, so give each the same
    full-height icon-over-word tile as Animation and Text. They remain the
    real independently movable controls — not proxy copies — which keeps
    custom ribbon layouts, keyboard state and the narrow View menu honest. */
-.rbn-row>.view-tile{width:var(--rbn-tile-w);height:var(--rbn-tile-h);
-  align-self:center;position:relative;grid-row:1/span 2;}
+.rbn-row>.view-tile{position:relative;}
 /* Keyboard hints are useful, but a third flex row made the words stop
    fitting in a 56px tile. Pin the hint into its corner instead. */
 .view-tile kbd{position:absolute;top:2px;right:3px;font-size:8px;
@@ -1794,13 +1836,20 @@ body.light .img-row{color:var(--ink-2);}
    the ordinary Text box and the frame's More door exposes every type. */
 .strip-frame>.fx-strip.tx-strip{flex-wrap:nowrap;align-content:initial;
   overflow-x:hidden;overflow-y:hidden;}
+/* T463: A NAME IS NEVER CUT. The tile is the specimen -- "Heading 1"
+   set as a heading -- and at the one tile width the specimen read
+   "Head… 1" (2026-09-15, user: "the text box types can't be read").
+   So a text tile is as wide as its name, one line, and never narrower
+   than the tile; the strip is as wide as its tiles, up to a ceiling
+   the ladder lowers a rung at a time (--rbn-txstrip-max), and the
+   arrows step by whole tiles past that. The nine built-in types fit
+   under the ceiling at rest. */
 .strip-frame .tx-strip .fx-tile{height:var(--rbn-tile-h);
-  flex:0 0 var(--rbn-tile-w);width:var(--rbn-tile-w);min-width:0;
-  max-width:none;flex-direction:column;padding:2px 4px;gap:4px;
+  flex:0 0 auto;width:min-content;min-width:var(--rbn-tile-w);
+  max-width:none;flex-direction:column;padding:2px 8px;gap:4px;
   scroll-snap-align:start;}
 .tx-tile-n{display:block;line-height:1.1;font-family:var(--sans);
-  max-width:100%;overflow:hidden;text-overflow:ellipsis;
-  white-space:normal;}
+  white-space:nowrap;}
 /* T190: the page-size tiles, each drawn at its own proportion */
 .page-ico{display:block;border:1.5px solid currentColor;border-radius:2px;
   opacity:.85;box-sizing:border-box;}
@@ -1857,6 +1906,11 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    half's two rows sat closer together than the constant half's -- two
    baselines on one bar. Column only. */
 .deck.erc1 .rbn-grp{padding-left:4px;padding-right:4px;}
+/* T463: the text strip is the widest thing on its tab, and a scroll box
+   already, so it is the first to give width back: a rung takes 80px
+   off its ceiling and the arrows page the rest into view. No word is
+   hidden -- every tile is still whole, and still its name's width. */
+.deck.erc1{--rbn-txstrip-max:604px;}
 .deck.erc1 .rbn-row{column-gap:2px;}
 .deck.erc2 .dbtn.rbn-sm{padding:3px 5px;gap:3px;}
 /* T372: THE TILE COMPACTS TOO. A worded button gives up padding at
@@ -1867,7 +1921,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    1600px where the worded version folded two, on a row only 8px wider.
    The token makes it one line a rung, and no rung touches the type:
    the label just wraps a little sooner. */
-.deck.erc2{--rbn-tile-w:58px;}
+.deck.erc2{--rbn-tile-w:58px;--rbn-txstrip-max:524px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
 /* spend BOX width before type size: on 1366-1440 laptops the ladder ran
    all the way to erc3's small type while the font select sat at its full
@@ -1882,6 +1936,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    big/small hierarchy — a label-only wall is the same flat wall that was
    rejected, arrived at from the other side. Density only, to the end. */
 .deck.erc3 .rbn-grp{padding-left:3px;padding-right:3px;}
+.deck.erc3{--rbn-txstrip-max:444px;}
 .deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{
   padding-left:4px;padding-right:4px;}
 .deck.erc3 .rbn-row .fmt-range{width:56px;}
@@ -2014,7 +2069,10 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    (two columns for its three controls, rather than a third row printed
    over its own label) costs about 60px, so this is most of it back
    (2026-08-16). */
-.deck.erc-tight{--rbn-tile-w:52px;}
+.deck.erc-tight{--rbn-tile-w:52px;--rbn-txstrip-max:364px;}
+/* T463: a readout gives up its last few characters at the tightest rung
+   ("Title + pa…" under New slide); the whole name is on the tooltip */
+.deck.erc-tight .fx-tile>.rbn-foldval{max-width:56px;}
 .deck.erc-tight .rbn-grp{padding-left:2px;padding-right:2px;}
 .deck.erc-tight .rbn-row{column-gap:2px;}
 .deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{
@@ -5795,12 +5853,11 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .strip-frame>.fx-strip,.strip-frame>.fx-strip.lay-strip,
 .strip-frame>.fx-strip.shape-strip{
   width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
-/* the text tiles are as wide as their NAMES since 2026-09-07, so a
-   whole number of tiles no longer describes this strip. Wide
-   enough that the eight built-in types fall in two rows; a deck with
-   more scrolls, and the frame's own arrows move it. */
-.strip-frame>.fx-strip.tx-strip{
-  width:calc(5 * var(--rbn-tile-w) + 4 * var(--rbn-tile-gap) + 8px);}
+/* the text tiles are as wide as their NAMES (T463), so a whole number
+   of tiles does not describe this strip: it is as wide as what is in
+   it, up to the ceiling the ladder sets, and past that it scrolls. */
+.strip-frame>.fx-strip.tx-strip{width:max-content;
+  max-width:var(--rbn-txstrip-max);}
 /* the three-tile strips: page sizes, and T372's transition and timing
    choices, which have three answers each and no fourth to scroll to */
 .strip-frame>.fx-strip.page-strip,
@@ -5858,8 +5915,6 @@ body.light .sh-menu.strip-all{background:var(--chrome-2);
   height:var(--rbn-tile-h);align-self:center;}
 .rbn-row>#dsg-std.big-tile>span{white-space:normal;text-align:center;
   line-height:1.15;}
-.rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;}
 .img-ov{position:fixed;inset:0;z-index:400;
   background:var(--chrome-0,#0b141d);color:#c9d6e2;overflow:auto;
   padding:16px 28px 40px;font-family:var(--sans);}
@@ -6064,11 +6119,9 @@ body.light .dg-num input{background:var(--input-bg);
    opens a menu, so it is the same shape as the tiles it applies. */
 #bg-drop.rbn-tall,#hm-updwrap.rbn-tall,
 #trans-scopewrap.rbn-tall{justify-self:start;}
-/* T280: the merged Update tile is the same shape as the two it replaced */
-#hm-updwrap.rbn-tall>.fx-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;}
-#bg-drop.rbn-tall>.fx-tile,#trans-scopewrap.rbn-tall>.fx-tile{
-  width:var(--rbn-tile-w);height:var(--rbn-tile-h);align-self:center;}
+/* T280: the merged Update tile is the same shape as the two it replaced
+   (T463: the tile inside any tall wrapper is sized by the one
+   standing-tile rule beside .fx-tile) */
 /* the opacity slider inside its captioned run */
 #fmt-opcell .fmt-opwrap{display:flex;align-items:center;gap:5px;
   padding:0 8px 0 4px;align-self:center;}
@@ -6079,20 +6132,16 @@ body.light .dg-num input{background:var(--input-bg);
 /* ...and A- / A+ are glyphs, so they get the same treatment */
 #fmt-sizecell .dbtn.etm{min-width:30px;justify-content:center;
   padding-left:4px;padding-right:4px;}
-/* History is a tall tile in a section of its own (T233) */
-.rbn-row>#fmt-hist.big-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;grid-row:1/span 2;}
+/* History is a tall tile in a section of its own (T233; T463: it wears
+   rbn-tall in the markup now, so the grid and sizeRibbonGroups agree
+   that it takes a column) */
 /* ---- T234: THE FLIP BOOK'S ONE BIG DOOR, AND ITS PAGE TURN ----------
    "+ Add" is the first control in the Picture group and the same
    height as History: an empty flip book is a hole, and the button that
    fills it should not be the smallest thing on the row. The turn
    itself is one keyframe on the frame that changed -- so it plays in
    the show, in an exported page, and nowhere else. */
-.rbn-row>#fmt-figures.big-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;}
 /* History is a tile on Home too, the same size as the others (T236) */
-.rbn-row>#hm-history.big-tile{width:var(--rbn-tile-w);
-  height:var(--rbn-tile-h);align-self:center;}
 /* ---- T239: THE WAY OUT IS ON THE BAR YOU CAN SEE ---------------------
    Two rows, like File over Save beside them: the pair is one errand
    and stacking halves the width it costs the top bar. */
@@ -6335,17 +6384,20 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 
 /* ---- T218: the folded door is a tile; the delay's cell --------------------- */
 .rbn-grp.rbn-folded>.rbn-foldwrap{align-items:center;}
-.rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);width:82px;}
-.rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
-  line-height:1.15;}
-/* T441: the door's readout -- the current choice, under the name. With
-   a value the icon steps aside so the two lines fit the tile. */
-.rbn-foldbtn>.rbn-foldval{display:block;font:600 10px var(--mono);
-  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
-.rbn-foldbtn>.rbn-foldval[hidden]{display:none;}
-.rbn-foldbtn.has-val>.bic{display:none;}
+/* T463: a door is a wider tile -- a group's name is longer than a
+   verb -- and, like every tile now, never narrower than its words. A
+   door with a choice on it keeps its name on one line (the tile's
+   has-val rule), so "Timing & text ▾" widens the door rather than
+   dropping its chevron onto a line of its own; a door without one
+   wraps its name into the 82px. The readout itself is the tile's
+   (.fx-tile>.rbn-foldval), shared with New slide and Send it away. */
+.rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);min-width:82px;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn>span{text-align:center;line-height:1.15;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn:not(.has-val)>span{white-space:normal;}
+/* T441: the door's readout -- the current choice, under the name. T463:
+   the icon stays. It used to step aside for the value, which left the
+   choosers the only wordless-icon-less tiles on the bar; with the
+   has-val gap the three lines fit the tile. */
 .rbn-foldbtn.has-val>span:first-of-type{font-size:11px;color:var(--ink-2);}
-body.light .rbn-foldbtn>.rbn-foldval{color:var(--cyan-deep);}
 #anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
 #anim-delaycell .cell-lab{padding-left:2px;}

@@ -1900,8 +1900,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # .pptx FILE rather than the PowerPoint PRODUCT (export-loss dialog,
 # importer errors, two tooltips); Help gains a Licence and trademarks
 # section.
-EXPECTED_MD5 = "a1175e359c7ccc7c73a536b4dd9587c9"
-EXPECTED_BYTES = 4304878
+# T463 (2026-09-15): a tile is never narrower than its longest word,
+# one standing-tile rule replaces eight per-id copies, the text tiles
+# are name-wide under a ceiling the ladder lowers, Images is tiles,
+# Send it away is a tile with its readout, New slide wears the chosen
+# layout and the strips reveal their lit tile; deck.css, deck.html,
+# 00-page.js, 05-figures-and-ribbon.js, 48-animation.js and
+# 55-sections-and-strip.js change.
+EXPECTED_MD5 = "74038f67cc7463559a7c2d2c1af80312"
+EXPECTED_BYTES = 4314805
 
 
 def _render_example() -> str:

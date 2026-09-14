@@ -58,7 +58,10 @@ def test_the_frame_has_an_edge_and_arrows_instead_of_a_scrollbar(out):
         assert f'<button class="strip-next" type="button" id="{sid}-next"' in out, sid
     assert "var ROW=60;" in out
     assert "prev.setAttribute('aria-disabled',top<=1?'true':'false');" in out
-    assert "new ResizeObserver(function(){ends();}).observe(strip);" in out
+    # T463: the first time the strip has a height, the lit tile is
+    # scrolled into view; every later resize only re-reads the ends
+    assert "          if(!shownH&&strip.clientHeight) reveal();" in out
+    assert "          shownH=strip.clientHeight;\n          ends();" in out
     start = out.index('.strip-more[aria-expanded="true"]')
     rule = out[start:out.index("}", start)]
     assert "var(--accent-deep,var(--cyan-deep))" in rule

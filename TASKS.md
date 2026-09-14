@@ -8719,3 +8719,45 @@ switch on yourself.
   about the way you want things. Needs lots of user flexability".
   Still fixed: the order of the sections, the bar's width, what a row
   shows, and whether versions list more than the last six.
+
+### Completed 2026-09-15 — four ribbon screenshots
+
+- [x] **T463 — A tile is never narrower than its longest word, and the
+  four tabs in the screenshots.** (User, 2026-09-15, with Home, Images,
+  Text and Animation screenshotted: "Text not within the box. The new
+  slide thing is kind of awkward as well as you cannot really tell which
+  one you selected ... The image tab style doesn't match the others now.
+  There is lots of space on the right and the buttons are small ... the
+  text box types can't be read ... the animations tab still looks odd.")
+  One cause under the first and third: T205's one tile width held until
+  the words did not. "Checkpoint…" printed past its border, "Heading 1"
+  read "Head… 1", "Make clones…" was cut, and "Timing & text ▾" dropped
+  its chevron onto a line of its own. A tile is `min-content` wide with
+  the tile as its floor now -- PowerPoint's big buttons are label-width
+  too -- so a two-word label still wraps into the tile and a word that
+  cannot wrap widens it instead of overflowing it; the strips keep their
+  flex-basis and stay a whole number of tiles wide. With that, ONE rule
+  sizes every standing tile (it was eight per-id copies, and Equation,
+  Markdown and Table had none and stood 60px beside 56px neighbours),
+  and the fold doors keep their icons beside a readout rather than
+  hiding them for one. **Text:** a type tile is as wide as its name, on
+  one line, under a ceiling (`--rbn-txstrip-max`) the ladder lowers a
+  rung at a time; all nine built-in types show at rest, the arrows step
+  to the next whole tile past that, and at the user's ~930px the tab
+  still fits without folding Presentation type. **Images:** Place and
+  Draw are tall tiles like every other tab's, not 26px pills stacked
+  two high beside an empty bar. **Animation:** Send it away is the same
+  tile as the four choosers beside it, wearing when it leaves (never /
+  on click 3) with the caret alongside, and the verb groups follow the
+  choosers instead of being pushed to the far edge -- the shelf takes a
+  line of its own, so the hole in the middle was buying nothing. **New
+  slide:** the default layout sat in the strip's fourth row, so on a
+  fresh deck nothing visible was lit; the tile now wears the chosen
+  layout's name (the two long layouts got strip-short names, as the
+  posters have), every strip scrolls a newly lit tile into view and
+  reveals it when first shown -- and a strip you scrolled by hand is
+  not dragged back on a refresh. Measured live against HEAD at 1150,
+  1300, 1500 and 1900: every tile 56px, no word cut on any tab, Home
+  and Text unfolded at 935px, the Animation row packed with no gaps;
+  the toggle, its caret menu, the Configure chip that presses it, the
+  Effect shelf and the tool tiles all driven.

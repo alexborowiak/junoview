@@ -9,6 +9,9 @@ from __future__ import annotations
 
 from junoview import assets
 
+TILE_RULE = (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"
+             "  height:var(--rbn-tile-h);align-self:center;}")
+
 VIEW_IDS = (
     "vw-versions",
     "vw-rulers",
@@ -40,8 +43,9 @@ def test_view_uses_the_full_height_tile_system(out):
     assert "Print check</button>" in view
 
     css = assets.load("css/deck.css")
-    assert ".rbn-row>.view-tile{width:var(--rbn-tile-w);" in css
-    assert "height:var(--rbn-tile-h);" in css
+    # T463: sized by the one standing-tile rule, like every other
+    assert ".rbn-row>.view-tile{position:relative;}" in css
+    assert TILE_RULE in css
     assert ".view-tile kbd{position:absolute;" in css
 
 

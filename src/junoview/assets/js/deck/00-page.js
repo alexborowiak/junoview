@@ -147,11 +147,17 @@
       {k:'cell',x:2,y:51,w:47.5,h:47},{k:'cell',x:50.5,y:51,w:47.5,h:47}]},
     /* NAMED FOR EVERYTHING ON THEM (T193): both of these carry a title
        too, which "Text | panel" did not say */
-    {id:'text-cell',label:'Title + text + panel',items:[
+    /* ...and a SHORT name for the strip tile (T463), the way the
+       posters have since T426: the full name is three lines of 8px
+       under a 16:9 icon that leaves room for one, so the strip showed
+       "Title +" and clipped the rest -- of the default layout, which
+       is also the name New slide now wears. The tooltip and the
+       Design menu keep the full name. */
+    {id:'text-cell',label:'Title + text + panel',short:'Text + panel',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
       {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:3.9,style:'body'},
       {k:'cell',x:49,y:20,w:47,h:76}]},
-    {id:'cell-text',label:'Title + panel + text',items:[
+    {id:'cell-text',label:'Title + panel + text',short:'Panel + text',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1,style:'h1'},
       {k:'cell',x:4,y:20,w:47,h:76},
       {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:3.9,
@@ -620,12 +626,38 @@
      slide wears (T218); a saved layout is remembered as 'arr:<n>' */
   function syncNewSlideMarks(){
     var key=lsGet(newLayKey())||'cell-text';
+    var chosen=null;
     $$('#layout-strip .dbtn.lay').forEach(function(b){
       var on=b.classList.contains('lay-saved')
         ?(('arr:'+b.dataset.arr)===key):(b.dataset.lay===key);
       b.setAttribute('aria-pressed',on?'true':'false');
       b.disabled=false;
+      if(on) chosen=b;
     });
+    /* T463: THE BUTTON SAYS WHICH LAYOUT IT WILL MAKE. The lit tile
+       is the only sign of the choice, and the default (Panel + text)
+       sits in the strip's fourth row, out of sight behind the arrows
+       -- so on a fresh deck no visible tile was lit and the words
+       "laid out as the highlighted layout" pointed at nothing
+       (2026-09-15, user: "you cannot really tell which one you
+       selected"). New slide wears the chosen layout's name under its
+       own, the way a chooser door wears its choice; the strip also
+       scrolls the lit tile into view (stripMoreBoot's reveal). */
+    var nb=$('#hm-newslide');
+    if(nb){
+      var val=nb.querySelector('.rbn-foldval');
+      if(!val){
+        val=document.createElement('span');val.className='rbn-foldval';
+        nb.appendChild(val);
+      }
+      var lb=chosen?chosen.querySelector('.lay-lb'):null;
+      var word=lb?lb.textContent.trim():'';
+      val.textContent=word;val.hidden=!word;
+      nb.classList.toggle('has-val',!!word);
+      /* the whole name, for the rung that shortens the readout */
+      nb.title='Add a slide after this one'
+        +(word?(', laid out as '+word):', laid out as the highlighted layout');
+    }
   }
   /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
      The catalog is offered from TWO places now — Design ▸ Layouts and

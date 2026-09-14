@@ -39,7 +39,9 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     # it is the one tall tile, the group's own icon over its name
     assert "btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')" in out
     # T441: the door carries its current choice under the name
-    assert ("+'<span>'+esc(name)+' \\u25be</span><span class=\"rbn-foldval\">"
+    # (T463: a no-break space before the chevron, so it stays with the
+    # last word of a name the door wraps)
+    assert ("+'<span>'+esc(name)+'\\u00a0\\u25be</span><span class=\"rbn-foldval\">"
             "</span>';") in out
     # rightmost ON SCREEN, since flex order decides the visual order
     assert ("return x.getBoundingClientRect().left"
@@ -78,7 +80,7 @@ def test_insert_is_tiles_a_named_cell_and_a_drawing_group(out):
     assert "if(at==='images'||at==='text') cg.setAttribute('data-tab',at);" in out
     assert "stc.innerHTML='<span><b>Drawing: '+esc(word)+'</b></span>'" in out
     assert ".deck.erc-tight .et-status span+span{display:none;}" in out
-    assert "From notebook</button>" in out   # T440
+    assert "<span>From notebook</span></button>" in out   # T440; a tile since T463
     assert 'id="ins-chart"' not in out and "var ic2=$('#ins-chart');" not in out
     # ...and the shapes are tiles of their own since T197 ("the shapes
     # should be on their own")

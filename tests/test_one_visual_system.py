@@ -23,14 +23,15 @@ def test_every_tall_control_is_the_one_tile(out):
     they are one line of type rather than a glyph over a word, and they
     wrap into two short rows in the height one tall row took.
     """
-    assert ".fx-tile{width:var(--rbn-tile-w);display:flex;" in out
+    # T463: THE tile wide, or its longest word wide, whichever is more
+    assert ".fx-tile{width:min-content;min-width:var(--rbn-tile-w);" in out
     assert ".fx-tile .bic{width:24px;height:24px;}" in out
     for rule in (".lay-strip .dbtn.lay{flex:0 0 var(--rbn-tile-w);",
                  ".shape-strip .fx-tile{flex:0 0 var(--rbn-tile-w);",
                  ".page-strip .fx-tile{flex:0 0 var(--rbn-tile-w);",
                  ".big-strip .fx-tile{height:var(--rbn-tile-h);}",
                  ".rbn-row>.fx-strip.big-strip{align-items:center;}",
-                 ".rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);\n"
+                 ".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"
                  "  height:var(--rbn-tile-h);align-self:center;}",
                  ".strip-frame>.fx-strip{height:calc(var(--rbn-band) - 2px);\n"
                  "  padding:2px 4px 0;",

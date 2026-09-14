@@ -36,8 +36,11 @@ def test_new_slide_takes_the_layout_you_last_chose(out):
     assert "if(lay&&!lay.poster) applyLayout(ns,lay);" in out
     assert "if(!layout.poster) lsSet(newLayKey(),layout.id);" in out
     # the two layouts that carried a title without saying so
-    assert "{id:'cell-text',label:'Title + panel + text',items:[" in out
-    assert "{id:'text-cell',label:'Title + text + panel',items:[" in out
+    # (T463: with a short name for the strip tile, as the posters have)
+    assert ("{id:'cell-text',label:'Title + panel + text',"
+            "short:'Panel + text',items:[") in out
+    assert ("{id:'text-cell',label:'Title + text + panel',"
+            "short:'Text + panel',items:[") in out
     # a new slide is still born empty; the layout is applied on top
     assert "return {layout:'blank',panes:[],annots:[]};" in out
 

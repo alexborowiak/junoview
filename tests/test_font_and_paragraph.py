@@ -55,8 +55,11 @@ def test_design_stops_looking_hectic(out):
     html = assets.deck_html()
     assert '<span class="sh-drop rbn-tall" id="bg-drop">' in html
     assert '<button class="fx-tile big-tile" id="bg-btn"' in html
-    assert ("#bg-drop.rbn-tall>.fx-tile,#trans-scopewrap.rbn-tall>.fx-tile{\n"
-            "  width:var(--rbn-tile-w);") in out
+    # T463: the tile in a tall wrapper is sized by the one standing-tile
+    # rule, not a copy per id
+    assert (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"
+            "  height:var(--rbn-tile-h);align-self:center;}") in out
+    assert "#bg-drop.rbn-tall>.fx-tile" not in out
     # the strip toggle is a View control now
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(">View</span>")[0]
     assert 'id="vw-versions"' in view
@@ -116,8 +119,9 @@ def test_the_small_things_the_screenshots_showed(out):
     assert '<span class="cell-lab">Opacity</span>' in html
     assert "show('#fmt-opcell',!!opw&&!opw.hidden);" in out
     # History is the one tall tile in the Object group
-    assert '<button class="fx-tile big-tile" id="fmt-hist"' in html
-    assert ".rbn-row>#fmt-hist.big-tile{width:var(--rbn-tile-w);" in out
+    # (T463: it says rbn-tall, so the grid and the column count agree)
+    assert '<button class="fx-tile big-tile rbn-tall" id="fmt-hist"' in html
+    assert "#fmt-hist.big-tile{" not in out
 
 
 def test_the_colour_popup_says_whose_colours_they_are(out):

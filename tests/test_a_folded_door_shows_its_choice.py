@@ -49,8 +49,11 @@ def test_the_door_reads_out_the_choice(out):
     assert "  function rbnReadoutBoot(){" in out
     assert "        attributeFilter:['aria-pressed']});" in out
     assert "  rbnReadoutBoot();" in out
-    assert ".rbn-foldbtn>.rbn-foldval{display:block;font:600 10px var(--mono);" \
+    # T463: the readout is the TILE's, shared with New slide and Send
+    # it away, and the door keeps its icon beside it
+    assert ".fx-tile>.rbn-foldval{display:block;font:600 10px var(--mono);" \
         in out
+    assert ".rbn-foldbtn.has-val>.bic{display:none;}" not in out
 
 
 def test_build_order_and_whole_slide_never_fold(out):

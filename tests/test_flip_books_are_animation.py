@@ -37,8 +37,9 @@ def test_add_is_the_first_control_and_a_tile():
     assert 'class="fx-tile big-tile rbn-tall" id="fmt-figures"' in html
     assert "<span>Figures</span></button>" in html   # T439
     # rbn-tall is what makes it span both rows AND count as two columns
-    assert ".rbn-row>#fmt-figures.big-tile{width:var(--rbn-tile-w);" \
-        in assets.deck_css()
+    # (T463: and what sizes it, through the one standing-tile rule)
+    assert (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"
+            "  height:var(--rbn-tile-h);align-self:center;}") in assets.deck_css()
 
 
 def test_the_options_are_on_the_row(out):

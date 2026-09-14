@@ -53,8 +53,11 @@ def test_home_is_make_do_and_keep(out):
     assert '<span class="rbn-lab">Arrange this slide</span>' not in out
     # New slide is a tall tile at the left of its strip
     assert 'class="fx-tile big-tile rbn-tall" id="hm-newslide"' in out
-    assert (".rbn-row>#hm-newslide.big-tile{width:var(--rbn-tile-w);\n"
+    # (T463: sized by the one standing-tile rule; it also wears the
+    # chosen layout's name, so it is a little wider than the tile)
+    assert (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"
             "  height:var(--rbn-tile-h);align-self:center;}") in out
+    assert "#hm-newslide.big-tile{" not in out
 
 
 def test_standardise_says_what_it_does(out):

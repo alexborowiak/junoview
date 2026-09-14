@@ -25,7 +25,9 @@ def test_the_door_is_on_the_animation_tab():
     # it was named for what it does to the object rather than for the
     # choice, under a label repeating the same word (2026-09-14)
     assert '<span class="rbn-lab">Leaves early</span>' in html
-    assert 'Send it away</button>' in html
+    # T463: a tall tile, its readout inside it
+    assert '<button class="fx-tile big-tile" id="anim-out"' in html
+    assert '<span>Send it away</span>' in html
     assert 'Disappear</button>' not in html
     for cid in ("anim-outwrap", "anim-out", "anim-out-caret",
                 "anim-out-menu", "anim-out-say"):
@@ -51,7 +53,7 @@ def test_the_ribbon_does_not_report_the_state_it_had_before_the_click(out):
     assert "      animOutSync();" in out
     assert "  function animOutSync(){" in out
     assert "    if(b) b.setAttribute('aria-pressed',(now!=null).toString());" in out
-    assert "      say.querySelector('b').textContent=now==null?'never'" in out
+    assert "      say.textContent=now==null?'never'" in out
 
 
 def test_leaving_is_an_effect_not_a_cut(out):

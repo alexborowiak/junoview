@@ -266,12 +266,15 @@
     if(!a||poster) return;
     var now=animOut(a),b=$('#anim-out');
     if(b) b.setAttribute('aria-pressed',(now!=null).toString());
+    /* T463: the readout is the tile's own second line, the way a
+       chooser door wears its choice -- "never", or the click it goes */
     if(say){
-      say.innerHTML='<span>Leaves</span><span><b></b></span>';
       var inf=(now!=null&&typeof spStepInfo==='function')
         ?spStepInfo(s,a):null;
-      say.querySelector('b').textContent=now==null?'never'
+      say.textContent=now==null?'never'
         :((inf&&inf.out!=null)?('on click '+inf.out):'on a click');
+      say.hidden=false;
+      if(b) b.classList.add('has-val');
     }
   }
   /* ---- T234: A FLIP BOOK'S PAGES ARE ANIMATION ------------------------
