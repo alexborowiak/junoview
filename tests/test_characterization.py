@@ -1886,8 +1886,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # renamePresByName
 # T451: saveProject sends the revision, carries its change, and adopts
 # the decks it learns
-EXPECTED_MD5 = "b5820a25818f4651ff3e59577b7cb1d0"
-EXPECTED_BYTES = 4281052
+# T452: the Animation pane's Configure and Order tabs
+EXPECTED_MD5 = "99fa9ae18f40643efcdca1a795eea43a"
+EXPECTED_BYTES = 4287359
 
 
 def _render_example() -> str:

@@ -5755,8 +5755,30 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
    because there are thirteen movements and the pane is 232px by
    default; every slider is label, track and a live readout on one
    line, so a number you are dragging says what it will be. */
+/* ---- T452: CONFIGURE | ORDER ----------------------------------------
+   (2026-09-14, user: "the animation pane is not the right place for
+   configuring the animation details ... The animation pane is for the
+   order. Please do not mix them. Or perhaps put tabs on the pane".)
+   Two tabs under the pane's heading, the underline saying which one is
+   showing -- the same grammar as the ribbon's own tab strip, at the
+   size a 272px pane can hold. */
+.anim-tabs{display:flex;gap:2px;flex:none;padding:0 8px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
+.anim-tab{display:inline-flex;align-items:center;gap:5px;flex:1;
+  justify-content:center;padding:7px 6px 6px;border:0;background:none;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  color:var(--chrome-ink-2);font:600 11.5px var(--sans);cursor:pointer;
+  white-space:nowrap;}
+.anim-tab .bic{width:12px;height:12px;}
+.anim-tab:hover{color:var(--chrome-ink);}
+.anim-tab[aria-selected="true"]{color:#fff;
+  border-bottom-color:var(--accent,var(--cyan));}
 .anim-cfg{display:block;margin-bottom:10px;}
 .anim-cfg:empty{display:none;}
+/* Quick animate at the head of the Order tab: the same card as a
+   configuration section, set off from the list it is writing */
+.anim-quick{margin:0 0 10px;padding-bottom:9px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
 .anim-cfg .anim-h{margin-top:10px;}
 .anim-cfg .anim-h:first-child{margin-top:0;}
 .cfg-note{font-size:11.5px;line-height:1.45;color:var(--chrome-ink-2);
@@ -16182,6 +16204,25 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="selpane-h"><span>Animation</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
+        <!-- T452: TWO TABS, NOT ONE SCROLL (2026-09-14, user: "the
+             animation pane is not the right place for configuring the
+             animation details e.g. for things like the wobble and such.
+             The animation pane is for the order. Please do not mix them.
+             Or perhaps put tabs on the pane e.g. configuration and
+             order"). Configure is what the selected thing DOES; Order is
+             the list of clicks the pane has always been, and Quick
+             animate belongs with it because clicking things IS setting
+             the order. -->
+        <div class="anim-tabs" role="tablist" aria-label="Animation pane">
+          <button class="anim-tab" id="animpane-tab-cfg" type="button"
+            role="tab" aria-selected="true" aria-controls="animpane-cfg"
+            title="How the selected thing arrives, moves and leaves"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/></svg> Configure</button>
+          <button class="anim-tab" id="animpane-tab-ord" type="button"
+            role="tab" aria-selected="false" aria-controls="animpane-body"
+            title="Every click on this slide, in the order they happen"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Order</button>
+        </div>
         <div class="selpane-list">
           <div class="anim-cfg" id="animpane-cfg"></div>
           <div id="animpane-body"></div>
@@ -61604,9 +61645,13 @@ window.JunoPptx = (function () {
        one moment your attention belongs on the slide -- and the row is
        exactly what the user said was "getting squashed out of screen".
        Arming the mode opens the Animation panel; cfgSeq (48b-motion.js)
-       draws the count, the effect chooser and the three verbs there. */
+       draws the count, the effect chooser and the three verbs there.
+       T452: "there" is the ORDER tab now, and arming switches the pane
+       to it -- the mode writes the order, so the order is what you
+       want to be watching while you point. */
     var on=!!seqArm;
     if(on&&typeof animPaneOpen==='function') animPaneOpen();
+    if(on&&typeof animTabSet==='function') animTabSet('ord');
     if(typeof animCfgSync==='function') animCfgSync();
     /* the Timing group stands down while the mode is armed, and comes
        back with the selection when it ends (T185) */
@@ -62177,6 +62222,16 @@ window.JunoPptx = (function () {
     function render(){
       var s=pres.slides[cur];
       menu.innerHTML='';
+      /* T452: Quick animate sits at the head of the ORDER tab, not in
+         the configuration one. It is the tool that sets this list by
+         pointing, so it belongs above the list it is writing. */
+      if(typeof seqOn==='function'&&seqOn()
+         &&typeof cfgSeq==='function'){
+        var qa=document.createElement('div');
+        qa.className='anim-cfg anim-quick';
+        menu.appendChild(qa);
+        cfgSeq(qa);
+      }
       var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
       var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
@@ -62426,7 +62481,10 @@ window.JunoPptx = (function () {
         menu.appendChild(sr);
       }
       /* ...and the way to SAY the order by pointing (T168), beside the
-         list it rewrites */
+         list it rewrites. T452: not while it is already running -- its
+         own controls are at the head of this very tab now, so a second
+         door into the mode you are standing in is just noise. */
+      if(typeof seqOn==='function'&&seqOn()) return;
       var sq=document.createElement('button');
       sq.type='button';sq.className='anim-mini wide';
       sq.innerHTML=bic('stagger')+' Quick animate\u2026';
@@ -62448,6 +62506,8 @@ window.JunoPptx = (function () {
       if(open){
         paneShow('animpane');render();
         if(typeof animCfgSync==='function') animCfgSync();
+        /* T452: opening lands you on the tab you left it on */
+        if(typeof animTabApply==='function') animTabApply();
       }
       else paneHide('animpane');
     }
@@ -63076,6 +63136,50 @@ window.JunoPptx = (function () {
         lifeApply(p[0]);});
     });
   }
+  /* ---- T452: TWO TABS, NOT ONE SCROLL --------------------------------
+     (2026-09-14, user: "the animation pane is not the right place for
+     configuring the animation details e.g. for things like the wobble
+     and such. The animation pane is for the order. Please do not mix
+     them. Or perhaps put tabs on the pane e.g. configuration and
+     order".) T445 stacked one on top of the other, which put the six
+     numbers of a wobble between you and the list of clicks every time
+     you opened the pane to check the order.
+     CONFIGURE is what the selected thing does -- how it arrives, how it
+     moves, when it leaves. ORDER is the list of clicks this pane has
+     always been, and Quick animate moved there with it, because
+     clicking things in turn IS setting the order. Which tab you were
+     last on is remembered per project, like every other pane state. */
+  var ANIMTAB_KEY='semopts:'+SCOPE+':animtab';
+  function animTabGet(){
+    return lsGet(ANIMTAB_KEY)==='ord'?'ord':'cfg';
+  }
+  function animTabSet(which){
+    lsSet(ANIMTAB_KEY,which==='ord'?'ord':'cfg');
+    animTabApply();
+  }
+  /* shows one host, hides the other, and lights the tab that won. Both
+     halves are BUILT either way -- each is a few dozen nodes and the
+     order list already redraws on every commit -- so switching tabs is
+     only ever a class flip, never a rebuild that could lose a caret or
+     a drag. */
+  function animTabApply(){
+    var cfg=$('#animpane-cfg'),ord=$('#animpane-body');
+    var tc=$('#animpane-tab-cfg'),to=$('#animpane-tab-ord');
+    if(!cfg||!ord) return;
+    var on=animTabGet();
+    cfg.hidden=(on!=='cfg');
+    ord.hidden=(on!=='ord');
+    if(tc) tc.setAttribute('aria-selected',(on==='cfg').toString());
+    if(to) to.setAttribute('aria-selected',(on==='ord').toString());
+  }
+  function animTabBoot(){
+    var tc=$('#animpane-tab-cfg'),to=$('#animpane-tab-ord');
+    if(tc) tc.addEventListener('click',function(e){
+      e.stopPropagation();animTabSet('cfg');});
+    if(to) to.addEventListener('click',function(e){
+      e.stopPropagation();animTabSet('ord');});
+    animTabApply();
+  }
   /* the whole panel, rebuilt from the selection. Cheap enough to
      rebuild: it is a few dozen nodes and it is only ever open while
      somebody is looking at it. */
@@ -63084,7 +63188,15 @@ window.JunoPptx = (function () {
     var pane=$('#animpane');
     if(pane&&pane.hidden){host.innerHTML='';return;}
     host.innerHTML='';
-    if(typeof seqOn==='function'&&seqOn()){cfgSeq(host);return;}
+    /* T452: Quick animate lives on Order now. Saying so beats an empty
+       tab, because arming it switches the pane over and the eye is
+       still here. */
+    if(typeof seqOn==='function'&&seqOn()){
+      cfgNote(host,'Quick animate is running — its count and its '
+        +'three buttons are on the Order tab, because clicking things '
+        +'in turn is what sets the order.');
+      return;
+    }
     var poster=!!(typeof pageOf==='function'&&pageOf().poster);
     if(poster){
       cfgNote(host,'A poster is one printed page: there is no click to '
@@ -63122,6 +63234,7 @@ window.JunoPptx = (function () {
     /* the panel follows the selection: showFmt already calls
        animPaneSync on every one, and that is where this hangs (see
        48-animation.js) */
+    animTabBoot();
     animCfgSync();
   }
   /* ================================================================

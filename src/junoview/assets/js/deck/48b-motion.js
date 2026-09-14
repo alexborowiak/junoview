@@ -497,6 +497,50 @@
         lifeApply(p[0]);});
     });
   }
+  /* ---- T452: TWO TABS, NOT ONE SCROLL --------------------------------
+     (2026-09-14, user: "the animation pane is not the right place for
+     configuring the animation details e.g. for things like the wobble
+     and such. The animation pane is for the order. Please do not mix
+     them. Or perhaps put tabs on the pane e.g. configuration and
+     order".) T445 stacked one on top of the other, which put the six
+     numbers of a wobble between you and the list of clicks every time
+     you opened the pane to check the order.
+     CONFIGURE is what the selected thing does -- how it arrives, how it
+     moves, when it leaves. ORDER is the list of clicks this pane has
+     always been, and Quick animate moved there with it, because
+     clicking things in turn IS setting the order. Which tab you were
+     last on is remembered per project, like every other pane state. */
+  var ANIMTAB_KEY='semopts:'+SCOPE+':animtab';
+  function animTabGet(){
+    return lsGet(ANIMTAB_KEY)==='ord'?'ord':'cfg';
+  }
+  function animTabSet(which){
+    lsSet(ANIMTAB_KEY,which==='ord'?'ord':'cfg');
+    animTabApply();
+  }
+  /* shows one host, hides the other, and lights the tab that won. Both
+     halves are BUILT either way -- each is a few dozen nodes and the
+     order list already redraws on every commit -- so switching tabs is
+     only ever a class flip, never a rebuild that could lose a caret or
+     a drag. */
+  function animTabApply(){
+    var cfg=$('#animpane-cfg'),ord=$('#animpane-body');
+    var tc=$('#animpane-tab-cfg'),to=$('#animpane-tab-ord');
+    if(!cfg||!ord) return;
+    var on=animTabGet();
+    cfg.hidden=(on!=='cfg');
+    ord.hidden=(on!=='ord');
+    if(tc) tc.setAttribute('aria-selected',(on==='cfg').toString());
+    if(to) to.setAttribute('aria-selected',(on==='ord').toString());
+  }
+  function animTabBoot(){
+    var tc=$('#animpane-tab-cfg'),to=$('#animpane-tab-ord');
+    if(tc) tc.addEventListener('click',function(e){
+      e.stopPropagation();animTabSet('cfg');});
+    if(to) to.addEventListener('click',function(e){
+      e.stopPropagation();animTabSet('ord');});
+    animTabApply();
+  }
   /* the whole panel, rebuilt from the selection. Cheap enough to
      rebuild: it is a few dozen nodes and it is only ever open while
      somebody is looking at it. */
@@ -505,7 +549,15 @@
     var pane=$('#animpane');
     if(pane&&pane.hidden){host.innerHTML='';return;}
     host.innerHTML='';
-    if(typeof seqOn==='function'&&seqOn()){cfgSeq(host);return;}
+    /* T452: Quick animate lives on Order now. Saying so beats an empty
+       tab, because arming it switches the pane over and the eye is
+       still here. */
+    if(typeof seqOn==='function'&&seqOn()){
+      cfgNote(host,'Quick animate is running — its count and its '
+        +'three buttons are on the Order tab, because clicking things '
+        +'in turn is what sets the order.');
+      return;
+    }
     var poster=!!(typeof pageOf==='function'&&pageOf().poster);
     if(poster){
       cfgNote(host,'A poster is one printed page: there is no click to '
@@ -543,5 +595,6 @@
     /* the panel follows the selection: showFmt already calls
        animPaneSync on every one, and that is where this hangs (see
        48-animation.js) */
+    animTabBoot();
     animCfgSync();
   }

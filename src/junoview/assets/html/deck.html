@@ -3028,6 +3028,25 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="selpane-h"><span>Animation</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
+        <!-- T452: TWO TABS, NOT ONE SCROLL (2026-09-14, user: "the
+             animation pane is not the right place for configuring the
+             animation details e.g. for things like the wobble and such.
+             The animation pane is for the order. Please do not mix them.
+             Or perhaps put tabs on the pane e.g. configuration and
+             order"). Configure is what the selected thing DOES; Order is
+             the list of clicks the pane has always been, and Quick
+             animate belongs with it because clicking things IS setting
+             the order. -->
+        <div class="anim-tabs" role="tablist" aria-label="Animation pane">
+          <button class="anim-tab" id="animpane-tab-cfg" type="button"
+            role="tab" aria-selected="true" aria-controls="animpane-cfg"
+            title="How the selected thing arrives, moves and leaves"
+            ><i data-ic="pulse"></i> Configure</button>
+          <button class="anim-tab" id="animpane-tab-ord" type="button"
+            role="tab" aria-selected="false" aria-controls="animpane-body"
+            title="Every click on this slide, in the order they happen"
+            ><i data-ic="numlist"></i> Order</button>
+        </div>
         <div class="selpane-list">
           <div class="anim-cfg" id="animpane-cfg"></div>
           <div id="animpane-body"></div>

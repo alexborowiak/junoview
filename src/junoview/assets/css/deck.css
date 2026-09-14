@@ -2142,8 +2142,30 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
    because there are thirteen movements and the pane is 232px by
    default; every slider is label, track and a live readout on one
    line, so a number you are dragging says what it will be. */
+/* ---- T452: CONFIGURE | ORDER ----------------------------------------
+   (2026-09-14, user: "the animation pane is not the right place for
+   configuring the animation details ... The animation pane is for the
+   order. Please do not mix them. Or perhaps put tabs on the pane".)
+   Two tabs under the pane's heading, the underline saying which one is
+   showing -- the same grammar as the ribbon's own tab strip, at the
+   size a 272px pane can hold. */
+.anim-tabs{display:flex;gap:2px;flex:none;padding:0 8px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
+.anim-tab{display:inline-flex;align-items:center;gap:5px;flex:1;
+  justify-content:center;padding:7px 6px 6px;border:0;background:none;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  color:var(--chrome-ink-2);font:600 11.5px var(--sans);cursor:pointer;
+  white-space:nowrap;}
+.anim-tab .bic{width:12px;height:12px;}
+.anim-tab:hover{color:var(--chrome-ink);}
+.anim-tab[aria-selected="true"]{color:#fff;
+  border-bottom-color:var(--accent,var(--cyan));}
 .anim-cfg{display:block;margin-bottom:10px;}
 .anim-cfg:empty{display:none;}
+/* Quick animate at the head of the Order tab: the same card as a
+   configuration section, set off from the list it is writing */
+.anim-quick{margin:0 0 10px;padding-bottom:9px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
 .anim-cfg .anim-h{margin-top:10px;}
 .anim-cfg .anim-h:first-child{margin-top:0;}
 .cfg-note{font-size:11.5px;line-height:1.45;color:var(--chrome-ink-2);
