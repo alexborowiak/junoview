@@ -8476,3 +8476,13 @@ gates are recorded in the completing commit.
   pressed choice inside, kept true as the selection changes. Build
   order and Whole slide (were Order and Everything on the slide) never
   fold. The text groups are untouched. Driven live.
+- [x] **T447 — A renamed presentation stops writing the file with the
+  old name.** (User, 2026-09-14: "autosaved to project.junovie...
+  Changed file name, but it still says it is saving to the above.
+  Why?????? How to get around this???") Where the browser cannot move
+  a picked file — Chrome cannot — the deck went on autosaving into the
+  file with the old name, and an eight-second toast was the only clue.
+  The binding is dropped on such a rename: the old file keeps what it
+  had, the readout says "click Save to choose the file", and the next
+  Save asks where to write the new name. Junoview's own folder still
+  renames outright. Driven live.
