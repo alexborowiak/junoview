@@ -8408,3 +8408,12 @@ gates are recorded in the completing commit.
   a Ctrl+click on a library row puts that presentation on the open
   list without leaving the dialog. The notebook `<input>` already took
   many. Driven live.
+- [x] **T435 — Pins in Recents.** (User, 2026-09-14: "would be cool to
+  be able to pin files to recent. I feel like I am always losing files
+  and hard to keep track of.") A pinned presentation heads Recent — on
+  Home, in the library dialog and in the presenting drawer's Recents
+  door — and never falls off the end of the list however many others
+  are opened after it. The pin is a small button on every row; a rename
+  or a delete follows it. Notebooks get the same on Home's recent list
+  and in the open dialog, kept beside the recent paths so the pins do
+  not eat the list. Driven live.

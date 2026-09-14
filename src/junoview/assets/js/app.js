@@ -6958,6 +6958,48 @@
         +'. Still remembered; they return when you reconnect.');
     },600);
   }
+  /* ---- T435: PINNED NOTEBOOKS (2026-09-14, user: "would be cool to be
+     able to pin files to recent. I feel like I am always losing files
+     and hard to keep track of"). Pinned paths head Recent on Home and
+     in the open dialog, and never fall off the end: the recent list
+     keeps six (web) or ten (the app), the pins are kept beside it. */
+  function nbPinKey(){
+    return (APP.mode==='web'?WEBKEY:('semapp:'+(APP.root||'')))+':pinned-nb';
+  }
+  function nbPinned(){
+    try{
+      var v=JSON.parse(localStorage.getItem(nbPinKey())||'[]');
+      return Array.isArray(v)?v:[];
+    }catch(e){return [];}
+  }
+  function nbPinToggle(p){
+    var pins=nbPinned(),on=pins.indexOf(p)<0;
+    pins=pins.filter(function(x){return x!==p;});
+    if(on) pins.unshift(p);
+    try{localStorage.setItem(nbPinKey(),JSON.stringify(pins.slice(0,40)));}
+    catch(e){}
+    renderRecent();renderDlgRecent();
+    docToast(on?(splitPath(p).name+' pinned \u2014 it stays at the top of '
+      +'Recent'):(splitPath(p).name+' unpinned'));
+    return on;
+  }
+  /* the recent list with the pins in front of it */
+  function recentWithPins(){
+    var rec=(APP.project&&APP.project.recent)||[],pins=nbPinned();
+    return pins.concat(rec.filter(function(r){return pins.indexOf(r)<0;}));
+  }
+  /* one pin button, for a Home row or a dialog row */
+  function pinButton(p,on,cls){
+    var b=document.createElement('button');
+    b.type='button';b.className=cls+(on?' on':'');
+    b.innerHTML=bic('pin');
+    b.title=on?'Pinned to the top of Recent \u2014 click to unpin'
+      :'Pin to the top of Recent, so it never drops off the list';
+    b.setAttribute('aria-label',b.title);
+    b.addEventListener('click',function(e){
+      e.stopPropagation();e.preventDefault();nbPinToggle(p);});
+    return b;
+  }
   function webNote(url){
     try{
       var rec=JSON.parse(localStorage.getItem(WEBKEY+':recent')||'[]');
@@ -6995,15 +7037,16 @@
   function renderDlgRecent(){
     var host=$('#odlg-recent'); if(!host) return;
     host.innerHTML='';
-    var rec=(APP.project&&APP.project.recent)||[];
+    var rec=recentWithPins(),pins=nbPinned();   /* T435 */
     if(!rec.length){host.hidden=true;return;}
     host.hidden=false;
     var h=document.createElement('div');h.className='odlg-recent-h';
     h.textContent='recent — reopen';host.appendChild(h);
-    rec.slice(0,12).forEach(function(p){
+    rec.slice(0,12+pins.length).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='odlg-r';
       b.type='button';
+      if(pins.indexOf(p)>=0) b.classList.add('pinned');
       b.title='Reopen '+sp.path;
       /* an icon makes the row read as a thing you act on rather than a
          caption above a path (2026-08-21) */
@@ -7013,6 +7056,7 @@
       nm.textContent=sp.name;b.appendChild(nm);
       var pt=document.createElement('span');pt.className='odlg-r-p';
       pt.textContent=sp.path;pt.dir='ltr';b.appendChild(pt);
+      b.appendChild(pinButton(p,pins.indexOf(p)>=0,'recent-pin'));
       b.addEventListener('click',function(){openPath(p);});
       host.appendChild(b);
     });
@@ -7172,16 +7216,17 @@
   function renderRecent(){
     var host=$('#welcome-recent'); if(!host) return;
     host.innerHTML='';
-    var rec=(APP.project&&APP.project.recent)||[];
+    var rec=recentWithPins(),pins=nbPinned();   /* T435: pins first */
     host.hidden=!rec.length;
     syncJump();
     if(!rec.length) return;
     var h=document.createElement('div');h.className='recent-h';
     h.textContent='recent';host.appendChild(h);
-    rec.slice(0,6).forEach(function(p){
+    rec.slice(0,6+pins.length).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='recent-i';
       b.type='button';
+      if(pins.indexOf(p)>=0) b.classList.add('pinned');
       /* THE NAME, and the path on hover. These rows were the whole path
          — an https://raw.githubusercontent.com/... URL ellipsised from
          the left — so six remembered notebooks read as six near-identical
@@ -7193,6 +7238,7 @@
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=sp.name;
       b.appendChild(ic);b.appendChild(nm);
+      b.appendChild(pinButton(p,pins.indexOf(p)>=0,'recent-pin'));
       b.addEventListener('click',function(){
         if(b.classList.contains('busy')) return;
         /* SAY THAT SOMETHING IS HAPPENING. A remembered notebook is a
@@ -7239,13 +7285,28 @@
         var d=document.createElement('span');d.className='recent-tag';
         d.textContent='draft';b.appendChild(d);
       }
+      /* T435: the pin, through the deck's own toggle */
+      if(p.pinned) b.classList.add('pinned');
+      var pin=document.createElement('button');
+      pin.type='button';pin.className='recent-pin'+(p.pinned?' on':'');
+      pin.innerHTML=bic('pin');
+      pin.title=p.pinned?'Pinned to the top of Recent \u2014 click to unpin'
+        :'Pin to the top of Recent, so it never drops off the list';
+      pin.setAttribute('aria-label',pin.title);
+      pin.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();
+        if(APP.deckPinToggle) APP.deckPinToggle(p.name);
+        renderWelcomePres();
+      });
+      b.appendChild(pin);
       b.addEventListener('click',function(){
         if(APP.deckChoose) APP.deckChoose(p.name);
         goHome(false);
       });
       host.appendChild(b);
     }
-    list.slice(0,6).forEach(row);
+    var npin=list.filter(function(p){return p.pinned;}).length;
+    list.slice(0,6+npin).forEach(row);   /* T435: pins do not eat the six */
   }
 
   /* ---- the welcome screen's demo reel ---------------------------------

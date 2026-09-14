@@ -549,7 +549,8 @@
      that is refused (a private window, a disk that is really full) is
      the only thing that can make the readout say "browser full" now. */
   var DRAFTS={},draftsDbFull=false,draftsLoaded=false;
-  var DRAFT_META={'last':1,'recent-presentations':1};
+  var DRAFT_META={'last':1,'recent-presentations':1,
+    'pinned-presentations':1};   /* T435 */
   function draftGet(name){
     var v=DRAFTS[name]; return (v==null)?null:v;
   }
@@ -752,12 +753,48 @@
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
       folder:p.folder||'',draft:!!loadDraft(name)};
   }
+  /* ---- T435: PINS (2026-09-14, user: "would be cool to be able to pin
+     files to recent. I feel like I am always losing files and hard to
+     keep track of"). A pinned presentation heads Recent, on Home and
+     in the library, and never falls off the end of the list however
+     many others are opened after it. Kept beside the recent list in
+     localStorage; a rename or a delete follows it. */
+  var PRESENT_PIN_KEY=PFX+'pinned-presentations';
+  function pinnedPresentationNames(){
+    var names=[];
+    try{names=JSON.parse(lsGet(PRESENT_PIN_KEY)||'[]');}catch(e){}
+    return Array.isArray(names)?names:[];
+  }
+  function isPinnedPresentation(name){
+    return pinnedPresentationNames().indexOf(name)>=0;
+  }
+  function setPinnedPresentation(name,on){
+    if(!name) return;
+    var names=pinnedPresentationNames().filter(function(n){return n!==name;});
+    if(on) names.unshift(name);
+    lsSet(PRESENT_PIN_KEY,JSON.stringify(names.slice(0,40)));
+    if(typeof renderPresentationHub==='function') renderPresentationHub();
+    if(typeof renderDeckPresentationDrawer==='function')
+      renderDeckPresentationDrawer();
+    if(APP.refreshChrome) APP.refreshChrome();
+  }
+  function togglePinPresentation(name){
+    setPinnedPresentation(name,!isPinnedPresentation(name));
+    return isPinnedPresentation(name);
+  }
   function savedRecentPresentationNames(){
     var names=[];
     try{names=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(names)) names=[];
+    /* T435: the pinned ones first, then the rest in recent order */
+    var pins=pinnedPresentationNames();
+    names=pins.concat(names.filter(function(n){return pins.indexOf(n)<0;}));
     return names.filter(function(name){return !!presentationByName(name);})
-      .map(presentationSummary).filter(Boolean);
+      .map(function(name){
+        var p=presentationSummary(name);
+        if(p) p.pinned=pins.indexOf(name)>=0;
+        return p;
+      }).filter(Boolean);
   }
   function notePresentationOpen(name){
     if(!name) return;
@@ -782,6 +819,7 @@
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(rename(recent).slice(0,12)));
+    lsSet(PRESENT_PIN_KEY,JSON.stringify(rename(pinnedPresentationNames())));
     renameOpenPresentation(oldName,newName);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
@@ -793,6 +831,8 @@
     if(!Array.isArray(recent)) recent=[];
     recent=recent.filter(function(n){return n!==name;});
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent));
+    lsSet(PRESENT_PIN_KEY,JSON.stringify(pinnedPresentationNames()
+      .filter(function(n){return n!==name;})));
     closeOpenPresentation(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();

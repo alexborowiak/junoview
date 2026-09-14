@@ -1852,8 +1852,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # entrance; 20-notes-and-tables.js and deck.css change.
 # T436 (2026-09-14): several files open at once; 60-saving-and-
 # export.js, 50-review-and-overview.js, app.js and page.html change.
-EXPECTED_MD5 = "7a0b004470cc3ccfe3d5bcd1b7cefd83"
-EXPECTED_BYTES = 4204618
+# T435 (2026-09-14): pins in Recents; 10-decks.js, 50-review-and-
+# overview.js, app.js and app.css change.
+EXPECTED_MD5 = "db6dee11d7507084263bef6e4e8d2c79"
+EXPECTED_BYTES = 4211681
 
 
 def _render_example() -> str:
