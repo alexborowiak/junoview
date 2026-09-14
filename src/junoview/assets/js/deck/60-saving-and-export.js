@@ -220,6 +220,12 @@
     fileHandle=h||null;fileName=h?(h.name||''):'';
     if(h){idbPut(HKEY,h).catch(function(){});lsSet(HNKEY,fileFor,true);}
     else {idbDel(HKEY).catch(function(){});lsDel(HNKEY);}
+    /* T431: a file bound by hand settles what the boot readout was
+       waiting on -- "click to reopen" went on showing after a file had
+       been opened and saved, and its click then said "nothing to
+       reopen" */
+    if(fileWaits==='reopen') fileWaits='';
+    if(fileReopen&&(!name||fileReopen.name===name)) fileReopen=null;
   }
   function fileSync(){
     var nm=(pres&&pres.name)||'';
@@ -1078,7 +1084,15 @@
         if(ok) return h.getFile().then(function(f){return f.text();})
           .then(function(txt){fileRestore(txt,forName);});
         fileReopen={h:h,name:forName};
-        if(!deckHas(forName)){fileWaits='reopen';status();}
+        if(!deckHas(forName)){
+          fileWaits='reopen';status();
+          /* T431: SAID OUT LOUD. The page has just opened on a default
+             deck in this one's place, and the pill beside Save was the
+             only thing that knew where the real one was. */
+          toast('\u201c'+forName+'\u201d is in '+(h.name||'its file')
+            +' \u2014 click \u201cclick to reopen\u201d beside Save to '
+            +'bring it back',12000);
+        }
       });
     }).catch(function(){});
   }

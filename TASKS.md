@@ -8315,3 +8315,11 @@ gates are recorded in the completing commit.
   browser with the file's version, Cancel keeps both under a new name.
   A silent boot restore and a file holding several decks never ask.
   Driven live both ways.
+- [x] **T431 — The remembered file's deck is announced, and the reopen
+  readout clears.** A deck that lived only in its file came back after
+  a reload as a default deck plus a small "click to reopen" pill beside
+  Save, the one thing on the page that knew where the real deck was;
+  a toast says it now. And once a file is opened or picked by hand the
+  pill's wait is over: it went on saying "click to reopen" after a file
+  had been opened and saved, and its click then said "nothing to
+  reopen".
