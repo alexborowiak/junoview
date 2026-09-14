@@ -315,7 +315,12 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                          "has no required h."),
     "cell": (("x", "y"), "A frame showing a card from a notebook, named "
                          "by `ref`."),
-    "rect": (("x", "y"), "A drawn shape; `shape` picks which one."),
+    "rect": (("x", "y"), "A drawn shape; `shape` picks which one: absent "
+                         "is a rectangle, else ellipse, triangle, diamond, "
+                         "pentagon, hexagon, star, cross, arrow, heart, "
+                         "cloud, bubble, lightning, exclaim, question, or "
+                         "an open stroke that takes no fill: langle, "
+                         "rangle, lbrace, rbrace, lbracket, rbracket."),
     "image": (("x", "y"), "A placed picture, carried as a data URI."),
     "video": (("x", "y"), "A video or audio clip. `vkey` names its bytes "
                           "in the deck's media store, `poster` is the "

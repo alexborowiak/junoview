@@ -8153,3 +8153,13 @@ gates are recorded in the completing commit.
   is a file is renamed whether or not a draft copy fits. The standalone
   HTML export carries the deck data, so it can be opened again. Driven
   in Chromium with a stubbed File System Access API.
+- [x] **T419 — Brackets and braces in the shape gallery.** (User: "Having
+  things like large angle brackets and stuff is always really useful
+  but they are currently missing.") Six open strokes join the shapes:
+  angle brackets, curly braces and square brackets, left and right.
+  An open shape takes no fill (`SHAPE_OPEN`), draws with round ends,
+  and stretches with its box like every other path. In PowerPoint the
+  braces and square brackets are the presets of the same name; an angle
+  bracket, which PowerPoint has no preset for, goes as a two-leg
+  freeform the way a drawn stroke does. Schema in DECK-FORMAT.md and
+  deck_schema.py.
