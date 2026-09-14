@@ -8260,3 +8260,24 @@ gates are recorded in the completing commit.
   transparent is transparent whether the style says `none` or nothing;
   a style that ASKS for a ground (T314) still catches a box that lost
   it. Driven live: both decks standardise to no named findings.
+- [x] **T426 — A poster tile in the Home strip shows a readable name.**
+  Found driving T424. A poster's strip tile has a taller (portrait)
+  icon, which leaves its label one line where a slide tile's gets two,
+  so "3 columns · classic" wrapped and clipped to "3" and the strip
+  read as a row of digits. Each poster template carries a `short` name
+  the strip tile shows on one line at the slide tiles' size; the full
+  name stays on the tooltip. Driven live on an A0 page: every label
+  fits its box on one line.
+- [x] **T427 — Every row of the animation pane moves, and every row can
+  go.** (User, 2026-09-14: "I still can't change the order of
+  animations. Like these are stuck in place. I also can't delete these
+  as well.") Earlier and Later sat on a build's first row only; a
+  bullet's row and a page's row had nothing, and nothing on the pane
+  removed anything. A build row's Remove takes its animation off; a
+  page row moves its page through the book or takes it out; a bullet
+  row moves its paragraph through the text or takes it out — the words
+  themselves, so the slide and the show agree (plain, Markdown and
+  rich text; only a by-paragraph build, since a sentence is not a
+  line). The controls sit on a second line under the name, where they
+  no longer crush it. Driven live: a bullet moved down the text, a page
+  left its book, a build's animation came off.

@@ -985,6 +985,12 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   max-height:300px;}
 .deck.poster-page .lay-lb{font-size:9.5px;}
 .deck.poster-page .dbtn.lay{padding:5px;}
+/* T426: a poster's strip tile has a taller (portrait) icon, which
+   leaves its label ONE line where a slide tile's gets two -- so the
+   name must not wrap, and it is the template's short name (00-page.js)
+   at the slide tiles' size; the full name stays on the tooltip */
+.deck.poster-page .lay-strip .lay-lb{white-space:nowrap;
+  text-overflow:ellipsis;font-size:8px;}
 .dc-menuwrap{position:relative;}
 .dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff22;border-radius:8px;
@@ -2088,7 +2094,15 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .anim-step.anim-sub .anim-num{background:none;border:1px solid var(--amber);
   color:var(--amber);font-weight:600;}
 .anim-step.anim-sub .anim-name{font-size:12px;color:#c4d0da;}
-.anim-stepctr{flex:none;display:flex;flex-direction:column;gap:2px;}
+/* T427: THE CONTROLS ARE A SECOND LINE, under the name, on every row
+   that has them -- build rows and page or bullet rows alike. Beside the
+   name they crushed it to "- cha..." in a pane 250px wide; under it
+   the words stay readable and the three buttons always show. */
+.anim-step{flex-wrap:wrap;}
+.anim-stepctr{flex:1 0 100%;display:flex;flex-direction:row;
+  justify-content:flex-end;align-items:center;gap:3px;}
+.anim-stepctr.row{flex:none;}
+.anim-updown{display:flex;flex-direction:row;gap:3px;}
 .anim-stepctr .anim-mini{padding:2px 6px;font-size:10.5px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
