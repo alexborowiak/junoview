@@ -8163,3 +8163,7 @@ gates are recorded in the completing commit.
   bracket, which PowerPoint has no preset for, goes as a two-leg
   freeform the way a drawn stroke does. Schema in DECK-FORMAT.md and
   deck_schema.py.
+- [x] **T420 — One name for clones, and a dead rule gone.** The Layers
+  pane's Actions and the canvas menu still said "Every instance" and
+  "component" where the ribbon says clones (T409); they say "Its
+  clones" now. And `.anim-empty` outlived the hint it styled (T417).

@@ -2591,7 +2591,7 @@
            other instance and could cut this one loose from them, but it
            could not tell you they existed — the count only ever
            appeared inside a tooltip on a different row (T89). */
-        row('Every instance of this component…',String(cN),
+        row('Its clones\u2026',String(cN),   /* T420: one name everywhere */
           function(){cmpInstMenu(cInst.cmp);},
           'Every place in the deck it has been put, as a list — '
           +'pick one to go to that slide with the instance already '
