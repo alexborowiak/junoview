@@ -1792,8 +1792,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T246: document Find marks carry jv-doc and findClear unwraps only
 # those
 # T247: Find re-runs its term on sem:activate
-EXPECTED_MD5 = "5db5917f76553471c65f92697bb98050"
-EXPECTED_BYTES = 4163192
+# T422: the Find bar steps left of an open Variables pane
+EXPECTED_MD5 = "17911d163eb7981c1c6cf2d7b14916a5"
+EXPECTED_BYTES = 4163520
 
 
 def _render_example() -> str:

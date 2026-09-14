@@ -768,6 +768,11 @@ body:not(.light) .wj-none{color:var(--ink-3);}
   background:var(--paper);border:1px solid var(--line);border-radius:9px;
   padding:6px 8px;box-shadow:0 10px 30px #0000002e;}
 .docfind[hidden]{display:none;}
+/* T422: the Variables pane docks in the same corner (top 170px, right
+   14px, and above this bar in z-order), so with both open the count and
+   the prev/next/close buttons sat behind it. The bar steps left of the
+   pane while the pane is open. */
+body:has(#varspane:not([hidden])) .docfind{right:calc(14px + 280px + 12px);}
 .docfind>.bic{width:14px;height:14px;opacity:.6;flex:none;}
 .docfind-in{width:210px;border:none;background:none;outline:none;
   font-family:var(--sans);font-size:13px;color:var(--ink);}

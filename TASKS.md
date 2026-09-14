@@ -8194,3 +8194,11 @@ gates are recorded in the completing commit.
   its own first rows into view inside the menu's scroll. Driven live at
   1440×900: the Match rows sit inside the window after one click on
   More.
+- [x] **T422 — The Find bar is not hidden under the Variables pane.**
+  Found driving T246. Both dock at the top right and the pane stacks
+  above the bar, so with both open the count and the prev/next/close
+  buttons sat behind it — the close button's hit point landed on the
+  pane's own close icon. The bar steps left of the pane while the pane
+  is open (`body:has(#varspane:not([hidden])) .docfind`). Driven on the
+  example notebook: no overlap with both open, and the bar back in the
+  corner once the pane closes.
