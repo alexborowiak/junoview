@@ -1788,8 +1788,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # JS/CSS).
 # T275: one matchProp helper for the three copy loops; a model with no
 # named style no longer strips the target's
-EXPECTED_MD5 = "ab34ae75f8f619fdaa39f8bc2e8f8c66"
-EXPECTED_BYTES = 4161544
+# T421: cmRefit re-clamps the canvas menu after the More fold opens
+EXPECTED_MD5 = "a40cc71d854834f279fd91daae3263e0"
+EXPECTED_BYTES = 4162281
 
 
 def _render_example() -> str:

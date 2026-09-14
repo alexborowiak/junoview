@@ -8173,3 +8173,13 @@ gates are recorded in the completing commit.
   pane's Actions and the canvas menu still said "Every instance" and
   "component" where the ribbon says clones (T409); they say "Its
   clones" now. And `.anim-empty` outlived the hint it styled (T417).
+- [x] **T421 — The right-click menu's More rows run off the screen.**
+  Found driving T275. `floatAt` clamps the canvas menu to the window
+  when it opens, measured FOLDED; the 24 rows behind "More" then grew
+  it past the bottom edge, where nothing could be clicked or scrolled
+  to — on a 900px-tall screen every Match row, the clone rows and the
+  select-on-this-slide rows were unreachable from the right-click menu.
+  The fold re-clamps the menu after it opens (`cmRefit`) and scrolls
+  its own first rows into view inside the menu's scroll. Driven live at
+  1440×900: the Match rows sit inside the window after one click on
+  More.
