@@ -1703,13 +1703,21 @@ def test_a_rename_or_delete_does_not_strip_the_embedded_figures(out):
     # ONE saveProject() helper owns the embedAssets save; rename and
     # delete (File menu and rail bins alike) route through it (2026-08-23)
     assert out.count(
-        "APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})"
+        "      {presentations:embedAssets(deep(projectPres)),rev:projectRev})"
     ) == 1
-    assert "function saveProject(){" in out
-    # three since T450 added renamePresByName, the library's rename of a
-    # presentation you are NOT in -- the point is that every writer of
-    # projectPres still goes through the one helper, not how many there are
-    assert out.count("saveProject();") == 3
+    # T451: and the conflict retry must never re-post projectPres either
+    # -- it posts the SERVER's list with this window's change re-applied,
+    # because theirs is the embedded form and projectPres is not
+    assert "        var merged=projectApply(e.data.presentations,change);" in out
+    assert "        return APP.api('/api/save',{presentations:merged," in out
+    assert "function saveProject(change){" in out
+    # Three writers of projectPres, each through the one helper -- the
+    # point is that none of them posts its own body, not how many there
+    # are. T450 added the library's rename; T451 gave each one the
+    # CHANGE it is making, so a revision conflict can re-apply it.
+    assert out.count("saveProject();") == 0
+    assert out.count("    saveProject({drop:nm});") == 1
+    assert out.count("    saveProject({from:old,to:nm});") == 2
     # the idle consolidation that puts the figures back
     assert "function saveToProject(silent,embed){" in out
     assert "var body=(silent&&!embed)?merged:embedAssets(deep(merged));" in out

@@ -8553,3 +8553,27 @@ gates are recorded in the completing commit.
   entries, the history, the remembered name, the open list and the
   file binding. Driven live: renaming a presentation that was not on
   screen, duplicating one, and deleting the one that was.
+- [x] **T451 — A rename or a delete honours the project's revision.**
+  (Found while driving T450: the library's delete took a 409 from
+  `/api/save`, which is the server refusing a write that has not seen
+  another window's changes.) `saveProject` — the one helper a rename
+  and a delete both write through — posted the whole project list with
+  NO `rev` at all and swallowed every error. The server reads a missing
+  `rev` as "do not check" (it is what an old page still open in a tab
+  sends), so the one thing the revision was added for in 2026-08-22 — a
+  second window creating a deck while this one writes — was still
+  broken through this door: renaming or deleting anything erased that
+  deck without a word, and this tab was left a revision behind, so the
+  next autosave paid for a 409 round trip it did not need. It sends the
+  revision now, and carries the CHANGE it is making (`{drop:name}` or
+  `{from:old,to:new}`), so a conflict re-applies the same intent to the
+  list the other window wrote rather than losing it or flattening them
+  — posting THEIR list, never `projectPres`, because theirs is the
+  embedded form. And the window learns the decks it had never heard of:
+  resolving the conflict once was not enough, because the retry wrote
+  the other deck back while `projectPres` still did not contain it, and
+  the next full-list write — revision caught up, nothing left to refuse
+  it — erased it for good. They come in through `normPres`, the boot
+  list's own door, so nothing carries `emb` into `projectPres`. Driven
+  live with a second writer: a delete and a rename, each with the other
+  window's deck surviving.
