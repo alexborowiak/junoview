@@ -22,6 +22,8 @@ def test_a_pasted_picture_still_gets_the_row(out):
     assert ("        if(!from) from='pasted or dropped \\u2014 no file "
             "behind it';") in out
     assert "      pth.hidden=!from;" in out
-    # ...and the readout alone keeps its group on the ribbon
-    assert ("      var vis=false,kids=g.querySelectorAll(\n"
-            "        'button,input,select,.sh-drop,.fmt-path');") in out
+    # ...and the readout alone keeps its group on the ribbon. T453
+    # moved the selector into SEL, because a shelved group's controls
+    # have to be counted where they are sitting as well.
+    assert "    var SEL='button,input,select,.sh-drop,.fmt-path';" in out
+    assert "      var vis=false,kids=[].slice.call(g.querySelectorAll(SEL));" in out

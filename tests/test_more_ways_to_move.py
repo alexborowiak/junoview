@@ -54,7 +54,8 @@ def test_motion_keeps_going(out):
         assert f'id="{cid}"' in out, cid
     assert '<span class="rbn-grp rbn-motion rbn-compact" data-tab="animation"' \
         in out
-    assert ".rbn-motion{order:3;}" in out
+    # T453: Leaves early keeps rung 3, Motion moved to 4
+    assert ".rbn-motion{order:4;}" in out
     # the class goes on in a pass of its own (T446: in the editor too)
     assert "    if(s.annots&&s.annots.some(function(a){" in out
     assert "          el.classList.add('an-move-'+ma.motion);" in out

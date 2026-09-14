@@ -109,7 +109,8 @@ def test_it_leads_the_tab_and_the_rungless_groups_got_rungs(out):
     assert ".rbn-trans{order:0;}" in css
     assert ".rbn-anim{order:1;}" in css
     assert ".rbn-exit{order:3;}" in css
-    assert ".rbn-flipfx{order:6;}" in css
+    # T453 gave the shelf rung 6 and moved Page turn up one
+    assert ".rbn-flipfx{order:5;}" in css
 
 
 def test_the_buttons_follow_the_slide_not_the_selection(out):

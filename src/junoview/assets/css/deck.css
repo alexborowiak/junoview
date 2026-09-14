@@ -1548,13 +1548,74 @@ body.slide-editing .apptop{display:none;}
 .rbn-trans{order:0;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
-.rbn-motion{order:3;}     /* T385: after Disappear, before the slide */
-.rbn-flipfx{order:6;}
-/* the Whole slide and Order groups share Animation's rung and follow
-   it by source order: the effect first, then the slide, then the order
-   things take it in (T176, T182) */
-.rbn-build{order:3;}
-.rbn-order{order:4;}
+.rbn-motion{order:4;}     /* T385: after Leaves, before the slide */
+.rbn-flipfx{order:5;}
+/* T453: the choosers lead, the shelf they open into takes the middle,
+   and the two groups of VERBS go to the right-hand end (2026-09-14,
+   user: "put all the ones for whole slide and build order to the right
+   hand side"). They are the buttons you press rather than the options
+   you pick, so they keep a place of their own that no chooser can
+   push around. */
+.rbn-build{order:8;margin-left:auto;}
+.rbn-order{order:9;}
+/* ---- T453: THE SHELF ------------------------------------------------
+   One strip in the ribbon that a chooser's whole row moves into, so the
+   options land IN the bar rather than in a pop-up over the slide, and
+   only ever one row at a time. It takes the middle: the choosers are to
+   its left, the verb groups to its right, and it collapses to nothing
+   when it is empty so the ribbon looks exactly as it did. */
+/* The shelf gets a LINE OF ITS OWN while it is open, and no space at
+   all while it is not. Squeezed into the gap between the choosers and
+   the verb groups it had about 230px, which showed two and a half of
+   the thirteen movements -- and there is no gap to grow into, because
+   the row is already full. So the row wraps, but only while a shelf is
+   open and only for the shelf: a 100% basis puts it alone on line two,
+   which means line one is exactly the groups it always was, and the
+   house rule that ribbon BUTTONS never wrap is untouched. Closing it
+   restores nowrap and the ribbon's own height. */
+.edit-tools.ribbon:has(.rbn-shelf:not([hidden])){flex-wrap:wrap;
+  height:auto;min-height:92px;}
+/* LAST, whatever its markup position: at any other rung a full-width
+   line pushes the groups after it onto a THIRD line, which is how the
+   verb groups went off the bottom of the bar the first time. */
+.rbn-shelf:not([hidden]){flex:1 0 100%;order:99;}
+.rbn-shelf{order:99;min-width:0;display:flex;position:relative;
+  align-items:center;gap:9px;padding:4px 44px 4px 12px;
+  border-top:1px solid var(--chrome-line,#ffffff1f);
+  overflow-x:auto;overflow-y:hidden;}
+.rbn-shelf[hidden]{display:none!important;}
+.rbn-shelf-name{flex:none;color:var(--chrome-ink-2);
+  font:600 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
+.rbn-shelf-body{display:flex;align-items:center;flex:0 1 auto;min-width:0;}
+/* ONE LINE, not the group's two. A .rbn-row is a two-track grid that
+   flows down and then across, which is right inside a group 90px tall
+   and wrong on a shelf that has a whole width to spend: it showed three
+   of the thirteen movements and hid the rest in a second track nothing
+   could see. Here the row is a flex line and everything is on it. */
+.rbn-shelf-body>.rbn-row{display:flex;align-items:center;
+  height:auto;column-gap:var(--rbn-col-gap);}
+.rbn-shelf-body>.rbn-row>*{flex:none;}
+/* A tile STRIP is a scroll box inside its group -- a fixed height, wrap
+   on, overflow hidden, and little arrows to page through it. On the
+   shelf there is nothing to scroll past: it lays its tiles out in one
+   line and shows all of them, which is the whole point of coming here.
+   The arrows go with the scrolling. */
+.rbn-shelf-body .strip-frame{overflow:visible;width:max-content;
+  flex:none;}
+.rbn-shelf-body .strip-frame>.fx-strip{flex-wrap:nowrap;overflow:visible;}
+.rbn-shelf-body .strip-more,.rbn-shelf-body .strip-prev,
+.rbn-shelf-body .strip-next{display:none;}
+/* pinned to the far right of the strip. In the flow it landed wherever
+   the row's own box happened to end, which for a tile strip -- a scroll
+   box that reports a narrower width than it draws -- was on top of the
+   tiles. The shelf is the full width of the bar, so its right edge is
+   where a close button belongs anyway. */
+.rbn-shelf-close{position:absolute;right:10px;top:50%;
+  transform:translateY(-50%);flex:none;}
+/* the door that owns the shelf reads as pressed while it does */
+.rbn-grp.rbn-shelved .rbn-foldbtn{
+  background:color-mix(in srgb,var(--accent) 30%,transparent);
+  border-color:var(--accent,var(--cyan));}
 /* T182: the effect tiles, in the row. A tall cell spanning both rows
    (rbn-tall counts as two, like a stack), five tiles of icon over word
    the way PowerPoint's are, the one that is on lit. Disabled with

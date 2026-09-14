@@ -1053,11 +1053,19 @@ items snap to both. Guides, not ink: never printed or exported"
             data-fold-ic="exit">
             <span class="rbn-row">
               <span class="sh-drop tx-split" id="anim-outwrap" hidden>
+                <!-- T453: "also what is disappear?" (2026-09-14, user).
+                     It was named for what it does to the object rather
+                     than for what you are choosing, and it sat under a
+                     label that said the same word twice. It sends the
+                     selected thing AWAY partway through the slide -- a
+                     bullet you are done with, a picture the next one
+                     replaces -- so it is named for that. -->
                 <button class="dbtn rbn-sm" id="anim-out"
                   aria-pressed="false"
-                  title="Make this leave the slide on a click of its
- own. The caret sends it away as something else arrives instead"
-                  ><i data-ic="exit"></i> Disappear</button>
+                  title="Send this away partway through the slide, on a
+ click of its own, so it is not there for the rest. The caret sends it
+ away as something else arrives"
+                  ><i data-ic="exit"></i> Send it away</button>
                 <button class="dbtn rbn-sm tx-caret" id="anim-out-caret"
                   aria-label="When it goes" aria-haspopup="true"
                   aria-expanded="false"
@@ -1069,7 +1077,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="An object that leaves still costs a click, so it
  is part of the sequence like any other step"></span>
             </span>
-            <span class="rbn-lab">Disappear</span>
+            <span class="rbn-lab">Leaves early</span>
           </span>
           <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
                nothing said so (2026-09-04, user: "how do the
@@ -2565,6 +2573,25 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Table</span>
           </span>
+        </span>
+        <!-- T453: ONE SHELF, NOT A DROPDOWN EACH (2026-09-14, user:
+             "put all the ones for whole slide and build order to the
+             right hand side. Then each of these buttons opens up a
+             horizontal display of all the options ... Like how we had
+             it before, but instead of them all having a little
+             horizontal thing of options, it just appears for the one
+             that you click on out of transition, effect, time and
+             text, motion"). A chooser's row moves in here when you
+             click its door and moves back when you close it, so the
+             options land IN the ribbon rather than over the slide, and
+             only ever one row at a time. It sits between the choosers
+             and the groups that went to the right-hand end. -->
+        <span class="rbn-shelf" id="rbn-shelf" hidden>
+          <span class="rbn-shelf-name" id="rbn-shelf-name"></span>
+          <span class="rbn-shelf-body" id="rbn-shelf-body"></span>
+          <button class="dbtn rbn-ico rbn-shelf-close" id="rbn-shelf-close"
+            type="button" aria-label="Close these options"
+            title="Close these options"><i data-ic="exit"></i></button>
         </span>
       </div>
   <div class="deck-main">
