@@ -8250,3 +8250,13 @@ gates are recorded in the completing commit.
   the Home tab's one door to the poster templates and clicking it did
   nothing. A poster tile applies to the page now, as the Design menu's
   tiles do; Ctrl+Z undoes it. Driven live on an A0 page.
+- [x] **T425 — The standardiser reads through the default look.** Found
+  driving T278. Every template-born box carries `align:'left'` and
+  `bg:0`, and a style that says nothing about either means the
+  default — left, transparent — but `stdMatchesStyle` compared both
+  strictly, so a poster fresh from its template reported "7 of 7
+  Heading 2 boxes no longer match the style" and a deck of Title + text
+  slides said the same of its headings. Left is the default alignment;
+  transparent is transparent whether the style says `none` or nothing;
+  a style that ASKS for a ground (T314) still catches a box that lost
+  it. Driven live: both decks standardise to no named findings.

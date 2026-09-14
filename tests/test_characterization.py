@@ -1804,8 +1804,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T278: poster templates typed at a page scale the template seeds and
 # a style set keeps
 # T424: a poster tile on the Home strip applies its template
-EXPECTED_MD5 = "8fd262b25cc4d3fd768358467e882838"
-EXPECTED_BYTES = 4169171
+# T425: the standardiser reads through the default look (left,
+# transparent)
+EXPECTED_MD5 = "de5167dd395527c93dd2e0a27f8a1837"
+EXPECTED_BYTES = 4169650
 
 
 def _render_example() -> str:

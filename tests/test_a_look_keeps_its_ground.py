@@ -65,8 +65,14 @@ def test_a_saved_set_keeps_the_palette_its_colours_mean(out):
 def test_the_standardiser_sees_the_ground(out):
     """A box that lost its style's background is a mismatch, and adopting
     a band samples the ground so a slate band stays slate."""
-    assert ("    if(((a.bg===0)?'none':(a.bg?(a.bgc||''):''))!==(d.bg||'')) "
-            "return false;") in out
-    assert "    if((a.bdc||'')!==(d.bdc||'')) return false;" in out
+    # T425: read through the default look -- transparent is transparent
+    # whether the style says 'none' or nothing, and a style that ASKS
+    # for a ground still catches a box that lost it
+    assert ("    var abg=(a.bg===0)?'':(a.bg?(a.bgc||''):''),dbg=d.bg||'';\n"
+            "    if(dbg==='none') dbg='';\n"
+            "    if(abg!==dbg) return false;") in out
+    assert ("    var abd=a.bdc||'',dbd=d.bdc||'';\n"
+            "    if(abd==='none') abd=''; if(dbd==='none') dbd='';\n"
+            "    if(abd!==dbd) return false;") in out
     assert "     ['lh',0],['pspace',0],['bg',''],['bdc','']].forEach(function(pr){" \
         in out
