@@ -8639,3 +8639,58 @@ gates are recorded in the completing commit.
   and a test fails if a built-in ever grows a palette without the
   sentence being widened back. Driven: Box background to green recolours
   the text box.
+
+## Left open from the 2026-09-14 session (audited at the end of it)
+
+Every ask from that day landed as T432-T456 and each is ticked above.
+These are the loose ends it *raised* rather than closed: places where a
+deliberate decision was made to stop, so the next person does not have to
+re-derive why.
+
+- [ ] **T457 — The six built-in style sets carry no palette.** T456
+  narrowed the Deck colours note because Clean, Editorial, Bold,
+  Academic, Minimal and Poster define type and not one of them defines
+  `tokens` — so applying one has never moved a colour, while a set you
+  save does carry your palette. `applyStyleSet` already swaps tokens
+  when a set has them; the work is designing six palettes. NOT done
+  because it changes what an existing action does: applying "Bold" for
+  its fonts would suddenly recolour your pages. Wants a decision, not
+  just code. (`test_box_background_and_the_set_promise.py` fails if a
+  built-in grows a palette without the note being widened back.)
+
+- [ ] **T458 — A new shape still arrives coral, not in the deck's line
+  colour.** T455 made "Lines and edges" govern `.an-rect`, but its
+  default stayed `#ff6b57` so no existing deck changed under anybody.
+  That means the token governs only once you have changed it, and a
+  freshly drawn box is still warm-orange rather than the deck's. The
+  same question is open for every other default that is a literal
+  rather than a role.
+
+- [ ] **T459 — "Box background" reaches two kinds of box, not all of
+  them.** T455/T456 wired the text box and the notebook frame. A
+  table's header fill is still a `currentColor` mix and a filled shape
+  still carries its own colour, so neither follows the deck. Decide
+  which of those SHOULD be a "box" before wiring more.
+
+- [ ] **T460 — The shelf is on the Animation and Images choosers only.**
+  T453 routes a group into the ribbon's shelf when it is `rbn-compact`
+  — the ones the user pointed at (Transition, Effect, Timing, Leaves
+  early, Motion, Shapes). Every other group still opens the old pop-up
+  when the window folds it, which is deliberate (a group folded for
+  want of room has no room for a shelf either), but the user did say
+  "this same idea should be applied to lots of other slides as well".
+  Decide which groups are choosers and mark them compact.
+
+- [ ] **T461 — More automatic ways to make a slide come alive.** T445
+  shipped thirteen movements with six numbers each and seven one-click
+  whole-slide treatments, against "I want this to be able to have lots
+  of automatic things to be able to make slides comes alive". That ask
+  has no natural end: more treatments, per-object-kind suggestions, and
+  a way to audition a whole slide's animation without presenting it are
+  the obvious next ones.
+
+- [ ] **T462 — More flexibility in the open-items bar.** T448 gave it
+  three docks and three toggleable sections, against "customise a lot
+  about the way you want things. Needs lots of user flexability".
+  Still fixed: the order of the sections, the bar's width, what a row
+  shows, and whether versions list more than the last six.
