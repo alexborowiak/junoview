@@ -1892,8 +1892,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T454: the shelf's row is the scroller, with a fade when it overflows
 # T455: the five deck colours are written onto the slide and the CSS
 # defaults read them
-EXPECTED_MD5 = "7c836f66e0a9c89dd1dd10b01b93523f"
-EXPECTED_BYTES = 4303174
+# T456: the frame follows Box background, and the note stops promising
+# built-in sets swap the palette
+EXPECTED_MD5 = "8bfa6ec151ceb1efa3d04d1e8dc05804"
+EXPECTED_BYTES = 4303929
 
 
 def _render_example() -> str:
