@@ -8364,3 +8364,11 @@ gates are recorded in the completing commit.
   Closing the tab or reloading raises the browser's leave-site prompt
   in those cases; closing the deck's row in the rail asks, and OK saves
   first. A deck merely opened this visit never asks. Driven live.
+- [x] **T440 — "From notebook", greyed without a notebook.** (User,
+  2026-09-14: "calling the 'notebook cell' figures is confusing. It
+  should be 'from notebook', and be greyed out if there are no
+  notebooks that are open.") The Insert button was named for the thing
+  in the notebook, not for what it does. It is "From notebook" now, and
+  so is the drawing group's word for the tool. With no notebook open,
+  it and the flip book's "+ Figures" are disabled and the title says
+  to open one; a notebook opening or closing re-judges them.

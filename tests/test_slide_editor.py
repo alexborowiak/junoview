@@ -44,7 +44,7 @@ def test_presentation_opens_in_editor_with_one_mode_toggle(out):
     assert out.count("openDeck('edit')") >= 2
     # the "+ Notebook cell" tool (now a plain tool, not a cyan bigcell), the
     # "+ Shapes" dropdown, and Present relocated into the slide tool bar
-    assert 'data-tool="cell"' in out and "Notebook cell" in out
+    assert 'data-tool="cell"' in out and "From notebook" in out   # T440
     assert "et-bigcell" not in out
     # the shapes are a strip of tiles since T197
     assert 'id="shape-strip"' in out and "var SHAPE_LIST" in out

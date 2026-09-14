@@ -3165,7 +3165,7 @@
     if(stc){
       stc.hidden=(t==='select');
       var word={text:'Text box',arrow:'Arrow',rect:'Shape',line:'Line',
-        cell:'Notebook cell',flip:'Flip book',table:'Table',
+        cell:'From notebook',flip:'Flip book',table:'Table',
         guide:'Guide box',draw:'Freehand'}[t]||t;
       if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
         word=styleDef(pendingStyle).label+' box';

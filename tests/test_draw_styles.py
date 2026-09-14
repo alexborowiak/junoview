@@ -212,7 +212,7 @@ def test_button_names_say_what_they_do(out):
     # cell option, that is gone"): the frame can still hold a picture,
     # but the notebook is what the button is for and the word people
     # look for
-    assert "Notebook cell</button>" in out
+    assert "From notebook</button>" in out   # T440
     assert "> Object</button>" not in out
     assert "Text</button>" in out
     assert "Text box</button>" not in out

@@ -1835,8 +1835,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # overview.js and 60-saving-and-export.js change.
 # T434 (2026-09-14): the close guard; 10-decks.js, 50-review-and-
 # overview.js and 60-saving-and-export.js change.
-EXPECTED_MD5 = "0937603c936a8b303edcc88d31f2b04d"
-EXPECTED_BYTES = 4196206
+# T440 (2026-09-14): From notebook, greyed without a notebook;
+# deck.html, help.html, 25-selecting.js, 60-saving-and-export.js and
+# 99-boot.js change.
+EXPECTED_MD5 = "fb7fef2addd6fc74117a2d4eae22017c"
+EXPECTED_BYTES = 4197588
 
 
 def _render_example() -> str:
