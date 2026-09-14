@@ -2366,7 +2366,11 @@
       /* per-output fold stubs are filter chrome, not content */
       $$('.ot-stub',clone).forEach(function(x){x.remove();});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
-      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
+      /* T248: the pin and the mark go too. A clone has no card id, so
+         a press here derived "" and persisted a mark for nothing; the
+         two live on the source card and its outline row. */
+      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote,'
+        +'.cell-pin,.cell-mark',clone)
         .forEach(function(x){x.remove();});
       body.appendChild(clone);
       /* cloneNode does not copy listeners: re-wire the clone so its code
@@ -6450,9 +6454,13 @@
       if(only) section.appendChild(only.cloneNode(true));
     }
     /* clones: drop per-cell eyes (no way back) and add-note pencils (their
-       listeners don't survive cloneNode; notes belong on the source tab) */
-    $$('.cell-eye,.card-addnote',section).forEach(function(b){
-      if(b.parentNode) b.parentNode.removeChild(b);});
+       listeners don't survive cloneNode; notes belong on the source tab).
+       T248: and the pin and the mark, for the same reason -- wired here
+       they repainted only the clone and left the source document stale
+       until a reload; the source card is where they act. */
+    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark',section)
+      .forEach(function(b){
+        if(b.parentNode) b.parentNode.removeChild(b);});
     $$('.card.cell-off',section).forEach(function(c){
       c.classList.remove('cell-off');});
     /* cards default to opacity:0 and are revealed by initShell's scroll

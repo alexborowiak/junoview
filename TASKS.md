@@ -5163,7 +5163,7 @@ option. Then where has the ability to refresh all images gone?"
   visible shell, and a term the first has nowhere read "nothing found"
   on switching back.
 
-- [ ] **T248 - Pin and mark have one source-cell identity in every
+- [x] **T248 - Pin and mark have one source-cell identity in every
   view.**
   Review, 2026-09-04. Tree clones remove their card ids but retain and
   rewire the new pin/mark buttons, so a click derives the empty id and
@@ -5172,6 +5172,12 @@ option. Then where has the ability to refresh all images gone?"
   reload. Either omit these controls from derived views or route every
   click through a stable source-cell id and repaint every live view and
   sidebar together.
+  *Done 2026-09-14*, the first way: a derived view is a view of the
+  source cell, and the pin and the mark act on that cell, so the tree
+  node and the plot-trace clone drop the two buttons with the eye and
+  the add-note pencil they already dropped. Driven on the example
+  notebook: 27 pins on the source cards, 0 in an expanded tree node, 0
+  across a plot trace's five cards.
 
 - [ ] **T249 - The widget does not show dead pin and mark buttons.**
   Review, 2026-09-04. `render_item()` now emits pin and mark controls for

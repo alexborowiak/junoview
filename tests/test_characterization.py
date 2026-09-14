@@ -1793,8 +1793,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # those
 # T247: Find re-runs its term on sem:activate
 # T422: the Find bar steps left of an open Variables pane
-EXPECTED_MD5 = "17911d163eb7981c1c6cf2d7b14916a5"
-EXPECTED_BYTES = 4163520
+# T248: tree and plot-trace clones drop the pin and mark buttons
+EXPECTED_MD5 = "b9cb71f3da62a273b3a5e60e149f6e65"
+EXPECTED_BYTES = 4163990
 
 
 def _render_example() -> str:
