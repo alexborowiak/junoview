@@ -75,7 +75,7 @@ def test_insert_is_tiles_a_named_cell_and_a_drawing_group(out):
     assert "if(at==='images'||at==='text') cg.setAttribute('data-tab',at);" in out
     assert "stc.innerHTML='<span><b>Drawing: '+esc(word)+'</b></span>'" in out
     assert ".deck.erc-tight .et-status span+span{display:none;}" in out
-    assert "Notebook cell</button>" in out
+    assert "From notebook</button>" in out   # T440
     assert 'id="ins-chart"' not in out and "var ic2=$('#ins-chart');" not in out
     # ...and the shapes are tiles of their own since T197 ("the shapes
     # should be on their own")

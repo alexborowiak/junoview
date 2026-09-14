@@ -2598,23 +2598,20 @@
       10000);
     return true;
   }
-  function openDeckFile(){
-    if(window.showOpenFilePicker){
-      window.showOpenFilePicker({
-        types:[{description:'Junoview presentation',
-          accept:{'text/html':['.html','.junoview'],
-            'application/json':['.json']}}],
-        multiple:false
-      }).then(function(hs){
-        var h=hs&&hs[0]; if(!h) return;
+  /* T436: SEVERAL AT ONCE (2026-09-14, user: "the ability to open
+     multiple notebook/presentations at once would be a slay out of
+     10"). The picker takes many; each file is opened in turn -- its
+     deck lands, and a single-deck file binds to the deck it opened,
+     the way one file always did -- and the last one is on screen. */
+  function openDeckHandles(hs){
+    var opened=0,last='';
+    return hs.reduce(function(chain,h){
+      return chain.then(function(){
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
             var n=fileDeckCount(txt);
             if(!importDeckText(txt,false)) return;
-            /* T433: a bundle from before a file held one deck is
-               opened INTO the browser and left alone -- binding it
-               would make the next Save write one deck over all of
-               them */
+            opened++;
             if(bundleOpened(n,f.name||'')) return;
             /* the handle is what makes Save write back to this very
                file -- bound to the deck it opened (T416; T261 before
@@ -2626,9 +2623,28 @@
                file; the opened one kept whatever name was inside) */
             followFileName();
             setTarget('file');
-            toast('Opened \u2014 Save now writes back to '+fileName);
+            last=fileName;
           });
         });
+      });
+    },Promise.resolve()).then(function(){
+      if(opened>1)
+        toast('Opened '+opened+' files \u2014 each presentation saves '
+          +'back to its own file',7000);
+      else if(opened&&last)
+        toast('Opened \u2014 Save now writes back to '+last);
+    });
+  }
+  function openDeckFile(){
+    if(window.showOpenFilePicker){
+      window.showOpenFilePicker({
+        types:[{description:'Junoview presentation',
+          accept:{'text/html':['.html','.junoview'],
+            'application/json':['.json']}}],
+        multiple:true
+      }).then(function(hs){
+        if(!hs||!hs.length) return;
+        return openDeckHandles(hs);
       }).catch(function(e){
         /* T414: a cancelled picker is silent; anything else is SAID.
            This swallowed every failure, so a file that would not open
@@ -2645,11 +2661,16 @@
     var fi=document.getElementById('deckfile');
     if(!fi) return;
     fi.addEventListener('change',function(){
-      var f=this.files&&this.files[0];
+      var files=Array.prototype.slice.call(this.files||[]);
       this.value='';
-      if(!f) return;
+      /* T436: several at once, one after the other */
+      files.reduce(function(chain,f){
+        return chain.then(function(){return openDeckInputFile(f);});
+      },Promise.resolve());
+    });
+    function openDeckInputFile(f){
       var nm=f.name||'';
-      f.text().then(function(txt){
+      return f.text().then(function(txt){
         var n=fileDeckCount(txt);
         if(!importDeckText(txt,false)) return;
         if(bundleOpened(n,nm)) return;   /* T433 */
@@ -2679,7 +2700,7 @@
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });
-    });
+    }
   })();
   menuAction('#mi-discard',function(){
     cancelDraftWrite();   /* a pending write would resurrect the discard */
@@ -3272,7 +3293,30 @@
   })();
 
   /* ---------- tabs opened / closed while the page lives ---------- */
+  /* T440: THE NOTEBOOK DOORS GREY OUT WITHOUT A NOTEBOOK (2026-09-14,
+     user: "calling the 'notebook cell' figures is confusing. It should
+     be 'from notebook', and be greyed out if there are no notebooks
+     that are open"). The Insert button and the flip book's "+ Figures"
+     both pick from an open notebook's cards; with none open they led
+     to an empty picker. The title says what to do instead. */
+  function nbDoorsSync(){
+    var open=!!(APP.order&&APP.order.length);
+    [['#et-cell','Draw a frame, then pick a figure from a notebook to '
+        +'fill it \u2014 or a picture from this computer, the clipboard, '
+        +'or a path'],
+     ['#fp-add-cells','Pick figures from your notebook \u2014 click as '
+        +'many as you want, in order'],
+     ['#fmt-figures','Pick figures from a notebook \u2014 click as many '
+        +'as you want, in order \u2014 and each becomes a page of this '
+        +'book']].forEach(function(d){
+      var b=$(d[0]); if(!b) return;
+      b.disabled=!open;
+      b.title=open?d[1]:('Open a notebook first \u2014 this places its '
+        +'figures, tables and notes');
+    });
+  }
   document.addEventListener('sem:shell',function(e){
+    nbDoorsSync();
     if(e.detail.replaced){
       /* the notebook was reloaded: what every frame showed until now
          becomes the "previous figure" it can revert to */
@@ -3298,6 +3342,7 @@
     else renderPresTabs();
   });
   document.addEventListener('sem:shellclosed',function(e){
+    nbDoorsSync();
     /* invalidation point 2: frames fall back to the embedded copy */
     dropFrameCache(e.detail.stem);
     /* T306: a reload can add or remove figures, and a close ends

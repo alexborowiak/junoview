@@ -3037,11 +3037,14 @@
         }
       });
     }
-    /* ---- T385: MOTION THAT KEEPS GOING. One class per item, in the
-       show only; the editor stays still so a wobbling box can be
-       grabbed. A pass of its own, like the builds above, so no kind's
-       branch can forget it. */
-    if(mode==='view'&&s.annots&&s.annots.some(function(a){
+    /* ---- T385: MOTION THAT KEEPS GOING. One class per item. A pass
+       of its own, like the builds above, so no kind's branch can forget
+       it. T446: IN THE EDITOR TOO (2026-09-14, user: "just applied some
+       motions to things and they did not work"). It played in the show
+       only, so applying one changed nothing on screen and read as
+       broken. The selected item alone stays still (deck.css), so a
+       wobbling box can still be grabbed. */
+    if(s.annots&&s.annots.some(function(a){
       return a&&a.motion;})){
       $$('.an-item[data-idx]',layer).forEach(function(el){
         var raw=el.getAttribute('data-idx');

@@ -35,25 +35,28 @@ def test_add_is_the_first_control_and_a_tile():
     ids = re.findall(r'\bid="([a-z0-9-]+)"', _row(html, "Picture"))
     assert ids[0] == "fmt-figures", ids[:3]
     assert 'class="fx-tile big-tile rbn-tall" id="fmt-figures"' in html
-    assert "<span>Add</span></button>" in html
+    assert "<span>Figures</span></button>" in html   # T439
     # rbn-tall is what makes it span both rows AND count as two columns
     assert ".rbn-row>#fmt-figures.big-tile{width:var(--rbn-tile-w);" \
         in assets.deck_css()
 
 
-def test_the_options_are_in_it(out):
-    assert "  function flipAddMenu(btn,idx){" in out
-    assert "    menuHead(m,'put figures in this book');" in out
-    assert "    row('Figures from a notebook\\u2026','cellcard'," in out
-    assert "    row('Pictures from this computer\\u2026','image'," in out
-    assert "    menuHead(m,'the pages it has');" in out
-    assert "    row('Reorder and name them\\u2026','list'," in out
-    # inside #deck, on the overlay stack
-    assert "    deckEl.appendChild(m);\n    overlayShow(btn,m);floatMenu(btn,m);" in out
-    # a hidden leftover must not read as open, or the next press closes nothing
-    assert ("      if(open&&!open.hidden)"
-            "{overlayHide(open);open.remove();return;}") in out
-    assert "      if(open) open.remove();" in out
+def test_the_options_are_on_the_row(out):
+    """T439: the three other doors stand beside the tile, not in a
+    menu behind it (2026-09-14, user: "the options that are there with
+    the add need to be not hidden under a menu")."""
+    assert "flipAddMenu" not in out
+    assert "flip-add-menu" not in out
+    for cid in ("fmt-flip-imgs", "fmt-flip-pages", "fmt-flip-own"):
+        assert f'id="{cid}" hidden' in out, cid
+        assert f"'#{cid}':'flip'" in out, cid
+    assert "    door('#fmt-figures',function(idx){startPick(idx,true);});" in out
+    assert "    door('#fmt-flip-pages',function(idx){showFlipPane(true,idx);});" \
+        in out
+    assert "      if(pgF.own) flipRelink(bk,pgAt); else flipUnlink(bk,pgAt);" \
+        in out
+    # the own-object door names the page showing and which way it goes
+    assert "          +(pgF.own?'Back in book':'Own object');" in out
 
 
 def test_a_flip_book_has_no_colour(out):

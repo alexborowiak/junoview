@@ -16,6 +16,7 @@
      existing. These calls keep the relative order they ran in when they
      were scattered mid-file. */
   initShellRegistry();        /* every notebook the page carries */
+  nbDoorsSync();              /* the notebook doors, greyed without one (T440) */
   initFirstPresentation();    /* the presentation the page opens with */
   /* app.js paints the welcome before this file loads; redraw it now the
      SemApp.deck* hooks and the registry can answer its questions */

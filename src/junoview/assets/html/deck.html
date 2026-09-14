@@ -1471,11 +1471,15 @@ items snap to both. Guides, not ink: never printed or exported"
                    it Object because the frame can hold a picture too;
                    the chooser still offers that, but the notebook is
                    what this button is for and the word people look for. -->
+              <!-- T440: "From notebook" (2026-09-14, user: "calling
+                   the 'notebook cell' figures is confusing. It should
+                   be 'from notebook', and be greyed out if there are no
+                   notebooks that are open"). nbDoorsSync greys it. -->
               <button class="dbtn et rbn-sm" id="et-cell" data-tool="cell"
                 aria-pressed="false"
                 title="Draw a frame, then pick a figure from a notebook to
  fill it &mdash; or a picture from this computer, the clipboard, or a
- path"><i data-ic="cellcard"></i> Notebook cell</button>
+ path"><i data-ic="cellcard"></i> From notebook</button>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
@@ -2383,11 +2387,28 @@ items snap to both. Guides, not ink: never printed or exported"
                    called ‘+ Add’, and then there are the options
                    there"). An empty flip book is a hole, so the door
                    that fills it is the first thing on the group. -->
+              <!-- T439: THE OPTIONS ARE ON THE ROW, NOT IN A MENU
+                   (2026-09-14, user: "for flip books, the options that
+                   are there with the add need to be not hidden under a
+                   menu, but need to be visible by default"). The tile
+                   is the notebook door; the other three stand beside
+                   it. -->
               <button class="fx-tile big-tile rbn-tall" id="fmt-figures"
-                hidden aria-haspopup="true" aria-expanded="false"
-                title="Put figures in this flip book — from a
- notebook or from your computer — and reorder or name the ones it
- already has"><i data-ic="plus"></i><span>Add</span></button>
+                hidden
+                title="Pick figures from a notebook — click as many as
+ you want, in order — and each becomes a page of this
+ book"><i data-ic="cellcard"></i><span>Figures</span></button>
+              <button class="dbtn etm" id="fmt-flip-imgs" hidden
+                title="Add pictures from this computer as pages. You can
+ pick several at once"><i data-ic="image"></i> Pictures&#8230;</button>
+              <button class="dbtn etm" id="fmt-flip-pages" hidden
+                title="Open this book&rsquo;s pages: drag them into order,
+ give them names, and tie text or objects to one of them"
+                ><i data-ic="film"></i> Pages&#8230;</button>
+              <button class="dbtn etm" id="fmt-flip-own" hidden
+                title="Take the page showing out of the book&rsquo;s box
+ as an object you can move, resize, fade or crop on its own. It still
+ shows with this page"><i data-ic="unlink"></i> Own object</button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the

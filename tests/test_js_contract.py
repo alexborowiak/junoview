@@ -82,9 +82,6 @@ RUNTIME_IDS = {
     # close like cmp-inst-menu (40-captions-and-components.js
     # cmpMakeMenu and cmpAddMenu)
     "cmp-make-menu", "cmp-add-menu",
-    # "+ Add" on a flip book: 45-images.js flipAddMenu builds it on
-    # open and removes it on close, exactly like the canvas menu (T234).
-    "flip-add-menu",
     # the layout-ideas chooser, built on open and removed on close like
     # the two menus above (35-arranging.js openLayoutIdeas, T131)
     "lay-ideas",

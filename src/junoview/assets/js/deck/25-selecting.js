@@ -30,7 +30,9 @@
     '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
     '#fmt-chartwrap':'chart',         /* the Chart pane's door (T322) */
     '#fmt-tablewrap':'table',         /* the Table pane's door (T324) */
-    '#fmt-figures':'flip'
+    '#fmt-figures':'flip',
+    /* T439: the book's other three doors, on the row beside the tile */
+    '#fmt-flip-imgs':'flip','#fmt-flip-pages':'flip','#fmt-flip-own':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
@@ -595,8 +597,14 @@
     var pth=$('#fmt-path');
     if(pth){
       var from='';
-      if(kind==='image') from=(typeof picAddr==='function'&&picAddr(a))
-        ||a.fname||a.psrc||'';
+      if(kind==='image'){
+        from=(typeof picAddr==='function'&&picAddr(a))
+          ||a.fname||a.psrc||'';
+        /* T438: SAID EVEN WHEN THERE IS NONE. A pasted picture has no
+           path, and the row used to vanish -- which reads as "the tab
+           does not show paths" rather than "this one has none". */
+        if(!from) from='pasted or dropped \u2014 no file behind it';
+      }
       else if(isNum&&provRef(a)){
         var pref=provRef(a),ci2=resolveRef(pref),po=provOf(a);
         var ff=(kind==='flip')?(flipFrames(a)[a.at||0]||{}):{};
@@ -610,6 +618,23 @@
         pth.querySelector('b').textContent=(typeof midElide==='function')
           ?midElide(String(from),46):from;
         pth.title='From '+from;
+      }
+    }
+    /* T439: the flip book's own-object door names the page showing
+       and which way it goes; a book with no pages has none to offer */
+    var fo=$('#fmt-flip-own');
+    if(fo&&kind==='flip'){
+      var pgAt=a.at||0,pgF=flipFrames(a)[pgAt];
+      fo.hidden=!pgF;
+      if(pgF){
+        fo.innerHTML=bic(pgF.own?'link':'unlink')+' '
+          +(pgF.own?'Back in book':'Own object');
+        fo.title=pgF.own
+          ?('Page '+(pgAt+1)+' goes back into the book\u2019s box as an '
+            +'ordinary page')
+          :('Takes page '+(pgAt+1)+' out of the book\u2019s box as an '
+            +'object you can move, resize, fade or crop on its own. It '
+            +'still shows with this page');
       }
     }
     show('#fmt-lock',isNum,isNum&&pinned(a));
@@ -742,7 +767,11 @@
        MEASURES the row, which is what the old ordering was protecting
        (2026-08-25, ribbon layouts). */
     $$('.rbn-grp',bar).forEach(function(g){
-      var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
+      /* T438: the provenance readout is content too -- a pasted
+         picture has no refresh button and no Source door, and its
+         group was hidden with the one line the tab exists to show */
+      var vis=false,kids=g.querySelectorAll(
+        'button,input,select,.sh-drop,.fmt-path');
       for(var i=0;i<kids.length;i++){
         var n=kids[i],blocked=false;
         /* A FOLD DOOR IS NOT CONTENT, AND THE DRAWER IT OPENS IS NOT A
@@ -3165,7 +3194,7 @@
     if(stc){
       stc.hidden=(t==='select');
       var word={text:'Text box',arrow:'Arrow',rect:'Shape',line:'Line',
-        cell:'Notebook cell',flip:'Flip book',table:'Table',
+        cell:'From notebook',flip:'Flip book',table:'Table',
         guide:'Guide box',draw:'Freehand'}[t]||t;
       if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
         word=styleDef(pendingStyle).label+' box';

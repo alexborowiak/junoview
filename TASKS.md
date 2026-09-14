@@ -8364,3 +8364,47 @@ gates are recorded in the completing commit.
   Closing the tab or reloading raises the browser's leave-site prompt
   in those cases; closing the deck's row in the rail asks, and OK saves
   first. A deck merely opened this visit never asks. Driven live.
+- [x] **T440 — "From notebook", greyed without a notebook.** (User,
+  2026-09-14: "calling the 'notebook cell' figures is confusing. It
+  should be 'from notebook', and be greyed out if there are no
+  notebooks that are open.") The Insert button was named for the thing
+  in the notebook, not for what it does. It is "From notebook" now, and
+  so is the drawing group's word for the tool. With no notebook open,
+  it and the flip book's "+ Figures" are disabled and the title says
+  to open one; a notebook opening or closing re-judges them.
+- [x] **T438 — An image's Object tab says where it came from first.**
+  (User, 2026-09-14: "when clicking on an object that is an image, it
+  needs to tell you the path as the first thing in that tab.") T281
+  wrote the Source group to lead, but Arrange, History and Size & place
+  carry flex order 0 and Source carried 2, so it sat fourth; it leads
+  now. A pasted picture, which has no path, used to lose the row (and
+  its group) altogether — it says "pasted or dropped — no file behind
+  it" in the same place.
+- [x] **T439 — The flip book's doors are on the row, not in a menu.**
+  (User, 2026-09-14: "for flip books, the options that are there with
+  the add need to be not hidden under a menu, but need to be visible by
+  default.") T234's "+ Add" tile hid three things behind a menu. They
+  are four buttons on the Picture group now: Figures (the tile, a
+  notebook door — greyed without a notebook), Pictures…, Pages…, and
+  the page showing as its own object or back in the book, named for
+  the page and the direction. Every ribbon layout seats them beside the
+  tile. Driven live.
+- [x] **T446 — A motion plays in the editor too, and beside an
+  entrance.** (User, 2026-09-14: "just applied some motions to things
+  and they did not work.") Wobble, Float and Pulse played in the show
+  only, so applying one changed nothing on screen and read as broken.
+  They play in the editor now; the selected item alone stays still so
+  it can be grabbed. And an item with both an entrance and a motion
+  got only the motion, because both classes set `animation` and the
+  later rule won — the fifteen pairs list both, the entrance first and
+  the motion from where it ends. Driven live.
+- [x] **T436 — Several notebooks or presentations open at once.**
+  (User, 2026-09-14: "the ability to open multiple notebook/
+  presentations at once would be a slay out of 10.") The .junoview
+  picker and its `<input>` fallback take many files and open them one
+  after another — each single-deck file binding to the deck it opened,
+  the last one on screen; the app's folder listing opens a notebook and
+  keeps the list up on Ctrl+click, so the next one is a click away; and
+  a Ctrl+click on a library row puts that presentation on the open
+  list without leaving the dialog. The notebook `<input>` already took
+  many. Driven live.

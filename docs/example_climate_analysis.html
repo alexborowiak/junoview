@@ -5133,6 +5133,12 @@ body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
+/* T438: ON OBJECT, THE SOURCE LEADS (2026-09-14, user: "when clicking
+   on an object that is an image, it needs to tell you the path as the
+   first thing in that tab"). The markup put the group first in
+   intent (T281) but Arrange, History and Size & place carry order 0,
+   so it sat fourth. Home's Sources group keeps its seat above. */
+.rbn-grp.rbn-sources[data-tab="object"]{order:-1;}
 .rbn-show{order:3;}
 /* T373: Spacing follows Layout, which is where it lived as a run */
 .rbn-spacing{order:2;}
@@ -6040,6 +6046,9 @@ select#fmt-font[hidden]{display:none;}
 .an-move-wobble{animation:an-wobble 1.6s ease-in-out infinite;}
 .an-move-bob{animation:an-bob 2.6s ease-in-out infinite;}
 .an-move-pulse{animation:an-pulse 1.8s ease-in-out infinite;}
+/* T446: the selected item stays still in the editor, so it can be
+   grabbed; everything else moves as it will in the show */
+body.slide-editing .an-item.sel[class*="an-move-"]{animation:none;}
 /* ---- TEXT BUILDS: the pieces one box arrives in ----------------------
    `.an-part` is a RENDER-TIME wrapper (17-text-builds.js). It never
    reaches the model -- sanitizeRich unwraps it, the caret never enters
@@ -6083,6 +6092,27 @@ select#fmt-font[hidden]{display:none;}
   .an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,.an-anim-turn,
   .an-move-wobble,.an-move-bob,.an-move-pulse{animation:none!important;}
 }
+/* T446: AN ENTRANCE AND A MOTION ON ONE ITEM. Both classes set
+   `animation`, so whichever rule came later in this file won and the
+   other never played -- an item that flew in and wobbled only wobbled.
+   Both, in order: the entrance once, then the motion from where the
+   entrance ended. After the reduced-motion guards, whose !important
+   still wins, so the guard stays beside the keyframes it guards. */
+.an-anim-fade.an-move-wobble{animation:anIn-fade .45s ease,an-wobble 1.6s ease-in-out .45s infinite;}
+.an-anim-fade.an-move-bob{animation:anIn-fade .45s ease,an-bob 2.6s ease-in-out .45s infinite;}
+.an-anim-fade.an-move-pulse{animation:anIn-fade .45s ease,an-pulse 1.8s ease-in-out .45s infinite;}
+.an-anim-rise.an-move-wobble{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .5s infinite;}
+.an-anim-rise.an-move-bob{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .5s infinite;}
+.an-anim-rise.an-move-pulse{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .5s infinite;}
+.an-anim-zoom.an-move-wobble{animation:anIn-zoom .45s ease,an-wobble 1.6s ease-in-out .45s infinite;}
+.an-anim-zoom.an-move-bob{animation:anIn-zoom .45s ease,an-bob 2.6s ease-in-out .45s infinite;}
+.an-anim-zoom.an-move-pulse{animation:anIn-zoom .45s ease,an-pulse 1.8s ease-in-out .45s infinite;}
+.an-anim-slide.an-move-wobble{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .5s infinite;}
+.an-anim-slide.an-move-bob{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .5s infinite;}
+.an-anim-slide.an-move-pulse{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .5s infinite;}
+.an-anim-turn.an-move-wobble{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .55s infinite;}
+.an-anim-turn.an-move-bob{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .55s infinite;}
+.an-anim-turn.an-move-pulse{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .55s infinite;}
 /* the build-order badge shown in the editor — and ONLY while the Timeline
    pane is open (T76, user: "the animation bubbles that appear are the
    worst, like you can't get rid of them").
@@ -12298,7 +12328,7 @@ back. <b>New&#8230;</b> starts one; the
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at its foot collapse or
 auto-hide the rail.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
-content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</b> (Images tab, under Place)
+content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> From notebook</b> (Images tab, under Place)
 &mdash; a draggable, resizable frame
 that holds any notebook card: drop it on the slide, then click a card in
 your notebook (from <i>any</i> open tab, so one deck can mix several
@@ -12892,7 +12922,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
   <div class="selpane-list" id="varspane-body"></div>
 </aside>
-<input type="file" id="deckfile" accept=".junoview,.json,.html" hidden>
+<input type="file" id="deckfile" accept=".junoview,.json,.html" multiple hidden>
 <input type="file" id="pptxfile" accept=".pptx,.potx,.ppsx,.pptm" hidden>
 
 <div class="deck" id="deck" hidden>
@@ -14367,11 +14397,15 @@ items snap to both. Guides, not ink: never printed or exported"
                    it Object because the frame can hold a picture too;
                    the chooser still offers that, but the notebook is
                    what this button is for and the word people look for. -->
+              <!-- T440: "From notebook" (2026-09-14, user: "calling
+                   the 'notebook cell' figures is confusing. It should
+                   be 'from notebook', and be greyed out if there are no
+                   notebooks that are open"). nbDoorsSync greys it. -->
               <button class="dbtn et rbn-sm" id="et-cell" data-tool="cell"
                 aria-pressed="false"
                 title="Draw a frame, then pick a figure from a notebook to
  fill it &mdash; or a picture from this computer, the clipboard, or a
- path"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</button>
+ path"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> From notebook</button>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
@@ -15279,11 +15313,28 @@ items snap to both. Guides, not ink: never printed or exported"
                    called ‘+ Add’, and then there are the options
                    there"). An empty flip book is a hole, so the door
                    that fills it is the first thing on the group. -->
+              <!-- T439: THE OPTIONS ARE ON THE ROW, NOT IN A MENU
+                   (2026-09-14, user: "for flip books, the options that
+                   are there with the add need to be not hidden under a
+                   menu, but need to be visible by default"). The tile
+                   is the notebook door; the other three stand beside
+                   it. -->
               <button class="fx-tile big-tile rbn-tall" id="fmt-figures"
-                hidden aria-haspopup="true" aria-expanded="false"
-                title="Put figures in this flip book — from a
- notebook or from your computer — and reorder or name the ones it
- already has"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg><span>Add</span></button>
+                hidden
+                title="Pick figures from a notebook — click as many as
+ you want, in order — and each becomes a page of this
+ book"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg><span>Figures</span></button>
+              <button class="dbtn etm" id="fmt-flip-imgs" hidden
+                title="Add pictures from this computer as pages. You can
+ pick several at once"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg> Pictures&#8230;</button>
+              <button class="dbtn etm" id="fmt-flip-pages" hidden
+                title="Open this book&rsquo;s pages: drag them into order,
+ give them names, and tie text or objects to one of them"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><path d="M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14"/><path d="M7 6.3v3.4L9.7 8Z"/></svg> Pages&#8230;</button>
+              <button class="dbtn etm" id="fmt-flip-own" hidden
+                title="Take the page showing out of the book&rsquo;s box
+ as an object you can move, resize, fade or crop on its own. It still
+ shows with this page"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9"/><path d="M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9"/><path d="M2.4 2.4l11.2 11.2"/></svg> Own object</button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
@@ -23175,7 +23226,11 @@ items snap to both. Guides, not ink: never printed or exported"
       alert('Could not fetch '+url+'\n'+((e&&e.message)||e));
     });
   }
-  function openPath(path){
+  /* T436: `keep` leaves the open dialog up, so several notebooks can be
+     opened one after another from the folder listing (Ctrl+click on a
+     row) -- "the ability to open multiple notebook/presentations at
+     once would be a slay out of 10" (2026-09-14) */
+  function openPath(path,keep){
     /* T320: a PowerPoint deck imports from the same places, as a copy */
     if(isPptxPath(path)){
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
@@ -23223,7 +23278,7 @@ items snap to both. Guides, not ink: never printed or exported"
     api('/api/open',{path:path}).then(function(j){
       delete OPENBUSY[path];setDlgBusy(false);
       mountShellHTML(j.shell,j.path||path);
-      hideDlg();
+      if(!keep) hideDlg();
     }).catch(function(e){
       delete OPENBUSY[path];setDlgBusy(false);
       alert('Open failed: '+e.message);});
@@ -23570,7 +23625,10 @@ items snap to both. Guides, not ink: never printed or exported"
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
         sz.textContent=n.size||'';b.appendChild(sz);
-        b.addEventListener('click',function(){openPath(n.path);});
+        b.title='Open this notebook \u2014 Ctrl+click to open it and '
+          +'keep this list up for the next one';
+        b.addEventListener('click',function(e){
+          openPath(n.path,e.ctrlKey||e.metaKey||e.shiftKey);});
         dlgList.appendChild(b);
       });
       /* every other source the producer table knows: Markdown,
@@ -23583,12 +23641,14 @@ items snap to both. Guides, not ink: never printed or exported"
       (j.sources||[]).forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i src';
         b.innerHTML='<span class="ic">'+bic('doc')+'</span>';
-        b.title='Open this '+(n.kind||'file');
+        b.title='Open this '+(n.kind||'file')+' \u2014 Ctrl+click to open '
+          +'it and keep this list up for the next one';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
         sz.textContent=n.size||'';b.appendChild(sz);
-        b.addEventListener('click',function(){openPath(n.path);});
+        b.addEventListener('click',function(e){
+          openPath(n.path,e.ctrlKey||e.metaKey||e.shiftKey);});
         dlgList.appendChild(b);
       });
       /* saved presentations, openable like notebooks (2026-08-20) */
@@ -31886,7 +31946,7 @@ window.JunoPptx = (function () {
          'fmt-opwrap','fmt-stylewrap','fmt-swwrap','fmt-headwrap',
          'fmt-bendwrap']},
       {id:'of-pic',label:'Picture',tab:'home',
-       items:['fmt-figures','fmt-replace','fmt-caption','fmt-imgrefresh',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh',
          'fmt-revert','fmt-lockver','fmt-locate','fmt-prov',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts','et-cell']},
       {id:'of-tbl',label:'Table',tab:'home',
@@ -31968,7 +32028,7 @@ window.JunoPptx = (function () {
        items:['fmt-stylewrap','fmt-swwrap','fmt-headwrap',
          'fmt-bendwrap','fmt-fillwrap','fmt-shapewrap']},
       {id:'ob-source',label:'Figure source',tab:'object',
-       items:['fmt-figures','fmt-lockver','fmt-imgrefresh','fmt-replace',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-lockver','fmt-imgrefresh','fmt-replace',
          'fmt-caption','fmt-locate','fmt-prov','fmt-revert',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts','et-cell']},
       {id:'ob-table',label:'Table',tab:'object',
@@ -31990,7 +32050,7 @@ window.JunoPptx = (function () {
       {id:'s1-view',label:'View',tab:'slides',rest:1,
        items:['vw-full','vw-side','vw-morewrap','notes-btn']},
       {id:'s1-link',label:'Notebook link',tab:'sources',
-       items:['fmt-figures','fmt-locate','fmt-prov','fmt-replace',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-locate','fmt-prov','fmt-replace',
          'fmt-caption','fmt-lockver','et-cell']},
       {id:'s1-fresh',label:'Freshness',tab:'sources',
        items:['fmt-imgrefresh','fmt-revert','vw-versions',
@@ -32067,7 +32127,7 @@ window.JunoPptx = (function () {
          'fmt-rotl','fmt-rotr','fmt-arline','fmt-argrid',
          'fmt-samewrap']},
       {id:'day-sources',label:'Frames and sources',tab:'format',
-       items:['fmt-figures','fmt-replace','fmt-caption','fmt-locate',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-locate',
          'fmt-prov','fmt-imgrefresh','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell']},
       {id:'day-table',label:'Table',tab:'format',
@@ -32109,7 +32169,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
          'dc-draw','et-table','et-flip','et-arrow','et-cancel']},
       {id:'j3-figures',label:'Figure source',tab:'content',
-       items:['fmt-figures','fmt-replace','fmt-caption','fmt-imgrefresh',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver','et-cell']},
       {id:'j3-text',label:'Text',tab:'content',
        items:['fmt-font','fmt-szwrap','fmt-smaller','fmt-bigger',
@@ -32153,7 +32213,7 @@ window.JunoPptx = (function () {
          'dc-head','dc-foot','dc-nums','vw-versions']},
       {id:'one-insert',label:'Insert and sources',tab:'all',
        items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
-         'dc-draw','fmt-figures','fmt-replace','fmt-caption','fmt-locate',
+         'dc-draw','fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-locate',
          'fmt-prov','fmt-imgrefresh','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
          'et-table','et-flip','et-arrow','et-cancel']},
@@ -32217,7 +32277,7 @@ window.JunoPptx = (function () {
        items:['fmt-alignwrap','fmt-arline','fmt-argrid',
          'fmt-samewrap','fmt-rotl','fmt-rotr']},
       {id:'mi-bub-fig',label:'Figure',tab:'mi-sel',
-       items:['fmt-figures','fmt-imgrefresh','fmt-replace','fmt-caption',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-imgrefresh','fmt-replace','fmt-caption',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts']},
       {id:'mi-bub-tbl',label:'Table',tab:'mi-sel',
@@ -32267,7 +32327,7 @@ window.JunoPptx = (function () {
          'fmt-backward','fmt-rotl','fmt-rotr','fmt-arline',
          'fmt-argrid']},
       {id:'tt-fig',label:'Figure',tab:'tt-fmt',
-       items:['fmt-figures','fmt-imgrefresh','fmt-replace','fmt-caption',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-imgrefresh','fmt-replace','fmt-caption',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts']},
       {id:'tt-tbl',label:'Table',tab:'tt-fmt',
@@ -42349,11 +42409,14 @@ window.JunoPptx = (function () {
         }
       });
     }
-    /* ---- T385: MOTION THAT KEEPS GOING. One class per item, in the
-       show only; the editor stays still so a wobbling box can be
-       grabbed. A pass of its own, like the builds above, so no kind's
-       branch can forget it. */
-    if(mode==='view'&&s.annots&&s.annots.some(function(a){
+    /* ---- T385: MOTION THAT KEEPS GOING. One class per item. A pass
+       of its own, like the builds above, so no kind's branch can forget
+       it. T446: IN THE EDITOR TOO (2026-09-14, user: "just applied some
+       motions to things and they did not work"). It played in the show
+       only, so applying one changed nothing on screen and read as
+       broken. The selected item alone stays still (deck.css), so a
+       wobbling box can still be grabbed. */
+    if(s.annots&&s.annots.some(function(a){
       return a&&a.motion;})){
       $$('.an-item[data-idx]',layer).forEach(function(el){
         var raw=el.getAttribute('data-idx');
@@ -43414,7 +43477,9 @@ window.JunoPptx = (function () {
     '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
     '#fmt-chartwrap':'chart',         /* the Chart pane's door (T322) */
     '#fmt-tablewrap':'table',         /* the Table pane's door (T324) */
-    '#fmt-figures':'flip'
+    '#fmt-figures':'flip',
+    /* T439: the book's other three doors, on the row beside the tile */
+    '#fmt-flip-imgs':'flip','#fmt-flip-pages':'flip','#fmt-flip-own':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
@@ -43979,8 +44044,14 @@ window.JunoPptx = (function () {
     var pth=$('#fmt-path');
     if(pth){
       var from='';
-      if(kind==='image') from=(typeof picAddr==='function'&&picAddr(a))
-        ||a.fname||a.psrc||'';
+      if(kind==='image'){
+        from=(typeof picAddr==='function'&&picAddr(a))
+          ||a.fname||a.psrc||'';
+        /* T438: SAID EVEN WHEN THERE IS NONE. A pasted picture has no
+           path, and the row used to vanish -- which reads as "the tab
+           does not show paths" rather than "this one has none". */
+        if(!from) from='pasted or dropped \u2014 no file behind it';
+      }
       else if(isNum&&provRef(a)){
         var pref=provRef(a),ci2=resolveRef(pref),po=provOf(a);
         var ff=(kind==='flip')?(flipFrames(a)[a.at||0]||{}):{};
@@ -43994,6 +44065,23 @@ window.JunoPptx = (function () {
         pth.querySelector('b').textContent=(typeof midElide==='function')
           ?midElide(String(from),46):from;
         pth.title='From '+from;
+      }
+    }
+    /* T439: the flip book's own-object door names the page showing
+       and which way it goes; a book with no pages has none to offer */
+    var fo=$('#fmt-flip-own');
+    if(fo&&kind==='flip'){
+      var pgAt=a.at||0,pgF=flipFrames(a)[pgAt];
+      fo.hidden=!pgF;
+      if(pgF){
+        fo.innerHTML=bic(pgF.own?'link':'unlink')+' '
+          +(pgF.own?'Back in book':'Own object');
+        fo.title=pgF.own
+          ?('Page '+(pgAt+1)+' goes back into the book\u2019s box as an '
+            +'ordinary page')
+          :('Takes page '+(pgAt+1)+' out of the book\u2019s box as an '
+            +'object you can move, resize, fade or crop on its own. It '
+            +'still shows with this page');
       }
     }
     show('#fmt-lock',isNum,isNum&&pinned(a));
@@ -44126,7 +44214,11 @@ window.JunoPptx = (function () {
        MEASURES the row, which is what the old ordering was protecting
        (2026-08-25, ribbon layouts). */
     $$('.rbn-grp',bar).forEach(function(g){
-      var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
+      /* T438: the provenance readout is content too -- a pasted
+         picture has no refresh button and no Source door, and its
+         group was hidden with the one line the tab exists to show */
+      var vis=false,kids=g.querySelectorAll(
+        'button,input,select,.sh-drop,.fmt-path');
       for(var i=0;i<kids.length;i++){
         var n=kids[i],blocked=false;
         /* A FOLD DOOR IS NOT CONTENT, AND THE DRAWER IT OPENS IS NOT A
@@ -46549,7 +46641,7 @@ window.JunoPptx = (function () {
     if(stc){
       stc.hidden=(t==='select');
       var word={text:'Text box',arrow:'Arrow',rect:'Shape',line:'Line',
-        cell:'Notebook cell',flip:'Flip book',table:'Table',
+        cell:'From notebook',flip:'Flip book',table:'Table',
         guide:'Guide box',draw:'Freehand'}[t]||t;
       if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
         word=styleDef(pendingStyle).label+' box';
@@ -55935,12 +56027,14 @@ window.JunoPptx = (function () {
     sel.addEventListener('change',commit);
     mode.addEventListener('change',commit);
   }
-  /* ---- T234: ONE DOOR, CALLED "+ ADD" ------------------------------
-     The three things you can do to a flip book's contents, on the one
-     button that used to open only the third of them. The pane keeps
-     its own two buttons: you are already looking at the list there,
-     and putting them behind a menu would be hiding what is in the
-     open. */
+  /* ---- T439: THE FLIP BOOK'S DOORS ARE ON THE ROW ---------------------
+     (2026-09-14, user: "for flip books, the options that are there with
+     the add need to be not hidden under a menu, but need to be visible
+     by default"). T234 put the three things you can do to a book's
+     contents behind one "+ Add" tile; they are four buttons now:
+     Figures (the tile, a notebook door), Pictures, Pages, and the page
+     showing as its own object or back in the book. The pane keeps its
+     own two buttons: you are already looking at the list there. */
   function flipSelIdx(){
     var s=pres.slides[cur],idx=null;
     selIdxs().forEach(function(i){
@@ -55948,66 +56042,31 @@ window.JunoPptx = (function () {
       if(idx===null&&x&&x.k==='flip') idx=i;});
     return idx;
   }
-  function flipAddMenu(btn,idx){
-    var old=$('#flip-add-menu'); if(old) old.remove();
-    var m=document.createElement('div');
-    m.className='sh-menu canvas-menu';m.id='flip-add-menu';
-    menuHead(m,'put figures in this book');
-    function row(txt,ic,tip,fn){
-      var b=document.createElement('button');
-      b.className='dbtn';b.type='button';
-      b.innerHTML=bic(ic)+' '+esc(txt);
-      b.title=tip;
-      b.addEventListener('click',function(e){
-        e.stopPropagation();overlayHide(m);m.remove();fn();});
-      m.appendChild(b);
-    }
-    row('Figures from a notebook\u2026','cellcard',
-      'Click as many notebook cards as you want, in order \u2014 each '
-      +'becomes a page of this book',function(){startPick(idx,true);});
-    row('Pictures from this computer\u2026','image',
-      'Add pictures as pages. You can pick several at once',
-      function(){
-        flipPaneIdx=idx;
-        var fi=$('#fp-img-file');
-        if(fi){fi.value='';fi.click();}
-      });
-    menuHead(m,'the pages it has');
-    row('Reorder and name them\u2026','list',
-      'Open this book\u2019s pages: drag them into order, give them '
-      +'names, and tie text or objects to one of them',
-      function(){showFlipPane(true,idx);});
-    /* T403: the page showing, as its own object -- the ask was "in
-       object there is like a 'unlink this frame'", and this door is
-       the Object tab's flip-book door */
-    var bk=(pres.slides[cur].annots||[])[idx];
-    var pgAt=bk?(bk.at||0):0,pgF=bk?flipFrames(bk)[pgAt]:null;
-    if(pgF){
-      menuHead(m,'page '+(pgAt+1)+', the one showing');
-      if(pgF.own) row('Put this page back in the book','link',
-        'The picture goes back into the book\u2019s box as an ordinary '
-        +'page',function(){flipRelink(bk,pgAt);});
-      else row('Make this page its own object','unlink',
-        'Takes it out of the book\u2019s box as an object you can move, '
-        +'resize, fade or crop on its own. It still shows with this '
-        +'page',function(){flipUnlink(bk,pgAt);});
-    }
-    deckEl.appendChild(m);
-    overlayShow(btn,m);floatMenu(btn,m);
-  }
   (function(){
-    var fg=$('#fmt-figures');
-    if(fg) fg.addEventListener('click',function(e){
-      e.stopPropagation();
-      /* the owner HIDES it on Escape or an outside click, it does
-         not remove it -- so a leftover must not read as open, or
-         the next press would spend itself closing nothing */
-      var open=$('#flip-add-menu');
-      if(open&&!open.hidden){overlayHide(open);open.remove();return;}
-      if(open) open.remove();
-      var idx=flipSelIdx();
-      if(idx===null) return;
-      flipAddMenu(fg,idx);
+    function door(id,fn){
+      var b=$(id);
+      if(b) b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var idx=flipSelIdx();
+        if(idx===null) return;
+        fn(idx);
+      });
+    }
+    door('#fmt-figures',function(idx){startPick(idx,true);});
+    door('#fmt-flip-imgs',function(idx){
+      flipPaneIdx=idx;
+      var fi=$('#fp-img-file');
+      if(fi){fi.value='';fi.click();}
+    });
+    door('#fmt-flip-pages',function(idx){showFlipPane(true,idx);});
+    /* T403: the page showing, as its own object -- the ask was "in
+       object there is like a 'unlink this frame'" */
+    door('#fmt-flip-own',function(idx){
+      var bk=(pres.slides[cur].annots||[])[idx];
+      var pgAt=bk?(bk.at||0):0,pgF=bk?flipFrames(bk)[pgAt]:null;
+      if(!pgF) return;
+      if(pgF.own) flipRelink(bk,pgAt); else flipUnlink(bk,pgAt);
+      showFmt();
     });
     var cl=$('#flippane-close');
     if(cl) cl.addEventListener('click',function(){showFlipPane(false);});
@@ -63745,17 +63804,30 @@ window.JunoPptx = (function () {
     if(pres) add(pres.name);
     return names.map(presentationSummary).filter(Boolean);
   }
+  /* T436: a modifier click on a library row puts the presentation on
+     the open list without leaving the dialog, so several can be opened
+     in one visit; a plain click opens it as it always did */
   function presentationLibraryRow(p,click){
     var b=document.createElement('button');
     b.type='button';b.className='presentation-hub-row';
-    b.title='Open '+presentationKind(p)+' “'+p.name+'”';
+    b.title='Open '+presentationKind(p)+' \u201c'+p.name+'\u201d'
+      +' \u2014 Ctrl+click to add it to the open list and stay here';
     var ic=document.createElement('span');ic.innerHTML=presentationIcon(p);
     var name=document.createElement('span');name.className='presentation-hub-row-name';
     name.textContent=p.name;
     var kind=document.createElement('span');kind.className='presentation-hub-row-kind';
     kind.textContent=presentationKind(p)+(p.folder?' · '+p.folder:'');
     b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
-    b.addEventListener('click',click);
+    b.addEventListener('click',function(e){
+      if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
+        noteSessionOpen(p.name);
+        renderPresTabs();
+        toast('\u201c'+p.name+'\u201d is on the open list \u2014 Ctrl+click '
+          +'adds more; a plain click opens one',5000);
+        return;
+      }
+      click(e);
+    });
     return b;
   }
   function emptyPresentationList(host,text){
@@ -72791,23 +72863,20 @@ window.JunoPptx = (function () {
       10000);
     return true;
   }
-  function openDeckFile(){
-    if(window.showOpenFilePicker){
-      window.showOpenFilePicker({
-        types:[{description:'Junoview presentation',
-          accept:{'text/html':['.html','.junoview'],
-            'application/json':['.json']}}],
-        multiple:false
-      }).then(function(hs){
-        var h=hs&&hs[0]; if(!h) return;
+  /* T436: SEVERAL AT ONCE (2026-09-14, user: "the ability to open
+     multiple notebook/presentations at once would be a slay out of
+     10"). The picker takes many; each file is opened in turn -- its
+     deck lands, and a single-deck file binds to the deck it opened,
+     the way one file always did -- and the last one is on screen. */
+  function openDeckHandles(hs){
+    var opened=0,last='';
+    return hs.reduce(function(chain,h){
+      return chain.then(function(){
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
             var n=fileDeckCount(txt);
             if(!importDeckText(txt,false)) return;
-            /* T433: a bundle from before a file held one deck is
-               opened INTO the browser and left alone -- binding it
-               would make the next Save write one deck over all of
-               them */
+            opened++;
             if(bundleOpened(n,f.name||'')) return;
             /* the handle is what makes Save write back to this very
                file -- bound to the deck it opened (T416; T261 before
@@ -72819,9 +72888,28 @@ window.JunoPptx = (function () {
                file; the opened one kept whatever name was inside) */
             followFileName();
             setTarget('file');
-            toast('Opened \u2014 Save now writes back to '+fileName);
+            last=fileName;
           });
         });
+      });
+    },Promise.resolve()).then(function(){
+      if(opened>1)
+        toast('Opened '+opened+' files \u2014 each presentation saves '
+          +'back to its own file',7000);
+      else if(opened&&last)
+        toast('Opened \u2014 Save now writes back to '+last);
+    });
+  }
+  function openDeckFile(){
+    if(window.showOpenFilePicker){
+      window.showOpenFilePicker({
+        types:[{description:'Junoview presentation',
+          accept:{'text/html':['.html','.junoview'],
+            'application/json':['.json']}}],
+        multiple:true
+      }).then(function(hs){
+        if(!hs||!hs.length) return;
+        return openDeckHandles(hs);
       }).catch(function(e){
         /* T414: a cancelled picker is silent; anything else is SAID.
            This swallowed every failure, so a file that would not open
@@ -72838,11 +72926,16 @@ window.JunoPptx = (function () {
     var fi=document.getElementById('deckfile');
     if(!fi) return;
     fi.addEventListener('change',function(){
-      var f=this.files&&this.files[0];
+      var files=Array.prototype.slice.call(this.files||[]);
       this.value='';
-      if(!f) return;
+      /* T436: several at once, one after the other */
+      files.reduce(function(chain,f){
+        return chain.then(function(){return openDeckInputFile(f);});
+      },Promise.resolve());
+    });
+    function openDeckInputFile(f){
       var nm=f.name||'';
-      f.text().then(function(txt){
+      return f.text().then(function(txt){
         var n=fileDeckCount(txt);
         if(!importDeckText(txt,false)) return;
         if(bundleOpened(n,nm)) return;   /* T433 */
@@ -72872,7 +72965,7 @@ window.JunoPptx = (function () {
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });
-    });
+    }
   })();
   menuAction('#mi-discard',function(){
     cancelDraftWrite();   /* a pending write would resurrect the discard */
@@ -73465,7 +73558,30 @@ window.JunoPptx = (function () {
   })();
 
   /* ---------- tabs opened / closed while the page lives ---------- */
+  /* T440: THE NOTEBOOK DOORS GREY OUT WITHOUT A NOTEBOOK (2026-09-14,
+     user: "calling the 'notebook cell' figures is confusing. It should
+     be 'from notebook', and be greyed out if there are no notebooks
+     that are open"). The Insert button and the flip book's "+ Figures"
+     both pick from an open notebook's cards; with none open they led
+     to an empty picker. The title says what to do instead. */
+  function nbDoorsSync(){
+    var open=!!(APP.order&&APP.order.length);
+    [['#et-cell','Draw a frame, then pick a figure from a notebook to '
+        +'fill it \u2014 or a picture from this computer, the clipboard, '
+        +'or a path'],
+     ['#fp-add-cells','Pick figures from your notebook \u2014 click as '
+        +'many as you want, in order'],
+     ['#fmt-figures','Pick figures from a notebook \u2014 click as many '
+        +'as you want, in order \u2014 and each becomes a page of this '
+        +'book']].forEach(function(d){
+      var b=$(d[0]); if(!b) return;
+      b.disabled=!open;
+      b.title=open?d[1]:('Open a notebook first \u2014 this places its '
+        +'figures, tables and notes');
+    });
+  }
   document.addEventListener('sem:shell',function(e){
+    nbDoorsSync();
     if(e.detail.replaced){
       /* the notebook was reloaded: what every frame showed until now
          becomes the "previous figure" it can revert to */
@@ -73491,6 +73607,7 @@ window.JunoPptx = (function () {
     else renderPresTabs();
   });
   document.addEventListener('sem:shellclosed',function(e){
+    nbDoorsSync();
     /* invalidation point 2: frames fall back to the embedded copy */
     dropFrameCache(e.detail.stem);
     /* T306: a reload can add or remove figures, and a close ends
@@ -73945,6 +74062,7 @@ window.JunoPptx = (function () {
      existing. These calls keep the relative order they ran in when they
      were scattered mid-file. */
   initShellRegistry();        /* every notebook the page carries */
+  nbDoorsSync();              /* the notebook doors, greyed without one (T440) */
   initFirstPresentation();    /* the presentation the page opens with */
   /* app.js paints the welcome before this file loads; redraw it now the
      SemApp.deck* hooks and the registry can answer its questions */

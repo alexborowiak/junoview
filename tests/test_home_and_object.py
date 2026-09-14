@@ -99,6 +99,8 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     # the rarer two sit last, so they fold first and View stays in sight
     assert ".rbn-layout,.rbn-this,.rbn-arrange{order:1;}" in out
     assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:1;}" in out
+    # T438: the Object tab's own Sources group leads
+    assert '.rbn-grp.rbn-sources[data-tab="object"]{order:-1;}' in out
     assert ".lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}" in out
 
 
@@ -123,7 +125,8 @@ def test_where_it_came_from_is_on_the_row(out):
     # (the by-bullet trio went back to the Animation tab in T220)
     for cid in ("fmt-path", "fmt-lock", "fmt-imgrefresh"):
         assert f'id="{cid}"' in out, cid
-    assert "if(kind==='image') from=(typeof picAddr==='function'&&picAddr(a))" in out
+    assert ("      if(kind==='image'){\n"
+            "        from=(typeof picAddr==='function'&&picAddr(a))") in out
     assert "||a.fname||a.psrc||'';" in out
     assert "from=a.nbpath||ff.nbpath" in out
     assert "show('#fmt-lock',isNum,isNum&&pinned(a));" in out

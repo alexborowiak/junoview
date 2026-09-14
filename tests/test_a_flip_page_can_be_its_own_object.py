@@ -40,14 +40,15 @@ def test_put_back_is_the_reverse(out):
     assert "    if(at>=0) s.annots.splice(at,1);" in out
 
 
-def test_the_doors_are_the_pane_row_and_the_add_menu(out):
+def test_the_doors_are_the_pane_row_and_the_object_tab(out):
     # the pane row: words on the verb, and the number says it is out
     assert "        :[bic('unlink')+' Own object',function(){flipUnlink(a,i);}," in out
     assert "        ?[bic('link')+' Put back',function(){flipRelink(a,i);}," in out
     assert "        +(f&&f.own?' own':'');   /* T403 */" in out
-    # the Object tab's "+ Add" door, for the page showing
-    assert "      if(pgF.own) row('Put this page back in the book','link'," in out
-    assert "      else row('Make this page its own object','unlink'," in out
+    # the Object tab's door for the page showing (T439: a button on the
+    # row, named for the direction it goes)
+    assert "      if(pgF.own) flipRelink(bk,pgAt); else flipUnlink(bk,pgAt);" in out
+    assert "          +(pgF.own?'Back in book':'Own object');" in out
 
 
 def test_a_blank_leaf_says_so_while_editing_and_costs_nothing_in_pptx(out):
