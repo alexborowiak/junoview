@@ -1807,8 +1807,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T425: the standardiser reads through the default look (left,
 # transparent)
 # T426: poster templates carry a short strip name shown on one line
-EXPECTED_MD5 = "54885fa0171ee326a706a2fe1b524338"
-EXPECTED_BYTES = 4170523
+# T427: every animation pane row has Earlier, Later and Remove; pages
+# and bullets move and go
+EXPECTED_MD5 = "907cb45f21630110ee5c7bd817e35f6b"
+EXPECTED_BYTES = 4175646
 
 
 def _render_example() -> str:

@@ -928,6 +928,71 @@
       q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
       renumber(s);commit(s);
     }
+    /* ---- T427: EVERY ROW MOVES, AND EVERY ROW CAN GO ------------------
+       (2026-09-14, user: "I still can't change the order of animations.
+       Like these are stuck in place. I also can't delete these as
+       well.") Earlier and Later sat on the build's first row only; a
+       bullet's row and a page's row had nothing, and nothing on the
+       pane removed anything. A build row's Remove takes its animation
+       off; a page row moves its page through the book or takes it out;
+       a bullet row moves its paragraph through the text or takes it
+       out -- the words themselves, so the slide and the show agree. */
+    function removeBuild(si){
+      var s=pres.slides[cur],q=animSeq(s);
+      if(!q[si]) return;
+      q[si].items.forEach(function(i){delete s.annots[i].anim;});
+      renumber(s);commit(s);
+    }
+    function movePage(a,k,dir){
+      var fr=flipFrames(a),t=k+dir;
+      if(k<0||k>=fr.length||t<0||t>=fr.length) return;
+      var tmp=fr[k];fr[k]=fr[t];fr[t]=tmp;
+      commit(pres.slides[cur]);
+    }
+    function dropPage(a,k){
+      var fr=flipFrames(a);
+      if(fr.length<2||k<0||k>=fr.length) return;
+      fr.splice(k,1);
+      if(typeof a.fi==='number'&&a.fi>=fr.length) a.fi=fr.length-1;
+      commit(pres.slides[cur]);
+    }
+    /* a paragraph up, down or out. Plain and Markdown text are lines;
+       rich text is the block children of its one list or of the box.
+       Only a by-paragraph build can do this -- a sentence is not a
+       line -- and the row says so by having no such buttons. */
+    function pieceEdit(a,k,dir){
+      var lines=String(a.text||'').split('\n');
+      function op(list,take,put){
+        if(k<0||k>=list.length) return false;
+        if(dir===0){if(list.length<2) return false;take(k);return true;}
+        var t=k+dir; if(t<0||t>=list.length) return false;
+        put(k,t);return true;
+      }
+      if(a.html){
+        var host=document.createElement('div');host.innerHTML=a.html;
+        var kids=[].slice.call(host.children);
+        var wrap=(kids.length===1&&/^(UL|OL)$/i.test(kids[0].tagName))
+          ?kids[0]:host;
+        var items=[].slice.call(wrap.children);
+        if(items.length<2) return false;
+        var ok=op(items,function(i){items[i].remove();},function(i,t){
+          if(dir<0) wrap.insertBefore(items[i],items[t]);
+          else wrap.insertBefore(items[t],items[i]);});
+        if(!ok) return false;
+        a.html=host.innerHTML;
+        if(lines.length===items.length)
+          op(lines,function(i){lines.splice(i,1);},function(i,t){
+            var tmp=lines[i];lines[i]=lines[t];lines[t]=tmp;});
+        a.text=lines.join('\n');
+      } else {
+        var ok2=op(lines,function(i){lines.splice(i,1);},function(i,t){
+          var tmp=lines[i];lines[i]=lines[t];lines[t]=tmp;});
+        if(!ok2) return false;
+        a.text=lines.join('\n');
+      }
+      commit(pres.slides[cur]);
+      return true;
+    }
     /* ---- THE PANE IS THE LIST OF CLICKS, AND NOTHING ELSE (T402) -----
        (2026-09-13, user: "What is up with the animation pane? How am I
        supposed to use this? I literally can't tell what is going on and
@@ -986,21 +1051,34 @@
           d.textContent=tag;r.appendChild(d);
         }
         if(opts.ctr){
-          var ctr=document.createElement('span');ctr.className='anim-stepctr';
-          [['\u2191 Earlier',-1],['\u2193 Later',1]].forEach(function(m){
-            var b=document.createElement('button');b.type='button';
-            b.className='anim-mini';b.textContent=m[0];
-            b.title=m[1]<0?'Move this build one click earlier'
-              :'Move this build one click later';
-            b.setAttribute('aria-label',b.title);
-            b.disabled=(m[1]<0?opts.si===0:opts.si===seq.length-1);
-            b.addEventListener('click',function(e){e.stopPropagation();
-              moveStep(opts.si,m[1]);});
-            ctr.appendChild(b);});
-          r.appendChild(ctr);
+          ctrls(r,[
+            ['\u2191 Earlier','Move this build one click earlier',
+             function(){moveStep(opts.si,-1);},opts.si===0],
+            ['\u2193 Later','Move this build one click later',
+             function(){moveStep(opts.si,1);},opts.si===seq.length-1],
+            ['\u2715 Remove','Take the animation off: it is just there',
+             function(){removeBuild(opts.si);},false]]);
         }
+        /* T427: a page's or a bullet's own controls */
+        if(opts.acts) ctrls(r,opts.acts);
         list.appendChild(r);
         return r;
+      }
+      /* Earlier and Later stacked, Remove beside them: the same shape on
+         every row that has them */
+      function ctrls(r,acts){
+        var ctr=document.createElement('span');ctr.className='anim-stepctr';
+        var col=document.createElement('span');col.className='anim-updown';
+        acts.forEach(function(m,i){
+          var b=document.createElement('button');b.type='button';
+          b.className='anim-mini';b.textContent=m[0];
+          b.title=m[1];b.setAttribute('aria-label',m[1]);
+          b.disabled=!!m[3];
+          b.addEventListener('click',function(e){e.stopPropagation();m[2]();});
+          (i<2?col:ctr).appendChild(b);
+        });
+        ctr.insertBefore(col,ctr.firstChild);
+        r.appendChild(ctr);
       }
       /* the stops a flip book, a chart or a paged text box takes AFTER
          the click it arrives on, each on its own numbered row (T163);
@@ -1017,7 +1095,15 @@
               var w=walk[d];
               var name=w.j?('Page '+(w.j+1)+' beside figure '+(w.k+1))
                 :frameLabel(fr[w.k],w.k);
-              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2});
+              /* T427: a page moves through its book, or leaves it */
+              var acts=w.j?null:(function(k){return [
+                ['\u2191 Earlier','Show this page one page sooner',
+                 function(){movePage(a,k,-1);},k<=0],
+                ['\u2193 Later','Show this page one page later',
+                 function(){movePage(a,k,1);},k>=fr.length-1],
+                ['\u2715 Remove','Take this page out of the book',
+                 function(){dropPage(a,k);},fr.length<2]];})(w.k);
+              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2,acts:acts});
             }
           } else if(a.k==='chart'){
             chartParse(a).series.forEach(function(se,k){
@@ -1067,9 +1153,19 @@
             return t;
           }
           row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2});
+          /* T427: a bullet moves through its text, or leaves it -- the
+             words move, so the slide and the show agree. Only a
+             by-paragraph build: a sentence is not a line. */
+          var para=textBy(pieceA)==='para';
           for(var k=1;k<nsub;k++)
             row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],'',
-              {sub:true,cur:cur2});
+              {sub:true,cur:cur2,acts:para?(function(kk){return [
+                ['\u2191 Earlier','Move this bullet up one',
+                 function(){pieceEdit(pieceA,kk,-1);},false],
+                ['\u2193 Later','Move this bullet down one',
+                 function(){pieceEdit(pieceA,kk,1);},kk>=nsub-1],
+                ['\u2715 Remove','Take this bullet out of the text',
+                 function(){pieceEdit(pieceA,kk,0);},false]];})(k):null});
         } else {
           var last=(plan.stop[b0+nsub-1]|0)+1;
           row(first===last?first:(first+'\u2013'+last),names,
