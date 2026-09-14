@@ -1917,6 +1917,10 @@
     var b=g.querySelector('.rbn-foldbtn');
     if(b) b.setAttribute('aria-expanded','true');
     rbnShelfFor=g;
+    /* T454: twenty-two shapes are wider than any window, and a row that
+       scrolls with no sign that it does is a row whose last third does
+       not exist. The class draws a fade at the edge it runs off. */
+    sh.classList.toggle('can-scroll',body.scrollWidth>body.clientWidth+1);
     return true;
   }
   /* A row parked in the shelf belongs to ONE group on ONE tab. Changing

@@ -5192,14 +5192,19 @@ body.slide-editing .apptop{display:none;}
    line pushes the groups after it onto a THIRD line, which is how the
    verb groups went off the bottom of the bar the first time. */
 .rbn-shelf:not([hidden]){flex:1 0 100%;order:99;}
-.rbn-shelf{order:99;min-width:0;display:flex;position:relative;
-  align-items:center;gap:9px;padding:4px 44px 4px 12px;
-  border-top:1px solid var(--chrome-line,#ffffff1f);
-  overflow-x:auto;overflow-y:hidden;}
+.rbn-shelf{order:99;min-width:0;display:flex;
+  align-items:center;gap:9px;padding:4px 12px;
+  border-top:1px solid var(--chrome-line,#ffffff1f);}
 .rbn-shelf[hidden]{display:none!important;}
 .rbn-shelf-name{flex:none;color:var(--chrome-ink-2);
   font:600 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
-.rbn-shelf-body{display:flex;align-items:center;flex:0 1 auto;min-width:0;}
+/* THE SCROLLER IS THE BODY, not the shelf. Twenty-two shapes are wider
+   than any window, and with the shelf itself scrolling, its own name and
+   its close button scrolled away under the tiles -- the X sat on top of
+   whichever shape happened to be beneath it. Only the row moves now; the
+   two things that frame it stay put. */
+.rbn-shelf-body{display:flex;align-items:center;flex:1 1 auto;min-width:0;
+  overflow-x:auto;overflow-y:hidden;}
 /* ONE LINE, not the group's two. A .rbn-row is a two-track grid that
    flows down and then across, which is right inside a group 90px tall
    and wrong on a shelf that has a whole width to spend: it showed three
@@ -5218,13 +5223,14 @@ body.slide-editing .apptop{display:none;}
 .rbn-shelf-body .strip-frame>.fx-strip{flex-wrap:nowrap;overflow:visible;}
 .rbn-shelf-body .strip-more,.rbn-shelf-body .strip-prev,
 .rbn-shelf-body .strip-next{display:none;}
-/* pinned to the far right of the strip. In the flow it landed wherever
-   the row's own box happened to end, which for a tile strip -- a scroll
-   box that reports a narrower width than it draws -- was on top of the
-   tiles. The shelf is the full width of the bar, so its right edge is
-   where a close button belongs anyway. */
-.rbn-shelf-close{position:absolute;right:10px;top:50%;
-  transform:translateY(-50%);flex:none;}
+/* T454: a row too wide for the bar says so, rather than simply ending.
+   The fade is on the SCROLLER, so it marks the edge the tiles run off
+   and leaves the name and the close button alone. */
+.rbn-shelf.can-scroll .rbn-shelf-body{
+  mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);}
+/* last in the line, outside the scroller, so it is always reachable and
+   never over a tile */
+.rbn-shelf-close{flex:none;align-self:center;}
 /* the door that owns the shelf reads as pressed while it does */
 .rbn-grp.rbn-shelved .rbn-foldbtn{
   background:color-mix(in srgb,var(--accent) 30%,transparent);
@@ -30450,6 +30456,10 @@ window.JunoPptx = (function () {
     var b=g.querySelector('.rbn-foldbtn');
     if(b) b.setAttribute('aria-expanded','true');
     rbnShelfFor=g;
+    /* T454: twenty-two shapes are wider than any window, and a row that
+       scrolls with no sign that it does is a row whose last third does
+       not exist. The class draws a fade at the edge it runs off. */
+    sh.classList.toggle('can-scroll',body.scrollWidth>body.clientWidth+1);
     return true;
   }
   /* A row parked in the shelf belongs to ONE group on ONE tab. Changing

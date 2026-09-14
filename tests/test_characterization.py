@@ -1889,8 +1889,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T452: the Animation pane's Configure and Order tabs
 # T453: the ribbon shelf, the verb groups at the right, and Disappear
 # renamed
-EXPECTED_MD5 = "e8597e2f8dbe662d0eb802c20c1b4c93"
-EXPECTED_BYTES = 4299787
+# T454: the shelf's row is the scroller, with a fade when it overflows
+EXPECTED_MD5 = "0a8e32cfb599a3dfc89292464fe57fb0"
+EXPECTED_BYTES = 4300409
 
 
 def _render_example() -> str:
