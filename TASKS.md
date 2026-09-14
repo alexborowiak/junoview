@@ -8647,6 +8647,31 @@ These are the loose ends it *raised* rather than closed: places where a
 deliberate decision was made to stop, so the next person does not have to
 re-derive why.
 
+**Checked by driving during the audit, not merely ticked.** The user
+asked at the end whether two older asks had been missed, which is a fair
+question to ask of a tick; both were re-verified in a browser and both
+work, so neither is open:
+
+* **Really large angle brackets, as a shape** - T419. `langle`, `rangle`,
+  `lbrace`, `rbrace`, `lbracket`, `rbracket` are entries in `SHAPE_LIST`
+  (10-decks.js) drawn as SVG paths, so they scale like any other shape
+  rather than being glyphs stuck at a font size. Driven at 86% of the
+  slide's height: clean strokes, correct geometry, no pixelation.
+* **Editing an equation once it exists** - T442. A double-click on a
+  maths box reopens the equation editor (`#eq-src` carrying the LaTeX
+  unwrapped from its `$$`, display-style ticked, the button reading
+  "Update it"), and Update it rewrites the box: driven `E = mc^2` ->
+  `\frac{a}{b}+\sqrt{x}` and the box followed. The right-click menu
+  offers the same door under "equation".
+
+Also re-verified the fine print of the same day's asks: all six T444
+moves resolve to the intended tabs (Citations, Text styles and Style
+sets on Text; Deck colours and Deck layout on Design; Slide master out
+of Page furniture; Style system on Home and excluded from the fold
+ladder), and T437 ships both halves - "Refresh from file" for a picture
+that is already embedded, and "Link only" framed as a size saving you
+switch on yourself.
+
 - [ ] **T457 — The six built-in style sets carry no palette.** T456
   narrowed the Deck colours note because Clean, Editorial, Bold,
   Academic, Minimal and Poster define type and not one of them defines
