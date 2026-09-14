@@ -6678,7 +6678,11 @@
       alert('Could not fetch '+url+'\n'+((e&&e.message)||e));
     });
   }
-  function openPath(path){
+  /* T436: `keep` leaves the open dialog up, so several notebooks can be
+     opened one after another from the folder listing (Ctrl+click on a
+     row) -- "the ability to open multiple notebook/presentations at
+     once would be a slay out of 10" (2026-09-14) */
+  function openPath(path,keep){
     /* T320: a PowerPoint deck imports from the same places, as a copy */
     if(isPptxPath(path)){
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
@@ -6726,7 +6730,7 @@
     api('/api/open',{path:path}).then(function(j){
       delete OPENBUSY[path];setDlgBusy(false);
       mountShellHTML(j.shell,j.path||path);
-      hideDlg();
+      if(!keep) hideDlg();
     }).catch(function(e){
       delete OPENBUSY[path];setDlgBusy(false);
       alert('Open failed: '+e.message);});
@@ -7073,7 +7077,10 @@
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
         sz.textContent=n.size||'';b.appendChild(sz);
-        b.addEventListener('click',function(){openPath(n.path);});
+        b.title='Open this notebook \u2014 Ctrl+click to open it and '
+          +'keep this list up for the next one';
+        b.addEventListener('click',function(e){
+          openPath(n.path,e.ctrlKey||e.metaKey||e.shiftKey);});
         dlgList.appendChild(b);
       });
       /* every other source the producer table knows: Markdown,
@@ -7086,12 +7093,14 @@
       (j.sources||[]).forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i src';
         b.innerHTML='<span class="ic">'+bic('doc')+'</span>';
-        b.title='Open this '+(n.kind||'file');
+        b.title='Open this '+(n.kind||'file')+' \u2014 Ctrl+click to open '
+          +'it and keep this list up for the next one';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
         sz.textContent=n.size||'';b.appendChild(sz);
-        b.addEventListener('click',function(){openPath(n.path);});
+        b.addEventListener('click',function(e){
+          openPath(n.path,e.ctrlKey||e.metaKey||e.shiftKey);});
         dlgList.appendChild(b);
       });
       /* saved presentations, openable like notebooks (2026-08-20) */

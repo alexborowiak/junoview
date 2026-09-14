@@ -584,7 +584,7 @@ def test_the_doors(out):
     assert "function isPptxPath(p){" in app
     drop = app.split("window.addEventListener('drop',function(e){")[1]
     assert "if(APP.deckImportPptx) APP.deckImportPptx(f);" in drop
-    opener = app.split("function openPath(path){")[1].split("\n  }")[0]
+    opener = app.split("function openPath(path,keep){")[1].split("\n  }")[0]
     assert "APP.deckImportPptxPath(path);" in opener
     assert "fetchPptxUrl(path)" in opener
     files = app.split("function webOpenFiles(files){")[1].split("\n  }")[0]

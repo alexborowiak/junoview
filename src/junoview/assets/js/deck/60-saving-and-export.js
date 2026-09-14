@@ -2598,23 +2598,20 @@
       10000);
     return true;
   }
-  function openDeckFile(){
-    if(window.showOpenFilePicker){
-      window.showOpenFilePicker({
-        types:[{description:'Junoview presentation',
-          accept:{'text/html':['.html','.junoview'],
-            'application/json':['.json']}}],
-        multiple:false
-      }).then(function(hs){
-        var h=hs&&hs[0]; if(!h) return;
+  /* T436: SEVERAL AT ONCE (2026-09-14, user: "the ability to open
+     multiple notebook/presentations at once would be a slay out of
+     10"). The picker takes many; each file is opened in turn -- its
+     deck lands, and a single-deck file binds to the deck it opened,
+     the way one file always did -- and the last one is on screen. */
+  function openDeckHandles(hs){
+    var opened=0,last='';
+    return hs.reduce(function(chain,h){
+      return chain.then(function(){
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
             var n=fileDeckCount(txt);
             if(!importDeckText(txt,false)) return;
-            /* T433: a bundle from before a file held one deck is
-               opened INTO the browser and left alone -- binding it
-               would make the next Save write one deck over all of
-               them */
+            opened++;
             if(bundleOpened(n,f.name||'')) return;
             /* the handle is what makes Save write back to this very
                file -- bound to the deck it opened (T416; T261 before
@@ -2626,9 +2623,28 @@
                file; the opened one kept whatever name was inside) */
             followFileName();
             setTarget('file');
-            toast('Opened \u2014 Save now writes back to '+fileName);
+            last=fileName;
           });
         });
+      });
+    },Promise.resolve()).then(function(){
+      if(opened>1)
+        toast('Opened '+opened+' files \u2014 each presentation saves '
+          +'back to its own file',7000);
+      else if(opened&&last)
+        toast('Opened \u2014 Save now writes back to '+last);
+    });
+  }
+  function openDeckFile(){
+    if(window.showOpenFilePicker){
+      window.showOpenFilePicker({
+        types:[{description:'Junoview presentation',
+          accept:{'text/html':['.html','.junoview'],
+            'application/json':['.json']}}],
+        multiple:true
+      }).then(function(hs){
+        if(!hs||!hs.length) return;
+        return openDeckHandles(hs);
       }).catch(function(e){
         /* T414: a cancelled picker is silent; anything else is SAID.
            This swallowed every failure, so a file that would not open
@@ -2645,11 +2661,16 @@
     var fi=document.getElementById('deckfile');
     if(!fi) return;
     fi.addEventListener('change',function(){
-      var f=this.files&&this.files[0];
+      var files=Array.prototype.slice.call(this.files||[]);
       this.value='';
-      if(!f) return;
+      /* T436: several at once, one after the other */
+      files.reduce(function(chain,f){
+        return chain.then(function(){return openDeckInputFile(f);});
+      },Promise.resolve());
+    });
+    function openDeckInputFile(f){
       var nm=f.name||'';
-      f.text().then(function(txt){
+      return f.text().then(function(txt){
         var n=fileDeckCount(txt);
         if(!importDeckText(txt,false)) return;
         if(bundleOpened(n,nm)) return;   /* T433 */
@@ -2679,7 +2700,7 @@
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });
-    });
+    }
   })();
   menuAction('#mi-discard',function(){
     cancelDraftWrite();   /* a pending write would resurrect the discard */

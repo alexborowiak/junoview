@@ -54,5 +54,6 @@ def test_a_bundle_opens_into_the_browser_unbound(out):
 
 
 def test_the_opened_file_names_the_deck(out):
-    fn = out.split("  function openDeckFile(){")[1].split("\n  }")[0]
+    # (T436 moved the per-file work into openDeckHandles)
+    fn = out.split("  function openDeckHandles(hs){")[1].split("\n  }")[0]
     assert "            followFileName();" in fn

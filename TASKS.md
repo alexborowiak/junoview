@@ -8398,3 +8398,13 @@ gates are recorded in the completing commit.
   got only the motion, because both classes set `animation` and the
   later rule won — the fifteen pairs list both, the entrance first and
   the motion from where it ends. Driven live.
+- [x] **T436 — Several notebooks or presentations open at once.**
+  (User, 2026-09-14: "the ability to open multiple notebook/
+  presentations at once would be a slay out of 10.") The .junoview
+  picker and its `<input>` fallback take many files and open them one
+  after another — each single-deck file binding to the deck it opened,
+  the last one on screen; the app's folder listing opens a notebook and
+  keeps the list up on Ctrl+click, so the next one is a click away; and
+  a Ctrl+click on a library row puts that presentation on the open
+  list without leaving the dialog. The notebook `<input>` already took
+  many. Driven live.

@@ -1327,17 +1327,30 @@
     if(pres) add(pres.name);
     return names.map(presentationSummary).filter(Boolean);
   }
+  /* T436: a modifier click on a library row puts the presentation on
+     the open list without leaving the dialog, so several can be opened
+     in one visit; a plain click opens it as it always did */
   function presentationLibraryRow(p,click){
     var b=document.createElement('button');
     b.type='button';b.className='presentation-hub-row';
-    b.title='Open '+presentationKind(p)+' “'+p.name+'”';
+    b.title='Open '+presentationKind(p)+' \u201c'+p.name+'\u201d'
+      +' \u2014 Ctrl+click to add it to the open list and stay here';
     var ic=document.createElement('span');ic.innerHTML=presentationIcon(p);
     var name=document.createElement('span');name.className='presentation-hub-row-name';
     name.textContent=p.name;
     var kind=document.createElement('span');kind.className='presentation-hub-row-kind';
     kind.textContent=presentationKind(p)+(p.folder?' · '+p.folder:'');
     b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
-    b.addEventListener('click',click);
+    b.addEventListener('click',function(e){
+      if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
+        noteSessionOpen(p.name);
+        renderPresTabs();
+        toast('\u201c'+p.name+'\u201d is on the open list \u2014 Ctrl+click '
+          +'adds more; a plain click opens one',5000);
+        return;
+      }
+      click(e);
+    });
     return b;
   }
   function emptyPresentationList(host,text){
