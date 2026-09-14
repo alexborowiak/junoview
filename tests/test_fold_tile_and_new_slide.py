@@ -54,8 +54,10 @@ def test_the_delay_is_the_last_cell_of_the_timing_row():
 
 def test_a_layout_tile_chooses_and_new_slide_adds(out):
     # the strip's click remembers and highlights; it no longer makes a slide
-    assert ("          if(sel==='#layout-strip'){\n"
-            "            if(!layout.poster) lsSet(newLayKey(),layout.id);\n"
+    # (T424: for a SLIDE tile -- a poster tile applies, since a poster's
+    # New slide is New version and a choice would be for nothing)
+    assert ("          if(sel==='#layout-strip'&&!layout.poster){\n"
+            "            lsSet(newLayKey(),layout.id);\n"
             "            syncNewSlideMarks();\n"
             "            return;\n") in out
     assert "function syncNewSlideMarks(){" in out

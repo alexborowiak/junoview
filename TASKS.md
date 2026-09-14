@@ -8243,3 +8243,10 @@ gates are recorded in the completing commit.
   of 1". Driven on the example notebook: "Pages" before and after a
   trace opens with no page error; "Page 1 of 5" once the notebook is
   paged.
+- [x] **T424 — A poster tile on the Home strip applies its template.**
+  Found driving T278. Since T218 a strip tile only CHOOSES the layout
+  the next New slide will use; a poster is one page and its New slide
+  is New version, so a poster tile chose for nothing — the strip was
+  the Home tab's one door to the poster templates and clicking it did
+  nothing. A poster tile applies to the page now, as the Design menu's
+  tiles do; Ctrl+Z undoes it. Driven live on an A0 page.

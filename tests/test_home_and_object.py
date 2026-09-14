@@ -59,7 +59,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "b.type='button';b.className='dbtn lay lay-saved';" in out
     assert "if(typeof syncSavedTiles==='function') syncSavedTiles();" in out
     # the strip's tile makes a slide; the Design menu's changes this one
-    assert "if(sel==='#layout-strip'){" in out
+    assert "if(sel==='#layout-strip'&&!layout.poster){" in out   # T424
     assert "function newVersion(lay,arr){" in out
     # (since T218 a saved tile is CHOSEN for the next New slide, like the
     # built-in tiles; newVersion reads the choice back)

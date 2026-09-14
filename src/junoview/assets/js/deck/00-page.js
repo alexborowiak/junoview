@@ -582,8 +582,14 @@
              layout the next New slide will use, and New slide adds it
              (2026-09-03, user: "clicking on one just highlights it to be
              added when clicking new slide") */
-          if(sel==='#layout-strip'){
-            if(!layout.poster) lsSet(newLayKey(),layout.id);
+          /* T424: ...FOR A SLIDE. A poster is one page and its New slide
+             is New version, so a poster tile that only chose chose for
+             nothing -- the strip was the Home tab's one door to the
+             poster templates and clicking it did nothing (2026-09-14).
+             A poster tile applies to the page, as the Design menu's
+             tiles do; Ctrl+Z undoes it. */
+          if(sel==='#layout-strip'&&!layout.poster){
+            lsSet(newLayKey(),layout.id);
             syncNewSlideMarks();
             return;
           }
