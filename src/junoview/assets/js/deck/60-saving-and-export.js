@@ -2717,10 +2717,73 @@
      quietly strip every embedded figure out of junoview_project.json —
      the file stopped being self-contained without anything being said
      (2026-08-22). */
-  function saveProject(){
-    if(APP.mode==='app')
-      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
-        .catch(function(){});
+  /* ---- T451: A RENAME AND A DELETE HONOUR THE REVISION TOO -----------
+     This posted the whole project list with NO `rev`, which the server
+     reads as "do not check" (it is what an old page still in a tab
+     sends), and then swallowed every error. So the one thing the
+     revision was added for in 2026-08-22 — a second window creating a
+     deck while this one writes — was still broken through this door:
+     renaming or deleting anything here erased that deck without a
+     word. It also left this tab's projectRev a revision behind, so the
+     very next autosave paid for a 409 round trip it did not need.
+     `change` says what the write was FOR, so a conflict can re-apply
+     the same intent to the list the other window wrote rather than
+     losing it or flattening them: {drop:name} or {from:old,to:new}. */
+  /* A 409 hands back everything on disk, including the decks this window
+     has never heard of. saveToProject already learns them (projectSaved
+     takes the reconciled list as the new projectPres); this door did not,
+     and that was the difference between a conflict resolved ONCE and one
+     resolved never: the retry wrote the other window's deck back, and
+     then the next full-list write from this tab -- now that the revision
+     had caught up, so nothing refused it -- erased it for good. They come
+     in through normPres, the same door the boot list uses, so nothing
+     carries `emb` into projectPres. */
+  function adoptUnknownPresentations(theirs){
+    if(!Array.isArray(theirs)) return 0;
+    var known={};
+    projectPres.forEach(function(p){if(p&&p.name) known[p.name]=1;});
+    var n=0;
+    theirs.forEach(function(p){
+      if(!p||!p.name||known[p.name]) return;
+      known[p.name]=1;projectPres.push(normPres(deep(p)));n++;
+    });
+    return n;
+  }
+  function projectApply(list,change){
+    if(!change||!Array.isArray(list)) return null;
+    if(change.drop!=null)
+      return list.filter(function(p){return !p||p.name!==change.drop;});
+    if(change.from!=null)
+      return list.map(function(p){
+        if(p&&p.name===change.from) p.name=change.to;
+        return p;});
+    return null;
+  }
+  function saveProject(change){
+    if(APP.mode!=='app') return Promise.resolve(false);
+    return APP.api('/api/save',
+      {presentations:embedAssets(deep(projectPres)),rev:projectRev})
+      .then(function(j){
+        if(j&&typeof j.rev==='number') projectRev=j.rev;
+        return true;
+      }).catch(function(e){
+        if(!(e&&e.status===409&&e.data&&Array.isArray(e.data.presentations)))
+          return false;
+        projectRev=e.data.rev;
+        /* their list, with this window's rename or delete re-applied.
+           projectPres itself is left alone: it is the normalised form
+           (normPres has absorbed `emb` out of it) and the server's is
+           the embedded one, so adopting theirs here is exactly the
+           swap that used to strip every embedded figure. */
+        var merged=projectApply(e.data.presentations,change);
+        if(!merged) return false;
+        adoptUnknownPresentations(merged);
+        return APP.api('/api/save',{presentations:merged,rev:projectRev})
+          .then(function(j2){
+            if(j2&&typeof j2.rev==='number') projectRev=j2.rev;
+            return true;
+          }).catch(function(){return false;});
+      });
   }
   /* one delete, callable for ANY presentation — the File menu and the
      rail rows' bins both land here (2026-08-18, user: "an easier way to
@@ -2735,7 +2798,7 @@
     var wasEmbedded=nbPres.some(function(p){return p.name===nm;});
     projectPres=projectPres.filter(function(p){return p.name!==nm;});
     nbPres=nbPres.filter(function(p){return p.name!==nm;});
-    saveProject();
+    saveProject({drop:nm});
     if(nm===pres.name){
       var names=allSaved().map(function(p){return p.name;})
         .concat(draftNames());
@@ -2823,12 +2886,59 @@
     pres.name=nm;
     if(typeof renameRememberedPresentation==='function')
       renameRememberedPresentation(old,nm);
-    saveProject();
+    saveProject({from:old,to:nm});
     fileRename(old,nm);   /* T416: the file follows the name */
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');
     return true;
   }
+  /* ---- T450: RENAMING ONE YOU ARE NOT IN ------------------------------
+     (2026-09-14, user: "you can't duplicate a presentation or delete it
+     from the main menu, there is very little controls".) The library
+     lists every saved presentation, not just the one on screen, so its
+     rename cannot be the one above -- that one moves `pres`. The deck
+     on screen still goes through it, because only it can carry the
+     unflushed edits, the dirty mark and the title bar with the name.
+     Everything else is the same moves without them: the draft, the
+     project entries, the history, the remembered name and the file
+     binding. */
+  function renamePresByName(old,nm){
+    old=String(old||'');nm=String(nm||'').trim();
+    if(!old||!nm||nm===old) return false;
+    if(pres&&pres.name===old) return renamePresentation(nm);
+    var taken=allSaved().map(function(p){return p.name;})
+      .concat(draftNames());
+    if(taken.indexOf(nm)>=0){
+      toast('There is already something called \u201c'+nm+'\u201d \u2014 pick another '
+        +'name');
+      return false;
+    }
+    var raw=draftGet(old);
+    if(raw){
+      var moved;
+      try{moved=JSON.parse(raw);}catch(e){moved=null;}
+      if(moved){moved.name=nm;raw=JSON.stringify(moved);}
+      if(!draftSet(nm,raw,true)){
+        toast('Could not rename \u2014 this browser could not keep the moved '
+          +'draft. It is still called \u201c'+old+'\u201d.',9000);
+        return false;
+      }
+      draftDel(old);
+    }
+    projectPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    nbPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    histRename(old,nm);
+    if(typeof renameRememberedPresentation==='function')
+      renameRememberedPresentation(old,nm);
+    if(typeof renameOpenPresentation==='function')
+      renameOpenPresentation(old,nm);
+    saveProject({from:old,to:nm});
+    fileRename(old,nm);
+    status();renderPresTabs();renderPresRow();
+    toast('Renamed \u201c'+old+'\u201d to \u201c'+nm+'\u201d');
+    return true;
+  }
+  window.SemDeckRename=renamePresByName;   /* library rows + tests */
   /* ---- T416: THE FILE FOLLOWS THE NAME, the other half of T398 --------
      (2026-09-13, user: "when you save it as a name the presentation
      name becomes this and vice-versa"). In the default folder the file

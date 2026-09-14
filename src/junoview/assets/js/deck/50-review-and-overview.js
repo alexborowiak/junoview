@@ -1330,6 +1330,20 @@
   /* T436: a modifier click on a library row puts the presentation on
      the open list without leaving the dialog, so several can be opened
      in one visit; a plain click opens it as it always did */
+  /* one verb on a library row: the pin's shape, so all four match */
+  function hubRowAct(row,icon,label,run){
+    var s=document.createElement('span');
+    s.className='presentation-hub-act';
+    s.setAttribute('role','button');s.tabIndex=0;
+    s.innerHTML=bic(icon);
+    s.title=label;s.setAttribute('aria-label',label);
+    function go(e){e.stopPropagation();e.preventDefault();run();}
+    s.addEventListener('click',go);
+    s.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' ') go(e);});
+    row.appendChild(s);
+    return s;
+  }
   function presentationLibraryRow(p,click){
     var b=document.createElement('button');
     b.type='button';b.className='presentation-hub-row';
@@ -1360,6 +1374,34 @@
     pin.addEventListener('click',flip);
     pin.addEventListener('keydown',function(e){
       if(e.key==='Enter'||e.key===' ') flip(e);});
+    /* ---- T450: THE VERBS, HERE TOO ----------------------------------
+       (2026-09-14, user: "you can't duplicate a presentation or delete
+       it from the main menu, there is very little controls".) T448 put
+       them on the open-items bar; this is the library, which is the
+       menu the user meant, and it listed everything you own while
+       letting you do nothing to any of it but open it. Spans with
+       role="button", not buttons: the row IS a button, and a button
+       inside a button is not a thing. */
+    hubRowAct(b,'copy','Duplicate \u201c'+p.name+'\u201d',function(){
+      var made=duplicatePresentation(p.name);
+      if(made) renderPresentationHub();
+    });
+    hubRowAct(b,'text','Rename \u201c'+p.name+'\u201d',function(){
+      var v=window.prompt('Call this presentation:',p.name);
+      if(!v||!v.trim()) return;
+      if(typeof renamePresByName==='function') renamePresByName(p.name,v.trim());
+      renderPresentationHub();
+      if(typeof renderDeckPresentationDrawer==='function')
+        renderDeckPresentationDrawer();
+    });
+    hubRowAct(b,'minus','Delete \u201c'+p.name+'\u201d for good',function(){
+      if(!window.confirm('Delete \u201c'+p.name+'\u201d?\n\nThis cannot '
+        +'be undone.')) return;
+      if(typeof deletePresByName==='function') deletePresByName(p.name);
+      renderPresentationHub();
+      if(typeof renderDeckPresentationDrawer==='function')
+        renderDeckPresentationDrawer();
+    });
     b.appendChild(pin);
     b.addEventListener('click',function(e){
       if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
