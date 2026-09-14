@@ -47,15 +47,15 @@ def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
     assert "      if(!el.isConnected){typeStop();return;}" in out
 
 
-def test_motion_keeps_going_in_the_show_only(out):
+def test_motion_keeps_going(out):
     assert "  var MOTION_FX=[['','None'],['wobble','Wobble'],['bob','Float']," in out
     for cid in ("anim-move-none", "anim-move-wobble", "anim-move-bob",
                 "anim-move-pulse"):
         assert f'id="{cid}"' in out, cid
     assert '<span class="rbn-grp rbn-motion" data-tab="animation"' in out
     assert ".rbn-motion{order:3;}" in out
-    # the class goes on in view mode, in a pass of its own
-    assert "    if(mode==='view'&&s.annots&&s.annots.some(function(a){" in out
+    # the class goes on in a pass of its own (T446: in the editor too)
+    assert "    if(s.annots&&s.annots.some(function(a){" in out
     assert "        if(ma&&ma.motion) el.classList.add('an-move-'+ma.motion);" in out
     # infinite keyframes on individual properties, so a rotation survives
     assert "@keyframes an-wobble{0%,100%{rotate:-2.5deg}50%{rotate:2.5deg}}" in out

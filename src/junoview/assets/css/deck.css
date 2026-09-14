@@ -2467,6 +2467,9 @@ select#fmt-font[hidden]{display:none;}
 .an-move-wobble{animation:an-wobble 1.6s ease-in-out infinite;}
 .an-move-bob{animation:an-bob 2.6s ease-in-out infinite;}
 .an-move-pulse{animation:an-pulse 1.8s ease-in-out infinite;}
+/* T446: the selected item stays still in the editor, so it can be
+   grabbed; everything else moves as it will in the show */
+body.slide-editing .an-item.sel[class*="an-move-"]{animation:none;}
 /* ---- TEXT BUILDS: the pieces one box arrives in ----------------------
    `.an-part` is a RENDER-TIME wrapper (17-text-builds.js). It never
    reaches the model -- sanitizeRich unwraps it, the caret never enters
@@ -2510,6 +2513,27 @@ select#fmt-font[hidden]{display:none;}
   .an-anim-fade,.an-anim-rise,.an-anim-zoom,.an-anim-slide,.an-anim-turn,
   .an-move-wobble,.an-move-bob,.an-move-pulse{animation:none!important;}
 }
+/* T446: AN ENTRANCE AND A MOTION ON ONE ITEM. Both classes set
+   `animation`, so whichever rule came later in this file won and the
+   other never played -- an item that flew in and wobbled only wobbled.
+   Both, in order: the entrance once, then the motion from where the
+   entrance ended. After the reduced-motion guards, whose !important
+   still wins, so the guard stays beside the keyframes it guards. */
+.an-anim-fade.an-move-wobble{animation:anIn-fade .45s ease,an-wobble 1.6s ease-in-out .45s infinite;}
+.an-anim-fade.an-move-bob{animation:anIn-fade .45s ease,an-bob 2.6s ease-in-out .45s infinite;}
+.an-anim-fade.an-move-pulse{animation:anIn-fade .45s ease,an-pulse 1.8s ease-in-out .45s infinite;}
+.an-anim-rise.an-move-wobble{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .5s infinite;}
+.an-anim-rise.an-move-bob{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .5s infinite;}
+.an-anim-rise.an-move-pulse{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .5s infinite;}
+.an-anim-zoom.an-move-wobble{animation:anIn-zoom .45s ease,an-wobble 1.6s ease-in-out .45s infinite;}
+.an-anim-zoom.an-move-bob{animation:anIn-zoom .45s ease,an-bob 2.6s ease-in-out .45s infinite;}
+.an-anim-zoom.an-move-pulse{animation:anIn-zoom .45s ease,an-pulse 1.8s ease-in-out .45s infinite;}
+.an-anim-slide.an-move-wobble{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .5s infinite;}
+.an-anim-slide.an-move-bob{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .5s infinite;}
+.an-anim-slide.an-move-pulse{animation:anIn-slide .5s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .5s infinite;}
+.an-anim-turn.an-move-wobble{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-wobble 1.6s ease-in-out .55s infinite;}
+.an-anim-turn.an-move-bob{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-bob 2.6s ease-in-out .55s infinite;}
+.an-anim-turn.an-move-pulse{animation:anIn-turn .55s cubic-bezier(.2,.7,.2,1),an-pulse 1.8s ease-in-out .55s infinite;}
 /* the build-order badge shown in the editor — and ONLY while the Timeline
    pane is open (T76, user: "the animation bubbles that appear are the
    worst, like you can't get rid of them").

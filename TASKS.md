@@ -8389,3 +8389,12 @@ gates are recorded in the completing commit.
   the page showing as its own object or back in the book, named for
   the page and the direction. Every ribbon layout seats them beside the
   tile. Driven live.
+- [x] **T446 — A motion plays in the editor too, and beside an
+  entrance.** (User, 2026-09-14: "just applied some motions to things
+  and they did not work.") Wobble, Float and Pulse played in the show
+  only, so applying one changed nothing on screen and read as broken.
+  They play in the editor now; the selected item alone stays still so
+  it can be grabbed. And an item with both an entrance and a motion
+  got only the motion, because both classes set `animation` and the
+  later rule won — the fifteen pairs list both, the entrance first and
+  the motion from where it ends. Driven live.

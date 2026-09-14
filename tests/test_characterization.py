@@ -1846,8 +1846,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T439 (2026-09-14): the flip book's doors on the row; deck.html,
 # 45-images.js, 25-selecting.js, 07-ribbon-layouts.js and 60-saving-
 # and-export.js change.
-EXPECTED_MD5 = "7dd9284bb890041abd1df73ba42aad48"
-EXPECTED_BYTES = 4200183
+# T446 (2026-09-14): motions play in the editor and beside an
+# entrance; 20-notes-and-tables.js and deck.css change.
+# T446 (2026-09-14): motions play in the editor and beside an
+# entrance; 20-notes-and-tables.js and deck.css change.
+EXPECTED_MD5 = "a2b9be74f6a983f140be7a3533ae0801"
+EXPECTED_BYTES = 4202669
 
 
 def _render_example() -> str:
