@@ -2303,6 +2303,16 @@ body:not(.light) .wj-none{color:var(--ink-3);}
 .recent-ic{flex:none;font-size:12px;line-height:1;opacity:.85;}
 .recent-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
+/* T435: the pin on a recent row. Faint until hovered, lit when on. */
+.recent-pin{flex:none;width:20px;height:20px;padding:0;border:0;
+  background:none;color:var(--ink-3);opacity:.35;cursor:pointer;
+  border-radius:4px;display:inline-flex;align-items:center;
+  justify-content:center;}
+.recent-pin .bic{width:12px;height:12px;}
+.recent-i:hover .recent-pin,.odlg-r:hover .recent-pin{opacity:.8;}
+.recent-pin:hover{opacity:1;background:color-mix(in srgb,var(--accent) 14%,transparent);}
+.recent-pin.on{opacity:1;color:var(--accent);}
+.recent-i.pinned{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));}
 .recent-tag{flex:none;font-size:8.5px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--amber);
   border:1px solid var(--amber-soft);border-radius:4px;padding:1px 5px;}
@@ -2535,6 +2545,15 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   white-space:nowrap;flex:1;}
 .presentation-hub-row-kind{flex:none;color:var(--chrome-ink-2);
   font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;}
+/* T435: the pin on a library row */
+.presentation-hub-pin{flex:none;width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:4px;
+  color:var(--chrome-ink-2);opacity:.35;cursor:pointer;}
+.presentation-hub-pin .bic{width:12px;height:12px;color:inherit;}
+.presentation-hub-row:hover .presentation-hub-pin{opacity:.85;}
+.presentation-hub-pin:hover{opacity:1;background:#ffffff14;}
+.presentation-hub-pin.on{opacity:1;color:var(--cyan);}
+.presentation-hub-row.pinned{border-color:color-mix(in srgb,var(--cyan) 45%,var(--chrome-line));}
 .presentation-hub-empty{padding:9px;color:var(--chrome-ink-2);
   border:1px dashed var(--chrome-line);border-radius:7px;font:11px var(--sans);}
 /* T394: folders live in the library now. A heading is a drop target;
@@ -2607,7 +2626,7 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
    said they could be clicked (2026-08-21, user: "the recents look just
    like text, not a button or something"). Now: a card, an icon, and the
    name over its path. */
-.odlg-r{display:grid;grid-template-columns:auto 1fr;
+.odlg-r{display:grid;grid-template-columns:auto 1fr auto;
   grid-template-rows:auto auto;column-gap:9px;row-gap:1px;width:100%;
   background:var(--chrome-3);border:1px solid var(--chrome-line);
   padding:7px 10px;border-radius:7px;cursor:pointer;text-align:left;
@@ -2615,6 +2634,8 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
 .odlg-r:hover{background:var(--surface-hover);border-color:var(--accent);}
 .odlg-r-ic{grid-row:1/3;align-self:center;font-size:13px;line-height:1;
   opacity:.85;}
+/* T435: the pin takes the third column, both rows */
+.odlg-r .recent-pin{grid-column:3;grid-row:1/3;align-self:center;}
 .odlg-r-nm{font-size:12.5px;color:var(--accent);font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   max-width:100%;min-width:0;}
@@ -15272,9 +15293,16 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
                 title="Where this came from"></span>
               <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came from.
- If that file has moved, the picture is left exactly as it is"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh from file</button>
+                title="Re-read this picture from the file or address it
+ came from. If that cannot be read, the picture is left exactly as it
+ is"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh from file</button>
+              <!-- T437: link only is a size saving you switch on
+                   yourself, never the default -->
+              <button class="dbtn etm" id="fmt-imglink" hidden
+                aria-pressed="false"
+                title="Keep only the address, not the picture: smaller,
+ but loaded from there every time and missing wherever that cannot be
+ reached. Off, the picture is in the deck"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9"/><path d="M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9"/></svg> Link only</button>
               <span class="sh-drop opt-drop src-flat" id="fmt-srcwrap"
                 data-flat="1">
                 <button class="dbtn etm" id="fmt-src"
@@ -23506,6 +23534,48 @@ items snap to both. Guides, not ink: never printed or exported"
         +'. Still remembered; they return when you reconnect.');
     },600);
   }
+  /* ---- T435: PINNED NOTEBOOKS (2026-09-14, user: "would be cool to be
+     able to pin files to recent. I feel like I am always losing files
+     and hard to keep track of"). Pinned paths head Recent on Home and
+     in the open dialog, and never fall off the end: the recent list
+     keeps six (web) or ten (the app), the pins are kept beside it. */
+  function nbPinKey(){
+    return (APP.mode==='web'?WEBKEY:('semapp:'+(APP.root||'')))+':pinned-nb';
+  }
+  function nbPinned(){
+    try{
+      var v=JSON.parse(localStorage.getItem(nbPinKey())||'[]');
+      return Array.isArray(v)?v:[];
+    }catch(e){return [];}
+  }
+  function nbPinToggle(p){
+    var pins=nbPinned(),on=pins.indexOf(p)<0;
+    pins=pins.filter(function(x){return x!==p;});
+    if(on) pins.unshift(p);
+    try{localStorage.setItem(nbPinKey(),JSON.stringify(pins.slice(0,40)));}
+    catch(e){}
+    renderRecent();renderDlgRecent();
+    docToast(on?(splitPath(p).name+' pinned \u2014 it stays at the top of '
+      +'Recent'):(splitPath(p).name+' unpinned'));
+    return on;
+  }
+  /* the recent list with the pins in front of it */
+  function recentWithPins(){
+    var rec=(APP.project&&APP.project.recent)||[],pins=nbPinned();
+    return pins.concat(rec.filter(function(r){return pins.indexOf(r)<0;}));
+  }
+  /* one pin button, for a Home row or a dialog row */
+  function pinButton(p,on,cls){
+    var b=document.createElement('button');
+    b.type='button';b.className=cls+(on?' on':'');
+    b.innerHTML=bic('pin');
+    b.title=on?'Pinned to the top of Recent \u2014 click to unpin'
+      :'Pin to the top of Recent, so it never drops off the list';
+    b.setAttribute('aria-label',b.title);
+    b.addEventListener('click',function(e){
+      e.stopPropagation();e.preventDefault();nbPinToggle(p);});
+    return b;
+  }
   function webNote(url){
     try{
       var rec=JSON.parse(localStorage.getItem(WEBKEY+':recent')||'[]');
@@ -23543,15 +23613,16 @@ items snap to both. Guides, not ink: never printed or exported"
   function renderDlgRecent(){
     var host=$('#odlg-recent'); if(!host) return;
     host.innerHTML='';
-    var rec=(APP.project&&APP.project.recent)||[];
+    var rec=recentWithPins(),pins=nbPinned();   /* T435 */
     if(!rec.length){host.hidden=true;return;}
     host.hidden=false;
     var h=document.createElement('div');h.className='odlg-recent-h';
     h.textContent='recent — reopen';host.appendChild(h);
-    rec.slice(0,12).forEach(function(p){
+    rec.slice(0,12+pins.length).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='odlg-r';
       b.type='button';
+      if(pins.indexOf(p)>=0) b.classList.add('pinned');
       b.title='Reopen '+sp.path;
       /* an icon makes the row read as a thing you act on rather than a
          caption above a path (2026-08-21) */
@@ -23561,6 +23632,7 @@ items snap to both. Guides, not ink: never printed or exported"
       nm.textContent=sp.name;b.appendChild(nm);
       var pt=document.createElement('span');pt.className='odlg-r-p';
       pt.textContent=sp.path;pt.dir='ltr';b.appendChild(pt);
+      b.appendChild(pinButton(p,pins.indexOf(p)>=0,'recent-pin'));
       b.addEventListener('click',function(){openPath(p);});
       host.appendChild(b);
     });
@@ -23720,16 +23792,17 @@ items snap to both. Guides, not ink: never printed or exported"
   function renderRecent(){
     var host=$('#welcome-recent'); if(!host) return;
     host.innerHTML='';
-    var rec=(APP.project&&APP.project.recent)||[];
+    var rec=recentWithPins(),pins=nbPinned();   /* T435: pins first */
     host.hidden=!rec.length;
     syncJump();
     if(!rec.length) return;
     var h=document.createElement('div');h.className='recent-h';
     h.textContent='recent';host.appendChild(h);
-    rec.slice(0,6).forEach(function(p){
+    rec.slice(0,6+pins.length).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='recent-i';
       b.type='button';
+      if(pins.indexOf(p)>=0) b.classList.add('pinned');
       /* THE NAME, and the path on hover. These rows were the whole path
          — an https://raw.githubusercontent.com/... URL ellipsised from
          the left — so six remembered notebooks read as six near-identical
@@ -23741,6 +23814,7 @@ items snap to both. Guides, not ink: never printed or exported"
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=sp.name;
       b.appendChild(ic);b.appendChild(nm);
+      b.appendChild(pinButton(p,pins.indexOf(p)>=0,'recent-pin'));
       b.addEventListener('click',function(){
         if(b.classList.contains('busy')) return;
         /* SAY THAT SOMETHING IS HAPPENING. A remembered notebook is a
@@ -23787,13 +23861,28 @@ items snap to both. Guides, not ink: never printed or exported"
         var d=document.createElement('span');d.className='recent-tag';
         d.textContent='draft';b.appendChild(d);
       }
+      /* T435: the pin, through the deck's own toggle */
+      if(p.pinned) b.classList.add('pinned');
+      var pin=document.createElement('button');
+      pin.type='button';pin.className='recent-pin'+(p.pinned?' on':'');
+      pin.innerHTML=bic('pin');
+      pin.title=p.pinned?'Pinned to the top of Recent \u2014 click to unpin'
+        :'Pin to the top of Recent, so it never drops off the list';
+      pin.setAttribute('aria-label',pin.title);
+      pin.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();
+        if(APP.deckPinToggle) APP.deckPinToggle(p.name);
+        renderWelcomePres();
+      });
+      b.appendChild(pin);
       b.addEventListener('click',function(){
         if(APP.deckChoose) APP.deckChoose(p.name);
         goHome(false);
       });
       host.appendChild(b);
     }
-    list.slice(0,6).forEach(row);
+    var npin=list.filter(function(p){return p.pinned;}).length;
+    list.slice(0,6+npin).forEach(row);   /* T435: pins do not eat the six */
   }
 
   /* ---- the welcome screen's demo reel ---------------------------------
@@ -31946,7 +32035,7 @@ window.JunoPptx = (function () {
          'fmt-opwrap','fmt-stylewrap','fmt-swwrap','fmt-headwrap',
          'fmt-bendwrap']},
       {id:'of-pic',label:'Picture',tab:'home',
-       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh','fmt-imglink',
          'fmt-revert','fmt-lockver','fmt-locate','fmt-prov',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts','et-cell']},
       {id:'of-tbl',label:'Table',tab:'home',
@@ -32028,7 +32117,7 @@ window.JunoPptx = (function () {
        items:['fmt-stylewrap','fmt-swwrap','fmt-headwrap',
          'fmt-bendwrap','fmt-fillwrap','fmt-shapewrap']},
       {id:'ob-source',label:'Figure source',tab:'object',
-       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-lockver','fmt-imgrefresh','fmt-replace',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-lockver','fmt-imgrefresh','fmt-imglink','fmt-replace',
          'fmt-caption','fmt-locate','fmt-prov','fmt-revert',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts','et-cell']},
       {id:'ob-table',label:'Table',tab:'object',
@@ -32053,7 +32142,7 @@ window.JunoPptx = (function () {
        items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-locate','fmt-prov','fmt-replace',
          'fmt-caption','fmt-lockver','et-cell']},
       {id:'s1-fresh',label:'Freshness',tab:'sources',
-       items:['fmt-imgrefresh','fmt-revert','vw-versions',
+       items:['fmt-imgrefresh','fmt-imglink','fmt-revert','vw-versions',
          'vw-check']},
       {id:'s1-frame',label:'Frame',tab:'sources',
        items:['et-image','et-media','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos',
@@ -32128,7 +32217,7 @@ window.JunoPptx = (function () {
          'fmt-samewrap']},
       {id:'day-sources',label:'Frames and sources',tab:'format',
        items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-locate',
-         'fmt-prov','fmt-imgrefresh','fmt-revert','fmt-lockver',
+         'fmt-prov','fmt-imgrefresh','fmt-imglink','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell']},
       {id:'day-table',label:'Table',tab:'format',
        items:['fmt-tbl-rowplus','fmt-tbl-rowminus','fmt-tbl-colplus',
@@ -32169,7 +32258,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
          'dc-draw','et-table','et-flip','et-arrow','et-cancel']},
       {id:'j3-figures',label:'Figure source',tab:'content',
-       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh','fmt-imglink',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver','et-cell']},
       {id:'j3-text',label:'Text',tab:'content',
        items:['fmt-font','fmt-szwrap','fmt-smaller','fmt-bigger',
@@ -32214,7 +32303,7 @@ window.JunoPptx = (function () {
       {id:'one-insert',label:'Insert and sources',tab:'all',
        items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
          'dc-draw','fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-locate',
-         'fmt-prov','fmt-imgrefresh','fmt-revert','fmt-lockver',
+         'fmt-prov','fmt-imgrefresh','fmt-imglink','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
          'et-table','et-flip','et-arrow','et-cancel']},
       {id:'one-text',label:'Text',tab:'all',
@@ -32277,7 +32366,7 @@ window.JunoPptx = (function () {
        items:['fmt-alignwrap','fmt-arline','fmt-argrid',
          'fmt-samewrap','fmt-rotl','fmt-rotr']},
       {id:'mi-bub-fig',label:'Figure',tab:'mi-sel',
-       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-imgrefresh','fmt-replace','fmt-caption',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-imgrefresh','fmt-imglink','fmt-replace','fmt-caption',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts']},
       {id:'mi-bub-tbl',label:'Table',tab:'mi-sel',
@@ -32327,7 +32416,7 @@ window.JunoPptx = (function () {
          'fmt-backward','fmt-rotl','fmt-rotr','fmt-arline',
          'fmt-argrid']},
       {id:'tt-fig',label:'Figure',tab:'tt-fmt',
-       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-imgrefresh','fmt-replace','fmt-caption',
+       items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-imgrefresh','fmt-imglink','fmt-replace','fmt-caption',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver',
          'fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','fmt-parts']},
       {id:'tt-tbl',label:'Table',tab:'tt-fmt',
@@ -32904,7 +32993,8 @@ window.JunoPptx = (function () {
      that is refused (a private window, a disk that is really full) is
      the only thing that can make the readout say "browser full" now. */
   var DRAFTS={},draftsDbFull=false,draftsLoaded=false;
-  var DRAFT_META={'last':1,'recent-presentations':1};
+  var DRAFT_META={'last':1,'recent-presentations':1,
+    'pinned-presentations':1};   /* T435 */
   function draftGet(name){
     var v=DRAFTS[name]; return (v==null)?null:v;
   }
@@ -33107,12 +33197,48 @@ window.JunoPptx = (function () {
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
       folder:p.folder||'',draft:!!loadDraft(name)};
   }
+  /* ---- T435: PINS (2026-09-14, user: "would be cool to be able to pin
+     files to recent. I feel like I am always losing files and hard to
+     keep track of"). A pinned presentation heads Recent, on Home and
+     in the library, and never falls off the end of the list however
+     many others are opened after it. Kept beside the recent list in
+     localStorage; a rename or a delete follows it. */
+  var PRESENT_PIN_KEY=PFX+'pinned-presentations';
+  function pinnedPresentationNames(){
+    var names=[];
+    try{names=JSON.parse(lsGet(PRESENT_PIN_KEY)||'[]');}catch(e){}
+    return Array.isArray(names)?names:[];
+  }
+  function isPinnedPresentation(name){
+    return pinnedPresentationNames().indexOf(name)>=0;
+  }
+  function setPinnedPresentation(name,on){
+    if(!name) return;
+    var names=pinnedPresentationNames().filter(function(n){return n!==name;});
+    if(on) names.unshift(name);
+    lsSet(PRESENT_PIN_KEY,JSON.stringify(names.slice(0,40)));
+    if(typeof renderPresentationHub==='function') renderPresentationHub();
+    if(typeof renderDeckPresentationDrawer==='function')
+      renderDeckPresentationDrawer();
+    if(APP.refreshChrome) APP.refreshChrome();
+  }
+  function togglePinPresentation(name){
+    setPinnedPresentation(name,!isPinnedPresentation(name));
+    return isPinnedPresentation(name);
+  }
   function savedRecentPresentationNames(){
     var names=[];
     try{names=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(names)) names=[];
+    /* T435: the pinned ones first, then the rest in recent order */
+    var pins=pinnedPresentationNames();
+    names=pins.concat(names.filter(function(n){return pins.indexOf(n)<0;}));
     return names.filter(function(name){return !!presentationByName(name);})
-      .map(presentationSummary).filter(Boolean);
+      .map(function(name){
+        var p=presentationSummary(name);
+        if(p) p.pinned=pins.indexOf(name)>=0;
+        return p;
+      }).filter(Boolean);
   }
   function notePresentationOpen(name){
     if(!name) return;
@@ -33137,6 +33263,7 @@ window.JunoPptx = (function () {
     try{recent=JSON.parse(lsGet(PRESENT_RECENT_KEY)||'[]');}catch(e){}
     if(!Array.isArray(recent)) recent=[];
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(rename(recent).slice(0,12)));
+    lsSet(PRESENT_PIN_KEY,JSON.stringify(rename(pinnedPresentationNames())));
     renameOpenPresentation(oldName,newName);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
@@ -33148,6 +33275,8 @@ window.JunoPptx = (function () {
     if(!Array.isArray(recent)) recent=[];
     recent=recent.filter(function(n){return n!==name;});
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent));
+    lsSet(PRESENT_PIN_KEY,JSON.stringify(pinnedPresentationNames()
+      .filter(function(n){return n!==name;})));
     closeOpenPresentation(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
@@ -40493,6 +40622,16 @@ window.JunoPptx = (function () {
       var sg=pres.slides[cur],ag=sg&&annotByIdx(sg,idx);
       if(ag&&ag.grp!=null&&inGroup!==ag.grp) return;
       e.stopPropagation();
+      /* T442: A MATHS BOX OPENS IN THE EQUATION EDITOR (2026-09-14,
+         user: "with equations it would be good if you can go back into
+         the equation and edit in the equation editor. Currently you
+         cannot do this"). The Edit equation button on the Text tab was
+         the only way back in, and a double-click -- the way into every
+         other box -- put a bare caret on the LaTeX instead. */
+      if(typeof idx==='number'&&ag&&typeof isMaths==='function'
+         &&isMaths(ag)&&window.SemDeckEquation){
+        window.SemDeckEquation(idx);return;
+      }
       /* WHICH CLICK THIS IS. The caret-placing below is right for the
          double-click that OPENS the box — you want the caret where you
          pointed, not at the end. It was running on every double-click,
@@ -43547,7 +43686,7 @@ window.JunoPptx = (function () {
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
-    +'#fmt-opval #fmt-imgrefresh').split(' ');
+    +'#fmt-opval #fmt-imgrefresh #fmt-imglink').split(' ');
 
   /* EVERY CONTEXTUAL CONTROL, in one list: the two tables that already
      govern them. */
@@ -44033,11 +44172,25 @@ window.JunoPptx = (function () {
        otherwise it is a button that can only ever fail */
     var ir=$('#fmt-imgrefresh');
     if(ir){
-      var anyLinked=false;
+      var anyLinked=false,anyAddr=false;
       selIdxs().forEach(function(i){
         var xa=(s&&s.annots||[])[i];
-        if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;});
-      ir.hidden=!anyLinked;
+        if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;
+        /* T437: a path or an address re-reads too */
+        if(xa&&xa.k==='image'&&typeof picAddr==='function'&&picAddr(xa))
+          anyAddr=true;});
+      ir.hidden=!(anyLinked||anyAddr);
+      ir.innerHTML=bic('reload')+(anyLinked&&!anyAddr
+        ?' Refresh from file':' Refresh from path');
+    }
+    /* T437: Link only -- the size saving, as a switch you can see */
+    var lk=$('#fmt-imglink');
+    if(lk){
+      var lkOn=kind==='image'&&isNum&&typeof picAddr==='function'
+        &&!!picAddr(a);
+      lk.hidden=!lkOn;
+      if(lkOn) lk.setAttribute('aria-pressed',
+        (picState(a)==='link').toString());
     }
     /* WHERE IT CAME FROM, on the row (T198): a picture's file, a
        figure's notebook; and the lock that keeps a thing in place */
@@ -45604,6 +45757,19 @@ window.JunoPptx = (function () {
           row('Remove the link','',function(){
             delete lk0.link;markDirty();renderSlide();
             toast('Link removed');},null,'unlink');
+      }
+      /* T442: the equation editor, from the menu that knows what you
+         clicked -- the same door the double-click takes */
+      if(selIdxs().length===1){
+        var eq0=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        if(eq0&&typeof isMaths==='function'&&isMaths(eq0)){
+          menuHead(m,'equation');
+          row('Edit the equation\u2026','',function(){
+            if(window.SemDeckEquation) window.SemDeckEquation(selIdxs()[0]);},
+            'Open it in the equation editor \u2014 the palette, the live '
+            +'preview, display or inline. Double-clicking the box does '
+            +'the same','maths');
+        }
       }
       if(altSel.length){
         var one0=(pres.slides[cur].annots||[])[altSel[0]];
@@ -49211,19 +49377,22 @@ window.JunoPptx = (function () {
         +'book'):'That image could not be read');
     }
     if(pic.file) flipAddFiles(bk,[pic.file],said);
-    else if(/^data:/i.test(pic.src)){
+    else {
+      /* T437: a data: picture and a web address alike are READ and
+         kept as a page; only a site that refuses the read leaves the
+         page as its address */
       fetch(pic.src).then(function(r){return r.blob();})
         .then(function(b){flipAddFiles(bk,[b],said);})
-        .catch(function(){said(0);});
-    } else {
-      /* a picture at an address is a page by its address, the way the
-         URL door places one */
-      bk.frames=flipFrames(bk).slice();
-      bk.frames.push({src:pic.src});
-      bk.at=bk.frames.length-1;
-      markDirty();renderSlide();
-      if(typeof renderFlipPane==='function') renderFlipPane();
-      said(1);
+        .catch(function(){
+          if(/^data:/i.test(pic.src)){said(0);return;}
+          bk.frames=flipFrames(bk).slice();
+          bk.frames.push({src:pic.src});
+          bk.at=bk.frames.length-1;
+          markDirty();renderSlide();
+          if(typeof renderFlipPane==='function') renderFlipPane();
+          toast('Pasted as page '+flipFrames(bk).length+' by its address '
+            +'\u2014 that site did not let the page read it',6000);
+        });
     }
     return true;
   }
@@ -49237,9 +49406,9 @@ window.JunoPptx = (function () {
         .catch(function(){toast('That image could not be read');});
       return true;
     }
-    /* a picture that lives at an address: placed by it, the way the
-       Images tab's own URL door does */
-    placeImage(pic.src,0,null);
+    /* T437: a picture at an address is read and kept, the way the
+       Images tab's own address door now does */
+    placeFromAddress(pic.src);
     return true;
   }
   document.addEventListener('paste',function(e){
@@ -55011,6 +55180,8 @@ window.JunoPptx = (function () {
     function picBytes(a){
       var addr=picAddr(a);
       if(addr&&!a.fkey){
+        /* T437: a web address reads itself, in every build */
+        if(/^https?:\/\//i.test(addr)) return fetchDataUrl(addr);
         if(!picCanEmbed())
           return Promise.reject(new Error('needs the Junoview app'));
         return APP.api('/api/readimage',{path:addr})
@@ -55035,7 +55206,11 @@ window.JunoPptx = (function () {
         }).then(function(r){
           var src=r.small;
           if(!src||src===e.a.src) {ok++;return;}
+          /* T437: a picture that lived at its address now holds the
+             bytes, and keeps the address beside them to re-read */
+          var wasLink=picState(e.a)==='link',addr0=picAddr(e.a);
           e.a.src=src;ok++;
+          if(wasLink&&addr0) e.a.psrc=addr0;
           /* THE ORIGINAL MOVES WITH THE PICTURE. Only a.src was
              replaced, so a.okey went on naming the bytes of the file as
              it was when first inserted — and every export that swaps
@@ -55301,7 +55476,8 @@ window.JunoPptx = (function () {
           +'only copy — there is no file to re-read, and nothing to lose');
         return;
       }
-      if(picState(a2)==='link'&&!picCanEmbed()){
+      if(picState(a2)==='link'&&!picCanEmbed()
+         &&!/^https?:\/\//i.test(picAddr(a2))){
         toast('This picture is loaded from '+picAddr(a2)+' every time the '
           +'deck opens, so it is always as current as that address is.',
           7000);
@@ -55357,6 +55533,21 @@ window.JunoPptx = (function () {
     }
     /* T313: one arm per state, because each one means something
        different by "refresh" */
+    /* T437: link only is a switch, on the row, said for what it is */
+    if(r.kind==='Picture'&&(r.pic==='link'||r.pic==='path')){
+      act(r.pic==='link'?'Link only':'Embedded',
+        r.pic==='link'
+          ?('Only the address is kept, so the deck is smaller \u2014 and '
+            +'the picture is missing wherever '+r.from+' cannot be '
+            +'reached. Click to read it into the deck.')
+          :('The bytes are in the deck, so it cannot go missing. Click '
+            +'to keep only the address instead (smaller, but loaded '
+            +'from '+r.from+' every time).'),
+        function(){
+          var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+          if(a2) picSetLink(a2,r.pic!=='link');
+        },r.pic==='link');
+    }
     act('Refresh',ref
       ?('Re-read this figure from ' + r.from + ' and keep the new copy '
         + '\u2014 only this one')
@@ -55607,8 +55798,18 @@ window.JunoPptx = (function () {
       var sl=pres.slides[cur],hits=[];
       selIdxs().forEach(function(i){
         var a=(sl&&sl.annots||[])[i];
-        if(a&&a.k==='image'&&a.fkey) hits.push({si:cur,ai:i,a:a});});
+        /* T437: a file, a path or an address -- anything re-readable */
+        if(a&&a.k==='image'&&(a.fkey||picAddr(a)))
+          hits.push({si:cur,ai:i,a:a});});
       refreshImagesReport(hits);
+    });
+    /* T437: the Link only switch on the Object tab */
+    var lk=$('#fmt-imglink');
+    if(lk) lk.addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=pres.slides[cur],a=(sl&&sl.annots||[])[selAnnot];
+      if(!a||a.k!=='image'||!picAddr(a)) return;
+      picSetLink(a,picState(a)!=='link').then(function(){showFmt();});
     });
   })();
   /* T313: A PATH IS READ, A URL IS LINKED.
@@ -55620,13 +55821,79 @@ window.JunoPptx = (function () {
      capped) and the bytes are kept with the address beside them; a web
      address stays a link, because it already works and proxying it
      would make the server reachable as one. */
+  /* ---- T437: EMBEDDED BY DEFAULT (2026-09-14, user: "images are
+     still just loading from their path by default. The default should
+     be that they are embedded, and then there are options to make them
+     just from the path and so load each time, as well as refresh from
+     the path even if they are embedded ... The load always from path
+     (symbolic link) needs to be a compression thing that is only active
+     manually so people are aware"). Every door now reads the picture
+     into the deck and keeps its address beside the bytes; "link only"
+     is a choice you make on the picture, said out loud as the size
+     saving it is, and undone by Refresh. */
+  function fetchDataUrl(url){
+    return fetch(url,{mode:'cors'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.blob();
+    }).then(function(b){
+      if(b.type&&b.type.indexOf('image/')!==0)
+        throw new Error('not a picture');
+      return readAsDataURL(b);
+    });
+  }
+  /* one picture: hold the bytes (off) or live at its address (on) */
+  function picSetLink(a,on){
+    if(!a||a.k!=='image') return Promise.resolve(false);
+    var addr=picAddr(a);
+    if(!addr) return Promise.resolve(false);
+    if(on){
+      if(picState(a)==='link') return Promise.resolve(true);
+      a.src=addr;delete a.psrc;
+      if(a.okey){try{idbDel(a.okey);}catch(e){}delete a.okey;}
+      markDirty();refresh();imgPaneRefresh();
+      toast('Link only: the deck keeps just the address, so it is smaller '
+        +'\u2014 and the picture is missing wherever '+midElide(addr,40)
+        +' cannot be reached. Refresh puts the bytes back.',9000);
+      return Promise.resolve(true);
+    }
+    if(picState(a)!=='link') return Promise.resolve(true);
+    var si=cur,ai=(pres.slides[cur].annots||[]).indexOf(a);
+    return refreshImagesReport([{si:si,ai:ai,a:a}],true).then(function(r){
+      var ok=!!(r&&r.ok);
+      toast(ok?'Kept in the deck \u2014 it remembers '+midElide(addr,40)
+        :('Could not read '+midElide(addr,40)+' \u2014 still a link'),6000);
+      imgPaneRefresh();
+      return ok;
+    });
+  }
   function placeFromAddress(addr){
     var isUrl=/^https?:\/\//i.test(addr);
-    if(isUrl||!picCanEmbed()){
-      if(!isUrl&&!picCanEmbed())
-        toast('A file on this computer can only be read by the Junoview '
-          +'app. Here, use a web address — or Insert \u203a Picture to '
-          +'choose the file.',7000);
+    if(isUrl){
+      /* T437: read and kept, with the address beside it. Only a site
+         that refuses the read leaves it as a link, and that is said. */
+      toast('Reading '+midElide(addr,40)+'\u2026');
+      fetchDataUrl(addr).then(function(full){
+        return shrinkDataUrl(full).then(function(small){
+          placeImage(small,0,null,full!==small?full:null);
+          var s=pres.slides[cur],a=s&&(s.annots||[])[selAnnot];
+          /* the address lands after placeImage selected the picture,
+             so the Object tab is re-judged with it */
+          if(a&&a.k==='image'){a.psrc=addr;markDirty();showFmt();}
+          toast('Kept in the deck, and it remembers '+midElide(addr,40));
+          imgPaneRefresh();
+        });
+      }).catch(function(){
+        placeImage(addr,0);
+        toast('That site did not let this page read the picture, so it '
+          +'is a link: loaded from '+midElide(addr,40)+' each time, and '
+          +'missing wherever that cannot be reached.',9000);
+      });
+      return;
+    }
+    if(!picCanEmbed()){
+      toast('A file on this computer can only be read by the Junoview '
+        +'app. Here, use a web address \u2014 or Insert \u203a Picture to '
+        +'choose the file.',7000);
       placeImage(addr,0);
       return;
     }
@@ -55642,7 +55909,7 @@ window.JunoPptx = (function () {
           a.psrc=addr;
           if(r.path) a.ppath=r.path;
           if(r.name) a.fname=r.name;
-          markDirty();
+          markDirty();showFmt();   /* T437: the tab sees the address */
         }
         toast('Kept in the deck, and it remembers '+(r.name||addr));
         imgPaneRefresh();
@@ -56185,12 +56452,12 @@ window.JunoPptx = (function () {
       function(){objInto=idx;pasteObjImage();}],
      [bic('link'),'A path or a link',
       picCanEmbed()
-        ? 'A file on this computer or a web address. A file is READ and '
+        ? 'A file on this computer or a web address. Either is READ and '
           +'kept in the deck, and remembers where it came from so you '
-          +'can re-read it; a web address is loaded every time.'
-        : 'A web address this page can load. The address is what is '
-          +'kept, so the picture stays exactly as portable as the '
-          +'address is — opening the deck elsewhere re-fetches it.',
+          +'can re-read it (T437).'
+        : 'A web address. It is read and kept in the deck, and remembers '
+          +'where it came from so you can re-read it; a site that '
+          +'refuses the read leaves it as a link, and that is said.',
       function(){
         var p=prompt(picCanEmbed()
           ? 'Path or link to a picture:'
@@ -63818,6 +64085,26 @@ window.JunoPptx = (function () {
     var kind=document.createElement('span');kind.className='presentation-hub-row-kind';
     kind.textContent=presentationKind(p)+(p.folder?' · '+p.folder:'');
     b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
+    /* T435: the pin. A pinned row heads Recent and never drops off it. */
+    var pinned=isPinnedPresentation(p.name);
+    if(pinned) b.classList.add('pinned');
+    var pin=document.createElement('span');
+    pin.className='presentation-hub-pin'+(pinned?' on':'');
+    pin.setAttribute('role','button');pin.tabIndex=0;
+    pin.innerHTML=bic('pin');
+    pin.title=pinned?'Pinned to the top of Recent \u2014 click to unpin'
+      :'Pin to the top of Recent, so it never drops off the list';
+    pin.setAttribute('aria-label',pin.title);
+    function flip(e){
+      e.stopPropagation();e.preventDefault();
+      var on=togglePinPresentation(p.name);
+      toast(on?('\u201c'+p.name+'\u201d pinned \u2014 it stays at the top '
+        +'of Recent'):('\u201c'+p.name+'\u201d unpinned'),4000);
+    }
+    pin.addEventListener('click',flip);
+    pin.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' ') flip(e);});
+    b.appendChild(pin);
     b.addEventListener('click',function(e){
       if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
         noteSessionOpen(p.name);
@@ -64203,6 +64490,7 @@ window.JunoPptx = (function () {
       if(form){form.hidden=false;if(field) field.focus();}
     };
     window.SemApp.deckRecentNames=savedRecentPresentationNames;
+    window.SemApp.deckPinToggle=togglePinPresentation;   /* T435 */
     renderPresentationHub();renderDeckPresentationDrawer();
     if(APP.refreshChrome) APP.refreshChrome();
   }
@@ -71793,6 +72081,7 @@ window.JunoPptx = (function () {
      checkable from outside (2026-08-22). */
   window.SemDeckRefreshImages=refreshImagesReport;   /* test hook */
   window.SemDeckLinkedImages=linkedImages;          /* test hook */
+  window.SemDeckPlaceAddress=placeFromAddress;      /* browser-verification hook (T437) */
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
   /* T236: History and Checkpoint are Home buttons now. They are
