@@ -142,4 +142,7 @@ def test_the_palette_door_says_what_a_named_colour_is():
         in js
     # ...and each row says what that colour is on
     assert "  function tokUses(k){" in js
-    assert "      use.textContent=tokUsesLabel(u);" in js
+    # T455 tells the five base colours apart: they are what everything
+    # without a colour of its own falls back to, never "not used yet"
+    assert "      use.textContent=tokUsesLabel(u,base);" in js
+    assert "    if(base) bits.push('everything else');" in js

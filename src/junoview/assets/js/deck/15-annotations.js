@@ -2450,10 +2450,37 @@
      read them -- the colours are resolved in JS by tokVal at each of its
      ~70 paint sites, and `grep "var(--tk-"` finds only --tk-rad. Six
      custom properties set on every slide on every render, for nobody. */
+  /* ---- T455: AND NOW THEY GOVERN --------------------------------------
+     (2026-09-14, user, for the third time: "Shared colours ... still
+     makes no sense to me whatever this is doing, and I have said this so
+     many times and you have never god damn fixed this.")
+     They governed nothing. A colour only followed a token if the object
+     carried '@ink' in its own field, which happens only if you pick from
+     the Deck row buried at the top of a colour menu -- so on every deck
+     anybody has ever made, setting "Body text" to red changed not one
+     pixel, and every row of the panel read "not used yet" beside a slide
+     full of colour. The panel's own sentence, "change one here and every
+     slide follows", was simply false.
+     It is true now: the five base colours are written onto the slide and
+     the CSS defaults read them, so everything that has NOT been given a
+     colour of its own follows the deck's. An explicit colour is still an
+     inline style and still wins.
+     ONLY WHEN IT DIFFERS from the default, and removed when it does not:
+     that keeps the literal in the CSS the one source of the default, so
+     a deck nobody has recoloured renders exactly as it did before this,
+     byte for byte. (--tk-rad has worked this way since T12; this is the
+     same bargain for the colours, which T265 removed precisely because
+     nothing read them. Something reads them now.) */
+  var TOK_BASE={ink:1,page:1,surface:1,heading:1,line:1};
   function applyTokens(slideEl){
     if(!slideEl) return;
-    var t=tokens();
+    var t=tokens(),d=TOKENS_DEFAULT.c;
     slideEl.style.setProperty('--tk-rad',t.rad+'px');
+    Object.keys(TOK_BASE).forEach(function(k){
+      var v=t.c[k];
+      if(v&&v!==d[k]) slideEl.style.setProperty('--tk-'+k,v);
+      else slideEl.style.removeProperty('--tk-'+k);
+    });
   }
   /* ---- T265: WHO WEARS THIS COLOUR ------------------------------------
      "I have never once understood the actual purpose of this ... changing
@@ -2488,11 +2515,15 @@
     return out;
   }
   /* "3 boxes", "2 boxes · 1 slide", or plainly nothing */
-  function tokUsesLabel(u){
+  function tokUsesLabel(u,base){
     var bits=[];
     if(u.boxes) bits.push(u.boxes+' box'+(u.boxes===1?'':'es'));
     if(u.slides) bits.push(u.slides+' slide'+(u.slides===1?'':'s'));
     if(u.other) bits.push('the deck');
+    /* T455: one of the five BASE colours is never unused -- it is what
+       everything falls back to. Saying "not used yet" beside a slide
+       full of colour is what made the panel read as broken. */
+    if(base) bits.push('everything else');
     return bits.length?bits.join(' \u00b7 '):'not used yet';
   }
   /* changing a token is an ordinary edit: one markDirty, one undo step,
@@ -2626,9 +2657,14 @@
       /* T265: what this colour is actually on. Without it the rows are
          abstract names and changing one is an act of faith. */
       var use=document.createElement('span');
-      var u=tokUses(k);
-      use.className='tok-use'+((u.boxes||u.slides||u.other)?'':' tok-none');
-      use.textContent=tokUsesLabel(u);
+      var u=tokUses(k),base=!!TOK_BASE[k];
+      use.className='tok-use'
+        +((base||u.boxes||u.slides||u.other)?'':' tok-none');
+      use.textContent=tokUsesLabel(u,base);
+      use.title=base
+        ?('Everything that has not been given a colour of its own wears '
+          +'this. Change it and they all follow.')
+        :'Put this colour on a box from the Deck row of its colour menu';
       row.appendChild(use);
       var inp=document.createElement('input');
       inp.type='color';inp.className='ff-in';

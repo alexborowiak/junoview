@@ -8594,3 +8594,36 @@ gates are recorded in the completing commit.
   runs, and Configure says where it went rather than going blank.
   Switching tabs is a class flip, not a rebuild, so it cannot lose a
   drag or a half-dragged slider. Driven live.
+- [x] **T454 — The shelf's row scrolls; its frame stays put.** (Found
+  driving T453 on the Images tab.) The Shapes group's twenty-two tiles
+  are wider than any window. With the overflow on the shelf itself, its
+  own name and its close button scrolled away under the tiles — the ✕
+  sat on top of whichever shape happened to be beneath it — and a row
+  that ran off the edge gave no sign that it had. The scroller is the
+  BODY now: only the row moves, the name and the ✕ that frame it stay
+  where they are, and a row wider than the bar gets a fade at the edge
+  it runs off so its last third is discoverable. Driven live on Shapes
+  (22 tiles, scrolls) and Transition (4, does not).
+- [x] **T455 — The deck colours actually govern the deck.** (User, for
+  the third time, 2026-09-14: "Shared colours ... this still makes no
+  sense to me whatever this is doing, and I have said this so many times
+  and you have never god damn fixed this. This needs an overhaul.") They
+  governed nothing. A colour only followed a token if the object carried
+  `'@ink'` in its own field, which happens only if you pick from the
+  Deck row buried at the top of a colour menu — so on every deck anybody
+  has ever made, setting "Body text" to red changed not one pixel, and
+  every row of the panel read "not used yet" beside a slide full of
+  colour. The panel's own sentence, *change one here and every slide
+  follows*, was simply false. It is true now: the five base colours are
+  written onto the slide and the CSS defaults read them, so everything
+  that has NOT been given a colour of its own follows the deck's, and an
+  explicit colour is still an inline style and still wins. They are
+  written ONLY when they differ from the default and removed when they
+  do not, so the literal in the CSS stays the one source of the default
+  and a deck nobody has recoloured renders exactly as it did — driven,
+  and an untouched slide still carries `--tk-rad` and nothing else. The
+  page background's last fallback stopped being a hard-coded hex and
+  became `@page`, which is what made that row inert. And a base colour
+  never reports "not used yet" again: it reads "everything else", beside
+  whatever explicitly wears it. Driven live: Body text to red turns the
+  text red, Page background to plum turns the page plum.

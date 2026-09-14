@@ -795,7 +795,11 @@
     /* slide > master > deck (T115): the slide's own colour still wins,
        the master fills in for every wearer that set none */
     var mbg=(typeof mastOf==='function'&&mastOf(s0)||{}).bg;
-    var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)||'#0b141d');
+    /* T455: the deck's own Page background is the last word, not a
+       literal -- that hard-coded hex is exactly why changing it in the
+       Deck colours panel did nothing. Its default IS this colour, so
+       nothing moves until somebody picks another. */
+    var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)||'@page');
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
     /* the chips live in the Background dropdown now, and it rebuilds
