@@ -8338,3 +8338,29 @@ gates are recorded in the completing commit.
   move, the list renumbered), a page through its book, a bullet through
   its text — the build's first row also stands for bullet 0, so a
   bullet can be dragged to the top. Driven live.
+- [x] **T433 — A .junoview file holds one presentation.** (User,
+  2026-09-14: "The files on local keep seeming to just save to project
+  junoview. Even though that is not the file name which gets confusing.
+  Then project junoview doesn't appear in the list of recently opened
+  files.") A saved file carried every deck the tab knew about, named
+  after the one on screen: opening it brought them all back under
+  minted names (talk-2, talk-3, one more each time), the handle bound
+  to whichever came first, and Save from that deck wrote the whole
+  library into a file whose name was not its own. A file now holds the
+  deck it was saved from (the project file stays the whole library);
+  a file of a deck already here, unchanged, opens that deck instead of
+  minting a copy; a file of several decks — a bundle from before —
+  goes into the library without binding to any of them, and a
+  remembered bundle is let go before an autosave could shrink it; and a
+  single-deck file's stem names the deck through the Open door too, as
+  T398 did for the picked file. Driven live.
+- [x] **T434 — Closing with changes that are not saved yet asks
+  first.** (User, 2026-09-14: "you can close things if they are not
+  saved which is an issue. If there are unsaved changes it needs to
+  warn you before closing.") The browser copy is written as you type,
+  so inside this browser nothing is lost — but a deck whose home is a
+  file or the project file has changes that are not there until the
+  next Save or autosave lands, and a full browser keeps nothing at all.
+  Closing the tab or reloading raises the browser's leave-site prompt
+  in those cases; closing the deck's row in the rail asks, and OK saves
+  first. A deck merely opened this visit never asks. Driven live.

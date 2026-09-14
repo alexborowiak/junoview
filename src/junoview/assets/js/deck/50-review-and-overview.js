@@ -1261,12 +1261,19 @@
       del.innerHTML=bic('exit')||'&#10005;';
       del.addEventListener('click',function(e){
         e.stopPropagation();e.preventDefault();
-        if(isCur&&!deckEl.hidden) closeDeck();
-        if(vwOpen) closeCustomView();
-        closeOpenPresentation(nm);
-        renderPresTabs();
-        if(typeof renderDeckPresentationDrawer==='function')
-          renderDeckPresentationDrawer();
+        /* T434: the deck on screen with changes not yet in its file
+           asks first */
+        var go=(isCur&&typeof closeGuard==='function')
+          ?closeGuard(nm):Promise.resolve(true);
+        go.then(function(ok){
+          if(!ok) return;
+          if(isCur&&!deckEl.hidden) closeDeck();
+          if(vwOpen) closeCustomView();
+          closeOpenPresentation(nm);
+          renderPresTabs();
+          if(typeof renderDeckPresentationDrawer==='function')
+            renderDeckPresentationDrawer();
+        });
       });
       t.appendChild(del);
       t.addEventListener('click',function(){
