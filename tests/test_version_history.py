@@ -114,7 +114,7 @@ def test_a_decks_history_goes_in_indexeddb(out):
         in out
     # (a fourth argument since T225: a checkpoint is marked)
     assert "function snapWrite(cap,ix,why,mark){" in out
-    assert "function idbDel(k){" in out
+    assert "function idbDel(k,store){" in out   # T429: one door, two stores
     assert "var HIST_KEEP=20,histOps=Promise.resolve();" in out
 
 
@@ -136,7 +136,7 @@ def test_the_same_snapshot_rule_the_notebook_uses(out):
     browser = out[out.index("if(saveBtn) saveBtn.addEventListener"):
                   out.index('/* ---- the "Saved to" picker')]
     assert browser.index("var savedHist=histCapture();") < \
-        browser.index("var ok=lsSet(")
+        browser.index("var ok=draftSet(")
     assert browser.index("if(!ok){") < \
         browser.index("if(savedHist) snapTake('saved',savedHist);")
     assert "if(ok){\n      try{localStorage.setItem(PFX+'last'" in browser

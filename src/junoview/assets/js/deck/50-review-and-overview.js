@@ -1134,11 +1134,11 @@
         if(p.name===nm){apply(p);hit=true;}});
       nbPres.forEach(function(p){
         if(p.name===nm){apply(p);hit=true;}});
-      var raw=lsGet(PFX+nm);
+      var raw=draftGet(nm);   /* T429: the draft store */
       if(raw){
         try{
           var d=JSON.parse(raw);apply(d);
-          lsSet(PFX+nm,JSON.stringify(d));hit=true;
+          draftSet(nm,JSON.stringify(d));hit=true;
         }catch(e){}
       }
       if(hit&&APP.mode==='app') scheduleAutosave();

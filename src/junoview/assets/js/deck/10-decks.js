@@ -526,8 +526,170 @@
   }
   function lsIsFull(){return lsFull;}
   function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+  /* ---- T429: THE DRAFT STORE IS INDEXEDDB, NOT localStorage -----------
+     (2026-09-14, user: "I tried to save a presentation ... the
+     presentation seems to just have disappeared and it wasn't in
+     recents and didn't save at all ... There seems to be a lot of bugs
+     around saving.")
+     The library WAS localStorage: every draft a PFX-keyed string inside
+     a ~5 MB budget shared by everything. A deck with a few pasted
+     pictures is bigger than that, and everything downstream treated
+     "no draft" as "no deck": Recents filtered it out, a rename deleted
+     the old key and could not write the new one, and a reload opened a
+     default deck in its place with only a small "click to reopen" pill
+     saying where the real one was. Every save bug the user hit is this
+     one cap.
+     Now the drafts live in ONE in-memory map, read synchronously by
+     everything that used to read localStorage, and written through to
+     IndexedDB, which takes hundreds of megabytes. localStorage keeps
+     only the small things (the last name, the recents list) and any
+     draft older code left there is read once at boot, copied into
+     IndexedDB and dropped, which also frees the quota those decks were
+     choking on. draftSet always succeeds in memory; an IndexedDB write
+     that is refused (a private window, a disk that is really full) is
+     the only thing that can make the readout say "browser full" now. */
+  var DRAFTS={},draftsDbFull=false,draftsLoaded=false;
+  var DRAFT_META={'last':1,'recent-presentations':1};
+  function draftGet(name){
+    var v=DRAFTS[name]; return (v==null)?null:v;
+  }
+  function draftSet(name,json,quiet){
+    if(!name) return false;
+    DRAFTS[name]=json;
+    idbPut(PFX+name,json,'drafts').then(function(){
+      if(draftsDbFull){draftsDbFull=false;if(typeof status==='function') status();}
+    }).catch(function(){
+      if(!draftsDbFull){
+        draftsDbFull=true;
+        if(typeof status==='function') status();
+        if(!quiet&&typeof toast==='function')
+          toast('This browser is refusing to keep drafts \u2014 that edit '
+            +'is NOT kept. Use File \u203a Download a copy, or the \u25be '
+            +'beside Save to save to a file.',9000);
+      }
+    });
+    lsDel(PFX+name);   /* the legacy copy: one source, and its quota back */
+    return true;
+  }
+  function draftDel(name){
+    if(!name) return;
+    delete DRAFTS[name];
+    lsDel(PFX+name);
+    idbDel(PFX+name,'drafts').catch(function(){});
+  }
+  function draftsFull(){return draftsDbFull;}
+  /* the legacy localStorage drafts, synchronously, so boot can open on
+     one; each is moved into IndexedDB and dropped from localStorage */
+  function draftsLoadLocal(){
+    try{
+      for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(!k||k.indexOf(PFX)!==0) continue;
+        var nm=k.slice(PFX.length);
+        if(!nm||DRAFT_META[nm]) continue;
+        var raw=lsGet(k);
+        if(raw!=null&&DRAFTS[nm]==null) DRAFTS[nm]=raw;
+      }
+    }catch(e){}
+    Object.keys(DRAFTS).forEach(function(nm){
+      if(lsGet(PFX+nm)!=null) draftSet(nm,DRAFTS[nm],true);
+    });
+  }
+  /* ...and the real store, asynchronously. A draft already in memory
+     (legacy, or written since boot) wins over the stored one. Resolves
+     with the names that were only in IndexedDB. */
+  function draftsLoadDb(){
+    return idbAll('drafts').then(function(rows){
+      var fresh=[];
+      (rows||[]).forEach(function(r){
+        if(!r||typeof r.key!=='string'||r.key.indexOf(PFX)!==0) return;
+        var nm=r.key.slice(PFX.length);
+        if(!nm||DRAFT_META[nm]||DRAFTS[nm]!=null) return;
+        if(typeof r.value==='string'){DRAFTS[nm]=r.value;fresh.push(nm);}
+      });
+      draftsLoaded=true;
+      return fresh;
+    }).catch(function(){draftsLoaded=true;return [];});
+  }
+  /* ---- IndexedDB, one door for every store (moved here from the save
+     fragment in T429 so the draft store above can use it; function
+     declarations hoist, `var` initialisers do not, and this runs from
+     initFirstPresentation in THE BOOT SEQUENCE). Version 2 adds the
+     'drafts' store beside 'handles'. */
+  function idb(){
+    return new Promise(function(res,rej){
+      var r,done=false;
+      function fail(e){if(!done){done=true;rej(e);}}
+      function okd(v){if(!done){done=true;res(v);}}
+      /* a blocked or wedged open must never leave the caller hanging */
+      setTimeout(function(){fail(new Error('indexeddb timeout'));},4000);
+      try{r=indexedDB.open('junoview',2);}catch(e){fail(e);return;}
+      r.onupgradeneeded=function(){
+        var db=r.result;
+        try{if(!db.objectStoreNames.contains('handles'))
+          db.createObjectStore('handles');}catch(e){}
+        try{if(!db.objectStoreNames.contains('drafts'))
+          db.createObjectStore('drafts');}catch(e){}
+      };
+      r.onsuccess=function(){okd(r.result);};
+      r.onerror=function(){fail(r.error);};
+      r.onblocked=function(){fail(new Error('indexeddb blocked'));};
+    });
+  }
+  function idbPut(k,v,store){
+    store=store||'handles';
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction(store,'readwrite');
+        /* .put can throw synchronously (DataCloneError) */
+        try{t.objectStore(store).put(v,k);}catch(e){rej(e);return;}
+        t.oncomplete=function(){res();};
+        t.onerror=function(){rej(t.error);};
+        t.onabort=function(){rej(t.error);};
+      });
+    });
+  }
+  function idbDel(k,store){
+    store=store||'handles';
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction(store,'readwrite');
+        try{t.objectStore(store).delete(k);}catch(e){rej(e);return;}
+        t.oncomplete=function(){res();};
+        t.onerror=function(){rej(t.error);};
+        t.onabort=function(){rej(t.error);};
+      });
+    });
+  }
+  function idbGet(k,store){
+    store=store||'handles';
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction(store,'readonly');
+        var q=t.objectStore(store).get(k);
+        q.onsuccess=function(){res(q.result);};
+        q.onerror=function(){rej(q.error);};
+      });
+    });
+  }
+  /* every row of a store, as [{key,value}] */
+  function idbAll(store){
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction(store,'readonly'),os=t.objectStore(store);
+        var out=[],q;
+        try{q=os.openCursor();}catch(e){rej(e);return;}
+        q.onsuccess=function(){
+          var c=q.result;
+          if(c){out.push({key:c.key,value:c.value});c.continue();}
+          else res(out);
+        };
+        q.onerror=function(){rej(q.error);};
+      });
+    });
+  }
   function loadDraft(name){
-    var raw=lsGet(PFX+name); if(!raw) return null;
+    var raw=draftGet(name); if(!raw) return null;
     try{var d=JSON.parse(raw);
       return (d&&Array.isArray(d.slides))?normPres(d):null;
     }catch(e){return null;}
@@ -553,7 +715,7 @@
     if(!pres) return;
     /* quiet when the browser is not where this deck lives (T406) */
     var spare=(typeof saveTarget!=='undefined'&&saveTarget!=='browser');
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres),spare);
+    draftSet(pres.name||'untitled',JSON.stringify(pres),spare);
     lsSet(PFX+'last',pres.name||'untitled',spare);
   }
   function scheduleDraftWrite(){
@@ -567,17 +729,9 @@
     if(draftT){clearTimeout(draftT);draftT=null;}
   }
   function draftNames(){
-    var out=[];
-    try{
-      for(var i=0;i<localStorage.length;i++){
-        var k=localStorage.key(i);
-        if(k&&k.indexOf(PFX)===0){
-          var nm=k.slice(PFX.length);
-          if(nm&&nm!=='last'&&out.indexOf(nm)<0) out.push(nm);
-        }
-      }
-    }catch(e){}
-    return out.sort();
+    /* T429: the map, not a walk of localStorage */
+    return Object.keys(DRAFTS).filter(function(nm){
+      return nm&&!DRAFT_META[nm];}).sort();
   }
   /* A browser session is not the saved library. The drawer used while
      presenting answers "what do I have open right now?" -- and since T382
@@ -778,12 +932,37 @@
      assigned thousands of lines below this point (see the 2026-08-22
      incident record at the boot sequence). */
   function initFirstPresentation(){
+    /* T429: the legacy localStorage drafts first, synchronously, so the
+       page can open on one of them right now... */
+    draftsLoadLocal();
     var last=lsGet(PFX+'last');
     if(last&&(loadDraft(last)||savedByName(last))) loadPresentation(last);
     else if(allSaved().length) loadPresentation(allSaved()[0].name);
     /* the other two branches sync via histReset; this one must too —
        "every path that installs a new pres", as syncCustomTypes says */
     else {pres=defaultPres();source='auto';syncCustomTypes();}
+    /* ...then the store proper. A deck that was only there -- the big
+       one, which is the one that matters -- takes the screen back from
+       the default deck the lines above had to open on, and every list
+       that names drafts is drawn again. */
+    var bootName=(pres&&pres.name)||'';
+    draftsLoadDb().then(function(fresh){
+      if(!fresh.length){draftsDbFull=false;return;}
+      var want=lsGet(PFX+'last')||'';
+      /* the deck you were on, if the lines above had to open on
+         something else and you have not moved since */
+      if(fresh.indexOf(want)>=0&&pres&&pres.name===bootName
+         &&bootName!==want){
+        loadPresentation(want);
+        cur=0;activePane=-1;
+        if(typeof status==='function') status();
+        if(typeof refresh==='function'&&!deckEl.hidden) refresh();
+      }
+      if(typeof renderPresTabs==='function') renderPresTabs();
+      if(typeof renderPresentationHub==='function') renderPresentationHub();
+      if(typeof renderDeckPresentationDrawer==='function')
+        renderDeckPresentationDrawer();
+    });
   }
 
   var saveStamp=null,saveKind='';
@@ -870,7 +1049,7 @@
     /* A FULL BROWSER OUTRANKS EVERY OTHER READING. Once localStorage has
        refused a write, "saved" is a lie about the only copy there is, so
        it says so and keeps saying so until a write succeeds. */
-    if(lsIsFull()&&saveTarget==='browser'){
+    if(draftsFull()&&saveTarget==='browser'){
       el.textContent='NOT saved — browser full';
       el.className='deck-status unsaved lsfull';
       el.title='Browser storage is full, so edits are not being kept. '
@@ -1217,7 +1396,7 @@
     if(pageChanged||(pres.pageBg||null)!==bgWas) deckZoom=0;
     /* persist WITHOUT recording a new history entry */
     source='draft';
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
+    draftSet(pres.name||'untitled',JSON.stringify(pres));   /* T429 */
     status();scheduleAutosave();
     if(pageChanged) applyPage();
     if(typeof applyPageBg==='function') applyPageBg();

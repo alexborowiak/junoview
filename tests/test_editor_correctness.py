@@ -1150,11 +1150,10 @@ def test_renaming_is_one_committed_action(out):
     # The new draft must be durable before the only old copy is removed.
     rename = out[out.index("function renamePresentation(nm){"):
                  out.index("menuAction('#mi-del'")]
-    # (T416: a deck whose home is a file is renamed whether or not the
-    # draft copy fits)
-    assert ("if(!lsSet(PFX+nm,JSON.stringify(moved),true)"
-            "&&saveTarget!=='file'){") in rename
-    assert rename.index("if(!lsSet(PFX+nm") < rename.index("lsDel(PFX+old);")
+    # (T429: the draft store keeps it whatever its size, so the old key
+    # is dropped only once the new one holds the deck)
+    assert "if(!draftSet(nm,JSON.stringify(moved),true)){" in rename
+    assert rename.index("if(!draftSet(nm") < rename.index("draftDel(old);")
     assert rename.index("histRename(old,nm);") < rename.index("pres.name=nm;")
     # the per-keystroke handler is gone, and BOTH doors call the one
     # implementation

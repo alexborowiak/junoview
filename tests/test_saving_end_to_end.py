@@ -64,7 +64,8 @@ def test_the_remembered_file_s_deck_comes_back(out):
             "loadPresentationObj(np);}") in out
     # ...or one click away when the browser will not read it yet
     assert "        fileReopen={h:h,name:forName};" in out
-    assert "        if(!deckHas(forName)){fileWaits='reopen';status();}" in out
+    assert ("        if(!deckHas(forName)){\n"
+            "          fileWaits='reopen';status();") in out   # T431: and says so
     assert "      el.textContent='click to reopen '+rf;" in out
     assert "         &&typeof reopenFile==='function'){reopenFile();return;}" in out
 
@@ -76,9 +77,8 @@ def test_the_file_follows_the_name(out):
     assert ("      return (h.isSameEntry?h.isSameEntry(oh)"
             ":Promise.resolve(false));") in out
     assert "          return deckDir.removeEntry(oldFile).catch(function(){})" in out
-    # a deck whose home is a file is renamed whether or not a draft fits
-    assert ("    if(!lsSet(PFX+nm,JSON.stringify(moved),true)"
-            "&&saveTarget!=='file'){") in out
+    # a deck is renamed whatever its size: the draft store keeps it (T429)
+    assert "    if(!draftSet(nm,JSON.stringify(moved),true)){" in out
 
 
 def test_the_standalone_html_can_be_opened_again(out):

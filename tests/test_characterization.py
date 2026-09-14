@@ -1809,8 +1809,18 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T426: poster templates carry a short strip name shown on one line
 # T427: every animation pane row has Earlier, Later and Remove; pages
 # and bullets move and go
-EXPECTED_MD5 = "907cb45f21630110ee5c7bd817e35f6b"
-EXPECTED_BYTES = 4175646
+# T429: drafts live in IndexedDB through one in-memory map;
+# localStorage drafts migrate at boot
+# T429: drafts live in IndexedDB through one in-memory map;
+# localStorage drafts migrate at boot
+# T429: drafts live in IndexedDB through one in-memory map;
+# localStorage drafts migrate at boot
+# T430: opening a file of a deck that is already here asks replace or
+# keep both
+# T431: the remembered file's deck is announced at boot and the reopen
+# readout clears once a file is bound
+EXPECTED_MD5 = "d1e10ae9eaba796d6ad2b49d59ae6692"
+EXPECTED_BYTES = 4183593
 
 
 def _render_example() -> str:
