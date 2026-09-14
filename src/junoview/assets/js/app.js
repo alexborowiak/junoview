@@ -3207,6 +3207,16 @@
     if(nx) nx.addEventListener('click',function(){findGo(1);});
     var xb=$('#docfind-x');
     if(xb) xb.addEventListener('click',function(){findOpen(false);});
+    /* T247: FIND BELONGS TO THE NOTEBOOK YOU ARE LOOKING AT. The bar,
+       its count and findHits survived a tab switch, so Next and Previous
+       walked matches in the now-hidden shell and the count described a
+       document you could not see. Re-run the term against the new one
+       (findRun clears the old shell's marks first, wherever they are). */
+    document.addEventListener('sem:activate',function(){
+      var bar=$('#docfind');
+      if(!bar||bar.hidden) return;
+      findRun(((inp&&inp.value)||'').trim());
+    });
     document.addEventListener('keydown',function(e){
       if(!(e.ctrlKey||e.metaKey)||e.key!=='f') return;
       /* the deck editor has its own Find and owns the window while

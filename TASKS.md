@@ -5150,12 +5150,18 @@ option. Then where has the ability to refresh all images gone?"
   Find gave 23 document marks and left the 3; closing the bar left 0
   and 3.
 
-- [ ] **T247 - Find follows the notebook you switch to.**
+- [x] **T247 - Find follows the notebook you switch to.**
   Review, 2026-09-04. The Find bar and its `findHits` DOM references
   survive `activate(stem)`. After switching notebooks, Next and
   Previous still walk matches in the now-hidden old shell. A tab switch
   must close Find or rerun the current term against the newly active
   document, and the count must immediately describe that document.
+  *Done 2026-09-14.* Find listens for `sem:activate` and, while its bar
+  is open, re-runs the term against the newly active shell; findRun's
+  clear takes the old shell's marks with it. Driven with two notebooks
+  open: 1 / 23 on one became 1 / 18 on the other with every mark in the
+  visible shell, and a term the first has nowhere read "nothing found"
+  on switching back.
 
 - [ ] **T248 - Pin and mark have one source-cell identity in every
   view.**

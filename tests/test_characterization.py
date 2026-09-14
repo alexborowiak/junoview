@@ -1791,8 +1791,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T421: cmRefit re-clamps the canvas menu after the More fold opens
 # T246: document Find marks carry jv-doc and findClear unwraps only
 # those
-EXPECTED_MD5 = "df63dd6119d2df9fcd1823831e09ca8a"
-EXPECTED_BYTES = 4162654
+# T247: Find re-runs its term on sem:activate
+EXPECTED_MD5 = "5db5917f76553471c65f92697bb98050"
+EXPECTED_BYTES = 4163192
 
 
 def _render_example() -> str:
