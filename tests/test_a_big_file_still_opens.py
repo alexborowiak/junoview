@@ -20,7 +20,7 @@ from __future__ import annotations
 
 
 def test_no_room_in_the_browser_is_not_cannot_open(out):
-    assert "      var kept=lsSet(PFX+nm,JSON.stringify(np),true);" in out
+    assert "      var kept=draftSet(nm,JSON.stringify(np),true);" in out   # T429
     assert ("      if(!silent&&!loose){loose={name:nm,pres:np,kept:false};"
             "imported++;}") in out
     assert "    } else loadPresentationObj(first.pres);   /* T414 */" in out

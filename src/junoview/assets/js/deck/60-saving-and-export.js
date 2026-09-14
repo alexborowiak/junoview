@@ -95,7 +95,7 @@
     if(exact){
       projectPres=next;
       cancelDraftWrite();
-      lsDel(PFX+(savedName||'untitled'));
+      draftDel(savedName||'untitled');
       source='saved';
     } else {
       source='draft';scheduleDraftWrite();
@@ -229,54 +229,8 @@
     fileHandle=h;fileName=h?(h.name||''):'';
     if(fileWaits!=='reopen') fileWaits='';
   }
-  function idb(){
-    return new Promise(function(res,rej){
-      var r,done=false;
-      function fail(e){if(!done){done=true;rej(e);}}
-      function okd(v){if(!done){done=true;res(v);}}
-      /* a blocked or wedged open must never leave the caller hanging */
-      setTimeout(function(){fail(new Error('indexeddb timeout'));},4000);
-      try{r=indexedDB.open('junoview',1);}catch(e){fail(e);return;}
-      r.onupgradeneeded=function(){
-        try{r.result.createObjectStore('handles');}catch(e){}};
-      r.onsuccess=function(){okd(r.result);};
-      r.onerror=function(){fail(r.error);};
-      r.onblocked=function(){fail(new Error('indexeddb blocked'));};
-    });
-  }
-  function idbPut(k,v){
-    return idb().then(function(db){
-      return new Promise(function(res,rej){
-        var t=db.transaction('handles','readwrite');
-        /* .put can throw synchronously (DataCloneError) */
-        try{t.objectStore('handles').put(v,k);}catch(e){rej(e);return;}
-        t.oncomplete=function(){res();};
-        t.onerror=function(){rej(t.error);};
-        t.onabort=function(){rej(t.error);};
-      });
-    });
-  }
-  function idbDel(k){
-    return idb().then(function(db){
-      return new Promise(function(res,rej){
-        var t=db.transaction('handles','readwrite');
-        try{t.objectStore('handles').delete(k);}catch(e){rej(e);return;}
-        t.oncomplete=function(){res();};
-        t.onerror=function(){rej(t.error);};
-        t.onabort=function(){rej(t.error);};
-      });
-    });
-  }
-  function idbGet(k){
-    return idb().then(function(db){
-      return new Promise(function(res,rej){
-        var t=db.transaction('handles','readonly');
-        var q=t.objectStore('handles').get(k);
-        q.onsuccess=function(){res(q.result);};
-        q.onerror=function(){rej(q.error);};
-      });
-    });
-  }
+  /* idb / idbPut / idbDel / idbGet live in 10-decks.js since T429 (the
+     draft store needs them too); the 'handles' store is their default */
   function permOK(h){
     if(!h||!h.queryPermission) return Promise.resolve(!!h);
     return h.queryPermission({mode:'readwrite'})
@@ -977,7 +931,10 @@
        deck, and Save must not report a state it did not save */
     flushTextEdits();
     var savedHist=histCapture(); /* also mints ids before serialisation */
-    var ok=lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
+    /* T429: the draft store keeps it in memory at once and in IndexedDB
+       a moment later; only a refused IndexedDB write can fail it */
+    var ok=draftSet(pres.name||'untitled',JSON.stringify(pres))
+      &&!draftsFull();
     /* The pointer is convenient, not the save. Its quota result must not
        reverse or clear the outcome of writing the actual deck. */
     if(ok){
@@ -1105,7 +1062,7 @@
      readout offers "click to reopen", one click, no dialog. */
   var fileReopen=null;
   function deckHas(name){
-    return !!(name&&(lsGet(PFX+name)||savedByName(name)));
+    return !!(name&&(draftGet(name)||savedByName(name)));
   }
   function rememberedFileBoot(h,forName){
     if(!h) return Promise.resolve();
@@ -1213,7 +1170,7 @@
             var c=normPres(p,null);c.origin=stem0;return c;});
           if(stillSaved(savedName,savedSig)){
             cancelDraftWrite();
-            lsDel(PFX+savedName);
+            draftDel(savedName);
             source='saved';
           } else {
             source='draft';scheduleDraftWrite();
@@ -2403,16 +2360,15 @@
       if(!pr||!Array.isArray(pr.slides)) return;
       var np=normPres(pr);
       var base=np.name||'imported',nm=base,k=1;
-      if(silent&&(savedByName(nm)||lsGet(PFX+nm))) return;
-      while(savedByName(nm)||lsGet(PFX+nm)){
+      if(silent&&(savedByName(nm)||draftGet(nm))) return;
+      while(savedByName(nm)||draftGet(nm)){
         k++;nm=base+'-'+k;
       }
       np.name=nm;
-      /* T263: lsSet returns a boolean precisely so this cannot lie. It
-         was ignored, so once the draft budget was full every write was
-         discarded and the toast still said "Imported N presentations" --
-         and the view was then switched to a deck that is not stored. */
-      var kept=lsSet(PFX+nm,JSON.stringify(np),true);
+      /* T263: the store answers whether it kept the deck, so this cannot
+         lie (T429: in memory it always does; a refused IndexedDB write
+         shows on the readout) */
+      var kept=draftSet(nm,JSON.stringify(np),true);
       if(kept){
         imported++;
         if(!first) first={name:nm,pres:np,kept:true};
@@ -2555,7 +2511,7 @@
   })();
   menuAction('#mi-discard',function(){
     cancelDraftWrite();   /* a pending write would resurrect the discard */
-    lsDel(PFX+(pres.name||'untitled'));
+    draftDel(pres.name||'untitled');
     loadPresentation(pres.name);
     cur=0;activePane=-1;
     status();
@@ -2577,7 +2533,7 @@
      delete presentation ... a delete option when something is selected") */
   function deletePresByName(nm){
     if(pres&&nm===pres.name) cancelDraftWrite();
-    lsDel(PFX+nm);
+    draftDel(nm);
     if(typeof forgetRememberedPresentation==='function')
       forgetRememberedPresentation(nm);
     /* embedded-in-a-notebook presentations come back on reload — say so,
@@ -2652,16 +2608,16 @@
        before. Put the complete current state under the new key NOW; the
        debounced markDirty below is redundancy, not the only copy. */
     var moved=deep(pres);moved.name=nm;
-    /* T416: a deck whose home is a FILE is renamed whether or not the
-       browser can keep a draft copy of it -- the file is the copy that
-       matters, and a deck too big for the store could not be renamed
-       at all */
-    if(!lsSet(PFX+nm,JSON.stringify(moved),true)&&saveTarget!=='file'){
+    /* T429: the draft store keeps it whatever its size, so the old key
+       is only ever dropped once the new one holds the deck (T416 used
+       to drop it on faith for a file-homed deck, which left a deck too
+       big for localStorage nowhere but in memory) */
+    if(!draftSet(nm,JSON.stringify(moved),true)){
       toast('Could not rename — this browser could not keep the moved '
         +'draft. Your presentation is still called “'+old+'”.',9000);
       return false;
     }
-    lsDel(PFX+old);
+    draftDel(old);
     /* the folder rides on the presentation object itself (p.folder), so
        it needs no separate move — but the SAVED copies are matched by
        name and do */

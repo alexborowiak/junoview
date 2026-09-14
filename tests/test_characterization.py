@@ -1809,8 +1809,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T426: poster templates carry a short strip name shown on one line
 # T427: every animation pane row has Earlier, Later and Remove; pages
 # and bullets move and go
-EXPECTED_MD5 = "907cb45f21630110ee5c7bd817e35f6b"
-EXPECTED_BYTES = 4175646
+# T429: drafts live in IndexedDB through one in-memory map;
+# localStorage drafts migrate at boot
+# T429: drafts live in IndexedDB through one in-memory map;
+# localStorage drafts migrate at boot
+# T429: drafts live in IndexedDB through one in-memory map;
+# localStorage drafts migrate at boot
+EXPECTED_MD5 = "b077615009dc78776b3678ffaa08a34c"
+EXPECTED_BYTES = 4181913
 
 
 def _render_example() -> str:

@@ -8281,3 +8281,28 @@ gates are recorded in the completing commit.
   line). The controls sit on a second line under the name, where they
   no longer crush it. Driven live: a bullet moved down the text, a page
   left its book, a build's animation came off.
+- [x] **T429 — Drafts live in IndexedDB, not the 5 MB localStorage.**
+  (User, 2026-09-14: "I tried to save a presentation ... the
+  presentation seems to just have disappeared and it wasn't in recents
+  and didn't save at all ... There seems to be a lot of bugs around
+  saving. Bugs around saving are what are going to cause people to get
+  angry at this website.") The library WAS localStorage: every draft a
+  string inside a ~5 MB budget, and a deck with a few pasted pictures
+  does not fit. Everything downstream read "no draft" as "no deck":
+  Recents filtered it out, a rename deleted the old key and could not
+  write the new one (T416 let a file-homed deck go on regardless, so
+  the deck was nowhere but in memory), and a reload opened a default
+  deck in its place with only a small pill saying where the real one
+  was. One cap, every symptom the user hit. Drafts are one in-memory
+  map now (`DRAFTS`), read synchronously by everything that used to
+  read localStorage (`draftGet`/`draftSet`/`draftDel`/`draftNames`) and
+  written through to IndexedDB (a `drafts` store beside `handles`, in
+  the one `junoview` database, version 2); only a refused IndexedDB
+  write can make the readout say "browser full". Legacy localStorage
+  drafts are read once at boot, copied into the store and dropped,
+  which also frees the quota they were choking on; the store is read
+  a moment later and the deck you were on takes the screen back if
+  boot had to open on something else. Driven live: an 11 MB deck
+  imported, reloaded, still open; renamed, reloaded, open under the
+  new name with its slides; a seeded legacy draft in the store after
+  one reload.

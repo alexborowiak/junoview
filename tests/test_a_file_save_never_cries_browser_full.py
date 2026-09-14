@@ -19,9 +19,9 @@ def test_the_draft_copy_is_quiet_when_the_deck_lives_elsewhere(out):
     assert "        if(!quiet&&typeof toast==='function')" in out
     assert ("    var spare=(typeof saveTarget!=='undefined'"
             "&&saveTarget!=='browser');") in out
-    assert "    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres),spare);" in out
+    assert "    draftSet(pres.name||'untitled',JSON.stringify(pres),spare);" in out
     # the browser-full readout is still only for a deck kept in the browser
-    assert "    if(lsIsFull()&&saveTarget==='browser'){" in out
+    assert "    if(draftsFull()&&saveTarget==='browser'){" in out   # T429
 
 
 def test_a_file_autosave_that_stands_down_says_why(out):

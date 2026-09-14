@@ -82,7 +82,7 @@ def test_import_counts_only_what_was_actually_stored():
     # T414: the store's answer is still read, and a deck that did not fit
     # is still not COUNTED as stored -- it opens from the object in hand
     # instead of being refused, and the toast says which happened
-    assert "var kept=lsSet(PFX+nm,JSON.stringify(np),true);" in fn
+    assert "var kept=draftSet(nm,JSON.stringify(np),true);" in fn   # T429
     assert "var imported=0,dropped=0,first=null,loose=null;" in fn
     assert "if(!silent&&!loose){loose={name:nm,pres:np,kept:false};imported++;}" in fn
     # ...and says so rather than reporting a clean success
