@@ -8534,3 +8534,22 @@ gates are recorded in the completing commit.
   a notebook row switches to it or closes it; a version row opens the
   history there. Duplicate is new: a deep copy under a free name,
   open beside the original. Driven live in all three docks.
+- [x] **T450 — Duplicate, rename and delete on every library row.**
+  (User, 2026-09-14, the other half of T448's ask: "you can't duplicate
+  a presentation or delete it from the main menu, there is very little
+  controls.") T448 put those verbs on the open-items bar; the library
+  dialog is the menu that ask actually named, and it listed everything
+  you own while letting you do nothing to any of it but open it. Four
+  verbs now, the pin's shape so they match: duplicate, rename, delete,
+  pin — spans with `role="button"`, because the row itself IS a button
+  and a button inside a button is not a thing, and invisible until the
+  row is under the pointer, because the library is a list you read
+  before it is a list you act on. Rename needed a second
+  implementation: `renamePresentation` moves `pres`, so it can only
+  rename the deck on screen. `renamePresByName` delegates to it for
+  that one (only it carries the unflushed edits, the dirty mark and
+  the title bar) and otherwise makes the same moves without them — the
+  draft under a new key before the old one is dropped, the project
+  entries, the history, the remembered name, the open list and the
+  file binding. Driven live: renaming a presentation that was not on
+  screen, duplicating one, and deleting the one that was.

@@ -1706,7 +1706,10 @@ def test_a_rename_or_delete_does_not_strip_the_embedded_figures(out):
         "APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})"
     ) == 1
     assert "function saveProject(){" in out
-    assert out.count("saveProject();") == 2
+    # three since T450 added renamePresByName, the library's rename of a
+    # presentation you are NOT in -- the point is that every writer of
+    # projectPres still goes through the one helper, not how many there are
+    assert out.count("saveProject();") == 3
     # the idle consolidation that puts the figures back
     assert "function saveToProject(silent,embed){" in out
     assert "var body=(silent&&!embed)?merged:embedAssets(deep(merged));" in out

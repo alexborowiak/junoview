@@ -997,6 +997,19 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
 .presentation-hub-pin:hover{opacity:1;background:#ffffff14;}
 .presentation-hub-pin.on{opacity:1;color:var(--cyan);}
 .presentation-hub-row.pinned{border-color:color-mix(in srgb,var(--cyan) 45%,var(--chrome-line));}
+/* T450: duplicate, rename and delete, the pin's shape so all four
+   match. They are invisible until the row is under the pointer or one
+   of them has the keyboard, because the library is a list you read
+   before it is a list you act on. */
+.presentation-hub-act{flex:none;width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:4px;
+  color:var(--chrome-ink-2);opacity:0;cursor:pointer;
+  transition:opacity .12s;}
+.presentation-hub-act .bic{width:12px;height:12px;color:inherit;}
+.presentation-hub-row:hover .presentation-hub-act,
+.presentation-hub-act:focus{opacity:.8;}
+.presentation-hub-act:hover{opacity:1;background:#ffffff14;
+  color:var(--chrome-ink);}
 .presentation-hub-empty{padding:9px;color:var(--chrome-ink-2);
   border:1px dashed var(--chrome-line);border-radius:7px;font:11px var(--sans);}
 /* T394: folders live in the library now. A heading is a drop target;

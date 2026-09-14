@@ -2829,6 +2829,53 @@
     toast('Renamed to “'+nm+'”');
     return true;
   }
+  /* ---- T450: RENAMING ONE YOU ARE NOT IN ------------------------------
+     (2026-09-14, user: "you can't duplicate a presentation or delete it
+     from the main menu, there is very little controls".) The library
+     lists every saved presentation, not just the one on screen, so its
+     rename cannot be the one above -- that one moves `pres`. The deck
+     on screen still goes through it, because only it can carry the
+     unflushed edits, the dirty mark and the title bar with the name.
+     Everything else is the same moves without them: the draft, the
+     project entries, the history, the remembered name and the file
+     binding. */
+  function renamePresByName(old,nm){
+    old=String(old||'');nm=String(nm||'').trim();
+    if(!old||!nm||nm===old) return false;
+    if(pres&&pres.name===old) return renamePresentation(nm);
+    var taken=allSaved().map(function(p){return p.name;})
+      .concat(draftNames());
+    if(taken.indexOf(nm)>=0){
+      toast('There is already something called \u201c'+nm+'\u201d \u2014 pick another '
+        +'name');
+      return false;
+    }
+    var raw=draftGet(old);
+    if(raw){
+      var moved;
+      try{moved=JSON.parse(raw);}catch(e){moved=null;}
+      if(moved){moved.name=nm;raw=JSON.stringify(moved);}
+      if(!draftSet(nm,raw,true)){
+        toast('Could not rename \u2014 this browser could not keep the moved '
+          +'draft. It is still called \u201c'+old+'\u201d.',9000);
+        return false;
+      }
+      draftDel(old);
+    }
+    projectPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    nbPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    histRename(old,nm);
+    if(typeof renameRememberedPresentation==='function')
+      renameRememberedPresentation(old,nm);
+    if(typeof renameOpenPresentation==='function')
+      renameOpenPresentation(old,nm);
+    saveProject();
+    fileRename(old,nm);
+    status();renderPresTabs();renderPresRow();
+    toast('Renamed \u201c'+old+'\u201d to \u201c'+nm+'\u201d');
+    return true;
+  }
+  window.SemDeckRename=renamePresByName;   /* library rows + tests */
   /* ---- T416: THE FILE FOLLOWS THE NAME, the other half of T398 --------
      (2026-09-13, user: "when you save it as a name the presentation
      name becomes this and vice-versa"). In the default folder the file

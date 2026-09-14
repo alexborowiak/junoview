@@ -1882,8 +1882,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tables.js, 48-animation.js, 05-figures-and-ribbon.js and 99-boot.js.
 # T448: the open-items bar gains a head (dock + close), section
 # headings, per-row verbs and the docked-layout CSS
-EXPECTED_MD5 = "22f28dc176f09bfa4b60f393ecd7f6de"
-EXPECTED_BYTES = 4272989
+# T450: the library row's duplicate, rename and delete, and
+# renamePresByName
+EXPECTED_MD5 = "33b273813a0fe79ccc1ec124cbcc461b"
+EXPECTED_BYTES = 4277819
 
 
 def _render_example() -> str:
