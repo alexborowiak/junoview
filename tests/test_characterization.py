@@ -1854,8 +1854,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # export.js, 50-review-and-overview.js, app.js and page.html change.
 # T435 (2026-09-14): pins in Recents; 10-decks.js, 50-review-and-
 # overview.js, app.js and app.css change.
-EXPECTED_MD5 = "db6dee11d7507084263bef6e4e8d2c79"
-EXPECTED_BYTES = 4211681
+# T437 (2026-09-14): pictures embed by default, link-only is a switch;
+# 45-images.js, 30-format-bar.js, 25-selecting.js, 07-ribbon-
+# layouts.js, 60-saving-and-export.js and deck.html change.
+# T437 (2026-09-14): pictures embed by default, link-only is a switch;
+# 45-images.js, 30-format-bar.js, 25-selecting.js, 07-ribbon-
+# layouts.js, 60-saving-and-export.js and deck.html change.
+EXPECTED_MD5 = "2052cae787f9d19d87a03863c388f9ed"
+EXPECTED_BYTES = 4218157
 
 
 def _render_example() -> str:

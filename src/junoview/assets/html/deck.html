@@ -2346,9 +2346,16 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
                 title="Where this came from"></span>
               <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came from.
- If that file has moved, the picture is left exactly as it is"
-                ><i data-ic="reload"></i> Refresh from file</button>
+                title="Re-read this picture from the file or address it
+ came from. If that cannot be read, the picture is left exactly as it
+ is"><i data-ic="reload"></i> Refresh from file</button>
+              <!-- T437: link only is a size saving you switch on
+                   yourself, never the default -->
+              <button class="dbtn etm" id="fmt-imglink" hidden
+                aria-pressed="false"
+                title="Keep only the address, not the picture: smaller,
+ but loaded from there every time and missing wherever that cannot be
+ reached. Off, the picture is in the deck"><i data-ic="link"></i> Link only</button>
               <span class="sh-drop opt-drop src-flat" id="fmt-srcwrap"
                 data-flat="1">
                 <button class="dbtn etm" id="fmt-src"

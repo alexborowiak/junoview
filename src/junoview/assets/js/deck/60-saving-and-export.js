@@ -1528,6 +1528,7 @@
      checkable from outside (2026-08-22). */
   window.SemDeckRefreshImages=refreshImagesReport;   /* test hook */
   window.SemDeckLinkedImages=linkedImages;          /* test hook */
+  window.SemDeckPlaceAddress=placeFromAddress;      /* browser-verification hook (T437) */
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
   /* T236: History and Checkpoint are Home buttons now. They are

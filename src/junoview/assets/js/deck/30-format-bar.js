@@ -2429,19 +2429,22 @@
         +'book'):'That image could not be read');
     }
     if(pic.file) flipAddFiles(bk,[pic.file],said);
-    else if(/^data:/i.test(pic.src)){
+    else {
+      /* T437: a data: picture and a web address alike are READ and
+         kept as a page; only a site that refuses the read leaves the
+         page as its address */
       fetch(pic.src).then(function(r){return r.blob();})
         .then(function(b){flipAddFiles(bk,[b],said);})
-        .catch(function(){said(0);});
-    } else {
-      /* a picture at an address is a page by its address, the way the
-         URL door places one */
-      bk.frames=flipFrames(bk).slice();
-      bk.frames.push({src:pic.src});
-      bk.at=bk.frames.length-1;
-      markDirty();renderSlide();
-      if(typeof renderFlipPane==='function') renderFlipPane();
-      said(1);
+        .catch(function(){
+          if(/^data:/i.test(pic.src)){said(0);return;}
+          bk.frames=flipFrames(bk).slice();
+          bk.frames.push({src:pic.src});
+          bk.at=bk.frames.length-1;
+          markDirty();renderSlide();
+          if(typeof renderFlipPane==='function') renderFlipPane();
+          toast('Pasted as page '+flipFrames(bk).length+' by its address '
+            +'\u2014 that site did not let the page read it',6000);
+        });
     }
     return true;
   }
@@ -2455,9 +2458,9 @@
         .catch(function(){toast('That image could not be read');});
       return true;
     }
-    /* a picture that lives at an address: placed by it, the way the
-       Images tab's own URL door does */
-    placeImage(pic.src,0,null);
+    /* T437: a picture at an address is read and kept, the way the
+       Images tab's own address door now does */
+    placeFromAddress(pic.src);
     return true;
   }
   document.addEventListener('paste',function(e){
