@@ -1,48 +1,62 @@
-"""T427: every row of the animation pane moves, and every row can go.
+"""T427 / T432: every row of the animation pane moves; Remove takes only
+the animation.
 
-The user, 2026-09-14: "I still can't change the order of animations.
-Like these are stuck in place. I also can't delete these as well."
-Earlier and Later sat on a build's first row only; a bullet's row and a
-page's row had nothing, and nothing on the pane removed anything. Now a
-build row's Remove takes its animation off; a page row moves its page
-through the book or takes it out; a bullet row moves its paragraph
-through the text or takes it out -- the words themselves, so the slide
-and the show agree. The controls sit on a second line under the name.
+T427 (2026-09-14, user: "I still can't change the order of animations
+... I also can't delete these") put Earlier and Later on every row and
+a Remove on every row. T432 (same day: "When removing the animation it
+would remove the image/the dot point, not just remove animation, and
+the re-ordering didn't work. Also would be good to be able to drag and
+drop order") took the Remove off the page rows and the bullet rows --
+the pane is about clicks, not content -- made the one Remove say what
+stayed, made a bullet move work for lines typed with Shift+Enter (runs
+between <br>s inside one block), and made every row draggable onto its
+siblings: a build onto another click, a page through its book, a
+bullet through its text.
 
-Driven live: "bravo" moved below "charlie" in the text, page 2 left a
-three-page book, and Remove on the build left the box with no anim.
+Driven live: dragging click 2's build below click 3 reordered them;
+dragging "delta" above "bravo" moved the words; the Remove on a build
+row left the box on the slide and said so.
 """
 
 from __future__ import annotations
 
 
-def test_a_build_row_can_be_removed(out):
-    assert "    function removeBuild(si){" in out
-    assert "      q[si].items.forEach(function(i){delete s.annots[i].anim;});" in out
-    assert ("            ['\\u2715 Remove',"
-            "'Take the animation off: it is just there',") in out
+def test_remove_lives_on_the_build_row_only_and_says_what_stayed(out):
+    fn = out.split("    function removeBuild(si){")[1].split("\n    }")[0]
+    assert "      q[si].items.forEach(function(i){delete s.annots[i].anim;});" in fn
+    assert "      toast('Animation removed \\u2014 '+names.join(', ')" in fn
+    assert ("            ['\\u2715 Remove','Take the animation off \\u2014 "
+            "the object '\n"
+            "             +'stays on the slide',") in out
+    for gone in ("function dropPage(", "Take this bullet out of the text",
+                 "function pieceEdit("):
+        assert gone not in out, gone
 
 
-def test_a_page_row_moves_and_goes(out):
-    assert "    function movePage(a,k,dir){" in out
-    assert "    function dropPage(a,k){" in out
-    assert "      if(fr.length<2||k<0||k>=fr.length) return;" in out
-    assert "                 function(){movePage(a,k,-1);},k<=0]," in out
-    assert "                 function(){dropPage(a,k);},fr.length<2]];})(w.k);" in out
+def test_a_page_and_a_bullet_move_but_never_leave(out):
+    assert "    function movePage(a,k,t){" in out
+    assert "      fr.splice(t,0,fr.splice(k,1)[0]);" in out
+    assert "                 function(){movePage(a,k,k-1);},k<=0]," in out
+    assert "                 function(){pieceMove(pieceA,kk,kk-1);},false]," in out
+    fn = out.split("    function pieceMove(a,k,t){")[1].split("\n    }")[0]
+    # block children, or the runs between <br>s inside one block
+    assert ("          /* one block: its runs between <br>s, "
+            "each run with its <br>.") in fn
+    assert "        var nodes=[].slice.call(wrap.childNodes),groups,runs;" in fn
+    assert ("            if(gi<groups.length-1) "
+            "g.push(document.createElement('br'));") in fn
+    assert "        if(lines.length===groups.length) shift(lines);" in fn
 
 
-def test_a_bullet_row_moves_the_words(out):
-    fn = out.split("    function pieceEdit(a,k,dir){")[1].split("\n    }")[0]
-    assert "      var lines=String(a.text||'').split('\\n');" in fn
-    assert "      if(a.html){" in fn
-    assert "        a.html=host.innerHTML;" in fn
-    # only a by-paragraph build offers it
-    assert "          var para=textBy(pieceA)==='para';" in out
-    assert ("                 function(){pieceEdit(pieceA,kk,0);},false]];"
-            "})(k):null});") in out
-
-
-def test_the_controls_are_a_second_line(out):
-    assert ".anim-step{flex-wrap:wrap;}" in out
-    assert (".anim-stepctr{flex:1 0 100%;display:flex;flex-direction:row;\n"
-            "  justify-content:flex-end;align-items:center;gap:3px;}") in out
+def test_every_row_drags_onto_its_siblings(out):
+    assert ("      var dragKey='';   "
+            "/* T432: the row being dragged, by its key */") in out
+    assert "          r.draggable=true;r.dataset.dk=opts.dk;" in out
+    assert "      function dropKeyFor(r,dk){" in out
+    assert "      function dropRow(from,to,below){" in out
+    assert "        if(fk[0]==='b') moveStepTo(k,t);" in out
+    assert "    function moveStepTo(si,tj){" in out
+    # the build's first row also stands for bullet 0
+    assert "            dk:'b:'+si,dk2:para?('t:'+ii+':0'):''});" in out
+    assert "                dk:w.j?'':('p:'+p.i+':'+w.k)});" in out
+    assert ".anim-step.drop-above{box-shadow:0 -3px 0 0 var(--cyan);}" in out

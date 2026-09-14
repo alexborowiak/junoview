@@ -1819,8 +1819,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # keep both
 # T431: the remembered file's deck is announced at boot and the reopen
 # readout clears once a file is bound
-EXPECTED_MD5 = "d1e10ae9eaba796d6ad2b49d59ae6692"
-EXPECTED_BYTES = 4183593
+# T432 (2026-09-14): the animation pane's Remove takes only the
+# animation, every pane row drags onto its siblings, and a bullet move
+# keeps <br> lines. 48-animation.js and deck.css change.
+EXPECTED_MD5 = "e51d3f1f696e1b250e0436e56cc04e16"
+EXPECTED_BYTES = 4188971
 
 
 def _render_example() -> str:
