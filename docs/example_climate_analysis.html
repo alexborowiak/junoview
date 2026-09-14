@@ -5682,6 +5682,12 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   justify-content:flex-end;align-items:center;gap:3px;}
 .anim-stepctr.row{flex:none;}
 .anim-updown{display:flex;flex-direction:row;gap:3px;}
+/* T432: rows drag; the landing edge is drawn on the row under the
+   pointer */
+.anim-step[draggable="true"]{cursor:grab;}
+.anim-step.dragging{opacity:.5;}
+.anim-step.drop-above{box-shadow:0 -3px 0 0 var(--cyan);}
+.anim-step.drop-below{box-shadow:0 3px 0 0 var(--cyan);}
 .anim-stepctr .anim-mini{padding:2px 6px;font-size:10.5px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
@@ -61424,57 +61430,99 @@ window.JunoPptx = (function () {
        off; a page row moves its page through the book or takes it out;
        a bullet row moves its paragraph through the text or takes it
        out -- the words themselves, so the slide and the show agree. */
+    /* T432: REMOVE TAKES THE ANIMATION OFF AND NOTHING ELSE (2026-09-14,
+       user: "When removing the animation it would remove the image/the
+       dot point, not just remove animation"). T427 put a Remove on the
+       page rows and the bullet rows that took the page out of the book
+       and the bullet out of the text -- content, in a pane about
+       clicks. Only the build row has Remove now, and it says what
+       stayed. */
     function removeBuild(si){
       var s=pres.slides[cur],q=animSeq(s);
       if(!q[si]) return;
+      var names=q[si].items.map(function(i){return itemLabel(s,i);});
       q[si].items.forEach(function(i){delete s.annots[i].anim;});
       renumber(s);commit(s);
+      toast('Animation removed \u2014 '+names.join(', ')
+        +(names.length===1?' is':' are')+' still on the slide');
     }
-    function movePage(a,k,dir){
-      var fr=flipFrames(a),t=k+dir;
-      if(k<0||k>=fr.length||t<0||t>=fr.length) return;
-      var tmp=fr[k];fr[k]=fr[t];fr[t]=tmp;
-      commit(pres.slides[cur]);
+    /* a build to another click: the whole list is renumbered, so a
+       drag from click 2 to click 7 is one move, not five swaps */
+    function moveStepTo(si,tj){
+      var s=pres.slides[cur],q=animSeq(s);
+      if(si<0||si>=q.length||tj<0||tj>=q.length||si===tj) return;
+      var it=q.splice(si,1)[0];q.splice(tj,0,it);
+      q.forEach(function(st,i){
+        st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});
+      commit(s);
     }
-    function dropPage(a,k){
+    function movePage(a,k,t){
       var fr=flipFrames(a);
-      if(fr.length<2||k<0||k>=fr.length) return;
-      fr.splice(k,1);
-      if(typeof a.fi==='number'&&a.fi>=fr.length) a.fi=fr.length-1;
+      if(k<0||k>=fr.length||t<0||t>=fr.length||k===t) return;
+      fr.splice(t,0,fr.splice(k,1)[0]);
       commit(pres.slides[cur]);
     }
-    /* a paragraph up, down or out. Plain and Markdown text are lines;
-       rich text is the block children of its one list or of the box.
-       Only a by-paragraph build can do this -- a sentence is not a
-       line -- and the row says so by having no such buttons. */
-    function pieceEdit(a,k,dir){
+    /* a paragraph to another place in its text -- the words move, so
+       the slide and the show agree. Plain and Markdown text are lines;
+       rich text is the block children of its one list or of the box,
+       or, when the lines were typed with Shift+Enter, the runs between
+       <br>s inside one block (T432: "the re-ordering didn't work" was
+       this shape). Only a by-paragraph build: a sentence is not a
+       line, and the row says so by having no such buttons. */
+    function pieceMove(a,k,t){
       var lines=String(a.text||'').split('\n');
-      function op(list,take,put){
-        if(k<0||k>=list.length) return false;
-        if(dir===0){if(list.length<2) return false;take(k);return true;}
-        var t=k+dir; if(t<0||t>=list.length) return false;
-        put(k,t);return true;
+      function shift(list){
+        if(k<0||k>=list.length||t<0||t>=list.length||k===t) return false;
+        list.splice(t,0,list.splice(k,1)[0]);return true;
       }
       if(a.html){
         var host=document.createElement('div');host.innerHTML=a.html;
+        function isBlock(nd){return !!nd&&nd.nodeType===1
+          &&/^(LI|P|DIV|H[1-6])$/i.test(nd.tagName);}
+        function isBr(nd){return !!nd&&nd.nodeType===1&&nd.tagName==='BR';}
+        function blank(nd){return nd.nodeType===3&&!String(nd.nodeValue||'').trim();}
         var kids=[].slice.call(host.children);
         var wrap=(kids.length===1&&/^(UL|OL)$/i.test(kids[0].tagName))
           ?kids[0]:host;
-        var items=[].slice.call(wrap.children);
-        if(items.length<2) return false;
-        var ok=op(items,function(i){items[i].remove();},function(i,t){
-          if(dir<0) wrap.insertBefore(items[i],items[t]);
-          else wrap.insertBefore(items[t],items[i]);});
-        if(!ok) return false;
+        var nodes=[].slice.call(wrap.childNodes),groups,runs;
+        /* blocks side by side (list items, paragraphs): one group each */
+        var blocky=nodes.length>0&&nodes.every(function(nd){
+          return isBlock(nd)||blank(nd);});
+        if(blocky&&nodes.filter(isBlock).length>1){
+          runs=false;
+          groups=nodes.filter(isBlock).map(function(el){return [el];});
+        } else {
+          /* one block: its runs between <br>s, each run with its <br>.
+             The box itself, or the single block it holds. */
+          runs=true;
+          var box=(kids.length===1&&isBlock(kids[0]))?kids[0]:wrap;
+          wrap=box;nodes=[].slice.call(box.childNodes);
+          groups=[[]];
+          nodes.forEach(function(nd){
+            groups[groups.length-1].push(nd);
+            if(isBr(nd)) groups.push([]);
+          });
+          groups=groups.filter(function(g){
+            return g.some(function(nd){return !isBr(nd)&&!blank(nd);});});
+        }
+        if(groups.length<2||!shift(groups)) return false;
+        var frag=document.createDocumentFragment();
+        groups.forEach(function(g,gi){
+          if(runs){
+            /* every run but the last ends in its <br>; the last has none:
+               a run moved from the end brings no <br> with it, and one
+               moved to the end must not keep the one it had */
+            while(g.length&&isBr(g[g.length-1])) g.pop();
+            if(gi<groups.length-1) g.push(document.createElement('br'));
+          }
+          g.forEach(function(nd){frag.appendChild(nd);});
+        });
+        wrap.innerHTML='';wrap.appendChild(frag);
         a.html=host.innerHTML;
-        if(lines.length===items.length)
-          op(lines,function(i){lines.splice(i,1);},function(i,t){
-            var tmp=lines[i];lines[i]=lines[t];lines[t]=tmp;});
+        if(lines.length===groups.length) shift(lines);
         a.text=lines.join('\n');
       } else {
-        var ok2=op(lines,function(i){lines.splice(i,1);},function(i,t){
-          var tmp=lines[i];lines[i]=lines[t];lines[t]=tmp;});
-        if(!ok2) return false;
+        if(!shift(lines)) return false;
         a.text=lines.join('\n');
       }
       commit(pres.slides[cur]);
@@ -61511,6 +61559,7 @@ window.JunoPptx = (function () {
       h1.textContent=total?(total+' click'+(total===1?'':'s')):'No clicks yet';
       menu.appendChild(h1);
       var list=document.createElement('div');list.className='anim-seq';
+      var dragKey='';   /* T432: the row being dragged, by its key */
       /* T417: ONE LINE PER ROW (2026-09-13, user: "All that text is
          soo unnecessary ... DON'T FILL IT WITH VERBOSE UNNECESSARY
          TEXT"). The number, the name, the effect word. Nothing that
@@ -61543,13 +61592,72 @@ window.JunoPptx = (function () {
              function(){moveStep(opts.si,-1);},opts.si===0],
             ['\u2193 Later','Move this build one click later',
              function(){moveStep(opts.si,1);},opts.si===seq.length-1],
-            ['\u2715 Remove','Take the animation off: it is just there',
+            ['\u2715 Remove','Take the animation off \u2014 the object '
+             +'stays on the slide',
              function(){removeBuild(opts.si);},false]]);
         }
         /* T427: a page's or a bullet's own controls */
         if(opts.acts) ctrls(r,opts.acts);
+        /* T432: ...AND EVERY ROW DRAGS (user: "would be good to be able
+           to drag and drop order, not just having to press arrows").
+           A row carries a key -- build, page of a book, bullet of a
+           text -- and lands on a row of the same kind and owner; the
+           build's first row also stands for bullet 0, so a bullet can
+           be dragged to the top. */
+        if(opts.dk){
+          r.draggable=true;r.dataset.dk=opts.dk;
+          if(opts.dk2) r.dataset.dk2=opts.dk2;
+          r.addEventListener('dragstart',function(e){
+            dragKey=opts.dk;r.classList.add('dragging');
+            try{e.dataTransfer.effectAllowed='move';
+              e.dataTransfer.setData('text/plain',opts.dk);}catch(err){}
+          });
+          r.addEventListener('dragend',function(){
+            dragKey='';r.classList.remove('dragging');
+            $$('.anim-step.drop-above,.anim-step.drop-below',list)
+              .forEach(function(x){x.classList.remove('drop-above','drop-below');});
+          });
+          r.addEventListener('dragover',function(e){
+            var tk=dropKeyFor(r,dragKey); if(!tk) return;
+            e.preventDefault();e.dataTransfer.dropEffect='move';
+            var bb=r.getBoundingClientRect();
+            var below=e.clientY>bb.top+bb.height/2;
+            r.classList.toggle('drop-below',below);
+            r.classList.toggle('drop-above',!below);
+          });
+          r.addEventListener('dragleave',function(){
+            r.classList.remove('drop-above','drop-below');});
+          r.addEventListener('drop',function(e){
+            var tk=dropKeyFor(r,dragKey); if(!tk) return;
+            e.preventDefault();e.stopPropagation();
+            var below=r.classList.contains('drop-below');
+            r.classList.remove('drop-above','drop-below');
+            dropRow(dragKey,tk,below);dragKey='';
+          });
+        }
         list.appendChild(r);
         return r;
+      }
+      /* the key on this row that matches the dragged one's kind and
+         owner: 'b:si', 'p:annot:k' or 't:annot:k' */
+      function dropKeyFor(r,dk){
+        if(!dk) return '';
+        var own=dk.replace(/:\d+$/,'');
+        var ks=[r.dataset.dk,r.dataset.dk2];
+        for(var i=0;i<ks.length;i++)
+          if(ks[i]&&ks[i]!==dk&&ks[i].replace(/:\d+$/,'')===own) return ks[i];
+        return '';
+      }
+      function dropRow(from,to,below){
+        var fk=from.split(':'),tk=to.split(':');
+        var k=+fk[fk.length-1],j=+tk[tk.length-1];
+        var t=below?j+1:j; if(k<t) t-=1;
+        if(fk[0]==='b') moveStepTo(k,t);
+        else {
+          var a=s.annots[+fk[1]]; if(!a) return;
+          if(fk[0]==='p') movePage(a,k,t);
+          else pieceMove(a,k,t);
+        }
       }
       /* Earlier and Later stacked, Remove beside them: the same shape on
          every row that has them */
@@ -61582,15 +61690,15 @@ window.JunoPptx = (function () {
               var w=walk[d];
               var name=w.j?('Page '+(w.j+1)+' beside figure '+(w.k+1))
                 :frameLabel(fr[w.k],w.k);
-              /* T427: a page moves through its book, or leaves it */
+              /* T427: a page moves through its book (T432: never out
+                 of it -- the pane is about clicks, not content) */
               var acts=w.j?null:(function(k){return [
                 ['\u2191 Earlier','Show this page one page sooner',
-                 function(){movePage(a,k,-1);},k<=0],
+                 function(){movePage(a,k,k-1);},k<=0],
                 ['\u2193 Later','Show this page one page later',
-                 function(){movePage(a,k,1);},k>=fr.length-1],
-                ['\u2715 Remove','Take this page out of the book',
-                 function(){dropPage(a,k);},fr.length<2]];})(w.k);
-              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2,acts:acts});
+                 function(){movePage(a,k,k+1);},k>=fr.length-1]];})(w.k);
+              row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2,acts:acts,
+                dk:w.j?'':('p:'+p.i+':'+w.k)});
             }
           } else if(a.k==='chart'){
             chartParse(a).series.forEach(function(se,k){
@@ -61639,25 +61747,26 @@ window.JunoPptx = (function () {
             if(sfr[k]) t+=' \u00b7 '+frameLabel(sfr[k],k);
             return t;
           }
-          row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2});
-          /* T427: a bullet moves through its text, or leaves it -- the
-             words move, so the slide and the show agree. Only a
-             by-paragraph build: a sentence is not a line. */
+          /* T427: a bullet moves through its text -- the words move, so
+             the slide and the show agree (T432: never out of it). Only
+             a by-paragraph build: a sentence is not a line. */
           var para=textBy(pieceA)==='para';
+          row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2,
+            dk:'b:'+si,dk2:para?('t:'+ii+':0'):''});
           for(var k=1;k<nsub;k++)
             row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],'',
-              {sub:true,cur:cur2,acts:para?(function(kk){return [
+              {sub:true,cur:cur2,dk:para?('t:'+ii+':'+k):'',
+               acts:para?(function(kk){return [
                 ['\u2191 Earlier','Move this bullet up one',
-                 function(){pieceEdit(pieceA,kk,-1);},false],
+                 function(){pieceMove(pieceA,kk,kk-1);},false],
                 ['\u2193 Later','Move this bullet down one',
-                 function(){pieceEdit(pieceA,kk,1);},kk>=nsub-1],
-                ['\u2715 Remove','Take this bullet out of the text',
-                 function(){pieceEdit(pieceA,kk,0);},false]];})(k):null});
+                 function(){pieceMove(pieceA,kk,kk+1);},kk>=nsub-1]];})(k)
+               :null});
         } else {
           var last=(plan.stop[b0+nsub-1]|0)+1;
           row(first===last?first:(first+'\u2013'+last),names,
             tag+(nsub>1?(' \u00b7 '+nsub+' pieces'):''),
-            {si:si,ctr:true,cur:cur2});
+            {si:si,ctr:true,cur:cur2,dk:'b:'+si});
         }
         stepperRows(plan.anch[b0]);
       });
