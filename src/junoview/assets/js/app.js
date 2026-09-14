@@ -722,7 +722,11 @@
     if(lv===99&&rows.length) lv=+(rows[0].dataset.level||2);
     var pending=[];
     rows.forEach(function(s2){
-      var l=+(s2.dataset.level||2),sid=s2.dataset.sec;
+      /* T423: a section built in code -- the plot-trace tab's -- has no
+         data-sec, and the run's title fell back to it and threw on
+         .replace, which killed renderPagesBtn (and everything after it
+         in the activate path) the moment a trace opened. */
+      var l=+(s2.dataset.level||2),sid=s2.dataset.sec||'';
       if(l<lv&&!runs.length){pending.push(sid);return;}
       if(l<=lv){
         var h=s2.querySelector('.sectionhead-txt'),t=sid;
@@ -783,7 +787,9 @@
     if(!b) return;
     var stem=activeStem(),sh=APP.shells[stem];
     var runs=(sh&&sh.el)?pageRuns(sh.el):[];
-    var i=pageRunOf(runs,pageBy[stem]||'');
+    /* T423: an unpaged tab has no page key -- '' would match a section
+       with no data-sec and read "Page 1 of 1" on a plot trace */
+    var i=pageBy[stem]?pageRunOf(runs,pageBy[stem]):-1;
     var on=i>=0;
     setBtnText(b,on?('Page '+(i+1)+' of '+runs.length):'Pages');
     b.classList.toggle('on',on);

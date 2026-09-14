@@ -8213,3 +8213,12 @@ gates are recorded in the completing commit.
   is open (`body:has(#varspane:not([hidden])) .docfind`). Driven on the
   example notebook: no overlap with both open, and the bar back in the
   corner once the pane closes.
+- [x] **T423 — Opening a plot trace threw in the pager.** Found driving
+  T248. The plot-trace tab's section is built in code and has no
+  `data-sec`, so `pageRuns` took undefined for the run's title and
+  threw on `.replace` — killing `renderPagesBtn` and everything after
+  it in the activate path the moment a trace opened. The id falls back
+  to '', and an unpaged tab no longer matches that empty id as "Page 1
+  of 1". Driven on the example notebook: "Pages" before and after a
+  trace opens with no page error; "Page 1 of 5" once the notebook is
+  paged.
