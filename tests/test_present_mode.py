@@ -538,13 +538,17 @@ def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):
     on screen and the open notebooks -- read live, not a session list --
     slides out at the left edge while presenting, closes when the pointer
     leaves it, and has a Recents door beside the route to the library.
-    No Close button: it closed the drawer, not the deck, under a heading
-    that repeated the button that opened it."""
+    T448 gave it a head of its own -- where it sits, and an X. That X is
+    not T382's: the one taken away closed the drawer under a heading that
+    repeated the button that opened it, while this one un-docks a bar the
+    layout has made room for, and the head it sits in says which bar you
+    are looking at rather than repeating a door."""
     assert 'id="deck-pres-open"' in out
     assert 'id="deck-pres-drawer"' in out
     assert 'id="deck-pres-browse"' in out
     assert 'id="deck-pres-recent"' in out
-    assert 'id="deck-pres-close"' not in out
+    assert 'id="deck-pres-dock"' in out
+    assert "      if(barDocked()){barSet('dock','pop');return;}" in out
     assert "function notePresentationOpen(name){" in out
     assert "var sessionPresentationNames" not in out
     assert "function sessionPresentationRows" not in out

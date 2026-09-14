@@ -439,6 +439,8 @@
       {detail:{stem:stem}}));
   }
   APP.activate=activate;
+  /* T448: the open-items bar closes a notebook from its own row */
+  APP.closeNotebook=function(stem){closeNotebook(stem);};
 
   /* ================= URL routing: a unique hash per view ================
      #/doc/<stem>  a document tab   #/pres/<name>[/s<n>]  a presentation slide.

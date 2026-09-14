@@ -56,6 +56,20 @@ _ICON_PATHS = {
     "bob": '<path d="M8 2.4v11.2"/><path d="M4.8 5.6L8 2.4l3.2 3.2"/>'
            '<path d="M4.8 10.4L8 13.6l3.2-3.2"/>',
     "pulse": '<circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/>',
+    # T445: ten more movements, six of which needed artwork of their own
+    # (spin borrows rotr, tilt rotl, breathe fade, glow star)
+    "sway": '<path d="M1.8 8h12.4"/><path d="M4.6 5.2L1.8 8l2.8 2.8"/>'
+            '<path d="M11.4 5.2L14.2 8l-2.8 2.8"/>',
+    "shake": '<path d="M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4"/>',
+    "swing": '<circle cx="8" cy="2.8" r="1"/><path d="M8 3.8v5.2"/>'
+             '<circle cx="8" cy="11.4" r="2.4"/>',
+    "jelly": '<ellipse cx="8" cy="8" rx="6.1" ry="3.4"/>'
+             '<ellipse cx="8" cy="8" rx="3.4" ry="6.1"/>',
+    "drift": '<path d="M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8'
+             '-4.4-2.6-2-4.4 5.6-.6 6.6 1.8"/>',
+    "flicker": '<circle cx="8" cy="8" r="2.4"/><path d="M8 1.8v2.2"/>'
+               '<path d="M12.4 8h1.8"/><path d="M4.8 4.8l1.5 1.5"/>'
+               '<path d="M8 12v2.2"/>',
     # T391: the animation story -- three frames of a strip
     "story": '<path d="M1.6 4.2h3.6v7.6H1.6z"/><path d="M6.2 4.2h3.6v7.6H6.2z"/>'
              '<path d="M10.8 4.2h3.6v7.6h-3.6z"/>',

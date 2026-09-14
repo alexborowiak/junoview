@@ -1952,7 +1952,6 @@
       return !g.hidden&&!g.hasAttribute('data-off')
         &&!g.classList.contains('rbn-folded')
         &&!g.classList.contains('rbn-fixed')
-        &&!g.classList.contains('rbn-seq')
         /* Keep up to date never folds (T202: the point of it is to be
            seen) */
         &&!g.classList.contains('rbn-sources')

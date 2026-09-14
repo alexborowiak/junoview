@@ -45,8 +45,8 @@ def test_design_and_animation_are_ordered_as_asked(out):
 def test_the_words_the_review_asked_for(out):
     html = assets.deck_html()        # the renderer turns each icon token into svg
     assert '<i data-ic="numbers"></i> Page numbers</button>' in html
-    assert '><i data-ic="play"></i> Animation pane</button>' in html
-    assert "<span>Animation pane</span>" in out
+    assert '><i data-ic="play"></i> Animation panel</button>' in html
+    assert "<span>Animation</span>" in out   # T445: the pane's own name
     assert "Deck colours&#8230;</button>" in out   # T444
     assert "Palette&#8230;" not in out
     assert "menuHead(m,'deck colours');" in out

@@ -57,9 +57,14 @@ def test_motion_keeps_going(out):
     assert ".rbn-motion{order:3;}" in out
     # the class goes on in a pass of its own (T446: in the editor too)
     assert "    if(s.annots&&s.annots.some(function(a){" in out
-    assert "        if(ma&&ma.motion) el.classList.add('an-move-'+ma.motion);" in out
+    assert "          el.classList.add('an-move-'+ma.motion);" in out
+    # T445: and the numbers on it
+    assert "          if(typeof motionPaint==='function') motionPaint(el,ma);" \
+        in out
     # infinite keyframes on individual properties, so a rotation survives
-    assert "@keyframes an-wobble{0%,100%{rotate:-2.5deg}50%{rotate:2.5deg}}" in out
+    # T445: how far is a number the keyframe multiplies by
+    assert ("@keyframes an-wobble{0%,100%{rotate:calc(-2.5deg * "
+            "var(--mo-amp,1))}") in out
     assert ".an-move-bob{animation:an-bob 2.6s ease-in-out infinite;}" in out
     # written down
     assert "motion" in ANNOT_COMMON

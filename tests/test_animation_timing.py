@@ -59,9 +59,13 @@ def test_the_numbers_show_whenever_the_animation_tab_is_up(out):
 
 def test_the_lit_chip_beats_the_theme(out):
     """T186. The colourful theme paints every .dbtn three classes deep,
-    which beat .seq-fxb.on and left the chosen effect in Quick animate
-    looking like its neighbours. The pressed state is said at five."""
-    assert ('.rbn-row .seq-fx .seq-fxb[aria-pressed="true"],\n'
-            '.rbn-row .rbn-cell .dbtn.rbn-sm[aria-pressed="true"]{') in out
+    which beat the chosen effect's own lit state and left it looking
+    like its neighbours. The pressed state is said at five.
+
+    T445 moved Quick animate into the Animation panel, where a chip is
+    a .cfg-chip and its lit state is its own rule; the ribbon half of
+    this pair still governs every pressed button on the row."""
+    assert '.rbn-row .rbn-cell .dbtn.rbn-sm[aria-pressed="true"]{' in out
+    assert ".cfg-chip.on{background:var(--accent-deep,var(--cyan-deep));" in out
     # ...and the status line says what to do, not only where you are
-    assert "click the '\n      +'next thing to appear'" in out
+    assert "'thing to appear'+(done?(' \\u00b7 '+done+' placed'):'');" in out

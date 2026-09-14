@@ -60,15 +60,38 @@
        button that opened it. -->
   <aside class="deck-pres-drawer" id="deck-pres-drawer" hidden
     aria-label="Open now">
-    <div class="deck-pres-drawer-head"><span>Open now</span></div>
+    <!-- T448: WHERE IT SITS IS YOURS (2026-09-14, user: "the button
+         beside home that is the only way to show what you currently
+         have open is annoying ... Having the side bar before was good
+         when you could have it open all the time or pop it up more
+         easily. Should also be able to make it as a top bar and
+         customise a lot about the way you want things. Needs lots of
+         user flexibility"). A pop-up that peeks from the edge, a rail
+         down the left that stays open, or a strip across the top --
+         remembered, with the sections you want in it. -->
+    <div class="deck-pres-drawer-head"><span>Open now</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="deck-pres-dock" type="button"
+        aria-haspopup="true" aria-expanded="false"
+        aria-label="Where this bar sits, and what it lists"
+        title="Where this bar sits, and what it lists"
+        ><i data-ic="dockright"></i></button>
+      <button class="dbtn dc-icon" id="deck-pres-close" type="button"
+        aria-label="Close this bar"
+        title="Close it. The chevron beside Home opens it again, and it
+ slides out when you reach the left edge"><i data-ic="exit"></i></button>
+    </div>
     <div class="deck-pres-list" id="deck-pres-list"></div>
     <div class="deck-pres-doors">
+      <button class="dbtn" id="deck-pres-new" type="button"
+        title="A new presentation, open beside the others"
+        ><i data-ic="newdeck"></i> New</button>
       <button class="dbtn" id="deck-pres-recent" type="button"
         title="Presentations you used recently, in any session"
         ><i data-ic="history"></i> Recents</button>
       <button class="dbtn" id="deck-pres-browse" type="button"
         title="Every saved presentation, folders, new decks and imports"
-        ><i data-ic="open"></i> All presentations&hellip;</button>
+        ><i data-ic="open"></i> All&hellip;</button>
     </div>
   </aside>
   <!-- the left COLUMN is the notebooks content and then the thumbnails,
@@ -1242,14 +1265,15 @@ items snap to both. Guides, not ink: never printed or exported"
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
                 title="Click things one after another and each becomes
- the next to appear. Shift-click puts one on the same click as the
- last. Finish when you are done"><i data-ic="locate"></i> Quick
+ the next to appear. The Animation panel opens with the count, the
+ effect and the way out"><i data-ic="locate"></i> Quick
  animate</button>
               <button class="dbtn rbn-sm" id="vw-anim"
                 aria-pressed="false"
-                title="The list of what appears when on this slide, in
- order, with arrows to move a step earlier or later"
-                ><i data-ic="play"></i> Animation pane</button>
+                title="How the selected object arrives and moves, every
+ number behind the movement, treatments for the whole slide, and the
+ list of clicks"
+                ><i data-ic="play"></i> Animation panel</button>
               <!-- THE TIMELINE IS THE LAYERS PANE (T174): every object
                    with the click it arrives on and, if it leaves, the
                    click it goes. It drives Home's Layers button: two
@@ -1360,35 +1384,15 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab" id="anim-timing-lab">Timing &amp; text</span>
           </span>
-          <!-- QUICK ANIMATE, IN THE RIBBON (T180). This was a bar fixed
-               across the top of the window, over the very ribbon it
-               was standing in for. The three cells are hidden until the
-               mode arms, so the group costs the resting row nothing;
-               seqSync shows them and the ribbon re-fits. The CELLS
-               carry the hidden bit, not the group: syncRibbonGroups
-               decides a group's visibility from its controls and would
-               put the group back. -->
-          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation" data-fold-ic="locate">
-            <span class="rbn-row">
-              <span class="rbn-cell seq-cell" id="seq-what" hidden></span>
-              <!-- WHICH EFFECT THE NEXT CLICK GIVES. Every button
-                   carries its key, because a mode with shortcuts nobody
-                   can see has no shortcuts. -->
-              <span class="rbn-cell seq-fx" id="seq-fx" hidden></span>
-              <span class="rbn-cell" id="seq-btns" hidden>
-                <button class="dbtn rbn-sm" id="seq-undo"
-                  title="Take back the last click, and stay in the
- mode"><i data-ic="undo"></i> Undo last</button>
-                <button class="dbtn rbn-sm primary" id="seq-done"
-                  title="Keep this order. Ctrl+Z afterwards undoes the
- whole run"><i data-ic="return"></i> Finish</button>
-                <button class="dbtn rbn-sm" id="seq-cancel"
-                  title="Leave the slide exactly as it was"
-                  ><i data-ic="exit"></i> Cancel (Esc)</button>
-              </span>
-            </span>
-            <span class="rbn-lab">Quick animate</span>
-          </span>
+          <!-- T445: QUICK ANIMATE IS A PANEL NOW (2026-09-14, user:
+               "the quick animate should pop up as a side panel. too
+               much on the ribbon now and it is getting squashed out of
+               screen"). T180 had put its bar in the ribbon as a group
+               of three cells that appeared while the mode was armed --
+               competing for the row at the one moment your attention
+               belongs on the slide. The mode's count, its effect
+               chooser and its three verbs are in the Animation panel
+               (48b-motion.js cfgSeq), which arming it opens. -->
           <!-- FOUR GROUPS (T188). Place a thing of a known kind;
                WRITE, where the kinds of text box are TILES in the row
                the way the effects are (2026-09-02, user: "the insert
@@ -3012,11 +3016,22 @@ items snap to both. Guides, not ink: never printed or exported"
           <div class="np-rehlist" id="np-rehlist"></div>
         </div>
       </aside>
+      <!-- T445: THE ANIMATION PANEL (2026-09-14, user: "the animation
+           need to be able to be configured with a side tab. Currently
+           there are starting to be too many things ... it would be cool
+           to have more configurations on these, like speed, and how far
+           they wobble"). Everything about the selected object's
+           animation, the slide's movement presets, and Quick animate
+           while it is armed, above the list of clicks this pane has
+           always been. -->
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animation pane</span>
+        <div class="selpane-h"><span>Animation</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
-        <div class="selpane-list" id="animpane-body"></div>
+        <div class="selpane-list">
+          <div class="anim-cfg" id="animpane-cfg"></div>
+          <div id="animpane-body"></div>
+        </div>
       </aside>
       <aside class="selpane verpane" id="verpane" hidden>
         <div class="selpane-h"><span id="verpane-title">Versions</span>
