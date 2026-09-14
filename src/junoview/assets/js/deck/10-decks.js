@@ -1002,6 +1002,12 @@
       if(typeof renderPresentationHub==='function') renderPresentationHub();
       if(typeof renderDeckPresentationDrawer==='function')
         renderDeckPresentationDrawer();
+      /* T449: AND HOME (2026-09-14, user's screenshot: "No recent
+         presentations" on Home while the library's Recent listed
+         seven). Home is painted before the store has answered, and
+         the recent list drops every name it cannot find yet -- so
+         it has to be painted again now that the drafts are here. */
+      if(APP.refreshChrome) APP.refreshChrome();
     });
   }
 

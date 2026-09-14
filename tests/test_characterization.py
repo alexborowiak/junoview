@@ -1870,8 +1870,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # deck.css, 05-figures-and-ribbon.js and 99-boot.js change.
 # T447 (2026-09-14): a rename lets the old file go; 60-saving-and-
 # export.js changes.
-EXPECTED_MD5 = "8e9f831507cdbfe0585086bc8f96feb6"
-EXPECTED_BYTES = 4228844
+# T449 (2026-09-14): Home repainted after the draft store loads;
+# 10-decks.js changes.
+EXPECTED_MD5 = "ee879958d06a600e28bea0426952a157"
+EXPECTED_BYTES = 4229230
 
 
 def _render_example() -> str:

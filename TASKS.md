@@ -8486,3 +8486,9 @@ gates are recorded in the completing commit.
   had, the readout says "click Save to choose the file", and the next
   Save asks where to write the new name. Junoview's own folder still
   renames outright. Driven live.
+- [x] **T449 — Home's Recent presentations is painted again once the
+  drafts land.** (User's screenshot, 2026-09-14: "No recent
+  presentations" on Home while the library's Recent listed seven.)
+  Home is painted before the IndexedDB draft store has answered, and
+  the recent list drops every name it cannot find yet; the library
+  re-rendered after the load and Home did not. It does now.
