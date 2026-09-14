@@ -1786,8 +1786,17 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pptx.js).
 # 2026-09-14, T420: chrome only. Clone wording, a dead rule (deck
 # JS/CSS).
-EXPECTED_MD5 = "4df1a3460fcbaf8648a8c482211df480"
-EXPECTED_BYTES = 4161219
+# T275: one matchProp helper for the three copy loops; a model with no
+# named style no longer strips the target's
+# T421: cmRefit re-clamps the canvas menu after the More fold opens
+# T246: document Find marks carry jv-doc and findClear unwraps only
+# those
+# T247: Find re-runs its term on sem:activate
+# T422: the Find bar steps left of an open Variables pane
+# T248: tree and plot-trace clones drop the pin and mark buttons
+# T423: pageRuns tolerates a section with no data-sec
+EXPECTED_MD5 = "307f69c1a2d7f23400ab6fa2a7cd08db"
+EXPECTED_BYTES = 4164418
 
 
 def _render_example() -> str:

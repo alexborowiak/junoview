@@ -2876,8 +2876,22 @@
       e.stopPropagation();
       more.hidden=!more.hidden;
       t2.setAttribute('aria-expanded',(!more.hidden).toString());
+      cmRefit(m,more.hidden?null:t2);
     });
     m.appendChild(t2);m.appendChild(more);
+  }
+  /* T421: THE FOLD OPENS DOWNWARDS, AND THE SCREEN DOES NOT GROW. floatAt
+     clamps the menu to the window when it opens, measured FOLDED; the
+     24 rows behind More then extended it past the bottom edge, where
+     nothing could be clicked or scrolled to -- on a 900px screen every
+     Match row was unreachable from the right-click menu (2026-09-14).
+     Re-clamp after the fold changes, and bring the fold's first rows
+     into view inside the menu's own scroll. */
+  function cmRefit(m,at){
+    var r=m.getBoundingClientRect();
+    if(r.bottom>window.innerHeight-8)
+      m.style.top=Math.max(8,window.innerHeight-8-r.height)+'px';
+    if(at) m.scrollTop=Math.max(0,at.offsetTop-6);
   }
   function setLockSel(mode){
     var s=pres.slides[cur]; if(!s||!s.annots) return;

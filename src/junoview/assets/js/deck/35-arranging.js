@@ -613,6 +613,21 @@
     /* lines and arrows */
     'x1','y1','x2','y2','mid','curve','bend','head','tail','nohead',
     'hsz','dash'];
+  /* T275: THE COPY RULE, IN ONE PLACE. Undefined on the model means
+     DELETE on the target — except `style`. A named style is a NAME the
+     target chose, not a look: matching a typed heading against a box
+     that never had one used to strip the name and keep the baked-on
+     look, so the box still read as a heading and was no longer one,
+     which the outline, "apply to all headings" and the standardiser
+     cannot see. Matching means "look like this one", so a model with no
+     name leaves the target's alone. Three loops share this. */
+  function matchProp(from,to,p){
+    if(from[p]===undefined){
+      if(p!=='style') delete to[p];
+      return;
+    }
+    to[p]=(typeof from[p]==='object'&&from[p])?deep(from[p]):from[p];
+  }
   /* ---- WHICH PROPERTIES TRAVEL ----------------------------------------
      "It should do everything by default (text size, spacing, indentation,
      width, height, x and y position), but then you can unselect ones you
@@ -761,10 +776,7 @@
       (sl.annots||[]).forEach(function(a){
         if(!a||a===src||typeKeyOf(a)!==key) return;
         MATCH_PROPS.forEach(function(p){
-          if(!want[p]) return;
-          if(src[p]===undefined) delete a[p];
-          else a[p]=(typeof src[p]==='object'&&src[p])
-            ?deep(src[p]):src[p];
+          if(want[p]) matchProp(src,a,p);
         });
         n++;
       });
@@ -846,11 +858,7 @@
         /* run out of models? reuse the last one, so three bullets on this
            slide all take the styling of the one bullet on that one */
         var m=from[Math.min(n,from.length-1)].a;
-        MATCH_PROPS.forEach(function(prop){
-          if(m[prop]===undefined) delete p2.a[prop];
-          else p2.a[prop]=(typeof m[prop]==='object'&&m[prop])
-            ?deep(m[prop]):m[prop];
-        });
+        MATCH_PROPS.forEach(function(prop){matchProp(m,p2.a,prop);});
         moved++;
       });
     });
@@ -1600,16 +1608,12 @@
     }
     return true;
   }
-  /* the copy loop, once. Same rule MATCH_PROPS has always followed —
-     undefined on the model means DELETE on the target — and the same deep
-     copy for the object-valued properties. */
+  /* the copy loop, once: matchProp's rule (undefined on the model means
+     delete on the target, a name is never deleted) over the wanted keys */
   function matchCopy(from,to,want){
     if(!from||!to||from===to) return false;
     MATCH_PROPS.forEach(function(p){
-      if(!want[p]) return;
-      if(from[p]===undefined) delete to[p];
-      else to[p]=(typeof from[p]==='object'&&from[p])
-        ?deep(from[p]):from[p];
+      if(want[p]) matchProp(from,to,p);
     });
     return true;
   }

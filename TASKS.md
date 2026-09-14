@@ -5137,22 +5137,33 @@ option. Then where has the ability to refresh all images gone?"
   jv-hitopen counts after closing were identical to the snapshot taken
   before Find was opened.
 
-- [ ] **T246 - Document Find does not erase the Variables match.**
+- [x] **T246 - Document Find does not erase the Variables match.**
   Review, 2026-09-04. Document hits and the Variables filter both use
   `.jv-hit`, while `findClear()` removes every `.jv-hit` in the page.
   Running or closing document Find therefore erases the highlighted
   part of a still-active Variables query. Give the two features
   separate ownership (separate classes or scoped clearing) and test
   both being active together.
+  *Done 2026-09-14.* The document's marks carry `jv-doc` as well as the
+  shared look, and `findClear` unwraps only those. Driven on the example
+  notebook: Variables filtered by "bl" (3 marks), then "blocking" in
+  Find gave 23 document marks and left the 3; closing the bar left 0
+  and 3.
 
-- [ ] **T247 - Find follows the notebook you switch to.**
+- [x] **T247 - Find follows the notebook you switch to.**
   Review, 2026-09-04. The Find bar and its `findHits` DOM references
   survive `activate(stem)`. After switching notebooks, Next and
   Previous still walk matches in the now-hidden old shell. A tab switch
   must close Find or rerun the current term against the newly active
   document, and the count must immediately describe that document.
+  *Done 2026-09-14.* Find listens for `sem:activate` and, while its bar
+  is open, re-runs the term against the newly active shell; findRun's
+  clear takes the old shell's marks with it. Driven with two notebooks
+  open: 1 / 23 on one became 1 / 18 on the other with every mark in the
+  visible shell, and a term the first has nowhere read "nothing found"
+  on switching back.
 
-- [ ] **T248 - Pin and mark have one source-cell identity in every
+- [x] **T248 - Pin and mark have one source-cell identity in every
   view.**
   Review, 2026-09-04. Tree clones remove their card ids but retain and
   rewire the new pin/mark buttons, so a click derives the empty id and
@@ -5161,13 +5172,24 @@ option. Then where has the ability to refresh all images gone?"
   reload. Either omit these controls from derived views or route every
   click through a stable source-cell id and repaint every live view and
   sidebar together.
+  *Done 2026-09-14*, the first way: a derived view is a view of the
+  source cell, and the pin and the mark act on that cell, so the tree
+  node and the plot-trace clone drop the two buttons with the eye and
+  the add-note pencil they already dropped. Driven on the example
+  notebook: 27 pins on the source cards, 0 in an expanded tree node, 0
+  across a plot trace's five cards.
 
-- [ ] **T249 - The widget does not show dead pin and mark buttons.**
+- [x] **T249 - The widget does not show dead pin and mark buttons.**
   Review, 2026-09-04. `render_item()` now emits pin and mark controls for
   every frontend, but `widget.js` wires neither of them. The widget
   consequently presents controls which look interactive and do
   nothing. Give the widget real persisted pin/mark behaviour, or make
   the shared renderer able to omit app-only card chrome.
+  *Done 2026-09-14.* The widget's mount() removes the pin, the label
+  and the per-cell eye (the eye was dead there too: the widget adds its
+  own hide button) before anything shows. The shared renderer is left
+  alone -- it is the app's chrome, and the widget is the one frontend
+  that does not wire it.
 
 - [x] **T250 - A colour theme covers the whole product, not only the
   chrome.**
@@ -5881,7 +5903,7 @@ option. Then where has the ability to refresh all images gone?"
   Driven before and after on the same fixture: before, the pasted box
   was `style:null, b:0`; after, `style:'h1', size:5, b:1`.
 
-- [ ] **T275 - "Match this slide" can silently delete a heading's type.**
+- [x] **T275 - "Match this slide" can silently delete a heading's type.**
   Found while driving T274, not reported. `MATCH_PROPS` includes
   `style`, and the match loops follow "undefined on the model means
   DELETE on the target" (35-arranging.js:1586-1592, and again at 748-752
@@ -5891,10 +5913,16 @@ option. Then where has the ability to refresh all images gone?"
   state the outline, "apply to all headings" and the standardiser cannot
   see. Three call sites: Match this slide, Apply to all of this type,
   and Arrange.
-  *Not fixed, because it is a product decision, not a slip.* Either
-  matching means "look like this one" and should never clear a NAME the
-  target chose, or it means "be this one" and should. The first reads
-  right, and is a one-line guard; the user should say which.
+  *Done 2026-09-14.* Matching means "look like this one": a model with
+  no name leaves the target's alone, and a model WITH one still passes
+  it on. The rule now lives in one helper, `matchProp`, that all three
+  loops call, so the next property with a "never delete" reading has
+  one place to go. Driven live: Copy this look from an untyped bold box
+  onto a Heading 1 on the next slide moved it to the model's spot and
+  left it `h1`; before, it came back `(none)`. Match this slide itself
+  turned out safe by construction -- a typed box only ever pairs with a
+  model of the same type -- so the exposed doors were Apply to all of
+  this type and the two armed object matches.
 
 - [x] **T276 - A slide template says what its boxes ARE.**
   The user (2026-09-05): "Inserting new slides some of the layouts don't
@@ -8167,3 +8195,30 @@ gates are recorded in the completing commit.
   pane's Actions and the canvas menu still said "Every instance" and
   "component" where the ribbon says clones (T409); they say "Its
   clones" now. And `.anim-empty` outlived the hint it styled (T417).
+- [x] **T421 — The right-click menu's More rows run off the screen.**
+  Found driving T275. `floatAt` clamps the canvas menu to the window
+  when it opens, measured FOLDED; the 24 rows behind "More" then grew
+  it past the bottom edge, where nothing could be clicked or scrolled
+  to — on a 900px-tall screen every Match row, the clone rows and the
+  select-on-this-slide rows were unreachable from the right-click menu.
+  The fold re-clamps the menu after it opens (`cmRefit`) and scrolls
+  its own first rows into view inside the menu's scroll. Driven live at
+  1440×900: the Match rows sit inside the window after one click on
+  More.
+- [x] **T422 — The Find bar is not hidden under the Variables pane.**
+  Found driving T246. Both dock at the top right and the pane stacks
+  above the bar, so with both open the count and the prev/next/close
+  buttons sat behind it — the close button's hit point landed on the
+  pane's own close icon. The bar steps left of the pane while the pane
+  is open (`body:has(#varspane:not([hidden])) .docfind`). Driven on the
+  example notebook: no overlap with both open, and the bar back in the
+  corner once the pane closes.
+- [x] **T423 — Opening a plot trace threw in the pager.** Found driving
+  T248. The plot-trace tab's section is built in code and has no
+  `data-sec`, so `pageRuns` took undefined for the run's title and
+  threw on `.replace` — killing `renderPagesBtn` and everything after
+  it in the activate path the moment a trace opened. The id falls back
+  to '', and an unpaged tab no longer matches that empty id as "Page 1
+  of 1". Driven on the example notebook: "Pages" before and after a
+  trace opens with no page error; "Page 1 of 5" once the notebook is
+  paged.

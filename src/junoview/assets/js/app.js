@@ -722,7 +722,11 @@
     if(lv===99&&rows.length) lv=+(rows[0].dataset.level||2);
     var pending=[];
     rows.forEach(function(s2){
-      var l=+(s2.dataset.level||2),sid=s2.dataset.sec;
+      /* T423: a section built in code -- the plot-trace tab's -- has no
+         data-sec, and the run's title fell back to it and threw on
+         .replace, which killed renderPagesBtn (and everything after it
+         in the activate path) the moment a trace opened. */
+      var l=+(s2.dataset.level||2),sid=s2.dataset.sec||'';
       if(l<lv&&!runs.length){pending.push(sid);return;}
       if(l<=lv){
         var h=s2.querySelector('.sectionhead-txt'),t=sid;
@@ -783,7 +787,9 @@
     if(!b) return;
     var stem=activeStem(),sh=APP.shells[stem];
     var runs=(sh&&sh.el)?pageRuns(sh.el):[];
-    var i=pageRunOf(runs,pageBy[stem]||'');
+    /* T423: an unpaged tab has no page key -- '' would match a section
+       with no data-sec and read "Page 1 of 1" on a plot trace */
+    var i=pageBy[stem]?pageRunOf(runs,pageBy[stem]):-1;
     var on=i>=0;
     setBtnText(b,on?('Page '+(i+1)+' of '+runs.length):'Pages');
     b.classList.toggle('on',on);
@@ -2366,7 +2372,11 @@
       /* per-output fold stubs are filter chrome, not content */
       $$('.ot-stub',clone).forEach(function(x){x.remove();});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
-      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
+      /* T248: the pin and the mark go too. A clone has no card id, so
+         a press here derived "" and persisted a mark for nothing; the
+         two live on the source card and its outline row. */
+      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote,'
+        +'.cell-pin,.cell-mark',clone)
         .forEach(function(x){x.remove();});
       body.appendChild(clone);
       /* cloneNode does not copy listeners: re-wire the clone so its code
@@ -3070,8 +3080,13 @@
     $$('.jv-hitopen').forEach(function(n){
       n.classList.remove('jv-hitopen');});
   }
+  /* T246: ONLY THE DOCUMENT'S OWN MARKS. The Variables filter paints its
+     matched letters with the same mark.jv-hit look, and this used to
+     unwrap every .jv-hit on the page -- so running or closing document
+     Find erased the highlight of a still-active Variables query. The
+     document's marks carry jv-doc as well, and that is all this clears. */
   function findClear(){
-    $$('.jv-hit').forEach(function(m){
+    $$('mark.jv-doc').forEach(function(m){
       var p2=m.parentNode; if(!p2) return;
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
@@ -3105,7 +3120,7 @@
         if(at>from)
           frag.appendChild(document.createTextNode(txt.slice(from,at)));
         var mk=document.createElement('mark');
-        mk.className='jv-hit';
+        mk.className='jv-hit jv-doc';
         mk.textContent=txt.slice(at,at+term.length);
         frag.appendChild(mk);out.push(mk);
         from=at+term.length;
@@ -3119,7 +3134,7 @@
   }
   function findGo(d){
     if(!findHits.length) return;
-    $$('.jv-hit.on').forEach(function(m){m.classList.remove('on');});
+    $$('.jv-doc.on').forEach(function(m){m.classList.remove('on');});
     findAt=(findAt+d+findHits.length)%findHits.length;
     var m=findHits[findAt];
     m.classList.add('on');
@@ -3202,6 +3217,16 @@
     if(nx) nx.addEventListener('click',function(){findGo(1);});
     var xb=$('#docfind-x');
     if(xb) xb.addEventListener('click',function(){findOpen(false);});
+    /* T247: FIND BELONGS TO THE NOTEBOOK YOU ARE LOOKING AT. The bar,
+       its count and findHits survived a tab switch, so Next and Previous
+       walked matches in the now-hidden shell and the count described a
+       document you could not see. Re-run the term against the new one
+       (findRun clears the old shell's marks first, wherever they are). */
+    document.addEventListener('sem:activate',function(){
+      var bar=$('#docfind');
+      if(!bar||bar.hidden) return;
+      findRun(((inp&&inp.value)||'').trim());
+    });
     document.addEventListener('keydown',function(e){
       if(!(e.ctrlKey||e.metaKey)||e.key!=='f') return;
       /* the deck editor has its own Find and owns the window while
@@ -6435,9 +6460,13 @@
       if(only) section.appendChild(only.cloneNode(true));
     }
     /* clones: drop per-cell eyes (no way back) and add-note pencils (their
-       listeners don't survive cloneNode; notes belong on the source tab) */
-    $$('.cell-eye,.card-addnote',section).forEach(function(b){
-      if(b.parentNode) b.parentNode.removeChild(b);});
+       listeners don't survive cloneNode; notes belong on the source tab).
+       T248: and the pin and the mark, for the same reason -- wired here
+       they repainted only the clone and left the source document stale
+       until a reload; the source card is where they act. */
+    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark',section)
+      .forEach(function(b){
+        if(b.parentNode) b.parentNode.removeChild(b);});
     $$('.card.cell-off',section).forEach(function(c){
       c.classList.remove('cell-off');});
     /* cards default to opacity:0 and are revealed by initShell's scroll
