@@ -8627,3 +8627,15 @@ gates are recorded in the completing commit.
   never reports "not used yet" again: it reads "everything else", beside
   whatever explicitly wears it. Driven live: Body text to red turns the
   text red, Page background to plum turns the page plum.
+- [x] **T456 — Two more places the colour panel overstated itself.**
+  (Found finishing T455.) **Box background** governed the text box and
+  not the notebook frame — the most box-shaped thing on a slide, which
+  carried a hard-coded chrome colour — so it does now, on the same
+  bargain: the chrome colour stays the default, `--tk-surface` answers
+  when one is chosen. And "Style sets swaps the whole palette at once"
+  is true of a set you SAVE, which captures `tokens()`, and of no set
+  that ships: not one of the six built-ins defines `tokens`, so applying
+  one has never moved a single colour. The note says the true half now,
+  and a test fails if a built-in ever grows a palette without the
+  sentence being widened back. Driven: Box background to green recolours
+  the text box.

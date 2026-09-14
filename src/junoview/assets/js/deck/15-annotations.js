@@ -2642,9 +2642,15 @@
        make sense up the top. I have never understood this." You cannot
        explain the cascade to somebody who does not yet know what the
        rows are. */
+    /* T456: ...and it says what is TRUE of style sets. The six built-in
+       sets carry type, not colour -- none of them defines `tokens` -- so
+       "Style sets swaps the whole palette at once" was a promise no set
+       that ships has ever kept. A set you SAVE does capture this palette
+       (40-captions-and-components.js, tokens:deep(tokens())), which is
+       the sentence worth telling somebody. */
     note.textContent='The five colours every slide is built from. Change '
-      +'one and every slide follows; Style sets swaps the whole palette '
-      +'at once.';
+      +'one and everything that has no colour of its own follows. A style '
+      +'set you save carries this palette with it.';
     m.appendChild(note);
     function tokRow(k){
       var row=document.createElement('div');row.className='ff-row';

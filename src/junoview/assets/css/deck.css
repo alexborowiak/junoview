@@ -4172,7 +4172,12 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);}
 
 /* notebook-cell frames */
-.an-cell{position:absolute;background:var(--chrome-1,#0e1926);
+/* T456: a notebook frame is a BOX, and "Box background" is the deck
+   colour for one -- it governed the text box and not this, which is the
+   most box-shaped thing on a slide. Same bargain as T455: the chrome
+   colour stays the default, --tk-surface answers when one is chosen. */
+.an-cell{position:absolute;
+  background:var(--tk-surface,var(--chrome-1,#0e1926));
   border:1.5px solid color-mix(in srgb,var(--accent) 36%,transparent);border-radius:10px;overflow:hidden;
   display:flex;flex-direction:column;}
 /* edit mode: an UNSELECTED frame is just its content — transparent (so it
