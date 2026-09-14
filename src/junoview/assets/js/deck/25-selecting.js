@@ -30,7 +30,9 @@
     '#fmt-mediawrap':'video',         /* trim, poster, switches (T321) */
     '#fmt-chartwrap':'chart',         /* the Chart pane's door (T322) */
     '#fmt-tablewrap':'table',         /* the Table pane's door (T324) */
-    '#fmt-figures':'flip'
+    '#fmt-figures':'flip',
+    /* T439: the book's other three doors, on the row beside the tile */
+    '#fmt-flip-imgs':'flip','#fmt-flip-pages':'flip','#fmt-flip-own':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
@@ -616,6 +618,23 @@
         pth.querySelector('b').textContent=(typeof midElide==='function')
           ?midElide(String(from),46):from;
         pth.title='From '+from;
+      }
+    }
+    /* T439: the flip book's own-object door names the page showing
+       and which way it goes; a book with no pages has none to offer */
+    var fo=$('#fmt-flip-own');
+    if(fo&&kind==='flip'){
+      var pgAt=a.at||0,pgF=flipFrames(a)[pgAt];
+      fo.hidden=!pgF;
+      if(pgF){
+        fo.innerHTML=bic(pgF.own?'link':'unlink')+' '
+          +(pgF.own?'Back in book':'Own object');
+        fo.title=pgF.own
+          ?('Page '+(pgAt+1)+' goes back into the book\u2019s box as an '
+            +'ordinary page')
+          :('Takes page '+(pgAt+1)+' out of the book\u2019s box as an '
+            +'object you can move, resize, fade or crop on its own. It '
+            +'still shows with this page');
       }
     }
     show('#fmt-lock',isNum,isNum&&pinned(a));

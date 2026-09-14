@@ -3284,7 +3284,10 @@
         +'fill it \u2014 or a picture from this computer, the clipboard, '
         +'or a path'],
      ['#fp-add-cells','Pick figures from your notebook \u2014 click as '
-        +'many as you want, in order']].forEach(function(d){
+        +'many as you want, in order'],
+     ['#fmt-figures','Pick figures from a notebook \u2014 click as many '
+        +'as you want, in order \u2014 and each becomes a page of this '
+        +'book']].forEach(function(d){
       var b=$(d[0]); if(!b) return;
       b.disabled=!open;
       b.title=open?d[1]:('Open a notebook first \u2014 this places its '

@@ -8380,3 +8380,12 @@ gates are recorded in the completing commit.
   now. A pasted picture, which has no path, used to lose the row (and
   its group) altogether — it says "pasted or dropped — no file behind
   it" in the same place.
+- [x] **T439 — The flip book's doors are on the row, not in a menu.**
+  (User, 2026-09-14: "for flip books, the options that are there with
+  the add need to be not hidden under a menu, but need to be visible by
+  default.") T234's "+ Add" tile hid three things behind a menu. They
+  are four buttons on the Picture group now: Figures (the tile, a
+  notebook door — greyed without a notebook), Pictures…, Pages…, and
+  the page showing as its own object or back in the book, named for
+  the page and the direction. Every ribbon layout seats them beside the
+  tile. Driven live.

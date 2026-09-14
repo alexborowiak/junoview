@@ -1840,8 +1840,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 99-boot.js change.
 # T438 (2026-09-14): the Source group leads the Object tab and a
 # pasted picture keeps its row; deck.css and 25-selecting.js change.
-EXPECTED_MD5 = "3304ef5360d46bf0f32b8d82447ce1d0"
-EXPECTED_BYTES = 4198501
+# T439 (2026-09-14): the flip book's doors on the row; deck.html,
+# 45-images.js, 25-selecting.js, 07-ribbon-layouts.js and 60-saving-
+# and-export.js change.
+# T439 (2026-09-14): the flip book's doors on the row; deck.html,
+# 45-images.js, 25-selecting.js, 07-ribbon-layouts.js and 60-saving-
+# and-export.js change.
+EXPECTED_MD5 = "7dd9284bb890041abd1df73ba42aad48"
+EXPECTED_BYTES = 4200183
 
 
 def _render_example() -> str:

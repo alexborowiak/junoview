@@ -1099,12 +1099,14 @@
     sel.addEventListener('change',commit);
     mode.addEventListener('change',commit);
   }
-  /* ---- T234: ONE DOOR, CALLED "+ ADD" ------------------------------
-     The three things you can do to a flip book's contents, on the one
-     button that used to open only the third of them. The pane keeps
-     its own two buttons: you are already looking at the list there,
-     and putting them behind a menu would be hiding what is in the
-     open. */
+  /* ---- T439: THE FLIP BOOK'S DOORS ARE ON THE ROW ---------------------
+     (2026-09-14, user: "for flip books, the options that are there with
+     the add need to be not hidden under a menu, but need to be visible
+     by default"). T234 put the three things you can do to a book's
+     contents behind one "+ Add" tile; they are four buttons now:
+     Figures (the tile, a notebook door), Pictures, Pages, and the page
+     showing as its own object or back in the book. The pane keeps its
+     own two buttons: you are already looking at the list there. */
   function flipSelIdx(){
     var s=pres.slides[cur],idx=null;
     selIdxs().forEach(function(i){
@@ -1112,66 +1114,31 @@
       if(idx===null&&x&&x.k==='flip') idx=i;});
     return idx;
   }
-  function flipAddMenu(btn,idx){
-    var old=$('#flip-add-menu'); if(old) old.remove();
-    var m=document.createElement('div');
-    m.className='sh-menu canvas-menu';m.id='flip-add-menu';
-    menuHead(m,'put figures in this book');
-    function row(txt,ic,tip,fn){
-      var b=document.createElement('button');
-      b.className='dbtn';b.type='button';
-      b.innerHTML=bic(ic)+' '+esc(txt);
-      b.title=tip;
-      b.addEventListener('click',function(e){
-        e.stopPropagation();overlayHide(m);m.remove();fn();});
-      m.appendChild(b);
-    }
-    row('Figures from a notebook\u2026','cellcard',
-      'Click as many notebook cards as you want, in order \u2014 each '
-      +'becomes a page of this book',function(){startPick(idx,true);});
-    row('Pictures from this computer\u2026','image',
-      'Add pictures as pages. You can pick several at once',
-      function(){
-        flipPaneIdx=idx;
-        var fi=$('#fp-img-file');
-        if(fi){fi.value='';fi.click();}
-      });
-    menuHead(m,'the pages it has');
-    row('Reorder and name them\u2026','list',
-      'Open this book\u2019s pages: drag them into order, give them '
-      +'names, and tie text or objects to one of them',
-      function(){showFlipPane(true,idx);});
-    /* T403: the page showing, as its own object -- the ask was "in
-       object there is like a 'unlink this frame'", and this door is
-       the Object tab's flip-book door */
-    var bk=(pres.slides[cur].annots||[])[idx];
-    var pgAt=bk?(bk.at||0):0,pgF=bk?flipFrames(bk)[pgAt]:null;
-    if(pgF){
-      menuHead(m,'page '+(pgAt+1)+', the one showing');
-      if(pgF.own) row('Put this page back in the book','link',
-        'The picture goes back into the book\u2019s box as an ordinary '
-        +'page',function(){flipRelink(bk,pgAt);});
-      else row('Make this page its own object','unlink',
-        'Takes it out of the book\u2019s box as an object you can move, '
-        +'resize, fade or crop on its own. It still shows with this '
-        +'page',function(){flipUnlink(bk,pgAt);});
-    }
-    deckEl.appendChild(m);
-    overlayShow(btn,m);floatMenu(btn,m);
-  }
   (function(){
-    var fg=$('#fmt-figures');
-    if(fg) fg.addEventListener('click',function(e){
-      e.stopPropagation();
-      /* the owner HIDES it on Escape or an outside click, it does
-         not remove it -- so a leftover must not read as open, or
-         the next press would spend itself closing nothing */
-      var open=$('#flip-add-menu');
-      if(open&&!open.hidden){overlayHide(open);open.remove();return;}
-      if(open) open.remove();
-      var idx=flipSelIdx();
-      if(idx===null) return;
-      flipAddMenu(fg,idx);
+    function door(id,fn){
+      var b=$(id);
+      if(b) b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var idx=flipSelIdx();
+        if(idx===null) return;
+        fn(idx);
+      });
+    }
+    door('#fmt-figures',function(idx){startPick(idx,true);});
+    door('#fmt-flip-imgs',function(idx){
+      flipPaneIdx=idx;
+      var fi=$('#fp-img-file');
+      if(fi){fi.value='';fi.click();}
+    });
+    door('#fmt-flip-pages',function(idx){showFlipPane(true,idx);});
+    /* T403: the page showing, as its own object -- the ask was "in
+       object there is like a 'unlink this frame'" */
+    door('#fmt-flip-own',function(idx){
+      var bk=(pres.slides[cur].annots||[])[idx];
+      var pgAt=bk?(bk.at||0):0,pgF=bk?flipFrames(bk)[pgAt]:null;
+      if(!pgF) return;
+      if(pgF.own) flipRelink(bk,pgAt); else flipUnlink(bk,pgAt);
+      showFmt();
     });
     var cl=$('#flippane-close');
     if(cl) cl.addEventListener('click',function(){showFlipPane(false);});
