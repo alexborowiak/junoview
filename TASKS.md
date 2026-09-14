@@ -8354,3 +8354,13 @@ gates are recorded in the completing commit.
   remembered bundle is let go before an autosave could shrink it; and a
   single-deck file's stem names the deck through the Open door too, as
   T398 did for the picked file. Driven live.
+- [x] **T434 — Closing with changes that are not saved yet asks
+  first.** (User, 2026-09-14: "you can close things if they are not
+  saved which is an issue. If there are unsaved changes it needs to
+  warn you before closing.") The browser copy is written as you type,
+  so inside this browser nothing is lost — but a deck whose home is a
+  file or the project file has changes that are not there until the
+  next Save or autosave lands, and a full browser keeps nothing at all.
+  Closing the tab or reloading raises the browser's leave-site prompt
+  in those cases; closing the deck's row in the rail asks, and OK saves
+  first. A deck merely opened this visit never asks. Driven live.

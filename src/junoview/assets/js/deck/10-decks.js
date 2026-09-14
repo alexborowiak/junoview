@@ -1144,11 +1144,14 @@
      that now runs while you type uses it, so a paragraph still costs one
      undo entry (taken on blur, as before) instead of one per phrase —
      which would evict real slide edits from the 50-deep stack. */
+  /* T434: whether anything was edited on this visit -- the close guard
+     asks only about work done here, never about a deck merely opened */
+  var editsThisVisit=false;
   function markDirty(quiet){
     /* T409: a committed edit to a clone reaches its clones FIRST, so
        the history entry and the draft below hold the synced deck */
     if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
-    source='draft';
+    source='draft';editsThisVisit=true;
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */
     status();

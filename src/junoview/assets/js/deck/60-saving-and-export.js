@@ -956,6 +956,53 @@
     }
     saveBtn.removeAttribute('title');
   }
+  /* ---- T434: CLOSING WITH CHANGES THAT ARE NOT SAVED YET ASKS --------
+     (2026-09-14, user: "you can close things if they are not saved
+     which is an issue. If there are unsaved changes it needs to warn
+     you before closing.") The browser copy is written as you type, so
+     inside this browser nothing is lost -- but a deck whose home is a
+     file or the project file has changes that are not THERE until the
+     next Save or autosave lands, and a full browser keeps nothing at
+     all. Closing the tab or reloading, and closing the deck's row in
+     the rail, ask in those cases and nowhere else. */
+  function unsavedWhere(){
+    if(!pres||!pres.slides||!editsThisVisit) return '';
+    if(saveTarget==='file') return source==='draft'?(fileName||'a file'):'';
+    if(saveTarget==='project'&&APP.mode==='app')
+      return source==='draft'?'junoview_project.json':'';
+    return draftsFull()?'nowhere':'';
+  }
+  function saveNow(){
+    if(saveTarget==='file') return saveToFile(false);
+    if(saveTarget==='project'&&APP.mode==='app') return saveToProject(false);
+    return Promise.resolve(false);
+  }
+  /* resolves true when the deck may close: nothing unsaved, or saved
+     now, or the loss accepted out loud */
+  function closeGuard(nm){
+    flushTextEdits();
+    var w=unsavedWhere();
+    if(!w) return Promise.resolve(true);
+    nm=nm||pres.name||'this presentation';
+    if(w==='nowhere')
+      return Promise.resolve(window.confirm('\u201c'+nm+'\u201d has '
+        +'changes that are kept NOWHERE \u2014 this browser is full.'
+        +'\n\nOK closes it and loses them. Cancel keeps it open so you '
+        +'can save it to a file.'));
+    if(!window.confirm('\u201c'+nm+'\u201d has changes not yet saved to '
+        +w+'.\n\nOK saves it there first, then closes. Cancel keeps it '
+        +'open.')) return Promise.resolve(false);
+    return saveNow().then(function(ok){
+      if(!ok) toast('Not closed \u2014 the save did not happen',6000);
+      return !!ok;
+    });
+  }
+  window.addEventListener('beforeunload',function(e){
+    try{flushTextEdits();}catch(err){}
+    if(!unsavedWhere()) return;
+    e.preventDefault();
+    e.returnValue='';   /* the browser's own "leave site?" prompt */
+  });
   if(saveBtn) saveBtn.addEventListener('click',function(){
     if(!requireName()) return;
     if(saveTarget==='project'&&APP.mode==='app'){saveToProject(false);return;}

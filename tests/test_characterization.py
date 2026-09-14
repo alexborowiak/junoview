@@ -1831,8 +1831,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T433 (2026-09-14): a .junoview file holds one presentation;
 # 60-saving-and-export.js changes (filePresentations, sameDeck,
 # bundleOpened, dropBundleHandle).
-EXPECTED_MD5 = "34d5038bb19c349b06d2ca060596a163"
-EXPECTED_BYTES = 4193506
+# T434 (2026-09-14): the close guard; 10-decks.js, 50-review-and-
+# overview.js and 60-saving-and-export.js change.
+# T434 (2026-09-14): the close guard; 10-decks.js, 50-review-and-
+# overview.js and 60-saving-and-export.js change.
+EXPECTED_MD5 = "0937603c936a8b303edcc88d31f2b04d"
+EXPECTED_BYTES = 4196206
 
 
 def _render_example() -> str:
