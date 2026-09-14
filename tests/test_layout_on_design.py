@@ -62,12 +62,14 @@ def test_standardise_says_what_it_does(out):
     it by (2026-09-12: "I liked the concept but the execution was always
     weird; now it's gone") -- and a tall tile in a group of its own, so a
     narrow window folding Presentation styles no longer takes it too."""
-    assert "<span>Fix mismatched text</span></button>" in out
-    assert "<span>Fix mismatched text</span>" in out
-    assert '<span class="rbn-grp rbn-check" data-tab="home"' in out
-    assert '<span class="rbn-lab">Consistency</span>' in out
-    assert "&&!g.classList.contains('rbn-check')" in out
-    assert "Check consistency</button>" not in out
+    # T443: the tile is gone; the check lives inside the Style system
+    # screen (the count table, and its Check consistency button) and its
+    # hidden door stays for the pane owner
+    assert "<span>Fix mismatched text</span></button>" not in out
+    assert '<span class="rbn-grp rbn-check" data-tab="home"' not in out
+    assert '<button class="dbtn rbn-sm" id="dsg-std" hidden' in out
+    assert "      +' Check consistency</button>'" in out
+    assert "  function dgCounts(rail,ov){" in out
     assert "<span>Standardise</span>" not in out
 
 

@@ -113,12 +113,12 @@ def test_the_palette_door_says_what_a_named_colour_is():
     i = html.index('id="dsg-tokens"')
     btn = html[i:html.index("</button>", i)]
     # This is the shared palette, not a whole presentation theme.
-    assert "Shared colours" in btn and "&#9662;" not in btn
+    assert "Deck colours" in btn and "&#9662;" not in btn   # T444
     # T315: ten now -- page, box, heading and edge joined the six so a
     # colour theme can say where each comes from; the count left the
     # sentence rather than being kept true by hand
-    assert "The colours this deck shares" in btn
-    assert "every box wearing it changes too" in btn
+    assert "The five colours every slide is built from" in btn   # T444
+    assert "Change one here and every slide follows" in btn
     js = assets.deck_js()
     # on the overlay stack, so Escape and an outside click close it
     assert "overlayShow(anchor,m);" in js
@@ -133,12 +133,13 @@ def test_the_palette_door_says_what_a_named_colour_is():
     # is wearing one yet (2026-09-04, user: "I have never once
     # understood the actual purpose of this and there is a lot of text,
     # but none of it means anything to me").
-    # T367: see test_morning_review -- the note names the panel now
-    assert "s colours. Change one here and everything using it '" in js
-    # the source carries the em dash as a \u escape, so match it literally
-    empty = ("s colours. Nothing uses them yet " + chr(92)
-             + "u2014 pick one from '")
-    assert empty in js
+    # T444: the note names the five colours the rows are; the extra
+    # colours get their own note, which depends on whether any is worn
+    assert ("    note.textContent='The five colours every slide is built from. "
+            "Change '") in js
+    assert "      menuHead(m,'extra colours, for things you choose');" in js
+    assert "        :'Nothing wears one yet. Put one on any box from the Deck row '" \
+        in js
     # ...and each row says what that colour is on
     assert "  function tokUses(k){" in js
     assert "      use.textContent=tokUsesLabel(u);" in js

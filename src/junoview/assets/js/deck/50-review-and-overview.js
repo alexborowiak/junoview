@@ -2910,9 +2910,81 @@
       key.appendChild(it);
     });
   }
+  /* ---- T443: WHO WEARS WHAT (2026-09-14, user: "the fix mismatched
+     text makes no sense ... It should tell you something like: 4
+     heading with this style, 3 with this ... the style system does a
+     better job of this ... this can just be something that is
+     incorporated into the style systems better"). One row per style
+     the deck uses: how many boxes wear it, how many of those were
+     changed by hand since, and the one click that puts the style back
+     on them. Then the boxes wearing nothing, banded by size, with the
+     style the check would give them. The same survey the old tile ran
+     (standardise), read as a table instead of a list of complaints. */
+  function dgCounts(rail,ov){
+    if(typeof standardise!=='function') return;
+    var r=standardise();
+    var host=document.createElement('div');host.className='dg-counts';
+    var h=document.createElement('div');
+    h.className='dg-family-name';h.textContent='who wears what';
+    host.appendChild(h);
+    var any=false;
+    function cntRow(n,label,cls){
+      var row=document.createElement('div');row.className='dg-cnt'+(cls||'');
+      var nn=document.createElement('span');
+      nn.className='dg-cnt-n';nn.textContent=String(n);
+      var l=document.createElement('span');
+      l.className='dg-cnt-l';l.textContent=label;l.title=label;
+      row.appendChild(nn);row.appendChild(l);
+      return row;
+    }
+    styleOrder().forEach(function(id){
+      var list=(r.named&&r.named[id])||[]; if(!list.length) return;
+      any=true;
+      var d=styleDef(id)||{label:id};
+      var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
+      var row=cntRow(list.length,(d.label||id)
+        +(odd.length?(' \u2014 '+odd.length+' changed by hand'):''),
+        odd.length?' dg-cnt-odd':'');
+      if(odd.length){
+        var b=document.createElement('button');
+        b.type='button';b.className='dbtn dg-cnt-fix';
+        b.textContent='Match '+odd.length;
+        b.title='Put the '+(d.label||id)+' style back on the '+odd.length
+          +' that were changed by hand';
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          stdFix(odd,function(a){applyStyleTo(a,id);},
+            odd.length+' box'+(odd.length===1?'':'es')+' put back');
+          dgRail(ov);dgBody(ov);
+        });
+        row.appendChild(b);
+      }
+      row.addEventListener('click',function(){
+        dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+      host.appendChild(row);
+    });
+    (r.bands||[]).forEach(function(bd){
+      if(bd.boxes.length<2) return;
+      any=true;
+      var sug=(styleDef(bd.suggest)||{}).label||bd.suggest;
+      var row=cntRow(bd.boxes.length,'at about '+Math.round(bd.size*5.4)
+        +' pt, no style yet',' dg-cnt-loose');
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn dg-cnt-fix';
+      b.textContent='Make them '+sug;
+      b.title='Give all '+bd.boxes.length+' the '+sug+' style; the odd '
+        +'ones move to match the rest, the rest stay put';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();stdAdopt(bd);dgRail(ov);dgBody(ov);});
+      row.appendChild(b);
+      host.appendChild(row);
+    });
+    if(any) rail.appendChild(host);
+  }
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
+    dgCounts(rail,ov);   /* T443 */
     function styleRow(id,isVar){
       var d=styleDef(id); if(!d) return;
       var b=document.createElement('button');
@@ -3663,7 +3735,7 @@
       +'<button class="dbtn" id="dg-sets">'+bic('styles')
       +' Style sets\u2026</button>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
-      +' Fix mismatched text</button>'
+      +' Check consistency</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dg-main">'
       +'<div class="dg-rail" id="dg-list"></div>'

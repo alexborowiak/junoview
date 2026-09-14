@@ -54,11 +54,12 @@ def test_the_words_on_the_tabs_say_what_happens(out):
     assert "Arrangements&#8230;</button>" not in out
     # The consistency check says what it looks for, and that it does not
     # alter a slide until a specific suggested fix is chosen.
+    # T443: the ribbon tile is gone; the check is the Style system's
+    # count table and its Check consistency button
     assert ('title="Find text or figures that look like they should match\n'
-            ' but have different formatting, and make them match in one '
-            'click. It only\n suggests a fix; you choose it"') in out
+            ' but have different formatting"') in out
     assert "Nothing changes until you choose a" in out
-    assert "<span>Fix mismatched text</span>" in out
+    assert "<span>Fix mismatched text</span></button>" not in out
     # masters, in one sentence, at its one door: Page furniture (Home's
     # left in T202, the Layouts menu's row in T204)
     assert out.count("A background and a header or footer that many slides "

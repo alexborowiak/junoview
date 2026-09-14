@@ -2573,8 +2573,29 @@
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'shared colours');
+    menuHead(m,'deck colours');
     var t=tokens();
+    /* T444: A PICTURE OF WHAT THE ROWS ARE (2026-09-14, user: "this
+       still makes no sense to me whatever this is doing ... This needs
+       an overhaul"). The five rows below are the page, its words, its
+       headings, its boxes and its lines; the preview is a slide made
+       of exactly those five, repainted as each one changes. */
+    var pv=document.createElement('div');pv.className='tok-preview';
+    pv.innerHTML='<div class="tok-pv-page"><div class="tok-pv-h">Heading'
+      +'</div><div class="tok-pv-t">Body text on the page</div>'
+      +'<div class="tok-pv-box">A box, with its edge</div></div>';
+    function paintPv(){
+      var c=tokens().c;
+      var pg=pv.querySelector('.tok-pv-page');
+      pg.style.background=tokVal(c.page||'#0b141d');
+      pg.style.color=tokVal(c.ink||'#dce6ee');
+      pv.querySelector('.tok-pv-h').style.color=tokVal(c.heading||c.ink||'');
+      var bx=pv.querySelector('.tok-pv-box');
+      bx.style.background=tokVal(c.surface||'');
+      bx.style.borderColor=tokVal(c.line||'');
+    }
+    paintPv();
+    m.appendChild(pv);
     /* T265: the note is ONE line now, and it only appears when it is the
        thing you need. T208 asked for an explanation here ("What does
        'colours and spacing' mean") and that ask stands -- but on a deck
@@ -2590,11 +2611,9 @@
        make sense up the top. I have never understood this." You cannot
        explain the cascade to somebody who does not yet know what the
        rows are. */
-    note.textContent=anyUse
-      ?'The deck\u2019s colours. Change one here and everything using it '
-        +'changes.'
-      :'The deck\u2019s colours. Nothing uses them yet \u2014 pick one from '
-        +'the Deck row at the top of any colour menu.';
+    note.textContent='The five colours every slide is built from. Change '
+      +'one and every slide follows; Style sets swaps the whole palette '
+      +'at once.';
     m.appendChild(note);
     function tokRow(k){
       var row=document.createElement('div');row.className='ff-row';
@@ -2618,6 +2637,7 @@
       inp.addEventListener('change',function(){
         setToken('c',k,inp.value);
         sw.style.background=inp.value;
+        paintPv();   /* T444 */
       });
       row.appendChild(inp);
       return row;
@@ -2636,7 +2656,15 @@
       (TOKEN_SPARE[k]?spare:jobs).push(k);});
     jobs.forEach(function(k){m.appendChild(tokRow(k));});
     if(spare.length){
-      menuHead(m,'colours you can put on things');
+      menuHead(m,'extra colours, for things you choose');
+      var note2=document.createElement('div');
+      note2.className='ff-none';
+      note2.textContent=anyUse
+        ?'Put one on any box from the Deck row at the top of its colour '
+          +'menu; change it here and every box wearing it follows.'
+        :'Nothing wears one yet. Put one on any box from the Deck row '
+          +'at the top of its colour menu.';
+      m.appendChild(note2);
       var used=[],idle=[];
       spare.forEach(function(k){
         var u=tokUses(k);

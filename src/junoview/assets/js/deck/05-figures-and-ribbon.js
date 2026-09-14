@@ -1902,6 +1902,9 @@
         /* Keep up to date never folds (T202: the point of it is to be
            seen) */
         &&!g.classList.contains('rbn-sources')
+        /* T444: the Style system is never folded (2026-09-14, user: "I
+           NEVER want this to be hidden. NEVER") */
+        &&!g.classList.contains('rbn-stylesys')
         /* T383: one tile folds into one tile -- nothing to gain, and
            the check would wear a chevron for no reason */
         &&!g.classList.contains('rbn-check')

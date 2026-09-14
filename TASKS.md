@@ -8440,3 +8440,27 @@ gates are recorded in the completing commit.
   bare caret on the LaTeX instead. A double-click on a maths box opens
   the equation editor on it, and the right-click menu offers the same
   under "equation". Driven live.
+- [x] **T443 — The consistency check is a count table in the Style
+  system.** (User, 2026-09-14: "the fix mismatched text makes no sense
+  ... It should tell you something like: 4 headings with this style, 3
+  with this ... this can just be something that is incorporated into
+  the style systems better.") The Home tile is gone. The Style system's
+  rail opens with "who wears what": one row per style the deck uses —
+  how many boxes wear it, how many were changed by hand since, and one
+  click that puts the style back — then the boxes wearing nothing,
+  banded by size, with the style the check would give them. The full
+  check is the screen's Check consistency button. Driven live. (One
+  commit with T444: the Home group is one block of markup.)
+- [x] **T444 — The Home tab reorganised around the Style system.**
+  (User, 2026-09-14: "Move citations to the text tab not home. Move
+  text styles and style sets to text away from home. Shared colours
+  also can go somewhere else ... This needs an overhaul. Moving all
+  these buttons means style systems can always be present, not
+  collapsed ... I NEVER want this to be hidden. NEVER. Move slide
+  master out of page furniture.") Text styles, Style sets and
+  Citations are a Presentation type group on Text; Deck colours (was
+  Shared colours) and Deck layout are a Whole deck group on Design, and
+  the colours panel opens with a preview slide painted from the five
+  colours the rows are; the Style system is a tall tile in a group of
+  its own on Home, excluded from the fold ladder; Slide master sits
+  with the layouts. Driven live.

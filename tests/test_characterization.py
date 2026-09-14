@@ -1862,8 +1862,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # layouts.js, 60-saving-and-export.js and deck.html change.
 # T442 (2026-09-14): a maths box reopens in the equation editor;
 # 20-notes-and-tables.js and 25-selecting.js change.
-EXPECTED_MD5 = "886792d12382e7d3fab28d482ea1cec1"
-EXPECTED_BYTES = 4219391
+# T443/T444 (2026-09-14): the Home tab reorganised around the Style
+# system and the check folded into it; deck.html, deck.css,
+# 05-figures-and-ribbon.js, 15-annotations.js and 50-review-and-
+# overview.js change.
+EXPECTED_MD5 = "aea90fe4af593b82db3ab31cd5e27447"
+EXPECTED_BYTES = 4224000
 
 
 def _render_example() -> str:
