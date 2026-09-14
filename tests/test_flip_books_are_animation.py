@@ -71,7 +71,8 @@ def test_a_flip_book_has_no_colour(out):
 
 def test_the_page_turn_is_an_animation(out):
     html = assets.deck_html()
-    assert '<span class="rbn-grp rbn-flipfx" data-tab="animation"' in html
+    assert '<span class="rbn-grp rbn-flipfx rbn-compact" data-tab="animation"' \
+        in html
     assert '<span class="rbn-lab">Flip book</span>' in html
     for k in ("none", "fade", "rise", "zoom"):
         assert f'id="anim-flip-{k}"' in html, k

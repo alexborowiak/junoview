@@ -996,7 +996,7 @@ items snap to both. Guides, not ink: never printed or exported"
                effect option when there is nothing to appear" -- and the
                whole-slide builds sit beside them as words. Built by
                galSync, which the selection already calls. -->
-          <span class="rbn-grp rbn-anim" data-tab="animation" data-fold-ic="appear">
+          <span class="rbn-grp rbn-anim rbn-compact" data-tab="animation" data-fold-ic="appear">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
@@ -1075,7 +1075,7 @@ items snap to both. Guides, not ink: never printed or exported"
                is the same three answers, where you would go for them.
                Apply to all is PowerPoint's own verb and was missing
                everywhere. -->
-          <span class="rbn-grp rbn-trans" data-tab="animation"
+          <span class="rbn-grp rbn-trans rbn-compact" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
               <!-- T372: THE SAME TILE AS THE EFFECT STRIP. Picking how
@@ -1137,7 +1137,7 @@ items snap to both. Guides, not ink: never printed or exported"
                wobbling and moving"). An entrance plays once; these loop
                while the object is on the slide, in the show only. Tiles,
                like Effect, because it is the same kind of choice. -->
-          <span class="rbn-grp rbn-motion" data-tab="animation"
+          <span class="rbn-grp rbn-motion rbn-compact" data-tab="animation"
             data-fold-ic="wobble">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-move">
@@ -1166,7 +1166,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Motion</span>
           </span>
-          <span class="rbn-grp rbn-flipfx" data-tab="animation"
+          <span class="rbn-grp rbn-flipfx rbn-compact" data-tab="animation"
             data-fold-ic="flipbook">
             <span class="rbn-row">
               <span class="rbn-cell rbn-seg" id="anim-flip-run" hidden
@@ -1205,7 +1205,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Flip book</span>
           </span>
-          <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
+          <span class="rbn-grp rbn-build rbn-nofold" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <!-- T391: the story -- the slide at every stop, editable -->
               <button class="dbtn rbn-sm" id="anim-story"
@@ -1224,15 +1224,21 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Take the entrance off every object on this slide"
                 ><i data-ic="exit"></i> Remove all</button>
             </span>
-            <span class="rbn-lab">Everything on the slide</span>
+            <span class="rbn-lab">Whole slide</span>
           </span>
+          <!-- T445: "BUILD ORDER", AND NEVER SQUASHED (2026-09-14, user:
+               "buttons like those in 'Order' (horrible name for this
+               collection) are not getting squashed out ... people will
+               NOT be able to find them under there"). rbn-nofold keeps
+               the group out of the fold ladder; the compact choosers
+               (T441) are what make the room. -->
           <!-- THE ORDER. Quick animate is the pointing mode (T168): it
                was "Click things in order…" and then "Set order", and
                the user named it themselves -- "the quick animations
                thing with clicking" (2026-09-02). Animation order is
                the pane that lists the sequence; Layers is the same
                list read as a timeline (T174). -->
-          <span class="rbn-grp rbn-order" data-tab="animation" data-fold-ic="play">
+          <span class="rbn-grp rbn-order rbn-nofold" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
                 title="Click things one after another and each becomes
@@ -1253,7 +1259,7 @@ items snap to both. Guides, not ink: never printed or exported"
  arrives on and, if it leaves, the click it goes. Hide, lock and reorder
  from the same list"><i data-ic="objects"></i> Layers</button>
             </span>
-            <span class="rbn-lab">Order</span>
+            <span class="rbn-lab">Build order</span>
           </span>
           <!-- TIMING, the way PowerPoint's Start box works (T185;
                2026-09-02, user: "there should be a default thing there
@@ -1271,7 +1277,7 @@ items snap to both. Guides, not ink: never printed or exported"
                there is a selected build to time, the way the tiles are,
                and the group stands down while Quick animate is armed so
                the mode's own controls have the row. -->
-          <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
+          <span class="rbn-grp rbn-timing rbn-compact" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-start">
@@ -1528,7 +1534,7 @@ items snap to both. Guides, not ink: never printed or exported"
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="images" data-fold-ic="shapes">
+          <span class="rbn-grp rbn-shapes rbn-compact" data-tab="images" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"

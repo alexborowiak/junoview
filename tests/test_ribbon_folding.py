@@ -38,7 +38,9 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     # the door is words plus an icon, named for the group -- and since T218
     # it is the one tall tile, the group's own icon over its name
     assert "btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')" in out
-    assert "+'<span>'+esc(name)+' \\u25be</span>';" in out
+    # T441: the door carries its current choice under the name
+    assert ("+'<span>'+esc(name)+' \\u25be</span><span class=\"rbn-foldval\">"
+            "</span>';") in out
     # rightmost ON SCREEN, since flex order decides the visual order
     assert ("return x.getBoundingClientRect().left"
             "-y.getBoundingClientRect().left;") in out

@@ -6082,5 +6082,14 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 .rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);width:82px;}
 .rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
   line-height:1.15;}
+/* T441: the door's readout -- the current choice, under the name. With
+   a value the icon steps aside so the two lines fit the tile. */
+.rbn-foldbtn>.rbn-foldval{display:block;font:600 10px var(--mono);
+  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.rbn-foldbtn>.rbn-foldval[hidden]{display:none;}
+.rbn-foldbtn.has-val>.bic{display:none;}
+.rbn-foldbtn.has-val>span:first-of-type{font-size:11px;color:var(--ink-2);}
+body.light .rbn-foldbtn>.rbn-foldval{color:var(--cyan-deep);}
 #anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
 #anim-delaycell .cell-lab{padding-left:2px;}

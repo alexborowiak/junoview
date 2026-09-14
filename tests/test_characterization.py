@@ -1866,8 +1866,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # system and the check folded into it; deck.html, deck.css,
 # 05-figures-and-ribbon.js, 15-annotations.js and 50-review-and-
 # overview.js change.
-EXPECTED_MD5 = "aea90fe4af593b82db3ab31cd5e27447"
-EXPECTED_BYTES = 4224000
+# T441 (2026-09-14): compact chooser doors with a readout; deck.html,
+# deck.css, 05-figures-and-ribbon.js and 99-boot.js change.
+EXPECTED_MD5 = "1584d93dcb3721a6f2149d5d907e8e70"
+EXPECTED_BYTES = 4227869
 
 
 def _render_example() -> str:

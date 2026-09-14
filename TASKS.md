@@ -8464,3 +8464,15 @@ gates are recorded in the completing commit.
   colours the rows are; the Style system is a tall tile in a group of
   its own on Home, excluded from the fold ladder; Slide master sits
   with the layouts. Driven live.
+- [x] **T441 — The choosers are compact doors that show the current
+  choice.** (User, 2026-09-14, of the Animation tab: "there are lots of
+  menus that drop down when you click. These should all be buttons
+  with what is currently selected beside it ... This same idea should
+  be applied to lots of other slides as well, like the shapes ...
+  Except for the text options, where I want almost all of them
+  visible.") A group marked `rbn-compact` is folded whatever the width
+  — Effect, Timing, Motion, Transition and Flip book on Animation,
+  Shapes on Images — and its door carries the group's name over the
+  pressed choice inside, kept true as the selection changes. Build
+  order and Whole slide (were Order and Everything on the slide) never
+  fold. The text groups are untouched. Driven live.

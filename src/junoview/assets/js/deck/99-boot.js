@@ -34,6 +34,7 @@
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  rbnReadoutBoot();           /* folded doors show their choice (T441) */
   /* the two auto-hides: their button and pointer listeners only. The
      remembered STATE is applied on first entry to edit mode, beside the
      ribbon fold's restore -- nothing here has geometry to measure yet. */
