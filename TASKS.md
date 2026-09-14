@@ -5881,7 +5881,7 @@ option. Then where has the ability to refresh all images gone?"
   Driven before and after on the same fixture: before, the pasted box
   was `style:null, b:0`; after, `style:'h1', size:5, b:1`.
 
-- [ ] **T275 - "Match this slide" can silently delete a heading's type.**
+- [x] **T275 - "Match this slide" can silently delete a heading's type.**
   Found while driving T274, not reported. `MATCH_PROPS` includes
   `style`, and the match loops follow "undefined on the model means
   DELETE on the target" (35-arranging.js:1586-1592, and again at 748-752
@@ -5891,10 +5891,16 @@ option. Then where has the ability to refresh all images gone?"
   state the outline, "apply to all headings" and the standardiser cannot
   see. Three call sites: Match this slide, Apply to all of this type,
   and Arrange.
-  *Not fixed, because it is a product decision, not a slip.* Either
-  matching means "look like this one" and should never clear a NAME the
-  target chose, or it means "be this one" and should. The first reads
-  right, and is a one-line guard; the user should say which.
+  *Done 2026-09-14.* Matching means "look like this one": a model with
+  no name leaves the target's alone, and a model WITH one still passes
+  it on. The rule now lives in one helper, `matchProp`, that all three
+  loops call, so the next property with a "never delete" reading has
+  one place to go. Driven live: Copy this look from an untyped bold box
+  onto a Heading 1 on the next slide moved it to the model's spot and
+  left it `h1`; before, it came back `(none)`. Match this slide itself
+  turned out safe by construction -- a typed box only ever pairs with a
+  model of the same type -- so the exposed doors were Apply to all of
+  this type and the two armed object matches.
 
 - [x] **T276 - A slide template says what its boxes ARE.**
   The user (2026-09-05): "Inserting new slides some of the layouts don't

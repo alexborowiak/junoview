@@ -189,9 +189,12 @@ def test_the_object_copy_follows_the_same_rule_as_every_other(out):
     """undefined on the model means DELETE on the target, and object-valued
     properties are deep-copied -- the rule MATCH_PROPS has always had."""
     body = out.split("function matchCopy(from,to,want){")[1].split("\n  }")[0]
-    assert "if(from[p]===undefined) delete to[p];" in body
-    assert "deep(from[p])" in body
+    assert "if(want[p]) matchProp(from,to,p);" in body
     assert "if(!from||!to||from===to) return false;" in body
+    # T275: the rule itself lives in ONE helper all three loops call
+    rule = out.split("function matchProp(from,to,p){")[1].split("\n  }")[0]
+    assert "if(p!=='style') delete to[p];" in rule
+    assert "deep(from[p])" in rule
 
 
 def test_object_matching_costs_the_ribbon_nothing(out):

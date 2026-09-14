@@ -1786,8 +1786,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pptx.js).
 # 2026-09-14, T420: chrome only. Clone wording, a dead rule (deck
 # JS/CSS).
-EXPECTED_MD5 = "4df1a3460fcbaf8648a8c482211df480"
-EXPECTED_BYTES = 4161219
+# T275: one matchProp helper for the three copy loops; a model with no
+# named style no longer strips the target's
+EXPECTED_MD5 = "ab34ae75f8f619fdaa39f8bc2e8f8c66"
+EXPECTED_BYTES = 4161544
 
 
 def _render_example() -> str:
