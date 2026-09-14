@@ -7,17 +7,17 @@
    "Install app" offer rides on this too; see web-loader.html for the
    registration and manifest.webmanifest for the identity.
 
-   a65322c16971 is replaced by build_web() with a hash of junoview.zip:
+   63b724d45994 is replaced by build_web() with a hash of junoview.zip:
    a new build retires the old cache on activate, and an unchanged package
    produces an unchanged worker, so the committed docs/ build stays
    diff-free (same rule as the zip itself). */
-var VERSION = 'a65322c16971';
+var VERSION = '63b724d45994';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
    because an "offline app" missing its renderer is a lie */
-var CORE = ['./', 'index.html', 'junoview.zip',
-  'manifest.webmanifest', 'icon.svg'];
+var CORE = ['./', 'index.html', 'junoview.zip', 'LICENSE', 'NOTICE',
+  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg'];
 
 /* the runtime, best-effort: a blocked CDN or a renamed font file must not
    veto the install — the page still loads those live while online.

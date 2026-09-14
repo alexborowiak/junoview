@@ -960,7 +960,7 @@
      ]},
     {id:'web-canvas-rail',
      name:'Canvas rail',
-     blurb:'Try this if Miro and FigJam are home: a standing rail of making tools, a Selection tab that behaves like the bubble popping over whatever you clicked, and board-wide settings kept off both.',
+     blurb:'Try this if a whiteboard app is home: a standing rail of making tools, a Selection tab that behaves like the bubble popping over whatever you clicked, and board-wide settings kept off both.',
      family:'web',
      selTab:'mi-sel',
      tabs:[{id:'mi-rail',label:'Tools'},{id:'mi-sel',label:'Selection'},{id:'mi-board',label:'Board'}],

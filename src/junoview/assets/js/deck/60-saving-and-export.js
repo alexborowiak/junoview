@@ -2214,26 +2214,26 @@
       note.frame=null;
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
-      +(note.skipped===1?'':'s')+' that PowerPoint has no shape for');
+      +(note.skipped===1?'':'s')+' with no .pptx shape to become');
     if(note.web) lost.push(note.web+' live web page'
-      +(note.web===1?'':'s')+' \u2014 PowerPoint cannot embed a page; '
+      +(note.web===1?'':'s')+' \u2014 a .pptx cannot carry a live page; '
       +'add a screenshot if it matters');
     if(note.maths) lost.push(note.maths+' equation'
-      +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
-      +'arrive as plain characters');
+      +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
+      +'path, so they arrive as plain characters');
     if(note.exits) lost.push(note.exits+' object'
       +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
       +'writer emits entrances only, so they arrive and then stay, '
       +'stacked over whatever was meant to replace them');
     if(note.tied) lost.push(note.tied+' item'+(note.tied===1?'':'s')
       +' tied to a chart series with “only” or “until” '
-      +'— PowerPoint is given no way to take them away again, so '
+      +'— the .pptx is given no way to take them away again, so '
       +'they stay on the slide once shown');
     if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
       +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
       +'is not');
     if(note.bands) lost.push(note.bands+' confidence band'
-      +(note.bands===1?'':'s')+' on a chart — PowerPoint has no band, '
+      +(note.bands===1?'':'s')+' on a chart — a .pptx chart has no band, '
       +'so the line arrives without it');
     /* builds TRAVEL now (T110) \u2014 what is still approximate is
        the entrance on the two effects PowerPoint spells differently */
@@ -2257,12 +2257,12 @@
                 &&/(^|\n)[ \t]*(\n|$)/.test(String(a.text||''))) mdpara++;
       });});
     if(sent) lost.push(sent+' sentence-by-sentence text build'
-      +(sent===1?'':'s')+' — PowerPoint builds text by PARAGRAPH and '
+      +(sent===1?'':'s')+' — a .pptx builds text by PARAGRAPH and '
       +'has no smaller unit, so each of these arrives as a whole box on '
       +'one click');
     if(mdpara) lost.push(mdpara+' Markdown box'+(mdpara===1?'':'es')
       +' built bullet by bullet — a blank line in the source is a '
-      +'paragraph to PowerPoint and not a bullet here, so it takes a few '
+      +'paragraph in the .pptx and not a bullet here, so it takes a few '
       +'more clicks there than it does on this slide');
     return lost;
   }
@@ -2345,17 +2345,17 @@
       +'no picture and no text — use Export PDF for those)';
     if(note.exits) msg+='. '+note.exits+' object'
       +(note.exits===1?'':'s')+' meant to leave on a later click will '
-      +'stay \u2014 PowerPoint gets entrances only from here';
+      +'stay \u2014 the .pptx gets entrances only from here';
     if(note.tied) msg+='. '+note.tied+' series-tied item'
       +(note.tied===1?'':'s')+' will stay once shown — '
       +'“only” and “until” need an exit this '
       +'writer does not have';
     if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
-      +(note.cropped===1?'':'s')+' not carried (PowerPoint has no '
-      +'freehand mask \u2014 the trim is, the outline is not)';
+      +(note.cropped===1?'':'s')+' not carried (the .pptx keeps the '
+      +'trim, not the outline)';
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
-      +'PowerPoint has no LaTeX, so they were flattened to characters';
+      +'this writer has no LaTeX-to-.pptx path, so they were flattened';
     toast(msg);
     /* one honest tally for the caller: the builder counts items IT could not
        write, this counts cells that never became items — reporting only one

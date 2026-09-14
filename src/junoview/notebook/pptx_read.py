@@ -187,14 +187,14 @@ _LOST_TEXT = {
     "mediafmt": "{n} clip{s} in a format no browser plays ({kinds}) — the "
                 "poster frame arrives as a picture; the clip does not",
     "chartkind": "{n} chart{s} of a kind this cannot read ({kinds}) — "
-                 "left out; save {it} as a picture in PowerPoint and "
+                 "left out; save {it} as a picture first and "
                  "place that",
     "chartcache": "{n} chart{s} with neither cached values nor a "
                   "workbook beside them — left out",
-    "ole": "{n} embedded object{s} (Excel sheets, equations or other "
+    "ole": "{n} embedded object{s} (spreadsheets, equations or other "
            "documents) — left out",
-    "smartart": "SmartArt on {n} slide{s} — its words arrive as a "
-                "bulleted list; the diagram does not",
+    "smartart": "{n} slide{s} with a diagram — its words arrive as a "
+                "bulleted list; the drawing does not",
     "anim": "{n} entrance{s} of kinds this deck does not have — "
             "{they} arrive{s3} as fades on the same click",
     "emph": "{n} emphasis or motion-path effect{s} — not carried",
@@ -206,7 +206,7 @@ _LOST_TEXT = {
               "bullet arrives at the first level",
     "runlink": "{n} link{s} on words inside a text box — each box "
                "takes its first link as a click on the whole box",
-    "hiddenobj": "{n} object{s} PowerPoint had hidden — left out",
+    "hiddenobj": "{n} hidden object{s} — left out",
     "merged": "{n} merged table cell{s} — split back into single "
               "cells",
     "asymerr": "{n} chart series with different error above and below "
@@ -268,7 +268,7 @@ class _Pkg:
             self.z = zipfile.ZipFile(io.BytesIO(data))
             infos = self.z.infolist()
         except zipfile.BadZipFile as e:
-            raise ValueError("not a PowerPoint file (not a zip archive "
+            raise ValueError("not a .pptx file (not a zip archive "
                              "inside)") from e
         if len(infos) > PART_CAP:
             raise ValueError("refused: this archive holds more parts than "
@@ -278,7 +278,7 @@ class _Pkg:
                              "what a deck could hold")
         self.names = {i.filename for i in infos}
         if "ppt/presentation.xml" not in self.names:
-            raise ValueError("not a PowerPoint file (no "
+            raise ValueError("not a .pptx file (no "
                              "ppt/presentation.xml inside)")
         self._xml: dict[str, ET.Element | None] = {}
         self._rels: dict[str, dict[str, tuple[str, str, bool]]] = {}
@@ -1815,7 +1815,7 @@ def read_pptx(data: bytes, name: str = "") -> dict:
     lost = _Tally()
     pres = pkg.xml("ppt/presentation.xml")
     if pres is None:
-        raise ValueError("not a PowerPoint file (presentation.xml is "
+        raise ValueError("not a .pptx file (presentation.xml is "
                          "empty)")
     sz = pres.find("p:sldSz", NS)
     w = _int(sz.get("cx"), 12192000) if sz is not None else 12192000
@@ -1851,7 +1851,7 @@ def read_pptx(data: bytes, name: str = "") -> dict:
             slide_parts.append(tgt)
             slide_ids.append(sid.get("id") or "")
     if not slide_parts:
-        raise ValueError("this PowerPoint file has no slides")
+        raise ValueError("this .pptx has no slides")
 
     # sections, from the 2010 extension every recent PowerPoint writes
     section_of: dict[str, str] = {}
@@ -1904,8 +1904,7 @@ def read_pptx_b64(name: str, b64: str) -> dict:
     the two doors cannot disagree about what a .pptx is."""
     nm = str(name or "").strip()
     if not is_pptx_name(nm):
-        raise ValueError(f"{nm or 'that file'} is not a PowerPoint file "
-                         "(.pptx)")
+        raise ValueError(f"{nm or 'that file'} is not a .pptx file")
     raw = str(b64 or "")
     if len(raw) > PPTX_CAP * 4 // 3 + 4:
         raise ValueError(f"{nm} is over the {PPTX_CAP // (1024 * 1024)} MB "

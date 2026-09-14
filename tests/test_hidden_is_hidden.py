@@ -42,5 +42,5 @@ def test_the_eye_says_what_it_does(out):
 
 
 def test_the_schema_says_so():
-    assert "not drawn while editing, in playback, in print or in PowerPoint" in (
+    assert "not drawn while editing, in playback, in print or in an exported .pptx" in (
         ANNOT_COMMON["hide"][1])

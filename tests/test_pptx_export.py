@@ -226,7 +226,7 @@ def test_a_deck_equation_is_flattened_rather_than_shipped_as_latex(out):
     assert out.count("note.maths++") == 3      # cell, text box, title
     # ...and the toast now counts them and says why
     assert "came across as plain text \\u2014 " in out
-    assert "PowerPoint has no LaTeX, so they were flattened" in out
+    assert "this writer has no LaTeX-to-.pptx path, so they were flattened" in out
 
 
 def test_prose_dollars_are_not_mistaken_for_maths_by_the_export(out):

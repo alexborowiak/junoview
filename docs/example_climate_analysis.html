@@ -10384,9 +10384,9 @@ window.MathJax = {
       <!-- T320: the other deck on disk. It imports as a new
            presentation; the .pptx is not changed. -->
       <button class="pr-mi" data-for="pptxfile"
-        title="Bring a PowerPoint deck in as a new presentation &mdash;
+        title="Bring a .pptx presentation in as a new presentation &mdash;
  text, shapes, pictures, tables, charts, notes and builds come across">
-        Import a PowerPoint file&#8230;</button>
+        Import a .pptx file&#8230;</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -12401,7 +12401,7 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
       <button class="dbtn" id="presentation-hub-file" type="button"
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Open a file</button>
       <button class="dbtn" id="presentation-hub-pptx" type="button"
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Import PowerPoint</button>
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Import .pptx</button>
     </div>
     <form class="presentation-hub-folderform" id="presentation-hub-folderform"
       hidden>
@@ -12458,7 +12458,7 @@ info</b>) re-reads it after you re-run it in Jupyter,
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></b> closes.</li>
 <li><b>Not just notebooks.</b> Markdown (<code>.md</code>,
 <code>.qmd</code>), LaTeX (<code>.tex</code>), tables
-(<code>.csv</code>/<code>.tsv</code>) and Excel workbooks
+(<code>.csv</code>/<code>.tsv</code>) and spreadsheet workbooks
 (<code>.xlsx</code> &mdash; values only, one table per sheet) open
 through every one of those doors too. They render the same way, keep the same version history
 (snapshots and git commits alike), place figures onto slides that
@@ -12798,11 +12798,10 @@ it &mdash; not a canvas you author on.</li>
 grouping, so there are more than a hundred. The always-visible
 <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> <b>Ribbon layouts</b> button beside the tabs
 (or right-clicking the ribbon) opens a gallery of
-whole arrangements, headed by family. Some recreate an application you
-already use &mdash; <i>PowerPoint 2003</i> and the ribbons that followed
-it, <i>Photoshop options bar</i>, <i>Keynote inspector</i>, <i>Figma
-design panel</i>, <i>Inkscape</i>, <i>Blender workspaces</i>. Others are
-built on a single idea: <i>Deck, slide, object</i> if you want to know
+whole arrangements, headed by family. Some favour familiar ways of
+working &mdash; a classic menu bar, tabbed ribbon, compact options bar,
+inspector, design panel or workspace strip. Others are built on a single
+idea: <i>Deck, slide, object</i> if you want to know
 what a button will change before you click it, <i>Sources tab</i> if
 your figures come from a live notebook, <i>Everything in one row</i> if
 tabs themselves are the problem. A whole family differs by one decision
@@ -12844,7 +12843,7 @@ is itself undoable.</li>
 have drawn and pick <i>Only me</i>. It stays on your screen and in the
 presenter view, marked with a dashed amber edge so you can tell at a
 glance, and it is never drawn for the audience, never in an exported PDF
-and never in PowerPoint. Like your speaker notes it <i>is</i> stored in
+and never in an exported <code>.pptx</code>. Like your speaker notes it <i>is</i> stored in
 the deck, so a deck file you hand to somebody contains it.</li>
 <li><b>Find a slide mid-talk.</b> Press <kbd>/</kbd> while presenting
 and the overview map opens with a search box: type any words from a
@@ -13035,39 +13034,41 @@ axis titles, a trend line per series, a series drawn as a line over the
 bars, and each series' colour, name and visibility. Error bars and
 confidence bands come in through the numbers: a column <i>Name
 &plusmn;</i> is Name's error bar, <i>Name lo</i> and <i>Name hi</i> its
-band. All of it exports as real PowerPoint chart XML except the band.</li>
+band. All of it exports as real <code>.pptx</code> chart XML except the band.</li>
 <li><i>Insert &rarr; Video / audio</i> places a clip from your computer
 (so does dropping one on the slide). It plays in the show &mdash; click
 it, or tick <i>Play when it arrives</i> &mdash; and the <i>Clip
 options</i> pane on the Object tab trims it, picks its poster frame and
 sets controls, loop and mute. The clip is kept in this browser and in
 every self-contained save, so the deck plays with no file beside it, and
-it exports as a real PowerPoint media shape and plays in the standalone
+it exports as a real media shape in the <code>.pptx</code> and plays in the standalone
 HTML.</li>
-<li><i>File &rarr; Import PowerPoint</i> brings a <code>.pptx</code>
+<li><i>File &rarr; Import .pptx</i> brings a <code>.pptx</code>
 IN as a new presentation (so does dropping one on the window, the
-launcher's <i>New &rarr; Import a PowerPoint file</i>, and a
+launcher's <i>New &rarr; Import a .pptx file</i>, and a
 <code>.pptx</code> row in the Open dialog). Text stays <b>editable</b>
 &mdash; bold, colour and bullets inside a box included &mdash; shapes,
 lines, pictures, tables, charts, speaker notes, sections, links and
 builds come across, and whatever cannot is listed <i>before</i> the deck
 lands. The <code>.pptx</code> itself is never changed.</li>
-<li><i>File &rarr; Export PowerPoint</i> writes a <code>.pptx</code>.
-Text stays <b>editable</b> in PowerPoint, figures and images come across
-as pictures, boxes and arrows become real shapes, placed tables become
-real PowerPoint tables, a placed <b>chart</b> leaves as a real
-PowerPoint chart &mdash; numbers, series colours and legend, ready to
-restyle over there &mdash; and speaker notes land on each slide's Notes
+<li><i>File &rarr; Export .pptx</i> writes a <code>.pptx</code>.
+Text stays <b>editable</b> in compatible presentation software, including
+Microsoft PowerPoint; figures and images come across as pictures, boxes
+and arrows become real shapes, placed tables become editable tables, and
+a placed <b>chart</b> leaves as an editable chart &mdash; numbers, series
+colours and legend, ready to restyle &mdash; and speaker notes land on each slide's Notes
 page. <b>Builds travel</b>: each click reveals the same objects it does
 here (rise and zoom arrive as fades &mdash; the click timing is exact).
 <b>Links travel</b>: a click action opens its page or jumps to its
 slide in the exported deck too. Cropped pictures keep their trim and
 their shape, and slide transitions come across (<i>Move matching
-objects</i> becomes a push, which is the nearest PowerPoint has). What
-does <b>not</b> travel: a crop you drew freehand, and equations (they
-arrive as plain text, since PowerPoint has no LaTeX). Everything lost
+objects</i> becomes a push). What does <b>not</b> travel: a crop you
+drew freehand, and equations (they arrive as plain text). Everything lost
 is counted and named when you export, not silently dropped &mdash; use
 Export PDF when any of it matters.</li>
+<li><small><b>About .pptx compatibility.</b> Junoview is independent and
+is not affiliated with, endorsed by, sponsored by, or approved by Microsoft.
+Microsoft and PowerPoint are trademarks of the Microsoft group of companies.</small></li>
 <li><b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one
@@ -13132,6 +13133,23 @@ regular improvements.</li>
 </ul>
 <p>Use the <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z"/></svg></b> button (top bar,
 far right) &mdash; it goes through Ko-fi. Thank you.</p>
+
+<h3>Licence and trademarks</h3>
+<p>Junoview is released under the
+<a href="https://www.apache.org/licenses/LICENSE-2.0"
+target="_blank" rel="noopener">Apache License 2.0</a>. The web build
+loads Pyodide, MathJax and Plotly.js at run time from their own
+distribution networks; their licences are listed in the
+<a href="https://junoview.dev/THIRD_PARTY_NOTICES.html" target="_blank"
+rel="noopener">third-party notices</a>.</p>
+<p><small>Junoview is an independent project and is not affiliated with,
+endorsed by, sponsored by, or approved by Microsoft. Microsoft,
+PowerPoint, Excel, Calibri and Segoe are trademarks of the Microsoft
+group of companies. <code>.pptx</code> and <code>.xlsx</code> are file
+formats standardised as ECMA-376 / ISO/IEC 29500 (Office Open XML).
+Other product and company names mentioned here may be trademarks of
+their respective owners; naming them describes what Junoview reads,
+writes or resembles and implies no endorsement.</small></p>
 
     </div>
   </div>
@@ -13416,14 +13434,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
         <button class="dc-mi" id="mi-load">Open a .junoview
           file&#8230;</button>
-        <!-- T320: PowerPoint IN. Beside Open because it is the other
+        <!-- T320: .pptx IMPORT. Beside Open because it is the other
              way a deck arrives from disk; it lands as a NEW presentation
              and the .pptx is never written to. -->
         <button class="dc-mi" id="mi-import-pptx"
           title="Bring a .pptx in as a new presentation. Text stays
  editable; shapes, pictures, tables, charts, notes and builds come
  across; whatever cannot is listed first"
-          >Import PowerPoint (.pptx)&#8230;</button>
+          >Import .pptx&#8230;</button>
         <!-- T236: HISTORY AND CHECKPOINTS MOVED TO HOME (2026-09-04,
              user: "the history as well I don’t like here, should be
              a button on the home tab"). They are things you do WHILE
@@ -13459,10 +13477,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  cut to. The sheet grows by 5mm a side; the page keeps its size"
           >Crop marks: off</button>
         <button class="dc-mi" id="mi-pptx"
-          title="Save as a PowerPoint .pptx. Text stays editable and
+          title="Save as a .pptx file. Text stays editable and
  figures come across as pictures; a placed cell showing code or a table
- cannot convert — use PDF for those">Export PowerPoint
- (.pptx)</button>
+ cannot convert — use PDF for those">Export .pptx</button>
         <button class="dc-mi" id="mi-html"
           title="A single .html file anyone can open — no Junoview
  needed. Arrow keys page through it; Ctrl+P prints at page size">Export
@@ -14698,7 +14715,7 @@ items snap to both. Guides, not ink: never printed or exported"
                    the show and in an exported page. -->
               <button class="dbtn rbn-sm" id="et-web"
                 title="Put a live web page on the slide, by its address.
- It works in the show and in an exported page; PowerPoint cannot hold it"
+ It works in the show and in an exported page; an exported .pptx cannot carry it"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9"/><path d="M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9"/></svg> Web page</button>
               <button class="dbtn et rbn-sm" id="et-flip" data-tool="flip"
                 aria-pressed="false"
@@ -23553,7 +23570,7 @@ items snap to both. Guides, not ink: never printed or exported"
     return /\.junoview(\.html)?$/i
       .test(String(p||'').split('?')[0].split('#')[0]);
   }
-  /* T320: a PowerPoint deck, which IMPORTS (as a copy) rather than opens */
+  /* T320: a .pptx presentation, which IMPORTS (as a copy) rather than opens */
   function isPptxPath(p){
     return /\.(pptx|potx|ppsx|pptm)$/i
       .test(String(p||'').split('?')[0].split('#')[0]);
@@ -23614,7 +23631,7 @@ items snap to both. Guides, not ink: never printed or exported"
      row) -- "the ability to open multiple notebook/presentations at
      once would be a slay out of 10" (2026-09-14) */
   function openPath(path,keep){
-    /* T320: a PowerPoint deck imports from the same places, as a copy */
+    /* T320: a .pptx presentation imports from the same places, as a copy */
     if(isPptxPath(path)){
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
       if(APP.mode!=='app') return;
@@ -24082,8 +24099,8 @@ items snap to both. Guides, not ink: never printed or exported"
       (j.decks||[]).forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i deck';
         b.innerHTML='<span class="ic">'+bic('present')+'</span>';
-        b.title=(n.kind==='PowerPoint')
-          ?'Import this PowerPoint deck as a new presentation (a copy '
+        b.title=(n.kind==='.pptx')
+          ?'Import this .pptx presentation as a new presentation (a copy '
             +'— the .pptx is not changed)'
           :'Open this saved Junoview presentation';
         var nm=document.createElement('span');nm.className='nm';
@@ -24432,7 +24449,7 @@ items snap to both. Guides, not ink: never printed or exported"
         clips.forEach(function(f){if(APP.deckDropMedia(f)) tookM++;});
         if(tookM) return;
       }
-      /* T320: a PowerPoint deck dropped anywhere imports, either mode */
+      /* T320: a .pptx presentation dropped anywhere imports, either mode */
       files.filter(function(f){return isPptxPath(f.name);})
         .forEach(function(f){
           if(APP.deckImportPptx) APP.deckImportPptx(f);
@@ -25961,9 +25978,9 @@ window.JunoPptx = (function () {
     charts.forEach(function (x, i) {
       zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x.xml);
       /* T323: the chart's own workbook, and the first rels part a chart
-         part has ever had. The name is the one PowerPoint writes for its
-         own charts, so the Edit Data button finds what it expects. */
-      var wbName = 'Microsoft_Excel_Sheet' + (i + 1) + '.xlsx';
+         part has ever had. Readers follow that relationship, so its name
+         can identify Junoview without affecting Edit Data. */
+      var wbName = 'Junoview_Chart_Data' + (i + 1) + '.xlsx';
       zip.add('ppt/embeddings/' + wbName, x.book);
       zip.addText('ppt/charts/_rels/chart' + (i + 1) + '.xml.rels',
         relsDoc([{ id: 'rId1', type: DOC_NS + '/relationships/package',
@@ -32548,7 +32565,7 @@ window.JunoPptx = (function () {
      describe. The user's call: keep Default plus "like 9 of the
      best". The eight below survive because each is a genuinely
      different, coherent way of working, not a permutation: the
-     PowerPoint-trained hands (Office ribbon), the scope taxonomy
+     familiar slide-editor conventions (Familiar ribbon), the scope taxonomy
      (Deck, slide, object), the notebook-first workflow (Sources tab),
      frequency (Everyday first), the poster maker (Poster first), the
      board-tool feel (Canvas rail), density (Everything in one row)
@@ -32559,8 +32576,8 @@ window.JunoPptx = (function () {
      demands. */
 
     {id:'familiar-office-ribbon',
-     name:'Office ribbon',
-     blurb:'Try this first if your hands already know PowerPoint - Home, Insert, Design and Animate with the group names Office trained you on.',
+     name:'Familiar ribbon',
+     blurb:'A familiar Home, Insert, Design and Animate arrangement with clearly named groups.',
      family:'familiar',
      selTab:'home',
      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},{id:'design',label:'Design'},{id:'animate',label:'Animate'}],
@@ -32878,7 +32895,7 @@ window.JunoPptx = (function () {
      ]},
     {id:'web-canvas-rail',
      name:'Canvas rail',
-     blurb:'Try this if Miro and FigJam are home: a standing rail of making tools, a Selection tab that behaves like the bubble popping over whatever you clicked, and board-wide settings kept off both.',
+     blurb:'Try this if a whiteboard app is home: a standing rail of making tools, a Selection tab that behaves like the bubble popping over whatever you clicked, and board-wide settings kept off both.',
      family:'web',
      selTab:'mi-sel',
      tabs:[{id:'mi-rail',label:'Tools'},{id:'mi-sel',label:'Selection'},{id:'mi-board',label:'Board'}],
@@ -47040,7 +47057,7 @@ window.JunoPptx = (function () {
       var pb=row(allPriv?'\u2713 Only me':'Only me','',function(){
         setPrivSel(!allPriv);},
         'Show this only on your screen and in presenter view \u2014 never '
-        +'to the audience, or in a PDF or PowerPoint','eye');
+        +'to the audience, or in a PDF or .pptx','eye');
       if(allPriv) pb.classList.add('on');
     }
     /* the slide's SEQUENCE (T106): always offered, because reading
@@ -47069,7 +47086,7 @@ window.JunoPptx = (function () {
         +'numbers or change its type');},
       'A bar chart with sample numbers to replace \u2014 or select a '
       +'placed table and \u201cTurn into a chart\u201d. Exports to '
-      +'PowerPoint as a real chart.','plots');
+      +'a .pptx as an editable chart.','plots');
     var cgm=customGuides();
     menuHead(m,'guides');
     row('Draw a guide box','B',armGuideBox,
@@ -48424,7 +48441,7 @@ window.JunoPptx = (function () {
         function(){paraApply('i:+');}).disabled=steps>=4;
       CURVES.forEach(function(p){
         optChip(cv,p[1],(a.arc||0)===p[0],
-          p[0]<0?'Round the bottom (as PowerPoint calls it)':'',
+          p[0]<0?'Round the bottom':'',
           function(){paraApply('c:'+p[0]);});
       });
     }
@@ -49291,7 +49308,7 @@ window.JunoPptx = (function () {
         var typed=prompt('Font family — exactly as it is named on this '
           +'computer (e.g. "Univers", "Source Sans Pro").\n\nIt has to be '
           +'installed to show here, and installed on any machine that '
-          +'opens the PowerPoint. PDF export always embeds what you see.',
+          +'opens the exported .pptx. PDF export always embeds what you see.',
           '');
         typed=(typed||'').trim();
         if(!typed){renderControls();return;}
@@ -74356,7 +74373,7 @@ window.JunoPptx = (function () {
   }
   function exportDeckPptx(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
-    if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
+    if(!window.JunoPptx){toast('.pptx export unavailable here');return;}
     /* what this will cost, BEFORE the file is in the downloads folder
        (T109). Silent when there is nothing to lose. */
     if(!pptxConfirmLosses()) return;
@@ -74383,26 +74400,26 @@ window.JunoPptx = (function () {
       note.frame=null;
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
-      +(note.skipped===1?'':'s')+' that PowerPoint has no shape for');
+      +(note.skipped===1?'':'s')+' with no .pptx shape to become');
     if(note.web) lost.push(note.web+' live web page'
-      +(note.web===1?'':'s')+' \u2014 PowerPoint cannot embed a page; '
+      +(note.web===1?'':'s')+' \u2014 a .pptx cannot carry a live page; '
       +'add a screenshot if it matters');
     if(note.maths) lost.push(note.maths+' equation'
-      +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
-      +'arrive as plain characters');
+      +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
+      +'path, so they arrive as plain characters');
     if(note.exits) lost.push(note.exits+' object'
       +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
       +'writer emits entrances only, so they arrive and then stay, '
       +'stacked over whatever was meant to replace them');
     if(note.tied) lost.push(note.tied+' item'+(note.tied===1?'':'s')
       +' tied to a chart series with “only” or “until” '
-      +'— PowerPoint is given no way to take them away again, so '
+      +'— the .pptx is given no way to take them away again, so '
       +'they stay on the slide once shown');
     if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
       +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
       +'is not');
     if(note.bands) lost.push(note.bands+' confidence band'
-      +(note.bands===1?'':'s')+' on a chart — PowerPoint has no band, '
+      +(note.bands===1?'':'s')+' on a chart — a .pptx chart has no band, '
       +'so the line arrives without it');
     /* builds TRAVEL now (T110) \u2014 what is still approximate is
        the entrance on the two effects PowerPoint spells differently */
@@ -74426,19 +74443,19 @@ window.JunoPptx = (function () {
                 &&/(^|\n)[ \t]*(\n|$)/.test(String(a.text||''))) mdpara++;
       });});
     if(sent) lost.push(sent+' sentence-by-sentence text build'
-      +(sent===1?'':'s')+' — PowerPoint builds text by PARAGRAPH and '
+      +(sent===1?'':'s')+' — a .pptx builds text by PARAGRAPH and '
       +'has no smaller unit, so each of these arrives as a whole box on '
       +'one click');
     if(mdpara) lost.push(mdpara+' Markdown box'+(mdpara===1?'':'es')
       +' built bullet by bullet — a blank line in the source is a '
-      +'paragraph to PowerPoint and not a bullet here, so it takes a few '
+      +'paragraph in the .pptx and not a bullet here, so it takes a few '
       +'more clicks there than it does on this slide');
     return lost;
   }
   function pptxConfirmLosses(){
     var lost=pptxLosses();
     if(!lost.length) return true;
-    return confirm('Export to PowerPoint?\n\nEverything else comes '
+    return confirm('Export .pptx?\n\nEverything else comes '
       +'across, but this will not:\n\n\u2022 '+lost.join('\n\u2022 ')
       +'\n\nExport PDF keeps all of it exactly as you see it.');
   }
@@ -74502,7 +74519,7 @@ window.JunoPptx = (function () {
     a.download=(pres.name||'presentation')+'.pptx';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
-    var msg='PowerPoint saved — text stays editable'+outputNote();
+    var msg='.pptx saved — text stays editable'+outputNote();
     var noted=outputSlides().filter(function(e){
       return e.s&&e.s.notes&&e.s.notes.trim();}).length;
     if(noted) msg+='. Speaker notes came across on '+noted+' slide'
@@ -74514,17 +74531,17 @@ window.JunoPptx = (function () {
       +'no picture and no text — use Export PDF for those)';
     if(note.exits) msg+='. '+note.exits+' object'
       +(note.exits===1?'':'s')+' meant to leave on a later click will '
-      +'stay \u2014 PowerPoint gets entrances only from here';
+      +'stay \u2014 the .pptx gets entrances only from here';
     if(note.tied) msg+='. '+note.tied+' series-tied item'
       +(note.tied===1?'':'s')+' will stay once shown — '
       +'“only” and “until” need an exit this '
       +'writer does not have';
     if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
-      +(note.cropped===1?'':'s')+' not carried (PowerPoint has no '
-      +'freehand mask \u2014 the trim is, the outline is not)';
+      +(note.cropped===1?'':'s')+' not carried (the .pptx keeps the '
+      +'trim, not the outline)';
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
-      +'PowerPoint has no LaTeX, so they were flattened to characters';
+      +'this writer has no LaTeX-to-.pptx path, so they were flattened';
     toast(msg);
     /* one honest tally for the caller: the builder counts items IT could not
        write, this counts cells that never became items — reporting only one
@@ -75666,7 +75683,7 @@ window.JunoPptx = (function () {
     if(!deckEl.hidden) refresh(); else renderPresTabs();
   }).catch(function(){});
   /* ================================================================
-     62-pptx-import.js — POWERPOINT IN (T320)
+     62-pptx-import.js — .PPTX IMPORT (T320)
 
      ONE FRAGMENT of deck.js's single IIFE: assets.DECK_PARTS names the
      order, 00-page.js opens the function and 99-boot.js closes it. It
@@ -75678,8 +75695,8 @@ window.JunoPptx = (function () {
      drive a deck out and back. This file turns that spec into slides
      (specToPres), settles the pictures into the original store the way
      a paste does, says what was lost BEFORE the deck lands (the export
-     dialog's twin), and opens the doors: File ▸ Import PowerPoint, the
-     launcher's New ▸ Import a PowerPoint file, a .pptx dropped on the
+     dialog's twin), and opens the doors: File ▸ Import .pptx, the
+     launcher's New ▸ Import a .pptx file, a .pptx dropped on the
      window, a .pptx row or path in the Open dialog, and a .pptx URL in
      the web build.
 
@@ -75929,7 +75946,7 @@ window.JunoPptx = (function () {
      dialog's twin (pptxConfirmLosses). Nothing to lose means no dialog. */
   function pptxConfirmImport(name,lost){
     if(!lost.length) return true;
-    return confirm('Import “'+name+'” from PowerPoint?\n\n'
+    return confirm('Import “'+name+'”?\n\n'
       +'Everything else comes across, but this will not:\n\n• '
       +lost.join('\n• ')
       +'\n\nThe .pptx itself is not changed.');
@@ -75971,7 +75988,7 @@ window.JunoPptx = (function () {
   }
   function importPptxSpec(got,name){
     if(!got||!got.spec||!Array.isArray(got.spec.slides)){
-      toast('That file does not look like a PowerPoint deck');
+      toast('That file does not look like a .pptx presentation');
       return;
     }
     var lost=(got.lost||[]).slice();
@@ -76011,7 +76028,7 @@ window.JunoPptx = (function () {
     var name=file.name||'presentation.pptx';
     var web=!!(window.semPy&&window.semPy.importPptx);
     if(APP.mode!=='app'&&!web){
-      toast('PowerPoint import needs the Junoview app or the web build '
+      toast('.pptx import needs the Junoview app or the web build '
         +'— this page has no reader for a .pptx',6000);
       return true;
     }
@@ -76047,7 +76064,7 @@ window.JunoPptx = (function () {
       accept['application/vnd.openxmlformats-officedocument'
         +'.presentationml.presentation']=['.pptx','.potx','.ppsx','.pptm'];
       window.showOpenFilePicker({
-        types:[{description:'PowerPoint presentation',accept:accept}],
+        types:[{description:'.pptx presentation',accept:accept}],
         multiple:false
       }).then(function(hs){
         var h=hs&&hs[0];
@@ -76142,7 +76159,7 @@ window.JunoPptx = (function () {
   storyBoot();                /* the animation story (T391) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
-  pptxImportBoot();           /* PowerPoint in: File, launcher, drop (T320) */
+  pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   chartBoot();                /* the Chart pane's door (T322) */

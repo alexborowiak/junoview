@@ -164,7 +164,7 @@ def read_pptx_at(root: Path, raw_path: Any) -> dict:
         f = root / f
     f = f.resolve()
     if not is_pptx_name(f.name):
-        raise ValueError(f"{f.name} is not a PowerPoint file (.pptx)")
+        raise ValueError(f"{f.name} is not a .pptx file")
     if not f.exists() or not f.is_file():
         raise FileNotFoundError(f"{f} not found")
     size = f.stat().st_size

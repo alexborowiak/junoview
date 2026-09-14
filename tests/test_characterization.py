@@ -1896,8 +1896,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # built-in sets swap the palette
 # 2026-09-14: user-facing .pptx labels and Help's Microsoft compatibility,
 # independence and trademark notice change baked assets.
-EXPECTED_MD5 = "516e5f8995d5a4d5ae5df293993d606b"
-EXPECTED_BYTES = 4303939
+# 2026-09-14, second legal pass: every user-facing string describes the
+# .pptx FILE rather than the PowerPoint PRODUCT (export-loss dialog,
+# importer errors, two tooltips); Help gains a Licence and trademarks
+# section.
+EXPECTED_MD5 = "a1175e359c7ccc7c73a536b4dd9587c9"
+EXPECTED_BYTES = 4304878
 
 
 def _render_example() -> str:

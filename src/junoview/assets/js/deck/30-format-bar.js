@@ -834,7 +834,7 @@
         function(){paraApply('i:+');}).disabled=steps>=4;
       CURVES.forEach(function(p){
         optChip(cv,p[1],(a.arc||0)===p[0],
-          p[0]<0?'Round the bottom (as PowerPoint calls it)':'',
+          p[0]<0?'Round the bottom':'',
           function(){paraApply('c:'+p[0]);});
       });
     }

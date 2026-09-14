@@ -150,7 +150,7 @@ def test_the_browser_transport_is_the_same_reader(fixture_bytes, got):
     back = read_pptx_b64("fixture.pptx", b64)
     assert back["name"] == "fixture.pptx"
     assert back["spec"] == got["spec"] and back["lost"] == got["lost"]
-    with pytest.raises(ValueError, match="not a PowerPoint"):
+    with pytest.raises(ValueError, match=r"not a \.pptx"):
         read_pptx_b64("notes.docx", b64)
     with pytest.raises(ValueError, match="base64"):
         read_pptx_b64("x.pptx", "@@not base64@@")
@@ -167,7 +167,7 @@ def test_the_suffixes_the_doors_accept():
 
 
 def test_what_is_not_a_deck_is_refused_by_name():
-    with pytest.raises(ValueError, match="not a PowerPoint"):
+    with pytest.raises(ValueError, match=r"not a \.pptx"):
         read_pptx(b"hello, not a zip")
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
@@ -642,7 +642,7 @@ def test_a_path_route_reads_powerpoint_and_nothing_else(tmp_path):
     assert got["name"] == "talk.pptx" and got["path"].endswith("talk.pptx")
     assert len(got["spec"]["slides"]) == 2 and got["lost"] == []
     (tmp_path / "notes.txt").write_text("hi")
-    with pytest.raises(ValueError, match="not a PowerPoint"):
+    with pytest.raises(ValueError, match=r"not a \.pptx"):
         read_pptx_at(tmp_path, "notes.txt")
     with pytest.raises(FileNotFoundError):
         read_pptx_at(tmp_path, "gone.pptx")

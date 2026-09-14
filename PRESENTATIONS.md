@@ -49,7 +49,7 @@ documents. You build slides by pointing at the document:
   document** to place it there; the next empty pane is selected
   automatically, and ✕ on a pane clears it. Figure panes show a faint
   live preview of their image.
-- The filmstrip shows PowerPoint-style thumbnails of every slide with the
+- The filmstrip shows thumbnails of every slide with the
   actual content — scaled-down figures, text stripes for markup — click
   to select, ↑ ↓ to reorder, ✕ to delete.
 - **✎ Edit slide** opens the slide in the document area (the builder

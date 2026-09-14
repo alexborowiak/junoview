@@ -189,7 +189,7 @@ LAYOUTS: dict[str, int] = {"full": 1, "halves": 2, "rows": 2,
 #: Fields any annot may carry, whatever its kind.
 ANNOT_COMMON: dict[str, tuple[type, str]] = {
     "hide": (int, "1 when this is hidden: not drawn while editing, in "
-                  "playback, in print or in PowerPoint, and it claims no "
+                  "playback, in print or in an exported .pptx, and it claims no "
                   "click. A spare kept on the slide."),
     "priv": (int, "1 when only you may see it: drawn on your own screen "
                   "and in the presenter view, never for the audience and "
@@ -342,7 +342,7 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                           "`mute` are its playback switches."),
     "web": (("x", "y"), "A live web page: `url` (http or https only) is "
                         "drawn as a sandboxed iframe, live in playback "
-                        "and in an exported page. PowerPoint has no "
+                        "and in an exported page. A .pptx has no "
                         "shape for it."),
     "arrow": (("x1", "y1", "x2", "y2"),
               "A line or arrow — two endpoints, not a box."),

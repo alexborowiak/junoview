@@ -142,7 +142,7 @@ def test_curved_text_warps_in_powerpoint_too(out):
     # (2026-08-17 audit)
     # ...and since T177 the curve is a row of chips in the Paragraph
     # window, where the sag chips carry the note as their tooltip
-    assert "p[0]<0?'Round the bottom (as PowerPoint calls it)':''" in out
+    assert "p[0]<0?'Round the bottom':''" in out
     assert "[-12,'Gentle sag'],[-30,'Sag']" in out
 
 
