@@ -1822,8 +1822,17 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T432 (2026-09-14): the animation pane's Remove takes only the
 # animation, every pane row drags onto its siblings, and a bullet move
 # keeps <br> lines. 48-animation.js and deck.css change.
-EXPECTED_MD5 = "e51d3f1f696e1b250e0436e56cc04e16"
-EXPECTED_BYTES = 4188971
+# T433 (2026-09-14): a .junoview file holds one presentation;
+# 60-saving-and-export.js changes (filePresentations, sameDeck,
+# bundleOpened, dropBundleHandle).
+# T433 (2026-09-14): a .junoview file holds one presentation;
+# 60-saving-and-export.js changes (filePresentations, sameDeck,
+# bundleOpened, dropBundleHandle).
+# T433 (2026-09-14): a .junoview file holds one presentation;
+# 60-saving-and-export.js changes (filePresentations, sameDeck,
+# bundleOpened, dropBundleHandle).
+EXPECTED_MD5 = "34d5038bb19c349b06d2ca060596a163"
+EXPECTED_BYTES = 4193506
 
 
 def _render_example() -> str:

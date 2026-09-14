@@ -399,10 +399,37 @@
         +' embedded, so it opens without the notebook'
       :'';
   }
+  /* ---- T433: A FILE HOLDS ONE PRESENTATION ----------------------------
+     (2026-09-14, user: "The files on local keep seeming to just save to
+     project junoview. Even though that is not the file name which gets
+     confusing. Then project junoview doesn't appear in the list of
+     recently opened files.") A .junoview.html used to carry EVERY deck
+     the tab knew about, named after the one you were in. So opening a
+     file brought all of them back under minted names ("talk-2",
+     "talk-3", one more each time), Save from any of those wrote the
+     whole library back into whichever file the first one had been
+     bound to, and the readout named a file that was not this deck's.
+     T416 already made a file belong to one deck; the file's contents
+     now agree. The project file (app mode) is still the whole
+     library -- that is what a project is. */
+  function filePresentations(){
+    var cp=deep(pres);delete cp.origin;
+    return [cp];
+  }
   function deckFileText(){
     return JSON.stringify({junoview:1,
-      presentations:embedAssets(plainIfSingle(mergedPresentations()))},
+      presentations:embedAssets(plainIfSingle(filePresentations()))},
       null,2);
+  }
+  /* how many decks a file's text holds, for the doors that open one */
+  function fileDeckCount(txt){
+    try{
+      var obj=parseDeckText(txt);
+      var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+        :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:[];
+      return list.filter(function(p){return p&&Array.isArray(p.slides);})
+        .length;
+    }catch(e){return 0;}
   }
   /* ---- the saved file is a real HTML page with the JSON inside it ----
      A bare-JSON ".junoview" was a dead end on disk: double-clicking it
@@ -417,12 +444,12 @@
      escaped inside the JSON so no content can close the script block. */
   function junoviewFileHtml(){
     var json=deckFileText().replace(/</g,'\\u003c');
-    var list=plainIfSingle(mergedPresentations());
+    var list=plainIfSingle(filePresentations());   /* T433: this deck */
     var n=Array.isArray(list)?list.length:1;
     var slides=(Array.isArray(list)?list:[list]).reduce(function(k,p2){
       return k+((p2&&p2.slides&&p2.slides.length)||0);},0);
     var icon=(document.querySelector('link[rel="icon"]')||{}).href||'';
-    var name=esc(APP.order.length===1?APP.order[0]:(pres.name||'project'));
+    var name=esc(pres.name||APP.order[0]||'presentation');
     return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
       +'<meta name="viewport" content="width=device-width,initial-scale=1">'
       +'<title>'+name+' — Junoview presentation</title>'
@@ -1097,9 +1124,30 @@
     }).catch(function(){});
   }
   window.SemDeckFileBoot=rememberedFileBoot;   /* browser-verification hook */
+  /* T433: A REMEMBERED BUNDLE IS LET GO. A handle bound before a file
+     held one deck may be a file of every deck; the next autosave would
+     write one deck over all of them. Its decks come into the library
+     and the binding is dropped, said out loud, so Save asks where. */
+  function dropBundleHandle(txt,forName){
+    var n=fileDeckCount(txt);
+    if(n<2) return false;
+    var h=fileHandles[forName]||null;
+    var nm=(h&&h.name)||'that file';
+    fileHandles[forName]=null;
+    if(fileHandle===h){fileHandle=null;fileName='';}
+    idbDel(HKEY).catch(function(){});lsDel(HNKEY);
+    importDeckText(txt,true);
+    if(saveTarget==='file'&&!fileHandle) fileWaits='pick';
+    status();renderTargetBtn();renderSaveBtn();renderPresTabs();
+    toast(nm+' holds '+n+' presentations. A file holds one now, so '
+      +'they are in this browser and Save asks where to write '
+      +'\u201c'+(forName||pres.name)+'\u201d.',12000);
+    return true;
+  }
   function fileRestore(txt,forName){
     var obj;
     try{obj=parseDeckText(txt);}catch(e){return false;}
+    if(dropBundleHandle(txt,forName)) return false;
     var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
       :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:[];
     /* everything that fits goes into the library, quietly */
@@ -1136,6 +1184,7 @@
       return h.getFile().then(function(f){return f.text();})
         .then(function(txt){
           fileReopen=null;fileWaits='';
+          if(fileDeckCount(txt)>1){dropBundleHandle(txt,nm);return true;}
           if(!fileRestore(txt,nm)){status();toast('Nothing to reopen \u2014 '
             +'\u201c'+nm+'\u201d is already here');}
           return true;
@@ -1210,8 +1259,7 @@
     a.href=URL.createObjectURL(blob);
     /* T415: the deck's own name, not "project" (2026-09-13, user:
        "downloaded with shit name project.junoview, not the actual
-       name"). The file still holds every deck; it is named after the
-       one you were in. */
+       name"). T433: and it holds that one deck. */
     a.download=(pres.name||(APP.order.length===1?APP.order[0]:'project'))
       +'.junoview.html';
     a.click();
@@ -2359,6 +2407,16 @@
      silent startup restore from a remembered file handle. `silent` never
      renames, never toasts and never steals the view — it only fills in
      presentations the browser does not already have. */
+  /* the copy here (the deck on screen, a draft's JSON, or a saved deck)
+     against a deck just read from a file: the same presentation, or
+     not. The deck on screen first: a Save mints slide ids into it
+     that the draft written before the click does not carry. */
+  function sameDeck(have,np){
+    try{
+      var h=typeof have==='string'?JSON.parse(have):have;
+      return deckSaveSig(normPres(h))===deckSaveSig(np);
+    }catch(e){return false;}
+  }
   function importDeckText(txt,silent){
     var obj=parseDeckText(txt);
     var list=(obj&&Array.isArray(obj.presentations))
@@ -2382,6 +2440,15 @@
          (2026-09-14). Replace, or keep both under a new name: the one
          question, asked once, on a file you chose yourself. */
       var clash=(savedByName(nm)||draftGet(nm));
+      /* T433: THE SAME DECK IS NOT A NEW DECK. A file of a deck that is
+         here already, unchanged, opens that deck -- no question, no
+         "talk-2". Opening the file you saved a minute ago used to mint
+         a copy every time. */
+      if(clash&&sameDeck((pres&&pres.name===nm)?pres:clash,np)){
+        imported++;
+        if(!first) first={name:nm,pres:np,kept:true};
+        return;
+      }
       if(clash&&!silent&&list.length===1){
         var replace=window.confirm('\u201c'+base+'\u201d is already in '
           +'this browser.\n\nOK replaces it with the file\u2019s version.'
@@ -2471,6 +2538,19 @@
      nothing can write back to it — so the target is still set to "on this
      computer" and the first Save asks once where to put it. Either way
      the answer to "where is this going?" stops being "somewhere else". */
+  /* T433: a file of several decks is a bundle from before a file held
+     one. Its decks go into the library; nothing binds to it, and the
+     toast says where each one saves from now on. */
+  function bundleOpened(n,name){
+    if(n<2) return false;
+    if(saveTarget==='file'&&!fileHandle) fileWaits='pick';
+    status();renderTargetBtn();renderSaveBtn();
+    toast('Opened '+n+' presentations from '+(name||'that file')
+      +' into this browser. A file holds one presentation now, so each '
+      +'saves to its own file \u2014 Save asks where the first time.',
+      10000);
+    return true;
+  }
   function openDeckFile(){
     if(window.showOpenFilePicker){
       window.showOpenFilePicker({
@@ -2482,12 +2562,22 @@
         var h=hs&&hs[0]; if(!h) return;
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
+            var n=fileDeckCount(txt);
             if(!importDeckText(txt,false)) return;
+            /* T433: a bundle from before a file held one deck is
+               opened INTO the browser and left alone -- binding it
+               would make the next Save write one deck over all of
+               them */
+            if(bundleOpened(n,f.name||'')) return;
             /* the handle is what makes Save write back to this very
                file -- bound to the deck it opened (T416; T261 before
                it: HKEY, not 'deckFile', so the next visit remembers) */
             bindFile(pres.name,h);
             if(!fileName) fileName=f.name||'';
+            /* T433: the file's name is the deck's name through this
+               door too (T398 gave it to the picked and the dropped
+               file; the opened one kept whatever name was inside) */
+            followFileName();
             setTarget('file');
             toast('Opened \u2014 Save now writes back to '+fileName);
           });
@@ -2513,7 +2603,9 @@
       if(!f) return;
       var nm=f.name||'';
       f.text().then(function(txt){
+        var n=fileDeckCount(txt);
         if(!importDeckText(txt,false)) return;
+        if(bundleOpened(n,nm)) return;   /* T433 */
         /* no handle from an <input>, so we cannot write back to the file
            itself - but the DESTINATION is still "a file on your
            computer", and the first Save asks where once. T416: bound to
