@@ -5058,7 +5058,13 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
-.rbn-check{order:5;}       /* T383: the check, beside the styles */
+/* T444: the deck's type on Text follows Write; the deck-wide colours
+   and spacing on Design follow Page furniture */
+.rbn-decktype{order:6;}
+.rbn-deckwide{order:4;}
+/* T444: the Style system is a tall tile, like History */
+.rbn-row>#dsg-design-btn.big-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;grid-row:1/span 2;}
 /* The default contextual surface is two tabs, rather than one long tray:
    Style is how a thing looks; Object is where it is, where it came from,
    and how it is reused (2026-09-11, ribbon-layout correction). */
@@ -8733,6 +8739,29 @@ body.jv-lens .deck-stage{cursor:crosshair;}
   flex-direction:column;background:var(--chrome-0,#0b141d);
   font-family:var(--sans);}
 .dg-main{display:flex;flex:1 1 auto;min-height:0;}
+/* T443: who wears what -- the count table at the head of the rail */
+.dg-counts{margin-bottom:8px;padding-bottom:6px;
+  border-bottom:1px solid var(--chrome-line);}
+.dg-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;
+  padding:4px 6px;border-radius:6px;font:12px var(--sans);
+  color:var(--chrome-ink);cursor:pointer;}
+.dg-cnt:hover{background:#ffffff0c;}
+.dg-cnt-n{font:600 13px var(--mono);min-width:22px;text-align:right;
+  color:var(--cyan);}
+.dg-cnt-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.dg-cnt-odd .dg-cnt-l{color:var(--amber);}
+.dg-cnt-loose .dg-cnt-l{color:var(--chrome-ink-2);}
+/* the fix on its own line under the words, so neither is squeezed */
+.dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;flex:1 0 100%;
+  margin-left:28px;width:auto;justify-content:center;}
+/* T444: the deck colours panel's preview */
+.tok-preview{margin:4px 0 8px;}
+.tok-pv-page{border-radius:6px;padding:8px 10px;font:12px var(--sans);
+  border:1px solid var(--chrome-line);}
+.tok-pv-h{font-weight:700;font-size:14px;margin-bottom:2px;}
+.tok-pv-box{margin-top:6px;padding:4px 8px;border-radius:5px;
+  border:1px solid;font-size:11px;}
 .dg-rail{width:216px;flex:none;overflow-y:auto;padding:8px;
   border-right:1px solid #ffffff14;display:flex;flex-direction:column;
   gap:3px;}
@@ -9653,6 +9682,15 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 .rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);width:82px;}
 .rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
   line-height:1.15;}
+/* T441: the door's readout -- the current choice, under the name. With
+   a value the icon steps aside so the two lines fit the tile. */
+.rbn-foldbtn>.rbn-foldval{display:block;font:600 10px var(--mono);
+  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.rbn-foldbtn>.rbn-foldval[hidden]{display:none;}
+.rbn-foldbtn.has-val>.bic{display:none;}
+.rbn-foldbtn.has-val>span:first-of-type{font-size:11px;color:var(--ink-2);}
+body.light .rbn-foldbtn>.rbn-foldval{color:var(--cyan-deep);}
 #anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
 #anim-delaycell .cell-lab{padding-left:2px;}
 </style>
@@ -13613,6 +13651,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
+              <!-- T444: the master is a LAYOUT every slide inherits, so it
+                   sits with the layouts (2026-09-14, user: "Move slide
+                   master out of page furniture (why would you put that
+                   there????)") -->
+              <button class="dbtn rbn-sm" id="dsg-masters"
+                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Slide master&#8230;</button>
               <button class="dbtn rbn-sm" id="dsg-tidy"
                 title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
               <!-- T365: LAST, and a column of its own. Four segments make
@@ -13726,14 +13770,29 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
                 title="A number on every slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Page numbers</button>
-              <!-- T115's masters hid inside two Layouts menus; the
-                   feature that owns "the look every slide inherits"
-                   belongs on the tab that owns page furniture
-                   (JVUX-11). -->
-              <button class="dbtn rbn-sm" id="dsg-masters"
-                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Slide master&#8230;</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
+          </span>
+          <!-- T444: DECK-WIDE COLOURS AND SPACING, ON DESIGN (2026-09-14,
+               user: "Shared colours also can go somewhere else ... This
+               needs an overhaul"). The panel is rebuilt around what the
+               colours ARE (openTokenPicker). -->
+          <span class="rbn-grp rbn-deckwide" data-tab="design"
+            data-fold-ic="palette">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="dsg-tokens"
+                aria-haspopup="true" aria-expanded="false"
+                title="The five colours every slide is built from &mdash; page,
+ words, headings, boxes, lines &mdash; and extra ones you can put on
+ things. Change one here and every slide follows"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Deck colours&#8230;</button>
+              <button class="dbtn rbn-sm" id="dsg-layout"
+                aria-haspopup="true" aria-expanded="false"
+                title="Deck-wide layout defaults: the corner shape of boxes
+ and the space used when Arrange distributes objects"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Deck layout</button>
+            </span>
+            <span class="rbn-lab">Whole deck</span>
           </span>
           <!-- THE DECK'S TYPE, editable without selecting anything. Until
                now a style could only be changed by formatting one box and
@@ -13743,121 +13802,31 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <!-- PRESENTATION STYLES LIVE ON HOME. They shape text, pictures,
                colours and layout across the whole presentation, so they are
                not merely a kind of text to insert (2026-09-11). -->
-          <span class="rbn-grp rbn-type" data-tab="home" data-fold-ic="styles">
+          <!-- T444: THE STYLE SYSTEM, ALONE AND NEVER FOLDED (2026-09-14,
+               user: "Moving all these buttons means style systems can
+               always be present, not collapsed. This is a really
+               important feature and I NEVER want this to be hidden.
+               NEVER"). Text styles, Style sets and Citations went to
+               the Text tab (they are about words); Deck colours and
+               Deck layout to Design (they are about the whole page);
+               the consistency check folded into the screen itself
+               (T443). rbn-stylesys is excluded from the fold ladder. -->
+          <span class="rbn-grp rbn-type rbn-stylesys" data-tab="home"
+            data-fold-ic="outline">
             <span class="rbn-row">
-              <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
-                   styles under design (should this be under design
-                   anyway???)"). The deck's type is a design decision
-                   about the whole deck, which is what every other door
-                   on this tab is; the per-box Styles door on Object is
-                   the other half, for one box. What was wrong was not
-                   the tab but the count: seven buttons for one idea.
-                   The Text styles window is the ONE room for the deck's
-                   type now -- the per-style list above, and below it
-                   the whole-deck commands that used to be four more
-                   buttons in the row: scale everything, re-apply, and
-                   the Style system screen. Design tokens stays out
-                   because it is not type (colours, radius, spacing);
-                   Standardise stays out because it is a CHECK, and the
-                   button the user went looking for (T87). -->
-              <!-- T315: the whole look, one click from the row. The
-                   gallery of style sets and colour themes used to hide
-                   as the first row of the Text styles menu. -->
-              <button class="dbtn rbn-sm" id="dsg-sets"
-                title="Ready-made looks for the whole deck: style sets
- (type) and colour themes (a palette for page, boxes, headings and
- ink), and any you saved"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style sets&#8230;</button>
-              <!-- T325: the deck's bibliography is a deck-wide thing,
-                   like its style sets and its tokens -->
-              <button class="dbtn rbn-sm" id="dsg-cites"
-                title="This deck&#8217;s references: import a .bib, add one
- by DOI, choose numbered or author-year, and insert a references box.
- Cite in any text box as [@key]"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Citations&#8230;</button>
-              <span class="sh-drop" id="dsg-stylewrap">
-                <button class="dbtn rbn-sm" id="dsg-styles"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Text
-                  styles &#9662;</button>
-                <div class="sh-menu style-mgr" id="dsg-style-menu"
-                  hidden>
-                  <!-- the per-style rows, built on open -->
-                  <div id="dsg-style-list"></div>
-                  <div class="hd-lab">the whole deck&rsquo;s type</div>
-                  <div class="opt-row">
-                    <button class="dbtn rbn-sm" id="dsg-scale-down"
-                      title="Make every text style one step smaller —
- the whole deck's type, in proportion">A&#8722; Smaller</button>
-                    <button class="dbtn rbn-sm" id="dsg-scale-up"
-                      title="Make every text style one step bigger — the
- whole deck's type, in proportion">A&#43; Bigger</button>
-                    <button class="dbtn rbn-sm" id="dsg-restyle"
-                      title="Re-apply the named looks to every box wearing one. Use it after changing a style by hand"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Re-apply</button>
-                  </div>
-                  <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
-                       2026-08-29: "where was the button where people
-                       can 'standardise presentation'"). Standardise
-                       CHECKS a deck against its own type; this screen
-                       is where that type is decided. Two doors because
-                       they are two questions -- what is the standard,
-                       and who is not keeping to it -- and each opens
-                       the other. -->
-                </div>
-              </span>
-              <!-- "What is 'design tokens'?????" (2026-09-02). The word
-                   was the implementation's; the button says what the
-                   things are. The dialog keeps the term in its title. -->
-              <button class="dbtn rbn-sm" id="dsg-tokens"
-                aria-haspopup="true" aria-expanded="false"
-                title="The colours this deck shares. Any box can wear one
- (the Deck row at the top of its colour menu); change a colour here and
- every box wearing it changes too"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Shared colours</button>
-              <!-- Radius and arrange spacing used to be appended to the
-                   Shared colours panel. They are deck-wide defaults, but
-                   they are not colours; a panel which changes subject
-                   halfway down is exactly why the colour system felt
-                   mysterious (2026-09-12). Give layout defaults their own
-                   plainly named door beside the other deck-wide tools. -->
-              <button class="dbtn rbn-sm" id="dsg-layout"
-                aria-haspopup="true" aria-expanded="false"
-                title="Deck-wide layout defaults: the corner shape of boxes
- and the space used when Arrange distributes objects"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Deck layout</button>
-              <!-- T383: the mismatch check is no longer a small button in
-                   this row -- it has a group and a tile of its own, next
-                   door, so a narrow window folding this group does not
-                   take it with it. -->
-              <!-- the whole-deck type screen was a row inside the Text styles
-                   menu: a screen behind a menu behind a door (T212) -->
-              <button class="dbtn rbn-sm" id="dsg-design-btn"
-                title="One screen for the deck's type: what each kind of
- text looks like, and every slide with a box round each object"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.6" width="12.4" height="10.8" rx="1.2"/><path d="M6.2 2.6v10.8"/><path d="M3.2 5.6h1.8M3.2 8h1.8"/></svg> Style system</button>
-            </span>
-            <span class="rbn-lab">Presentation styles</span>
-          </span>
-          <!-- T383: THE BUTTON THE USER WENT LOOKING FOR, AGAIN. It was
-               "Standardise text" (2026-08-22: "it would be cool if there
-               was a button that was called 'standardise text', and
-               checked if all headings paragraphs, captions, are looking
-               the same"), then "Fix mismatched text", then T378 renamed it
-               "Check consistency" and left it as the last small button of
-               the Presentation styles row -- which folds into one tile at
-               laptop width, so the check was a row inside a menu behind a
-               door (2026-09-12, user: "I liked the concept but the
-               execution was always weird; now it's gone"). Its own group,
-               its own tall tile, under the name the user knows it by. -->
-          <span class="rbn-grp rbn-check" data-tab="home" data-fold-ic="scope">
-            <span class="rbn-row">
-              <button class="fx-tile big-tile rbn-tall" id="dsg-std"
+              <button class="fx-tile big-tile rbn-tall" id="dsg-design-btn"
+                title="One screen for the deck's type: who wears which
+ style, what each kind of text looks like, and every slide with a box
+ round each object"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.6" width="12.4" height="10.8" rx="1.2"/><path d="M6.2 2.6v10.8"/><path d="M3.2 5.6h1.8M3.2 8h1.8"/></svg><span>Style system</span></button>
+              <!-- T443: the consistency check's door, kept for the
+                   screen's own button and the pane owner; the tile it
+                   was is gone -->
+              <button class="dbtn rbn-sm" id="dsg-std" hidden
                 aria-pressed="false"
                 title="Find text or figures that look like they should match
- but have different formatting, and make them match in one click. It only
- suggests a fix; you choose it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg>
-                <span>Fix mismatched text</span></button>
+ but have different formatting"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg> Check</button>
             </span>
-            <span class="rbn-lab">Consistency</span>
+            <span class="rbn-lab">Style system</span>
           </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
@@ -14012,7 +13981,7 @@ items snap to both. Guides, not ink: never printed or exported"
                effect option when there is nothing to appear" -- and the
                whole-slide builds sit beside them as words. Built by
                galSync, which the selection already calls. -->
-          <span class="rbn-grp rbn-anim" data-tab="animation" data-fold-ic="appear">
+          <span class="rbn-grp rbn-anim rbn-compact" data-tab="animation" data-fold-ic="appear">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
@@ -14091,7 +14060,7 @@ items snap to both. Guides, not ink: never printed or exported"
                is the same three answers, where you would go for them.
                Apply to all is PowerPoint's own verb and was missing
                everywhere. -->
-          <span class="rbn-grp rbn-trans" data-tab="animation"
+          <span class="rbn-grp rbn-trans rbn-compact" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
               <!-- T372: THE SAME TILE AS THE EFFECT STRIP. Picking how
@@ -14153,7 +14122,7 @@ items snap to both. Guides, not ink: never printed or exported"
                wobbling and moving"). An entrance plays once; these loop
                while the object is on the slide, in the show only. Tiles,
                like Effect, because it is the same kind of choice. -->
-          <span class="rbn-grp rbn-motion" data-tab="animation"
+          <span class="rbn-grp rbn-motion rbn-compact" data-tab="animation"
             data-fold-ic="wobble">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-move">
@@ -14182,7 +14151,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Motion</span>
           </span>
-          <span class="rbn-grp rbn-flipfx" data-tab="animation"
+          <span class="rbn-grp rbn-flipfx rbn-compact" data-tab="animation"
             data-fold-ic="flipbook">
             <span class="rbn-row">
               <span class="rbn-cell rbn-seg" id="anim-flip-run" hidden
@@ -14221,7 +14190,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Flip book</span>
           </span>
-          <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
+          <span class="rbn-grp rbn-build rbn-nofold" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <!-- T391: the story -- the slide at every stop, editable -->
               <button class="dbtn rbn-sm" id="anim-story"
@@ -14240,15 +14209,21 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Take the entrance off every object on this slide"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove all</button>
             </span>
-            <span class="rbn-lab">Everything on the slide</span>
+            <span class="rbn-lab">Whole slide</span>
           </span>
+          <!-- T445: "BUILD ORDER", AND NEVER SQUASHED (2026-09-14, user:
+               "buttons like those in 'Order' (horrible name for this
+               collection) are not getting squashed out ... people will
+               NOT be able to find them under there"). rbn-nofold keeps
+               the group out of the fold ladder; the compact choosers
+               (T441) are what make the room. -->
           <!-- THE ORDER. Quick animate is the pointing mode (T168): it
                was "Click things in order…" and then "Set order", and
                the user named it themselves -- "the quick animations
                thing with clicking" (2026-09-02). Animation order is
                the pane that lists the sequence; Layers is the same
                list read as a timeline (T174). -->
-          <span class="rbn-grp rbn-order" data-tab="animation" data-fold-ic="play">
+          <span class="rbn-grp rbn-order rbn-nofold" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
                 title="Click things one after another and each becomes
@@ -14269,7 +14244,7 @@ items snap to both. Guides, not ink: never printed or exported"
  arrives on and, if it leaves, the click it goes. Hide, lock and reorder
  from the same list"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
             </span>
-            <span class="rbn-lab">Order</span>
+            <span class="rbn-lab">Build order</span>
           </span>
           <!-- TIMING, the way PowerPoint's Start box works (T185;
                2026-09-02, user: "there should be a default thing there
@@ -14287,7 +14262,7 @@ items snap to both. Guides, not ink: never printed or exported"
                there is a selected build to time, the way the tiles are,
                and the group stands down while Quick animate is armed so
                the mode's own controls have the row. -->
-          <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
+          <span class="rbn-grp rbn-timing rbn-compact" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-start">
@@ -14491,12 +14466,60 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Write</span>
           </span>
+          <!-- T444: THE DECK'S TYPE LIVES WITH THE WORDS (2026-09-14,
+               user: "Move citations to the text tab not home. Move
+               text styles and style sets to text away from home"). -->
+          <span class="rbn-grp rbn-decktype" data-tab="text"
+            data-fold-ic="styles">
+            <span class="rbn-row">
+              <span class="sh-drop" id="dsg-stylewrap">
+                <button class="dbtn rbn-sm" id="dsg-styles"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Text
+                  styles &#9662;</button>
+                <div class="sh-menu style-mgr" id="dsg-style-menu"
+                  hidden>
+                  <!-- the per-style rows, built on open -->
+                  <div id="dsg-style-list"></div>
+                  <div class="hd-lab">the whole deck&rsquo;s type</div>
+                  <div class="opt-row">
+                    <button class="dbtn rbn-sm" id="dsg-scale-down"
+                      title="Make every text style one step smaller —
+ the whole deck's type, in proportion">A&#8722; Smaller</button>
+                    <button class="dbtn rbn-sm" id="dsg-scale-up"
+                      title="Make every text style one step bigger — the
+ whole deck's type, in proportion">A&#43; Bigger</button>
+                    <button class="dbtn rbn-sm" id="dsg-restyle"
+                      title="Re-apply the named looks to every box wearing one. Use it after changing a style by hand"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Re-apply</button>
+                  </div>
+                  <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
+                       2026-08-29: "where was the button where people
+                       can 'standardise presentation'"). Standardise
+                       CHECKS a deck against its own type; this screen
+                       is where that type is decided. Two doors because
+                       they are two questions -- what is the standard,
+                       and who is not keeping to it -- and each opens
+                       the other. -->
+                </div>
+              </span>
+              <button class="dbtn rbn-sm" id="dsg-sets"
+                title="Ready-made looks for the whole deck: style sets
+ (type) and colour themes (a palette for page, boxes, headings and
+ ink), and any you saved"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style sets&#8230;</button>
+              <button class="dbtn rbn-sm" id="dsg-cites"
+                title="This deck&#8217;s references: import a .bib, add one
+ by DOI, choose numbered or author-year, and insert a references box.
+ Cite in any text box as [@key]"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Citations&#8230;</button>
+            </span>
+            <span class="rbn-lab">Presentation type</span>
+          </span>
           <!-- SHAPES ON THEIR OWN (T197; 2026-09-02, user: "the shapes
                should be on their own"). Fifteen tiles drawn as
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="images" data-fold-ic="shapes">
+          <span class="rbn-grp rbn-shapes rbn-compact" data-tab="images" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
@@ -29751,6 +29774,9 @@ window.JunoPptx = (function () {
     foldViewGroup(false);
     rbnUnfoldAll();
     sizeRibbonGroups();
+    /* T441: the choosers are compact by design, not by width */
+    rbnFoldCompact();
+    sizeRibbonGroups();
     var cl=deckEl.classList;
     ERC.forEach(function(c){cl.remove(c);});
     cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
@@ -30053,10 +30079,24 @@ window.JunoPptx = (function () {
     btn.type='button';btn.className='fx-tile big-tile rbn-foldbtn';
     btn.setAttribute('aria-haspopup','true');
     btn.setAttribute('aria-expanded','false');
+    /* T441: THE DOOR SAYS WHAT IS CHOSEN (2026-09-14, user, of the
+       Animation tab: "there are lots of menus that drop down when you
+       click. These should all be buttons with what is currently
+       selected beside it ... the transition button, then there should
+       just be one beside it with what is the current option"). The
+       tile carries the group's name over its current choice -- the
+       pressed tile or button inside -- and rbnFoldReadouts keeps it
+       true as the selection changes. A compact group (rbn-compact) is
+       folded whatever the width; the rest still fold only when the
+       row runs out of room. */
+    var compact=g.classList.contains('rbn-compact');
     btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')
-      +'<span>'+esc(name)+' \u25be</span>';
-    btn.title=name+' \u2014 folded because the window is too narrow '
-      +'to show the whole row. Widen the window and it opens out again';
+      +'<span>'+esc(name)+' \u25be</span><span class="rbn-foldval"></span>';
+    btn.title=compact
+      ?(name+' \u2014 click to choose. The current choice is on the '
+        +'button')
+      :(name+' \u2014 folded because the window is too narrow to show '
+        +'the whole row. Widen the window and it opens out again');
     var menu=document.createElement('div');
     menu.className='sh-menu rbn-foldmenu';menu.hidden=true;
     menu.appendChild(row);
@@ -30068,7 +30108,44 @@ window.JunoPptx = (function () {
       if(!menu.hidden){overlayHide(menu);return;}
       overlayShow(btn,menu);floatMenu(btn,menu);
     });
+    rbnFoldReadout(g);
     return true;
+  }
+  /* T441: the current choice of a folded group, read off the pressed
+     control inside its row: a tile's word, a button's words, never a
+     chevron or a shortcut key */
+  function rbnFoldReadout(g){
+    var val=g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval');
+    if(!val) return;
+    var on=g.querySelector('.rbn-foldmenu [aria-pressed="true"]');
+    var txt='';
+    if(on){
+      var sp=on.classList.contains('fx-tile')?on.querySelector('span'):null;
+      var src=(sp||on).cloneNode(true);
+      $$('kbd',src).forEach(function(k){k.remove();});
+      txt=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
+        .trim();
+    }
+    val.textContent=txt;
+    val.hidden=!txt;
+    var btn=val.parentNode;
+    btn.classList.toggle('has-val',!!txt);
+  }
+  function rbnFoldReadouts(){
+    $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnFoldReadout);
+  }
+  /* T441: fold every compact group; the rest are the ladder's */
+  function rbnFoldCompact(){
+    var bar=$('#edit-tools'); if(!bar) return;
+    $$('.rbn-grp.rbn-compact',bar).forEach(function(g){
+      if(!g.hidden&&!g.classList.contains('rbn-folded')) rbnFoldGroup(g);});
+  }
+  /* the readouts follow every pressed-state change on the bar */
+  function rbnReadoutBoot(){
+    var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
+    new MutationObserver(function(){rbnFoldReadouts();})
+      .observe(bar,{subtree:true,attributes:true,
+        attributeFilter:['aria-pressed']});
   }
   function rbnUnfoldGroup(g){
     var wrap=null;
@@ -30097,6 +30174,14 @@ window.JunoPptx = (function () {
         /* Keep up to date never folds (T202: the point of it is to be
            seen) */
         &&!g.classList.contains('rbn-sources')
+        /* T444: the Style system is never folded (2026-09-14, user: "I
+           NEVER want this to be hidden. NEVER") */
+        &&!g.classList.contains('rbn-stylesys')
+        /* T441/T445: a group that says so never folds -- Build order and
+           Whole slide on Animation (2026-09-14, user: "make sure buttons
+           like those in 'Order' are not getting squashed out, as they
+           are really important") */
+        &&!g.classList.contains('rbn-nofold')
         /* T383: one tile folds into one tile -- nothing to gain, and
            the check would wear a chevron for no reason */
         &&!g.classList.contains('rbn-check')
@@ -33446,6 +33531,12 @@ window.JunoPptx = (function () {
       if(typeof renderPresentationHub==='function') renderPresentationHub();
       if(typeof renderDeckPresentationDrawer==='function')
         renderDeckPresentationDrawer();
+      /* T449: AND HOME (2026-09-14, user's screenshot: "No recent
+         presentations" on Home while the library's Recent listed
+         seven). Home is painted before the store has answered, and
+         the recent list drops every name it cannot find yet -- so
+         it has to be painted again now that the drafts are here. */
+      if(APP.refreshChrome) APP.refreshChrome();
     });
   }
 
@@ -37808,8 +37899,29 @@ window.JunoPptx = (function () {
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'shared colours');
+    menuHead(m,'deck colours');
     var t=tokens();
+    /* T444: A PICTURE OF WHAT THE ROWS ARE (2026-09-14, user: "this
+       still makes no sense to me whatever this is doing ... This needs
+       an overhaul"). The five rows below are the page, its words, its
+       headings, its boxes and its lines; the preview is a slide made
+       of exactly those five, repainted as each one changes. */
+    var pv=document.createElement('div');pv.className='tok-preview';
+    pv.innerHTML='<div class="tok-pv-page"><div class="tok-pv-h">Heading'
+      +'</div><div class="tok-pv-t">Body text on the page</div>'
+      +'<div class="tok-pv-box">A box, with its edge</div></div>';
+    function paintPv(){
+      var c=tokens().c;
+      var pg=pv.querySelector('.tok-pv-page');
+      pg.style.background=tokVal(c.page||'#0b141d');
+      pg.style.color=tokVal(c.ink||'#dce6ee');
+      pv.querySelector('.tok-pv-h').style.color=tokVal(c.heading||c.ink||'');
+      var bx=pv.querySelector('.tok-pv-box');
+      bx.style.background=tokVal(c.surface||'');
+      bx.style.borderColor=tokVal(c.line||'');
+    }
+    paintPv();
+    m.appendChild(pv);
     /* T265: the note is ONE line now, and it only appears when it is the
        thing you need. T208 asked for an explanation here ("What does
        'colours and spacing' mean") and that ask stands -- but on a deck
@@ -37825,11 +37937,9 @@ window.JunoPptx = (function () {
        make sense up the top. I have never understood this." You cannot
        explain the cascade to somebody who does not yet know what the
        rows are. */
-    note.textContent=anyUse
-      ?'The deck\u2019s colours. Change one here and everything using it '
-        +'changes.'
-      :'The deck\u2019s colours. Nothing uses them yet \u2014 pick one from '
-        +'the Deck row at the top of any colour menu.';
+    note.textContent='The five colours every slide is built from. Change '
+      +'one and every slide follows; Style sets swaps the whole palette '
+      +'at once.';
     m.appendChild(note);
     function tokRow(k){
       var row=document.createElement('div');row.className='ff-row';
@@ -37853,6 +37963,7 @@ window.JunoPptx = (function () {
       inp.addEventListener('change',function(){
         setToken('c',k,inp.value);
         sw.style.background=inp.value;
+        paintPv();   /* T444 */
       });
       row.appendChild(inp);
       return row;
@@ -37871,7 +37982,15 @@ window.JunoPptx = (function () {
       (TOKEN_SPARE[k]?spare:jobs).push(k);});
     jobs.forEach(function(k){m.appendChild(tokRow(k));});
     if(spare.length){
-      menuHead(m,'colours you can put on things');
+      menuHead(m,'extra colours, for things you choose');
+      var note2=document.createElement('div');
+      note2.className='ff-none';
+      note2.textContent=anyUse
+        ?'Put one on any box from the Deck row at the top of its colour '
+          +'menu; change it here and every box wearing it follows.'
+        :'Nothing wears one yet. Put one on any box from the Deck row '
+          +'at the top of its colour menu.';
+      m.appendChild(note2);
       var used=[],idle=[];
       spare.forEach(function(k){
         var u=tokUses(k);
@@ -65654,9 +65773,81 @@ window.JunoPptx = (function () {
       key.appendChild(it);
     });
   }
+  /* ---- T443: WHO WEARS WHAT (2026-09-14, user: "the fix mismatched
+     text makes no sense ... It should tell you something like: 4
+     heading with this style, 3 with this ... the style system does a
+     better job of this ... this can just be something that is
+     incorporated into the style systems better"). One row per style
+     the deck uses: how many boxes wear it, how many of those were
+     changed by hand since, and the one click that puts the style back
+     on them. Then the boxes wearing nothing, banded by size, with the
+     style the check would give them. The same survey the old tile ran
+     (standardise), read as a table instead of a list of complaints. */
+  function dgCounts(rail,ov){
+    if(typeof standardise!=='function') return;
+    var r=standardise();
+    var host=document.createElement('div');host.className='dg-counts';
+    var h=document.createElement('div');
+    h.className='dg-family-name';h.textContent='who wears what';
+    host.appendChild(h);
+    var any=false;
+    function cntRow(n,label,cls){
+      var row=document.createElement('div');row.className='dg-cnt'+(cls||'');
+      var nn=document.createElement('span');
+      nn.className='dg-cnt-n';nn.textContent=String(n);
+      var l=document.createElement('span');
+      l.className='dg-cnt-l';l.textContent=label;l.title=label;
+      row.appendChild(nn);row.appendChild(l);
+      return row;
+    }
+    styleOrder().forEach(function(id){
+      var list=(r.named&&r.named[id])||[]; if(!list.length) return;
+      any=true;
+      var d=styleDef(id)||{label:id};
+      var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
+      var row=cntRow(list.length,(d.label||id)
+        +(odd.length?(' \u2014 '+odd.length+' changed by hand'):''),
+        odd.length?' dg-cnt-odd':'');
+      if(odd.length){
+        var b=document.createElement('button');
+        b.type='button';b.className='dbtn dg-cnt-fix';
+        b.textContent='Match '+odd.length;
+        b.title='Put the '+(d.label||id)+' style back on the '+odd.length
+          +' that were changed by hand';
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          stdFix(odd,function(a){applyStyleTo(a,id);},
+            odd.length+' box'+(odd.length===1?'':'es')+' put back');
+          dgRail(ov);dgBody(ov);
+        });
+        row.appendChild(b);
+      }
+      row.addEventListener('click',function(){
+        dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+      host.appendChild(row);
+    });
+    (r.bands||[]).forEach(function(bd){
+      if(bd.boxes.length<2) return;
+      any=true;
+      var sug=(styleDef(bd.suggest)||{}).label||bd.suggest;
+      var row=cntRow(bd.boxes.length,'at about '+Math.round(bd.size*5.4)
+        +' pt, no style yet',' dg-cnt-loose');
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn dg-cnt-fix';
+      b.textContent='Make them '+sug;
+      b.title='Give all '+bd.boxes.length+' the '+sug+' style; the odd '
+        +'ones move to match the rest, the rest stay put';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();stdAdopt(bd);dgRail(ov);dgBody(ov);});
+      row.appendChild(b);
+      host.appendChild(row);
+    });
+    if(any) rail.appendChild(host);
+  }
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
+    dgCounts(rail,ov);   /* T443 */
     function styleRow(id,isVar){
       var d=styleDef(id); if(!d) return;
       var b=document.createElement('button');
@@ -66407,7 +66598,7 @@ window.JunoPptx = (function () {
       +'<button class="dbtn" id="dg-sets">'+bic('styles')
       +' Style sets\u2026</button>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
-      +' Fix mismatched text</button>'
+      +' Check consistency</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dg-main">'
       +'<div class="dg-rail" id="dg-list"></div>'
@@ -73398,10 +73589,25 @@ window.JunoPptx = (function () {
     if(h) lsSet(HNKEY,nm,true);
     if(!h||fileStem(fileName)===nm) return Promise.resolve(false);
     var oldFile=fileName,newName=deckFileName();
+    /* T447: THE OLD FILE IS LET GO, NOT WRITTEN ON (2026-09-14, user:
+       "autosaved to project.junovie... Changed file name, but it still
+       says it is saving to the above. Why?????? How to get around
+       this???"). Where the browser cannot move a picked file -- Chrome
+       cannot -- the deck went on autosaving into the file with the OLD
+       name, and an eight-second toast was the only clue. Now the
+       binding is dropped: the old file keeps what it had under its old
+       name, the readout says "click Save to choose the file", and the
+       next Save asks where to write the NEW name (an autosave never
+       opens a dialog). Junoview's own folder still renames outright. */
     function say(){
-      toast('Still writing '+oldFile+' \u2014 the \u25be beside Save \u203a '
-        +'\u201cA file on your computer\u2026\u201d saves it as '+newName,
-        8000);
+      fileHandles[nm]=null;
+      if(fileFor===nm){fileHandle=null;fileName='';}
+      idbDel(HKEY).catch(function(){});lsDel(HNKEY);
+      if(saveTarget==='file') fileWaits='pick';
+      renderTargetBtn();renderSaveBtn();status();
+      toast('Renamed to \u201c'+nm+'\u201d. '+oldFile+' keeps the old '
+        +'name \u2014 press Save once and it asks where to write '
+        +newName+'; every autosave after that goes there.',10000);
       return false;
     }
     function moveOrSay(){
@@ -74369,6 +74575,7 @@ window.JunoPptx = (function () {
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  rbnReadoutBoot();           /* folded doors show their choice (T441) */
   /* the two auto-hides: their button and pointer listeners only. The
      remembered STATE is applied on first entry to edit mode, beside the
      ribbon fold's restore -- nothing here has geometry to measure yet. */
