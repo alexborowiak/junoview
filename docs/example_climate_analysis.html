@@ -2325,6 +2325,11 @@ body:not(.light) .wj-none{color:var(--ink-3);}
   background:var(--paper);border:1px solid var(--line);border-radius:9px;
   padding:6px 8px;box-shadow:0 10px 30px #0000002e;}
 .docfind[hidden]{display:none;}
+/* T422: the Variables pane docks in the same corner (top 170px, right
+   14px, and above this bar in z-order), so with both open the count and
+   the prev/next/close buttons sat behind it. The bar steps left of the
+   pane while the pane is open. */
+body:has(#varspane:not([hidden])) .docfind{right:calc(14px + 280px + 12px);}
 .docfind>.bic{width:14px;height:14px;opacity:.6;flex:none;}
 .docfind-in{width:210px;border:none;background:none;outline:none;
   font-family:var(--sans);font-size:13px;color:var(--ink);}
@@ -17194,7 +17199,11 @@ items snap to both. Guides, not ink: never printed or exported"
     if(lv===99&&rows.length) lv=+(rows[0].dataset.level||2);
     var pending=[];
     rows.forEach(function(s2){
-      var l=+(s2.dataset.level||2),sid=s2.dataset.sec;
+      /* T423: a section built in code -- the plot-trace tab's -- has no
+         data-sec, and the run's title fell back to it and threw on
+         .replace, which killed renderPagesBtn (and everything after it
+         in the activate path) the moment a trace opened. */
+      var l=+(s2.dataset.level||2),sid=s2.dataset.sec||'';
       if(l<lv&&!runs.length){pending.push(sid);return;}
       if(l<=lv){
         var h=s2.querySelector('.sectionhead-txt'),t=sid;
@@ -17255,7 +17264,9 @@ items snap to both. Guides, not ink: never printed or exported"
     if(!b) return;
     var stem=activeStem(),sh=APP.shells[stem];
     var runs=(sh&&sh.el)?pageRuns(sh.el):[];
-    var i=pageRunOf(runs,pageBy[stem]||'');
+    /* T423: an unpaged tab has no page key -- '' would match a section
+       with no data-sec and read "Page 1 of 1" on a plot trace */
+    var i=pageBy[stem]?pageRunOf(runs,pageBy[stem]):-1;
     var on=i>=0;
     setBtnText(b,on?('Page '+(i+1)+' of '+runs.length):'Pages');
     b.classList.toggle('on',on);
@@ -18838,7 +18849,11 @@ items snap to both. Guides, not ink: never printed or exported"
       /* per-output fold stubs are filter chrome, not content */
       $$('.ot-stub',clone).forEach(function(x){x.remove();});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
-      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
+      /* T248: the pin and the mark go too. A clone has no card id, so
+         a press here derived "" and persisted a mark for nothing; the
+         two live on the source card and its outline row. */
+      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote,'
+        +'.cell-pin,.cell-mark',clone)
         .forEach(function(x){x.remove();});
       body.appendChild(clone);
       /* cloneNode does not copy listeners: re-wire the clone so its code
@@ -19542,8 +19557,13 @@ items snap to both. Guides, not ink: never printed or exported"
     $$('.jv-hitopen').forEach(function(n){
       n.classList.remove('jv-hitopen');});
   }
+  /* T246: ONLY THE DOCUMENT'S OWN MARKS. The Variables filter paints its
+     matched letters with the same mark.jv-hit look, and this used to
+     unwrap every .jv-hit on the page -- so running or closing document
+     Find erased the highlight of a still-active Variables query. The
+     document's marks carry jv-doc as well, and that is all this clears. */
   function findClear(){
-    $$('.jv-hit').forEach(function(m){
+    $$('mark.jv-doc').forEach(function(m){
       var p2=m.parentNode; if(!p2) return;
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
@@ -19577,7 +19597,7 @@ items snap to both. Guides, not ink: never printed or exported"
         if(at>from)
           frag.appendChild(document.createTextNode(txt.slice(from,at)));
         var mk=document.createElement('mark');
-        mk.className='jv-hit';
+        mk.className='jv-hit jv-doc';
         mk.textContent=txt.slice(at,at+term.length);
         frag.appendChild(mk);out.push(mk);
         from=at+term.length;
@@ -19591,7 +19611,7 @@ items snap to both. Guides, not ink: never printed or exported"
   }
   function findGo(d){
     if(!findHits.length) return;
-    $$('.jv-hit.on').forEach(function(m){m.classList.remove('on');});
+    $$('.jv-doc.on').forEach(function(m){m.classList.remove('on');});
     findAt=(findAt+d+findHits.length)%findHits.length;
     var m=findHits[findAt];
     m.classList.add('on');
@@ -19674,6 +19694,16 @@ items snap to both. Guides, not ink: never printed or exported"
     if(nx) nx.addEventListener('click',function(){findGo(1);});
     var xb=$('#docfind-x');
     if(xb) xb.addEventListener('click',function(){findOpen(false);});
+    /* T247: FIND BELONGS TO THE NOTEBOOK YOU ARE LOOKING AT. The bar,
+       its count and findHits survived a tab switch, so Next and Previous
+       walked matches in the now-hidden shell and the count described a
+       document you could not see. Re-run the term against the new one
+       (findRun clears the old shell's marks first, wherever they are). */
+    document.addEventListener('sem:activate',function(){
+      var bar=$('#docfind');
+      if(!bar||bar.hidden) return;
+      findRun(((inp&&inp.value)||'').trim());
+    });
     document.addEventListener('keydown',function(e){
       if(!(e.ctrlKey||e.metaKey)||e.key!=='f') return;
       /* the deck editor has its own Find and owns the window while
@@ -22907,9 +22937,13 @@ items snap to both. Guides, not ink: never printed or exported"
       if(only) section.appendChild(only.cloneNode(true));
     }
     /* clones: drop per-cell eyes (no way back) and add-note pencils (their
-       listeners don't survive cloneNode; notes belong on the source tab) */
-    $$('.cell-eye,.card-addnote',section).forEach(function(b){
-      if(b.parentNode) b.parentNode.removeChild(b);});
+       listeners don't survive cloneNode; notes belong on the source tab).
+       T248: and the pin and the mark, for the same reason -- wired here
+       they repainted only the clone and left the source document stale
+       until a reload; the source card is where they act. */
+    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark',section)
+      .forEach(function(b){
+        if(b.parentNode) b.parentNode.removeChild(b);});
     $$('.card.cell-off',section).forEach(function(c){
       c.classList.remove('cell-off');});
     /* cards default to opacity:0 and are revealed by initShell's scroll
@@ -45948,8 +45982,22 @@ window.JunoPptx = (function () {
       e.stopPropagation();
       more.hidden=!more.hidden;
       t2.setAttribute('aria-expanded',(!more.hidden).toString());
+      cmRefit(m,more.hidden?null:t2);
     });
     m.appendChild(t2);m.appendChild(more);
+  }
+  /* T421: THE FOLD OPENS DOWNWARDS, AND THE SCREEN DOES NOT GROW. floatAt
+     clamps the menu to the window when it opens, measured FOLDED; the
+     24 rows behind More then extended it past the bottom edge, where
+     nothing could be clicked or scrolled to -- on a 900px screen every
+     Match row was unreachable from the right-click menu (2026-09-14).
+     Re-clamp after the fold changes, and bring the fold's first rows
+     into view inside the menu's own scroll. */
+  function cmRefit(m,at){
+    var r=m.getBoundingClientRect();
+    if(r.bottom>window.innerHeight-8)
+      m.style.top=Math.max(8,window.innerHeight-8-r.height)+'px';
+    if(at) m.scrollTop=Math.max(0,at.offsetTop-6);
   }
   function setLockSel(mode){
     var s=pres.slides[cur]; if(!s||!s.annots) return;
@@ -49582,6 +49630,21 @@ window.JunoPptx = (function () {
     /* lines and arrows */
     'x1','y1','x2','y2','mid','curve','bend','head','tail','nohead',
     'hsz','dash'];
+  /* T275: THE COPY RULE, IN ONE PLACE. Undefined on the model means
+     DELETE on the target — except `style`. A named style is a NAME the
+     target chose, not a look: matching a typed heading against a box
+     that never had one used to strip the name and keep the baked-on
+     look, so the box still read as a heading and was no longer one,
+     which the outline, "apply to all headings" and the standardiser
+     cannot see. Matching means "look like this one", so a model with no
+     name leaves the target's alone. Three loops share this. */
+  function matchProp(from,to,p){
+    if(from[p]===undefined){
+      if(p!=='style') delete to[p];
+      return;
+    }
+    to[p]=(typeof from[p]==='object'&&from[p])?deep(from[p]):from[p];
+  }
   /* ---- WHICH PROPERTIES TRAVEL ----------------------------------------
      "It should do everything by default (text size, spacing, indentation,
      width, height, x and y position), but then you can unselect ones you
@@ -49730,10 +49793,7 @@ window.JunoPptx = (function () {
       (sl.annots||[]).forEach(function(a){
         if(!a||a===src||typeKeyOf(a)!==key) return;
         MATCH_PROPS.forEach(function(p){
-          if(!want[p]) return;
-          if(src[p]===undefined) delete a[p];
-          else a[p]=(typeof src[p]==='object'&&src[p])
-            ?deep(src[p]):src[p];
+          if(want[p]) matchProp(src,a,p);
         });
         n++;
       });
@@ -49815,11 +49875,7 @@ window.JunoPptx = (function () {
         /* run out of models? reuse the last one, so three bullets on this
            slide all take the styling of the one bullet on that one */
         var m=from[Math.min(n,from.length-1)].a;
-        MATCH_PROPS.forEach(function(prop){
-          if(m[prop]===undefined) delete p2.a[prop];
-          else p2.a[prop]=(typeof m[prop]==='object'&&m[prop])
-            ?deep(m[prop]):m[prop];
-        });
+        MATCH_PROPS.forEach(function(prop){matchProp(m,p2.a,prop);});
         moved++;
       });
     });
@@ -50569,16 +50625,12 @@ window.JunoPptx = (function () {
     }
     return true;
   }
-  /* the copy loop, once. Same rule MATCH_PROPS has always followed —
-     undefined on the model means DELETE on the target — and the same deep
-     copy for the object-valued properties. */
+  /* the copy loop, once: matchProp's rule (undefined on the model means
+     delete on the target, a name is never deleted) over the wanted keys */
   function matchCopy(from,to,want){
     if(!from||!to||from===to) return false;
     MATCH_PROPS.forEach(function(p){
-      if(!want[p]) return;
-      if(from[p]===undefined) delete to[p];
-      else to[p]=(typeof from[p]==='object'&&from[p])
-        ?deep(from[p]):from[p];
+      if(want[p]) matchProp(from,to,p);
     });
     return true;
   }
