@@ -104,14 +104,29 @@ def test_the_layout_builders_palette_names_real_types(out):
     assert "          if(base.style) it.style=base.style;" in out
 
 
-def test_the_poster_templates_are_left_alone_on_purpose(out):
-    """Their type scale is the PAGE's, not the 16:9 ladder's -- 1.9% of
-    an A0 is a section heading where Heading 2 is 3.8 -- so stamping the
-    built-in names on them would make every poster read as drift from
-    the moment it was created. Doing it properly needs the deck's own
-    style overrides seeded from the template, and applyStyleSet replaces
-    pres.styles wholesale, so a seed does not survive one click of any
-    style set. Recorded as T278 rather than half-done."""
+def test_every_poster_slot_is_typed_at_the_page_scale(out):
+    """T278. A poster's type scale is the PAGE's, not the 16:9 ladder's,
+    so each template declares its own `scale` -- one size per type --
+    and every text slot wears a built-in name at exactly that size.
+    applyLayout seeds pres.scale from it, styleDef reads the seed under
+    the deck's overrides, and a style set keeps it (see
+    test_a_poster_seeds_its_scale)."""
     js = out[out.index("{id:'poster-3col'"):]
     js = js[:js.index("  function applyLayout")]
-    assert "style:'" not in js, "a poster slot has grown a built-in type"
+    tmpls = re.split(r"(?=\{id:'poster-)", js)
+    tmpls = [t for t in tmpls if t.startswith("{id:'poster-")]
+    assert len(tmpls) == 8, len(tmpls)
+    for t in tmpls:
+        tid = re.match(r"\{id:'([a-z0-9-]+)'", t).group(1)
+        sc = re.search(r"scale:\{([^}]*)\}", t)
+        assert sc, f"{tid} declares no scale"
+        scale = {k: float(v) for k, v in
+                 re.findall(r"([a-z0-9]+):([0-9.]+)", sc.group(1))}
+        for slot in re.findall(r"\{k:'text',[^}]*\}", t):
+            m = re.search(r"style:'([a-z0-9]+)'", slot)
+            assert m, f"{tid}: untyped slot {slot}"
+            size = float(re.search(r"size:([0-9.]+)", slot).group(1))
+            assert scale.get(m.group(1)) == size, (tid, m.group(1), size, slot)
+        # a footer is small print, never a Caption: the built-in caption is
+        # italic and coloured, which the slot is not
+        assert "style:'caption'" not in t, tid

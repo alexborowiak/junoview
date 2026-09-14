@@ -101,6 +101,9 @@ DECK_SENTINELS = {
     "head": {"text": "left header"},
     "foot": {"text": "right footer"},
     "styles": {"h1": {"size": 44}},
+    # the page's type scale a poster template seeds (T278), read under
+    # the styles and lost the same way without the Python side
+    "scale": {"title": 3.1, "body": 1.35},
     "tokens": {"c": {"accent": "#39a9c0"}, "rad": 8},
     "components": {"c1": {"name": "FigureCaption", "w": 30, "h": 10,
                           "items": []}},

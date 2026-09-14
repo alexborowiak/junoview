@@ -1797,8 +1797,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T423: pageRuns tolerates a section with no data-sec
 # T277: an eighth built-in type, Subtitle, in the ladder, every set
 # and theme, and the Title layout
-EXPECTED_MD5 = "2a623e731892d8bf271a38d67d4618a9"
-EXPECTED_BYTES = 4165299
+# T278/T424/T425: poster templates typed at a seeded page scale,
+# poster tiles apply, standardiser reads the default look
+# T278/T424/T425: poster templates typed at a seeded page scale,
+# poster tiles apply, standardiser reads the default look
+# T278: poster templates typed at a page scale the template seeds and
+# a style set keeps
+EXPECTED_MD5 = "3ebd44c90142425d8124cb1e8f9d5269"
+EXPECTED_BYTES = 4168774
 
 
 def _render_example() -> str:

@@ -386,7 +386,7 @@ def test_clearing_every_guide_asks_first_and_is_undoable(out):
     # slide layout could not be undone while every other
     # design-level key could.
     assert ("'guides','masters','layouts','page','pageBg',"
-            "'cropMarks','live']\n      .forEach(function(k){") in out
+            "'cropMarks','live',\n     'scale']\n      .forEach(function(k){") in out
     # the guide layer caches the signature it last drew, so an undo has
     # to ask it again or the restored model is invisible
     assert "if(typeof syncGuides==='function') syncGuides();" in out
@@ -456,7 +456,7 @@ def test_your_guides_survive_being_re_opened(out):
     (2026-08-29).
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters','bib','cite','slot']\n"
+            "     'components','cuts','guides','masters','bib','cite','slot','scale']\n"
             "      .forEach(function(k){") in out
 
 

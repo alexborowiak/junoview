@@ -5974,7 +5974,7 @@ option. Then where has the ability to refresh all images gone?"
   place rather than a band, so stdName skips it the way it only ever
   finds Caption by position. Poster author lines stay for T278.
 
-- [ ] **T278 - The poster templates cannot be typed until the seed
+- [x] **T278 - The poster templates cannot be typed until the seed
   survives a style set.**
   Also found doing T276, and why the poster half was left alone. A
   poster's type scale is the PAGE's, not the 16:9 ladder's -- 1.9% of an
@@ -5985,6 +5985,19 @@ option. Then where has the ability to refresh all images gone?"
   `applyStyleSet` ends with `pres.styles=next`, a wholesale REPLACE, so
   one click of any style set (or `autoStyleDeck`) discards the seed.
   The seeding and the replace have to be reconciled first.
+  *Done 2026-09-14.* The seed is its own layer: `pres.scale`, one size
+  per type, declared on each poster template and written by applyLayout
+  when the template is applied. styleDef reads it between the built-in
+  and the deck's overrides (a size set by hand still wins; "back to the
+  built-in sizes" lands on the sheet's scale, not the 16:9 ladder), and
+  applyStyleSet's replace still replaces -- it just takes the page's
+  size for every type the scale names, so a set brings its faces,
+  weights and colours and the poster keeps its scale. Every poster slot
+  is stamped (title, subtitle, h1/h2/h3, body, small; footers are small
+  print rather than Caption, whose built-in is italic and coloured) at
+  exactly the template's scale, so a new poster reports no drift. A
+  slide page drops the scale; undo, the draft and the project file
+  carry it (normPres, histState, presentations.py, deck_schema).
 
 - [x] **T279 - The style check points at the odd one out.**
   The user (2026-09-05), with a screenshot: "the style system isn't

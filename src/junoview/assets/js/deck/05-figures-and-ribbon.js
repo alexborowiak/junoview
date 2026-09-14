@@ -2175,6 +2175,9 @@
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
+        /* T278: the scale was the poster sheet's; a slide page takes
+           the built-in ladder back */
+        if(!pg.poster) delete pres.scale;
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a

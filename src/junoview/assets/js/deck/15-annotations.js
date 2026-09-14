@@ -3080,6 +3080,13 @@
          applyStyleTo deletes on falsy, and align has no else at all. */
       STYLE_FIELDS.forEach(function(p){
         if(o[p]===undefined) o[p]=0;});
+      /* T278: ON A POSTER THE SET BRINGS ITS FACES, WEIGHTS AND COLOURS
+         AND THE PAGE KEEPS ITS SCALE. A set's sizes are the 16:9
+         ladder's -- Bold's 9.0% title is a third of an A0 sheet -- so
+         where the template seeded a scale, the set's size for that type
+         is the page's. This is the reconciliation T278 asked for: the
+         replace below still replaces, and the seed survives it. */
+      if(pres.scale&&pres.scale[k]>0) o.size=pres.scale[k];
       next[k]=o;
     });
     /* a custom type keeps the size it had unless the set names it, so
@@ -3409,6 +3416,15 @@
     styleChain(id).forEach(function(k){
       var base=STYLE_DEFAULTS[k],over=deckStyles()[k];
       if(base) Object.keys(base).forEach(function(p){out[p]=base[p];});
+      /* T278: THE PAGE'S SCALE, between the built-in and the override.
+         A poster's type is sized to the sheet -- 1.9% of an A0 is a
+         section heading where Heading 2 is 3.8 -- so the template that
+         made the page seeds pres.scale with one size per type, and it
+         sits UNDER the deck's own overrides: a size you set by hand
+         still wins, and "back to the built-in sizes" lands here rather
+         than on the 16:9 ladder. Sizes only; never a look. */
+      var sc=pres&&pres.scale&&pres.scale[k];
+      if(sc>0) out.size=sc;
       if(over) Object.keys(over).forEach(function(p){out[p]=over[p];});
     });
     /* the family's own bookkeeping, never the parent's: a variation is
