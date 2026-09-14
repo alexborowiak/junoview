@@ -21,9 +21,9 @@ from __future__ import annotations
 
 import re
 
-# the built-in seven, with the size each one means
+# the built-in eight, with the size each one means
 STYLE_SIZES = {
-    "title": 7.2, "h1": 5.0, "h2": 3.8, "h3": 3.0,
+    "title": 7.2, "subtitle": 3.4, "h1": 5.0, "h2": 3.8, "h3": 3.0,
     "body": 3.9, "small": 2.0, "caption": 1.7,
 }
 
@@ -40,9 +40,8 @@ def test_every_slide_template_text_slot_declares_its_type(out):
     slots = re.findall(r"\{k:'text',[^}]*\}", block)
     assert len(slots) >= 14, f"only found {len(slots)} text slots"
     untyped = [s for s in slots if "style:'" not in s]
-    # exactly one, and it is the subtitle, which has no home in the seven
-    assert len(untyped) == 1, untyped
-    assert "Subtitle" in untyped[0], untyped[0]
+    # T277: none -- the subtitle, once the only untyped slot, has a type
+    assert untyped == [], untyped
 
 
 def test_a_stamped_box_is_not_born_already_drifting(out):

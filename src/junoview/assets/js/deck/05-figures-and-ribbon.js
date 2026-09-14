@@ -429,7 +429,11 @@
      and it matters more than the theoretically closest name for any one
      band. styleOrder(), so a type you invented can be suggested too. */
   function stdName(bands){
-    var left=styleOrder();
+    /* T277: a subtitle is the line UNDER A TITLE -- a place, not a size
+       band -- so size alone must never suggest it: a deck of 3.4% body
+       paragraphs is Body, not a page of subtitles. Like caption, it is
+       a name only the user gives. */
+    var left=styleOrder().filter(function(id){return id!=='subtitle';});
     bands.forEach(function(b){
       var best=null,bestD=1e9;
       left.forEach(function(id){

@@ -166,7 +166,7 @@
      a saved deck with custom types can be normalised without reaching an
      as-yet undefined BUILTIN_STYLE_IDS (and keep one canonical list). */
   var BUILTIN_STYLE_IDS=[
-    'title','h1','h2','h3','body','small','caption'];
+    'title','subtitle','h1','h2','h3','body','small','caption'];
   function normPres(p,stem){
     /* deep-copy a presentation, namespacing plain anchors (against
        `stem` when it came from one notebook, else best-effort);

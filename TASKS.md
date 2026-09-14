@@ -5954,7 +5954,7 @@ option. Then where has the ability to refresh all images gone?"
   to arrive `(NONE)`; they now arrive `title @7.2`, `h1 @5` and
   `body @2.6` exactly as the slot says.
 
-- [ ] **T277 - There is no Subtitle type.**
+- [x] **T277 - There is no Subtitle type.**
   Found doing T276. The built-in seven are title / h1 / h2 / h3 / body /
   small / caption. The Title layout's "Subtitle" slot, and every poster's
   author-and-affiliation line, have nowhere semantically right to land:
@@ -5965,6 +5965,14 @@ option. Then where has the ability to refresh all images gone?"
   STYLE_ORDER, every style set, the type strip and the Design rail --
   worth doing, but it is a decision about the deck's type ladder rather
   than a bug fix.
+  *Done 2026-09-14.* `subtitle` sits under Title in BUILTIN_STYLE_IDS
+  (3.4, not bold, no baked colour -- so the Title layout's slot, now
+  stamped, is not drift the moment it lands); the six style sets and
+  four colour themes each name it (quiet ink); the type strip, the
+  Styles menu and the Design rail pick it up from the one list. Size
+  alone never suggests it: a subtitle is the line under a title, a
+  place rather than a band, so stdName skips it the way it only ever
+  finds Caption by position. Poster author lines stay for T278.
 
 - [ ] **T278 - The poster templates cannot be typed until the seed
   survives a style set.**

@@ -2289,6 +2289,10 @@
      contract - a style sets, it does not lock. */
   var STYLE_DEFAULTS={
     title:  {label:'Title',      size:7.2, b:1},
+    /* T277: the eighth. The four headings are bold and body/small are
+       body copy; a subtitle -- the line under a title, an author-and-
+       affiliation line -- is neither, and had nowhere right to land. */
+    subtitle:{label:'Subtitle',  size:3.4},
     h1:     {label:'Heading 1',  size:5.0, b:1},
     h2:     {label:'Heading 2',  size:3.8, b:1},
     h3:     {label:'Heading 3',  size:3.0, b:1},
@@ -2779,13 +2783,15 @@
     {id:'clean',label:'Clean',
      note:'Sans throughout, the built-in scale. A safe default.',
      styles:{
-       title:{size:7.2,b:1},h1:{size:5.0,b:1},h2:{size:3.8,b:1},
+       title:{size:7.2,b:1},subtitle:{size:3.4},
+       h1:{size:5.0,b:1},h2:{size:3.8,b:1},
        h3:{size:3.0,b:1},body:{size:3.9},small:{size:2.0},
        caption:{size:1.7,i:1,color:'#8aa0b0'}}},
     {id:'editorial',label:'Editorial',
      note:'Serif headings over a sans body, and room to breathe.',
      styles:{
        title:{size:7.6,b:1,font:'serif'},
+       subtitle:{size:3.4,i:1,font:'serif',color:'#9aa8b4'},
        h1:{size:5.2,b:1,font:'serif'},
        h2:{size:3.9,b:1,font:'serif'},
        h3:{size:3.0,b:0,i:1,font:'serif'},
@@ -2794,13 +2800,15 @@
     {id:'bold',label:'Bold',
      note:'Heavy sans and big titles — for a room at the back.',
      styles:{
-       title:{size:9.0,b:1},h1:{size:6.2,b:1},h2:{size:4.4,b:1},
+       title:{size:9.0,b:1},subtitle:{size:4.0,color:'#7f93a4'},
+       h1:{size:6.2,b:1},h2:{size:4.4,b:1},
        h3:{size:3.3,b:1},body:{size:3.0,b:0},small:{size:2.3},
        caption:{size:1.9,b:1,color:'#7f93a4'}}},
     {id:'academic',label:'Academic',
      note:'Serif everywhere, modest sizes, generous leading.',
      styles:{
        title:{size:6.4,b:1,font:'serif'},
+       subtitle:{size:3.0,i:1,font:'serif',color:'#93a3b0'},
        h1:{size:4.4,b:1,font:'serif'},
        h2:{size:3.4,b:1,font:'serif'},
        h3:{size:2.8,b:0,i:1,font:'serif'},
@@ -2810,13 +2818,15 @@
     {id:'minimal',label:'Minimal',
      note:'Light weights and small headings. Lets the figures talk.',
      styles:{
-       title:{size:5.6},h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
+       title:{size:5.6},subtitle:{size:2.8,color:'#8aa0b0'},
+       h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
        body:{size:2.4,lh:1.55},small:{size:1.9,lh:1.45},
        caption:{size:1.55,color:'#8aa0b0'}}},
     {id:'poster',label:'Poster',
      note:'Sized for a printed sheet read from a metre away.',
      styles:{
-       title:{size:4.6,b:1},h1:{size:3.2,b:1},h2:{size:2.5,b:1},
+       title:{size:4.6,b:1},subtitle:{size:2.2,color:'#8aa0b0'},
+       h1:{size:3.2,b:1},h2:{size:2.5,b:1},
        h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
        caption:{size:1.25,i:1,color:'#8aa0b0'}}}
   ];
@@ -2839,7 +2849,7 @@
      says is '@name', and the palette says what the name means -- so
      applying a second theme re-resolves every box, and a variation
      (which keeps only its own delta, T292) survives and re-resolves too.
-     Built-in themes name ALL ten tokens and all seven built-in styles,
+     Built-in themes name ALL ten tokens and all eight built-in styles,
      so "a theme means what it says" needs no zero-fill list. */
   var COLOUR_THEMES=[
     {id:'business',label:'Business',
@@ -2850,6 +2860,7 @@
        warm:'#c0392b',lift:'#d98e04',calm:'#2e8b6f'}},
      styles:{
        title:{color:'@heading',bg:'@surface',bdc:'@line'},
+       subtitle:{color:'@quiet',bg:'@surface',bdc:'@line'},
        h1:{color:'@heading',bg:'@surface',bdc:'@line'},
        h2:{color:'@heading',bg:'@surface',bdc:'@line'},
        h3:{color:'@heading',bg:'@surface',bdc:'@line'},
@@ -2864,6 +2875,7 @@
        warm:'#ff4d6d',lift:'#ffd166',calm:'#4dd0e1'}},
      styles:{
        title:{color:'@heading',bg:'none',bdc:'none'},
+       subtitle:{color:'@quiet',bg:'none',bdc:'none'},
        h1:{color:'@heading',bg:'none',bdc:'none'},
        h2:{color:'@accent',bg:'none',bdc:'none'},
        h3:{color:'@accent',bg:'none',bdc:'none'},
@@ -2878,6 +2890,7 @@
        warm:'#b5473a',lift:'#c98a2a',calm:'#4f7f6a'}},
      styles:{
        title:{color:'@heading',bg:'none',bdc:'none'},
+       subtitle:{color:'@quiet',bg:'none',bdc:'none'},
        h1:{color:'@heading',bg:'none',bdc:'none'},
        h2:{color:'@heading',bg:'none',bdc:'none'},
        h3:{color:'@accent',bg:'none',bdc:'none'},
@@ -2892,6 +2905,7 @@
        warm:'#ff6b57',lift:'#f0a848',calm:'#46a892'}},
      styles:{
        title:{color:'@heading',bg:'none',bdc:'none'},
+       subtitle:{color:'@quiet',bg:'none',bdc:'none'},
        h1:{color:'@heading',bg:'none',bdc:'none'},
        h2:{color:'@accent',bg:'none',bdc:'none'},
        h3:{color:'@accent',bg:'none',bdc:'none'},

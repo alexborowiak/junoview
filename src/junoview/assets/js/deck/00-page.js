@@ -116,13 +116,10 @@
     {id:'title',label:'Title',items:[
       {k:'text',x:12,y:33,w:76,h:16,text:'Presentation title',size:7.2,
         b:1,align:'center',style:'title'},
-      /* THE SUBTITLE HAS NO HOME IN THE SEVEN and is deliberately left
-         untyped. title/h1/h2/h3 are all bold, body and small are body
-         copy; a subtitle is neither, and inventing an eighth built-in
-         reaches into BUILTIN_STYLE_IDS, every style set, the type strip
-         and the Design rail. Recorded as T277 rather than guessed at. */
+      /* T277: the subtitle has a home now -- the eighth built-in, sized
+         at its own number so the box is not drift the moment it lands */
       {k:'text',x:12,y:55,w:76,h:8,text:'Subtitle',size:3.4,
-        align:'center'}]},
+        align:'center',style:'subtitle'}]},
     {id:'section',label:'Section',items:[
       {k:'text',x:8,y:41,w:84,h:18,text:'Section',size:7.2,b:1,
         align:'center',style:'title'}]},

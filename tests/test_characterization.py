@@ -1795,8 +1795,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T422: the Find bar steps left of an open Variables pane
 # T248: tree and plot-trace clones drop the pin and mark buttons
 # T423: pageRuns tolerates a section with no data-sec
-EXPECTED_MD5 = "307f69c1a2d7f23400ab6fa2a7cd08db"
-EXPECTED_BYTES = 4164418
+# T277: an eighth built-in type, Subtitle, in the ladder, every set
+# and theme, and the Title layout
+EXPECTED_MD5 = "2a623e731892d8bf271a38d67d4618a9"
+EXPECTED_BYTES = 4165299
 
 
 def _render_example() -> str:

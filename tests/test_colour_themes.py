@@ -118,8 +118,8 @@ def test_every_theme_names_every_token_and_every_style():
         assert t["tokens"] == sorted(["accent", "warm", "lift", "calm", "ink",
                                       "quiet", "page", "surface", "heading",
                                       "line"]), t["id"]
-        assert t["styles"] == sorted(["title", "h1", "h2", "h3", "body",
-                                      "small", "caption"]), t["id"]
+        assert t["styles"] == sorted(["title", "subtitle", "h1", "h2", "h3",
+                                      "body", "small", "caption"]), t["id"]
         assert all(f == "bdc,bg,color" for f in t["fields"]), (t["id"], t["fields"])
 
 
