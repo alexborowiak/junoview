@@ -83,6 +83,8 @@
     function picBytes(a){
       var addr=picAddr(a);
       if(addr&&!a.fkey){
+        /* T437: a web address reads itself, in every build */
+        if(/^https?:\/\//i.test(addr)) return fetchDataUrl(addr);
         if(!picCanEmbed())
           return Promise.reject(new Error('needs the Junoview app'));
         return APP.api('/api/readimage',{path:addr})
@@ -107,7 +109,11 @@
         }).then(function(r){
           var src=r.small;
           if(!src||src===e.a.src) {ok++;return;}
+          /* T437: a picture that lived at its address now holds the
+             bytes, and keeps the address beside them to re-read */
+          var wasLink=picState(e.a)==='link',addr0=picAddr(e.a);
           e.a.src=src;ok++;
+          if(wasLink&&addr0) e.a.psrc=addr0;
           /* THE ORIGINAL MOVES WITH THE PICTURE. Only a.src was
              replaced, so a.okey went on naming the bytes of the file as
              it was when first inserted — and every export that swaps
@@ -373,7 +379,8 @@
           +'only copy — there is no file to re-read, and nothing to lose');
         return;
       }
-      if(picState(a2)==='link'&&!picCanEmbed()){
+      if(picState(a2)==='link'&&!picCanEmbed()
+         &&!/^https?:\/\//i.test(picAddr(a2))){
         toast('This picture is loaded from '+picAddr(a2)+' every time the '
           +'deck opens, so it is always as current as that address is.',
           7000);
@@ -429,6 +436,21 @@
     }
     /* T313: one arm per state, because each one means something
        different by "refresh" */
+    /* T437: link only is a switch, on the row, said for what it is */
+    if(r.kind==='Picture'&&(r.pic==='link'||r.pic==='path')){
+      act(r.pic==='link'?'Link only':'Embedded',
+        r.pic==='link'
+          ?('Only the address is kept, so the deck is smaller \u2014 and '
+            +'the picture is missing wherever '+r.from+' cannot be '
+            +'reached. Click to read it into the deck.')
+          :('The bytes are in the deck, so it cannot go missing. Click '
+            +'to keep only the address instead (smaller, but loaded '
+            +'from '+r.from+' every time).'),
+        function(){
+          var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+          if(a2) picSetLink(a2,r.pic!=='link');
+        },r.pic==='link');
+    }
     act('Refresh',ref
       ?('Re-read this figure from ' + r.from + ' and keep the new copy '
         + '\u2014 only this one')
@@ -679,8 +701,18 @@
       var sl=pres.slides[cur],hits=[];
       selIdxs().forEach(function(i){
         var a=(sl&&sl.annots||[])[i];
-        if(a&&a.k==='image'&&a.fkey) hits.push({si:cur,ai:i,a:a});});
+        /* T437: a file, a path or an address -- anything re-readable */
+        if(a&&a.k==='image'&&(a.fkey||picAddr(a)))
+          hits.push({si:cur,ai:i,a:a});});
       refreshImagesReport(hits);
+    });
+    /* T437: the Link only switch on the Object tab */
+    var lk=$('#fmt-imglink');
+    if(lk) lk.addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=pres.slides[cur],a=(sl&&sl.annots||[])[selAnnot];
+      if(!a||a.k!=='image'||!picAddr(a)) return;
+      picSetLink(a,picState(a)!=='link').then(function(){showFmt();});
     });
   })();
   /* T313: A PATH IS READ, A URL IS LINKED.
@@ -692,13 +724,79 @@
      capped) and the bytes are kept with the address beside them; a web
      address stays a link, because it already works and proxying it
      would make the server reachable as one. */
+  /* ---- T437: EMBEDDED BY DEFAULT (2026-09-14, user: "images are
+     still just loading from their path by default. The default should
+     be that they are embedded, and then there are options to make them
+     just from the path and so load each time, as well as refresh from
+     the path even if they are embedded ... The load always from path
+     (symbolic link) needs to be a compression thing that is only active
+     manually so people are aware"). Every door now reads the picture
+     into the deck and keeps its address beside the bytes; "link only"
+     is a choice you make on the picture, said out loud as the size
+     saving it is, and undone by Refresh. */
+  function fetchDataUrl(url){
+    return fetch(url,{mode:'cors'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.blob();
+    }).then(function(b){
+      if(b.type&&b.type.indexOf('image/')!==0)
+        throw new Error('not a picture');
+      return readAsDataURL(b);
+    });
+  }
+  /* one picture: hold the bytes (off) or live at its address (on) */
+  function picSetLink(a,on){
+    if(!a||a.k!=='image') return Promise.resolve(false);
+    var addr=picAddr(a);
+    if(!addr) return Promise.resolve(false);
+    if(on){
+      if(picState(a)==='link') return Promise.resolve(true);
+      a.src=addr;delete a.psrc;
+      if(a.okey){try{idbDel(a.okey);}catch(e){}delete a.okey;}
+      markDirty();refresh();imgPaneRefresh();
+      toast('Link only: the deck keeps just the address, so it is smaller '
+        +'\u2014 and the picture is missing wherever '+midElide(addr,40)
+        +' cannot be reached. Refresh puts the bytes back.',9000);
+      return Promise.resolve(true);
+    }
+    if(picState(a)!=='link') return Promise.resolve(true);
+    var si=cur,ai=(pres.slides[cur].annots||[]).indexOf(a);
+    return refreshImagesReport([{si:si,ai:ai,a:a}],true).then(function(r){
+      var ok=!!(r&&r.ok);
+      toast(ok?'Kept in the deck \u2014 it remembers '+midElide(addr,40)
+        :('Could not read '+midElide(addr,40)+' \u2014 still a link'),6000);
+      imgPaneRefresh();
+      return ok;
+    });
+  }
   function placeFromAddress(addr){
     var isUrl=/^https?:\/\//i.test(addr);
-    if(isUrl||!picCanEmbed()){
-      if(!isUrl&&!picCanEmbed())
-        toast('A file on this computer can only be read by the Junoview '
-          +'app. Here, use a web address — or Insert \u203a Picture to '
-          +'choose the file.',7000);
+    if(isUrl){
+      /* T437: read and kept, with the address beside it. Only a site
+         that refuses the read leaves it as a link, and that is said. */
+      toast('Reading '+midElide(addr,40)+'\u2026');
+      fetchDataUrl(addr).then(function(full){
+        return shrinkDataUrl(full).then(function(small){
+          placeImage(small,0,null,full!==small?full:null);
+          var s=pres.slides[cur],a=s&&(s.annots||[])[selAnnot];
+          /* the address lands after placeImage selected the picture,
+             so the Object tab is re-judged with it */
+          if(a&&a.k==='image'){a.psrc=addr;markDirty();showFmt();}
+          toast('Kept in the deck, and it remembers '+midElide(addr,40));
+          imgPaneRefresh();
+        });
+      }).catch(function(){
+        placeImage(addr,0);
+        toast('That site did not let this page read the picture, so it '
+          +'is a link: loaded from '+midElide(addr,40)+' each time, and '
+          +'missing wherever that cannot be reached.',9000);
+      });
+      return;
+    }
+    if(!picCanEmbed()){
+      toast('A file on this computer can only be read by the Junoview '
+        +'app. Here, use a web address \u2014 or Insert \u203a Picture to '
+        +'choose the file.',7000);
       placeImage(addr,0);
       return;
     }
@@ -714,7 +812,7 @@
           a.psrc=addr;
           if(r.path) a.ppath=r.path;
           if(r.name) a.fname=r.name;
-          markDirty();
+          markDirty();showFmt();   /* T437: the tab sees the address */
         }
         toast('Kept in the deck, and it remembers '+(r.name||addr));
         imgPaneRefresh();
@@ -1257,12 +1355,12 @@
       function(){objInto=idx;pasteObjImage();}],
      [bic('link'),'A path or a link',
       picCanEmbed()
-        ? 'A file on this computer or a web address. A file is READ and '
+        ? 'A file on this computer or a web address. Either is READ and '
           +'kept in the deck, and remembers where it came from so you '
-          +'can re-read it; a web address is loaded every time.'
-        : 'A web address this page can load. The address is what is '
-          +'kept, so the picture stays exactly as portable as the '
-          +'address is — opening the deck elsewhere re-fetches it.',
+          +'can re-read it (T437).'
+        : 'A web address. It is read and kept in the deck, and remembers '
+          +'where it came from so you can re-read it; a site that '
+          +'refuses the read leaves it as a link, and that is said.',
       function(){
         var p=prompt(picCanEmbed()
           ? 'Path or link to a picture:'

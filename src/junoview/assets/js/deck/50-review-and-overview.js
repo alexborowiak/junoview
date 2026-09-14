@@ -1341,6 +1341,26 @@
     var kind=document.createElement('span');kind.className='presentation-hub-row-kind';
     kind.textContent=presentationKind(p)+(p.folder?' · '+p.folder:'');
     b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
+    /* T435: the pin. A pinned row heads Recent and never drops off it. */
+    var pinned=isPinnedPresentation(p.name);
+    if(pinned) b.classList.add('pinned');
+    var pin=document.createElement('span');
+    pin.className='presentation-hub-pin'+(pinned?' on':'');
+    pin.setAttribute('role','button');pin.tabIndex=0;
+    pin.innerHTML=bic('pin');
+    pin.title=pinned?'Pinned to the top of Recent \u2014 click to unpin'
+      :'Pin to the top of Recent, so it never drops off the list';
+    pin.setAttribute('aria-label',pin.title);
+    function flip(e){
+      e.stopPropagation();e.preventDefault();
+      var on=togglePinPresentation(p.name);
+      toast(on?('\u201c'+p.name+'\u201d pinned \u2014 it stays at the top '
+        +'of Recent'):('\u201c'+p.name+'\u201d unpinned'),4000);
+    }
+    pin.addEventListener('click',flip);
+    pin.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' ') flip(e);});
+    b.appendChild(pin);
     b.addEventListener('click',function(e){
       if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
         noteSessionOpen(p.name);
@@ -1726,6 +1746,7 @@
       if(form){form.hidden=false;if(field) field.focus();}
     };
     window.SemApp.deckRecentNames=savedRecentPresentationNames;
+    window.SemApp.deckPinToggle=togglePinPresentation;   /* T435 */
     renderPresentationHub();renderDeckPresentationDrawer();
     if(APP.refreshChrome) APP.refreshChrome();
   }

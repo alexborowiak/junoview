@@ -1852,8 +1852,18 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # entrance; 20-notes-and-tables.js and deck.css change.
 # T436 (2026-09-14): several files open at once; 60-saving-and-
 # export.js, 50-review-and-overview.js, app.js and page.html change.
-EXPECTED_MD5 = "7a0b004470cc3ccfe3d5bcd1b7cefd83"
-EXPECTED_BYTES = 4204618
+# T435 (2026-09-14): pins in Recents; 10-decks.js, 50-review-and-
+# overview.js, app.js and app.css change.
+# T437 (2026-09-14): pictures embed by default, link-only is a switch;
+# 45-images.js, 30-format-bar.js, 25-selecting.js, 07-ribbon-
+# layouts.js, 60-saving-and-export.js and deck.html change.
+# T437 (2026-09-14): pictures embed by default, link-only is a switch;
+# 45-images.js, 30-format-bar.js, 25-selecting.js, 07-ribbon-
+# layouts.js, 60-saving-and-export.js and deck.html change.
+# T442 (2026-09-14): a maths box reopens in the equation editor;
+# 20-notes-and-tables.js and 25-selecting.js change.
+EXPECTED_MD5 = "886792d12382e7d3fab28d482ea1cec1"
+EXPECTED_BYTES = 4219391
 
 
 def _render_example() -> str:

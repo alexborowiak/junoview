@@ -98,7 +98,8 @@ def test_the_per_picture_refresh_never_shows_when_it_could_only_fail(out):
     """A button offered on a picture that was never linked to a file is a
     button that can only ever report failure."""
     assert "if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;" in out
-    assert "ir.hidden=!anyLinked;" in out
+    # T437: a path or an address re-reads too, so the rule widened
+    assert "ir.hidden=!(anyLinked||anyAddr);" in out
     # and it is declared, so the completeness check does not warn
     assert "#fmt-imgrefresh" in out
 

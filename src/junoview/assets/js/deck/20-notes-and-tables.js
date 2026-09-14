@@ -1121,6 +1121,16 @@
       var sg=pres.slides[cur],ag=sg&&annotByIdx(sg,idx);
       if(ag&&ag.grp!=null&&inGroup!==ag.grp) return;
       e.stopPropagation();
+      /* T442: A MATHS BOX OPENS IN THE EQUATION EDITOR (2026-09-14,
+         user: "with equations it would be good if you can go back into
+         the equation and edit in the equation editor. Currently you
+         cannot do this"). The Edit equation button on the Text tab was
+         the only way back in, and a double-click -- the way into every
+         other box -- put a bare caret on the LaTeX instead. */
+      if(typeof idx==='number'&&ag&&typeof isMaths==='function'
+         &&isMaths(ag)&&window.SemDeckEquation){
+        window.SemDeckEquation(idx);return;
+      }
       /* WHICH CLICK THIS IS. The caret-placing below is right for the
          double-click that OPENS the box — you want the caret where you
          pointed, not at the end. It was running on every double-click,

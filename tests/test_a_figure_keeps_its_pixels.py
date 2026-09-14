@@ -1051,11 +1051,18 @@ def test_a_path_picture_is_read_and_kept(out):
     assert "          a.psrc=addr;" in out
 
 
-def test_a_web_address_stays_a_link(out):
-    """https already loads in an <img>. Reading it server-side would buy
-    only the embed half and cost a proxy reachable from the page."""
-    assert "    if(isUrl||!picCanEmbed()){" in out
-    assert "      placeImage(addr,0);" in out
+def test_a_web_address_is_read_in_too(out):
+    """T437 (2026-09-14): a web address used to stay a link -- loaded on
+    every render, missing wherever it cannot be reached. It is read
+    and kept now, the address beside the bytes; only a site that
+    refuses the read leaves it as a link, and the toast says so."""
+    fn = out.split("  function placeFromAddress(addr){")[1].split("\n  }")[0]
+    assert "    if(isUrl){" in fn
+    assert "      fetchDataUrl(addr).then(function(full){" in fn
+    assert "        toast('That site did not let this page read the picture, " \
+        in fn
+    # a local path still needs the app to read it
+    assert "    if(!picCanEmbed()){" in fn
 
 
 def test_the_door_promises_only_what_this_mode_can_do(out):
@@ -1065,7 +1072,8 @@ def test_the_door_promises_only_what_this_mode_can_do(out):
     reverse."""
     assert "  function picCanEmbed(){return APP.mode==='app';}" in out
     assert "      picCanEmbed()\n        ? 'A file on this computer" in out
-    assert "        : 'A web address this page can load." in out
+    # T437: read and kept even here; a refusing site leaves it a link
+    assert "        : 'A web address. It is read and kept in the deck," in out
     assert ("        var p=prompt(picCanEmbed()\n"
             "          ? 'Path or link to a picture:'\n"
             "          : 'Link to a picture (a web address):','');") in out

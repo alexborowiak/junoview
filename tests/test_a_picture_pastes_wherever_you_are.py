@@ -23,7 +23,8 @@ def test_one_reader_for_every_shape_a_picture_arrives_in(out):
     assert ("    if(m&&/^(data:image\\/|https?:\\/\\/)/i.test(m[1])) "
             "return {src:m[1]};") in out
     assert "  function pasteClipboardImage(pic){" in out
-    assert "    placeImage(pic.src,0,null);" in out
+    # T437: an address is read in through the address door, not linked
+    assert "    placeFromAddress(pic.src);\n    return true;" in out
 
 
 def test_a_paste_while_typing_puts_the_picture_on_the_slide(out):

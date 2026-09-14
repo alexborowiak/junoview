@@ -100,7 +100,7 @@
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
-    +'#fmt-opval #fmt-imgrefresh').split(' ');
+    +'#fmt-opval #fmt-imgrefresh #fmt-imglink').split(' ');
 
   /* EVERY CONTEXTUAL CONTROL, in one list: the two tables that already
      govern them. */
@@ -586,11 +586,25 @@
        otherwise it is a button that can only ever fail */
     var ir=$('#fmt-imgrefresh');
     if(ir){
-      var anyLinked=false;
+      var anyLinked=false,anyAddr=false;
       selIdxs().forEach(function(i){
         var xa=(s&&s.annots||[])[i];
-        if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;});
-      ir.hidden=!anyLinked;
+        if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;
+        /* T437: a path or an address re-reads too */
+        if(xa&&xa.k==='image'&&typeof picAddr==='function'&&picAddr(xa))
+          anyAddr=true;});
+      ir.hidden=!(anyLinked||anyAddr);
+      ir.innerHTML=bic('reload')+(anyLinked&&!anyAddr
+        ?' Refresh from file':' Refresh from path');
+    }
+    /* T437: Link only -- the size saving, as a switch you can see */
+    var lk=$('#fmt-imglink');
+    if(lk){
+      var lkOn=kind==='image'&&isNum&&typeof picAddr==='function'
+        &&!!picAddr(a);
+      lk.hidden=!lkOn;
+      if(lkOn) lk.setAttribute('aria-pressed',
+        (picState(a)==='link').toString());
     }
     /* WHERE IT CAME FROM, on the row (T198): a picture's file, a
        figure's notebook; and the lock that keeps a thing in place */
@@ -2157,6 +2171,19 @@
           row('Remove the link','',function(){
             delete lk0.link;markDirty();renderSlide();
             toast('Link removed');},null,'unlink');
+      }
+      /* T442: the equation editor, from the menu that knows what you
+         clicked -- the same door the double-click takes */
+      if(selIdxs().length===1){
+        var eq0=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        if(eq0&&typeof isMaths==='function'&&isMaths(eq0)){
+          menuHead(m,'equation');
+          row('Edit the equation\u2026','',function(){
+            if(window.SemDeckEquation) window.SemDeckEquation(selIdxs()[0]);},
+            'Open it in the equation editor \u2014 the palette, the live '
+            +'preview, display or inline. Double-clicking the box does '
+            +'the same','maths');
+        }
       }
       if(altSel.length){
         var one0=(pres.slides[cur].annots||[])[altSel[0]];

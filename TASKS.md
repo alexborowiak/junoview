@@ -8408,3 +8408,35 @@ gates are recorded in the completing commit.
   a Ctrl+click on a library row puts that presentation on the open
   list without leaving the dialog. The notebook `<input>` already took
   many. Driven live.
+- [x] **T435 — Pins in Recents.** (User, 2026-09-14: "would be cool to
+  be able to pin files to recent. I feel like I am always losing files
+  and hard to keep track of.") A pinned presentation heads Recent — on
+  Home, in the library dialog and in the presenting drawer's Recents
+  door — and never falls off the end of the list however many others
+  are opened after it. The pin is a small button on every row; a rename
+  or a delete follows it. Notebooks get the same on Home's recent list
+  and in the open dialog, kept beside the recent paths so the pins do
+  not eat the list. Driven live.
+- [x] **T437 — A picture is embedded by default; link-only is a choice
+  you make.** (User, 2026-09-14: "images are still just loading from
+  their path by default. The default should be that they are embedded,
+  and then there are options to make them just from the path and so
+  load each time, as well as refresh from the path even if they are
+  embedded ... The load always from path (symbolic link) needs to be a
+  compression thing that is only active manually so people are
+  aware.") A web address typed at the address door, pasted as HTML, or
+  pasted onto a flip book was kept as the address and loaded on every
+  render. Every door now reads the picture into the deck and keeps the
+  address beside the bytes; only a site that refuses the read leaves
+  it as a link, said out loud. "Link only" is a switch on the Images
+  pane row and on the Object tab, worded as the size saving it is;
+  Refresh re-reads from a file, a path or an address and turns a link
+  back into bytes. Driven live.
+- [x] **T442 — An equation goes back into the equation editor.** (User,
+  2026-09-14: "with equations it would be good if you can go back into
+  the equation and edit in the equation editor. Currently you cannot
+  do this.") The Edit equation button on the Text tab was the only way
+  back in, and a double-click — the way into every other box — put a
+  bare caret on the LaTeX instead. A double-click on a maths box opens
+  the equation editor on it, and the right-click menu offers the same
+  under "equation". Driven live.

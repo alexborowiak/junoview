@@ -746,6 +746,16 @@ body:not(.light) .wj-none{color:var(--ink-3);}
 .recent-ic{flex:none;font-size:12px;line-height:1;opacity:.85;}
 .recent-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
+/* T435: the pin on a recent row. Faint until hovered, lit when on. */
+.recent-pin{flex:none;width:20px;height:20px;padding:0;border:0;
+  background:none;color:var(--ink-3);opacity:.35;cursor:pointer;
+  border-radius:4px;display:inline-flex;align-items:center;
+  justify-content:center;}
+.recent-pin .bic{width:12px;height:12px;}
+.recent-i:hover .recent-pin,.odlg-r:hover .recent-pin{opacity:.8;}
+.recent-pin:hover{opacity:1;background:color-mix(in srgb,var(--accent) 14%,transparent);}
+.recent-pin.on{opacity:1;color:var(--accent);}
+.recent-i.pinned{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));}
 .recent-tag{flex:none;font-size:8.5px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--amber);
   border:1px solid var(--amber-soft);border-radius:4px;padding:1px 5px;}
@@ -978,6 +988,15 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   white-space:nowrap;flex:1;}
 .presentation-hub-row-kind{flex:none;color:var(--chrome-ink-2);
   font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;}
+/* T435: the pin on a library row */
+.presentation-hub-pin{flex:none;width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:4px;
+  color:var(--chrome-ink-2);opacity:.35;cursor:pointer;}
+.presentation-hub-pin .bic{width:12px;height:12px;color:inherit;}
+.presentation-hub-row:hover .presentation-hub-pin{opacity:.85;}
+.presentation-hub-pin:hover{opacity:1;background:#ffffff14;}
+.presentation-hub-pin.on{opacity:1;color:var(--cyan);}
+.presentation-hub-row.pinned{border-color:color-mix(in srgb,var(--cyan) 45%,var(--chrome-line));}
 .presentation-hub-empty{padding:9px;color:var(--chrome-ink-2);
   border:1px dashed var(--chrome-line);border-radius:7px;font:11px var(--sans);}
 /* T394: folders live in the library now. A heading is a drop target;
@@ -1050,7 +1069,7 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
    said they could be clicked (2026-08-21, user: "the recents look just
    like text, not a button or something"). Now: a card, an icon, and the
    name over its path. */
-.odlg-r{display:grid;grid-template-columns:auto 1fr;
+.odlg-r{display:grid;grid-template-columns:auto 1fr auto;
   grid-template-rows:auto auto;column-gap:9px;row-gap:1px;width:100%;
   background:var(--chrome-3);border:1px solid var(--chrome-line);
   padding:7px 10px;border-radius:7px;cursor:pointer;text-align:left;
@@ -1058,6 +1077,8 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
 .odlg-r:hover{background:var(--surface-hover);border-color:var(--accent);}
 .odlg-r-ic{grid-row:1/3;align-self:center;font-size:13px;line-height:1;
   opacity:.85;}
+/* T435: the pin takes the third column, both rows */
+.odlg-r .recent-pin{grid-column:3;grid-row:1/3;align-self:center;}
 .odlg-r-nm{font-size:12.5px;color:var(--accent);font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   max-width:100%;min-width:0;}
