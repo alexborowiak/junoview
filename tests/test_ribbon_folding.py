@@ -38,7 +38,9 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     # the door is words plus an icon, named for the group -- and since T218
     # it is the one tall tile, the group's own icon over its name
     assert "btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')" in out
-    assert "+'<span>'+esc(name)+' \\u25be</span>';" in out
+    # T441: the door carries its current choice under the name
+    assert ("+'<span>'+esc(name)+' \\u25be</span><span class=\"rbn-foldval\">"
+            "</span>';") in out
     # rightmost ON SCREEN, since flex order decides the visual order
     assert ("return x.getBoundingClientRect().left"
             "-y.getBoundingClientRect().left;") in out
@@ -95,7 +97,7 @@ def test_the_page_size_is_tiles_and_tokens_have_a_plain_name(out):
     assert "function closePageMenu(){}" in out
     # ...and since T208 it is the Palette, with a tooltip that says what a
     # named colour is ("what does colours and spacing do?")
-    assert "Shared colours</button>" in out
+    assert "Deck colours&#8230;</button>" in out   # T444
     assert ".page-ico{display:block;border:1.5px solid currentColor;" in out
 
 

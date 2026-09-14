@@ -30,9 +30,13 @@ def _row(html: str, label: str) -> str:
 
 def test_the_presentation_style_system_is_on_home(out):
     """Styles, shared colours and consistency span more than typed text."""
-    assert 'class="rbn-grp rbn-type" data-tab="home"' in out
+    # T444: the Style system alone stays on Home, never folded; the type
+    # doors moved to Text and the deck-wide ones to Design
+    assert ('class="rbn-grp rbn-type rbn-stylesys" data-tab="home"') in out
     assert 'class="rbn-grp rbn-type" data-tab="design"' not in out
-    assert '<span class="rbn-lab">Presentation styles</span>' in out
+    assert '<span class="rbn-lab">Style system</span>' in out
+    assert '<span class="rbn-lab">Presentation type</span>' in out
+    assert '<span class="rbn-lab">Whole deck</span>' in out
     for cid in ("dsg-styles", "dsg-tokens", "dsg-std", "dsg-design-btn"):
         assert f'id="{cid}"' in out, cid
     assert "styles used in this presentation" in out

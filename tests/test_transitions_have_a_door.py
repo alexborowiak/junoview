@@ -25,7 +25,7 @@ from junoview import assets
 
 def test_the_three_transitions_are_on_the_animation_tab():
     html = assets.deck_html()
-    assert 'class="rbn-grp rbn-trans" data-tab="animation"' in html
+    assert 'class="rbn-grp rbn-trans rbn-compact" data-tab="animation"' in html
     # T372: the same frame-of-tiles as the entrance-effect strip two
     # groups along, because it is the same kind of choice
     assert 'class="rbn-tall strip-frame" id="trans-frame"' in html

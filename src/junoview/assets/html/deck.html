@@ -666,6 +666,12 @@
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <i data-ic="objects"></i> Saved layouts&#8230;</button>
+              <!-- T444: the master is a LAYOUT every slide inherits, so it
+                   sits with the layouts (2026-09-14, user: "Move slide
+                   master out of page furniture (why would you put that
+                   there????)") -->
+              <button class="dbtn rbn-sm" id="dsg-masters"
+                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Slide master&#8230;</button>
               <button class="dbtn rbn-sm" id="dsg-tidy"
                 title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><i data-ic="align"></i> Tidy page</button>
               <!-- T365: LAST, and a column of its own. Four segments make
@@ -779,14 +785,29 @@
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
                 title="A number on every slide"><i data-ic="numbers"></i> Page numbers</button>
-              <!-- T115's masters hid inside two Layouts menus; the
-                   feature that owns "the look every slide inherits"
-                   belongs on the tab that owns page furniture
-                   (JVUX-11). -->
-              <button class="dbtn rbn-sm" id="dsg-masters"
-                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Slide master&#8230;</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
+          </span>
+          <!-- T444: DECK-WIDE COLOURS AND SPACING, ON DESIGN (2026-09-14,
+               user: "Shared colours also can go somewhere else ... This
+               needs an overhaul"). The panel is rebuilt around what the
+               colours ARE (openTokenPicker). -->
+          <span class="rbn-grp rbn-deckwide" data-tab="design"
+            data-fold-ic="palette">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="dsg-tokens"
+                aria-haspopup="true" aria-expanded="false"
+                title="The five colours every slide is built from &mdash; page,
+ words, headings, boxes, lines &mdash; and extra ones you can put on
+ things. Change one here and every slide follows"
+                ><i data-ic="palette"></i> Deck colours&#8230;</button>
+              <button class="dbtn rbn-sm" id="dsg-layout"
+                aria-haspopup="true" aria-expanded="false"
+                title="Deck-wide layout defaults: the corner shape of boxes
+ and the space used when Arrange distributes objects"
+                ><i data-ic="layouts"></i> Deck layout</button>
+            </span>
+            <span class="rbn-lab">Whole deck</span>
           </span>
           <!-- THE DECK'S TYPE, editable without selecting anything. Until
                now a style could only be changed by formatting one box and
@@ -796,121 +817,31 @@
           <!-- PRESENTATION STYLES LIVE ON HOME. They shape text, pictures,
                colours and layout across the whole presentation, so they are
                not merely a kind of text to insert (2026-09-11). -->
-          <span class="rbn-grp rbn-type" data-tab="home" data-fold-ic="styles">
+          <!-- T444: THE STYLE SYSTEM, ALONE AND NEVER FOLDED (2026-09-14,
+               user: "Moving all these buttons means style systems can
+               always be present, not collapsed. This is a really
+               important feature and I NEVER want this to be hidden.
+               NEVER"). Text styles, Style sets and Citations went to
+               the Text tab (they are about words); Deck colours and
+               Deck layout to Design (they are about the whole page);
+               the consistency check folded into the screen itself
+               (T443). rbn-stylesys is excluded from the fold ladder. -->
+          <span class="rbn-grp rbn-type rbn-stylesys" data-tab="home"
+            data-fold-ic="outline">
             <span class="rbn-row">
-              <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
-                   styles under design (should this be under design
-                   anyway???)"). The deck's type is a design decision
-                   about the whole deck, which is what every other door
-                   on this tab is; the per-box Styles door on Object is
-                   the other half, for one box. What was wrong was not
-                   the tab but the count: seven buttons for one idea.
-                   The Text styles window is the ONE room for the deck's
-                   type now -- the per-style list above, and below it
-                   the whole-deck commands that used to be four more
-                   buttons in the row: scale everything, re-apply, and
-                   the Style system screen. Design tokens stays out
-                   because it is not type (colours, radius, spacing);
-                   Standardise stays out because it is a CHECK, and the
-                   button the user went looking for (T87). -->
-              <!-- T315: the whole look, one click from the row. The
-                   gallery of style sets and colour themes used to hide
-                   as the first row of the Text styles menu. -->
-              <button class="dbtn rbn-sm" id="dsg-sets"
-                title="Ready-made looks for the whole deck: style sets
- (type) and colour themes (a palette for page, boxes, headings and
- ink), and any you saved"><i data-ic="styles"></i> Style sets&#8230;</button>
-              <!-- T325: the deck's bibliography is a deck-wide thing,
-                   like its style sets and its tokens -->
-              <button class="dbtn rbn-sm" id="dsg-cites"
-                title="This deck&#8217;s references: import a .bib, add one
- by DOI, choose numbered or author-year, and insert a references box.
- Cite in any text box as [@key]"
-                ><i data-ic="doc"></i> Citations&#8230;</button>
-              <span class="sh-drop" id="dsg-stylewrap">
-                <button class="dbtn rbn-sm" id="dsg-styles"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><i data-ic="styles"></i> Text
-                  styles &#9662;</button>
-                <div class="sh-menu style-mgr" id="dsg-style-menu"
-                  hidden>
-                  <!-- the per-style rows, built on open -->
-                  <div id="dsg-style-list"></div>
-                  <div class="hd-lab">the whole deck&rsquo;s type</div>
-                  <div class="opt-row">
-                    <button class="dbtn rbn-sm" id="dsg-scale-down"
-                      title="Make every text style one step smaller —
- the whole deck's type, in proportion">A&#8722; Smaller</button>
-                    <button class="dbtn rbn-sm" id="dsg-scale-up"
-                      title="Make every text style one step bigger — the
- whole deck's type, in proportion">A&#43; Bigger</button>
-                    <button class="dbtn rbn-sm" id="dsg-restyle"
-                      title="Re-apply the named looks to every box wearing one. Use it after changing a style by hand"><i data-ic="reload"></i> Re-apply</button>
-                  </div>
-                  <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
-                       2026-08-29: "where was the button where people
-                       can 'standardise presentation'"). Standardise
-                       CHECKS a deck against its own type; this screen
-                       is where that type is decided. Two doors because
-                       they are two questions -- what is the standard,
-                       and who is not keeping to it -- and each opens
-                       the other. -->
-                </div>
-              </span>
-              <!-- "What is 'design tokens'?????" (2026-09-02). The word
-                   was the implementation's; the button says what the
-                   things are. The dialog keeps the term in its title. -->
-              <button class="dbtn rbn-sm" id="dsg-tokens"
-                aria-haspopup="true" aria-expanded="false"
-                title="The colours this deck shares. Any box can wear one
- (the Deck row at the top of its colour menu); change a colour here and
- every box wearing it changes too"
-                ><i data-ic="palette"></i> Shared colours</button>
-              <!-- Radius and arrange spacing used to be appended to the
-                   Shared colours panel. They are deck-wide defaults, but
-                   they are not colours; a panel which changes subject
-                   halfway down is exactly why the colour system felt
-                   mysterious (2026-09-12). Give layout defaults their own
-                   plainly named door beside the other deck-wide tools. -->
-              <button class="dbtn rbn-sm" id="dsg-layout"
-                aria-haspopup="true" aria-expanded="false"
-                title="Deck-wide layout defaults: the corner shape of boxes
- and the space used when Arrange distributes objects"
-                ><i data-ic="layouts"></i> Deck layout</button>
-              <!-- T383: the mismatch check is no longer a small button in
-                   this row -- it has a group and a tile of its own, next
-                   door, so a narrow window folding this group does not
-                   take it with it. -->
-              <!-- the whole-deck type screen was a row inside the Text styles
-                   menu: a screen behind a menu behind a door (T212) -->
-              <button class="dbtn rbn-sm" id="dsg-design-btn"
-                title="One screen for the deck's type: what each kind of
- text looks like, and every slide with a box round each object"
-                ><i data-ic="outline"></i> Style system</button>
-            </span>
-            <span class="rbn-lab">Presentation styles</span>
-          </span>
-          <!-- T383: THE BUTTON THE USER WENT LOOKING FOR, AGAIN. It was
-               "Standardise text" (2026-08-22: "it would be cool if there
-               was a button that was called 'standardise text', and
-               checked if all headings paragraphs, captions, are looking
-               the same"), then "Fix mismatched text", then T378 renamed it
-               "Check consistency" and left it as the last small button of
-               the Presentation styles row -- which folds into one tile at
-               laptop width, so the check was a row inside a menu behind a
-               door (2026-09-12, user: "I liked the concept but the
-               execution was always weird; now it's gone"). Its own group,
-               its own tall tile, under the name the user knows it by. -->
-          <span class="rbn-grp rbn-check" data-tab="home" data-fold-ic="scope">
-            <span class="rbn-row">
-              <button class="fx-tile big-tile rbn-tall" id="dsg-std"
+              <button class="fx-tile big-tile rbn-tall" id="dsg-design-btn"
+                title="One screen for the deck's type: who wears which
+ style, what each kind of text looks like, and every slide with a box
+ round each object"><i data-ic="outline"></i><span>Style system</span></button>
+              <!-- T443: the consistency check's door, kept for the
+                   screen's own button and the pane owner; the tile it
+                   was is gone -->
+              <button class="dbtn rbn-sm" id="dsg-std" hidden
                 aria-pressed="false"
                 title="Find text or figures that look like they should match
- but have different formatting, and make them match in one click. It only
- suggests a fix; you choose it"><i data-ic="scope"></i>
-                <span>Fix mismatched text</span></button>
+ but have different formatting"><i data-ic="scope"></i> Check</button>
             </span>
-            <span class="rbn-lab">Consistency</span>
+            <span class="rbn-lab">Style system</span>
           </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
@@ -1065,7 +996,7 @@ items snap to both. Guides, not ink: never printed or exported"
                effect option when there is nothing to appear" -- and the
                whole-slide builds sit beside them as words. Built by
                galSync, which the selection already calls. -->
-          <span class="rbn-grp rbn-anim" data-tab="animation" data-fold-ic="appear">
+          <span class="rbn-grp rbn-anim rbn-compact" data-tab="animation" data-fold-ic="appear">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
@@ -1144,7 +1075,7 @@ items snap to both. Guides, not ink: never printed or exported"
                is the same three answers, where you would go for them.
                Apply to all is PowerPoint's own verb and was missing
                everywhere. -->
-          <span class="rbn-grp rbn-trans" data-tab="animation"
+          <span class="rbn-grp rbn-trans rbn-compact" data-tab="animation"
             data-fold-ic="play">
             <span class="rbn-row">
               <!-- T372: THE SAME TILE AS THE EFFECT STRIP. Picking how
@@ -1206,7 +1137,7 @@ items snap to both. Guides, not ink: never printed or exported"
                wobbling and moving"). An entrance plays once; these loop
                while the object is on the slide, in the show only. Tiles,
                like Effect, because it is the same kind of choice. -->
-          <span class="rbn-grp rbn-motion" data-tab="animation"
+          <span class="rbn-grp rbn-motion rbn-compact" data-tab="animation"
             data-fold-ic="wobble">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-move">
@@ -1235,7 +1166,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Motion</span>
           </span>
-          <span class="rbn-grp rbn-flipfx" data-tab="animation"
+          <span class="rbn-grp rbn-flipfx rbn-compact" data-tab="animation"
             data-fold-ic="flipbook">
             <span class="rbn-row">
               <span class="rbn-cell rbn-seg" id="anim-flip-run" hidden
@@ -1274,7 +1205,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Flip book</span>
           </span>
-          <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
+          <span class="rbn-grp rbn-build rbn-nofold" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <!-- T391: the story -- the slide at every stop, editable -->
               <button class="dbtn rbn-sm" id="anim-story"
@@ -1293,15 +1224,21 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Take the entrance off every object on this slide"
                 ><i data-ic="exit"></i> Remove all</button>
             </span>
-            <span class="rbn-lab">Everything on the slide</span>
+            <span class="rbn-lab">Whole slide</span>
           </span>
+          <!-- T445: "BUILD ORDER", AND NEVER SQUASHED (2026-09-14, user:
+               "buttons like those in 'Order' (horrible name for this
+               collection) are not getting squashed out ... people will
+               NOT be able to find them under there"). rbn-nofold keeps
+               the group out of the fold ladder; the compact choosers
+               (T441) are what make the room. -->
           <!-- THE ORDER. Quick animate is the pointing mode (T168): it
                was "Click things in order…" and then "Set order", and
                the user named it themselves -- "the quick animations
                thing with clicking" (2026-09-02). Animation order is
                the pane that lists the sequence; Layers is the same
                list read as a timeline (T174). -->
-          <span class="rbn-grp rbn-order" data-tab="animation" data-fold-ic="play">
+          <span class="rbn-grp rbn-order rbn-nofold" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
                 title="Click things one after another and each becomes
@@ -1322,7 +1259,7 @@ items snap to both. Guides, not ink: never printed or exported"
  arrives on and, if it leaves, the click it goes. Hide, lock and reorder
  from the same list"><i data-ic="objects"></i> Layers</button>
             </span>
-            <span class="rbn-lab">Order</span>
+            <span class="rbn-lab">Build order</span>
           </span>
           <!-- TIMING, the way PowerPoint's Start box works (T185;
                2026-09-02, user: "there should be a default thing there
@@ -1340,7 +1277,7 @@ items snap to both. Guides, not ink: never printed or exported"
                there is a selected build to time, the way the tiles are,
                and the group stands down while Quick animate is armed so
                the mode's own controls have the row. -->
-          <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
+          <span class="rbn-grp rbn-timing rbn-compact" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-start">
@@ -1544,12 +1481,60 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Write</span>
           </span>
+          <!-- T444: THE DECK'S TYPE LIVES WITH THE WORDS (2026-09-14,
+               user: "Move citations to the text tab not home. Move
+               text styles and style sets to text away from home"). -->
+          <span class="rbn-grp rbn-decktype" data-tab="text"
+            data-fold-ic="styles">
+            <span class="rbn-row">
+              <span class="sh-drop" id="dsg-stylewrap">
+                <button class="dbtn rbn-sm" id="dsg-styles"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><i data-ic="styles"></i> Text
+                  styles &#9662;</button>
+                <div class="sh-menu style-mgr" id="dsg-style-menu"
+                  hidden>
+                  <!-- the per-style rows, built on open -->
+                  <div id="dsg-style-list"></div>
+                  <div class="hd-lab">the whole deck&rsquo;s type</div>
+                  <div class="opt-row">
+                    <button class="dbtn rbn-sm" id="dsg-scale-down"
+                      title="Make every text style one step smaller —
+ the whole deck's type, in proportion">A&#8722; Smaller</button>
+                    <button class="dbtn rbn-sm" id="dsg-scale-up"
+                      title="Make every text style one step bigger — the
+ whole deck's type, in proportion">A&#43; Bigger</button>
+                    <button class="dbtn rbn-sm" id="dsg-restyle"
+                      title="Re-apply the named looks to every box wearing one. Use it after changing a style by hand"><i data-ic="reload"></i> Re-apply</button>
+                  </div>
+                  <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
+                       2026-08-29: "where was the button where people
+                       can 'standardise presentation'"). Standardise
+                       CHECKS a deck against its own type; this screen
+                       is where that type is decided. Two doors because
+                       they are two questions -- what is the standard,
+                       and who is not keeping to it -- and each opens
+                       the other. -->
+                </div>
+              </span>
+              <button class="dbtn rbn-sm" id="dsg-sets"
+                title="Ready-made looks for the whole deck: style sets
+ (type) and colour themes (a palette for page, boxes, headings and
+ ink), and any you saved"><i data-ic="styles"></i> Style sets&#8230;</button>
+              <button class="dbtn rbn-sm" id="dsg-cites"
+                title="This deck&#8217;s references: import a .bib, add one
+ by DOI, choose numbered or author-year, and insert a references box.
+ Cite in any text box as [@key]"
+                ><i data-ic="doc"></i> Citations&#8230;</button>
+            </span>
+            <span class="rbn-lab">Presentation type</span>
+          </span>
           <!-- SHAPES ON THEIR OWN (T197; 2026-09-02, user: "the shapes
                should be on their own"). Fifteen tiles drawn as
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="images" data-fold-ic="shapes">
+          <span class="rbn-grp rbn-shapes rbn-compact" data-tab="images" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"

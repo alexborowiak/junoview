@@ -1119,8 +1119,8 @@ def test_animations_can_be_removed(out):
     # Insert when it was six small buttons, and it is two groups and
     # seven doors now -- the pointing mode and the reading order came
     # up from the foot of the pane, where they were a door behind a door
-    assert 'class="rbn-grp rbn-anim" data-tab="animation"' in out
-    assert 'class="rbn-grp rbn-build" data-tab="animation"' in out
+    assert 'class="rbn-grp rbn-anim rbn-compact" data-tab="animation"' in out
+    assert 'class="rbn-grp rbn-build rbn-nofold" data-tab="animation"' in out
     # ...and T180 renamed the pointing mode's door "Set order", moved
     # its controls into the ribbon, dropped the Reading order door
     # (Set order writes that order too) and added Layers, the timeline

@@ -21,7 +21,7 @@ def test_start_is_on_click_with_previous_or_after_previous(out):
     for cid in ("anim-onclick", "anim-withprev", "anim-afterprev",
                 "anim-delay", "anim-delaywrap", "anim-start"):
         assert f'id="{cid}"' in out, cid
-    assert 'class="rbn-grp rbn-timing" data-tab="animation"' in out
+    assert 'class="rbn-grp rbn-timing rbn-compact" data-tab="animation"' in out
     assert "function setDelay(sec){" in out
     assert "function timingState(){" in out
     assert "function timingSync(){" in out

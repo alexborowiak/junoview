@@ -1025,7 +1025,7 @@ def test_no_group_is_a_heading_over_one_button(out):
     assert "function orderedIdx(s2){" in out
     # Home carries the deck-level system: it changes text, colours and
     # other objects, so it is not merely an insertion choice.
-    assert 'class="rbn-grp rbn-type" data-tab="home"' in out
+    assert 'class="rbn-grp rbn-type rbn-stylesys" data-tab="home"' in out
     assert 'id="dsg-styles"' in out
     assert "function scaleStyles(k){" in out
     # `scope` (2026-08-22) is an array of slide indexes, or null/omitted
@@ -1969,15 +1969,13 @@ def test_shared_colours_have_a_permanent_home_door(out):
     assert 'id="dsg-tokens"' in out
     tokens = out[out.index('id="dsg-tokens"'):]
     tokens = tokens[:tokens.index("</button>")]
-    assert '<svg class="bic"' in tokens and "Shared colours" in tokens
-    # T315: ten now -- page, box, heading and edge joined the six so a
-    # colour theme can say where each comes from; the count left the
-    # sentence rather than being kept true by hand
-    assert "The colours this deck shares" in tokens
+    assert '<svg class="bic"' in tokens and "Deck colours" in tokens
+    # T444: the tooltip names the five colours the rows are
+    assert "The five colours every slide is built from" in tokens
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out
-    assert "Shared colours" in out
+    assert "Deck colours" in out
 
 
 def test_the_deck_registry_survives_a_save(out):
@@ -2794,7 +2792,9 @@ def test_the_consistency_check_says_what_it_is_opened_for(out):
     headed "Standardise text" and its count line counted text boxes
     (2026-08-26 audit, T58).
     """
-    assert "<span>Fix mismatched text</span></button>" in out
+    # T443: the check's tile is gone from the ribbon; its pane and
+    # overlay keep the name, its hidden door keeps the words
+    assert "<span>Fix mismatched text</span></button>" not in out
     assert "Fix mismatched text" in out
     assert "Find text or figures that look like they should" in out
     # The count includes figures, while the list suppresses cards that

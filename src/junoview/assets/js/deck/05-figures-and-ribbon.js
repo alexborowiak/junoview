@@ -1556,6 +1556,9 @@
     foldViewGroup(false);
     rbnUnfoldAll();
     sizeRibbonGroups();
+    /* T441: the choosers are compact by design, not by width */
+    rbnFoldCompact();
+    sizeRibbonGroups();
     var cl=deckEl.classList;
     ERC.forEach(function(c){cl.remove(c);});
     cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
@@ -1858,10 +1861,24 @@
     btn.type='button';btn.className='fx-tile big-tile rbn-foldbtn';
     btn.setAttribute('aria-haspopup','true');
     btn.setAttribute('aria-expanded','false');
+    /* T441: THE DOOR SAYS WHAT IS CHOSEN (2026-09-14, user, of the
+       Animation tab: "there are lots of menus that drop down when you
+       click. These should all be buttons with what is currently
+       selected beside it ... the transition button, then there should
+       just be one beside it with what is the current option"). The
+       tile carries the group's name over its current choice -- the
+       pressed tile or button inside -- and rbnFoldReadouts keeps it
+       true as the selection changes. A compact group (rbn-compact) is
+       folded whatever the width; the rest still fold only when the
+       row runs out of room. */
+    var compact=g.classList.contains('rbn-compact');
     btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')
-      +'<span>'+esc(name)+' \u25be</span>';
-    btn.title=name+' \u2014 folded because the window is too narrow '
-      +'to show the whole row. Widen the window and it opens out again';
+      +'<span>'+esc(name)+' \u25be</span><span class="rbn-foldval"></span>';
+    btn.title=compact
+      ?(name+' \u2014 click to choose. The current choice is on the '
+        +'button')
+      :(name+' \u2014 folded because the window is too narrow to show '
+        +'the whole row. Widen the window and it opens out again');
     var menu=document.createElement('div');
     menu.className='sh-menu rbn-foldmenu';menu.hidden=true;
     menu.appendChild(row);
@@ -1873,7 +1890,44 @@
       if(!menu.hidden){overlayHide(menu);return;}
       overlayShow(btn,menu);floatMenu(btn,menu);
     });
+    rbnFoldReadout(g);
     return true;
+  }
+  /* T441: the current choice of a folded group, read off the pressed
+     control inside its row: a tile's word, a button's words, never a
+     chevron or a shortcut key */
+  function rbnFoldReadout(g){
+    var val=g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval');
+    if(!val) return;
+    var on=g.querySelector('.rbn-foldmenu [aria-pressed="true"]');
+    var txt='';
+    if(on){
+      var sp=on.classList.contains('fx-tile')?on.querySelector('span'):null;
+      var src=(sp||on).cloneNode(true);
+      $$('kbd',src).forEach(function(k){k.remove();});
+      txt=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
+        .trim();
+    }
+    val.textContent=txt;
+    val.hidden=!txt;
+    var btn=val.parentNode;
+    btn.classList.toggle('has-val',!!txt);
+  }
+  function rbnFoldReadouts(){
+    $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnFoldReadout);
+  }
+  /* T441: fold every compact group; the rest are the ladder's */
+  function rbnFoldCompact(){
+    var bar=$('#edit-tools'); if(!bar) return;
+    $$('.rbn-grp.rbn-compact',bar).forEach(function(g){
+      if(!g.hidden&&!g.classList.contains('rbn-folded')) rbnFoldGroup(g);});
+  }
+  /* the readouts follow every pressed-state change on the bar */
+  function rbnReadoutBoot(){
+    var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
+    new MutationObserver(function(){rbnFoldReadouts();})
+      .observe(bar,{subtree:true,attributes:true,
+        attributeFilter:['aria-pressed']});
   }
   function rbnUnfoldGroup(g){
     var wrap=null;
@@ -1902,6 +1956,14 @@
         /* Keep up to date never folds (T202: the point of it is to be
            seen) */
         &&!g.classList.contains('rbn-sources')
+        /* T444: the Style system is never folded (2026-09-14, user: "I
+           NEVER want this to be hidden. NEVER") */
+        &&!g.classList.contains('rbn-stylesys')
+        /* T441/T445: a group that says so never folds -- Build order and
+           Whole slide on Animation (2026-09-14, user: "make sure buttons
+           like those in 'Order' are not getting squashed out, as they
+           are really important") */
+        &&!g.classList.contains('rbn-nofold')
         /* T383: one tile folds into one tile -- nothing to gain, and
            the check would wear a chevron for no reason */
         &&!g.classList.contains('rbn-check')

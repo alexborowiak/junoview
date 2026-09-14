@@ -47,9 +47,9 @@ def test_the_words_the_review_asked_for(out):
     assert '<i data-ic="numbers"></i> Page numbers</button>' in html
     assert '><i data-ic="play"></i> Animation pane</button>' in html
     assert "<span>Animation pane</span>" in out
-    assert "Shared colours</button>" in out
+    assert "Deck colours&#8230;</button>" in out   # T444
     assert "Palette&#8230;" not in out
-    assert "menuHead(m,'shared colours');" in out
+    assert "menuHead(m,'deck colours');" in out
     # T265 replaced the panel's 195-character paragraph with one line
     # that depends on what is actually there, plus a per-colour count.
     # T208's contract is on the DOOR's tooltip -- "its tooltip says what
@@ -64,7 +64,12 @@ def test_the_words_the_review_asked_for(out):
     # -- you cannot explain the mechanism to somebody who does not yet
     # know what the rows are (2026-09-07, user: "I have told you so many
     # times that the text doesn't make sense up the top")
-    assert "s colours. Change one here and everything using it '" in out
+    # T444: the note names the five colours the rows are, over a preview
+    # made of exactly those five
+    assert ("    note.textContent='The five colours every slide is built from. "
+            "Change '") in out
+    assert "    var pv=document.createElement('div');pv.className='tok-preview';" \
+        in out
 
 
 def test_the_masters_panel_is_a_panel(out):

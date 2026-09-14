@@ -1458,7 +1458,13 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
-.rbn-check{order:5;}       /* T383: the check, beside the styles */
+/* T444: the deck's type on Text follows Write; the deck-wide colours
+   and spacing on Design follow Page furniture */
+.rbn-decktype{order:6;}
+.rbn-deckwide{order:4;}
+/* T444: the Style system is a tall tile, like History */
+.rbn-row>#dsg-design-btn.big-tile{width:var(--rbn-tile-w);
+  height:var(--rbn-tile-h);align-self:center;grid-row:1/span 2;}
 /* The default contextual surface is two tabs, rather than one long tray:
    Style is how a thing looks; Object is where it is, where it came from,
    and how it is reused (2026-09-11, ribbon-layout correction). */
@@ -5133,6 +5139,29 @@ body.jv-lens .deck-stage{cursor:crosshair;}
   flex-direction:column;background:var(--chrome-0,#0b141d);
   font-family:var(--sans);}
 .dg-main{display:flex;flex:1 1 auto;min-height:0;}
+/* T443: who wears what -- the count table at the head of the rail */
+.dg-counts{margin-bottom:8px;padding-bottom:6px;
+  border-bottom:1px solid var(--chrome-line);}
+.dg-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;
+  padding:4px 6px;border-radius:6px;font:12px var(--sans);
+  color:var(--chrome-ink);cursor:pointer;}
+.dg-cnt:hover{background:#ffffff0c;}
+.dg-cnt-n{font:600 13px var(--mono);min-width:22px;text-align:right;
+  color:var(--cyan);}
+.dg-cnt-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.dg-cnt-odd .dg-cnt-l{color:var(--amber);}
+.dg-cnt-loose .dg-cnt-l{color:var(--chrome-ink-2);}
+/* the fix on its own line under the words, so neither is squeezed */
+.dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;flex:1 0 100%;
+  margin-left:28px;width:auto;justify-content:center;}
+/* T444: the deck colours panel's preview */
+.tok-preview{margin:4px 0 8px;}
+.tok-pv-page{border-radius:6px;padding:8px 10px;font:12px var(--sans);
+  border:1px solid var(--chrome-line);}
+.tok-pv-h{font-weight:700;font-size:14px;margin-bottom:2px;}
+.tok-pv-box{margin-top:6px;padding:4px 8px;border-radius:5px;
+  border:1px solid;font-size:11px;}
 .dg-rail{width:216px;flex:none;overflow-y:auto;padding:8px;
   border-right:1px solid #ffffff14;display:flex;flex-direction:column;
   gap:3px;}
@@ -6053,5 +6082,14 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 .rbn-foldwrap .fx-tile.rbn-foldbtn{height:var(--rbn-tile-h);width:82px;}
 .rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
   line-height:1.15;}
+/* T441: the door's readout -- the current choice, under the name. With
+   a value the icon steps aside so the two lines fit the tile. */
+.rbn-foldbtn>.rbn-foldval{display:block;font:600 10px var(--mono);
+  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.rbn-foldbtn>.rbn-foldval[hidden]{display:none;}
+.rbn-foldbtn.has-val>.bic{display:none;}
+.rbn-foldbtn.has-val>span:first-of-type{font-size:11px;color:var(--ink-2);}
+body.light .rbn-foldbtn>.rbn-foldval{color:var(--cyan-deep);}
 #anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
 #anim-delaycell .cell-lab{padding-left:2px;}

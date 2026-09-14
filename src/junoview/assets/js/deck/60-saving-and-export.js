@@ -2845,10 +2845,25 @@
     if(h) lsSet(HNKEY,nm,true);
     if(!h||fileStem(fileName)===nm) return Promise.resolve(false);
     var oldFile=fileName,newName=deckFileName();
+    /* T447: THE OLD FILE IS LET GO, NOT WRITTEN ON (2026-09-14, user:
+       "autosaved to project.junovie... Changed file name, but it still
+       says it is saving to the above. Why?????? How to get around
+       this???"). Where the browser cannot move a picked file -- Chrome
+       cannot -- the deck went on autosaving into the file with the OLD
+       name, and an eight-second toast was the only clue. Now the
+       binding is dropped: the old file keeps what it had under its old
+       name, the readout says "click Save to choose the file", and the
+       next Save asks where to write the NEW name (an autosave never
+       opens a dialog). Junoview's own folder still renames outright. */
     function say(){
-      toast('Still writing '+oldFile+' \u2014 the \u25be beside Save \u203a '
-        +'\u201cA file on your computer\u2026\u201d saves it as '+newName,
-        8000);
+      fileHandles[nm]=null;
+      if(fileFor===nm){fileHandle=null;fileName='';}
+      idbDel(HKEY).catch(function(){});lsDel(HNKEY);
+      if(saveTarget==='file') fileWaits='pick';
+      renderTargetBtn();renderSaveBtn();status();
+      toast('Renamed to \u201c'+nm+'\u201d. '+oldFile+' keeps the old '
+        +'name \u2014 press Save once and it asks where to write '
+        +newName+'; every autosave after that goes there.',10000);
       return false;
     }
     function moveOrSay(){
