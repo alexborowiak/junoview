@@ -1838,8 +1838,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T440 (2026-09-14): From notebook, greyed without a notebook;
 # deck.html, help.html, 25-selecting.js, 60-saving-and-export.js and
 # 99-boot.js change.
-EXPECTED_MD5 = "fb7fef2addd6fc74117a2d4eae22017c"
-EXPECTED_BYTES = 4197588
+# T438 (2026-09-14): the Source group leads the Object tab and a
+# pasted picture keeps its row; deck.css and 25-selecting.js change.
+EXPECTED_MD5 = "3304ef5360d46bf0f32b8d82447ce1d0"
+EXPECTED_BYTES = 4198501
 
 
 def _render_example() -> str:

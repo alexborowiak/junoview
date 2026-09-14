@@ -1554,6 +1554,12 @@ body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
+/* T438: ON OBJECT, THE SOURCE LEADS (2026-09-14, user: "when clicking
+   on an object that is an image, it needs to tell you the path as the
+   first thing in that tab"). The markup put the group first in
+   intent (T281) but Arrange, History and Size & place carry order 0,
+   so it sat fourth. Home's Sources group keeps its seat above. */
+.rbn-grp.rbn-sources[data-tab="object"]{order:-1;}
 .rbn-show{order:3;}
 /* T373: Spacing follows Layout, which is where it lived as a run */
 .rbn-spacing{order:2;}

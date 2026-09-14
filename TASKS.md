@@ -8372,3 +8372,11 @@ gates are recorded in the completing commit.
   so is the drawing group's word for the tool. With no notebook open,
   it and the flip book's "+ Figures" are disabled and the title says
   to open one; a notebook opening or closing re-judges them.
+- [x] **T438 — An image's Object tab says where it came from first.**
+  (User, 2026-09-14: "when clicking on an object that is an image, it
+  needs to tell you the path as the first thing in that tab.") T281
+  wrote the Source group to lead, but Arrange, History and Size & place
+  carry flex order 0 and Source carried 2, so it sat fourth; it leads
+  now. A pasted picture, which has no path, used to lose the row (and
+  its group) altogether — it says "pasted or dropped — no file behind
+  it" in the same place.

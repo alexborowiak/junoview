@@ -595,8 +595,14 @@
     var pth=$('#fmt-path');
     if(pth){
       var from='';
-      if(kind==='image') from=(typeof picAddr==='function'&&picAddr(a))
-        ||a.fname||a.psrc||'';
+      if(kind==='image'){
+        from=(typeof picAddr==='function'&&picAddr(a))
+          ||a.fname||a.psrc||'';
+        /* T438: SAID EVEN WHEN THERE IS NONE. A pasted picture has no
+           path, and the row used to vanish -- which reads as "the tab
+           does not show paths" rather than "this one has none". */
+        if(!from) from='pasted or dropped \u2014 no file behind it';
+      }
       else if(isNum&&provRef(a)){
         var pref=provRef(a),ci2=resolveRef(pref),po=provOf(a);
         var ff=(kind==='flip')?(flipFrames(a)[a.at||0]||{}):{};
@@ -742,7 +748,11 @@
        MEASURES the row, which is what the old ordering was protecting
        (2026-08-25, ribbon layouts). */
     $$('.rbn-grp',bar).forEach(function(g){
-      var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
+      /* T438: the provenance readout is content too -- a pasted
+         picture has no refresh button and no Source door, and its
+         group was hidden with the one line the tab exists to show */
+      var vis=false,kids=g.querySelectorAll(
+        'button,input,select,.sh-drop,.fmt-path');
       for(var i=0;i<kids.length;i++){
         var n=kids[i],blocked=false;
         /* A FOLD DOOR IS NOT CONTENT, AND THE DRAWER IT OPENS IS NOT A
