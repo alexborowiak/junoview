@@ -66,7 +66,7 @@
   storyBoot();                /* the animation story (T391) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
-  pptxImportBoot();           /* PowerPoint in: File, launcher, drop (T320) */
+  pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   chartBoot();                /* the Chart pane's door (T322) */

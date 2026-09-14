@@ -63,11 +63,11 @@ def test_every_chart_carries_a_workbook(deck):
     data, report, z = deck
     assert report["skipped"] == 0
     names = set(z.namelist())
-    assert "ppt/embeddings/Microsoft_Excel_Sheet1.xlsx" in names
+    assert "ppt/embeddings/Junoview_Chart_Data1.xlsx" in names
     # ...named by a rels part charts have never had before
     rels = z.read("ppt/charts/_rels/chart1.xml.rels").decode("utf-8")
     assert "/relationships/package" in rels
-    assert 'Target="../embeddings/Microsoft_Excel_Sheet1.xlsx"' in rels
+    assert 'Target="../embeddings/Junoview_Chart_Data1.xlsx"' in rels
     # ...pointed at from the chart, after txPr, where CT_ChartSpace puts it
     xml = z.read("ppt/charts/chart1.xml").decode("utf-8")
     assert '<c:externalData r:id="rId1"><c:autoUpdate val="0"/>' in xml
@@ -83,7 +83,7 @@ def test_the_workbook_is_a_real_readable_xlsx(deck):
     """Read back with the deck's own sheet reader -- the one that has
     opened .xlsx files since T113 -- not a bespoke parser."""
     _, _, z = deck
-    book = z.read("ppt/embeddings/Microsoft_Excel_Sheet1.xlsx")
+    book = z.read("ppt/embeddings/Junoview_Chart_Data1.xlsx")
     inner = set(zipfile.ZipFile(io.BytesIO(book)).namelist())
     assert {"[Content_Types].xml", "_rels/.rels", "xl/workbook.xml",
             "xl/_rels/workbook.xml.rels",
@@ -104,7 +104,7 @@ def test_the_sheet_is_the_grid_the_formulas_claim(deck):
     another."""
     _, _, z = deck
     xml = z.read("ppt/charts/chart1.xml").decode("utf-8")
-    rows = sheet_rows(z.read("ppt/embeddings/Microsoft_Excel_Sheet1.xlsx"))
+    rows = sheet_rows(z.read("ppt/embeddings/Junoview_Chart_Data1.xlsx"))
 
     def cell(ref: str) -> str:
         col = re.match(r"([A-Z]+)(\d+)", ref)

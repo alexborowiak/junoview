@@ -21,6 +21,7 @@ import hashlib
 import json
 import re
 import zipfile
+from importlib.metadata import PackageNotFoundError, files
 from pathlib import Path
 
 from . import assets
@@ -36,6 +37,7 @@ from .render.page import render_page, render_shell
 # on every build, and the committed docs/ Pages build would show a diff each
 # time whether or not anything in it actually changed.
 _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+_LEGAL_FILES = ("LICENSE", "NOTICE")
 
 
 def web_parse(name: str, text: str, taken_json: str = "[]") -> str:
@@ -79,6 +81,24 @@ def _is_shipped(path: Path) -> bool:
             and path.suffix not in (".pyc", ".pyo"))
 
 
+def _legal_text(name: str) -> str:
+    """Read a legal file from a checkout or an installed distribution."""
+    root = Path(__file__).resolve().parent
+    candidate = root.parents[1] / name
+    if candidate.is_file():
+        return candidate.read_text(encoding="utf-8")
+    try:
+        dist_files = files("junoview") or ()
+    except PackageNotFoundError:
+        dist_files = ()
+    for item in dist_files:
+        if item.name == name:
+            candidate = Path(item.locate())
+            if candidate.is_file():
+                return candidate.read_text(encoding="utf-8")
+    raise FileNotFoundError(f"Junoview distribution has no {name}")
+
+
 def bundle_package(dest: Path) -> Path:
     """Zip this package so Pyodide can unpack and import it whole.
 
@@ -94,6 +114,11 @@ def bundle_package(dest: Path) -> Path:
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             archive.writestr(info, path.read_bytes())
+        for name in _LEGAL_FILES:
+            info = zipfile.ZipInfo(name, date_time=_ZIP_EPOCH)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            archive.writestr(info, _legal_text(name).encode("utf-8"))
     return dest
 
 
@@ -142,6 +167,10 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
         f'<meta name="junoview-build" content="{version}">\n<title>', 1)
     write_text(outdir / "index.html", loader.replace("__JV_VERSION__", version))
     write_text(outdir / ".nojekyll", "")
+    for name in _LEGAL_FILES:
+        write_text(outdir / name, _legal_text(name))
+    write_text(outdir / "THIRD_PARTY_NOTICES.html",
+               assets.third_party_notices())
 
     # The offline, installable app: a service worker plus a manifest turn
     # the page into a PWA -- one visit caches the app, the Pyodide runtime

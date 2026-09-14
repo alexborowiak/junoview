@@ -6624,7 +6624,7 @@
     return /\.junoview(\.html)?$/i
       .test(String(p||'').split('?')[0].split('#')[0]);
   }
-  /* T320: a PowerPoint deck, which IMPORTS (as a copy) rather than opens */
+  /* T320: a .pptx presentation, which IMPORTS (as a copy) rather than opens */
   function isPptxPath(p){
     return /\.(pptx|potx|ppsx|pptm)$/i
       .test(String(p||'').split('?')[0].split('#')[0]);
@@ -6685,7 +6685,7 @@
      row) -- "the ability to open multiple notebook/presentations at
      once would be a slay out of 10" (2026-09-14) */
   function openPath(path,keep){
-    /* T320: a PowerPoint deck imports from the same places, as a copy */
+    /* T320: a .pptx presentation imports from the same places, as a copy */
     if(isPptxPath(path)){
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
       if(APP.mode!=='app') return;
@@ -7153,8 +7153,8 @@
       (j.decks||[]).forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i deck';
         b.innerHTML='<span class="ic">'+bic('present')+'</span>';
-        b.title=(n.kind==='PowerPoint')
-          ?'Import this PowerPoint deck as a new presentation (a copy '
+        b.title=(n.kind==='.pptx')
+          ?'Import this .pptx presentation as a new presentation (a copy '
             +'— the .pptx is not changed)'
           :'Open this saved Junoview presentation';
         var nm=document.createElement('span');nm.className='nm';
@@ -7503,7 +7503,7 @@
         clips.forEach(function(f){if(APP.deckDropMedia(f)) tookM++;});
         if(tookM) return;
       }
-      /* T320: a PowerPoint deck dropped anywhere imports, either mode */
+      /* T320: a .pptx presentation dropped anywhere imports, either mode */
       files.filter(function(f){return isPptxPath(f.name);})
         .forEach(function(f){
           if(APP.deckImportPptx) APP.deckImportPptx(f);

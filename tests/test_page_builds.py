@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import zipfile
 from pathlib import Path
 
 from helpers import _demo_and_other
@@ -80,9 +81,23 @@ def test_build_web_emits_a_pyodide_bundle():
     """
     with tempfile.TemporaryDirectory() as td:
         build_web(Path(td))
+        root = Path(__file__).resolve().parent.parent
         idx = (Path(td) / "index.html").read_text(encoding="utf-8")
         assert "pyodide" in idx and "sem:pyready" in idx
-        assert (Path(td) / "junoview.zip").exists()
+        archive = Path(td) / "junoview.zip"
+        assert archive.exists()
+        with zipfile.ZipFile(archive) as bundled:
+            for name in ("LICENSE", "NOTICE"):
+                assert bundled.read(name).decode() == (root / name).read_text(
+                    encoding="utf-8")
+        for name in ("LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.html"):
+            assert (Path(td) / name).is_file()
+        notices = (Path(td) / "THIRD_PARTY_NOTICES.html").read_text(
+            encoding="utf-8")
+        assert "Pyodide 0.26.4" in notices
+        assert "MathJax 3" in notices
+        assert "Plotly.js 2.35.2" in notices
+        assert 'href="THIRD_PARTY_NOTICES.html"' in idx
 
 
 def test_client_reactivates_outputs_and_draws_plotly_specs(out):
@@ -108,6 +123,8 @@ def test_build_web_emits_the_offline_installable_app():
         sw = (Path(td) / "sw.js").read_text(encoding="utf-8")
         assert "__JV_VERSION__" not in sw, "version token never replaced"
         assert "junoview.zip" in sw and "pyodide" in sw
+        assert "LICENSE" in sw and "NOTICE" in sw
+        assert "THIRD_PARTY_NOTICES.html" in sw
         # the Pyodide pin in the worker must match the loader's script tag
         idx = (Path(td) / "index.html").read_text(encoding="utf-8")
         pin = "pyodide/v0.26.4/full/"
@@ -141,6 +158,10 @@ def test_build_web_emits_the_offline_installable_app():
         with tempfile.TemporaryDirectory() as td2:
             build_web(Path(td2))
             assert (Path(td2) / "sw.js").read_text(encoding="utf-8") == sw
+            for name in ("junoview.zip", "LICENSE", "NOTICE",
+                         "THIRD_PARTY_NOTICES.html"):
+                assert (Path(td2) / name).read_bytes() == \
+                    (Path(td) / name).read_bytes()
 
 
 def test_a_failed_silent_restore_never_forgets_the_notebook():

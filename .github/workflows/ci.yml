@@ -72,8 +72,13 @@ jobs:
           /tmp/venv/bin/junoview --build-web /tmp/web
           test -s /tmp/web/index.html
           test -s /tmp/web/junoview.zip
+          test -s /tmp/web/LICENSE
+          test -s /tmp/web/NOTICE
+          test -s /tmp/web/THIRD_PARTY_NOTICES.html
 
       - name: the web bundle is reproducible
         run: |
           /tmp/venv/bin/junoview --build-web /tmp/web2
-          cmp /tmp/web/junoview.zip /tmp/web2/junoview.zip
+          for f in junoview.zip LICENSE NOTICE THIRD_PARTY_NOTICES.html; do
+            cmp /tmp/web/$f /tmp/web2/$f
+          done

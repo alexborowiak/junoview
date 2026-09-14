@@ -1894,8 +1894,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # defaults read them
 # T456: the frame follows Box background, and the note stops promising
 # built-in sets swap the palette
-EXPECTED_MD5 = "8bfa6ec151ceb1efa3d04d1e8dc05804"
-EXPECTED_BYTES = 4303929
+# 2026-09-14: user-facing .pptx labels and Help's Microsoft compatibility,
+# independence and trademark notice change baked assets.
+EXPECTED_MD5 = "516e5f8995d5a4d5ae5df293993d606b"
+EXPECTED_BYTES = 4303939
 
 
 def _render_example() -> str:

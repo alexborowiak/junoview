@@ -21,7 +21,8 @@ __all__ = [
     "core_css", "app_css", "deck_css",
     "app_js", "deck_js", "pptx_js", "DECK_PARTS",
     "page_template", "shell_template",
-    "deck_html", "help_html", "mathjax_html", "web_loader",
+    "deck_html", "help_html", "mathjax_html", "third_party_notices",
+    "web_loader",
 ]
 
 
@@ -174,6 +175,11 @@ def help_html() -> str:
 def mathjax_html() -> str:
     """MathJax configuration and CDN script tag."""
     return load("html/mathjax.html")
+
+
+def third_party_notices() -> str:
+    """Public notices for the web build's separately supplied runtimes."""
+    return load("html/third-party-notices.html")
 
 
 def sw_js() -> str:

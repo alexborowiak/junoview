@@ -223,12 +223,12 @@ def _list_dir(raw: str) -> dict:
                 decks.append({"name": name, "path": str(p),
                               "size": f"{kb} KB"})
             elif is_pptx_name(name):
-                # T320: a PowerPoint deck imports from this dialog too.
+                # T320: a .pptx presentation imports from this dialog too.
                 # Listed WITH the decks, carrying its kind, because that
                 # is the shelf a person looks on for a presentation.
                 kb = max(1, p.stat().st_size // 1024)
                 decks.append({"name": name, "path": str(p),
-                              "size": f"{kb} KB", "kind": "PowerPoint"})
+                              "size": f"{kb} KB", "kind": ".pptx"})
             elif source_label(name):
                 # every OTHER source the producer table knows: Markdown,
                 # Quarto, LaTeX, csv/tsv. They parsed from the CLI and

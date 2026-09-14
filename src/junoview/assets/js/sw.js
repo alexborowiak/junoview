@@ -16,8 +16,8 @@ var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
    because an "offline app" missing its renderer is a lie */
-var CORE = ['./', 'index.html', 'junoview.zip',
-  'manifest.webmanifest', 'icon.svg'];
+var CORE = ['./', 'index.html', 'junoview.zip', 'LICENSE', 'NOTICE',
+  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg'];
 
 /* the runtime, best-effort: a blocked CDN or a renamed font file must not
    veto the install — the page still loads those live while online.

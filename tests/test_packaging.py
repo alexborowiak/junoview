@@ -149,6 +149,7 @@ def test_every_asset_the_code_loads_is_readable():
                  "js/app.js", "js/pptx.js", "js/sw.js", "js/widget.js",
                  "html/page.html", "html/shell.html", "html/deck.html",
                  "html/help.html", "html/mathjax.html",
+                 "html/third-party-notices.html",
                  "html/web-loader.html"):
         assert assets.load(name).strip(), f"asset {name} is empty or missing"
     for part in assets.DECK_PARTS:
@@ -169,6 +170,7 @@ def test_the_asset_loaders_and_the_files_agree():
               "js/app.js", "js/pptx.js", "js/sw.js", "js/widget.js",
               "html/page.html", "html/shell.html", "html/deck.html",
               "html/help.html", "html/mathjax.html",
+              "html/third-party-notices.html",
               "html/web-loader.html"}
     loaded |= {f"js/deck/{p}.js" for p in assets.DECK_PARTS}
     on_disk = {p.relative_to(PKG / "assets").as_posix()

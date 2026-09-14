@@ -150,7 +150,7 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     assert heads == ["file", "export &amp; share",
                      "careful — these lose work"], heads
     # thirteen rows you can see, down from nineteen and then up one for
-    # T320's Import PowerPoint (the fourteenth is #mi-autosave, hidden
+    # T320's .pptx import (the fourteenth is #mi-autosave, hidden
     # unless the build has a project to save to)
     assert menu.count('class="dc-mi') == 14, menu.count('class="dc-mi')
     for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",

@@ -1366,9 +1366,9 @@ window.JunoPptx = (function () {
     charts.forEach(function (x, i) {
       zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x.xml);
       /* T323: the chart's own workbook, and the first rels part a chart
-         part has ever had. The name is the one PowerPoint writes for its
-         own charts, so the Edit Data button finds what it expects. */
-      var wbName = 'Microsoft_Excel_Sheet' + (i + 1) + '.xlsx';
+         part has ever had. Readers follow that relationship, so its name
+         can identify Junoview without affecting Edit Data. */
+      var wbName = 'Junoview_Chart_Data' + (i + 1) + '.xlsx';
       zip.add('ppt/embeddings/' + wbName, x.book);
       zip.addText('ppt/charts/_rels/chart' + (i + 1) + '.xml.rels',
         relsDoc([{ id: 'rId1', type: DOC_NS + '/relationships/package',

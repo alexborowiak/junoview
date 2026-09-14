@@ -2187,7 +2187,7 @@
   }
   function exportDeckPptx(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
-    if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
+    if(!window.JunoPptx){toast('.pptx export unavailable here');return;}
     /* what this will cost, BEFORE the file is in the downloads folder
        (T109). Silent when there is nothing to lose. */
     if(!pptxConfirmLosses()) return;
@@ -2269,7 +2269,7 @@
   function pptxConfirmLosses(){
     var lost=pptxLosses();
     if(!lost.length) return true;
-    return confirm('Export to PowerPoint?\n\nEverything else comes '
+    return confirm('Export .pptx?\n\nEverything else comes '
       +'across, but this will not:\n\n\u2022 '+lost.join('\n\u2022 ')
       +'\n\nExport PDF keeps all of it exactly as you see it.');
   }
@@ -2333,7 +2333,7 @@
     a.download=(pres.name||'presentation')+'.pptx';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
-    var msg='PowerPoint saved — text stays editable'+outputNote();
+    var msg='.pptx saved — text stays editable'+outputNote();
     var noted=outputSlides().filter(function(e){
       return e.s&&e.s.notes&&e.s.notes.trim();}).length;
     if(noted) msg+='. Speaker notes came across on '+noted+' slide'

@@ -170,7 +170,7 @@ def test_a_door_shows_when_anything_behind_it_would(out):
 def test_a_ribbon_layout_places_a_window_where_its_first_member_went(out):
     """The catalogue names Bold; Bold lives inside the Font window now,
     and the window is the atom. A member resolves to its window, so
-    Font lands in the Office ribbon's Font group and Paragraph in its
+    Font lands in the Familiar ribbon's Font group and Paragraph in its
     Paragraph group -- driven on 2026-09-02, both groups on Home.
     """
     assert "function rbnResolve(cid,atoms){" in out

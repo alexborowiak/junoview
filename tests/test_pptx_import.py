@@ -562,12 +562,14 @@ def test_calibri_is_the_deck_s_own_sans():
 
 
 def test_the_doors(out):
-    """File ▸ Import PowerPoint, the launcher's New ▸ Import a PowerPoint
-    file, a .pptx dropped on the window, the Open dialog's rows and
+    """File ▸ Import .pptx, the launcher's New ▸ Import a .pptx file,
+    a .pptx dropped on the window, the Open dialog's rows and
     input, the web build's Choose files -- every road a file comes in by
     -- and the one boot call that wires them."""
     html = assets.deck_html()
     assert 'id="mi-import-pptx"' in html
+    assert '>Import .pptx&#8230;</button>' in html
+    assert '>Export .pptx</button>' in html
     boot = out.split("function pptxImportBoot(){")[1].split("\n  }")[0]
     assert "    menuAction('#mi-import-pptx',openPptxFile);" in boot
     assert "document.getElementById('pptxfile')" in boot
@@ -578,10 +580,13 @@ def test_the_doors(out):
     assert "62-pptx-import" in assets.DECK_PARTS
     page = assets.page_template()
     assert 'data-for="pptxfile"' in page
+    assert 'Import a .pptx file&#8230;</button>' in page
     assert '<input type="file" id="pptxfile" accept=".pptx,.potx,' in page
     assert ".junoview,.html,.pptx\"" in page
     app = assets.app_js()
     assert "function isPptxPath(p){" in app
+    assert "n.kind==='.pptx'" in app
+    assert "Import this .pptx presentation" in app
     drop = app.split("window.addEventListener('drop',function(e){")[1]
     assert "if(APP.deckImportPptx) APP.deckImportPptx(f);" in drop
     opener = app.split("function openPath(path,keep){")[1].split("\n  }")[0]
@@ -653,7 +658,7 @@ def test_the_open_dialog_lists_a_deck_with_its_kind(tmp_path):
     (tmp_path / "old.junoview").write_text("{}")
     got = _list_dir(str(tmp_path))
     rows = {d["name"]: d for d in got["decks"]}
-    assert rows["talk.pptx"]["kind"] == "PowerPoint"
+    assert rows["talk.pptx"]["kind"] == ".pptx"
     assert "kind" not in rows["old.junoview"]
 
 
@@ -676,4 +681,10 @@ def test_the_web_build_reaches_the_reader(tmp_path):
 
 
 def test_the_help_page_says_so():
-    assert "Import PowerPoint" in assets.help_html()
+    help_html = assets.help_html()
+    assert "File &rarr; Import .pptx" in help_html
+    assert "File &rarr; Export .pptx" in help_html
+    assert "Microsoft PowerPoint" in help_html
+    assert "not affiliated with, endorsed by, sponsored by, or approved" in \
+        help_html
+    assert "Microsoft and PowerPoint are trademarks" in help_html

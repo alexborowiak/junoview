@@ -390,12 +390,14 @@ def test_every_family_the_gallery_declares_has_layouts_in_it(out):
         f"used but undeclared: {sorted(used - set(declared))}")
 
 
-def test_the_catalogue_recreates_the_applications_people_already_use(out):
-    """REWRITTEN for T139: of the two dozen product imitations, only
-    the Office taxonomy survived the cut -- it is the one hands
-    actually arrive trained on. The rest were retired by the user's
-    decision and live in git history."""
+def test_the_catalogue_keeps_a_familiar_layout_without_product_branding(out):
+    """T139 keeps the familiar taxonomy while leaving product names out
+    of the public gallery. Older layout ids remain readable so saved
+    preferences still fall back predictably."""
     assert "familiar-office-ribbon" in out
+    assert "name:'Familiar ribbon'" in out
+    assert "name:'Office ribbon'" not in out
+    assert "PowerPoint-trained" not in out
     for gone in ("microsoft-powerpoint-2003", "adobe-raster-options-bar",
                  "consumer-pres-keynote", "opensource-blender"):
         assert gone not in out, f"{gone} came back"

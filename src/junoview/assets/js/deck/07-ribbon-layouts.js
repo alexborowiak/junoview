@@ -630,7 +630,7 @@
      describe. The user's call: keep Default plus "like 9 of the
      best". The eight below survive because each is a genuinely
      different, coherent way of working, not a permutation: the
-     PowerPoint-trained hands (Office ribbon), the scope taxonomy
+     familiar slide-editor conventions (Familiar ribbon), the scope taxonomy
      (Deck, slide, object), the notebook-first workflow (Sources tab),
      frequency (Everyday first), the poster maker (Poster first), the
      board-tool feel (Canvas rail), density (Everything in one row)
@@ -641,8 +641,8 @@
      demands. */
 
     {id:'familiar-office-ribbon',
-     name:'Office ribbon',
-     blurb:'Try this first if your hands already know PowerPoint - Home, Insert, Design and Animate with the group names Office trained you on.',
+     name:'Familiar ribbon',
+     blurb:'A familiar Home, Insert, Design and Animate arrangement with clearly named groups.',
      family:'familiar',
      selTab:'home',
      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},{id:'design',label:'Design'},{id:'animate',label:'Animate'}],

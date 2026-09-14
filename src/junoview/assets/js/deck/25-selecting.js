@@ -2828,7 +2828,7 @@
       var pb=row(allPriv?'\u2713 Only me':'Only me','',function(){
         setPrivSel(!allPriv);},
         'Show this only on your screen and in presenter view \u2014 never '
-        +'to the audience, or in a PDF or PowerPoint','eye');
+        +'to the audience, or in a PDF or .pptx','eye');
       if(allPriv) pb.classList.add('on');
     }
     /* the slide's SEQUENCE (T106): always offered, because reading
@@ -2857,7 +2857,7 @@
         +'numbers or change its type');},
       'A bar chart with sample numbers to replace \u2014 or select a '
       +'placed table and \u201cTurn into a chart\u201d. Exports to '
-      +'PowerPoint as a real chart.','plots');
+      +'a .pptx as an editable chart.','plots');
     var cgm=customGuides();
     menuHead(m,'guides');
     row('Draw a guide box','B',armGuideBox,

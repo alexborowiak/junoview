@@ -1,5 +1,5 @@
   /* ================================================================
-     62-pptx-import.js — POWERPOINT IN (T320)
+     62-pptx-import.js — .PPTX IMPORT (T320)
 
      ONE FRAGMENT of deck.js's single IIFE: assets.DECK_PARTS names the
      order, 00-page.js opens the function and 99-boot.js closes it. It
@@ -11,8 +11,8 @@
      drive a deck out and back. This file turns that spec into slides
      (specToPres), settles the pictures into the original store the way
      a paste does, says what was lost BEFORE the deck lands (the export
-     dialog's twin), and opens the doors: File ▸ Import PowerPoint, the
-     launcher's New ▸ Import a PowerPoint file, a .pptx dropped on the
+     dialog's twin), and opens the doors: File ▸ Import .pptx, the
+     launcher's New ▸ Import a .pptx file, a .pptx dropped on the
      window, a .pptx row or path in the Open dialog, and a .pptx URL in
      the web build.
 
@@ -262,7 +262,7 @@
      dialog's twin (pptxConfirmLosses). Nothing to lose means no dialog. */
   function pptxConfirmImport(name,lost){
     if(!lost.length) return true;
-    return confirm('Import “'+name+'” from PowerPoint?\n\n'
+    return confirm('Import “'+name+'”?\n\n'
       +'Everything else comes across, but this will not:\n\n• '
       +lost.join('\n• ')
       +'\n\nThe .pptx itself is not changed.');
@@ -304,7 +304,7 @@
   }
   function importPptxSpec(got,name){
     if(!got||!got.spec||!Array.isArray(got.spec.slides)){
-      toast('That file does not look like a PowerPoint deck');
+      toast('That file does not look like a .pptx presentation');
       return;
     }
     var lost=(got.lost||[]).slice();
@@ -344,7 +344,7 @@
     var name=file.name||'presentation.pptx';
     var web=!!(window.semPy&&window.semPy.importPptx);
     if(APP.mode!=='app'&&!web){
-      toast('PowerPoint import needs the Junoview app or the web build '
+      toast('.pptx import needs the Junoview app or the web build '
         +'— this page has no reader for a .pptx',6000);
       return true;
     }
@@ -380,7 +380,7 @@
       accept['application/vnd.openxmlformats-officedocument'
         +'.presentationml.presentation']=['.pptx','.potx','.ppsx','.pptm'];
       window.showOpenFilePicker({
-        types:[{description:'PowerPoint presentation',accept:accept}],
+        types:[{description:'.pptx presentation',accept:accept}],
         multiple:false
       }).then(function(hs){
         var h=hs&&hs[0];

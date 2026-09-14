@@ -363,11 +363,10 @@ it &mdash; not a canvas you author on.</li>
 grouping, so there are more than a hundred. The always-visible
 <i data-ic="layouts"></i> <b>Ribbon layouts</b> button beside the tabs
 (or right-clicking the ribbon) opens a gallery of
-whole arrangements, headed by family. Some recreate an application you
-already use &mdash; <i>PowerPoint 2003</i> and the ribbons that followed
-it, <i>Photoshop options bar</i>, <i>Keynote inspector</i>, <i>Figma
-design panel</i>, <i>Inkscape</i>, <i>Blender workspaces</i>. Others are
-built on a single idea: <i>Deck, slide, object</i> if you want to know
+whole arrangements, headed by family. Some favour familiar ways of
+working &mdash; a classic menu bar, tabbed ribbon, compact options bar,
+inspector, design panel or workspace strip. Others are built on a single
+idea: <i>Deck, slide, object</i> if you want to know
 what a button will change before you click it, <i>Sources tab</i> if
 your figures come from a live notebook, <i>Everything in one row</i> if
 tabs themselves are the problem. A whole family differs by one decision
@@ -409,7 +408,7 @@ is itself undoable.</li>
 have drawn and pick <i>Only me</i>. It stays on your screen and in the
 presenter view, marked with a dashed amber edge so you can tell at a
 glance, and it is never drawn for the audience, never in an exported PDF
-and never in PowerPoint. Like your speaker notes it <i>is</i> stored in
+and never in an exported <code>.pptx</code>. Like your speaker notes it <i>is</i> stored in
 the deck, so a deck file you hand to somebody contains it.</li>
 <li><b>Find a slide mid-talk.</b> Press <kbd>/</kbd> while presenting
 and the overview map opens with a search box: type any words from a
@@ -600,39 +599,41 @@ axis titles, a trend line per series, a series drawn as a line over the
 bars, and each series' colour, name and visibility. Error bars and
 confidence bands come in through the numbers: a column <i>Name
 &plusmn;</i> is Name's error bar, <i>Name lo</i> and <i>Name hi</i> its
-band. All of it exports as real PowerPoint chart XML except the band.</li>
+band. All of it exports as real <code>.pptx</code> chart XML except the band.</li>
 <li><i>Insert &rarr; Video / audio</i> places a clip from your computer
 (so does dropping one on the slide). It plays in the show &mdash; click
 it, or tick <i>Play when it arrives</i> &mdash; and the <i>Clip
 options</i> pane on the Object tab trims it, picks its poster frame and
 sets controls, loop and mute. The clip is kept in this browser and in
 every self-contained save, so the deck plays with no file beside it, and
-it exports as a real PowerPoint media shape and plays in the standalone
+it exports as a real media shape in the <code>.pptx</code> and plays in the standalone
 HTML.</li>
-<li><i>File &rarr; Import PowerPoint</i> brings a <code>.pptx</code>
+<li><i>File &rarr; Import .pptx</i> brings a <code>.pptx</code>
 IN as a new presentation (so does dropping one on the window, the
-launcher's <i>New &rarr; Import a PowerPoint file</i>, and a
+launcher's <i>New &rarr; Import a .pptx file</i>, and a
 <code>.pptx</code> row in the Open dialog). Text stays <b>editable</b>
 &mdash; bold, colour and bullets inside a box included &mdash; shapes,
 lines, pictures, tables, charts, speaker notes, sections, links and
 builds come across, and whatever cannot is listed <i>before</i> the deck
 lands. The <code>.pptx</code> itself is never changed.</li>
-<li><i>File &rarr; Export PowerPoint</i> writes a <code>.pptx</code>.
-Text stays <b>editable</b> in PowerPoint, figures and images come across
-as pictures, boxes and arrows become real shapes, placed tables become
-real PowerPoint tables, a placed <b>chart</b> leaves as a real
-PowerPoint chart &mdash; numbers, series colours and legend, ready to
-restyle over there &mdash; and speaker notes land on each slide's Notes
+<li><i>File &rarr; Export .pptx</i> writes a <code>.pptx</code>.
+Text stays <b>editable</b> in compatible presentation software, including
+Microsoft PowerPoint; figures and images come across as pictures, boxes
+and arrows become real shapes, placed tables become editable tables, and
+a placed <b>chart</b> leaves as an editable chart &mdash; numbers, series
+colours and legend, ready to restyle &mdash; and speaker notes land on each slide's Notes
 page. <b>Builds travel</b>: each click reveals the same objects it does
 here (rise and zoom arrive as fades &mdash; the click timing is exact).
 <b>Links travel</b>: a click action opens its page or jumps to its
 slide in the exported deck too. Cropped pictures keep their trim and
 their shape, and slide transitions come across (<i>Move matching
-objects</i> becomes a push, which is the nearest PowerPoint has). What
-does <b>not</b> travel: a crop you drew freehand, and equations (they
-arrive as plain text, since PowerPoint has no LaTeX). Everything lost
+objects</i> becomes a push). What does <b>not</b> travel: a crop you
+drew freehand, and equations (they arrive as plain text). Everything lost
 is counted and named when you export, not silently dropped &mdash; use
 Export PDF when any of it matters.</li>
+<li><small><b>About .pptx compatibility.</b> Junoview is independent and
+is not affiliated with, endorsed by, sponsored by, or approved by Microsoft.
+Microsoft and PowerPoint are trademarks of the Microsoft group of companies.</small></li>
 <li><b><i data-ic="play"></i> Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one

@@ -1701,7 +1701,7 @@
         var typed=prompt('Font family — exactly as it is named on this '
           +'computer (e.g. "Univers", "Source Sans Pro").\n\nIt has to be '
           +'installed to show here, and installed on any machine that '
-          +'opens the PowerPoint. PDF export always embeds what you see.',
+          +'opens the exported .pptx. PDF export always embeds what you see.',
           '');
         typed=(typed||'').trim();
         if(!typed){renderControls();return;}
