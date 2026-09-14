@@ -2619,8 +2619,8 @@
       'Another one here, on every slide, or on every slide after this '
       +'one \u2014 and what the clones share',!!primInst,
       function(b){cmpAddMenu(b,primInst);});
-    act(bic('locate')+' Every instance',
-      'Every place in this deck this component has been put — pick '
+    act(bic('locate')+' Its clones',   /* T420: one name everywhere */
+      'Every place in this deck this clone has been put \u2014 pick '
       +'one to go there',!!primInst,
       function(b){cmpInstMenu(primInst.cmp,b);});
     act(bic('history')+' History',

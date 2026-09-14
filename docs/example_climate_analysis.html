@@ -5623,7 +5623,6 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .selpane.animpane .selpane-list{padding:10px 11px;}
 .anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--chrome-ink-2);margin:0 2px 6px;}
-.anim-empty{font-size:12px;color:var(--chrome-ink-2);padding:1px 2px 9px;line-height:1.5;}
 .anim-mini{background:var(--chrome-2,#16273a);border:1px solid #ffffff1f;color:#bcccd8;
   border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
   font-family:var(--sans);white-space:nowrap;}
@@ -24576,7 +24575,17 @@ window.JunoPptx = (function () {
      picShape only runs from build(), long after this line. */
   var SHAPE_GEOM = { rect: 'rect', ellipse: 'ellipse', oval: 'ellipse',
     circle: 'ellipse', round: 'roundRect', roundRect: 'roundRect',
-    diamond: 'diamond', triangle: 'triangle', star: 'star5' };
+    diamond: 'diamond', triangle: 'triangle', star: 'star5',
+    /* T419: PowerPoint has the braces and the square brackets as line
+       presets of its own */
+    lbrace: 'leftBrace', rbrace: 'rightBrace',
+    lbracket: 'leftBracket', rbracket: 'rightBracket' };
+  /* ...and no angle bracket, so those go as a freeform of two legs, the
+     way a drawn stroke does. A shape in this table, or an open preset
+     above, is a LINE: it gets no fill. */
+  var SHAPE_OPEN_PTS = { langle: [[1, 0], [0, 0.5], [1, 1]],
+    rangle: [[0, 0], [1, 0.5], [0, 1]] };
+  var SHAPE_OPEN_PRESET = { lbrace: 1, rbrace: 1, lbracket: 1, rbracket: 1 };
 
   /* Line weight arrives as a PERCENTAGE OF PAGE HEIGHT, the same currency
      runProps already uses for text size. It used to arrive as canvas
@@ -24589,14 +24598,19 @@ window.JunoPptx = (function () {
   }
 
   function rectShape(item, id, page) {
-    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
+    var open = SHAPE_OPEN_PTS[item.shape];
+    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '"'
+      + (open ? ' cap="rnd"><a:round/>' : '>')
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
+    var geom = open ? freeformGeom(open)
+      : '<a:prstGeom prst="' + (SHAPE_GEOM[item.shape] || 'rect')
+        + '"><a:avLst/></a:prstGeom>';
+    var fill = (open || SHAPE_OPEN_PRESET[item.shape])
+      ? '<a:noFill/>' : shapeFillXml(item);
     return '<p:sp>'
       + nvSp(id, item.name || ('Shape ' + id), '', item._link)
-      + '<p:spPr>' + xfrm(item, page) + '<a:prstGeom prst="'
-      + (SHAPE_GEOM[item.shape] || 'rect') + '"><a:avLst/></a:prstGeom>'
-      + shapeFillXml(item)
+      + '<p:spPr>' + xfrm(item, page) + geom + fill
       + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
       + '</p:txBody></p:sp>';
   }
@@ -24608,9 +24622,9 @@ window.JunoPptx = (function () {
      fixed 100000-unit grid rather than into EMU, which keeps the numbers
      integral and independent of the page size. */
   var FREE_N = 100000;
-  function drawShape(item, id, page) {
-    var pts = item.pts || [];
-    if (pts.length < 2) return '';
+  /* the custGeom for a list of 0..1 points: one open polyline (T419
+     lifted it out of drawShape so an angle bracket can use it too) */
+  function freeformGeom(pts) {
     var path = '<a:path w="' + FREE_N + '" h="' + FREE_N + '">';
     pts.forEach(function (q, i) {
       var x = Math.round(Math.max(0, Math.min(1, q[0])) * FREE_N);
@@ -24620,15 +24634,20 @@ window.JunoPptx = (function () {
         : '<a:lnTo>' + pt + '</a:lnTo>';
     });
     path += '</a:path>';
+    return '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst>' + path
+      + '</a:pathLst></a:custGeom>';
+  }
+  function drawShape(item, id, page) {
+    var pts = item.pts || [];
+    if (pts.length < 2) return '';
     var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667)
       + '" cap="rnd"><a:round/>'
       + solidFill(item.color, item.op, '8AA0B0')
       + dashXml(item.dash) + '</a:ln>';
     return '<p:sp>' + nvSp(id, item.name || ('Drawing ' + id))
       + '<p:spPr>' + xfrm(item, page)
-      + '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
-      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst>' + path
-      + '</a:pathLst></a:custGeom><a:noFill/>'
+      + freeformGeom(pts) + '<a:noFill/>'
       + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
       + '</p:txBody></p:sp>';
   }
@@ -30566,8 +30585,8 @@ window.JunoPptx = (function () {
       'Another one here, on every slide, or on every slide after this '
       +'one \u2014 and what the clones share',!!primInst,
       function(b){cmpAddMenu(b,primInst);});
-    act(bic('locate')+' Every instance',
-      'Every place in this deck this component has been put — pick '
+    act(bic('locate')+' Its clones',   /* T420: one name everywhere */
+      'Every place in this deck this clone has been put \u2014 pick '
       +'one to go there',!!primInst,
       function(b){cmpInstMenu(primInst.cmp,b);});
     act(bic('history')+' History',
@@ -33937,8 +33956,23 @@ window.JunoPptx = (function () {
     cloud:'M30 82 C12 82 6 58 24 52 C20 30 52 22 58 38 '
       +'C72 26 92 40 84 56 C98 58 96 82 78 82 Z',
     bubble:'M8 8 H92 V66 H44 L24 90 V66 H8 Z',
-    lightning:'M58 4 L20 56 H46 L38 96 L82 40 H54 Z'
+    lightning:'M58 4 L20 56 H46 L38 96 L82 40 H54 Z',
+    /* T419: BRACKETS AND BRACES (2026-09-14, user: "Having things like
+       large angle brackets and stuff is always really useful but they
+       are currently missing"). Open strokes, not outlines: no Z, and
+       SHAPE_OPEN keeps the fill off them. Drawn tall and thin, and the
+       box stretches them like every other path. */
+    langle:'M88 4 L12 50 L88 96',
+    rangle:'M12 4 L88 50 L12 96',
+    lbracket:'M82 4 H24 V96 H82',
+    rbracket:'M18 4 H76 V96 H18',
+    lbrace:'M80 4 C56 4 62 22 62 32 C62 44 60 48 30 50 '
+      +'C60 52 62 56 62 68 C62 78 56 96 80 96',
+    rbrace:'M20 4 C44 4 38 22 38 32 C38 44 40 48 70 50 '
+      +'C40 52 38 56 38 68 C38 78 44 96 20 96'
   };
+  /* a shape that is a line, not a region: nothing to fill, ends round */
+  var SHAPE_OPEN={langle:1,rangle:1,lbracket:1,rbracket:1,lbrace:1,rbrace:1};
   var SHAPE_GLYPH={exclaim:'!',question:'?'};
 
   /* ---- line styles, arrow heads, gradients ---------------------------
@@ -34133,7 +34167,11 @@ window.JunoPptx = (function () {
     ['diamond','Diamond'],['pentagon','Pentagon'],['hexagon','Hexagon'],
     ['star','Star'],['cross','Plus'],['arrow','Arrow'],['heart','Heart'],
     ['cloud','Cloud'],['bubble','Speech'],['lightning','Bolt'],
-    ['exclaim','Exclaim'],['question','Question']];
+    ['exclaim','Exclaim'],['question','Question'],
+    /* T419 */
+    ['langle','Angle \u2039'],['rangle','Angle \u203a'],
+    ['lbrace','Brace {'],['rbrace','Brace }'],
+    ['lbracket','Bracket ['],['rbracket','Bracket ]']];
   /* the fill a shape actually paints: none, a tint of its own line
      colour (the original behaviour, kept for existing posters), a solid
      colour, or a gradient — linear at an angle, or radiating from the
@@ -34251,7 +34289,11 @@ window.JunoPptx = (function () {
       var p=document.createElementNS(SVGNS,'path');
       p.setAttribute('d',SHAPE_PATHS[shp]||'');
       var fillVal='none';
-      if(a.grad){
+      if(SHAPE_OPEN[shp]){
+        /* T419: a bracket is a stroke; a fill would paint the page
+           between its arms */
+        p.setAttribute('stroke-linecap','round');
+      } else if(a.grad){
         /* SVG cannot take a CSS gradient string, so the same gradient is
            declared as a paint server and referenced */
         var gid='an-grad-'+(idx==null?'x':idx);
@@ -45621,7 +45663,7 @@ window.JunoPptx = (function () {
            other instance and could cut this one loose from them, but it
            could not tell you they existed — the count only ever
            appeared inside a tooltip on a different row (T89). */
-        row('Every instance of this component…',String(cN),
+        row('Its clones\u2026',String(cN),   /* T420: one name everywhere */
           function(){cmpInstMenu(cInst.cmp);},
           'Every place in the deck it has been put, as a list — '
           +'pick one to go to that slide with the instance already '
@@ -68326,7 +68368,14 @@ window.JunoPptx = (function () {
     } else {
       var p=document.createElementNS(SVGNS,'path');
       p.setAttribute('d',SHAPE_PATHS[shp]||'');
-      p.setAttribute('fill','#c9d6e2');svg.appendChild(p);
+      if(SHAPE_OPEN[shp]){
+        /* T419: drawn as the stroke it is */
+        p.setAttribute('fill','none');p.setAttribute('stroke','#c9d6e2');
+        p.setAttribute('stroke-width','9');
+        p.setAttribute('stroke-linecap','round');
+        p.setAttribute('stroke-linejoin','round');
+      } else p.setAttribute('fill','#c9d6e2');
+      svg.appendChild(p);
     }
     return svg;
   }

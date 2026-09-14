@@ -1685,7 +1685,14 @@
     } else {
       var p=document.createElementNS(SVGNS,'path');
       p.setAttribute('d',SHAPE_PATHS[shp]||'');
-      p.setAttribute('fill','#c9d6e2');svg.appendChild(p);
+      if(SHAPE_OPEN[shp]){
+        /* T419: drawn as the stroke it is */
+        p.setAttribute('fill','none');p.setAttribute('stroke','#c9d6e2');
+        p.setAttribute('stroke-width','9');
+        p.setAttribute('stroke-linecap','round');
+        p.setAttribute('stroke-linejoin','round');
+      } else p.setAttribute('fill','#c9d6e2');
+      svg.appendChild(p);
     }
     return svg;
   }

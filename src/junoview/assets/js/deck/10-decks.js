@@ -1757,8 +1757,23 @@
     cloud:'M30 82 C12 82 6 58 24 52 C20 30 52 22 58 38 '
       +'C72 26 92 40 84 56 C98 58 96 82 78 82 Z',
     bubble:'M8 8 H92 V66 H44 L24 90 V66 H8 Z',
-    lightning:'M58 4 L20 56 H46 L38 96 L82 40 H54 Z'
+    lightning:'M58 4 L20 56 H46 L38 96 L82 40 H54 Z',
+    /* T419: BRACKETS AND BRACES (2026-09-14, user: "Having things like
+       large angle brackets and stuff is always really useful but they
+       are currently missing"). Open strokes, not outlines: no Z, and
+       SHAPE_OPEN keeps the fill off them. Drawn tall and thin, and the
+       box stretches them like every other path. */
+    langle:'M88 4 L12 50 L88 96',
+    rangle:'M12 4 L88 50 L12 96',
+    lbracket:'M82 4 H24 V96 H82',
+    rbracket:'M18 4 H76 V96 H18',
+    lbrace:'M80 4 C56 4 62 22 62 32 C62 44 60 48 30 50 '
+      +'C60 52 62 56 62 68 C62 78 56 96 80 96',
+    rbrace:'M20 4 C44 4 38 22 38 32 C38 44 40 48 70 50 '
+      +'C40 52 38 56 38 68 C38 78 44 96 20 96'
   };
+  /* a shape that is a line, not a region: nothing to fill, ends round */
+  var SHAPE_OPEN={langle:1,rangle:1,lbracket:1,rbracket:1,lbrace:1,rbrace:1};
   var SHAPE_GLYPH={exclaim:'!',question:'?'};
 
   /* ---- line styles, arrow heads, gradients ---------------------------
@@ -1953,7 +1968,11 @@
     ['diamond','Diamond'],['pentagon','Pentagon'],['hexagon','Hexagon'],
     ['star','Star'],['cross','Plus'],['arrow','Arrow'],['heart','Heart'],
     ['cloud','Cloud'],['bubble','Speech'],['lightning','Bolt'],
-    ['exclaim','Exclaim'],['question','Question']];
+    ['exclaim','Exclaim'],['question','Question'],
+    /* T419 */
+    ['langle','Angle \u2039'],['rangle','Angle \u203a'],
+    ['lbrace','Brace {'],['rbrace','Brace }'],
+    ['lbracket','Bracket ['],['rbracket','Bracket ]']];
   /* the fill a shape actually paints: none, a tint of its own line
      colour (the original behaviour, kept for existing posters), a solid
      colour, or a gradient — linear at an angle, or radiating from the
@@ -2071,7 +2090,11 @@
       var p=document.createElementNS(SVGNS,'path');
       p.setAttribute('d',SHAPE_PATHS[shp]||'');
       var fillVal='none';
-      if(a.grad){
+      if(SHAPE_OPEN[shp]){
+        /* T419: a bracket is a stroke; a fill would paint the page
+           between its arms */
+        p.setAttribute('stroke-linecap','round');
+      } else if(a.grad){
         /* SVG cannot take a CSS gradient string, so the same gradient is
            declared as a paint server and referenced */
         var gid='an-grad-'+(idx==null?'x':idx);

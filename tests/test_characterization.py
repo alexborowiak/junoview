@@ -1782,8 +1782,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-13, T418: chrome only. The picture turns with the bullets
 # (deck JS/HTML).
 # 2026-09-13, T416: chrome only. Saving end to end (deck JS).
-EXPECTED_MD5 = "108c3ac195644c03ad9885b339ea6aa6"
-EXPECTED_BYTES = 4158759
+# 2026-09-14, T419: chrome only. Brackets and braces (deck JS,
+# pptx.js).
+# 2026-09-14, T420: chrome only. Clone wording, a dead rule (deck
+# JS/CSS).
+EXPECTED_MD5 = "4df1a3460fcbaf8648a8c482211df480"
+EXPECTED_BYTES = 4161219
 
 
 def _render_example() -> str:

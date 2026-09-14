@@ -538,7 +538,17 @@ window.JunoPptx = (function () {
      picShape only runs from build(), long after this line. */
   var SHAPE_GEOM = { rect: 'rect', ellipse: 'ellipse', oval: 'ellipse',
     circle: 'ellipse', round: 'roundRect', roundRect: 'roundRect',
-    diamond: 'diamond', triangle: 'triangle', star: 'star5' };
+    diamond: 'diamond', triangle: 'triangle', star: 'star5',
+    /* T419: PowerPoint has the braces and the square brackets as line
+       presets of its own */
+    lbrace: 'leftBrace', rbrace: 'rightBrace',
+    lbracket: 'leftBracket', rbracket: 'rightBracket' };
+  /* ...and no angle bracket, so those go as a freeform of two legs, the
+     way a drawn stroke does. A shape in this table, or an open preset
+     above, is a LINE: it gets no fill. */
+  var SHAPE_OPEN_PTS = { langle: [[1, 0], [0, 0.5], [1, 1]],
+    rangle: [[0, 0], [1, 0.5], [0, 1]] };
+  var SHAPE_OPEN_PRESET = { lbrace: 1, rbrace: 1, lbracket: 1, rbracket: 1 };
 
   /* Line weight arrives as a PERCENTAGE OF PAGE HEIGHT, the same currency
      runProps already uses for text size. It used to arrive as canvas
@@ -551,14 +561,19 @@ window.JunoPptx = (function () {
   }
 
   function rectShape(item, id, page) {
-    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
+    var open = SHAPE_OPEN_PTS[item.shape];
+    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '"'
+      + (open ? ' cap="rnd"><a:round/>' : '>')
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
+    var geom = open ? freeformGeom(open)
+      : '<a:prstGeom prst="' + (SHAPE_GEOM[item.shape] || 'rect')
+        + '"><a:avLst/></a:prstGeom>';
+    var fill = (open || SHAPE_OPEN_PRESET[item.shape])
+      ? '<a:noFill/>' : shapeFillXml(item);
     return '<p:sp>'
       + nvSp(id, item.name || ('Shape ' + id), '', item._link)
-      + '<p:spPr>' + xfrm(item, page) + '<a:prstGeom prst="'
-      + (SHAPE_GEOM[item.shape] || 'rect') + '"><a:avLst/></a:prstGeom>'
-      + shapeFillXml(item)
+      + '<p:spPr>' + xfrm(item, page) + geom + fill
       + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
       + '</p:txBody></p:sp>';
   }
@@ -570,9 +585,9 @@ window.JunoPptx = (function () {
      fixed 100000-unit grid rather than into EMU, which keeps the numbers
      integral and independent of the page size. */
   var FREE_N = 100000;
-  function drawShape(item, id, page) {
-    var pts = item.pts || [];
-    if (pts.length < 2) return '';
+  /* the custGeom for a list of 0..1 points: one open polyline (T419
+     lifted it out of drawShape so an angle bracket can use it too) */
+  function freeformGeom(pts) {
     var path = '<a:path w="' + FREE_N + '" h="' + FREE_N + '">';
     pts.forEach(function (q, i) {
       var x = Math.round(Math.max(0, Math.min(1, q[0])) * FREE_N);
@@ -582,15 +597,20 @@ window.JunoPptx = (function () {
         : '<a:lnTo>' + pt + '</a:lnTo>';
     });
     path += '</a:path>';
+    return '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst>' + path
+      + '</a:pathLst></a:custGeom>';
+  }
+  function drawShape(item, id, page) {
+    var pts = item.pts || [];
+    if (pts.length < 2) return '';
     var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667)
       + '" cap="rnd"><a:round/>'
       + solidFill(item.color, item.op, '8AA0B0')
       + dashXml(item.dash) + '</a:ln>';
     return '<p:sp>' + nvSp(id, item.name || ('Drawing ' + id))
       + '<p:spPr>' + xfrm(item, page)
-      + '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
-      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst>' + path
-      + '</a:pathLst></a:custGeom><a:noFill/>'
+      + freeformGeom(pts) + '<a:noFill/>'
       + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
       + '</p:txBody></p:sp>';
   }
