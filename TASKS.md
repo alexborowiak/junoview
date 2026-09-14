@@ -5179,12 +5179,17 @@ option. Then where has the ability to refresh all images gone?"
   notebook: 27 pins on the source cards, 0 in an expanded tree node, 0
   across a plot trace's five cards.
 
-- [ ] **T249 - The widget does not show dead pin and mark buttons.**
+- [x] **T249 - The widget does not show dead pin and mark buttons.**
   Review, 2026-09-04. `render_item()` now emits pin and mark controls for
   every frontend, but `widget.js` wires neither of them. The widget
   consequently presents controls which look interactive and do
   nothing. Give the widget real persisted pin/mark behaviour, or make
   the shared renderer able to omit app-only card chrome.
+  *Done 2026-09-14.* The widget's mount() removes the pin, the label
+  and the per-cell eye (the eye was dead there too: the widget adds its
+  own hide button) before anything shows. The shared renderer is left
+  alone -- it is the app's chrome, and the widget is the one frontend
+  that does not wire it.
 
 - [x] **T250 - A colour theme covers the whole product, not only the
   chrome.**

@@ -79,6 +79,12 @@ function mount(model, el){
   function flash(c){c.classList.add('target-flash');
     setTimeout(()=>c.classList.remove('target-flash'),1300);}
 
+  /* T249: the shared renderer emits the app's per-cell chrome -- pin,
+     label and eye -- and this widget wires none of it (its own hide
+     button follows below). A control that looks live and does nothing
+     is worse than none, so the three come off before anything shows. */
+  $$('.cell-pin,.cell-mark,.cell-eye').forEach(b=>b.remove());
+
   // hide buttons + restore the hidden set
   $$('.card').forEach(card=>{
     const head=$('.cardhead',card);
