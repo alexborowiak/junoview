@@ -267,9 +267,11 @@ def as_presentations(obj: Any) -> list:
         # explicitly opted out of.
         # "slot" is which type a layout's slot actually gets, so a
         # variation you chose survives into the next new slide (T368).
+        # "scale" is the page's type scale, seeded by a poster template
+        # and read under the deck's style overrides (T278).
         for key in ("wmark", "head", "foot", "styles", "sections",
                     "tokens", "components", "cuts", "guides", "masters",
-                    "live", "bib", "cite", "slot"):
+                    "live", "bib", "cite", "slot", "scale"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

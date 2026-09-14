@@ -429,7 +429,11 @@
      and it matters more than the theoretically closest name for any one
      band. styleOrder(), so a type you invented can be suggested too. */
   function stdName(bands){
-    var left=styleOrder();
+    /* T277: a subtitle is the line UNDER A TITLE -- a place, not a size
+       band -- so size alone must never suggest it: a deck of 3.4% body
+       paragraphs is Body, not a page of subtitles. Like caption, it is
+       a name only the user gives. */
+    var left=styleOrder().filter(function(id){return id!=='subtitle';});
     bands.forEach(function(b){
       var best=null,bestD=1e9;
       left.forEach(function(id){
@@ -521,12 +525,21 @@
     if(!!a.b!==!!d.b||!!a.i!==!!d.i) return false;
     if((a.font||'')!==(d.font||'')) return false;
     if(colDrift(stdCol(a),d.color||stdInk())) return false;
-    if((a.align||'')!==(d.align||'')) return false;
+    /* T425: THE DEFAULT LOOK IS NOT A DIFFERENCE. Every template-born
+       box carries align:'left' and bg:0, and a style that says nothing
+       about either means "the default" -- left, transparent. Read
+       strictly, 7 of 7 Heading 2 boxes on a poster fresh from its
+       template "no longer matched the style" (2026-09-14). A style that
+       ASKS for a ground (T314) still catches a box that lost it. */
+    if((a.align||'left')!==(d.align||'left')) return false;
     if(Math.abs((a.lh||0)-(d.lh||0))>0.02) return false;
     if(Math.abs((a.pspace||0)-(d.pspace||0))>0.02) return false;
-    /* T314: a box that lost its style's background is a mismatch */
-    if(((a.bg===0)?'none':(a.bg?(a.bgc||''):''))!==(d.bg||'')) return false;
-    if((a.bdc||'')!==(d.bdc||'')) return false;
+    var abg=(a.bg===0)?'':(a.bg?(a.bgc||''):''),dbg=d.bg||'';
+    if(dbg==='none') dbg='';
+    if(abg!==dbg) return false;
+    var abd=a.bdc||'',dbd=d.bdc||'';
+    if(abd==='none') abd=''; if(dbd==='none') dbd='';
+    if(abd!==dbd) return false;
     return true;
   }
   /* T268: what the two values ARE. "2 of 7 differ" told you a count and
@@ -2171,6 +2184,9 @@
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
+        /* T278: the scale was the poster sheet's; a slide page takes
+           the built-in ladder back */
+        if(!pg.poster) delete pres.scale;
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a

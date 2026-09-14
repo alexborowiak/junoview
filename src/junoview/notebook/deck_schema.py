@@ -103,6 +103,10 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "head": (dict, "Running header."),
     "foot": (dict, "Running footer."),
     "styles": (dict, "This deck's overrides of the named text types."),
+    "scale": (dict, "The page's type scale: {type: size}, in page-height "
+                    "percent, seeded by the poster template that made "
+                    "the page. Read under `styles`, so a size set by "
+                    "hand still wins; a style set keeps it."),
     "tokens": (dict, "The deck's design tokens: {c:{name:colour}, rad, "
                      "gap}. An item referencing one stores '@name'."),
     "components": (dict, "{id: {name, w, h, items, link, x, y}}. Named "

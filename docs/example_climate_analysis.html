@@ -25691,13 +25691,10 @@ window.JunoPptx = (function () {
     {id:'title',label:'Title',items:[
       {k:'text',x:12,y:33,w:76,h:16,text:'Presentation title',size:7.2,
         b:1,align:'center',style:'title'},
-      /* THE SUBTITLE HAS NO HOME IN THE SEVEN and is deliberately left
-         untyped. title/h1/h2/h3 are all bold, body and small are body
-         copy; a subtitle is neither, and inventing an eighth built-in
-         reaches into BUILTIN_STYLE_IDS, every style set, the type strip
-         and the Design rail. Recorded as T277 rather than guessed at. */
+      /* T277: the subtitle has a home now -- the eighth built-in, sized
+         at its own number so the box is not drift the moment it lands */
       {k:'text',x:12,y:55,w:76,h:8,text:'Subtitle',size:3.4,
-        align:'center'}]},
+        align:'center',style:'subtitle'}]},
     {id:'section',label:'Section',items:[
       {k:'text',x:8,y:41,w:84,h:18,text:'Section',size:7.2,b:1,
         align:'center',style:'title'}]},
@@ -25752,236 +25749,244 @@ window.JunoPptx = (function () {
        else. `land:1` marks the templates shaped for a landscape page.
        Text `size` is a % of page HEIGHT, so the landscape templates carry
        larger numbers for the same physical type size. ---- */
-    {id:'poster-3col',label:'3 columns · classic',poster:1,items:[
+    {id:'poster-3col',label:'3 columns · classic',poster:1,
+      scale:{title:3.1,subtitle:1.4,h2:1.9,body:1.35,small:1.1},items:[
       {k:'text',x:3,y:1.4,w:94,h:3.6,
         text:'Poster title — the finding in one line',size:3.1,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:8,y:5.4,w:84,h:2.2,
         text:'Author, Author · Institution · contact@institution.edu',
-        size:1.4,align:'center'},
+        size:1.4,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:9.2,w:29.7,h:2.6,text:'1 · Introduction',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'text',x:2.5,y:12.4,w:29.7,h:13,
         text:'Why this matters, the question you asked, and what was '
-          +'already known.',size:1.35},
+          +'already known.',size:1.35,style:'body'},
       {k:'text',x:2.5,y:26.8,w:29.7,h:2.6,text:'2 · Methods',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'text',x:2.5,y:30,w:29.7,h:10.5,
         text:'Data sources, processing and the analysis in brief.',
-        size:1.35},
+        size:1.35,style:'body'},
       {k:'cell',x:2.5,y:42,w:29.7,h:22},
       {k:'text',x:2.5,y:65.6,w:29.7,h:2.6,text:'3 · Key numbers',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'cell',x:2.5,y:68.8,w:29.7,h:22.8},
       {k:'text',x:35.15,y:9.2,w:29.7,h:2.6,text:'4 · Results',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'cell',x:35.15,y:12.4,w:29.7,h:37.5},
       {k:'cell',x:35.15,y:51.5,w:29.7,h:40.1},
       {k:'text',x:67.8,y:9.2,w:29.7,h:2.6,text:'5 · More results',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'cell',x:67.8,y:12.4,w:29.7,h:29},
       {k:'text',x:67.8,y:43,w:29.7,h:2.6,text:'6 · Discussion',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'text',x:67.8,y:46.2,w:29.7,h:17.5,
-        text:'What the results mean, and the caveats.',size:1.35},
+        text:'What the results mean, and the caveats.',size:1.35,style:'body'},
       {k:'text',x:67.8,y:65.6,w:29.7,h:2.6,text:'7 · Conclusions',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'text',x:67.8,y:68.8,w:29.7,h:22.8,
-        text:'The take-home messages, as short bullets.',size:1.4},
+        text:'The take-home messages, as short bullets.',size:1.35,style:'body'},
       {k:'text',x:2.5,y:93.4,w:95,h:4.6,
         text:'References · Funding & acknowledgements · '
-          +'Code and data: github.com/…',size:1.1}]},
-    {id:'poster-2col',label:'2 columns · wide figures',poster:1,items:[
+          +'Code and data: github.com/…',size:1.1,style:'small'}]},
+    {id:'poster-2col',label:'2 columns · wide figures',poster:1,
+      scale:{title:3.3,subtitle:1.5,h2:2.1,h3:1.7,body:1.5,small:1.2},items:[
       {k:'text',x:3,y:1.4,w:94,h:3.8,text:'Poster title',size:3.3,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:8,y:5.6,w:84,h:2.2,
-        text:'Author, Author · Institution',size:1.5,align:'center'},
+        text:'Author, Author · Institution',size:1.5,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:9.4,w:46,h:2.8,text:'1 · Introduction',
-        size:2.1,b:1},
+        size:2.1,b:1,style:'h2'},
       {k:'text',x:2.5,y:12.8,w:46,h:14,
         text:'Motivation, the question, and the gap this fills.',
-        size:1.5},
-      {k:'text',x:2.5,y:28.2,w:46,h:2.8,text:'2 · Methods',size:2.1,b:1},
+        size:1.5,style:'body'},
+      {k:'text',x:2.5,y:28.2,w:46,h:2.8,text:'2 · Methods',size:2.1,b:1,style:'h2'},
       {k:'text',x:2.5,y:31.6,w:46,h:12.5,
         text:'Data and analysis, in enough detail to be believed.',
-        size:1.5},
+        size:1.5,style:'body'},
       {k:'cell',x:2.5,y:45.6,w:46,h:24},
       {k:'text',x:2.5,y:71.4,w:46,h:2.8,text:'4 · Take-home message',
-        size:2.1,b:1},
+        size:2.1,b:1,style:'h2'},
       {k:'text',x:2.5,y:74.8,w:46,h:15,
-        text:'The one thing you want remembered.',size:1.7,b:1},
-      {k:'text',x:51.5,y:9.4,w:46,h:2.8,text:'3 · Results',size:2.1,b:1},
+        text:'The one thing you want remembered.',size:1.7,b:1,style:'h3'},
+      {k:'text',x:51.5,y:9.4,w:46,h:2.8,text:'3 · Results',size:2.1,b:1,style:'h2'},
       {k:'cell',x:51.5,y:12.8,w:46,h:37},
       {k:'cell',x:51.5,y:51.2,w:46,h:38.6},
       {k:'text',x:2.5,y:92,w:95,h:5.5,
         text:'References · Acknowledgements · contact@institution.edu',
-        size:1.2}]},
-    {id:'poster-fig',label:'Hero figure',poster:1,items:[
+        size:1.2,style:'small'}]},
+    {id:'poster-fig',label:'Hero figure',poster:1,
+      scale:{title:3.1,subtitle:1.4,h1:2,h2:1.8,body:1.35,small:1},items:[
       {k:'text',x:3,y:1.4,w:94,h:3.6,text:'Poster title',size:3.1,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:8,y:5.4,w:84,h:2.2,
-        text:'Author, Author · Institution',size:1.4,align:'center'},
+        text:'Author, Author · Institution',size:1.4,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:9.4,w:95,h:2.8,text:'Headline result',
-        size:2,b:1},
+        size:2,b:1,style:'h1'},
       {k:'cell',x:2.5,y:12.8,w:95,h:42},
       {k:'text',x:2.5,y:56.4,w:95,h:2.6,text:'Supporting evidence',
-        size:1.8,b:1},
+        size:1.8,b:1,style:'h2'},
       {k:'cell',x:2.5,y:59.8,w:29.7,h:22},
       {k:'cell',x:35.15,y:59.8,w:29.7,h:22},
       {k:'cell',x:67.8,y:59.8,w:29.7,h:22},
       {k:'text',x:2.5,y:83.6,w:46,h:2.6,text:'What it means',
-        size:1.8,b:1},
+        size:1.8,b:1,style:'h2'},
       {k:'text',x:2.5,y:86.8,w:46,h:8,
-        text:'Interpretation and limitations.',size:1.35},
+        text:'Interpretation and limitations.',size:1.35,style:'body'},
       {k:'text',x:51.5,y:83.6,w:46,h:2.6,text:'Methods in brief',
-        size:1.8,b:1},
+        size:1.8,b:1,style:'h2'},
       {k:'text',x:51.5,y:86.8,w:46,h:8,
-        text:'Data, model, validation.',size:1.35},
+        text:'Data, model, validation.',size:1.35,style:'body'},
       {k:'text',x:2.5,y:95.6,w:95,h:3.6,
-        text:'References · contact@institution.edu',size:1}]},
+        text:'References · contact@institution.edu',size:1,style:'small'}]},
     {id:'poster-flow',label:'Intro → results → conclusions',poster:1,
+      scale:{title:3.1,subtitle:1.4,h2:1.9,body:1.4,small:1},
       items:[
       {k:'text',x:3,y:1.4,w:94,h:3.6,text:'Poster title',size:3.1,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:8,y:5.4,w:84,h:2.2,
-        text:'Author, Author · Institution',size:1.4,align:'center'},
+        text:'Author, Author · Institution',size:1.4,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:9.4,w:95,h:2.6,text:'1 · Introduction',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'text',x:2.5,y:12.6,w:95,h:7.5,
         text:'Motivation, question, and data — two or three sentences.',
-        size:1.4},
-      {k:'text',x:2.5,y:21.6,w:95,h:2.6,text:'2 · Results',size:1.9,b:1},
+        size:1.4,style:'body'},
+      {k:'text',x:2.5,y:21.6,w:95,h:2.6,text:'2 · Results',size:1.9,b:1,style:'h2'},
       {k:'cell',x:2.5,y:24.8,w:46,h:32},
       {k:'cell',x:51.5,y:24.8,w:46,h:32},
       {k:'cell',x:2.5,y:58.4,w:46,h:27},
       {k:'cell',x:51.5,y:58.4,w:46,h:27},
       {k:'text',x:2.5,y:87,w:95,h:2.6,text:'3 · Conclusions',
-        size:1.9,b:1},
+        size:1.9,b:1,style:'h2'},
       {k:'text',x:2.5,y:90.2,w:95,h:6,
-        text:'What it means, and what is next.',size:1.4},
+        text:'What it means, and what is next.',size:1.4,style:'body'},
       {k:'text',x:2.5,y:96.8,w:95,h:2.8,
         text:'References · Acknowledgements · contact@institution.edu',
-        size:1}]},
+        size:1,style:'small'}]},
     {id:'poster-billboard',label:'Billboard · one big message',poster:1,
+      scale:{title:2.6,subtitle:1.3,h1:4.6,h2:1.7,body:1.25,small:1.05},
       items:[
       {k:'text',x:3,y:1.6,w:94,h:3.2,text:'Poster title',size:2.6,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:8,y:5.2,w:84,h:2,
-        text:'Author, Author · Institution',size:1.3,align:'center'},
+        text:'Author, Author · Institution',size:1.3,align:'center',style:'subtitle'},
       {k:'text',x:5,y:9.6,w:90,h:15,
         text:'The one sentence a passer-by should remember.',
-        size:4.6,b:1,align:'center'},
+        size:4.6,b:1,align:'center',style:'h1'},
       {k:'cell',x:5,y:26.5,w:90,h:37},
       {k:'text',x:2.5,y:66,w:29.7,h:2.6,text:'Why it matters',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:2.5,y:69.2,w:29.7,h:20,
-        text:'The problem, in plain words.',size:1.25},
+        text:'The problem, in plain words.',size:1.25,style:'body'},
       {k:'text',x:35.15,y:66,w:29.7,h:2.6,text:'How we did it',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:35.15,y:69.2,w:29.7,h:20,
-        text:'Data, method, validation.',size:1.25},
+        text:'Data, method, validation.',size:1.25,style:'body'},
       {k:'text',x:67.8,y:66,w:29.7,h:2.6,text:'Detail & references',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:67.8,y:69.2,w:29.7,h:20,
-        text:'Caveats, citations, funding.',size:1.25},
+        text:'Caveats, citations, funding.',size:1.25,style:'body'},
       {k:'text',x:2.5,y:91,w:95,h:3.4,
         text:'Paper, code and data: github.com/… · contact@institution.edu',
-        size:1.05,align:'center'}]},
-    {id:'poster-4col',label:'4 columns · dense',poster:1,items:[
+        size:1.05,align:'center',style:'small'}]},
+    {id:'poster-4col',label:'4 columns · dense',poster:1,
+      scale:{title:2.9,subtitle:1.3,h2:1.7,body:1.25,small:1.05},items:[
       {k:'text',x:3,y:1.2,w:94,h:3.2,text:'Poster title',size:2.9,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:8,y:4.9,w:84,h:2,
-        text:'Author, Author · Institution',size:1.3,align:'center'},
+        text:'Author, Author · Institution',size:1.3,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:8.8,w:21.87,h:2.4,text:'1 · Introduction',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:2.5,y:11.8,w:21.87,h:16,
-        text:'Motivation and question.',size:1.25},
+        text:'Motivation and question.',size:1.25,style:'body'},
       {k:'text',x:2.5,y:29.2,w:21.87,h:2.4,text:'2 · Methods',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:2.5,y:32.2,w:21.87,h:14,
-        text:'Data and analysis.',size:1.25},
+        text:'Data and analysis.',size:1.25,style:'body'},
       {k:'cell',x:2.5,y:47.6,w:21.87,h:20},
       {k:'cell',x:2.5,y:69,w:21.87,h:22.5},
       {k:'text',x:26.87,y:8.8,w:21.87,h:2.4,text:'3 · Results',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'cell',x:26.87,y:11.8,w:21.87,h:26},
       {k:'cell',x:26.87,y:39.6,w:21.87,h:26},
       {k:'cell',x:26.87,y:67.4,w:21.87,h:24.1},
       {k:'text',x:51.25,y:8.8,w:21.87,h:2.4,text:'4 · More results',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'cell',x:51.25,y:11.8,w:21.87,h:26},
       {k:'cell',x:51.25,y:39.6,w:21.87,h:26},
       {k:'cell',x:51.25,y:67.4,w:21.87,h:24.1},
       {k:'text',x:75.62,y:8.8,w:21.87,h:2.4,text:'5 · Discussion',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:75.62,y:11.8,w:21.87,h:24,
-        text:'Interpretation and caveats.',size:1.25},
+        text:'Interpretation and caveats.',size:1.25,style:'body'},
       {k:'text',x:75.62,y:37.2,w:21.87,h:2.4,text:'6 · Conclusions',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:75.62,y:40.2,w:21.87,h:22,
-        text:'The take-home messages.',size:1.3},
+        text:'The take-home messages.',size:1.25,style:'body'},
       {k:'text',x:75.62,y:63.8,w:21.87,h:2.4,text:'References',
-        size:1.7,b:1},
+        size:1.7,b:1,style:'h2'},
       {k:'text',x:75.62,y:66.8,w:21.87,h:24.7,
-        text:'Citations and funding.',size:1.05},
+        text:'Citations and funding.',size:1.05,style:'small'},
       {k:'text',x:2.5,y:93,w:95,h:5,
-        text:'Acknowledgements · contact@institution.edu',size:1.05}]},
-    {id:'poster-land3',label:'Landscape · 3 columns',poster:1,land:1,
+        text:'Acknowledgements · contact@institution.edu',size:1.05,style:'small'}]},
+    {id:'poster-land3',label:'Landscape · 3 columns',poster:1,
+      scale:{title:4.4,subtitle:2,h2:2.6,body:1.85,small:1.5},land:1,
       items:[
       {k:'text',x:2.5,y:2.2,w:95,h:6,text:'Poster title',size:4.4,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:10,y:9,w:80,h:3.4,
         text:'Author, Author · Institution · contact@institution.edu',
-        size:2,align:'center'},
+        size:2,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:15.5,w:29.7,h:4,text:'1 · Introduction',
-        size:2.6,b:1},
+        size:2.6,b:1,style:'h2'},
       {k:'text',x:2.5,y:20.5,w:29.7,h:20,
         text:'Motivation, the question, and what was already known.',
-        size:1.85},
-      {k:'text',x:2.5,y:42.5,w:29.7,h:4,text:'2 · Methods',size:2.6,b:1},
+        size:1.85,style:'body'},
+      {k:'text',x:2.5,y:42.5,w:29.7,h:4,text:'2 · Methods',size:2.6,b:1,style:'h2'},
       {k:'text',x:2.5,y:47.5,w:29.7,h:16,
-        text:'Data sources and analysis.',size:1.85},
+        text:'Data sources and analysis.',size:1.85,style:'body'},
       {k:'cell',x:2.5,y:65.5,w:29.7,h:22.5},
       {k:'text',x:35.15,y:15.5,w:29.7,h:4,text:'3 · Results',
-        size:2.6,b:1},
+        size:2.6,b:1,style:'h2'},
       {k:'cell',x:35.15,y:20.5,w:29.7,h:32},
       {k:'cell',x:35.15,y:54.5,w:29.7,h:33.5},
       {k:'text',x:67.8,y:15.5,w:29.7,h:4,text:'4 · Discussion',
-        size:2.6,b:1},
+        size:2.6,b:1,style:'h2'},
       {k:'text',x:67.8,y:20.5,w:29.7,h:23,
-        text:'What the results mean, and the caveats.',size:1.85},
+        text:'What the results mean, and the caveats.',size:1.85,style:'body'},
       {k:'text',x:67.8,y:45.5,w:29.7,h:4,text:'5 · Conclusions',
-        size:2.6,b:1},
+        size:2.6,b:1,style:'h2'},
       {k:'text',x:67.8,y:50.5,w:29.7,h:37.5,
-        text:'The take-home messages, as short bullets.',size:1.9},
+        text:'The take-home messages, as short bullets.',size:1.85,style:'body'},
       {k:'text',x:2.5,y:89.5,w:95,h:7,
         text:'References · Funding · Code and data: github.com/…',
-        size:1.5}]},
+        size:1.5,style:'small'}]},
     {id:'poster-land-fig',label:'Landscape · hero + notes',poster:1,
+      scale:{title:4.4,subtitle:1.9,h1:2.6,h2:2.4,body:1.8,small:1.6},
       land:1,items:[
       {k:'text',x:2.5,y:2.2,w:95,h:6,text:'Poster title',size:4.4,b:1,
-        align:'center'},
+        align:'center',style:'title'},
       {k:'text',x:10,y:9,w:80,h:3.2,
-        text:'Author, Author · Institution',size:1.9,align:'center'},
+        text:'Author, Author · Institution',size:1.9,align:'center',style:'subtitle'},
       {k:'text',x:2.5,y:15.5,w:63,h:4,text:'Headline result',
-        size:2.6,b:1},
+        size:2.6,b:1,style:'h1'},
       {k:'cell',x:2.5,y:20.5,w:63,h:60},
       {k:'text',x:2.5,y:82,w:63,h:6.5,
-        text:'What this figure shows, and the key numbers.',size:1.6},
+        text:'What this figure shows, and the key numbers.',size:1.6,style:'small'},
       {k:'text',x:67.8,y:15.5,w:29.7,h:4,text:'Introduction',
-        size:2.4,b:1},
+        size:2.4,b:1,style:'h2'},
       {k:'text',x:67.8,y:20.5,w:29.7,h:22,
-        text:'Motivation and question.',size:1.8},
-      {k:'text',x:67.8,y:44,w:29.7,h:4,text:'Methods',size:2.4,b:1},
+        text:'Motivation and question.',size:1.8,style:'body'},
+      {k:'text',x:67.8,y:44,w:29.7,h:4,text:'Methods',size:2.4,b:1,style:'h2'},
       {k:'text',x:67.8,y:49,w:29.7,h:14,
-        text:'Data and analysis.',size:1.8},
+        text:'Data and analysis.',size:1.8,style:'body'},
       {k:'text',x:67.8,y:64.5,w:29.7,h:4,text:'Conclusions',
-        size:2.4,b:1},
+        size:2.4,b:1,style:'h2'},
       {k:'text',x:67.8,y:69.5,w:29.7,h:19,
-        text:'The take-home messages.',size:1.85},
+        text:'The take-home messages.',size:1.8,style:'body'},
       {k:'text',x:2.5,y:89.5,w:95,h:7,
         text:'References · Acknowledgements · contact@institution.edu',
-        size:1.5}]}
+        size:1.6,style:'small'}]}
   ];
   var LAYOUTBYID={};
   LAYOUTS.forEach(function(l){LAYOUTBYID[l.id]=l;});
@@ -26007,6 +26012,12 @@ window.JunoPptx = (function () {
   function applyLayout(s,layout){
     if(!s||!layout) return;
     s.layout='blank';s.lay=layout.id;
+    /* T278: A POSTER TEMPLATE SEEDS THE PAGE'S TYPE SCALE. Its slots
+       are stamped with the built-in names below, sized to the sheet;
+       pres.scale is the one place those sizes live, read by styleDef
+       under the deck's overrides, so the stamped boxes are not drift
+       the moment the page is made and a style set keeps them so. */
+    if(layout.poster&&layout.scale) pres.scale=deep(layout.scale);
     var old=s.annots||[];
     var cells=old.filter(function(a){return a.k==='cell';});
     var texts=old.filter(function(a){return a.k==='text';});
@@ -26146,8 +26157,14 @@ window.JunoPptx = (function () {
              layout the next New slide will use, and New slide adds it
              (2026-09-03, user: "clicking on one just highlights it to be
              added when clicking new slide") */
-          if(sel==='#layout-strip'){
-            if(!layout.poster) lsSet(newLayKey(),layout.id);
+          /* T424: ...FOR A SLIDE. A poster is one page and its New slide
+             is New version, so a poster tile that only chose chose for
+             nothing -- the strip was the Home tab's one door to the
+             poster templates and clicking it did nothing (2026-09-14).
+             A poster tile applies to the page, as the Design menu's
+             tiles do; Ctrl+Z undoes it. */
+          if(sel==='#layout-strip'&&!layout.poster){
+            lsSet(newLayKey(),layout.id);
             syncNewSlideMarks();
             return;
           }
@@ -28429,7 +28446,11 @@ window.JunoPptx = (function () {
      and it matters more than the theoretically closest name for any one
      band. styleOrder(), so a type you invented can be suggested too. */
   function stdName(bands){
-    var left=styleOrder();
+    /* T277: a subtitle is the line UNDER A TITLE -- a place, not a size
+       band -- so size alone must never suggest it: a deck of 3.4% body
+       paragraphs is Body, not a page of subtitles. Like caption, it is
+       a name only the user gives. */
+    var left=styleOrder().filter(function(id){return id!=='subtitle';});
     bands.forEach(function(b){
       var best=null,bestD=1e9;
       left.forEach(function(id){
@@ -28521,12 +28542,21 @@ window.JunoPptx = (function () {
     if(!!a.b!==!!d.b||!!a.i!==!!d.i) return false;
     if((a.font||'')!==(d.font||'')) return false;
     if(colDrift(stdCol(a),d.color||stdInk())) return false;
-    if((a.align||'')!==(d.align||'')) return false;
+    /* T425: THE DEFAULT LOOK IS NOT A DIFFERENCE. Every template-born
+       box carries align:'left' and bg:0, and a style that says nothing
+       about either means "the default" -- left, transparent. Read
+       strictly, 7 of 7 Heading 2 boxes on a poster fresh from its
+       template "no longer matched the style" (2026-09-14). A style that
+       ASKS for a ground (T314) still catches a box that lost it. */
+    if((a.align||'left')!==(d.align||'left')) return false;
     if(Math.abs((a.lh||0)-(d.lh||0))>0.02) return false;
     if(Math.abs((a.pspace||0)-(d.pspace||0))>0.02) return false;
-    /* T314: a box that lost its style's background is a mismatch */
-    if(((a.bg===0)?'none':(a.bg?(a.bgc||''):''))!==(d.bg||'')) return false;
-    if((a.bdc||'')!==(d.bdc||'')) return false;
+    var abg=(a.bg===0)?'':(a.bg?(a.bgc||''):''),dbg=d.bg||'';
+    if(dbg==='none') dbg='';
+    if(abg!==dbg) return false;
+    var abd=a.bdc||'',dbd=d.bdc||'';
+    if(abd==='none') abd=''; if(dbd==='none') dbd='';
+    if(abd!==dbd) return false;
     return true;
   }
   /* T268: what the two values ARE. "2 of 7 differ" told you a count and
@@ -30171,6 +30201,9 @@ window.JunoPptx = (function () {
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
+        /* T278: the scale was the poster sheet's; a slide page takes
+           the built-in ladder back */
+        if(!pg.poster) delete pres.scale;
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a
@@ -32399,7 +32432,7 @@ window.JunoPptx = (function () {
      a saved deck with custom types can be normalised without reaching an
      as-yet undefined BUILTIN_STYLE_IDS (and keep one canonical list). */
   var BUILTIN_STYLE_IDS=[
-    'title','h1','h2','h3','body','small','caption'];
+    'title','subtitle','h1','h2','h3','body','small','caption'];
   function normPres(p,stem){
     /* deep-copy a presentation, namespacing plain anchors (against
        `stem` when it came from one notebook, else best-effort);
@@ -32610,7 +32643,7 @@ window.JunoPptx = (function () {
        what normPres keeps, and a comment between the brackets hides
        every one of them from it. */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides','masters','bib','cite','slot']
+     'components','cuts','guides','masters','bib','cite','slot','scale']
       .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
@@ -33312,6 +33345,9 @@ window.JunoPptx = (function () {
          lazily creates {}) would record a phantom undo step */
       styles:(pres.styles&&Object.keys(pres.styles).length)
         ?pres.styles:null,
+      /* T278: the page's type scale is read under the styles, so it is
+         as undoable as they are (a template applied, then Ctrl+Z) */
+      scale:pres.scale||null,
       /* the types you invented are as undoable as the boxes wearing
          them, and for the same reason the styles are: delete a type and
          Ctrl+Z must bring back both the type AND the a.style tags that
@@ -33402,7 +33438,8 @@ window.JunoPptx = (function () {
        design-level key could. d.layouts is always emitted and [] is
        truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','layouts','page','pageBg','cropMarks','live']
+     'guides','masters','layouts','page','pageBg','cropMarks','live',
+     'scale']
       .forEach(function(k){
         if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
@@ -37087,6 +37124,10 @@ window.JunoPptx = (function () {
      contract - a style sets, it does not lock. */
   var STYLE_DEFAULTS={
     title:  {label:'Title',      size:7.2, b:1},
+    /* T277: the eighth. The four headings are bold and body/small are
+       body copy; a subtitle -- the line under a title, an author-and-
+       affiliation line -- is neither, and had nowhere right to land. */
+    subtitle:{label:'Subtitle',  size:3.4},
     h1:     {label:'Heading 1',  size:5.0, b:1},
     h2:     {label:'Heading 2',  size:3.8, b:1},
     h3:     {label:'Heading 3',  size:3.0, b:1},
@@ -37577,13 +37618,15 @@ window.JunoPptx = (function () {
     {id:'clean',label:'Clean',
      note:'Sans throughout, the built-in scale. A safe default.',
      styles:{
-       title:{size:7.2,b:1},h1:{size:5.0,b:1},h2:{size:3.8,b:1},
+       title:{size:7.2,b:1},subtitle:{size:3.4},
+       h1:{size:5.0,b:1},h2:{size:3.8,b:1},
        h3:{size:3.0,b:1},body:{size:3.9},small:{size:2.0},
        caption:{size:1.7,i:1,color:'#8aa0b0'}}},
     {id:'editorial',label:'Editorial',
      note:'Serif headings over a sans body, and room to breathe.',
      styles:{
        title:{size:7.6,b:1,font:'serif'},
+       subtitle:{size:3.4,i:1,font:'serif',color:'#9aa8b4'},
        h1:{size:5.2,b:1,font:'serif'},
        h2:{size:3.9,b:1,font:'serif'},
        h3:{size:3.0,b:0,i:1,font:'serif'},
@@ -37592,13 +37635,15 @@ window.JunoPptx = (function () {
     {id:'bold',label:'Bold',
      note:'Heavy sans and big titles — for a room at the back.',
      styles:{
-       title:{size:9.0,b:1},h1:{size:6.2,b:1},h2:{size:4.4,b:1},
+       title:{size:9.0,b:1},subtitle:{size:4.0,color:'#7f93a4'},
+       h1:{size:6.2,b:1},h2:{size:4.4,b:1},
        h3:{size:3.3,b:1},body:{size:3.0,b:0},small:{size:2.3},
        caption:{size:1.9,b:1,color:'#7f93a4'}}},
     {id:'academic',label:'Academic',
      note:'Serif everywhere, modest sizes, generous leading.',
      styles:{
        title:{size:6.4,b:1,font:'serif'},
+       subtitle:{size:3.0,i:1,font:'serif',color:'#93a3b0'},
        h1:{size:4.4,b:1,font:'serif'},
        h2:{size:3.4,b:1,font:'serif'},
        h3:{size:2.8,b:0,i:1,font:'serif'},
@@ -37608,13 +37653,15 @@ window.JunoPptx = (function () {
     {id:'minimal',label:'Minimal',
      note:'Light weights and small headings. Lets the figures talk.',
      styles:{
-       title:{size:5.6},h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
+       title:{size:5.6},subtitle:{size:2.8,color:'#8aa0b0'},
+       h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
        body:{size:2.4,lh:1.55},small:{size:1.9,lh:1.45},
        caption:{size:1.55,color:'#8aa0b0'}}},
     {id:'poster',label:'Poster',
      note:'Sized for a printed sheet read from a metre away.',
      styles:{
-       title:{size:4.6,b:1},h1:{size:3.2,b:1},h2:{size:2.5,b:1},
+       title:{size:4.6,b:1},subtitle:{size:2.2,color:'#8aa0b0'},
+       h1:{size:3.2,b:1},h2:{size:2.5,b:1},
        h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
        caption:{size:1.25,i:1,color:'#8aa0b0'}}}
   ];
@@ -37637,7 +37684,7 @@ window.JunoPptx = (function () {
      says is '@name', and the palette says what the name means -- so
      applying a second theme re-resolves every box, and a variation
      (which keeps only its own delta, T292) survives and re-resolves too.
-     Built-in themes name ALL ten tokens and all seven built-in styles,
+     Built-in themes name ALL ten tokens and all eight built-in styles,
      so "a theme means what it says" needs no zero-fill list. */
   var COLOUR_THEMES=[
     {id:'business',label:'Business',
@@ -37648,6 +37695,7 @@ window.JunoPptx = (function () {
        warm:'#c0392b',lift:'#d98e04',calm:'#2e8b6f'}},
      styles:{
        title:{color:'@heading',bg:'@surface',bdc:'@line'},
+       subtitle:{color:'@quiet',bg:'@surface',bdc:'@line'},
        h1:{color:'@heading',bg:'@surface',bdc:'@line'},
        h2:{color:'@heading',bg:'@surface',bdc:'@line'},
        h3:{color:'@heading',bg:'@surface',bdc:'@line'},
@@ -37662,6 +37710,7 @@ window.JunoPptx = (function () {
        warm:'#ff4d6d',lift:'#ffd166',calm:'#4dd0e1'}},
      styles:{
        title:{color:'@heading',bg:'none',bdc:'none'},
+       subtitle:{color:'@quiet',bg:'none',bdc:'none'},
        h1:{color:'@heading',bg:'none',bdc:'none'},
        h2:{color:'@accent',bg:'none',bdc:'none'},
        h3:{color:'@accent',bg:'none',bdc:'none'},
@@ -37676,6 +37725,7 @@ window.JunoPptx = (function () {
        warm:'#b5473a',lift:'#c98a2a',calm:'#4f7f6a'}},
      styles:{
        title:{color:'@heading',bg:'none',bdc:'none'},
+       subtitle:{color:'@quiet',bg:'none',bdc:'none'},
        h1:{color:'@heading',bg:'none',bdc:'none'},
        h2:{color:'@heading',bg:'none',bdc:'none'},
        h3:{color:'@accent',bg:'none',bdc:'none'},
@@ -37690,6 +37740,7 @@ window.JunoPptx = (function () {
        warm:'#ff6b57',lift:'#f0a848',calm:'#46a892'}},
      styles:{
        title:{color:'@heading',bg:'none',bdc:'none'},
+       subtitle:{color:'@quiet',bg:'none',bdc:'none'},
        h1:{color:'@heading',bg:'none',bdc:'none'},
        h2:{color:'@accent',bg:'none',bdc:'none'},
        h3:{color:'@accent',bg:'none',bdc:'none'},
@@ -37864,6 +37915,13 @@ window.JunoPptx = (function () {
          applyStyleTo deletes on falsy, and align has no else at all. */
       STYLE_FIELDS.forEach(function(p){
         if(o[p]===undefined) o[p]=0;});
+      /* T278: ON A POSTER THE SET BRINGS ITS FACES, WEIGHTS AND COLOURS
+         AND THE PAGE KEEPS ITS SCALE. A set's sizes are the 16:9
+         ladder's -- Bold's 9.0% title is a third of an A0 sheet -- so
+         where the template seeded a scale, the set's size for that type
+         is the page's. This is the reconciliation T278 asked for: the
+         replace below still replaces, and the seed survives it. */
+      if(pres.scale&&pres.scale[k]>0) o.size=pres.scale[k];
       next[k]=o;
     });
     /* a custom type keeps the size it had unless the set names it, so
@@ -38193,6 +38251,15 @@ window.JunoPptx = (function () {
     styleChain(id).forEach(function(k){
       var base=STYLE_DEFAULTS[k],over=deckStyles()[k];
       if(base) Object.keys(base).forEach(function(p){out[p]=base[p];});
+      /* T278: THE PAGE'S SCALE, between the built-in and the override.
+         A poster's type is sized to the sheet -- 1.9% of an A0 is a
+         section heading where Heading 2 is 3.8 -- so the template that
+         made the page seeds pres.scale with one size per type, and it
+         sits UNDER the deck's own overrides: a size you set by hand
+         still wins, and "back to the built-in sizes" lands here rather
+         than on the 16:9 ladder. Sizes only; never a look. */
+      var sc=pres&&pres.scale&&pres.scale[k];
+      if(sc>0) out.size=sc;
       if(over) Object.keys(over).forEach(function(p){out[p]=over[p];});
     });
     /* the family's own bookkeeping, never the parent's: a variation is

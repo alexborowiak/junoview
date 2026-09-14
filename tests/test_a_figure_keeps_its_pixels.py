@@ -659,7 +659,7 @@ def test_flipping_a_figure_to_live_is_undoable(out):
     Ctrl+Z rewound the edit before it while the switch stayed flipped."""
     assert ("      live:(pres.live&&Object.keys(pres.live).length)"
             "?pres.live:null,") in out
-    assert "'cropMarks','live']\n      .forEach(function(k){" in out
+    assert "'cropMarks','live',\n     'scale']\n      .forEach(function(k){" in out
 
 
 def test_the_liveness_map_is_stripped_with_the_refs_it_names(out):

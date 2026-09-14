@@ -166,7 +166,7 @@
      a saved deck with custom types can be normalised without reaching an
      as-yet undefined BUILTIN_STYLE_IDS (and keep one canonical list). */
   var BUILTIN_STYLE_IDS=[
-    'title','h1','h2','h3','body','small','caption'];
+    'title','subtitle','h1','h2','h3','body','small','caption'];
   function normPres(p,stem){
     /* deep-copy a presentation, namespacing plain anchors (against
        `stem` when it came from one notebook, else best-effort);
@@ -377,7 +377,7 @@
        what normPres keeps, and a comment between the brackets hides
        every one of them from it. */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides','masters','bib','cite','slot']
+     'components','cuts','guides','masters','bib','cite','slot','scale']
       .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
@@ -1079,6 +1079,9 @@
          lazily creates {}) would record a phantom undo step */
       styles:(pres.styles&&Object.keys(pres.styles).length)
         ?pres.styles:null,
+      /* T278: the page's type scale is read under the styles, so it is
+         as undoable as they are (a template applied, then Ctrl+Z) */
+      scale:pres.scale||null,
       /* the types you invented are as undoable as the boxes wearing
          them, and for the same reason the styles are: delete a type and
          Ctrl+Z must bring back both the type AND the a.style tags that
@@ -1169,7 +1172,8 @@
        design-level key could. d.layouts is always emitted and [] is
        truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','layouts','page','pageBg','cropMarks','live']
+     'guides','masters','layouts','page','pageBg','cropMarks','live',
+     'scale']
       .forEach(function(k){
         if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;

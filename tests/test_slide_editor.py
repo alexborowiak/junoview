@@ -758,7 +758,7 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # `tokens` joined them for the same reason (T12): a deck that has
     # forgotten what "@accent" means renders the fallback instead
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters','bib','cite','slot']\n"
+            "     'components','cuts','guides','masters','bib','cite','slot','scale']\n"
             "      .forEach(function(k){") in out
 
 
@@ -1988,7 +1988,7 @@ def test_the_deck_registry_survives_a_save(out):
     sentinel for it.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters','bib','cite','slot']\n"
+            "     'components','cuts','guides','masters','bib','cite','slot','scale']\n"
             "      .forEach(function(k){") in out
     # undo reaches it too: a token change repaints every item that
     # references it, so it is an edit like any other
@@ -2156,7 +2156,7 @@ def test_the_component_library_is_deck_level_and_survives(out):
     obvious.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides','masters','bib','cite','slot']\n"
+            "     'components','cuts','guides','masters','bib','cite','slot','scale']\n"
             "      .forEach(function(k){") in out
     assert "components:(pres.components&&Object.keys(pres.components).length)" \
         in out

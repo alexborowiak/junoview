@@ -59,6 +59,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `showNums` | int | 1 when slide numbers are drawn. |
 | `slides` | list | The slides, in order. The order IS the story. |
 | `style` | dict | For a view: its saved styling. |
+| `scale` | dict | The page's type scale: {type: size}, in page-height percent, seeded by the poster template that made the page. Read under `styles`, so a size set by hand still wins; a style set keeps it (T278). |
 | `styles` | dict | This deck's overrides of the named text types. |
 | `talkMins` | int or float | How long the whole talk should run. |
 | `tapzoom` | int | 1 when tapping an item enlarges it in playback. |

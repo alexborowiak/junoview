@@ -5954,7 +5954,7 @@ option. Then where has the ability to refresh all images gone?"
   to arrive `(NONE)`; they now arrive `title @7.2`, `h1 @5` and
   `body @2.6` exactly as the slot says.
 
-- [ ] **T277 - There is no Subtitle type.**
+- [x] **T277 - There is no Subtitle type.**
   Found doing T276. The built-in seven are title / h1 / h2 / h3 / body /
   small / caption. The Title layout's "Subtitle" slot, and every poster's
   author-and-affiliation line, have nowhere semantically right to land:
@@ -5965,8 +5965,16 @@ option. Then where has the ability to refresh all images gone?"
   STYLE_ORDER, every style set, the type strip and the Design rail --
   worth doing, but it is a decision about the deck's type ladder rather
   than a bug fix.
+  *Done 2026-09-14.* `subtitle` sits under Title in BUILTIN_STYLE_IDS
+  (3.4, not bold, no baked colour -- so the Title layout's slot, now
+  stamped, is not drift the moment it lands); the six style sets and
+  four colour themes each name it (quiet ink); the type strip, the
+  Styles menu and the Design rail pick it up from the one list. Size
+  alone never suggests it: a subtitle is the line under a title, a
+  place rather than a band, so stdName skips it the way it only ever
+  finds Caption by position. Poster author lines stay for T278.
 
-- [ ] **T278 - The poster templates cannot be typed until the seed
+- [x] **T278 - The poster templates cannot be typed until the seed
   survives a style set.**
   Also found doing T276, and why the poster half was left alone. A
   poster's type scale is the PAGE's, not the 16:9 ladder's -- 1.9% of an
@@ -5977,6 +5985,19 @@ option. Then where has the ability to refresh all images gone?"
   `applyStyleSet` ends with `pres.styles=next`, a wholesale REPLACE, so
   one click of any style set (or `autoStyleDeck`) discards the seed.
   The seeding and the replace have to be reconciled first.
+  *Done 2026-09-14.* The seed is its own layer: `pres.scale`, one size
+  per type, declared on each poster template and written by applyLayout
+  when the template is applied. styleDef reads it between the built-in
+  and the deck's overrides (a size set by hand still wins; "back to the
+  built-in sizes" lands on the sheet's scale, not the 16:9 ladder), and
+  applyStyleSet's replace still replaces -- it just takes the page's
+  size for every type the scale names, so a set brings its faces,
+  weights and colours and the poster keeps its scale. Every poster slot
+  is stamped (title, subtitle, h1/h2/h3, body, small; footers are small
+  print rather than Caption, whose built-in is italic and coloured) at
+  exactly the template's scale, so a new poster reports no drift. A
+  slide page drops the scale; undo, the draft and the project file
+  carry it (normPres, histState, presentations.py, deck_schema).
 
 - [x] **T279 - The style check points at the odd one out.**
   The user (2026-09-05), with a screenshot: "the style system isn't
@@ -8222,3 +8243,20 @@ gates are recorded in the completing commit.
   of 1". Driven on the example notebook: "Pages" before and after a
   trace opens with no page error; "Page 1 of 5" once the notebook is
   paged.
+- [x] **T424 — A poster tile on the Home strip applies its template.**
+  Found driving T278. Since T218 a strip tile only CHOOSES the layout
+  the next New slide will use; a poster is one page and its New slide
+  is New version, so a poster tile chose for nothing — the strip was
+  the Home tab's one door to the poster templates and clicking it did
+  nothing. A poster tile applies to the page now, as the Design menu's
+  tiles do; Ctrl+Z undoes it. Driven live on an A0 page.
+- [x] **T425 — The standardiser reads through the default look.** Found
+  driving T278. Every template-born box carries `align:'left'` and
+  `bg:0`, and a style that says nothing about either means the
+  default — left, transparent — but `stdMatchesStyle` compared both
+  strictly, so a poster fresh from its template reported "7 of 7
+  Heading 2 boxes no longer match the style" and a deck of Title + text
+  slides said the same of its headings. Left is the default alignment;
+  transparent is transparent whether the style says `none` or nothing;
+  a style that ASKS for a ground (T314) still catches a box that lost
+  it. Driven live: both decks standardise to no named findings.
