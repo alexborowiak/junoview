@@ -174,7 +174,7 @@
        else. `land:1` marks the templates shaped for a landscape page.
        Text `size` is a % of page HEIGHT, so the landscape templates carry
        larger numbers for the same physical type size. ---- */
-    {id:'poster-3col',label:'3 columns · classic',poster:1,
+    {id:'poster-3col',label:'3 columns · classic',poster:1,short:'3 columns',
       scale:{title:3.1,subtitle:1.4,h2:1.9,body:1.35,small:1.1},items:[
       {k:'text',x:3,y:1.4,w:94,h:3.6,
         text:'Poster title — the finding in one line',size:3.1,b:1,
@@ -214,7 +214,7 @@
       {k:'text',x:2.5,y:93.4,w:95,h:4.6,
         text:'References · Funding & acknowledgements · '
           +'Code and data: github.com/…',size:1.1,style:'small'}]},
-    {id:'poster-2col',label:'2 columns · wide figures',poster:1,
+    {id:'poster-2col',label:'2 columns · wide figures',poster:1,short:'2 columns',
       scale:{title:3.3,subtitle:1.5,h2:2.1,h3:1.7,body:1.5,small:1.2},items:[
       {k:'text',x:3,y:1.4,w:94,h:3.8,text:'Poster title',size:3.3,b:1,
         align:'center',style:'title'},
@@ -240,7 +240,7 @@
       {k:'text',x:2.5,y:92,w:95,h:5.5,
         text:'References · Acknowledgements · contact@institution.edu',
         size:1.2,style:'small'}]},
-    {id:'poster-fig',label:'Hero figure',poster:1,
+    {id:'poster-fig',label:'Hero figure',poster:1,short:'Hero fig',
       scale:{title:3.1,subtitle:1.4,h1:2,h2:1.8,body:1.35,small:1},items:[
       {k:'text',x:3,y:1.4,w:94,h:3.6,text:'Poster title',size:3.1,b:1,
         align:'center',style:'title'},
@@ -265,6 +265,7 @@
       {k:'text',x:2.5,y:95.6,w:95,h:3.6,
         text:'References · contact@institution.edu',size:1,style:'small'}]},
     {id:'poster-flow',label:'Intro → results → conclusions',poster:1,
+      short:'Flow',
       scale:{title:3.1,subtitle:1.4,h2:1.9,body:1.4,small:1},
       items:[
       {k:'text',x:3,y:1.4,w:94,h:3.6,text:'Poster title',size:3.1,b:1,
@@ -289,6 +290,7 @@
         text:'References · Acknowledgements · contact@institution.edu',
         size:1,style:'small'}]},
     {id:'poster-billboard',label:'Billboard · one big message',poster:1,
+      short:'Billboard',
       scale:{title:2.6,subtitle:1.3,h1:4.6,h2:1.7,body:1.25,small:1.05},
       items:[
       {k:'text',x:3,y:1.6,w:94,h:3.2,text:'Poster title',size:2.6,b:1,
@@ -314,7 +316,7 @@
       {k:'text',x:2.5,y:91,w:95,h:3.4,
         text:'Paper, code and data: github.com/… · contact@institution.edu',
         size:1.05,align:'center',style:'small'}]},
-    {id:'poster-4col',label:'4 columns · dense',poster:1,
+    {id:'poster-4col',label:'4 columns · dense',poster:1,short:'4 columns',
       scale:{title:2.9,subtitle:1.3,h2:1.7,body:1.25,small:1.05},items:[
       {k:'text',x:3,y:1.2,w:94,h:3.2,text:'Poster title',size:2.9,b:1,
         align:'center',style:'title'},
@@ -355,6 +357,7 @@
       {k:'text',x:2.5,y:93,w:95,h:5,
         text:'Acknowledgements · contact@institution.edu',size:1.05,style:'small'}]},
     {id:'poster-land3',label:'Landscape · 3 columns',poster:1,
+      short:'Land 3 col',
       scale:{title:4.4,subtitle:2,h2:2.6,body:1.85,small:1.5},land:1,
       items:[
       {k:'text',x:2.5,y:2.2,w:95,h:6,text:'Poster title',size:4.4,b:1,
@@ -387,6 +390,7 @@
         text:'References · Funding · Code and data: github.com/…',
         size:1.5,style:'small'}]},
     {id:'poster-land-fig',label:'Landscape · hero + notes',poster:1,
+      short:'Land hero',
       scale:{title:4.4,subtitle:1.9,h1:2.6,h2:2.4,body:1.8,small:1.6},
       land:1,items:[
       {k:'text',x:2.5,y:2.2,w:95,h:6,text:'Poster title',size:4.4,b:1,
@@ -564,7 +568,12 @@
         b.title=layout.label;
         b.appendChild(layIcon(layout));
         var lb=document.createElement('span');lb.className='lay-lb';
-        lb.textContent=layout.label;b.appendChild(lb);
+        /* T426: a strip tile is two short lines tall, and a poster's
+           full name ("3 columns · classic") clipped to its first word
+           there -- the strip read "3", "2", "Hero". The tile takes the
+           template's short name; the full one stays on the tooltip. */
+        lb.textContent=(sel==='#layout-strip'&&layout.short)||layout.label;
+        b.appendChild(lb);
         b.addEventListener('click',function(){
           /* with no page yet, MAKE one rather than doing nothing — a
              layout button that silently ignores the click reads as

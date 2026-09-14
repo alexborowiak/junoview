@@ -8260,3 +8260,11 @@ gates are recorded in the completing commit.
   transparent is transparent whether the style says `none` or nothing;
   a style that ASKS for a ground (T314) still catches a box that lost
   it. Driven live: both decks standardise to no named findings.
+- [x] **T426 — A poster tile in the Home strip shows a readable name.**
+  Found driving T424. A poster's strip tile has a taller (portrait)
+  icon, which leaves its label one line where a slide tile's gets two,
+  so "3 columns · classic" wrapped and clipped to "3" and the strip
+  read as a row of digits. Each poster template carries a `short` name
+  the strip tile shows on one line at the slide tiles' size; the full
+  name stays on the tooltip. Driven live on an A0 page: every label
+  fits its box on one line.

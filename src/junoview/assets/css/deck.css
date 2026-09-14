@@ -985,6 +985,12 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   max-height:300px;}
 .deck.poster-page .lay-lb{font-size:9.5px;}
 .deck.poster-page .dbtn.lay{padding:5px;}
+/* T426: a poster's strip tile has a taller (portrait) icon, which
+   leaves its label ONE line where a slide tile's gets two -- so the
+   name must not wrap, and it is the template's short name (00-page.js)
+   at the slide tiles' size; the full name stays on the tooltip */
+.deck.poster-page .lay-strip .lay-lb{white-space:nowrap;
+  text-overflow:ellipsis;font-size:8px;}
 .dc-menuwrap{position:relative;}
 .dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff22;border-radius:8px;

@@ -1806,8 +1806,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T424: a poster tile on the Home strip applies its template
 # T425: the standardiser reads through the default look (left,
 # transparent)
-EXPECTED_MD5 = "de5167dd395527c93dd2e0a27f8a1837"
-EXPECTED_BYTES = 4169650
+# T426: poster templates carry a short strip name shown on one line
+EXPECTED_MD5 = "54885fa0171ee326a706a2fe1b524338"
+EXPECTED_BYTES = 4170523
 
 
 def _render_example() -> str:
