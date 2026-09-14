@@ -473,9 +473,13 @@
        one moment your attention belongs on the slide -- and the row is
        exactly what the user said was "getting squashed out of screen".
        Arming the mode opens the Animation panel; cfgSeq (48b-motion.js)
-       draws the count, the effect chooser and the three verbs there. */
+       draws the count, the effect chooser and the three verbs there.
+       T452: "there" is the ORDER tab now, and arming switches the pane
+       to it -- the mode writes the order, so the order is what you
+       want to be watching while you point. */
     var on=!!seqArm;
     if(on&&typeof animPaneOpen==='function') animPaneOpen();
+    if(on&&typeof animTabSet==='function') animTabSet('ord');
     if(typeof animCfgSync==='function') animCfgSync();
     /* the Timing group stands down while the mode is armed, and comes
        back with the selection when it ends (T185) */
@@ -1046,6 +1050,16 @@
     function render(){
       var s=pres.slides[cur];
       menu.innerHTML='';
+      /* T452: Quick animate sits at the head of the ORDER tab, not in
+         the configuration one. It is the tool that sets this list by
+         pointing, so it belongs above the list it is writing. */
+      if(typeof seqOn==='function'&&seqOn()
+         &&typeof cfgSeq==='function'){
+        var qa=document.createElement('div');
+        qa.className='anim-cfg anim-quick';
+        menu.appendChild(qa);
+        cfgSeq(qa);
+      }
       var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
       var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
@@ -1295,7 +1309,10 @@
         menu.appendChild(sr);
       }
       /* ...and the way to SAY the order by pointing (T168), beside the
-         list it rewrites */
+         list it rewrites. T452: not while it is already running -- its
+         own controls are at the head of this very tab now, so a second
+         door into the mode you are standing in is just noise. */
+      if(typeof seqOn==='function'&&seqOn()) return;
       var sq=document.createElement('button');
       sq.type='button';sq.className='anim-mini wide';
       sq.innerHTML=bic('stagger')+' Quick animate\u2026';
@@ -1317,6 +1334,8 @@
       if(open){
         paneShow('animpane');render();
         if(typeof animCfgSync==='function') animCfgSync();
+        /* T452: opening lands you on the tab you left it on */
+        if(typeof animTabApply==='function') animTabApply();
       }
       else paneHide('animpane');
     }

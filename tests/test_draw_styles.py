@@ -478,7 +478,8 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # follows it by source order
     assert ("var TABS=['home','images','text','design','animation','view',\n"
             "    'present','style','object'];") in out
-    assert ".rbn-build{order:3;}" in out
+    # T453 sent the verb groups to the right-hand end (order 8/9)
+    assert ".rbn-build{order:8;margin-left:auto;}" in out
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more
     assert "rbn-standby" not in out

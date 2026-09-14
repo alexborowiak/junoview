@@ -784,10 +784,22 @@
       /* T438: the provenance readout is content too -- a pasted
          picture has no refresh button and no Source door, and its
          group was hidden with the one line the tab exists to show */
-      var vis=false,kids=g.querySelectorAll(
-        'button,input,select,.sh-drop,.fmt-path');
+      var SEL='button,input,select,.sh-drop,.fmt-path';
+      var vis=false,kids=[].slice.call(g.querySelectorAll(SEL));
+      /* T453: A SHELVED GROUP'S ROW IS NOT INSIDE IT. rbnShelfOpen
+         moves the whole .rbn-row into the ribbon's shelf, so a group
+         whose options are open would have had nothing left but its door
+         -- which this pass skips -- and would have been hidden out from
+         under the very row it is showing. Its controls are still its
+         own wherever they are sitting. */
+      var shelved=(typeof rbnFoldRow==='function')?rbnFoldRow(g):null;
+      if(shelved&&!g.contains(shelved))
+        kids=kids.concat([].slice.call(shelved.querySelectorAll(SEL)));
+      else shelved=null;
       for(var i=0;i<kids.length;i++){
         var n=kids[i],blocked=false;
+        /* ...and the walk up stops at whichever host it came from */
+        var stop=g.contains(n)?g:shelved;
         /* A FOLD DOOR IS NOT CONTENT, AND THE DRAWER IT OPENS IS NOT A
            REASON TO HIDE. rbnFoldGroup (T187) moves the group's whole
            .rbn-row into a `hidden` .rbn-foldmenu and leaves a tile
@@ -806,7 +818,7 @@
            still on the ribbon -- that is what folding MEANS. */
         if(n.classList.contains('rbn-foldwrap')
            ||n.classList.contains('rbn-foldbtn')) continue;
-        while(n&&n!==g){
+        while(n&&n!==stop){
           if(n.hidden&&!n.classList.contains('rbn-foldmenu')){
             blocked=true;break;}
           n=n.parentNode;
@@ -833,6 +845,10 @@
       if(to&&to!==activeTab()){curTab=to;lsSet(tabKey(),to);}
     }
     applyTab();
+    /* T453: a row on the shelf belongs to one group on one tab; if that
+       group has just gone away, give the row back before anything
+       measures the row it is no longer part of */
+    if(typeof rbnShelfSync==='function') rbnShelfSync();
     /* `rbn-first` used to be stamped on the leading visible group so a
        ::before divider could be suppressed on it. The dividers became a
        border-right on the group itself and `:last-child` handles the end

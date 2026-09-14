@@ -1886,8 +1886,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # renamePresByName
 # T451: saveProject sends the revision, carries its change, and adopts
 # the decks it learns
-EXPECTED_MD5 = "b5820a25818f4651ff3e59577b7cb1d0"
-EXPECTED_BYTES = 4281052
+# T452: the Animation pane's Configure and Order tabs
+# T453: the ribbon shelf, the verb groups at the right, and Disappear
+# renamed
+EXPECTED_MD5 = "e8597e2f8dbe662d0eb802c20c1b4c93"
+EXPECTED_BYTES = 4299787
 
 
 def _render_example() -> str:

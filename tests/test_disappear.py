@@ -21,7 +21,12 @@ from junoview import assets
 def test_the_door_is_on_the_animation_tab():
     html = assets.deck_html()
     assert '<span class="rbn-grp rbn-exit" data-tab="animation"' in html
-    assert '<span class="rbn-lab">Disappear</span>' in html
+    # T453 renamed it: the user asked "also what is disappear?", and
+    # it was named for what it does to the object rather than for the
+    # choice, under a label repeating the same word (2026-09-14)
+    assert '<span class="rbn-lab">Leaves early</span>' in html
+    assert 'Send it away</button>' in html
+    assert 'Disappear</button>' not in html
     for cid in ("anim-outwrap", "anim-out", "anim-out-caret",
                 "anim-out-menu", "anim-out-say"):
         assert f'id="{cid}"' in html, cid

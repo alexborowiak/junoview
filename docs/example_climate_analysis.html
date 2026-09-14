@@ -5161,13 +5161,74 @@ body.slide-editing .apptop{display:none;}
 .rbn-trans{order:0;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
-.rbn-motion{order:3;}     /* T385: after Disappear, before the slide */
-.rbn-flipfx{order:6;}
-/* the Whole slide and Order groups share Animation's rung and follow
-   it by source order: the effect first, then the slide, then the order
-   things take it in (T176, T182) */
-.rbn-build{order:3;}
-.rbn-order{order:4;}
+.rbn-motion{order:4;}     /* T385: after Leaves, before the slide */
+.rbn-flipfx{order:5;}
+/* T453: the choosers lead, the shelf they open into takes the middle,
+   and the two groups of VERBS go to the right-hand end (2026-09-14,
+   user: "put all the ones for whole slide and build order to the right
+   hand side"). They are the buttons you press rather than the options
+   you pick, so they keep a place of their own that no chooser can
+   push around. */
+.rbn-build{order:8;margin-left:auto;}
+.rbn-order{order:9;}
+/* ---- T453: THE SHELF ------------------------------------------------
+   One strip in the ribbon that a chooser's whole row moves into, so the
+   options land IN the bar rather than in a pop-up over the slide, and
+   only ever one row at a time. It takes the middle: the choosers are to
+   its left, the verb groups to its right, and it collapses to nothing
+   when it is empty so the ribbon looks exactly as it did. */
+/* The shelf gets a LINE OF ITS OWN while it is open, and no space at
+   all while it is not. Squeezed into the gap between the choosers and
+   the verb groups it had about 230px, which showed two and a half of
+   the thirteen movements -- and there is no gap to grow into, because
+   the row is already full. So the row wraps, but only while a shelf is
+   open and only for the shelf: a 100% basis puts it alone on line two,
+   which means line one is exactly the groups it always was, and the
+   house rule that ribbon BUTTONS never wrap is untouched. Closing it
+   restores nowrap and the ribbon's own height. */
+.edit-tools.ribbon:has(.rbn-shelf:not([hidden])){flex-wrap:wrap;
+  height:auto;min-height:92px;}
+/* LAST, whatever its markup position: at any other rung a full-width
+   line pushes the groups after it onto a THIRD line, which is how the
+   verb groups went off the bottom of the bar the first time. */
+.rbn-shelf:not([hidden]){flex:1 0 100%;order:99;}
+.rbn-shelf{order:99;min-width:0;display:flex;position:relative;
+  align-items:center;gap:9px;padding:4px 44px 4px 12px;
+  border-top:1px solid var(--chrome-line,#ffffff1f);
+  overflow-x:auto;overflow-y:hidden;}
+.rbn-shelf[hidden]{display:none!important;}
+.rbn-shelf-name{flex:none;color:var(--chrome-ink-2);
+  font:600 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
+.rbn-shelf-body{display:flex;align-items:center;flex:0 1 auto;min-width:0;}
+/* ONE LINE, not the group's two. A .rbn-row is a two-track grid that
+   flows down and then across, which is right inside a group 90px tall
+   and wrong on a shelf that has a whole width to spend: it showed three
+   of the thirteen movements and hid the rest in a second track nothing
+   could see. Here the row is a flex line and everything is on it. */
+.rbn-shelf-body>.rbn-row{display:flex;align-items:center;
+  height:auto;column-gap:var(--rbn-col-gap);}
+.rbn-shelf-body>.rbn-row>*{flex:none;}
+/* A tile STRIP is a scroll box inside its group -- a fixed height, wrap
+   on, overflow hidden, and little arrows to page through it. On the
+   shelf there is nothing to scroll past: it lays its tiles out in one
+   line and shows all of them, which is the whole point of coming here.
+   The arrows go with the scrolling. */
+.rbn-shelf-body .strip-frame{overflow:visible;width:max-content;
+  flex:none;}
+.rbn-shelf-body .strip-frame>.fx-strip{flex-wrap:nowrap;overflow:visible;}
+.rbn-shelf-body .strip-more,.rbn-shelf-body .strip-prev,
+.rbn-shelf-body .strip-next{display:none;}
+/* pinned to the far right of the strip. In the flow it landed wherever
+   the row's own box happened to end, which for a tile strip -- a scroll
+   box that reports a narrower width than it draws -- was on top of the
+   tiles. The shelf is the full width of the bar, so its right edge is
+   where a close button belongs anyway. */
+.rbn-shelf-close{position:absolute;right:10px;top:50%;
+  transform:translateY(-50%);flex:none;}
+/* the door that owns the shelf reads as pressed while it does */
+.rbn-grp.rbn-shelved .rbn-foldbtn{
+  background:color-mix(in srgb,var(--accent) 30%,transparent);
+  border-color:var(--accent,var(--cyan));}
 /* T182: the effect tiles, in the row. A tall cell spanning both rows
    (rbn-tall counts as two, like a stack), five tiles of icon over word
    the way PowerPoint's are, the one that is on lit. Disabled with
@@ -5755,8 +5816,30 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
    because there are thirteen movements and the pane is 232px by
    default; every slider is label, track and a live readout on one
    line, so a number you are dragging says what it will be. */
+/* ---- T452: CONFIGURE | ORDER ----------------------------------------
+   (2026-09-14, user: "the animation pane is not the right place for
+   configuring the animation details ... The animation pane is for the
+   order. Please do not mix them. Or perhaps put tabs on the pane".)
+   Two tabs under the pane's heading, the underline saying which one is
+   showing -- the same grammar as the ribbon's own tab strip, at the
+   size a 272px pane can hold. */
+.anim-tabs{display:flex;gap:2px;flex:none;padding:0 8px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
+.anim-tab{display:inline-flex;align-items:center;gap:5px;flex:1;
+  justify-content:center;padding:7px 6px 6px;border:0;background:none;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  color:var(--chrome-ink-2);font:600 11.5px var(--sans);cursor:pointer;
+  white-space:nowrap;}
+.anim-tab .bic{width:12px;height:12px;}
+.anim-tab:hover{color:var(--chrome-ink);}
+.anim-tab[aria-selected="true"]{color:#fff;
+  border-bottom-color:var(--accent,var(--cyan));}
 .anim-cfg{display:block;margin-bottom:10px;}
 .anim-cfg:empty{display:none;}
+/* Quick animate at the head of the Order tab: the same card as a
+   configuration section, set off from the list it is writing */
+.anim-quick{margin:0 0 10px;padding-bottom:9px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
 .anim-cfg .anim-h{margin-top:10px;}
 .anim-cfg .anim-h:first-child{margin-top:0;}
 .cfg-note{font-size:11.5px;line-height:1.45;color:var(--chrome-ink-2);
@@ -14207,11 +14290,19 @@ items snap to both. Guides, not ink: never printed or exported"
             data-fold-ic="exit">
             <span class="rbn-row">
               <span class="sh-drop tx-split" id="anim-outwrap" hidden>
+                <!-- T453: "also what is disappear?" (2026-09-14, user).
+                     It was named for what it does to the object rather
+                     than for what you are choosing, and it sat under a
+                     label that said the same word twice. It sends the
+                     selected thing AWAY partway through the slide -- a
+                     bullet you are done with, a picture the next one
+                     replaces -- so it is named for that. -->
                 <button class="dbtn rbn-sm" id="anim-out"
                   aria-pressed="false"
-                  title="Make this leave the slide on a click of its
- own. The caret sends it away as something else arrives instead"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Disappear</button>
+                  title="Send this away partway through the slide, on a
+ click of its own, so it is not there for the rest. The caret sends it
+ away as something else arrives"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Send it away</button>
                 <button class="dbtn rbn-sm tx-caret" id="anim-out-caret"
                   aria-label="When it goes" aria-haspopup="true"
                   aria-expanded="false"
@@ -14223,7 +14314,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="An object that leaves still costs a click, so it
  is part of the sequence like any other step"></span>
             </span>
-            <span class="rbn-lab">Disappear</span>
+            <span class="rbn-lab">Leaves early</span>
           </span>
           <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
                nothing said so (2026-09-04, user: "how do the
@@ -15720,6 +15811,25 @@ items snap to both. Guides, not ink: never printed or exported"
             <span class="rbn-lab">Table</span>
           </span>
         </span>
+        <!-- T453: ONE SHELF, NOT A DROPDOWN EACH (2026-09-14, user:
+             "put all the ones for whole slide and build order to the
+             right hand side. Then each of these buttons opens up a
+             horizontal display of all the options ... Like how we had
+             it before, but instead of them all having a little
+             horizontal thing of options, it just appears for the one
+             that you click on out of transition, effect, time and
+             text, motion"). A chooser's row moves in here when you
+             click its door and moves back when you close it, so the
+             options land IN the ribbon rather than over the slide, and
+             only ever one row at a time. It sits between the choosers
+             and the groups that went to the right-hand end. -->
+        <span class="rbn-shelf" id="rbn-shelf" hidden>
+          <span class="rbn-shelf-name" id="rbn-shelf-name"></span>
+          <span class="rbn-shelf-body" id="rbn-shelf-body"></span>
+          <button class="dbtn rbn-ico rbn-shelf-close" id="rbn-shelf-close"
+            type="button" aria-label="Close these options"
+            title="Close these options"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
+        </span>
       </div>
   <div class="deck-main">
     
@@ -16182,6 +16292,25 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="selpane-h"><span>Animation</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
+        <!-- T452: TWO TABS, NOT ONE SCROLL (2026-09-14, user: "the
+             animation pane is not the right place for configuring the
+             animation details e.g. for things like the wobble and such.
+             The animation pane is for the order. Please do not mix them.
+             Or perhaps put tabs on the pane e.g. configuration and
+             order"). Configure is what the selected thing DOES; Order is
+             the list of clicks the pane has always been, and Quick
+             animate belongs with it because clicking things IS setting
+             the order. -->
+        <div class="anim-tabs" role="tablist" aria-label="Animation pane">
+          <button class="anim-tab" id="animpane-tab-cfg" type="button"
+            role="tab" aria-selected="true" aria-controls="animpane-cfg"
+            title="How the selected thing arrives, moves and leaves"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.6"/></svg> Configure</button>
+          <button class="anim-tab" id="animpane-tab-ord" type="button"
+            role="tab" aria-selected="false" aria-controls="animpane-body"
+            title="Every click on this slide, in the order they happen"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Order</button>
+        </div>
         <div class="selpane-list">
           <div class="anim-cfg" id="animpane-cfg"></div>
           <div id="animpane-body"></div>
@@ -29772,6 +29901,8 @@ window.JunoPptx = (function () {
        still persists. */
     if(!transient) lsSet(tabKey(),t);
     applyTab();
+    /* T453: the shelf belongs to a group on the tab you just left */
+    rbnShelfSync();
     /* the row's content just changed wholesale, so its column counts and
        its density both have to be judged again */
     syncRibbonGroups();
@@ -30115,6 +30246,7 @@ window.JunoPptx = (function () {
     });
     tabGroupsOn(wasTab);
     reFold.forEach(rbnFoldGroup);
+    rbnShelfRestore();      /* T453: the eight walks unfolded it */
     sizeRibbonGroups();
     /* the single-tab reading is still taken, and is still the floor when
        there is only one tab to have (the 'All tools' layout) */
@@ -30246,6 +30378,97 @@ window.JunoPptx = (function () {
      the groups out again by itself. Never the fixed groups, never the
      Drawing or Quick animate groups (a mode's exit must stay on the
      bar), and a layout unfolds all before it moves anything. */
+  /* ---- T453: THE SHELF ------------------------------------------------
+     (2026-09-14, user: "put all the ones for whole slide and build order
+     to the right hand side. Then each of these buttons opens up a
+     horizontal display of all the options ... Like how we had it before,
+     but instead of them all having a little horizontal thing of options,
+     it just appears for the one that you click on out of transition,
+     effect, time and text, motion".)
+     T441 gave every chooser a door and a readout, which fixed the
+     crowding but put the options in a pop-up over the slide -- the thing
+     the user has objected to more than any other. The row is not
+     rebuilt anywhere: the SAME element moves between its parked holder
+     and the shelf, so every listener, pressed state and readout on it
+     survives the move, and there is exactly one of it. */
+  var rbnShelfFor=null,rbnShelfWant=null;
+  /* the row of a folded group, wherever it currently lives */
+  function rbnFoldRow(g){
+    if(!g) return null;
+    var m=g.querySelector('.rbn-foldmenu');
+    var r=m&&m.querySelector('.rbn-row');
+    if(r) return r;
+    if(rbnShelfFor===g){
+      var b=$('#rbn-shelf-body');
+      return b?b.querySelector('.rbn-row'):null;
+    }
+    return null;
+  }
+  /* The user closing it forgets it; everything else is bookkeeping and
+     must not, or a measuring pass would dismiss what you are reading. */
+  function rbnShelfDismiss(){rbnShelfWant=null;rbnShelfClose();}
+  function rbnShelfClose(){
+    var sh=$('#rbn-shelf'); if(!sh) return;
+    var g=rbnShelfFor;
+    rbnShelfFor=null;
+    if(g){
+      var menu=g.querySelector('.rbn-foldmenu');
+      var body=$('#rbn-shelf-body');
+      var row=body&&body.querySelector('.rbn-row');
+      if(menu&&row) menu.appendChild(row);
+      var b=g.querySelector('.rbn-foldbtn');
+      if(b) b.setAttribute('aria-expanded','false');
+      g.classList.remove('rbn-shelved');
+    }
+    sh.hidden=true;
+    var nm=$('#rbn-shelf-name'); if(nm) nm.textContent='';
+  }
+  /* The bar grows a line while the shelf is open and loses it again, so
+     the stage is a different height either way and the page has to be
+     re-fitted to it -- the same courtesy a docking pane gets.
+     Only the CLICKS call this. Opening and closing must stay silent in
+     themselves, because fitEditRibbon takes the shelf apart and puts it
+     back on every pass and a refit from inside that would re-enter it. */
+  function rbnShelfRefit(){
+    if(typeof applyZoom==='function') applyZoom();
+    if(typeof fitFilmMax==='function') fitFilmMax();
+  }
+  /* clicking the open door again closes it; clicking another swaps */
+  function rbnShelfOpen(g){
+    var sh=$('#rbn-shelf'),body=$('#rbn-shelf-body');
+    if(!sh||!body||!g) return false;
+    if(rbnShelfFor===g){rbnShelfDismiss();return true;}
+    rbnShelfClose();
+    var menu=g.querySelector('.rbn-foldmenu');
+    var row=menu&&menu.querySelector('.rbn-row');
+    if(!row) return false;
+    body.appendChild(row);
+    var lab=g.querySelector('.rbn-lab'),nm=$('#rbn-shelf-name');
+    if(nm) nm.textContent=(lab&&lab.textContent.trim())||'Options';
+    sh.hidden=false;
+    g.classList.add('rbn-shelved');
+    var b=g.querySelector('.rbn-foldbtn');
+    if(b) b.setAttribute('aria-expanded','true');
+    rbnShelfFor=g;
+    return true;
+  }
+  /* A row parked in the shelf belongs to ONE group on ONE tab. Changing
+     tab, or anything that hides that group, has to give it back first or
+     the row is stranded in a shelf the tab it came from cannot see. */
+  function rbnShelfSync(){
+    var g=rbnShelfFor;
+    if(!g) return;
+    /* `data-off` is how a tab change takes a group away -- it is
+       display:none, not `hidden` -- and a row left on the shelf after
+       its tab has gone is a row its own tab can never get back */
+    if(g.hidden||g.hasAttribute('data-off')||!document.contains(g))
+      rbnShelfDismiss();
+  }
+  function rbnShelfBoot(){
+    var x=$('#rbn-shelf-close');
+    if(x) x.addEventListener('click',function(e){
+      e.stopPropagation();rbnShelfDismiss();rbnShelfRefit();});
+  }
   function rbnFoldGroup(g){
     if(!g||g.classList.contains('rbn-folded')) return false;
     var row=null;
@@ -30291,6 +30514,11 @@ window.JunoPptx = (function () {
     g.classList.add('rbn-folded');
     btn.addEventListener('click',function(e){
       e.stopPropagation();
+      /* T453: a COMPACT group is one the user chose to keep folded, so
+         its options open in the ribbon's own shelf. A group folded only
+         because the window is narrow keeps the pop-up: there is by
+         definition no room for a shelf on that row. */
+      if(compact&&rbnShelfOpen(g)){rbnShelfRefit();return;}
       if(!menu.hidden){overlayHide(menu);return;}
       overlayShow(btn,menu);floatMenu(btn,menu);
     });
@@ -30303,7 +30531,10 @@ window.JunoPptx = (function () {
   function rbnFoldReadout(g){
     var val=g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval');
     if(!val) return;
-    var on=g.querySelector('.rbn-foldmenu [aria-pressed="true"]');
+    /* T453: the row may be sitting in the shelf rather than in this
+       group, and the readout is still this group's to keep true */
+    var row=rbnFoldRow(g);
+    var on=row?row.querySelector('[aria-pressed="true"]'):null;
     var txt='';
     if(on){
       var sp=on.classList.contains('fx-tile')?on.querySelector('span'):null;
@@ -30325,6 +30556,7 @@ window.JunoPptx = (function () {
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp.rbn-compact',bar).forEach(function(g){
       if(!g.hidden&&!g.classList.contains('rbn-folded')) rbnFoldGroup(g);});
+    rbnShelfRestore();
   }
   /* the readouts follow every pressed-state change on the bar */
   function rbnReadoutBoot(){
@@ -30338,6 +30570,9 @@ window.JunoPptx = (function () {
     [].slice.call(g.children).forEach(function(c){
       if(!wrap&&c.classList.contains('rbn-foldwrap')) wrap=c;});
     if(!wrap) return;
+    /* T453: take the row back off the shelf before unfolding, or the
+       group opens out around a row that is somewhere else */
+    if(rbnShelfFor===g) rbnShelfClose();
     var menu=wrap.querySelector('.rbn-foldmenu');
     if(menu&&!menu.hidden) overlayHide(menu);
     var row=wrap.querySelector('.rbn-row');
@@ -30346,7 +30581,22 @@ window.JunoPptx = (function () {
     g.classList.remove('rbn-folded');
   }
   function rbnUnfoldAll(){
+    /* T453: EVERY measuring pass unfolds the whole bar and folds it
+       again -- fitEditRibbon to judge the row, ribbonMinW eight times
+       over to find the strip's ceiling -- and each one hands the
+       shelf's row back to its group. Remember whose it was here, once,
+       so whoever refolds can put it back; patching the callers one at
+       a time is how the shelf shut itself on every selection change. */
+    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;
     $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnUnfoldGroup);
+  }
+  /* ...and the other half: called wherever a pass has finished folding */
+  function rbnShelfRestore(){
+    var g=rbnShelfWant;
+    if(!g||rbnShelfFor) return;
+    if(g.hidden||g.hasAttribute('data-off')||!document.contains(g)
+       ||!g.classList.contains('rbn-folded')) return;
+    rbnShelfOpen(g);
   }
   /* the rightmost group ON SCREEN that may fold: flex `order` decides
      the visual order, so sort by position rather than by markup */
@@ -44679,10 +44929,22 @@ window.JunoPptx = (function () {
       /* T438: the provenance readout is content too -- a pasted
          picture has no refresh button and no Source door, and its
          group was hidden with the one line the tab exists to show */
-      var vis=false,kids=g.querySelectorAll(
-        'button,input,select,.sh-drop,.fmt-path');
+      var SEL='button,input,select,.sh-drop,.fmt-path';
+      var vis=false,kids=[].slice.call(g.querySelectorAll(SEL));
+      /* T453: A SHELVED GROUP'S ROW IS NOT INSIDE IT. rbnShelfOpen
+         moves the whole .rbn-row into the ribbon's shelf, so a group
+         whose options are open would have had nothing left but its door
+         -- which this pass skips -- and would have been hidden out from
+         under the very row it is showing. Its controls are still its
+         own wherever they are sitting. */
+      var shelved=(typeof rbnFoldRow==='function')?rbnFoldRow(g):null;
+      if(shelved&&!g.contains(shelved))
+        kids=kids.concat([].slice.call(shelved.querySelectorAll(SEL)));
+      else shelved=null;
       for(var i=0;i<kids.length;i++){
         var n=kids[i],blocked=false;
+        /* ...and the walk up stops at whichever host it came from */
+        var stop=g.contains(n)?g:shelved;
         /* A FOLD DOOR IS NOT CONTENT, AND THE DRAWER IT OPENS IS NOT A
            REASON TO HIDE. rbnFoldGroup (T187) moves the group's whole
            .rbn-row into a `hidden` .rbn-foldmenu and leaves a tile
@@ -44701,7 +44963,7 @@ window.JunoPptx = (function () {
            still on the ribbon -- that is what folding MEANS. */
         if(n.classList.contains('rbn-foldwrap')
            ||n.classList.contains('rbn-foldbtn')) continue;
-        while(n&&n!==g){
+        while(n&&n!==stop){
           if(n.hidden&&!n.classList.contains('rbn-foldmenu')){
             blocked=true;break;}
           n=n.parentNode;
@@ -44728,6 +44990,10 @@ window.JunoPptx = (function () {
       if(to&&to!==activeTab()){curTab=to;lsSet(tabKey(),to);}
     }
     applyTab();
+    /* T453: a row on the shelf belongs to one group on one tab; if that
+       group has just gone away, give the row back before anything
+       measures the row it is no longer part of */
+    if(typeof rbnShelfSync==='function') rbnShelfSync();
     /* `rbn-first` used to be stamped on the leading visible group so a
        ::before divider could be suppressed on it. The dividers became a
        border-right on the group itself and `:last-child` handles the end
@@ -61604,9 +61870,13 @@ window.JunoPptx = (function () {
        one moment your attention belongs on the slide -- and the row is
        exactly what the user said was "getting squashed out of screen".
        Arming the mode opens the Animation panel; cfgSeq (48b-motion.js)
-       draws the count, the effect chooser and the three verbs there. */
+       draws the count, the effect chooser and the three verbs there.
+       T452: "there" is the ORDER tab now, and arming switches the pane
+       to it -- the mode writes the order, so the order is what you
+       want to be watching while you point. */
     var on=!!seqArm;
     if(on&&typeof animPaneOpen==='function') animPaneOpen();
+    if(on&&typeof animTabSet==='function') animTabSet('ord');
     if(typeof animCfgSync==='function') animCfgSync();
     /* the Timing group stands down while the mode is armed, and comes
        back with the selection when it ends (T185) */
@@ -62177,6 +62447,16 @@ window.JunoPptx = (function () {
     function render(){
       var s=pres.slides[cur];
       menu.innerHTML='';
+      /* T452: Quick animate sits at the head of the ORDER tab, not in
+         the configuration one. It is the tool that sets this list by
+         pointing, so it belongs above the list it is writing. */
+      if(typeof seqOn==='function'&&seqOn()
+         &&typeof cfgSeq==='function'){
+        var qa=document.createElement('div');
+        qa.className='anim-cfg anim-quick';
+        menu.appendChild(qa);
+        cfgSeq(qa);
+      }
       var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
       var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
@@ -62426,7 +62706,10 @@ window.JunoPptx = (function () {
         menu.appendChild(sr);
       }
       /* ...and the way to SAY the order by pointing (T168), beside the
-         list it rewrites */
+         list it rewrites. T452: not while it is already running -- its
+         own controls are at the head of this very tab now, so a second
+         door into the mode you are standing in is just noise. */
+      if(typeof seqOn==='function'&&seqOn()) return;
       var sq=document.createElement('button');
       sq.type='button';sq.className='anim-mini wide';
       sq.innerHTML=bic('stagger')+' Quick animate\u2026';
@@ -62448,6 +62731,8 @@ window.JunoPptx = (function () {
       if(open){
         paneShow('animpane');render();
         if(typeof animCfgSync==='function') animCfgSync();
+        /* T452: opening lands you on the tab you left it on */
+        if(typeof animTabApply==='function') animTabApply();
       }
       else paneHide('animpane');
     }
@@ -63076,6 +63361,50 @@ window.JunoPptx = (function () {
         lifeApply(p[0]);});
     });
   }
+  /* ---- T452: TWO TABS, NOT ONE SCROLL --------------------------------
+     (2026-09-14, user: "the animation pane is not the right place for
+     configuring the animation details e.g. for things like the wobble
+     and such. The animation pane is for the order. Please do not mix
+     them. Or perhaps put tabs on the pane e.g. configuration and
+     order".) T445 stacked one on top of the other, which put the six
+     numbers of a wobble between you and the list of clicks every time
+     you opened the pane to check the order.
+     CONFIGURE is what the selected thing does -- how it arrives, how it
+     moves, when it leaves. ORDER is the list of clicks this pane has
+     always been, and Quick animate moved there with it, because
+     clicking things in turn IS setting the order. Which tab you were
+     last on is remembered per project, like every other pane state. */
+  var ANIMTAB_KEY='semopts:'+SCOPE+':animtab';
+  function animTabGet(){
+    return lsGet(ANIMTAB_KEY)==='ord'?'ord':'cfg';
+  }
+  function animTabSet(which){
+    lsSet(ANIMTAB_KEY,which==='ord'?'ord':'cfg');
+    animTabApply();
+  }
+  /* shows one host, hides the other, and lights the tab that won. Both
+     halves are BUILT either way -- each is a few dozen nodes and the
+     order list already redraws on every commit -- so switching tabs is
+     only ever a class flip, never a rebuild that could lose a caret or
+     a drag. */
+  function animTabApply(){
+    var cfg=$('#animpane-cfg'),ord=$('#animpane-body');
+    var tc=$('#animpane-tab-cfg'),to=$('#animpane-tab-ord');
+    if(!cfg||!ord) return;
+    var on=animTabGet();
+    cfg.hidden=(on!=='cfg');
+    ord.hidden=(on!=='ord');
+    if(tc) tc.setAttribute('aria-selected',(on==='cfg').toString());
+    if(to) to.setAttribute('aria-selected',(on==='ord').toString());
+  }
+  function animTabBoot(){
+    var tc=$('#animpane-tab-cfg'),to=$('#animpane-tab-ord');
+    if(tc) tc.addEventListener('click',function(e){
+      e.stopPropagation();animTabSet('cfg');});
+    if(to) to.addEventListener('click',function(e){
+      e.stopPropagation();animTabSet('ord');});
+    animTabApply();
+  }
   /* the whole panel, rebuilt from the selection. Cheap enough to
      rebuild: it is a few dozen nodes and it is only ever open while
      somebody is looking at it. */
@@ -63084,7 +63413,15 @@ window.JunoPptx = (function () {
     var pane=$('#animpane');
     if(pane&&pane.hidden){host.innerHTML='';return;}
     host.innerHTML='';
-    if(typeof seqOn==='function'&&seqOn()){cfgSeq(host);return;}
+    /* T452: Quick animate lives on Order now. Saying so beats an empty
+       tab, because arming it switches the pane over and the eye is
+       still here. */
+    if(typeof seqOn==='function'&&seqOn()){
+      cfgNote(host,'Quick animate is running — its count and its '
+        +'three buttons are on the Order tab, because clicking things '
+        +'in turn is what sets the order.');
+      return;
+    }
     var poster=!!(typeof pageOf==='function'&&pageOf().poster);
     if(poster){
       cfgNote(host,'A poster is one printed page: there is no click to '
@@ -63122,6 +63459,7 @@ window.JunoPptx = (function () {
     /* the panel follows the selection: showFmt already calls
        animPaneSync on every one, and that is where this hangs (see
        48-animation.js) */
+    animTabBoot();
     animCfgSync();
   }
   /* ================================================================
@@ -75706,6 +76044,7 @@ window.JunoPptx = (function () {
   renderPresTabs();
   initRibbonLayoutDoor();
   rbnReadoutBoot();           /* folded doors show their choice (T441) */
+  rbnShelfBoot();             /* and open into the ribbon's shelf (T453) */
   /* the two auto-hides: their button and pointer listeners only. The
      remembered STATE is applied on first entry to edit mode, beside the
      ribbon fold's restore -- nothing here has geometry to measure yet. */

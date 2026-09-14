@@ -41,7 +41,10 @@ def test_a_compact_group_folds_by_design(out):
 
 def test_the_door_reads_out_the_choice(out):
     assert "  function rbnFoldReadout(g){" in out
-    assert "    var on=g.querySelector('.rbn-foldmenu [aria-pressed=\"true\"]');" \
+    # T453: the row may be on the ribbon's shelf rather than inside
+    # the group, and the readout is still that group's to keep true
+    assert "    var row=rbnFoldRow(g);" in out
+    assert "    var on=row?row.querySelector('[aria-pressed=\"true\"]'):null;" \
         in out
     assert "  function rbnReadoutBoot(){" in out
     assert "        attributeFilter:['aria-pressed']});" in out

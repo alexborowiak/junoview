@@ -8577,3 +8577,20 @@ gates are recorded in the completing commit.
   list's own door, so nothing carries `emb` into `projectPres`. Driven
   live with a second writer: a delete and a rename, each with the other
   window's deck surviving.
+- [x] **T452 — The Animation pane is two tabs: Configure and Order.**
+  (User, 2026-09-14: "the animation pane is not the right place for
+  configuring the animation details e.g. for things like the wobble and
+  such. The animation pane is for the order. Please do not mix them. Or
+  perhaps put tabs on the pane e.g. configuration and order.") T445 put
+  one on top of the other, so the six numbers of a wobble sat between
+  you and the list of clicks every time you opened the pane to check
+  the order. Two tabs now, remembered per project: **Configure** is
+  what the selected thing does — how it arrives, how it moves, when it
+  leaves, and the whole-slide treatments; **Order** is the list of
+  clicks this pane has always been. Quick animate moved to Order with
+  it, because clicking things in turn IS setting the order: arming it
+  switches the pane over, its count and three verbs draw at the head of
+  the list they are writing, the list's own door stands down while it
+  runs, and Configure says where it went rather than going blank.
+  Switching tabs is a class flip, not a rebuild, so it cannot lose a
+  drag or a half-dragged slider. Driven live.

@@ -1368,6 +1368,8 @@
        still persists. */
     if(!transient) lsSet(tabKey(),t);
     applyTab();
+    /* T453: the shelf belongs to a group on the tab you just left */
+    rbnShelfSync();
     /* the row's content just changed wholesale, so its column counts and
        its density both have to be judged again */
     syncRibbonGroups();
@@ -1711,6 +1713,7 @@
     });
     tabGroupsOn(wasTab);
     reFold.forEach(rbnFoldGroup);
+    rbnShelfRestore();      /* T453: the eight walks unfolded it */
     sizeRibbonGroups();
     /* the single-tab reading is still taken, and is still the floor when
        there is only one tab to have (the 'All tools' layout) */
@@ -1842,6 +1845,97 @@
      the groups out again by itself. Never the fixed groups, never the
      Drawing or Quick animate groups (a mode's exit must stay on the
      bar), and a layout unfolds all before it moves anything. */
+  /* ---- T453: THE SHELF ------------------------------------------------
+     (2026-09-14, user: "put all the ones for whole slide and build order
+     to the right hand side. Then each of these buttons opens up a
+     horizontal display of all the options ... Like how we had it before,
+     but instead of them all having a little horizontal thing of options,
+     it just appears for the one that you click on out of transition,
+     effect, time and text, motion".)
+     T441 gave every chooser a door and a readout, which fixed the
+     crowding but put the options in a pop-up over the slide -- the thing
+     the user has objected to more than any other. The row is not
+     rebuilt anywhere: the SAME element moves between its parked holder
+     and the shelf, so every listener, pressed state and readout on it
+     survives the move, and there is exactly one of it. */
+  var rbnShelfFor=null,rbnShelfWant=null;
+  /* the row of a folded group, wherever it currently lives */
+  function rbnFoldRow(g){
+    if(!g) return null;
+    var m=g.querySelector('.rbn-foldmenu');
+    var r=m&&m.querySelector('.rbn-row');
+    if(r) return r;
+    if(rbnShelfFor===g){
+      var b=$('#rbn-shelf-body');
+      return b?b.querySelector('.rbn-row'):null;
+    }
+    return null;
+  }
+  /* The user closing it forgets it; everything else is bookkeeping and
+     must not, or a measuring pass would dismiss what you are reading. */
+  function rbnShelfDismiss(){rbnShelfWant=null;rbnShelfClose();}
+  function rbnShelfClose(){
+    var sh=$('#rbn-shelf'); if(!sh) return;
+    var g=rbnShelfFor;
+    rbnShelfFor=null;
+    if(g){
+      var menu=g.querySelector('.rbn-foldmenu');
+      var body=$('#rbn-shelf-body');
+      var row=body&&body.querySelector('.rbn-row');
+      if(menu&&row) menu.appendChild(row);
+      var b=g.querySelector('.rbn-foldbtn');
+      if(b) b.setAttribute('aria-expanded','false');
+      g.classList.remove('rbn-shelved');
+    }
+    sh.hidden=true;
+    var nm=$('#rbn-shelf-name'); if(nm) nm.textContent='';
+  }
+  /* The bar grows a line while the shelf is open and loses it again, so
+     the stage is a different height either way and the page has to be
+     re-fitted to it -- the same courtesy a docking pane gets.
+     Only the CLICKS call this. Opening and closing must stay silent in
+     themselves, because fitEditRibbon takes the shelf apart and puts it
+     back on every pass and a refit from inside that would re-enter it. */
+  function rbnShelfRefit(){
+    if(typeof applyZoom==='function') applyZoom();
+    if(typeof fitFilmMax==='function') fitFilmMax();
+  }
+  /* clicking the open door again closes it; clicking another swaps */
+  function rbnShelfOpen(g){
+    var sh=$('#rbn-shelf'),body=$('#rbn-shelf-body');
+    if(!sh||!body||!g) return false;
+    if(rbnShelfFor===g){rbnShelfDismiss();return true;}
+    rbnShelfClose();
+    var menu=g.querySelector('.rbn-foldmenu');
+    var row=menu&&menu.querySelector('.rbn-row');
+    if(!row) return false;
+    body.appendChild(row);
+    var lab=g.querySelector('.rbn-lab'),nm=$('#rbn-shelf-name');
+    if(nm) nm.textContent=(lab&&lab.textContent.trim())||'Options';
+    sh.hidden=false;
+    g.classList.add('rbn-shelved');
+    var b=g.querySelector('.rbn-foldbtn');
+    if(b) b.setAttribute('aria-expanded','true');
+    rbnShelfFor=g;
+    return true;
+  }
+  /* A row parked in the shelf belongs to ONE group on ONE tab. Changing
+     tab, or anything that hides that group, has to give it back first or
+     the row is stranded in a shelf the tab it came from cannot see. */
+  function rbnShelfSync(){
+    var g=rbnShelfFor;
+    if(!g) return;
+    /* `data-off` is how a tab change takes a group away -- it is
+       display:none, not `hidden` -- and a row left on the shelf after
+       its tab has gone is a row its own tab can never get back */
+    if(g.hidden||g.hasAttribute('data-off')||!document.contains(g))
+      rbnShelfDismiss();
+  }
+  function rbnShelfBoot(){
+    var x=$('#rbn-shelf-close');
+    if(x) x.addEventListener('click',function(e){
+      e.stopPropagation();rbnShelfDismiss();rbnShelfRefit();});
+  }
   function rbnFoldGroup(g){
     if(!g||g.classList.contains('rbn-folded')) return false;
     var row=null;
@@ -1887,6 +1981,11 @@
     g.classList.add('rbn-folded');
     btn.addEventListener('click',function(e){
       e.stopPropagation();
+      /* T453: a COMPACT group is one the user chose to keep folded, so
+         its options open in the ribbon's own shelf. A group folded only
+         because the window is narrow keeps the pop-up: there is by
+         definition no room for a shelf on that row. */
+      if(compact&&rbnShelfOpen(g)){rbnShelfRefit();return;}
       if(!menu.hidden){overlayHide(menu);return;}
       overlayShow(btn,menu);floatMenu(btn,menu);
     });
@@ -1899,7 +1998,10 @@
   function rbnFoldReadout(g){
     var val=g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval');
     if(!val) return;
-    var on=g.querySelector('.rbn-foldmenu [aria-pressed="true"]');
+    /* T453: the row may be sitting in the shelf rather than in this
+       group, and the readout is still this group's to keep true */
+    var row=rbnFoldRow(g);
+    var on=row?row.querySelector('[aria-pressed="true"]'):null;
     var txt='';
     if(on){
       var sp=on.classList.contains('fx-tile')?on.querySelector('span'):null;
@@ -1921,6 +2023,7 @@
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp.rbn-compact',bar).forEach(function(g){
       if(!g.hidden&&!g.classList.contains('rbn-folded')) rbnFoldGroup(g);});
+    rbnShelfRestore();
   }
   /* the readouts follow every pressed-state change on the bar */
   function rbnReadoutBoot(){
@@ -1934,6 +2037,9 @@
     [].slice.call(g.children).forEach(function(c){
       if(!wrap&&c.classList.contains('rbn-foldwrap')) wrap=c;});
     if(!wrap) return;
+    /* T453: take the row back off the shelf before unfolding, or the
+       group opens out around a row that is somewhere else */
+    if(rbnShelfFor===g) rbnShelfClose();
     var menu=wrap.querySelector('.rbn-foldmenu');
     if(menu&&!menu.hidden) overlayHide(menu);
     var row=wrap.querySelector('.rbn-row');
@@ -1942,7 +2048,22 @@
     g.classList.remove('rbn-folded');
   }
   function rbnUnfoldAll(){
+    /* T453: EVERY measuring pass unfolds the whole bar and folds it
+       again -- fitEditRibbon to judge the row, ribbonMinW eight times
+       over to find the strip's ceiling -- and each one hands the
+       shelf's row back to its group. Remember whose it was here, once,
+       so whoever refolds can put it back; patching the callers one at
+       a time is how the shelf shut itself on every selection change. */
+    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;
     $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnUnfoldGroup);
+  }
+  /* ...and the other half: called wherever a pass has finished folding */
+  function rbnShelfRestore(){
+    var g=rbnShelfWant;
+    if(!g||rbnShelfFor) return;
+    if(g.hidden||g.hasAttribute('data-off')||!document.contains(g)
+       ||!g.classList.contains('rbn-folded')) return;
+    rbnShelfOpen(g);
   }
   /* the rightmost group ON SCREEN that may fold: flex `order` decides
      the visual order, so sort by position rather than by markup */
