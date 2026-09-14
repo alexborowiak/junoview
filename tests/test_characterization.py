@@ -1789,8 +1789,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T275: one matchProp helper for the three copy loops; a model with no
 # named style no longer strips the target's
 # T421: cmRefit re-clamps the canvas menu after the More fold opens
-EXPECTED_MD5 = "a40cc71d854834f279fd91daae3263e0"
-EXPECTED_BYTES = 4162281
+# T246: document Find marks carry jv-doc and findClear unwraps only
+# those
+EXPECTED_MD5 = "df63dd6119d2df9fcd1823831e09ca8a"
+EXPECTED_BYTES = 4162654
 
 
 def _render_example() -> str:

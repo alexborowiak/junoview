@@ -5137,13 +5137,18 @@ option. Then where has the ability to refresh all images gone?"
   jv-hitopen counts after closing were identical to the snapshot taken
   before Find was opened.
 
-- [ ] **T246 - Document Find does not erase the Variables match.**
+- [x] **T246 - Document Find does not erase the Variables match.**
   Review, 2026-09-04. Document hits and the Variables filter both use
   `.jv-hit`, while `findClear()` removes every `.jv-hit` in the page.
   Running or closing document Find therefore erases the highlighted
   part of a still-active Variables query. Give the two features
   separate ownership (separate classes or scoped clearing) and test
   both being active together.
+  *Done 2026-09-14.* The document's marks carry `jv-doc` as well as the
+  shared look, and `findClear` unwraps only those. Driven on the example
+  notebook: Variables filtered by "bl" (3 marks), then "blocking" in
+  Find gave 23 document marks and left the 3; closing the bar left 0
+  and 3.
 
 - [ ] **T247 - Find follows the notebook you switch to.**
   Review, 2026-09-04. The Find bar and its `findHits` DOM references

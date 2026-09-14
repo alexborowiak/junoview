@@ -3070,8 +3070,13 @@
     $$('.jv-hitopen').forEach(function(n){
       n.classList.remove('jv-hitopen');});
   }
+  /* T246: ONLY THE DOCUMENT'S OWN MARKS. The Variables filter paints its
+     matched letters with the same mark.jv-hit look, and this used to
+     unwrap every .jv-hit on the page -- so running or closing document
+     Find erased the highlight of a still-active Variables query. The
+     document's marks carry jv-doc as well, and that is all this clears. */
   function findClear(){
-    $$('.jv-hit').forEach(function(m){
+    $$('mark.jv-doc').forEach(function(m){
       var p2=m.parentNode; if(!p2) return;
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
@@ -3105,7 +3110,7 @@
         if(at>from)
           frag.appendChild(document.createTextNode(txt.slice(from,at)));
         var mk=document.createElement('mark');
-        mk.className='jv-hit';
+        mk.className='jv-hit jv-doc';
         mk.textContent=txt.slice(at,at+term.length);
         frag.appendChild(mk);out.push(mk);
         from=at+term.length;
@@ -3119,7 +3124,7 @@
   }
   function findGo(d){
     if(!findHits.length) return;
-    $$('.jv-hit.on').forEach(function(m){m.classList.remove('on');});
+    $$('.jv-doc.on').forEach(function(m){m.classList.remove('on');});
     findAt=(findAt+d+findHits.length)%findHits.length;
     var m=findHits[findAt];
     m.classList.add('on');
