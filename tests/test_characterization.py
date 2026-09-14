@@ -1815,8 +1815,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # localStorage drafts migrate at boot
 # T429: drafts live in IndexedDB through one in-memory map;
 # localStorage drafts migrate at boot
-EXPECTED_MD5 = "b077615009dc78776b3678ffaa08a34c"
-EXPECTED_BYTES = 4181913
+# T430: opening a file of a deck that is already here asks replace or
+# keep both
+EXPECTED_MD5 = "200d2b048e717cc572e0c4537f61a956"
+EXPECTED_BYTES = 4182852
 
 
 def _render_example() -> str:

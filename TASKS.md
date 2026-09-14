@@ -8306,3 +8306,12 @@ gates are recorded in the completing commit.
   imported, reloaded, still open; renamed, reloaded, open under the
   new name with its slides; a seeded legacy draft in the store after
   one reload.
+- [x] **T430 — Opening a file of a deck that is already here asks.**
+  (Same report: "I opened an old version of this from local, and then
+  when I clicked save, everything got reverted back to before the
+  save.") Opening an older file of "talk" silently minted "talk-2" and
+  put it on the screen, so the old version appeared to have replaced
+  the current one. One confirm now: OK replaces the copy in this
+  browser with the file's version, Cancel keeps both under a new name.
+  A silent boot restore and a file holding several decks never ask.
+  Driven live both ways.

@@ -2361,6 +2361,25 @@
       var np=normPres(pr);
       var base=np.name||'imported',nm=base,k=1;
       if(silent&&(savedByName(nm)||draftGet(nm))) return;
+      /* T430: A FILE OF A DECK THAT IS ALREADY HERE ASKS. Opening an
+         older file of "talk" silently minted "talk-2" and put it on the
+         screen, so the old version appeared to have replaced the current
+         one -- "everything got reverted back to before the save"
+         (2026-09-14). Replace, or keep both under a new name: the one
+         question, asked once, on a file you chose yourself. */
+      var clash=(savedByName(nm)||draftGet(nm));
+      if(clash&&!silent&&list.length===1){
+        var replace=window.confirm('\u201c'+base+'\u201d is already in '
+          +'this browser.\n\nOK replaces it with the file\u2019s version.'
+          +'\nCancel keeps both \u2014 the file\u2019s copy opens as a new '
+          +'name.');
+        if(replace){
+          np.name=nm;
+          draftSet(nm,JSON.stringify(np),true);
+          imported++;first={name:nm,pres:np,kept:true};
+          return;
+        }
+      }
       while(savedByName(nm)||draftGet(nm)){
         k++;nm=base+'-'+k;
       }
