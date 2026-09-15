@@ -45,7 +45,8 @@ def test_one_row_per_click_numbered_by_the_space_bar(out):
     assert "          var last=(plan.stop[b0+nsub-1]|0)+1;" in body
     assert "          row(first===last?first:(first+'\\u2013'+last),names," in body
     # T417: a build in pieces is one row per piece, the words on each
-    assert "          if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});" in body
+    # (T473: a figure's panels are pieces too)
+    assert "          if(!pieceA&&nsub>1&&(textBy(a)" in body
     assert "          var pcs=textPieces(pieceA),ii=st.items[0];" in body
     assert "          for(var k=1;k<nsub;k++)" in body
     assert "            row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],''," in body

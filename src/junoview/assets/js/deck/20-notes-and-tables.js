@@ -3067,6 +3067,8 @@
               });
             }
           }
+          /* T473: the grid of covers, faint and numbered while editing */
+          if(typeof panelPaint==='function') panelPaint(el,ba,s,st,plan,true,storyK);
         } else if(mode==='view'){
           /* WHICH STOP, not which build number: a flip book with a build
              of its own puts its frames straight after itself, so anything
@@ -3114,6 +3116,9 @@
                 typeInto(el,j);
             });
           }
+          /* T473: a figure in panels -- cover k lifts on build step
+             st+k, read off the same plan as a text piece */
+          if(typeof panelPaint==='function') panelPaint(el,ba,s,st,plan,false,null);
           if(sp>=revealCount) el.classList.add('an-prebuild');
           else if(sp===revealCount-1){
             var atype=ba.anim.type||'fade';

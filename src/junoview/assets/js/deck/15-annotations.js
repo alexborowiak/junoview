@@ -1680,7 +1680,8 @@
       /* the WIDEST claim on this order wins: two boxes on one build, one
          of them split four ways, is four clicks and the other box
          arrives on the first of them */
-      var n=textBy(a)?textPieceCount(a):1;
+      var n=(typeof pieceCount==='function')?pieceCount(a)
+        :(textBy(a)?textPieceCount(a):1);   /* T473: panels count too */
       if(!(o in seen)||n>seen[o]) seen[o]=n;});
     /* AN EXIT IS A CLAIM ON A STOP TOO (T174). Usually it lands on a
        build that already exists -- the click the replacement arrives on

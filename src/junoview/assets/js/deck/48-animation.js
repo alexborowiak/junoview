@@ -22,6 +22,7 @@
      "rerender is not defined" and nothing happened. */
   var animSetType=function(){};
   var animSetHl=function(){};   /* T471: the highlight's two choices */
+  var animSetPanels=function(){};   /* T473: a figure's grid of panels */
   var HL_FX=[['','Bigger & coloured'],['grow','Bigger'],['colour','Coloured']];
   var HL_REST=[['','Dimmed'],['blur','Blurred'],['plain','As they are']];
   var animRibbonSync=function(){};
@@ -943,7 +944,9 @@
          COME OUT ONE AT A TIME???? I CAN'T SEE ANY OF THE OPTIONS FOR
          TEXT!!!!!"). The tiles show for any text box; picking one gives
          the box an entrance (setBy). */
-      if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false};
+      var fig=!!a&&num&&(a.k==='cell'||a.k==='image');   /* T473 */
+      if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false,
+        fig:fig,grid:''};
       var q=animSeq(s),si=stepOf(s,selAnnot);
       var after=(a.anim.after)|0,shared=false;
       if(si>=0&&q[si].items.length>1){
@@ -954,17 +957,85 @@
           if(first===null&&q[si].items.indexOf(i)>=0) first=i;});
         shared=(first!==selAnnot);
       }
+      var pg=(typeof panelsOf==='function')?panelsOf(a):null;
       return {on:true,si:si,after:after,shared:shared,
         mode:after?'after':(shared?'with':'click'),
         text:a.k==='text',
         by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:'',
-        hl:!!a.anim.hl};
+        hl:!!a.anim.hl,
+        fig:fig,grid:pg?(pg.c+'x'+pg.r):''};
     }
+    /* T473: the grids the strip offers -- key, words, what it is */
+    var PANEL_GRIDS=[['1x1','Whole figure','On one click, all of it'],
+      ['2x1','2 across','Two panels, left then right'],
+      ['3x1','3 across','Three panels, left to right'],
+      ['4x1','4 across','Four panels, left to right'],
+      ['1x2','2 down','Two panels, top then bottom'],
+      ['1x3','3 down','Three panels, top to bottom'],
+      ['2x2','2 \u00d7 2','Four panels: the top row, then the bottom'],
+      ['3x2','3 \u00d7 2','Six panels: the top row, then the bottom'],
+      ['2x3','2 \u00d7 3','Six panels, two to a row, top to bottom']];
+    function panelId(k){return '#anim-panels-'+k.replace('x','by');}
+    /* set on every selected figure; '1x1' takes the panels off. A
+       figure with no entrance gets one, as a text box does for By
+       bullet (T401). */
+    function setPanels(grid){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0,no=nextAnimOrder(s);
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||(a.k!=='cell'&&a.k!=='image')) return;
+        if(grid&&grid!=='1x1'){
+          var an=ensureAnim(s,a,no);an.by='panels';an.grid=grid;
+        } else if(a.anim&&a.anim.by==='panels'){
+          delete a.anim.by;delete a.anim.grid;
+        } else return;
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    }
+    animSetPanels=function(grid){setPanels(grid);};
+    function panelsBoot(){
+      var strip=$('#anim-panels-strip'); if(!strip) return;
+      PANEL_GRIDS.forEach(function(pr){
+        var b=$(panelId(pr[0]));
+        if(!b){
+          b=document.createElement('button');
+          b.type='button';b.className='fx-tile';
+          b.id=panelId(pr[0]).slice(1);
+          b.disabled=true;b.setAttribute('aria-pressed','false');
+          b.title=pr[2];
+          b.innerHTML=panelIcon(pr[0])+'<span>'+esc(pr[1])+'</span>';
+          strip.appendChild(b);
+        }
+        b.addEventListener('click',function(e){
+          e.stopPropagation();setPanels(pr[0]);});
+      });
+    }
+    /* the grid drawn small: a box of c x r cells */
+    function panelIcon(k){
+      var m=/^(\d)x(\d)$/.exec(k),c=m?+m[1]:1,r=m?+m[2]:1,cells='';
+      for(var i=0;i<c*r;i++) cells+='<i></i>';
+      return '<span class="panel-ico" style="grid-template-columns:repeat('
+        +c+',1fr);grid-template-rows:repeat('+r+',1fr)">'+cells+'</span>';
+    }
+    panelsBoot();
     function timingSync(){
       var st=timingState(),poster=!!pageOf().poster,armed=seqOn();
       var start=$('#anim-start'),by=$('#anim-by');
       if(start) start.hidden=poster||armed;
       if(by) by.hidden=poster||armed||!st.text;
+      /* T473: a figure or a picture arrives in panels, the way a text
+         box arrives by bullet -- the strip shows for either */
+      var pf=$('#anim-panels');
+      if(pf) pf.hidden=poster||armed||!st.fig;
+      PANEL_GRIDS.forEach(function(pr){
+        var b=$(panelId(pr[0])); if(!b) return;
+        b.disabled=!st.fig;
+        b.setAttribute('aria-pressed',
+          (st.fig&&(st.grid||'1x1')===pr[0]).toString());
+      });
       [['anim-onclick','click'],['anim-withprev','with'],
        ['anim-afterprev','after']].forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
@@ -1030,7 +1101,8 @@
         }
       }
       var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent=st.text?'Timing & text':'Timing';
+      if(lab) lab.textContent=st.text?'Timing & text'
+        :(st.fig?'Timing & panels':'Timing');
     }
     /* T418: figure k with piece k. Set on every selected box built in
        pieces; '' takes it off. The book keeps whatever entrance it has. */
@@ -1560,9 +1632,15 @@
         var pieceA=null;
         st.items.forEach(function(idx){
           var a=s.annots[idx];
-          if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});
+          if(!pieceA&&nsub>1&&(textBy(a)
+             ||(typeof panelsOf==='function'&&panelsOf(a)))) pieceA=a;});
         if(pieceA&&st.items.length===1){
-          var pcs=textPieces(pieceA),ii=st.items[0];
+          /* T473: a figure's panels are its pieces */
+          var pcs=textBy(pieceA)?textPieces(pieceA)
+            :(function(){var g=panelsOf(pieceA),o=[];
+              for(var q3=0;q3<g.c*g.r;q3++) o.push('Panel '+(q3+1)+' of '+(g.c*g.r));
+              return o;})();
+          var ii=st.items[0];
           /* T418: the figure that turns with each piece, on its row */
           var sfb=pieceA.anim.sync?flipById(s,pieceA.anim.sync):null;
           var sfr=sfb?flipFrames(sfb):[];

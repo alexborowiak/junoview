@@ -37,8 +37,10 @@
         var st=steps.map[a.anim.order||0];
         if(st!=null){
           if(stopOf(st)===k-1) arr.push(annotLabel(a));
-          else if(typeof textBy==='function'&&textBy(a)){
-            var n=textPieceCount(a);
+          else if((typeof textBy==='function'&&textBy(a))
+                  ||(typeof panelsOf==='function'&&panelsOf(a))){
+            var n=(typeof pieceCount==='function')?pieceCount(a)
+              :textPieceCount(a);   /* T473: panels too */
             for(var j=1;j<n;j++) if(stopOf(st+j)===k-1)
               arr.push('more of '+annotLabel(a));
           }

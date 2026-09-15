@@ -319,3 +319,68 @@
     var p=textPieces(a);
     return p.length?p.length:1;
   }
+  /* ---- T473: A FIGURE THAT ARRIVES PANEL BY PANEL ----------------------
+     (2026-09-15, user: "people like to reveal panel by panel in figures
+     ... people usually have to have white boxes that disappear which
+     gets annoying"). The white boxes, done properly: a grid of covers
+     in the page's own colour over a figure or a picture, one lifted per
+     click, left to right and then down. `a.anim.by='panels'` with
+     `a.anim.grid='3x1'` (across x down, 1-6 each); the model is never
+     cut, the covers are drawn at render time exactly as the text pieces
+     are wrapped. Every piece costs a click, read off the same plan. */
+  function panelsOf(a){
+    if(!a||!a.anim||a.anim.by!=='panels') return null;
+    if(a.k!=='cell'&&a.k!=='image') return null;
+    var m=/^([1-6])x([1-6])$/.exec(String(a.anim.grid||'2x1'));
+    if(!m) return {c:2,r:1};
+    return {c:+m[1],r:+m[2]};
+  }
+  /* how many clicks a thing arrives over: text pieces, panels, or one */
+  function pieceCount(a){
+    if(textBy(a)) return textPieceCount(a);
+    var g=panelsOf(a);
+    return g?Math.max(1,g.c*g.r):1;
+  }
+  /* the covers, built once per render onto the item; `bg` is what the
+     figure sits on, so a lifted panel is the only thing that changes */
+  function panelCovers(el,a,bg){
+    var g=panelsOf(a); if(!g||!el) return [];
+    var host=el.querySelector('.an-covers');
+    if(host) return $$('.an-cover',host);
+    host=document.createElement('span');host.className='an-covers';
+    var out=[];
+    for(var k=0;k<g.c*g.r;k++){
+      var col=k%g.c,row=Math.floor(k/g.c);
+      var c=document.createElement('span');
+      c.className='an-cover';c.setAttribute('data-part',String(k));
+      c.style.left=(col*100/g.c)+'%';c.style.top=(row*100/g.r)+'%';
+      c.style.width=(100/g.c)+'%';c.style.height=(100/g.r)+'%';
+      c.style.background=bg;
+      var n=document.createElement('b');n.textContent=String(k+1);
+      c.appendChild(n);
+      host.appendChild(c);out.push(c);
+    }
+    el.appendChild(host);
+    return out;
+  }
+  /* paint the covers for this render: in the show cover k is down until
+     its click; in the editor every cover is a faint numbered outline
+     (the story, storyAt, covers what has not arrived by stop k) */
+  function panelPaint(el,a,s,st,plan,editing,storyK){
+    if(!panelsOf(a)||!el) return;
+    var bg=(function(){
+      try{var cb=getComputedStyle(el).backgroundColor;
+        if(!editing&&cb&&cb!=='rgba(0, 0, 0, 0)'&&cb!=='transparent')
+          return cb;}catch(err){}
+      return (typeof pageBgOf==='function')?pageBgOf(s):deckPageBg();
+    })();
+    panelCovers(el,a,bg).forEach(function(cv){
+      var j=+cv.getAttribute('data-part');
+      var jp=plan.stop[st+j]; if(jp==null) jp=st+j;
+      var covered=(!editing&&mode==='view'&&jp>=revealCount)
+        ||(storyK!=null&&jp>=storyK);
+      cv.classList.toggle('on',covered);
+      cv.classList.toggle('an-cover-edit',!!editing&&storyK==null);
+      if(editing) cv.querySelector('b').textContent=String(jp+1);
+    });
+  }

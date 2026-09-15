@@ -1978,8 +1978,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # keeps its keys and has a text-build row; the highlight's two choices.
 # T472 (2026-09-15): focus on a click -- blur the rest, zoom in,
 # magnify: the model, the ribbon group, the panel section, the CSS.
-EXPECTED_MD5 = "8fa33c24805da1c664fe1d8a16dd26a9"
-EXPECTED_BYTES = 4384989
+# T473 (2026-09-15): a figure arrives panel by panel -- the covers, the
+# strip of grids, the panel section, the CSS.
+EXPECTED_MD5 = "c935a0491a1bb61a8fc393f68d8a2277"
+EXPECTED_BYTES = 4395465
 
 
 def _render_example() -> str:

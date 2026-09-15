@@ -2759,6 +2759,23 @@ select#fmt-font[hidden]{display:none;}
   transform-origin:left center;transition:scale .25s ease,color .25s ease;
   display:inline-block;}
 .an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
+/* ---- T473: A FIGURE IN PANELS. The covers sit over the item in the
+   page's colour and lift one per click; in the editor they are faint
+   numbered outlines so the grid reads and the figure is still seen. */
+.an-covers{position:absolute;inset:0;pointer-events:none;z-index:2;}
+.an-cover{position:absolute;box-sizing:border-box;display:none;
+  align-items:center;justify-content:center;}
+.an-cover.on{display:flex;}
+.an-cover>b{display:none;font:600 11px var(--mono);color:var(--cyan);
+  background:#0b141dcc;border-radius:4px;padding:1px 5px;}
+.an-cover.an-cover-edit{display:flex;background:transparent!important;
+  border:1px dashed color-mix(in srgb,var(--cyan) 55%,transparent);}
+.an-cover.an-cover-edit>b{display:block;}
+.an-cover.on.an-cover-edit{background:transparent!important;}
+.panel-ico{display:grid;gap:1.5px;width:22px;height:16px;
+  margin:0 auto 2px;}
+.panel-ico>i{display:block;background:currentColor;opacity:.75;
+  border-radius:1px;}
 /* T471: THE HIGHLIGHT, CONFIGURED. data-hlfx says what the lit piece
    does (both = the T385 look above; grow = bigger only; colour =
    coloured only) and data-hlrest what every other piece does (dim =

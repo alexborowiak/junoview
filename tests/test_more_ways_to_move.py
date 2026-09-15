@@ -153,3 +153,43 @@ def test_a_focus_is_a_click_of_its_own(out):
     assert ".deck-stage{transition:transform .55s cubic-bezier(.2,.7,.2,1);}" in out
     assert ".an-item.an-lens{pointer-events:none;z-index:30;opacity:0;" in out
     assert "  focusBoot();                /* T472: focus, on its click */" in out
+
+
+def test_a_figure_arrives_panel_by_panel(out):
+    """T473 (2026-09-15, user: "people like to reveal panel by panel in
+    figures ... people usually have to have white boxes that disappear").
+    A grid of covers in the page's colour over a figure or a picture, one
+    lifted per click -- the model is never cut, the covers are drawn at
+    render time like the text pieces, and every panel is a click on the
+    one plan."""
+    assert "  function panelsOf(a){" in out
+    assert "    if(a.k!=='cell'&&a.k!=='image') return null;" in out
+    assert ("    var m=/^([1-6])x([1-6])$/.exec("
+            "String(a.anim.grid||'2x1'));") in out
+    assert "  function pieceCount(a){" in out
+    assert "  function panelCovers(el,a,bg){" in out
+    assert "  function panelPaint(el,a,s,st,plan,editing,storyK){" in out
+    # the plan counts panels the way it counts bullets
+    assert "      var n=(typeof pieceCount==='function')?pieceCount(a)" in out
+    # painted in the editor (faint, numbered) and in the show (lifted per click)
+    assert ("          if(typeof panelPaint==='function') "
+            "panelPaint(el,ba,s,st,plan,true,storyK);") in out
+    assert ("          if(typeof panelPaint==='function') "
+            "panelPaint(el,ba,s,st,plan,false,null);") in out
+    assert "      var covered=(!editing&&mode==='view'&&jp>=revealCount)" in out
+    # the strip of grids beside the text strip, the panel's chips and sliders
+    assert 'id="anim-panels-strip"' in out
+    assert ("    var PANEL_GRIDS=[['1x1','Whole figure',"
+            "'On one click, all of it'],") in out
+    assert "      if(pf) pf.hidden=poster||armed||!st.fig;" in out
+    assert "        :(st.fig?'Timing & panels':'Timing');" in out
+    assert ("        cfgRange(host,'Across',g.c,1,6,1,"
+            "function(v){return String(v);},") in out
+    # the Order tab names the panels; the story strip counts them
+    assert ("              for(var q3=0;q3<g.c*g.r;q3++) "
+            "o.push('Panel '+(q3+1)+' of '+(g.c*g.r));") in out
+    assert "              :textPieceCount(a);   /* T473: panels too */" in out
+    # the CSS: covers down in the show, outlines in the editor
+    assert ".an-cover.on{display:flex;}" in out
+    assert (".an-cover.an-cover-edit{display:flex;"
+            "background:transparent!important;") in out

@@ -456,6 +456,29 @@
         });
       }
     }
+    /* T473: a figure arrives in panels -- the common grids as chips
+       and the exact numbers as two sliders */
+    if(a.k==='cell'||a.k==='image'){
+      cfgHead(host,'how much arrives at a time');
+      var rp=cfgRow(host);
+      var g=(typeof panelsOf==='function')?panelsOf(a):null;
+      var gk=g?(g.c+'x'+g.r):'1x1';
+      [['1x1','Whole figure'],['2x1','2 across'],['3x1','3 across'],
+       ['2x2','2 \u00d7 2'],['3x2','3 \u00d7 2']].forEach(function(p){
+        cfgChip(rp,bic('grid'),p[1],gk===p[0],'',
+          function(){animSetPanels(p[0]);animCfgSync();});
+      });
+      if(g){
+        cfgRange(host,'Across',g.c,1,6,1,function(v){return String(v);},
+          'Panels across',function(v){
+            animSetPanels(Math.round(v)+'x'+g.r);animCfgSync();});
+        cfgRange(host,'Down',g.r,1,6,1,function(v){return String(v);},
+          'Panels down',function(v){
+            animSetPanels(g.c+'x'+Math.round(v));animCfgSync();});
+        cfgNote(host,'Each panel is a click, left to right and then down. '
+          +'The covers are the page\u2019s own colour.');
+      }
+    }
     var ow=$('#anim-outwrap');
     if(ow&&!ow.hidden){
       cfgHead(host,'when it leaves');
