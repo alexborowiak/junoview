@@ -553,7 +553,15 @@
   function overviewKey(e){
     if(!$('#deck-overview')) return;
     if(e.key==='Escape'){
-      e.preventDefault();e.stopPropagation();overviewClose();
+      e.preventDefault();e.stopPropagation();
+      /* T482: a search still typed is cleared first, like the ribbon
+         gallery's; the map closes on the next Escape */
+      var fi=$('#ovw-find');
+      if(fi&&document.activeElement===fi&&fi.value){
+        fi.value='';fi.dispatchEvent(new Event('input',{bubbles:true}));
+        fi.focus();return;
+      }
+      overviewClose();
     }
   }
   function openOverview(){
@@ -1605,7 +1613,10 @@
   function closeDeckPresentationDrawer(force){
     var d=$('#deck-pres-drawer');
     if(barDocked()&&!force) return;
-    if(d) d.hidden=true;
+    if(d){
+      if(typeof overlayHide==='function') overlayHide(d);   /* T482 */
+      d.hidden=true;
+    }
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','false');});
   }
   /* ---- T382: THE DRAWER IS WHAT IS OPEN NOW ------------------------
@@ -1922,7 +1933,13 @@
     var d=$('#deck-pres-drawer');
     if(!d) return;
     renderDeckPresentationDrawer();
-    d.hidden=false;
+    /* T482: a POP-UP is on the overlay owner's stack, like every menu:
+       File opened underneath it and both stood open (2026-09-15
+       review); opening File closes it now, and Escape and an outside
+       click work. A docked bar is part of the frame, not an overlay. */
+    if(!barDocked()&&typeof overlayShow==='function')
+      overlayShow($('#qat-open')||null,d);
+    else d.hidden=false;
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','true');});
   }
   /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the

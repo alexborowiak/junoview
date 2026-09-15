@@ -9222,3 +9222,24 @@ any reading. The rest are T466 onwards.
   showed Source / Where it came from… / Lock figure with nothing
   selected, because `display:contents!important` beat the wrapper's
   [hidden] — flat only while shown. Driven at 1500.
+- [x] **T482 — Overlays and Escape, after the second review pass.** Five
+  modal dialogs (Style sets, Apply look, Arrange, Copy layout to
+  slides, the transition's give-to) listened for Escape on their own
+  box while focus stayed on the button that opened them, so the key
+  stepped the editor's ladder instead — the first dropped the
+  selection, the second left the editor with the dialog still up over
+  the notebook: a dialog is the innermost thing of all, and the ladder
+  closes it first. Right-click menus (film strip, canvas, select-by,
+  chart) registered Escape in the bubble phase, after the ladder — the
+  menu's Escape is in capture now, like the owner's. Menus whose pick
+  set `hidden` directly left a dead entry on the overlay stack, so the
+  trigger stayed expanded and the next Escape was swallowed — nine
+  picks close through overlayHide. The pop-up Open-now drawer
+  outranked the top bar's menus (File opened underneath it) and the
+  Find & Replace pop covered six of the Present menu's rows — both are
+  on the owner's stack, so a menu closes them and Escape works. The
+  Theme menu opened beside an open File menu and its Escape closed File
+  under it — it closes the deck's menus first and keeps its own
+  Escape. Escape in the overview map's find field closed the map with
+  the search still typed — it clears the field first, as the ribbon
+  gallery's does. Driven at 1500.

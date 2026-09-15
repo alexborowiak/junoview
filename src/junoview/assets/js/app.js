@@ -2954,7 +2954,10 @@
       else if(e.key==='ArrowUp') next=(at-1+opts.length)%opts.length;
       else if(e.key==='Home') next=0;
       else if(e.key==='End') next=opts.length-1;
-      else if(e.key==='Escape'){e.preventDefault();close(true);return;}
+      /* T482: stopped here, or the deck's Escape ladder under this
+         menu dropped the selection or left the editor */
+      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();
+        close(true);return;}
       else return;
       e.preventDefault();opts[next].focus();
     });
@@ -2972,7 +2975,12 @@
   }
   var deckScheme=$('#deck-scheme');
   if(deckScheme) deckScheme.addEventListener('click',function(e){
-    e.stopPropagation();openSchemeMenu(deckScheme);});
+    e.stopPropagation();
+    /* T482: one menu at a time -- it opened beside an open File menu,
+       and Escape then closed File under it (2026-09-15 review) */
+    if(window.SemApp&&window.SemApp.deckOverlayCloseAll)
+      window.SemApp.deckOverlayCloseAll();
+    openSchemeMenu(deckScheme);});
   var abScheme=$('#scheme-btn');
   if(abScheme) abScheme.addEventListener('click',function(e){
     e.stopPropagation();openSchemeMenu(abScheme);});

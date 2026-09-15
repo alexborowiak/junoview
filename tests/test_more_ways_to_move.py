@@ -348,3 +348,23 @@ def test_selection_and_object_after_the_second_pass(out):
     # a contextual tab keeps you; the way back is the tab you chose
     assert "    if(wantTab&&!ctxNow) tabBeforeSel=activeTab();" in out
     assert "      if(activeTab()===ctxTab&&tabHasContent(ctxTab)) wantTab='';" in out
+
+
+def test_overlays_and_escape_after_the_second_pass(out):
+    """T482 (2026-09-15, the second review pass): Escape reaches the thing
+    that is open, and every transient surface is on the one owner."""
+    # a modal dialog takes Escape before the ladder steps
+    assert "      var dlgUp=$('.aa-dlg:not([hidden]),.eq-dlg:not([hidden]),'" in out
+    # a context menu's Escape is in capture, like the owner's
+    assert "      document.addEventListener('keydown',esc,true);" in out
+    # picks close through the owner
+    assert "      overlayHide(menu);   /* T482: through the owner" in out
+    assert "        e.stopPropagation();fn();overlayHide(menu);});   /* T482 */" in out
+    # the pop-up drawer and the find pop are on the stack
+    assert "      overlayShow($('#qat-open')||null,d);" in out
+    assert "overlayShow($('#qat-find'),pop);" in out
+    # the theme menu closes the deck's menus first, and keeps its Escape
+    assert "      window.SemApp.deckOverlayCloseAll();" in out
+    assert "  window.SemApp.deckOverlayCloseAll=function(){" in out
+    # the map's find field clears before the map closes
+    assert "      if(fi&&document.activeElement===fi&&fi.value){" in out

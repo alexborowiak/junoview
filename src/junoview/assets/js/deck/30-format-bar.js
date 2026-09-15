@@ -443,7 +443,7 @@
          weight after the style without opening the window twice,
          and showFmt re-marks the rows (T177) */
       if(menu.closest&&menu.closest('.opt-panel')) return;
-      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      overlayHide(menu);   /* T482: through the owner, no dead stack entry */
     });
     menu.appendChild(o);
     return o;
@@ -660,8 +660,7 @@
       b.setAttribute('aria-pressed',on?'true':'false');
       b.appendChild(node);
       b.addEventListener('click',function(e){
-        e.stopPropagation();fn();menu.hidden=true;
-        btn.setAttribute('aria-expanded','false');});
+        e.stopPropagation();fn();overlayHide(menu);});   /* T482 */
       return b;
     }
     function build(){
@@ -1123,7 +1122,7 @@
           e.stopPropagation();pvEnd(true);
           fmtApply(function(x){
             if(x.k==='text') applyStyleTo(x,id);});
-          menu.hidden=true;
+          overlayHide(menu);   /* T482 */
         });
         familyHost.appendChild(b);
       }
@@ -1282,7 +1281,7 @@
            review); promoteStyleFromBox writes only a variation's
            differences, carries `head`, and keeps the name you gave it. */
         promoteStyleFromBox(a3,true);
-        menu.hidden=true;
+        overlayHide(menu);   /* T482 */
         toast('\u201c'+styleDef(a3.style).label+'\u201d updated everywhere');
       });
       menu.appendChild(upd);
@@ -1295,7 +1294,7 @@
       all.addEventListener('click',function(e){
         e.stopPropagation();
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
-        if(!a4){menu.hidden=true;return;}
+        if(!a4){overlayHide(menu);return;}
         headingStyles().forEach(function(id){
           /* T293: NOT THE VARIATIONS. This flattens weight, slant, face
              and colour across every heading -- which is exactly the set

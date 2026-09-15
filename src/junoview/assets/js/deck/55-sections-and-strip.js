@@ -829,11 +829,15 @@
     function shut(){
       m.remove();
       document.removeEventListener('click',off);
-      document.removeEventListener('keydown',esc);
+      document.removeEventListener('keydown',esc,true);
     }
+    /* T482: IN CAPTURE, like the overlay owner's. In the bubble phase
+       the editor's own ladder ran first on the same key -- Escape on a
+       right-click menu dropped the selection, or left the editor, and
+       only then closed the menu (2026-09-15 review). */
     setTimeout(function(){
       document.addEventListener('click',off);
-      document.addEventListener('keydown',esc);
+      document.addEventListener('keydown',esc,true);
     },0);
   }
   function presNbs(p){
@@ -1407,6 +1411,10 @@
     if(APP.refreshChrome) APP.refreshChrome();
   }
   /* ---- URL routing hooks used by the SemApp router (docs side) ---- */
+  /* T482: the app bar's Theme menu opens over the deck's own menus and
+     must close them first (app.js) */
+  window.SemApp.deckOverlayCloseAll=function(){
+    if(typeof overlayCloseAll==='function') overlayCloseAll();};
   window.SemApp.deckState=function(){
     return deckEl.hidden?null:{name:pres.name,slide:cur};
   };
@@ -2256,6 +2264,22 @@
          picker — so it goes first and swallows the key */
       if(slideArm){e.preventDefault();cancelSlideMatch();return;}
       if(matchArm){e.preventDefault();cancelMatch();return;}
+      /* T482: A DIALOG IS THE INNERMOST THING OF ALL. Style sets, Apply
+         look, Arrange, Copy layout to slides and the transition's
+         give-to are modal boxes whose own Escape listeners sit on the
+         box -- and focus was still on the button that opened them, so
+         the key came here instead and stepped the ladder: the first
+         dropped the selection, the second left the editor with the
+         dialog still up over the notebook (2026-09-15 review). */
+      var dlgUp=$('.aa-dlg:not([hidden]),.eq-dlg:not([hidden]),'
+        +'.ts-dlg:not([hidden])');
+      if(dlgUp){
+        e.preventDefault();
+        var x=dlgUp.querySelector('.aa-head .dc-icon,.eq-head .dc-icon,'
+          +'[id$="-close"],[id$="-cancel"]');
+        if(x) x.click(); else dlgUp.hidden=true;
+        return;
+      }
       /* a transient menu or window is INNER to everything below: its
          own owner closes it (overlayBoot, in capture) and this ladder
          must not also step -- belt and braces, in case the two

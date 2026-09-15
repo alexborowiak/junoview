@@ -3469,6 +3469,9 @@
       if(bf) bf.addEventListener('click',function(){setMode('fmt');});
     })();
     function open(){
+      /* T482: on the overlay owner's stack, so a top-bar menu closes it
+         rather than opening underneath it (2026-09-15 review) */
+      if(typeof overlayShow==='function') overlayShow($('#qat-find'),pop);
       pop.hidden=false;
       /* a re-open re-reads the selection: the whole find half is
          seeded by example, and a stale example is worse than none */
@@ -3478,7 +3481,9 @@
       qi.focus();qi.select();
       scan();
     }
-    function close(){pop.hidden=true;at=-1;}
+    function close(){
+      if(typeof overlayHide==='function') overlayHide(pop);
+      pop.hidden=true;at=-1;}
     [qi,ri].forEach(function(el){
       el.addEventListener('keydown',function(e){
         e.stopPropagation();

@@ -1992,8 +1992,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T480 (2026-09-15): the type and colour model -- an-head, page-aware
 # token defaults, '@quiet' greys, the label/promoter/check fixes.
 # T481 (2026-09-15): selection and the Object tab after the second pass.
-EXPECTED_MD5 = "3d91a082d9b94ced577cbf13db14339a"
-EXPECTED_BYTES = 4427200
+# T482 (2026-09-15): overlays and Escape after the second pass.
+EXPECTED_MD5 = "9f9879224c8eab3cc22df5151cd1a278"
+EXPECTED_BYTES = 4429936
 
 
 def _render_example() -> str:

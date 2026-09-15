@@ -1618,7 +1618,7 @@
       } else o.textContent=p[1];
       o.addEventListener('click',function(e){
         e.stopPropagation();onPick(p[0]);
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');
+        overlayHide(menu);   /* T482: through the owner */
       });
       menu.appendChild(o);
     });
@@ -1995,7 +1995,7 @@
     var cb=$('#fmt-crop');
     if(cb) cb.addEventListener('click',function(e){
       e.stopPropagation();
-      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      overlayHide(menu);   /* T482 */
       setCropMode(!cropMode);
     });
     /* DRAW THE OUTLINE YOURSELF. "There is no free crop as well where
@@ -2009,7 +2009,7 @@
       +'the outline is hidden; the picture itself is untouched';
     fc.addEventListener('click',function(e){
       e.stopPropagation();
-      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      overlayHide(menu);   /* T482 */
       armFreeCrop();
     });
     menu.insertBefore(fc,menu.firstChild);

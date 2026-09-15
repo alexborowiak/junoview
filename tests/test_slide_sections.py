@@ -803,7 +803,9 @@ def test_the_overview_closes_before_the_editors_esc_ladder(out):
     already follows.
     """
     assert "document.addEventListener('keydown',overviewKey,true);" in out
-    assert "e.preventDefault();e.stopPropagation();overviewClose();" in out
+    # T482: the find field clears first; the map closes on the next Escape
+    assert "      e.preventDefault();e.stopPropagation();" in out
+    assert "      overviewClose();" in out
     # and it is reached from the menu that already asks "how do I want to
     # look at this deck"
     assert "['overview','Overview map\u2026','Overview map\u2026']];" in out
