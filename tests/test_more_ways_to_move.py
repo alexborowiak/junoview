@@ -264,3 +264,13 @@ def test_which_version_is_a_chooser_on_the_present_tab(out):
     # renameCut and renderFilm redraw both doors
     assert "    cutsSync();   /* T477: the menu and the tab's strip */" in out
     assert "    if(typeof cutsSync==='function') cutsSync();" in out
+
+
+def test_a_master_is_chosen_from_swatches_and_pressed_runs(out):
+    """T478 (2026-09-15 review). The master panel typed a hex into a
+    prompt and cycled Furniture / Corner by clicking a row with no list."""
+    assert "        bgChips(chips,m.bg||'',function(v){" in out
+    assert "        opt(run,'None',!m.cmp,'Nothing drawn behind the wearers'," in out
+    assert "          none.textContent='No clone sets yet " in out
+    assert "          lab3.textContent='where it sits';" in out
+    assert "Click to cycle through the deck" not in out

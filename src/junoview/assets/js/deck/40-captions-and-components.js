@@ -530,53 +530,63 @@
         var h=document.createElement('div');h.className='mast-name';
         h.textContent=m.name||'Master';
         body.appendChild(h);
-        body.appendChild(act('Background \u2014 '+(m.bg||'none'),
-          'The page colour every wearer inherits. The slide\u2019s own '
-          +'Background still wins where one is set.',
-          function(){
-            /* T475: the editor's own question -- and the deck's colour
-               names, since a master's page is one of them */
-            askText({title:'Background of \u201c'+(m.name||'Master')+'\u201d',
-              label:'A colour: #123456, or a deck colour by name '
-                +'(@page, @accent, @surface\u2026)',
-              value:m.bg||'',placeholder:'empty for the deck\u2019s page',
-              ok:'Set',note:'The slide\u2019s own Background still wins '
-                +'where one is set'},function(v){
-            if(v===null) return;
-            v=v.trim();
-            if(v&&!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)
-               &&v.charAt(0)!=='@'){
-              toast('Like #123456, or a @token name');return;
-            }
-            if(v) m.bg=v; else delete m.bg;
-            mastRepaint();render();
-            });
-          }));
+        /* T478: THE CHOICES, IN FRONT OF YOU (2026-09-15 review:
+           "colour is typed as '#hex or @token' into a native prompt, and
+           Furniture / Corner are chosen by clicking a row repeatedly to
+           cycle, with no list and no feedback when there is nothing to
+           cycle to"). The background is the Design tab's own swatch row
+           (bgChips, Auto = the deck's page); the furniture is a run of
+           the deck's clone sets as pressed options, or one line saying
+           there are none and where to make one; the corner is five
+           pressed options in one run. */
+        var lab=document.createElement('div');lab.className='mast-lab';
+        lab.textContent='background';
+        body.appendChild(lab);
+        var chips=document.createElement('div');chips.className='mast-chips';
+        bgChips(chips,m.bg||'',function(v){
+          if(v) m.bg=v; else delete m.bg;
+          mastRepaint();render();
+        },true);
+        body.appendChild(chips);
         var cl=cmpList();
-        var cur2=m.cmp&&cmpStore()[m.cmp];
-        body.appendChild(act('Furniture \u2014 '
-          +(cur2?(cur2.name||'component'):'none'),
-          'A component drawn behind every slide wearing this master. '
-          +'Click to cycle through the deck\u2019s components',
-          function(){
-            var ids=[''].concat(cl.map(function(c){return c.id;}));
-            var at=ids.indexOf(m.cmp||'');
-            var nx=ids[(at+1)%ids.length];
-            if(nx) m.cmp=nx; else delete m.cmp;
-            mastRepaint();render();
-          }));
+        var lab2=document.createElement('div');lab2.className='mast-lab';
+        lab2.textContent='furniture \u2014 a clone set drawn behind every wearer';
+        body.appendChild(lab2);
+        var run=document.createElement('div');run.className='mast-run';
+        function opt(host,label,on,tip,fn){
+          var b=document.createElement('button');
+          b.type='button';b.className='dbtn mast-opt';
+          b.textContent=label;if(tip) b.title=tip;
+          b.setAttribute('aria-pressed',on?'true':'false');
+          b.addEventListener('click',function(e){e.stopPropagation();fn();});
+          host.appendChild(b);
+          return b;
+        }
+        opt(run,'None',!m.cmp,'Nothing drawn behind the wearers',
+          function(){delete m.cmp;mastRepaint();render();});
+        cl.forEach(function(c){
+          opt(run,c.name,m.cmp===c.id,c.n+(c.n===1?' thing':' things'),
+            function(){m.cmp=c.id;mastRepaint();render();});
+        });
+        body.appendChild(run);
+        if(!cl.length){
+          var none=document.createElement('div');none.className='rd-state';
+          none.textContent='No clone sets yet \u2014 select things, then '
+            +'Object \u2192 Make clones\u2026';
+          body.appendChild(none);
+        }
         if(m.cmp){
           var POS=[['c','centre'],['tl','top left'],['tr','top right'],
             ['bl','bottom left'],['br','bottom right']];
-          var pl=POS.filter(function(q){
-            return q[0]===(m.pos||'c');})[0];
-          body.appendChild(act('Corner \u2014 '+pl[1],
-            'Where the furniture sits on the page',
-            function(){
-              var ks=POS.map(function(q){return q[0];});
-              m.pos=ks[(ks.indexOf(m.pos||'c')+1)%ks.length];
-              mastRepaint();render();
-            }));
+          var lab3=document.createElement('div');lab3.className='mast-lab';
+          lab3.textContent='where it sits';
+          body.appendChild(lab3);
+          var run2=document.createElement('div');run2.className='mast-run';
+          POS.forEach(function(q){
+            opt(run2,q[1],(m.pos||'c')===q[0],'',function(){
+              m.pos=q[0];mastRepaint();render();});
+          });
+          body.appendChild(run2);
         }
         body.appendChild(act('Wear it \u2014 this slide','',
           function(){

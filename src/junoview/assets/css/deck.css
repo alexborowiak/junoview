@@ -5837,6 +5837,17 @@ body.light .seq-cell b{color:var(--ink);}
   font-size:12.5px;
   padding:4px 7px;margin:2px 0;}
 .mast-new{display:block;width:100%;text-align:left;margin-top:10px;}
+/* T478: the master's choices as swatches and pressed runs */
+.mast-lab{font-family:var(--sans);font-size:11px;color:var(--chrome-ink-2);
+  margin:8px 0 3px;}
+.mast-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;}
+.mast-chips .bg-chip{width:22px;height:22px;border-radius:5px;padding:0;
+  border:1px solid #ffffff2a;}
+.mast-chips .bg-chip[aria-pressed="true"],.mast-chips .bg-auto[aria-pressed="true"]{
+  outline:2px solid var(--accent,var(--cyan));outline-offset:1px;}
+.mast-chips .bg-auto{font-size:11px;padding:2px 8px;}
+.mast-run{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;}
+.mast-opt{font-size:12px;padding:3px 8px;}
 /* T117: charts — the SVG fills its box; the dialog is the numbers */
 /* POSITIONED, like every other kind (T164). Charts shipped in T117
    without a `position`, and every other annotation declares its own

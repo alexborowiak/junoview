@@ -9138,3 +9138,14 @@ any reading. The rest are T466 onwards.
   Play menu is a sub-IIFE that runs at script evaluation, so the
   published stub had to be declared before it, or the later `var`
   overwrote the assignment (driven: the strip never followed).
+- [x] **T478 — A master's choices in front of you.** (2026-09-15 review:
+  "Slide master panel: colour is typed as '#hex or @token' into a
+  native prompt, and Furniture / Corner are chosen by clicking a row
+  repeatedly to cycle, with no list and no feedback when there is
+  nothing to cycle to".) The background is the Design tab's own swatch
+  row (bgChips, Auto = the deck's page); the furniture is a run of the
+  deck's clone sets as pressed options — None and each set with how
+  many things it is — or, with none, one line saying where to make one;
+  the corner is five pressed options in one run, shown once a set is
+  chosen. Driven at 1500: a swatch presses and un-presses Auto, and
+  "Wear it — this slide" paints the page.
