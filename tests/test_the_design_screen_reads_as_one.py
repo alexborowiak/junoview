@@ -112,7 +112,8 @@ def test_the_table_edits_the_words_and_its_boxes_are_smaller(out):
     assert "      if(r.a.k==='text'&&!listOf(r.a)){" in out
     assert "          ?'A list: edit its words on the slide'" in out
     assert ".dgt-n{max-width:74px;}" in out
-    assert "    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 34px 34px;" in out
+    # (T490: the two colour columns hold a picker and its Default / None)
+    assert "    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 88px 74px;" in out
 
 
 def test_the_slide_column_has_select_all_and_unselect_all(out):

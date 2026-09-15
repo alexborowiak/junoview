@@ -542,3 +542,27 @@ def test_two_small_doors_wear_their_choice(out):
             ".deck.erc-tight .dbtn.etm>.rbn-foldval{max-width:56px;}") in out
     assert "select#fmt-font{background:var(--btn-bg,#ffffff0a);" in out
     assert "select#fmt-font{background:var(--chrome-2,#16273a);" not in out
+
+
+def test_the_style_system_after_the_first_pass(out):
+    """T490 (2026-09-15 review, three first-pass leftovers): the ideas
+    cards drew text as 3px specks; the table's Colour, Fill and Face
+    were read-only; the rail listed every style twice."""
+    # [106] a card is drawn at its own scale, and its text boxes show
+    assert "      var mh=miniHNow;miniHNow=H;" in out
+    assert "      try{mini=miniDiagram(prev);}finally{miniHNow=mh;}" in out
+    assert ".li-card .mini-tx{outline:1px solid #ffffff2e;outline-offset:1px;" in out
+    assert "['airy','Airy','with wide gaps']" in out
+    assert "airyly" not in out
+    # [78] the three cells write
+    assert "  function dgColCell(r,key,isFill){" in out
+    assert "  function dgFaceCell(r){" in out
+    assert "        cell(dgFaceCell(r),'dgt-face-c');" in out
+    assert "      cell(dgColCell(r,'color',false),'dgt-swc');" in out
+    assert "      cell(dgColCell(r,'bgc',true),'dgt-swc');" in out
+    assert "        if(a.bg===0){delete a.bg;} else {a.bg=0;}" in out
+    assert "      if(sel.value) r.a.font=sel.value; else delete r.a.font;" in out
+    assert "minmax(52px,.5fr)) 88px 74px;" in out
+    # [77] one row per style; the note under it
+    assert "  function dgOddNote(id,d,ov,r){" in out
+    assert ".dg-cnt.dg-rownote{margin:-4px 0 4px;" in out

@@ -2005,8 +2005,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T488 (2026-09-15): askText's small form; the page furniture's editor.
 # T489 (2026-09-15): the layout and Styles doors' readouts; the
 # typeface select on the ribbon's surface.
-EXPECTED_MD5 = "ad8c867ac54e8932343fa9c368e5111b"
-EXPECTED_BYTES = 4467739
+# T490 (2026-09-15): the ideas cards' scale, the table's editable
+# colour/fill/face cells, the rail's one row per style.
+EXPECTED_MD5 = "d4b3c9a76808d59e284200670f7e492b"
+EXPECTED_BYTES = 4473370
 
 
 def _render_example() -> str:

@@ -2723,6 +2723,81 @@
     if(!v&&fallback) s.title='default';
     return s;
   }
+  /* T490: THE TABLE EDITS COLOUR, FILL AND FACE TOO. T224's ask was "a
+     table of them all ... colour, font etc. ... change them
+     individually here", and the three cells were read-only swatches
+     and a word (2026-09-15 review). A colour cell is the swatch as a
+     picker, with a Default (or None, for the fill) button beside it;
+     the Face cell is the ribbon's typeface list. Every write goes the
+     way dgNum's does: markDirty, refresh, the strip, the body kept. */
+  function dgWrite(){
+    markDirty();refresh();renderFilm();
+    var ov=$('#deck-design'); if(ov) dgBodyKeep(ov);
+  }
+  function dgColCell(r,key,isFill){
+    var wrap=document.createElement('span');
+    wrap.className='dgt-colw';
+    var a=r.a;
+    var v=isFill?((a.bg===0)?'none':a.bgc):a.color;
+    var st=(a.style&&typeof styleDef==='function')?styleDef(a.style):null;
+    var eff=v||(st&&(isFill?st.bg:st.color))||'';
+    var ci=document.createElement('input');
+    ci.type='color';ci.className='dgt-col';
+    var rv=(eff&&eff!=='none')?tokVal(eff):'';
+    ci.value=/^#[0-9a-f]{6}$/i.test(rv)?rv:(isFill?'#16273a':'#e6eef5');
+    ci.classList.toggle('dgt-unset',!v||v==='none');
+    ci.title=(isFill?'Fill':'Text colour')+' of this box'
+      +(v?(v==='none'?' \u2014 none':''):' \u2014 the type\u2019s own');
+    ci.addEventListener('click',function(e){e.stopPropagation();});
+    ci.addEventListener('input',function(){
+      if(isFill){a.bgc=ci.value;delete a.bg;}
+      else a.color=ci.value;
+      ci.classList.remove('dgt-unset');
+      markDirty();refresh();
+    });
+    ci.addEventListener('change',function(){dgWrite();});
+    wrap.appendChild(ci);
+    var nb=document.createElement('button');
+    nb.className='dbtn dgt-colb';nb.type='button';
+    nb.textContent=isFill?'None':'Default';
+    nb.title=isFill?'No fill behind this box'
+      :'Back to the type\u2019s own colour';
+    nb.setAttribute('aria-pressed',(isFill?(a.bg===0):!a.color).toString());
+    nb.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(isFill){
+        if(a.bg===0){delete a.bg;} else {a.bg=0;}
+      } else delete a.color;
+      dgWrite();
+    });
+    wrap.appendChild(nb);
+    return wrap;
+  }
+  function dgFaceCell(r){
+    var sel=document.createElement('select');
+    sel.className='dgt-face dgt-facesel';
+    var o0=document.createElement('option');
+    o0.value='';o0.textContent='default';sel.appendChild(o0);
+    var seen={};
+    FONTS.forEach(function(f){
+      var o=document.createElement('option');
+      o.value=f.id;o.textContent=f.label;sel.appendChild(o);seen[f.id]=1;
+    });
+    /* a typed family name is not in the table: offer it as itself */
+    if(r.a.font&&!seen[r.a.font]){
+      var ox=document.createElement('option');
+      ox.value=r.a.font;ox.textContent=r.a.font;sel.appendChild(ox);
+    }
+    sel.value=r.a.font||'';
+    sel.title='Typeface of this box \u2014 default is the type\u2019s own';
+    sel.addEventListener('click',function(e){e.stopPropagation();});
+    sel.addEventListener('keydown',function(e){e.stopPropagation();});
+    sel.addEventListener('change',function(){
+      if(sel.value) r.a.font=sel.value; else delete r.a.font;
+      dgWrite();
+    });
+    return sel;
+  }
   /* pt: the cell reads and writes POINTS (T411) -- the unit the ribbon's
      Text size box and the type screen speak -- and a box that says
      nothing shows what it gets, greyed, rather than an empty cell. */
@@ -2967,12 +3042,10 @@
       cell(dgNum(r,'w'),'dgt-num');
       if(isTx){
         cell(dgNum(r,'size','1',true),'dgt-num');   /* T411: in pt */
-        var f=document.createElement('span');
-        f.className='dgt-face';f.textContent=r.a.font||'default';
-        cell(f,'dgt-face-c');
+        cell(dgFaceCell(r),'dgt-face-c');           /* T490: editable */
       }
-      cell(dgSwatch(r.a.color,1),'dgt-swc');
-      cell(dgSwatch(r.a.bg===0?'none':r.a.bgc,1),'dgt-swc');
+      cell(dgColCell(r,'color',false),'dgt-swc');   /* T490: editable */
+      cell(dgColCell(r,'bgc',true),'dgt-swc');
       cells.forEach(function(c){
         /* the row is the click target: matching, and going to look at it */
         c.addEventListener('click',function(){
@@ -3284,12 +3357,42 @@
      on them. Then the boxes wearing nothing, banded by size, with the
      style the check would give them. The same survey the old tile ran
      (standardise), read as a table instead of a list of complaints. */
+  /* T490: the per-style counts FOLDED INTO THE STYLE ROWS. The rail
+     listed every used style twice -- a "who wears what" count row and,
+     directly under it, the type row with the same name and number
+     (2026-09-15 review). The count, the "changed by hand" note and its
+     Match button live on the style's own row now (dgOddNote, under
+     styleRow); this table keeps only what has no row of its own: the
+     boxes wearing nothing, banded by size. */
+  function dgOddNote(id,d,ov,r){
+    var list=(r&&r.named&&r.named[id])||[]; if(!list.length) return null;
+    var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
+    if(!odd.length) return null;
+    var row=document.createElement('div');row.className='dg-cnt dg-cnt-odd dg-rownote';
+    var note=document.createElement('span');
+    note.className='dg-cnt-note';
+    note.textContent=odd.length+' changed by hand';
+    row.appendChild(note);
+    var b=document.createElement('button');
+    b.type='button';b.className='dbtn dg-cnt-fix';
+    b.textContent='Match '+odd.length;
+    b.title='Put the '+(d.label||id)+' style back on the '+odd.length
+      +' that were changed by hand';
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      stdFix(odd,function(a){applyStyleTo(a,id);},
+        odd.length+' box'+(odd.length===1?'':'es')+' put back');
+      dgRail(ov);dgBody(ov);
+    });
+    row.appendChild(b);
+    return row;
+  }
   function dgCounts(rail,ov){
     if(typeof standardise!=='function') return;
     var r=standardise();
     var host=document.createElement('div');host.className='dg-counts';
     var h=document.createElement('div');
-    h.className='dg-family-name';h.textContent='who wears what';
+    h.className='dg-family-name';h.textContent='no style yet';
     host.appendChild(h);
     var any=false;
     function cntRow(n,label,cls){
@@ -3301,43 +3404,12 @@
       row.appendChild(nn);row.appendChild(l);
       return row;
     }
-    styleOrder().forEach(function(id){
-      var list=(r.named&&r.named[id])||[]; if(!list.length) return;
-      any=true;
-      var d=styleDef(id)||{label:id};
-      var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
-      var row=cntRow(list.length,d.label||id,odd.length?' dg-cnt-odd':'');
-      if(odd.length){
-        /* T470: the note on its own line, like the button under it --
-           on one line with the name it was the note that got cut
-           ("Heading 1 -- 1 changed by…", 2026-09-15 review) */
-        var note=document.createElement('span');
-        note.className='dg-cnt-note';
-        note.textContent=odd.length+' changed by hand';
-        row.appendChild(note);
-        var b=document.createElement('button');
-        b.type='button';b.className='dbtn dg-cnt-fix';
-        b.textContent='Match '+odd.length;
-        b.title='Put the '+(d.label||id)+' style back on the '+odd.length
-          +' that were changed by hand';
-        b.addEventListener('click',function(e){
-          e.stopPropagation();
-          stdFix(odd,function(a){applyStyleTo(a,id);},
-            odd.length+' box'+(odd.length===1?'':'es')+' put back');
-          dgRail(ov);dgBody(ov);
-        });
-        row.appendChild(b);
-      }
-      row.addEventListener('click',function(){
-        dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
-      host.appendChild(row);
-    });
     (r.bands||[]).forEach(function(bd){
       if(bd.boxes.length<2) return;
       any=true;
       var sug=(styleDef(bd.suggest)||{}).label||bd.suggest;
       var row=cntRow(bd.boxes.length,'at about '+Math.round(bd.size*5.4)
-        +' pt, no style yet',' dg-cnt-loose');
+        +' pt',' dg-cnt-loose');
       var b=document.createElement('button');
       b.type='button';b.className='dbtn dg-cnt-fix';
       b.textContent='Make them '+sug;
@@ -3353,7 +3425,9 @@
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
-    dgCounts(rail,ov);   /* T443 */
+    /* T490: one survey for the rail -- the loose bands at the foot,
+       the odd-wearer notes under the rows */
+    var std=(typeof standardise==='function')?standardise():null;
     function styleRow(id,isVar){
       var d=styleDef(id); if(!d) return;
       var b=document.createElement('button');
@@ -3399,6 +3473,9 @@
       b.addEventListener('click',function(){
         dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b);
+      /* T490: "N changed by hand · Match N", under the row it is about */
+      var oddRow=dgOddNote(id,d,ov,std);
+      if(oddRow) rail.appendChild(oddRow);
     }
     /* T295: A FAMILY READS AS A FAMILY HERE TOO. styleOrder appends, so
        a variation of Heading 1 sat last, after Caption, with nothing
@@ -3492,6 +3569,9 @@
         dgSel=key;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b2);
     });
+    /* T490: the boxes wearing nothing, banded by size, AFTER the rows --
+       they are the one thing without a row of their own */
+    dgCounts(rail,ov);   /* T443 */
   }
   /* ---- the board: where a named type SITS by default ------------------
      The one genuinely new idea. A style has always said how a Heading

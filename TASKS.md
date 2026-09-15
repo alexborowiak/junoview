@@ -9385,3 +9385,21 @@ any reading. The rest are T466 onwards.
   group on a different fill, edge and type size; it wears the ribbon's
   one surface now. Driven: every tab still fits at 1300 and 1100 with
   the readouts on.
+- [x] **T490 — The Style system and Layout ideas, after the first
+  pass.** Three leftovers from the 2026-09-15 first review pass. Layout
+  ideas drew every text box as three 3px specks (miniDiagram sizes
+  type off the film strip's 66px thumbnail height) — a card is drawn
+  at its own height now, its text boxes wear a hairline box, and "Airy"
+  is "with wide gaps" rather than "airyly spaced". The "Every box
+  wearing it" table let you type X/Y/Width/Size/Text but Colour, Fill
+  and Face were read-only, although T224's ask was to "change them
+  individually here" — the two colours are pickers with Default / None
+  beside them and Face is the ribbon's typeface list, every write
+  through the same markDirty / refresh / strip / body-kept path. And
+  the rail listed every used style twice: a "who wears what" count row
+  and the type row under it with the same name and number — the count
+  is the row's alone, "N changed by hand · Match N" sits under the row
+  it is about, and the count table keeps only the boxes wearing
+  nothing, banded by size, after the rows. Driven: Serif, red and
+  no-fill written from the table and painted on the canvas; the odd
+  note under Heading 2 and its Match putting the box back.

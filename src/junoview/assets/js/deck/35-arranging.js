@@ -1297,10 +1297,19 @@
       var b=document.createElement('button');
       b.className='dbtn li-card';
       b.title=note||'';
-      var mini=miniDiagram(prev);
       var W=Math.max(220,Math.min(420,Math.round(window.innerWidth*0.28)));
+      var H=Math.round(W*ratio);
+      /* T490: DRAWN AT THE CARD'S OWN SCALE. miniDiagram sizes type
+         and strokes off miniHNow, the film strip's thumbnail height
+         (66px) -- so a 442x279 card drew every text box as three 3px
+         specks and text-only candidates were indistinguishable
+         (2026-09-15 review). The card's height is the scale while it
+         is drawn; the strip's is put back after. */
+      var mh=miniHNow;miniHNow=H;
+      var mini;
+      try{mini=miniDiagram(prev);}finally{miniHNow=mh;}
       mini.style.width=W+'px';
-      mini.style.height=Math.round(W*ratio)+'px';
+      mini.style.height=H+'px';
       b.appendChild(mini);
       var t=document.createElement('span');
       t.className='li-lab';t.textContent=label;
@@ -1309,11 +1318,11 @@
         e.stopPropagation();closeLayoutIdeas();apply();});
       grid.appendChild(b);
     }
-    [['tight','Tight'],['normal','Normal'],['airy','Airy']]
+    [['tight','Tight','tightly spaced'],['normal','Normal','normally spaced'],
+     ['airy','Airy','with wide gaps']]   /* T490: a word, not "-ly" */
       .forEach(function(t){
         card(ideaPreviewTidy(t[0],sl),t[1],
-          'Arrange what is on the slide, '+t[1].toLowerCase()+'ly '
-          +'spaced. Ctrl+Z undoes it.',
+          'Arrange what is on the slide, '+t[2]+'. Ctrl+Z undoes it.',
           function(){
             var n=arrangeSlide(pres.slides[cur],
               stage.querySelector('.annot-layer'),arrangeOpts(t[0]));

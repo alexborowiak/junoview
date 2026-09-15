@@ -26,16 +26,24 @@ from __future__ import annotations
 
 
 def test_the_rail_opens_with_the_counts(out):
+    """T490 folded the per-style counts into the style rows themselves:
+    the rail listed every used style twice (2026-09-15 review). The
+    count is the row's; "N changed by hand / Match N" sits under the
+    row it is about (dgOddNote); dgCounts keeps the loose bands, after
+    the rows."""
     assert "  function dgCounts(rail,ov){" in out
     assert "    dgCounts(rail,ov);   /* T443 */" in out
     fn = out.split("  function dgCounts(rail,ov){")[1].split("\n  }")[0]
     assert "    var r=standardise();" in fn
-    assert "      var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});" \
-        in fn
-    # T470: the note on a line of its own, so it is never the part cut
-    assert "        note.textContent=odd.length+' changed by hand';" in fn
-    assert "        b.textContent='Match '+odd.length;" in fn
+    assert "h.textContent='no style yet';" in fn
     assert "      b.textContent='Make them '+sug;" in fn
+    assert "changed by hand" not in fn
+    note = out.split("  function dgOddNote(id,d,ov,r){")[1].split("\n  }")[0]
+    assert "    var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});" \
+        in note
+    assert "    note.textContent=odd.length+' changed by hand';" in note
+    assert "    b.textContent='Match '+odd.length;" in note
+    assert "      var oddRow=dgOddNote(id,d,ov,std);" in out
 
 
 def test_the_tile_is_gone_and_the_door_stays(out):

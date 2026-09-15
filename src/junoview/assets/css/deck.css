@@ -5673,9 +5673,15 @@ body.jv-lens .deck-stage{cursor:crosshair;}
   flex-direction:column;background:var(--chrome-0,#0b141d);
   font-family:var(--sans);}
 .dg-main{display:flex;flex:1 1 auto;min-height:0;}
-/* T443: who wears what -- the count table at the head of the rail */
-.dg-counts{margin-bottom:8px;padding-bottom:6px;
-  border-bottom:1px solid var(--chrome-line);}
+/* T443: the count table in the rail -- T490: the loose bands only,
+   after the style rows; a style's own count and its odd wearers sit on
+   its row */
+.dg-counts{margin-top:8px;padding-top:6px;
+  border-top:1px solid var(--chrome-line);}
+.dg-cnt.dg-rownote{margin:-4px 0 4px;padding:0 6px 4px;cursor:default;}
+.dg-cnt.dg-rownote:hover{background:none;}
+.dg-cnt.dg-rownote .dg-cnt-note,.dg-cnt.dg-rownote .dg-cnt-fix{
+  margin-left:8px;flex:1 0 calc(100% - 8px);}
 .dg-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;
   padding:4px 6px;border-radius:6px;font:12px var(--sans);
   color:var(--chrome-ink);cursor:pointer;}
@@ -6030,6 +6036,10 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
   padding:7px;}
 .li-card .mini-diagram{pointer-events:none;background:#0d1722;
   border:1px solid #ffffff22;border-radius:3px;}
+/* T490: a candidate's text boxes show their BOX, hairline, so two
+   layouts that differ only in where the words go can be told apart */
+.li-card .mini-tx{outline:1px solid #ffffff2e;outline-offset:1px;
+  border-radius:1px;}
 .li-lab{font-size:10.5px;color:#dbe7ef;}
 /* T130: the put button and its slide scope, side by side */
 .dg-putrow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
@@ -6250,7 +6260,8 @@ body.light .lb-name{background:var(--input-bg);
   margin-left:auto;}
 .dgt-grid{display:grid;
   grid-template-columns:26px 40px minmax(150px,1.7fr)
-    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 34px 34px;
+    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 88px 74px;
+  /* T490: the two colour columns hold a picker AND its Default / None */
   gap:1px;background:#ffffff12;border:1px solid #ffffff1c;
   border-radius:9px;overflow:hidden;max-height:52vh;overflow-y:auto;}
 .dgt-h{background:var(--chrome-1,#0e1926);font-family:var(--sans);
@@ -6269,6 +6280,21 @@ body.light .lb-name{background:var(--input-bg);
   background:#ffffff0d;border:1px solid #ffffff22;border-radius:5px;}
 .dgt-n:focus{border-color:var(--cyan);outline:none;}
 .dgt-face{font-family:var(--mono);font-size:11px;color:var(--chrome-ink-2);}
+/* T490: the editable cells -- a swatch that is a picker, with its
+   Default / None beside it, and the typeface list */
+.dgt-colw{display:inline-flex;align-items:center;gap:4px;}
+.dgt-col{width:22px;height:20px;padding:0;border:1.5px solid #ffffff33;
+  border-radius:50%;background:none;cursor:pointer;}
+.dgt-col::-webkit-color-swatch-wrapper{padding:0;}
+.dgt-col::-webkit-color-swatch{border:0;border-radius:50%;}
+.dgt-col.dgt-unset{opacity:.45;}
+.dgt-colb{font-size:10px;padding:2px 5px;line-height:1.2;}
+.dgt-colb[aria-pressed="true"]{border-color:var(--cyan);color:var(--chrome-ink);}
+.dgt-facesel{height:24px;padding:0 4px;max-width:96px;
+  background:#ffffff0d;border:1px solid #ffffff22;border-radius:5px;
+  color:#e8f1f8;}
+body.light .dgt-facesel{background:var(--input-bg);
+  border-color:var(--border-strong);color:var(--ink);}
 .dgt-sw{width:16px;height:16px;border-radius:50%;
   border:1.5px solid #ffffff33;display:block;}
 .dgt-sw.dgt-none{background:var(--chrome-0,#0b141d);position:relative;
