@@ -9294,3 +9294,18 @@ any reading. The rest are T466 onwards.
   "Recent presentations" heading wrapped under its buttons — it keeps
   to one line. Driven at 1300 with the Familiar ribbon: the rest door
   opens a 1007px popover inside the window.
+- [x] **T485 — The .pptx round trip keeps sections, names and the page
+  size; a place-linked set gets no second clone on a slide.** The
+  reader has read PowerPoint's 2010 section list and every shape's
+  name since T320; the writer wrote neither, so a deck's sections were
+  lost on the way out and every box came back "Text 2" (2026-09-15
+  review) — the writer writes one p14:section per run of slides
+  sharing a name, and a text box's name travels. The editor's 16:9 and
+  4:3 pages are a millimetre off PowerPoint's Widescreen and Standard,
+  so a deck that started in PowerPoint came back a size it does not
+  know — within a millimetre of either, the writer emits the canonical
+  EMU, and the round-trip fixture pins 338.7 × 190.5. And Images →
+  Place → Clone… would put a second clone of a place-linked set on a
+  slide that already has one, exactly on top of it — that row is
+  disabled with the reason, as the Object tab's Add a clone… already
+  refuses it.

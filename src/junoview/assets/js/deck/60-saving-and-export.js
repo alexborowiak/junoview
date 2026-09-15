@@ -1925,7 +1925,7 @@
   function pptxTextItem(a,centred,ink,box){
     var b=box||pptxBox(a,centred);
     return {t:'text',x:b.x,y:b.y,w:b.w,h:b.h,
-      rot:a.rot,op:a.op,centred:!!centred,
+      rot:a.rot,op:a.op,centred:!!centred,name:a.name||'',   /* T485 */
       text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
@@ -2446,7 +2446,9 @@
            presenter sees on each of them. */
         return {bg:bgSolid(tokVal(ent.s.bg)
             ||(mm3&&tokVal(mm3.bg))||bg),items:its,
-          trans:transFor(ent.i),notes:ent.s.notes||''};
+          trans:transFor(ent.i),notes:ent.s.notes||'',
+          /* T485: the slide's section, by name, for the writer's list */
+          section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):''};
       }),
     });
     var a=document.createElement('a');

@@ -1200,6 +1200,11 @@ window.JunoPptx = (function () {
       + '</p:spTree>';
   }
 
+  /* a stable, well-formed GUID per section run */
+  function secGuid(k) {
+    var h = ('00000000' + (k + 1).toString(16)).slice(-8).toUpperCase();
+    return '4A6E6F56-4A56-4A56-4A56-0000' + h;
+  }
   function nsAttrs() {
     return ' xmlns:a="' + DML_NS + '" xmlns:r="' + DOC_NS
       + '/relationships" xmlns:p="' + PML_NS + '"';
@@ -1207,11 +1212,29 @@ window.JunoPptx = (function () {
 
   /* ---------------------------------------------------------------- build */
 
+  /* T485: PowerPoint's own two sizes, byte-exact. The editor's 16:9 and
+     4:3 pages are 339x191 and 254x190 mm, a millimetre off PowerPoint's
+     Widescreen (12192000x6858000 EMU) and Standard (9144000x6858000);
+     a deck that started in PowerPoint came back a size it does not
+     know (2026-09-15 review). Within a millimetre of either, the
+     canonical EMU is written. */
+  var PPT_SIZES = [[338.667, 190.5, 12192000, 6858000],
+    [254, 190.5, 9144000, 6858000]];
+  function pageEmu(widthMm, heightMm) {
+    for (var i = 0; i < PPT_SIZES.length; i++) {
+      var s = PPT_SIZES[i];
+      if (Math.abs(widthMm - s[0]) <= 1 && Math.abs(heightMm - s[1]) <= 1)
+        return { wEmu: s[2], hEmu: s[3] };
+    }
+    return { wEmu: Math.round(widthMm * EMU_PER_MM),
+      hEmu: Math.round(heightMm * EMU_PER_MM) };
+  }
   function build(spec) {
     var widthMm = spec.widthMm || 339, heightMm = spec.heightMm || 191;
+    var emu = pageEmu(widthMm, heightMm);
     var page = {
-      wEmu: Math.round(widthMm * EMU_PER_MM),
-      hEmu: Math.round(heightMm * EMU_PER_MM),
+      wEmu: emu.wEmu,
+      hEmu: emu.hEmu,
       hPt: heightMm * PT_PER_MM,
     };
     var zip = new Zip();
@@ -1404,6 +1427,32 @@ window.JunoPptx = (function () {
     var sldIds = slides.map(function (_, i) {
       return '<p:sldId id="' + (256 + i) + '" r:id="rId' + (i + 2) + '"/>';
     }).join('');
+    /* T485: SECTIONS TRAVEL. The reader has read PowerPoint's 2010
+       section list since T320; the writer never wrote one, so a deck's
+       sections were lost on the way out (2026-09-15 review). One
+       p14:section per run of slides sharing a name; slides with none
+       go in an unnamed section only when some slide is named. */
+    var secXml = '';
+    if (slides.some(function (s) { return s && s.section; })) {
+      var runs = [];
+      slides.forEach(function (s, i) {
+        var nm = (s && s.section) || '';
+        if (!runs.length || runs[runs.length - 1].name !== nm)
+          runs.push({ name: nm, ids: [] });
+        runs[runs.length - 1].ids.push(256 + i);
+      });
+      secXml = '<p:extLst><p:ext uri="{521415D9-36F7-43E2-AB2F-B90AF26B5E84}">'
+        + '<p14:sectionLst xmlns:p14="http://schemas.microsoft.com/office/'
+        + 'powerpoint/2010/main">'
+        + runs.map(function (r, k) {
+          return '<p14:section name="' + esc(r.name || 'Untitled Section')
+            + '" id="{' + secGuid(k) + '}"><p14:sldIdLst>'
+            + r.ids.map(function (id) {
+              return '<p14:sldId id="' + id + '"/>'; }).join('')
+            + '</p14:sldIdLst></p14:section>';
+        }).join('')
+        + '</p14:sectionLst></p:ext></p:extLst>';
+    }
     zip.addText('ppt/presentation.xml',
       XML_HEAD + '<p:presentation' + nsAttrs() + ' saveSubsetFonts="1">'
       + '<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/>'
@@ -1416,6 +1465,7 @@ window.JunoPptx = (function () {
       + '<p:sldIdLst>' + sldIds + '</p:sldIdLst>'
       + '<p:sldSz cx="' + page.wEmu + '" cy="' + page.hEmu + '"/>'
       + '<p:notesSz cx="' + page.hEmu + '" cy="' + page.wEmu + '"/>'
+      + secXml
       + '</p:presentation>');
 
     var presRels = [{ id: 'rId1', type: DOC_NS + '/relationships/slideMaster',

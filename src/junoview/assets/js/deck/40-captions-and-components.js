@@ -1046,6 +1046,14 @@
       b.title=cmpHasPlace(def)
         ?'In the spot every clone of this set shares'
         :'In the middle of the slide \u2014 drag it where you want it';
+      /* T485: a place-linked set shares one spot, so a second on this
+         slide would sit exactly on top of the first (the Object tab's
+         Add a clone… refuses it for the same reason) */
+      if(here&&cmpHasPlace(def)){
+        b.disabled=true;
+        b.title='This slide has one already, and every clone of this '
+          +'set shares one spot';
+      }
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayDrop(m);
         var k=cmpPlace(c.id,null,cur,null,false);

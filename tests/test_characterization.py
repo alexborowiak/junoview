@@ -1996,8 +1996,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T483 (2026-09-15): saving and export after the second pass.
 # T484 (2026-09-15): the frame after the second pass -- the layouts'
 # rest groups, the fold popover's width, the tour, the version rows.
-EXPECTED_MD5 = "fffdef03054399a4b61b2420db3d46ea"
-EXPECTED_BYTES = 4437179
+# T485 (2026-09-15): sections, names and the canonical page size in
+# the .pptx; the clone menu refuses a second place-linked clone.
+EXPECTED_MD5 = "8e3413975e7d25a90b9f61ad0fdf6c06"
+EXPECTED_BYTES = 4440051
 
 
 def _render_example() -> str:

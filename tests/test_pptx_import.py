@@ -252,8 +252,10 @@ ROUND_TRIP = {
     "title": "rt", "widthMm": 339, "heightMm": 191, "bg": "#0b141d",
     "slides": [
         {"bg": "#0b141d", "trans": "fade", "notes": "Say hello.",
+         "section": "Intro",   # T485: the writer writes the section list
          "items": [
              {"t": "text", "x": 10, "y": 10, "w": 60, "h": 10,
+              "name": "Greeting",   # T485: names travel
               "text": "Hello\nWorld", "sizePct": 5, "color": "#ffcc00",
               "b": 1, "align": "center", "bullets": 1,
               "animStep": 0, "animType": "fade",
@@ -306,6 +308,19 @@ def _one(got: dict, i: int, t: str) -> dict:
 def test_round_trip_nothing_is_lost(round_trip):
     assert round_trip["lost"] == []
     assert len(round_trip["spec"]["slides"]) == 2
+
+
+def test_round_trip_sections_and_names(round_trip):
+    """T485 (2026-09-15 review): the reader read PowerPoint's section
+    list and every shape's name, and the writer wrote neither."""
+    sl = round_trip["spec"]["slides"]
+    assert sl[0].get("section") == "Intro"
+    assert sl[1].get("section", "") in ("", "Untitled Section")
+    t = _one(round_trip, 0, "text")
+    assert t.get("name") == "Greeting"
+    # PowerPoint's own Widescreen, byte-exact, for the editor's 16:9 page
+    spec = round_trip["spec"]
+    assert (spec["widthMm"], spec["heightMm"]) == (338.7, 190.5)
 
 
 def test_round_trip_text(round_trip):
