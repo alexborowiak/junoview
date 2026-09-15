@@ -16,7 +16,7 @@ from junoview import assets
 
 def test_text_means_a_text_box_is_selected_full_stop(out):
     assert ("      if(!on) return {on:false,text:!!a&&num&&a.k==='text',"
-            "by:'',hl:false};") in out
+            "by:'',hl:false,") in out   # (T473 adds fig/grid)
     assert "text:!!a&&num&&a.k==='text'&&!!a.anim" not in out
 
 
@@ -26,7 +26,7 @@ def test_the_tiles_are_live_for_a_plain_box_and_say_whole_box(out):
     assert "        b.disabled=!st.text;" in body
     assert "          (st.text&&st.by===p[1]).toString());" in body
     assert "        hb.disabled=!st.text;" in body
-    assert "      if(lab) lab.textContent=st.text?'Timing & text':'Timing';" in body
+    assert "      if(lab) lab.textContent=st.text?'Timing & text'" in body   # T473
 
 
 def test_a_piecewise_build_gives_a_plain_box_an_entrance(out):
