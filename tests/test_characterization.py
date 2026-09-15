@@ -1907,8 +1907,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # layout and the strips reveal their lit tile; deck.css, deck.html,
 # 00-page.js, 05-figures-and-ribbon.js, 48-animation.js and
 # 55-sections-and-strip.js change.
-EXPECTED_MD5 = "74038f67cc7463559a7c2d2c1af80312"
-EXPECTED_BYTES = 4314805
+# T464 (2026-09-15): Page size is a compact chooser on Design; the
+# fold ladder measures "over" as overflowed OR wrapped while the shelf is
+# open, and gives folded groups their row back after the fold that made
+# the row fit; the door readout reads the whole control's words.
+# deck.html, deck.css and 05-figures-and-ribbon.js change.
+EXPECTED_MD5 = "bdbc551768565dca5cd3947527be1979"
+EXPECTED_BYTES = 4318038
 
 
 def _render_example() -> str:

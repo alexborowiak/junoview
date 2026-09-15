@@ -30,7 +30,12 @@ def test_the_three_bad_pairs_are_paired_now():
     # (T215 moved Tidy page into Layout, paired with Spacing, and put the
     # page itself first on Design)
     slide = _ids(_row(html, "Slide"))
-    assert slide.index("bg-drop") < slide.index("page-strip-frame")
+    assert "bg-drop" in slide
+    # T464: the page size is a compact chooser in a group of its own,
+    # right after Slide, so the door can wear the size in use
+    assert "page-strip-frame" not in slide
+    assert "page-strip-frame" in _ids(_row(html, "Page size"))
+    assert 'class="rbn-grp rbn-pagesize rbn-compact" data-tab="design"' in html
     assert "dsg-tidy" not in slide
     lay = _ids(_row(html, "Layout"))
     # T365 put the Spacing run LAST and gave it a column of its own: four

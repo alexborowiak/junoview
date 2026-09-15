@@ -8761,3 +8761,31 @@ switch on yourself.
   and Text unfolded at 935px, the Animation row packed with no gaps;
   the toggle, its caret menu, the Configure chip that presses it, the
   Effect shelf and the tool tiles all driven.
+
+- [x] **T464 — The Design tab: Page size is a chooser, and the fold
+  ladder gives back what it over-bought.** (The pass T463 left open:
+  "that tab is wide and could use a pass of its own".) Three things.
+  **Page size** showed three of its eight sizes in a 226px scroll strip
+  inside Slide; it is a compact door beside Background now -- "Page
+  size ▾ / 16:9", every size on the shelf when pressed -- which is the
+  T441/T453 idiom and the first of T460's "decide which groups are
+  choosers". Spacing stays as tiles: Tight, Normal and Airy are verbs,
+  not a choice, and a door would have nothing to read out. **The fold
+  ladder** folded from the right one group at a time and stopped the
+  moment the row fit -- but the fold that made it fit was Layout
+  (407px), by which time Whole deck, Page furniture, Spacing and Apply
+  had all folded for 21, 86, 92 and 40px each, and Design at 935px sat
+  at 624px with five doors on it. Each folded group is offered its row
+  back, leftmost first, and keeps it if the row still fits: Design at
+  935px is now one door (Layout) and five open groups. **The shelf's
+  wrap** broke the ladder: with the shelf open the bar is
+  flex-wrap:wrap, a wrapping bar never overflows, so every rung came
+  off and the Whole deck group wrapped onto the shelf's line the moment
+  Page size opened (a T453 bug, first reachable on the widest tab).
+  "Over" is overflowed OR wrapped now. Also the door readout read a
+  tile's FIRST span, which for a page-size tile is its little page
+  drawing, so the new door said nothing; it reads the whole control's
+  words less kbd, icon and its own readout. Driven at 1150 and 1500:
+  the door reads 16:9, picking 4:3 on the shelf changes the page and
+  the readout, the shelf is one line (bar 157px, was 243), Background's
+  menu still opens; the fold probe across all tabs at 935/1085/1285.

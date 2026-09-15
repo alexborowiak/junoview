@@ -1523,6 +1523,7 @@ body.slide-editing .apptop{display:none;}
    ("there is lot's of weird space around"). ---- */
 .rbn-file{order:1;}
 .rbn-slide{order:0;}      /* T215: the page itself first on Design */
+.rbn-pagesize{order:0;}   /* T464: its size beside it, then the layouts */
 .rbn-view{order:3;}
 /* Design reads Slide, Page furniture, Type -- the markup's order.
    Without a rung Page furniture sat at 0 and came FIRST (T178). */

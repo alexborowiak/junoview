@@ -29,9 +29,16 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     # before anything is measured
     assert ("    foldViewGroup(false);\n    rbnUnfoldAll();\n"
             "    sizeRibbonGroups();") in out
-    # after every other rung
-    assert ("    while(bar.scrollWidth>bar.clientWidth+1&&guard++<12&&rbnFoldOne())\n"
+    # after every other rung -- and "over" means overflowed OR wrapped
+    # onto the shelf's line (T464), since a wrapping bar never overflows
+    assert ("    while(over()&&guard++<12&&rbnFoldOne())\n"
             "      sizeRibbonGroups();") in out
+    assert "      if(bar.scrollWidth>bar.clientWidth+1) return true;\n" in out
+    assert "        else if(Math.abs(r.top-top)>1) wrapped=true;\n" in out
+    # ...and the groups the greedy pass folded before the wide one that
+    # made the row fit are offered their row back, leftmost first
+    assert "    var back=$$('.rbn-grp.rbn-folded',bar).filter(function(g){" in out
+    assert "      if(over()){rbnFoldGroup(g);sizeRibbonGroups();}\n" in out
     # the real row moves into the popover; nothing is copied
     assert "    menu.appendChild(row);\n" in out
     assert "    if(row) g.insertBefore(row,wrap);\n" in out

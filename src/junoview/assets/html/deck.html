@@ -768,6 +768,22 @@
                   ><i data-ic="fill"></i><span>Background</span></button>
                 <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
               </span>
+            </span>
+            <span class="rbn-lab">Slide</span>
+          </span>
+          <!-- T464: PAGE SIZE IS A CHOOSER, so it is a compact door with
+               the size in use on it and every size on the shelf when
+               you press it (2026-09-15, the Design tab pass after T463;
+               T460 had left "decide which groups are choosers" open).
+               As a strip it showed three of eight sizes and cost 226px
+               of a tab that folds four of its six groups on a laptop;
+               the door costs 82px and shows all eight, in the bar,
+               when asked. The strip, its ids and its More door are
+               unchanged, so the ribbon layouts that move
+               page-strip-frame still can. -->
+          <span class="rbn-grp rbn-pagesize rbn-compact" data-tab="design"
+            data-fold-ic="pagep">
+            <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="page-strip-frame">
                 <span class="fx-strip page-strip" id="page-strip"
                   role="group" aria-label="Page size"></span>
@@ -780,7 +796,7 @@
                     aria-expanded="false" title="Show all"
                     aria-label="Show all page sizes">&#9662;</button></span></span>
             </span>
-            <span class="rbn-lab">Slide</span>
+            <span class="rbn-lab">Page size</span>
           </span>
           <!-- PAGE FURNITURE. A watermark, a header and a footer are one
                piece of content repeated on every page, which is exactly

@@ -1572,23 +1572,42 @@
       return;
     }
     if(!bar.clientWidth) return;
+    /* T464: "OVER" IS OVERFLOWED OR WRAPPED. While the shelf (T453) is
+       open the bar is flex-wrap:wrap so the shelf can take a line of
+       its own -- and a wrapping bar never overflows: a row too wide for
+       it puts its last group on the shelf's line instead, scrollWidth
+       reads as fitting, every rung comes off, and the Whole deck group
+       sat under the Design tab's row the moment Page size opened its
+       shelf. A group that is not on the first group's line is the
+       overflow, and is measured as such. */
+    var over=function(){
+      if(bar.scrollWidth>bar.clientWidth+1) return true;
+      var top=null,wrapped=false;
+      $$('.rbn-grp',bar).forEach(function(g){
+        if(wrapped||g.hidden||g.hasAttribute('data-off')) return;
+        var r=g.getBoundingClientRect(); if(!r.width) return;
+        if(top===null) top=r.top;
+        else if(Math.abs(r.top-top)>1) wrapped=true;
+      });
+      return wrapped;
+    };
     ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
     /* the reminder text gives up its room before any control tightens */
-    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nohint');
+    if(over()) cl.add('erc-nohint');
     for(var i=0;i<ERC.length;i++){
-      if(bar.scrollWidth<=bar.clientWidth+1) break;
+      if(!over()) break;
       cl.add(ERC[i]);
     }
     /* the save readout goes AFTER the density rungs, not with the hint:
        it is informative (where your work is) where the hint is
        decorative — but it still goes before any control shrinks to its
        last rung or the row clips (2026-08-18) */
-    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nostatus');
+    if(over()) cl.add('erc-nostatus');
     /* still over after every rung: fold the one group that is not about
        the selection, rather than let the row clip. sizeRibbonGroups has
        to run again — it counts the controls that are showing, and seven
        of them just stopped */
-    if(bar.scrollWidth>bar.clientWidth+1){
+    if(over()){
       cl.add('erc-tight');
       foldViewGroup(true);
       sizeRibbonGroups();
@@ -1598,8 +1617,27 @@
        collapses a group on a narrow window. It is the rung that
        makes spreading the controls out affordable at all. */
     var guard=0;
-    while(bar.scrollWidth>bar.clientWidth+1&&guard++<12&&rbnFoldOne())
+    while(over()&&guard++<12&&rbnFoldOne())
       sizeRibbonGroups();
+    /* T464: GIVE BACK WHAT THE LAST FOLD OVER-BOUGHT. Folding from the
+       right, one group at a time, stops the moment the row fits -- and
+       the fold that finally makes it fit is often a wide group whose
+       107px door frees far more than was needed. On Design at 935px
+       that was Layout (407px): by the time it folded, Whole deck, Page
+       furniture, Spacing and Apply had all folded before it for 21, 86,
+       92 and 40px, and the row then sat at 624px of 935 with five doors
+       on it. Each folded group is offered its row back, leftmost first
+       (the tab's own order of importance), and keeps it if the row
+       still fits. Compact groups are folded by choice and stay so. */
+    var back=$$('.rbn-grp.rbn-folded',bar).filter(function(g){
+      return !g.hidden&&!g.hasAttribute('data-off')
+        &&!g.classList.contains('rbn-compact');});
+    back.sort(function(x,y){
+      return x.getBoundingClientRect().left-y.getBoundingClientRect().left;});
+    back.forEach(function(g){
+      rbnUnfoldGroup(g);sizeRibbonGroups();
+      if(over()){rbnFoldGroup(g);sizeRibbonGroups();}
+    });
     /* Below the floor the row genuinely does not fit even flattened, and
        the only moves left — clip, scroll, wrap — are all forbidden.
        Standing the toolbar on its end is the layout that has room, and
@@ -2011,9 +2049,14 @@
     var on=row?row.querySelector('[aria-pressed="true"]'):null;
     var txt='';
     if(on){
-      var sp=on.classList.contains('fx-tile')?on.querySelector('span'):null;
-      var src=(sp||on).cloneNode(true);
-      $$('kbd',src).forEach(function(k){k.remove();});
+      /* T464: the WHOLE control's words, less what is not a word. The
+         first <span> of a tile used to be taken as its word, and a
+         page-size tile's first span is its little page drawing -- so
+         the Page size door read out nothing. A tile's own readout is
+         dropped too, or a folded Leaves early would say "Send it away
+         never". */
+      var src=on.cloneNode(true);
+      $$('kbd,.rbn-foldval,.page-ico',src).forEach(function(k){k.remove();});
       txt=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
         .trim();
     }
