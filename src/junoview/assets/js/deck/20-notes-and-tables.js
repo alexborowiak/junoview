@@ -2346,9 +2346,11 @@
              you zoomed out, so an empty frame's placeholder swelled to
              fill the poster (2026-08-07, user: text "changes size when I
              zoom in and out"). */
-          pb.style.fontSize=fontPx(layer,1.15);
+          /* T468: ...but never below a readable floor -- it drew at 6.9px
+             on a fitted slide (2026-09-15 review) */
+          pb.style.fontSize='max(10px,'+fontPx(layer,1.15)+')';
           pb.textContent=a.ref?('missing: '+a.ref)
-            :'Click to add an object';
+            :'Click to choose what goes here';
           pb.addEventListener('mousedown',function(e){
             if(tool==='select') e.stopPropagation();});
           pb.addEventListener('click',function(e){

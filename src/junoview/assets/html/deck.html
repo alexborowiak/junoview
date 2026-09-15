@@ -1534,14 +1534,19 @@ items snap to both. Guides, not ink: never printed or exported"
           <!-- T444: THE DECK'S TYPE LIVES WITH THE WORDS (2026-09-14,
                user: "Move citations to the text tab not home. Move
                text styles and style sets to text away from home"). -->
+          <!-- T468: TILES, like Equation, Markdown and Table beside them.
+               These were three 26px pills stacked two high with the
+               third floating at a third baseline, the one group on Text
+               not made of the one tile (2026-09-15 review, measured);
+               and two of them wore one icon. -->
           <span class="rbn-grp rbn-decktype" data-tab="text"
             data-fold-ic="styles">
             <span class="rbn-row">
-              <span class="sh-drop" id="dsg-stylewrap">
-                <button class="dbtn rbn-sm" id="dsg-styles"
+              <span class="sh-drop rbn-tall" id="dsg-stylewrap">
+                <button class="fx-tile big-tile" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
-                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><i data-ic="styles"></i> Text
-                  styles &#9662;</button>
+                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><i data-ic="styles"></i><span>Text
+                  styles &#9662;</span></button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
                   hidden>
                   <!-- the per-style rows, built on open -->
@@ -1567,15 +1572,15 @@ items snap to both. Guides, not ink: never printed or exported"
                        the other. -->
                 </div>
               </span>
-              <button class="dbtn rbn-sm" id="dsg-sets"
+              <button class="fx-tile big-tile rbn-tall" id="dsg-sets"
                 title="Ready-made looks for the whole deck: style sets
  (type) and colour themes (a palette for page, boxes, headings and
- ink), and any you saved"><i data-ic="styles"></i> Style sets&#8230;</button>
-              <button class="dbtn rbn-sm" id="dsg-cites"
+ ink), and any you saved"><i data-ic="theme"></i><span>Style sets&#8230;</span></button>
+              <button class="fx-tile big-tile rbn-tall" id="dsg-cites"
                 title="This deck&#8217;s references: import a .bib, add one
  by DOI, choose numbered or author-year, and insert a references box.
  Cite in any text box as [@key]"
-                ><i data-ic="doc"></i> Citations&#8230;</button>
+                ><i data-ic="doc"></i><span>Citations&#8230;</span></button>
             </span>
             <span class="rbn-lab">Presentation type</span>
           </span>

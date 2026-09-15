@@ -1821,6 +1821,16 @@
       if(!tiny||(boxed&&a.k!=='draw')){
         selectAnnot(layer,idx);
         if(a.k==='text') focusText(layer,idx);
+        /* T468: THE TILE SAYS "FROM NOTEBOOK", SO THE FRAME GOES THERE.
+           Drawing one used to show a tiny "Click to add an object"
+           caption and then a pop-up asking what to put in it -- with
+           the notebook one answer among four (2026-09-15 review). With
+           a notebook open the picker opens at once; Escape or Cancel
+           brings you back to the frame, whose caption still offers the
+           other sources (a picture, the clipboard, a link). */
+        if(a.k==='cell'&&!a.ref&&APP.order&&APP.order.length
+           &&typeof startPick==='function')
+          setTimeout(function(){startPick(idx);},0);
       }
     }
     document.addEventListener('mousemove',mm);

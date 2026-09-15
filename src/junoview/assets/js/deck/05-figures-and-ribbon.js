@@ -3360,13 +3360,36 @@
           :{left:0,top:0};   /* a fixed pane drags in viewport space */
         var r=pane.getBoundingClientRect();
         var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
+        /* T468: THE HEIGHT SURVIVES THE DRAG. A docked pane is sized by
+           its top and bottom anchors; the first move sets bottom:auto
+           and the pane collapsed to its content -- 629px to 240px on
+           the first pixel of a drag (2026-09-15 review). Its measured
+           height is written first. */
+        if(!pane.style.height) pane.style.height=Math.round(r.height)+'px';
         function mv(e2){
           place({moved:1,x:e2.clientX-hostR.left-dx,
             y:e2.clientY-hostR.top-dy});
         }
-        function up(){
+        function up(e2){
           document.removeEventListener('pointermove',mv);
           document.removeEventListener('pointerup',up);
+          /* T468: LET GO AT THE EDGE, AND IT DOCKS. syncPaneDock's note
+             promised "drag it back to the edge to re-dock" and nothing
+             did it: once moved, a pane floated over the page for good.
+             Within 28px of the right edge (or dropped where a docked
+             pane sits) the anchors come back and `moved` is not
+             written. */
+          var host=pane.offsetParent,hw=host?host.clientWidth:innerWidth;
+          var pr=pane.getBoundingClientRect();
+          var hr=host?host.getBoundingClientRect():{left:0,top:0};
+          var nearEdge=(hw-(pr.right-hr.left))<=40&&(pr.top-hr.top)<=60;
+          if(nearEdge){
+            pane.style.left='';pane.style.top='';pane.style.right='';
+            pane.style.bottom='';pane.style.height='';
+            paneSave(id,{w:pane.offsetWidth});   /* the dock sizes its height */
+            syncPaneDock();
+            return;
+          }
           /* `moved` is set HERE and only here: a drag is the one gesture
              that means "I want this somewhere else" */
           paneSave(id,{moved:1,x:pane.offsetLeft,y:pane.offsetTop,

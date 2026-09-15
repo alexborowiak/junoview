@@ -1020,11 +1020,27 @@
     }
     var capH=Math.max(4,(maxRank>0?5:0));
     var nb=bodies.length,nm=majors.length;
+    /* T468: STACKED BY THEIR OWN HEIGHT, the gap between them. Sharing
+       the page's height among the boxes made Tight, Normal and Airy
+       the same arrangement on a text slide -- every box widened to the
+       full page and spread over the whole height, the three presets
+       differing by 5px per gap -- and "Tight" closed nothing up
+       (2026-09-15 review, measured). A box keeps its own width, within
+       the margins; the gap is the preset's, so the three presets are
+       three visibly different stacks. */
+    function stackTexts(idxs,x,w,y0){
+      var y=y0;
+      idxs.forEach(function(i){
+        var r=rects[i]||{};
+        var h=Math.max(3,(r.b||0)-(r.t||0));
+        var bw=w!=null?w:Math.min(R-L,Math.max(10,(r.r||0)-(r.l||0)));
+        setBox(i,x,y,bw,null);
+        y+=h+gap;
+      });
+    }
     if(!nm){
-      /* text only: one column, stacked, sharing the height */
-      var each=(B-T-gap*Math.max(0,nb-1))/Math.max(1,nb);
-      bodies.forEach(function(i,k){
-        setBox(i,L,T+k*(each+gap),R-L,null);});
+      /* text only: one column, stacked */
+      stackTexts(bodies,L,null,T);
     } else {
       var fx=L,fw=R-L;
       if(nb&&nm<=2){
@@ -1033,9 +1049,7 @@
            beside a 2x2 grid is a gutter, not a paragraph. */
         var tw=(R-L)*opt.textShare;
         fx=L+tw+gap;fw=(R-L)-tw-gap;
-        var eachT=(B-T-gap*Math.max(0,nb-1))/Math.max(1,nb);
-        bodies.forEach(function(i,k){
-          setBox(i,L,T+k*(eachT+gap),tw,null);});
+        stackTexts(bodies,L,tw,T);
       }
       var fb=B;
       if(nb&&nm>2){

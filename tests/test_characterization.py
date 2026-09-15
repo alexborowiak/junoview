@@ -1947,8 +1947,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # only its size; the scrolling page shows the version the show would;
 # the page keeps clear of the zoom bar; the pane's leave chips speak
 # the ribbon's words and say the click; a two-choice door reads both.
-EXPECTED_MD5 = "fcbc76d52e5eb3a30c70b654b1f06c8c"
-EXPECTED_BYTES = 4345616
+# T468 (2026-09-15): the review's fourth batch -- Tight/Normal/Airy
+# stack text by its own height; a dragged pane keeps its height and
+# docks again at the edge; "From notebook" opens the picker at once and
+# the frame's caption has a floor; Presentation type is three tiles.
+EXPECTED_MD5 = "b7fdddc8387143d90046a0702843bf55"
+EXPECTED_BYTES = 4348724
 
 
 def _render_example() -> str:

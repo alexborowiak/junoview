@@ -8925,3 +8925,25 @@ any reading. The rest are T466 onwards.
   "Disappears" after; it is Stays / Send it away with the click it
   goes on. **A two-strip door** (Timing & text) read only its first
   pressed tile; it reads "On click · By sentence". Driven at 1500.
+
+- [x] **T468 — The review's fourth batch: things that did the same thing
+  three ways, or nothing.** **Spacing** (Tight, Normal, Airy) shared the
+  page's height among the text boxes, so on a text slide all three
+  widened every box to the page and spread it over the whole height,
+  five pixels apart per gap -- "Tight" closed nothing up. They stack by
+  each box's own height with the preset's gap, and a box keeps its
+  width. **A pane you dragged** collapsed to its content on the first
+  pixel (its bottom anchor went before its height was written) and
+  could never dock again, though syncPaneDock's note promised it: the
+  height is written first, and a pane let go within 40px of the right
+  edge takes its anchors back. **"From notebook"** drew a frame, showed
+  a 6.9px caption and asked what to put in it, with the notebook one
+  answer of four: with a notebook open the picker opens at once, and
+  the caption ("Click to choose what goes here") has a 10px floor.
+  **Presentation type** was the one group on Text still made of 26px
+  pills stacked two high with the third at a third baseline, two of
+  them wearing one icon: three tiles now, like Equation, Markdown and
+  Table beside them. Driven at 1500: Tight [241,361,409] vs Airy
+  [241,380,447]; a drag keeps 629px and a drag back re-docks with
+  `{w:272}`; drawing a frame lands in the picker and Cancel returns to
+  the frame with the undo stack intact.
