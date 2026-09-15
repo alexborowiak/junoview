@@ -20,12 +20,16 @@
     var m=String(u||'').match(/^https?:\/\/([^\/?#]+)/i);
     return m?m[1]:String(u||'');
   }
-  function askWebUrl(current){
-    var u=window.prompt('Web address (http or https):',current||'https://');
-    if(u==null) return null;
-    u=String(u).trim();
-    if(!webUrlOk(u)){toast('That is not an http or https address');return null;}
-    return u;
+  /* T475: the editor's own question -- cb(url) once it is a good one */
+  function askWebUrl(current,cb){
+    askText({title:current?'The page\u2019s address':'A live web page',
+      label:'Web address (http or https)',value:current||'https://',
+      ok:current?'Change it':'Place it',select:!current},function(u){
+      if(u==null) return;
+      u=String(u).trim();
+      if(!webUrlOk(u)){toast('That is not an http or https address');return;}
+      cb(u);
+    });
   }
   function placeWebPage(url){
     var s=pres.slides[cur]; if(!s) return;
@@ -43,14 +47,16 @@
     var et=$('#et-web');
     if(et) et.addEventListener('click',function(e){
       e.stopPropagation();
-      var u=askWebUrl(''); if(u) placeWebPage(u);
+      askWebUrl('',function(u){placeWebPage(u);});
     });
     var fb=$('#fmt-weburl');
     if(fb) fb.addEventListener('click',function(e){
       e.stopPropagation();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       if(!a||a.k!=='web') return;
-      var u=askWebUrl(a.url||''); if(!u||u===a.url) return;
-      fmtApply(function(x){if(x.k==='web') x.url=u;});
+      askWebUrl(a.url||'',function(u){
+        if(u===a.url) return;
+        fmtApply(function(x){if(x.k==='web') x.url=u;});
+      });
     });
   }

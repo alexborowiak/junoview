@@ -1242,8 +1242,10 @@
           var s5=pres.slides[cur],a5=annotByIdx(s5,selAnnot);
           if(!a5||!a5.style) return;
           var base=a5.style;
-          var nm=prompt('Call this variation of '
-            +styleDef(base).label+' what?','');
+          askText({title:'A variation of '+styleDef(base).label,
+            label:'Call this variation',value:'',ok:'Save',
+            note:'It follows '+styleDef(base).label+' for everything '
+              +'you did not change'},function(nm){
           if(nm===null) return;
           nm=String(nm).trim();
           if(!nm){toast('A variation needs a name');return;}
@@ -1259,6 +1261,7 @@
           toast('\u201c'+nm+'\u201d is a variation of '
             +p.label+' \u2014 it follows '+p.label
             +' for everything you did not change.',6000);
+          });
         });
         menu.appendChild(mkv);
       }
@@ -1717,14 +1720,16 @@
     fontSelEl.addEventListener('change',function(){
       var v=this.value;
       if(v==='__custom'){
-        var typed=prompt('Font family — exactly as it is named on this '
-          +'computer (e.g. "Univers", "Source Sans Pro").\n\nIt has to be '
-          +'installed to show here, and installed on any machine that '
-          +'opens the exported .pptx. PDF export always embeds what you see.',
-          '');
+        askText({title:'A font by name',
+          label:'The font family, exactly as it is named on this computer',
+          placeholder:'Univers, Source Sans Pro\u2026',value:'',ok:'Use it',
+          note:'It has to be installed to show here, and on any machine '
+            +'that opens the exported .pptx. A PDF always embeds what '
+            +'you see.'},function(typed){
         typed=(typed||'').trim();
         if(!typed){renderControls();return;}
         fmtApply(function(a){a.font=typed;});
+        });
         return;
       }
       fmtApply(function(a){

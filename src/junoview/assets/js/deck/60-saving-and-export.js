@@ -26,6 +26,79 @@
     clearTimeout(toastTimer);
     toastTimer=setTimeout(function(){t.hidden=true;},ms||9000);
   }
+  /* ---- T475: THE EDITOR'S OWN QUESTION ---------------------------------
+     window.prompt was the browser's box: unstyled, un-themed, the one
+     dialog in the editor that did not look like the editor, blocked
+     outright in some embeddings, and unable to show what it was asking
+     about. Thirty-six of them (2026-09-15 review: "three of them use
+     the browser's native prompt" was the count for one group alone).
+     One small dialog on the .aa-dlg shell asks every one of them now: a
+     title, a line of help, a field pre-filled, a note under it, Cancel
+     and a verb, Enter and Escape. cb(null) when cancelled, cb(text)
+     otherwise -- so every caller is a callback, which is what a
+     dialog that is not modal to the whole browser has to be. */
+  var askCb=null,askWired=false;
+  function askText(o,cb){
+    var dlg=$('#ask-dlg');
+    if(!dlg){cb(null);return;}
+    o=o||{};
+    var multi=!!o.multi;
+    var inp=$('#ask-in'),area=$('#ask-area');
+    $('#ask-t').textContent=o.title||'Name';
+    var what=$('#ask-what');
+    what.textContent=o.what||'';what.hidden=!o.what;
+    var lab=$('#ask-lab');
+    lab.textContent=o.label||'';lab.hidden=!o.label;
+    var note=$('#ask-note');
+    note.textContent=o.note||'';
+    $('#ask-ok').textContent=o.ok||'OK';
+    inp.hidden=multi;area.hidden=!multi;
+    var field=multi?area:inp;
+    field.value=(o.value==null)?'':String(o.value);
+    field.placeholder=o.placeholder||'';
+    askCb=cb;
+    dlg.classList.toggle('over-design',!!$('#deck-design'));
+    dlg.hidden=false;
+    setTimeout(function(){field.focus();
+      if(!multi&&o.select!==false) field.select();},0);
+    if(askWired) return;
+    askWired=true;
+    function done(v){
+      dlg.hidden=true;
+      var f=askCb;askCb=null;
+      if(f) f(v);
+    }
+    function ok(){done((area.hidden?inp:area).value);}
+    $('#ask-ok').addEventListener('click',function(e){
+      e.stopPropagation();ok();});
+    $('#ask-cancel').addEventListener('click',function(e){
+      e.stopPropagation();done(null);});
+    $('#ask-close').addEventListener('click',function(e){
+      e.stopPropagation();done(null);});
+    dlg.addEventListener('click',function(e){
+      /* the box, not the shade: a click on the shade cancels; a click
+         inside must not reach the overlay owner underneath, which would
+         pop the menu the question was asked from */
+      e.stopPropagation();
+      if(e.target===dlg) done(null);
+    });
+    dlg.addEventListener('mousedown',function(e){e.stopPropagation();});
+    /* ON WINDOW, IN CAPTURE. A question asked from inside a menu sits
+       over an overlay whose own Escape listener is on document in
+       capture and wins against anything on the dialog (the
+       overlay-panels-eat-keys trap): Escape closed the MENU under the
+       question and left the question standing (driven 2026-09-15).
+       Window capture fires before document capture, so while the
+       dialog is open its keys are its own. */
+    window.addEventListener('keydown',function(e){
+      if(dlg.hidden) return;
+      if(!dlg.contains(e.target)&&e.target!==document.body) return;
+      e.stopImmediatePropagation();
+      if(e.key==='Escape'){e.preventDefault();done(null);}
+      else if(e.key==='Enter'&&(e.target===inp||(e.target===area&&e.ctrlKey))){
+        e.preventDefault();ok();}
+    },true);
+  }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
       .map(function(p){var c=deep(p);delete c.origin;return c;});

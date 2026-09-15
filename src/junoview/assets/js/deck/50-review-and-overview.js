@@ -776,16 +776,20 @@
     if(!hasCut(id)) return false;
     var d=cutMap()[id]; if(!d) return false;
     var old=d.name||id;
-    var v=prompt('Name this version:',old);
-    if(v==null) return false;
-    v=v.trim(); if(!v||v===old) return false;
+    /* T475: the editor's own question; the menu re-syncs itself once
+       the answer lands, so this returns false to its caller */
+    askText({title:'Name this version',value:old,ok:'Rename'},function(v){
+    if(v==null) return;
+    v=v.trim(); if(!v||v===old) return;
     if(cutNameTaken(v,id)){
-      toast('There is already a version called “'+v+'”');return false;
+      toast('There is already a version called “'+v+'”');return;
     }
     d.name=v;
     markDirty();renderFilm();presenterSync&&presenterSync();
     toast('Version renamed to “'+v+'”');
-    return true;
+    if(typeof syncCuts==='function') syncCuts();
+    });
+    return false;
   }
   function delCut(id){
     if(!hasCut(id)) return false;
@@ -1387,12 +1391,14 @@
       if(made) renderPresentationHub();
     });
     hubRowAct(b,'text','Rename \u201c'+p.name+'\u201d',function(){
-      var v=window.prompt('Call this presentation:',p.name);
+      askText({title:'Rename this presentation',value:p.name,ok:'Rename'},
+      function(v){
       if(!v||!v.trim()) return;
       if(typeof renamePresByName==='function') renamePresByName(p.name,v.trim());
       renderPresentationHub();
       if(typeof renderDeckPresentationDrawer==='function')
         renderDeckPresentationDrawer();
+      });
     });
     hubRowAct(b,'minus','Delete \u201c'+p.name+'\u201d for good',function(){
       if(!window.confirm('Delete \u201c'+p.name+'\u201d?\n\nThis cannot '
@@ -1456,9 +1462,10 @@
     n.textContent=count;
     h.appendChild(ic);h.appendChild(t);h.appendChild(n);
     [[bic('pen'),'Rename folder',function(){
-        var v=prompt('Rename the folder:',f);
-        if(v==null) return;
-        renameFolder(f,v);
+        askText({title:'Rename this folder',value:f,ok:'Rename'},function(v){
+          if(v==null) return;
+          renameFolder(f,v);
+        });
       }],
      [bic('exit'),'Delete folder (its presentations move out)',function(){
         deleteFolder(f);}]].forEach(function(b){
@@ -1765,10 +1772,12 @@
           [bic('copy'),'Duplicate “'+nm+'”',function(){
             duplicatePresentation(nm);}],
           mine?[bic('text'),'Rename “'+nm+'”',function(){
-            var v=window.prompt('Call this presentation:',nm);
+            askText({title:'Rename this presentation',value:nm,ok:'Rename'},
+            function(v){
             if(v&&v.trim()&&typeof renamePresentation==='function')
               renamePresentation(v.trim());
             renderDeckPresentationDrawer();
+            });
           }]:null,
           [bic('pin'),pinned?('Unpin “'+nm+'”')
             :('Pin “'+nm+'” to the top of Recent'),function(){
@@ -2483,15 +2492,19 @@
       else if(v.indexOf('sec:')===0){sc.kind='sec';sc.sec=v.slice(4);}
       else {
         var total=(pres.slides||[]).length;
-        var got=prompt('Which slides? Like 4-9, or one number.',
-          '1-'+total);
-        var mm=got&&got.match(/^\s*(\d+)\s*(?:[-\u2013]\s*(\d+))?\s*$/);
-        if(!mm){sel.value=sc.kind==='all'?'all'
-          :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
-        sc.kind='range';
-        var r=dgRange(parseInt(mm[1],10),
-          parseInt(mm[2]||mm[1],10),total);
-        sc.from=r.from;sc.to=r.to;
+        /* T475: the editor's own question; the change lands in its answer */
+        askText({title:'Which slides?',label:'A range like 4-9, or one number',
+          value:'1-'+total,ok:'Use these'},function(got){
+          var mm=got&&got.match(/^\s*(\d+)\s*(?:[-\u2013]\s*(\d+))?\s*$/);
+          if(!mm){sel.value=sc.kind==='all'?'all'
+            :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
+          sc.kind='range';
+          var r=dgRange(parseInt(mm[1],10),
+            parseInt(mm[2]||mm[1],10),total);
+          sc.from=r.from;sc.to=r.to;
+          onchange();
+        });
+        return;
       }
       onchange();
     });
@@ -4583,7 +4596,8 @@
        re-renders the strip, so by the time a dblclick handler arrived the
        node it was editing had already been replaced — the same reason the
        poster version rename is a button and a prompt (2026-08-10) */
-    var v=prompt('Name this section:',secName(id));
+    askText({title:'Name this section',value:secName(id),ok:'Rename'},
+    function(v){
     if(v==null) return;
     v=v.trim(); if(!v) return;
     /* T316: in place, so the arrival and the colour survive a rename
@@ -4591,6 +4605,7 @@
     var rec=secMap()[id]||(secMap()[id]={});
     rec.name=v;
     markDirty();renderFilm();
+    });
   }
   function foldSection(id,on){
     var d=secMap()[id]; if(!d) return;

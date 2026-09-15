@@ -214,3 +214,26 @@ def test_a_clone_can_be_added_with_nothing_selected(out):
     # Home: Save version last; the flip book's doors say what they add
     assert ".rbn-vers{order:9;}" in out
     assert "&#43; Notebook figures&#8230;</button>" in out
+
+
+def test_the_editor_asks_its_own_questions(out):
+    """T475 (2026-09-15 review: three of the Layout group's doors used the
+    browser's native prompt()). Thirty-six of them did, across the
+    editor: one dialog on the .aa-dlg shell asks every one now, and the
+    word prompt( appears nowhere in the deck's code but its comment."""
+    assert "  function askText(o,cb){" in out
+    assert 'id="ask-dlg"' in out and 'id="ask-in"' in out and 'id="ask-area"' in out
+    # its keys are its own even over a menu: window capture, before the
+    # overlay owner's document capture
+    assert ("    window.addEventListener('keydown',function(e){"
+            "\n      if(dlg.hidden) return;") in out
+    # the old box is gone from the editor: every prompt( left in deck.js
+    # is inside a comment
+    from junoview import assets
+    deck = assets.deck_js()
+    body = "\n".join(ln for ln in deck.split("\n")
+                     if not ln.lstrip().startswith(("*", "/*", "//")))
+    assert "prompt(" not in body
+    # the layout's word is the ribbon's (T194), not "arrangement"
+    assert "Call this arrangement" not in out
+    assert "label:'Call this layout'" in out

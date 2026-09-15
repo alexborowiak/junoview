@@ -3396,6 +3396,32 @@ items snap to both. Guides, not ink: never printed or exported"
     <div class="vfull-body" id="vfull-body"></div>
   </div>
   <div class="deck-toast" id="deck-toast" hidden></div>
+  <!-- T475: THE EDITOR'S OWN QUESTION -- the one small dialog every
+       "call this…" and "which slides?" asks through (askText), in place
+       of the browser's prompt(). -->
+  <div class="aa-dlg ask-dlg" id="ask-dlg" hidden role="dialog"
+    aria-labelledby="ask-t">
+    <div class="aa-box ask-box">
+      <div class="aa-head">
+        <span class="eq-t" id="ask-t">Name</span>
+        <span class="deck-spring"></span>
+        <button class="dbtn dc-icon" id="ask-close" type="button"
+          aria-label="Cancel" title="Cancel (Esc)"><i data-ic="exit"></i></button>
+      </div>
+      <div class="aa-what" id="ask-what" hidden></div>
+      <label class="ask-lab" id="ask-lab" for="ask-in" hidden></label>
+      <input class="ask-in" id="ask-in" type="text" spellcheck="false"
+        autocomplete="off">
+      <textarea class="ask-in ask-area" id="ask-area" rows="5" hidden
+        spellcheck="false"></textarea>
+      <div class="aa-foot">
+        <span class="aa-count" id="ask-note"></span>
+        <span class="deck-spring"></span>
+        <button class="dbtn" id="ask-cancel" type="button">Cancel</button>
+        <button class="dbtn primary" id="ask-ok" type="button">OK</button>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- WHILE A MATCH IS ARMED. The user asked for this "in the ribbon", and
      it very nearly went there — but the ribbon may never grow a row and

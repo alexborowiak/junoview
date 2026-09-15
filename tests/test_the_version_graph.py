@@ -64,7 +64,8 @@ def test_a_version_is_called_by_its_time_unless_you_name_it(out):
     assert "  function histSetName(id,nm){" in out
     # ...and the pencil that does it
     assert "      ren.className='dbtn dh-ren';" in out
-    assert "        var v=prompt('Call this version:',e.nm||histClock(e.at));" in out
+    assert ("        askText({title:'Name this version',"
+            "value:e.nm||histClock(e.at),") in out   # T475
     # a checkpoint's name IS the version's name
     assert "      return histSetName(histHead,nm);" in out
 

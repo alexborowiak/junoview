@@ -2862,14 +2862,16 @@
     act(bic('frame')+' New folder','Put the selected items in a named '
       +'folder — filing only, they are NOT grouped',selN.length>=1,
       function(){
-        var nm=prompt('Name this folder','Folder '
-          +(folderNames(s).length+1));
+        askText({title:'New folder',label:'Call this folder',
+          value:'Folder '+(folderNames(s).length+1),ok:'File them'},
+        function(nm){
         if(nm===null) return;
         nm=nm.trim(); if(!nm) return;
         selN.forEach(function(i){if(s.annots[i]) s.annots[i].fold=nm;});
         markDirty();renderSelPane();
         toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
           +'“'+nm+'”');
+        });
       });
     act(bic('exit')+' Out of folder','Take the selected items out of '
       +'their folder',
@@ -2962,13 +2964,16 @@
       fn.title=fname+' \u2014 double-click to rename this folder';
       fn.addEventListener('dblclick',function(e){
         e.stopPropagation();
-        var nm=prompt('Rename this folder',fname);
+        askText({title:'Rename this folder',value:fname,
+          note:'Empty takes the items out of it',ok:'Rename'},
+        function(nm){
         if(nm===null) return;
         nm=nm.trim();
         (s.annots||[]).forEach(function(a){
           if(a&&a.fold===fname){
             if(nm) a.fold=nm; else delete a.fold;}});
         markDirty();renderSelPane();
+        });
       });
       fw.appendChild(fn);
       var fsel=document.createElement('button');
@@ -3021,8 +3026,10 @@
       nm.textContent=meta.name||('Group '+g);
       nm.title='Double-click to rename';
       nm.addEventListener('dblclick',function(){
-        var v=prompt('Group name:',meta.name||('Group '+g));
-        if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        askText({title:'Name this group',value:meta.name||('Group '+g),
+          ok:'Rename'},function(v){
+          if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        });
       });
       f.appendChild(nm);
       var rn=document.createElement('button');
@@ -3031,8 +3038,10 @@
       rn.setAttribute('aria-label','Rename this group');
       rn.addEventListener('click',function(e){
         e.stopPropagation();
-        var v=prompt('Group name:',meta.name||('Group '+g));
-        if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        askText({title:'Name this group',value:meta.name||('Group '+g),
+          ok:'Rename'},function(v){
+          if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        });
       });
       f.appendChild(rn);
       var dp=document.createElement('button');

@@ -2036,10 +2036,10 @@
     var a=(pres.slides[cur].annots||[])[i]; if(!a) return;
     var was=a.link?(a.link.to==='url'?a.link.href
       :('slide '+(linkSlideIdx(a.link.sid)+1))):'';
-    var got=prompt('Where should clicking this go while you present?'
-      +'\n\n\u2022 a link: https://\u2026 or mailto:\u2026'
-      +'\n\u2022 a slide in this deck: its number, like 7'
-      +'\n\nLeave it empty to remove the link.',was);
+    askText({title:'Where clicking this goes, while you present',
+      label:'A link (https://\u2026 or mailto:\u2026), or a slide\u2019s '
+        +'number, like 7',value:was,placeholder:'https://\u2026 or 7',
+      note:'Empty removes the link',ok:'Link'},function(got){
     if(got===null) return;
     got=String(got).trim();
     if(!got){delete a.link;markDirty();renderSlide();
@@ -2060,15 +2060,18 @@
     }
     markDirty();renderSlide();
     toast('Linked to '+linkLabel(a.link));
+    });
   }
   function setAltText(idxs){
     var ans=(pres.slides[cur].annots||[]);
     var first=ans[idxs[0]]||{};
     var was=first.dec?'':(first.alt||'');
-    var got=prompt('What does this picture show? Somebody who cannot '
-      +'see it reads this instead of it.\n\nLeave it empty to mark the '
-      +'picture decorative \u2014 a rule, a texture, a logo already '
-      +'named in the words.',was);
+    askText({title:'What this picture shows',
+      what:'Somebody who cannot see it reads this instead of it.',
+      label:'Alt text',value:was,multi:true,ok:'Set',
+      note:'Empty marks the picture decorative \u2014 a rule, a texture, '
+        +'a logo already named in the words. Ctrl+Enter to set.'},
+    function(got){
     if(got===null) return;
     got=got.trim();
     idxs.forEach(function(i){
@@ -2079,6 +2082,7 @@
     markDirty();renderSlide();
     toast(got?'Alt text set':'Marked decorative \u2014 a screen reader '
       +'will skip '+(idxs.length===1?'it':'them'));
+    });
   }
   /* REPEAT ON OTHER SLIDES. This is deliberately a copy, not a linked
      component: the object can be edited independently after it lands. The
@@ -2097,14 +2101,22 @@
       for(i=0;i<(pres.slides||[]).length;i++)
         if(i!==cur&&(pres.slides[i].sec||'')===sec) targets.push(i);
     } else {
-      var raw=prompt('Slide range (for example 2-6):','1-'+pres.slides.length);
-      if(raw===null) return;
-      var m=String(raw).trim().match(/^(\d+)\s*(?:-|–|\.\.)\s*(\d+)$/);
-      if(!m){toast('Use a range such as 2-6');return;}
-      var lo=Math.max(1,Math.min(+m[1],+m[2]))-1;
-      var hi=Math.min(pres.slides.length,Math.max(+m[1],+m[2]));
-      for(i=lo;i<hi;i++) if(i!==cur) targets.push(i);
+      /* T475: the editor's own question; the copy happens in its answer */
+      askText({title:'Repeat on which slides?',label:'A range of slides',
+        value:'1-'+pres.slides.length,placeholder:'2-6',ok:'Repeat'},
+      function(raw){
+        if(raw===null) return;
+        var m=String(raw).trim().match(/^(\d+)\s*(?:-|–|\.\.)\s*(\d+)$/);
+        if(!m){toast('Use a range such as 2-6');return;}
+        var lo=Math.max(1,Math.min(+m[1],+m[2]))-1;
+        var hi=Math.min(pres.slides.length,Math.max(+m[1],+m[2]));
+        for(var i2=lo;i2<hi;i2++) if(i2!==cur) targets.push(i2);
+        repeatOnto(targets);
+      });
+      return;
     }
+    repeatOnto(targets);
+    function repeatOnto(targets){
     if(!targets.length){toast('There are no other slides in that scope');return;}
     var n=0;
     targets.forEach(function(ti){
@@ -2120,6 +2132,7 @@
     markDirty();refresh();renderFilm();
     toast(n+' object'+(n===1?'':'s')+' added to '+targets.length
       +' slide'+(targets.length===1?'':'s')+' — edit each copy freely');
+    }
   }
   /* ---- THE CANVAS RIGHT-CLICK MENU -------------------------------------
      Paste has three answers now (the plain one, in place, here) and a
@@ -2755,7 +2768,10 @@
               'inherit');
             row('Save as a named variation…','',function(){
               var base=fa.style,p=styleDef(base);
-              var nm=prompt('Call this variation of '+p.label+' what?','');
+              askText({title:'A variation of '+p.label,
+                label:'Call this variation',value:'',ok:'Save',
+                note:'It follows '+p.label+' for every property you '
+                  +'did not change'},function(nm){
               if(nm===null) return;
               nm=String(nm).trim();
               if(!nm){toast('A variation needs a name');return;}
@@ -2766,6 +2782,7 @@
               applyStyleTo(fa,v.id);
               markDirty();refresh();
               toast('Saved “'+nm+'” as a variation of '+p.label);
+              });
             },'Keep this as a reusable named look. It follows the current '
               +'type for every property you did not change','plus');
           }

@@ -1362,11 +1362,14 @@
           +'where it came from so you can re-read it; a site that '
           +'refuses the read leaves it as a link, and that is said.',
       function(){
-        var p=prompt(picCanEmbed()
-          ? 'Path or link to a picture:'
-          : 'Link to a picture (a web address):','');
+        askText({title:'A picture by address',
+          label:picCanEmbed()?'A path on this computer, or a web address'
+            :'A web address',value:'',ok:'Place it',
+          placeholder:picCanEmbed()?'C:\\figures\\map.png or https://\u2026'
+            :'https://\u2026'},function(p){
         if(!p||!p.trim()) return;
-        objInto=idx;placeFromAddress(p.trim());}]
+        objInto=idx;placeFromAddress(p.trim());
+        });}]
     ].forEach(function(r){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';

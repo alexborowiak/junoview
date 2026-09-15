@@ -9087,3 +9087,30 @@ any reading. The rest are T466 onwards.
   with the reason, until the deck has a set. The canvas menu's copy of
   the list says "add a clone of" rather than "components" (T420's one
   word). Driven at 1500.
+- [x] **T475 — The editor asks its own questions: no more prompt().**
+  (2026-09-15 review: "Eight doors in one Layout group open four
+  different kinds of surface, and three of them use the browser's
+  native prompt()"; "colour is typed as '#hex or @token' into a native
+  prompt".) It was thirty-six of them across the editor — every "call
+  this…" (a layout, a master, a style set, a colour theme, a
+  variation, a version, a branch, a checkpoint, a section, a folder, a
+  group, a presentation), the DOI, a link's target, alt text, a slide
+  range, a font by name, a picture by address, a web page's address,
+  the watermark / header / footer, the table's column groups. The
+  browser's box is unstyled, un-themed, blocked in some embeddings,
+  and cannot say what it is asking about. One small dialog on the
+  .aa-dlg shell (`askText(o,cb)` in 60-saving-and-export.js; `#ask-dlg`)
+  asks all of them: a title, a line of help, a label, the field
+  pre-filled and selected, a note under it, Cancel and a verb (Save,
+  Rename, Make it, Place it…), Enter and Escape, multi-line with
+  Ctrl+Enter for alt text and the column groups. Every caller is a
+  callback now — renameCut re-syncs the versions menu itself, the
+  repeat-on-slides range and the Style system's scope range finish
+  their job in the answer, askWebUrl takes a callback. Its keys are
+  taken on window in capture, because a question asked from inside a
+  menu sits over an overlay whose Escape is on document in capture
+  and won — Escape closed the menu under the question and left the
+  question standing (driven). "Call this arrangement" says layout,
+  the ribbon's word since T194. Driven at 1500: Save layout, New
+  master (Escape keeps the panel, a click inside keeps the panel),
+  the web address (a bad one is refused), no window.prompt reached.

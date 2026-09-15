@@ -1982,8 +1982,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # strip of grids, the panel section, the CSS.
 # T474 (2026-09-15): Saved versions last on Home; "Notebook figures";
 # the Clone… door on Images > Place and its menu; the canvas menu's words.
-EXPECTED_MD5 = "ba481be4254990cbc9e554b340e2c9e6"
-EXPECTED_BYTES = 4399685
+# T475 (2026-09-15): the editor's own question -- askText and #ask-dlg
+# in place of thirty-six window.prompt() calls.
+EXPECTED_MD5 = "2aa5bec9241a495894f24777b7339fe9"
+EXPECTED_BYTES = 4409673
 
 
 def _render_example() -> str:

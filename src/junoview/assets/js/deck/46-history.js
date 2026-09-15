@@ -401,12 +401,15 @@
       ren.setAttribute('aria-label','Name this version');
       ren.addEventListener('click',function(ev){
         ev.stopPropagation();
-        var v=prompt('Call this version:',e.nm||histClock(e.at));
+        askText({title:'Name this version',value:e.nm||histClock(e.at),
+          ok:'Name it',note:'Empty goes back to the time it was saved'},
+        function(v){
         if(v===null) return;
         v=v.trim();
         histSetName(e.id,v).then(function(){
           if(v) e.nm=v; else delete e.nm;
           histRows(ov,ix);
+        });
         });
       });
       row.appendChild(ren);
@@ -642,7 +645,9 @@
         +'the line you were on';
       branch.addEventListener('click',function(){
         var suggest=ent.br?(ent.br+' 2'):'alternative';
-        var nm=prompt('Call this branch:',suggest);
+        askText({title:'Branch from '+histLabel(ent),label:'Call this branch',
+          value:suggest,ok:'Branch',note:'What you save next descends '
+            +'from that version, not from where you are'},function(nm){
         if(nm===null) return;
         nm=nm.trim()||suggest;
         snapTake('before branching').then(function(){
@@ -652,6 +657,7 @@
           toast('On branch \u201c'+nm+'\u201d \u2014 what you save next '
             +'descends from '+histLabel(ent)+', not from where you '
             +'were');
+        });
         });
       });
       acts.appendChild(branch);
@@ -803,7 +809,9 @@
      snapshot with a name and a mark, so going back to it and
      branching from it are the buttons that already exist. */
   function histCheckpoint(ov){
-    var nm=prompt('Call this checkpoint:','before the rewrite');
+    askText({title:'Checkpoint',label:'Call this checkpoint',
+      value:'before the rewrite',ok:'Save',note:'Kept even when older '
+        +'versions are dropped'},function(nm){
     if(nm===null) return;
     nm=nm.trim()||'checkpoint';
     snapTake('checkpoint',undefined,undefined,1).then(function(){
@@ -815,6 +823,7 @@
         +'even when older versions are dropped');
       if(ov&&document.body.contains(ov))
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
+    });
     });
   }
   /* T465: openHistory(wantId) opens ON a version -- the open-items

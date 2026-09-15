@@ -534,8 +534,14 @@
           'The page colour every wearer inherits. The slide\u2019s own '
           +'Background still wins where one is set.',
           function(){
-            var v=prompt('Background \u2014 #hex or @token, empty '
-              +'to clear','');
+            /* T475: the editor's own question -- and the deck's colour
+               names, since a master's page is one of them */
+            askText({title:'Background of \u201c'+(m.name||'Master')+'\u201d',
+              label:'A colour: #123456, or a deck colour by name '
+                +'(@page, @accent, @surface\u2026)',
+              value:m.bg||'',placeholder:'empty for the deck\u2019s page',
+              ok:'Set',note:'The slide\u2019s own Background still wins '
+                +'where one is set'},function(v){
             if(v===null) return;
             v=v.trim();
             if(v&&!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)
@@ -544,6 +550,7 @@
             }
             if(v) m.bg=v; else delete m.bg;
             mastRepaint();render();
+            });
           }));
         var cl=cmpList();
         var cur2=m.cmp&&cmpStore()[m.cmp];
@@ -617,12 +624,14 @@
       nb.innerHTML=(bic('inherit')||'')+' New master\u2026';
       nb.addEventListener('click',function(e){
         e.stopPropagation();
-        var nm=prompt('Name this master \u2014 like \u201cSection '
-          +'divider\u201d or \u201cBranded\u201d','');
+        askText({title:'New slide master',label:'Call this master',
+          placeholder:'like \u201cSection divider\u201d or \u201cBranded\u201d',
+          value:'',ok:'Make it'},function(nm){
         if(nm===null) return;
         var id=nextMastId();
         mastStore()[id]={name:nm.trim()||('Master '+id.slice(1))};
         markDirty();render();
+        });
       });
       body.appendChild(nb);
     }
@@ -1408,8 +1417,9 @@
       var sl=pres.slides[cur];
       if(!sl||!(sl.annots||[]).length){
         toast('Lay something out on this slide first');return;}
-      var nm=prompt('Call this arrangement:',
-        slideTitle(sl).slice(0,30)||'Arrangement');
+      askText({title:'Save this slide\u2019s layout',label:'Call this layout',
+        value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -1420,6 +1430,7 @@
          empty, so nothing was suggested at all */
       seed();buildLib();buildSug();sync();
       toast('“'+nm+'” saved — offered on every deck you open here');
+      });
     });
     $('#ar-all').addEventListener('click',function(){
       (pres.slides||[]).forEach(function(sl,i){
@@ -1635,7 +1646,9 @@
     });
     $('#ss-save').addEventListener('click',function(e){
       e.stopPropagation();
-      var nm=prompt('Call this style set:','My set');
+      askText({title:'Save this deck\u2019s type as a set',
+        label:'Call this style set',value:'My set',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var st={};
@@ -1662,11 +1675,14 @@
       build();
       showSaved($('#ss-grid'));
       toast('“'+nm+'” saved — it is offered on every deck you open here');
+      });
     });
     var cs=$('#ss-csave');
     if(cs) cs.addEventListener('click',function(e){
       e.stopPropagation();
-      var nm=prompt('Call this colour theme:','My colours');
+      askText({title:'Save this deck\u2019s colours as a theme',
+        label:'Call this colour theme',value:'My colours',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       saveColourTheme(nm);
@@ -1674,6 +1690,7 @@
       showSaved($('#ss-cgrid'));
       toast('\u201c'+nm+'\u201d saved \u2014 it is offered on every deck '
         +'you open here');
+      });
     });
     /* T315: THE DOOR ON THE ROW. The gallery was reachable only as the
        first row of the Text styles menu -- a look you pick once, hidden
@@ -2776,7 +2793,9 @@
        type whose parent is the style they all already wore. */
     function commitAsVariation(idxs,want,samp){
       var base=srcA.style,p=styleDef(base);
-      var nm=prompt('Call this variation of '+p.label+' what?','');
+      askText({title:'A variation of '+p.label,label:'Call this variation',
+        value:'',ok:'Save',note:'It follows '+p.label+' for every '
+          +'property you did not change'},function(nm){
       if(nm===null) return;                    /* cancelled: stay open */
       nm=String(nm).trim();
       if(!nm){toast('A variation needs a name');return;}
@@ -2801,6 +2820,7 @@
         +' now wear \u201c'+nm+'\u201d, a variation of '+p.label
         +' \u2014 change '+p.label+' and they follow. Ctrl+Z undoes '
         +'the lot.',7000);
+      });
     }
     $('#aa-ok').addEventListener('click',commit);
     $('#aa-cancel').addEventListener('click',close);

@@ -1074,9 +1074,10 @@ def test_the_door_promises_only_what_this_mode_can_do(out):
     assert "      picCanEmbed()\n        ? 'A file on this computer" in out
     # T437: read and kept even here; a refusing site leaves it a link
     assert "        : 'A web address. It is read and kept in the deck," in out
-    assert ("        var p=prompt(picCanEmbed()\n"
-            "          ? 'Path or link to a picture:'\n"
-            "          : 'Link to a picture (a web address):','');") in out
+    # T475: the editor's own question, not the browser's prompt()
+    assert ("          label:picCanEmbed()?"
+            "'A path on this computer, or a web address'") in out
+    assert "            :'A web address',value:'',ok:'Place it'," in out
 
 
 def test_every_linked_picture_can_actually_be_read(out):

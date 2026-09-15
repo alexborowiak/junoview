@@ -670,11 +670,13 @@
           'star');
         row('Name this version\u2026',function(){
           var s2=pres.slides[i]; if(!s2) return;
-          var v=prompt('Name this version:',s2.label||'');
+          askText({title:'Name this version',value:s2.label||'',ok:'Name it'},
+          function(v){
           if(v==null) return;
           v=v.trim();
           if(v) s2.label=v; else delete s2.label;
           markDirty();renderFilm();
+          });
         },null,'pen');
         row('Make it a slide of its own',function(){
           var s3=pres.slides[i]; if(!s3) return;
@@ -782,11 +784,13 @@
     row('Move it down',function(){moveSlide(i,1);},null,'next');
     if(pageOf().poster) row('Rename this version\u2026',function(){
       var s2=pres.slides[i]; if(!s2) return;
-      var v=prompt('Name this version:',s2.label||slideTitle(s2));
+      askText({title:'Name this version',value:s2.label||slideTitle(s2),
+        ok:'Rename'},function(v){
       if(v==null) return;
       v=v.trim();
       if(v) s2.label=v; else delete s2.label;
       markDirty();renderFilm();
+      });
     },null,'pen');
     row('Duplicate',function(){dupSlide(i);},null,'copy');
     if(ar0&&!isAlt0)
@@ -1557,13 +1561,16 @@
         +'file, no diverging copies';
       nb.addEventListener('click',function(e){
         e.stopPropagation();overlayHide(menu);
-        var nm=prompt('Name for this version:','20-min');
+        askText({title:'A new version of this deck',label:'Call it',
+          value:'20-min',ok:'Make it',note:'Then right-click a slide to '
+            +'put it in'},function(nm){
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
         var id=newCut(nm);if(!id) return;
         toast('“'+nm+'” created — right-click a '
           +'slide to put it in');
         setCut(id);syncCuts();
+        });
       });
       add(nb);
       var sep=document.createElement('div');
@@ -2828,7 +2835,12 @@
      the same gesture as clearing any other field. */
   function furnEdit(key,label,hint,dflt){
     var cur_=pres[key]||{};
-    var v=prompt(label+'\n\n'+hint,cur_.text||dflt||'');
+    /* T475: the editor's own question; the hint's first line is what
+       it is, the rest is the note under the field */
+    var lines=String(hint).split('\n');
+    askText({title:label,label:lines[0],value:cur_.text||dflt||'',
+      note:lines.slice(1).join(' '),ok:cur_.text?'Change it':'Add it'},
+    function(v){
     if(v===null) return;
     v=v.trim();
     if(!v) delete pres[key];
@@ -2842,6 +2854,7 @@
     }
     markDirty();refresh();syncFurnBtns();
     toast(v?(label+' set'):(label+' removed'));
+    });
   }
   function syncFurnBtns(){
     [['#dc-wmark','wmark'],['#dc-head','head'],['#dc-foot','foot']]

@@ -407,7 +407,9 @@
         +'Junoview app. Import a .bib instead.',6000);
       return;
     }
-    var raw=prompt('The DOI (or a doi.org link):','');
+    askText({title:'Add a reference by DOI',label:'The DOI, or a doi.org link',
+      value:'',placeholder:'10.1038/s41586-020-2649-2',ok:'Look it up'},
+    function(raw){
     if(raw==null) return;
     var doi=String(raw).trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'')
       .replace(/^doi:\s*/i,'');
@@ -432,6 +434,7 @@
         :'Already in the library; the entry was refreshed',6000);
     }).catch(function(e){
       toast('DOI lookup failed: '+((e&&e.message)||e),6000);
+    });
     });
   }
   function citeImportText(text,name){

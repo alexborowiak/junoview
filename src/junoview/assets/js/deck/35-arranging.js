@@ -1199,8 +1199,11 @@
       var sl=pres.slides[cur];
       if(!sl||!(sl.annots||[]).length){
         toast('Lay something out on this slide first');return;}
-      var nm=prompt('Call this arrangement:',
-        slideTitle(sl).slice(0,30)||'Arrangement');
+      /* T475: the editor's own question, and the ribbon's word for it
+         (T194: layout, not arrangement) */
+      askText({title:'Save this slide\u2019s layout',label:'Call this layout',
+        value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -1208,6 +1211,7 @@
       arrSave(l);
       toast('“'+nm+'” saved — offered on every deck you '
         +'open here');
+      });
     });
     });
   }

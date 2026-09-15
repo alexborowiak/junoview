@@ -406,11 +406,14 @@
     gAt.textContent=gs.length
       ?(gs.length+' group'+(gs.length===1?'':'s')):'none';
     btn(gr,'Group these columns…',false,function(){
-      var txt=prompt('One group per line, as "first column, how many, '
-        +'label" — for example:\n\n2, 3, 2020\n5, 3, 2021\n\n'
-        +'Columns are numbered from 1. Leave empty to remove them.',
-        gs.map(function(g){
-          return ((g.at|0)+1)+', '+(g.n|0)+', '+(g.text||'');}).join('\n'));
+      askText({title:'Group these columns',multi:true,
+        label:'One group per line: first column, how many, label',
+        placeholder:'2, 3, 2020\n5, 3, 2021',
+        note:'Columns are numbered from 1. Empty removes the groups. '
+          +'Ctrl+Enter to apply.',ok:'Apply',
+        value:gs.map(function(g){
+          return ((g.at|0)+1)+', '+(g.n|0)+', '+(g.text||'');}).join('\n')},
+      function(txt){
       if(txt==null) return;
       var made=[];
       String(txt).split(/\r?\n/).forEach(function(ln){
@@ -423,6 +426,7 @@
       });
       tablePaneWrite(function(a2){
         if(made.length) a2.groups=made; else delete a2.groups;});
+      });
     },'A row above the header spanning groups of columns');
     gr.appendChild(gAt);
   }
