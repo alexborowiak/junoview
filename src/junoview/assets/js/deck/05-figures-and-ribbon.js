@@ -1001,6 +1001,9 @@
   }
   function applySideRibbon(){
     var on=wantSide();
+    /* T465: a shelf open when the ribbon turns sideways is not carried
+       into the column */
+    if(on&&mode==='edit'&&typeof rbnShelfDismiss==='function') rbnShelfDismiss();
     deckEl.classList.toggle('rbn-side',on&&mode==='edit');
     var b=$('#vw-side');
     if(b) b.setAttribute('aria-pressed',on?'true':'false');
@@ -2030,7 +2033,12 @@
          its options open in the ribbon's own shelf. A group folded only
          because the window is narrow keeps the pop-up: there is by
          definition no room for a shelf on that row. */
-      if(compact&&rbnShelfOpen(g)){rbnShelfRefit();return;}
+      /* T465: ...and a ribbon standing on its side (every portrait
+         poster) has no line to give a shelf either -- the shelf became
+         a 711px block at the foot of the column with one tile visible
+         behind a 63px scrollbar (2026-09-15 review) */
+      if(compact&&!deckEl.classList.contains('rbn-side')&&rbnShelfOpen(g)){
+        rbnShelfRefit();return;}
       if(!menu.hidden){overlayHide(menu);return;}
       overlayShow(btn,menu);floatMenu(btn,menu);
     });
@@ -3377,10 +3385,10 @@
       if(!st.moved) requestAnimationFrame(syncPaneDock);
     }).observe(pane);
   }
-  ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'imgpane','mediapane','chartpane','tablepane','citepane',
-   'stdpane','tidypane','objhist','provpane','flippane','sizepane']
-    .forEach(function(id){wirePane(document.getElementById(id));});
+  /* T465: PANE_IDS is the list -- this one named 'varspane', which no
+     longer exists, and not 'reviewpane', so the Review pane was the
+     one inspector you could not drag or resize (2026-09-15 review). */
+  PANE_IDS.forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
     if(!ob||!pane) return;

@@ -1926,8 +1926,20 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # keeps the undo stack; Remove all removes exits and movements; a
 # colour door does not preview on open; a references box is not an
 # empty box; layout tile labels are 9.5px sans, never clipped.
-EXPECTED_MD5 = "f9992cb4c35b89c8cd008970428a3e77"
-EXPECTED_BYTES = 4330693
+# T466 (2026-09-15): the review's second batch -- the Order tab lists
+# exit clicks; every movement is on the Motion shelf; the Notes pane has
+# a Timing tab and Present's Timing opens it; a side-docked ribbon uses
+# the pop-up, not the shelf; the text strip's Show-all window closes on
+# a pick and the row refits; Z spotlights in the show; an empty run
+# takes no column; the Style system's rail buttons fit and its board
+# draws arrows where they are on the page's colour; the History
+# screen's selected tab reads in Light; every pane is wired from
+# PANE_IDS; the Text tiles follow a style edit and a new style gets its
+# tile at once; the Citations pane follows a Cite; the heading toggle
+# reads the resolved answer; a table's Colour door shows its swatches;
+# a hidden checkbox row is hidden; the empty flip book names real doors.
+EXPECTED_MD5 = "d422bb2a4346b35ccfb50aedb80d03a7"
+EXPECTED_BYTES = 4339409
 
 
 def _render_example() -> str:

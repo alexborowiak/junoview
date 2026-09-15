@@ -340,6 +340,8 @@
         if(b3) b3.hidden=(which!=='pad');
         var b4=$('#notespane-reh');
         if(b4) b4.hidden=(which!=='reh');
+        var b5=$('#notespane-time');   /* T465 */
+        if(b5) b5.hidden=(which!=='time');
         if(which==='pad') renderPad();
         if(which==='reh') renderReh();
       });
@@ -406,6 +408,11 @@
       });
     });
     markDirty();refresh();
+    /* T465: the Text tab's tiles are specimens of these styles and were
+       rebuilt only when the registry changed -- a Heading 1 made red,
+       serif and italic stayed white bold sans on its tile, with the
+       old point size on the tooltip (2026-09-15 review, driven) */
+    if(typeof txStripSync==='function') txStripSync(true);
     return n;
   }
   /* every style one step up or down, in proportion - the whole deck's
@@ -475,8 +482,16 @@
       function toggle(label,key,title){
         var b=document.createElement('button');
         b.className='dbtn stm-tg';b.textContent=label;
-        b.setAttribute('aria-pressed',(!!d[key]).toString());
+        /* T465: "counts as a heading" is answered by isHeadingStyle,
+           which knows the four built-in headings; d.head is unset for
+           them, so the toggle read OFF on Heading 1 (2026-09-15 review) */
+        var onNow=(key==='head'&&typeof isHeadingStyle==='function')
+          ?isHeadingStyle(id):!!d[key];
+        b.setAttribute('aria-pressed',onNow.toString());
         b.title=title;
+        if(key==='head'&&onNow&&HEADING_STYLES.indexOf(id)>=0){
+          b.disabled=true;b.title='Always a heading';
+        }
         b.addEventListener('click',function(e){
           e.stopPropagation();
           var o=over();
@@ -2763,7 +2778,7 @@
           var fph=document.createElement('div');
           fph.className='an-flipempty';
           fph.textContent=editing
-            ?'Empty flip book — use + Add to put figures in it'
+            ?'Empty flip book — Figures, Pictures… or Pages… on the Object tab put pages in it'
             :'';
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){

@@ -434,6 +434,7 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
   outline:none;}
 .find-in:focus{border-color:var(--cyan);}
 .find-opts{display:flex;gap:12px;}
+.find-ck[hidden]{display:none!important;}   /* T465: the house rule */
 .find-ck{font-size:11px;color:var(--chrome-ink-2);display:flex;align-items:center;
   gap:4px;cursor:pointer;}
 .find-foot{display:flex;align-items:center;gap:5px;}
@@ -2957,7 +2958,8 @@ body.slide-editing .an-item.sel[class*="an-move-"]:not(.an-mo-preview){
 .dh-tabs{display:flex;align-items:center;gap:6px;margin:0 0 10px;
   border-bottom:1px solid #ffffff14;padding-bottom:9px;}
 .dh-tab[aria-pressed="true"]{border-color:var(--cyan);
-  background:color-mix(in srgb,var(--cyan) 18%,transparent);}
+  background:color-mix(in srgb,var(--cyan) 18%,transparent);
+  color:var(--chrome-ink);}   /* T465: an 18% wash keeps the theme's ink */
 .dh-every{display:inline-flex;align-items:center;gap:5px;margin-left:auto;
   font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-2);cursor:pointer;}
 .dh-chlist{display:flex;flex-direction:column;}
@@ -5464,7 +5466,7 @@ body.jv-lens .deck-stage{cursor:crosshair;}
 .dh-snap{border-left:3px solid var(--dh-lane,transparent);
   border-left:2px solid transparent;}
 .dh-snap.head{border-left-color:var(--amber,#f0a848);}
-.dh-snap.head .dh-when{color:var(--amber,#f0a848);}
+.dh-snap.head .dh-when{color:var(--warning,#f0a848);}   /* T465: per-scheme */
 .dh-snap.forked .dh-why{color:var(--cyan);}
 .dh-onbr{display:inline-flex;align-items:center;gap:5px;margin-left:10px;
   font-family:var(--mono);font-size:10px;color:var(--cyan);
@@ -5494,7 +5496,8 @@ body.jv-lens .deck-stage{cursor:crosshair;}
 .dg-cnt-odd .dg-cnt-l{color:var(--amber);}
 .dg-cnt-loose .dg-cnt-l{color:var(--chrome-ink-2);}
 /* the fix on its own line under the words, so neither is squeezed */
-.dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;flex:1 0 100%;
+.dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;
+  flex:1 0 calc(100% - 28px);min-width:0;box-sizing:border-box;
   margin-left:28px;width:auto;justify-content:center;}
 /* T444: the deck colours panel's preview */
 .tok-preview{margin:4px 0 8px;}
@@ -6356,7 +6359,12 @@ body.light .rbn-geom input{color:var(--ink-2);background:var(--input-bg);
    hidden takes no column. */
 .rbn-cell#tx-run-style .dbtn,.rbn-cell#tx-run-align .dbtn{padding:3px 7px;}
 .rbn-cell#tx-run-style .dbtn.etm{min-width:28px;justify-content:center;}
-.rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}
+/* T465: the CHILD combinator. Without it the <b>/<i>/<u>/<s> inside
+   the hidden buttons counted as "something showing", so B/I/U/S and
+   Left/Centre/Right stayed as 2px slivers beside a shape or a table and
+   pushed the row's first control to the bottom track (2026-09-15
+   review, measured). */
+.rbn-row>.rbn-cell:not(:has(>:not([hidden]))){display:none;}
 
 /* ---- T209: THE REVIEW VIEWS, FULL SCREEN --------------------------------
    Mismatched text and Tidy page draw their cards into a grid with room

@@ -91,7 +91,9 @@ def test_arrange_and_object_groups_pair_what_belongs_together():
 
 
 def test_a_run_with_nothing_showing_takes_no_column(out):
-    assert ".rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}" in out
+    # T465: the CHILD combinator -- the <b> inside a hidden button must
+    # not count as something showing
+    assert ".rbn-row>.rbn-cell:not(:has(>:not([hidden]))){display:none;}" in out
     assert ".edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile," in out
 
 

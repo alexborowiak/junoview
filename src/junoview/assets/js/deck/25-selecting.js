@@ -304,7 +304,11 @@
     var isNum=(typeof selAnnot==='number');
     /* the colour swatches drive a.color for text / arrows / shapes, and a.txcol
        for a markdown note — but NOT images or figure/code cells */
-    var colourable=isText||kind==='arrow'||kind==='rect'||noteCell;
+    /* T465: the same set the door (hasInk, below) shows for -- a table
+       and a pen stroke got a Colour door that opened on headings over
+       nothing, every swatch hidden (2026-09-15 review) */
+    var colourable=isText||kind==='arrow'||kind==='rect'||noteCell
+      ||isTbl||kind==='draw';
     $$('.sw:not(.swbg)',bar).forEach(function(sw){
       sw.hidden=!colourable;
       var cur_=(kind==='cell')?(a.txcol||''):(a.color||defaultColor(kind));

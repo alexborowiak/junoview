@@ -55,7 +55,9 @@ def test_one_row_at_a_time_and_it_is_the_same_row(out):
     assert "      if(menu&&row) menu.appendChild(row);" in out
     # only a group the user keeps folded goes to the shelf; one folded
     # because the window is narrow keeps its pop-up
-    assert "      if(compact&&rbnShelfOpen(g)){rbnShelfRefit();return;}" in out
+    # (T465: not on a side-docked ribbon, which has no line for a shelf)
+    assert ("      if(compact&&!deckEl.classList.contains('rbn-side')"
+            "&&rbnShelfOpen(g)){") in out
 
 
 def test_the_shelf_survives_every_measuring_pass(out):

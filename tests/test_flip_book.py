@@ -230,7 +230,9 @@ def test_the_frames_pane_is_the_slide_strips_shape(out):
     assert "function renderFlipPane(){" in out
     assert "function frameLabel(f,i){" in out
     # it joins the panes that share the corner and the remembered geometry
-    assert "'stdpane','tidypane','objhist','provpane','flippane','sizepane']" in out
+    # (T465: every pane is wired from PANE_IDS, the one list)
+    assert ("  PANE_IDS.forEach(function(id){"
+            "wirePane(document.getElementById(id));});") in out
 
 
 def test_tying_acts_on_the_whole_selection(out):

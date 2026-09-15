@@ -1691,9 +1691,11 @@ items snap to both. Guides, not ink: never printed or exported"
                    "notes and timing should be two different buttons").
                    They open the same pane on different tabs, which is
                    what the pane was already built to do. -->
+              <!-- T465: two doors, two names -- Notes lands on the notes,
+                   Timing on the pane's Timing tab -->
               <button class="dbtn rbn-sm" id="pr-notes"
                 title="Your speaker notes for each slide"
-                ><i data-ic="style"></i> Notes &amp; timing&#8230;</button>
+                ><i data-ic="style"></i> Notes&#8230;</button>
               <button class="dbtn rbn-sm" id="pr-timing"
                 title="How long you want each slide to take, how long
  the whole talk is, and what your rehearsals actually took"
@@ -3003,8 +3005,14 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="selpane-h"><span>Notes &amp; timing</span>
           <button class="dbtn dc-icon" id="notespane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
+        <!-- T465: TIMING IS A TAB. Present's Timing button landed on
+             "Whole talk", which holds only whole-talk NOTES -- not one
+             of the timing fields its tooltip promised (2026-09-15
+             review). The target, the rehearsal readout, the running
+             total and the talk's length are a tab of their own now. -->
         <div class="np-tabs" id="np-tabs">
           <button class="np-tab on" data-np="slide">This slide</button>
+          <button class="np-tab" data-np="time">Timing</button>
           <button class="np-tab" data-np="deck">Whole talk</button>
           <button class="np-tab" data-np="pad">Scratchpad</button>
           <button class="np-tab" data-np="reh">Rehearsals</button>
@@ -3021,6 +3029,8 @@ items snap to both. Guides, not ink: never printed or exported"
           <button class="dbtn np-bigbtn" id="np-big"
             title="The slide, your notes and how they will read, side by
  side"><i data-ic="expand"></i> Bigger editor</button>
+        </div>
+        <div class="selpane-list" id="notespane-time" hidden>
           <label class="np-lab" for="np-goal">How long you want to spend
             here</label>
           <div class="np-row">

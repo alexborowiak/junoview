@@ -48,7 +48,13 @@ def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
 
 
 def test_motion_keeps_going(out):
-    assert "  var MOTION_FX=[['','None'],['wobble','Wobble'],['bob','Float']," in out
+    # T465: every movement is on the shelf, built from the panel's own
+    # MOTIONS list beside the four markup tiles, so the door always has
+    # a readout
+    assert "  var MOTION_FX=[['','None']];" in out
+    assert "    MOTIONS.forEach(function(m){MOTION_FX.push([m[0],m[1],m[4]]);});" in out
+    assert ("        b.type='button';b.className='fx-tile';"
+            "b.id='anim-move-'+pr[0];") in out
     for cid in ("anim-move-none", "anim-move-wobble", "anim-move-bob",
                 "anim-move-pulse"):
         assert f'id="{cid}"' in out, cid

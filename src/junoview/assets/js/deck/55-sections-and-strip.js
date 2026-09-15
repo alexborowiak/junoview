@@ -1790,7 +1790,7 @@
              tab they land on -- the pane has had those tabs since
              T29 and nothing pointed at them */
           if(p[0]==='pr-notes'||p[0]==='pr-timing'){
-            var want=(p[0]==='pr-timing')?'deck':'slide';
+            var want=(p[0]==='pr-timing')?'time':'slide';   /* T465 */
             setTimeout(function(){
               var t=$('.np-tab[data-np="'+want+'"]');
               if(t) t.click();
@@ -1939,7 +1939,13 @@
       function home(){
         if(strip.parentNode===frame) return;
         frame.insertBefore(strip,nav||more);
+        frame.style.width='';
         more.setAttribute('aria-expanded','false');
+        /* T465: the ladder was re-judged while the strip was away and
+           every rung came off; with the strip back the row overflowed
+           the window by 220px until something resized it (2026-09-15
+           review). Fit again, now. */
+        if(typeof fitEditRibbon==='function') fitEditRibbon();
         setTimeout(ends,0);
       }
       function build(){
@@ -1957,12 +1963,15 @@
           .appendChild(panel);
         /* a tile picked in the window closes it, after its own
            handler has run */
+        /* CAPTURE (T465): a text tile's own handler stops propagation,
+           so a bubbling listener never heard the pick and the window
+           stayed open over the armed tool */
         panel.addEventListener('click',function(e){
           var t=e.target&&e.target.closest?
             e.target.closest('.fx-tile,.dbtn.lay'):null;
           if(t&&panel.contains(t))
             setTimeout(function(){overlayHide(panel);},0);
-        });
+        },true);
         new MutationObserver(function(){
           if(panel.hidden) home();
         }).observe(panel,{attributes:true,attributeFilter:['hidden']});
@@ -1971,6 +1980,10 @@
         e.stopPropagation();
         if(!panel) build();
         if(!panel.hidden){overlayHide(panel);return;}
+        /* T465: the frame keeps the strip's width while the strip is in
+           the window, so the bar does not reflow under the pop-up */
+        var fw=frame.getBoundingClientRect().width;
+        if(fw) frame.style.width=Math.round(fw)+'px';
         panel.appendChild(strip);
         overlayShow(more,panel);
         var fr=frame.getBoundingClientRect(),
@@ -2358,11 +2371,6 @@
       /* Z spotlights whatever the pointer is over. Alt+click does the
          same with the mouse alone; this is the version you can use from a
          lectern with a clicker in one hand (2026-08-20). */
-      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='z'||e.key==='Z')
-              &&mode==='view'){
-        e.preventDefault();
-        if(spotEl) closeSpot(); else if(spotHover) spotlight(spotHover);
-      }
       /* R rulers, G grid — plain keys, so Ctrl+G still groups. H and B
          join them for the guides you drew yourself: H shows or hides
          them (Photoshop's Ctrl+H, without the Ctrl this row does not
@@ -2402,6 +2410,16 @@
          and Escape puts them down before it does anything else */
       if(typeof talkToolKey==='function'&&talkToolKey(e)){
         e.preventDefault();return;}
+      /* Z spotlights whatever the pointer is over. Alt+click does the
+         same with the mouse alone; this is the version you can use from
+         a lectern with a clicker in one hand (2026-08-20). T465: it sat
+         inside the EDIT-mode block guarded by mode==='view', so it could
+         never fire -- the tooltip advertised a dead key. */
+      if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='z'||e.key==='Z')){
+        e.preventDefault();
+        if(spotEl) closeSpot(); else if(spotHover) spotlight(spotHover);
+        return;
+      }
       /* FIND A SLIDE, MID-TALK. "/" is the type-to-search key everywhere
          else on a keyboard, and the map it opens is the one T26 already
          built -- so this is a door, not a second piece of navigation

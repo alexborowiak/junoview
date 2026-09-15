@@ -3236,8 +3236,6 @@
      histReset() does, that being the one funnel every new presentation
      passes through. */
   function syncCustomTypes(){
-    /* a type of your own gets a tile on Insert (T188) */
-    if(typeof txStripSync==='function') txStripSync(true);
     /* Impossible by construction since 2026-08-23: the first
        presentation loads from THE BOOT SEQUENCE at the end of the file,
        after STYLE_DEFAULTS is assigned, so this guard never fires. It
@@ -3269,6 +3267,11 @@
         if(t[k]!==undefined) d[k]=t[k];});
       STYLE_DEFAULTS[t.id]=d;
     });
+    /* a type of your own gets a tile on Text (T188). T465: AFTER the
+       registry is written -- it ran first, styleOrder() dropped the id
+       that was not yet in STYLE_DEFAULTS, and "New style of my own" got
+       no tile until something rebuilt the strip again. */
+    if(typeof txStripSync==='function') txStripSync(true);
   }
   /* the order the menus walk: the built-in scale first, then yours, in
      the order you made them. STYLE_ORDER itself stays exactly as it was -

@@ -1601,7 +1601,9 @@ def test_tidy_up_reports_before_it_rearranges(out):
     assert "act.addEventListener('click',function(){\n      var n=f.fix()" \
         in out
     # it joins the panes that share the corner and the remembered geometry
-    assert "'stdpane','tidypane','objhist','provpane','flippane','sizepane']" in out
+    # (T465: every pane is wired from PANE_IDS, the one list)
+    assert ("  PANE_IDS.forEach(function(id){"
+            "wirePane(document.getElementById(id));});") in out
 
 
 def test_the_tidy_tolerances_are_named_and_argued(out):
@@ -2422,7 +2424,9 @@ def test_a_frame_can_say_where_it_came_from(out):
     # and the trace door is the existing one, not a second drawing
     assert "if(window.SemTrace&&pr[0]) window.SemTrace.open(pr[0],pr[1]);" \
         in out
-    assert "'stdpane','tidypane','objhist','provpane','flippane','sizepane']" in out
+    # (T465: every pane is wired from PANE_IDS, the one list)
+    assert ("  PANE_IDS.forEach(function(id){"
+            "wirePane(document.getElementById(id));});") in out
 
 
 def test_staleness_is_answered_honestly_or_not_at_all(out):

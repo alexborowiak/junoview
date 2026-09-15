@@ -3501,10 +3501,24 @@
         if(bad) off++;
         var b=document.createElement('div');
         b.className=(mine?'dg-real':'dg-other')+(bad?' dg-off':'');
-        b.style.left=(a.x||0)+'%';
-        b.style.top=(a.y||0)+'%';
-        b.style.width=Math.max(1.5,(a.w||10))+'%';
-        b.style.height=Math.max(1.5,(a.h||6))+'%';
+        /* T465: an arrow has endpoints, not a box -- drawn from a.x/a.w
+           every line sat as a 10x6 box in the slide's top-left corner
+           (2026-09-15 review). The same bounding box the outline sheet
+           draws its proxies from. */
+        var gx=a.x||0,gy=a.y||0,gw=a.w||10,gh=a.h||6;
+        if(a.k==='arrow'&&typeof arrowEnds==='function'){
+          var ae=arrowEnds(null,e.sl,a,0);
+          var axs=[ae.x1,ae.x2],ays=[ae.y1,ae.y2];
+          if(typeof arrowMids==='function')
+            arrowMids(a).forEach(function(m){axs.push(m[0]);ays.push(m[1]);});
+          gx=Math.min.apply(null,axs);gy=Math.min.apply(null,ays);
+          gw=Math.max.apply(null,axs)-gx;gh=Math.max.apply(null,ays)-gy;
+          if(!isFinite(gx)||!isFinite(gy)||!isFinite(gw)||!isFinite(gh)) return;
+        }
+        b.style.left=gx+'%';
+        b.style.top=gy+'%';
+        b.style.width=Math.max(1.5,gw)+'%';
+        b.style.height=Math.max(1.5,gh)+'%';
         b.style.borderColor=mine?'':dgKindCol(a);
         /* T384: THE WORDS, IN THE BOX. An empty amber rectangle said
            where a heading was and nothing about what it looked like
@@ -4042,6 +4056,13 @@
          the four-across grid they were in, so their words can be
          read. */
       +'<div class="dg-sheetcol" id="dg-sheetcol"></div></div>';
+    /* T465: the page's colour rides onto the screen. It is mounted on
+       body, outside .deck where --page-bg is set, so the board fell to
+       its fallback and in Light drew the slide's white words on a white
+       board (2026-09-15 review). */
+    try{ov.style.setProperty('--page-bg',
+      getComputedStyle(deckEl).getPropertyValue('--page-bg')||deckPageBg());
+    }catch(err){}
     document.body.appendChild(ov);
     ov.querySelector('#dg-close').addEventListener('click',dgClose);
     /* T384: the door had no handler behind it. Same route the ribbon's

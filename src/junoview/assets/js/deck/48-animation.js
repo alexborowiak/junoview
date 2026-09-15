@@ -71,10 +71,19 @@
      and moving"). Stored as a.motion; the renderer puts one class on
      the item and the keyframes do the rest, so an exported page keeps
      it too. Reduced motion turns them off, as it does every keyframe. */
-  /* the ribbon keeps the four commonest; every one of the thirteen,
-     and every number on them, is in the Animation panel (T445) */
-  var MOTION_FX=[['','None'],['wobble','Wobble'],['bob','Float'],
-    ['pulse','Pulse']];
+  /* T465: EVERY MOVEMENT IS ON THE SHELF. The ribbon kept the four
+     commonest and left the other nine to the Animation panel (T445),
+     which was the right call for a strip in the row -- but the strip
+     is a shelf now (T453) with a whole line to itself, and a Spin
+     chosen in the panel left the Motion door reading nothing, with no
+     tile lit when it opened (2026-09-15 review). The four tiles in the
+     markup keep their ids; the rest are built beside them from the
+     same list the panel reads, so the two can never disagree. */
+  var MOTION_FX=[['','None']];
+  function motionFxSync(){
+    if(MOTION_FX.length>1||typeof MOTIONS==='undefined') return;
+    MOTIONS.forEach(function(m){MOTION_FX.push([m[0],m[1],m[4]]);});
+  }
   function motionId(v){return '#anim-move-'+(v||'none');}
   function motionItems(){
     var s=pres.slides[cur],out=[];
@@ -119,8 +128,20 @@
     motionPvT=setTimeout(motionPreviewStop,2400);
   }
   function motionBoot(){
+    motionFxSync();
+    var strip=$('#anim-move-strip');
     MOTION_FX.forEach(function(pr){
-      var b=$(motionId(pr[0])); if(!b) return;
+      var b=$(motionId(pr[0]));
+      if(!b&&strip&&pr[0]){
+        b=document.createElement('button');
+        b.type='button';b.className='fx-tile';b.id='anim-move-'+pr[0];
+        b.disabled=true;b.setAttribute('aria-pressed','false');
+        b.title=(pr[2]||pr[1])+' \u2014 hover to see it';
+        b.innerHTML=(typeof moIcon==='function'?(moIcon(pr[0])||''):'')
+          +'<span>'+esc(pr[1])+'</span>';
+        strip.appendChild(b);
+      }
+      if(!b) return;
       b.addEventListener('mouseenter',function(){motionPreview(pr[0]);});
       b.addEventListener('mouseleave',motionPreviewStop);
       b.addEventListener('click',function(e){
@@ -134,6 +155,7 @@
     });
   }
   function motionSync(){
+    motionFxSync();
     var items=motionItems(),on=items.length>0;
     var now=on?(items[0].motion||''):null;
     MOTION_FX.forEach(function(pr){
@@ -1225,6 +1247,46 @@
         t=String(t||'').replace(/\s+/g,' ').trim();
         return t.length>n?(t.slice(0,n-1)+'\u2026'):t;
       }
+      /* T465: EXITS ARE CLICKS TOO. The header counted them (an exit
+         claims a stop, T174) and the Story strip listed them, but this
+         list walked only the builds -- "5 clicks" over three rows, and
+         no way to move or remove a Send it away from here (2026-09-15
+         review). An exit on a build's click follows that build's rows;
+         one on a click of its own is a row of its own, at the end, in
+         stop order. Earlier / Later walk the slide's stops; Stays is
+         the menu's own first answer. */
+      var exits=[];
+      (s.annots||[]).forEach(function(a,i){
+        if(!a||a.hide) return;
+        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o});});
+      var stopOrders=Object.keys(steps.map).map(Number)
+        .sort(function(x,y){return x-y;});
+      function exitCommit(){
+        markDirty();refresh();
+        if(typeof animRibbonSync==='function') animRibbonSync();
+        if(typeof animPaneSync==='function') animPaneSync();
+      }
+      function exitRow(x){
+        var inf=(typeof spStepInfo==='function')?spStepInfo(s,x.a):null;
+        var no=(inf&&inf.out!=null)?inf.out:'\u2013';
+        var k=stopOrders.indexOf(x.o);
+        var isBuild=seq.some(function(st){return st.order===x.o;});
+        row(no,[[itemLabel(s,x.i)+' leaves',x.i]],'Send it away',
+          {sub:true,cur:x.i===selAnnot,acts:[
+            ['\u2191 Earlier','Leave one click earlier',
+             function(){x.a.out=stopOrders[k-1];exitCommit();},k<=0],
+            ['\u2193 Later','Leave one click later',
+             function(){
+               x.a.out=(k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s);
+               exitCommit();},
+             k>=stopOrders.length-1&&!isBuild],
+            ['\u2715 Stays','Keep it on the slide to the end',
+             function(){delete x.a.out;exitCommit();},false]]});
+        x.done=true;
+      }
+      function exitRowsFor(o){
+        exits.forEach(function(x){if(!x.done&&x.o===o) exitRow(x);});
+      }
       seq.forEach(function(st,si){
         var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
         var first=(plan.stop[b0]|0)+1;
@@ -1279,10 +1341,13 @@
             {si:si,ctr:true,cur:cur2,dk:'b:'+si});
         }
         stepperRows(plan.anch[b0]);
+        exitRowsFor(st.order);
       });
       /* anything that steps but carries no build of its own lands
          after every build, exactly as flipPlan lays it out */
       stepperRows(plan.tail);
+      exits.filter(function(x){return !x.done;})
+        .sort(function(x,y){return x.o-y.o;}).forEach(exitRow);
       if(total) menu.appendChild(list);
       /* T417: the thing you have selected, when it is not on the list
          yet -- with the two ways onto it, so a box with bullets is one

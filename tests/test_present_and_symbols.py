@@ -58,7 +58,11 @@ def test_notes_and_timing_are_two_buttons(out):
     assert ("     ['pr-notes','pl-notes'],['pr-timing','pl-notes'],\n"
             "     ['pr-tap','pl-tap'],['pr-trace','pl-trace']]") in out
     assert "          if(p[0]==='pr-notes'||p[0]==='pr-timing'){" in out
-    assert "            var want=(p[0]==='pr-timing')?'deck':'slide';" in out
+    # T465: Timing opens the pane's own Timing tab, not whole-talk notes
+    assert ("            var want=(p[0]==='pr-timing')?'time':'slide';"
+            "   /* T465 */") in out
+    assert '<button class="np-tab" data-np="time">Timing</button>' in out
+    assert '<div class="selpane-list" id="notespane-time" hidden>' in out
     # the pane's tabs are what they land on, and they still exist
     for np in ("slide", "deck", "pad", "reh"):
         assert f'data-np="{np}"' in html, np

@@ -349,8 +349,10 @@
       var n=used[k];
       var num=document.createElement('span');
       num.className='ct-num';
-      num.textContent=n?('['+n+']'):'–';
-      num.title=n?('Reference '+n+' in this deck'):'Not cited yet';
+      /* T465: in author-year there is no number to show */
+      num.textContent=n?(cfg.style==='ay'?bibShort(lib[k]):('['+n+']')):'–';
+      num.title=n?(cfg.style==='ay'?'Cited in this deck'
+        :('Reference '+n+' in this deck')):'Not cited yet';
       r.appendChild(num);
       var t=document.createElement('span');
       t.className='ct-ref';
@@ -384,6 +386,7 @@
     a.text=String(a.text||'')+(a.text?' ':'')+'[@'+key+']';
     if(a.html) a.html=String(a.html)+' [@'+key+']';
     markDirty();renderSlide();
+    citePaneSync();   /* T465: the pane's own column follows the Cite */
     toast('Cited — the number comes from where the slide sits, so '
       +'moving the slide renumbers it');
   }

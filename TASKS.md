@@ -8857,3 +8857,41 @@ any reading. The rest are T466 onwards.
   and pick; B off gives weight 400; an exit on a wobbling box plays
   (opacity 0 at its click); Remove all reports "1 entrance, 1 exit,
   1 movement"; opening Text leaves the box white.
+
+- [x] **T466 — The review's second batch: doors that led nowhere and
+  readouts that lied.** **The Order tab** counted exit clicks in its
+  header and listed none of them, so a Send it away could not be moved
+  or removed from the pane; every exit is a row now (on its build's
+  click, or its own at the end), with Earlier, Later and Stays. **The
+  Motion door** read nothing once a Spin or any of the nine pane-only
+  movements was chosen: the shelf holds all thirteen, built from the
+  panel's own list beside the four markup tiles. **Present > Timing**
+  opened the whole-talk NOTES tab, with none of the timing fields on
+  it; the pane has a Timing tab (target, rehearsal readout, running
+  total, the talk's length), Timing opens it, and the other door is
+  "Notes…". **A side-docked ribbon** (every portrait poster) opened the
+  Page size shelf as a 711px block with one tile visible; a side ribbon
+  takes the pop-up, as a narrow window does, and turning the ribbon
+  sideways dismisses a shelf. **The text strip's Show all** window
+  stayed open after a pick (the tile stops propagation; the listener
+  is capture now), the bar reflowed under it and the row came back
+  220px over the window (the frame keeps its width while the strip is
+  away, and the ladder is re-judged when it is back). **Z** was
+  advertised for spotlighting and sat inside the edit-mode block.
+  **An empty run** (B/I/U/S beside a shape) stayed as a 2px sliver: the
+  child combinator. **The Style system's** rail buttons overflowed the
+  rail by 14px; its board drew every arrow as a box at the slide's
+  corner and did not take the page's colour (mounted on body); the
+  History screen's selected tab was white on pale cyan in Light. **The
+  Review pane** was the one you could not drag or resize: wirePane's
+  list named a pane that no longer exists and not this one -- PANE_IDS
+  is the list. **The Text tab's tiles** did not follow a style edit,
+  and a new style got no tile until renamed (the strip was rebuilt
+  before the registry was written). **The Citations pane** kept
+  saying "Not cited yet" after Cite, and showed [1] in author-year.
+  **¶ Heading** read OFF for Heading 1. **A table's Colour door** opened
+  on headings over nothing. **A hidden checkbox row** stayed painted.
+  **The empty flip book** sent you to "+ Add", a control T439 removed.
+  Driven at 1300: fourteen Motion tiles and the door reading Spin; the
+  Order tab's "leaves" row and its Stays; Timing's fields on their tab;
+  the Show-all pick closing the window with the bar at 1085 of 1085.
