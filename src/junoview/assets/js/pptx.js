@@ -289,10 +289,41 @@ window.JunoPptx = (function () {
     return '<a:' + tag + out + '>' + body + '</a:' + tag + '>';
   }
 
+  /* T486: A RUN MODEL. `item.paras` is [{runs:[{t,b,i,u,strike,color}],
+     bullet, num, lvl, head}] -- the shape pptx_read.py has always
+     produced -- and each run leaves as its own <a:r> with its own rPr,
+     so bold, colour and bullets inside a box arrive as themselves rather
+     than as '**bold**', '# Heading' and '- bullet' in plain text
+     (2026-09-15 review). item.text is the fallback, one run per line. */
+  function runXml(item, page, run, head) {
+    var r = {};
+    for (var k in item) r[k] = item[k];
+    if (run.b) r.b = 1; if (run.i) r.i = 1; if (run.u) r.u = 1;
+    if (run.strike) r.strike = 1;
+    if (run.color) r.color = run.color;
+    if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
+    return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
+  }
   function paragraphs(item, page) {
-    var lines = String(item.text == null ? '' : item.text).split('\n');
     var align = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[
       item.align] || 'l';
+    if (item.paras && item.paras.length) {
+      return item.paras.map(function (pa) {
+        var lvl = pa.lvl || 0, mar = 228600 * (lvl + 1);
+        var props = '<a:pPr algn="' + align + '"'
+          + ((pa.bullet || pa.num) ? ' indent="-228600" marL="' + mar + '"' : '')
+          + (lvl ? ' lvl="' + lvl + '"' : '') + '>'
+          + (pa.bullet ? '<a:buChar char="&#8226;"/>'
+            : pa.num ? '<a:buAutoNum type="arabicPeriod"/>' : '<a:buNone/>')
+          + '</a:pPr>';
+        var runs = (pa.runs || []).filter(function (r) { return r.t; });
+        if (!runs.length)
+          return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';
+        return '<a:p>' + props + runs.map(function (r) {
+          return runXml(item, page, r, pa.head); }).join('') + '</a:p>';
+      }).join('');
+    }
+    var lines = String(item.text == null ? '' : item.text).split('\n');
     return lines.map(function (line) {
       var props = '<a:pPr algn="' + align + '"'
         + (item.bullets ? ' indent="-228600" marL="228600"' : '') + '>'

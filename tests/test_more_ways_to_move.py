@@ -389,7 +389,10 @@ def test_saving_and_export_after_the_second_pass(out):
     assert "        var _pg=textPage(a,_pn<0?0:_pn);" in out
     assert "          :figSubst(_pg.t,a,note.figs);" in out
     assert "        flipForce=ent.f;   /* T483: the page this output slide" in out
-    assert "    if(note.md) lost.push(note.md+' Markdown box'" in out
+    # (T486: Markdown and rich boxes travel as runs now; a link is named)
+    assert "    if(note.links) lost.push(note.links+' link'" in out
+    assert "  function pptxParasFromHtml(html){" in out
+    assert "            ti.paras=paras;" in out
 
 
 def test_the_frame_after_the_second_pass(out):

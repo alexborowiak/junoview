@@ -1998,8 +1998,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # rest groups, the fold popover's width, the tour, the version rows.
 # T485 (2026-09-15): sections, names and the canonical page size in
 # the .pptx; the clone menu refuses a second place-linked clone.
-EXPECTED_MD5 = "8e3413975e7d25a90b9f61ad0fdf6c06"
-EXPECTED_BYTES = 4440051
+# T486 (2026-09-15): the .pptx writer's run model.
+EXPECTED_MD5 = "71d928a7221ef82c6766f210a038c01f"
+EXPECTED_BYTES = 4444995
 
 
 def _render_example() -> str:

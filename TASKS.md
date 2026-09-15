@@ -9309,3 +9309,17 @@ any reading. The rest are T466 onwards.
   slide that already has one, exactly on top of it — that row is
   disabled with the reason, as the Object tab's Add a clone… already
   refuses it.
+- [x] **T486 — The .pptx writer has a run model: Markdown and rich boxes
+  arrive as themselves.** (2026-09-15 review: ".pptx export flattens
+  Markdown and rich boxes to their raw source: '**bold**', '# Heading',
+  '- bullet' arrive literally; bold/colour runs are dropped".) The
+  writer takes `paras` — [{runs:[{t,b,i,u,strike,color}], bullet, num,
+  lvl, head}], the shape the reader has always produced — and each run
+  leaves as its own <a:r> with its own rPr, each paragraph with its own
+  bullet, number and level, a heading bold and a step larger. The
+  exporter builds them from the HTML the slide itself shows (notesHtml
+  for a Markdown box, sanitizeRich for a rich one), walked block by
+  block and mark by mark; a link inside the words is the one thing
+  still named as lost. The round trip is pinned: five paragraphs with a
+  heading, a bold and a red run, a bullet, a nested bullet and a number
+  come back as they went.

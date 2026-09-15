@@ -1922,6 +1922,71 @@
     var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);
     return {x:p.x,y:p.y,w:w,h:h};
   }
+  /* T486: THE BOX AS PARAGRAPHS AND RUNS. A Markdown box renders through
+     notesHtml and a rich box through sanitizeRich -- the same HTML the
+     slide shows -- and that HTML is walked into the writer's run model:
+     block elements are paragraphs (an <li> a bullet, at its nesting
+     level; an <hN> a heading), inline marks are per-run bold, italic,
+     underline, strike and colour. Links keep their words. */
+  function pptxParasFromHtml(html){
+    var doc;
+    try{doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');}
+    catch(e){return null;}
+    var root=doc.body&&doc.body.firstChild; if(!root) return null;
+    var paras=[],cur=null;
+    function para(kind,lvl,head){
+      cur={runs:[],bullet:kind==='ul',num:kind==='ol',lvl:lvl||0,head:head||0};
+      paras.push(cur);return cur;
+    }
+    function colOf(n){
+      var c=n.style&&n.style.color; if(!c) return '';
+      var m=/^#([0-9a-f]{6})$/i.exec(c); if(m) return c;
+      var r=rgbOf(c); return r?('#'+[r[0],r[1],r[2]].map(function(v){
+        return ('0'+Math.round(v).toString(16)).slice(-2);}).join('')):'';
+    }
+    function walk(n,st,lvl){
+      if(n.nodeType===3){
+        var t=n.nodeValue.replace(/\s+/g,' ');
+        if(!t.trim()&&!cur) return;
+        if(!cur) para('',0,0);
+        cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
+          color:st.color||''});
+        return;
+      }
+      if(n.nodeType!==1) return;
+      var tag=n.tagName.toLowerCase(),s2={};
+      for(var k in st) s2[k]=st[k];
+      if(tag==='b'||tag==='strong') s2.b=1;
+      if(tag==='i'||tag==='em') s2.i=1;
+      if(tag==='u') s2.u=1;
+      if(tag==='s'||tag==='strike'||tag==='del') s2.s=1;
+      var col=colOf(n); if(col) s2.color=col;
+      if(tag==='br'){cur=null;return;}
+      var hd=/^h([1-6])$/.exec(tag);
+      if(hd){para('',0,+hd[1]);[].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});cur=null;return;}
+      if(tag==='p'||tag==='div'||tag==='blockquote'||tag==='pre'||tag==='hr'){
+        para('',0,0);[].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});
+        cur=null;return;
+      }
+      if(tag==='ul'||tag==='ol'){
+        [].forEach.call(n.childNodes,function(c){
+          if(c.nodeType!==1||c.tagName.toLowerCase()!=='li'){walk(c,s2,lvl);return;}
+          para(tag,lvl,0);
+          [].forEach.call(c.childNodes,function(g){walk(g,s2,lvl+1);});
+          cur=null;
+        });
+        return;
+      }
+      [].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});
+    }
+    [].forEach.call(root.childNodes,function(c){walk(c,{},0);});
+    paras=paras.filter(function(p){return p.runs.some(function(r){return r.t.trim();});});
+    paras.forEach(function(p){
+      if(p.runs.length){p.runs[0].t=p.runs[0].t.replace(/^\s+/,'');
+        p.runs[p.runs.length-1].t=p.runs[p.runs.length-1].t.replace(/\s+$/,'');}
+    });
+    return paras.length?paras:null;
+  }
   function pptxTextItem(a,centred,ink,box){
     var b=box||pptxBox(a,centred);
     return {t:'text',x:b.x,y:b.y,w:b.w,h:b.h,
@@ -2006,9 +2071,22 @@
         var tp=mathsPlain(ti.text,!!a.maths);
         if(tp.hit) note.maths++;
         ti.text=tp.text;
-        /* T483: what the writer cannot say yet is counted, not hidden */
-        if(a.md) note.md=(note.md||0)+1;
-        else if(a.html&&/<(b|i|u|s|span|a)\b/i.test(a.html)) note.rich=(note.rich||0)+1;
+        /* T486: a Markdown or rich box leaves as paragraphs and runs,
+           from the HTML the slide itself shows */
+        if(!a.bib&&(a.md||_pg.h)){
+          var html=a.md?notesHtml(figSubst(_pg.t,a,note.figs))
+            :sanitizeRich(figSubst(_pg.h,a,note.figs)).html;
+          var paras=pptxParasFromHtml(html);
+          if(/<a\s[^>]*href/i.test(html)) note.links=(note.links||0)+1;
+          if(paras){
+            paras.forEach(function(p){p.runs.forEach(function(r){
+              var t2=mathsPlain(r.t,!!a.maths); r.t=t2.text;});});
+            ti.paras=paras;
+            /* the writer's plain-text bullets flag is the box's list;
+               with paragraphs it is per paragraph */
+            ti.bullets=false;
+          }
+        }
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
@@ -2333,13 +2411,11 @@
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
       +'path, so they arrive as plain characters');
-    /* T483: named rather than silent -- the writer has no run model yet */
-    if(note.md) lost.push(note.md+' Markdown box'+(note.md===1?'':'es')
-      +' \u2014 they arrive as their source text (the # and - marks '
-      +'included), not as headings and bullets');
-    if(note.rich) lost.push(note.rich+' text box'+(note.rich===1?'':'es')
-      +' with bold, colour or a link inside the words \u2014 the words '
-      +'arrive, the marks inside them do not');
+    /* T486: Markdown and rich boxes travel as paragraphs and runs now;
+       only a link inside the words is still words alone */
+    if(note.links) lost.push(note.links+' link'+(note.links===1?'':'s')
+      +' inside the words of a text box \u2014 the words arrive, the '
+      +'link does not');
     if(note.exits) lost.push(note.exits+' object'
       +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
       +'writer emits entrances only, so they arrive and then stay, '

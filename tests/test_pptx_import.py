@@ -743,3 +743,41 @@ def test_a_placeholder_reads_its_layouts_list_style(fixture_bytes):
     assert not sub.get("bullets")
     assert sub.get("align") == "center"
     assert sub.get("color", "").lower() == "#404040"
+
+
+def test_a_box_with_runs_keeps_its_bold_colour_and_bullets():
+    """T486 (2026-09-15 review): the writer flattened a Markdown or rich
+    box to its source text. It takes `paras` -- the reader's own shape --
+    and each run leaves as its own <a:r>, each paragraph with its own
+    bullet or number."""
+    _engine()
+    from helpers_js import build_pptx
+    spec = {
+        "title": "runs", "widthMm": 339, "heightMm": 191, "bg": "#0b141d",
+        "slides": [{"bg": "#0b141d", "trans": "", "notes": "", "items": [
+            {"t": "text", "x": 5, "y": 5, "w": 60, "h": 30, "sizePct": 3,
+             "color": "#ffffff", "text": "fallback words",
+             "paras": [
+                 {"runs": [{"t": "A heading"}], "head": 3},
+                 {"runs": [{"t": "Plain, then "}, {"t": "bold", "b": 1},
+                           {"t": " and "}, {"t": "red", "color": "#c0392b"}]},
+                 {"runs": [{"t": "first bullet"}], "bullet": 1},
+                 {"runs": [{"t": "nested"}], "bullet": 1, "lvl": 1},
+                 {"runs": [{"t": "numbered"}], "num": 1},
+             ]}]}]}
+    data, report = build_pptx(json.loads(json.dumps(spec)))
+    assert report["skipped"] == 0
+    got = read_pptx(data, "runs.pptx")
+    t = _one(got, 0, "text")
+    paras = t["paras"]
+    texts = ["".join(r["t"] for r in pa["runs"]) for pa in paras]
+    assert texts == ["A heading", "Plain, then bold and red", "first bullet",
+                     "nested", "numbered"]
+    runs = paras[1]["runs"]
+    assert [r["t"] for r in runs] == ["Plain, then ", "bold", " and ", "red"]
+    assert runs[1]["b"] and not runs[0]["b"]
+    assert runs[3]["color"].lower() == "#c0392b"
+    assert paras[2]["bullet"] and not paras[1]["bullet"]
+    assert paras[3]["bullet"] and paras[3].get("lvl", 0) == 1
+    assert paras[4]["num"]
+    assert "fallback words" not in " ".join(texts)
