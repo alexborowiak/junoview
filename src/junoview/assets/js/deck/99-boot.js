@@ -65,6 +65,7 @@
   scrollShowBoot();           /* the scrolling version (T389) */
   storyBoot();                /* the animation story (T391) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
+  focusBoot();                /* T472: focus, on its click */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */

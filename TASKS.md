@@ -9043,3 +9043,24 @@ any reading. The rest are T466 onwards.
   Highlight is on, the CSS reads them off data attributes. Driven at
   1500 with reduced motion off (the harness reports it on, which is
   why the typewriter "worked" in every earlier check).
+- [x] **T472 — Focus, on its click: blur the rest, zoom in, magnify.**
+  (User, 2026-09-15: "Needs to be an animation that is 'blur everything
+  else but this', and 'zoom in here', or 'show magnify of this box'".)
+  PowerPoint calls these emphasis effects: a thing already on the slide
+  gets a click on which it is the point. It is a peer of `anim` the way
+  the exit is — `a.focus={at,fx}`, `at` claiming a stop like `a.out` —
+  because the commonest case is a figure that is simply there and,
+  three clicks in, is what everyone should be looking at; it lasts one
+  stop, and the next click puts the slide back whatever else it does.
+  Blur the rest softens and dims every other item on the layer; Zoom
+  in scales the STAGE about the item and slides it to the middle (the
+  stage survives a re-render, so the zoom in and the zoom back both
+  move); Magnify floats a scaled copy of the item over the page. The
+  Animation tab has a Focus group — None / Blur the rest / Zoom in /
+  Magnify, a hover preview on the real object, the caption wearing the
+  click it goes on — the Configure panel has the same four and the
+  when-chooser (on a click of its own, or when something else
+  arrives), the Order tab lists it as a row beside the exits with
+  Earlier / Later / None, Remove all clears it and the Story strip's
+  caption names it. Driven at 1500 with reduced motion off; the three
+  shots are in the session's rib3 folder.

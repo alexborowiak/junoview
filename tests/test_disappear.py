@@ -77,4 +77,4 @@ def test_a_slide_whose_only_animation_is_an_exit_still_builds(out):
             "      return a&&(a.anim||animOut(a)!=null);})){") in out
     # ...and an exit has always claimed a stop of its own
     assert ("      var o=animOut(a);\n"
-            "      if(o!=null&&!(o in seen)) seen[o]=1;});") in out
+            "      if(o!=null&&!(o in seen)) seen[o]=1;") in out   # T472 adds a focus

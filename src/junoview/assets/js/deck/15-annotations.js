@@ -1690,7 +1690,10 @@
     (s&&s.annots||[]).forEach(function(a){
       if(!a||a.hide) return;
       var o=animOut(a);
-      if(o!=null&&!(o in seen)) seen[o]=1;});
+      if(o!=null&&!(o in seen)) seen[o]=1;
+      /* T472: and a focus, which is a click of its own the same way */
+      var f=animFocus(a);
+      if(f&&!(f.at in seen)) seen[f.at]=1;});
     var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
     var map={},sub={},last={},at=0;
     keys.forEach(function(o){
@@ -1713,7 +1716,8 @@
       /* an EXIT claims an order too (T174), or asking twice for "on one
          more click at the end" would hand out the same number twice and
          the second object would leave on the first one's click */
-      var o=animOut(a); if(o!=null&&o>mx) mx=o;});
+      var o=animOut(a); if(o!=null&&o>mx) mx=o;
+      var f=animFocus(a); if(f&&f.at>mx) mx=f.at;});   /* T472 */
     return mx+1;
   }
   /* ---- THE WALK-THROUGH (T175) ---------------------------------------
@@ -1822,6 +1826,41 @@
        stop drops it for real, and so does the every-moment-at-once
        reading an export takes. */
     return revealCount>sp+1;
+  }
+  /* ---- T472: A FOCUS IS A CLICK OF ITS OWN ----------------------------
+     (2026-09-15, user: "Needs to be an animation that is 'blur
+     everything else but this', and 'zoom in here', or 'show magnify of
+     this box'"). PowerPoint calls these emphasis effects: a thing
+     already on the slide gets a click on which it is the point. Like
+     the exit it is a PEER of `anim`, not part of it -- the commonest
+     case is a figure that is simply there and, three clicks in, is
+     what you want everyone looking at. `a.focus={at:order,fx}`: `at`
+     claims a stop the way `a.out` does, `fx` is one of FOCUS_FX. It
+     lasts ONE stop: the next click, whatever else it does, puts the
+     slide back. */
+  var FOCUS_FX=[
+    ['spot','Blur the rest',
+     'Everything else on the slide softens and dims; this stays sharp'],
+    ['zoom','Zoom in',
+     'The page zooms in on this, and zooms back on the next click'],
+    ['lens','Magnify',
+     'A larger copy of this floats over the slide until the next click']];
+  function animFocus(a){
+    if(!a||!a.focus||typeof a.focus!=='object') return null;
+    var f=a.focus;
+    if(typeof f.at!=='number'||!isFinite(f.at)||f.at<0) return null;
+    if(!FOCUS_FX.some(function(p){return p[0]===f.fx;})) return null;
+    return f;
+  }
+  /* the one stop where it is the point */
+  function animFocusing(s,a){
+    var f=animFocus(a); if(!f) return false;
+    if(mode!=='view'||printAll) return false;
+    var st=slideBuildSteps(s).map[f.at];
+    if(st==null) return false;
+    var sp=flipPlan(s).stop[st];
+    if(sp==null) sp=st;
+    return revealCount===sp+1;
   }
   /* ...and the one stop where it is on its way out */
   function animGoing(s,a){

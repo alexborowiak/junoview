@@ -1579,6 +1579,7 @@ body.slide-editing .apptop{display:none;}
 .rbn-trans{order:0;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
+.rbn-focus{order:3;}      /* T472: after Leaves early, before Motion */
 .rbn-motion{order:4;}     /* T385: after Leaves, before the slide */
 .rbn-flipfx{order:5;}
 /* T453: the choosers lead and the two groups of VERBS follow them
@@ -5951,9 +5952,14 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .strip-frame>.fx-strip.page-strip,
 .strip-frame>.fx-strip.trans-strip{
   width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap) + 8px);}
-/* T385: four ways for a text box to arrive, so that strip is four wide */
-.strip-frame>#anim-by-strip.trans-strip{
+/* T385: four ways for a text box to arrive, so that strip is four wide;
+   T472: and four ways to be the point */
+.strip-frame>#anim-by-strip.trans-strip,
+.strip-frame>#anim-focus-strip.trans-strip{
   width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
+/* the group caption wears the click, like a folded door's readout */
+.rbn-focus .rbn-lab .rbn-foldval{display:inline;margin-left:4px;
+  font-size:10px;color:var(--chrome-ink-3);max-width:none;}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
 .strip-nav>button{flex:1 1 0;min-height:0;padding:0;border:0;
@@ -6241,6 +6247,27 @@ body.light .dg-num input{background:var(--input-bg);
    drops it for real. */
 @keyframes an-out{from{opacity:1;}to{opacity:0;}}
 .an-anim-out{animation:an-out .28s ease forwards;pointer-events:none;}
+/* ---- T472: FOCUS, ON ITS CLICK ----------------------------------------
+   spot: every other item on the layer softens; the stage zooms about the
+   item and slides it to the middle (the transition is on the stage,
+   which survives a re-render, so the zoom back moves too); a lens is a
+   scaled clone floated over the page. */
+.deck:not(.editing) .annot-layer .an-item{
+  transition:filter .35s ease,opacity .35s ease;}
+.annot-layer.an-spotlit .an-item:not(.an-spot):not(.an-lens){
+  filter:blur(3px);opacity:.45;}
+.annot-layer.an-spotlit .an-item.an-spot{z-index:20;}
+.deck-stage{transition:transform .55s cubic-bezier(.2,.7,.2,1);}
+.deck.editing .deck-stage{transition:none;}
+.an-item.an-lens{pointer-events:none;z-index:30;opacity:0;
+  transition:opacity .3s ease,transform .45s cubic-bezier(.2,.7,.2,1);
+  box-shadow:0 18px 60px #000a,0 0 0 2px #ffffff55;
+  background:var(--page-bg,#0b141d);border-radius:6px;}
+.an-item.an-lens.an-lens-in{opacity:1;}
+@media (prefers-reduced-motion:reduce){
+  .deck-stage,.an-item.an-lens,.deck:not(.editing) .annot-layer .an-item{
+    transition:none;}
+}
 @media (prefers-reduced-motion: reduce){
   .an-anim-out{animation:none;opacity:0;}}
 @keyframes fturn-fade{from{opacity:0;}to{opacity:1;}}

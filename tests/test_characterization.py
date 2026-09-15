@@ -1976,8 +1976,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T471 (2026-09-15): the typewriter's pace and piece-by-piece typing;
 # Quick animate ends with its pane, its door, the slide or the editor,
 # keeps its keys and has a text-build row; the highlight's two choices.
-EXPECTED_MD5 = "a7651899c9d023f91c2b554c16f9acf3"
-EXPECTED_BYTES = 4369577
+# T472 (2026-09-15): focus on a click -- blur the rest, zoom in,
+# magnify: the model, the ribbon group, the panel section, the CSS.
+EXPECTED_MD5 = "8fa33c24805da1c664fe1d8a16dd26a9"
+EXPECTED_BYTES = 4384989
 
 
 def _render_example() -> str:

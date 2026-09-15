@@ -479,6 +479,21 @@
       }
     }
   }
+  /* T472: the click on which it is the point */
+  function cfgFocus(host,a){
+    cfgHead(host,'focus, on a click');
+    var row=cfgRow(host);
+    var f=animFocus(a),now=f?f.fx:'';
+    cfgChip(row,bic('none'),'None',!f,'No focus click',
+      function(){focusSet('');animCfgSync();});
+    FOCUS_FX.forEach(function(p){
+      cfgChip(row,bic(p[0]==='spot'?'eye':(p[0]==='zoom'?'expand':'find')),
+        p[1],now===p[0],p[2],function(){focusSet(p[0]);animCfgSync();});
+    });
+    if(!f) return;
+    cfgHead(host,'when');
+    focusWhenRows(host);
+  }
   function cfgMotion(host,a){
     cfgHead(host,'movement, while it is on the slide');
     var row=cfgRow(host,'cfg-mo');
@@ -635,6 +650,7 @@
     }
     host.appendChild(who);
     cfgArrival(host,a);
+    cfgFocus(host,a);   /* T472 */
     cfgMotion(host,a);
     cfgLife(host);
   }

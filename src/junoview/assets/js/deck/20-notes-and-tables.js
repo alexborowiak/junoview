@@ -3022,6 +3022,10 @@
         /* the fade OUT, on the one stop it goes (T238) */
         if(mode==='view'&&animGoing(s,ba))
           el.classList.add('an-anim-out');
+        /* T472: the click on which it is the point */
+        if(mode==='view'&&typeof animFocusing==='function'
+           &&animFocusing(s,ba)&&typeof focusPaint==='function')
+          focusPaint(layer,el,ba);
         /* T391: THE STORY. Editing at stop k, an object that has
            already left is not on the slide -- not dimmed, not there --
            so what is under it can be reached. Checked before the
@@ -3131,6 +3135,9 @@
         }
       });
     }
+    /* T472: nothing on this slide is the point right now -- the zoom,
+       if the stage still carries one, comes back */
+    if(typeof focusSettle==='function') focusSettle(layer);
     /* ---- T385: MOTION THAT KEEPS GOING. One class per item. A pass
        of its own, like the builds above, so no kind's branch can forget
        it. T446: IN THE EDITOR TOO (2026-09-14, user: "just applied some

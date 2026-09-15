@@ -230,6 +230,174 @@
       if(shown>=total) typeStop();
     },tick);
   }
+  /* ---- T472: FOCUS, ON ITS CLICK ---------------------------------------
+     Three ways to make one thing the point for one click. `spot` blurs
+     and dims every other item on the layer; `zoom` scales the STAGE
+     (which survives a re-render, so the zoom in and the zoom back both
+     move) about the item and slides it to the middle; `lens` floats a
+     scaled copy of the item over the page. All three are painted by
+     the reveal pass on the focus's stop and undone by the next render,
+     which is the next click. focusSettle clears a zoom the stage still
+     wears once nothing is focusing. */
+  function focusClear(){
+    if(!stage) return;
+    if(stage.style.transform){stage.style.transform='';}
+  }
+  function focusPaint(layer,el,a){
+    var f=animFocus(a); if(!f||!layer||!el) return;
+    layer.setAttribute('data-focus',f.fx);
+    if(f.fx==='spot'){
+      el.classList.add('an-spot');
+      /* a frame later, so the softening is a transition rather than a cut */
+      requestAnimationFrame(function(){layer.classList.add('an-spotlit');});
+    } else if(f.fx==='zoom'){
+      var sr=stage.getBoundingClientRect(),r=el.getBoundingClientRect();
+      if(!sr.width||!r.width) return;
+      /* the stage may already be zoomed from a re-render: measure the
+         item where it would be unzoomed */
+      var cur2=stage.style.transform;
+      if(cur2){stage.style.transition='none';stage.style.transform='';
+        sr=stage.getBoundingClientRect();r=el.getBoundingClientRect();
+        void stage.offsetWidth;stage.style.transition='';}
+      var cx=r.left+r.width/2-sr.left,cy=r.top+r.height/2-sr.top;
+      var k=Math.min(3,0.78*sr.width/r.width,0.78*sr.height/r.height);
+      k=Math.max(1.15,k);
+      stage.style.transformOrigin=cx.toFixed(1)+'px '+cy.toFixed(1)+'px';
+      var tf='translate('+(sr.width/2-cx).toFixed(1)+'px,'
+        +(sr.height/2-cy).toFixed(1)+'px) scale('+k.toFixed(3)+')';
+      if(cur2===tf){stage.style.transform=tf;return;}
+      requestAnimationFrame(function(){stage.style.transform=tf;});
+    } else if(f.fx==='lens'){
+      var old=layer.querySelector('.an-lens'); if(old) old.remove();
+      var c=el.cloneNode(true);
+      c.classList.remove('sel','grpsel','an-prebuild','an-ingrp');
+      c.classList.add('an-lens');
+      c.removeAttribute('data-idx');
+      $$('.an-resize,.an-handle,.an-rotate,.an-buildno,.an-readno,'
+        +'.an-cellbtn,.cellparts,.an-endpt',c).forEach(function(n){n.remove();});
+      var lr=layer.getBoundingClientRect(),r2=el.getBoundingClientRect();
+      if(!lr.width||!r2.width) return;
+      var k2=Math.max(1.3,Math.min(2.4,0.8*lr.width/r2.width,
+        0.8*lr.height/r2.height));
+      var cx2=r2.left+r2.width/2-lr.left,cy2=r2.top+r2.height/2-lr.top;
+      c.style.transformOrigin='center center';
+      c.style.transform='translate('+(lr.width/2-cx2).toFixed(1)+'px,'
+        +(lr.height/2-cy2).toFixed(1)+'px) scale('+k2.toFixed(3)+')';
+      c.style.animation='';
+      layer.appendChild(c);
+      requestAnimationFrame(function(){c.classList.add('an-lens-in');});
+    }
+  }
+  function focusSettle(layer){
+    if(!layer||layer.getAttribute('data-focus')==='zoom') return;
+    focusClear();
+  }
+  /* the ribbon strip: None / Blur the rest / Zoom in / Magnify, on the
+     selection, with a hover preview on the real object */
+  function focusItem(){
+    var s=pres.slides[cur];
+    if(typeof selAnnot!=='number') return null;
+    return annotByIdx(s,selAnnot)||null;
+  }
+  var focusPvT=null,focusPvLayer=null;
+  function focusPreviewStop(){
+    if(focusPvT){clearTimeout(focusPvT);focusPvT=null;}
+    var layer=focusPvLayer; focusPvLayer=null;
+    if(layer){
+      layer.classList.remove('an-spotlit');
+      layer.removeAttribute('data-focus');
+      $$('.an-spot',layer).forEach(function(n){n.classList.remove('an-spot');});
+      var l=layer.querySelector('.an-lens'); if(l) l.remove();
+    }
+    focusClear();
+  }
+  function focusPreview(fx){
+    focusPreviewStop();
+    if(!fx||!motionOK()) return;
+    var a=focusItem(); if(!a) return;
+    var layer=stage&&stage.querySelector('.annot-layer'); if(!layer) return;
+    var el=layer.querySelector('.an-item[data-idx="'+selAnnot+'"]');
+    if(!el) return;
+    focusPvLayer=layer;
+    focusPaint(layer,el,{focus:{at:0,fx:fx}});
+    focusPvT=setTimeout(focusPreviewStop,1800);
+  }
+  function focusBoot(){
+    var strip=$('#anim-focus-strip'); if(!strip) return;
+    [['','none']].concat(FOCUS_FX).forEach(function(pr){
+      var b=$('#anim-focus-'+(pr[0]||'none')); if(!b) return;
+      b.addEventListener('mouseenter',function(){
+        if(!b.disabled) focusPreview(pr[0]);});
+      b.addEventListener('mouseleave',focusPreviewStop);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();focusPreviewStop();
+        focusSet(pr[0]);
+      });
+    });
+    strip.addEventListener('mouseleave',focusPreviewStop);
+  }
+  /* give every selected thing this focus, on a click of its own at the
+     end (the exit's default); '' takes it away. A thing that already
+     has one keeps its click. */
+  function focusSet(fx){
+    var s=pres.slides[cur]; if(!s) return;
+    var n=0;
+    selIdxs().forEach(function(i){
+      var a=s.annots[i]; if(!a) return;
+      var f=animFocus(a);
+      if(!fx){if(f){delete a.focus;n++;}return;}
+      a.focus={at:f?f.at:nextAnimOrder(s),fx:fx};
+      n++;
+    });
+    if(!n) return;
+    markDirty();refresh();
+    if(typeof animRibbonSync==='function') animRibbonSync();
+    if(typeof animPaneSync==='function') animPaneSync();
+  }
+  /* ...and WHEN: on a click of its own, or on the click something
+     else arrives -- the exit menu's own rows, for the panel */
+  function focusWhenRows(host){
+    var s=pres.slides[cur],a=focusItem(); if(!a) return;
+    var f=animFocus(a); if(!f) return;
+    function put(){
+      markDirty();refresh();
+      if(typeof animRibbonSync==='function') animRibbonSync();
+      if(typeof animPaneSync==='function') animPaneSync();
+    }
+    var row=cfgRow(host);
+    var own=!animSeq(s).some(function(st){return st.order===f.at;});
+    cfgChip(row,bic('locate'),'On a click of its own',own,
+      'Adds a click on which this is the point',function(){
+        if(!own){a.focus.at=nextAnimOrder(s);put();}});
+    var mine=a.anim?(a.anim.order||0):-1;
+    animSeq(s).forEach(function(st){
+      if(st.order<=mine) return;
+      var who=st.items.map(function(i2){
+        return annotLabel((s.annots||[])[i2]);}).join(', ');
+      if(who.length>26) who=who.slice(0,25)+'…';
+      cfgChip(row,bic('together'),'When '+who+' arrives',f.at===st.order,
+        'On the click that arrives',function(){a.focus.at=st.order;put();});
+    });
+  }
+  function focusSync(){
+    var a=focusItem(),poster=!!(pageOf&&pageOf().poster);
+    var strip=$('#anim-focus-strip'); if(!strip) return;
+    var on=!!a&&!poster,f=on?animFocus(a):null,now=f?f.fx:'';
+    [['','none']].concat(FOCUS_FX).forEach(function(pr){
+      var b=$('#anim-focus-'+(pr[0]||'none')); if(!b) return;
+      b.disabled=!on;
+      b.setAttribute('aria-pressed',(on&&now===pr[0]).toString());
+    });
+    var say=$('#anim-focus-say');
+    if(say){
+      var s=pres.slides[cur];
+      var inf=(f&&typeof spStepInfo==='function')?spStepInfo(s,a):null;
+      var bs=f?slideBuildSteps(s):null,st=(bs&&bs.map[f.at]);
+      var sp=(st!=null)?flipPlan(s).stop[st]:null;
+      say.textContent=f?('on click '+(((sp==null?st:sp)|0)+1)):'';
+      say.hidden=!f;
+    }
+  }
   /* ---- T238: DISAPPEAR, WHERE ANIMATION IS -----------------------------
      The exit has existed since T174 and had one door: a popover inside
      the Layers pane's build column (2026-09-04, user: "animations is
@@ -1329,7 +1497,10 @@
       var exits=[];
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.hide) return;
-        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o});});
+        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o,kind:'out'});
+        /* T472: a focus is a click too, listed the same way */
+        var f=animFocus(a);
+        if(f) exits.push({i:i,a:a,o:f.at,kind:'focus',f:f});});
       var stopOrders=Object.keys(steps.map).map(Number)
         .sort(function(x,y){return x-y;});
       function exitCommit(){
@@ -1338,21 +1509,31 @@
         if(typeof animPaneSync==='function') animPaneSync();
       }
       function exitRow(x){
-        var inf=(typeof spStepInfo==='function')?spStepInfo(s,x.a):null;
-        var no=(inf&&inf.out!=null)?inf.out:'\u2013';
         var k=stopOrders.indexOf(x.o);
         var isBuild=seq.some(function(st){return st.order===x.o;});
-        row(no,[[itemLabel(s,x.i)+' leaves',x.i]],'Send it away',
+        var st0=steps.map[x.o],sp0=(st0!=null)?plan.stop[st0]:null;
+        var no=(st0==null)?'\u2013':(((sp0==null?st0:sp0)|0)+1);
+        function setAt(v){
+          if(x.kind==='focus') x.a.focus.at=v; else x.a.out=v;
+          exitCommit();
+        }
+        var word=x.kind==='focus'
+          ?(FOCUS_FX.filter(function(p){return p[0]===x.f.fx;})[0]||[])[1]
+          :'Send it away';
+        row(no,[[itemLabel(s,x.i)+(x.kind==='focus'?' in focus':' leaves'),
+          x.i]],word,
           {sub:true,cur:x.i===selAnnot,acts:[
-            ['\u2191 Earlier','Leave one click earlier',
-             function(){x.a.out=stopOrders[k-1];exitCommit();},k<=0],
-            ['\u2193 Later','Leave one click later',
+            ['\u2191 Earlier','One click earlier',
+             function(){setAt(stopOrders[k-1]);},k<=0],
+            ['\u2193 Later','One click later',
              function(){
-               x.a.out=(k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s);
-               exitCommit();},
+               setAt((k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s));},
              k>=stopOrders.length-1&&!isBuild],
-            ['\u2715 Stays','Keep it on the slide to the end',
-             function(){delete x.a.out;exitCommit();},false]]});
+            x.kind==='focus'
+              ?['\u2715 None','No focus click',
+                function(){delete x.a.focus;exitCommit();},false]
+              :['\u2715 Stays','Keep it on the slide to the end',
+                function(){delete x.a.out;exitCommit();},false]]});
         x.done=true;
       }
       function exitRowsFor(o){
@@ -1580,15 +1761,16 @@
          review). Entrances, exits and movements go; the flip book's
          pages stay, as the note above says; and what is left is named
          from what is actually left. */
-      var n=0,nx=0,nm=0;
+      var n=0,nx=0,nm=0,nf=0;
       (s.annots||[]).forEach(function(a){
         if(!a) return;
         if(a.anim){delete a.anim;n++;}
         if(animOut(a)!=null){delete a.out;nx++;}
         if(a.motion){delete a.motion;delete a.mo;nm++;}
+        if(animFocus(a)){delete a.focus;nf++;}   /* T472 */
       });
       var left=slideStops(s);   /* the clicks still in the slide */
-      var all=n+nx+nm;
+      var all=n+nx+nm+nf;
       if(!all){
         toast(left
           ?('Nothing here has an entrance, exit or movement, but the '
@@ -1602,6 +1784,7 @@
       if(n) parts.push(n+(n===1?' entrance':' entrances'));
       if(nx) parts.push(nx+(nx===1?' exit':' exits'));
       if(nm) parts.push(nm+(nm===1?' movement':' movements'));
+      if(nf) parts.push(nf+(nf===1?' focus':' focuses'));
       toast('Cleared '+parts.join(', ')
         +(left?(' — '+left+' click'+(left===1?'':'s')
                 +' left, stepping the flip book')
@@ -1614,6 +1797,7 @@
       flipFxSync();
       animOutSync();
       motionSync();
+      focusSync();   /* T472 */
       if(typeof pictureSync==='function') pictureSync();   /* T387 */
       /* T289: the slide transition is a fact about the SLIDE rather than
          the selection, but this is the one sync every path already

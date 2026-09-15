@@ -109,3 +109,47 @@ def test_a_flip_book_page_can_turn_or_push(out):
     assert 'id="anim-flip-turn"' in out and 'id="anim-flip-push"' in out
     assert "@keyframes fturn-push{from{transform:translateX(100%);}" in out
     assert "  transform:perspective(900px) rotateY(-85deg);}" in out
+
+
+def test_a_focus_is_a_click_of_its_own(out):
+    """T472 (2026-09-15, user: "blur everything else but this", "zoom in
+    here", "show magnify of this box"). A focus is a peer of `anim` like
+    the exit: it claims a stop, it plays on that one stop, and the next
+    click puts the slide back. Three effects, one ribbon strip, a section
+    in the Configure panel with the click it goes on, a row in the Order
+    tab, and Remove all clears it."""
+    assert "  function animFocus(a){" in out
+    assert "  function animFocusing(s,a){" in out
+    assert "    return revealCount===sp+1;" in out
+    # the model: at + fx, fx one of the three
+    assert "  var FOCUS_FX=[" in out
+    for fx in ("['spot','Blur the rest',", "['zoom','Zoom in',", "['lens','Magnify',"):
+        assert fx in out
+    # a claim on a stop, and the next free order counts it
+    assert "      if(f&&!(f.at in seen)) seen[f.at]=1;});" in out
+    assert "      var f=animFocus(a); if(f&&f.at>mx) mx=f.at;});   /* T472 */" in out
+    # painted by the reveal pass on its stop; the stage zoom settles after
+    assert "          focusPaint(layer,el,ba);" in out
+    assert "    if(typeof focusSettle==='function') focusSettle(layer);" in out
+    # the three paints
+    assert ("      requestAnimationFrame(function(){"
+            "layer.classList.add('an-spotlit');});") in out
+    assert "      requestAnimationFrame(function(){stage.style.transform=tf;});" in out
+    assert "      c.classList.add('an-lens');" in out
+    # the ribbon strip, four wide, with a hover preview; the caption wears the click
+    assert 'id="anim-focus-strip"' in out
+    for k in ("none", "spot", "zoom", "lens"):
+        assert f'id="anim-focus-{k}"' in out
+    assert ".strip-frame>#anim-focus-strip.trans-strip{" in out
+    assert "      say.textContent=f?('on click '+(((sp==null?st:sp)|0)+1)):'';" in out
+    assert "  function focusPreview(fx){" in out
+    # the panel's section and its when-rows; the Order tab's row; Remove all
+    assert "    cfgHead(host,'focus, on a click');" in out
+    assert "    cfgChip(row,bic('locate'),'On a click of its own',own," in out
+    assert "        if(f) exits.push({i:i,a:a,o:f.at,kind:'focus',f:f});});" in out
+    assert "        if(animFocus(a)){delete a.focus;nf++;}   /* T472 */" in out
+    # the show's CSS: the rest soften, the stage moves, the lens floats
+    assert ".annot-layer.an-spotlit .an-item:not(.an-spot):not(.an-lens){" in out
+    assert ".deck-stage{transition:transform .55s cubic-bezier(.2,.7,.2,1);}" in out
+    assert ".an-item.an-lens{pointer-events:none;z-index:30;opacity:0;" in out
+    assert "  focusBoot();                /* T472: focus, on its click */" in out

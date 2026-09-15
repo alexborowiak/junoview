@@ -1111,6 +1111,44 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Leaves early</span>
           </span>
+          <!-- T472: FOCUS, ON ITS CLICK (2026-09-15, user: "Needs to be
+               an animation that is 'blur everything else but this',
+               and 'zoom in here', or 'show magnify of this box'"). A
+               thing already on the slide gets a click on which it is
+               the point; the click is its own at the end, or the one
+               something else arrives on (the Configure panel). -->
+          <span class="rbn-grp rbn-focus rbn-compact" data-tab="animation"
+            data-fold-ic="expand">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="anim-focus">
+                <span class="fx-strip trans-strip" id="anim-focus-strip"
+                  role="group" aria-label="Focus on it, on a click">
+                <button class="fx-tile" id="anim-focus-none"
+                  aria-pressed="false" disabled
+                  title="No click makes this the point"
+                  ><i data-ic="none"></i><span>None</span></button>
+                <button class="fx-tile" id="anim-focus-spot"
+                  aria-pressed="false" disabled
+                  title="On its click everything else on the slide softens
+ and dims and this stays sharp; the next click puts the slide back
+ &mdash; hover to see it"
+                  ><i data-ic="eye"></i><span>Blur the rest</span></button>
+                <button class="fx-tile" id="anim-focus-zoom"
+                  aria-pressed="false" disabled
+                  title="On its click the page zooms in on this; the next
+ click zooms back &mdash; hover to see it"
+                  ><i data-ic="expand"></i><span>Zoom in</span></button>
+                <button class="fx-tile" id="anim-focus-lens"
+                  aria-pressed="false" disabled
+                  title="On its click a larger copy of this floats over the
+ slide; the next click takes it away &mdash; hover to see it"
+                  ><i data-ic="find"></i><span>Magnify</span></button>
+                </span>
+              </span>
+            </span>
+            <span class="rbn-lab">Focus <span class="rbn-foldval"
+              id="anim-focus-say" hidden></span></span>
+          </span>
           <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
                nothing said so (2026-09-04, user: "how do the
                animations work with the flip books. Can there be a

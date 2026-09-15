@@ -49,6 +49,11 @@
         var st2=steps.map[o];
         if(st2!=null&&stopOf(st2)===k-1) leave.push(annotLabel(a));
       }
+      var f=(typeof animFocus==='function')?animFocus(a):null;   /* T472 */
+      if(f){
+        var st3=steps.map[f.at];
+        if(st3!=null&&stopOf(st3)===k-1) arr.push('focus on '+annotLabel(a));
+      }
     });
     steppersOn(s).forEach(function(p){
       var base=plan.base[p.i]; if(base==null) return;
