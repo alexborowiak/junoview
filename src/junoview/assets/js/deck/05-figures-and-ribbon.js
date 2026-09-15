@@ -2081,6 +2081,23 @@
     val.hidden=!txt;
     var btn=val.parentNode;
     btn.classList.toggle('has-val',!!txt);
+    /* T469: A DOOR OVER NOTHING LIVE IS NOT LIVE. Effect, Timing and
+       Motion looked ready with nothing selected and opened shelves of
+       disabled tiles (2026-09-15 review). A row whose every control
+       is disabled greys its door and says why; Transition, whose row
+       is about the slide, stays live. */
+    if(row){
+      var ctl=$$('button,select,input',row).filter(function(c){
+        if(c.closest&&c.closest('.strip-nav')) return false;   /* arrows are not choices */
+        for(var n=c;n&&n!==row;n=n.parentNode) if(n.hidden) return false;   /* nor hidden ones */
+        return true;});
+      var dead=ctl.length>0&&ctl.every(function(c){return c.disabled;});
+      /* only when it changes: the observer that calls this watches
+         `disabled`, and re-setting the same value is still a mutation */
+      if(btn.disabled!==dead) btn.disabled=dead;
+      if(dead){val.textContent='select something';val.hidden=false;
+        btn.classList.add('has-val');}
+    }
   }
   function rbnFoldReadouts(){
     $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnFoldReadout);
@@ -2097,7 +2114,7 @@
     var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
     new MutationObserver(function(){rbnFoldReadouts();})
       .observe(bar,{subtree:true,attributes:true,
-        attributeFilter:['aria-pressed']});
+        attributeFilter:['aria-pressed','disabled']});
   }
   function rbnUnfoldGroup(g){
     var wrap=null;
@@ -2495,7 +2512,7 @@
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
-    imgpane:'#hm-images',
+    imgpane:'#hm-images',citepane:'#dsg-cites',   /* T469: Citations too */
     notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
   function paneSyncBtns(){
     Object.keys(PANE_BTN).forEach(function(p){

@@ -8947,3 +8947,37 @@ any reading. The rest are T466 onwards.
   [241,380,447]; a drag keeps 629px and a drag back re-docks with
   `{w:272}`; drawing a frame lands in the picker and Cancel returns to
   the frame with the undo stack intact.
+
+- [x] **T469 — The review's fifth batch: the small things, twenty-five
+  of them.** The tab-strip hint named a shape by its internal key with
+  the wrong article ("draw a lbrace") and the pen had no hint; the
+  colour door's tooltip said "for the words" whatever was selected;
+  the Citations door never lit while its pane was open; in the
+  colourful theme every pane was pinned green whatever tab opened it;
+  the shelf left the strip's arrow column as a pale slab over a tile
+  and drew the page strip at its three-tile row width so the frame's
+  edge cut through the fourth; Deck layout's corners reached drawn
+  shapes but not the text box or the frame; the show's counter and the
+  presenter window disagreed once a slide was skipped (it counts what
+  the show plays); the film strip named a maths box "$$ E = mc^2 $$"
+  and a markdown box "# Big heading"; the Style system called itself
+  "Design of"; Tab from a table's last cell ended the edit (it adds a
+  row, as PowerPoint does); an audio clip offered "Poster frame / This
+  frame"; "Copy layout to slides…" opened a dialog called "Match
+  slides" whose verb was Match and whose buttons said Use all / None;
+  Quick animate and Layers on Build order showed no pressed state;
+  "Deck layout" had no ellipsis beside "Deck colours…"; Presentation
+  type was the first group Text folded (rbn-nofold: the strip beside
+  it scrolls); a poster kept a 200px empty left column; the code
+  trail's way back up was an icon-only circle beside a worded pill;
+  both style editors said "Words / Behind / Edge" for what the format
+  bar calls Text / Fill / Border, and the table's swatch heads were
+  clipped to "Colou" / "Behin"; the light theme's warning readout was
+  3.9:1; Effect, Timing and Motion doors looked live with nothing
+  selected and opened shelves of disabled tiles (a door over nothing
+  live is disabled and reads "select something" -- Transition, about
+  the slide, stays live); the Talk panel's "Skip animations · PLAYING"
+  read as two states; "Talk settings…" on Present plays (it says so:
+  "Play with talk settings…"). One trap on the way: a readout that
+  writes `disabled` inside an observer that watches `disabled` must
+  write only on change, or the page hangs. Driven at 1500.

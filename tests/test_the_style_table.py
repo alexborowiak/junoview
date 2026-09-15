@@ -54,7 +54,8 @@ def test_the_table_is_the_real_annots(out):
     # (T230: the first column is the words, and editable)
     assert "    var heads=['','Slide','Text',' X',' Y',' Width'];" in out
     assert "    if(isTx) heads=heads.concat(['Size','Face']);" in out
-    assert "    heads=heads.concat(['Colour','Behind']);" in out
+    # (T469: the format bar's words, and they fit the 34px columns)
+    assert "    heads=heads.concat(['Text','Fill']);" in out
     assert "    var isTx=!dgIsObj()||dgObjKind()==='text';" in out
 
 

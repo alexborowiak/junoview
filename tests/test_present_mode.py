@@ -759,4 +759,4 @@ def test_skip_animations_means_transitions_too(out):
     transition player was not, so half the ask was quietly missing.
     Flip books still step, because their frames are content."""
     assert "if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;" in out
-    assert "Skip animations" in out
+    assert "Animations" in out and 'class="tk-state">playing' in out   # T469

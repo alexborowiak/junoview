@@ -487,6 +487,12 @@
       :(kind==='arrow'||kind==='draw')?'Line colour ▾':'Colour ▾');
     var fgl=$('.rbn-fontgrp>.rbn-lab');
     if(fgl) fgl.textContent=(isText||isTbl||noteCell)?'Font':'Colour';
+    if(tcb) tcb.title=(isText||kind==='cell')
+      ?'Every colour for the words \u2014 and this deck\u2019s own colours, '
+        +'which every box wearing one follows'
+      :kind==='rect'?'Every colour for this shape\u2019s outline'
+      :(kind==='arrow'||kind==='draw')?'Every colour for this line'
+      :'Every colour for the table\u2019s words and rules';
     /* a SHAPE has one Fill control and it is the panel in Line & shape;
        this button stays for text boxes and cell frames, which have a
        background colour but no fill STYLE (2026-08-20, user: "confusing
@@ -3247,11 +3253,19 @@
           ?' '+styleDef(pendingStyle).label:' text')
         +' box, or click for one that sizes itself')
       :t==='arrow'?'Drag on '+pw+' to draw an arrow'
-      :t==='rect'?('Drag on '+pw+' to draw a '
-        +(pendingShape==='rect'?'rectangle':pendingShape))
+      :t==='rect'?(function(){
+        /* T469: the shape's own label, with its article -- it said
+           "draw a lbrace" and "draw a exclaim" (2026-09-15 review) */
+        var nm='shape';
+        (typeof SHAPE_LIST!=='undefined'?SHAPE_LIST:[]).forEach(function(p){
+          if(p[0]===pendingShape) nm=String(p[1]).toLowerCase();});
+        if(pendingShape==='rect') nm='rectangle';
+        return 'Drag on '+pw+' to draw '+(/^[aeiou]/.test(nm)?'an ':'a ')+nm;
+      })()
+      :t==='draw'?'Hold the mouse down and draw on '+pw+' freehand'
       :t==='line'?'Drag on '+pw+' to draw a line'
-      :t==='cell'?'Drag on '+pw+' to draw a cell frame (or click for the '
-        +'usual size), then pick a card from your notebook to fill it'
+      :t==='cell'?'Drag on '+pw+' to draw a box for a figure (or click for '
+        +'the usual size), then click the figure in your notebook'
       :t==='flip'?('Drag on '+pw+' to draw a flip book, then add the '
         +'figures you want to step through')
       :t==='table'?'Drag on '+pw+' to draw a table (or click for a 3\u00d73). '

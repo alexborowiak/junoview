@@ -847,7 +847,7 @@
                 aria-haspopup="true" aria-expanded="false"
                 title="Deck-wide layout defaults: the corner shape of boxes
  and the space used when Arrange distributes objects"
-                ><i data-ic="layouts"></i> Deck layout</button>
+                ><i data-ic="layouts"></i> Deck layout&#8230;</button>
             </span>
             <span class="rbn-lab">Whole deck</span>
           </span>
@@ -1300,7 +1300,7 @@ items snap to both. Guides, not ink: never printed or exported"
                list read as a timeline (T174). -->
           <span class="rbn-grp rbn-order rbn-nofold" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="anim-seq"
+              <button class="dbtn rbn-sm" id="anim-seq" aria-pressed="false"
                 title="Click things one after another and each becomes
  the next to appear. The Animation panel opens with the count, the
  effect and the way out"><i data-ic="locate"></i> Quick
@@ -1315,7 +1315,7 @@ items snap to both. Guides, not ink: never printed or exported"
                    with the click it arrives on and, if it leaves, the
                    click it goes. It drives Home's Layers button: two
                    doors, one pane. -->
-              <button class="dbtn rbn-sm" id="anim-layers"
+              <button class="dbtn rbn-sm" id="anim-layers" aria-pressed="false"
                 title="Every object on this slide with the click it
  arrives on and, if it leaves, the click it goes. Hide, lock and reorder
  from the same list"><i data-ic="objects"></i> Layers</button>
@@ -1539,7 +1539,7 @@ items snap to both. Guides, not ink: never printed or exported"
                third floating at a third baseline, the one group on Text
                not made of the one tile (2026-09-15 review, measured);
                and two of them wore one icon. -->
-          <span class="rbn-grp rbn-decktype" data-tab="text"
+          <span class="rbn-grp rbn-decktype rbn-nofold" data-tab="text"
             data-fold-ic="styles">
             <span class="rbn-row">
               <span class="sh-drop rbn-tall" id="dsg-stylewrap">
@@ -1691,7 +1691,7 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn rbn-sm" id="pr-talk"
                 title="Play from this slide with the talk settings open: skip
  the animations, or size headings, body text and captions for the room"
-                ><i data-ic="theme"></i> Talk settings&#8230;</button>
+                ><i data-ic="theme"></i> Play with talk settings&#8230;</button>
               <!-- T222: two buttons, not one (2026-09-03, user:
                    "notes and timing should be two different buttons").
                    They open the same pane on different tabs, which is
@@ -2940,8 +2940,11 @@ items snap to both. Guides, not ink: never printed or exported"
             type="number" min="0" step="0.1" placeholder="end">
             <button class="dbtn" id="md-end-now"
               title="Use where the preview is paused">Now</button></div>
-          <div class="np-lab">Poster frame</div>
-          <div class="np-row md-btns">
+          <!-- T469: hidden for an audio clip (mediaPaneSync): there is
+               no frame to pause on, and "This frame" toasted about
+               scrubbing to one -->
+          <div class="np-lab" id="md-poster-lab">Poster frame</div>
+          <div class="np-row md-btns" id="md-poster-row">
             <button class="dbtn" id="md-poster-now"
               title="The frame the preview is paused on becomes the still
  the clip shows before it plays"><i data-ic="image"></i> This frame</button>
@@ -3168,9 +3171,10 @@ items snap to both. Guides, not ink: never printed or exported"
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"
         aria-label="Next slide">&#8250;</button>
-      <button class="deck-arrow up" id="deck-up" hidden
+      <button class="deck-codepill up" id="deck-up" hidden
         title="Back to the slide (&#8593;)"
-        aria-label="Back up to the slide">&#8593;</button>
+        aria-label="Back up to the slide">
+        <span class="cp-arr">&#8593;</span> Back to the slide</button>
       <button class="deck-codepill" id="deck-down" hidden
         title="Scroll down to the code trace (&#8595;)"
         aria-label="Show the code trace that made this slide">
@@ -3193,8 +3197,10 @@ items snap to both. Guides, not ink: never printed or exported"
             title="Close"><i data-ic="exit"></i></button></div>
         <div class="tk-row">
           <span class="tk-lab">Animations</span>
+          <!-- T469: one word for the state beside a word for the thing:
+               "Skip animations · PLAYING" read as two states at once -->
           <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
-            ><i data-ic="stagger"></i> Skip animations
+            ><i data-ic="stagger"></i> Animations
             <span class="tk-state">playing</span></button>
         </div>
         <!-- T386: the talk's tools. A laser dot, a magnifier, a black
@@ -3276,9 +3282,9 @@ items snap to both. Guides, not ink: never printed or exported"
               aria-label="Bigger captions">+</button>
           </span>
         </div>
-        <p class="tk-note">Neither is saved with the deck &mdash; they
-          are about the room you are in, so nothing here reaches a PDF,
-          a .pptx or anyone else&rsquo;s copy.</p>
+        <p class="tk-note">None of this is saved with the deck &mdash;
+          it is about the room you are in, so nothing here reaches a
+          PDF, a .pptx or anyone else&rsquo;s copy.</p>
       </aside>
       <!-- the zoom cluster, pinned to the corner of the canvas the way
            every other page-based editor does it. It floats over the stage
@@ -3582,10 +3588,10 @@ items snap to both. Guides, not ink: never printed or exported"
      slide at a time"). It borrows the Apply dialog's shell and its slide
      picker outright rather than growing a second one. -->
 <div class="aa-dlg" id="ms-dlg" hidden role="dialog"
-  aria-label="Match slides">
+  aria-label="Copy layout to slides">
   <div class="aa-box ms-box">
     <div class="aa-head">
-      <span class="eq-t">Match slides</span>
+      <span class="eq-t">Copy layout to slides</span>
       <span class="deck-spring"></span>
       <button class="dbtn dc-icon" id="ms-close" aria-label="Cancel" title="Cancel (Esc)"
         ><i data-ic="exit"></i></button>
@@ -3595,8 +3601,8 @@ items snap to both. Guides, not ink: never printed or exported"
       <div class="aa-colh">
         <span class="eq-t">Give it to</span>
         <span class="deck-spring"></span>
-        <button class="dbtn aa-b" id="ms-all">Use all</button>
-        <button class="dbtn aa-b" id="ms-none">None</button>
+        <button class="dbtn aa-b" id="ms-all">Tick all</button>
+        <button class="dbtn aa-b" id="ms-none">Untick all</button>
       </div>
       <div class="aa-scope" id="ms-scope"></div>
     </div>
@@ -3604,7 +3610,7 @@ items snap to both. Guides, not ink: never printed or exported"
       <span class="aa-count" id="ms-count"></span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="ms-cancel">Cancel</button>
-      <button class="dbtn primary" id="ms-ok">Match</button>
+      <button class="dbtn primary" id="ms-ok">Copy</button>
     </div>
   </div>
 </div>

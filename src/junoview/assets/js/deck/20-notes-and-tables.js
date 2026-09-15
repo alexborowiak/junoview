@@ -561,7 +561,7 @@
         if(none){
           var nb=document.createElement('button');
           nb.className='dbtn stm-tg';nb.textContent=none;
-          nb.title='No '+label.toLowerCase()+' at all';
+          nb.title='No '+label.toLowerCase();
           nb.setAttribute('aria-pressed',(v==='none').toString());
           nb.addEventListener('click',function(e){
             e.stopPropagation();
@@ -573,9 +573,11 @@
         }
         return wrap;
       }
-      crow.appendChild(colCtl('color','Words','#e6eef5',''));
-      crow.appendChild(colCtl('bg','Behind','#16273a','None'));
-      crow.appendChild(colCtl('bdc','Edge','#8aa0b0','None'));
+      /* T469: the format bar's words (Text, Fill, Border), not a
+         second vocabulary ("Words / Behind / Edge") */
+      crow.appendChild(colCtl('color','Text','#e6eef5',''));
+      crow.appendChild(colCtl('bg','Fill','#16273a','None'));
+      crow.appendChild(colCtl('bdc','Border','#8aa0b0','None'));
       box.appendChild(crow);
       var ren=document.createElement('input');
       ren.className='stm-ren';ren.type='text';ren.value=d.label;
@@ -1912,6 +1914,9 @@
         nc=ci+(e.shiftKey?-1:1);
         if(nc>=a.rows[ri].length){nc=0;nr=ri+1;}
         else if(nc<0){nc=a.rows[ri].length-1;nr=ri-1;}
+        /* T469: Tab out of the last cell adds a row, as PowerPoint
+           does, rather than ending the edit */
+        if(nr>=a.rows.length&&!e.shiftKey){tableGrow(a,'row',1);}
       } else if(e.key==='Enter'){e.preventDefault();
         nr=ri+(e.shiftKey?-1:1);
       } else if(e.key==='Escape'){e.preventDefault();td.blur();return;}

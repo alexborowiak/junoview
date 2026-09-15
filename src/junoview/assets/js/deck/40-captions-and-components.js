@@ -1627,7 +1627,7 @@
       var c=$('#ms-count'); if(c) c.textContent=words();
       var ok=$('#ms-ok'),n=idxs().length;
       if(ok){ok.disabled=!n;
-        ok.textContent=n?('Match '+n+' slide'+(n===1?'':'s')):'Match';}
+        ok.textContent=n?('Copy to '+n+' slide'+(n===1?'':'s')):'Copy';}
     }
     function build(){
       var w=$('#ms-what');

@@ -353,6 +353,10 @@
     }
     if(body) body.classList.remove('empty');
     if(nm) nm.textContent=mediaLabel(a);
+    /* T469: no poster frame for a sound */
+    var pl=$('#md-poster-lab'),prw=$('#md-poster-row');
+    if(pl) pl.hidden=!!a.audio;
+    if(prw) prw.hidden=!!a.audio;
     var tr=mediaTrimOf(a);
     var st=$('#md-start'),en=$('#md-end');
     if(st) st.value=tr.s?tr.s.toFixed(1):'0';

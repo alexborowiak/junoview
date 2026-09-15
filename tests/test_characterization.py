@@ -1951,8 +1951,22 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # stack text by its own height; a dragged pane keeps its height and
 # docks again at the edge; "From notebook" opens the picker at once and
 # the frame's caption has a floor; Presentation type is three tiles.
-EXPECTED_MD5 = "b7fdddc8387143d90046a0702843bf55"
-EXPECTED_BYTES = 4348724
+# T469 (2026-09-15): the review's fifth batch -- the small things:
+# hints name shapes by their label and the pen has one; the colour
+# door's tooltip says what it colours; the Citations door lights; the
+# panes take the tab's hue in the colourful theme; the shelf drops the
+# nav column and a strip is as wide as its tiles; corners reach the
+# text box and the frame; the show's counter counts what the show
+# plays; the film strip names maths and markdown by their words; the
+# Style system wears its door's name; Tab from a table's last cell adds
+# a row; an audio clip has no poster frame; Copy layout to slides is
+# called that; Quick animate and Layers light; Deck layout... ;
+# Presentation type never folds; a poster's empty column collapses;
+# the code trail's way up is a pill; the style editors say Text / Fill
+# / Border; the light theme's warning reads; a door over disabled tiles
+# is disabled and says "select something"; the Talk panel's words.
+EXPECTED_MD5 = "3450b57ff8de7adbb9b34268e179e850"
+EXPECTED_BYTES = 4354034
 
 
 def _render_example() -> str:

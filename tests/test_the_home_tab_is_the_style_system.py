@@ -27,7 +27,9 @@ from __future__ import annotations
 
 
 def test_the_type_doors_are_on_text(out):
-    grp = out.split('<span class="rbn-grp rbn-decktype" data-tab="text"')[1] \
+    # (T469: rbn-nofold -- the strip beside it scrolls, this never folds)
+    grp = out.split('<span class="rbn-grp rbn-decktype rbn-nofold"'
+                    ' data-tab="text"')[1] \
         .split('<span class="rbn-lab">Presentation type</span>')[0]
     for cid in ("dsg-stylewrap", "dsg-sets", "dsg-cites"):
         assert f'id="{cid}"' in grp, cid

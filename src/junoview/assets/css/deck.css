@@ -845,6 +845,8 @@ body.light .sp-act:hover{color:var(--ink);background:var(--surface-active);}
 .cp-arr{font-size:14px;line-height:1;}
 .deck-arrow.up{left:50%;top:12px;transform:translateX(-50%);
   width:44px;height:44px;font-size:24px;}
+/* T469: the way back up is the same worded pill as the way down */
+.deck-codepill.up{top:12px;bottom:auto;}
 .deck-count{position:absolute;right:18px;bottom:12px;z-index:7;
   font-family:var(--mono);font-size:11.5px;color:var(--chrome-ink-2);}
 .deck.creating .deck-count,.deck.editing .deck-count{display:none;}
@@ -1276,6 +1278,12 @@ body.slide-editing .apptop{display:none;}
    the THUMBNAILS inside a column that keeps its width. This hides the
    column. */
 .deck.editing.film-auto{grid-template-columns:0 minmax(0,1fr);}
+/* T469: a POSTER has nothing in the column at all -- no film, no name
+   row, no controls while editing (rename is the top bar's since T447)
+   -- so the track goes too; it kept a 200px empty column beside the
+   sheet (2026-09-15 review) */
+.deck.editing.poster-page{grid-template-columns:0 minmax(0,1fr);}
+.deck.editing.poster-page>.deck-create{display:none;}
 .deck.editing.film-auto>.deck-create{position:relative;z-index:120;
   transform:translateX(-100%);transition:transform .18s ease;
   box-shadow:0 0 40px #00000066;}
@@ -1634,7 +1642,10 @@ body.slide-editing .apptop{display:none;}
    The arrows go with the scrolling. */
 .rbn-shelf-body .strip-frame{overflow:visible;width:max-content;
   flex:none;}
-.rbn-shelf-body .strip-frame>.fx-strip{flex-wrap:nowrap;overflow:visible;}
+.rbn-shelf-body .strip-frame>.fx-strip.fx-strip{flex-wrap:nowrap;overflow:visible;
+  width:max-content;max-width:none;}   /* T469: not the row's 3- or 4-tile width
+  (the class twice outranks each strip's own width rule, which comes later) */
+.rbn-shelf-body .strip-nav{display:none;}   /* T469: the column, not just its buttons */
 .rbn-shelf-body .strip-more,.rbn-shelf-body .strip-prev,
 .rbn-shelf-body .strip-next{display:none;}
 /* T454: a row too wide for the bar says so, rather than simply ending.
@@ -3476,7 +3487,7 @@ body.light .fp-tielab{color:var(--ink-3);}
 .rbn-gt{font-size:13px;color:#dbe7ef;}
 .rbn-gnote{font-size:11px;line-height:1.55;color:var(--chrome-ink-2);
   padding:8px 16px 0;}
-.rbn-gnote b{color:#dbe7ef;font-weight:600;}
+.rbn-gnote b{color:var(--chrome-ink);font-weight:600;}   /* T469: the theme's ink */
 .rbn-gwarn{margin:8px 16px 0;padding:7px 10px;border-radius:6px;
   border:1px solid #ef9f2766;background:#ef9f2714;color:#e8c88f;
   font-size:11px;line-height:1.45;display:flex;align-items:center;gap:10px;}
@@ -4006,7 +4017,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   line-height:1.35;color:var(--tk-ink,#fff);
   background:color-mix(in srgb,
     var(--tk-surface,var(--chrome-1,#0e1926)) 85%,transparent);
-  border:1px solid var(--tk-line,#ffffff2e);border-radius:8px;padding:.35em .55em;
+  border:1px solid var(--tk-line,#ffffff2e);border-radius:var(--tk-rad,8px);padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
 /* no text-shadow: it was meant to keep bare text legible on any page but
    read as a smudge on every one (2026-08-19, user: "why is there a shadow
@@ -4261,7 +4272,7 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
    once that is chosen; the accent tint stays its default */
 .an-cell{position:absolute;
   background:var(--tk-surface,var(--chrome-1,#0e1926));
-  border:1.5px solid var(--tk-line,color-mix(in srgb,var(--accent) 36%,transparent));border-radius:10px;overflow:hidden;
+  border:1.5px solid var(--tk-line,color-mix(in srgb,var(--accent) 36%,transparent));border-radius:var(--tk-rad,10px);overflow:hidden;
   display:flex;flex-direction:column;}
 /* edit mode: an UNSELECTED frame is just its content — transparent (so it
    never blocks what's behind), no border, no title header. The border, title,

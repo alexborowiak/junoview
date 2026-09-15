@@ -2815,7 +2815,7 @@
        say what a three-level list is. */
     var heads=['','Slide','Text',' X',' Y',' Width'];
     if(isTx) heads=heads.concat(['Size','Face']);
-    heads=heads.concat(['Colour','Behind']);
+    heads=heads.concat(['Text','Fill']);   /* T469: fit, and the bar's words */
     heads.forEach(function(h){
       var c=document.createElement('div');
       c.className='dgt-h';c.textContent=h.trim();
@@ -3916,9 +3916,10 @@
       return wrap;
     }
     var cg=cur_;
-    cg.appendChild(dgCol('color','Words','#e6eef5',''));
-    cg.appendChild(dgCol('bg','Behind','#16273a','None'));
-    cg.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));
+    /* T469: the format bar's words, as the menu's editor says them */
+    cg.appendChild(dgCol('color','Text','#e6eef5',''));
+    cg.appendChild(dgCol('bg','Fill','#16273a','None'));
+    cg.appendChild(dgCol('bdc','Border','#8aa0b0','None'));
     grp('');
     var rst=document.createElement('button');
     rst.className='dbtn dg-b';rst.textContent='Reset';
@@ -4038,7 +4039,7 @@
     var ov=document.createElement('div');
     ov.className='deck-design';ov.id='deck-design';
     ov.innerHTML='<div class="dh-head">'
-      +'<span class="dh-t">Design of “'+esc(pres.name||'this deck')
+      +'<span class="dh-t">Style system — “'+esc(pres.name||'this deck')
       +'”</span><span class="deck-spring"></span>'
       /* T315: the screen whose job is "what is the standard" had no
          way to pick one */
@@ -4401,7 +4402,16 @@
     }
     var tx=(s.annots||[]).filter(function(a){
       return a.k==='text'&&a.text;})[0];
-    if(tx) return tx.text;
+    if(tx){
+      /* T469: not the SOURCE -- the strip read "$$ E = mc^2 $$" and
+         "# Big heading ## Sub" (2026-09-15 review) */
+      var t=String(tx.text);
+      if(tx.maths) t=t.replace(/^\s*\$\$?/,'').replace(/\$\$?\s*$/,'').trim()||'equation';
+      else if(tx.md) t=(t.split('\n').map(function(l){
+        return l.replace(/^\s*(?:#{1,6}|[-*>]|\d+[.)])\s*/,'').trim();})
+        .filter(Boolean)[0])||t;
+      return t;
+    }
     /* a slide that is one big table is named by its first heading, which
        beats calling it "empty slide" (2026-08-20) */
     var tb=(s.annots||[]).filter(function(a){return a.k==='table';})[0];

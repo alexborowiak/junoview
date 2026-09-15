@@ -49,14 +49,15 @@ def test_both_style_editors_offer_the_whole_vocabulary(out):
     screen. Neither is allowed to be the poorer one."""
     # the window's editor
     assert "      var fsel=document.createElement('select');\n" in out
-    assert "      crow.appendChild(colCtl('color','Words','#e6eef5',''));" in out
-    assert "      crow.appendChild(colCtl('bg','Behind','#16273a','None'));" in out
-    assert "      crow.appendChild(colCtl('bdc','Edge','#8aa0b0','None'));" in out
+    # (T469: the format bar's words -- Text, Fill, Border)
+    assert "      crow.appendChild(colCtl('color','Text','#e6eef5',''));" in out
+    assert "      crow.appendChild(colCtl('bg','Fill','#16273a','None'));" in out
+    assert "      crow.appendChild(colCtl('bdc','Border','#8aa0b0','None'));" in out
     # the screen
     # (T230 put them in a captioned Colours cluster)
-    assert "    cg.appendChild(dgCol('color','Words','#e6eef5',''));" in out
-    assert "    cg.appendChild(dgCol('bg','Behind','#16273a','None'));" in out
-    assert "    cg.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));" in out
+    assert "    cg.appendChild(dgCol('color','Text','#e6eef5',''));" in out
+    assert "    cg.appendChild(dgCol('bg','Fill','#16273a','None'));" in out
+    assert "    cg.appendChild(dgCol('bdc','Border','#8aa0b0','None'));" in out
     assert "    fsel.className='dg-font';" in out
     # both offer the same five faces plus "default"
     assert out.count("['','Default face'],['sans','Sans'],['serif','Serif'],") == 2

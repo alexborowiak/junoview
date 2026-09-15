@@ -1236,8 +1236,8 @@ body.light{
   --border-strong:#798b9b;--input-bg:#ffffff;
   --tooltip-bg:#172330;--tooltip-ink:#f2f6fa;
   --overlay:#1020308f;--shadow:#1a263440;--focus:#17677a;
-  --selection:#238aa03d;--danger:#b83b30;--warning:#98640e;
-  --success:#257a64;--on-accent:#ffffff;--on-accent-deep:#ffffff;}
+  --selection:#238aa03d;--danger:#b83b30;--warning:#7a4e06;
+  --success:#1f6652;--on-accent:#ffffff;--on-accent-deep:#ffffff;}
 body.th-forest{
   --ink:#e2f0e9;--ink-2:#bed3c8;--ink-3:#8baa9a;
   --paper:#10271f;--paper-2:#091711;--paper-3:#19352a;
@@ -1487,7 +1487,9 @@ body.th-colorful .rbn-grp[data-tab="present"]{
   --accent:#f18ab1;--accent-deep:#a63c68;}
 body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#f18ab1;--accent-deep:#a63c68;}
-body.th-colorful .selpane{--accent:#62d49b;--accent-deep:#19764d;}
+/* (T469: the panes used to be pinned green here, whatever tab opened
+   them -- a Home ribbon opened a green Layers pane; the zone on body
+   supplies the hue now) */
 /* DIRECT rules, not --btn-* tokens: a token defined on body resolves
    its var(--accent) AT body — the same freeze the * alias exists for —
    so the per-group hue never reached the faces. A declaration on the

@@ -1827,6 +1827,16 @@
         .observe(ob,{attributes:true,attributeFilter:['aria-pressed']});
       mirror();
     }
+    /* T469: Build order's Layers door is the same door, and mirrors the
+       same state (it showed no pressed state while the pane was open) */
+    var al=$('#anim-layers');
+    if(al&&ob){
+      var mirrorA=function(){
+        al.setAttribute('aria-pressed',ob.getAttribute('aria-pressed')||'false');};
+      new MutationObserver(mirrorA)
+        .observe(ob,{attributes:true,attributeFilter:['aria-pressed']});
+      mirrorA();
+    }
   }
   function presentTabSync(){
     [['pr-tap','pl-tap'],['pr-trace','pl-trace']].forEach(function(p){
@@ -2775,7 +2785,7 @@
   function toggleSlideNums(){
     if(pres.showNums){delete pres.showNums;} else {pres.showNums=1;}
     markDirty();refresh();
-    toast('Slide numbers '+(pres.showNums?'on':'off'));
+    toast('Page numbers '+(pres.showNums?'on':'off'));
   }
   function updateCropLabel(){
     var b=$('#mi-crop');

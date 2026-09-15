@@ -465,9 +465,19 @@
     if(down) down.hidden=!(hasTrace&&atTop);
     if(up) up.hidden=!(hasTrace&&!atTop);
     var c=$('#deck-count');
-    /* T318: mains only, the number the talk and the paper agree on */
-    if(c) c.textContent=pres.slides.length
-      ?(slideNo(cur)+' / '+slideCount()):'0 / 0';
+    /* T318: mains only, the number the talk and the paper agree on.
+       T469: in the SHOW, the slides the show will play -- the presenter
+       window already counts that way, and the two read "3 / 4" and
+       "3 / 3" of the same talk once a version or Running late skipped
+       one (2026-09-15 review). */
+    if(c){
+      var shown=(mode==='view'&&typeof shownSlides==='function')?shownSlides():null;
+      if(shown&&shown.length){
+        var at=shown.indexOf(cur);
+        c.textContent=(at>=0?at+1:slideNo(cur))+' / '+shown.length;
+      } else c.textContent=pres.slides.length
+        ?(slideNo(cur)+' / '+slideCount()):'0 / 0';
+    }
   }
   function scrollToTrace(){
     var tr=stage.querySelector('.vtrace');

@@ -71,7 +71,7 @@ def test_shared_colours_does_not_change_layout(out):
     assert 'id="dsg-layout"' in out
     assert "Corner radius" in layout
     assert "Space between arranged boxes" in layout
-    assert "Deck layout</button>" in out
+    assert "Deck layout&#8230;</button>" in out   # T469: both doors open a panel
 
 
 def test_style_family_shows_the_base_specimen_once(out):

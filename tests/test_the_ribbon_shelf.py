@@ -26,7 +26,8 @@ def test_the_shelf_is_in_the_bar(out):
     # one line of options, not the group's two-track grid
     assert (".rbn-shelf-body>.rbn-row{display:flex;align-items:center;\n"
             "  height:auto;column-gap:var(--rbn-col-gap);}") in out
-    assert ".rbn-shelf-body .strip-frame>.fx-strip{flex-wrap:nowrap;" in out
+    # (T469: the class twice, to outrank each strip's own row-width rule)
+    assert ".rbn-shelf-body .strip-frame>.fx-strip.fx-strip{flex-wrap:nowrap;" in out
     # the door that owns it reads as pressed
     assert ".rbn-grp.rbn-shelved .rbn-foldbtn{" in out
 

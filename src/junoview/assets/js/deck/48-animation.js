@@ -503,6 +503,8 @@
        to it -- the mode writes the order, so the order is what you
        want to be watching while you point. */
     var on=!!seqArm;
+    var sqb=$('#anim-seq');   /* T469: the door lights while the mode is armed */
+    if(sqb) sqb.setAttribute('aria-pressed',on.toString());
     if(on&&typeof animPaneOpen==='function') animPaneOpen();
     if(on&&typeof animTabSet==='function') animTabSet('ord');
     if(typeof animCfgSync==='function') animCfgSync();
