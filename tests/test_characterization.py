@@ -2002,8 +2002,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T487 (2026-09-15): the small ends of the second pass -- group frame,
 # lock button truth, the thin bar's one height and settled fitter, the
 # download's words, the standalone page's packed fonts.
-EXPECTED_MD5 = "307b05a5d18b61c93a524648d2145aae"
-EXPECTED_BYTES = 4455581
+# T488 (2026-09-15): askText's small form; the page furniture's editor.
+EXPECTED_MD5 = "529a0f42106e3f4efb03d3bba96166fa"
+EXPECTED_BYTES = 4464719
 
 
 def _render_example() -> str:

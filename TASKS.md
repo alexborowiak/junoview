@@ -9358,3 +9358,19 @@ any reading. The rest are T466 onwards.
   equations fetched MathJax's fonts from the CDN — the faces the page
   loaded are packed in as data: URIs (from the service worker's cache
   when offline), and one that cannot be is named in the toast.
+- [x] **T488 — The page furniture has an editor.** Header, Footer and
+  Watermark looked like toggles but click-to-edit, and the edit was a
+  one-line prompt for the words: size, colour, alignment, "not on the
+  first slide", the watermark's opacity and angle have all been in the
+  model since T115, read by paintFurniture and written nowhere
+  (2026-09-15 review). askText grew a small form — `rows` of text,
+  number, select, check, colour (with a Default button) and range
+  fields, and a third button (`alt`) — and each furniture button opens
+  it: words with the legend of {name}/{date}/{n}/{N}/{sn}/{sN}/{sec},
+  size in points (stored as the percent of page height the painter
+  reads), alignment, colour, "Not on the first slide"; the watermark
+  takes opacity and angle instead. The ribbon button stays the on/off
+  readout; "Turn it off" is the form's third button, and empty words
+  turn it off too. Driven: a 14pt centred red header skipped on slide
+  1 and painted on slide 2 at 14.5px, round-tripped into the form,
+  turned off; the watermark at 40% and 0°.

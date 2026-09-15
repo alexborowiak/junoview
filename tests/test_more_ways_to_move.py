@@ -495,3 +495,32 @@ def test_a_deck_named_after_itself_loads_beside_its_notebook(tmp_path):
     (tmp_path / "analysis.junoview.html").write_text(
         wrap("mine"), encoding="utf-8")
     assert [p["name"] for p in load_doc(nb).presentations] == ["mine"]
+
+
+def test_the_page_furniture_has_an_editor(out):
+    """T488 (2026-09-15 review): header, footer and watermark carried
+    size, colour, alignment, angle and "not on the first slide" in the
+    model, read by paintFurniture and written nowhere; the prompt took
+    the words alone and the ribbon button read as a toggle that could
+    not be toggled."""
+    # askText grew a small form and a third button
+    assert "  function askRowsBuild(host,rows){" in out
+    assert "  function askRowsRead(){" in out
+    assert '<div class="ask-rows" id="ask-rows" hidden></div>' in out
+    assert '<button class="dbtn" id="ask-alt" type="button" hidden></button>' in out
+    assert "      e.stopPropagation();done(null,'alt');});" in out
+    assert "      if(f) f(v,why||'');" in out
+    # the furniture editor asks for every field the painter reads
+    assert "  var FURN_PT=5.4;" in out
+    assert "      {k:'pt',label:'Size',type:'number'," in out
+    assert "      rows.push({k:'op',label:'Opacity',type:'range'," in out
+    assert "      rows.push({k:'rot',label:'Angle',type:'number'," in out
+    assert "      rows.push({k:'align',label:'Aligned',type:'select'," in out
+    assert ("    if(!isW) rows.push({k:'skipFirst',"
+            "label:'Not on the first slide',") in out
+    assert "      ok:on?'Change it':'Add it',alt:on?'Turn it off':''}," in out
+    assert "        if(v.skipFirst) o2.skipFirst=1; else delete o2.skipFirst;" in out
+    # the painter still reads what the editor writes
+    assert "      if(v.skipFirst&&idx===0) return;" in out
+    assert "      if(v.align) el.style.textAlign=v.align;" in out
+    assert "        +(w.rot==null?-28:w.rot)+'deg)';" in out

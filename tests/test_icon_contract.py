@@ -202,6 +202,7 @@ _JS_LABELED = {
     ("html/deck.html", "qat-name"),     # syncQatName: presentation name
     ("html/deck.html", "qat-auto"),     # renderAutosaveItem: "Autosave on"
     ("html/deck.html", "mi-autosave"),  # renderAutosaveItem: "Autosave: on"
+    ("html/deck.html", "ask-alt"),      # askText: o.alt ("Turn it off")
     ("html/page.html", "tv-plots"),     # setBtnText: "Plots" + state word
     ("html/page.html", "tv-markdown"),  # setBtnText
     ("html/page.html", "tv-code"),      # setBtnText

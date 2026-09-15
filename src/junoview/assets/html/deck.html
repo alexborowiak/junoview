@@ -820,20 +820,27 @@
                by accident (2026-08-20). -->
           <span class="rbn-grp rbn-furn" data-tab="design" data-fold-ic="footer">
             <span class="rbn-row">
+              <!-- T488: pressed means ON; the click opens the editor
+                   (words, size, alignment, colour, first slide), which
+                   is also where it is turned off -->
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
-                title="A line along the top of every page. {name}, {date},
- {n}/{N} the page and the total, {sn}/{sN} the same within the section,
- {sec} its name"><i data-ic="docktop"></i>
+                title="Top of every page; click to set words, size,
+ alignment, colour. {name}, {date}, {n}/{N} page and total,
+ {sn}/{sN} the same within the section, {sec} its name"
+                ><i data-ic="docktop"></i>
  Header</button>
               <button class="dbtn rbn-sm" id="dc-foot"
                 aria-pressed="false"
-                title="A line along the bottom of every page. {n} and {N}
- are the page number and the total, {sn} and {sN} the same within the
- section, and {sec} its name"><i data-ic="footer"></i> Footer</button>
+                title="Bottom of every page; click to set words, size,
+ alignment, colour. {n} and {N} the page and total,
+ {sn} and {sN} the same within the section, {sec} its name"
+                ><i data-ic="footer"></i> Footer</button>
               <button class="dbtn rbn-sm" id="dc-wmark"
                 aria-pressed="false"
-                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><i data-ic="wmark"></i>
+                title="A faint word across every page — DRAFT, CONFIDENTIAL,
+ your name — behind the content. Click to set its words, size, opacity,
+ angle and colour"><i data-ic="wmark"></i>
    Watermark</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
@@ -3460,9 +3467,12 @@ items snap to both. Guides, not ink: never printed or exported"
         autocomplete="off">
       <textarea class="ask-in ask-area" id="ask-area" rows="5" hidden
         spellcheck="false"></textarea>
+      <!-- T488: the small form (askText's `rows`), filled per question -->
+      <div class="ask-rows" id="ask-rows" hidden></div>
       <div class="aa-foot">
         <span class="aa-count" id="ask-note"></span>
         <span class="deck-spring"></span>
+        <button class="dbtn" id="ask-alt" type="button" hidden></button>
         <button class="dbtn" id="ask-cancel" type="button">Cancel</button>
         <button class="dbtn primary" id="ask-ok" type="button">OK</button>
       </div>

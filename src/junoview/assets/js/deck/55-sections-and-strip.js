@@ -2905,32 +2905,70 @@
     renderPresRow();
   });
 
-  /* ---- watermark / header / footer, edited in one small prompt each --
-     A dialog would be a whole modal for three fields nobody changes twice
-     a year; a prompt says exactly what it wants and leaves the ribbon
-     button showing whether the thing is on. Empty turns it off, which is
-     the same gesture as clearing any other field. */
+  /* ---- watermark / header / footer, edited in one small form each ---
+     T488: the model has carried size, colour, alignment, "not on the
+     first slide", the watermark's opacity and angle since T115, read by
+     paintFurniture and written nowhere -- the prompt took the words
+     alone, and the ribbon button read as a toggle that could not be
+     toggled (2026-09-15 review). The form is askText's `rows`; the
+     ribbon button stays the on/off readout, and "Turn it off" is the
+     form's third button (an empty text turns it off too). Sizes are
+     asked in points, the editor's currency everywhere else, and stored
+     as the percent of page height the painter reads. */
+  var FURN_PT=5.4;   /* pt per percent of page height, as the tooltips */
   function furnEdit(key,label,hint,dflt){
     var cur_=pres[key]||{};
-    /* T475: the editor's own question; the hint's first line is what
-       it is, the rest is the note under the field */
     var lines=String(hint).split('\n');
-    askText({title:label,label:lines[0],value:cur_.text||dflt||'',
-      note:lines.slice(1).join(' '),ok:cur_.text?'Change it':'Add it'},
-    function(v){
-    if(v===null) return;
-    v=v.trim();
-    if(!v) delete pres[key];
-    else {
-      pres[key]=pres[key]||{};
-      pres[key].text=v;
-      if(key==='wmark'){
-        if(pres[key].size==null) pres[key].size=12;
-        if(pres[key].op==null) pres[key].op=0.12;
-      } else if(pres[key].size==null) pres[key].size=2;
+    var isW=(key==='wmark');
+    var on=!!String(cur_.text||'').trim();
+    var curCol=cur_.color?tokVal(cur_.color):'';
+    var rows=[
+      {k:'text',label:'Words',value:cur_.text||dflt||'',placeholder:dflt||'',
+       note:lines.slice(1).join(' ')},
+      {k:'pt',label:'Size',type:'number',
+       value:Math.round((cur_.size==null?(isW?12:2):cur_.size)*FURN_PT),
+       min:4,max:isW?400:60,step:1,unit:'pt'}];
+    if(isW){
+      rows.push({k:'op',label:'Opacity',type:'range',
+        value:cur_.op==null?0.12:cur_.op,min:0.03,max:0.6,step:0.01,pct:true});
+      rows.push({k:'rot',label:'Angle',type:'number',
+        value:cur_.rot==null?-28:cur_.rot,min:-90,max:90,step:1,
+        unit:'\u00b0'});
+    } else {
+      rows.push({k:'align',label:'Aligned',type:'select',
+        value:cur_.align||'left',
+        options:[['left','Left'],['center','Centre'],['right','Right']]});
     }
-    markDirty();refresh();syncFurnBtns();
-    toast(v?(label+' set'):(label+' removed'));
+    rows.push({k:'color',label:'Colour',type:'color',value:curCol,clear:true});
+    if(!isW) rows.push({k:'skipFirst',label:'Not on the first slide',
+      type:'check',value:!!cur_.skipFirst});
+    askText({title:label,what:lines[0],rows:rows,
+      ok:on?'Change it':'Add it',alt:on?'Turn it off':''},
+    function(v,why){
+      if(why==='alt'||(v&&!String(v.text||'').trim())){
+        delete pres[key];
+        markDirty();refresh();syncFurnBtns();
+        toast(label+' removed');
+        return;
+      }
+      if(v===null) return;
+      var o2=pres[key]=pres[key]||{};
+      o2.text=String(v.text).trim();
+      if(v.pt!=null&&v.pt>0) o2.size=Math.round(v.pt/FURN_PT*100)/100;
+      else if(o2.size==null) o2.size=isW?12:2;
+      if(isW){
+        if(v.op!=null) o2.op=v.op; else if(o2.op==null) o2.op=0.12;
+        if(v.rot!=null) o2.rot=v.rot;
+      } else {
+        if(v.align&&v.align!=='left') o2.align=v.align; else delete o2.align;
+        if(v.skipFirst) o2.skipFirst=1; else delete o2.skipFirst;
+      }
+      /* a token colour (@ink) is kept when the swatch was left alone */
+      if(!v.color) delete o2.color;
+      else if(v.color.toLowerCase()!==String(curCol).toLowerCase())
+        o2.color=v.color;
+      markDirty();refresh();syncFurnBtns();
+      toast(label+' set');
     });
   }
   function syncFurnBtns(){

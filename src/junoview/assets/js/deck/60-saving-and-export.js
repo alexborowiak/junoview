@@ -38,37 +38,165 @@
      otherwise -- so every caller is a callback, which is what a
      dialog that is not modal to the whole browser has to be. */
   var askCb=null,askWired=false;
+  /* T488: A SMALL FORM. `o.rows` is a list of {k,label,type,value,...}
+     -- text (default), number (min/max/step, unit), select (options
+     [[value,label]]), check, color (clear:true adds a Default button;
+     '' means default), range (min/max/step, pct:true reads as a
+     percentage) -- and the callback receives {k:value} instead of a
+     string. `o.alt` names a third button; it closes the question and
+     calls back (null,'alt'). The page furniture's editor is the first
+     taker: header, footer and watermark had size, colour, alignment,
+     angle and "not on the first slide" in the model with no door
+     (2026-09-15 review). */
+  var askRows=null;
+  function askRowsBuild(host,rows){
+    host.innerHTML='';
+    askRows=[];
+    rows.forEach(function(r,i){
+      var id='ask-r'+i;
+      var lab=document.createElement('label');
+      lab.className='ask-row-lab';lab.htmlFor=id;
+      lab.textContent=r.label||'';
+      var cell=document.createElement('span');
+      cell.className='ask-row-cell';
+      var el,readout=null,clearBtn=null;
+      var t=r.type||'text';
+      if(t==='select'){
+        el=document.createElement('select');
+        el.className='ask-in ask-sel';
+        (r.options||[]).forEach(function(op){
+          var o2=document.createElement('option');
+          o2.value=op[0];o2.textContent=op[1];
+          if(String(op[0])===String(r.value)) o2.selected=true;
+          el.appendChild(o2);
+        });
+      } else if(t==='check'){
+        el=document.createElement('input');
+        el.type='checkbox';el.className='ask-check';
+        el.checked=!!r.value;
+      } else if(t==='color'){
+        el=document.createElement('input');
+        el.type='color';el.className='ask-color';
+        var hex=/^#[0-9a-f]{6}$/i.test(String(r.value||''))?r.value:'';
+        el.value=hex||'#888888';
+        el.dataset.cleared=hex?'':'1';
+        if(r.clear){
+          clearBtn=document.createElement('button');
+          clearBtn.type='button';clearBtn.className='dbtn ask-clear';
+          clearBtn.textContent='Default';
+          clearBtn.setAttribute('aria-pressed',hex?'false':'true');
+          clearBtn.addEventListener('click',function(e){
+            e.stopPropagation();
+            el.dataset.cleared='1';
+            clearBtn.setAttribute('aria-pressed','true');
+          });
+          el.addEventListener('input',function(){
+            el.dataset.cleared='';
+            clearBtn.setAttribute('aria-pressed','false');
+          });
+        }
+      } else if(t==='range'){
+        el=document.createElement('input');
+        el.type='range';el.className='ask-range';
+        if(r.min!=null) el.min=r.min;
+        if(r.max!=null) el.max=r.max;
+        if(r.step!=null) el.step=r.step;
+        el.value=r.value==null?'':r.value;
+        readout=document.createElement('span');
+        readout.className='ask-unit';
+        var say=function(){
+          readout.textContent=r.pct?(Math.round(parseFloat(el.value)*100)+'%')
+            :el.value+(r.unit?(' '+r.unit):'');};
+        el.addEventListener('input',say);say();
+      } else {
+        el=document.createElement('input');
+        el.type=(t==='number')?'number':'text';
+        el.className='ask-in'+(t==='number'?' ask-num':'');
+        if(t==='number'){
+          if(r.min!=null) el.min=r.min;
+          if(r.max!=null) el.max=r.max;
+          if(r.step!=null) el.step=r.step;
+        }
+        /* the form's text rows are names and {codes}: unchecked, like
+           #ask-in's own markup */
+        el.setAttribute('spellcheck','false');el.autocomplete='off';
+        el.value=(r.value==null)?'':String(r.value);
+        el.placeholder=r.placeholder||'';
+      }
+      el.id=id;
+      cell.appendChild(el);
+      if(readout) cell.appendChild(readout);
+      else if(r.unit&&t!=='range'){
+        var u=document.createElement('span');
+        u.className='ask-unit';u.textContent=r.unit;
+        cell.appendChild(u);
+      }
+      if(clearBtn) cell.appendChild(clearBtn);
+      host.appendChild(lab);host.appendChild(cell);
+      if(r.note){
+        var n=document.createElement('div');
+        n.className='ask-row-note';n.textContent=r.note;
+        host.appendChild(n);
+      }
+      askRows.push({r:r,el:el});
+    });
+  }
+  function askRowsRead(){
+    var out={};
+    (askRows||[]).forEach(function(x){
+      var r=x.r,el=x.el,t=r.type||'text';
+      if(t==='check') out[r.k]=!!el.checked;
+      else if(t==='color') out[r.k]=el.dataset.cleared?'':el.value;
+      else if(t==='number'||t==='range'){
+        var n=parseFloat(el.value);
+        out[r.k]=isFinite(n)?n:(r.value==null?null:r.value);
+      } else out[r.k]=el.value;
+    });
+    return out;
+  }
   function askText(o,cb){
     var dlg=$('#ask-dlg');
     if(!dlg){cb(null);return;}
     o=o||{};
-    var multi=!!o.multi;
-    var inp=$('#ask-in'),area=$('#ask-area');
+    var multi=!!o.multi,rows=Array.isArray(o.rows)&&o.rows.length;
+    var inp=$('#ask-in'),area=$('#ask-area'),rowsEl=$('#ask-rows');
     $('#ask-t').textContent=o.title||'Name';
     var what=$('#ask-what');
     what.textContent=o.what||'';what.hidden=!o.what;
     var lab=$('#ask-lab');
-    lab.textContent=o.label||'';lab.hidden=!o.label;
+    lab.textContent=o.label||'';lab.hidden=!o.label||rows;
     var note=$('#ask-note');
     note.textContent=o.note||'';
     $('#ask-ok').textContent=o.ok||'OK';
-    inp.hidden=multi;area.hidden=!multi;
-    var field=multi?area:inp;
-    field.value=(o.value==null)?'':String(o.value);
-    field.placeholder=o.placeholder||'';
+    var alt=$('#ask-alt');
+    if(alt){alt.textContent=o.alt||'';alt.hidden=!o.alt;}
+    inp.hidden=multi||rows;area.hidden=!multi||rows;
+    if(rowsEl){rowsEl.hidden=!rows;if(rows) askRowsBuild(rowsEl,o.rows);
+      else askRows=null;}
+    var field=rows?(askRows[0]&&askRows[0].el):multi?area:inp;
+    if(!rows){
+      field.value=(o.value==null)?'':String(o.value);
+      field.placeholder=o.placeholder||'';
+    }
     askCb=cb;
     dlg.classList.toggle('over-design',!!$('#deck-design'));
+    dlg.classList.toggle('ask-form',!!rows);
     dlg.hidden=false;
-    setTimeout(function(){field.focus();
-      if(!multi&&o.select!==false) field.select();},0);
+    setTimeout(function(){if(!field) return;field.focus();
+      if(!multi&&o.select!==false&&field.select&&field.type!=='color')
+        field.select();},0);
     if(askWired) return;
     askWired=true;
-    function done(v){
+    function done(v,why){
       dlg.hidden=true;
       var f=askCb;askCb=null;
-      if(f) f(v);
+      if(f) f(v,why||'');
     }
-    function ok(){done((area.hidden?inp:area).value);}
+    function ok(){
+      done(askRows?askRowsRead():(area.hidden?inp:area).value);
+    }
+    if(alt) alt.addEventListener('click',function(e){
+      e.stopPropagation();done(null,'alt');});
     $('#ask-ok').addEventListener('click',function(e){
       e.stopPropagation();ok();});
     $('#ask-cancel').addEventListener('click',function(e){
@@ -95,7 +223,9 @@
       if(!dlg.contains(e.target)&&e.target!==document.body) return;
       e.stopImmediatePropagation();
       if(e.key==='Escape'){e.preventDefault();done(null);}
-      else if(e.key==='Enter'&&(e.target===inp||(e.target===area&&e.ctrlKey))){
+      else if(e.key==='Enter'&&(e.target===inp||(e.target===area&&e.ctrlKey)
+        ||(askRows&&rowsEl&&rowsEl.contains(e.target)
+          &&e.target.tagName!=='BUTTON'))){
         e.preventDefault();ok();}
     },true);
   }
