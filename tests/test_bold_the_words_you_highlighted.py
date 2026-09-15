@@ -68,5 +68,7 @@ def test_nothing_highlighted_still_means_the_whole_box(out):
     selection, which is the caller's signal to fall back."""
     run = out.split("  function onRun(id,cmd,fn){")[1].split("\n  }")[0]
     assert "      if(runStyleSelection(cmd)){" in run
-    assert "      fmtApply(fn);" in run
-    assert "onRun('#fmt-bold','bold',function(a){a.b=a.b?0:1;});" in out
+    # T481: the target state is decided once from the primary, so a
+    # mixed selection can be made uniform
+    assert "      fmtApply(function(a){fn(a,on);});" in run
+    assert "onRun('#fmt-bold','bold',setFromPrimary('b'));" in out

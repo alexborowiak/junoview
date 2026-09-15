@@ -2698,7 +2698,12 @@
           if(isFinite(n)) sizePaneWrite(k,n);
         });
         el.addEventListener('blur',function(){
-          if(typeof histPush==='function') histPush();});
+          /* T481: a COMMITTED edit, like the drag's end -- markDirty
+             pushes the clones of a place-linked set along (cmpFollowSel)
+             before it records history; a bare histPush moved this one
+             alone and the next drag anywhere in the set snapped it back
+             (2026-09-15 review, driven) */
+          markDirty();});
       });
     });
   })();

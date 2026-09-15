@@ -16,7 +16,7 @@ def test_deselecting_returns_to_the_tab_the_selection_took_you_from(out):
     ribbon used to fall to Home. It goes back to the tab you left, if
     that tab still has anything on it."""
     assert "var tabBeforeSel='';" in out
-    assert "if(wantTab) tabBeforeSel=activeTab();" in out
+    assert "if(wantTab&&!ctxNow) tabBeforeSel=activeTab();" in out   # T481
     assert "if(tabBeforeSel&&tabHasContent(tabBeforeSel)) to=tabBeforeSel;" in out
     # used once, then forgotten: a tab you changed to on purpose while
     # something was selected is where you stay

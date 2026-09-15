@@ -2688,6 +2688,7 @@
       var l=stage.querySelector('.annot-layer');
       if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
       renderSelPane();
+      if(typeof showFmt==='function') showFmt();   /* T481: the ribbon's readout */
     }
     function toggleFlag(i,flag){
       var a2=liveAnnot(i);
@@ -2695,6 +2696,17 @@
       if(a2[flag]) delete a2[flag]; else a2[flag]=1;
       markDirty();
       var l=stage.querySelector('.annot-layer');
+      /* T481: A HIDDEN THING IS NOT SELECTED. The contextual bar stayed
+         up for an object no longer on the canvas, and Duplicate made a
+         hidden copy (2026-09-15 review). */
+      if(flag==='hide'&&a2.hide&&selSet.indexOf(i)>=0){
+        selSet=selSet.filter(function(x){return x!==i;});
+        selAnnot=selSet.length?selSet[0]:null;
+        if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+        if(typeof showFmt==='function') showFmt();
+        renderSelPane();
+        return;
+      }
       if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
       renderSelPane();
     }

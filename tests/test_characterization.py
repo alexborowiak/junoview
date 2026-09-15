@@ -1991,8 +1991,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T479 (2026-09-15): Background as a compact chooser on the shelf.
 # T480 (2026-09-15): the type and colour model -- an-head, page-aware
 # token defaults, '@quiet' greys, the label/promoter/check fixes.
-EXPECTED_MD5 = "7b378f7eddd65ffb4547d02afde3ebe2"
-EXPECTED_BYTES = 4422790
+# T481 (2026-09-15): selection and the Object tab after the second pass.
+EXPECTED_MD5 = "3d91a082d9b94ced577cbf13db14339a"
+EXPECTED_BYTES = 4427200
 
 
 def _render_example() -> str:

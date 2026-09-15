@@ -1409,6 +1409,11 @@
        the structure the model now keeps (RICH_TAGS allows ul/ol/li). */
     el.addEventListener('keydown',function(e){
       if(!el.isContentEditable) return;
+      /* T481: Escape ends the edit -- a rung the ladder ("one
+         deselects, two leave") had no answer for while the caret was
+         in a box; a table cell already did this (2026-09-15 review) */
+      if(e.key==='Escape'){
+        e.preventDefault();e.stopPropagation();el.blur();return;}
       if(e.key==='Tab'&&el.classList.contains('an-ul')){
         e.preventDefault();e.stopPropagation();
         try{document.execCommand(e.shiftKey?'outdent':'indent',

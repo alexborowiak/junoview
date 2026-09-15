@@ -118,8 +118,11 @@ def test_the_source_window_holds_the_provenance_family(out):
     assert 'class="rbn-grp rbn-sources" data-tab="object"' in out
     assert 'id="fmt-srcwrap"\n                data-flat="1"' in out
     assert 'data-flat="1"' in src
-    assert ("#fmt-srcwrap.src-flat,#fmt-srcwrap.src-flat #fmt-src-menu{\n"
+    # T481: flat only while shown -- the wrapper's [hidden] must win
+    assert ("#fmt-srcwrap.src-flat:not([hidden]),\n"
+            "#fmt-srcwrap.src-flat:not([hidden]) #fmt-src-menu{\n"
             "  display:contents!important;}" in css)
+    assert "#fmt-srcwrap.src-flat[hidden]{display:none!important;}" in css
     assert ('.rbn-fontgrp{order:0;}' in css
             and '.rbn-paragrp{order:1;}' in css)
     assert ".deck.erc-tight .seq-cell:not(.fmt-path) span+span" in css

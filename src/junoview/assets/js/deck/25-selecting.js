@@ -269,12 +269,21 @@
       ||activeTab()==='animation';
     var wantTab=(freshSel&&activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
+    /* T481: STANDING ON A CONTEXTUAL TAB, STAY. Clicking a text box
+       from Object yanked the ribbon to Style; clicking a figure from
+       Style yanked it to Object -- and each yank overwrote the way
+       back with the tab you were yanked from, so Esc landed on Home
+       (2026-09-15 review). A contextual tab that still has content
+       for the new selection keeps you; the tab you CHOSE is the one
+       remembered. */
+    var ctxNow=(activeTab()==='style'||activeTab()==='object');
+    var ctxTab=activeTab();
     /* REMEMBER WHERE YOU WERE (T192). The selection carries you to
        Object; when it goes, syncRibbonGroups brings you back to the
        tab you left rather than to Home (2026-09-02, user: "if you are
        on Insert tab, and you click on an object then unclick, it
        should go back to Insert"). */
-    if(wantTab) tabBeforeSel=activeTab();
+    if(wantTab&&!ctxNow) tabBeforeSel=activeTab();
     justDrew=false;
     /* a table is not a text box, but its WORDS take the same size, font
        and alignment controls a text box does (2026-08-20) */
@@ -753,6 +762,16 @@
     /* ...and NOW the tab, with the controls that justify it in place.
        setTab re-runs syncRibbonGroups itself, so this is one call or the
        other, never both. */
+    if(wantTab&&ctxNow){
+      /* T481: the contextual tab keeps you if it still has content for
+         what is selected now; the groups are judged first (with the
+         way back kept safe from the empty-tab fallback), and only an
+         emptied tab hands over to the other contextual one */
+      var keep=tabBeforeSel;
+      syncRibbonGroups();
+      tabBeforeSel=keep;
+      if(activeTab()===ctxTab&&tabHasContent(ctxTab)) wantTab='';
+    }
     if(wantTab) setTab(wantTab,true); else syncRibbonGroups();
   }
   /* ---- THE DOORS OF THE WINDOWS (T177) ---------------------------------
@@ -3039,6 +3058,7 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);paintSel(l);}
+    showFmt();   /* T481: the ribbon's Lock in place reads the new state */
     toast(LOCK_LABEL[mode]+(idxs.length===1?''
       :' — '+idxs.length+' items'));
   }

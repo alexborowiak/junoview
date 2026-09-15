@@ -2248,8 +2248,13 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* Source is the important answer, not a drawer. Keep its provenance
    actions on the same row as the path and Source label. The existing
    buttons and handlers are reused; only the containment changes. */
-#fmt-srcwrap.src-flat,#fmt-srcwrap.src-flat #fmt-src-menu{
+#fmt-srcwrap.src-flat:not([hidden]),
+#fmt-srcwrap.src-flat:not([hidden]) #fmt-src-menu{
   display:contents!important;}
+/* T481: the wrapper's [hidden] must still win, or every layout that
+   flattens the source row showed Source / Where it came from… / Lock
+   figure with nothing selected (2026-09-15 review) */
+#fmt-srcwrap.src-flat[hidden]{display:none!important;}
 #fmt-srcwrap.src-flat #fmt-src-menu>.dbtn{width:auto;min-height:26px;
   padding:4px 7px!important;font-size:11px!important;}
 /* a chip: one of several answers, and it shows which one is on */

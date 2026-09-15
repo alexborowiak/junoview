@@ -1362,11 +1362,22 @@
   /* keep it where it is (T198): the position lock, the same flag the
      Layers pane's pin sets, toggled from the row */
   onBtn('#fmt-lock',function(){
+    /* T481: ONE ANSWER FOR THE WHOLE SELECTION, read off the primary the
+       way the button's own pressed state is -- toggling each item on its
+       own swapped a mixed selection's locks (2026-09-15 review) */
+    var s0=pres.slides[cur],a0=annotByIdx(s0,selAnnot);
+    var pin=!(a0&&lockMode(a0)==='pos');
+    var full=0,n=0;
     fmtApply(function(a){
       /* a FULL lock is the pane's to take off: this button only ever
          pins or unpins the position */
-      if(a.lock==='pos') delete a.lock;
-      else if(lockMode(a)==='') a.lock='pos';});
+      if(lockMode(a)==='all'){full++;return;}
+      n++;
+      if(pin) a.lock='pos'; else delete a.lock;});
+    if(full&&!n) toast('Fully locked \u2014 "Not locked" in the '
+      +'right-click menu or the Layers pane takes it off');
+    else toast((pin?'Position locked':'Not locked')
+      +(n>1?(' \u2014 '+n+' items'):''));
   });
   /* T227: the button applies the kind you last chose in its own
      gallery, so the second bullet list you make is the kind you
@@ -1756,13 +1767,23 @@
         if(typeof showFmt==='function') showFmt();
         return;
       }
-      fmtApply(fn);
+      /* T481: the primary's state, inverted, is what every item gets */
+      var s0=pres.slides[cur],a0=annotByIdx(s0,selAnnot);
+      var key={bold:'b',italic:'i',underline:'u',strikeThrough:'strike'}[cmd];
+      var on=!(a0&&key&&a0[key]);
+      fmtApply(function(a){fn(a,on);});
     });
   }
-  onRun('#fmt-bold','bold',function(a){a.b=a.b?0:1;});
-  onRun('#fmt-ital','italic',function(a){a.i=a.i?0:1;});
-  onRun('#fmt-under','underline',function(a){a.u=a.u?0:1;});
-  onRun('#fmt-strike','strikeThrough',function(a){a.strike=a.strike?0:1;});
+  /* T481: the target state is decided ONCE from the primary -- the
+     item the button reads -- so a mixed selection can be made uniform
+     rather than every item flipping on its own (2026-09-15 review) */
+  function setFromPrimary(key){
+    return function(a,on){a[key]=on?1:0;};
+  }
+  onRun('#fmt-bold','bold',setFromPrimary('b'));
+  onRun('#fmt-ital','italic',setFromPrimary('i'));
+  onRun('#fmt-under','underline',setFromPrimary('u'));
+  onRun('#fmt-strike','strikeThrough',setFromPrimary('strike'));
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out
@@ -1958,9 +1979,25 @@
     if(!idxs.length) return;
     var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF,bare);
     if(!made.length) return;
+    /* T481: A COPY OF A PLACE-LINKED CLONE IS A FREE OBJECT. The set
+       shares one spot, so a second clone on the same slide would sit
+       exactly on top of the first (cmpAddMenu refuses one for that
+       reason) -- and it did: markDirty pushed the set's spot from the
+       original and the copy snapped under it, an invisible twin every
+       later edit synced (2026-09-15 review, driven). */
+    var freed=0;
+    made.forEach(function(j){
+      var cp=s.annots[j];
+      if(!cp||!cp.cmp) return;
+      var def=cmpStore()[cp.cmp];
+      if(def&&cmpHasPlace(def)){
+        delete cp.cmp;delete cp.ci;delete cp.cinst;freed++;}
+    });
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,made);}
+    if(freed) toast('Copied as a free object \u2014 clones of that set '
+      +'share one spot, so the copy is not one of them');
     /* SAY SO. A stripped picture looks identical to the original at the
        moment it lands -- only its Refresh link is gone -- so the one
        difference that matters is the one thing nobody can see. The

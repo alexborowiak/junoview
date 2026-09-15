@@ -9199,3 +9199,26 @@ any reading. The rest are T466 onwards.
   layout) are '@quiet', so a light theme keeps them readable. Driven
   at 1500: the red Heading text lands on the Heading 1 box, a white
   page reads Body text #1b2733, "Section title" survives + and Bigger.
+- [x] **T481 — Selection and the Object tab, after the second review
+  pass.** Typing X/Y/W/H on a place-linked clone moved that clone alone
+  (the field's blur pushed history without the commit that carries the
+  set) and the next drag snapped it back — it is a committed edit now.
+  Duplicating a place-linked clone landed the copy exactly under the
+  original and every later edit synced the twins — a copy of one is a
+  free object, and says so. B / I / U / S and Lock in place read the
+  primary but toggled every selected item on its own, so a mixed
+  selection swapped rather than agreed — the target is decided once
+  from the primary, and the lock says what it did. Locking from the
+  right-click menu or the Layers pane left the ribbon's Lock in place
+  a click behind — both refresh it. Hiding the selected item from the
+  Layers pane left a phantom selection whose Duplicate made a hidden
+  copy — a hidden thing is not selected. Escape did nothing while the
+  caret was in a text box — it ends the edit, as a table cell's does.
+  Clicking a second object from a contextual tab yanked the ribbon to
+  the other contextual tab and overwrote the way back with it, so
+  Escape landed on Home — a contextual tab keeps you while it has
+  content for the new selection, and only a tab you chose is
+  remembered. And every ribbon layout that flattens the source row
+  showed Source / Where it came from… / Lock figure with nothing
+  selected, because `display:contents!important` beat the wrapper's
+  [hidden] — flat only while shown. Driven at 1500.

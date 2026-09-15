@@ -326,3 +326,25 @@ def test_the_type_and_colour_model_after_the_second_pass(out):
     assert "    var a=rgbOf(tokVal(c1)),b=rgbOf(tokVal(c2));" in out
     assert ("        if(inner.mode===stdInk()) delete a.color; "
             "else a.color=inner.mode;}") in out
+
+
+def test_selection_and_object_after_the_second_pass(out):
+    """T481 (2026-09-15, the second review pass): eight selection and
+    Object-tab bugs, each driven."""
+    # a typed X/Y/W/H is a committed edit, so a place-linked set follows
+    assert "          /* T481: a COMMITTED edit, like the drag's end" in out
+    # a duplicate of a place-linked clone is a free object
+    assert "        delete cp.cmp;delete cp.ci;delete cp.cinst;freed++;}" in out
+    # one answer for the whole selection: B/I/U/S and the lock
+    assert "  function setFromPrimary(key){" in out
+    assert "    var pin=!(a0&&lockMode(a0)==='pos');" in out
+    # the ribbon's lock readout follows the menu and the pane
+    assert "    showFmt();   /* T481: the ribbon's Lock in place reads" in out
+    assert "showFmt();   /* T481: the ribbon's readout */" in out
+    # a hidden thing is not selected
+    assert "      if(flag==='hide'&&a2.hide&&selSet.indexOf(i)>=0){" in out
+    # Escape ends a text edit
+    assert "        e.preventDefault();e.stopPropagation();el.blur();return;}" in out
+    # a contextual tab keeps you; the way back is the tab you chose
+    assert "    if(wantTab&&!ctxNow) tabBeforeSel=activeTab();" in out
+    assert "      if(activeTab()===ctxTab&&tabHasContent(ctxTab)) wantTab='';" in out
