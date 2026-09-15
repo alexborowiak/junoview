@@ -9243,3 +9243,35 @@ any reading. The rest are T466 onwards.
   Escape. Escape in the overview map's find field closed the map with
   the search still typed — it clears the field first, as the ribbon
   gallery's does. Driven at 1500.
+- [x] **T483 — Saving and export, after the second review pass.** The
+  save readout reported the current target and the last stamp, not
+  where and when this deck was written — File › Save to project with
+  the browser as the target read "saved to browser", a browser Save in
+  the app read "unsaved — saving…" while the toast said "Saved to this
+  browser" (the manual branch was gated on the static build), and the
+  stamp survived a switch to another deck — `saveWhere` records the
+  last write, the gate is gone, and both reset per deck. Home tagged
+  every browser-kept deck DRAFT (unsaved draft) and the rail gave it the
+  amber dot — a deck whose home is this browser is not a draft. The
+  Save caret's tooltip read "Saving to In this browser" and the
+  Autosave door kept saying "to project" after the target changed —
+  a phrase for after "to", and setTarget redraws the door; the Save
+  tooltip names the interval it actually uses. File › Discard changes
+  deleted a deck with no saved copy outright and replaced it with the
+  notebook's deck — it re-reads a file-homed deck from its file and
+  asks before it deletes; File › Delete asks the library's question.
+  "click to reopen" imported the file and said "already here" once
+  another deck had been touched — the click always reopens. The .pptx
+  wrote N identical slides of page one for a text box with pages (the
+  exporter sets flipForce per output page as the print root does) and
+  shipped {fig}, {fig:id} and [@key] unresolved (every outgoing string
+  goes through figSubst; a references box its list); the losses dialog
+  multiplied every count on a flip-book slide by its frames (tallies
+  count source slides) and said nothing about Markdown and rich boxes
+  arriving as source text (named now); the equation tally counted cells
+  rather than equations. The .pptx reader skipped the layout's and
+  master's placeholder list styles (a title slide's subtitle arrived
+  bulleted and left-aligned: `Element.find('title','')` on the resolved
+  elements never matched — fixed and pinned by a fixture), knew none of
+  the four brace/bracket shapes this editor's own writer emits, and
+  reported the writer's own "push" as a lost transition.

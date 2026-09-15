@@ -131,7 +131,10 @@ def test_the_reference_is_resolved_at_paint_time(out):
     # the three funnels set it; a master-synth slide never clobbers it
     assert "    if(s&&(pres.slides||[]).indexOf(s)>=0) paintSlide=s;" in out
     assert "    if((pres.slides||[]).indexOf(s)>=0) paintSlide=s;   /* T316 */" in out
-    assert out.count("paintSlide=ent.s;") == 2, "both pptx passes"
+    # T483: the losses pass walks the source slides (paintSlide=s), the
+    # build pass the output pages (paintSlide=ent.s)
+    assert out.count("paintSlide=ent.s;") == 1, "the pptx build pass"
+    assert "      paintSlide=s;                                         /* T316" in out
 
 
 def test_a_sections_colour_travels_and_survives_a_rename(out):

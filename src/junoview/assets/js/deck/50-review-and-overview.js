@@ -1238,7 +1238,7 @@
       /* radio model: a row lights up ONLY while its deck is open — back on
          the notebook view, no presentation stays highlighted */
       t.className='pr-item ptab'+(isCur&&editing?' current editing':'')
-        +(savedNames.indexOf(nm)<0?' draftonly':'');
+        +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');   /* T483 */
       t.setAttribute('role','tab');
       t.dataset.pres=nm;
       var isPoster=/^a\d/.test(String(p.page||''));

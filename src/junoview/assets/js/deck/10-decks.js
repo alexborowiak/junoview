@@ -763,7 +763,9 @@
     if(!p) return null;
     return {name:name,slides:((p.slides)||[]).length,
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
-      folder:p.folder||'',draft:!!loadDraft(name)};
+      /* T483: a deck whose home IS this browser is not an "unsaved
+         draft" -- Home tagged every browser-kept deck DRAFT */
+      folder:p.folder||'',draft:!!loadDraft(name)&&saveTarget!=='browser'};
   }
   /* ---- T435: PINS (2026-09-14, user: "would be cool to be able to pin
      files to recent. I feel like I am always losing files and hard to
@@ -946,6 +948,7 @@
        across would parent the new deck's first snapshot onto the
        old deck's tree (T90) */
     histHead=null;histBranch='';
+    saveStamp=null;saveKind='';saveWhere='';   /* T483: this deck's, not the last one's */
     deckZoom=0;   /* zoom is per-session, reset per presentation */
     /* ...and then the NEW deck's stored head is read back, through the
        history queue so any snapshot queued after this waits for it
@@ -1024,6 +1027,12 @@
   }
 
   var saveStamp=null,saveKind='';
+  /* T483: WHERE the last write for this deck went -- 'project',
+     'browser' or a file's name -- rather than where the NEXT one is
+     set to go: File > Save to project with the browser as the target
+     read "saved to browser", and the stamp survived a switch to
+     another deck (2026-09-15 review) */
+  var saveWhere='';
   function fmtT(d){
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
@@ -1046,6 +1055,7 @@
       :txt;
   }
   function whereSaved(){
+    if(saveWhere) return saveWhere;   /* T483: the last write, not the target */
     if(saveTarget==='project') return 'project';
     /* T414: WHICH file, and WHERE. An autosave into the default folder
        writes <name>.junoview.html THERE -- not into a file you opened
@@ -1151,7 +1161,9 @@
     if(source==='draft'){
       /* web/static Save writes to the browser but keeps source='draft';
          show a plain 'saved' — the Save button tooltip explains where */
-      if(APP.mode!=='app'&&saveKind==='manual'&&saveStamp){
+      /* T483: in the app too -- a browser Save toasted "Saved to this
+         browser" while the readout kept saying "unsaved" */
+      if(saveKind==='manual'&&saveStamp){
         el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);
         el.className='deck-status saved';
         markSaveClickable(el);   /* this branch returns before the shared

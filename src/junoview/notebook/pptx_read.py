@@ -106,6 +106,10 @@ _SHAPES = {
     "wedgeRectCallout": "bubble", "wedgeRoundRectCallout": "bubble",
     "wedgeEllipseCallout": "bubble",
     "lightningBolt": "lightning",
+    # T483: the four this editor's own writer emits (T419), so a round
+    # trip keeps them
+    "leftBrace": "lbrace", "rightBrace": "rbrace",
+    "leftBracket": "lbracket", "rightBracket": "rbracket",
 }
 _LINE_GEOMS = ("line", "straightConnector1", "bentConnector2",
                "bentConnector3", "bentConnector4", "bentConnector5",
@@ -629,8 +633,11 @@ def _def_rpr_chain(shape: ET.Element | None, slots: list[_Slots],
     nearest first: the shape's own lstStyle, the layout placeholder's,
     the master placeholder's, then the master's text styles."""
     out: list[ET.Element] = []
-    for sp in [shape] + [
-            s.find(kind, "") for s in slots]:  # type: ignore[misc]
+    # T483: `slots` are the resolved placeholder ELEMENTS (layout, master),
+    # not _Slots -- Element.find("title", "") never matched, so the
+    # layout's lstStyle (buNone, algn=ctr, the tinted colour) was skipped
+    # and a title slide's subtitle arrived bulleted and left-aligned.
+    for sp in [shape] + [s for s in slots if s is not None]:
         if sp is None:
             continue
         lst = sp.find("./p:txBody/a:lstStyle", NS)
@@ -1633,6 +1640,10 @@ class _SlideReader:
         if k == "fade":
             return "fade"
         if k == "morph":
+            return "move"
+        if k == "push":
+            # T483: the writer's own approximation of "move" comes back
+            # as move, not as a loss
             return "move"
         self.lost.add("trans", k)
         return "fade"

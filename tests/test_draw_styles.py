@@ -324,7 +324,7 @@ def test_save_is_one_control_not_two(out):
     assert 'class="dc-savegrp"' in out
     assert ".dc-savegrp>.dbtn:first-child{border-radius:6px 0 0 6px;}" in out
     assert "b.innerHTML='&#9662;';" in out
-    assert "b.title='Saving to '+targetLabel()" in out
+    assert "b.title='Saving to '+targetPhrase()" in out   # T483: a phrase after "to"
     assert "th.textContent='save to — now: '+targetLabel();" in out
     # the old wide destination label is gone from the row
     assert "'&#8594; '+esc(targetLabel())+' &#9662;'" not in out

@@ -223,7 +223,10 @@ def test_a_deck_equation_is_flattened_rather_than_shipped_as_latex(out):
     # both branches that carry deck words, not just one
     assert "var tp=mathsPlain(ti.text,!!a.maths);" in out
     assert "var mp=mathsPlain(val,false);" in out
-    assert out.count("note.maths++") == 3      # cell, text box, title
+    # text box and title count one each; a cell counts every equation in
+    # it (T483: display and inline alike)
+    assert out.count("note.maths++") == 2
+    assert "note.maths+=node.querySelectorAll('mjx-container').length;" in out
     # ...and the toast now counts them and says why
     assert "came across as plain text \\u2014 " in out
     assert "this writer has no LaTeX-to-.pptx path, so they were flattened" in out
@@ -291,7 +294,8 @@ def test_the_losses_are_named_before_the_file_is_written(out):
     # actually does
     losses = out[out.index("function pptxLosses(){"):
                  out.index("function pptxConfirmLosses(){")]
-    assert "pptxItems(ent.s,note,'#ffffff',null);" in losses
+    # T483: the tallies count SOURCE slides, never an exploded book's frames
+    assert "pptxItems(s,note,'#ffffff',null);" in losses
     assert "note.skipped" in losses and "note.maths" in losses
     assert "note.cropped" in losses and "a.anim" in losses
     # nothing to lose means no dialog: the ordinary export stays one click

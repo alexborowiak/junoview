@@ -1993,8 +1993,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # token defaults, '@quiet' greys, the label/promoter/check fixes.
 # T481 (2026-09-15): selection and the Object tab after the second pass.
 # T482 (2026-09-15): overlays and Escape after the second pass.
-EXPECTED_MD5 = "9f9879224c8eab3cc22df5151cd1a278"
-EXPECTED_BYTES = 4429936
+# T483 (2026-09-15): saving and export after the second pass.
+EXPECTED_MD5 = "ec711cb73e1a9847306ee051d6f42d8a"
+EXPECTED_BYTES = 4435127
 
 
 def _render_example() -> str:

@@ -368,3 +368,25 @@ def test_overlays_and_escape_after_the_second_pass(out):
     assert "  window.SemApp.deckOverlayCloseAll=function(){" in out
     # the map's find field clears before the map closes
     assert "      if(fi&&document.activeElement===fi&&fi.value){" in out
+
+
+def test_saving_and_export_after_the_second_pass(out):
+    """T483 (2026-09-15, the second review pass)."""
+    # the readout says where THIS deck's last write went, in the app too
+    assert "  var saveWhere='';" in out
+    assert "    if(saveWhere) return saveWhere;   /* T483: the last write" in out
+    assert "      if(saveKind==='manual'&&saveStamp){" in out
+    assert "    saveStamp=null;saveKind='';saveWhere='';" in out
+    # a browser-kept deck is not a draft; the tooltips follow the target
+    assert "draft:!!loadDraft(name)&&saveTarget!=='browser'};" in out
+    assert "  function targetPhrase(){" in out
+    assert "    if(typeof renderAutosaveItem==='function') renderAutosaveItem();" in out
+    # Discard reverts or asks; Delete asks; reopen always reopens
+    assert "has no saved copy to go back " in out
+    assert "  function fileRestore(txt,forName,force){" in out
+    assert "          if(!fileRestore(txt,nm,true)){" in out
+    # the .pptx says the page's words and the numbers; the tallies count sources
+    assert "        var _pg=textPage(a,_pn<0?0:_pn);" in out
+    assert "          :figSubst(_pg.t,a,note.figs);" in out
+    assert "        flipForce=ent.f;   /* T483: the page this output slide" in out
+    assert "    if(note.md) lost.push(note.md+' Markdown box'" in out

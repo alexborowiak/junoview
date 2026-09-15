@@ -53,7 +53,7 @@ def test_a_lapsed_permission_never_flips_the_target_to_the_browser(out):
 
 
 def test_the_remembered_file_s_deck_comes_back(out):
-    assert "  function fileRestore(txt,forName){" in out
+    assert "  function fileRestore(txt,forName,force){" in out   # T483
     assert "    importDeckText(txt,true);" in out
     assert "    if(!hit||(pres&&pres.name===forName)) return false;" in out
     # from the library when the silent import could keep it there, else

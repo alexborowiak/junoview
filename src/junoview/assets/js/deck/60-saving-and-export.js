@@ -174,6 +174,7 @@
       source='draft';scheduleDraftWrite();
     }
     saveStamp=new Date();saveKind=silent?'auto':'manual';
+    saveWhere='project';   /* T483 */
     status();renderPresRow();
     if(conflict){
       renderPresTabs();
@@ -615,6 +616,7 @@
                from the app (2026-08-20, user: "I made a presentation for
                tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
+            saveWhere=fileName||'file';   /* T483 */
             if(stillSaved(savedName,savedSig)) source='saved';
             else {source='draft';scheduleDraftWrite();}
             status();renderTargetBtn();renderPresRow();
@@ -644,6 +646,15 @@
         :'On this computer';
     return 'In this browser';
   }
+  /* T483: the same destination as a phrase after "to" -- "Saving to
+     In this browser" read as two sentences */
+  function targetPhrase(){
+    if(saveTarget==='project') return 'this project';
+    if(saveTarget==='file')
+      return deckDirName?('your '+deckDirName+' folder')
+        :'a file on this computer';
+    return 'this browser';
+  }
   function renderTargetBtn(){
     var b=$('#dc-target'); if(!b) return;
     /* the label is just the DESTINATION — "Saved to:" lives in the
@@ -653,7 +664,7 @@
        is named in the menu this opens, and in the tooltip — in the ribbon
        it was a second, wordier control that looked like a rival Save. */
     b.innerHTML='&#9662;';
-    b.title='Saving to '+targetLabel()+' — click to change where';
+    b.title='Saving to '+targetPhrase()+' — click to change where';
     var th=$('#tg-head');
     if(th) th.textContent='save to — now: '+targetLabel();
     b.classList.toggle('tg-file',saveTarget==='file');
@@ -703,6 +714,9 @@
   function setTarget(t){
     saveTarget=t;lsSet(TGKEY,t);
     renderTargetBtn();renderSaveBtn();status();
+    /* T483: the Autosave door's words name the destination too; they
+       kept saying "to project" after the target changed */
+    if(typeof renderAutosaveItem==='function') renderAutosaveItem();
   }
   /* PICK A FOLDER, ONCE, FOR EVERYTHING AFTER (T235). Lifted out of the
      menu row's handler by T283 so the first-run prompt runs the same
@@ -847,6 +861,7 @@
     flushDraftWrite();
     if(lsIsFull()){status();return;}
     saveStamp=new Date();saveKind='auto';source='saved';
+    saveWhere='browser';   /* T483 */
     status();
   }
   function cancelAutosave(){
@@ -1019,8 +1034,9 @@
       saveBtn.setAttribute('data-tip','Save now to '
         +'junoview_project.json'
         +(autosaveOn
-          ?' — autosave is ON: every change saves itself about a '
-            +'second later'
+          ?' — autosave is ON: every change saves itself within '
+            +(typeof autoSecsLabel==='function'?autoSecsLabel(autoSecs)
+              :'a moment')   /* T483: the interval it actually is */
           :' — autosave is OFF, only this button saves'));
     } else {
       saveBtn.setAttribute('data-tip','Kept in this browser '
@@ -1110,6 +1126,7 @@
        same rule the notebook's snapshots follow (T32) */
     if(savedHist) snapTake('saved',savedHist);
     saveStamp=new Date();saveKind='manual';
+    saveWhere='browser';   /* T483 */
     status();
     /* T266: a toast says what just happened. Where it is kept and what
        the caret beside Save does are on the button's own tooltip,
@@ -1264,7 +1281,7 @@
       +'\u201c'+(forName||pres.name)+'\u201d.',12000);
     return true;
   }
-  function fileRestore(txt,forName){
+  function fileRestore(txt,forName,force){
     var obj;
     try{obj=parseDeckText(txt);}catch(e){return false;}
     if(dropBundleHandle(txt,forName)) return false;
@@ -1276,8 +1293,10 @@
     list.forEach(function(pr){
       if(!hit&&pr&&Array.isArray(pr.slides)&&(pr.name||'')===forName) hit=pr;});
     if(!hit||(pres&&pres.name===forName)) return false;
-    /* the deck this visit opened on, or nothing real is open yet */
-    var want=(lsGet(PFX+'last')||'')===forName||!pres||!pres.slides
+    /* the deck this visit opened on, or nothing real is open yet --
+       T483: or the click that asked for it, whatever else was touched
+       since (it imported the file and said "already here") */
+    var want=force||(lsGet(PFX+'last')||'')===forName||!pres||!pres.slides
       ||source==='auto';
     if(!want) return false;
     /* from the library when the silent import could keep it there,
@@ -1305,7 +1324,7 @@
         .then(function(txt){
           fileReopen=null;fileWaits='';
           if(fileDeckCount(txt)>1){dropBundleHandle(txt,nm);return true;}
-          if(!fileRestore(txt,nm)){status();toast('Nothing to reopen \u2014 '
+          if(!fileRestore(txt,nm,true)){status();toast('Nothing to reopen \u2014 '
             +'\u201c'+nm+'\u201d is already here');}
           return true;
         });
@@ -1359,6 +1378,7 @@
             source='draft';scheduleDraftWrite();
           }
           saveStamp=new Date();saveKind='manual';
+          saveWhere=f.name||'file';   /* T483 */
           status();renderPresRow();
           toast('Saved "'+savedName+'" into '+f.name);
           return true;
@@ -1969,12 +1989,26 @@
       var pushedAt=items.length;
       if(a.k==='text'){
         var ti=pptxTextItem(a,false,ink,box);
+        /* T483: THE PAGE THIS OUTPUT SLIDE IS ABOUT. A box with pages
+           left as N identical slides of page one (2026-09-15 review);
+           textAt honours flipForce, which the exporter sets per output
+           page the way the print root does. And the numbers: {fig},
+           {fig:id} and [@key] went out as the markers while the slide
+           and the PDF show the numbers -- the same funnel every render
+           path uses (figSubst), and a references box its list. */
+        var _pn=(typeof textAt==='function')?textAt(s,a):0;
+        var _pg=textPage(a,_pn<0?0:_pn);
+        ti.text=a.bib&&typeof bibListText==='function'?bibListText()
+          :figSubst(_pg.t,a,note.figs);
         /* `a.maths` means the Maths button built this box, so the whole
            of it is the equation and there is nothing to be careful about
            — an ordinary box has to earn the flattening (T53) */
         var tp=mathsPlain(ti.text,!!a.maths);
         if(tp.hit) note.maths++;
         ti.text=tp.text;
+        /* T483: what the writer cannot say yet is counted, not hidden */
+        if(a.md) note.md=(note.md||0)+1;
+        else if(a.html&&/<(b|i|u|s|span|a)\b/i.test(a.html)) note.rich=(note.rich||0)+1;
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
@@ -2134,7 +2168,7 @@
         var code=node&&node.querySelector('pre');
         /* typeset maths survives only as its flattened characters — legible,
            but no longer an equation. Counted so the toast can say so. */
-        if(node&&node.querySelector('mjx-container')) note.maths++;
+        if(node) note.maths+=node.querySelectorAll('mjx-container').length;   /* T483 */
         var txt=(node&&!isTable)?blockText(node):'';
         if(txt){
           items.push({t:'text',x:box.x,y:box.y,w:box.w,h:box.h,
@@ -2280,11 +2314,16 @@
   function pptxLosses(){
     var note={skipped:0,cropped:0,maths:0,tied:0,exits:0,orig:{}};
     var lost=[];
-    outputSlides().forEach(function(ent){
-      note.frame=ent.f;
-      paintSlide=ent.s;                                     /* T316 */
-      pptxItems(ent.s,note,'#ffffff',null);
-      note.frame=null;
+    /* T483: the tallies count SOURCE slides -- an exploded flip book
+       multiplied every count on its slide by its frames (three live
+       web pages for one, 2026-09-15 review); the figure numbers are
+       computed once, they depend on order */
+    note.figs=(typeof figNumbers==='function')?figNumbers():null;
+    (pres.slides||[]).forEach(function(s,i){
+      if(slideIsAlt(i)) return;
+      note.frame=null;flipForce=null;
+      paintSlide=s;                                         /* T316 */
+      pptxItems(s,note,'#ffffff',null);
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
       +(note.skipped===1?'':'s')+' with no .pptx shape to become');
@@ -2294,6 +2333,13 @@
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
       +'path, so they arrive as plain characters');
+    /* T483: named rather than silent -- the writer has no run model yet */
+    if(note.md) lost.push(note.md+' Markdown box'+(note.md===1?'':'es')
+      +' \u2014 they arrive as their source text (the # and - marks '
+      +'included), not as headings and bullets');
+    if(note.rich) lost.push(note.rich+' text box'+(note.rich===1?'':'es')
+      +' with bold, colour or a link inside the words \u2014 the words '
+      +'arrive, the marks inside them do not');
     if(note.exits) lost.push(note.exits+' object'
       +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
       +'writer emits entrances only, so they arrive and then stay, '
@@ -2358,6 +2404,7 @@
     var firstOut={};
     ents.forEach(function(ent,oi){
       if(!(ent.i in firstOut)) firstOut[ent.i]=oi+1;});
+    note.figs=(typeof figNumbers==='function')?figNumbers():null;   /* T483 */
     var out=JunoPptx.build({
       title:pres.name||'presentation',
       widthMm:pg.mm[0],heightMm:pg.mm[1],bg:bg,
@@ -2366,9 +2413,10 @@
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
         note.frame=ent.f;
+        flipForce=ent.f;   /* T483: the page this output slide is about */
         paintSlide=ent.s;                                   /* T316 */
         var its=pptxItems(ent.s,note,ink,lay);
-        note.frame=null;
+        note.frame=null;flipForce=null;
         /* the master's look is BAKED into the export (T115): furniture
            items first (under the content) and the inherited
            background. PowerPoint-side inheritance would mean real
@@ -2791,8 +2839,31 @@
     }
   })();
   menuAction('#mi-discard',function(){
+    /* T483: DISCARD GOES BACK TO THE SAVED COPY. A deck kept in a file
+       is re-read from it; a deck with no saved copy at all was simply
+       deleted and replaced with the notebook's own deck, with no
+       question asked (2026-09-15 review) -- it asks now. */
+    var nm=pres.name||'untitled';
+    if(saveTarget==='file'&&fileHandle&&fileHandle.getFile){
+      fileHandle.getFile().then(function(f){return f.text();}).then(function(txt){
+        var obj=parseDeckText(txt);
+        var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+          :(obj&&Array.isArray(obj.slides))?[obj]:[];
+        var hit=list.filter(function(p){return p&&(p.name||'')===nm;})[0]||list[0];
+        if(!hit){toast('The file has no copy of \u201c'+nm+'\u201d to go back to');return;}
+        cancelDraftWrite();draftDel(nm);
+        var np=normPres(hit);np.name=nm;loadPresentationObj(np);
+        cur=0;activePane=-1;status();refresh();
+        toast('Back to \u201c'+nm+'\u201d as saved in '+(fileName||'the file'));
+      }).catch(function(){toast('Could not read '+(fileName||'the file'));});
+      return;
+    }
+    if(!savedByName(nm)){
+      if(!window.confirm('\u201c'+nm+'\u201d has no saved copy to go back '
+        +'to \u2014 OK deletes it from this browser.')) return;
+    }
     cancelDraftWrite();   /* a pending write would resurrect the discard */
-    draftDel(pres.name||'untitled');
+    draftDel(nm);
     loadPresentation(pres.name);
     cur=0;activePane=-1;
     status();
@@ -3091,6 +3162,9 @@
     }).catch(function(){return moveOrSay();});
   }
   menuAction('#mi-del',function(){
+    /* T483: the same question the library asks before it deletes */
+    if(!window.confirm('Delete \u201c'+pres.name+'\u201d?\n\nThis cannot '
+      +'be undone.')) return;
     deletePresByName(pres.name);
   });
 

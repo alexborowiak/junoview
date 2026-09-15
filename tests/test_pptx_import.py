@@ -688,3 +688,43 @@ def test_the_help_page_says_so():
     assert "not affiliated with, endorsed by, sponsored by, or approved" in \
         help_html
     assert "Microsoft and PowerPoint are trademarks" in help_html
+
+
+def test_a_placeholder_reads_its_layouts_list_style(fixture_bytes):
+    """T483 (2026-09-15 review): _def_rpr_chain was handed the resolved
+    placeholder ELEMENTS and called Element.find('title', '') on them, so
+    the layout's lstStyle (buNone, algn=ctr, a tinted colour) was never
+    read -- a python-pptx title slide's subtitle arrived bulleted and
+    left-aligned. The layout gains a subTitle placeholder whose list
+    style centres and un-bullets; a slide shape wearing that placeholder
+    with no pPr of its own must inherit both."""
+    layout_ph = (
+        '<p:sp><p:nvSpPr><p:cNvPr id="9" name="Subtitle 9"/><p:cNvSpPr/>'
+        '<p:nvPr><p:ph type="subTitle" idx="1"/></p:nvPr></p:nvSpPr>'
+        '<p:spPr><a:xfrm><a:off x="1524000" y="3602038"/>'
+        '<a:ext cx="9144000" cy="1655762"/></a:xfrm></p:spPr>'
+        '<p:txBody><a:bodyPr/><a:lstStyle><a:lvl1pPr marL="0" indent="0" '
+        'algn="ctr"><a:buNone/><a:defRPr><a:solidFill><a:srgbClr val="404040"/>'
+        '</a:solidFill></a:defRPr></a:lvl1pPr></a:lstStyle>'
+        '<a:p><a:endParaRPr/></a:p></p:txBody></p:sp>')
+    slide_ph = (
+        '<p:sp><p:nvSpPr><p:cNvPr id="7" name="Subtitle 2"/><p:cNvSpPr/>'
+        '<p:nvPr><p:ph type="subTitle" idx="1"/></p:nvPr></p:nvSpPr>'
+        '<p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p>'
+        '<a:r><a:rPr lang="en-GB" sz="2400"/><a:t>A subtitle from python-pptx'
+        '</a:t></a:r></a:p></p:txBody></p:sp>')
+
+    def edit(name, body):
+        if name == "ppt/slideLayouts/slideLayout1.xml":
+            return body.replace(
+                b"<p:grpSpPr/></p:spTree>",
+                b"<p:grpSpPr/>" + layout_ph.encode() + b"</p:spTree>", 1)
+        if name == "ppt/slides/slide1.xml":
+            return body.replace(b"</p:spTree>", slide_ph.encode() + b"</p:spTree>", 1)
+        return body
+    got = read_pptx(_rezip(fixture_bytes, edit))
+    sub = [it for it in _items(got, 0) if it.get("name") == "Subtitle 2"][0]
+    assert sub["text"] == "A subtitle from python-pptx"
+    assert not sub.get("bullets")
+    assert sub.get("align") == "center"
+    assert sub.get("color", "").lower() == "#404040"
