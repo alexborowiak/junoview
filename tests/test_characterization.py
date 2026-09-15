@@ -1984,8 +1984,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the Clone… door on Images > Place and its menu; the canvas menu's words.
 # T475 (2026-09-15): the editor's own question -- askText and #ask-dlg
 # in place of thirty-six window.prompt() calls.
-EXPECTED_MD5 = "2aa5bec9241a495894f24777b7339fe9"
-EXPECTED_BYTES = 4409673
+# T476 (2026-09-15): Presenter view in the Talk panel and on N; Running
+# late in the presenter window.
+EXPECTED_MD5 = "4694058b0a103f66f391bc8e4fe6b991"
+EXPECTED_BYTES = 4411969
 
 
 def _render_example() -> str:

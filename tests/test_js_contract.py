@@ -65,6 +65,7 @@ RUNTIME_IDS = {
     # these lookups run against that popup's document, not the app's.
     "jvp-clock", "jvp-count", "jvp-goal", "jvp-next-b", "jvp-notes",
     "jvp-now", "jvp-pace", "jvp-pause", "jvp-prev", "jvp-reset",
+    "jvp-late",   # T476: Running late in the presenter window
     "jvp-slideclock",
     "jvp-talk", "jvp-find", "jvp-hits",
     # The PDF/print export builds a throwaway container:

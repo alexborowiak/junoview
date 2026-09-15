@@ -237,3 +237,14 @@ def test_the_editor_asks_its_own_questions(out):
     # the layout's word is the ribbon's (T194), not "arrangement"
     assert "Call this arrangement" not in out
     assert "label:'Call this layout'" in out
+
+
+def test_presenter_view_from_inside_the_show_and_late_from_the_presenter(out):
+    """T476 (2026-09-15 review). The presenter window could only be opened
+    before F5; the window that says you are behind had no Running late."""
+    assert 'id="talk-presenter"' in out
+    assert "    if(k==='n'||k==='N'){" in out
+    assert "      if(typeof openPresenter==='function') openPresenter();" in out
+    assert "+'<button class=\"jvp-b\" id=\"jvp-late\" aria-pressed=\"false\">'" in out
+    assert "    else if(msg.do==='late'){   /* T476 */" in out
+    assert "      lb2.textContent=lateOn?'Running late: on':'Running late';" in out

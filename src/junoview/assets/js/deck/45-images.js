@@ -2282,6 +2282,9 @@
       else if(msg.act==='resume'&&presPauseAt){
         presPaused+=Date.now()-presPauseAt;presPauseAt=0;rehResume();}
     }
+    else if(msg.do==='late'){   /* T476 */
+      if(typeof runLate==='function') runLate(lateFrom<0);
+    }
     else if(msg.do==='closed'){presWin=null;return;}
     presenterPush();
   }
@@ -2393,6 +2396,15 @@
       pauseAt:presPauseAt,goal:slideGoal(sl),
       talk:pres.talkMins||0,slide:shownAt,count:shown.length,
       planned:Math.round(planned),slideIndex:cur};
+    /* T476: the button wears the state, like the show's own */
+    var lb2=doc.getElementById('jvp-late');
+    if(lb2){
+      var lateOn=(typeof lateFrom==='number'&&lateFrom>=0);
+      lb2.textContent=lateOn?'Running late: on':'Running late';
+      lb2.setAttribute('aria-pressed',lateOn?'true':'false');
+      lb2.title=lateOn?'Show the remaining optional slides again'
+        :'Skip the remaining optional slides from here';
+    }
   }
   function presenterHtml(){
     /* every stylesheet the deck uses, so the imported slide nodes look
@@ -2407,6 +2419,8 @@
       +'grid-template-rows:auto 1fr auto;gap:12px;height:100%;'
       +'box-sizing:border-box;padding:12px;}'
       +'.jvp-bar{grid-column:1/-1;display:flex;align-items:center;gap:14px;}'
+      +'.jvp-b[aria-pressed="true"]{background:#c9573e;border-color:#c9573e;'
+      +'color:#fff;}'
       +'.jvp-clock{font-family:var(--mono,monospace);font-size:44px;'
       +'font-weight:600;line-height:1;letter-spacing:.02em;}'
       +'.jvp-clock.over{color:#ff8a7a;}'
@@ -2480,6 +2494,12 @@
       +'<span id="jvp-slideclock"></span></span>'
       +'<span class="jvp-pace" id="jvp-pace"></span>'
       +'<span class="jvp-sp"></span>'
+      /* T476: RUNNING LATE, IN THE WINDOW THAT TELLS YOU YOU ARE
+         (2026-09-15 review: "the presenter window has no Running late
+         control though it is the window that tells you you are behind").
+         The same verb the show's bar has, on the same runLate. */
+      +'<button class="jvp-b" id="jvp-late" aria-pressed="false">'
+      +'Running late</button>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
       +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
       +'</div>'
@@ -2532,6 +2552,8 @@
       send({jv:'cmd',do:'next'});};
     d.getElementById('jvp-reset').onclick=function(){
       send({jv:'cmd',do:'timer',act:'reset'});};
+    var lb=d.getElementById('jvp-late');   /* T476 */
+    if(lb) lb.onclick=function(){send({jv:'cmd',do:'late'});};
     var pb=d.getElementById('jvp-pause');
     pb.onclick=function(){
       var paused=!!(presWin.__jvState&&presWin.__jvState.pauseAt);

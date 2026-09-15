@@ -9114,3 +9114,13 @@ any reading. The rest are T466 onwards.
   the ribbon's word since T194. Driven at 1500: Save layout, New
   master (Escape keeps the panel, a click inside keeps the panel),
   the web address (a bad one is refused), no window.prompt reached.
+- [x] **T476 — Presenter view from inside the show; Running late in the
+  presenter window.** (2026-09-15 review: "Presenter view has no door
+  from inside the show, and the presenter window has no Running late
+  control though it is the window that tells you you are behind".) The
+  Talk panel's Screen row has a Presenter view button beside Black
+  screen, and N opens it from the lectern (the show's key map, beside
+  P, M and B); the presenter window's bar has a Running late button
+  beside the pace chip that drives the same runLate the show's bar
+  does and wears the state ("Running late: on", pressed). Driven at
+  1500: the door and the key both reach window.open.

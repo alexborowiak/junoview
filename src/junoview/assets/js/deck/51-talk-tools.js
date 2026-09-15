@@ -155,6 +155,11 @@
     if(k==='p'||k==='P'){setTalkTool('laser');return true;}
     if(k==='m'||k==='M'){setTalkTool('lens');return true;}
     if(k==='b'||k==='B'){talkBlack();return true;}
+    /* T476: the presenter window, from the lectern */
+    if(k==='n'||k==='N'){
+      if(typeof openPresenter==='function') openPresenter();
+      return true;
+    }
     return false;
   }
   function talkToolsBoot(){
@@ -165,6 +170,11 @@
       e.stopPropagation();setTalkTool('lens');});
     if(bl) bl.addEventListener('click',function(e){
       e.stopPropagation();talkBlack();});
+    var pv=$('#talk-presenter');   /* T476 */
+    if(pv) pv.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(typeof openPresenter==='function') openPresenter();
+    });
     if(window.SemDeckTalk){
       window.SemDeckTalk.tool=setTalkTool;
       window.SemDeckTalk.black=talkBlack;
