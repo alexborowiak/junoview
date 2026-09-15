@@ -1249,8 +1249,8 @@ body.light{
   --border-strong:#798b9b;--input-bg:#ffffff;
   --tooltip-bg:#172330;--tooltip-ink:#f2f6fa;
   --overlay:#1020308f;--shadow:#1a263440;--focus:#17677a;
-  --selection:#238aa03d;--danger:#b83b30;--warning:#98640e;
-  --success:#257a64;--on-accent:#ffffff;--on-accent-deep:#ffffff;}
+  --selection:#238aa03d;--danger:#b83b30;--warning:#7a4e06;
+  --success:#1f6652;--on-accent:#ffffff;--on-accent-deep:#ffffff;}
 body.th-forest{
   --ink:#e2f0e9;--ink-2:#bed3c8;--ink-3:#8baa9a;
   --paper:#10271f;--paper-2:#091711;--paper-3:#19352a;
@@ -1500,7 +1500,9 @@ body.th-colorful .rbn-grp[data-tab="present"]{
   --accent:#f18ab1;--accent-deep:#a63c68;}
 body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#f18ab1;--accent-deep:#a63c68;}
-body.th-colorful .selpane{--accent:#62d49b;--accent-deep:#19764d;}
+/* (T469: the panes used to be pinned green here, whatever tab opened
+   them -- a Home ribbon opened a green Layers pane; the zone on body
+   supplies the hue now) */
 /* DIRECT rules, not --btn-* tokens: a token defined on body resolves
    its var(--accent) AT body — the same freeze the * alias exists for —
    so the per-group hue never reached the faces. A declaration on the
@@ -4047,6 +4049,7 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
   outline:none;}
 .find-in:focus{border-color:var(--cyan);}
 .find-opts{display:flex;gap:12px;}
+.find-ck[hidden]{display:none!important;}   /* T465: the house rule */
 .find-ck{font-size:11px;color:var(--chrome-ink-2);display:flex;align-items:center;
   gap:4px;cursor:pointer;}
 .find-foot{display:flex;align-items:center;gap:5px;}
@@ -4072,8 +4075,13 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
 /* editing: the slide is a real bounded page surface (16:9 by default —
    the Page dropdown can make it 4:3 or a poster), so you can see exactly
    where things will sit when presented */
+/* T467: the bottom padding is the zoom bar's room. The bar sits over
+   the page's bottom-right corner, where the page number is drawn, so
+   pressing Page numbers showed the top half of a digit (2026-09-15
+   review). sizeSlideTo measures this padding, so the page fits above
+   the bar. */
 .deck.editing .deck-stage{align-items:center;justify-content:center;
-  padding:18px 26px 10px;}
+  padding:18px 26px 50px;}
 .deck.editing .slide{flex:none;width:100%;max-height:100%;
   aspect-ratio:var(--page-ar,16/9);margin:auto;background:var(--chrome-0,#0b141d);
   border:2px solid #ffffff2b;border-radius:12px;
@@ -4452,6 +4460,8 @@ body.light .sp-act:hover{color:var(--ink);background:var(--surface-active);}
 .cp-arr{font-size:14px;line-height:1;}
 .deck-arrow.up{left:50%;top:12px;transform:translateX(-50%);
   width:44px;height:44px;font-size:24px;}
+/* T469: the way back up is the same worded pill as the way down */
+.deck-codepill.up{top:12px;bottom:auto;}
 .deck-count{position:absolute;right:18px;bottom:12px;z-index:7;
   font-family:var(--mono);font-size:11.5px;color:var(--chrome-ink-2);}
 .deck.creating .deck-count,.deck.editing .deck-count{display:none;}
@@ -4786,9 +4796,15 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    the 48px a tile has under its 17px icon). overflow:hidden stays as
    the floor for a name longer than any built-in one; the button also
    carries the full name as its title. */
-.lay-lb{font-family:var(--mono);font-size:8px;letter-spacing:.02em;
-  color:var(--chrome-ink-2);text-align:center;line-height:1.05;
-  max-width:100%;overflow:hidden;}
+/* T465: the label is the ribbon's own sans at 9.5px, and the tile
+   is sized so two lines of it fit WHOLE under the icon (which gives
+   up 14px of width for it): every two-line name in the strip and the
+   Change layout grid was 8px monospace with its second line's
+   descenders cut off, and a three-line one cut to a sliver
+   (2026-09-15 review, measured). The grid takes the short name too. */
+.lay-lb{font-family:var(--sans);font-size:9.5px;letter-spacing:0;
+  color:var(--chrome-ink-2);text-align:center;line-height:1.1;
+  max-width:100%;max-height:2.2em;overflow:hidden;}
 .dbtn.lay[aria-pressed="true"] .lay-lb{color:#fff;}
 /* title-slide text inputs */
 .title-editor{display:flex;flex-direction:column;gap:7px;}
@@ -4810,9 +4826,11 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 /* a thumbnail draws EVERY kind of item, not just placed cells. Each one
    sits at its page percentage, so the strip is a true scale model of the
    slide (2026-08-20). */
-.mini-tx{position:absolute;color:#dbe6ee;line-height:1.2;
+.mini-tx{position:absolute;color:var(--tk-ink,#dbe6ee);line-height:1.2;
   white-space:pre-wrap;overflow:hidden;max-width:100%;
   transform-origin:0 0;pointer-events:none;}
+/* T467: a light deck's thumbnails carry dark words, as the page does */
+.page-light .mini-tx{color:var(--tk-ink,#1b2733);}
 .mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
 .mini-it{position:absolute;overflow:hidden;pointer-events:none;}
 .mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}
@@ -4875,6 +4893,12 @@ body.slide-editing .apptop{display:none;}
    the THUMBNAILS inside a column that keeps its width. This hides the
    column. */
 .deck.editing.film-auto{grid-template-columns:0 minmax(0,1fr);}
+/* T469: a POSTER has nothing in the column at all -- no film, no name
+   row, no controls while editing (rename is the top bar's since T447)
+   -- so the track goes too; it kept a 200px empty column beside the
+   sheet (2026-09-15 review) */
+.deck.editing.poster-page{grid-template-columns:0 minmax(0,1fr);}
+.deck.editing.poster-page>.deck-create{display:none;}
 .deck.editing.film-auto>.deck-create{position:relative;z-index:120;
   transform:translateX(-100%);transition:transform .18s ease;
   box-shadow:0 0 40px #00000066;}
@@ -5233,7 +5257,10 @@ body.slide-editing .apptop{display:none;}
    The arrows go with the scrolling. */
 .rbn-shelf-body .strip-frame{overflow:visible;width:max-content;
   flex:none;}
-.rbn-shelf-body .strip-frame>.fx-strip{flex-wrap:nowrap;overflow:visible;}
+.rbn-shelf-body .strip-frame>.fx-strip.fx-strip{flex-wrap:nowrap;overflow:visible;
+  width:max-content;max-width:none;}   /* T469: not the row's 3- or 4-tile width
+  (the class twice outranks each strip's own width rule, which comes later) */
+.rbn-shelf-body .strip-nav{display:none;}   /* T469: the column, not just its buttons */
 .rbn-shelf-body .strip-more,.rbn-shelf-body .strip-prev,
 .rbn-shelf-body .strip-next{display:none;}
 /* T454: a row too wide for the bar says so, rather than simply ending.
@@ -5301,8 +5328,8 @@ body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
    tile carrying one closes its gaps so icon, word and choice all fit
    the height; pressed, the choice takes the tile's own ink. */
 .fx-tile>.rbn-foldval{display:block;font:600 10px var(--mono);
-  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
+  color:var(--cyan);max-width:118px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}   /* T467: room for "On click · By bullet" */
 .fx-tile>.rbn-foldval[hidden]{display:none;}
 .fx-tile.has-val{gap:2px;}
 .fx-tile.has-val>span:first-of-type{white-space:nowrap;}
@@ -5427,8 +5454,8 @@ body.light .img-row{color:var(--ink-2);}
   display:flex;width:var(--rbn-tile-w);
   min-width:0;white-space:normal;text-align:center;
   flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;padding:4px 3px;line-height:1.1;}
-.lay-strip .layico2{width:calc(var(--rbn-tile-w) - 8px);}
+  gap:4px;padding:3px 3px;line-height:1.1;}
+.lay-strip .layico2{width:calc(var(--rbn-tile-w) - 22px);}
 /* the picker writes a heading into each of its homes; the group label
    is the strip's heading */
 .lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}
@@ -5897,7 +5924,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   white-space:nowrap;}
 .anim-tab .bic{width:12px;height:12px;}
 .anim-tab:hover{color:var(--chrome-ink);}
-.anim-tab[aria-selected="true"]{color:#fff;
+.anim-tab[aria-selected="true"]{color:var(--chrome-ink);
   border-bottom-color:var(--accent,var(--cyan));}
 .anim-cfg{display:block;margin-bottom:10px;}
 .anim-cfg:empty{display:none;}
@@ -5918,7 +5945,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   text-transform:uppercase;color:var(--chrome-ink-2);}
 .cfg-chips{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px;}
 .cfg-chip{display:inline-flex;align-items:center;gap:4px;
-  background:var(--chrome-3,#101c28);border:1px solid #ffffff1f;
+  background:var(--chrome-3,#101c28);border:1px solid var(--chrome-line,#ffffff1f);
   color:#bcccd8;border-radius:6px;padding:4px 7px;font-size:11px;
   font-family:var(--sans);cursor:pointer;min-width:0;}
 .cfg-chip .bic{width:12px;height:12px;flex:none;}
@@ -6564,7 +6591,8 @@ body.slide-editing .an-item.sel[class*="an-move-"]:not(.an-mo-preview){
 .dh-tabs{display:flex;align-items:center;gap:6px;margin:0 0 10px;
   border-bottom:1px solid #ffffff14;padding-bottom:9px;}
 .dh-tab[aria-pressed="true"]{border-color:var(--cyan);
-  background:color-mix(in srgb,var(--cyan) 18%,transparent);}
+  background:color-mix(in srgb,var(--cyan) 18%,transparent);
+  color:var(--chrome-ink);}   /* T465: an 18% wash keeps the theme's ink */
 .dh-every{display:inline-flex;align-items:center;gap:5px;margin-left:auto;
   font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-2);cursor:pointer;}
 .dh-chlist{display:flex;flex-direction:column;}
@@ -6608,9 +6636,16 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
    NEW posters: posters exist to be printed. ---- */
 .deck .deck-stage .slide{background:var(--page-bg,transparent);}
 .page-light .slide{color:#1b2733;}
-.page-light .an-text{color:#1b2733;background:#ffffffd9;
-  border-color:#00000024;}
-.page-light .an-cell{background:#fff;border-color:#00000030;}
+/* T465: the light page's defaults are the FALLBACK of the same
+   tokens the dark page reads, so Body text, Box background and Lines
+   and edges govern a white page too -- they were plain literals here,
+   which outranked the token rules and made three of the five deck
+   colours dead on every poster (2026-09-15 review) */
+.page-light .an-text{color:var(--tk-ink,#1b2733);
+  background:var(--tk-surface,#ffffffd9);
+  border-color:var(--tk-line,#00000024);}
+.page-light .an-cell{background:var(--tk-surface,#fff);
+  border-color:var(--tk-line,#00000030);}
 .page-light .an-cell pre.result,.page-light .an-cell pre.stream{
   background:#fff;color:#1b2733;border-color:#00000018;}
 .page-light .an-cell .note{color:#1b2733;}
@@ -6619,7 +6654,7 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
 /* needs the .slide-titlefree qualifier to OUTRANK the later dark rule of
    equal specificity — without it this was dead CSS (2026-08-05 review) */
 .page-light .slide-titlefree .ttl-eyebrow{color:#1d7a90;}
-.page-light .an-title{color:#16222c;}
+.page-light .an-title{color:var(--tk-heading,#16222c);}
 /* T366: a placeholder's words. Faint enough to read as a hint about
    the slide's shape rather than as something written, and never
    selectable -- the caret arrives in an empty box, so there is nothing
@@ -7067,7 +7102,7 @@ body.light .fp-tielab{color:var(--ink-3);}
 .rbn-gt{font-size:13px;color:#dbe7ef;}
 .rbn-gnote{font-size:11px;line-height:1.55;color:var(--chrome-ink-2);
   padding:8px 16px 0;}
-.rbn-gnote b{color:#dbe7ef;font-weight:600;}
+.rbn-gnote b{color:var(--chrome-ink);font-weight:600;}   /* T469: the theme's ink */
 .rbn-gwarn{margin:8px 16px 0;padding:7px 10px;border-radius:6px;
   border:1px solid #ef9f2766;background:#ef9f2714;color:#e8c88f;
   font-size:11px;line-height:1.45;display:flex;align-items:center;gap:10px;}
@@ -7597,7 +7632,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   line-height:1.35;color:var(--tk-ink,#fff);
   background:color-mix(in srgb,
     var(--tk-surface,var(--chrome-1,#0e1926)) 85%,transparent);
-  border:1px solid #ffffff2e;border-radius:8px;padding:.35em .55em;
+  border:1px solid var(--tk-line,#ffffff2e);border-radius:var(--tk-rad,8px);padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
 /* no text-shadow: it was meant to keep bare text legible on any page but
    read as a smudge on every one (2026-08-19, user: "why is there a shadow
@@ -7677,8 +7712,8 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-placehead{font-size:11px;opacity:.85;flex:0 0 auto;}
 .dg-placeslides{display:flex;flex-wrap:wrap;gap:3px;}
 .dg-slidechip{font-family:var(--mono);font-size:10px;line-height:1;
-  padding:2px 5px;border-radius:4px;cursor:pointer;color:#c9d6e2;
-  background:none;border:1px solid #ffffff26;}
+  padding:2px 5px;border-radius:4px;cursor:pointer;color:var(--chrome-ink-2);
+  background:none;border:1px solid var(--border-strong,#ffffff26);}
 .dg-slidechip:hover{border-color:color-mix(in srgb,var(--accent) 55%,
   transparent);background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:#fff;}
@@ -7848,9 +7883,11 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
    colour for one -- it governed the text box and not this, which is the
    most box-shaped thing on a slide. Same bargain as T455: the chrome
    colour stays the default, --tk-surface answers when one is chosen. */
+/* T465: the frame's edge, like the text box's, is "Lines and edges"
+   once that is chosen; the accent tint stays its default */
 .an-cell{position:absolute;
   background:var(--tk-surface,var(--chrome-1,#0e1926));
-  border:1.5px solid color-mix(in srgb,var(--accent) 36%,transparent);border-radius:10px;overflow:hidden;
+  border:1.5px solid var(--tk-line,color-mix(in srgb,var(--accent) 36%,transparent));border-radius:var(--tk-rad,10px);overflow:hidden;
   display:flex;flex-direction:column;}
 /* edit mode: an UNSELECTED frame is just its content — transparent (so it
    never blocks what's behind), no border, no title header. The border, title,
@@ -8005,8 +8042,8 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   max-height:none;overflow:visible;}
 .lay-menu .lay-picker .dbtn.lay{flex:0 0 var(--rbn-tile-w);
   width:var(--rbn-tile-w);height:var(--rbn-tile-h);
-  padding:4px 3px;align-items:center;}
-.lay-menu .lay-picker .layico2{width:calc(var(--rbn-tile-w) - 8px);}
+  padding:3px 3px;align-items:center;}
+.lay-menu .lay-picker .layico2{width:calc(var(--rbn-tile-w) - 22px);}
 /* catalog section headings (Slide layouts / Poster layouts) */
 .lay-sec{grid-column:1/-1;font-family:var(--mono);font-size:9px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-ink-3);
@@ -8216,7 +8253,7 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
    somewhere. Change one, change the other. */
 .mini-diagram{--mini-h:66px;width:116px;height:var(--mini-h);flex:none;
   display:grid;gap:2px;
-  background:var(--chrome-0,#0b141d);border:1px solid #ffffff22;border-radius:4px;
+  background:var(--page-bg,var(--chrome-0,#0b141d));border:1px solid #ffffff22;border-radius:4px;
   padding:2px;overflow:hidden;}
 .mini-diagram.full{grid-template-columns:1fr;}
 .mini-diagram.halves{grid-template-columns:1fr 1fr;}
@@ -8903,6 +8940,12 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .an-md code{font-family:var(--mono,ui-monospace,Consolas,monospace);
   font-size:.9em;padding:0 .2em;border-radius:.2em;
   background:rgba(127,127,127,.18);}
+/* T467: a fenced block is a block */
+.an-md pre{margin:.4em 0;padding:.4em .55em;border-radius:.3em;
+  background:rgba(127,127,127,.18);white-space:pre-wrap;
+  overflow-wrap:anywhere;font-size:.9em;line-height:1.3;}
+.an-md pre code{padding:0;background:none;font-size:1em;}
+.an-md h6{margin:.5em 0 .25em;line-height:1.15;font-weight:700;font-size:1em;}
 .an-md hr{border:0;border-top:.08em solid currentColor;opacity:.4;
   margin:.5em 0;}
 .an-md a{color:inherit;text-decoration:underline;}
@@ -9003,7 +9046,14 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;
   background:#ff3b30;box-shadow:0 0 6px 2px #ff3b30aa,0 0 22px 8px #ff3b3055;}
 body.jv-laser .deck-stage{cursor:none;}
-.jv-lens{position:fixed;z-index:420;border-radius:50%;overflow:hidden;
+/* T465: the lens ELEMENT is .jv-lensbox; .jv-lens is the BODY flag
+   (talkSync toggles it, the rule below reads it). They were one name,
+   so the body itself was position:fixed and pointer-events:none while
+   the magnifier was up -- every click in the show died, including the
+   Magnifier and Close buttons that would have ended it (2026-09-15
+   review). tests/test_talk_tools.py now refuses a body flag that is
+   also a bare element selector. */
+.jv-lensbox{position:fixed;z-index:420;border-radius:50%;overflow:hidden;
   pointer-events:none;border:3px solid #ffffffcc;
   box-shadow:0 0 0 1px #0008,0 18px 48px #000a;background:#000;}
 .jv-lens-in{position:absolute;inset:0;}
@@ -9055,7 +9105,7 @@ body.jv-lens .deck-stage{cursor:crosshair;}
 .dh-snap{border-left:3px solid var(--dh-lane,transparent);
   border-left:2px solid transparent;}
 .dh-snap.head{border-left-color:var(--amber,#f0a848);}
-.dh-snap.head .dh-when{color:var(--amber,#f0a848);}
+.dh-snap.head .dh-when{color:var(--warning,#f0a848);}   /* T465: per-scheme */
 .dh-snap.forked .dh-why{color:var(--cyan);}
 .dh-onbr{display:inline-flex;align-items:center;gap:5px;margin-left:10px;
   font-family:var(--mono);font-size:10px;color:var(--cyan);
@@ -9085,7 +9135,8 @@ body.jv-lens .deck-stage{cursor:crosshair;}
 .dg-cnt-odd .dg-cnt-l{color:var(--amber);}
 .dg-cnt-loose .dg-cnt-l{color:var(--chrome-ink-2);}
 /* the fix on its own line under the words, so neither is squeezed */
-.dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;flex:1 0 100%;
+.dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;
+  flex:1 0 calc(100% - 28px);min-width:0;box-sizing:border-box;
   margin-left:28px;width:auto;justify-content:center;}
 /* T444: the deck colours panel's preview */
 .tok-preview{margin:4px 0 8px;}
@@ -9122,8 +9173,11 @@ body.light .dg-swatch{border-color:#00000026;}
    stacked under it (2026-09-03, user: "all the text is a bit
    confusing here. There is text of heaps of different sizes and
    different width everywhere"). */
+/* T465: the screen's ink is the theme's (three headings, the slide
+   chips and the scope select were dark-only literals, invisible or an
+   island in Light -- 2026-09-15 review) */
 .dg-h{font-family:var(--sans);font-size:15px;font-weight:600;
-  letter-spacing:0;text-transform:none;color:#e8f1f8;margin:26px 0 5px;}
+  letter-spacing:0;text-transform:none;color:var(--chrome-ink);margin:26px 0 5px;}
 .dg-h:first-child{margin-top:0;}
 .dg-sub{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:var(--chrome-ink);
   max-width:62ch;}
@@ -9414,7 +9468,8 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .li-lab{font-size:10.5px;color:#dbe7ef;}
 /* T130: the put button and its slide scope, side by side */
 .dg-putrow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
-.dg-scope{background:#0f1c28;color:#dbe7ef;border:1px solid #ffffff2a;
+.dg-scope{background:var(--input-bg);color:var(--chrome-ink);
+  border:1px solid var(--border-strong);
   border-radius:6px;padding:4px 6px;font:inherit;font-size:11px;
   max-width:180px;}
 /* the drag proxies live inside the miniature at page percentages;
@@ -9875,13 +9930,17 @@ body.light .img-ov .oh-row{background:var(--surface-hover);
   background:color-mix(in srgb,var(--danger) 13%,transparent);
   border-color:color-mix(in srgb,var(--danger) 70%,transparent);}
 /* the colourful theme tints the box's edge and its words with the tab's hue */
+/* T465: ...and NEVER a pressed one -- .fx-tile excluded .on but not
+   [aria-pressed="true"], which is how View's Slides and Guides, Home's
+   Layers and Present's Code trail read exactly like their unlit
+   neighbours in this theme (2026-09-15 review) */
 body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"]):not(:hover),
-body.th-colorful .edit-tools .fx-tile:not(.on):not(:hover){
+body.th-colorful .edit-tools .fx-tile:not(.on):not([aria-pressed="true"]):not(:hover){
   border-color:color-mix(in srgb,var(--accent) 30%,transparent);
   background:color-mix(in srgb,var(--accent) 7%,transparent);
   color:color-mix(in srgb,var(--accent) 60%,#f2f7fa);}
 body.th-colorful .edit-tools .dbtn:hover:not([aria-pressed="true"]),
-body.th-colorful .edit-tools .fx-tile:hover:not(.on){
+body.th-colorful .edit-tools .fx-tile:hover:not(.on):not([aria-pressed="true"]){
   background:color-mix(in srgb,var(--accent) 16%,transparent);
   border-color:color-mix(in srgb,var(--accent) 55%,transparent);}
 /* a primary button keeps its fill (Finish in Quick animate) */
@@ -9939,7 +9998,12 @@ body.light .rbn-geom input{color:var(--ink-2);background:var(--input-bg);
    hidden takes no column. */
 .rbn-cell#tx-run-style .dbtn,.rbn-cell#tx-run-align .dbtn{padding:3px 7px;}
 .rbn-cell#tx-run-style .dbtn.etm{min-width:28px;justify-content:center;}
-.rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}
+/* T465: the CHILD combinator. Without it the <b>/<i>/<u>/<s> inside
+   the hidden buttons counted as "something showing", so B/I/U/S and
+   Left/Centre/Right stayed as 2px slivers beside a shape or a table and
+   pushed the row's first control to the bottom track (2026-09-15
+   review, measured). */
+.rbn-row>.rbn-cell:not(:has(>:not([hidden]))){display:none;}
 
 /* ---- T209: THE REVIEW VIEWS, FULL SCREEN --------------------------------
    Mismatched text and Tidy page draw their cards into a grid with room
@@ -12947,7 +13011,7 @@ text can now number within the section as well as within the deck:
 <code>{sn}</code>, <code>{sN}</code> and <code>{sec}</code> are the
 section's number, size and name &mdash; useful for a talk that runs in
 parts.</li>
-<li><b>Check what should match.</b> <i>Home &rarr; Fix mismatched text</i>
+<li><b>Check what should match.</b> <i>Home &rarr; Style system &rarr; Check consistency</i>
 groups text and figures that look as though they should use the same
 formatting. It never changes a slide by itself: each card names one
 possible difference and offers its own fix. It can also compare figure
@@ -14155,7 +14219,11 @@ writes or resembles and implies no endorsement.</small></p>
                user: "Shared colours also can go somewhere else ... This
                needs an overhaul"). The panel is rebuilt around what the
                colours ARE (openTokenPicker). -->
-          <span class="rbn-grp rbn-deckwide" data-tab="design"
+          <!-- T465: rbn-nofold. T444 moved these here so that the
+               style system "can always be present, not collapsed", and
+               at the user's own window width they were the first Design
+               group the ladder folded behind a door. -->
+          <span class="rbn-grp rbn-deckwide rbn-nofold" data-tab="design"
             data-fold-ic="palette">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="dsg-tokens"
@@ -14168,7 +14236,7 @@ writes or resembles and implies no endorsement.</small></p>
                 aria-haspopup="true" aria-expanded="false"
                 title="Deck-wide layout defaults: the corner shape of boxes
  and the space used when Arrange distributes objects"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Deck layout</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Deck layout&#8230;</button>
             </span>
             <span class="rbn-lab">Whole deck</span>
           </span>
@@ -14602,7 +14670,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Every object on this slide arrives together, on the
  first click"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All together</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
-                title="Take the entrance off every object on this slide"
+                title="Take every entrance, exit and movement off every object on this slide"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove all</button>
             </span>
             <span class="rbn-lab">Whole slide</span>
@@ -14621,7 +14689,7 @@ items snap to both. Guides, not ink: never printed or exported"
                list read as a timeline (T174). -->
           <span class="rbn-grp rbn-order rbn-nofold" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="anim-seq"
+              <button class="dbtn rbn-sm" id="anim-seq" aria-pressed="false"
                 title="Click things one after another and each becomes
  the next to appear. The Animation panel opens with the count, the
  effect and the way out"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Quick
@@ -14636,7 +14704,7 @@ items snap to both. Guides, not ink: never printed or exported"
                    with the click it arrives on and, if it leaves, the
                    click it goes. It drives Home's Layers button: two
                    doors, one pane. -->
-              <button class="dbtn rbn-sm" id="anim-layers"
+              <button class="dbtn rbn-sm" id="anim-layers" aria-pressed="false"
                 title="Every object on this slide with the click it
  arrives on and, if it leaves, the click it goes. Hide, lock and reorder
  from the same list"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
@@ -14839,8 +14907,8 @@ items snap to both. Guides, not ink: never printed or exported"
                     aria-expanded="false" title="Show all"
                     aria-label="Show every kind of text box">&#9662;</button></span></span>
               <button class="fx-tile big-tile rbn-tall" id="dc-maths"
-                title="Add an equation, written in LaTeX between $$ and $$
- - it is typeset as you type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg><span>Equation</span></button>
+                title="Add an equation: type the LaTeX (no $$ needed) and it
+ is typeset as you type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg><span>Equation</span></button>
               <button class="fx-tile big-tile rbn-tall" id="dc-md"
                 title="Add a Markdown box - headings, bullets, numbers,
  links, quotes, code and emphasis, typed as text and rendered on the
@@ -14855,14 +14923,19 @@ items snap to both. Guides, not ink: never printed or exported"
           <!-- T444: THE DECK'S TYPE LIVES WITH THE WORDS (2026-09-14,
                user: "Move citations to the text tab not home. Move
                text styles and style sets to text away from home"). -->
-          <span class="rbn-grp rbn-decktype" data-tab="text"
+          <!-- T468: TILES, like Equation, Markdown and Table beside them.
+               These were three 26px pills stacked two high with the
+               third floating at a third baseline, the one group on Text
+               not made of the one tile (2026-09-15 review, measured);
+               and two of them wore one icon. -->
+          <span class="rbn-grp rbn-decktype rbn-nofold" data-tab="text"
             data-fold-ic="styles">
             <span class="rbn-row">
-              <span class="sh-drop" id="dsg-stylewrap">
-                <button class="dbtn rbn-sm" id="dsg-styles"
+              <span class="sh-drop rbn-tall" id="dsg-stylewrap">
+                <button class="fx-tile big-tile" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
-                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Text
-                  styles &#9662;</button>
+                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg><span>Text
+                  styles &#9662;</span></button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
                   hidden>
                   <!-- the per-style rows, built on open -->
@@ -14888,15 +14961,15 @@ items snap to both. Guides, not ink: never printed or exported"
                        the other. -->
                 </div>
               </span>
-              <button class="dbtn rbn-sm" id="dsg-sets"
+              <button class="fx-tile big-tile rbn-tall" id="dsg-sets"
                 title="Ready-made looks for the whole deck: style sets
  (type) and colour themes (a palette for page, boxes, headings and
- ink), and any you saved"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style sets&#8230;</button>
-              <button class="dbtn rbn-sm" id="dsg-cites"
+ ink), and any you saved"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg><span>Style sets&#8230;</span></button>
+              <button class="fx-tile big-tile rbn-tall" id="dsg-cites"
                 title="This deck&#8217;s references: import a .bib, add one
  by DOI, choose numbered or author-year, and insert a references box.
  Cite in any text box as [@key]"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Citations&#8230;</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg><span>Citations&#8230;</span></button>
             </span>
             <span class="rbn-lab">Presentation type</span>
           </span>
@@ -15007,14 +15080,16 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn rbn-sm" id="pr-talk"
                 title="Play from this slide with the talk settings open: skip
  the animations, or size headings, body text and captions for the room"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> Talk settings&#8230;</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> Play with talk settings&#8230;</button>
               <!-- T222: two buttons, not one (2026-09-03, user:
                    "notes and timing should be two different buttons").
                    They open the same pane on different tabs, which is
                    what the pane was already built to do. -->
+              <!-- T465: two doors, two names -- Notes lands on the notes,
+                   Timing on the pane's Timing tab -->
               <button class="dbtn rbn-sm" id="pr-notes"
                 title="Your speaker notes for each slide"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/><path d="m9.2 4 2.8 2.8"/></svg> Notes &amp; timing&#8230;</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/><path d="m9.2 4 2.8 2.8"/></svg> Notes&#8230;</button>
               <button class="dbtn rbn-sm" id="pr-timing"
                 title="How long you want each slide to take, how long
  the whole talk is, and what your rehearsals actually took"
@@ -15176,7 +15251,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 <!-- T228: Notes beside Layers. It is a thing you
                      write while building, so it belongs on the tab
                      you build from. -->
-                <button class="fx-tile big-tile" id="hm-notes"
+                <button class="fx-tile big-tile" id="hm-notes" aria-pressed="false"
                   title="Your speaker notes for this slide, how long
  you want it to take, and what your rehearsals actually took"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg><span>Notes</span></button>
@@ -15812,15 +15887,6 @@ items snap to both. Guides, not ink: never printed or exported"
                    the four playback switches -->
               <!-- T322: everything a chart can be asked beyond its kind
                    and its numbers -->
-              <!-- T324: what each column of a table holds, and
-                   everything that follows from it -->
-              <span class="sh-drop" id="fmt-tablewrap" hidden>
-                <button class="dbtn etm" id="fmt-table"
-                  title="What each column holds &mdash; numbers or text
- &mdash; and so how it lines up, how many decimals it shows, its units,
- its footer and its colours"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg> Columns</button>
-              </span>
               <span class="sh-drop" id="fmt-chartwrap" hidden>
                 <button class="dbtn etm" id="fmt-chart"
                   title="Kind, stacking, log and second axes, data labels,
@@ -15922,6 +15988,17 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Add a column on the right"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Column</button>
               <button class="dbtn etm" id="fmt-tbl-colminus"
                 title="Remove the last column"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg> Column</button>
+              <!-- T324: what each column of a table holds, and
+                   everything that follows from it. T467: HERE, with the
+                   table's other controls -- it sat alone in the Picture
+                   group, a thousand pixels from them. -->
+              <span class="sh-drop" id="fmt-tablewrap" hidden>
+                <button class="dbtn etm" id="fmt-table"
+                  title="What each column holds &mdash; numbers or text
+ &mdash; and so how it lines up, how many decimals it shows, its units,
+ its footer and its colours"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg> Columns</button>
+              </span>
               <button class="dbtn etm" id="fmt-tbl-head"
                 aria-pressed="false"
                 title="Treat the first row as headings"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg>
@@ -15988,7 +16065,10 @@ items snap to both. Guides, not ink: never printed or exported"
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Fix mismatched text</span>
+        <!-- T467: named as its door is. T443 quoted the user: "the fix
+             mismatched text makes no sense"; the Style system's button
+             says Check consistency, and now so does what it opens. -->
+        <div class="selpane-h"><span>Check consistency</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
@@ -16074,8 +16154,8 @@ items snap to both. Guides, not ink: never printed or exported"
            view; a fix re-renders it. The panes stay in the markup for
            the pane owner and the tests, but the ribbon doors open these. -->
       <div class="img-ov" id="std-ov" hidden role="dialog"
-        aria-label="Fix mismatched text">
-        <div class="img-ov-h"><span class="img-ov-t">Fix mismatched text</span>
+        aria-label="Check consistency">
+        <div class="img-ov-h"><span class="img-ov-t">Check consistency</span>
           <span class="img-ov-sub" id="std-ov-sub"></span>
           <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
             ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Check again</button>
@@ -16249,8 +16329,11 @@ items snap to both. Guides, not ink: never printed or exported"
             type="number" min="0" step="0.1" placeholder="end">
             <button class="dbtn" id="md-end-now"
               title="Use where the preview is paused">Now</button></div>
-          <div class="np-lab">Poster frame</div>
-          <div class="np-row md-btns">
+          <!-- T469: hidden for an audio clip (mediaPaneSync): there is
+               no frame to pause on, and "This frame" toasted about
+               scrubbing to one -->
+          <div class="np-lab" id="md-poster-lab">Poster frame</div>
+          <div class="np-row md-btns" id="md-poster-row">
             <button class="dbtn" id="md-poster-now"
               title="The frame the preview is paused on becomes the still
  the clip shows before it plays"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg> This frame</button>
@@ -16324,8 +16407,14 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="selpane-h"><span>Notes &amp; timing</span>
           <button class="dbtn dc-icon" id="notespane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
+        <!-- T465: TIMING IS A TAB. Present's Timing button landed on
+             "Whole talk", which holds only whole-talk NOTES -- not one
+             of the timing fields its tooltip promised (2026-09-15
+             review). The target, the rehearsal readout, the running
+             total and the talk's length are a tab of their own now. -->
         <div class="np-tabs" id="np-tabs">
           <button class="np-tab on" data-np="slide">This slide</button>
+          <button class="np-tab" data-np="time">Timing</button>
           <button class="np-tab" data-np="deck">Whole talk</button>
           <button class="np-tab" data-np="pad">Scratchpad</button>
           <button class="np-tab" data-np="reh">Rehearsals</button>
@@ -16342,6 +16431,8 @@ items snap to both. Guides, not ink: never printed or exported"
           <button class="dbtn np-bigbtn" id="np-big"
             title="The slide, your notes and how they will read, side by
  side"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Bigger editor</button>
+        </div>
+        <div class="selpane-list" id="notespane-time" hidden>
           <label class="np-lab" for="np-goal">How long you want to spend
             here</label>
           <div class="np-row">
@@ -16469,9 +16560,10 @@ items snap to both. Guides, not ink: never printed or exported"
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"
         aria-label="Next slide">&#8250;</button>
-      <button class="deck-arrow up" id="deck-up" hidden
+      <button class="deck-codepill up" id="deck-up" hidden
         title="Back to the slide (&#8593;)"
-        aria-label="Back up to the slide">&#8593;</button>
+        aria-label="Back up to the slide">
+        <span class="cp-arr">&#8593;</span> Back to the slide</button>
       <button class="deck-codepill" id="deck-down" hidden
         title="Scroll down to the code trace (&#8595;)"
         aria-label="Show the code trace that made this slide">
@@ -16494,8 +16586,10 @@ items snap to both. Guides, not ink: never printed or exported"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
         <div class="tk-row">
           <span class="tk-lab">Animations</span>
+          <!-- T469: one word for the state beside a word for the thing:
+               "Skip animations · PLAYING" read as two states at once -->
           <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
-            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> Skip animations
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> Animations
             <span class="tk-state">playing</span></button>
         </div>
         <!-- T386: the talk's tools. A laser dot, a magnifier, a black
@@ -16577,9 +16671,9 @@ items snap to both. Guides, not ink: never printed or exported"
               aria-label="Bigger captions">+</button>
           </span>
         </div>
-        <p class="tk-note">Neither is saved with the deck &mdash; they
-          are about the room you are in, so nothing here reaches a PDF,
-          a .pptx or anyone else&rsquo;s copy.</p>
+        <p class="tk-note">None of this is saved with the deck &mdash;
+          it is about the room you are in, so nothing here reaches a
+          PDF, a .pptx or anyone else&rsquo;s copy.</p>
       </aside>
       <!-- the zoom cluster, pinned to the corner of the canvas the way
            every other page-based editor does it. It floats over the stage
@@ -16883,10 +16977,10 @@ items snap to both. Guides, not ink: never printed or exported"
      slide at a time"). It borrows the Apply dialog's shell and its slide
      picker outright rather than growing a second one. -->
 <div class="aa-dlg" id="ms-dlg" hidden role="dialog"
-  aria-label="Match slides">
+  aria-label="Copy layout to slides">
   <div class="aa-box ms-box">
     <div class="aa-head">
-      <span class="eq-t">Match slides</span>
+      <span class="eq-t">Copy layout to slides</span>
       <span class="deck-spring"></span>
       <button class="dbtn dc-icon" id="ms-close" aria-label="Cancel" title="Cancel (Esc)"
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
@@ -16896,8 +16990,8 @@ items snap to both. Guides, not ink: never printed or exported"
       <div class="aa-colh">
         <span class="eq-t">Give it to</span>
         <span class="deck-spring"></span>
-        <button class="dbtn aa-b" id="ms-all">Use all</button>
-        <button class="dbtn aa-b" id="ms-none">None</button>
+        <button class="dbtn aa-b" id="ms-all">Tick all</button>
+        <button class="dbtn aa-b" id="ms-none">Untick all</button>
       </div>
       <div class="aa-scope" id="ms-scope"></div>
     </div>
@@ -16905,7 +16999,7 @@ items snap to both. Guides, not ink: never printed or exported"
       <span class="aa-count" id="ms-count"></span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="ms-cancel">Cancel</button>
-      <button class="dbtn primary" id="ms-ok">Match</button>
+      <button class="dbtn primary" id="ms-ok">Copy</button>
     </div>
   </div>
 </div>
@@ -26783,7 +26877,10 @@ window.JunoPptx = (function () {
            full name ("3 columns · classic") clipped to its first word
            there -- the strip read "3", "2", "Hero". The tile takes the
            template's short name; the full one stays on the tooltip. */
-        lb.textContent=(sel==='#layout-strip'&&layout.short)||layout.label;
+        /* T465: the Change layout grid's tiles are the strip's size, so
+           they take the short name too; the builder panel keeps the
+           full one */
+        lb.textContent=(sel!=='#layout-row'&&layout.short)||layout.label;
         b.appendChild(lb);
         b.addEventListener('click',function(){
           /* with no page yet, MAKE one rather than doing nothing — a
@@ -27024,19 +27121,30 @@ window.JunoPptx = (function () {
       host.appendChild(b);
     });
   }
+  /* T465: ONE ANSWER FOR THE PAGE'S COLOUR. There were two stores --
+     pres.pageBg (Background > Every slide, posters, colour themes) and
+     tokens.c.page (Deck colours > Page background) -- and pageBg won
+     silently, so the Deck colours row and its preview showed a colour
+     the page was not, and changing it changed nothing once Every slide
+     had ever been used or on any poster (born pageBg '#ffffff'). Nine
+     readers besides had their own '#0b141d' literal, which is how a
+     plum page exported navy and its thumbnail stayed navy (2026-09-15
+     review). The token is the store now: normPres absorbs a saved
+     pageBg into it, every writer writes it, and these two are the only
+     readers. */
+  function deckPageBg(){return tokVal('@page');}
+  function pageBgOf(s){
+    /* slide > master > deck (T115): the slide's own colour still wins,
+       the master fills in for every wearer that set none */
+    var mbg=(typeof mastOf==='function'&&mastOf(s)||{}).bg;
+    return tokVal((s&&s.bg)||mbg||'@page');
+  }
   function applyPageBg(){
-    /* the slide's own colour wins; File > Page background stays the
+    /* the slide's own colour wins; the deck's Page background stays the
        presentation-wide default (2026-08-18, user asked for per-slide
        backgrounds "like PowerPoint has") */
     var s0=pres&&pres.slides&&pres.slides[cur];
-    /* slide > master > deck (T115): the slide's own colour still wins,
-       the master fills in for every wearer that set none */
-    var mbg=(typeof mastOf==='function'&&mastOf(s0)||{}).bg;
-    /* T455: the deck's own Page background is the last word, not a
-       literal -- that hard-coded hex is exactly why changing it in the
-       Deck colours panel did nothing. Its default IS this colour, so
-       nothing moves until somebody picks another. */
-    var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)||'@page');
+    var bg=pageBgOf(s0);
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
     /* the chips live in the Background dropdown now, and it rebuilds
@@ -27833,7 +27941,7 @@ window.JunoPptx = (function () {
     var layer=stage.querySelector('.annot-layer');
     var slideEl=stage.querySelector('.slide');
     var pg=pageOf(),m=marginPct();
-    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
+    var bg=deckPageBg();
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     function add(idx,sev,what,why){
       out.push({idx:idx,sev:sev,what:what,why:why});
@@ -27954,9 +28062,9 @@ window.JunoPptx = (function () {
       function(){showTidyPane();},
       'Near-miss alignments, uneven gaps and duplicates');
     var r=standardise();
-    cat('Fix mismatched text','whole deck',
+    cat('Check consistency','whole deck',
       r.findings.filter(function(f){return f.sev==='warn';}).length+figLint().length,
-      bic('scope')+' Open Fix mismatched text',
+      bic('scope')+' Open Check consistency',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
       'Text and figures that look like they should match but do not');
     cat('Content & wording','whole deck',reviewLints().length,
@@ -29011,7 +29119,7 @@ window.JunoPptx = (function () {
      say nothing reports a drift that is not on the screen. The same ink
      preflight computes. */
   function stdInk(){
-    return pageIsLight((pres&&pres.pageBg)||'#0b141d')?'#0b141d':'#ffffff';
+    return pageIsLight(deckPageBg())?'#0b141d':'#ffffff';
   }
   function stdSize(a){return (a&&a.size)||2.6;}
   function stdCol(a){return (a&&a.color)||stdInk();}
@@ -29693,6 +29801,9 @@ window.JunoPptx = (function () {
   }
   function applySideRibbon(){
     var on=wantSide();
+    /* T465: a shelf open when the ribbon turns sideways is not carried
+       into the column */
+    if(on&&mode==='edit'&&typeof rbnShelfDismiss==='function') rbnShelfDismiss();
     deckEl.classList.toggle('rbn-side',on&&mode==='edit');
     var b=$('#vw-side');
     if(b) b.setAttribute('aria-pressed',on?'true':'false');
@@ -30722,7 +30833,12 @@ window.JunoPptx = (function () {
          its options open in the ribbon's own shelf. A group folded only
          because the window is narrow keeps the pop-up: there is by
          definition no room for a shelf on that row. */
-      if(compact&&rbnShelfOpen(g)){rbnShelfRefit();return;}
+      /* T465: ...and a ribbon standing on its side (every portrait
+         poster) has no line to give a shelf either -- the shelf became
+         a 711px block at the foot of the column with one tile visible
+         behind a 63px scrollbar (2026-09-15 review) */
+      if(compact&&!deckEl.classList.contains('rbn-side')&&rbnShelfOpen(g)){
+        rbnShelfRefit();return;}
       if(!menu.hidden){overlayHide(menu);return;}
       overlayShow(btn,menu);floatMenu(btn,menu);
     });
@@ -30738,9 +30854,16 @@ window.JunoPptx = (function () {
     /* T453: the row may be sitting in the shelf rather than in this
        group, and the readout is still this group's to keep true */
     var row=rbnFoldRow(g);
-    var on=row?row.querySelector('[aria-pressed="true"]'):null;
-    var txt='';
-    if(on){
+    /* T467: EVERY choice in the row, one per strip or cell, joined --
+       "Timing & text" holds two strips (when it starts, how much
+       arrives) and read only the first pressed tile, so picking By
+       sentence left the door saying On click (2026-09-15 review). */
+    var ons=row?$$('[aria-pressed="true"]',row):[];
+    var boxes=[],parts=[];
+    ons.forEach(function(on){
+      var box=(on.closest&&on.closest('.strip-frame,.rbn-cell,.sh-drop'))||on;
+      if(boxes.indexOf(box)>=0) return;
+      boxes.push(box);
       /* T464: the WHOLE control's words, less what is not a word. The
          first <span> of a tile used to be taken as its word, and a
          page-size tile's first span is its little page drawing -- so
@@ -30749,13 +30872,32 @@ window.JunoPptx = (function () {
          never". */
       var src=on.cloneNode(true);
       $$('kbd,.rbn-foldval,.page-ico',src).forEach(function(k){k.remove();});
-      txt=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
+      var t=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
         .trim();
-    }
+      if(t) parts.push(t);
+    });
+    var txt=parts.join(' \u00b7 ');
     val.textContent=txt;
     val.hidden=!txt;
     var btn=val.parentNode;
     btn.classList.toggle('has-val',!!txt);
+    /* T469: A DOOR OVER NOTHING LIVE IS NOT LIVE. Effect, Timing and
+       Motion looked ready with nothing selected and opened shelves of
+       disabled tiles (2026-09-15 review). A row whose every control
+       is disabled greys its door and says why; Transition, whose row
+       is about the slide, stays live. */
+    if(row){
+      var ctl=$$('button,select,input',row).filter(function(c){
+        if(c.closest&&c.closest('.strip-nav')) return false;   /* arrows are not choices */
+        for(var n=c;n&&n!==row;n=n.parentNode) if(n.hidden) return false;   /* nor hidden ones */
+        return true;});
+      var dead=ctl.length>0&&ctl.every(function(c){return c.disabled;});
+      /* only when it changes: the observer that calls this watches
+         `disabled`, and re-setting the same value is still a mutation */
+      if(btn.disabled!==dead) btn.disabled=dead;
+      if(dead){val.textContent='select something';val.hidden=false;
+        btn.classList.add('has-val');}
+    }
   }
   function rbnFoldReadouts(){
     $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnFoldReadout);
@@ -30772,7 +30914,7 @@ window.JunoPptx = (function () {
     var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
     new MutationObserver(function(){rbnFoldReadouts();})
       .observe(bar,{subtree:true,attributes:true,
-        attributeFilter:['aria-pressed']});
+        attributeFilter:['aria-pressed','disabled']});
   }
   function rbnUnfoldGroup(g){
     var wrap=null;
@@ -31170,7 +31312,7 @@ window.JunoPptx = (function () {
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
-    imgpane:'#hm-images',
+    imgpane:'#hm-images',citepane:'#dsg-cites',   /* T469: Citations too */
     notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
   function paneSyncBtns(){
     Object.keys(PANE_BTN).forEach(function(p){
@@ -32035,13 +32177,36 @@ window.JunoPptx = (function () {
           :{left:0,top:0};   /* a fixed pane drags in viewport space */
         var r=pane.getBoundingClientRect();
         var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
+        /* T468: THE HEIGHT SURVIVES THE DRAG. A docked pane is sized by
+           its top and bottom anchors; the first move sets bottom:auto
+           and the pane collapsed to its content -- 629px to 240px on
+           the first pixel of a drag (2026-09-15 review). Its measured
+           height is written first. */
+        if(!pane.style.height) pane.style.height=Math.round(r.height)+'px';
         function mv(e2){
           place({moved:1,x:e2.clientX-hostR.left-dx,
             y:e2.clientY-hostR.top-dy});
         }
-        function up(){
+        function up(e2){
           document.removeEventListener('pointermove',mv);
           document.removeEventListener('pointerup',up);
+          /* T468: LET GO AT THE EDGE, AND IT DOCKS. syncPaneDock's note
+             promised "drag it back to the edge to re-dock" and nothing
+             did it: once moved, a pane floated over the page for good.
+             Within 28px of the right edge (or dropped where a docked
+             pane sits) the anchors come back and `moved` is not
+             written. */
+          var host=pane.offsetParent,hw=host?host.clientWidth:innerWidth;
+          var pr=pane.getBoundingClientRect();
+          var hr=host?host.getBoundingClientRect():{left:0,top:0};
+          var nearEdge=(hw-(pr.right-hr.left))<=40&&(pr.top-hr.top)<=60;
+          if(nearEdge){
+            pane.style.left='';pane.style.top='';pane.style.right='';
+            pane.style.bottom='';pane.style.height='';
+            paneSave(id,{w:pane.offsetWidth});   /* the dock sizes its height */
+            syncPaneDock();
+            return;
+          }
           /* `moved` is set HERE and only here: a drag is the one gesture
              that means "I want this somewhere else" */
           paneSave(id,{moved:1,x:pane.offsetLeft,y:pane.offsetTop,
@@ -32069,10 +32234,10 @@ window.JunoPptx = (function () {
       if(!st.moved) requestAnimationFrame(syncPaneDock);
     }).observe(pane);
   }
-  ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'imgpane','mediapane','chartpane','tablepane','citepane',
-   'stdpane','tidypane','objhist','provpane','flippane','sizepane']
-    .forEach(function(id){wirePane(document.getElementById(id));});
+  /* T465: PANE_IDS is the list -- this one named 'varspane', which no
+     longer exists, and not 'reviewpane', so the Review pane was the
+     one inspector you could not drag or resize (2026-09-15 review). */
+  PANE_IDS.forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
     if(!ob||!pane) return;
@@ -33467,8 +33632,9 @@ window.JunoPptx = (function () {
     if(p.hideTrace) out.hideTrace=1;
     if(typeof p.page==='string'&&p.page) out.page=p.page;  /* page preset */
     /* the page background survives every load path — normPres dropping
-       it turned saved white posters navy again (2026-08-05 review) */
-    if(typeof p.pageBg==='string'&&p.pageBg) out.pageBg=p.pageBg;
+       it turned saved white posters navy again (2026-08-05 review).
+       T465: it survives as tokens.c.page, below, after the tokens
+       object itself has been copied in. */
     /* trim marks are a print decision and were being forgotten on every
        reload, because nothing carried them across (2026-08-10) */
     if(p.cropMarks) out.cropMarks=1;
@@ -33554,6 +33720,17 @@ window.JunoPptx = (function () {
       .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
+    /* T465: A SAVED pres.pageBg BECOMES THE PAGE TOKEN. It was the
+       second store for one colour and it won over the token at render
+       time, so it takes the token's place here -- a deck renders
+       exactly as it did, and from now on there is one answer
+       (deckPageBg). '@page' was a theme's way of saying "the token",
+       which is the default. */
+    if(typeof p.pageBg==='string'&&p.pageBg&&p.pageBg!=='@page'){
+      out.tokens=out.tokens||{};
+      out.tokens.c=out.tokens.c||{};
+      out.tokens.c.page=p.pageBg;
+    }
     /* embedded card snapshots ride the FILE, not the object: they are
        absorbed into the session store (and IndexedDB) here, so frames
        still render when the notebook never opens — while drafts written
@@ -34542,7 +34719,7 @@ window.JunoPptx = (function () {
          a section's fold state out: that is a way of looking at the page,
          and lives in the browser's view state. */
       guides:pres.guides||null,
-      page:pres.page||null,pageBg:pres.pageBg||null,
+      page:pres.page||null,
       cropMarks:pres.cropMarks||0});
   }
   function histReset(){
@@ -34566,14 +34743,14 @@ window.JunoPptx = (function () {
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
-    var pageWas=pres.page||null,bgWas=pres.pageBg||null;
+    var pageWas=pres.page||null,bgWas=deckPageBg();
     /* T263: 'layouts' belongs in this list. histState has always
        snapshotted it, and nothing read it back -- so making or deleting
        a custom slide layout could not be undone, while every other
        design-level key could. d.layouts is always emitted and [] is
        truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','layouts','page','pageBg','cropMarks','live',
+     'guides','masters','layouts','page','cropMarks','live',
      'scale']
       .forEach(function(k){
         if(d[k]) pres[k]=d[k]; else delete pres[k];});
@@ -34615,7 +34792,7 @@ window.JunoPptx = (function () {
        two calls the picker does, and re-fit a ribbon whose column may
        have just changed shape */
     var pageChanged=(pres.page||null)!==pageWas;
-    if(pageChanged||(pres.pageBg||null)!==bgWas) deckZoom=0;
+    if(pageChanged||deckPageBg()!==bgWas) deckZoom=0;
     /* persist WITHOUT recording a new history entry */
     source='draft';
     draftSet(pres.name||'untitled',JSON.stringify(pres));   /* T429 */
@@ -36435,9 +36612,19 @@ window.JunoPptx = (function () {
     if(down) down.hidden=!(hasTrace&&atTop);
     if(up) up.hidden=!(hasTrace&&!atTop);
     var c=$('#deck-count');
-    /* T318: mains only, the number the talk and the paper agree on */
-    if(c) c.textContent=pres.slides.length
-      ?(slideNo(cur)+' / '+slideCount()):'0 / 0';
+    /* T318: mains only, the number the talk and the paper agree on.
+       T469: in the SHOW, the slides the show will play -- the presenter
+       window already counts that way, and the two read "3 / 4" and
+       "3 / 3" of the same talk once a version or Running late skipped
+       one (2026-09-15 review). */
+    if(c){
+      var shown=(mode==='view'&&typeof shownSlides==='function')?shownSlides():null;
+      if(shown&&shown.length){
+        var at=shown.indexOf(cur);
+        c.textContent=(at>=0?at+1:slideNo(cur))+' / '+shown.length;
+      } else c.textContent=pres.slides.length
+        ?(slideNo(cur)+' / '+slideCount()):'0 / 0';
+    }
   }
   function scrollToTrace(){
     var tr=stage.querySelector('.vtrace');
@@ -36723,6 +36910,11 @@ window.JunoPptx = (function () {
     }
     renderSelPane();   /* keep the Objects pane on the CURRENT slide */
     renderNotesPane(); /* ...and the notes, which are per slide */
+    /* T465: ...and the Images pane, whose heading says "on this slide"
+       and which went on listing the previous slide's pictures until
+       its own reload button was pressed (2026-09-15 review) */
+    if(typeof renderImgPane==='function'){
+      var ip=$('#imgpane'); if(ip&&!ip.hidden) renderImgPane();}
     /* Slide navigation clears the selection and reaches renderSlide
        without passing through showFmt. Open selection inspectors still
        have to drop the previous slide's subject. */
@@ -38377,7 +38569,7 @@ window.JunoPptx = (function () {
     var d=(pres&&pres.sections||{})[id];
     if(d&&/^#[0-9a-f]{6}$/i.test(d.color||'')) return d.color;
     var k=sectionOrdinal(id); if(k<0) return '';
-    var bg=(sl.bg)||(pres&&pres.pageBg)||'#0b141d';
+    var bg=pageBgOf(sl);
     var light=(typeof pageIsLight==='function')?pageIsLight(bg):false;
     return SECTION_HUES[k%SECTION_HUES.length][light?1:0];
   }
@@ -38478,7 +38670,6 @@ window.JunoPptx = (function () {
       (sl.annots||[]).forEach(function(a){if(hits(a,0)) out.boxes++;});
       if(hits(sl.bg,0)||hits(sl.border,0)) out.slides++;
     });
-    if(hits(pres&&pres.pageBg,0)) out.other++;
     if(hits(pres&&pres.styles,0)) out.other++;
     if(hits(pres&&pres.components,0)) out.other++;
     if(hits(pres&&pres.masters,0)) out.other++;
@@ -38520,10 +38711,14 @@ window.JunoPptx = (function () {
       var isFill=(sel==='#fmt-fillcol-menu');
       var lab=document.createElement('span');
       lab.className='fmt-lab';
-      lab.textContent='This deck\u2019s colours';
-      lab.title='This deck\u2019s own colours. An item given one of '
-        +'these follows it: change the colour once and everything '
-        +'wearing it changes.';
+      /* T467: ONE NAME. The row said "This deck's colours", the chips
+         sent you to "Home -> Shared colours" (a tab and a name that
+         went in T444) and the panel spoke of "the Deck row" -- three
+         names for the door the ribbon calls Deck colours. */
+      lab.textContent='Deck colours';
+      lab.title='The deck\u2019s own colours (Design \u2192 Deck colours). '
+        +'An item given one of these follows it: change the colour once '
+        +'and everything wearing it changes.';
       row.appendChild(lab);
       var t=tokens();
       Object.keys(t.c).forEach(function(k){
@@ -38532,8 +38727,8 @@ window.JunoPptx = (function () {
         b.setAttribute('data-c','@'+k);
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
-        b.title=nm+' \u2014 a shared colour. Change it in Home \u2192 '
-          +'Shared colours and everything using it follows.';
+        b.title=nm+' \u2014 a deck colour. Change it under Design \u2192 '
+          +'Deck colours and everything wearing it follows.';
         b.setAttribute('aria-label',nm+' (shared colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -38640,7 +38835,8 @@ window.JunoPptx = (function () {
       use.title=base
         ?('Everything that has not been given a colour of its own wears '
           +'this. Change it and they all follow.')
-        :'Put this colour on a box from the Deck row of its colour menu';
+        :'Put this colour on a box from the Deck colours row of its '
+          +'colour menu';
       row.appendChild(use);
       var inp=document.createElement('input');
       inp.type='color';inp.className='ff-in';
@@ -38672,10 +38868,10 @@ window.JunoPptx = (function () {
       var note2=document.createElement('div');
       note2.className='ff-none';
       note2.textContent=anyUse
-        ?'Put one on any box from the Deck row at the top of its colour '
+        ?'Put one on any box from the Deck colours row of its colour '
           +'menu; change it here and every box wearing it follows.'
-        :'Nothing wears one yet. Put one on any box from the Deck row '
-          +'at the top of its colour menu.';
+        :'Nothing wears one yet. Put one on any box from the Deck '
+          +'colours row of its colour menu.';
       m.appendChild(note2);
       var used=[],idle=[];
       spare.forEach(function(k){
@@ -39052,7 +39248,10 @@ window.JunoPptx = (function () {
       ['color','bg','bdc'].forEach(function(p){
         if(src&&src[p]) rec[p]=src[p]; else delete rec[p];});
     });
-    if(t.page) pres.pageBg=t.page; else delete pres.pageBg;
+    /* T465: a theme's page colour is the page token (a saved theme
+       carries it inside tokens.c already; `page` is the older field) */
+    if(t.page&&t.page!=='@page'){
+      pres.tokens.c=pres.tokens.c||{};pres.tokens.c.page=t.page;}
     if(typeof applyPageBg==='function') applyPageBg();
     return restyleAll(null);
   }
@@ -39070,7 +39269,7 @@ window.JunoPptx = (function () {
     });
     var t={id:'ct'+Date.now().toString(36),label:nm,
       note:'Saved from \u201c'+(pres.name||'a deck')+'\u201d.',
-      page:pres.pageBg||'',tokens:{c:tokens().c,rad:tokens().rad,
+      page:tokens().c.page||'',tokens:{c:tokens().c,rad:tokens().rad,
       gap:tokens().gap},styles:st};
     var list=myColourThemes();list.push(t);saveMyColourThemes(list);
     return t;
@@ -39199,8 +39398,6 @@ window.JunoPptx = (function () {
      histReset() does, that being the one funnel every new presentation
      passes through. */
   function syncCustomTypes(){
-    /* a type of your own gets a tile on Insert (T188) */
-    if(typeof txStripSync==='function') txStripSync(true);
     /* Impossible by construction since 2026-08-23: the first
        presentation loads from THE BOOT SEQUENCE at the end of the file,
        after STYLE_DEFAULTS is assigned, so this guard never fires. It
@@ -39232,6 +39429,11 @@ window.JunoPptx = (function () {
         if(t[k]!==undefined) d[k]=t[k];});
       STYLE_DEFAULTS[t.id]=d;
     });
+    /* a type of your own gets a tile on Text (T188). T465: AFTER the
+       registry is written -- it ran first, styleOrder() dropped the id
+       that was not yet in STYLE_DEFAULTS, and "New style of my own" got
+       no tile until something rebuilt the strip again. */
+    if(typeof txStripSync==='function') txStripSync(true);
   }
   /* the order the menus walk: the built-in scale first, then yours, in
      the order you made them. STYLE_ORDER itself stays exactly as it was -
@@ -39679,10 +39881,21 @@ window.JunoPptx = (function () {
       null);
     var lines=esc(src).split('\n'),out=[],list=null;
     function closeList(){if(list){out.push('</'+list+'>');list=null;}}
+    /* T467: a FENCED code block. The tile promised "code" and only the
+       inline kind worked: three backticks became three paragraphs of
+       literal backticks on the slide (2026-09-15 review). The lines
+       between the fences are kept whole, escaped already by esc(). */
+    var code=null;
     lines.forEach(function(ln){
       var m;
+      if(/^\s*```/.test(ln)){
+        if(code===null){closeList();code=[];}
+        else {out.push('<pre><code>'+code.join('\n')+'</code></pre>');code=null;}
+        return;
+      }
+      if(code!==null){code.push(ln);return;}
       if(/^\s*$/.test(ln)){closeList();return;}
-      if((m=/^(#{1,3})\s+(.*)$/.exec(ln))){
+      if((m=/^(#{1,4})\s+(.*)$/.exec(ln))){
         closeList();
         /* # is an h3: a note never outranks the page it sits beside */
         out.push('<h'+(m[1].length+2)+'>'+mdInline(m[2])
@@ -39703,6 +39916,7 @@ window.JunoPptx = (function () {
       out.push('<p>'+mdInline(ln)+'</p>');
     });
     closeList();
+    if(code!==null) out.push('<pre><code>'+code.join('\n')+'</code></pre>');
     return out.join('');
   }
   /* ---- THE ROOM TO WRITE THEM IN --------------------------------------
@@ -40646,6 +40860,8 @@ window.JunoPptx = (function () {
         if(b3) b3.hidden=(which!=='pad');
         var b4=$('#notespane-reh');
         if(b4) b4.hidden=(which!=='reh');
+        var b5=$('#notespane-time');   /* T465 */
+        if(b5) b5.hidden=(which!=='time');
         if(which==='pad') renderPad();
         if(which==='reh') renderReh();
       });
@@ -40712,6 +40928,11 @@ window.JunoPptx = (function () {
       });
     });
     markDirty();refresh();
+    /* T465: the Text tab's tiles are specimens of these styles and were
+       rebuilt only when the registry changed -- a Heading 1 made red,
+       serif and italic stayed white bold sans on its tile, with the
+       old point size on the tooltip (2026-09-15 review, driven) */
+    if(typeof txStripSync==='function') txStripSync(true);
     return n;
   }
   /* every style one step up or down, in proportion - the whole deck's
@@ -40781,12 +41002,26 @@ window.JunoPptx = (function () {
       function toggle(label,key,title){
         var b=document.createElement('button');
         b.className='dbtn stm-tg';b.textContent=label;
-        b.setAttribute('aria-pressed',(!!d[key]).toString());
+        /* T465: "counts as a heading" is answered by isHeadingStyle,
+           which knows the four built-in headings; d.head is unset for
+           them, so the toggle read OFF on Heading 1 (2026-09-15 review) */
+        var onNow=(key==='head'&&typeof isHeadingStyle==='function')
+          ?isHeadingStyle(id):!!d[key];
+        b.setAttribute('aria-pressed',onNow.toString());
         b.title=title;
+        if(key==='head'&&onNow&&HEADING_STYLES.indexOf(id)>=0){
+          b.disabled=true;b.title='Always a heading';
+        }
         b.addEventListener('click',function(e){
           e.stopPropagation();
           var o=over();
-          if(d[key]) delete o[key]; else o[key]=1;
+          /* T465: OFF IS A VALUE. Deleting the override left the
+             base's own bold or italic in force, so B and I could never
+             be turned off on Title, the headings or Caption -- the
+             toggle stayed lit and the boxes stayed bold (2026-09-15
+             review, driven). styleDef lays the override over the base,
+             and applyStyleTo already reads 0 as "not bold". */
+          if(d[key]) o[key]=0; else o[key]=1;
           restyleAll([id]);build();
         });
         return b;
@@ -40846,7 +41081,7 @@ window.JunoPptx = (function () {
         if(none){
           var nb=document.createElement('button');
           nb.className='dbtn stm-tg';nb.textContent=none;
-          nb.title='No '+label.toLowerCase()+' at all';
+          nb.title='No '+label.toLowerCase();
           nb.setAttribute('aria-pressed',(v==='none').toString());
           nb.addEventListener('click',function(e){
             e.stopPropagation();
@@ -40858,9 +41093,11 @@ window.JunoPptx = (function () {
         }
         return wrap;
       }
-      crow.appendChild(colCtl('color','Words','#e6eef5',''));
-      crow.appendChild(colCtl('bg','Behind','#16273a','None'));
-      crow.appendChild(colCtl('bdc','Edge','#8aa0b0','None'));
+      /* T469: the format bar's words (Text, Fill, Border), not a
+         second vocabulary ("Words / Behind / Edge") */
+      crow.appendChild(colCtl('color','Text','#e6eef5',''));
+      crow.appendChild(colCtl('bg','Fill','#16273a','None'));
+      crow.appendChild(colCtl('bdc','Border','#8aa0b0','None'));
       box.appendChild(crow);
       var ren=document.createElement('input');
       ren.className='stm-ren';ren.type='text';ren.value=d.label;
@@ -40969,7 +41206,13 @@ window.JunoPptx = (function () {
             over.label=STYLE_DEFAULTS[id].label;
             over.size=Math.max(0.8,Math.min(24,
               Math.round(d.size*pr[1]*100)/100));
-            STYLE_FIELDS.forEach(function(k2){
+            /* T467: a VARIATION writes only what it says (T292). Copying
+               the resolved weight, face and colour into it froze its
+               parent's look into the child, and it stopped following
+               (2026-09-15 review, driven). A root style keeps the full
+               copy, for the reason over() in the editor gives. */
+            var varying=(typeof parentOf==='function')&&!!parentOf(id);
+            if(!varying) STYLE_FIELDS.forEach(function(k2){
               if(d[k2]!==undefined) over[k2]=d[k2];});
             deckStyles()[id]=over;
             restyleAll([id]);
@@ -41548,7 +41791,11 @@ window.JunoPptx = (function () {
          whole box, bullet and all (2026-08-29, user: "creating dot
          points with no text seems to delete the cell"). */
       var s2=pres.slides[cur],a2=s2&&(s2.annots||[])[idx];
-      if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html
+      /* T465: NOR A REFERENCES BOX. It draws the deck's bibliography
+         rather than storing words, so it is "empty" by this test the
+         whole time -- and deleted itself the first time you clicked
+         away from it (2026-09-15 review, driven). */
+      if(a2&&a2.k==='text'&&!a2.bib&&!String(a2.text||'').trim()&&!a2.html
          &&!listOf(a2)){
         s2.annots.splice(idx,1);
         if(selAnnot===idx) selAnnot=null;
@@ -42187,6 +42434,9 @@ window.JunoPptx = (function () {
         nc=ci+(e.shiftKey?-1:1);
         if(nc>=a.rows[ri].length){nc=0;nr=ri+1;}
         else if(nc<0){nc=a.rows[ri].length-1;nr=ri-1;}
+        /* T469: Tab out of the last cell adds a row, as PowerPoint
+           does, rather than ending the edit */
+        if(nr>=a.rows.length&&!e.shiftKey){tableGrow(a,'row',1);}
       } else if(e.key==='Enter'){e.preventDefault();
         nr=ri+(e.shiftKey?-1:1);
       } else if(e.key==='Escape'){e.preventDefault();td.blur();return;}
@@ -42457,7 +42707,13 @@ window.JunoPptx = (function () {
       if(a.k==='arrow'){_arrows.push(i);return;}
       if(a.k==='rect'){
         var shp=a.shape||'rect';
-        var col=tokVal(a.color)||'#ff6b57';
+        /* T465: a shape with no colour of its own follows "Lines and
+           edges" once that has been changed (the T455 bargain: the
+           literal stays the default, the token answers when somebody
+           picks one). A newborn shape still carries coral -- T458 is
+           the open question of whether it should. */
+        var col=tokVal(a.color)
+          ||(tokens().c.line!==TOKENS_DEFAULT.c.line?tokVal('@line'):'#ff6b57');
         var r=document.createElement('div');
         var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]);
         r.className='an-item an-rect'+(svgShape?' an-svgshape':'')
@@ -42615,9 +42871,11 @@ window.JunoPptx = (function () {
              you zoomed out, so an empty frame's placeholder swelled to
              fill the poster (2026-08-07, user: text "changes size when I
              zoom in and out"). */
-          pb.style.fontSize=fontPx(layer,1.15);
+          /* T468: ...but never below a readable floor -- it drew at 6.9px
+             on a fitted slide (2026-09-15 review) */
+          pb.style.fontSize='max(10px,'+fontPx(layer,1.15)+')';
           pb.textContent=a.ref?('missing: '+a.ref)
-            :'Click to add an object';
+            :'Click to choose what goes here';
           pb.addEventListener('mousedown',function(e){
             if(tool==='select') e.stopPropagation();});
           pb.addEventListener('click',function(e){
@@ -42715,16 +42973,21 @@ window.JunoPptx = (function () {
            storing it, so it is right the moment a citation is added,
            removed or moved and there is nothing to regenerate. */
         var showTx=(editing&&document.activeElement
-                    &&d2.contains(document.activeElement))
+                    &&d2.contains(document.activeElement)&&!a.bib)
           ?(_pg.t||'')
           :(a.bib?bibListText():figSubst(_pg.t,a,_figMap));
+        /* T465: with nothing cited yet the box says what it is for, in
+           the editor only (the same an-ph rule as a placeholder: never
+           in the show, never printed) */
+        var _bibHint=!!(a.bib&&!showTx&&mode==='edit');
+        if(_bibHint) showTx='References appear here once a box cites [@key]';
         var showHtml=(a.bib||!_pg.h)?null:figSubst(_pg.h,a,_figMap);
         /* T366: a placeholder is a hint about the SHAPE of the slide,
            so it is drawn only where the shape is what you are working
            on. Anywhere else -- the show, the printed page, a thumbnail,
            every export -- an untouched slot is empty, because "Body
            text" printed on a slide is the bug this closes. */
-        var _isPh=!!a.ph;
+        var _isPh=!!a.ph||_bibHint;
         if(_isPh&&mode!=='edit'){showTx='';showHtml=null;}
         var tx2,lst=listOf(a);
         if(lst){
@@ -42766,6 +43029,13 @@ window.JunoPptx = (function () {
              flush, Tab-to-indent, paste-as-code and the maths and
              markdown re-render gates all keep working untouched. */
           if(_isPh) tx2.classList.add('an-ph');
+          /* T465: a references box is drawn from the deck's citations
+             and has no words of its own to edit -- the editor opened
+             BLANK on a double-click and the list vanished */
+          if(a.bib){
+            tx2.title='This box draws the deck’s references — cite '
+              +'something ([@key] in any text box) to change it';
+          } else
           editableText(layer,tx2,
             /* T366: the editor opens EMPTY on a placeholder, so the
                first keystroke is the first word instead of something
@@ -43041,7 +43311,7 @@ window.JunoPptx = (function () {
           var fph=document.createElement('div');
           fph.className='an-flipempty';
           fph.textContent=editing
-            ?'Empty flip book — use + Add to put figures in it'
+            ?'Empty flip book — Figures, Pictures… or Pages… on the Object tab put pages in it'
             :'';
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){
@@ -44274,8 +44544,10 @@ window.JunoPptx = (function () {
       var n=used[k];
       var num=document.createElement('span');
       num.className='ct-num';
-      num.textContent=n?('['+n+']'):'–';
-      num.title=n?('Reference '+n+' in this deck'):'Not cited yet';
+      /* T465: in author-year there is no number to show */
+      num.textContent=n?(cfg.style==='ay'?bibShort(lib[k]):('['+n+']')):'–';
+      num.title=n?(cfg.style==='ay'?'Cited in this deck'
+        :('Reference '+n+' in this deck')):'Not cited yet';
       r.appendChild(num);
       var t=document.createElement('span');
       t.className='ct-ref';
@@ -44309,6 +44581,7 @@ window.JunoPptx = (function () {
     a.text=String(a.text||'')+(a.text?' ':'')+'[@'+key+']';
     if(a.html) a.html=String(a.html)+' [@'+key+']';
     markDirty();renderSlide();
+    citePaneSync();   /* T465: the pane's own column follows the Cite */
     toast('Cited — the number comes from where the slide sits, so '
       +'moving the slide renumbers it');
   }
@@ -44515,6 +44788,13 @@ window.JunoPptx = (function () {
   var inspectorSig='';
   /* the tab a selection carried you away from, for the way back (T192) */
   var tabBeforeSel='';
+  /* T465: the selection showFmt last carried the ribbon for. showFmt
+     runs again on every re-render of the same selection -- a colour
+     hover's live preview, every fmtApply -- and each run used to decide
+     the tab afresh, so a shape you had walked over to Style was yanked
+     back to Object by the first swatch you hovered (the T410 complaint,
+     for shapes). The tab follows a NEW selection only. */
+  var fmtSelSig='';
   function syncInspectorPanes(force){
     /* the numbers pane is an inspector too, and a cheap one -- four
        value writes, and an immediate return when it is closed. It sits
@@ -44556,6 +44836,7 @@ window.JunoPptx = (function () {
     if(window.SemDeckFindSync) window.SemDeckFindSync();
     if(!a){
       bar.hidden=true;
+      fmtSelSig='';
       /* ...AND EVERY CONTEXTUAL CONTROL, one at a time. Hiding the bar
          used to be enough because every one of them lived inside it. A
          ribbon layout may put any of them in a group of its own, and a
@@ -44622,9 +44903,17 @@ window.JunoPptx = (function () {
        line or a pen stroke lands on Style, and stays there when you
        are already on it. A shape keeps going to Object: its fill and
        edge are there. */
-    var strokeSel=(kind==='arrow'||kind==='draw');
+    /* T465: ...and so does a SHAPE. "its fill and edge are there" had
+       stopped being true: Object holds arrange, size, opacity and
+       reuse, while Fill, Border, Line and Shape are the Style tab's
+       Line & shape group (2026-09-15 review, measured). */
+    var strokeSel=(kind==='arrow'||kind==='draw'||kind==='rect');
     if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)
       selT='object';
+    var selSig=cur+'|'+String(selAnnot)+'|'
+      +(selSet||[]).map(String).join(',');
+    var freshSel=(selSig!==fmtSelSig);
+    fmtSelSig=selSig;
     /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
        line, before a single control had been revealed — and once a
        layout may give the format groups a tab of their own, that tab is
@@ -44647,7 +44936,7 @@ window.JunoPptx = (function () {
          what to animate, and being carried off to Object would take
          the tiles away in the same click */
       ||activeTab()==='animation';
-    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
+    var wantTab=(freshSel&&activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
     /* REMEMBER WHERE YOU WERE (T192). The selection carries you to
        Object; when it goes, syncRibbonGroups brings you back to the
@@ -44684,7 +44973,11 @@ window.JunoPptx = (function () {
     var isNum=(typeof selAnnot==='number');
     /* the colour swatches drive a.color for text / arrows / shapes, and a.txcol
        for a markdown note — but NOT images or figure/code cells */
-    var colourable=isText||kind==='arrow'||kind==='rect'||noteCell;
+    /* T465: the same set the door (hasInk, below) shows for -- a table
+       and a pen stroke got a Colour door that opened on headings over
+       nothing, every swatch hidden (2026-09-15 review) */
+    var colourable=isText||kind==='arrow'||kind==='rect'||noteCell
+      ||isTbl||kind==='draw';
     $$('.sw:not(.swbg)',bar).forEach(function(sw){
       sw.hidden=!colourable;
       var cur_=(kind==='cell')?(a.txcol||''):(a.color||defaultColor(kind));
@@ -44853,10 +45146,22 @@ window.JunoPptx = (function () {
        selected, and textContent would delete the icon with the old word
        every time -- which is why it was the one ribbon button that could
        never keep one (2026-08-25). */
+    /* T467: named for what it COLOURS. An arrow had two doors reading
+       "Line ▾" 200px apart -- this one (its colour) and Line & shape's
+       (dash, weight, ends) -- and a shape's sat in a group captioned
+       "Font" (2026-09-15 review). */
     if(tcb) tcb.innerHTML=bic('palette')+' '
       +((isText||kind==='cell')?'Text ▾'
-      :kind==='rect'?'Border ▾'
-      :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾');
+      :kind==='rect'?'Border colour ▾'
+      :(kind==='arrow'||kind==='draw')?'Line colour ▾':'Colour ▾');
+    var fgl=$('.rbn-fontgrp>.rbn-lab');
+    if(fgl) fgl.textContent=(isText||isTbl||noteCell)?'Font':'Colour';
+    if(tcb) tcb.title=(isText||kind==='cell')
+      ?'Every colour for the words \u2014 and this deck\u2019s own colours, '
+        +'which every box wearing one follows'
+      :kind==='rect'?'Every colour for this shape\u2019s outline'
+      :(kind==='arrow'||kind==='draw')?'Every colour for this line'
+      :'Every colour for the table\u2019s words and rules';
     /* a SHAPE has one Fill control and it is the panel in Line & shape;
        this button stays for text boxes and cell frames, which have a
        background colour but no fill STYLE (2026-08-20, user: "confusing
@@ -46094,7 +46399,7 @@ window.JunoPptx = (function () {
         shape:(pendingShape!=='rect'?pendingShape:undefined)}
       :(kind==='draw')
       ?{k:'draw',x:p0.x,y:p0.y,w:0,h:0,pts:[[0,0]],sw:SW_DEFAULT,
-        color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
+        color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'}
       :(kind==='cell')
       ?{k:'cell',x:p0.x,y:p0.y,w:0,h:0,ref:null}
       /* born EMPTY and already carrying its own id: the id is what every
@@ -46120,7 +46425,7 @@ window.JunoPptx = (function () {
         sw:1,rows:[['','',''],['','',''],['','','']]}
       :(kind==='line')
       ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
-        color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
+        color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'}
       :{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,
         color:'#ff6b57',sw:SW_DEFAULT};
     var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text'
@@ -46191,6 +46496,16 @@ window.JunoPptx = (function () {
       if(!tiny||(boxed&&a.k!=='draw')){
         selectAnnot(layer,idx);
         if(a.k==='text') focusText(layer,idx);
+        /* T468: THE TILE SAYS "FROM NOTEBOOK", SO THE FRAME GOES THERE.
+           Drawing one used to show a tiny "Click to add an object"
+           caption and then a pop-up asking what to put in it -- with
+           the notebook one answer among four (2026-09-15 review). With
+           a notebook open the picker opens at once; Escape or Cancel
+           brings you back to the frame, whose caption still offers the
+           other sources (a picture, the clipboard, a link). */
+        if(a.k==='cell'&&!a.ref&&APP.order&&APP.order.length
+           &&typeof startPick==='function')
+          setTimeout(function(){startPick(idx);},0);
       }
     }
     document.addEventListener('mousemove',mm);
@@ -47607,11 +47922,19 @@ window.JunoPptx = (function () {
           ?' '+styleDef(pendingStyle).label:' text')
         +' box, or click for one that sizes itself')
       :t==='arrow'?'Drag on '+pw+' to draw an arrow'
-      :t==='rect'?('Drag on '+pw+' to draw a '
-        +(pendingShape==='rect'?'rectangle':pendingShape))
+      :t==='rect'?(function(){
+        /* T469: the shape's own label, with its article -- it said
+           "draw a lbrace" and "draw a exclaim" (2026-09-15 review) */
+        var nm='shape';
+        (typeof SHAPE_LIST!=='undefined'?SHAPE_LIST:[]).forEach(function(p){
+          if(p[0]===pendingShape) nm=String(p[1]).toLowerCase();});
+        if(pendingShape==='rect') nm='rectangle';
+        return 'Drag on '+pw+' to draw '+(/^[aeiou]/.test(nm)?'an ':'a ')+nm;
+      })()
+      :t==='draw'?'Hold the mouse down and draw on '+pw+' freehand'
       :t==='line'?'Drag on '+pw+' to draw a line'
-      :t==='cell'?'Drag on '+pw+' to draw a cell frame (or click for the '
-        +'usual size), then pick a card from your notebook to fill it'
+      :t==='cell'?'Drag on '+pw+' to draw a box for a figure (or click for '
+        +'the usual size), then click the figure in your notebook'
       :t==='flip'?('Drag on '+pw+' to draw a flip book, then add the '
         +'figures you want to step through')
       :t==='table'?'Drag on '+pw+' to draw a table (or click for a 3\u00d73). '
@@ -47858,7 +48181,7 @@ window.JunoPptx = (function () {
        undoes "I added six figures" rather than six separate steps */
     if(wasMulti&&pickAdded) markDirty();
     pickAdded=0;
-    openDeck('edit');
+    openDeck('edit',true);   /* T465: resume, do not restart, the session */
     var l=stage.querySelector('.annot-layer');
     if(l&&idx>=0) selectAnnot(l,idx);
     if(wasMulti) renderFlipPane();
@@ -49241,6 +49564,12 @@ window.JunoPptx = (function () {
      recent-colours strip. Text swatches and the fill swatches each get a
      rainbow "＋" chip that opens it; any CSS colour string is accepted. ---- */
   var cpEl=$('#color-pop'), cpTarget='text', cpRGBA={r:57,g:169,b:192,a:1};
+  /* T465: the picker previews only once YOU have moved it. Mounting it
+     seeded cpRGBA and synced, and the sync previewed -- so opening the
+     Text or Fill door painted an item that had no colour of its own
+     with the picker's fallback cyan and marked Cyan as its colour
+     (2026-09-15 review, driven). */
+  var cpArmed=false;
   /* where it lives when it is nobody's section (T232) */
   var cpHome=cpEl?cpEl.parentNode:null;
   /* a live text selection captured when the picker opens, so a custom colour
@@ -49286,6 +49615,7 @@ window.JunoPptx = (function () {
     return null;
   }
   function cpSync(from){
+    if(from) cpArmed=true;
     var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),
         al=$('#cp-alpha'),av=$('#cp-aval'),pv=$('#cp-preview');
     if(nat&&from!=='native') nat.value=toHex(cpRGBA);
@@ -49305,7 +49635,7 @@ window.JunoPptx = (function () {
      Apply commits it, closing without applying puts it back. A saved text
      RUN is the exception — its selection cannot survive a re-render. */
   function cpPreview(){
-    if(!cpEl||cpEl.hidden||cpSavedRange) return;
+    if(!cpEl||cpEl.hidden||cpSavedRange||!cpArmed) return;
     pvEnd(true);
     pvShow((cpTarget==='text'?textMut:fillMut)(toStr(cpRGBA)));
   }
@@ -49318,7 +49648,7 @@ window.JunoPptx = (function () {
       b.title=colorLabel(str);
       b.style.setProperty('--cpc',tokVal(str));
       b.addEventListener('click',function(){
-        var c=parseColor(str); if(c){cpRGBA=c;cpSync();}});
+        var c=parseColor(str); if(c){cpRGBA=c;cpSync('recent');}});
       box.appendChild(b);
     });
   }
@@ -49360,6 +49690,7 @@ window.JunoPptx = (function () {
     var c0=parseColor(tokVal(cpCurrentFor(target)))
       ||{r:57,g:169,b:192,a:1};
     cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpArmed=false;
     cpEl.classList.add('cp-inline');
     cpEl.style.left='';cpEl.style.top='';
     menu.appendChild(cpEl);
@@ -49390,6 +49721,7 @@ window.JunoPptx = (function () {
     if(head) head.textContent=target==='fill'?'Custom fill':'Custom colour';
     var c0=parseColor(cpCurrentFor(target))||{r:57,g:169,b:192,a:1};
     cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpArmed=false;
     cpRenderRecent();cpSync();
     /* on the stack, INSIDE the swatch menu that opened it (T213): the
        owner keeps that menu open under it and closes both on Escape,
@@ -51402,11 +51734,27 @@ window.JunoPptx = (function () {
     }
     var capH=Math.max(4,(maxRank>0?5:0));
     var nb=bodies.length,nm=majors.length;
+    /* T468: STACKED BY THEIR OWN HEIGHT, the gap between them. Sharing
+       the page's height among the boxes made Tight, Normal and Airy
+       the same arrangement on a text slide -- every box widened to the
+       full page and spread over the whole height, the three presets
+       differing by 5px per gap -- and "Tight" closed nothing up
+       (2026-09-15 review, measured). A box keeps its own width, within
+       the margins; the gap is the preset's, so the three presets are
+       three visibly different stacks. */
+    function stackTexts(idxs,x,w,y0){
+      var y=y0;
+      idxs.forEach(function(i){
+        var r=rects[i]||{};
+        var h=Math.max(3,(r.b||0)-(r.t||0));
+        var bw=w!=null?w:Math.min(R-L,Math.max(10,(r.r||0)-(r.l||0)));
+        setBox(i,x,y,bw,null);
+        y+=h+gap;
+      });
+    }
     if(!nm){
-      /* text only: one column, stacked, sharing the height */
-      var each=(B-T-gap*Math.max(0,nb-1))/Math.max(1,nb);
-      bodies.forEach(function(i,k){
-        setBox(i,L,T+k*(each+gap),R-L,null);});
+      /* text only: one column, stacked */
+      stackTexts(bodies,L,null,T);
     } else {
       var fx=L,fw=R-L;
       if(nb&&nm<=2){
@@ -51415,9 +51763,7 @@ window.JunoPptx = (function () {
            beside a 2x2 grid is a gutter, not a paragraph. */
         var tw=(R-L)*opt.textShare;
         fx=L+tw+gap;fw=(R-L)-tw-gap;
-        var eachT=(B-T-gap*Math.max(0,nb-1))/Math.max(1,nb);
-        bodies.forEach(function(i,k){
-          setBox(i,L,T+k*(eachT+gap),tw,null);});
+        stackTexts(bodies,L,tw,T);
       }
       var fb=B;
       if(nb&&nm>2){
@@ -54770,7 +55116,7 @@ window.JunoPptx = (function () {
       var c=$('#ms-count'); if(c) c.textContent=words();
       var ok=$('#ms-ok'),n=idxs().length;
       if(ok){ok.disabled=!n;
-        ok.textContent=n?('Match '+n+' slide'+(n===1?'':'s')):'Match';}
+        ok.textContent=n?('Copy to '+n+' slide'+(n===1?'':'s')):'Copy';}
     }
     function build(){
       var w=$('#ms-what');
@@ -55320,9 +55666,22 @@ window.JunoPptx = (function () {
       if(m) return {tex:m[1].trim(),display:false};
       return {tex:(t||'').trim(),display:true};
     }
+    /* T467: the tile used to say "between $$ and $$" while the editor
+       added them itself, so following the tooltip stored '$$ $$x^2$$ $$'
+       and drew literal text with no warning (2026-09-15 review). Dollars
+       you type are absorbed: the LaTeX inside is what is kept, and $$
+       ticks display style. */
+    function absorb(){
+      var v=src.value;
+      if(!/^\s*\$/.test(v)||!/\$\s*$/.test(v)) return;
+      var u=unwrap(v);
+      if(u.tex===v.trim()) return;
+      src.value=u.tex;disp.checked=u.display;
+    }
     function render(){
       clearTimeout(prevT);
       prevT=setTimeout(function(){
+        absorb();
         var tex=src.value.trim();
         prev.textContent=tex?wrap(tex,disp.checked):'';
         if(!window.MathJax||!MathJax.typesetPromise){
@@ -55426,6 +55785,7 @@ window.JunoPptx = (function () {
     }
     function close(){dlg.hidden=true;editIdx=null;}
     function commit(){
+      absorb();
       var tex=src.value.trim();
       if(!tex){close();return;}
       var s2=pres.slides[cur];
@@ -57474,6 +57834,18 @@ window.JunoPptx = (function () {
   function overlayBoot(){
     document.addEventListener('click',function(e){
       if(!overlayStack.length) return;
+      /* T465: A CLICK WHOSE TARGET IS NO LONGER IN THE DOCUMENT WAS
+         INSIDE. A control whose own handler re-renders its surface
+         (the layout builder's add-slot, Tidy page's fix buttons) or
+         closes it and opens another (the Style system's Check
+         consistency) has been detached by the time the click bubbles
+         here; `contains` then says "outside" and the surface the click
+         opened, or was working in, is popped as if you had clicked the
+         page. Three surfaces closed themselves in the user's hands
+         for this (2026-09-15 review). Nothing outside an overlay is
+         ever detached by its own click, so a detached target is the
+         overlay's own. */
+      if(e.target&&e.target.nodeType===1&&!document.contains(e.target)) return;
       for(var i=overlayStack.length-1;i>=0;i--){
         var o=overlayStack[i];
         if(o.menu.contains(e.target)) break;
@@ -58214,7 +58586,7 @@ window.JunoPptx = (function () {
     el.style.cssText='width:960px;height:540px;position:relative;';
     if(sl.layout==='title')
       el.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
-    var bg=tokVal(sl.bg||pres.pageBg||'#0b141d');
+    var bg=pageBgOf(sl);
     el.style.setProperty('background',bg,'important');
     host.appendChild(el);
     try{attachAnnots(el,sl);paintFurniture(el,i);}catch(err){}
@@ -60083,14 +60455,26 @@ window.JunoPptx = (function () {
           +'could not be read.</div>';
         return;
       }
-      var d=deckDiff(then,now),list=deckChanges(then,now);
+      /* T465: THE DIFF READS OLDER -> NEWER. `then` is the version you
+         picked and `now` the one it is read against -- and since T269
+         the newest version opens against the one BEFORE it, so the pair
+         arrived newest-first and every addition was reported as a
+         removal ("after adding a slide": 1 removed, 1 moved --
+         2026-09-15 review, driven). Order the pair by time for the
+         reading; the restore buttons below still restore `then`, the
+         version you picked. */
+      var aEnt=ent,bEnt=histAgainst?histAgainstEnt(ov):null;
+      var older=then,newer=now,olderEnt=aEnt,newerEnt=bEnt;
+      if(bEnt&&(bEnt.at||0)<(ent.at||0)){
+        older=now;newer=then;olderEnt=bEnt;newerEnt=aEnt;}
+      var d=deckDiff(older,newer),list=deckChanges(older,newer);
       /* ---- what this version is, and what it is being read against */
       var head=document.createElement('div');
       head.className='dh-head2';
       var ttl=document.createElement('span');
       ttl.className='dh-h2t';
-      ttl.textContent=histLabel(ent)+' \u2192 '
-        +(histAgainst?histLabel(histAgainstEnt(ov)):'now')
+      ttl.textContent=histLabel(olderEnt)+' \u2192 '
+        +(newerEnt?histLabel(newerEnt):'now')
         +': '+chSummary(list);
       head.appendChild(ttl);
       if(!d.byName){
@@ -60190,7 +60574,7 @@ window.JunoPptx = (function () {
           +'</div>';
       } else if(histView==='slide') chBySlide(list2,list);
       else if(histView==='type') chByType(list2,list);
-      else chSlideRows(list2,d,then,now);
+      else chSlideRows(list2,d,older,newer);
       body.appendChild(list2);
     });
   }
@@ -60271,11 +60655,11 @@ window.JunoPptx = (function () {
     if(fromId!==undefined) histHead=fromId||null;
     if(branch!==undefined) histBranch=branch||'';
     if(fromId!==undefined||branch!==undefined) histPtrSave(pres.name);
-    var pageWas=pres.page||null,bgWas=pres.pageBg||null;
+    var pageWas=pres.page||null,bgWas=deckPageBg();
     var copy=JSON.parse(JSON.stringify(then));
     copy.name=pres.name;      /* the NAME is where you are, not where it was */
     pres=copy;              /* replace/delete every normPres key together */
-    if((pres.page||null)!==pageWas||(pres.pageBg||null)!==bgWas) deckZoom=0;
+    if((pres.page||null)!==pageWas||deckPageBg()!==bgWas) deckZoom=0;
     cur=0;activePane=-1;selAnnot=null;selSet=[];
     /* Installs this version's custom type registry and discards undo
        entries whose object references belong to the replaced deck. */
@@ -60302,7 +60686,10 @@ window.JunoPptx = (function () {
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
     });
   }
-  function openHistory(){
+  /* T465: openHistory(wantId) opens ON a version -- the open-items
+     bar's rows ask for the one they name; without it the newest wins,
+     as it always did */
+  function openHistory(wantId){
     histPanelClose();
     histAgainst='';
     var ov=document.createElement('div');
@@ -60351,10 +60738,14 @@ window.JunoPptx = (function () {
     histIndex().then(function(ix){
       histIxCache=ix;
       histRows(ov,ix);
-      /* the most recent one is the one you meant */
-      if(ix.length){histSel=ix[ix.length-1].id;histRows(ov,ix);
-        histAgainst=histAutoAgainst(ix,ix[ix.length-1]);
-        histCompare(ov,ix[ix.length-1]);}
+      /* the most recent one is the one you meant, unless the caller
+         named one that exists */
+      var want=null;
+      if(wantId) ix.forEach(function(e){if(e.id===wantId) want=e;});
+      if(!want&&ix.length) want=ix[ix.length-1];
+      if(want){histSel=want.id;histRows(ov,ix);
+        histAgainst=histAutoAgainst(ix,want);
+        histCompare(ov,want);}
     });
   }
   /* ================================================================
@@ -60641,7 +61032,7 @@ window.JunoPptx = (function () {
        exporter both already ask pageIsLight; the on-screen renderer was
        the one that did not. */
     var lightPg=(typeof pageIsLight==='function')
-      &&pageIsLight((pres&&pres.pageBg)||'#0b141d');
+      &&pageIsLight(deckPageBg());
     var ink=lightPg?'#0b141d':'#dbe7ef';
     var dim=lightPg?'#4a5b68':'#8aa0b0';
     var grid=lightPg?'#4a5b6833':'#8aa0b033';
@@ -61719,10 +62110,19 @@ window.JunoPptx = (function () {
      and moving"). Stored as a.motion; the renderer puts one class on
      the item and the keyframes do the rest, so an exported page keeps
      it too. Reduced motion turns them off, as it does every keyframe. */
-  /* the ribbon keeps the four commonest; every one of the thirteen,
-     and every number on them, is in the Animation panel (T445) */
-  var MOTION_FX=[['','None'],['wobble','Wobble'],['bob','Float'],
-    ['pulse','Pulse']];
+  /* T465: EVERY MOVEMENT IS ON THE SHELF. The ribbon kept the four
+     commonest and left the other nine to the Animation panel (T445),
+     which was the right call for a strip in the row -- but the strip
+     is a shelf now (T453) with a whole line to itself, and a Spin
+     chosen in the panel left the Motion door reading nothing, with no
+     tile lit when it opened (2026-09-15 review). The four tiles in the
+     markup keep their ids; the rest are built beside them from the
+     same list the panel reads, so the two can never disagree. */
+  var MOTION_FX=[['','None']];
+  function motionFxSync(){
+    if(MOTION_FX.length>1||typeof MOTIONS==='undefined') return;
+    MOTIONS.forEach(function(m){MOTION_FX.push([m[0],m[1],m[4]]);});
+  }
   function motionId(v){return '#anim-move-'+(v||'none');}
   function motionItems(){
     var s=pres.slides[cur],out=[];
@@ -61767,8 +62167,20 @@ window.JunoPptx = (function () {
     motionPvT=setTimeout(motionPreviewStop,2400);
   }
   function motionBoot(){
+    motionFxSync();
+    var strip=$('#anim-move-strip');
     MOTION_FX.forEach(function(pr){
-      var b=$(motionId(pr[0])); if(!b) return;
+      var b=$(motionId(pr[0]));
+      if(!b&&strip&&pr[0]){
+        b=document.createElement('button');
+        b.type='button';b.className='fx-tile';b.id='anim-move-'+pr[0];
+        b.disabled=true;b.setAttribute('aria-pressed','false');
+        b.title=(pr[2]||pr[1])+' \u2014 hover to see it';
+        b.innerHTML=(typeof moIcon==='function'?(moIcon(pr[0])||''):'')
+          +'<span>'+esc(pr[1])+'</span>';
+        strip.appendChild(b);
+      }
+      if(!b) return;
       b.addEventListener('mouseenter',function(){motionPreview(pr[0]);});
       b.addEventListener('mouseleave',motionPreviewStop);
       b.addEventListener('click',function(e){
@@ -61782,6 +62194,7 @@ window.JunoPptx = (function () {
     });
   }
   function motionSync(){
+    motionFxSync();
     var items=motionItems(),on=items.length>0;
     var now=on?(items[0].motion||''):null;
     MOTION_FX.forEach(function(pr){
@@ -62129,6 +62542,8 @@ window.JunoPptx = (function () {
        to it -- the mode writes the order, so the order is what you
        want to be watching while you point. */
     var on=!!seqArm;
+    var sqb=$('#anim-seq');   /* T469: the door lights while the mode is armed */
+    if(sqb) sqb.setAttribute('aria-pressed',on.toString());
     if(on&&typeof animPaneOpen==='function') animPaneOpen();
     if(on&&typeof animTabSet==='function') animTabSet('ord');
     if(typeof animCfgSync==='function') animCfgSync();
@@ -62873,6 +63288,46 @@ window.JunoPptx = (function () {
         t=String(t||'').replace(/\s+/g,' ').trim();
         return t.length>n?(t.slice(0,n-1)+'\u2026'):t;
       }
+      /* T465: EXITS ARE CLICKS TOO. The header counted them (an exit
+         claims a stop, T174) and the Story strip listed them, but this
+         list walked only the builds -- "5 clicks" over three rows, and
+         no way to move or remove a Send it away from here (2026-09-15
+         review). An exit on a build's click follows that build's rows;
+         one on a click of its own is a row of its own, at the end, in
+         stop order. Earlier / Later walk the slide's stops; Stays is
+         the menu's own first answer. */
+      var exits=[];
+      (s.annots||[]).forEach(function(a,i){
+        if(!a||a.hide) return;
+        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o});});
+      var stopOrders=Object.keys(steps.map).map(Number)
+        .sort(function(x,y){return x-y;});
+      function exitCommit(){
+        markDirty();refresh();
+        if(typeof animRibbonSync==='function') animRibbonSync();
+        if(typeof animPaneSync==='function') animPaneSync();
+      }
+      function exitRow(x){
+        var inf=(typeof spStepInfo==='function')?spStepInfo(s,x.a):null;
+        var no=(inf&&inf.out!=null)?inf.out:'\u2013';
+        var k=stopOrders.indexOf(x.o);
+        var isBuild=seq.some(function(st){return st.order===x.o;});
+        row(no,[[itemLabel(s,x.i)+' leaves',x.i]],'Send it away',
+          {sub:true,cur:x.i===selAnnot,acts:[
+            ['\u2191 Earlier','Leave one click earlier',
+             function(){x.a.out=stopOrders[k-1];exitCommit();},k<=0],
+            ['\u2193 Later','Leave one click later',
+             function(){
+               x.a.out=(k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s);
+               exitCommit();},
+             k>=stopOrders.length-1&&!isBuild],
+            ['\u2715 Stays','Keep it on the slide to the end',
+             function(){delete x.a.out;exitCommit();},false]]});
+        x.done=true;
+      }
+      function exitRowsFor(o){
+        exits.forEach(function(x){if(!x.done&&x.o===o) exitRow(x);});
+      }
       seq.forEach(function(st,si){
         var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
         var first=(plan.stop[b0]|0)+1;
@@ -62927,10 +63382,13 @@ window.JunoPptx = (function () {
             {si:si,ctr:true,cur:cur2,dk:'b:'+si});
         }
         stepperRows(plan.anch[b0]);
+        exitRowsFor(st.order);
       });
       /* anything that steps but carries no build of its own lands
          after every build, exactly as flipPlan lays it out */
       stepperRows(plan.tail);
+      exits.filter(function(x){return !x.done;})
+        .sort(function(x,y){return x.o-y.o;}).forEach(exitRow);
       if(total) menu.appendChild(list);
       /* T417: the thing you have selected, when it is not on the list
          yet -- with the two ways onto it, so a box with bullets is one
@@ -63073,19 +63531,36 @@ window.JunoPptx = (function () {
          about the reveal, and a flip book is CONTENT -- taking its
          figures away would destroy work this button never promised to
          touch. */
-      var n=0;
-      (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
+      /* T465: "Remove all" removes ALL of it. It took only the
+         entrances, so a Wobble kept wobbling and a Send it away still
+         cost its click -- and the sentence then blamed a flip book that
+         was not there for the click the exit was taking (2026-09-15
+         review). Entrances, exits and movements go; the flip book's
+         pages stay, as the note above says; and what is left is named
+         from what is actually left. */
+      var n=0,nx=0,nm=0;
+      (s.annots||[]).forEach(function(a){
+        if(!a) return;
+        if(a.anim){delete a.anim;n++;}
+        if(animOut(a)!=null){delete a.out;nx++;}
+        if(a.motion){delete a.motion;delete a.mo;nm++;}
+      });
       var left=slideStops(s);   /* the clicks still in the slide */
-      if(!n){
+      var all=n+nx+nm;
+      if(!all){
         toast(left
-          ?('Nothing here has an entrance effect, but the slide still '
-            +'takes '+left+' more click'+(left===1?'':'s')
+          ?('Nothing here has an entrance, exit or movement, but the '
+            +'slide still takes '+left+' more click'+(left===1?'':'s')
             +' — that is its flip book')
           :'Nothing on this slide is animated');
         return;
       }
       revealCount=0;commit(s);
-      toast('Cleared '+n+(n===1?' animation':' animations')
+      var parts=[];
+      if(n) parts.push(n+(n===1?' entrance':' entrances'));
+      if(nx) parts.push(nx+(nx===1?' exit':' exits'));
+      if(nm) parts.push(nm+(nm===1?' movement':' movements'));
+      toast('Cleared '+parts.join(', ')
         +(left?(' — '+left+' click'+(left===1?'':'s')
                 +' left, stepping the flip book')
               :' — everything is on the slide from the start'));
@@ -63231,6 +63706,15 @@ window.JunoPptx = (function () {
      guard is written that way. */
   function motionPaint(el,a){
     if(!el||!a||!a.motion) return;
+    /* T465: AN OBJECT THAT IS LEAVING LEAVES. The exit is a class rule
+       (.an-anim-out{animation:an-out ...}) and this writes the motion
+       into the INLINE animation shorthand, which outranks it -- so a
+       box with a Wobble or a Spin on it kept moving at full opacity on
+       the click it was sent away, and was dropped only on the next
+       stop, or never if that was the slide's last click (2026-09-15
+       review, driven). Leave the inline shorthand empty on that stop
+       so the exit runs; the movement is over anyway. */
+    if(el.classList.contains('an-anim-out')){el.style.animation='';return;}
     var b=moBase(a.motion); if(!b) return;
     var o=moOpt(a);
     el.style.setProperty('--mo-amp',String(o.amp));
@@ -63543,11 +64027,23 @@ window.JunoPptx = (function () {
     if(ow&&!ow.hidden){
       cfgHead(host,'when it leaves');
       var r4=cfgRow(host);
-      cfgChip(r4,bic('exit'),cfgOn('#anim-out')?'Disappears':'Stays',
-        cfgOn('#anim-out'),
-        'On a click of its own. The caret on the ribbon sends it away '
-        +'as something else arrives instead',
-        function(){cfgPress('#anim-out');animCfgSync();});
+      /* T467: the ribbon's own words (T453 renamed the verb for exactly
+         this) -- two chips, the pressed one the truth, and the click it
+         goes on beside them. It was one chip that read "Stays" until you
+         pressed it and "Disappears" after, and never said which click. */
+      var leaving=cfgOn('#anim-out');
+      cfgChip(r4,bic('none'),'Stays',!leaving,
+        'On the slide to the end',
+        function(){if(leaving){cfgPress('#anim-out');animCfgSync();}});
+      cfgChip(r4,bic('exit'),'Send it away',leaving,
+        'Leaves partway through, on a click of its own. The caret beside '
+        +'Send it away on the ribbon sends it away as something else '
+        +'arrives instead',
+        function(){if(!leaving){cfgPress('#anim-out');animCfgSync();}});
+      if(leaving){
+        var say=$('#anim-out-say');
+        if(say&&say.textContent) cfgNote(host,'Goes '+say.textContent+'.');
+      }
     }
   }
   function cfgMotion(host,a){
@@ -64071,6 +64567,10 @@ window.JunoPptx = (function () {
     }
     if(body) body.classList.remove('empty');
     if(nm) nm.textContent=mediaLabel(a);
+    /* T469: no poster frame for a sound */
+    var pl=$('#md-poster-lab'),prw=$('#md-poster-row');
+    if(pl) pl.hidden=!!a.audio;
+    if(prw) prw.hidden=!!a.audio;
     var tr=mediaTrimOf(a);
     var st=$('#md-start'),en=$('#md-end');
     if(st) st.value=tr.s?tr.s.toFixed(1):'0';
@@ -66020,16 +66520,24 @@ window.JunoPptx = (function () {
         }
         vh.remove();
         rows.forEach(function(v){
-          var when=v.t?new Date(v.t):null;
-          var lab=v.name||v.why||'version';
+          /* T465: the index's fields are `nm` (a checkpoint's name),
+             `why` (opened / saved / checkpoint) and `at` (ms). This read
+             v.name and v.t, which do not exist, so every row said
+             "checkpoint" or "opened" with no time and no name, and
+             clicking one opened History on the newest version whatever
+             you had clicked (2026-09-15 review). The History rail's own
+             helpers name a version the same way here. */
+          var lab=(typeof histLabel==='function')?histLabel(v)
+            :(v.nm||v.why||'version');
+          var kind=(v.nm&&v.why)?v.why:'';
           var r=row('',bic('history'),lab,
-            when?(when.getHours()+':'
-              +(when.getMinutes()<10?'0':'')+when.getMinutes()):'',
+            kind||((typeof histClock==='function'&&v.at)?histClock(v.at):''),
             'Open the history on this version',function(){
               if(!barDocked()) closeDeckPresentationDrawer();
-              if(typeof histSel!=='undefined') histSel=v.id||'';
-              if(typeof openHistory==='function') openHistory();
+              if(typeof openHistory==='function') openHistory(v.id||'');
             });
+          if(v.at&&typeof histClock==='function')
+            r.title=lab+' \u00b7 '+histClock(v.at)+(v.why?(' \u00b7 '+v.why):'');
           r.classList.add('deck-pres-ver');
         });
       }).catch(function(){
@@ -66313,7 +66821,7 @@ window.JunoPptx = (function () {
        fill" idiom, but stretched over an A0 sheet it is one more thing
        you did not put there. */
     s.annots=[];
-    pres={name:name,slides:[s],page:'a0p',pageBg:'#ffffff'};
+    pres={name:name,slides:[s],page:'a0p',tokens:{c:{page:'#ffffff'}}};
     source='auto';
     cur=0;activePane=-1;
     openDeck('edit');
@@ -66994,7 +67502,7 @@ window.JunoPptx = (function () {
        say what a three-level list is. */
     var heads=['','Slide','Text',' X',' Y',' Width'];
     if(isTx) heads=heads.concat(['Size','Face']);
-    heads=heads.concat(['Colour','Behind']);
+    heads=heads.concat(['Text','Fill']);   /* T469: fit, and the bar's words */
     heads.forEach(function(h){
       var c=document.createElement('div');
       c.className='dgt-h';c.textContent=h.trim();
@@ -67680,10 +68188,24 @@ window.JunoPptx = (function () {
         if(bad) off++;
         var b=document.createElement('div');
         b.className=(mine?'dg-real':'dg-other')+(bad?' dg-off':'');
-        b.style.left=(a.x||0)+'%';
-        b.style.top=(a.y||0)+'%';
-        b.style.width=Math.max(1.5,(a.w||10))+'%';
-        b.style.height=Math.max(1.5,(a.h||6))+'%';
+        /* T465: an arrow has endpoints, not a box -- drawn from a.x/a.w
+           every line sat as a 10x6 box in the slide's top-left corner
+           (2026-09-15 review). The same bounding box the outline sheet
+           draws its proxies from. */
+        var gx=a.x||0,gy=a.y||0,gw=a.w||10,gh=a.h||6;
+        if(a.k==='arrow'&&typeof arrowEnds==='function'){
+          var ae=arrowEnds(null,e.sl,a,0);
+          var axs=[ae.x1,ae.x2],ays=[ae.y1,ae.y2];
+          if(typeof arrowMids==='function')
+            arrowMids(a).forEach(function(m){axs.push(m[0]);ays.push(m[1]);});
+          gx=Math.min.apply(null,axs);gy=Math.min.apply(null,ays);
+          gw=Math.max.apply(null,axs)-gx;gh=Math.max.apply(null,ays)-gy;
+          if(!isFinite(gx)||!isFinite(gy)||!isFinite(gw)||!isFinite(gh)) return;
+        }
+        b.style.left=gx+'%';
+        b.style.top=gy+'%';
+        b.style.width=Math.max(1.5,gw)+'%';
+        b.style.height=Math.max(1.5,gh)+'%';
         b.style.borderColor=mine?'':dgKindCol(a);
         /* T384: THE WORDS, IN THE BOX. An empty amber rectangle said
            where a heading was and nothing about what it looked like
@@ -67960,7 +68482,7 @@ window.JunoPptx = (function () {
     dgSpecimen(spec,id);
     /* on the deck's actual page colour, so a specimen reads the way the
        slide will */
-    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
+    spec.style.background=deckPageBg();
     if(!d.color) spec.style.color=tokVal('@ink');
     left.appendChild(spec);
     dgLooks(left,id,ov);
@@ -68081,9 +68603,10 @@ window.JunoPptx = (function () {
       return wrap;
     }
     var cg=cur_;
-    cg.appendChild(dgCol('color','Words','#e6eef5',''));
-    cg.appendChild(dgCol('bg','Behind','#16273a','None'));
-    cg.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));
+    /* T469: the format bar's words, as the menu's editor says them */
+    cg.appendChild(dgCol('color','Text','#e6eef5',''));
+    cg.appendChild(dgCol('bg','Fill','#16273a','None'));
+    cg.appendChild(dgCol('bdc','Border','#8aa0b0','None'));
     grp('');
     var rst=document.createElement('button');
     rst.className='dbtn dg-b';rst.textContent='Reset';
@@ -68203,7 +68726,7 @@ window.JunoPptx = (function () {
     var ov=document.createElement('div');
     ov.className='deck-design';ov.id='deck-design';
     ov.innerHTML='<div class="dh-head">'
-      +'<span class="dh-t">Design of “'+esc(pres.name||'this deck')
+      +'<span class="dh-t">Style system — “'+esc(pres.name||'this deck')
       +'”</span><span class="deck-spring"></span>'
       /* T315: the screen whose job is "what is the standard" had no
          way to pick one */
@@ -68221,20 +68744,34 @@ window.JunoPptx = (function () {
          the four-across grid they were in, so their words can be
          read. */
       +'<div class="dg-sheetcol" id="dg-sheetcol"></div></div>';
+    /* T465: the page's colour rides onto the screen. It is mounted on
+       body, outside .deck where --page-bg is set, so the board fell to
+       its fallback and in Light drew the slide's white words on a white
+       board (2026-09-15 review). */
+    try{ov.style.setProperty('--page-bg',
+      getComputedStyle(deckEl).getPropertyValue('--page-bg')||deckPageBg());
+    }catch(err){}
     document.body.appendChild(ov);
     ov.querySelector('#dg-close').addEventListener('click',dgClose);
     /* T384: the door had no handler behind it. Same route the ribbon's
        own Style sets button takes; this screen closes first, because
        the picker is a dialog over the editor, not over this. */
-    ov.querySelector('#dg-sets').addEventListener('click',function(){
+    /* T465: the click that opens the next surface must not reach the
+       overlay owner's outside-click, which would pop it the same
+       instant -- the standing overlay rule, applied where it was
+       missing: Check consistency opened the check and closed it in
+       one click, so the Style system had no working door to it. */
+    ov.querySelector('#dg-sets').addEventListener('click',function(e){
+      e.stopPropagation();
       dgClose();
       var sb=$('#dsg-sets');
       if(sb) sb.click();
     });
-    ov.querySelector('#dg-check').addEventListener('click',function(){
+    ov.querySelector('#dg-check').addEventListener('click',function(e){
       /* the drift CHECK stays where it is: this surface says what the
          standard is, that pane says who is not keeping to it, and one
          doing both would be a screen answering two questions */
+      e.stopPropagation();
       dgClose();
       var b=$('#dsg-std');
       if(b) b.click();
@@ -68260,8 +68797,12 @@ window.JunoPptx = (function () {
     d.className='mini-diagram free';
     if(!s) return d;
     if((pres.slides||[]).indexOf(s)>=0) paintSlide=s;   /* T316 */
-    /* the slide's own background, so a recoloured slide reads as one */
-    if(s.bg) d.style.background=tokVal(s.bg);
+    /* the slide's own background, so a recoloured slide reads as one --
+       T467: and the DECK's, resolved the one way (pageBgOf), so a deck
+       made light reads light in the strip rather than navy against a
+       white page (2026-09-15 review) */
+    if(typeof pageBgOf==='function') d.style.background=pageBgOf(s);
+    else if(s.bg) d.style.background=tokVal(s.bg);
     var annots=s.annots||[];
     if(s.layout!=='title'&&!annots.length){
       var e=document.createElement('span');
@@ -68548,7 +69089,16 @@ window.JunoPptx = (function () {
     }
     var tx=(s.annots||[]).filter(function(a){
       return a.k==='text'&&a.text;})[0];
-    if(tx) return tx.text;
+    if(tx){
+      /* T469: not the SOURCE -- the strip read "$$ E = mc^2 $$" and
+         "# Big heading ## Sub" (2026-09-15 review) */
+      var t=String(tx.text);
+      if(tx.maths) t=t.replace(/^\s*\$\$?/,'').replace(/\$\$?\s*$/,'').trim()||'equation';
+      else if(tx.md) t=(t.split('\n').map(function(l){
+        return l.replace(/^\s*(?:#{1,6}|[-*>]|\d+[.)])\s*/,'').trim();})
+        .filter(Boolean)[0])||t;
+      return t;
+    }
     /* a slide that is one big table is named by its first heading, which
        beats calling it "empty slide" (2026-08-20) */
     var tb=(s.annots||[]).filter(function(a){return a.k==='table';})[0];
@@ -68801,7 +69351,7 @@ window.JunoPptx = (function () {
       document.addEventListener('mousemove',laserMove);
     } else if(t==='lens'){
       lensEl=document.createElement('div');
-      lensEl.className='jv-lens';
+      lensEl.className='jv-lensbox';   /* T465: not the body flag's name */
       lensEl.style.width=LENS_D+'px';lensEl.style.height=LENS_D+'px';
       lensIn=document.createElement('div');
       lensIn.className='jv-lens-in';
@@ -69290,20 +69840,30 @@ window.JunoPptx = (function () {
       el.classList.add('an-anim-'+(el.dataset.sanim||'fade'));
     });
   }
+  /* T465: a page's top MEASURED IN THE BODY'S SCROLL SPACE. offsetTop
+     is relative to the nearest positioned ancestor, which the scroll
+     body is not, so it carried the 45px bar above it: the step's "which
+     page am I on" ran one page behind after the first press and
+     ArrowDown could never get past page 2 (2026-09-15 review, driven:
+     scrollTop stuck at 768 against a page at 813). */
+  function scrollShowPageTop(body,p){
+    return p.getBoundingClientRect().top-body.getBoundingClientRect().top
+      +body.scrollTop;
+  }
   function scrollShowCount(){
     if(!scrollShowEl) return;
     var body=scrollShowEl.querySelector('.deck-scroll-body');
     var out=scrollShowEl.querySelector('.deck-scroll-n');
     if(!body||!out) return;
     var pages=scrollShowPages(),at=0,top=body.scrollTop+body.clientHeight*0.35;
-    pages.forEach(function(p,i){if(p.offsetTop<=top) at=i;});
+    pages.forEach(function(p,i){if(scrollShowPageTop(body,p)<=top) at=i;});
     out.textContent=(at+1)+' / '+pages.length;
   }
   function scrollShowStep(d){
     if(!scrollShowEl) return;
     var body=scrollShowEl.querySelector('.deck-scroll-body');
     var pages=scrollShowPages(),at=0,top=body.scrollTop+10;
-    pages.forEach(function(p,i){if(p.offsetTop<=top) at=i;});
+    pages.forEach(function(p,i){if(scrollShowPageTop(body,p)<=top) at=i;});
     var to=pages[Math.max(0,Math.min(pages.length-1,at+d))];
     if(to) to.scrollIntoView({behavior:'smooth',block:'start'});
   }
@@ -69325,6 +69885,19 @@ window.JunoPptx = (function () {
     /* it is a scrolling page now, not the print root: the id goes so a
        later print or export builds its own without deleting this one */
     root.removeAttribute('id');
+    /* T467: THE VERSION THE SHOW WOULD PLAY. outputSlides is the
+       export's list and never consults slideSkipped (deliberately, so a
+       rehearsal cut cannot trim a PDF); this is a way of PLAYING, so a
+       slide the strip marks "not shown" is not a page here either
+       (2026-09-15 review). The pages are dropped after the build so the
+       explode-a-flip-book arithmetic is untouched. */
+    if(typeof slideSkipped==='function'){
+      var pgs=$$('.print-page',root),keep=[];
+      ents.forEach(function(e,i){
+        if(slideSkipped(e.i)){if(pgs[i]) pgs[i].remove();}
+        else keep.push(e);});
+      ents=keep;
+    }
     root.classList.add('scroll-root');
     var ov=document.createElement('div');
     ov.className='deck-scroll';ov.id='deck-scroll';
@@ -69363,9 +69936,11 @@ window.JunoPptx = (function () {
       if(!scrollShowEl) return;
       if(e.key==='Escape'){e.preventDefault();e.stopPropagation();
         closeScrollShow();return;}
-      if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){
+      /* the arrows a clicker sends step a page too, as the show does */
+      if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '
+         ||e.key==='ArrowRight'){
         e.preventDefault();e.stopPropagation();scrollShowStep(1);}
-      else if(e.key==='ArrowUp'||e.key==='PageUp'){
+      else if(e.key==='ArrowUp'||e.key==='PageUp'||e.key==='ArrowLeft'){
         e.preventDefault();e.stopPropagation();scrollShowStep(-1);}
     };
     document.addEventListener('keydown',scrollShowKey,true);
@@ -70674,19 +71249,27 @@ window.JunoPptx = (function () {
     if(!back||!back.isConnected||back.hasAttribute('inert')) return;
     try{back.focus();}catch(err){}
   }
-  function openDeck(m){
+  /* T465: openDeck(m, resume) -- `resume` is the notebook picker's way
+     back: the deck was hidden for a trip to the notebook, not closed,
+     so it is the SAME editing session and the undo stack survives.
+     Every trip through the picker (including Escape and Cancel) used
+     to wipe it -- draw a frame, pick a figure, and Ctrl+Z did nothing
+     (2026-09-15 review, driven). */
+  function openDeck(m,resume){
     deckEl.hidden=false;
     if(pres&&typeof notePresentationOpen==='function')
       notePresentationOpen(pres.name);
-    histReset();   /* undo history starts fresh per editing session */
-    /* ONE ON ARRIVAL, so "how it was when I sat down" is always
-       reachable -- the same rule the notebook's own snapshots follow,
-       and deduped, so opening and closing without touching anything
-       costs nothing (T32) */
-    /* the opening snapshot waits for the stored head pointer, so a
-       reload's first entry descends from where you actually were
-       rather than founding a new root (T127) */
-    snapTake('opened',undefined,histSeed());
+    if(!resume){
+      histReset();   /* undo history starts fresh per editing session */
+      /* ONE ON ARRIVAL, so "how it was when I sat down" is always
+         reachable -- the same rule the notebook's own snapshots follow,
+         and deduped, so opening and closing without touching anything
+         costs nothing (T32) */
+      /* the opening snapshot waits for the stored head pointer, so a
+         reload's first entry descends from where you actually were
+         rather than founding a new root (T127) */
+      snapTake('opened',undefined,histSeed());
+    }
     status();
     setUIMode(m||'view');
     routeSync();
@@ -71105,8 +71688,20 @@ window.JunoPptx = (function () {
      only be made optional from a right-click menu on the strip
      ("how are slides made optional?"). */
   function homeDoorsBoot(){
-    var n=$('#hm-notes');
-    if(n) n.addEventListener('click',function(e){
+    /* T467: the same shape as Layers beside it -- press View's own
+       Notes toggle and mirror its state, so the tile lights while the
+       pane is open and a second press closes it (it pressed the
+       Present menu's row, which only ever opened) */
+    var n=$('#hm-notes'),nb=$('#notes-btn');
+    if(n&&nb){
+      n.addEventListener('click',function(e){
+        e.stopPropagation();nb.click();});
+      var mirrorN=function(){
+        n.setAttribute('aria-pressed',nb.getAttribute('aria-pressed')||'false');};
+      new MutationObserver(mirrorN)
+        .observe(nb,{attributes:true,attributeFilter:['aria-pressed']});
+      mirrorN();
+    } else if(n) n.addEventListener('click',function(e){
       e.stopPropagation();
       var row=$('#pl-notes'); if(row) row.click();
     });
@@ -71164,7 +71759,7 @@ window.JunoPptx = (function () {
              tab they land on -- the pane has had those tabs since
              T29 and nothing pointed at them */
           if(p[0]==='pr-notes'||p[0]==='pr-timing'){
-            var want=(p[0]==='pr-timing')?'deck':'slide';
+            var want=(p[0]==='pr-timing')?'time':'slide';   /* T465 */
             setTimeout(function(){
               var t=$('.np-tab[data-np="'+want+'"]');
               if(t) t.click();
@@ -71188,6 +71783,16 @@ window.JunoPptx = (function () {
       new MutationObserver(mirror)
         .observe(ob,{attributes:true,attributeFilter:['aria-pressed']});
       mirror();
+    }
+    /* T469: Build order's Layers door is the same door, and mirrors the
+       same state (it showed no pressed state while the pane was open) */
+    var al=$('#anim-layers');
+    if(al&&ob){
+      var mirrorA=function(){
+        al.setAttribute('aria-pressed',ob.getAttribute('aria-pressed')||'false');};
+      new MutationObserver(mirrorA)
+        .observe(ob,{attributes:true,attributeFilter:['aria-pressed']});
+      mirrorA();
     }
   }
   function presentTabSync(){
@@ -71313,7 +71918,13 @@ window.JunoPptx = (function () {
       function home(){
         if(strip.parentNode===frame) return;
         frame.insertBefore(strip,nav||more);
+        frame.style.width='';
         more.setAttribute('aria-expanded','false');
+        /* T465: the ladder was re-judged while the strip was away and
+           every rung came off; with the strip back the row overflowed
+           the window by 220px until something resized it (2026-09-15
+           review). Fit again, now. */
+        if(typeof fitEditRibbon==='function') fitEditRibbon();
         setTimeout(ends,0);
       }
       function build(){
@@ -71331,12 +71942,15 @@ window.JunoPptx = (function () {
           .appendChild(panel);
         /* a tile picked in the window closes it, after its own
            handler has run */
+        /* CAPTURE (T465): a text tile's own handler stops propagation,
+           so a bubbling listener never heard the pick and the window
+           stayed open over the armed tool */
         panel.addEventListener('click',function(e){
           var t=e.target&&e.target.closest?
             e.target.closest('.fx-tile,.dbtn.lay'):null;
           if(t&&panel.contains(t))
             setTimeout(function(){overlayHide(panel);},0);
-        });
+        },true);
         new MutationObserver(function(){
           if(panel.hidden) home();
         }).observe(panel,{attributes:true,attributeFilter:['hidden']});
@@ -71345,6 +71959,10 @@ window.JunoPptx = (function () {
         e.stopPropagation();
         if(!panel) build();
         if(!panel.hidden){overlayHide(panel);return;}
+        /* T465: the frame keeps the strip's width while the strip is in
+           the window, so the bar does not reflow under the pop-up */
+        var fw=frame.getBoundingClientRect().width;
+        if(fw) frame.style.width=Math.round(fw)+'px';
         panel.appendChild(strip);
         overlayShow(more,panel);
         var fr=frame.getBoundingClientRect(),
@@ -71732,11 +72350,6 @@ window.JunoPptx = (function () {
       /* Z spotlights whatever the pointer is over. Alt+click does the
          same with the mouse alone; this is the version you can use from a
          lectern with a clicker in one hand (2026-08-20). */
-      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='z'||e.key==='Z')
-              &&mode==='view'){
-        e.preventDefault();
-        if(spotEl) closeSpot(); else if(spotHover) spotlight(spotHover);
-      }
       /* R rulers, G grid — plain keys, so Ctrl+G still groups. H and B
          join them for the guides you drew yourself: H shows or hides
          them (Photoshop's Ctrl+H, without the Ctrl this row does not
@@ -71776,6 +72389,16 @@ window.JunoPptx = (function () {
          and Escape puts them down before it does anything else */
       if(typeof talkToolKey==='function'&&talkToolKey(e)){
         e.preventDefault();return;}
+      /* Z spotlights whatever the pointer is over. Alt+click does the
+         same with the mouse alone; this is the version you can use from
+         a lectern with a clicker in one hand (2026-08-20). T465: it sat
+         inside the EDIT-mode block guarded by mode==='view', so it could
+         never fire -- the tooltip advertised a dead key. */
+      if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='z'||e.key==='Z')){
+        e.preventDefault();
+        if(spotEl) closeSpot(); else if(spotHover) spotlight(spotHover);
+        return;
+      }
       /* FIND A SLIDE, MID-TALK. "/" is the type-to-search key everywhere
          else on a keyboard, and the map it opens is the one T26 already
          built -- so this is a door, not a second piece of navigation
@@ -72119,7 +72742,7 @@ window.JunoPptx = (function () {
   function toggleSlideNums(){
     if(pres.showNums){delete pres.showNums;} else {pres.showNums=1;}
     markDirty();refresh();
-    toast('Slide numbers '+(pres.showNums?'on':'off'));
+    toast('Page numbers '+(pres.showNums?'on':'off'));
   }
   function updateCropLabel(){
     var b=$('#mi-crop');
@@ -73779,7 +74402,7 @@ window.JunoPptx = (function () {
     }
     /* the page's own background rides into the export — a white poster
        prints white, not the app's navy (2026-08-04) */
-    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
+    var bg=deckPageBg();
     root.classList.toggle('page-light',pageIsLight(bg));
     var bst=document.createElement('style');
     /* PRINT THE INK. Chrome and Edge default the print dialog's
@@ -74696,7 +75319,7 @@ window.JunoPptx = (function () {
     var pg=pageOf(),
       note={skipped:0,cropped:0,maths:0,tied:0,exits:0,
         orig:orig||{}};
-    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
+    var bg=deckPageBg();
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     /* a slide-jump names a DECK slide; the .pptx page it lands on is
        the first output page that slide produced (flip books explode) */
@@ -74808,8 +75431,11 @@ window.JunoPptx = (function () {
          export things (2026-08-20, user). */
       menuHead(menu,'Every slide');
       var r0=menuRow(menu,'bg-sw');
-      bgChips(r0,(pres&&pres.pageBg)||'',function(v){
-        pres.pageBg=v;markDirty();applyPageBg();applyZoom();renderSlide();
+      /* T465: the same switch the Deck colours panel's Page background
+         row moves -- one store, so the two doors always agree */
+      bgChips(r0,(tokens().c.page)||'',function(v){
+        setToken('c','page',v);
+        applyPageBg();applyZoom();renderSlide();
         build();
         toast('Background for every slide set');
       },false);
@@ -74829,8 +75455,8 @@ window.JunoPptx = (function () {
         +' slide'+(over.length===1?'':'s')+' set individually';
       push.addEventListener('click',function(e){
         e.stopPropagation();
-        var use=s2.bg||pres.pageBg||'';
-        if(use) pres.pageBg=use;
+        var use=s2.bg||tokens().c.page||'';
+        if(use) setToken('c','page',use);
         (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
         markDirty();applyPageBg();applyZoom();renderSlide();build();
         toast('Every slide now uses the one background');
