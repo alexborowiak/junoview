@@ -367,8 +367,9 @@ def test_the_deck_background_can_really_be_pushed_to_every_slide(out):
     nothing -- you set the background for every slide and watched the one
     in front of you not change.
     """
-    assert "id='bg-pushall'" in out or "aa-" in out
-    assert "Use this on every slide (clears per-slide ones)" in out
+    # T479: the verb says what it does, on the shelf
+    assert 'id="bg-push"' in out
+    assert "Make every slide match this one" in out
     assert "(pres.slides||[]).forEach(function(x){if(x) delete x.bg;});" in out
 
 

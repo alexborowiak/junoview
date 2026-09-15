@@ -1546,6 +1546,16 @@ body.slide-editing .apptop{display:none;}
 .rbn-file{order:1;}
 .rbn-slide{order:0;}      /* T215: the page itself first on Design */
 .rbn-pagesize{order:0;}   /* T464: its size beside it, then the layouts */
+/* T479: the Background block -- two columns of two tracks each and the
+   deck-wide verb, on the shelf or in a group */
+.bg-block{display:flex;align-items:center;gap:12px;}
+.bg-col{display:flex;flex-direction:column;gap:4px;}
+.bg-cell{height:var(--rbn-track);align-items:center;}
+.bg-cell .cell-lab{min-width:72px;}
+.bg-run{display:flex;align-items:center;gap:3px;}
+.bg-run .bg-chip{width:20px;height:20px;}
+.bg-run .bg-w,.bg-run .bg-auto{font-size:10.5px;padding:2px 7px;}
+.bg-push{white-space:nowrap;}
 .rbn-view{order:3;}
 /* Design reads Slide, Page furniture, Type -- the markup's order.
    Without a rung Page furniture sat at 0 and came FIRST (T178). */

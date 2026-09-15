@@ -383,7 +383,7 @@ def test_slides_have_their_own_background_and_border(out):
     browser that slide 2 keeps the default while slide 1 is cream, both
     ways across a navigation.
     """
-    assert 'id="bg-btn"' in out and 'id="bg-menu"' in out
+    assert 'id="bg-run-this"' in out and 'id="bg-run-every"' in out   # T479
     # slide > master > deck since T115: the slide's colour still wins
     # T455: the last fallback is the deck's own Page background token,
     # not a literal -- that hex was why changing it in Deck colours did

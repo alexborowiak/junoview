@@ -879,8 +879,13 @@
     ['#anim-clear','#anim-stagger','#anim-together','#anim-strip',
      '#anim-seq','#anim-layers'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
+    /* T479: the group is Background now, on a slide or a page; the
+       folded door takes the label's word, so this is the door's too */
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
-    if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
+    if(slideLab) slideLab.textContent='Background';
+    var slideDoor=deckEl.querySelector('.rbn-slide .rbn-foldbtn>span:not(.rbn-foldval)');
+    if(slideDoor&&/^(Slide|Page)/.test(slideDoor.textContent))
+      slideDoor.textContent='Background ▾';
     /* T236: numbers are Design's button now, and a poster has no
        slide numbers to switch on */
     var nums=$('#dc-nums');

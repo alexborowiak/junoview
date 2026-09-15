@@ -129,8 +129,8 @@ def test_a_poster_is_not_told_it_has_slides(out):
     assert ".deck.poster-page .dc-film{display:none!important;}" in out
     assert ".deck.poster-page .deck-count{display:none!important;}" in out
     assert ".deck.poster-page .deck-arrow{display:none!important;}" in out
-    # the group is called Page, and only a deck is told about slides
-    assert "slideLab.textContent=pg.poster?'Page':'Slide';" in out
+    # T479: the group is Background on a slide and on a page alike
+    assert "if(slideLab) slideLab.textContent='Background';" in out
     assert "if(nums) nums.hidden=!!pg.poster;" in out
     # ...and there is no auto-build to gain pages through since T236:
     # it replaced the whole deck to lay the notebook out again

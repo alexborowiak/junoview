@@ -274,3 +274,25 @@ def test_a_master_is_chosen_from_swatches_and_pressed_runs(out):
     assert "          none.textContent='No clone sets yet " in out
     assert "          lab3.textContent='where it sits';" in out
     assert "Click to cycle through the deck" not in out
+
+
+def test_background_is_a_chooser_on_the_shelf(out):
+    """T479 (2026-09-15 review). Background was the one Design chooser
+    still in a pop-up over the slide, with no readout and 22 unlabelled
+    swatches. A compact door wearing this slide's answer; the rows on the
+    shelf; every swatch named."""
+    assert '<span class="rbn-grp rbn-slide rbn-compact" data-tab="design"' in out
+    assert 'id="bg-run-this"' in out and 'id="bg-run-every"' in out
+    assert 'id="bg-run-border"' in out and 'id="bg-run-bcol"' in out
+    assert "  function bgSync(){" in out
+    assert ("      if(mode==='edit'&&typeof bgSync==='function') bgSync();"
+            "   /* T479 */") in out
+    # the door wears the answer the feature says, and the observer hears it
+    assert ("    if(g.hasAttribute('data-say')) "
+            "txt=g.getAttribute('data-say')||'';") in out
+    assert "attributeFilter:['aria-pressed','disabled','data-say']" in out
+    assert "        g.setAttribute('data-say',name+(bw?' \\u00b7 border':''));" in out
+    # the border's colours say their names; the verb says what it does
+    assert "  var BG_BORDER_COLS=[['#39a9c0','Teal'],['#ff6b57','Coral']," in out
+    assert "Make every slide match this one" in out
+    assert "wireMenuToggle('bg-drop','bg-btn','bg-menu')" not in out

@@ -708,6 +708,7 @@
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
       if(mode==='edit'&&typeof cmpDoorSync==='function') cmpDoorSync();   /* T474 */
+      if(mode==='edit'&&typeof bgSync==='function') bgSync();   /* T479 */
       /* the annot layer exists only now, and the rulers shade the
          selection's extent from it */
       if(mode==='edit') syncGuides();

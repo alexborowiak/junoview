@@ -29,7 +29,7 @@ def test_page_background_and_light_pages(out):
     # the Background dropdown beside the per-slide override, so the two
     # can be seen against each other.
     assert 'id="mi-pagebg"' not in out
-    assert "menuHead(menu,'Every slide');" in out
+    assert 'id="bg-run-every"' in out   # T479: a run on the shelf now
     assert "var PAGE_BGS=[" in out
     assert "function bgChips(host,current,onPick,withAuto){" in out
     # a gradient has no single colour to measure, so each entry declares

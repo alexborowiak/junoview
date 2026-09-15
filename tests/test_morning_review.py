@@ -41,7 +41,7 @@ def test_design_and_animation_are_ordered_as_asked(out):
     assert "hm-lay-tidy" not in lay
     assert "dsg-tidy" in lay
     assert ".rbn-spacing{order:2;}" in out
-    assert "dsg-tidy" not in _row(html, "Slide")
+    assert "dsg-tidy" not in _row(html, "Background")   # T479
 
 
 def test_the_words_the_review_asked_for(out):

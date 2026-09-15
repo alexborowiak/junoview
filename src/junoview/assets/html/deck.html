@@ -750,29 +750,41 @@
           <!-- not rbn-fixed any more (T204): with Layout in front of it,
                a group that never folds would push Layout into a fold
                on a laptop, and Layout is what this tab is for now -->
-          <span class="rbn-grp rbn-slide" data-tab="design" data-fold-ic="pagep">
+          <!-- T479: BACKGROUND IS A CHOOSER (2026-09-15 review: "Background
+               is the one Design chooser still in a pop-up over the slide:
+               no readout on the tile, 22 unlabelled swatches"). A compact
+               door that wears this slide's answer (Auto, or the colour's
+               name, and the border), opening the two swatch rows, the
+               border and the one deck-wide verb IN THE BAR, on the shelf,
+               the way Page size does (T464). Every swatch says its name
+               under the pointer; the border's colours say theirs. The
+               block keeps the id the ribbon layouts move (bg-drop). -->
+          <span class="rbn-grp rbn-slide rbn-compact" data-tab="design"
+            data-fold-ic="fill">
             <span class="rbn-row">
-              <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
-                   many of the options there are dropdowns with a
-                   million options that should just already be
-                   visible"). Eight presets, each drawn at its own
-                   proportion, the one in use lit; the strip scrolls
-                   and a tile cut at the edge is the affordance. Built
-                   from PAGE_PRESETS, the same table the menu was. -->
-              <!-- T221: a tall tile, like the page sizes beside it. It
-                   was a half-height button alone in its column with an
-                   empty cell under it (2026-09-03, user: "why is the
-                   background button so weird. Gross"). -->
-              <span class="sh-drop rbn-tall" id="bg-drop">
-                <button class="fx-tile big-tile" id="bg-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Background colour and border, for this slide or
- for every slide"
-                  ><i data-ic="fill"></i><span>Background</span></button>
-                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
+              <span class="bg-block" id="bg-drop">
+                <span class="bg-col">
+                  <span class="rbn-cell bg-cell"><span class="cell-lab">This slide</span>
+                    <span class="bg-run" id="bg-run-this" role="group"
+                      aria-label="This slide's background"></span></span>
+                  <span class="rbn-cell bg-cell"><span class="cell-lab">Every slide</span>
+                    <span class="bg-run" id="bg-run-every" role="group"
+                      aria-label="Every slide's background"></span></span>
+                </span>
+                <span class="bg-col">
+                  <span class="rbn-cell bg-cell"><span class="cell-lab">Border</span>
+                    <span class="bg-run" id="bg-run-border" role="group"
+                      aria-label="A border round this slide"></span></span>
+                  <span class="rbn-cell bg-cell" id="bg-bcol-cell" hidden><span class="cell-lab">Colour</span>
+                    <span class="bg-run" id="bg-run-bcol" role="group"
+                      aria-label="The border's colour"></span></span>
+                </span>
+                <button class="dbtn rbn-sm bg-push" id="bg-push" type="button"
+                  title="Slides with a background of their own keep showing it
+ until this clears them"><i data-ic="forward"></i> Make every slide match this one</button>
               </span>
             </span>
-            <span class="rbn-lab">Slide</span>
+            <span class="rbn-lab">Background</span>
           </span>
           <!-- T464: PAGE SIZE IS A CHOOSER, so it is a compact door with
                the size in use on it and every size on the shelf when

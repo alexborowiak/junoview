@@ -43,7 +43,7 @@ def test_the_presentation_style_system_is_on_home(out):
     assert ("var ids=styleOrder().filter(function(id){return "
             "worn[id]||id===openEdit;});") in out
     # Design keeps the four groups that are about the page itself
-    for lab in ("Slide", "Layout", "Apply to other slides", "Page furniture"):
+    for lab in ("Background", "Layout", "Apply to other slides", "Page furniture"):
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab
 
 
@@ -53,8 +53,11 @@ def test_design_stops_looking_hectic(out):
     was drawn the width of whatever wide run shared its column, which is
     how Tidy page ended up the size of the Spacing run."""
     html = assets.deck_html()
-    assert '<span class="sh-drop rbn-tall" id="bg-drop">' in html
-    assert '<button class="fx-tile big-tile" id="bg-btn"' in html
+    # T479: Background is a compact chooser -- the block keeps the id the
+    # ribbon layouts move, the group wears the answer on its door
+    assert '<span class="bg-block" id="bg-drop">' in html
+    assert ('<span class="rbn-grp rbn-slide rbn-compact" data-tab="design"'
+            ) in html
     # T463: the tile in a tall wrapper is sized by the one standing-tile
     # rule, not a copy per id
     assert (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"

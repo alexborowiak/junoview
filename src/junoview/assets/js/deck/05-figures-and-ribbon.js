@@ -2077,6 +2077,9 @@
       if(t) parts.push(t);
     });
     var txt=parts.join(' \u00b7 ');
+    /* T479: a group may say its own answer (data-say) when the pressed
+       controls are swatches with no words -- Background's */
+    if(g.hasAttribute('data-say')) txt=g.getAttribute('data-say')||'';
     val.textContent=txt;
     val.hidden=!txt;
     var btn=val.parentNode;
@@ -2114,7 +2117,7 @@
     var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
     new MutationObserver(function(){rbnFoldReadouts();})
       .observe(bar,{subtree:true,attributes:true,
-        attributeFilter:['aria-pressed','disabled']});
+        attributeFilter:['aria-pressed','disabled','data-say']});
   }
   function rbnUnfoldGroup(g){
     var wrap=null;

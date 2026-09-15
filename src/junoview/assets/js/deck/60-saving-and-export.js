@@ -2436,23 +2436,24 @@
     return {blob:out.blob,slides:out.slides,cropped:note.cropped,
       skipped:note.skipped+out.skipped};
   }
-  /* ---- Background menu: THIS slide's colour and border. The whole
-     presentation's background stays under File, where it always was. */
-  (function(){
-    var wired=wireMenuToggle('bg-drop','bg-btn','bg-menu');
-    if(!wired) return;
-    var menu=wired.menu;
+  /* ---- T479: BACKGROUND, ON THE SHELF. This slide's colour and
+     border, every slide's colour, and the one deck-wide verb -- built
+     into the Design tab's Background block on every slide change
+     (bgSync from renderSlide), so the runs and the door's readout are
+     always this slide's. It was a pop-up over the slide (bg-menu). */
+  var BG_BORDER_COLS=[['#39a9c0','Teal'],['#ff6b57','Coral'],
+    ['#f0a848','Amber'],['#46a892','Jade'],['#16202b','Ink'],
+    ['#ffffff','White']];
+  function bgSync(){
+    var r1=$('#bg-run-this'); if(!r1) return;
     var BWS=[[0,'Off'],[2,'Thin'],[4,'Medium'],[9,'Thick']];
     function apply(fn){
       var s2=pres.slides[cur]; if(!s2) return;
       fn(s2);markDirty();applyPageBg();applyZoom();renderSlide();
-      build();
     }
     function build(){
       var s2=pres.slides[cur]||{};
-      menu.innerHTML='';
-      menuHead(menu,'This slide');
-      var r1=menuRow(menu,'bg-sw');
+      r1.innerHTML='';
       bgChips(r1,s2.bg||'',function(v){
         apply(function(x){if(v) x.bg=v; else delete x.bg;});
       },true);
@@ -2460,14 +2461,12 @@
          override, so you can see the two against each other. It used to
          be a row in the File menu, which is where you open, save and
          export things (2026-08-20, user). */
-      menuHead(menu,'Every slide');
-      var r0=menuRow(menu,'bg-sw');
+      var r0=$('#bg-run-every'); r0.innerHTML='';
       /* T465: the same switch the Deck colours panel's Page background
          row moves -- one store, so the two doors always agree */
       bgChips(r0,(tokens().c.page)||'',function(v){
         setToken('c','page',v);
         applyPageBg();applyZoom();renderSlide();
-        build();
         toast('Background for every slide set');
       },false);
       /* the deck default only shows through on slides that have no
@@ -2475,26 +2474,15 @@
          above silently did nothing at all — you set the background for
          every slide and watched the one in front of you not change
          (2026-08-22). This is the verb that clears them. */
-      var push=document.createElement('button');
-      push.className='dbtn vw-opt';
-      push.textContent='Use this on every slide (clears per-slide ones)';
-      push.title='Slides with a background of their own keep showing it '
-        +'until this clears them';
+      var push=$('#bg-push');
       var over=(pres.slides||[]).filter(function(x){return x&&x.bg;});
       push.disabled=!over.length;
-      if(over.length) push.title='Clears the background '+over.length
-        +' slide'+(over.length===1?'':'s')+' set individually';
-      push.addEventListener('click',function(e){
-        e.stopPropagation();
-        var use=s2.bg||tokens().c.page||'';
-        if(use) setToken('c','page',use);
-        (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
-        markDirty();applyPageBg();applyZoom();renderSlide();build();
-        toast('Every slide now uses the one background');
-      });
-      menu.appendChild(push);
-      menuHead(menu,'Border');
-      var r2=menuRow(menu,'bg-bw');
+      push.title=over.length
+        ?('Give every slide this slide\u2019s background \u2014 the '
+          +over.length+' slide'+(over.length===1?'':'s')+' set '
+          +'individually follow it')
+        :'Every slide already shares the one background';
+      var r2=$('#bg-run-border'); r2.innerHTML='';
       BWS.forEach(function(p){
         var b=document.createElement('button');
         b.className='sh-opt bg-w';b.textContent=p[1];
@@ -2507,12 +2495,14 @@
           });});
         r2.appendChild(b);
       });
+      var bc=$('#bg-bcol-cell'),r3=$('#bg-run-bcol');
+      bc.hidden=!s2.border;
+      r3.innerHTML='';
       if(s2.border){
-        var r3=menuRow(menu,'bg-sw');
-        ['#39a9c0','#ff6b57','#f0a848','#46a892','#16202b','#ffffff']
-          .forEach(function(c){
+        BG_BORDER_COLS.forEach(function(pr){
+          var c=pr[0];
           var b=document.createElement('button');
-          b.className='sh-opt bg-chip';b.title='Border colour';
+          b.className='sh-opt bg-chip';b.title=pr[1];   /* T479: its name */
           b.style.background=c;
           b.setAttribute('aria-pressed',(s2.border.c===c).toString());
           b.addEventListener('click',function(e){e.stopPropagation();
@@ -2520,8 +2510,29 @@
           r3.appendChild(b);
         });
       }
+      /* the door wears this slide's answer */
+      var g=r1.closest('.rbn-grp')||$('.rbn-grp.rbn-slide');
+      if(g){
+        var name='Auto';
+        PAGE_BGS.forEach(function(q){if(q[0]===s2.bg) name=q[1];});
+        if(s2.bg&&name==='Auto') name='Custom';
+        var bw=(s2.border&&s2.border.w)||0;
+        g.setAttribute('data-say',name+(bw?' \u00b7 border':''));
+      }
     }
-    wired.btn.addEventListener('click',function(){build();});
+    build();
+  }
+  (function(){
+    var push=$('#bg-push');
+    if(push) push.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s2=pres.slides[cur]||{};
+      var use=s2.bg||tokens().c.page||'';
+      if(use) setToken('c','page',use);
+      (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
+      markDirty();applyPageBg();applyZoom();renderSlide();
+      toast('Every slide now uses the one background');
+    });
   })();
   window.SemDeckPptx=exportDeckPptx;   /* test hook */
   menuAction('#mi-pptx',function(){exportDeckPptx();});

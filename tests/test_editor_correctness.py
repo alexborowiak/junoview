@@ -784,8 +784,8 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     SET this page belongs to, which is the same subject as Layouts and Page
     size.
     """
-    slide = out.split('class="rbn-grp rbn-slide"')[1].split(
-        ">Slide</span>")[0]
+    slide = out.split('class="rbn-grp rbn-slide rbn-compact"')[1].split(
+        ">Background</span>")[0]   # T479
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]
     # ...and T221 sent the strip's toggle back to View at the user's
@@ -1346,8 +1346,9 @@ def test_page_background_left_the_file_menu(out):
     other. Measured: 22 chips in that one menu, none in File.
     """
     assert 'id="mi-pagebg"' not in out
-    assert "menuHead(menu,'Every slide');" in out
-    assert "menuHead(menu,'This slide');" in out
+    # T479: the two rows sit on the shelf, one over the other
+    assert 'id="bg-run-every"' in out
+    assert 'id="bg-run-this"' in out
 
 
 def test_the_save_destination_says_where_not_which_file(out):

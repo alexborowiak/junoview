@@ -29,7 +29,7 @@ def test_the_three_bad_pairs_are_paired_now():
     html = assets.deck_html()
     # (T215 moved Tidy page into Layout, paired with Spacing, and put the
     # page itself first on Design)
-    slide = _ids(_row(html, "Slide"))
+    slide = _ids(_row(html, "Background"))   # T479: the group's word
     assert "bg-drop" in slide
     # T464: the page size is a compact chooser in a group of its own,
     # right after Slide, so the door can wear the size in use

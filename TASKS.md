@@ -9149,3 +9149,22 @@ any reading. The rest are T466 onwards.
   the corner is five pressed options in one run, shown once a set is
   chosen. Driven at 1500: a swatch presses and un-presses Auto, and
   "Wear it — this slide" paints the page.
+- [x] **T479 — Background is a chooser.** (2026-09-15 review: "Background
+  is the one Design chooser still in a pop-up over the slide: no
+  readout on the tile, 22 unlabelled swatches, and 'Use this on every
+  slide (clears per-slide ones)'".) The Slide group is Background, a
+  compact door that wears this slide's answer ("Background ▾ Plum",
+  "Auto · border") and opens its rows on the shelf the way Page size
+  does (T464): This slide (Auto and the eleven named swatches), Every
+  slide (the same eleven, the Deck colours' page token), Border (Off /
+  Thin / Medium / Thick, then its six named colours once one is on)
+  and one verb, "Make every slide match this one", greyed with the
+  reason when every slide already shares one. The rows are rebuilt on
+  every slide change (bgSync from renderSlide), so they are always
+  this slide's; the door's words come from the feature itself
+  (`data-say` on the group, read by rbnFoldReadout and watched by its
+  observer) because pressed swatches have no words to read. The block
+  keeps the id the ribbon layouts move (bg-drop). Driven at 1500: the
+  shelf's block is 838px in a 1335px bar, a swatch presses and the
+  page takes it, a border shows its colours, the verb clears the
+  per-slide ones.
