@@ -6538,7 +6538,12 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
   border-color:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
 .rbn-play{order:1;}
-.rbn-talk{order:2;}
+.rbn-version{order:2;}    /* T477: which version, between Play and the talk */
+.rbn-talk{order:3;}
+/* a deck with no versions has one tile and no strip to speak of: the
+   frame is as wide as that tile */
+.strip-frame>#pr-version-strip.trans-strip{width:max-content;
+  max-width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
 
 /* ---- T218: the folded door is a tile; the delay's cell --------------------- */
 .rbn-grp.rbn-folded>.rbn-foldwrap{align-items:center;}

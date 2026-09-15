@@ -9124,3 +9124,17 @@ any reading. The rest are T466 onwards.
   beside the pace chip that drives the same runLate the show's bar
   does and wears the state ("Running late: on", pressed). Driven at
   1500: the door and the key both reach window.open.
+- [x] **T477 — Which version, on the Present tab.** (2026-09-15 review:
+  "'Which version' to play is only in the Present drop-down; the
+  Present tab — built to hold 'all those options as buttons' — has no
+  version chooser and shows no current choice".) A Version group
+  between Play and During the talk: a compact chooser with one tile per
+  version of this deck (Every slide, then each cut), the chosen one lit
+  and worn on the door ("Version ▾ Short"), and New version… beside it
+  through the editor's own question (T475). The tiles are built from
+  the same list the Play menu's rows come from, and one published sync
+  (`cutsSync`) redraws both, from renderFilm, from a rename and from
+  either door — so the two cannot disagree. One trap on the way: the
+  Play menu is a sub-IIFE that runs at script evaluation, so the
+  published stub had to be declared before it, or the later `var`
+  overwrote the assignment (driven: the strip never followed).

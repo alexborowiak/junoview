@@ -248,3 +248,19 @@ def test_presenter_view_from_inside_the_show_and_late_from_the_presenter(out):
     assert "+'<button class=\"jvp-b\" id=\"jvp-late\" aria-pressed=\"false\">'" in out
     assert "    else if(msg.do==='late'){   /* T476 */" in out
     assert "      lb2.textContent=lateOn?'Running late: on':'Running late';" in out
+
+
+def test_which_version_is_a_chooser_on_the_present_tab(out):
+    """T477 (2026-09-15 review). The version to play was only in the Play
+    menu; the Present tab has a compact chooser now, one tile per
+    version, built from the same list, and one sync redraws both."""
+    assert 'id="pr-version-strip"' in out and 'id="pr-newversion"' in out
+    assert ".rbn-version{order:2;}" in out
+    assert "    function versionStripSync(){" in out
+    assert "    cutsSync=function(){syncCuts();versionStripSync();};" in out
+    # the stub is declared BEFORE the menu's sub-IIFE assigns it
+    assert out.index("  var cutsSync=function(){};") < out.index(
+        "    cutsSync=function(){syncCuts();versionStripSync();};")
+    # renameCut and renderFilm redraw both doors
+    assert "    cutsSync();   /* T477: the menu and the tab's strip */" in out
+    assert "    if(typeof cutsSync==='function') cutsSync();" in out

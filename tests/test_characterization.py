@@ -1986,8 +1986,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # in place of thirty-six window.prompt() calls.
 # T476 (2026-09-15): Presenter view in the Talk panel and on N; Running
 # late in the presenter window.
-EXPECTED_MD5 = "4694058b0a103f66f391bc8e4fe6b991"
-EXPECTED_BYTES = 4411969
+# T477 (2026-09-15): the Version chooser on the Present tab.
+EXPECTED_MD5 = "1604b9c7185fd379587043ad91ed3058"
+EXPECTED_BYTES = 4416373
 
 
 def _render_example() -> str:

@@ -491,6 +491,9 @@
        renderCreate, which the strip's own click does not reach
        (driven: the star stayed in the main's state on an alternative). */
     if(typeof syncHomeDoors==='function') syncHomeDoors();
+    /* T477: the Present tab's version strip follows the deck (a new
+       deck, a cut chosen, renamed or deleted all come through here) */
+    if(typeof cutsSync==='function') cutsSync();
   }
   /* T412: the current row, on screen -- and only when it is not. A row
      you can already see is left exactly where it is; one that is off
@@ -1480,6 +1483,12 @@
     inp.focus();inp.select();
   });
   var presentFrom='create';
+  /* T477: one sync for the Play menu's version rows and the Present
+     tab's strip; published because renameCut in another part and
+     renderFilm need it. Declared BEFORE the menu's sub-IIFE below,
+     which assigns it at script evaluation -- a `var` stub after it
+     would overwrite the assignment (driven: the strip never followed). */
+  var cutsSync=function(){};
   /* ---- the Present menu ------------------------------------------------
      Play from here, play from the start, or open the presenter view first
      and then play. Presenter view deliberately does NOT start playback:
@@ -1578,6 +1587,50 @@
       add(sep);
     }
     wrap.addEventListener('click',syncCuts);
+    /* T477: THE STRIP ON THE PRESENT TAB, from the same list. One
+       published sync redraws both, so a rename from the menu, a New
+       version… from the tab, or a cut chosen anywhere lands on both. */
+    function versionStripSync(){
+      var strip=$('#pr-version-strip'); if(!strip) return;
+      var list=cutList(),selected=activeCut();
+      /* rebuilt only when the answer changed: renderFilm calls this on
+         every slide change and the tiles are a chooser's, not a film's */
+      var sig=JSON.stringify(list)+'|'+selected;
+      if(strip.getAttribute('data-sig')===sig) return;
+      strip.setAttribute('data-sig',sig);
+      strip.innerHTML='';
+      function tile(id,label,tip){
+        var b=document.createElement('button');
+        b.type='button';b.className='fx-tile';
+        b.innerHTML=bic(id?'versions':'present')+'<span>'+esc(label)+'</span>';
+        b.title=tip;
+        b.setAttribute('aria-pressed',(selected===id).toString());
+        b.addEventListener('click',function(e){
+          e.stopPropagation();setCut(id);cutsSync();});
+        strip.appendChild(b);
+      }
+      tile('','Every slide','The whole deck, which is what a deck with '
+        +'no versions always shows');
+      list.forEach(function(c){
+        tile(c.id,c.name,'Only the slides that name this version. '
+          +'Rename or delete it from the Present menu');
+      });
+    }
+    cutsSync=function(){syncCuts();versionStripSync();};
+    var nvb=$('#pr-newversion');
+    if(nvb) nvb.addEventListener('click',function(e){
+      e.stopPropagation();
+      askText({title:'A new version of this deck',label:'Call it',
+        value:'20-min',ok:'Make it',note:'Then right-click a slide to '
+          +'put it in'},function(nm){
+        if(nm==null) return;
+        nm=nm.trim();if(!nm) return;
+        var id=newCut(nm);if(!id) return;
+        toast('\u201c'+nm+'\u201d created \u2014 right-click a slide to put it in');
+        setCut(id);cutsSync();
+      });
+    });
+    versionStripSync();
     mi('#pl-here',function(){$('#dc-play').click();});
     mi('#pl-start',function(){cur=0;refresh();$('#dc-play').click();});
     mi('#pl-presenter',openPresenter);

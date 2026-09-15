@@ -787,7 +787,7 @@
     d.name=v;
     markDirty();renderFilm();presenterSync&&presenterSync();
     toast('Version renamed to “'+v+'”');
-    if(typeof syncCuts==='function') syncCuts();
+    cutsSync();   /* T477: the menu and the tab's strip */
     });
     return false;
   }

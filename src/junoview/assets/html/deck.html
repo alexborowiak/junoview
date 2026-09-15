@@ -1760,6 +1760,29 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Play</span>
           </span>
+          <!-- T477: WHICH VERSION, ON THE TAB (2026-09-15 review: "'Which
+               version' to play is only in the Present drop-down; the
+               Present tab -- built to hold 'all those options as
+               buttons' -- has no version chooser and shows no current
+               choice"). A compact chooser: one tile per version of this
+               deck (Every slide, then each cut) with the chosen one lit
+               and worn on the door, and New version… beside it. Built
+               by versionStripSync from the same list the Play menu's
+               rows come from, so the two cannot disagree. -->
+          <span class="rbn-grp rbn-version rbn-compact" data-tab="present"
+            data-fold-ic="versions">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="pr-version">
+                <span class="fx-strip trans-strip" id="pr-version-strip"
+                  role="group" aria-label="Which version to play"></span>
+              </span>
+              <button class="fx-tile big-tile rbn-tall" id="pr-newversion"
+                title="Name a shorter cut of this same deck &mdash; no second
+ file, no diverging copies. Then right-click a slide to put it in"
+                ><i data-ic="plus"></i><span>New version&#8230;</span></button>
+            </span>
+            <span class="rbn-lab">Version</span>
+          </span>
           <span class="rbn-grp rbn-talk" data-tab="present" data-fold-ic="theme">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="pr-talk"
