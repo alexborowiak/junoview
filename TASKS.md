@@ -9403,3 +9403,24 @@ any reading. The rest are T466 onwards.
   nothing, banded by size, after the rows. Driven: Serif, red and
   no-fill written from the table and painted on the canvas; the odd
   note under Heading 2 and its Match putting the box back.
+- [x] **T491 — The animation model, after the third review pass.**
+  Eight findings, driven. Every not-yet-arrived object flashed at full
+  opacity on EVERY click of the show and faded out over 350 ms (T472's
+  transition ran on an item the reveal pass hid a moment after it was
+  built) — a hidden item never transitions. Opening the Animation Story
+  on a slide with a Zoom in threw the editor's stage 100,000 px off
+  screen and the strip re-rendered forever (a thumbnail zoomed the
+  global stage; the observer watched the stage's own style) — a
+  thumbnail is a still, the strip watches children and classes, and
+  leaving the editor closes it. A slide whose only animation was a
+  focus ate its click and showed nothing — a focus is enough for the
+  reveal pass. nextAnimOrder skipped objects with no entrance, so two
+  Send-it-aways shared click 1 and a later entrance landed on a
+  focus's click — every exit and focus claims its click, a focus before
+  its entrance is none, and giving an entrance moves such a focus after
+  it. The Order tab listed own-click exits and focuses after every
+  build (1, 2, 4, 4, 3) — in stop order now. Quick animate took P, A,
+  N and every digit typed into Notes, Find or the deck's name — not
+  inside a text field. A Zoom in on the last click made the next slide
+  arrive 3× and shrink back — off before the rebuild. And "Blur the
+  rest" left every arrow sharp — the visible stroke dims too.

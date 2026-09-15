@@ -193,7 +193,11 @@
          one, and this is the one place that always knows */
       if(window.MutationObserver&&!storyObs){
         storyObs=new MutationObserver(storySoon);
-        storyObs.observe(stage,{childList:true,subtree:true,attributes:true});
+        /* T491: children and classes -- never the stage's own style,
+           which the focus zoom writes and which made the strip repaint
+           itself forever (third review pass) */
+        storyObs.observe(stage,{childList:true,subtree:true,
+          characterData:true,attributes:true,attributeFilter:['class']});
       }
     }
     var b=$('#anim-story');

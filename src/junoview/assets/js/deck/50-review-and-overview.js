@@ -940,6 +940,15 @@
     if(cur===prev) return;   /* clamped no-op: keep build + selection state */
     /* stepping back into a slide shows it fully built; forward starts fresh */
     revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
+    /* T491: a Zoom in on the last click stayed on the stage while the
+       next slide was built, and .deck-stage's transform transition
+       then played the clear -- the next slide arrived zoomed 3x and
+       shrank back (third review pass). Off, without a transition,
+       before the rebuild. */
+    if(stage&&stage.style.transform){
+      stage.style.transition='none';stage.style.transform='';
+      void stage.offsetWidth;stage.style.transition='';
+    }
     /* arm on ARRIVAL too: a slide whose first build is delayed should
        start counting the moment you land on it, not on a click that
        would defeat the point (T169). Deferred so it arms against the

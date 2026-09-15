@@ -3023,8 +3023,11 @@
     }
     /* T238: an EXIT is a build too, so a slide whose only animation
        is something leaving still needs this pass */
+    /* T491: ...and so does a focus (a slide whose only animation was
+       a Zoom in ate its click and showed nothing -- third review pass) */
     if(s.annots&&s.annots.some(function(a){
-      return a&&(a.anim||animOut(a)!=null);})){
+      return a&&(a.anim||animOut(a)!=null
+        ||(typeof animFocus==='function'&&animFocus(a)));})){
       var steps=slideBuildSteps(s),plan=flipPlan(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
          class (the fat invisible hit path under the items does), so an

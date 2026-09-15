@@ -566,3 +566,33 @@ def test_the_style_system_after_the_first_pass(out):
     # [77] one row per style; the note under it
     assert "  function dgOddNote(id,d,ov,r){" in out
     assert ".dg-cnt.dg-rownote{margin:-4px 0 4px;" in out
+
+
+def test_the_animation_model_after_the_third_pass(out):
+    """T491 (2026-09-15, the third review pass: animation-model lens)."""
+    # [23] a hidden item never transitions, so nothing flashes on a click
+    assert (".deck:not(.editing) .annot-layer .an-item.an-prebuild"
+            "{transition:none;}") in out
+    # [30] blur the rest dims the arrow's visible stroke
+    assert ".annot-layer.an-spotlit .an-arrow-line:not(.an-spot){" in out
+    # [24] a Story thumbnail never zooms the stage; the strip watches
+    #      the DOM, not the stage's style; leaving the editor closes it
+    assert ("    if(typeof storyPaint!=='undefined'&&storyPaint"
+            "&&f.fx==='zoom') return;") in out
+    assert ("          characterData:true,attributes:true,"
+            "attributeFilter:['class']});") in out
+    assert "       &&typeof storyShow==='function') storyShow(false);" in out
+    # [25] a focus alone is enough for the reveal pass
+    assert "        ||(typeof animFocus==='function'&&animFocus(a)));})){" in out
+    # [26] every exit and focus claims its click; a focus before the
+    #      entrance is none; an entrance moves such a focus after it
+    assert "      if(a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;" in out
+    assert "    if(a.anim&&f.at<(a.anim.order||0)) return null;" in out
+    assert "            a.focus.at=nextAnimOrder(s);" in out
+    # [27] the Order tab in stop order
+    assert "        exits.filter(function(x){return !x.done&&x.o<o;})" in out
+    # [28] the mode's letters stay out of text fields
+    assert "  function seqInField(e){" in out
+    assert "    if(!seqArm||seqInField(e)) return;" in out
+    # [29] the zoom comes off before the next slide is built
+    assert "      stage.style.transition='none';stage.style.transform='';" in out

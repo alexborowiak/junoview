@@ -1110,6 +1110,11 @@
     mode=m;
     /* T471: Quick animate is an editor mode; leaving the editor ends it */
     if(m!=='edit'&&typeof seqOn==='function'&&seqOn()) seqEnd(true);
+    /* T491: the Story strip is the editor's; the show's stage is not
+       its to watch (it re-rendered the strip on every click of the
+       show, and its zoom leaked into the show -- third review pass) */
+    if(m!=='edit'&&typeof storyOpen==='function'&&storyOpen()
+       &&typeof storyShow==='function') storyShow(false);
     if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
       closeDeckPresentationDrawer();
     if(m!=='view'&&typeof talkToolsReset==='function') talkToolsReset();

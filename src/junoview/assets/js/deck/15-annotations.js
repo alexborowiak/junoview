@@ -1728,8 +1728,12 @@
   }
   function nextAnimOrder(s){
     var mx=-1;(s&&s.annots||[]).forEach(function(a){
-      if(!a||!a.anim) return;
-      if((a.anim.order||0)>mx) mx=a.anim.order||0;
+      /* T491: an object with NO entrance still claims the click its
+         exit or focus is on -- the early return here handed the same
+         click to two Send-it-aways and put a later entrance on a
+         focus's click (third review pass) */
+      if(!a) return;
+      if(a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;
       /* an EXIT claims an order too (T174), or asking twice for "on one
          more click at the end" would hand out the same number twice and
          the second object would leave on the first one's click */
@@ -1867,6 +1871,9 @@
     var f=a.focus;
     if(typeof f.at!=='number'||!isFinite(f.at)||f.at<0) return null;
     if(!FOCUS_FX.some(function(p){return p[0]===f.fx;})) return null;
+    /* T491: a focus before the object has arrived is a focus on
+       nothing -- the rule animOut has for an exit */
+    if(a.anim&&f.at<(a.anim.order||0)) return null;
     return f;
   }
   /* the one stop where it is the point */

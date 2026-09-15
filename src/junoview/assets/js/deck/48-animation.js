@@ -246,6 +246,13 @@
   }
   function focusPaint(layer,el,a){
     var f=animFocus(a); if(!f||!layer||!el) return;
+    /* T491: A THUMBNAIL IS A STILL. The zoom branch below moves the
+       GLOBAL stage; painted from a Story thumbnail it threw the
+       editor's page 100,000px off screen and the strip's observer,
+       watching the stage's style, re-rendered the strip forever
+       (third review pass). The lens and the spot are DOM on the
+       layer, harmless in a still; the zoom is the stage's alone. */
+    if(typeof storyPaint!=='undefined'&&storyPaint&&f.fx==='zoom') return;
     layer.setAttribute('data-focus',f.fx);
     if(f.fx==='spot'){
       el.classList.add('an-spot');
@@ -566,8 +573,17 @@
   var SEQ_BY=[['','Whole box','W','text'],['para','By bullet','B','indent'],
     ['sent','By sentence','S','spacing'],['hl','Highlight','H','star']];
   var seqBy='';
+  /* T491: ...but not inside a text field. Armed, the mode took P, A,
+     N and every digit typed into Notes, Find or the deck's name (third
+     review pass); the editor's own key handler has had this guard all
+     along. */
+  function seqInField(e){
+    var t=e&&e.target; if(!t) return false;
+    var tag=(t.tagName||'').toLowerCase();
+    return tag==='input'||tag==='select'||tag==='textarea'||!!t.isContentEditable;
+  }
   function seqKeyDown(e){
-    if(!seqArm) return;
+    if(!seqArm||seqInField(e)) return;
     /* T471: A KEY THE MODE TAKES IS TAKEN. It prevented the default and
        let the event go on, so the editor's own handler saw it too: G
        (Grow) toggled the grid, B (By bullet) armed the guide-box tool
@@ -595,7 +611,7 @@
     else {delete a.anim.by;delete a.anim.hl;}
   }
   function seqKeyUp(e){
-    if(!seqArm) return;
+    if(!seqArm||seqInField(e)) return;
     if(e.key>='0'&&e.key<='9'&&+e.key===seqDigit){seqDigit=0;seqSync();}
   }
   function seqArmStart(){
@@ -1233,7 +1249,13 @@
       idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
         if(type==='none') delete a.anim;
         else if(a.anim) a.anim.type=type;
-        else a.anim={type:type,order:no};});
+        else {
+          a.anim={type:type,order:no};
+          /* T491: a focus that would now sit before the entrance moves
+             to a click of its own, after it */
+          if(a.focus&&typeof a.focus.at==='number'&&a.focus.at<no)
+            a.focus.at=nextAnimOrder(s);
+        }});
       commit(s);
     }
     function mergeUp(){
@@ -1613,6 +1635,11 @@
       }
       seq.forEach(function(st,si){
         var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
+        /* T491: an exit or focus on a click of its own BEFORE this
+           build is listed before it -- appended after every build, the
+           numbered list ran 1, 2, 4, 4, 3 (third review pass) */
+        exits.filter(function(x){return !x.done&&x.o<o;})
+          .sort(function(x,y){return x.o-y.o;}).forEach(exitRow);
         var first=(plan.stop[b0]|0)+1;
         var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
         var kinds={};

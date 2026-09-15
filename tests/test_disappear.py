@@ -74,7 +74,8 @@ def test_leaving_is_an_effect_not_a_cut(out):
 def test_a_slide_whose_only_animation_is_an_exit_still_builds(out):
     """The reveal pass ran only when something had an entrance."""
     assert ("    if(s.annots&&s.annots.some(function(a){\n"
-            "      return a&&(a.anim||animOut(a)!=null);})){") in out
+            "      return a&&(a.anim||animOut(a)!=null\n"
+            "        ||(typeof animFocus==='function'&&animFocus(a)));})){") in out
     # ...and an exit has always claimed a stop of its own
     assert ("      var o=animOut(a);\n"
             "      if(o!=null&&!(o in seen)) seen[o]=1;") in out   # T472 adds a focus

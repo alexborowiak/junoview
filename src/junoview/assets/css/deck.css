@@ -6425,7 +6425,18 @@ body.light .dg-num input{background:var(--input-bg);
    scaled clone floated over the page. */
 .deck:not(.editing) .annot-layer .an-item{
   transition:filter .35s ease,opacity .35s ease;}
+/* T491: NEVER ON A HIDDEN ITEM. Every render builds the items fresh
+   and the reveal pass adds .an-prebuild a moment later, so with the
+   transition on every item each not-yet-arrived object flashed at full
+   opacity on EVERY click and faded out over 350ms (third review pass,
+   measured: 1.00 -> 0.62 -> 0.22 -> 0.01). An element whose after-
+   change style carries no transition starts none. */
+.deck:not(.editing) .annot-layer .an-item.an-prebuild{transition:none;}
 .annot-layer.an-spotlit .an-item:not(.an-spot):not(.an-lens){
+  filter:blur(3px);opacity:.45;}
+/* T491: the visible arrow stroke is not an .an-item (the fat hit path
+   under it is), so "Blur the rest" left every arrow sharp */
+.annot-layer.an-spotlit .an-arrow-line:not(.an-spot){
   filter:blur(3px);opacity:.45;}
 .annot-layer.an-spotlit .an-item.an-spot{z-index:20;}
 .deck-stage{transition:transform .55s cubic-bezier(.2,.7,.2,1);}

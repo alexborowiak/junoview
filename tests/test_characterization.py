@@ -2007,8 +2007,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # typeface select on the ribbon's surface.
 # T490 (2026-09-15): the ideas cards' scale, the table's editable
 # colour/fill/face cells, the rail's one row per style.
-EXPECTED_MD5 = "d4b3c9a76808d59e284200670f7e492b"
-EXPECTED_BYTES = 4473370
+# T491 (2026-09-15): the animation model after the third pass -- no
+# flash on a click, the Story strip's zoom, the Order tab's order.
+EXPECTED_MD5 = "2d42c6b1a9bb768ba3b13c4fd9d93b2e"
+EXPECTED_BYTES = 4477245
 
 
 def _render_example() -> str:
