@@ -411,6 +411,7 @@
     /* T409: a place-linked set remembers the spot */
     if(link==='place'||link==='both'){def.link=link;def.x=bb.l;def.y=bb.t;}
     cmpStore()[id]=def;
+    cmpDoorSync();   /* T474: the Clone… door wakes with the first set */
     /* the objects you defined it FROM become its first instance, so the
        thing you were looking at is a component now rather than a copy of
        one sitting beside it */
@@ -983,6 +984,59 @@
       var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
       if(a2&&a2.cmp) cmpInstMenu(a2.cmp,fd);
     });
+    /* T474: the door that needs nothing selected */
+    var pk=$('#et-clone');
+    if(pk) pk.addEventListener('click',function(e){
+      e.stopPropagation();cmpPickMenu(pk);});
+    cmpDoorSync();
+  }
+  /* T474: A CLONE FROM NOTHING SELECTED. The menu lists the deck's
+     sets; a row puts a clone of that set on this slide -- in its
+     remembered spot if the set is place-linked, else the middle -- with
+     the content of its first instance (cmpSeed), selected and ready to
+     drag. The door greys when there is no set to place. */
+  function cmpDoorSync(){
+    var b=$('#et-clone'); if(!b) return;
+    var n=cmpList().length;
+    b.disabled=!n;
+    b.title=n
+      ?('Put a clone of one of this deck\u2019s '+n+' clone set'
+        +(n===1?'':'s')+' on this slide')
+      :('Put a clone of one of this deck\u2019s clone sets on this '
+        +'slide. Make a set first: select things, then Object \u2192 '
+        +'Make clones\u2026');
+  }
+  function cmpPickMenu(btn){
+    var old=$('#cmp-pick-menu'); if(old){overlayDrop(old);return;}
+    var list=cmpList();
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu cmp-menu';m.id='cmp-pick-menu';
+    menuHead(m,'a clone of\u2026');
+    if(!list.length){
+      menuHead(m,'no clone sets yet \u2014 select things, then Object '
+        +'\u2192 Make clones\u2026');
+    }
+    list.forEach(function(c){
+      var def=cmpStore()[c.id]||{};
+      var here=cmpInstances(c.id).some(function(g){return g.si===cur;});
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.type='button';
+      b.innerHTML=bic('group')+' '+esc(c.name)
+        +' <span class="fh-n">'+c.n+(c.n===1?' thing':' things')
+        +(here?' \u00b7 one here already':'')+'</span>';
+      b.title=cmpHasPlace(def)
+        ?'In the spot every clone of this set shares'
+        :'In the middle of the slide \u2014 drag it where you want it';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);
+        var k=cmpPlace(c.id,null,cur,null,false);
+        toast(k?('A clone of \u201c'+c.name+'\u201d is on this slide'
+          +(cmpHasPlace(def)?'':' \u2014 drag it where you want it'))
+          :'Nothing was added');
+      });
+      m.appendChild(b);
+    });
+    overlayMount(btn,m);
   }
   function cmpInstMenu(id,btn){
     var old=$('#cmp-inst-menu'); if(old) old.remove();

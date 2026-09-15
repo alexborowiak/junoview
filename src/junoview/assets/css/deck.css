@@ -1762,6 +1762,11 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
+/* T474: Save version LAST (2026-09-15, user: "the save version group
+   should definitely be last. This means the 'new slide' and 'this
+   slide' can appear next to each other"). It had no rung, so it sat
+   at 0 between New slide and This slide. */
+.rbn-vers{order:9;}
 /* T438: ON OBJECT, THE SOURCE LEADS (2026-09-14, user: "when clicking
    on an object that is an image, it needs to tell you the path as the
    first thing in that tab"). The markup put the group first in

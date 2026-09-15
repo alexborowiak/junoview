@@ -2850,14 +2850,16 @@
        rows sat inside the selection branch, so an EMPTY canvas had no
        component door at all (T129). Moved here, where both halves of
        the menu can reach them. */
+    /* T474: the deck's one word for these is clones (T420); and the
+       ribbon has the same door now (Images > Place > Clone…) */
     var cAll=cmpList();
     if(cAll.length){
-      menuHead(m,'components');
+      menuHead(m,'add a clone of');
       cAll.forEach(function(c){
-        row('Place \u201c'+c.name+'\u201d',String(c.n),function(){
+        row('\u201c'+c.name+'\u201d',String(c.n),function(){
           var k=cmpPlace(c.id,at);
-          if(k) toast('Placed \u201c'+c.name+'\u201d');},
-          'Drops a linked copy here');
+          if(k) toast('A clone of \u201c'+c.name+'\u201d is on this slide');},
+          'A clone of this set, here');
       });
     }
     /* WHO SEES THIS. Beside `lock`, because both answer "what can be

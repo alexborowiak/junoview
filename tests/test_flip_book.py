@@ -254,7 +254,7 @@ def test_the_flip_book_costs_the_ribbon_one_hidden_button(out):
     """
     assert "'#fmt-figures':'flip'" in out
     assert 'class="fx-tile big-tile rbn-tall" id="fmt-figures"' in out
-    assert "<span>Figures</span></button>" in out   # T439
+    assert "<span>Notebook figures</span></button>" in out   # T439, T474
     # T439: the other three doors stand beside the tile, no menu
     assert "flipAddMenu" not in out
     for cid in ("fmt-flip-imgs", "fmt-flip-pages", "fmt-flip-own"):

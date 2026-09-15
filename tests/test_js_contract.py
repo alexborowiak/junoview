@@ -82,6 +82,9 @@ RUNTIME_IDS = {
     # close like cmp-inst-menu (40-captions-and-components.js
     # cmpMakeMenu and cmpAddMenu)
     "cmp-make-menu", "cmp-add-menu",
+    # T474: the Clone… door's menu on Images > Place, same shape
+    # (40-captions-and-components.js cmpPickMenu)
+    "cmp-pick-menu",
     # the layout-ideas chooser, built on open and removed on close like
     # the two menus above (35-arranging.js openLayoutIdeas, T131)
     "lay-ideas",

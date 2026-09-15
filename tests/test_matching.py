@@ -245,7 +245,7 @@ def test_placing_a_component_needs_no_selection(out):
     idx = out.index("var cAll=cmpList();")
     # the rows now sit AFTER the selection branch's lock section and
     # before the who-sees-it block, at menu top level
-    assert out.index("menuHead(m,'components');") > idx
+    assert out.index("menuHead(m,'add a clone of');") > idx   # T474
     assert out.index("var cAll=cmpList();") < \
         out.index("/* WHO SEES THIS. Beside `lock`")
     # and the lock section (end of the selection branch) comes first

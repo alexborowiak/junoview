@@ -193,3 +193,24 @@ def test_a_figure_arrives_panel_by_panel(out):
     assert ".an-cover.on{display:flex;}" in out
     assert (".an-cover.an-cover-edit{display:flex;"
             "background:transparent!important;") in out
+
+
+def test_a_clone_can_be_added_with_nothing_selected(out):
+    """T474 (2026-09-15, user: "I go to another slide, then click 'add a
+    clone' and it would also be there. But that didn't seem to work").
+    Add a clone… needs a clone selected, and on the other slide there is
+    none: Images > Place > Clone… lists the sets and puts one here."""
+    assert 'id="et-clone"' in out
+    assert "  function cmpPickMenu(btn){" in out
+    assert "  function cmpDoorSync(){" in out
+    assert "        var k=cmpPlace(c.id,null,cur,null,false);" in out
+    # greyed until a set exists; wakes with the first set and on every render
+    assert ("    cmpDoorSync();   /* T474: the Clone… door wakes with the "
+            "first set */") in out
+    assert ("      if(mode==='edit'&&typeof cmpDoorSync==='function') cmpDoorSync();"
+            "   /* T474 */") in out
+    # the ribbon layouts keep it beside the flip book
+    assert "'et-flip','et-clone'" in out
+    # Home: Save version last; the flip book's doors say what they add
+    assert ".rbn-vers{order:9;}" in out
+    assert "&#43; Notebook figures&#8230;</button>" in out

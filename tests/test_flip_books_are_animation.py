@@ -35,7 +35,7 @@ def test_add_is_the_first_control_and_a_tile():
     ids = re.findall(r'\bid="([a-z0-9-]+)"', _row(html, "Picture"))
     assert ids[0] == "fmt-figures", ids[:3]
     assert 'class="fx-tile big-tile rbn-tall" id="fmt-figures"' in html
-    assert "<span>Figures</span></button>" in html   # T439
+    assert "<span>Notebook figures</span></button>" in html   # T439, T474
     # rbn-tall is what makes it span both rows AND count as two columns
     # (T463: and what sizes it, through the one standing-tile rule)
     assert (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"

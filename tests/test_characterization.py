@@ -1980,8 +1980,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # magnify: the model, the ribbon group, the panel section, the CSS.
 # T473 (2026-09-15): a figure arrives panel by panel -- the covers, the
 # strip of grids, the panel section, the CSS.
-EXPECTED_MD5 = "c935a0491a1bb61a8fc393f68d8a2277"
-EXPECTED_BYTES = 4395465
+# T474 (2026-09-15): Saved versions last on Home; "Notebook figures";
+# the Clone… door on Images > Place and its menu; the canvas menu's words.
+EXPECTED_MD5 = "ba481be4254990cbc9e554b340e2c9e6"
+EXPECTED_BYTES = 4399685
 
 
 def _render_example() -> str:

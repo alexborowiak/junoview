@@ -2803,7 +2803,7 @@
           var fph=document.createElement('div');
           fph.className='an-flipempty';
           fph.textContent=editing
-            ?'Empty flip book — Figures, Pictures… or Pages… on the Object tab put pages in it'
+            ?'Empty flip book — Notebook figures, Pictures… or Pages… on the Object tab put pages in it'
             :'';
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){

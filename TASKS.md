@@ -9064,3 +9064,26 @@ any reading. The rest are T466 onwards.
   Earlier / Later / None, Remove all clears it and the Story strip's
   caption names it. Driven at 1500 with reduced motion off; the three
   shots are in the session's rib3 folder.
+- [x] **T474 — Save version last, "Notebook figures", and a clone with
+  nothing selected.** (User, 2026-09-15: "On the home tab, the save
+  version group should definitely be last. This means the 'new slide'
+  and 'this slide' can appear next to each other as well"; "Flip books
+  still have figures and pictures. Should be 'notebook figures' and
+  'pictures'"; "The clones feature is cool, but the 'Add a clone' I
+  can't really figure. Like the way I assumed this would work, would
+  be I go to another slide, then click 'add a clone' and it would also
+  be there. But that didn't seem to work".) Saved versions had no
+  order rung, so it sat at 0 between New slide and This slide — it is
+  last now (New slide, This slide, Keep up to date, Show, Style
+  system, Saved versions). The flip book's tile, its pane's button and
+  its empty-book line say "Notebook figures". And "Add a clone…" lives
+  on the Object tab, which needs a clone selected — on the other slide
+  there is none to select, so the door was unreachable from exactly
+  where the user stood. Images → Place has a Clone… tile now that
+  needs nothing selected: it lists the deck's sets (with how many
+  things each is, and whether one is here already) and a row puts a
+  clone of that set on this slide — in the shared spot if the set is
+  place-linked, else the middle, selected and ready to drag; greyed,
+  with the reason, until the deck has a set. The canvas menu's copy of
+  the list says "add a clone of" rather than "components" (T420's one
+  word). Driven at 1500.

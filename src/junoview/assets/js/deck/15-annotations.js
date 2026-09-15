@@ -707,6 +707,7 @@
          above the slide: Notebook cell, Image, Text, Table, Shape. */
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
+      if(mode==='edit'&&typeof cmpDoorSync==='function') cmpDoorSync();   /* T474 */
       /* the annot layer exists only now, and the rulers shade the
          selection's extent from it */
       if(mode==='edit') syncGuides();

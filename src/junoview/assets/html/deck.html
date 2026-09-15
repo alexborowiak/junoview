@@ -1548,6 +1548,21 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Draw a flip book: one box holding many figures, with
  arrows to step through them &mdash; in the editor and while presenting"
                 ><i data-ic="flipbook"></i><span>Flip book</span></button>
+              <!-- T474: A CLONE, ON THIS SLIDE (2026-09-15, user: "the
+                   way I assumed this would work, would be I go to
+                   another slide, then click 'add a clone' and it would
+                   also be there. But that didn't seem to work"). "Add a
+                   clone…" lives on the Object tab, which needs a clone
+                   selected -- and on the other slide there is none to
+                   select. This door needs nothing selected: pick a set,
+                   a clone of it lands here. Greyed until the deck has a
+                   set (cmpDoorSync). -->
+              <button class="fx-tile big-tile rbn-tall" id="et-clone"
+                aria-haspopup="true" aria-expanded="false" disabled
+                title="Put a clone of one of this deck&rsquo;s clone sets
+ on this slide. Make a set first: select things, then Object &rarr;
+ Make clones&hellip;"
+                ><i data-ic="group"></i><span>Clone&#8230;</span></button>
             </span>
             <span class="rbn-lab">Place</span>
           </span>
@@ -2506,7 +2521,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 hidden
                 title="Pick figures from a notebook — click as many as
  you want, in order — and each becomes a page of this
- book"><i data-ic="cellcard"></i><span>Figures</span></button>
+ book"><i data-ic="cellcard"></i><span>Notebook figures</span></button>
               <button class="dbtn etm" id="fmt-flip-imgs" hidden
                 title="Add pictures from this computer as pages. You can
  pick several at once"><i data-ic="image"></i> Pictures&#8230;</button>
@@ -2925,7 +2940,7 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="fp-adds">
           <button class="dbtn" id="fp-add-cells"
             title="Pick figures from your notebook — click as many as you
- want, in order">&#43; Figures&#8230;</button>
+ want, in order">&#43; Notebook figures&#8230;</button>
           <button class="dbtn" id="fp-add-img"
             title="Add pictures from your computer. You can pick several
  at once">&#43; Pictures&#8230;</button>
