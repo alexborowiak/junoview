@@ -3066,9 +3066,9 @@ body.light .edit-tools .dbtn.etm[aria-pressed="true"]{
   color:var(--on-accent-deep);}
 body.light .et-label{color:var(--warning);}
 body.light .et-hint{color:var(--ink-3);}
-body.light select#fmt-font{background:var(--input-bg);
-  border-color:var(--border-strong);
-  color:var(--ink);}
+body.light select#fmt-font{background:var(--btn-bg);
+  border-color:var(--btn-border);
+  color:var(--btn-ink);}   /* T489: the button surface, like its row */
 /* document rail (section nav aka Overview + analysis graph) */
 body.light .rail{background:var(--chrome);color:var(--chrome-ink);
   border-right-color:var(--chrome-line);}
@@ -3798,6 +3798,28 @@ body.deck-open{overflow:hidden;}
    line by another name. The bar's width pressure goes to fitQat's
    rungs instead (2026-08-24). */
 .deck-qat .dbtn{padding:4px 9px;white-space:nowrap;flex:none;}
+/* T487: NO TRANSITION ON WHAT THE FITTERS MEASURE. .dbtn transitions
+   `all`, so a rung's padding change ANIMATED over 150ms: fitQat's
+   synchronous measurement right after adding a class saw the OLD
+   padding (a transition starts from the value before the change),
+   judged the rung a failure and reached for the next; the observer on
+   the bar then watched the buttons shrink and re-ran it against a
+   half-way size, and at 1300px the two states flip-flopped forever
+   (driven: forty class mutations in four seconds). Colour and border
+   still ease; geometry snaps. The ribbon's rungs change padding too,
+   and get the same rule. */
+.deck-qat .dbtn,.deck .edit-tools .dbtn{
+  transition-property:border-color,color,background-color,box-shadow;}
+/* T487: ONE HEIGHT, ONE BASELINE. Measured at 1500px the bar carried
+   four heights on three baselines -- 24px@y5 words, 22px@y6 carets,
+   23px@y6 File and Save, 26px@y4 undo and redo (2026-09-15 review).
+   Every control is the ribbon's button height now, and a button
+   centres its own content. The readout keeps inline-block: its
+   ellipsis needs a block container (see below). */
+.deck-qat .dbtn,.deck-qat .qat-name,.deck-qat .qat-nameedit{
+  height:var(--rbn-btn-h);box-sizing:border-box;
+  padding-top:0;padding-bottom:0;}
+.deck-qat .qat-name{line-height:calc(var(--rbn-btn-h) - 2px);}
 .deck-qat .rbn-stack{flex-direction:row;align-items:center;gap:6px;}
 .deck-qat .rbn-cell{height:var(--rbn-btn-h);gap:3px;}
 .deck-qat .dc-menuwrap,.deck-qat .dc-savegrp{display:inline-flex;
@@ -3831,7 +3853,8 @@ body.deck-open{overflow:hidden;}
    (2026-08-29, T70, user: "make sure everything is fitting inside its
    box"). inline-block centres by line-height exactly as align-items did,
    and gives the ellipsis somewhere to land. */
-.deck-qat .deck-status{display:inline-block;height:24px;line-height:24px;
+.deck-qat .deck-status{display:inline-block;height:var(--rbn-btn-h);
+  line-height:var(--rbn-btn-h);
   font-size:11px;flex:none;width:34ch;max-width:34ch;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
 /* Keep the readout's slot even while it is empty.  Autosave changes this
@@ -3845,20 +3868,23 @@ body.deck-open{overflow:hidden;}
 .deck-qat .qat-auto .qat-tick{display:inline-block;min-width:4.2ch;
   text-align:right;font-variant-numeric:tabular-nums;}
 /* ---- fitQat's rungs (see fitQat in deck.js): this bar never clips.
-   Rung 1 drops the save readout (informative, not a control; the Save
-   button's tooltip carries the same words). Rung 2 tightens spacing and
-   swaps the .qat-long/.qat-short label pair ("Autosave"→"Auto") — words
-   are SHORTENED, never hidden (icon-only was rejected twice). The floor
-   scrolls the bar sideways so Present and Help are always reachable;
-   its menus float via floatMenu (position:fixed), so the scroll box
-   cannot cut them off. */
+   Rung 1 tightens spacing and swaps the .qat-long/.qat-short label pair
+   ("Autosave"→"Auto") — words are SHORTENED, never hidden (icon-only was
+   rejected twice). Rung 2 drops the save readout (informative, not a
+   control; the Save button's tooltip carries the same words). T487
+   swapped the two: the readout was the FIRST thing to go, and at 1300px
+   it went whole -- 219px of words -- for a 30px shortfall the cheap rung
+   would have covered (2026-09-15 review). The floor scrolls the bar
+   sideways so Present and Help are always reachable; its menus float
+   via floatMenu (position:fixed), so the scroll box cannot cut them
+   off. */
 .deck-qat .qat-short{display:none;}
-.deck-qat.qat-c1 .deck-status{display:none;}
-.deck-qat.qat-c2{gap:3px;}
-.deck-qat.qat-c2 .dbtn{padding:4px 6px;}
-.deck-qat.qat-c2 .qat-name{max-width:16vw;}
-.deck-qat.qat-c2 .qat-long{display:none;}
-.deck-qat.qat-c2 .qat-short{display:inline;}
+.deck-qat.qat-c1{gap:3px;}
+.deck-qat.qat-c1 .dbtn{padding-left:6px;padding-right:6px;}
+.deck-qat.qat-c1 .qat-name{max-width:16vw;}
+.deck-qat.qat-c1 .qat-long{display:none;}
+.deck-qat.qat-c1 .qat-short{display:inline;}
+.deck-qat.qat-c2 .deck-status{display:none;}
 .deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
   scrollbar-width:thin;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
@@ -6116,9 +6142,29 @@ body.light .cfg-rv{color:var(--cyan-deep);}
   border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 .dbtn.etm{padding:5px 9px;font-family:var(--sans);font-size:12px;}
 .dbtn.etm>svg,.dbtn.etm>i[data-ic]{width:15px;height:15px;flex:none;}
-select#fmt-font{background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
-  color:#cdd9e3;font-family:var(--mono);font-size:11px;
-  padding:5px 6px;border-radius:6px;}
+/* T489: a small door's readout -- its choice beside its word, in the
+   readout face the tiles use (Change layout: "Title + text"; Styles:
+   "Heading 2"). It gives way first when the row is tight. */
+.dbtn.rbn-sm>.rbn-foldval,.dbtn.etm>.rbn-foldval{display:inline-block;
+  font:600 10px var(--mono);color:var(--cyan);margin-left:5px;
+  max-width:110px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;flex:0 1 auto;min-width:0;}
+.dbtn.rbn-sm>.rbn-foldval[hidden],.dbtn.etm>.rbn-foldval[hidden]{
+  display:none;}
+.dbtn.rbn-sm[aria-pressed="true"]>.rbn-foldval,
+.dbtn.etm[aria-pressed="true"]>.rbn-foldval{color:inherit;}
+body.light .dbtn.rbn-sm>.rbn-foldval,body.light .dbtn.etm>.rbn-foldval{
+  color:var(--cyan-deep);}
+.deck.erc-tight .dbtn.rbn-sm>.rbn-foldval,
+.deck.erc-tight .dbtn.etm>.rbn-foldval{max-width:56px;}
+/* T489: the typeface select wears the ribbon's ONE surface -- it was
+   the one control in the Font group on a different fill, edge and
+   type size (2026-09-15 review) */
+select#fmt-font{background:var(--btn-bg,#ffffff0a);
+  border:1px solid var(--btn-border,#ffffff22);
+  color:var(--btn-ink,#cdd9e3);font-family:var(--sans);font-size:12px;
+  padding:4px 6px;border-radius:6px;}
+select#fmt-font:hover{border-color:var(--cyan);color:var(--chrome-ink);}
 select#fmt-font[hidden]{display:none;}
 .dbtn.etm[aria-pressed="true"]{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
@@ -6349,6 +6395,12 @@ select#fmt-font[hidden]{display:none;}
   color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:3px;}
 .deck.editing .an-item.grpsel{outline:1.5px dashed var(--cyan);
   outline-offset:1px;}
+/* T487: a whole group selected wears ONE solid frame round the union
+   of its members (paintSel draws it); the members' own dashes go */
+.deck.editing .an-item.grpsel.an-grouped{outline:none;}
+.deck.editing .an-grpframe{position:absolute;pointer-events:none;
+  outline:2px solid var(--cyan);outline-offset:3px;border-radius:3px;
+  z-index:5;}
 .deck.editing .an-item.grpsel .an-resize,
 .deck.editing .an-item.grpsel .an-handle,
 .deck.editing .an-item.grpsel .an-cellbtn,
@@ -8777,6 +8829,31 @@ body.light .eq-box{background:var(--chrome-2);
 .ask-in:focus{outline:none;border-color:var(--accent,var(--cyan));}
 .ask-area{resize:vertical;min-height:84px;font:12.5px var(--mono);
   line-height:1.45;}
+/* T488: the small form -- label column, field column, a note under a
+   row spanning both */
+.ask-rows{display:grid;grid-template-columns:auto minmax(0,1fr);
+  gap:8px 12px;align-items:center;}
+.ask-rows[hidden]{display:none;}
+.ask-row-lab{font-family:var(--sans);font-size:12.5px;
+  color:var(--chrome-ink-2);white-space:nowrap;}
+.ask-row-cell{display:flex;align-items:center;gap:8px;min-width:0;}
+.ask-rows .ask-in{flex:1 1 auto;}
+.ask-rows .ask-num{flex:0 0 84px;width:84px;}
+.ask-rows .ask-sel{flex:0 0 auto;width:auto;min-width:120px;padding:5px 8px;}
+.ask-rows .ask-range{flex:1 1 auto;min-width:0;accent-color:var(--cyan);}
+.ask-rows .ask-check{width:16px;height:16px;accent-color:var(--cyan);
+  margin:0;}
+.ask-rows .ask-color{width:40px;height:26px;padding:0;border:1px solid
+  var(--chrome-line);border-radius:6px;background:none;cursor:pointer;}
+.ask-rows .ask-clear{font-size:11px;padding:4px 8px;}
+.ask-rows .ask-clear[aria-pressed="true"]{border-color:var(--cyan);
+  color:var(--chrome-ink);}
+.ask-rows .ask-color:has(+.ask-clear[aria-pressed="true"]){opacity:.35;}
+.ask-unit{font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-3);
+  white-space:nowrap;}
+.ask-row-note{grid-column:1/-1;font-family:var(--sans);font-size:11.5px;
+  color:var(--chrome-ink-3);line-height:1.45;margin-top:-4px;}
+.ask-dlg.ask-form .ask-box{width:min(520px,94vw);}
 .aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:9px;padding:12px 13px 11px;
   background:var(--chrome-2);border:1px solid var(--chrome-line);
@@ -9211,9 +9288,15 @@ body.jv-lens .deck-stage{cursor:crosshair;}
   flex-direction:column;background:var(--chrome-0,#0b141d);
   font-family:var(--sans);}
 .dg-main{display:flex;flex:1 1 auto;min-height:0;}
-/* T443: who wears what -- the count table at the head of the rail */
-.dg-counts{margin-bottom:8px;padding-bottom:6px;
-  border-bottom:1px solid var(--chrome-line);}
+/* T443: the count table in the rail -- T490: the loose bands only,
+   after the style rows; a style's own count and its odd wearers sit on
+   its row */
+.dg-counts{margin-top:8px;padding-top:6px;
+  border-top:1px solid var(--chrome-line);}
+.dg-cnt.dg-rownote{margin:-4px 0 4px;padding:0 6px 4px;cursor:default;}
+.dg-cnt.dg-rownote:hover{background:none;}
+.dg-cnt.dg-rownote .dg-cnt-note,.dg-cnt.dg-rownote .dg-cnt-fix{
+  margin-left:8px;flex:1 0 calc(100% - 8px);}
 .dg-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;
   padding:4px 6px;border-radius:6px;font:12px var(--sans);
   color:var(--chrome-ink);cursor:pointer;}
@@ -9568,6 +9651,10 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
   padding:7px;}
 .li-card .mini-diagram{pointer-events:none;background:#0d1722;
   border:1px solid #ffffff22;border-radius:3px;}
+/* T490: a candidate's text boxes show their BOX, hairline, so two
+   layouts that differ only in where the words go can be told apart */
+.li-card .mini-tx{outline:1px solid #ffffff2e;outline-offset:1px;
+  border-radius:1px;}
 .li-lab{font-size:10.5px;color:#dbe7ef;}
 /* T130: the put button and its slide scope, side by side */
 .dg-putrow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
@@ -9788,7 +9875,8 @@ body.light .lb-name{background:var(--input-bg);
   margin-left:auto;}
 .dgt-grid{display:grid;
   grid-template-columns:26px 40px minmax(150px,1.7fr)
-    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 34px 34px;
+    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 88px 74px;
+  /* T490: the two colour columns hold a picker AND its Default / None */
   gap:1px;background:#ffffff12;border:1px solid #ffffff1c;
   border-radius:9px;overflow:hidden;max-height:52vh;overflow-y:auto;}
 .dgt-h{background:var(--chrome-1,#0e1926);font-family:var(--sans);
@@ -9807,6 +9895,21 @@ body.light .lb-name{background:var(--input-bg);
   background:#ffffff0d;border:1px solid #ffffff22;border-radius:5px;}
 .dgt-n:focus{border-color:var(--cyan);outline:none;}
 .dgt-face{font-family:var(--mono);font-size:11px;color:var(--chrome-ink-2);}
+/* T490: the editable cells -- a swatch that is a picker, with its
+   Default / None beside it, and the typeface list */
+.dgt-colw{display:inline-flex;align-items:center;gap:4px;}
+.dgt-col{width:22px;height:20px;padding:0;border:1.5px solid #ffffff33;
+  border-radius:50%;background:none;cursor:pointer;}
+.dgt-col::-webkit-color-swatch-wrapper{padding:0;}
+.dgt-col::-webkit-color-swatch{border:0;border-radius:50%;}
+.dgt-col.dgt-unset{opacity:.45;}
+.dgt-colb{font-size:10px;padding:2px 5px;line-height:1.2;}
+.dgt-colb[aria-pressed="true"]{border-color:var(--cyan);color:var(--chrome-ink);}
+.dgt-facesel{height:24px;padding:0 4px;max-width:96px;
+  background:#ffffff0d;border:1px solid #ffffff22;border-radius:5px;
+  color:#e8f1f8;}
+body.light .dgt-facesel{background:var(--input-bg);
+  border-color:var(--border-strong);color:var(--ink);}
 .dgt-sw{width:16px;height:16px;border-radius:50%;
   border:1.5px solid #ffffff33;display:block;}
 .dgt-sw.dgt-none{background:var(--chrome-0,#0b141d);position:relative;
@@ -9937,7 +10040,18 @@ body.light .dg-num input{background:var(--input-bg);
    scaled clone floated over the page. */
 .deck:not(.editing) .annot-layer .an-item{
   transition:filter .35s ease,opacity .35s ease;}
+/* T491: NEVER ON A HIDDEN ITEM. Every render builds the items fresh
+   and the reveal pass adds .an-prebuild a moment later, so with the
+   transition on every item each not-yet-arrived object flashed at full
+   opacity on EVERY click and faded out over 350ms (third review pass,
+   measured: 1.00 -> 0.62 -> 0.22 -> 0.01). An element whose after-
+   change style carries no transition starts none. */
+.deck:not(.editing) .annot-layer .an-item.an-prebuild{transition:none;}
 .annot-layer.an-spotlit .an-item:not(.an-spot):not(.an-lens){
+  filter:blur(3px);opacity:.45;}
+/* T491: the visible arrow stroke is not an .an-item (the fat hit path
+   under it is), so "Blur the rest" left every arrow sharp */
+.annot-layer.an-spotlit .an-arrow-line:not(.an-spot){
   filter:blur(3px);opacity:.45;}
 .annot-layer.an-spotlit .an-item.an-spot{z-index:20;}
 .deck-stage{transition:transform .55s cubic-bezier(.2,.7,.2,1);}
@@ -14343,20 +14457,27 @@ writes or resembles and implies no endorsement.</small></p>
                by accident (2026-08-20). -->
           <span class="rbn-grp rbn-furn" data-tab="design" data-fold-ic="footer">
             <span class="rbn-row">
+              <!-- T488: pressed means ON; the click opens the editor
+                   (words, size, alignment, colour, first slide), which
+                   is also where it is turned off -->
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
-                title="A line along the top of every page. {name}, {date},
- {n}/{N} the page and the total, {sn}/{sN} the same within the section,
- {sec} its name"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/></svg>
+                title="Top of every page; click to set words, size,
+ alignment, colour. {name}, {date}, {n}/{N} page and total,
+ {sn}/{sN} the same within the section, {sec} its name"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/></svg>
  Header</button>
               <button class="dbtn rbn-sm" id="dc-foot"
                 aria-pressed="false"
-                title="A line along the bottom of every page. {n} and {N}
- are the page number and the total, {sn} and {sN} the same within the
- section, and {sec} its name"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M1.8 9.8h12.4"/><path d="M4.4 11.7h5.4"/></svg> Footer</button>
+                title="Bottom of every page; click to set words, size,
+ alignment, colour. {n} and {N} the page and total,
+ {sn} and {sN} the same within the section, {sec} its name"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M1.8 9.8h12.4"/><path d="M4.4 11.7h5.4"/></svg> Footer</button>
               <button class="dbtn rbn-sm" id="dc-wmark"
                 aria-pressed="false"
-                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3" y="2.2" width="10" height="11.6" rx="1"/><path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/></svg>
+                title="A faint word across every page — DRAFT, CONFIDENTIAL,
+ your name — behind the content. Click to set its words, size, opacity,
+ angle and colour"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3" y="2.2" width="10" height="11.6" rx="1"/><path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/></svg>
    Watermark</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
@@ -16983,9 +17104,12 @@ items snap to both. Guides, not ink: never printed or exported"
         autocomplete="off">
       <textarea class="ask-in ask-area" id="ask-area" rows="5" hidden
         spellcheck="false"></textarea>
+      <!-- T488: the small form (askText's `rows`), filled per question -->
+      <div class="ask-rows" id="ask-rows" hidden></div>
       <div class="aa-foot">
         <span class="aa-count" id="ask-note"></span>
         <span class="deck-spring"></span>
+        <button class="dbtn" id="ask-alt" type="button" hidden></button>
         <button class="dbtn" id="ask-cancel" type="button">Cancel</button>
         <button class="dbtn primary" id="ask-ok" type="button">OK</button>
       </div>
@@ -25413,10 +25537,41 @@ window.JunoPptx = (function () {
     return '<a:' + tag + out + '>' + body + '</a:' + tag + '>';
   }
 
+  /* T486: A RUN MODEL. `item.paras` is [{runs:[{t,b,i,u,strike,color}],
+     bullet, num, lvl, head}] -- the shape pptx_read.py has always
+     produced -- and each run leaves as its own <a:r> with its own rPr,
+     so bold, colour and bullets inside a box arrive as themselves rather
+     than as '**bold**', '# Heading' and '- bullet' in plain text
+     (2026-09-15 review). item.text is the fallback, one run per line. */
+  function runXml(item, page, run, head) {
+    var r = {};
+    for (var k in item) r[k] = item[k];
+    if (run.b) r.b = 1; if (run.i) r.i = 1; if (run.u) r.u = 1;
+    if (run.strike) r.strike = 1;
+    if (run.color) r.color = run.color;
+    if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
+    return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
+  }
   function paragraphs(item, page) {
-    var lines = String(item.text == null ? '' : item.text).split('\n');
     var align = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[
       item.align] || 'l';
+    if (item.paras && item.paras.length) {
+      return item.paras.map(function (pa) {
+        var lvl = pa.lvl || 0, mar = 228600 * (lvl + 1);
+        var props = '<a:pPr algn="' + align + '"'
+          + ((pa.bullet || pa.num) ? ' indent="-228600" marL="' + mar + '"' : '')
+          + (lvl ? ' lvl="' + lvl + '"' : '') + '>'
+          + (pa.bullet ? '<a:buChar char="&#8226;"/>'
+            : pa.num ? '<a:buAutoNum type="arabicPeriod"/>' : '<a:buNone/>')
+          + '</a:pPr>';
+        var runs = (pa.runs || []).filter(function (r) { return r.t; });
+        if (!runs.length)
+          return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';
+        return '<a:p>' + props + runs.map(function (r) {
+          return runXml(item, page, r, pa.head); }).join('') + '</a:p>';
+      }).join('');
+    }
+    var lines = String(item.text == null ? '' : item.text).split('\n');
     return lines.map(function (line) {
       var props = '<a:pPr algn="' + align + '"'
         + (item.bullets ? ' indent="-228600" marL="228600"' : '') + '>'
@@ -27339,6 +27494,21 @@ window.JunoPptx = (function () {
       nb.title='Add a slide after this one'
         +(word?(', laid out as '+word):', laid out as the highlighted layout');
     }
+  }
+  /* T489: a small door's readout -- its current choice beside its
+     word, in the readout face the tiles use (.rbn-foldval), created on
+     first use. The title takes the whole name for the rung that
+     shortens the readout. */
+  function doorVal(sel,word,title){
+    var b=$(sel); if(!b) return;
+    var val=b.querySelector('.rbn-foldval');
+    if(!val){
+      val=document.createElement('span');val.className='rbn-foldval';
+      b.appendChild(val);
+    }
+    val.textContent=word||'';val.hidden=!word;
+    b.classList.toggle('has-val',!!word);
+    if(typeof title==='function') b.title=title(word||'');
   }
   /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
      The catalog is offered from TWO places now — Design ▸ Layouts and
@@ -30984,11 +31154,13 @@ window.JunoPptx = (function () {
      primary action, and Help — clipped away unreachable, which the
      ladder forbids ("clip, scroll, wrap — all forbidden", fitEditRibbon).
      Same shape as fitRibbon / fitEditRibbon: reset, measure, escalate.
-       rung 1 (.qat-c1)     the save readout gives up its text — its
-                            words also live in the Save button's tooltip
-       rung 2 (.qat-c2)     spacing tightens and the long label shortens
+       rung 1 (.qat-c1)     spacing tightens and the long label shortens
                             ("Autosave" → "Auto"); words are shortened,
                             NEVER hidden (the twice-rejected icon-only)
+       rung 2 (.qat-c2)     the save readout gives up its text — its
+                            words also live in the Save button's tooltip
+                            (T487: the cheap rung first; the readout was
+                            dropped whole for a 30px shortfall)
        floor  (.qat-scroll) the bar scrolls sideways (overflow-x:auto,
                             thin scrollbar) so nothing is ever
                             unreachable. Safe for the bar's own menus:
@@ -31561,12 +31733,22 @@ window.JunoPptx = (function () {
          its box changing (window resize, first real layout on open) is
          the one signal that catches every way it can get narrower */
       var qb=$('#deck-qat');
-      if(qb) new ResizeObserver(function(){
-        if(deckEl.hidden) return;
-        requestAnimationFrame(function(){
-          if(!deckEl.hidden) fitQat();
+      if(qb){
+        var qro=new ResizeObserver(function(){
+          if(deckEl.hidden) return;
+          requestAnimationFrame(function(){
+            if(!deckEl.hidden) fitQat();
+          });
         });
-      }).observe(qb);
+        qro.observe(qb);
+        /* T487: and its CONTENTS. The bar's own box never changes when
+           a control inside it grows -- the Autosave label was rewritten
+           a beat after fitQat had measured, and at 1300px the bar sat
+           16px past its box with the Present chevron clipped until the
+           next window resize (driven). Its children are fixed markup,
+           so watching them once at boot is watching every label. */
+        [].forEach.call(qb.children,function(c){qro.observe(c);});
+      }
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything
        that moves the slide has to redraw them. The ribbon observer above
@@ -31588,6 +31770,13 @@ window.JunoPptx = (function () {
     try{
       if(document.fonts&&document.fonts.ready)
         document.fonts.ready.then(function(){
+          if(!deckEl.hidden){fitEditRibbon();fitQat();}});
+      /* T487: .ready settles ONCE, for the batch in flight at boot; a
+         face that arrives later (the bar's mono, first used when the
+         deck opens) widened the thin bar 16px past its box at 1300px
+         and nothing re-judged it until the next window resize */
+      if(document.fonts&&document.fonts.addEventListener)
+        document.fonts.addEventListener('loadingdone',function(){
           if(!deckEl.hidden){fitEditRibbon();fitQat();}});
     }catch(e){}
     /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:
@@ -34835,7 +35024,13 @@ window.JunoPptx = (function () {
     var b=$('#qat-name');
     if(!b) return;
     var nm=(pres&&pres.name)||'';
-    if(b.textContent!==nm) b.textContent=nm;
+    if(b.textContent!==nm){
+      b.textContent=nm;
+      /* T487: a longer name widens the bar, and nothing re-judged it --
+         at 1300px a deck opened by name overflowed by 16px, clipping
+         the Present chevron, until the window was next resized */
+      if(typeof fitQat==='function') requestAnimationFrame(fitQat);
+    }
     b.title=nm?('“'+nm+'” — click to rename'):'Click to name this';
   }
   function startQatRename(){
@@ -37464,6 +37659,20 @@ window.JunoPptx = (function () {
     inGroup=null;
     if(layer) paintSel(layer);
   }
+  /* T487: every selected item is a member of ONE group you have not
+     stepped into -- the selection IS the group */
+  function selIsOneGroup(){
+    var s=pres.slides[cur]; if(!s) return false;
+    var idxs=selSet.filter(function(i){return typeof i==='number';});
+    if(idxs.length<2) return false;
+    var g=null;
+    for(var i=0;i<idxs.length;i++){
+      var a=(s.annots||[])[idxs[i]];
+      if(!a||a.grp==null) return false;
+      if(g===null) g=a.grp; else if(a.grp!==g) return false;
+    }
+    return inGroup!==g;
+  }
   function groupMembers(s,idx){
     if(!s||typeof idx!=='number') return [idx];
     var a=(s.annots||[])[idx];
@@ -38293,8 +38502,12 @@ window.JunoPptx = (function () {
   }
   function nextAnimOrder(s){
     var mx=-1;(s&&s.annots||[]).forEach(function(a){
-      if(!a||!a.anim) return;
-      if((a.anim.order||0)>mx) mx=a.anim.order||0;
+      /* T491: an object with NO entrance still claims the click its
+         exit or focus is on -- the early return here handed the same
+         click to two Send-it-aways and put a later entrance on a
+         focus's click (third review pass) */
+      if(!a) return;
+      if(a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;
       /* an EXIT claims an order too (T174), or asking twice for "on one
          more click at the end" would hand out the same number twice and
          the second object would leave on the first one's click */
@@ -38432,6 +38645,9 @@ window.JunoPptx = (function () {
     var f=a.focus;
     if(typeof f.at!=='number'||!isFinite(f.at)||f.at<0) return null;
     if(!FOCUS_FX.some(function(p){return p[0]===f.fx;})) return null;
+    /* T491: a focus before the object has arrived is a focus on
+       nothing -- the rule animOut has for an exit */
+    if(a.anim&&f.at<(a.anim.order||0)) return null;
     return f;
   }
   /* the one stop where it is the point */
@@ -38486,12 +38702,35 @@ window.JunoPptx = (function () {
   function paintSel(layer){
     var multi=selSet.length>1;
     var s0=pres.slides[cur];
+    /* T487: A GROUP WEARS ONE FRAME. Its members drop the per-item
+       dashes and one solid frame is drawn round the union of them, so
+       a group and a plain multi-selection no longer look the same
+       (2026-09-15 review: pixel-identical before and after Ctrl+G). */
+    var oneGrp=selIsOneGroup();
+    $$('.an-grpframe',layer).forEach(function(f){f.remove();});
+    if(oneGrp){
+      var u=null;
+      selSet.forEach(function(i){
+        if(typeof i!=='number') return;
+        var r=annotRectPct(layer,s0,i); if(!r) return;
+        u=u?{l:Math.min(u.l,r.l),t:Math.min(u.t,r.t),
+          r:Math.max(u.r,r.r),b:Math.max(u.b,r.b)}:r;
+      });
+      if(u){
+        var fr=document.createElement('div');
+        fr.className='an-grpframe';
+        fr.style.left=u.l+'%';fr.style.top=u.t+'%';
+        fr.style.width=(u.r-u.l)+'%';fr.style.height=(u.b-u.t)+'%';
+        layer.appendChild(fr);
+      }
+    }
     $$('[data-idx]',layer).forEach(function(el){
       var raw=el.getAttribute('data-idx');
       var key=(raw==='t'||raw==='s')?raw:+raw;
       var on=selSet.indexOf(key)>=0;
       el.classList.toggle('sel',on);
       el.classList.toggle('grpsel',on&&multi);
+      el.classList.toggle('an-grouped',on&&oneGrp);
       /* the group you have stepped into is outlined as a whole, so it is
          obvious that clicks are landing on members and not on the group */
       var ga=(typeof key==='number'&&s0)?(s0.annots||[])[key]:null;
@@ -44111,8 +44350,11 @@ window.JunoPptx = (function () {
     }
     /* T238: an EXIT is a build too, so a slide whose only animation
        is something leaving still needs this pass */
+    /* T491: ...and so does a focus (a slide whose only animation was
+       a Zoom in ate its click and showed nothing -- third review pass) */
     if(s.annots&&s.annots.some(function(a){
-      return a&&(a.anim||animOut(a)!=null);})){
+      return a&&(a.anim||animOut(a)!=null
+        ||(typeof animFocus==='function'&&animFocus(a)));})){
       var steps=slideBuildSteps(s),plan=flipPlan(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
          class (the fat invisible hit path under the items does), so an
@@ -45653,6 +45895,17 @@ window.JunoPptx = (function () {
     /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
        already the deck's title style by definition */
     show('#fmt-stylewrap-tx',isText&&isNum);
+    /* T489: the Styles door names the style this box wears -- after
+       picking Heading 2 it still read "Styles" and the choice was only
+       visible by reopening the menu (2026-09-15 review) */
+    if(isText&&isNum&&typeof doorVal==='function'){
+      var sd=a.style?styleDef(a.style):null;
+      doorVal('#fmt-style-tx',sd?sd.label:'Plain',function(word){
+        return 'Named text styles \u2014 Title, Headings, Body, Caption '
+          +'\u2014 and pushing this box\u2019s look to all of them. '
+          +(word==='Plain'?'This box wears none':'This box is '+word);
+      });
+    }
     /* spacing applies to any run of words, including a table's */
     show('#fmt-lhwrap',(isText||isTbl)&&isNum);
     show('#fmt-eqedit',isMaths(a)&&isNum);
@@ -45728,7 +45981,9 @@ window.JunoPptx = (function () {
     if(opV) opV.textContent=opPct+'%';
     show('#fmt-dup',isNum);
     var nSel=selSet.filter(function(i){return typeof i==='number';}).length;
-    show('#fmt-group',nSel>=2);
+    /* T487: a selection that already IS one group is offered Ungroup
+       alone, not Group and Ungroup side by side */
+    show('#fmt-group',nSel>=2&&!selIsOneGroup());
     show('#fmt-ungroup',isNum&&a.grp!=null);
     /* Bring to front and Send to back are BUTTONS again. They were
        menu-only, which is why they read as missing (2026-08-20, user
@@ -45992,7 +46247,20 @@ window.JunoPptx = (function () {
             +'still shows with this page');
       }
     }
-    show('#fmt-lock',isNum,isNum&&pinned(a));
+    /* T487: pressed for the POSITION lock only; a fully locked item
+       (reached through Alt-marquee or Layers) showed "[on]" with the
+       position-lock words and a click that did nothing (2026-09-15
+       review). The button is disabled and says where the full lock
+       comes off. */
+    show('#fmt-lock',isNum,isNum&&lockMode(a)==='pos');
+    var lkB=$('#fmt-lock');
+    if(lkB&&isNum){
+      var full=lockedAll(a);
+      lkB.disabled=full;
+      if(!lkB.dataset.title0) lkB.dataset.title0=lkB.title;
+      lkB.title=full?('Fully locked \u2014 "Not locked" in the '
+        +'right-click menu or the Layers pane takes it off'):lkB.dataset.title0;
+    }
     /* T220: what this object has been through, one click away */
     show('#fmt-hist',isNum);
     /* T229: making a set of clones, and finding the ones that exist */
@@ -48754,16 +49022,23 @@ window.JunoPptx = (function () {
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,idxs[0]);}
+    /* T487: Ctrl+G was invisible -- a group looked pixel-identical to a
+       plain multi-selection and nothing said it had happened
+       (2026-09-15 review) */
+    toast('Grouped \u2014 '+idxs.length+' items move as one. '
+      +'Ctrl+Shift+G ungroups; double-click to edit one inside');
   }
   function ungroupSel(){
     var s=pres.slides[cur];
     if(!s||typeof selAnnot!=='number'||!s.annots) return;
     var a=s.annots[selAnnot]; if(!a||a.grp==null) return;
     var g=a.grp;
-    s.annots.forEach(function(x){if(x.grp===g) delete x.grp;});
+    var ng=0;
+    s.annots.forEach(function(x){if(x.grp===g){delete x.grp;ng++;}});
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,selAnnot);}
+    toast('Ungrouped \u2014 '+ng+' separate items again');
   }
 /* 30-format-bar.js — picking a card into a frame, and every control on the format bar.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
@@ -50740,9 +51015,17 @@ window.JunoPptx = (function () {
     /* a fully locked item cannot even be clicked, so an unlocked twin
        dropped on top of it would be a puzzle rather than a duplicate. A
        PINNED one clones happily: the copy is a free item. */
-    var idxs=selIdxs().filter(function(i){
+    var all=selIdxs();
+    var idxs=all.filter(function(i){
       var a=s.annots[i];return a&&!lockedAll(a);});
-    if(!idxs.length) return;
+    /* T487: the same words Delete uses, not a silent no-op */
+    if(!idxs.length){
+      var held=all.filter(function(i){
+        var a=s.annots[i];return a&&lockedAll(a);}).length;
+      if(held) toast(held===1?'That item is fully locked \u2014 unlock it first'
+        :'Those '+held+' items are fully locked \u2014 unlock them first');
+      return;
+    }
     var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF,bare);
     if(!made.length) return;
     /* T481: A COPY OF A PLACE-LINKED CLONE IS A FREE OBJECT. The set
@@ -51456,7 +51739,13 @@ window.JunoPptx = (function () {
     var atEnd=front
       ?idxs[0]===n-idxs.length
       :idxs[idxs.length-1]===idxs.length-1;
-    if(atEnd&&!step) return;
+    /* T487: the comment above promised the words and the code returned
+       bare (2026-09-15 review) */
+    if(atEnd){
+      toast(front?'Already in front of everything on this page'
+        :'Already behind everything on this page');
+      return;
+    }
     var moving=idxs.map(function(i){return s.annots[i];});
     var rest=s.annots.filter(function(a,i){return idxs.indexOf(i)<0;});
     /* idxs[0] is the LOWEST selected index, so every item below it is in
@@ -52724,10 +53013,19 @@ window.JunoPptx = (function () {
       var b=document.createElement('button');
       b.className='dbtn li-card';
       b.title=note||'';
-      var mini=miniDiagram(prev);
       var W=Math.max(220,Math.min(420,Math.round(window.innerWidth*0.28)));
+      var H=Math.round(W*ratio);
+      /* T490: DRAWN AT THE CARD'S OWN SCALE. miniDiagram sizes type
+         and strokes off miniHNow, the film strip's thumbnail height
+         (66px) -- so a 442x279 card drew every text box as three 3px
+         specks and text-only candidates were indistinguishable
+         (2026-09-15 review). The card's height is the scale while it
+         is drawn; the strip's is put back after. */
+      var mh=miniHNow;miniHNow=H;
+      var mini;
+      try{mini=miniDiagram(prev);}finally{miniHNow=mh;}
       mini.style.width=W+'px';
-      mini.style.height=Math.round(W*ratio)+'px';
+      mini.style.height=H+'px';
       b.appendChild(mini);
       var t=document.createElement('span');
       t.className='li-lab';t.textContent=label;
@@ -52736,11 +53034,11 @@ window.JunoPptx = (function () {
         e.stopPropagation();closeLayoutIdeas();apply();});
       grid.appendChild(b);
     }
-    [['tight','Tight'],['normal','Normal'],['airy','Airy']]
+    [['tight','Tight','tightly spaced'],['normal','Normal','normally spaced'],
+     ['airy','Airy','with wide gaps']]   /* T490: a word, not "-ly" */
       .forEach(function(t){
         card(ideaPreviewTidy(t[0],sl),t[1],
-          'Arrange what is on the slide, '+t[1].toLowerCase()+'ly '
-          +'spaced. Ctrl+Z undoes it.',
+          'Arrange what is on the slide, '+t[2]+'. Ctrl+Z undoes it.',
           function(){
             var n=arrangeSlide(pres.slides[cur],
               stage.querySelector('.annot-layer'),arrangeOpts(t[0]));
@@ -54063,6 +54361,20 @@ window.JunoPptx = (function () {
     if(!isFinite(val)) return;
     if(k==='x'||k==='y'){
       if(pinned(a)) return;
+      /* T487: A GROUP MOVES AS ONE, the way a drag moves it. The readout
+         is the primary's, but typing X into it tore one member out of
+         its group while the outline still said "one thing"
+         (2026-09-15 review, driven). Inside a group (double-clicked
+         in), an item is just an item, as everywhere else. */
+      var gi=sizeIdx(a);
+      if(a.grp!=null&&inGroup!==a.grp){
+        var d=val-(k==='x'?x:y);
+        dropTiedCaptions(s,selIdxs()).forEach(function(i){
+          var m=(typeof i==='number')?s.annots[i]:null;
+          if(!m||i===gi||m.grp!==a.grp||pinned(m)) return;
+          shiftAnnot(m,k==='x'?d:0,k==='y'?d:0);
+        });
+      }
       if(k==='x') x=val; else y=val;
     } else if(k==='w'){
       if(!(val>0)) return;
@@ -63167,6 +63479,13 @@ window.JunoPptx = (function () {
   }
   function focusPaint(layer,el,a){
     var f=animFocus(a); if(!f||!layer||!el) return;
+    /* T491: A THUMBNAIL IS A STILL. The zoom branch below moves the
+       GLOBAL stage; painted from a Story thumbnail it threw the
+       editor's page 100,000px off screen and the strip's observer,
+       watching the stage's style, re-rendered the strip forever
+       (third review pass). The lens and the spot are DOM on the
+       layer, harmless in a still; the zoom is the stage's alone. */
+    if(typeof storyPaint!=='undefined'&&storyPaint&&f.fx==='zoom') return;
     layer.setAttribute('data-focus',f.fx);
     if(f.fx==='spot'){
       el.classList.add('an-spot');
@@ -63487,8 +63806,17 @@ window.JunoPptx = (function () {
   var SEQ_BY=[['','Whole box','W','text'],['para','By bullet','B','indent'],
     ['sent','By sentence','S','spacing'],['hl','Highlight','H','star']];
   var seqBy='';
+  /* T491: ...but not inside a text field. Armed, the mode took P, A,
+     N and every digit typed into Notes, Find or the deck's name (third
+     review pass); the editor's own key handler has had this guard all
+     along. */
+  function seqInField(e){
+    var t=e&&e.target; if(!t) return false;
+    var tag=(t.tagName||'').toLowerCase();
+    return tag==='input'||tag==='select'||tag==='textarea'||!!t.isContentEditable;
+  }
   function seqKeyDown(e){
-    if(!seqArm) return;
+    if(!seqArm||seqInField(e)) return;
     /* T471: A KEY THE MODE TAKES IS TAKEN. It prevented the default and
        let the event go on, so the editor's own handler saw it too: G
        (Grow) toggled the grid, B (By bullet) armed the guide-box tool
@@ -63516,7 +63844,7 @@ window.JunoPptx = (function () {
     else {delete a.anim.by;delete a.anim.hl;}
   }
   function seqKeyUp(e){
-    if(!seqArm) return;
+    if(!seqArm||seqInField(e)) return;
     if(e.key>='0'&&e.key<='9'&&+e.key===seqDigit){seqDigit=0;seqSync();}
   }
   function seqArmStart(){
@@ -64154,7 +64482,13 @@ window.JunoPptx = (function () {
       idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
         if(type==='none') delete a.anim;
         else if(a.anim) a.anim.type=type;
-        else a.anim={type:type,order:no};});
+        else {
+          a.anim={type:type,order:no};
+          /* T491: a focus that would now sit before the entrance moves
+             to a click of its own, after it */
+          if(a.focus&&typeof a.focus.at==='number'&&a.focus.at<no)
+            a.focus.at=nextAnimOrder(s);
+        }});
       commit(s);
     }
     function mergeUp(){
@@ -64534,6 +64868,11 @@ window.JunoPptx = (function () {
       }
       seq.forEach(function(st,si){
         var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
+        /* T491: an exit or focus on a click of its own BEFORE this
+           build is listed before it -- appended after every build, the
+           numbered list ran 1, 2, 4, 4, 3 (third review pass) */
+        exits.filter(function(x){return !x.done&&x.o<o;})
+          .sort(function(x,y){return x.o-y.o;}).forEach(exitRow);
         var first=(plan.stop[b0]|0)+1;
         var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
         var kinds={};
@@ -66917,6 +67256,15 @@ window.JunoPptx = (function () {
     if(cur===prev) return;   /* clamped no-op: keep build + selection state */
     /* stepping back into a slide shows it fully built; forward starts fresh */
     revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
+    /* T491: a Zoom in on the last click stayed on the stage while the
+       next slide was built, and .deck-stage's transform transition
+       then played the clear -- the next slide arrived zoomed 3x and
+       shrank back (third review pass). Off, without a transition,
+       before the rebuild. */
+    if(stage&&stage.style.transform){
+      stage.style.transition='none';stage.style.transform='';
+      void stage.offsetWidth;stage.style.transition='';
+    }
     /* arm on ARRIVAL too: a slide whose first build is delayed should
        start counting the moment you land on it, not on a click that
        would defeat the point (T169). Deferred so it arms against the
@@ -68182,6 +68530,18 @@ window.JunoPptx = (function () {
         (!!s&&s.lay===b.dataset.lay).toString());
       b.disabled=!s;
     });
+    /* T489: THE DOOR SAYS WHICH LAYOUT THIS SLIDE HAS. The pressed
+       tile was the only sign, and it sat inside a pop-up you had to
+       open to read (2026-09-15 review); the door wears the slide's
+       layout beside its word, the way New slide wears the next one. */
+    doorVal('#lay-btn',(function(){
+      var on=$('#layout-menu-grid .lay[aria-pressed="true"] .lay-lb');
+      return on?on.textContent.trim():'';
+    })(),function(word){
+      return 'Lay THIS slide out one of the ready-made ways. Your words '
+        +'and figures stay; they move into the new places'
+        +(word?('. It is laid out as '+word+' now'):'');
+    });
     /* Home's strip lights the layout the NEXT slide takes (T218) */
     if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
     var te=$('#title-editor'), eb=$('#dc-edit');
@@ -68688,6 +69048,81 @@ window.JunoPptx = (function () {
     if(!v&&fallback) s.title='default';
     return s;
   }
+  /* T490: THE TABLE EDITS COLOUR, FILL AND FACE TOO. T224's ask was "a
+     table of them all ... colour, font etc. ... change them
+     individually here", and the three cells were read-only swatches
+     and a word (2026-09-15 review). A colour cell is the swatch as a
+     picker, with a Default (or None, for the fill) button beside it;
+     the Face cell is the ribbon's typeface list. Every write goes the
+     way dgNum's does: markDirty, refresh, the strip, the body kept. */
+  function dgWrite(){
+    markDirty();refresh();renderFilm();
+    var ov=$('#deck-design'); if(ov) dgBodyKeep(ov);
+  }
+  function dgColCell(r,key,isFill){
+    var wrap=document.createElement('span');
+    wrap.className='dgt-colw';
+    var a=r.a;
+    var v=isFill?((a.bg===0)?'none':a.bgc):a.color;
+    var st=(a.style&&typeof styleDef==='function')?styleDef(a.style):null;
+    var eff=v||(st&&(isFill?st.bg:st.color))||'';
+    var ci=document.createElement('input');
+    ci.type='color';ci.className='dgt-col';
+    var rv=(eff&&eff!=='none')?tokVal(eff):'';
+    ci.value=/^#[0-9a-f]{6}$/i.test(rv)?rv:(isFill?'#16273a':'#e6eef5');
+    ci.classList.toggle('dgt-unset',!v||v==='none');
+    ci.title=(isFill?'Fill':'Text colour')+' of this box'
+      +(v?(v==='none'?' \u2014 none':''):' \u2014 the type\u2019s own');
+    ci.addEventListener('click',function(e){e.stopPropagation();});
+    ci.addEventListener('input',function(){
+      if(isFill){a.bgc=ci.value;delete a.bg;}
+      else a.color=ci.value;
+      ci.classList.remove('dgt-unset');
+      markDirty();refresh();
+    });
+    ci.addEventListener('change',function(){dgWrite();});
+    wrap.appendChild(ci);
+    var nb=document.createElement('button');
+    nb.className='dbtn dgt-colb';nb.type='button';
+    nb.textContent=isFill?'None':'Default';
+    nb.title=isFill?'No fill behind this box'
+      :'Back to the type\u2019s own colour';
+    nb.setAttribute('aria-pressed',(isFill?(a.bg===0):!a.color).toString());
+    nb.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(isFill){
+        if(a.bg===0){delete a.bg;} else {a.bg=0;}
+      } else delete a.color;
+      dgWrite();
+    });
+    wrap.appendChild(nb);
+    return wrap;
+  }
+  function dgFaceCell(r){
+    var sel=document.createElement('select');
+    sel.className='dgt-face dgt-facesel';
+    var o0=document.createElement('option');
+    o0.value='';o0.textContent='default';sel.appendChild(o0);
+    var seen={};
+    FONTS.forEach(function(f){
+      var o=document.createElement('option');
+      o.value=f.id;o.textContent=f.label;sel.appendChild(o);seen[f.id]=1;
+    });
+    /* a typed family name is not in the table: offer it as itself */
+    if(r.a.font&&!seen[r.a.font]){
+      var ox=document.createElement('option');
+      ox.value=r.a.font;ox.textContent=r.a.font;sel.appendChild(ox);
+    }
+    sel.value=r.a.font||'';
+    sel.title='Typeface of this box \u2014 default is the type\u2019s own';
+    sel.addEventListener('click',function(e){e.stopPropagation();});
+    sel.addEventListener('keydown',function(e){e.stopPropagation();});
+    sel.addEventListener('change',function(){
+      if(sel.value) r.a.font=sel.value; else delete r.a.font;
+      dgWrite();
+    });
+    return sel;
+  }
   /* pt: the cell reads and writes POINTS (T411) -- the unit the ribbon's
      Text size box and the type screen speak -- and a box that says
      nothing shows what it gets, greyed, rather than an empty cell. */
@@ -68932,12 +69367,10 @@ window.JunoPptx = (function () {
       cell(dgNum(r,'w'),'dgt-num');
       if(isTx){
         cell(dgNum(r,'size','1',true),'dgt-num');   /* T411: in pt */
-        var f=document.createElement('span');
-        f.className='dgt-face';f.textContent=r.a.font||'default';
-        cell(f,'dgt-face-c');
+        cell(dgFaceCell(r),'dgt-face-c');           /* T490: editable */
       }
-      cell(dgSwatch(r.a.color,1),'dgt-swc');
-      cell(dgSwatch(r.a.bg===0?'none':r.a.bgc,1),'dgt-swc');
+      cell(dgColCell(r,'color',false),'dgt-swc');   /* T490: editable */
+      cell(dgColCell(r,'bgc',true),'dgt-swc');
       cells.forEach(function(c){
         /* the row is the click target: matching, and going to look at it */
         c.addEventListener('click',function(){
@@ -69249,12 +69682,42 @@ window.JunoPptx = (function () {
      on them. Then the boxes wearing nothing, banded by size, with the
      style the check would give them. The same survey the old tile ran
      (standardise), read as a table instead of a list of complaints. */
+  /* T490: the per-style counts FOLDED INTO THE STYLE ROWS. The rail
+     listed every used style twice -- a "who wears what" count row and,
+     directly under it, the type row with the same name and number
+     (2026-09-15 review). The count, the "changed by hand" note and its
+     Match button live on the style's own row now (dgOddNote, under
+     styleRow); this table keeps only what has no row of its own: the
+     boxes wearing nothing, banded by size. */
+  function dgOddNote(id,d,ov,r){
+    var list=(r&&r.named&&r.named[id])||[]; if(!list.length) return null;
+    var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
+    if(!odd.length) return null;
+    var row=document.createElement('div');row.className='dg-cnt dg-cnt-odd dg-rownote';
+    var note=document.createElement('span');
+    note.className='dg-cnt-note';
+    note.textContent=odd.length+' changed by hand';
+    row.appendChild(note);
+    var b=document.createElement('button');
+    b.type='button';b.className='dbtn dg-cnt-fix';
+    b.textContent='Match '+odd.length;
+    b.title='Put the '+(d.label||id)+' style back on the '+odd.length
+      +' that were changed by hand';
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      stdFix(odd,function(a){applyStyleTo(a,id);},
+        odd.length+' box'+(odd.length===1?'':'es')+' put back');
+      dgRail(ov);dgBody(ov);
+    });
+    row.appendChild(b);
+    return row;
+  }
   function dgCounts(rail,ov){
     if(typeof standardise!=='function') return;
     var r=standardise();
     var host=document.createElement('div');host.className='dg-counts';
     var h=document.createElement('div');
-    h.className='dg-family-name';h.textContent='who wears what';
+    h.className='dg-family-name';h.textContent='no style yet';
     host.appendChild(h);
     var any=false;
     function cntRow(n,label,cls){
@@ -69266,43 +69729,12 @@ window.JunoPptx = (function () {
       row.appendChild(nn);row.appendChild(l);
       return row;
     }
-    styleOrder().forEach(function(id){
-      var list=(r.named&&r.named[id])||[]; if(!list.length) return;
-      any=true;
-      var d=styleDef(id)||{label:id};
-      var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
-      var row=cntRow(list.length,d.label||id,odd.length?' dg-cnt-odd':'');
-      if(odd.length){
-        /* T470: the note on its own line, like the button under it --
-           on one line with the name it was the note that got cut
-           ("Heading 1 -- 1 changed by…", 2026-09-15 review) */
-        var note=document.createElement('span');
-        note.className='dg-cnt-note';
-        note.textContent=odd.length+' changed by hand';
-        row.appendChild(note);
-        var b=document.createElement('button');
-        b.type='button';b.className='dbtn dg-cnt-fix';
-        b.textContent='Match '+odd.length;
-        b.title='Put the '+(d.label||id)+' style back on the '+odd.length
-          +' that were changed by hand';
-        b.addEventListener('click',function(e){
-          e.stopPropagation();
-          stdFix(odd,function(a){applyStyleTo(a,id);},
-            odd.length+' box'+(odd.length===1?'':'es')+' put back');
-          dgRail(ov);dgBody(ov);
-        });
-        row.appendChild(b);
-      }
-      row.addEventListener('click',function(){
-        dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
-      host.appendChild(row);
-    });
     (r.bands||[]).forEach(function(bd){
       if(bd.boxes.length<2) return;
       any=true;
       var sug=(styleDef(bd.suggest)||{}).label||bd.suggest;
       var row=cntRow(bd.boxes.length,'at about '+Math.round(bd.size*5.4)
-        +' pt, no style yet',' dg-cnt-loose');
+        +' pt',' dg-cnt-loose');
       var b=document.createElement('button');
       b.type='button';b.className='dbtn dg-cnt-fix';
       b.textContent='Make them '+sug;
@@ -69318,7 +69750,9 @@ window.JunoPptx = (function () {
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
-    dgCounts(rail,ov);   /* T443 */
+    /* T490: one survey for the rail -- the loose bands at the foot,
+       the odd-wearer notes under the rows */
+    var std=(typeof standardise==='function')?standardise():null;
     function styleRow(id,isVar){
       var d=styleDef(id); if(!d) return;
       var b=document.createElement('button');
@@ -69364,6 +69798,9 @@ window.JunoPptx = (function () {
       b.addEventListener('click',function(){
         dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b);
+      /* T490: "N changed by hand · Match N", under the row it is about */
+      var oddRow=dgOddNote(id,d,ov,std);
+      if(oddRow) rail.appendChild(oddRow);
     }
     /* T295: A FAMILY READS AS A FAMILY HERE TOO. styleOrder appends, so
        a variation of Heading 1 sat last, after Caption, with nothing
@@ -69457,6 +69894,9 @@ window.JunoPptx = (function () {
         dgSel=key;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b2);
     });
+    /* T490: the boxes wearing nothing, banded by size, AFTER the rows --
+       they are the one thing without a row of their own */
+    dgCounts(rail,ov);   /* T443 */
   }
   /* ---- the board: where a named type SITS by default ------------------
      The one genuinely new idea. A style has always said how a Heading
@@ -72469,6 +72909,11 @@ window.JunoPptx = (function () {
     mode=m;
     /* T471: Quick animate is an editor mode; leaving the editor ends it */
     if(m!=='edit'&&typeof seqOn==='function'&&seqOn()) seqEnd(true);
+    /* T491: the Story strip is the editor's; the show's stage is not
+       its to watch (it re-rendered the strip on every click of the
+       show, and its zoom leaked into the show -- third review pass) */
+    if(m!=='edit'&&typeof storyOpen==='function'&&storyOpen()
+       &&typeof storyShow==='function') storyShow(false);
     if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
       closeDeckPresentationDrawer();
     if(m!=='view'&&typeof talkToolsReset==='function') talkToolsReset();
@@ -74264,32 +74709,70 @@ window.JunoPptx = (function () {
     renderPresRow();
   });
 
-  /* ---- watermark / header / footer, edited in one small prompt each --
-     A dialog would be a whole modal for three fields nobody changes twice
-     a year; a prompt says exactly what it wants and leaves the ribbon
-     button showing whether the thing is on. Empty turns it off, which is
-     the same gesture as clearing any other field. */
+  /* ---- watermark / header / footer, edited in one small form each ---
+     T488: the model has carried size, colour, alignment, "not on the
+     first slide", the watermark's opacity and angle since T115, read by
+     paintFurniture and written nowhere -- the prompt took the words
+     alone, and the ribbon button read as a toggle that could not be
+     toggled (2026-09-15 review). The form is askText's `rows`; the
+     ribbon button stays the on/off readout, and "Turn it off" is the
+     form's third button (an empty text turns it off too). Sizes are
+     asked in points, the editor's currency everywhere else, and stored
+     as the percent of page height the painter reads. */
+  var FURN_PT=5.4;   /* pt per percent of page height, as the tooltips */
   function furnEdit(key,label,hint,dflt){
     var cur_=pres[key]||{};
-    /* T475: the editor's own question; the hint's first line is what
-       it is, the rest is the note under the field */
     var lines=String(hint).split('\n');
-    askText({title:label,label:lines[0],value:cur_.text||dflt||'',
-      note:lines.slice(1).join(' '),ok:cur_.text?'Change it':'Add it'},
-    function(v){
-    if(v===null) return;
-    v=v.trim();
-    if(!v) delete pres[key];
-    else {
-      pres[key]=pres[key]||{};
-      pres[key].text=v;
-      if(key==='wmark'){
-        if(pres[key].size==null) pres[key].size=12;
-        if(pres[key].op==null) pres[key].op=0.12;
-      } else if(pres[key].size==null) pres[key].size=2;
+    var isW=(key==='wmark');
+    var on=!!String(cur_.text||'').trim();
+    var curCol=cur_.color?tokVal(cur_.color):'';
+    var rows=[
+      {k:'text',label:'Words',value:cur_.text||dflt||'',placeholder:dflt||'',
+       note:lines.slice(1).join(' ')},
+      {k:'pt',label:'Size',type:'number',
+       value:Math.round((cur_.size==null?(isW?12:2):cur_.size)*FURN_PT),
+       min:4,max:isW?400:60,step:1,unit:'pt'}];
+    if(isW){
+      rows.push({k:'op',label:'Opacity',type:'range',
+        value:cur_.op==null?0.12:cur_.op,min:0.03,max:0.6,step:0.01,pct:true});
+      rows.push({k:'rot',label:'Angle',type:'number',
+        value:cur_.rot==null?-28:cur_.rot,min:-90,max:90,step:1,
+        unit:'\u00b0'});
+    } else {
+      rows.push({k:'align',label:'Aligned',type:'select',
+        value:cur_.align||'left',
+        options:[['left','Left'],['center','Centre'],['right','Right']]});
     }
-    markDirty();refresh();syncFurnBtns();
-    toast(v?(label+' set'):(label+' removed'));
+    rows.push({k:'color',label:'Colour',type:'color',value:curCol,clear:true});
+    if(!isW) rows.push({k:'skipFirst',label:'Not on the first slide',
+      type:'check',value:!!cur_.skipFirst});
+    askText({title:label,what:lines[0],rows:rows,
+      ok:on?'Change it':'Add it',alt:on?'Turn it off':''},
+    function(v,why){
+      if(why==='alt'||(v&&!String(v.text||'').trim())){
+        delete pres[key];
+        markDirty();refresh();syncFurnBtns();
+        toast(label+' removed');
+        return;
+      }
+      if(v===null) return;
+      var o2=pres[key]=pres[key]||{};
+      o2.text=String(v.text).trim();
+      if(v.pt!=null&&v.pt>0) o2.size=Math.round(v.pt/FURN_PT*100)/100;
+      else if(o2.size==null) o2.size=isW?12:2;
+      if(isW){
+        if(v.op!=null) o2.op=v.op; else if(o2.op==null) o2.op=0.12;
+        if(v.rot!=null) o2.rot=v.rot;
+      } else {
+        if(v.align&&v.align!=='left') o2.align=v.align; else delete o2.align;
+        if(v.skipFirst) o2.skipFirst=1; else delete o2.skipFirst;
+      }
+      /* a token colour (@ink) is kept when the swatch was left alone */
+      if(!v.color) delete o2.color;
+      else if(v.color.toLowerCase()!==String(curCol).toLowerCase())
+        o2.color=v.color;
+      markDirty();refresh();syncFurnBtns();
+      toast(label+' set');
     });
   }
   function syncFurnBtns(){
@@ -74524,7 +75007,11 @@ window.JunoPptx = (function () {
          one, and this is the one place that always knows */
       if(window.MutationObserver&&!storyObs){
         storyObs=new MutationObserver(storySoon);
-        storyObs.observe(stage,{childList:true,subtree:true,attributes:true});
+        /* T491: children and classes -- never the stage's own style,
+           which the focus zoom writes and which made the strip repaint
+           itself forever (third review pass) */
+        storyObs.observe(stage,{childList:true,subtree:true,
+          characterData:true,attributes:true,attributeFilter:['class']});
       }
     }
     var b=$('#anim-story');
@@ -74581,37 +75068,165 @@ window.JunoPptx = (function () {
      otherwise -- so every caller is a callback, which is what a
      dialog that is not modal to the whole browser has to be. */
   var askCb=null,askWired=false;
+  /* T488: A SMALL FORM. `o.rows` is a list of {k,label,type,value,...}
+     -- text (default), number (min/max/step, unit), select (options
+     [[value,label]]), check, color (clear:true adds a Default button;
+     '' means default), range (min/max/step, pct:true reads as a
+     percentage) -- and the callback receives {k:value} instead of a
+     string. `o.alt` names a third button; it closes the question and
+     calls back (null,'alt'). The page furniture's editor is the first
+     taker: header, footer and watermark had size, colour, alignment,
+     angle and "not on the first slide" in the model with no door
+     (2026-09-15 review). */
+  var askRows=null;
+  function askRowsBuild(host,rows){
+    host.innerHTML='';
+    askRows=[];
+    rows.forEach(function(r,i){
+      var id='ask-r'+i;
+      var lab=document.createElement('label');
+      lab.className='ask-row-lab';lab.htmlFor=id;
+      lab.textContent=r.label||'';
+      var cell=document.createElement('span');
+      cell.className='ask-row-cell';
+      var el,readout=null,clearBtn=null;
+      var t=r.type||'text';
+      if(t==='select'){
+        el=document.createElement('select');
+        el.className='ask-in ask-sel';
+        (r.options||[]).forEach(function(op){
+          var o2=document.createElement('option');
+          o2.value=op[0];o2.textContent=op[1];
+          if(String(op[0])===String(r.value)) o2.selected=true;
+          el.appendChild(o2);
+        });
+      } else if(t==='check'){
+        el=document.createElement('input');
+        el.type='checkbox';el.className='ask-check';
+        el.checked=!!r.value;
+      } else if(t==='color'){
+        el=document.createElement('input');
+        el.type='color';el.className='ask-color';
+        var hex=/^#[0-9a-f]{6}$/i.test(String(r.value||''))?r.value:'';
+        el.value=hex||'#888888';
+        el.dataset.cleared=hex?'':'1';
+        if(r.clear){
+          clearBtn=document.createElement('button');
+          clearBtn.type='button';clearBtn.className='dbtn ask-clear';
+          clearBtn.textContent='Default';
+          clearBtn.setAttribute('aria-pressed',hex?'false':'true');
+          clearBtn.addEventListener('click',function(e){
+            e.stopPropagation();
+            el.dataset.cleared='1';
+            clearBtn.setAttribute('aria-pressed','true');
+          });
+          el.addEventListener('input',function(){
+            el.dataset.cleared='';
+            clearBtn.setAttribute('aria-pressed','false');
+          });
+        }
+      } else if(t==='range'){
+        el=document.createElement('input');
+        el.type='range';el.className='ask-range';
+        if(r.min!=null) el.min=r.min;
+        if(r.max!=null) el.max=r.max;
+        if(r.step!=null) el.step=r.step;
+        el.value=r.value==null?'':r.value;
+        readout=document.createElement('span');
+        readout.className='ask-unit';
+        var say=function(){
+          readout.textContent=r.pct?(Math.round(parseFloat(el.value)*100)+'%')
+            :el.value+(r.unit?(' '+r.unit):'');};
+        el.addEventListener('input',say);say();
+      } else {
+        el=document.createElement('input');
+        el.type=(t==='number')?'number':'text';
+        el.className='ask-in'+(t==='number'?' ask-num':'');
+        if(t==='number'){
+          if(r.min!=null) el.min=r.min;
+          if(r.max!=null) el.max=r.max;
+          if(r.step!=null) el.step=r.step;
+        }
+        /* the form's text rows are names and {codes}: unchecked, like
+           #ask-in's own markup */
+        el.setAttribute('spellcheck','false');el.autocomplete='off';
+        el.value=(r.value==null)?'':String(r.value);
+        el.placeholder=r.placeholder||'';
+      }
+      el.id=id;
+      cell.appendChild(el);
+      if(readout) cell.appendChild(readout);
+      else if(r.unit&&t!=='range'){
+        var u=document.createElement('span');
+        u.className='ask-unit';u.textContent=r.unit;
+        cell.appendChild(u);
+      }
+      if(clearBtn) cell.appendChild(clearBtn);
+      host.appendChild(lab);host.appendChild(cell);
+      if(r.note){
+        var n=document.createElement('div');
+        n.className='ask-row-note';n.textContent=r.note;
+        host.appendChild(n);
+      }
+      askRows.push({r:r,el:el});
+    });
+  }
+  function askRowsRead(){
+    var out={};
+    (askRows||[]).forEach(function(x){
+      var r=x.r,el=x.el,t=r.type||'text';
+      if(t==='check') out[r.k]=!!el.checked;
+      else if(t==='color') out[r.k]=el.dataset.cleared?'':el.value;
+      else if(t==='number'||t==='range'){
+        var n=parseFloat(el.value);
+        out[r.k]=isFinite(n)?n:(r.value==null?null:r.value);
+      } else out[r.k]=el.value;
+    });
+    return out;
+  }
   function askText(o,cb){
     var dlg=$('#ask-dlg');
     if(!dlg){cb(null);return;}
     o=o||{};
-    var multi=!!o.multi;
-    var inp=$('#ask-in'),area=$('#ask-area');
+    var multi=!!o.multi,rows=Array.isArray(o.rows)&&o.rows.length;
+    var inp=$('#ask-in'),area=$('#ask-area'),rowsEl=$('#ask-rows');
     $('#ask-t').textContent=o.title||'Name';
     var what=$('#ask-what');
     what.textContent=o.what||'';what.hidden=!o.what;
     var lab=$('#ask-lab');
-    lab.textContent=o.label||'';lab.hidden=!o.label;
+    lab.textContent=o.label||'';lab.hidden=!o.label||rows;
     var note=$('#ask-note');
     note.textContent=o.note||'';
     $('#ask-ok').textContent=o.ok||'OK';
-    inp.hidden=multi;area.hidden=!multi;
-    var field=multi?area:inp;
-    field.value=(o.value==null)?'':String(o.value);
-    field.placeholder=o.placeholder||'';
+    var alt=$('#ask-alt');
+    if(alt){alt.textContent=o.alt||'';alt.hidden=!o.alt;}
+    inp.hidden=multi||rows;area.hidden=!multi||rows;
+    if(rowsEl){rowsEl.hidden=!rows;if(rows) askRowsBuild(rowsEl,o.rows);
+      else askRows=null;}
+    var field=rows?(askRows[0]&&askRows[0].el):multi?area:inp;
+    if(!rows){
+      field.value=(o.value==null)?'':String(o.value);
+      field.placeholder=o.placeholder||'';
+    }
     askCb=cb;
     dlg.classList.toggle('over-design',!!$('#deck-design'));
+    dlg.classList.toggle('ask-form',!!rows);
     dlg.hidden=false;
-    setTimeout(function(){field.focus();
-      if(!multi&&o.select!==false) field.select();},0);
+    setTimeout(function(){if(!field) return;field.focus();
+      if(!multi&&o.select!==false&&field.select&&field.type!=='color')
+        field.select();},0);
     if(askWired) return;
     askWired=true;
-    function done(v){
+    function done(v,why){
       dlg.hidden=true;
       var f=askCb;askCb=null;
-      if(f) f(v);
+      if(f) f(v,why||'');
     }
-    function ok(){done((area.hidden?inp:area).value);}
+    function ok(){
+      done(askRows?askRowsRead():(area.hidden?inp:area).value);
+    }
+    if(alt) alt.addEventListener('click',function(e){
+      e.stopPropagation();done(null,'alt');});
     $('#ask-ok').addEventListener('click',function(e){
       e.stopPropagation();ok();});
     $('#ask-cancel').addEventListener('click',function(e){
@@ -74638,7 +75253,9 @@ window.JunoPptx = (function () {
       if(!dlg.contains(e.target)&&e.target!==document.body) return;
       e.stopImmediatePropagation();
       if(e.key==='Escape'){e.preventDefault();done(null);}
-      else if(e.key==='Enter'&&(e.target===inp||(e.target===area&&e.ctrlKey))){
+      else if(e.key==='Enter'&&(e.target===inp||(e.target===area&&e.ctrlKey)
+        ||(askRows&&rowsEl&&rowsEl.contains(e.target)
+          &&e.target.tagName!=='BUTTON'))){
         e.preventDefault();ok();}
     },true);
   }
@@ -75084,8 +75701,8 @@ window.JunoPptx = (function () {
       +(n===1?'':'s')+', '+slides+' slide'+(slides===1?'':'s')+'.</p>'
       +'<p>To edit it, open Junoview and pick <code>+ New… → Open a '
       +'.junoview file…</code> (or <code>File → Open</code> inside any '
-      +'presentation), or keep it next to its notebook and it loads '
-      +'itself.</p>'
+      +'presentation), or keep it next to its notebook and '
+      +'<code>junoview notebook.ipynb</code> loads it itself.</p>'
       +'</main><script type="application/json" id="junoview-data">\n'
       +json+'\n</'+'script></body></html>\n';
   }
@@ -75947,9 +76564,15 @@ window.JunoPptx = (function () {
       +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
-    toast((APP.order.length===1
-      ?'Downloaded. Keep it next to the .ipynb and it loads itself.'
-      :'Downloaded. Load it with --deck, or save to the project instead.')
+    /* T487: the words say how the file IS opened. Since T415 it is
+       named after the deck, and the loader looked for <notebook>
+       .junoview.html alone, so "keep it next to the .ipynb and it loads
+       itself" was a promise the file could not keep (2026-09-15
+       review); loader.py now takes every .junoview.html beside the
+       notebook that is not another notebook's, and the toast names
+       the other door. */
+    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '
+      +'itself; File \u2192 Open a .junoview file\u2026 opens it anywhere.'
       +embNote());
   });
   menuAction('#mi-load',openDeckFile);
@@ -76068,7 +76691,8 @@ window.JunoPptx = (function () {
     /* ...and whatever a render path still marked, off: the ring is the
        editor's, and no page is the editor */
     $$('.sel,.grpsel',root).forEach(function(el){
-      el.classList.remove('sel','grpsel');});
+      el.classList.remove('sel','grpsel','an-grouped');});
+    $$('.an-grpframe',root).forEach(function(el){el.remove();});
     /* put the editor back on its own frame, or every flip book on screen
        would be left showing whatever the last exported page wanted */
     flipForce=null;
@@ -76196,13 +76820,71 @@ window.JunoPptx = (function () {
      so the file travels whole. It reads as stacked pages, arrow keys
      step through them, and Ctrl+P prints at true page size (the same
      @page rules ride along). ---- */
+  /* T487: THE FONTS RIDE INSIDE. MathJax's stylesheet is copied into
+     the standalone page with its @font-face url(https://cdn.jsdelivr
+     .net/...woff) rules, so "opens anywhere" opened offline with every
+     equation in a fallback face (2026-09-15 review, driven offline with
+     a fresh profile: five fonts in error). The fonts the page used are
+     fetched -- from the service worker's cache when there is no
+     network -- and written in as data: URIs; one that cannot be fetched
+     is left as its URL and the toast says so. */
+  function inlineFontUrls(css){
+    /* only the faces this page has actually LOADED -- MathJax declares
+       all 22 up front and fetches per glyph, so packing every one in
+       would add ~600KB for a deck with one equation. document.fonts
+       .ready first: the print root was typeset a moment ago and its
+       faces may still be on their way in. */
+    var ready;
+    try{ready=document.fonts.ready;}catch(e){}
+    return Promise.resolve(ready).catch(function(){}).then(function(){
+      return inlineFontUrls2(css);});
+  }
+  function inlineFontUrls2(css){
+    var loaded={},anyLoaded=false;
+    try{
+      document.fonts.forEach(function(f){
+        if(f.status==='loaded'||f.status==='loading'){
+          loaded[String(f.family).replace(/^["']|["']$/g,'')]=1;anyLoaded=true;}
+      });
+    }catch(e){}
+    var seen={},list=[];
+    css.replace(/@font-face[^{]*\{([^}]*)\}/g,function(m,body){
+      var fam=/font-family:\s*["']?([^;"']+)/.exec(body);
+      var u=/url\((["']?)(https:\/\/cdn\.jsdelivr\.net\/[^)"']+?\.woff2?)\1\)/.exec(body);
+      if(!u) return m;
+      if(anyLoaded&&fam&&!loaded[fam[1].trim()]) return m;
+      if(!seen[u[2]]){seen[u[2]]=1;list.push(u[2]);}
+      return m;
+    });
+    if(!list.length) return Promise.resolve({css:css,missed:0});
+    return Promise.all(list.map(function(u){
+      return fetch(u).then(function(r){return r.ok?r.blob():null;})
+        .then(function(b){
+          if(!b) return null;
+          return new Promise(function(res){
+            var fr=new FileReader();
+            fr.onload=function(){res(fr.result);};
+            fr.onerror=function(){res(null);};
+            fr.readAsDataURL(b);
+          });
+        }).catch(function(){return null;})
+        .then(function(d){return [u,d];});
+    })).then(function(pairs){
+      var missed=0;
+      pairs.forEach(function(p){
+        if(p[1]) css=css.split(p[0]).join(p[1]); else missed++;});
+      return {css:css,missed:missed};
+    });
+  }
   function exportDeckHtml(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var root=buildPrintRoot();
     afterTypeset(root,function(){
-      var css='';
+      var css0='';
       $$('style',document.head).forEach(function(st){
-        css+=st.textContent+'\n';});
+        css0+=st.textContent+'\n';});
+      inlineFontUrls(css0).then(function(fo){
+      var css=fo.css;
       var nav='<scr'+'ipt>document.addEventListener("keydown",'
         +'function(e){'
         +'var p=[].slice.call(document.querySelectorAll(".print-page"));'
@@ -76244,8 +76926,13 @@ window.JunoPptx = (function () {
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
       if(root.parentNode) root.remove();   /* by reference, never by id */
-      toast('Standalone HTML saved — opens anywhere; Ctrl+P there '
-        +'prints at page size');
+      toast(fo.missed
+        ?('Standalone HTML saved \u2014 '+fo.missed+' equation font'
+          +(fo.missed===1?'':'s')+' could not be packed in, so equations '
+          +'need a network connection the first time it is opened')
+        :'Standalone HTML saved — opens anywhere; Ctrl+P there '
+          +'prints at page size');
+      });
     });
   }
   menuAction('#mi-html',function(){exportDeckHtml();});
@@ -76465,6 +77152,71 @@ window.JunoPptx = (function () {
     var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);
     return {x:p.x,y:p.y,w:w,h:h};
   }
+  /* T486: THE BOX AS PARAGRAPHS AND RUNS. A Markdown box renders through
+     notesHtml and a rich box through sanitizeRich -- the same HTML the
+     slide shows -- and that HTML is walked into the writer's run model:
+     block elements are paragraphs (an <li> a bullet, at its nesting
+     level; an <hN> a heading), inline marks are per-run bold, italic,
+     underline, strike and colour. Links keep their words. */
+  function pptxParasFromHtml(html){
+    var doc;
+    try{doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');}
+    catch(e){return null;}
+    var root=doc.body&&doc.body.firstChild; if(!root) return null;
+    var paras=[],cur=null;
+    function para(kind,lvl,head){
+      cur={runs:[],bullet:kind==='ul',num:kind==='ol',lvl:lvl||0,head:head||0};
+      paras.push(cur);return cur;
+    }
+    function colOf(n){
+      var c=n.style&&n.style.color; if(!c) return '';
+      var m=/^#([0-9a-f]{6})$/i.exec(c); if(m) return c;
+      var r=rgbOf(c); return r?('#'+[r[0],r[1],r[2]].map(function(v){
+        return ('0'+Math.round(v).toString(16)).slice(-2);}).join('')):'';
+    }
+    function walk(n,st,lvl){
+      if(n.nodeType===3){
+        var t=n.nodeValue.replace(/\s+/g,' ');
+        if(!t.trim()&&!cur) return;
+        if(!cur) para('',0,0);
+        cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
+          color:st.color||''});
+        return;
+      }
+      if(n.nodeType!==1) return;
+      var tag=n.tagName.toLowerCase(),s2={};
+      for(var k in st) s2[k]=st[k];
+      if(tag==='b'||tag==='strong') s2.b=1;
+      if(tag==='i'||tag==='em') s2.i=1;
+      if(tag==='u') s2.u=1;
+      if(tag==='s'||tag==='strike'||tag==='del') s2.s=1;
+      var col=colOf(n); if(col) s2.color=col;
+      if(tag==='br'){cur=null;return;}
+      var hd=/^h([1-6])$/.exec(tag);
+      if(hd){para('',0,+hd[1]);[].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});cur=null;return;}
+      if(tag==='p'||tag==='div'||tag==='blockquote'||tag==='pre'||tag==='hr'){
+        para('',0,0);[].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});
+        cur=null;return;
+      }
+      if(tag==='ul'||tag==='ol'){
+        [].forEach.call(n.childNodes,function(c){
+          if(c.nodeType!==1||c.tagName.toLowerCase()!=='li'){walk(c,s2,lvl);return;}
+          para(tag,lvl,0);
+          [].forEach.call(c.childNodes,function(g){walk(g,s2,lvl+1);});
+          cur=null;
+        });
+        return;
+      }
+      [].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});
+    }
+    [].forEach.call(root.childNodes,function(c){walk(c,{},0);});
+    paras=paras.filter(function(p){return p.runs.some(function(r){return r.t.trim();});});
+    paras.forEach(function(p){
+      if(p.runs.length){p.runs[0].t=p.runs[0].t.replace(/^\s+/,'');
+        p.runs[p.runs.length-1].t=p.runs[p.runs.length-1].t.replace(/\s+$/,'');}
+    });
+    return paras.length?paras:null;
+  }
   function pptxTextItem(a,centred,ink,box){
     var b=box||pptxBox(a,centred);
     return {t:'text',x:b.x,y:b.y,w:b.w,h:b.h,
@@ -76549,9 +77301,22 @@ window.JunoPptx = (function () {
         var tp=mathsPlain(ti.text,!!a.maths);
         if(tp.hit) note.maths++;
         ti.text=tp.text;
-        /* T483: what the writer cannot say yet is counted, not hidden */
-        if(a.md) note.md=(note.md||0)+1;
-        else if(a.html&&/<(b|i|u|s|span|a)\b/i.test(a.html)) note.rich=(note.rich||0)+1;
+        /* T486: a Markdown or rich box leaves as paragraphs and runs,
+           from the HTML the slide itself shows */
+        if(!a.bib&&(a.md||_pg.h)){
+          var html=a.md?notesHtml(figSubst(_pg.t,a,note.figs))
+            :sanitizeRich(figSubst(_pg.h,a,note.figs)).html;
+          var paras=pptxParasFromHtml(html);
+          if(/<a\s[^>]*href/i.test(html)) note.links=(note.links||0)+1;
+          if(paras){
+            paras.forEach(function(p){p.runs.forEach(function(r){
+              var t2=mathsPlain(r.t,!!a.maths); r.t=t2.text;});});
+            ti.paras=paras;
+            /* the writer's plain-text bullets flag is the box's list;
+               with paragraphs it is per paragraph */
+            ti.bullets=false;
+          }
+        }
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
@@ -76876,13 +77641,11 @@ window.JunoPptx = (function () {
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
       +'path, so they arrive as plain characters');
-    /* T483: named rather than silent -- the writer has no run model yet */
-    if(note.md) lost.push(note.md+' Markdown box'+(note.md===1?'':'es')
-      +' \u2014 they arrive as their source text (the # and - marks '
-      +'included), not as headings and bullets');
-    if(note.rich) lost.push(note.rich+' text box'+(note.rich===1?'':'es')
-      +' with bold, colour or a link inside the words \u2014 the words '
-      +'arrive, the marks inside them do not');
+    /* T486: Markdown and rich boxes travel as paragraphs and runs now;
+       only a link inside the words is still words alone */
+    if(note.links) lost.push(note.links+' link'+(note.links===1?'':'s')
+      +' inside the words of a text box \u2014 the words arrive, the '
+      +'link does not');
     if(note.exits) lost.push(note.exits+' object'
       +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
       +'writer emits entrances only, so they arrive and then stay, '

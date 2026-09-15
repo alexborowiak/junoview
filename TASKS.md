@@ -9424,3 +9424,103 @@ any reading. The rest are T466 onwards.
   inside a text field. A Zoom in on the last click made the next slide
   arrive 3× and shrink back — off before the rebuild. And "Blur the
   rest" left every arrow sharp — the visible stroke dims too.
+- [ ] **T492 — The third review pass's open findings (2026-09-15).**
+  Verified by a skeptic agent where marked (v); the full record with
+  evidence, repro scripts and proposed fixes is in
+  `%LOCALAPPDATA%\Temp\claude\jv-shot\findings3.json` (workflow
+  wf_7df36607-44a). The animation-model lens shipped as T491; the
+  rest, one line each, by lens:
+  - [0] s3 - boot-and-wiring: On a poster page the Animation tab's Effect door
+    stays enabled and opens an EMPTY shelf; Focus reads 'select something'
+    while a text box is selected
+  - [1] s3 - boot-and-wiring: With View > Other slides on, the ghost copies of
+    every other slide wear the live selection outline (three things look
+    selected, one is)
+  - [2] s2 - boot-and-wiring: showFmt's completeness self-check warns on every
+    session that #fmt-chart, #fmt-media, #fmt-table are 'governed by nothing'
+    and 'will show for every selection' — false: their wrappers are governed
+  - [3] s2 - boot-and-wiring: 99-boot.js and CLAUDE.md claim ALL load-time
+    work runs from the boot sequence; 51 executing sub-IIFEs and ~260
+    top-level executing statements still run mid-file, some on unguarded
+    lookups
+  - [4] s4 v round-trip: A slide set to Cut inside a Fade section silently
+    goes back to Fade on every reload/reopen (normPres and the Python coercer
+    both drop trans:'')
+  - [5] s4 v round-trip: Reloading while editing a browser-kept deck drops you
+    out of the editor and rewrites the URL (#/pres/rt61/s2 -> #/doc/...); a
+    project deck survives the same reload
+  - [6] s3 - round-trip: After reopening a browser-kept deck the readout says
+    'unsaved — saving…' although nothing changed, nothing is scheduled to
+    save, and the close guard agrees nothing is unsaved
+  - [7] s4 v ribbon-fit: With a shelf open, a whole group wraps onto a second
+    line of the ribbon (Build order at <=1050 with a selection; Whole slide +
+    Build order at 900)
+  - [8] s3 - ribbon-fit: Below the floor the row clips silently: Build order's
+    Layers/Animation panel cut off with nothing telling the user (1050 with a
+    selection, 900 without)
+  - [9] s3 - ribbon-fit: On a poster the Animation tab's compact doors stay
+    live over hidden rows: Effect opens an empty shelf / a 42px empty popover,
+    Focus/Motion/Timing say 'select something'
+  - [10] s2 - ribbon-fit: Compact door readouts are ellipsised to 56px at the
+    tight rung inside an 82px door: 'select s…' x4, 'Every sl…', 'Panel + te…'
+  - [11] s2 - ribbon-fit: Focus door's NAME absorbs the caption's click
+    readout after a refit: 'Focus on click 5 ▾ / Blur the rest' and a shelf
+    titled FOCUS ON CLICK 5
+  - [12] s2 - ribbon-fit: A folded door's readout joins every pressed control
+    in its row, including ones inside hidden menus -- rest-group doors read
+    'None · Cut · Still · Whole box · Every slide · Code trail · Panel + text
+    · Left'
+  - [13] s2 - ribbon-fit: The shelf survives a selection change and a resize
+    but not a tab change -- coming back to the tab finds it closed
+  - [14] s2 - ribbon-fit: 'Everything in one row' and 'Everyday first' presets
+    fold most of the ribbon into doors at ordinary widths, leaving half the
+    bar empty
+  - [15] s4 - undo-history: Words typed in the ~900 ms before clicking Bold /
+    a colour swatch (caret kept in the box) are wiped by Ctrl+Z and never come
+    back with Ctrl+Y
+  - [16] s3 - undo-history: Citation style / footnotes / bibliography / 'new
+    slides get' slot changes push no undo entry, and Ctrl+Z after them rewinds
+    the previous unrelated edit instead
+  - [17] s3 - undo-history: Undo/redo never moves to the slide where the
+    change happened, so an edit on another slide is undone invisibly (and Redo
+    of 'New slide' leaves you on the old slide)
+  - [18] s3 - undo-history: Ctrl+Z drops the selection, the contextual
+    Object/Style tab disappears and the ribbon jumps to the Text tab; arrow
+    keys then move nothing
+  - [19] s3 - undo-history: Holding an arrow key to nudge pushes one undo
+    entry per key-repeat: 40 repeats = 40 entries, a second and a half of
+    nudging evicts every earlier edit from the 50-deep stack
+  - [20] s3 - undo-history: History pane: after a checkpoint plus edits,
+    picking the checkpoint compares it against the version BEFORE it, shows
+    the wrong diff, offers no 'Use the old one' / 'Put it back' buttons, and
+    still says 'you are here'
+  - [21] s2 - undo-history: 'Go back to this version' / 'Branch from here'
+    toast says 'so this is undoable' but Ctrl+Z is disabled immediately
+    afterwards
+  - [22] s2 - undo-history: Adding a section costs two undo entries: the first
+    Ctrl+Z only renames it back to 'New section'
+  - [31] s5 v layout-model: Save layout keeps the model slide's WORDS and New
+    slide places them as real, printable text (truncated to 18 chars) on every
+    slide made from it, in every deck of the project
+  - [32] s4 v layout-model: The layout pickers cache on pres.layouts.length,
+    so switching to another deck with the same number of custom layouts shows
+    and APPLIES the other deck's layout
+  - [33] s4 v layout-model: New slide while standing on the main of a version
+    group inserts between the main and its versions and silently dissolves the
+    group: 'Version 2' becomes an ordinary slide the talk shows
+  - [34] s4 v layout-model: The chosen saved layout is remembered by INDEX
+    ('arr:1'), so forgetting an earlier one makes New slide say one name and
+    build another; the saved tiles are rebuilt without re-lighting
+  - [35] s4 v layout-model: applyLayout treats untyped placeholder boxes as
+    content: they keep the old slot's words/type/size/alignment in the new
+    slot, and the surplus ones survive as strays floating over the new panel
+  - [36] s3 - layout-model: Placeholder words leave the editor: the .pptx
+    export writes 'Title'/'Body text' as text, thumbnails draw them, and the
+    strip names a slide by them
+  - [37] s3 - layout-model: Deleting the custom layout New slide was set to
+    leaves the strip with no lit tile, an empty readout, and New slide
+    silently adds a BLANK slide instead of the default
+  - [38] s2 - layout-model: On a poster the Home tile still says 'New slide …
+    laid out as the highlighted layout' but makes 'Version 2' (a copy of the
+    sheet), and the Animation tab stays live with six chooser groups a printed
+    page cannot use
