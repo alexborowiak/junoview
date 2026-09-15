@@ -5194,6 +5194,7 @@ body.slide-editing .apptop{display:none;}
 .rbn-trans{order:0;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
+.rbn-focus{order:3;}      /* T472: after Leaves early, before Motion */
 .rbn-motion{order:4;}     /* T385: after Leaves, before the slide */
 .rbn-flipfx{order:5;}
 /* T453: the choosers lead and the two groups of VERBS follow them
@@ -5376,6 +5377,11 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
+/* T474: Save version LAST (2026-09-15, user: "the save version group
+   should definitely be last. This means the 'new slide' and 'this
+   slide' can appear next to each other"). It had no rung, so it sat
+   at 0 between New slide and This slide. */
+.rbn-vers{order:9;}
 /* T438: ON OBJECT, THE SOURCE LEADS (2026-09-14, user: "when clicking
    on an object that is an image, it needs to tell you the path as the
    first thing in that tab"). The markup put the group first in
@@ -6373,6 +6379,34 @@ select#fmt-font[hidden]{display:none;}
   transform-origin:left center;transition:scale .25s ease,color .25s ease;
   display:inline-block;}
 .an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
+/* ---- T473: A FIGURE IN PANELS. The covers sit over the item in the
+   page's colour and lift one per click; in the editor they are faint
+   numbered outlines so the grid reads and the figure is still seen. */
+.an-covers{position:absolute;inset:0;pointer-events:none;z-index:2;}
+.an-cover{position:absolute;box-sizing:border-box;display:none;
+  align-items:center;justify-content:center;}
+.an-cover.on{display:flex;}
+.an-cover>b{display:none;font:600 11px var(--mono);color:var(--cyan);
+  background:#0b141dcc;border-radius:4px;padding:1px 5px;}
+.an-cover.an-cover-edit{display:flex;background:transparent!important;
+  border:1px dashed color-mix(in srgb,var(--cyan) 55%,transparent);}
+.an-cover.an-cover-edit>b{display:block;}
+.an-cover.on.an-cover-edit{background:transparent!important;}
+.panel-ico{display:grid;gap:1.5px;width:22px;height:16px;
+  margin:0 auto 2px;}
+.panel-ico>i{display:block;background:currentColor;opacity:.75;
+  border-radius:1px;}
+/* T471: THE HIGHLIGHT, CONFIGURED. data-hlfx says what the lit piece
+   does (both = the T385 look above; grow = bigger only; colour =
+   coloured only) and data-hlrest what every other piece does (dim =
+   the T385 look, the ones still to come sit quiet; blur = all the
+   others soften; plain = they are left alone). */
+.an-item[data-hlfx="grow"] .an-part.an-hl{color:inherit;}
+.an-item[data-hlfx="colour"] .an-part.an-hl{scale:1;}
+.an-item[data-hlrest="blur"] .an-part.an-hl-wait{opacity:1;}
+.an-item[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);
+  opacity:.7;transition:filter .3s ease,opacity .3s ease;}
+.an-item[data-hlrest="plain"] .an-part.an-hl-wait{opacity:1;}
 /* T385: MOTION THAT KEEPS GOING -- individual properties again, so a
    rotated item wobbles about its own rotation instead of losing it */
 /* T445: HOW FAR IS A NUMBER (2026-09-14, user: "it would be cool to
@@ -7565,6 +7599,20 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .deck.rbn-side .rulers{right:var(--rbn-side-w);}
 .deck.rbn-side .deck-arrow.next{right:calc(var(--rbn-side-w) + 8px);}
 .deck.rbn-side .selpane{right:var(--rbn-side-w);}
+/* T470: A STRIP IS AS WIDE AS THE RAIL. The frames keep their
+   horizontal widths -- three or four tiles -- which is wider than the
+   rail's column, so the Airy tile ran under the scrollbar with its
+   right edge cut (2026-09-15 review). In the rail a frame is the
+   column's width and its tiles wrap inside it; the arrows still step
+   whole rows. */
+.deck.rbn-side .strip-frame{width:100%;flex:1 0 100%;box-sizing:border-box;}
+.deck.rbn-side .strip-frame>.fx-strip.fx-strip,
+.deck.rbn-side .strip-frame>#anim-by-strip{width:auto;max-width:none;
+  flex:1 1 auto;min-width:0;}
+.deck.rbn-side{--rbn-tile-w:54px;}
+/* ...and a bare strip (Play's four tiles) wraps in the rail too, rather
+   than running its last tile under the scrollbar */
+.deck.rbn-side .rbn-row>.fx-strip{flex-wrap:wrap;width:100%;height:auto;}
 
 /* ---------- full-screen EDITING (not presenting) ---------- */
 /* Present hides every tool, which is wrong for a poster: there is no
@@ -8151,8 +8199,12 @@ body.light .ar-row:hover,body.light .ar-srow:hover{
 .ss-name{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--accent);display:flex;
   align-items:center;gap:6px;}
-.ss-mine{font-size:8.5px;letter-spacing:.08em;padding:1px 5px;
+.ss-mine{font-size:10px;letter-spacing:.06em;padding:1px 6px;
   border-radius:8px;background:#ffffff14;color:var(--chrome-ink-2);}
+/* T470: the card just saved, lit for a moment */
+.ss-card.ss-new{border-color:var(--accent,var(--cyan));
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent);
+  transition:box-shadow .5s,border-color .5s;}
 .ss-spec{display:flex;flex-direction:column;gap:3px;min-height:82px;
   overflow:hidden;}
 .ss-line{line-height:1.2;overflow:hidden;text-overflow:ellipsis;
@@ -8687,6 +8739,9 @@ body.light .eq-box{background:var(--chrome-2);
 .aa-dlg{position:fixed;inset:0;z-index:260;display:flex;
   align-items:center;justify-content:center;background:var(--overlay);}
 .aa-dlg[hidden]{display:none!important;}
+/* T470: the Style sets picker opened from the Style system sits over
+   that screen (z-index 400), not under it */
+.aa-dlg.over-design{z-index:410;}
 .aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:9px;padding:12px 13px 11px;
   background:var(--chrome-2);border:1px solid var(--chrome-line);
@@ -8845,12 +8900,12 @@ body.light .np-notes,body.light .np-goal{background:var(--paper-2);
 .an-tx br{content:"";display:block;margin-top:var(--an-pspace,0);}
 
 /* ---- the notes pane's three tabs + the scratchpad -------------------- */
-.np-tabs{display:flex;gap:2px;padding:5px 7px 0;flex:none;}
-.np-tab{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;
-  background:none;border:none;border-bottom:2px solid transparent;
-  color:var(--chrome-ink-2);padding:4px 2px;cursor:pointer;white-space:nowrap;}
-.np-tab:hover{color:#e2edf5;}
-.np-tab.on{color:#fff;border-bottom-color:var(--cyan);}
+/* T470: ONE TAB GRAMMAR PER PANE SHELL. These were 9.5px mono text
+   with a class for "on" while the Animation pane's tabs, in the same
+   shell, were 11.5px sans with role=tab (2026-09-15 review). They wear
+   .anim-tab now; five of them in a 272px pane means the words are set
+   a step smaller than Animation's two. */
+.np-tabs .anim-tab{font-size:10.5px;padding:6px 3px 5px;letter-spacing:0;}
 .np-tall{min-height:230px;}
 .np-padbar{display:flex;gap:5px;}
 .np-padb{padding:3px 9px;font-size:10.5px;}
@@ -9133,6 +9188,8 @@ body.jv-lens .deck-stage{cursor:crosshair;}
 .dg-cnt-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
 .dg-cnt-odd .dg-cnt-l{color:var(--amber);}
+.dg-cnt-note{flex:1 0 calc(100% - 28px);margin-left:28px;min-width:0;
+  font-size:11px;color:var(--amber);}
 .dg-cnt-loose .dg-cnt-l{color:var(--chrome-ink-2);}
 /* the fix on its own line under the words, so neither is squeezed */
 .dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;
@@ -9532,9 +9589,14 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .strip-frame>.fx-strip.page-strip,
 .strip-frame>.fx-strip.trans-strip{
   width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap) + 8px);}
-/* T385: four ways for a text box to arrive, so that strip is four wide */
-.strip-frame>#anim-by-strip.trans-strip{
+/* T385: four ways for a text box to arrive, so that strip is four wide;
+   T472: and four ways to be the point */
+.strip-frame>#anim-by-strip.trans-strip,
+.strip-frame>#anim-focus-strip.trans-strip{
   width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
+/* the group caption wears the click, like a folded door's readout */
+.rbn-focus .rbn-lab .rbn-foldval{display:inline;margin-left:4px;
+  font-size:10px;color:var(--chrome-ink-3);max-width:none;}
 .strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
   border-left:1px solid #ffffff24;background:#ffffff0a;}
 .strip-nav>button{flex:1 1 0;min-height:0;padding:0;border:0;
@@ -9822,6 +9884,27 @@ body.light .dg-num input{background:var(--input-bg);
    drops it for real. */
 @keyframes an-out{from{opacity:1;}to{opacity:0;}}
 .an-anim-out{animation:an-out .28s ease forwards;pointer-events:none;}
+/* ---- T472: FOCUS, ON ITS CLICK ----------------------------------------
+   spot: every other item on the layer softens; the stage zooms about the
+   item and slides it to the middle (the transition is on the stage,
+   which survives a re-render, so the zoom back moves too); a lens is a
+   scaled clone floated over the page. */
+.deck:not(.editing) .annot-layer .an-item{
+  transition:filter .35s ease,opacity .35s ease;}
+.annot-layer.an-spotlit .an-item:not(.an-spot):not(.an-lens){
+  filter:blur(3px);opacity:.45;}
+.annot-layer.an-spotlit .an-item.an-spot{z-index:20;}
+.deck-stage{transition:transform .55s cubic-bezier(.2,.7,.2,1);}
+.deck.editing .deck-stage{transition:none;}
+.an-item.an-lens{pointer-events:none;z-index:30;opacity:0;
+  transition:opacity .3s ease,transform .45s cubic-bezier(.2,.7,.2,1);
+  box-shadow:0 18px 60px #000a,0 0 0 2px #ffffff55;
+  background:var(--page-bg,#0b141d);border-radius:6px;}
+.an-item.an-lens.an-lens-in{opacity:1;}
+@media (prefers-reduced-motion:reduce){
+  .deck-stage,.an-item.an-lens,.deck:not(.editing) .annot-layer .an-item{
+    transition:none;}
+}
 @media (prefers-reduced-motion: reduce){
   .an-anim-out{animation:none;opacity:0;}}
 @keyframes fturn-fade{from{opacity:0;}to{opacity:1;}}
@@ -13460,15 +13543,18 @@ writes or resembles and implies no endorsement.</small></p>
          remembered, with the sections you want in it. -->
     <div class="deck-pres-drawer-head"><span>Open now</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="deck-pres-dock" type="button"
-        aria-haspopup="true" aria-expanded="false"
-        aria-label="Where this bar sits, and what it lists"
+      <!-- T470: a chooser is a door that shows the CURRENT choice --
+           this one was a glyph that read the same as a pop-up, a rail
+           and a strip (2026-09-15 review); barApply writes its words -->
+      <button class="dbtn deck-pres-dockbtn" id="deck-pres-dock"
+        type="button" aria-haspopup="true" aria-expanded="false"
         title="Where this bar sits, and what it lists"
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/></svg></button>
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> <span id="deck-pres-dock-say"
+        >Pop-up</span>&nbsp;&#9662;</button>
       <button class="dbtn dc-icon" id="deck-pres-close" type="button"
         aria-label="Close this bar"
-        title="Close it. The chevron beside Home opens it again, and it
- slides out when you reach the left edge"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
+        title="Close it. The chevron beside Home opens it again"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
     </div>
     <div class="deck-pres-list" id="deck-pres-list"></div>
     <div class="deck-pres-doors">
@@ -14497,6 +14583,44 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Leaves early</span>
           </span>
+          <!-- T472: FOCUS, ON ITS CLICK (2026-09-15, user: "Needs to be
+               an animation that is 'blur everything else but this',
+               and 'zoom in here', or 'show magnify of this box'"). A
+               thing already on the slide gets a click on which it is
+               the point; the click is its own at the end, or the one
+               something else arrives on (the Configure panel). -->
+          <span class="rbn-grp rbn-focus rbn-compact" data-tab="animation"
+            data-fold-ic="expand">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="anim-focus">
+                <span class="fx-strip trans-strip" id="anim-focus-strip"
+                  role="group" aria-label="Focus on it, on a click">
+                <button class="fx-tile" id="anim-focus-none"
+                  aria-pressed="false" disabled
+                  title="No click makes this the point"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg><span>None</span></button>
+                <button class="fx-tile" id="anim-focus-spot"
+                  aria-pressed="false" disabled
+                  title="On its click everything else on the slide softens
+ and dims and this stays sharp; the next click puts the slide back
+ &mdash; hover to see it"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg><span>Blur the rest</span></button>
+                <button class="fx-tile" id="anim-focus-zoom"
+                  aria-pressed="false" disabled
+                  title="On its click the page zooms in on this; the next
+ click zooms back &mdash; hover to see it"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span>Zoom in</span></button>
+                <button class="fx-tile" id="anim-focus-lens"
+                  aria-pressed="false" disabled
+                  title="On its click a larger copy of this floats over the
+ slide; the next click takes it away &mdash; hover to see it"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg><span>Magnify</span></button>
+                </span>
+              </span>
+            </span>
+            <span class="rbn-lab">Focus <span class="rbn-foldval"
+              id="anim-focus-say" hidden></span></span>
+          </span>
           <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
                nothing said so (2026-09-04, user: "how do the
                animations work with the flip books. Can there be a
@@ -14777,6 +14901,24 @@ items snap to both. Guides, not ink: never printed or exported"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z"/></svg><span>Highlight</span></button>
                 </span>
               </span>
+              <!-- T473: A FIGURE ARRIVES IN PANELS (2026-09-15, user:
+                   "people like to reveal panel by panel in figures ...
+                   people usually have to have white boxes that
+                   disappear which gets annoying"). A grid of covers in
+                   the page's colour, one lifted per click; the tiles
+                   are the common grids, the Configure panel takes any
+                   numbers. Built by panelsBoot from PANEL_GRIDS. -->
+              <span class="rbn-tall strip-frame" id="anim-panels" hidden>
+                <span class="fx-strip" id="anim-panels-strip"
+                  role="group" aria-label="A figure arrives in panels"></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="anim-panels-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="anim-panels-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="anim-panels-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every grid">&#9662;</button></span></span>
               <!-- T418: THE PICTURE TURNS WITH THE BULLETS (2026-09-13,
                    user: "I want the image to change in the flip book
                    as the dot point changes"). For a box built in
@@ -14878,6 +15020,21 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Draw a flip book: one box holding many figures, with
  arrows to step through them &mdash; in the editor and while presenting"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg><span>Flip book</span></button>
+              <!-- T474: A CLONE, ON THIS SLIDE (2026-09-15, user: "the
+                   way I assumed this would work, would be I go to
+                   another slide, then click 'add a clone' and it would
+                   also be there. But that didn't seem to work"). "Add a
+                   clone…" lives on the Object tab, which needs a clone
+                   selected -- and on the other slide there is none to
+                   select. This door needs nothing selected: pick a set,
+                   a clone of it lands here. Greyed until the deck has a
+                   set (cmpDoorSync). -->
+              <button class="fx-tile big-tile rbn-tall" id="et-clone"
+                aria-haspopup="true" aria-expanded="false" disabled
+                title="Put a clone of one of this deck&rsquo;s clone sets
+ on this slide. Make a set first: select things, then Object &rarr;
+ Make clones&hellip;"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" stroke-dasharray="2.6 2.3"/><rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/><circle cx="10.2" cy="10.2" r="2.1"/></svg><span>Clone&#8230;</span></button>
             </span>
             <span class="rbn-lab">Place</span>
           </span>
@@ -14934,7 +15091,7 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop rbn-tall" id="dsg-stylewrap">
                 <button class="fx-tile big-tile" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
-                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg><span>Text
+                  title="The named kinds of text this deck uses — Title, Heading, Body, Caption, your own — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg><span>Text
                   styles &#9662;</span></button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
                   hidden>
@@ -15836,7 +15993,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 hidden
                 title="Pick figures from a notebook — click as many as
  you want, in order — and each becomes a page of this
- book"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg><span>Figures</span></button>
+ book"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg><span>Notebook figures</span></button>
               <button class="dbtn etm" id="fmt-flip-imgs" hidden
                 title="Add pictures from this computer as pages. You can
  pick several at once"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg> Pictures&#8230;</button>
@@ -16255,7 +16412,7 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="fp-adds">
           <button class="dbtn" id="fp-add-cells"
             title="Pick figures from your notebook — click as many as you
- want, in order">&#43; Figures&#8230;</button>
+ want, in order">&#43; Notebook figures&#8230;</button>
           <button class="dbtn" id="fp-add-img"
             title="Add pictures from your computer. You can pick several
  at once">&#43; Pictures&#8230;</button>
@@ -16412,12 +16569,25 @@ items snap to both. Guides, not ink: never printed or exported"
              of the timing fields its tooltip promised (2026-09-15
              review). The target, the rehearsal readout, the running
              total and the talk's length are a tab of their own now. -->
-        <div class="np-tabs" id="np-tabs">
-          <button class="np-tab on" data-np="slide">This slide</button>
-          <button class="np-tab" data-np="time">Timing</button>
-          <button class="np-tab" data-np="deck">Whole talk</button>
-          <button class="np-tab" data-np="pad">Scratchpad</button>
-          <button class="np-tab" data-np="reh">Rehearsals</button>
+        <!-- T470: the Animation pane's tab grammar (role=tab,
+             aria-selected, the underline), not a second one -->
+        <div class="anim-tabs np-tabs" id="np-tabs" role="tablist"
+          aria-label="Notes pane">
+          <button class="anim-tab np-tab" data-np="slide" type="button"
+            role="tab" aria-selected="true" aria-controls="notespane-body"
+            title="What you want to say on this slide">Slide</button>
+          <button class="anim-tab np-tab" data-np="time" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-time"
+            title="How long this slide and the talk should take">Timing</button>
+          <button class="anim-tab np-tab" data-np="deck" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-deck"
+            title="Notes about the whole talk">Talk</button>
+          <button class="anim-tab np-tab" data-np="pad" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-pad"
+            title="Loose notes, in folders, attached to no slide">Scratchpad</button>
+          <button class="anim-tab np-tab" data-np="reh" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-reh"
+            title="Every run of this talk, and how long each took">Rehearsals</button>
         </div>
         <div class="selpane-list" id="notespane-body">
           <label class="np-lab" for="np-notes">Speaker notes for this
@@ -32944,7 +33114,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','dc-maths','dc-md']},
       {id:'of-illus',label:'Illustrations',tab:'insert',
        items:['et-image','et-media','shape-strip-frame','dc-line','dc-draw','et-table',
-         'et-flip','et-arrow','et-cancel']},
+         'et-flip','et-clone','et-arrow','et-cancel']},
       {id:'of-furn',label:'Page furniture',tab:'insert',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'of-setup',label:'Slide setup',tab:'design',
@@ -32989,7 +33159,7 @@ window.JunoPptx = (function () {
       {id:'sl-insert',label:'Insert',tab:'slide',
        items:['tx-strip','et-image','et-media','dc-maths','dc-md']},
       {id:'sl-draw',label:'Draw',tab:'slide',
-       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip',
+       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'sl-anim',label:'Build order',tab:'slide',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
@@ -33044,7 +33214,7 @@ window.JunoPptx = (function () {
       {id:'s1-typed',label:'Typed content',tab:'sources',
        items:['tx-strip','dc-maths','dc-md']},
       {id:'s1-drawn',label:'Drawn content',tab:'sources',
-       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip',
+       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'s1-guides',label:'Guides and layers',tab:'format',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox',
@@ -33089,7 +33259,7 @@ window.JunoPptx = (function () {
          'vw-versions']},
       {id:'day-insert',label:'Insert',tab:'start',
        items:['tx-strip','et-image','et-media','shape-strip-frame','dc-line','et-table',
-         'et-flip','et-arrow','et-cancel']},
+         'et-flip','et-clone','et-arrow','et-cancel']},
       {id:'day-look',label:'Deck look',tab:'start',
        items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout']},
       {id:'day-show',label:'Present',tab:'start',
@@ -33150,7 +33320,7 @@ window.JunoPptx = (function () {
        items:['vw-check','vw-versions']},
       {id:'j3-insert',label:'Insert',tab:'content',
        items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
-         'dc-draw','et-table','et-flip','et-arrow','et-cancel']},
+         'dc-draw','et-table','et-flip','et-clone','et-arrow','et-cancel']},
       {id:'j3-figures',label:'Figure source',tab:'content',
        items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-imgrefresh','fmt-imglink',
          'fmt-locate','fmt-prov','fmt-revert','fmt-lockver','et-cell']},
@@ -33199,7 +33369,7 @@ window.JunoPptx = (function () {
          'dc-draw','fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-locate',
          'fmt-prov','fmt-imgrefresh','fmt-imglink','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
-         'et-table','et-flip','et-arrow','et-cancel']},
+         'et-table','et-flip','et-clone','et-arrow','et-cancel']},
       {id:'one-text',label:'Text',tab:'all',
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std','fmt-stylewrap-tx','fmt-font',
@@ -33236,7 +33406,7 @@ window.JunoPptx = (function () {
        items:['tx-strip','shape-strip-frame','dc-line','et-arrow','dc-draw',
          'et-cancel']},
       {id:'mi-place',label:'Place',tab:'mi-rail',
-       items:['et-cell','et-image','et-media','et-table','et-flip','dc-maths','dc-md',
+       items:['et-cell','et-image','et-media','et-table','et-flip','et-clone','dc-maths','dc-md',
          'dc-md']},
       {id:'mi-frames',label:'Frames',tab:'mi-rail',
        items:['hm-newslide','hm-dupslide','hm-version','hm-main','hm-laywrap','hm-match',
@@ -33320,7 +33490,7 @@ window.JunoPptx = (function () {
        items:['fmt-shapewrap','fmt-stylewrap','fmt-swwrap',
          'fmt-headwrap','fmt-bendwrap']},
       {id:'tt-ins',label:'Insert',tab:'tt-more',
-       items:['et-table','et-flip','shape-strip-frame','dc-line','et-arrow',
+       items:['et-table','et-flip','et-clone','shape-strip-frame','dc-line','et-arrow',
          'dc-draw','dc-maths','dc-md','et-cancel']},
       {id:'tt-lay',label:'Slides',tab:'tt-more',
        items:['hm-laywrap','hm-match']},
@@ -36786,6 +36956,14 @@ window.JunoPptx = (function () {
   }
   function renderSlide(){
     var s=pres.slides[cur];
+    /* T471: Quick animate numbers ONE slide's clicks. Every way of
+       leaving a slide -- go, New slide, the film strip, a section jump
+       -- comes through here, so this is where the mode finishes with
+       what was placed rather than carrying its count onto a slide it
+       was never about. seqEnd clears the mode before it renders, so
+       there is no loop. */
+    if(typeof seqOn==='function'&&seqOn()&&seqArm&&seqArm.slide!==cur)
+      seqEnd(true);
     /* the talk's text multiplier, applied to the stage and therefore to
        every layer under it. Forced back to 1 outside a talk so it can
        never reach the editor, a print or an export (T88). */
@@ -36846,6 +37024,7 @@ window.JunoPptx = (function () {
          above the slide: Notebook cell, Image, Text, Table, Shape. */
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
+      if(mode==='edit'&&typeof cmpDoorSync==='function') cmpDoorSync();   /* T474 */
       /* the annot layer exists only now, and the rulers shade the
          selection's extent from it */
       if(mode==='edit') syncGuides();
@@ -37819,7 +37998,8 @@ window.JunoPptx = (function () {
       /* the WIDEST claim on this order wins: two boxes on one build, one
          of them split four ways, is four clicks and the other box
          arrives on the first of them */
-      var n=textBy(a)?textPieceCount(a):1;
+      var n=(typeof pieceCount==='function')?pieceCount(a)
+        :(textBy(a)?textPieceCount(a):1);   /* T473: panels count too */
       if(!(o in seen)||n>seen[o]) seen[o]=n;});
     /* AN EXIT IS A CLAIM ON A STOP TOO (T174). Usually it lands on a
        build that already exists -- the click the replacement arrives on
@@ -37829,7 +38009,10 @@ window.JunoPptx = (function () {
     (s&&s.annots||[]).forEach(function(a){
       if(!a||a.hide) return;
       var o=animOut(a);
-      if(o!=null&&!(o in seen)) seen[o]=1;});
+      if(o!=null&&!(o in seen)) seen[o]=1;
+      /* T472: and a focus, which is a click of its own the same way */
+      var f=animFocus(a);
+      if(f&&!(f.at in seen)) seen[f.at]=1;});
     var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
     var map={},sub={},last={},at=0;
     keys.forEach(function(o){
@@ -37852,7 +38035,8 @@ window.JunoPptx = (function () {
       /* an EXIT claims an order too (T174), or asking twice for "on one
          more click at the end" would hand out the same number twice and
          the second object would leave on the first one's click */
-      var o=animOut(a); if(o!=null&&o>mx) mx=o;});
+      var o=animOut(a); if(o!=null&&o>mx) mx=o;
+      var f=animFocus(a); if(f&&f.at>mx) mx=f.at;});   /* T472 */
     return mx+1;
   }
   /* ---- THE WALK-THROUGH (T175) ---------------------------------------
@@ -37961,6 +38145,41 @@ window.JunoPptx = (function () {
        stop drops it for real, and so does the every-moment-at-once
        reading an export takes. */
     return revealCount>sp+1;
+  }
+  /* ---- T472: A FOCUS IS A CLICK OF ITS OWN ----------------------------
+     (2026-09-15, user: "Needs to be an animation that is 'blur
+     everything else but this', and 'zoom in here', or 'show magnify of
+     this box'"). PowerPoint calls these emphasis effects: a thing
+     already on the slide gets a click on which it is the point. Like
+     the exit it is a PEER of `anim`, not part of it -- the commonest
+     case is a figure that is simply there and, three clicks in, is
+     what you want everyone looking at. `a.focus={at:order,fx}`: `at`
+     claims a stop the way `a.out` does, `fx` is one of FOCUS_FX. It
+     lasts ONE stop: the next click, whatever else it does, puts the
+     slide back. */
+  var FOCUS_FX=[
+    ['spot','Blur the rest',
+     'Everything else on the slide softens and dims; this stays sharp'],
+    ['zoom','Zoom in',
+     'The page zooms in on this, and zooms back on the next click'],
+    ['lens','Magnify',
+     'A larger copy of this floats over the slide until the next click']];
+  function animFocus(a){
+    if(!a||!a.focus||typeof a.focus!=='object') return null;
+    var f=a.focus;
+    if(typeof f.at!=='number'||!isFinite(f.at)||f.at<0) return null;
+    if(!FOCUS_FX.some(function(p){return p[0]===f.fx;})) return null;
+    return f;
+  }
+  /* the one stop where it is the point */
+  function animFocusing(s,a){
+    var f=animFocus(a); if(!f) return false;
+    if(mode!=='view'||printAll) return false;
+    var st=slideBuildSteps(s).map[f.at];
+    if(st==null) return false;
+    var sp=flipPlan(s).stop[st];
+    if(sp==null) sp=st;
+    return revealCount===sp+1;
   }
   /* ...and the one stop where it is on its way out */
   function animGoing(s,a){
@@ -40518,6 +40737,71 @@ window.JunoPptx = (function () {
     var p=textPieces(a);
     return p.length?p.length:1;
   }
+  /* ---- T473: A FIGURE THAT ARRIVES PANEL BY PANEL ----------------------
+     (2026-09-15, user: "people like to reveal panel by panel in figures
+     ... people usually have to have white boxes that disappear which
+     gets annoying"). The white boxes, done properly: a grid of covers
+     in the page's own colour over a figure or a picture, one lifted per
+     click, left to right and then down. `a.anim.by='panels'` with
+     `a.anim.grid='3x1'` (across x down, 1-6 each); the model is never
+     cut, the covers are drawn at render time exactly as the text pieces
+     are wrapped. Every piece costs a click, read off the same plan. */
+  function panelsOf(a){
+    if(!a||!a.anim||a.anim.by!=='panels') return null;
+    if(a.k!=='cell'&&a.k!=='image') return null;
+    var m=/^([1-6])x([1-6])$/.exec(String(a.anim.grid||'2x1'));
+    if(!m) return {c:2,r:1};
+    return {c:+m[1],r:+m[2]};
+  }
+  /* how many clicks a thing arrives over: text pieces, panels, or one */
+  function pieceCount(a){
+    if(textBy(a)) return textPieceCount(a);
+    var g=panelsOf(a);
+    return g?Math.max(1,g.c*g.r):1;
+  }
+  /* the covers, built once per render onto the item; `bg` is what the
+     figure sits on, so a lifted panel is the only thing that changes */
+  function panelCovers(el,a,bg){
+    var g=panelsOf(a); if(!g||!el) return [];
+    var host=el.querySelector('.an-covers');
+    if(host) return $$('.an-cover',host);
+    host=document.createElement('span');host.className='an-covers';
+    var out=[];
+    for(var k=0;k<g.c*g.r;k++){
+      var col=k%g.c,row=Math.floor(k/g.c);
+      var c=document.createElement('span');
+      c.className='an-cover';c.setAttribute('data-part',String(k));
+      c.style.left=(col*100/g.c)+'%';c.style.top=(row*100/g.r)+'%';
+      c.style.width=(100/g.c)+'%';c.style.height=(100/g.r)+'%';
+      c.style.background=bg;
+      var n=document.createElement('b');n.textContent=String(k+1);
+      c.appendChild(n);
+      host.appendChild(c);out.push(c);
+    }
+    el.appendChild(host);
+    return out;
+  }
+  /* paint the covers for this render: in the show cover k is down until
+     its click; in the editor every cover is a faint numbered outline
+     (the story, storyAt, covers what has not arrived by stop k) */
+  function panelPaint(el,a,s,st,plan,editing,storyK){
+    if(!panelsOf(a)||!el) return;
+    var bg=(function(){
+      try{var cb=getComputedStyle(el).backgroundColor;
+        if(!editing&&cb&&cb!=='rgba(0, 0, 0, 0)'&&cb!=='transparent')
+          return cb;}catch(err){}
+      return (typeof pageBgOf==='function')?pageBgOf(s):deckPageBg();
+    })();
+    panelCovers(el,a,bg).forEach(function(cv){
+      var j=+cv.getAttribute('data-part');
+      var jp=plan.stop[st+j]; if(jp==null) jp=st+j;
+      var covered=(!editing&&mode==='view'&&jp>=revealCount)
+        ||(storyK!=null&&jp>=storyK);
+      cv.classList.toggle('on',covered);
+      cv.classList.toggle('an-cover-edit',!!editing&&storyK==null);
+      if(editing) cv.querySelector('b').textContent=String(jp+1);
+    });
+  }
 /* 20-notes-and-tables.js — the scratchpad, the style manager, lists, tables, and things only you can see.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
    siblings in filename order by assets.deck_js(). It does not
@@ -40851,7 +41135,7 @@ window.JunoPptx = (function () {
     $$('#np-tabs .np-tab').forEach(function(t){
       t.addEventListener('click',function(){
         $$('#np-tabs .np-tab').forEach(function(o){
-          o.classList.toggle('on',o===t);});
+          o.setAttribute('aria-selected',o===t?'true':'false');});   /* T470 */
         var which=t.dataset.np;
         var b1=$('#notespane-body'),b2=$('#notespane-deck'),
             b3=$('#notespane-pad');
@@ -41177,9 +41461,20 @@ window.JunoPptx = (function () {
       if(!ids.length){
         var none=document.createElement('div');
         none.className='stm-empty';
-        none.textContent='No named text styles are used yet.';
+        none.textContent='No named text styles are used yet \u2014 a text '
+          +'box gets one from the Text tab, or from a layout.';
         list.appendChild(none);
       }
+      /* T470: Smaller, Bigger and Re-apply act on boxes wearing a
+         style; with none they toasted "0 boxes followed" (2026-09-15
+         review). Dead until there is something to move. */
+      ['#dsg-scale-down','#dsg-scale-up','#dsg-restyle'].forEach(function(s){
+        var b=$(s); if(!b) return;
+        b.disabled=!ids.length;
+        if(!ids.length) b.title='Nothing wears a named style yet';
+        else if(b.dataset.tt) b.title=b.dataset.tt;
+        if(!b.dataset.tt) b.dataset.tt=b.title;
+      });
       ids.forEach(function(id){
         var d=styleDef(id);
         var row=document.createElement('div');row.className='stm-row';
@@ -41257,6 +41552,7 @@ window.JunoPptx = (function () {
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
       rst.innerHTML=bic('reset')+' Back to the built-in sizes';
+      rst.disabled=!ids.length&&!pres.styles;   /* T470: nothing to reset */
       /* it clears the OVERRIDES, and it must never touch pres.types:
          "back to the built-in sizes" is not "throw away the types I
          invented" */
@@ -43311,7 +43607,7 @@ window.JunoPptx = (function () {
           var fph=document.createElement('div');
           fph.className='an-flipempty';
           fph.textContent=editing
-            ?'Empty flip book — Figures, Pictures… or Pages… on the Object tab put pages in it'
+            ?'Empty flip book — Notebook figures, Pictures… or Pages… on the Object tab put pages in it'
             :'';
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){
@@ -43530,6 +43826,10 @@ window.JunoPptx = (function () {
         /* the fade OUT, on the one stop it goes (T238) */
         if(mode==='view'&&animGoing(s,ba))
           el.classList.add('an-anim-out');
+        /* T472: the click on which it is the point */
+        if(mode==='view'&&typeof animFocusing==='function'
+           &&animFocusing(s,ba)&&typeof focusPaint==='function')
+          focusPaint(layer,el,ba);
         /* T391: THE STORY. Editing at stop k, an object that has
            already left is not on the slide -- not dimmed, not there --
            so what is under it can be reached. Checked before the
@@ -43571,6 +43871,8 @@ window.JunoPptx = (function () {
               });
             }
           }
+          /* T473: the grid of covers, faint and numbered while editing */
+          if(typeof panelPaint==='function') panelPaint(el,ba,s,st,plan,true,storyK);
         } else if(mode==='view'){
           /* WHICH STOP, not which build number: a flip book with a build
              of its own puts its frames straight after itself, so anything
@@ -43592,6 +43894,13 @@ window.JunoPptx = (function () {
                whose stop was just taken is lit, the ones still to come
                sit quiet, the ones already done are plain. */
             var hl=!!ba.anim.hl;
+            /* T471: the lit piece's look and the rest's, as data the
+               CSS reads (hlfx: bigger & coloured / bigger / coloured;
+               hlrest: dimmed / blurred / as they are) */
+            if(hl){
+              el.setAttribute('data-hlfx',ba.anim.hlfx||'both');
+              el.setAttribute('data-hlrest',ba.anim.hlrest||'dim');
+            }
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');
               var jp=plan.stop[st+j];
@@ -43601,9 +43910,19 @@ window.JunoPptx = (function () {
               if(hl&&mode==='view'){
                 pe.classList.toggle('an-hl',jp===revealCount-1);
                 pe.classList.toggle('an-hl-wait',wait);
+                pe.classList.toggle('an-hl-rest',jp!==revealCount-1);
               }
+              /* T471: a typewriter box types each bullet on its own
+                 click, not the whole box on the first */
+              if(!hl&&mode==='view'&&j>0&&jp===revealCount-1
+                 &&ba.anim.type==='type'&&typeof typeInto==='function'
+                 &&!(typeof storyPaint!=='undefined'&&storyPaint))
+                typeInto(el,j);
             });
           }
+          /* T473: a figure in panels -- cover k lifts on build step
+             st+k, read off the same plan as a text piece */
+          if(typeof panelPaint==='function') panelPaint(el,ba,s,st,plan,false,null);
           if(sp>=revealCount) el.classList.add('an-prebuild');
           else if(sp===revealCount-1){
             var atype=ba.anim.type||'fade';
@@ -43618,11 +43937,16 @@ window.JunoPptx = (function () {
             atype=(atype==='type'&&ba.k!=='text')?'fade':atype;
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
             if(atype==='type'&&typeof typeInto==='function'
-               &&!(typeof storyPaint!=='undefined'&&storyPaint)) typeInto(el);
+               &&!(typeof storyPaint!=='undefined'&&storyPaint))
+              typeInto(el,(typeof textBy==='function'&&textBy(ba)
+                &&!ba.anim.hl)?0:undefined);   /* T471: the first piece */
           }
         }
       });
     }
+    /* T472: nothing on this slide is the point right now -- the zoom,
+       if the stage still carries one, comes back */
+    if(typeof focusSettle==='function') focusSettle(layer);
     /* ---- T385: MOTION THAT KEEPS GOING. One class per item. A pass
        of its own, like the builds above, so no kind's branch can forget
        it. T446: IN THE EDITOR TOO (2026-09-14, user: "just applied some
@@ -47519,14 +47843,16 @@ window.JunoPptx = (function () {
        rows sat inside the selection branch, so an EMPTY canvas had no
        component door at all (T129). Moved here, where both halves of
        the menu can reach them. */
+    /* T474: the deck's one word for these is clones (T420); and the
+       ribbon has the same door now (Images > Place > Clone…) */
     var cAll=cmpList();
     if(cAll.length){
-      menuHead(m,'components');
+      menuHead(m,'add a clone of');
       cAll.forEach(function(c){
-        row('Place \u201c'+c.name+'\u201d',String(c.n),function(){
+        row('\u201c'+c.name+'\u201d',String(c.n),function(){
           var k=cmpPlace(c.id,at);
-          if(k) toast('Placed \u201c'+c.name+'\u201d');},
-          'Drops a linked copy here');
+          if(k) toast('A clone of \u201c'+c.name+'\u201d is on this slide');},
+          'A clone of this set, here');
       });
     }
     /* WHO SEES THIS. Beside `lock`, because both answer "what can be
@@ -48126,9 +48452,11 @@ window.JunoPptx = (function () {
       ?('Done — '+pickAdded+' figure'+(pickAdded===1?'':'s'))
       :'Done';
   }
+  var pickTab='';
   function startPick(idx,multi){
     if(typeof idx!=='number') return;
     picking=idx;pickMulti=!!multi;pickAdded=0;
+    pickTab=activeTab();   /* T470: the tab Figures was pressed from */
     rbnGalleryClose();
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
@@ -48185,6 +48513,14 @@ window.JunoPptx = (function () {
     var l=stage.querySelector('.annot-layer');
     if(l&&idx>=0) selectAnnot(l,idx);
     if(wasMulti) renderFlipPane();
+    /* T470: BACK ON THE TAB YOU LEFT. With the Pages pane open the
+       selection does not carry the ribbon to Object (the pane holds
+       it), and openDeck's redraw had already dropped it to Home -- so
+       Done on a flip book's Figures pick landed you a tab away from
+       the book (2026-09-15 review). */
+    if(pickTab&&pickTab!==activeTab()&&tabHasContent(pickTab))
+      setTab(pickTab,true);
+    pickTab='';
   }
   document.addEventListener('click',function(e){
     if(picking<0) return;
@@ -53900,6 +54236,7 @@ window.JunoPptx = (function () {
     /* T409: a place-linked set remembers the spot */
     if(link==='place'||link==='both'){def.link=link;def.x=bb.l;def.y=bb.t;}
     cmpStore()[id]=def;
+    cmpDoorSync();   /* T474: the Clone… door wakes with the first set */
     /* the objects you defined it FROM become its first instance, so the
        thing you were looking at is a component now rather than a copy of
        one sitting beside it */
@@ -54472,6 +54809,59 @@ window.JunoPptx = (function () {
       var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
       if(a2&&a2.cmp) cmpInstMenu(a2.cmp,fd);
     });
+    /* T474: the door that needs nothing selected */
+    var pk=$('#et-clone');
+    if(pk) pk.addEventListener('click',function(e){
+      e.stopPropagation();cmpPickMenu(pk);});
+    cmpDoorSync();
+  }
+  /* T474: A CLONE FROM NOTHING SELECTED. The menu lists the deck's
+     sets; a row puts a clone of that set on this slide -- in its
+     remembered spot if the set is place-linked, else the middle -- with
+     the content of its first instance (cmpSeed), selected and ready to
+     drag. The door greys when there is no set to place. */
+  function cmpDoorSync(){
+    var b=$('#et-clone'); if(!b) return;
+    var n=cmpList().length;
+    b.disabled=!n;
+    b.title=n
+      ?('Put a clone of one of this deck\u2019s '+n+' clone set'
+        +(n===1?'':'s')+' on this slide')
+      :('Put a clone of one of this deck\u2019s clone sets on this '
+        +'slide. Make a set first: select things, then Object \u2192 '
+        +'Make clones\u2026');
+  }
+  function cmpPickMenu(btn){
+    var old=$('#cmp-pick-menu'); if(old){overlayDrop(old);return;}
+    var list=cmpList();
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu cmp-menu';m.id='cmp-pick-menu';
+    menuHead(m,'a clone of\u2026');
+    if(!list.length){
+      menuHead(m,'no clone sets yet \u2014 select things, then Object '
+        +'\u2192 Make clones\u2026');
+    }
+    list.forEach(function(c){
+      var def=cmpStore()[c.id]||{};
+      var here=cmpInstances(c.id).some(function(g){return g.si===cur;});
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.type='button';
+      b.innerHTML=bic('group')+' '+esc(c.name)
+        +' <span class="fh-n">'+c.n+(c.n===1?' thing':' things')
+        +(here?' \u00b7 one here already':'')+'</span>';
+      b.title=cmpHasPlace(def)
+        ?'In the spot every clone of this set shares'
+        :'In the middle of the slide \u2014 drag it where you want it';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);
+        var k=cmpPlace(c.id,null,cur,null,false);
+        toast(k?('A clone of \u201c'+c.name+'\u201d is on this slide'
+          +(cmpHasPlace(def)?'':' \u2014 drag it where you want it'))
+          :'Nothing was added');
+      });
+      m.appendChild(b);
+    });
+    overlayMount(btn,m);
   }
   function cmpInstMenu(id,btn){
     var old=$('#cmp-inst-menu'); if(old) old.remove();
@@ -54935,6 +55325,7 @@ window.JunoPptx = (function () {
         var r=(auto&&auto.checked)?autoStyleDeck(t.id)
           :{named:0,styled:applyStyleSet(t.id),set:t};
         markDirty();refresh();build();
+        if(onClose) onClose();   /* T470: the screen underneath follows */
         var msg='“'+t.label+'” applied';
         if(r&&r.named) msg+=' — '+r.named+' box'+(r.named===1?'':'es')
           +' were named from their size first';
@@ -55002,6 +55393,7 @@ window.JunoPptx = (function () {
       c.addEventListener('click',function(){
         var n=applyColourTheme(t.id);
         markDirty();refresh();build();
+        if(onClose) onClose();   /* T470 */
         toast('\u201c'+t.label+'\u201d colours applied'
           +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
             +'undoes it.':' \u2014 the page and the deck\u2019s colours '
@@ -55026,15 +55418,39 @@ window.JunoPptx = (function () {
       }
       var w=$('#ss-what'),n=unstyledCount();
       if(w) w.textContent=n
-        ? (n+' text box'+(n===1?'':'es')+' on this deck wear no named '
-          +'style. Picking a set below will name them from their size and '
-          +'then style them.')
+        ? (n+' text box'+(n===1?' on this deck wears':'es on this deck wear')
+          +' no named style. Picking a set below will name '
+          +(n===1?'it':'them')+' from '+(n===1?'its':'their')
+          +' size and then style '+(n===1?'it':'them')+'.')
         : 'Everything here already wears a named style, so a set restyles '
           +'it straight away.';
       var aw=$('#ss-autowrap'); if(aw) aw.hidden=!n;
     }
-    function open(){build();dlg.hidden=false;}
-    function close(){dlg.hidden=true;}
+    /* T470: THE CARD YOU JUST MADE IS THE ONE YOU CANNOT SEE. Your own
+       sets go last in a band that scrolls, so the one you just saved
+       landed under the fold with a toast saying it was there
+       (2026-09-15 review). Bring it into view and light it for a
+       moment, so "saved" is something you watched happen. */
+    function showSaved(g){
+      var c=g&&g.lastElementChild; if(!c) return;
+      try{c.scrollIntoView({block:'nearest'});}catch(err){}
+      c.classList.add('ss-new');
+      setTimeout(function(){c.classList.remove('ss-new');},1600);
+    }
+    /* T470: opened from the Style system it sits OVER that screen
+       (.over-design) and tells it when it closes, so the screen can
+       redraw wearing the set that was picked */
+    var onClose=null;
+    function open(cb){
+      onClose=(typeof cb==='function')?cb:null;
+      dlg.classList.toggle('over-design',!!onClose);
+      build();dlg.hidden=false;
+    }
+    function close(){
+      dlg.hidden=true;dlg.classList.remove('over-design');
+      var cb=onClose;onClose=null;
+      if(cb) cb();
+    }
     $('#ss-close').addEventListener('click',close);
     $('#ss-cancel').addEventListener('click',close);
     dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
@@ -55069,6 +55485,7 @@ window.JunoPptx = (function () {
         tokens:deep(tokens())});
       saveMyStyleSets(list);
       build();
+      showSaved($('#ss-grid'));
       toast('“'+nm+'” saved — it is offered on every deck you open here');
     });
     var cs=$('#ss-csave');
@@ -55079,6 +55496,7 @@ window.JunoPptx = (function () {
       nm=nm.trim(); if(!nm) return;
       saveColourTheme(nm);
       build();
+      showSaved($('#ss-cgrid'));
       toast('\u201c'+nm+'\u201d saved \u2014 it is offered on every deck '
         +'you open here');
     });
@@ -62060,6 +62478,10 @@ window.JunoPptx = (function () {
      the write (T171). Caught by driving: the first pick threw
      "rerender is not defined" and nothing happened. */
   var animSetType=function(){};
+  var animSetHl=function(){};   /* T471: the highlight's two choices */
+  var animSetPanels=function(){};   /* T473: a figure's grid of panels */
+  var HL_FX=[['','Bigger & coloured'],['grow','Bigger'],['colour','Coloured']];
+  var HL_REST=[['','Dimmed'],['blur','Blurred'],['plain','As they are']];
   var animRibbonSync=function(){};
   /* ---- CLICK THINGS IN THE ORDER THEY SHOULD APPEAR (T168) --------
      Asked for in the user's own words: "when you click it becomes the
@@ -62219,20 +62641,39 @@ window.JunoPptx = (function () {
     typeRun.el.classList.remove('an-typing');
     typeRun=null;
   }
-  function typeInto(el){
+  /* T471: A PACE YOU CAN WATCH. It typed a character every 25ms, so a
+     short line was on the slide in under half a second and read as
+     "the typewriter doesn't work" (2026-09-15, user). Thirty a second
+     now, and a long box speeds up so it never takes more than four
+     seconds. `part` types ONE piece of a box built bullet by bullet --
+     the piece whose click this is -- rather than the whole box
+     including the bullets still hidden under it. */
+  var TYPE_TICK=33,TYPE_MAX_MS=4000,TYPE_MIN_MS=1200;
+  function typeInto(el,part){
     typeStop();
     if(!el||!motionOK()) return;
     var host=el.querySelector('.an-tx')||el;
+    var roots=(part==null)?[host]:$$('[data-part="'+part+'"]',host);
     var nodes=[];
-    var walker=document.createTreeWalker(host,NodeFilter.SHOW_TEXT);
-    var n;
-    while((n=walker.nextNode())){
-      if(n.textContent) nodes.push({node:n,text:n.textContent});}
+    roots.forEach(function(root){
+      var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+      var n;
+      while((n=walker.nextNode())){
+        if(!n.textContent) continue;
+        /* a piece still to come is hidden; typing it types nothing */
+        var pe=n.parentNode&&n.parentNode.closest
+          ?n.parentNode.closest('[data-part]'):null;
+        if(part==null&&pe&&pe.style.visibility==='hidden') continue;
+        nodes.push({node:n,text:n.textContent});
+      }
+    });
     var total=0;
     nodes.forEach(function(x){total+=x.text.length;});
     if(!total) return;
     nodes.forEach(function(x){x.node.textContent='';});
-    var per=Math.max(1,Math.ceil(total/100)),shown=0;
+    var per=Math.max(1,Math.ceil(total/(TYPE_MAX_MS/TYPE_TICK))),shown=0;
+    /* a short line slows down, so three words are still a typing */
+    var tick=Math.max(TYPE_TICK,Math.min(70,Math.round(TYPE_MIN_MS/total)));
     el.classList.add('an-typing');
     typeRun={el:el,nodes:nodes,t:0};
     typeRun.t=setInterval(function(){
@@ -62245,7 +62686,175 @@ window.JunoPptx = (function () {
         left-=x.text.length;
       });
       if(shown>=total) typeStop();
-    },25);
+    },tick);
+  }
+  /* ---- T472: FOCUS, ON ITS CLICK ---------------------------------------
+     Three ways to make one thing the point for one click. `spot` blurs
+     and dims every other item on the layer; `zoom` scales the STAGE
+     (which survives a re-render, so the zoom in and the zoom back both
+     move) about the item and slides it to the middle; `lens` floats a
+     scaled copy of the item over the page. All three are painted by
+     the reveal pass on the focus's stop and undone by the next render,
+     which is the next click. focusSettle clears a zoom the stage still
+     wears once nothing is focusing. */
+  function focusClear(){
+    if(!stage) return;
+    if(stage.style.transform){stage.style.transform='';}
+  }
+  function focusPaint(layer,el,a){
+    var f=animFocus(a); if(!f||!layer||!el) return;
+    layer.setAttribute('data-focus',f.fx);
+    if(f.fx==='spot'){
+      el.classList.add('an-spot');
+      /* a frame later, so the softening is a transition rather than a cut */
+      requestAnimationFrame(function(){layer.classList.add('an-spotlit');});
+    } else if(f.fx==='zoom'){
+      var sr=stage.getBoundingClientRect(),r=el.getBoundingClientRect();
+      if(!sr.width||!r.width) return;
+      /* the stage may already be zoomed from a re-render: measure the
+         item where it would be unzoomed */
+      var cur2=stage.style.transform;
+      if(cur2){stage.style.transition='none';stage.style.transform='';
+        sr=stage.getBoundingClientRect();r=el.getBoundingClientRect();
+        void stage.offsetWidth;stage.style.transition='';}
+      var cx=r.left+r.width/2-sr.left,cy=r.top+r.height/2-sr.top;
+      var k=Math.min(3,0.78*sr.width/r.width,0.78*sr.height/r.height);
+      k=Math.max(1.15,k);
+      stage.style.transformOrigin=cx.toFixed(1)+'px '+cy.toFixed(1)+'px';
+      var tf='translate('+(sr.width/2-cx).toFixed(1)+'px,'
+        +(sr.height/2-cy).toFixed(1)+'px) scale('+k.toFixed(3)+')';
+      if(cur2===tf){stage.style.transform=tf;return;}
+      requestAnimationFrame(function(){stage.style.transform=tf;});
+    } else if(f.fx==='lens'){
+      var old=layer.querySelector('.an-lens'); if(old) old.remove();
+      var c=el.cloneNode(true);
+      c.classList.remove('sel','grpsel','an-prebuild','an-ingrp');
+      c.classList.add('an-lens');
+      c.removeAttribute('data-idx');
+      $$('.an-resize,.an-handle,.an-rotate,.an-buildno,.an-readno,'
+        +'.an-cellbtn,.cellparts,.an-endpt',c).forEach(function(n){n.remove();});
+      var lr=layer.getBoundingClientRect(),r2=el.getBoundingClientRect();
+      if(!lr.width||!r2.width) return;
+      var k2=Math.max(1.3,Math.min(2.4,0.8*lr.width/r2.width,
+        0.8*lr.height/r2.height));
+      var cx2=r2.left+r2.width/2-lr.left,cy2=r2.top+r2.height/2-lr.top;
+      c.style.transformOrigin='center center';
+      c.style.transform='translate('+(lr.width/2-cx2).toFixed(1)+'px,'
+        +(lr.height/2-cy2).toFixed(1)+'px) scale('+k2.toFixed(3)+')';
+      c.style.animation='';
+      layer.appendChild(c);
+      requestAnimationFrame(function(){c.classList.add('an-lens-in');});
+    }
+  }
+  function focusSettle(layer){
+    if(!layer||layer.getAttribute('data-focus')==='zoom') return;
+    focusClear();
+  }
+  /* the ribbon strip: None / Blur the rest / Zoom in / Magnify, on the
+     selection, with a hover preview on the real object */
+  function focusItem(){
+    var s=pres.slides[cur];
+    if(typeof selAnnot!=='number') return null;
+    return annotByIdx(s,selAnnot)||null;
+  }
+  var focusPvT=null,focusPvLayer=null;
+  function focusPreviewStop(){
+    if(focusPvT){clearTimeout(focusPvT);focusPvT=null;}
+    var layer=focusPvLayer; focusPvLayer=null;
+    if(layer){
+      layer.classList.remove('an-spotlit');
+      layer.removeAttribute('data-focus');
+      $$('.an-spot',layer).forEach(function(n){n.classList.remove('an-spot');});
+      var l=layer.querySelector('.an-lens'); if(l) l.remove();
+    }
+    focusClear();
+  }
+  function focusPreview(fx){
+    focusPreviewStop();
+    if(!fx||!motionOK()) return;
+    var a=focusItem(); if(!a) return;
+    var layer=stage&&stage.querySelector('.annot-layer'); if(!layer) return;
+    var el=layer.querySelector('.an-item[data-idx="'+selAnnot+'"]');
+    if(!el) return;
+    focusPvLayer=layer;
+    focusPaint(layer,el,{focus:{at:0,fx:fx}});
+    focusPvT=setTimeout(focusPreviewStop,1800);
+  }
+  function focusBoot(){
+    var strip=$('#anim-focus-strip'); if(!strip) return;
+    [['','none']].concat(FOCUS_FX).forEach(function(pr){
+      var b=$('#anim-focus-'+(pr[0]||'none')); if(!b) return;
+      b.addEventListener('mouseenter',function(){
+        if(!b.disabled) focusPreview(pr[0]);});
+      b.addEventListener('mouseleave',focusPreviewStop);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();focusPreviewStop();
+        focusSet(pr[0]);
+      });
+    });
+    strip.addEventListener('mouseleave',focusPreviewStop);
+  }
+  /* give every selected thing this focus, on a click of its own at the
+     end (the exit's default); '' takes it away. A thing that already
+     has one keeps its click. */
+  function focusSet(fx){
+    var s=pres.slides[cur]; if(!s) return;
+    var n=0;
+    selIdxs().forEach(function(i){
+      var a=s.annots[i]; if(!a) return;
+      var f=animFocus(a);
+      if(!fx){if(f){delete a.focus;n++;}return;}
+      a.focus={at:f?f.at:nextAnimOrder(s),fx:fx};
+      n++;
+    });
+    if(!n) return;
+    markDirty();refresh();
+    if(typeof animRibbonSync==='function') animRibbonSync();
+    if(typeof animPaneSync==='function') animPaneSync();
+  }
+  /* ...and WHEN: on a click of its own, or on the click something
+     else arrives -- the exit menu's own rows, for the panel */
+  function focusWhenRows(host){
+    var s=pres.slides[cur],a=focusItem(); if(!a) return;
+    var f=animFocus(a); if(!f) return;
+    function put(){
+      markDirty();refresh();
+      if(typeof animRibbonSync==='function') animRibbonSync();
+      if(typeof animPaneSync==='function') animPaneSync();
+    }
+    var row=cfgRow(host);
+    var own=!animSeq(s).some(function(st){return st.order===f.at;});
+    cfgChip(row,bic('locate'),'On a click of its own',own,
+      'Adds a click on which this is the point',function(){
+        if(!own){a.focus.at=nextAnimOrder(s);put();}});
+    var mine=a.anim?(a.anim.order||0):-1;
+    animSeq(s).forEach(function(st){
+      if(st.order<=mine) return;
+      var who=st.items.map(function(i2){
+        return annotLabel((s.annots||[])[i2]);}).join(', ');
+      if(who.length>26) who=who.slice(0,25)+'…';
+      cfgChip(row,bic('together'),'When '+who+' arrives',f.at===st.order,
+        'On the click that arrives',function(){a.focus.at=st.order;put();});
+    });
+  }
+  function focusSync(){
+    var a=focusItem(),poster=!!(pageOf&&pageOf().poster);
+    var strip=$('#anim-focus-strip'); if(!strip) return;
+    var on=!!a&&!poster,f=on?animFocus(a):null,now=f?f.fx:'';
+    [['','none']].concat(FOCUS_FX).forEach(function(pr){
+      var b=$('#anim-focus-'+(pr[0]||'none')); if(!b) return;
+      b.disabled=!on;
+      b.setAttribute('aria-pressed',(on&&now===pr[0]).toString());
+    });
+    var say=$('#anim-focus-say');
+    if(say){
+      var s=pres.slides[cur];
+      var inf=(f&&typeof spStepInfo==='function')?spStepInfo(s,a):null;
+      var bs=f?slideBuildSteps(s):null,st=(bs&&bs.map[f.at]);
+      var sp=(st!=null)?flipPlan(s).stop[st]:null;
+      say.textContent=f?('on click '+(((sp==null?st:sp)|0)+1)):'';
+      say.hidden=!f;
+    }
   }
   /* ---- T238: DISAPPEAR, WHERE ANIMATION IS -----------------------------
      The exit has existed since T174 and had one door: a popover inside
@@ -62405,16 +63014,42 @@ window.JunoPptx = (function () {
     }
   }
   var seqType='fade';
+  /* T471: ...AND HOW MUCH OF A TEXT BOX A CLICK GIVES (2026-09-15,
+     user: "in quick animate there is no by dot points option"). The
+     same four answers the Timing group has, with a letter each the
+     way the effects have, applied to every text box the mode clicks
+     from then on. Whole box is the instruction it always was: a box
+     that arrived by bullet goes back to arriving whole. */
+  var SEQ_BY=[['','Whole box','W','text'],['para','By bullet','B','indent'],
+    ['sent','By sentence','S','spacing'],['hl','Highlight','H','star']];
+  var seqBy='';
   function seqKeyDown(e){
     if(!seqArm) return;
+    /* T471: A KEY THE MODE TAKES IS TAKEN. It prevented the default and
+       let the event go on, so the editor's own handler saw it too: G
+       (Grow) toggled the grid, B (By bullet) armed the guide-box tool
+       -- which then swallowed the first click after the mode ended
+       (driven 2026-09-15). The mode's letters are the mode's. */
     if(e.key>='0'&&e.key<='9'){
-      seqDigit=+e.key;e.preventDefault();seqSync();
-      return;
+      seqDigit=+e.key;e.preventDefault();e.stopImmediatePropagation();
+      seqSync();return;
     }
     var k=String(e.key||'').toUpperCase();
     for(var q=0;q<SEQ_FX.length;q++) if(SEQ_FX[q][2]===k){
-      seqType=SEQ_FX[q][0];e.preventDefault();seqSync();return;
+      seqType=SEQ_FX[q][0];e.preventDefault();e.stopImmediatePropagation();
+      seqSync();return;
     }
+    for(var q2=0;q2<SEQ_BY.length;q2++) if(SEQ_BY[q2][2]===k){
+      seqBy=SEQ_BY[q2][0];e.preventDefault();e.stopImmediatePropagation();
+      seqSync();return;
+    }
+  }
+  /* T471: the mode's text-build choice, on one box */
+  function seqApplyBy(a){
+    if(!a||a.k!=='text'||!a.anim) return;
+    if(seqBy==='hl'){a.anim.by='para';a.anim.hl=1;}
+    else if(seqBy){a.anim.by=seqBy;delete a.anim.hl;}
+    else {delete a.anim.by;delete a.anim.hl;}
   }
   function seqKeyUp(e){
     if(!seqArm) return;
@@ -62503,6 +63138,7 @@ window.JunoPptx = (function () {
     if(a.anim) {a.anim.order=ord;a.anim.type=seqType;}
     else a.anim={type:seqType,order:ord};
     if(seqType==='none') delete a.anim;
+    seqApplyBy(a);   /* T471 */
     /* THE DIGIT SETS THE DELAY (T169). "Hold down 5 and click, it
        appears five seconds after the last." 0 clears one, which is how
        you take a delay back without leaving the mode. It goes on the
@@ -62765,7 +63401,9 @@ window.JunoPptx = (function () {
          COME OUT ONE AT A TIME???? I CAN'T SEE ANY OF THE OPTIONS FOR
          TEXT!!!!!"). The tiles show for any text box; picking one gives
          the box an entrance (setBy). */
-      if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false};
+      var fig=!!a&&num&&(a.k==='cell'||a.k==='image');   /* T473 */
+      if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false,
+        fig:fig,grid:''};
       var q=animSeq(s),si=stepOf(s,selAnnot);
       var after=(a.anim.after)|0,shared=false;
       if(si>=0&&q[si].items.length>1){
@@ -62776,17 +63414,85 @@ window.JunoPptx = (function () {
           if(first===null&&q[si].items.indexOf(i)>=0) first=i;});
         shared=(first!==selAnnot);
       }
+      var pg=(typeof panelsOf==='function')?panelsOf(a):null;
       return {on:true,si:si,after:after,shared:shared,
         mode:after?'after':(shared?'with':'click'),
         text:a.k==='text',
         by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:'',
-        hl:!!a.anim.hl};
+        hl:!!a.anim.hl,
+        fig:fig,grid:pg?(pg.c+'x'+pg.r):''};
     }
+    /* T473: the grids the strip offers -- key, words, what it is */
+    var PANEL_GRIDS=[['1x1','Whole figure','On one click, all of it'],
+      ['2x1','2 across','Two panels, left then right'],
+      ['3x1','3 across','Three panels, left to right'],
+      ['4x1','4 across','Four panels, left to right'],
+      ['1x2','2 down','Two panels, top then bottom'],
+      ['1x3','3 down','Three panels, top to bottom'],
+      ['2x2','2 \u00d7 2','Four panels: the top row, then the bottom'],
+      ['3x2','3 \u00d7 2','Six panels: the top row, then the bottom'],
+      ['2x3','2 \u00d7 3','Six panels, two to a row, top to bottom']];
+    function panelId(k){return '#anim-panels-'+k.replace('x','by');}
+    /* set on every selected figure; '1x1' takes the panels off. A
+       figure with no entrance gets one, as a text box does for By
+       bullet (T401). */
+    function setPanels(grid){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0,no=nextAnimOrder(s);
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||(a.k!=='cell'&&a.k!=='image')) return;
+        if(grid&&grid!=='1x1'){
+          var an=ensureAnim(s,a,no);an.by='panels';an.grid=grid;
+        } else if(a.anim&&a.anim.by==='panels'){
+          delete a.anim.by;delete a.anim.grid;
+        } else return;
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    }
+    animSetPanels=function(grid){setPanels(grid);};
+    function panelsBoot(){
+      var strip=$('#anim-panels-strip'); if(!strip) return;
+      PANEL_GRIDS.forEach(function(pr){
+        var b=$(panelId(pr[0]));
+        if(!b){
+          b=document.createElement('button');
+          b.type='button';b.className='fx-tile';
+          b.id=panelId(pr[0]).slice(1);
+          b.disabled=true;b.setAttribute('aria-pressed','false');
+          b.title=pr[2];
+          b.innerHTML=panelIcon(pr[0])+'<span>'+esc(pr[1])+'</span>';
+          strip.appendChild(b);
+        }
+        b.addEventListener('click',function(e){
+          e.stopPropagation();setPanels(pr[0]);});
+      });
+    }
+    /* the grid drawn small: a box of c x r cells */
+    function panelIcon(k){
+      var m=/^(\d)x(\d)$/.exec(k),c=m?+m[1]:1,r=m?+m[2]:1,cells='';
+      for(var i=0;i<c*r;i++) cells+='<i></i>';
+      return '<span class="panel-ico" style="grid-template-columns:repeat('
+        +c+',1fr);grid-template-rows:repeat('+r+',1fr)">'+cells+'</span>';
+    }
+    panelsBoot();
     function timingSync(){
       var st=timingState(),poster=!!pageOf().poster,armed=seqOn();
       var start=$('#anim-start'),by=$('#anim-by');
       if(start) start.hidden=poster||armed;
       if(by) by.hidden=poster||armed||!st.text;
+      /* T473: a figure or a picture arrives in panels, the way a text
+         box arrives by bullet -- the strip shows for either */
+      var pf=$('#anim-panels');
+      if(pf) pf.hidden=poster||armed||!st.fig;
+      PANEL_GRIDS.forEach(function(pr){
+        var b=$(panelId(pr[0])); if(!b) return;
+        b.disabled=!st.fig;
+        b.setAttribute('aria-pressed',
+          (st.fig&&(st.grid||'1x1')===pr[0]).toString());
+      });
       [['anim-onclick','click'],['anim-withprev','with'],
        ['anim-afterprev','after']].forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
@@ -62852,7 +63558,8 @@ window.JunoPptx = (function () {
         }
       }
       var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent=st.text?'Timing & text':'Timing';
+      if(lab) lab.textContent=st.text?'Timing & text'
+        :(st.fig?'Timing & panels':'Timing');
     }
     /* T418: figure k with piece k. Set on every selected box built in
        pieces; '' takes it off. The book keeps whatever entrance it has. */
@@ -62923,6 +63630,26 @@ window.JunoPptx = (function () {
       if(!a.anim) a.anim={type:'appear',order:no};
       return a.anim;
     }
+    /* T471: HOW THE LIT BULLET IS LIT, AND WHAT THE REST DO
+       (2026-09-15, user: "the dot point in question either becomes
+       bigger or changes color, or other become blurred. Then this
+       needs to be able to be configured"). Two facts on the box:
+       `hlfx` is the lit piece -- bigger and coloured (the T385 look),
+       bigger, or coloured -- and `hlrest` is every other piece --
+       dimmed (T385's), blurred, or left as it is. The Configure panel
+       is the door (animCfg). */
+    animSetHl=function(key,val){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim||!a.anim.hl) return;
+        if(val) a.anim[key]=val; else delete a.anim[key];
+        n++;
+      });
+      if(!n) return;
+      commit(s);
+    };
     var hlb=$('#anim-by-hl');
     if(hlb) hlb.addEventListener('click',function(e){
       e.stopPropagation();
@@ -63299,7 +64026,10 @@ window.JunoPptx = (function () {
       var exits=[];
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.hide) return;
-        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o});});
+        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o,kind:'out'});
+        /* T472: a focus is a click too, listed the same way */
+        var f=animFocus(a);
+        if(f) exits.push({i:i,a:a,o:f.at,kind:'focus',f:f});});
       var stopOrders=Object.keys(steps.map).map(Number)
         .sort(function(x,y){return x-y;});
       function exitCommit(){
@@ -63308,21 +64038,31 @@ window.JunoPptx = (function () {
         if(typeof animPaneSync==='function') animPaneSync();
       }
       function exitRow(x){
-        var inf=(typeof spStepInfo==='function')?spStepInfo(s,x.a):null;
-        var no=(inf&&inf.out!=null)?inf.out:'\u2013';
         var k=stopOrders.indexOf(x.o);
         var isBuild=seq.some(function(st){return st.order===x.o;});
-        row(no,[[itemLabel(s,x.i)+' leaves',x.i]],'Send it away',
+        var st0=steps.map[x.o],sp0=(st0!=null)?plan.stop[st0]:null;
+        var no=(st0==null)?'\u2013':(((sp0==null?st0:sp0)|0)+1);
+        function setAt(v){
+          if(x.kind==='focus') x.a.focus.at=v; else x.a.out=v;
+          exitCommit();
+        }
+        var word=x.kind==='focus'
+          ?(FOCUS_FX.filter(function(p){return p[0]===x.f.fx;})[0]||[])[1]
+          :'Send it away';
+        row(no,[[itemLabel(s,x.i)+(x.kind==='focus'?' in focus':' leaves'),
+          x.i]],word,
           {sub:true,cur:x.i===selAnnot,acts:[
-            ['\u2191 Earlier','Leave one click earlier',
-             function(){x.a.out=stopOrders[k-1];exitCommit();},k<=0],
-            ['\u2193 Later','Leave one click later',
+            ['\u2191 Earlier','One click earlier',
+             function(){setAt(stopOrders[k-1]);},k<=0],
+            ['\u2193 Later','One click later',
              function(){
-               x.a.out=(k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s);
-               exitCommit();},
+               setAt((k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s));},
              k>=stopOrders.length-1&&!isBuild],
-            ['\u2715 Stays','Keep it on the slide to the end',
-             function(){delete x.a.out;exitCommit();},false]]});
+            x.kind==='focus'
+              ?['\u2715 None','No focus click',
+                function(){delete x.a.focus;exitCommit();},false]
+              :['\u2715 Stays','Keep it on the slide to the end',
+                function(){delete x.a.out;exitCommit();},false]]});
         x.done=true;
       }
       function exitRowsFor(o){
@@ -63349,9 +64089,15 @@ window.JunoPptx = (function () {
         var pieceA=null;
         st.items.forEach(function(idx){
           var a=s.annots[idx];
-          if(!pieceA&&textBy(a)&&nsub>1) pieceA=a;});
+          if(!pieceA&&nsub>1&&(textBy(a)
+             ||(typeof panelsOf==='function'&&panelsOf(a)))) pieceA=a;});
         if(pieceA&&st.items.length===1){
-          var pcs=textPieces(pieceA),ii=st.items[0];
+          /* T473: a figure's panels are its pieces */
+          var pcs=textBy(pieceA)?textPieces(pieceA)
+            :(function(){var g=panelsOf(pieceA),o=[];
+              for(var q3=0;q3<g.c*g.r;q3++) o.push('Panel '+(q3+1)+' of '+(g.c*g.r));
+              return o;})();
+          var ii=st.items[0];
           /* T418: the figure that turns with each piece, on its row */
           var sfb=pieceA.anim.sync?flipById(s,pieceA.anim.sync):null;
           var sfr=sfb?flipFrames(sfb):[];
@@ -63446,7 +64192,16 @@ window.JunoPptx = (function () {
         /* T452: opening lands you on the tab you left it on */
         if(typeof animTabApply==='function') animTabApply();
       }
-      else paneHide('animpane');
+      else {
+        /* T471: QUICK ANIMATE ENDS WITH ITS PANEL. Its controls live
+           in this pane (T445), so closing the pane read as closing the
+           mode -- and the mode stayed armed, numbering every click
+           until Escape (2026-09-15, user: "even when I close it
+           everything is still trying to quick animate unless I press
+           esc"). Closing keeps what was placed, the way Finish does. */
+        if(seqOn()) seqEnd(true);
+        paneHide('animpane');
+      }
     }
     vbtn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
@@ -63509,7 +64264,10 @@ window.JunoPptx = (function () {
        call; two doors, one implementation. */
     var sqb=$('#anim-seq');
     if(sqb) sqb.addEventListener('click',function(e){
-      e.stopPropagation();seqArmStart();});
+      e.stopPropagation();
+      /* T471: the lit door is the way out as well as in */
+      if(seqOn()) seqEnd(true); else seqArmStart();
+    });
     /* the timeline IS the Layers pane (T174); this door drives
        Home's button so there is one pane and one implementation */
     var lyb=$('#anim-layers');
@@ -63538,15 +64296,16 @@ window.JunoPptx = (function () {
          review). Entrances, exits and movements go; the flip book's
          pages stay, as the note above says; and what is left is named
          from what is actually left. */
-      var n=0,nx=0,nm=0;
+      var n=0,nx=0,nm=0,nf=0;
       (s.annots||[]).forEach(function(a){
         if(!a) return;
         if(a.anim){delete a.anim;n++;}
         if(animOut(a)!=null){delete a.out;nx++;}
         if(a.motion){delete a.motion;delete a.mo;nm++;}
+        if(animFocus(a)){delete a.focus;nf++;}   /* T472 */
       });
       var left=slideStops(s);   /* the clicks still in the slide */
-      var all=n+nx+nm;
+      var all=n+nx+nm+nf;
       if(!all){
         toast(left
           ?('Nothing here has an entrance, exit or movement, but the '
@@ -63560,6 +64319,7 @@ window.JunoPptx = (function () {
       if(n) parts.push(n+(n===1?' entrance':' entrances'));
       if(nx) parts.push(nx+(nx===1?' exit':' exits'));
       if(nm) parts.push(nm+(nm===1?' movement':' movements'));
+      if(nf) parts.push(nf+(nf===1?' focus':' focuses'));
       toast('Cleared '+parts.join(', ')
         +(left?(' — '+left+' click'+(left===1?'':'s')
                 +' left, stepping the flip book')
@@ -63572,6 +64332,7 @@ window.JunoPptx = (function () {
       flipFxSync();
       animOutSync();
       motionSync();
+      focusSync();   /* T472 */
       if(typeof pictureSync==='function') pictureSync();   /* T387 */
       /* T289: the slide transition is a fact about the SLIDE rather than
          the selection, but this is the one sync every path already
@@ -63958,6 +64719,16 @@ window.JunoPptx = (function () {
           :'. Every click from now gives this.'),
         function(){seqType=f[0];seqSync();});
     });
+    /* T471: and how much of a text box each click gives */
+    cfgHead(host,'a text box arrives');
+    var rowb=cfgRow(host);
+    SEQ_BY.forEach(function(f){
+      cfgChip(rowb,bic(f[3]==='text'?'text':(f[3]==='indent'?'indent'
+        :(f[3]==='spacing'?'spacing':'star'))),f[1]+' ('+f[2]+')',
+        seqBy===f[0],f[1]+' \u2014 press '+f[2]+'. Every text box '
+        +'clicked from now arrives this way.',
+        function(){seqBy=f[0];seqSync();});
+    });
     var acts=cfgRow(host,'cfg-acts');
     var u=document.createElement('button');
     u.type='button';u.className='anim-mini';
@@ -64022,6 +64793,45 @@ window.JunoPptx = (function () {
             :(p[2]==='spacing'?bic('spacing'):bic('star')))),
           p[1],cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
       });
+      /* T471: the highlight's two choices, once it is on */
+      if(a.anim&&a.anim.hl){
+        cfgHead(host,'the bullet whose click it is');
+        var r5=cfgRow(host);
+        HL_FX.forEach(function(p){
+          cfgChip(r5,bic('star'),p[1],(a.anim.hlfx||'')===p[0],'',
+            function(){animSetHl('hlfx',p[0]);animCfgSync();});
+        });
+        cfgHead(host,'the other bullets');
+        var r6=cfgRow(host);
+        HL_REST.forEach(function(p){
+          cfgChip(r6,bic(p[0]==='blur'?'none':(p[0]==='plain'?'text':'eye')),
+            p[1],(a.anim.hlrest||'')===p[0],'',
+            function(){animSetHl('hlrest',p[0]);animCfgSync();});
+        });
+      }
+    }
+    /* T473: a figure arrives in panels -- the common grids as chips
+       and the exact numbers as two sliders */
+    if(a.k==='cell'||a.k==='image'){
+      cfgHead(host,'how much arrives at a time');
+      var rp=cfgRow(host);
+      var g=(typeof panelsOf==='function')?panelsOf(a):null;
+      var gk=g?(g.c+'x'+g.r):'1x1';
+      [['1x1','Whole figure'],['2x1','2 across'],['3x1','3 across'],
+       ['2x2','2 \u00d7 2'],['3x2','3 \u00d7 2']].forEach(function(p){
+        cfgChip(rp,bic('grid'),p[1],gk===p[0],'',
+          function(){animSetPanels(p[0]);animCfgSync();});
+      });
+      if(g){
+        cfgRange(host,'Across',g.c,1,6,1,function(v){return String(v);},
+          'Panels across',function(v){
+            animSetPanels(Math.round(v)+'x'+g.r);animCfgSync();});
+        cfgRange(host,'Down',g.r,1,6,1,function(v){return String(v);},
+          'Panels down',function(v){
+            animSetPanels(g.c+'x'+Math.round(v));animCfgSync();});
+        cfgNote(host,'Each panel is a click, left to right and then down. '
+          +'The covers are the page\u2019s own colour.');
+      }
     }
     var ow=$('#anim-outwrap');
     if(ow&&!ow.hidden){
@@ -64045,6 +64855,21 @@ window.JunoPptx = (function () {
         if(say&&say.textContent) cfgNote(host,'Goes '+say.textContent+'.');
       }
     }
+  }
+  /* T472: the click on which it is the point */
+  function cfgFocus(host,a){
+    cfgHead(host,'focus, on a click');
+    var row=cfgRow(host);
+    var f=animFocus(a),now=f?f.fx:'';
+    cfgChip(row,bic('none'),'None',!f,'No focus click',
+      function(){focusSet('');animCfgSync();});
+    FOCUS_FX.forEach(function(p){
+      cfgChip(row,bic(p[0]==='spot'?'eye':(p[0]==='zoom'?'expand':'find')),
+        p[1],now===p[0],p[2],function(){focusSet(p[0]);animCfgSync();});
+    });
+    if(!f) return;
+    cfgHead(host,'when');
+    focusWhenRows(host);
   }
   function cfgMotion(host,a){
     cfgHead(host,'movement, while it is on the slide');
@@ -64202,6 +65027,7 @@ window.JunoPptx = (function () {
     }
     host.appendChild(who);
     cfgArrival(host,a);
+    cfgFocus(host,a);   /* T472 */
     cfgMotion(host,a);
     cfgLife(host);
   }
@@ -66353,8 +67179,21 @@ window.JunoPptx = (function () {
     if(c.dock!=='pop'&&d.hidden){d.hidden=false;renderDeckPresentationDrawer();}
     drawerDoors().forEach(function(b){
       b.setAttribute('aria-expanded',(!d.hidden).toString());});
+    /* T470: the door wears the choice -- its icon and its word are the
+       menu's own row for where the bar is now */
+    var db=$('#deck-pres-dock');
+    if(db){
+      var w=BAR_DOCK_WORDS[c.dock]||BAR_DOCK_WORDS.pop;
+      db.innerHTML=bic(w[0])+' <span id="deck-pres-dock-say">'+w[1]
+        +'</span>\u00a0\u25be';
+      db.title='This bar is '+w[2]+'. Where it sits, and what it lists';
+      db.setAttribute('aria-label',db.title);
+    }
     if(typeof applyZoom==='function') applyZoom();
   }
+  var BAR_DOCK_WORDS={pop:['objects','Pop-up','a pop-up'],
+    left:['dockright','Rail','a rail down the left'],
+    top:['docktop','Strip','a strip across the top']};
   /* ---- A COPY OF A PRESENTATION (T448) --------------------------------
      "you can't duplicate a presentation". One deep copy under a free
      name, into the draft store, open beside the original. */
@@ -66643,10 +67482,15 @@ window.JunoPptx = (function () {
       if(!barDocked()) closeDeckPresentationDrawer();
       newPresentation();
     });
+    /* T470: AN X CLOSES. On a docked bar it un-docked and left the
+       bar open as a pop-up over the thumbnails, under a label that
+       said "Close this bar" (2026-09-15 review). It closes: the bar
+       goes back to a pop-up, which is the only kind that can be shut,
+       and shuts. The door beside it is how you dock it again. */
     var dclose=$('#deck-pres-close');
     if(dclose) dclose.addEventListener('click',function(e){
       e.stopPropagation();
-      if(barDocked()){barSet('dock','pop');return;}
+      if(barDocked()) barSet('dock','pop');
       closeDeckPresentationDrawer(true);
     });
     barApply();
@@ -67207,6 +68051,9 @@ window.JunoPptx = (function () {
   function dgKey(e){
     if(!$('#deck-design')) return;
     if(e.key==='Escape'){
+      /* T470: the Style sets picker may be open over this screen; its
+         Escape is its own */
+      var sd=$('#ss-dlg'); if(sd&&!sd.hidden) return;
       e.preventDefault();e.stopPropagation();dgClose();}
   }
   function dgSpecimen(el,id){
@@ -67265,6 +68112,9 @@ window.JunoPptx = (function () {
     ['table','Tables','table'],['flip','Flip books','flipbook'],
     ['arrow','Arrows and lines','arrow']];
   function dgIsObj(){return /^obj:/.test(dgSel);}
+  function dgAnyStyleWorn(){
+    return styleOrder().some(function(id){return dgWearers(id).length>0;});
+  }
   function dgObjKind(){return dgSel.slice(4);}
   function dgKindLabel(){
     if(!dgIsObj()){
@@ -67925,10 +68775,15 @@ window.JunoPptx = (function () {
       any=true;
       var d=styleDef(id)||{label:id};
       var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
-      var row=cntRow(list.length,(d.label||id)
-        +(odd.length?(' \u2014 '+odd.length+' changed by hand'):''),
-        odd.length?' dg-cnt-odd':'');
+      var row=cntRow(list.length,d.label||id,odd.length?' dg-cnt-odd':'');
       if(odd.length){
+        /* T470: the note on its own line, like the button under it --
+           on one line with the name it was the note that got cut
+           ("Heading 1 -- 1 changed by…", 2026-09-15 review) */
+        var note=document.createElement('span');
+        note.className='dg-cnt-note';
+        note.textContent=odd.length+' changed by hand';
+        row.appendChild(note);
         var b=document.createElement('button');
         b.type='button';b.className='dbtn dg-cnt-fix';
         b.textContent='Match '+odd.length;
@@ -68091,6 +68946,9 @@ window.JunoPptx = (function () {
          it. The one it is showing stays, whatever its count, or
          choosing an empty kind would make its own row vanish. */
       if(!n2&&key!==dgSel) return;
+      /* T470: the head says "else" -- with no text styles above it
+         there is no else, and with no rows under it there is nothing */
+      if(!n2&&!dgAnyStyleWorn()) return;
       if(!hd){
         hd=document.createElement('div');
         hd.className='hd-lab';hd.textContent='everything else';
@@ -68405,16 +69263,24 @@ window.JunoPptx = (function () {
     board.addEventListener('mouseleave',function(){bub.hidden=true;});
     /* the key, and the switch that turns the rest of the page on */
     var key=document.createElement('div');key.className='dg-key';
-    var ck=document.createElement('label');ck.className='dg-keyck';
-    var box=document.createElement('input');box.type='checkbox';
-    box.checked=dgShowOthers;
-    box.addEventListener('change',function(){
-      dgShowOthers=box.checked;
+    /* T470: the same switch as the sheet column's Outlines, in the
+       same shape -- it was a bare checkbox beside a boxed button on
+       one screen (2026-09-15 review) */
+    var ck=document.createElement('button');
+    ck.type='button';ck.className='dbtn dg-b dg-keyck';
+    function ckPaint(){
+      ck.setAttribute('aria-pressed',dgShowOthers?'true':'false');
+      ck.innerHTML=bic('eye')+(dgShowOthers?' Everything else on'
+        :' Everything else off');
+    }
+    ckPaint();
+    ck.addEventListener('click',function(e){
+      e.stopPropagation();
+      dgShowOthers=!dgShowOthers;
+      ckPaint();
       dgGhostsFor(board,id);
       dgKeyList(key,id);
     });
-    ck.appendChild(box);
-    ck.appendChild(document.createTextNode(' Show everything else'));
     ck.title='Draw every other object on these slides too';
     key.appendChild(ck);
     dgKeyList(key,id);
@@ -68438,6 +69304,17 @@ window.JunoPptx = (function () {
     var id=dgSel,d=styleDef(id);
     /* T224: an object kind has no look to edit -- it has a table */
     if(dgIsObj()){
+      /* T470: a deck with nothing to standardise said "Pictures --
+         every one in this deck" over an empty table and three dead
+         buttons, with no line saying what the screen is for
+         (2026-09-15 review) */
+      if(!dgRows().length&&!dgAnyStyleWorn()){
+        body.innerHTML='<div class="selpane-empty">Nothing to '
+          +'standardise yet. Add text and its styles are listed here; '
+          +'pictures, tables, shapes and the rest get a table each, so '
+          +'the ones that should match can be made to.</div>';
+        return;
+      }
       dgSectionHead(body,dgKindLabel()+' \u2014 every one in this deck');
       dgTable(body,ov);
       dgSheet(body,ov);
@@ -68761,11 +69638,19 @@ window.JunoPptx = (function () {
        instant -- the standing overlay rule, applied where it was
        missing: Check consistency opened the check and closed it in
        one click, so the Style system had no working door to it. */
+    /* T470: ...AND THE SCREEN STAYS. It closed itself first, because
+       the picker sits at a lower z-index than the screen -- so picking
+       a set threw you out of the Style system and Close on the picker
+       left you in the editor, not back where you were (2026-09-15
+       review). The picker opens ABOVE the screen instead, and the
+       screen redraws when it closes, wearing what was picked. */
     ov.querySelector('#dg-sets').addEventListener('click',function(e){
       e.stopPropagation();
-      dgClose();
-      var sb=$('#dsg-sets');
-      if(sb) sb.click();
+      if(typeof window.SemDeckStyleSets==='function')
+        window.SemDeckStyleSets(function(){
+          var o2=$('#deck-design');
+          if(o2){dgRail(o2);dgBody(o2);}
+        });
     });
     ov.querySelector('#dg-check').addEventListener('click',function(e){
       /* the drift CHECK stays where it is: this surface says what the
@@ -71054,6 +71939,8 @@ window.JunoPptx = (function () {
       if(tbn) tbn.setAttribute('aria-expanded','false');
     }
     mode=m;
+    /* T471: Quick animate is an editor mode; leaving the editor ends it */
+    if(m!=='edit'&&typeof seqOn==='function'&&seqOn()) seqEnd(true);
     if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
       closeDeckPresentationDrawer();
     if(m!=='view'&&typeof talkToolsReset==='function') talkToolsReset();
@@ -72874,8 +73761,10 @@ window.JunoPptx = (function () {
         var st=steps.map[a.anim.order||0];
         if(st!=null){
           if(stopOf(st)===k-1) arr.push(annotLabel(a));
-          else if(typeof textBy==='function'&&textBy(a)){
-            var n=textPieceCount(a);
+          else if((typeof textBy==='function'&&textBy(a))
+                  ||(typeof panelsOf==='function'&&panelsOf(a))){
+            var n=(typeof pieceCount==='function')?pieceCount(a)
+              :textPieceCount(a);   /* T473: panels too */
             for(var j=1;j<n;j++) if(stopOf(st+j)===k-1)
               arr.push('more of '+annotLabel(a));
           }
@@ -72885,6 +73774,11 @@ window.JunoPptx = (function () {
       if(o!=null){
         var st2=steps.map[o];
         if(st2!=null&&stopOf(st2)===k-1) leave.push(annotLabel(a));
+      }
+      var f=(typeof animFocus==='function')?animFocus(a):null;   /* T472 */
+      if(f){
+        var st3=steps.map[f.at];
+        if(st3!=null&&stopOf(st3)===k-1) arr.push('focus on '+annotLabel(a));
       }
     });
     steppersOn(s).forEach(function(p){
@@ -77017,6 +77911,7 @@ window.JunoPptx = (function () {
   scrollShowBoot();           /* the scrolling version (T389) */
   storyBoot();                /* the animation story (T391) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
+  focusBoot();                /* T472: focus, on its click */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
