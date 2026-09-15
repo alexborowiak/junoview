@@ -831,8 +831,11 @@ def test_named_text_styles_and_apply_to_all_headings(out):
     for key in ("title:", "h1:", "h2:", "h3:", "body:", "caption:"):
         assert key in out, key
     # size is what makes a heading level a level, so "apply to all
-    # headings" is the one thing that must not flatten it
+    # headings" is the one thing that must not flatten it -- T480: nor
+    # WRITE it, which pinned a poster's headings to the 16:9 ladder
     assert "d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;" \
+        not in out
+    assert "          d4.label=styleDef(id).label;   /* T480: the name you gave it */" \
         in out
 
 

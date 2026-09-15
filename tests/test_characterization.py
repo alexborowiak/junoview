@@ -1989,8 +1989,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T477 (2026-09-15): the Version chooser on the Present tab.
 # T478 (2026-09-15): the master panel's swatches and pressed runs.
 # T479 (2026-09-15): Background as a compact chooser on the shelf.
-EXPECTED_MD5 = "f4ed69be1f7946b475adac92ee49530c"
-EXPECTED_BYTES = 4420136
+# T480 (2026-09-15): the type and colour model -- an-head, page-aware
+# token defaults, '@quiet' greys, the label/promoter/check fixes.
+EXPECTED_MD5 = "7b378f7eddd65ffb4547d02afde3ebe2"
+EXPECTED_BYTES = 4422790
 
 
 def _render_example() -> str:

@@ -1276,19 +1276,14 @@
         e.stopPropagation();
         var s3=pres.slides[cur],a3=annotByIdx(s3,selAnnot);
         if(!a3||!a3.style) return;
-        var d3={size:a3.size,label:STYLE_DEFAULTS[a3.style].label};
-        /* whether a type counts as a heading is a property of the TYPE,
-           not of the box you happened to select — carry it forward or a
-           custom heading silently stops being one the first time anyone
-           updates it from a box (2026-08-22) */
-        if(STYLE_DEFAULTS[a3.style].head) d3.head=1;
-        /* T314: every look field, through the one read-back */
-        var look3=styleFromBox(a3);
-        Object.keys(look3).forEach(function(k){d3[k]=look3[k];});
-        deckStyles()[a3.style]=d3;
-        restyleDeck([a3.style]);
+        /* T480: THE ONE PROMOTER. This built its own record and wrote
+           the box's whole look, so on a variation it froze the parent's
+           look into the child and it stopped following (2026-09-15
+           review); promoteStyleFromBox writes only a variation's
+           differences, carries `head`, and keeps the name you gave it. */
+        promoteStyleFromBox(a3,true);
         menu.hidden=true;
-        toast('\u201c'+d3.label+'\u201d updated everywhere');
+        toast('\u201c'+styleDef(a3.style).label+'\u201d updated everywhere');
       });
       menu.appendChild(upd);
       var all=document.createElement('button');
@@ -1310,9 +1305,12 @@
           if(parentOf(id)) return;
           var d4=deckStyles()[id]||{};
           /* SIZE is what makes a heading level a level, so it is the one
-             thing this does not flatten */
-          d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;
-          d4.label=STYLE_DEFAULTS[id].label;
+             thing this does not flatten. T480: and it is not WRITTEN
+             either -- writing the built-in size here pinned every
+             heading on a poster to the 16:9 ladder, over the sheet's
+             own scale (2026-09-15 review: a title spanning three lines
+             over the columns). An override that has a size keeps it. */
+          d4.label=styleDef(id).label;   /* T480: the name you gave it */
           /* T314: the box's ground and edge travel with its colour */
           var look4=styleFromBox(a4);
           ['b','i','font','color','bg','bdc'].forEach(function(k){

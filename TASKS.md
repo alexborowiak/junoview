@@ -9168,3 +9168,34 @@ any reading. The rest are T466 onwards.
   shelf's block is 838px in a 1335px bar, a swatch presses and the
   page takes it, a border shows its colours, the verb clears the
   per-slide ones.
+- [x] **T480 — The type and colour model, after the second review pass.**
+  (2026-09-15, the 13 lenses that never ran in the first pass — 8 ran,
+  53 findings, verified by driving.) Deck colours' Heading text
+  governed nothing a text box wore — only the legacy title layout's
+  `.an-title` read the token — so a heading-styled box carries
+  `.an-head` and reads `--tk-heading` (light page too). The resolver's
+  defaults follow the page: on a white page the CSS has always flipped
+  its fallbacks but tokens() answered the dark page's, so the Deck
+  colours panel read "Body text #ffffff" over a white preview, the
+  Style system's specimen was white on white and the check compared
+  against the wrong ink (`tokDefaults`, TOKENS_LIGHT; applyTokens
+  compares against the same). "Apply this look to ALL headings" wrote
+  the 16:9 built-in size onto every heading of a poster (a title over
+  three lines, every section heading over its body) — it no longer
+  writes size at all. A renamed built-in was reset to its stock name by
+  the row's +/−, Smaller/Bigger, a style set and "Update the style
+  from this box" — five writers now keep the name you gave it. "Update
+  the style from this box" on a variation froze its parent's look into
+  it and it stopped following — it goes through the one promoter
+  (promoteStyleFromBox), which writes only a variation's differences.
+  Both style editors' Text/Fill/Border inputs showed the fallback hex
+  whenever the style wore a deck colour — they show what it resolves
+  to and say which colour it is. Standardise treated the page's ink as
+  a literal, so a box wearing '@ink' was flagged against an unset one
+  and "make them match, no style" baked #ffffff onto boxes that
+  vanished on a light page — colours resolve through tokVal first and
+  the page's ink is "no colour". The caption and subtitle greys (five
+  literals across the defaults, the six style sets and the title
+  layout) are '@quiet', so a light theme keeps them readable. Driven
+  at 1500: the red Heading text lands on the Heading 1 box, a white
+  page reads Body text #1b2733, "Section title" survives + and Bigger.

@@ -24,7 +24,10 @@ def test_promoting_a_box_keeps_its_background(out):
     assert "    o.bg=a.bg?(a.bgc||'none'):'none';" in out
     assert "    o.bdc=a.bdc||'none';" in out
     assert "    o.b=a.b?1:0;o.i=a.i?1:0;" in out
-    assert "        var look3=styleFromBox(a3);" in out
+    # T480: the menu's Update goes through promoteStyleFromBox, which
+    # reads the box the same way
+    assert "        promoteStyleFromBox(a3,true);" in out
+    assert "      :styleFromBox(a);" in out
     # and the "every heading" door carries the ground with the colour
     assert "          var look4=styleFromBox(a4);" in out
     assert "          ['b','i','font','color','bg','bdc'].forEach(function(k){" \

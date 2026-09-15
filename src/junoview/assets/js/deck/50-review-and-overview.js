@@ -3960,8 +3960,11 @@
       var ci=document.createElement('input');
       ci.type='color';ci.className='dg-col';
       var v=d[key];
-      ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
-      ci.title=label+' \u2014 every box of this type';
+      var rv=tokVal(v);   /* T480: what a deck colour resolves to */
+      ci.value=(v&&v!=='none'&&/^#[0-9a-f]{6}$/i.test(rv))?rv:fallback;
+      ci.title=label+' \u2014 every box of this type'
+        +(tokRef(v)?(' (a deck colour: '+tokRef(v)+'; a change here '
+          +'unhooks it)'):'');
       ci.addEventListener('input',function(){
         rec[key]=ci.value;markDirty();dgRestamp(id);refresh();});
       ci.addEventListener('change',function(){dgRail(ov);dgBody(ov);});

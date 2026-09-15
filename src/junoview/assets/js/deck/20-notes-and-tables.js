@@ -429,7 +429,7 @@
       if(typeof parentOf==='function'&&parentOf(id)) return;
       var d=styleDef(id);
       var over=deckStyles()[id]||{};
-      over.label=STYLE_DEFAULTS[id].label;
+      over.label=d.label;   /* T480 */
       over.size=Math.max(0.8,Math.min(24,
         Math.round(d.size*k*100)/100));
       STYLE_FIELDS.forEach(function(pr){
@@ -550,8 +550,13 @@
         var ci=document.createElement('input');
         ci.type='color';ci.className='stm-colin';
         var v=d[key];
-        ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
-        ci.title=label+' \u2014 everywhere in this deck';
+        /* T480: a deck colour shows as what it resolves to, and says
+           so; it showed the fallback after any colour theme */
+        var rv=tokVal(v);
+        ci.value=(v&&v!=='none'&&/^#[0-9a-f]{6}$/i.test(rv))?rv:fallback;
+        ci.title=label+' \u2014 everywhere in this deck'
+          +(tokRef(v)?(' (a deck colour: '+tokRef(v)+'; a change here '
+            +'unhooks it)'):'');
         ci.addEventListener('click',function(e){e.stopPropagation();});
         ci.addEventListener('change',function(){
           var o=over();o[key]=ci.value;
@@ -694,7 +699,7 @@
           b.addEventListener('click',function(e){
             e.stopPropagation();
             var over=deckStyles()[id]||{};
-            over.label=STYLE_DEFAULTS[id].label;
+            over.label=d.label;   /* T480: the name you gave it stays */
             over.size=Math.max(0.8,Math.min(24,
               Math.round(d.size*pr[1]*100)/100));
             /* T467: a VARIATION writes only what it says (T292). Copying
@@ -2391,7 +2396,13 @@
       } else if(a.k==='text'){
         var d2=document.createElement('div');
         d2.className='an-item an-text'+(a.bg===0?' nobg':'')
-          +(selAnnot===i?' sel':'');
+          +(selAnnot===i?' sel':'')
+          /* T480: a heading wears the deck's Heading text colour (the
+             CSS reads --tk-heading off the class; only .an-title did,
+             so Deck colours' Heading text governed nothing a text box
+             wore -- 2026-09-15 review) */
+          +((a.style&&typeof isHeadingStyle==='function'
+             &&isHeadingStyle(a.style))?' an-head':'');
         var ap4=anchorPos(a,a.w,a.h);
         d2.style.left=ap4.x+'%';d2.style.top=ap4.y+'%';
         /* the fit multiplier rides on the element as a variable, so

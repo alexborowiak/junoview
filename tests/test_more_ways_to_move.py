@@ -296,3 +296,33 @@ def test_background_is_a_chooser_on_the_shelf(out):
     assert "  var BG_BORDER_COLS=[['#39a9c0','Teal'],['#ff6b57','Coral']," in out
     assert "Make every slide match this one" in out
     assert "wireMenuToggle('bg-drop','bg-btn','bg-menu')" not in out
+
+
+def test_the_type_and_colour_model_after_the_second_pass(out):
+    """T480 (2026-09-15, the second review pass). Eight things the styles
+    model got wrong, each verified by driving."""
+    # a heading-styled box wears the deck's Heading text colour
+    assert "             &&isHeadingStyle(a.style))?' an-head':'');" in out
+    assert ".an-text.an-head{color:var(--tk-heading,#f0f6fa);}" in out
+    # the resolver's defaults follow the page
+    assert "  function tokDefaults(){" in out
+    assert "    var dd=tokDefaults();" in out
+    # the quiet greys are the role
+    assert "    caption:{label:'Caption',    size:1.7, i:1, color:'@quiet'}" in out
+    assert "      :{x:50,y:58,size:2.6,color:'@quiet'};" in out
+    assert "color:'#9aa8b4'" not in out and "color:'#7f93a4'" not in out
+    # a renamed built-in keeps its name through +, Bigger, a set and an update
+    assert ("            over.label=d.label;   "
+            "/* T480: the name you gave it stays */") in out
+    assert "      over.label=d.label;   /* T480 */" in out
+    assert "      if(STYLE_DEFAULTS[k]) o.label=styleDef(k).label;" in out
+    # Update the style from this box goes through the one promoter
+    assert "        promoteStyleFromBox(a3,true);" in out
+    # the colour inputs show what a deck colour resolves to
+    assert ("      ci.value=(v&&v!=='none'&&/^#[0-9a-f]{6}$/i.test(rv))"
+            "?rv:fallback;") in out
+    # the check resolves the page's ink through the resolver
+    assert "  function stdInk(){\n    return tokVal('@ink');\n  }" in out
+    assert "    var a=rgbOf(tokVal(c1)),b=rgbOf(tokVal(c2));" in out
+    assert ("        if(inner.mode===stdInk()) delete a.color; "
+            "else a.color=inner.mode;}") in out

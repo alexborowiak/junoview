@@ -21,7 +21,11 @@ def test_the_base_colours_are_written_onto_the_slide(out):
     the CSS stays the one source of the default and an untouched deck
     renders exactly as it did."""
     assert "  var TOK_BASE={ink:1,page:1,surface:1,heading:1,line:1};" in out
-    assert "    var t=tokens(),d=TOKENS_DEFAULT.c;" in out
+    # T480: the default is the PAGE's -- dark ink on a dark page, dark
+    # ink on a light one -- so a white poster's Deck colours read true
+    assert ("    var t=tokens(),d=tokDefaults();   "
+            "/* T480: the page's own defaults */") in out
+    assert "  var TOKENS_LIGHT={ink:'#1b2733',heading:'#16222c',quiet:'#5f6f7d'," in out
     assert "    Object.keys(TOK_BASE).forEach(function(k){" in out
     assert "      if(v&&v!==d[k]) slideEl.style.setProperty('--tk-'+k,v);" in out
     assert "      else slideEl.style.removeProperty('--tk-'+k);" in out

@@ -1946,7 +1946,7 @@
     var key=which==='t'?'tprops':'sprops';
     if(!s[key]) s[key]=(which==='t')
       ?{x:50,y:42,size:6}          /* colours come from the page theme */
-      :{x:50,y:58,size:2.6,color:'#7e93a4'};
+      :{x:50,y:58,size:2.6,color:'@quiet'};   /* T480: the role */
     return s[key];
   }
   function annotByIdx(s,idx){
@@ -2366,7 +2366,7 @@
        without first opening the style system. */
     body:   {label:'Body',       size:3.9},
     small:  {label:'Small',      size:2.0},
-    caption:{label:'Caption',    size:1.7, i:1, color:'#8aa0b0'}
+    caption:{label:'Caption',    size:1.7, i:1, color:'@quiet'}   /* T480 */
   };
   var STYLE_ORDER=BUILTIN_STYLE_IDS.slice();
   /* the HEADING styles, for "apply to all headings" */
@@ -2476,11 +2476,30 @@
     var light=(typeof pageIsLight==='function')?pageIsLight(bg):false;
     return SECTION_HUES[k%SECTION_HUES.length][light?1:0];
   }
+  /* T480: THE DEFAULTS FOLLOW THE PAGE (2026-09-15 review: "On a light
+     page (every poster) the ink/heading tokens read #ffffff while the
+     page paints #1b2733: the Deck colours preview, swatches, Style
+     system specimen and the 'Body text' chip all lie or paint white on
+     white"). The CSS has always flipped its fallbacks under
+     .page-light; the resolver did not, so everything that asked it --
+     the panel, the swatches, the specimen, the check -- got the dark
+     page's answer on a white one. One place answers now. */
+  var TOKENS_LIGHT={ink:'#1b2733',heading:'#16222c',quiet:'#5f6f7d',
+    surface:'#ffffff',line:'#d9dee3'};
+  function tokDefaults(){
+    var t=(pres&&pres.tokens)||{};
+    var page=(t.c&&t.c.page)||TOKENS_DEFAULT.c.page;
+    var d={};
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){d[k]=TOKENS_DEFAULT.c[k];});
+    if(typeof pageIsLight==='function'&&pageIsLight(page))
+      Object.keys(TOKENS_LIGHT).forEach(function(k){d[k]=TOKENS_LIGHT[k];});
+    return d;
+  }
   function tokens(){
     var t=(pres&&pres.tokens)||{};
     var out={c:{},rad:TOKENS_DEFAULT.rad,gap:TOKENS_DEFAULT.gap};
-    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
-      out.c[k]=TOKENS_DEFAULT.c[k];});
+    var dd=tokDefaults();
+    Object.keys(dd).forEach(function(k){out.c[k]=dd[k];});
     if(t.c) Object.keys(t.c).forEach(function(k){
       if(t.c[k]) out.c[k]=t.c[k];});
     if(t.rad!=null&&isFinite(t.rad)) out.rad=+t.rad;
@@ -2539,7 +2558,7 @@
   var TOK_BASE={ink:1,page:1,surface:1,heading:1,line:1};
   function applyTokens(slideEl){
     if(!slideEl) return;
-    var t=tokens(),d=TOKENS_DEFAULT.c;
+    var t=tokens(),d=tokDefaults();   /* T480: the page's own defaults */
     slideEl.style.setProperty('--tk-rad',t.rad+'px');
     Object.keys(TOK_BASE).forEach(function(k){
       var v=t.c[k];
@@ -2925,49 +2944,49 @@
        title:{size:7.2,b:1},subtitle:{size:3.4},
        h1:{size:5.0,b:1},h2:{size:3.8,b:1},
        h3:{size:3.0,b:1},body:{size:3.9},small:{size:2.0},
-       caption:{size:1.7,i:1,color:'#8aa0b0'}}},
+       caption:{size:1.7,i:1,color:'@quiet'}}},
     {id:'editorial',label:'Editorial',
      note:'Serif headings over a sans body, and room to breathe.',
      styles:{
        title:{size:7.6,b:1,font:'serif'},
-       subtitle:{size:3.4,i:1,font:'serif',color:'#9aa8b4'},
+       subtitle:{size:3.4,i:1,font:'serif',color:'@quiet'},
        h1:{size:5.2,b:1,font:'serif'},
        h2:{size:3.9,b:1,font:'serif'},
        h3:{size:3.0,b:0,i:1,font:'serif'},
        body:{size:2.5,lh:1.5},small:{size:1.95,lh:1.4},
-       caption:{size:1.6,i:1,font:'serif',color:'#9aa8b4'}}},
+       caption:{size:1.6,i:1,font:'serif',color:'@quiet'}}},
     {id:'bold',label:'Bold',
      note:'Heavy sans and big titles — for a room at the back.',
      styles:{
-       title:{size:9.0,b:1},subtitle:{size:4.0,color:'#7f93a4'},
+       title:{size:9.0,b:1},subtitle:{size:4.0,color:'@quiet'},
        h1:{size:6.2,b:1},h2:{size:4.4,b:1},
        h3:{size:3.3,b:1},body:{size:3.0,b:0},small:{size:2.3},
-       caption:{size:1.9,b:1,color:'#7f93a4'}}},
+       caption:{size:1.9,b:1,color:'@quiet'}}},
     {id:'academic',label:'Academic',
      note:'Serif everywhere, modest sizes, generous leading.',
      styles:{
        title:{size:6.4,b:1,font:'serif'},
-       subtitle:{size:3.0,i:1,font:'serif',color:'#93a3b0'},
+       subtitle:{size:3.0,i:1,font:'serif',color:'@quiet'},
        h1:{size:4.4,b:1,font:'serif'},
        h2:{size:3.4,b:1,font:'serif'},
        h3:{size:2.8,b:0,i:1,font:'serif'},
        body:{size:2.4,font:'serif',lh:1.5,pspace:0.5},
        small:{size:1.9,font:'serif',lh:1.4},
-       caption:{size:1.6,i:1,font:'serif',color:'#93a3b0'}}},
+       caption:{size:1.6,i:1,font:'serif',color:'@quiet'}}},
     {id:'minimal',label:'Minimal',
      note:'Light weights and small headings. Lets the figures talk.',
      styles:{
-       title:{size:5.6},subtitle:{size:2.8,color:'#8aa0b0'},
+       title:{size:5.6},subtitle:{size:2.8,color:'@quiet'},
        h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
        body:{size:2.4,lh:1.55},small:{size:1.9,lh:1.45},
-       caption:{size:1.55,color:'#8aa0b0'}}},
+       caption:{size:1.55,color:'@quiet'}}},
     {id:'poster',label:'Poster',
      note:'Sized for a printed sheet read from a metre away.',
      styles:{
-       title:{size:4.6,b:1},subtitle:{size:2.2,color:'#8aa0b0'},
+       title:{size:4.6,b:1},subtitle:{size:2.2,color:'@quiet'},
        h1:{size:3.2,b:1},h2:{size:2.5,b:1},
        h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
-       caption:{size:1.25,i:1,color:'#8aa0b0'}}}
+       caption:{size:1.25,i:1,color:'@quiet'}}}
   ];
   /* ---- T315: COLOUR THEMES ---------------------------------------
      (2026-09-06, user: "there should be themes that you can create, and
@@ -3206,7 +3225,9 @@
     var next={};
     Object.keys(t.styles||{}).forEach(function(k){
       var o=deep(t.styles[k]);
-      if(STYLE_DEFAULTS[k]) o.label=STYLE_DEFAULTS[k].label;
+      /* T480: a name you gave a built-in survives a set (2026-09-15
+         review: five writers reset it from STYLE_DEFAULTS) */
+      if(STYLE_DEFAULTS[k]) o.label=styleDef(k).label;
       /* SPELL OUT the properties the set does NOT want. styleDef merges an
          override OVER the built-in, so a key the set simply omits keeps
          whatever the built-in said — which meant "Bold", whose caption is

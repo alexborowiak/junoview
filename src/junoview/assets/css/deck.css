@@ -4303,6 +4303,9 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 
 /* movable title / subtitle on title slides */
 .an-title{color:var(--tk-heading,#f0f6fa);}
+/* T480: a text box wearing a heading style reads the same token */
+.an-text.an-head{color:var(--tk-heading,#f0f6fa);}
+.page-light .an-text.an-head{color:var(--tk-heading,#16222c);}
    /* default lives HERE so .page-light can win; T455 lets the deck's
       Heading text colour override it when one has been chosen */
 .an-title{position:absolute;transform:translate(-50%,-50%);

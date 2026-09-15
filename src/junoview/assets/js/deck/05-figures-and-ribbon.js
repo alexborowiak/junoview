@@ -318,15 +318,18 @@
      before comparing or a deck where half the boxes say #ffffff and half
      say nothing reports a drift that is not on the screen. The same ink
      preflight computes. */
+  /* T480: the page's ink is the resolver's answer (tokDefaults follows
+     the page), so a box wearing '@ink' and a box wearing nothing are
+     the same colour to the check, as they are on the screen */
   function stdInk(){
-    return pageIsLight(deckPageBg())?'#0b141d':'#ffffff';
+    return tokVal('@ink');
   }
   function stdSize(a){return (a&&a.size)||2.6;}
-  function stdCol(a){return (a&&a.color)||stdInk();}
+  function stdCol(a){return tokVal(a&&a.color)||stdInk();}
   /* two numbers, because "a different colour" is true in two ways and one
      distance hides one behind the other */
   function colDrift(c1,c2){
-    var a=rgbOf(c1),b=rgbOf(c2);
+    var a=rgbOf(tokVal(c1)),b=rgbOf(tokVal(c2));
     if(!a||!b) return String(c1||'')===String(c2||'')?0:1;
     var dl=Math.abs(relLum(a)-relLum(b));
     var dh=Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),
@@ -678,7 +681,10 @@
     stdFix(inner.odd,function(a){
       var pr=inner.prop;
       if(pr.k==='size') a.size=parseFloat(inner.mode);
-      else if(pr.k==='color') a.color=inner.mode;
+      /* T480: the page's own ink is "no colour", never a baked literal
+         that vanishes when the page turns light */
+      else if(pr.k==='color'){
+        if(inner.mode===stdInk()) delete a.color; else a.color=inner.mode;}
       else if(inner.mode==='0'||inner.mode===''||inner.mode==='NaN')
         delete a[pr.k];
       else a[pr.k]=(pr.k==='lh'||pr.k==='pspace')
