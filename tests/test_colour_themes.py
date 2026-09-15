@@ -225,7 +225,8 @@ def test_applying_a_theme_touches_colour_and_nothing_else(out):
     assert "        if(src&&src[p]) rec[p]=src[p]; else delete rec[p];});" in body
     assert "    return restyleAll(null);" in body
     # ...and the page follows the theme
-    assert "    if(t.page) pres.pageBg=t.page; else delete pres.pageBg;" in body
+    # T465: a theme's page colour is the page token
+    assert "      pres.tokens.c=pres.tokens.c||{};pres.tokens.c.page=t.page;}" in body
 
 
 def test_a_saved_theme_carries_the_resolved_palette(out):
@@ -233,7 +234,7 @@ def test_a_saved_theme_carries_the_resolved_palette(out):
     theme made here means the same thing on the next deck."""
     body = out.split("function saveColourTheme(nm){")[1].split("\n  }")[0]
     assert "tokens:{c:tokens().c,rad:tokens().rad," in body
-    assert "      page:pres.pageBg||''," in body
+    assert "      page:tokens().c.page||''," in body
     assert "var THEMEKEY='jv-deck-colours:';" in out
 
 

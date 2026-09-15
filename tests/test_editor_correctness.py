@@ -1549,7 +1549,7 @@ def test_undo_can_see_the_whole_presentation_not_just_its_slides(out):
     """
     assert "function histState(){" in out
     # the three that were missing
-    assert "page:pres.page||null,pageBg:pres.pageBg||null," in out
+    assert "page:pres.page||null," in out   # T465: the page colour is in tokens
     assert "cropMarks:pres.cropMarks||0});" in out
     assert "?pres.styles:null," in out
     # ...and restored, not merely recorded
@@ -1558,7 +1558,7 @@ def test_undo_can_see_the_whole_presentation_not_just_its_slides(out):
     # slide layout could not be undone while every other
     # design-level key could.
     assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
-            "     'guides','masters','layouts','page','pageBg',") in out
+            "     'guides','masters','layouts','page','cropMarks','live',") in out
     # T304: 'live' joins the list. setRefLive DOES mutate pres.live, so
     # unlike a resync this looks like a normal edit -- but histState did
     # not serialise it, the snapshot came out identical, and histPush's

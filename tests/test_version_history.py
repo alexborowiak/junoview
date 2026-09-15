@@ -275,7 +275,7 @@ def test_whole_history_restore_replaces_the_whole_deck(out):
     # T90 gave it two more parameters -- where in the TREE this puts the
     # live deck -- so the signature is matched by its stem.
     restore = out[out.index("function histRestoreDeck(then"):
-                  out.index("function openHistory(){")]
+                  out.index("function openHistory(wantId){")]
     assert "function histRestoreDeck(then,fromId,branch){" in out
     assert "copy.name=pres.name;" in restore
     assert "pres=copy;" in restore

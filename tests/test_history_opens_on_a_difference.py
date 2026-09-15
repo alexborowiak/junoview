@@ -73,8 +73,11 @@ def test_the_newest_version_is_read_against_the_one_before_it():
 def test_it_is_used_where_a_version_becomes_the_selected_one():
     js = assets.deck_js()
     # on open
-    assert ("        histAgainst=histAutoAgainst(ix,ix[ix.length-1]);\n"
-            "        histCompare(ov,ix[ix.length-1]);}") in js
+    # (T465: openHistory(wantId) may open on a named version; the newest
+    # is still the default)
+    assert ("        histAgainst=histAutoAgainst(ix,want);\n"
+            "        histCompare(ov,want);}") in js
+    assert "      if(!want&&ix.length) want=ix[ix.length-1];" in js
     # ...and when you click back onto that row
     assert ("        histSel=e.id;histRows(ov,ix);\n"
             "        histAgainst=histAutoAgainst(ix,e);\n"

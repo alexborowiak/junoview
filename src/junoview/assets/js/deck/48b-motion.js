@@ -113,6 +113,15 @@
      guard is written that way. */
   function motionPaint(el,a){
     if(!el||!a||!a.motion) return;
+    /* T465: AN OBJECT THAT IS LEAVING LEAVES. The exit is a class rule
+       (.an-anim-out{animation:an-out ...}) and this writes the motion
+       into the INLINE animation shorthand, which outranks it -- so a
+       box with a Wobble or a Spin on it kept moving at full opacity on
+       the click it was sent away, and was dropped only on the next
+       stop, or never if that was the slide's last click (2026-09-15
+       review, driven). Leave the inline shorthand empty on that stop
+       so the exit runs; the movement is over anyway. */
+    if(el.classList.contains('an-anim-out')){el.style.animation='';return;}
     var b=moBase(a.motion); if(!b) return;
     var o=moOpt(a);
     el.style.setProperty('--mo-amp',String(o.amp));

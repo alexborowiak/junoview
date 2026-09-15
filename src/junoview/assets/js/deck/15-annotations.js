@@ -753,6 +753,11 @@
     }
     renderSelPane();   /* keep the Objects pane on the CURRENT slide */
     renderNotesPane(); /* ...and the notes, which are per slide */
+    /* T465: ...and the Images pane, whose heading says "on this slide"
+       and which went on listing the previous slide's pictures until
+       its own reload button was pressed (2026-09-15 review) */
+    if(typeof renderImgPane==='function'){
+      var ip=$('#imgpane'); if(ip&&!ip.hidden) renderImgPane();}
     /* Slide navigation clears the selection and reaches renderSlide
        without passing through showFmt. Open selection inspectors still
        have to drop the previous slide's subject. */
@@ -2407,7 +2412,7 @@
     var d=(pres&&pres.sections||{})[id];
     if(d&&/^#[0-9a-f]{6}$/i.test(d.color||'')) return d.color;
     var k=sectionOrdinal(id); if(k<0) return '';
-    var bg=(sl.bg)||(pres&&pres.pageBg)||'#0b141d';
+    var bg=pageBgOf(sl);
     var light=(typeof pageIsLight==='function')?pageIsLight(bg):false;
     return SECTION_HUES[k%SECTION_HUES.length][light?1:0];
   }
@@ -2508,7 +2513,6 @@
       (sl.annots||[]).forEach(function(a){if(hits(a,0)) out.boxes++;});
       if(hits(sl.bg,0)||hits(sl.border,0)) out.slides++;
     });
-    if(hits(pres&&pres.pageBg,0)) out.other++;
     if(hits(pres&&pres.styles,0)) out.other++;
     if(hits(pres&&pres.components,0)) out.other++;
     if(hits(pres&&pres.masters,0)) out.other++;
@@ -3082,7 +3086,10 @@
       ['color','bg','bdc'].forEach(function(p){
         if(src&&src[p]) rec[p]=src[p]; else delete rec[p];});
     });
-    if(t.page) pres.pageBg=t.page; else delete pres.pageBg;
+    /* T465: a theme's page colour is the page token (a saved theme
+       carries it inside tokens.c already; `page` is the older field) */
+    if(t.page&&t.page!=='@page'){
+      pres.tokens.c=pres.tokens.c||{};pres.tokens.c.page=t.page;}
     if(typeof applyPageBg==='function') applyPageBg();
     return restyleAll(null);
   }
@@ -3100,7 +3107,7 @@
     });
     var t={id:'ct'+Date.now().toString(36),label:nm,
       note:'Saved from \u201c'+(pres.name||'a deck')+'\u201d.',
-      page:pres.pageBg||'',tokens:{c:tokens().c,rad:tokens().rad,
+      page:tokens().c.page||'',tokens:{c:tokens().c,rad:tokens().rad,
       gap:tokens().gap},styles:st};
     var list=myColourThemes();list.push(t);saveMyColourThemes(list);
     return t;

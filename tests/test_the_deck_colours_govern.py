@@ -37,8 +37,11 @@ def test_the_css_defaults_read_them(out):
     assert ".an-title{color:var(--tk-heading,#f0f6fa);}" in out
     assert ".an-rect{position:absolute;border:3px solid var(--tk-line,#ff6b57);" in out
     # the page is resolved in JS, so its last fallback is the token itself
-    assert ("var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)"
-            "||'@page');") in out
+    # T465: one resolver for the page's colour -- the token is the store,
+    # a saved pres.pageBg is absorbed into it by normPres
+    assert "  function deckPageBg(){return tokVal('@page');}" in out
+    assert "    return tokVal((s&&s.bg)||mbg||'@page');" in out
+    assert "    var bg=pageBgOf(s0);" in out
 
 
 def test_a_base_colour_is_never_reported_as_unused(out):

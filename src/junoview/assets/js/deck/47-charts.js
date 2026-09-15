@@ -282,7 +282,7 @@
        exporter both already ask pageIsLight; the on-screen renderer was
        the one that did not. */
     var lightPg=(typeof pageIsLight==='function')
-      &&pageIsLight((pres&&pres.pageBg)||'#0b141d');
+      &&pageIsLight(deckPageBg());
     var ink=lightPg?'#0b141d':'#dbe7ef';
     var dim=lightPg?'#4a5b68':'#8aa0b0';
     var grid=lightPg?'#4a5b6833':'#8aa0b033';

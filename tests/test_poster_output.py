@@ -17,7 +17,8 @@ def test_page_background_and_light_pages(out):
     background rides into the print/export path instead of the app navy.
     """
     assert "function applyPageBg" in out and "function pageIsLight" in out
-    assert "pres={name:name,slides:[s],page:'a0p',pageBg:'#ffffff'};" in out
+    # T465: born white through the page TOKEN, the one store
+    assert "pres={name:name,slides:[s],page:'a0p',tokens:{c:{page:'#ffffff'}}};" in out
     # the swatches are BUILT from PAGE_BGS now rather than hand-written
     # into the markup, so the two background menus cannot drift apart and
     # the colours live in one place (2026-08-20)
@@ -38,7 +39,8 @@ def test_page_background_and_light_pages(out):
     assert "function bgSolid(bg){" in out
     assert ".deck .deck-stage .slide{background:var(--page-bg,transparent);}" in out
     assert ".page-light .an-text{" in out
-    assert ".page-light .an-cell{background:#fff;" in out
+    # T465: the light page's defaults are the fallback of the deck tokens
+    assert ".page-light .an-cell{background:var(--tk-surface,#fff);" in out
     # the export carries the page's own background
     assert "'.print-page,.print-page .slide{background:'+bg" in out
 
@@ -109,7 +111,7 @@ def test_line_is_drawn_like_a_shape(out):
     assert "return a.nohead?'none':'triangle';" in out
     assert "a.nohead?'Line':'Arrow'" in out
     # a line on a light page defaults dark, and vice versa
-    assert "color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'" in out
+    assert "color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'" in out
     # every <i data-ic> token was substituted into an inline SVG
     assert "<i data-ic=" not in out
     assert ".dbtn .bic{display:inline-block;" in out

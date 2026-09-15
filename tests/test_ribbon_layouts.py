@@ -181,7 +181,8 @@ def test_the_selection_opens_the_layouts_own_format_tab(out):
     # T410: a line or a pen stroke stays on Style, where its Line window is
     assert ("if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)\n"
             "      selT='object';") in out
-    assert "var wantTab=(activeTab()!==selT" in out
+    # T465: a NEW selection only
+    assert "var wantTab=(freshSel&&activeTab()!==selT" in out
     assert "if(wantTab) setTab(wantTab,true); else syncRibbonGroups();" in out
     # ...and TRANSIENT, so a tab the selection carried you to is not
     # written to the remembered-tab preference (2026-09-05)

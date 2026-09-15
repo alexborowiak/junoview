@@ -22,7 +22,8 @@ def test_the_pane_has_a_tab_strip(out):
     assert "> Configure</button>" in out
     assert "> Order</button>" in out
     assert ".anim-tabs{display:flex;gap:2px;flex:none;padding:0 8px;" in out
-    assert '.anim-tab[aria-selected="true"]{color:#fff;' in out
+    # T465: the theme's ink, not white -- white-on-white in Light
+    assert '.anim-tab[aria-selected="true"]{color:var(--chrome-ink);' in out
 
 
 def test_one_half_shows_and_the_other_hides(out):

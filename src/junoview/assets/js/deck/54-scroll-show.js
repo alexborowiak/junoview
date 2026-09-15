@@ -67,20 +67,30 @@
       el.classList.add('an-anim-'+(el.dataset.sanim||'fade'));
     });
   }
+  /* T465: a page's top MEASURED IN THE BODY'S SCROLL SPACE. offsetTop
+     is relative to the nearest positioned ancestor, which the scroll
+     body is not, so it carried the 45px bar above it: the step's "which
+     page am I on" ran one page behind after the first press and
+     ArrowDown could never get past page 2 (2026-09-15 review, driven:
+     scrollTop stuck at 768 against a page at 813). */
+  function scrollShowPageTop(body,p){
+    return p.getBoundingClientRect().top-body.getBoundingClientRect().top
+      +body.scrollTop;
+  }
   function scrollShowCount(){
     if(!scrollShowEl) return;
     var body=scrollShowEl.querySelector('.deck-scroll-body');
     var out=scrollShowEl.querySelector('.deck-scroll-n');
     if(!body||!out) return;
     var pages=scrollShowPages(),at=0,top=body.scrollTop+body.clientHeight*0.35;
-    pages.forEach(function(p,i){if(p.offsetTop<=top) at=i;});
+    pages.forEach(function(p,i){if(scrollShowPageTop(body,p)<=top) at=i;});
     out.textContent=(at+1)+' / '+pages.length;
   }
   function scrollShowStep(d){
     if(!scrollShowEl) return;
     var body=scrollShowEl.querySelector('.deck-scroll-body');
     var pages=scrollShowPages(),at=0,top=body.scrollTop+10;
-    pages.forEach(function(p,i){if(p.offsetTop<=top) at=i;});
+    pages.forEach(function(p,i){if(scrollShowPageTop(body,p)<=top) at=i;});
     var to=pages[Math.max(0,Math.min(pages.length-1,at+d))];
     if(to) to.scrollIntoView({behavior:'smooth',block:'start'});
   }
@@ -140,9 +150,11 @@
       if(!scrollShowEl) return;
       if(e.key==='Escape'){e.preventDefault();e.stopPropagation();
         closeScrollShow();return;}
-      if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){
+      /* the arrows a clicker sends step a page too, as the show does */
+      if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '
+         ||e.key==='ArrowRight'){
         e.preventDefault();e.stopPropagation();scrollShowStep(1);}
-      else if(e.key==='ArrowUp'||e.key==='PageUp'){
+      else if(e.key==='ArrowUp'||e.key==='PageUp'||e.key==='ArrowLeft'){
         e.preventDefault();e.stopPropagation();scrollShowStep(-1);}
     };
     document.addEventListener('keydown',scrollShowKey,true);

@@ -1292,19 +1292,27 @@
     if(!back||!back.isConnected||back.hasAttribute('inert')) return;
     try{back.focus();}catch(err){}
   }
-  function openDeck(m){
+  /* T465: openDeck(m, resume) -- `resume` is the notebook picker's way
+     back: the deck was hidden for a trip to the notebook, not closed,
+     so it is the SAME editing session and the undo stack survives.
+     Every trip through the picker (including Escape and Cancel) used
+     to wipe it -- draw a frame, pick a figure, and Ctrl+Z did nothing
+     (2026-09-15 review, driven). */
+  function openDeck(m,resume){
     deckEl.hidden=false;
     if(pres&&typeof notePresentationOpen==='function')
       notePresentationOpen(pres.name);
-    histReset();   /* undo history starts fresh per editing session */
-    /* ONE ON ARRIVAL, so "how it was when I sat down" is always
-       reachable -- the same rule the notebook's own snapshots follow,
-       and deduped, so opening and closing without touching anything
-       costs nothing (T32) */
-    /* the opening snapshot waits for the stored head pointer, so a
-       reload's first entry descends from where you actually were
-       rather than founding a new root (T127) */
-    snapTake('opened',undefined,histSeed());
+    if(!resume){
+      histReset();   /* undo history starts fresh per editing session */
+      /* ONE ON ARRIVAL, so "how it was when I sat down" is always
+         reachable -- the same rule the notebook's own snapshots follow,
+         and deduped, so opening and closing without touching anything
+         costs nothing (T32) */
+      /* the opening snapshot waits for the stored head pointer, so a
+         reload's first entry descends from where you actually were
+         rather than founding a new root (T127) */
+      snapTake('opened',undefined,histSeed());
+    }
     status();
     setUIMode(m||'view');
     routeSync();

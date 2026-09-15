@@ -480,7 +480,13 @@
         b.addEventListener('click',function(e){
           e.stopPropagation();
           var o=over();
-          if(d[key]) delete o[key]; else o[key]=1;
+          /* T465: OFF IS A VALUE. Deleting the override left the
+             base's own bold or italic in force, so B and I could never
+             be turned off on Title, the headings or Caption -- the
+             toggle stayed lit and the boxes stayed bold (2026-09-15
+             review, driven). styleDef lays the override over the base,
+             and applyStyleTo already reads 0 as "not bold". */
+          if(d[key]) o[key]=0; else o[key]=1;
           restyleAll([id]);build();
         });
         return b;
@@ -1242,7 +1248,11 @@
          whole box, bullet and all (2026-08-29, user: "creating dot
          points with no text seems to delete the cell"). */
       var s2=pres.slides[cur],a2=s2&&(s2.annots||[])[idx];
-      if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html
+      /* T465: NOR A REFERENCES BOX. It draws the deck's bibliography
+         rather than storing words, so it is "empty" by this test the
+         whole time -- and deleted itself the first time you clicked
+         away from it (2026-09-15 review, driven). */
+      if(a2&&a2.k==='text'&&!a2.bib&&!String(a2.text||'').trim()&&!a2.html
          &&!listOf(a2)){
         s2.annots.splice(idx,1);
         if(selAnnot===idx) selAnnot=null;
@@ -2151,7 +2161,13 @@
       if(a.k==='arrow'){_arrows.push(i);return;}
       if(a.k==='rect'){
         var shp=a.shape||'rect';
-        var col=tokVal(a.color)||'#ff6b57';
+        /* T465: a shape with no colour of its own follows "Lines and
+           edges" once that has been changed (the T455 bargain: the
+           literal stays the default, the token answers when somebody
+           picks one). A newborn shape still carries coral -- T458 is
+           the open question of whether it should. */
+        var col=tokVal(a.color)
+          ||(tokens().c.line!==TOKENS_DEFAULT.c.line?tokVal('@line'):'#ff6b57');
         var r=document.createElement('div');
         var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]);
         r.className='an-item an-rect'+(svgShape?' an-svgshape':'')
@@ -2409,16 +2425,21 @@
            storing it, so it is right the moment a citation is added,
            removed or moved and there is nothing to regenerate. */
         var showTx=(editing&&document.activeElement
-                    &&d2.contains(document.activeElement))
+                    &&d2.contains(document.activeElement)&&!a.bib)
           ?(_pg.t||'')
           :(a.bib?bibListText():figSubst(_pg.t,a,_figMap));
+        /* T465: with nothing cited yet the box says what it is for, in
+           the editor only (the same an-ph rule as a placeholder: never
+           in the show, never printed) */
+        var _bibHint=!!(a.bib&&!showTx&&mode==='edit');
+        if(_bibHint) showTx='References appear here once a box cites [@key]';
         var showHtml=(a.bib||!_pg.h)?null:figSubst(_pg.h,a,_figMap);
         /* T366: a placeholder is a hint about the SHAPE of the slide,
            so it is drawn only where the shape is what you are working
            on. Anywhere else -- the show, the printed page, a thumbnail,
            every export -- an untouched slot is empty, because "Body
            text" printed on a slide is the bug this closes. */
-        var _isPh=!!a.ph;
+        var _isPh=!!a.ph||_bibHint;
         if(_isPh&&mode!=='edit'){showTx='';showHtml=null;}
         var tx2,lst=listOf(a);
         if(lst){
@@ -2460,6 +2481,13 @@
              flush, Tab-to-indent, paste-as-code and the maths and
              markdown re-render gates all keep working untouched. */
           if(_isPh) tx2.classList.add('an-ph');
+          /* T465: a references box is drawn from the deck's citations
+             and has no words of its own to edit -- the editor opened
+             BLANK on a double-click and the list vanished */
+          if(a.bib){
+            tx2.title='This box draws the deck’s references — cite '
+              +'something ([@key] in any text box) to change it';
+          } else
           editableText(layer,tx2,
             /* T366: the editor opens EMPTY on a placeholder, so the
                first keystroke is the first word instead of something

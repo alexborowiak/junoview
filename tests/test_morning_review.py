@@ -115,7 +115,7 @@ def test_big_screen_text_and_readable_style_system(out):
     # on a 1800px monitor)
     assert "  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12.5px;}" in out
     assert "      nm.style.color='';" in out
-    assert "    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');" in out
+    assert "    spec.style.background=deckPageBg();" in out   # T465
     assert ".dg-sub{margin:0 0 10px;font-size:12.5px;" in out
 
 

@@ -26,7 +26,9 @@ def test_every_poster_template_has_a_short_name(out):
 
 
 def test_the_strip_tile_shows_it_on_one_line(out):
-    assert ("        lb.textContent=(sel==='#layout-strip'&&layout.short)"
+    # (T465: the Change layout grid is the strip's tile size and takes
+    # the short name too; only the builder panel shows the full one)
+    assert ("        lb.textContent=(sel!=='#layout-row'&&layout.short)"
             "||layout.label;") in out
     assert ("        b.title=layout.label;") in out
     assert (".deck.poster-page .lay-strip .lay-lb{white-space:nowrap;\n"

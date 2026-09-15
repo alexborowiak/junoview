@@ -1833,16 +1833,24 @@
         }
         vh.remove();
         rows.forEach(function(v){
-          var when=v.t?new Date(v.t):null;
-          var lab=v.name||v.why||'version';
+          /* T465: the index's fields are `nm` (a checkpoint's name),
+             `why` (opened / saved / checkpoint) and `at` (ms). This read
+             v.name and v.t, which do not exist, so every row said
+             "checkpoint" or "opened" with no time and no name, and
+             clicking one opened History on the newest version whatever
+             you had clicked (2026-09-15 review). The History rail's own
+             helpers name a version the same way here. */
+          var lab=(typeof histLabel==='function')?histLabel(v)
+            :(v.nm||v.why||'version');
+          var kind=(v.nm&&v.why)?v.why:'';
           var r=row('',bic('history'),lab,
-            when?(when.getHours()+':'
-              +(when.getMinutes()<10?'0':'')+when.getMinutes()):'',
+            kind||((typeof histClock==='function'&&v.at)?histClock(v.at):''),
             'Open the history on this version',function(){
               if(!barDocked()) closeDeckPresentationDrawer();
-              if(typeof histSel!=='undefined') histSel=v.id||'';
-              if(typeof openHistory==='function') openHistory();
+              if(typeof openHistory==='function') openHistory(v.id||'');
             });
+          if(v.at&&typeof histClock==='function')
+            r.title=lab+' \u00b7 '+histClock(v.at)+(v.why?(' \u00b7 '+v.why):'');
           r.classList.add('deck-pres-ver');
         });
       }).catch(function(){
@@ -2126,7 +2134,7 @@
        fill" idiom, but stretched over an A0 sheet it is one more thing
        you did not put there. */
     s.annots=[];
-    pres={name:name,slides:[s],page:'a0p',pageBg:'#ffffff'};
+    pres={name:name,slides:[s],page:'a0p',tokens:{c:{page:'#ffffff'}}};
     source='auto';
     cur=0;activePane=-1;
     openDeck('edit');
@@ -3773,7 +3781,7 @@
     dgSpecimen(spec,id);
     /* on the deck's actual page colour, so a specimen reads the way the
        slide will */
-    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
+    spec.style.background=deckPageBg();
     if(!d.color) spec.style.color=tokVal('@ink');
     left.appendChild(spec);
     dgLooks(left,id,ov);
@@ -4039,15 +4047,22 @@
     /* T384: the door had no handler behind it. Same route the ribbon's
        own Style sets button takes; this screen closes first, because
        the picker is a dialog over the editor, not over this. */
-    ov.querySelector('#dg-sets').addEventListener('click',function(){
+    /* T465: the click that opens the next surface must not reach the
+       overlay owner's outside-click, which would pop it the same
+       instant -- the standing overlay rule, applied where it was
+       missing: Check consistency opened the check and closed it in
+       one click, so the Style system had no working door to it. */
+    ov.querySelector('#dg-sets').addEventListener('click',function(e){
+      e.stopPropagation();
       dgClose();
       var sb=$('#dsg-sets');
       if(sb) sb.click();
     });
-    ov.querySelector('#dg-check').addEventListener('click',function(){
+    ov.querySelector('#dg-check').addEventListener('click',function(e){
       /* the drift CHECK stays where it is: this surface says what the
          standard is, that pane says who is not keeping to it, and one
          doing both would be a screen answering two questions */
+      e.stopPropagation();
       dgClose();
       var b=$('#dsg-std');
       if(b) b.click();

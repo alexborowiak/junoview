@@ -51,7 +51,7 @@ def test_the_chart_takes_the_pages_ink_not_the_editors(out):
     1.2:1. buildPrintRoot and the pptx exporter both already asked
     pageIsLight; the on-screen renderer was the one that did not."""
     assert "    var lightPg=(typeof pageIsLight==='function')" in out
-    assert "      &&pageIsLight((pres&&pres.pageBg)||'#0b141d');" in out
+    assert "      &&pageIsLight(deckPageBg());" in out   # T465: the one resolver
     assert "    var ink=lightPg?'#0b141d':'#dbe7ef';" in out
     assert "    var dim=lightPg?'#4a5b68':'#8aa0b0';" in out
     assert "    var grid=lightPg?'#4a5b6833':'#8aa0b033';" in out

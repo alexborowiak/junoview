@@ -34,7 +34,10 @@ def test_the_type_doors_are_on_text(out):
 
 
 def test_the_deck_wide_doors_are_on_design(out):
-    grp = out.split('<span class="rbn-grp rbn-deckwide" data-tab="design"')[1] \
+    # (T465: rbn-nofold -- "I NEVER want this to be hidden" applies to
+    # the doors T444 moved here as much as to the Home tile)
+    grp = out.split('<span class="rbn-grp rbn-deckwide rbn-nofold"'
+                    ' data-tab="design"')[1] \
         .split('<span class="rbn-lab">Whole deck</span>')[0]
     for cid in ("dsg-tokens", "dsg-layout"):
         assert f'id="{cid}"' in grp, cid

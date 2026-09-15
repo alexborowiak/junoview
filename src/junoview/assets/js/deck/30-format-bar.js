@@ -84,7 +84,7 @@
        undoes "I added six figures" rather than six separate steps */
     if(wasMulti&&pickAdded) markDirty();
     pickAdded=0;
-    openDeck('edit');
+    openDeck('edit',true);   /* T465: resume, do not restart, the session */
     var l=stage.querySelector('.annot-layer');
     if(l&&idx>=0) selectAnnot(l,idx);
     if(wasMulti) renderFlipPane();
@@ -1467,6 +1467,12 @@
      recent-colours strip. Text swatches and the fill swatches each get a
      rainbow "＋" chip that opens it; any CSS colour string is accepted. ---- */
   var cpEl=$('#color-pop'), cpTarget='text', cpRGBA={r:57,g:169,b:192,a:1};
+  /* T465: the picker previews only once YOU have moved it. Mounting it
+     seeded cpRGBA and synced, and the sync previewed -- so opening the
+     Text or Fill door painted an item that had no colour of its own
+     with the picker's fallback cyan and marked Cyan as its colour
+     (2026-09-15 review, driven). */
+  var cpArmed=false;
   /* where it lives when it is nobody's section (T232) */
   var cpHome=cpEl?cpEl.parentNode:null;
   /* a live text selection captured when the picker opens, so a custom colour
@@ -1512,6 +1518,7 @@
     return null;
   }
   function cpSync(from){
+    if(from) cpArmed=true;
     var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),
         al=$('#cp-alpha'),av=$('#cp-aval'),pv=$('#cp-preview');
     if(nat&&from!=='native') nat.value=toHex(cpRGBA);
@@ -1531,7 +1538,7 @@
      Apply commits it, closing without applying puts it back. A saved text
      RUN is the exception — its selection cannot survive a re-render. */
   function cpPreview(){
-    if(!cpEl||cpEl.hidden||cpSavedRange) return;
+    if(!cpEl||cpEl.hidden||cpSavedRange||!cpArmed) return;
     pvEnd(true);
     pvShow((cpTarget==='text'?textMut:fillMut)(toStr(cpRGBA)));
   }
@@ -1544,7 +1551,7 @@
       b.title=colorLabel(str);
       b.style.setProperty('--cpc',tokVal(str));
       b.addEventListener('click',function(){
-        var c=parseColor(str); if(c){cpRGBA=c;cpSync();}});
+        var c=parseColor(str); if(c){cpRGBA=c;cpSync('recent');}});
       box.appendChild(b);
     });
   }
@@ -1586,6 +1593,7 @@
     var c0=parseColor(tokVal(cpCurrentFor(target)))
       ||{r:57,g:169,b:192,a:1};
     cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpArmed=false;
     cpEl.classList.add('cp-inline');
     cpEl.style.left='';cpEl.style.top='';
     menu.appendChild(cpEl);
@@ -1616,6 +1624,7 @@
     if(head) head.textContent=target==='fill'?'Custom fill':'Custom colour';
     var c0=parseColor(cpCurrentFor(target))||{r:57,g:169,b:192,a:1};
     cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpArmed=false;
     cpRenderRecent();cpSync();
     /* on the stack, INSIDE the swatch menu that opened it (T213): the
        owner keeps that menu open under it and closes both on Escape,

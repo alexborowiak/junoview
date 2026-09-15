@@ -1425,19 +1425,36 @@
          about the reveal, and a flip book is CONTENT -- taking its
          figures away would destroy work this button never promised to
          touch. */
-      var n=0;
-      (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
+      /* T465: "Remove all" removes ALL of it. It took only the
+         entrances, so a Wobble kept wobbling and a Send it away still
+         cost its click -- and the sentence then blamed a flip book that
+         was not there for the click the exit was taking (2026-09-15
+         review). Entrances, exits and movements go; the flip book's
+         pages stay, as the note above says; and what is left is named
+         from what is actually left. */
+      var n=0,nx=0,nm=0;
+      (s.annots||[]).forEach(function(a){
+        if(!a) return;
+        if(a.anim){delete a.anim;n++;}
+        if(animOut(a)!=null){delete a.out;nx++;}
+        if(a.motion){delete a.motion;delete a.mo;nm++;}
+      });
       var left=slideStops(s);   /* the clicks still in the slide */
-      if(!n){
+      var all=n+nx+nm;
+      if(!all){
         toast(left
-          ?('Nothing here has an entrance effect, but the slide still '
-            +'takes '+left+' more click'+(left===1?'':'s')
+          ?('Nothing here has an entrance, exit or movement, but the '
+            +'slide still takes '+left+' more click'+(left===1?'':'s')
             +' — that is its flip book')
           :'Nothing on this slide is animated');
         return;
       }
       revealCount=0;commit(s);
-      toast('Cleared '+n+(n===1?' animation':' animations')
+      var parts=[];
+      if(n) parts.push(n+(n===1?' entrance':' entrances'));
+      if(nx) parts.push(nx+(nx===1?' exit':' exits'));
+      if(nm) parts.push(nm+(nm===1?' movement':' movements'));
+      toast('Cleared '+parts.join(', ')
         +(left?(' — '+left+' click'+(left===1?'':'s')
                 +' left, stepping the flip book')
               :' — everything is on the slide from the start'));

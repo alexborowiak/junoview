@@ -13,7 +13,16 @@ from __future__ import annotations
 
 
 def test_a_stroke_is_not_sent_to_object(out):
-    assert "    var strokeSel=(kind==='arrow'||kind==='draw');" in out
+    # T465: a shape too -- its fill, border and shape controls are the
+    # Style tab's Line & shape group, and Object had nothing for it but
+    # arrange, size, opacity and reuse
+    assert "    var strokeSel=(kind==='arrow'||kind==='draw'||kind==='rect');" in out
+    # ...and the tab follows a NEW selection only: a re-render of the same
+    # selection (a colour hover's preview, any fmtApply) must not yank the
+    # ribbon back to the tab it would have chosen
+    assert "    var freshSel=(selSig!==fmtSelSig);" in out
+    assert ("    var wantTab=(freshSel&&activeTab()!==selT&&tool==='select'"
+            "&&!justDrew") in out
     assert ("    if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)\n"
             "      selT='object';") in out
 

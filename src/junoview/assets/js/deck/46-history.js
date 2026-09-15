@@ -586,14 +586,26 @@
           +'could not be read.</div>';
         return;
       }
-      var d=deckDiff(then,now),list=deckChanges(then,now);
+      /* T465: THE DIFF READS OLDER -> NEWER. `then` is the version you
+         picked and `now` the one it is read against -- and since T269
+         the newest version opens against the one BEFORE it, so the pair
+         arrived newest-first and every addition was reported as a
+         removal ("after adding a slide": 1 removed, 1 moved --
+         2026-09-15 review, driven). Order the pair by time for the
+         reading; the restore buttons below still restore `then`, the
+         version you picked. */
+      var aEnt=ent,bEnt=histAgainst?histAgainstEnt(ov):null;
+      var older=then,newer=now,olderEnt=aEnt,newerEnt=bEnt;
+      if(bEnt&&(bEnt.at||0)<(ent.at||0)){
+        older=now;newer=then;olderEnt=bEnt;newerEnt=aEnt;}
+      var d=deckDiff(older,newer),list=deckChanges(older,newer);
       /* ---- what this version is, and what it is being read against */
       var head=document.createElement('div');
       head.className='dh-head2';
       var ttl=document.createElement('span');
       ttl.className='dh-h2t';
-      ttl.textContent=histLabel(ent)+' \u2192 '
-        +(histAgainst?histLabel(histAgainstEnt(ov)):'now')
+      ttl.textContent=histLabel(olderEnt)+' \u2192 '
+        +(newerEnt?histLabel(newerEnt):'now')
         +': '+chSummary(list);
       head.appendChild(ttl);
       if(!d.byName){
@@ -693,7 +705,7 @@
           +'</div>';
       } else if(histView==='slide') chBySlide(list2,list);
       else if(histView==='type') chByType(list2,list);
-      else chSlideRows(list2,d,then,now);
+      else chSlideRows(list2,d,older,newer);
       body.appendChild(list2);
     });
   }
@@ -774,11 +786,11 @@
     if(fromId!==undefined) histHead=fromId||null;
     if(branch!==undefined) histBranch=branch||'';
     if(fromId!==undefined||branch!==undefined) histPtrSave(pres.name);
-    var pageWas=pres.page||null,bgWas=pres.pageBg||null;
+    var pageWas=pres.page||null,bgWas=deckPageBg();
     var copy=JSON.parse(JSON.stringify(then));
     copy.name=pres.name;      /* the NAME is where you are, not where it was */
     pres=copy;              /* replace/delete every normPres key together */
-    if((pres.page||null)!==pageWas||(pres.pageBg||null)!==bgWas) deckZoom=0;
+    if((pres.page||null)!==pageWas||deckPageBg()!==bgWas) deckZoom=0;
     cur=0;activePane=-1;selAnnot=null;selSet=[];
     /* Installs this version's custom type registry and discards undo
        entries whose object references belong to the replaced deck. */
@@ -805,7 +817,10 @@
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
     });
   }
-  function openHistory(){
+  /* T465: openHistory(wantId) opens ON a version -- the open-items
+     bar's rows ask for the one they name; without it the newest wins,
+     as it always did */
+  function openHistory(wantId){
     histPanelClose();
     histAgainst='';
     var ov=document.createElement('div');
@@ -854,9 +869,13 @@
     histIndex().then(function(ix){
       histIxCache=ix;
       histRows(ov,ix);
-      /* the most recent one is the one you meant */
-      if(ix.length){histSel=ix[ix.length-1].id;histRows(ov,ix);
-        histAgainst=histAutoAgainst(ix,ix[ix.length-1]);
-        histCompare(ov,ix[ix.length-1]);}
+      /* the most recent one is the one you meant, unless the caller
+         named one that exists */
+      var want=null;
+      if(wantId) ix.forEach(function(e){if(e.id===wantId) want=e;});
+      if(!want&&ix.length) want=ix[ix.length-1];
+      if(want){histSel=want.id;histRows(ov,ix);
+        histAgainst=histAutoAgainst(ix,want);
+        histCompare(ov,want);}
     });
   }

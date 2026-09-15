@@ -38,6 +38,7 @@ function sectionRuns(){
 }
 var LIGHT=false;
 function pageIsLight(bg){return LIGHT;}
+function pageBgOf(sl){return (sl&&sl.bg)||pres.pageBg||'#0b141d';}
 """
 
 

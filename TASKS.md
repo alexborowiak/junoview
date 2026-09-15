@@ -8789,3 +8789,71 @@ switch on yourself.
   the door reads 16:9, picking 4:3 on the shelf changes the page and
   the readout, the shelf is one line (bar 157px, was 243), Background's
   menu still opens; the fold probe across all tabs at 935/1085/1285.
+
+### Completed 2026-09-15 — the review's first batch
+
+Twelve reviewers drove one surface each (the Style system screen, Deck
+colours, Text styles, the Style and Object tabs, Animation, the panes,
+the layout dialogs, Present, the Images and Text flows, the Design
+dialogs, the light and colourful themes) and came back with 125
+findings; the verifiers ran out of budget, so each was checked by
+reading the code it named and the important ones were driven again
+before the fix. T465 is the first batch -- the ones that were bugs by
+any reading. The rest are T466 onwards.
+
+- [x] **T465 — Twenty things that were simply wrong.** In the order a
+  user would hit them. **The overlay owner** popped a surface whose
+  clicked control had been detached by its own handler -- the layout
+  builder closed the moment you added a slot, Tidy page closed on its
+  first fix, and the Style system's Check consistency opened the check
+  and closed it in the same click; a detached click target is the
+  overlay's own now, and the two doors that open a second surface stop
+  the click as the standing rule says. **The magnifier** killed every
+  click in the show: `.jv-lens` was both the body flag and the element
+  class, so the body itself went pointer-events:none; the element is
+  `.jv-lensbox`, and a test refuses a body flag that is also a bare
+  selector. **A shape** was yanked from Style back to Object by the
+  first swatch you hovered (T410's complaint, for shapes): the tab
+  follows a NEW selection only, and a shape lands on Style, where its
+  fill, border and shape controls actually are. **An object with a
+  movement never left**: the motion's inline animation outranked the
+  exit's class rule; the inline shorthand is cleared on the stop it
+  goes. **The page colour had two stores** (pres.pageBg and the page
+  token) and nine readers with their own '#0b141d', so Background >
+  Every slide silently beat Deck colours > Page background, the panel's
+  preview showed a colour the page was not, every poster's colours
+  were dead, and a plum page exported navy with a navy thumbnail;
+  `deckPageBg()` / `pageBgOf(slide)` are the only readers, the token
+  is the store, and normPres absorbs a saved pageBg into it. **The
+  Images pane** went on listing the previous slide. **Whole deck**
+  (Deck colours, Deck layout) folded at the user's own width -- T444's
+  "I NEVER want this to be hidden" applies to it: rbn-nofold. **The
+  colourful theme** lost the pressed state on every tile. **Light
+  theme**: the Style system's headings, slide chips and scope select
+  were dark-only literals; the Animation pane's selected tab was
+  white-on-white and its chips unboxed -- tokens now. **On a white
+  page** three of the five deck colours did nothing: the light-page
+  literals outranked the token rules; they are the tokens' fallbacks.
+  **"Lines and edges"** reached no edge: text-box and frame edges read
+  it now, and a shape without its own colour follows it once it has
+  been changed (T458 stays open for the newborn coral). **B and I**
+  could not be turned off on Title, the headings or Caption: off is
+  written as 0, not deleted. **The scrolling page** could not step
+  past page 2 (offsetTop carried the bar above the body) and the
+  arrow keys did nothing. **History** read newest -> older, so adding
+  a slide reported "1 removed"; it reads older -> newer whichever end
+  you picked, and `openHistory(id)` opens on a version. **The
+  open-items bar's** version rows read `v.t`/`v.name`, which do not
+  exist, so every row said "checkpoint" with no time and opened the
+  newest. **The notebook picker** wiped the undo stack on every trip,
+  Escape included: it resumes the session. **Remove all** left exits
+  and movements in place and blamed a flip book that was not there.
+  **A colour door** painted an uncoloured item cyan the moment it
+  opened. **A references box** deleted itself when you clicked away,
+  and opened blank on a double-click. **Layout tile labels** were 8px
+  monospace with their second line's descenders cut off. Driven: the
+  check opens; the builder survives an add; Every slide = Plum and
+  the Deck colours preview agree; a shape stays on Style through hover
+  and pick; B off gives weight 400; an exit on a wobbling box plays
+  (opacity 0 at its click); Remove all reports "1 entrance, 1 exit,
+  1 movement"; opening Text leaves the box white.

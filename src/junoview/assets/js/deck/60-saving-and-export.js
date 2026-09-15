@@ -1360,7 +1360,7 @@
     }
     /* the page's own background rides into the export — a white poster
        prints white, not the app's navy (2026-08-04) */
-    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
+    var bg=deckPageBg();
     root.classList.toggle('page-light',pageIsLight(bg));
     var bst=document.createElement('style');
     /* PRINT THE INK. Chrome and Edge default the print dialog's
@@ -2277,7 +2277,7 @@
     var pg=pageOf(),
       note={skipped:0,cropped:0,maths:0,tied:0,exits:0,
         orig:orig||{}};
-    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
+    var bg=deckPageBg();
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     /* a slide-jump names a DECK slide; the .pptx page it lands on is
        the first output page that slide produced (flip books explode) */
@@ -2389,8 +2389,11 @@
          export things (2026-08-20, user). */
       menuHead(menu,'Every slide');
       var r0=menuRow(menu,'bg-sw');
-      bgChips(r0,(pres&&pres.pageBg)||'',function(v){
-        pres.pageBg=v;markDirty();applyPageBg();applyZoom();renderSlide();
+      /* T465: the same switch the Deck colours panel's Page background
+         row moves -- one store, so the two doors always agree */
+      bgChips(r0,(tokens().c.page)||'',function(v){
+        setToken('c','page',v);
+        applyPageBg();applyZoom();renderSlide();
         build();
         toast('Background for every slide set');
       },false);
@@ -2410,8 +2413,8 @@
         +' slide'+(over.length===1?'':'s')+' set individually';
       push.addEventListener('click',function(e){
         e.stopPropagation();
-        var use=s2.bg||pres.pageBg||'';
-        if(use) pres.pageBg=use;
+        var use=s2.bg||tokens().c.page||'';
+        if(use) setToken('c','page',use);
         (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
         markDirty();applyPageBg();applyZoom();renderSlide();build();
         toast('Every slide now uses the one background');

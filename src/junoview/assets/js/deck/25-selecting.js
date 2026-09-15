@@ -119,6 +119,13 @@
   var inspectorSig='';
   /* the tab a selection carried you away from, for the way back (T192) */
   var tabBeforeSel='';
+  /* T465: the selection showFmt last carried the ribbon for. showFmt
+     runs again on every re-render of the same selection -- a colour
+     hover's live preview, every fmtApply -- and each run used to decide
+     the tab afresh, so a shape you had walked over to Style was yanked
+     back to Object by the first swatch you hovered (the T410 complaint,
+     for shapes). The tab follows a NEW selection only. */
+  var fmtSelSig='';
   function syncInspectorPanes(force){
     /* the numbers pane is an inspector too, and a cheap one -- four
        value writes, and an immediate return when it is closed. It sits
@@ -160,6 +167,7 @@
     if(window.SemDeckFindSync) window.SemDeckFindSync();
     if(!a){
       bar.hidden=true;
+      fmtSelSig='';
       /* ...AND EVERY CONTEXTUAL CONTROL, one at a time. Hiding the bar
          used to be enough because every one of them lived inside it. A
          ribbon layout may put any of them in a group of its own, and a
@@ -226,9 +234,17 @@
        line or a pen stroke lands on Style, and stays there when you
        are already on it. A shape keeps going to Object: its fill and
        edge are there. */
-    var strokeSel=(kind==='arrow'||kind==='draw');
+    /* T465: ...and so does a SHAPE. "its fill and edge are there" had
+       stopped being true: Object holds arrange, size, opacity and
+       reuse, while Fill, Border, Line and Shape are the Style tab's
+       Line & shape group (2026-09-15 review, measured). */
+    var strokeSel=(kind==='arrow'||kind==='draw'||kind==='rect');
     if(selT==='style'&&kind!=='text'&&kind!=='table'&&!strokeSel)
       selT='object';
+    var selSig=cur+'|'+String(selAnnot)+'|'
+      +(selSet||[]).map(String).join(',');
+    var freshSel=(selSig!==fmtSelSig);
+    fmtSelSig=selSig;
     /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
        line, before a single control had been revealed — and once a
        layout may give the format groups a tab of their own, that tab is
@@ -251,7 +267,7 @@
          what to animate, and being carried off to Object would take
          the tiles away in the same click */
       ||activeTab()==='animation';
-    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
+    var wantTab=(freshSel&&activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
     /* REMEMBER WHERE YOU WERE (T192). The selection carries you to
        Object; when it goes, syncRibbonGroups brings you back to the
@@ -1698,7 +1714,7 @@
         shape:(pendingShape!=='rect'?pendingShape:undefined)}
       :(kind==='draw')
       ?{k:'draw',x:p0.x,y:p0.y,w:0,h:0,pts:[[0,0]],sw:SW_DEFAULT,
-        color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
+        color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'}
       :(kind==='cell')
       ?{k:'cell',x:p0.x,y:p0.y,w:0,h:0,ref:null}
       /* born EMPTY and already carrying its own id: the id is what every
@@ -1724,7 +1740,7 @@
         sw:1,rows:[['','',''],['','',''],['','','']]}
       :(kind==='line')
       ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
-        color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
+        color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'}
       :{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,
         color:'#ff6b57',sw:SW_DEFAULT};
     var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text'

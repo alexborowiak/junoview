@@ -319,7 +319,7 @@
      say nothing reports a drift that is not on the screen. The same ink
      preflight computes. */
   function stdInk(){
-    return pageIsLight((pres&&pres.pageBg)||'#0b141d')?'#0b141d':'#ffffff';
+    return pageIsLight(deckPageBg())?'#0b141d':'#ffffff';
   }
   function stdSize(a){return (a&&a.size)||2.6;}
   function stdCol(a){return (a&&a.color)||stdInk();}

@@ -385,7 +385,8 @@ def test_clearing_every_guide_asks_first_and_is_undoable(out):
     # it and nothing read it back, so making or deleting a custom
     # slide layout could not be undone while every other
     # design-level key could.
-    assert ("'guides','masters','layouts','page','pageBg',"
+    # (T465: pageBg left the list -- the page colour rides in tokens)
+    assert ("'guides','masters','layouts','page',"
             "'cropMarks','live',\n     'scale']\n      .forEach(function(k){") in out
     # the guide layer caches the signature it last drew, so an undo has
     # to ask it again or the restored model is invisible

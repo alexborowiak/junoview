@@ -50,8 +50,19 @@ def test_the_magnifier_is_a_picture_that_cannot_take_a_click(out):
     assert "        lensObs=new MutationObserver(lensSyncSoon);" in out
     assert "      if(lensObs){lensObs.disconnect();lensObs=null;}" in out
     # none of the three take the pointer: a click still advances
-    assert (".jv-lens{position:fixed;z-index:420;border-radius:50%;"
+    assert (".jv-lensbox{position:fixed;z-index:420;border-radius:50%;"
             "overflow:hidden;\n  pointer-events:none;") in out
+    # T465: the body FLAG (jv-lens, jv-laser) and the ELEMENT must not
+    # share a name -- `.jv-lens{pointer-events:none}` matched body.jv-lens
+    # and killed every click in the show while the magnifier was up
+    import re
+    css = assets.deck_css()
+    flags = set(re.findall(r"classList\.toggle\('(jv-[a-z]+)'", out))
+    assert {"jv-lens", "jv-laser"} <= flags, flags
+    for flag in flags:
+        bare = re.findall(r"(?<![\w.-])\." + re.escape(flag) + r"(?![\w-])\s*[{,]", css)
+        assert not bare, f".{flag} is a body flag AND a bare element selector: {bare}"
+    assert "lensEl.className='jv-lensbox';" in out
     assert (".jv-laserdot{position:fixed;z-index:420;width:16px;height:16px;\n"
             "  margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;") in out
     assert (".jv-black{position:fixed;inset:0;z-index:430;background:#000;"

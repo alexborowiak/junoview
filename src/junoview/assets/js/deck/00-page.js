@@ -578,7 +578,10 @@
            full name ("3 columns · classic") clipped to its first word
            there -- the strip read "3", "2", "Hero". The tile takes the
            template's short name; the full one stays on the tooltip. */
-        lb.textContent=(sel==='#layout-strip'&&layout.short)||layout.label;
+        /* T465: the Change layout grid's tiles are the strip's size, so
+           they take the short name too; the builder panel keeps the
+           full one */
+        lb.textContent=(sel!=='#layout-row'&&layout.short)||layout.label;
         b.appendChild(lb);
         b.addEventListener('click',function(){
           /* with no page yet, MAKE one rather than doing nothing — a
@@ -819,19 +822,30 @@
       host.appendChild(b);
     });
   }
+  /* T465: ONE ANSWER FOR THE PAGE'S COLOUR. There were two stores --
+     pres.pageBg (Background > Every slide, posters, colour themes) and
+     tokens.c.page (Deck colours > Page background) -- and pageBg won
+     silently, so the Deck colours row and its preview showed a colour
+     the page was not, and changing it changed nothing once Every slide
+     had ever been used or on any poster (born pageBg '#ffffff'). Nine
+     readers besides had their own '#0b141d' literal, which is how a
+     plum page exported navy and its thumbnail stayed navy (2026-09-15
+     review). The token is the store now: normPres absorbs a saved
+     pageBg into it, every writer writes it, and these two are the only
+     readers. */
+  function deckPageBg(){return tokVal('@page');}
+  function pageBgOf(s){
+    /* slide > master > deck (T115): the slide's own colour still wins,
+       the master fills in for every wearer that set none */
+    var mbg=(typeof mastOf==='function'&&mastOf(s)||{}).bg;
+    return tokVal((s&&s.bg)||mbg||'@page');
+  }
   function applyPageBg(){
-    /* the slide's own colour wins; File > Page background stays the
+    /* the slide's own colour wins; the deck's Page background stays the
        presentation-wide default (2026-08-18, user asked for per-slide
        backgrounds "like PowerPoint has") */
     var s0=pres&&pres.slides&&pres.slides[cur];
-    /* slide > master > deck (T115): the slide's own colour still wins,
-       the master fills in for every wearer that set none */
-    var mbg=(typeof mastOf==='function'&&mastOf(s0)||{}).bg;
-    /* T455: the deck's own Page background is the last word, not a
-       literal -- that hard-coded hex is exactly why changing it in the
-       Deck colours panel did nothing. Its default IS this colour, so
-       nothing moves until somebody picks another. */
-    var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)||'@page');
+    var bg=pageBgOf(s0);
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
     /* the chips live in the Background dropdown now, and it rebuilds
@@ -1628,7 +1642,7 @@
     var layer=stage.querySelector('.annot-layer');
     var slideEl=stage.querySelector('.slide');
     var pg=pageOf(),m=marginPct();
-    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
+    var bg=deckPageBg();
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     function add(idx,sev,what,why){
       out.push({idx:idx,sev:sev,what:what,why:why});

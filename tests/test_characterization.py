@@ -1912,8 +1912,22 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # open, and gives folded groups their row back after the fold that made
 # the row fit; the door readout reads the whole control's words.
 # deck.html, deck.css and 05-figures-and-ribbon.js change.
-EXPECTED_MD5 = "bdbc551768565dca5cd3947527be1979"
-EXPECTED_BYTES = 4318038
+# T465 (2026-09-15): the review's first batch -- the overlay owner
+# ignores a detached click target; the lens element is .jv-lensbox; a
+# shape lands on Style and the tab follows a NEW selection only; the
+# exit outranks a motion's inline animation; ONE store for the page
+# colour (tokens.c.page, pres.pageBg absorbed by normPres); the Images
+# pane follows the slide; Whole deck never folds; the colourful theme
+# keeps the pressed state; Style system, Animation pane and light-page
+# token fallbacks in Light; "Lines and edges" reaches the edges; B and I
+# turn off in the style editor; the scrolling page steps past page 2;
+# History reads older -> newer and opens on a named version; the
+# open-items bar's version rows read real fields; the notebook picker
+# keeps the undo stack; Remove all removes exits and movements; a
+# colour door does not preview on open; a references box is not an
+# empty box; layout tile labels are 9.5px sans, never clipped.
+EXPECTED_MD5 = "f9992cb4c35b89c8cd008970428a3e77"
+EXPECTED_BYTES = 4330693
 
 
 def _render_example() -> str:

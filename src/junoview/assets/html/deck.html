@@ -830,7 +830,11 @@
                user: "Shared colours also can go somewhere else ... This
                needs an overhaul"). The panel is rebuilt around what the
                colours ARE (openTokenPicker). -->
-          <span class="rbn-grp rbn-deckwide" data-tab="design"
+          <!-- T465: rbn-nofold. T444 moved these here so that the
+               style system "can always be present, not collapsed", and
+               at the user's own window width they were the first Design
+               group the ladder folded behind a door. -->
+          <span class="rbn-grp rbn-deckwide rbn-nofold" data-tab="design"
             data-fold-ic="palette">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="dsg-tokens"
@@ -1277,7 +1281,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Every object on this slide arrives together, on the
  first click"><i data-ic="together"></i> All together</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
-                title="Take the entrance off every object on this slide"
+                title="Take every entrance, exit and movement off every object on this slide"
                 ><i data-ic="exit"></i> Remove all</button>
             </span>
             <span class="rbn-lab">Whole slide</span>

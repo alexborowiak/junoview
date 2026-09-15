@@ -44,7 +44,7 @@ def test_a_slide_page_drops_it_and_undo_and_save_carry_it(out):
     assert "        if(!pg.poster) delete pres.scale;" in out
     assert "      scale:pres.scale||null," in out
     # ...and read back by undo, or Ctrl+Z after a template would keep it
-    assert ("     'guides','masters','layouts','page','pageBg','cropMarks','live',\n"
+    assert ("     'guides','masters','layouts','page','cropMarks','live',\n"
             "     'scale']") in out
     assert "'components','cuts','guides','masters','bib','cite','slot','scale']" in out
     assert "scale" in DECK_KEYS

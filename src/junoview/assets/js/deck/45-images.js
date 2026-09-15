@@ -1551,6 +1551,18 @@
   function overlayBoot(){
     document.addEventListener('click',function(e){
       if(!overlayStack.length) return;
+      /* T465: A CLICK WHOSE TARGET IS NO LONGER IN THE DOCUMENT WAS
+         INSIDE. A control whose own handler re-renders its surface
+         (the layout builder's add-slot, Tidy page's fix buttons) or
+         closes it and opens another (the Style system's Check
+         consistency) has been detached by the time the click bubbles
+         here; `contains` then says "outside" and the surface the click
+         opened, or was working in, is popped as if you had clicked the
+         page. Three surfaces closed themselves in the user's hands
+         for this (2026-09-15 review). Nothing outside an overlay is
+         ever detached by its own click, so a detached target is the
+         overlay's own. */
+      if(e.target&&e.target.nodeType===1&&!document.contains(e.target)) return;
       for(var i=overlayStack.length-1;i>=0;i--){
         var o=overlayStack[i];
         if(o.menu.contains(e.target)) break;
@@ -2291,7 +2303,7 @@
     el.style.cssText='width:960px;height:540px;position:relative;';
     if(sl.layout==='title')
       el.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
-    var bg=tokVal(sl.bg||pres.pageBg||'#0b141d');
+    var bg=pageBgOf(sl);
     el.style.setProperty('background',bg,'important');
     host.appendChild(el);
     try{attachAnnots(el,sl);paintFurniture(el,i);}catch(err){}

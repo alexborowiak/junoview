@@ -104,7 +104,7 @@
       document.addEventListener('mousemove',laserMove);
     } else if(t==='lens'){
       lensEl=document.createElement('div');
-      lensEl.className='jv-lens';
+      lensEl.className='jv-lensbox';   /* T465: not the body flag's name */
       lensEl.style.width=LENS_D+'px';lensEl.style.height=LENS_D+'px';
       lensIn=document.createElement('div');
       lensIn.className='jv-lens-in';

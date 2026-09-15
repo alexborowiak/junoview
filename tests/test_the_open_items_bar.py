@@ -80,7 +80,10 @@ def test_the_bar_lists_three_kinds_and_you_choose_which(out):
     assert "    [['pres','Presentations'],['nb','Notebooks']," in out
     # the six newest versions, newest first, opened in the history panel
     assert "        var rows=(ix||[]).slice(-6).reverse();" in out
-    assert "              if(typeof openHistory==='function') openHistory();" in out
+    # T465: ON the version the row names, with the index's own fields
+    assert ("              if(typeof openHistory==='function')"
+            " openHistory(v.id||'');") in out
+    assert "          var lab=(typeof histLabel==='function')?histLabel(v)" in out
     # a notebook row still stops the talk and shows that notebook
     assert "            if(A.activate) A.activate(n.stem);" in out
     assert "          if(A.closeNotebook) A.closeNotebook(n.stem);" in out

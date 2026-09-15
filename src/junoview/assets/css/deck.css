@@ -1173,9 +1173,15 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    the 48px a tile has under its 17px icon). overflow:hidden stays as
    the floor for a name longer than any built-in one; the button also
    carries the full name as its title. */
-.lay-lb{font-family:var(--mono);font-size:8px;letter-spacing:.02em;
-  color:var(--chrome-ink-2);text-align:center;line-height:1.05;
-  max-width:100%;overflow:hidden;}
+/* T465: the label is the ribbon's own sans at 9.5px, and the tile
+   is sized so two lines of it fit WHOLE under the icon (which gives
+   up 14px of width for it): every two-line name in the strip and the
+   Change layout grid was 8px monospace with its second line's
+   descenders cut off, and a three-line one cut to a sliver
+   (2026-09-15 review, measured). The grid takes the short name too. */
+.lay-lb{font-family:var(--sans);font-size:9.5px;letter-spacing:0;
+  color:var(--chrome-ink-2);text-align:center;line-height:1.1;
+  max-width:100%;max-height:2.2em;overflow:hidden;}
 .dbtn.lay[aria-pressed="true"] .lay-lb{color:#fff;}
 /* title-slide text inputs */
 .title-editor{display:flex;flex-direction:column;gap:7px;}
@@ -1814,8 +1820,8 @@ body.light .img-row{color:var(--ink-2);}
   display:flex;width:var(--rbn-tile-w);
   min-width:0;white-space:normal;text-align:center;
   flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;padding:4px 3px;line-height:1.1;}
-.lay-strip .layico2{width:calc(var(--rbn-tile-w) - 8px);}
+  gap:4px;padding:3px 3px;line-height:1.1;}
+.lay-strip .layico2{width:calc(var(--rbn-tile-w) - 22px);}
 /* the picker writes a heading into each of its homes; the group label
    is the strip's heading */
 .lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}
@@ -2284,7 +2290,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   white-space:nowrap;}
 .anim-tab .bic{width:12px;height:12px;}
 .anim-tab:hover{color:var(--chrome-ink);}
-.anim-tab[aria-selected="true"]{color:#fff;
+.anim-tab[aria-selected="true"]{color:var(--chrome-ink);
   border-bottom-color:var(--accent,var(--cyan));}
 .anim-cfg{display:block;margin-bottom:10px;}
 .anim-cfg:empty{display:none;}
@@ -2305,7 +2311,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   text-transform:uppercase;color:var(--chrome-ink-2);}
 .cfg-chips{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px;}
 .cfg-chip{display:inline-flex;align-items:center;gap:4px;
-  background:var(--chrome-3,#101c28);border:1px solid #ffffff1f;
+  background:var(--chrome-3,#101c28);border:1px solid var(--chrome-line,#ffffff1f);
   color:#bcccd8;border-radius:6px;padding:4px 7px;font-size:11px;
   font-family:var(--sans);cursor:pointer;min-width:0;}
 .cfg-chip .bic{width:12px;height:12px;flex:none;}
@@ -2995,9 +3001,16 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
    NEW posters: posters exist to be printed. ---- */
 .deck .deck-stage .slide{background:var(--page-bg,transparent);}
 .page-light .slide{color:#1b2733;}
-.page-light .an-text{color:#1b2733;background:#ffffffd9;
-  border-color:#00000024;}
-.page-light .an-cell{background:#fff;border-color:#00000030;}
+/* T465: the light page's defaults are the FALLBACK of the same
+   tokens the dark page reads, so Body text, Box background and Lines
+   and edges govern a white page too -- they were plain literals here,
+   which outranked the token rules and made three of the five deck
+   colours dead on every poster (2026-09-15 review) */
+.page-light .an-text{color:var(--tk-ink,#1b2733);
+  background:var(--tk-surface,#ffffffd9);
+  border-color:var(--tk-line,#00000024);}
+.page-light .an-cell{background:var(--tk-surface,#fff);
+  border-color:var(--tk-line,#00000030);}
 .page-light .an-cell pre.result,.page-light .an-cell pre.stream{
   background:#fff;color:#1b2733;border-color:#00000018;}
 .page-light .an-cell .note{color:#1b2733;}
@@ -3006,7 +3019,7 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
 /* needs the .slide-titlefree qualifier to OUTRANK the later dark rule of
    equal specificity — without it this was dead CSS (2026-08-05 review) */
 .page-light .slide-titlefree .ttl-eyebrow{color:#1d7a90;}
-.page-light .an-title{color:#16222c;}
+.page-light .an-title{color:var(--tk-heading,#16222c);}
 /* T366: a placeholder's words. Faint enough to read as a hint about
    the slide's shape rather than as something written, and never
    selectable -- the caret arrives in an empty box, so there is nothing
@@ -3984,7 +3997,7 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   line-height:1.35;color:var(--tk-ink,#fff);
   background:color-mix(in srgb,
     var(--tk-surface,var(--chrome-1,#0e1926)) 85%,transparent);
-  border:1px solid #ffffff2e;border-radius:8px;padding:.35em .55em;
+  border:1px solid var(--tk-line,#ffffff2e);border-radius:8px;padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
 /* no text-shadow: it was meant to keep bare text legible on any page but
    read as a smudge on every one (2026-08-19, user: "why is there a shadow
@@ -4064,8 +4077,8 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-placehead{font-size:11px;opacity:.85;flex:0 0 auto;}
 .dg-placeslides{display:flex;flex-wrap:wrap;gap:3px;}
 .dg-slidechip{font-family:var(--mono);font-size:10px;line-height:1;
-  padding:2px 5px;border-radius:4px;cursor:pointer;color:#c9d6e2;
-  background:none;border:1px solid #ffffff26;}
+  padding:2px 5px;border-radius:4px;cursor:pointer;color:var(--chrome-ink-2);
+  background:none;border:1px solid var(--border-strong,#ffffff26);}
 .dg-slidechip:hover{border-color:color-mix(in srgb,var(--accent) 55%,
   transparent);background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:#fff;}
@@ -4235,9 +4248,11 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
    colour for one -- it governed the text box and not this, which is the
    most box-shaped thing on a slide. Same bargain as T455: the chrome
    colour stays the default, --tk-surface answers when one is chosen. */
+/* T465: the frame's edge, like the text box's, is "Lines and edges"
+   once that is chosen; the accent tint stays its default */
 .an-cell{position:absolute;
   background:var(--tk-surface,var(--chrome-1,#0e1926));
-  border:1.5px solid color-mix(in srgb,var(--accent) 36%,transparent);border-radius:10px;overflow:hidden;
+  border:1.5px solid var(--tk-line,color-mix(in srgb,var(--accent) 36%,transparent));border-radius:10px;overflow:hidden;
   display:flex;flex-direction:column;}
 /* edit mode: an UNSELECTED frame is just its content — transparent (so it
    never blocks what's behind), no border, no title header. The border, title,
@@ -4392,8 +4407,8 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   max-height:none;overflow:visible;}
 .lay-menu .lay-picker .dbtn.lay{flex:0 0 var(--rbn-tile-w);
   width:var(--rbn-tile-w);height:var(--rbn-tile-h);
-  padding:4px 3px;align-items:center;}
-.lay-menu .lay-picker .layico2{width:calc(var(--rbn-tile-w) - 8px);}
+  padding:3px 3px;align-items:center;}
+.lay-menu .lay-picker .layico2{width:calc(var(--rbn-tile-w) - 22px);}
 /* catalog section headings (Slide layouts / Poster layouts) */
 .lay-sec{grid-column:1/-1;font-family:var(--mono);font-size:9px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-ink-3);
@@ -5390,7 +5405,14 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;
   background:#ff3b30;box-shadow:0 0 6px 2px #ff3b30aa,0 0 22px 8px #ff3b3055;}
 body.jv-laser .deck-stage{cursor:none;}
-.jv-lens{position:fixed;z-index:420;border-radius:50%;overflow:hidden;
+/* T465: the lens ELEMENT is .jv-lensbox; .jv-lens is the BODY flag
+   (talkSync toggles it, the rule below reads it). They were one name,
+   so the body itself was position:fixed and pointer-events:none while
+   the magnifier was up -- every click in the show died, including the
+   Magnifier and Close buttons that would have ended it (2026-09-15
+   review). tests/test_talk_tools.py now refuses a body flag that is
+   also a bare element selector. */
+.jv-lensbox{position:fixed;z-index:420;border-radius:50%;overflow:hidden;
   pointer-events:none;border:3px solid #ffffffcc;
   box-shadow:0 0 0 1px #0008,0 18px 48px #000a;background:#000;}
 .jv-lens-in{position:absolute;inset:0;}
@@ -5509,8 +5531,11 @@ body.light .dg-swatch{border-color:#00000026;}
    stacked under it (2026-09-03, user: "all the text is a bit
    confusing here. There is text of heaps of different sizes and
    different width everywhere"). */
+/* T465: the screen's ink is the theme's (three headings, the slide
+   chips and the scope select were dark-only literals, invisible or an
+   island in Light -- 2026-09-15 review) */
 .dg-h{font-family:var(--sans);font-size:15px;font-weight:600;
-  letter-spacing:0;text-transform:none;color:#e8f1f8;margin:26px 0 5px;}
+  letter-spacing:0;text-transform:none;color:var(--chrome-ink);margin:26px 0 5px;}
 .dg-h:first-child{margin-top:0;}
 .dg-sub{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:var(--chrome-ink);
   max-width:62ch;}
@@ -5801,7 +5826,8 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .li-lab{font-size:10.5px;color:#dbe7ef;}
 /* T130: the put button and its slide scope, side by side */
 .dg-putrow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
-.dg-scope{background:#0f1c28;color:#dbe7ef;border:1px solid #ffffff2a;
+.dg-scope{background:var(--input-bg);color:var(--chrome-ink);
+  border:1px solid var(--border-strong);
   border-radius:6px;padding:4px 6px;font:inherit;font-size:11px;
   max-width:180px;}
 /* the drag proxies live inside the miniature at page percentages;
@@ -6262,13 +6288,17 @@ body.light .img-ov .oh-row{background:var(--surface-hover);
   background:color-mix(in srgb,var(--danger) 13%,transparent);
   border-color:color-mix(in srgb,var(--danger) 70%,transparent);}
 /* the colourful theme tints the box's edge and its words with the tab's hue */
+/* T465: ...and NEVER a pressed one -- .fx-tile excluded .on but not
+   [aria-pressed="true"], which is how View's Slides and Guides, Home's
+   Layers and Present's Code trail read exactly like their unlit
+   neighbours in this theme (2026-09-15 review) */
 body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"]):not(:hover),
-body.th-colorful .edit-tools .fx-tile:not(.on):not(:hover){
+body.th-colorful .edit-tools .fx-tile:not(.on):not([aria-pressed="true"]):not(:hover){
   border-color:color-mix(in srgb,var(--accent) 30%,transparent);
   background:color-mix(in srgb,var(--accent) 7%,transparent);
   color:color-mix(in srgb,var(--accent) 60%,#f2f7fa);}
 body.th-colorful .edit-tools .dbtn:hover:not([aria-pressed="true"]),
-body.th-colorful .edit-tools .fx-tile:hover:not(.on){
+body.th-colorful .edit-tools .fx-tile:hover:not(.on):not([aria-pressed="true"]){
   background:color-mix(in srgb,var(--accent) 16%,transparent);
   border-color:color-mix(in srgb,var(--accent) 55%,transparent);}
 /* a primary button keeps its fill (Finish in Quick animate) */

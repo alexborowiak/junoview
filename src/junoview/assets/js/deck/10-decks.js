@@ -294,8 +294,9 @@
     if(p.hideTrace) out.hideTrace=1;
     if(typeof p.page==='string'&&p.page) out.page=p.page;  /* page preset */
     /* the page background survives every load path — normPres dropping
-       it turned saved white posters navy again (2026-08-05 review) */
-    if(typeof p.pageBg==='string'&&p.pageBg) out.pageBg=p.pageBg;
+       it turned saved white posters navy again (2026-08-05 review).
+       T465: it survives as tokens.c.page, below, after the tokens
+       object itself has been copied in. */
     /* trim marks are a print decision and were being forgotten on every
        reload, because nothing carried them across (2026-08-10) */
     if(p.cropMarks) out.cropMarks=1;
@@ -381,6 +382,17 @@
       .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
+    /* T465: A SAVED pres.pageBg BECOMES THE PAGE TOKEN. It was the
+       second store for one colour and it won over the token at render
+       time, so it takes the token's place here -- a deck renders
+       exactly as it did, and from now on there is one answer
+       (deckPageBg). '@page' was a theme's way of saying "the token",
+       which is the default. */
+    if(typeof p.pageBg==='string'&&p.pageBg&&p.pageBg!=='@page'){
+      out.tokens=out.tokens||{};
+      out.tokens.c=out.tokens.c||{};
+      out.tokens.c.page=p.pageBg;
+    }
     /* embedded card snapshots ride the FILE, not the object: they are
        absorbed into the session store (and IndexedDB) here, so frames
        still render when the notebook never opens — while drafts written
@@ -1369,7 +1381,7 @@
          a section's fold state out: that is a way of looking at the page,
          and lives in the browser's view state. */
       guides:pres.guides||null,
-      page:pres.page||null,pageBg:pres.pageBg||null,
+      page:pres.page||null,
       cropMarks:pres.cropMarks||0});
   }
   function histReset(){
@@ -1393,14 +1405,14 @@
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
-    var pageWas=pres.page||null,bgWas=pres.pageBg||null;
+    var pageWas=pres.page||null,bgWas=deckPageBg();
     /* T263: 'layouts' belongs in this list. histState has always
        snapshotted it, and nothing read it back -- so making or deleting
        a custom slide layout could not be undone, while every other
        design-level key could. d.layouts is always emitted and [] is
        truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','layouts','page','pageBg','cropMarks','live',
+     'guides','masters','layouts','page','cropMarks','live',
      'scale']
       .forEach(function(k){
         if(d[k]) pres[k]=d[k]; else delete pres[k];});
@@ -1442,7 +1454,7 @@
        two calls the picker does, and re-fit a ribbon whose column may
        have just changed shape */
     var pageChanged=(pres.page||null)!==pageWas;
-    if(pageChanged||(pres.pageBg||null)!==bgWas) deckZoom=0;
+    if(pageChanged||deckPageBg()!==bgWas) deckZoom=0;
     /* persist WITHOUT recording a new history entry */
     source='draft';
     draftSet(pres.name||'untitled',JSON.stringify(pres));   /* T429 */

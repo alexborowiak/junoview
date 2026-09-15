@@ -388,8 +388,11 @@ def test_slides_have_their_own_background_and_border(out):
     # T455: the last fallback is the deck's own Page background token,
     # not a literal -- that hex was why changing it in Deck colours did
     # nothing. Its default IS this colour, so nothing moves by default.
-    assert ("var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)"
-            "||'@page');") in out
+    # T465: one resolver for the page's colour -- the token is the store,
+    # a saved pres.pageBg is absorbed into it by normPres
+    assert "  function deckPageBg(){return tokVal('@page');}" in out
+    assert "    return tokVal((s&&s.bg)||mbg||'@page');" in out
+    assert "    var bg=pageBgOf(s0);" in out
     assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
     assert "if(s.border) o.border=deep(s.border);" in out
     assert "(bd.w||4)/SW_REF_H*h" in out
@@ -1721,8 +1724,10 @@ def test_object_inspectors_follow_the_live_selection(out):
     # neither guesses that the last expanded group member was clicked.
     assert out.count("typeof selAnnot==='number'&&(s") >= 2
     # Slide changes bypass showFmt, so renderSlide owns that invalidation.
-    assert "renderNotesPane(); /* ...and the notes, which are per slide */\n" \
-        "    /* Slide navigation clears the selection" in out
+    assert "renderNotesPane(); /* ...and the notes, which are per slide */\n" in out
+    # T465: the Images pane follows the slide too
+    assert "      var ip=$('#imgpane'); if(ip&&!ip.hidden) renderImgPane();}" in out
+    assert "    /* Slide navigation clears the selection" in out
     # An edit changes the history's live 'now' state without a selection
     # event, so markDirty has its own open-pane refresh.
     assert "if(!quiet&&ohp&&!ohp.hidden) renderObjHist();" in out
@@ -1994,8 +1999,9 @@ def test_the_deck_registry_survives_a_save(out):
     # undo reaches it too: a token change repaints every item that
     # references it, so it is an edit like any other
     assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
+    # (T465: pageBg left the list -- the page colour rides in tokens)
     assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
-            "     'guides','masters','layouts','page','pageBg',") in out
+            "     'guides','masters','layouts','page','cropMarks','live',") in out
 
 
 def test_corner_and_gap_need_no_per_item_reference(out):
@@ -2824,7 +2830,9 @@ def test_an_empty_bullet_is_not_an_abandoned_box(out):
     bullet and all (2026-08-29, user: "creating dot points with no text
     seems to delete the cell, but also when you unclick it it deletes").
     """
-    assert ("if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html\n"
+    # (T465: nor a references box, which draws the bibliography rather
+    # than storing words and is "empty" by this test the whole time)
+    assert ("if(a2&&a2.k==='text'&&!a2.bib&&!String(a2.text||'').trim()&&!a2.html\n"
             "         &&!listOf(a2)){") in out
     # ...and when it DOES delete one, it says so: the blur's markDirty is
     # not quiet, so there was always an undo entry and never a word
@@ -3443,7 +3451,10 @@ def test_removing_animations_says_what_is_left(out):
     # and the largest sp is count-1. The -1 this once had told a two-page
     # text box it took "0 clicks" while the strip said 1 (T165).
     assert "var left=slideStops(s);" in out
-    assert "'Nothing here has an entrance effect, but the slide still '" in out
+    # T465: Remove all takes exits and movements too, and says so
+    assert "'Nothing here has an entrance, exit or movement, but the '" in out
+    assert "        if(animOut(a)!=null){delete a.out;nx++;}" in out
+    assert "        if(a.motion){delete a.motion;delete a.mo;nm++;}" in out
     assert "' left, stepping the flip book')" in out
     # the claim survives ONLY as the else-branch of the ternary, so it
     # is said only when nothing is in fact left. Asserted as the CODE
@@ -3451,7 +3462,7 @@ def test_removing_animations_says_what_is_left(out):
     # unconditional sentence, and a test that forbids its own
     # explanation teaches people to delete the explanation.
     i = out.index("var clr=$('#anim-clear');")
-    body = out[i:i + 1800]
+    body = out[i:i + 2600]   # (T465 grew the handler)
     assert "(left?(' \u2014 '+left+' click'+(left===1?'':'s')" in body
     assert ":' \u2014 everything is on the slide from the start'));" \
         in body

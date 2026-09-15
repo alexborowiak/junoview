@@ -45,8 +45,7 @@ def test_a_master_is_resolved_at_render_time_never_stamped():
 def test_background_resolves_slide_then_master_then_deck():
     out = _out()
     # T455 made the last fallback the deck's own Page background token
-    assert ("var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)"
-            "||'@page');") in out
+    assert "    return tokVal((s&&s.bg)||mbg||'@page');" in out
 
 
 def test_the_deck_and_slide_carry_masters_through_every_normaliser():
