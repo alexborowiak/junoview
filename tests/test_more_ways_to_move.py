@@ -31,18 +31,23 @@ def test_the_effect_table_has_the_three_new_ways_in(out):
 
 
 def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
-    assert "  function typeInto(el){" in out
+    assert "  function typeInto(el,part){" in out   # T471: one piece, or all
     assert "  function typeStop(){" in out
     # the model is never split: text NODES are emptied and refilled
-    assert "document.createTreeWalker(host,NodeFilter.SHOW_TEXT)" in out
+    assert "document.createTreeWalker(root,NodeFilter.SHOW_TEXT)" in out
     assert "    typeRun.nodes.forEach(function(n){n.node.textContent=n.text;});" in out
-    # bounded: at most ~100 ticks however long the box
-    assert "    var per=Math.max(1,Math.ceil(total/100)),shown=0;" in out
+    # T471: a pace you can watch (30 a second), bounded at four seconds
+    assert "  var TYPE_TICK=33,TYPE_MAX_MS=4000,TYPE_MIN_MS=1200;" in out
+    assert ("    var per=Math.max(1,Math.ceil(total/(TYPE_MAX_MS/TYPE_TICK))),"
+            "shown=0;") in out
     # words only -- on anything else it plays as a fade
     assert "            atype=(atype==='type'&&ba.k!=='text')?'fade':atype;" in out
     assert ("            if(atype==='type'&&typeof typeInto==='function'\n"
-            "               &&!(typeof storyPaint!=='undefined'&&storyPaint)) "
-            "typeInto(el);") in out
+            "               &&!(typeof storyPaint!=='undefined'&&storyPaint))\n"
+            "              typeInto(el,(typeof textBy==='function'&&textBy(ba)\n"
+            "                &&!ba.anim.hl)?0:undefined);") in out
+    # ...and each later bullet types on its own click
+    assert "                typeInto(el,j);" in out
     # a stale run is stopped when the element leaves the page
     assert "      if(!el.isConnected){typeStop();return;}" in out
 
@@ -90,6 +95,10 @@ def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert "              pe.style.visibility=(wait&&!hl)?'hidden':'';" in out
     assert "                pe.classList.toggle('an-hl',jp===revealCount-1);" in out
     assert "                pe.classList.toggle('an-hl-wait',wait);" in out
+    # T471: the highlight configured -- the lit piece's look and the rest's
+    assert ("                pe.classList.toggle('an-hl-rest',"
+            "jp!==revealCount-1);") in out
+    assert '.an-item[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);' in out
     assert ".an-part.an-hl{color:var(--accent,#39a9c0);scale:1.04;" in out
     # four tiles, so that strip is four wide
     assert "width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}" in out

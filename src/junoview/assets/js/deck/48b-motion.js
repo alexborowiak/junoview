@@ -365,6 +365,16 @@
           :'. Every click from now gives this.'),
         function(){seqType=f[0];seqSync();});
     });
+    /* T471: and how much of a text box each click gives */
+    cfgHead(host,'a text box arrives');
+    var rowb=cfgRow(host);
+    SEQ_BY.forEach(function(f){
+      cfgChip(rowb,bic(f[3]==='text'?'text':(f[3]==='indent'?'indent'
+        :(f[3]==='spacing'?'spacing':'star'))),f[1]+' ('+f[2]+')',
+        seqBy===f[0],f[1]+' \u2014 press '+f[2]+'. Every text box '
+        +'clicked from now arrives this way.',
+        function(){seqBy=f[0];seqSync();});
+    });
     var acts=cfgRow(host,'cfg-acts');
     var u=document.createElement('button');
     u.type='button';u.className='anim-mini';
@@ -429,6 +439,22 @@
             :(p[2]==='spacing'?bic('spacing'):bic('star')))),
           p[1],cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
       });
+      /* T471: the highlight's two choices, once it is on */
+      if(a.anim&&a.anim.hl){
+        cfgHead(host,'the bullet whose click it is');
+        var r5=cfgRow(host);
+        HL_FX.forEach(function(p){
+          cfgChip(r5,bic('star'),p[1],(a.anim.hlfx||'')===p[0],'',
+            function(){animSetHl('hlfx',p[0]);animCfgSync();});
+        });
+        cfgHead(host,'the other bullets');
+        var r6=cfgRow(host);
+        HL_REST.forEach(function(p){
+          cfgChip(r6,bic(p[0]==='blur'?'none':(p[0]==='plain'?'text':'eye')),
+            p[1],(a.anim.hlrest||'')===p[0],'',
+            function(){animSetHl('hlrest',p[0]);animCfgSync();});
+        });
+      }
     }
     var ow=$('#anim-outwrap');
     if(ow&&!ow.hidden){

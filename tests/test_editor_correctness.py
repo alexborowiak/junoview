@@ -1126,7 +1126,8 @@ def test_animations_can_be_removed(out):
     # (Set order writes that order too) and added Layers, the timeline
     assert 'id="anim-seq"' in out and 'id="anim-layers"' in out
     assert 'id="anim-order"' not in out
-    assert "e.stopPropagation();seqArmStart();});" in out
+    # T471: the lit door is the way out as well as in
+    assert "      if(seqOn()) seqEnd(true); else seqArmStart();" in out
     assert 'class="rbn-grp rbn-anim" data-tab="insert"' not in out
     assert "animRibbonSync=function(){" in out
     assert "revealCount=0;commit(s);" in out

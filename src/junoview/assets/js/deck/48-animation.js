@@ -21,6 +21,9 @@
      the write (T171). Caught by driving: the first pick threw
      "rerender is not defined" and nothing happened. */
   var animSetType=function(){};
+  var animSetHl=function(){};   /* T471: the highlight's two choices */
+  var HL_FX=[['','Bigger & coloured'],['grow','Bigger'],['colour','Coloured']];
+  var HL_REST=[['','Dimmed'],['blur','Blurred'],['plain','As they are']];
   var animRibbonSync=function(){};
   /* ---- CLICK THINGS IN THE ORDER THEY SHOULD APPEAR (T168) --------
      Asked for in the user's own words: "when you click it becomes the
@@ -180,20 +183,39 @@
     typeRun.el.classList.remove('an-typing');
     typeRun=null;
   }
-  function typeInto(el){
+  /* T471: A PACE YOU CAN WATCH. It typed a character every 25ms, so a
+     short line was on the slide in under half a second and read as
+     "the typewriter doesn't work" (2026-09-15, user). Thirty a second
+     now, and a long box speeds up so it never takes more than four
+     seconds. `part` types ONE piece of a box built bullet by bullet --
+     the piece whose click this is -- rather than the whole box
+     including the bullets still hidden under it. */
+  var TYPE_TICK=33,TYPE_MAX_MS=4000,TYPE_MIN_MS=1200;
+  function typeInto(el,part){
     typeStop();
     if(!el||!motionOK()) return;
     var host=el.querySelector('.an-tx')||el;
+    var roots=(part==null)?[host]:$$('[data-part="'+part+'"]',host);
     var nodes=[];
-    var walker=document.createTreeWalker(host,NodeFilter.SHOW_TEXT);
-    var n;
-    while((n=walker.nextNode())){
-      if(n.textContent) nodes.push({node:n,text:n.textContent});}
+    roots.forEach(function(root){
+      var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+      var n;
+      while((n=walker.nextNode())){
+        if(!n.textContent) continue;
+        /* a piece still to come is hidden; typing it types nothing */
+        var pe=n.parentNode&&n.parentNode.closest
+          ?n.parentNode.closest('[data-part]'):null;
+        if(part==null&&pe&&pe.style.visibility==='hidden') continue;
+        nodes.push({node:n,text:n.textContent});
+      }
+    });
     var total=0;
     nodes.forEach(function(x){total+=x.text.length;});
     if(!total) return;
     nodes.forEach(function(x){x.node.textContent='';});
-    var per=Math.max(1,Math.ceil(total/100)),shown=0;
+    var per=Math.max(1,Math.ceil(total/(TYPE_MAX_MS/TYPE_TICK))),shown=0;
+    /* a short line slows down, so three words are still a typing */
+    var tick=Math.max(TYPE_TICK,Math.min(70,Math.round(TYPE_MIN_MS/total)));
     el.classList.add('an-typing');
     typeRun={el:el,nodes:nodes,t:0};
     typeRun.t=setInterval(function(){
@@ -206,7 +228,7 @@
         left-=x.text.length;
       });
       if(shown>=total) typeStop();
-    },25);
+    },tick);
   }
   /* ---- T238: DISAPPEAR, WHERE ANIMATION IS -----------------------------
      The exit has existed since T174 and had one door: a popover inside
@@ -366,16 +388,42 @@
     }
   }
   var seqType='fade';
+  /* T471: ...AND HOW MUCH OF A TEXT BOX A CLICK GIVES (2026-09-15,
+     user: "in quick animate there is no by dot points option"). The
+     same four answers the Timing group has, with a letter each the
+     way the effects have, applied to every text box the mode clicks
+     from then on. Whole box is the instruction it always was: a box
+     that arrived by bullet goes back to arriving whole. */
+  var SEQ_BY=[['','Whole box','W','text'],['para','By bullet','B','indent'],
+    ['sent','By sentence','S','spacing'],['hl','Highlight','H','star']];
+  var seqBy='';
   function seqKeyDown(e){
     if(!seqArm) return;
+    /* T471: A KEY THE MODE TAKES IS TAKEN. It prevented the default and
+       let the event go on, so the editor's own handler saw it too: G
+       (Grow) toggled the grid, B (By bullet) armed the guide-box tool
+       -- which then swallowed the first click after the mode ended
+       (driven 2026-09-15). The mode's letters are the mode's. */
     if(e.key>='0'&&e.key<='9'){
-      seqDigit=+e.key;e.preventDefault();seqSync();
-      return;
+      seqDigit=+e.key;e.preventDefault();e.stopImmediatePropagation();
+      seqSync();return;
     }
     var k=String(e.key||'').toUpperCase();
     for(var q=0;q<SEQ_FX.length;q++) if(SEQ_FX[q][2]===k){
-      seqType=SEQ_FX[q][0];e.preventDefault();seqSync();return;
+      seqType=SEQ_FX[q][0];e.preventDefault();e.stopImmediatePropagation();
+      seqSync();return;
     }
+    for(var q2=0;q2<SEQ_BY.length;q2++) if(SEQ_BY[q2][2]===k){
+      seqBy=SEQ_BY[q2][0];e.preventDefault();e.stopImmediatePropagation();
+      seqSync();return;
+    }
+  }
+  /* T471: the mode's text-build choice, on one box */
+  function seqApplyBy(a){
+    if(!a||a.k!=='text'||!a.anim) return;
+    if(seqBy==='hl'){a.anim.by='para';a.anim.hl=1;}
+    else if(seqBy){a.anim.by=seqBy;delete a.anim.hl;}
+    else {delete a.anim.by;delete a.anim.hl;}
   }
   function seqKeyUp(e){
     if(!seqArm) return;
@@ -464,6 +512,7 @@
     if(a.anim) {a.anim.order=ord;a.anim.type=seqType;}
     else a.anim={type:seqType,order:ord};
     if(seqType==='none') delete a.anim;
+    seqApplyBy(a);   /* T471 */
     /* THE DIGIT SETS THE DELAY (T169). "Hold down 5 and click, it
        appears five seconds after the last." 0 clears one, which is how
        you take a delay back without leaving the mode. It goes on the
@@ -884,6 +933,26 @@
       if(!a.anim) a.anim={type:'appear',order:no};
       return a.anim;
     }
+    /* T471: HOW THE LIT BULLET IS LIT, AND WHAT THE REST DO
+       (2026-09-15, user: "the dot point in question either becomes
+       bigger or changes color, or other become blurred. Then this
+       needs to be able to be configured"). Two facts on the box:
+       `hlfx` is the lit piece -- bigger and coloured (the T385 look),
+       bigger, or coloured -- and `hlrest` is every other piece --
+       dimmed (T385's), blurred, or left as it is. The Configure panel
+       is the door (animCfg). */
+    animSetHl=function(key,val){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim||!a.anim.hl) return;
+        if(val) a.anim[key]=val; else delete a.anim[key];
+        n++;
+      });
+      if(!n) return;
+      commit(s);
+    };
     var hlb=$('#anim-by-hl');
     if(hlb) hlb.addEventListener('click',function(e){
       e.stopPropagation();
@@ -1407,7 +1476,16 @@
         /* T452: opening lands you on the tab you left it on */
         if(typeof animTabApply==='function') animTabApply();
       }
-      else paneHide('animpane');
+      else {
+        /* T471: QUICK ANIMATE ENDS WITH ITS PANEL. Its controls live
+           in this pane (T445), so closing the pane read as closing the
+           mode -- and the mode stayed armed, numbering every click
+           until Escape (2026-09-15, user: "even when I close it
+           everything is still trying to quick animate unless I press
+           esc"). Closing keeps what was placed, the way Finish does. */
+        if(seqOn()) seqEnd(true);
+        paneHide('animpane');
+      }
     }
     vbtn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
@@ -1470,7 +1548,10 @@
        call; two doors, one implementation. */
     var sqb=$('#anim-seq');
     if(sqb) sqb.addEventListener('click',function(e){
-      e.stopPropagation();seqArmStart();});
+      e.stopPropagation();
+      /* T471: the lit door is the way out as well as in */
+      if(seqOn()) seqEnd(true); else seqArmStart();
+    });
     /* the timeline IS the Layers pane (T174); this door drives
        Home's button so there is one pane and one implementation */
     var lyb=$('#anim-layers');

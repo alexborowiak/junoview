@@ -639,6 +639,14 @@
   }
   function renderSlide(){
     var s=pres.slides[cur];
+    /* T471: Quick animate numbers ONE slide's clicks. Every way of
+       leaving a slide -- go, New slide, the film strip, a section jump
+       -- comes through here, so this is where the mode finishes with
+       what was placed rather than carrying its count onto a slide it
+       was never about. seqEnd clears the mode before it renders, so
+       there is no loop. */
+    if(typeof seqOn==='function'&&seqOn()&&seqArm&&seqArm.slide!==cur)
+      seqEnd(true);
     /* the talk's text multiplier, applied to the stage and therefore to
        every layer under it. Forced back to 1 outside a talk so it can
        never reach the editor, a print or an export (T88). */

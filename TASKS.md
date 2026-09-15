@@ -9013,3 +9013,33 @@ any reading. The rest are T466 onwards.
   scrollbar (a frame is the rail's width, its tiles wrap, the tile is
   54px there); "1 text box wear no named style" (wears). Driven at
   1500 and on an A1 poster.
+- [x] **T471 — The typewriter you can see, Quick animate that ends, and
+  the highlight you can set.** (User, 2026-09-15: "The type writer
+  animation doesn't work"; "In quick animate there is no by dot points
+  option"; "even when I close it everything is still trying to quick
+  animate unless I press esc"; "there is no like 'highlight per dot
+  point', where the dot point in question either becomes bigger or
+  changes color, or other become blurred. Then this needs to be able
+  to be configured".) The typewriter typed a character every 25 ms, so
+  a short line was on the slide in under half a second and read as
+  nothing happening — thirty a second now, a short line slower still,
+  a long box never more than four seconds; and a box built bullet by
+  bullet types each bullet on its own click rather than the whole box
+  (hidden bullets included) on the first. Quick animate's controls
+  live in the Animation pane (T445), so closing the pane read as
+  closing the mode while the mode stayed armed: closing it, pressing
+  the lit Quick animate door again, leaving the slide (New slide, the
+  film strip, go) or leaving the editor all finish it with what was
+  placed. The mode's letters were also the editor's: G (Grow) toggled
+  the grid and B armed the guide-box tool, which then swallowed the
+  first click after the mode ended — the mode's keys stop at the mode.
+  Quick animate has a second row of chips, "a text box arrives":
+  Whole box (W), By bullet (B), By sentence (S), Highlight (H),
+  applied to every text box it clicks from then on. And Highlight is
+  configurable: on the box, `hlfx` says what the lit bullet does
+  (bigger & coloured — the T385 look — bigger, or coloured) and
+  `hlrest` what every other bullet does (dimmed — T385's — blurred, or
+  left as it is); the Configure panel shows the two rows once
+  Highlight is on, the CSS reads them off data attributes. Driven at
+  1500 with reduced motion off (the harness reports it on, which is
+  why the typewriter "worked" in every earlier check).

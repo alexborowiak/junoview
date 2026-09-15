@@ -3374,7 +3374,8 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # (T385's five extra keyframe blocks sit in the same run, so the
     # window grew once more; T445's ten more movements, each a keyframe
     # block and a default rule, grew it again)
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 7000
+    # (T471's highlight rules grew it again)
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 9000
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 
@@ -3641,7 +3642,8 @@ def test_a_build_can_run_itself_after_a_pause(out):
     assert "var seqDigit=0;" in out
     assert "if(e.key>='0'&&e.key<='9'){" in out
     # ...and swallowed, so it cannot also mean whatever else a digit means
-    assert "seqDigit=+e.key;e.preventDefault();seqSync();" in out
+    assert ("seqDigit=+e.key;e.preventDefault();"
+            "e.stopImmediatePropagation();") in out   # T471
     # the delay lands on the whole stop, and 0 takes it back
     assert "if(delay) x.anim.after=delay; else delete x.anim.after;" in out
     # the pane says a stop runs itself, where the order is read

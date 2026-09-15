@@ -1973,8 +1973,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pane's tabs wear the Animation pane's tab grammar; a flip book's pick
 # returns to the tab it left; the Text styles door and its dead rows on
 # a fresh deck; the side rail's strips wrap; "wears".
-EXPECTED_MD5 = "47d2b39baef73d143bc361db8c152c7d"
-EXPECTED_BYTES = 4362035
+# T471 (2026-09-15): the typewriter's pace and piece-by-piece typing;
+# Quick animate ends with its pane, its door, the slide or the editor,
+# keeps its keys and has a text-build row; the highlight's two choices.
+EXPECTED_MD5 = "a7651899c9d023f91c2b554c16f9acf3"
+EXPECTED_BYTES = 4369577
 
 
 def _render_example() -> str:

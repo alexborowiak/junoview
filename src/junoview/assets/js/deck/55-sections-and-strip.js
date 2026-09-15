@@ -1097,6 +1097,8 @@
       if(tbn) tbn.setAttribute('aria-expanded','false');
     }
     mode=m;
+    /* T471: Quick animate is an editor mode; leaving the editor ends it */
+    if(m!=='edit'&&typeof seqOn==='function'&&seqOn()) seqEnd(true);
     if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
       closeDeckPresentationDrawer();
     if(m!=='view'&&typeof talkToolsReset==='function') talkToolsReset();

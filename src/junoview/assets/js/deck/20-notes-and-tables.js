@@ -3084,6 +3084,13 @@
                whose stop was just taken is lit, the ones still to come
                sit quiet, the ones already done are plain. */
             var hl=!!ba.anim.hl;
+            /* T471: the lit piece's look and the rest's, as data the
+               CSS reads (hlfx: bigger & coloured / bigger / coloured;
+               hlrest: dimmed / blurred / as they are) */
+            if(hl){
+              el.setAttribute('data-hlfx',ba.anim.hlfx||'both');
+              el.setAttribute('data-hlrest',ba.anim.hlrest||'dim');
+            }
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');
               var jp=plan.stop[st+j];
@@ -3093,7 +3100,14 @@
               if(hl&&mode==='view'){
                 pe.classList.toggle('an-hl',jp===revealCount-1);
                 pe.classList.toggle('an-hl-wait',wait);
+                pe.classList.toggle('an-hl-rest',jp!==revealCount-1);
               }
+              /* T471: a typewriter box types each bullet on its own
+                 click, not the whole box on the first */
+              if(!hl&&mode==='view'&&j>0&&jp===revealCount-1
+                 &&ba.anim.type==='type'&&typeof typeInto==='function'
+                 &&!(typeof storyPaint!=='undefined'&&storyPaint))
+                typeInto(el,j);
             });
           }
           if(sp>=revealCount) el.classList.add('an-prebuild');
@@ -3110,7 +3124,9 @@
             atype=(atype==='type'&&ba.k!=='text')?'fade':atype;
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
             if(atype==='type'&&typeof typeInto==='function'
-               &&!(typeof storyPaint!=='undefined'&&storyPaint)) typeInto(el);
+               &&!(typeof storyPaint!=='undefined'&&storyPaint))
+              typeInto(el,(typeof textBy==='function'&&textBy(ba)
+                &&!ba.anim.hl)?0:undefined);   /* T471: the first piece */
           }
         }
       });

@@ -33,8 +33,8 @@ def test_each_stop_is_painted_by_the_show_itself(out):
     # a thumbnail is a still: no keyframes, no typewriter
     assert ("        .replace(/\\ban-anim-[a-z]+\\b/g,'')"
             ".replace(/\\ban-move-[a-z]+\\b/g,'')") in out
-    assert ("               &&!(typeof storyPaint!=='undefined'&&storyPaint)) "
-            "typeInto(el);") in out
+    assert ("               &&!(typeof storyPaint!=='undefined'&&storyPaint))\n"
+            "              typeInto(el,") in out   # T471
     assert "    slideEl.style.zoom=(STORY_THUMB_W/W).toFixed(4);" in out
 
 
