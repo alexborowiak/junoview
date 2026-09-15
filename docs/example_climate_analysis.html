@@ -2261,7 +2261,7 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 /* the kind's own name, a step louder than the little mono sub-labels
    inside it -- the two were the same size and colour, which is why the
    two kinds read as one list */
-.wj-h{display:flex;align-items:center;gap:7px;margin:0;
+.wj-h{white-space:nowrap;   /* T484: never "Recent / presentations" */display:flex;align-items:center;gap:7px;margin:0;
   font-family:var(--sans);font-size:13px;font-weight:600;
   letter-spacing:0;text-transform:none;color:var(--ink-2);
   padding-bottom:7px;border-bottom:1px solid var(--line);}
@@ -5161,6 +5161,16 @@ body.slide-editing .apptop{display:none;}
 .rbn-file{order:1;}
 .rbn-slide{order:0;}      /* T215: the page itself first on Design */
 .rbn-pagesize{order:0;}   /* T464: its size beside it, then the layouts */
+/* T479: the Background block -- two columns of two tracks each and the
+   deck-wide verb, on the shelf or in a group */
+.bg-block{display:flex;align-items:center;gap:12px;}
+.bg-col{display:flex;flex-direction:column;gap:4px;}
+.bg-cell{height:var(--rbn-track);align-items:center;}
+.bg-cell .cell-lab{min-width:72px;}
+.bg-run{display:flex;align-items:center;gap:3px;}
+.bg-run .bg-chip{width:20px;height:20px;}
+.bg-run .bg-w,.bg-run .bg-auto{font-size:10.5px;padding:2px 7px;}
+.bg-push{white-space:nowrap;}
 .rbn-view{order:3;}
 /* Design reads Slide, Page furniture, Type -- the markup's order.
    Without a rung Page furniture sat at 0 and came FIRST (T178). */
@@ -5449,8 +5459,13 @@ body.light .img-row{color:var(--ink-2);}
 /* T187: a FOLDED group is one worded door over a popover holding its
    row -- the real controls, moved, never copied. The popover lays the
    row out exactly as the ribbon does. */
-.sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;}
-.rbn-foldmenu .rbn-row{height:auto;}
+.sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;
+  /* T484: never wider than the window -- a rest group of seventy atoms
+     opened a popover 3112px wide in a 1300px window with 58 controls
+     off the right edge (2026-09-15 review); the row wraps instead */
+  max-width:calc(100vw - 16px);box-sizing:border-box;}
+.rbn-foldmenu .rbn-row{height:auto;display:flex;flex-wrap:wrap;
+  align-items:center;gap:var(--rbn-row-gap) var(--rbn-col-gap);}
 .rbn-grp.rbn-folded>.rbn-foldwrap{display:flex;height:var(--rbn-band);
   align-items:center;}
 /* T188: the text strip. A specimen "Aa" over the type's name; the strip
@@ -5853,8 +5868,13 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* Source is the important answer, not a drawer. Keep its provenance
    actions on the same row as the path and Source label. The existing
    buttons and handlers are reused; only the containment changes. */
-#fmt-srcwrap.src-flat,#fmt-srcwrap.src-flat #fmt-src-menu{
+#fmt-srcwrap.src-flat:not([hidden]),
+#fmt-srcwrap.src-flat:not([hidden]) #fmt-src-menu{
   display:contents!important;}
+/* T481: the wrapper's [hidden] must still win, or every layout that
+   flattens the source row showed Source / Where it came from… / Lock
+   figure with nothing selected (2026-09-15 review) */
+#fmt-srcwrap.src-flat[hidden]{display:none!important;}
 #fmt-srcwrap.src-flat #fmt-src-menu>.dbtn{width:auto;min-height:26px;
   padding:4px 7px!important;font-size:11px!important;}
 /* a chip: one of several answers, and it shows which one is on */
@@ -7908,6 +7928,9 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 
 /* movable title / subtitle on title slides */
 .an-title{color:var(--tk-heading,#f0f6fa);}
+/* T480: a text box wearing a heading style reads the same token */
+.an-text.an-head{color:var(--tk-heading,#f0f6fa);}
+.page-light .an-text.an-head{color:var(--tk-heading,#16222c);}
    /* default lives HERE so .page-light can win; T455 lets the deck's
       Heading text colour override it when one has been chosen */
 .an-title{position:absolute;transform:translate(-50%,-50%);
@@ -8742,6 +8765,18 @@ body.light .eq-box{background:var(--chrome-2);
 /* T470: the Style sets picker opened from the Style system sits over
    that screen (z-index 400), not under it */
 .aa-dlg.over-design{z-index:410;}
+/* T475: the editor's own question sits over every other dialog and
+   menu (the apply dialog, the masters panel, the library) */
+.aa-dlg.ask-dlg{z-index:300;}
+.aa-dlg.ask-dlg.over-design{z-index:420;}
+.ask-box{width:min(440px,94vw);}
+.ask-lab{font-family:var(--sans);font-size:12.5px;color:var(--chrome-ink-2);}
+.ask-in{width:100%;box-sizing:border-box;font:13.5px var(--sans);
+  padding:7px 9px;border-radius:7px;color:var(--chrome-ink);
+  background:var(--chrome-0,#0b141d);border:1px solid var(--chrome-line);}
+.ask-in:focus{outline:none;border-color:var(--accent,var(--cyan));}
+.ask-area{resize:vertical;min-height:84px;font:12.5px var(--mono);
+  line-height:1.45;}
 .aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:9px;padding:12px 13px 11px;
   background:var(--chrome-2);border:1px solid var(--chrome-line);
@@ -9440,6 +9475,17 @@ body.light .seq-cell b{color:var(--ink);}
   font-size:12.5px;
   padding:4px 7px;margin:2px 0;}
 .mast-new{display:block;width:100%;text-align:left;margin-top:10px;}
+/* T478: the master's choices as swatches and pressed runs */
+.mast-lab{font-family:var(--sans);font-size:11px;color:var(--chrome-ink-2);
+  margin:8px 0 3px;}
+.mast-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;}
+.mast-chips .bg-chip{width:22px;height:22px;border-radius:5px;padding:0;
+  border:1px solid #ffffff2a;}
+.mast-chips .bg-chip[aria-pressed="true"],.mast-chips .bg-auto[aria-pressed="true"]{
+  outline:2px solid var(--accent,var(--cyan));outline-offset:1px;}
+.mast-chips .bg-auto{font-size:11px;padding:2px 8px;}
+.mast-run{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;}
+.mast-opt{font-size:12px;padding:3px 8px;}
 /* T117: charts — the SVG fills its box; the dialog is the numbers */
 /* POSITIONED, like every other kind (T164). Charts shipped in T117
    without a `position`, and every other annotation declares its own
@@ -10141,7 +10187,12 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
   border-color:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
 .rbn-play{order:1;}
-.rbn-talk{order:2;}
+.rbn-version{order:2;}    /* T477: which version, between Play and the talk */
+.rbn-talk{order:3;}
+/* a deck with no versions has one tile and no strip to speak of: the
+   frame is as wide as that tile */
+.strip-frame>#pr-version-strip.trans-strip{width:max-content;
+  max-width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
 
 /* ---- T218: the folded door is a tile; the delay's cell --------------------- */
 .rbn-grp.rbn-folded>.rbn-foldwrap{align-items:center;}
@@ -14222,29 +14273,41 @@ writes or resembles and implies no endorsement.</small></p>
           <!-- not rbn-fixed any more (T204): with Layout in front of it,
                a group that never folds would push Layout into a fold
                on a laptop, and Layout is what this tab is for now -->
-          <span class="rbn-grp rbn-slide" data-tab="design" data-fold-ic="pagep">
+          <!-- T479: BACKGROUND IS A CHOOSER (2026-09-15 review: "Background
+               is the one Design chooser still in a pop-up over the slide:
+               no readout on the tile, 22 unlabelled swatches"). A compact
+               door that wears this slide's answer (Auto, or the colour's
+               name, and the border), opening the two swatch rows, the
+               border and the one deck-wide verb IN THE BAR, on the shelf,
+               the way Page size does (T464). Every swatch says its name
+               under the pointer; the border's colours say theirs. The
+               block keeps the id the ribbon layouts move (bg-drop). -->
+          <span class="rbn-grp rbn-slide rbn-compact" data-tab="design"
+            data-fold-ic="fill">
             <span class="rbn-row">
-              <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
-                   many of the options there are dropdowns with a
-                   million options that should just already be
-                   visible"). Eight presets, each drawn at its own
-                   proportion, the one in use lit; the strip scrolls
-                   and a tile cut at the edge is the affordance. Built
-                   from PAGE_PRESETS, the same table the menu was. -->
-              <!-- T221: a tall tile, like the page sizes beside it. It
-                   was a half-height button alone in its column with an
-                   empty cell under it (2026-09-03, user: "why is the
-                   background button so weird. Gross"). -->
-              <span class="sh-drop rbn-tall" id="bg-drop">
-                <button class="fx-tile big-tile" id="bg-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Background colour and border, for this slide or
- for every slide"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg><span>Background</span></button>
-                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
+              <span class="bg-block" id="bg-drop">
+                <span class="bg-col">
+                  <span class="rbn-cell bg-cell"><span class="cell-lab">This slide</span>
+                    <span class="bg-run" id="bg-run-this" role="group"
+                      aria-label="This slide's background"></span></span>
+                  <span class="rbn-cell bg-cell"><span class="cell-lab">Every slide</span>
+                    <span class="bg-run" id="bg-run-every" role="group"
+                      aria-label="Every slide's background"></span></span>
+                </span>
+                <span class="bg-col">
+                  <span class="rbn-cell bg-cell"><span class="cell-lab">Border</span>
+                    <span class="bg-run" id="bg-run-border" role="group"
+                      aria-label="A border round this slide"></span></span>
+                  <span class="rbn-cell bg-cell" id="bg-bcol-cell" hidden><span class="cell-lab">Colour</span>
+                    <span class="bg-run" id="bg-run-bcol" role="group"
+                      aria-label="The border's colour"></span></span>
+                </span>
+                <button class="dbtn rbn-sm bg-push" id="bg-push" type="button"
+                  title="Slides with a background of their own keep showing it
+ until this clears them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Make every slide match this one</button>
               </span>
             </span>
-            <span class="rbn-lab">Slide</span>
+            <span class="rbn-lab">Background</span>
           </span>
           <!-- T464: PAGE SIZE IS A CHOOSER, so it is a compact door with
                the size in use on it and every size on the shelf when
@@ -15231,6 +15294,29 @@ items snap to both. Guides, not ink: never printed or exported"
               </span>
             </span>
             <span class="rbn-lab">Play</span>
+          </span>
+          <!-- T477: WHICH VERSION, ON THE TAB (2026-09-15 review: "'Which
+               version' to play is only in the Present drop-down; the
+               Present tab -- built to hold 'all those options as
+               buttons' -- has no version chooser and shows no current
+               choice"). A compact chooser: one tile per version of this
+               deck (Every slide, then each cut) with the chosen one lit
+               and worn on the door, and New version… beside it. Built
+               by versionStripSync from the same list the Play menu's
+               rows come from, so the two cannot disagree. -->
+          <span class="rbn-grp rbn-version rbn-compact" data-tab="present"
+            data-fold-ic="versions">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="pr-version">
+                <span class="fx-strip trans-strip" id="pr-version-strip"
+                  role="group" aria-label="Which version to play"></span>
+              </span>
+              <button class="fx-tile big-tile rbn-tall" id="pr-newversion"
+                title="Name a shorter cut of this same deck &mdash; no second
+ file, no diverging copies. Then right-click a slide to put it in"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg><span>New version&#8230;</span></button>
+            </span>
+            <span class="rbn-lab">Version</span>
           </span>
           <span class="rbn-grp rbn-talk" data-tab="present" data-fold-ic="theme">
             <span class="rbn-row">
@@ -16777,9 +16863,20 @@ items snap to both. Guides, not ink: never printed or exported"
         </div>
         <div class="tk-row">
           <span class="tk-lab">Screen</span>
+          <span class="tk-grp">
           <button class="dbtn tk-b" id="talk-black" aria-pressed="false"
             title="Black the screen so the room looks at you (B). B, Esc
  or a click brings the slide back"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.4h11.2v11.2H2.4z" fill="currentColor"/></svg> Black screen</button>
+          <!-- T476: PRESENTER VIEW FROM INSIDE THE SHOW (2026-09-15
+               review: "Presenter view has no door from inside the show
+               ... you must set it up BEFORE F5"). The same window the
+               Present tab opens, from the bar that stays up during the
+               talk, and on a key (N). -->
+          <button class="dbtn tk-b" id="talk-presenter" type="button"
+            title="A second window with your notes, the next slide and a
+ clock (N). Drag it to the other screen"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/></svg>
+            Presenter view</button>
+          </span>
         </div>
         <div class="tk-row">
           <span class="tk-lab">Text size</span>
@@ -16868,6 +16965,32 @@ items snap to both. Guides, not ink: never printed or exported"
     <div class="vfull-body" id="vfull-body"></div>
   </div>
   <div class="deck-toast" id="deck-toast" hidden></div>
+  <!-- T475: THE EDITOR'S OWN QUESTION -- the one small dialog every
+       "call this…" and "which slides?" asks through (askText), in place
+       of the browser's prompt(). -->
+  <div class="aa-dlg ask-dlg" id="ask-dlg" hidden role="dialog"
+    aria-labelledby="ask-t">
+    <div class="aa-box ask-box">
+      <div class="aa-head">
+        <span class="eq-t" id="ask-t">Name</span>
+        <span class="deck-spring"></span>
+        <button class="dbtn dc-icon" id="ask-close" type="button"
+          aria-label="Cancel" title="Cancel (Esc)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="aa-what" id="ask-what" hidden></div>
+      <label class="ask-lab" id="ask-lab" for="ask-in" hidden></label>
+      <input class="ask-in" id="ask-in" type="text" spellcheck="false"
+        autocomplete="off">
+      <textarea class="ask-in ask-area" id="ask-area" rows="5" hidden
+        spellcheck="false"></textarea>
+      <div class="aa-foot">
+        <span class="aa-count" id="ask-note"></span>
+        <span class="deck-spring"></span>
+        <button class="dbtn" id="ask-cancel" type="button">Cancel</button>
+        <button class="dbtn primary" id="ask-ok" type="button">OK</button>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- WHILE A MATCH IS ARMED. The user asked for this "in the ribbon", and
      it very nearly went there — but the ribbon may never grow a row and
@@ -20253,7 +20376,10 @@ items snap to both. Guides, not ink: never printed or exported"
       else if(e.key==='ArrowUp') next=(at-1+opts.length)%opts.length;
       else if(e.key==='Home') next=0;
       else if(e.key==='End') next=opts.length-1;
-      else if(e.key==='Escape'){e.preventDefault();close(true);return;}
+      /* T482: stopped here, or the deck's Escape ladder under this
+         menu dropped the selection or left the editor */
+      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();
+        close(true);return;}
       else return;
       e.preventDefault();opts[next].focus();
     });
@@ -20271,7 +20397,12 @@ items snap to both. Guides, not ink: never printed or exported"
   }
   var deckScheme=$('#deck-scheme');
   if(deckScheme) deckScheme.addEventListener('click',function(e){
-    e.stopPropagation();openSchemeMenu(deckScheme);});
+    e.stopPropagation();
+    /* T482: one menu at a time -- it opened beside an open File menu,
+       and Escape then closed File under it (2026-09-15 review) */
+    if(window.SemApp&&window.SemApp.deckOverlayCloseAll)
+      window.SemApp.deckOverlayCloseAll();
+    openSchemeMenu(deckScheme);});
   var abScheme=$('#scheme-btn');
   if(abScheme) abScheme.addEventListener('click',function(e){
     e.stopPropagation();openSchemeMenu(abScheme);});
@@ -20643,7 +20774,7 @@ items snap to both. Guides, not ink: never printed or exported"
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
      text:'The Choose buttons under each filter pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
-    {sel:'.rail .nav',title:'The sidebar',
+    {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
      text:'A key at the top; collapse or hide a whole section (also from its '
        +'heading in the document), and an eye beside every cell to hide just '
        +'that one — hidden things stay here so you can bring them back.'},
@@ -20651,21 +20782,39 @@ items snap to both. Guides, not ink: never printed or exported"
      text:'Plot trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    {sel:'#pr-docs,.presrail,#presrail',title:'Build presentations',
-     text:'The left rail holds presentations. Lay out slides, drop in cards '
-       +'from any open notebook, and present full screen.'},
+    {sel:'#pr-docs,#pr-newbtn',title:'Build presentations',
+     text:'Presentations you have open are listed here; New and All '
+       +'presentations\u2026 are below. Lay out slides, drop in cards from '
+       +'any open notebook, and present full screen.'},
     {sel:'#help-btn',title:'Help & support',
      text:'Full docs live here. If Junoview helps you, Support funds a '
        +'hosted version with accounts — thank you!'}
   ];
   var tourI=0;
-  function tourRect(step){
+  function tourEl(step){
     if(!step.sel) return null;
-    var el=$(step.sel);
-    if(!el||el.hidden||el.offsetParent===null) return null;
-    var r=el.getBoundingClientRect();
-    if(r.width===0&&r.height===0) return null;
-    return r;
+    /* T484: the FIRST selector that names something visible, not the
+       first in document order -- "#pr-docs,.presrail" resolved to the
+       fixed rail (offsetParent null) and the step was skipped */
+    var out=null;
+    step.sel.split(',').forEach(function(s){
+      if(out) return;
+      var el=$(s.trim());
+      if(!el||el.hidden) return;
+      var r=el.getBoundingClientRect();
+      if(r.width===0&&r.height===0) return;
+      out=el;
+    });
+    return out;
+  }
+  function tourRect(step){
+    var el=tourEl(step);
+    return el?el.getBoundingClientRect():null;
+  }
+  /* T484: only the steps that will show are counted, so the counter
+     never jumps 4 -> 6 -> 8 */
+  function tourVisible(){
+    return TOUR_STEPS.filter(function(st){return !st.sel||tourRect(st);});
   }
   function tourShow(i){
     var steps=TOUR_STEPS,dir=(i>=tourI)?1:-1;
@@ -20679,12 +20828,22 @@ items snap to both. Guides, not ink: never printed or exported"
     var step=steps[i],tour=$('#tour'),hole=$('#tour-hole'),tip=$('#tour-tip');
     if(!tour) return;
     tour.hidden=false;
-    $('#tour-step').textContent=(i+1)+' / '+steps.length;
+    /* T484: a target below the fold is scrolled into view before it is
+       measured -- step 6 drew its spotlight 3000px under the viewport */
+    var tel=tourEl(step);
+    if(tel){
+      var tr=tel.getBoundingClientRect();
+      if(tr.top<0||tr.bottom>window.innerHeight){
+        try{tel.scrollIntoView({block:'center'});}catch(err){}
+      }
+    }
+    var shown=tourVisible();
+    $('#tour-step').textContent=(shown.indexOf(step)+1)+' / '+shown.length;
     $('#tour-title').textContent=step.title;
     $('#tour-text').textContent=step.text;
     var back=$('#tour-back'),next=$('#tour-next');
     if(back) back.style.visibility=i>0?'visible':'hidden';
-    if(next) next.textContent=(i===steps.length-1)?'Done':'Next';
+    if(next) next.textContent=(shown.indexOf(step)===shown.length-1)?'Done':'Next';
     var r=tourRect(step);
     var tw=Math.min(400,window.innerWidth*0.90),th=tip.offsetHeight||170;
     if(r){
@@ -26165,6 +26324,11 @@ window.JunoPptx = (function () {
       + '</p:spTree>';
   }
 
+  /* a stable, well-formed GUID per section run */
+  function secGuid(k) {
+    var h = ('00000000' + (k + 1).toString(16)).slice(-8).toUpperCase();
+    return '4A6E6F56-4A56-4A56-4A56-0000' + h;
+  }
   function nsAttrs() {
     return ' xmlns:a="' + DML_NS + '" xmlns:r="' + DOC_NS
       + '/relationships" xmlns:p="' + PML_NS + '"';
@@ -26172,11 +26336,29 @@ window.JunoPptx = (function () {
 
   /* ---------------------------------------------------------------- build */
 
+  /* T485: PowerPoint's own two sizes, byte-exact. The editor's 16:9 and
+     4:3 pages are 339x191 and 254x190 mm, a millimetre off PowerPoint's
+     Widescreen (12192000x6858000 EMU) and Standard (9144000x6858000);
+     a deck that started in PowerPoint came back a size it does not
+     know (2026-09-15 review). Within a millimetre of either, the
+     canonical EMU is written. */
+  var PPT_SIZES = [[338.667, 190.5, 12192000, 6858000],
+    [254, 190.5, 9144000, 6858000]];
+  function pageEmu(widthMm, heightMm) {
+    for (var i = 0; i < PPT_SIZES.length; i++) {
+      var s = PPT_SIZES[i];
+      if (Math.abs(widthMm - s[0]) <= 1 && Math.abs(heightMm - s[1]) <= 1)
+        return { wEmu: s[2], hEmu: s[3] };
+    }
+    return { wEmu: Math.round(widthMm * EMU_PER_MM),
+      hEmu: Math.round(heightMm * EMU_PER_MM) };
+  }
   function build(spec) {
     var widthMm = spec.widthMm || 339, heightMm = spec.heightMm || 191;
+    var emu = pageEmu(widthMm, heightMm);
     var page = {
-      wEmu: Math.round(widthMm * EMU_PER_MM),
-      hEmu: Math.round(heightMm * EMU_PER_MM),
+      wEmu: emu.wEmu,
+      hEmu: emu.hEmu,
       hPt: heightMm * PT_PER_MM,
     };
     var zip = new Zip();
@@ -26369,6 +26551,32 @@ window.JunoPptx = (function () {
     var sldIds = slides.map(function (_, i) {
       return '<p:sldId id="' + (256 + i) + '" r:id="rId' + (i + 2) + '"/>';
     }).join('');
+    /* T485: SECTIONS TRAVEL. The reader has read PowerPoint's 2010
+       section list since T320; the writer never wrote one, so a deck's
+       sections were lost on the way out (2026-09-15 review). One
+       p14:section per run of slides sharing a name; slides with none
+       go in an unnamed section only when some slide is named. */
+    var secXml = '';
+    if (slides.some(function (s) { return s && s.section; })) {
+      var runs = [];
+      slides.forEach(function (s, i) {
+        var nm = (s && s.section) || '';
+        if (!runs.length || runs[runs.length - 1].name !== nm)
+          runs.push({ name: nm, ids: [] });
+        runs[runs.length - 1].ids.push(256 + i);
+      });
+      secXml = '<p:extLst><p:ext uri="{521415D9-36F7-43E2-AB2F-B90AF26B5E84}">'
+        + '<p14:sectionLst xmlns:p14="http://schemas.microsoft.com/office/'
+        + 'powerpoint/2010/main">'
+        + runs.map(function (r, k) {
+          return '<p14:section name="' + esc(r.name || 'Untitled Section')
+            + '" id="{' + secGuid(k) + '}"><p14:sldIdLst>'
+            + r.ids.map(function (id) {
+              return '<p14:sldId id="' + id + '"/>'; }).join('')
+            + '</p14:sldIdLst></p14:section>';
+        }).join('')
+        + '</p14:sectionLst></p:ext></p:extLst>';
+    }
     zip.addText('ppt/presentation.xml',
       XML_HEAD + '<p:presentation' + nsAttrs() + ' saveSubsetFonts="1">'
       + '<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/>'
@@ -26381,6 +26589,7 @@ window.JunoPptx = (function () {
       + '<p:sldIdLst>' + sldIds + '</p:sldIdLst>'
       + '<p:sldSz cx="' + page.wEmu + '" cy="' + page.hEmu + '"/>'
       + '<p:notesSz cx="' + page.hEmu + '" cy="' + page.wEmu + '"/>'
+      + secXml
       + '</p:presentation>');
 
     var presRels = [{ id: 'rId1', type: DOC_NS + '/relationships/slideMaster',
@@ -27348,8 +27557,13 @@ window.JunoPptx = (function () {
     ['#anim-clear','#anim-stagger','#anim-together','#anim-strip',
      '#anim-seq','#anim-layers'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
+    /* T479: the group is Background now, on a slide or a page; the
+       folded door takes the label's word, so this is the door's too */
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
-    if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
+    if(slideLab) slideLab.textContent='Background';
+    var slideDoor=deckEl.querySelector('.rbn-slide .rbn-foldbtn>span:not(.rbn-foldval)');
+    if(slideDoor&&/^(Slide|Page)/.test(slideDoor.textContent))
+      slideDoor.textContent='Background ▾';
     /* T236: numbers are Design's button now, and a poster has no
        slide numbers to switch on */
     var nums=$('#dc-nums');
@@ -29288,15 +29502,18 @@ window.JunoPptx = (function () {
      before comparing or a deck where half the boxes say #ffffff and half
      say nothing reports a drift that is not on the screen. The same ink
      preflight computes. */
+  /* T480: the page's ink is the resolver's answer (tokDefaults follows
+     the page), so a box wearing '@ink' and a box wearing nothing are
+     the same colour to the check, as they are on the screen */
   function stdInk(){
-    return pageIsLight(deckPageBg())?'#0b141d':'#ffffff';
+    return tokVal('@ink');
   }
   function stdSize(a){return (a&&a.size)||2.6;}
-  function stdCol(a){return (a&&a.color)||stdInk();}
+  function stdCol(a){return tokVal(a&&a.color)||stdInk();}
   /* two numbers, because "a different colour" is true in two ways and one
      distance hides one behind the other */
   function colDrift(c1,c2){
-    var a=rgbOf(c1),b=rgbOf(c2);
+    var a=rgbOf(tokVal(c1)),b=rgbOf(tokVal(c2));
     if(!a||!b) return String(c1||'')===String(c2||'')?0:1;
     var dl=Math.abs(relLum(a)-relLum(b));
     var dh=Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),
@@ -29648,7 +29865,10 @@ window.JunoPptx = (function () {
     stdFix(inner.odd,function(a){
       var pr=inner.prop;
       if(pr.k==='size') a.size=parseFloat(inner.mode);
-      else if(pr.k==='color') a.color=inner.mode;
+      /* T480: the page's own ink is "no colour", never a baked literal
+         that vanishes when the page turns light */
+      else if(pr.k==='color'){
+        if(inner.mode===stdInk()) delete a.color; else a.color=inner.mode;}
       else if(inner.mode==='0'||inner.mode===''||inner.mode==='NaN')
         delete a[pr.k];
       else a[pr.k]=(pr.k==='lh'||pr.k==='pspace')
@@ -31047,6 +31267,9 @@ window.JunoPptx = (function () {
       if(t) parts.push(t);
     });
     var txt=parts.join(' \u00b7 ');
+    /* T479: a group may say its own answer (data-say) when the pressed
+       controls are swatches with no words -- Background's */
+    if(g.hasAttribute('data-say')) txt=g.getAttribute('data-say')||'';
     val.textContent=txt;
     val.hidden=!txt;
     var btn=val.parentNode;
@@ -31084,7 +31307,7 @@ window.JunoPptx = (function () {
     var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
     new MutationObserver(function(){rbnFoldReadouts();})
       .observe(bar,{subtree:true,attributes:true,
-        attributeFilter:['aria-pressed','disabled']});
+        attributeFilter:['aria-pressed','disabled','data-say']});
   }
   function rbnUnfoldGroup(g){
     var wrap=null;
@@ -31649,6 +31872,7 @@ window.JunoPptx = (function () {
       var l=stage.querySelector('.annot-layer');
       if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
       renderSelPane();
+      if(typeof showFmt==='function') showFmt();   /* T481: the ribbon's readout */
     }
     function toggleFlag(i,flag){
       var a2=liveAnnot(i);
@@ -31656,6 +31880,17 @@ window.JunoPptx = (function () {
       if(a2[flag]) delete a2[flag]; else a2[flag]=1;
       markDirty();
       var l=stage.querySelector('.annot-layer');
+      /* T481: A HIDDEN THING IS NOT SELECTED. The contextual bar stayed
+         up for an object no longer on the canvas, and Duplicate made a
+         hidden copy (2026-09-15 review). */
+      if(flag==='hide'&&a2.hide&&selSet.indexOf(i)>=0){
+        selSet=selSet.filter(function(x){return x!==i;});
+        selAnnot=selSet.length?selSet[0]:null;
+        if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+        if(typeof showFmt==='function') showFmt();
+        renderSelPane();
+        return;
+      }
       if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
       renderSelPane();
     }
@@ -31832,14 +32067,16 @@ window.JunoPptx = (function () {
     act(bic('frame')+' New folder','Put the selected items in a named '
       +'folder — filing only, they are NOT grouped',selN.length>=1,
       function(){
-        var nm=prompt('Name this folder','Folder '
-          +(folderNames(s).length+1));
+        askText({title:'New folder',label:'Call this folder',
+          value:'Folder '+(folderNames(s).length+1),ok:'File them'},
+        function(nm){
         if(nm===null) return;
         nm=nm.trim(); if(!nm) return;
         selN.forEach(function(i){if(s.annots[i]) s.annots[i].fold=nm;});
         markDirty();renderSelPane();
         toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
           +'“'+nm+'”');
+        });
       });
     act(bic('exit')+' Out of folder','Take the selected items out of '
       +'their folder',
@@ -31932,13 +32169,16 @@ window.JunoPptx = (function () {
       fn.title=fname+' \u2014 double-click to rename this folder';
       fn.addEventListener('dblclick',function(e){
         e.stopPropagation();
-        var nm=prompt('Rename this folder',fname);
+        askText({title:'Rename this folder',value:fname,
+          note:'Empty takes the items out of it',ok:'Rename'},
+        function(nm){
         if(nm===null) return;
         nm=nm.trim();
         (s.annots||[]).forEach(function(a){
           if(a&&a.fold===fname){
             if(nm) a.fold=nm; else delete a.fold;}});
         markDirty();renderSelPane();
+        });
       });
       fw.appendChild(fn);
       var fsel=document.createElement('button');
@@ -31991,8 +32231,10 @@ window.JunoPptx = (function () {
       nm.textContent=meta.name||('Group '+g);
       nm.title='Double-click to rename';
       nm.addEventListener('dblclick',function(){
-        var v=prompt('Group name:',meta.name||('Group '+g));
-        if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        askText({title:'Name this group',value:meta.name||('Group '+g),
+          ok:'Rename'},function(v){
+          if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        });
       });
       f.appendChild(nm);
       var rn=document.createElement('button');
@@ -32001,8 +32243,10 @@ window.JunoPptx = (function () {
       rn.setAttribute('aria-label','Rename this group');
       rn.addEventListener('click',function(e){
         e.stopPropagation();
-        var v=prompt('Group name:',meta.name||('Group '+g));
-        if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        askText({title:'Name this group',value:meta.name||('Group '+g),
+          ok:'Rename'},function(v){
+          if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+        });
       });
       f.appendChild(rn);
       var dp=document.createElement('button');
@@ -33084,7 +33328,10 @@ window.JunoPptx = (function () {
      selTab:'home',
      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},{id:'design',label:'Design'},{id:'animate',label:'Animate'}],
      groups:[
-      {id:'of-slides',label:'Slides',tab:'home',rest:1,
+      /* T484: the strays used to land HERE, as the catch-all -- seventy
+         atoms folded into one "Slides" door (2026-09-15 review). They
+         have a group of their own at the end of Home now. */
+      {id:'of-slides',label:'Slides',tab:'home',
        items:['hm-newslide','hm-dupslide','hm-version','hm-main','hm-laywrap','hm-match',
          'hm-delslide']},
       {id:'of-font',label:'Font',tab:'home',
@@ -33133,6 +33380,7 @@ window.JunoPptx = (function () {
        items:['anim-stagger','anim-together']},
       {id:'of-time',label:'Animations',tab:'animate',
        items:['vw-anim','anim-clear']},
+      {id:'of-rest',label:'Everything else',tab:'home',rest:1,items:[]},
      ]},
     {id:'scope-deck-slide-object',
      name:'Deck, slide, object',
@@ -33295,9 +33543,11 @@ window.JunoPptx = (function () {
          'hm-match']},
       {id:'day-maths',label:'Other inserts',tab:'more',
        items:['dc-maths','dc-md','dc-draw']},
-      {id:'day-workspace',label:'Workspace',tab:'more',rest:1,
+      {id:'day-workspace',label:'Workspace',tab:'more',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-check','objects-btn','vw-morewrap']},
+      /* T484: the strays in a group of their own, not in Workspace */
+      {id:'day-rest',label:'Everything else',tab:'more',rest:1,items:[]},
      ]},
     {id:'journey-poster-first',
      name:'Poster first',
@@ -34271,7 +34521,9 @@ window.JunoPptx = (function () {
     if(!p) return null;
     return {name:name,slides:((p.slides)||[]).length,
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
-      folder:p.folder||'',draft:!!loadDraft(name)};
+      /* T483: a deck whose home IS this browser is not an "unsaved
+         draft" -- Home tagged every browser-kept deck DRAFT */
+      folder:p.folder||'',draft:!!loadDraft(name)&&saveTarget!=='browser'};
   }
   /* ---- T435: PINS (2026-09-14, user: "would be cool to be able to pin
      files to recent. I feel like I am always losing files and hard to
@@ -34454,6 +34706,7 @@ window.JunoPptx = (function () {
        across would parent the new deck's first snapshot onto the
        old deck's tree (T90) */
     histHead=null;histBranch='';
+    saveStamp=null;saveKind='';saveWhere='';   /* T483: this deck's, not the last one's */
     deckZoom=0;   /* zoom is per-session, reset per presentation */
     /* ...and then the NEW deck's stored head is read back, through the
        history queue so any snapshot queued after this waits for it
@@ -34532,6 +34785,12 @@ window.JunoPptx = (function () {
   }
 
   var saveStamp=null,saveKind='';
+  /* T483: WHERE the last write for this deck went -- 'project',
+     'browser' or a file's name -- rather than where the NEXT one is
+     set to go: File > Save to project with the browser as the target
+     read "saved to browser", and the stamp survived a switch to
+     another deck (2026-09-15 review) */
+  var saveWhere='';
   function fmtT(d){
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
@@ -34554,6 +34813,7 @@ window.JunoPptx = (function () {
       :txt;
   }
   function whereSaved(){
+    if(saveWhere) return saveWhere;   /* T483: the last write, not the target */
     if(saveTarget==='project') return 'project';
     /* T414: WHICH file, and WHERE. An autosave into the default folder
        writes <name>.junoview.html THERE -- not into a file you opened
@@ -34659,7 +34919,9 @@ window.JunoPptx = (function () {
     if(source==='draft'){
       /* web/static Save writes to the browser but keeps source='draft';
          show a plain 'saved' — the Save button tooltip explains where */
-      if(APP.mode!=='app'&&saveKind==='manual'&&saveStamp){
+      /* T483: in the app too -- a browser Save toasted "Saved to this
+         browser" while the readout kept saying "unsaved" */
+      if(saveKind==='manual'&&saveStamp){
         el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);
         el.className='deck-status saved';
         markSaveClickable(el);   /* this branch returns before the shared
@@ -37025,6 +37287,7 @@ window.JunoPptx = (function () {
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
       if(mode==='edit'&&typeof cmpDoorSync==='function') cmpDoorSync();   /* T474 */
+      if(mode==='edit'&&typeof bgSync==='function') bgSync();   /* T479 */
       /* the annot layer exists only now, and the rulers shade the
          selection's extent from it */
       if(mode==='edit') syncGuides();
@@ -38262,7 +38525,7 @@ window.JunoPptx = (function () {
     var key=which==='t'?'tprops':'sprops';
     if(!s[key]) s[key]=(which==='t')
       ?{x:50,y:42,size:6}          /* colours come from the page theme */
-      :{x:50,y:58,size:2.6,color:'#7e93a4'};
+      :{x:50,y:58,size:2.6,color:'@quiet'};   /* T480: the role */
     return s[key];
   }
   function annotByIdx(s,idx){
@@ -38682,7 +38945,7 @@ window.JunoPptx = (function () {
        without first opening the style system. */
     body:   {label:'Body',       size:3.9},
     small:  {label:'Small',      size:2.0},
-    caption:{label:'Caption',    size:1.7, i:1, color:'#8aa0b0'}
+    caption:{label:'Caption',    size:1.7, i:1, color:'@quiet'}   /* T480 */
   };
   var STYLE_ORDER=BUILTIN_STYLE_IDS.slice();
   /* the HEADING styles, for "apply to all headings" */
@@ -38792,11 +39055,30 @@ window.JunoPptx = (function () {
     var light=(typeof pageIsLight==='function')?pageIsLight(bg):false;
     return SECTION_HUES[k%SECTION_HUES.length][light?1:0];
   }
+  /* T480: THE DEFAULTS FOLLOW THE PAGE (2026-09-15 review: "On a light
+     page (every poster) the ink/heading tokens read #ffffff while the
+     page paints #1b2733: the Deck colours preview, swatches, Style
+     system specimen and the 'Body text' chip all lie or paint white on
+     white"). The CSS has always flipped its fallbacks under
+     .page-light; the resolver did not, so everything that asked it --
+     the panel, the swatches, the specimen, the check -- got the dark
+     page's answer on a white one. One place answers now. */
+  var TOKENS_LIGHT={ink:'#1b2733',heading:'#16222c',quiet:'#5f6f7d',
+    surface:'#ffffff',line:'#d9dee3'};
+  function tokDefaults(){
+    var t=(pres&&pres.tokens)||{};
+    var page=(t.c&&t.c.page)||TOKENS_DEFAULT.c.page;
+    var d={};
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){d[k]=TOKENS_DEFAULT.c[k];});
+    if(typeof pageIsLight==='function'&&pageIsLight(page))
+      Object.keys(TOKENS_LIGHT).forEach(function(k){d[k]=TOKENS_LIGHT[k];});
+    return d;
+  }
   function tokens(){
     var t=(pres&&pres.tokens)||{};
     var out={c:{},rad:TOKENS_DEFAULT.rad,gap:TOKENS_DEFAULT.gap};
-    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
-      out.c[k]=TOKENS_DEFAULT.c[k];});
+    var dd=tokDefaults();
+    Object.keys(dd).forEach(function(k){out.c[k]=dd[k];});
     if(t.c) Object.keys(t.c).forEach(function(k){
       if(t.c[k]) out.c[k]=t.c[k];});
     if(t.rad!=null&&isFinite(t.rad)) out.rad=+t.rad;
@@ -38855,7 +39137,7 @@ window.JunoPptx = (function () {
   var TOK_BASE={ink:1,page:1,surface:1,heading:1,line:1};
   function applyTokens(slideEl){
     if(!slideEl) return;
-    var t=tokens(),d=TOKENS_DEFAULT.c;
+    var t=tokens(),d=tokDefaults();   /* T480: the page's own defaults */
     slideEl.style.setProperty('--tk-rad',t.rad+'px');
     Object.keys(TOK_BASE).forEach(function(k){
       var v=t.c[k];
@@ -39241,49 +39523,49 @@ window.JunoPptx = (function () {
        title:{size:7.2,b:1},subtitle:{size:3.4},
        h1:{size:5.0,b:1},h2:{size:3.8,b:1},
        h3:{size:3.0,b:1},body:{size:3.9},small:{size:2.0},
-       caption:{size:1.7,i:1,color:'#8aa0b0'}}},
+       caption:{size:1.7,i:1,color:'@quiet'}}},
     {id:'editorial',label:'Editorial',
      note:'Serif headings over a sans body, and room to breathe.',
      styles:{
        title:{size:7.6,b:1,font:'serif'},
-       subtitle:{size:3.4,i:1,font:'serif',color:'#9aa8b4'},
+       subtitle:{size:3.4,i:1,font:'serif',color:'@quiet'},
        h1:{size:5.2,b:1,font:'serif'},
        h2:{size:3.9,b:1,font:'serif'},
        h3:{size:3.0,b:0,i:1,font:'serif'},
        body:{size:2.5,lh:1.5},small:{size:1.95,lh:1.4},
-       caption:{size:1.6,i:1,font:'serif',color:'#9aa8b4'}}},
+       caption:{size:1.6,i:1,font:'serif',color:'@quiet'}}},
     {id:'bold',label:'Bold',
      note:'Heavy sans and big titles — for a room at the back.',
      styles:{
-       title:{size:9.0,b:1},subtitle:{size:4.0,color:'#7f93a4'},
+       title:{size:9.0,b:1},subtitle:{size:4.0,color:'@quiet'},
        h1:{size:6.2,b:1},h2:{size:4.4,b:1},
        h3:{size:3.3,b:1},body:{size:3.0,b:0},small:{size:2.3},
-       caption:{size:1.9,b:1,color:'#7f93a4'}}},
+       caption:{size:1.9,b:1,color:'@quiet'}}},
     {id:'academic',label:'Academic',
      note:'Serif everywhere, modest sizes, generous leading.',
      styles:{
        title:{size:6.4,b:1,font:'serif'},
-       subtitle:{size:3.0,i:1,font:'serif',color:'#93a3b0'},
+       subtitle:{size:3.0,i:1,font:'serif',color:'@quiet'},
        h1:{size:4.4,b:1,font:'serif'},
        h2:{size:3.4,b:1,font:'serif'},
        h3:{size:2.8,b:0,i:1,font:'serif'},
        body:{size:2.4,font:'serif',lh:1.5,pspace:0.5},
        small:{size:1.9,font:'serif',lh:1.4},
-       caption:{size:1.6,i:1,font:'serif',color:'#93a3b0'}}},
+       caption:{size:1.6,i:1,font:'serif',color:'@quiet'}}},
     {id:'minimal',label:'Minimal',
      note:'Light weights and small headings. Lets the figures talk.',
      styles:{
-       title:{size:5.6},subtitle:{size:2.8,color:'#8aa0b0'},
+       title:{size:5.6},subtitle:{size:2.8,color:'@quiet'},
        h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
        body:{size:2.4,lh:1.55},small:{size:1.9,lh:1.45},
-       caption:{size:1.55,color:'#8aa0b0'}}},
+       caption:{size:1.55,color:'@quiet'}}},
     {id:'poster',label:'Poster',
      note:'Sized for a printed sheet read from a metre away.',
      styles:{
-       title:{size:4.6,b:1},subtitle:{size:2.2,color:'#8aa0b0'},
+       title:{size:4.6,b:1},subtitle:{size:2.2,color:'@quiet'},
        h1:{size:3.2,b:1},h2:{size:2.5,b:1},
        h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
-       caption:{size:1.25,i:1,color:'#8aa0b0'}}}
+       caption:{size:1.25,i:1,color:'@quiet'}}}
   ];
   /* ---- T315: COLOUR THEMES ---------------------------------------
      (2026-09-06, user: "there should be themes that you can create, and
@@ -39522,7 +39804,9 @@ window.JunoPptx = (function () {
     var next={};
     Object.keys(t.styles||{}).forEach(function(k){
       var o=deep(t.styles[k]);
-      if(STYLE_DEFAULTS[k]) o.label=STYLE_DEFAULTS[k].label;
+      /* T480: a name you gave a built-in survives a set (2026-09-15
+         review: five writers reset it from STYLE_DEFAULTS) */
+      if(STYLE_DEFAULTS[k]) o.label=styleDef(k).label;
       /* SPELL OUT the properties the set does NOT want. styleDef merges an
          override OVER the built-in, so a key the set simply omits keeps
          whatever the built-in said — which meant "Bold", whose caption is
@@ -41233,7 +41517,7 @@ window.JunoPptx = (function () {
       if(typeof parentOf==='function'&&parentOf(id)) return;
       var d=styleDef(id);
       var over=deckStyles()[id]||{};
-      over.label=STYLE_DEFAULTS[id].label;
+      over.label=d.label;   /* T480 */
       over.size=Math.max(0.8,Math.min(24,
         Math.round(d.size*k*100)/100));
       STYLE_FIELDS.forEach(function(pr){
@@ -41354,8 +41638,13 @@ window.JunoPptx = (function () {
         var ci=document.createElement('input');
         ci.type='color';ci.className='stm-colin';
         var v=d[key];
-        ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
-        ci.title=label+' \u2014 everywhere in this deck';
+        /* T480: a deck colour shows as what it resolves to, and says
+           so; it showed the fallback after any colour theme */
+        var rv=tokVal(v);
+        ci.value=(v&&v!=='none'&&/^#[0-9a-f]{6}$/i.test(rv))?rv:fallback;
+        ci.title=label+' \u2014 everywhere in this deck'
+          +(tokRef(v)?(' (a deck colour: '+tokRef(v)+'; a change here '
+            +'unhooks it)'):'');
         ci.addEventListener('click',function(e){e.stopPropagation();});
         ci.addEventListener('change',function(){
           var o=over();o[key]=ci.value;
@@ -41498,7 +41787,7 @@ window.JunoPptx = (function () {
           b.addEventListener('click',function(e){
             e.stopPropagation();
             var over=deckStyles()[id]||{};
-            over.label=STYLE_DEFAULTS[id].label;
+            over.label=d.label;   /* T480: the name you gave it stays */
             over.size=Math.max(0.8,Math.min(24,
               Math.round(d.size*pr[1]*100)/100));
             /* T467: a VARIATION writes only what it says (T292). Copying
@@ -42208,6 +42497,11 @@ window.JunoPptx = (function () {
        the structure the model now keeps (RICH_TAGS allows ul/ol/li). */
     el.addEventListener('keydown',function(e){
       if(!el.isContentEditable) return;
+      /* T481: Escape ends the edit -- a rung the ladder ("one
+         deselects, two leave") had no answer for while the caret was
+         in a box; a table cell already did this (2026-09-15 review) */
+      if(e.key==='Escape'){
+        e.preventDefault();e.stopPropagation();el.blur();return;}
       if(e.key==='Tab'&&el.classList.contains('an-ul')){
         e.preventDefault();e.stopPropagation();
         try{document.execCommand(e.shiftKey?'outdent':'indent',
@@ -43195,7 +43489,13 @@ window.JunoPptx = (function () {
       } else if(a.k==='text'){
         var d2=document.createElement('div');
         d2.className='an-item an-text'+(a.bg===0?' nobg':'')
-          +(selAnnot===i?' sel':'');
+          +(selAnnot===i?' sel':'')
+          /* T480: a heading wears the deck's Heading text colour (the
+             CSS reads --tk-heading off the class; only .an-title did,
+             so Deck colours' Heading text governed nothing a text box
+             wore -- 2026-09-15 review) */
+          +((a.style&&typeof isHeadingStyle==='function'
+             &&isHeadingStyle(a.style))?' an-head':'');
         var ap4=anchorPos(a,a.w,a.h);
         d2.style.left=ap4.x+'%';d2.style.top=ap4.y+'%';
         /* the fit multiplier rides on the element as a variable, so
@@ -44488,11 +44788,14 @@ window.JunoPptx = (function () {
     gAt.textContent=gs.length
       ?(gs.length+' group'+(gs.length===1?'':'s')):'none';
     btn(gr,'Group these columns…',false,function(){
-      var txt=prompt('One group per line, as "first column, how many, '
-        +'label" — for example:\n\n2, 3, 2020\n5, 3, 2021\n\n'
-        +'Columns are numbered from 1. Leave empty to remove them.',
-        gs.map(function(g){
-          return ((g.at|0)+1)+', '+(g.n|0)+', '+(g.text||'');}).join('\n'));
+      askText({title:'Group these columns',multi:true,
+        label:'One group per line: first column, how many, label',
+        placeholder:'2, 3, 2020\n5, 3, 2021',
+        note:'Columns are numbered from 1. Empty removes the groups. '
+          +'Ctrl+Enter to apply.',ok:'Apply',
+        value:gs.map(function(g){
+          return ((g.at|0)+1)+', '+(g.n|0)+', '+(g.text||'');}).join('\n')},
+      function(txt){
       if(txt==null) return;
       var made=[];
       String(txt).split(/\r?\n/).forEach(function(ln){
@@ -44505,6 +44808,7 @@ window.JunoPptx = (function () {
       });
       tablePaneWrite(function(a2){
         if(made.length) a2.groups=made; else delete a2.groups;});
+      });
     },'A row above the header spanning groups of columns');
     gr.appendChild(gAt);
   }
@@ -44926,7 +45230,9 @@ window.JunoPptx = (function () {
         +'Junoview app. Import a .bib instead.',6000);
       return;
     }
-    var raw=prompt('The DOI (or a doi.org link):','');
+    askText({title:'Add a reference by DOI',label:'The DOI, or a doi.org link',
+      value:'',placeholder:'10.1038/s41586-020-2649-2',ok:'Look it up'},
+    function(raw){
     if(raw==null) return;
     var doi=String(raw).trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'')
       .replace(/^doi:\s*/i,'');
@@ -44951,6 +45257,7 @@ window.JunoPptx = (function () {
         :'Already in the library; the entry was refreshed',6000);
     }).catch(function(e){
       toast('DOI lookup failed: '+((e&&e.message)||e),6000);
+    });
     });
   }
   function citeImportText(text,name){
@@ -45262,12 +45569,21 @@ window.JunoPptx = (function () {
       ||activeTab()==='animation';
     var wantTab=(freshSel&&activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
+    /* T481: STANDING ON A CONTEXTUAL TAB, STAY. Clicking a text box
+       from Object yanked the ribbon to Style; clicking a figure from
+       Style yanked it to Object -- and each yank overwrote the way
+       back with the tab you were yanked from, so Esc landed on Home
+       (2026-09-15 review). A contextual tab that still has content
+       for the new selection keeps you; the tab you CHOSE is the one
+       remembered. */
+    var ctxNow=(activeTab()==='style'||activeTab()==='object');
+    var ctxTab=activeTab();
     /* REMEMBER WHERE YOU WERE (T192). The selection carries you to
        Object; when it goes, syncRibbonGroups brings you back to the
        tab you left rather than to Home (2026-09-02, user: "if you are
        on Insert tab, and you click on an object then unclick, it
        should go back to Insert"). */
-    if(wantTab) tabBeforeSel=activeTab();
+    if(wantTab&&!ctxNow) tabBeforeSel=activeTab();
     justDrew=false;
     /* a table is not a text box, but its WORDS take the same size, font
        and alignment controls a text box does (2026-08-20) */
@@ -45746,6 +46062,16 @@ window.JunoPptx = (function () {
     /* ...and NOW the tab, with the controls that justify it in place.
        setTab re-runs syncRibbonGroups itself, so this is one call or the
        other, never both. */
+    if(wantTab&&ctxNow){
+      /* T481: the contextual tab keeps you if it still has content for
+         what is selected now; the groups are judged first (with the
+         way back kept safe from the empty-tab fallback), and only an
+         emptied tab hands over to the other contextual one */
+      var keep=tabBeforeSel;
+      syncRibbonGroups();
+      tabBeforeSel=keep;
+      if(activeTab()===ctxTab&&tabHasContent(ctxTab)) wantTab='';
+    }
     if(wantTab) setTab(wantTab,true); else syncRibbonGroups();
   }
   /* ---- THE DOORS OF THE WINDOWS (T177) ---------------------------------
@@ -47029,10 +47355,10 @@ window.JunoPptx = (function () {
     var a=(pres.slides[cur].annots||[])[i]; if(!a) return;
     var was=a.link?(a.link.to==='url'?a.link.href
       :('slide '+(linkSlideIdx(a.link.sid)+1))):'';
-    var got=prompt('Where should clicking this go while you present?'
-      +'\n\n\u2022 a link: https://\u2026 or mailto:\u2026'
-      +'\n\u2022 a slide in this deck: its number, like 7'
-      +'\n\nLeave it empty to remove the link.',was);
+    askText({title:'Where clicking this goes, while you present',
+      label:'A link (https://\u2026 or mailto:\u2026), or a slide\u2019s '
+        +'number, like 7',value:was,placeholder:'https://\u2026 or 7',
+      note:'Empty removes the link',ok:'Link'},function(got){
     if(got===null) return;
     got=String(got).trim();
     if(!got){delete a.link;markDirty();renderSlide();
@@ -47053,15 +47379,18 @@ window.JunoPptx = (function () {
     }
     markDirty();renderSlide();
     toast('Linked to '+linkLabel(a.link));
+    });
   }
   function setAltText(idxs){
     var ans=(pres.slides[cur].annots||[]);
     var first=ans[idxs[0]]||{};
     var was=first.dec?'':(first.alt||'');
-    var got=prompt('What does this picture show? Somebody who cannot '
-      +'see it reads this instead of it.\n\nLeave it empty to mark the '
-      +'picture decorative \u2014 a rule, a texture, a logo already '
-      +'named in the words.',was);
+    askText({title:'What this picture shows',
+      what:'Somebody who cannot see it reads this instead of it.',
+      label:'Alt text',value:was,multi:true,ok:'Set',
+      note:'Empty marks the picture decorative \u2014 a rule, a texture, '
+        +'a logo already named in the words. Ctrl+Enter to set.'},
+    function(got){
     if(got===null) return;
     got=got.trim();
     idxs.forEach(function(i){
@@ -47072,6 +47401,7 @@ window.JunoPptx = (function () {
     markDirty();renderSlide();
     toast(got?'Alt text set':'Marked decorative \u2014 a screen reader '
       +'will skip '+(idxs.length===1?'it':'them'));
+    });
   }
   /* REPEAT ON OTHER SLIDES. This is deliberately a copy, not a linked
      component: the object can be edited independently after it lands. The
@@ -47090,14 +47420,22 @@ window.JunoPptx = (function () {
       for(i=0;i<(pres.slides||[]).length;i++)
         if(i!==cur&&(pres.slides[i].sec||'')===sec) targets.push(i);
     } else {
-      var raw=prompt('Slide range (for example 2-6):','1-'+pres.slides.length);
-      if(raw===null) return;
-      var m=String(raw).trim().match(/^(\d+)\s*(?:-|–|\.\.)\s*(\d+)$/);
-      if(!m){toast('Use a range such as 2-6');return;}
-      var lo=Math.max(1,Math.min(+m[1],+m[2]))-1;
-      var hi=Math.min(pres.slides.length,Math.max(+m[1],+m[2]));
-      for(i=lo;i<hi;i++) if(i!==cur) targets.push(i);
+      /* T475: the editor's own question; the copy happens in its answer */
+      askText({title:'Repeat on which slides?',label:'A range of slides',
+        value:'1-'+pres.slides.length,placeholder:'2-6',ok:'Repeat'},
+      function(raw){
+        if(raw===null) return;
+        var m=String(raw).trim().match(/^(\d+)\s*(?:-|–|\.\.)\s*(\d+)$/);
+        if(!m){toast('Use a range such as 2-6');return;}
+        var lo=Math.max(1,Math.min(+m[1],+m[2]))-1;
+        var hi=Math.min(pres.slides.length,Math.max(+m[1],+m[2]));
+        for(var i2=lo;i2<hi;i2++) if(i2!==cur) targets.push(i2);
+        repeatOnto(targets);
+      });
+      return;
     }
+    repeatOnto(targets);
+    function repeatOnto(targets){
     if(!targets.length){toast('There are no other slides in that scope');return;}
     var n=0;
     targets.forEach(function(ti){
@@ -47113,6 +47451,7 @@ window.JunoPptx = (function () {
     markDirty();refresh();renderFilm();
     toast(n+' object'+(n===1?'':'s')+' added to '+targets.length
       +' slide'+(targets.length===1?'':'s')+' — edit each copy freely');
+    }
   }
   /* ---- THE CANVAS RIGHT-CLICK MENU -------------------------------------
      Paste has three answers now (the plain one, in place, here) and a
@@ -47748,7 +48087,10 @@ window.JunoPptx = (function () {
               'inherit');
             row('Save as a named variation…','',function(){
               var base=fa.style,p=styleDef(base);
-              var nm=prompt('Call this variation of '+p.label+' what?','');
+              askText({title:'A variation of '+p.label,
+                label:'Call this variation',value:'',ok:'Save',
+                note:'It follows '+p.label+' for every property you '
+                  +'did not change'},function(nm){
               if(nm===null) return;
               nm=String(nm).trim();
               if(!nm){toast('A variation needs a name');return;}
@@ -47759,6 +48101,7 @@ window.JunoPptx = (function () {
               applyStyleTo(fa,v.id);
               markDirty();refresh();
               toast('Saved “'+nm+'” as a variation of '+p.label);
+              });
             },'Keep this as a reusable named look. It follows the current '
               +'type for every property you did not change','plus');
           }
@@ -48015,6 +48358,7 @@ window.JunoPptx = (function () {
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);paintSel(l);}
+    showFmt();   /* T481: the ribbon's Lock in place reads the new state */
     toast(LOCK_LABEL[mode]+(idxs.length===1?''
       :' — '+idxs.length+' items'));
   }
@@ -48866,7 +49210,7 @@ window.JunoPptx = (function () {
          weight after the style without opening the window twice,
          and showFmt re-marks the rows (T177) */
       if(menu.closest&&menu.closest('.opt-panel')) return;
-      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      overlayHide(menu);   /* T482: through the owner, no dead stack entry */
     });
     menu.appendChild(o);
     return o;
@@ -49083,8 +49427,7 @@ window.JunoPptx = (function () {
       b.setAttribute('aria-pressed',on?'true':'false');
       b.appendChild(node);
       b.addEventListener('click',function(e){
-        e.stopPropagation();fn();menu.hidden=true;
-        btn.setAttribute('aria-expanded','false');});
+        e.stopPropagation();fn();overlayHide(menu);});   /* T482 */
       return b;
     }
     function build(){
@@ -49546,7 +49889,7 @@ window.JunoPptx = (function () {
           e.stopPropagation();pvEnd(true);
           fmtApply(function(x){
             if(x.k==='text') applyStyleTo(x,id);});
-          menu.hidden=true;
+          overlayHide(menu);   /* T482 */
         });
         familyHost.appendChild(b);
       }
@@ -49665,8 +50008,10 @@ window.JunoPptx = (function () {
           var s5=pres.slides[cur],a5=annotByIdx(s5,selAnnot);
           if(!a5||!a5.style) return;
           var base=a5.style;
-          var nm=prompt('Call this variation of '
-            +styleDef(base).label+' what?','');
+          askText({title:'A variation of '+styleDef(base).label,
+            label:'Call this variation',value:'',ok:'Save',
+            note:'It follows '+styleDef(base).label+' for everything '
+              +'you did not change'},function(nm){
           if(nm===null) return;
           nm=String(nm).trim();
           if(!nm){toast('A variation needs a name');return;}
@@ -49682,6 +50027,7 @@ window.JunoPptx = (function () {
           toast('\u201c'+nm+'\u201d is a variation of '
             +p.label+' \u2014 it follows '+p.label
             +' for everything you did not change.',6000);
+          });
         });
         menu.appendChild(mkv);
       }
@@ -49696,19 +50042,14 @@ window.JunoPptx = (function () {
         e.stopPropagation();
         var s3=pres.slides[cur],a3=annotByIdx(s3,selAnnot);
         if(!a3||!a3.style) return;
-        var d3={size:a3.size,label:STYLE_DEFAULTS[a3.style].label};
-        /* whether a type counts as a heading is a property of the TYPE,
-           not of the box you happened to select — carry it forward or a
-           custom heading silently stops being one the first time anyone
-           updates it from a box (2026-08-22) */
-        if(STYLE_DEFAULTS[a3.style].head) d3.head=1;
-        /* T314: every look field, through the one read-back */
-        var look3=styleFromBox(a3);
-        Object.keys(look3).forEach(function(k){d3[k]=look3[k];});
-        deckStyles()[a3.style]=d3;
-        restyleDeck([a3.style]);
-        menu.hidden=true;
-        toast('\u201c'+d3.label+'\u201d updated everywhere');
+        /* T480: THE ONE PROMOTER. This built its own record and wrote
+           the box's whole look, so on a variation it froze the parent's
+           look into the child and it stopped following (2026-09-15
+           review); promoteStyleFromBox writes only a variation's
+           differences, carries `head`, and keeps the name you gave it. */
+        promoteStyleFromBox(a3,true);
+        overlayHide(menu);   /* T482 */
+        toast('\u201c'+styleDef(a3.style).label+'\u201d updated everywhere');
       });
       menu.appendChild(upd);
       var all=document.createElement('button');
@@ -49720,7 +50061,7 @@ window.JunoPptx = (function () {
       all.addEventListener('click',function(e){
         e.stopPropagation();
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
-        if(!a4){menu.hidden=true;return;}
+        if(!a4){overlayHide(menu);return;}
         headingStyles().forEach(function(id){
           /* T293: NOT THE VARIATIONS. This flattens weight, slant, face
              and colour across every heading -- which is exactly the set
@@ -49730,9 +50071,12 @@ window.JunoPptx = (function () {
           if(parentOf(id)) return;
           var d4=deckStyles()[id]||{};
           /* SIZE is what makes a heading level a level, so it is the one
-             thing this does not flatten */
-          d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;
-          d4.label=STYLE_DEFAULTS[id].label;
+             thing this does not flatten. T480: and it is not WRITTEN
+             either -- writing the built-in size here pinned every
+             heading on a poster to the 16:9 ladder, over the sheet's
+             own scale (2026-09-15 review: a title spanning three lines
+             over the columns). An override that has a size keeps it. */
+          d4.label=styleDef(id).label;   /* T480: the name you gave it */
           /* T314: the box's ground and edge travel with its colour */
           var look4=styleFromBox(a4);
           ['b','i','font','color','bg','bdc'].forEach(function(k){
@@ -49784,11 +50128,22 @@ window.JunoPptx = (function () {
   /* keep it where it is (T198): the position lock, the same flag the
      Layers pane's pin sets, toggled from the row */
   onBtn('#fmt-lock',function(){
+    /* T481: ONE ANSWER FOR THE WHOLE SELECTION, read off the primary the
+       way the button's own pressed state is -- toggling each item on its
+       own swapped a mixed selection's locks (2026-09-15 review) */
+    var s0=pres.slides[cur],a0=annotByIdx(s0,selAnnot);
+    var pin=!(a0&&lockMode(a0)==='pos');
+    var full=0,n=0;
     fmtApply(function(a){
       /* a FULL lock is the pane's to take off: this button only ever
          pins or unpins the position */
-      if(a.lock==='pos') delete a.lock;
-      else if(lockMode(a)==='') a.lock='pos';});
+      if(lockMode(a)==='all'){full++;return;}
+      n++;
+      if(pin) a.lock='pos'; else delete a.lock;});
+    if(full&&!n) toast('Fully locked \u2014 "Not locked" in the '
+      +'right-click menu or the Layers pane takes it off');
+    else toast((pin?'Position locked':'Not locked')
+      +(n>1?(' \u2014 '+n+' items'):''));
   });
   /* T227: the button applies the kind you last chose in its own
      gallery, so the second bullet list you make is the kind you
@@ -50140,14 +50495,16 @@ window.JunoPptx = (function () {
     fontSelEl.addEventListener('change',function(){
       var v=this.value;
       if(v==='__custom'){
-        var typed=prompt('Font family — exactly as it is named on this '
-          +'computer (e.g. "Univers", "Source Sans Pro").\n\nIt has to be '
-          +'installed to show here, and installed on any machine that '
-          +'opens the exported .pptx. PDF export always embeds what you see.',
-          '');
+        askText({title:'A font by name',
+          label:'The font family, exactly as it is named on this computer',
+          placeholder:'Univers, Source Sans Pro\u2026',value:'',ok:'Use it',
+          note:'It has to be installed to show here, and on any machine '
+            +'that opens the exported .pptx. A PDF always embeds what '
+            +'you see.'},function(typed){
         typed=(typed||'').trim();
         if(!typed){renderControls();return;}
         fmtApply(function(a){a.font=typed;});
+        });
         return;
       }
       fmtApply(function(a){
@@ -50176,13 +50533,23 @@ window.JunoPptx = (function () {
         if(typeof showFmt==='function') showFmt();
         return;
       }
-      fmtApply(fn);
+      /* T481: the primary's state, inverted, is what every item gets */
+      var s0=pres.slides[cur],a0=annotByIdx(s0,selAnnot);
+      var key={bold:'b',italic:'i',underline:'u',strikeThrough:'strike'}[cmd];
+      var on=!(a0&&key&&a0[key]);
+      fmtApply(function(a){fn(a,on);});
     });
   }
-  onRun('#fmt-bold','bold',function(a){a.b=a.b?0:1;});
-  onRun('#fmt-ital','italic',function(a){a.i=a.i?0:1;});
-  onRun('#fmt-under','underline',function(a){a.u=a.u?0:1;});
-  onRun('#fmt-strike','strikeThrough',function(a){a.strike=a.strike?0:1;});
+  /* T481: the target state is decided ONCE from the primary -- the
+     item the button reads -- so a mixed selection can be made uniform
+     rather than every item flipping on its own (2026-09-15 review) */
+  function setFromPrimary(key){
+    return function(a,on){a[key]=on?1:0;};
+  }
+  onRun('#fmt-bold','bold',setFromPrimary('b'));
+  onRun('#fmt-ital','italic',setFromPrimary('i'));
+  onRun('#fmt-under','underline',setFromPrimary('u'));
+  onRun('#fmt-strike','strikeThrough',setFromPrimary('strike'));
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out
@@ -50378,9 +50745,25 @@ window.JunoPptx = (function () {
     if(!idxs.length) return;
     var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF,bare);
     if(!made.length) return;
+    /* T481: A COPY OF A PLACE-LINKED CLONE IS A FREE OBJECT. The set
+       shares one spot, so a second clone on the same slide would sit
+       exactly on top of the first (cmpAddMenu refuses one for that
+       reason) -- and it did: markDirty pushed the set's spot from the
+       original and the copy snapped under it, an invisible twin every
+       later edit synced (2026-09-15 review, driven). */
+    var freed=0;
+    made.forEach(function(j){
+      var cp=s.annots[j];
+      if(!cp||!cp.cmp) return;
+      var def=cmpStore()[cp.cmp];
+      if(def&&cmpHasPlace(def)){
+        delete cp.cmp;delete cp.ci;delete cp.cinst;freed++;}
+    });
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,made);}
+    if(freed) toast('Copied as a free object \u2014 clones of that set '
+      +'share one spot, so the copy is not one of them');
     /* SAY SO. A stripped picture looks identical to the original at the
        moment it lands -- only its Refresh link is gone -- so the one
        difference that matters is the one thing nobody can see. The
@@ -52249,8 +52632,11 @@ window.JunoPptx = (function () {
       var sl=pres.slides[cur];
       if(!sl||!(sl.annots||[]).length){
         toast('Lay something out on this slide first');return;}
-      var nm=prompt('Call this arrangement:',
-        slideTitle(sl).slice(0,30)||'Arrangement');
+      /* T475: the editor's own question, and the ribbon's word for it
+         (T194: layout, not arrangement) */
+      askText({title:'Save this slide\u2019s layout',label:'Call this layout',
+        value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -52258,6 +52644,7 @@ window.JunoPptx = (function () {
       arrSave(l);
       toast('“'+nm+'” saved — offered on every deck you '
         +'open here');
+      });
     });
     });
   }
@@ -53744,7 +54131,12 @@ window.JunoPptx = (function () {
           if(isFinite(n)) sizePaneWrite(k,n);
         });
         el.addEventListener('blur',function(){
-          if(typeof histPush==='function') histPush();});
+          /* T481: a COMMITTED edit, like the drag's end -- markDirty
+             pushes the clones of a place-linked set along (cmpFollowSel)
+             before it records history; a bare histPush moved this one
+             alone and the next drag anywhere in the set snapped it back
+             (2026-09-15 review, driven) */
+          markDirty();});
       });
     });
   })();
@@ -54355,46 +54747,63 @@ window.JunoPptx = (function () {
         var h=document.createElement('div');h.className='mast-name';
         h.textContent=m.name||'Master';
         body.appendChild(h);
-        body.appendChild(act('Background \u2014 '+(m.bg||'none'),
-          'The page colour every wearer inherits. The slide\u2019s own '
-          +'Background still wins where one is set.',
-          function(){
-            var v=prompt('Background \u2014 #hex or @token, empty '
-              +'to clear','');
-            if(v===null) return;
-            v=v.trim();
-            if(v&&!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)
-               &&v.charAt(0)!=='@'){
-              toast('Like #123456, or a @token name');return;
-            }
-            if(v) m.bg=v; else delete m.bg;
-            mastRepaint();render();
-          }));
+        /* T478: THE CHOICES, IN FRONT OF YOU (2026-09-15 review:
+           "colour is typed as '#hex or @token' into a native prompt, and
+           Furniture / Corner are chosen by clicking a row repeatedly to
+           cycle, with no list and no feedback when there is nothing to
+           cycle to"). The background is the Design tab's own swatch row
+           (bgChips, Auto = the deck's page); the furniture is a run of
+           the deck's clone sets as pressed options, or one line saying
+           there are none and where to make one; the corner is five
+           pressed options in one run. */
+        var lab=document.createElement('div');lab.className='mast-lab';
+        lab.textContent='background';
+        body.appendChild(lab);
+        var chips=document.createElement('div');chips.className='mast-chips';
+        bgChips(chips,m.bg||'',function(v){
+          if(v) m.bg=v; else delete m.bg;
+          mastRepaint();render();
+        },true);
+        body.appendChild(chips);
         var cl=cmpList();
-        var cur2=m.cmp&&cmpStore()[m.cmp];
-        body.appendChild(act('Furniture \u2014 '
-          +(cur2?(cur2.name||'component'):'none'),
-          'A component drawn behind every slide wearing this master. '
-          +'Click to cycle through the deck\u2019s components',
-          function(){
-            var ids=[''].concat(cl.map(function(c){return c.id;}));
-            var at=ids.indexOf(m.cmp||'');
-            var nx=ids[(at+1)%ids.length];
-            if(nx) m.cmp=nx; else delete m.cmp;
-            mastRepaint();render();
-          }));
+        var lab2=document.createElement('div');lab2.className='mast-lab';
+        lab2.textContent='furniture \u2014 a clone set drawn behind every wearer';
+        body.appendChild(lab2);
+        var run=document.createElement('div');run.className='mast-run';
+        function opt(host,label,on,tip,fn){
+          var b=document.createElement('button');
+          b.type='button';b.className='dbtn mast-opt';
+          b.textContent=label;if(tip) b.title=tip;
+          b.setAttribute('aria-pressed',on?'true':'false');
+          b.addEventListener('click',function(e){e.stopPropagation();fn();});
+          host.appendChild(b);
+          return b;
+        }
+        opt(run,'None',!m.cmp,'Nothing drawn behind the wearers',
+          function(){delete m.cmp;mastRepaint();render();});
+        cl.forEach(function(c){
+          opt(run,c.name,m.cmp===c.id,c.n+(c.n===1?' thing':' things'),
+            function(){m.cmp=c.id;mastRepaint();render();});
+        });
+        body.appendChild(run);
+        if(!cl.length){
+          var none=document.createElement('div');none.className='rd-state';
+          none.textContent='No clone sets yet \u2014 select things, then '
+            +'Object \u2192 Make clones\u2026';
+          body.appendChild(none);
+        }
         if(m.cmp){
           var POS=[['c','centre'],['tl','top left'],['tr','top right'],
             ['bl','bottom left'],['br','bottom right']];
-          var pl=POS.filter(function(q){
-            return q[0]===(m.pos||'c');})[0];
-          body.appendChild(act('Corner \u2014 '+pl[1],
-            'Where the furniture sits on the page',
-            function(){
-              var ks=POS.map(function(q){return q[0];});
-              m.pos=ks[(ks.indexOf(m.pos||'c')+1)%ks.length];
-              mastRepaint();render();
-            }));
+          var lab3=document.createElement('div');lab3.className='mast-lab';
+          lab3.textContent='where it sits';
+          body.appendChild(lab3);
+          var run2=document.createElement('div');run2.className='mast-run';
+          POS.forEach(function(q){
+            opt(run2,q[1],(m.pos||'c')===q[0],'',function(){
+              m.pos=q[0];mastRepaint();render();});
+          });
+          body.appendChild(run2);
         }
         body.appendChild(act('Wear it \u2014 this slide','',
           function(){
@@ -54442,12 +54851,14 @@ window.JunoPptx = (function () {
       nb.innerHTML=(bic('inherit')||'')+' New master\u2026';
       nb.addEventListener('click',function(e){
         e.stopPropagation();
-        var nm=prompt('Name this master \u2014 like \u201cSection '
-          +'divider\u201d or \u201cBranded\u201d','');
+        askText({title:'New slide master',label:'Call this master',
+          placeholder:'like \u201cSection divider\u201d or \u201cBranded\u201d',
+          value:'',ok:'Make it'},function(nm){
         if(nm===null) return;
         var id=nextMastId();
         mastStore()[id]={name:nm.trim()||('Master '+id.slice(1))};
         markDirty();render();
+        });
       });
       body.appendChild(nb);
     }
@@ -54852,6 +55263,14 @@ window.JunoPptx = (function () {
       b.title=cmpHasPlace(def)
         ?'In the spot every clone of this set shares'
         :'In the middle of the slide \u2014 drag it where you want it';
+      /* T485: a place-linked set shares one spot, so a second on this
+         slide would sit exactly on top of the first (the Object tab's
+         Add a clone… refuses it for the same reason) */
+      if(here&&cmpHasPlace(def)){
+        b.disabled=true;
+        b.title='This slide has one already, and every clone of this '
+          +'set shares one spot';
+      }
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayDrop(m);
         var k=cmpPlace(c.id,null,cur,null,false);
@@ -55233,8 +55652,9 @@ window.JunoPptx = (function () {
       var sl=pres.slides[cur];
       if(!sl||!(sl.annots||[]).length){
         toast('Lay something out on this slide first');return;}
-      var nm=prompt('Call this arrangement:',
-        slideTitle(sl).slice(0,30)||'Arrangement');
+      askText({title:'Save this slide\u2019s layout',label:'Call this layout',
+        value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -55245,6 +55665,7 @@ window.JunoPptx = (function () {
          empty, so nothing was suggested at all */
       seed();buildLib();buildSug();sync();
       toast('“'+nm+'” saved — offered on every deck you open here');
+      });
     });
     $('#ar-all').addEventListener('click',function(){
       (pres.slides||[]).forEach(function(sl,i){
@@ -55460,7 +55881,9 @@ window.JunoPptx = (function () {
     });
     $('#ss-save').addEventListener('click',function(e){
       e.stopPropagation();
-      var nm=prompt('Call this style set:','My set');
+      askText({title:'Save this deck\u2019s type as a set',
+        label:'Call this style set',value:'My set',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var st={};
@@ -55487,11 +55910,14 @@ window.JunoPptx = (function () {
       build();
       showSaved($('#ss-grid'));
       toast('“'+nm+'” saved — it is offered on every deck you open here');
+      });
     });
     var cs=$('#ss-csave');
     if(cs) cs.addEventListener('click',function(e){
       e.stopPropagation();
-      var nm=prompt('Call this colour theme:','My colours');
+      askText({title:'Save this deck\u2019s colours as a theme',
+        label:'Call this colour theme',value:'My colours',ok:'Save',
+        note:'Offered on every deck you open here'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       saveColourTheme(nm);
@@ -55499,6 +55925,7 @@ window.JunoPptx = (function () {
       showSaved($('#ss-cgrid'));
       toast('\u201c'+nm+'\u201d saved \u2014 it is offered on every deck '
         +'you open here');
+      });
     });
     /* T315: THE DOOR ON THE ROW. The gallery was reachable only as the
        first row of the Text styles menu -- a look you pick once, hidden
@@ -56601,7 +57028,9 @@ window.JunoPptx = (function () {
        type whose parent is the style they all already wore. */
     function commitAsVariation(idxs,want,samp){
       var base=srcA.style,p=styleDef(base);
-      var nm=prompt('Call this variation of '+p.label+' what?','');
+      askText({title:'A variation of '+p.label,label:'Call this variation',
+        value:'',ok:'Save',note:'It follows '+p.label+' for every '
+          +'property you did not change'},function(nm){
       if(nm===null) return;                    /* cancelled: stay open */
       nm=String(nm).trim();
       if(!nm){toast('A variation needs a name');return;}
@@ -56626,6 +57055,7 @@ window.JunoPptx = (function () {
         +' now wear \u201c'+nm+'\u201d, a variation of '+p.label
         +' \u2014 change '+p.label+' and they follow. Ctrl+Z undoes '
         +'the lot.',7000);
+      });
     }
     $('#aa-ok').addEventListener('click',commit);
     $('#aa-cancel').addEventListener('click',close);
@@ -58063,11 +58493,14 @@ window.JunoPptx = (function () {
           +'where it came from so you can re-read it; a site that '
           +'refuses the read leaves it as a link, and that is said.',
       function(){
-        var p=prompt(picCanEmbed()
-          ? 'Path or link to a picture:'
-          : 'Link to a picture (a web address):','');
+        askText({title:'A picture by address',
+          label:picCanEmbed()?'A path on this computer, or a web address'
+            :'A web address',value:'',ok:'Place it',
+          placeholder:picCanEmbed()?'C:\\figures\\map.png or https://\u2026'
+            :'https://\u2026'},function(p){
         if(!p||!p.trim()) return;
-        objInto=idx;placeFromAddress(p.trim());}]
+        objInto=idx;placeFromAddress(p.trim());
+        });}]
     ].forEach(function(r){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';
@@ -58316,7 +58749,7 @@ window.JunoPptx = (function () {
       } else o.textContent=p[1];
       o.addEventListener('click',function(e){
         e.stopPropagation();onPick(p[0]);
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');
+        overlayHide(menu);   /* T482: through the owner */
       });
       menu.appendChild(o);
     });
@@ -58693,7 +59126,7 @@ window.JunoPptx = (function () {
     var cb=$('#fmt-crop');
     if(cb) cb.addEventListener('click',function(e){
       e.stopPropagation();
-      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      overlayHide(menu);   /* T482 */
       setCropMode(!cropMode);
     });
     /* DRAW THE OUTLINE YOURSELF. "There is no free crop as well where
@@ -58707,7 +59140,7 @@ window.JunoPptx = (function () {
       +'the outline is hidden; the picture itself is untouched';
     fc.addEventListener('click',function(e){
       e.stopPropagation();
-      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      overlayHide(menu);   /* T482 */
       armFreeCrop();
     });
     menu.insertBefore(fc,menu.firstChild);
@@ -58980,6 +59413,9 @@ window.JunoPptx = (function () {
       else if(msg.act==='resume'&&presPauseAt){
         presPaused+=Date.now()-presPauseAt;presPauseAt=0;rehResume();}
     }
+    else if(msg.do==='late'){   /* T476 */
+      if(typeof runLate==='function') runLate(lateFrom<0);
+    }
     else if(msg.do==='closed'){presWin=null;return;}
     presenterPush();
   }
@@ -59091,6 +59527,15 @@ window.JunoPptx = (function () {
       pauseAt:presPauseAt,goal:slideGoal(sl),
       talk:pres.talkMins||0,slide:shownAt,count:shown.length,
       planned:Math.round(planned),slideIndex:cur};
+    /* T476: the button wears the state, like the show's own */
+    var lb2=doc.getElementById('jvp-late');
+    if(lb2){
+      var lateOn=(typeof lateFrom==='number'&&lateFrom>=0);
+      lb2.textContent=lateOn?'Running late: on':'Running late';
+      lb2.setAttribute('aria-pressed',lateOn?'true':'false');
+      lb2.title=lateOn?'Show the remaining optional slides again'
+        :'Skip the remaining optional slides from here';
+    }
   }
   function presenterHtml(){
     /* every stylesheet the deck uses, so the imported slide nodes look
@@ -59105,6 +59550,8 @@ window.JunoPptx = (function () {
       +'grid-template-rows:auto 1fr auto;gap:12px;height:100%;'
       +'box-sizing:border-box;padding:12px;}'
       +'.jvp-bar{grid-column:1/-1;display:flex;align-items:center;gap:14px;}'
+      +'.jvp-b[aria-pressed="true"]{background:#c9573e;border-color:#c9573e;'
+      +'color:#fff;}'
       +'.jvp-clock{font-family:var(--mono,monospace);font-size:44px;'
       +'font-weight:600;line-height:1;letter-spacing:.02em;}'
       +'.jvp-clock.over{color:#ff8a7a;}'
@@ -59178,6 +59625,12 @@ window.JunoPptx = (function () {
       +'<span id="jvp-slideclock"></span></span>'
       +'<span class="jvp-pace" id="jvp-pace"></span>'
       +'<span class="jvp-sp"></span>'
+      /* T476: RUNNING LATE, IN THE WINDOW THAT TELLS YOU YOU ARE
+         (2026-09-15 review: "the presenter window has no Running late
+         control though it is the window that tells you you are behind").
+         The same verb the show's bar has, on the same runLate. */
+      +'<button class="jvp-b" id="jvp-late" aria-pressed="false">'
+      +'Running late</button>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
       +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
       +'</div>'
@@ -59230,6 +59683,8 @@ window.JunoPptx = (function () {
       send({jv:'cmd',do:'next'});};
     d.getElementById('jvp-reset').onclick=function(){
       send({jv:'cmd',do:'timer',act:'reset'});};
+    var lb=d.getElementById('jvp-late');   /* T476 */
+    if(lb) lb.onclick=function(){send({jv:'cmd',do:'late'});};
     var pb=d.getElementById('jvp-pause');
     pb.onclick=function(){
       var paused=!!(presWin.__jvState&&presWin.__jvState.pauseAt);
@@ -60688,12 +61143,15 @@ window.JunoPptx = (function () {
       ren.setAttribute('aria-label','Name this version');
       ren.addEventListener('click',function(ev){
         ev.stopPropagation();
-        var v=prompt('Call this version:',e.nm||histClock(e.at));
+        askText({title:'Name this version',value:e.nm||histClock(e.at),
+          ok:'Name it',note:'Empty goes back to the time it was saved'},
+        function(v){
         if(v===null) return;
         v=v.trim();
         histSetName(e.id,v).then(function(){
           if(v) e.nm=v; else delete e.nm;
           histRows(ov,ix);
+        });
         });
       });
       row.appendChild(ren);
@@ -60929,7 +61387,9 @@ window.JunoPptx = (function () {
         +'the line you were on';
       branch.addEventListener('click',function(){
         var suggest=ent.br?(ent.br+' 2'):'alternative';
-        var nm=prompt('Call this branch:',suggest);
+        askText({title:'Branch from '+histLabel(ent),label:'Call this branch',
+          value:suggest,ok:'Branch',note:'What you save next descends '
+            +'from that version, not from where you are'},function(nm){
         if(nm===null) return;
         nm=nm.trim()||suggest;
         snapTake('before branching').then(function(){
@@ -60939,6 +61399,7 @@ window.JunoPptx = (function () {
           toast('On branch \u201c'+nm+'\u201d \u2014 what you save next '
             +'descends from '+histLabel(ent)+', not from where you '
             +'were');
+        });
         });
       });
       acts.appendChild(branch);
@@ -61090,7 +61551,9 @@ window.JunoPptx = (function () {
      snapshot with a name and a mark, so going back to it and
      branching from it are the buttons that already exist. */
   function histCheckpoint(ov){
-    var nm=prompt('Call this checkpoint:','before the rewrite');
+    askText({title:'Checkpoint',label:'Call this checkpoint',
+      value:'before the rewrite',ok:'Save',note:'Kept even when older '
+        +'versions are dropped'},function(nm){
     if(nm===null) return;
     nm=nm.trim()||'checkpoint';
     snapTake('checkpoint',undefined,undefined,1).then(function(){
@@ -61102,6 +61565,7 @@ window.JunoPptx = (function () {
         +'even when older versions are dropped');
       if(ov&&document.body.contains(ov))
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
+    });
     });
   }
   /* T465: openHistory(wantId) opens ON a version -- the open-items
@@ -66066,7 +66530,15 @@ window.JunoPptx = (function () {
   function overviewKey(e){
     if(!$('#deck-overview')) return;
     if(e.key==='Escape'){
-      e.preventDefault();e.stopPropagation();overviewClose();
+      e.preventDefault();e.stopPropagation();
+      /* T482: a search still typed is cleared first, like the ribbon
+         gallery's; the map closes on the next Escape */
+      var fi=$('#ovw-find');
+      if(fi&&document.activeElement===fi&&fi.value){
+        fi.value='';fi.dispatchEvent(new Event('input',{bubbles:true}));
+        fi.focus();return;
+      }
+      overviewClose();
     }
   }
   function openOverview(){
@@ -66289,16 +66761,20 @@ window.JunoPptx = (function () {
     if(!hasCut(id)) return false;
     var d=cutMap()[id]; if(!d) return false;
     var old=d.name||id;
-    var v=prompt('Name this version:',old);
-    if(v==null) return false;
-    v=v.trim(); if(!v||v===old) return false;
+    /* T475: the editor's own question; the menu re-syncs itself once
+       the answer lands, so this returns false to its caller */
+    askText({title:'Name this version',value:old,ok:'Rename'},function(v){
+    if(v==null) return;
+    v=v.trim(); if(!v||v===old) return;
     if(cutNameTaken(v,id)){
-      toast('There is already a version called “'+v+'”');return false;
+      toast('There is already a version called “'+v+'”');return;
     }
     d.name=v;
     markDirty();renderFilm();presenterSync&&presenterSync();
     toast('Version renamed to “'+v+'”');
-    return true;
+    cutsSync();   /* T477: the menu and the tab's strip */
+    });
+    return false;
   }
   function delCut(id){
     if(!hasCut(id)) return false;
@@ -66739,7 +67215,7 @@ window.JunoPptx = (function () {
       /* radio model: a row lights up ONLY while its deck is open — back on
          the notebook view, no presentation stays highlighted */
       t.className='pr-item ptab'+(isCur&&editing?' current editing':'')
-        +(savedNames.indexOf(nm)<0?' draftonly':'');
+        +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');   /* T483 */
       t.setAttribute('role','tab');
       t.dataset.pres=nm;
       var isPoster=/^a\d/.test(String(p.page||''));
@@ -66900,12 +67376,14 @@ window.JunoPptx = (function () {
       if(made) renderPresentationHub();
     });
     hubRowAct(b,'text','Rename \u201c'+p.name+'\u201d',function(){
-      var v=window.prompt('Call this presentation:',p.name);
+      askText({title:'Rename this presentation',value:p.name,ok:'Rename'},
+      function(v){
       if(!v||!v.trim()) return;
       if(typeof renamePresByName==='function') renamePresByName(p.name,v.trim());
       renderPresentationHub();
       if(typeof renderDeckPresentationDrawer==='function')
         renderDeckPresentationDrawer();
+      });
     });
     hubRowAct(b,'minus','Delete \u201c'+p.name+'\u201d for good',function(){
       if(!window.confirm('Delete \u201c'+p.name+'\u201d?\n\nThis cannot '
@@ -66969,9 +67447,10 @@ window.JunoPptx = (function () {
     n.textContent=count;
     h.appendChild(ic);h.appendChild(t);h.appendChild(n);
     [[bic('pen'),'Rename folder',function(){
-        var v=prompt('Rename the folder:',f);
-        if(v==null) return;
-        renameFolder(f,v);
+        askText({title:'Rename this folder',value:f,ok:'Rename'},function(v){
+          if(v==null) return;
+          renameFolder(f,v);
+        });
       }],
      [bic('exit'),'Delete folder (its presentations move out)',function(){
         deleteFolder(f);}]].forEach(function(b){
@@ -67111,7 +67590,10 @@ window.JunoPptx = (function () {
   function closeDeckPresentationDrawer(force){
     var d=$('#deck-pres-drawer');
     if(barDocked()&&!force) return;
-    if(d) d.hidden=true;
+    if(d){
+      if(typeof overlayHide==='function') overlayHide(d);   /* T482 */
+      d.hidden=true;
+    }
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','false');});
   }
   /* ---- T382: THE DRAWER IS WHAT IS OPEN NOW ------------------------
@@ -67278,10 +67760,12 @@ window.JunoPptx = (function () {
           [bic('copy'),'Duplicate “'+nm+'”',function(){
             duplicatePresentation(nm);}],
           mine?[bic('text'),'Rename “'+nm+'”',function(){
-            var v=window.prompt('Call this presentation:',nm);
+            askText({title:'Rename this presentation',value:nm,ok:'Rename'},
+            function(v){
             if(v&&v.trim()&&typeof renamePresentation==='function')
               renamePresentation(v.trim());
             renderDeckPresentationDrawer();
+            });
           }]:null,
           [bic('pin'),pinned?('Unpin “'+nm+'”')
             :('Pin “'+nm+'” to the top of Recent'),function(){
@@ -67368,9 +67852,11 @@ window.JunoPptx = (function () {
              helpers name a version the same way here. */
           var lab=(typeof histLabel==='function')?histLabel(v)
             :(v.nm||v.why||'version');
-          var kind=(v.nm&&v.why)?v.why:'';
+          /* T484: the right-hand word is WHY (opened / saved /
+             checkpoint); an unnamed version printed its time twice */
+          var kind=v.why||'';
           var r=row('',bic('history'),lab,
-            kind||((typeof histClock==='function'&&v.at)?histClock(v.at):''),
+            kind||((typeof histClock==='function'&&v.at&&v.nm)?histClock(v.at):''),
             'Open the history on this version',function(){
               if(!barDocked()) closeDeckPresentationDrawer();
               if(typeof openHistory==='function') openHistory(v.id||'');
@@ -67426,7 +67912,13 @@ window.JunoPptx = (function () {
     var d=$('#deck-pres-drawer');
     if(!d) return;
     renderDeckPresentationDrawer();
-    d.hidden=false;
+    /* T482: a POP-UP is on the overlay owner's stack, like every menu:
+       File opened underneath it and both stood open (2026-09-15
+       review); opening File closes it now, and Escape and an outside
+       click work. A docked bar is part of the frame, not an overlay. */
+    if(!barDocked()&&typeof overlayShow==='function')
+      overlayShow($('#qat-open')||null,d);
+    else d.hidden=false;
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','true');});
   }
   /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the
@@ -67996,15 +68488,19 @@ window.JunoPptx = (function () {
       else if(v.indexOf('sec:')===0){sc.kind='sec';sc.sec=v.slice(4);}
       else {
         var total=(pres.slides||[]).length;
-        var got=prompt('Which slides? Like 4-9, or one number.',
-          '1-'+total);
-        var mm=got&&got.match(/^\s*(\d+)\s*(?:[-\u2013]\s*(\d+))?\s*$/);
-        if(!mm){sel.value=sc.kind==='all'?'all'
-          :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
-        sc.kind='range';
-        var r=dgRange(parseInt(mm[1],10),
-          parseInt(mm[2]||mm[1],10),total);
-        sc.from=r.from;sc.to=r.to;
+        /* T475: the editor's own question; the change lands in its answer */
+        askText({title:'Which slides?',label:'A range like 4-9, or one number',
+          value:'1-'+total,ok:'Use these'},function(got){
+          var mm=got&&got.match(/^\s*(\d+)\s*(?:[-\u2013]\s*(\d+))?\s*$/);
+          if(!mm){sel.value=sc.kind==='all'?'all'
+            :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
+          sc.kind='range';
+          var r=dgRange(parseInt(mm[1],10),
+            parseInt(mm[2]||mm[1],10),total);
+          sc.from=r.from;sc.to=r.to;
+          onchange();
+        });
+        return;
       }
       onchange();
     });
@@ -69460,8 +69956,11 @@ window.JunoPptx = (function () {
       var ci=document.createElement('input');
       ci.type='color';ci.className='dg-col';
       var v=d[key];
-      ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
-      ci.title=label+' \u2014 every box of this type';
+      var rv=tokVal(v);   /* T480: what a deck colour resolves to */
+      ci.value=(v&&v!=='none'&&/^#[0-9a-f]{6}$/i.test(rv))?rv:fallback;
+      ci.title=label+' \u2014 every box of this type'
+        +(tokRef(v)?(' (a deck colour: '+tokRef(v)+'; a change here '
+          +'unhooks it)'):'');
       ci.addEventListener('input',function(){
         rec[key]=ci.value;markDirty();dgRestamp(id);refresh();});
       ci.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
@@ -70096,7 +70595,8 @@ window.JunoPptx = (function () {
        re-renders the strip, so by the time a dblclick handler arrived the
        node it was editing had already been replaced — the same reason the
        poster version rename is a button and a prompt (2026-08-10) */
-    var v=prompt('Name this section:',secName(id));
+    askText({title:'Name this section',value:secName(id),ok:'Rename'},
+    function(v){
     if(v==null) return;
     v=v.trim(); if(!v) return;
     /* T316: in place, so the arrival and the colour survive a rename
@@ -70104,6 +70604,7 @@ window.JunoPptx = (function () {
     var rec=secMap()[id]||(secMap()[id]={});
     rec.name=v;
     markDirty();renderFilm();
+    });
   }
   function foldSection(id,on){
     var d=secMap()[id]; if(!d) return;
@@ -70287,6 +70788,11 @@ window.JunoPptx = (function () {
     if(k==='p'||k==='P'){setTalkTool('laser');return true;}
     if(k==='m'||k==='M'){setTalkTool('lens');return true;}
     if(k==='b'||k==='B'){talkBlack();return true;}
+    /* T476: the presenter window, from the lectern */
+    if(k==='n'||k==='N'){
+      if(typeof openPresenter==='function') openPresenter();
+      return true;
+    }
     return false;
   }
   function talkToolsBoot(){
@@ -70297,6 +70803,11 @@ window.JunoPptx = (function () {
       e.stopPropagation();setTalkTool('lens');});
     if(bl) bl.addEventListener('click',function(e){
       e.stopPropagation();talkBlack();});
+    var pv=$('#talk-presenter');   /* T476 */
+    if(pv) pv.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(typeof openPresenter==='function') openPresenter();
+    });
     if(window.SemDeckTalk){
       window.SemDeckTalk.tool=setTalkTool;
       window.SemDeckTalk.black=talkBlack;
@@ -70622,12 +71133,16 @@ window.JunoPptx = (function () {
     var m=String(u||'').match(/^https?:\/\/([^\/?#]+)/i);
     return m?m[1]:String(u||'');
   }
-  function askWebUrl(current){
-    var u=window.prompt('Web address (http or https):',current||'https://');
-    if(u==null) return null;
-    u=String(u).trim();
-    if(!webUrlOk(u)){toast('That is not an http or https address');return null;}
-    return u;
+  /* T475: the editor's own question -- cb(url) once it is a good one */
+  function askWebUrl(current,cb){
+    askText({title:current?'The page\u2019s address':'A live web page',
+      label:'Web address (http or https)',value:current||'https://',
+      ok:current?'Change it':'Place it',select:!current},function(u){
+      if(u==null) return;
+      u=String(u).trim();
+      if(!webUrlOk(u)){toast('That is not an http or https address');return;}
+      cb(u);
+    });
   }
   function placeWebPage(url){
     var s=pres.slides[cur]; if(!s) return;
@@ -70645,15 +71160,17 @@ window.JunoPptx = (function () {
     var et=$('#et-web');
     if(et) et.addEventListener('click',function(e){
       e.stopPropagation();
-      var u=askWebUrl(''); if(u) placeWebPage(u);
+      askWebUrl('',function(u){placeWebPage(u);});
     });
     var fb=$('#fmt-weburl');
     if(fb) fb.addEventListener('click',function(e){
       e.stopPropagation();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       if(!a||a.k!=='web') return;
-      var u=askWebUrl(a.url||''); if(!u||u===a.url) return;
-      fmtApply(function(x){if(x.k==='web') x.url=u;});
+      askWebUrl(a.url||'',function(u){
+        if(u===a.url) return;
+        fmtApply(function(x){if(x.k==='web') x.url=u;});
+      });
     });
   }
   /* ---- T389: THE SCROLLING VERSION OF A PRESENTATION -------------------
@@ -71333,6 +71850,9 @@ window.JunoPptx = (function () {
        renderCreate, which the strip's own click does not reach
        (driven: the star stayed in the main's state on an alternative). */
     if(typeof syncHomeDoors==='function') syncHomeDoors();
+    /* T477: the Present tab's version strip follows the deck (a new
+       deck, a cut chosen, renamed or deleted all come through here) */
+    if(typeof cutsSync==='function') cutsSync();
   }
   /* T412: the current row, on screen -- and only when it is not. A row
      you can already see is left exactly where it is; one that is off
@@ -71512,11 +72032,13 @@ window.JunoPptx = (function () {
           'star');
         row('Name this version\u2026',function(){
           var s2=pres.slides[i]; if(!s2) return;
-          var v=prompt('Name this version:',s2.label||'');
+          askText({title:'Name this version',value:s2.label||'',ok:'Name it'},
+          function(v){
           if(v==null) return;
           v=v.trim();
           if(v) s2.label=v; else delete s2.label;
           markDirty();renderFilm();
+          });
         },null,'pen');
         row('Make it a slide of its own',function(){
           var s3=pres.slides[i]; if(!s3) return;
@@ -71624,11 +72146,13 @@ window.JunoPptx = (function () {
     row('Move it down',function(){moveSlide(i,1);},null,'next');
     if(pageOf().poster) row('Rename this version\u2026',function(){
       var s2=pres.slides[i]; if(!s2) return;
-      var v=prompt('Name this version:',s2.label||slideTitle(s2));
+      askText({title:'Name this version',value:s2.label||slideTitle(s2),
+        ok:'Rename'},function(v){
       if(v==null) return;
       v=v.trim();
       if(v) s2.label=v; else delete s2.label;
       markDirty();renderFilm();
+      });
     },null,'pen');
     row('Duplicate',function(){dupSlide(i);},null,'copy');
     if(ar0&&!isAlt0)
@@ -71664,11 +72188,15 @@ window.JunoPptx = (function () {
     function shut(){
       m.remove();
       document.removeEventListener('click',off);
-      document.removeEventListener('keydown',esc);
+      document.removeEventListener('keydown',esc,true);
     }
+    /* T482: IN CAPTURE, like the overlay owner's. In the bubble phase
+       the editor's own ladder ran first on the same key -- Escape on a
+       right-click menu dropped the selection, or left the editor, and
+       only then closed the menu (2026-09-15 review). */
     setTimeout(function(){
       document.addEventListener('click',off);
-      document.addEventListener('keydown',esc);
+      document.addEventListener('keydown',esc,true);
     },0);
   }
   function presNbs(p){
@@ -72242,6 +72770,10 @@ window.JunoPptx = (function () {
     if(APP.refreshChrome) APP.refreshChrome();
   }
   /* ---- URL routing hooks used by the SemApp router (docs side) ---- */
+  /* T482: the app bar's Theme menu opens over the deck's own menus and
+     must close them first (app.js) */
+  window.SemApp.deckOverlayCloseAll=function(){
+    if(typeof overlayCloseAll==='function') overlayCloseAll();};
   window.SemApp.deckState=function(){
     return deckEl.hidden?null:{name:pres.name,slide:cur};
   };
@@ -72318,6 +72850,12 @@ window.JunoPptx = (function () {
     inp.focus();inp.select();
   });
   var presentFrom='create';
+  /* T477: one sync for the Play menu's version rows and the Present
+     tab's strip; published because renameCut in another part and
+     renderFilm need it. Declared BEFORE the menu's sub-IIFE below,
+     which assigns it at script evaluation -- a `var` stub after it
+     would overwrite the assignment (driven: the strip never followed). */
+  var cutsSync=function(){};
   /* ---- the Present menu ------------------------------------------------
      Play from here, play from the start, or open the presenter view first
      and then play. Presenter view deliberately does NOT start playback:
@@ -72399,13 +72937,16 @@ window.JunoPptx = (function () {
         +'file, no diverging copies';
       nb.addEventListener('click',function(e){
         e.stopPropagation();overlayHide(menu);
-        var nm=prompt('Name for this version:','20-min');
+        askText({title:'A new version of this deck',label:'Call it',
+          value:'20-min',ok:'Make it',note:'Then right-click a slide to '
+            +'put it in'},function(nm){
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
         var id=newCut(nm);if(!id) return;
         toast('“'+nm+'” created — right-click a '
           +'slide to put it in');
         setCut(id);syncCuts();
+        });
       });
       add(nb);
       var sep=document.createElement('div');
@@ -72413,6 +72954,50 @@ window.JunoPptx = (function () {
       add(sep);
     }
     wrap.addEventListener('click',syncCuts);
+    /* T477: THE STRIP ON THE PRESENT TAB, from the same list. One
+       published sync redraws both, so a rename from the menu, a New
+       version… from the tab, or a cut chosen anywhere lands on both. */
+    function versionStripSync(){
+      var strip=$('#pr-version-strip'); if(!strip) return;
+      var list=cutList(),selected=activeCut();
+      /* rebuilt only when the answer changed: renderFilm calls this on
+         every slide change and the tiles are a chooser's, not a film's */
+      var sig=JSON.stringify(list)+'|'+selected;
+      if(strip.getAttribute('data-sig')===sig) return;
+      strip.setAttribute('data-sig',sig);
+      strip.innerHTML='';
+      function tile(id,label,tip){
+        var b=document.createElement('button');
+        b.type='button';b.className='fx-tile';
+        b.innerHTML=bic(id?'versions':'present')+'<span>'+esc(label)+'</span>';
+        b.title=tip;
+        b.setAttribute('aria-pressed',(selected===id).toString());
+        b.addEventListener('click',function(e){
+          e.stopPropagation();setCut(id);cutsSync();});
+        strip.appendChild(b);
+      }
+      tile('','Every slide','The whole deck, which is what a deck with '
+        +'no versions always shows');
+      list.forEach(function(c){
+        tile(c.id,c.name,'Only the slides that name this version. '
+          +'Rename or delete it from the Present menu');
+      });
+    }
+    cutsSync=function(){syncCuts();versionStripSync();};
+    var nvb=$('#pr-newversion');
+    if(nvb) nvb.addEventListener('click',function(e){
+      e.stopPropagation();
+      askText({title:'A new version of this deck',label:'Call it',
+        value:'20-min',ok:'Make it',note:'Then right-click a slide to '
+          +'put it in'},function(nm){
+        if(nm==null) return;
+        nm=nm.trim();if(!nm) return;
+        var id=newCut(nm);if(!id) return;
+        toast('\u201c'+nm+'\u201d created \u2014 right-click a slide to put it in');
+        setCut(id);cutsSync();
+      });
+    });
+    versionStripSync();
     mi('#pl-here',function(){$('#dc-play').click();});
     mi('#pl-start',function(){cur=0;refresh();$('#dc-play').click();});
     mi('#pl-presenter',openPresenter);
@@ -73038,6 +73623,22 @@ window.JunoPptx = (function () {
          picker — so it goes first and swallows the key */
       if(slideArm){e.preventDefault();cancelSlideMatch();return;}
       if(matchArm){e.preventDefault();cancelMatch();return;}
+      /* T482: A DIALOG IS THE INNERMOST THING OF ALL. Style sets, Apply
+         look, Arrange, Copy layout to slides and the transition's
+         give-to are modal boxes whose own Escape listeners sit on the
+         box -- and focus was still on the button that opened them, so
+         the key came here instead and stepped the ladder: the first
+         dropped the selection, the second left the editor with the
+         dialog still up over the notebook (2026-09-15 review). */
+      var dlgUp=$('.aa-dlg:not([hidden]),.eq-dlg:not([hidden]),'
+        +'.ts-dlg:not([hidden])');
+      if(dlgUp){
+        e.preventDefault();
+        var x=dlgUp.querySelector('.aa-head .dc-icon,.eq-head .dc-icon,'
+          +'[id$="-close"],[id$="-cancel"]');
+        if(x) x.click(); else dlgUp.hidden=true;
+        return;
+      }
       /* a transient menu or window is INNER to everything below: its
          own owner closes it (overlayBoot, in capture) and this ladder
          must not also step -- belt and braces, in case the two
@@ -73670,7 +74271,12 @@ window.JunoPptx = (function () {
      the same gesture as clearing any other field. */
   function furnEdit(key,label,hint,dflt){
     var cur_=pres[key]||{};
-    var v=prompt(label+'\n\n'+hint,cur_.text||dflt||'');
+    /* T475: the editor's own question; the hint's first line is what
+       it is, the rest is the note under the field */
+    var lines=String(hint).split('\n');
+    askText({title:label,label:lines[0],value:cur_.text||dflt||'',
+      note:lines.slice(1).join(' '),ok:cur_.text?'Change it':'Add it'},
+    function(v){
     if(v===null) return;
     v=v.trim();
     if(!v) delete pres[key];
@@ -73684,6 +74290,7 @@ window.JunoPptx = (function () {
     }
     markDirty();refresh();syncFurnBtns();
     toast(v?(label+' set'):(label+' removed'));
+    });
   }
   function syncFurnBtns(){
     [['#dc-wmark','wmark'],['#dc-head','head'],['#dc-foot','foot']]
@@ -73962,6 +74569,79 @@ window.JunoPptx = (function () {
     clearTimeout(toastTimer);
     toastTimer=setTimeout(function(){t.hidden=true;},ms||9000);
   }
+  /* ---- T475: THE EDITOR'S OWN QUESTION ---------------------------------
+     window.prompt was the browser's box: unstyled, un-themed, the one
+     dialog in the editor that did not look like the editor, blocked
+     outright in some embeddings, and unable to show what it was asking
+     about. Thirty-six of them (2026-09-15 review: "three of them use
+     the browser's native prompt" was the count for one group alone).
+     One small dialog on the .aa-dlg shell asks every one of them now: a
+     title, a line of help, a field pre-filled, a note under it, Cancel
+     and a verb, Enter and Escape. cb(null) when cancelled, cb(text)
+     otherwise -- so every caller is a callback, which is what a
+     dialog that is not modal to the whole browser has to be. */
+  var askCb=null,askWired=false;
+  function askText(o,cb){
+    var dlg=$('#ask-dlg');
+    if(!dlg){cb(null);return;}
+    o=o||{};
+    var multi=!!o.multi;
+    var inp=$('#ask-in'),area=$('#ask-area');
+    $('#ask-t').textContent=o.title||'Name';
+    var what=$('#ask-what');
+    what.textContent=o.what||'';what.hidden=!o.what;
+    var lab=$('#ask-lab');
+    lab.textContent=o.label||'';lab.hidden=!o.label;
+    var note=$('#ask-note');
+    note.textContent=o.note||'';
+    $('#ask-ok').textContent=o.ok||'OK';
+    inp.hidden=multi;area.hidden=!multi;
+    var field=multi?area:inp;
+    field.value=(o.value==null)?'':String(o.value);
+    field.placeholder=o.placeholder||'';
+    askCb=cb;
+    dlg.classList.toggle('over-design',!!$('#deck-design'));
+    dlg.hidden=false;
+    setTimeout(function(){field.focus();
+      if(!multi&&o.select!==false) field.select();},0);
+    if(askWired) return;
+    askWired=true;
+    function done(v){
+      dlg.hidden=true;
+      var f=askCb;askCb=null;
+      if(f) f(v);
+    }
+    function ok(){done((area.hidden?inp:area).value);}
+    $('#ask-ok').addEventListener('click',function(e){
+      e.stopPropagation();ok();});
+    $('#ask-cancel').addEventListener('click',function(e){
+      e.stopPropagation();done(null);});
+    $('#ask-close').addEventListener('click',function(e){
+      e.stopPropagation();done(null);});
+    dlg.addEventListener('click',function(e){
+      /* the box, not the shade: a click on the shade cancels; a click
+         inside must not reach the overlay owner underneath, which would
+         pop the menu the question was asked from */
+      e.stopPropagation();
+      if(e.target===dlg) done(null);
+    });
+    dlg.addEventListener('mousedown',function(e){e.stopPropagation();});
+    /* ON WINDOW, IN CAPTURE. A question asked from inside a menu sits
+       over an overlay whose own Escape listener is on document in
+       capture and wins against anything on the dialog (the
+       overlay-panels-eat-keys trap): Escape closed the MENU under the
+       question and left the question standing (driven 2026-09-15).
+       Window capture fires before document capture, so while the
+       dialog is open its keys are its own. */
+    window.addEventListener('keydown',function(e){
+      if(dlg.hidden) return;
+      if(!dlg.contains(e.target)&&e.target!==document.body) return;
+      e.stopImmediatePropagation();
+      if(e.key==='Escape'){e.preventDefault();done(null);}
+      else if(e.key==='Enter'&&(e.target===inp||(e.target===area&&e.ctrlKey))){
+        e.preventDefault();ok();}
+    },true);
+  }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
       .map(function(p){var c=deep(p);delete c.origin;return c;});
@@ -74037,6 +74717,7 @@ window.JunoPptx = (function () {
       source='draft';scheduleDraftWrite();
     }
     saveStamp=new Date();saveKind=silent?'auto':'manual';
+    saveWhere='project';   /* T483 */
     status();renderPresRow();
     if(conflict){
       renderPresTabs();
@@ -74478,6 +75159,7 @@ window.JunoPptx = (function () {
                from the app (2026-08-20, user: "I made a presentation for
                tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
+            saveWhere=fileName||'file';   /* T483 */
             if(stillSaved(savedName,savedSig)) source='saved';
             else {source='draft';scheduleDraftWrite();}
             status();renderTargetBtn();renderPresRow();
@@ -74507,6 +75189,15 @@ window.JunoPptx = (function () {
         :'On this computer';
     return 'In this browser';
   }
+  /* T483: the same destination as a phrase after "to" -- "Saving to
+     In this browser" read as two sentences */
+  function targetPhrase(){
+    if(saveTarget==='project') return 'this project';
+    if(saveTarget==='file')
+      return deckDirName?('your '+deckDirName+' folder')
+        :'a file on this computer';
+    return 'this browser';
+  }
   function renderTargetBtn(){
     var b=$('#dc-target'); if(!b) return;
     /* the label is just the DESTINATION — "Saved to:" lives in the
@@ -74516,7 +75207,7 @@ window.JunoPptx = (function () {
        is named in the menu this opens, and in the tooltip — in the ribbon
        it was a second, wordier control that looked like a rival Save. */
     b.innerHTML='&#9662;';
-    b.title='Saving to '+targetLabel()+' — click to change where';
+    b.title='Saving to '+targetPhrase()+' — click to change where';
     var th=$('#tg-head');
     if(th) th.textContent='save to — now: '+targetLabel();
     b.classList.toggle('tg-file',saveTarget==='file');
@@ -74566,6 +75257,9 @@ window.JunoPptx = (function () {
   function setTarget(t){
     saveTarget=t;lsSet(TGKEY,t);
     renderTargetBtn();renderSaveBtn();status();
+    /* T483: the Autosave door's words name the destination too; they
+       kept saying "to project" after the target changed */
+    if(typeof renderAutosaveItem==='function') renderAutosaveItem();
   }
   /* PICK A FOLDER, ONCE, FOR EVERYTHING AFTER (T235). Lifted out of the
      menu row's handler by T283 so the first-run prompt runs the same
@@ -74710,6 +75404,7 @@ window.JunoPptx = (function () {
     flushDraftWrite();
     if(lsIsFull()){status();return;}
     saveStamp=new Date();saveKind='auto';source='saved';
+    saveWhere='browser';   /* T483 */
     status();
   }
   function cancelAutosave(){
@@ -74882,8 +75577,9 @@ window.JunoPptx = (function () {
       saveBtn.setAttribute('data-tip','Save now to '
         +'junoview_project.json'
         +(autosaveOn
-          ?' — autosave is ON: every change saves itself about a '
-            +'second later'
+          ?' — autosave is ON: every change saves itself within '
+            +(typeof autoSecsLabel==='function'?autoSecsLabel(autoSecs)
+              :'a moment')   /* T483: the interval it actually is */
           :' — autosave is OFF, only this button saves'));
     } else {
       saveBtn.setAttribute('data-tip','Kept in this browser '
@@ -74973,6 +75669,7 @@ window.JunoPptx = (function () {
        same rule the notebook's snapshots follow (T32) */
     if(savedHist) snapTake('saved',savedHist);
     saveStamp=new Date();saveKind='manual';
+    saveWhere='browser';   /* T483 */
     status();
     /* T266: a toast says what just happened. Where it is kept and what
        the caret beside Save does are on the button's own tooltip,
@@ -75127,7 +75824,7 @@ window.JunoPptx = (function () {
       +'\u201c'+(forName||pres.name)+'\u201d.',12000);
     return true;
   }
-  function fileRestore(txt,forName){
+  function fileRestore(txt,forName,force){
     var obj;
     try{obj=parseDeckText(txt);}catch(e){return false;}
     if(dropBundleHandle(txt,forName)) return false;
@@ -75139,8 +75836,10 @@ window.JunoPptx = (function () {
     list.forEach(function(pr){
       if(!hit&&pr&&Array.isArray(pr.slides)&&(pr.name||'')===forName) hit=pr;});
     if(!hit||(pres&&pres.name===forName)) return false;
-    /* the deck this visit opened on, or nothing real is open yet */
-    var want=(lsGet(PFX+'last')||'')===forName||!pres||!pres.slides
+    /* the deck this visit opened on, or nothing real is open yet --
+       T483: or the click that asked for it, whatever else was touched
+       since (it imported the file and said "already here") */
+    var want=force||(lsGet(PFX+'last')||'')===forName||!pres||!pres.slides
       ||source==='auto';
     if(!want) return false;
     /* from the library when the silent import could keep it there,
@@ -75168,7 +75867,7 @@ window.JunoPptx = (function () {
         .then(function(txt){
           fileReopen=null;fileWaits='';
           if(fileDeckCount(txt)>1){dropBundleHandle(txt,nm);return true;}
-          if(!fileRestore(txt,nm)){status();toast('Nothing to reopen \u2014 '
+          if(!fileRestore(txt,nm,true)){status();toast('Nothing to reopen \u2014 '
             +'\u201c'+nm+'\u201d is already here');}
           return true;
         });
@@ -75222,6 +75921,7 @@ window.JunoPptx = (function () {
             source='draft';scheduleDraftWrite();
           }
           saveStamp=new Date();saveKind='manual';
+          saveWhere=f.name||'file';   /* T483 */
           status();renderPresRow();
           toast('Saved "'+savedName+'" into '+f.name);
           return true;
@@ -75768,7 +76468,7 @@ window.JunoPptx = (function () {
   function pptxTextItem(a,centred,ink,box){
     var b=box||pptxBox(a,centred);
     return {t:'text',x:b.x,y:b.y,w:b.w,h:b.h,
-      rot:a.rot,op:a.op,centred:!!centred,
+      rot:a.rot,op:a.op,centred:!!centred,name:a.name||'',   /* T485 */
       text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
@@ -75832,12 +76532,26 @@ window.JunoPptx = (function () {
       var pushedAt=items.length;
       if(a.k==='text'){
         var ti=pptxTextItem(a,false,ink,box);
+        /* T483: THE PAGE THIS OUTPUT SLIDE IS ABOUT. A box with pages
+           left as N identical slides of page one (2026-09-15 review);
+           textAt honours flipForce, which the exporter sets per output
+           page the way the print root does. And the numbers: {fig},
+           {fig:id} and [@key] went out as the markers while the slide
+           and the PDF show the numbers -- the same funnel every render
+           path uses (figSubst), and a references box its list. */
+        var _pn=(typeof textAt==='function')?textAt(s,a):0;
+        var _pg=textPage(a,_pn<0?0:_pn);
+        ti.text=a.bib&&typeof bibListText==='function'?bibListText()
+          :figSubst(_pg.t,a,note.figs);
         /* `a.maths` means the Maths button built this box, so the whole
            of it is the equation and there is nothing to be careful about
            — an ordinary box has to earn the flattening (T53) */
         var tp=mathsPlain(ti.text,!!a.maths);
         if(tp.hit) note.maths++;
         ti.text=tp.text;
+        /* T483: what the writer cannot say yet is counted, not hidden */
+        if(a.md) note.md=(note.md||0)+1;
+        else if(a.html&&/<(b|i|u|s|span|a)\b/i.test(a.html)) note.rich=(note.rich||0)+1;
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
@@ -75997,7 +76711,7 @@ window.JunoPptx = (function () {
         var code=node&&node.querySelector('pre');
         /* typeset maths survives only as its flattened characters — legible,
            but no longer an equation. Counted so the toast can say so. */
-        if(node&&node.querySelector('mjx-container')) note.maths++;
+        if(node) note.maths+=node.querySelectorAll('mjx-container').length;   /* T483 */
         var txt=(node&&!isTable)?blockText(node):'';
         if(txt){
           items.push({t:'text',x:box.x,y:box.y,w:box.w,h:box.h,
@@ -76143,11 +76857,16 @@ window.JunoPptx = (function () {
   function pptxLosses(){
     var note={skipped:0,cropped:0,maths:0,tied:0,exits:0,orig:{}};
     var lost=[];
-    outputSlides().forEach(function(ent){
-      note.frame=ent.f;
-      paintSlide=ent.s;                                     /* T316 */
-      pptxItems(ent.s,note,'#ffffff',null);
-      note.frame=null;
+    /* T483: the tallies count SOURCE slides -- an exploded flip book
+       multiplied every count on its slide by its frames (three live
+       web pages for one, 2026-09-15 review); the figure numbers are
+       computed once, they depend on order */
+    note.figs=(typeof figNumbers==='function')?figNumbers():null;
+    (pres.slides||[]).forEach(function(s,i){
+      if(slideIsAlt(i)) return;
+      note.frame=null;flipForce=null;
+      paintSlide=s;                                         /* T316 */
+      pptxItems(s,note,'#ffffff',null);
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
       +(note.skipped===1?'':'s')+' with no .pptx shape to become');
@@ -76157,6 +76876,13 @@ window.JunoPptx = (function () {
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
       +'path, so they arrive as plain characters');
+    /* T483: named rather than silent -- the writer has no run model yet */
+    if(note.md) lost.push(note.md+' Markdown box'+(note.md===1?'':'es')
+      +' \u2014 they arrive as their source text (the # and - marks '
+      +'included), not as headings and bullets');
+    if(note.rich) lost.push(note.rich+' text box'+(note.rich===1?'':'es')
+      +' with bold, colour or a link inside the words \u2014 the words '
+      +'arrive, the marks inside them do not');
     if(note.exits) lost.push(note.exits+' object'
       +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
       +'writer emits entrances only, so they arrive and then stay, '
@@ -76221,6 +76947,7 @@ window.JunoPptx = (function () {
     var firstOut={};
     ents.forEach(function(ent,oi){
       if(!(ent.i in firstOut)) firstOut[ent.i]=oi+1;});
+    note.figs=(typeof figNumbers==='function')?figNumbers():null;   /* T483 */
     var out=JunoPptx.build({
       title:pres.name||'presentation',
       widthMm:pg.mm[0],heightMm:pg.mm[1],bg:bg,
@@ -76229,9 +76956,10 @@ window.JunoPptx = (function () {
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
         note.frame=ent.f;
+        flipForce=ent.f;   /* T483: the page this output slide is about */
         paintSlide=ent.s;                                   /* T316 */
         var its=pptxItems(ent.s,note,ink,lay);
-        note.frame=null;
+        note.frame=null;flipForce=null;
         /* the master's look is BAKED into the export (T115): furniture
            items first (under the content) and the inherited
            background. PowerPoint-side inheritance would mean real
@@ -76261,7 +76989,9 @@ window.JunoPptx = (function () {
            presenter sees on each of them. */
         return {bg:bgSolid(tokVal(ent.s.bg)
             ||(mm3&&tokVal(mm3.bg))||bg),items:its,
-          trans:transFor(ent.i),notes:ent.s.notes||''};
+          trans:transFor(ent.i),notes:ent.s.notes||'',
+          /* T485: the slide's section, by name, for the writer's list */
+          section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):''};
       }),
     });
     var a=document.createElement('a');
@@ -76299,23 +77029,24 @@ window.JunoPptx = (function () {
     return {blob:out.blob,slides:out.slides,cropped:note.cropped,
       skipped:note.skipped+out.skipped};
   }
-  /* ---- Background menu: THIS slide's colour and border. The whole
-     presentation's background stays under File, where it always was. */
-  (function(){
-    var wired=wireMenuToggle('bg-drop','bg-btn','bg-menu');
-    if(!wired) return;
-    var menu=wired.menu;
+  /* ---- T479: BACKGROUND, ON THE SHELF. This slide's colour and
+     border, every slide's colour, and the one deck-wide verb -- built
+     into the Design tab's Background block on every slide change
+     (bgSync from renderSlide), so the runs and the door's readout are
+     always this slide's. It was a pop-up over the slide (bg-menu). */
+  var BG_BORDER_COLS=[['#39a9c0','Teal'],['#ff6b57','Coral'],
+    ['#f0a848','Amber'],['#46a892','Jade'],['#16202b','Ink'],
+    ['#ffffff','White']];
+  function bgSync(){
+    var r1=$('#bg-run-this'); if(!r1) return;
     var BWS=[[0,'Off'],[2,'Thin'],[4,'Medium'],[9,'Thick']];
     function apply(fn){
       var s2=pres.slides[cur]; if(!s2) return;
       fn(s2);markDirty();applyPageBg();applyZoom();renderSlide();
-      build();
     }
     function build(){
       var s2=pres.slides[cur]||{};
-      menu.innerHTML='';
-      menuHead(menu,'This slide');
-      var r1=menuRow(menu,'bg-sw');
+      r1.innerHTML='';
       bgChips(r1,s2.bg||'',function(v){
         apply(function(x){if(v) x.bg=v; else delete x.bg;});
       },true);
@@ -76323,14 +77054,12 @@ window.JunoPptx = (function () {
          override, so you can see the two against each other. It used to
          be a row in the File menu, which is where you open, save and
          export things (2026-08-20, user). */
-      menuHead(menu,'Every slide');
-      var r0=menuRow(menu,'bg-sw');
+      var r0=$('#bg-run-every'); r0.innerHTML='';
       /* T465: the same switch the Deck colours panel's Page background
          row moves -- one store, so the two doors always agree */
       bgChips(r0,(tokens().c.page)||'',function(v){
         setToken('c','page',v);
         applyPageBg();applyZoom();renderSlide();
-        build();
         toast('Background for every slide set');
       },false);
       /* the deck default only shows through on slides that have no
@@ -76338,26 +77067,15 @@ window.JunoPptx = (function () {
          above silently did nothing at all — you set the background for
          every slide and watched the one in front of you not change
          (2026-08-22). This is the verb that clears them. */
-      var push=document.createElement('button');
-      push.className='dbtn vw-opt';
-      push.textContent='Use this on every slide (clears per-slide ones)';
-      push.title='Slides with a background of their own keep showing it '
-        +'until this clears them';
+      var push=$('#bg-push');
       var over=(pres.slides||[]).filter(function(x){return x&&x.bg;});
       push.disabled=!over.length;
-      if(over.length) push.title='Clears the background '+over.length
-        +' slide'+(over.length===1?'':'s')+' set individually';
-      push.addEventListener('click',function(e){
-        e.stopPropagation();
-        var use=s2.bg||tokens().c.page||'';
-        if(use) setToken('c','page',use);
-        (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
-        markDirty();applyPageBg();applyZoom();renderSlide();build();
-        toast('Every slide now uses the one background');
-      });
-      menu.appendChild(push);
-      menuHead(menu,'Border');
-      var r2=menuRow(menu,'bg-bw');
+      push.title=over.length
+        ?('Give every slide this slide\u2019s background \u2014 the '
+          +over.length+' slide'+(over.length===1?'':'s')+' set '
+          +'individually follow it')
+        :'Every slide already shares the one background';
+      var r2=$('#bg-run-border'); r2.innerHTML='';
       BWS.forEach(function(p){
         var b=document.createElement('button');
         b.className='sh-opt bg-w';b.textContent=p[1];
@@ -76370,12 +77088,14 @@ window.JunoPptx = (function () {
           });});
         r2.appendChild(b);
       });
+      var bc=$('#bg-bcol-cell'),r3=$('#bg-run-bcol');
+      bc.hidden=!s2.border;
+      r3.innerHTML='';
       if(s2.border){
-        var r3=menuRow(menu,'bg-sw');
-        ['#39a9c0','#ff6b57','#f0a848','#46a892','#16202b','#ffffff']
-          .forEach(function(c){
+        BG_BORDER_COLS.forEach(function(pr){
+          var c=pr[0];
           var b=document.createElement('button');
-          b.className='sh-opt bg-chip';b.title='Border colour';
+          b.className='sh-opt bg-chip';b.title=pr[1];   /* T479: its name */
           b.style.background=c;
           b.setAttribute('aria-pressed',(s2.border.c===c).toString());
           b.addEventListener('click',function(e){e.stopPropagation();
@@ -76383,8 +77103,29 @@ window.JunoPptx = (function () {
           r3.appendChild(b);
         });
       }
+      /* the door wears this slide's answer */
+      var g=r1.closest('.rbn-grp')||$('.rbn-grp.rbn-slide');
+      if(g){
+        var name='Auto';
+        PAGE_BGS.forEach(function(q){if(q[0]===s2.bg) name=q[1];});
+        if(s2.bg&&name==='Auto') name='Custom';
+        var bw=(s2.border&&s2.border.w)||0;
+        g.setAttribute('data-say',name+(bw?' \u00b7 border':''));
+      }
     }
-    wired.btn.addEventListener('click',function(){build();});
+    build();
+  }
+  (function(){
+    var push=$('#bg-push');
+    if(push) push.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s2=pres.slides[cur]||{};
+      var use=s2.bg||tokens().c.page||'';
+      if(use) setToken('c','page',use);
+      (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
+      markDirty();applyPageBg();applyZoom();renderSlide();
+      toast('Every slide now uses the one background');
+    });
   })();
   window.SemDeckPptx=exportDeckPptx;   /* test hook */
   menuAction('#mi-pptx',function(){exportDeckPptx();});
@@ -76643,8 +77384,31 @@ window.JunoPptx = (function () {
     }
   })();
   menuAction('#mi-discard',function(){
+    /* T483: DISCARD GOES BACK TO THE SAVED COPY. A deck kept in a file
+       is re-read from it; a deck with no saved copy at all was simply
+       deleted and replaced with the notebook's own deck, with no
+       question asked (2026-09-15 review) -- it asks now. */
+    var nm=pres.name||'untitled';
+    if(saveTarget==='file'&&fileHandle&&fileHandle.getFile){
+      fileHandle.getFile().then(function(f){return f.text();}).then(function(txt){
+        var obj=parseDeckText(txt);
+        var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+          :(obj&&Array.isArray(obj.slides))?[obj]:[];
+        var hit=list.filter(function(p){return p&&(p.name||'')===nm;})[0]||list[0];
+        if(!hit){toast('The file has no copy of \u201c'+nm+'\u201d to go back to');return;}
+        cancelDraftWrite();draftDel(nm);
+        var np=normPres(hit);np.name=nm;loadPresentationObj(np);
+        cur=0;activePane=-1;status();refresh();
+        toast('Back to \u201c'+nm+'\u201d as saved in '+(fileName||'the file'));
+      }).catch(function(){toast('Could not read '+(fileName||'the file'));});
+      return;
+    }
+    if(!savedByName(nm)){
+      if(!window.confirm('\u201c'+nm+'\u201d has no saved copy to go back '
+        +'to \u2014 OK deletes it from this browser.')) return;
+    }
     cancelDraftWrite();   /* a pending write would resurrect the discard */
-    draftDel(pres.name||'untitled');
+    draftDel(nm);
     loadPresentation(pres.name);
     cur=0;activePane=-1;
     status();
@@ -76943,6 +77707,9 @@ window.JunoPptx = (function () {
     }).catch(function(){return moveOrSay();});
   }
   menuAction('#mi-del',function(){
+    /* T483: the same question the library asks before it deletes */
+    if(!window.confirm('Delete \u201c'+pres.name+'\u201d?\n\nThis cannot '
+      +'be undone.')) return;
     deletePresByName(pres.name);
   });
 
@@ -77321,6 +78088,9 @@ window.JunoPptx = (function () {
       if(bf) bf.addEventListener('click',function(){setMode('fmt');});
     })();
     function open(){
+      /* T482: on the overlay owner's stack, so a top-bar menu closes it
+         rather than opening underneath it (2026-09-15 review) */
+      if(typeof overlayShow==='function') overlayShow($('#qat-find'),pop);
       pop.hidden=false;
       /* a re-open re-reads the selection: the whole find half is
          seeded by example, and a stale example is worse than none */
@@ -77330,7 +78100,9 @@ window.JunoPptx = (function () {
       qi.focus();qi.select();
       scan();
     }
-    function close(){pop.hidden=true;at=-1;}
+    function close(){
+      if(typeof overlayHide==='function') overlayHide(pop);
+      pop.hidden=true;at=-1;}
     [qi,ri].forEach(function(el){
       el.addEventListener('keydown',function(e){
         e.stopPropagation();
