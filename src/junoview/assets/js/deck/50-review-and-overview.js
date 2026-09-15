@@ -1875,9 +1875,11 @@
              helpers name a version the same way here. */
           var lab=(typeof histLabel==='function')?histLabel(v)
             :(v.nm||v.why||'version');
-          var kind=(v.nm&&v.why)?v.why:'';
+          /* T484: the right-hand word is WHY (opened / saved /
+             checkpoint); an unnamed version printed its time twice */
+          var kind=v.why||'';
           var r=row('',bic('history'),lab,
-            kind||((typeof histClock==='function'&&v.at)?histClock(v.at):''),
+            kind||((typeof histClock==='function'&&v.at&&v.nm)?histClock(v.at):''),
             'Open the history on this version',function(){
               if(!barDocked()) closeDeckPresentationDrawer();
               if(typeof openHistory==='function') openHistory(v.id||'');

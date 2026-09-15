@@ -3352,7 +3352,7 @@
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
      text:'The Choose buttons under each filter pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
-    {sel:'.rail .nav',title:'The sidebar',
+    {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
      text:'A key at the top; collapse or hide a whole section (also from its '
        +'heading in the document), and an eye beside every cell to hide just '
        +'that one — hidden things stay here so you can bring them back.'},
@@ -3360,21 +3360,39 @@
      text:'Plot trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    {sel:'#pr-docs,.presrail,#presrail',title:'Build presentations',
-     text:'The left rail holds presentations. Lay out slides, drop in cards '
-       +'from any open notebook, and present full screen.'},
+    {sel:'#pr-docs,#pr-newbtn',title:'Build presentations',
+     text:'Presentations you have open are listed here; New and All '
+       +'presentations\u2026 are below. Lay out slides, drop in cards from '
+       +'any open notebook, and present full screen.'},
     {sel:'#help-btn',title:'Help & support',
      text:'Full docs live here. If Junoview helps you, Support funds a '
        +'hosted version with accounts — thank you!'}
   ];
   var tourI=0;
-  function tourRect(step){
+  function tourEl(step){
     if(!step.sel) return null;
-    var el=$(step.sel);
-    if(!el||el.hidden||el.offsetParent===null) return null;
-    var r=el.getBoundingClientRect();
-    if(r.width===0&&r.height===0) return null;
-    return r;
+    /* T484: the FIRST selector that names something visible, not the
+       first in document order -- "#pr-docs,.presrail" resolved to the
+       fixed rail (offsetParent null) and the step was skipped */
+    var out=null;
+    step.sel.split(',').forEach(function(s){
+      if(out) return;
+      var el=$(s.trim());
+      if(!el||el.hidden) return;
+      var r=el.getBoundingClientRect();
+      if(r.width===0&&r.height===0) return;
+      out=el;
+    });
+    return out;
+  }
+  function tourRect(step){
+    var el=tourEl(step);
+    return el?el.getBoundingClientRect():null;
+  }
+  /* T484: only the steps that will show are counted, so the counter
+     never jumps 4 -> 6 -> 8 */
+  function tourVisible(){
+    return TOUR_STEPS.filter(function(st){return !st.sel||tourRect(st);});
   }
   function tourShow(i){
     var steps=TOUR_STEPS,dir=(i>=tourI)?1:-1;
@@ -3388,12 +3406,22 @@
     var step=steps[i],tour=$('#tour'),hole=$('#tour-hole'),tip=$('#tour-tip');
     if(!tour) return;
     tour.hidden=false;
-    $('#tour-step').textContent=(i+1)+' / '+steps.length;
+    /* T484: a target below the fold is scrolled into view before it is
+       measured -- step 6 drew its spotlight 3000px under the viewport */
+    var tel=tourEl(step);
+    if(tel){
+      var tr=tel.getBoundingClientRect();
+      if(tr.top<0||tr.bottom>window.innerHeight){
+        try{tel.scrollIntoView({block:'center'});}catch(err){}
+      }
+    }
+    var shown=tourVisible();
+    $('#tour-step').textContent=(shown.indexOf(step)+1)+' / '+shown.length;
     $('#tour-title').textContent=step.title;
     $('#tour-text').textContent=step.text;
     var back=$('#tour-back'),next=$('#tour-next');
     if(back) back.style.visibility=i>0?'visible':'hidden';
-    if(next) next.textContent=(i===steps.length-1)?'Done':'Next';
+    if(next) next.textContent=(shown.indexOf(step)===shown.length-1)?'Done':'Next';
     var r=tourRect(step);
     var tw=Math.min(400,window.innerWidth*0.90),th=tip.offsetHeight||170;
     if(r){

@@ -9275,3 +9275,22 @@ any reading. The rest are T466 onwards.
   elements never matched — fixed and pinned by a fixture), knew none of
   the four brace/bracket shapes this editor's own writer emits, and
   reported the writer's own "push" as a lost transition.
+- [x] **T484 — The frame, after the second review pass.** The Familiar
+  ribbon and Everyday first layouts swallowed every control added since
+  T139 — about seventy atoms — into their catch-all group (Slides, and
+  Workspace), which folded into one door whose popover opened 3112px
+  wide in a 1300px window with 58 controls off the right edge. A
+  folded door's popover is never wider than the window now and its row
+  wraps; and each layout's strays land in an "Everything else" group of
+  their own (placing them in named groups would break the rule that
+  every layout places exactly the same controls — a taxonomy pass for
+  another day). The open-items bar's version
+  rows printed an unnamed version's time twice — the right-hand word is
+  why it exists. The welcome tour drew step 6's spotlight 3000px below
+  the viewport and skipped steps 5 and 7 (a selector list resolved in
+  document order to the fixed rail, whose offsetParent is null) — a
+  target is scrolled into view, the first VISIBLE selector wins, and
+  the counter counts the steps that will show. The Home screen's
+  "Recent presentations" heading wrapped under its buttons — it keeps
+  to one line. Driven at 1300 with the Familiar ribbon: the rest door
+  opens a 1007px popover inside the window.

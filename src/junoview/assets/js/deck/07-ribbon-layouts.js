@@ -647,7 +647,10 @@
      selTab:'home',
      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},{id:'design',label:'Design'},{id:'animate',label:'Animate'}],
      groups:[
-      {id:'of-slides',label:'Slides',tab:'home',rest:1,
+      /* T484: the strays used to land HERE, as the catch-all -- seventy
+         atoms folded into one "Slides" door (2026-09-15 review). They
+         have a group of their own at the end of Home now. */
+      {id:'of-slides',label:'Slides',tab:'home',
        items:['hm-newslide','hm-dupslide','hm-version','hm-main','hm-laywrap','hm-match',
          'hm-delslide']},
       {id:'of-font',label:'Font',tab:'home',
@@ -696,6 +699,7 @@
        items:['anim-stagger','anim-together']},
       {id:'of-time',label:'Animations',tab:'animate',
        items:['vw-anim','anim-clear']},
+      {id:'of-rest',label:'Everything else',tab:'home',rest:1,items:[]},
      ]},
     {id:'scope-deck-slide-object',
      name:'Deck, slide, object',
@@ -858,9 +862,11 @@
          'hm-match']},
       {id:'day-maths',label:'Other inserts',tab:'more',
        items:['dc-maths','dc-md','dc-draw']},
-      {id:'day-workspace',label:'Workspace',tab:'more',rest:1,
+      {id:'day-workspace',label:'Workspace',tab:'more',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-check','objects-btn','vw-morewrap']},
+      /* T484: the strays in a group of their own, not in Workspace */
+      {id:'day-rest',label:'Everything else',tab:'more',rest:1,items:[]},
      ]},
     {id:'journey-poster-first',
      name:'Poster first',

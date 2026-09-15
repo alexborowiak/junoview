@@ -1844,8 +1844,13 @@ body.light .img-row{color:var(--ink-2);}
 /* T187: a FOLDED group is one worded door over a popover holding its
    row -- the real controls, moved, never copied. The popover lays the
    row out exactly as the ribbon does. */
-.sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;}
-.rbn-foldmenu .rbn-row{height:auto;}
+.sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;
+  /* T484: never wider than the window -- a rest group of seventy atoms
+     opened a popover 3112px wide in a 1300px window with 58 controls
+     off the right edge (2026-09-15 review); the row wraps instead */
+  max-width:calc(100vw - 16px);box-sizing:border-box;}
+.rbn-foldmenu .rbn-row{height:auto;display:flex;flex-wrap:wrap;
+  align-items:center;gap:var(--rbn-row-gap) var(--rbn-col-gap);}
 .rbn-grp.rbn-folded>.rbn-foldwrap{display:flex;height:var(--rbn-band);
   align-items:center;}
 /* T188: the text strip. A specimen "Aa" over the type's name; the strip

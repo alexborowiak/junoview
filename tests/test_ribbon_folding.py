@@ -58,7 +58,9 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
         assert f"&&!g.classList.contains({never})" in out, never
     # a layout moves atoms out of rows; nothing may be folded meanwhile
     assert "if(typeof rbnUnfoldAll==='function') rbnUnfoldAll();" in out
-    assert ".sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;}" in out
+    # T484: the popover is never wider than the window
+    assert ".sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;" in out
+    assert "  max-width:calc(100vw - 16px);box-sizing:border-box;}" in out
 
 
 def test_insert_is_tiles_a_named_cell_and_a_drawing_group(out):

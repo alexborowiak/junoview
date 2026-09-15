@@ -390,3 +390,22 @@ def test_saving_and_export_after_the_second_pass(out):
     assert "          :figSubst(_pg.t,a,note.figs);" in out
     assert "        flipForce=ent.f;   /* T483: the page this output slide" in out
     assert "    if(note.md) lost.push(note.md+' Markdown box'" in out
+
+
+def test_the_frame_after_the_second_pass(out):
+    """T484 (2026-09-15, the second review pass)."""
+    # a folded door's popover fits the window and its row wraps
+    assert "  max-width:calc(100vw - 16px);box-sizing:border-box;}" in out
+    assert ".rbn-foldmenu .rbn-row{height:auto;display:flex;flex-wrap:wrap;" in out
+    # the strays of a layout have a group of their own
+    assert "      {id:'of-rest',label:'Everything else',tab:'home',rest:1," in out
+    assert "      {id:'day-rest',label:'Everything else',tab:'more',rest:1," in out
+    assert "      {id:'of-slides',label:'Slides',tab:'home',\n" in out
+    # a version row says why it exists, once
+    assert "          var kind=v.why||'';" in out
+    # the tour scrolls to its target, picks the visible selector, counts
+    # the steps it will show
+    assert "  function tourEl(step){" in out
+    assert "  function tourVisible(){" in out
+    assert "        try{tel.scrollIntoView({block:'center'});}catch(err){}" in out
+    assert "    {sel:'#pr-docs,#pr-newbtn',title:'Build presentations'," in out

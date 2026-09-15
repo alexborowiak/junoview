@@ -1994,8 +1994,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T481 (2026-09-15): selection and the Object tab after the second pass.
 # T482 (2026-09-15): overlays and Escape after the second pass.
 # T483 (2026-09-15): saving and export after the second pass.
-EXPECTED_MD5 = "ec711cb73e1a9847306ee051d6f42d8a"
-EXPECTED_BYTES = 4435127
+# T484 (2026-09-15): the frame after the second pass -- the layouts'
+# rest groups, the fold popover's width, the tour, the version rows.
+EXPECTED_MD5 = "fffdef03054399a4b61b2420db3d46ea"
+EXPECTED_BYTES = 4437179
 
 
 def _render_example() -> str:
