@@ -61,7 +61,7 @@ def test_notes_and_timing_are_two_buttons(out):
     # T465: Timing opens the pane's own Timing tab, not whole-talk notes
     assert ("            var want=(p[0]==='pr-timing')?'time':'slide';"
             "   /* T465 */") in out
-    assert '<button class="np-tab" data-np="time">Timing</button>' in out
+    assert 'class="anim-tab np-tab" data-np="time"' in out   # T470
     assert '<div class="selpane-list" id="notespane-time" hidden>' in out
     # the pane's tabs are what they land on, and they still exist
     for np in ("slide", "deck", "pad", "reh"):

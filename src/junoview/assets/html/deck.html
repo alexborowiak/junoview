@@ -71,15 +71,18 @@
          remembered, with the sections you want in it. -->
     <div class="deck-pres-drawer-head"><span>Open now</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="deck-pres-dock" type="button"
-        aria-haspopup="true" aria-expanded="false"
-        aria-label="Where this bar sits, and what it lists"
+      <!-- T470: a chooser is a door that shows the CURRENT choice --
+           this one was a glyph that read the same as a pop-up, a rail
+           and a strip (2026-09-15 review); barApply writes its words -->
+      <button class="dbtn deck-pres-dockbtn" id="deck-pres-dock"
+        type="button" aria-haspopup="true" aria-expanded="false"
         title="Where this bar sits, and what it lists"
-        ><i data-ic="dockright"></i></button>
+        ><i data-ic="objects"></i> <span id="deck-pres-dock-say"
+        >Pop-up</span>&nbsp;&#9662;</button>
       <button class="dbtn dc-icon" id="deck-pres-close" type="button"
         aria-label="Close this bar"
-        title="Close it. The chevron beside Home opens it again, and it
- slides out when you reach the left edge"><i data-ic="exit"></i></button>
+        title="Close it. The chevron beside Home opens it again"
+        ><i data-ic="exit"></i></button>
     </div>
     <div class="deck-pres-list" id="deck-pres-list"></div>
     <div class="deck-pres-doors">
@@ -1545,7 +1548,7 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop rbn-tall" id="dsg-stylewrap">
                 <button class="fx-tile big-tile" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
-                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><i data-ic="styles"></i><span>Text
+                  title="The named kinds of text this deck uses — Title, Heading, Body, Caption, your own — and what each looks like. Change one and every box of that kind follows"><i data-ic="styles"></i><span>Text
                   styles &#9662;</span></button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
                   hidden>
@@ -3023,12 +3026,25 @@ items snap to both. Guides, not ink: never printed or exported"
              of the timing fields its tooltip promised (2026-09-15
              review). The target, the rehearsal readout, the running
              total and the talk's length are a tab of their own now. -->
-        <div class="np-tabs" id="np-tabs">
-          <button class="np-tab on" data-np="slide">This slide</button>
-          <button class="np-tab" data-np="time">Timing</button>
-          <button class="np-tab" data-np="deck">Whole talk</button>
-          <button class="np-tab" data-np="pad">Scratchpad</button>
-          <button class="np-tab" data-np="reh">Rehearsals</button>
+        <!-- T470: the Animation pane's tab grammar (role=tab,
+             aria-selected, the underline), not a second one -->
+        <div class="anim-tabs np-tabs" id="np-tabs" role="tablist"
+          aria-label="Notes pane">
+          <button class="anim-tab np-tab" data-np="slide" type="button"
+            role="tab" aria-selected="true" aria-controls="notespane-body"
+            title="What you want to say on this slide">Slide</button>
+          <button class="anim-tab np-tab" data-np="time" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-time"
+            title="How long this slide and the talk should take">Timing</button>
+          <button class="anim-tab np-tab" data-np="deck" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-deck"
+            title="Notes about the whole talk">Talk</button>
+          <button class="anim-tab np-tab" data-np="pad" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-pad"
+            title="Loose notes, in folders, attached to no slide">Scratchpad</button>
+          <button class="anim-tab np-tab" data-np="reh" type="button"
+            role="tab" aria-selected="false" aria-controls="notespane-reh"
+            title="Every run of this talk, and how long each took">Rehearsals</button>
         </div>
         <div class="selpane-list" id="notespane-body">
           <label class="np-lab" for="np-notes">Speaker notes for this

@@ -1446,6 +1446,7 @@
         var r=(auto&&auto.checked)?autoStyleDeck(t.id)
           :{named:0,styled:applyStyleSet(t.id),set:t};
         markDirty();refresh();build();
+        if(onClose) onClose();   /* T470: the screen underneath follows */
         var msg='“'+t.label+'” applied';
         if(r&&r.named) msg+=' — '+r.named+' box'+(r.named===1?'':'es')
           +' were named from their size first';
@@ -1513,6 +1514,7 @@
       c.addEventListener('click',function(){
         var n=applyColourTheme(t.id);
         markDirty();refresh();build();
+        if(onClose) onClose();   /* T470 */
         toast('\u201c'+t.label+'\u201d colours applied'
           +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
             +'undoes it.':' \u2014 the page and the deck\u2019s colours '
@@ -1537,15 +1539,39 @@
       }
       var w=$('#ss-what'),n=unstyledCount();
       if(w) w.textContent=n
-        ? (n+' text box'+(n===1?'':'es')+' on this deck wear no named '
-          +'style. Picking a set below will name them from their size and '
-          +'then style them.')
+        ? (n+' text box'+(n===1?' on this deck wears':'es on this deck wear')
+          +' no named style. Picking a set below will name '
+          +(n===1?'it':'them')+' from '+(n===1?'its':'their')
+          +' size and then style '+(n===1?'it':'them')+'.')
         : 'Everything here already wears a named style, so a set restyles '
           +'it straight away.';
       var aw=$('#ss-autowrap'); if(aw) aw.hidden=!n;
     }
-    function open(){build();dlg.hidden=false;}
-    function close(){dlg.hidden=true;}
+    /* T470: THE CARD YOU JUST MADE IS THE ONE YOU CANNOT SEE. Your own
+       sets go last in a band that scrolls, so the one you just saved
+       landed under the fold with a toast saying it was there
+       (2026-09-15 review). Bring it into view and light it for a
+       moment, so "saved" is something you watched happen. */
+    function showSaved(g){
+      var c=g&&g.lastElementChild; if(!c) return;
+      try{c.scrollIntoView({block:'nearest'});}catch(err){}
+      c.classList.add('ss-new');
+      setTimeout(function(){c.classList.remove('ss-new');},1600);
+    }
+    /* T470: opened from the Style system it sits OVER that screen
+       (.over-design) and tells it when it closes, so the screen can
+       redraw wearing the set that was picked */
+    var onClose=null;
+    function open(cb){
+      onClose=(typeof cb==='function')?cb:null;
+      dlg.classList.toggle('over-design',!!onClose);
+      build();dlg.hidden=false;
+    }
+    function close(){
+      dlg.hidden=true;dlg.classList.remove('over-design');
+      var cb=onClose;onClose=null;
+      if(cb) cb();
+    }
     $('#ss-close').addEventListener('click',close);
     $('#ss-cancel').addEventListener('click',close);
     dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
@@ -1580,6 +1606,7 @@
         tokens:deep(tokens())});
       saveMyStyleSets(list);
       build();
+      showSaved($('#ss-grid'));
       toast('“'+nm+'” saved — it is offered on every deck you open here');
     });
     var cs=$('#ss-csave');
@@ -1590,6 +1617,7 @@
       nm=nm.trim(); if(!nm) return;
       saveColourTheme(nm);
       build();
+      showSaved($('#ss-cgrid'));
       toast('\u201c'+nm+'\u201d saved \u2014 it is offered on every deck '
         +'you open here');
     });

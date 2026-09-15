@@ -73,7 +73,9 @@ def test_the_board_shows_the_real_boxes_not_only_the_master(out):
     assert "  function dgGhostsFor(board,id){" in out
     assert "        var mine=(a.k==='text'&&a.style===id);" in out
     assert "        if(!mine&&!dgShowOthers) return;" in out
-    assert "createTextNode(' Show everything else')" in out
+    # T470: the same boxed switch as the sheet column's Outlines
+    assert "ck.className='dbtn dg-b dg-keyck';" in out
+    assert "' Everything else off'" in out
     assert "  function dgKeyList(key,id){" in out
     assert "  function dgBoardWords(b,a,def){" in out
     assert "    t.style.fontSize=size.toFixed(2)+'cqh';" in out

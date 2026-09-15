@@ -548,7 +548,8 @@ def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):
     assert 'id="deck-pres-browse"' in out
     assert 'id="deck-pres-recent"' in out
     assert 'id="deck-pres-dock"' in out
-    assert "      if(barDocked()){barSet('dock','pop');return;}" in out
+    # T470: the X closes -- a docked bar goes back to a pop-up and shuts
+    assert "      if(barDocked()) barSet('dock','pop');" in out
     assert "function notePresentationOpen(name){" in out
     assert "var sessionPresentationNames" not in out
     assert "function sessionPresentationRows" not in out

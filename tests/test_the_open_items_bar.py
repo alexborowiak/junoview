@@ -55,14 +55,19 @@ def test_a_docked_bar_is_a_track_of_the_decks_own_grid(out):
 def test_a_docked_bar_does_not_close_under_you(out):
     """"open it all the time" -- so the pointer leaving it, or the
     library dialog tidying up, must not hide a rail the layout has
-    made room for. The X un-docks instead."""
+    made room for. The X (T470) un-docks AND closes: an X that left the
+    bar open over the thumbnails under "Close this bar" was the
+    review's finding."""
     assert "  function closeDeckPresentationDrawer(force){" in out
     assert "    if(barDocked()&&!force) return;" in out
     # the edge peek stands down entirely
     assert "      if(barDocked()) return;" in out
-    # ...and the head's X goes back to a pop-up rather than hiding
-    assert "      if(barDocked()){barSet('dock','pop');return;}" in out
+    # ...and the head's X goes back to a pop-up, then shuts it
+    assert "      if(barDocked()) barSet('dock','pop');" in out
     assert "      closeDeckPresentationDrawer(true);" in out
+    # T470: the placement door wears the current choice
+    assert "  var BAR_DOCK_WORDS={pop:['objects','Pop-up','a pop-up']," in out
+    assert 'id="deck-pres-dock-say"' in out
 
 
 def test_the_bar_lists_three_kinds_and_you_choose_which(out):

@@ -1965,8 +1965,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the code trail's way up is a pill; the style editors say Text / Fill
 # / Border; the light theme's warning reads; a door over disabled tiles
 # is disabled and says "select something"; the Talk panel's words.
-EXPECTED_MD5 = "3450b57ff8de7adbb9b34268e179e850"
-EXPECTED_BYTES = 4354034
+# T470 (2026-09-15): the review's sixth batch -- a saved style set
+# scrolls into view and lights; the open-items bar's placement door
+# wears the choice and its X closes; Style sets opens over the Style
+# system; the board's "everything else" is a boxed switch; the screen
+# has an empty state; the count row's note has its own line; the Notes
+# pane's tabs wear the Animation pane's tab grammar; a flip book's pick
+# returns to the tab it left; the Text styles door and its dead rows on
+# a fresh deck; the side rail's strips wrap; "wears".
+EXPECTED_MD5 = "47d2b39baef73d143bc361db8c152c7d"
+EXPECTED_BYTES = 4362035
 
 
 def _render_example() -> str:

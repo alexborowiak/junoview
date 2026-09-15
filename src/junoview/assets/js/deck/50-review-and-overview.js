@@ -1666,8 +1666,21 @@
     if(c.dock!=='pop'&&d.hidden){d.hidden=false;renderDeckPresentationDrawer();}
     drawerDoors().forEach(function(b){
       b.setAttribute('aria-expanded',(!d.hidden).toString());});
+    /* T470: the door wears the choice -- its icon and its word are the
+       menu's own row for where the bar is now */
+    var db=$('#deck-pres-dock');
+    if(db){
+      var w=BAR_DOCK_WORDS[c.dock]||BAR_DOCK_WORDS.pop;
+      db.innerHTML=bic(w[0])+' <span id="deck-pres-dock-say">'+w[1]
+        +'</span>\u00a0\u25be';
+      db.title='This bar is '+w[2]+'. Where it sits, and what it lists';
+      db.setAttribute('aria-label',db.title);
+    }
     if(typeof applyZoom==='function') applyZoom();
   }
+  var BAR_DOCK_WORDS={pop:['objects','Pop-up','a pop-up'],
+    left:['dockright','Rail','a rail down the left'],
+    top:['docktop','Strip','a strip across the top']};
   /* ---- A COPY OF A PRESENTATION (T448) --------------------------------
      "you can't duplicate a presentation". One deep copy under a free
      name, into the draft store, open beside the original. */
@@ -1956,10 +1969,15 @@
       if(!barDocked()) closeDeckPresentationDrawer();
       newPresentation();
     });
+    /* T470: AN X CLOSES. On a docked bar it un-docked and left the
+       bar open as a pop-up over the thumbnails, under a label that
+       said "Close this bar" (2026-09-15 review). It closes: the bar
+       goes back to a pop-up, which is the only kind that can be shut,
+       and shuts. The door beside it is how you dock it again. */
     var dclose=$('#deck-pres-close');
     if(dclose) dclose.addEventListener('click',function(e){
       e.stopPropagation();
-      if(barDocked()){barSet('dock','pop');return;}
+      if(barDocked()) barSet('dock','pop');
       closeDeckPresentationDrawer(true);
     });
     barApply();
@@ -2520,6 +2538,9 @@
   function dgKey(e){
     if(!$('#deck-design')) return;
     if(e.key==='Escape'){
+      /* T470: the Style sets picker may be open over this screen; its
+         Escape is its own */
+      var sd=$('#ss-dlg'); if(sd&&!sd.hidden) return;
       e.preventDefault();e.stopPropagation();dgClose();}
   }
   function dgSpecimen(el,id){
@@ -2578,6 +2599,9 @@
     ['table','Tables','table'],['flip','Flip books','flipbook'],
     ['arrow','Arrows and lines','arrow']];
   function dgIsObj(){return /^obj:/.test(dgSel);}
+  function dgAnyStyleWorn(){
+    return styleOrder().some(function(id){return dgWearers(id).length>0;});
+  }
   function dgObjKind(){return dgSel.slice(4);}
   function dgKindLabel(){
     if(!dgIsObj()){
@@ -3238,10 +3262,15 @@
       any=true;
       var d=styleDef(id)||{label:id};
       var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});
-      var row=cntRow(list.length,(d.label||id)
-        +(odd.length?(' \u2014 '+odd.length+' changed by hand'):''),
-        odd.length?' dg-cnt-odd':'');
+      var row=cntRow(list.length,d.label||id,odd.length?' dg-cnt-odd':'');
       if(odd.length){
+        /* T470: the note on its own line, like the button under it --
+           on one line with the name it was the note that got cut
+           ("Heading 1 -- 1 changed by…", 2026-09-15 review) */
+        var note=document.createElement('span');
+        note.className='dg-cnt-note';
+        note.textContent=odd.length+' changed by hand';
+        row.appendChild(note);
         var b=document.createElement('button');
         b.type='button';b.className='dbtn dg-cnt-fix';
         b.textContent='Match '+odd.length;
@@ -3404,6 +3433,9 @@
          it. The one it is showing stays, whatever its count, or
          choosing an empty kind would make its own row vanish. */
       if(!n2&&key!==dgSel) return;
+      /* T470: the head says "else" -- with no text styles above it
+         there is no else, and with no rows under it there is nothing */
+      if(!n2&&!dgAnyStyleWorn()) return;
       if(!hd){
         hd=document.createElement('div');
         hd.className='hd-lab';hd.textContent='everything else';
@@ -3718,16 +3750,24 @@
     board.addEventListener('mouseleave',function(){bub.hidden=true;});
     /* the key, and the switch that turns the rest of the page on */
     var key=document.createElement('div');key.className='dg-key';
-    var ck=document.createElement('label');ck.className='dg-keyck';
-    var box=document.createElement('input');box.type='checkbox';
-    box.checked=dgShowOthers;
-    box.addEventListener('change',function(){
-      dgShowOthers=box.checked;
+    /* T470: the same switch as the sheet column's Outlines, in the
+       same shape -- it was a bare checkbox beside a boxed button on
+       one screen (2026-09-15 review) */
+    var ck=document.createElement('button');
+    ck.type='button';ck.className='dbtn dg-b dg-keyck';
+    function ckPaint(){
+      ck.setAttribute('aria-pressed',dgShowOthers?'true':'false');
+      ck.innerHTML=bic('eye')+(dgShowOthers?' Everything else on'
+        :' Everything else off');
+    }
+    ckPaint();
+    ck.addEventListener('click',function(e){
+      e.stopPropagation();
+      dgShowOthers=!dgShowOthers;
+      ckPaint();
       dgGhostsFor(board,id);
       dgKeyList(key,id);
     });
-    ck.appendChild(box);
-    ck.appendChild(document.createTextNode(' Show everything else'));
     ck.title='Draw every other object on these slides too';
     key.appendChild(ck);
     dgKeyList(key,id);
@@ -3751,6 +3791,17 @@
     var id=dgSel,d=styleDef(id);
     /* T224: an object kind has no look to edit -- it has a table */
     if(dgIsObj()){
+      /* T470: a deck with nothing to standardise said "Pictures --
+         every one in this deck" over an empty table and three dead
+         buttons, with no line saying what the screen is for
+         (2026-09-15 review) */
+      if(!dgRows().length&&!dgAnyStyleWorn()){
+        body.innerHTML='<div class="selpane-empty">Nothing to '
+          +'standardise yet. Add text and its styles are listed here; '
+          +'pictures, tables, shapes and the rest get a table each, so '
+          +'the ones that should match can be made to.</div>';
+        return;
+      }
       dgSectionHead(body,dgKindLabel()+' \u2014 every one in this deck');
       dgTable(body,ov);
       dgSheet(body,ov);
@@ -4074,11 +4125,19 @@
        instant -- the standing overlay rule, applied where it was
        missing: Check consistency opened the check and closed it in
        one click, so the Style system had no working door to it. */
+    /* T470: ...AND THE SCREEN STAYS. It closed itself first, because
+       the picker sits at a lower z-index than the screen -- so picking
+       a set threw you out of the Style system and Close on the picker
+       left you in the editor, not back where you were (2026-09-15
+       review). The picker opens ABOVE the screen instead, and the
+       screen redraws when it closes, wearing what was picked. */
     ov.querySelector('#dg-sets').addEventListener('click',function(e){
       e.stopPropagation();
-      dgClose();
-      var sb=$('#dsg-sets');
-      if(sb) sb.click();
+      if(typeof window.SemDeckStyleSets==='function')
+        window.SemDeckStyleSets(function(){
+          var o2=$('#deck-design');
+          if(o2){dgRail(o2);dgBody(o2);}
+        });
     });
     ov.querySelector('#dg-check').addEventListener('click',function(e){
       /* the drift CHECK stays where it is: this surface says what the

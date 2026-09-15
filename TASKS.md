@@ -8981,3 +8981,35 @@ any reading. The rest are T466 onwards.
   "Play with talk settings…"). One trap on the way: a readout that
   writes `disabled` inside an observer that watches `disabled` must
   write only on change, or the page hangs. Driven at 1500.
+- [x] **T470 — The review's sixth batch: eleven doors that were nearly
+  right.** The style set you had just saved landed under the fold of
+  the picker's scroll box with an 8.5px "yours" chip (it scrolls into
+  view and lights for a moment; the chip is 10px); the open-items
+  bar's placement door was an icon-only glyph that read the same as a
+  pop-up, a rail and a strip (it wears the choice: "Pop-up ▾", "Rail
+  ▾", "Strip ▾"), and its X on a docked bar un-docked and left the bar
+  open over the thumbnails under a label that said "Close" (it
+  closes); "Style sets…" from the Style system closed the screen first
+  and the picker's Close left you in the editor (the picker opens
+  above the screen, which redraws wearing what was picked; Escape in
+  the picker is the picker's); the board's "Show everything else" was
+  a bare checkbox beside the sheet column's boxed Outlines button (the
+  same boxed switch); a deck with nothing to standardise opened the
+  screen on "Pictures — every one in this deck" over an empty table
+  and a rail head reading "everything else" (one line saying what the
+  screen is for); the count row's note was the part that got cut
+  ("Heading 1 — 1 changed by…"; it has a line of its own, like the
+  button under it); the Notes pane's tabs were 9.5px mono text with no
+  tab role beside the Animation pane's 11.5px sans role=tab (one tab
+  grammar per pane shell: Slide / Timing / Talk / Scratchpad /
+  Rehearsals); Done on a flip book's Figures pick with the Pages pane
+  open landed on Home (back on the tab Figures was pressed from); on a
+  fresh deck the Text styles door promised "Title, Heading, Body,
+  Caption" over an empty menu whose Smaller / Bigger / Re-apply
+  toasted "0 boxes followed" (the door says "this deck uses", the
+  empty line says where a style comes from, the three are dead until
+  something wears one); in the side rail the tile strips kept their
+  three- and four-tile widths and Play's four tiles ran under the
+  scrollbar (a frame is the rail's width, its tiles wrap, the tile is
+  54px there); "1 text box wear no named style" (wears). Driven at
+  1500 and on an A1 poster.

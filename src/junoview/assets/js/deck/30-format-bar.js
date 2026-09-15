@@ -29,9 +29,11 @@
       ?('Done — '+pickAdded+' figure'+(pickAdded===1?'':'s'))
       :'Done';
   }
+  var pickTab='';
   function startPick(idx,multi){
     if(typeof idx!=='number') return;
     picking=idx;pickMulti=!!multi;pickAdded=0;
+    pickTab=activeTab();   /* T470: the tab Figures was pressed from */
     rbnGalleryClose();
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
@@ -88,6 +90,14 @@
     var l=stage.querySelector('.annot-layer');
     if(l&&idx>=0) selectAnnot(l,idx);
     if(wasMulti) renderFlipPane();
+    /* T470: BACK ON THE TAB YOU LEFT. With the Pages pane open the
+       selection does not carry the ribbon to Object (the pane holds
+       it), and openDeck's redraw had already dropped it to Home -- so
+       Done on a flip book's Figures pick landed you a tab away from
+       the book (2026-09-15 review). */
+    if(pickTab&&pickTab!==activeTab()&&tabHasContent(pickTab))
+      setTab(pickTab,true);
+    pickTab='';
   }
   document.addEventListener('click',function(e){
     if(picking<0) return;

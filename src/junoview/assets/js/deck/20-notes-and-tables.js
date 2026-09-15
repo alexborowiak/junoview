@@ -331,7 +331,7 @@
     $$('#np-tabs .np-tab').forEach(function(t){
       t.addEventListener('click',function(){
         $$('#np-tabs .np-tab').forEach(function(o){
-          o.classList.toggle('on',o===t);});
+          o.setAttribute('aria-selected',o===t?'true':'false');});   /* T470 */
         var which=t.dataset.np;
         var b1=$('#notespane-body'),b2=$('#notespane-deck'),
             b3=$('#notespane-pad');
@@ -657,9 +657,20 @@
       if(!ids.length){
         var none=document.createElement('div');
         none.className='stm-empty';
-        none.textContent='No named text styles are used yet.';
+        none.textContent='No named text styles are used yet \u2014 a text '
+          +'box gets one from the Text tab, or from a layout.';
         list.appendChild(none);
       }
+      /* T470: Smaller, Bigger and Re-apply act on boxes wearing a
+         style; with none they toasted "0 boxes followed" (2026-09-15
+         review). Dead until there is something to move. */
+      ['#dsg-scale-down','#dsg-scale-up','#dsg-restyle'].forEach(function(s){
+        var b=$(s); if(!b) return;
+        b.disabled=!ids.length;
+        if(!ids.length) b.title='Nothing wears a named style yet';
+        else if(b.dataset.tt) b.title=b.dataset.tt;
+        if(!b.dataset.tt) b.dataset.tt=b.title;
+      });
       ids.forEach(function(id){
         var d=styleDef(id);
         var row=document.createElement('div');row.className='stm-row';
@@ -737,6 +748,7 @@
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
       rst.innerHTML=bic('reset')+' Back to the built-in sizes';
+      rst.disabled=!ids.length&&!pres.styles;   /* T470: nothing to reset */
       /* it clears the OVERRIDES, and it must never touch pres.types:
          "back to the built-in sizes" is not "throw away the types I
          invented" */

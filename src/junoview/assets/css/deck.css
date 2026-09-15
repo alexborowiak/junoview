@@ -3950,6 +3950,20 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .deck.rbn-side .rulers{right:var(--rbn-side-w);}
 .deck.rbn-side .deck-arrow.next{right:calc(var(--rbn-side-w) + 8px);}
 .deck.rbn-side .selpane{right:var(--rbn-side-w);}
+/* T470: A STRIP IS AS WIDE AS THE RAIL. The frames keep their
+   horizontal widths -- three or four tiles -- which is wider than the
+   rail's column, so the Airy tile ran under the scrollbar with its
+   right edge cut (2026-09-15 review). In the rail a frame is the
+   column's width and its tiles wrap inside it; the arrows still step
+   whole rows. */
+.deck.rbn-side .strip-frame{width:100%;flex:1 0 100%;box-sizing:border-box;}
+.deck.rbn-side .strip-frame>.fx-strip.fx-strip,
+.deck.rbn-side .strip-frame>#anim-by-strip{width:auto;max-width:none;
+  flex:1 1 auto;min-width:0;}
+.deck.rbn-side{--rbn-tile-w:54px;}
+/* ...and a bare strip (Play's four tiles) wraps in the rail too, rather
+   than running its last tile under the scrollbar */
+.deck.rbn-side .rbn-row>.fx-strip{flex-wrap:wrap;width:100%;height:auto;}
 
 /* ---------- full-screen EDITING (not presenting) ---------- */
 /* Present hides every tool, which is wrong for a poster: there is no
@@ -4536,8 +4550,12 @@ body.light .ar-row:hover,body.light .ar-srow:hover{
 .ss-name{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--accent);display:flex;
   align-items:center;gap:6px;}
-.ss-mine{font-size:8.5px;letter-spacing:.08em;padding:1px 5px;
+.ss-mine{font-size:10px;letter-spacing:.06em;padding:1px 6px;
   border-radius:8px;background:#ffffff14;color:var(--chrome-ink-2);}
+/* T470: the card just saved, lit for a moment */
+.ss-card.ss-new{border-color:var(--accent,var(--cyan));
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent);
+  transition:box-shadow .5s,border-color .5s;}
 .ss-spec{display:flex;flex-direction:column;gap:3px;min-height:82px;
   overflow:hidden;}
 .ss-line{line-height:1.2;overflow:hidden;text-overflow:ellipsis;
@@ -5072,6 +5090,9 @@ body.light .eq-box{background:var(--chrome-2);
 .aa-dlg{position:fixed;inset:0;z-index:260;display:flex;
   align-items:center;justify-content:center;background:var(--overlay);}
 .aa-dlg[hidden]{display:none!important;}
+/* T470: the Style sets picker opened from the Style system sits over
+   that screen (z-index 400), not under it */
+.aa-dlg.over-design{z-index:410;}
 .aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:9px;padding:12px 13px 11px;
   background:var(--chrome-2);border:1px solid var(--chrome-line);
@@ -5230,12 +5251,12 @@ body.light .np-notes,body.light .np-goal{background:var(--paper-2);
 .an-tx br{content:"";display:block;margin-top:var(--an-pspace,0);}
 
 /* ---- the notes pane's three tabs + the scratchpad -------------------- */
-.np-tabs{display:flex;gap:2px;padding:5px 7px 0;flex:none;}
-.np-tab{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;
-  background:none;border:none;border-bottom:2px solid transparent;
-  color:var(--chrome-ink-2);padding:4px 2px;cursor:pointer;white-space:nowrap;}
-.np-tab:hover{color:#e2edf5;}
-.np-tab.on{color:#fff;border-bottom-color:var(--cyan);}
+/* T470: ONE TAB GRAMMAR PER PANE SHELL. These were 9.5px mono text
+   with a class for "on" while the Animation pane's tabs, in the same
+   shell, were 11.5px sans with role=tab (2026-09-15 review). They wear
+   .anim-tab now; five of them in a 272px pane means the words are set
+   a step smaller than Animation's two. */
+.np-tabs .anim-tab{font-size:10.5px;padding:6px 3px 5px;letter-spacing:0;}
 .np-tall{min-height:230px;}
 .np-padbar{display:flex;gap:5px;}
 .np-padb{padding:3px 9px;font-size:10.5px;}
@@ -5518,6 +5539,8 @@ body.jv-lens .deck-stage{cursor:crosshair;}
 .dg-cnt-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
 .dg-cnt-odd .dg-cnt-l{color:var(--amber);}
+.dg-cnt-note{flex:1 0 calc(100% - 28px);margin-left:28px;min-width:0;
+  font-size:11px;color:var(--amber);}
 .dg-cnt-loose .dg-cnt-l{color:var(--chrome-ink-2);}
 /* the fix on its own line under the words, so neither is squeezed */
 .dg-cnt .dg-cnt-fix{font-size:10.5px;padding:2px 6px;

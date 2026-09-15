@@ -32,8 +32,8 @@ def test_the_rail_opens_with_the_counts(out):
     assert "    var r=standardise();" in fn
     assert "      var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});" \
         in fn
-    assert "        +(odd.length?(' \\u2014 '+odd.length+' changed by hand'):'')," \
-        in fn
+    # T470: the note on a line of its own, so it is never the part cut
+    assert "        note.textContent=odd.length+' changed by hand';" in fn
     assert "        b.textContent='Match '+odd.length;" in fn
     assert "      b.textContent='Make them '+sug;" in fn
 
