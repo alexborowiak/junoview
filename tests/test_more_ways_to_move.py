@@ -524,3 +524,21 @@ def test_the_page_furniture_has_an_editor(out):
     assert "      if(v.skipFirst&&idx===0) return;" in out
     assert "      if(v.align) el.style.textAlign=v.align;" in out
     assert "        +(w.rot==null?-28:w.rot)+'deg)';" in out
+
+
+def test_two_small_doors_wear_their_choice(out):
+    """T489 (2026-09-15 review): Change layout and Styles were pick-one
+    doors that never showed the pick; the typeface select was the one
+    control in its group on a different surface."""
+    assert "  function doorVal(sel,word,title){" in out
+    assert "    doorVal('#lay-btn',(function(){" in out
+    assert ("      var on=$('#layout-menu-grid .lay[aria-pressed=\"true\"]"
+            " .lay-lb');") in out
+    assert ("      doorVal('#fmt-style-tx',sd?sd.label:'Plain',"
+            "function(word){") in out
+    assert (".dbtn.rbn-sm>.rbn-foldval,.dbtn.etm>.rbn-foldval{"
+            "display:inline-block;") in out
+    assert (".deck.erc-tight .dbtn.rbn-sm>.rbn-foldval,\n"
+            ".deck.erc-tight .dbtn.etm>.rbn-foldval{max-width:56px;}") in out
+    assert "select#fmt-font{background:var(--btn-bg,#ffffff0a);" in out
+    assert "select#fmt-font{background:var(--chrome-2,#16273a);" not in out

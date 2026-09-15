@@ -1507,9 +1507,9 @@ body.light .edit-tools .dbtn.etm[aria-pressed="true"]{
   color:var(--on-accent-deep);}
 body.light .et-label{color:var(--warning);}
 body.light .et-hint{color:var(--ink-3);}
-body.light select#fmt-font{background:var(--input-bg);
-  border-color:var(--border-strong);
-  color:var(--ink);}
+body.light select#fmt-font{background:var(--btn-bg);
+  border-color:var(--btn-border);
+  color:var(--btn-ink);}   /* T489: the button surface, like its row */
 /* document rail (section nav aka Overview + analysis graph) */
 body.light .rail{background:var(--chrome);color:var(--chrome-ink);
   border-right-color:var(--chrome-line);}

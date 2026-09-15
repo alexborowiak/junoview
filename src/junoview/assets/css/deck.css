@@ -2527,9 +2527,29 @@ body.light .cfg-rv{color:var(--cyan-deep);}
   border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 .dbtn.etm{padding:5px 9px;font-family:var(--sans);font-size:12px;}
 .dbtn.etm>svg,.dbtn.etm>i[data-ic]{width:15px;height:15px;flex:none;}
-select#fmt-font{background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
-  color:#cdd9e3;font-family:var(--mono);font-size:11px;
-  padding:5px 6px;border-radius:6px;}
+/* T489: a small door's readout -- its choice beside its word, in the
+   readout face the tiles use (Change layout: "Title + text"; Styles:
+   "Heading 2"). It gives way first when the row is tight. */
+.dbtn.rbn-sm>.rbn-foldval,.dbtn.etm>.rbn-foldval{display:inline-block;
+  font:600 10px var(--mono);color:var(--cyan);margin-left:5px;
+  max-width:110px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;flex:0 1 auto;min-width:0;}
+.dbtn.rbn-sm>.rbn-foldval[hidden],.dbtn.etm>.rbn-foldval[hidden]{
+  display:none;}
+.dbtn.rbn-sm[aria-pressed="true"]>.rbn-foldval,
+.dbtn.etm[aria-pressed="true"]>.rbn-foldval{color:inherit;}
+body.light .dbtn.rbn-sm>.rbn-foldval,body.light .dbtn.etm>.rbn-foldval{
+  color:var(--cyan-deep);}
+.deck.erc-tight .dbtn.rbn-sm>.rbn-foldval,
+.deck.erc-tight .dbtn.etm>.rbn-foldval{max-width:56px;}
+/* T489: the typeface select wears the ribbon's ONE surface -- it was
+   the one control in the Font group on a different fill, edge and
+   type size (2026-09-15 review) */
+select#fmt-font{background:var(--btn-bg,#ffffff0a);
+  border:1px solid var(--btn-border,#ffffff22);
+  color:var(--btn-ink,#cdd9e3);font-family:var(--sans);font-size:12px;
+  padding:4px 6px;border-radius:6px;}
+select#fmt-font:hover{border-color:var(--cyan);color:var(--chrome-ink);}
 select#fmt-font[hidden]{display:none;}
 .dbtn.etm[aria-pressed="true"]{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}

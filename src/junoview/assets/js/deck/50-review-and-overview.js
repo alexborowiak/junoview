@@ -2205,6 +2205,18 @@
         (!!s&&s.lay===b.dataset.lay).toString());
       b.disabled=!s;
     });
+    /* T489: THE DOOR SAYS WHICH LAYOUT THIS SLIDE HAS. The pressed
+       tile was the only sign, and it sat inside a pop-up you had to
+       open to read (2026-09-15 review); the door wears the slide's
+       layout beside its word, the way New slide wears the next one. */
+    doorVal('#lay-btn',(function(){
+      var on=$('#layout-menu-grid .lay[aria-pressed="true"] .lay-lb');
+      return on?on.textContent.trim():'';
+    })(),function(word){
+      return 'Lay THIS slide out one of the ready-made ways. Your words '
+        +'and figures stay; they move into the new places'
+        +(word?('. It is laid out as '+word+' now'):'');
+    });
     /* Home's strip lights the layout the NEXT slide takes (T218) */
     if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
     var te=$('#title-editor'), eb=$('#dc-edit');

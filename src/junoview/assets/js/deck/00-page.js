@@ -662,6 +662,21 @@
         +(word?(', laid out as '+word):', laid out as the highlighted layout');
     }
   }
+  /* T489: a small door's readout -- its current choice beside its
+     word, in the readout face the tiles use (.rbn-foldval), created on
+     first use. The title takes the whole name for the rung that
+     shortens the readout. */
+  function doorVal(sel,word,title){
+    var b=$(sel); if(!b) return;
+    var val=b.querySelector('.rbn-foldval');
+    if(!val){
+      val=document.createElement('span');val.className='rbn-foldval';
+      b.appendChild(val);
+    }
+    val.textContent=word||'';val.hidden=!word;
+    b.classList.toggle('has-val',!!word);
+    if(typeof title==='function') b.title=title(word||'');
+  }
   /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
      The catalog is offered from TWO places now — Design ▸ Layouts and
      Home ▸ Layout — so picking from either has to shut both. */

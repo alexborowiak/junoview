@@ -2003,8 +2003,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # lock button truth, the thin bar's one height and settled fitter, the
 # download's words, the standalone page's packed fonts.
 # T488 (2026-09-15): askText's small form; the page furniture's editor.
-EXPECTED_MD5 = "529a0f42106e3f4efb03d3bba96166fa"
-EXPECTED_BYTES = 4464719
+# T489 (2026-09-15): the layout and Styles doors' readouts; the
+# typeface select on the ribbon's surface.
+EXPECTED_MD5 = "ad8c867ac54e8932343fa9c368e5111b"
+EXPECTED_BYTES = 4467739
 
 
 def _render_example() -> str:

@@ -353,6 +353,17 @@
     /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
        already the deck's title style by definition */
     show('#fmt-stylewrap-tx',isText&&isNum);
+    /* T489: the Styles door names the style this box wears -- after
+       picking Heading 2 it still read "Styles" and the choice was only
+       visible by reopening the menu (2026-09-15 review) */
+    if(isText&&isNum&&typeof doorVal==='function'){
+      var sd=a.style?styleDef(a.style):null;
+      doorVal('#fmt-style-tx',sd?sd.label:'Plain',function(word){
+        return 'Named text styles \u2014 Title, Headings, Body, Caption '
+          +'\u2014 and pushing this box\u2019s look to all of them. '
+          +(word==='Plain'?'This box wears none':'This box is '+word);
+      });
+    }
     /* spacing applies to any run of words, including a table's */
     show('#fmt-lhwrap',(isText||isTbl)&&isNum);
     show('#fmt-eqedit',isMaths(a)&&isNum);

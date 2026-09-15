@@ -9374,3 +9374,14 @@ any reading. The rest are T466 onwards.
   turn it off too. Driven: a 14pt centred red header skipped on slide
   1 and painted on slide 2 at 14.5px, round-tripped into the form,
   turned off; the watermark at 40% and 0°.
+- [x] **T489 — Two small doors wear their choice.** Change layout ▾
+  never said which layout the slide has (the pressed tile sat inside
+  the pop-up you had to open to read), and Styles ▾ went on reading
+  "Styles" after Heading 2 was picked (2026-09-15 review). A small
+  door's readout — `doorVal`, the tiles' `.rbn-foldval` face beside
+  the door's word — says "Title + text" and "Heading 2" (or "Plain"),
+  gives way first when the row is tight, and the tooltips carry the
+  whole name. The typeface select was the one control in the Font
+  group on a different fill, edge and type size; it wears the ribbon's
+  one surface now. Driven: every tab still fits at 1300 and 1100 with
+  the readouts on.
