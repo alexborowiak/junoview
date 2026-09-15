@@ -541,8 +541,8 @@
       +(n===1?'':'s')+', '+slides+' slide'+(slides===1?'':'s')+'.</p>'
       +'<p>To edit it, open Junoview and pick <code>+ New… → Open a '
       +'.junoview file…</code> (or <code>File → Open</code> inside any '
-      +'presentation), or keep it next to its notebook and it loads '
-      +'itself.</p>'
+      +'presentation), or keep it next to its notebook and '
+      +'<code>junoview notebook.ipynb</code> loads it itself.</p>'
       +'</main><script type="application/json" id="junoview-data">\n'
       +json+'\n</'+'script></body></html>\n';
   }
@@ -1404,9 +1404,15 @@
       +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
-    toast((APP.order.length===1
-      ?'Downloaded. Keep it next to the .ipynb and it loads itself.'
-      :'Downloaded. Load it with --deck, or save to the project instead.')
+    /* T487: the words say how the file IS opened. Since T415 it is
+       named after the deck, and the loader looked for <notebook>
+       .junoview.html alone, so "keep it next to the .ipynb and it loads
+       itself" was a promise the file could not keep (2026-09-15
+       review); loader.py now takes every .junoview.html beside the
+       notebook that is not another notebook's, and the toast names
+       the other door. */
+    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '
+      +'itself; File \u2192 Open a .junoview file\u2026 opens it anywhere.'
       +embNote());
   });
   menuAction('#mi-load',openDeckFile);
@@ -1525,7 +1531,8 @@
     /* ...and whatever a render path still marked, off: the ring is the
        editor's, and no page is the editor */
     $$('.sel,.grpsel',root).forEach(function(el){
-      el.classList.remove('sel','grpsel');});
+      el.classList.remove('sel','grpsel','an-grouped');});
+    $$('.an-grpframe',root).forEach(function(el){el.remove();});
     /* put the editor back on its own frame, or every flip book on screen
        would be left showing whatever the last exported page wanted */
     flipForce=null;
@@ -1653,13 +1660,71 @@
      so the file travels whole. It reads as stacked pages, arrow keys
      step through them, and Ctrl+P prints at true page size (the same
      @page rules ride along). ---- */
+  /* T487: THE FONTS RIDE INSIDE. MathJax's stylesheet is copied into
+     the standalone page with its @font-face url(https://cdn.jsdelivr
+     .net/...woff) rules, so "opens anywhere" opened offline with every
+     equation in a fallback face (2026-09-15 review, driven offline with
+     a fresh profile: five fonts in error). The fonts the page used are
+     fetched -- from the service worker's cache when there is no
+     network -- and written in as data: URIs; one that cannot be fetched
+     is left as its URL and the toast says so. */
+  function inlineFontUrls(css){
+    /* only the faces this page has actually LOADED -- MathJax declares
+       all 22 up front and fetches per glyph, so packing every one in
+       would add ~600KB for a deck with one equation. document.fonts
+       .ready first: the print root was typeset a moment ago and its
+       faces may still be on their way in. */
+    var ready;
+    try{ready=document.fonts.ready;}catch(e){}
+    return Promise.resolve(ready).catch(function(){}).then(function(){
+      return inlineFontUrls2(css);});
+  }
+  function inlineFontUrls2(css){
+    var loaded={},anyLoaded=false;
+    try{
+      document.fonts.forEach(function(f){
+        if(f.status==='loaded'||f.status==='loading'){
+          loaded[String(f.family).replace(/^["']|["']$/g,'')]=1;anyLoaded=true;}
+      });
+    }catch(e){}
+    var seen={},list=[];
+    css.replace(/@font-face[^{]*\{([^}]*)\}/g,function(m,body){
+      var fam=/font-family:\s*["']?([^;"']+)/.exec(body);
+      var u=/url\((["']?)(https:\/\/cdn\.jsdelivr\.net\/[^)"']+?\.woff2?)\1\)/.exec(body);
+      if(!u) return m;
+      if(anyLoaded&&fam&&!loaded[fam[1].trim()]) return m;
+      if(!seen[u[2]]){seen[u[2]]=1;list.push(u[2]);}
+      return m;
+    });
+    if(!list.length) return Promise.resolve({css:css,missed:0});
+    return Promise.all(list.map(function(u){
+      return fetch(u).then(function(r){return r.ok?r.blob():null;})
+        .then(function(b){
+          if(!b) return null;
+          return new Promise(function(res){
+            var fr=new FileReader();
+            fr.onload=function(){res(fr.result);};
+            fr.onerror=function(){res(null);};
+            fr.readAsDataURL(b);
+          });
+        }).catch(function(){return null;})
+        .then(function(d){return [u,d];});
+    })).then(function(pairs){
+      var missed=0;
+      pairs.forEach(function(p){
+        if(p[1]) css=css.split(p[0]).join(p[1]); else missed++;});
+      return {css:css,missed:missed};
+    });
+  }
   function exportDeckHtml(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var root=buildPrintRoot();
     afterTypeset(root,function(){
-      var css='';
+      var css0='';
       $$('style',document.head).forEach(function(st){
-        css+=st.textContent+'\n';});
+        css0+=st.textContent+'\n';});
+      inlineFontUrls(css0).then(function(fo){
+      var css=fo.css;
       var nav='<scr'+'ipt>document.addEventListener("keydown",'
         +'function(e){'
         +'var p=[].slice.call(document.querySelectorAll(".print-page"));'
@@ -1701,8 +1766,13 @@
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
       if(root.parentNode) root.remove();   /* by reference, never by id */
-      toast('Standalone HTML saved — opens anywhere; Ctrl+P there '
-        +'prints at page size');
+      toast(fo.missed
+        ?('Standalone HTML saved \u2014 '+fo.missed+' equation font'
+          +(fo.missed===1?'':'s')+' could not be packed in, so equations '
+          +'need a network connection the first time it is opened')
+        :'Standalone HTML saved — opens anywhere; Ctrl+P there '
+          +'prints at page size');
+      });
     });
   }
   menuAction('#mi-html',function(){exportDeckHtml();});

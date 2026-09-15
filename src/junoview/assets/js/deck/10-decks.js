@@ -1077,7 +1077,13 @@
     var b=$('#qat-name');
     if(!b) return;
     var nm=(pres&&pres.name)||'';
-    if(b.textContent!==nm) b.textContent=nm;
+    if(b.textContent!==nm){
+      b.textContent=nm;
+      /* T487: a longer name widens the bar, and nothing re-judged it --
+         at 1300px a deck opened by name overflowed by 16px, clipping
+         the Present chevron, until the window was next resized */
+      if(typeof fitQat==='function') requestAnimationFrame(fitQat);
+    }
     b.title=nm?('“'+nm+'” — click to rename'):'Click to name this';
   }
   function startQatRename(){

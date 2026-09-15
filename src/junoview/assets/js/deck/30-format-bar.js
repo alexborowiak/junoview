@@ -1973,9 +1973,17 @@
     /* a fully locked item cannot even be clicked, so an unlocked twin
        dropped on top of it would be a puzzle rather than a duplicate. A
        PINNED one clones happily: the copy is a free item. */
-    var idxs=selIdxs().filter(function(i){
+    var all=selIdxs();
+    var idxs=all.filter(function(i){
       var a=s.annots[i];return a&&!lockedAll(a);});
-    if(!idxs.length) return;
+    /* T487: the same words Delete uses, not a silent no-op */
+    if(!idxs.length){
+      var held=all.filter(function(i){
+        var a=s.annots[i];return a&&lockedAll(a);}).length;
+      if(held) toast(held===1?'That item is fully locked \u2014 unlock it first'
+        :'Those '+held+' items are fully locked \u2014 unlock them first');
+      return;
+    }
     var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF,bare);
     if(!made.length) return;
     /* T481: A COPY OF A PLACE-LINKED CLONE IS A FREE OBJECT. The set

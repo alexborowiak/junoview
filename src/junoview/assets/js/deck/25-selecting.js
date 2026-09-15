@@ -428,7 +428,9 @@
     if(opV) opV.textContent=opPct+'%';
     show('#fmt-dup',isNum);
     var nSel=selSet.filter(function(i){return typeof i==='number';}).length;
-    show('#fmt-group',nSel>=2);
+    /* T487: a selection that already IS one group is offered Ungroup
+       alone, not Group and Ungroup side by side */
+    show('#fmt-group',nSel>=2&&!selIsOneGroup());
     show('#fmt-ungroup',isNum&&a.grp!=null);
     /* Bring to front and Send to back are BUTTONS again. They were
        menu-only, which is why they read as missing (2026-08-20, user
@@ -692,7 +694,20 @@
             +'still shows with this page');
       }
     }
-    show('#fmt-lock',isNum,isNum&&pinned(a));
+    /* T487: pressed for the POSITION lock only; a fully locked item
+       (reached through Alt-marquee or Layers) showed "[on]" with the
+       position-lock words and a click that did nothing (2026-09-15
+       review). The button is disabled and says where the full lock
+       comes off. */
+    show('#fmt-lock',isNum,isNum&&lockMode(a)==='pos');
+    var lkB=$('#fmt-lock');
+    if(lkB&&isNum){
+      var full=lockedAll(a);
+      lkB.disabled=full;
+      if(!lkB.dataset.title0) lkB.dataset.title0=lkB.title;
+      lkB.title=full?('Fully locked \u2014 "Not locked" in the '
+        +'right-click menu or the Layers pane takes it off'):lkB.dataset.title0;
+    }
     /* T220: what this object has been through, one click away */
     show('#fmt-hist',isNum);
     /* T229: making a set of clones, and finding the ones that exist */
@@ -3454,14 +3469,21 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,idxs[0]);}
+    /* T487: Ctrl+G was invisible -- a group looked pixel-identical to a
+       plain multi-selection and nothing said it had happened
+       (2026-09-15 review) */
+    toast('Grouped \u2014 '+idxs.length+' items move as one. '
+      +'Ctrl+Shift+G ungroups; double-click to edit one inside');
   }
   function ungroupSel(){
     var s=pres.slides[cur];
     if(!s||typeof selAnnot!=='number'||!s.annots) return;
     var a=s.annots[selAnnot]; if(!a||a.grp==null) return;
     var g=a.grp;
-    s.annots.forEach(function(x){if(x.grp===g) delete x.grp;});
+    var ng=0;
+    s.annots.forEach(function(x){if(x.grp===g){delete x.grp;ng++;}});
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,selAnnot);}
+    toast('Ungrouped \u2014 '+ng+' separate items again');
   }

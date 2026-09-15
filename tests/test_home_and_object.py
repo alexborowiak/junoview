@@ -129,7 +129,8 @@ def test_where_it_came_from_is_on_the_row(out):
             "        from=(typeof picAddr==='function'&&picAddr(a))") in out
     assert "||a.fname||a.psrc||'';" in out
     assert "from=a.nbpath||ff.nbpath" in out
-    assert "show('#fmt-lock',isNum,isNum&&pinned(a));" in out
+    # (T487: pressed for the position lock alone; a full lock disables it)
+    assert "show('#fmt-lock',isNum,isNum&&lockMode(a)==='pos');" in out
     assert "      if(pin) a.lock='pos'; else delete a.lock;});" in out   # T481
     # governed, so the completeness audit stays quiet
     assert "#fmt-path #fmt-lock " in out

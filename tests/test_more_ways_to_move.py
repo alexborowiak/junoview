@@ -412,3 +412,86 @@ def test_the_frame_after_the_second_pass(out):
     assert "  function tourVisible(){" in out
     assert "        try{tel.scrollIntoView({block:'center'});}catch(err){}" in out
     assert "    {sel:'#pr-docs,#pr-newbtn',title:'Build presentations'," in out
+
+
+def test_the_small_ends_of_the_second_pass(out):
+    """T487 (2026-09-15, the second review pass: the small ones)."""
+    # [7] Bring to front / Send to back at the end says so
+    assert "      toast(front?'Already in front of everything on this page'" in out
+    # [6] a typed X or Y moves the whole group, the way a drag does
+    assert "      if(a.grp!=null&&inGroup!==a.grp){" in out
+    assert "          shiftAnnot(m,k==='x'?d:0,k==='y'?d:0);" in out
+    # [29] a group says so when made, wears one frame, offers Ungroup alone
+    assert "    toast('Grouped \\u2014 '+idxs.length+' items move as one. '" in out
+    assert "    toast('Ungrouped \\u2014 '+ng+' separate items again');" in out
+    assert "  function selIsOneGroup(){" in out
+    assert "        fr.className='an-grpframe';" in out
+    assert "    show('#fmt-group',nSel>=2&&!selIsOneGroup());" in out
+    assert ".deck.editing .an-grpframe{position:absolute;pointer-events:none;" in out
+    assert "      el.classList.remove('sel','grpsel','an-grouped');});" in out
+    # [30] a fully locked item's lock button is disabled and says where
+    #      the lock comes off; Duplicate says why not
+    assert "    show('#fmt-lock',isNum,isNum&&lockMode(a)==='pos');" in out
+    assert "      lkB.disabled=full;" in out
+    assert "      if(held) toast(held===1?'That item is fully locked" in out
+    # [14] the thin bar: one height, the cheap rung first, no geometry
+    #      transition under the fitter, the bar's children watched
+    assert (".deck-qat .dbtn,.deck-qat .qat-name,.deck-qat .qat-nameedit{\n"
+            "  height:var(--rbn-btn-h);box-sizing:border-box;") in out
+    assert ".deck-qat.qat-c1 .qat-short{display:inline;}" in out
+    assert ".deck-qat.qat-c2 .deck-status{display:none;}" in out
+    assert ".deck-qat.qat-c1 .deck-status{display:none;}" not in out
+    assert (".deck-qat .dbtn,.deck .edit-tools .dbtn{\n"
+            "  transition-property:border-color,color,background-color,"
+            "box-shadow;}") in out
+    assert "        [].forEach.call(qb.children,function(c){qro.observe(c);});" in out
+    assert "        document.fonts.addEventListener('loadingdone',function(){" in out
+    assert "      if(typeof fitQat==='function') requestAnimationFrame(fitQat);" in out
+    # [22] the download says how it IS opened
+    assert "    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '" in out
+    assert "Keep it next to the .ipynb and it loads itself" not in out
+    # [43] the standalone page carries the equation fonts it used
+    assert "  function inlineFontUrls(css){" in out
+    assert "      inlineFontUrls(css0).then(function(fo){" in out
+    assert "        if(f.status==='loaded'||f.status==='loading'){" in out
+    assert "could not be packed in, so equations '" in out
+
+
+def test_a_deck_named_after_itself_loads_beside_its_notebook(tmp_path):
+    """T487 [22]: since T415 a download is named after the DECK, and the
+    loader only ever looked for <notebook>.junoview.html -- so the file's
+    own words ("keep it next to its notebook and it loads itself") were
+    a promise it could not keep (2026-09-15 review)."""
+    import json
+
+    from junoview.notebook.loader import load_doc
+
+    def wrap(name):
+        return ('<!doctype html><html><body>'
+                '<script type="application/json" id="junoview-data">'
+                + json.dumps({"junoview": 1, "presentations": [
+                    {"name": name, "slides": []}]})
+                + '</script></body></html>')
+
+    nb = tmp_path / "analysis.ipynb"
+    nb.write_text(json.dumps({"cells": [
+        {"cell_type": "code", "source": "x=1", "outputs": []}]}),
+        encoding="utf-8")
+    (tmp_path / "Lab meeting.junoview.html").write_text(
+        wrap("Lab meeting"), encoding="utf-8")
+    (tmp_path / "Poster.junoview.html").write_text(
+        wrap("Poster"), encoding="utf-8")
+    # another notebook's stem-named deck is that notebook's, not ours
+    (tmp_path / "other.ipynb").write_text(nb.read_text(encoding="utf-8"),
+                                          encoding="utf-8")
+    (tmp_path / "other.junoview.html").write_text(
+        wrap("other's deck"), encoding="utf-8")
+    # a stray broken file must not stop the notebook opening
+    (tmp_path / "broken.junoview.html").write_text(
+        "<html>no data block</html>", encoding="utf-8")
+    names = [p["name"] for p in load_doc(nb).presentations]
+    assert names == ["Lab meeting", "Poster"]
+    # the stem-named sidecar still wins outright when it exists
+    (tmp_path / "analysis.junoview.html").write_text(
+        wrap("mine"), encoding="utf-8")
+    assert [p["name"] for p in load_doc(nb).presentations] == ["mine"]

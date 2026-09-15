@@ -885,6 +885,20 @@
     inGroup=null;
     if(layer) paintSel(layer);
   }
+  /* T487: every selected item is a member of ONE group you have not
+     stepped into -- the selection IS the group */
+  function selIsOneGroup(){
+    var s=pres.slides[cur]; if(!s) return false;
+    var idxs=selSet.filter(function(i){return typeof i==='number';});
+    if(idxs.length<2) return false;
+    var g=null;
+    for(var i=0;i<idxs.length;i++){
+      var a=(s.annots||[])[idxs[i]];
+      if(!a||a.grp==null) return false;
+      if(g===null) g=a.grp; else if(a.grp!==g) return false;
+    }
+    return inGroup!==g;
+  }
   function groupMembers(s,idx){
     if(!s||typeof idx!=='number') return [idx];
     var a=(s.annots||[])[idx];
@@ -1907,12 +1921,35 @@
   function paintSel(layer){
     var multi=selSet.length>1;
     var s0=pres.slides[cur];
+    /* T487: A GROUP WEARS ONE FRAME. Its members drop the per-item
+       dashes and one solid frame is drawn round the union of them, so
+       a group and a plain multi-selection no longer look the same
+       (2026-09-15 review: pixel-identical before and after Ctrl+G). */
+    var oneGrp=selIsOneGroup();
+    $$('.an-grpframe',layer).forEach(function(f){f.remove();});
+    if(oneGrp){
+      var u=null;
+      selSet.forEach(function(i){
+        if(typeof i!=='number') return;
+        var r=annotRectPct(layer,s0,i); if(!r) return;
+        u=u?{l:Math.min(u.l,r.l),t:Math.min(u.t,r.t),
+          r:Math.max(u.r,r.r),b:Math.max(u.b,r.b)}:r;
+      });
+      if(u){
+        var fr=document.createElement('div');
+        fr.className='an-grpframe';
+        fr.style.left=u.l+'%';fr.style.top=u.t+'%';
+        fr.style.width=(u.r-u.l)+'%';fr.style.height=(u.b-u.t)+'%';
+        layer.appendChild(fr);
+      }
+    }
     $$('[data-idx]',layer).forEach(function(el){
       var raw=el.getAttribute('data-idx');
       var key=(raw==='t'||raw==='s')?raw:+raw;
       var on=selSet.indexOf(key)>=0;
       el.classList.toggle('sel',on);
       el.classList.toggle('grpsel',on&&multi);
+      el.classList.toggle('an-grouped',on&&oneGrp);
       /* the group you have stepped into is outlined as a whole, so it is
          obvious that clicks are landing on members and not on the group */
       var ga=(typeof key==='number'&&s0)?(s0.annots||[])[key]:null;

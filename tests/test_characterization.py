@@ -1999,8 +1999,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T485 (2026-09-15): sections, names and the canonical page size in
 # the .pptx; the clone menu refuses a second place-linked clone.
 # T486 (2026-09-15): the .pptx writer's run model.
-EXPECTED_MD5 = "71d928a7221ef82c6766f210a038c01f"
-EXPECTED_BYTES = 4444995
+# T487 (2026-09-15): the small ends of the second pass -- group frame,
+# lock button truth, the thin bar's one height and settled fitter, the
+# download's words, the standalone page's packed fonts.
+EXPECTED_MD5 = "307b05a5d18b61c93a524648d2145aae"
+EXPECTED_BYTES = 4455581
 
 
 def _render_example() -> str:

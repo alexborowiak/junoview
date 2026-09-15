@@ -952,8 +952,9 @@ def test_the_save_readout_lives_under_save(out):
     # never fire: an inline-flex's bare text is an anonymous flex item,
     # so 26ch of "autosaved to <file> · 12:41" was sliced off mid-glyph
     # rather than ellipsised (T70)
-    assert (".deck-qat .deck-status{display:inline-block;height:24px;"
-            "line-height:24px;") in out
+    # (T487: the ribbon's button height, like every control on the bar)
+    assert (".deck-qat .deck-status{display:inline-block;"
+            "height:var(--rbn-btn-h);\n  line-height:var(--rbn-btn-h);") in out
     # the display above outranks the base :empty rule, so the empty pill
     # has to be hidden again or it draws as a bare stub
     # The readout reserves a fixed slot so autosave state changes do not

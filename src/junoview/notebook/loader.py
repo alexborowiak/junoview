@@ -47,22 +47,62 @@ def load_doc(path: Path, title: str | None = None,
     doc = doc_from_bytes(path, path.read_bytes(), title=title,
                          base=path.parent)
     doc.source_name = path.stem
-    if deck_path is None:
-        # a deck saved from the browser lands next to the notebook as
-        # <stem>.junoview.html (an HTML page carrying the JSON, so
-        # double-clicking it opens a browser); bare <stem>.junoview and
-        # the older <stem>.deck.json still work
-        for suffix in (".junoview.html", ".junoview", ".deck.json"):
-            sidecar = path.with_suffix(suffix)
-            if sidecar.exists():
-                deck_path = sidecar
-                break
     if deck_path is not None:
-        pres = as_presentations(
-            deck_json(Path(deck_path).read_text(encoding="utf-8")))
-        if pres:
-            doc.presentations = pres
+        sidecars, lenient = [Path(deck_path)], False
+    else:
+        sidecars, lenient = _sidecars(path)
+    pres: list = []
+    for sc in sidecars:
+        try:
+            pres += as_presentations(
+                deck_json(sc.read_text(encoding="utf-8")))
+        except ValueError:
+            # a stray, broken deck file beside the notebook must not
+            # stop the notebook opening; the one asked for by name must
+            if not lenient:
+                raise
+    if pres:
+        doc.presentations = pres
     return doc
+
+
+def _sidecars(path: Path) -> tuple[list[Path], bool]:
+    """The deck files a notebook loads by itself, and whether a broken
+    one may be skipped.
+
+    A deck saved from the browser lands next to the notebook as
+    ``<stem>.junoview.html`` (an HTML page carrying the JSON, so
+    double-clicking it opens a browser); bare ``<stem>.junoview`` and
+    the older ``<stem>.deck.json`` still work, and the first of the
+    three found wins (and a broken one is an error, as before).
+
+    T487: a DOWNLOAD is named after the deck, not the notebook (T415),
+    so ``Lab meeting.junoview.html`` beside ``analysis.ipynb`` was never
+    picked up although the page it saved said it would be (2026-09-15
+    review). With no stem-named sidecar, every ``*.junoview.html`` and
+    ``*.junoview`` beside the notebook loads -- except one named after
+    ANOTHER notebook in the same folder, which is that notebook's.
+    """
+    for suffix in (".junoview.html", ".junoview", ".deck.json"):
+        sidecar = path.with_suffix(suffix)
+        if sidecar.exists():
+            return [sidecar], False
+    folder = path.parent
+    try:
+        others = {p.stem for p in folder.glob("*.ipynb")
+                  if p.stem != path.stem}
+        found = sorted(set(folder.glob("*.junoview.html"))
+                       | set(folder.glob("*.junoview")))
+    except OSError:
+        return [], True
+    out = []
+    for f in found:
+        base = f.name[:-len(".junoview.html")] \
+            if f.name.endswith(".junoview.html") else f.stem
+        if base in others:
+            continue
+        out.append(f)
+    return out, True
 
 
 def render_notebook_file(path: Path, title: str | None = None,

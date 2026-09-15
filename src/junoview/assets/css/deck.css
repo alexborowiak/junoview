@@ -183,6 +183,28 @@ body.deck-open{overflow:hidden;}
    line by another name. The bar's width pressure goes to fitQat's
    rungs instead (2026-08-24). */
 .deck-qat .dbtn{padding:4px 9px;white-space:nowrap;flex:none;}
+/* T487: NO TRANSITION ON WHAT THE FITTERS MEASURE. .dbtn transitions
+   `all`, so a rung's padding change ANIMATED over 150ms: fitQat's
+   synchronous measurement right after adding a class saw the OLD
+   padding (a transition starts from the value before the change),
+   judged the rung a failure and reached for the next; the observer on
+   the bar then watched the buttons shrink and re-ran it against a
+   half-way size, and at 1300px the two states flip-flopped forever
+   (driven: forty class mutations in four seconds). Colour and border
+   still ease; geometry snaps. The ribbon's rungs change padding too,
+   and get the same rule. */
+.deck-qat .dbtn,.deck .edit-tools .dbtn{
+  transition-property:border-color,color,background-color,box-shadow;}
+/* T487: ONE HEIGHT, ONE BASELINE. Measured at 1500px the bar carried
+   four heights on three baselines -- 24px@y5 words, 22px@y6 carets,
+   23px@y6 File and Save, 26px@y4 undo and redo (2026-09-15 review).
+   Every control is the ribbon's button height now, and a button
+   centres its own content. The readout keeps inline-block: its
+   ellipsis needs a block container (see below). */
+.deck-qat .dbtn,.deck-qat .qat-name,.deck-qat .qat-nameedit{
+  height:var(--rbn-btn-h);box-sizing:border-box;
+  padding-top:0;padding-bottom:0;}
+.deck-qat .qat-name{line-height:calc(var(--rbn-btn-h) - 2px);}
 .deck-qat .rbn-stack{flex-direction:row;align-items:center;gap:6px;}
 .deck-qat .rbn-cell{height:var(--rbn-btn-h);gap:3px;}
 .deck-qat .dc-menuwrap,.deck-qat .dc-savegrp{display:inline-flex;
@@ -216,7 +238,8 @@ body.deck-open{overflow:hidden;}
    (2026-08-29, T70, user: "make sure everything is fitting inside its
    box"). inline-block centres by line-height exactly as align-items did,
    and gives the ellipsis somewhere to land. */
-.deck-qat .deck-status{display:inline-block;height:24px;line-height:24px;
+.deck-qat .deck-status{display:inline-block;height:var(--rbn-btn-h);
+  line-height:var(--rbn-btn-h);
   font-size:11px;flex:none;width:34ch;max-width:34ch;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
 /* Keep the readout's slot even while it is empty.  Autosave changes this
@@ -230,20 +253,23 @@ body.deck-open{overflow:hidden;}
 .deck-qat .qat-auto .qat-tick{display:inline-block;min-width:4.2ch;
   text-align:right;font-variant-numeric:tabular-nums;}
 /* ---- fitQat's rungs (see fitQat in deck.js): this bar never clips.
-   Rung 1 drops the save readout (informative, not a control; the Save
-   button's tooltip carries the same words). Rung 2 tightens spacing and
-   swaps the .qat-long/.qat-short label pair ("Autosave"→"Auto") — words
-   are SHORTENED, never hidden (icon-only was rejected twice). The floor
-   scrolls the bar sideways so Present and Help are always reachable;
-   its menus float via floatMenu (position:fixed), so the scroll box
-   cannot cut them off. */
+   Rung 1 tightens spacing and swaps the .qat-long/.qat-short label pair
+   ("Autosave"→"Auto") — words are SHORTENED, never hidden (icon-only was
+   rejected twice). Rung 2 drops the save readout (informative, not a
+   control; the Save button's tooltip carries the same words). T487
+   swapped the two: the readout was the FIRST thing to go, and at 1300px
+   it went whole -- 219px of words -- for a 30px shortfall the cheap rung
+   would have covered (2026-09-15 review). The floor scrolls the bar
+   sideways so Present and Help are always reachable; its menus float
+   via floatMenu (position:fixed), so the scroll box cannot cut them
+   off. */
 .deck-qat .qat-short{display:none;}
-.deck-qat.qat-c1 .deck-status{display:none;}
-.deck-qat.qat-c2{gap:3px;}
-.deck-qat.qat-c2 .dbtn{padding:4px 6px;}
-.deck-qat.qat-c2 .qat-name{max-width:16vw;}
-.deck-qat.qat-c2 .qat-long{display:none;}
-.deck-qat.qat-c2 .qat-short{display:inline;}
+.deck-qat.qat-c1{gap:3px;}
+.deck-qat.qat-c1 .dbtn{padding-left:6px;padding-right:6px;}
+.deck-qat.qat-c1 .qat-name{max-width:16vw;}
+.deck-qat.qat-c1 .qat-long{display:none;}
+.deck-qat.qat-c1 .qat-short{display:inline;}
+.deck-qat.qat-c2 .deck-status{display:none;}
 .deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
   scrollbar-width:thin;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
@@ -2734,6 +2760,12 @@ select#fmt-font[hidden]{display:none;}
   color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:3px;}
 .deck.editing .an-item.grpsel{outline:1.5px dashed var(--cyan);
   outline-offset:1px;}
+/* T487: a whole group selected wears ONE solid frame round the union
+   of its members (paintSel draws it); the members' own dashes go */
+.deck.editing .an-item.grpsel.an-grouped{outline:none;}
+.deck.editing .an-grpframe{position:absolute;pointer-events:none;
+  outline:2px solid var(--cyan);outline-offset:3px;border-radius:3px;
+  z-index:5;}
 .deck.editing .an-item.grpsel .an-resize,
 .deck.editing .an-item.grpsel .an-handle,
 .deck.editing .an-item.grpsel .an-cellbtn,

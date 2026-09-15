@@ -1800,11 +1800,13 @@
      primary action, and Help — clipped away unreachable, which the
      ladder forbids ("clip, scroll, wrap — all forbidden", fitEditRibbon).
      Same shape as fitRibbon / fitEditRibbon: reset, measure, escalate.
-       rung 1 (.qat-c1)     the save readout gives up its text — its
-                            words also live in the Save button's tooltip
-       rung 2 (.qat-c2)     spacing tightens and the long label shortens
+       rung 1 (.qat-c1)     spacing tightens and the long label shortens
                             ("Autosave" → "Auto"); words are shortened,
                             NEVER hidden (the twice-rejected icon-only)
+       rung 2 (.qat-c2)     the save readout gives up its text — its
+                            words also live in the Save button's tooltip
+                            (T487: the cheap rung first; the readout was
+                            dropped whole for a 30px shortfall)
        floor  (.qat-scroll) the bar scrolls sideways (overflow-x:auto,
                             thin scrollbar) so nothing is ever
                             unreachable. Safe for the bar's own menus:
@@ -2377,12 +2379,22 @@
          its box changing (window resize, first real layout on open) is
          the one signal that catches every way it can get narrower */
       var qb=$('#deck-qat');
-      if(qb) new ResizeObserver(function(){
-        if(deckEl.hidden) return;
-        requestAnimationFrame(function(){
-          if(!deckEl.hidden) fitQat();
+      if(qb){
+        var qro=new ResizeObserver(function(){
+          if(deckEl.hidden) return;
+          requestAnimationFrame(function(){
+            if(!deckEl.hidden) fitQat();
+          });
         });
-      }).observe(qb);
+        qro.observe(qb);
+        /* T487: and its CONTENTS. The bar's own box never changes when
+           a control inside it grows -- the Autosave label was rewritten
+           a beat after fitQat had measured, and at 1300px the bar sat
+           16px past its box with the Present chevron clipped until the
+           next window resize (driven). Its children are fixed markup,
+           so watching them once at boot is watching every label. */
+        [].forEach.call(qb.children,function(c){qro.observe(c);});
+      }
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything
        that moves the slide has to redraw them. The ribbon observer above
@@ -2404,6 +2416,13 @@
     try{
       if(document.fonts&&document.fonts.ready)
         document.fonts.ready.then(function(){
+          if(!deckEl.hidden){fitEditRibbon();fitQat();}});
+      /* T487: .ready settles ONCE, for the batch in flight at boot; a
+         face that arrives later (the bar's mono, first used when the
+         deck opens) widened the thin bar 16px past its box at 1300px
+         and nothing re-judged it until the next window resize */
+      if(document.fonts&&document.fonts.addEventListener)
+        document.fonts.addEventListener('loadingdone',function(){
           if(!deckEl.hidden){fitEditRibbon();fitQat();}});
     }catch(e){}
     /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:

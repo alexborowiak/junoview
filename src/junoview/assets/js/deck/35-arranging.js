@@ -23,7 +23,13 @@
     var atEnd=front
       ?idxs[0]===n-idxs.length
       :idxs[idxs.length-1]===idxs.length-1;
-    if(atEnd&&!step) return;
+    /* T487: the comment above promised the words and the code returned
+       bare (2026-09-15 review) */
+    if(atEnd){
+      toast(front?'Already in front of everything on this page'
+        :'Already behind everything on this page');
+      return;
+    }
     var moving=idxs.map(function(i){return s.annots[i];});
     var rest=s.annots.filter(function(a,i){return idxs.indexOf(i)<0;});
     /* idxs[0] is the LOWEST selected index, so every item below it is in
@@ -2630,6 +2636,20 @@
     if(!isFinite(val)) return;
     if(k==='x'||k==='y'){
       if(pinned(a)) return;
+      /* T487: A GROUP MOVES AS ONE, the way a drag moves it. The readout
+         is the primary's, but typing X into it tore one member out of
+         its group while the outline still said "one thing"
+         (2026-09-15 review, driven). Inside a group (double-clicked
+         in), an item is just an item, as everywhere else. */
+      var gi=sizeIdx(a);
+      if(a.grp!=null&&inGroup!==a.grp){
+        var d=val-(k==='x'?x:y);
+        dropTiedCaptions(s,selIdxs()).forEach(function(i){
+          var m=(typeof i==='number')?s.annots[i]:null;
+          if(!m||i===gi||m.grp!==a.grp||pinned(m)) return;
+          shiftAnnot(m,k==='x'?d:0,k==='y'?d:0);
+        });
+      }
       if(k==='x') x=val; else y=val;
     } else if(k==='w'){
       if(!(val>0)) return;

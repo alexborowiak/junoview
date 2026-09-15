@@ -9323,3 +9323,38 @@ any reading. The rest are T466 onwards.
   still named as lost. The round trip is pinned: five paragraphs with a
   heading, a bold and a red run, a bullet, a nested bullet and a number
   come back as they went.
+- [x] **T487 — The small ends of the second review pass.** Seven
+  findings, one commit. Bring to front / Send to back on an item
+  already there said nothing although the code promised the words —
+  it says "Already in front of / behind everything on this page". A
+  typed X or Y on a grouped item tore one member out of its group
+  while a drag moved the whole — the size pane moves the group by the
+  delta, the way a drag does (inside a stepped-into group an item is
+  just an item). Ctrl+G was invisible: a group looked pixel-identical
+  to a plain multi-selection, nothing said it had happened, and the
+  Object tab offered Group and Ungroup side by side — it toasts, the
+  whole group wears ONE solid frame round the union of its members,
+  and a selection that already is one group is offered Ungroup alone.
+  A fully locked item showed "Lock in place [on]" with the
+  position-lock words and a click that did nothing, and Duplicate
+  refused it silently — the button is pressed for the position lock
+  alone, disabled for a full one with the words that say where it
+  comes off, and Duplicate says what Delete says. The thin top bar
+  carried four heights on three baselines — every control is the
+  ribbon's button height now; and its rungs were the wrong way round
+  (the 219px readout dropped whole for a 30px shortfall) — the cheap
+  rung first. Driving that found a bug under it: `.dbtn` transitions
+  `all`, so a rung's padding change animated, fitQat measured the old
+  padding, and the observer watched the buttons shrink and re-ran it
+  — at 1300px the two states flip-flopped forever (forty class
+  mutations in four seconds); geometry no longer transitions on either
+  bar, the bar's children are observed, and a late font or a rename
+  re-judges it. "Download a copy" promised "keep it next to the .ipynb
+  and it loads itself", but since T415 the file is named after the
+  deck and the loader looked for the notebook's stem alone — the
+  loader takes every .junoview(.html) beside the notebook that is not
+  another notebook's, skipping a broken stray, and the toast names the
+  other door. And the standalone HTML said "opens anywhere" while its
+  equations fetched MathJax's fonts from the CDN — the faces the page
+  loaded are packed in as data: URIs (from the service worker's cache
+  when offline), and one that cannot be is named in the toast.
