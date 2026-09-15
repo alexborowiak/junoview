@@ -2054,9 +2054,16 @@
     /* T453: the row may be sitting in the shelf rather than in this
        group, and the readout is still this group's to keep true */
     var row=rbnFoldRow(g);
-    var on=row?row.querySelector('[aria-pressed="true"]'):null;
-    var txt='';
-    if(on){
+    /* T467: EVERY choice in the row, one per strip or cell, joined --
+       "Timing & text" holds two strips (when it starts, how much
+       arrives) and read only the first pressed tile, so picking By
+       sentence left the door saying On click (2026-09-15 review). */
+    var ons=row?$$('[aria-pressed="true"]',row):[];
+    var boxes=[],parts=[];
+    ons.forEach(function(on){
+      var box=(on.closest&&on.closest('.strip-frame,.rbn-cell,.sh-drop'))||on;
+      if(boxes.indexOf(box)>=0) return;
+      boxes.push(box);
       /* T464: the WHOLE control's words, less what is not a word. The
          first <span> of a tile used to be taken as its word, and a
          page-size tile's first span is its little page drawing -- so
@@ -2065,9 +2072,11 @@
          never". */
       var src=on.cloneNode(true);
       $$('kbd,.rbn-foldval,.page-ico',src).forEach(function(k){k.remove();});
-      txt=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
+      var t=src.textContent.replace(/[\u25be\u25bc]/g,'').replace(/\s+/g,' ')
         .trim();
-    }
+      if(t) parts.push(t);
+    });
+    var txt=parts.join(' \u00b7 ');
     val.textContent=txt;
     val.hidden=!txt;
     var btn=val.parentNode;

@@ -434,11 +434,23 @@
     if(ow&&!ow.hidden){
       cfgHead(host,'when it leaves');
       var r4=cfgRow(host);
-      cfgChip(r4,bic('exit'),cfgOn('#anim-out')?'Disappears':'Stays',
-        cfgOn('#anim-out'),
-        'On a click of its own. The caret on the ribbon sends it away '
-        +'as something else arrives instead',
-        function(){cfgPress('#anim-out');animCfgSync();});
+      /* T467: the ribbon's own words (T453 renamed the verb for exactly
+         this) -- two chips, the pressed one the truth, and the click it
+         goes on beside them. It was one chip that read "Stays" until you
+         pressed it and "Disappears" after, and never said which click. */
+      var leaving=cfgOn('#anim-out');
+      cfgChip(r4,bic('none'),'Stays',!leaving,
+        'On the slide to the end',
+        function(){if(leaving){cfgPress('#anim-out');animCfgSync();}});
+      cfgChip(r4,bic('exit'),'Send it away',leaving,
+        'Leaves partway through, on a click of its own. The caret beside '
+        +'Send it away on the ribbon sends it away as something else '
+        +'arrives instead',
+        function(){if(!leaving){cfgPress('#anim-out');animCfgSync();}});
+      if(leaving){
+        var say=$('#anim-out-say');
+        if(say&&say.textContent) cfgNote(host,'Goes '+say.textContent+'.');
+      }
     }
   }
   function cfgMotion(host,a){

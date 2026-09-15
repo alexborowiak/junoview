@@ -140,8 +140,8 @@ def test_the_palette_door_says_what_a_named_colour_is():
     assert ("    note.textContent='The five colours every slide is built from. "
             "Change '") in js
     assert "      menuHead(m,'extra colours, for things you choose');" in js
-    assert "        :'Nothing wears one yet. Put one on any box from the Deck row '" \
-        in js
+    assert "        :'Nothing wears one yet. Put one on any box from the Deck '" \
+        in js   # (T467: "the Deck colours row", the menu row's own name)
     # ...and each row says what that colour is on
     assert "  function tokUses(k){" in js
     # T455 tells the five base colours apart: they are what everything

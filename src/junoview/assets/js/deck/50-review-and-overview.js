@@ -4109,8 +4109,12 @@
     d.className='mini-diagram free';
     if(!s) return d;
     if((pres.slides||[]).indexOf(s)>=0) paintSlide=s;   /* T316 */
-    /* the slide's own background, so a recoloured slide reads as one */
-    if(s.bg) d.style.background=tokVal(s.bg);
+    /* the slide's own background, so a recoloured slide reads as one --
+       T467: and the DECK's, resolved the one way (pageBgOf), so a deck
+       made light reads light in the strip rather than navy against a
+       white page (2026-09-15 review) */
+    if(typeof pageBgOf==='function') d.style.background=pageBgOf(s);
+    else if(s.bg) d.style.background=tokVal(s.bg);
     var annots=s.annots||[];
     if(s.layout!=='title'&&!annots.length){
       var e=document.createElement('span');

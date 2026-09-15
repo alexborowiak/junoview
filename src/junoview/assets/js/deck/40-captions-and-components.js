@@ -2177,9 +2177,22 @@
       if(m) return {tex:m[1].trim(),display:false};
       return {tex:(t||'').trim(),display:true};
     }
+    /* T467: the tile used to say "between $$ and $$" while the editor
+       added them itself, so following the tooltip stored '$$ $$x^2$$ $$'
+       and drew literal text with no warning (2026-09-15 review). Dollars
+       you type are absorbed: the LaTeX inside is what is kept, and $$
+       ticks display style. */
+    function absorb(){
+      var v=src.value;
+      if(!/^\s*\$/.test(v)||!/\$\s*$/.test(v)) return;
+      var u=unwrap(v);
+      if(u.tex===v.trim()) return;
+      src.value=u.tex;disp.checked=u.display;
+    }
     function render(){
       clearTimeout(prevT);
       prevT=setTimeout(function(){
+        absorb();
         var tex=src.value.trim();
         prev.textContent=tex?wrap(tex,disp.checked):'';
         if(!window.MathJax||!MathJax.typesetPromise){
@@ -2283,6 +2296,7 @@
     }
     function close(){dlg.hidden=true;editIdx=null;}
     function commit(){
+      absorb();
       var tex=src.value.trim();
       if(!tex){close();return;}
       var s2=pres.slides[cur];

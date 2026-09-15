@@ -684,7 +684,13 @@
             over.label=STYLE_DEFAULTS[id].label;
             over.size=Math.max(0.8,Math.min(24,
               Math.round(d.size*pr[1]*100)/100));
-            STYLE_FIELDS.forEach(function(k2){
+            /* T467: a VARIATION writes only what it says (T292). Copying
+               the resolved weight, face and colour into it froze its
+               parent's look into the child, and it stopped following
+               (2026-09-15 review, driven). A root style keeps the full
+               copy, for the reason over() in the editor gives. */
+            var varying=(typeof parentOf==='function')&&!!parentOf(id);
+            if(!varying) STYLE_FIELDS.forEach(function(k2){
               if(d[k2]!==undefined) over[k2]=d[k2];});
             deckStyles()[id]=over;
             restyleAll([id]);

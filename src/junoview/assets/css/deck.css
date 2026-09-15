@@ -460,8 +460,13 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
 /* editing: the slide is a real bounded page surface (16:9 by default —
    the Page dropdown can make it 4:3 or a poster), so you can see exactly
    where things will sit when presented */
+/* T467: the bottom padding is the zoom bar's room. The bar sits over
+   the page's bottom-right corner, where the page number is drawn, so
+   pressing Page numbers showed the top half of a digit (2026-09-15
+   review). sizeSlideTo measures this padding, so the page fits above
+   the bar. */
 .deck.editing .deck-stage{align-items:center;justify-content:center;
-  padding:18px 26px 10px;}
+  padding:18px 26px 50px;}
 .deck.editing .slide{flex:none;width:100%;max-height:100%;
   aspect-ratio:var(--page-ar,16/9);margin:auto;background:var(--chrome-0,#0b141d);
   border:2px solid #ffffff2b;border-radius:12px;
@@ -1204,9 +1209,11 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 /* a thumbnail draws EVERY kind of item, not just placed cells. Each one
    sits at its page percentage, so the strip is a true scale model of the
    slide (2026-08-20). */
-.mini-tx{position:absolute;color:#dbe6ee;line-height:1.2;
+.mini-tx{position:absolute;color:var(--tk-ink,#dbe6ee);line-height:1.2;
   white-space:pre-wrap;overflow:hidden;max-width:100%;
   transform-origin:0 0;pointer-events:none;}
+/* T467: a light deck's thumbnails carry dark words, as the page does */
+.page-light .mini-tx{color:var(--tk-ink,#1b2733);}
 .mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
 .mini-it{position:absolute;overflow:hidden;pointer-events:none;}
 .mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}
@@ -1695,8 +1702,8 @@ body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
    tile carrying one closes its gaps so icon, word and choice all fit
    the height; pressed, the choice takes the tile's own ink. */
 .fx-tile>.rbn-foldval{display:block;font:600 10px var(--mono);
-  color:var(--cyan);max-width:78px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;}
+  color:var(--cyan);max-width:118px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}   /* T467: room for "On click · By bullet" */
 .fx-tile>.rbn-foldval[hidden]{display:none;}
 .fx-tile.has-val{gap:2px;}
 .fx-tile.has-val>span:first-of-type{white-space:nowrap;}
@@ -4620,7 +4627,7 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
    somewhere. Change one, change the other. */
 .mini-diagram{--mini-h:66px;width:116px;height:var(--mini-h);flex:none;
   display:grid;gap:2px;
-  background:var(--chrome-0,#0b141d);border:1px solid #ffffff22;border-radius:4px;
+  background:var(--page-bg,var(--chrome-0,#0b141d));border:1px solid #ffffff22;border-radius:4px;
   padding:2px;overflow:hidden;}
 .mini-diagram.full{grid-template-columns:1fr;}
 .mini-diagram.halves{grid-template-columns:1fr 1fr;}
@@ -5307,6 +5314,12 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .an-md code{font-family:var(--mono,ui-monospace,Consolas,monospace);
   font-size:.9em;padding:0 .2em;border-radius:.2em;
   background:rgba(127,127,127,.18);}
+/* T467: a fenced block is a block */
+.an-md pre{margin:.4em 0;padding:.4em .55em;border-radius:.3em;
+  background:rgba(127,127,127,.18);white-space:pre-wrap;
+  overflow-wrap:anywhere;font-size:.9em;line-height:1.3;}
+.an-md pre code{padding:0;background:none;font-size:1em;}
+.an-md h6{margin:.5em 0 .25em;line-height:1.15;font-weight:700;font-size:1em;}
 .an-md hr{border:0;border-top:.08em solid currentColor;opacity:.4;
   margin:.5em 0;}
 .an-md a{color:inherit;text-decoration:underline;}

@@ -127,7 +127,9 @@ def test_the_small_things_the_screenshots_showed(out):
 def test_the_colour_popup_says_whose_colours_they_are(out):
     """It headed one row "Deck" and the next "Text", which read as a
     difference in what they colour rather than in where they come from."""
-    assert "lab.textContent='This deck\\u2019s colours';" in out
+    # T467: one name everywhere -- the ribbon's own "Deck colours"
+    assert "lab.textContent='Deck colours';" in out
+    assert "Home \\u2192 " not in out   # the door that went in T444
     assert ">Standard colours</span>" in out
     assert out.count("lab.textContent='Deck';") == 0
 

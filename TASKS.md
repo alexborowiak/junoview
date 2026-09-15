@@ -8895,3 +8895,33 @@ any reading. The rest are T466 onwards.
   Driven at 1300: fourteen Motion tiles and the door reading Spin; the
   Order tab's "leaves" row and its Stays; Timing's fields on their tab;
   the Show-all pick closing the window with the bar at 1085 of 1085.
+
+- [x] **T467 — The review's third batch: names, and doors that were
+  nearly right.** **One name for the deck's colours**: the colour menu's
+  row said "This deck's colours", its chips sent you to "Home → Shared
+  colours" (gone in T444) and the panel spoke of "the Deck row" -- all
+  three say Deck colours, the ribbon's own word. **One name for the
+  check**: the door says Check consistency and what it opened was
+  titled "Fix mismatched text", the very name T443 quotes the user on;
+  the pane, the overview, the Review row and Help all say Check
+  consistency. **Home's Notes tile** never lit and never closed the
+  pane, unlike Layers beside it: it presses View's own toggle and
+  mirrors it. **The equation editor** told you to write "between $$
+  and $$" and then added them itself, storing '$$ $$x^2$$ $$' as
+  plain text; typed dollars are absorbed and the tile stops asking.
+  **Markdown** fenced code was three paragraphs of backticks; it is a
+  block now, and #### is a heading. **The film strip's thumbnails**
+  stayed navy under a light deck; they take the page colour, with dark
+  words. **A shape's colour door** was "Line ▾" beside Line & shape's
+  "Line ▾", in a group captioned "Font": the door is named for what it
+  colours (Border colour, Line colour) and the group reads Colour for
+  anything that is not words. **A table's Columns door** sat alone in
+  the Picture group a thousand pixels from the Table group. **A
+  variation's − / +** copied its parent's weight, face and colour into
+  it, so it stopped following (T292). **The scrolling page** ignored
+  the chosen version and Running late. **Page numbers** drew under the
+  zoom bar; the stage keeps the bar's height clear. **The pane's "when
+  it leaves"** was one chip that read Stays until pressed and
+  "Disappears" after; it is Stays / Send it away with the click it
+  goes on. **A two-strip door** (Timing & text) read only its first
+  pressed tile; it reads "On click · By sentence". Driven at 1500.

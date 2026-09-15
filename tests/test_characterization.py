@@ -1938,8 +1938,17 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tile at once; the Citations pane follows a Cite; the heading toggle
 # reads the resolved answer; a table's Colour door shows its swatches;
 # a hidden checkbox row is hidden; the empty flip book names real doors.
-EXPECTED_MD5 = "d422bb2a4346b35ccfb50aedb80d03a7"
-EXPECTED_BYTES = 4339409
+# T467 (2026-09-15): the review's third batch -- one name for the
+# deck's colours and for the consistency check; Home's Notes tile is a
+# toggle that lights; the equation editor absorbs typed $$; Markdown
+# fenced code and four heading levels; thumbnails take the page colour;
+# a colour door is named for what it colours and its group too; a
+# table's Columns door sits with the table; a variation's +/- writes
+# only its size; the scrolling page shows the version the show would;
+# the page keeps clear of the zoom bar; the pane's leave chips speak
+# the ribbon's words and say the click; a two-choice door reads both.
+EXPECTED_MD5 = "fcbc76d52e5eb3a30c70b654b1f06c8c"
+EXPECTED_BYTES = 4345616
 
 
 def _render_example() -> str:

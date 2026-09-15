@@ -1518,8 +1518,8 @@ items snap to both. Guides, not ink: never printed or exported"
                     aria-expanded="false" title="Show all"
                     aria-label="Show every kind of text box">&#9662;</button></span></span>
               <button class="fx-tile big-tile rbn-tall" id="dc-maths"
-                title="Add an equation, written in LaTeX between $$ and $$
- - it is typeset as you type"><i data-ic="maths"></i><span>Equation</span></button>
+                title="Add an equation: type the LaTeX (no $$ needed) and it
+ is typeset as you type"><i data-ic="maths"></i><span>Equation</span></button>
               <button class="fx-tile big-tile rbn-tall" id="dc-md"
                 title="Add a Markdown box - headings, bullets, numbers,
  links, quotes, code and emphasis, typed as text and rendered on the
@@ -1857,7 +1857,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 <!-- T228: Notes beside Layers. It is a thing you
                      write while building, so it belongs on the tab
                      you build from. -->
-                <button class="fx-tile big-tile" id="hm-notes"
+                <button class="fx-tile big-tile" id="hm-notes" aria-pressed="false"
                   title="Your speaker notes for this slide, how long
  you want it to take, and what your rehearsals actually took"
                   ><i data-ic="doc"></i><span>Notes</span></button>
@@ -2493,15 +2493,6 @@ items snap to both. Guides, not ink: never printed or exported"
                    the four playback switches -->
               <!-- T322: everything a chart can be asked beyond its kind
                    and its numbers -->
-              <!-- T324: what each column of a table holds, and
-                   everything that follows from it -->
-              <span class="sh-drop" id="fmt-tablewrap" hidden>
-                <button class="dbtn etm" id="fmt-table"
-                  title="What each column holds &mdash; numbers or text
- &mdash; and so how it lines up, how many decimals it shows, its units,
- its footer and its colours"
-                  ><i data-ic="table"></i> Columns</button>
-              </span>
               <span class="sh-drop" id="fmt-chartwrap" hidden>
                 <button class="dbtn etm" id="fmt-chart"
                   title="Kind, stacking, log and second axes, data labels,
@@ -2603,6 +2594,17 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Add a column on the right"><i data-ic="plus"></i> Column</button>
               <button class="dbtn etm" id="fmt-tbl-colminus"
                 title="Remove the last column"><i data-ic="minus"></i> Column</button>
+              <!-- T324: what each column of a table holds, and
+                   everything that follows from it. T467: HERE, with the
+                   table's other controls -- it sat alone in the Picture
+                   group, a thousand pixels from them. -->
+              <span class="sh-drop" id="fmt-tablewrap" hidden>
+                <button class="dbtn etm" id="fmt-table"
+                  title="What each column holds &mdash; numbers or text
+ &mdash; and so how it lines up, how many decimals it shows, its units,
+ its footer and its colours"
+                  ><i data-ic="table"></i> Columns</button>
+              </span>
               <button class="dbtn etm" id="fmt-tbl-head"
                 aria-pressed="false"
                 title="Treat the first row as headings"><i data-ic="table"></i>
@@ -2669,7 +2671,10 @@ items snap to both. Guides, not ink: never printed or exported"
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Fix mismatched text</span>
+        <!-- T467: named as its door is. T443 quoted the user: "the fix
+             mismatched text makes no sense"; the Style system's button
+             says Check consistency, and now so does what it opens. -->
+        <div class="selpane-h"><span>Check consistency</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
@@ -2755,8 +2760,8 @@ items snap to both. Guides, not ink: never printed or exported"
            view; a fix re-renders it. The panes stay in the markup for
            the pane owner and the tests, but the ribbon doors open these. -->
       <div class="img-ov" id="std-ov" hidden role="dialog"
-        aria-label="Fix mismatched text">
-        <div class="img-ov-h"><span class="img-ov-t">Fix mismatched text</span>
+        aria-label="Check consistency">
+        <div class="img-ov-h"><span class="img-ov-t">Check consistency</span>
           <span class="img-ov-sub" id="std-ov-sub"></span>
           <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>

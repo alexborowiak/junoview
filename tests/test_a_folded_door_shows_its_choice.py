@@ -44,8 +44,10 @@ def test_the_door_reads_out_the_choice(out):
     # T453: the row may be on the ribbon's shelf rather than inside
     # the group, and the readout is still that group's to keep true
     assert "    var row=rbnFoldRow(g);" in out
-    assert "    var on=row?row.querySelector('[aria-pressed=\"true\"]'):null;" \
-        in out
+    # T467: every pressed control in the row, one per strip or cell,
+    # joined -- "On click · By sentence"
+    assert "    var ons=row?$$('[aria-pressed=\"true\"]',row):[];" in out
+    assert "    var txt=parts.join(' \\u00b7 ');" in out
     assert "  function rbnReadoutBoot(){" in out
     assert "        attributeFilter:['aria-pressed']});" in out
     assert "  rbnReadoutBoot();" in out

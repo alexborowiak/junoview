@@ -1763,9 +1763,9 @@
       function(){showTidyPane();},
       'Near-miss alignments, uneven gaps and duplicates');
     var r=standardise();
-    cat('Fix mismatched text','whole deck',
+    cat('Check consistency','whole deck',
       r.findings.filter(function(f){return f.sev==='warn';}).length+figLint().length,
-      bic('scope')+' Open Fix mismatched text',
+      bic('scope')+' Open Check consistency',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
       'Text and figures that look like they should match but do not');
     cat('Content & wording','whole deck',reviewLints().length,

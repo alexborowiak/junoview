@@ -22,7 +22,7 @@ def test_the_review_centre_and_toasts_use_current_names(out):
                  "guides and the print check lead"):
         assert gone not in out, gone
     # (T383: the check is "Fix mismatched text" again, on its own tile)
-    for now in ("' Open Before you print'", "' Open Fix mismatched text'",
+    for now in ("' Open Before you print'", "' Open Check consistency'",
                 "Shared colours",
                 "guides and Review lead"):
         assert now in out, now
@@ -33,6 +33,8 @@ def test_help_uses_current_names():
         encoding="utf-8")
     assert "<i>Standardise text</i>" not in help_html
     assert "<i>Colours &amp; spacing</i>" not in help_html
-    assert "Fix mismatched text</i>" in help_html
-    assert "Check consistency</i>" not in help_html
+    # T467: one name -- the door's (T443: "the fix mismatched text
+    # makes no sense")
+    assert "Fix mismatched text</i>" not in help_html
+    assert "Check consistency</i>" in help_html
     assert "Shared colours</i>" in help_html

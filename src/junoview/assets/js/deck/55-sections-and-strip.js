@@ -1731,8 +1731,20 @@
      only be made optional from a right-click menu on the strip
      ("how are slides made optional?"). */
   function homeDoorsBoot(){
-    var n=$('#hm-notes');
-    if(n) n.addEventListener('click',function(e){
+    /* T467: the same shape as Layers beside it -- press View's own
+       Notes toggle and mirror its state, so the tile lights while the
+       pane is open and a second press closes it (it pressed the
+       Present menu's row, which only ever opened) */
+    var n=$('#hm-notes'),nb=$('#notes-btn');
+    if(n&&nb){
+      n.addEventListener('click',function(e){
+        e.stopPropagation();nb.click();});
+      var mirrorN=function(){
+        n.setAttribute('aria-pressed',nb.getAttribute('aria-pressed')||'false');};
+      new MutationObserver(mirrorN)
+        .observe(nb,{attributes:true,attributeFilter:['aria-pressed']});
+      mirrorN();
+    } else if(n) n.addEventListener('click',function(e){
       e.stopPropagation();
       var row=$('#pl-notes'); if(row) row.click();
     });

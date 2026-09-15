@@ -112,6 +112,19 @@
     /* it is a scrolling page now, not the print root: the id goes so a
        later print or export builds its own without deleting this one */
     root.removeAttribute('id');
+    /* T467: THE VERSION THE SHOW WOULD PLAY. outputSlides is the
+       export's list and never consults slideSkipped (deliberately, so a
+       rehearsal cut cannot trim a PDF); this is a way of PLAYING, so a
+       slide the strip marks "not shown" is not a page here either
+       (2026-09-15 review). The pages are dropped after the build so the
+       explode-a-flip-book arithmetic is untouched. */
+    if(typeof slideSkipped==='function'){
+      var pgs=$$('.print-page',root),keep=[];
+      ents.forEach(function(e,i){
+        if(slideSkipped(e.i)){if(pgs[i]) pgs[i].remove();}
+        else keep.push(e);});
+      ents=keep;
+    }
     root.classList.add('scroll-root');
     var ov=document.createElement('div');
     ov.className='deck-scroll';ov.id='deck-scroll';

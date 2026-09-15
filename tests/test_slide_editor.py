@@ -2808,7 +2808,8 @@ def test_the_consistency_check_says_what_it_is_opened_for(out):
     # T443: the check's tile is gone from the ribbon; its pane and
     # overlay keep the name, its hidden door keeps the words
     assert "<span>Fix mismatched text</span></button>" not in out
-    assert "Fix mismatched text" in out
+    # T467: the pane and the overview wear the door's name
+    assert '<span class="img-ov-t">Check consistency</span>' in out
     assert "Find text or figures that look like they should" in out
     # The count includes figures, while the list suppresses cards that
     # merely say something already matches...

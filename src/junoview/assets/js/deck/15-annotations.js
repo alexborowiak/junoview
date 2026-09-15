@@ -2554,10 +2554,14 @@
       var isFill=(sel==='#fmt-fillcol-menu');
       var lab=document.createElement('span');
       lab.className='fmt-lab';
-      lab.textContent='This deck\u2019s colours';
-      lab.title='This deck\u2019s own colours. An item given one of '
-        +'these follows it: change the colour once and everything '
-        +'wearing it changes.';
+      /* T467: ONE NAME. The row said "This deck's colours", the chips
+         sent you to "Home -> Shared colours" (a tab and a name that
+         went in T444) and the panel spoke of "the Deck row" -- three
+         names for the door the ribbon calls Deck colours. */
+      lab.textContent='Deck colours';
+      lab.title='The deck\u2019s own colours (Design \u2192 Deck colours). '
+        +'An item given one of these follows it: change the colour once '
+        +'and everything wearing it changes.';
       row.appendChild(lab);
       var t=tokens();
       Object.keys(t.c).forEach(function(k){
@@ -2566,8 +2570,8 @@
         b.setAttribute('data-c','@'+k);
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
-        b.title=nm+' \u2014 a shared colour. Change it in Home \u2192 '
-          +'Shared colours and everything using it follows.';
+        b.title=nm+' \u2014 a deck colour. Change it under Design \u2192 '
+          +'Deck colours and everything wearing it follows.';
         b.setAttribute('aria-label',nm+' (shared colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -2674,7 +2678,8 @@
       use.title=base
         ?('Everything that has not been given a colour of its own wears '
           +'this. Change it and they all follow.')
-        :'Put this colour on a box from the Deck row of its colour menu';
+        :'Put this colour on a box from the Deck colours row of its '
+          +'colour menu';
       row.appendChild(use);
       var inp=document.createElement('input');
       inp.type='color';inp.className='ff-in';
@@ -2706,10 +2711,10 @@
       var note2=document.createElement('div');
       note2.className='ff-none';
       note2.textContent=anyUse
-        ?'Put one on any box from the Deck row at the top of its colour '
+        ?'Put one on any box from the Deck colours row of its colour '
           +'menu; change it here and every box wearing it follows.'
-        :'Nothing wears one yet. Put one on any box from the Deck row '
-          +'at the top of its colour menu.';
+        :'Nothing wears one yet. Put one on any box from the Deck '
+          +'colours row of its colour menu.';
       m.appendChild(note2);
       var used=[],idle=[];
       spare.forEach(function(k){
@@ -3719,10 +3724,21 @@
       null);
     var lines=esc(src).split('\n'),out=[],list=null;
     function closeList(){if(list){out.push('</'+list+'>');list=null;}}
+    /* T467: a FENCED code block. The tile promised "code" and only the
+       inline kind worked: three backticks became three paragraphs of
+       literal backticks on the slide (2026-09-15 review). The lines
+       between the fences are kept whole, escaped already by esc(). */
+    var code=null;
     lines.forEach(function(ln){
       var m;
+      if(/^\s*```/.test(ln)){
+        if(code===null){closeList();code=[];}
+        else {out.push('<pre><code>'+code.join('\n')+'</code></pre>');code=null;}
+        return;
+      }
+      if(code!==null){code.push(ln);return;}
       if(/^\s*$/.test(ln)){closeList();return;}
-      if((m=/^(#{1,3})\s+(.*)$/.exec(ln))){
+      if((m=/^(#{1,4})\s+(.*)$/.exec(ln))){
         closeList();
         /* # is an h3: a note never outranks the page it sits beside */
         out.push('<h'+(m[1].length+2)+'>'+mdInline(m[2])
@@ -3743,6 +3759,7 @@
       out.push('<p>'+mdInline(ln)+'</p>');
     });
     closeList();
+    if(code!==null) out.push('<pre><code>'+code.join('\n')+'</code></pre>');
     return out.join('');
   }
   /* ---- THE ROOM TO WRITE THEM IN --------------------------------------

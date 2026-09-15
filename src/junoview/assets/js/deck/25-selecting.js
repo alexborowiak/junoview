@@ -477,10 +477,16 @@
        selected, and textContent would delete the icon with the old word
        every time -- which is why it was the one ribbon button that could
        never keep one (2026-08-25). */
+    /* T467: named for what it COLOURS. An arrow had two doors reading
+       "Line ▾" 200px apart -- this one (its colour) and Line & shape's
+       (dash, weight, ends) -- and a shape's sat in a group captioned
+       "Font" (2026-09-15 review). */
     if(tcb) tcb.innerHTML=bic('palette')+' '
       +((isText||kind==='cell')?'Text ▾'
-      :kind==='rect'?'Border ▾'
-      :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾');
+      :kind==='rect'?'Border colour ▾'
+      :(kind==='arrow'||kind==='draw')?'Line colour ▾':'Colour ▾');
+    var fgl=$('.rbn-fontgrp>.rbn-lab');
+    if(fgl) fgl.textContent=(isText||isTbl||noteCell)?'Font':'Colour';
     /* a SHAPE has one Fill control and it is the panel in Line & shape;
        this button stays for text boxes and cell frames, which have a
        background colour but no fill STYLE (2026-08-20, user: "confusing

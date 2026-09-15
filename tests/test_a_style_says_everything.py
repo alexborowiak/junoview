@@ -21,7 +21,8 @@ def test_the_vocabulary_lives_in_one_list(out):
     assert "      STYLE_FIELDS.forEach(function(k){\n" in out
     assert "    STYLE_FIELDS.forEach(function(k){\n" in out
     assert "        STYLE_FIELDS.forEach(function(k){\n" in out
-    assert "            STYLE_FIELDS.forEach(function(k2){\n" in out
+    # (T467: a variation copies nothing; a root style still copies all)
+    assert "            if(!varying) STYLE_FIELDS.forEach(function(k2){\n" in out
     for gone in ("['b','i','font','color','align','lh','pspace','head']",
                  "['b','i','font','color','align','lh','pspace']",
                  "['b','i','font','color','align'].forEach"):
