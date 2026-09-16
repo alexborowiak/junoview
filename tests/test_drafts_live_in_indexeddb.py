@@ -55,7 +55,7 @@ def test_boot_reads_legacy_then_the_store(out):
     assert "    draftsLoadDb().then(function(fresh){" in fn
     # the deck you were on takes the screen back, unless you have moved
     assert ("      if(fresh.indexOf(want)>=0&&pres&&pres.name===bootName\n"
-            "         &&bootName!==want){") in fn
+            "         &&(bootName!==want||!bootStored)){") in fn   # T496
     load = out.split("  function draftsLoadLocal(){")[1].split("\n  }")[0]
     assert "      if(lsGet(PFX+nm)!=null) draftSet(nm,DRAFTS[nm],true);" in load
 

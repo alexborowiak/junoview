@@ -215,8 +215,12 @@
         if(typeof s.alt==='string'&&s.alt) o.alt=s.alt;
         /* how this slide ARRIVES. Per slide because that is how anyone
            thinks about it, and because a deck-wide setting cannot say
-           "this one flies in from the last" (T27). */
-        if(typeof s.trans==='string'&&s.trans) o.trans=s.trans;
+           "this one flies in from the last" (T27).
+           '' IS AN ANSWER (T494): Cut inside a section that fades is
+           stored as '' -- the override T57 made real -- and the
+           truthiness test here dropped it on every reload, so the slide
+           faded again and every readout said Fade. */
+        if(typeof s.trans==='string') o.trans=s.trans;
         if(Array.isArray(s.cuts)&&s.cuts.length)
           o.cuts=s.cuts.filter(function(c){
             return typeof c==='string'&&c;});
@@ -624,6 +628,9 @@
       return fresh;
     }).catch(function(){draftsLoaded=true;return [];});
   }
+  /* T494: the router asks this before it gives up on a #/pres route --
+     a browser-kept deck is invisible to deckOpen until the store answers */
+  APP.draftsPending=function(){return !draftsLoaded;};
   /* ---- IndexedDB, one door for every store (moved here from the save
      fragment in T429 so the draft store above can use it; function
      declarations hoist, `var` initialisers do not, and this runs from
@@ -1001,18 +1008,31 @@
        the default deck the lines above had to open on, and every list
        that names drafts is drawn again. */
     var bootName=(pres&&pres.name)||'';
+    /* T494: ...and whether that deck came from the store. The default
+       deck is called "presentation", and so is the first deck anyone
+       makes: boot opened the notebook's automatic deck under the saved
+       one's name, the name test below read "same deck, do nothing",
+       and the saved one never took the screen back. */
+    var bootStored=(source==='draft');
     draftsLoadDb().then(function(fresh){
-      if(!fresh.length){draftsDbFull=false;return;}
+      if(!fresh.length) draftsDbFull=false;
       var want=lsGet(PFX+'last')||'';
       /* the deck you were on, if the lines above had to open on
          something else and you have not moved since */
       if(fresh.indexOf(want)>=0&&pres&&pres.name===bootName
-         &&bootName!==want){
+         &&(bootName!==want||!bootStored)){
         loadPresentation(want);
         cur=0;activePane=-1;
         if(typeof status==='function') status();
         if(typeof refresh==='function'&&!deckEl.hidden) refresh();
       }
+      /* T494: the URL's #/pres route, which the router held back
+         until now because the deck it names could be one of these.
+         Before the chrome is painted, so Home is judged with the deck
+         open; and when the store does not hold it either, the router
+         stamps the view that is showing, as it always did. */
+      if(typeof APP.tryRoute==='function') APP.tryRoute();
+      if(!fresh.length) return;
       if(typeof renderPresTabs==='function') renderPresTabs();
       if(typeof renderPresentationHub==='function') renderPresentationHub();
       if(typeof renderDeckPresentationDrawer==='function')
@@ -1176,7 +1196,22 @@
                                     tail below would run */
         return;
       }
-      el.textContent=auto?'unsaved — saving…':'unsaved';
+      /* T494: A DECK THE STORE HOLDS, UNTOUCHED SINCE IT WAS OPENED, IS
+         SAVED. Reopening a browser-kept deck after a reload (or
+         switching to it) read "unsaved — saving…" for as long as you
+         did not edit: the per-deck reset T483 added put the phrase back
+         on every reopen, no autosave was armed to make it true, and the
+         close guard agreed nothing was unsaved. The store is this
+         deck's home, so it says so; and "saving…" is only promised
+         once an edit this visit has armed the autosave. */
+      var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
+      if(!deckEdited()&&toBrowser&&pres&&draftGet(pres.name)!=null){
+        el.textContent='saved to browser';
+        el.className='deck-status saved';
+        markSaveClickable(el);
+        return;
+      }
+      el.textContent=(auto&&deckEdited())?'unsaved — saving…':'unsaved';
     } else if(source==='saved'){
       /* WHERE, not just when: "autosaved · 12:18" answered the question
          nobody asked and skipped the one that matters — into the browser?
@@ -1223,11 +1258,16 @@
   /* T434: whether anything was edited on this visit -- the close guard
      asks only about work done here, never about a deck merely opened */
   var editsThisVisit=false;
+  /* T494: ...and WHICH decks, by name, so the readout can tell a deck
+     merely switched to from the one that was worked on */
+  var editedDecks={};
+  function deckEdited(){return !!(pres&&editedDecks[pres.name]);}
   function markDirty(quiet){
     /* T409: a committed edit to a clone reaches its clones FIRST, so
        the history entry and the draft below hold the synced deck */
     if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
     source='draft';editsThisVisit=true;
+    if(pres&&pres.name) editedDecks[pres.name]=1;
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */
     status();

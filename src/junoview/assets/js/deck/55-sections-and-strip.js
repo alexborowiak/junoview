@@ -1224,6 +1224,12 @@
     if(mode==='create'){renderCreate();}
     else if(mode==='edit'){renderCreate();renderSlide();}
     else renderSlide();
+    /* T494: the URL names the slide on screen. go() stamped it, but
+       New slide, Duplicate, Delete and a drag set `cur` and come here
+       instead, so the hash still said /s1 while slide 2 was showing --
+       and a reload restored the wrong slide. setHash is a no-op when
+       nothing changed, and a slide move inside one deck never pushes. */
+    if(!deckEl.hidden) routeSync();
   }
   function routeSync(){
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
@@ -1466,7 +1472,17 @@
   };
   window.SemApp.deckOpen=function(name,slide){
     if(!name) return false;
-    if(pres.name!==name){
+    /* T494: THE AUTOMATIC DECK IS NOT THE ONE THE URL NAMES until the
+       draft store has said so. Both are called "presentation" -- the
+       default name, and the name of the first deck anyone keeps -- and
+       the name test alone opened the notebook's automatic deck on
+       #/pres/presentation/s1, whose opening snapshot minted slide ids
+       (ensureSids -> markDirty) and wrote THAT deck into the store
+       under the saved one's key, 300ms later, before the store had
+       answered: the saved deck was gone. While the store is pending an
+       automatic deck answers "not yet", so the route waits for it; once
+       it has answered, a never-kept automatic deck still opens by name. */
+    if(pres.name!==name||(source==='auto'&&!draftsLoaded)){
       if(!(savedByName(name)||loadDraft(name))) return false;
       lsSet(PFX+'last',name);
       loadPresentation(name);

@@ -447,7 +447,8 @@
      Bookmarkable + survives reload + back/forward, in every mode (hash only,
      so no server routing needed). The deck registers deckState/deckOpen. */
   var initialHash=location.hash, routeReady=false, pendingRoute=null,
-      routeTimer=null, lastView=null, applyingRoute=false;
+      routeTimer=null, lastView=null, applyingRoute=false,
+      routeWaits=false;   /* T494: a #/pres route the draft store must answer */
   /* the VIEW a hash names: everything but a /s<n> slide suffix */
   function viewOf(h){return String(h||'').replace(/\/s\d+$/i,'');}
   function setHash(h){
@@ -496,6 +497,7 @@
   function applyHash(hash){
     var parts=routeParse(hash);
     var open=APP.deckState&&APP.deckState();
+    routeWaits=false;
     if(!parts.length){
       /* the default view: Back has arrived at the entry stamped on load,
          so whatever opened since (a presentation, Home) goes away */
@@ -519,7 +521,21 @@
         if(st.slide!==slide&&APP.deckGo) APP.deckGo(slide);
         return;
       }
-      if(APP.deckOpen&&!APP.deckOpen(parts[1],slide)) updateHash();
+      if(APP.deckOpen&&!APP.deckOpen(parts[1],slide)){
+        /* T494: A DECK KEPT IN THIS BROWSER IS NOT THERE YET. Since
+           T429 the drafts live in IndexedDB and arrive after boot, so
+           at this point deckOpen cannot see one and the route used to
+           be rewritten to the notebook's -- F5 on #/pres/talk/s2 landed
+           on #/doc/... with the editor closed, on the very destination
+           the Pages build defaults to (a project deck survived the same
+           reload). The route stays pending until the store has answered
+           and the deck fragment retries it; only a name the store does
+           not hold either falls through to the view that is showing. */
+        if(APP.draftsPending&&APP.draftsPending()){
+          pendingRoute=hash;routeWaits=true;return;
+        }
+        updateHash();
+      }
     } else if(parts[0]==='doc'&&parts[1]){
       var ca=APP.shells[APP.active];
       var curStem=ca&&ca.trace?ca.source:APP.active;   /* symmetric w/ updateHash */
@@ -532,11 +548,14 @@
   function tryRoute(){
     if(!pendingRoute) return;
     applyHash(pendingRoute);
+    if(routeWaits) return;   /* T494: the draft store has the last word */
     var parts=routeParse(pendingRoute);
     /* presentations open synchronously; a doc route may wait for its tab to
        mount (web mode restores notebooks asynchronously) */
     if(parts[0]!=='doc'||APP.shells[parts[1]]) pendingRoute=null;
   }
+  /* T494: the deck fragment calls this once the draft store has answered */
+  APP.tryRoute=tryRoute;
   APP.applyInitialRoute=function(){
     routeReady=true;
     var parts=routeParse(initialHash);
@@ -551,7 +570,10 @@
     if(!pendingRoute) return;
     if(routeTimer) clearTimeout(routeTimer);
     routeTimer=setTimeout(function(){
-      applyHash(pendingRoute);pendingRoute=null;},250);
+      if(!pendingRoute) return;
+      applyHash(pendingRoute);
+      if(!routeWaits) pendingRoute=null;   /* T494 */
+    },250);
   });
   window.addEventListener('hashchange',function(){
     pendingRoute=null;   /* a real navigation supersedes the initial route */

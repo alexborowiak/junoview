@@ -646,3 +646,39 @@ def test_undo_after_the_third_pass(out):
     # [18] the selection survives by oid, so the tab and the nudge keys do
     assert "    if(back.length){selSet=back;selAnnot=back[back.length-1];}" in out
     assert "    if(typeof renderSelPane==='function') renderSelPane();" in out
+
+
+def test_the_round_trip_after_the_third_pass(out):
+    """T496 (2026-09-16, the third review pass: round-trip lens)."""
+    # [4] '' is an answer: Cut inside a section that fades survives
+    assert "        if(typeof s.trans==='string') o.trans=s.trans;" in out
+    assert "if(typeof s.trans==='string'&&s.trans) o.trans=s.trans;" not in out
+    # [5] a #/pres route waits for the draft store, and is retried by it
+    assert ("      routeWaits=false;   /* T494: a #/pres route the draft "
+            "store must answer */") in out
+    assert "        if(APP.draftsPending&&APP.draftsPending()){" in out
+    assert "  APP.draftsPending=function(){return !draftsLoaded;};" in out
+    assert "      if(typeof APP.tryRoute==='function') APP.tryRoute();" in out
+    assert "    if(pres.name!==name||(source==='auto'&&!draftsLoaded)){" in out
+    # ...and the URL names the slide on screen after New slide / Delete
+    assert "    if(!deckEl.hidden) routeSync();" in out
+    # [6] a browser-kept deck untouched since it was opened is saved
+    assert "        el.textContent='saved to browser';" in out
+    assert "  function deckEdited(){return !!(pres&&editedDecks[pres.name]);}" in out
+    # the Transition tiles follow a section default the moment it changes
+    assert "    if(typeof transRibbonSync==='function') transRibbonSync();" in out
+
+
+def test_a_cut_inside_a_fading_section_survives_the_python_coercer():
+    """T496 [4]: the Python side dropped trans:'' too, so a deck saved
+    beside its notebook faded again on the next load."""
+    from junoview.notebook.presentations import as_presentations
+
+    pres = as_presentations([{"name": "d", "slides": [
+        {"layout": "blank", "sec": "s1", "trans": ""},
+        {"layout": "blank", "sec": "s1", "trans": "fade"},
+        {"layout": "blank"}]}])
+    sl = pres[0]["slides"]
+    assert sl[0]["trans"] == ""
+    assert sl[1]["trans"] == "fade"
+    assert "trans" not in sl[2]

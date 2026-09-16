@@ -3150,6 +3150,10 @@
     var m=(pres.sections||{})[id]; if(!m) return;
     if(kind) m.trans=kind; else delete m.trans;
     markDirty();renderFilm();
+    /* T494: the Animation tab's tiles describe the current slide, and
+       its section default just changed under it -- driven, they kept
+       the previous answer until the next slide move */
+    if(typeof transRibbonSync==='function') transRibbonSync();
     var lab=transLabel(kind);
     toast('Every slide in this section arrives: '+lab.toLowerCase());
   }

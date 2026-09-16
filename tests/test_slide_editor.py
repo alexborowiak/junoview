@@ -537,8 +537,10 @@ def test_browser_saves_offer_a_way_out(out):
     """
     assert "function markSaveClickable(el){" in out
     # (three since T406: the file-waiting readout is a door to Save too;
-    # T416's "click to reopen" marks itself, being a read and not a save)
-    assert out.count("markSaveClickable(el);") == 3
+    # T416's "click to reopen" marks itself, being a read and not a save;
+    # four since T496: a browser-kept deck untouched since it was opened
+    # reads "saved to browser", and that readout is a door to Save too)
+    assert out.count("markSaveClickable(el);") == 4
     # clicking SAVES now — it used to open the save-to-file picker, but a
     # thing that says "autosaved" invites saving, not a destination dialog
     # (2026-08-19, user: "clicking the autosave button should save").

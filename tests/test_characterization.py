@@ -2018,8 +2018,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T495 (2026-09-16): undo and history after the third pass -- typing
 # settled before a format lands, cite/bib/slot in the snapshot, undo
 # jumps to the slide it changed and keeps the selection.
-EXPECTED_MD5 = "dbc628dbbd99358c8b03cbf8feaad0db"
-EXPECTED_BYTES = 4495916
+# T496 (2026-09-16): the round trip after the third pass -- Cut inside
+# a fading section survives a reload, a #/pres route waits for the draft
+# store, a reopened browser-kept deck says "saved to browser".
+EXPECTED_MD5 = "bfaa811f77946a9539f88b364c050134"
+EXPECTED_BYTES = 4500818
 
 
 def _render_example() -> str:

@@ -9586,3 +9586,23 @@ any reading. The rest are T466 onwards.
   [22] adding a section costs two entries. (Implemented by a worktree
   agent of the T492 workflow; integrated, renamed a duplicate
   `slideSig` the name-guard caught, and gated here.)
+- [x] **T496 — The round trip, after the third review pass.** Three
+  findings, driven. A slide set to Cut inside a Fade section went back
+  to Fade on every reload — '' is the override T57 made real, and both
+  normPres and the Python coercer dropped it on a truthiness test; ''
+  is kept on both sides, and the Transition tiles follow a section
+  default the moment it changes. Reloading while editing a browser-
+  kept deck dropped you out of the editor and rewrote the URL to the
+  notebook's (since T429 the drafts arrive from IndexedDB after boot,
+  so the route was judged before the deck existed) — a #/pres route
+  waits for the draft store, the store retries it, an automatic deck
+  answers "not yet" while the store is pending, and the URL names the
+  slide on screen after New slide, Duplicate, Delete and a drag. And a
+  reopened browser-kept deck read "unsaved — saving…" although nothing
+  had changed — untouched since it was opened, it says "saved to
+  browser"; "saving…" is only promised once an edit this visit has
+  armed the autosave. Driven: Cut set, saved, reloaded — Cut still
+  pressed, the row menu ticks Cut; F5 on #/pres/presentation/s2 lands
+  on slide 2 in the editor; the readout after reopen, after an edit,
+  after the autosave. (Implemented by a worktree agent of the T492
+  workflow; integrated, tested and gated here.)

@@ -136,8 +136,10 @@ def as_presentations(obj: Any) -> list:
                     slide["alt"] = s["alt"].strip()
                 # how this slide ARRIVES -- "", "fade" or "move".
                 # Per-slide because that is how anyone thinks about it
-                # (2026-08-25).
-                if isinstance(s.get("trans"), str) and s["trans"].strip():
+                # (2026-08-25). "" is kept (T494): it is Cut said out
+                # loud inside a section that fades, and dropping it
+                # handed the slide back to the section on the next load.
+                if isinstance(s.get("trans"), str):
                     slide["trans"] = s["trans"].strip()
                 # the slide's durable name, minted on first rehearsal.
                 # Losing it here would make every rehearsal recorded
