@@ -2495,8 +2495,11 @@
               &&(selSet.length||selAnnot!==null)){
         e.preventDefault();
         var st=e.shiftKey?2:0.4;
+        /* T499: quiet, and settled on keyup (below) or 300 ms after
+           the last press -- a held key is one gesture, one entry */
         nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
-                 e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
+                 e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0,true);
+        nudgeArm();
       }
       /* with NOTHING selected, up/down walk the deck like the thumbnail
          strip (2026-08-19, user: "pressing the down key on the slide
@@ -2629,6 +2632,11 @@
       if(pl){e.preventDefault();pl.click();}
     }
   });
+  /* T499: the arrow comes up -- the nudge's one undo entry lands now
+     rather than 300 ms later (a no-op when no nudge is pending) */
+  document.addEventListener('keyup',function(e){
+    if(e.key&&e.key.indexOf('Arrow')===0) nudgeSettle();
+  });
   /* every deck shortcut is advertised in its button's tooltip, exactly
      like the document ribbon's (the data-kbd chip in app.js) */
   [['#dc-play','F5'],['#dc-undo','Ctrl+Z'],['#dc-redo','Ctrl+Y'],
@@ -2720,13 +2728,20 @@
   (function(){
     var sec=$('#film-sec');
     if(sec) sec.addEventListener('click',function(){
-      newSection(cur,'New section');
+      /* T499: ONE GESTURE, ONE ENTRY. Creating pushed an entry and the
+         rename pushed another, so the first Ctrl+Z only renamed it back
+         to "New section" -- a name you never chose (2026-09-15 review,
+         driven: undo depth +2). The creation is quiet; the name you
+         give it is the entry, and a declined name commits the creation
+         as its own. */
+      newSection(cur,'New section',true);
       /* the name is the point of a section, so ask for it straight away
          rather than leaving "New section" sitting there */
       var runs=sectionRuns(),i;
       for(i=0;i<runs.length;i++)
         if(runs[i].at<=cur&&cur<runs[i].at+runs[i].n&&runs[i].id)
-          {renameSection(runs[i].id);break;}
+          {renameSection(runs[i].id,function(named){
+            if(!named) markDirty();});break;}
     });
     var btn=$('#film-view-btn'),menu=$('#film-view-menu');
     function label(){

@@ -4734,7 +4734,9 @@
   /* the five verbs. Everything that touches sections goes through one of
      these, so normSections() is guaranteed to have run before markDirty
      writes the deck out. */
-  function newSection(at,name){
+  /* T499: `quiet` for the strip's Section button, whose rename question
+     follows at once -- the naming is the entry, see #film-sec */
+  function newSection(at,name,quiet){
     var id=secId(),i;
     secMap()[id]={name:name||'New section'};
     /* a new section OWNS everything from `at` down to the next divider —
@@ -4748,22 +4750,27 @@
     /* T316: refresh, not renderFilm -- every other membership verb
        ends in refresh(), and a heading wearing '@section' has to
        repaint the moment the section it now sits in exists */
-    normSections();markDirty();refresh();
+    normSections();markDirty(!!quiet);refresh();
   }
-  function renameSection(id){
+  /* T499: `then(named)` runs once the question is answered either way
+     -- the strip's Section button commits the section's own entry there
+     when the name was declined, so a cancel is undoable too */
+  function renameSection(id,then){
     /* prompt(), not an inline edit on the row. The row's own click
        re-renders the strip, so by the time a dblclick handler arrived the
        node it was editing had already been replaced — the same reason the
        poster version rename is a button and a prompt (2026-08-10) */
     askText({title:'Name this section',value:secName(id),ok:'Rename'},
     function(v){
-    if(v==null) return;
-    v=v.trim(); if(!v) return;
+    v=(v==null)?'':v.trim();
+    if(v){
     /* T316: in place, so the arrival and the colour survive a rename
        (the rebuild here was already dropping `trans`) */
     var rec=secMap()[id]||(secMap()[id]={});
     rec.name=v;
     markDirty();renderFilm();
+    }
+    if(then) then(!!v);
     });
   }
   function foldSection(id,on){

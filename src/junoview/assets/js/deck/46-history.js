@@ -333,6 +333,7 @@
        one old version against another with no per-slide restore, which
        is the state this fix exists to get out of. */
     histAgainst='';histAgainstPicked=false;
+    histLiveAtHead=null;   /* T499: read again next open */
   }
   function histPanelKey(e){
     if(!$('#deck-history')) return;
@@ -374,8 +375,13 @@
       b.style.setProperty('--dh-lane',laneColor(L));
       var l1=document.createElement('span');
       l1.className='dh-when';
+      /* T499: "you are here" only while the deck IS this version;
+         edited since, it says so */
       l1.textContent=histLabel(e)
-        +(e.id===histHead?' \u00b7 you are here':'');
+        +(e.id===histHead&&histLiveAtHead!==null
+          ?(histLiveAtHead?' \u00b7 you are here'
+            :' \u00b7 edited since')
+          :'');
       var l2=document.createElement('span');
       l2.className='dh-why';
       l2.textContent=(e.br||'main')+' \u00b7 '+e.why+' \u00b7 '
@@ -387,11 +393,14 @@
         +(e.mk?'\nA checkpoint: kept even when older versions are '
           +'dropped':'')
         +(e.id===histHead
-          ?'\nThis is where the deck you are editing came from':'');
+          ?'\nThis is where the deck you are editing came from'
+            +(histLiveAtHead===false?', and it has been edited since':'')
+          :'');
       b.addEventListener('click',function(){
         histSel=e.id;histRows(ov,ix);
-        histAgainst=histAutoAgainst(ix,e);
-        histCompare(ov,e);});
+        histAutoAgainst(ix,e).then(function(ag){
+          if(histSel!==e.id) return;   /* T499: a later click won */
+          histAgainst=ag;histCompare(ov,e);});});
       row.appendChild(b);
       var ren=document.createElement('button');
       ren.className='dbtn dh-ren';
@@ -582,7 +591,13 @@
     body.innerHTML='<div class="selpane-empty">Reading\u2026</div>';
     var wantB=histAgainst?snapRead(histAgainst):Promise.resolve(null);
     Promise.all([snapRead(ent.id),wantB]).then(function(got){
-      var then=got[0],now=histAgainst?got[1]:pres;
+      /* T499: the live deck in the SAME FORM a version is stored in.
+         Raw `pres` was read against a normPres text, and slideSig is a
+         JSON.stringify -- so a slide whose keys had merely been written
+         in another order (`lay` after `annots`, on every slide given a
+         layout since it was made) read as "changed" in Pictures, with a
+         "Use the old one" button, while By slide listed nothing. */
+      var then=got[0],now=histAgainst?got[1]:normPres(pres);
       body.innerHTML='';
       if(!then||(histAgainst&&!now)){
         body.innerHTML='<div class="selpane-empty">That version '
@@ -653,7 +668,9 @@
         snapTake('before branching').then(function(){
           histRestoreDeck(then,ent.id,nm);
           histPanelClose();
-          snapTake('branched: '+nm);
+          /* T499: the branch's first dot is where a redo of this lands
+             the head, not the version it forked from */
+          snapTake('branched: '+nm).then(histMarkHeadNow);
           toast('On branch \u201c'+nm+'\u201d \u2014 what you save next '
             +'descends from '+histLabel(ent)+', not from where you '
             +'were');
@@ -725,11 +742,41 @@
      is what it changed, so it is read against the one before it.
      Only ever applied when nothing has been picked by hand: choosing a
      comparison from the dropdown and then clicking about must keep it. */
+  /* T499: ...AND ONLY WHILE THE NEWEST VERSION IS THE DECK YOU ARE
+     EDITING. T269 assumed it always was; it is not the moment one edit
+     follows a checkpoint -- the checkpoint's whole use case -- and then
+     picking the checkpoint read it against the version BEFORE it: the
+     wrong diff, and no "Put it back" / "Use the old one", which only
+     render against the live deck (2026-09-15 review, driven: "2 added"
+     for a move and a deleted slide). So the answer is a promise: the
+     newest version's stored text is read and compared with the deck as
+     it stands, and only when they are the same is it redirected. */
   function histAutoAgainst(ix,ent){
-    if(histAgainstPicked) return histAgainst;
-    if(!ix||ix.length<2||!ent) return '';
-    if(ent.id!==ix[ix.length-1].id) return '';
-    return ix[ix.length-2].id;
+    if(histAgainstPicked) return Promise.resolve(histAgainst);
+    if(!ix||ix.length<2||!ent) return Promise.resolve('');
+    if(ent.id!==ix[ix.length-1].id) return Promise.resolve('');
+    return histLiveIs(ent.id).then(function(same){
+      return same?ix[ix.length-2].id:'';});
+  }
+  /* whether the deck you are editing IS the version `id`: the text a
+     save would write now, against the text the store holds */
+  function histLiveIs(id){
+    if(!id||!pres||!pres.slides) return Promise.resolve(false);
+    var name=pres.name,txt;
+    try{txt=histText();}catch(e){return Promise.resolve(false);}
+    return histOps.then(function(){return idbGet(histVKeyFor(name,id));})
+      .then(function(t){return t===txt;}).catch(function(){return false;});
+  }
+  /* T499: the head row said "you are here" whatever had been done
+     since -- on a checkpoint the deck had moved past, a readout that
+     lies. Read once per open (and again after a checkpoint); until it
+     is known the row carries no label. */
+  var histLiveAtHead=null;
+  function histLiveLabel(ov,ix){
+    histLiveIs(histHead).then(function(same){
+      histLiveAtHead=!!same;
+      if(ov&&document.body.contains(ov)) histRows(ov,ix);
+    });
   }
   var histIxCache=[];
   function histAgainstEnt(){
@@ -789,6 +836,10 @@
        that snapshot, so the next save descends from IT -- which is what
        makes carrying on from an old version a fork rather than a lie
        about what came before (T90). */
+    /* T499: settle first, so the undo entry pushed below is the deck as
+       it stood (a nudge inside its 300 ms, words still in a box) */
+    histSettle();
+    var headWas={h:histHead,br:histBranch};
     if(fromId!==undefined) histHead=fromId||null;
     if(branch!==undefined) histBranch=branch||'';
     if(fromId!==undefined||branch!==undefined) histPtrSave(pres.name);
@@ -798,10 +849,20 @@
     pres=copy;              /* replace/delete every normPres key together */
     if((pres.page||null)!==pageWas||deckPageBg()!==bgWas) deckZoom=0;
     cur=0;activePane=-1;selAnnot=null;selSet=[];
-    /* Installs this version's custom type registry and discards undo
-       entries whose object references belong to the replaced deck. */
-    histReset();
-    markDirty();refresh();renderFilm();renderPresTabs();renderPresRow();
+    /* Installs this version's custom type registry. T499: the undo
+       stack is KEPT -- this used to be histReset(), which emptied it in
+       the same breath as the toast below promised Ctrl+Z (2026-09-15
+       review, driven: #dc-undo disabled after "Go back"). The entries
+       are JSON text, not references into the replaced deck, and
+       histRestore reads back every key histState writes, so the entry
+       markDirty pushes here is the deck you had; the mark is what lets
+       that undo move the head pointer back with it (10-decks.js). */
+    syncCustomTypes();
+    var depthWas=undoStack.length;
+    markDirty();
+    if(undoStack.length>depthWas)
+      histMarkHead(headWas,{h:histHead,br:histBranch});
+    refresh();renderFilm();renderPresTabs();renderPresRow();
     toast('Back to the older version \u2014 the deck as it was is in the '
       +'history too, so this is undoable');
   }
@@ -821,6 +882,7 @@
     }).then(function(){
       toast('Checkpoint \u201c'+nm+'\u201d saved \u2014 it is kept '
         +'even when older versions are dropped');
+      histLiveAtHead=true;   /* T499: the deck is the checkpoint, just taken */
       if(ov&&document.body.contains(ov))
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
     });
@@ -884,7 +946,9 @@
       if(wantId) ix.forEach(function(e){if(e.id===wantId) want=e;});
       if(!want&&ix.length) want=ix[ix.length-1];
       if(want){histSel=want.id;histRows(ov,ix);
-        histAgainst=histAutoAgainst(ix,want);
-        histCompare(ov,want);}
+        histAutoAgainst(ix,want).then(function(ag){
+          if(histSel!==want.id) return;
+          histAgainst=ag;histCompare(ov,want);});}
+      histLiveLabel(ov,ix);   /* T499 */
     });
   }

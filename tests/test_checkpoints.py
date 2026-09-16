@@ -70,7 +70,8 @@ def test_going_back_and_branching_are_the_buttons_that_were_already_there(out):
     # T237 shortened it; the gesture is the same
     assert "Branch from here" in out
     assert "          histRestoreDeck(then,ent.id,nm);" in out
-    assert "          snapTake('branched: '+nm);" in out
+    # T499: the branch's first dot is where a redo of this lands the head
+    assert "          snapTake('branched: '+nm).then(histMarkHeadNow);" in out
     # and the rail shows which ones you chose
     assert "        +(e.mk?' checkpoint':'')" in out
     assert ".dh-snap.checkpoint{border-left:3px solid var(--accent,#39a9c0);}" in out

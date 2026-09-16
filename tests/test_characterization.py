@@ -2029,8 +2029,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T498 (2026-09-16): the ribbon fit after the third pass -- the shelf is
 # a grid row, the clip is told, doors' readouts and names, the shelf
 # survives a tab change.
-EXPECTED_MD5 = "b56722db1c20ee3c5588ec59c15c633e"
-EXPECTED_BYTES = 4514111
+# T499 (2026-09-16): undo 19-22 -- a held arrow is one entry, the
+# History pane's comparison, restores keep the stack, one entry per
+# section.
+EXPECTED_MD5 = "b33848588b901be1f28147b03f8f9125"
+EXPECTED_BYTES = 4522624
 
 
 def _render_example() -> str:

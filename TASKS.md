@@ -9688,5 +9688,42 @@ any reading. The rest are T466 onwards.
   open from this lens: [14] the Everyday first and Everything in one row
   presets fold most of the bar at 1366 — T484's deferred taxonomy pass, a
   product decision on which groups to split. (Implemented by a worktree
-  agent of the T492 workflow.) (Implemented by a worktree agent of the
-  T492 workflow; integrated over T497's poster list and gated here.)
+  agent of the T492 workflow; integrated over T497's poster list and
+  gated here.)
+- [x] **T499 — Undo and history, after the third review pass (findings
+  19–22).** Holding an arrow key to nudge pushed one undo entry per
+  key-repeat — forty repeats, forty entries, a second and a half of
+  nudging evicted every earlier edit from the 50-deep stack and one
+  Ctrl+Z stepped back 0.4% — the rule the opacity slider follows: every
+  press is a quiet preview, the entry lands when the key comes up (or
+  300 ms after the last press), and Ctrl+Z inside those 300 ms settles
+  the nudge first. The History pane, after a checkpoint plus edits,   read
+  the checkpoint against the version BEFORE it (T269 assumed the   newest
+  version is always the deck you are editing; it is not the   moment one
+  edit follows a checkpoint, which is the checkpoint's whole   use case) —
+  the wrong diff, no "Put it back" / "Use the old one",   and "you are
+  here" on a version the deck had moved past: the newest   version's
+  stored text is compared with the deck as it stands and only   redirected
+  when they are the same; the head row says "edited since"   otherwise.
+  Two readout lies that exposed in Pictures went with it: the   live deck
+  is compared in the form a version is stored in (raw `pres`   differed by
+  key order alone, so an untouched slide read "changed"   with a restore
+  button), and slideSig drops the oids renderAnnots   mints. "Go back to
+  this version" said "so this is undoable" and   emptied the undo stack in
+  the same breath — the stack is kept, the   entry pushed is the deck you
+  had, and because an undo that put the   content back while the head
+  pointer stayed on the old version would   make the next save a false
+  child of it, a restore leaves a mark at   its depth: undo across it
+  moves the head back, redo moves it on (a   branch's redo lands on the
+  branch's first dot). And adding a section   from the strip cost two
+  entries, the first Ctrl+Z landing on "New   section" — a name you never
+  chose: the creation is quiet, the name   is the entry, and a declined
+  name commits the creation as its own.   Driven (A/B against the
+  skeptics' own probes): 40 held repeats add 1   entry and one Ctrl+Z puts
+  the box back; a real keyup lands the entry   at once; the checkpoint
+  opens on "safe point → now: 1 moved, 1   removed" with both restore
+  buttons; #dc-undo enabled after Go back   and after Branch, Ctrl+Z
+  restores the two slides and the [head] row   moves with it; Section +
+  "Part A" adds 1 entry, Cancel adds 1.   (Implemented by a worktree agent
+  of the T492 workflow.) (Implemented by a worktree agent of the T492
+  workflow; integrated and gated here.)

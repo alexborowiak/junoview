@@ -3563,7 +3563,13 @@
     var c={};
     Object.keys(sl).forEach(function(k){
       if(k!=='sid') c[k]=sl[k];});
-    try{return JSON.stringify(c);}catch(e){return '';}
+    /* T499: without the oids renderAnnots mints on first showing -- a
+       slide not looked at since the snapshot read as "changed", with a
+       "Use the old one" button, while By slide listed nothing (the
+       T494 rule histSlideSig already follows) */
+    try{return JSON.stringify(c,function(k,v){
+      return k==='oid'?undefined:v;});}
+    catch(e){return '';}
   }
   /* WHAT CHANGED, as rows in reading order: every slide that is in
      either version, paired by name where both versions have names. */

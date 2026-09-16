@@ -1324,7 +1324,7 @@
     },140);
   }
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
-  var undoStack=[],redoStack=[],histSnap=null;
+  var undoStack=[],redoStack=[],histSnap=null,histHeadMarks=[];
   /* the section names alone, or null when there are none — the same
      empty-is-null trick pres.styles uses, so a deck with no sections
      serialises into the snapshot exactly as it did before they existed */
@@ -1483,14 +1483,51 @@
        into the shared STYLE_DEFAULTS registry. Miss it and deck A's
        "Quote" is still on the menu after you open deck B. */
     syncCustomTypes();
-    histSnap=histState();undoStack=[];redoStack=[];updateUndoBtns();
+    histSnap=histState();undoStack=[];redoStack=[];histHeadMarks=[];
+    updateUndoBtns();
   }
   function histPush(){
     var st=histState();
     if(st===histSnap) return;         /* nothing actually changed */
     undoStack.push(histSnap);
-    if(undoStack.length>50) undoStack.shift();
+    if(undoStack.length>50){undoStack.shift();histMarksShift();}
     redoStack.length=0;histSnap=st;updateUndoBtns();
+    /* T499: a restore that had been undone is now past reaching */
+    histHeadMarks=histHeadMarks.filter(function(m){
+      return m.depth<undoStack.length;});
+  }
+  /* ---- T499: WHERE IN THE TREE, ACROSS AN UNDO ------------------------
+     "Go back to this version" said "so this is undoable" and then
+     emptied the stack (histReset), so Ctrl+Z was disabled the moment
+     the toast appeared (2026-09-15 review, driven). The stack is kept
+     now -- its entries are JSON text, not references into the replaced
+     deck, and histRestore reads every whole-deck key -- so the undo
+     entry markDirty pushes IS the deck you had. What the entry cannot
+     carry is the head pointer: a restore moves it to the version you
+     went back to, and an undo that put the content back while the head
+     stayed there would make the next save a child of the old version
+     -- the lie about what came before that T90 exists to prevent. So a
+     restore leaves a mark at its depth in the stack: undo across it
+     moves the head back where it was, redo moves it on again. */
+  function histMarkHead(from,to){
+    histHeadMarks.push({depth:undoStack.length,from:from,to:to});
+  }
+  function histMarkHeadNow(){
+    /* the branch flow takes its own snapshot after the restore, and that
+       is where a redo should land the head */
+    var m=histHeadMarks[histHeadMarks.length-1];
+    if(m&&m.depth===undoStack.length) m.to={h:histHead,br:histBranch};
+  }
+  function histMarksShift(){
+    histHeadMarks=histHeadMarks.map(function(m){
+      return {depth:m.depth-1,from:m.from,to:m.to};
+    }).filter(function(m){return m.depth>0;});
+  }
+  function histHeadTo(p){
+    histHead=p.h||null;histBranch=p.br||'';
+    histPtrSave(pres.name);
+    var chip=$('#deck-history .dh-onbr');
+    if(chip) chip.innerHTML=bic('route')+' on '+esc(histBranch||'main');
   }
   function histRestore(snap){
     var d;try{d=JSON.parse(snap);}catch(e){return;}
@@ -1603,13 +1640,20 @@
     if(typeof renderSelPane==='function') renderSelPane();
   }
   function undo(){
+    if(typeof nudgeSettle==='function') nudgeSettle();   /* T499 */
     if(!undoStack.length) return;
     redoStack.push(histSnap);histSnap=undoStack.pop();
+    /* T499: stepping back over a whole-deck restore moves the head back */
+    histHeadMarks.forEach(function(m){
+      if(m.depth===undoStack.length+1) histHeadTo(m.from);});
     updateUndoBtns();histRestore(histSnap);
   }
   function redo(){
+    if(typeof nudgeSettle==='function') nudgeSettle();   /* T499 */
     if(!redoStack.length) return;
     undoStack.push(histSnap);histSnap=redoStack.pop();
+    histHeadMarks.forEach(function(m){
+      if(m.depth===undoStack.length) histHeadTo(m.to);});
     updateUndoBtns();histRestore(histSnap);
   }
   function updateUndoBtns(){

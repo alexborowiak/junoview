@@ -154,8 +154,10 @@ def test_a_new_section_repaints_the_slide(out):
     """newSection ended in renderFilm(); every other membership verb ends
     in refresh(), and a heading wearing '@section' has to repaint the
     moment the section it now sits in exists."""
-    body = out.split("  function newSection(at,name){")[1].split("\n  }")[0]
-    assert "normSections();markDirty();refresh();" in body
+    # (T499: `quiet` for the strip's Section button, whose rename
+    # question follows at once)
+    body = out.split("  function newSection(at,name,quiet){")[1].split("\n  }")[0]
+    assert "normSections();markDirty(!!quiet);refresh();" in body
 
 
 def test_the_doors(out):

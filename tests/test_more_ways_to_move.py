@@ -789,3 +789,57 @@ def test_the_ribbon_fit_after_the_third_pass(out):
             "{rbnShelfWant=g;rbnShelfClose();}") in out
     assert "    var hadShelf=!!rbnShelfFor;" in out
     assert "    if(hadShelf!==!!rbnShelfFor) rbnShelfRefit();" in out
+
+
+def test_undo_and_history_after_the_third_pass_19_to_22(out):
+    """T499 (2026-09-16, the third review pass: undo-history lens,
+    findings 19-22)."""
+    # [19] a held arrow is one gesture, one entry: every press is quiet,
+    #      settled on keyup or 300 ms after the last press, and Ctrl+Z
+    #      inside those 300 ms settles first
+    assert "  function nudgeSel(dx,dy,quiet){" in out
+    assert ("    markDirty(!!quiet);\n"
+            "    var l=stage.querySelector('.annot-layer');") in out
+    assert ("                 e.key==='ArrowUp'?-st:e.key==='ArrowDown'"
+            "?st:0,true);") in out
+    assert "        nudgeArm();" in out
+    assert "    nudgeT=setTimeout(nudgeSettle,300);" in out
+    assert "    if(e.key&&e.key.indexOf('Arrow')===0) nudgeSettle();" in out
+    assert out.count("    if(typeof nudgeSettle==='function') nudgeSettle();"
+                     "   /* T499 */") == 2
+    # [20] the newest version is read against the one before it only
+    #      while the live deck IS that version; the head row says
+    #      "edited since" otherwise
+    assert "  function histLiveIs(id){" in out
+    assert "  function histLiveLabel(ov,ix){" in out
+    assert "          ?(histLiveAtHead?' \\u00b7 you are here'" in out
+    assert "            :' \\u00b7 edited since')" in out
+    assert "      histLiveLabel(ov,ix);   /* T499 */" in out
+    assert "    histLiveAtHead=null;   /* T499: read again next open */" in out
+    assert ("      histLiveAtHead=true;   /* T499: the deck is the checkpoint,"
+            " just taken */") in out
+    # ...and the live deck is compared in the form a version is stored in
+    assert "      var then=got[0],now=histAgainst?got[1]:normPres(pres);" in out
+    sig = out.split("  function slideSig(sl){")[1].split("\n  }")[0]
+    assert "return k==='oid'?undefined:v;" in sig
+    # [21] "so this is undoable" is true: the stack is kept across a
+    #      whole-deck restore, and the head pointer moves with an undo
+    restore = out[out.index("function histRestoreDeck(then"):
+                  out.index("function openHistory(wantId){")]
+    assert "histReset();" not in restore
+    assert "    histSettle();\n    var headWas={h:histHead,br:histBranch};" in restore
+    assert "      histMarkHead(headWas,{h:histHead,br:histBranch});" in restore
+    assert "  var undoStack=[],redoStack=[],histSnap=null,histHeadMarks=[];" in out
+    assert "    if(undoStack.length>50){undoStack.shift();histMarksShift();}" in out
+    assert "      if(m.depth===undoStack.length+1) histHeadTo(m.from);});" in out
+    assert "      if(m.depth===undoStack.length) histHeadTo(m.to);});" in out
+    assert "    histSnap=histState();undoStack=[];redoStack=[];histHeadMarks=[];" in out
+    # [22] the strip's Section button is one entry: a quiet creation,
+    #      the name is the entry, and a declined name commits the creation
+    assert "      newSection(cur,'New section',true);" in out
+    assert "  function renameSection(id,then){" in out
+    assert "    if(then) then(!!v);" in out
+    assert ("          {renameSection(runs[i].id,function(named){\n"
+            "            if(!named) markDirty();});break;}") in out
+    # the row-menu section keeps its own single entry
+    assert "function(){newSection(i,'New section');}" in out

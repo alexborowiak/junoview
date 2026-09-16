@@ -270,8 +270,11 @@ def test_going_back_is_itself_undoable(out):
 
 def test_whole_history_restore_replaces_the_whole_deck(out):
     """A whitelist drifts whenever normPres grows. Replace the object so
-    all saved keys return, absent keys disappear, and histReset installs
-    the restored custom types before this becomes a new draft."""
+    all saved keys return, absent keys disappear, and the restored custom
+    types are installed before this becomes a new draft. (T499: that used
+    to be histReset(), which also emptied the undo stack the toast had
+    just promised -- syncCustomTypes() alone now, and the stack is kept.)
+    """
     # T90 gave it two more parameters -- where in the TREE this puts the
     # live deck -- so the signature is matched by its stem.
     restore = out[out.index("function histRestoreDeck(then"):
@@ -279,8 +282,9 @@ def test_whole_history_restore_replaces_the_whole_deck(out):
     assert "function histRestoreDeck(then,fromId,branch){" in out
     assert "copy.name=pres.name;" in restore
     assert "pres=copy;" in restore
-    assert restore.index("pres=copy;") < restore.index("histReset();")
-    assert restore.index("histReset();") < restore.index("markDirty();")
+    assert "histReset();" not in restore
+    assert restore.index("pres=copy;") < restore.index("syncCustomTypes();")
+    assert restore.index("syncCustomTypes();") < restore.index("markDirty();")
     assert "pres.slides=copy.slides" not in restore
     assert "activePane=-1" in restore and "deckZoom=0" in restore
 

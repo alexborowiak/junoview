@@ -2646,7 +2646,28 @@
       var a=s.annots[i];
       return !(a&&a.capOf&&figs[a.capOf]);});
   }
-  function nudgeSel(dx,dy){
+  /* T499: ONE ENTRY PER GESTURE, as the opacity slider above. A held
+     arrow key repeats some thirty times a second and every repeat
+     called markDirty(), so two seconds of nudging pushed sixty entries,
+     evicted every earlier edit from the 50-deep stack, and one Ctrl+Z
+     stepped back 0.4% (2026-09-15 review, driven: 40 repeats -> undo
+     depth +40). Every press is now a quiet preview; the entry lands
+     once, when the key comes up -- or 300 ms after the last press, for
+     a press whose keyup never arrives. histSnap still holds the deck
+     from before the first press, so that one push records the whole
+     run. undo()/redo() settle first, so Ctrl+Z inside the 300 ms undoes
+     the nudge and not the edit before it. */
+  var nudgeT=null;
+  function nudgeSettle(){
+    if(!nudgeT) return;
+    clearTimeout(nudgeT);nudgeT=null;
+    markDirty();
+  }
+  function nudgeArm(){
+    clearTimeout(nudgeT);
+    nudgeT=setTimeout(nudgeSettle,300);
+  }
+  function nudgeSel(dx,dy,quiet){
     var s=pres.slides[cur]; if(!s) return;
     if(selAnnot==='t'||selAnnot==='s'){
       var tp=titleProps(s,selAnnot);tp.x+=dx;tp.y+=dy;
@@ -2658,7 +2679,7 @@
         shiftAnnot(a,dx,dy);
       });
     }
-    markDirty();
+    markDirty(!!quiet);
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);paintSel(l);}
   }

@@ -61,27 +61,51 @@ def test_the_newest_version_is_read_against_the_one_before_it():
     # written, so after one open the default became sticky and the
     # per-slide restore buttons, which need histAgainst empty, were
     # unreachable for the rest of the session.
-    assert "if(histAgainstPicked) return histAgainst;" in fn
+    # (T499: the answer is a promise now -- see the test below)
+    assert "if(histAgainstPicked) return Promise.resolve(histAgainst);" in fn
     assert "if(histAgainst) return histAgainst;" not in fn
     # only the newest entry is redirected
-    assert "if(ent.id!==ix[ix.length-1].id) return '';" in fn
-    assert "return ix[ix.length-2].id;" in fn
+    assert "if(ent.id!==ix[ix.length-1].id) return Promise.resolve('');" in fn
+    assert "return same?ix[ix.length-2].id:'';" in fn
     # ...and a history with one entry has nothing to compare against
-    assert "if(!ix||ix.length<2||!ent) return '';" in fn
+    assert "if(!ix||ix.length<2||!ent) return Promise.resolve('');" in fn
+
+
+def test_but_only_while_the_newest_version_is_the_deck_you_are_editing():
+    """T499. T269 assumed the newest version always IS the deck you are
+    editing. It is not the moment one edit follows a checkpoint -- the
+    checkpoint's whole use case -- and then picking the checkpoint read
+    it against the version BEFORE it: "2 added" for a move and a deleted
+    slide, and no "Put it back" / "Use the old one", which only render
+    against the live deck. The newest version's stored text is read and
+    compared with the deck as it stands; only when they are the same is
+    the comparison redirected."""
+    js = assets.deck_js()
+    fn = js.split("  function histAutoAgainst(ix,ent){")[1].split("\n  }")[0]
+    assert "return histLiveIs(ent.id).then(function(same){" in fn
+    live = js.split("  function histLiveIs(id){")[1].split("\n  }")[0]
+    # the text a save would write now, against the text the store holds
+    assert "try{txt=histText();}catch(e){return Promise.resolve(false);}" in live
+    assert "return histOps.then(function(){return idbGet(histVKeyFor(name,id));})" \
+        in live
+    assert ".then(function(t){return t===txt;})" in live
 
 
 def test_it_is_used_where_a_version_becomes_the_selected_one():
     js = assets.deck_js()
     # on open
     # (T465: openHistory(wantId) may open on a named version; the newest
-    # is still the default)
-    assert ("        histAgainst=histAutoAgainst(ix,want);\n"
-            "        histCompare(ov,want);}") in js
+    # is still the default; T499: the answer arrives as a promise, and a
+    # click on another row while it is pending wins)
+    assert ("        histAutoAgainst(ix,want).then(function(ag){\n"
+            "          if(histSel!==want.id) return;\n"
+            "          histAgainst=ag;histCompare(ov,want);});}") in js
     assert "      if(!want&&ix.length) want=ix[ix.length-1];" in js
     # ...and when you click back onto that row
     assert ("        histSel=e.id;histRows(ov,ix);\n"
-            "        histAgainst=histAutoAgainst(ix,e);\n"
-            "        histCompare(ov,e);});") in js
+            "        histAutoAgainst(ix,e).then(function(ag){\n"
+            "          if(histSel!==e.id) return;   /* T499: a later click won */\n"
+            "          histAgainst=ag;histCompare(ov,e);});});") in js
 
 
 def test_an_empty_answer_says_which_two_it_compared():
