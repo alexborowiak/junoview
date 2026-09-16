@@ -9428,8 +9428,9 @@ any reading. The rest are T466 onwards.
   Verified by a skeptic agent where marked (v); the full record with
   evidence, repro scripts and proposed fixes is in
   `%LOCALAPPDATA%\Temp\claude\jv-shot\findings3.json` (workflow
-  wf_7df36607-44a). The animation-model lens shipped as T491; the
-  rest, one line each, by lens:
+  wf_7df36607-44a). The animation-model lens shipped as T491, the
+  layout-model lens as T494, undo 15–18 as T495 and the round-trip lens
+  as T496 (2026-09-16); the rest, one line each, by lens:
   - [0] s3 - boot-and-wiring: On a poster page the Animation tab's Effect door
     stays enabled and opens an EMPTY shelf; Focus reads 'select something'
     while a text box is selected
