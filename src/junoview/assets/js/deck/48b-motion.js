@@ -270,6 +270,53 @@
      (two doors, one implementation, the rule anim-layers already
      follows) and write the model directly only where the ribbon has
      nothing -- which is every one of the numbers below. */
+  /* T493: the deck's colours as dots, and a picker for any other;
+     the pressed one is the box's hlcol (@accent when it says nothing) */
+  var HL_TOKENS=[['@accent','Accent'],['@warm','Warm'],['@lift','Lift'],
+    ['@calm','Calm'],['@heading','Heading'],['@ink','Ink']];
+  function cfgHlColour(host,a){
+    var row=cfgRow(host,'cfg-hlcol');
+    var cur_=a.anim.hlcol||'@accent';
+    HL_TOKENS.forEach(function(t){
+      var c=cfgChip(row,'<i class="cfg-dot"></i>',t[1],cur_===t[0],
+        'Deck colour '+t[1]+' \u2014 follows the deck colours',
+        function(){animSetHl('hlcol',t[0]==='@accent'?'':t[0]);animCfgSync();});
+      var dot=c.querySelector('.cfg-dot');
+      if(dot) dot.style.background=tokVal(t[0]);
+    });
+    var pick=document.createElement('input');
+    pick.type='color';
+    var hex=/^#[0-9a-f]{6}$/i.test(cur_)?cur_:tokVal(cur_);
+    pick.value=/^#[0-9a-f]{6}$/i.test(hex)?hex:'#39a9c0';
+    pick.title='Any other colour';
+    pick.setAttribute('aria-label','Highlight colour');
+    pick.addEventListener('click',function(e){e.stopPropagation();});
+    pick.addEventListener('input',function(){
+      /* live on the sample while the picker is open */
+      var pv=host.querySelector('.cfg-hlprev');
+      if(pv) pv.style.setProperty('--hl-col',pick.value);
+    });
+    pick.addEventListener('change',function(){
+      animSetHl('hlcol',pick.value);animCfgSync();});
+    row.appendChild(pick);
+  }
+  function cfgHlPreview(host,a){
+    var pv=document.createElement('div');
+    pv.className='cfg-hlprev';
+    pv.setAttribute('data-hlfx',a.anim.hlfx||'both');
+    pv.setAttribute('data-hlrest',a.anim.hlrest||'dim');
+    pv.style.setProperty('--hl-col',tokVal(a.anim.hlcol||'@accent'));
+    pv.style.setProperty('--hl-scale',
+      String((a.anim.hlsize>0?a.anim.hlsize:104)/100));
+    [['an-hl-rest','The bullet before it'],['an-hl','The one this click is about'],
+     ['an-hl-wait an-hl-rest','The one still to come']].forEach(function(p){
+      var sp=document.createElement('span');
+      sp.className='an-part '+p[0];sp.textContent=p[1];
+      pv.appendChild(sp);
+    });
+    host.appendChild(pv);
+    return pv;
+  }
   function cfgHead(host,txt){
     var h=document.createElement('div');
     h.className='anim-h';h.textContent=txt;host.appendChild(h);
@@ -439,14 +486,32 @@
             :(p[2]==='spacing'?bic('spacing'):bic('star')))),
           p[1],cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
       });
-      /* T471: the highlight's two choices, once it is on */
+      /* T471: the highlight's two choices, once it is on. T493: and
+         its colour and its size, with a sample that shows all four
+         (2026-09-15, user: "I can't work out how to configure the dot
+         point by dot point animation that is the highlight option ...
+         confused if that is an option to change the colour of the
+         highlight and size"). */
       if(a.anim&&a.anim.hl){
-        cfgHead(host,'the bullet whose click it is');
+        cfgHead(host,'the lit bullet — a sample');
+        cfgHlPreview(host,a);
+        cfgHead(host,'the lit bullet');
         var r5=cfgRow(host);
         HL_FX.forEach(function(p){
           cfgChip(r5,bic('star'),p[1],(a.anim.hlfx||'')===p[0],'',
             function(){animSetHl('hlfx',p[0]);animCfgSync();});
         });
+        if((a.anim.hlfx||'')!=='grow'){
+          cfgHead(host,'its colour');
+          cfgHlColour(host,a);
+        }
+        if((a.anim.hlfx||'')!=='colour'){
+          var sz=(a.anim.hlsize>0)?a.anim.hlsize:104;
+          cfgRange(host,'Bigger by',sz,100,150,1,
+            function(v){return (v-100)+'%';},
+            'How much larger the lit bullet grows',function(v){
+              animSetHl('hlsize',v===104?'':v);animCfgSync();});
+        }
         cfgHead(host,'the other bullets');
         var r6=cfgRow(host);
         HL_REST.forEach(function(p){

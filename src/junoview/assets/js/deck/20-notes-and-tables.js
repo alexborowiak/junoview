@@ -3115,6 +3115,14 @@
             if(hl){
               el.setAttribute('data-hlfx',ba.anim.hlfx||'both');
               el.setAttribute('data-hlrest',ba.anim.hlrest||'dim');
+              /* T493: ITS COLOUR AND ITS SIZE (2026-09-15, user: "I am
+                 confused if that is an option to change the colour of
+                 the highlight and size"). Two more facts on the box,
+                 read by the CSS as variables: hlcol is a deck colour
+                 (@accent by default) or a hex, hlsize a percent. */
+              el.style.setProperty('--hl-col',tokVal(ba.anim.hlcol||'@accent'));
+              el.style.setProperty('--hl-scale',
+                String((ba.anim.hlsize>0?ba.anim.hlsize:104)/100));
             }
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');

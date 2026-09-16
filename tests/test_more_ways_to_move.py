@@ -88,7 +88,7 @@ def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert 'id="anim-by-hl"' in out
     # (T401: a box with no entrance gets one on the way)
     assert ("        else {var an=ensureAnim(s,a,no);an.hl=1; "
-            "if(!an.by) an.by='para';}") in out
+            "if(!an.by) an.by='para';on++;}") in out   # T493: on++
     # whole-box takes the highlight with it: no pieces, nothing to light
     assert "        else if(a.anim){delete a.anim.by;delete a.anim.hl;}" in out
     # the renderer keeps every piece visible and marks the current one
@@ -98,8 +98,10 @@ def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     # T471: the highlight configured -- the lit piece's look and the rest's
     assert ("                pe.classList.toggle('an-hl-rest',"
             "jp!==revealCount-1);") in out
-    assert '.an-item[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);' in out
-    assert ".an-part.an-hl{color:var(--accent,#39a9c0);scale:1.04;" in out
+    # (T493: keyed on the attribute alone, so the pane's sample shares it)
+    assert '[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);' in out
+    # (T493: the colour and the size are the box's own variables)
+    assert ".an-part.an-hl{color:var(--hl-col,var(--accent,#39a9c0));" in out
     # four tiles, so that strip is four wide
     assert "width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}" in out
 
@@ -596,3 +598,27 @@ def test_the_animation_model_after_the_third_pass(out):
     assert "    if(!seqArm||seqInField(e)) return;" in out
     # [29] the zoom comes off before the next slide is built
     assert "      stage.style.transition='none';stage.style.transform='';" in out
+
+
+def test_the_highlight_has_a_colour_and_a_size_and_a_door(out):
+    """T493 (2026-09-15, user: "I can't work out how to configure the
+    dot point by dot point animation that is the highlight option ...
+    confused if that is an option to change the colour of the highlight
+    and size"). It was not; and the two choices it did have sat on a
+    tab nothing pointed at."""
+    # the two facts, painted as variables the CSS reads
+    assert ("              el.style.setProperty('--hl-col',"
+            "tokVal(ba.anim.hlcol||'@accent'));") in out
+    assert ".an-part.an-hl{color:var(--hl-col,var(--accent,#39a9c0));" in out
+    assert "  scale:var(--hl-scale,1.04);" in out
+    # the pane: a sample, the deck colours, any colour, a size
+    assert "  function cfgHlColour(host,a){" in out
+    assert "  function cfgHlPreview(host,a){" in out
+    assert "        cfgHead(host,'the lit bullet — a sample');" in out
+    assert "          cfgRange(host,'Bigger by',sz,100,150,1," in out
+    assert ("  var HL_TOKENS=[['@accent','Accent'],['@warm','Warm'],"
+            "['@lift','Lift'],") in out
+    # the door opens itself when Highlight goes on
+    assert "        if(typeof paneShow==='function') paneShow('animpane');" in out
+    assert "        if(typeof animTabSet==='function') animTabSet('cfg');" in out
+    assert "other bullets do are in the Animation pane, under Configure');" in out

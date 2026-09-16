@@ -9524,3 +9524,20 @@ any reading. The rest are T466 onwards.
     laid out as the highlighted layout' but makes 'Version 2' (a copy of the
     sheet), and the Animation tab stays live with six chooser groups a printed
     page cannot use
+- [x] **T493 — The highlight has a colour and a size, and a door.**
+  (2026-09-15, user: "I can't work out how to configure the dot point
+  by dot point animation that is the highlight option. Like I am
+  confused if that is an option to change the colour of the highlight
+  and size?") It was not an option: the lit bullet was always the
+  accent, always 4% bigger, and the two choices it did have (bigger /
+  coloured, and what the other bullets do) sat on the Configure tab of
+  the Animation pane with nothing pointing at them. Two more facts on
+  the box — `anim.hlcol` (a deck colour, @accent by default, or any
+  hex) and `anim.hlsize` (a percent, 104 by default) — painted as CSS
+  variables the highlight rules read. The Configure tab shows a
+  SAMPLE (three bullets, the middle one lit, drawn by the slide's own
+  classes), the six deck colours as dots plus a picker, a "Bigger by"
+  slider (0–50%), and the two choices it had. And the door opens
+  itself: pressing Highlight opens the Animation pane on Configure and
+  says where the colour and size are. Driven: Warm at +25% chosen in
+  the pane, seen in the sample, and lit on the slide in the show.

@@ -1213,16 +1213,27 @@
     if(hlb) hlb.addEventListener('click',function(e){
       e.stopPropagation();
       var s=pres.slides[cur]; if(!s) return;
-      var n=0,no=nextAnimOrder(s);
+      var n=0,on=0,no=nextAnimOrder(s);
       selIdxs().forEach(function(i){
         var a=s.annots[i];
         if(!a||a.k!=='text') return;
         if(a.anim&&a.anim.hl) delete a.anim.hl;
-        else {var an=ensureAnim(s,a,no);an.hl=1; if(!an.by) an.by='para';}
+        else {var an=ensureAnim(s,a,no);an.hl=1; if(!an.by) an.by='para';on++;}
         n++;
       });
       if(!n) return;
       revealCount=0;commit(s);
+      /* T493: THE DOOR OPENS ITSELF. The colour, the size and what the
+         other bullets do are on the Configure tab of the Animation
+         pane, and nothing said so (2026-09-15, user: "I can't work out
+         how to configure the dot point by dot point animation"). */
+      if(on){
+        if(typeof paneShow==='function') paneShow('animpane');
+        if(typeof animTabSet==='function') animTabSet('cfg');
+        if(typeof animCfgSync==='function') animCfgSync();
+        toast('Highlight on \u2014 its colour, its size and what the '
+          +'other bullets do are in the Animation pane, under Configure');
+      }
     });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it

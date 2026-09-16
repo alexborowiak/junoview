@@ -2832,7 +2832,11 @@ select#fmt-font[hidden]{display:none;}
 /* T385: HIGHLIGHT, DON'T HIDE. The lit piece takes the accent and a
    little size from its left edge; the pieces still to come sit quiet.
    Left origin so a bullet grows away from its dot, not over it. */
-.an-part.an-hl{color:var(--accent,#39a9c0);scale:1.04;
+/* T493: the colour and the size are the box's own (--hl-col and
+   --hl-scale, set by the reveal pass from anim.hlcol / anim.hlsize);
+   the accent and 4% are what a box that says nothing gets */
+.an-part.an-hl{color:var(--hl-col,var(--accent,#39a9c0));
+  scale:var(--hl-scale,1.04);
   transform-origin:left center;transition:scale .25s ease,color .25s ease;
   display:inline-block;}
 .an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
@@ -2857,13 +2861,31 @@ select#fmt-font[hidden]{display:none;}
    does (both = the T385 look above; grow = bigger only; colour =
    coloured only) and data-hlrest what every other piece does (dim =
    the T385 look, the ones still to come sit quiet; blur = all the
-   others soften; plain = they are left alone). */
-.an-item[data-hlfx="grow"] .an-part.an-hl{color:inherit;}
-.an-item[data-hlfx="colour"] .an-part.an-hl{scale:1;}
-.an-item[data-hlrest="blur"] .an-part.an-hl-wait{opacity:1;}
-.an-item[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);
+   others soften; plain = they are left alone). T493: keyed on the
+   attribute alone, so the Configure pane's sample (.cfg-hlprev) wears
+   the same rules as the box on the slide. */
+[data-hlfx="grow"] .an-part.an-hl{color:inherit;}
+[data-hlfx="colour"] .an-part.an-hl{scale:1;}
+[data-hlrest="blur"] .an-part.an-hl-wait{opacity:1;}
+[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);
   opacity:.7;transition:filter .3s ease,opacity .3s ease;}
-.an-item[data-hlrest="plain"] .an-part.an-hl-wait{opacity:1;}
+[data-hlrest="plain"] .an-part.an-hl-wait{opacity:1;}
+/* T493: THE SAMPLE. Three bullets in the Configure pane, the middle
+   one lit, drawn by the same classes and variables as the slide -- so
+   a colour or a size chosen here is seen before the show. */
+.cfg-hlprev{display:flex;flex-direction:column;gap:3px;margin:0 2px 8px;
+  padding:8px 10px;border-radius:7px;background:var(--chrome-2,#16273a);
+  font-family:var(--sans);font-size:12.5px;color:var(--chrome-ink);
+  line-height:1.35;}
+.cfg-hlprev .an-part{display:inline-block;}
+.cfg-hlprev .an-part::before{content:"\2022\00a0";opacity:.7;}
+.cfg-hlcol{display:inline-flex;align-items:center;gap:4px;}
+.cfg-hlcol .cfg-dot{width:12px;height:12px;border-radius:50%;flex:none;
+  border:1px solid #ffffff44;}
+.cfg-hlcol input[type="color"]{width:26px;height:22px;padding:0;
+  border:1px solid var(--chrome-line,#ffffff1f);border-radius:6px;
+  background:none;cursor:pointer;}
+body.light .cfg-hlprev{background:#fff;color:var(--ink);}
 /* T385: MOTION THAT KEEPS GOING -- individual properties again, so a
    rotated item wobbles about its own rotation instead of losing it */
 /* T445: HOW FAR IS A NUMBER (2026-09-14, user: "it would be cool to

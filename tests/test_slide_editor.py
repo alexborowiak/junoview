@@ -3377,8 +3377,9 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # (T385's five extra keyframe blocks sit in the same run, so the
     # window grew once more; T445's ten more movements, each a keyframe
     # block and a default rule, grew it again)
-    # (T471's highlight rules grew it again)
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 9000
+    # (T471's highlight rules grew it again; T493's sample and colour
+    # rows once more)
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 10500
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 

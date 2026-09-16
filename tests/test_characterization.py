@@ -2009,8 +2009,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # colour/fill/face cells, the rail's one row per style.
 # T491 (2026-09-15): the animation model after the third pass -- no
 # flash on a click, the Story strip's zoom, the Order tab's order.
-EXPECTED_MD5 = "2d42c6b1a9bb768ba3b13c4fd9d93b2e"
-EXPECTED_BYTES = 4477245
+# T493 (2026-09-15): the highlight's colour, size and sample; its door.
+EXPECTED_MD5 = "a346289357a462812235352685e3b000"
+EXPECTED_BYTES = 4482727
 
 
 def _render_example() -> str:

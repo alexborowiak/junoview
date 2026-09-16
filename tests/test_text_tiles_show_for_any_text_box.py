@@ -38,7 +38,7 @@ def test_a_piecewise_build_gives_a_plain_box_an_entrance(out):
             "nothing to change */") in out
     # highlight can be the first click too
     assert ("        else {var an=ensureAnim(s,a,no);an.hl=1; "
-            "if(!an.by) an.by='para';}") in out
+            "if(!an.by) an.by='para';on++;}") in out   # T493: on++
 
 
 def test_the_tooltips_say_so():
