@@ -2021,7 +2021,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T496 (2026-09-16): the round trip after the third pass -- Cut inside
 # a fading section survives a reload, a #/pres route waits for the draft
 # store, a reopened browser-kept deck says "saved to browser".
-EXPECTED_MD5 = "bfaa811f77946a9539f88b364c050134"
+# 2026-09-16: the site moved to junoview.com on 2026-08-03 (CNAME) but the
+# generator tag, canonical/og:url and the Help notices link still said
+# junoview.dev, which GitHub Pages now answers with "Site not found".
+EXPECTED_MD5 = "c5a529d033b97ff40c2fa9a881e21bb7"
 EXPECTED_BYTES = 4500818
 
 

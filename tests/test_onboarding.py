@@ -141,7 +141,7 @@ def test_exported_page_names_the_generator(out):
     A generator tag, not a fake description of someone else's notebook.
     """
     assert '<meta name="generator" content="Junoview' in out
-    assert "https://junoview.dev" in out
+    assert "https://junoview.com" in out
 
 
 def test_welcome_screen_hides_the_ribbon(out):

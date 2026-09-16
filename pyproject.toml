@@ -40,8 +40,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://junoview.dev"
-Documentation = "https://junoview.dev"
+Homepage = "https://junoview.com"
+Documentation = "https://junoview.com"
 Repository = "https://github.com/alexborowiak/junoview"
 Issues = "https://github.com/alexborowiak/junoview/issues"
 

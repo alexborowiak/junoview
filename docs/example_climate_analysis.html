@@ -8,7 +8,7 @@
      whoever exported it, so we name the tool without describing their
      notebook for them -->
 <meta name="generator" content="Junoview — figure-first Jupyter notebook
- viewer and presentation builder (https://junoview.dev)">
+ viewer and presentation builder (https://junoview.com)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20class%3D%22jv-logo%22%20viewBox%3D%220%200%20200%20200%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20role%3D%22img%22%20aria-label%3D%22Junoview%22%3E%3Cg%20stroke%3D%22%231D9E75%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8%22%3E%3Cline%20x1%3D%22169.55%22%20y1%3D%22118.64%22%20x2%3D%22186.93%22%20y2%3D%22123.29%22/%3E%3Cline%20x1%3D%22150.91%22%20y1%3D%22150.91%22%20x2%3D%22163.64%22%20y2%3D%22163.64%22/%3E%3Cline%20x1%3D%22118.64%22%20y1%3D%22169.55%22%20x2%3D%22123.29%22%20y2%3D%22186.93%22/%3E%3Cline%20x1%3D%2281.36%22%20y1%3D%22169.55%22%20x2%3D%2276.71%22%20y2%3D%22186.93%22/%3E%3Cline%20x1%3D%2249.09%22%20y1%3D%22150.91%22%20x2%3D%2236.36%22%20y2%3D%22163.64%22/%3E%3Cline%20x1%3D%2230.45%22%20y1%3D%22118.64%22%20x2%3D%2213.07%22%20y2%3D%22123.29%22/%3E%3Cline%20x1%3D%2230.45%22%20y1%3D%2281.36%22%20x2%3D%2213.07%22%20y2%3D%2276.71%22/%3E%3Cline%20x1%3D%2249.09%22%20y1%3D%2249.09%22%20x2%3D%2236.36%22%20y2%3D%2236.36%22/%3E%3Cline%20x1%3D%2281.36%22%20y1%3D%2230.45%22%20x2%3D%2276.71%22%20y2%3D%2213.07%22/%3E%3Cline%20x1%3D%22118.64%22%20y1%3D%2230.45%22%20x2%3D%22123.29%22%20y2%3D%2213.07%22/%3E%3Cline%20x1%3D%22150.91%22%20y1%3D%2249.09%22%20x2%3D%22163.64%22%20y2%3D%2236.36%22/%3E%3Cline%20x1%3D%22169.55%22%20y1%3D%2281.36%22%20x2%3D%22186.93%22%20y2%3D%2276.71%22/%3E%3C/g%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2266%22%20fill%3D%22%230F6E56%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2266%22%20fill%3D%22none%22%20stroke%3D%22%23EF9F27%22%20stroke-width%3D%223.5%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2242%22%20fill%3D%22%23185FA5%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2218%22%20fill%3D%22%2304342C%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%2212%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3Ccircle%20cx%3D%22176.21%22%20cy%3D%22144%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3Ccircle%20cx%3D%2223.79%22%20cy%3D%22144%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3C/svg%3E">
 
 <style>
@@ -4857,6 +4857,10 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   transform-origin:0 0;pointer-events:none;}
 /* T467: a light deck's thumbnails carry dark words, as the page does */
 .page-light .mini-tx{color:var(--tk-ink,#1b2733);}
+/* T494: a placeholder in a thumbnail is as faint as on the canvas
+   (.an-ph), boxed hairline so the slot's shape reads at strip size */
+.mini-tx.is-ph{opacity:.38;outline:1px solid currentColor;
+  outline-offset:1px;border-radius:1px;}
 .mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
 .mini-it{position:absolute;overflow:hidden;pointer-events:none;}
 .mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}
@@ -6447,7 +6451,11 @@ select#fmt-font[hidden]{display:none;}
 /* T385: HIGHLIGHT, DON'T HIDE. The lit piece takes the accent and a
    little size from its left edge; the pieces still to come sit quiet.
    Left origin so a bullet grows away from its dot, not over it. */
-.an-part.an-hl{color:var(--accent,#39a9c0);scale:1.04;
+/* T493: the colour and the size are the box's own (--hl-col and
+   --hl-scale, set by the reveal pass from anim.hlcol / anim.hlsize);
+   the accent and 4% are what a box that says nothing gets */
+.an-part.an-hl{color:var(--hl-col,var(--accent,#39a9c0));
+  scale:var(--hl-scale,1.04);
   transform-origin:left center;transition:scale .25s ease,color .25s ease;
   display:inline-block;}
 .an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
@@ -6472,13 +6480,31 @@ select#fmt-font[hidden]{display:none;}
    does (both = the T385 look above; grow = bigger only; colour =
    coloured only) and data-hlrest what every other piece does (dim =
    the T385 look, the ones still to come sit quiet; blur = all the
-   others soften; plain = they are left alone). */
-.an-item[data-hlfx="grow"] .an-part.an-hl{color:inherit;}
-.an-item[data-hlfx="colour"] .an-part.an-hl{scale:1;}
-.an-item[data-hlrest="blur"] .an-part.an-hl-wait{opacity:1;}
-.an-item[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);
+   others soften; plain = they are left alone). T493: keyed on the
+   attribute alone, so the Configure pane's sample (.cfg-hlprev) wears
+   the same rules as the box on the slide. */
+[data-hlfx="grow"] .an-part.an-hl{color:inherit;}
+[data-hlfx="colour"] .an-part.an-hl{scale:1;}
+[data-hlrest="blur"] .an-part.an-hl-wait{opacity:1;}
+[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);
   opacity:.7;transition:filter .3s ease,opacity .3s ease;}
-.an-item[data-hlrest="plain"] .an-part.an-hl-wait{opacity:1;}
+[data-hlrest="plain"] .an-part.an-hl-wait{opacity:1;}
+/* T493: THE SAMPLE. Three bullets in the Configure pane, the middle
+   one lit, drawn by the same classes and variables as the slide -- so
+   a colour or a size chosen here is seen before the show. */
+.cfg-hlprev{display:flex;flex-direction:column;gap:3px;margin:0 2px 8px;
+  padding:8px 10px;border-radius:7px;background:var(--chrome-2,#16273a);
+  font-family:var(--sans);font-size:12.5px;color:var(--chrome-ink);
+  line-height:1.35;}
+.cfg-hlprev .an-part{display:inline-block;}
+.cfg-hlprev .an-part::before{content:"\2022\00a0";opacity:.7;}
+.cfg-hlcol{display:inline-flex;align-items:center;gap:4px;}
+.cfg-hlcol .cfg-dot{width:12px;height:12px;border-radius:50%;flex:none;
+  border:1px solid #ffffff44;}
+.cfg-hlcol input[type="color"]{width:26px;height:22px;padding:0;
+  border:1px solid var(--chrome-line,#ffffff1f);border-radius:6px;
+  background:none;cursor:pointer;}
+body.light .cfg-hlprev{background:#fff;color:var(--ink);}
 /* T385: MOTION THAT KEEPS GOING -- individual properties again, so a
    rotated item wobbles about its own rotation instead of losing it */
 /* T445: HOW FAR IS A NUMBER (2026-09-14, user: "it would be cool to
@@ -13505,7 +13531,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
 target="_blank" rel="noopener">Apache License 2.0</a>. The web build
 loads Pyodide, MathJax and Plotly.js at run time from their own
 distribution networks; their licences are listed in the
-<a href="https://junoview.dev/THIRD_PARTY_NOTICES.html" target="_blank"
+<a href="https://junoview.com/THIRD_PARTY_NOTICES.html" target="_blank"
 rel="noopener">third-party notices</a>.</p>
 <p><small>Junoview is an independent project and is not affiliated with,
 endorsed by, sponsored by, or approved by Microsoft. Microsoft,
@@ -15081,7 +15107,8 @@ items snap to both. Guides, not ink: never printed or exported"
                 <button class="fx-tile" id="anim-by-hl"
                   aria-pressed="false"
                   title="Show every bullet from the start and light up the
- one each click is about, instead of hiding the rest"
+ one each click is about. Its colour, size and what the other bullets
+ do: Animation pane, Configure"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z"/></svg><span>Highlight</span></button>
                 </span>
               </span>
@@ -17993,7 +18020,8 @@ items snap to both. Guides, not ink: never printed or exported"
      Bookmarkable + survives reload + back/forward, in every mode (hash only,
      so no server routing needed). The deck registers deckState/deckOpen. */
   var initialHash=location.hash, routeReady=false, pendingRoute=null,
-      routeTimer=null, lastView=null, applyingRoute=false;
+      routeTimer=null, lastView=null, applyingRoute=false,
+      routeWaits=false;   /* T494: a #/pres route the draft store must answer */
   /* the VIEW a hash names: everything but a /s<n> slide suffix */
   function viewOf(h){return String(h||'').replace(/\/s\d+$/i,'');}
   function setHash(h){
@@ -18042,6 +18070,7 @@ items snap to both. Guides, not ink: never printed or exported"
   function applyHash(hash){
     var parts=routeParse(hash);
     var open=APP.deckState&&APP.deckState();
+    routeWaits=false;
     if(!parts.length){
       /* the default view: Back has arrived at the entry stamped on load,
          so whatever opened since (a presentation, Home) goes away */
@@ -18065,7 +18094,21 @@ items snap to both. Guides, not ink: never printed or exported"
         if(st.slide!==slide&&APP.deckGo) APP.deckGo(slide);
         return;
       }
-      if(APP.deckOpen&&!APP.deckOpen(parts[1],slide)) updateHash();
+      if(APP.deckOpen&&!APP.deckOpen(parts[1],slide)){
+        /* T494: A DECK KEPT IN THIS BROWSER IS NOT THERE YET. Since
+           T429 the drafts live in IndexedDB and arrive after boot, so
+           at this point deckOpen cannot see one and the route used to
+           be rewritten to the notebook's -- F5 on #/pres/talk/s2 landed
+           on #/doc/... with the editor closed, on the very destination
+           the Pages build defaults to (a project deck survived the same
+           reload). The route stays pending until the store has answered
+           and the deck fragment retries it; only a name the store does
+           not hold either falls through to the view that is showing. */
+        if(APP.draftsPending&&APP.draftsPending()){
+          pendingRoute=hash;routeWaits=true;return;
+        }
+        updateHash();
+      }
     } else if(parts[0]==='doc'&&parts[1]){
       var ca=APP.shells[APP.active];
       var curStem=ca&&ca.trace?ca.source:APP.active;   /* symmetric w/ updateHash */
@@ -18078,11 +18121,14 @@ items snap to both. Guides, not ink: never printed or exported"
   function tryRoute(){
     if(!pendingRoute) return;
     applyHash(pendingRoute);
+    if(routeWaits) return;   /* T494: the draft store has the last word */
     var parts=routeParse(pendingRoute);
     /* presentations open synchronously; a doc route may wait for its tab to
        mount (web mode restores notebooks asynchronously) */
     if(parts[0]!=='doc'||APP.shells[parts[1]]) pendingRoute=null;
   }
+  /* T494: the deck fragment calls this once the draft store has answered */
+  APP.tryRoute=tryRoute;
   APP.applyInitialRoute=function(){
     routeReady=true;
     var parts=routeParse(initialHash);
@@ -18097,7 +18143,10 @@ items snap to both. Guides, not ink: never printed or exported"
     if(!pendingRoute) return;
     if(routeTimer) clearTimeout(routeTimer);
     routeTimer=setTimeout(function(){
-      applyHash(pendingRoute);pendingRoute=null;},250);
+      if(!pendingRoute) return;
+      applyHash(pendingRoute);
+      if(!routeWaits) pendingRoute=null;   /* T494 */
+    },250);
   });
   window.addEventListener('hashchange',function(){
     pendingRoute=null;   /* a real navigation supersedes the initial route */
@@ -27288,7 +27337,16 @@ window.JunoPptx = (function () {
     if(layout.poster&&layout.scale) pres.scale=deep(layout.scale);
     var old=s.annots||[];
     var cells=old.filter(function(a){return a.k==='cell';});
-    var texts=old.filter(function(a){return a.k==='text';});
+    /* T494: A PLACEHOLDER IS NOT CONTENT, so it is not carried. Every
+       text box went into the reuse pool, and a slot's hint -- "Subtitle",
+       "Body text" -- was paired to the new layout's first slot with its
+       old words, type, size and alignment, while the surplus ones stayed
+       at their old coordinates over the new panel (2026-09-15 review:
+       Title > Title + panel left "Subtitle" floating inside the figure
+       frame). Only TYPED boxes are content; an untouched hint is dropped
+       and every slot of the new layout is born fresh below, the same
+       rule the cells follow (a cell survives only with a ref). */
+    var texts=old.filter(function(a){return a.k==='text'&&!a.ph;});
     var keep=old.filter(function(a){return a.k!=='cell'&&a.k!=='text';});
     var ci=0,ti=0,next=[];
     (layout.items||[]).forEach(function(it){
@@ -27383,7 +27441,16 @@ window.JunoPptx = (function () {
       .forEach(function(sel){
       /* T226: the family AND how many layouts there are, so making
          one of your own makes the pickers draw again */
-      var stamp=variant+':'+((pres&&pres.layouts)?pres.layouts.length:0);
+      /* T494: ...and WHICH layouts, not just how many. The count let a
+         deck opened after another deck with the same number of custom
+         layouts keep the other deck's tiles -- every deck's first
+         layout is 'my1', so deck A's grid read "Beta" and clicking it
+         applied deck B's slots to deck A's slide (2026-09-15 review).
+         The stamp is a signature of the custom layouts themselves, so
+         any switch, load, undo or import that changes them redraws. */
+      var stamp=variant+':'+((pres&&pres.layouts)||[]).map(function(l){
+        return (l&&l.id)+'/'+(l&&l.label)+'/'+((l&&l.items)||[]).length;
+      }).join(',');
       var row=$(sel); if(!row||row.dataset.built===stamp) return;
       row.dataset.built=stamp;row.innerHTML='';
       var list=allLayouts().filter(function(l){
@@ -27459,17 +27526,38 @@ window.JunoPptx = (function () {
     syncNewSlideMarks();
   }
   /* the strip lights the layout the NEXT slide takes, not the one this
-     slide wears (T218); a saved layout is remembered as 'arr:<n>' */
+     slide wears (T218); a saved layout is remembered as 'arr:<id>' --
+     T494: by its ID, not its index, or forgetting an earlier one made
+     the key point at the next tile along */
   function syncNewSlideMarks(){
     var key=lsGet(newLayKey())||'cell-text';
-    var chosen=null;
-    $$('#layout-strip .dbtn.lay').forEach(function(b){
+    var chosen=null,tiles=$$('#layout-strip .dbtn.lay');
+    tiles.forEach(function(b){
       var on=b.classList.contains('lay-saved')
-        ?(('arr:'+b.dataset.arr)===key):(b.dataset.lay===key);
+        ?(('arr:'+b.dataset.arrId)===key):(b.dataset.lay===key);
       b.setAttribute('aria-pressed',on?'true':'false');
       b.disabled=false;
       if(on) chosen=b;
     });
+    /* T494: A CHOICE THAT NO LONGER EXISTS IS THE DEFAULT. Deleting the
+       custom layout New slide was set to, forgetting the saved one, or
+       opening a deck that never had this deck's 'my1' left the key
+       naming nothing: no tile lit, the readout empty, and New slide
+       quietly adding a BLANK slide (2026-09-15 review). The strip is
+       the authority on what can be chosen, so a key it cannot light
+       falls back to Panel + text (T193's default) and is written back,
+       so newVersion and the strip agree. Only once the strip has slide
+       tiles to check against: a poster's strip holds poster tiles,
+       which never light a slide choice, and a strip not yet built has
+       nothing to say. */
+    if(!chosen&&key!=='cell-text'&&tiles.length&&!pageOf().poster){
+      lsSet(newLayKey(),'cell-text');
+      tiles.forEach(function(b){
+        var on=!b.classList.contains('lay-saved')&&b.dataset.lay==='cell-text';
+        b.setAttribute('aria-pressed',on?'true':'false');
+        if(on) chosen=b;
+      });
+    }
     /* T463: THE BUTTON SAYS WHICH LAYOUT IT WILL MAKE. The lit tile
        is the only sign of the choice, and the default (Panel + text)
        sits in the strip's fourth row, out of sight behind the arrows
@@ -27488,11 +27576,33 @@ window.JunoPptx = (function () {
       }
       var lb=chosen?chosen.querySelector('.lay-lb'):null;
       var word=lb?lb.textContent.trim():'';
+      /* T494: ON A POSTER THE TILE IS NEW VERSION. A poster is one page
+         and its New slide is New version (T424), which is what the tile
+         already MADE -- but it went on saying "New slide ... laid out as
+         the highlighted layout" over a copy of the sheet named "Version
+         2" (2026-09-15 review). The tile wears the verb it does, with
+         the strip's words for it, and the small New version button in
+         This slide stands down rather than offer the same thing twice. */
+      var poster=!!pageOf().poster;
+      var nw=nb.querySelector('span:not(.rbn-foldval)');
+      if(nw) nw.textContent=poster?'New version':'New slide';
+      /* the group's caption is the door's word when it folds -- its
+         own group only; a ribbon layout may have moved the tile into a
+         group with a name of its own */
+      var grp=nb.closest('.rbn-grp.rbn-slides');
+      var glab=grp&&grp.querySelector('.rbn-lab');
+      if(glab) glab.textContent=poster?'New version':'New slide';
+      if(poster) word='';
       val.textContent=word;val.hidden=!word;
       nb.classList.toggle('has-val',!!word);
       /* the whole name, for the rung that shortens the readout */
-      nb.title='Add a slide after this one'
-        +(word?(', laid out as '+word):', laid out as the highlighted layout');
+      nb.title=poster
+        ?'Copy this poster to a new version you can change independently. '
+          +'It is named for you; use Rename to change that.'
+        :'Add a slide after this one'
+          +(word?(', laid out as '+word):', laid out as the highlighted layout');
+      var vb=$('#hm-version');
+      if(vb) vb.hidden=poster;
     }
   }
   /* T489: a small door's readout -- its current choice beside its
@@ -34162,8 +34272,12 @@ window.JunoPptx = (function () {
         if(typeof s.alt==='string'&&s.alt) o.alt=s.alt;
         /* how this slide ARRIVES. Per slide because that is how anyone
            thinks about it, and because a deck-wide setting cannot say
-           "this one flies in from the last" (T27). */
-        if(typeof s.trans==='string'&&s.trans) o.trans=s.trans;
+           "this one flies in from the last" (T27).
+           '' IS AN ANSWER (T494): Cut inside a section that fades is
+           stored as '' -- the override T57 made real -- and the
+           truthiness test here dropped it on every reload, so the slide
+           faded again and every readout said Fade. */
+        if(typeof s.trans==='string') o.trans=s.trans;
         if(Array.isArray(s.cuts)&&s.cuts.length)
           o.cuts=s.cuts.filter(function(c){
             return typeof c==='string'&&c;});
@@ -34571,6 +34685,9 @@ window.JunoPptx = (function () {
       return fresh;
     }).catch(function(){draftsLoaded=true;return [];});
   }
+  /* T494: the router asks this before it gives up on a #/pres route --
+     a browser-kept deck is invisible to deckOpen until the store answers */
+  APP.draftsPending=function(){return !draftsLoaded;};
   /* ---- IndexedDB, one door for every store (moved here from the save
      fragment in T429 so the draft store above can use it; function
      declarations hoist, `var` initialisers do not, and this runs from
@@ -34948,18 +35065,31 @@ window.JunoPptx = (function () {
        the default deck the lines above had to open on, and every list
        that names drafts is drawn again. */
     var bootName=(pres&&pres.name)||'';
+    /* T494: ...and whether that deck came from the store. The default
+       deck is called "presentation", and so is the first deck anyone
+       makes: boot opened the notebook's automatic deck under the saved
+       one's name, the name test below read "same deck, do nothing",
+       and the saved one never took the screen back. */
+    var bootStored=(source==='draft');
     draftsLoadDb().then(function(fresh){
-      if(!fresh.length){draftsDbFull=false;return;}
+      if(!fresh.length) draftsDbFull=false;
       var want=lsGet(PFX+'last')||'';
       /* the deck you were on, if the lines above had to open on
          something else and you have not moved since */
       if(fresh.indexOf(want)>=0&&pres&&pres.name===bootName
-         &&bootName!==want){
+         &&(bootName!==want||!bootStored)){
         loadPresentation(want);
         cur=0;activePane=-1;
         if(typeof status==='function') status();
         if(typeof refresh==='function'&&!deckEl.hidden) refresh();
       }
+      /* T494: the URL's #/pres route, which the router held back
+         until now because the deck it names could be one of these.
+         Before the chrome is painted, so Home is judged with the deck
+         open; and when the store does not hold it either, the router
+         stamps the view that is showing, as it always did. */
+      if(typeof APP.tryRoute==='function') APP.tryRoute();
+      if(!fresh.length) return;
       if(typeof renderPresTabs==='function') renderPresTabs();
       if(typeof renderPresentationHub==='function') renderPresentationHub();
       if(typeof renderDeckPresentationDrawer==='function')
@@ -35123,7 +35253,22 @@ window.JunoPptx = (function () {
                                     tail below would run */
         return;
       }
-      el.textContent=auto?'unsaved — saving…':'unsaved';
+      /* T494: A DECK THE STORE HOLDS, UNTOUCHED SINCE IT WAS OPENED, IS
+         SAVED. Reopening a browser-kept deck after a reload (or
+         switching to it) read "unsaved — saving…" for as long as you
+         did not edit: the per-deck reset T483 added put the phrase back
+         on every reopen, no autosave was armed to make it true, and the
+         close guard agreed nothing was unsaved. The store is this
+         deck's home, so it says so; and "saving…" is only promised
+         once an edit this visit has armed the autosave. */
+      var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
+      if(!deckEdited()&&toBrowser&&pres&&draftGet(pres.name)!=null){
+        el.textContent='saved to browser';
+        el.className='deck-status saved';
+        markSaveClickable(el);
+        return;
+      }
+      el.textContent=(auto&&deckEdited())?'unsaved — saving…':'unsaved';
     } else if(source==='saved'){
       /* WHERE, not just when: "autosaved · 12:18" answered the question
          nobody asked and skipped the one that matters — into the browser?
@@ -35170,11 +35315,16 @@ window.JunoPptx = (function () {
   /* T434: whether anything was edited on this visit -- the close guard
      asks only about work done here, never about a deck merely opened */
   var editsThisVisit=false;
+  /* T494: ...and WHICH decks, by name, so the readout can tell a deck
+     merely switched to from the one that was worked on */
+  var editedDecks={};
+  function deckEdited(){return !!(pres&&editedDecks[pres.name]);}
   function markDirty(quiet){
     /* T409: a committed edit to a clone reaches its clones FIRST, so
        the history entry and the draft below hold the synced deck */
     if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
     source='draft';editsThisVisit=true;
+    if(pres&&pres.name) editedDecks[pres.name]=1;
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */
     status();
@@ -35346,8 +35496,43 @@ window.JunoPptx = (function () {
          a section's fold state out: that is a way of looking at the page,
          and lives in the browser's view state. */
       guides:pres.guides||null,
+      /* T494: HOW THE DECK CITES, ITS LIBRARY, AND WHICH TYPE A SLOT
+         GETS are edits like any other -- the Citations pane and the
+         "new slides get" chooser each call markDirty(), and each walked
+         into the trap T304's comment above describes: pres.cite,
+         pres.bib and pres.slot were not serialised, so the snapshot
+         came out identical, histPush's early return fired, and Ctrl+Z
+         after "(Smith 2020)" put the box you had moved back while the
+         style stayed (2026-09-15 review, driven: undo depth +0).
+         Deleting a library entry was not undoable at all. Empty-is-null
+         like their neighbours: bibOf() creates pres.bib={} lazily, and
+         merely opening the pane must not record a phantom step. */
+      cite:(pres.cite&&Object.keys(pres.cite).length)?pres.cite:null,
+      bib:(pres.bib&&Object.keys(pres.bib).length)?pres.bib:null,
+      slot:(pres.slot&&Object.keys(pres.slot).length)?pres.slot:null,
       page:pres.page||null,
       cropMarks:pres.cropMarks||0});
+  }
+  /* T494: the same slide, with the identity renderAnnots mints left
+     out -- a box drawn since the last snapshot carries an oid the
+     snapshot does not, and that is not a change to the slide */
+  function histSlideSig(s){
+    return JSON.stringify(s||null,function(k,v){
+      return k==='oid'?undefined:v;});
+  }
+  /* T494: SETTLE WHAT IS BEING TYPED BEFORE A FORMAT LANDS ON IT.
+     Bold, a colour swatch and the other keep-the-caret controls mutate
+     the box and push their entry FIRST; the words you had typed in the
+     900 ms before the click were only committed afterwards, by the
+     blur renderAnnots' rebuild fires -- so the history read
+     [.., words-less+bold] under [words+bold], and the first Ctrl+Z
+     after Bold removed the sentence and kept the bold (2026-09-15
+     review, driven with real input). The flush is quiet, so the push
+     here is what gives the typing its own entry; it is a no-op when
+     nothing was typed. */
+  function histSettle(){
+    if(typeof flushTextEdits==='function') flushTextEdits();
+    histPush();
   }
   function histReset(){
     /* the one funnel every newly installed `pres` passes through, which
@@ -35366,7 +35551,27 @@ window.JunoPptx = (function () {
   }
   function histRestore(snap){
     var d;try{d=JSON.parse(snap);}catch(e){return;}
+    /* T494: WHERE THE CHANGE WAS, AND WHAT WAS SELECTED. This restored
+       the model and left `cur` alone, so an edit made on another slide
+       was undone out of sight -- press Ctrl+Z, see nothing move, press
+       it again and two things are gone -- and Redo of "New slide" put
+       the slide back without showing it. PowerPoint jumps to the slide
+       it changed; so does this: the first slide that differs between
+       the deck you had and the one coming back. And the selection was
+       dropped, which cost every undo of a move a re-select and threw
+       the ribbon off the Object tab (the empty-tab fallback), after
+       which the arrow keys nudged nothing (2026-09-15 review, driven).
+       The selected items are remembered by oid and picked up again
+       where they survive on the slide we land on. */
+    var was=pres.slides||[],keepOids=[],sWas=was[cur];
+    if(sWas&&sWas.annots) selIdxs().forEach(function(i){
+      var a=sWas.annots[i]; if(a&&a.oid) keepOids.push(a.oid);});
+    var keepTitle=(selAnnot==='t'||selAnnot==='s')?selAnnot:null;
     pres.slides=d.slides||[];
+    var jump=-1,nSl=Math.max(was.length,pres.slides.length);
+    for(var si=0;si<nSl&&jump<0;si++)
+      if(histSlideSig(was[si])!==histSlideSig(pres.slides[si])) jump=si;
+    if(jump>=0) cur=jump;
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
@@ -35390,6 +35595,9 @@ window.JunoPptx = (function () {
        type that no longer resolves. */
     if(d.types) pres.types=d.types; else delete pres.types;
     syncCustomTypes();
+    /* T494: read back what histState now saves (see the note there) */
+    ['cite','bib','slot'].forEach(function(k){
+      if(d[k]) pres[k]=d[k]; else delete pres[k];});
     /* sections get their own merge rather than joining the list above:
        that loop deletes what the snapshot lacks, and the snapshot
        deliberately lacks the fold flags — so it would collapse-or-expand
@@ -35410,6 +35618,17 @@ window.JunoPptx = (function () {
     } else delete pres.sections;
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;selAnnot=null;selSet=[];
+    /* T494: the selection, by oid, on the slide we land on. Set BEFORE
+       refresh() so renderAnnots' own paintSel draws it and showFmt at
+       the end sees the same signature it had -- a selection that
+       survives must not read as a fresh one and yank the tab. */
+    var sNow=pres.slides[cur],back=[];
+    if(sNow&&sNow.annots&&keepOids.length)
+      sNow.annots.forEach(function(a,i){
+        if(a&&a.oid&&keepOids.indexOf(a.oid)>=0) back.push(i);});
+    if(back.length){selSet=back;selAnnot=back[back.length-1];}
+    else if(keepTitle&&sNow&&sNow.layout==='title'){
+      selAnnot=keepTitle;selSet=[keepTitle];}
     /* the styles come back as DEFINITIONS only. Every text box already
        carries the sizes it had in this snapshot (applyStyleTo writes them
        in), so restyling here would overwrite the restored boxes with the
@@ -35435,8 +35654,10 @@ window.JunoPptx = (function () {
        caches the signature it last drew, so an undo across a guide edit
        has to ask it again or the restored model is invisible */
     if(typeof syncGuides==='function') syncGuides();
-    /* nothing is selected after a restore — clear the format bar */
+    /* the format bar follows the selection -- cleared, or the one that
+       survived (T494); the Objects pane reads the same fact */
     if(typeof showFmt==='function') showFmt();
+    if(typeof renderSelPane==='function') renderSelPane();
   }
   function undo(){
     if(!undoStack.length) return;
@@ -42276,6 +42497,7 @@ window.JunoPptx = (function () {
   function richSelectionEdit(run){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
+    histSettle();   /* T494: the typing is its own entry, under this one */
     run();
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(a){
@@ -42308,6 +42530,7 @@ window.JunoPptx = (function () {
   function colorSelection(col){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
+    histSettle();   /* T494: as richSelectionEdit */
     try{document.execCommand('styleWithCSS',false,true);}catch(e){}
     try{document.execCommand('foreColor',false,col);}catch(e){}
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
@@ -44442,6 +44665,14 @@ window.JunoPptx = (function () {
             if(hl){
               el.setAttribute('data-hlfx',ba.anim.hlfx||'both');
               el.setAttribute('data-hlrest',ba.anim.hlrest||'dim');
+              /* T493: ITS COLOUR AND ITS SIZE (2026-09-15, user: "I am
+                 confused if that is an option to change the colour of
+                 the highlight and size"). Two more facts on the box,
+                 read by the CSS as variables: hlcol is a deck colour
+                 (@accent by default) or a hex, hlsize a percent. */
+              el.style.setProperty('--hl-col',tokVal(ba.anim.hlcol||'@accent'));
+              el.style.setProperty('--hl-scale',
+                String((ba.anim.hlsize>0?ba.anim.hlsize:104)/100));
             }
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');
@@ -46567,6 +46798,10 @@ window.JunoPptx = (function () {
   }
   function fmtApply(fn,quiet){
     var s=pres.slides[cur]; if(!s) return;
+    /* T494: the words being typed get their own entry BEFORE the format
+       mutates the box, or the first Ctrl+Z after Bold takes the
+       sentence and leaves the bold (see histSettle) */
+    if(!quiet) histSettle();
     /* apply to EVERY selected item (a group or shift-multi-select), not just
        the primary — otherwise formatting a multi-selection silently changes
        only one item and collapses the selection */
@@ -53078,8 +53313,30 @@ window.JunoPptx = (function () {
   function arrList(){
     try{
       var l=JSON.parse(lsGet(ARRKEY+SCOPE)||'[]');
-      return Array.isArray(l)?l:[];
+      if(!Array.isArray(l)) return [];
+      /* T494: a layout saved before the words were scrubbed still
+         holds the first 18 characters of somebody's slide; it is read
+         through the same generic-word rule arrFromSlide writes with,
+         so an old store stops leaking without being rewritten. And an
+         entry without an id gets a steady one, because a tile is
+         remembered by id now. */
+      l.forEach(function(arr,i){
+        if(!arr) return;
+        if(!arr.id) arr.id='arr'+i;
+        (arr.annots||[]).forEach(function(a){
+          if(a&&a.k==='text') a.text=arrWord(a);
+        });
+      });
+      return l;
     }catch(e){return [];}
+  }
+  /* T494: THE WORD A SAVED SLOT WEARS -- the slot's kind, never the
+     slide's words. "Only the shape is kept -- no words, no figures" is
+     what the door promises. */
+  function arrWord(a){
+    return {title:'Title',h1:'Title',h2:'Heading',h3:'Heading',
+      subtitle:'Subtitle',body:'Body text',small:'Small text',
+      caption:'Caption'}[a&&a.style]||'Text';
   }
   function arrSave(list){
     lsSet(ARRKEY+SCOPE,JSON.stringify(list));
@@ -53098,7 +53355,10 @@ window.JunoPptx = (function () {
     arrList().forEach(function(arr,i){
       var b=document.createElement('button');
       b.type='button';b.className='dbtn lay lay-saved';
-      b.dataset.arr=String(i);
+      /* T494: the tile is known by the arrangement's ID. It was its
+         index, so Forget on an earlier one made the remembered 'arr:1'
+         name one layout and build the next along (2026-09-15 review). */
+      b.dataset.arrId=arr.id;
       var th=document.createElement('span');th.className='layico2 lay-savedth';
       th.appendChild(miniDiagram({layout:'blank',panes:[],annots:arr.annots||[]}));
       b.appendChild(th);
@@ -53111,11 +53371,15 @@ window.JunoPptx = (function () {
         e.stopPropagation();
         /* chosen for the next New slide (T218); the dialog's Apply is
            what lays an EXISTING slide out like one */
-        lsSet(newLayKey(),'arr:'+b.dataset.arr);
+        lsSet(newLayKey(),'arr:'+b.dataset.arrId);
         if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
       });
       strip.appendChild(b);
     });
+    /* T494: rebuilt tiles are re-lit, so Forget (or a rename) in the
+       Saved layouts dialog leaves the chosen one lit and New slide's
+       readout saying what it will make */
+    if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
   }
   function arrById(id){
     var hit=null;
@@ -53138,9 +53402,14 @@ window.JunoPptx = (function () {
           ?deep(a[p]):a[p];
       });
       /* a placeholder word, so the saved slide can be DRAWN as a
-         thumbnail without carrying the real text anywhere */
-      if(a.k==='text') o.text=annotLabel(a).replace(/^Text — /,'')
-        .slice(0,18)||'Text';
+         thumbnail without carrying the real text anywhere.
+         T494: the word is the SLOT'S KIND -- "Title", "Body text" --
+         never the slide's own words. annotLabel gave the first 18
+         characters of what you typed, the store is project-wide, and
+         New slide placed them as real text on every slide made from
+         the layout, in every deck (2026-09-15 review: "Confidential
+         resul" on a slide in another deck, at full ink, in the show). */
+      if(a.k==='text') o.text=arrWord(o);
       keep.push(o);
     });
     return {id:'ar'+Date.now().toString(36),
@@ -60593,6 +60862,10 @@ window.JunoPptx = (function () {
     var m=(pres.sections||{})[id]; if(!m) return;
     if(kind) m.trans=kind; else delete m.trans;
     markDirty();renderFilm();
+    /* T494: the Animation tab's tiles describe the current slide, and
+       its section default just changed under it -- driven, they kept
+       the previous answer until the next slide move */
+    if(typeof transRibbonSync==='function') transRibbonSync();
     var lab=transLabel(kind);
     toast('Every slide in this section arrives: '+lab.toLowerCase());
   }
@@ -64446,16 +64719,27 @@ window.JunoPptx = (function () {
     if(hlb) hlb.addEventListener('click',function(e){
       e.stopPropagation();
       var s=pres.slides[cur]; if(!s) return;
-      var n=0,no=nextAnimOrder(s);
+      var n=0,on=0,no=nextAnimOrder(s);
       selIdxs().forEach(function(i){
         var a=s.annots[i];
         if(!a||a.k!=='text') return;
         if(a.anim&&a.anim.hl) delete a.anim.hl;
-        else {var an=ensureAnim(s,a,no);an.hl=1; if(!an.by) an.by='para';}
+        else {var an=ensureAnim(s,a,no);an.hl=1; if(!an.by) an.by='para';on++;}
         n++;
       });
       if(!n) return;
       revealCount=0;commit(s);
+      /* T493: THE DOOR OPENS ITSELF. The colour, the size and what the
+         other bullets do are on the Configure tab of the Animation
+         pane, and nothing said so (2026-09-15, user: "I can't work out
+         how to configure the dot point by dot point animation"). */
+      if(on){
+        if(typeof paneShow==='function') paneShow('animpane');
+        if(typeof animTabSet==='function') animTabSet('cfg');
+        if(typeof animCfgSync==='function') animCfgSync();
+        toast('Highlight on \u2014 its colour, its size and what the '
+          +'other bullets do are in the Animation pane, under Configure');
+      }
     });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it
@@ -65427,6 +65711,53 @@ window.JunoPptx = (function () {
      (two doors, one implementation, the rule anim-layers already
      follows) and write the model directly only where the ribbon has
      nothing -- which is every one of the numbers below. */
+  /* T493: the deck's colours as dots, and a picker for any other;
+     the pressed one is the box's hlcol (@accent when it says nothing) */
+  var HL_TOKENS=[['@accent','Accent'],['@warm','Warm'],['@lift','Lift'],
+    ['@calm','Calm'],['@heading','Heading'],['@ink','Ink']];
+  function cfgHlColour(host,a){
+    var row=cfgRow(host,'cfg-hlcol');
+    var cur_=a.anim.hlcol||'@accent';
+    HL_TOKENS.forEach(function(t){
+      var c=cfgChip(row,'<i class="cfg-dot"></i>',t[1],cur_===t[0],
+        'Deck colour '+t[1]+' \u2014 follows the deck colours',
+        function(){animSetHl('hlcol',t[0]==='@accent'?'':t[0]);animCfgSync();});
+      var dot=c.querySelector('.cfg-dot');
+      if(dot) dot.style.background=tokVal(t[0]);
+    });
+    var pick=document.createElement('input');
+    pick.type='color';
+    var hex=/^#[0-9a-f]{6}$/i.test(cur_)?cur_:tokVal(cur_);
+    pick.value=/^#[0-9a-f]{6}$/i.test(hex)?hex:'#39a9c0';
+    pick.title='Any other colour';
+    pick.setAttribute('aria-label','Highlight colour');
+    pick.addEventListener('click',function(e){e.stopPropagation();});
+    pick.addEventListener('input',function(){
+      /* live on the sample while the picker is open */
+      var pv=host.querySelector('.cfg-hlprev');
+      if(pv) pv.style.setProperty('--hl-col',pick.value);
+    });
+    pick.addEventListener('change',function(){
+      animSetHl('hlcol',pick.value);animCfgSync();});
+    row.appendChild(pick);
+  }
+  function cfgHlPreview(host,a){
+    var pv=document.createElement('div');
+    pv.className='cfg-hlprev';
+    pv.setAttribute('data-hlfx',a.anim.hlfx||'both');
+    pv.setAttribute('data-hlrest',a.anim.hlrest||'dim');
+    pv.style.setProperty('--hl-col',tokVal(a.anim.hlcol||'@accent'));
+    pv.style.setProperty('--hl-scale',
+      String((a.anim.hlsize>0?a.anim.hlsize:104)/100));
+    [['an-hl-rest','The bullet before it'],['an-hl','The one this click is about'],
+     ['an-hl-wait an-hl-rest','The one still to come']].forEach(function(p){
+      var sp=document.createElement('span');
+      sp.className='an-part '+p[0];sp.textContent=p[1];
+      pv.appendChild(sp);
+    });
+    host.appendChild(pv);
+    return pv;
+  }
   function cfgHead(host,txt){
     var h=document.createElement('div');
     h.className='anim-h';h.textContent=txt;host.appendChild(h);
@@ -65596,14 +65927,32 @@ window.JunoPptx = (function () {
             :(p[2]==='spacing'?bic('spacing'):bic('star')))),
           p[1],cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
       });
-      /* T471: the highlight's two choices, once it is on */
+      /* T471: the highlight's two choices, once it is on. T493: and
+         its colour and its size, with a sample that shows all four
+         (2026-09-15, user: "I can't work out how to configure the dot
+         point by dot point animation that is the highlight option ...
+         confused if that is an option to change the colour of the
+         highlight and size"). */
       if(a.anim&&a.anim.hl){
-        cfgHead(host,'the bullet whose click it is');
+        cfgHead(host,'the lit bullet — a sample');
+        cfgHlPreview(host,a);
+        cfgHead(host,'the lit bullet');
         var r5=cfgRow(host);
         HL_FX.forEach(function(p){
           cfgChip(r5,bic('star'),p[1],(a.anim.hlfx||'')===p[0],'',
             function(){animSetHl('hlfx',p[0]);animCfgSync();});
         });
+        if((a.anim.hlfx||'')!=='grow'){
+          cfgHead(host,'its colour');
+          cfgHlColour(host,a);
+        }
+        if((a.anim.hlfx||'')!=='colour'){
+          var sz=(a.anim.hlsize>0)?a.anim.hlsize:104;
+          cfgRange(host,'Bigger by',sz,100,150,1,
+            function(v){return (v-100)+'%';},
+            'How much larger the lit bullet grows',function(v){
+              animSetHl('hlsize',v===104?'':v);animCfgSync();});
+        }
         cfgHead(host,'the other bullets');
         var r6=cfgRow(host);
         HL_REST.forEach(function(p){
@@ -70643,7 +70992,13 @@ window.JunoPptx = (function () {
     annots.forEach(function(a,i){
       if(!a||a.hide) return;
       if(a.k==='arrow'){arrows.push(a);return;}
-      if(a.k==='text'){miniText(d,a,a.text||'');return;}
+      /* T494: a placeholder is drawn the way the canvas draws it while
+         you edit -- faint, in a hairline box -- so the strip still
+         shows the SHAPE of an untouched slide without printing "Body
+         text" on it at full ink (T366); a thumbnail is an editing
+         surface, the words are the slot's, and the class is how a
+         reader can tell a hint from a heading */
+      if(a.k==='text'){miniText(d,a,a.text||'',a.ph?'is-ph':'');return;}
       if(a.k==='image'){
         var bx=miniBox(d,a,'is-img');
         if(a.src){
@@ -70825,7 +71180,14 @@ window.JunoPptx = (function () {
      neither */
   function newVersion(lay,arr){
     if(!(lay&&lay.items)) lay=null;
-    var at=pres.slides.length?cur+1:0;
+    /* T494: AFTER THE WHOLE GROUP, the way dupSlide places its copy
+       (T318). cur+1 from the MAIN of a version group spliced the new
+       slide between the main and its versions; the untagged slide
+       closed the run, normAlts dropped the tag from every member, and
+       "Version 2" became a numbered slide the talk shows (2026-09-15
+       review). A poster has no runs, so its branch is unchanged. */
+    var ar=(typeof altRun==='function')?altRun(cur):null;
+    var at=ar?(ar.at+ar.n):(pres.slides.length?cur+1:0);
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
          than "Slide 3" — so no label is stamped here */
@@ -70838,14 +71200,33 @@ window.JunoPptx = (function () {
          added. The default slide choice should be the panel, title,
          text"). Blank is still one pick away. */
       var key=lsGet(newLayKey())||'cell-text';
-      if(!arr&&!lay&&/^arr:/.test(key)&&typeof arrList==='function'){
-        var hit=arrList()[+key.slice(4)];
+      /* T494: a saved layout is remembered by ID ('arr:<id>'), so
+         Forget on an earlier one cannot move the choice along; an id
+         the store no longer has (or an old numeric key) falls through
+         to the default below rather than to a random layout */
+      if(!arr&&!lay&&/^arr:/.test(key)&&typeof arrById==='function'){
+        var hit=arrById(key.slice(4));
         if(hit&&hit.annots) arr=hit;
       }
       if(arr&&arr.annots){
-        ns.annots=deep(arr.annots);
+        /* T494: the shapes arrive as PLACEHOLDERS, like a built-in
+           layout's (T366): the words are the slot's kind, drawn faint
+           while you edit and nowhere else. deep() alone made them
+           content -- printed, shown and exported. A cell arrives
+           empty (no ref), so a saved slide's figure cannot ride in
+           either; its part -- which facet the slot wanted -- is the
+           shape and stays. */
+        ns.annots=deep(arr.annots).map(function(a){
+          if(a&&a.k==='text') a.ph=1;
+          if(a&&a.k==='cell') a.ref=null;
+          return a;
+        });
       } else {
-        lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key);
+        /* T494: ...and a layout that no longer exists -- deleted in the
+           builder, or another deck's 'my1' -- is the default (T193),
+           not a blank slide with no word said */
+        lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key)
+          ||layoutById('cell-text');
         if(lay&&!lay.poster) applyLayout(ns,lay);
       }
       pres.slides.splice(at,0,ns);
@@ -70876,6 +71257,7 @@ window.JunoPptx = (function () {
     var best=null,bestAt=99;
     (s.annots||[]).forEach(function(a){
       if(!a||a.k!=='text'||a.hide||!String(a.text||'').trim()) return;
+      if(a.ph) return;   /* T494: a hint is not a heading */
       if(!a.style||!isHeadingStyle(a.style)) return;
       var at=headingStyles().indexOf(a.style);
       if(at>=0&&at<bestAt){bestAt=at;best=a;}
@@ -70911,8 +71293,11 @@ window.JunoPptx = (function () {
       var it=cells[i].a.ref&&resolveRef(cells[i].a.ref);
       if(it) return it.title;
     }
+    /* T494: not a placeholder -- an untouched Title + text slide was
+       called "Title" in the strip and in every dialog that names a
+       slide, when it holds nothing (T366: a hint is not content) */
     var tx=(s.annots||[]).filter(function(a){
-      return a.k==='text'&&a.text;})[0];
+      return a.k==='text'&&a.text&&!a.ph;})[0];
     if(tx){
       /* T469: not the SOURCE -- the strip read "$$ E = mc^2 $$" and
          "# Big heading ## Sub" (2026-09-15 review) */
@@ -71506,6 +71891,11 @@ window.JunoPptx = (function () {
           var at=myLayouts().indexOf(l);
           if(at>=0) myLayouts().splice(at,1);
           if(lbEdit===l.id){lbEdit='';lbName='';lbItems=[];lbSel=-1;}
+          /* T494: if New slide was set to it, it is set to the default
+             again -- the strip re-lights from the key, so a key naming
+             a deleted layout lit nothing and New slide made a blank
+             slide (2026-09-15 review) */
+          if(lsGet(newLayKey())===l.id) lsSet(newLayKey(),'cell-text');
           markDirty();lbInvalidate();renderLayoutPicker();
           renderControls();lbRender();
         });
@@ -73023,6 +73413,12 @@ window.JunoPptx = (function () {
     if(mode==='create'){renderCreate();}
     else if(mode==='edit'){renderCreate();renderSlide();}
     else renderSlide();
+    /* T494: the URL names the slide on screen. go() stamped it, but
+       New slide, Duplicate, Delete and a drag set `cur` and come here
+       instead, so the hash still said /s1 while slide 2 was showing --
+       and a reload restored the wrong slide. setHash is a no-op when
+       nothing changed, and a slide move inside one deck never pushes. */
+    if(!deckEl.hidden) routeSync();
   }
   function routeSync(){
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
@@ -73265,7 +73661,17 @@ window.JunoPptx = (function () {
   };
   window.SemApp.deckOpen=function(name,slide){
     if(!name) return false;
-    if(pres.name!==name){
+    /* T494: THE AUTOMATIC DECK IS NOT THE ONE THE URL NAMES until the
+       draft store has said so. Both are called "presentation" -- the
+       default name, and the name of the first deck anyone keeps -- and
+       the name test alone opened the notebook's automatic deck on
+       #/pres/presentation/s1, whose opening snapshot minted slide ids
+       (ensureSids -> markDirty) and wrote THAT deck into the store
+       under the saved one's key, 300ms later, before the store had
+       answered: the saved deck was gone. While the store is pending an
+       automatic deck answers "not yet", so the route waits for it; once
+       it has answered, a never-kept automatic deck still opens by name. */
+    if(pres.name!==name||(source==='auto'&&!draftsLoaded)){
       if(!(savedByName(name)||loadDraft(name))) return false;
       lsSet(PFX+'last',name);
       loadPresentation(name);
@@ -77263,6 +77669,11 @@ window.JunoPptx = (function () {
          prevent. */
       if(a.priv) return;
       if(a.hide) return;   /* T404: hidden is hidden, in PowerPoint too */
+      /* T494: a placeholder is a hint about the shape of the slide,
+         drawn nowhere in any export (T366) -- this writer does not go
+         through renderAnnots, so "Title" and "Body text" went out to
+         PowerPoint as real text (2026-09-15 review) */
+      if(a.k==='text'&&a.ph) return;
       /* an item tied to a figure other than this page's does not belong
          on this page. note.frame is set by the exploding enumerator; with
          no flip book on the slide it is null and nothing is filtered. */

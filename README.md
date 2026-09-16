@@ -13,7 +13,7 @@
 pip install junoview   # then: junoview
 ```
 
-**▶ [Live demo — no install](https://junoview.dev/example_climate_analysis.html)** &nbsp;·&nbsp; a real climate-diagnostics notebook, rendered.
+**▶ [Live demo — no install](https://junoview.com/example_climate_analysis.html)** &nbsp;·&nbsp; a real climate-diagnostics notebook, rendered.
 
 ![Folding code away to leave the figures](docs/gifs/code_folding.gif)
 
