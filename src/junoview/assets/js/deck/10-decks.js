@@ -1399,8 +1399,43 @@
          a section's fold state out: that is a way of looking at the page,
          and lives in the browser's view state. */
       guides:pres.guides||null,
+      /* T494: HOW THE DECK CITES, ITS LIBRARY, AND WHICH TYPE A SLOT
+         GETS are edits like any other -- the Citations pane and the
+         "new slides get" chooser each call markDirty(), and each walked
+         into the trap T304's comment above describes: pres.cite,
+         pres.bib and pres.slot were not serialised, so the snapshot
+         came out identical, histPush's early return fired, and Ctrl+Z
+         after "(Smith 2020)" put the box you had moved back while the
+         style stayed (2026-09-15 review, driven: undo depth +0).
+         Deleting a library entry was not undoable at all. Empty-is-null
+         like their neighbours: bibOf() creates pres.bib={} lazily, and
+         merely opening the pane must not record a phantom step. */
+      cite:(pres.cite&&Object.keys(pres.cite).length)?pres.cite:null,
+      bib:(pres.bib&&Object.keys(pres.bib).length)?pres.bib:null,
+      slot:(pres.slot&&Object.keys(pres.slot).length)?pres.slot:null,
       page:pres.page||null,
       cropMarks:pres.cropMarks||0});
+  }
+  /* T494: the same slide, with the identity renderAnnots mints left
+     out -- a box drawn since the last snapshot carries an oid the
+     snapshot does not, and that is not a change to the slide */
+  function histSlideSig(s){
+    return JSON.stringify(s||null,function(k,v){
+      return k==='oid'?undefined:v;});
+  }
+  /* T494: SETTLE WHAT IS BEING TYPED BEFORE A FORMAT LANDS ON IT.
+     Bold, a colour swatch and the other keep-the-caret controls mutate
+     the box and push their entry FIRST; the words you had typed in the
+     900 ms before the click were only committed afterwards, by the
+     blur renderAnnots' rebuild fires -- so the history read
+     [.., words-less+bold] under [words+bold], and the first Ctrl+Z
+     after Bold removed the sentence and kept the bold (2026-09-15
+     review, driven with real input). The flush is quiet, so the push
+     here is what gives the typing its own entry; it is a no-op when
+     nothing was typed. */
+  function histSettle(){
+    if(typeof flushTextEdits==='function') flushTextEdits();
+    histPush();
   }
   function histReset(){
     /* the one funnel every newly installed `pres` passes through, which
@@ -1419,7 +1454,27 @@
   }
   function histRestore(snap){
     var d;try{d=JSON.parse(snap);}catch(e){return;}
+    /* T494: WHERE THE CHANGE WAS, AND WHAT WAS SELECTED. This restored
+       the model and left `cur` alone, so an edit made on another slide
+       was undone out of sight -- press Ctrl+Z, see nothing move, press
+       it again and two things are gone -- and Redo of "New slide" put
+       the slide back without showing it. PowerPoint jumps to the slide
+       it changed; so does this: the first slide that differs between
+       the deck you had and the one coming back. And the selection was
+       dropped, which cost every undo of a move a re-select and threw
+       the ribbon off the Object tab (the empty-tab fallback), after
+       which the arrow keys nudged nothing (2026-09-15 review, driven).
+       The selected items are remembered by oid and picked up again
+       where they survive on the slide we land on. */
+    var was=pres.slides||[],keepOids=[],sWas=was[cur];
+    if(sWas&&sWas.annots) selIdxs().forEach(function(i){
+      var a=sWas.annots[i]; if(a&&a.oid) keepOids.push(a.oid);});
+    var keepTitle=(selAnnot==='t'||selAnnot==='s')?selAnnot:null;
     pres.slides=d.slides||[];
+    var jump=-1,nSl=Math.max(was.length,pres.slides.length);
+    for(var si=0;si<nSl&&jump<0;si++)
+      if(histSlideSig(was[si])!==histSlideSig(pres.slides[si])) jump=si;
+    if(jump>=0) cur=jump;
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
@@ -1443,6 +1498,9 @@
        type that no longer resolves. */
     if(d.types) pres.types=d.types; else delete pres.types;
     syncCustomTypes();
+    /* T494: read back what histState now saves (see the note there) */
+    ['cite','bib','slot'].forEach(function(k){
+      if(d[k]) pres[k]=d[k]; else delete pres[k];});
     /* sections get their own merge rather than joining the list above:
        that loop deletes what the snapshot lacks, and the snapshot
        deliberately lacks the fold flags — so it would collapse-or-expand
@@ -1463,6 +1521,17 @@
     } else delete pres.sections;
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;selAnnot=null;selSet=[];
+    /* T494: the selection, by oid, on the slide we land on. Set BEFORE
+       refresh() so renderAnnots' own paintSel draws it and showFmt at
+       the end sees the same signature it had -- a selection that
+       survives must not read as a fresh one and yank the tab. */
+    var sNow=pres.slides[cur],back=[];
+    if(sNow&&sNow.annots&&keepOids.length)
+      sNow.annots.forEach(function(a,i){
+        if(a&&a.oid&&keepOids.indexOf(a.oid)>=0) back.push(i);});
+    if(back.length){selSet=back;selAnnot=back[back.length-1];}
+    else if(keepTitle&&sNow&&sNow.layout==='title'){
+      selAnnot=keepTitle;selSet=[keepTitle];}
     /* the styles come back as DEFINITIONS only. Every text box already
        carries the sizes it had in this snapshot (applyStyleTo writes them
        in), so restyling here would overwrite the restored boxes with the
@@ -1488,8 +1557,10 @@
        caches the signature it last drew, so an undo across a guide edit
        has to ask it again or the restored model is invisible */
     if(typeof syncGuides==='function') syncGuides();
-    /* nothing is selected after a restore — clear the format bar */
+    /* the format bar follows the selection -- cleared, or the one that
+       survived (T494); the Objects pane reads the same fact */
     if(typeof showFmt==='function') showFmt();
+    if(typeof renderSelPane==='function') renderSelPane();
   }
   function undo(){
     if(!undoStack.length) return;

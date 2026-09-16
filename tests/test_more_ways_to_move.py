@@ -622,3 +622,27 @@ def test_the_highlight_has_a_colour_and_a_size_and_a_door(out):
     assert "        if(typeof paneShow==='function') paneShow('animpane');" in out
     assert "        if(typeof animTabSet==='function') animTabSet('cfg');" in out
     assert "other bullets do are in the Animation pane, under Configure');" in out
+
+
+def test_undo_after_the_third_pass(out):
+    """T495 (2026-09-16, the third review pass: undo-history lens,
+    findings 15-18)."""
+    # [15] what is being typed is settled, as its own entry, before a
+    #      format lands on the box
+    assert "  function histSettle(){" in out
+    assert "    if(typeof flushTextEdits==='function') flushTextEdits();" in out
+    assert "    if(!quiet) histSettle();" in out
+    assert "    histSettle();   /* T494: the typing is its own entry" in out
+    assert "    histSettle();   /* T494: as richSelectionEdit */" in out
+    # [16] how the deck cites, its library and the slot choice are in
+    #      the snapshot, and come back
+    assert ("      cite:(pres.cite&&Object.keys(pres.cite).length)"
+            "?pres.cite:null,") in out
+    assert "    ['cite','bib','slot'].forEach(function(k){" in out
+    # [17] undo jumps to the first slide that differs
+    assert "  function histSlideSig(s){" in out
+    assert ("      if(histSlideSig(was[si])!==histSlideSig(pres.slides[si]))"
+            " jump=si;") in out
+    # [18] the selection survives by oid, so the tab and the nudge keys do
+    assert "    if(back.length){selSet=back;selAnnot=back[back.length-1];}" in out
+    assert "    if(typeof renderSelPane==='function') renderSelPane();" in out

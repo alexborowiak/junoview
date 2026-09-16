@@ -1025,6 +1025,10 @@
   }
   function fmtApply(fn,quiet){
     var s=pres.slides[cur]; if(!s) return;
+    /* T494: the words being typed get their own entry BEFORE the format
+       mutates the box, or the first Ctrl+Z after Bold takes the
+       sentence and leaves the bold (see histSettle) */
+    if(!quiet) histSettle();
     /* apply to EVERY selected item (a group or shift-multi-select), not just
        the primary — otherwise formatting a multi-selection silently changes
        only one item and collapses the selection */

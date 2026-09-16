@@ -949,6 +949,7 @@
   function richSelectionEdit(run){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
+    histSettle();   /* T494: the typing is its own entry, under this one */
     run();
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(a){
@@ -981,6 +982,7 @@
   function colorSelection(col){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
+    histSettle();   /* T494: as richSelectionEdit */
     try{document.execCommand('styleWithCSS',false,true);}catch(e){}
     try{document.execCommand('foreColor',false,col);}catch(e){}
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);

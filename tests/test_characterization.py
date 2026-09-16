@@ -2015,8 +2015,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # WHICH layouts, New slide lands after a version group, the saved tile is
 # known by id, a placeholder is never carried or exported, a poster's
 # tile is New version.
-EXPECTED_MD5 = "9f1b6e69af64637361398b434d034667"
-EXPECTED_BYTES = 4491323
+# T495 (2026-09-16): undo and history after the third pass -- typing
+# settled before a format lands, cite/bib/slot in the snapshot, undo
+# jumps to the slide it changed and keeps the selection.
+EXPECTED_MD5 = "dbc628dbbd99358c8b03cbf8feaad0db"
+EXPECTED_BYTES = 4495916
 
 
 def _render_example() -> str:

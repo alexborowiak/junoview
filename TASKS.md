@@ -9564,3 +9564,25 @@ any reading. The rest are T466 onwards.
   copy named Version 2 — it says New version, and the duplicate button
   stands down. (Implemented by a worktree agent of the T492 workflow;
   integrated and gated here.)
+- [x] **T495 — Undo and history, after the third review pass (findings
+  15–18).** Words typed in the ~900 ms before clicking Bold or a colour
+  swatch (caret kept in the box) were wiped by Ctrl+Z and never came
+  back with Ctrl+Y — the format pushed its entry first and the words
+  were committed afterwards; what is being typed is settled, as its own
+  entry, before the format lands. Citation style, footnotes, the
+  bibliography and the "new slides get" slot pushed no undo entry
+  (they were not in the snapshot, so it read identical) — they are in
+  it and come back. Undo never moved to the slide the change was on,
+  so an edit on another slide was undone out of sight — it jumps to
+  the first slide that differs, and Redo of New slide shows the slide.
+  And Ctrl+Z dropped the selection, so the Object tab vanished and the
+  arrow keys nudged nothing — the selection survives by oid. Driven
+  (A/B against the skeptics' own probes): "Fresh words typed" kept and
+  bold removed on undo; a cite change adds an entry and undoes alone;
+  undo on slide 1 of a change made on slide 2 lands on slide 2; the
+  Object tab and a nudge after undo. Still open from this lens:
+  [19] one undo entry per key-repeat of a held arrow, [20] the History
+  pane's checkpoint comparison, [21] the "so this is undoable" toast,
+  [22] adding a section costs two entries. (Implemented by a worktree
+  agent of the T492 workflow; integrated, renamed a duplicate
+  `slideSig` the name-guard caught, and gated here.)
