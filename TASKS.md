@@ -9641,3 +9641,52 @@ any reading. The rest are T466 onwards.
   box keeps its six handles; the nine re-wired controls clicked (Add
   slide, Present, prev, next, exit, rename). (Implemented by a worktree
   agent of the T492 workflow; integrated and gated here.)
+- [x] **T498 — The ribbon fit, after the third review pass (findings
+  7–13).** Seven findings, driven. With a shelf open a whole group wrapped
+  onto a second line of the ribbon — Build order at ≤1050 with a
+  selection, Whole slide and Build order at 900 — because the shelf's line
+  was a flex-wrap:wrap on the same container the groups are items of, and
+  once the ladder had nothing left (every chooser compact, Leaves early
+  folded, Build order and Whole slide never folded by T445) the last group
+  took the shelf's line and the bar grew from 157 to 258px; the bar is a
+  two-row grid while a shelf is open, every group pinned to row one in the
+  order it always had, the shelf row two across the width, so the row
+  clips like the closed bar does and the wrapped test in over() is the
+  safety net it was written to be (and the open shelf's row no longer
+  inflates the strip's floor: 200px of column at 1500, not 150 with a
+  scrollbar). Below the floor the row clipped silently — the notice only
+  ever lit the gallery's warning row, which nobody has open while resizing
+  — so it says the same sentence once a session as a toast with Use Side
+  toolbar on it. On a poster the Animation tab's doors stayed live over
+  hidden rows (Effect opened an empty shelf, a 42px empty popover in the
+  rail) because only the Effect strip was hidden and its frame stood on;
+  every chooser's frame goes on a poster, the groups empty and the tab
+  stands down — after the Page size click and after a reload alike, which
+  each needed a group pass that ran before the page kind was known.
+  Compact door readouts were cut to 56px inside an 82px door ('select s…'
+  ×4, 'Every sl…') — a door's readout has the door's own 76px at the tight
+  rung, and a dead door reads 'no selection' with the sentence on its
+  title. Focus's door grew the caption's click into its name after a refit
+  ('Focus on click 5 ▾') — a group's name is its caption's own words, less
+  any readout, for the door, the shelf and the prefs menu. A folded door
+  joined every pressed control in its row, hidden menus included ('None ·
+  Cut · Still · Whole box · Every slide · Code trail · Panel + text ·
+  Left') — a control inside something hidden is not a choice, and a door
+  over more than two says nothing. And the shelf survived a deselect, a
+  reselect and four resizes but not a tab change — a tab change closes it
+  and keeps the wish, so coming back finds it where it was, and the stage
+  re-fits either way. Driven (A/B against the skeptic's own run): at 1050
+  with the Motion shelf the bar is 177px and no group is off line one (was
+  258 and Build order on line two); 900 with the Transition shelf, no wrap
+  (was Build order); the toast at 900 and not again at the second
+  crossing; A1 landscape and portrait posters with no Animation tab, on
+  the click and after F5; doors 82px reading 'no selection' uncut at 900,
+  'Every slide' uncut on Present; 'Focus ▾ / Blur the rest' at 82px after
+  the refit; the rest doors of Familiar ribbon and Everything in one row
+  read nothing; Transition shelf open → Home → Animation open again, bar
+  162 and the slide re-fitted, closed by hand and it stays closed. Still
+  open from this lens: [14] the Everyday first and Everything in one row
+  presets fold most of the bar at 1366 — T484's deferred taxonomy pass, a
+  product decision on which groups to split. (Implemented by a worktree
+  agent of the T492 workflow.) (Implemented by a worktree agent of the
+  T492 workflow; integrated over T497's poster list and gated here.)

@@ -11,7 +11,8 @@ from __future__ import annotations
 
 
 def test_only_the_row_moves(out):
-    assert (".rbn-shelf{order:99;min-width:0;display:flex;\n"
+    # (T498: no `order` -- the shelf is placed on its own grid row now)
+    assert (".rbn-shelf{min-width:0;display:flex;\n"
             "  align-items:center;gap:9px;padding:4px 12px;") in out
     assert ("  overflow-x:auto;overflow-y:hidden;}") in out
     assert (".rbn-shelf-body{display:flex;align-items:center;"

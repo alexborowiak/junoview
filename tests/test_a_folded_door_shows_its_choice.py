@@ -47,7 +47,8 @@ def test_the_door_reads_out_the_choice(out):
     # T467: every pressed control in the row, one per strip or cell,
     # joined -- "On click · By sentence"
     assert "    var ons=row?$$('[aria-pressed=\"true\"]',row):[];" in out
-    assert "    var txt=parts.join(' \\u00b7 ');" in out
+    # T498: two choices at most -- a rest group's eight are not a readout
+    assert "    var txt=parts.length>2?'':parts.join(' \\u00b7 ');" in out
     assert "  function rbnReadoutBoot(){" in out
     assert "        attributeFilter:['aria-pressed']});" in out
     assert "  rbnReadoutBoot();" in out

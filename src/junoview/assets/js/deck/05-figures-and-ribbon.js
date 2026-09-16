@@ -1192,8 +1192,7 @@
     m.appendChild(note);
     ribbonGroupsHere().forEach(function(g){
       var gid=ribbonGroupId(g);
-      var lab=g.querySelector('.rbn-lab');
-      menuHead(m,((lab&&lab.textContent)||gid).trim().toLowerCase());
+      menuHead(m,(rbnGroupName(g)||gid).toLowerCase());
       ribbonControls(g).forEach(function(el){
         var row=document.createElement('div');
         row.className='ff-row rbn-crow';
@@ -1376,12 +1375,18 @@
        deliberate setTab('animation') in 48-animation.js IS a choice and
        still persists. */
     if(!transient) lsSet(tabKey(),t);
+    var hadShelf=!!rbnShelfFor;
     applyTab();
     /* T453: the shelf belongs to a group on the tab you just left */
     rbnShelfSync();
     /* the row's content just changed wholesale, so its column counts and
        its density both have to be judged again */
     syncRibbonGroups();
+    /* T498: the shelf closes with the tab it belongs to and comes back
+       with it (rbnShelfRestore, from the refit above), and either way
+       the bar is a different height -- the same courtesy its clicks
+       pay, or the slide sits under a bar that grew 65px */
+    if(hadShelf!==!!rbnShelfFor) rbnShelfRefit();
   }
   /* ---- FOLDING THE TOOLS AWAY ------------------------------------------
      The ribbon is about 100px of a 700px laptop window, and there are long
@@ -1581,14 +1586,17 @@
       return;
     }
     if(!bar.clientWidth) return;
-    /* T464: "OVER" IS OVERFLOWED OR WRAPPED. While the shelf (T453) is
-       open the bar is flex-wrap:wrap so the shelf can take a line of
+    /* T464: "OVER" IS OVERFLOWED OR WRAPPED. While the shelf (T453) was
+       open the bar was flex-wrap:wrap so the shelf could take a line of
        its own -- and a wrapping bar never overflows: a row too wide for
        it puts its last group on the shelf's line instead, scrollWidth
        reads as fitting, every rung comes off, and the Whole deck group
        sat under the Design tab's row the moment Page size opened its
        shelf. A group that is not on the first group's line is the
-       overflow, and is measured as such. */
+       overflow, and is measured as such.
+       T498: the shelf is a grid row of its own now (deck.css), so the
+       groups' row never wraps and clips like the closed bar; the
+       wrapped test stays as the safety net it was written to be. */
     var over=function(){
       if(bar.scrollWidth>bar.clientWidth+1) return true;
       var top=null,wrapped=false;
@@ -1658,8 +1666,13 @@
        costs once its three controls are honestly sized across two columns
        instead of stacking into a third row and printing over their own
        label; the tight rung's spacing gave 40px of the ~70px back. Below
-       it the remedy is Guides ▸ Toolbar on the right. */
+       it the remedy is Guides ▸ Toolbar on the right.
+       T498: ...and the remedy is SAID, once. The notice only ever lit
+       the gallery's warning row, which nobody has open while resizing,
+       so below the floor Build order's Layers lost its door with no
+       sign (the third review pass). */
     if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
+    rbnShelfScrollSync();
   }
   /* ---- the strip may not eat the ribbon --------------------------------
      The slide column and the ribbon are two tracks of ONE grid, so every
@@ -1908,6 +1921,20 @@
      and the shelf, so every listener, pressed state and readout on it
      survives the move, and there is exactly one of it. */
   var rbnShelfFor=null,rbnShelfWant=null;
+  /* T498: A GROUP'S NAME IS ITS CAPTION'S OWN WORDS. Focus's caption
+     wears the click its focus is on (#anim-focus-say, a readout INSIDE
+     the label, T472), and the door and the shelf took the whole
+     caption as the name: after the first refit the door read "Focus on
+     click 5 ▾" over "Blur the rest" and the shelf would have been
+     titled FOCUS ON CLICK 5 (the third review pass). The words less
+     any readout, from the one place both readers ask. */
+  function rbnGroupName(g){
+    var lab=g&&g.querySelector('.rbn-lab');
+    if(!lab) return '';
+    var src=lab.cloneNode(true);
+    $$('.rbn-foldval',src).forEach(function(v){v.remove();});
+    return src.textContent.replace(/\s+/g,' ').trim();
+  }
   /* the row of a folded group, wherever it currently lives */
   function rbnFoldRow(g){
     if(!g) return null;
@@ -1959,8 +1986,8 @@
     var row=menu&&menu.querySelector('.rbn-row');
     if(!row) return false;
     body.appendChild(row);
-    var lab=g.querySelector('.rbn-lab'),nm=$('#rbn-shelf-name');
-    if(nm) nm.textContent=(lab&&lab.textContent.trim())||'Options';
+    var nm=$('#rbn-shelf-name');
+    if(nm) nm.textContent=rbnGroupName(g)||'Options';
     sh.hidden=false;
     g.classList.add('rbn-shelved');
     var b=g.querySelector('.rbn-foldbtn');
@@ -1969,8 +1996,17 @@
     /* T454: twenty-two shapes are wider than any window, and a row that
        scrolls with no sign that it does is a row whose last third does
        not exist. The class draws a fade at the edge it runs off. */
-    sh.classList.toggle('can-scroll',body.scrollWidth>body.clientWidth+1);
+    rbnShelfScrollSync();
     return true;
+  }
+  /* T498: ...measured again at the end of every fit, not only when the
+     shelf opened: the ladder narrows the tiles and the window narrows
+     the body after that, and a row that ran off the edge at 1050px
+     wore no fade because it had fitted at 1500. */
+  function rbnShelfScrollSync(){
+    var sh=$('#rbn-shelf'),body=$('#rbn-shelf-body');
+    if(!sh||!body||sh.hidden) return;
+    sh.classList.toggle('can-scroll',body.scrollWidth>body.clientWidth+1);
   }
   /* A row parked in the shelf belongs to ONE group on ONE tab. Changing
      tab, or anything that hides that group, has to give it back first or
@@ -1981,8 +2017,14 @@
     /* `data-off` is how a tab change takes a group away -- it is
        display:none, not `hidden` -- and a row left on the shelf after
        its tab has gone is a row its own tab can never get back */
-    if(g.hidden||g.hasAttribute('data-off')||!document.contains(g))
-      rbnShelfDismiss();
+    if(!document.contains(g)){rbnShelfDismiss();return;}
+    /* T498: a tab change is bookkeeping, not the user closing it. The
+       shelf rode through a deselect, a reselect and four resizes and
+       was forgotten by a glance at Home (the third review pass): the
+       row goes back to its group, and the wish stays, so rbnShelfRestore
+       reopens it when its tab returns -- and refuses while the group is
+       off or hidden, so nothing opens on the wrong tab. */
+    if(g.hidden||g.hasAttribute('data-off')){rbnShelfWant=g;rbnShelfClose();}
   }
   function rbnShelfBoot(){
     var x=$('#rbn-shelf-close');
@@ -1996,7 +2038,7 @@
       if(!row&&c.classList.contains('rbn-row')) row=c;});
     if(!row) return false;
     var lab=g.querySelector('.rbn-lab');
-    var name=(lab&&lab.textContent.trim())||'More';
+    var name=rbnGroupName(g)||'More';
     /* THE DOOR IS A TILE (T218): the group's own icon over its name and
        a chevron, spanning both rows -- the shape PowerPoint collapses a
        group into, and the one tile every other tall control is. A small
@@ -2029,6 +2071,8 @@
         +'button')
       :(name+' \u2014 folded because the window is too narrow to show '
         +'the whole row. Widen the window and it opens out again');
+    /* T498: the live title, for the readout to put back after a dead spell */
+    btn.setAttribute('data-title',btn.title);
     var menu=document.createElement('div');
     menu.className='sh-menu rbn-foldmenu';menu.hidden=true;
     menu.appendChild(row);
@@ -2068,7 +2112,17 @@
        sentence left the door saying On click (2026-09-15 review). */
     var ons=row?$$('[aria-pressed="true"]',row):[];
     var boxes=[],parts=[];
+    /* T498: a control inside something HIDDEN is not a choice on show.
+       The Familiar ribbon's Drawing door read "2.25 pt" off a .sh-opt
+       inside the line-width menu that was not open (the third review
+       pass); the dead check below already walks the ancestors, and so
+       does this. */
+    function shown(c){
+      for(var n=c;n&&n!==row;n=n.parentNode) if(n.hidden) return false;
+      return true;
+    }
     ons.forEach(function(on){
+      if(!shown(on)) return;
       var box=(on.closest&&on.closest('.strip-frame,.rbn-cell,.sh-drop'))||on;
       if(boxes.indexOf(box)>=0) return;
       boxes.push(box);
@@ -2084,7 +2138,14 @@
         .trim();
       if(t) parts.push(t);
     });
-    var txt=parts.join(' \u00b7 ');
+    /* T498: TWO CHOICES AT MOST. T467's join is for a group of two
+       strips ("On click \u00b7 By bullet"); a rest group holds eight
+       unrelated choices and its door read "None \u00b7 Cut \u00b7 Still
+       \u00b7 Whole box \u00b7 Every slide \u00b7 Code trail \u00b7
+       Panel + text \u00b7 Left", cut to 56px (the third review pass).
+       A door over more than two says nothing and lets what it opens
+       speak. */
+    var txt=parts.length>2?'':parts.join(' \u00b7 ');
     /* T479: a group may say its own answer (data-say) when the pressed
        controls are swatches with no words -- Background's */
     if(g.hasAttribute('data-say')) txt=g.getAttribute('data-say')||'';
@@ -2096,18 +2157,29 @@
        Motion looked ready with nothing selected and opened shelves of
        disabled tiles (2026-09-15 review). A row whose every control
        is disabled greys its door and says why; Transition, whose row
-       is about the slide, stays live. */
+       is about the slide, stays live.
+       T498: a row whose every control is HIDDEN is not live either --
+       on a poster the Effect strip was hidden and its door opened an
+       empty shelf (belt and braces: applyPage hides the frames now).
+       The readout says the STATE in the door's own width -- "select
+       something" was cut to "select s\u2026" at the tight rung, four
+       doors in a row (the third review pass) -- and the title carries
+       the sentence. */
     if(row){
       var ctl=$$('button,select,input',row).filter(function(c){
         if(c.closest&&c.closest('.strip-nav')) return false;   /* arrows are not choices */
         for(var n=c;n&&n!==row;n=n.parentNode) if(n.hidden) return false;   /* nor hidden ones */
         return true;});
-      var dead=ctl.length>0&&ctl.every(function(c){return c.disabled;});
+      var dead=ctl.every(function(c){return c.disabled;});
       /* only when it changes: the observer that calls this watches
          `disabled`, and re-setting the same value is still a mutation */
       if(btn.disabled!==dead) btn.disabled=dead;
-      if(dead){val.textContent='select something';val.hidden=false;
+      if(dead){val.textContent='no selection';val.hidden=false;
         btn.classList.add('has-val');}
+      var live=btn.getAttribute('data-title')||'';
+      var want=dead?(live.split(' \u2014 ')[0]
+        +' \u2014 select something on the slide first'):live;
+      if(live&&btn.title!==want) btn.title=want;
     }
   }
   function rbnFoldReadouts(){
@@ -2491,6 +2563,13 @@
         /* switching to a portrait poster moves the toolbar to the side
            (unless you have already chosen otherwise) */
         applySideRibbon();
+        /* T498: applyPage just hid (or showed) the Animation tab's
+           chooser frames by page kind, and a group is hidden by
+           syncRibbonGroups once nothing in it shows -- which only the
+           format pass runs. Without this the Effect door stood over an
+           empty shelf until the next selection. The undo path (10-decks)
+           already ends the same way. */
+        if(typeof showFmt==='function') showFmt();
       });
       ps.appendChild(o);
     });

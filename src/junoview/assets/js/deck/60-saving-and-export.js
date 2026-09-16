@@ -14,7 +14,9 @@
   /* T301: a toast that can be acted on. `toast` is text-only and
      stays that way -- this is for the one case where the message is
      "something was replaced" and the only useful reply is "put it
-     back". Longer by default, because a reply needs reading time. */
+     back". Longer by default, because a reply needs reading time.
+     T498: and for the one other -- "the ribbon is wider than the
+     window", whose only useful reply is the Side toolbar. */
   function toastUndo(msg,label,fn,ms){
     var t=$('#deck-toast'); if(!t){toast(msg);return;}
     t.textContent=msg+' ';

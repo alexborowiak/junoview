@@ -289,8 +289,8 @@ def test_an_oversized_layout_names_the_existing_remedy(out):
     """
     i = out.index("function applyRibbonLayout(id,quiet){")
     body = out[i:out.index("\n  /* WHAT A LAYOUT MISSED", i)]
-    assert body.index("showFmt();") < body.index("rbnOverflowNotice(bar)")
-    notice_i = out.index("function rbnOverflowNotice(bar){")
+    assert body.index("showFmt();") < body.index("rbnOverflowNotice(bar,true)")
+    notice_i = out.index("function rbnOverflowNotice(bar,quiet){")
     notice = out[notice_i:out.index("\n  function ", notice_i + 20)]
     assert "bar.scrollWidth>bar.clientWidth+1" in notice
     assert "!deckEl.classList.contains('rbn-side')" in notice

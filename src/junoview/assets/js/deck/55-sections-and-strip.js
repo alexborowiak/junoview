@@ -1218,6 +1218,12 @@
     /* the bar's title depends on the mode, and openDeck calls status()
        BEFORE the mode is set — so it is refreshed once more here */
     status();
+    /* T498: renderSlide's applyPage has just hidden (or shown) the
+       Animation tab's chooser frames by page kind -- AFTER showFmt's
+       group pass above, so a poster opened from a reload kept the
+       Effect door live over an empty shelf until the next selection.
+       One more group pass, now that the page kind is on the bar. */
+    if(editing&&typeof syncRibbonGroups==='function') syncRibbonGroups();
     if(startingTalk||endingTalk) presenterSync();
   }
   function refresh(){

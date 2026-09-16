@@ -19,10 +19,19 @@ def test_the_shelf_is_in_the_bar(out):
     assert 'id="rbn-shelf-name"' in out
     assert 'id="rbn-shelf-body"' in out
     assert 'id="rbn-shelf-close"' in out
-    # a line of its own while open, and no space at all while not
-    assert (".edit-tools.ribbon:has(.rbn-shelf:not([hidden])){"
-            "flex-wrap:wrap;\n  height:auto;min-height:92px;}") in out
-    assert ".rbn-shelf:not([hidden]){flex:1 0 100%;order:99;}" in out
+    # a ROW of its own while open, and no space at all while not.
+    # T498: a grid row, not a wrapped flex line -- with the groups
+    # items of the same wrapping container, the last group went onto
+    # the shelf's line once the fold ladder had nothing left to give
+    assert (".deck:not(.rbn-side) .edit-tools.ribbon"
+            ":has(.rbn-shelf:not([hidden])){\n"
+            "  display:grid;grid-template-rows:92px auto;") in out
+    assert (".edit-tools.ribbon:has(.rbn-shelf:not([hidden])) .rbn-grp{\n"
+            "  grid-row:1;}") in out
+    assert (".edit-tools.ribbon>.rbn-shelf:not([hidden]){\n"
+            "  grid-row:2;grid-column:1/-1;contain:inline-size;") in out
+    assert "flex:1 0 100%;order:99;" not in out
+    assert "{flex-wrap:wrap;\n  height:auto;min-height:92px;}" not in out
     # one line of options, not the group's two-track grid
     assert (".rbn-shelf-body>.rbn-row{display:flex;align-items:center;\n"
             "  height:auto;column-gap:var(--rbn-col-gap);}") in out
@@ -77,7 +86,12 @@ def test_the_shelf_survives_every_measuring_pass(out):
     assert "  function rbnShelfDismiss(){rbnShelfWant=null;rbnShelfClose();}" in out
     # ...and a tab change gives the row back to the tab it came from
     assert "    rbnShelfSync();" in out
-    assert "    if(g.hidden||g.hasAttribute('data-off')||!document.contains(g))" in out
+    # T498: a group that LEFT the document is forgotten; one its tab took
+    # away (data-off) or that hid is closed and remembered, so coming
+    # back to the tab finds the shelf where it was
+    assert "    if(!document.contains(g)){rbnShelfDismiss();return;}" in out
+    assert ("    if(g.hidden||g.hasAttribute('data-off'))"
+            "{rbnShelfWant=g;rbnShelfClose();}") in out
 
 
 def test_a_shelved_group_is_still_counted_as_occupied(out):

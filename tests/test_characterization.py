@@ -2026,8 +2026,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # junoview.dev, which GitHub Pages now answers with "Site not found".
 # T497 (2026-09-16): boot and wiring after the third pass -- a poster's
 # Animation tab stands down, ghosts wear no selection, guarded lookups.
-EXPECTED_MD5 = "7c445075a559fad99dc123da46029d00"
-EXPECTED_BYTES = 4506391
+# T498 (2026-09-16): the ribbon fit after the third pass -- the shelf is
+# a grid row, the clip is told, doors' readouts and names, the shelf
+# survives a tab change.
+EXPECTED_MD5 = "b56722db1c20ee3c5588ec59c15c633e"
+EXPECTED_BYTES = 4514111
 
 
 def _render_example() -> str:

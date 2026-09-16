@@ -1644,18 +1644,37 @@ body.slide-editing .apptop{display:none;}
    all while it is not. Squeezed into the gap between the choosers and
    the verb groups it had about 230px, which showed two and a half of
    the thirteen movements -- and there is no gap to grow into, because
-   the row is already full. So the row wraps, but only while a shelf is
-   open and only for the shelf: a 100% basis puts it alone on line two,
-   which means line one is exactly the groups it always was, and the
-   house rule that ribbon BUTTONS never wrap is untouched. Closing it
-   restores nowrap and the ribbon's own height. */
-.edit-tools.ribbon:has(.rbn-shelf:not([hidden])){flex-wrap:wrap;
+   the row is already full.
+   T498: A ROW OF ITS OWN, NOT A WRAPPED LINE. This was flex-wrap:wrap
+   with the shelf on a 100% basis, and the comment here claimed line
+   one was "exactly the groups it always was" -- it was not: the
+   groups were items of the same wrapping container, so once the fold
+   ladder had nothing left to give (every chooser compact, Leaves early
+   folded, Build order and Whole slide never folded by T445) the last
+   group went onto the shelf's line instead of clipping, and the bar
+   grew from 157px to 258px and shoved the slide down (Animation with a
+   selection at <=1050, the third review pass). The bar is a two-row
+   GRID while a shelf is open: every group is pinned to row one and
+   auto-placed across it in order-modified document order -- the same
+   `order` the flex row honours -- so row one is a nowrap row that clips
+   sideways exactly as the closed bar does, and the shelf is row two
+   across the whole width. Sixty-three max-content columns and a 1fr
+   tail rather than an implicit grid: the shelf spans 1/-1, which needs
+   explicit lines, the empty columns cost nothing, and the tail is what
+   lets the shelf reach the far edge when the groups do not. The
+   shelf's own width is contained so its content (twenty-two shapes)
+   cannot widen the columns the groups sit in. Closing it restores the
+   flex row and the ribbon's own height. A side rail (T465) never opens
+   a shelf and keeps its column. */
+.deck:not(.rbn-side) .edit-tools.ribbon:has(.rbn-shelf:not([hidden])){
+  display:grid;grid-template-rows:92px auto;
+  grid-template-columns:repeat(63,max-content) minmax(0,1fr);
   height:auto;min-height:92px;}
-/* LAST, whatever its markup position: at any other rung a full-width
-   line pushes the groups after it onto a THIRD line, which is how the
-   verb groups went off the bottom of the bar the first time. */
-.rbn-shelf:not([hidden]){flex:1 0 100%;order:99;}
-.rbn-shelf{order:99;min-width:0;display:flex;
+.deck:not(.rbn-side) .edit-tools.ribbon:has(.rbn-shelf:not([hidden])) .rbn-grp{
+  grid-row:1;}
+.deck:not(.rbn-side) .edit-tools.ribbon>.rbn-shelf:not([hidden]){
+  grid-row:2;grid-column:1/-1;contain:inline-size;min-width:0;}
+.rbn-shelf{min-width:0;display:flex;
   align-items:center;gap:9px;padding:4px 12px;
   border-top:1px solid var(--chrome-line,#ffffff1f);}
 .rbn-shelf[hidden]{display:none!important;}
@@ -2150,6 +2169,13 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* T463: a readout gives up its last few characters at the tightest rung
    ("Title + pa…" under New slide); the whole name is on the tooltip */
 .deck.erc-tight .fx-tile>.rbn-foldval{max-width:56px;}
+/* T498: ...but a DOOR is 82px wide by rule (its floor, below), so its
+   readout has 76px of content box for nothing, and the 56px cap cut
+   "Every slide" to "Every sl…" and "Panel + text" to "Panel + te…"
+   inside a door with 26px of room beside them (the third review pass).
+   The cap is the door's own width: the door never widens for its
+   readout at this rung, and nothing that fits it is cut. */
+.deck.erc-tight .rbn-foldwrap .fx-tile.rbn-foldbtn>.rbn-foldval{max-width:76px;}
 .deck.erc-tight .rbn-grp{padding-left:2px;padding-right:2px;}
 .deck.erc-tight .rbn-row{column-gap:2px;}
 .deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{

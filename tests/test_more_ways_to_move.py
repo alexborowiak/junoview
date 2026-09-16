@@ -718,3 +718,74 @@ def test_boot_and_wiring_after_the_third_pass(out):
     assert "  var presCur=$('#pres-current');" in out
     assert "  var prevBtn=$('#deck-prev'),nextBtn=$('#deck-next');" in out
     assert "  var presName=$('#pres-name');" in out
+
+
+def test_the_ribbon_fit_after_the_third_pass(out):
+    """T498 (2026-09-16, the third review pass: ribbon-fit lens,
+    findings 7-13)."""
+    # [7] the shelf is a grid ROW of its own, not a wrapped flex line:
+    #     every group is pinned to row one and the shelf spans row two
+    assert (".deck:not(.rbn-side) .edit-tools.ribbon"
+            ":has(.rbn-shelf:not([hidden])){\n"
+            "  display:grid;grid-template-rows:92px auto;\n"
+            "  grid-template-columns:repeat(63,max-content) minmax(0,1fr);") in out
+    assert (".edit-tools.ribbon:has(.rbn-shelf:not([hidden])) .rbn-grp{\n"
+            "  grid-row:1;}") in out
+    assert (".edit-tools.ribbon>.rbn-shelf:not([hidden]){\n"
+            "  grid-row:2;grid-column:1/-1;contain:inline-size;min-width:0;}") in out
+    assert ".rbn-shelf:not([hidden]){flex:1 0 100%;order:99;}" not in out
+    #     ...and the fade that marks a row running off the edge is
+    #     measured again at the end of every fit, not only at open
+    assert "  function rbnShelfScrollSync(){" in out
+    assert ("    sh.classList.toggle('can-scroll',"
+            "body.scrollWidth>body.clientWidth+1);") in out
+    assert ("    if(typeof rbnOverflowNotice==='function') "
+            "rbnOverflowNotice(bar);\n    rbnShelfScrollSync();\n  }") in out
+    # [8] below the floor the remedy is SAID, once a session, with the
+    #     Side toolbar on the toast
+    assert "  var rbnClipTold=false;" in out
+    assert "  function rbnOverflowNotice(bar,quiet){" in out
+    assert "    if(clipped&&!note&&!quiet&&!rbnClipTold" in out
+    assert ("      toastUndo('The ribbon is wider than the window \\u2014 the '\n"
+            "        +'right-hand toolbar keeps every control reachable.',\n"
+            "        'Use Side toolbar',function(){") in out
+    assert "    var clipped=rbnOverflowNotice(bar,true);" in out
+    # [9] a poster hides every chooser's FRAME, so the groups empty and
+    #     the Animation tab stands down -- after the page change and on
+    #     a reload alike
+    #     (the list itself is T497's; both lenses hid the frames)
+    assert ("     '#anim-seq','#anim-layers','#anim-story','#anim-focus',"
+            "'#anim-move',\n     '#trans-frame','#trans-scopewrap']") in out
+    assert ("        applySideRibbon();\n"
+            "        /* T498: applyPage just hid") in out
+    assert "        if(typeof showFmt==='function') showFmt();\n      });" in out
+    assert ("    if(editing&&typeof syncRibbonGroups==='function') "
+            "syncRibbonGroups();") in out
+    #     belt and braces: a row whose every control is hidden is dead
+    assert "      var dead=ctl.every(function(c){return c.disabled;});" in out
+    assert "      var dead=ctl.length>0&&ctl.every(" not in out
+    # [10] a door's readout has the door's own 76px at the tight rung,
+    #      and the dead readout is a state that fits it
+    assert (".deck.erc-tight .rbn-foldwrap .fx-tile.rbn-foldbtn>.rbn-foldval"
+            "{max-width:76px;}") in out
+    assert "      if(dead){val.textContent='no selection';val.hidden=false;" in out
+    assert "        +' \\u2014 select something on the slide first'):live;" in out
+    assert "    btn.setAttribute('data-title',btn.title);" in out
+    # [11] a group's name is its caption's own words, less any readout
+    assert "  function rbnGroupName(g){" in out
+    assert "    $$('.rbn-foldval',src).forEach(function(v){v.remove();});" in out
+    assert "    var name=rbnGroupName(g)||'More';" in out
+    assert "    if(nm) nm.textContent=rbnGroupName(g)||'Options';" in out
+    assert "(lab&&lab.textContent.trim())||'More'" not in out
+    # [12] a pressed control inside something hidden is not a choice, and
+    #      a door over more than two choices says nothing
+    assert "    function shown(c){" in out
+    assert "      if(!shown(on)) return;" in out
+    assert "    var txt=parts.length>2?'':parts.join(' \\u00b7 ');" in out
+    # [13] a tab change closes the shelf and keeps the wish; a group that
+    #      left the document is forgotten; the stage is re-fitted either way
+    assert "    if(!document.contains(g)){rbnShelfDismiss();return;}" in out
+    assert ("    if(g.hidden||g.hasAttribute('data-off'))"
+            "{rbnShelfWant=g;rbnShelfClose();}") in out
+    assert "    var hadShelf=!!rbnShelfFor;" in out
+    assert "    if(hadShelf!==!!rbnShelfFor) rbnShelfRefit();" in out

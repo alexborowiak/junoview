@@ -233,14 +233,34 @@
     b.title='Choose a different arrangement of the ribbon. Current: '+name;
     b.setAttribute('aria-label','Ribbon layouts. Current: '+name);
   }
-  function rbnOverflowNotice(bar){
+  /* T498: the below-the-floor toast is said ONCE a session. The row
+     clips on every refit below the floor -- each resize step, each
+     selection -- and a toast that fired on each would be the nag the
+     ribbon has never been; and the moment you have been told where the
+     controls went, you know. */
+  var rbnClipTold=false;
+  function rbnOverflowNotice(bar,quiet){
     var clipped=!!(bar&&!deckEl.classList.contains('rbn-side')
       &&bar.clientWidth&&bar.scrollWidth>bar.clientWidth+1);
     /* A gallery sits above the deck's stacking context, so a deck toast
        would be hidden behind it. When the chooser is open, put the remedy
-       in the chooser itself; callers without a gallery still get a toast. */
+       in the chooser itself. */
     var note=$('#rbn-gal-warn');
     if(note) note.hidden=!clipped;
+    /* T498: ...and with no gallery open, a toast -- the comment above
+       used to promise one and nothing produced it, so below the floor
+       the row simply lost Build order's Layers off its right edge with
+       nothing said (the third review pass). The same sentence as the
+       gallery's warning, with the same door on it; applyRibbonLayout
+       asks for quiet because it says it in its own words. */
+    if(clipped&&!note&&!quiet&&!rbnClipTold
+       &&typeof toastUndo==='function'){
+      rbnClipTold=true;
+      toastUndo('The ribbon is wider than the window \u2014 the '
+        +'right-hand toolbar keeps every control reachable.',
+        'Use Side toolbar',function(){
+          var side=$('#vw-side'); if(side) side.click();});
+    }
     return clipped;
   }
   function initRibbonLayoutDoor(){
@@ -384,7 +404,7 @@
        rung at this point. Some experimental layouts put so many controls
        in one group that the horizontal ribbon still cannot fit; say so
        and name the existing remedy instead of clipping buttons silently. */
-    var clipped=rbnOverflowNotice(bar);
+    var clipped=rbnOverflowNotice(bar,true);
     if(clipped&&!$('#rbn-gal-warn'))
       toast('This ribbon layout is wider than the window \u2014 '
         +'turn on Side toolbar to reach all of it.');
