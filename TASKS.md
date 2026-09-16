@@ -9429,8 +9429,11 @@ any reading. The rest are T466 onwards.
   evidence, repro scripts and proposed fixes is in
   `%LOCALAPPDATA%\Temp\claude\jv-shot\findings3.json` (workflow
   wf_7df36607-44a). The animation-model lens shipped as T491, the
-  layout-model lens as T494, undo 15–18 as T495 and the round-trip lens
-  as T496 (2026-09-16); the rest, one line each, by lens:
+  layout-model lens as T494, undo 15–18 as T495, the round-trip lens as
+  T496, boot-and-wiring as T497, ribbon-fit 7–13 as T498 and undo 19–22
+  as T499 (2026-09-16). Everything below is closed except [14] (a
+  product decision T484 deferred: which catch-all groups to split); the
+  list stays as the record of what the pass found:
   - [0] s3 - boot-and-wiring: On a poster page the Animation tab's Effect door
     stays enabled and opens an EMPTY shelf; Focus reads 'select something'
     while a text box is selected
@@ -9725,5 +9728,4 @@ any reading. The rest are T466 onwards.
   buttons; #dc-undo enabled after Go back   and after Branch, Ctrl+Z
   restores the two slides and the [head] row   moves with it; Section +
   "Part A" adds 1 entry, Cancel adds 1.   (Implemented by a worktree agent
-  of the T492 workflow.) (Implemented by a worktree agent of the T492
-  workflow; integrated and gated here.)
+  of the T492 workflow; integrated and gated here.)
