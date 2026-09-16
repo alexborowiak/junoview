@@ -455,7 +455,16 @@
     if(layout.poster&&layout.scale) pres.scale=deep(layout.scale);
     var old=s.annots||[];
     var cells=old.filter(function(a){return a.k==='cell';});
-    var texts=old.filter(function(a){return a.k==='text';});
+    /* T494: A PLACEHOLDER IS NOT CONTENT, so it is not carried. Every
+       text box went into the reuse pool, and a slot's hint -- "Subtitle",
+       "Body text" -- was paired to the new layout's first slot with its
+       old words, type, size and alignment, while the surplus ones stayed
+       at their old coordinates over the new panel (2026-09-15 review:
+       Title > Title + panel left "Subtitle" floating inside the figure
+       frame). Only TYPED boxes are content; an untouched hint is dropped
+       and every slot of the new layout is born fresh below, the same
+       rule the cells follow (a cell survives only with a ref). */
+    var texts=old.filter(function(a){return a.k==='text'&&!a.ph;});
     var keep=old.filter(function(a){return a.k!=='cell'&&a.k!=='text';});
     var ci=0,ti=0,next=[];
     (layout.items||[]).forEach(function(it){
@@ -550,7 +559,16 @@
       .forEach(function(sel){
       /* T226: the family AND how many layouts there are, so making
          one of your own makes the pickers draw again */
-      var stamp=variant+':'+((pres&&pres.layouts)?pres.layouts.length:0);
+      /* T494: ...and WHICH layouts, not just how many. The count let a
+         deck opened after another deck with the same number of custom
+         layouts keep the other deck's tiles -- every deck's first
+         layout is 'my1', so deck A's grid read "Beta" and clicking it
+         applied deck B's slots to deck A's slide (2026-09-15 review).
+         The stamp is a signature of the custom layouts themselves, so
+         any switch, load, undo or import that changes them redraws. */
+      var stamp=variant+':'+((pres&&pres.layouts)||[]).map(function(l){
+        return (l&&l.id)+'/'+(l&&l.label)+'/'+((l&&l.items)||[]).length;
+      }).join(',');
       var row=$(sel); if(!row||row.dataset.built===stamp) return;
       row.dataset.built=stamp;row.innerHTML='';
       var list=allLayouts().filter(function(l){
@@ -626,17 +644,38 @@
     syncNewSlideMarks();
   }
   /* the strip lights the layout the NEXT slide takes, not the one this
-     slide wears (T218); a saved layout is remembered as 'arr:<n>' */
+     slide wears (T218); a saved layout is remembered as 'arr:<id>' --
+     T494: by its ID, not its index, or forgetting an earlier one made
+     the key point at the next tile along */
   function syncNewSlideMarks(){
     var key=lsGet(newLayKey())||'cell-text';
-    var chosen=null;
-    $$('#layout-strip .dbtn.lay').forEach(function(b){
+    var chosen=null,tiles=$$('#layout-strip .dbtn.lay');
+    tiles.forEach(function(b){
       var on=b.classList.contains('lay-saved')
-        ?(('arr:'+b.dataset.arr)===key):(b.dataset.lay===key);
+        ?(('arr:'+b.dataset.arrId)===key):(b.dataset.lay===key);
       b.setAttribute('aria-pressed',on?'true':'false');
       b.disabled=false;
       if(on) chosen=b;
     });
+    /* T494: A CHOICE THAT NO LONGER EXISTS IS THE DEFAULT. Deleting the
+       custom layout New slide was set to, forgetting the saved one, or
+       opening a deck that never had this deck's 'my1' left the key
+       naming nothing: no tile lit, the readout empty, and New slide
+       quietly adding a BLANK slide (2026-09-15 review). The strip is
+       the authority on what can be chosen, so a key it cannot light
+       falls back to Panel + text (T193's default) and is written back,
+       so newVersion and the strip agree. Only once the strip has slide
+       tiles to check against: a poster's strip holds poster tiles,
+       which never light a slide choice, and a strip not yet built has
+       nothing to say. */
+    if(!chosen&&key!=='cell-text'&&tiles.length&&!pageOf().poster){
+      lsSet(newLayKey(),'cell-text');
+      tiles.forEach(function(b){
+        var on=!b.classList.contains('lay-saved')&&b.dataset.lay==='cell-text';
+        b.setAttribute('aria-pressed',on?'true':'false');
+        if(on) chosen=b;
+      });
+    }
     /* T463: THE BUTTON SAYS WHICH LAYOUT IT WILL MAKE. The lit tile
        is the only sign of the choice, and the default (Panel + text)
        sits in the strip's fourth row, out of sight behind the arrows
@@ -655,11 +694,33 @@
       }
       var lb=chosen?chosen.querySelector('.lay-lb'):null;
       var word=lb?lb.textContent.trim():'';
+      /* T494: ON A POSTER THE TILE IS NEW VERSION. A poster is one page
+         and its New slide is New version (T424), which is what the tile
+         already MADE -- but it went on saying "New slide ... laid out as
+         the highlighted layout" over a copy of the sheet named "Version
+         2" (2026-09-15 review). The tile wears the verb it does, with
+         the strip's words for it, and the small New version button in
+         This slide stands down rather than offer the same thing twice. */
+      var poster=!!pageOf().poster;
+      var nw=nb.querySelector('span:not(.rbn-foldval)');
+      if(nw) nw.textContent=poster?'New version':'New slide';
+      /* the group's caption is the door's word when it folds -- its
+         own group only; a ribbon layout may have moved the tile into a
+         group with a name of its own */
+      var grp=nb.closest('.rbn-grp.rbn-slides');
+      var glab=grp&&grp.querySelector('.rbn-lab');
+      if(glab) glab.textContent=poster?'New version':'New slide';
+      if(poster) word='';
       val.textContent=word;val.hidden=!word;
       nb.classList.toggle('has-val',!!word);
       /* the whole name, for the rung that shortens the readout */
-      nb.title='Add a slide after this one'
-        +(word?(', laid out as '+word):', laid out as the highlighted layout');
+      nb.title=poster
+        ?'Copy this poster to a new version you can change independently. '
+          +'It is named for you; use Rename to change that.'
+        :'Add a slide after this one'
+          +(word?(', laid out as '+word):', laid out as the highlighted layout');
+      var vb=$('#hm-version');
+      if(vb) vb.hidden=poster;
     }
   }
   /* T489: a small door's readout -- its current choice beside its

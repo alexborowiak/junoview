@@ -36,9 +36,14 @@ def test_the_catalogue_is_the_built_ins_plus_yours(out):
             in out)
     assert ("      var list=allLayouts().filter(function(l){\n"
             "        return !!l.poster===isPoster&&l.id!=='blank';});") in out
-    # the pickers cache what they drew, so the stamp counts yours
-    assert ("      var stamp=variant+':'+"
-            "((pres&&pres.layouts)?pres.layouts.length:0);") in out
+    # the pickers cache what they drew, so the stamp names yours
+    # (T494: a signature, not a count -- two decks with one custom
+    # layout each must not share tiles)
+    assert ("      var stamp=variant+':'+((pres&&pres.layouts)||[])"
+            ".map(function(l){\n"
+            "        return (l&&l.id)+'/'+(l&&l.label)+'/'"
+            "+((l&&l.items)||[]).length;\n"
+            "      }).join(',');") in out
     assert "      row.dataset.built=stamp;row.innerHTML='';" in out
 
 

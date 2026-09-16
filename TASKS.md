@@ -9541,3 +9541,26 @@ any reading. The rest are T466 onwards.
   itself: pressing Highlight opens the Animation pane on Configure and
   says where the colour and size are. Driven: Warm at +25% chosen in
   the pane, seen in the sample, and lit on the slide in the show.
+- [x] **T494 — The layout model, after the third review pass.** Eight
+  findings, driven. Save layout kept the model slide's WORDS (the
+  first 18 characters of what you typed) and New slide placed them as
+  real, printable text on every slide made from it, in every deck of
+  the project — a saved slot's word is the slot's kind ("Title", "Body
+  text"), a layout made from one arrives as placeholders, and a store
+  saved before this is read through the same rule. The layout pickers
+  cached on how MANY custom layouts a deck had, so a deck opened after
+  another with the same count showed and applied the other deck's
+  layout — the stamp is a signature of the layouts themselves. New
+  slide from the main of a version group spliced between the main and
+  its versions and dissolved the group — it lands after the whole
+  group, as Duplicate does. The chosen saved layout was remembered by
+  index, so forgetting an earlier one made New slide say one name and
+  build another — by id, and the rebuilt tiles re-light. applyLayout
+  carried untyped placeholders as content — a hint is dropped and the
+  new slot is born fresh. Placeholder words left the editor (the .pptx,
+  thumbnails, the strip's slide names) — never. Deleting the layout New
+  slide was set to left nothing lit and a blank slide — the default
+  again. And on a poster the tile said "New slide … laid out as" over a
+  copy named Version 2 — it says New version, and the duplicate button
+  stands down. (Implemented by a worktree agent of the T492 workflow;
+  integrated and gated here.)

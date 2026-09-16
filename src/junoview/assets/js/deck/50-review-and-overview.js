@@ -4327,7 +4327,13 @@
     annots.forEach(function(a,i){
       if(!a||a.hide) return;
       if(a.k==='arrow'){arrows.push(a);return;}
-      if(a.k==='text'){miniText(d,a,a.text||'');return;}
+      /* T494: a placeholder is drawn the way the canvas draws it while
+         you edit -- faint, in a hairline box -- so the strip still
+         shows the SHAPE of an untouched slide without printing "Body
+         text" on it at full ink (T366); a thumbnail is an editing
+         surface, the words are the slot's, and the class is how a
+         reader can tell a hint from a heading */
+      if(a.k==='text'){miniText(d,a,a.text||'',a.ph?'is-ph':'');return;}
       if(a.k==='image'){
         var bx=miniBox(d,a,'is-img');
         if(a.src){
@@ -4509,7 +4515,14 @@
      neither */
   function newVersion(lay,arr){
     if(!(lay&&lay.items)) lay=null;
-    var at=pres.slides.length?cur+1:0;
+    /* T494: AFTER THE WHOLE GROUP, the way dupSlide places its copy
+       (T318). cur+1 from the MAIN of a version group spliced the new
+       slide between the main and its versions; the untagged slide
+       closed the run, normAlts dropped the tag from every member, and
+       "Version 2" became a numbered slide the talk shows (2026-09-15
+       review). A poster has no runs, so its branch is unchanged. */
+    var ar=(typeof altRun==='function')?altRun(cur):null;
+    var at=ar?(ar.at+ar.n):(pres.slides.length?cur+1:0);
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
          than "Slide 3" — so no label is stamped here */
@@ -4522,14 +4535,33 @@
          added. The default slide choice should be the panel, title,
          text"). Blank is still one pick away. */
       var key=lsGet(newLayKey())||'cell-text';
-      if(!arr&&!lay&&/^arr:/.test(key)&&typeof arrList==='function'){
-        var hit=arrList()[+key.slice(4)];
+      /* T494: a saved layout is remembered by ID ('arr:<id>'), so
+         Forget on an earlier one cannot move the choice along; an id
+         the store no longer has (or an old numeric key) falls through
+         to the default below rather than to a random layout */
+      if(!arr&&!lay&&/^arr:/.test(key)&&typeof arrById==='function'){
+        var hit=arrById(key.slice(4));
         if(hit&&hit.annots) arr=hit;
       }
       if(arr&&arr.annots){
-        ns.annots=deep(arr.annots);
+        /* T494: the shapes arrive as PLACEHOLDERS, like a built-in
+           layout's (T366): the words are the slot's kind, drawn faint
+           while you edit and nowhere else. deep() alone made them
+           content -- printed, shown and exported. A cell arrives
+           empty (no ref), so a saved slide's figure cannot ride in
+           either; its part -- which facet the slot wanted -- is the
+           shape and stays. */
+        ns.annots=deep(arr.annots).map(function(a){
+          if(a&&a.k==='text') a.ph=1;
+          if(a&&a.k==='cell') a.ref=null;
+          return a;
+        });
       } else {
-        lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key);
+        /* T494: ...and a layout that no longer exists -- deleted in the
+           builder, or another deck's 'my1' -- is the default (T193),
+           not a blank slide with no word said */
+        lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key)
+          ||layoutById('cell-text');
         if(lay&&!lay.poster) applyLayout(ns,lay);
       }
       pres.slides.splice(at,0,ns);
@@ -4560,6 +4592,7 @@
     var best=null,bestAt=99;
     (s.annots||[]).forEach(function(a){
       if(!a||a.k!=='text'||a.hide||!String(a.text||'').trim()) return;
+      if(a.ph) return;   /* T494: a hint is not a heading */
       if(!a.style||!isHeadingStyle(a.style)) return;
       var at=headingStyles().indexOf(a.style);
       if(at>=0&&at<bestAt){bestAt=at;best=a;}
@@ -4595,8 +4628,11 @@
       var it=cells[i].a.ref&&resolveRef(cells[i].a.ref);
       if(it) return it.title;
     }
+    /* T494: not a placeholder -- an untouched Title + text slide was
+       called "Title" in the strip and in every dialog that names a
+       slide, when it holds nothing (T366: a hint is not content) */
     var tx=(s.annots||[]).filter(function(a){
-      return a.k==='text'&&a.text;})[0];
+      return a.k==='text'&&a.text&&!a.ph;})[0];
     if(tx){
       /* T469: not the SOURCE -- the strip read "$$ E = mc^2 $$" and
          "# Big heading ## Sub" (2026-09-15 review) */

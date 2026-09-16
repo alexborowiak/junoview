@@ -63,8 +63,8 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "function newVersion(lay,arr){" in out
     # (since T218 a saved tile is CHOSEN for the next New slide, like the
     # built-in tiles; newVersion reads the choice back)
-    assert "lsSet(newLayKey(),'arr:'+b.dataset.arr);" in out
-    assert "ns.annots=deep(arr.annots);" in out
+    assert "lsSet(newLayKey(),'arr:'+b.dataset.arrId);" in out   # T494
+    assert "ns.annots=deep(arr.annots).map(function(a){" in out
     for tile in ("hm-update", "hm-images"):     # T280: two became one
         assert f'class="fx-tile big-tile" id="{tile}"' in out, tile
     assert ".big-strip .fx-tile{height:var(--rbn-tile-h);}" in out  # one tile

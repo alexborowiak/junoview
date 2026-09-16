@@ -63,11 +63,13 @@ def test_a_layout_tile_chooses_and_new_slide_adds(out):
             "            syncNewSlideMarks();\n"
             "            return;\n") in out
     assert "function syncNewSlideMarks(){" in out
-    assert "?(('arr:'+b.dataset.arr)===key):(b.dataset.lay===key);" in out
+    # (T494: by the arrangement's ID, not its index)
+    assert "?(('arr:'+b.dataset.arrId)===key):(b.dataset.lay===key);" in out
     # a saved layout is chosen the same way, and New slide honours it
-    assert "lsSet(newLayKey(),'arr:'+b.dataset.arr);" in out
-    assert "var hit=arrList()[+key.slice(4)];" in out
-    assert "lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key);" in out
+    assert "lsSet(newLayKey(),'arr:'+b.dataset.arrId);" in out
+    assert "var hit=arrById(key.slice(4));" in out
+    assert ("lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key)\n"
+            "          ||layoutById('cell-text');") in out
     # the slide's own sweep leaves the strip alone
     assert ("$$('#layout-row .lay,#layout-menu-grid .lay')\n"
             "      .forEach(function(b){") in out

@@ -1242,6 +1242,10 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   transform-origin:0 0;pointer-events:none;}
 /* T467: a light deck's thumbnails carry dark words, as the page does */
 .page-light .mini-tx{color:var(--tk-ink,#1b2733);}
+/* T494: a placeholder in a thumbnail is as faint as on the canvas
+   (.an-ph), boxed hairline so the slot's shape reads at strip size */
+.mini-tx.is-ph{opacity:.38;outline:1px solid currentColor;
+  outline-offset:1px;border-radius:1px;}
 .mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
 .mini-it{position:absolute;overflow:hidden;pointer-events:none;}
 .mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}

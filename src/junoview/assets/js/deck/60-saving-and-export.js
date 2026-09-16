@@ -2233,6 +2233,11 @@
          prevent. */
       if(a.priv) return;
       if(a.hide) return;   /* T404: hidden is hidden, in PowerPoint too */
+      /* T494: a placeholder is a hint about the shape of the slide,
+         drawn nowhere in any export (T366) -- this writer does not go
+         through renderAnnots, so "Title" and "Body text" went out to
+         PowerPoint as real text (2026-09-15 review) */
+      if(a.k==='text'&&a.ph) return;
       /* an item tied to a figure other than this page's does not belong
          on this page. note.frame is set by the exploding enumerator; with
          no flip book on the slide it is null and nothing is filtered. */

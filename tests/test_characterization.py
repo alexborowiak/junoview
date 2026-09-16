@@ -2010,8 +2010,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T491 (2026-09-15): the animation model after the third pass -- no
 # flash on a click, the Story strip's zoom, the Order tab's order.
 # T493 (2026-09-15): the highlight's colour, size and sample; its door.
-EXPECTED_MD5 = "a346289357a462812235352685e3b000"
-EXPECTED_BYTES = 4482727
+# T494 (2026-09-16): the layout model after the third pass -- a saved
+# layout keeps no words and arrives as placeholders, the pickers stamp
+# WHICH layouts, New slide lands after a version group, the saved tile is
+# known by id, a placeholder is never carried or exported, a poster's
+# tile is New version.
+EXPECTED_MD5 = "9f1b6e69af64637361398b434d034667"
+EXPECTED_BYTES = 4491323
 
 
 def _render_example() -> str:

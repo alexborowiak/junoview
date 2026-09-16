@@ -242,6 +242,11 @@
           var at=myLayouts().indexOf(l);
           if(at>=0) myLayouts().splice(at,1);
           if(lbEdit===l.id){lbEdit='';lbName='';lbItems=[];lbSel=-1;}
+          /* T494: if New slide was set to it, it is set to the default
+             again -- the strip re-lights from the key, so a key naming
+             a deleted layout lit nothing and New slide made a blank
+             slide (2026-09-15 review) */
+          if(lsGet(newLayKey())===l.id) lsSet(newLayKey(),'cell-text');
           markDirty();lbInvalidate();renderLayoutPicker();
           renderControls();lbRender();
         });

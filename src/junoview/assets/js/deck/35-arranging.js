@@ -1362,8 +1362,30 @@
   function arrList(){
     try{
       var l=JSON.parse(lsGet(ARRKEY+SCOPE)||'[]');
-      return Array.isArray(l)?l:[];
+      if(!Array.isArray(l)) return [];
+      /* T494: a layout saved before the words were scrubbed still
+         holds the first 18 characters of somebody's slide; it is read
+         through the same generic-word rule arrFromSlide writes with,
+         so an old store stops leaking without being rewritten. And an
+         entry without an id gets a steady one, because a tile is
+         remembered by id now. */
+      l.forEach(function(arr,i){
+        if(!arr) return;
+        if(!arr.id) arr.id='arr'+i;
+        (arr.annots||[]).forEach(function(a){
+          if(a&&a.k==='text') a.text=arrWord(a);
+        });
+      });
+      return l;
     }catch(e){return [];}
+  }
+  /* T494: THE WORD A SAVED SLOT WEARS -- the slot's kind, never the
+     slide's words. "Only the shape is kept -- no words, no figures" is
+     what the door promises. */
+  function arrWord(a){
+    return {title:'Title',h1:'Title',h2:'Heading',h3:'Heading',
+      subtitle:'Subtitle',body:'Body text',small:'Small text',
+      caption:'Caption'}[a&&a.style]||'Text';
   }
   function arrSave(list){
     lsSet(ARRKEY+SCOPE,JSON.stringify(list));
@@ -1382,7 +1404,10 @@
     arrList().forEach(function(arr,i){
       var b=document.createElement('button');
       b.type='button';b.className='dbtn lay lay-saved';
-      b.dataset.arr=String(i);
+      /* T494: the tile is known by the arrangement's ID. It was its
+         index, so Forget on an earlier one made the remembered 'arr:1'
+         name one layout and build the next along (2026-09-15 review). */
+      b.dataset.arrId=arr.id;
       var th=document.createElement('span');th.className='layico2 lay-savedth';
       th.appendChild(miniDiagram({layout:'blank',panes:[],annots:arr.annots||[]}));
       b.appendChild(th);
@@ -1395,11 +1420,15 @@
         e.stopPropagation();
         /* chosen for the next New slide (T218); the dialog's Apply is
            what lays an EXISTING slide out like one */
-        lsSet(newLayKey(),'arr:'+b.dataset.arr);
+        lsSet(newLayKey(),'arr:'+b.dataset.arrId);
         if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
       });
       strip.appendChild(b);
     });
+    /* T494: rebuilt tiles are re-lit, so Forget (or a rename) in the
+       Saved layouts dialog leaves the chosen one lit and New slide's
+       readout saying what it will make */
+    if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
   }
   function arrById(id){
     var hit=null;
@@ -1422,9 +1451,14 @@
           ?deep(a[p]):a[p];
       });
       /* a placeholder word, so the saved slide can be DRAWN as a
-         thumbnail without carrying the real text anywhere */
-      if(a.k==='text') o.text=annotLabel(a).replace(/^Text — /,'')
-        .slice(0,18)||'Text';
+         thumbnail without carrying the real text anywhere.
+         T494: the word is the SLOT'S KIND -- "Title", "Body text" --
+         never the slide's own words. annotLabel gave the first 18
+         characters of what you typed, the store is project-wide, and
+         New slide placed them as real text on every slide made from
+         the layout, in every deck (2026-09-15 review: "Confidential
+         resul" on a slide in another deck, at full ink, in the show). */
+      if(a.k==='text') o.text=arrWord(o);
       keep.push(o);
     });
     return {id:'ar'+Date.now().toString(36),

@@ -125,8 +125,12 @@ def test_an_arrangement_carries_no_content(out):
     cannot smuggle someone else's words or figure onto your slide."""
     body = out.split("function arrFromSlide(sl,name){")[1].split("\n  }")[0]
     assert "MATCH_PROPS.forEach(function(p){" in body
-    # the placeholder word exists ONLY so the saved slide can be drawn
-    assert "annotLabel(a).replace(/^Text — /,'')" in body
+    # the placeholder word exists ONLY so the saved slide can be drawn --
+    # and (T494) it is the SLOT'S word, never the slide's: annotLabel gave
+    # the first 18 characters of what was typed, which is exactly the
+    # smuggling this test's name promises cannot happen
+    assert "if(a.k==='text') o.text=arrWord(o);" in body
+    assert "annotLabel(" not in body
 
 
 def test_the_score_punishes_a_mismatch_in_both_directions(out):
