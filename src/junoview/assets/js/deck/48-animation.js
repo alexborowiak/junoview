@@ -546,6 +546,11 @@
   function flipFxSync(){
     var run=$('#anim-flip-run'),say=$('#anim-flip-say');
     var a=flipFxItem();
+    /* T497: a poster has no clicks for a page to turn on, so its
+       flip book gets no run -- the same answer Disappear and Timing
+       already give, and the last group that kept the Animation tab
+       in the strip on a poster */
+    if(a&&pageOf&&pageOf().poster) a=null;
     if(run) run.hidden=!a;
     if(say) say.hidden=!a;
     if(!a) return;

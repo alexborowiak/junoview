@@ -797,8 +797,18 @@
       gl.className='deck-ghost-slide'+(otherSlidesFill?' is-content':'');
       gl.dataset.slide='Slide '+(si+1);
       gl.style.setProperty('--ghost',GHOST_COL[si%GHOST_COL.length]);
-      var before=mode;
-      try{mode='view';renderAnnots(gl,deep(sl));}finally{mode=before;}
+      /* T497: ...AND WITH NOTHING SELECTED. renderAnnots keys `sel`
+         on the global selAnnot whichever slide it is drawing, so the
+         ghost of every other slide put the cyan selection frame on
+         ITS item at the same index -- three things looked selected,
+         one was (2026-09-15 review, measured: three `.an-item.sel`
+         for one selection). A ghost is a picture of a slide nobody is
+         editing; it is drawn the way the live layer draws a slide
+         with no selection on it, and the selection is handed back
+         with the mode. */
+      var before=mode,selWas=selAnnot,setWas=selSet;
+      try{mode='view';selAnnot=null;selSet=[];renderAnnots(gl,deep(sl));}
+      finally{mode=before;selAnnot=selWas;selSet=setWas;}
       /* The renderer quite rightly gives live controls identities. Ghosts
          are pictures of those controls, never a second set of them. */
       $$('[id],[contenteditable],[data-idx]',gl).forEach(function(n){
@@ -952,9 +962,41 @@
        syncRibbonGroups hides a group once nothing in it is showing */
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
-    ['#anim-clear','#anim-stagger','#anim-together','#anim-strip',
-     '#anim-seq','#anim-layers'].forEach(function(id){
+    /* T497: THE WHOLE TAB, AND THE ATOMS A LAYOUT MOVES. This list
+       hid `#anim-strip` -- the tiles -- and left its frame standing
+       with the three strip arrows in it, which syncRibbonGroups counts
+       as content; so on a poster the Effect group kept its row and
+       its door opened a shelf of eight 0x0 tiles, Focus and Motion
+       stood greyed saying "select something" over a selected text
+       box, and Transition offered Cut / Fade / Move to a page that
+       has nothing to arrive from (2026-09-15 review, driven). The
+       frames are what a ribbon layout moves (`anim-strip-frame` in
+       07-ribbon-layouts.js), so they are what stands down; Timing,
+       Disappear and the whole-slide verbs already answer the poster
+       in their own syncs. With every group empty the tab leaves the
+       strip, which is what T176 promised. */
+    ['#anim-clear','#anim-stagger','#anim-together','#anim-strip-frame',
+     '#anim-seq','#anim-layers','#anim-story','#anim-focus','#anim-move',
+     '#trans-frame','#trans-scopewrap'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
+    /* ...AND THE GROUPS ARE JUDGED WHEN THE KIND FLIPS. Nothing on the
+       page-size tile, New poster or a deck switch re-ran
+       syncRibbonGroups, so a poster made while standing on Animation
+       kept the tab with every group "shown" over hidden rows, and the
+       16:9 deck opened after it wore the poster's verdict the other
+       way round (driven). This runs on every render, so it acts only
+       on the flip; a tick later, because it is the middle of a render
+       and animRibbonSync is a boot-time stub until animBoot has run.
+       Off the editor the mode switch's own showFmt judges it. */
+    var isPoster=!!pg.poster;
+    if(applyPage._poster!==isPoster){
+      applyPage._poster=isPoster;
+      setTimeout(function(){
+        if(mode!=='edit'||deckEl.hidden) return;
+        if(typeof animRibbonSync==='function') animRibbonSync();
+        if(typeof syncRibbonGroups==='function') syncRibbonGroups();
+      },0);
+    }
     /* T479: the group is Background now, on a slide or a page; the
        folded door takes the label's word, so this is the door's too */
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');

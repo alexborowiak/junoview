@@ -682,3 +682,39 @@ def test_a_cut_inside_a_fading_section_survives_the_python_coercer():
     assert sl[0]["trans"] == ""
     assert sl[1]["trans"] == "fade"
     assert "trans" not in sl[2]
+
+
+def test_boot_and_wiring_after_the_third_pass(out):
+    """T497 (2026-09-16, the third review pass: boot-and-wiring lens,
+    findings 0-3)."""
+    # [0] on a poster the Animation groups stand down whole: the frames a
+    #     layout moves, not just the tiles inside one of them
+    assert ("    ['#anim-clear','#anim-stagger','#anim-together',"
+            "'#anim-strip-frame',") in out
+    assert ("     '#anim-seq','#anim-layers','#anim-story','#anim-focus',"
+            "'#anim-move',") in out
+    assert "     '#trans-frame','#trans-scopewrap'].forEach(function(id){" in out
+    assert "'#anim-together','#anim-strip'," not in out
+    # ...a poster's flip book gets no run either
+    assert "    if(a&&pageOf&&pageOf().poster) a=null;" in out
+    # ...and the groups are judged, a tick later, whenever the kind flips
+    assert "    if(applyPage._poster!==isPoster){" in out
+    assert "        if(mode!=='edit'||deckEl.hidden) return;\n" \
+           "        if(typeof animRibbonSync==='function') animRibbonSync();\n" \
+           "        if(typeof syncRibbonGroups==='function') " \
+           "syncRibbonGroups();" in out
+    # ...and a strip's arrows are chrome, not content
+    assert "        if(n.closest&&n.closest('.strip-nav')) continue;" in out
+    # [1] a ghost of another slide is drawn with nothing selected
+    assert "      var before=mode,selWas=selAnnot,setWas=selSet;" in out
+    assert ("      try{mode='view';selAnnot=null;selSet=[];"
+            "renderAnnots(gl,deep(sl));}") in out
+    assert "      finally{mode=before;selAnnot=selWas;selSet=setWas;}" in out
+    # [2] the completeness check reasons the way the deselect sweep does
+    assert "        for(var p=el.parentNode;p&&p!==bar;p=p.parentNode)" in out
+    assert "          if(p.id&&governed['#'+p.id]) return;" in out
+    # [3] the boot header says what is true, and the nine are guarded
+    assert "WHAT STILL RUNS MID-FILE, AND WHY THAT IS NOT A LIE (T497)." in out
+    assert "  var presCur=$('#pres-current');" in out
+    assert "  var prevBtn=$('#deck-prev'),nextBtn=$('#deck-next');" in out
+    assert "  var presName=$('#pres-name');" in out

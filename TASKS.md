@@ -9607,3 +9607,37 @@ any reading. The rest are T466 onwards.
   on slide 2 in the editor; the readout after reopen, after an edit,
   after the autosave. (Implemented by a worktree agent of the T492
   workflow; integrated, tested and gated here.)
+- [x] **T497 — Boot and wiring, after the third review pass.** Four
+  findings, driven. On a poster the Animation tab's Effect door stayed
+  live and opened an EMPTY shelf (eight tiles at 0×0), Focus and Motion
+  stood greyed saying "select something" over a selected text box, and
+  Transition offered Cut / Fade / Move to a page with nothing to arrive
+  from — applyPage hid the tiles and left their frame with its three strip
+  arrows, which syncRibbonGroups counted as content; the frames a layout
+  moves stand down (Effect, Focus, Motion, Transition, Story), a poster's
+  flip book gets no run, a strip's arrows are chrome, and the groups are
+  re-judged a tick after the page kind flips (the page-size tile, New
+  poster and a deck switch never re-ran the pass), so the whole tab leaves
+  the strip as T176 promised and comes back at 16:9. With View > Other
+  slides on, the ghost of every other slide wore the live selection's cyan
+  dashes (three `.an-item.sel` for one selection) — renderAnnots keys
+  `sel` on the global index whichever slide it draws; a ghost is rendered
+  with nothing selected and the selection handed back with the mode.
+  showFmt's completeness audit warned on every first selection of every
+  session that #fmt-chart, #fmt-media and #fmt-table were governed by
+  nothing — each sits inside a wrapper FMT_KINDS maps; the audit walks
+  ancestors the way the deselect sweep already does, and the static half
+  is a contract test that fails on a real stray at test time. And
+  99-boot.js claimed ALL load-time work ran from the boot sequence while
+  51 sub-IIFEs and nine unguarded `$('#x').addEventListener` calls still
+  ran mid-file — the header says what is true (the boot sequence owns the
+  order-sensitive work; what remains only wires), a ratchet test holds the
+  sub-IIFE count so it can fall and never climb, a second refuses an
+  unguarded top-level lookup, and the nine are guarded like their
+  neighbours. Driven: A0 landscape then Animation — tab display:none with
+  and without a selection, no door, no shelf, no console warning; New
+  poster while standing on Animation, then back to the 16:9 deck; Other
+  slides on a 3-slide deck — one `.sel`, ghosts outlined none, the live
+  box keeps its six handles; the nine re-wired controls clicked (Add
+  slide, Present, prev, next, exit, rename). (Implemented by a worktree
+  agent of the T492 workflow; integrated and gated here.)

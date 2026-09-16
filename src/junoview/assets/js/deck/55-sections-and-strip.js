@@ -1505,7 +1505,11 @@
   if(prNewView) prNewView.addEventListener('click',newCustomView);
   var sbDone=document.getElementById('sb-done');
   if(sbDone) sbDone.addEventListener('click',closeCustomView);
-  $('#pres-current').addEventListener('click',function(){
+  /* T497: guarded like its neighbours -- a lookup that throws at
+     script evaluation takes the rest of the IIFE with it (T133), and
+     tests/test_js_contract.py now refuses an unguarded one */
+  var presCur=$('#pres-current');
+  if(presCur) presCur.addEventListener('click',function(){
     var inp=$('#pres-name');
     this.hidden=true;
     inp.hidden=false;inp.value=pres.name;
@@ -1721,16 +1725,20 @@
       syncTap();syncTrace();});
     syncTap();syncTrace();
   })();
-  $('#dc-play').addEventListener('click',function(){
+  /* T497: the four guarded like undo and redo beside them (T133) */
+  var playBtn=$('#dc-play');
+  if(playBtn) playBtn.addEventListener('click',function(){
     presentFrom=mode;setUIMode('view');});
   var undoBtn=$('#dc-undo');
   if(undoBtn) undoBtn.addEventListener('click',undo);
   var redoBtn=$('#dc-redo');
   if(redoBtn) redoBtn.addEventListener('click',redo);
-  $('#deck-exit').addEventListener('click',function(){
+  var exitBtn=$('#deck-exit');
+  if(exitBtn) exitBtn.addEventListener('click',function(){
     setUIMode(presentFrom==='edit'?'edit':'create');});
-  $('#deck-prev').addEventListener('click',function(){backStep();});
-  $('#deck-next').addEventListener('click',function(){advance();});
+  var prevBtn=$('#deck-prev'),nextBtn=$('#deck-next');
+  if(prevBtn) prevBtn.addEventListener('click',function(){backStep();});
+  if(nextBtn) nextBtn.addEventListener('click',function(){advance();});
   /* click the letterbox AROUND the slide to clear the selection (clicks on
      the canvas itself are already handled by the annot-layer). Scoped to the
      stage element only, so it never fights a fresh text/arrow placement. */
@@ -2697,7 +2705,8 @@
   },true);
 
   /* ---------- create mode: slide + presentation operations ---------- */
-  $('#film-add').addEventListener('click',newVersion);
+  var filmAdd=$('#film-add');   /* T497: guarded (T133) */
+  if(filmAdd) filmAdd.addEventListener('click',newVersion);
   /* ---- the slide column's own three controls ---------------------------
      Section, the display-mode chooser and the drag handle. All three are
      about the STRIP, so all three live on it rather than in a ribbon that
@@ -2906,7 +2915,9 @@
         +'mm on each side; the page keeps its exact size'
       :'Crop marks off');
   });
-  $('#pres-name').addEventListener('input',function(){
+  /* T497: one guarded lookup for the three listeners (T133) */
+  var presName=$('#pres-name');
+  if(presName) presName.addEventListener('input',function(){
     /* NOTHING happens per keystroke any more. This used to set pres.name
        and lsDel the old draft on every letter typed, so renaming "talk"
        to "talk2" walked through "tal", "ta", "t" — deleting the draft
@@ -2914,11 +2925,11 @@
        the rail (2026-08-20 diagnosis). Renaming is a single committed
        action; see renamePresentation. */
   });
-  $('#pres-name').addEventListener('keydown',function(e){
+  if(presName) presName.addEventListener('keydown',function(e){
     if(e.key==='Enter'||e.key==='Escape') this.blur();
     e.stopPropagation();
   });
-  $('#pres-name').addEventListener('blur',function(){
+  if(presName) presName.addEventListener('blur',function(){
     this.hidden=true;
     var lbl=$('#pres-current');
     if(lbl) lbl.hidden=false;

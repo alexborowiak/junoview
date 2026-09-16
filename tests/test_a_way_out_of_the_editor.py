@@ -48,4 +48,7 @@ def test_the_pick_bars_primary_button_is_wired(out):
 
 def test_present_mode_still_has_an_exit(out):
     assert 'id="deck-exit"' in assets.deck_html()
-    assert "$('#deck-exit').addEventListener('click'" in out
+    # T497: guarded, like #pick-done above -- an unguarded lookup at the
+    # IIFE's own level is what test_js_contract.py now refuses
+    assert "  var exitBtn=$('#deck-exit');" in out
+    assert "  if(exitBtn) exitBtn.addEventListener('click',function(){" in out

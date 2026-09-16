@@ -774,7 +774,20 @@
       var stray=[];
       $$('[id^="fmt-"]',bar).forEach(function(el){
         if(/-menu$/.test(el.id)) return;          /* menu bodies */
-        if(!governed['#'+el.id]) stray.push('#'+el.id);
+        if(governed['#'+el.id]) return;
+        /* T497: A CONTROL INSIDE A GOVERNED WRAPPER IS GOVERNED. The
+           deselect sweep above already reasons this way ("a button
+           inside a governed wrapper is hidden BY the wrapper"), but
+           this check did not, so it cried wolf on every first
+           selection of every session -- #fmt-chart, #fmt-media and
+           #fmt-table, each inside a wrapper FMT_KINDS maps -- and a
+           warning that fires every time is one nobody reads; the
+           real stray it exists for (Ends and Route on a shape) would
+           pass under it (2026-09-15 review). The same rule the sweep
+           uses, so the two cannot disagree about what is governed. */
+        for(var p=el.parentNode;p&&p!==bar;p=p.parentNode)
+          if(p.id&&governed['#'+p.id]) return;
+        stray.push('#'+el.id);
       });
       if(stray.length&&window.console&&console.warn)
         console.warn('deck: ribbon controls governed by nothing in '
@@ -895,6 +908,12 @@
            still on the ribbon -- that is what folding MEANS. */
         if(n.classList.contains('rbn-foldwrap')
            ||n.classList.contains('rbn-foldbtn')) continue;
+        /* T497: NOR ARE A STRIP'S ARROWS. Back / Next / Show all are
+           the chrome round a row of tiles, not choices of their own
+           (rbnFoldReadout already skips them); with the tiles hidden
+           they kept the Effect group -- and its door over an empty
+           shelf -- on a poster's ribbon (2026-09-15 review) */
+        if(n.closest&&n.closest('.strip-nav')) continue;
         while(n&&n!==stop){
           if(n.hidden&&!n.classList.contains('rbn-foldmenu')){
             blocked=true;break;}

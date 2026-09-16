@@ -3,18 +3,31 @@
    siblings in filename order by assets.deck_js(). It does not
    parse alone and is not meant to: see 00-page.js. */
   /* ================= THE BOOT SEQUENCE =================
-     ALL of this file's load-time work runs from here, after every
-     declaration and every `var` initialiser above. Never call any of it
-     mid-file, and never add a sub-IIFE that executes logic at load:
-     function declarations hoist but `var` initialisers do not, and a
-     throw during load silently kills the rest of this IIFE — no
-     handlers, no exports, no deck, and no test notices. Not
+     Every piece of load-time work whose ORDER matters runs from here,
+     after every declaration and every `var` initialiser above. Never
+     call any of it mid-file, and never add a sub-IIFE that executes
+     logic at load: function declarations hoist but `var` initialisers
+     do not, and a throw during load silently kills the rest of this
+     IIFE — no handlers, no exports, no deck, and no test notices. Not
      hypothetical: on 2026-08-22 a mid-file loadPresentation(last) ran
      histReset() → syncCustomTypes() → Object.keys(STYLE_DEFAULTS)
      thousands of lines before STYLE_DEFAULTS was assigned, and the
      TypeError killed everything below it — the editor quietly stopped
      existing. These calls keep the relative order they ran in when they
-     were scattered mid-file. */
+     were scattered mid-file.
+     WHAT STILL RUNS MID-FILE, AND WHY THAT IS NOT A LIE (T497). The
+     older parts keep 51 executing sub-IIFEs and a few hundred bare
+     wiring statements -- onBtn(...), menuAction(...), a listener on a
+     node the markup guarantees. None of them reads a `var` declared
+     later (a tokenised order analysis of all of them and the 108
+     functions they call at load found no such read on 2026-09-15),
+     every id they look up is one tests/test_js_contract.py proves
+     exists, and every lookup at the IIFE's own level is guarded. That
+     is the bargain: what remains mid-file only wires; anything that
+     DECIDES -- reads a store, walks the deck's markup, measures --
+     belongs here. test_js_contract.py ratchets the sub-IIFE count so
+     the number can fall and never climb, and refuses a top-level
+     lookup used unguarded (an addEventListener straight off `$`). */
   initShellRegistry();        /* every notebook the page carries */
   nbDoorsSync();              /* the notebook doors, greyed without one (T440) */
   initFirstPresentation();    /* the presentation the page opens with */

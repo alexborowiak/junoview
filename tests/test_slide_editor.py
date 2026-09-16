@@ -624,8 +624,12 @@ def test_the_ribbon_is_tabbed(out):
     # control too, and a poster has no build for any of them
     # ...and the two Order doors T176 put on the ribbon stand down with
     # them, for the same reason: a poster has nothing to sequence
+    # T497: the strip's FRAME (the atom a layout moves), and every other
+    # Animation group's frame with it, so the tab leaves the strip
     assert ("['#anim-clear','#anim-stagger','#anim-together',"
-            "'#anim-strip',\n     '#anim-seq','#anim-layers']"
+            "'#anim-strip-frame',\n     '#anim-seq','#anim-layers',"
+            "'#anim-story','#anim-focus','#anim-move',\n"
+            "     '#trans-frame','#trans-scopewrap']"
             ".forEach(function(id){") in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out

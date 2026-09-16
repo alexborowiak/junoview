@@ -551,3 +551,130 @@ def test_the_shared_menu_wiring_is_only_ever_handed_id_strings():
         "at boot, and the rest of the deck never wires up. Wire that "
         "menu directly instead."
     )
+
+
+# T497: how many executing sub-IIFEs the deck's parts still carry
+# mid-file. The boot sequence (99-boot.js) owns every load-time call
+# whose ORDER matters; these are the older wiring blocks that only put
+# listeners on markup the id test above proves exists, and read no
+# `var` declared after them. The number may FALL -- lower it here when
+# you fold one into a boot function -- and must never climb, because a
+# throw inside any of them kills the rest of the IIFE silently (T133).
+MID_FILE_SUB_IIFES = 51
+
+
+def _mid_file_sub_iifes() -> list[str]:
+    hits = []
+    for path in sorted((JS / "deck").glob("*.js")):
+        for i, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.startswith("  (function("):
+                hits.append(f"{path.name}:{i}")
+    return hits
+
+
+def test_mid_file_sub_iifes_only_ever_get_fewer():
+    """The boot-sequence rule (99-boot.js, CLAUDE.md) was written after
+    the 2026-08-22 incident, and for a year the header claimed ALL
+    load-time work ran from there while 51 sub-IIFEs still executed
+    mid-file -- an invariant nothing enforced, so the count could only
+    grow (2026-09-15 review). This ratchets it: a new executing
+    sub-IIFE fails here with the list, and the fix is a boot function.
+    """
+    hits = _mid_file_sub_iifes()
+    assert len(hits) <= MID_FILE_SUB_IIFES, (
+        f"{len(hits)} executing sub-IIFEs mid-file, more than the "
+        f"{MID_FILE_SUB_IIFES} ratcheted here. A sub-IIFE that runs at "
+        "script evaluation takes the whole deck IIFE with it when it "
+        "throws (T133): give the new one a name and call it from THE "
+        "BOOT SEQUENCE in 99-boot.js instead. Found: "
+        + ", ".join(hits))
+    assert len(hits) >= MID_FILE_SUB_IIFES - 10, (
+        f"only {len(hits)} sub-IIFEs matched -- either a real "
+        "migration (lower MID_FILE_SUB_IIFES to match) or the parts no "
+        "longer indent the IIFE's own level by two spaces")
+
+
+def test_no_unguarded_lookup_at_the_top_of_the_iife():
+    """`$('#x').addEventListener(...)` at the IIFE's own level runs at
+    script evaluation, and a template split that drops #x turns it
+    into a TypeError that kills every later declaration (T133). Nine
+    of them stood in 55-sections-and-strip.js beside neighbours
+    written as `var b=$('#x'); if(b) b.addEventListener` (2026-09-15
+    review); T497 guarded them, and this keeps it so.
+    """
+    pat = re.compile(r"^  \$\('#[^']+'\)\.")
+    bad = []
+    for path in sorted((JS / "deck").glob("*.js")):
+        for i, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(), 1):
+            if pat.match(line):
+                bad.append(f"{path.name}:{i}: {line.strip()[:60]}")
+    assert not bad, (
+        "a lookup at the top level of the deck IIFE is used unguarded; "
+        "write `var el=$('#x'); if(el) el....` as its neighbours do: "
+        + "; ".join(bad))
+
+
+def test_every_fmt_control_in_the_markup_is_governed_or_wrapped():
+    """The static half of showFmt's completeness self-check. Every
+    `#fmt-*` element inside #et-fmt (deck.html) is in FMT_KINDS, in
+    FMT_MANUAL, a menu body, or inside a wrapper one of the tables
+    names. The runtime check reasoned only about the element itself,
+    so #fmt-chart, #fmt-media and #fmt-table -- each inside a governed
+    wrapper -- were reported as 'governed by nothing' on every first
+    selection of every session, and a warning that always fires is one
+    nobody reads (2026-09-15 review, T497). This test fails on a REAL
+    stray at test time, which the console never could.
+    """
+    from html.parser import HTMLParser
+
+    from junoview import assets
+
+    src = assets.deck_js()
+    kinds = src[src.index("var FMT_KINDS={"):src.index("var FMT_MANUAL=")]
+    manual = src[src.index("var FMT_MANUAL="):]
+    manual = manual[:manual.index(".split(' ')")]
+    governed = set(re.findall(r"'(#fmt-[A-Za-z0-9_-]+)'", kinds))
+    governed.update(re.findall(r"#fmt-[A-Za-z0-9_-]+", manual))
+
+    class Walk(HTMLParser):
+        VOID = {"br", "hr", "img", "input", "i", "meta", "link"}
+
+        def __init__(self):
+            super().__init__()
+            self.stack: list[str | None] = []   # id per open element
+            self.inside = 0
+            self.stray: list[str] = []
+
+        def handle_starttag(self, tag, attrs):
+            a = dict(attrs)
+            eid = a.get("id")
+            if tag in self.VOID and tag != "i":
+                return
+            if eid == "et-fmt":
+                self.inside = len(self.stack) + 1
+            if (self.inside and eid and eid.startswith("fmt-")
+                    and not eid.endswith("-menu")
+                    and "#" + eid not in governed
+                    and not any(s and "#" + s in governed
+                                for s in self.stack)):
+                self.stray.append("#" + eid)
+            self.stack.append(eid)
+
+        def handle_endtag(self, tag):
+            if tag in self.VOID and tag != "i":
+                return
+            if self.stack:
+                self.stack.pop()
+            if self.inside and len(self.stack) < self.inside:
+                self.inside = 0
+
+    w = Walk()
+    w.feed((HTML / "deck.html").read_text(encoding="utf-8"))
+    assert len(governed) > 80, "FMT_KINDS / FMT_MANUAL did not parse"
+    assert not w.stray, (
+        "contextual controls governed by nothing in showFmt -- they will "
+        "show for every selection, forever: " + ", ".join(w.stray)
+        + ". Add each to FMT_KINDS (with the kinds it applies to) or "
+        "FMT_MANUAL (if showFmt decides it by hand) in 25-selecting.js.")

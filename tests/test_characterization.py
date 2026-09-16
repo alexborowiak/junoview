@@ -2024,8 +2024,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-16: the site moved to junoview.com on 2026-08-03 (CNAME) but the
 # generator tag, canonical/og:url and the Help notices link still said
 # junoview.dev, which GitHub Pages now answers with "Site not found".
-EXPECTED_MD5 = "c5a529d033b97ff40c2fa9a881e21bb7"
-EXPECTED_BYTES = 4500818
+# T497 (2026-09-16): boot and wiring after the third pass -- a poster's
+# Animation tab stands down, ghosts wear no selection, guarded lookups.
+EXPECTED_MD5 = "7c445075a559fad99dc123da46029d00"
+EXPECTED_BYTES = 4506391
 
 
 def _render_example() -> str:
