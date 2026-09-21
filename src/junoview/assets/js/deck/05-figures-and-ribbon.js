@@ -2246,6 +2246,10 @@
         /* T444: the Style system is never folded (2026-09-14, user: "I
            NEVER want this to be hidden. NEVER") */
         &&!g.classList.contains('rbn-stylesys')
+        /* Lists are an editing primitive, not an infrequent option: keeping
+           Paragraph open leaves List and Numbered direct targets when the
+           ribbon is tight (2026-09-21). */
+        &&!g.classList.contains('rbn-paragrp')
         /* T441/T445: a group that says so never folds -- Build order and
            Whole slide on Animation (2026-09-14, user: "make sure buttons
            like those in 'Order' are not getting squashed out, as they

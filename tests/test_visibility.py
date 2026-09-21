@@ -382,6 +382,7 @@ def test_section_heading_and_whole_section_hide_are_separate(out):
     document and in the sidebar.
     """
     assert 'class="sec-chev"' in out and 'class="sec-eye"' in out
+    assert 'aria-label="Collapse this section"' in out
     assert 'class="navsec-eye"' in out
     assert 'class="sec-hideall"' in out and 'class="navsec-hideall"' in out
     assert 'title="Hide just this heading (the cards below stay)"' in out
@@ -403,6 +404,7 @@ def test_section_collapse_and_hide_css(out):
     assert 'class="sectionhead-txt" data-sec="' in out
     assert 'role="button" tabindex="0" aria-expanded="true"' in out
     assert "$$('.sectionhead-txt',shell).forEach(function(t){" in out
+    assert "var action=val?'Expand':'Collapse';" in out
 
 
 def test_hidden_heading_leaves_no_hover_ghost(out):

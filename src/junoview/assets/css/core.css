@@ -652,11 +652,16 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .section.sec-l3 .sectionhead{margin-left:28px;}
 /* main-view section controls: a collapse chevron (left) + a hide eye (right,
    on hover) — the sidebar has the same two, kept in sync */
-.sec-chev{flex:none;background:none;border:none;color:var(--ink-3);
-  cursor:pointer;font-size:13px;line-height:1;padding:4px 4px;
-  border-radius:4px;transition:transform .15s,color .15s;}
+.sec-chev{flex:none;display:inline-flex;align-items:center;gap:4px;
+  background:none;border:none;color:var(--ink-3);cursor:pointer;
+  font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  line-height:1;padding:5px 6px;border-radius:4px;
+  transition:transform .15s,color .15s,background .15s;}
 .sec-chev:hover{color:var(--ink);}
-.section.sec-collapsed .sec-chev{transform:rotate(-90deg);}
+.sec-chev:hover,.sec-chev:focus-visible{background:var(--paper-2);}
+.section.sec-collapsed .sec-chev{transform:none;}
+.sec-chev-ic{display:inline-block;transition:transform .15s;}
+.section.sec-collapsed .sec-chev-ic{transform:rotate(-90deg);}
 .sec-eye{flex:none;background:none;border:none;color:var(--ink-3);
   cursor:pointer;font-size:14px;line-height:1;padding:3px 6px;
   border-radius:5px;opacity:0;transition:opacity .12s,background .12s;}

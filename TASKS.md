@@ -9742,3 +9742,11 @@ any reading. The rest are T466 onwards.
   restores the two slides and the [head] row   moves with it; Section +
   "Part A" adds 1 entry, Cancel adds 1.   (Implemented by a worktree agent
   of the T492 workflow; integrated and gated here.)
+- [x] **T501 — Direct section and list controls.** (2026-09-21, user:
+  "If I ask you to do something do it") Notebook sections now expose a
+  worded Collapse / Expand control instead of relying on a small chevron or
+  a discoverable-by-accident heading click. The current slide inside a
+  folded deck section stays fully legible and visibly current, rather than
+  appearing disabled. Paragraph remains open during a narrow-ribbon fit so
+  List and Numbered remain direct targets. The earlier T500 editor repair
+  covers the underlying empty-box, rich-text and slide-shortcut faults.

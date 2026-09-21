@@ -4894,10 +4894,10 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
   var(--chrome-line);color:var(--chrome-ink-2);font:inherit;padding:0 5px;}
 .film-mark.alt-pill:hover{color:var(--chrome-ink);}
 .film-mark.alt{color:var(--accent);}
-/* the current slide is drawn even inside a COLLAPSED section — it is
-   where you are standing, and refreshThumb goes looking for its row on
-   every edit. Dimmed so it reads as a peek out of a closed drawer. */
-.film-row.peek{opacity:.72;}
+/* The current slide remains in a collapsed section so its live thumbnail
+   can refresh. It is a real, readable row -- dimming it made the current
+   slide look disabled and its controls needlessly hard to hit. */
+.film-row.peek{opacity:1;box-shadow:inset 3px 0 0 var(--accent);}
 /* T399: ONE readable column, like the canvas menu below it. The strip's
    menu inherited .sh-menu's three-column icon grid, so "New version of
    this slide" and "Move matching objects" wrapped word by word into

@@ -56,6 +56,7 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     # (T445 took Quick animate off the ribbon, so its guard went too)
     for never in ("'rbn-fixed'", "'rbn-cancel'", "'rbn-nofold'"):
         assert f"&&!g.classList.contains({never})" in out, never
+    assert "&&!g.classList.contains('rbn-paragrp')" in out
     # a layout moves atoms out of rows; nothing may be folded meanwhile
     assert "if(typeof rbnUnfoldAll==='function') rbnUnfoldAll();" in out
     # T484: the popover is never wider than the window

@@ -4724,6 +4724,15 @@
         +'.navsec-row[data-sec="'+sid+'"] .navsec-chev');
       [].forEach.call(chevs,function(ch){
         ch.setAttribute('aria-expanded',(!val).toString());});
+      $$('.sec-chev[data-sec="'+sid+'"]',shell).forEach(function(ch){
+        var action=val?'Expand':'Collapse';
+        ch.setAttribute('aria-label',action+' this section');
+        ch.title=action+' this section';
+        var word=ch.querySelector('.sec-chev-ic+span');
+        if(word) word.textContent=action;
+        var icon=ch.querySelector('.sec-chev-ic');
+        if(icon) icon.textContent=val?'\u25b8':'\u25be';
+      });
       recalcSecCascade(shell);   /* fold/unfold the deeper tiers below */
       scheduleSaveLayout();
     }

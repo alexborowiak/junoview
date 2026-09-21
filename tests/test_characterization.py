@@ -2034,9 +2034,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # section.
 # T500 (2026-09-21): blank text boxes remain explicit objects; list
 # commands preserve a live paragraph selection, empty inline styling is
-# discarded, and the strip menu folds its administrative tail.
-EXPECTED_MD5 = "2160ff3e0173f41b5450d4205c9608e7"
-EXPECTED_BYTES = 4525117
+# discarded, and the strip menu folds its administrative tail. T501 adds a
+# worded section collapse control and keeps List direct on a narrow ribbon.
+EXPECTED_MD5 = "60e162e1f2221671d33eec98196e4abe"
+EXPECTED_BYTES = 4526941
 
 
 def _render_example() -> str:
