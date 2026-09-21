@@ -400,6 +400,9 @@ def test_section_collapse_and_hide_css(out):
     assert ".section.sec-collapsed .card{display:none" in out
     assert ".section.sec-off{display:none" in out
     assert "function setSecCollapsed" in out and "function setSecOff" in out
+    assert 'class="sectionhead-txt" data-sec="' in out
+    assert 'role="button" tabindex="0" aria-expanded="true"' in out
+    assert "$$('.sectionhead-txt',shell).forEach(function(t){" in out
 
 
 def test_hidden_heading_leaves_no_hover_ghost(out):

@@ -9644,6 +9644,19 @@ any reading. The rest are T466 onwards.
   box keeps its six handles; the nine re-wired controls clicked (Add
   slide, Present, prev, next, exit, rename). (Implemented by a worktree
   agent of the T492 workflow; integrated and gated here.)
+- [x] **T500 — Editing stays intentional.** (2026-09-21, user: empty
+  boxes vanished, lists turned whole boxes into bullets and could not be
+  backed out, clearing text made the next words bold, thumbnail menus were
+  difficult to use, and Delete did not remove the current slide.) Empty
+  boxes now stay until explicitly deleted; an empty list is not a preflight
+  warning; list commands use the live selected paragraph(s) when a caret is
+  active; Backspace leaves a blank one-item list; and empty inline markup is
+  discarded so its style cannot leak to fresh text. The strip menu keeps
+  everyday slide/section actions visible and folds its administrative tail;
+  Delete deletes selected objects or, with none selected, the current slide.
+  The notebook section title is now a visible, keyboard-accessible collapse
+  control; Ctrl+S already follows the Save button and remains covered by the
+  editor shortcut contract.
 - [x] **T498 — The ribbon fit, after the third review pass (findings
   7–13).** Seven findings, driven. With a shelf open a whole group wrapped
   onto a second line of the ribbon — Build order at ≤1050 with a

@@ -1428,16 +1428,13 @@ def test_find_and_replace_has_a_formatting_half(out):
     assert "fmtBuiltFor=ref;" in out
     assert "if(pop.hidden||mode!=='fmt') return;" in out
     assert "if(fmtRef()===fmtBuiltFor) return;" in out
-    # Two removals bypass both selection entry points: Tidy's duplicate
-    # fixer, and an empty text editor on blur. They explicitly converge,
-    # and the latter remaps later indexes before doing so.
+    # Tidy's duplicate fixer bypasses both selection entry points and
+    # explicitly converges. Blank editors no longer remove an object on
+    # blur, so there is no second index-remapping deletion path.
     tidy = out[out.index("function tidyRow(f){"):
-               out.index("function renderTidyPane(){")]
+                   out.index("function renderTidyPane(){")]
     assert tidy.index("paintSel(l);") < tidy.index("showFmt();")
-    assert "else if(typeof selAnnot==='number'&&selAnnot>idx) selAnnot--;" \
-           in out
-    assert "return typeof i2==='number'&&i2>idx?i2-1:i2;" in out
-    assert "renderAnnots(layer,s2);\n        showFmt();" in out
+    assert "Empty text box removed" not in out
 
 
 def test_a_formatting_sweep_is_not_the_selection_rule(out):
@@ -2833,24 +2830,12 @@ def test_the_consistency_check_says_what_it_is_opened_for(out):
 
 
 def test_an_empty_bullet_is_not_an_abandoned_box(out):
-    """A box drawn and abandoned removes itself on blur, which is right.
-    A LIST is the one box that is deliberately empty for a moment -- you
-    make the bullet first and type second -- and it reached the same
-    branch even after you had made one, because sanitizeRich does not
-    count a bare <li> as rich, so a.html was stripped on the way through
-    and the box then looked abandoned.
-
-    So making a dot point and clicking away deleted the whole box,
-    bullet and all (2026-08-29, user: "creating dot points with no text
-    seems to delete the cell, but also when you unclick it it deletes").
-    """
-    # (T465: nor a references box, which draws the bibliography rather
-    # than storing words and is "empty" by this test the whole time)
-    assert ("if(a2&&a2.k==='text'&&!a2.bib&&!String(a2.text||'').trim()&&!a2.html\n"
-            "         &&!listOf(a2)){") in out
-    # ...and when it DOES delete one, it says so: the blur's markDirty is
-    # not quiet, so there was always an undo entry and never a word
-    assert r"Empty text box removed \u2014 Ctrl+Z puts it back" in out
+    """A blank text box is still intentional; a bullet is never an error."""
+    assert "Empty text box removed" not in out
+    assert "if(!String(a.text||'').trim()&&!listOf(a))" in out
+    assert "function listSelection(style){" in out
+    assert "insertUnorderedList" in out
+    assert "e.key==='Backspace'&&el.classList.contains('an-ul')" in out
 
 
 def test_double_click_selects_a_word_once_you_are_editing(out):

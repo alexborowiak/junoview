@@ -1041,6 +1041,7 @@
      you can SEE is on. Indent and outdent drive the browser's own list
      machinery, which is what builds the nested <ul> the model stores. */
   function listApply(style){
+    if(listSelection(style)) return;
     fmtApply(function(a){
       if(a.k!=='text') return;
       setListStyle(a,listOf(a)===style?0:style);
@@ -1052,7 +1053,13 @@
      ones) */
   function onBtn(id,fn){
     var b=$(id);
-    if(b) b.addEventListener('click',function(e){e.preventDefault();fn();});
+    if(b){
+      /* Keep an editing caret and its paragraph selection while a ribbon
+         command is clicked; otherwise the button takes focus before its
+         click handler can ask what text the user selected. */
+      b.addEventListener('mousedown',function(e){e.preventDefault();});
+      b.addEventListener('click',function(e){e.preventDefault();fn();});
+    }
   }
   /* ---- table structure ---------------------------------------------
      Rows and columns are added at the END. "Insert above the cell I am

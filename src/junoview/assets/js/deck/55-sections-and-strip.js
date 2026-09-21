@@ -807,6 +807,10 @@
         },null,'exit');
     row(ar0&&!isAlt0?'Delete just this one (the next version becomes the main)'
       :'Delete',function(){delSlide(i);},null,'exit');
+    /* This menu has section, transition and version administration as well
+       as everyday slide actions. Keep Delete/Duplicate visible and fold the
+       long tail behind More, like the canvas menu. */
+    cmFold(m);
     floatAt(m,ev);
   }
   /* floatMenu positions against an element's rect; a context menu has
@@ -2397,7 +2401,8 @@
     }
     else if(mode==='edit'){
       if(e.key==='Delete'||e.key==='Backspace'){
-        e.preventDefault();deleteSel();
+        e.preventDefault();
+        if(selIdxs().length) deleteSel(); else delSlide(cur);
       }
       /* SELECT EVERYTHING ON THIS SLIDE. There was no Ctrl+A at all, so
          the one shortcut every person reaches for when "selecting

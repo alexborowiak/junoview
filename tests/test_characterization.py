@@ -2032,8 +2032,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T499 (2026-09-16): undo 19-22 -- a held arrow is one entry, the
 # History pane's comparison, restores keep the stack, one entry per
 # section.
-EXPECTED_MD5 = "b33848588b901be1f28147b03f8f9125"
-EXPECTED_BYTES = 4522624
+# T500 (2026-09-21): blank text boxes remain explicit objects; list
+# commands preserve a live paragraph selection, empty inline styling is
+# discarded, and the strip menu folds its administrative tail.
+EXPECTED_MD5 = "2160ff3e0173f41b5450d4205c9608e7"
+EXPECTED_BYTES = 4525117
 
 
 def _render_example() -> str:

@@ -4718,6 +4718,8 @@
       if(sec) sec.classList.toggle('sec-collapsed',val);
       if(row) row.classList.toggle('collapsed',val);
       if(items) items.classList.toggle('nav-collapsed',val);
+      var title=sec&&sec.querySelector('.sectionhead-txt[data-sec="'+sid+'"]');
+      if(title) title.setAttribute('aria-expanded',(!val).toString());
       var chevs=shell.querySelectorAll('.sec-chev[data-sec="'+sid+'"],'
         +'.navsec-row[data-sec="'+sid+'"] .navsec-chev');
       [].forEach.call(chevs,function(ch){
@@ -4805,6 +4807,14 @@
       h.addEventListener('click',function(e){
         if(e.target.closest('button,a')) return;
         var sec=h.closest('.section'); if(!sec) return;
+        setSecCollapsed(sec.dataset.sec,!sec.classList.contains('sec-collapsed'));
+      });
+    });
+    $$('.sectionhead-txt',shell).forEach(function(t){
+      t.addEventListener('keydown',function(e){
+        if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Spacebar') return;
+        e.preventDefault();
+        var sec=t.closest('.section'); if(!sec) return;
         setSecCollapsed(sec.dataset.sec,!sec.classList.contains('sec-collapsed'));
       });
     });

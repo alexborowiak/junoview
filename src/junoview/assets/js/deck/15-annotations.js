@@ -2139,7 +2139,7 @@
      flattened to its plain lines the moment it round-tripped through the
      sanitiser: bold inside a bullet, or a sub-level, silently vanished
      (2026-08-20, user: "the bullet list on/off is cursed"). */
-  var RICH_TAGS={span:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1,
+  var RICH_TAGS={span:1,div:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1,
     ul:1,ol:1,li:1};
   function sanitizeRich(html){
     /* parse into an INERT template fragment — no image loads, no inline event
@@ -2200,6 +2200,13 @@
         n=next;
       }
     })(tpl.content);
+    /* Browsers leave the old inline wrapper behind when its last character
+       is deleted (for example <b><br></b>). Keeping that empty wrapper
+       makes the next character bold again. An empty list is different: its
+       one blank item is the bullet and caret target, so it remains real. */
+    var hasList=!!tpl.content.querySelector('li');
+    if(!hasList&&!String(tpl.content.textContent||'').trim())
+      tpl.innerHTML='';
     return {html:tpl.innerHTML,
       /* a list is structure worth keeping even with no inline styling in
          it — without ul/ol here a plain bullet list reported rich:false
@@ -2213,7 +2220,7 @@
          made leaving a list impossible, because the structure you had
          just escaped from was rebuilt from a.list on the next render
          (T72, 2026-08-29). */
-      rich:!!tpl.content.querySelector(
+      rich:hasList||!!tpl.content.querySelector(
         'span[style],font,b,strong,i,em,u,s,ul,ol,li')};
   }
   /* ---- PASTED CODE (T92) ----------------------------------------------

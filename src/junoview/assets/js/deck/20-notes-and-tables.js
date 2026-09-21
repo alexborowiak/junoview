@@ -979,6 +979,23 @@
       try{document.execCommand(cmd,false,null);}catch(e){}
     });
   }
+  /* A list is usually a property of the whole box, but while the caret is
+     live the browser already knows the paragraph(s) the user means. Keep
+     that structure as rich text instead of turning every line in the box
+     into a bullet. */
+  function listSelection(style){
+    var el=activeTextEditable();
+    if(!el||el.classList.contains('an-ul')) return false;
+    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    if(!a||a.k!=='text') return false;
+    histSettle();
+    try{document.execCommand(listIsOrdered(style)
+      ?'insertOrderedList':'insertUnorderedList',false,null);}catch(e){}
+    var r=sanitizeRich(el.innerHTML),n=textAt(s,a); if(!(n>0)) n=0;
+    textPageSet(a,n,el.innerText,r.rich?r.html:'');
+    markDirty();
+    return true;
+  }
   function colorSelection(col){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
@@ -1277,41 +1294,10 @@
       var r=rich?sanitizeRich(el.innerHTML):null;
       setVal(v,r);
       endEdit();
-      /* a text box with nothing in it is invisible once deselected (they
-         are born with no placeholder and no background) — so an empty one
-         removes itself rather than haunting the slide.
-
-         NOT A LIST, THOUGH. A list is the one box that is deliberately
-         empty for a moment: you make the bullet first and type second.
-         And it reaches here even when you have typed nothing visible,
-         because sanitizeRich does not count a bare `<li>` as rich, so
-         `a.html` is stripped on the way through and the box then looks
-         abandoned. Making a dot point and clicking away deleted the
-         whole box, bullet and all (2026-08-29, user: "creating dot
-         points with no text seems to delete the cell"). */
+      /* An empty box is still an object the author placed. Keep it: its
+         visible edit-state outline says where it is, and Delete remains the
+         explicit way to remove it. */
       var s2=pres.slides[cur],a2=s2&&(s2.annots||[])[idx];
-      /* T465: NOR A REFERENCES BOX. It draws the deck's bibliography
-         rather than storing words, so it is "empty" by this test the
-         whole time -- and deleted itself the first time you clicked
-         away from it (2026-09-15 review, driven). */
-      if(a2&&a2.k==='text'&&!a2.bib&&!String(a2.text||'').trim()&&!a2.html
-         &&!listOf(a2)){
-        s2.annots.splice(idx,1);
-        if(selAnnot===idx) selAnnot=null;
-        else if(typeof selAnnot==='number'&&selAnnot>idx) selAnnot--;
-        /* A mousedown on another object can select it before this blur.
-           Removing the empty editor shifts every later annotation index. */
-        selSet=selSet.filter(function(i2){return i2!==idx;})
-          .map(function(i2){
-            return typeof i2==='number'&&i2>idx?i2-1:i2;
-          });
-        renderAnnots(layer,s2);
-        showFmt();
-        /* the blur's own markDirty below is not quiet, so there IS an
-           undo entry for this — nothing said so, which is what made an
-           accidental delete feel permanent */
-        toast('Empty text box removed \u2014 Ctrl+Z puts it back');
-      }
       /* MARKDOWN YOU JUST TYPED. Committing a text box writes into the
          element in place, so renderAnnots -- the only thing that turns
          source into markup -- never runs, and the box would sit there
@@ -1416,6 +1402,18 @@
          in a box; a table cell already did this (2026-09-15 review) */
       if(e.key==='Escape'){
         e.preventDefault();e.stopPropagation();el.blur();return;}
+      /* Backspace on the one blank list item is the native "leave this
+         list" gesture. The box-wide list model otherwise rebuilt its dot
+         on the next render, so the user could never remove it. */
+      if(e.key==='Backspace'&&el.classList.contains('an-ul')
+         &&!String(el.innerText||'').trim()
+         &&el.querySelectorAll('li').length===1){
+        e.preventDefault();e.stopPropagation();
+        el.innerHTML='';el.classList.remove('an-ul');
+        el.style.listStyle='none';el.style.paddingLeft='0';
+        setVal('',null);markDirty();
+        return;
+      }
       if(e.key==='Tab'&&el.classList.contains('an-ul')){
         e.preventDefault();e.stopPropagation();
         try{document.execCommand(e.shiftKey?'outdent':'indent',

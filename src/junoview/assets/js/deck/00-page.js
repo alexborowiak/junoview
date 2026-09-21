@@ -1806,7 +1806,7 @@
             +'frames eat that strip.');
       }
       if(a.k==='text'){
-        if(!String(a.text||'').trim())
+        if(!String(a.text||'').trim()&&!listOf(a))
           add(i,'warn','Empty text box','Nothing typed in it.');
         var fg=tokVal(a.color)||ink;
         var against=(a.bg!==0&&a.bgc)?tokVal(a.bgc):bg;

@@ -3042,7 +3042,8 @@
      was written to correct. */
   var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
     'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
-    'chart':1,'shows with':1,'flip book':1,'repeat on slides':1};
+    'chart':1,'shows with':1,'flip book':1,'repeat on slides':1,
+    'this slide':1,'this section':1};
   function cmFold(m){
     m.setAttribute('role','menu');
     $$('button',m).forEach(function(b){

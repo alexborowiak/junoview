@@ -630,7 +630,9 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   border-bottom:var(--hd-bw,1px) solid var(--hd-bd,var(--line));
   background:var(--hd-bg,transparent);
   display:flex;align-items:center;gap:8px;}
-.sectionhead-txt{flex:1;min-width:0;}
+.sectionhead-txt{flex:1;min-width:0;cursor:pointer;}
+.sectionhead-txt:focus-visible{outline:2px solid var(--accent);
+  outline-offset:3px;border-radius:3px;}
 .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--hd-accent,var(--cyan-deep));
   display:var(--hd-eyebrow,block);margin-bottom:6px;}

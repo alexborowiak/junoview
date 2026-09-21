@@ -41,7 +41,7 @@ def test_real_tags_not_inline_styles(out):
             "catch(e){}") in out
     assert "      try{document.execCommand(cmd,false,null);}catch(e){}" in out
     # ...and the tags it emits are ones the sanitiser keeps
-    assert "var RICH_TAGS={span:1,b:1,strong:1,i:1,em:1,u:1,s:1," in out
+    assert "var RICH_TAGS={span:1,div:1,b:1,strong:1,i:1,em:1,u:1,s:1," in out
 
 
 def test_all_four_buttons_ask_the_selection_first(out):
