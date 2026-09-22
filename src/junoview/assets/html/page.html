@@ -34,7 +34,8 @@
          second identity strip inside the document (2026-09-11). -->
     <span class="nb-file-ident" id="nb-file-ident" hidden>
       <span class="nb-file-name" id="nb-file-name"></span>
-      <span class="nb-file-path" id="nb-file-path" dir="ltr"></span>
+      <button type="button" class="nb-file-path" id="nb-file-path" dir="ltr"
+        aria-label="View full file path"></button>
     </span>
     <span class="fgrp-row" id="file-dock"></span>
   </div>
@@ -166,11 +167,7 @@
       </span>
       <span class="fgrp-cap">Text</span>
     </span></span><span class="abgrp-lab">Size</span></span>
-  </div>
-  <!-- The former tabs row has room for the notebook's navigation and
-       app commands. Keeping them above the content controls lets the
-       filters and size controls fit at ordinary laptop widths. -->
-  <div class="tabsrow nb-quickbar" aria-label="Notebook navigation and app">
+    <!-- View commands belong at the right of the notebook ribbon. -->
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
@@ -213,6 +210,8 @@
       ><i data-ic="newdeck"></i><span class="btxt">Create slides</span></button>
     </span>
     </span></span><span class="abgrp-lab">View</span></span>
+  </div>
+  <div class="tabsrow nb-quickbar" aria-label="Notebook navigation and app">
     <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="appbar-flex" aria-hidden="true"></span>

@@ -9750,3 +9750,12 @@ any reading. The rest are T466 onwards.
   appearing disabled. Paragraph remains open during a narrow-ribbon fit so
   List and Numbered remain direct targets. The earlier T500 editor repair
   covers the underlying empty-box, rich-text and slide-shortcut faults.
+- [x] **T502 — Notebook header and outline.** (2026-09-22) View commands
+  return to the right of the filter ribbon. File name and a smaller,
+  clickable path share the utility row with app controls; Info displays the
+  complete path. Removed the repeated outline identity and statistics.
+  Added Collapse all, Expand all, Show hidden sections and Peek at hidden
+  to the outline. Peek temporarily reveals hidden/folded content without
+  changing saved flags; individual unhides persist when the peek ends.
+  Verified rendered control containment and executed collapse/expand against
+  preserved hidden state, plus viewer, presentation and syntax regressions.

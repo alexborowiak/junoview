@@ -55,8 +55,8 @@ def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
     assert "  function dockFileBar(){" in app
     assert "    bar.dataset.nb=APP.active;" in app
     assert "    dock.appendChild(bar);" in app
-    # ...and "Show all hidden" is found wherever its bar is parked
-    assert "      var bar=rfBarFor(sh);" in app
+    # Preview belongs to the outline, independent of the docked file bar.
+    assert "var b=sh.querySelector('.rf-unhide');" in app
 
 
 def test_full_screen_is_reachable_from_everywhere(out):
@@ -455,12 +455,11 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
 def test_app_buttons_share_the_notebook_quick_access_row(out):
     """The viewer's long ribbon fits by reusing the former tabs row.
 
-    View and App commands now sit above the content controls, as in
-    presentations. The row was already 44px tall: moving them adds no
-    header height and retains every button and its word.
+    View commands sit after the filters; app utilities occupy the
+    utility row beside the file identity.
     """
-    assert (out.index('class="tabsrow nb-quickbar"')
-            < out.index('id="doc-present"'))
+    assert (out.index('id="doc-present"')
+            < out.index('class="tabsrow nb-quickbar"'))
     assert out.index('id="doc-present"') < out.index('id="ab-app"')
     assert ".nb-quickbar{order:-1;align-items:center;" in out
     assert "#ab-app .toggle{min-width:34px;}" in out

@@ -14,9 +14,13 @@
            a section name standing in for a file name (2026-08-21, user:
            "Preamble is not the name of the notebook, that is a section").
            The heading did not lose its place; it moved one line down. -->
-      <h1 class="railtitle" title="{stem}">{stem}</h1>
-      {doctitle}
-      <div class="railmeta">{meta}</div>
+      <div class="outline-tools" aria-label="Outline options">
+        <button class="rf-btn outline-collapse" type="button"><i data-ic="minus"></i>Collapse all</button>
+        <button class="rf-btn outline-expand" type="button"><i data-ic="plus"></i>Expand all</button>
+        <label><input class="outline-hidden" type="checkbox" checked> Show hidden sections</label>
+        <button class="rf-btn rf-unhide" type="button" aria-pressed="false"
+          title="Temporarily reveal hidden sections, headings and cells without changing what is saved as hidden"><i data-ic="eye"></i>Peek at hidden</button>
+      </div>
       <div class="railfile">
         <!-- T364: "Info", not "File info": this bar is docked under
              the ribbon's File heading, and saying the word twice is
@@ -35,9 +39,6 @@
  disk"><i data-ic="reload"></i>Reload</button>
         <!-- shown only while something IS hidden: a permanent button for a
              state you are usually not in is clutter -->
-        <button class="rf-btn rf-unhide" type="button" hidden
-          title="Bring back every hidden section, heading and cell in this
- notebook">Show all hidden</button>
       </div>
       <div class="rf-panel" hidden></div>
     </div>

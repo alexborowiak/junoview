@@ -2036,8 +2036,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # commands preserve a live paragraph selection, empty inline styling is
 # discarded, and the strip menu folds its administrative tail. T501 adds a
 # worded section collapse control and keeps List direct on a narrow ribbon.
-EXPECTED_MD5 = "60e162e1f2221671d33eec98196e4abe"
-EXPECTED_BYTES = 4526941
+# T502: compact identity header, right-hand view commands and outline tools.
+EXPECTED_MD5 = "d6a3df6a1029b7a29118d71d9a13a195"
+EXPECTED_BYTES = 4529972
 
 
 def _render_example() -> str:

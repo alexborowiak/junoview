@@ -16,7 +16,7 @@ body.presrail-min{--presrail-w:46px;}
 /* the header sizes to its content: --chrome-h is measured from the real
    element (see measureChrome), so a bar that needs a second line pushes
    the page down instead of hiding controls off the right-hand edge */
-.apptop{position:fixed;top:0;left:0;right:0;min-height:var(--chrome-h);
+.apptop{position:fixed;top:0;left:0;right:0;
   z-index:90;display:flex;flex-direction:column;background:var(--chrome-0,#0a141d);
   border-bottom:1px solid #ffffff14;}
 /* top-aligned: every main button sits on one first row; the small
@@ -134,14 +134,16 @@ body.presrail-min{--presrail-w:46px;}
   box-sizing:border-box;padding:3px 8px;background:var(--chrome-1,#0d1a26);
   border-bottom:1px solid #ffffff12;overflow-x:auto;scrollbar-width:thin;}
 .nb-filebar[hidden]{display:none!important;}
-.nb-file-ident{display:flex;align-items:baseline;gap:7px;min-width:0;
+.nb-file-ident{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;
   max-width:min(46vw,580px);padding:0 7px 0 2px;
   border-right:1px solid #ffffff1a;}
 .nb-file-ident[hidden]{display:none!important;}
-.nb-file-name{flex:none;max-width:190px;overflow:hidden;text-overflow:ellipsis;
+.nb-file-name{flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font:600 11.5px var(--sans);color:var(--chrome-ink,#d7e3ec);}
 .nb-file-path{min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);}
+  white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);
+  background:none;border:0;padding:0;text-align:left;cursor:pointer;}
+.nb-file-path:hover{text-decoration:underline;}
 .nb-filebar #file-dock{min-width:0;}
 .nb-filebar #file-dock .railfile{margin-top:0;}
 /* Present had dead space under it, so T-era CSS let it span both rows
@@ -311,6 +313,13 @@ body.light .tabsrow .menubtn span::after{background:var(--ink-2);}
   height:var(--ab-btn-h);margin:0;padding:0 7px;gap:7px;
   white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);}
 .nb-quickbar #vars-btn{margin-right:4px;}
+/* One utility row above the filters: identity on the left, app commands
+   on the right. The existing Info panel shows the complete source path. */
+.apptop{display:grid;grid-template-columns:minmax(280px,1fr) auto;}
+.nb-filebar{grid-column:1;grid-row:1;}
+.nb-quickbar{grid-column:2;grid-row:1;height:auto;order:0;}
+.apptop>.appbar,.apptop>#stylebar{grid-column:1/-1;}
+.appbar>#ab-view{margin-left:auto;padding-left:12px;}
 /* tabs line up with the DOCUMENT, not with the outline beneath them —
    the strip starts where the sidebar ends (and slides back when the
    sidebar is toggled off) */

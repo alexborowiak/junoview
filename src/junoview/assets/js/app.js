@@ -4012,6 +4012,14 @@
       sec.classList.toggle('sec-under',hideLv!=null);
       sec.classList.toggle('sec-under-off',offLv!=null);
       var sid=sec.dataset.sec;
+      var closed=sec.classList.contains('sec-collapsed');
+      var action=closed?'Expand':'Collapse';
+      $$('.sec-chev,.sectionhead-txt',sec).forEach(function(b){
+        b.setAttribute('aria-expanded',String(!closed));
+        b.title=action+' this section';
+      });
+      var word=sec.querySelector('.sec-chev-ic+span');
+      if(word) word.textContent=action;
       var row=sh.querySelector('.navsec-row[data-sec="'+sid+'"]');
       var items=sh.querySelector('.navitems[data-sec="'+sid+'"]');
       if(row){
@@ -4730,8 +4738,6 @@
         ch.title=action+' this section';
         var word=ch.querySelector('.sec-chev-ic+span');
         if(word) word.textContent=action;
-        var icon=ch.querySelector('.sec-chev-ic');
-        if(icon) icon.textContent=val?'\u25b8':'\u25be';
       });
       recalcSecCascade(shell);   /* fold/unfold the deeper tiers below */
       scheduleSaveLayout();
@@ -4755,18 +4761,15 @@
        un-hide just the one you actually wanted back. ---- */
     function syncUnhideBtn(sh){
       /* T364: the bar this button lives on may be docked in the ribbon */
-      var bar=rfBarFor(sh);
-      var b=bar&&bar.querySelector('.rf-unhide'); if(!b) return;
+      var b=sh.querySelector('.rf-unhide'); if(!b) return;
       var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
         +'.content .card.cell-off').length;
       var on=sh.classList.contains('reveal-hidden');
       /* with nothing hidden the button has no job — unless it is still
          revealing, in which case it is the only way back */
-      b.hidden=!n&&!on;
+      b.disabled=false;
       b.setAttribute('aria-pressed',on?'true':'false');
-      b.textContent=on?('Hide them again ('+n+')')
-                      :('Show all hidden ('+n+')');
-      if(!n&&on) sh.classList.remove('reveal-hidden');
+      b.innerHTML=bic('eye')+(on?'End peek':'Peek at hidden')+' ('+n+')';
     }
     (function(){
       var ub=shell.querySelector('.rf-unhide');
@@ -4778,6 +4781,18 @@
       });
       syncUnhideBtn(shell);
     })();
+    $$('.outline-collapse,.outline-expand',shell).forEach(function(b){
+      b.addEventListener('click',function(){
+        var closed=b.classList.contains('outline-collapse');
+        $$('.section',shell).forEach(function(sec){
+          setSecCollapsed(sec.dataset.sec,closed);
+        });
+      });
+    });
+    var hiddenChoice=shell.querySelector('.outline-hidden');
+    if(hiddenChoice) hiddenChoice.addEventListener('change',function(){
+      shell.classList.toggle('outline-hide-hidden',!hiddenChoice.checked);
+    });
     /* hiding the HEADING is a different, smaller action than hiding the
        section: the cards stay in the document, only the title goes. */
     function setSecHeadOff(sid,val){
@@ -5065,6 +5080,10 @@
     base=base||String(cur.label||cur.title||APP.active||'Untitled');
     name.textContent=base;
     path.textContent=p;
+    path.onclick=function(){
+      var bar=rfBarFor(cur.el),info=bar&&bar.querySelector('.rf-info');
+      if(info) info.click();
+    };
     path.title=p||base;
     box.title=p||base;
     var railTitle=cur.el&&cur.el.querySelector('.railtitle');
@@ -5163,6 +5182,7 @@
       var ghp=isUrlPath?ghFromUrl(path):null;
       /* the NAME first, then where it lives — not a wrapped raw URL */
       panel.appendChild(row('file',baseName(path)||'untitled'));
+      if(path) panel.appendChild(row('Full path',path,'rf-sub'));
       panel.appendChild(row(isUrlPath?'from':'folder',
         ghp?(ghp.owner+'/'+ghp.repo)
           :(path?folderOf(path):'not saved to a file')));

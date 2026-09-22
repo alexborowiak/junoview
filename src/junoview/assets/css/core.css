@@ -115,6 +115,15 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 
 /* ---------- rail header ---------- */
 .railhead{padding:22px 22px 16px;border-bottom:1px solid var(--chrome-line);}
+.nbshell .railhead{padding:10px 12px;}
+.outline-tools{display:flex;flex-wrap:wrap;gap:6px;}
+.outline-tools label{display:flex;align-items:center;gap:5px;width:100%;
+  font:11px var(--sans);color:var(--chrome-ink-2);}
+.outline-hide-hidden:not(.reveal-hidden) .navsec-row.sec-off,
+.outline-hide-hidden:not(.reveal-hidden) .navsec-row.sec-under-off,
+.outline-hide-hidden:not(.reveal-hidden) .navsec-row.head-off,
+.outline-hide-hidden:not(.reveal-hidden) .navsec-row.sec-off+.navitems,
+.outline-hide-hidden:not(.reveal-hidden) .navsec-row.sec-under-off+.navitems{display:none;}
 .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
   text-transform:uppercase;color:var(--cyan);margin:0 0 12px;display:flex;
   align-items:center;gap:8px;}
@@ -694,6 +703,9 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
    away again. Each item's own eye still works while revealed, which is
    how you keep just the one you wanted back. */
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead{display:flex;}
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead-txt{display:block;}
+.nbshell.reveal-hidden .section.sec-under,
+.nbshell.reveal-hidden .section.sec-collapsed .card{display:block;}
 .nbshell.reveal-hidden .section.sec-off,
 .nbshell.reveal-hidden .section.sec-under-off,
 .nbshell.reveal-hidden .content .card.cell-off.is-hidden{display:block;}
@@ -707,6 +719,14 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead:hover{opacity:1;}
 .rf-unhide[aria-pressed="true"]{border-color:var(--amber);
   color:var(--amber);}
+/* Preview changes only presentation: all stored hide/fold flags survive. */
+.nbshell.reveal-hidden .content .section,
+.nbshell.reveal-hidden .content .card,
+.nbshell.reveal-hidden .content .cardbody,
+.nbshell.reveal-hidden .content .codewrap,
+.nbshell.reveal-hidden .content .cb-part,
+.nbshell.reveal-hidden .content .cb-part>*{display:revert!important;}
+.nbshell.reveal-hidden .content .part-fold::before{display:none!important;}
 .section.sec-headoff .sec-eye{opacity:.5;position:relative;}
 /* the struck-through eye = "hidden, click to bring it back" mark is the
    shared slash rule beside .navitem-eye above */
