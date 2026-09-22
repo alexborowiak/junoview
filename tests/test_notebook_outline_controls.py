@@ -64,3 +64,29 @@ if(flags.has('sec-collapsed')||!flags.has('sec-off')||saves!==2)
     result = subprocess.run(command + ["-e", script], env=env,
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
+
+
+def test_tab_placement_preserves_open_tabs_and_remembers_choice():
+    engine = js_engine()
+    if engine is None:
+        pytest.skip("No JavaScript engine")
+    command, env = engine
+    script = """
+const classes=new Set();
+const document={body:{classList:{toggle:(k,v)=>v?classes.add(k):classes.delete(k)}}};
+const placement={value:'side'},stored={};
+const localStorage={setItem:(k,v)=>stored[k]=v};
+let measures=0,rail='min';
+function setRailState(v){rail=v;}
+function measureChrome(){measures++;}
+""" + lift_fn(assets.app_js(), "setTabPlacement") + """
+setTabPlacement('top');
+if(!classes.has('tabs-top')||rail!=='full'||placement.value!=='top')
+  throw Error('top tabs not visible');
+setTabPlacement('side');
+if(classes.has('tabs-top')||stored['sem-tab-placement']!=='side'||measures!==2)
+  throw Error('sidebar not restored');
+"""
+    result = subprocess.run(command + ["-e", script], env=env,
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr

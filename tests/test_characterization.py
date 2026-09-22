@@ -2037,8 +2037,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # discarded, and the strip menu folds its administrative tail. T501 adds a
 # worded section collapse control and keeps List direct on a narrow ribbon.
 # T502: compact identity header, right-hand view commands and outline tools.
-EXPECTED_MD5 = "d6a3df6a1029b7a29118d71d9a13a195"
-EXPECTED_BYTES = 4529972
+# T503: open-document tabs with readable names and sidebar/top placement.
+EXPECTED_MD5 = "c1b5727b3fa039e9a9686b5144faaec3"
+EXPECTED_BYTES = 4532743
 
 
 def _render_example() -> str:

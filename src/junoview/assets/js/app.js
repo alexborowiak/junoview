@@ -3612,6 +3612,22 @@
   if(prShow) prShow.addEventListener('click',function(){
     setRailState('full');
   });
+  /* ---- open-document tab placement ---- */
+  var placement=$('#pr-placement');
+  function setTabPlacement(value){
+    var top=value==='top';
+    document.body.classList.toggle('tabs-top',top);
+    if(top) setRailState('full');
+    if(placement) placement.value=top?'top':'side';
+    try{localStorage.setItem('sem-tab-placement',top?'top':'side');}catch(e){}
+    measureChrome();
+  }
+  if(placement){
+    placement.addEventListener('change',function(){setTabPlacement(placement.value);});
+    var savedPlacement='side';
+    try{savedPlacement=localStorage.getItem('sem-tab-placement')||'side';}catch(e){}
+    setTabPlacement(savedPlacement);
+  }
 
   /* ---- help overlay ---- */
   var helpDlg=$('#helpdlg');
@@ -3714,6 +3730,7 @@
          requirements as well as its width */
       fitRibbon();
       var h=Math.ceil(top.getBoundingClientRect().height);
+      if(document.body.classList.contains('tabs-top')) h+=76;
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
       /* Tree view drops the filter and scope sections. Record how wide

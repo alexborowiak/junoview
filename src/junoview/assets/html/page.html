@@ -344,7 +344,7 @@
     </div>
   </div>
 </div>
-<nav class="presrail" id="presrail" aria-label="Presentations">
+<nav class="presrail" id="presrail" aria-label="Open documents">
   <!-- the wordmark is the HOME button, the thing everyone tries first
        (2026-08-21, user: "clicking the Junoview logo should take you
        back to that screen"). It shows the welcome without closing
@@ -352,7 +352,7 @@
   <button class="presrail-brand" id="presrail-home" type="button"
     title="Home — the Junoview welcome screen. Nothing is closed."
     >{logo}<span class="prb-full">Junoview</span></button>
-  <button class="pr-item pr-docs current" id="pr-docs"
+  <button class="pr-item pr-docs current" id="pr-docs" hidden
     title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico"><i data-ic="doc"></i></span>
     <span class="pr-t">Notebooks</span></button>
@@ -380,7 +380,7 @@
   <!-- OPEN notebooks, listed under the button that names them. Same shape
        as the presentations list below: a label, then the things you can
        switch to (2026-08-20). -->
-  <div class="pr-label pr-nblabel" id="pr-nblabel">open notebooks</div>
+  <div class="pr-label pr-nblabel" id="pr-nblabel">Notebooks</div>
   <div class="tabstrip" id="tabstrip" role="tablist"
     aria-label="Open notebooks"></div>
   <!-- T394: OPEN presentations, the way the strip above is open
@@ -389,8 +389,8 @@
        column showed one row (2026-09-13, user: "the side bar should only
        show what is open, not all recents. That should be something
        separate"). Recents and the library are the two doors beneath. -->
-  <div class="pr-label">open presentations</div>
-  <div class="pr-list" id="presstrip" role="tablist"></div>
+  <div class="pr-label">Presentations</div>
+  <div class="pr-list" id="presstrip" role="tablist" aria-label="Presentations"></div>
   <button class="pr-item pr-door" id="pr-recent" type="button"
     title="Presentations you used recently, in any session">
     <span class="pr-ico"><i data-ic="history"></i></span>
@@ -456,6 +456,12 @@
   <!-- the two panel controls as a pair: collapse it, or let it hide
        itself. Neither is "pin" — nothing is being pinned. -->
   <div class="pr-foot">
+    <label class="pr-placement">Tabs
+      <select id="pr-placement" aria-label="Tab placement">
+        <option value="side">Sidebar</option>
+        <option value="top">Top</option>
+      </select>
+    </label>
     <button class="pr-collapse" id="pr-collapse" aria-label="Collapse the presentations panel"
       title="Collapse this panel"><i data-ic="collapse"></i> Collapse</button>
     <button class="pr-collapse" id="pr-auto" aria-label="Auto-hide the presentations panel" aria-pressed="false"
@@ -524,7 +530,7 @@
        looking at a screen with no exit (2026-08-21). -->
   <button class="welcome-back" id="welcome-back" hidden type="button"
     title="Back to the notebook you were reading. Nothing was closed.">
-    &#8592; Back to your notebooks</button>
+    &#8592; Resume last document</button>
   <div class="welcome-box">
     <div class="welcome-top">
       <!-- ONE identity block, not three stacked rows. The mark, the

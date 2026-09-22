@@ -9759,3 +9759,11 @@ any reading. The rest are T466 onwards.
   changing saved flags; individual unhides persist when the peek ends.
   Verified rendered control containment and executed collapse/expand against
   preserved hidden state, plus viewer, presentation and syntax regressions.
+- [x] **T503 — Open documents are tabs.** (2026-09-22) Removed the visible
+  Notebooks navigation shortcut and welcome-screen return shortcut; open
+  documents themselves provide navigation. Simplified the group labels to
+  Notebooks and Presentations and allowed longer names to wrap. Added a
+  remembered Tabs placement selector (Sidebar / Top), using the same live
+  tab lists and handlers. Top placement reserves header space and retains
+  search, New and placement controls. Tested placement switching and viewer
+  regressions; no generated web deployment was performed.
