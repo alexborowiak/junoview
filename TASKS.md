@@ -9750,20 +9750,22 @@ any reading. The rest are T466 onwards.
   appearing disabled. Paragraph remains open during a narrow-ribbon fit so
   List and Numbered remain direct targets. The earlier T500 editor repair
   covers the underlying empty-box, rich-text and slide-shortcut faults.
-- [x] **T502 — Notebook header and outline.** (2026-09-22) View commands
-  return to the right of the filter ribbon. File name and a smaller,
-  clickable path share the utility row with app controls; Info displays the
-  complete path. Removed the repeated outline identity and statistics.
-  Added Collapse all, Expand all, Show hidden sections and Peek at hidden
-  to the outline. Peek temporarily reveals hidden/folded content without
-  changing saved flags; individual unhides persist when the peek ends.
-  Verified rendered control containment and executed collapse/expand against
-  preserved hidden state, plus viewer, presentation and syntax regressions.
-- [x] **T503 — Open documents are tabs.** (2026-09-22) Removed the visible
-  Notebooks navigation shortcut and welcome-screen return shortcut; open
-  documents themselves provide navigation. Simplified the group labels to
-  Notebooks and Presentations and allowed longer names to wrap. Added a
-  remembered Tabs placement selector (Sidebar / Top), using the same live
-  tab lists and handlers. Top placement reserves header space and retains
-  search, New and placement controls. Tested placement switching and viewer
-  regressions; no generated web deployment was performed.
+- [x] **T502 — Notebook header and outline.** (2026-09-22) The permanent
+  reader bar is now only Outline, Variables, Filters and the right-aligned
+  view actions. The full filter grid opens from Filters instead of occupying
+  a second dashboard row. File name, small clickable path and app-wide
+  choices share the utility row; Info shows the full path. The outline no
+  longer repeats identity or counts, and its quiet options menu provides
+  Collapse all, Expand all, Show hidden sections and Peek at hidden. Peek
+  temporarily reveals hidden/folded content without changing saved flags.
+- [x] **T503 — Open documents are tabs.** (2026-09-22) Removed the confusing
+  Notebooks route and placement selector. Open files are now conventional
+  top tabs whenever there is a choice, while the side panel remains a
+  simultaneous library view of those same live tabs. The side labels are
+  simply Open files and Presentations; no duplicate outline list, file name
+  or notebook statistics remains.
+- [x] **T504 — Ship the compact notebook layout.** (2026-09-22) Rebuilt the
+  generated web view and its example page after the reader-header, outline,
+  tabs and deck app-menu redesign. The intentional rendered-output baseline
+  is pinned, the focused checks and full suite pass, and the generated docs
+  carry the new layout.

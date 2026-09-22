@@ -1250,28 +1250,21 @@ def test_the_tools_fold_away(out):
     assert ".rbn-tabs .rbn-fold{align-self:center;" in out
 
 
-def test_open_notebooks_live_in_the_rail(out):
-    """A row of horizontal tabs is a row of chrome across the top of the
-    document whose width runs out at about five notebooks, and the rail
-    beside it was already the place this app lists the things you can
-    switch between (2026-08-20, user: "I don't want the horizontal tabs in
-    notebooks anymore, this should just be a thing down the right hand
-    side pop up thing, like presentations but just under the buttons that
-    says notebooks").
-
-    The strip MOVED node-for-node rather than being rebuilt, so makeTab,
-    the close buttons, the Plot-trace sub-tabs and the version marks all
-    keep working untouched.
+def test_open_notebooks_live_in_both_top_and_side_tab_views(out):
+    """Open files are available as conventional top tabs and as the
+    side library view at the same time. Both are rebuilt from makeTab(),
+    keeping close buttons, trace tabs and version markers identical.
     """
     rail = out.split('class="presrail"')[1].split("</nav>")[0]
     assert 'id="tabstrip"' in rail
     assert 'id="pr-nblabel"' in rail
-    # the header row keeps only the two sidebar toggles
-    row = out.split('class="tabsrow nb-quickbar"')[1].split("</div>")[0]
-    assert 'id="tabstrip"' not in row
+    assert 'id="open-tabs-row"' in out
+    assert 'id="top-tabstrip"' in out
+    assert "var tabstrip=$('#tabstrip'),topTabstrip=$('#top-tabstrip')," in out
+    assert "if(openTabsRow) openTabsRow.hidden=n<2;" in out
     assert ".presrail .tabstrip{display:flex;flex-direction:column;" in out
-    # a heading over an empty list promises something that is not there
-    assert "if(nbl) nbl.hidden=!tabstrip.childNodes.length;" in out
+    # the side label only appears when there is something to list
+    assert "var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;" in out
 
 
 def test_the_equation_editor_is_real(out):

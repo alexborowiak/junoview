@@ -39,18 +39,13 @@ def test_present_mode_moves_the_real_controls_into_a_tray(out):
 
 
 def test_present_bar_reproduces_the_appbar_ribbon_groups(out):
-    """The present bar takes the whole labelled SECTIONS, so it reproduces
-    the ribbon grid instead of flattening the groups into its own wrap flow.
-    The app bar reads as groups because of full-height separators between
-    them.
+    """Present mode takes the real grouped controls from the compact
+    filter panel instead of creating a second set of widgets.
     """
     assert ("var PB_TOOLS=['#ab-filters','#ab-scope','#ab-size','#ab-view'];"
             in out)
-    assert ".appbar-div{flex:none;width:1px;height:70px" in out
-    # 2 plain dividers (one is between View/App on the quick-access row)
-    # + 2 grouping the custom-view styling bar
-    # (the other 2 carry filt-div and disappear with the filters in tree)
-    assert out.count('class="appbar-div"') == 4
+    assert "pbMoved.push({el:el,parent:el.parentNode,next:el.nextSibling});" in out
+    assert "m.hidden=true;docsEl.appendChild(m);" in out
 
 
 def test_present_bar_has_one_fold_button_and_autohide(out):
@@ -85,7 +80,8 @@ def test_present_bar_shares_appbar_toggle_theming_and_sizing(out):
     buttons are comfortably tall; expanded tree nodes widen.
     """
     assert (".appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,"
-            ".nb-quickbar .toggle,") in out
+            in out)
+    assert ".nb-filebar .appbar-link,.present-bar .toggle{" in out
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
     assert (".appbar .toggle.sub,.present-bar .toggle.sub"
             "{height:var(--ab-btn-h);") in out

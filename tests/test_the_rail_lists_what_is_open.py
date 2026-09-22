@@ -13,9 +13,9 @@ from __future__ import annotations
 from junoview import assets
 
 
-def test_the_rail_label_says_open_and_has_the_two_doors():
+def test_the_presentations_label_is_simple_and_has_the_two_doors():
     html = assets.page_template()
-    assert '<div class="pr-label">open presentations</div>' in html
+    assert '<div class="pr-label">Presentations</div>' in html
     assert 'id="pr-recent"' in html and 'id="pr-library"' in html
     # words plus icons, never icon-only
     assert '<span class="pr-t">Recents</span>' in html

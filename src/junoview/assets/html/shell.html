@@ -1,30 +1,21 @@
 <div class="shell nbshell" data-nb="{stem}"{path_attr}{kind_attr}>
   <aside class="rail">
     <div class="railhead">
-      <!-- WHICH NOTEBOOKS ARE OPEN, at the top of the sidebar you are
-           already reading. The presentations rail lists them too, but it
-           collapses and auto-hides, and with it away nothing on screen
-           said a second notebook existed (2026-08-21, user: "the sidebar
-           doesn't show notebooks that are open"). Filled by renderTabs();
-           it stays hidden when there is only one and nothing to open. -->
-      <div class="railnbs" hidden></div>
-      <!-- THE NOTEBOOK'S NAME, not its first heading. This line used to
-           be doc.title, which is whatever the file's first `# ` says --
-           so a notebook opening with "# Preamble" was labelled Preamble,
-           a section name standing in for a file name (2026-08-21, user:
-           "Preamble is not the name of the notebook, that is a section").
-           The heading did not lose its place; it moved one line down. -->
-      <div class="outline-tools" aria-label="Outline options">
-        <button class="rf-btn outline-collapse" type="button"><i data-ic="minus"></i>Collapse all</button>
-        <button class="rf-btn outline-expand" type="button"><i data-ic="plus"></i>Expand all</button>
-        <label><input class="outline-hidden" type="checkbox" checked> Show hidden sections</label>
-        <button class="rf-btn rf-unhide" type="button" aria-pressed="false"
-          title="Temporarily reveal hidden sections, headings and cells without changing what is saved as hidden"><i data-ic="eye"></i>Peek at hidden</button>
-      </div>
+      <!-- The outline owns only section navigation. Open documents are
+           available in the top tabs and the app rail, not a third list. -->
+      <details class="outline-tools">
+        <summary class="rf-btn"><i data-ic="outline"></i>Outline options</summary>
+        <div class="outline-options-menu">
+          <button class="rf-btn outline-collapse" type="button"><i data-ic="minus"></i>Collapse all</button>
+          <button class="rf-btn outline-expand" type="button"><i data-ic="plus"></i>Expand all</button>
+          <label><input class="outline-hidden" type="checkbox" checked> Show hidden sections</label>
+          <button class="rf-btn rf-unhide" type="button" aria-pressed="false"
+            title="Temporarily reveal hidden sections, headings and cells without changing what is saved as hidden"><i data-ic="eye"></i>Peek at hidden</button>
+        </div>
+      </details>
       <div class="railfile">
-        <!-- T364: "Info", not "File info": this bar is docked under
-             the ribbon's File heading, and saying the word twice is
-             exactly the clutter the user keeps pointing at. -->
+        <!-- Info is docked in the compact file utility line. Keeping the
+             label short avoids repeating the same file identity. -->
         <button class="rf-btn rf-info" type="button"
           title="Where this notebook came from — its path, its git commit,
  and every earlier version you can open"><i data-ic="info"></i>Info

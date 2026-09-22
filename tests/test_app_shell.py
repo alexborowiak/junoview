@@ -19,19 +19,15 @@ from junoview.render.page import render_html
 
 
 def test_ribbon_group_counts(out):
-    """4 type filters + the mark gate + scope/reset + copy + figure &
-    text size. File provenance is in the thin utility line above.
-
-    8 filter/scope groups + 2 tree-view groups (fold, width); the 2 size
-    steppers carry ``fgrp-h`` and are counted separately. The ribbon is
-    organised into LABELLED sections. T364 added the mark gate
-    (``#marks-grp``) inside the Filters section; T390 added the Pages
-    group (``#pages-grp``) and its label.
+    """Full controls live behind one labelled Filters door, not in the
+    permanent reader bar. The panel retains the grouped controls.
     """
     assert out.count('class="fgrp"') == 10
     assert out.count('class="fgrp fgrp-h"') == 2
-    assert out.count('class="abgrp-lab"') == 7   # + Tree (tree view only)
+    assert out.count('class="abgrp-lab"') == 6   # + Tree (tree view only)
     assert 'class="abgrp" id="ab-filters"' in out
+    assert 'id="filters-toggle"' in out
+    assert 'class="filter-panel" id="filters-panel" hidden' in out
 
 
 def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
@@ -102,7 +98,7 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     that only tighten spacing / drop state words, a font-load re-fit, and
     a sideways scroll as the only overflow of last resort.
     """
-    assert "--appbar-h:88px" in out and "--chrome-h:96px" in out
+    assert "--appbar-h:38px;--chrome-h:80px" in out
     assert ".appbar{display:flex;align-items:stretch;gap:3px;" \
         "flex-wrap:nowrap;" in out
     assert "justify-content:flex-start;padding-left:8px;" in out
@@ -164,41 +160,37 @@ def test_keyboard_shortcuts_are_conventional_and_advertised(out):
             "['#dc-redo','Ctrl+Y']," in out)
 
 
-def test_appbar_fills_its_row_with_capped_flexible_spacers(out):
-    """Leftover ribbon width is DISTRIBUTED, not left as one dead gap.
+def test_appbar_uses_a_compact_filter_door_without_fake_spacing(out):
+    """The reader bar contains navigation, Filters and view actions only.
 
-    On a laptop the packed-left groups ended in a void before the App
-    group and read as broken (2026-08-04). Capped flexible spacers flank
-    each divider: at laptop widths the sections spread to fill the row;
-    on a huge monitor the caps stop them drifting apart and the slack
-    pools before the right-pinned App group; under pressure the spacers
-    collapse to 0 first so compaction sees an unspaced bar.
+    The dense control grid opens below it, rather than creating a row of
+    permanent mini dashboards or spacer-shaped holes.
     """
-    # File moved into the utility line, taking its two main-bar spacers
-    # with it rather than leaving a decorative hole before Filters.
-    assert out.count('class="appbar-flex') == 6
-    assert ".appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}" in out
-    # the middle pair leaves with the filter sections in Tree view; the
-    # measured filters slot spans (and so compensates for) their width
-    assert 'class="appbar-flex filt-div"' in out
-    assert "body.tree-mode .appbar-flex.filt-div," in out
+    assert 'class="filter-wrap" id="filter-wrap"' in out
+    assert ".filter-panel{position:fixed;z-index:121;display:flex;" in out
+    assert ".filter-panel[hidden]{display:none!important;}" in out
+    assert 'class="appbar-flex' not in out
+    assert "body.tree-mode #ab-tree{min-width:0;}" in out
 
 
-def test_ribbon_size_stepper_and_fixed_view_slot(out):
-    """The ribbon's size stepper, dividers and fixed-width View stack."""
-    assert out.count('class="appbar-div filt-div"') == 1
+def test_filter_panel_keeps_size_stepper_and_right_view_actions(out):
+    """The full panel retains zoom controls; Raw / Tree / Present stay in
+    the short reader bar instead of becoming another control grid.
+    """
+    assert 'class="appbar-div filt-div"' not in out
     assert "APP.ribbonSizeStep=function(dir)" in out
     assert "if(!APP.ribbonSizeStep(1)) bumpFigAll(1.15);" in out
     assert "cap.textContent=isTree?'Tree':'Figures'" in out
     assert "top:calc(var(--chrome-h) + 6px)" in out
     # a centred bar slides sideways when the scrollbar comes and goes
     assert "scrollbar-gutter:stable" in out
-    # the View stack is a FIXED slot: the Tree button renames itself to
-    # "Document" and a wider word would shove Present sideways
+    # In the compact reader bar the view controls are intentionally one
+    # horizontal unit, aligned to the right.
     assert (
         ".vw-stack{display:flex;flex-direction:column;gap:3px;flex:none;"
         "\n  min-width:92px;}"
     ) in out
+    assert ".appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp," in out
     assert '<span class="btxt">Match document</span></button>' in out
 
 
@@ -215,11 +207,12 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
     # THEMES in the palette menu, beside forest and the rest
     assert 'id="theme-btn"' not in out
     assert 'id="scheme-btn"' in out
-    # Raw / Tree / Present are one unit and never wrap apart; Help and
-    # Support moved behind a "…" so the bar fits on one row
+    # Raw / Tree / Present are one unit on the right; global Theme /
+    # Support / Find / Help sit beside the file identity above it.
     assert 'class="btn-grp" id="view-grp"' in out
-    assert (out.index('id="view-grp"') < out.index('id="view-raw"')
-            < out.index('id="doc-present"') < out.index('id="scheme-btn"'))
+    assert (out.index('id="scheme-btn"') < out.index('id="view-grp"')
+            < out.index('id="view-raw"')
+            < out.index('id="doc-present"'))
     assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
@@ -241,15 +234,16 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
     assert "'--pb-corner'" in out          # measured for real at runtime
 
 
-def test_top_left_declutter_puts_hamburger_on_the_tab_line(out):
-    """top-left declutter: no "docs" label; the hamburger sits on the tab
-    line, and Open has moved up to the ribbon's file group.
+def test_top_left_declutter_keeps_navigation_in_the_reader_bar(out):
+    """Navigation is beside Filters, while conventional tabs appear only
+    when there is more than one open document.
     """
     assert 'class="tabs-label"' not in out
-    assert (out.index('class="tabsrow nb-quickbar"') < out.index('id="menubtn"')
-            < out.index('id="tabstrip"'))
+    assert (out.index('id="menubtn"') < out.index('id="filters-toggle"')
+            < out.index('id="view-grp"'))
+    assert 'id="open-tabs-row"' in out and 'id="top-tabstrip"' in out
     assert 'class="tabrow-open"' not in out
-    assert ".tabsrow .menubtn" in out
+    assert ".appbar .menubtn{display:inline-flex;" in out
 
 
 def test_chrome_toc_toggle_resizable_builder_dark_doc_no_refresh(out):
@@ -400,31 +394,20 @@ def test_focus_mode_gone_and_toolbar_filter_order(out):
             < out.index('id="ot-filter-btn"'))
 
 
-def test_tree_view_ribbon_disables_filters_and_anchors_right(out):
-    """Tree view: filters are DISABLED, not removed.
-
-    A control that vanishes drags its neighbours' positions with it, and
-    the Size stepper drives the tree zoom from the same place on the
-    ribbon.
+def test_tree_view_replaces_document_filters_inside_the_panel(out):
+    """Tree-only controls replace document filters inside the panel, while
+    the permanent reader bar stays still.
     """
     assert "function syncTreeRibbon" in out
     # icon-only buttons need a WIDTH floor, not just padding:0 -- with
     # nothing to stop them they were squeezed to 9px in a tight bar
     assert "width:var(--ab-btn-h);min-width:var(--ab-btn-h);flex:none;" in out
-    assert "#ab-app .btn-grp>*{flex:none;}" in out
-    # Tree view removes the filter and scope sections, and Size / View must
-    # not slide into the hole -- the button you use to get back would move
-    # under the pointer. This used to be `#ab-size{margin-left:auto}`,
-    # pinning them to the right EDGE, which left a 429px hole between
-    # Apply-to and Size in document view. Now the Tree section reserves the
-    # width the filters occupied, so the groups pack left and still hold
-    # their place across the switch.
+    # Tree view removes document-only controls from the popup; it does not
+    # reserve an invisible wide ribbon slot.
     assert "#ab-size{margin-left:auto;}" not in out
-    assert "body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}" in out
-    # the slot is measured from the real groups, not guessed, so relabelling
-    # a filter cannot put the two views out of step
-    assert "'--filters-slot',w+'px'" in out
-    # the tree's own controls are ON THE RIBBON, in the Filters slot
+    assert "body.tree-mode #ab-tree{min-width:0;}" in out
+    assert "'--filters-slot',w+'px'" not in out
+    # the tree's own controls are available from the Filters panel
     assert 'id="ab-tree"' in out and 'id="tree-expand"' in out
     assert 'id="tree-collapse"' in out and 'id="tree-width"' in out
     assert "body.tree-mode #ab-tree{display:flex!important;}" in out
@@ -452,18 +435,15 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
     assert "document.addEventListener('sem:shell'" in out
 
 
-def test_app_buttons_share_the_notebook_quick_access_row(out):
-    """The viewer's long ribbon fits by reusing the former tabs row.
-
-    View commands sit after the filters; app utilities occupy the
-    utility row beside the file identity.
+def test_app_buttons_share_the_file_utility_line(out):
+    """Global commands are grouped with document identity, not filter
+    controls, and the old quick-access row is gone.
     """
-    assert (out.index('id="doc-present"')
-            < out.index('class="tabsrow nb-quickbar"'))
-    assert out.index('id="doc-present"') < out.index('id="ab-app"')
-    assert ".nb-quickbar{order:-1;align-items:center;" in out
-    assert "#ab-app .toggle{min-width:34px;}" in out
-    assert "#ab-app .bic{width:17px;height:17px;}" in out
+    assert (out.index('id="nb-file-ident"') < out.index('id="scheme-btn"')
+            < out.index('class="appbar"'))
+    assert 'class="nb-file-utils"' in out
+    assert 'class="tabsrow nb-quickbar"' not in out
+    assert '.nb-quickbar' not in out
     assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
     # the group's buttons came with it (the dark/light toggle became a
     # theme in the palette menu, 2026-08-19)

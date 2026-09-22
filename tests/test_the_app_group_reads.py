@@ -39,13 +39,12 @@ import re
 from junoview import assets
 
 
-def test_a_worded_button_is_sized_by_its_word():
+def test_global_buttons_are_grouped_in_the_file_utility_line():
     css = assets.load("css/app.css")
-    assert "#ab-app .toggle{min-width:34px;}" in css
-    # ...not by a square that its word then overflows
-    assert "#ab-app .toggle{width:34px;min-width:34px;height:34px;}" not in css
-    # The larger icon stays; height is shared with the quick-access row.
-    assert "#ab-app .bic{width:17px;height:17px;}" in css
+    assert ".nb-file-utils{display:flex;align-items:center;gap:4px;flex:none;}" in css
+    assert ".nb-file-utils .toggle{height:var(--ab-btn-h);font-size:11.5px;" in css
+    # The dead App ribbon group cannot leave invisible sizing rules behind.
+    assert "#ab-app" not in css
 
 
 def test_help_is_not_an_icon_only_button():

@@ -30,10 +30,10 @@ def test_demo_page_renders_and_embeds_its_presentation(doc, out):
     assert '"panes": ["clim", "cell:md1"]' in out
     assert 'class="nb-data"' in out and 'id="app-data"' in out
     assert 'id="presstrip"' in out and 'id="tv-markdown"' in out
-    # the rail's Docs button is the way back to the document view. The
-    # deck's own #deck-docs was a second one, and it was holding a whole
-    # toolbar row open on its own, so it went (2026-08-07).
-    assert 'id="pr-docs"' in out and 'id="pr-new"' in out
+    # Open documents are conventional tabs now; the presentation rail
+    # does not pose as a separate "Notebooks" destination.
+    assert 'id="pr-docs"' not in out and 'id="pr-new"' in out
+    assert 'id="top-tabstrip"' in out and 'id="tabstrip"' in out
     assert 'id="deck-docs"' not in out
 
 
@@ -129,16 +129,16 @@ def test_anchors_reach_the_page_and_fall_back_to_ids(out, items):
     assert any(it.anchor == "cell:md1" for it in items)
 
 
-def test_presentation_rail_is_a_radio_model(out):
-    """rail radio model: a presentation row lights up ONLY while its deck is
-    open; the Notebooks button is a bordered button with the SAME active
-    style (no stale half-highlight after going back to the notebooks)
+def test_presentation_rail_lists_presentations_without_a_notebooks_button(out):
+    """A presentation row lights up only while its deck is open. Open
+    notebook tabs have their own clearly labelled part of the rail.
     """
-    assert '<span class="pr-t">Notebooks</span>' in out
+    assert '<span class="pr-t">Notebooks</span>' not in out
+    assert '<div class="pr-label pr-nblabel" id="pr-nblabel">Open files</div>' in out
+    assert '<div class="pr-label">Presentations</div>' in out
     assert "isCur&&editing?' current editing'" in out
     assert ".pr-item.current{background:var(--cyan-deep)" in out
-    assert ".pr-docs{margin-bottom:6px;border:1px solid" in out
-    # the redundant builder "Close" is gone (presrail Notebooks handles it)
+    # The redundant builder Close and the redundant Notebooks route are gone.
     assert 'id="dc-close"' not in out
 
 

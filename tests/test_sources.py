@@ -886,7 +886,9 @@ def test_a_source_shell_wears_its_kind_and_a_notebook_stays_unmarked():
     tex.source_name = "paper"
     shell = render_shell(tex, path="C:/x/paper.tex")
     assert 'data-srckind="LaTeX"' in shell
-    assert "LaTeX \u00b7 " in shell  # the rail meta line leads with it
+    # The source kind is available on the shell without reintroducing a
+    # duplicate filename / stats block into the outline.
+    assert 'class="railmeta"' not in shell
 
     nb = doc_from_text("book.ipynb", json.dumps(
         {"cells": [{"cell_type": "markdown", "id": "m",
@@ -902,17 +904,17 @@ def test_a_source_shell_wears_its_kind_and_a_notebook_stays_unmarked():
     assert doc_from_text("README", "hi").source_kind == "Markdown"
 
 
-def test_the_rail_list_carries_the_kind_and_the_heading_follows():
-    """Client half: the shell's data-kind lands on APP.shells, each
-    non-notebook row wears a kind chip, and the list heading stops
-    claiming "open notebooks" when a .tex is in it."""
+def test_open_file_tabs_do_not_create_a_second_outline_list():
+    """Source kind remains part of an open shell, but open files are shown
+    by the two real tab views rather than a duplicate list inside every
+    notebook outline."""
     from junoview import assets
 
     js = assets.app_js()
     assert "kind:shell.dataset.srckind||''" in js
-    assert "kd.className='rnb-kind'" in js
-    assert "?'open files':'open notebooks';" in js
-    assert ".rnb-kind{" in assets.core_css()
+    assert "function renderRailNbs" not in js
+    assert ".railnbs{" not in assets.core_css()
+    assert "topTabstrip=$('#top-tabstrip')" in js
 
 
 def test_the_insert_note_pencil_is_offered_only_where_a_cell_can_land():

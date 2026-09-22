@@ -49,7 +49,8 @@
   APP.api=api;
 
   /* ================= tab strip ================= */
-  var tabstrip=$('#tabstrip'), openBtn=$('#tab-open');
+  var tabstrip=$('#tabstrip'),topTabstrip=$('#top-tabstrip'),
+      openTabsRow=$('#open-tabs-row'),openBtn=$('#tab-open');
   /* HOME IS A PLACE, not just the state of having nothing open. The
      wordmark is a home button now (2026-08-21, user: "clicking the
      Junoview logo should take you back to that screen"), so the welcome
@@ -327,91 +328,29 @@
   function renderTabs(){
     if(!tabstrip){refreshChrome();return;}
     tabstrip.innerHTML='';
-    /* each notebook is followed inline by its own Plot-trace sub-tabs, so a
-       trace reads as a child of the notebook it was opened from */
+    if(topTabstrip) topTabstrip.innerHTML='';
+    function add(stem){
+      var side=makeTab(stem); if(side) tabstrip.appendChild(side);
+      var top=makeTab(stem); if(top&&topTabstrip) topTabstrip.appendChild(top);
+    }
+    /* Each notebook is followed by its own trace tabs in both places. */
     APP.order.forEach(function(stem){
-      var nb=makeTab(stem); if(nb) tabstrip.appendChild(nb);
+      add(stem);
       APP.traces.forEach(function(k){
-        if(APP.shells[k]&&APP.shells[k].source===stem){
-          var st=makeTab(k); if(st) tabstrip.appendChild(st);
-        }
+        if(APP.shells[k]&&APP.shells[k].source===stem) add(k);
       });
     });
-    /* defensive: a trace whose source is gone still gets a tab (at the end) */
     APP.traces.forEach(function(k){
       var sh=APP.shells[k];
-      if(sh&&APP.order.indexOf(sh.source)<0){
-        var st=makeTab(k); if(st) tabstrip.appendChild(st);
-      }
+      if(sh&&APP.order.indexOf(sh.source)<0) add(k);
     });
-    /* the strip lives in the rail now, under a heading of its own — and a
-       heading over an empty list is a heading promising something that is
-       not there (2026-08-20) */
-    var nbl=$('#pr-nblabel');
-    if(nbl) nbl.hidden=!tabstrip.childNodes.length;
-    railFilter();   /* a rebuilt strip arrives unfiltered (T75) */
-    renderRailNbs();
+    var n=tabstrip.childNodes.length;
+    var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;
+    /* A single tab says nothing useful but costs a whole row. */
+    if(openTabsRow) openTabsRow.hidden=n<2;
+    railFilter();
     refreshChrome();
-  }
-  /* ---- the same list, inside each notebook's own sidebar -------------
-     The presentations rail already lists open notebooks, but it
-     collapses and auto-hides, and with it away nothing on screen said a
-     second notebook was open (2026-08-21, user: "the sidebar doesn't
-     show notebooks that are open"). Every shell carries its own copy
-     because the rail is part of the shell; only the active one is
-     visible, so the cost is a handful of rows. */
-  function renderRailNbs(){
-    var list=tabList();
-    /* This is a switcher, not another Open control.  One open notebook
-       names no choice, and opening a file belongs in the utility line. */
-    var useful=list.length>1;
-    $$('.railnbs').forEach(function(host){
-      host.innerHTML='';
-      host.hidden=!useful;
-      if(!useful) return;
-      var h=document.createElement('div');h.className='railnbs-h';
-      /* "open notebooks" over a list holding a .tex was the exact
-         confusion T124 names; the heading follows the contents */
-      h.textContent=list.some(function(s3){
-        var q=APP.shells[s3];return q&&q.kind&&!q.trace;})
-        ?'open files':'open notebooks';
-      host.appendChild(h);
-      list.forEach(function(stem){
-        var sh=APP.shells[stem]; if(!sh) return;
-        var on=(stem===APP.active);
-        var b=document.createElement('button');
-        b.type='button';
-        b.className='rnb'+(on?' on':'')+(sh.trace?' trace':'');
-        b.title=sh.trace
-          ?('Plot trace — a sub-tab of '+(sh.source||''))
-          :((sh.kind?sh.kind+' — ':'')+(sh.path||stem));
-        var d=document.createElement('span');d.className='rnb-dot';
-        b.appendChild(d);
-        var nm=document.createElement('span');nm.className='rnb-nm';
-        nm.textContent=sh.trace?('↳ '+(sh.title||'Plot trace'))
-          :(sh.label||stem);
-        b.appendChild(nm);
-        /* non-notebook kinds wear their name; the notebook stays the
-           unmarked default (T124) */
-        if(sh.kind&&!sh.trace){
-          var kd=document.createElement('span');kd.className='rnb-kind';
-          kd.textContent=sh.kind;
-          b.appendChild(kd);
-        }
-        if(!on) b.addEventListener('click',function(){activate(stem);});
-        if(sh.trace||APP.mode==='app'||APP.mode==='web'){
-          var x=document.createElement('span');x.className='rnb-x';
-          x.setAttribute('role','button');
-          x.innerHTML=bic('exit')||'&#10005;';
-          x.title=sh.trace?'Close this trace':'Close this notebook';
-          x.setAttribute('aria-label',x.title);
-          x.addEventListener('click',function(e){
-            e.stopPropagation();closeNotebook(stem);});
-          b.appendChild(x);
-        }
-        host.appendChild(b);
-      });
-    });
+    if(APP.measureChrome) APP.measureChrome();
   }
   function activate(stem){
     if(!APP.shells[stem]) return;
@@ -432,6 +371,9 @@
        the OLD notebook's type overrides into the NEW notebook's state
        (2026-08-04, adversarial review). */
     closeFilterMenus();
+    var filterPanel=$('#filters-panel'),filterToggle=$('#filters-toggle');
+    if(filterPanel) filterPanel.hidden=true;
+    if(filterToggle) filterToggle.setAttribute('aria-expanded','false');
     dockFileBar();
     renderTypeButtons();renderScopeBtn();renderMarkGate();
     updateHash();
@@ -1169,6 +1111,12 @@
     setTvBtn('tv-plots','Plots',readF('plot'));
     setTvBtn('tv-output','Output',readF('out'));
     renderFilterExtras();
+    var count=$('#filters-count');
+    if(count){
+      var n=['md','code','plot','out'].filter(function(k){
+        return readF(k)!=='visible';}).length;
+      count.hidden=!n;count.textContent=n?String(n):'';
+    }
     /* "Apply to" with nothing ticked: the filters have no target, so say
        so instead of letting clicks do nothing */
     var none=allSids().length>0&&targetSids().length===0;
@@ -1967,6 +1915,30 @@
   }
   renderTypeButtons();
 
+  /* The reader keeps one short row. The full filter controls are still
+     here, in a positioned panel, rather than being a second dashboard. */
+  (function(){
+    var wrap=$('#filter-wrap'),btn=$('#filters-toggle'),panel=$('#filters-panel');
+    if(!wrap||!btn||!panel) return;
+    function place(){
+      var r=btn.getBoundingClientRect();
+      var w=panel.offsetWidth||760,h=panel.offsetHeight||260;
+      panel.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
+      panel.style.top=Math.max(8,Math.min(r.bottom+6,window.innerHeight-h-8))+'px';
+    }
+    function set(open){
+      panel.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) place(); else closeFilterMenus();
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(panel.hidden);});
+    document.addEventListener('click',function(e){
+      if(!panel.hidden&&!wrap.contains(e.target)) set(false);});
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&!panel.hidden){set(false);btn.focus();}});
+    window.addEventListener('resize',function(){if(!panel.hidden) place();});
+  })();
+
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */
   var rawBtn=$('#view-raw');
   /* write a button's LABEL without touching its icon: every chrome button
@@ -2061,14 +2033,11 @@
        the present bar with the rest of the View section */
     syncTreeRibbon(isTree);
   }
-  /* ---- the tree shows the WHOLE analysis, so the filters do not apply
-     there. Grey them out rather than removing them: a control that
-     vanishes takes its neighbours' positions with it, and the whole point
-     is that a button never moves when you change view (2026-07-30). ---- */
+  /* ---- Tree replaces document-only controls inside the Filters panel.
+     The compact reader bar does not shift when the view changes. ---- */
   function syncTreeRibbon(isTree){
-    /* the CSS removes the filter sections outright in tree view; the
-       disabling below is belt-and-braces for anything that stays reachable
-       (a present-bar copy, keyboard focus mid-transition) */
+    /* CSS swaps document-only panel groups for Tree controls; disabling
+       below protects a present-bar copy or keyboard focus mid-transition. */
     document.body.classList.toggle('tree-mode',isTree);
     var why='Filters do not apply in the tree — it always shows every '
       +'cell, so you can see the whole analysis. Switch back to Document '
@@ -3382,7 +3351,7 @@
      text:'Plot trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    {sel:'#pr-docs,#pr-newbtn',title:'Build presentations',
+    {sel:'#pr-newbtn',title:'Build presentations',
      text:'Presentations you have open are listed here; New and All '
        +'presentations\u2026 are below. Lay out slides, drop in cards from '
        +'any open notebook, and present full screen.'},
@@ -3393,9 +3362,7 @@
   var tourI=0;
   function tourEl(step){
     if(!step.sel) return null;
-    /* T484: the FIRST selector that names something visible, not the
-       first in document order -- "#pr-docs,.presrail" resolved to the
-       fixed rail (offsetParent null) and the step was skipped */
+    /* The first selector that names something visible wins. */
     var out=null;
     step.sel.split(',').forEach(function(s){
       if(out) return;
@@ -3612,23 +3579,6 @@
   if(prShow) prShow.addEventListener('click',function(){
     setRailState('full');
   });
-  /* ---- open-document tab placement ---- */
-  var placement=$('#pr-placement');
-  function setTabPlacement(value){
-    var top=value==='top';
-    document.body.classList.toggle('tabs-top',top);
-    if(top) setRailState('full');
-    if(placement) placement.value=top?'top':'side';
-    try{localStorage.setItem('sem-tab-placement',top?'top':'side');}catch(e){}
-    measureChrome();
-  }
-  if(placement){
-    placement.addEventListener('change',function(){setTabPlacement(placement.value);});
-    var savedPlacement='side';
-    try{savedPlacement=localStorage.getItem('sem-tab-placement')||'side';}catch(e){}
-    setTabPlacement(savedPlacement);
-  }
-
   /* ---- help overlay ---- */
   var helpDlg=$('#helpdlg');
   function showHelp(){if(helpDlg) helpDlg.hidden=false;}
@@ -3730,23 +3680,8 @@
          requirements as well as its width */
       fitRibbon();
       var h=Math.ceil(top.getBoundingClientRect().height);
-      if(document.body.classList.contains('tabs-top')) h+=76;
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
-      /* Tree view drops the filter and scope sections. Record how wide
-         they are together, so the Tree section can reserve the same slot
-         and Size / View stay put across the switch -- the button you use
-         to get back must not move under the pointer. Measured rather than
-         guessed, so relabelling a filter cannot put it out of step. */
-      if(!document.body.classList.contains('tree-mode')){
-        var f=$('#ab-filters'), s=$('#ab-scope');
-        if(f&&s){
-          var w=Math.ceil(s.getBoundingClientRect().right
-                          -f.getBoundingClientRect().left);
-          if(w>0) document.documentElement.style.setProperty(
-            '--filters-slot',w+'px');
-        }
-      }
     },0);
   }
   APP.measureChrome=measureChrome;
@@ -4777,7 +4712,7 @@
        they are revealed each one's own eye still works, which is how you
        un-hide just the one you actually wanted back. ---- */
     function syncUnhideBtn(sh){
-      /* T364: the bar this button lives on may be docked in the ribbon */
+      /* The outline owns this button; each open shell keeps its own state. */
       var b=sh.querySelector('.rf-unhide'); if(!b) return;
       var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
         +'.content .card.cell-off').length;

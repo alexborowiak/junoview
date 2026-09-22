@@ -1311,8 +1311,6 @@
       none.textContent='nothing open';
       presstrip.appendChild(none);
     }
-    var docsBtn=document.getElementById('pr-docs');
-    if(docsBtn) docsBtn.classList.toggle('current',!editing);
     /* ...and re-applied, now the rows are back (T75) */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();

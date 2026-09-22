@@ -17,7 +17,6 @@ from ..branding import FAVICON, KOFI_URL, LOGO_SVG, icons, icons_js
 from ..notebook.model import Document
 from .items import (
     deck_payload,
-    doc_meta,
     render_graph_panel,
     render_nav,
     render_railtabs,
@@ -34,27 +33,13 @@ def render_shell(doc: Document, path: str = "") -> str:
     """
     stem = doc.source_name or "notebook"
     path_attr = f' data-path="{html.escape(path)}"' if path else ""
-    # A .tex and a .ipynb used to sit side by side with nothing saying
-    # which was which (T124). The notebook is the unmarked default --
-    # notebook-first is the stated design -- so only OTHER kinds are
-    # stamped and named, which also keeps every already-rendered
-    # notebook page byte-identical.
+    # A source kind remains machine-readable for the live tab controller.
+    # The outline itself deliberately has no repeated title, kind or stats.
     kind = doc.source_kind
     if kind and kind != "Jupyter notebook":
         kind_attr = f' data-srckind="{html.escape(kind)}"'
-        meta = f"{kind} \u00b7 {doc_meta(doc)}"
     else:
         kind_attr = ""
-        meta = doc_meta(doc)
-    # The document's own title is the notebook's first ``# `` heading, which
-    # is a section name -- useful, but not this file's name. It rides one
-    # line under the file name, and only when it says something the file
-    # name does not (see the comment in shell.html).
-    doctitle = ""
-    if doc.title and doc.title.strip().lower() not in (
-            "untitled analysis", stem.strip().lower()):
-        doctitle = (f'<div class="raildoct" title="The notebook’s '
-                    f'first heading">{html.escape(doc.title)}</div>')
     # icons() runs HERE as well as over the whole page: a shell is also
     # served on its own (server routes, the Pyodide bridge's web_parse)
     # and mounted into an already-built page, where no later expansion
@@ -64,9 +49,6 @@ def render_shell(doc: Document, path: str = "") -> str:
         stem=html.escape(stem),
         path_attr=path_attr,
         kind_attr=kind_attr,
-        title=html.escape(doc.title),
-        doctitle=doctitle,
-        meta=html.escape(meta),
         railtabs=render_railtabs(doc),
         nav=render_nav(doc),
         varpanel=render_varpanel(doc),

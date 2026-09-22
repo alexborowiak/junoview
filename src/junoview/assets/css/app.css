@@ -1,5 +1,5 @@
 
-:root{--appbar-h:88px;--tabsrow-h:44px;--chrome-h:96px;--dc-w:430px;
+:root{--appbar-h:38px;--chrome-h:80px;--dc-w:430px;
   --presrail-w:176px;
   /* THE VIEWER BAR'S MEASUREMENTS, once (T369). The height was already
      claimed to be "set exactly once" and was written out in five rules;
@@ -12,7 +12,7 @@
   --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}
 body.presrail-min{--presrail-w:46px;}
 
-/* ---------- row 1: global controls; row 2: notebook + presentation tabs */
+/* ---------- compact file utility line, optional tabs, reader controls --- */
 /* the header sizes to its content: --chrome-h is measured from the real
    element (see measureChrome), so a bar that needs a second line pushes
    the page down instead of hiding controls off the right-hand edge */
@@ -47,16 +47,6 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
-/* the bar FILLS its row (2026-08-04, user: on a laptop the packed-left
-   groups ended in one dead gap and read as broken): leftover width is
-   distributed into small flexible spacers flanking each divider, so the
-   sections spread evenly across the window. Each spacer is CAPPED —
-   on a huge monitor the groups ease apart a little and the rest of the
-   slack pools before the right-pinned App group, instead of stranding
-   the sections across half the screen. Under pressure the spacers
-   collapse to 0 first, so compaction and the scroll fallback measure
-   the same content width as an unspaced bar. */
-.appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold.
    28px is THE ribbon button height and it is set exactly once — a second
@@ -65,8 +55,8 @@ body.presrail-min{--presrail-w:46px;}
    DENSE on purpose (2026-08-04, user, pointing at PowerPoint): the way a
    real ribbon fits everything on one row is small, tightly-packed
    controls with their labels INTACT — never by degrading to icons. */
-.appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,.nb-quickbar .toggle,
-.nb-quickbar .appbar-link,.present-bar .toggle{
+.appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,
+.nb-filebar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:var(--ab-btn-h);box-sizing:border-box;
   padding:0 var(--ab-btn-px);line-height:1;font-size:11.5px;
   gap:var(--ab-btn-gap);}
@@ -161,9 +151,6 @@ body.presrail-min{--presrail-w:46px;}
    groups with a ragged bottom edge. Width comes from the column
    (align-items:stretch), so there is nothing to keep in sync by hand. */
 #pt-filter-btn,#ck-filter-btn,#ot-filter-btn{width:100%;flex:none;}
-#ab-app .btn-grp>*{flex:none;}
-#ab-app .toggle{min-width:34px;}
-#ab-app .bic{width:17px;height:17px;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present,#ab-view #doc-full,#ab-view #doc-autoslides{
   justify-content:center;align-items:center;}
@@ -225,25 +212,12 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    second row, even when there is room */
 
 .appbar-spring{flex:1;}
-/* a thin rule that marks where the content FILTERS end and the view/theme
-   controls begin — centred against the 30px first row */
-/* group separators: full-height so the bar reads as distinct groups
-   (file · filters · scope+size · view · app), not one long run */
-/* ---- TREE VIEW: the filters do not apply there, so they GO — but the
-   controls that remain must not slide left to fill the hole, or the
-   button you use to get back moves every time you switch view.
-   This used to be `margin-left:auto` on Size, pinning it to the RIGHT
-   edge. That holds it still, but it also opens a gap between Apply-to and
-   Size as wide as whatever space is left over — and the gap grew by the
-   width of the App group when those buttons moved to the tab row. Instead
-   the filter slot keeps a stable width, so the groups can pack left
-   normally and Size still does not move when the filters swap out. ---- */
-body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}
+/* ---- TREE VIEW: its controls replace the document filters inside the
+   panel. They no longer need to reserve an invisible ribbon-sized slot. */
+body.tree-mode #ab-tree{min-width:0;}
 /* the Tree section takes the Filters slot while the tree is on */
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
-body.tree-mode .appbar-div.filt-div,
-body.tree-mode .appbar-flex.filt-div,
 body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
 body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
 body.tree-mode #copy-grp{display:none!important;}
@@ -262,10 +236,10 @@ body.tree-mode #copy-grp{display:none!important;}
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:var(--chrome-line);}
 /* dark variants of the show/hide toggles */
-.appbar .toggle,.nb-filebar .toggle,.nb-quickbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
+.appbar .toggle,.nb-filebar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
 .appbar-link{text-decoration:none;display:inline-flex;
   align-items:center;}
-.appbar .toggle:hover,.nb-filebar .toggle:hover,.nb-quickbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.appbar .toggle:hover,.nb-filebar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
 /* ---- ribbon COMPACTION (see fitRibbon in app.js): ONE stage, spacing
    only, then the bar scrolls sideways. NO WORDS EVER DISAPPEAR
@@ -278,48 +252,71 @@ body.rbc1 .appbar{gap:2px;}
 /* not the steppers/values: their fixed square boxes centre themselves */
 body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
   padding-left:3px;padding-right:3px;}
-/* the sidebar toggle now lives on the tab line, next to Open + the tabs
-   (the doc-navigation controls), not up among the filters */
-.tabsrow .menubtn{display:inline-flex;align-items:center;
-  justify-content:center;width:30px;height:29px;margin:7px 2px 0 8px;
-  border:1px solid #ffffff22;background:none;
-  border-radius:8px;cursor:pointer;flex:none;}
-.tabsrow .menubtn:hover{border-color:var(--cyan);}
-.tabsrow .menubtn span,.tabsrow .menubtn span::before,
-.tabsrow .menubtn span::after{content:"";display:block;width:14px;
-  height:2px;background:#cdd9e3;position:relative;}
-.tabsrow .menubtn span::before{position:absolute;top:-5px;}
-.tabsrow .menubtn span::after{position:absolute;top:5px;}
-.tabsrow .menubtn[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 13%,transparent);
-  border-color:color-mix(in srgb,var(--accent) 53%,transparent);}
-body.light .tabsrow .menubtn{border-color:var(--line);}
-body.light .tabsrow .menubtn span,body.light .tabsrow .menubtn span::before,
-body.light .tabsrow .menubtn span::after{background:var(--ink-2);}
-.tabsrow{display:flex;align-items:stretch;height:var(--tabsrow-h);
-  background:var(--chrome-1,#0d1a26);}
-/* The old tabs row was nearly empty after notebooks moved to the rail.
-   Reuse its height for navigation and app commands, above the narrower
-   content ribbon. Neither row wraps or drops button labels. */
-.nb-quickbar{order:-1;align-items:center;gap:6px;padding:0 8px;
-  flex:none;overflow-x:auto;scrollbar-width:thin;flex-wrap:nowrap;}
-.nb-quickbar .abgrp{flex-direction:row;align-items:center;gap:7px;}
-.nb-quickbar .abgrp-row{align-items:center;flex:none;}
-.nb-quickbar .abgrp-lab{display:none;}
-.nb-quickbar .vw-stack{flex-direction:row;min-width:0;}
-.nb-quickbar .vw-stack .toggle{width:auto;}
-.nb-quickbar .appbar-flex{display:none;}
-.nb-quickbar .appbar-div{height:22px;margin:0 2px;}
-.nb-quickbar .menubtn{order:-1;width:auto;min-width:28px;
-  height:var(--ab-btn-h);margin:0;padding:0 7px;gap:7px;
-  white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);}
-.nb-quickbar #vars-btn{margin-right:4px;}
 /* One utility row above the filters: identity on the left, app commands
    on the right. The existing Info panel shows the complete source path. */
-.apptop{display:grid;grid-template-columns:minmax(280px,1fr) auto;}
-.nb-filebar{grid-column:1;grid-row:1;}
-.nb-quickbar{grid-column:2;grid-row:1;height:auto;order:0;}
-.apptop>.appbar,.apptop>#stylebar{grid-column:1/-1;}
-.appbar>#ab-view{margin-left:auto;padding-left:12px;}
+.apptop{display:flex;flex-direction:column;}
+.nb-filebar{min-height:42px;padding:4px 8px;}
+.nb-file-spacer{flex:1;min-width:8px;}
+.nb-file-utils{display:flex;align-items:center;gap:4px;flex:none;}
+.nb-file-utils .toggle{height:var(--ab-btn-h);font-size:11.5px;
+  white-space:nowrap;}
+.open-tabs-row{display:flex;align-items:end;gap:8px;min-height:34px;
+  padding:0 8px;background:var(--chrome-1,#0d1a26);
+  border-bottom:1px solid #ffffff12;}
+.open-tabs-row[hidden]{display:none!important;}
+.open-tabs-label{font:9px var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:0 2px 8px;}
+.top-tabstrip{display:flex;align-items:stretch;gap:4px;min-width:0;
+  overflow-x:auto;scrollbar-width:thin;padding-top:5px;}
+.top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
+  padding:0 8px 0 10px;border-radius:7px 7px 0 0;}
+.top-tabstrip .tab-t{max-width:180px;}
+/* The permanent reader bar is intentionally one short row. Filters keep
+   their full controls, but only when someone asks for them. */
+.appbar{position:relative;min-height:38px;padding:5px 8px;
+  align-items:center;overflow-x:auto;overflow-y:visible;}
+.appbar>.abgrp .abgrp-lab{display:none;}
+.appbar .ab-nav .abgrp-row{align-items:center;gap:4px;}
+.appbar .menubtn{display:inline-flex;align-items:center;justify-content:center;
+  height:var(--ab-btn-h);box-sizing:border-box;margin:0;padding:0 7px;
+  gap:7px;white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);
+  border:1px solid var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);
+  border-radius:7px;cursor:pointer;}
+.appbar .menubtn:hover{border-color:var(--cyan);color:#fff;}
+.appbar .menubtn span,.appbar .menubtn span::before,
+.appbar .menubtn span::after{content:"";display:block;width:14px;height:2px;
+  background:currentColor;position:relative;}
+.appbar .menubtn span::before{position:absolute;top:-5px;}
+.appbar .menubtn span::after{position:absolute;top:5px;}
+.filter-wrap{position:relative;flex:none;}
+.filter-count{display:inline-flex;align-items:center;justify-content:center;
+  min-width:14px;height:14px;padding:0 3px;border-radius:8px;
+  background:color-mix(in srgb,var(--accent) 24%,transparent);
+  color:var(--cyan);font:9px var(--mono);}
+.filter-panel{position:fixed;z-index:121;display:flex;flex-wrap:wrap;
+  align-items:flex-start;gap:12px;width:min(760px,calc(100vw - 24px));
+  max-height:calc(100vh - 78px);overflow:auto;box-sizing:border-box;
+  padding:12px;border:1px solid var(--chrome-line);border-radius:10px;
+  background:var(--chrome-0,#0a141d);box-shadow:0 14px 36px #00000055;}
+.filter-panel[hidden]{display:none!important;}
+.filter-panel .abgrp{flex:none;}
+.filter-panel .abgrp-lab{display:block;}
+.filter-panel #ab-filters{flex:1 1 390px;min-width:0;}
+.filter-panel #ab-filters .abgrp-row{flex-wrap:wrap;}
+.filter-panel #ab-filters .fgrp{min-width:106px;}
+.filter-panel #ab-scope{min-width:122px;}
+.filter-panel #ab-pages{min-width:92px;}
+.filter-panel #ab-size .abgrp-row{flex-direction:row;gap:12px;}
+.filter-panel #ab-size .fgrp{justify-content:flex-start;}
+.appbar>#ab-view{margin-left:auto;padding-left:0;}
+.appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp,
+.appbar #ab-view .vw-stack{align-items:center;flex-direction:row;}
+.appbar #ab-view .vw-stack{min-width:0;gap:4px;}
+.appbar #ab-view .vw-stack .toggle{width:auto;}
+body.light .appbar .menubtn{border-color:var(--line);color:var(--ink);}
+body.light .appbar .menubtn:hover{color:var(--ink);}
+body.light .filter-panel{background:var(--chrome-0);color:var(--ink);
+  box-shadow:0 14px 36px #00000020;}
 /* tabs line up with the DOCUMENT, not with the outline beneath them —
    the strip starts where the sidebar ends (and slides back when the
    sidebar is toggled off) */
@@ -349,13 +346,7 @@ body.light .tab-ver{color:var(--cyan-deep);}
   cursor:pointer;font-size:13px;padding:4px 6px;border-radius:5px;
   line-height:1;flex:none;}
 .tab-b:hover{opacity:1;background:#00000033;}
-.tabs-label{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;
-  text-transform:uppercase;color:#54677a;display:flex;align-items:center;
-  padding:0 10px 0 14px;flex:none;user-select:none;}
-
-/* ---------- presentations rail: vertical stack on the left edge.
-   Exactly ONE item is active at a time: "Notebooks" (no builder) or a
-   presentation (builder open) — so the way out is always visible. */
+/* ---------- left library: open files and presentations ----------------- */
 /* ---- the open-notebooks list, in the rail ---------------------------
    It used to be a horizontal tab strip across the top of the document —
    a row of chrome whose width ran out at about five notebooks. The nodes
@@ -390,35 +381,7 @@ body.light .tab-ver{color:var(--cyan-deep);}
 .presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
   z-index:95;background:var(--chrome-0,#0a141d);border-right:1px solid #ffffff1f;
   display:flex;flex-direction:column;padding:8px 6px;gap:2px;}
-/* The same live tabs can sit above the document; switching placement
-   does not recreate a tab or lose its close/switch handlers. */
-#pr-docs[hidden]{display:none!important;}
 #welcome-back{display:none!important;} /* Open tabs are the return route. */
-.pr-placement{display:flex;align-items:center;gap:6px;padding:6px;
-  color:var(--chrome-ink);font:12px var(--sans);}
-.pr-placement select{min-width:0;background:var(--chrome-1);
-  color:var(--chrome-ink);border:1px solid var(--chrome-line);padding:4px;}
-body.tabs-top{--presrail-w:0px;--open-tabs-h:76px;}
-body.tabs-top .apptop{top:var(--open-tabs-h);}
-body.tabs-top #presrail{width:100%;height:var(--open-tabs-h);bottom:auto;
-  box-sizing:border-box;flex-direction:row;align-items:center;gap:8px;
-  transform:none;overflow-x:auto;}
-body.tabs-top .presrail-brand{width:auto;padding:6px;}
-body.tabs-top .presrail .prb-full,
-body.tabs-top .presrail .pr-door,
-body.tabs-top .presrail .pr-label,
-body.tabs-top .presrail #pr-collapse,
-body.tabs-top .presrail #pr-auto{display:none;}
-body.tabs-top .presrail .tabstrip,
-body.tabs-top .presrail .pr-list{display:flex;flex-direction:row;
-  flex:1 1 auto;overflow-x:auto;overflow-y:hidden;min-width:0;}
-body.tabs-top .presrail .tab,
-body.tabs-top .presrail .pr-item{width:200px;flex:0 0 200px;}
-body.tabs-top .presrail .pr-foot{margin:0;flex:none;}
-body.tabs-top .presrail .pr-newwrap{flex:none;}
-body.tabs-top .presrail .pr-find{display:flex;flex:0 0 140px;margin:0;}
-body.tabs-top .welcome{top:var(--open-tabs-h);}
-body.tabs-top .presrail .pr-newmenu{position:fixed;top:60px;left:auto;right:8px;}
 .presrail .tab .tab-t,.presrail .pr-t{white-space:normal;
   overflow-wrap:anywhere;line-height:1.35;font-size:13px;}
 .presrail .pr-label{font-size:10px;letter-spacing:.06em;
@@ -454,13 +417,6 @@ body.light .presrail-brand{color:var(--cyan-deep);}
 .pr-item.ptab .pr-ico{font-size:8.5px;color:var(--cyan);}
 .pr-item.editing .pr-ico{color:var(--on-accent-deep);}
 .pr-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-/* the Notebooks button reads as a BUTTON (bordered like + New
-   presentation), not a plain label */
-.pr-docs{margin-bottom:6px;border:1px solid #ffffff22;border-radius:8px;}
-.pr-docs:hover{border-color:var(--cyan);}
-.pr-docs.current{border-color:var(--cyan-deep);}
-body.light .pr-docs{border-color:var(--line);}
-body.light .pr-docs:hover{border-color:var(--cyan);}
 .pr-label{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;
   text-transform:uppercase;color:#4e93a6;padding:10px 10px 6px;
   user-select:none;white-space:nowrap;overflow:hidden;}
@@ -1446,13 +1402,11 @@ body.light .appbar .toggle,body.light .present-bar .toggle{
 body.light .appbar .toggle:hover,body.light .present-bar .toggle:hover{border-color:var(--cyan);
   color:var(--ink);}
 body.light .appbar .toggle.tv.off,body.light .present-bar .toggle.tv.off{color:var(--ink-3);}
-body.light .tabsrow{background:var(--chrome-1);}
 body.light .tab{border-color:var(--chrome-line);
   background:var(--surface-hover);color:var(--chrome-ink-3);}
 body.light .tab:hover{background:var(--surface-active);
   color:var(--chrome-ink);}
 body.light .tab.current{background:var(--paper);color:var(--ink);}
-body.light .tabs-label{color:var(--chrome-ink-3);}
 body.light .presrail{background:var(--chrome-0);
   border-right-color:var(--chrome-line);}
 body.light .pr-item{color:var(--chrome-ink-3);}
@@ -1559,13 +1513,6 @@ body.light .railhead{border-bottom-color:var(--chrome-line);}
 body.light .railtitle{color:var(--chrome-ink);}
 body.light .raildoct{color:var(--chrome-ink-3);}
 body.light .railmeta{color:var(--chrome-ink-3);}
-body.light .railnbs-h{color:var(--chrome-ink-3);}
-body.light .rnb{color:var(--chrome-ink-2);}
-body.light .rnb.on{color:var(--chrome-ink);}
-body.light .rnb-dot{background:var(--chrome-ink-3);}
-body.light .rnb-x{color:var(--chrome-ink-3);}
-body.light .rnb-x:hover{color:var(--chrome-ink);
-  background:var(--surface-active);}
 body.light .brand{color:var(--cyan-deep);}
 body.light .navsec{color:var(--ink-2);}
 body.light .navsec:hover{background:var(--surface-hover);}
@@ -2059,7 +2006,7 @@ body.light .vars-menubtn{color:var(--ink-2);}
    svg (2026-08-23). An emoji was sized by its button's font-size; the
    svg needs its own, and only the tight little buttons are clamped
    below the 14px default. ---- */
-.tab-b .bic,.rnb-x .bic{width:10px;height:10px;vertical-align:-1px;}
+.tab-b .bic{width:10px;height:10px;vertical-align:-1px;}
 .tab-vermark .bic{width:12px;height:12px;vertical-align:-2px;}
 .recent-ic .bic,.odlg-r-ic .bic{width:13px;height:13px;
   vertical-align:-3px;}

@@ -38,8 +38,53 @@
         aria-label="View full file path"></button>
     </span>
     <span class="fgrp-row" id="file-dock"></span>
+    <span class="nb-file-spacer" aria-hidden="true"></span>
+    <!-- App-wide choices belong with the document identity, not among the
+         controls that change what is shown in this notebook. -->
+    <span class="nb-file-utils" aria-label="Application controls">
+      <button class="toggle" id="scheme-btn" aria-label="Colour scheme"
+        aria-haspopup="menu" aria-expanded="false"
+        aria-controls="jv-scheme-menu"
+        title="Colour scheme — follow system, dark, light, forest,
+ colourful and high contrast"><i data-ic="palette"></i> Theme</button>
+      <a class="toggle appbar-link" id="support-btn"
+        aria-label="Support Junoview on Ko-fi" href="{kofi}"
+        target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
+        ><i data-ic="heart"></i> Support</a>
+      <button class="toggle" id="doc-find"
+        title="Find words anywhere in this notebook — titles, prose,
+ code and output, folded cells included (Ctrl+F)"
+        ><i data-ic="find"></i> Find</button>
+      <button class="toggle" id="help-btn"
+        title="How to use, and everything this tool can do"
+        aria-label="Help"><i data-ic="help"></i> Help</button>
+    </span>
+  </div>
+  <!-- Open documents are conventional tabs when there is a choice. The
+       side panel remains available at the same time as the library view. -->
+  <div class="open-tabs-row" id="open-tabs-row" hidden>
+    <span class="open-tabs-label">Open</span>
+    <div class="top-tabstrip" id="top-tabstrip" role="tablist"
+      aria-label="Open documents"></div>
   </div>
   <div class="appbar">
+    <span class="abgrp ab-nav" id="ab-nav"><span class="abgrp-row">
+      <button class="menubtn" id="menubtn" aria-label="Toggle sections"
+        title="Show or hide the section sidebar (table of contents)">
+        <span></span> Outline</button>
+      <button class="menubtn vars-menubtn" id="vars-btn"
+        aria-label="Variables" aria-pressed="false"
+        title="Every variable in this notebook — filter by type, and click
+ a name or use-site to jump to it">x&#178; Variables</button>
+    </span></span>
+    <span class="filter-wrap" id="filter-wrap">
+      <button class="toggle" id="filters-toggle" type="button"
+        aria-haspopup="true" aria-expanded="false"
+        aria-controls="filters-panel"
+        title="Choose what the notebook shows"><i data-ic="types"></i>
+        Filters <span class="filter-count" id="filters-count" hidden></span>
+        &#9662;</button>
+      <span class="filter-panel" id="filters-panel" hidden>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
@@ -79,12 +124,6 @@
     <span class="fgrp" id="marks-grp" hidden>
       <span class="fgrp-row" id="marks-row"></span>
     </span></span><span class="abgrp-lab">Filters</span></span>
-    <!-- this middle pair carries filt-div too: it vanishes with the
-         filter sections in Tree view, and the measured filters slot
-         (which spans it) compensates for its width -->
-    <span class="appbar-flex filt-div" aria-hidden="true"></span>
-    <span class="appbar-div filt-div" aria-hidden="true"></span>
-    <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Which sections the filters act on"
@@ -118,9 +157,6 @@
       </span>
     </span>
     </span><span class="abgrp-lab">Pages</span></span>
-    <span class="appbar-flex" aria-hidden="true"></span>
-    <span class="appbar-div" aria-hidden="true"></span>
-    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
          because it plays the same role — it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
@@ -167,6 +203,9 @@
       </span>
       <span class="fgrp-cap">Text</span>
     </span></span><span class="abgrp-lab">Size</span></span>
+      </span>
+    </span>
+    <span class="appbar-spring" aria-hidden="true"></span>
     <!-- View commands belong at the right of the notebook ribbon. -->
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
@@ -211,60 +250,8 @@
     </span>
     </span></span><span class="abgrp-lab">View</span></span>
   </div>
-  <div class="tabsrow nb-quickbar" aria-label="Notebook navigation and app">
-    <span class="appbar-flex" aria-hidden="true"></span>
-    <span class="appbar-div" aria-hidden="true"></span>
-    <span class="appbar-flex" aria-hidden="true"></span>
-    <!-- App commands share the quick-access row; the main ribbon is for
-         changing the notebook content that is on screen. -->
-    <span class="abgrp" id="ab-app"><span class="abgrp-row">
-    <span class="btn-grp">
-      <!-- no separate dark/light toggle: light and dark are THEMES in
-           the palette menu, beside forest and the rest (2026-08-19) -->
-      <button class="toggle" id="scheme-btn" aria-label="Colour scheme"
-        aria-haspopup="menu" aria-expanded="false"
-        aria-controls="jv-scheme-menu"
-        title="Colour scheme — follow system, dark, light, forest,
- colourful and high contrast"><i data-ic="palette"></i> Theme</button>
-      <a class="toggle appbar-link" id="support-btn" aria-label="Support Junoview on Ko-fi" href="{kofi}"
-        target="_blank" rel="noopener"
-        title="Support Junoview on Ko-fi — funds an online, hosted version
- with accounts (save + share your docs and talks, like Overleaf)"
-        ><i data-ic="heart"></i> Support</a>
-      <!-- T244: FIND, IN THE NOTEBOOK (2026-09-04, user: "would be
-           good for a search feature"). The rail's box finds notebooks
-           by name and the variables box filters names; nothing looked
-           inside the document. The browser's own Ctrl+F cannot see a
-           folded cell or one a filter has hidden, which is most of
-           what this reader does. -->
-      <button class="toggle" id="doc-find"
-        title="Find words anywhere in this notebook — titles, prose,
- code and output, folded cells included (Ctrl+F)"
-        ><i data-ic="find"></i> Find</button>
-      <button class="toggle" id="help-btn"
-        title="How to use, and everything this tool can do" aria-label="Help"><i data-ic="help"></i> Help</button>
-    </span></span><span class="abgrp-lab">App</span></span>
-    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
-      title="Show or hide the section sidebar (table of contents)">
-      <span></span> Outline</button>
-    <!-- beside the hamburger, because they are the same kind of thing:
-         two indexes of the document — its sections, its names
-         (2026-08-19, user). It replaced a Sections|Variables tab switch
-         inside the sidebar and a button up in the View group. -->
-    <button class="menubtn vars-menubtn" id="vars-btn" aria-label="Variables" aria-pressed="false"
-      title="Every variable in this notebook — filter by type, and click
- a name or use-site to jump to it">x&#178; Variables</button>
-    <!-- the open-notebooks strip is NOT here any more. A row of
-         horizontal tabs is a row of chrome across the top of the document
-         whose width runs out at about five notebooks, and the rail beside
-         it was already the place this app lists the things you can switch
-         between (2026-08-20, user: "I don't want the horizontal tabs in
-         notebooks anymore, this should just be a thing down the right
-         hand side pop up thing, like presentations but just under the
-         buttons that says notebooks"). It MOVED, node for node, so every
-         handler, the close buttons, the trace sub-tabs and the version
-         marks all keep working — see #tabstrip in the rail. -->
-  </div>
+  <!-- The top strip and side panel deliberately show the same live tabs:
+       the former is quick navigation; the latter is the library view. -->
   <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
        insets the document by it automatically, and so the normal filter
        ribbon stays available (a custom view saves your filters too) -->
@@ -352,10 +339,6 @@
   <button class="presrail-brand" id="presrail-home" type="button"
     title="Home — the Junoview welcome screen. Nothing is closed."
     >{logo}<span class="prb-full">Junoview</span></button>
-  <button class="pr-item pr-docs current" id="pr-docs" hidden
-    title="Back to your notebooks — closes the presentation builder">
-    <span class="pr-ico"><i data-ic="doc"></i></span>
-    <span class="pr-t">Notebooks</span></button>
   <!-- ONE FIELD, BOTH LISTS (T75, 2026-08-29: "there is no search bar
        for notebooks", and the rail is crowded once a handful of things
        are open). "Find the thing I am looking for" is one question, and
@@ -380,7 +363,7 @@
   <!-- OPEN notebooks, listed under the button that names them. Same shape
        as the presentations list below: a label, then the things you can
        switch to (2026-08-20). -->
-  <div class="pr-label pr-nblabel" id="pr-nblabel">Notebooks</div>
+  <div class="pr-label pr-nblabel" id="pr-nblabel">Open files</div>
   <div class="tabstrip" id="tabstrip" role="tablist"
     aria-label="Open notebooks"></div>
   <!-- T394: OPEN presentations, the way the strip above is open
@@ -456,12 +439,6 @@
   <!-- the two panel controls as a pair: collapse it, or let it hide
        itself. Neither is "pin" — nothing is being pinned. -->
   <div class="pr-foot">
-    <label class="pr-placement">Tabs
-      <select id="pr-placement" aria-label="Tab placement">
-        <option value="side">Sidebar</option>
-        <option value="top">Top</option>
-      </select>
-    </label>
     <button class="pr-collapse" id="pr-collapse" aria-label="Collapse the presentations panel"
       title="Collapse this panel"><i data-ic="collapse"></i> Collapse</button>
     <button class="pr-collapse" id="pr-auto" aria-label="Auto-hide the presentations panel" aria-pressed="false"

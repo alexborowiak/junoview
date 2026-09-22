@@ -1504,9 +1504,6 @@
     openDeck('edit');
     return true;
   };
-  /* wrap so the click Event isn't forwarded (closeDeck takes no args) */
-  var prDocs=document.getElementById('pr-docs');
-  if(prDocs) prDocs.addEventListener('click',function(){closeDeck();});
   var prNew=document.getElementById('pr-new');
   if(prNew) prNew.addEventListener('click',newPresentation);
   var prNewPost=document.getElementById('pr-newpost');
@@ -2899,10 +2896,9 @@
     var b=$(id);
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
-  /* ---- Help menu (T397): How to use, and Support. app.js owns what
-     How to use does; this only opens and closes the menu. ---- */
+  /* ---- App menu: Theme, help and support. app.js owns the actions. ---- */
   (function(){
-    var h=wireMenuToggle('deck-helpwrap','deck-help','deck-help-menu');
+    var h=wireMenuToggle('deck-appwrap','deck-app','deck-app-menu');
     if(!h) return;
     $$('.dc-mi',h.menu).forEach(function(b){
       b.addEventListener('click',function(){overlayHide(h.menu);});

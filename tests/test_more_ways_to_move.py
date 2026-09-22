@@ -413,7 +413,7 @@ def test_the_frame_after_the_second_pass(out):
     assert "  function tourEl(step){" in out
     assert "  function tourVisible(){" in out
     assert "        try{tel.scrollIntoView({block:'center'});}catch(err){}" in out
-    assert "    {sel:'#pr-docs,#pr-newbtn',title:'Build presentations'," in out
+    assert "    {sel:'#pr-newbtn',title:'Build presentations'," in out
 
 
 def test_the_small_ends_of_the_second_pass(out):

@@ -18,19 +18,20 @@ def test_the_name_never_gives_way_first(out):
             "white-space:nowrap;") in out
 
 
-def test_help_and_support_are_one_worded_menu():
+def test_global_deck_options_are_one_quiet_app_menu():
     html = assets.deck_html()
-    assert 'id="deck-helpwrap"' in html
-    assert '<i data-ic="help"></i> Help &#9662;</button>' in html
+    assert 'id="deck-appwrap"' in html
+    assert '<i data-ic="theme"></i> App &#9662;</button>' in html
+    assert 'id="deck-scheme"' in html
     assert 'id="deck-howto"' in html
     assert '<a class="dc-mi" id="deck-support" target="_blank" rel="noopener"' in html
     assert 'Support Junoview &#9829;</a>' in html
-    # no longer two loose buttons on the bar
+    # Theme, Help and Support are no longer loose top-bar buttons.
     assert '<a class="dbtn qat-btn" id="deck-support"' not in html
 
 
 def test_the_menu_is_wired_and_how_to_use_still_opens_help(out):
-    assert "wireMenuToggle('deck-helpwrap','deck-help','deck-help-menu')" in out
+    assert "wireMenuToggle('deck-appwrap','deck-app','deck-app-menu')" in out
     assert "  ['#help-btn','#deck-howto'].forEach(function(sel){" in out
     assert "a.dc-mi{display:block;text-decoration:none;}" in out
 

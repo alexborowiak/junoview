@@ -147,19 +147,20 @@ def test_the_viewer_bar_has_one_button_height():
             in css)
     core = assets.load("css/core.css")
     assert "#file-dock .rf-btn{height:28px;box-sizing:border-box;" in core
-    buttons = css.split(".nb-quickbar .appbar-link,.present-bar .toggle{")[1]
+    buttons = css.split(".appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,")[1]
     assert "height:var(--ab-btn-h);" in buttons.split("}")[0]
 
 
-def test_the_app_group_uses_the_existing_quick_access_row():
-    """View/App no longer consume width in the main content ribbon.
-
-    Reusing the former tabs row saves the whole group's width without
-    adding another band of chrome or dropping the button labels.
+def test_the_reader_bar_uses_a_filter_door_not_an_extra_ribbon_row():
+    """The dense controls are available in a popup; the permanent reader
+    bar remains one compact line with the labelled view controls.
     """
     css = assets.load("css/app.css")
-    assert ".nb-quickbar .vw-stack{flex-direction:row;min-width:0;}" in css
-    assert "overflow-x:auto;scrollbar-width:thin;flex-wrap:nowrap;" in css
+    assert ".filter-panel{position:fixed;z-index:121;display:flex;" in css
+    assert ".filter-panel #ab-filters{flex:1 1 390px;min-width:0;}" in css
+    assert ".appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp," in css
+    assert ".nb-quickbar" not in css
+    assert "overflow-x:auto;scrollbar-width:thin;" in css
 
 
 def test_no_two_controls_wear_the_same_id():

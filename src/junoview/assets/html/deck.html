@@ -333,30 +333,21 @@
          stuff need to go into this top bar as well"). Help is new here:
          editing hides the app bar, so from inside a poster there was no
          way to reach it at all. -->
-    <span class="dc-menuwrap">
-      <button class="dbtn qat-btn" id="deck-scheme" aria-haspopup="menu"
-        aria-expanded="false" aria-controls="jv-scheme-menu"
-        title="Colour scheme — follow system, dark, light, forest,
- colourful, high contrast"><i data-ic="theme"></i> Theme &#9662;</button>
-    </span>
-    <!-- T397: Help and Support are ONE menu. With Home at the front the
-         bar had thirteen controls, and the presentation's name -- the
-         one thing on it that is not a control -- was what gave way
-         (2026-09-13, user: "The top bar is too busy ... There is not
-         enough room for the presentation name"). Both stay worded; they
-         are a menu deep, like Theme's schemes. -->
-    <span class="dc-menuwrap" id="deck-helpwrap">
-      <button class="dbtn qat-btn" id="deck-help" aria-haspopup="true"
-        aria-expanded="false" aria-controls="deck-help-menu"
-        title="How to use this, and how to support it"
-        ><i data-ic="help"></i> Help &#9662;</button>
-      <div class="dc-menu" id="deck-help-menu" hidden>
+    <!-- App-wide choices are one quiet menu. The deck name and the
+         actions people use while editing keep the top bar instead. -->
+    <span class="dc-menuwrap" id="deck-appwrap">
+      <button class="dbtn qat-btn" id="deck-app" aria-haspopup="true"
+        aria-expanded="false" aria-controls="deck-app-menu"
+        title="Theme, help and support"><i data-ic="theme"></i> App &#9662;</button>
+      <div class="dc-menu" id="deck-app-menu" hidden>
+        <button class="dc-mi" id="deck-scheme" aria-haspopup="menu"
+          aria-expanded="false" aria-controls="jv-scheme-menu"
+          title="Choose a colour scheme">Theme&#8230;</button>
         <button class="dc-mi" id="deck-howto"
           title="How to use this, and everything it can do (?)">How to
           use&#8230;</button>
         <a class="dc-mi" id="deck-support" target="_blank" rel="noopener"
-          title="Support Junoview on Ko-fi — funds an online, hosted
- version with accounts">Support Junoview &#9829;</a>
+          title="Support Junoview on Ko-fi">Support Junoview &#9829;</a>
       </div>
     </span>
     <!-- Present is a SPLIT control: press it to play, press the chevron
