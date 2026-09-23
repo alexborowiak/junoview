@@ -346,12 +346,22 @@
     });
     var n=tabstrip.childNodes.length;
     var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;
-    /* A single tab says nothing useful but costs a whole row. */
-    if(openTabsRow) openTabsRow.hidden=n<2;
+    /* The deck registers its presentation tabs here. One source still
+       makes both the side library and the ordinary top strip, rather than
+       turning either into a separate navigation model. */
+    if(APP.renderPresentationTabs) APP.renderPresentationTabs();
+    else refreshOpenTabsRow();
     railFilter();
     refreshChrome();
+  }
+  function refreshOpenTabsRow(){
+    var n=topTabstrip?topTabstrip.querySelectorAll('.tab').length:0;
+    /* A single open item says nothing useful but costs a whole row. */
+    if(openTabsRow) openTabsRow.hidden=n<2;
     if(APP.measureChrome) APP.measureChrome();
   }
+  APP.refreshOpenTabsRow=refreshOpenTabsRow;
+  APP.renderTabs=renderTabs;
   function activate(stem){
     if(!APP.shells[stem]) return;
     /* The shared rail stays live beside the full deck editor. A notebook

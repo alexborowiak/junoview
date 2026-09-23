@@ -39,7 +39,9 @@ def test_the_open_list_is_per_tab_and_survives_a_reload(out):
 
 
 def test_the_rail_is_built_from_the_open_list_not_the_library(out):
-    start = out.index("  function renderPresTabs(){")
+    # The shared row factory now also supplies the ordinary top tabs, so
+    # its close path deliberately lives just before renderPresTabs().
+    start = out.index("  function presentationTabNames(editing){")
     body = out[start:out.index("  var newFoldBtn=", start)]
     assert "openPresentationNames()" in body
     assert "draftNames()" not in body

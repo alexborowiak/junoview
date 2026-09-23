@@ -85,11 +85,12 @@ presentation — refresh and nothing is lost; the status pill shows
 ## Presentations across notebooks
 
 Projects usually span several notebooks, so the deck works across **all
-open tabs**: the tab strip stays visible in Create mode — switch tabs
-while building and click cards from any notebook; a *Halves* slide can
-show a figure from `part1` next to a figure from `part2`. When more than
-one notebook is open, panes and slides carry a small chip naming the
-source notebook, and the auto-builders walk every tab in order.
+open tabs**: the shared rail and, when there is a choice, ordinary top tabs
+stay visible in Create and Edit mode. Switch tabs while building and click
+cards from any notebook; a *Halves* slide can show a figure from `part1`
+next to a figure from `part2`. When more than one notebook is open, panes
+and slides carry a small chip naming the source notebook, and the
+auto-builders walk every tab in order.
 
 Internally a pane in a multi-notebook deck is stored as
 `<notebook>::<anchor>`; single-notebook decks keep plain anchors, so

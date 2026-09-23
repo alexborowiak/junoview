@@ -27,9 +27,12 @@ def test_editor_has_no_second_home_or_open_items_control():
 def test_editor_uses_the_live_logo_rail(out):
     assert 'id="presrail-home"' in assets.page_template()
     assert "    return [$('#deck-pres-open')].filter(Boolean);" in out
-    assert ".deck.creating,.deck.editing{left:var(--presrail-w);}" in out
+    assert ".deck.editing{left:var(--presrail-w);top:0;}" in out
+    assert ("body.slide-editing:has(#open-tabs-row:not([hidden])) "
+            ".apptop{" in out)
+    assert "top:var(--open-tabs-h);" in out
     assert "deckIsolate(full,editing);" in out
-    assert "if(railLive&&(sel==='#presrail'||sel==='#presrail-show')) return;" in out
+    assert "if(appNavLive&&(sel==='#apptop'||sel==='#presrail'" in out
     assert "if(document.body.classList.contains('slide-editing')&&APP.deckClose)" in out
 
 

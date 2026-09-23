@@ -495,7 +495,7 @@ def test_rail_has_one_new_button_and_per_row_delete(out):
     for f in ("pr-new", "pr-newpost", "pr-newview", "pr-newfold"):
         assert '<button class="pr-btn" hidden id="' + f + '"' in out
     assert "function deletePresByName(nm){" in out
-    assert "del.className='pr-del';" in out
+    assert "del.className=top?'tab-b':'pr-del';" in out
     assert "if(confirm(" in out
     assert ".pr-item:hover .pr-del,.pr-item.current .pr-del" in out
 

@@ -9782,3 +9782,8 @@ any reading. The rest are T466 onwards.
   audience view keeps its compact edge drawer. Reader-wide choices now use
   the same quiet App menu; Find remains direct, while Full screen and Present
   share the editor's order and visual hierarchy.
+- [x] **T507 — Keep open tabs horizontal in the editor.** (2026-09-23)
+  The ordinary top tab row now mirrors every open notebook, trace and
+  presentation alongside the shared left rail. It stays available while
+  editing slides when there is a meaningful choice; reader-only file and
+  filter controls stay hidden, and the deck starts beneath the row.

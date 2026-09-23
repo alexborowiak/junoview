@@ -1561,7 +1561,7 @@ body.th-colorful .pr-btn,body.th-colorful .pr-item{
      5px of side padding, which is what PowerPoint's small command
      spends. The height stays 28px -- it is a target, and shrinking it
      was never the complaint. */
-  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:35px;}
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- compact file utility line, optional tabs, reader controls --- */
@@ -1818,7 +1818,8 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 #ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
 #ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
-.open-tabs-row{display:flex;align-items:end;gap:8px;min-height:34px;
+.open-tabs-row{display:flex;align-items:end;gap:8px;height:var(--open-tabs-h);
+  box-sizing:border-box;
   padding:0 8px;background:var(--chrome-1,#0d1a26);
   border-bottom:1px solid #ffffff12;}
 .open-tabs-row[hidden]{display:none!important;}
@@ -1829,6 +1830,15 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 .top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
   padding:0 8px 0 10px;border-radius:7px 7px 0 0;}
 .top-tabstrip .tab-t{max-width:180px;}
+.top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
+  justify-content:center;flex:none;color:var(--cyan);}
+.top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
+.top-tabstrip .top-pres-tab.current .top-pres-ico{color:currentColor;}
+.top-tabstrip .top-pres-tab.draftonly .tab-t::after{
+  content:" \\2022";color:var(--amber);}
+.top-tabstrip .top-pres-main{display:flex;align-items:center;gap:8px;
+  flex:1;min-width:0;border:0;padding:0;background:none;color:inherit;
+  font:inherit;text-align:left;cursor:pointer;}
 /* The navigation and view commands stay on one short row. The controls
    they operate are a real second header row by default, not a menu that
    covers the notebook; Filters can collapse that row when space matters. */
@@ -2080,7 +2090,7 @@ body.welcoming{padding-top:0;}
 .card{scroll-margin-top:calc(var(--chrome-h) + 18px);}
 /* builder docked: full-height panel right of the rail; tab / controls
    chrome shifts right so it sits above the DOCUMENT (IDE-style) */
-.deck.creating,.deck.editing{left:var(--presrail-w);}
+.deck.creating{left:var(--presrail-w);}
 body.creating-docs .apptop{
   left:calc(var(--presrail-w) + min(var(--dc-w),94vw));}
 @media (max-width:860px){
@@ -4872,13 +4882,24 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    the slide canvas takes the document area. The document chrome (tabs,
    filters) is hidden while editing — it acts on the hidden documents —
    and comes back for cell-picking / on Done. */
-/* FULL width: the editor used to start right of the presentations rail,
-   so the rail's 176px came out of the ribbon on every screen — part of
-   why a laptop's ribbon ran out of room (2026-08-19, user: "the ribbon
-   needs to go all the way across the top"). The way back to the
-   notebooks now lives at the top of the slide column instead. */
-.deck.editing{left:0;top:0;}
+/* The editor starts after the shared app rail, so its logo and live open
+   items remain the same navigation in both views. When there is more than
+   one open item, the ordinary horizontal tab row stays above it too; the
+   reader-only file and filter controls remain out of the editor. */
+.deck.editing{left:var(--presrail-w);top:0;}
 body.slide-editing .apptop{display:none;}
+/* The editor's auto-hidden slide strip translates left over its own grid
+   column. Keep the shared application rail above it, including while an
+   auto-hidden rail peeks back in, so Home is never covered. */
+body.slide-editing .presrail,body.slide-editing .presrail-show{z-index:134;}
+body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{
+  display:flex;z-index:133;pointer-events:none;}
+body.slide-editing:has(#open-tabs-row:not([hidden])) .nb-filebar,
+body.slide-editing:has(#open-tabs-row:not([hidden])) .appbar{display:none;}
+body.slide-editing:has(#open-tabs-row:not([hidden])) .open-tabs-row{
+  pointer-events:auto;}
+body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
+  top:var(--open-tabs-h);}
 /* while editing, the panel is just chrome + film strip (the template
    catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
    slide canvas gets the width */
@@ -13032,11 +13053,11 @@ document to its normal styling.</li>
 
 <h3>Presentations</h3>
 <ul>
-<li>The <b>document tabs</b> list open Notebooks and Presentations.
-Click a document to switch to it. The <b>Tabs</b> selector chooses
-<b>Sidebar</b> or <b>Top</b> placement. <b>New&#8230;</b> starts one; the
-<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at its foot collapse or
-auto-hide the rail.</li>
+<li>The open-items rail lists Notebooks and Presentations; when two or
+more are open, the same items also appear as ordinary horizontal tabs.
+Both stay available while editing slides. <b>New&#8230;</b> starts one; the
+<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at the rail's foot collapse or
+auto-hide it.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
 content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> From notebook</b> (Images tab, under Place)
 &mdash; a draggable, resizable frame
@@ -17883,12 +17904,22 @@ items snap to both. Guides, not ink: never printed or exported"
     });
     var n=tabstrip.childNodes.length;
     var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;
-    /* A single tab says nothing useful but costs a whole row. */
-    if(openTabsRow) openTabsRow.hidden=n<2;
+    /* The deck registers its presentation tabs here. One source still
+       makes both the side library and the ordinary top strip, rather than
+       turning either into a separate navigation model. */
+    if(APP.renderPresentationTabs) APP.renderPresentationTabs();
+    else refreshOpenTabsRow();
     railFilter();
     refreshChrome();
+  }
+  function refreshOpenTabsRow(){
+    var n=topTabstrip?topTabstrip.querySelectorAll('.tab').length:0;
+    /* A single open item says nothing useful but costs a whole row. */
+    if(openTabsRow) openTabsRow.hidden=n<2;
     if(APP.measureChrome) APP.measureChrome();
   }
+  APP.refreshOpenTabsRow=refreshOpenTabsRow;
+  APP.renderTabs=renderTabs;
   function activate(stem){
     if(!APP.shells[stem]) return;
     /* The shared rail stays live beside the full deck editor. A notebook
@@ -68155,93 +68186,114 @@ window.JunoPptx = (function () {
      above it lists open notebooks, and two doors under it lead to Recents
      and to the whole library. The library dialog took the folders and the
      filing with it (renderPresentationHub). */
+  function presentationTabNames(editing){
+    var names=openPresentationNames();
+    /* The deck on screen is open whatever the list says: a brand-new,
+       never-saved presentation is not yet anywhere the list can find it. */
+    if(editing&&pres&&pres.name&&names.indexOf(pres.name)<0)
+      names.push(pres.name);
+    return names;
+  }
+  function presItem(nm,savedNames,editing,top){
+    var p=presentationByName(nm)||{name:nm};
+    var isCur=nm===pres.name;
+    var t=document.createElement(top?'div':'button');
+    if(!top) t.type='button';
+    /* The same item has a rail and a regular-tab skin. Both call the same
+       switch and close paths, so opening a deck cannot drift by location. */
+    t.className=(top?'tab top-pres-tab':'pr-item ptab')
+      +(isCur&&editing?' current editing':'')
+      +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');
+    t.dataset.pres=nm;
+    var isPoster=/^a\d/.test(String(p.page||''));
+    var isView=isViewPres(p);
+    /* A custom view lights up while ITS styling bar is open, not while
+       the slide stage is (it never opens the slide stage). */
+    var vwOpen=isView&&isCur
+      &&document.body.classList.contains('styling');
+    if(vwOpen) t.className+=' current editing';
+    var kindWord=isView?'custom view':isPoster?'poster':'presentation';
+    var selected=isCur&&(editing||vwOpen);
+    var title=selected
+      ?('Editing "'+nm+'" — use the Junoview logo to return')
+      :('Open '+kindWord+' "'+nm+'"'
+        +(isView?' — restyles the notebook itself':' in the builder'));
+    var action=top?document.createElement('button'):t;
+    if(top){
+      /* A regular tab has its own focusable button; the close button is
+         its sibling, never a button nested inside a tab. */
+      action.type='button';action.className='top-pres-main';
+      action.setAttribute('role','tab');
+      action.setAttribute('aria-selected',selected?'true':'false');
+      action.dataset.pres=nm;action.title=title;
+    } else {
+      t.setAttribute('role','tab');t.title=title;
+    }
+    var ic=document.createElement('span');
+    ic.className=top?'tab-pres-ico':'pr-ico';
+    ic.innerHTML=bic(isView?'newview':isPoster?'newposter':'newdeck');
+    action.appendChild(ic);
+    var lbl=document.createElement('span');lbl.className=top?'tab-t':'pr-t';
+    lbl.textContent=nm||'(unnamed)';
+    action.appendChild(lbl);
+    /* The × closes only this open tab; deletion remains in File where its
+       confirmation can guard saved work. */
+    var del=document.createElement('button');
+    del.type='button';
+    del.className=top?'tab-b':'pr-del';
+    del.title='Close "'+nm+'" (it stays saved)';
+    del.setAttribute('aria-label','Close "'+nm+'"');
+    del.innerHTML=bic('exit')||'&#10005;';
+    del.addEventListener('click',function(e){
+      e.stopPropagation();e.preventDefault();
+      var go=(isCur&&typeof closeGuard==='function')
+        ?closeGuard(nm):Promise.resolve(true);
+      go.then(function(ok){
+        if(!ok) return;
+        if(isCur&&!deckEl.hidden) closeDeck();
+        if(vwOpen) closeCustomView();
+        closeOpenPresentation(nm);
+        renderPresTabs();
+        if(typeof renderDeckPresentationDrawer==='function')
+          renderDeckPresentationDrawer();
+      });
+    });
+    if(top) t.appendChild(action);
+    t.appendChild(del);
+    action.addEventListener('click',function(){
+      if(isCur&&!deckEl.hidden) return;
+      if(vwOpen) return;              /* already the open custom view */
+      choosePresentation(nm);
+    });
+    return t;
+  }
+  function renderTopPresTabs(){
+    var top=$('#top-tabstrip'); if(!top) return;
+    $$('.top-pres-tab',top).forEach(function(t){t.remove();});
+    var savedNames=allSaved().map(function(p){return p.name;});
+    var editing=!deckEl.hidden;
+    presentationTabNames(editing).forEach(function(nm){
+      top.appendChild(presItem(nm,savedNames,editing,true));});
+    if(APP.refreshOpenTabsRow) APP.refreshOpenTabsRow();
+  }
   function renderPresTabs(){
     if(!presstrip) return;
-    /* the rail's filter is re-applied at the end of this: the strip is
-       rebuilt from scratch here, so it arrives unfiltered and a deck
-       created while a filter is live would otherwise appear out of
-       nowhere in a list that is meant to be showing only matches (T75) */
+    /* The rail's filter is re-applied at the end: the strip is rebuilt
+       from scratch here, so a deck created while filtering stays filtered. */
     presstrip.innerHTML='';
     var savedNames=allSaved().map(function(p){return p.name;});
     var editing=!deckEl.hidden;
-    var names=openPresentationNames();
-    /* the deck on screen is open whatever the list says: a brand-new,
-       never-saved presentation is not yet anywhere the list can find it */
-    if(editing&&pres&&pres.name&&names.indexOf(pres.name)<0)
-      names.push(pres.name);
-
-    function presItem(nm){
-      var p=presentationByName(nm)||{name:nm};
-      var isCur=nm===pres.name;
-      var t=document.createElement('button');
-      /* radio model: a row lights up ONLY while its deck is open — back on
-         the notebook view, no presentation stays highlighted */
-      t.className='pr-item ptab'+(isCur&&editing?' current editing':'')
-        +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');   /* T483 */
-      t.setAttribute('role','tab');
-      t.dataset.pres=nm;
-      var isPoster=/^a\d/.test(String(p.page||''));
-      var isView=isViewPres(p);
-      /* a custom view lights up while ITS styling bar is open, not while
-         the slide stage is (it never opens the slide stage) */
-      var vwOpen=isView&&isCur
-        &&document.body.classList.contains('styling');
-      if(vwOpen) t.className+=' current editing';
-      var kindWord=isView?'custom view':isPoster?'poster':'presentation';
-      t.title=(isCur&&(editing||vwOpen))
-        ?('Editing "'+nm+'" — Home, in the top bar, goes back')
-        :('Open '+kindWord+' "'+nm+'"'
-          +(isView?' — restyles the notebook itself':' in the builder'));
-      /* the same drawn icons as the "+ New ..." buttons, so a row and the
-         button that made it read as the same kind of thing — straight
-         from SemIcons, where the "+ New" template tokens also resolve */
-      t.innerHTML='<span class="pr-ico">'
-        +bic(isView?'newview':isPoster?'newposter':'newdeck')
-        +'</span>';
-      var lbl=document.createElement('span');lbl.className='pr-t';
-      lbl.textContent=nm||'(unnamed)';
-      t.appendChild(lbl);
-      /* the × CLOSES the row, the way a notebook tab's does: the
-         presentation stays saved and stays in Recents. Deleting is File ›
-         Delete presentation, where a confirm guards it. A real <button>,
-         focusable and named for screen readers (2026-08-24). */
-      var del=document.createElement('button');
-      del.type='button';
-      del.className='pr-del';del.title='Close "'+nm+'" (it stays saved)';
-      del.setAttribute('aria-label','Close "'+nm+'"');
-      del.innerHTML=bic('exit')||'&#10005;';
-      del.addEventListener('click',function(e){
-        e.stopPropagation();e.preventDefault();
-        /* T434: the deck on screen with changes not yet in its file
-           asks first */
-        var go=(isCur&&typeof closeGuard==='function')
-          ?closeGuard(nm):Promise.resolve(true);
-        go.then(function(ok){
-          if(!ok) return;
-          if(isCur&&!deckEl.hidden) closeDeck();
-          if(vwOpen) closeCustomView();
-          closeOpenPresentation(nm);
-          renderPresTabs();
-          if(typeof renderDeckPresentationDrawer==='function')
-            renderDeckPresentationDrawer();
-        });
-      });
-      t.appendChild(del);
-      t.addEventListener('click',function(){
-        if(isCur&&!deckEl.hidden) return;
-        if(vwOpen) return;            /* already the open custom view */
-        choosePresentation(nm);
-      });
-      return t;
-    }
-    names.forEach(function(nm){presstrip.appendChild(presItem(nm));});
+    var names=presentationTabNames(editing);
+    names.forEach(function(nm){
+      presstrip.appendChild(presItem(nm,savedNames,editing,false));});
     if(!names.length){
       var none=document.createElement('div');
       none.className='pr-none';
       none.textContent='nothing open';
       presstrip.appendChild(none);
     }
-    /* ...and re-applied, now the rows are back (T75) */
+    renderTopPresTabs();
+    /* ...and re-applied, now the rail rows are back (T75). */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
   }
@@ -73733,14 +73785,18 @@ window.JunoPptx = (function () {
   var deckInerted = [];
   var deckFocusReturn = null;
 
-  function deckIsolate(on,railLive){
+  function deckIsolate(on,appNavLive){
     var wanted=[];
     if(on) DECK_BEHIND.forEach(function(sel){
-      if(railLive&&(sel==='#presrail'||sel==='#presrail-show')) return;
+      /* Editor navigation is deliberately shared: the logo rail and its
+         horizontal tabs remain live, while every reader-only control in
+         #apptop is display:none. The audience surface isolates all three. */
+      if(appNavLive&&(sel==='#apptop'||sel==='#presrail'
+          ||sel==='#presrail-show')) return;
       var el=$(sel); if(el) wanted.push(el);
     });
-    /* Moving from the audience view to the editor revives only the rail
-       we put aside. Every other background surface stays inert, and a
+    /* Moving from the audience view to the editor revives only shared
+       navigation. Every other background surface stays inert, and a
        surface that was inert before the deck remains untouched. */
     deckInerted.slice().forEach(function(el){
       if(wanted.indexOf(el)>=0) return;
@@ -80150,6 +80206,9 @@ window.JunoPptx = (function () {
   syncCustomTypes();
   status();
   initPresenterControls();
+  /* app.js owns the one horizontal strip; this registers presentation
+     tabs beside its notebook tabs whenever either list is rebuilt. */
+  APP.renderPresentationTabs=renderTopPresTabs;
   renderPresTabs();
   initRibbonLayoutDoor();
   rbnReadoutBoot();           /* folded doors show their choice (T441) */

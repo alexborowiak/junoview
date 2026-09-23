@@ -9,7 +9,7 @@
      5px of side padding, which is what PowerPoint's small command
      spends. The height stays 28px -- it is a target, and shrinking it
      was never the complaint. */
-  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:35px;}
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- compact file utility line, optional tabs, reader controls --- */
@@ -266,7 +266,8 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 #ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
 #ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
-.open-tabs-row{display:flex;align-items:end;gap:8px;min-height:34px;
+.open-tabs-row{display:flex;align-items:end;gap:8px;height:var(--open-tabs-h);
+  box-sizing:border-box;
   padding:0 8px;background:var(--chrome-1,#0d1a26);
   border-bottom:1px solid #ffffff12;}
 .open-tabs-row[hidden]{display:none!important;}
@@ -277,6 +278,15 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 .top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
   padding:0 8px 0 10px;border-radius:7px 7px 0 0;}
 .top-tabstrip .tab-t{max-width:180px;}
+.top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
+  justify-content:center;flex:none;color:var(--cyan);}
+.top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
+.top-tabstrip .top-pres-tab.current .top-pres-ico{color:currentColor;}
+.top-tabstrip .top-pres-tab.draftonly .tab-t::after{
+  content:" \\2022";color:var(--amber);}
+.top-tabstrip .top-pres-main{display:flex;align-items:center;gap:8px;
+  flex:1;min-width:0;border:0;padding:0;background:none;color:inherit;
+  font:inherit;text-align:left;cursor:pointer;}
 /* The navigation and view commands stay on one short row. The controls
    they operate are a real second header row by default, not a menu that
    covers the notebook; Filters can collapse that row when space matters. */
@@ -528,7 +538,7 @@ body.welcoming{padding-top:0;}
 .card{scroll-margin-top:calc(var(--chrome-h) + 18px);}
 /* builder docked: full-height panel right of the rail; tab / controls
    chrome shifts right so it sits above the DOCUMENT (IDE-style) */
-.deck.creating,.deck.editing{left:var(--presrail-w);}
+.deck.creating{left:var(--presrail-w);}
 body.creating-docs .apptop{
   left:calc(var(--presrail-w) + min(var(--dc-w),94vw));}
 @media (max-width:860px){

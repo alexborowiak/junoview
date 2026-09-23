@@ -97,27 +97,24 @@ junoview
 ```
 
 launches a small local server and opens the **semantic notebook app** in your
-browser. The layout is IDE-style: a **controls bar** on top (**+ Open**
-and the global Hide/Show filters, left-aligned), the **notebook tabs**
-beneath it, and a vertical **presentations rail** down the left edge.
+browser. The layout is IDE-style: a quiet file line and reader controls at the
+top, ordinary **open-document tabs** when there is a choice, and one shared
+application rail down the left edge.
 
-- **+ Open** (controls bar, top left) browses your file system; or just
+- **Open** (the file line) browses your file system; or just
   **drag-and-drop `.ipynb` files** anywhere onto the window — or paste a
   **URL** into the open dialog (GitHub `blob` links are converted to raw
   automatically). URL notebooks reload with ↻ and come back on restart.
-- Every notebook opens as a **tab**. Click to switch, **↻** re-reads a
-  notebook from disk after you re-run it in Jupyter, **✕** closes it.
-- The **presentations rail** (left edge) stacks your presentations
-  vertically under a **Documents** button. Exactly one item is active at a
-  time: click a ▶ presentation to open it in the builder, click
-  **Documents** to go back — that button is always visible, so there is
-  always an obvious way out (`Esc` and the builder's **✕ Close** work
-  too). **New** starts a presentation; unsaved drafts carry an amber dot
-  and stay listed while you work on others. **«** collapses the rail to
-  icons, and again to hide it completely — a small **»** handle at the
-  bottom-left brings it back. While the builder is docked, notebook tabs
-  keep working — switch tabs to pull cards from different notebooks into
-  the same deck.
+- Every open notebook and presentation appears in the shared **left rail**;
+  with two or more open, the same items also appear as familiar horizontal
+  tabs. Click to switch, **↻** re-reads a notebook from disk after you
+  re-run it in Jupyter, and **✕** closes an open item without deleting it.
+- The **Junoview logo** in the rail goes Home. **New** starts a presentation;
+  unsaved drafts carry an amber dot. Recents and the full presentation library
+  are separate from the short list of currently open items. **«** collapses
+  the rail to icons, and again to hide it completely — a small **»** handle
+  at the bottom-left brings it back. The rail and top tabs stay usable while
+  editing slides, so another notebook is always available as a card source.
 - Open tabs and recent files are remembered in `junoview_project.json` next to
   where you launched the app — restart later and your workspace comes back.
 - Presentations can **mix cards from every open tab** and save into the same
@@ -232,22 +229,23 @@ widget extras come with `pip install "junoview[widget]"`.
 - **Figure stage** — each diagnostic as a card: title, output, serif caption,
   amber `derives from …` provenance chips (click to jump to a source), and a
   collapsible code block.
-- **Controls bar** (top row, global — it applies to every tab) — three
-  buttons whose labels follow the state: *Hide/Show figures*, *Hide/Show
-  markup* (the markdown/equation cells) and *Hide/Show code*. **Show
-  code shows ALL code**: it reveals the code-only cards *and* unfolds the
-  code tucked under every figure and dataset card in one click. Any
-  combination works — hide code for a figures-plus-documentation reading
-  view, leave only markup for just the prose. A hidden card collapses to
-  a slim dashed stub that expands in place when clicked.
-- **Raw notebook** (controls bar) — flips the active tab to the notebook
+- **Reader header** — Outline, Variables and the full filter controls are
+  visible by default; **Filters** can collapse that row when a shorter header
+  is useful. The file name and compact source path live above it, while view
+  actions stay together on the right. The controls filter figures, markdown,
+  code and output for the active notebook. A hidden card collapses to a slim
+  dashed stub that expands in place when clicked.
+- **Raw notebook** (reader header) — flips the active tab to the notebook
   exactly as authored: every cell in order, `#|` directives visible,
   outputs underneath. This is the transparency view — it shows precisely
   where each card's title, caption and section came from. Click again
   (or any nav link) to return to the formatted view.
-- **Notebook tabs** (beneath the controls) — one per open notebook.
-- **Presentations rail** (left edge, vertical) — a **Documents** button on
-  top, then your presentations; the active item is highlighted.
+- **Open-document tabs** — the conventional horizontal strip and the left
+  rail mirror each other whenever two or more notebooks, traces or
+  presentations are open.
+- **Application rail** (left edge, vertical) — the logo goes Home; it lists
+  only open files and presentations, with separate doors to recents and the
+  full presentation library.
 - Responsive to mobile, keyboard-navigable, respects reduced-motion.
 
 ---

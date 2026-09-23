@@ -45,6 +45,9 @@
   syncCustomTypes();
   status();
   initPresenterControls();
+  /* app.js owns the one horizontal strip; this registers presentation
+     tabs beside its notebook tabs whenever either list is rebuilt. */
+  APP.renderPresentationTabs=renderTopPresTabs;
   renderPresTabs();
   initRibbonLayoutDoor();
   rbnReadoutBoot();           /* folded doors show their choice (T441) */

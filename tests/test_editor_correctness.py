@@ -1250,10 +1250,9 @@ def test_the_tools_fold_away(out):
     assert ".rbn-tabs .rbn-fold{align-self:center;" in out
 
 
-def test_open_notebooks_live_in_both_top_and_side_tab_views(out):
-    """Open files are available as conventional top tabs and as the
-    side library view at the same time. Both are rebuilt from makeTab(),
-    keeping close buttons, trace tabs and version markers identical.
+def test_open_documents_live_in_both_top_and_side_tab_views(out):
+    """Open files and presentations have one vertical library and one
+    ordinary top strip. The editor keeps both navigation surfaces live.
     """
     rail = out.split('class="presrail"')[1].split("</nav>")[0]
     assert 'id="tabstrip"' in rail
@@ -1261,8 +1260,16 @@ def test_open_notebooks_live_in_both_top_and_side_tab_views(out):
     assert 'id="open-tabs-row"' in out
     assert 'id="top-tabstrip"' in out
     assert "var tabstrip=$('#tabstrip'),topTabstrip=$('#top-tabstrip')," in out
+    assert "if(APP.renderPresentationTabs) APP.renderPresentationTabs();" in out
+    assert "function renderTopPresTabs(){" in out
+    assert "APP.renderPresentationTabs=renderTopPresTabs;" in out
+    assert "top.appendChild(presItem(nm,savedNames,editing,true));" in out
+    assert "action.setAttribute('role','tab');" in out
+    assert "action.setAttribute('aria-selected',selected?'true':'false');" in out
     assert "if(openTabsRow) openTabsRow.hidden=n<2;" in out
     assert ".presrail .tabstrip{display:flex;flex-direction:column;" in out
+    assert "body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{" in out
+    assert "body.slide-editing .presrail,body.slide-editing .presrail-show" in out
     # the side label only appears when there is something to list
     assert "var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;" in out
 

@@ -2045,8 +2045,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T506 (2026-09-23): reader and presentation editor now share the live
 # application rail and App-menu language; the reader's Full screen / Present
 # pair matches the editor's hierarchy.
-EXPECTED_MD5 = "6690dd99fc8ed02a0232eb4c0efeea20"
-EXPECTED_BYTES = 4519922
+# T507 (2026-09-23): the ordinary top strip now mirrors every open
+# presentation as well as notebooks and remains usable over the editor.
+EXPECTED_MD5 = "85704d789738b37f0aaf6878df9514f2"
+EXPECTED_BYTES = 4522728
 
 
 def _render_example() -> str:

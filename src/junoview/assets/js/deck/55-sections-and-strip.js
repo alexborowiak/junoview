@@ -1272,14 +1272,18 @@
   var deckInerted = [];
   var deckFocusReturn = null;
 
-  function deckIsolate(on,railLive){
+  function deckIsolate(on,appNavLive){
     var wanted=[];
     if(on) DECK_BEHIND.forEach(function(sel){
-      if(railLive&&(sel==='#presrail'||sel==='#presrail-show')) return;
+      /* Editor navigation is deliberately shared: the logo rail and its
+         horizontal tabs remain live, while every reader-only control in
+         #apptop is display:none. The audience surface isolates all three. */
+      if(appNavLive&&(sel==='#apptop'||sel==='#presrail'
+          ||sel==='#presrail-show')) return;
       var el=$(sel); if(el) wanted.push(el);
     });
-    /* Moving from the audience view to the editor revives only the rail
-       we put aside. Every other background surface stays inert, and a
+    /* Moving from the audience view to the editor revives only shared
+       navigation. Every other background surface stays inert, and a
        surface that was inert before the deck remains untouched. */
     deckInerted.slice().forEach(function(el){
       if(wanted.indexOf(el)>=0) return;

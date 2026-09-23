@@ -77,6 +77,10 @@ def test_open_tabs_are_always_available_in_both_places():
     assert 'id="top-tabstrip"' in page
     assert "topTabstrip.innerHTML='';" in js
     assert "var side=makeTab(stem); if(side) tabstrip.appendChild(side);" in js
-    assert "var top=makeTab(stem); if(top&&topTabstrip) topTabstrip.appendChild(top);" in js
+    assert ("var top=makeTab(stem); if(top&&topTabstrip) "
+            "topTabstrip.appendChild(top);" in js)
+    assert "if(APP.renderPresentationTabs) APP.renderPresentationTabs();" in js
+    assert "function refreshOpenTabsRow(){" in js
+    assert "topTabstrip.querySelectorAll('.tab').length" in js
     assert "if(openTabsRow) openTabsRow.hidden=n<2;" in js
     assert "setTabPlacement" not in js

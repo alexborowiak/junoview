@@ -1225,93 +1225,114 @@
      above it lists open notebooks, and two doors under it lead to Recents
      and to the whole library. The library dialog took the folders and the
      filing with it (renderPresentationHub). */
+  function presentationTabNames(editing){
+    var names=openPresentationNames();
+    /* The deck on screen is open whatever the list says: a brand-new,
+       never-saved presentation is not yet anywhere the list can find it. */
+    if(editing&&pres&&pres.name&&names.indexOf(pres.name)<0)
+      names.push(pres.name);
+    return names;
+  }
+  function presItem(nm,savedNames,editing,top){
+    var p=presentationByName(nm)||{name:nm};
+    var isCur=nm===pres.name;
+    var t=document.createElement(top?'div':'button');
+    if(!top) t.type='button';
+    /* The same item has a rail and a regular-tab skin. Both call the same
+       switch and close paths, so opening a deck cannot drift by location. */
+    t.className=(top?'tab top-pres-tab':'pr-item ptab')
+      +(isCur&&editing?' current editing':'')
+      +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');
+    t.dataset.pres=nm;
+    var isPoster=/^a\d/.test(String(p.page||''));
+    var isView=isViewPres(p);
+    /* A custom view lights up while ITS styling bar is open, not while
+       the slide stage is (it never opens the slide stage). */
+    var vwOpen=isView&&isCur
+      &&document.body.classList.contains('styling');
+    if(vwOpen) t.className+=' current editing';
+    var kindWord=isView?'custom view':isPoster?'poster':'presentation';
+    var selected=isCur&&(editing||vwOpen);
+    var title=selected
+      ?('Editing "'+nm+'" — use the Junoview logo to return')
+      :('Open '+kindWord+' "'+nm+'"'
+        +(isView?' — restyles the notebook itself':' in the builder'));
+    var action=top?document.createElement('button'):t;
+    if(top){
+      /* A regular tab has its own focusable button; the close button is
+         its sibling, never a button nested inside a tab. */
+      action.type='button';action.className='top-pres-main';
+      action.setAttribute('role','tab');
+      action.setAttribute('aria-selected',selected?'true':'false');
+      action.dataset.pres=nm;action.title=title;
+    } else {
+      t.setAttribute('role','tab');t.title=title;
+    }
+    var ic=document.createElement('span');
+    ic.className=top?'tab-pres-ico':'pr-ico';
+    ic.innerHTML=bic(isView?'newview':isPoster?'newposter':'newdeck');
+    action.appendChild(ic);
+    var lbl=document.createElement('span');lbl.className=top?'tab-t':'pr-t';
+    lbl.textContent=nm||'(unnamed)';
+    action.appendChild(lbl);
+    /* The × closes only this open tab; deletion remains in File where its
+       confirmation can guard saved work. */
+    var del=document.createElement('button');
+    del.type='button';
+    del.className=top?'tab-b':'pr-del';
+    del.title='Close "'+nm+'" (it stays saved)';
+    del.setAttribute('aria-label','Close "'+nm+'"');
+    del.innerHTML=bic('exit')||'&#10005;';
+    del.addEventListener('click',function(e){
+      e.stopPropagation();e.preventDefault();
+      var go=(isCur&&typeof closeGuard==='function')
+        ?closeGuard(nm):Promise.resolve(true);
+      go.then(function(ok){
+        if(!ok) return;
+        if(isCur&&!deckEl.hidden) closeDeck();
+        if(vwOpen) closeCustomView();
+        closeOpenPresentation(nm);
+        renderPresTabs();
+        if(typeof renderDeckPresentationDrawer==='function')
+          renderDeckPresentationDrawer();
+      });
+    });
+    if(top) t.appendChild(action);
+    t.appendChild(del);
+    action.addEventListener('click',function(){
+      if(isCur&&!deckEl.hidden) return;
+      if(vwOpen) return;              /* already the open custom view */
+      choosePresentation(nm);
+    });
+    return t;
+  }
+  function renderTopPresTabs(){
+    var top=$('#top-tabstrip'); if(!top) return;
+    $$('.top-pres-tab',top).forEach(function(t){t.remove();});
+    var savedNames=allSaved().map(function(p){return p.name;});
+    var editing=!deckEl.hidden;
+    presentationTabNames(editing).forEach(function(nm){
+      top.appendChild(presItem(nm,savedNames,editing,true));});
+    if(APP.refreshOpenTabsRow) APP.refreshOpenTabsRow();
+  }
   function renderPresTabs(){
     if(!presstrip) return;
-    /* the rail's filter is re-applied at the end of this: the strip is
-       rebuilt from scratch here, so it arrives unfiltered and a deck
-       created while a filter is live would otherwise appear out of
-       nowhere in a list that is meant to be showing only matches (T75) */
+    /* The rail's filter is re-applied at the end: the strip is rebuilt
+       from scratch here, so a deck created while filtering stays filtered. */
     presstrip.innerHTML='';
     var savedNames=allSaved().map(function(p){return p.name;});
     var editing=!deckEl.hidden;
-    var names=openPresentationNames();
-    /* the deck on screen is open whatever the list says: a brand-new,
-       never-saved presentation is not yet anywhere the list can find it */
-    if(editing&&pres&&pres.name&&names.indexOf(pres.name)<0)
-      names.push(pres.name);
-
-    function presItem(nm){
-      var p=presentationByName(nm)||{name:nm};
-      var isCur=nm===pres.name;
-      var t=document.createElement('button');
-      /* radio model: a row lights up ONLY while its deck is open — back on
-         the notebook view, no presentation stays highlighted */
-      t.className='pr-item ptab'+(isCur&&editing?' current editing':'')
-        +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');   /* T483 */
-      t.setAttribute('role','tab');
-      t.dataset.pres=nm;
-      var isPoster=/^a\d/.test(String(p.page||''));
-      var isView=isViewPres(p);
-      /* a custom view lights up while ITS styling bar is open, not while
-         the slide stage is (it never opens the slide stage) */
-      var vwOpen=isView&&isCur
-        &&document.body.classList.contains('styling');
-      if(vwOpen) t.className+=' current editing';
-      var kindWord=isView?'custom view':isPoster?'poster':'presentation';
-      t.title=(isCur&&(editing||vwOpen))
-        ?('Editing "'+nm+'" — Home, in the top bar, goes back')
-        :('Open '+kindWord+' "'+nm+'"'
-          +(isView?' — restyles the notebook itself':' in the builder'));
-      /* the same drawn icons as the "+ New ..." buttons, so a row and the
-         button that made it read as the same kind of thing — straight
-         from SemIcons, where the "+ New" template tokens also resolve */
-      t.innerHTML='<span class="pr-ico">'
-        +bic(isView?'newview':isPoster?'newposter':'newdeck')
-        +'</span>';
-      var lbl=document.createElement('span');lbl.className='pr-t';
-      lbl.textContent=nm||'(unnamed)';
-      t.appendChild(lbl);
-      /* the × CLOSES the row, the way a notebook tab's does: the
-         presentation stays saved and stays in Recents. Deleting is File ›
-         Delete presentation, where a confirm guards it. A real <button>,
-         focusable and named for screen readers (2026-08-24). */
-      var del=document.createElement('button');
-      del.type='button';
-      del.className='pr-del';del.title='Close "'+nm+'" (it stays saved)';
-      del.setAttribute('aria-label','Close "'+nm+'"');
-      del.innerHTML=bic('exit')||'&#10005;';
-      del.addEventListener('click',function(e){
-        e.stopPropagation();e.preventDefault();
-        /* T434: the deck on screen with changes not yet in its file
-           asks first */
-        var go=(isCur&&typeof closeGuard==='function')
-          ?closeGuard(nm):Promise.resolve(true);
-        go.then(function(ok){
-          if(!ok) return;
-          if(isCur&&!deckEl.hidden) closeDeck();
-          if(vwOpen) closeCustomView();
-          closeOpenPresentation(nm);
-          renderPresTabs();
-          if(typeof renderDeckPresentationDrawer==='function')
-            renderDeckPresentationDrawer();
-        });
-      });
-      t.appendChild(del);
-      t.addEventListener('click',function(){
-        if(isCur&&!deckEl.hidden) return;
-        if(vwOpen) return;            /* already the open custom view */
-        choosePresentation(nm);
-      });
-      return t;
-    }
-    names.forEach(function(nm){presstrip.appendChild(presItem(nm));});
+    var names=presentationTabNames(editing);
+    names.forEach(function(nm){
+      presstrip.appendChild(presItem(nm,savedNames,editing,false));});
     if(!names.length){
       var none=document.createElement('div');
       none.className='pr-none';
       none.textContent='nothing open';
       presstrip.appendChild(none);
     }
-    /* ...and re-applied, now the rows are back (T75) */
+    renderTopPresTabs();
+    /* ...and re-applied, now the rail rows are back (T75). */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
   }

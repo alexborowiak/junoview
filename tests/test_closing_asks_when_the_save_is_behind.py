@@ -38,7 +38,7 @@ def test_the_tab_and_the_rail_both_ask(out):
     assert ("    if(!window.confirm('\\u201c'+nm+'\\u201d has changes not "
             "yet saved to '") in fn
     assert "    return saveNow().then(function(ok){" in fn
-    # the rail's x goes through it for the deck on screen
-    assert ("        var go=(isCur&&typeof closeGuard==='function')\n"
-            "          ?closeGuard(nm):Promise.resolve(true);") in out
-    assert "          if(isCur&&!deckEl.hidden) closeDeck();" in out
+    # Both rail and top-tab close buttons use the shared guarded path.
+    assert ("      var go=(isCur&&typeof closeGuard==='function')\n"
+            "        ?closeGuard(nm):Promise.resolve(true);") in out
+    assert "        if(isCur&&!deckEl.hidden) closeDeck();" in out

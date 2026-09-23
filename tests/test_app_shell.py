@@ -106,7 +106,8 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     assert "overflow-x:auto;scrollbar-width:thin;" in out
     assert "function fitRibbon" in out
     # dense, PowerPoint-style: --ab-btn-h is THE viewer button height
-    assert "--ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;}" in out
+    assert ("--ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;"
+            "--open-tabs-h:35px;}" in out)
     assert "flex:none;white-space:nowrap;height:var(--ab-btn-h);" in out
     # the stages: tighter spacing, then the redundant state words —
     # NEVER the labels. No rule may ever hide .btxt in the ribbon.
@@ -249,13 +250,14 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
 
 def test_top_left_declutter_keeps_navigation_in_the_reader_bar(out):
     """Navigation is beside Filters, while conventional tabs appear only
-    when there is more than one open document.
+    when there is more than one open document and reuse a fixed slim row.
     """
     assert 'class="tabs-label"' not in out
     assert (out.index('id="menubtn"') < out.index('id="filters-toggle"')
             < out.index('id="view-grp"'))
     assert 'id="open-tabs-row"' in out and 'id="top-tabstrip"' in out
     assert 'class="tabrow-open"' not in out
+    assert '--open-tabs-h:35px' in out
     assert ".appbar .menubtn{display:inline-flex;" in out
 
 

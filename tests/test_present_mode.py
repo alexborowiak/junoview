@@ -490,11 +490,11 @@ def test_the_document_behind_the_deck_goes_inert_except_the_live_rail(out):
     property. So Tab walked off the editor into a ~12,670px document
     nobody could see, and a screen reader met two applications at once.
     """
-    assert "function deckIsolate(on,railLive){" in out
+    assert "function deckIsolate(on,appNavLive){" in out
     assert "el.setAttribute('inert','');" in out
     assert "el.setAttribute('aria-hidden','true');" in out
     assert "el.removeAttribute('inert');" in out
-    assert "if(railLive&&(sel==='#presrail'||sel==='#presrail-show')) return;" in out
+    assert "if(appNavLive&&(sel==='#apptop'||sel==='#presrail'" in out
 
 
 def test_it_isolates_named_surfaces_rather_than_sweeping_the_body(out):
