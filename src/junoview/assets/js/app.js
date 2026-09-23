@@ -354,6 +354,12 @@
   }
   function activate(stem){
     if(!APP.shells[stem]) return;
+    /* The shared rail stays live beside the full deck editor. A notebook
+       click there means leave the editor for that notebook, rather than
+       leaving two competing document surfaces on screen. Create mode is
+       deliberately excluded: it still uses the notebook as a live source. */
+    if(document.body.classList.contains('slide-editing')&&APP.deckClose)
+      APP.deckClose();
     /* looking at a notebook is not being at Home; opening one from the
        welcome has to take you off it */
     atHome=false;
@@ -3519,14 +3525,12 @@
       e.stopPropagation();on=!on;apply();});
     document.addEventListener('mousemove',function(e){
       if(!on) return;
-      /* ONE panel answers the left edge. The deck editor is a full-screen
-         surface with its own left column and its own auto-hide, and
-         deckIsolate() has put `inert` on this rail for as long as it is
-         open (2026-08-30 review) -- so peeking it there produced a panel
-         you could see and not click, over the top of the editor's own.
-         The way back out of the editor is #deck-exit in the QAT, which is
-         visible throughout (syncTopBar). */
-      if(document.body.classList.contains('deck-open')) return;
+      /* The audience view owns the left edge, but the editor deliberately
+         keeps this real rail live. That makes auto-hide the same useful
+         choice in both document and editor views, rather than a dead
+         preference as soon as a presentation opens. */
+      if(document.body.classList.contains('deck-open')
+         &&!document.body.classList.contains('slide-editing')) return;
       var peek=document.body.classList.contains('prrail-peek');
       /* A four-pixel trigger is easy to skip between mousemove samples,
          especially when the pointer is thrown at the edge.  The rail is

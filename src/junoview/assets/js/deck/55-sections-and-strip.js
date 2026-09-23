@@ -1070,7 +1070,7 @@
         +'is closed or lost.';
     }
     syncLateButton();
-    if(typeof renderDeckPresentationDrawer==='function')
+    if(mode==='view'&&typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
   }
   function setUIMode(m){
@@ -1125,6 +1125,7 @@
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
+    if(typeof barApply==='function') barApply();
     /* nothing moves any more: the document actions LIVE in the left
        column in every mode (2026-08-19) */
     /* the builder panel stays visible while editing a slide */
@@ -1161,7 +1162,7 @@
     document.body.classList.toggle('deck-open',full);
     /* the same condition as the class, so the two can never disagree
        about whether this is a full-screen surface (T104) */
-    deckIsolate(full);
+    deckIsolate(full,editing);
     if(full) deckTakeFocus();
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
@@ -1271,26 +1272,27 @@
   var deckInerted = [];
   var deckFocusReturn = null;
 
-  function deckIsolate(on){
-    if(on){
-      if(deckInerted.length) return;          /* already isolated */
-      DECK_BEHIND.forEach(function(sel){
-        var el=$(sel);
-        /* something already inert is inert for its own reason, and
-           un-inerting it on close would be this feature breaking
-           another one */
-        if(!el||el.hasAttribute('inert')) return;
-        el.setAttribute('inert','');
-        el.setAttribute('aria-hidden','true');
-        deckInerted.push(el);
-      });
-      return;
-    }
-    deckInerted.forEach(function(el){
-      el.removeAttribute('inert');
-      el.removeAttribute('aria-hidden');
+  function deckIsolate(on,railLive){
+    var wanted=[];
+    if(on) DECK_BEHIND.forEach(function(sel){
+      if(railLive&&(sel==='#presrail'||sel==='#presrail-show')) return;
+      var el=$(sel); if(el) wanted.push(el);
     });
-    deckInerted=[];
+    /* Moving from the audience view to the editor revives only the rail
+       we put aside. Every other background surface stays inert, and a
+       surface that was inert before the deck remains untouched. */
+    deckInerted.slice().forEach(function(el){
+      if(wanted.indexOf(el)>=0) return;
+      el.removeAttribute('inert');el.removeAttribute('aria-hidden');
+      deckInerted.splice(deckInerted.indexOf(el),1);
+    });
+    wanted.forEach(function(el){
+      /* something already inert is inert for its own reason, and
+         un-inerting it on close would be this feature breaking another */
+      if(el.hasAttribute('inert')||deckInerted.indexOf(el)>=0) return;
+      el.setAttribute('inert','');el.setAttribute('aria-hidden','true');
+      deckInerted.push(el);
+    });
   }
 
   /* Focus has to GO somewhere when the background stops accepting it,
@@ -2823,7 +2825,9 @@
       var hi=fitFilmMax();
       var w=0;
       function mv(ev){
-        w=Math.max(150,Math.min(hi,ev.clientX));
+        /* The live app rail shifts the editor right of x=0. */
+        var x=ev.clientX-deckEl.getBoundingClientRect().left;
+        w=Math.max(150,Math.min(hi,x));
         deckEl.style.setProperty('--film-w',w+'px');
         /* the stage just lost or gained that width, so the page has to
            re-fit as you drag or the slide sits wrong until you let go */
@@ -2899,9 +2903,11 @@
   /* ---- App menu: Theme, help and support. app.js owns the actions. ---- */
   (function(){
     var h=wireMenuToggle('deck-appwrap','deck-app','deck-app-menu');
-    if(!h) return;
-    $$('.dc-mi',h.menu).forEach(function(b){
-      b.addEventListener('click',function(){overlayHide(h.menu);});
+    var reader=wireMenuToggle('app-appwrap','app-app','app-app-menu');
+    [h,reader].filter(Boolean).forEach(function(menu){
+      $$('.dc-mi',menu.menu).forEach(function(b){
+        b.addEventListener('click',function(){overlayHide(menu.menu);});
+      });
     });
   })();
   menuAction('#mi-new',newPresentation);

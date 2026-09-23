@@ -2042,8 +2042,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T503: open-document tabs with readable names and sidebar/top placement.
 # T504/T505 (2026-09-22/23): conventional top tabs alongside the side library,
 # a minimal outline and the final reader-header layout.
-EXPECTED_MD5 = "2efc5fb602d80d45751835bab8d616be"
-EXPECTED_BYTES = 4520818
+# T506 (2026-09-23): reader and presentation editor now share the live
+# application rail and App-menu language; the reader's Full screen / Present
+# pair matches the editor's hierarchy.
+EXPECTED_MD5 = "6690dd99fc8ed02a0232eb4c0efeea20"
+EXPECTED_BYTES = 4519922
 
 
 def _render_example() -> str:

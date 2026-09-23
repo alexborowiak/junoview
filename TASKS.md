@@ -9775,3 +9775,10 @@ any reading. The rest are T466 onwards.
   cover notebook content or vanish after switching tabs. Filters remains the
   optional compact mode, and the utility-line file name is larger while its
   path stays a quieter second line.
+- [x] **T506 — Share reader and presentation-editor chrome.** (2026-09-23)
+  The editor now uses the live application rail rather than rebuilding a
+  second open-items drawer: the Junoview logo is the one Home control, and
+  open notebooks and presentations are the same list in both contexts. The
+  audience view keeps its compact edge drawer. Reader-wide choices now use
+  the same quiet App menu; Find remains direct, while Full screen and Present
+  share the editor's order and visual hierarchy.

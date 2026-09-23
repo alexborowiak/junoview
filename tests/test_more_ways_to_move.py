@@ -362,8 +362,8 @@ def test_overlays_and_escape_after_the_second_pass(out):
     # picks close through the owner
     assert "      overlayHide(menu);   /* T482: through the owner" in out
     assert "        e.stopPropagation();fn();overlayHide(menu);});   /* T482 */" in out
-    # the pop-up drawer and the find pop are on the stack
-    assert "      overlayShow($('#qat-open')||null,d);" in out
+    # the audience drawer and the find pop are on the stack
+    assert "      overlayShow($('#deck-pres-open')||null,d);" in out
     assert "overlayShow($('#qat-find'),pop);" in out
     # the theme menu closes the deck's menus first, and keeps its Escape
     assert "      window.SemApp.deckOverlayCloseAll();" in out

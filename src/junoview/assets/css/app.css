@@ -261,6 +261,11 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 .nb-file-utils{display:flex;align-items:center;gap:4px;flex:none;}
 .nb-file-utils .toggle{height:var(--ab-btn-h);font-size:11.5px;
   white-space:nowrap;}
+/* The reader's primary Present action uses the editor's quiet accented
+   outline, not the filled state used for an already-selected toggle. */
+#ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
+  transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
+#ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
 .open-tabs-row{display:flex;align-items:end;gap:8px;min-height:34px;
   padding:0 8px;background:var(--chrome-1,#0d1a26);
   border-bottom:1px solid #ffffff12;}
@@ -523,7 +528,7 @@ body.welcoming{padding-top:0;}
 .card{scroll-margin-top:calc(var(--chrome-h) + 18px);}
 /* builder docked: full-height panel right of the rail; tab / controls
    chrome shifts right so it sits above the DOCUMENT (IDE-style) */
-.deck.creating{left:var(--presrail-w);}
+.deck.creating,.deck.editing{left:var(--presrail-w);}
 body.creating-docs .apptop{
   left:calc(var(--presrail-w) + min(var(--dc-w),94vw));}
 @media (max-width:860px){

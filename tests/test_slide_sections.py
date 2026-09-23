@@ -481,8 +481,10 @@ def test_the_strip_cannot_eat_the_ribbon(out):
     assert "bar.style.width='max-content';" in out
     assert "min=Math.ceil(bar.getBoundingClientRect().width);" in out
     assert "min=bar.scrollWidth;" not in out
-    # the drag obeys the measured ceiling, not the old blind 900px
-    assert "w=Math.max(150,Math.min(hi,ev.clientX));" in out
+    # the drag obeys the measured ceiling, not the old blind 900px. The
+    # shared app rail shifts the editor right, so convert pointer x first.
+    assert "var x=ev.clientX-deckEl.getBoundingClientRect().left;" in out
+    assert "w=Math.max(150,Math.min(hi,x));" in out
     # ...and the ladder is re-run once the handle is let go
     assert "fitFilmMax();fitEditRibbon();" in out
     # the measurement leaves the ribbon exactly as it found it

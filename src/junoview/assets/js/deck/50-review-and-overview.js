@@ -1607,10 +1607,10 @@
       var b=$(create?'#presentation-hub-new':'#presentation-hub-file');
       if(b) b.focus();},0);
   }
-  /* two doors, one drawer: the presenting bar's button and the editing
-     bar's chevron beside Home (T396) both say whether it is open */
+  /* The audience view owns one compact open-items drawer. The editor uses
+     the real app rail instead, so its logo, tabs and rows cannot drift. */
   function drawerDoors(){
-    return [$('#deck-pres-open'),$('#qat-open')].filter(Boolean);
+    return [$('#deck-pres-open')].filter(Boolean);
   }
   /* T448: a DOCKED bar does not close. Its whole point is staying
      there, and the pointer wanders off it constantly while you work,
@@ -1684,10 +1684,19 @@
   function barApply(){
     var d=$('#deck-pres-drawer'); if(!d||!deckEl) return;
     var c=barCfg();
-    d.classList.toggle('dock-left',c.dock==='left');
-    d.classList.toggle('dock-top',c.dock==='top');
-    deckEl.classList.toggle('openbar-left',c.dock==='left');
-    deckEl.classList.toggle('openbar-top',c.dock==='top');
+    /* The editor has the shared app rail; this configurable drawer is
+       reserved for the audience view where the app rail is deliberately
+       absent. */
+    var audience=mode==='view';
+    d.classList.toggle('dock-left',audience&&c.dock==='left');
+    d.classList.toggle('dock-top',audience&&c.dock==='top');
+    deckEl.classList.toggle('openbar-left',audience&&c.dock==='left');
+    deckEl.classList.toggle('openbar-top',audience&&c.dock==='top');
+    if(!audience){
+      d.hidden=true;
+      drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','false');});
+      return;
+    }
     if(c.dock!=='pop'&&d.hidden){d.hidden=false;renderDeckPresentationDrawer();}
     drawerDoors().forEach(function(b){
       b.setAttribute('aria-expanded',(!d.hidden).toString());});
@@ -1940,14 +1949,14 @@
   }
   function openDeckPresentationDrawer(){
     var d=$('#deck-pres-drawer');
-    if(!d) return;
+    if(!d||mode!=='view') return;
     renderDeckPresentationDrawer();
     /* T482: a POP-UP is on the overlay owner's stack, like every menu:
        File opened underneath it and both stood open (2026-09-15
        review); opening File closes it now, and Escape and an outside
        click work. A docked bar is part of the frame, not an overlay. */
     if(!barDocked()&&typeof overlayShow==='function')
-      overlayShow($('#qat-open')||null,d);
+      overlayShow($('#deck-pres-open')||null,d);
     else d.hidden=false;
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','true');});
   }
@@ -1970,8 +1979,7 @@
       var d=$('#deck-pres-drawer'); if(!d) return;
       /* T448: a docked bar is already open and stays open */
       if(barDocked()) return;
-      if(deckEl.hidden||(mode!=='view'&&mode!=='edit')) return;
-      if(mode==='edit'&&filmAutoOn()) return;
+      if(deckEl.hidden||mode!=='view') return;
       var hub=$('#presentation-hub');
       if(hub&&!hub.hidden) return;
       if(d.hidden){
@@ -2016,12 +2024,6 @@
       closeDeckPresentationDrawer(true);
     });
     barApply();
-    /* T396: Home from the editor's own bar */
-    var home=$('#qat-home');
-    if(home) home.addEventListener('click',function(){
-      if(window.SemApp&&window.SemApp.goHome) window.SemApp.goHome(true);
-      else closeDeck();
-    });
     if(drawerBrowse) drawerBrowse.addEventListener('click',openPresentationHub);
     /* the separate Recents door: the same library dialog, opened on its
        Recent column */

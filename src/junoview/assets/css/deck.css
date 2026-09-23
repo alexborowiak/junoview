@@ -35,9 +35,6 @@ body.deck-open{overflow:hidden;}
   overflow:auto;border:1px solid var(--chrome-line);border-radius:9px;
   background:var(--chrome-2);box-shadow:0 16px 48px #0008;}
 .deck-pres-drawer[hidden]{display:none!important;}
-/* T396: while editing it opens under the thin top bar, over the tab
-   strip and the ribbon, which sit at z-index 131 */
-.deck.editing .deck-pres-drawer{top:40px;z-index:136;}
 .deck-pres-drawer-head{display:flex;align-items:center;gap:8px;
   padding-bottom:8px;border-bottom:1px solid var(--chrome-line);
   color:var(--chrome-ink);font:600 11px var(--mono);letter-spacing:.08em;
@@ -4957,11 +4954,11 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 /* ---- the strip's own resize handle ------------------------------------
    position:fixed, not absolute: .deck-create scrolls, and an absolutely
    positioned child would scroll away from the edge it is supposed to be
-   sitting on. No --presrail-w term because .deck.editing sits at left:0,
-   which is exactly why app.js's #dc-resize cannot be reused here. */
+   sitting on. The shared rail remains live in the editor, so the handle
+   begins after its width rather than at the window's left edge. */
 .film-resize{display:none;position:fixed;top:0;bottom:0;width:6px;
   z-index:130;cursor:col-resize;
-  left:calc(clamp(150px,var(--film-w,min(var(--dc-w),200px)),
+  left:calc(var(--presrail-w) + clamp(150px,var(--film-w,min(var(--dc-w),200px)),
     var(--film-max,46vw)) - 3px);}
 .deck.editing .film-resize{display:block;}
 .deck.editing.strip-off .film-resize,

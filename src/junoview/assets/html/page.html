@@ -39,25 +39,30 @@
     </span>
     <span class="fgrp-row" id="file-dock"></span>
     <span class="nb-file-spacer" aria-hidden="true"></span>
-    <!-- App-wide choices belong with the document identity, not among the
-         controls that change what is shown in this notebook. -->
+    <!-- App-wide choices are one quiet menu, just as they are in the
+         presentation editor.  Find stays direct because it is a document
+         command rather than an application preference. -->
     <span class="nb-file-utils" aria-label="Application controls">
-      <button class="toggle" id="scheme-btn" aria-label="Colour scheme"
-        aria-haspopup="menu" aria-expanded="false"
-        aria-controls="jv-scheme-menu"
-        title="Colour scheme — follow system, dark, light, forest,
- colourful and high contrast"><i data-ic="palette"></i> Theme</button>
-      <a class="toggle appbar-link" id="support-btn"
-        aria-label="Support Junoview on Ko-fi" href="{kofi}"
-        target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
-        ><i data-ic="heart"></i> Support</a>
+      <span class="dc-menuwrap" id="app-appwrap">
+        <button class="toggle" id="app-app" aria-haspopup="true"
+          aria-expanded="false" aria-controls="app-app-menu"
+          title="Theme, help and support"><i data-ic="theme"></i> App &#9662;</button>
+        <div class="dc-menu" id="app-app-menu" hidden>
+          <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
+            aria-expanded="false" aria-controls="jv-scheme-menu"
+            title="Choose a colour scheme">Theme&#8230;</button>
+          <button class="dc-mi" id="help-btn"
+            title="How to use this, and everything it can do (?)">How to
+            use&#8230;</button>
+          <a class="dc-mi" id="support-btn" href="{kofi}"
+            target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
+            >Support Junoview &#9829;</a>
+        </div>
+      </span>
       <button class="toggle" id="doc-find"
         title="Find words anywhere in this notebook — titles, prose,
  code and output, folded cells included (Ctrl+F)"
         ><i data-ic="find"></i> Find</button>
-      <button class="toggle" id="help-btn"
-        title="How to use, and everything this tool can do"
-        aria-label="Help"><i data-ic="help"></i> Help</button>
     </span>
   </div>
   <!-- Open documents are conventional tabs when there is a choice. The
@@ -221,21 +226,17 @@
  collapse and hide cell by cell. Toggle back for the narrative document."
       ><i data-ic="tree"></i><span class="btxt">Tree</span></button>
     </span>
-    <!-- T364: FULL SCREEN, ANYWHERE (2026-09-07, user: "there needs to
-         be a universal full screen button somewhere so whole thing can
-         always be full screen"). The deck has had one beside Present
-         since T216, at the user's own asking; the viewer had only
-         Present, which changes WHAT you are looking at as well as how
-         big it is. Stacked under Present rather than added to the App
-         group: it is the same idea as its neighbour, and a sixth button
-         over there cost the bar 90px it does not have. -->
+    <!-- These are the same two viewer-level actions as the editor's
+         Full screen / Present pair. The document has no alternate start
+         point, so Present stays a direct button rather than a fake split
+         menu. -->
     <span class="vw-stack">
-    <button class="toggle" id="doc-present"
-      title="Present this document full screen (Narrative or Tree). Esc to
- exit."><i data-ic="present"></i><span class="btxt">Present</span></button>
     <button class="toggle" id="doc-full" aria-pressed="false"
       title="Fill the display with Junoview (Esc to leave)"
       ><i data-ic="expand"></i><span class="btxt">Full screen</span></button>
+    <button class="toggle primary" id="doc-present"
+      title="Present this document full screen (Narrative or Tree). Esc to
+ exit."><i data-ic="play"></i><span class="btxt">Present</span></button>
     </span>
     <!-- Creating a presentation is one deliberate action.  The dialog
          shows every choice at once, rather than scattering “from this

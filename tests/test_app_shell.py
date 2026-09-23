@@ -218,12 +218,14 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
     # THEMES in the palette menu, beside forest and the rest
     assert 'id="theme-btn"' not in out
     assert 'id="scheme-btn"' in out
-    # Raw / Tree / Present are one unit on the right; global Theme /
-    # Support / Find / Help sit beside the file identity above it.
+    # Raw / Tree / Full screen / Present are one unit on the right; global
+    # Theme, help and support are one App menu beside the file identity.
     assert 'class="btn-grp" id="view-grp"' in out
     assert (out.index('id="scheme-btn"') < out.index('id="view-grp"')
-            < out.index('id="view-raw"')
-            < out.index('id="doc-present"'))
+            < out.index('id="view-raw"'))
+    assert out.index('id="doc-full"') < out.index('id="doc-present"')
+    assert '<button class="toggle primary" id="doc-present"' in out
+    assert 'id="app-appwrap"' in out
     assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
@@ -457,6 +459,7 @@ def test_app_buttons_share_the_file_utility_line(out):
     assert 'class="tabsrow nb-quickbar"' not in out
     assert '.nb-quickbar' not in out
     assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
+    assert 'id="app-app"' in out and 'id="app-app-menu"' in out
     # the group's buttons came with it (the dark/light toggle became a
     # theme in the palette menu, 2026-08-19)
     for button in ('id="scheme-btn"', 'id="support-btn"', 'id="help-btn"'):

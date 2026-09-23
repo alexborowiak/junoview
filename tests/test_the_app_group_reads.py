@@ -47,13 +47,16 @@ def test_global_buttons_are_grouped_in_the_file_utility_line():
     assert "#ab-app" not in css
 
 
-def test_help_is_not_an_icon_only_button():
+def test_reader_uses_the_editor_app_menu():
     css = assets.load("css/app.css")
     assert "#help-btn{padding:0;justify-content:center;" not in css
     page = assets.load("html/page.html")
-    btn = page.split('id="help-btn"')[1].split("</button>")[0]
-    assert "Help</button>" in page.split('id="help-btn"')[1][:400]
-    assert 'data-ic="help"' in btn
+    assert 'id="app-appwrap"' in page
+    assert '<i data-ic="theme"></i> App &#9662;</button>' in page
+    menu = page.split('id="app-app-menu"')[1].split("</div>")[0]
+    assert 'id="scheme-btn"' in menu
+    assert 'id="help-btn"' in menu and "How to\n            use&#8230;" in menu
+    assert 'id="support-btn"' in menu
 
 
 def test_the_icon_only_square_rule_names_only_icon_only_buttons():

@@ -3240,22 +3240,19 @@ def test_the_ribbons_auto_hide_cannot_move_the_strips_ceiling(out):
     assert ".rbn-tabs .rbn-autobtn{" in out
 
 
-def test_the_decks_left_edge_is_not_claimed_by_the_inert_rail(out):
-    """T154, and a defect it had to fix to work at all.
+def test_the_editors_left_edge_keeps_the_live_rail_available(out):
+    """The audience owns the left edge; the editor deliberately does not.
 
-    `initRailAuto`'s mousemove had no deck guard, so with rail auto-hide
-    on, reaching the left edge INSIDE the deck editor slid the
-    presentations rail in over the deck -- a panel that `deckIsolate`
-    (T104) has marked `inert`, so it appeared and could not be used. The
-    film column's own reveal uses that same edge, so the two would have
-    fought. The rail now stands down while the deck is open.
+    The shared rail is live beside the editor, including for people who
+    choose auto-hide, so the same logo and open-item list remains reachable
+    without recreating a second drawer.
     """
     assert "prrail-peek" in out
     assert "e.clientX<=14" in out
     # the guard names the deck, and sits in the rail's own listener
     i = out.index("function initRailAuto(")
     block = out[i:i + 1400]
-    assert "deck-open" in block or "deckOpen" in block
+    assert "deck-open" in block and "slide-editing" in block
 
 
 def test_the_resize_handle_can_be_seen_reached_and_clicked_past(out):

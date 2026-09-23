@@ -47,8 +47,9 @@ def test_a_docked_bar_is_a_track_of_the_decks_own_grid(out):
     # across the top the list flows sideways, so the strip is one band
     assert ".deck-pres-drawer.dock-top .deck-pres-list{flex-direction:row;" in out
     # the classes that drive all of it, and the re-fit that follows
-    assert "    d.classList.toggle('dock-left',c.dock==='left');" in out
-    assert "    deckEl.classList.toggle('openbar-top',c.dock==='top');" in out
+    assert "    var audience=mode==='view';" in out
+    assert "    d.classList.toggle('dock-left',audience&&c.dock==='left');" in out
+    assert "    deckEl.classList.toggle('openbar-top',audience&&c.dock==='top');" in out
     assert "    if(typeof applyZoom==='function') applyZoom();" in out
 
 

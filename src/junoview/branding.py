@@ -154,9 +154,6 @@ _ICON_PATHS = {
              '<path d="M5.8 6.4h.1M10.1 6.4h.1"/>',
     "tag": '<path d="M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z"/>'
            '<circle cx="5.3" cy="6.3" r=".8"/>',
-    "help": '<circle cx="8" cy="8" r="6.2"/>'
-            '<path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/>'
-            '<path d="M8.6 12v.1"/>',
     # custom views
     "style": '<path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/>'
              '<path d="m9.2 4 2.8 2.8"/>',
@@ -403,10 +400,6 @@ _ICON_PATHS = {
     # a hooked back-arrow: leave the editor / stop presenting
     "return": '<path d="M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4"/>'
               '<path d="M6.2 6.3 3.3 9.2l2.9 2.9"/>',
-    # a house: Home, the start screen (T396)
-    "home": '<path d="M2.4 8.4 8 3.2l5.6 5.2"/>'
-            '<path d="M4.2 7.4v5.4h7.6V7.4"/>'
-            '<path d="M6.8 12.8V9.6h2.4v3.2"/>',
     # the reset arc wearing clock hands: automatic version history
     "clock": '<circle cx="8" cy="8" r="6"/>'
              '<path d="M8 4.6V8l2.4 1.5"/>',

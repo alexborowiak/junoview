@@ -477,14 +477,12 @@ def test_the_words_on_a_notebook_card_are_words_on_the_slide(out):
 # still wired the way that run found it working.
 
 
-def test_the_document_behind_the_deck_goes_inert(out):
-    """Browser-verified 2026-08-30, Edge over a rendered example page.
+def test_the_document_behind_the_deck_goes_inert_except_the_live_rail(out):
+    """The editor shares its real navigation rail and isolates the rest.
 
-    Before opening: all eight surfaces live, focus on #presrail-home.
-    With the deck open in edit mode: all eight carried `inert` and
-    aria-hidden="true", and focus had moved to #dc-file inside the deck.
-    After closing: all eight live again with no aria-hidden left behind,
-    and focus back on #presrail-home.
+    In audience mode every background surface is inert. In edit mode the
+    rail and its reveal handle stay live, while the document and other
+    background surfaces remain inaccessible.
 
     Before this, `inert` appeared nowhere in the deck's own chrome. CSS
     had isolated scroll, pointer and paint; it cannot isolate the TAB
@@ -492,11 +490,11 @@ def test_the_document_behind_the_deck_goes_inert(out):
     property. So Tab walked off the editor into a ~12,670px document
     nobody could see, and a screen reader met two applications at once.
     """
-    assert "function deckIsolate(on){" in out
+    assert "function deckIsolate(on,railLive){" in out
     assert "el.setAttribute('inert','');" in out
     assert "el.setAttribute('aria-hidden','true');" in out
     assert "el.removeAttribute('inert');" in out
-    assert "el.removeAttribute('aria-hidden');" in out
+    assert "if(railLive&&(sel==='#presrail'||sel==='#presrail-show')) return;" in out
 
 
 def test_it_isolates_named_surfaces_rather_than_sweeping_the_body(out):
@@ -510,7 +508,7 @@ def test_it_isolates_named_surfaces_rather_than_sweeping_the_body(out):
     assert ("'#welcome', '#present-bar', '#present-bar-show', "
             "'#stylepanel'];") in out
     # and it never un-inerts something that was inert for its own reason
-    assert "if(!el||el.hasAttribute('inert')) return;" in out
+    assert "if(el.hasAttribute('inert')||deckInerted.indexOf(el)>=0) return;" in out
 
 
 def test_isolation_and_the_deck_open_class_are_one_expression(out):
@@ -522,12 +520,12 @@ def test_isolation_and_the_deck_open_class_are_one_expression(out):
     """
     assert "var full=!creating&&!deckEl.hidden;" in out
     assert "document.body.classList.toggle('deck-open',full);" in out
-    assert "deckIsolate(full);" in out
+    assert "deckIsolate(full,editing);" in out
     assert "if(full) deckTakeFocus();" in out
 
 
 def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):
-    """The global rail remains safely inert behind the deck; the visible
+    """The audience view keeps a compact drawer while the global rail is inert.
     substitute is a deck child. T382 (2026-09-12, user: "the auto-hidden
     sidebar doesn't appear; it should show only open items, not all
     recents, with a separate recents button"): it lists the presentation
@@ -552,11 +550,10 @@ def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):
     assert "function openNotebookRows(){" in out
     assert "function renderDeckPresentationDrawer(){" in out
     assert "function openDeckPresentationDrawer(){" in out
-    # the edge peek, the rail's own 14px hit zone -- while presenting and,
-    # since T396, while editing (unless the slide column owns the edge)
+    # The edge peek belongs only to the audience. The editor uses the shared
+    # rail instead of another drawer with another renderer.
     assert "  function initDrawerPeek(){" in out
-    assert "      if(deckEl.hidden||(mode!=='view'&&mode!=='edit')) return;" in out
-    assert "      if(mode==='edit'&&filmAutoOn()) return;" in out
+    assert "      if(deckEl.hidden||mode!=='view') return;" in out
     assert "        if(e.clientX<=14) openDeckPresentationDrawer();" in out
     assert "      if(e.clientX>r.right+40||e.clientY>r.bottom+40)" in out
     # a notebook row stops the talk and shows that notebook
