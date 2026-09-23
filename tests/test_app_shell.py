@@ -27,7 +27,8 @@ def test_ribbon_group_counts(out):
     assert out.count('class="abgrp-lab"') == 6   # + Tree (tree view only)
     assert 'class="abgrp" id="ab-filters"' in out
     assert 'id="filters-toggle"' in out
-    assert 'class="filter-panel" id="filters-panel" hidden' in out
+    assert 'class="filter-panel" id="filters-panel">' in out
+    assert 'aria-expanded="true"' in out
 
 
 def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
@@ -163,12 +164,22 @@ def test_keyboard_shortcuts_are_conventional_and_advertised(out):
 def test_appbar_uses_a_compact_filter_door_without_fake_spacing(out):
     """The reader bar contains navigation, Filters and view actions only.
 
-    The dense control grid opens below it, rather than creating a row of
-    permanent mini dashboards or spacer-shaped holes.
+    The dense control grid is visible below it by default, but can collapse
+    into the short reader bar without creating spacer-shaped holes.
     """
     assert 'class="filter-wrap" id="filter-wrap"' in out
-    assert ".filter-panel{position:fixed;z-index:121;display:flex;" in out
+    assert ".filter-wrap{display:contents;}" in out
+    assert (
+        ".filter-panel{position:static;z-index:auto;grid-column:1/-1;"
+        "grid-row:2;" in out
+    )
+    assert (
+        "display:grid;grid-template-columns:max-content max-content "
+        "minmax(0,1fr) max-content;" in out
+    )
     assert ".filter-panel[hidden]{display:none!important;}" in out
+    assert "if(APP.measureChrome) APP.measureChrome();" in out
+    assert "if(filterPanel) filterPanel.hidden=true;" not in out
     assert 'class="appbar-flex' not in out
     assert "body.tree-mode #ab-tree{min-width:0;}" in out
 
@@ -254,6 +265,7 @@ def test_chrome_toc_toggle_resizable_builder_dark_doc_no_refresh(out):
     # File identity is in the utility bar above the ribbon, alongside
     # Open / Info / Reload, not repeated inside each document.
     assert 'id="nb-file-ident"' in out and 'id="nb-file-path"' in out
+    assert "font:700 15px var(--sans)" in out
     assert 'class="docbar"' not in out
     assert "body:not(.light) .card" in out
     assert 'id="refresh-btn"' not in out

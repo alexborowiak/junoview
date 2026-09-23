@@ -1677,11 +1677,12 @@ body.presrail-min{--presrail-w:46px;}
   border-bottom:1px solid #ffffff12;overflow-x:auto;scrollbar-width:thin;}
 .nb-filebar[hidden]{display:none!important;}
 .nb-file-ident{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;
-  max-width:min(46vw,580px);padding:0 7px 0 2px;
+  max-width:min(52vw,640px);padding:0 7px 0 2px;
   border-right:1px solid #ffffff1a;}
 .nb-file-ident[hidden]{display:none!important;}
 .nb-file-name{flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;font:600 11.5px var(--sans);color:var(--chrome-ink,#d7e3ec);}
+  white-space:nowrap;font:700 15px var(--sans);letter-spacing:-.01em;
+  color:var(--chrome-ink,#d7e3ec);}
 .nb-file-path{min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);
   background:none;border:0;padding:0;text-align:left;cursor:pointer;}
@@ -1823,11 +1824,17 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 .top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
   padding:0 8px 0 10px;border-radius:7px 7px 0 0;}
 .top-tabstrip .tab-t{max-width:180px;}
-/* The permanent reader bar is intentionally one short row. Filters keep
-   their full controls, but only when someone asks for them. */
+/* The navigation and view commands stay on one short row. The controls
+   they operate are a real second header row by default, not a menu that
+   covers the notebook; Filters can collapse that row when space matters. */
 .appbar{position:relative;min-height:38px;padding:5px 8px;
-  align-items:center;overflow-x:auto;overflow-y:visible;}
+  display:grid;grid-template-columns:max-content max-content minmax(0,1fr) max-content;
+  grid-template-rows:auto;align-items:center;column-gap:3px;row-gap:5px;
+  overflow-x:auto;overflow-y:visible;}
 .appbar>.abgrp .abgrp-lab{display:none;}
+.appbar .ab-nav{grid-column:1;grid-row:1;}
+.appbar #filters-toggle{grid-column:2;grid-row:1;}
+.appbar-spring{grid-column:3;grid-row:1;}
 .appbar .ab-nav .abgrp-row{align-items:center;gap:4px;}
 .appbar .menubtn{display:inline-flex;align-items:center;justify-content:center;
   height:var(--ab-btn-h);box-sizing:border-box;margin:0;padding:0 7px;
@@ -1840,16 +1847,16 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
   background:currentColor;position:relative;}
 .appbar .menubtn span::before{position:absolute;top:-5px;}
 .appbar .menubtn span::after{position:absolute;top:5px;}
-.filter-wrap{position:relative;flex:none;}
+.filter-wrap{display:contents;}
 .filter-count{display:inline-flex;align-items:center;justify-content:center;
   min-width:14px;height:14px;padding:0 3px;border-radius:8px;
   background:color-mix(in srgb,var(--accent) 24%,transparent);
   color:var(--cyan);font:9px var(--mono);}
-.filter-panel{position:fixed;z-index:121;display:flex;flex-wrap:wrap;
-  align-items:flex-start;gap:12px;width:min(760px,calc(100vw - 24px));
-  max-height:calc(100vh - 78px);overflow:auto;box-sizing:border-box;
-  padding:12px;border:1px solid var(--chrome-line);border-radius:10px;
-  background:var(--chrome-0,#0a141d);box-shadow:0 14px 36px #00000055;}
+.filter-panel{position:static;z-index:auto;grid-column:1/-1;grid-row:2;
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;width:100%;
+  min-width:0;max-height:none;overflow:visible;box-sizing:border-box;
+  padding:5px 0 3px;border:0;border-top:1px solid var(--chrome-line);
+  border-radius:0;background:transparent;box-shadow:none;}
 .filter-panel[hidden]{display:none!important;}
 .filter-panel .abgrp{flex:none;}
 .filter-panel .abgrp-lab{display:block;}
@@ -1860,15 +1867,14 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 .filter-panel #ab-pages{min-width:92px;}
 .filter-panel #ab-size .abgrp-row{flex-direction:row;gap:12px;}
 .filter-panel #ab-size .fgrp{justify-content:flex-start;}
-.appbar>#ab-view{margin-left:auto;padding-left:0;}
+.appbar>#ab-view{grid-column:4;grid-row:1;margin-left:0;padding-left:0;}
 .appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp,
 .appbar #ab-view .vw-stack{align-items:center;flex-direction:row;}
 .appbar #ab-view .vw-stack{min-width:0;gap:4px;}
 .appbar #ab-view .vw-stack .toggle{width:auto;}
 body.light .appbar .menubtn{border-color:var(--line);color:var(--ink);}
 body.light .appbar .menubtn:hover{color:var(--ink);}
-body.light .filter-panel{background:var(--chrome-0);color:var(--ink);
-  box-shadow:0 14px 36px #00000020;}
+body.light .filter-panel{background:transparent;color:var(--ink);box-shadow:none;}
 /* tabs line up with the DOCUMENT, not with the outline beneath them —
    the strip starts where the sidebar ends (and slides back when the
    sidebar is toggled off) */
@@ -10434,12 +10440,12 @@ window.MathJax = {
     </span></span>
     <span class="filter-wrap" id="filter-wrap">
       <button class="toggle" id="filters-toggle" type="button"
-        aria-haspopup="true" aria-expanded="false"
+        aria-expanded="true"
         aria-controls="filters-panel"
-        title="Choose what the notebook shows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg>
+        title="Collapse or show the notebook controls"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg>
         Filters <span class="filter-count" id="filters-count" hidden></span>
         &#9662;</button>
-      <span class="filter-panel" id="filters-panel" hidden>
+      <span class="filter-panel" id="filters-panel">
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
@@ -17917,9 +17923,6 @@ items snap to both. Guides, not ink: never printed or exported"
        the OLD notebook's type overrides into the NEW notebook's state
        (2026-08-04, adversarial review). */
     closeFilterMenus();
-    var filterPanel=$('#filters-panel'),filterToggle=$('#filters-toggle');
-    if(filterPanel) filterPanel.hidden=true;
-    if(filterToggle) filterToggle.setAttribute('aria-expanded','false');
     dockFileBar();
     renderTypeButtons();renderScopeBtn();renderMarkGate();
     updateHash();
@@ -19461,28 +19464,20 @@ items snap to both. Guides, not ink: never printed or exported"
   }
   renderTypeButtons();
 
-  /* The reader keeps one short row. The full filter controls are still
-     here, in a positioned panel, rather than being a second dashboard. */
+  /* The full controls are visible by default. Filters only collapses this
+     header row when a shorter reader bar is useful; it is not a menu. */
   (function(){
     var wrap=$('#filter-wrap'),btn=$('#filters-toggle'),panel=$('#filters-panel');
     if(!wrap||!btn||!panel) return;
-    function place(){
-      var r=btn.getBoundingClientRect();
-      var w=panel.offsetWidth||760,h=panel.offsetHeight||260;
-      panel.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
-      panel.style.top=Math.max(8,Math.min(r.bottom+6,window.innerHeight-h-8))+'px';
-    }
     function set(open){
       panel.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) place(); else closeFilterMenus();
+      if(!open) closeFilterMenus();
+      if(APP.measureChrome) APP.measureChrome();
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(panel.hidden);});
-    document.addEventListener('click',function(e){
-      if(!panel.hidden&&!wrap.contains(e.target)) set(false);});
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&!panel.hidden){set(false);btn.focus();}});
-    window.addEventListener('resize',function(){if(!panel.hidden) place();});
   })();
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */

@@ -371,9 +371,6 @@
        the OLD notebook's type overrides into the NEW notebook's state
        (2026-08-04, adversarial review). */
     closeFilterMenus();
-    var filterPanel=$('#filters-panel'),filterToggle=$('#filters-toggle');
-    if(filterPanel) filterPanel.hidden=true;
-    if(filterToggle) filterToggle.setAttribute('aria-expanded','false');
     dockFileBar();
     renderTypeButtons();renderScopeBtn();renderMarkGate();
     updateHash();
@@ -1915,28 +1912,20 @@
   }
   renderTypeButtons();
 
-  /* The reader keeps one short row. The full filter controls are still
-     here, in a positioned panel, rather than being a second dashboard. */
+  /* The full controls are visible by default. Filters only collapses this
+     header row when a shorter reader bar is useful; it is not a menu. */
   (function(){
     var wrap=$('#filter-wrap'),btn=$('#filters-toggle'),panel=$('#filters-panel');
     if(!wrap||!btn||!panel) return;
-    function place(){
-      var r=btn.getBoundingClientRect();
-      var w=panel.offsetWidth||760,h=panel.offsetHeight||260;
-      panel.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
-      panel.style.top=Math.max(8,Math.min(r.bottom+6,window.innerHeight-h-8))+'px';
-    }
     function set(open){
       panel.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) place(); else closeFilterMenus();
+      if(!open) closeFilterMenus();
+      if(APP.measureChrome) APP.measureChrome();
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(panel.hidden);});
-    document.addEventListener('click',function(e){
-      if(!panel.hidden&&!wrap.contains(e.target)) set(false);});
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&!panel.hidden){set(false);btn.focus();}});
-    window.addEventListener('resize',function(){if(!panel.hidden) place();});
   })();
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */

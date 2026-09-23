@@ -9752,8 +9752,9 @@ any reading. The rest are T466 onwards.
   covers the underlying empty-box, rich-text and slide-shortcut faults.
 - [x] **T502 — Notebook header and outline.** (2026-09-22) The permanent
   reader bar is now only Outline, Variables, Filters and the right-aligned
-  view actions. The full filter grid opens from Filters instead of occupying
-  a second dashboard row. File name, small clickable path and app-wide
+  view actions. The full filter grid occupies its own visible header row by
+  default; Filters collapses it when a shorter reader bar is useful. File
+  name, small clickable path and app-wide
   choices share the utility row; Info shows the full path. The outline no
   longer repeats identity or counts, and its quiet options menu provides
   Collapse all, Expand all, Show hidden sections and Peek at hidden. Peek
@@ -9769,3 +9770,8 @@ any reading. The rest are T466 onwards.
   tabs and deck app-menu redesign. The intentional rendered-output baseline
   is pinned, the focused checks and full suite pass, and the generated docs
   carry the new layout.
+- [x] **T505 — Keep notebook controls visible by default.** (2026-09-23)
+  The expanded filter controls are now a real header row, so they never
+  cover notebook content or vanish after switching tabs. Filters remains the
+  optional compact mode, and the utility-line file name is larger while its
+  path stays a quieter second line.

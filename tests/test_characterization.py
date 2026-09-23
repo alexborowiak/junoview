@@ -2036,13 +2036,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # commands preserve a live paragraph selection, empty inline styling is
 # discarded, and the strip menu folds its administrative tail. T501 adds a
 # worded section collapse control and keeps List direct on a narrow ribbon.
-# T502: compact identity header, right-hand view commands and outline tools.
+# T502/T505: compact identity header, right-hand view commands, outline tools
+# and an expanded-by-default, collapsible filter row. The rendered chrome
+# intentionally changed.
 # T503: open-document tabs with readable names and sidebar/top placement.
-# T504 (2026-09-22): the notebook viewer now has a compact reader bar,
-# filter popover, conventional top tabs alongside the side library, and a
-# minimal outline. The rendered chrome intentionally changed.
-EXPECTED_MD5 = "ccb0da8a1d3bf24df13db5139a60ee9c"
-EXPECTED_BYTES = 4521118
+# T504/T505 (2026-09-22/23): conventional top tabs alongside the side library,
+# a minimal outline and the final reader-header layout.
+EXPECTED_MD5 = "2efc5fb602d80d45751835bab8d616be"
+EXPECTED_BYTES = 4520818
 
 
 def _render_example() -> str:

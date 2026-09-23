@@ -152,11 +152,14 @@ def test_the_viewer_bar_has_one_button_height():
 
 
 def test_the_reader_bar_uses_a_filter_door_not_an_extra_ribbon_row():
-    """The dense controls are available in a popup; the permanent reader
-    bar remains one compact line with the labelled view controls.
+    """The dense controls start open and the Filters control can collapse
+    them, while the reader bar retains the labelled view controls.
     """
     css = assets.load("css/app.css")
-    assert ".filter-panel{position:fixed;z-index:121;display:flex;" in css
+    assert (
+        ".filter-panel{position:static;z-index:auto;grid-column:1/-1;"
+        "grid-row:2;" in css
+    )
     assert ".filter-panel #ab-filters{flex:1 1 390px;min-width:0;}" in css
     assert ".appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp," in css
     assert ".nb-quickbar" not in css
