@@ -4602,8 +4602,7 @@
     var b=sh.querySelector('.rf-unhide');
     var peeking=sh.classList.contains('reveal-hidden');
     var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff').length
-      +sh.querySelectorAll(peeking?'.content .card.is-hidden'
-        :'.content .card.cell-off').length;
+      +sh.querySelectorAll('.content .card.is-hidden').length;
     if(b){
       b.disabled=false;b.setAttribute('aria-pressed',peeking?'true':'false');
       b.innerHTML=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';

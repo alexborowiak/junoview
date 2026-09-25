@@ -151,6 +151,22 @@ console.log(JSON.stringify({hidden:a.attrs['aria-label'],
     assert "follow filters for this cell again" in result["shown"]
 
 
+def test_peek_count_includes_filter_hidden_cells_before_opening(tmp_path):
+    src = assets.load("js/app.js")
+    code = lift_fn(src, "syncUnhideBtn") + r"""
+var peek={attrs:{},setAttribute(k,v){this.attrs[k]=v;}};
+var shell={classList:{contains:()=>false},querySelector:()=>peek,
+  querySelectorAll:s=>s==='.content .card.is-hidden'?[{},{}]:[{}]};
+function $$(){return [];}
+function bic(){return '<i></i>';}
+syncUnhideBtn(shell);
+console.log(JSON.stringify({label:peek.innerHTML,pressed:peek.attrs['aria-pressed']}));
+"""
+    result = run_js(tmp_path, code)
+    assert "Peek at hidden (3)" in result["label"]
+    assert result["pressed"] == "false"
+
+
 def test_local_cell_history_serializes_git_reads_and_skips_stale(tmp_path):
     src = assets.load("js/app.js")
     code = "var cellHistoryLocalQueue=Promise.resolve();\n"

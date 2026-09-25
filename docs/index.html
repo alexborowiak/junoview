@@ -10500,7 +10500,7 @@ window.MathJax = {
 };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-<meta name="junoview-build" content="b2a673ca4cfa">
+<meta name="junoview-build" content="e0ea1f00b829">
 <script src="web-runtime.js"></script>
 </head>
 <body>
@@ -20586,8 +20586,7 @@ items snap to both. Guides, not ink: never printed or exported"
     var b=sh.querySelector('.rf-unhide');
     var peeking=sh.classList.contains('reveal-hidden');
     var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff').length
-      +sh.querySelectorAll(peeking?'.content .card.is-hidden'
-        :'.content .card.cell-off').length;
+      +sh.querySelectorAll('.content .card.is-hidden').length;
     if(b){
       b.disabled=false;b.setAttribute('aria-pressed',peeking?'true':'false');
       b.innerHTML=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';

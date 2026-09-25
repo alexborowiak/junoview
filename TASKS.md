@@ -9825,3 +9825,7 @@ any reading. The rest are T466 onwards.
   source previews. Rapid local selections queue one Git read at a time and
   skip obsolete requests. Focused regression tests cover these cases, and
   the generated `docs/` web app and example page are rebuilt for publishing.
+- [x] **T510 — Count filter-hidden cells before Peek opens.** (2026-09-25)
+  Live-site QA caught a misleading zero beside Peek when Markdown had been
+  filtered out. The count now includes all filtered and manually hidden cards
+  even before Peek opens, without double-counting one card in both categories.
