@@ -2941,7 +2941,7 @@
   function setTrans(i,kind){
     var sl=(pres.slides||[])[i]; if(!sl) return;
     if(kind==null) delete sl.trans; else sl.trans=String(kind);
-    markDirty();renderFilm();
+    markDirty();
     if(typeof transRibbonSync==='function') transRibbonSync();
     toast(kind==null
       ?('This slide arrives however its section says: '

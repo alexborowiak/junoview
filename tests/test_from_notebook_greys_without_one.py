@@ -31,7 +31,9 @@ def test_the_doors_grey_out_without_a_notebook(out):
             "places its '") in fn
     # re-judged as notebooks come and go, and once at boot
     assert ("  document.addEventListener('sem:shell',function(e){\n"
+            "    if(typeof storyInvalidate==='function') storyInvalidate();\n"
             "    nbDoorsSync();") in out
     assert ("  document.addEventListener('sem:shellclosed',function(e){\n"
+            "    if(typeof storyInvalidate==='function') storyInvalidate();\n"
             "    nbDoorsSync();") in out
     assert "  nbDoorsSync();              /* the notebook doors" in out

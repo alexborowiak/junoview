@@ -729,7 +729,7 @@ def test_tables_are_a_real_item_kind(out):
     toggled off (3 th -> 0), and the thumbnail drew a miniature of it.
     """
     assert 'data-tool="table"' in out
-    assert "function drawTable(layer,s,a,i,editing){" in out
+    assert "function drawTable(layer,s,a,i,editing,place){" in out
     assert "function tableNormalise(a){" in out
     assert "function tableGrow(a,what,by){" in out
     assert "function startTableEdit(layer,s,a,idx,td,ri,ci){" in out
@@ -792,7 +792,9 @@ def test_equations_reuse_the_text_box_and_mathjax(out):
     # widened without hunting for an inlined copy of it -- and it was
     # widened, to slideHasMaths, when a title slide turned out to keep
     # its LaTeX somewhere s.annots could not see it (T53)
-    assert "if(slideHasMaths(s)) typeset(layer);" in out
+    assert ("if(slideHasMaths(s)){\n"
+            "      if(prior) changed.forEach(function(el){typeset(el);});\n"
+            "      else typeset(layer);") in out
     # ...and since 2026-08-20 there is a real EDITOR in front of it. The
     # button used to drop "$$ E = mc^2 $$" on the slide and walk away --
     # no preview, no symbols, no way to tell whether what you typed was
@@ -1415,7 +1417,7 @@ def test_find_and_replace_has_a_formatting_half(out):
     assert show.index("window.SemDeckFindSync()") < show.index("if(!a){")
     # Slide navigation has several paths that deliberately skip showFmt,
     # so renderSlide carries the same guarded synchronization seam.
-    render = out[out.index("function renderSlide()"):
+    render = out[out.index("function renderSlide(buildOnly)"):
                  out.index("/* ---------- free annotations:")]
     assert (render.index("syncInspectorPanes();") <
             render.index("window.SemDeckFindSync()"))
@@ -1703,7 +1705,7 @@ def test_object_identity_is_lazy_and_self_healing(out):
     """
     assert "function ensureOids(s){" in out
     assert "if(!a.oid||seen[a.oid]) a.oid=mintOid();" in out
-    assert "function renderAnnots(layer,s){" in out
+    assert "function renderAnnots(layer,s,incremental){" in out
     assert ("       no copy site has to remember to strip one. */\n"
             "    ensureOids(s);") in out
     # a schematic, not a render: rendering a historical state would mean
@@ -1791,22 +1793,12 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     # rather than as adjacent lines: T89's initReuseDoors now sits
     # between them, and it belongs in the boot sequence for the same
     # reason -- it walks the deck's markup.
-    # anchored on the boot CALL (newline + two spaces), which is unique;
-    # the bare name also appears at each definition site
-    _boot = out[out.index("\n  renderPresTabs();"):]
-    assert _boot.index("\n  initRibbonLayoutDoor();") < _boot.index(
-        "  /* the ribbon you kept: applied once here, at the tail")
-    # a PROXIMITY check, not a byte offset: the window grew when T158
-    # put animBoot() and its note in the sequence. What it guards is
-    # that the door wiring stays near the top of the tail and ahead of
-    # the ribbon restore -- so assert that ordering directly too.
-    # the window tracks the sequence's LENGTH, which grows every time a
-    # feature earns a boot call (T321, T322, T324 and T325 each added
-    # one ahead of this; T385-T391 added five more). What it guards is
-    # the ORDER, asserted next.
-    assert "\n  initReuseDoors();" in _boot[:3400]
-    assert _boot.index("\n  initReuseDoors();") < _boot.index(
-        "  /* the ribbon you kept: applied once here, at the tail")
+    # First editor entry now performs this boot. Wiring must still precede
+    # layout restoration, which must still precede per-button preferences.
+    _boot = out.split("function initEditorTools(){", 1)[1].split("\n  }", 1)[0]
+    assert _boot.index("initRibbonLayoutDoor();") < _boot.index("applyRibbonLayout(")
+    assert _boot.index("initReuseDoors();") < _boot.index("applyRibbonLayout(")
+    assert _boot.index("applyRibbonLayout(") < _boot.index("applyRibbonPrefs();")
 
 
 def test_each_ribbon_group_is_keyed_by_its_own_name(out):
@@ -1845,7 +1837,9 @@ def test_inline_maths_survives_a_rebuild_of_the_layer(out):
     the typeset (there is maths in here somewhere).
     """
     assert "function hasMaths(a){" in out
-    assert "if(slideHasMaths(s)) typeset(layer);" in out
+    assert ("if(slideHasMaths(s)){\n"
+            "      if(prior) changed.forEach(function(el){typeset(el);});\n"
+            "      else typeset(layer);") in out
     # kept cheap: renderAnnots runs on every mousemove of a drag, so the
     # no-maths case must cost one indexOf and no regex
     assert "if(!src||src.indexOf('$')<0) return false;" in out
@@ -2057,7 +2051,7 @@ def test_shrink_to_fit_never_rewrites_the_size_you_chose(out):
     writing the size would bake it, fight the style system on the next
     Re-apply, and lose the original the moment the words got shorter.
     """
-    assert "function fitTexts(layer,s,editing){" in out
+    assert "function fitTexts(layer,s,editing,kept){" in out
     assert "if(!a||a.k!=='text'||!a.fh) return;" in out
     assert "el.style.setProperty('--an-fit',k.toFixed(3));" in out
     # T88 put the talk's text multiplier in the SAME calc, for the same
@@ -2224,7 +2218,7 @@ def test_an_anchored_item_is_placed_from_what_it_measured(out):
     # target sits) and after the fit pass (which changes heights)
     assert "if(_anchorFixWanted) anchorFix(layer,s);\n    _arrows.forEach(" \
         in out
-    assert "fitTexts(layer,s,editing);\n    /* ...and AFTER the fit pass" in out
+    assert "fitTexts(layer,s,editing,kept);\n    /* ...and AFTER the fit pass" in out
 
 
 def test_resize_keeps_anchored_items_in_page_coordinates(out):
@@ -2380,8 +2374,10 @@ def test_a_figure_number_is_never_stored(out):
     # hidden used to read '[not a caption]', which is wrong on its face
     assert "if(id) return '[missing figure]';" in out
     assert "return key?'[figure not shown]':'[not a caption]';" in out
-    # and the walk happens once per render, not once per text box
-    assert "})?figNumbers():null;" in out
+    # T508: only changed captions need the map; share one lazy walk.
+    assert "    var _figMap=null;" in out
+    assert ("        if(!_figMap&&String(a.text||a.html||'').indexOf('{fig')>=0)\n"
+            "          _figMap=figNumbers();") in out
 
 
 def test_figure_numbers_read_the_same_order_as_builds(out):
@@ -3328,7 +3324,7 @@ def test_clicking_an_effect_lights_that_effect(out):
     Every change to an animation goes through commit(), which is exactly
     why the sync belongs there and not at each of its seven callers.
     """
-    assert ("function commit(s){markDirty();rerender();render();renderFilm();"
+    assert ("function commit(s){markDirty();rerender();render();"
             in out)
     assert "if(typeof animRibbonSync==='function') animRibbonSync();}" in out
 
@@ -3708,7 +3704,7 @@ def test_the_sequencing_bar_is_named_and_shows_its_keys(out):
     assert "    cfgHead(host,'quick animate \\u2014 click things in order');" \
         in out
     # the chooser, its keys, and the state it drives
-    assert "var SEQ_FX=[['none','None','N'],['appear','Appear','A']," in out
+    assert "var SEQ_FX=[['none','From start','N'],['appear','Appear','A']," in out
     assert "['fade','Fade','F'],['rise','Float up','U'],"
     assert "var seqType='fade';" in out
     assert "      cfgChip(row,fxIcon(f[0]),f[1]+' ('+f[2]+')',seqType===f[0]," \
@@ -3787,7 +3783,7 @@ def test_the_effects_are_tiles_in_the_row(out):
     assert "b.disabled=!on;" in out
     # the label lost its instruction in T191 ("that is unnecessary text
     # lol"): the greyed tiles already say to select something
-    assert "if(lab) lab.textContent='Effect';" in out
+    assert "if(lab) lab.textContent='Entrance';" in out
     # one list feeds the strip AND the Quick animate chooser, so the two
     # surfaces cannot drift into two vocabularies
     assert "SEQ_FX.forEach(function(f){" in out
@@ -3803,7 +3799,7 @@ def test_the_effects_are_tiles_in_the_row(out):
 
 
 def test_the_gallery_previews_on_the_real_object(out):
-    """T171. Hovering a card runs the REAL keyframe on the REAL object,
+    """T171/T508. Preview runs the REAL keyframe on the REAL object,
     so what you see is what you get, and nothing is stored so there is
     nothing to undo. Reduced motion suppresses it, since a preview is
     the most decorative motion in the product.
@@ -3811,11 +3807,12 @@ def test_the_gallery_previews_on_the_real_object(out):
     assert "function galPreview(type){" in out
     assert "window.matchMedia('(prefers-reduced-motion: reduce)')" in out
     # re-adding a class already present does nothing: off, reflow, on
-    assert "void el.offsetWidth;" in out
+    assert "if(previews.length) void layer.offsetWidth;" in out
     # animationend is not a safe cleanup, so a timer always runs
     # (T385: the typewriter preview runs longer than a keyframe)
-    assert "galPvT=setTimeout(galPreviewStop,type==='type'?2800:900);" in out
-    assert "b.addEventListener('mouseleave',galPreviewStop);" in out
+    assert "previews.some(function(p){return p.fx==='type';})?2800:900);" in out
+    assert "e.stopPropagation();galPreview();" in out
+    assert "b.addEventListener('mouseenter',function(){if(on) galPreview" not in out
 
 
 def test_a_text_box_can_arrive_a_bullet_at_a_time(out):

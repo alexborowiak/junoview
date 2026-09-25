@@ -83,7 +83,13 @@ def test_build_web_emits_a_pyodide_bundle():
         build_web(Path(td))
         root = Path(__file__).resolve().parent.parent
         idx = (Path(td) / "index.html").read_text(encoding="utf-8")
-        assert "pyodide" in idx and "sem:pyready" in idx
+        runtime = (Path(td) / "web-runtime.js").read_text(encoding="utf-8")
+        worker = (Path(td) / "web-worker.js").read_text(encoding="utf-8")
+        assert "pyodide" in worker and "sem:pyready" in runtime
+        assert '<script src="web-runtime.js"></script>' in idx
+        assert idx.index('src="web-runtime.js"') < idx.index("window.SemApp")
+        assert 'id="deck"' in idx
+        assert "document.write" not in runtime
         archive = Path(td) / "junoview.zip"
         assert archive.exists()
         with zipfile.ZipFile(archive) as bundled:
@@ -97,7 +103,7 @@ def test_build_web_emits_a_pyodide_bundle():
         assert "Pyodide 0.26.4" in notices
         assert "MathJax 3" in notices
         assert "Plotly.js 2.35.2" in notices
-        assert 'href="THIRD_PARTY_NOTICES.html"' in idx
+        assert 'href="https://junoview.com/THIRD_PARTY_NOTICES.html"' in idx
 
 
 def test_client_reactivates_outputs_and_draws_plotly_specs(out):
@@ -114,9 +120,8 @@ def test_build_web_emits_the_offline_installable_app():
     ``build_web`` writes a service worker (version-stamped with the
     package hash so a new build retires the old cache, deterministic so an
     unchanged build produces no diff), a manifest and an icon, and the
-    loader registers the worker BEFORE Pyodide starts so the first visit
-    precaches in parallel with the first boot (2026-08-20, user: "make it
-    purely offline").
+    offline cache is filled after the parsing worker's critical downloads
+    (2026-09-24). The complete offline asset set is retained.
     """
     with tempfile.TemporaryDirectory() as td:
         build_web(Path(td))
@@ -125,12 +130,15 @@ def test_build_web_emits_the_offline_installable_app():
         assert "junoview.zip" in sw and "pyodide" in sw
         assert "LICENSE" in sw and "NOTICE" in sw
         assert "THIRD_PARTY_NOTICES.html" in sw
-        # the Pyodide pin in the worker must match the loader's script tag
+        # The parser and offline cache must use the same Python runtime.
         idx = (Path(td) / "index.html").read_text(encoding="utf-8")
+        runtime = (Path(td) / "web-runtime.js").read_text(encoding="utf-8")
+        worker = (Path(td) / "web-worker.js").read_text(encoding="utf-8")
         pin = "pyodide/v0.26.4/full/"
-        assert pin in sw and pin in idx
-        assert "serviceWorker" in idx and "manifest.webmanifest" in idx
-        assert "beforeinstallprompt" in idx
+        assert pin in sw and pin in worker
+        assert "serviceWorker" in runtime and "manifest.webmanifest" in idx
+        assert "beforeinstallprompt" in runtime
+        assert "web-worker.js" in sw and "web-runtime.js" in sw
         # T206: a newer build announces itself. The first visit after a
         # deploy boots the previous build from the worker's cache while
         # the new worker takes over; the loader now says so with a Reload
@@ -139,12 +147,12 @@ def test_build_web_emits_the_offline_installable_app():
         assert len(version) == 12
         assert "__JV_VERSION__" not in idx
         assert f'<meta name="junoview-build" content="{version}">' in idx
-        assert f"window.__jvBuild='{version}';" in idx
-        assert "addEventListener('controllerchange'" in idx
-        assert "if(!hadWorker) return;" in idx
-        assert "window.__jvUpdateBar=function(){" in idx
-        assert "bar.id='jv-newbuild';" in idx
-        # ...and the app page raises the bar again after document.write
+        assert f"window.__jvBuild='{version}';" in runtime
+        assert "addEventListener('controllerchange'" in runtime
+        assert "if(!hadWorker) return;" in runtime
+        assert "window.__jvUpdateBar=function(){" in runtime
+        assert "bar.id='jv-newbuild';" in runtime
+        # ...and app boot shows an update that arrived before the body
         from junoview import assets
         assert ("if(window.__jvNewBuild&&window.__jvUpdateBar) "
                 "window.__jvUpdateBar();") in assets.app_js()
@@ -158,7 +166,8 @@ def test_build_web_emits_the_offline_installable_app():
         with tempfile.TemporaryDirectory() as td2:
             build_web(Path(td2))
             assert (Path(td2) / "sw.js").read_text(encoding="utf-8") == sw
-            for name in ("junoview.zip", "LICENSE", "NOTICE",
+            for name in ("index.html", "web-runtime.js", "web-worker.js",
+                         "junoview.zip", "LICENSE", "NOTICE",
                          "THIRD_PARTY_NOTICES.html"):
                 assert (Path(td2) / name).read_bytes() == \
                     (Path(td) / name).read_bytes()

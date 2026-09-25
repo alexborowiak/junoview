@@ -34,13 +34,13 @@ def test_the_chart_part_is_real_and_listed():
     assert "47-charts" in assets.DECK_PARTS
     out = _out()
     assert "function chartSvg(a){" in out
-    assert "function drawChart(layer,s,a,i){" in out
+    assert "function drawChart(layer,s,a,i,place){" in out
     assert "window.SemDeckChart={place:placeChart,dataOf:chartDataOf," in out
 
 
 def test_the_renderer_dispatches_and_the_panes_can_name_it():
     out = _out()
-    assert "drawChart(layer,s,a,i);" in out
+    assert "drawChart(layer,s,a,i,placeAnnot);" in out
     assert "'Chart \\u2014 '+(a.ct||'bar')" in out.replace("\n        +", "")
 
 

@@ -352,8 +352,9 @@
     pptxFileB64(file).then(function(b64){
       if(APP.mode==='app')
         return APP.api('/api/importpptx',{name:name,b64:b64});
-      var j=window.semPy.importPptx(name,b64);
-      return (typeof j==='string')?JSON.parse(j):j;
+      return Promise.resolve(window.semPy.importPptx(name,b64)).then(function(j){
+        return (typeof j==='string')?JSON.parse(j):j;
+      });
     }).then(function(got){
       importPptxSpec(got,name);
     }).catch(function(e){

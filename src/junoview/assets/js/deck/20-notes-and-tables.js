@@ -1766,7 +1766,7 @@
     if(Array.isArray(a.cols)&&a.cols.length!==n) delete a.cols;
     return a;
   }
-  function drawTable(layer,s,a,i,editing){
+  function drawTable(layer,s,a,i,editing,place){
     tableNormalise(a);
     var rows=tableRows(a),cols=tableCols(a);
     var host=document.createElement('div');
@@ -1895,7 +1895,7 @@
         });
       }
     }
-    layer.appendChild(host);
+    if(place) place(host); else layer.appendChild(host);
   }
   /* type into ONE cell. contenteditable on the <td> itself, so the caret,
      selection and spellcheck all behave the way they do in a text box. */
@@ -1997,13 +1997,13 @@
   }
   /* the fit pass itself. Called from renderAnnots and from the text
      commit -- see the note at its call site. */
-  function fitTexts(layer,s,editing){
+  function fitTexts(layer,s,editing,kept){
     if(!layer||!s) return;
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.k!=='text'||!a.fh) return;
         if(a.hide) return;                   /* T404: hidden is hidden */
         var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
-        if(!el) return;
+        if(!el||(kept&&kept.has(el))) return;
         var lr=layer.getBoundingClientRect();
         var want=a.fh/100*(lr.height||600);
         if(!(want>0)) return;
@@ -2087,7 +2087,39 @@
     else if(extra&&!t) t=String(extra);
     img.alt=t;
   }
-  function renderAnnots(layer,s){
+  /* Only animation edits and playback use this key. Content/geometry
+     edits still take the normal render path, so large image payloads
+     never need serialising just to advance a bullet. */
+  function annotRenderKey(s,a,steps,plan){
+    var st=a.anim?steps.map[a.anim.order||0]:null;
+    var sp=st==null?null:plan.stop[st];
+    if(sp==null) sp=st;
+    var cursor=mode==='view'?revealCount:
+      (typeof storyAt==='number'?storyAt:null);
+    var pieces=[];
+    if(st!=null&&(cursor!=null||mode==='edit')){
+      var n=pieceCount(a);
+      for(var j=0;j<n;j++){
+        var p=plan.stop[st+j];if(p==null) p=st+j;
+        /* Editor badges number actual clicks, even in Whole slide mode. */
+        if(mode==='edit') pieces.push(p);
+        pieces.push(cursor==null?null:(p<cursor?1:0));
+        if(a.anim&&a.anim.hl) pieces.push(p===cursor-1?1:0);
+      }
+    }
+    var out=animOut(a),focus=animFocus(a);
+    var exitStep=out==null?null:steps.map[out];
+    var focusStep=focus?steps.map[focus.at]:null;
+    return JSON.stringify([a.anim||null,a.out,a.focus,a.motion,a.mo,a.fanim,
+      st,sp,cursor==null?null:(sp==null||sp<cursor),pieces,
+      exitStep,plan.stop[exitStep],focusStep,plan.stop[focusStep],
+      animGoing(s,a),animGone(s,a),animFocusing(s,a),
+      a.k==='flip'?flipAtNow(s,a):null,
+      a.k==='chart'?chartSeriesShown(s,a):null,
+      a.k==='text'?textAt(s,a):null,
+      cursor==null?null:stepShows(s,a)]);
+  }
+  function renderAnnots(layer,s,incremental){
     /* the one funnel every slide render passes through, which makes it
        the only place identity has to be minted — see WHAT HAS THIS
        OBJECT LOOKED LIKE. Idempotent, and it re-mints a duplicate, so
@@ -2102,7 +2134,44 @@
        the async embedded-cards arrival — silently threw away whatever
        was being typed (2026-08-22) */
     flushTextEdits();
-    layer.innerHTML='';
+    var prior=incremental&&layer._paintSlide===s&&layer._paintMode===mode
+      ?layer._paintItems:null;
+    var kept=new Set(),nextItems={},changed=[],motionTimes=[];
+    var keySteps=slideBuildSteps(s),keyPlan=flipPlan(s),paintKey='';
+    if(!prior) layer.innerHTML='';
+    else {
+      /* Preserve the actual nodes: moving an iframe or animated element
+         through a detached fragment would restart it as well. */
+      Array.from(layer.children).forEach(function(el){
+        if(el.tagName.toLowerCase()==='svg'||el.classList.contains('an-lens')
+           ||el.classList.contains('an-endpt'))
+          el.remove();
+      });
+      layer.removeAttribute('data-focus');layer.classList.remove('an-spotlit');
+      $$('.an-spot',layer).forEach(function(el){el.classList.remove('an-spot');});
+    }
+    function placeAnnot(el){
+      var idx=el.getAttribute('data-idx'),old=prior&&prior[idx];
+      if(!prior){
+        layer.appendChild(el);
+      } else if(old&&old.el.parentNode===layer){
+        var a=(s.annots||[])[+idx];
+        if(a&&a.motion&&old.el.getAnimations){
+          old.el.getAnimations().forEach(function(an){
+            if(an.animationName==='an-'+a.motion)
+              motionTimes.push({el:el,name:an.animationName,time:an.currentTime});
+          });
+        }
+        layer.replaceChild(el,old.el);
+      } else {
+        var after=Array.from(layer.children).find(function(n){
+          var k=n.getAttribute('data-idx');
+          return k!=null&&isFinite(+k)&&+k>+idx;
+        });
+        layer.insertBefore(el,after||null);
+      }
+      nextItems[idx]={el:el,key:paintKey};changed.push(el);
+    }
     /* every layer rebuild destroys the dpi chips — re-judge (debounced)
        once the edit settles, so resizing a figure ONTO a poster column
        actually raises the warning it exists for (2026-08-05 review) */
@@ -2117,7 +2186,7 @@
        frames stay clickable), visible strokes ON TOP of everything
        (click-transparent) so arrows are never hidden behind frames */
     var svg=document.createElementNS(AN_NS,'svg');
-    layer.appendChild(svg);
+    layer.insertBefore(svg,layer.firstChild);
     var svgTop=document.createElementNS(AN_NS,'svg');
     svgTop.setAttribute('class','an-svgtop');
     var defs=document.createElementNS(AN_NS,'defs');
@@ -2125,6 +2194,9 @@
 
     if(s.layout==='title'){
       ['t','s'].forEach(function(which){
+        if(prior&&prior[which]){
+          nextItems[which]=prior[which];kept.add(prior[which].el);return;
+        }
         var p=titleProps(s,which);
         var d=document.createElement('div');
         d.className='an-item an-title'+(which==='t'?' t-main':'')
@@ -2166,7 +2238,7 @@
             },which);
         }
         d.appendChild(tx);
-        layer.appendChild(d);
+        placeAnnot(d);
       });
     }
 
@@ -2190,10 +2262,7 @@
       return a&&a.anch;});
     /* ONE walk of the deck per render, not one per text box: figNumbers
        walks every slide and a poster can hold thirty captions (T18) */
-    var _figMap=(s.annots||[]).some(function(a){
-      return a&&a.k==='text'
-        &&String(a.text||a.html||'').indexOf('{fig')>=0;
-    })?figNumbers():null;
+    var _figMap=null;
     var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
       /* T404: HIDDEN IS HIDDEN. The Layers pane's eye used to mean
@@ -2207,6 +2276,11 @@
          print or PowerPoint (T31) */
       if(a.priv&&!privShown()) return;
       if(a.k==='arrow'){_arrows.push(i);return;}
+      paintKey=annotRenderKey(s,a,keySteps,keyPlan);
+      var old=prior&&prior[i];
+      if(old&&old.key===paintKey&&old.el.parentNode===layer){
+        nextItems[i]=old;kept.add(old.el);return;
+      }
       if(a.k==='rect'){
         var shp=a.shape||'rect';
         /* T465: a shape with no colour of its own follows "Lines and
@@ -2238,7 +2312,7 @@
         r.setAttribute('data-idx',i);
         if(editing){r.appendChild(mkResize());
           r.appendChild(mkRotate());}
-        layer.appendChild(r);
+        placeAnnot(r);
       } else if(a.k==='draw'){
         var dv=document.createElement('div');
         dv.className='an-item an-rect an-svgshape an-draw'
@@ -2250,7 +2324,7 @@
         applyCommon(dv,a);
         dv.setAttribute('data-idx',i);
         if(editing){dv.appendChild(mkResize());dv.appendChild(mkRotate());}
-        layer.appendChild(dv);
+        placeAnnot(dv);
       } else if(a.k==='cell'){
         var c=document.createElement('div');
         var it=a.ref?resolveRef(a.ref):null;
@@ -2397,8 +2471,10 @@
           if(cropMode&&selAnnot===i) mkCropHandles(c,layer,s,i);
           else {c.appendChild(mkResize());c.appendChild(mkRotate());}
         }
-        layer.appendChild(c);
+        placeAnnot(c);
       } else if(a.k==='text'){
+        if(!_figMap&&String(a.text||a.html||'').indexOf('{fig')>=0)
+          _figMap=figNumbers();
         var d2=document.createElement('div');
         d2.className='an-item an-text'+(a.bg===0?' nobg':'')
           +(selAnnot===i?' sel':'')
@@ -2665,7 +2741,7 @@
           pgNav(1,'Forward');
           d2.appendChild(pbar);
         }
-        layer.appendChild(d2);
+        placeAnnot(d2);
         /* Curved text. Drawn as SVG on a bowed baseline, which HTML has no
            way to do — but only when the box is NOT being typed into:
            contenteditable does not work on an SVG <textPath>, so the flat
@@ -2682,9 +2758,9 @@
           applyTextArc(d2,tx2,a,i);
         }
       } else if(a.k==='table'){
-        drawTable(layer,s,a,i,editing);
+        drawTable(layer,s,a,i,editing,placeAnnot);
       } else if(a.k==='chart'){
-        drawChart(layer,s,a,i);
+        drawChart(layer,s,a,i,placeAnnot);
       } else if(a.k==='image'){
         var im=document.createElement('div');
         im.className='an-item an-image'+(selAnnot===i?' sel':'');
@@ -2721,7 +2797,7 @@
               :'Drag to resize — the picture keeps its shape. '
                 +'Hold Shift to stretch it'));
             im.appendChild(mkRotate());}}
-        layer.appendChild(im);
+        placeAnnot(im);
       } else if(a.k==='video'){
         /* T321: a clip. The element plays from a blob: URL minted from
            the deck's own store; inside a print root (a standalone
@@ -2744,7 +2820,7 @@
           mv.appendChild(mkResize('Drag to resize the clip'));
           mv.appendChild(mkRotate());
         }
-        layer.appendChild(mv);
+        placeAnnot(mv);
       } else if(a.k==='web'){
         /* T388: a live page. Sandboxed, lazy, and covered while editing
            so the box can be picked up -- an iframe eats the pointer. */
@@ -2780,7 +2856,7 @@
           wb.appendChild(mkResize('Drag to resize the page'));
           wb.appendChild(mkRotate());
         }
-        layer.appendChild(wb);
+        placeAnnot(wb);
       } else if(a.k==='flip'){
         var fr=flipFrames(a),at=flipAtNow(s,a),fdef=fr[at]||null;
         var fl=document.createElement('div');
@@ -2927,8 +3003,11 @@
           fl.appendChild(fbar);
         }
         if(editing){fl.appendChild(mkResize());fl.appendChild(mkRotate());}
-        layer.appendChild(fl);
+        placeAnnot(fl);
       }
+    });
+    if(prior) Object.keys(prior).forEach(function(k){
+      if(!nextItems[k]&&prior[k].el.parentNode===layer) prior[k].el.remove();
     });
     /* ---- WHAT BELONGS TO ANOTHER FRAME --------------------------------
        Done as a pass over the rendered layer rather than inside the loop
@@ -2992,7 +3071,10 @@
        slideHasMaths, not `s.annots.some(hasMaths)`: a title slide's
        title and subtitle are strings on the slide, so the annot-only
        question threw their LaTeX away on every rebuild (T53). */
-    if(slideHasMaths(s)) typeset(layer);
+    if(slideHasMaths(s)){
+      if(prior) changed.forEach(function(el){typeset(el);});
+      else typeset(layer);
+    }
     /* build animations: number the builds in the editor; in playback, hide the
        ones not yet revealed and animate the one just revealed.
        The editor's .an-buildno badges are still BUILT on every render, but
@@ -3012,6 +3094,7 @@
       orderedIdx(s).forEach(function(ri){rmap[ri]=++rn;});
       $$('.an-item[data-idx],.an-arrow-line[data-idx]',layer)
         .forEach(function(el){
+          if(kept.has(el)) return;
           var raw=el.getAttribute('data-idx');
           if(raw==='t'||raw==='s') return;
           if(rmap[+raw]==null) return;
@@ -3045,6 +3128,7 @@
         if(mode==='view'&&typeof animFocusing==='function'
            &&animFocusing(s,ba)&&typeof focusPaint==='function')
           focusPaint(layer,el,ba);
+        if(kept.has(el)) return;
         /* T391: THE STORY. Editing at stop k, an object that has
            already left is not on the slide -- not dimmed, not there --
            so what is under it can be reached. Checked before the
@@ -3180,6 +3264,7 @@
     if(s.annots&&s.annots.some(function(a){
       return a&&a.motion;})){
       $$('.an-item[data-idx]',layer).forEach(function(el){
+        if(kept.has(el)) return;
         var raw=el.getAttribute('data-idx');
         if(raw==='t'||raw==='s') return;
         var ma=(s.annots||[])[+raw];
@@ -3223,7 +3308,7 @@
        and never rebuilds the layer, so a box that had just been filled
        past its fit height was measured before the words arrived
        (2026-08-25, found in the browser). */
-    fitTexts(layer,s,editing);
+    fitTexts(layer,s,editing,kept);
     /* ...and AFTER the fit pass, which can change a box's height */
     if(_anchorFixWanted) anchorFix(layer,s);
     /* ---- STRAYS ------------------------------------------------------
@@ -3253,6 +3338,18 @@
       var lm=lockMode(a); if(!lm) return;
       $$('.an-item[data-idx="'+i+'"]',layer).forEach(function(el){
         el.classList.add(lm==='all'?'an-locked':'an-pinned');});
+    });
+    layer._paintSlide=s;layer._paintMode=mode;layer._paintItems=nextItems;
+    /* Replacing the object whose contents changed must not reset its
+       independent looping motion. Unchanged objects never leave the DOM. */
+    motionTimes.forEach(function(m){
+      if(m.time==null||!m.el.getAnimations) return;
+      m.el.getAnimations().forEach(function(an){
+        if(an.animationName===m.name) an.currentTime=m.time;
+      });
+    });
+    if(prior&&window.SemActivate) changed.forEach(function(el){
+      if(el.parentNode===layer) window.SemActivate(el,true);
     });
   }
   function selectAnnot(layer,idx,additive){

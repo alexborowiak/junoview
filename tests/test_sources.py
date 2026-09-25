@@ -1125,6 +1125,6 @@ def test_the_browser_reads_a_workbook_as_bytes():
     assert r"var BIN_RE=/\.(xlsx)$/i;" in js
     assert "function fileB64(f){" in js
     assert "api('/api/parse',{name:f.name,b64:b});" in js
-    assert "window.semPy.parseB64(name,b64,APP.order);" in js
-    loader = assets.web_loader()
-    assert "sr.web_parse_b64(_wname,_wtext,_wtaken)" in loader
+    assert "window.semPy.parseB64(name,b64,APP.order).then(" in js
+    worker = assets.load("js/web-worker.js")
+    assert "parseB64:'web_parse_b64'" in worker

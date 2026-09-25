@@ -22,13 +22,14 @@ def test_a_tree_node_drops_the_pin_and_the_mark():
     app = assets.app_js()
     node = app.split("    function fillNode(el){")[1].split("\n    function ")[0]
     assert ("      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote,'\n"
-            "        +'.cell-pin,.cell-mark',clone)\n"
+            "        +'.cell-pin,.cell-mark,.cell-history-btn',clone)\n"
             "        .forEach(function(x){x.remove();});") in node
 
 
 def test_a_plot_trace_drops_them_too():
     app = assets.app_js()
-    assert ("    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark',section)\n"
+    assert ("    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark,'\n"
+            "      +'.cell-history-btn',section)\n"
             "      .forEach(function(b){\n"
             "        if(b.parentNode) b.parentNode.removeChild(b);});") in app
 

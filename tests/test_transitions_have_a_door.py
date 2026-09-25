@@ -41,7 +41,7 @@ def test_the_three_transitions_are_on_the_animation_tab():
     # T372: "How it arrives" named nothing (2026-09-09, user: "WHAT
     # DOES 'HOW IT ARRIVES' EVEN MEAN"). It is the slide transition, and
     # Transition is the word PowerPoint uses for it.
-    assert '<span class="rbn-lab">Transition</span>' in html
+    assert '<span class="rbn-lab">Slide transition</span>' in html
     assert "How it arrives" not in html
 
 

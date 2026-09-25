@@ -2047,8 +2047,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pair matches the editor's hierarchy.
 # T507 (2026-09-23): the ordinary top strip now mirrors every open
 # presentation as well as notebooks and remains usable over the editor.
-EXPECTED_MD5 = "85704d789738b37f0aaf6878df9514f2"
-EXPECTED_BYTES = 4522728
+# T508 (2026-09-24): incremental animation rendering, lazy editor controls,
+# cached Story previews, coalesced ribbon fitting and explicit Preview UI.
+# Web imports now use a Promise bridge to the parsing worker. The same
+# implementation batch adds the per-cell Git comparison and Peek eye state
+# (2026-09-25), changing app.js and core.css embedded in the output.
+EXPECTED_MD5 = "b9b72f4359b0e0a65db6d5fb9e7b3a5c"
+EXPECTED_BYTES = 4550036
 
 
 def _render_example() -> str:

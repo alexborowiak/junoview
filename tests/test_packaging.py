@@ -168,6 +168,7 @@ def test_the_asset_loaders_and_the_files_agree():
     loaded = {"css/core.css", "css/app.css", "css/deck.css",
               "css/widget.css", "css/widget-media.css",
               "js/app.js", "js/pptx.js", "js/sw.js", "js/widget.js",
+              "js/web-runtime.js", "js/web-worker.js",
               "html/page.html", "html/shell.html", "html/deck.html",
               "html/help.html", "html/mathjax.html",
               "html/third-party-notices.html",

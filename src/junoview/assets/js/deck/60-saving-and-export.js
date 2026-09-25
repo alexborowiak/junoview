@@ -3893,6 +3893,7 @@
     });
   }
   document.addEventListener('sem:shell',function(e){
+    if(typeof storyInvalidate==='function') storyInvalidate();
     nbDoorsSync();
     if(e.detail.replaced){
       /* the notebook was reloaded: what every frame showed until now
@@ -3919,6 +3920,7 @@
     else renderPresTabs();
   });
   document.addEventListener('sem:shellclosed',function(e){
+    if(typeof storyInvalidate==='function') storyInvalidate();
     nbDoorsSync();
     /* invalidation point 2: frames fall back to the embedded copy */
     dropFrameCache(e.detail.stem);

@@ -122,6 +122,6 @@ def test_a_born_empty_text_box_says_it_is_there(out):
     """
     # (and since T203 it says so whether or not the caret is in it)
     assert '.deck.editing .an-item.an-text .an-tx:empty::before{' in out
-    assert "if(lab) lab.textContent='Effect';" in out
+    assert "if(lab) lab.textContent='Entrance';" in out
     # (T401: "& text" for any selected text box, animated or not)
-    assert "if(lab) lab.textContent=st.text?'Timing & text'" in out   # T473
+    assert "if(lab) lab.textContent='Timing';" in out

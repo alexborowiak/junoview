@@ -2374,7 +2374,7 @@
          a press here derived "" and persisted a mark for nothing; the
          two live on the source card and its outline row. */
       $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote,'
-        +'.cell-pin,.cell-mark',clone)
+        +'.cell-pin,.cell-mark,.cell-history-btn',clone)
         .forEach(function(x){x.remove();});
       body.appendChild(clone);
       /* cloneNode does not copy listeners: re-wire the clone so its code
@@ -3941,6 +3941,7 @@
     ensurePlotly(function(){
       if(!window.Plotly) return;
       [].forEach.call(pe,function(div){
+        if(div.isConnected===false) return;
         /* a cloned card may carry a static copy already — leave it be */
         if(div.querySelector('.js-plotly-plot,.plotly')) return;
         var raw=div.getAttribute('data-plotly'); if(!raw) return;
@@ -4587,7 +4588,306 @@
   function renderMarks(shell,stem){
     if(stem===(APP.active||'')) renderMarkGate();
   }
+  /* A peek reveals the view temporarily. The eyes report and edit the
+     SAVED state, so ending the peek only hides what still has a slash. */
+  function syncUnhideBtn(sh){
+    var b=sh.querySelector('.rf-unhide');
+    var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
+      +'.content .card.cell-off').length;
+    if(b){
+      var on=sh.classList.contains('reveal-hidden');
+      b.disabled=false;b.setAttribute('aria-pressed',on?'true':'false');
+      b.innerHTML=bic('eye')+(on?'End peek':'Peek at hidden')+' ('+n+')';
+      b.title=on?'End peek; your visibility changes stay saved'
+        :'Temporarily show hidden content so you can choose what to restore';
+    }
+    function status(el,hidden,what){
+      el.setAttribute('aria-pressed',hidden?'true':'false');
+      var say=hidden?'Hidden — show ':'Visible — hide ';
+      el.title=say+what+(sh.classList.contains('reveal-hidden')
+        ?' permanently':'');
+      el.setAttribute('aria-label',el.title);
+    }
+    $$('.cell-eye,.navitem-eye',sh).forEach(function(el){
+      var item=el.closest('.card,.navitem');
+      status(el,!!(item&&item.classList.contains('cell-off')),'this cell');
+    });
+    $$('.sec-eye,.navsec-eye',sh).forEach(function(el){
+      var sec=el.closest('.section'),row=el.closest('.navsec-row');
+      status(el,!!(sec&&sec.classList.contains('sec-headoff')
+        ||row&&row.classList.contains('head-off')),'this heading');
+    });
+    $$('.sec-hideall,.navsec-hideall',sh).forEach(function(el){
+      var sec=el.closest('.section'),row=el.closest('.navsec-row');
+      var hidden=!!(sec&&sec.classList.contains('sec-off')
+        ||row&&row.classList.contains('sec-off'));
+      status(el,hidden,'this whole section');
+      if(el.classList.contains('sec-hideall'))
+        el.textContent=hidden?'Show section':'Hide section';
+    });
+  }
+  /* ---- CELL HISTORY: one commit's output at a time -------------------
+     The timeline lists file commits only. Opening it never renders all
+     historical notebooks; selecting a row loads just that version. */
+  var cellHistoryDialog=null,cellHistoryRequest=0;
+  function historySource(path){
+    if(!/\.ipynb(?:$|[?#])/i.test(path||'')) return null;
+    var gh=ghFromUrl(path);
+    if(gh) return {gh:gh,path:path};
+    if(APP.mode==='app'&&!isUrl(path)) return {path:path};
+    return null;
+  }
+  function historyText(v){
+    return Array.isArray(v)?v.join(''):String(v==null?'':v);
+  }
+  function historyGitCell(nb,anchor){
+    var cells=Array.isArray(nb.cells)?nb.cells:[];
+    var found=null,index=-1,status='absent';
+    if(anchor.indexOf('cell:')===0){
+      index=cells.findIndex(function(c){return c.id===anchor.slice(5);});
+      if(index>=0) status='matched-id';
+    }
+    if(index<0&&/^cell:p\d+$/.test(anchor)){
+      var at=+anchor.slice(6);
+      if(Number.isInteger(at)&&at>=0&&at<cells.length){
+        index=at;status='matched-position';
+      }
+    }
+    if(index<0&&anchor.indexOf('cell:')!==0){
+      index=cells.findIndex(function(c){
+        return historyText(c.source).split('\n').some(function(line){
+          var m=/^\s*#\s*\|\s*id\s*:\s*(\S+)/.exec(line);
+          return m&&m[1]===anchor;
+        });
+      });
+      if(index>=0) status='matched-source';
+    }
+    if(index>=0) found=cells[index];
+    return {cell:found,index:index,status:status};
+  }
+  function historyBoundedText(response,limit){
+    var size=+(response.headers.get('content-length')||0);
+    if(size>limit) throw new Error('This notebook is too large to preview');
+    if(!response.body||!response.body.getReader)
+      return response.text().then(function(raw){
+        if(raw.length>limit) throw new Error('This notebook is too large to preview');
+        return raw;
+      });
+    var reader=response.body.getReader(),decoder=new TextDecoder('utf-8');
+    var parts=[],bytes=0;
+    function next(){return reader.read().then(function(part){
+      if(part.done){parts.push(decoder.decode());return parts.join('');}
+      bytes+=part.value.byteLength;
+      if(bytes>limit){reader.cancel();
+        throw new Error('This notebook is too large to preview');}
+      parts.push(decoder.decode(part.value,{stream:true}));
+      return next();
+    });}
+    return next();
+  }
+  function historyGithubVersion(gh,commit,anchor,signal){
+    return fetch(ghRawAt(gh,commit),{cache:'no-store',signal:signal}).then(function(r){
+      if(!r.ok) throw new Error('GitHub said '+r.status);
+      return historyBoundedText(r,20*1024*1024);
+    }).then(function(raw){
+      var match=historyGitCell(JSON.parse(raw),anchor),cell=match.cell;
+      return {found:!!cell,status:match.status,index:match.index,
+        source:cell?historyText(cell.source).slice(0,400):'',
+        outputs:cell&&Array.isArray(cell.outputs)?cell.outputs:[]};
+    });
+  }
+  function historyCurrent(card,host){
+    var imgs=$$('.cb-fig img',card).slice(0,4);
+    if(imgs.length){
+      imgs.forEach(function(im){
+        var copy=document.createElement('img');
+        copy.src=im.currentSrc||im.src;copy.alt=im.alt||'Cell output';
+        host.appendChild(copy);
+      });
+      return;
+    }
+    var svgs=$$('.cb-fig .figframe > svg',card).slice(0,4);
+    if(svgs.length){
+      svgs.forEach(function(svg){
+        var xml=new XMLSerializer().serializeToString(svg);
+        if(xml.length>2*1024*1024) return;
+        var copy=document.createElement('img');
+        copy.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+        copy.alt='Current SVG output';host.appendChild(copy);
+      });
+      if(host.children.length) return;
+      host.textContent='SVG output is too large to preview';return;
+    }
+    var plot=card.querySelector('.plotly-embed[data-plotly]');
+    if(plot){host.appendChild(plot.cloneNode(false));
+      activateOutputs(host,true);return;}
+    var content=card.querySelector('.cb-out,.note,.code');
+    var pre=document.createElement('pre');
+    pre.textContent=content
+      ?(content.textContent||'').slice(0,8000):'No stored output';
+    host.appendChild(pre);
+  }
+  function historyRemoteOutput(result,host){
+    var shown=0,tooLarge=false;
+    (result.outputs||[]).forEach(function(output){
+      if(shown>=4) return;
+      var data=output.data||{},mime=['image/png','image/jpeg',
+        'image/gif','image/webp'].find(function(k){return data[k];});
+      if(mime){
+        var payload=historyText(data[mime]);
+        if(payload.length<=8*1024*1024){
+          var im=document.createElement('img');
+          im.src='data:'+mime+';base64,'+payload;
+          im.alt='Stored output at this commit';host.appendChild(im);shown++;
+        } else tooLarge=true;
+      } else if(data['image/svg+xml']){
+        var svg=historyText(data['image/svg+xml']);
+        if(svg.length<=2*1024*1024){
+          var vector=document.createElement('img');
+          vector.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+          vector.alt='Stored SVG output at this commit';
+          host.appendChild(vector);shown++;
+        } else tooLarge=true;
+      } else {
+        var value=data['text/plain']||output.text
+          ||(output.traceback||[]).join('\n');
+        if(value){var pre=document.createElement('pre');
+          pre.textContent=historyText(value).slice(0,8000);
+          host.appendChild(pre);shown++;}
+      }
+    });
+    if(!shown) host.textContent=tooLarge?'Stored output is too large to preview'
+      :'No stored output in this version';
+  }
+  function historyPurge(root){
+    if(!window.Plotly||!window.Plotly.purge) return;
+    $$('.plotly-embed',root).forEach(function(el){
+      try{window.Plotly.purge(el);}catch(e){}
+    });
+  }
+  function openCellHistory(sh,card){
+    var source=historySource(sh.path);if(!source) return;
+    if(cellHistoryDialog) cellHistoryDialog.close();
+    var dialog=document.createElement('dialog'),loadTimer=null,abort=null;
+    var previews=new Map();
+    dialog.className='cell-history';
+    dialog.innerHTML='<header class="ch-head"><div><span>Cell history</span>'
+      +'<h2></h2></div><button class="ch-close" type="button">Close</button>'
+      +'</header><div class="ch-main"><nav class="ch-timeline" '
+      +'aria-label="Notebook commits"></nav><div class="ch-compare">'
+      +'<section><h3>Current</h3><div class="ch-output ch-current"></div>'
+      +'</section><section><h3 class="ch-version-title">Earlier version</h3>'
+      +'<div class="ch-output ch-version">Choose a commit</div>'
+      +'<p class="ch-source"></p></section></div></div>';
+    dialog.querySelector('h2').textContent=
+      (card.querySelector('.cardtitle')||{}).textContent||'Cell';
+    dialog.querySelector('.ch-close').addEventListener('click',function(){
+      dialog.close();});
+    document.body.appendChild(dialog);cellHistoryDialog=dialog;
+    dialog.addEventListener('close',function(){
+      if(cellHistoryDialog===dialog){
+        cellHistoryRequest++;cellHistoryDialog=null;
+      }
+      clearTimeout(loadTimer);
+      if(abort) abort.abort();
+      previews.clear();
+      historyPurge(dialog);
+      dialog.remove();
+    });
+    dialog.showModal();
+    historyCurrent(card,dialog.querySelector('.ch-current'));
+    var timeline=dialog.querySelector('.ch-timeline'),version=
+      dialog.querySelector('.ch-version');
+    timeline.textContent='Loading commits…';
+    var anchor=card.dataset.anchor;
+    var commits=source.gh?ghCommits(source.gh):
+      api('/api/cellhistory',{path:source.path,anchor:anchor})
+        .then(function(j){return j.commits||[];});
+    Promise.resolve(commits).then(function(list){
+      if(cellHistoryDialog!==dialog) return;
+      timeline.replaceChildren();
+      if(!list.length){
+        timeline.textContent='No Git commits for this notebook yet';return;
+      }
+      list.slice(0,25).forEach(function(cm){
+        var row=document.createElement('button');row.type='button';
+        row.className='ch-commit';
+        var date=document.createElement('small');
+        date.textContent=(cm.date||'')+' · '+cm.id;
+        var msg=document.createElement('span');
+        msg.textContent=cm.msg||'Commit';
+        row.appendChild(date);row.appendChild(msg);
+        row.addEventListener('click',function(){
+          $$('.ch-commit',timeline).forEach(function(b){
+            b.setAttribute('aria-current',b===row?'true':'false');});
+          var request=++cellHistoryRequest;
+          clearTimeout(loadTimer);
+          if(abort){abort.abort();abort=null;}
+          version.textContent='Loading this cell…';
+          dialog.querySelector('.ch-version-title').textContent=
+            'Commit '+cm.id;
+          dialog.querySelector('.ch-source').textContent='';
+          loadTimer=setTimeout(function(){
+            var key=cm.full||cm.id;
+            if(source.gh&&window.AbortController) abort=new AbortController();
+            var load=previews.has(key)?previews.get(key):source.gh
+              ?historyGithubVersion(source.gh,key,anchor,
+                abort&&abort.signal)
+              :api('/api/cellversion',
+                {path:source.path,anchor:anchor,commit:cm.id});
+            Promise.resolve(load).then(function(result){
+            if(cellHistoryDialog!==dialog||request!==cellHistoryRequest)
+              return;
+            /* Two recent revisions cover back-and-forth comparison without
+               retaining a whole timeline of image payloads in memory. */
+            previews.delete(key);previews.set(key,result);
+            if(previews.size>2) previews.delete(previews.keys().next().value);
+            historyPurge(version);version.replaceChildren();
+            if(result.status==='too-large'){
+              version.textContent='Stored output is too large to preview';
+              return;
+            }
+            if(!result.found){
+              version.textContent='This cell is not in that commit';return;
+            }
+            if(source.gh) historyRemoteOutput(result,version);
+            else {
+              version.innerHTML=result.html||'No stored output in this version';
+              activateOutputs(version,true);
+            }
+            dialog.querySelector('.ch-source').textContent=
+              result.status==='matched-position'
+                ?'Matched by position; check the source: '
+                  +(result.source||'').slice(0,140):'';
+            }).catch(function(err){
+            if(cellHistoryDialog===dialog&&request===cellHistoryRequest)
+              version.textContent='Could not load this version: '+err.message;
+            });
+          },90);
+        });
+        timeline.appendChild(row);
+      });
+      timeline.querySelector('.ch-commit').click();
+    }).catch(function(err){
+      if(cellHistoryDialog===dialog)
+        timeline.textContent='Could not load commits: '+err.message;
+    });
+  }
   function wireCardBehaviors(shell,stem){
+    /* The button is cheap; no history or image is fetched until it opens. */
+    var source=historySource(shell.dataset.path||'');
+    if(source) $$('.card:not([data-note="1"])',shell).forEach(function(card){
+      var head=card.querySelector('.cardhead');if(!head) return;
+      var b=document.createElement('button');b.type='button';
+      b.className='cell-history-btn';
+      b.innerHTML=bic('history')+' Versions';
+      b.title='Compare this cell across Git commits';
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        openCellHistory({path:shell.dataset.path||''},card);
+      });
+      head.insertBefore(b,head.querySelector('.cell-pin')||null);
+    });
     /* ---- code toggles ---- */
     $$('.codetoggle',shell).forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -4606,12 +4906,14 @@
       if(card) card.classList.toggle('cell-off',off);
       if(nav) nav.classList.toggle('cell-off',off);
       applyFilters();
+      scheduleSaveLayout();syncUnhideBtn(shell);
     }
     $$('.cell-eye',shell).forEach(function(btn){
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
         var card=btn.closest('.card'); if(!card) return;
-        setCellOff(card.id.replace(/^card-/,''),true);   /* hide this cell */
+        var id=card.id.replace(/^card-/,'');
+        setCellOff(id,!card.classList.contains('cell-off'));
       });
     });
     /* T242: the pin and the mark. Pinning a cell you had hidden by
@@ -4714,18 +5016,6 @@
        untouched and you can hide them all again with one click. While
        they are revealed each one's own eye still works, which is how you
        un-hide just the one you actually wanted back. ---- */
-    function syncUnhideBtn(sh){
-      /* The outline owns this button; each open shell keeps its own state. */
-      var b=sh.querySelector('.rf-unhide'); if(!b) return;
-      var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
-        +'.content .card.cell-off').length;
-      var on=sh.classList.contains('reveal-hidden');
-      /* with nothing hidden the button has no job — unless it is still
-         revealing, in which case it is the only way back */
-      b.disabled=false;
-      b.setAttribute('aria-pressed',on?'true':'false');
-      b.innerHTML=bic('eye')+(on?'End peek':'Peek at hidden')+' ('+n+')';
-    }
     (function(){
       var ub=shell.querySelector('.rf-unhide');
       if(!ub) return;
@@ -4808,7 +5098,8 @@
     $$('.sec-hideall',shell).forEach(function(b){
       b.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        setSecOff(b.dataset.sec,true);   /* heading AND every card */
+        var sec=b.closest('.section');
+        setSecOff(b.dataset.sec,!sec.classList.contains('sec-off'));
       });
     });
     $$('.navsec-eye',shell).forEach(function(sp){
@@ -4944,6 +5235,7 @@
        shared by both branches; `taken` is the stems the parser must
        avoid, and done(shellHtml) runs after the mount */
     function webFetchParse(taken,done){
+      var excluded=APP.order.filter(function(st){return taken.indexOf(st)<0;});
       fetch(url,{cache:'no-store'}).then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
         return r.text();
@@ -4951,9 +5243,12 @@
         if(!webReady()) throw new Error('Python is still loading');
         var name=decodeURIComponent(
           url.split('?')[0].split('/').pop()||'notebook.ipynb');
-        var shell=window.semPy.parse(name,txt,taken);
-        mountShellHTML(shell,url,true);
-        done(shell);
+        return queueWebImport(function(){
+          var current=APP.order.filter(function(st){return excluded.indexOf(st)<0;});
+          return window.semPy.parse(name,txt,current).then(function(shell){
+            mountShellHTML(shell,url,true);done(shell);
+          });
+        });
       }).catch(function(e){
         alert('Could not open that version: '+((e&&e.message)||e));});
     }
@@ -4988,11 +5283,15 @@
     }).catch(function(e){
       alert('Could not open that version: '+((e&&e.message)||e));});
   }
+  var ghCommitCache=new Map();
   function ghCommits(gh){
+    var key=[gh.owner,gh.repo,gh.ref,gh.path].join('/');
+    var cached=ghCommitCache.get(key);
+    if(cached&&Date.now()-cached.at<60000) return cached.promise;
     var url='https://api.github.com/repos/'+encodeURIComponent(gh.owner)
       +'/'+encodeURIComponent(gh.repo)+'/commits?per_page=25&sha='
       +encodeURIComponent(gh.ref)+'&path='+encodeURIComponent(gh.path);
-    return fetch(url,{headers:{'Accept':'application/vnd.github+json'}})
+    var promise=fetch(url,{headers:{'Accept':'application/vnd.github+json'}})
       .then(function(r){
         if(r.status===403)
           throw new Error('GitHub rate limit — try again later');
@@ -5005,7 +5304,14 @@
           return {id:String(c.sha||'').slice(0,10),full:c.sha,
             msg:msg,date:d?d.slice(0,10):''};
         });
+      }).catch(function(err){
+        var entry=ghCommitCache.get(key);
+        if(entry&&entry.promise===promise) ghCommitCache.delete(key);
+        throw err;
       });
+    ghCommitCache.delete(key);ghCommitCache.set(key,{at:Date.now(),promise:promise});
+    if(ghCommitCache.size>4) ghCommitCache.delete(ghCommitCache.keys().next().value);
+    return promise;
   }
   /* ---- THE FILE BAR IS DOCKED ABOVE THE NOTEBOOK RIBBON ---------------
      The bar is still the SHELL's --
@@ -5905,6 +6211,7 @@
       if(items) items.classList.add('nav-collapsed');
     });
     recalcSecCascade(shell);   /* re-fold the tiers under restored state */
+    syncUnhideBtn(shell);
     if(keep.raw&&!keep.tree){
       shell.classList.add('raw');
       populateRawView(shell);  /* a reload/restore skips the Raw button */
@@ -6518,7 +6825,8 @@
        T248: and the pin and the mark, for the same reason -- wired here
        they repainted only the clone and left the source document stale
        until a reload; the source card is where they act. */
-    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark',section)
+    $$('.cell-eye,.card-addnote,.cell-pin,.cell-mark,'
+      +'.cell-history-btn',section)
       .forEach(function(b){
         if(b.parentNode) b.parentNode.removeChild(b);});
     $$('.card.cell-off',section).forEach(function(c){
@@ -6876,18 +7184,26 @@
     return u;
   }
   function webReady(){return !!window.semPy;}
+  var webImports=Promise.resolve();
+  function queueWebImport(run){
+    /* Mount one result before allocating the next notebook's name. Two
+       simultaneously dropped files may have the same filename. */
+    var result=webImports.then(run);
+    webImports=result.catch(function(){});
+    return result;
+  }
   function webParseText(name,text){
     if(!webReady()){
       alert('Python is still loading — try again in a moment.');
       return;
     }
-    try{
-      var shell=window.semPy.parse(name,text,APP.order);
-      mountShellHTML(shell,'');
-      hideDlg();
-    }catch(e){
+    return queueWebImport(function(){
+      return window.semPy.parse(name,text,APP.order).then(function(shell){
+        mountShellHTML(shell,'');hideDlg();
+      });
+    }).catch(function(e){
       alert('Could not open '+name+': '+((e&&e.message)||e));
-    }
+    });
   }
   /* WHAT THIS TOOL CAN OPEN (T91). Kept in step with SOURCES in
      notebook/sources.py, which is where the parsing actually happens --
@@ -6912,13 +7228,13 @@
       alert('Python is still loading — try again in a moment.');
       return;
     }
-    try{
-      var shell=window.semPy.parseB64(name,b64,APP.order);
-      mountShellHTML(shell,'');
-      hideDlg();
-    }catch(e){
+    return queueWebImport(function(){
+      return window.semPy.parseB64(name,b64,APP.order).then(function(shell){
+        mountShellHTML(shell,'');hideDlg();
+      });
+    }).catch(function(e){
       alert('Could not open '+name+': '+((e&&e.message)||e));
-    }
+    });
   }
   function webOpenFiles(files){
     Array.prototype.slice.call(files||[]).forEach(function(f){
@@ -6971,13 +7287,13 @@
       /* reloading: exclude the tab that already holds this URL from the
          "taken" names so the parser reproduces its stem and we REPLACE
          that tab in place instead of minting a new one */
-      var taken=APP.order.filter(function(s){
-        return !(APP.shells[s]&&APP.shells[s].path===url);});
-      var shell=window.semPy.parse(name,txt,taken);
-      mountShellHTML(shell,url);
-      webNote(url);
-      done();
-      hideDlg();
+      return queueWebImport(function(){
+        var taken=APP.order.filter(function(s){
+          return !(APP.shells[s]&&APP.shells[s].path===url);});
+        return window.semPy.parse(name,txt,taken).then(function(shell){
+          mountShellHTML(shell,url);webNote(url);done();hideDlg();
+        });
+      });
     }).catch(function(e){
       var wasSilent=pend.s;
       done();
@@ -7602,10 +7918,8 @@
       webOpenUrl('example_climate_analysis.ipynb',false);
     });
     /* ---- the installable, offline-capable app (PWA) ----
-       The install offer (`beforeinstallprompt`) usually fires on the BOOT
-       document and is stashed on the window — which document.write keeps —
-       by web-loader.html; it can also fire later, on this page. Either
-       way the welcome screen grows an "Install as an app" link. */
+       web-runtime.js keeps any early install offer on the window; this
+       listener handles offers arriving after the welcome is wired. */
     var wInst=$('#welcome-install'),wInstSep=$('#welcome-install-sep');
     /* ALWAYS OFFERED, not only when the browser volunteers. The link
        used to be hidden unless `beforeinstallprompt` had fired, which is
@@ -7664,17 +7978,8 @@
       APP.project.recent=JSON.parse(
         localStorage.getItem(WEBKEY+':recent')||'[]');
     }catch(e){}
-    /* reopen last session's URL notebooks once Python is up.
-       WAITING FOR THE EVENT IS NOT ENOUGH. The loader writes this whole
-       page with document.write() and fires sem:pyready immediately
-       afterwards; whether this script has run by then is a race, and
-       document.write() wipes the document (listeners included), so an
-       early dispatch is simply lost and the session never comes back.
-       The service worker made that race much easier to lose, because a
-       cached boot writes the page faster (2026-08-21: reproduced — the
-       first visit restored, every later one silently did not).
-       window.semPy is set before the dispatch, so it is the reliable
-       "already up" flag; the listener only covers the other ordering. */
+    /* The bridge exists before app.js and queues imports until Python is
+       ready. The last-session offer itself needs no Python startup. */
     /* T241: IT IS AN OFFER NOW, not a decision. Reopening every
        notebook of the last session on load is a page that decides
        what you are doing before you have said (2026-09-04, user: "I
@@ -7706,9 +8011,8 @@
      only touches what is declared above it — but do not add more. */
   initRailAuto();
   pagesBoot();                /* one section at a time (T390) */
-  /* the loader learnt a newer build took over while this page was
-     booting from the cache (T206); the loader's own bar died with the
-     document it wrote over, so raise it again here */
+  /* An update may arrive before the body exists; show the saved notice
+     now that the application markup is ready (T206). */
   if(window.__jvNewBuild&&window.__jvUpdateBar) window.__jvUpdateBar();
   $$('.nbshell').forEach(function(sh){initShell(sh);});
   if(APP.order.length) activate(APP.order[0]);

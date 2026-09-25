@@ -664,7 +664,7 @@
     }
     return svg;
   }
-  function drawChart(layer,s,a,i){
+  function drawChart(layer,s,a,i,place){
     var d2=document.createElement('div');
     d2.className='an-item an-chart'+(selAnnot===i?' sel':'');
     var ap=anchorPos(a,a.w,a.h);
@@ -693,7 +693,7 @@
       });
     }
     d2.appendChild(svg);
-    layer.appendChild(d2);
+    if(place) place(d2); else layer.appendChild(d2);
   }
 
   /* ---- born from a table --------------------------------------------- */

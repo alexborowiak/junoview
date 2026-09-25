@@ -113,6 +113,6 @@ def test_a_shelved_group_is_still_counted_as_occupied(out):
 def test_disappear_is_named_for_what_you_are_choosing(out):
     """"also what is disappear?" -- it was named for what it does to the
     object, under a group label that said the same word again."""
-    assert '<span class="rbn-lab">Leaves early</span>' in out
+    assert '<span class="rbn-lab">Exit</span>' in out
     assert "<span>Send it away</span>" in out
     assert "Disappear</button>" not in out and "<span>Disappear</span>" not in out

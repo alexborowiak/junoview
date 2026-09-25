@@ -310,6 +310,28 @@
       ev.preventDefault();openFilmMenu(r.at,ev,r);});
     return el;
   }
+  function syncFilmBuild(i){
+    var row=$('#film-list .film-row[data-idx="'+i+'"]');
+    var s=pres.slides[i];if(!row||!s) return;
+    var marks=row.querySelector('.film-marks'),tag=row.querySelector('.film-mark.anim');
+    var n=slideStops(s);
+    if(!n){
+      if(tag) tag.remove();
+      if(marks&&!marks.childNodes.length) marks.remove();
+      return;
+    }
+    if(!marks){
+      marks=document.createElement('span');marks.className='film-marks';
+      row.querySelector('.film-label').appendChild(marks);
+    }
+    if(!tag){
+      tag=document.createElement('span');tag.className='film-mark anim';
+      marks.appendChild(tag);
+    }
+    tag.textContent='▸'+n;
+    tag.title=n+(n===1?' click':' clicks')+' to walk this slide'
+      +'\nOpen Animation to see the order';
+  }
   function renderFilm(){
     var list=$('#film-list');
     /* T412: THE STRIP STAYS WHERE YOU SCROLLED IT (2026-09-13, user:
@@ -1074,6 +1096,7 @@
       renderDeckPresentationDrawer();
   }
   function setUIMode(m){
+    if(m==='edit'||m==='create') initEditorTools();
     var startingTalk=(m==='view'&&mode!=='view');
     var endingTalk=(m!=='view'&&mode==='view');
     /* Running late belongs to ONE run. A named version survives the run,

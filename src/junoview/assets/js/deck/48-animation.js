@@ -61,7 +61,7 @@
      grow (zoom's word collides with the canvas magnifier three groups
      away), U float up -- and every one is PRINTED ON ITS BUTTON,
      because a mode whose shortcuts are invisible has no shortcuts. */
-  var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
+  var SEQ_FX=[['none','From start','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G'],
     /* T385: three more ways in (2026-09-12, user: "the big thing in
        websites is people having cool animations ... text typing out
@@ -115,16 +115,17 @@
   }
   function motionPreview(v){
     motionPreviewStop();
-    if(!v||!motionOK()) return;
+    if(!motionOK()) return;
     var layer=stage&&stage.querySelector('.annot-layer'); if(!layer) return;
     selIdxs().slice(0,8).forEach(function(i){
       var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
       if(!el) return;
-      el.className=el.className.replace(/\ban-move-[a-z]+\b/g,'').trim();
-      el.classList.add('an-move-'+v,'an-mo-preview');
-      /* the object's OWN numbers, so a preview is what you will get */
       var s2=pres.slides[cur],a2=(s2&&s2.annots||[])[i];
-      if(a2&&a2.motion===v&&typeof motionPaint==='function')
+      var fx=v||(a2&&a2.motion);if(!fx) return;
+      el.className=el.className.replace(/\ban-move-[a-z]+\b/g,'').trim();
+      el.classList.add('an-move-'+fx,'an-mo-preview');
+      /* the object's OWN numbers, so a preview is what you will get */
+      if(a2&&a2.motion===fx&&typeof motionPaint==='function')
         motionPaint(el,a2);
       else el.style.animation='';
       motionPvEls.push(el);
@@ -140,20 +141,18 @@
         b=document.createElement('button');
         b.type='button';b.className='fx-tile';b.id='anim-move-'+pr[0];
         b.disabled=true;b.setAttribute('aria-pressed','false');
-        b.title=(pr[2]||pr[1])+' \u2014 hover to see it';
+        b.title=pr[2]||pr[1];
         b.innerHTML=(typeof moIcon==='function'?(moIcon(pr[0])||''):'')
           +'<span>'+esc(pr[1])+'</span>';
         strip.appendChild(b);
       }
       if(!b) return;
-      b.addEventListener('mouseenter',function(){motionPreview(pr[0]);});
-      b.addEventListener('mouseleave',motionPreviewStop);
       b.addEventListener('click',function(e){
         e.stopPropagation();motionPreviewStop();
         var items=motionItems(); if(!items.length) return;
         items.forEach(function(a){
           if(pr[0]) a.motion=pr[0]; else delete a.motion;});
-        markDirty();renderSlide();
+        moCommit();
         if(typeof animRibbonSync==='function') animRibbonSync();
       });
     });
@@ -162,6 +161,11 @@
     motionFxSync();
     var items=motionItems(),on=items.length>0;
     var now=on?(items[0].motion||''):null;
+    if(items.some(function(a){return (a.motion||'')!==now;})) now='mixed';
+    var grp=$('#anim-move');
+    var label=now==='mixed'?'Mixed':now===''?'Still':
+      ((MOTION_FX.find(function(p){return p[0]===now;})||[])[1]||'');
+    if(grp.getAttribute('data-say')!==label) grp.setAttribute('data-say',label);
     MOTION_FX.forEach(function(pr){
       var b=$(motionId(pr[0])); if(!b) return;
       b.disabled=!on;
@@ -207,7 +211,7 @@
         var pe=n.parentNode&&n.parentNode.closest
           ?n.parentNode.closest('[data-part]'):null;
         if(part==null&&pe&&pe.style.visibility==='hidden') continue;
-        nodes.push({node:n,text:n.textContent});
+        nodes.push({node:n,text:n.textContent,shown:0});
       }
     });
     var total=0;
@@ -225,7 +229,7 @@
       var left=shown;
       nodes.forEach(function(x){
         var take=Math.max(0,Math.min(x.text.length,left));
-        x.node.textContent=x.text.slice(0,take);
+        if(take!==x.shown){x.node.textContent=x.text.slice(0,take);x.shown=take;}
         left-=x.text.length;
       });
       if(shown>=total) typeStop();
@@ -257,7 +261,10 @@
     if(f.fx==='spot'){
       el.classList.add('an-spot');
       /* a frame later, so the softening is a transition rather than a cut */
-      requestAnimationFrame(function(){layer.classList.add('an-spotlit');});
+      requestAnimationFrame(function(){
+        if(layer.isConnected&&el.parentNode===layer&&layer.getAttribute('data-focus')==='spot')
+          layer.classList.add('an-spotlit');
+      });
     } else if(f.fx==='zoom'){
       var sr=stage.getBoundingClientRect(),r=el.getBoundingClientRect();
       if(!sr.width||!r.width) return;
@@ -274,7 +281,11 @@
       var tf='translate('+(sr.width/2-cx).toFixed(1)+'px,'
         +(sr.height/2-cy).toFixed(1)+'px) scale('+k.toFixed(3)+')';
       if(cur2===tf){stage.style.transform=tf;return;}
-      requestAnimationFrame(function(){stage.style.transform=tf;});
+      requestAnimationFrame(function(){
+        /* A second click can settle focus before this frame runs. */
+        if(layer.isConnected&&el.parentNode===layer&&layer.getAttribute('data-focus')==='zoom')
+          stage.style.transform=tf;
+      });
     } else if(f.fx==='lens'){
       var old=layer.querySelector('.an-lens'); if(old) old.remove();
       var c=el.cloneNode(true);
@@ -293,15 +304,19 @@
         +(lr.height/2-cy2).toFixed(1)+'px) scale('+k2.toFixed(3)+')';
       c.style.animation='';
       layer.appendChild(c);
-      requestAnimationFrame(function(){c.classList.add('an-lens-in');});
+      requestAnimationFrame(function(){
+        if(c.parentNode===layer) c.classList.add('an-lens-in');
+      });
     }
   }
   function focusSettle(layer){
+    /* Lazy Story thumbnails are stills, never commands to the live stage. */
+    if(typeof storyPaint!=='undefined'&&storyPaint) return;
     if(!layer||layer.getAttribute('data-focus')==='zoom') return;
     focusClear();
   }
   /* the ribbon strip: None / Blur the rest / Zoom in / Magnify, on the
-     selection, with a hover preview on the real object */
+     selection, with the shared Preview button for the real object */
   function focusItem(){
     var s=pres.slides[cur];
     if(typeof selAnnot!=='number') return null;
@@ -334,15 +349,11 @@
     var strip=$('#anim-focus-strip'); if(!strip) return;
     [['','none']].concat(FOCUS_FX).forEach(function(pr){
       var b=$('#anim-focus-'+(pr[0]||'none')); if(!b) return;
-      b.addEventListener('mouseenter',function(){
-        if(!b.disabled) focusPreview(pr[0]);});
-      b.addEventListener('mouseleave',focusPreviewStop);
       b.addEventListener('click',function(e){
         e.stopPropagation();focusPreviewStop();
         focusSet(pr[0]);
       });
     });
-    strip.addEventListener('mouseleave',focusPreviewStop);
   }
   /* give every selected thing this focus, on a click of its own at the
      end (the exit's default); '' takes it away. A thing that already
@@ -358,7 +369,7 @@
       n++;
     });
     if(!n) return;
-    markDirty();refresh();
+    markDirty();repaintAnimation();
     if(typeof animRibbonSync==='function') animRibbonSync();
     if(typeof animPaneSync==='function') animPaneSync();
   }
@@ -368,7 +379,7 @@
     var s=pres.slides[cur],a=focusItem(); if(!a) return;
     var f=animFocus(a); if(!f) return;
     function put(){
-      markDirty();refresh();
+      markDirty();repaintAnimation();
       if(typeof animRibbonSync==='function') animRibbonSync();
       if(typeof animPaneSync==='function') animPaneSync();
     }
@@ -424,7 +435,7 @@
       var s=pres.slides[cur],a=animOutItem(); if(!a) return;
       if(animOut(a)!=null) delete a.out;
       else a.out=nextAnimOrder(s);
-      markDirty();refresh();
+      markDirty();repaintAnimation();
       /* refresh() does not re-run the ribbon's own sync -- that
          happens on a SELECTION change, and this is not one, so the
          button reported the state it had before its own click */
@@ -451,7 +462,7 @@
       b.setAttribute('aria-pressed',on?'true':'false');
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayHide(m);fn();
-        markDirty();refresh();animRibbonSync();
+        markDirty();repaintAnimation();animRibbonSync();
         if(typeof animPaneSync==='function') animPaneSync();
       });
       m.appendChild(b);
@@ -537,7 +548,7 @@
         e.stopPropagation();
         var a=flipFxItem(); if(!a) return;
         if(pr[0]) a.fanim=pr[0]; else delete a.fanim;
-        markDirty();renderSlide();
+        markDirty();repaintAnimation();
         if(typeof animRibbonSync==='function') animRibbonSync();
         if(typeof animPaneSync==='function') animPaneSync();
       });
@@ -717,7 +728,7 @@
         }});
     }
     seqArm.hits.push({i:i,o:ord});
-    renderSlide();
+    repaintAnimation();
     seqSync();
   }
   function seqUndoOne(){
@@ -729,7 +740,7 @@
        a shift-click shared one and never advanced it */
     var still=seqArm.hits.some(function(x){return x.o===h.o;});
     if(!still&&seqArm.n) seqArm.n--;
-    renderSlide();seqSync();
+    repaintAnimation();seqSync();
   }
   function seqSync(){
     /* T445: THE MODE'S OWN CONTROLS ARE THE PANEL'S NOW. They were
@@ -813,25 +824,30 @@
     if(!s||!layer) return;
     var idxs=selIdxs();
     if(!idxs.length) idxs=(s.annots||[]).map(function(_,i){return i;});
+    var previews=[];
     idxs.slice(0,8).forEach(function(i){
       var a=(s.annots||[])[i]; if(!a||a.hide) return;
       var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
       if(!el) return;
-      /* re-adding a class already there does nothing, so it comes off,
-         the element is reflowed, and it goes back on */
-      el.classList.remove('an-anim-'+type);
-      void el.offsetWidth;
-      el.classList.add('an-anim-'+type);
-      galPvEls.push(el);
-      if(type==='type'&&a.k==='text') typeInto(el);
+      var fx=type||(a.anim&&a.anim.type)||'none';
+      if(fx==='none'||fx==='appear') return;
+      el.classList.remove('an-anim-'+fx);
+      previews.push({el:el,a:a,fx:fx});
+    });
+    /* Restart every selected entrance with one layout flush. */
+    if(previews.length) void layer.offsetWidth;
+    previews.forEach(function(p){
+      p.el.classList.add('an-anim-'+p.fx);galPvEls.push(p.el);
+      if(p.fx==='type'&&p.a.k==='text') typeInto(p.el);
     });
     /* animationend is not reliable enough to be the only cleanup */
-    galPvT=setTimeout(galPreviewStop,type==='type'?2800:900);
+    galPvT=setTimeout(galPreviewStop,
+      previews.some(function(p){return p.fx==='type';})?2800:900);
   }
-  /* THE STRIP (T182): five tiles in the ribbon's own row, icon over
-     word, the one that is on lit. Rebuilt rather than diffed -- five
-     buttons are cheaper to redraw than to reconcile, and it has to
-     follow the selection. DISABLED with nothing selected: an effect
+  /* THE STRIP (T182): tiles in the ribbon's own row, icon over word,
+     the one that is on lit. Reuse the buttons so selection updates do
+     not rebuild their markup or handlers. DISABLED with nothing selected:
+     an effect
      is a fact about a thing, and the whole-slide builds are the two
      worded buttons beside the strip. */
   function galSync(){
@@ -839,36 +855,46 @@
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     var on=!!a&&typeof selAnnot==='number';
     var now=(a&&a.anim)?(a.anim.type||'fade'):(a?'none':null);
-    strip.innerHTML='';
+    if(selIdxs().some(function(i){var x=s.annots[i];
+      return x&&((x.anim?(x.anim.type||'fade'):'none')!==now);
+    })) now='mixed';
+    var grp=strip.closest('.strip-frame');
+    var label=now==='mixed'?'Mixed':((SEQ_FX.find(function(f){
+      return f[0]===now;})||[])[1]||'');
+    if(grp.getAttribute('data-say')!==label) grp.setAttribute('data-say',label);
+    var preview=$('#anim-preview');if(preview) preview.disabled=!on;
     SEQ_FX.forEach(function(f){
-      var b=document.createElement('button');
+      var b=strip.querySelector('[data-effect="'+f[0]+'"]');
+      var fresh=!b;
+      if(fresh){b=document.createElement('button');b.dataset.effect=f[0];}
       b.className='fx-tile'+(on&&now===f[0]?' on':'');
       b.type='button';
       b.disabled=!on;
       b.setAttribute('aria-pressed',on&&now===f[0]?'true':'false');
-      b.innerHTML=fxIcon(f[0])+'<span>'+f[1]+'</span>';
+      if(fresh) b.innerHTML=fxIcon(f[0])+'<span>'+f[1]+'</span>';
       b.title=on
         ?(f[0]==='none'?'No entrance \u2014 on the slide from the start'
-          :f[1]+' \u2014 hover to see it, click to give it')
+          :f[0]==='appear'?'Appear instantly at its assigned step':f[1])
         :'Select something on the slide first';
-      b.addEventListener('mouseenter',function(){if(on) galPreview(f[0]);});
-      b.addEventListener('focus',function(){if(on) galPreview(f[0]);});
-      b.addEventListener('mouseleave',galPreviewStop);
-      b.addEventListener('click',function(e){
+      if(fresh) b.addEventListener('click',function(e){
         e.stopPropagation();galPreviewStop();
-        if(on) animSetType(f[0]);});
-      strip.appendChild(b);
+        if(!b.disabled) animSetType(f[0]);});
+      if(fresh) strip.appendChild(b);
     });
     var lab=$('#anim-strip-lab');
-    /* just "Effect": the greyed tiles already say to select something
+    /* just "Entrance": the greyed tiles already say to select something
        (2026-09-02, user: "that is unnecessary text lol") */
-    if(lab) lab.textContent='Effect';
+    if(lab) lab.textContent='Entrance';
   }
   function galBoot(){
     var strip=$('#anim-strip');
     if(!strip) return;
     galSync();
-    strip.addEventListener('mouseleave',galPreviewStop);
+    var preview=$('#anim-preview');
+    if(preview) preview.addEventListener('click',function(e){
+      e.stopPropagation();galPreview();motionPreview();
+      var a=focusItem();if(a&&animFocus(a)) focusPreview(a.focus.fx);
+    });
     return;
     /* what follows is the popover's own wiring, kept only as the
        record of why the strip is not built through wireMenuToggle */
@@ -903,14 +929,21 @@
       seqEnd(false);
     },true);
   }
+  function repaintAnimation(){
+    var s=pres.slides[cur],layer=stage.querySelector('.annot-layer');
+    if(layer&&s&&mode==='edit'){
+      renderAnnots(layer,s,true);paintSel(layer);
+    } else renderSlide(true);
+    syncFilmBuild(cur);
+    if(typeof storyInvalidate==='function') storyInvalidate();
+  }
   function animBoot(){
     var vbtn=$('#vw-anim'),pane=$('#animpane');
     var menu=$('#animpane-body'),cl=$('#animpane-close');
     if(!vbtn||!pane||!menu) return;
     menu.classList.add('anim-pane');
     function rerender(){
-      var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
-      if(l){renderAnnots(l,s);paintSel(l);}
+      repaintAnimation();
     }
     function renumber(s){animSeq(s).forEach(function(st,i){
       st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
@@ -930,7 +963,7 @@
        button, nothing moved, and the honest reading was that it had not
        worked. Every change to an animation goes through here, which is
        exactly why the sync belongs here and not at each of the callers. */
-    function commit(s){markDirty();rerender();render();renderFilm();
+    function commit(s){markDirty();rerender();render();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
     /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
@@ -1122,8 +1155,7 @@
         }
       }
       var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent=st.text?'Timing & text'
-        :(st.fig?'Timing & panels':'Timing');
+      if(lab) lab.textContent='Timing';
     }
     /* T418: figure k with piece k. Set on every selected box built in
        pieces; '' takes it off. The book keeps whatever entrance it has. */
@@ -1614,7 +1646,7 @@
       var stopOrders=Object.keys(steps.map).map(Number)
         .sort(function(x,y){return x-y;});
       function exitCommit(){
-        markDirty();refresh();
+        markDirty();repaintAnimation();
         if(typeof animRibbonSync==='function') animRibbonSync();
         if(typeof animPaneSync==='function') animPaneSync();
       }

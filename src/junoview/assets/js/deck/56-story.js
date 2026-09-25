@@ -21,6 +21,23 @@
      cursor read it only while editing. */
   var storyAt=null,storySlide=-1,storyPaint=false,storyT=null,storyObs=null;
   var STORY_THUMB_W=150;
+  var storyRevision=0,storyPainted=-1,storySource=null,storyDeck=null;
+  function storyInvalidate(){
+    storyRevision++;
+    storySoon();
+  }
+  function storySelection(strip){
+    $$('.story-stop',strip).forEach(function(card){
+      var on=storyAt===+card.getAttribute('data-stop');
+      card.classList.toggle('on',on);
+      card.setAttribute('aria-pressed',String(on));
+    });
+    var whole=strip.querySelector('.story-whole');
+    if(whole){whole.classList.toggle('on',storyAt==null);
+      whole.setAttribute('aria-pressed',String(storyAt==null));}
+    var on=strip.querySelector('.story-stop.on');
+    if(on&&on.scrollIntoView) on.scrollIntoView({block:'nearest',inline:'nearest'});
+  }
   function storyPlan(s){
     return {steps:slideBuildSteps(s),plan:flipPlan(s)};
   }
@@ -115,6 +132,10 @@
     var strip=$('#story-strip'); if(!strip||strip.hidden) return;
     var s=pres.slides[cur]; if(!s) return;
     if(storySlide!==cur){storySlide=cur;storyAt=null;}
+    if(storySource===s&&storyDeck===pres&&storyPainted===storyRevision
+       &&strip.firstChild){storySelection(strip);return;}
+    if(storyObs){storyObs.disconnect();storyObs=null;}
+    storySource=s;storyDeck=pres;storyPainted=storyRevision;
     var n=storyCount(s);
     if(storyAt!=null&&storyAt>n){storyAt=n;}
     strip.innerHTML='';
@@ -139,13 +160,31 @@
     head.appendChild(x);
     strip.appendChild(head);
     var row=document.createElement('div');row.className='story-row';
+    var revision=storyRevision;
+    function paintCard(card){
+      if(!card.isConnected||storySource!==s||storyRevision!==revision) return;
+      var box=card.querySelector('.story-pic');
+      if(!box||box.firstChild) return;
+      box.replaceWith(storyThumb(s,+card.getAttribute('data-stop')));
+    }
+    /* Only nearby cards own rendered slides. The labels remain a complete,
+       keyboard-accessible list, however many clicks the slide contains. */
+    if(window.IntersectionObserver) storyObs=new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){if(entry.isIntersecting){
+        paintCard(entry.target);if(storyObs) storyObs.unobserve(entry.target);
+      }});
+    },{root:row,rootMargin:'200px'});
     for(var k=0;k<=n;k++){
       (function(k){
         var card=document.createElement('button');
         card.type='button';
+        card.setAttribute('data-stop',String(k));
         card.className='story-stop'+(storyAt===k?' on':'');
         card.setAttribute('aria-pressed',(storyAt===k).toString());
-        card.appendChild(storyThumb(s,k));
+        var placeholder=document.createElement('div');placeholder.className='story-pic';
+        var pg=pageOf();placeholder.style.width=STORY_THUMB_W+'px';
+        placeholder.style.height=Math.round(STORY_THUMB_W*pg.mm[1]/pg.mm[0])+'px';
+        card.appendChild(placeholder);
         var cap=document.createElement('span');cap.className='story-cap';
         var t=document.createElement('b');
         t.textContent=k===0?'Start':('Click '+k);
@@ -163,11 +202,12 @@
         card.addEventListener('click',function(e){
           e.stopPropagation();setStoryAt(k);});
         row.appendChild(card);
+        if(storyObs) storyObs.observe(card);
       })(k);
     }
     strip.appendChild(row);
-    var on=row.querySelector('.story-stop.on');
-    if(on&&on.scrollIntoView) on.scrollIntoView({block:'nearest',inline:'nearest'});
+    if(!storyObs) $$('.story-stop',row).forEach(paintCard);
+    storySelection(strip);
   }
   function setStoryAt(k){
     storyAt=(k==null)?null:Math.max(0,k|0);
@@ -185,20 +225,14 @@
     if(!on){
       storyAt=null;deckEl.classList.remove('storying');
       if(storyObs){storyObs.disconnect();storyObs=null;}
+      strip.innerHTML='';storySource=null;storyDeck=null;
+      clearTimeout(storyT);storyT=null;
       renderSlide();
     } else {
       storySlide=cur;
       renderStory();
-      /* the pictures follow every edit: the stage's DOM changes on each
-         one, and this is the one place that always knows */
-      if(window.MutationObserver&&!storyObs){
-        storyObs=new MutationObserver(storySoon);
-        /* T491: children and classes -- never the stage's own style,
-           which the focus zoom writes and which made the strip repaint
-           itself forever (third review pass) */
-        storyObs.observe(stage,{childList:true,subtree:true,
-          characterData:true,attributes:true,attributeFilter:['class']});
-      }
+      /* Content edits invalidate through markDirty. Selection, animation
+         classes and stepping through the story do not change its pictures. */
     }
     var b=$('#anim-story');
     if(b) b.setAttribute('aria-pressed',on?'true':'false');

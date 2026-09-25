@@ -50,6 +50,8 @@ from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
 from .state import StaleWrite, _app_page, _AppState, _is_deck_file, _list_dir
 from .vcs import (
+    CELL_HISTORY_COMMITS,
+    _git_cell_version,
     _git_commit_file,
     _git_file_log,
     _git_info,
@@ -349,6 +351,10 @@ def _make_handler(state: _AppState):
                     self._json(self._open_version(body))
                 elif url.path == "/api/versioncards":
                     self._json(self._version_cards(body))
+                elif url.path == "/api/cellhistory":
+                    self._json(self._cell_history(body))
+                elif url.path == "/api/cellversion":
+                    self._json(self._cell_version(body))
                 else:
                     self._json({"error": "not found"}, 404)
             except FileNotFoundError as e:
@@ -531,6 +537,36 @@ def _make_handler(state: _AppState):
                                if e["id"] == commit), {})
             return {"commit": commit, "msg": meta.get("msg", ""),
                     "date": meta.get("date", ""), "cards": cards}
+
+        def _cell_history(self, body: dict) -> dict:
+            """Metadata only; a selected revision is read by cellversion."""
+            raw = str(body.get("path") or "").strip().strip('"')
+            if not raw or is_url(raw):
+                raise ValueError("cell history needs a local notebook")
+            anchor = str(body.get("anchor") or "")
+            if not 0 < len(anchor) <= 200:
+                raise ValueError("bad cell anchor")
+            f = self._resolve_nb_path(raw)
+            return {"commits": _git_file_log(f, CELL_HISTORY_COMMITS)}
+
+        def _cell_version(self, body: dict) -> dict:
+            """Only the chosen card's stored output, from one git commit."""
+            raw = str(body.get("path") or "").strip().strip('"')
+            if not raw or is_url(raw):
+                raise ValueError("cell history needs a local notebook")
+            anchor = str(body.get("anchor") or "")
+            if not 0 < len(anchor) <= 200:
+                raise ValueError("bad cell anchor")
+            commit = str(body.get("commit") or "")
+            if not re.fullmatch(r"[0-9a-fA-F]{4,40}", commit):
+                raise ValueError("bad commit id")
+            f = self._resolve_nb_path(raw)
+            # A hash for some other file/repository must not become an
+            # arbitrary `git show` request from the page.
+            entries = _git_file_log(f, CELL_HISTORY_COMMITS)
+            if not any(e["id"].lower() == commit.lower() for e in entries):
+                raise FileNotFoundError("commit is not in this cell history")
+            return _git_cell_version(f, commit, anchor)
 
         def _versions(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')

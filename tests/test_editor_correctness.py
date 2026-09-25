@@ -507,7 +507,7 @@ def test_the_animation_pane_does_not_need_a_selection(out):
     # the selection through setType, whose commit() calls the pane's own
     # render, and the whole-slide builds go through the same commit
     assert "function galApply(type){" not in out
-    assert "function commit(s){markDirty();rerender();render();renderFilm();" in out
+    assert "function commit(s){markDirty();rerender();render();" in out
     assert out.count("animPaneSync();") >= 2
     # only a deck has builds
     assert "if(vaB) vaB.hidden=!!pg.poster;" in out
@@ -1649,7 +1649,9 @@ def test_typed_text_reaches_the_model_without_a_blur(out):
     assert "function markDirty(quiet){" in out
     assert "if(!quiet) histPush();" in out
     # every path that persists, re-renders or tears down flushes first
-    assert "flushTextEdits();\n    layer.innerHTML='';" in out
+    render = out.split("function renderAnnots(layer,s,incremental){", 1)[1]
+    assert render.index("flushTextEdits();") < render.index(
+        "if(!prior) layer.innerHTML='';")
     assert "flushTextEdits();   /* the words still in the DOM are part" in out
     assert "if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S'))" in out
     # a tab can close or be backgrounded without ever firing blur

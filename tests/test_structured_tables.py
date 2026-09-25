@@ -335,7 +335,7 @@ def test_the_doors(out):
     assert "  function tablePaneBusy(){" in out
     assert "if(a&&a===tablePaneAt&&tablePaneBusy()) return;" in out
     # ...and the renderer reads the columns
-    draw = out.split("function drawTable(layer,s,a,i,editing){")[1].split(
+    draw = out.split("function drawTable(layer,s,a,i,editing,place){")[1].split(
         "\n  }")[0]
     assert "var metas=tableColMeta(a);" in draw
     assert "tableFmtCell(val,m)" in draw

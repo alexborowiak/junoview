@@ -188,5 +188,5 @@ def sw_js() -> str:
 
 
 def web_loader() -> str:
-    """Boot page for the Pyodide build; see :mod:`junoview.web`."""
+    """SEO metadata for the pre-rendered web app; see :mod:`junoview.web`."""
     return load("html/web-loader.html")

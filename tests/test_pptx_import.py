@@ -610,7 +610,7 @@ def test_the_doors(out):
     files = app.split("function webOpenFiles(files){")[1].split("\n  }")[0]
     assert "isPptxPath(f.name)" in files
     assert "isDeckPath(v)||isPptxPath(v)" in app
-    assert "sr.web_import_pptx_b64(_wname,_wtext)" in assets.web_loader()
+    assert "importPptx:'web_import_pptx_b64'" in assets.load("js/web-worker.js")
 
 
 def test_the_import_says_what_it_will_cost_first(out):

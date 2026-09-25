@@ -1104,7 +1104,7 @@
        bar walks the figure through its steps exactly as it walks a build
        — one gesture for the whole talk (2026-08-22) */
     if(mode==='view'&&s&&revealCount<slideStops(s)){
-      revealCount++;renderSlide();presenterSync();autoArm();
+      revealCount++;renderSlide(true);presenterSync();autoArm();
     } else {
       /* THE FILTER LIVES HERE, in the two verbs the whole talk runs on,
          rather than in twenty callers. A cut or a running-late skip is
@@ -1116,7 +1116,7 @@
   }
   function backStep(){
     autoStop();
-    if(mode==='view'&&revealCount>0){revealCount--;renderSlide();
+    if(mode==='view'&&revealCount>0){revealCount--;renderSlide(true);
       presenterSync();}
     else {
       var pv=nextShown(cur,-1);

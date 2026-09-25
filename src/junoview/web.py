@@ -8,8 +8,9 @@ How the package reaches the browser
 -----------------------------------
 Junoview used to be one module, and the loader simply fetched
 ``semantic_render.py`` and imported it. A package cannot ship that way, so
-:func:`build_web` writes ``junoview.zip`` and the loader hands it to Pyodide's
-``unpackArchive``. Both ``import`` and :mod:`importlib.resources` work from a
+:func:`build_web` writes the application HTML ahead of time and a parsing
+worker hands ``junoview.zip`` to Pyodide's ``unpackArchive``. Both ``import``
+and :mod:`importlib.resources` work from a
 zip, so the CSS/JS/HTML assets load exactly as they do on disk -- and it stays
 one HTTP request, as the single file was.
 """
@@ -26,7 +27,7 @@ from pathlib import Path
 
 from . import assets
 from ._write import write_text
-from .branding import FAVICON, LOGO_SVG
+from .branding import LOGO_SVG
 from .notebook.loader import stem_for
 from .notebook.parser import parse_notebook
 from .notebook.pptx_read import read_pptx_b64
@@ -162,10 +163,19 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     # the stamp the loader shows so a screenshot can say which build it
     # is (T206 -- three stale-build screenshots in one day)
     version = hashlib.md5(zip_path.read_bytes()).hexdigest()[:12]
-    loader = assets.web_loader().replace(
-        "<title>", f'<link rel="icon" href="{FAVICON}">\n'
-        f'<meta name="junoview-build" content="{version}">\n<title>', 1)
-    write_text(outdir / "index.html", loader.replace("__JV_VERSION__", version))
+    # Build the empty app here, where Python is already running. The
+    # browser can show it immediately while its worker loads the parser.
+    page = render_page([], mode="web")
+    head = assets.web_loader().split("<head>", 1)[1].split("</head>", 1)[0]
+    page = re.sub(r"<title>.*?</title>", "", page, count=1, flags=re.S)
+    page = page.replace("<head>", "<head>\n" + head, 1)
+    page = page.replace("</head>",
+                        f'<meta name="junoview-build" content="{version}">\n'
+                        '<script src="web-runtime.js"></script>\n</head>', 1)
+    write_text(outdir / "index.html", page)
+    for name in ("web-runtime.js", "web-worker.js"):
+        write_text(outdir / name, assets.load("js/" + name).replace(
+            "__JV_VERSION__", version))
     write_text(outdir / ".nojekyll", "")
     for name in _LEGAL_FILES:
         write_text(outdir / name, _legal_text(name))

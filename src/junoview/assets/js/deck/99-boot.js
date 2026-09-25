@@ -28,13 +28,58 @@
      belongs here. test_js_contract.py ratchets the sub-IIFE count so
      the number can fall and never climb, and refuses a top-level
      lookup used unguarded (an addEventListener straight off `$`). */
+  /* Editor controls are wired on first entry. Notebook-only visits do
+     not build galleries or lay out a hidden editor. */
+  var editorToolsReady=false;
+  function initEditorTools(){
+    if(editorToolsReady) return;
+    editorToolsReady=true;
+    renderLayoutPicker();
+    initRibbonLayoutDoor();
+    rbnReadoutBoot();           /* folded doors show their choice (T441) */
+    rbnShelfBoot();             /* and open into the ribbon's shelf (T453) */
+    animBoot();
+    animCfgBoot();              /* the Animation panel (T445) */
+    seqBoot();       /* the sequencing mode's bar (T168) */
+    galBoot();       /* the effect gallery's door (T171) */
+    txStripBoot();              /* the kinds of text box, as tiles (T188) */
+    shapeStripBoot();           /* the shapes, as tiles (T197) */
+    imgPaneBoot();
+    quickSwatchBoot();          /* the deck's six colours, on the row */
+    ohOverviewBoot();           /* History of this object, full screen */
+    layoutBuilderBoot();        /* layouts of your own (T226) */
+    listGalleryBoot();          /* kinds of bullet and numbering (T227) */
+    homeDoorsBoot();            /* Notes and Optional on Home (T228) */
+    cloneDoorsBoot();           /* clones, on the Object tab (T229) */
+    transRibbonBoot();          /* how a SLIDE arrives (T289) */
+    flipFxBoot();               /* how a flip book's page turns (T234) */
+    motionBoot();               /* wobble / float / pulse (T385) */
+    webBoot();                  /* a live web page on a slide (T388) */
+    storyBoot();                /* the animation story (T391) */
+    animOutBoot();              /* Disappear, on the Animation tab (T238) */
+    focusBoot();                /* T472: focus, on its click */
+    versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
+    chartBoot();                /* the Chart pane's door (T322) */
+    tablePaneBoot();            /* the Table pane's door (T324) */
+    citeBoot();                 /* the Citations pane's door (T325) */
+    spActionsBoot();            /* the Layers pane's Actions popover (T221) */
+    stripMoreBoot();            /* every strip's Show-all door (T203) */
+    presentTabBoot();           /* the Present tab and Layers on Home (T216) */
+    optPanelBoot();             /* every window of options' door (T177) */
+    /* The saved-layout rows walk real markup, so belong in boot (T89).
+       Restore the layout BEFORE the per-button preferences: the layout
+       decides each control's group, then preferences order/hide it there.
+       The second preferences pass also covers the default layout (T11). */
+    initReuseDoors();
+    applyRibbonLayout(rbnCurrentId(),true);
+    applyRibbonPrefs();
+  }
   initShellRegistry();        /* every notebook the page carries */
   nbDoorsSync();              /* the notebook doors, greyed without one (T440) */
   initFirstPresentation();    /* the presentation the page opens with */
   /* app.js paints the welcome before this file loads; redraw it now the
      SemApp.deck* hooks and the registry can answer its questions */
   if(APP.refreshChrome) APP.refreshChrome();
-  renderLayoutPicker();
   renderAutosaveItem();
   renderSaveBtn();
   /* belt-and-braces: initFirstPresentation already synced the custom
@@ -49,69 +94,19 @@
      tabs beside its notebook tabs whenever either list is rebuilt. */
   APP.renderPresentationTabs=renderTopPresTabs;
   renderPresTabs();
-  initRibbonLayoutDoor();
-  rbnReadoutBoot();           /* folded doors show their choice (T441) */
-  rbnShelfBoot();             /* and open into the ribbon's shelf (T453) */
   /* the two auto-hides: their button and pointer listeners only. The
      remembered STATE is applied on first entry to edit mode, beside the
      ribbon fold's restore -- nothing here has geometry to measure yet. */
   initFilmAuto();
   initRibbonAuto();
-  /* the animation surface (T158). It used to run itself from the
-     middle of 45-images.js; a throw in an executing sub-IIFE takes
-     the whole deck IIFE with it, which is T133 exactly. */
-  animBoot();
-  animCfgBoot();              /* the Animation panel (T445) */
-  seqBoot();       /* the sequencing mode's bar (T168) */
-  galBoot();       /* the effect gallery's door (T171) */
-  txStripBoot();              /* the kinds of text box, as tiles (T188) */
-  shapeStripBoot();           /* the shapes, as tiles (T197) */
-  imgPaneBoot();
-  quickSwatchBoot();          /* the deck's six colours, on the row */
-  ohOverviewBoot();           /* History of this object, full screen */
-  layoutBuilderBoot();        /* layouts of your own (T226) */
-  listGalleryBoot();          /* kinds of bullet and numbering (T227) */
-  homeDoorsBoot();            /* Notes and Optional on Home (T228) */
-  cloneDoorsBoot();           /* clones, on the Object tab (T229) */
-  transRibbonBoot();          /* how a SLIDE arrives (T289) */
-  flipFxBoot();               /* how a flip book's page turns (T234) */
-  motionBoot();               /* wobble / float / pulse (T385) */
   talkToolsBoot();            /* laser, magnifier, black screen (T386) */
-  webBoot();                  /* a live web page on a slide (T388) */
   scrollShowBoot();           /* the scrolling version (T389) */
-  storyBoot();                /* the animation story (T391) */
-  animOutBoot();              /* Disappear, on the Animation tab (T238) */
-  focusBoot();                /* T472: focus, on its click */
-  versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
-  chartBoot();                /* the Chart pane's door (T322) */
-  tablePaneBoot();            /* the Table pane's door (T324) */
-  citeBoot();                 /* the Citations pane's door (T325) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
-  spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
-  stripMoreBoot();            /* every strip's Show-all door (T203) */
-  presentTabBoot();           /* the Present tab and Layers on Home (T216) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
-  optPanelBoot();             /* every window of options' door (T177) */
-  /* the three saved-layout rows in the Layouts menu (T89). Here, not
-     mid-file: it walks the deck's markup, which is only guaranteed real
-     by the time the boot sequence runs. */
-  initReuseDoors();
-  /* the ribbon you kept: applied once here, at the tail, after every
-     declaration and every group's markup is real. It must not run
-     mid-file — it walks #edit-tools and calls fitEditRibbon (T11).
-     The LAYOUT goes first and the per-button preferences follow, because
-     a layout decides which group a control is in and the preferences
-     order and hide it WITHIN that group — the other way round would sort
-     a group the control is about to leave. applyRibbonLayout ends by
-     calling applyRibbonPrefs itself, so the ordinary path is one call;
-     the second is the belt-and-braces for the default layout, which
-     moves nothing (2026-08-25). */
-  applyRibbonLayout(rbnCurrentId(),true);
-  applyRibbonPrefs();
   /* both IIFEs + their route hooks are now wired — restore the URL's view */
   if(window.SemApp&&window.SemApp.applyInitialRoute)
     window.SemApp.applyInitialRoute();

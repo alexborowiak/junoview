@@ -637,8 +637,18 @@
       slideEl.appendChild(el);
     });
   }
-  function renderSlide(){
+  function renderSlide(buildOnly){
     var s=pres.slides[cur];
+    if(typeof storyOpen==='function'&&storyOpen()
+       &&(storySource!==s||storyDeck!==pres)){
+      storyAt=null;storySlide=cur;storySoon();
+    }
+    var live=buildOnly&&mode==='view'&&stage.querySelector('.annot-layer');
+    if(live&&live._paintSlide===s&&live._paintMode===mode){
+      renderAnnots(live,s,true);
+      stage.scrollTop=0;updateVNav();syncBuildNav(s);
+      return;
+    }
     /* T471: Quick animate numbers ONE slide's clicks. Every way of
        leaving a slide -- go, New slide, the film strip, a section jump
        -- comes through here, so this is where the mode finishes with
@@ -806,6 +816,9 @@
     }
     stage.scrollTop=0;
     updateVNav();
+    syncBuildNav(s);
+  }
+  function syncBuildNav(s){
     /* Next stays live while builds remain on the last slide; Prev while any
        build can be stepped back on the first slide */
     var moreBuilds=(mode==='view'&&s&&revealCount<slideStops(s));
@@ -1632,7 +1645,7 @@
       var base=stepBase(s,a);
       if(base==null) return;
       revealCount=base+to;
-      renderSlide();presenterSync();
+      renderSlide(true);presenterSync();
       return;
     }
     a.at=to;
@@ -1656,7 +1669,7 @@
       var base=flipBase(s,a);
       if(base==null) return;
       revealCount=base+to;
-      renderSlide();presenterSync();
+      renderSlide(true);presenterSync();
       return;
     }
     a.at=to;

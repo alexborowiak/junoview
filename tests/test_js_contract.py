@@ -243,14 +243,14 @@ def test_cdn_pins_match_the_service_worker():
     that was never tested. A one-sided bump must fail here."""
     sw = (JS / "sw.js").read_text(encoding="utf-8")
 
-    # Pyodide: web-loader.html's script tag vs sw.js's PY base URL.
-    loader = (HTML / "web-loader.html").read_text(encoding="utf-8")
+    # Python now loads in the parsing worker; its pin still matches SW.
+    loader = (JS / "web-worker.js").read_text(encoding="utf-8")
     m = re.search(
-        r'src="(https://cdn\.jsdelivr\.net/pyodide/v[^"]+/)pyodide\.js"',
+        r"PYODIDE_BASE='(https://cdn\.jsdelivr\.net/pyodide/v[^']+/)'",
         loader)
-    assert m, "web-loader.html no longer pins Pyodide where expected"
+    assert m, "web-worker.js no longer pins Pyodide where expected"
     assert m.group(1) in sw, (
-        f"Pyodide pinned at {m.group(1)} in web-loader.html but sw.js "
+        f"Pyodide pinned at {m.group(1)} in web-worker.js but sw.js "
         "precaches a different version -- bump the two together "
         "(see the comment above PY in sw.js)"
     )

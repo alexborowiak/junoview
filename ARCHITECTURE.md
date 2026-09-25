@@ -29,7 +29,9 @@ dropped);
 `notebook/loader.py` imports `render_html` to offer the one-call
 `render_notebook_file`; `notebook/outputs.py` emits the HTML fragments for
 stored rich outputs (a figure, an xarray repr) rather than describing them
-abstractly; and `render/` reaches back for `_as_text` and `_HEADING_RE`. So
+abstractly; `server/vcs.py` uses the parser's card identities and the public
+`render/sanitize.py` allowlist for safe, selected Git-history previews; and
+`render/` reaches back for `_as_text` and `_HEADING_RE`. So
 you can usually change how a figure is *rendered* without touching how it is
 *recognised* — unless you are near one of those crossings.
 
@@ -64,6 +66,8 @@ src/junoview/
 │   │                      · widget-media.css  (the widget's responsive rules)
 │   ├── js/                app.js · deck/ · pptx.js · widget.js
 │   │                      · sw.js  (the web build's offline service worker)
+│   │                      · web-runtime.js  (async import bridge + PWA)
+│   │                      · web-worker.js  (Python parsing off the UI thread)
 │   │   └── deck/          the slide editor: ONE IIFE, one file per
 │   │                      fragment, in the order DECK_PARTS names
 │   └── html/              page.html · shell.html · deck.html · help.html · …
@@ -123,20 +127,26 @@ which is exactly how the web build runs.
 
 `junoview --build-web DIR` writes a static site that runs Python in the
 visitor's browser via Pyodide. Because a package cannot be fetched as one file
-the way the old single module could, `build_web()` writes `junoview.zip` and the
-loader hands it to Pyodide's `unpackArchive`. Imports and `importlib.resources`
-both work from that zip, so assets load normally.
+the way the old single module could, `build_web()` writes `junoview.zip` and
+`web-worker.js` hands it to Pyodide's `unpackArchive`. Imports and
+`importlib.resources` both work from that zip, so assets load normally.
+The application HTML is generated at build time: the UI opens while Python
+starts in the worker. `web-runtime.js` exposes a Promise-based import bridge;
+`app.js` serializes parse-and-mount jobs so simultaneous drops get unique
+names. Editor-only galleries and controls initialize on first editor entry.
 
 The archive is written deterministically — members sorted, timestamps fixed — so
 an unchanged package produces byte-identical output and the committed `docs/`
 build doesn't churn.
 
 The build is also an installable, offline-capable PWA: `build_web()` writes
-`sw.js` (a service worker that precaches the page, `junoview.zip`, the Pyodide
+`sw.js` (a service worker that precaches the page, the bridge/parser scripts,
+`junoview.zip`, the Pyodide
 runtime and MathJax on first visit — version-stamped with the package hash so
 it follows the same determinism rule), `manifest.webmanifest` and `icon.svg`.
-The Pyodide version is pinned in two places — the loader's script tag and the
-worker's precache list — bump them together.
+The Pyodide version is pinned in two places — `web-worker.js` and the service
+worker's precache list — bump them together. First-install precaching starts
+after the parser's critical downloads, so optional assets don't compete.
 
 ## Testing
 

@@ -9787,3 +9787,31 @@ any reading. The rest are T466 onwards.
   presentation alongside the shared left rail. It stays available while
   editing slides when there is a meaningful choice; reader-only file and
   filter controls stay hidden, and the deck starts beneath the row.
+- [x] **T508 — Animation and web-startup performance.** (2026-09-24)
+  Build playback and animation edits retain unchanged objects instead of
+  rebuilding the slide, with motion phase preserved when an object changes.
+  Animation edits refresh the current thumbnail, not the whole filmstrip.
+  Story reuses previews between selections and paints nearby cards lazily;
+  mapped exit/panel stops invalidate correctly when sibling builds change.
+  Ribbon resize work is coalesced and unchanged fits reused. Editor-only
+  controls initialize on first entry. The web application is rendered at
+  build time, with Python parsing/imports in a worker and queued imports
+  accepting files while it starts. Offline precaching follows critical
+  downloads. Entrance, Exit, Motion, Focus and Slide transition keep stable
+  labels, mixed selections say Mixed, and Preview replaces hover playback.
+  Fast-click focus callbacks and thumbnail/live-focus isolation are guarded.
+  No new runtime dependencies or language rewrite; generated docs unchanged.
+  The rendered-output baseline deliberately changes with these scripts and
+  controls. Also corrected the existing PPTX placeholder-chain annotation
+  exposed by mypy; its runtime behavior is unchanged.
+  (2026-09-25, follow-up in the same implementation batch) Peek at hidden
+  now keeps each eye and section action tied to its saved visibility state:
+  click while peeking to restore just that cell, heading or section; End peek
+  re-hides only those still marked hidden. Output-bearing notebook cells have
+  a Versions comparison against recent Git commits, with metadata fetched
+  before any selected output, source/position matching, side-by-side image
+  and text previews, bounded reads and a small preview cache. Historical HTML
+  is sanitized and SVG is shown as an inert image. GitHub commit metadata is
+  shared briefly between cell dialogs and the file Info panel. The full test
+  suite, ruff and mypy pass; browser FPS/visual checks were not run, and
+  generated `docs/` was not rebuilt or deployed.

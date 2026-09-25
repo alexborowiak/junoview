@@ -1556,12 +1556,45 @@
     if(f) f.addEventListener('click',function(){
       setRibbonFold(!ribbonFolded());});
   })();
+  /* Content and available width determine a fit; selection highlights do
+     not. Reuse the last arrangement before unfolding and measuring it. */
+  function ribbonFitKey(bar){
+    return [bar.clientWidth,document.body.className,
+      deckEl.classList.contains('rbn-side'),
+      window.getComputedStyle(bar).font,
+      Array.from(bar.querySelectorAll(
+        '.rbn-grp,.rbn-cell,.strip-frame,[hidden],[data-off],.rbn-hid')).map(function(el){
+        return [el.id,el.hidden,el.getAttribute('data-off'),
+          el.classList.contains('rbn-hid'),el.getAttribute('data-say'),el.textContent].join('|');
+      }).join('\n')].join('\n');
+  }
+  var ribbonFitFrame=null,qatFitFrame=null,guidesFitFrame=null;
+  function scheduleRibbonFit(){
+    if(ribbonFitFrame!=null) return;
+    ribbonFitFrame=requestAnimationFrame(function(){ribbonFitFrame=null;
+      if(!deckEl.hidden){fitEditRibbon();applyZoom();}
+    });
+  }
+  function scheduleQatFit(){
+    if(qatFitFrame!=null) return;
+    qatFitFrame=requestAnimationFrame(function(){qatFitFrame=null;
+      if(!deckEl.hidden) fitQat();
+    });
+  }
+  function scheduleGuidesFit(){
+    if(guidesFitFrame!=null) return;
+    guidesFitFrame=requestAnimationFrame(function(){guidesFitFrame=null;
+      if(!deckEl.hidden) syncGuides();
+    });
+  }
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
     /* a folded bar has no width to measure: scrollWidth would read 0 and
        the ladder would climb every rung for nothing */
     if(deckEl.classList.contains('rbn-fold')) return;
+    var fitKey=ribbonFitKey(bar);
+    if(bar._fitKey===fitKey) return;
     /* BEFORE anything is measured: a stale column count is a wrong width,
        so re-counting here is both the fix for a group that grew a control
        since the last count and the only way the density rungs below are
@@ -1583,6 +1616,7 @@
          one stamped on would shrink the rail's type for no reason */
       ERCW.forEach(function(r){cl.remove(r[0]);});
       if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
+      bar._fitKey=ribbonFitKey(bar);
       return;
     }
     if(!bar.clientWidth) return;
@@ -1673,6 +1707,7 @@
        sign (the third review pass). */
     if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
     rbnShelfScrollSync();
+    bar._fitKey=ribbonFitKey(bar);
   }
   /* ---- the strip may not eat the ribbon --------------------------------
      The slide column and the ribbon are two tracks of ONE grid, so every
@@ -2121,6 +2156,12 @@
       for(var n=c;n&&n!==row;n=n.parentNode) if(n.hidden) return false;
       return true;
     }
+    /* A chooser can report Mixed even though none of its tiles is pressed.
+       Keep the answer on that chooser so custom ribbon layouts can move it. */
+    if(row) $$('.strip-frame[data-say]',row).forEach(function(box){
+      var say=box.getAttribute('data-say');
+      if(say&&shown(box)){boxes.push(box);parts.push(say);}
+    });
     ons.forEach(function(on){
       if(!shown(on)) return;
       var box=(on.closest&&on.closest('.strip-frame,.rbn-cell,.sh-drop'))||on;
@@ -2195,7 +2236,11 @@
   /* the readouts follow every pressed-state change on the bar */
   function rbnReadoutBoot(){
     var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
-    new MutationObserver(function(){rbnFoldReadouts();})
+    var pending=false;
+    new MutationObserver(function(){
+      if(pending) return;pending=true;
+      requestAnimationFrame(function(){pending=false;rbnFoldReadouts();});
+    })
       .observe(bar,{subtree:true,attributes:true,
         attributeFilter:['aria-pressed','disabled','data-say']});
   }
@@ -2431,7 +2476,7 @@
       setZoom(Math.max(0.25,(deckZoom||1)/1.25));});
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
-      if(!deckEl.hidden){fitFilmMax();fitEditRibbon();fitQat();applyZoom();}});
+      if(!deckEl.hidden){fitFilmMax();scheduleRibbonFit();scheduleQatFit();}});
     /* the ribbon's height CHANGES now (the contextual format groups
        leave the layout when hidden), and so does the page picker — any
        toolbar reflow resizes the stage, so the page re-fits itself
@@ -2446,10 +2491,7 @@
          full size and simply ran off the right-hand edge (2026-08-07). */
       if(et) new ResizeObserver(function(){
         if(deckEl.hidden) return;
-        requestAnimationFrame(function(){
-          if(deckEl.hidden) return;
-          fitEditRibbon();applyZoom();
-        });
+        scheduleRibbonFit();
       }).observe(et);
       /* the thin top bar gets the same treatment for the same reason:
          its box changing (window resize, first real layout on open) is
@@ -2458,9 +2500,7 @@
       if(qb){
         var qro=new ResizeObserver(function(){
           if(deckEl.hidden) return;
-          requestAnimationFrame(function(){
-            if(!deckEl.hidden) fitQat();
-          });
+          scheduleQatFit();
         });
         qro.observe(qb);
         /* T487: and its CONTENTS. The bar's own box never changes when
@@ -2482,9 +2522,7 @@
     if(window.ResizeObserver&&stage){
       new ResizeObserver(function(){
         if(deckEl.hidden) return;
-        requestAnimationFrame(function(){
-          if(!deckEl.hidden) syncGuides();
-        });
+        scheduleGuidesFit();
       }).observe(stage);
     }
     /* a fit measured against the fallback font sticks, because the bar's
@@ -2492,6 +2530,7 @@
     try{
       if(document.fonts&&document.fonts.ready)
         document.fonts.ready.then(function(){
+          var bar=$('#edit-tools');if(bar) bar._fitKey=null;
           if(!deckEl.hidden){fitEditRibbon();fitQat();}});
       /* T487: .ready settles ONCE, for the batch in flight at boot; a
          face that arrives later (the bar's mono, first used when the
@@ -2499,6 +2538,7 @@
          and nothing re-judged it until the next window resize */
       if(document.fonts&&document.fonts.addEventListener)
         document.fonts.addEventListener('loadingdone',function(){
+          var bar=$('#edit-tools');if(bar) bar._fitKey=null;
           if(!deckEl.hidden){fitEditRibbon();fitQat();}});
     }catch(e){}
     /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:

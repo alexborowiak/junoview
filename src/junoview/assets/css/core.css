@@ -388,6 +388,7 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 /* ONE slash for every crossed-out eye: the item eye, the section-heading
    eyes, and the hide-all control (deck.css draws its own, larger one) */
 .navitem.cell-off .navitem-eye::after,
+.nbshell.reveal-hidden .card.cell-off .cell-eye::after,
 .section.sec-headoff .sec-eye::after,
 .navsec-row.head-off .navsec-eye::after,
 .navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
@@ -683,6 +684,9 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .nbshell.reveal-hidden .section.sec-off:hover,
 .nbshell.reveal-hidden .content .card.cell-off.is-hidden:hover,
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead:hover{opacity:1;}
+.nbshell.reveal-hidden .card.cell-off .cell-eye,
+.nbshell.reveal-hidden .section.sec-off .sec-hideall{
+  opacity:1;position:relative;color:var(--amber);}
 .rf-unhide[aria-pressed="true"]{border-color:var(--amber);
   color:var(--amber);}
 /* Preview changes only presentation: all stored hide/fold flags survive. */
@@ -842,6 +846,61 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   transition:opacity .15s,background .15s;}
 .card:hover .cell-eye,.cell-eye:focus-visible{opacity:.55;}
 .cell-eye:hover{opacity:1;background:var(--paper-2);}
+/* The version comparison is a deliberate per-cell action, so keep its
+   word visible and its place predictable even when other actions fade. */
+.cell-history-btn{flex:none;display:inline-flex;align-items:center;gap:5px;
+  margin-left:auto;padding:4px 7px;border:1px solid var(--line);
+  border-radius:5px;background:none;color:var(--ink-3);cursor:pointer;
+  font:600 10px var(--mono);white-space:nowrap;}
+.cardhead .plot-trace-btn+.cell-history-btn{margin-left:0;}
+.cardhead .cell-history-btn+.cell-pin{margin-left:0;}
+.cell-history-btn:hover,.cell-history-btn:focus-visible{
+  background:var(--paper-2);color:var(--ink);}
+/* One comparison owns the screen; its timeline stays narrow while the
+   current and chosen outputs each get room to breathe. */
+dialog.cell-history{width:min(1120px,94vw);max-width:94vw;height:min(760px,86vh);
+  max-height:86vh;box-sizing:border-box;padding:0;overflow:hidden;
+  border:1px solid var(--line);border-radius:12px;background:var(--paper);
+  color:var(--ink);box-shadow:0 18px 55px var(--shadow);}
+dialog.cell-history::backdrop{background:#0009;}
+.ch-head{display:flex;align-items:center;justify-content:space-between;
+  gap:16px;padding:17px 20px;border-bottom:1px solid var(--line);}
+.ch-head span{font:600 10px var(--mono);letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);}
+.ch-head h2{font-size:17px;margin:3px 0 0;line-height:1.25;}
+.ch-close{border:1px solid var(--line);border-radius:6px;padding:7px 11px;
+  background:var(--paper-2);color:var(--ink);cursor:pointer;}
+.ch-main{display:grid;grid-template-columns:minmax(175px,225px) minmax(0,1fr);
+  height:calc(100% - 73px);min-height:0;}
+.ch-timeline{overflow:auto;padding:10px;border-right:1px solid var(--line);
+  font-size:12px;color:var(--ink-3);}
+.ch-commit{display:flex;flex-direction:column;gap:4px;width:100%;
+  margin-bottom:4px;padding:9px;text-align:left;border:1px solid transparent;
+  border-radius:6px;background:none;color:var(--ink-2);cursor:pointer;}
+.ch-commit small{font:10px var(--mono);color:var(--ink-3);}
+.ch-commit span{font-size:12px;line-height:1.35;}
+.ch-commit:hover{background:var(--paper-2);}
+.ch-commit[aria-current="true"]{border-color:var(--cyan);background:var(--paper-2);}
+.ch-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  min-width:0;min-height:0;overflow:auto;}
+.ch-compare section{min-width:0;padding:16px;overflow:auto;}
+.ch-compare section+section{border-left:1px solid var(--line);}
+.ch-compare h3{font-size:12px;margin:0 0 12px;color:var(--ink-2);}
+.ch-output{font-size:12px;line-height:1.5;overflow:auto;overflow-wrap:anywhere;}
+.ch-output img,.ch-output svg{display:block;max-width:100%;height:auto;
+  margin:0 0 12px;object-fit:contain;}
+.ch-output pre{font:11px/1.45 var(--mono);white-space:pre-wrap;
+  overflow-wrap:anywhere;margin:0;}
+.ch-output .figzoom,.ch-output .fz-btn{display:none;}
+.ch-source{font-size:11px;color:var(--ink-3);}
+@media(max-width:700px){
+  .ch-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);}
+  .ch-timeline{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;
+    border-right:0;border-bottom:1px solid var(--line);}
+  .ch-commit{flex:none;width:170px;margin:0;}
+  .ch-compare{grid-template-columns:1fr;}
+  .ch-compare section+section{border-left:0;border-top:1px solid var(--line);}
+}
 /* Labels sit on the row the cell ALREADY has, rather than copying that
    cell into a list above the sections. Pin plus any reactions/categories
    show together: they are different facts about the cell. */

@@ -26,7 +26,7 @@ def test_the_tiles_are_live_for_a_plain_box_and_say_whole_box(out):
     assert "        b.disabled=!st.text;" in body
     assert "          (st.text&&st.by===p[1]).toString());" in body
     assert "        hb.disabled=!st.text;" in body
-    assert "      if(lab) lab.textContent=st.text?'Timing & text'" in body   # T473
+    assert "      if(lab) lab.textContent='Timing';" in body   # T473
 
 
 def test_a_piecewise_build_gives_a_plain_box_an_entrance(out):

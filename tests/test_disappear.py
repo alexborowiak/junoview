@@ -24,7 +24,7 @@ def test_the_door_is_on_the_animation_tab():
     # T453 renamed it: the user asked "also what is disappear?", and
     # it was named for what it does to the object rather than for the
     # choice, under a label repeating the same word (2026-09-14)
-    assert '<span class="rbn-lab">Leaves early</span>' in html
+    assert '<span class="rbn-lab">Exit</span>' in html
     # T463: a tall tile, its readout inside it
     assert '<button class="fx-tile big-tile" id="anim-out"' in html
     assert '<span>Send it away</span>' in html

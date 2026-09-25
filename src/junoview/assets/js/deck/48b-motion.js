@@ -148,9 +148,7 @@
   }
   function moCommit(){
     markDirty();
-    var l=stage.querySelector('.annot-layer');
-    if(l&&pres.slides[cur]) renderAnnots(l,pres.slides[cur]);
-    if(typeof paintSel==='function'&&l) paintSel(l);
+    repaintAnimation();
     if(typeof motionSync==='function') motionSync();
     animCfgSync();
   }
@@ -257,7 +255,7 @@
         ?(n+' objects play themselves, a second apart')
         :(n+' objects arrive one per click');
     }
-    markDirty();refresh();
+    markDirty();repaintAnimation();
     if(typeof animPaneSync==='function') animPaneSync();
     animCfgSync();
     toast(said+' \u2014 Ctrl+Z undoes the lot');

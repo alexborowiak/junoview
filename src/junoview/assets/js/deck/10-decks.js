@@ -1234,10 +1234,9 @@
        readout whole when the row is tight. */
     if(el.textContent!==el._lastTxt){
       el._lastTxt=el.textContent;
-      requestAnimationFrame(fitEditRibbon);
       /* the readout lives in the thin bar now, so a wider text has to
          re-judge THAT row too — fitQat drops it whole when tight */
-      requestAnimationFrame(fitQat);
+      scheduleQatFit();
     }
     if(!el.classList.contains('clickable')) el.title=el.textContent;
   }
@@ -1270,6 +1269,7 @@
     if(pres&&pres.name) editedDecks[pres.name]=1;
     saveKind='';
     scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */
+    if(typeof storyInvalidate==='function') storyInvalidate();
     status();
     scheduleAutosave();
     if(!quiet) histPush();
@@ -1303,7 +1303,9 @@
   var thumbT=null;
   function refreshThumb(i){
     clearTimeout(thumbT);
+    var deck=pres,slide=pres.slides[i];
     thumbT=setTimeout(function(){
+      if(pres!==deck||pres.slides[i]!==slide) return;
       var s=pres.slides[i]; if(!s) return;
       var row=$('#film-list .film-row[data-idx="'+i+'"]');
       if(!row) return;
@@ -1321,6 +1323,7 @@
          would rename it back on the first edit */
       if(tt) tt.textContent=filmText(s);
       row.dataset.lvl=headLevel(s);
+      syncFilmBuild(i);
     },140);
   }
   /* ---------- undo / redo (snapshots of the slide content) ---------- */

@@ -134,11 +134,13 @@ def test_a_focus_is_a_click_of_its_own(out):
     assert "          focusPaint(layer,el,ba);" in out
     assert "    if(typeof focusSettle==='function') focusSettle(layer);" in out
     # the three paints
-    assert ("      requestAnimationFrame(function(){"
-            "layer.classList.add('an-spotlit');});") in out
-    assert "      requestAnimationFrame(function(){stage.style.transform=tf;});" in out
+    # T508: a later click may clear focus before the queued frame runs.
+    assert "&&layer.getAttribute('data-focus')==='spot')" in out
+    assert "          layer.classList.add('an-spotlit');" in out
+    assert "&&layer.getAttribute('data-focus')==='zoom')" in out
+    assert "          stage.style.transform=tf;" in out
     assert "      c.classList.add('an-lens');" in out
-    # the ribbon strip, four wide, with a hover preview; the caption wears the click
+    # the ribbon strip, four wide; explicit Preview, caption wears the click
     assert 'id="anim-focus-strip"' in out
     for k in ("none", "spot", "zoom", "lens"):
         assert f'id="anim-focus-{k}"' in out
@@ -184,7 +186,7 @@ def test_a_figure_arrives_panel_by_panel(out):
     assert ("    var PANEL_GRIDS=[['1x1','Whole figure',"
             "'On one click, all of it'],") in out
     assert "      if(pf) pf.hidden=poster||armed||!st.fig;" in out
-    assert "        :(st.fig?'Timing & panels':'Timing');" in out
+    assert "      if(lab) lab.textContent='Timing';" in out
     assert ("        cfgRange(host,'Across',g.c,1,6,1,"
             "function(v){return String(v);},") in out
     # the Order tab names the panels; the story strip counts them
@@ -581,8 +583,9 @@ def test_the_animation_model_after_the_third_pass(out):
     #      the DOM, not the stage's style; leaving the editor closes it
     assert ("    if(typeof storyPaint!=='undefined'&&storyPaint"
             "&&f.fx==='zoom') return;") in out
-    assert ("          characterData:true,attributes:true,"
-            "attributeFilter:['class']});") in out
+    # Content edits invalidate previews; playback/selection classes do not.
+    assert "if(typeof storyInvalidate==='function') storyInvalidate();" in out
+    assert "storyObs=new MutationObserver" not in out
     assert "       &&typeof storyShow==='function') storyShow(false);" in out
     # [25] a focus alone is enough for the reveal pass
     assert "        ||(typeof animFocus==='function'&&animFocus(a)));})){" in out
@@ -740,7 +743,7 @@ def test_the_ribbon_fit_after_the_third_pass(out):
     assert ("    sh.classList.toggle('can-scroll',"
             "body.scrollWidth>body.clientWidth+1);") in out
     assert ("    if(typeof rbnOverflowNotice==='function') "
-            "rbnOverflowNotice(bar);\n    rbnShelfScrollSync();\n  }") in out
+            "rbnOverflowNotice(bar);\n    rbnShelfScrollSync();") in out
     # [8] below the floor the remedy is SAID, once a session, with the
     #     Side toolbar on the toast
     assert "  var rbnClipTold=false;" in out

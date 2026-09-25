@@ -24,7 +24,9 @@ def test_the_editor_moves_too_but_not_the_selected_item(out):
     # item still plays it
     assert ('body.slide-editing .an-item.sel[class*="an-move-"]'
             ':not(.an-mo-preview){\n  animation:none!important;}') in out
-    assert "      el.classList.add('an-move-'+v,'an-mo-preview');" in out
+    # T508: the explicit Preview keeps each selected object's own motion.
+    assert "      var fx=v||(a2&&a2.motion);if(!fx) return;" in out
+    assert "      el.classList.add('an-move-'+fx,'an-mo-preview');" in out
 
 
 def test_an_entrance_and_a_motion_both_play(out):

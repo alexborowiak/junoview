@@ -114,10 +114,14 @@ class _HtmlSanitizer(html.parser.HTMLParser):
             self.out.append(html.escape(data))
 
 
-def _sanitize_html(fragment: str) -> str:
+def sanitize_html(fragment: str) -> str:
     """Jupyter-style raw HTML in markdown, re-emitted from an allowlist
     of safe tags/attributes so no active content can survive."""
     s = _HtmlSanitizer()
     s.feed(fragment)
     s.close()
     return "".join(s.out)
+
+
+# Keep the render subpackage's existing private spelling for its callers.
+_sanitize_html = sanitize_html

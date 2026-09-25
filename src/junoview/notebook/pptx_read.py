@@ -627,7 +627,7 @@ def _lvl_props(lst: ET.Element | None, lvl: int) -> ET.Element | None:
     return lst.find(f"a:lvl{lvl + 1}pPr", NS)
 
 
-def _def_rpr_chain(shape: ET.Element | None, slots: list[_Slots],
+def _def_rpr_chain(shape: ET.Element | None, slots: list[ET.Element | None],
                    master: _Master, kind: str, lvl: int) -> list[ET.Element]:
     """Every lvlNpPr that could say what a run at this level looks like,
     nearest first: the shape's own lstStyle, the layout placeholder's,

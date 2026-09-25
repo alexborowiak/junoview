@@ -535,7 +535,7 @@ def test_a_private_item_looks_private_in_both_places_it_is_drawn(out):
     # attached arrows are rebuilt after their figure finishes fitting;
     # that second path must restore the marker too
     assert out.count("markPrivateItems(layer,s);") == 2
-    start = out.index("function renderAnnots(layer,s){")
+    start = out.index("function renderAnnots(layer,s,incremental){")
     render = out[start:out.index("  function selectAnnot(", start)]
     assert render.index("layer.appendChild(svgTop);") \
         < render.index("markPrivateItems(layer,s);")
