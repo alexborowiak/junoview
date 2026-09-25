@@ -1463,7 +1463,7 @@
         if(row) row.classList.toggle('nav-paged',paged);
         if(items) items.classList.toggle('nav-paged',paged);
       });
-      if(sh.classList.contains('reveal-hidden')) syncUnhideBtn(sh);
+      syncUnhideBtn(sh);
     });
     renderTypeButtons();
     /* an advanced picker lights up when ANY selected section hides a type
@@ -4961,7 +4961,7 @@
           card.classList.toggle('cell-keep-visible',!!keepVisible);}
       if(nav) nav.classList.toggle('cell-off',off);
       applyFilters();
-      scheduleSaveLayout();syncUnhideBtn(shell);
+      scheduleSaveLayout();
     }
     function toggleCellEye(id){
       var card=shell.querySelector('.card[id="card-'+id+'"]');

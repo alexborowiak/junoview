@@ -9829,3 +9829,7 @@ any reading. The rest are T466 onwards.
   Live-site QA caught a misleading zero beside Peek when Markdown had been
   filtered out. The count now includes all filtered and manually hidden cards
   even before Peek opens, without double-counting one card in both categories.
+- [x] **T511 — Refresh the Peek count after filtering.** (2026-09-25)
+  Live browser QA caught the timing missed by the count-only unit check: on
+  initial view restore the filters ran after the counter first rendered. The
+  counter now refreshes after every filter pass, including initial restore.

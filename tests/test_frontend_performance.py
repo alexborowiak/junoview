@@ -153,6 +153,8 @@ console.log(JSON.stringify({hidden:a.attrs['aria-label'],
 
 def test_peek_count_includes_filter_hidden_cells_before_opening(tmp_path):
     src = assets.load("js/app.js")
+    filters = lift_fn(src, "applyFilters")
+    assert "      syncUnhideBtn(sh);" in filters
     code = lift_fn(src, "syncUnhideBtn") + r"""
 var peek={attrs:{},setAttribute(k,v){this.attrs[k]=v;}};
 var shell={classList:{contains:()=>false},querySelector:()=>peek,

@@ -2056,8 +2056,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # deliberate restore; Markdown notes join the lazy Git cell timeline. The
 # note position attribute and these app/CSS changes alter rendered bytes.
 # T510 (2026-09-25): count filter-hidden cards before Peek opens too.
-EXPECTED_MD5 = "b66f64fd4db88bc079796011c25b38cf"
-EXPECTED_BYTES = 4554412
+# T511 (2026-09-25): refresh that count after every filter pass.
+EXPECTED_MD5 = "6e7e80e1b5a0308c9e97ab68d572f375"
+EXPECTED_BYTES = 4554348
 
 
 def _render_example() -> str:
