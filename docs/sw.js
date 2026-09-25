@@ -4,25 +4,25 @@
    One visit caches everything the app needs to boot cold — this page, the
    packaged renderer, the Pyodide runtime and MathJax (fonts included) —
    so every later visit, online or not, serves from disk. The browser's
-   "Install app" offer rides on this too; see web-loader.html for the
+   "Install app" offer rides on this too; see web-runtime.js for the
    registration and manifest.webmanifest for the identity.
 
-   457bed7ca224 is replaced by build_web() with a hash of junoview.zip:
+   b2a673ca4cfa is replaced by build_web() with a hash of junoview.zip:
    a new build retires the old cache on activate, and an unchanged package
    produces an unchanged worker, so the committed docs/ build stays
    diff-free (same rule as the zip itself). */
-var VERSION = '457bed7ca224';
+var VERSION = 'b2a673ca4cfa';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
    because an "offline app" missing its renderer is a lie */
-var CORE = ['./', 'index.html', 'junoview.zip', 'LICENSE', 'NOTICE',
+var CORE = ['./', 'index.html', 'junoview.zip', 'web-runtime.js', 'web-worker.js', 'LICENSE', 'NOTICE',
   'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg'];
 
 /* the runtime, best-effort: a blocked CDN or a renamed font file must not
    veto the install — the page still loads those live while online.
-   The Pyodide version here MUST match the loader's script tag in
-   web-loader.html; bump the two together. */
+   The Pyodide version here MUST match the parser's PYODIDE_BASE in
+   web-worker.js; bump the two together. */
 var PY = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 var MJ = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/';
 var RUNTIME = [

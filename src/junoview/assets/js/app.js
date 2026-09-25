@@ -1165,18 +1165,21 @@
            is you saying which cells you are working with at all, so a
            pinned cell is out of view under a label filter like any
            other. "Only pinned" is the case where the two agree. */
-        if(!onlyKeeps(c,only)){
+        if(!onlyKeeps(c,only)&&!c.classList.contains('cell-keep-visible')){
           c.classList.add('is-hidden');
           var onav=sh.querySelector('.navitem[data-item="'
             +c.id.replace(/^card-/,'')+'"]');
-          if(onav) onav.classList.add('nav-hidden');
+          if(onav){onav.classList.add('nav-hidden');
+            onav.classList.toggle('cell-off',c.classList.contains('cell-off'));
+            onav.classList.remove('cell-keep-visible');}
           return;
         }
         /* T242: PINNED MEANS THE FILTERS DO NOT REACH IT. Everything
            below decides what to fold and hide; a pinned cell wants
            none of it, so it is cleared and skipped rather than being
            threaded through every branch as one more exception. */
-        if(c.classList.contains('is-pinned')){
+        if(c.classList.contains('is-pinned')
+           ||c.classList.contains('cell-keep-visible')){
           /* T263: the filters do not reach a pinned cell -- but its own
              EYE still does. cell-off is a deliberate press, not a filter,
              and stripping it here meant the eye on a pinned card looked
@@ -1194,7 +1197,10 @@
           $$('.ot-stub',c).forEach(function(n){n.remove();});
           var pnav=sh.querySelector('.navitem[data-item="'
             +c.id.replace(/^card-/,'')+'"]');
-          if(pnav) pnav.classList.remove('nav-hidden','cell-off');
+          if(pnav){pnav.classList.remove('nav-hidden');
+            pnav.classList.toggle('cell-off',poff);
+            pnav.classList.toggle('cell-keep-visible',
+              c.classList.contains('cell-keep-visible'));}
           return;
         }
         /* a per-cell eye can hide one cell regardless of the filters */
@@ -1427,6 +1433,7 @@
              (dimmed, so you can bring it back) */
           nav.classList.toggle('nav-hidden',filtGone);
           nav.classList.toggle('cell-off',off);
+          nav.classList.remove('cell-keep-visible');
         }
       });
       var pgOut=pagedOut(sh);            /* T390: sections off this page */
@@ -1456,6 +1463,7 @@
         if(row) row.classList.toggle('nav-paged',paged);
         if(items) items.classList.toggle('nav-paged',paged);
       });
+      if(sh.classList.contains('reveal-hidden')) syncUnhideBtn(sh);
     });
     renderTypeButtons();
     /* an advanced picker lights up when ANY selected section hides a type
@@ -4592,13 +4600,14 @@
      SAVED state, so ending the peek only hides what still has a slash. */
   function syncUnhideBtn(sh){
     var b=sh.querySelector('.rf-unhide');
-    var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
-      +'.content .card.cell-off').length;
+    var peeking=sh.classList.contains('reveal-hidden');
+    var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff').length
+      +sh.querySelectorAll(peeking?'.content .card.is-hidden'
+        :'.content .card.cell-off').length;
     if(b){
-      var on=sh.classList.contains('reveal-hidden');
-      b.disabled=false;b.setAttribute('aria-pressed',on?'true':'false');
-      b.innerHTML=bic('eye')+(on?'End peek':'Peek at hidden')+' ('+n+')';
-      b.title=on?'End peek; your visibility changes stay saved'
+      b.disabled=false;b.setAttribute('aria-pressed',peeking?'true':'false');
+      b.innerHTML=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';
+      b.title=peeking?'End peek; your visibility changes stay saved'
         :'Temporarily show hidden content so you can choose what to restore';
     }
     function status(el,hidden,what){
@@ -4610,7 +4619,14 @@
     }
     $$('.cell-eye,.navitem-eye',sh).forEach(function(el){
       var item=el.closest('.card,.navitem');
-      status(el,!!(item&&item.classList.contains('cell-off')),'this cell');
+      var manual=!!(item&&item.classList.contains('cell-off'));
+      var filtered=!!(item&&item.classList.contains(
+        item.classList.contains('card')?'is-hidden':'nav-hidden'));
+      if(item&&item.classList.contains('cell-keep-visible')){
+        el.setAttribute('aria-pressed','false');
+        el.title='Visible — follow filters for this cell again';
+        el.setAttribute('aria-label',el.title);
+      } else status(el,manual||(peeking&&filtered),'this cell');
     });
     $$('.sec-eye,.navsec-eye',sh).forEach(function(el){
       var sec=el.closest('.section'),row=el.closest('.navsec-row');
@@ -4630,6 +4646,7 @@
      The timeline lists file commits only. Opening it never renders all
      historical notebooks; selecting a row loads just that version. */
   var cellHistoryDialog=null,cellHistoryRequest=0;
+  var cellHistoryLocalQueue=Promise.resolve();
   function historySource(path){
     if(!/\.ipynb(?:$|[?#])/i.test(path||'')) return null;
     var gh=ghFromUrl(path);
@@ -4640,9 +4657,21 @@
   function historyText(v){
     return Array.isArray(v)?v.join(''):String(v==null?'':v);
   }
-  function historyGitCell(nb,anchor){
+  function historyGitCell(nb,anchor,noteIndex){
     var cells=Array.isArray(nb.cells)?nb.cells:[];
     var found=null,index=-1,status='absent';
+    if(Number.isInteger(noteIndex)&&noteIndex>=0){
+      if(anchor.indexOf('cell:')===0){
+        index=cells.findIndex(function(c){
+          return c&&c.cell_type==='markdown'&&c.id===anchor.slice(5);});
+        if(index>=0) status='matched-id';
+      }
+      if(index<0&&anchor.indexOf('cell:')!==0&&noteIndex<cells.length
+         &&cells[noteIndex]&&cells[noteIndex].cell_type==='markdown'){
+        index=noteIndex;status='matched-position';
+      }
+      return {cell:index>=0?cells[index]:null,index:index,status:status};
+    }
     if(anchor.indexOf('cell:')===0){
       index=cells.findIndex(function(c){return c.id===anchor.slice(5);});
       if(index>=0) status='matched-id';
@@ -4685,18 +4714,27 @@
     });}
     return next();
   }
-  function historyGithubVersion(gh,commit,anchor,signal){
+  function historyGithubVersion(gh,commit,anchor,signal,noteIndex){
     return fetch(ghRawAt(gh,commit),{cache:'no-store',signal:signal}).then(function(r){
       if(!r.ok) throw new Error('GitHub said '+r.status);
       return historyBoundedText(r,20*1024*1024);
     }).then(function(raw){
-      var match=historyGitCell(JSON.parse(raw),anchor),cell=match.cell;
+      var match=historyGitCell(JSON.parse(raw),anchor,noteIndex),cell=match.cell;
       return {found:!!cell,status:match.status,index:match.index,
+        kind:noteIndex!=null?'note':'code',
         source:cell?historyText(cell.source).slice(0,400):'',
+        noteText:noteIndex!=null&&cell
+          ?historyText(cell.source).slice(0,8000):'',
         outputs:cell&&Array.isArray(cell.outputs)?cell.outputs:[]};
     });
   }
   function historyCurrent(card,host){
+    if(card.dataset.note==='1'){
+      var note=card.querySelector('.note');
+      if(note) host.appendChild(note.cloneNode(true));
+      else host.textContent='No note text';
+      return;
+    }
     var imgs=$$('.cb-fig img',card).slice(0,4);
     if(imgs.length){
       imgs.forEach(function(im){
@@ -4728,6 +4766,11 @@
     host.appendChild(pre);
   }
   function historyRemoteOutput(result,host){
+    if(result.kind==='note'){
+      var note=document.createElement('pre');
+      note.textContent=result.noteText||'No note text';
+      host.appendChild(note);return;
+    }
     var shown=0,tooLarge=false;
     (result.outputs||[]).forEach(function(output){
       if(shown>=4) return;
@@ -4765,6 +4808,17 @@
       try{window.Plotly.purge(el);}catch(e){}
     });
   }
+  function historyLocalVersion(dialog,request,source,anchor,commit){
+    /* ponytail: one local Git read at a time; split by file only if
+       profiling shows independent comparisons need parallel reads. */
+    var load=cellHistoryLocalQueue.then(function(){
+      if(cellHistoryDialog!==dialog||request!==cellHistoryRequest) return null;
+      return api('/api/cellversion',
+        {path:source.path,anchor:anchor,commit:commit});
+    });
+    cellHistoryLocalQueue=load.catch(function(){});
+    return load;
+  }
   function openCellHistory(sh,card){
     var source=historySource(sh.path);if(!source) return;
     if(cellHistoryDialog) cellHistoryDialog.close();
@@ -4800,6 +4854,7 @@
       dialog.querySelector('.ch-version');
     timeline.textContent='Loading commits…';
     var anchor=card.dataset.anchor;
+    var noteIndex=card.dataset.note==='1'?+card.dataset.noteidx:null;
     var commits=source.gh?ghCommits(source.gh):
       api('/api/cellhistory',{path:source.path,anchor:anchor})
         .then(function(j){return j.commits||[];});
@@ -4832,9 +4887,8 @@
             if(source.gh&&window.AbortController) abort=new AbortController();
             var load=previews.has(key)?previews.get(key):source.gh
               ?historyGithubVersion(source.gh,key,anchor,
-                abort&&abort.signal)
-              :api('/api/cellversion',
-                {path:source.path,anchor:anchor,commit:cm.id});
+                abort&&abort.signal,noteIndex)
+              :historyLocalVersion(dialog,request,source,anchor,cm.id);
             Promise.resolve(load).then(function(result){
             if(cellHistoryDialog!==dialog||request!==cellHistoryRequest)
               return;
@@ -4876,7 +4930,7 @@
   function wireCardBehaviors(shell,stem){
     /* The button is cheap; no history or image is fetched until it opens. */
     var source=historySource(shell.dataset.path||'');
-    if(source) $$('.card:not([data-note="1"])',shell).forEach(function(card){
+    if(source) $$('.card',shell).forEach(function(card){
       var head=card.querySelector('.cardhead');if(!head) return;
       var b=document.createElement('button');b.type='button';
       b.className='cell-history-btn';
@@ -4900,20 +4954,34 @@
       });
     });
     /* ---- per-cell eye: hide/show one cell (it stays in the sidebar) ---- */
-    function setCellOff(id,off){
+    function setCellOff(id,off,keepVisible){
       var card=shell.querySelector('.card[id="card-'+id+'"]');
       var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
-      if(card) card.classList.toggle('cell-off',off);
+      if(card){card.classList.toggle('cell-off',off);
+        if(keepVisible!==undefined)
+          card.classList.toggle('cell-keep-visible',!!keepVisible);}
       if(nav) nav.classList.toggle('cell-off',off);
       applyFilters();
       scheduleSaveLayout();syncUnhideBtn(shell);
+    }
+    function toggleCellEye(id){
+      var card=shell.querySelector('.card[id="card-'+id+'"]');
+      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
+      if(!card) return;
+      var filtered=shell.classList.contains('reveal-hidden')
+        &&!!(nav&&nav.classList.contains('nav-hidden'));
+      if(card.classList.contains('cell-off')) setCellOff(id,false,filtered);
+      else if(card.classList.contains('cell-keep-visible'))
+        setCellOff(id,false,false);
+      else if(filtered) setCellOff(id,false,true);
+      else setCellOff(id,true,false);
     }
     $$('.cell-eye',shell).forEach(function(btn){
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
         var card=btn.closest('.card'); if(!card) return;
         var id=card.id.replace(/^card-/,'');
-        setCellOff(id,!card.classList.contains('cell-off'));
+        toggleCellEye(id);
       });
     });
     /* T242: the pin and the mark. Pinning a cell you had hidden by
@@ -4945,7 +5013,7 @@
       var toggle=function(e){
         e.preventDefault();e.stopPropagation();
         var nav=sp.closest('.navitem'); if(!nav) return;
-        setCellOff(nav.dataset.item,!nav.classList.contains('cell-off'));
+        toggleCellEye(nav.dataset.item);
       };
       sp.addEventListener('click',toggle);
       /* role=button span: Enter/Space must act (keyboard users restore a
@@ -6169,6 +6237,8 @@
     return {
       cellsOff:$$('.card.cell-off',el).map(function(c){
         return c.dataset.anchor;}).filter(Boolean),
+      cellsShown:$$('.card.cell-keep-visible',el).map(function(c){
+        return c.dataset.anchor;}).filter(Boolean),
       secsOff:$$('.section.sec-off',el).map(function(s2){
         return s2.dataset.sec;}).filter(Boolean),
       secsHeadOff:$$('.section.sec-headoff',el).map(function(s2){
@@ -6189,6 +6259,11 @@
       var id=card.id.replace(/^card-/,'');
       var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
       if(nav) nav.classList.add('cell-off');
+    });
+    (keep.cellsShown||[]).forEach(function(an){
+      var card=shell.querySelector(
+        '.card[data-anchor="'+String(an).replace(/"/g,'\\"')+'"]');
+      if(card) card.classList.add('cell-keep-visible');
     });
     keep.secsOff.forEach(function(sid){
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
@@ -6291,6 +6366,7 @@
     });
     restoreViewState(shell,stem,{
       cellsOff:st.cellsOff||[],secsOff:st.secsOff||[],
+      cellsShown:st.cellsShown||[],
       secsHeadOff:st.secsHeadOff||[],
       secsClosed:st.secsClosed||[],tree:!!st.tree,raw:!!st.raw});
     return true;
@@ -6303,6 +6379,8 @@
        hidden cells/sections survive underneath the incoming view */
     $$('.card.cell-off',sh.el).forEach(function(c){
       c.classList.remove('cell-off');});
+    $$('.card.cell-keep-visible',sh.el).forEach(function(c){
+      c.classList.remove('cell-keep-visible');});
     $$('.section',sh.el).forEach(function(s2){
       s2.classList.remove('sec-off','sec-headoff','sec-collapsed');});
     $$('.navsec-row',sh.el).forEach(function(r){

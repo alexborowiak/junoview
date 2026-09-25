@@ -36,6 +36,7 @@ class Item:
     depends: list[str] = field(default_factory=list)
     subsection: str = ""
     is_note: bool = False          # pure-markdown interpretation card
+    note_index: int = -1           # original notebook cell for note history
     title_echo: bool = False       # title merely repeats a code line
     labelled: bool = False         # AUTHOR-added label (`#| title:`,
                                    # caption, or a leading `#` comment) —

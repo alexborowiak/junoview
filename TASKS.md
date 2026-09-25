@@ -9815,3 +9815,13 @@ any reading. The rest are T466 onwards.
   shared briefly between cell dialogs and the file Info panel. The full test
   suite, ruff and mypy pass; browser FPS/visual checks were not run, and
   generated `docs/` was not rebuilt or deployed.
+- [x] **T509 — Finish Peek visibility and Git cell history.** (2026-09-25)
+  Peek now exposes filter-hidden cells in the outline, labels every eye from
+  the saved state (including manually hidden pinned cards), and lets one
+  filtered cell remain visible after Peek ends. The exception persists with
+  the view; pagination still owns off-page sections. Markdown notes have a
+  Versions timeline too, matched by stable cell ID or an explicitly flagged
+  positional fallback, with sanitized local previews and bounded remote
+  source previews. Rapid local selections queue one Git read at a time and
+  skip obsolete requests. Focused regression tests cover these cases, and
+  the generated `docs/` web app and example page are rebuilt for publishing.

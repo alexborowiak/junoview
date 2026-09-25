@@ -429,7 +429,7 @@ def test_reveal_hidden_is_a_toggle_not_a_reset(out):
         ".sectionhead{display:flex;}"
     ) in out
     assert "shell.classList.toggle('reveal-hidden')" in out
-    assert "on?'End peek':'Peek at hidden'" in out
+    assert "peeking?'End peek':'Peek at hidden'" in out
 
 
 def test_type_picker_matches_the_width_of_its_filter(out):

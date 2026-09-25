@@ -39,7 +39,7 @@ from junoview.notebook.deck_schema import DECK_KEYS
 
 def test_the_eye_still_works_on_a_pinned_cell():
     app = assets.app_js()
-    pinned = app.split("        if(c.classList.contains('is-pinned')){")[1]
+    pinned = app.split("        if(c.classList.contains('is-pinned')")[1]
     pinned = pinned.split("          return;")[0]
     assert "var poff=c.classList.contains('cell-off');" in pinned
     assert "c.classList.toggle('is-hidden',poff);" in pinned

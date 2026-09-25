@@ -2052,8 +2052,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Web imports now use a Promise bridge to the parsing worker. The same
 # implementation batch adds the per-cell Git comparison and Peek eye state
 # (2026-09-25), changing app.js and core.css embedded in the output.
-EXPECTED_MD5 = "b9b72f4359b0e0a65db6d5fb9e7b3a5c"
-EXPECTED_BYTES = 4550036
+# T509 (2026-09-25): Peek exposes filter-hidden outline rows and saves each
+# deliberate restore; Markdown notes join the lazy Git cell timeline. The
+# note position attribute and these app/CSS changes alter rendered bytes.
+EXPECTED_MD5 = "094ca2b9cb269293437ba15ab402b79e"
+EXPECTED_BYTES = 4554455
 
 
 def _render_example() -> str:

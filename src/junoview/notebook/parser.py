@@ -254,7 +254,8 @@ def parse_notebook(nb: dict, title: str | None = None,
                     sec.items.append(Item(
                         kind="note", title=text if handled_heading else "Note",
                         caption=rest, is_note=True, subsection=cur_subsection,
-                        item_id=nid, anchor=md_anchor or nid))
+                        item_id=nid, anchor=md_anchor or nid,
+                        note_index=idx))
             else:
                 if stripped:
                     sec = ensure_section()
@@ -262,7 +263,8 @@ def parse_notebook(nb: dict, title: str | None = None,
                     sec.items.append(Item(
                         kind="note", title="Note", caption=stripped,
                         is_note=True, subsection=cur_subsection,
-                        item_id=nid, anchor=md_anchor or nid))
+                        item_id=nid, anchor=md_anchor or nid,
+                        note_index=idx))
             continue
 
         if ctype != "code":

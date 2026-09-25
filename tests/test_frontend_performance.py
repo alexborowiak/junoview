@@ -108,6 +108,77 @@ console.log(JSON.stringify({before,after:eye.attrs['aria-label']}));
     assert "hide this cell permanently" in result["after"]
 
 
+def test_peek_filtered_cell_can_be_kept_visible(tmp_path):
+    src = assets.load("js/app.js")
+    code = lift_fn(src, "toggleCellEye") + r"""
+function classes(names){return {contains:n=>names.includes(n)};}
+const card={classList:classes([])},nav={classList:classes(['nav-hidden'])};
+var shell={classList:classes(['reveal-hidden']),querySelector:s=>
+  s.startsWith('.card')?card:nav},calls=[];
+function setCellOff(...args){calls.push(args);}
+toggleCellEye('a');
+card.classList=classes(['cell-keep-visible']);
+nav.classList=classes([]);
+toggleCellEye('a');
+card.classList=classes(['cell-off','is-pinned']);
+toggleCellEye('a');
+console.log(JSON.stringify(calls));
+"""
+    assert run_js(tmp_path, code) == [
+        ["a", False, True], ["a", False, False], ["a", False, False]]
+
+
+def test_peek_eyes_identify_filtered_and_overridden_cells(tmp_path):
+    src = assets.load("js/app.js")
+    code = lift_fn(src, "syncUnhideBtn") + r"""
+function classes(items){return {contains:x=>items.includes(x)};}
+function eye(owner){return {attrs:{},closest:()=>owner,
+  setAttribute(k,v){this.attrs[k]=v;}};}
+const hidden={classList:classes(['nav-hidden'])};
+const shown={classList:classes(['cell-keep-visible'])};
+const a=eye(hidden),b=eye(shown),peek={attrs:{},
+  setAttribute(k,v){this.attrs[k]=v;}};
+const shell={classList:classes(['reveal-hidden']),
+  querySelector:()=>peek,querySelectorAll:()=>[hidden]};
+function $$(selector){return selector==='.cell-eye,.navitem-eye'?[a,b]:[];}
+function bic(){return '<i></i>';}
+syncUnhideBtn(shell);
+console.log(JSON.stringify({hidden:a.attrs['aria-label'],
+  shown:b.attrs['aria-label']}));
+"""
+    result = run_js(tmp_path, code)
+    assert "show this cell permanently" in result["hidden"]
+    assert "follow filters for this cell again" in result["shown"]
+
+
+def test_local_cell_history_serializes_git_reads_and_skips_stale(tmp_path):
+    src = assets.load("js/app.js")
+    code = "var cellHistoryLocalQueue=Promise.resolve();\n"
+    code += lift_fn(src, "historyLocalVersion") + r"""
+var cellHistoryDialog={},cellHistoryRequest=1,calls=[],finish=[];
+function api(path,payload){calls.push(payload.commit);
+  return new Promise(resolve=>finish.push(resolve));}
+(async()=>{
+  const dialog=cellHistoryDialog,source={path:'notebook.ipynb'};
+  const first=historyLocalVersion(dialog,1,source,'cell:a','first');
+  await Promise.resolve();
+  cellHistoryRequest=2;
+  const stale=historyLocalVersion(dialog,1,source,'cell:a','stale');
+  const second=historyLocalVersion(dialog,2,source,'cell:a','second');
+  await Promise.resolve();
+  const before=calls.slice();
+  finish[0]({found:true});
+  await first;await stale;
+  await Promise.resolve();
+  const after=calls.slice();
+  finish[1]({found:true});await second;
+  console.log(JSON.stringify({before,after}));
+})();
+"""
+    assert run_js(tmp_path, code) == {
+        "before": ["first"], "after": ["first", "second"]}
+
+
 def test_reader_queues_before_ready_and_recovers_after_bad_document(tmp_path):
     code = r"""
 const vm=require('vm');

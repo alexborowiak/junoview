@@ -221,12 +221,14 @@ def render_item(item: Item, sec_id: str = "") -> str:
     # move (2026-09-04, user: "remove/fold code cells without output, as a
     # lot of the times these are the ones that I don't care about").
     no_out = "1" if (code_block and not item.outputs) else "0"
+    note_idx = f'data-noteidx="{item.note_index}" ' if item.is_note else ""
     return (
         f'<article class="card {kclass}" id="card-{item.item_id}" '
         f'data-kind="{item.kind}" data-role="{role}" '
         f'data-node="{html.escape(item.node_id)}"{ck_attr} '
         f'data-secid="{html.escape(sec_id)}" '
         f'data-note="{"1" if item.is_note else "0"}" '
+        f'{note_idx}'
         f'data-noout="{no_out}" '
         f'data-labelled="{1 if item.labelled else 0}" '
         f'data-anchor="{html.escape(item.anchor or item.item_id)}" tabindex="-1">'

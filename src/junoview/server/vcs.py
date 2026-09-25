@@ -17,6 +17,7 @@ from ..notebook.directives import split_directives
 from ..notebook.model import Document, Item
 from ..notebook.outputs import as_text, render_outputs
 from ..notebook.parser import parse_notebook
+from ..render.markdown import md_to_html
 from ..render.sanitize import sanitize_html
 
 # A history row is metadata only. One selected revision may read one bounded
@@ -200,7 +201,7 @@ def _light_document(nb: dict) -> Document:
 
 def _card_items(doc: Document) -> list[Item]:
     return [item for section in doc.sections for item in section.items
-            if item.members]
+            if item.members or item.is_note]
 
 
 def _primary_member(item: Item) -> dict:
@@ -212,6 +213,21 @@ def _card_for_history(now: Document, then: Document,
     current = next((it for it in _card_items(now) if it.anchor == anchor),
                    None)
     old_items = _card_items(then)
+    if current is not None and current.is_note:
+        notes = [it for it in old_items if it.is_note]
+        if anchor.startswith("cell:"):
+            exact = next((it for it in notes if it.anchor == anchor), None)
+            if exact:
+                return exact, "id"
+        same = [it for it in notes if it.caption == current.caption
+                and it.title == current.title]
+        if len(same) == 1:
+            return same[0], "source"
+        if anchor.startswith("cell:"):
+            return None, ""
+        positional = next((it for it in notes
+                           if it.note_index == current.note_index), None)
+        return positional, "position" if positional else ""
     positional_anchor = bool(re.fullmatch(r"cell:p\d+", anchor))
     if current is not None and positional_anchor:
         positional_anchor = not bool(_primary_member(current).get("cell_id"))
@@ -292,6 +308,16 @@ def _git_cell_version(f: Path, commit: str, anchor: str) -> dict:
     if item is None:
         return {"commit": commit, "found": False, "status": "absent",
                 "match": "", "html": "", "source": "", "title": ""}
+    if item.is_note:
+        markup = '<div class="note">' + md_to_html(item.caption) + '</div>'
+        if len(markup.encode("utf-8")) > CELL_HISTORY_OUTPUT_CAP:
+            return {"commit": commit, "found": True, "status": "too-large",
+                    "match": match, "html": "", "source": "", "title": item.title,
+                    "index": item.note_index, "kind": "note"}
+        return {"commit": commit, "found": True,
+                "status": "matched-" + match, "match": match,
+                "html": markup, "source": item.caption[:400],
+                "title": item.title, "index": item.note_index, "kind": "note"}
     primary = _primary_member(item)
     ordered_members = sorted(item.members,
                              key=lambda m: (m["order"], m["idx"]))

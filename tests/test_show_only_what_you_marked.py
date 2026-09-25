@@ -57,13 +57,14 @@ def test_the_gate_runs_before_the_pin_bypass():
     pin's promise is about the TYPE and SECTION filters."""
     app = assets.app_js()
     body = app.split("  function applyFilters(){")[1]
-    gate = body.index("if(!onlyKeeps(c,only)){")
-    bypass = body.index("if(c.classList.contains('is-pinned')){")
+    gate = body.index("if(!onlyKeeps(c,only)"
+                      "&&!c.classList.contains('cell-keep-visible')){")
+    bypass = body.index("if(c.classList.contains('is-pinned')")
     assert gate < bypass, "the mark gate must come first"
     assert "      var only=onlyFor(stem);" in app
     # a gated-out card leaves the document AND the sidebar
     assert "          c.classList.add('is-hidden');" in app
-    assert "          if(onav) onav.classList.add('nav-hidden');" in app
+    assert "          if(onav){onav.classList.add('nav-hidden');" in app
 
 
 def test_one_labels_control_only_appears_when_the_notebook_has_labels():

@@ -356,6 +356,9 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 .card.is-hidden,.section.is-hidden{display:none;}
 .navitem.nav-hidden,.navsec-row.nav-hidden,.navitems.nav-hidden{
   display:none;}
+.nbshell.reveal-hidden .navitem.nav-hidden,
+.nbshell.reveal-hidden .navsec-row.nav-hidden{display:flex;}
+.nbshell.reveal-hidden .navitems.nav-hidden{display:block;}
 .navsec-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .navsec-c{font-family:var(--mono);font-size:10px;color:var(--cyan);
   background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:20px;padding:1px 7px;min-width:18px;
@@ -385,10 +388,15 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 .navitem-eye:hover{opacity:1;background:var(--surface-active);}
 .navitem.cell-off{opacity:.5;}
 .navitem.cell-off .navitem-eye{opacity:.9;}
+.nbshell.reveal-hidden .navitem.nav-hidden .navitem-eye,
+.navitem.cell-keep-visible .navitem-eye{opacity:.9;}
+.card.cell-keep-visible .cell-eye,
+.navitem.cell-keep-visible .navitem-eye{opacity:1;color:var(--cyan);}
 /* ONE slash for every crossed-out eye: the item eye, the section-heading
    eyes, and the hide-all control (deck.css draws its own, larger one) */
 .navitem.cell-off .navitem-eye::after,
-.nbshell.reveal-hidden .card.cell-off .cell-eye::after,
+.nbshell.reveal-hidden .navitem.nav-hidden .navitem-eye::after,
+.nbshell.reveal-hidden .card.is-hidden .cell-eye::after,
 .section.sec-headoff .sec-eye::after,
 .navsec-row.head-off .navsec-eye::after,
 .navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
@@ -675,16 +683,16 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .nbshell.reveal-hidden .section.sec-collapsed .card{display:block;}
 .nbshell.reveal-hidden .section.sec-off,
 .nbshell.reveal-hidden .section.sec-under-off,
-.nbshell.reveal-hidden .content .card.cell-off.is-hidden{display:block;}
+.nbshell.reveal-hidden .content .card.is-hidden{display:block;}
 .nbshell.reveal-hidden .section.sec-off,
 .nbshell.reveal-hidden .section.sec-under-off,
-.nbshell.reveal-hidden .content .card.cell-off.is-hidden,
+.nbshell.reveal-hidden .content .card.is-hidden,
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead{
   outline:1px dashed var(--amber);outline-offset:4px;opacity:.62;}
 .nbshell.reveal-hidden .section.sec-off:hover,
-.nbshell.reveal-hidden .content .card.cell-off.is-hidden:hover,
+.nbshell.reveal-hidden .content .card.is-hidden:hover,
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead:hover{opacity:1;}
-.nbshell.reveal-hidden .card.cell-off .cell-eye,
+.nbshell.reveal-hidden .card.is-hidden .cell-eye,
 .nbshell.reveal-hidden .section.sec-off .sec-hideall{
   opacity:1;position:relative;color:var(--amber);}
 .rf-unhide[aria-pressed="true"]{border-color:var(--amber);
@@ -696,6 +704,7 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .nbshell.reveal-hidden .content .codewrap,
 .nbshell.reveal-hidden .content .cb-part,
 .nbshell.reveal-hidden .content .cb-part>*{display:revert!important;}
+.nbshell.reveal-hidden .content .section.pg-out{display:none!important;}
 .nbshell.reveal-hidden .content .part-fold::before{display:none!important;}
 .section.sec-headoff .sec-eye{opacity:.5;position:relative;}
 /* the struck-through eye = "hidden, click to bring it back" mark is the

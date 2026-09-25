@@ -31,6 +31,13 @@ def _cell(source: str, result: str, cell_id: str = "") -> dict:
     return cell
 
 
+def _note(source: str, cell_id: str = "") -> dict:
+    cell = {"cell_type": "markdown", "source": source}
+    if cell_id:
+        cell["id"] = cell_id
+    return cell
+
+
 def _save(path: Path, cells: list[dict]) -> None:
     path.write_text(json.dumps({"cells": cells, "metadata": {},
                                 "nbformat": 4, "nbformat_minor": 5}),
@@ -186,3 +193,37 @@ def test_history_previews_do_not_activate_old_html_or_inline_svg():
             "image/svg+xml": '<svg onload="alert(3)"></svg>'}})
     assert 'src="data:image/svg+xml;base64,' in svg
     assert "<svg" not in svg and "onload" not in svg
+
+
+def test_markdown_note_history_follows_id_and_sanitizes_old_markup(repo):
+    path, handler = repo
+    _save(path, [_note("# Topic\n\nOld **finding**\n\n"
+                       "<script>alert(1)</script>", "note-id"),
+                 _cell("plot()", "OLD", "plot")])
+    first = _commit(path.parent, "old note")
+    _save(path, [_cell("inserted()", "NEW", "inserted"),
+                 _note("# Topic\n\nNew finding", "note-id"),
+                 _cell("plot()", "NEW", "plot")])
+    _commit(path.parent, "new note")
+
+    out = handler._cell_version({"path": str(path),
+                                 "anchor": "cell:note-id",
+                                 "commit": first})
+    assert out["found"] and out["status"] == "matched-id"
+    assert out["kind"] == "note" and out["index"] == 0
+    assert "<strong>finding</strong>" in out["html"]
+    assert "<script" not in out["html"] and "alert(1)" not in out["html"]
+    assert "OLD" not in out["html"]
+
+
+def test_idless_note_history_uses_position_when_prose_changes(repo):
+    path, handler = repo
+    _save(path, [_note("Old prose")])
+    first = _commit(path.parent, "old prose")
+    _save(path, [_note("New prose")])
+    _commit(path.parent, "new prose")
+
+    out = handler._cell_version({"path": str(path), "anchor": "note",
+                                 "commit": first})
+    assert out["status"] == "matched-position"
+    assert "Old prose" in out["html"] and "New prose" not in out["html"]
