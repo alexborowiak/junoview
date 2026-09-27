@@ -13,7 +13,7 @@ Everything about what is left to do is in these, all in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **groups 13–14** | **The queue.** The 2026-08-30 external review, T95–T121, every claim re-read against the source and then handed to a refuter told to prove it wrong — read the verdict before working one. Groups 1–12 are the design record; every entry in them is closed and ends in a dated note saying what shipped. |
+| **TASKS.md** (this file) | **The ledger.** Every implementation task through T512 is closed. The unticked-looking work that used to remain in groups 14 and 17 is now labelled honestly as an idea bank or decision parking lot, not a release queue. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 | [**reviews/**](reviews/) | **The evidence for group 13.** Two external reviews of `23956c4` — one on bugs, packaging and hygiene, one on missing features — with the file:line each claim rests on. Group 13's notes record where re-reading disagreed with them, which is often, and the disagreements are the useful part. |
 | `tests/test_characterization.py`, the comment block above `EXPECTED_MD5` | **The build log.** Every deliberate change to the rendered page since the package split, dated, saying what moved and why. Written at the moment the work lands rather than afterwards, which is why group 13's completion notes could be transcribed from it instead of reconstructed from `git log`. |
@@ -49,10 +49,10 @@ edited dead code.
   (group 3 — the scientific core is the differentiator), then structure,
   styling, presenting. Group 8 refactors run alone, with nothing else in
   flight.
-- **Groups 1–12 are all ticked and are now the design record: what was
-  built, what was rejected, and why. GROUP 13 IS THE LIVE QUEUE**
-  (2026-08-30) — what two external reviews of the shipped code found.
-  The entries run worst-first, so take them from the top.
+- **There is no live implementation queue after T512.** The numbered tasks
+  are the design record: what was built, what was rejected, and why. Future
+  feature ideas and choices that need a product decision are plain bullets,
+  not unchecked work.
 - **A ticked box means the work landed, and the note says what landed.**
   Every closed entry ends in a dated paragraph naming its commit. Do not
   re-open a task because its DIAGNOSIS is written in the present tense:
@@ -7058,7 +7058,7 @@ option. Then where has the ability to refresh all images gone?"
   star never appeared -- the sync now ends renderFilm, the one repaint
   every change of `cur` goes through.
 
-## Group 14 - the 2026-09-06 list
+## Group 14 - the 2026-09-06 idea bank (not the release queue)
 
 The user's own backlog, filed verbatim (their number, their difficulty),
 after "Once having done those" -- the colour themes (T315), section colour
@@ -7223,42 +7223,42 @@ first. Ticked in the commit that ships each.
   server makes: held to doi.org, to a validated DOI shape, to BibTeX
   content negotiation, 15s and 64 KB -- a lookup, not a proxy -- and the
   button says plainly that it needs the app.
-- [ ] **T326 (list 7, M) Equation numbering and cross-references.**
-- [ ] **T327 (list 8, M) Custom font management**: local install, missing-font warnings, fallbacks, export packaging.
-- [ ] **T328 (list 9, M) Visual refresh approval**: old and new figure side by side before a source update is accepted.
-- [ ] **T329 (list 10, L/M) Automatic agenda/contents slides** from sections; editable; updates as the deck changes.
-- [ ] **T330 (list 11, M) Handout export**: 1/2/3/6-up, speaker notes, writing space, section breaks.
-- [ ] **T331 (list 12, L) Command palette** for actions, tools and navigation, not only content search.
-- [ ] **T332 (list 13, M) Glossary and terminology checker**: inconsistent names, unexplained abbreviations, first-use problems.
-- [ ] **T333 (list 14, M) Linked numeric labels**: values, units, rounding and dates that update from source data.
-- [ ] **T334 (list 15, M/H) Slide dependency graph**: which slides, figures and text depend on which cells or notebooks.
-- [ ] **T335 (list 16, M) Return stack for reused slides**: jump back to the place that linked to the current slide.
-- [ ] **T336 (list 17, H) Full interactive audience export**: builds, flipbooks, links, animations, accessibility.
-- [ ] **T337 (list 18, M) Automatic fallback package**: static export plus resume-at-current-slide if the interactive deck fails.
-- [ ] **T338 (list 19, M) Style provenance inspector**: which properties come from family, variation, local override or token.
-- [ ] **T339 (list 20, M) Inline character styles**: emphasis, code, warnings, quotations, inline maths.
-- [ ] **T340 (list 21, M) Named styles for charts, tables, shapes and animations.**
-- [ ] **T341 (list 22, H) Versioned brand packages**: fonts, logos, tokens, components, masters, layouts, migration previews.
-- [ ] **T342 (list 23, H) Responsive constraints and reflow** on page size, aspect ratio or text length change.
-- [ ] **T343 (list 24, H) Scalable components with optional slots** and local overrides that survive updates.
-- [ ] **T344 (list 25, H) True master/layout placeholders** whose geometry and roles inherit live.
-- [ ] **T345 (list 26, M) Optical alignment tools** (perceived, not merely geometric).
-- [ ] **T346 (list 27, M) Plot-aware design diagnostics**: legends, axes, labels, data regions, concrete fixes.
-- [ ] **T347 (list 28, H) Multi-panel scientific figure editor**: panel labels, shared axes, alignment, spacing.
-- [ ] **T348 (list 29, M) Semantic colour registry**: the same entity gets the same colour across charts and slides.
-- [ ] **T349 (list 30, H) Linked chart viewports**: shared zoom, pan, filters, time ranges.
-- [ ] **T350 (list 31, H) Data-anchored callouts** that stay attached to a point, bar, region or threshold.
-- [ ] **T351 (list 32, H) Selective deck regeneration after source changes**, with affected-slide report and accept/skip.
-- [ ] **T352 (list 33, H) Cross-notebook result library**: tags, previews, provenance, search, reuse.
-- [ ] **T353 (list 34, M/H) Animated equation derivations**: substitutions, cancellations, transformations step by step.
-- [ ] **T354 (list 35, M) Code walkthrough mode**: staged line highlighting, output focus, synchronised explanation.
-- [ ] **T355 (list 36, H) Precomputed parameter sliders** driving several linked figures through stored states.
-- [ ] **T356 (list 37, M/H) Audience-level variants**: beginner, specialist and executive explanations of one slide.
-- [ ] **T357 (list 38, H) Claim/evidence graph**: claims, figures, sources, caveats, counterarguments.
-- [ ] **T358 (list 39, M) Argument/story editor**: slide purpose, takeaway, evidence and transition fields.
-- [ ] **T359 (list 40, L/M) Speaker-role and handoff cues** for multi-person talks.
-- [ ] **T360 (list, H) Infinite canvas story map**: the whole argument spatially before presenting it linearly.
-- [ ] **T361 (list 59, H) Result constellation**: figures, notebooks, claims and sources as an explorable map.
+- **T326 (list 7, M) Equation numbering and cross-references.**
+- **T327 (list 8, M) Custom font management**: local install, missing-font warnings, fallbacks, export packaging.
+- **T328 (list 9, M) Visual refresh approval**: old and new figure side by side before a source update is accepted.
+- **T329 (list 10, L/M) Automatic agenda/contents slides** from sections; editable; updates as the deck changes.
+- **T330 (list 11, M) Handout export**: 1/2/3/6-up, speaker notes, writing space, section breaks.
+- **T331 (list 12, L) Command palette** for actions, tools and navigation, not only content search.
+- **T332 (list 13, M) Glossary and terminology checker**: inconsistent names, unexplained abbreviations, first-use problems.
+- **T333 (list 14, M) Linked numeric labels**: values, units, rounding and dates that update from source data.
+- **T334 (list 15, M/H) Slide dependency graph**: which slides, figures and text depend on which cells or notebooks.
+- **T335 (list 16, M) Return stack for reused slides**: jump back to the place that linked to the current slide.
+- **T336 (list 17, H) Full interactive audience export**: builds, flipbooks, links, animations, accessibility.
+- **T337 (list 18, M) Automatic fallback package**: static export plus resume-at-current-slide if the interactive deck fails.
+- **T338 (list 19, M) Style provenance inspector**: which properties come from family, variation, local override or token.
+- **T339 (list 20, M) Inline character styles**: emphasis, code, warnings, quotations, inline maths.
+- **T340 (list 21, M) Named styles for charts, tables, shapes and animations.**
+- **T341 (list 22, H) Versioned brand packages**: fonts, logos, tokens, components, masters, layouts, migration previews.
+- **T342 (list 23, H) Responsive constraints and reflow** on page size, aspect ratio or text length change.
+- **T343 (list 24, H) Scalable components with optional slots** and local overrides that survive updates.
+- **T344 (list 25, H) True master/layout placeholders** whose geometry and roles inherit live.
+- **T345 (list 26, M) Optical alignment tools** (perceived, not merely geometric).
+- **T346 (list 27, M) Plot-aware design diagnostics**: legends, axes, labels, data regions, concrete fixes.
+- **T347 (list 28, H) Multi-panel scientific figure editor**: panel labels, shared axes, alignment, spacing.
+- **T348 (list 29, M) Semantic colour registry**: the same entity gets the same colour across charts and slides.
+- **T349 (list 30, H) Linked chart viewports**: shared zoom, pan, filters, time ranges.
+- **T350 (list 31, H) Data-anchored callouts** that stay attached to a point, bar, region or threshold.
+- **T351 (list 32, H) Selective deck regeneration after source changes**, with affected-slide report and accept/skip.
+- **T352 (list 33, H) Cross-notebook result library**: tags, previews, provenance, search, reuse.
+- **T353 (list 34, M/H) Animated equation derivations**: substitutions, cancellations, transformations step by step.
+- **T354 (list 35, M) Code walkthrough mode**: staged line highlighting, output focus, synchronised explanation.
+- **T355 (list 36, H) Precomputed parameter sliders** driving several linked figures through stored states.
+- **T356 (list 37, M/H) Audience-level variants**: beginner, specialist and executive explanations of one slide.
+- **T357 (list 38, H) Claim/evidence graph**: claims, figures, sources, caveats, counterarguments.
+- **T358 (list 39, M) Argument/story editor**: slide purpose, takeaway, evidence and transition fields.
+- **T359 (list 40, L/M) Speaker-role and handoff cues** for multi-person talks.
+- **T360 (list, H) Infinite canvas story map**: the whole argument spatially before presenting it linearly.
+- **T361 (list 59, H) Result constellation**: figures, notebooks, claims and sources as an explorable map.
 - [x] **T362 - Slides from the notebook viewer.** The user (2026-09-06):
   "we also need the auto generate presentations from notebooks but this
   should be just in the notebook viewer now. And there should be From
@@ -8648,7 +8648,7 @@ gates are recorded in the completing commit.
   sentence being widened back. Driven: Box background to green recolours
   the text box.
 
-## Left open from the 2026-09-14 session (audited at the end of it)
+## Decision parking lot from 2026-09-14 (not the release queue)
 
 Every ask from that day landed as T432-T456 and each is ticked above.
 These are the loose ends it *raised* rather than closed: places where a
@@ -8680,7 +8680,7 @@ ladder), and T437 ships both halves - "Refresh from file" for a picture
 that is already embedded, and "Link only" framed as a size saving you
 switch on yourself.
 
-- [ ] **T457 — The six built-in style sets carry no palette.** T456
+- **T457 — The six built-in style sets carry no palette.** T456
   narrowed the Deck colours note because Clean, Editorial, Bold,
   Academic, Minimal and Poster define type and not one of them defines
   `tokens` — so applying one has never moved a colour, while a set you
@@ -8691,7 +8691,7 @@ switch on yourself.
   just code. (`test_box_background_and_the_set_promise.py` fails if a
   built-in grows a palette without the note being widened back.)
 
-- [ ] **T458 — A new shape still arrives coral, not in the deck's line
+- **T458 — A new shape still arrives coral, not in the deck's line
   colour.** T455 made "Lines and edges" govern `.an-rect`, but its
   default stayed `#ff6b57` so no existing deck changed under anybody.
   That means the token governs only once you have changed it, and a
@@ -8699,13 +8699,13 @@ switch on yourself.
   same question is open for every other default that is a literal
   rather than a role.
 
-- [ ] **T459 — "Box background" reaches two kinds of box, not all of
+- **T459 — "Box background" reaches two kinds of box, not all of
   them.** T455/T456 wired the text box and the notebook frame. A
   table's header fill is still a `currentColor` mix and a filled shape
   still carries its own colour, so neither follows the deck. Decide
   which of those SHOULD be a "box" before wiring more.
 
-- [ ] **T460 — The shelf is on the Animation and Images choosers only.**
+- **T460 — The shelf is on the Animation and Images choosers only.**
   T453 routes a group into the ribbon's shelf when it is `rbn-compact`
   — the ones the user pointed at (Transition, Effect, Timing, Leaves
   early, Motion, Shapes). Every other group still opens the old pop-up
@@ -8714,7 +8714,7 @@ switch on yourself.
   "this same idea should be applied to lots of other slides as well".
   Decide which groups are choosers and mark them compact.
 
-- [ ] **T461 — More automatic ways to make a slide come alive.** T445
+- **T461 — More automatic ways to make a slide come alive.** T445
   shipped thirteen movements with six numbers each and seven one-click
   whole-slide treatments, against "I want this to be able to have lots
   of automatic things to be able to make slides comes alive". That ask
@@ -8722,7 +8722,7 @@ switch on yourself.
   a way to audition a whole slide's animation without presenting it are
   the obvious next ones.
 
-- [ ] **T462 — More flexibility in the open-items bar.** T448 gave it
+- **T462 — More flexibility in the open-items bar.** T448 gave it
   three docks and three toggleable sections, against "customise a lot
   about the way you want things. Needs lots of user flexability".
   Still fixed: the order of the sections, the bar's width, what a row
@@ -9432,7 +9432,7 @@ any reading. The rest are T466 onwards.
   inside a text field. A Zoom in on the last click made the next slide
   arrive 3× and shrink back — off before the rebuild. And "Blur the
   rest" left every arrow sharp — the visible stroke dims too.
-- [ ] **T492 — The third review pass's open findings (2026-09-15).**
+- [x] **T492 — The third review pass's open findings (2026-09-15).**
   Verified by a skeptic agent where marked (v); the full record with
   evidence, repro scripts and proposed fixes is in
   `%LOCALAPPDATA%\Temp\claude\jv-shot\findings3.json` (workflow
@@ -9536,6 +9536,10 @@ any reading. The rest are T466 onwards.
     laid out as the highlighted layout' but makes 'Version 2' (a copy of the
     sheet), and the Animation tab stays live with six chooser groups a printed
     page cannot use
+  *Closed 2026-09-27.* T491 and T494–T499 closed every implementation
+  finding. Item 14 is the product choice T484 deliberately deferred, not a
+  surviving defect, so the parent review is closed rather than left as a
+  misleading release blocker.
 - [x] **T493 — The highlight has a colour and a size, and a door.**
   (2026-09-15, user: "I can't work out how to configure the dot point
   by dot point animation that is the highlight option. Like I am
@@ -9841,3 +9845,10 @@ any reading. The rest are T466 onwards.
   Live browser QA caught the timing missed by the count-only unit check: on
   initial view restore the filters ran after the counter first rendered. The
   counter now refreshes after every filter pass, including initial restore.
+- [x] **T512 — Close the 0.2.0 implementation queue.** (2026-09-27)
+  T254's real-browser theme matrix closes the last concrete verification gap.
+  The speculative T326–T361 list is labelled as the idea bank it is, and the
+  T457–T462 loose ends are product decisions rather than unchecked code work.
+  T492 is closed because every implementation finding landed; its sole
+  remainder is T484's deliberate ribbon-taxonomy choice. There are no
+  unchecked implementation tasks or known release blockers left in this file.
