@@ -38,6 +38,8 @@ dependency is the Python standard library.
 | | |
 | --- | --- |
 | [Run it](#run-it) | the app, static export, and publishing to the web |
+| [Notebook top ten][notebook-ten] | features worth trying |
+| [Presentation top ten][presentation-ten] | features worth trying |
 | [What you get in the page](#what-you-get-in-the-page) | the reading experience |
 | [Authoring guide](AUTHORING.md) | the `#\|` directive language, in full |
 | [Presentations](PRESENTATIONS.md) | slide decks and conference posters |
@@ -47,6 +49,9 @@ dependency is the Python standard library.
 | [Changelog](CHANGELOG.md) | what changed, and what moved |
 | [Backlog](TASKS.md) | what is left to do, and the design record of what was built |
 | [Audit](AUDIT-2026-08-26.md) | the evidence behind the open items |
+
+[notebook-ten]: #ten-notebook-features-worth-trying
+[presentation-ten]: #ten-presentation-features-worth-trying
 
 ## See it work
 
@@ -85,6 +90,77 @@ dependency is the Python standard library.
 
 ![Scaling figures and text, then presenting](docs/gifs/make_figure_and_text_bigger_and_present_them.gif)
 </details>
+
+---
+
+## Ten notebook features worth trying
+
+1. **Open an ordinary executed notebook.** No directives are required and
+   Junoview never runs its code. It classifies the stored outputs into figures,
+   datasets, metrics, prose and code automatically.
+2. **Read figures first.** Outputs become titled cards with the implementation
+   folded behind them, instead of every input and output receiving equal visual
+   weight.
+3. **Trace a plot back to its inputs.** Plot trace follows explicit
+   `depends:` links and the variables each cell reads to show the chain that
+   produced a figure.
+4. **See the whole analysis as a graph.** Stable cell ids become nodes in a
+   navigable provenance map; selecting a node jumps to the corresponding card.
+5. **Turn several cells into one reproducible figure.** `group:` combines a
+   small pipeline into one card with named, ordered code steps.
+6. **Reuse shared preparation without copying it.** `stack:` can fold the same
+   loading, regridding or plotting helper under several figures.
+7. **Make a focused view without changing the notebook.** Filter, hide,
+   collapse and style sections to make a reading view for a particular
+   audience while leaving the source document alone.
+8. **Check the transformation.** Raw notebook view puts every original cell,
+   directive and output back in authored order, so the polished view is never
+   a black box.
+9. **Work across a project.** Open several notebooks as tabs, compare them
+   without leaving the app, and refresh each one from disk after re-running it.
+10. **Move from static reading to live exploration.** The Jupyter widget uses
+    the same document model but can recompute against a live kernel and retain
+    its view state.
+
+The [authoring guide](AUTHORING.md) covers every directive, grouping and
+stacking, and the inference rules used when you write none of them.
+
+## Ten presentation features worth trying
+
+1. **Build directly from notebook evidence.** Place figures, markdown, code or
+   other cards from any open notebook, or generate a first deck from notebook
+   sections automatically.
+2. **Keep the scientific trail attached.** A placed figure remembers its
+   notebook and cell, can show the code trail that produced it, and can take a
+   newer notebook version without moving, resizing or losing its crop.
+3. **Number figures without maintenance.** Tie captions to figures and use
+   `{fig}` references; moving slides renumbers captions and cross-references
+   automatically.
+4. **Find the one heading that drifted.** **Check consistency** groups text and
+   figures that should agree, spots headings changed by hand or jumping between
+   slides, and proposes individual fixes without silently changing the deck.
+5. **Make slides agree by pointing at a good one.** **Match slide** transfers
+   layout and appearance while keeping each slide's own words and figures;
+   **Copy layout to slides** sends the good arrangement to several slides at
+   once.
+6. **Lay out a real poster.** Work at A4 through A0 with millimetre rulers,
+   grids, guide boxes, snapping, print-margin checks and optional crop marks;
+   PDF export keeps the true page size.
+7. **Prepare the talk, not only the slides.** Markdown speaker notes,
+   presenter view, slide search, private on-slide annotations and remembered
+   rehearsal timings all travel with the deck.
+8. **Keep several talk lengths in one file.** Sections, optional slides and
+   named versions avoid duplicate decks; **Running late** skips the remaining
+   optional material during the talk.
+9. **Build a reusable visual system.** Shared colours, named text styles,
+   components and saved layouts let repeated elements change together while
+   each instance keeps its own content.
+10. **Exchange finished work.** Import `.pptx`; export editable PowerPoint
+    text, tables and charts; or use PDF and standalone HTML when exact
+    appearance, equations or offline playback matter more.
+
+The [presentation guide](PRESENTATIONS.md) explains the complete slide, poster,
+presenting, review, saving and export workflows.
 
 ---
 
