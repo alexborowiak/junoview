@@ -6,7 +6,8 @@ is only what's specific to this machine.
 
 ## Running things
 
-- Tests: `python -m pytest -q` from the repo root (781 tests, under 40 s).
+- Tests: `python -m pytest -q` from the repo root (about 1,900 tests,
+  under two minutes).
   Bare `python` on this machine is a real Python 3.13, not the Store stub.
   pyproject.toml sets `pythonpath = ["src", "tests"]`, so no `pip install -e`
   or PYTHONPATH is needed to run the suite.
@@ -23,6 +24,13 @@ is only what's specific to this machine.
   venv is what CI actually runs — and note both tools are pinned `>=`,
   so a fresh install can surface rules that did not exist when the code
   was written (that is what the 2026-08-25 lint pass was).
+- Theme surfaces have one opt-in real-browser gate because computed CSS and
+  screenshots need Chromium. Run it with
+  `$env:JUNOVIEW_BROWSER_TESTS='1'; python -m pytest -q
+  tests/test_theme_browser_matrix.py`. Add
+  `$env:JUNOVIEW_UPDATE_THEME_REFERENCE='1'` to refresh
+  `reviews/theme-matrix.png`. The ordinary suite skips this one test on
+  machines where browser launches are unavailable.
 - There is NO Node on this machine. To syntax-check a JS file, use VS Code's
   Electron as node (PowerShell — the `Out-Null` forces the shell to wait so
   `$LASTEXITCODE` is real):

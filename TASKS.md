@@ -5276,7 +5276,7 @@ option. Then where has the ability to refresh all images gone?"
   system listener and WCAG ratios for normal/muted/subtle ink, chrome,
   accent links, focus and deep selected states across all twelve palettes.
 
-- [ ] **T254 - Theme coverage is visually tested across the real
+- [x] **T254 - Theme coverage is visually tested across the real
   surfaces.**
   Review, 2026-09-04. Existing theme tests mostly assert that a token or
   selector substring exists; they do not catch an unthemed new dialog
@@ -5286,6 +5286,14 @@ option. Then where has the ability to refresh all images gone?"
   editor), checking computed tokens/contrast and keeping reference
   screenshots for the places where partial theming is visible rather
   than structurally detectable.
+  *Done 2026-09-27.* One opt-in Chromium matrix now drives all twelve
+  schemes through the rendered app and measures computed foreground and
+  effective background on seven real surfaces: reader, welcome,
+  menus, dialogs, Variables, tree/trace and the editor. It understands
+  browsers' resolved `color(srgb ...)` output as well as `rgb(...)` and
+  fails below 4.5:1; the lowest current pair is 4.72:1. The compact
+  contact sheet in `reviews/theme-matrix.png` keeps the visual half of
+  the check without adding a browser or image library to the project.
 
 - [x] **T255 - Zoom in, inside a full-screen plot.**
   The user (2026-09-04): "when viewing plots in full screen you can't
