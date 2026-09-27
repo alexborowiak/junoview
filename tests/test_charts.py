@@ -64,9 +64,12 @@ def test_update_figures_re_reads_the_chart_numbers_too():
     everything already matches. Position, type and colours stay."""
     out = _out()
     assert "if(a.k==='chart') return a.ref||'';" in out
-    assert ("var cn=(typeof chartResyncAll==='function')"
-            "?chartResyncAll(only):0;" in out)   # T280: scoped
-    assert "if(!list.length&&!cn){" in out
+    # T328: charts now join the same non-mutating stale list as snapshots;
+    # chartResyncAll must not write before the review dialog is accepted.
+    assert "chartSourceVersion(a))" in out
+    assert "out.push({si:si,ai:ai,a:a,st:'stale',ref:a.ref});" in out
+    assert "var cn=(typeof chartResyncAll==='function')" not in out
+    assert "if(!list.length){" in out
     # hand-edited numbers unlink: the dialog deletes ref on apply
     fn = out[out.index("function chartDataDlg(idx){"):]
     fn = fn[:fn.index("function chartResyncAll")]
@@ -249,6 +252,6 @@ def test_a_series_build_survives_its_data_being_re_read(out):
     # TABLE and reported success while the chart had not moved.
     i = out.index("function chartResyncOne(a){")
     body = out[i:i + 1400]
-    assert "a.cats=data.cats;a.series=data.series;" in body
+    assert "a.cats=next.cats;a.series=next.series;" in body
     # nothing in the refresh touches the animation
     assert "a.anim" not in body

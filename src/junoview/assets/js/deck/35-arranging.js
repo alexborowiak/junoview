@@ -2142,6 +2142,15 @@
       if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
         if(!a||a.hide) return;
+        /* A native chart keeps its source in the annotation rather than
+           EMBED. Ask the chart for a non-mutating candidate so it joins
+           the same approval window instead of changing before the
+           snapshots have even been shown (T328). */
+        if(a.k==='chart'){
+          if(typeof chartSourceVersion==='function'&&chartSourceVersion(a))
+            out.push({si:si,ai:ai,a:a,st:'stale',ref:a.ref});
+          return;
+        }
         /* T307: one entry per SOURCE, so a flip book's other pages are
            not silently left behind by the refresh that claims to have
            covered them */
@@ -2260,23 +2269,28 @@
         if(r.ok){reread++;return;}
         if(r.reason==='failed') bad.push(r.stem);
       });
-      /* charts re-read their table's NUMBERS on the same click (T117);
-         type, colours, position and size stay the author's. Counted
-         BEFORE the early return, or a deck whose only change was a
-         chart would be told everything already matches. */
-      var cn=(typeof chartResyncAll==='function')?chartResyncAll(only):0;
       var list=staleFigures(only);
-      if(!list.length&&!cn){
+      if(!list.length){
         if(!quiet) toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
         return {n:0,reread:reread,bad:bad,tried:0};
       }
-      var n=cn,touched=[];
-      list.forEach(function(p){
-        if(!resyncFigure(p.a,p.ref)) return;
-        n++;
-        var k=normRef(p.ref||provRef(p.a));
-        if(k&&touched.indexOf(k)<0) touched.push(k);
-      });
+      /* T328: re-reading sources is harmless; replacing the kept copies
+         is not. The old and new renderings are put side by side before
+         this loop is allowed to write either EMBED or chart data. */
+      return reviewFigureUpdates(list).then(function(accepted){
+        if(!accepted){
+          if(!quiet) toast('Kept the current figure copies');
+          return {n:0,reread:reread,bad:bad,tried:list.length,
+            cancelled:true};
+        }
+        var n=0,touched=[];
+        list.forEach(function(p){
+          if(!resyncFigure(p.a,p.ref)) return;
+          n++;
+          if(p.a&&p.a.k==='chart') return;
+          var k=normRef(p.ref||provRef(p.a));
+          if(k&&touched.indexOf(k)<0) touched.push(k);
+        });
       /* T301: THE BUTTON THE USER LEARNED TO FEAR. It rewrites every
          stale figure in the deck at once, nothing else in the editor can
          put one back, and it does not even leave an undo entry -- so
@@ -2307,6 +2321,7 @@
           bad.length?7000:0);
       }
       return {n:n,reread:reread,bad:bad,tried:list.length};
+      });
     });
   }
   window.SemDeckStaleFigures=staleFigures;   /* test hook */
@@ -2335,6 +2350,129 @@
       var b=cloneBody(ref,1);      /* the NOTEBOOK's answer (T302) */
       return b?b.outerHTML:'';
     }catch(e){return '';}
+  }
+  /* T328: THE DECISION BEFORE THE WRITE. A refresh used to replace the
+     only kept copy and then offer an undo toast after the damage. This
+     native dialog shows the exact saved and live bodies (or the two chart
+     drawings) side by side, and resolves true only from the worded
+     acceptance button. Escape, the backdrop and Keep current all decline.
+
+     It is built on demand because it holds live figure DOM -- often
+     megabytes -- and there is no reason to keep any of that after the
+     choice. */
+  function reviewFigureUpdates(list){
+    var rows=[];
+    (list||[]).forEach(function(p){
+      if(!p||!p.a) return;
+      if(p.a.k==='chart'){
+        var newer=(typeof chartSourceVersion==='function')
+          ?chartSourceVersion(p.a):null;
+        if(newer) rows.push({p:p,old:p.a,newer:newer,chart:true});
+        return;
+      }
+      var live=liveCardHtml(p.ref),saved=embFor(p.ref);
+      if(!live||((saved&&saved.html)===live)) return;
+      rows.push({p:p,old:saved&&saved.html||'',newer:live,chart:false});
+    });
+    if(!rows.length) return Promise.resolve(false);
+    return new Promise(function(done){
+      var dlg=document.createElement('dialog');
+      dlg.className='fig-review';
+      var head=document.createElement('div');head.className='fig-review-h';
+      var title=document.createElement('div');title.className='fig-review-t';
+      title.textContent=rows.length===1?'Review figure update'
+        :'Review '+rows.length+' figure updates';
+      head.appendChild(title);
+      var sub=document.createElement('div');sub.className='fig-review-sub';
+      sub.textContent='Nothing changes until you use the new version.';
+      head.appendChild(sub);
+      var keep=document.createElement('button');
+      keep.type='button';keep.className='dbtn';
+      keep.innerHTML=bic('none')+' Keep current';head.appendChild(keep);
+      var use=document.createElement('button');
+      use.type='button';use.className='dbtn primary';
+      use.innerHTML=bic('reload')+' Use '+(rows.length===1
+        ?'new version':('all '+rows.length+' new versions'));
+      head.appendChild(use);dlg.appendChild(head);
+      var intro=document.createElement('div');intro.className='fig-review-note';
+      intro.textContent='Saved in the deck is on the left; the source now '
+        +'is on the right. Position, size and crop stay unchanged.';
+      dlg.appendChild(intro);
+      var body=document.createElement('div');body.className='fig-review-list';
+      function frame(label,node,empty){
+        var col=document.createElement('div');col.className='fig-review-col';
+        var cap=document.createElement('div');cap.className='fig-review-cap';
+        cap.textContent=label;col.appendChild(cap);
+        var box=document.createElement('div');box.className='fig-review-frame';
+        if(node) box.appendChild(node);
+        else {
+          var miss=document.createElement('div');
+          miss.className='fig-review-empty';miss.textContent=empty;
+          box.appendChild(miss);
+        }
+        col.appendChild(box);return col;
+      }
+      rows.forEach(function(r){
+        var item=document.createElement('section');
+        item.className='fig-review-item';
+        var lab=document.createElement('div');lab.className='fig-review-label';
+        var pr=splitRef(r.p.ref||'');
+        lab.textContent='Slide '+(r.p.si+1)+' · '
+          +(pr[0]?pr[0]+' · ':'')+(pr[1]||'chart');
+        item.appendChild(lab);
+        var pair=document.createElement('div');pair.className='fig-review-pair';
+        if(r.chart){
+          pair.appendChild(frame('Saved in the deck',chartSvg(r.old),''));
+          pair.appendChild(frame('Source now',chartSvg(r.newer),''));
+        } else {
+          var part=r.p.a.k==='cell'?partOf(r.p.a):'figure';
+          pair.appendChild(frame('Saved in the deck',r.old
+            ?framePartFromSnap(r.old,part):null,'No copy has been kept yet'));
+          pair.appendChild(frame('Source now',
+            framePartFromSnap(r.newer,part),'Nothing to show'));
+        }
+        item.appendChild(pair);body.appendChild(item);
+      });
+      dlg.appendChild(body);document.body.appendChild(dlg);
+      var settled=false;
+      function finish(ok){
+        if(settled) return;settled=true;
+        if(dlg.open) dlg.close();
+        if(dlg.parentNode) dlg.parentNode.removeChild(dlg);
+        done(ok);
+      }
+      keep.addEventListener('click',function(){finish(false);});
+      use.addEventListener('click',function(){finish(true);});
+      dlg.addEventListener('cancel',function(e){
+        e.preventDefault();finish(false);});
+      dlg.addEventListener('click',function(e){
+        if(e.target!==dlg) return;
+        var r=dlg.getBoundingClientRect();
+        if(e.clientX<r.left||e.clientX>r.right
+           ||e.clientY<r.top||e.clientY>r.bottom) finish(false);
+      });
+      dlg.showModal();
+      if(typeof typeset==='function') typeset(dlg);
+      use.focus();
+    });
+  }
+  function reviewOneFigure(a,ref){
+    if(!a) return Promise.resolve({n:0,missing:true});
+    var p={si:cur,ai:selAnnot,a:a,ref:ref||provRef(a)};
+    if(a.k==='chart'){
+      if(!cardEl(p.ref)) return Promise.resolve({n:0,missing:true});
+      if(typeof chartSourceVersion!=='function'||!chartSourceVersion(a))
+        return Promise.resolve({n:0,same:true});
+    } else {
+      var st=provState(provOf(ref?{k:'cell',ref:ref}:a));
+      if(st==='same') return Promise.resolve({n:0,same:true});
+      if(st!=='stale'&&st!=='nosaved')
+        return Promise.resolve({n:0,missing:true});
+    }
+    return reviewFigureUpdates([p]).then(function(ok){
+      if(!ok) return {n:0,cancelled:true};
+      return {n:resyncFigure(a,p.ref)};
+    });
   }
   function renderProvPane(){
     var list=$('#provpane-list'),head=$('#provpane-count');
@@ -2445,10 +2583,14 @@
         +'its size and its crop are on the frame, not the snapshot, so '
         +'none of them change.';
       up.addEventListener('click',function(){
-        var n=resyncFigure(a);
-        toast(n?'Updated from the notebook \u2014 position, size and '
-          +'crop unchanged':'Could not read the live card');
-        renderProvPane();
+        reviewOneFigure(a).then(function(r){
+          if(r.n) toast('Updated from the notebook \u2014 position, size and '
+            +'crop unchanged');
+          else if(r.same) toast('This figure already matches the notebook');
+          else if(r.missing) toast('Could not read the live card');
+          else toast('Kept the current figure');
+          renderProvPane();
+        });
       });
       list.appendChild(up);
     }
@@ -2540,8 +2682,11 @@
        cell frame on another slide, the capture refreshed THAT figure
        instead. The chart's numbers live in a.cats/a.series and only
        chartResyncOne reads them. */
-    if(a&&a.k==='chart')
-      return (typeof chartResyncOne==='function')?chartResyncOne(a):0;
+    if(a&&a.k==='chart'){
+      var cn=(typeof chartResyncOne==='function')?chartResyncOne(a):0;
+      if(cn){markDirty();refresh();}
+      return cn;
+    }
     /* T307: `ref` names WHICH source, because a flip book has one per
        page and provRef only ever answers for the page on show. Absent,
        it means the annot's own single source, which is what every

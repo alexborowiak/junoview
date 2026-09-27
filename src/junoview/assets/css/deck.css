@@ -6247,6 +6247,52 @@ body.light .img-sec{border-color:var(--line);
   background:var(--surface-hover);}
 body.light .img-ov .img-row{border-color:var(--line);}
 
+/* ---- T328: LOOK BEFORE A FIGURE REFRESH WRITES ------------------------
+   The deck's kept rendering and the source's current rendering get equal
+   space. The choice stays worded: these are destructive source updates,
+   not a mystery pair of tick/cross icons. */
+.fig-review{box-sizing:border-box;width:min(1120px,calc(100vw - 32px));
+  max-width:none;max-height:calc(100vh - 32px);padding:18px 20px 22px;
+  color:#c9d6e2;background:var(--chrome-0,#0b141d);
+  border:1px solid #ffffff2b;border-radius:12px;box-shadow:0 24px 70px #000c;
+  font-family:var(--sans);overflow:auto;}
+.fig-review::backdrop{background:#02060bd9;backdrop-filter:blur(2px);}
+.fig-review-h{display:flex;align-items:center;gap:9px;position:sticky;top:-18px;
+  z-index:2;margin:-18px -20px 0;padding:16px 20px 12px;
+  background:var(--chrome-0,#0b141d);border-bottom:1px solid #ffffff18;}
+.fig-review-t{font-size:18px;font-weight:650;white-space:nowrap;}
+.fig-review-sub{flex:1;color:var(--chrome-ink-2);font-size:12px;}
+.fig-review-note{font-size:12px;line-height:1.5;color:var(--chrome-ink-2);
+  margin:13px 0;}
+.fig-review-list{display:flex;flex-direction:column;gap:14px;}
+.fig-review-item{border:1px solid #ffffff1c;border-radius:9px;
+  background:#ffffff05;padding:10px;}
+.fig-review-label{font-family:var(--mono);font-size:10px;color:var(--chrome-ink-2);
+  margin:0 2px 8px;}
+.fig-review-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;}
+.fig-review-col{min-width:0;display:flex;flex-direction:column;gap:5px;}
+.fig-review-cap{font-size:11px;font-weight:600;color:#dbe7ef;}
+.fig-review-frame{height:290px;box-sizing:border-box;overflow:auto;
+  display:flex;align-items:center;justify-content:center;padding:10px;
+  background:#fff;color:#18232d;border:1px solid #ffffff26;border-radius:7px;}
+.fig-review-frame>.cardbody{width:100%;max-height:100%;}
+.fig-review-frame img,.fig-review-frame svg{max-width:100%;max-height:100%;}
+.fig-review-frame>.an-chartsvg{width:100%;height:100%;}
+.fig-review-empty{font-family:var(--mono);font-size:11px;color:#647484;}
+body.light .fig-review{color:var(--ink-2);background:var(--chrome-2);
+  border-color:var(--line);}
+body.light .fig-review-h{background:var(--chrome-2);border-color:var(--line);}
+body.light .fig-review-item{border-color:var(--line);
+  background:var(--surface-hover);}
+body.light .fig-review-cap{color:var(--ink);}
+@media(max-width:760px){
+  .fig-review-h{flex-wrap:wrap;}
+  .fig-review-sub{flex-basis:100%;order:3;}
+  .fig-review-pair{grid-template-columns:1fr;}
+  .fig-review-frame{height:230px;}
+}
+
 /* the two galleries: three lines with the marker they would draw */
 .sh-menu.ls-menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
   gap:4px;width:250px;padding:7px;}

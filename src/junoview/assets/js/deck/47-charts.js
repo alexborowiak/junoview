@@ -1011,21 +1011,25 @@
      chartResyncAll's forEach, lifted unchanged; the loop below now
      calls it rather than repeating it. Returns 1 when the numbers
      moved, so a caller can say nothing rather than claim a refresh. */
-  function chartResyncOne(a){
-    if(!a||a.k!=='chart'||!a.ref) return 0;
+  function chartSourceSig(cats,ss){
+    return JSON.stringify([cats,ss.map(function(se){
+      return [se.name,se.ys,se.err||null,se.band||null];})]);
+  }
+  /* A non-mutating rendering of what a chart would become. The refresh
+     review can therefore draw old and new before chartResyncOne writes
+     either cats or series (T328). */
+  function chartSourceVersion(a){
+    if(!a||a.k!=='chart'||!a.ref) return null;
     var data=chartFromRows(chartRowsOfCard(a.ref));
-    if(!data) return 0;
+    if(!data) return null;
     /* names, error bars and bands are part of "has the table changed":
        comparing the values alone let a helper-column-only or a
        rename-only edit report no change, so "Refresh from table" said
        the table had not moved while the plot showed the old error bars
        (2026-09-07 review) */
-    function sig(cats,ss){
-      return JSON.stringify([cats,ss.map(function(se){
-        return [se.name,se.ys,se.err||null,se.band||null];})]);
-    }
     var p0=chartParse(a);
-    if(sig(p0.cats,p0.series)===sig(data.cats,data.series)) return 0;
+    if(chartSourceSig(p0.cats,p0.series)===
+       chartSourceSig(data.cats,data.series)) return null;
     /* the author's per-series choices survive a refresh by NAME: the
        colour (T123), and since T322 the axis, the trend line, a line
        drawn over the bars and being hidden -- err/band come from the
@@ -1038,7 +1042,13 @@
       ['axis','trend','ct','hide'].forEach(function(k){
         if(o[k]) se[k]=o[k];});
     });
-    a.cats=data.cats;a.series=data.series;
+    var next={};Object.keys(a).forEach(function(k){next[k]=a[k];});
+    next.cats=data.cats;next.series=data.series;
+    return next;
+  }
+  function chartResyncOne(a){
+    var next=chartSourceVersion(a);if(!next) return 0;
+    a.cats=next.cats;a.series=next.series;
     return 1;
   }
   function chartResyncAll(only){          /* T280: a slide, or the deck */

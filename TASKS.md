@@ -7225,7 +7225,16 @@ first. Ticked in the commit that ships each.
   button says plainly that it needs the app.
 - **T326 (list 7, M) Equation numbering and cross-references.**
 - **T327 (list 8, M) Custom font management**: local install, missing-font warnings, fallbacks, export packaging.
-- **T328 (list 9, M) Visual refresh approval**: old and new figure side by side before a source update is accepted.
+- [x] **T328 (list 9, M) Visual refresh approval**: old and new figure
+  side by side before a source update is accepted.
+  Done 2026-09-27. Every source-backed figure now stops at one native
+  review window before the kept copy is replaced: the deck's version on
+  the left, the freshly re-read source on the right, with explicit
+  **Keep current** and **Use new version(s)** actions. The same gate owns
+  the Home update, Images-row refresh and provenance-pane refresh, and
+  Escape or the backdrop keeps the current copy. Native charts join the
+  same path through a non-mutating candidate, so their source data no
+  longer changes early while notebook snapshots are still being reviewed.
 - **T329 (list 10, L/M) Automatic agenda/contents slides** from sections; editable; updates as the deck changes.
 - **T330 (list 11, M) Handout export**: 1/2/3/6-up, speaker notes, writing space, section breaks.
 - **T331 (list 12, L) Command palette** for actions, tools and navigation, not only content search.

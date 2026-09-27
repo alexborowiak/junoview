@@ -217,7 +217,11 @@
       if(f.n) bits.push(f.n+' figure'+(f.n===1?'':'s'));
       if(p.ok) bits.push(p.ok+' picture'+(p.ok===1?'':'s'));
       var msg;
-      if(bits.length) msg=bits.join(' and ')+' updated on '+where;
+      if(f.cancelled) msg=bits.length
+        ?bits.join(' and ')+' updated on '+where
+          +'; figure updates kept as they were'
+        :'Kept the current figure copies';
+      else if(bits.length) msg=bits.join(' and ')+' updated on '+where;
       else msg='Everything on '+where+' already matches its source';
       var trouble=[];
       if(f.bad&&f.bad.length)
@@ -389,24 +393,32 @@
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
       return;
     }
-    if(!resyncFigure(a2,r.ref)){
-      toast('Its notebook is not open, so there is nothing newer to '
-        +'read — the copy in the deck is being shown');
-      return;
-    }
-    /* T301: one figure, and the way back out of it */
-    var k=normRef(provRef(a2));
-    toastUndo('Re-read from the notebook, and kept.','Put it back',
-      function(){
-        var back=embRestore(k?[k]:[]);
-        toast(back.n
-          ?('Back to the figure from before'
-            +(back.unlinked?' \u2014 and it is a kept copy again, not a '
-              +'live link':''))
-          :'Nothing left to put back');
-        imgPaneRefresh();
-      });
-    imgPaneRefresh();
+    reviewOneFigure(a2,r.ref).then(function(got){
+      if(!got.n){
+        if(got.same) toast('This figure already matches its source');
+        else if(got.cancelled) toast('Kept the current figure');
+        else toast('Its notebook is not open, so there is nothing newer '
+          +'to read — the copy in the deck is being shown');
+        return;
+      }
+      if(a2.k==='chart'){
+        toast('Re-read the chart data from the notebook');
+      } else {
+        /* T301: one figure, and the way back out of it */
+        var k=normRef(r.ref||provRef(a2));
+        toastUndo('Re-read from the notebook, and kept.','Put it back',
+          function(){
+            var back=embRestore(k?[k]:[]);
+            toast(back.n
+              ?('Back to the figure from before'
+                +(back.unlinked?' \u2014 and it is a kept copy again, not a '
+                  +'live link':''))
+              :'Nothing left to put back');
+            imgPaneRefresh();
+          });
+      }
+      imgPaneRefresh();
+    });
   }
   function imgPaneRefresh(){
     renderImgPane();

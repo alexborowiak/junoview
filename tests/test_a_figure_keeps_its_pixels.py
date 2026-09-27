@@ -224,7 +224,8 @@ def test_refresh_is_one_figure_and_says_so(out):
     assert "      refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);" in out
     # T307: on the source the ROW names, so a flip book's other pages are
     # not refreshed through whichever one happens to be showing
-    assert "    if(!resyncFigure(a2,r.ref)){" in out
+    assert "    reviewOneFigure(a2,r.ref).then(function(got){" in out
+    assert "      return {n:resyncFigure(a,p.ref)};" in out
     assert "\\u2014 only this one'" in out
     # T308: only the genuinely sourceless picture is refused, and it is
     # told why in terms of what that means -- the deck holds the only
@@ -232,6 +233,29 @@ def test_refresh_is_one_figure_and_says_so(out):
     assert "      if(picState(a2)==='kept'){" in out
     assert ("        toast('This picture was pasted or dropped, so the deck "
             "holds the '") in out
+
+
+def test_a_figure_update_is_reviewed_before_it_writes(out):
+    """T328. The old and new renderings are visible together, and neither
+    the single-figure nor whole-deck route reaches resyncFigure until the
+    user has pressed the worded acceptance button. Escape keeps the copy.
+    """
+    assert "  function reviewFigureUpdates(list){" in out
+    assert "Saved in the deck is on the left; the source now " in out
+    assert "keep.innerHTML=bic('none')+' Keep current'" in out
+    assert "?'new version':('all '+rows.length+' new versions')" in out
+    assert "dlg.addEventListener('cancel',function(e){" in out
+    assert ".fig-review-pair{display:grid;grid-template-columns:" in out
+
+    bulk = out[out.index("function resyncAllFigures(only,quiet){"):]
+    bulk = bulk[:bulk.index("window.SemDeckStaleFigures")]
+    assert bulk.index("reviewFigureUpdates(list).then") < \
+        bulk.index("resyncFigure(p.a,p.ref)")
+
+    one = out[out.index("function reviewOneFigure(a,ref){"):]
+    one = one[:one.index("function renderProvPane")]
+    assert one.index("reviewFigureUpdates([p]).then") < \
+        one.index("resyncFigure(a,p.ref)")
 
 
 def test_the_live_switch_says_what_it_will_do_on_hover(out):
@@ -476,12 +500,13 @@ def test_the_refresh_reports_only_what_it_actually_changed(out):
     # emits one entry per source now, so a flip book's other pages are
     # no longer left behind by a refresh that claims to cover them --
     # and `touched` dedupes, because two pages can share a ref.
-    assert ("      list.forEach(function(p){\n"
-            "        if(!resyncFigure(p.a,p.ref)) return;\n"
-            "        n++;\n"
-            "        var k=normRef(p.ref||provRef(p.a));\n"
-            "        if(k&&touched.indexOf(k)<0) touched.push(k);\n"
-            "      });") in out
+    assert ("        list.forEach(function(p){\n"
+            "          if(!resyncFigure(p.a,p.ref)) return;\n"
+            "          n++;\n"
+            "          if(p.a&&p.a.k==='chart') return;\n"
+            "          var k=normRef(p.ref||provRef(p.a));\n"
+            "          if(k&&touched.indexOf(k)<0) touched.push(k);\n"
+            "        });") in out
     assert "        if(touched.length)" in out
 
 
@@ -828,8 +853,10 @@ def test_a_chart_is_refreshed_as_a_chart(out):
     placed as a cell frame on another slide, the capture refreshed THAT
     figure instead. The numbers live in a.cats/a.series."""
     assert "  function chartResyncOne(a){" in out
-    assert ("    if(a&&a.k==='chart')\n      return (typeof chartResyncOne"
-            "==='function')?chartResyncOne(a):0;") in out
+    assert "    if(a&&a.k==='chart'){" in out
+    assert ("      var cn=(typeof chartResyncOne==='function')"
+            "?chartResyncOne(a):0;") in out
+    assert "      if(cn){markDirty();refresh();}" in out
     # ...and the deck-wide loop is now the one-shot in a loop, not a copy
     assert ("      (sl.annots||[]).forEach(function(a){nn+=chartResyncOne(a);});"
             ) in out
