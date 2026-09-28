@@ -473,16 +473,21 @@
       });
     }
     if(a.k==='text'){
-      cfgHead(host,'how much arrives at a time');
+      cfgHead(host,'text sequence');
       var r3=cfgRow(host);
       [['#anim-by-all','Whole box','text'],
        ['#anim-by-para','By bullet','indent'],
-       ['#anim-by-sent','By sentence','spacing'],
-       ['#anim-by-hl','Highlight','star']].forEach(function(p){
+       ['#anim-by-sent','By sentence','spacing']].forEach(function(p){
         cfgChip(r3,(p[2]==='text'?bic('text')
-          :(p[2]==='indent'?bic('indent')
-            :(p[2]==='spacing'?bic('spacing'):bic('star')))),
+          :(p[2]==='indent'?bic('indent'):bic('spacing'))),
           p[1],cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
+      });
+      cfgHead(host,'what each text step does');
+      var r4=cfgRow(host);
+      [['#anim-by-reveal','Reveal','appear'],
+       ['#anim-by-hl','Highlight','star']].forEach(function(p){
+        cfgChip(r4,p[2]==='appear'?bic('appear'):bic('star'),p[1],
+          cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
       });
       /* T471: the highlight's two choices, once it is on. T493: and
          its colour and its size, with a sample that shows all four

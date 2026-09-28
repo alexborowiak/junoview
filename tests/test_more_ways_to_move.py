@@ -87,8 +87,8 @@ def test_motion_keeps_going(out):
 def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert 'id="anim-by-hl"' in out
     # (T401: a box with no entrance gets one on the way)
-    assert ("        else {var an=ensureAnim(s,a,no);an.hl=1; "
-            "if(!an.by) an.by='para';on++;}") in out   # T493: on++
+    assert "        var an=ensureAnim(s,a,no);if(!an.by) an.by='para';" in out
+    assert "        if(highlight) an.hl=1; else delete an.hl;" in out
     # whole-box takes the highlight with it: no pieces, nothing to light
     assert "        else if(a.anim){delete a.anim.by;delete a.anim.hl;}" in out
     # the renderer keeps every piece visible and marks the current one
@@ -102,8 +102,11 @@ def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert '[data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);' in out
     # (T493: the colour and the size are the box's own variables)
     assert ".an-part.an-hl{color:var(--hl-col,var(--accent,#39a9c0));" in out
-    # four tiles, so that strip is four wide
-    assert "width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}" in out
+    # T518: unit and behaviour are separate strips; the two-choice mode
+    # does not waste the width of the standard three-choice strip
+    assert (".strip-frame>#anim-textmode-strip.trans-strip{\n"
+            "  width:calc(2 * var(--rbn-tile-w) + "
+            "var(--rbn-tile-gap) + 8px);}") in out
 
 
 def test_a_flip_book_page_can_turn_or_push(out):
@@ -186,7 +189,8 @@ def test_a_figure_arrives_panel_by_panel(out):
     assert ("    var PANEL_GRIDS=[['1x1','Whole figure',"
             "'On one click, all of it'],") in out
     assert "      if(pf) pf.hidden=poster||armed||!st.fig;" in out
-    assert "      if(lab) lab.textContent='Timing';" in out
+    assert ("      if(lab) lab.textContent=st.fig?"
+            "'Panel sequence':'Text sequence';") in out
     assert ("        cfgRange(host,'Across',g.c,1,6,1,"
             "function(v){return String(v);},") in out
     # the Order tab names the panels; the story strip counts them

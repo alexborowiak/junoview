@@ -30,7 +30,8 @@ def _row(html: str, label: str) -> list[str]:
 
 def test_design_and_animation_are_ordered_as_asked(out):
     assert ".rbn-slide{order:0;}" in out
-    assert ".rbn-anim{order:1;}" in out and ".rbn-timing{order:2;}" in out
+    assert ".rbn-anim{order:1;}" in out
+    assert ".rbn-start,.rbn-sequence,.rbn-textmode{order:2;}" in out
     # T453 moved both after the choosers (T463: packed, not pushed)
     assert ".rbn-build{order:8;}" in out
     assert ".rbn-order{order:9;}" in out

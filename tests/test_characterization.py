@@ -2064,8 +2064,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu; the shared icon set also gains the scissors used by Cut.
 # T517 (2026-09-28): Chromium's obsolete strike tag is canonicalised to the
 # rich-text model's s tag, so selection-level strikethrough survives redraw.
-EXPECTED_MD5 = "0c087280b8651c5e6cb8db7cd2c27f01"
-EXPECTED_BYTES = 4572623
+# T518 (2026-09-28): animation effect, start, text sequence and text-step
+# behaviour are separate ribbon choices and use the same terms in the pane.
+EXPECTED_MD5 = "f7055eb2700b63f5141081948b239c4e"
+EXPECTED_BYTES = 4574146
 
 
 def _render_example() -> str:

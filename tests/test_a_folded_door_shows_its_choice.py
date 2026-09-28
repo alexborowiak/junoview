@@ -31,8 +31,8 @@ def test_a_compact_group_folds_by_design(out):
     assert ("    rbnUnfoldAll();\n    sizeRibbonGroups();\n"
             "    /* T441: the choosers are compact by design, not by width */\n"
             "    rbnFoldCompact();") in out
-    for grp in ("rbn-anim", "rbn-timing", "rbn-motion", "rbn-trans",
-                "rbn-flipfx", "rbn-shapes"):
+    for grp in ("rbn-anim", "rbn-start", "rbn-sequence", "rbn-textmode",
+                "rbn-motion", "rbn-trans", "rbn-flipfx", "rbn-shapes"):
         assert f'class="rbn-grp {grp} rbn-compact"' in out, grp
     # never the text groups
     for grp in ("rbn-fontgrp", "rbn-paragrp", "rbn-write"):

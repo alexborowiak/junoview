@@ -26,7 +26,8 @@ def test_the_tiles_are_live_for_a_plain_box_and_say_whole_box(out):
     assert "        b.disabled=!st.text;" in body
     assert "          (st.text&&st.by===p[1]).toString());" in body
     assert "        hb.disabled=!st.text;" in body
-    assert "      if(lab) lab.textContent='Timing';" in body   # T473
+    assert ("      if(lab) lab.textContent=st.fig?"
+            "'Panel sequence':'Text sequence';") in body
 
 
 def test_a_piecewise_build_gives_a_plain_box_an_entrance(out):
@@ -37,8 +38,8 @@ def test_a_piecewise_build_gives_a_plain_box_an_entrance(out):
     assert ("        else return;   /* no entrance and \"whole box\": "
             "nothing to change */") in out
     # highlight can be the first click too
-    assert ("        else {var an=ensureAnim(s,a,no);an.hl=1; "
-            "if(!an.by) an.by='para';on++;}") in out   # T493: on++
+    assert "        var an=ensureAnim(s,a,no);if(!an.by) an.by='para';" in out
+    assert "        if(highlight) an.hl=1; else delete an.hl;" in out
 
 
 def test_the_tooltips_say_so():

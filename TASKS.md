@@ -9890,3 +9890,9 @@ any reading. The rest are T466 onwards.
   strikethrough was unwrapped immediately while box-level strikethrough
   worked. The sanitizer now converts `<strike>` to `<s>` before applying its
   allow-list, preserving the selected run through save, redraw and export.
+- [x] **T518 — Separate the animation choices.** (2026-09-28) The Animation
+  tab no longer puts the start trigger, bullet/sentence progression and
+  highlight behaviour behind one misleading Timing door. Entrance effect
+  says how the object arrives; Start says when it runs; Text sequence says
+  which text unit gets each click; and Each text step chooses Reveal or
+  Highlight. The Animation panel and help use the same four-part language.

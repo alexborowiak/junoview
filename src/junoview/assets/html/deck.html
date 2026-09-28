@@ -1017,10 +1017,9 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <!-- ANIMATION, on its own tab (T176). Four groups: the EFFECT
-               the selected thing gets, the builds for EVERYTHING on the
-               slide, the ORDER things come in, and the TIMING of the
-               selected build with how much of a text box arrives. -->
+          <!-- ANIMATION, on its own tab (T176). The selected object's
+               effect, start trigger and text sequence are separate
+               decisions; whole-slide builds and order are actions. -->
           <!-- THE EFFECTS ARE TILES IN THE ROW (T182), the way
                PowerPoint's are, so giving the selected thing an
                entrance is one click with nothing to open first
@@ -1047,7 +1046,7 @@ items snap to both. Guides, not ink: never printed or exported"
                     aria-expanded="false" title="Show all"
                     aria-label="Show every effect">&#9662;</button></span></span>
             </span>
-            <span class="rbn-lab" id="anim-strip-lab">Entrance</span>
+            <span class="rbn-lab" id="anim-strip-lab">Entrance effect</span>
           </span>
           <!-- EVERYTHING ON THE SLIDE, in one press. Three verbs about
                the whole slide; the effect they give is Fade, or what
@@ -1358,7 +1357,7 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Build order</span>
           </span>
-          <!-- TIMING, the way PowerPoint's Start box works (T185;
+          <!-- START, the way PowerPoint's Start box works (T185;
                2026-09-02, user: "there should be a default thing there
                with time like PowerPoint has, and something like 'With
                previous', or 'on click' that you can swap around").
@@ -1367,14 +1366,10 @@ items snap to both. Guides, not ink: never printed or exported"
                build's click (the pane's "Appear with previous"); or a
                number of seconds after the previous build, with no click
                (T169's delay, which used to be reachable only by holding
-               a digit in Quick animate). The second row is HOW MUCH of
-               a text box arrives at a time (T172), which lived only in
-               the pane -- "where are the things for dot points" -- and
-               shows for a text box. Every control is disabled until
-               there is a selected build to time, the way the tiles are,
-               and the group stands down while Quick animate is armed so
-               the mode's own controls have the row. -->
-          <span class="rbn-grp rbn-timing rbn-compact" data-tab="animation" data-fold-ic="locate">
+               a digit in Quick animate). It is deliberately separate
+               from how text is divided across clicks (T518). -->
+          <span class="rbn-grp rbn-start rbn-compact" id="anim-start-group"
+            data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-start">
@@ -1395,10 +1390,27 @@ items snap to both. Guides, not ink: never printed or exported"
                   ><i data-ic="reload"></i><span>After previous</span></button>
                 </span>
               </span>
+              <span class="rbn-cell" id="anim-delaycell">
+                <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
+                  title="Seconds after the previous build"><span class="cell-lab">Delay</span>
+                  <input class="fmt-num" id="anim-delay" type="number"
+                    min="1" max="60" step="1" value="1"
+                    aria-label="Seconds after the previous build">
+                  <span class="fmt-unit">s</span></span>
+              </span>
+            </span>
+            <span class="rbn-lab">Start</span>
+          </span>
+          <!-- TEXT SEQUENCE: which piece gets each click. This used to
+               share one Timing door with Start and Highlight, making
+               three unrelated choices look like one setting (T518). -->
+          <span class="rbn-grp rbn-sequence rbn-compact" id="anim-sequence-group"
+            data-tab="animation" data-fold-ic="spacing">
+            <span class="rbn-row">
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-by">
                 <span class="fx-strip trans-strip" id="anim-by-strip"
-                  role="group" aria-label="How much arrives on a click">
+                  role="group" aria-label="How text is divided across clicks">
                 <button class="fx-tile" id="anim-by-all"
                   aria-pressed="false"
                   title="The whole text box on one click"
@@ -1413,16 +1425,6 @@ items snap to both. Guides, not ink: never printed or exported"
                   title="One click per sentence. A box with no effect yet
  arrives with Appear"
                   ><i data-ic="spacing"></i><span>By sentence</span></button>
-                <!-- T385: the same stops, but nothing is held back --
-                     the piece whose click it is lights up instead
-                     (2026-09-12, user: "one dot point is highlighted so
-                     you can still have all text out"). -->
-                <button class="fx-tile" id="anim-by-hl"
-                  aria-pressed="false"
-                  title="Show every bullet from the start and light up the
- one each click is about. Its colour, size and what the other bullets
- do: Animation pane, Configure"
-                  ><i data-ic="star"></i><span>Highlight</span></button>
                 </span>
               </span>
               <!-- T473: A FIGURE ARRIVES IN PANELS (2026-09-15, user:
@@ -1458,23 +1460,30 @@ items snap to both. Guides, not ink: never printed or exported"
                     <option value="">no flip book</option>
                   </select></span>
               </span>
-              <!-- T372: LAST, not second. Beside two full-height strips
-                   the delay is the only single cell, so it has to be
-                   the one sizeRibbonGroups marks `rbn-odd` -- that is
-                   what centres a lone cell in the band instead of
-                   pinning it to row 1 with a hole underneath. A
-                   spanning cell resets the pairing, so it only gets
-                   that mark from the END of the row. -->
-              <span class="rbn-cell" id="anim-delaycell">
-                <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
-                  title="Seconds after the previous build"><span class="cell-lab">Delay</span>
-                  <input class="fmt-num" id="anim-delay" type="number"
-                    min="1" max="60" step="1" value="1"
-                    aria-label="Seconds after the previous build">
-                  <span class="fmt-unit">s</span></span>
+            </span>
+            <span class="rbn-lab" id="anim-sequence-lab">Text sequence</span>
+          </span>
+          <!-- WHAT EACH TEXT STEP DOES. Reveal and Highlight use the same
+               bullet/sentence stops, so they are a second choice rather
+               than pretending Highlight is another unit of text (T518). -->
+          <span class="rbn-grp rbn-textmode rbn-compact" id="anim-textmode-group"
+            data-tab="animation" data-fold-ic="star">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="anim-textmode">
+                <span class="fx-strip trans-strip" id="anim-textmode-strip"
+                  role="group" aria-label="What happens on each text step">
+                <button class="fx-tile" id="anim-by-reveal"
+                  aria-pressed="false"
+                  title="Keep later bullets or sentences hidden until their click"
+                  ><i data-ic="appear"></i><span>Reveal</span></button>
+                <button class="fx-tile" id="anim-by-hl"
+                  aria-pressed="false"
+                  title="Show all text from the start and highlight the bullet or sentence for this click. Configure its look in the Animation panel"
+                  ><i data-ic="star"></i><span>Highlight</span></button>
+                </span>
               </span>
             </span>
-            <span class="rbn-lab" id="anim-timing-lab">Timing</span>
+            <span class="rbn-lab">Each text step</span>
           </span>
           <!-- T445: QUICK ANIMATE IS A PANEL NOW (2026-09-14, user:
                "the quick animate should pop up as a side panel. too

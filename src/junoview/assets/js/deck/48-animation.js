@@ -882,9 +882,9 @@
       if(fresh) strip.appendChild(b);
     });
     var lab=$('#anim-strip-lab');
-    /* just "Entrance": the greyed tiles already say to select something
+    /* The noun says WHAT this chooser changes; Start says WHEN beside it.
        (2026-09-02, user: "that is unnecessary text lol") */
-    if(lab) lab.textContent='Entrance';
+    if(lab) lab.textContent='Entrance effect';
   }
   function galBoot(){
     var strip=$('#anim-strip');
@@ -966,7 +966,7 @@
     function commit(s){markDirty();rerender();render();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
-    /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
+    /* ---- START, SEQUENCE, AND WHAT EACH TEXT STEP DOES (T185/T518) -
        PowerPoint's Start box, on the model this deck already has:
        On click is a stop of its own; With previous is the pane's
        "Appear with previous" (mergeUp); After previous is T169's
@@ -974,8 +974,9 @@
        one before, no click -- which was reachable only by holding
        a digit in Quick animate. Every control is disabled until
        there is a selected build to time, and the group stands down
-       while Quick animate has the row. The second row is T172's
-       text builds, which lived only in the pane. */
+       while Quick animate has the row. T518 separates that WHEN from
+       T172's text unit and from Reveal/Highlight, which are independent
+       choices even though they share the same animation model. */
     function setDelay(sec){
       var s=pres.slides[cur]; if(!s) return;
       var a=annotByIdx(s,selAnnot); if(!a||!a.anim) return;
@@ -1080,6 +1081,9 @@
       var start=$('#anim-start'),by=$('#anim-by');
       if(start) start.hidden=poster||armed;
       if(by) by.hidden=poster||armed||!st.text;
+      var sg=$('#anim-sequence-group'),mg=$('#anim-textmode-group');
+      if(sg) sg.hidden=poster||armed||(!st.text&&!st.fig);
+      if(mg) mg.hidden=poster||armed||!st.text;
       /* T473: a figure or a picture arrives in panels, the way a text
          box arrives by bullet -- the strip shows for either */
       var pf=$('#anim-panels');
@@ -1127,6 +1131,12 @@
         hb.disabled=!st.text;
         hb.setAttribute('aria-pressed',(st.text&&st.hl).toString());
       }
+      var rb=$('#anim-by-reveal');
+      if(rb){
+        rb.disabled=!st.text;
+        rb.setAttribute('aria-pressed',
+          (st.text&&!!st.by&&!st.hl).toString());
+      }
       /* T418: the flip book that turns with each piece -- offered only
          for a box built in pieces, on a slide that has a book with
          pages to turn */
@@ -1154,8 +1164,8 @@
           if(!cur3) ss.value='';
         }
       }
-      var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent='Timing';
+      var lab=$('#anim-sequence-lab');
+      if(lab) lab.textContent=st.fig?'Panel sequence':'Text sequence';
     }
     /* T418: figure k with piece k. Set on every selected box built in
        pieces; '' takes it off. The book keeps whatever entrance it has. */
@@ -1246,16 +1256,14 @@
       if(!n) return;
       commit(s);
     };
-    var hlb=$('#anim-by-hl');
-    if(hlb) hlb.addEventListener('click',function(e){
-      e.stopPropagation();
+    function setTextMode(highlight){
       var s=pres.slides[cur]; if(!s) return;
-      var n=0,on=0,no=nextAnimOrder(s);
+      var n=0,no=nextAnimOrder(s);
       selIdxs().forEach(function(i){
         var a=s.annots[i];
         if(!a||a.k!=='text') return;
-        if(a.anim&&a.anim.hl) delete a.anim.hl;
-        else {var an=ensureAnim(s,a,no);an.hl=1; if(!an.by) an.by='para';on++;}
+        var an=ensureAnim(s,a,no);if(!an.by) an.by='para';
+        if(highlight) an.hl=1; else delete an.hl;
         n++;
       });
       if(!n) return;
@@ -1264,13 +1272,21 @@
          other bullets do are on the Configure tab of the Animation
          pane, and nothing said so (2026-09-15, user: "I can't work out
          how to configure the dot point by dot point animation"). */
-      if(on){
+      if(highlight){
         if(typeof paneShow==='function') paneShow('animpane');
         if(typeof animTabSet==='function') animTabSet('cfg');
         if(typeof animCfgSync==='function') animCfgSync();
         toast('Highlight on \u2014 its colour, its size and what the '
           +'other bullets do are in the Animation pane, under Configure');
       }
+    }
+    var revealb=$('#anim-by-reveal');
+    if(revealb) revealb.addEventListener('click',function(e){
+      e.stopPropagation();setTextMode(false);
+    });
+    var hlb=$('#anim-by-hl');
+    if(hlb) hlb.addEventListener('click',function(e){
+      e.stopPropagation();setTextMode(true);
     });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it

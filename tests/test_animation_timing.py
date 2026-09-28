@@ -21,7 +21,7 @@ def test_start_is_on_click_with_previous_or_after_previous(out):
     for cid in ("anim-onclick", "anim-withprev", "anim-afterprev",
                 "anim-delay", "anim-delaywrap", "anim-start"):
         assert f'id="{cid}"' in out, cid
-    assert 'class="rbn-grp rbn-timing rbn-compact" data-tab="animation"' in out
+    assert 'class="rbn-grp rbn-start rbn-compact"' in out
     assert "function setDelay(sec){" in out
     assert "function timingState(){" in out
     assert "function timingSync(){" in out
@@ -48,6 +48,23 @@ def test_how_much_of_a_text_box_arrives_is_on_the_ribbon(out):
     assert "e.stopPropagation();setBy(p[1]);});" in out
     assert "by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:''," in out
     assert "        hl:!!a.anim.hl," in out   # T473 adds fig/grid
+
+
+def test_effect_start_sequence_and_step_behaviour_are_separate(out):
+    """T518. Entrance effect says what the object looks like; Start says
+    when it runs; Text sequence says which piece owns each click; and the
+    text-step mode says whether that piece is revealed or highlighted.
+    None of those choices shares a misleading Timing door any more.
+    """
+    for group in ("rbn-anim", "rbn-start", "rbn-sequence", "rbn-textmode"):
+        assert f'class="rbn-grp {group} rbn-compact"' in out
+    for label in ("Entrance effect", "Start", "Text sequence",
+                  "Each text step"):
+        assert f">{label}</span>" in out
+    assert 'id="anim-by-reveal"' in out
+    assert 'id="anim-by-hl"' in out
+    assert "function setTextMode(highlight){" in out
+    assert "if(highlight) an.hl=1; else delete an.hl;" in out
 
 
 def test_the_numbers_show_whenever_the_animation_tab_is_up(out):

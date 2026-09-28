@@ -49,7 +49,7 @@ def test_the_verb_groups_follow_the_choosers(out):
     # the choosers keep the left, in the order they were already in
     assert ".rbn-trans{order:0;}" in out
     assert ".rbn-anim{order:1;}" in out
-    assert ".rbn-timing{order:2;}" in out
+    assert ".rbn-start,.rbn-sequence,.rbn-textmode{order:2;}" in out
     assert ".rbn-exit{order:3;}" in out
     assert ".rbn-motion{order:4;}" in out
 

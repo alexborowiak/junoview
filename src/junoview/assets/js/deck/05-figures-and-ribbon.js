@@ -2099,7 +2099,7 @@
     btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')
       /* T463: a no-break space before the chevron, so a name the door
          has to wrap keeps its chevron on the last word rather than
-         dropping it onto a line of its own ("Timing & text" / "\u25be") */
+         dropping it onto a line of its own ("Text sequence" / "\u25be") */
       +'<span>'+esc(name)+'\u00a0\u25be</span><span class="rbn-foldval"></span>';
     btn.title=compact
       ?(name+' \u2014 click to choose. The current choice is on the '
@@ -2141,10 +2141,9 @@
     /* T453: the row may be sitting in the shelf rather than in this
        group, and the readout is still this group's to keep true */
     var row=rbnFoldRow(g);
-    /* T467: EVERY choice in the row, one per strip or cell, joined --
-       "Timing & text" holds two strips (when it starts, how much
-       arrives) and read only the first pressed tile, so picking By
-       sentence left the door saying On click (2026-09-15 review). */
+    /* T467: EVERY choice in the row, one per strip or cell, joined.
+       T518 split the former two-strip Timing group into separate doors,
+       but custom layouts can still place several choosers in one group. */
     var ons=row?$$('[aria-pressed="true"]',row):[];
     var boxes=[],parts=[];
     /* T498: a control inside something HIDDEN is not a choice on show.

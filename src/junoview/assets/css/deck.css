@@ -1801,10 +1801,11 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
    animate is (2026-09-02, user: "the animation numbers should appear
    when on the animation tab always") */
 .deck.tab-animation .an-buildno{display:flex;}
-/* T185: the Timing group. The delay field is the size field's twin. */
-.rbn-timing{order:2;}     /* T215: timing sits beside the effect */
+/* T185/T518: Start, sequence and text-step behaviour sit beside the
+   entrance effect, but remain separate choices. */
+.rbn-start,.rbn-sequence,.rbn-textmode{order:2;}
 .anim-delaywrap .fmt-num{width:44px;}
-.rbn-timing .dbtn:disabled{opacity:.4;cursor:default;}
+.rbn-start .dbtn:disabled{opacity:.4;cursor:default;}
 /* WHICH ONE IS ON, said louder than a theme can quiet. The colourful
    theme paints every .dbtn at three classes deep, which beat the two of
    .seq-fxb.on and left the lit chip looking like its neighbours
@@ -6194,9 +6195,10 @@ body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .strip-frame>.fx-strip.page-strip,
 .strip-frame>.fx-strip.trans-strip{
   width:calc(3 * var(--rbn-tile-w) + 2 * var(--rbn-tile-gap) + 8px);}
-/* T385: four ways for a text box to arrive, so that strip is four wide;
-   T472: and four ways to be the point */
-.strip-frame>#anim-by-strip.trans-strip,
+/* T518: the text-step mode has two choices; T472 keeps four ways to be
+   the point. The three-unit text sequence uses the standard width above. */
+.strip-frame>#anim-textmode-strip.trans-strip{
+  width:calc(2 * var(--rbn-tile-w) + var(--rbn-tile-gap) + 8px);}
 .strip-frame>#anim-focus-strip.trans-strip{
   width:calc(4 * var(--rbn-tile-w) + 3 * var(--rbn-tile-gap) + 8px);}
 /* the group caption wears the click, like a folded door's readout */
@@ -6831,7 +6833,7 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 /* T463: a door is a wider tile -- a group's name is longer than a
    verb -- and, like every tile now, never narrower than its words. A
    door with a choice on it keeps its name on one line (the tile's
-   has-val rule), so "Timing & text ▾" widens the door rather than
+   has-val rule), so "Text sequence ▾" widens the door rather than
    dropping its chevron onto a line of its own; a door without one
    wraps its name into the 82px. The readout itself is the tile's
    (.fx-tile>.rbn-foldval), shared with New slide and Send it away. */

@@ -29,24 +29,18 @@ def test_a_folded_group_is_the_one_tile_with_its_own_icon(out):
     assert groups and not bare, bare
 
 
-def test_the_delay_is_the_last_cell_of_the_timing_row():
-    """It sat between the start run and the by-text run so it could
-    share the start run's column. T372 made both of those full-height
-    tile strips, so there is no column left to share -- and a spanning
-    cell resets sizeRibbonGroups' pairing, so only the LAST single cell
-    in a row can be marked `rbn-odd`. Anywhere but the end and the delay
-    hangs in row 1 with a hole beneath it; measured at y=69 in a band
-    ending at 130 before it was moved.
-
-    It also hides with its own cell now, not just the wrap inside it: an
-    inapplicable delay beside two strips was a column spending 96px on
-    nothing, which folded this very group away at 1600px.
+def test_the_delay_belongs_to_start_not_text_sequence():
+    """T518 separated WHEN from WHICH TEXT UNIT. Delay is conditional
+    detail for After previous, so it stays in the Start row and precedes
+    the independently foldable Text sequence group.
     """
     html = assets.deck_html()
+    start_group = html.index('id="anim-start-group"')
     start = html.index('id="anim-start"')
-    by = html.index('id="anim-by"')
     cell = html.index('id="anim-delaycell"')
-    assert start < by < cell
+    sequence_group = html.index('id="anim-sequence-group"')
+    by = html.index('id="anim-by"')
+    assert start_group < start < cell < sequence_group < by
     delaywrap = html.index('id="anim-delaywrap"')
     assert cell < delaywrap
     assert '<span class="cell-lab">Delay</span>' in html[delaywrap:]
