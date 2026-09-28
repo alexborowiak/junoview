@@ -2576,6 +2576,9 @@
     if(clipBuf.length&&mk.indexOf('junoview/items')===0){
       e.preventDefault();pasteBuf();return;
     }
+    if(slideClip&&mk.indexOf('junoview/slide')===0){
+      e.preventDefault();slidePaste(cur);toast('Slide pasted');return;
+    }
     if(pic){e.preventDefault();pasteClipboardImage(pic);return;}
     if(clipBuf.length){e.preventDefault();pasteBuf();return;}
     /* NOTHING USED TO HAPPEN HERE. Ctrl+V with plain text on the

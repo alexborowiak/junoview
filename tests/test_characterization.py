@@ -2060,8 +2060,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T513 (2026-09-28): lists can occupy only selected paragraphs in a text box.
 # T514 (2026-09-28): the ribbon spans above thumbnails and preserves the caret.
 # T515 (2026-09-28): editable text keeps the browser's spelling menu.
-EXPECTED_MD5 = "7cfd04fba6743738ffff868158bdff8e"
-EXPECTED_BYTES = 4568949
+# T516 (2026-09-28): slide clipboard shortcuts and a compact, ordered strip
+# menu; the shared icon set also gains the scissors used by Cut.
+EXPECTED_MD5 = "d82c5b56b48425507e681cd19ddad60a"
+EXPECTED_BYTES = 4572035
 
 
 def _render_example() -> str:

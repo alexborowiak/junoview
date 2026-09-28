@@ -31,7 +31,8 @@ def test_a_slide_row_is_a_slide_not_a_toolbar(out):
     # the menu is where they went
     assert "    row('Move it up',function(){moveSlide(i,-1);},null,'prev');" in out
     assert "    row('Move it down',function(){moveSlide(i,1);},null,'next');" in out
-    assert "    row('Duplicate',function(){dupSlide(i);},null,'copy');" in out
+    assert ("    row('Duplicate',function(){dupSlide(i);},null,'copy',"
+            "'Ctrl+D');") in out
     assert "row('Rename this version" in out
     # the section rows keep their own controls
     assert ".film-sec:hover .film-ctr{display:flex;}" in out

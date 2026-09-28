@@ -16,18 +16,32 @@ def test_one_column_like_the_canvas_menu(out):
     assert ".film-menu{min-width:210px;}" not in out
 
 
-def test_one_heading_per_group(out):
+def test_everyday_slide_actions_come_first(out):
     start = out.index("  function openFilmMenu(i,ev,run){")
     body = out[start:out.index("  function floatAt(m,ev){", start)]
     slide_part = body[body.index("var ar0=altRun(i)"):]
-    # the dead heading above "how it arrives" is gone, and the slide's
-    # own verbs sit under ONE heading: optional, move, duplicate, delete
-    assert slide_part.count("menuHead(m,poster?'this page':'this slide');") == 1
+    # The normal slide-sorter verbs are the first rows, with discoverable
+    # keys. Version, transition and organising controls remain under More.
+    everyday = ["row('Cut'", "row('Copy'", "row('Paste after'",
+                "row('Duplicate'", "row('Delete'"]
+    positions = [slide_part.index(verb) for verb in everyday]
+    assert positions == sorted(positions)
+    assert "'cut','Ctrl+X'" in slide_part
+    assert "'copy','Ctrl+C'" in slide_part
+    assert "'paste','Ctrl+V'" in slide_part
+    assert "'copy','Ctrl+D'" in slide_part
+    assert "'exit','Del'" in slide_part
+    assert slide_part.index("row('Delete'") < slide_part.index(
+        "menuHead(m,'versions');")
     assert "menuHead(m,'how it arrives'" in slide_part
-    heads = slide_part.index("menuHead(m,poster?'this page':'this slide');")
-    tail = slide_part[heads:]
-    assert "'Mark it optional'" in tail
-    assert "row('Move it up',function(){moveSlide(i,-1);},null,'prev');" in tail
-    assert "row('Duplicate',function(){dupSlide(i);},null,'copy');" in tail
-    # "in these versions" comes before it, not between two copies of it
-    assert slide_part.index("menuHead(m,'in these versions');") < heads
+    assert "menuHead(m,'organise');" in slide_part
+    assert "'Mark it optional'" in slide_part
+    assert "row('Move it up',function(){moveSlide(i,-1);},null,'prev');" \
+        in slide_part
+
+
+def test_paste_row_explains_when_it_is_not_available(out):
+    start = out.index("  function openFilmMenu(i,ev,run){")
+    body = out[start:out.index("  function floatAt(m,ev){", start)]
+    assert "slideClip?'After this one':'Copy or cut a slide first'" in body
+    assert "pasteSlideRow.disabled=!slideClip;" in body

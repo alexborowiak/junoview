@@ -9,8 +9,8 @@ comment in branding.py):
 * render/items.py stamps finished markup through ``icon_svg`` (its
   local alias ``_ic``);
 * the scripts read ``window.SemIcons`` / the widget's ``data.icons``
-  through a per-file ``bic('key')`` accessor, or declare an ``ic:'key'``
-  value consumed by a shared picker row.
+  through a per-file ``bic('key')`` accessor, or pass a declared icon key
+  to a shared picker/menu row.
 
 Two things can rot silently and this file is what makes them loud:
 
@@ -73,6 +73,11 @@ def _used_keys() -> set[str]:
         # A data-driven picker passes its declared icon to bic(info.ic), so
         # the consumer is deliberately dynamic rather than one literal call.
         used |= set(re.findall(r"\bic:'([a-z][a-z0-9-]*)'", script))
+        # Shortcut rows do the same through row(..., icon, keys). Keep this
+        # narrow to the worded keyboard rows so arbitrary string arguments
+        # cannot accidentally make dead artwork look live.
+        used |= set(re.findall(
+            r",null,'([a-z][a-z0-9-]*)','(?:Ctrl\+[A-Z]|Del)'", script))
     return used
 
 

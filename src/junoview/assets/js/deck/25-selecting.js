@@ -3062,7 +3062,9 @@
            as right-click workflows. Leaving either behind More made a
            working command look absent in the live editor (2026-09-11). */
         folding=!CM_KEEP[t]&&!/^make default \/ style for /.test(t)
-          &&!/objects?$/.test(t);
+          &&!/objects?$/.test(t)
+          &&!/^slide \d+$/.test(t)&&!/^a version of slide \d+$/.test(t)
+          &&t!=='this page';
       }
       if(folding) more.appendChild(k);
     });

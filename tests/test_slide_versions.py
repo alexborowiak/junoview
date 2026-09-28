@@ -157,9 +157,11 @@ def test_duplicate_never_grows_a_group(out):
     """New version is the verb that does. A duplicate is an ordinary
     slide placed after the whole group, or it would land inside the run
     and become a version."""
-    body = out.split("  function dupSlide(i){")[1].split("\n  }")[0]
+    body = out.split("  function putSlideCopy(source,i){")[1].split("\n  }")[0]
     assert "    delete cp.alt;delete cp.sid;" in body
     assert "    var at=ar?(ar.at+ar.n):(i+1);" in body
+    dup = out.split("  function dupSlide(i){")[1].split("\n  }")[0]
+    assert "    putSlideCopy(s,i);" in dup
 
 
 def test_deleting_the_main_promotes_the_next(out):

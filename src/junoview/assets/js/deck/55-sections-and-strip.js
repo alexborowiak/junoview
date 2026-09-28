@@ -489,7 +489,16 @@
          this listener is no longer conditional on i!==cur (T66) */
       lbl.addEventListener('click',function(){
         if(slideMatchHit(i)) return;
-        if(i===cur) return;
+        /* A thumbnail click selects the SLIDE. This matters even when it
+           is already current: otherwise an object selection survives the
+           click and Ctrl+C / Delete still act on that object instead of
+           the thumbnail the user just chose (T516). */
+        if(i===cur){
+          var layer=stage.querySelector('.annot-layer');
+          if(layer) selectAnnot(layer,null);
+          else {selAnnot=null;selSet=[];showFmt();}
+          return;
+        }
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
       /* T228: NO CONTROLS ON THE ROW. Four buttons appeared over
          every slide on hover -- move up, move down, duplicate,
@@ -617,13 +626,17 @@
     var m=document.createElement('div');
     m.className='sh-menu film-menu';m.id='film-menu';
     var poster=pageOf().poster;
-    function row(label,fn,title,icon){
+    function row(label,fn,title,icon,keys){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';
       /* the icon arrives as trusted bic() markup; the LABEL stays a
          text node — section names are user data */
       if(icon) b.innerHTML=bic(icon)+' ';
       b.appendChild(document.createTextNode(label));
+      if(keys){
+        var k=document.createElement('kbd');
+        k.textContent=keys;b.appendChild(k);
+      }
       if(title) b.title=title;
       b.addEventListener('click',function(e){
         e.stopPropagation();m.remove();fn();});
@@ -684,7 +697,24 @@
     var ar0=altRun(i),isAlt0=!!(ar0&&i>ar0.at);
     menuHead(m,poster?'this page':(isAlt0?'a version of slide '+slideNo(ar0.at)
       :'slide '+slideNo(i)));
+    /* The five verbs people reach for stay above More and in the same
+       order as a normal slide sorter. The richer version, section and
+       transition administration remains available below (T516). */
+    row('Cut',function(){
+      if(slideCut(i)) toast(poster?'Page cut':'Slide cut');
+    },null,'cut','Ctrl+X');
+    row('Copy',function(){
+      if(slideCopy(i)) toast(poster?'Page copied':'Slide copied');
+    },null,'copy','Ctrl+C');
+    var pasteSlideRow=row('Paste after',function(){
+      if(slidePaste(i)) toast(poster?'Page pasted':'Slide pasted');
+    },slideClip?'After this one':'Copy or cut a slide first',
+    'paste','Ctrl+V');
+    pasteSlideRow.disabled=!slideClip;
+    row('Duplicate',function(){dupSlide(i);},null,'copy','Ctrl+D');
+    row('Delete',function(){delSlide(i);},null,'exit','Del');
     if(!poster){
+      menuHead(m,'versions');
       /* T318: the version verbs, on the thing being versioned */
       row('New version of this slide',function(){addVersion(i);},
         'A copy, kept under this slide as an alternative. The talk keeps '
@@ -800,7 +830,7 @@
               :'Add it to this version'));
       });
     }
-    menuHead(m,poster?'this page':'this slide');
+    menuHead(m,'organise');
     row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
       toggleOptional(i);},
       'Running late in present mode skips the optional slides from '
@@ -817,7 +847,6 @@
       markDirty();renderFilm();
       });
     },null,'pen');
-    row('Duplicate',function(){dupSlide(i);},null,'copy');
     if(ar0&&!isAlt0)
       row('Delete it AND its '+(ar0.n-1)+' version'+(ar0.n===2?'':'s'),
         function(){
@@ -827,11 +856,10 @@
             activePane=-1;normSections();markDirty();refresh();
           }
         },null,'exit');
-    row(ar0&&!isAlt0?'Delete just this one (the next version becomes the main)'
-      :'Delete',function(){delSlide(i);},null,'exit');
     /* This menu has section, transition and version administration as well
-       as everyday slide actions. Keep Delete/Duplicate visible and fold the
-       long tail behind More, like the canvas menu. */
+       as everyday slide actions. Keep the familiar Cut/Copy/Paste,
+       Duplicate and Delete rows visible and fold the long tail behind More,
+       like the canvas menu. */
     cmFold(m);
     floatAt(m,ev);
   }
@@ -1034,12 +1062,13 @@
     activePane=-1;
     normSections();markDirty();refresh();
   }
-  /* duplicate in place — decks never had this at all (2026-08-19, user:
-     "still no duplicate slide"); a poster's copy becomes a named version
-     like "+ Create new version" makes */
-  function dupSlide(i){
-    var s=pres.slides[i]; if(!s) return;
-    var cp=deep(s);
+  /* The strip has its own clipboard. Object copy remains the more specific
+     action while objects are selected; choosing a thumbnail clears that
+     selection, so the same familiar keys then address the slide (T516). */
+  var slideClip=null;
+  function putSlideCopy(source,i){
+    if(!source) return false;
+    var cp=deep(source);
     if(pageOf().poster) cp.label=nextVersionName();
     else delete cp.label;
     /* T318: Duplicate never grows a group -- New version is the verb
@@ -1051,6 +1080,34 @@
     pres.slides.splice(at,0,cp);
     cur=at;activePane=-1;selAnnot=null;selSet=[];
     normSections();markDirty();refresh();
+    return true;
+  }
+  function slideCopy(i){
+    var s=pres.slides[i]; if(!s) return false;
+    slideClip=deep(s);
+    /* The last internal copy wins. The marker lets the real paste event
+       distinguish this from unrelated text or pictures on the system
+       clipboard; the keydown timer remains the permission-free fallback. */
+    clipBuf=[];clipGrpMeta={};
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)
+        navigator.clipboard.writeText('junoview/slide').catch(function(){});
+    }catch(err){}
+    return true;
+  }
+  function slideCut(i){
+    if(!slideCopy(i)) return false;
+    delSlide(i);return true;
+  }
+  function slidePaste(i){
+    return slideClip?putSlideCopy(slideClip,i):false;
+  }
+  /* duplicate in place — decks never had this at all (2026-08-19, user:
+     "still no duplicate slide"); a poster's copy becomes a named version
+     like "+ Create new version" makes */
+  function dupSlide(i){
+    var s=pres.slides[i]; if(!s) return;
+    putSlideCopy(s,i);
   }
 
   /* ---------- mode switching ---------- */
@@ -2466,7 +2523,9 @@
         e.preventDefault();duplicateSel(1);
       }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='d'||e.key==='D')){
-        e.preventDefault();duplicateSel();
+        e.preventDefault();
+        if(selIdxs().length) duplicateSel();
+        else {dupSlide(cur);toast('Slide duplicated');}
       }
       /* copy and cut; PASTE rides the real paste event instead, so a
          system-clipboard image can come in too */
@@ -2474,11 +2533,15 @@
         var nc=copySel();
         if(nc){e.preventDefault();
           toast(nc+' item'+(nc===1?'':'s')+' copied');}
+        else if(slideCopy(cur)){
+          e.preventDefault();toast('Slide copied');}
       }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='x'||e.key==='X')){
         var nx=cutSel();
         if(nx){e.preventDefault();
           toast(nx+' item'+(nx===1?'':'s')+' cut');}
+        else if(slideCut(cur)){
+          e.preventDefault();toast('Slide cut');}
       }
       /* the two PLACED pastes. They come first because the plain-paste
          branch below matches 'v' and 'V' alike and would swallow them,
@@ -2516,6 +2579,7 @@
         pendingPaste=setTimeout(function(){
           pendingPaste=null;
           if(clipBuf.length) pasteBuf();
+          else if(slidePaste(cur)) toast('Slide pasted');
         },150);
       }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='g'||e.key==='G')){

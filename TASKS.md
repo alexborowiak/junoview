@@ -9877,3 +9877,10 @@ any reading. The rest are T466 onwards.
   slide text and table cells now keep the browser's native context menu, so
   misspellings offer corrections instead of being covered by Junoview's
   object menu. Right-clicking the object or canvas still opens that menu.
+- [x] **T516 — Make thumbnails behave like a slide sorter.** (2026-09-28)
+  Clicking even the current thumbnail now selects the slide rather than
+  leaving a stale object selected. Delete/Backspace deletes it; Ctrl+C,
+  Ctrl+X, Ctrl+V and Ctrl+D copy, cut, paste and duplicate it through the
+  same version-safe insertion path as the existing controls. The thumbnail
+  menu puts those five everyday actions first with their shortcuts visible;
+  version, section, transition and organising controls fold behind More.
