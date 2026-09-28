@@ -245,6 +245,7 @@ def test_a_figure_update_is_reviewed_before_it_writes(out):
     assert "keep.innerHTML=bic('none')+' Keep current'" in out
     assert "?'new version':('all '+rows.length+' new versions')" in out
     assert "dlg.addEventListener('cancel',function(e){" in out
+    assert "keep.focus();" in out
     assert ".fig-review-pair{display:grid;grid-template-columns:" in out
 
     bulk = out[out.index("function resyncAllFigures(only,quiet){"):]

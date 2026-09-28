@@ -2380,6 +2380,7 @@
       dlg.className='fig-review';
       var head=document.createElement('div');head.className='fig-review-h';
       var title=document.createElement('div');title.className='fig-review-t';
+      title.id='fig-review-title';dlg.setAttribute('aria-labelledby',title.id);
       title.textContent=rows.length===1?'Review figure update'
         :'Review '+rows.length+' figure updates';
       head.appendChild(title);
@@ -2453,7 +2454,8 @@
       });
       dlg.showModal();
       if(typeof typeset==='function') typeset(dlg);
-      use.focus();
+      /* Enter must not accept a destructive update by accident. */
+      keep.focus();
     });
   }
   function reviewOneFigure(a,ref){

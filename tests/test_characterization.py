@@ -2057,8 +2057,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # note position attribute and these app/CSS changes alter rendered bytes.
 # T510 (2026-09-25): count filter-hidden cards before Peek opens too.
 # T511 (2026-09-25): refresh that count after every filter pass.
-EXPECTED_MD5 = "3a76ce3035d67320ceff7a6ec096d287"
-EXPECTED_BYTES = 4564492
+EXPECTED_MD5 = "329f36d242f25c104cb75c381356d0ef"
+EXPECTED_BYTES = 4564641
 
 
 def _render_example() -> str:

@@ -54,7 +54,8 @@ def test_both_halves_run_quiet_and_one_sentence_is_written(out):
     assert "  function updateFromSources(slideOnly){" in out
     assert "        ? resyncAllFigures(only,true)" in out
     assert "      pics.length ? refreshImagesReport(pics,true)" in out
-    assert "      else if(bits.length) msg=bits.join(' and ')+' updated on '+where;" in out
+    assert ("      else if(bits.length) msg=bits.join(' and ')"
+            "+' updated on '+where;") in out
     assert "        :'Kept the current figure copies';" in out
     # the trouble from BOTH halves lands in the same sentence
     assert "      if(trouble.length) msg+=' \\u2014 '+trouble.join('; ');" in out
