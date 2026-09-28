@@ -2062,8 +2062,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T515 (2026-09-28): editable text keeps the browser's spelling menu.
 # T516 (2026-09-28): slide clipboard shortcuts and a compact, ordered strip
 # menu; the shared icon set also gains the scissors used by Cut.
-EXPECTED_MD5 = "d82c5b56b48425507e681cd19ddad60a"
-EXPECTED_BYTES = 4572035
+# T517 (2026-09-28): Chromium's obsolete strike tag is canonicalised to the
+# rich-text model's s tag, so selection-level strikethrough survives redraw.
+EXPECTED_MD5 = "0c087280b8651c5e6cb8db7cd2c27f01"
+EXPECTED_BYTES = 4572623
 
 
 def _render_example() -> str:

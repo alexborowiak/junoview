@@ -996,8 +996,9 @@
     return true;
   }
   /* B / I / U / S on the highlighted words. styleWithCSS FALSE on
-     purpose: we want real <b>/<i>/<u>/<strike> TAGS, which RICH_TAGS
-     keeps. With it true the browser emits
+     purpose: we want real <b>/<i>/<u>/<strike> tags; sanitizeRich
+     canonicalises Chromium's obsolete <strike> spelling to <s>. With it
+     true the browser emits
      <span style="font-weight:bold">, and sanitizeRich strips every
      inline style except colour -- so the run would look right until the
      next blur and then quietly lose its weight. */

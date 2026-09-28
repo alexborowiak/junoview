@@ -9884,3 +9884,9 @@ any reading. The rest are T466 onwards.
   same version-safe insertion path as the existing controls. The thumbnail
   menu puts those five everyday actions first with their shortcuts visible;
   version, section, transition and organising controls fold behind More.
+- [x] **T517 — Keep strikethrough on the selected words.** (2026-09-28)
+  Chromium still produces the obsolete `<strike>` tag for the S button;
+  the rich-text sanitizer only kept the canonical `<s>`, so selection-level
+  strikethrough was unwrapped immediately while box-level strikethrough
+  worked. The sanitizer now converts `<strike>` to `<s>` before applying its
+  allow-list, preserving the selected run through save, redraw and export.

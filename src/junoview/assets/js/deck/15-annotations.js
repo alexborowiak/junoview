@@ -2197,6 +2197,16 @@
         if(n.nodeType===3){n=next;continue;}      /* text node: keep */
         if(n.nodeType!==1){node.removeChild(n);n=next;continue;}
         var tag=(n.tagName||'').toLowerCase();
+        /* Chromium's execCommand('strikeThrough') still emits the obsolete
+           <strike> spelling even with styleWithCSS=false. The model and
+           every exporter speak <s>; normalise before the allow-list or the
+           sanitizer unwraps the selected run and Strikethrough appears to
+           do nothing (T517). */
+        if(tag==='strike'){
+          var sTag=document.createElement('s');
+          while(n.firstChild) sTag.appendChild(n.firstChild);
+          node.replaceChild(sTag,n);n=sTag;tag='s';
+        }
         if(!RICH_TAGS[tag]){                       /* unwrap unknown tags */
           var first=n.firstChild;
           while(n.firstChild) node.insertBefore(n.firstChild,n);

@@ -44,6 +44,13 @@ def test_real_tags_not_inline_styles(out):
     assert "var RICH_TAGS={span:1,div:1,b:1,strong:1,i:1,em:1,u:1,s:1," in out
 
 
+def test_chromiums_strike_tag_is_canonicalised_before_sanitising(out):
+    """execCommand emits obsolete <strike>, while the model stores <s>."""
+    assert "        if(tag==='strike'){" in out
+    assert "          var sTag=document.createElement('s');" in out
+    assert "          node.replaceChild(sTag,n);n=sTag;tag='s';" in out
+
+
 def test_all_four_buttons_ask_the_selection_first(out):
     assert "  function onRun(id,cmd,fn){" in out
     for bid, cmd in (("bold", "bold"), ("ital", "italic"),
