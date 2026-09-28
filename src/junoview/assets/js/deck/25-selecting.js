@@ -379,8 +379,9 @@
        table too, because a table's words take spacing. */
     show('#fmt-lh-btn',(isText||isTbl)&&isNum);
     show('#fmt-font-btn',isText||cellText||isTbl);
-    /* T220: list levels, the box indent and the curve are a text
-       box's own; a table's words take spacing, which is its own door */
+    /* T220: the box indent and curve are a text box's own; a table's
+       words take spacing, which is its own door. T514 put list levels
+       directly on the row. */
     show('#fmt-parawrap',isText&&isNum);
     show('#fmt-para',(isText||isTbl)&&isNum);
     var lineKinds=['arrow','rect','draw','table'];
@@ -399,8 +400,10 @@
     show('#fmt-bullets',isText&&isNum,!!lst&&!listIsOrdered(lst));
     show('#fmt-numbers',isText&&isNum,!!lst&&listIsOrdered(lst));
     if(typeof listGallerySync==='function') listGallerySync(lst);
-    show('#fmt-indent',isText&&isNum&&!!lst);
-    show('#fmt-outdent',isText&&isNum&&!!lst);
+    /* Keep these visible for every text box: caretList decides whether
+       the live paragraph is a list, including a list inside mixed text. */
+    show('#fmt-indent',isText&&isNum);
+    show('#fmt-outdent',isText&&isNum);
     /* the three alignments, in the row and showing which is on
        (T189); they were rows of a menu called Layout, then chips in
        a window called Paragraph */

@@ -9867,3 +9867,9 @@ any reading. The rest are T466 onwards.
   the same list. Mixed plain/list content, marker kinds and nested levels
   survive sanitising, saving and re-rendering; playback and export retain the
   compact root-list representation for boxes that are still entirely lists.
+- [x] **T514 — Keep paragraph controls live and visible.** (2026-09-28) The
+  ribbon now spans the editor above the thumbnail rail, so the rail no longer
+  takes control space. List-level Outdent and Indent sit directly beside the
+  list controls, and mouse use of ribbon tabs, doors and popovers preserves
+  the live text caret instead of silently losing the paragraph being edited.
+  The layout and paragraph interaction were driven in the browser.

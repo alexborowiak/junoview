@@ -2058,8 +2058,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T510 (2026-09-25): count filter-hidden cards before Peek opens too.
 # T511 (2026-09-25): refresh that count after every filter pass.
 # T513 (2026-09-28): lists can occupy only selected paragraphs in a text box.
-EXPECTED_MD5 = "00a3b25410c1b7ef93344b0a8684f170"
-EXPECTED_BYTES = 4568376
+# T514 (2026-09-28): the ribbon spans above thumbnails and preserves the caret.
+EXPECTED_MD5 = "21665e336f2dc6d1a1d7020b9d5ed14f"
+EXPECTED_BYTES = 4568803
 
 
 def _render_example() -> str:

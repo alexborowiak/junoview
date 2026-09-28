@@ -41,6 +41,22 @@ def test_the_overlay_owner_exists_and_boots_from_the_boot_sequence():
     assert "overlayBoot();" in boot
 
 
+def test_ribbon_buttons_keep_the_live_text_caret():
+    """Mouse focus moves before click, so one capture rule protects every
+    tab, ribbon door and popover action that operates on the live paragraph.
+    Inputs remain outside the rule and can still receive focus."""
+    out = _out()
+    boot = out[out.index("function overlayBoot(){"):
+               out.index("function wireMenuToggle", out.index(
+                   "function overlayBoot(){"))]
+    assert "document.addEventListener('mousedown',function(e){" in boot
+    assert "if(!activeTextEditable()||!e.target||!e.target.closest) return;" in boot
+    assert "var b=e.target.closest('button');" in boot
+    for scope in (".rbn-tabs", ".edit-tools.ribbon", ".sh-menu"):
+        assert f"b.closest('{scope}')" in boot
+    assert "e.preventDefault();\n    },true);" in boot
+
+
 def test_every_wired_menu_routes_through_the_owner():
     """wireMenuToggle registers; the formerly bespoke menus call the
     owner by name. A menu that opens with a bare .hidden write would

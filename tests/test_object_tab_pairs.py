@@ -49,9 +49,9 @@ def test_font_and_paragraph_are_two_groups_with_deliberate_pairs():
     assert '<span class="cell-lab">Text</span>' not in html
     assert '<span class="cell-lab">Fill</span>' not in html
     para = _ids(_row(html, "Paragraph"))
-    # bullets over numbers, the alignment run over Spacing, then Paragraph
-    order2 = ["fmt-bullets", "fmt-numbers", "tx-run-align", "fmt-lhwrap",
-              "fmt-parawrap"]
+    # lists, their levels, alignment, Spacing, then Paragraph
+    order2 = ["fmt-bullets", "fmt-numbers", "tx-list-levels",
+              "tx-run-align", "fmt-lhwrap", "fmt-parawrap"]
     at2 = [para.index(i) for i in order2]
     assert at2 == sorted(at2), order2
     row = _row(html, "Font")

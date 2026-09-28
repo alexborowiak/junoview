@@ -1564,6 +1564,15 @@
     if(m.parentNode) m.remove();
   }
   function overlayBoot(){
+    /* A browser moves focus on mousedown, before a button's click handler
+       can act. Keep the live text caret while using any ribbon or menu
+       button; inputs and keyboard focus still work normally. */
+    document.addEventListener('mousedown',function(e){
+      if(!activeTextEditable()||!e.target||!e.target.closest) return;
+      var b=e.target.closest('button');
+      if(b&&(b.closest('.rbn-tabs')||b.closest('.edit-tools.ribbon')
+          ||b.closest('.sh-menu'))) e.preventDefault();
+    },true);
     document.addEventListener('click',function(e){
       if(!overlayStack.length) return;
       /* T465: A CLICK WHOSE TARGET IS NO LONGER IN THE DOCUMENT WAS

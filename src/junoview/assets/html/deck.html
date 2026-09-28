@@ -2264,6 +2264,15 @@ items snap to both. Guides, not ink: never printed or exported"
                 <div class="sh-menu ls-menu" id="fmt-numbers-menu"
                   hidden></div>
               </span>
+              <span class="rbn-cell rbn-seg" id="tx-list-levels"
+                role="group" aria-label="List level">
+                <button class="dbtn etm" id="fmt-outdent" hidden
+                  title="Move this bullet out one level (Shift+Tab)"
+                  ><i data-ic="outdent"></i> Outdent</button>
+                <button class="dbtn etm" id="fmt-indent" hidden
+                  title="Move this bullet in one level (Tab)"
+                  ><i data-ic="indent"></i> Indent</button>
+              </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
                 title="Align left"><i data-ic="alignleft"></i> Left</button>
@@ -2286,20 +2295,10 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="List levels, the whole-box indent, line and
- paragraph spacing, and bending the text along a curve"
+                  title="Indent the whole box or bend its text along a curve"
                   ><i data-ic="route"></i> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
-                  <div class="hd-lab">list levels</div>
-                  <div class="opt-row">
-                    <button class="dbtn etm" id="fmt-outdent" hidden
-                      title="Move this bullet out one level (Shift+Tab)"><i data-ic="outdent"></i>
-                        Outdent</button>
-                    <button class="dbtn etm" id="fmt-indent" hidden
-                      title="Move this bullet in one level (Tab)"><i data-ic="indent"></i>
-                        Indent</button>
-                  </div>
                   <div class="hd-lab">indent the whole box</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
                   <div class="hd-lab">curve</div>

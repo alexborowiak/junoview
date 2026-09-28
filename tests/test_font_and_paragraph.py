@@ -85,7 +85,8 @@ def test_the_style_tab_is_font_then_paragraph(out):
                 "fmt-txcolwrap", "fmt-fillcolwrap", "fmt-txquick", "fmt-bgquick"):
         assert cid in font, cid
     para = re.findall(r'\bid="([a-z0-9-]+)"', _row(html, "Paragraph"))
-    for cid in ("fmt-bullets", "fmt-numbers", "tx-run-align", "fmt-lhwrap",
+    for cid in ("fmt-bullets", "fmt-numbers", "tx-list-levels",
+                "fmt-outdent", "fmt-indent", "tx-run-align", "fmt-lhwrap",
                 "fmt-parawrap"):
         assert cid in para, cid
     # neither group holds the other's controls

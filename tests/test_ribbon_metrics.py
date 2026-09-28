@@ -88,6 +88,17 @@ def test_the_viewer_bar_states_its_measurements_once():
     assert got == {k: float(v) for k, v in APP_TOKENS.items()}, got
 
 
+def test_the_ribbon_uses_the_width_above_the_thumbnail_rail():
+    """The rail begins below the ribbon, as in PowerPoint: giving rows
+    2-3 to the rail made every ribbon pay for its width and hid controls
+    that the window had room to show."""
+    css = assets.deck_css()
+    assert ".deck>.deck-create{grid-column:1;grid-row:4;min-height:0;}" in css
+    assert ".deck>.rbn-tabs{grid-column:1/-1;grid-row:2;}" in css
+    assert ".deck>.edit-tools{grid-column:1/-1;grid-row:3;}" in css
+    assert ".deck-main{grid-column:2;grid-row:4;}" in css
+
+
 def test_the_band_is_its_two_tracks_and_the_gap_between_them():
     """`.rbn-row` states the band height as well as its tracks, so the
     one rule can disagree with itself."""

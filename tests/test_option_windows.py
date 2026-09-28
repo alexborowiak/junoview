@@ -51,9 +51,14 @@ def test_the_text_group_is_three_doors_not_fifteen_buttons(out):
     style = out[out.index('id="tx-run-style"'):out.index('id="tx-run-align"')]
     assert 'id="fmt-strike"' in style
     para = _window(out, "fmt-parawrap")
-    for cid in ("fmt-para", "fmt-para-menu", "fmt-outdent", "fmt-indent",
-                "fmt-para-ind", "fmt-para-curve"):
+    for cid in ("fmt-para", "fmt-para-menu", "fmt-para-ind",
+                "fmt-para-curve"):
         assert f'id="{cid}"' in para, cid
+    # T514: list levels are immediate actions on the ribbon, not two
+    # actions hidden behind the catch-all Paragraph door.
+    assert 'id="tx-list-levels"' in out
+    for cid in ("fmt-outdent", "fmt-indent"):
+        assert f'id="{cid}"' in out and f'id="{cid}"' not in para, cid
     # ...and spacing left it for a door of its own on the row (T220)
     assert 'id="fmt-lhwrap"' not in para
     assert 'id="fmt-lh-btn"' in out and 'id="fmt-lh-menu"' in out

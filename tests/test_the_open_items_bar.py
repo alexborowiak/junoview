@@ -37,12 +37,14 @@ def test_a_docked_bar_is_a_track_of_the_decks_own_grid(out):
     assert ".deck-pres-drawer.dock-left,.deck-pres-drawer.dock-top{" in out
     assert "  position:static;max-height:none;border-radius:0;box-shadow:none;}" in out
     assert ".deck.openbar-left{grid-template-columns:auto auto minmax(0,1fr);}" in out
-    assert ".deck.openbar-left>.deck-pres-drawer{grid-column:1;grid-row:2/5;" in out
-    assert (".deck.openbar-left>.rbn-tabs,.deck.openbar-left>.edit-tools,\n"
-            ".deck.openbar-left>.deck-main{grid-column:3;}") in out
+    assert ".deck.openbar-left>.deck-pres-drawer{grid-column:1;grid-row:4;" in out
+    assert (".deck.openbar-left>.rbn-tabs,.deck.openbar-left>.edit-tools"
+            "{grid-column:1/-1;}") in out
+    assert ".deck.openbar-left>.deck-main{grid-column:3;}" in out
     assert (".deck.openbar-top{grid-template-rows:"
             "auto auto auto auto minmax(0,1fr);}") in out
     assert ".deck.openbar-top>.deck-pres-drawer{grid-column:1/-1;grid-row:2;" in out
+    assert ".deck.openbar-top>.deck-create{grid-row:5;}" in out
     assert ".deck.openbar-top>.deck-main{grid-row:5;}" in out
     # across the top the list flows sideways, so the strip is one band
     assert ".deck-pres-drawer.dock-top .deck-pres-list{flex-direction:row;" in out

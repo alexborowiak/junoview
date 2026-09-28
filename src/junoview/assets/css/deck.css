@@ -1,22 +1,19 @@
 
-/* GRID, not a column: the left column spans every row (full window
-   height, nothing above it), the ribbon and stage share the right track
-   (2026-08-19, user). Row 1 is the presenting top bar; rows 2-3 are the
-   ribbon and the stage. */
+/* GRID, not a column: the ribbon spans the whole window, as it does in
+   PowerPoint, and the thumbnail column starts below it. That gives the
+   controls the width they need without making either rail wider. */
 .deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0);
   color:var(--chrome-ink);
   display:grid;grid-template-columns:auto minmax(0,1fr);
   grid-template-rows:auto auto auto minmax(0,1fr);font-family:var(--sans);}
 /* Row 1 is the document's own bar, and only ever ONE of these two is in
    it: .deck-qat while editing, .deck-top while presenting. Rows 2 and 3
-   are the tab strip and the ribbon, which belong to the stage column;
-   row 4 is the stage. The left column starts under row 1 and runs to the
-   bottom, so the notebook content and the thumbnails still have the whole
-   height with nothing but the title bar over them. */
+   are the full-width tab strip and ribbon; thumbnails and stage share
+   row 4. */
 .deck-top,.deck-qat{grid-column:1/-1;grid-row:1;}
-.deck>.deck-create{grid-column:1;grid-row:2/5;min-height:0;}
-.deck>.rbn-tabs{grid-column:2;grid-row:2;}
-.deck>.edit-tools{grid-column:2;grid-row:3;}
+.deck>.deck-create{grid-column:1;grid-row:4;min-height:0;}
+.deck>.rbn-tabs{grid-column:1/-1;grid-row:2;}
+.deck>.edit-tools{grid-column:1/-1;grid-row:3;}
 .deck-main{grid-column:2;grid-row:4;}
 .deck[hidden]{display:none!important;}
 .deck [hidden]{display:none!important;}
@@ -72,16 +69,16 @@ body.deck-open{overflow:hidden;}
   position:static;max-height:none;border-radius:0;box-shadow:none;}
 /* a rail: a third column, ahead of the slide column and the stage */
 .deck.openbar-left{grid-template-columns:auto auto minmax(0,1fr);}
-.deck.openbar-left>.deck-pres-drawer{grid-column:1;grid-row:2/5;
+.deck.openbar-left>.deck-pres-drawer{grid-column:1;grid-row:4;
   width:var(--openbar-w);min-height:0;border-width:0 1px 0 0;}
 .deck.openbar-left>.deck-create{grid-column:2;}
-.deck.openbar-left>.rbn-tabs,.deck.openbar-left>.edit-tools,
+.deck.openbar-left>.rbn-tabs,.deck.openbar-left>.edit-tools{grid-column:1/-1;}
 .deck.openbar-left>.deck-main{grid-column:3;}
 /* a strip: a band of its own under the document bar, full width */
 .deck.openbar-top{grid-template-rows:auto auto auto auto minmax(0,1fr);}
 .deck.openbar-top>.deck-pres-drawer{grid-column:1/-1;grid-row:2;
   width:auto;max-height:var(--openbar-h);border-width:0 0 1px;}
-.deck.openbar-top>.deck-create{grid-row:3/6;}
+.deck.openbar-top>.deck-create{grid-row:5;}
 .deck.openbar-top>.rbn-tabs{grid-row:3;}
 .deck.openbar-top>.edit-tools{grid-row:4;}
 .deck.openbar-top>.deck-main{grid-row:5;}
