@@ -4230,6 +4230,10 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    1.15em to 1.7em inside the already-dead declaration, which is why
    it was reported as STILL wrong. Measured: 0px before, 21.1px after. */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0px));}
+/* A list can be one paragraph-sized section inside a text box. The outer
+   .an-tx owns the box indent; each inner list adds only its marker gutter. */
+.an-tx>ul,.an-tx>ol{margin:.18em 0;padding-left:1.7em;}
+.an-list-edit>.an-ul{margin:0;}
 /* T231: the slide column picks slides, so it gets the same two buttons
    the table has, and says how many are picked. */
 .dg-picks{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -4376,6 +4380,32 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-tx.an-ul ul ul{list-style:square;}
 .an-tx.an-ul ol{list-style:lower-alpha;margin:0;padding-left:1.25em;}
 .an-tx.an-ul ol ol{list-style:lower-roman;}
+/* The same list levels when .an-tx is the neutral mixed-content wrapper. */
+.an-tx:not(.an-ul) li{margin:.18em 0;white-space:pre-wrap;}
+.an-tx:not(.an-ul)>ul ul,
+.an-tx:not(.an-ul)>ol ul{list-style:circle;margin:0;padding-left:1.5em;}
+.an-tx:not(.an-ul)>ul ul ul,
+.an-tx:not(.an-ul)>ol ul ul{list-style:square;}
+.an-tx:not(.an-ul)>ol ol,
+.an-tx:not(.an-ul)>ul ol{list-style:lower-alpha;margin:0;
+  padding-left:1.25em;}
+.an-tx:not(.an-ul)>ol ol ol,
+.an-tx:not(.an-ul)>ul ol ol{list-style:lower-roman;}
+/* Once a box contains both plain and listed paragraphs, the kind travels
+   on that list section instead of on the box-wide a.list flag. */
+.an-tx ul[data-list="bullet"]{list-style-type:disc;}
+.an-tx ul[data-list="circle"]{list-style-type:circle;}
+.an-tx ul[data-list="square"]{list-style-type:square;}
+.an-tx ul[data-list="dash"]{list-style-type:"–\00a0";}
+.an-tx ul[data-list="arrow"]{list-style-type:"▸\00a0";}
+.an-tx ul[data-list="check"]{list-style-type:"✓\00a0";}
+.an-tx ol[data-list="number"]{list-style-type:decimal;}
+.an-tx ol[data-list="alpha"]{list-style-type:lower-alpha;}
+.an-tx ol[data-list="alpha-upper"]{list-style-type:upper-alpha;}
+.an-tx ol[data-list="roman"]{list-style-type:lower-roman;}
+.an-tx ol[data-list="roman-upper"]{list-style-type:upper-roman;}
+.an-tx ol[data-list="paren"]{list-style-type:decimal;}
+.an-tx ol[data-list="paren"]>li::marker{content:counter(list-item) ") ";}
 /* text reads as draggable, and only turns into a text cursor once you are
    actually typing in it */
 .deck.editing .an-text,.deck.editing .an-title{cursor:move;}

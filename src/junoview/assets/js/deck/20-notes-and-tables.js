@@ -898,6 +898,23 @@
     }
     return String(a.text||'').split('\n');
   }
+  /* A box-wide list is edited inside a neutral contenteditable wrapper,
+     because only a NESTED list lets the browser turn one paragraph's
+     marker on or off. While it remains one list, keep the compact model's
+     bare <li>s. The moment it contains plain paragraphs or two list kinds,
+     it is ordinary rich text and the wrapper's whole HTML is the content. */
+  function listEditBody(html){
+    var t=document.createElement('template');t.innerHTML=String(html||'');
+    var one=t.content.firstElementChild,n=t.content.firstChild;
+    if(!one||one.nextElementSibling
+       ||(one.tagName!=='UL'&&one.tagName!=='OL')) return null;
+    while(n){
+      if(n!==one&&n.nodeType===3&&String(n.nodeValue||'').trim()) return null;
+      if(n!==one&&n.nodeType===1) return null;
+      n=n.nextSibling;
+    }
+    return one.innerHTML;
+  }
   /* set (or clear) the list style, converting the content either way */
   function setListStyle(a,style){
     if(!a) return;
@@ -934,6 +951,17 @@
     if(!sel||sel.rangeCount===0||sel.isCollapsed) return false;
     var r=sel.getRangeAt(0);
     return el.contains(r.startContainer)&&el.contains(r.endContainer);
+  }
+  function caretList(el){
+    var sel=window.getSelection(),n=sel&&sel.rangeCount?sel.focusNode:null;
+    if(!n||!el.contains(n)) return null;
+    if(n.nodeType===3) n=n.parentNode;
+    while(n){
+      if(n.tagName==='UL'||n.tagName==='OL') return n;
+      if(n===el) break;
+      n=n.parentNode;
+    }
+    return null;
   }
   /* colour just the highlighted run inside the text box being edited;
      returns false when there is no live selection to recolour */
@@ -985,14 +1013,22 @@
      into a bullet. */
   function listSelection(style){
     var el=activeTextEditable();
-    if(!el||el.classList.contains('an-ul')) return false;
+    if(!el) return false;
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(!a||a.k!=='text') return false;
     histSettle();
     try{document.execCommand(listIsOrdered(style)
       ?'insertOrderedList':'insertUnorderedList',false,null);}catch(e){}
+    /* The command leaves the caret in the list it just created. Carry the
+       chosen marker with that section; when it removed a marker there is
+       deliberately no list under the caret to label. */
+    var live=caretList(el);
+    if(live) live.setAttribute('data-list',style);
     var r=sanitizeRich(el.innerHTML),n=textAt(s,a); if(!(n>0)) n=0;
     textPageSet(a,n,el.innerText,r.rich?r.html:'');
+    /* A paragraph edit ends the old all-or-nothing box mode. Its remaining
+       list sections are now explicit ul/ol nodes in a.html. */
+    if(listOf(a)) delete a.list;
     markDirty();
     return true;
   }
@@ -1162,7 +1198,7 @@
          is the marker and caret target. Clearing the root here removed
          that item immediately after dash-to-bullet rebuilt the editor,
          and the apparently-created box then vanished. */
-      if(!getVal()&&!el.classList.contains('an-ul')) el.textContent='';
+      if(!getVal()&&!el.querySelector('li')) el.textContent='';
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
       el.focus();
       var host=el.closest?el.closest('.an-item'):null;
@@ -1241,7 +1277,7 @@
       /* beginEdit already preserves an empty list's first <li>; focus
          must make the same distinction or it erases that caret target
          one event later. */
-      if(!getVal()&&!el.classList.contains('an-ul')) el.textContent='';
+      if(!getVal()&&!el.querySelector('li')) el.textContent='';
     });
     /* THE CARET NEVER ENTERS A BUILD WRAPPER. The pieces a text build is
        cut into are render-time <span>s (17-text-builds.js): typing
@@ -1347,7 +1383,7 @@
        eat a hyphen you meant to keep. */
     el.addEventListener('input',function(){
       if(!el.isContentEditable) return;
-      if(el.classList.contains('an-ul')) return;
+      if(el.querySelector('li')) return;
       var t=el.textContent||'';
       var m=/^\s*([-*\u2022]|1[.)])\s$/.exec(t);
       if(!m) return;
@@ -1405,16 +1441,16 @@
       /* Backspace on the one blank list item is the native "leave this
          list" gesture. The box-wide list model otherwise rebuilt its dot
          on the next render, so the user could never remove it. */
-      if(e.key==='Backspace'&&el.classList.contains('an-ul')
+      if(e.key==='Backspace'&&caretList(el)
          &&!String(el.innerText||'').trim()
          &&el.querySelectorAll('li').length===1){
         e.preventDefault();e.stopPropagation();
-        el.innerHTML='';el.classList.remove('an-ul');
+        el.innerHTML='';
         el.style.listStyle='none';el.style.paddingLeft='0';
         setVal('',null);markDirty();
         return;
       }
-      if(e.key==='Tab'&&el.classList.contains('an-ul')){
+      if(e.key==='Tab'&&caretList(el)){
         e.preventDefault();e.stopPropagation();
         try{document.execCommand(e.shiftKey?'outdent':'indent',
           false,null);}catch(err){}
@@ -2586,6 +2622,17 @@
             li.textContent=line;
             tx2.appendChild(li);
           });
+          /* In the editor a neutral wrapper is what lets the browser split
+             one paragraph out of this list. Playback/export keep the lean
+             root ul/ol they have always used. */
+          if(editing){
+            tx2.dataset.list=lst;
+            var listTx=tx2;
+            listTx.classList.remove('an-tx');
+            tx2=document.createElement('div');
+            tx2.className='an-tx an-list-edit';
+            tx2.appendChild(listTx);
+          }
         } else {
           tx2=document.createElement('span');
           /* A MARKDOWN BOX RENDERS FROM ITS SOURCE, EVERY TIME (T74).
@@ -2650,17 +2697,13 @@
                    just typed stay ghosted until the next full render */
                 tx2.classList.remove('an-ph');
               }
-              textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');
-              /* THE WAY OUT OF A LIST. `a.list` is a box-wide flag and
-                 the renderer rebuilds a bullet for every line from it,
-                 so every browser-native escape — Backspace at the start
-                 of the first item, Enter twice out of the last — was
-                 undone on the next render and the bullet came back
-                 (2026-08-29, user: "dot points can't really be
-                 deleted"). If nothing you committed is a list item any
-                 more, you have left the list, and the model follows. */
-              if(listOf(a)&&!/<li[\s>]/i.test(String(textPage(a,_pi).h||'')))
-                delete a.list;},
+              if(listOf(a)){
+                if(r&&r.rich){
+                  var body=listEditBody(r.html);
+                  if(body===null) delete a.list; else r.html=body;
+                } else delete a.list;
+              }
+              textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');},
             /* a markdown box is NOT rich: what you edit is the SOURCE,
                so plaintext-only is the right editor (Enter must give a
                newline, not a <div>) and `a.html` has to stay empty, or

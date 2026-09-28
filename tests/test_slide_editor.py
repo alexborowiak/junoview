@@ -656,17 +656,13 @@ def test_bullets_are_a_real_list_model(out):
     assert "function setListStyle(a,style){" in out
     assert "function contentLines(a){" in out
     assert "ul:1,ol:1,li:1};" in out
-    # T72: `li` belongs here too. The editable element IS the <ul>, so
-    # its innerHTML is a bare run of <li> with no wrapper -- querying for
-    # ul/ol found nothing, every unstyled list reported rich:false, and
-    # its markup was deleted on every blur.
+    # T72: `li` belongs here too. A box-wide list stores bare <li>s, while
+    # T513's edit wrapper temporarily carries the outer ul/ol.
     assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li')};" in out
-    # ...and once nothing you committed is a list item, you have left the
-    # list and the model follows
-    # asked of the PAGE you just committed, not of the box (T165)
-    assert (r"if(listOf(a)&&!/<li[\s>]/i.test("
-            r"String(textPage(a,_pi).h||'')))") in out
-    assert "                delete a.list;}," in out
+    # A single nested list is folded back to bare items. Mixed paragraphs
+    # deliberately drop the old box-wide flag and keep their full HTML.
+    assert "function listEditBody(html){" in out
+    assert "if(body===null) delete a.list; else r.html=body;" in out
     # a legacy deck stored a.list as the boolean 1
     assert ("var v=a&&a.list?(a.list===true||a.list===1?'bullet'"
             ":a.list):0;") in out
@@ -678,7 +674,7 @@ def test_bullets_are_a_real_list_model(out):
     assert "ol.an-ul{list-style:decimal;}" in out
     # Tab makes a sub-bullet, the way every outliner does -- and only
     # inside a list, where it has something to mean
-    assert "if(e.key==='Tab'&&el.classList.contains('an-ul')){" in out
+    assert "if(e.key==='Tab'&&caretList(el)){" in out
 
 
 def test_find_and_replace_searches_the_model(out):
@@ -2831,7 +2827,7 @@ def test_an_empty_bullet_is_not_an_abandoned_box(out):
     assert "if(!String(a.text||'').trim()&&!listOf(a))" in out
     assert "function listSelection(style){" in out
     assert "insertUnorderedList" in out
-    assert "e.key==='Backspace'&&el.classList.contains('an-ul')" in out
+    assert "e.key==='Backspace'&&caretList(el)" in out
 
 
 def test_double_click_selects_a_word_once_you_are_editing(out):

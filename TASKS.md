@@ -9861,3 +9861,9 @@ any reading. The rest are T466 onwards.
   T492 is closed because every implementation finding landed; its sole
   remainder is T484's deliberate ribbon-taxonomy choice. There are no
   unchecked implementation tasks or known release blockers left in this file.
+- [x] **T513 — Make bullets paragraph-level.** (2026-09-28) A list is now a
+  section inside the editable text box, so Bullets or Numbering changes the
+  paragraph at the caret instead of forcing every paragraph in the box into
+  the same list. Mixed plain/list content, marker kinds and nested levels
+  survive sanitising, saving and re-rendering; playback and export retain the
+  compact root-list representation for boxes that are still entirely lists.

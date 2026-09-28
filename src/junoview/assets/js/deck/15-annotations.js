@@ -2205,10 +2205,20 @@
         }
         var color=(n.style&&n.style.color)||
           (tag==='font'?(n.getAttribute('color')||''):'');
+        /* A mixed text box keeps each list's marker kind on the list
+           itself. It is the one safe structural attribute rich text
+           needs: the value must be one of LIST_KINDS and must agree
+           with ul/ol, so pasted markup cannot smuggle arbitrary data or
+           styling through the sanitizer. */
+        var listStyle=(tag==='ul'||tag==='ol')
+          ?(n.getAttribute('data-list')||''):'';
         var names=[],k;
         for(k=0;k<n.attributes.length;k++) names.push(n.attributes[k].name);
         names.forEach(function(nm){n.removeAttribute(nm);});
         if(color) n.style.color=color;
+        if(listStyle&&listKind(listStyle)
+           &&listIsOrdered(listStyle)===(tag==='ol'))
+          n.setAttribute('data-list',listStyle);
         walk(n);
         n=next;
       }

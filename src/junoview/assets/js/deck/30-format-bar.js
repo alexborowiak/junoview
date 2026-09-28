@@ -1459,7 +1459,7 @@
      blur handler writes the result back like any other typing */
   function listIndent(out){
     var el=activeTextEditable();
-    if(!el||!el.classList.contains('an-ul')){
+    if(!el||!caretList(el)){
       toast('Click into the list first, then indent');return;
     }
     try{document.execCommand(out?'outdent':'indent',false,null);}catch(e){}

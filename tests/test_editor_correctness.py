@@ -1453,7 +1453,8 @@ def test_typing_a_dash_makes_a_bullet(out):
     to keep. Measured: typing "- " produced a <ul> with one <li>.
     """
     assert "var m=/^\\s*([-*\\u2022]|1[.)])\\s$/.exec(t);" in out
-    assert "if(el.classList.contains('an-ul')) return;" in out
+    # A mixed text box can have a list section without being a list root.
+    assert "if(el.querySelector('li')) return;" in out
     assert "var kind=/^1/.test(m[1])?'number':'bullet';" in out
     # Rebuilding the layer flushes live editors first. The auto-list path
     # must disarm the old editor or that flush removes the list it just made.
@@ -1461,10 +1462,10 @@ def test_typing_a_dash_makes_a_bullet(out):
     assert "if(el.__jvSkipBlur){" in out
     assert "el.__jvSkipBlur=1;" in out
     assert "el.contentEditable='false';" in out
-    # The rebuilt editor is an empty <ul> with one <li>. Treating it like
-    # an empty plain box clears the marker and deletes the whole object.
+    # The rebuilt editor contains an empty <ul> with one <li>. Treating it
+    # like an empty plain box clears the marker and deletes the whole object.
     assert out.count(
-        "if(!getVal()&&!el.classList.contains('an-ul'))"
+        "if(!getVal()&&!el.querySelector('li'))"
     ) == 2
     assert "a3.text='';delete a3.html;delete a3.ph;" in out
 
