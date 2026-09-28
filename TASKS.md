@@ -9896,3 +9896,10 @@ any reading. The rest are T466 onwards.
   says how the object arrives; Start says when it runs; Text sequence says
   which text unit gets each click; and Each text step chooses Reveal or
   Highlight. The Animation panel and help use the same four-part language.
+- [x] **T519 — Make the Style system one question at a time.** (2026-09-28)
+  A text style now opens into separate Look, Position and Boxes views instead
+  of showing the editor, placement board, object table and slide navigator at
+  once. The style rail is uniform navigation rather than a second specimen;
+  Look uses an aligned property sheet, and the slide navigator appears only
+  where it can filter or move boxes. The three paths and a live formatting
+  change were driven in the browser.

@@ -36,9 +36,11 @@ def test_the_rail_groups_a_family(out):
 
 
 def test_the_colour_rides_on_a_chip_not_the_name(out):
-    """Blanking the name is still right. The chip sits on a known ground
-    and so cannot disappear into it."""
-    assert "      nm.style.color='';" in out          # unchanged, on purpose
+    """The rail is uniform navigation; colour still gets a visible chip."""
+    rail = out.split("  function dgRail(ov){", 1)[1].split(
+        "\n  /* ---- the board:", 1)[0]
+    assert "dgSpecimen(nm,id);" not in rail
+    assert "nm.style.color" not in rail
     assert "        chip.className='dg-swatch';" in out
     assert "        chip.style.background=tokVal(d.color);" in out
     css = assets.load("css/deck.css")

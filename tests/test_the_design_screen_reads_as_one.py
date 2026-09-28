@@ -38,25 +38,40 @@ def test_the_slides_go_down_the_side(out):
             "  grid-template-columns:1fr;}") in out
 
 
-def test_the_headings_are_words_and_the_controls_are_clusters(out):
+def test_the_style_editor_is_three_clear_views(out):
     assert (".dg-h{font-family:var(--sans);font-size:15px;font-weight:600;\n"
             "  letter-spacing:0;text-transform:none;") in out
     assert ".dg-count{font-family:var(--sans);font-size:11.5px;" in out
     assert "    function grp(name){" in out
-    for name in ("Size", "Weight", "Alignment", "Typeface", "Colours"):
+    assert "      g.dataset.group=name.toLowerCase()||'reset';" in out
+    for name in ("Size", "Emphasis", "Alignment", "Typeface", "Colours"):
         assert f"    grp('{name}');" in out, name
-    assert ".dg-grp{display:flex;align-items:center;gap:4px;" in out
+    assert (".dg-ctrls{display:grid;grid-template-columns:repeat(2,"
+            "minmax(0,1fr));") in out
+    assert ".dg-grp{display:flex;align-items:center;gap:4px;min-width:0;" in out
+    assert '.dg-grp[data-group="colours"],.dg-grp[data-group="reset"]{' in out
     assert ".dg-grplab:empty{display:none;}" in out
-    # T384: the "Exactly" trio is gone (dead since T367 removed the
-    # Apply that read it); the body is two labelled columns over a table
+    # T519: the former two-column board over a table is three views. Each
+    # keeps the existing controls but only the selected job is visible.
     assert "nlab.textContent='Exactly';" not in out
+    assert "  function dgTabs(body,ov,count){" in out
+    assert "    [['look','Look'],['place','Position']," in out
+    assert "     ['boxes','Boxes ('+count+')']].forEach(function(pr){" in out
+    assert "    body.className='dg-body dg-view-'+dgView;" in out
+    assert "    left.hidden=dgView!=='look';right.hidden=dgView!=='place';" in out
+    assert "    if(dgView==='boxes') dgTable(body,ov);" in out
+    assert "    if(dgView==='place'||dgView==='boxes'){" in out
     assert "    var top=document.createElement('div');top.className='dg-top';" in out
-    assert "    colHead(left,'how it looks');" in out
-    assert "    colHead(right,'where its boxes sit');" in out
-    assert "    dgSectionHead(body,'Every box wearing it');" in out
-    assert (".dg-top{display:grid;grid-template-columns:minmax(300px,1fr) "
-            "minmax(320px,1.2fr);") in out
-    assert "@media (max-width:1180px){.dg-top{grid-template-columns:1fr;}}" in out
+    assert ".dg-top{display:block;width:100%;max-width:980px;" in out
+
+
+def test_the_rail_is_navigation_not_a_second_specimen(out):
+    rail = out.split("  function dgRail(ov){", 1)[1].split(
+        "\n  /* ---- the board:", 1)[0]
+    assert "nm.className='dg-name';nm.textContent=d.label||id;" in rail
+    assert "dgSpecimen(nm,id);" not in rail
+    assert (".dg-name{line-height:1.15;min-width:0;overflow:hidden;\n"
+            "  text-overflow:ellipsis;white-space:nowrap;font-size:15px;") in out
 
 
 def test_the_board_shows_the_real_boxes_not_only_the_master(out):
@@ -128,6 +143,8 @@ def test_the_slide_column_has_select_all_and_unselect_all(out):
     assert "      ?(dgPickedCount()+' of these slides')" in out
     assert "      :'all slides';" in out
     assert ".dg-picks{display:flex;align-items:center;gap:6px;" in out
+    assert "    dgSectionHead(body,'Slides'," in out
+    assert ".dg-sheetcol[hidden]{display:none!important;}" in out
 
 
 def test_apply_is_for_the_selection_and_has_no_scope_of_its_own(out):

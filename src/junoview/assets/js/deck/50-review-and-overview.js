@@ -2481,7 +2481,7 @@
      cannot express, and it is a button you press, never something
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
-  var dgSel='title', dgOutline=false, dgVarOpen={};
+  var dgSel='title', dgView='look', dgOutline=false, dgVarOpen={};
   /* the smallest a drag proxy in the outline sheet may be, in page
      percent. A horizontal or vertical line's bounding box is
      zero-thickness and there is nothing to grab; the canvas answers the
@@ -3104,9 +3104,9 @@
     var body=ov&&ov.querySelector('#dg-sheetcol');
     if(!body) return;
     body.innerHTML='';
-    dgSectionHead(body,'Every object, outlined',
-      'With outlines on, drag a box in a thumbnail to move that object; '
-      +'click one to find it in the table.');
+    dgSectionHead(body,'Slides',
+      'Pick slides to limit this view. Turn on outlines to move objects '
+      +'in a thumbnail.');
     var tg=document.createElement('button');
     tg.className='dbtn dg-b';
     tg.setAttribute('aria-pressed',dgOutline?'true':'false');
@@ -3464,16 +3464,9 @@
       b.className='dg-row'+(id===dgSel?' on':'')+(isVar?' dg-rowvar':'');
       var nm=document.createElement('span');
       nm.className='dg-name';nm.textContent=d.label||id;
-      dgSpecimen(nm,id);
-      /* the rail is chrome, not a slide: the style's own colour could be
-         the page's ink and vanish here (2026-09-03, "a lot of the text
-         can't be read"); weight, italic and size still draw the ladder */
-      nm.style.color='';
-      /* T295: ...WHICH MEANT TWO VARIATIONS DIFFERING ONLY IN COLOUR
-         DREW AS IDENTICAL ROWS -- in the one place the user asked for
-         "the preview should show the colours". Blanking the text is
-         still right; the colour goes on a CHIP instead, which sits on a
-         known ground and so cannot disappear into it. */
+      /* Navigation is navigation, not a second specimen. Rendering every
+         row at its style's own size made the rail itself look broken; the
+         preview belongs in Look. Colour differences remain as chips. */
       var chip=null;
       if(d.color){
         chip=document.createElement('span');
@@ -3596,7 +3589,7 @@
       b2.appendChild(nm2);b2.appendChild(ct2);
       b2.title=pr[1]+' in this deck'+(n2?(': '+n2):': none yet');
       b2.addEventListener('click',function(){
-        dgSel=key;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+        dgSel=key;dgView='boxes';dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b2);
     });
     /* T490: the boxes wearing nothing, banded by size, AFTER the rows --
@@ -3938,10 +3931,28 @@
       host.appendChild(p);
     }
   }
+  function dgTabs(body,ov,count){
+    var tabs=document.createElement('div');
+    tabs.className='dg-tabs';tabs.setAttribute('role','tablist');
+    [['look','Look'],['place','Position'],
+     ['boxes','Boxes ('+count+')']].forEach(function(pr){
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn dg-tab';b.textContent=pr[1];
+      b.setAttribute('role','tab');
+      b.setAttribute('aria-selected',(dgView===pr[0]).toString());
+      b.addEventListener('click',function(){
+        dgView=pr[0];dgBodyKeep(ov);});
+      tabs.appendChild(b);
+    });
+    body.appendChild(tabs);
+  }
   function dgBody(ov){
     if(!ov) return;
     var body=ov.querySelector('#dg-body');
     body.innerHTML='';
+    body.className='dg-body';
+    var sheetcol=ov.querySelector('#dg-sheetcol');
+    if(sheetcol){sheetcol.innerHTML='';sheetcol.hidden=true;}
     var id=dgSel,d=styleDef(id);
     /* T224: an object kind has no look to edit -- it has a table */
     if(dgIsObj()){
@@ -3958,6 +3969,7 @@
       }
       dgSectionHead(body,dgKindLabel()+' \u2014 every one in this deck');
       dgTable(body,ov);
+      if(sheetcol) sheetcol.hidden=false;
       dgSheet(body,ov);
       return;
     }
@@ -3972,26 +3984,18 @@
        think almost all text is unnecessary, just one short description
        at the top"). Every control below says what it is by being what
        it is. */
-    dgSectionHead(body,(d.label||id)
-      +' \u2014 changes every box wearing it, on every slide');
-    /* ---- T384: TWO COLUMNS, NOT NINE STACKED SECTIONS -------------
-       (2026-09-12, user: "the style systems box is confusing; needs a
-       better layout"). What the type looks like on the left -- specimen,
-       looks, the control clusters -- and where its boxes sit on the
-       right -- the board, its key, the groups and the move. The table
-       of every box runs full width underneath. The dead "Exactly X / Y
-       / Width" inputs are gone: T367 removed the Apply that read them,
-       and the table's own number cells are where a box is typed into
-       place. */
+    dgSectionHead(body,d.label||id);
+    dgTabs(body,ov,wear.length);
+    body.className='dg-body dg-view-'+dgView;
+    /* T519: ONE QUESTION AT A TIME. Look, Position and the individual
+       Boxes used to be two columns over a table with a permanent slide
+       column, so all three jobs competed for attention. They keep their
+       existing controls and model; the tabs only decide which job is in
+       view. */
     var top=document.createElement('div');top.className='dg-top';
     var left=document.createElement('div');left.className='dg-typecol';
     var right=document.createElement('div');right.className='dg-placecol';
-    function colHead(host,text){
-      var h=document.createElement('div');
-      h.className='dg-colh';h.textContent=text;host.appendChild(h);
-    }
-    colHead(left,'how it looks');
-    colHead(right,'where its boxes sit');
+    left.hidden=dgView!=='look';right.hidden=dgView!=='place';
     top.appendChild(left);top.appendChild(right);
     body.appendChild(top);
     var spec=document.createElement('div');
@@ -4014,6 +4018,7 @@
     var cur_=null;
     function grp(name){
       var g=document.createElement('div');g.className='dg-grp';
+      g.dataset.group=name.toLowerCase()||'reset';
       var lb=document.createElement('span');
       lb.className='dg-grplab';lb.textContent=name;
       g.appendChild(lb);
@@ -4060,7 +4065,7 @@
     (cur_||row).appendChild(sz);
     ctl('+','Bigger',null,function(){
       rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
-    grp('Weight');
+    grp('Emphasis');
     ctl('B','Bold',!!d.b,function(){
       if(d.b) rec.b=0; else rec.b=1;});
     ctl('I','Italic',!!d.i,function(){
@@ -4238,9 +4243,11 @@
     putSync();
     right.appendChild(putRow);
 
-    dgSectionHead(body,'Every box wearing it');
-    dgTable(body,ov);
-    dgSheet(body,ov);
+    if(dgView==='boxes') dgTable(body,ov);
+    if(dgView==='place'||dgView==='boxes'){
+      if(sheetcol) sheetcol.hidden=false;
+      dgSheet(body,ov);
+    }
   }
   function openDesign(){
     dgClose();

@@ -2066,8 +2066,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # rich-text model's s tag, so selection-level strikethrough survives redraw.
 # T518 (2026-09-28): animation effect, start, text sequence and text-step
 # behaviour are separate ribbon choices and use the same terms in the pane.
-EXPECTED_MD5 = "f7055eb2700b63f5141081948b239c4e"
-EXPECTED_BYTES = 4574146
+# T519 (2026-09-28): Style system separates Look, Position and Boxes instead
+# of rendering all three jobs and the slide navigator at the same time.
+EXPECTED_MD5 = "4563dc7f913ca4eb85a971d28380a031"
+EXPECTED_BYTES = 4574776
 
 
 def _render_example() -> str:

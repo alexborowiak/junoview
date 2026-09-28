@@ -115,7 +115,9 @@ def test_big_screen_text_and_readable_style_system(out):
     # (a half step over T219's resting 12px: a whole one folded a group
     # on a 1800px monitor)
     assert "  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12.5px;}" in out
-    assert "      nm.style.color='';" in out
+    # T519: names are uniform navigation now; only the preview wears a style.
+    assert (".dg-name{line-height:1.15;min-width:0;overflow:hidden;\n"
+            "  text-overflow:ellipsis;white-space:nowrap;font-size:15px;") in out
     assert "    spec.style.background=deckPageBg();" in out   # T465
     assert ".dg-sub{margin:0 0 10px;font-size:12.5px;" in out
 
