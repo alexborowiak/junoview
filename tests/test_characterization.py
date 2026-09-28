@@ -2059,8 +2059,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T511 (2026-09-25): refresh that count after every filter pass.
 # T513 (2026-09-28): lists can occupy only selected paragraphs in a text box.
 # T514 (2026-09-28): the ribbon spans above thumbnails and preserves the caret.
-EXPECTED_MD5 = "21665e336f2dc6d1a1d7020b9d5ed14f"
-EXPECTED_BYTES = 4568803
+# T515 (2026-09-28): editable text keeps the browser's spelling menu.
+EXPECTED_MD5 = "7cfd04fba6743738ffff868158bdff8e"
+EXPECTED_BYTES = 4568949
 
 
 def _render_example() -> str:

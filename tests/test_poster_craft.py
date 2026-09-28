@@ -150,6 +150,14 @@ def test_spellcheck_is_on_for_editable_text(out):
     """
     assert "el.spellcheck=true;" in out
     assert "el.spellcheck=false" not in out
+    # T515: the canvas must not suppress the native menu that carries
+    # spelling suggestions while the caret is in text or a table cell.
+    menu = out[out.index("layer.addEventListener('contextmenu',function(ev){"):
+               out.index("layer.addEventListener('mousedown',function(ev){")]
+    assert "ev.target.closest(" in menu
+    assert ('[contenteditable="true"],'
+            '[contenteditable="plaintext-only"]') in menu
+    assert menu.index("[contenteditable=") < menu.index("ev.preventDefault();")
 
 
 def test_copy_cut_paste_including_images_from_the_clipboard(out):

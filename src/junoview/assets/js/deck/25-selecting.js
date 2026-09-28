@@ -3116,10 +3116,12 @@
       :' — '+idxs.length+' items'));
   }
   function wireEditor(layer,s){
-    /* a right-click on a corner takes it out, so the browser's own menu
-       must not open over the top of the gesture; anywhere else on the
-       canvas it opens OUR menu instead (2026-08-24) */
+    /* Editable words keep the browser's native menu: it owns spelling
+       suggestions and corrections. A right-click on a corner takes it
+       out; anywhere else on the canvas opens OUR object menu. */
     layer.addEventListener('contextmenu',function(ev){
+      if(ev.target&&ev.target.closest&&ev.target.closest(
+        '[contenteditable="true"],[contenteditable="plaintext-only"]')) return;
       if(ev.target&&ev.target.classList
          &&ev.target.classList.contains('an-mid')){ev.preventDefault();return;}
       if(mode!=='edit'||tool!=='select') return;

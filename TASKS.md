@@ -9873,3 +9873,7 @@ any reading. The rest are T466 onwards.
   list controls, and mouse use of ribbon tabs, doors and popovers preserves
   the live text caret instead of silently losing the paragraph being edited.
   The layout and paragraph interaction were driven in the browser.
+- [x] **T515 — Put spelling back on text right-click.** (2026-09-28) Editable
+  slide text and table cells now keep the browser's native context menu, so
+  misspellings offer corrections instead of being covered by Junoview's
+  object menu. Right-clicking the object or canvas still opens that menu.
