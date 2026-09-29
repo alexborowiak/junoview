@@ -325,7 +325,8 @@ def test_the_overflow_notice_tracks_every_ribbon_refit(out):
     """
     i = out.index("function fitEditRibbon(){")
     body = out[i:out.index("\n  /* ---- the thin top bar", i)]
-    assert body.count("rbnOverflowNotice(bar);") == 2
+    # (T539: and the replay of a remembered fit is a refit too)
+    assert body.count("rbnOverflowNotice(bar);") == 3
     side = body.index("if(cl.contains('rbn-side')){")
     assert body.index("ERC.forEach(function(c){cl.remove(c);});") < side
     assert body.index("cl.remove('erc-nohint')") < side

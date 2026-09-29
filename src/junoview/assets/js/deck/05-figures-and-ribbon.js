@@ -1595,6 +1595,17 @@
     if(deckEl.classList.contains('rbn-fold')) return;
     var fitKey=ribbonFitKey(bar);
     if(bar._fitKey===fitKey) return;
+    /* T539: A STATE SEEN BEFORE IS REPLAYED, NOT RE-MEASURED. Selecting
+       an object carries the ribbon to its contextual tab and deselecting
+       carries it back, and each move changed the key above -- so every
+       click on the canvas re-ran the climb below: 150ms of forced layout
+       (`over` alone 121ms) inside the mousedown, on the example deck at
+       1440px (2026-09-29 profile). The climb's answer depends only on
+       what the key already captures, so it is kept per key and put back
+       directly; a replay that does not land on the recorded result falls
+       through to the real climb. */
+    var memo=ribbonFitMemo[fitKey];
+    if(memo&&ribbonFitReplay(bar,memo,fitKey)) return;
     /* BEFORE anything is measured: a stale column count is a wrong width,
        so re-counting here is both the fix for a group that grew a control
        since the last count and the only way the density rungs below are
@@ -1708,6 +1719,43 @@
     if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
     rbnShelfScrollSync();
     bar._fitKey=ribbonFitKey(bar);
+    ribbonFitRecord(fitKey,bar);
+  }
+  var ribbonFitMemo={};
+  function ribbonFitRungs(){
+    var out=[];
+    ERCW.forEach(function(r){out.push(r[0]);});
+    ERC.forEach(function(c){out.push(c);});
+    out.push('erc-nohint');out.push('erc-nostatus');out.push('erc-tight');
+    return out;
+  }
+  function ribbonFitRecord(key,bar){
+    if(Object.keys(ribbonFitMemo).length>60) ribbonFitMemo={};
+    var cl=deckEl.classList;
+    ribbonFitMemo[key]={
+      rungs:ribbonFitRungs().filter(function(c){return cl.contains(c);}),
+      view:!!viewFolded,
+      folded:$$('.rbn-grp.rbn-folded',bar).filter(function(g){
+        return !g.classList.contains('rbn-compact');}),
+      after:bar._fitKey};
+  }
+  function ribbonFitReplay(bar,m,key){
+    if(deckEl.classList.contains('rbn-side')) return false;
+    foldViewGroup(false);
+    rbnUnfoldAll();
+    rbnFoldCompact();
+    var cl=deckEl.classList;
+    ribbonFitRungs().forEach(function(c){cl.toggle(c,m.rungs.indexOf(c)>=0);});
+    if(m.view) foldViewGroup(true);
+    m.folded.forEach(function(g){if(bar.contains(g)) rbnFoldGroup(g);});
+    sizeRibbonGroups();
+    if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
+    rbnShelfScrollSync();
+    bar._fitKey=ribbonFitKey(bar);
+    if(bar._fitKey===m.after) return true;
+    delete ribbonFitMemo[key];
+    bar._fitKey=null;
+    return false;
   }
   /* ---- the strip may not eat the ribbon --------------------------------
      The slide column and the ribbon are two tracks of ONE grid, so every
@@ -1739,12 +1787,17 @@
        and fitFilmMax calls this on every selection change as well as on
        every tab click. max-content does not depend on the container's
        width, so the answer only moves when the ribbon's CONTENTS do. */
-    var sig=TABS.join(',')+'|'+TABS.filter(tabHasContent).join(',')+'|'
-      +$$('#edit-tools .rbn-grp').filter(function(g){
-        return !g.hidden;}).length
-      +'|'+$$('#edit-tools .rbn-grp .rbn-row>*').filter(function(n){
-        return !n.hidden;}).length;
+    var sig=ribbonMinSig();
     if(sig===filmFloorSig&&filmFloorW) return filmFloorW;
+    /* T539: ONE ANSWER PER STATE, KEPT. The single-entry memo above was
+       beaten by every change of selection KIND -- a text box, a figure,
+       nothing -- each of which shows a different set of contextual
+       controls, so selecting a figure after a title re-ran the whole
+       eight-tab walk: 100ms of forced layout inside the mousedown, the
+       hitch you felt on the first click of every drag (measured
+       2026-09-29 with a CPU profile: showFmt 120ms, of it ribbonMinW
+       98ms). A deck has a handful of such states; each is measured once. */
+    if(filmFloorMemo[sig]){filmFloorSig=sig;return filmFloorMemo[sig];}
     var cl=deckEl.classList,rungs=[],had={},wasFolded=viewFolded,min;
     ERCW.forEach(function(r){rungs.push(r[0]);});
     ERC.forEach(function(c){rungs.push(c);});
@@ -1818,7 +1871,18 @@
     foldViewGroup(wasFolded);
     sizeRibbonGroups();
     filmFloorSig=sig;
+    if(Object.keys(filmFloorMemo).length>40) filmFloorMemo={};
+    filmFloorMemo[sig]=min;
     return min;
+  }
+  /* what the ribbon's floor depends on: the layout's tabs, which have
+     content, and how many groups and controls are showing */
+  function ribbonMinSig(){
+    return TABS.join(',')+'|'+TABS.filter(tabHasContent).join(',')+'|'
+      +$$('#edit-tools .rbn-grp').filter(function(g){
+        return !g.hidden;}).length
+      +'|'+$$('#edit-tools .rbn-grp .rbn-row>*').filter(function(n){
+        return !n.hidden;}).length;
   }
   /* The ceiling the strip is allowed to reach, published to CSS as
      --film-max so ONE number drives the rendered column, the handle's own
@@ -1827,12 +1891,34 @@
      The last measured floor is REMEMBERED, so folding the ribbon -- the
      one state where the floor cannot be read -- does not let the strip
      lurch wider only to be shoved back the moment it unfolds. */
-  var filmFloorW=0,filmFloorSig='';
+  var filmFloorW=0,filmFloorSig='',filmFloorMemo={},filmFloorT=0;
+  /* T539: A NEW STATE IS MEASURED AFTER THE GESTURE, NOT DURING IT. The
+     floor only caps how wide the slide strip may be dragged; nothing on
+     screen waits for it. So once there is a first answer, a state not
+     yet seen is measured a beat later, and never while a mouse button is
+     down -- the walk folds and unfolds every group, and doing that in
+     the middle of a drag is exactly the stutter this avoids. */
+  var filmPtrDown=false;
+  document.addEventListener('mousedown',function(){filmPtrDown=true;},true);
+  document.addEventListener('mouseup',function(){filmPtrDown=false;},true);
+  function fitFilmLater(){
+    if(filmFloorT) return;
+    filmFloorT=setTimeout(function run(){
+      if(filmPtrDown){filmFloorT=setTimeout(run,300);return;}
+      filmFloorT=0;
+      if(deckEl.hidden) return;
+      var f2=ribbonMinW();
+      if(f2){filmFloorW=f2;fitFilmMax();}
+    },350);
+  }
   function fitFilmMax(){
     var W=deckEl.clientWidth||window.innerWidth||0;
     if(!W) return 900;
-    var f=ribbonMinW();
-    if(f) filmFloorW=f;
+    var sig=ribbonMinSig();
+    var f=(sig===filmFloorSig&&filmFloorW)?filmFloorW:filmFloorMemo[sig];
+    if(!f&&!filmFloorW) f=ribbonMinW();   /* the first answer, now */
+    else if(!f) fitFilmLater();
+    if(f){filmFloorW=f;filmFloorSig=sig;}
     var hi=Math.min(900,Math.round(W*0.46));
     if(filmFloorW) hi=Math.min(hi,W-filmFloorW);
     /* 150px is the strip's own minimum and wins the tie: below the

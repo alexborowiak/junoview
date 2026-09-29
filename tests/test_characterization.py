@@ -2113,8 +2113,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T537 (2026-09-29): Clipboard group on Home.
 # T538 (2026-09-29): Search commands (Alt+Q) in the tab strip -- the ribbon
 # read live, run on its own tab.
-EXPECTED_MD5 = "946623c4d34b0cbd0250f4113e37059e"
-EXPECTED_BYTES = 4641394
+# T539 (2026-09-29): the ribbon fit is replayed per state and the strip
+# floor measured after the gesture -- selecting no longer costs a 200ms
+# frame.
+EXPECTED_MD5 = "8d0b1ffa814d35af85e488bac17f5fac"
+EXPECTED_BYTES = 4645505
 
 
 def _render_example() -> str:

@@ -10143,9 +10143,20 @@ choice in the editor (T506, T507).
   through an alias list (format painter, selection pane, slide number...).
   Driven: 'format painter' -> Copy look; 'page numbers' ran on Design;
   'fade' opened the Entrance shelf and applied Fade.
-- [ ] **T539 — Measure the gestures, and fix what is slow.** Drag, resize,
+- [x] **T539 — Measure the gestures, and fix what is slow.** Drag, resize,
   slide change and typing on a 14-slide deck with figures, timed; the
   release-of-drag rebuild and anything else over a frame is made cheaper.
+  *Done 2026-09-29.* Measured with frame logs and CPU profiles of real
+  input on the example deck at 1440: slide changes and typing never exceed
+  a 17ms frame, drag moves hold p95 17ms, but the mousedown that selects
+  cost one 180-210ms frame every time -- showFmt 175ms, of which
+  fitEditRibbon's climb 150ms (its single-entry key missed on every tab
+  move selection makes) and ribbonMinW's eight-tab walk 98ms. The fit's
+  outcome is now kept per key and replayed (verified against the recorded
+  result, else the climb runs), and the strip floor is kept per ribbon
+  state with new states measured after the gesture, never while a button
+  is down. Selecting now costs 41ms of script; a deselect-select-drag
+  cycle holds every frame within 33ms.
 - [ ] **T540 — Zoom like PowerPoint.** Ctrl+wheel zooms at the pointer,
   Ctrl+0 fits, and the status bar's Fit button does the same.
 
