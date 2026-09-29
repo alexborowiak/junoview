@@ -1224,6 +1224,13 @@
     } else el.textContent='';
 
     el.className='deck-status '+source;
+    /* T526: AN AUTOSAVE ON ITS WAY IS NOT A WARNING. Every edit painted
+       the readout in the warning colour for the fifteen seconds until
+       the timer fired, so the bar flashed orange all day for the one
+       state that needs nothing from you (2026-09-29 audit). The colour
+       is kept for the states that do: autosave off, a file waiting on a
+       click, a full browser. */
+    if(source==='draft'&&auto&&deckEdited()) el.classList.add('pending');
     /* AFTER the className assignment, which would wipe the class */
     markSaveClickable(el);
     /* the readout RENAMES ITSELF between fits ("" -> "autosaved to

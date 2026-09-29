@@ -132,6 +132,10 @@ body.deck-open{overflow:hidden;}
   color:var(--warning);}
 .deck-status.saved{background:color-mix(in srgb,var(--success) 15%,transparent);
   color:var(--success);}
+/* T526: "unsaved — saving…" with the autosave armed is the ordinary
+   state after every edit; it reads quietly, not as a warning */
+.deck-status.draft.pending{background:var(--surface-active);
+  color:var(--chrome-ink-2);}
 .deck-status:empty{display:none;}
 .deck-spring{flex:1;}
 .dbtn{font-family:var(--mono);font-size:11px;

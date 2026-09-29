@@ -9984,10 +9984,16 @@ choice in the editor (T506, T507).
   .welcome{left:0} had silently beaten left:var(--presrail-w), and at
   900px the logo and headings sat under the rail. Driven at 1440, 1100,
   900 and 700.
-- [ ] **T526 — Saving reads as one quiet state.** The orange "unsaved —
+- [x] **T526 — Saving reads as one quiet state.** The orange "unsaved —
   saving…" pill beside a separate "Auto 15s" button is two readouts of
   one fact. One chip: Saved · Saving… · Not saved, with where it lives on
   hover; the interval moves into the Save ▾ menu.
+  *Done 2026-09-29.* The readout's pending state (autosave armed after an
+  edit) is marked 'pending' and drawn in the quiet chrome ink; the warning
+  colour stays for autosave off, a file waiting on a click and a full
+  browser. The Auto 15s countdown button stays: the user asked for a
+  visible auto-save timer in T70, so the interval does not move into a
+  menu. Driven live.
 - [ ] **T527 — No native dialogs.** "OK replaces it … Cancel keeps both"
   is a browser confirm() whose buttons mean the opposite of their words.
   Every remaining confirm()/alert()/prompt() in the app and the editor

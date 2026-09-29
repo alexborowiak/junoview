@@ -2080,8 +2080,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # left of the canvas, opens the Overview map.
 # T525 (2026-09-29): the Home screen starts beside the rail, has room for
 # two columns of doors, and wraps a header's doors as one group.
-EXPECTED_MD5 = "67f356637d2f65fbfa60445b5e3b4874"
-EXPECTED_BYTES = 4586619
+# T526 (2026-09-29): an armed autosave's 'unsaved — saving…' reads in the
+# quiet chrome ink, not the warning colour.
+EXPECTED_MD5 = "186eb3949471edbaf898fbfea2d0ca3d"
+EXPECTED_BYTES = 4587310
 
 
 def _render_example() -> str:
