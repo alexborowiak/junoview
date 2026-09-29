@@ -9917,3 +9917,189 @@ any reading. The rest are T466 onwards.
   objects one click away above the canvas, labels its slide-number chips and
   says Reset appearance explicitly. Placement and Individual boxes were
   driven with the drawer closed, open, filtered and closed while filtered.
+
+## Group 18 — the 2026-09-29 PowerPoint-parity pass
+
+The user, 2026-09-29: "it still doesn't feel as smooth as power point.
+Also the way some things appear doesn't feel very easy to use — the
+feature labels are confusing, the layout is odd, or there are features
+missing ... I want this to be as amazing as possible, so nothing is too
+small." An 85-point audit (markup, code and a live drive at 1440×900) was
+approved as a whole ("Please get on to these"). It is filed here as the
+tasks below, one commit each.
+
+**Kept as already decided, not re-opened** (the audit proposed these; an
+earlier, explicit user decision says otherwise, so they stand):
+Insert stays split into Images and Text (T220, the user's own split); the
+Style system stays a never-folding tile on Home (T444: "I NEVER want this
+to be hidden"); selecting an object still carries the ribbon to its
+contextual tab when no pane is open (T141, T192, T410, T481); text styles,
+style sets and citations stay on Text (T444); the ribbon keeps nine
+layouts (T139 — the help page's "more than a hundred" is the stale part,
+fixed in T531); the open-items rail keeps its own Collapse / Auto-hide
+choice in the editor (T506, T507).
+
+### What you see first
+
+- [ ] **T522 — Thumbnails show the slide.** A placed Markdown note draws
+  as a white card of grey rules in the strip, so every text slide made by
+  Create slides looks identical and none looks like the dark slide it
+  indexes. Draw the note's own words, in the slide's own colours, the way
+  a text box already is; a code cell shows its first lines of code.
+- [ ] **T523 — Create slides never clips its words.** The first slide of
+  the example deck cuts the descenders off its last line: the note box
+  is placed a few pixels shorter than its text. Size placed notes from
+  their rendered height, and grow (never clip) a note whose words outgrow
+  its box.
+- [ ] **T524 — A status bar.** "Slide 3 of 14 · Methods", the zoom, and a
+  Fit button along the bottom edge, where PowerPoint keeps them; the
+  floating zoom widget moves into it.
+- [ ] **T525 — The Home screen's buttons stay in their own column.** The
+  Recent presentations row's Folder button straddles the Notebooks
+  heading at 1440px.
+- [ ] **T526 — Saving reads as one quiet state.** The orange "unsaved —
+  saving…" pill beside a separate "Auto 15s" button is two readouts of
+  one fact. One chip: Saved · Saving… · Not saved, with where it lives on
+  hover; the interval moves into the Save ▾ menu.
+- [ ] **T527 — No native dialogs.** "OK replaces it … Cancel keeps both"
+  is a browser confirm() whose buttons mean the opposite of their words.
+  Every remaining confirm()/alert()/prompt() in the app and the editor
+  becomes the in-app ask dialog, with verbs on its buttons.
+- [ ] **T528 — Nothing 403s on load.** One resource is refused on every
+  app start.
+
+### Words
+
+- [ ] **T529 — Group names say what is in them.** Presentation type (it
+  holds text styles), Build order (it holds Preview, Quick animate, the
+  panel and Layers), Page furniture, Whole slide, Focus and the rest are
+  re-read against their contents, live, and renamed where they mislead.
+- [ ] **T530 — Buttons that share a name stop sharing it.** Table's
+  Row / Row / Column / Column (add and remove, told apart only by icon),
+  Arrange's Left / Right (rotate) beside Paragraph's Left / Right (align),
+  Text ▾ and Fill ▾ (colours), Main, Optional, and the several Layers,
+  Notes, History and Duplicate buttons.
+- [ ] **T531 — The help page describes this ribbon.** "Home → Shared
+  colours", "Insert → Video / audio", "File → History…", "Check
+  consistency" and "more than a hundred" layouts all name things that
+  moved. Fix every path, and add a test that each "Tab → Control" path in
+  help.html names a real tab and a real control on it.
+- [ ] **T532 — "Version" means one thing.** Slide versions, talk-length
+  versions, saved history and poster drafts all say Version.
+
+### Feel
+
+- [ ] **T533 — The right-click menu leads with the everyday.** 45 rows on
+  a title: one "Insert a reference to Figure n" row per figure, "Nothing
+  copied yet", and a chart and a guide box offered on a text box. Lead
+  with the eight things you do, fold the rest, and put the figure
+  references in one submenu.
+- [ ] **T534 — The shortcuts PowerPoint users type.** F2 / Enter edits the
+  selected box, Tab / Shift+Tab walks the objects, Ctrl+K link,
+  Ctrl+E/L/R/J align, Ctrl+Shift+> / < size, Ctrl+M new slide,
+  Ctrl+Space clear formatting — where none is already taken.
+- [ ] **T535 — Format painter behaves like one.** Double-click keeps it on
+  until Esc; Ctrl+Shift+C / Ctrl+Shift+V copy and paste a look.
+- [ ] **T536 — A mini toolbar by the selection.** Select words or a box
+  and the everyday formatting floats beside it: typeface, size, bold,
+  italic, underline, colour, bullets, alignment.
+- [ ] **T537 — Clipboard on Home.** Paste (with in place, here, and as
+  plain text), Cut, Copy and Format painter, first on Home as in
+  PowerPoint.
+- [ ] **T538 — Search the commands.** A "Search commands" box (Alt+Q)
+  finds any ribbon control by its name, tooltip or tab and runs it — the
+  answer to "I know it exists, where is it?".
+- [ ] **T539 — Measure the gestures, and fix what is slow.** Drag, resize,
+  slide change and typing on a 14-slide deck with figures, timed; the
+  release-of-drag rebuild and anything else over a frame is made cheaper.
+- [ ] **T540 — Zoom like PowerPoint.** Ctrl+wheel zooms at the pointer,
+  Ctrl+0 fits, and the status bar's Fit button does the same.
+
+### Text and formatting
+
+- [ ] **T541 — Superscript and subscript.** Buttons, Ctrl+Shift+= and
+  Ctrl+=, kept by the sanitizer and exported to .pptx.
+- [ ] **T542 — Vertical alignment in a box.** Top, middle, bottom; saved,
+  rendered, imported and exported.
+- [ ] **T543 — Highlighter for words.** A text highlight colour on the
+  selected run, exported to .pptx.
+- [ ] **T544 — Clear formatting and Change case.** Ctrl+Space, and
+  Sentence case / lowercase / UPPERCASE / Capitalise Each Word.
+- [ ] **T545 — AutoCorrect as you type.** Straight quotes curl, -- becomes
+  an en dash, (c) ©, -> →; one switch turns it off.
+- [ ] **T546 — Link has a button.** "Make this a link…" is only on the
+  right-click menu; a Link button (Ctrl+K) on Text and the mini toolbar.
+- [ ] **T547 — Text in columns.** One, two or three columns in a box, with
+  a gap, exported as the .pptx column count.
+
+### Shapes, pictures, tables
+
+- [ ] **T548 — Shadow.** None / soft / hard / lifted on any shape,
+  picture, figure or box; exported as a .pptx outer shadow.
+- [ ] **T549 — Flip and quarter turns.** Flip horizontal, flip vertical,
+  rotate 90° either way; saved, rendered and exported.
+- [ ] **T550 — Picture corrections.** Brightness, contrast, saturation and
+  greyscale presets with Reset picture, kept as settings over the
+  untouched original, exported to .pptx.
+- [ ] **T551 — Tables grow up.** Merge and split cells, cell fill colour,
+  and a small table style gallery (header, banded rows, first column).
+- [ ] **T552 — Alt text has a door on the Object tab.**
+
+### Slides, shows and output
+
+- [ ] **T553 — Transitions: a duration and three more.** Push, Wipe and
+  Zoom beside Cut, Fade and Move, each with a duration; exported.
+- [ ] **T554 — Hide slide.** A slide that never plays (PowerPoint's Hide
+  Slide), distinct from Optional (skipped only when running late).
+- [ ] **T555 — Header & footer, with the date.** The Page furniture group
+  says what it is, and a {date} field joins {n}, {N} and the section
+  fields.
+- [ ] **T556 — Handouts and notes pages.** Export PDF can print three or
+  six slides a page with lines, or each slide above its notes.
+- [ ] **T557 — A slide sorter.** A full-screen grid of the slides you can
+  drag to reorder, select several of and delete, duplicate or section.
+- [ ] **T558 — Ink while presenting.** Pen, highlighter and eraser in the
+  show, never saved into the slides unless you keep them.
+- [ ] **T559 — Start from a template.** New presentation offers a handful
+  of starting decks (talk, lab meeting, poster, defence) as well as blank.
+- [ ] **T560 — Icons.** An Icons gallery inserts a simple line icon as a
+  shape you can recolour and resize.
+- [ ] **T561 — Diagrams.** Process, cycle, list and hierarchy diagrams
+  placed as ordinary grouped shapes and arrows you can edit.
+- [ ] **T562 — Chart data you can type into.** A grid editor for a chart's
+  numbers, beside the preview (if the chart pane does not already have
+  one, which this task checks first).
+- [ ] **T563 — Comments.** A comment pinned to a slide or an object,
+  listed in a Comments pane, never presented, printed or exported.
+- [ ] **T564 — Record narration.** Record audio per slide while
+  rehearsing; it plays in the show and travels in the saved deck.
+- [ ] **T565 — The accessibility check.** Missing alt text, reading order
+  and contrast in the Review centre, each with a fix.
+
+### Around the editor
+
+- [ ] **T566 — The notebook toolbar reads.** "PlotsOn", "CodeFold", three
+  unnamed "Choose" buttons and two unexplained 100% controls.
+- [ ] **T567 — A tour of the editor.** The welcome tour covers the
+  notebook; the slide editor gets its own short one on first entry.
+- [ ] **T568 — Dialogs agree on their buttons.** Cancel on the left, the
+  verb on the right, Esc cancels, Enter does the verb, everywhere.
+- [ ] **T569 — The File menu keeps the destructive rows apart.** Discard
+  changes and Delete presentation sit at the foot, in their own section,
+  and confirm in the app.
+- [ ] **T570 — The typeface list shows the typefaces.** Each name drawn in
+  its own face, and the faces you used recently at the top.
+- [ ] **T571 — Bullets you can style.** A bullet's colour and size, and a
+  numbered list that starts at any number.
+- [ ] **T572 — AutoFit is on the row.** Shrink to fit / Do not autofit sit
+  with Paragraph, not only on the right-click menu.
+- [ ] **T573 — Find a shape by name.** The Shapes gallery takes a search
+  and keeps the shapes you used last at the front.
+- [ ] **T574 — Presenter view, checked against PowerPoint's.** Timer pause
+  and reset, next-slide preview, notes text size, slide jump; whatever is
+  missing is added.
+- [ ] **T575 — Touch and pen.** Move, resize and rotate answer pointer
+  events, so a touchscreen or a pen works on the canvas.
+- [ ] **T576 — Selection like PowerPoint.** Shift-click toggles, a second
+  click on stacked objects reaches the one underneath, Esc steps out of
+  a group; each checked and whatever is missing added.
