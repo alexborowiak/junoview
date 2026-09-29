@@ -1452,8 +1452,50 @@
   /* the three alignments, as buttons (T189) */
   ALIGNS.forEach(function(p){
     onBtn('#fmt-al-'+(p[0]==='center'?'center':p[0]),function(){
-      paraApply('a:'+p[0]);});
+      keepTyping(function(){paraApply('a:'+p[0]);});});
   });
+  /* T534: AN ALIGNMENT MADE WHILE TYPING LEAVES YOU TYPING. The box is
+     redrawn by the change, so the caret went with the old node and the
+     next key -- after Ctrl+E, the one PowerPoint users press mid-line --
+     went nowhere. The caret's place is read as a character offset
+     before, and put back in the new box after. */
+  function keepTyping(fn){
+    var el=activeTextEditable();
+    if(!el){fn();return;}
+    var item=el.closest?el.closest('.an-item[data-idx]'):null;
+    var idx=item?item.getAttribute('data-idx'):null;
+    var at=null;
+    try{
+      var sel=window.getSelection();
+      if(sel&&sel.rangeCount){
+        var r=sel.getRangeAt(0),pre=r.cloneRange();
+        pre.selectNodeContents(el);pre.setEnd(r.startContainer,r.startOffset);
+        at={s:pre.toString().length,n:r.toString().length};
+      }
+    }catch(e){}
+    fn();
+    if(idx==null) return;
+    var layer=stage.querySelector('.annot-layer');
+    var nt=layer&&layer.querySelector('.an-item[data-idx="'+idx+'"] .an-tx');
+    if(!nt||nt===el) return;
+    if(nt._beginEdit) nt._beginEdit();
+    nt.focus();
+    if(!at) return;
+    try{
+      var walk=document.createTreeWalker(nt,NodeFilter.SHOW_TEXT,null);
+      var node,seen=0,rg=document.createRange(),started=false;
+      while((node=walk.nextNode())){
+        var len=node.nodeValue.length;
+        if(!started&&seen+len>=at.s){
+          rg.setStart(node,at.s-seen);started=true;}
+        if(started&&seen+len>=at.s+at.n){
+          rg.setEnd(node,at.s+at.n-seen);break;}
+        seen+=len;
+      }
+      if(started){
+        var sl2=window.getSelection();sl2.removeAllRanges();sl2.addRange(rg);}
+    }catch(e2){}
+  }
   /* indent/outdent only mean anything with the caret inside the box, so
      they act on the live contenteditable rather than the model, and the
      blur handler writes the result back like any other typing */

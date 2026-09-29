@@ -2100,8 +2100,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Custom show, not a Version.
 # T533 (2026-09-29): the right-click menu refers to figures through one
 # picker row and puts Paste beside Cut and Copy.
-EXPECTED_MD5 = "63cf699ce6603f8c991030de760890ae"
-EXPECTED_BYTES = 4601612
+# T534 (2026-09-29): PowerPoint's shortcuts (F2/Enter, Tab,
+# Ctrl+B/I/U/L/E/R/M, Ctrl+Shift+>/<, Ctrl+]/[), Ctrl+S from inside a box,
+# and a canvas click takes the keyboard.
+EXPECTED_MD5 = "bdb44fc8ccf473d686edbe9d2c5974af"
+EXPECTED_BYTES = 4609678
 
 
 def _render_example() -> str:

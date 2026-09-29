@@ -1462,6 +1462,15 @@
           false,null);}catch(err){}
         return;
       }
+      /* T534: TWO KINDS OF KEY ARE THE DECK'S EVEN WHILE TYPING. Ctrl+S
+         is the save: stopped here, it never reached the deck's handler
+         -- whose comment says it flushes and saves from inside a box --
+         so the browser's own "Save page as" opened over the editor
+         (driven 2026-09-29: the keydown came back not prevented). And
+         the PowerPoint text keys (Ctrl+L/E/R align, Ctrl+Shift+> / <
+         size) act on the box being typed in. */
+      if((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==='s'||e.key==='S')) return;
+      if(pptTextKey(e)){e.preventDefault();e.stopPropagation();return;}
       /* while typing, the deck's own single-letter shortcuts (R, G, …)
          must not fire — they would arm a tool mid-sentence */
       e.stopPropagation();
@@ -1970,6 +1979,9 @@
     }
     td.addEventListener('blur',commit,{once:true});
     td.addEventListener('keydown',function(e){
+      /* T534: Ctrl+S saves from a cell too, as from a text box */
+      if((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==='s'||e.key==='S')) return;
+      if(pptTextKey(e)){e.preventDefault();e.stopPropagation();return;}
       e.stopPropagation();
       /* Tab along, Enter down - the two moves that make a table usable
          without reaching for the mouse between every cell */

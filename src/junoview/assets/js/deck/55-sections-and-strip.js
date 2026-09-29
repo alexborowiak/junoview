@@ -2371,6 +2371,80 @@
        (2026-08-19, user: "takes you to some cursed view") */
     setUIMode(presentFrom==='edit'?'edit':'create');
   });
+  /* ---- T534: THE SHORTCUTS POWERPOINT USERS TYPE --------------------
+     F2 / Enter start typing in the selected box; Tab and Shift+Tab walk
+     the objects on the slide; Ctrl+B / I / U format a selected box, not
+     only selected words; Ctrl+L / E / R align; Ctrl+Shift+> / < size the
+     text; Ctrl+M adds a slide; Ctrl+] / [ bring forward and send back,
+     with Shift to the front and the back -- the two the Arrange buttons'
+     tooltips had promised since they were written, and nothing handled
+     (2026-09-29 audit). Ctrl+K stays the rail's Find from anywhere. */
+  function pptClick(sel){
+    var b=$(sel); if(!b||b.disabled) return false;
+    b.click();return true;
+  }
+  function pptTextish(){
+    if(selAnnot==='t'||selAnnot==='s') return true;
+    var s=pres.slides[cur],a=(s&&typeof selAnnot==='number')
+      ?(s.annots||[])[selAnnot]:null;
+    return !!(a&&(a.k==='text'||a.k==='table'||a.k==='cell'));
+  }
+  /* the keys that also work with a caret in a box */
+  function pptTextKey(e){
+    if(!(e.ctrlKey||e.metaKey)||e.altKey) return false;
+    var k=e.key;
+    if(!e.shiftKey&&(k==='l'||k==='L')) return pptClick('#fmt-al-left');
+    if(!e.shiftKey&&(k==='e'||k==='E')) return pptClick('#fmt-al-center');
+    if(!e.shiftKey&&(k==='r'||k==='R')) return pptClick('#fmt-al-right');
+    if(e.shiftKey&&(k==='>'||e.code==='Period')) return pptClick('#fmt-bigger');
+    if(e.shiftKey&&(k==='<'||e.code==='Comma')) return pptClick('#fmt-smaller');
+    return false;
+  }
+  function pptEditKey(e){
+    var layer=stage.querySelector('.annot-layer');
+    var ctrl=e.ctrlKey||e.metaKey,any=selAnnot!==null||selIdxs().length;
+    /* only from the canvas: Enter on a focused ribbon button presses it,
+       and Tab there walks the ribbon, as they must for the keyboard */
+    var t=e.target,onCanvas=(t===document.body)
+      ||!!(t.closest&&t.closest('#deck-stage'));
+    /* start typing: the double-click, from the keyboard */
+    if(!ctrl&&!e.altKey&&(e.key==='F2'||e.key==='Enter')&&onCanvas&&layer
+       &&selIdxs().length<=1&&selAnnot!==null){
+      var s=pres.slides[cur],a=typeof selAnnot==='number'
+        ?(s.annots||[])[selAnnot]:null;
+      if(a&&typeof isMaths==='function'&&isMaths(a)&&window.SemDeckEquation){
+        window.SemDeckEquation(selAnnot);return true;}
+      if(selAnnot==='t'||selAnnot==='s'||(a&&a.k==='text')){
+        focusText(layer,selAnnot);return true;}
+      return false;
+    }
+    /* walk the objects, in the order the Layers pane lists them */
+    if(!ctrl&&!e.altKey&&e.key==='Tab'&&onCanvas&&layer){
+      var s2=pres.slides[cur]; if(!s2) return false;
+      var ring=[];
+      if(s2.layout==='title'){ring.push('t');ring.push('s');}
+      (s2.annots||[]).forEach(function(x,i){
+        if(x&&!x.hide&&!lockedAll(x)) ring.push(i);});
+      if(!ring.length) return false;
+      var at=ring.indexOf(selAnnot);
+      var nx=at<0?(e.shiftKey?ring.length-1:0)
+        :(at+(e.shiftKey?-1:1)+ring.length)%ring.length;
+      leaveGroup(layer);
+      selectAnnot(layer,ring[nx]);
+      return true;
+    }
+    if(!ctrl||e.altKey) return false;
+    if(!e.shiftKey&&(e.key==='m'||e.key==='M')) return pptClick('#hm-newslide');
+    if(e.code==='BracketRight'&&any)
+      return pptClick(e.shiftKey?'#fmt-front':'#fmt-forward');
+    if(e.code==='BracketLeft'&&any)
+      return pptClick(e.shiftKey?'#fmt-back':'#fmt-backward');
+    if(!pptTextish()) return false;
+    if(!e.shiftKey&&(e.key==='b'||e.key==='B')) return pptClick('#fmt-bold');
+    if(!e.shiftKey&&(e.key==='i'||e.key==='I')) return pptClick('#fmt-ital');
+    if(!e.shiftKey&&(e.key==='u'||e.key==='U')) return pptClick('#fmt-under');
+    return pptTextKey(e);
+  }
   document.addEventListener('keydown',function(e){
     if(picking>=0){
       if(e.key==='Escape'){e.preventDefault();endPick();}
@@ -2389,7 +2463,7 @@
        saving nothing. Flush first, then let the save branch below run. */
     if(e.target.isContentEditable){
       if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')) flushTextEdits();
-      else return;
+      else {if(pptTextKey(e)) e.preventDefault();return;}
     }
     if(e.key==='Escape'){
       var vf=$('#vfull');
@@ -2524,6 +2598,10 @@
           ?(allA.length+' item'+(allA.length===1?'':'s')+' selected')
           :'Nothing on this slide to select');
       }
+      /* T534: THE KEYS POWERPOINT HANDS HAVE. Each drives the real
+         ribbon button, as R/G/H/B do below, so a key can never disagree
+         with the control it stands for. */
+      else if(pptEditKey(e)){e.preventDefault();}
       /* T93, AND IT MUST COME FIRST. The plain branch below matches 'D'
          as well as 'd', and e.key is 'D' whenever Shift is down -- so
          Ctrl+Shift+D already fired today as a silent alias for plain

@@ -10089,10 +10089,21 @@ choice in the editor (T506, T507).
   Repeat on slides, make-default (user, 2026-09-11) and 'shows with'
   (T162) stay above More. Driven: the title's menu, and a reference
   inserted through the picker.
-- [ ] **T534 — The shortcuts PowerPoint users type.** F2 / Enter edits the
+- [x] **T534 — The shortcuts PowerPoint users type.** F2 / Enter edits the
   selected box, Tab / Shift+Tab walks the objects, Ctrl+K link,
   Ctrl+E/L/R/J align, Ctrl+Shift+> / < size, Ctrl+M new slide,
   Ctrl+Space clear formatting — where none is already taken.
+  *Done 2026-09-29.* Driven with real key events: F2/Enter start typing in
+  a selected box (an equation opens its editor), Tab/Shift+Tab walk the
+  slide's objects, Ctrl+B/I/U format a selected box, Ctrl+L/E/R align and
+  Ctrl+Shift+>/< size (with the caret in a box too; keepTyping puts the
+  caret back after the redraw, so F2, End, Ctrl+E and typing carries on),
+  Ctrl+M adds a slide, Ctrl+]/[ (Shift: front/back) arrange -- the
+  tooltips had promised those two and nothing handled them. Found on the
+  way and fixed: Ctrl+S with a caret in a box went to the browser's Save
+  page as (the box stopped every key), and a canvas click never moved
+  keyboard focus, so Enter re-pressed the last ribbon button. Ctrl+K stays
+  the rail's Find. The help page lists them all.
 - [ ] **T535 — Format painter behaves like one.** Double-click keeps it on
   until Esc; Ctrl+Shift+C / Ctrl+Shift+V copy and paste a look.
 - [ ] **T536 — A mini toolbar by the selection.** Select words or a box

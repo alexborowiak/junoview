@@ -120,7 +120,8 @@ def test_the_armed_canvas_is_a_picker_not_an_editor(out):
     # the window grew when T168's sequencing mode took the same door,
     # ahead of matching. What this guards is that BOTH modes are decided
     # at the top of the one handler, before any select/drag ladder runs.
-    head = body[:1600]
+    # (T534 put the focus hand-over first, and the window grew again)
+    head = body[:2400]
     assert "if(typeof seqOn==='function'&&seqOn()){" in head
     assert "if(matchArm){" in head
     assert head.index("if(matchArm){") < head.index("if(tool==='select')")

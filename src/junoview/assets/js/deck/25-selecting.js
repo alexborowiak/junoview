@@ -3176,6 +3176,15 @@
     layer.addEventListener('mousedown',function(ev){
       if(mode!=='edit') return;
       var t=ev.target;
+      /* T534: THE KEYBOARD FOLLOWS THE CLICK. Every canvas gesture
+         preventDefaults its mousedown, and that also stops the browser
+         moving focus -- so after pressing a ribbon button and then
+         clicking an object, Enter pressed that button AGAIN and Tab
+         walked the ribbon instead of the slide (2026-09-29 audit). A
+         click on the page hands the keys to the page; a box being typed
+         in is on the page, and keeps them. */
+      var fa=document.activeElement;
+      if(fa&&fa!==document.body&&fa.blur&&!layer.contains(fa)) fa.blur();
       /* WHILE A MATCH IS ARMED the canvas is a picker, not an editor: the
          next thing you press is the object you meant, and selecting or
          dragging it instead would be the wrong answer to a gesture you
