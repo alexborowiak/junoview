@@ -7840,7 +7840,13 @@
       imgs.forEach(function(im){io.observe(im);});
     }
     /* does the folder exist at all? one HEAD-ish probe decides whether the
-       section is offered, so a local render never shows broken frames */
+       section is offered, so a local render never shows broken frames.
+       T528: ONLY WHERE IT CAN. The folder is the published site's
+       (docs/gifs/); the app's own server and a file:// render never have
+       it, and asking anyway put a refused request (403 from the app, a
+       not-found from a file) in the console of every start. The web
+       build is the one place the answer can be yes. */
+    if(APP.mode!=='web'){t.hidden=true;return;}
     var probe=new Image();
     probe.addEventListener('load',function(){t.hidden=false;paint();});
     probe.addEventListener('error',function(){t.hidden=true;});

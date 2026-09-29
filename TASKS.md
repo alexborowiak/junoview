@@ -10010,8 +10010,14 @@ choice in the editor (T506, T507).
   T475. Driven: delete (Escape keeps), a notice over the notebook, and
   both import answers. A test scans every asset script for the three
   calls.
-- [ ] **T528 — Nothing 403s on load.** One resource is refused on every
+- [x] **T528 — Nothing 403s on load.** One resource is refused on every
   app start.
+  *Done 2026-09-29.* The refused request was the Home screen's demo-reel
+  probe (gifs/code_folding.gif), which only the published site can answer;
+  the app's server refused it with a 403 and a file:// render reported it
+  missing. The probe now runs only in the web build. Driven: fresh app
+  start and open editor log no 4xx and no console error; the web build
+  with docs/gifs still shows the reel.
 
 ### Words
 

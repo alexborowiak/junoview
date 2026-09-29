@@ -2085,8 +2085,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T527 (2026-09-29): no native confirm/alert/prompt anywhere -- every
 # question goes through the editor's own dialog (askYes, askTell), which
 # moves to the page body while the editor is hidden.
-EXPECTED_MD5 = "68fc283b1dcfe101dcdbf438d2b3ca5d"
-EXPECTED_BYTES = 4596037
+# T528 (2026-09-29): the demo reel's probe runs only in the web build, so
+# the app no longer logs a refused request on start.
+EXPECTED_MD5 = "04d03f632d6344b0e0d044da7949d710"
+EXPECTED_BYTES = 4596421
 
 
 def _render_example() -> str:
