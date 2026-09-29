@@ -2074,8 +2074,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # placement controls precede the canvas.
 # T522 (2026-09-29): a thumbnail draws a placed note or code cell as its own
 # rendered body at the canvas's zoom rule.
-EXPECTED_MD5 = "8b49a9a4987caccf016f9f31e0c3b3ac"
-EXPECTED_BYTES = 4579275
+# T523 (2026-09-29): Create slides measures each note at the slide width
+# before laying it out; a note too long or too wide shrinks its words.
+EXPECTED_MD5 = "e93bc93c121190d322b021538836bdbc"
+EXPECTED_BYTES = 4583276
 
 
 def _render_example() -> str:

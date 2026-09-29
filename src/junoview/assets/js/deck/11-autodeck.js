@@ -43,7 +43,31 @@
         var it=e.it;
         return typeof it.words==='number'&&it.words>0?it.words:0;
       }
+      /* T523: THE HEIGHT THE WORDS REALLY TAKE. The estimate below scales
+         the notebook's measurement to the deck's 21pt body, and on the
+         example notebook it came up short on four slides of fourteen --
+         slide 13 by two whole lines, clipped (2026-09-29 audit). The
+         import passes plan.measure, which renders the note at the slide
+         width and reads it; the estimate stays for a plan without one
+         (and for the tests that run this builder on its own). */
+      function noteNeed(e,width){
+        var m=(plan&&typeof plan.measure==='function')
+          ?+plan.measure(e.it,Math.max(1,+width||84)):0;
+        return m>0?m:noteEstimate(e,width);
+      }
       function noteHeight(e,width){
+        return Math.max(9,Math.min(88,noteNeed(e,width)));
+      }
+      /* ...and how much wider than its column it is drawn: a display
+         equation or a table does not wrap, so beside a figure it was
+         cut off at the column's edge (slide 9 of the example). 1 when it
+         fits, or when nothing measured it. */
+      function noteWide(e,width){
+        var m=(plan&&typeof plan.measureWide==='function')
+          ?+plan.measureWide(e.it,Math.max(1,+width||84)):1;
+        return m>1?m:1;
+      }
+      function noteEstimate(e,width){
         var it=e.it,px=+it.sourceHeight||0,lines=+it.lines||0;
         var w=Math.max(1,+width||84),srcW=+it.sourceWidth||0;
         /* 28 CSS px at the deck's 1280x720 reference is 21pt. Scale the
@@ -60,11 +84,10 @@
         var glyphScale=28/srcFont;
         var wrapScale=srcW?Math.max(1,
           srcW*glyphScale/(w*12.8)):1;
-        if(px) return Math.max(9,Math.min(88,
-          (px*typeScale*wrapScale+8)/7.2));
+        if(px) return (px*typeScale*wrapScale+8)/7.2;
         var n=wordsOf(e),perLine=Math.max(6,Math.floor(w/4.5));
         var rows=Math.max(lines||0,n?Math.ceil(n/perLine):0);
-        return rows?Math.max(9,Math.min(88,4+rows*5.25)):14;
+        return rows?4+rows*5.25:14;
       }
       function noteWidth(e){
         var it=e.it,px=+it.sourceWidth||0;
@@ -81,6 +104,13 @@
         if(it.nbpath) a.nbpath=it.nbpath;
         if(it.kind==='note'){
           a.autoNote=1;
+          /* a note longer than the room it was given is not clipped: its
+             words shrink until they fit, the way an AutoFit box does, and
+             never below 60% (T523) */
+          var need=noteNeed(e,box.w),wide=noteWide(e,box.w),ts=1;
+          if(need>box.h+0.5) ts=box.h/need;
+          if(wide>1) ts=Math.min(ts,1/wide);
+          if(ts<1) a.ts=Math.max(0.6,+ts.toFixed(3));
         }
         return {a:a,seq:e.seq};
       }
@@ -112,7 +142,8 @@
              side-by-side pair only needs the prose to fit its column.
              If it does not, put the first item on this slide and revisit
              the second next time; decrementing i preserves source order. */
-          var pairFits=tall?pairH<=h-35:pairH<=h;
+          var pairFits=(tall?pairH<=h-35:pairH<=h)
+            &&noteWide(md,tall?84:42)<=1;
           if(!pairFits){
             if(md.seq<fig.seq) fig=null;
             else md=null;
@@ -160,8 +191,63 @@
   /* the plan, into a NEW presentation that opens in the editor. Never
      replaces the deck you had: T236 removed the old Auto-build for
      exactly that. */
+  /* T523: measure a note the way the canvas will draw it -- the frame's
+     own classes, the deck's 1280x720 reference, zoom 1 -- in a host off
+     the screen, and give the builder its height as a page percentage.
+     Memoised per note and width: the builder asks the same question
+     while it tries a note beside a figure and then on its own. */
+  function autoNoteMeasurer(){
+    var host=document.createElement('div');
+    host.setAttribute('aria-hidden','true');
+    host.style.cssText='position:fixed;left:-30000px;top:0;width:1280px;'
+      +'visibility:hidden;pointer-events:none;';
+    document.body.appendChild(host);
+    var memo={},memoW={};
+    function measure(it,w){
+      var key=String(it.ref)+'|'+(+w).toFixed(2);
+      if(memo[key]!=null) return memo[key];
+      memoW[key]=1;
+      var b=(typeof framePart==='function')
+        ?framePart(it.ref,it.part||'output'):null;
+      if(!b) return (memo[key]=0);
+      $$('[id]',b).forEach(function(n){n.removeAttribute('id');});
+      var c=document.createElement('div');
+      c.className='an-cell an-auto-note';
+      c.style.cssText='position:relative;height:auto;width:'
+        +(1280*w/100).toFixed(2)+'px;';
+      c.appendChild(b);host.appendChild(c);
+      var n=c.querySelector('.note')||b;
+      /* + the frame's two 1.5px borders, then a hair of slack for the
+         rounding between this and the zoomed canvas */
+      var px=Math.max(n.scrollHeight||0,b.scrollHeight||0);
+      /* the right-most edge of anything inside, against the column */
+      var nr=n.getBoundingClientRect(),maxR=nr.right;
+      $$('*',n).forEach(function(el){
+        var r=el.getBoundingClientRect();
+        if(r.width&&r.right>maxR) maxR=r.right;});
+      var wide=nr.width?(maxR-nr.left)/nr.width:1;
+      memoW[key]=wide>1.02?wide:1;
+      host.removeChild(c);
+      return (memo[key]=px?(px+3)/7.2+0.8:0);
+    }
+    measure.wide=function(it,w){
+      var key=String(it.ref)+'|'+(+w).toFixed(2);
+      if(memoW[key]==null) measure(it,w);
+      return memoW[key]||1;
+    };
+    measure.done=function(){
+      if(host.parentNode) host.parentNode.removeChild(host);};
+    return measure;
+  }
   function autoDeckImport(plan){
-    var pr=autoDeckBuild(plan);
+    var measure=autoNoteMeasurer(),pr;
+    try{
+      if(plan){plan.measure=measure;plan.measureWide=measure.wide;}
+      pr=autoDeckBuild(plan);
+    } finally {
+      measure.done();
+      if(plan){delete plan.measure;delete plan.measureWide;}
+    }
     var where=(plan&&plan.scopeLabel)||'the notebook';
     if(!pr.slides.length){
       toast('Nothing to make slides from in '+where

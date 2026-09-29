@@ -9952,11 +9952,19 @@ choice in the editor (T506, T507).
   light decks agree; figures keep their picture. Driven at 1440x900: the
   example deck's strip shows each slide's dark page, heading and words
   where the canvas has them.
-- [ ] **T523 — Create slides never clips its words.** The first slide of
+- [x] **T523 — Create slides never clips its words.** The first slide of
   the example deck cuts the descenders off its last line: the note box
   is placed a few pixels shorter than its text. Size placed notes from
   their rendered height, and grow (never clip) a note whose words outgrow
   its box.
+  *Done 2026-09-29.* The import renders each note off screen at the slide
+  width in the frame's own classes and hands the builder its real height
+  and how far it overruns its column. A note that is too wide is never put
+  beside a figure; one that is still too long or too wide shrinks its
+  words (a.ts, floor 60%). Driven on the example notebook: fourteen
+  slides, every note scrollHeight == clientHeight and nothing past the
+  frame's right edge; the display equation on slide 9 is whole. The pure
+  builder keeps its estimate for plans without a measurer.
 - [ ] **T524 — A status bar.** "Slide 3 of 14 · Methods", the zoom, and a
   Fit button along the bottom edge, where PowerPoint keeps them; the
   floating zoom widget moves into it.
