@@ -288,6 +288,12 @@ body.deck-open{overflow:hidden;}
 .deck.pane-open.rbn-side .deck-zoombar{
   right:calc(var(--pane-w) + var(--rbn-side-w) + 18px);}
 .deck-zoombar .dbtn{padding:3px 9px;}
+/* T542: the words in the middle or at the foot of a box that keeps a
+   height (min-height, so words that outgrow it still grow the box) */
+/* (.an-text is a flex ROW -- the words and the move handle -- so the
+   vertical place is the cross axis) */
+.an-item.an-text.an-va-m{align-items:center;}
+.an-item.an-text.an-va-b{align-items:flex-end;}
 /* T536: the mini toolbar -- the ribbon's own faces, beside the run */
 .mini-tb{position:fixed;z-index:70;display:flex;align-items:center;gap:3px;
   padding:4px;border-radius:9px;background:var(--chrome-1);

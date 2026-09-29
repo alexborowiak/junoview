@@ -2241,7 +2241,9 @@
       text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
-      arc:a.arc,font:fontPpt(a.font)};
+      arc:a.arc,font:fontPpt(a.font),
+      /* T542: a box that keeps its height, with its words placed in it */
+      va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:''};
   }
   /* one slide's annots -> spec items, plus a tally of what could not go */
   /* `layer` is the rendered annotation layer for THIS slide, or null. It is

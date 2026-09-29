@@ -2540,6 +2540,16 @@
              &&isHeadingStyle(a.style))?' an-head':'');
         var ap4=anchorPos(a,a.w,a.h);
         d2.style.left=ap4.x+'%';d2.style.top=ap4.y+'%';
+        /* T542: WHERE THE WORDS SIT, in a box that keeps a height (the
+           fit line, a.fh): the middle or the foot of it. Only then -- a
+           box that grows with its words has no spare room to sit
+           anywhere in, which is the T15 model and is not changed. */
+        if(a.fh&&(a.va==='m'||a.va==='b')){
+          /* the WHOLE box is the fit line: min-height is the content
+             box's, so the .35em padding and 1px border come off it */
+          d2.style.minHeight='calc('+a.fh+'% - 0.7em - 2px)';
+          d2.classList.add('an-va-'+a.va);
+        }
         /* the fit multiplier rides on the element as a variable, so
            shrink-to-fit never rewrites a.size (T15) */
         /* --talk-text is 1 everywhere but a live talk (T88); it rides
@@ -2595,7 +2605,9 @@
         
         /* a text box has width and no height: only the six handles that
            can actually change something (T65) */
-        if(editing){d2.appendChild(mkResize(null,1));
+        /* T542: a box that keeps a height (a.fh) has it to drag, top and
+           bottom; one that grows with its words has width handles only */
+        if(editing){d2.appendChild(mkResize(null,a.fh?0:1));
           d2.appendChild(mkRotate());}
         /* {fig} RESOLVES AT RENDER, never in the stored words (T18).
            Not while the box is being edited: what you type is what is

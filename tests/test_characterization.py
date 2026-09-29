@@ -2120,8 +2120,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T541 (2026-09-29): superscript and subscript -- buttons, keys, the mini
 # toolbar, the sanitizer and the .pptx both ways.
 # T541 (2026-09-29): superscript and subscript.
-EXPECTED_MD5 = "0159e30a68147b81deef9f34f3fc24fc"
-EXPECTED_BYTES = 4648148
+# T542 (2026-09-29): words sit at the top, middle or bottom of a box that
+# keeps its height; its height has handles; the .pptx anchors both ways.
+EXPECTED_MD5 = "376b736b5e34009c130af060bbdd65f5"
+EXPECTED_BYTES = 4652143
 
 
 def _render_example() -> str:

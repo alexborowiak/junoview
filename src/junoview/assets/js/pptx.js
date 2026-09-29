@@ -371,9 +371,14 @@ window.JunoPptx = (function () {
         + '"><a:avLst><a:gd name="adj" fmla="val ' + sweep + '"/>'
         + '</a:avLst></a:prstTxWarp>'
       : '';
-    var bodyPr = '<a:bodyPr wrap="square" anchor="'
-      + (item.centred ? 'ctr' : 't') + '">' + warp
-      + (arc ? '<a:noAutofit/>' : '<a:spAutoFit/>') + '</a:bodyPr>';
+    /* T542: middle or bottom of a box that keeps its height -- anchored
+       there, and NOT auto-fitted, or PowerPoint would shrink the shape
+       round the words and there would be nowhere left to sit */
+    var anchor = item.va === 'm' ? 'ctr' : item.va === 'b' ? 'b'
+      : (item.centred ? 'ctr' : 't');
+    var bodyPr = '<a:bodyPr wrap="square" anchor="' + anchor + '">' + warp
+      + ((arc || item.va) ? '<a:noAutofit/>' : '<a:spAutoFit/>')
+      + '</a:bodyPr>';
     return '<p:sp>'
       + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)

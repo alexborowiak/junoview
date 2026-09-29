@@ -84,6 +84,11 @@
     if(it.u) a.u=1;
     if(it.strike) a.strike=1;
     if(it.align==='center'||it.align==='right') a.align=it.align;
+    /* T542: a box anchored to its middle or foot keeps that -- its height
+       becomes the fit line the words sit in (a bottom-anchored title no
+       longer climbs to the top of where it was) */
+    if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){
+      a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}
     var f=pptFontId(it.font);
     if(f) a.font=f;
     if(it.bgc) a.bgc=it.bgc;

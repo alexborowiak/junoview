@@ -134,7 +134,7 @@ def test_curved_text_warps_in_powerpoint_too(out):
     assert "textArchUp" in out and "textArchDown" in out
     assert 'a:gd name="adj" fmla="val ' in out
     # a warped run is sized by its path, so autofit has to go
-    assert "(arc ? '<a:noAutofit/>' : '<a:spAutoFit/>')" in out
+    assert "((arc || item.va) ? '<a:noAutofit/>' : '<a:spAutoFit/>')" in out   # T542
     # and the one asymmetry is stated in the menu you can actually open,
     # not left to be found. It used to be asserted against the #fmt-arc
     # dropdown, which was permanently hidden and has been removed -- so

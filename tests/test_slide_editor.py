@@ -2889,7 +2889,8 @@ def test_an_object_has_eight_resize_handles(out):
     """
     assert "var sides=noH?['nw','ne','sw','se','e','w']" in out
     assert "      :['nw','ne','sw','se','n','e','s','w'];" in out
-    assert "if(editing){d2.appendChild(mkResize(null,1));" in out
+    # T542: a box that keeps a height (a.fh) gets its vertical handles
+    assert "if(editing){d2.appendChild(mkResize(null,a.fh?0:1));" in out
     assert ".an-rs-n,.an-rs-s{left:50%;margin-left:-11px;" in out
     # a one-axis drag must not let the OTHER axis move: with four
     # corners every handle moved both, so the snap else-arms were only

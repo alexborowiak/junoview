@@ -10176,8 +10176,17 @@ choice in the editor (T506, T507).
   -25000) and the reader turns it back into <sup>/<sub>; a test builds a
   real .pptx and reads it back. Driven: 'Southern' raised with
   Ctrl+Shift+= and still raised after Escape and a slide change.
-- [ ] **T542 — Vertical alignment in a box.** Top, middle, bottom; saved,
+- [x] **T542 — Vertical alignment in a box.** Top, middle, bottom; saved,
   rendered, imported and exported.
+  *Done 2026-09-29.* Paragraph ▾ gains 'where the words sit': Top, Middle,
+  Bottom. A text box still grows with its words (T15); Middle and Bottom
+  keep the height it has now as its fit line (a.fh, toggleFit's 'stay this
+  big' rule, half a percent of room) and place the words in it, and a box
+  that keeps a height now has top and bottom handles to change it. The
+  .pptx writes anchor ctr/b with noAutofit, and an imported box anchored
+  middle or bottom keeps its anchor and height (the reader already read
+  the anchor; the importer dropped it). Driven: the title at Bottom,
+  dragged 66px taller, words at its foot, no overflow mark.
 - [ ] **T543 — Highlighter for words.** A text highlight colour on the
   selected run, exported to .pptx.
 - [ ] **T544 — Clear formatting and Change case.** Ctrl+Space, and

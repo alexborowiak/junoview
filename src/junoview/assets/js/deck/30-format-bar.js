@@ -779,6 +779,27 @@
       fmtApply(function(a){a.align=al;});
       return;
     }
+    /* T542: where the words sit. Middle or bottom needs a height to sit
+       in, so the box keeps the height it has now -- toggleFit's "stay
+       this big" rule -- and Top gives the words back their growing box */
+    if(v.indexOf('v:')===0){
+      var vv=v.slice(2),ly=stage.querySelector('.annot-layer'),
+          s3=pres.slides[cur];
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        if(vv==='t'){delete a.va;if(!a.fit) delete a.fh;return;}
+        if(!a.fh){
+          var ix=(s3&&s3.annots||[]).indexOf(a);
+          var rr=(ly&&ix>=0)?annotRectPct(ly,s3,ix):null;
+          /* half a percent of room: a flex box lays its words out a
+             pixel or two taller than a block one, and a fit line drawn
+             exactly at the old height would call them overflowing */
+          a.fh=rr?Math.round((rr.b-rr.t+0.5)*100)/100:12;   /* T542 */
+        }
+        a.va=vv;
+      });
+      return;
+    }
     if(v.indexOf('i:')===0){
       var out=v.slice(2)==='-';
       fmtApply(function(a){boxIndent(a,out);});
@@ -822,8 +843,9 @@
     var isTx=(a.k==='text');
     /* alignment and the two lists are buttons in the row again
        (T189); the window keeps what is set once */
-    var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve');
-    [ind,cv].forEach(function(h){
+    var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve'),
+        vt=$('#fmt-para-va');
+    [ind,cv,vt].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
@@ -845,6 +867,15 @@
         optChip(cv,p[1],(a.arc||0)===p[0],
           p[0]<0?'Round the bottom':'',
           function(){paraApply('c:'+p[0]);});
+      });
+      /* T542 */
+      if(vt) [['t','Top','The box grows with its words from the top'],
+        ['m','Middle','The box keeps the height it has now, the words in '
+          +'the middle of it'],
+        ['b','Bottom','The box keeps the height it has now, the words at '
+          +'the foot of it']].forEach(function(p){
+        optChip(vt,p[1],((a.fh&&a.va)||'t')===p[0],p[2],
+          function(){paraApply('v:'+p[0]);});
       });
     }
     buildSpacingRows();

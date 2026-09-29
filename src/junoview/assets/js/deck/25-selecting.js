@@ -1659,6 +1659,11 @@
     var anyArrow=(s.annots||[]).some(function(m){
       return m&&m.k==='arrow';});
     var movedAny=false;
+    /* T542: a text box that KEEPS a height (the fit line a.fh -- words
+       at its middle or foot, or shrinking to fit) has that height moved
+       by the vertical handles. A box that grows with its words still has
+       none to move. */
+    var fh0=(a.k==='text'&&a.fh)?+a.fh:0;
     function mm(ev){
       movedAny=true;
       var p=pctPoint(layer,ev);
@@ -1719,6 +1724,12 @@
           if(axisX) ny=oy+(oh-nh)/2;   /* ditto, vertically */
           else if(north) ny=oy+oh-nh;  /* keep the bottom edge anchored */
         }
+      }
+      if(fh0&&(south||north)){
+        var nf=Math.max(3,fh0+(south?dy:-dy));
+        a.fh=Math.round(nf*100)/100;
+        if(north) ny=oy+(fh0-nf);
+        if(el) el.style.minHeight='calc('+a.fh+'% - 0.7em - 2px)';
       }
       a.w=nw;
       if(a.k!=='text') a.h=nh;
