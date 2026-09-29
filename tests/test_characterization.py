@@ -2116,8 +2116,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T539 (2026-09-29): the ribbon fit is replayed per state and the strip
 # floor measured after the gesture -- selecting no longer costs a 200ms
 # frame.
-EXPECTED_MD5 = "8d0b1ffa814d35af85e488bac17f5fac"
-EXPECTED_BYTES = 4645505
+# T540 (2026-09-29): Ctrl+0 fits the page.
+EXPECTED_MD5 = "50bf3fe58922f67355b2c2a02ef027be"
+EXPECTED_BYTES = 4645863
 
 
 def _render_example() -> str:

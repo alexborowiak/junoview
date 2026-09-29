@@ -10157,8 +10157,13 @@ choice in the editor (T506, T507).
   state with new states measured after the gesture, never while a button
   is down. Selecting now costs 41ms of script; a deselect-select-drag
   cycle holds every frame within 33ms.
-- [ ] **T540 — Zoom like PowerPoint.** Ctrl+wheel zooms at the pointer,
+- [x] **T540 — Zoom like PowerPoint.** Ctrl+wheel zooms at the pointer,
   Ctrl+0 fits, and the status bar's Fit button does the same.
+  *Done 2026-09-29.* Ctrl+scroll already zoomed at the pointer and the
+  zoom value's click already fitted; the missing piece was Ctrl+0, which
+  the browser used to reset the whole app's zoom. It fits the page now,
+  and the zoom value's tooltip and the help page say so. Driven: + + to
+  118%, Ctrl+0 to the fit, a real Ctrl+wheel to 124%.
 
 ### Text and formatting
 

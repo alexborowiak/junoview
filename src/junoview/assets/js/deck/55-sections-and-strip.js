@@ -2435,6 +2435,9 @@
     }
     if(!ctrl||e.altKey) return false;
     if(!e.shiftKey&&(e.key==='m'||e.key==='M')) return pptClick('#hm-newslide');
+    /* T540: Ctrl+0 fits the page -- the browser's own reset would zoom
+       the whole app instead (Ctrl+scroll already zooms at the pointer) */
+    if(!e.shiftKey&&(e.key==='0'||e.code==='Digit0')) return pptClick('#zoom-val');
     if(e.code==='BracketRight'&&any)
       return pptClick(e.shiftKey?'#fmt-front':'#fmt-forward');
     if(e.code==='BracketLeft'&&any)
