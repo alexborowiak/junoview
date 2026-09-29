@@ -2093,8 +2093,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (Add/Remove row and column, Rotate left/right, Make main, Object history,
 # Text/Box colour, Figure/Code/Split in two) and the Source cell leads with
 # the file name.
-EXPECTED_MD5 = "2e72ca213d3ab335b13666d1505deefb"
-EXPECTED_BYTES = 4599265
+# T531 (2026-09-29): the help page's paths name this ribbon (Design > Deck
+# colours, Images > Video / audio, Home > History, nine layouts, Print
+# check, slide numbers under Header & footer).
+EXPECTED_MD5 = "bf3b247cb548255e5be6aee8479a7156"
+EXPECTED_BYTES = 4599268
 
 
 def _render_example() -> str:

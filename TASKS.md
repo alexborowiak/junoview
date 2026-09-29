@@ -10047,11 +10047,22 @@ choice in the editor (T506, T507).
   file name first and its folder beneath, the whole path on hover (T438's
   first-thing rule kept). The several Layers and Notes buttons stay: each
   opens the same pane. Driven at 1440: figure, table shelf and text box.
-- [ ] **T531 — The help page describes this ribbon.** "Home → Shared
+- [x] **T531 — The help page describes this ribbon.** "Home → Shared
   colours", "Insert → Video / audio", "File → History…", "Check
   consistency" and "more than a hundred" layouts all name things that
   moved. Fix every path, and add a test that each "Tab → Control" path in
   help.html names a real tab and a real control on it.
+  *Done 2026-09-29.* Ten stale passages fixed: Deck colours on Design (was
+  Home > Shared colours), Images > Video / audio (was Insert), Home >
+  History (was File > History...), Present > Version ▾ > New version...,
+  slide numbers under Design > Header & footer, New ▾ > Custom view, nine
+  ribbon layouts (was 'more than a hundred'), the New slide gallery and
+  Change layout (was 'the Layout control in Home'), Full screen on the top
+  bar (was described as a View control), and Print check where 'Review'
+  was meant. test_the_help_names_real_controls.py reads every A > B path
+  in help.html and checks each step against the tab's own groups, the File
+  menu or a known door; run against the old page it names all three wrong
+  paths.
 - [ ] **T532 — "Version" means one thing.** Slide versions, talk-length
   versions, saved history and poster drafts all say Version.
 

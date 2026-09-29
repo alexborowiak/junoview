@@ -37,4 +37,7 @@ def test_help_uses_current_names():
     # makes no sense")
     assert "Fix mismatched text</i>" not in help_html
     assert "Check consistency</i>" in help_html
-    assert "Shared colours</i>" in help_html
+    # T531: T444 renamed Shared colours to Deck colours and moved it to
+    # Design; the help page followed on 2026-09-29
+    assert "<i>Deck colours&#8230;</i>" in help_html
+    assert "Shared colours</i>" not in help_html
