@@ -2066,10 +2066,14 @@
        in the builder (create) or select tool the button always acts */
     function guardDown(e){if(mode!=='edit'||tool==='select') e.stopPropagation();}
     function armed(){return mode!=='edit'||tool==='select';}
+    /* T530: words and icons like every other button -- the pills read
+       "figure / code / split" in lower-case mono beside sans buttons */
+    var PART_IC={figure:'plots',code:'code',output:'output'};
     facs.forEach(function(fp){
       var b=document.createElement('button');
       b.className='cellpartbtn'+(fp===curp?' on':'');
-      b.textContent=fp;
+      b.innerHTML=(PART_IC[fp]?bic(PART_IC[fp])+' ':'')
+        +esc(fp.charAt(0).toUpperCase()+fp.slice(1));
       b.title='Show the '+fp+' in this frame';
       b.addEventListener('mousedown',guardDown);
       b.addEventListener('click',function(e){
@@ -2080,7 +2084,7 @@
       box.appendChild(b);
     });
     var sp=document.createElement('button');
-    sp.className='cellpartbtn split';sp.innerHTML=bic('outline')+' split';
+    sp.className='cellpartbtn split';sp.innerHTML=bic('outline')+' Split in two';
     sp.title='Split into two frames — one for each part';
     sp.addEventListener('mousedown',guardDown);
     sp.addEventListener('click',function(e){

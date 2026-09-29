@@ -2089,8 +2089,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the app no longer logs a refused request on start.
 # T529 (2026-09-29): Deck text and Header & footer group names, masters say
 # 'objects behind the slide', and a dead Animation door says why.
-EXPECTED_MD5 = "1f2ef5d54c4e6cc78af92d3c43f94f60"
-EXPECTED_BYTES = 4597325
+# T530 (2026-09-29): buttons that shared a name say their own verb
+# (Add/Remove row and column, Rotate left/right, Make main, Object history,
+# Text/Box colour, Figure/Code/Split in two) and the Source cell leads with
+# the file name.
+EXPECTED_MD5 = "2e72ca213d3ab335b13666d1505deefb"
+EXPECTED_BYTES = 4599265
 
 
 def _render_example() -> str:

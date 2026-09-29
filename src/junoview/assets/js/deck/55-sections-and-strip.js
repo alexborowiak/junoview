@@ -1965,6 +1965,9 @@
       st.hidden=!r;
       st.disabled=!!(r&&!isA);
       st.setAttribute('aria-pressed',(r&&!isA)?'true':'false');
+      /* T530: "Main" was a word with no verb -- the button MAKES a
+         version the main one, and on the main one it says what it is */
+      st.innerHTML=bic('star')+' '+(isA?'Make main':'Main version');
       st.title=!r?'':(isA
         ?'Make this the main version \u2014 the talk, the arrows and every '
           +'export show it instead'

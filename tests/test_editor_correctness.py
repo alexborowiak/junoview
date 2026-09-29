@@ -852,7 +852,8 @@ def test_a_shape_can_be_given_a_fill_colour(out):
     # and the picker prefills from the shape's own fill
     assert "if(a.k==='rect') return (a.grad&&a.grad.a)" in out
     # two Fill buttons would otherwise both read "Fill"
-    assert "((kind==='rect')?'Fill colour ▾':'Fill ▾')" in out
+    # (T530: and a text box's reads "Box colour", beside "Text colour")
+    assert "((kind==='rect')?'Fill colour ▾':'Box colour ▾')" in out
     # ...and it keeps its ICON while being renamed. textContent wiped the
     # icon along with the old word on every pass, which is why this was
     # one of the two ribbon buttons that could never carry one

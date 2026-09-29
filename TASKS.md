@@ -10033,11 +10033,20 @@ choice in the editor (T506, T507).
   a figure selected; it now says 'no entrance' (Start) or 'not for this'.
   Kept deliberately: Build order (T140's glossary) and the Entrance door's
   'From start' (T508). Driven at 1440.
-- [ ] **T530 — Buttons that share a name stop sharing it.** Table's
+- [x] **T530 — Buttons that share a name stop sharing it.** Table's
   Row / Row / Column / Column (add and remove, told apart only by icon),
   Arrange's Left / Right (rotate) beside Paragraph's Left / Right (align),
   Text ▾ and Fill ▾ (colours), Main, Optional, and the several Layers,
   Notes, History and Duplicate buttons.
+  *Done 2026-09-29.* Table: Add row / Remove row / Add column / Remove
+  column and Column types; Arrange: Rotate left / Rotate right / In a row
+  / In a grid; Home's Main says Make main (Main version on the main one);
+  Object's History tile says Object history; a text box's colour doors say
+  Text colour / Box colour; the figure-part pills are Figure / Code /
+  Split in two with icons, in the ribbon's sans; the Source cell shows the
+  file name first and its folder beneath, the whole path on hover (T438's
+  first-thing rule kept). The several Layers and Notes buttons stay: each
+  opens the same pane. Driven at 1440: figure, table shelf and text box.
 - [ ] **T531 — The help page describes this ribbon.** "Home → Shared
   colours", "Insert → Video / audio", "File → History…", "Check
   consistency" and "more than a hundred" layouts all name things that

@@ -507,7 +507,7 @@
        (dash, weight, ends) -- and a shape's sat in a group captioned
        "Font" (2026-09-15 review). */
     if(tcb) tcb.innerHTML=bic('palette')+' '
-      +((isText||kind==='cell')?'Text ▾'
+      +((isText||kind==='cell')?'Text colour ▾'
       :kind==='rect'?'Border colour ▾'
       :(kind==='arrow'||kind==='draw')?'Line colour ▾':'Colour ▾');
     var fgl=$('.rbn-fontgrp>.rbn-lab');
@@ -532,7 +532,7 @@
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');
     if(fcb) fcb.innerHTML=bic('fill')+' '
-      +((kind==='rect')?'Fill colour ▾':'Fill ▾');
+      +((kind==='rect')?'Fill colour ▾':'Box colour ▾');
     /* the wrapper around each colour dropdown shows exactly when its
        button does. Read from the button rather than restated, so the
        rule for when Colour appears stays in one place (2026-08-25).
@@ -685,9 +685,19 @@
       }
       pth.hidden=!from;
       if(from){
-        pth.innerHTML='<span>From</span><span><b></b></span>';
-        pth.querySelector('b').textContent=(typeof midElide==='function')
-          ?midElide(String(from),46):from;
+        /* T530: THE FILE'S NAME FIRST, then its folder. The path was
+           elided in the middle and then cut by the 170px cell, so the
+           row read "C:\Users\rvgp59...\example_cli..." -- the one
+           part worth reading was the part that went. The whole path is
+           still on hover, and still the first thing on the tab (T438). */
+        var fs=String(from),cut=Math.max(fs.lastIndexOf('/'),
+          fs.lastIndexOf('\\'));
+        var fbase=(cut>=0&&cut<fs.length-1)?fs.slice(cut+1):fs;
+        var fdir=(cut>=0&&cut<fs.length-1)?fs.slice(0,cut):'';
+        pth.innerHTML='<span>From</span><span><b></b><i></i></span>';
+        pth.querySelector('b').textContent=fbase;
+        pth.querySelector('i').textContent=fdir?((typeof midElide==='function')
+          ?midElide(fdir,40):fdir):'';
         pth.title='From '+from;
       }
     }
