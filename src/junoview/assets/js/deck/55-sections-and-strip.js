@@ -687,9 +687,11 @@
         'The slides stay — they join the section above','minus');
       row('Delete the section AND its '+run.n+' slide'
         +(run.n===1?'':'s'),function(){
-          if(confirm('Delete '+run.n+' slide'+(run.n===1?'':'s')
-            +' along with the section "'+run.name+'"?'))
-            removeSection(run.id,true);
+          askYes({title:'Delete '+run.n+' slide'+(run.n===1?'':'s')+'?',
+            what:'The section \u201c'+run.name+'\u201d goes, and every '
+              +'slide in it. Ctrl+Z brings them back.',
+            ok:'Delete slides',cancel:'Keep them',danger:true},function(y){
+            if(y===true) removeSection(run.id,true);});
         },null,'exit');
       floatAt(m,ev);
       return;
@@ -850,11 +852,15 @@
     if(ar0&&!isAlt0)
       row('Delete it AND its '+(ar0.n-1)+' version'+(ar0.n===2?'':'s'),
         function(){
-          if(confirm('Delete this slide and all '+(ar0.n-1)+' of its versions?')){
+          askYes({title:'Delete this slide and its '+(ar0.n-1)+' version'
+              +(ar0.n===2?'':'s')+'?',
+            what:'Ctrl+Z brings them back.',
+            ok:'Delete them',cancel:'Keep them',danger:true},function(y){
+            if(y!==true) return;
             pres.slides.splice(ar0.at,ar0.n);
             if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
             activePane=-1;normSections();markDirty();refresh();
-          }
+          });
         },null,'exit');
     /* This menu has section, transition and version administration as well
        as everyday slide actions. Keep the familiar Cut/Copy/Paste,
@@ -977,12 +983,15 @@
   function unlockAllFrames(){
     var ann=allCellAnnots().filter(function(a){return a.lockver;});
     if(!ann.length){toast('No locked figures');return;}
-    if(!window.confirm('Unlock all '+ann.length+' figure'
-      +(ann.length===1?'':'s')+'? They will follow notebook refreshes '
-      +'again — locked versions stop showing.')) return;
-    ann.forEach(function(a){delete a.lockver;});
-    markDirty();refresh();
-    toast('Unlocked '+ann.length+' figure'+(ann.length===1?'':'s'));
+    askYes({title:'Unlock '+ann.length+' figure'+(ann.length===1?'':'s')+'?',
+      what:'They will follow notebook refreshes again \u2014 the locked '
+        +'versions stop showing.',
+      ok:'Unlock them',cancel:'Keep them locked'},function(y){
+      if(y!==true) return;
+      ann.forEach(function(a){delete a.lockver;});
+      markDirty();refresh();
+      toast('Unlocked '+ann.length+' figure'+(ann.length===1?'':'s'));
+    });
   }
   function loadLockedVersions(){
     var groups={};

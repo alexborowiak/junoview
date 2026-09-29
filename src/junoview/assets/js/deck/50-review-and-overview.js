@@ -806,11 +806,20 @@
     var universal=(pres.slides||[]).filter(function(sl){
       return sl&&Array.isArray(sl.cuts)&&sl.cuts.length
         &&sl.cuts.every(function(c){return c===id;});}).length;
-    if(!confirm('Delete the version “'+name+'”? Slides stay in the deck. '
-      +(universal?(universal+' slide'+(universal===1?'':'s')
-        +' that names no other version will return to every version.')
-        :'No slide will become universal.')))
-      return false;
+    /* T527: the editor's own question; like renameCut, the menu
+       re-syncs itself when the answer lands, so this returns false */
+    askYes({title:'Delete the version \u201c'+name+'\u201d?',
+      what:'Slides stay in the deck. '
+        +(universal?(universal+' slide'+(universal===1?'':'s')
+          +' that names no other version will return to every version.')
+          :'No slide will become universal.'),
+      ok:'Delete version',cancel:'Keep it',danger:true},function(y){
+      if(y===true) delCutNow(id);});
+    return false;
+  }
+  function delCutNow(id){
+    var d=cutMap()[id]; if(!d) return;
+    var name=d.name||id;
     var wasActive=activeCut()===id;
     delete pres.cuts[id];
     (pres.slides||[]).forEach(function(sl){
@@ -823,7 +832,7 @@
     markDirty();renderFilm();presenterSync&&presenterSync();
     toast('Deleted “'+name+'” — every slide stayed'
       +(wasActive?' · showing every slide':''));
-    return true;
+    cutsSync();   /* the menu and the tab's strip, as renameCut does */
   }
   /* a slide is in a cut when it names it — and a slide that names no
      cuts is in all of them, which is what makes an existing deck a
@@ -1437,12 +1446,12 @@
       });
     });
     hubRowAct(b,'minus','Delete \u201c'+p.name+'\u201d for good',function(){
-      if(!window.confirm('Delete \u201c'+p.name+'\u201d?\n\nThis cannot '
-        +'be undone.')) return;
-      if(typeof deletePresByName==='function') deletePresByName(p.name);
-      renderPresentationHub();
-      if(typeof renderDeckPresentationDrawer==='function')
-        renderDeckPresentationDrawer();
+      askDeleteDeck(p.name,function(){
+        if(typeof deletePresByName==='function') deletePresByName(p.name);
+        renderPresentationHub();
+        if(typeof renderDeckPresentationDrawer==='function')
+          renderDeckPresentationDrawer();
+      });
     });
     b.appendChild(pin);
     b.addEventListener('click',function(e){
@@ -1847,10 +1856,10 @@
             renderPresTabs();renderDeckPresentationDrawer();
           }],
           [bic('minus'),'Delete “'+nm+'” for good',function(){
-            if(!window.confirm('Delete “'+nm+'”?\n\nThis cannot '
-              +'be undone.')) return;
-            if(typeof deletePresByName==='function') deletePresByName(nm);
-            renderDeckPresentationDrawer();
+            askDeleteDeck(nm,function(){
+              if(typeof deletePresByName==='function') deletePresByName(nm);
+              renderDeckPresentationDrawer();
+            });
           }]]);
       });
       if(!names.length){

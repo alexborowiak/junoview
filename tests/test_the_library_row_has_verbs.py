@@ -27,7 +27,7 @@ def test_a_library_row_carries_four_verbs(out):
         assert verb in out, verb
     # the row's own click must still be the only thing that OPENS it
     assert "      var made=duplicatePresentation(p.name);" in out
-    assert "      if(!window.confirm('Delete " in out
+    assert "      askDeleteDeck(p.name,function(){" in out   # T527
     # ...and both lists repaint, because the bar and the library show
     # the same presentations under different headings
     assert ("      if(typeof renderDeckPresentationDrawer==='function')\n"

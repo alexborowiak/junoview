@@ -81,7 +81,8 @@ def test_figure_locks_pin_a_frame_to_a_git_commit(out):
     assert 'id="fmt-lockver"' in out and "a.lockver" in out
     assert "'/api/versioncards'" in out and "function fetchVerCards" in out
     assert "function lockAllFrames" in out
-    assert "function unlockAllFrames" in out and "window.confirm" in out
+    assert "function unlockAllFrames" in out \
+        and "askYes({title:'Unlock '+ann.length+' figure'" in out   # T527
     assert "function loadLockedVersions" in out and "an-lockchip" in out
     assert "function frameFromVerCard" in out and "an-verwait" in out
 

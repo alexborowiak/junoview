@@ -217,7 +217,7 @@ def test_the_viewer_owns_one_complete_create_slides_dialog(out):
     assert "window.SemApp.deckAuto=autoDeckImport;" in boot
     imp = out.split("function autoDeckImport(plan){")[1].split("\n  }")[0]
     assert "embedIfAbsent(a);" in imp
-    assert "importDeckText(JSON.stringify({presentations:[pr]}),false);" in imp
+    assert "importDeckText(JSON.stringify({presentations:[pr]}),false,'keep');" in imp
     # never the old Auto-build: the deck's own File menu offers no such row
     deck = assets.deck_html()
     assert 'id="mi-auto-figs"' not in deck and 'id="mi-auto-figdocs"' not in deck

@@ -75,6 +75,11 @@
     applyRibbonLayout(rbnCurrentId(),true);
     applyRibbonPrefs();
   }
+  /* T527: the one dialog, for the notebook side too (app.js jvTell and
+     jvAsk) -- no native alert, confirm or prompt anywhere */
+  window.SemAsk=askText;
+  window.SemAskYes=askYes;
+  window.SemAskTell=askTell;
   initShellRegistry();        /* every notebook the page carries */
   nbDoorsSync();              /* the notebook doors, greyed without one (T440) */
   initFirstPresentation();    /* the presentation the page opens with */

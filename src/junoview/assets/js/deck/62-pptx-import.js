@@ -261,11 +261,14 @@
   /* what this import will cost, said before it happens -- the export
      dialog's twin (pptxConfirmLosses). Nothing to lose means no dialog. */
   function pptxConfirmImport(name,lost){
-    if(!lost.length) return true;
-    return confirm('Import “'+name+'”?\n\n'
-      +'Everything else comes across, but this will not:\n\n• '
-      +lost.join('\n• ')
-      +'\n\nThe .pptx itself is not changed.');
+    if(!lost.length) return Promise.resolve(true);
+    return new Promise(function(res){
+      askYes({title:'Import \u201c'+name+'\u201d?',
+        what:'Everything else comes across, but this will not:\n\n\u2022 '
+          +lost.join('\n\u2022 '),
+        note:'The .pptx itself is not changed.',
+        ok:'Import it',cancel:'Not now'},function(y){res(y===true);});
+    });
   }
   /* every picture settles the way a pasted one does: a display copy on
      the slide, the full bytes in the original store (T58), so the deck
@@ -310,9 +313,13 @@
     var lost=(got.lost||[]).slice();
     var nm=String(name||got.name||got.spec.title||'presentation');
     var pr=specToPres(got.spec,nm,lost);
-    if(!pptxConfirmImport(pr.name,lost)) return;
-    pptxSettleImages(pr).then(function(){
-      var n=importDeckText(JSON.stringify({presentations:[pr]}),false);
+    pptxConfirmImport(pr.name,lost).then(function(go){
+      if(!go) return false;
+      return pptxSettleImages(pr).then(function(){return true;});
+    }).then(function(settled){
+      if(!settled) return 0;
+      return importDeckTextAsk(JSON.stringify({presentations:[pr]}));
+    }).then(function(n){
       if(!n) return;
       /* the file you opened was a .pptx; the one you will save is not,
          so the destination is "a file on your computer" the way the

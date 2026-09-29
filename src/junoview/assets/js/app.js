@@ -158,7 +158,7 @@
           docToast(toastMsg+' — reload, or the Version history menu, '
             +'returns to live');
         }).catch(function(err){
-          alert('Open failed: '+err.message);});
+          jvTell('Open failed: '+err.message);});
       }
       row('● Live — the file on disk',!sh.version,function(){
         openPath(sh.path);});
@@ -3779,6 +3779,28 @@
       gitlab:$('#note-dlg-gitlab'),err:$('#note-dlg-err'),
       save:$('#note-dlg-save')};
   }
+  /* T527: NO NATIVE DIALOGS. alert() and prompt() were the browser's
+     boxes: unstyled, un-themed, blocking every other window of the app
+     until dismissed, and (for alert) with nothing on them but "OK". They
+     go through the editor's own dialog, which the deck exports at boot
+     and which moves itself to wherever you are looking. The heading says
+     what kind of news it is, so the words underneath need not. */
+  function jvTell(msg){
+    msg=String(msg==null?'':msg);
+    var title=/^(Could not|Open failed|Import failed)/.test(msg)
+      ?'That did not open'
+      :/not loaded yet|still loading/.test(msg)?'One moment'
+      :/^Open a notebook first/.test(msg)?'Open a notebook first'
+      :/^Paste an http/.test(msg)?'That is not a link'
+      :'Junoview';
+    if(typeof window.SemAskTell==='function')
+      window.SemAskTell({title:title,what:msg});
+    else docToast(msg,null,null,9000);
+  }
+  function jvAsk(o,cb){
+    if(typeof window.SemAsk==='function') window.SemAsk(o,cb);
+    else cb(null);
+  }
   function docToast(text,url,label,ms){
     var t=$('#doc-toast'); if(!t) return;
     t.textContent=text;
@@ -4464,12 +4486,16 @@
     add.innerHTML=bic('plus')+'<span class="mark-menu-name">Add a custom label…</span>';
     add.addEventListener('click',function(e){
       e.stopPropagation();
-      var key=customTag(prompt('Name this label:',''));
-      if(!key) return;
-      if(picked.indexOf(key)<0) picked.push(key);
-      setMarkState(stem,id,{p:st.p?1:0,tags:picked});
-      paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
-      closeLabelMenu();
+      /* T527: the editor's own question, not the browser's prompt() */
+      jvAsk({title:'Add a custom label',label:'Name this label',
+        placeholder:'e.g. For the paper',ok:'Add label'},function(v){
+        var key=customTag(v);
+        if(!key) return;
+        if(picked.indexOf(key)<0) picked.push(key);
+        setMarkState(stem,id,{p:st.p?1:0,tags:picked});
+        paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
+        closeLabelMenu();
+      });
     });
     m.appendChild(add);placeLabelMenu(btn,m);
   }
@@ -5317,7 +5343,7 @@
           });
         });
       }).catch(function(e){
-        alert('Could not open that version: '+((e&&e.message)||e));});
+        jvTell('Could not open that version: '+((e&&e.message)||e));});
     }
     if(!intoStem){
       /* its OWN tab, but still named for the notebook with the commit
@@ -5334,7 +5360,7 @@
         mountShellHTML(j.shell,url,true);
         tag(j.stem);
       }).catch(function(e){
-        alert('Could not open that version: '+((e&&e.message)||e));});
+        jvTell('Could not open that version: '+((e&&e.message)||e));});
       return;
     }
     if(APP.mode==='web'){
@@ -5348,7 +5374,7 @@
       mountShellHTML(j.shell,url,true);
       tag(intoStem);
     }).catch(function(e){
-      alert('Could not open that version: '+((e&&e.message)||e));});
+      jvTell('Could not open that version: '+((e&&e.message)||e));});
   }
   var ghCommitCache=new Map();
   function ghCommits(gh){
@@ -5835,17 +5861,17 @@
   function autoSlidesFrom(stem,scope,sid,animations){
     var plan=autoPlan(stem,scope,sid);
     if(!plan){
-      alert('Open a notebook first \u2014 the slides are made from its '
+      jvTell('Open a notebook first \u2014 the slides are made from its '
         +'sections.');
       return;
     }
     if(!APP.deckAuto){
-      alert('The presentation editor has not loaded yet \u2014 try again '
+      jvTell('The presentation editor has not loaded yet \u2014 try again '
         +'in a moment.');
       return;
     }
     if(!plan.sections.length){
-      alert(scope==='marks'
+      jvTell(scope==='marks'
         ?'None of the cells you pinned or labelled is markdown or a figure '
           +'\u2014 label some first.'
         :'No markdown or figure cells to make slides from here.');
@@ -5884,7 +5910,7 @@
     var d=$('#auto-slides-dialog'); if(!d) return;
     var stem=APP.active||APP.order[0];
     if(!stem){
-      alert('Open a notebook first \u2014 the slides are made from its '
+      jvTell('Open a notebook first \u2014 the slides are made from its '
         +'sections.');
       return;
     }
@@ -6831,7 +6857,7 @@
     var tmp=document.createElement('div');
     tmp.innerHTML=htmlStr;
     var shell=tmp.querySelector('.nbshell');
-    if(!shell){alert('Open failed: bad response');return;}
+    if(!shell){jvTell('Open failed: bad response');return;}
     if(path) shell.dataset.path=path;
     var stem=shell.dataset.nb;
     var old=APP.shells[stem];
@@ -7071,10 +7097,10 @@
   function importDeckTextSafe(txt,label){
     try{
       if(window.SemDeckImport) window.SemDeckImport(txt,false);
-      else alert('The presentation editor has not loaded yet — '
+      else jvTell('The presentation editor has not loaded yet — '
         +'try again in a moment.');
     }catch(e){
-      alert('Could not open '+(label||'that file')+': '
+      jvTell('Could not open '+(label||'that file')+': '
         +((e&&e.message)||e));
     }
     hideDlg();
@@ -7091,7 +7117,7 @@
         url.split('?')[0].split('/').pop()||url));
     }).catch(function(e){
       setDlgBusy(false);
-      alert('Could not fetch '+url+'\n'+((e&&e.message)||e)
+      jvTell('Could not fetch '+url+'\n'+((e&&e.message)||e)
         +'\nIf that host blocks cross-site requests, download the '
         +'file and drop it here instead.');
     });
@@ -7110,11 +7136,11 @@
       var nm=decodeURIComponent(
         url.split('?')[0].split('/').pop()||'deck.pptx');
       if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
-      else alert('The presentation editor has not loaded yet — '
+      else jvTell('The presentation editor has not loaded yet — '
         +'try again in a moment.');
     }).catch(function(e){
       setDlgBusy(false);
-      alert('Could not fetch '+url+'\n'+((e&&e.message)||e));
+      jvTell('Could not fetch '+url+'\n'+((e&&e.message)||e));
     });
   }
   /* T436: `keep` leaves the open dialog up, so several notebooks can be
@@ -7127,7 +7153,7 @@
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
       if(APP.mode!=='app') return;
       if(!APP.deckImportPptxPath){
-        alert('The presentation editor has not loaded yet — '
+        jvTell('The presentation editor has not loaded yet — '
           +'try again in a moment.');
         return;
       }
@@ -7150,7 +7176,7 @@
         importDeckTextSafe(j.text,j.name||path);
       }).catch(function(e){
         delete OPENBUSY[path];setDlgBusy(false);
-        alert('Open failed: '+e.message);});
+        jvTell('Open failed: '+e.message);});
       return;
     }
     if(APP.mode==='web'){
@@ -7172,7 +7198,7 @@
       if(!keep) hideDlg();
     }).catch(function(e){
       delete OPENBUSY[path];setDlgBusy(false);
-      alert('Open failed: '+e.message);});
+      jvTell('Open failed: '+e.message);});
   }
   APP.openPath=openPath;
   /* RELOAD ONE OPEN TAB FROM DISK, in place, and report WHAT HAPPENED
@@ -7271,7 +7297,7 @@
   }
   function webParseText(name,text){
     if(!webReady()){
-      alert('Python is still loading — try again in a moment.');
+      jvTell('Python is still loading — try again in a moment.');
       return;
     }
     return queueWebImport(function(){
@@ -7279,7 +7305,7 @@
         mountShellHTML(shell,'');hideDlg();
       });
     }).catch(function(e){
-      alert('Could not open '+name+': '+((e&&e.message)||e));
+      jvTell('Could not open '+name+': '+((e&&e.message)||e));
     });
   }
   /* WHAT THIS TOOL CAN OPEN (T91). Kept in step with SOURCES in
@@ -7302,7 +7328,7 @@
   }
   function webParseB64(name,b64){
     if(!webReady()){
-      alert('Python is still loading — try again in a moment.');
+      jvTell('Python is still loading — try again in a moment.');
       return;
     }
     return queueWebImport(function(){
@@ -7310,7 +7336,7 @@
         mountShellHTML(shell,'');hideDlg();
       });
     }).catch(function(e){
-      alert('Could not open '+name+': '+((e&&e.message)||e));
+      jvTell('Could not open '+name+': '+((e&&e.message)||e));
     });
   }
   function webOpenFiles(files){
@@ -7385,7 +7411,7 @@
         else noteRestoreMiss();
         return;
       }
-      alert('Could not fetch '+url+'\n'+((e&&e.message)||e)
+      jvTell('Could not fetch '+url+'\n'+((e&&e.message)||e)
         +'\nIf that host blocks cross-site requests, download the '
         +'file and drop it here instead.');
     });
@@ -7874,7 +7900,7 @@
       var v=inp.value.trim(); if(!v) return;
       if(isWeb){
         if(isUrl(v)) webOpenUrl(v,false);
-        else alert('Paste an http(s) link to a notebook, .md, .tex '
+        else jvTell('Paste an http(s) link to a notebook, .md, .tex '
           +'or .csv file, or use '
           +'Choose files / drag-and-drop.');
         return;
@@ -7952,7 +7978,7 @@
       files.filter(function(f){return isPptxPath(f.name);})
         .forEach(function(f){
           if(APP.deckImportPptx) APP.deckImportPptx(f);
-          else alert('The presentation editor has not loaded yet — '
+          else jvTell('The presentation editor has not loaded yet — '
             +'try again in a moment.');
         });
       /* a dropped saved presentation imports, in either mode */
@@ -7985,7 +8011,7 @@
               return api('/api/parse',{name:f.name,text:txt});}))
           .then(function(j){mountShellHTML(j.shell,j.path||'');})
           .catch(function(err){
-            alert('Could not open '+f.name+': '+err.message);});
+            jvTell('Could not open '+f.name+': '+err.message);});
         });
     });
   }

@@ -642,11 +642,16 @@
       restoreAll.className='dbtn dh-all';
       restoreAll.innerHTML=bic('reload')+' Go back to this version';
       restoreAll.addEventListener('click',function(){
-        if(!confirm('Replace all '+(pres.slides||[]).length
-          +' slides with the '+((then.slides||[]).length)+' from '
-          +histLabel(ent)+'?')) return;
-        snapTake('before going back').then(function(){
-          histRestoreDeck(then,ent.id,ent.br||'');histPanelClose();});
+        askYes({title:'Go back to this version?',
+          what:'All '+(pres.slides||[]).length+' slides are replaced with '
+            +'the '+((then.slides||[]).length)+' from '+histLabel(ent)
+            +'. A snapshot of where you are now is taken first, so this '
+            +'can be undone.',
+          ok:'Go back',cancel:'Stay here'},function(y){
+          if(y!==true) return;
+          snapTake('before going back').then(function(){
+            histRestoreDeck(then,ent.id,ent.br||'');histPanelClose();});
+        });
       });
       acts.appendChild(restoreAll);
       /* Same restore, plus a name -- so the work you do next is recorded

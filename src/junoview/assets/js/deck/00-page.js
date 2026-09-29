@@ -1636,10 +1636,18 @@
        fixed, which is why the question is only asked when it is worth
        asking: one guide is a click you can obviously repeat, a page's
        worth of them is not. */
-    if(n>1&&!confirm('Clear '+n+' guides?\n\n'
-        +(boxesOnly?'Every guide box on this deck.'
-                   :'Every guide box and every line dragged off a ruler.')
-        +' Ctrl+Z brings them back.')) return;
+    if(n>1){
+      askYes({title:'Clear '+n+' guides?',
+        what:(boxesOnly?'Every guide box on this deck.'
+                       :'Every guide box and every line dragged off a ruler.')
+          +' Ctrl+Z brings them back.',
+        ok:'Clear guides',cancel:'Keep them'},function(y){
+        if(y===true) clearGuidesNow(cg,boxesOnly);});
+      return;
+    }
+    clearGuidesNow(cg,boxesOnly);
+  }
+  function clearGuidesNow(cg,boxesOnly){
     cg.b=[];
     if(!boxesOnly){cg.x=[];cg.y=[];}
     setCustomGuides(cg);

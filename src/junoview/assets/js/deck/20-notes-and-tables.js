@@ -183,10 +183,15 @@
     clr.className='dbtn np-padb';
     clr.innerHTML=bic('exit')+' Forget these rehearsals';
     clr.addEventListener('click',function(){
-      if(!confirm('Delete the timing from '+st.runs.length
-        +' rehearsal'+(st.runs.length===1?'':'s')+'?')) return;
-      try{lsSet(rehKey(),'[]');}catch(e){}
-      renderReh();renderNotesPane();
+      askYes({title:'Forget '+st.runs.length+' rehearsal'
+          +(st.runs.length===1?'':'s')+'?',
+        what:'The timing from every run of this talk is deleted from this '
+          +'computer. The slides and your notes are not touched.',
+        ok:'Forget them',cancel:'Keep them',danger:true},function(y){
+        if(y!==true) return;
+        try{lsSet(rehKey(),'[]');}catch(e){}
+        renderReh();renderNotesPane();
+      });
     });
     host.appendChild(clr);
   }

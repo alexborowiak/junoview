@@ -156,27 +156,48 @@
     });
     return out;
   }
+  /* T527: THE QUESTION GOES WHERE YOU ARE LOOKING. The dialog lives in
+     the editor, and the editor is hidden while the library, the Home
+     screen or a notebook is on screen -- so a question asked from there
+     would have been asked into a hidden box. It moves to the page body
+     while the editor is hidden (its colours are :root tokens, so it looks
+     the same there) and back inside the editor when it is not. */
+  function askHost(dlg){
+    var host=(deckEl&&!deckEl.hidden)?deckEl:document.body;
+    var fs=document.fullscreenElement;
+    if(fs&&fs!==document.documentElement&&!fs.contains(host)) host=fs;
+    if(dlg.parentNode!==host) host.appendChild(dlg);
+  }
   function askText(o,cb){
     var dlg=$('#ask-dlg');
     if(!dlg){cb(null);return;}
     o=o||{};
-    var multi=!!o.multi,rows=Array.isArray(o.rows)&&o.rows.length;
+    askHost(dlg);
+    /* T527: o.yes -- a question with no field at all, answered by its
+       buttons (askYes); o.tell -- a notice with one button (askTell) */
+    var yes=!!(o.yes||o.tell);
+    dlg.classList.toggle('ask-yes',yes);
+    var multi=!yes&&!!o.multi,rows=!yes&&Array.isArray(o.rows)&&o.rows.length;
     var inp=$('#ask-in'),area=$('#ask-area'),rowsEl=$('#ask-rows');
     $('#ask-t').textContent=o.title||'Name';
     var what=$('#ask-what');
     what.textContent=o.what||'';what.hidden=!o.what;
     var lab=$('#ask-lab');
-    lab.textContent=o.label||'';lab.hidden=!o.label||rows;
+    lab.textContent=o.label||'';lab.hidden=!o.label||rows||yes;
     var note=$('#ask-note');
     note.textContent=o.note||'';
-    $('#ask-ok').textContent=o.ok||'OK';
+    var okb=$('#ask-ok');
+    okb.textContent=o.ok||'OK';
+    okb.classList.toggle('dbtn-warn',!!o.danger);
+    var cnb=$('#ask-cancel');
+    cnb.textContent=o.cancel||'Cancel';cnb.hidden=!!o.tell;
     var alt=$('#ask-alt');
     if(alt){alt.textContent=o.alt||'';alt.hidden=!o.alt;}
-    inp.hidden=multi||rows;area.hidden=!multi||rows;
+    inp.hidden=multi||rows||yes;area.hidden=!multi||rows||yes;
     if(rowsEl){rowsEl.hidden=!rows;if(rows) askRowsBuild(rowsEl,o.rows);
       else askRows=null;}
-    var field=rows?(askRows[0]&&askRows[0].el):multi?area:inp;
-    if(!rows){
+    var field=yes?okb:rows?(askRows[0]&&askRows[0].el):multi?area:inp;
+    if(!rows&&!yes){
       field.value=(o.value==null)?'':String(o.value);
       field.placeholder=o.placeholder||'';
     }
@@ -230,6 +251,22 @@
           &&e.target.tagName!=='BUTTON'))){
         e.preventDefault();ok();}
     },true);
+  }
+  /* T527: the browser's confirm(), in the editor's own dialog. Verbs on
+     the buttons -- "Delete" / "Keep it", never OK / Cancel with the
+     meaning spelled out in a paragraph above them. cb(true) for the
+     verb, cb(false) for cancel, Escape or the shade, cb('alt') for a
+     third button when o.alt names one. */
+  function askYes(o,cb){
+    askText({yes:true,title:o.title,what:o.what,note:o.note,
+      ok:o.ok||'OK',cancel:o.cancel,alt:o.alt,danger:o.danger},
+      function(v,why){cb(why==='alt'?'alt':v!==null);});
+  }
+  /* ...and its alert(): one button, and whatever you do closes it */
+  function askTell(o,cb){
+    if(typeof o==='string') o={title:'Junoview',what:o};
+    askText({tell:true,title:o.title||'Junoview',what:o.what,
+      note:o.note,ok:o.ok||'OK'},function(){if(cb) cb();});
   }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
@@ -1206,16 +1243,22 @@
     if(!w) return Promise.resolve(true);
     nm=nm||pres.name||'this presentation';
     if(w==='nowhere')
-      return Promise.resolve(window.confirm('\u201c'+nm+'\u201d has '
-        +'changes that are kept NOWHERE \u2014 this browser is full.'
-        +'\n\nOK closes it and loses them. Cancel keeps it open so you '
-        +'can save it to a file.'));
-    if(!window.confirm('\u201c'+nm+'\u201d has changes not yet saved to '
-        +w+'.\n\nOK saves it there first, then closes. Cancel keeps it '
-        +'open.')) return Promise.resolve(false);
-    return saveNow().then(function(ok){
-      if(!ok) toast('Not closed \u2014 the save did not happen',6000);
-      return !!ok;
+      return new Promise(function(res){
+        askYes({title:'Close \u201c'+nm+'\u201d and lose its changes?',
+          what:'Its changes are kept NOWHERE \u2014 this browser is full.',
+          ok:'Close and lose them',cancel:'Keep it open to save it',
+          danger:true},function(y){res(y===true);});
+      });
+    return new Promise(function(res){
+      askYes({title:'Save \u201c'+nm+'\u201d before closing?',
+        what:'It has changes not yet saved to '+w+'.',
+        ok:'Save and close',cancel:'Keep it open'},function(y){res(y===true);});
+    }).then(function(y){
+      if(!y) return false;
+      return saveNow().then(function(ok){
+        if(!ok) toast('Not closed \u2014 the save did not happen',6000);
+        return !!ok;
+      });
     });
   }
   window.addEventListener('beforeunload',function(e){
@@ -2582,12 +2625,14 @@
     if(!window.JunoPptx){toast('.pptx export unavailable here');return;}
     /* what this will cost, BEFORE the file is in the downloads folder
        (T109). Silent when there is nothing to lose. */
-    if(!pptxConfirmLosses()) return;
     /* a .pptx leaves this machine and is re-scaled by whoever opens it,
        so it is one of the two consumers that most wants the full bytes —
        and it was embedding a.src, which is the shrunk display copy
        (2026-08-26 audit, T58) */
-    return pptxOriginals().then(pptxBuildAndSave);
+    return pptxConfirmLosses().then(function(go){
+      if(!go) return;
+      return pptxOriginals().then(pptxBuildAndSave);
+    });
   }
   /* WHAT THIS EXPORT WILL COST, said before it happens. The tally
      already existed and was read out in a toast AFTERWARDS, which is
@@ -2670,10 +2715,14 @@
   }
   function pptxConfirmLosses(){
     var lost=pptxLosses();
-    if(!lost.length) return true;
-    return confirm('Export .pptx?\n\nEverything else comes '
-      +'across, but this will not:\n\n\u2022 '+lost.join('\n\u2022 ')
-      +'\n\nExport PDF keeps all of it exactly as you see it.');
+    if(!lost.length) return Promise.resolve(true);
+    return new Promise(function(res){
+      askYes({title:'Export .pptx?',
+        what:'Everything else comes across, but this will not:\n\n\u2022 '
+          +lost.join('\n\u2022 '),
+        note:'Export PDF keeps all of it exactly as you see it.',
+        ok:'Export .pptx',cancel:'Not now'},function(y){res(y===true);});
+    });
   }
   function pptxBuildAndSave(orig){
     var pg=pageOf(),
@@ -2885,7 +2934,31 @@
       return deckSaveSig(normPres(h))===deckSaveSig(np);
     }catch(e){return false;}
   }
-  function importDeckText(txt,silent){
+  /* T527: a file of a deck that is already here asks, in the editor's
+     dialog, BEFORE the import -- the import itself never asks. The
+     answer goes back in as `choice`; no answer (a caller that did not
+     ask) keeps both, which never destroys anything. */
+  function importDeckTextAsk(txt){
+    var obj=parseDeckText(txt);
+    var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+      :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:null;
+    var pr=list&&list.length===1?list[0]:null;
+    if(pr&&Array.isArray(pr.slides)){
+      var np=normPres(pr),nm=np.name||'imported';
+      var clash=(savedByName(nm)||draftGet(nm));
+      if(clash&&!sameDeck((pres&&pres.name===nm)?pres:clash,np))
+        return new Promise(function(res){
+          askYes({title:'\u201c'+nm+'\u201d is already here',
+            what:'Replace the copy in this browser with the file\u2019s '
+              +'version, or keep both \u2014 the file\u2019s copy then '
+              +'opens under a new name.',
+            ok:'Replace it',cancel:'Keep both',danger:true},function(y){
+            res(importDeckText(txt,false,y===true?'replace':'keep'));});
+        });
+    }
+    return Promise.resolve(importDeckText(txt,false));
+  }
+  function importDeckText(txt,silent,choice){
     var obj=parseDeckText(txt);
     var list=(obj&&Array.isArray(obj.presentations))
       ?obj.presentations
@@ -2918,11 +2991,7 @@
         return;
       }
       if(clash&&!silent&&list.length===1){
-        var replace=window.confirm('\u201c'+base+'\u201d is already in '
-          +'this browser.\n\nOK replaces it with the file\u2019s version.'
-          +'\nCancel keeps both \u2014 the file\u2019s copy opens as a new '
-          +'name.');
-        if(replace){
+        if(choice==='replace'){
           np.name=nm;
           draftSet(nm,JSON.stringify(np),true);
           imported++;first={name:nm,pres:np,kept:true};
@@ -2993,6 +3062,7 @@
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
+  window.SemDeckImportAsk=importDeckTextAsk; /* ...and the asking door (T527) */
   window.SemDeckFileHtml=function(){return junoviewFileHtml();};
   /* ---- OPENING A .junoview FILE ---------------------------------------
      Opening a file used to import its contents and then carry on saving
@@ -3031,7 +3101,21 @@
         return h.getFile().then(function(f){
           return f.text().then(function(txt){
             var n=fileDeckCount(txt);
-            if(!importDeckText(txt,false)) return;
+            return importDeckTextAsk(txt).then(function(got){
+              if(got) landed(n,f,h);});
+          });
+        });
+      });
+    },Promise.resolve()).then(function(){
+      if(opened>1)
+        toast('Opened '+opened+' files \u2014 each presentation saves '
+          +'back to its own file',7000);
+      else if(opened&&last)
+        toast('Opened \u2014 Save now writes back to '+last);
+    });
+    /* T527: what landing one file does, once its question (if it had
+       one) is answered */
+    function landed(n,f,h){
             opened++;
             if(bundleOpened(n,f.name||'')) return;
             /* the handle is what makes Save write back to this very
@@ -3045,16 +3129,7 @@
             followFileName();
             setTarget('file');
             last=fileName;
-          });
-        });
-      });
-    },Promise.resolve()).then(function(){
-      if(opened>1)
-        toast('Opened '+opened+' files \u2014 each presentation saves '
-          +'back to its own file',7000);
-      else if(opened&&last)
-        toast('Opened \u2014 Save now writes back to '+last);
-    });
+    }
   }
   function openDeckFile(){
     if(window.showOpenFilePicker){
@@ -3093,7 +3168,14 @@
       var nm=f.name||'';
       return f.text().then(function(txt){
         var n=fileDeckCount(txt);
-        if(!importDeckText(txt,false)) return;
+        return importDeckTextAsk(txt).then(function(got){
+          if(got) landedInput(n,nm);});
+      }).catch(function(e){
+        toast('Import failed: '+((e&&e.message)||e));
+      });
+    }
+    /* T527: the input door's landing, after any question */
+    function landedInput(n,nm){
         if(bundleOpened(n,nm)) return;   /* T433 */
         /* no handle from an <input>, so we cannot write back to the file
            itself - but the DESTINATION is still "a file on your
@@ -3118,9 +3200,6 @@
             +'to a file, so it is kept here as a draft. Use Download to '
             +'write it out.');
         }
-      }).catch(function(e){
-        toast('Import failed: '+((e&&e.message)||e));
-      });
     }
   })();
   menuAction('#mi-discard',function(){
@@ -3144,16 +3223,23 @@
       return;
     }
     if(!savedByName(nm)){
-      if(!window.confirm('\u201c'+nm+'\u201d has no saved copy to go back '
-        +'to \u2014 OK deletes it from this browser.')) return;
+      askYes({title:'Discard \u201c'+nm+'\u201d?',
+        what:'It has no saved copy to go back to, so discarding its '
+          +'changes deletes it from this browser.',
+        ok:'Delete it',cancel:'Keep it',danger:true},function(y){
+        if(y===true) discardNow(nm);});
+      return;
     }
+    discardNow(nm);
+  });
+  function discardNow(nm){
     cancelDraftWrite();   /* a pending write would resurrect the discard */
     draftDel(nm);
     loadPresentation(pres.name);
     cur=0;activePane=-1;
     status();
     refresh();
-  });
+  }
   /* ONE project save, shared by rename and delete. embedAssets, not the
      lean list: `projectPres` can never carry `emb` (normPres absorbs it
      into the session store), so posting it raw made a rename or a delete
@@ -3448,10 +3534,17 @@
   }
   menuAction('#mi-del',function(){
     /* T483: the same question the library asks before it deletes */
-    if(!window.confirm('Delete \u201c'+pres.name+'\u201d?\n\nThis cannot '
-      +'be undone.')) return;
-    deletePresByName(pres.name);
+    var nm=pres.name;
+    askDeleteDeck(nm,function(){deletePresByName(nm);});
   });
+  /* T527: the one "delete a presentation" question, for the File menu,
+     the library and the open list alike */
+  function askDeleteDeck(nm,go){
+    askYes({title:'Delete \u201c'+nm+'\u201d?',
+      what:'This cannot be undone.',
+      ok:'Delete presentation',cancel:'Keep it',danger:true},function(y){
+      if(y===true) go();});
+  }
 
   /* ---- FIND AND REPLACE ------------------------------------------------
      Searches the MODEL, not the rendered page: every text box, list item,

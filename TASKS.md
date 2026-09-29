@@ -9994,10 +9994,22 @@ choice in the editor (T506, T507).
   browser. The Auto 15s countdown button stays: the user asked for a
   visible auto-save timer in T70, so the interval does not move into a
   menu. Driven live.
-- [ ] **T527 — No native dialogs.** "OK replaces it … Cancel keeps both"
+- [x] **T527 — No native dialogs.** "OK replaces it … Cancel keeps both"
   is a browser confirm() whose buttons mean the opposite of their words.
   Every remaining confirm()/alert()/prompt() in the app and the editor
   becomes the in-app ask dialog, with verbs on its buttons.
+  *Done 2026-09-29.* All seventeen confirm() calls in the editor and the
+  notebook app's twenty-five alert() calls and one prompt() now go through
+  the editor's own dialog. askText learned a yes/no shape (askYes: verbs
+  on the buttons, red for a verb that destroys, focus on the verb) and a
+  notice shape (askTell), and moves itself to the page body while the
+  editor is hidden; app.js reaches it through window.SemAsk/SemAskTell.
+  The import clash asks before the import (Replace it / Keep both) and a
+  deck made by Create slides never asks. The ask box also gets its
+  intended width back: .aa-box had been overriding .ask-box to 760px since
+  T475. Driven: delete (Escape keeps), a notice over the notebook, and
+  both import answers. A test scans every asset script for the three
+  calls.
 - [ ] **T528 — Nothing 403s on load.** One resource is refused on every
   app start.
 

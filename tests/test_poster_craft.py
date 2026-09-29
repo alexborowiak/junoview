@@ -401,8 +401,9 @@ def test_clearing_every_guide_asks_first_and_is_undoable(out):
     assert "if(typeof syncGuides==='function') syncGuides();" in out
     # ...and the question is asked above one, not for a click you can
     # obviously just repeat
-    assert "if(n>1&&!confirm('Clear '+n+' guides?" in out
-    assert "Ctrl+Z brings them back.')) return;" in out
+    # (T527: in the editor's own dialog)
+    assert "    if(n>1){\n      askYes({title:'Clear '+n+' guides?'," in out
+    assert "          +' Ctrl+Z brings them back.',\n" in out
 
 
 def test_guides_can_be_hidden_without_being_deleted(out):

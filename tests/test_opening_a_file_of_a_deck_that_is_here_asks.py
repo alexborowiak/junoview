@@ -15,14 +15,17 @@ from __future__ import annotations
 
 
 def test_the_one_question(out):
-    fn = out.split("  function importDeckText(txt,silent){")[1].split("\n  }")[0]
+    fn = out.split("  function importDeckText(txt,silent,choice){")[1] \
+        .split("\n  }")[0]
     assert "      var clash=(savedByName(nm)||draftGet(nm));" in fn
     assert "      if(clash&&!silent&&list.length===1){" in fn
-    assert ("        var replace=window.confirm('\\u201c'+base"
-            "+'\\u201d is already in '\n"
-            "          +'this browser.\\n\\nOK replaces it with the "
-            "file\\u2019s version.'") in fn
-    assert ("        if(replace){\n"
+    # T527: the question is asked BEFORE the import, in the editor's own
+    # dialog, and comes back in as `choice`; no answer keeps both
+    ask = out.split("  function importDeckTextAsk(txt){")[1] \
+        .split("\n  }")[0]
+    assert ("            ok:'Replace it',cancel:'Keep both',danger:true}"
+            ) in ask
+    assert ("        if(choice==='replace'){\n"
             "          np.name=nm;\n"
             "          draftSet(nm,JSON.stringify(np),true);") in fn
     # the keep-both path is the old one, unchanged

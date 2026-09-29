@@ -5345,6 +5345,22 @@ body.light .eq-box{background:var(--chrome-2);
 .ask-row-note{grid-column:1/-1;font-family:var(--sans);font-size:11.5px;
   color:var(--chrome-ink-3);line-height:1.45;margin-top:-4px;}
 .ask-dlg.ask-form .ask-box{width:min(520px,94vw);}
+/* T527: a yes/no or a notice keeps the paragraph breaks and bullets of
+   what it is asking about ("this will not come across: • …") */
+.ask-dlg.ask-yes .aa-what{white-space:pre-line;}
+/* the question's own width: `.aa-box` (760px, declared later at the same
+   weight) had been winning over `.ask-box` since T475, so a one-line
+   name field sat in a box the width of the Apply dialog (T527) */
+.aa-box.ask-box{width:min(460px,94vw);}
+.ask-dlg.ask-form .aa-box.ask-box{width:min(520px,94vw);}
+/* ...and a verb that destroys is red, filled, so "Delete presentation"
+   never wears the same cyan as "Save and close" */
+.ask-dlg .dbtn.primary.dbtn-warn{background:var(--danger);
+  border-color:var(--danger);color:#fff;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--danger) 40%,transparent),
+    0 2px 12px color-mix(in srgb,var(--danger) 35%,transparent);}
+.ask-dlg .dbtn.primary.dbtn-warn:hover{
+  background:color-mix(in srgb,var(--danger) 86%,black);color:#fff;}
 .aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:9px;padding:12px 13px 11px;
   background:var(--chrome-2);border:1px solid var(--chrome-line);

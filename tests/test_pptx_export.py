@@ -299,8 +299,9 @@ def test_the_losses_are_named_before_the_file_is_written(out):
     assert "note.skipped" in losses and "note.maths" in losses
     assert "note.cropped" in losses and "a.anim" in losses
     # nothing to lose means no dialog: the ordinary export stays one click
-    assert "if(!lost.length) return true;" in out
-    # and it gates the export rather than merely reporting
-    assert "if(!pptxConfirmLosses()) return;" in out
-    assert out.index("if(!pptxConfirmLosses()) return;") \
-        < out.index("return pptxOriginals().then(pptxBuildAndSave);")
+    assert "if(!lost.length) return Promise.resolve(true);" in out
+    # and it gates the export rather than merely reporting (T527: the
+    # answer arrives from the editor's own dialog, so it is a promise)
+    assert ("    return pptxConfirmLosses().then(function(go){\n"
+            "      if(!go) return;\n"
+            "      return pptxOriginals().then(pptxBuildAndSave);") in out

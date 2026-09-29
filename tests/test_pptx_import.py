@@ -618,12 +618,14 @@ def test_the_import_says_what_it_will_cost_first(out):
     deck -- never a deck with silent holes."""
     body = out.split("function importPptxSpec(got,name){")[1].split(
         "\n  }")[0]
-    assert "if(!pptxConfirmImport(pr.name,lost)) return;" in body
+    # T527: the answer comes from the editor's own dialog, as a promise
+    assert "pptxConfirmImport(pr.name,lost).then(function(go){" in body
+    assert "      if(!go) return false;" in body
     assert body.index("pptxConfirmImport") < body.index("pptxSettleImages")
-    assert body.index("pptxSettleImages") < body.index("importDeckText(")
+    assert body.index("pptxSettleImages") < body.index("importDeckTextAsk(")
     conf = out.split("function pptxConfirmImport(name,lost){")[1].split(
         "\n  }")[0]
-    assert "if(!lost.length) return true;" in conf
+    assert "if(!lost.length) return Promise.resolve(true);" in conf
 
 
 def test_a_rendered_export_says_it_cannot(out):

@@ -259,7 +259,9 @@
         if(a.k==='cell'&&typeof embedIfAbsent==='function') embedIfAbsent(a);
       });
     });
-    var n=importDeckText(JSON.stringify({presentations:[pr]}),false);
+    /* 'keep': a deck made from the notebook is always a NEW deck, so a
+       name that is taken takes the next free one (T236, T527) */
+    var n=importDeckText(JSON.stringify({presentations:[pr]}),false,'keep');
     if(n) toast(pr.slides.length+' slide'+(pr.slides.length===1?'':'s')
       +' from '+where+' — section headings as titles, the markdown '
       +'and figures placed beneath. It is a new presentation; edit away.',

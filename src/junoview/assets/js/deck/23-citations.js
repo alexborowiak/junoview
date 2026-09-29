@@ -362,10 +362,14 @@
       btn(r,'Cite',false,function(){citeInsert(k);},
         'Put [@'+k+'] into the selected text box');
       btn(r,'Remove',false,function(){
-        if(n&&!confirm('“'+k+'” is cited '
-          +'in this deck. Remove it from the library anyway? The '
-          +'citation will read ?'+k+' until you add it back.')) return;
-        delete lib[k];markDirty();renderSlide();citePaneSync();},
+        function drop(){
+          delete lib[k];markDirty();renderSlide();citePaneSync();}
+        if(!n){drop();return;}
+        askYes({title:'Remove \u201c'+k+'\u201d?',
+          what:'It is cited in this deck. The citation will read ?'+k
+            +' until you add it back.',
+          ok:'Remove it',cancel:'Keep it',danger:true},function(y){
+          if(y===true) drop();});},
         'Take this entry out of the deck’s library');
     });
     lab('References box');

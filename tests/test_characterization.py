@@ -2082,8 +2082,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # two columns of doors, and wraps a header's doors as one group.
 # T526 (2026-09-29): an armed autosave's 'unsaved — saving…' reads in the
 # quiet chrome ink, not the warning colour.
-EXPECTED_MD5 = "186eb3949471edbaf898fbfea2d0ca3d"
-EXPECTED_BYTES = 4587310
+# T527 (2026-09-29): no native confirm/alert/prompt anywhere -- every
+# question goes through the editor's own dialog (askYes, askTell), which
+# moves to the page body while the editor is hidden.
+EXPECTED_MD5 = "68fc283b1dcfe101dcdbf438d2b3ca5d"
+EXPECTED_BYTES = 4596037
 
 
 def _render_example() -> str:
