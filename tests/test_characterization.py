@@ -2076,8 +2076,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # rendered body at the canvas's zoom rule.
 # T523 (2026-09-29): Create slides measures each note at the slide width
 # before laying it out; a note too long or too wide shrinks its words.
-EXPECTED_MD5 = "e93bc93c121190d322b021538836bdbc"
-EXPECTED_BYTES = 4583276
+# T524 (2026-09-29): a floating 'Slide 3 of 14 · section' readout, bottom-
+# left of the canvas, opens the Overview map.
+EXPECTED_MD5 = "9d478b9ed2fc54607e73ea3977c58f1e"
+EXPECTED_BYTES = 4585692
 
 
 def _render_example() -> str:

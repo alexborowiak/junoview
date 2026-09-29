@@ -9965,9 +9965,16 @@ choice in the editor (T506, T507).
   slides, every note scrollHeight == clientHeight and nothing past the
   frame's right edge; the display equation on slide 9 is whole. The pure
   builder keeps its estimate for plans without a measurer.
-- [ ] **T524 — A status bar.** "Slide 3 of 14 · Methods", the zoom, and a
+- [x] **T524 — A status bar.** "Slide 3 of 14 · Methods", the zoom, and a
   Fit button along the bottom edge, where PowerPoint keeps them; the
   floating zoom widget moves into it.
+  *Done 2026-09-29.* Built as the zoom cluster's floating twin in the
+  canvas's bottom-left rather than a full-width bar: the user placed zoom
+  there on 2026-08-20 precisely so the canvas keeps its height, and Fit is
+  already the zoom value's click. It reads 'Slide 5 of 14', adds the
+  version label and section name when there are any, says Page on a
+  poster, counts mains only like the strip, and opens the Overview map.
+  Driven at 1440x900.
 - [ ] **T525 — The Home screen's buttons stay in their own column.** The
   Recent presentations row's Folder button straddles the Notebooks
   heading at 1440px.

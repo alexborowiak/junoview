@@ -284,6 +284,15 @@ body.deck-open{overflow:hidden;}
 .deck.pane-open.rbn-side .deck-zoombar{
   right:calc(var(--pane-w) + var(--rbn-side-w) + 18px);}
 .deck-zoombar .dbtn{padding:3px 9px;}
+/* T524: "Slide 3 of 14 · Methods", the zoom cluster's twin bottom-left */
+.deck-where{position:absolute;left:18px;bottom:12px;z-index:8;
+  display:none;padding:4px;border-radius:9px;max-width:45%;
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  box-shadow:0 6px 20px var(--shadow);}
+.deck.editing .deck-where{display:flex;}
+.deck-where .dbtn{padding:3px 9px;min-width:0;}
+.deck-where #where-t{overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
 .qat-play{flex:none;white-space:nowrap;}
 
 /* ---------- the tab strip ---------------------------------------------

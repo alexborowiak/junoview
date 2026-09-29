@@ -478,6 +478,34 @@
       } else c.textContent=pres.slides.length
         ?(slideNo(cur)+' / '+slideCount()):'0 / 0';
     }
+    syncWhere();
+  }
+  /* ---- T524: WHERE YOU ARE ---------------------------------------------
+     PowerPoint's status bar opens with "Slide 3 of 14". The zoom cluster
+     floats in the canvas's bottom-right corner so the canvas keeps its
+     height (2026-08-20, user); this is its twin in the bottom-left: the
+     slide you are on, of how many, the version it is and the section it
+     sits in -- the same main-only numbers the strip and the talk use.
+     Click it for the Overview map, every slide as a tile. */
+  function syncWhere(){
+    var t=$('#where-t'); if(!t||!pres) return;
+    var sl=pres.slides||[],s=sl[cur],n=slideCount();
+    var word=pageOf().poster?'Page':'Slide';
+    var txt=n?(word+' '+slideNo(cur)+' of '+n):('No '+word.toLowerCase()+'s');
+    if(s&&slideIsAlt(cur)){
+      var ar=altRun(cur);
+      txt+=' · '+(s.label||('Version '+(cur-ar.at+1)));
+    }
+    if(s&&s.sec) txt+=' · '+secName(s.sec);
+    t.textContent=txt;
+    var b=$('#where-btn');
+    if(b) b.title=txt+' — click for every slide as a tile (the '
+      +'Overview map)';
+  }
+  function whereBoot(){
+    var b=$('#where-btn');
+    if(b) b.addEventListener('click',function(){openOverview();});
+    syncWhere();
   }
   function scrollToTrace(){
     var tr=stage.querySelector('.vtrace');
