@@ -2070,8 +2070,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # of rendering all three jobs and the slide navigator at the same time.
 # T520 (2026-09-28): its labels, variation chooser, override note, placement
 # groups and individual-box table are the compact, plain-language versions.
-EXPECTED_MD5 = "8fd1c28efe06cfa43db81f34b82fb57f"
-EXPECTED_BYTES = 4576139
+# T521 (2026-09-29): slide thumbnails are an optional drawer and the focused
+# placement controls precede the canvas.
+EXPECTED_MD5 = "e8f8f74b2b4f52f70ac884ddd9167c75"
+EXPECTED_BYTES = 4577692
 
 
 def _render_example() -> str:

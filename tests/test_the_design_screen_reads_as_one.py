@@ -19,16 +19,16 @@ you know if your heading is going to overlap with something (should be a
 colour for every different thing, but the one in question glows and has
 a thicker border)."
 
-Driven at 1700px: the slides sit in a column on the right, the controls
-read as five captioned clusters, ticking Show everything else drew eight
-other boxes with a key, and picking two slides accumulated and filtered
-both the table and the board.
+Driven at 1700px: Slides opens a column on the right only when needed, the
+controls read as five captioned clusters, Show other objects drew eight other
+boxes with a key, and picking two slides accumulated and filtered both the
+table and the board.
 """
 
 from __future__ import annotations
 
 
-def test_the_slides_go_down_the_side(out):
+def test_the_optional_slides_go_down_the_side(out):
     assert "'<div class=\"dg-sheetcol\" id=\"dg-sheetcol\"></div></div>';" in out
     assert "  function dgSheet(_unused,ov){" in out
     assert "    var body=ov&&ov.querySelector('#dg-sheetcol');" in out
@@ -36,6 +36,10 @@ def test_the_slides_go_down_the_side(out):
     # one column, so a thumbnail is big enough to read
     assert (".dg-sheet{display:grid;gap:10px;margin-top:10px;\n"
             "  grid-template-columns:1fr;}") in out
+    assert "  function dgSheetButton(ov){" in out
+    assert "b.setAttribute('aria-pressed',dgSheetOpen?'true':'false');" in out
+    assert "b.innerHTML=bic('present')+' Slides'" in out
+    assert "dgSheetOpen=!dgSheetOpen;dgBodyKeep(ov);" in out
 
 
 def test_the_style_editor_is_three_clear_views(out):
@@ -51,6 +55,7 @@ def test_the_style_editor_is_three_clear_views(out):
     assert ".dg-grp{display:flex;align-items:center;gap:4px;min-width:0;" in out
     assert '.dg-grp[data-group="colours"],.dg-grp[data-group="reset"]{' in out
     assert ".dg-grplab:empty{display:none;}" in out
+    assert "rst.className='dbtn dg-b';rst.textContent='Reset appearance';" in out
     # T519: the former two-column board over a table is three views. Each
     # keeps the existing controls but only the selected job is visible.
     assert "nlab.textContent='Exactly';" not in out
@@ -60,7 +65,7 @@ def test_the_style_editor_is_three_clear_views(out):
     assert "    body.className='dg-body dg-view-'+dgView;" in out
     assert "    left.hidden=dgView!=='look';right.hidden=dgView!=='place';" in out
     assert "    if(dgView==='boxes') dgTable(body,ov);" in out
-    assert "    if(dgView==='place'||dgView==='boxes'){" in out
+    assert "    if((dgView==='place'||dgView==='boxes')&&dgSheetOpen){" in out
     assert "    var top=document.createElement('div');top.className='dg-top';" in out
     assert ".dg-top{display:block;width:100%;max-width:980px;" in out
 
@@ -93,9 +98,9 @@ def test_the_board_shows_the_real_boxes_not_only_the_master(out):
     the WORDS on it -- each text box carries its own text at its own
     size, in cqh so a style's percent-of-page is percent-of-board, one
     set of words per place so fourteen headings at 5,4 are one title and
-    thirteen outlines -- and turns everything else on by default, so the
-    board reads as the slide it is. The key says "figure", not "cell"."""
-    assert "  var dgShowOthers=true;" in out
+    thirteen outlines. Other objects stay one click away rather than making
+    the default board noisy. The key says "figure", not "cell"."""
+    assert "  var dgShowOthers=false;" in out
     assert "  var DG_KIND_COL={text:'#6b9bff',cell:'#f0a848',image:'#a586e8'," in out
     assert "  function dgGhostsFor(board,id){" in out
     assert "        var mine=(a.k==='text'&&a.style===id);" in out
@@ -103,7 +108,9 @@ def test_the_board_shows_the_real_boxes_not_only_the_master(out):
     # T470: the same boxed switch as the sheet column's Outlines
     assert "ck.className='dbtn dg-b dg-keyck';" in out
     assert "ck.innerHTML=bic('eye')+' Show other objects';" in out
+    assert "    host.insertBefore(key,board);" in out
     assert "  function dgKeyList(key,id){" in out
+    assert "slidesLabel.textContent='Slides';list.appendChild(slidesLabel);" in out
     assert "  function dgBoardWords(b,a,def){" in out
     assert "    t.style.fontSize=size.toFixed(2)+'cqh';" in out
     assert "        var at=(mine?'m':'o')+a.k+':'+dgPlaceKey(a);" in out

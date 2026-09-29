@@ -4277,7 +4277,8 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .dg-placehead.on{color:var(--cyan);}
 .dgt-c.dgt-inplace{background:color-mix(in srgb,var(--accent) 12%,transparent);}
 .dg-placehead{font-size:11px;opacity:.85;flex:0 0 auto;}
-.dg-placeslides{display:flex;flex-wrap:wrap;gap:3px;}
+.dg-placeslides{display:flex;align-items:center;flex-wrap:wrap;gap:3px;}
+.dg-placeslides-label{margin-right:3px;color:var(--chrome-ink-3);}
 .dg-slidechip{font-family:var(--mono);font-size:10px;line-height:1;
   padding:2px 5px;border-radius:4px;cursor:pointer;color:var(--chrome-ink-2);
   background:none;border:1px solid var(--border-strong,#ffffff26);}
@@ -5840,12 +5841,18 @@ body.light .dg-swatch{border-color:#00000026;}
   text-overflow:ellipsis;white-space:nowrap;}
 /* T519: one job at a time. The old screen showed the style editor,
    placement board, instance table and slide navigator simultaneously. */
-.dg-tabs{display:flex;gap:4px;margin:8px 0 16px;padding-bottom:10px;
-  border-bottom:1px solid var(--chrome-line,#ffffff1f);overflow-x:auto;}
+.dg-navrow{display:flex;align-items:flex-start;gap:8px;margin:8px 0 16px;
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
+.dg-tabs{display:flex;flex:1 1 auto;gap:4px;margin:0;padding-bottom:10px;
+  overflow-x:auto;}
 .dg-tab{min-width:128px;justify-content:center;white-space:nowrap;}
 .dg-tab[aria-selected="true"]{background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
+.dg-sheet-toggle{flex:none;margin-left:auto;white-space:nowrap;}
+.dg-viewhead{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:8px;}
+.dg-viewhead .dg-h{margin:0;}
 /* T519: a property sheet, not differently sized islands. Two regular
    columns keep labels and controls aligned; Colours needs the whole row. */
 .dg-ctrls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));

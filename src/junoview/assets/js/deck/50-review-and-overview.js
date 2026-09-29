@@ -2481,7 +2481,8 @@
      cannot express, and it is a button you press, never something
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
-  var dgSel='title', dgView='look', dgOutline=false, dgVarOpen={};
+  var dgSel='title', dgView='look', dgSheetOpen=false,
+    dgOutline=false, dgVarOpen={};
   /* the smallest a drag proxy in the outline sheet may be, in page
      percent. A horizontal or vertical line's bounding box is
      zero-thickness and there is nothing to grab; the canvas answers the
@@ -3341,6 +3342,9 @@
       if(dgPlacePick===g.key) wrap.className='dg-place on';
       var list=document.createElement('span');
       list.className='dg-placeslides';
+      var slidesLabel=document.createElement('span');
+      slidesLabel.className='dg-placeslides-label';
+      slidesLabel.textContent='Slides';list.appendChild(slidesLabel);
       g.ws.forEach(function(w){
         var s=document.createElement('button');
         s.className='dg-slidechip';
@@ -3612,16 +3616,13 @@
      is going to overlap with something (should be a colour for every
      different thing, but the one in question glows and has a thicker
      border)".)
-     The dragged rectangle is still the default this style stamps. Behind
-     it now sit every box that actually wears the style, and -- when you
-     ask -- everything else on those slides, one colour per kind. So the
-     question "will my heading land on the figure" is answered by looking
-     rather than by pressing the button and undoing it.
-     T384: ON by default. With the dashed prototype gone (T367) a board
-     of one amber outline on a grey page was "the visual display is
-     gone" (2026-09-12); the board reads as a slide only when the slide
-     is on it. */
-  var dgShowOthers=true;
+     The board shows every box that wears the style and, when asked,
+     everything else on those slides, one colour per kind. So the question
+     "will my heading land on the figure" is answered by looking rather than
+     by pressing a button and undoing it. T521 starts focused on the selected
+     style; Show other objects is directly above the canvas when overlap
+     context is useful. */
+  var dgShowOthers=false;
   var DG_KIND_COL={text:'#6b9bff',cell:'#f0a848',image:'#a586e8',
     rect:'#46a892',table:'#e0a5c6',flip:'#39a9c0',arrow:'#ff6b57',
     line:'#ff6b57',draw:'#ff6b57',chart:'#7fd7c0'};
@@ -3934,7 +3935,9 @@
     ck.title='Draw every other object on these slides too';
     key.appendChild(ck);
     dgKeyList(key,id);
-    host.appendChild(key);
+    /* The board can fill a laptop-height viewport. Put its controls first,
+       so the way to reveal context is never hidden below the canvas. */
+    host.insertBefore(key,board);
 
   }
   function dgSectionHead(host,text,sub){
@@ -3947,7 +3950,19 @@
       host.appendChild(p);
     }
   }
+  function dgSheetButton(ov){
+    var b=document.createElement('button');
+    b.type='button';b.className='dbtn dg-sheet-toggle';
+    b.setAttribute('aria-pressed',dgSheetOpen?'true':'false');
+    b.innerHTML=bic('present')+' Slides'
+      +(dgPickedAny()?' ('+dgPickedCount()+')':'');
+    b.title='Show slide thumbnails to filter this view';
+    b.addEventListener('click',function(){
+      dgSheetOpen=!dgSheetOpen;dgBodyKeep(ov);});
+    return b;
+  }
   function dgTabs(body,ov,count){
+    var nav=document.createElement('div');nav.className='dg-navrow';
     var tabs=document.createElement('div');
     tabs.className='dg-tabs';tabs.setAttribute('role','tablist');
     [['look','Appearance'],['place','Placement'],
@@ -3960,7 +3975,9 @@
         dgView=pr[0];dgBodyKeep(ov);});
       tabs.appendChild(b);
     });
-    body.appendChild(tabs);
+    nav.appendChild(tabs);
+    if(dgView!=='look') nav.appendChild(dgSheetButton(ov));
+    body.appendChild(nav);
   }
   function dgBody(ov){
     if(!ov) return;
@@ -3983,10 +4000,14 @@
           +'the ones that should match can be made to.</div>';
         return;
       }
-      dgSectionHead(body,dgKindLabel()+' \u2014 every one in this deck');
+      var objHead=document.createElement('div');objHead.className='dg-viewhead';
+      dgSectionHead(objHead,dgKindLabel()+' \u2014 every one in this deck');
+      objHead.appendChild(dgSheetButton(ov));body.appendChild(objHead);
       dgTable(body,ov);
-      if(sheetcol) sheetcol.hidden=false;
-      dgSheet(body,ov);
+      if(dgSheetOpen){
+        if(sheetcol) sheetcol.hidden=false;
+        dgSheet(body,ov);
+      }
       return;
     }
     if(!d){body.innerHTML='<div class="selpane-empty">Pick a type on '
@@ -4151,7 +4172,7 @@
     cg.appendChild(dgCol('bdc','Border','#8aa0b0','None'));
     grp('');
     var rst=document.createElement('button');
-    rst.className='dbtn dg-b';rst.textContent='Reset';
+    rst.className='dbtn dg-b';rst.textContent='Reset appearance';
     rst.title='Back to this type’s built-in look';
     rst.addEventListener('click',function(){
       var st=deckStyles();
@@ -4260,7 +4281,7 @@
     right.appendChild(putRow);
 
     if(dgView==='boxes') dgTable(body,ov);
-    if(dgView==='place'||dgView==='boxes'){
+    if((dgView==='place'||dgView==='boxes')&&dgSheetOpen){
       if(sheetcol) sheetcol.hidden=false;
       dgSheet(body,ov);
     }

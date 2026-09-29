@@ -9910,3 +9910,10 @@ any reading. The rest are T466 onwards.
   placement groups say how many boxes are there, and the individual-box table
   distinguishes Contents, Font, Colour and Fill. Slide and box selection no
   longer use the same labels. All three paths were driven in the dark theme.
+- [x] **T521 — Give Style-system work the whole canvas.** (2026-09-29) Slide
+  thumbnails are an optional, counted Slides drawer instead of a permanent
+  quarter-screen column; closing it keeps any active slide filter visible in
+  the button. Placement starts with the selected style alone, keeps Show other
+  objects one click away above the canvas, labels its slide-number chips and
+  says Reset appearance explicitly. Placement and Individual boxes were
+  driven with the drawer closed, open, filtered and closed while filtered.
