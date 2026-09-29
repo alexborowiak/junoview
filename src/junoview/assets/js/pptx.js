@@ -284,6 +284,8 @@ window.JunoPptx = (function () {
     if (item.i) out += ' i="1"';
     if (item.u) out += ' u="sng"';
     if (item.strike) out += ' strike="sngStrike"';
+    /* T541: PowerPoint's own offsets for superscript and subscript */
+    if (item.baseline) out += ' baseline="' + item.baseline + '"';
     var body = solidFill(item.color, item.op, 'FFFFFF');
     if (item.font) body += '<a:latin typeface="' + esc(item.font) + '"/>';
     return '<a:' + tag + out + '>' + body + '</a:' + tag + '>';
@@ -300,6 +302,8 @@ window.JunoPptx = (function () {
     for (var k in item) r[k] = item[k];
     if (run.b) r.b = 1; if (run.i) r.i = 1; if (run.u) r.u = 1;
     if (run.strike) r.strike = 1;
+    if (run.sup) r.baseline = 30000;
+    else if (run.sub) r.baseline = -25000;
     if (run.color) r.color = run.color;
     if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
     return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';

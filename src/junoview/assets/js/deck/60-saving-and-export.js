@@ -2195,7 +2195,7 @@
         if(!t.trim()&&!cur) return;
         if(!cur) para('',0,0);
         cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
-          color:st.color||''});
+          color:st.color||'',sup:!!st.sup,sub:!!st.sub});
         return;
       }
       if(n.nodeType!==1) return;
@@ -2205,6 +2205,8 @@
       if(tag==='i'||tag==='em') s2.i=1;
       if(tag==='u') s2.u=1;
       if(tag==='s'||tag==='strike'||tag==='del') s2.s=1;
+      if(tag==='sup'){s2.sup=1;s2.sub=0;}      /* T541 */
+      if(tag==='sub'){s2.sub=1;s2.sup=0;}
       var col=colOf(n); if(col) s2.color=col;
       if(tag==='br'){cur=null;return;}
       var hd=/^h([1-6])$/.exec(tag);

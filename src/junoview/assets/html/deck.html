@@ -2179,6 +2179,14 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Underline"><u>U</u></button>
                 <button class="dbtn etm" id="fmt-strike"
                 title="Strikethrough"><s>S</s></button>
+                <!-- T541: raise and lower the highlighted characters --
+                     m², CO₂, x₁ -- PowerPoint's Ctrl+Shift+= and Ctrl+= -->
+                <button class="dbtn etm fmt-supsub" id="fmt-sup"
+                title="Superscript: raise the highlighted characters (Ctrl+Shift+=)"
+                ><i>x</i><sup>2</sup></button>
+                <button class="dbtn etm fmt-supsub" id="fmt-sub"
+                title="Subscript: lower the highlighted characters (Ctrl+=)"
+                ><i>x</i><sub>2</sub></button>
               </span>
               <!-- Grid columns fill downward. Keep related decisions in
                    each column: face over named style, then emphasis over

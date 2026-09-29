@@ -1832,6 +1832,24 @@
   onRun('#fmt-ital','italic',setFromPrimary('i'));
   onRun('#fmt-under','underline',setFromPrimary('u'));
   onRun('#fmt-strike','strikeThrough',setFromPrimary('strike'));
+  /* T541: superscript and subscript are about CHARACTERS -- a whole box
+     raised above its own baseline means nothing -- so with no run
+     highlighted they say what to do instead of guessing */
+  [['#fmt-sup','superscript'],['#fmt-sub','subscript']].forEach(function(p){
+    var b=$(p[0]); if(!b) return;
+    b.addEventListener('mousedown',function(e){
+      if(activeTextEditable()) e.preventDefault();});
+    b.addEventListener('click',function(){
+      if(runStyleSelection(p[1])){
+        renderSlide();
+        if(typeof showFmt==='function') showFmt();
+        return;
+      }
+      toast('Highlight the characters to '+(p[1]==='superscript'
+        ?'raise':'lower')+' first \u2014 double-click into the box and '
+        +'select them');
+    });
+  });
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out

@@ -758,6 +758,7 @@ class _TextReader:
         i = _first_attr(srcs, "", "i")
         u = _first_attr(srcs, "", "u")
         strike = _first_attr(srcs, "", "strike")
+        baseline = _int(_first_attr(srcs, "", "baseline"), 0)
         color, alpha, ink = "", 1.0, False
         for s in srcs:
             fill = s.find("a:solidFill", NS)
@@ -781,6 +782,11 @@ class _TextReader:
                "u": bool(u) and u != "none",
                "strike": bool(strike) and strike != "noStrike",
                "color": "" if ink else color, "font": font}
+        # T541: a raised or lowered run (m², CO₂) keeps its baseline
+        if baseline > 0:
+            out["sup"] = True
+        elif baseline < 0:
+            out["sub"] = True
         if alpha < 1:
             out["op"] = round(alpha, 3)
         if href:

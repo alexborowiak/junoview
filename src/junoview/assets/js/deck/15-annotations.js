@@ -2181,7 +2181,7 @@
      sanitiser: bold inside a bullet, or a sub-level, silently vanished
      (2026-08-20, user: "the bullet list on/off is cursed"). */
   var RICH_TAGS={span:1,div:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1,
-    ul:1,ol:1,li:1};
+    ul:1,ol:1,li:1,sup:1,sub:1};   /* T541: m², CO₂ */
   function sanitizeRich(html){
     /* parse into an INERT template fragment — no image loads, no inline event
        handlers ever run (unlike a live-document div), so merely sanitising
@@ -2282,7 +2282,7 @@
          just escaped from was rebuilt from a.list on the next render
          (T72, 2026-08-29). */
       rich:hasList||!!tpl.content.querySelector(
-        'span[style],font,b,strong,i,em,u,s,ul,ol,li')};
+        'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub')};
   }
   /* ---- PASTED CODE (T92) ----------------------------------------------
      "Like how Slack you can paste code and it formats" (2026-08-29,

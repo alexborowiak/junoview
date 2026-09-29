@@ -10167,8 +10167,15 @@ choice in the editor (T506, T507).
 
 ### Text and formatting
 
-- [ ] **T541 — Superscript and subscript.** Buttons, Ctrl+Shift+= and
+- [x] **T541 — Superscript and subscript.** Buttons, Ctrl+Shift+= and
   Ctrl+=, kept by the sanitizer and exported to .pptx.
+  *Done 2026-09-29.* x² and x₂ sit beside B I U S (and in the mini
+  toolbar), Ctrl+Shift+= and Ctrl+= press them, and the rich-text allow-
+  list keeps <sup>/<sub>. They act on highlighted characters and, with
+  none, say how. The .pptx writer sets PowerPoint's run baseline (+30000 /
+  -25000) and the reader turns it back into <sup>/<sub>; a test builds a
+  real .pptx and reads it back. Driven: 'Southern' raised with
+  Ctrl+Shift+= and still raised after Escape and a slide change.
 - [ ] **T542 — Vertical alignment in a box.** Top, middle, bottom; saved,
   rendered, imported and exported.
 - [ ] **T543 — Highlighter for words.** A text highlight colour on the

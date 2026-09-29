@@ -38,6 +38,7 @@
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
   var FMT_MANUAL=('#fmt-geom-xy #fmt-geom-wh #fmt-lhwrap '
+    +'#fmt-sup #fmt-sub '   /* T541: shown for text by hand, beside Bold */
     /* the four windows of options (T177): a wrapper, its door, the
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
@@ -346,6 +347,9 @@
     show('#fmt-ital',isText,!!a.i);
     show('#fmt-under',isText,!!a.u);
     show('#fmt-strike',isText,!!a.strike);
+    /* T541: characters, so words only -- a text box's own */
+    show('#fmt-sup',isText);
+    show('#fmt-sub',isText);
     show('#fmt-szwrap',isText||isTbl);
     /* T220: the size cell is on the row now that the Font window
        is gone */

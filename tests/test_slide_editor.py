@@ -655,10 +655,10 @@ def test_bullets_are_a_real_list_model(out):
     assert "function listOf(a){" in out
     assert "function setListStyle(a,style){" in out
     assert "function contentLines(a){" in out
-    assert "ul:1,ol:1,li:1};" in out
+    assert "ul:1,ol:1,li:1" in out   # (T541 added sup/sub after them)
     # T72: `li` belongs here too. A box-wide list stores bare <li>s, while
     # T513's edit wrapper temporarily carries the outer ul/ol.
-    assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li')};" in out
+    assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub')};" in out
     # A single nested list is folded back to bare items. Mixed paragraphs
     # deliberately drop the old box-wide flag and keep their full HTML.
     assert "function listEditBody(html){" in out

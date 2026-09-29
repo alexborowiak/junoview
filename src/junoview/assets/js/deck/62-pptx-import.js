@@ -64,6 +64,8 @@
     if(r.i&&!box.i) h='<i>'+h+'</i>';
     if(r.u&&!box.u) h='<u>'+h+'</u>';
     if(r.strike&&!box.strike) h='<s>'+h+'</s>';
+    if(r.sup) h='<sup>'+h+'</sup>';          /* T541 */
+    else if(r.sub) h='<sub>'+h+'</sub>';
     if(r.color&&r.color!==(box.color||''))
       h='<span style="color:'+r.color+'">'+h+'</span>';
     return h;
@@ -94,7 +96,7 @@
     var rich=paras.some(function(p){
       return p.runs.some(function(r){
         return (!!r.b!==!!it.b)||(!!r.i!==!!it.i)||(!!r.u!==!!it.u)
-          ||(!!r.strike!==!!it.strike)
+          ||(!!r.strike!==!!it.strike)||!!r.sup||!!r.sub
           ||((r.color||'')!==(it.color||''));
       });
     });

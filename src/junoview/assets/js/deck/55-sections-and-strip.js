@@ -2397,6 +2397,9 @@
     if(!e.shiftKey&&(k==='e'||k==='E')) return pptClick('#fmt-al-center');
     if(!e.shiftKey&&(k==='r'||k==='R')) return pptClick('#fmt-al-right');
     if(e.shiftKey&&(k==='>'||e.code==='Period')) return pptClick('#fmt-bigger');
+    /* T541: Ctrl+Shift+= superscript, Ctrl+= subscript, as PowerPoint */
+    if(e.code==='Equal'||k==='='||k==='+')
+      return pptClick(e.shiftKey?'#fmt-sup':'#fmt-sub');
     if(e.shiftKey&&(k==='<'||e.code==='Comma')) return pptClick('#fmt-smaller');
     return false;
   }

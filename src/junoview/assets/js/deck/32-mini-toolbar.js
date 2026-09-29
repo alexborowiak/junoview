@@ -28,6 +28,8 @@
     ['#fmt-ital','I','Italic (Ctrl+I)','mini-i'],
     ['#fmt-under','U','Underline (Ctrl+U)','mini-u'],
     ['#fmt-strike','S','Strikethrough','mini-s'],
+    ['#fmt-sup','x\u00b2','Superscript (Ctrl+Shift+=)',''],
+    ['#fmt-sub','x\u2082','Subscript (Ctrl+=)',''],
     ['#fmt-smaller','A−','Smaller text (Ctrl+Shift+<)',''],
     ['#fmt-bigger','A+','Bigger text (Ctrl+Shift+>)','']
   ];

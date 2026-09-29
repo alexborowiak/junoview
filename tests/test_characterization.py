@@ -2117,8 +2117,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # floor measured after the gesture -- selecting no longer costs a 200ms
 # frame.
 # T540 (2026-09-29): Ctrl+0 fits the page.
-EXPECTED_MD5 = "50bf3fe58922f67355b2c2a02ef027be"
-EXPECTED_BYTES = 4645863
+# T541 (2026-09-29): superscript and subscript -- buttons, keys, the mini
+# toolbar, the sanitizer and the .pptx both ways.
+# T541 (2026-09-29): superscript and subscript.
+EXPECTED_MD5 = "0159e30a68147b81deef9f34f3fc24fc"
+EXPECTED_BYTES = 4648148
 
 
 def _render_example() -> str:
