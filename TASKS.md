@@ -10121,9 +10121,16 @@ choice in the editor (T506, T507).
   being typed in. Each button presses the ribbon's own control and mirrors
   its pressed state; mousedowns are swallowed so the run stays selected.
   Driven: F2 on the title shows the bar above the words with Bold lit.
-- [ ] **T537 — Clipboard on Home.** Paste (with in place, here, and as
+- [x] **T537 — Clipboard on Home.** Paste (with in place, here, and as
   plain text), Cut, Copy and Format painter, first on Home as in
   PowerPoint.
+  *Done 2026-09-29.* Home opens with a Clipboard group: Paste (split:
+  Paste in place, Paste as plain text, Paste look), Cut, Copy and Copy
+  look -- words while typing, objects otherwise, the slide when nothing is
+  selected, as the keys do; Paste prefers Junoview's own copy and then
+  asks the browser for the system clipboard. No Home group folds at 1920,
+  1440, 1366 or 1280 (the spacing ladder absorbs the 174px). Driven: Copy,
+  Paste and Paste in place on the title.
 - [ ] **T538 — Search the commands.** A "Search commands" box (Alt+Q)
   finds any ribbon control by its name, tooltip or tab and runs it — the
   answer to "I know it exists, where is it?".

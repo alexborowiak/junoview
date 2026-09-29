@@ -1844,6 +1844,48 @@ items snap to both. Guides, not ink: never printed or exported"
                slide is laid out -- changing it, arranging what is on
                it, saving and applying a layout -- is one subject and
                lives on Design, in one place. -->
+          <!-- T537: CLIPBOARD, FIRST ON HOME, where PowerPoint keeps it.
+               Cut, Copy and Paste lived only on keys and the right-click
+               menu, and the chords Paste in place and Copy look had no
+               button at all. Four cells, two columns: Paste | Cut over
+               Copy | Copy look. Every one acts on highlighted words
+               while you type and on the selected objects otherwise. -->
+          <span class="rbn-grp rbn-clip" data-tab="home" data-fold-ic="paste">
+            <span class="rbn-row">
+              <span class="sh-drop tx-split" id="hm-pastewrap">
+                <button class="dbtn rbn-sm" id="hm-paste"
+                  title="Paste (Ctrl+V) &mdash; what you copied in
+ Junoview, or from outside it"><i data-ic="paste"></i> Paste</button>
+                <button class="dbtn rbn-sm tx-caret" id="hm-paste-caret"
+                  aria-label="Ways to paste" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Paste in place, as plain text, or a copied look"
+                  >&#9662;</button>
+                <div class="dc-menu" id="hm-paste-menu" hidden>
+                  <button class="dc-mi" id="hm-paste-place"
+                    title="Exactly where it was copied from">
+                    <i data-ic="paste"></i> Paste in place
+                    <kbd>Ctrl+Shift+V</kbd></button>
+                  <button class="dc-mi" id="hm-paste-plain"
+                    title="Words from outside Junoview, with none of their
+ formatting"><i data-ic="text"></i> Paste as plain text</button>
+                  <button class="dc-mi" id="hm-paste-look"
+                    title="The look you copied, on everything selected"
+                    ><i data-ic="palette"></i> Paste look</button>
+                </div>
+              </span>
+              <button class="dbtn rbn-sm" id="hm-cut"
+                title="Cut (Ctrl+X)"><i data-ic="cut"></i> Cut</button>
+              <button class="dbtn rbn-sm" id="hm-copy"
+                title="Copy (Ctrl+C)"><i data-ic="copy"></i> Copy</button>
+              <button class="dbtn rbn-sm" id="hm-copylook"
+                title="Copy the selected object&rsquo;s look &mdash; its
+ typeface, size, colours, fill and line (Ctrl+Shift+C). Paste it with
+ Ctrl+Shift+V or Paste &#9662; Paste look"><i data-ic="palette"></i> Copy
+                look</button>
+            </span>
+            <span class="rbn-lab">Clipboard</span>
+          </span>
           <span class="rbn-grp rbn-slides" data-tab="home" data-fold-ic="plus">
             <span class="rbn-row">
               <button class="fx-tile big-tile rbn-tall" id="hm-newslide"

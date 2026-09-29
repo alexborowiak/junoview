@@ -2164,6 +2164,118 @@
     if(n){markDirty();refresh();}
     return n;
   }
+  /* ---- T537: THE CLIPBOARD GROUP ON HOME --------------------------------
+     The buttons do what the keys do. With a caret in a box they act on
+     the words (the browser's own cut and copy, which a click is allowed
+     to run); otherwise on the selected objects, and with nothing
+     selected, on the slide -- the same fall-through the keys have. Paste
+     prefers Junoview's own copy, then the system clipboard, which a
+     button has to ASK for (navigator.clipboard.read) where a key press
+     is simply handed it. */
+  function clipBtn(which){
+    var ed=activeTextEditable();
+    if(ed&&(which==='cut'||which==='copy')){
+      try{document.execCommand(which);}catch(e){}
+      return;
+    }
+    if(which==='copy'){
+      var nc=copySel();
+      if(nc) toast(nc+' item'+(nc===1?'':'s')+' copied');
+      else if(slideCopy(cur)) toast('Slide copied');
+      return;
+    }
+    if(which==='cut'){
+      var nx=cutSel();
+      if(nx) toast(nx+' item'+(nx===1?'':'s')+' cut');
+      else if(slideCut(cur)) toast('Slide cut');
+      return;
+    }
+    if(which==='look'){
+      if(copyLook()) toast('Look copied \u2014 select what should wear '
+        +'it and press Ctrl+Shift+V, or Paste \u25be Paste look');
+      else toast('Select the object whose look you want first');
+      return;
+    }
+    if(which==='pastelook'){
+      if(!lookBuf){toast('Copy a look first \u2014 Copy look, beside '
+        +'Paste');return;}
+      var nl=pasteLook();
+      toast(nl?('Look pasted onto '+nl+' object'+(nl===1?'':'s')
+        +' \u2014 Ctrl+Z undoes it'):'Select what should wear the look');
+      return;
+    }
+    if(which==='place'){
+      if(!clipBuf.length){toast('Nothing copied in Junoview yet');return;}
+      pasteBuf('place');
+      toast('Pasted in place \u2014 the coordinates it was copied from');
+      return;
+    }
+    /* 'paste' and 'plain' */
+    if(which==='paste'&&clipBuf.length){pasteBuf('auto');return;}
+    if(which==='paste'&&!ed&&typeof slideClip!=='undefined'&&slideClip){
+      slidePaste(cur);toast('Slide pasted');return;}
+    var cb=navigator.clipboard;
+    function outside(){
+      toast('The browser keeps the clipboard for a key press here \u2014 '
+        +'press Ctrl+V to paste from outside Junoview',7000);
+    }
+    if(!cb){outside();return;}
+    if(which==='paste'&&cb.read){
+      cb.read().then(function(items){
+        for(var i=0;i<items.length;i++){
+          var t=(items[i].types||[]).filter(function(x){
+            return x.indexOf('image/')===0;})[0];
+          if(t) return items[i].getType(t).then(function(b){
+            pasteClipboardImage({file:b});});
+        }
+        return cb.readText().then(landText);
+      }).catch(function(){
+        if(cb.readText) cb.readText().then(landText).catch(outside);
+        else outside();
+      });
+      return;
+    }
+    if(cb.readText) cb.readText().then(landText).catch(outside);
+    else outside();
+    function landText(txt){
+      txt=String(txt||'');
+      if(!txt.trim()){toast('The clipboard is empty');return;}
+      if(ed&&document.contains(ed)){
+        ed.focus();
+        try{document.execCommand('insertText',false,txt);}catch(e){}
+        return;
+      }
+      if(which==='plain') pasteTextBox(txt);
+      else if(looksLikeCode(txt)) pasteCodeBox(txt);
+      else pasteTextBox(txt,true);
+    }
+  }
+  function clipBoot(){
+    onBtn('#hm-paste',function(){clipBtn('paste');});
+    onBtn('#hm-cut',function(){clipBtn('cut');});
+    onBtn('#hm-copy',function(){clipBtn('copy');});
+    onBtn('#hm-copylook',function(){clipBtn('look');});
+    wireMenuToggle('hm-pastewrap','hm-paste-caret','hm-paste-menu');
+    [['#hm-paste-place','place'],['#hm-paste-plain','plain'],
+     ['#hm-paste-look','pastelook']].forEach(function(p){
+      var b=$(p[0]); if(!b) return;
+      b.addEventListener('mousedown',function(e){e.preventDefault();});
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayHide($('#hm-paste-menu'));
+        clipBtn(p[1]);});
+    });
+  }
+  /* greyed when there is nothing for them to act on, as PowerPoint's are */
+  function clipSync(){
+    var any=selectedIdxs().length>0||!!activeTextEditable()
+      ||!!(pres&&pres.slides&&pres.slides[cur]);
+    var obj=selectedIdxs().length>0;
+    var c=$('#hm-cut'),k=$('#hm-copy'),l=$('#hm-copylook'),pl=$('#hm-paste-look');
+    if(c) c.disabled=!any;
+    if(k) k.disabled=!any;
+    if(l) l.disabled=!obj;
+    if(pl) pl.disabled=!lookBuf;
+  }
   function copySel(){
     var s=pres.slides[cur];
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;

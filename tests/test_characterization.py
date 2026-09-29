@@ -2108,8 +2108,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu.
 # T536 (2026-09-29): a mini toolbar of the ribbon's own controls floats
 # above highlighted words.
-EXPECTED_MD5 = "7b906fde02dfb2f325a08906e5208833"
-EXPECTED_BYTES = 4619340
+# T537 (2026-09-29): a Clipboard group leads Home -- Paste (in place, plain
+# text, a copied look), Cut, Copy, Copy look.
+# T537 (2026-09-29): Clipboard group on Home.
+EXPECTED_MD5 = "8003941d09431649dd8022a471b6fe75"
+EXPECTED_BYTES = 4627860
 
 
 def _render_example() -> str:

@@ -872,6 +872,7 @@
   /* hide a ribbon group whose controls are all hidden, and drop the divider
      before the first visible group — so the format ribbon stays tidy */
   function syncRibbonGroups(){
+    if(typeof clipSync==='function') clipSync();   /* T537 */
     /* the WHOLE ribbon, not just the contextual half: a static group can
        empty out too (Notebooks has nothing to offer a poster with no
        placed cells yet) and an empty group that still drew its label and

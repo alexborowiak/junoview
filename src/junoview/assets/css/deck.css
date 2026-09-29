@@ -1128,6 +1128,9 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
 .dc-msep{height:1px;background:#ffffff14;margin:4px 6px;}
 /* a link can be a row too (Support, in the Help menu: T397) */
 a.dc-mi{display:block;text-decoration:none;}
+/* T537: a menu row's shortcut, at its right edge, as .vw-opt rows do */
+.dc-mi kbd{float:right;margin-left:14px;font-family:var(--mono);
+  font-size:9.5px;opacity:.7;}
 /* the "Saved to" picker: a heading + a tick beside the current target */
 .dc-mhead{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
   text-transform:uppercase;color:var(--chrome-ink-2);padding:5px 11px 6px;}
