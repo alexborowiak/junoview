@@ -2976,8 +2976,9 @@
       return 'Master \u2014 '+((mm&&mm.name)||'none')+'\u2026';
     })(),'',function(){
       if(window.SemDeckMasters) window.SemDeckMasters();},
-      'A look this slide inherits live \u2014 background and '
-      +'furniture. Set it here for one slide, a section or the deck.',
+      'A look this slide inherits live \u2014 a background and the '
+      +'objects drawn behind it (a logo, a footer band). Set it here for '
+      +'one slide, a section or the deck.',
       'inherit');
     row('Insert a chart','',function(){
       var na=window.SemDeckChart.place(

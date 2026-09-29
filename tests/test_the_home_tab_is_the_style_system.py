@@ -30,7 +30,7 @@ def test_the_type_doors_are_on_text(out):
     # (T469: rbn-nofold -- the strip beside it scrolls, this never folds)
     grp = out.split('<span class="rbn-grp rbn-decktype rbn-nofold"'
                     ' data-tab="text"')[1] \
-        .split('<span class="rbn-lab">Presentation type</span>')[0]
+        .split('<span class="rbn-lab">Deck text</span>')[0]   # T529
     for cid in ("dsg-stylewrap", "dsg-sets", "dsg-cites"):
         assert f'id="{cid}"' in grp, cid
 
@@ -66,5 +66,5 @@ def test_the_master_sits_with_the_layouts(out):
         .split('<span class="rbn-lab">Layout</span>')[0]
     assert 'id="dsg-masters"' in lay
     furn = out.split('<span class="rbn-grp rbn-furn" data-tab="design"')[1] \
-        .split('<span class="rbn-lab">Page furniture</span>')[0]
+        .split('<span class="rbn-lab">Header &amp; footer</span>')[0]
     assert 'id="dsg-masters"' not in furn

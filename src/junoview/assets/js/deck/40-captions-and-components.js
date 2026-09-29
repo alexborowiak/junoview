@@ -503,7 +503,8 @@
     head.appendChild(x);
     var note=document.createElement('div');note.className='rd-note';
     note.textContent='A look slides inherit, live: a background and a '
-      +'furniture component drawn behind every slide that wears it. '
+      +'set of objects (a logo, a footer band) drawn behind every slide '
+      +'that wears it. '
       +'Change the master \u2014 or push a new look to its component '
       +'\u2014 and every wearer follows.';
     p.appendChild(note);
@@ -550,7 +551,8 @@
         body.appendChild(chips);
         var cl=cmpList();
         var lab2=document.createElement('div');lab2.className='mast-lab';
-        lab2.textContent='furniture \u2014 a clone set drawn behind every wearer';
+        lab2.textContent='objects behind the slide \u2014 a clone set '
+          +'drawn behind every slide that wears it';
         body.appendChild(lab2);
         var run=document.createElement('div');run.className='mast-run';
         function opt(host,label,on,tip,fn){

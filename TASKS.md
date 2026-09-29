@@ -10021,10 +10021,18 @@ choice in the editor (T506, T507).
 
 ### Words
 
-- [ ] **T529 — Group names say what is in them.** Presentation type (it
+- [x] **T529 — Group names say what is in them.** Presentation type (it
   holds text styles), Build order (it holds Preview, Quick animate, the
   panel and Layers), Page furniture, Whole slide, Focus and the rest are
   re-read against their contents, live, and renamed where they mislead.
+  *Done 2026-09-29.* Read live against their contents: Presentation type
+  is Deck text (it holds the deck's text styles), Page furniture is Header
+  & footer in the markup and every ribbon layout, and the masters panel
+  says 'objects behind the slide' instead of 'furniture'. A folded
+  Animation door whose controls are all disabled said 'no selection' with
+  a figure selected; it now says 'no entrance' (Start) or 'not for this'.
+  Kept deliberately: Build order (T140's glossary) and the Entrance door's
+  'From start' (T508). Driven at 1440.
 - [ ] **T530 — Buttons that share a name stop sharing it.** Table's
   Row / Row / Column / Column (add and remove, told apart only by icon),
   Arrange's Left / Right (rotate) beside Paragraph's Left / Right (align),

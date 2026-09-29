@@ -2214,11 +2214,21 @@
       /* only when it changes: the observer that calls this watches
          `disabled`, and re-setting the same value is still a mutation */
       if(btn.disabled!==dead) btn.disabled=dead;
-      if(dead){val.textContent='no selection';val.hidden=false;
+      /* T529: "no selection" was said with a figure selected -- the
+         row is dead for another reason then, and the door says which:
+         Start waits for an entrance, anything else does not apply to
+         what you picked (2026-09-29 audit) */
+      var picked=(typeof selAnnot!=='undefined'&&selAnnot!==null);
+      var why=!picked?'no selection'
+        :g.classList.contains('rbn-start')?'no entrance'
+        :'not for this';
+      if(dead){val.textContent=why;val.hidden=false;
         btn.classList.add('has-val');}
       var live=btn.getAttribute('data-title')||'';
-      var want=dead?(live.split(' \u2014 ')[0]
-        +' \u2014 select something on the slide first'):live;
+      var want=dead?(live.split(' \u2014 ')[0]+' \u2014 '
+        +(!picked?'select something on the slide first'
+          :why==='no entrance'?'give it an entrance effect first'
+          :'not available for what is selected')):live;
       if(live&&btn.title!==want) btn.title=want;
     }
   }

@@ -35,7 +35,7 @@ def test_the_presentation_style_system_is_on_home(out):
     assert ('class="rbn-grp rbn-type rbn-stylesys" data-tab="home"') in out
     assert 'class="rbn-grp rbn-type" data-tab="design"' not in out
     assert '<span class="rbn-lab">Style system</span>' in out
-    assert '<span class="rbn-lab">Presentation type</span>' in out
+    assert '<span class="rbn-lab">Deck text</span>' in out   # T529
     assert '<span class="rbn-lab">Whole deck</span>' in out
     for cid in ("dsg-styles", "dsg-tokens", "dsg-std", "dsg-design-btn"):
         assert f'id="{cid}"' in out, cid
@@ -43,7 +43,8 @@ def test_the_presentation_style_system_is_on_home(out):
     assert ("var ids=styleOrder().filter(function(id){return "
             "worn[id]||id===openEdit;});") in out
     # Design keeps the four groups that are about the page itself
-    for lab in ("Background", "Layout", "Apply to other slides", "Page furniture"):
+    for lab in ("Background", "Layout", "Apply to other slides",
+                "Header &amp; footer"):   # T529: was Page furniture
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab
 
 

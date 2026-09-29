@@ -776,8 +776,11 @@ def test_the_ribbon_fit_after_the_third_pass(out):
     #      and the dead readout is a state that fits it
     assert (".deck.erc-tight .rbn-foldwrap .fx-tile.rbn-foldbtn>.rbn-foldval"
             "{max-width:76px;}") in out
-    assert "      if(dead){val.textContent='no selection';val.hidden=false;" in out
-    assert "        +' \\u2014 select something on the slide first'):live;" in out
+    # (T529: the state says WHY -- none of the three is longer than
+    #  "no selection", so each still fits the 76px)
+    assert "      if(dead){val.textContent=why;val.hidden=false;" in out
+    assert "    var why=!picked?'no selection'" in out
+    assert "        +(!picked?'select something on the slide first'" in out
     assert "    btn.setAttribute('data-title',btn.title);" in out
     # [11] a group's name is its caption's own words, less any readout
     assert "  function rbnGroupName(g){" in out

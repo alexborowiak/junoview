@@ -49,7 +49,7 @@ def test_the_three_bad_pairs_are_paired_now():
     assert 'id="hm-lay-tidy"' in html
     assert 'class="rbn-tall strip-frame" id="hm-lay-tidy"' in html
     assert "hm-lay-tidy" not in lay
-    furn = _ids(_row(html, "Page furniture"))
+    furn = _ids(_row(html, "Header &amp; footer"))   # T529
     assert furn[:4] == ["dc-head", "dc-foot", "dc-wmark", "dc-nums"]
     # the Object tab's own Animation group went in T220 -- an entrance is
     # the Animation tab's job, and the by-bullet trio went with it
