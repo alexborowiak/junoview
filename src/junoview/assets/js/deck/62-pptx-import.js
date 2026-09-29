@@ -66,6 +66,8 @@
     if(r.strike&&!box.strike) h='<s>'+h+'</s>';
     if(r.sup) h='<sup>'+h+'</sup>';          /* T541 */
     else if(r.sub) h='<sub>'+h+'</sub>';
+    if(r.hl&&/^#[0-9a-f]{6}$/i.test(r.hl))   /* T543: a highlighter mark */
+      h='<span data-hl="1" style="background-color:'+r.hl+'">'+h+'</span>';
     if(r.color&&r.color!==(box.color||''))
       h='<span style="color:'+r.color+'">'+h+'</span>';
     return h;
@@ -101,7 +103,7 @@
     var rich=paras.some(function(p){
       return p.runs.some(function(r){
         return (!!r.b!==!!it.b)||(!!r.i!==!!it.i)||(!!r.u!==!!it.u)
-          ||(!!r.strike!==!!it.strike)||!!r.sup||!!r.sub
+          ||(!!r.strike!==!!it.strike)||!!r.sup||!!r.sub||!!r.hl
           ||((r.color||'')!==(it.color||''));
       });
     });

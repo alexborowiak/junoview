@@ -259,6 +259,14 @@
       if(!menu.hidden){overlayHide(menu);pvEnd(false);return;}
       renderSwRecents(menu);
       cpMountInline(menu,target);  /* the picker IS the menu (T232) */
+      /* T543: the highlighter sits with the words' colour */
+      $$('.hl-block',menu).forEach(function(o){o.remove();});
+      if(target==='text'){
+        var hb=document.createElement('div');hb.className='hl-block';
+        var hh=document.createElement('div');hh.className='hd-lab';
+        hh.textContent='highlight behind the words';
+        hb.appendChild(hh);hlRow(hb,false);menu.appendChild(hb);
+      }
       overlayShow(btn,menu);       /* on the stack (T213) */
       floatMenu(btn,menu);
     });

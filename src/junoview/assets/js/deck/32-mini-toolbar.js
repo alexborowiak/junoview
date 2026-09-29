@@ -56,6 +56,9 @@
     });
     var sw=document.createElement('span');
     sw.className='mini-sw';m.appendChild(sw);
+    /* T543: the markers, where the highlighted words are */
+    var hl=document.createElement('span');hl.className='mini-hl';
+    hlRow(hl,true);m.appendChild(hl);
     deckEl.appendChild(m);
     miniEl=m;
     return m;

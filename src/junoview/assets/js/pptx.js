@@ -287,6 +287,10 @@ window.JunoPptx = (function () {
     /* T541: PowerPoint's own offsets for superscript and subscript */
     if (item.baseline) out += ' baseline="' + item.baseline + '"';
     var body = solidFill(item.color, item.op, 'FFFFFF');
+    /* T543: a highlighter mark -- after the fill, before the typeface,
+       where the schema puts it */
+    if (item.hl) body += '<a:highlight><a:srgbClr val="'
+      + hex(item.hl, 'FFFF00') + '"/></a:highlight>';
     if (item.font) body += '<a:latin typeface="' + esc(item.font) + '"/>';
     return '<a:' + tag + out + '>' + body + '</a:' + tag + '>';
   }
@@ -305,6 +309,7 @@ window.JunoPptx = (function () {
     if (run.sup) r.baseline = 30000;
     else if (run.sub) r.baseline = -25000;
     if (run.color) r.color = run.color;
+    r.hl = run.hl || '';
     if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
     return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
   }

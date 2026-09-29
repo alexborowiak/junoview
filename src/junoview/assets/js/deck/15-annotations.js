@@ -2250,10 +2250,18 @@
            styling through the sanitizer. */
         var listStyle=(tag==='ul'||tag==='ol')
           ?(n.getAttribute('data-list')||''):'';
+        /* T543: A HIGHLIGHT, AND ONLY A HIGHLIGHT. The highlighter marks
+           its runs data-hl; a background that arrived any other way (a
+           paste from a web page) is not one, and goes like every other
+           style here */
+        var hlBg=(n.getAttribute('data-hl')==='1'&&n.style)
+          ?(n.style.backgroundColor||''):'';
+        if(/transparent|rgba\(0, 0, 0, 0\)/.test(hlBg)) hlBg='';
         var names=[],k;
         for(k=0;k<n.attributes.length;k++) names.push(n.attributes[k].name);
         names.forEach(function(nm){n.removeAttribute(nm);});
         if(color) n.style.color=color;
+        if(hlBg){n.style.backgroundColor=hlBg;n.setAttribute('data-hl','1');}
         if(listStyle&&listKind(listStyle)
            &&listIsOrdered(listStyle)===(tag==='ol'))
           n.setAttribute('data-list',listStyle);

@@ -2195,7 +2195,7 @@
         if(!t.trim()&&!cur) return;
         if(!cur) para('',0,0);
         cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
-          color:st.color||'',sup:!!st.sup,sub:!!st.sub});
+          color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||''});
         return;
       }
       if(n.nodeType!==1) return;
@@ -2208,6 +2208,13 @@
       if(tag==='sup'){s2.sup=1;s2.sub=0;}      /* T541 */
       if(tag==='sub'){s2.sub=1;s2.sup=0;}
       var col=colOf(n); if(col) s2.color=col;
+      /* T543: a highlighter mark (only a marked run is one) */
+      if(n.getAttribute&&n.getAttribute('data-hl')==='1'&&n.style
+         &&n.style.backgroundColor){
+        var hr=rgbOf(n.style.backgroundColor);
+        if(hr) s2.hl='#'+[hr[0],hr[1],hr[2]].map(function(v){
+          return ('0'+Math.round(v).toString(16)).slice(-2);}).join('');
+      }
       if(tag==='br'){cur=null;return;}
       var hd=/^h([1-6])$/.exec(tag);
       if(hd){para('',0,+hd[1]);[].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});cur=null;return;}

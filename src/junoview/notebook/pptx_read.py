@@ -782,6 +782,13 @@ class _TextReader:
                "u": bool(u) and u != "none",
                "strike": bool(strike) and strike != "noStrike",
                "color": "" if ink else color, "font": font}
+        # T543: a highlighter mark behind the run
+        if rpr is not None:
+            hl_el = rpr.find("a:highlight", NS)
+            if hl_el is not None:
+                hl_c, _a, _i = self.ctx.color(hl_el)
+                if hl_c:
+                    out["hl"] = hl_c
         # T541: a raised or lowered run (m², CO₂) keeps its baseline
         if baseline > 0:
             out["sup"] = True

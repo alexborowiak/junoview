@@ -10187,8 +10187,17 @@ choice in the editor (T506, T507).
   middle or bottom keeps its anchor and height (the reader already read
   the anchor; the importer dropped it). Driven: the title at Bottom,
   dragged 66px taller, words at its foot, no overflow mark.
-- [ ] **T543 — Highlighter for words.** A text highlight colour on the
+- [x] **T543 — Highlighter for words.** A text highlight colour on the
   selected run, exported to .pptx.
+  *Done 2026-09-29.* Five marker colours and No highlight at the foot of
+  the Text colour door and in the mini toolbar. The runs the browser's
+  hiliteColor paints are marked data-hl, and the sanitizer keeps a
+  background only on a marked run, so a pasted web background is still
+  stripped. The .pptx writes <a:highlight> and the reader brings it back;
+  a test builds and reads a real file. Driven: 'Southern' highlighted from
+  the mini toolbar survived Escape and a slide change. Like PowerPoint,
+  the highlight does not change the words' colour, so white words on a
+  yellow marker are the user's call.
 - [ ] **T544 — Clear formatting and Change case.** Ctrl+Space, and
   Sentence case / lowercase / UPPERCASE / Capitalise Each Word.
 - [ ] **T545 — AutoCorrect as you type.** Straight quotes curl, -- becomes

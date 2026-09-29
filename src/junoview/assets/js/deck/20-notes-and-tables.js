@@ -1038,6 +1038,71 @@
     markDirty();
     return true;
   }
+  /* T543: THE HIGHLIGHTER. A marker colour behind the highlighted words
+     -- or none, which takes it off. The browser's hiliteColor writes the
+     background; every run it touched is marked data-hl so the sanitizer
+     can tell a highlight from a pasted background. Same commit path as
+     colorSelection. */
+  var HL_MARKS=[['#fff176','Yellow'],['#aef0b4','Green'],['#9ee7f5','Blue'],
+    ['#ffb3d1','Pink'],['#ffd08a','Orange']];
+  function highlightSelection(col){
+    var el=activeTextEditable();
+    if(!el||!selectionInside(el)) return false;
+    histSettle();
+    try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+    try{document.execCommand('hiliteColor',false,col||'transparent');}
+    catch(e){}
+    $$('span',el).forEach(function(sp){
+      var bg=sp.style.backgroundColor; if(!bg) return;
+      if(/transparent|rgba\(0, 0, 0, 0\)/.test(bg)){
+        sp.style.backgroundColor='';sp.removeAttribute('data-hl');}
+      else sp.setAttribute('data-hl','1');
+    });
+    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    if(a){
+      var r=sanitizeRich(el.innerHTML);
+      var n=textAt(s,a); if(!(n>0)) n=0;
+      textPageSet(a,n,el.innerText,r.rich?r.html:'');
+      markDirty();
+    }
+    return true;
+  }
+  /* the marker row, for the Text colour door and the mini toolbar */
+  function hlRow(host,compact){
+    var row=document.createElement('div');
+    row.className='hl-row'+(compact?' hl-compact':'');
+    HL_MARKS.forEach(function(m){
+      var b=document.createElement('button');
+      b.type='button';b.className='hl-sw';b.dataset.hl=m[0];
+      b.id=compact?'':('fmt-hl-'+m[1].toLowerCase());
+      if(!b.id) b.removeAttribute('id');
+      b.style.background=m[0];
+      b.title=m[1]+' highlight behind the highlighted words';
+      b.setAttribute('aria-label',m[1]+' highlight');
+      row.appendChild(b);
+    });
+    var no=document.createElement('button');
+    no.type='button';no.className='dbtn hl-none';no.dataset.hl='';
+    if(!compact) no.id='fmt-hl-none';
+    no.innerHTML=bic('none')+(compact?'':' No highlight');
+    no.title='Take the highlight off the highlighted words';
+    no.setAttribute('aria-label','No highlight');
+    row.appendChild(no);
+    row.addEventListener('mousedown',function(e){e.preventDefault();});
+    row.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('[data-hl]');
+      if(!b) return;
+      e.stopPropagation();
+      if(highlightSelection(b.dataset.hl)){
+        renderSlide();
+        if(typeof showFmt==='function') showFmt();
+      } else toast('Highlight the words first \u2014 double-click into '
+        +'the box and select them');
+      var om=row.closest('.sh-menu'); if(om) overlayHide(om);
+    });
+    host.appendChild(row);
+    return row;
+  }
   function colorSelection(col){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
