@@ -28,7 +28,7 @@ from __future__ import annotations
 def test_the_rail_opens_with_the_counts(out):
     """T490 folded the per-style counts into the style rows themselves:
     the rail listed every used style twice (2026-09-15 review). The
-    count is the row's; "N changed by hand / Match N" sits under the
+    count is the row's; the compact "N boxes differ / Reset" sits under the
     row it is about (dgOddNote); dgCounts keeps the loose bands, after
     the rows."""
     assert "  function dgCounts(rail,ov){" in out
@@ -41,8 +41,9 @@ def test_the_rail_opens_with_the_counts(out):
     note = out.split("  function dgOddNote(id,d,ov,r){")[1].split("\n  }")[0]
     assert "    var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});" \
         in note
-    assert "    note.textContent=odd.length+' changed by hand';" in note
-    assert "    b.textContent='Match '+odd.length;" in note
+    assert ("    note.textContent=odd.length+' box'"
+            "+(odd.length===1?'':'es')+' differs';") in note
+    assert "    b.textContent='Reset';" in note
     assert "      var oddRow=dgOddNote(id,d,ov,std);" in out
 
 

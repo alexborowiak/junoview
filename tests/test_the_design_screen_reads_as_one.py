@@ -55,8 +55,8 @@ def test_the_style_editor_is_three_clear_views(out):
     # keeps the existing controls but only the selected job is visible.
     assert "nlab.textContent='Exactly';" not in out
     assert "  function dgTabs(body,ov,count){" in out
-    assert "    [['look','Look'],['place','Position']," in out
-    assert "     ['boxes','Boxes ('+count+')']].forEach(function(pr){" in out
+    assert "    [['look','Appearance'],['place','Placement']," in out
+    assert "     ['boxes','Individual boxes ('+count+')']].forEach(function(pr){" in out
     assert "    body.className='dg-body dg-view-'+dgView;" in out
     assert "    left.hidden=dgView!=='look';right.hidden=dgView!=='place';" in out
     assert "    if(dgView==='boxes') dgTable(body,ov);" in out
@@ -72,6 +72,18 @@ def test_the_rail_is_navigation_not_a_second_specimen(out):
     assert "dgSpecimen(nm,id);" not in rail
     assert (".dg-name{line-height:1.15;min-width:0;overflow:hidden;\n"
             "  text-overflow:ellipsis;white-space:nowrap;font-size:15px;") in out
+    assert "stylesHead.textContent='Text styles';" in out
+    assert "hd.className='hd-lab';hd.textContent='Objects';" in out
+
+
+def test_unused_variation_ideas_stay_behind_one_door(out):
+    assert "lab.className='dg-lookslab';lab.textContent='Variations';" in out
+    assert "sum.className='dbtn dg-lookadd';sum.textContent='Add variation…';" in out
+    assert "sum.setAttribute('role','button');" in out
+    assert "sum.setAttribute('aria-expanded','false');" in out
+    assert ("offers=document.createElement('div');"
+            "offers.className='dg-lookoffers';") in out
+    assert ".dg-lookmore>summary{list-style:none;cursor:pointer;" in out
 
 
 def test_the_board_shows_the_real_boxes_not_only_the_master(out):
@@ -90,7 +102,7 @@ def test_the_board_shows_the_real_boxes_not_only_the_master(out):
     assert "        if(!mine&&!dgShowOthers) return;" in out
     # T470: the same boxed switch as the sheet column's Outlines
     assert "ck.className='dbtn dg-b dg-keyck';" in out
-    assert "' Everything else off'" in out
+    assert "ck.innerHTML=bic('eye')+' Show other objects';" in out
     assert "  function dgKeyList(key,id){" in out
     assert "  function dgBoardWords(b,a,def){" in out
     assert "    t.style.fontSize=size.toFixed(2)+'cqh';" in out
@@ -119,7 +131,7 @@ def test_picking_slides_is_cumulative_and_feeds_the_table(out):
 
 
 def test_the_table_edits_the_words_and_its_boxes_are_smaller(out):
-    assert "    var heads=['','Slide','Text',' X',' Y',' Width'];" in out
+    assert "    var heads=['','Slide','Contents',' X',' Y',' Width'];" in out
     assert "        ti.type='text';ti.className='dgt-tx';" in out
     assert "        ti.value=String(r.a.text||'');" in out
     assert "          if(r.a.html!==undefined) r.a.html=esc(v);" in out
@@ -134,8 +146,8 @@ def test_the_table_edits_the_words_and_its_boxes_are_smaller(out):
 def test_the_slide_column_has_select_all_and_unselect_all(out):
     """It picks slides, so it needs the two buttons the table has."""
     assert "picks.className='dg-picks';" in out
-    assert "    pickBtn('Select all','Pick every slide shown here',function(){" in out
-    assert "    pickBtn('Unselect all','Clear every picked slide',function(){" in out
+    assert "    pickBtn('All slides','Pick every slide shown here',function(){" in out
+    assert "    pickBtn('Clear','Clear every picked slide',function(){" in out
     # Select all takes what the column is showing, which its scope decides
     assert "        if(dgInScope(dgSheetScope,i)) dgSheetPick[i]=1;});" in out
     # T367: "none picked - everything counts" meant "you have picked no

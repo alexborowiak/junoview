@@ -9903,3 +9903,10 @@ any reading. The rest are T466 onwards.
   Look uses an aligned property sheet, and the slide navigator appears only
   where it can filter or move boxes. The three paths and a live formatting
   change were driven in the browser.
+- [x] **T520 — Polish the Style system's everyday language.** (2026-09-28)
+  The three jobs now say Appearance, Placement and Individual boxes; the rail
+  is plainly split into Text styles and Objects, and a differing box gets one
+  compact Reset action. Ready-made variations stay behind Add variation,
+  placement groups say how many boxes are there, and the individual-box table
+  distinguishes Contents, Font, Colour and Fill. Slide and box selection no
+  longer use the same labels. All three paths were driven in the dark theme.

@@ -2667,7 +2667,7 @@
   /* `text` is every text box whatever style it wears, or none: a box
      that has never been given a named style appeared in no table at
      all, and an unstyled box is exactly the thing you go looking for */
-  var DG_OBJ_KINDS=[['text','Text boxes, all of them','text'],
+  var DG_OBJ_KINDS=[['text','All text boxes','text'],
     ['cell','Figures','cellcard'],
     ['image','Pictures','image'],['rect','Shapes','shapes'],
     ['table','Tables','table'],['flip','Flip books','flipbook'],
@@ -2879,7 +2879,7 @@
         rows.forEach(function(r){dgMarked[dgRowKey(r)]=1;});
         dgBodyKeep(ov);
       }).disabled=!rows.length;
-    btn('Unselect all','Clear every tick',function(){
+    btn('Clear selection','Clear every tick',function(){
       dgMarked={};dgBodyKeep(ov);}).disabled=!rows.length;
     var marked=dgMarkedRows(rows);
     var mb=btn(dgMatchArm
@@ -2986,9 +2986,9 @@
        the text in here as well"). A box with a list, and anything
        that is not text, shows its label: a one-line input cannot
        say what a three-level list is. */
-    var heads=['','Slide','Text',' X',' Y',' Width'];
-    if(isTx) heads=heads.concat(['Size','Face']);
-    heads=heads.concat(['Text','Fill']);   /* T469: fit, and the bar's words */
+    var heads=['','Slide','Contents',' X',' Y',' Width'];
+    if(isTx) heads=heads.concat(['Size','Font']);
+    heads=heads.concat(['Colour','Fill']); /* T469: fit, and the bar's words */
     heads.forEach(function(h){
       var c=document.createElement('div');
       c.className='dgt-h';c.textContent=h.trim();
@@ -3105,8 +3105,7 @@
     if(!body) return;
     body.innerHTML='';
     dgSectionHead(body,'Slides',
-      'Pick slides to limit this view. Turn on outlines to move objects '
-      +'in a thumbnail.');
+      'Choose slides to filter this view. Turn on outlines to move objects.');
     var tg=document.createElement('button');
     tg.className='dbtn dg-b';
     tg.setAttribute('aria-pressed',dgOutline?'true':'false');
@@ -3130,12 +3129,12 @@
       picks.appendChild(b);
       return b;
     }
-    pickBtn('Select all','Pick every slide shown here',function(){
+    pickBtn('All slides','Pick every slide shown here',function(){
       (pres.slides||[]).forEach(function(_sl,i){
         if(dgInScope(dgSheetScope,i)) dgSheetPick[i]=1;});
       dgBodyKeep(ov);
     });
-    pickBtn('Unselect all','Clear every picked slide',function(){
+    pickBtn('Clear','Clear every picked slide',function(){
       dgSheetPick={};dgBodyKeep(ov);
     }).disabled=!dgPickedAny();
     var pc=document.createElement('span');
@@ -3326,13 +3325,13 @@
       var head=document.createElement('button');
       head.type='button';
       head.className='dg-placehead'+(dgPlacePick===g.key?' on':'');
-      head.textContent='Group '+(gi+1)+' \u2014 '+g.ws.length+' box'
-        +(g.ws.length===1?'':'es')+' at '+Math.round(g.a.x||0)+', '
-        +Math.round(g.a.y||0);
+      head.textContent=g.ws.length+' box'+(g.ws.length===1?'':'es')+' here';
       head.title=dgPlacePick===g.key
-        ?'The others get moved here. Click again to unpick it.'
-        :'Pick this place: its boxes light up below, and the rest can be '
-          +'moved onto it';
+        ?'At x '+Math.round(g.a.x||0)+', y '+Math.round(g.a.y||0)
+          +'. The others get moved here. Click again to unpick it.'
+        :'Pick this position at x '+Math.round(g.a.x||0)+', y '
+          +Math.round(g.a.y||0)+'. Its boxes light up below, and the rest '
+          +'can be moved onto it.';
       head.addEventListener('click',function(e){
         e.stopPropagation();
         dgPlacePick=(dgPlacePick===g.key)?'':g.key;
@@ -3401,11 +3400,11 @@
     var row=document.createElement('div');row.className='dg-cnt dg-cnt-odd dg-rownote';
     var note=document.createElement('span');
     note.className='dg-cnt-note';
-    note.textContent=odd.length+' changed by hand';
+    note.textContent=odd.length+' box'+(odd.length===1?'':'es')+' differs';
     row.appendChild(note);
     var b=document.createElement('button');
     b.type='button';b.className='dbtn dg-cnt-fix';
-    b.textContent='Match '+odd.length;
+    b.textContent='Reset';
     b.title='Put the '+(d.label||id)+' style back on the '+odd.length
       +' that were changed by hand';
     b.addEventListener('click',function(e){
@@ -3511,6 +3510,9 @@
        id, so one loosened predicate would silently repaint every colour
        variation in its parent's colour the next time anyone nudged
        Heading 1. */
+    var stylesHead=document.createElement('div');
+    stylesHead.className='hd-lab';stylesHead.textContent='Text styles';
+    rail.appendChild(stylesHead);
     var listed={};
     styleOrder().forEach(function(id){
       if(listed[id]||parentOf(id)) return;
@@ -3582,7 +3584,7 @@
       if(!n2&&!dgAnyStyleWorn()) return;
       if(!hd){
         hd=document.createElement('div');
-        hd.className='hd-lab';hd.textContent='everything else';
+        hd.className='hd-lab';hd.textContent='Objects';
         rail.appendChild(hd);
       }
       ct2.textContent=String(n2);
@@ -3764,10 +3766,11 @@
     if(!have.length&&!offer.length) return;
     var wrap=document.createElement('div');
     wrap.className='dg-looks';
-    var lab=document.createElement('span');
-    lab.className='dg-lookslab';
-    lab.textContent=(d0(id).label||id)+' comes in';
-    wrap.appendChild(lab);
+    if(have.length){
+      var lab=document.createElement('span');
+      lab.className='dg-lookslab';lab.textContent='Variations';
+      wrap.appendChild(lab);
+    }
     have.forEach(function(v){
       var b=document.createElement('button');
       b.className='dbtn dg-look on';
@@ -3803,13 +3806,27 @@
         toast('New slides get '+(d0(pick.value).label||pick.value));
       });
       var pl=document.createElement('span');
-      pl.className='dg-lookslab';pl.textContent='new slides get';
+      pl.className='dg-lookslab';pl.textContent='New slides use';
       wrap.appendChild(pl);
       wrap.appendChild(pick);
     }
+    var offers=null;
+    if(offer.length){
+      var more=document.createElement('details');
+      more.className='dg-lookmore';
+      var sum=document.createElement('summary');
+      sum.className='dbtn dg-lookadd';sum.textContent='Add variation…';
+      sum.setAttribute('role','button');
+      sum.setAttribute('aria-expanded','false');
+      more.appendChild(sum);
+      offers=document.createElement('div');offers.className='dg-lookoffers';
+      more.appendChild(offers);wrap.appendChild(more);
+      more.addEventListener('toggle',function(){
+        sum.setAttribute('aria-expanded',more.open?'true':'false');});
+    }
     offer.forEach(function(look){
       var b=document.createElement('button');
-      b.className='dbtn dg-look dg-lookadd';
+      b.className='dbtn dg-look';
       b.textContent=look.label;
       /* a specimen of what it WOULD be: the parent's face and size with
          the look's own colours over it, resolved against this deck */
@@ -3831,7 +3848,7 @@
         markDirty();
         dgSel=vid;dgMatchArm=false;dgRail(ov);dgBody(ov);
       });
-      wrap.appendChild(b);
+      offers.appendChild(b);
     });
     host.appendChild(wrap);
   }
@@ -3904,8 +3921,7 @@
     ck.type='button';ck.className='dbtn dg-b dg-keyck';
     function ckPaint(){
       ck.setAttribute('aria-pressed',dgShowOthers?'true':'false');
-      ck.innerHTML=bic('eye')+(dgShowOthers?' Everything else on'
-        :' Everything else off');
+      ck.innerHTML=bic('eye')+' Show other objects';
     }
     ckPaint();
     ck.addEventListener('click',function(e){
@@ -3934,8 +3950,8 @@
   function dgTabs(body,ov,count){
     var tabs=document.createElement('div');
     tabs.className='dg-tabs';tabs.setAttribute('role','tablist');
-    [['look','Look'],['place','Position'],
-     ['boxes','Boxes ('+count+')']].forEach(function(pr){
+    [['look','Appearance'],['place','Placement'],
+     ['boxes','Individual boxes ('+count+')']].forEach(function(pr){
       var b=document.createElement('button');
       b.type='button';b.className='dbtn dg-tab';b.textContent=pr[1];
       b.setAttribute('role','tab');

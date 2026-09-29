@@ -573,7 +573,8 @@ def test_the_style_system_after_the_first_pass(out):
     assert "minmax(52px,.5fr)) 88px 74px;" in out
     # [77] one row per style; the note under it
     assert "  function dgOddNote(id,d,ov,r){" in out
-    assert ".dg-cnt.dg-rownote{margin:-4px 0 4px;" in out
+    assert ".dg-cnt.dg-rownote{margin:-3px 7px 4px;" in out
+    assert ".dg-cnt.dg-rownote .dg-cnt-fix{flex:none;width:auto;" in out
 
 
 def test_the_animation_model_after_the_third_pass(out):

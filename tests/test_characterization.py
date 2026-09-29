@@ -2068,8 +2068,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # behaviour are separate ribbon choices and use the same terms in the pane.
 # T519 (2026-09-28): Style system separates Look, Position and Boxes instead
 # of rendering all three jobs and the slide navigator at the same time.
-EXPECTED_MD5 = "4563dc7f913ca4eb85a971d28380a031"
-EXPECTED_BYTES = 4574776
+# T520 (2026-09-28): its labels, variation chooser, override note, placement
+# groups and individual-box table are the compact, plain-language versions.
+EXPECTED_MD5 = "8fd1c28efe06cfa43db81f34b82fb57f"
+EXPECTED_BYTES = 4576139
 
 
 def _render_example() -> str:

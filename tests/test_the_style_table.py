@@ -25,14 +25,14 @@ from __future__ import annotations
 def test_the_rail_lists_things_that_are_not_text(out):
     """A figure has no style registry to edit, but it has a position, a
     size and a place in the table."""
-    assert ("  var DG_OBJ_KINDS=[['text','Text boxes, all of them','text'],\n"
+    assert ("  var DG_OBJ_KINDS=[['text','All text boxes','text'],\n"
             "    ['cell','Figures','cellcard'],") in out
     for kind in ("image', 'Pictures".replace("', '", "','"),
                  "rect','Shapes", "table','Tables",
                  "flip','Flip books", "arrow','Arrows and lines"):
         assert kind in out, kind
     assert "  function dgIsObj(){return /^obj:/.test(dgSel);}" in out
-    assert "    hd.className='hd-lab';hd.textContent='everything else';" in out
+    assert "    hd.className='hd-lab';hd.textContent='Objects';" in out
     # a box with no named style used to appear in no table at all
     assert "a box that has never been given a named style" not in out
     assert "in no table at" in out
@@ -52,16 +52,16 @@ def test_the_table_is_the_real_annots(out):
     assert "      markDirty();refresh();renderFilm();" in out
     # the columns
     # (T230: the first column is the words, and editable)
-    assert "    var heads=['','Slide','Text',' X',' Y',' Width'];" in out
-    assert "    if(isTx) heads=heads.concat(['Size','Face']);" in out
+    assert "    var heads=['','Slide','Contents',' X',' Y',' Width'];" in out
+    assert "    if(isTx) heads=heads.concat(['Size','Font']);" in out
     # (T469: the format bar's words, and they fit the 34px columns)
-    assert "    heads=heads.concat(['Text','Fill']);" in out
+    assert "    heads=heads.concat(['Colour','Fill']);" in out
     assert "    var isTx=!dgIsObj()||dgObjKind()==='text';" in out
 
 
 def test_select_all_unselect_all_and_the_count(out):
     assert "    btn('Select all','Tick every box of this kind, on every slide'," in out
-    assert "    btn('Unselect all','Clear every tick',function(){" in out
+    assert "    btn('Clear selection','Clear every tick',function(){" in out
     assert ("      ?(marked.length?(marked.length+' of '+rows.length+' ticked')") in out
 
 

@@ -5766,10 +5766,13 @@ body.jv-lens .deck-stage{cursor:crosshair;}
    its row */
 .dg-counts{margin-top:8px;padding-top:6px;
   border-top:1px solid var(--chrome-line);}
-.dg-cnt.dg-rownote{margin:-4px 0 4px;padding:0 6px 4px;cursor:default;}
+.dg-cnt.dg-rownote{margin:-3px 7px 4px;padding:2px 3px 3px;cursor:default;
+  flex-wrap:nowrap;border-top:1px solid #ffffff12;border-radius:0;}
 .dg-cnt.dg-rownote:hover{background:none;}
 .dg-cnt.dg-rownote .dg-cnt-note,.dg-cnt.dg-rownote .dg-cnt-fix{
-  margin-left:8px;flex:1 0 calc(100% - 8px);}
+  margin-left:0;}
+.dg-cnt.dg-rownote .dg-cnt-note{flex:1 1 auto;}
+.dg-cnt.dg-rownote .dg-cnt-fix{flex:none;width:auto;padding:2px 8px;}
 .dg-cnt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;
   padding:4px 6px;border-radius:6px;font:12px var(--sans);
   color:var(--chrome-ink);cursor:pointer;}
@@ -5838,8 +5841,8 @@ body.light .dg-swatch{border-color:#00000026;}
 /* T519: one job at a time. The old screen showed the style editor,
    placement board, instance table and slide navigator simultaneously. */
 .dg-tabs{display:flex;gap:4px;margin:8px 0 16px;padding-bottom:10px;
-  border-bottom:1px solid var(--chrome-line,#ffffff1f);}
-.dg-tab{min-width:108px;justify-content:center;}
+  border-bottom:1px solid var(--chrome-line,#ffffff1f);overflow-x:auto;}
+.dg-tab{min-width:128px;justify-content:center;white-space:nowrap;}
 .dg-tab[aria-selected="true"]{background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
@@ -5892,8 +5895,14 @@ body.light .dg-swatch{border-color:#00000026;}
   text-transform:uppercase;color:var(--chrome-ink-3,#8ea2b3);
   padding-right:4px;}
 .dg-look{font-size:12.5px;padding:3px 10px;border-radius:7px;}
-.dg-look.dg-lookadd{border-style:dashed;}
 .dg-look.on{border-color:var(--cyan);}
+.dg-lookmore{position:relative;}
+.dg-lookmore>summary{list-style:none;cursor:pointer;border-style:dashed;}
+.dg-lookmore>summary::-webkit-details-marker{display:none;}
+.dg-lookoffers{position:absolute;z-index:5;top:calc(100% + 5px);left:0;
+  display:flex;gap:6px;padding:7px;background:var(--chrome-1,#13202c);
+  border:1px solid var(--chrome-line,#ffffff26);border-radius:8px;
+  box-shadow:0 10px 28px #0008;white-space:nowrap;}
 .dg-slotpick{font-family:var(--sans);font-size:12px;
   background:var(--btn-bg,#ffffff0e);color:var(--chrome-ink);
   border:1px solid var(--chrome-line,#ffffff26);border-radius:6px;
