@@ -9975,9 +9975,15 @@ choice in the editor (T506, T507).
   version label and section name when there are any, says Page on a
   poster, counts mains only like the strip, and opens the Overview map.
   Driven at 1440x900.
-- [ ] **T525 — The Home screen's buttons stay in their own column.** The
+- [x] **T525 — The Home screen's buttons stay in their own column.** The
   Recent presentations row's Folder button straddles the Notebooks
   heading at 1440px.
+  *Done 2026-09-29.* The header's doors are one group (.wj-doors) that
+  wraps beneath the name when the column is short, the box widens to 880px
+  above 1000px, and the screen now starts at the rail's edge: the later
+  .welcome{left:0} had silently beaten left:var(--presrail-w), and at
+  900px the logo and headings sat under the rail. Driven at 1440, 1100,
+  900 and 700.
 - [ ] **T526 — Saving reads as one quiet state.** The orange "unsaved —
   saving…" pill beside a separate "Auto 15s" button is two readouts of
   one fact. One chip: Saved · Saving… · Not saved, with where it lives on

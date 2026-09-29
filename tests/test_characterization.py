@@ -2078,8 +2078,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # before laying it out; a note too long or too wide shrinks its words.
 # T524 (2026-09-29): a floating 'Slide 3 of 14 · section' readout, bottom-
 # left of the canvas, opens the Overview map.
-EXPECTED_MD5 = "9d478b9ed2fc54607e73ea3977c58f1e"
-EXPECTED_BYTES = 4585692
+# T525 (2026-09-29): the Home screen starts beside the rail, has room for
+# two columns of doors, and wraps a header's doors as one group.
+EXPECTED_MD5 = "67f356637d2f65fbfa60445b5e3b4874"
+EXPECTED_BYTES = 4586619
 
 
 def _render_example() -> str:
