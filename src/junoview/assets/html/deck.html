@@ -555,6 +555,18 @@
       title="Format and arrange what is selected">Object</button>
     </span>
     <span class="deck-spring"></span>
+    <!-- T538: SEARCH THE COMMANDS (Alt+Q), PowerPoint's "Tell me" box.
+         In the markup and outside .rbn-tabset for the reason written
+         beside #rbn-auto below: rbnHome() snapshots this strip once. -->
+    <span class="rbn-search" id="rbn-search">
+      <i data-ic="find"></i>
+      <input id="rbn-search-in" type="search" autocomplete="off"
+        spellcheck="false" placeholder="Search commands (Alt+Q)"
+        aria-label="Search commands" role="combobox"
+        aria-controls="rbn-search-list" aria-expanded="false">
+      <div class="rbn-search-list" id="rbn-search-list" role="listbox"
+        aria-label="Commands" hidden></div>
+    </span>
     <span class="et-hint" id="et-hint"></span>
     <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
          window, and there are long stretches — reading, rehearsing,

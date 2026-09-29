@@ -10131,9 +10131,18 @@ choice in the editor (T506, T507).
   asks the browser for the system clipboard. No Home group folds at 1920,
   1440, 1366 or 1280 (the spacing ladder absorbs the 174px). Driven: Copy,
   Paste and Paste in place on the title.
-- [ ] **T538 — Search the commands.** A "Search commands" box (Alt+Q)
+- [x] **T538 — Search the commands.** A "Search commands" box (Alt+Q)
   finds any ribbon control by its name, tooltip or tab and runs it — the
   answer to "I know it exists, where is it?".
+  *Done 2026-09-29.* A 'Search commands (Alt+Q)' field in the tab strip
+  indexes the ribbon live -- every worded control, folded doors and the
+  shelf included, plus the File and Present menus and the top bar -- less
+  anything the selection has hidden or disabled. Enter (or a click)
+  switches to the control's tab, opens its folded door, presses the real
+  control and outlines it for a moment. PowerPoint names reach ours
+  through an alias list (format painter, selection pane, slide number...).
+  Driven: 'format painter' -> Copy look; 'page numbers' ran on Design;
+  'fade' opened the Entrance shelf and applied Fade.
 - [ ] **T539 — Measure the gestures, and fix what is slow.** Drag, resize,
   slide change and typing on a 14-slide deck with figures, timed; the
   release-of-drag rebuild and anything else over a frame is made cheaper.

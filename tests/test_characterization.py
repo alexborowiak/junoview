@@ -2111,8 +2111,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T537 (2026-09-29): a Clipboard group leads Home -- Paste (in place, plain
 # text, a copied look), Cut, Copy, Copy look.
 # T537 (2026-09-29): Clipboard group on Home.
-EXPECTED_MD5 = "8003941d09431649dd8022a471b6fe75"
-EXPECTED_BYTES = 4627860
+# T538 (2026-09-29): Search commands (Alt+Q) in the tab strip -- the ribbon
+# read live, run on its own tab.
+EXPECTED_MD5 = "946623c4d34b0cbd0250f4113e37059e"
+EXPECTED_BYTES = 4641394
 
 
 def _render_example() -> str:

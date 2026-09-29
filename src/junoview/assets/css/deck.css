@@ -370,6 +370,37 @@ body.deck-open{overflow:hidden;}
   flex:none;font-size:10px;display:inline-flex;align-items:center;gap:4px;
   white-space:nowrap;}
 .rbn-tabs .rbn-autobtn .bic{width:12px;height:12px;}
+/* T538: search the commands -- a field in the tab strip, its list a
+   floating surface of the editor's */
+.rbn-tabs .rbn-search{align-self:center;display:inline-flex;align-items:center;
+  gap:5px;flex:0 1 210px;min-width:120px;margin-right:6px;height:22px;
+  padding:0 7px;border:1px solid var(--chrome-line);border-radius:6px;
+  background:var(--chrome-0);}
+.rbn-tabs .rbn-search:focus-within{border-color:var(--cyan);}
+.rbn-tabs .rbn-search .bic{width:12px;height:12px;flex:none;opacity:.7;}
+.rbn-search input{flex:1;min-width:0;border:none;outline:none;
+  background:none;color:var(--chrome-ink);font:12px var(--sans);}
+.rbn-search input::placeholder{color:var(--chrome-ink-3);}
+.rbn-search-list{position:fixed;z-index:320;width:min(420px,92vw);
+  max-height:60vh;overflow-y:auto;padding:4px;border-radius:9px;
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  box-shadow:0 12px 34px var(--shadow);}
+.rbn-search-list[hidden]{display:none;}
+.rbn-search-row{display:grid;grid-template-columns:18px minmax(0,1fr) auto;
+  align-items:center;gap:8px;width:100%;text-align:left;background:none;
+  border:none;border-radius:6px;padding:6px 8px;cursor:pointer;
+  color:var(--chrome-ink);font:12.5px var(--sans);}
+.rbn-search-row .bic,.rbn-search-row svg{width:16px;height:16px;}
+.rbn-search-row.on,.rbn-search-row:hover{
+  background:color-mix(in srgb,var(--accent) 16%,transparent);}
+.rbn-search-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rbn-search-w{color:var(--chrome-ink-3);font-size:11px;white-space:nowrap;}
+.rbn-search-none{padding:8px 10px;color:var(--chrome-ink-2);
+  font:12px var(--sans);}
+/* the control a search ran, outlined for a moment so you learn where
+   it lives */
+.cmd-found{outline:2px solid var(--cyan)!important;outline-offset:2px;
+  transition:outline-color .3s;}
 #rbn-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
 /* SCOPED to the strip. Unscoped, `.rbn-fold` also matched the deck's own
    `.rbn-fold` state class — so folding the tools put 1px 9px of padding on
