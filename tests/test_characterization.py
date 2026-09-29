@@ -2098,8 +2098,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # check, slide numbers under Header & footer).
 # T532 (2026-09-29): a named subset of the deck for a shorter talk is a
 # Custom show, not a Version.
-EXPECTED_MD5 = "2a1be2a9239e11603859a969a839d875"
-EXPECTED_BYTES = 4599730
+# T533 (2026-09-29): the right-click menu refers to figures through one
+# picker row and puts Paste beside Cut and Copy.
+EXPECTED_MD5 = "63cf699ce6603f8c991030de760890ae"
+EXPECTED_BYTES = 4601612
 
 
 def _render_example() -> str:

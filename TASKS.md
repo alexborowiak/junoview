@@ -10076,11 +10076,19 @@ choice in the editor (T506, T507).
 
 ### Feel
 
-- [ ] **T533 — The right-click menu leads with the everyday.** 45 rows on
+- [x] **T533 — The right-click menu leads with the everyday.** 45 rows on
   a title: one "Insert a reference to Figure n" row per figure, "Nothing
   copied yet", and a chart and a guide box offered on a text box. Lead
   with the eight things you do, fold the rest, and put the figure
   references in one submenu.
+  *Done 2026-09-29.* The per-figure reference rows are one row, 'Insert a
+  reference to a figure...', opening a picker that names every figure by
+  number and title (one figure is still one click, and all remain
+  reachable per T58). Paste moves up to follow the first section, and with
+  nothing copied it is a greyed Paste instead of 'Nothing copied yet'.
+  Repeat on slides, make-default (user, 2026-09-11) and 'shows with'
+  (T162) stay above More. Driven: the title's menu, and a reference
+  inserted through the picker.
 - [ ] **T534 — The shortcuts PowerPoint users type.** F2 / Enter edits the
   selected box, Tab / Shift+Tab walks the objects, Ctrl+K link,
   Ctrl+E/L/R/J align, Ctrl+Shift+> / < size, Ctrl+M new slide,

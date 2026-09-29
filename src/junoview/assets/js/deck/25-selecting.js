@@ -2412,21 +2412,33 @@
               if(isFigure(x)&&!x.hide&&x.cap) figs.push(x);});});
           if(figs.length){
             menuHead(m,'refer to a figure');
-            /* EVERY figure, in a box that scrolls when there are many.
-               `.slice(0,8)` threw the rest away silently — on the poster
-               tool whose sibling task is written around "regenerate 30
-               figures", seven eighths of a deck could not be referred
-               to at all. */
-            var fbox=document.createElement('div');
-            fbox.className='menu-scroll';
-            m.appendChild(fbox);
-            figs.forEach(function(x){
-              var num=fmap[x.cap]?fmap[x.cap].n:'?';
-              row('Insert a reference to Figure '+num,'',function(){
-                refCaption(capSel[0],x.cap);},
-                'Writes {fig:'+x.cap+'}, which follows that figure’s '
-                +'number wherever it ends up','locate',fbox);
-            });
+            /* EVERY figure -- `.slice(0,8)` once threw the rest away
+               (T58) -- but in ONE row. A row per figure made the menu as
+               long as the deck had figures: seven on the example, thirty
+               on a thesis poster, each "Insert a reference to Figure n"
+               (2026-09-29 audit, T533). One figure is still one click;
+               more open a picker that names each by its title. */
+            var figNo=function(x){return fmap[x.cap]?fmap[x.cap].n:'?';};
+            if(figs.length===1){
+              row('Insert a reference to Figure '+figNo(figs[0]),'',function(){
+                refCaption(capSel[0],figs[0].cap);},
+                'Writes {fig:'+figs[0].cap+'}, which follows that figure\u2019s '
+                +'number wherever it ends up','locate');
+            } else {
+              row('Insert a reference to a figure\u2026','',function(){
+                askText({title:'Refer to a figure',
+                  what:'The number follows the figure wherever it ends up.',
+                  rows:[{k:'cap',label:'Figure',type:'select',value:figs[0].cap,
+                    options:figs.map(function(x){
+                      var it=(x.k==='cell'&&x.ref)?resolveRef(x.ref):null;
+                      var nm=(it&&it.title)||x.alt||x.fname||'';
+                      return [x.cap,'Figure '+figNo(x)+(nm?' \u2014 '+nm:'')];
+                    })}],
+                  ok:'Insert reference'},function(v){
+                  if(v&&v.cap) refCaption(capSel[0],v.cap);});
+              },'One of the '+figs.length+' figures in this deck, by its '
+                +'number and name','locate');
+            }
           }
         }
       }
@@ -3027,7 +3039,10 @@
         'The boxes and the lines dragged off the rulers');
     menuHead(m,'paste');
     if(!clipBuf.length){
-      row('Nothing copied yet','',function(){}).disabled=true;
+      /* greyed, the way every editor shows a Paste with nothing to paste,
+         rather than a sentence standing in for the command (T533) */
+      var pz=row('Paste','Ctrl+V',function(){});
+      pz.disabled=true;pz.title='Nothing copied yet';
     } else {
       row('Paste','Ctrl+V',function(){pasteBuf('auto');},
         'Nudged clear of the original on this slide; in the same place '
@@ -3038,8 +3053,25 @@
       row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);},
         'Centred on the point you right-clicked');
     }
+    cmPasteUp(m);
     cmFold(m);
     floatAt(m,ev);
+  }
+  /* T533: PASTE BESIDE CUT AND COPY. Paste was the last section of the
+     menu, eight headings below the Cut and Copy it belongs with. When
+     the menu opens on a selection, its rows move up to follow the first
+     section's; on the empty canvas they are near the top already. */
+  function cmPasteUp(m){
+    var heads=$$('.hd-lab',m),ph=null;
+    heads.forEach(function(h){
+      if((h.textContent||'').trim().toLowerCase()==='paste') ph=h;});
+    if(!ph||heads.length<3||heads[0]===ph) return;
+    var first=(heads[0].textContent||'').trim().toLowerCase();
+    if(!/^this object$|objects$/.test(first)) return;
+    var block=[ph],n=ph.nextSibling;
+    while(n&&!(n.classList&&n.classList.contains('hd-lab'))){
+      block.push(n);n=n.nextSibling;}
+    block.forEach(function(k){m.insertBefore(k,heads[1]);});
   }
   /* THE FOLD (T137). A right-click on one text box reached 31 buttons
      under 13 headings -- an inspector forced into a popup. The

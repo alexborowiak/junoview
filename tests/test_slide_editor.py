@@ -2684,10 +2684,11 @@ def test_the_figure_reference_list_can_actually_appear(out):
     # number FIRST, then collect
     assert menu.index("var fmap=figNumbers();") < menu.index("var figs=[];")
     assert "if(isFigure(x)&&!x.hide&&x.cap) figs.push(x);" in menu
-    # ...and every figure, not the first eight
+    # ...and every figure, not the first eight -- T533: through one row
+    # and a picker that lists them all, not a row per figure
     assert "figs.slice(0,8).forEach" not in menu
-    assert "figs.forEach(function(x){" in menu
-    assert "fbox.className='menu-scroll';" in menu
+    assert "options:figs.map(function(x){" in menu
+    assert "row('Insert a reference to a figure\\u2026','',function(){" in menu
     assert ".menu-scroll{max-height:210px;overflow-y:auto;" in out
 
 
@@ -2738,7 +2739,8 @@ def test_the_caption_rows_carry_icons_like_their_neighbours(out):
     assert "+'figure’s number and renumbers itself when slides move',\n" \
         "            'numbers');" in out
     assert "            null,'unlink');" in out
-    assert "+'number wherever it ends up','locate',fbox);" in out
+    assert "+'number wherever it ends up','locate');" in out   # T533
+    assert "+'number and name','locate');" in out
 
 
 def test_inserting_a_figure_token_keeps_the_rich_runs(out):
