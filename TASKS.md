@@ -10063,8 +10063,16 @@ choice in the editor (T506, T507).
   in help.html and checks each step against the tab's own groups, the File
   menu or a known door; run against the old page it names all three wrong
   paths.
-- [ ] **T532 — "Version" means one thing.** Slide versions, talk-length
+- [x] **T532 — "Version" means one thing.** Slide versions, talk-length
   versions, saved history and poster drafts all say Version.
+  *Done 2026-09-29.* A named subset of the deck for a shorter talk (T24's
+  named cuts, shown as Version) is a Custom show, PowerPoint's term: the
+  Present group, door and New button, the Play menu, the slide menu, every
+  toast and question and the help page. The slide menu had offered 'in
+  these versions' two rows from 'New version of this slide'. Slide
+  versions (T318) and Saved versions (T225/T236) keep the user's own word;
+  poster pages keep Versions. 'Cut' was not an option (the clipboard's
+  word). Driven: tab, New custom show..., and the slide menu.
 
 ### Feel
 

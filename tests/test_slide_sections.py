@@ -701,7 +701,7 @@ def test_a_named_cut_has_a_complete_lifecycle(out):
     assert "if(!Object.keys(pres.cuts).length) delete pres.cuts;" in delete
     assert "if(wasActive) showCut='';" in delete
     assert delete.count("markDirty();") == 1
-    assert "will return to every version" in delete
+    assert "in no other custom show will be in every one again." in delete  # T532
 
 
 def test_a_cut_filter_belongs_to_one_deck_and_one_run(out):

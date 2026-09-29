@@ -2096,8 +2096,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T531 (2026-09-29): the help page's paths name this ribbon (Design > Deck
 # colours, Images > Video / audio, Home > History, nine layouts, Print
 # check, slide numbers under Header & footer).
-EXPECTED_MD5 = "bf3b247cb548255e5be6aee8479a7156"
-EXPECTED_BYTES = 4599268
+# T532 (2026-09-29): a named subset of the deck for a shorter talk is a
+# Custom show, not a Version.
+EXPECTED_MD5 = "2a1be2a9239e11603859a969a839d875"
+EXPECTED_BYTES = 4599730
 
 
 def _render_example() -> str:

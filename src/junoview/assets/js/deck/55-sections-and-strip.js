@@ -821,15 +821,15 @@
     }
     var cuts=cutList();
     if(cuts.length){
-      menuHead(m,'in these versions');
+      menuHead(m,'in these custom shows');
       cuts.forEach(function(c){
         var inIt=!!(oSl&&oSl.cuts&&oSl.cuts.indexOf(c.id)>=0);
         var none=!(oSl&&oSl.cuts&&oSl.cuts.length);
         row((inIt||none?'✓ ':'')+c.name,function(){
           toggleSlideCut(i,c.id);},
-          none?'In every version, because it names none'
-            :(inIt?'Remove it from this version'
-              :'Add it to this version'));
+          none?'In every custom show, because it names none'
+            :(inIt?'Take it out of this custom show'
+              :'Put it in this custom show'));
       });
     }
     menuHead(m,'organise');
@@ -1659,7 +1659,7 @@
         menu.insertBefore(el,anchor);
       }
       var hd=document.createElement('div');
-      hd.className='hd-lab';hd.textContent='which version';
+      hd.className='hd-lab';hd.textContent='which custom show';
       add(hd);
       function opt(id,label,why){
         var b=document.createElement('button');
@@ -1679,7 +1679,7 @@
         var choose=document.createElement('button');
         choose.className='dbtn dc-mi pl-cutpick';
         choose.textContent=c.name;
-        choose.title='Only the slides that name this version';
+        choose.title='Only the slides in this custom show';
         choose.setAttribute('aria-pressed',(selected===c.id).toString());
         choose.addEventListener('click',function(e){
           e.stopPropagation();overlayHide(menu);setCut(c.id);syncCuts();});
@@ -1691,7 +1691,7 @@
             b.className='dbtn pl-cutact';
             b.innerHTML=p[0]+' ';
             b.appendChild(document.createTextNode(p[1]));
-            b.title=p[1]+' the “'+c.name+'” version';
+            b.title=p[1]+' the custom show “'+c.name+'”';
             b.addEventListener('click',function(e){
               e.stopPropagation();if(p[2]()) syncCuts();});
             box.appendChild(b);
@@ -1700,12 +1700,12 @@
       });
       var nb=document.createElement('button');
       nb.className='dbtn dc-mi';
-      nb.textContent='New version…';
-      nb.title='Name a shorter cut of this same deck — no second '
-        +'file, no diverging copies';
+      nb.textContent='New custom show…';
+      nb.title='Name a shorter talk made from this same deck — no '
+        +'second file, no diverging copies';
       nb.addEventListener('click',function(e){
         e.stopPropagation();overlayHide(menu);
-        askText({title:'A new version of this deck',label:'Call it',
+        askText({title:'A new custom show',label:'Call it',
           value:'20-min',ok:'Make it',note:'Then right-click a slide to '
             +'put it in'},function(nm){
         if(nm==null) return;
@@ -1745,9 +1745,9 @@
         strip.appendChild(b);
       }
       tile('','Every slide','The whole deck, which is what a deck with '
-        +'no versions always shows');
+        +'no custom shows always shows');
       list.forEach(function(c){
-        tile(c.id,c.name,'Only the slides that name this version. '
+        tile(c.id,c.name,'Only the slides in this custom show. '
           +'Rename or delete it from the Present menu');
       });
     }
@@ -1755,7 +1755,7 @@
     var nvb=$('#pr-newversion');
     if(nvb) nvb.addEventListener('click',function(e){
       e.stopPropagation();
-      askText({title:'A new version of this deck',label:'Call it',
+      askText({title:'A new custom show',label:'Call it',
         value:'20-min',ok:'Make it',note:'Then right-click a slide to '
           +'put it in'},function(nm){
         if(nm==null) return;

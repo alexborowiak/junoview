@@ -754,9 +754,9 @@
       return c.id!==except&&c.name.toLowerCase()===want;});
   }
   function newCut(name){
-    name=String(name||'').trim()||'Short version';
+    name=String(name||'').trim()||'Short talk';
     if(cutNameTaken(name,'')){
-      toast('There is already a version called “'+name+'”');return '';
+      toast('There is already a custom show called “'+name+'”');return '';
     }
     var id=cutId();
     if(!pres.cuts) pres.cuts={};
@@ -786,15 +786,15 @@
     var old=d.name||id;
     /* T475: the editor's own question; the menu re-syncs itself once
        the answer lands, so this returns false to its caller */
-    askText({title:'Name this version',value:old,ok:'Rename'},function(v){
+    askText({title:'Name this custom show',value:old,ok:'Rename'},function(v){
     if(v==null) return;
     v=v.trim(); if(!v||v===old) return;
     if(cutNameTaken(v,id)){
-      toast('There is already a version called “'+v+'”');return;
+      toast('There is already a custom show called “'+v+'”');return;
     }
     d.name=v;
     markDirty();renderFilm();presenterSync&&presenterSync();
-    toast('Version renamed to “'+v+'”');
+    toast('Custom show renamed to “'+v+'”');
     cutsSync();   /* T477: the menu and the tab's strip */
     });
     return false;
@@ -808,12 +808,12 @@
         &&sl.cuts.every(function(c){return c===id;});}).length;
     /* T527: the editor's own question; like renameCut, the menu
        re-syncs itself when the answer lands, so this returns false */
-    askYes({title:'Delete the version \u201c'+name+'\u201d?',
+    askYes({title:'Delete the custom show \u201c'+name+'\u201d?',
       what:'Slides stay in the deck. '
         +(universal?(universal+' slide'+(universal===1?'':'s')
-          +' that names no other version will return to every version.')
+          +' in no other custom show will be in every one again.')
           :'No slide will become universal.'),
-      ok:'Delete version',cancel:'Keep it',danger:true},function(y){
+      ok:'Delete custom show',cancel:'Keep it',danger:true},function(y){
       if(y===true) delCutNow(id);});
     return false;
   }
@@ -888,8 +888,8 @@
     }
     presenterSync&&presenterSync();
     renderFilm();
-    toast(id?('Showing the \u201c'+(cutMap()[id]||{}).name
-      +'\u201d version'):'Showing every slide');
+    toast(id?('Showing the custom show \u201c'+(cutMap()[id]||{}).name
+      +'\u201d'):'Showing every slide');
   }
   /* T25. One control, mid-talk, that drops the rest of the optional
      slides. From HERE onward: what you have already shown is not the
