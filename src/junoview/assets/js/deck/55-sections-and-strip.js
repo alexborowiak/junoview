@@ -2619,6 +2619,15 @@
       }
       /* copy and cut; PASTE rides the real paste event instead, so a
          system-clipboard image can come in too */
+      /* T535: copy the LOOK -- before the plain branch, which matches
+         'C' with Shift down as well */
+      else if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey
+              &&(e.key==='c'||e.key==='C')){
+        e.preventDefault();
+        if(copyLook()) toast('Look copied \u2014 select what should wear '
+          +'it and press Ctrl+Shift+V');
+        else toast('Select the object whose look you want first');
+      }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='c'||e.key==='C')){
         var nc=copySel();
         if(nc){e.preventDefault();
@@ -2639,6 +2648,14 @@
          paste event could add: the buffer is ours. */
       else if((e.ctrlKey||e.metaKey)&&e.shiftKey
               &&(e.key==='v'||e.key==='V')){
+        /* T535: a look copied more recently than any object */
+        if(pasteLookWanted()){
+          e.preventDefault();
+          var nl=pasteLook();
+          toast(nl?('Look pasted onto '+nl+' object'+(nl===1?'':'s')
+            +' \u2014 Ctrl+Z undoes it'):'Nothing selected takes that look');
+          return;
+        }
         if(!clipBuf.length){
           /* nothing of ours to place: the same keys become "paste the
              clipboard as PLAIN text" (T128) -- the canvas's escape from

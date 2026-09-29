@@ -10104,8 +10104,15 @@ choice in the editor (T506, T507).
   page as (the box stopped every key), and a canvas click never moved
   keyboard focus, so Enter re-pressed the last ribbon button. Ctrl+K stays
   the rail's Find. The help page lists them all.
-- [ ] **T535 — Format painter behaves like one.** Double-click keeps it on
+- [x] **T535 — Format painter behaves like one.** Double-click keeps it on
   until Esc; Ctrl+Shift+C / Ctrl+Shift+V copy and paste a look.
+  *Done 2026-09-29.* The copy-a-look mode already stays on until Esc (the
+  user's 2026-08-22 design), so double-click-to-keep is its only mode.
+  Added the keyboard pair: Ctrl+Shift+C copies the selected object's look
+  (the match machinery's fields), Ctrl+Shift+V puts it on the selection --
+  and stays Paste in place whenever an object was copied more recently.
+  Copy look / Paste look are right-click rows. Driven with real keys both
+  ways; help updated.
 - [ ] **T536 — A mini toolbar by the selection.** Select words or a box
   and the everyday formatting floats beside it: typeface, size, bold,
   italic, underline, colour, bullets, alignment.

@@ -2289,6 +2289,18 @@
       row('Copy','Ctrl+C',function(){
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
+      /* T535: the look on its own, PowerPoint's Ctrl+Shift+C / V */
+      row('Copy look','Ctrl+Shift+C',function(){
+        if(copyLook()) toast('Look copied \u2014 select what should wear '
+          +'it and press Ctrl+Shift+V');},
+        'Its typeface, size, colours, fill and line \u2014 not its words '
+        +'or its place','palette');
+      if(lookBuf)
+        row('Paste look','Ctrl+Shift+V',function(){
+          var nl=pasteLook();
+          if(nl) toast('Look pasted onto '+nl+' object'+(nl===1?'':'s')
+            +' \u2014 Ctrl+Z undoes it');},
+          'The look you copied, on everything selected','palette');
       row('Delete','Del',deleteSel,null,'exit');
       menuHead(m,'repeat on slides');
       row('All other slides','',function(){repeatSelection('all');},

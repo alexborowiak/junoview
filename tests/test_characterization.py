@@ -2103,8 +2103,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T534 (2026-09-29): PowerPoint's shortcuts (F2/Enter, Tab,
 # Ctrl+B/I/U/L/E/R/M, Ctrl+Shift+>/<, Ctrl+]/[), Ctrl+S from inside a box,
 # and a canvas click takes the keyboard.
-EXPECTED_MD5 = "bdb44fc8ccf473d686edbe9d2c5974af"
-EXPECTED_BYTES = 4609678
+# T535 (2026-09-29): Ctrl+Shift+C copies a look and Ctrl+Shift+V pastes it
+# when a look is the newest copy; Copy look / Paste look on the right-click
+# menu.
+EXPECTED_MD5 = "220c59fac7b887e56aeca5cbcdd11abb"
+EXPECTED_BYTES = 4612657
 
 
 def _render_example() -> str:

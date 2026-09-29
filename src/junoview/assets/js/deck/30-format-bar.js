@@ -2136,11 +2136,40 @@
     });
     return (l>r||t>b)?null:{l:l,t:t,r:r,b:b};
   }
+  /* ---- T535: COPY A LOOK, PASTE A LOOK ---------------------------------
+     PowerPoint's Ctrl+Shift+C / Ctrl+Shift+V. The copying is the match
+     machinery's (matchCopy over applyFieldsFor, the same fields "Copy
+     this look to objects I click" carries), held in a buffer of its own.
+     Ctrl+Shift+V was already Paste in place, and it stays that: it pastes
+     a LOOK only when a look was copied more recently than an object, so
+     the chord means whatever you copied last. */
+  var lookBuf=null,lookStamp=0,objStamp=0,clipSeq=0;
+  function copyLook(){
+    var s=pres.slides[cur]; if(!s) return false;
+    var i=(typeof selAnnot==='number')?selAnnot:selectedIdxs()[0];
+    var a=(s.annots||[])[i]; if(!a) return false;
+    lookBuf=deep(a);lookStamp=++clipSeq;
+    return true;
+  }
+  function pasteLookWanted(){
+    return !!lookBuf&&lookStamp>objStamp&&selectedIdxs().length>0;
+  }
+  function pasteLook(){
+    var s=pres.slides[cur]; if(!s||!lookBuf) return 0;
+    var n=0;
+    selectedIdxs().forEach(function(i){
+      var to=(s.annots||[])[i];
+      if(to&&matchCopy(lookBuf,to,applyFieldsFor(matchPick,to.k))) n++;
+    });
+    if(n){markDirty();refresh();}
+    return n;
+  }
   function copySel(){
     var s=pres.slides[cur];
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
     clipFrom=cur;              /* where it came from - see pasteBuf */
     clipIdx=idxs.slice();
+    objStamp=++clipSeq;        /* T535: the newest copy decides Ctrl+Shift+V */
     clipBuf=idxs.map(function(i){
       return deep(s.annots[i]);});
     clipGrpMeta={};
