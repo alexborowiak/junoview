@@ -46,6 +46,7 @@
     shapeStripBoot();           /* the shapes, as tiles (T197) */
     imgPaneBoot();
     quickSwatchBoot();          /* the deck's six colours, on the row */
+    miniBoot();                 /* formatting beside highlighted words (T536) */
     ohOverviewBoot();           /* History of this object, full screen */
     layoutBuilderBoot();        /* layouts of your own (T226) */
     listGalleryBoot();          /* kinds of bullet and numbering (T227) */

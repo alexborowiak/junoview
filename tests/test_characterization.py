@@ -2106,8 +2106,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T535 (2026-09-29): Ctrl+Shift+C copies a look and Ctrl+Shift+V pastes it
 # when a look is the newest copy; Copy look / Paste look on the right-click
 # menu.
-EXPECTED_MD5 = "220c59fac7b887e56aeca5cbcdd11abb"
-EXPECTED_BYTES = 4612657
+# T536 (2026-09-29): a mini toolbar of the ribbon's own controls floats
+# above highlighted words.
+EXPECTED_MD5 = "7b906fde02dfb2f325a08906e5208833"
+EXPECTED_BYTES = 4619340
 
 
 def _render_example() -> str:

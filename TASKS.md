@@ -10113,9 +10113,14 @@ choice in the editor (T506, T507).
   and stays Paste in place whenever an object was copied more recently.
   Copy look / Paste look are right-click rows. Driven with real keys both
   ways; help updated.
-- [ ] **T536 — A mini toolbar by the selection.** Select words or a box
+- [x] **T536 — A mini toolbar by the selection.** Select words or a box
   and the everyday formatting floats beside it: typeface, size, bold,
   italic, underline, colour, bullets, alignment.
+  *Done 2026-09-29.* A new part, 32-mini-toolbar.js: B, I, U, S, A-, A+
+  and the deck's quick colours float above a run highlighted in a box
+  being typed in. Each button presses the ribbon's own control and mirrors
+  its pressed state; mousedowns are swallowed so the run stays selected.
+  Driven: F2 on the title shows the bar above the words with Bold lit.
 - [ ] **T537 — Clipboard on Home.** Paste (with in place, here, and as
   plain text), Cut, Copy and Format painter, first on Home as in
   PowerPoint.

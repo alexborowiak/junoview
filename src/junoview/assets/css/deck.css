@@ -288,6 +288,23 @@ body.deck-open{overflow:hidden;}
 .deck.pane-open.rbn-side .deck-zoombar{
   right:calc(var(--pane-w) + var(--rbn-side-w) + 18px);}
 .deck-zoombar .dbtn{padding:3px 9px;}
+/* T536: the mini toolbar -- the ribbon's own faces, beside the run */
+.mini-tb{position:fixed;z-index:70;display:flex;align-items:center;gap:3px;
+  padding:4px;border-radius:9px;background:var(--chrome-1);
+  border:1px solid var(--chrome-line);box-shadow:0 6px 20px var(--shadow);}
+.mini-tb[hidden]{display:none;}
+.mini-tb .dbtn{font-family:var(--sans);font-size:12px;height:26px;
+  min-width:26px;padding:0 7px;justify-content:center;}
+.mini-tb .mini-b{font-weight:700;}
+.mini-tb .mini-i{font-style:italic;font-family:Georgia,serif;}
+.mini-tb .mini-u{text-decoration:underline;}
+.mini-tb .mini-s{text-decoration:line-through;}
+.mini-tb .dbtn[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));color:var(--on-accent-deep,#fff);}
+.mini-tb .mini-sw{display:inline-flex;gap:3px;padding:0 2px 0 4px;
+  border-left:1px solid var(--chrome-line);margin-left:2px;}
+.mini-tb .mini-swb{width:18px;height:18px;border-radius:50%;
+  border:1px solid #ffffff44;padding:0;cursor:pointer;}
 /* T524: "Slide 3 of 14 · Methods", the zoom cluster's twin bottom-left */
 .deck-where{position:absolute;left:18px;bottom:12px;z-index:8;
   display:none;padding:4px;border-radius:9px;max-width:45%;

@@ -111,6 +111,7 @@ DECK_PARTS = (
     "23-citations",
     "25-selecting",
     "30-format-bar",
+    "32-mini-toolbar",
     "35-arranging",
     "40-captions-and-components",
     "45-images",
