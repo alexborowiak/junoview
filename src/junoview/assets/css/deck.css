@@ -1246,6 +1246,10 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .mini-it.is-img img{width:100%;height:100%;object-fit:contain;
   display:block;}
 .mini-it.is-img.is-crop img{object-fit:cover;}
+/* T522: a placed note or code cell is its own rendered body, zoomed to
+   the thumbnail by the canvas's rule; nothing inside a miniature scrolls */
+.mini-it.is-cell.an-cell .note,.mini-it.is-cell.an-cell pre,
+.mini-it.is-cell.an-cell .cardbody{overflow:hidden;}
 /* arrows share one overlay in the page's own 0..100 space */
 .mini-svg{position:absolute;inset:0;width:100%;height:100%;
   pointer-events:none;overflow:visible;}

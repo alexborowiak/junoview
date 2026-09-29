@@ -637,7 +637,8 @@ def test_the_thumbnails_say_they_are_decorative(out):
     """These five really ARE decorative -- a thumbnail is a picture of
     something already named beside it -- so aria-hidden states it rather
     than leaving a screen reader to infer it from an empty alt."""
-    assert out.count("/* decorative (T105) */") == 4
+    # T522 added the fifth: a placed note drawn as itself in the strip
+    assert out.count("/* decorative (T105) */") == 5
     assert "im.src=src;im.alt='';im.setAttribute('aria-hidden','true');" in out
 
 

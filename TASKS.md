@@ -9941,11 +9941,17 @@ choice in the editor (T506, T507).
 
 ### What you see first
 
-- [ ] **T522 — Thumbnails show the slide.** A placed Markdown note draws
+- [x] **T522 — Thumbnails show the slide.** A placed Markdown note draws
   as a white card of grey rules in the strip, so every text slide made by
   Create slides looks identical and none looks like the dark slide it
   indexes. Draw the note's own words, in the slide's own colours, the way
   a text box already is; a code cell shows its first lines of code.
+  *Done 2026-09-29.* miniCell draws a placed note or code cell from the
+  canvas's own rendered body (framePart) at the canvas's zoom rule, inside
+  a box wearing the canvas's frame classes, so ink, recoloured notes and
+  light decks agree; figures keep their picture. Driven at 1440x900: the
+  example deck's strip shows each slide's dark page, heading and words
+  where the canvas has them.
 - [ ] **T523 — Create slides never clips its words.** The first slide of
   the example deck cuts the descenders off its last line: the note box
   is placed a few pixels shorter than its text. Size placed notes from

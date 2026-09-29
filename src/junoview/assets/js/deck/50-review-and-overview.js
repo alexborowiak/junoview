@@ -2430,6 +2430,32 @@
     t.textContent=String(txt);
     d.appendChild(t);
   }
+  /* T522: A PLACED NOTE OR CODE CELL IS DRAWN AS ITSELF. It used to be a
+     white card of grey rules (.mini-pane.is-note), so every slide Create
+     slides makes -- a heading over a Markdown note -- looked identical in
+     the strip, and none of them looked like the dark slide it indexes
+     (2026-09-29 audit). The canvas already has the rendered body
+     (framePart, cached, a clone per call); the thumbnail takes the same
+     clone at the same zoom rule the canvas uses -- a.ts x page height /
+     SW_REF_H -- inside a box wearing the canvas's own frame classes, so the
+     page's ink, a recoloured note and a light deck all come through the
+     one set of rules. A figure keeps its picture (paneThumb): its body is
+     megabytes and an <img> of it is the same thing. Returns false when
+     there is nothing to draw, and the caller falls back. */
+  function miniCell(d,a){
+    if(!a.ref||(a.lockver&&a.lockver.commit)) return false;
+    if(paneImgSrc(a.ref)) return false;
+    var it=resolveRef(a.ref); if(!it) return false;
+    var b=framePart(it.ns,a.part); if(!b) return false;
+    var box=miniBox(d,a,'is-cell an-cell'+(a.autoNote?' an-auto-note':''));
+    applyCellColor(box,a);
+    b.style.zoom=((a.ts||1)*miniHNow/SW_REF_H).toFixed(4);
+    b.setAttribute('aria-hidden','true');   /* decorative (T105) */
+    b.removeAttribute('id');
+    $$('[id]',b).forEach(function(n){n.removeAttribute('id');});
+    box.appendChild(b);
+    return true;
+  }
   /* a box-shaped item (shape, image, cell frame) at its page rect */
   function miniBox(d,a,cls){
     var b=document.createElement('span');
@@ -4472,6 +4498,7 @@
         return;
       }
       if(a.k==='cell'){
+        if(miniCell(d,a)) return;
         var w2=paneThumb(a.ref);
         w2.style.position='absolute';
         w2.style.left=(a.x||0)+'%';w2.style.top=(a.y||0)+'%';
