@@ -10431,3 +10431,18 @@ create animation. This gets congested very easily."
   stands its corner handles off, because eight 15px handles buried a 20px
   dot and left nothing to drag it by. Driven: a 12x10px oval is kept,
   shrinks to 6px, and drags by its middle.
+- [x] **T585 — An arrow over a picture can be clicked; pointing
+  previews.** "so I create this arrow with a curve (would be good if on
+  hover you could preview how the arrow looks), but I cannot click on it
+  with the map in the background." The arrow's fat invisible grab path
+  was drawn UNDER every item, so the picture beneath took every click;
+  and arrowAt, the pick that runs on a click over an item, measured the
+  straight chord between the ends, so a curved arrow was found where it
+  is not drawn and missed where it is. While editing the grab path is on
+  top with the ink (presenting keeps it underneath for tap-to-zoom), and
+  arrowAt asks the drawn path (isPointInStroke). Handles are z-index 6 so
+  an arrow attached at an edge does not cover that edge's handle. And
+  every Line window option -- route, style, weight, ends -- previews on
+  the selection while pointed at; leaving or closing puts it back, a
+  click keeps it with one undo entry. Driven: before, a click on the
+  visible curve selected the chart under it; after, the arrow.

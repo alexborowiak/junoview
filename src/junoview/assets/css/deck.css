@@ -4571,9 +4571,12 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-arrow-line.sel{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 80%,transparent));}
 .an-arrow-hit{stroke:transparent;stroke-width:16;fill:none;}
 .deck.editing .an-arrow-hit{cursor:move;}
+/* z-index 6, above the arrows' svg (5): while editing an arrow's grab
+   path is up there (T585), and one attached at an edge would otherwise
+   sit on that edge's handle */
 .an-resize{position:absolute;width:15px;
   height:15px;border-radius:4px;background:var(--cyan);
-  border:2px solid var(--chrome-0,#0b141d);display:none;z-index:3;}
+  border:2px solid var(--chrome-0,#0b141d);display:none;z-index:6;}
 .an-rs-se{right:-7px;bottom:-7px;cursor:nwse-resize;}
 .an-rs-nw{left:-7px;top:-7px;cursor:nwse-resize;}
 .an-rs-ne{right:-7px;top:-7px;cursor:nesw-resize;}
@@ -4602,7 +4605,7 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 /* free-rotation grip above the item (drag; Shift snaps to 15 deg) */
 .an-rotate{position:absolute;top:-30px;left:50%;margin-left:-8px;
   width:16px;height:16px;border-radius:50%;background:var(--chrome-1,#0e1926);
-  border:2px solid var(--cyan);cursor:grab;display:none;z-index:3;}
+  border:2px solid var(--cyan);cursor:grab;display:none;z-index:6;}
 .an-rotate::after{content:"";position:absolute;left:50%;top:100%;
   width:2px;height:11px;background:var(--cyan);margin-left:-1px;}
 .an-item.sel .an-rotate{display:block;}

@@ -2157,8 +2157,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T584 (2026-09-30): a resize stops at six screen pixels, not 4% of the
 # slide; a draw under 4px of travel is a click; a small selection hides
 # its side bars and stands its corners off.
-EXPECTED_MD5 = "8acda9a830741b8b444fa9019e40bc52"
-EXPECTED_BYTES = 4717544
+# T585 (2026-09-30): an arrow's grab path is on top while editing and
+# arrowAt asks the drawn path, so an arrow over a picture can be clicked;
+# pointing at a Line window option previews it.
+EXPECTED_MD5 = "fa6485cdf8359d121fd40379a1915da4"
+EXPECTED_BYTES = 4721384
 
 
 def _render_example() -> str:
