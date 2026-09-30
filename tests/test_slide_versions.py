@@ -123,7 +123,7 @@ def test_exports_show_the_main_only(out):
     rehearsal cut does not silently trim a PDF -- so the deck-state half
     of the test is asked there directly. PDF, pptx and standalone HTML
     all read that one list."""
-    body = out.split("function outputSlides(){")[1].split("\n  }")[0]
+    body = out.split("function outputSlides(withHidden){")[1].split("\n  }")[0]
     assert "      if(slideIsAlt(i)) return;" in body
 
 

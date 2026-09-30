@@ -1962,6 +1962,13 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn rbn-sm" id="pr-trace" aria-pressed="false"
                 title="Show the code trail under each slide while presenting"
                 ><i data-ic="code"></i> Code trail</button>
+              <!-- T554: PowerPoint's Hide Slide, where its Slide Show tab
+                   keeps it: the slide stays in the deck and the show goes
+                   straight past it. Optional (Home) is the other kind of
+                   skip -- played unless you are running late. -->
+              <button class="dbtn rbn-sm" id="pr-hide" aria-pressed="false"
+                title="Keep this slide in the deck but never play it"
+                ><i data-ic="hideslide"></i> Hide slide</button>
             </span>
             <span class="rbn-lab">During the talk</span>
           </span>

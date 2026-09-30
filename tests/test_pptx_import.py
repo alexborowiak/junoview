@@ -527,7 +527,10 @@ def test_every_other_kind_maps_onto_the_deck_model():
     assert res["lost"] == []                 # 4:3 is a preset of ours
     assert pr["page"] == "4x3" and pr["name"] == "talk"
     s0, s1, s2 = pr["slides"]
-    assert s0["bg"] == "#202020" and s0["trans"] == "fade" and s0["opt"] == 1
+    # T554: a hidden PowerPoint slide is a hidden slide here too (it
+    # arrived as Optional before this deck could hide one)
+    assert s0["bg"] == "#202020" and s0["trans"] == "fade" and s0["hide"] == 1
+    assert "opt" not in s0
     assert (s0["sec"], s1["sec"], s2["sec"]) == ("ps1", "ps1", "ps2")
     assert pr["sections"] == {"ps1": {"name": "Intro"},
                               "ps2": {"name": "Results"}}

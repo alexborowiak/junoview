@@ -213,6 +213,10 @@
            lives on the SLIDE so it survives every splice and drag for
            free — the same argument s.sec makes above (T24). */
         if(s.opt) o.opt=1;
+        /* T554: hidden -- in the deck, never played (PowerPoint's Hide
+           Slide). Not the same as optional, which plays unless you are
+           running late. */
+        if(s.hide) o.hide=1;
         /* T318: which version group this slide belongs to -- the first
            of a contiguous run is the main, so nothing else is stored */
         if(typeof s.alt==='string'&&s.alt) o.alt=s.alt;

@@ -186,6 +186,9 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                    "set a default for the slides in it."),
     "opt": (int, "1 when this slide is optional — \"Running late\" in "
                  "present mode skips it."),
+    "hide": (int, "1 when this slide is hidden: kept in the deck and in "
+                  "its .pptx (hidden there too), but never played and "
+                  "left out of a PDF — PowerPoint's Hide Slide."),
     "alt": (str, "The version group this slide belongs to. A group is a "
                  "contiguous run of slides sharing it; the FIRST is the "
                  "main -- what the talk, the arrows and every export show "

@@ -52,6 +52,7 @@
     'vw-rulers':'ruler',
     'dsg-masters':'slide master master slide',
     'pr-newversion':'custom slide show custom show shorter talk',
+    'pr-hide':'hide slide hidden slide skip slide unhide show slide',
     'pr-timing':'rehearse timings rehearsal timer',
     'hm-notes':'speaker notes notes pane',
     'hm-lay-ideas':'designer design ideas layout suggestions',

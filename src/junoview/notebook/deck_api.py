@@ -291,6 +291,18 @@ class Slide:
         else:
             self.raw.pop("opt", None)
 
+    @property
+    def hide(self) -> bool:
+        """True when the slide never plays (PowerPoint's Hide Slide)."""
+        return bool(self.raw.get("hide"))
+
+    @hide.setter
+    def hide(self, v: bool) -> None:
+        if v:
+            self.raw["hide"] = 1
+        else:
+            self.raw.pop("hide", None)
+
     def update(self, **kw: Any) -> Slide:
         """Set any slide keys; ``None`` removes one."""
         for k, v in kw.items():

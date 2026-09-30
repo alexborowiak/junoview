@@ -302,7 +302,7 @@ def test_a_poster_goes_to_the_printer_one_version_at_a_time(out):
     the slide counter -- so one version goes out, and the toast says
     which. A deck's slides ARE the deck, so they all go.
     """
-    assert "function outputSlides(){" in out
+    assert "function outputSlides(withHidden){" in out
     assert "if(!pageOf().poster||all.length<2) return all;" in out
     assert "outputSlides().forEach(function(ent,i){" in out
     # T110 hoisted the ents list to map slide-jump targets first

@@ -135,7 +135,7 @@ def test_the_export_explodes_a_flip_book_into_real_slides(out):
     The FIRST flip book on a slide is the one that explodes it -- two of
     them multiplying into a grid of pages is nobody's intention.
     """
-    body = out.split("function outputSlides(){")[1].split("\n  }")[0]
+    body = out.split("function outputSlides(withHidden){")[1].split("\n  }")[0]
     # THE SLIDE'S BOOK, not merely its first flip book (T165): a slide
     # whose only book is made of words has to explode too, or four
     # fifths of its text would leave the building silently

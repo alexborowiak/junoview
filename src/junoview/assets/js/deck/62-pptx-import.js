@@ -263,7 +263,7 @@
       if(sl.bg&&sl.bg!==pr.pageBg) s.bg=sl.bg;
       if(sl.notes) s.notes=String(sl.notes);
       if(sl.trans) s.trans=sl.trans;
-      if(sl.hidden) s.opt=1;
+      if(sl.hidden) s.hide=1;   /* T554: hidden stays hidden */
       if(sl.section){
         if(!secIds[sl.section]){
           nsec++;secIds[sl.section]='ps'+nsec;

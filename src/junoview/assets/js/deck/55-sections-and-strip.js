@@ -400,13 +400,14 @@
       var row=document.createElement('div');
       row.className='film-row'+(i===cur?' current':'')
         +(fold[i]?' peek':'')+(s.sec?' in-sec':'')
-        +(s.opt?' opt':'')+(skipped&&!isAlt?' cut':'')
+        +(s.opt?' opt':'')+(s.hide?' hid':'')+(skipped&&!isAlt?' cut':'')
         +(isAlt?' alt':'')+(ar&&!isAlt?' has-alt':'');
       row.dataset.idx=i;
       row.draggable=true;
       var rowTips=['Drag to reorder'];
       if(s.opt) rowTips.push('Optional: Running late can skip this slide');
-      if(skipped) rowTips.push(filmCut&&!inCut(s,filmCut)
+      if(s.hide) rowTips.push('Hidden: the show goes straight past it');
+      else if(skipped) rowTips.push(filmCut&&!inCut(s,filmCut)
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'
         :'Skipped by Running late');
@@ -458,6 +459,8 @@
         marks.appendChild(tag);
       }
       if(s.opt) mark('opt','optional','Running late can skip this slide');
+      if(s.hide) mark('hid','hidden','The show goes straight past it '
+        +'(Present › Hide slide)');
       /* T318: the main wears the group's pill, and the pill IS the
          fold toggle -- secRow's chevron in the marks row's clothes,
          not a control over the thumbnail (T228). An alternative says
@@ -500,7 +503,9 @@
       if(nbuild) mark('anim','▸'+nbuild,
         nbuild+(nbuild===1?' click':' clicks')+' to walk this slide'
         +'\nOpen Insert ▸ Animations to see the order');
-      if(skipped&&!isAlt) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
+      /* (a hidden slide says "hidden" above; "not shown" would be the
+         same fact twice) */
+      if(skipped&&!isAlt&&!s.hide) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'
         :'Skipped by Running late');
@@ -862,6 +867,10 @@
       toggleOptional(i);},
       'Running late in present mode skips the optional slides from '
       +'wherever you have got to','flag');
+    row((oSl&&oSl.hide)?'✓ Hidden':'Hide slide',function(){
+      toggleSlideHidden(i);},
+      'Keep it in the deck but never play it — the show goes '
+      +'straight past it','hideslide');
     row('Move it up',function(){moveSlide(i,-1);},null,'prev');
     row('Move it down',function(){moveSlide(i,1);},null,'next');
     if(pageOf().poster) row('Rename this version\u2026',function(){
@@ -1213,6 +1222,9 @@
         var to=nextShown(cur,1);
         if(to<0) to=nextShown(cur,-1);
         if(to>=0) cur=to;
+        /* T554: nothing left to play because every slide is hidden */
+        else if(!activeCut())
+          toast('Every slide is hidden — showing this one anyway');
         else {
           var emptyName=(cutMap()[activeCut()]||{}).name||'version';
           showCut='';
@@ -1495,7 +1507,7 @@
      "+ Create new version" makes those easy to accumulate, exporting all
      of them would quietly turn one A0 into three (2026-08-10). A deck's
      slides ARE the deck, so they all go. */
-  function outputSlides(){
+  function outputSlides(withHidden){
     var all=[];
     (pres.slides||[]).forEach(function(s,i){
       /* T318: exports show the main version only. This list never
@@ -1503,6 +1515,9 @@
          not silently trim a PDF -- so the deck-state half of the test
          is asked here directly. */
       if(slideIsAlt(i)) return;
+      /* T554: nor a hidden slide, except where the format can keep it
+         hidden (a .pptx asks for it, and writes show="0") */
+      if(s.hide&&!withHidden) return;
       /* A FLIP BOOK EXPLODES ON THE WAY OUT. This is the whole payoff:
          the complaint was "heaps of new slides each with a new figure",
          so the editor keeps ONE slide with the figures stacked inside it
@@ -1993,6 +2008,10 @@
     if(o) o.addEventListener('click',function(e){
       e.stopPropagation();toggleOptional(cur);syncHomeDoors();
     });
+    var hd=$('#pr-hide');   /* T554 */
+    if(hd) hd.addEventListener('click',function(e){
+      e.stopPropagation();toggleSlideHidden(cur);syncHomeDoors();
+    });
     syncHomeDoors();
   }
   function syncHomeDoors(){
@@ -2018,6 +2037,16 @@
          stale (this is the same self-healing rule the comment above
          sizeRibbonGroups states, applied at the path that broke it). */
       if(typeof fitEditRibbon==='function') fitEditRibbon();
+    }
+    /* T554: Present's Hide slide wears this slide's state */
+    var hb=$('#pr-hide'),hs=(pres&&pres.slides)?pres.slides[cur]:null;
+    if(hb){
+      var hOn=!!(hs&&hs.hide);
+      hb.setAttribute('aria-pressed',hOn?'true':'false');
+      hb.title=hOn?'This slide is hidden: the show goes straight past it. '
+        +'Click to show it again'
+        :'Keep this slide in the deck but never play it (PowerPoint’s '
+        +'Hide Slide)';
     }
     var o=$('#hm-optional'); if(!o) return;
     var s=(pres&&pres.slides)?pres.slides[cur]:null;

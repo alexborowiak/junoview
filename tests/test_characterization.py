@@ -2246,8 +2246,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Alt text... (icon alttext, in every layout beside Caption), alt text is
 # for notebook figures, clips and charts too (altPaint draws it, the .pptx
 # carries it), the Review asks about charts, and the help has an entry.
-EXPECTED_MD5 = "bd760a7a4c596b58f5507d7a998e52f3"
-EXPECTED_BYTES = 4904107
+# T554 (2026-10-01): Hide slide -- a slide's hide flag, skipped by the
+# show, a Present-tab button and a strip menu row, the strip's struck
+# number and hidden pill, PDF/page exports leave it out and the .pptx
+# keeps it with show=0 both ways, and the help entry.
+EXPECTED_MD5 = "333d84e79ac044f1267de56b265bdedd"
+EXPECTED_BYTES = 4908421
 
 
 def _render_example() -> str:

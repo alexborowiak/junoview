@@ -133,6 +133,10 @@ def as_presentations(obj: Any) -> list:
                 # deck's "20-minute version" back into the full one.
                 if s.get("opt"):
                     slide["opt"] = 1
+                # T554: a hidden slide never plays -- PowerPoint's Hide
+                # Slide, and a different thing from optional
+                if s.get("hide"):
+                    slide["hide"] = 1
                 # which version group this slide is in (T318). The first
                 # of a contiguous run sharing it is the main and nothing
                 # else is stored, so a starred slide is just the one at

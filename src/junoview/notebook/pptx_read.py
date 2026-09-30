@@ -215,8 +215,6 @@ _LOST_TEXT = {
                "— this deck has one error per point, so the upper one "
                "is kept",
     "curve": "{n} freehand curve{s} drawn with straight segments",
-    "hidden": "{n} hidden slide{s} — imported as Optional, which "
-              "Running late can skip",
     "picfill": "{n} shape{s} filled with a picture — the outline "
                "arrives, the picture does not",
     "vertical": "{n} text box{es} set vertically — shown horizontal",
@@ -1941,9 +1939,10 @@ def read_pptx(data: bytes, name: str = "") -> dict:
                 layout.root is not None) else None
             if lbg is not None:
                 sl["bg"] = rd._bg(lbg)
+        # T554: PowerPoint's Hide Slide is this deck's too, so nothing
+        # is lost (it used to arrive as Optional, and was tallied)
         if root.get("show") == "0":
             sl["hidden"] = True
-            lost.add("hidden")
         sl["section"] = section_of.get(slide_ids[i], "")
         slides.append(sl)
 

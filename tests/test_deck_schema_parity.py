@@ -140,6 +140,7 @@ SLIDE_SENTINELS = {
     "border": {"w": 2},
     "grpmeta": {"g": [1, 2]},
     "opt": 1,
+    "hide": 1,    # T554: PowerPoint's Hide Slide
     # the version group (T318): the first of a run is the main
     "alt": "v1",
     "cuts": ["k1"],

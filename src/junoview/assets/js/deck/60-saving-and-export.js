@@ -3127,7 +3127,8 @@
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     /* a slide-jump names a DECK slide; the .pptx page it lands on is
        the first output page that slide produced (flip books explode) */
-    var ents=outputSlides();
+    /* T554: a hidden slide goes too, hidden there as well (show="0") */
+    var ents=outputSlides(true);
     var firstOut={};
     ents.forEach(function(ent,oi){
       if(!(ent.i in firstOut)) firstOut[ent.i]=oi+1;});
@@ -3183,12 +3184,13 @@
             ||(mm3&&tokVal(mm3.bg))||bg),items:its,
           trans:transFor(ent.i),notes:ent.s.notes||'',
           /* T485: the slide's section, by name, for the writer's list */
-          section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):''};
+          section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):'',
+          hide:!!ent.s.hide};
       }),
     });
     var fname=(pres.name||'presentation')+'.pptx';
     var msg='.pptx saved — text stays editable'+outputNote();
-    var noted=outputSlides().filter(function(e){
+    var noted=outputSlides(true).filter(function(e){
       return e.s&&e.s.notes&&e.s.notes.trim();}).length;
     if(noted) msg+='. Speaker notes came across on '+noted+' slide'
       +(noted===1?'':'s');

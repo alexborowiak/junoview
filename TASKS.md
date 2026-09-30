@@ -10304,8 +10304,28 @@ choice in the editor (T506, T507).
 
 - [ ] **T553 — Transitions: a duration and three more.** Push, Wipe and
   Zoom beside Cut, Fade and Move, each with a duration; exported.
-- [ ] **T554 — Hide slide.** A slide that never plays (PowerPoint's Hide
+- [x] **T554 — Hide slide.** A slide that never plays (PowerPoint's Hide
   Slide), distinct from Optional (skipped only when running late).
+  *Done 2026-10-01.* A slide's `hide` (1 = hidden; in the JS and Python
+  normalisers, the schema, DECK-FORMAT and the Python API as
+  `slide.hide`). slideSkipped answers it, so the arrows, the counter,
+  the presenter view's next slide and the scrolling page all go straight
+  past it whatever show is playing; starting a talk on it moves to the
+  next shown slide, and a deck where every slide is hidden says so and
+  shows the current one. The doors: Present > Hide slide, where
+  PowerPoint's Slide Show tab keeps it (the "During the talk" group goes
+  from five cells to an even six), pressed while the slide is hidden,
+  with an icon of its own (a slide struck through); the strip's
+  right-click menu beside Mark it optional; Search commands by "hide
+  slide" and "unhide". The strip draws it as PowerPoint does -- the
+  number struck through, the thumbnail dimmed, a "hidden" pill (and not
+  a second "not shown" one). Out of the house: a PDF and the standalone
+  page leave it out (outputSlides skips it unless asked), a .pptx keeps
+  it with show="0", and the .pptx reader, which used to import a hidden
+  slide as Optional and tally it as a loss, now brings it in hidden.
+  Driven at 1440x900: slide 2 hidden from the Present tab (pressed, the
+  toast, the strip's struck "2" and pill), From the start then right
+  arrow went 1 -> 3 and left arrow 3 -> 1.
 - [ ] **T555 — Header & footer, with the date.** The Page furniture group
   says what it is, and a {date} field joins {n}, {N} and the section
   fields.

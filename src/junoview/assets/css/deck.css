@@ -5185,6 +5185,12 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .film-row.cut:not(.current) .film-n{opacity:.42;}
 .film-row.cut{background-image:linear-gradient(90deg,#71879a 0 2px,
   transparent 2px);}
+/* T554: a hidden slide, as PowerPoint draws one -- its number struck
+   through, the picture dimmed (by .cut, since the show skips it), and
+   the current slide dimmed too, so hiding the slide you are on shows */
+.film-row.hid .film-n{text-decoration:line-through;}
+.film-row.hid.current .mini-diagram{opacity:.55;}
+.film-mark.hid{color:var(--chrome-ink-2);}
 /* the selected slide expands: number on top, big editor, title below */
 .film-row.current .film-label{flex-direction:column;align-items:stretch;
   gap:6px;cursor:default;}

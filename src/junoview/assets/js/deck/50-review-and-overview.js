@@ -855,6 +855,8 @@
        presenter, the arrows, the counter, the overview dimming and the
        strip's mark all read this one predicate */
     if(slideIsAlt(i)) return true;
+    /* T554: a hidden slide never plays, whatever the show */
+    if(sl.hide) return true;
     if(!inCut(sl,activeCut())) return true;
     if(lateFrom>=0&&i>lateFrom&&sl.opt) return true;
     return false;
@@ -932,6 +934,17 @@
     markDirty();renderFilm();
     toast(sl.opt?'Optional \u2014 "Running late" will skip it'
       :'No longer optional');
+  }
+  /* T554: HIDE SLIDE. PowerPoint's: the slide stays in the deck, in its
+     place and with its number, and the show goes straight past it. Not
+     Optional, which plays unless you are running late. */
+  function toggleSlideHidden(i){
+    var sl=(pres.slides||[])[i]; if(!sl) return;
+    if(sl.hide) delete sl.hide; else sl.hide=1;
+    markDirty();renderFilm();
+    if(typeof syncHomeDoors==='function') syncHomeDoors();
+    toast(sl.hide?'Hidden — the show goes straight past it, and it '
+      +'stays out of a PDF':'Shown again');
   }
   function toggleSlideCut(i,id){
     var sl=(pres.slides||[])[i]; if(!sl||!id||!hasCut(id)) return;

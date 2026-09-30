@@ -1433,7 +1433,9 @@ window.JunoPptx = (function () {
       var tree = emptyTree('Slide').replace('</p:spTree>',
         function () { return body + '</p:spTree>'; });
       return { rels: rels,
-        xml: XML_HEAD + '<p:sld' + nsAttrs() + '><p:cSld>' + bg + tree
+        /* T554: a hidden slide is PowerPoint's own Hide Slide */
+        xml: XML_HEAD + '<p:sld' + nsAttrs() + (slide.hide ? ' show="0"' : '')
+          + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
           + transition(slide.trans) + timingXml(anims) + '</p:sld>' };
     });

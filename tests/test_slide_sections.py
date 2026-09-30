@@ -760,7 +760,9 @@ def test_the_strip_spells_out_optional_and_not_shown(out):
     assert "var filmCut=activeCut(),skipped=slideSkipped(i);" in film
     # T318: an unstarred version IS skipped by playback but is not "cut"
     # -- it wears its own mark ("Version 2") rather than "not shown"
-    assert "+(s.opt?' opt':'')+(skipped&&!isAlt?' cut':'')" in film
+    # (T554: a hidden slide wears its own class between them)
+    assert ("+(s.opt?' opt':'')+(s.hide?' hid':'')"
+            "+(skipped&&!isAlt?' cut':'')") in film
     assert "mark('opt','optional'" in film
     assert "mark('cut','not shown'" in film
     assert "?'Not shown in the “'" in film
