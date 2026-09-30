@@ -112,7 +112,10 @@ def test_a_shelved_group_is_still_counted_as_occupied(out):
 
 def test_disappear_is_named_for_what_you_are_choosing(out):
     """"also what is disappear?" -- it was named for what it does to the
-    object, under a group label that said the same word again."""
+    object, under a group label that said the same word again. T579
+    (2026-09-30, "I cannot figure out how to make an image disappear"):
+    the word the user searches with is the tile's, under Exit, with the
+    click it happens on beneath it."""
     assert '<span class="rbn-lab">Exit</span>' in out
-    assert "<span>Send it away</span>" in out
-    assert "Disappear</button>" not in out and "<span>Disappear</span>" not in out
+    assert "<span>Disappear</span>" in out
+    assert '<span class="rbn-lab">Disappear</span>' not in out

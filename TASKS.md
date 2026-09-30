@@ -10363,9 +10363,17 @@ create animation. This gets congested very easily."
   the lit piece was forced to inline-block, and a promoted piece IS the
   <li>, so the lit bullet lost its dot. Only an inline run is made
   inline-block now. Driven with photos on the bullets' clicks (T577).
-- [ ] **T579 — Disappear is where you look for it.** "I cannot figure out
+- [x] **T579 — Disappear is where you look for it.** "I cannot figure out
   how to make an image disappear. The UI for the animations is really
-  confusing overall."
+  confusing overall." The exit worked; it could not be found. Its tile
+  was HIDDEN until something was selected (every neighbour stays,
+  disabled, reading "no selection"), so the tab you scanned had no exit
+  on it, and command search skips hidden controls. It keeps its place
+  now, wears the user's own word (Disappear, under Exit, with never /
+  on click N beneath -- T453's complaint was the word twice with nothing
+  saying when), is found by "disappear", "hide", "exit", "go away"...,
+  and a single object's right-click menu has "Disappear on a click" in
+  its first screen. The Order tab's rows say "X disappears".
 - [ ] **T580 — The Story: the whole slide without closing it, drag to
   reorder, less of the screen.** "would be cool if you could drag and
   re-arrange the slides here as well ... the only way to view the

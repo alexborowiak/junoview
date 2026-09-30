@@ -27,6 +27,9 @@
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
     'vw-anim':'animation pane animations list',
+    /* T579: the words people look for it by */
+    'anim-out':'disappear exit animation hide leave go away fade out '
+      +'remove from slide vanish',
     'fmt-txcol-btn':'font colour font color text color',
     'tx-link':'hyperlink insert link url web address jump to slide',
     'tx-autocorrect':'autocorrect auto correct smart quotes curly quotes '
