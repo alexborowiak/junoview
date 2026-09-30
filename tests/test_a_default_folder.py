@@ -33,8 +33,13 @@ def test_the_folder_is_remembered_like_the_file(out):
 
 def test_a_remembered_folder_makes_local_the_default(out):
     """That is the whole ask: not one more place you can save to, but the
-    place everything saves to from then on."""
-    assert "        if(saveTarget==='browser') setTarget('file');" in out
+    place everything saves to from then on.
+
+    T598 made destinations per deck, so the folder is the DEFAULT -- the
+    home of every deck that has none of its own -- and the deck on screen
+    follows its own record."""
+    assert "        if(defaultSaveTarget()==='browser') lsSet(TGKEY,'file');" in out
+    assert "        var home0=deckHomeOf((pres&&pres.name)||'');" in out
 
 
 def test_junoview_makes_its_own_file_in_there(out):

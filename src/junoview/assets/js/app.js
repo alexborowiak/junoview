@@ -7826,7 +7826,17 @@
       ic.innerHTML=p.view?bic('eye'):p.poster?bic('pagep'):bic('present');
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=p.name;
-      b.appendChild(ic);b.appendChild(nm);
+      /* T598: where it lives and when -- not a path repeated six times
+         (the rule for these rows), but what tells two decks apart */
+      var words=APP.deckRowWords?APP.deckRowWords(p):'';
+      if(words){
+        var tx=document.createElement('span');tx.className='recent-txt';
+        var sub=document.createElement('span');sub.className='recent-sub';
+        sub.textContent=words;
+        tx.appendChild(nm);tx.appendChild(sub);
+        b.appendChild(ic);b.appendChild(tx);
+        b.title+=String.fromCharCode(10)+words;
+      } else {b.appendChild(ic);b.appendChild(nm);}
       if(p.draft){
         var d=document.createElement('span');d.className='recent-tag';
         d.textContent='draft';b.appendChild(d);

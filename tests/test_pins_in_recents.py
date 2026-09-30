@@ -21,7 +21,7 @@ from __future__ import annotations
 
 def test_pinned_presentations_lead_recent_and_never_drop(out):
     assert "  var PRESENT_PIN_KEY=PFX+'pinned-presentations';" in out
-    assert "    'pinned-presentations':1};   /* T435 */" in out
+    assert "    'pinned-presentations':1,    /* T435 */" in out
     assert "  function togglePinPresentation(name){" in out
     fn = out.split("  function savedRecentPresentationNames(){")[1] \
         .split("\n  }")[0]

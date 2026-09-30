@@ -803,6 +803,10 @@ body:not(.light) .wj-none{color:var(--ink-3);}
 .recent-ic{flex:none;font-size:12px;line-height:1;opacity:.85;}
 .recent-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
+/* T598: a presentation row says where it lives and when, under its name */
+.recent-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.recent-sub{min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:10.5px var(--sans);color:var(--ink-3);}
 /* T435: the pin on a recent row. Faint until hovered, lit when on. */
 .recent-pin{flex:none;width:20px;height:20px;padding:0;border:0;
   background:none;color:var(--ink-3);opacity:.35;cursor:pointer;
@@ -1045,6 +1049,14 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   white-space:nowrap;flex:1;}
 .presentation-hub-row-kind{flex:none;color:var(--chrome-ink-2);
   font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;}
+/* T598: the name, and under it where the deck lives and when */
+.presentation-hub-row-txt{flex:1;min-width:0;display:flex;
+  flex-direction:column;gap:2px;}
+.presentation-hub-row-sub{min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font:10.5px var(--sans);
+  color:var(--chrome-ink-2);}
+.presentation-hub-row-sub:empty,.presentation-hub-row-kind:empty{
+  display:none;}
 /* T435: the pin on a library row */
 .presentation-hub-pin{flex:none;width:20px;height:20px;display:inline-flex;
   align-items:center;justify-content:center;border-radius:4px;
