@@ -2535,6 +2535,9 @@
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
       va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',
+      /* T572: AutoFit -- 'shrink' (normAutofit), 'fixed' (noAutofit) or
+         '' for a box that grows with its words (spAutoFit) */
+      fit:!a.fh?'':(a.fit==='shrink'?'shrink':'fixed'),
       /* T547: its columns and the gap between them (em of its words);
          a curved box has none, as on the canvas */
       ncol:(a.ncol>1&&!a.arc)?Math.min(3,a.ncol):0,
@@ -2554,6 +2557,7 @@
   }
   function pptxItems(s,note,ink,layer){
     var items=[];
+    var fitHost=null;   /* T572: where a shrunk box's scale is read */
     /* which CLICK each annot appears on, the same grouping the badges
        and playback use \u2014 exported as real PowerPoint timing (T110) */
     var bsteps=slideBuildSteps(s).map;
@@ -2600,10 +2604,31 @@
       /* Every editable box leaves in PAGE coordinates. An anchored
          object's stored x/y are distances from an edge or centre, and
          its export fallback size matters to that conversion. */
-      var box=(a.k==='arrow')?null:pptxBox(a,false);
+      /* T572: a text box that keeps its height -- AutoFit's Shrink or
+         Fixed, or words sat in its middle or at its foot -- leaves at
+         that height, not at a guess */
+      var box=(a.k==='arrow')?null:pptxBox((a.k==='text'&&a.fh>0)
+        ?Object.assign({},a,{h:a.fh}):a,false);
       var pushedAt=items.length;
       if(a.k==='text'){
         var ti=pptxTextItem(a,false,ink,box);
+        /* ...and a shrunk box takes the scale the slide drew it at, as
+           PowerPoint's own fontScale: PowerPoint only works the shrink
+           out again once the words are edited, so without it the words
+           would open at full size, running out of the box. Only the
+           slide on screen has a live layer; another is drawn off screen
+           once, the way the presenter view draws its previews. */
+        if(a.fit==='shrink'&&a.fh){
+          if(!fitHost){
+            var fsi=(pres.slides||[]).indexOf(s);
+            fitHost=layer||(fsi>=0&&typeof buildSlideNode==='function'
+              ?buildSlideNode(fsi):null)||false;
+          }
+          var fel=fitHost?fitHost.querySelector('div.an-item[data-idx="'
+            +(s.annots||[]).indexOf(a)+'"]'):null;
+          var fk=fel?parseFloat(fel.style.getPropertyValue('--an-fit')):NaN;
+          if(fk>0&&fk<1) ti.fontScale=fk;
+        }
         /* T483: THE PAGE THIS OUTPUT SLIDE IS ABOUT. A box with pages
            left as N identical slides of page one (2026-09-15 review);
            textAt honours flipForce, which the exporter sets per output

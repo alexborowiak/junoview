@@ -10373,8 +10373,28 @@ choice in the editor (T506, T507).
   its own face, and the faces you used recently at the top.
 - [ ] **T571 — Bullets you can style.** A bullet's colour and size, and a
   numbered list that starts at any number.
-- [ ] **T572 — AutoFit is on the row.** Shrink to fit / Do not autofit sit
+- [x] **T572 — AutoFit is on the row.** Shrink to fit / Do not autofit sit
   with Paragraph, not only on the right-click menu.
+  *Done 2026-10-01.* The model already had PowerPoint's three answers --
+  no a.fh (the box grows), a.fh with a.fit 'shrink' (the words shrink),
+  a.fh alone (a fixed box whose overrun is marked) -- and offered one of
+  them as an on/off row on the right-click menu beside "Forget the fit
+  height". Paragraph ▾ gains "Autofit -- when the words outgrow the box",
+  beside where the words sit (the other half of the box's height): Grow
+  the box, Shrink the words, Fixed box, each tooltip naming PowerPoint's
+  own option; the right-click menu offers the same three in the same
+  words through the same paraApply('f:...'), and toggleFit/clearFit are
+  gone. Grow takes middle/bottom away, since they need a height, and says
+  so. Search commands finds the window by "autofit", "shrink text on
+  overflow" and "resize shape to fit text". The .pptx now carries it:
+  Shrink is normAutofit with the fontScale the slide drew the words at
+  (read off the live layer, or an off-screen draw of another slide, since
+  PowerPoint only works the shrink out again once the words are edited),
+  Fixed is noAutofit, and a box that keeps its height leaves at that
+  height rather than PPTX_DIMS' guess; the reader brings normAutofit back
+  as Shrink the words. Driven at 1440x900: Grow lit on a new box, Shrink
+  lit after a click, five more lines typed drew at 0.62 with "does not
+  fit", Fixed marked the overrun unscaled, Grow grew the box to 195px.
 - [ ] **T573 — Find a shape by name.** The Shapes gallery takes a search
   and keeps the shapes you used last at the front.
 - [ ] **T574 — Presenter view, checked against PowerPoint's.** Timer pause

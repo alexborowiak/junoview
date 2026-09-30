@@ -97,6 +97,12 @@
        longer climbs to the top of where it was) */
     if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){
       a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}
+    /* T572: Shrink text on overflow is AutoFit's Shrink the words, in the
+       box's own height (the reader has already set the words at the
+       scale PowerPoint drew them, so they fit on arrival and shrink
+       further only if more are added) */
+    if(it.fit==='shrink'&&it.h>0){
+      a.fit='shrink';if(!a.fh) a.fh=Math.round(it.h*100)/100;}
     /* T547: columns come across, the gap as the reader measured it in em
        of the words (PowerPoint's own default gap is none at all) */
     if(it.ncol>1){

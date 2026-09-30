@@ -840,7 +840,7 @@
       return;
     }
     /* T542: where the words sit. Middle or bottom needs a height to sit
-       in, so the box keeps the height it has now -- toggleFit's "stay
+       in, so the box keeps the height it has now -- AutoFit's "stay
        this big" rule -- and Top gives the words back their growing box */
     if(v.indexOf('v:')===0){
       var vv=v.slice(2),ly=stage.querySelector('.annot-layer'),
@@ -863,6 +863,35 @@
     if(v.indexOf('i:')===0){
       var out=v.slice(2)==='-';
       fmtApply(function(a){boxIndent(a,out);});
+      return;
+    }
+    /* T572: AUTOFIT, PowerPoint's three answers to words that outgrow
+       their box. Grow ('g') is the box growing with its words, which is
+       every box with no a.fh; Shrink ('s') keeps the height the box has
+       now -- make the box the size you want and say "stay this big", the
+       only version of this anybody can predict -- and scales the drawn
+       words into it (a.fit, T15); Fixed ('x')
+       keeps the height and lets the words run over, marked while you
+       edit. Middle and bottom need a height to sit in, so Grow puts the
+       words back at the top -- and says so. */
+    if(v.indexOf('f:')===0){
+      var ff=v.slice(2),ly2=stage.querySelector('.annot-layer'),
+          s4=pres.slides[cur],unSat=false;
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        if(ff==='g'){
+          if(a.va){delete a.va;unSat=true;}
+          delete a.fit;delete a.fh;return;
+        }
+        if(!a.fh){
+          var ix=(s4&&s4.annots||[]).indexOf(a);
+          var rr=(ly2&&ix>=0)?annotRectPct(ly2,s4,ix):null;
+          a.fh=rr?Math.round((rr.b-rr.t+0.5)*100)/100:12;
+        }
+        if(ff==='s') a.fit='shrink'; else delete a.fit;
+      });
+      if(unSat) toast('A box that grows has no middle or bottom — the '
+        +'words sit at the top again',4000);
       return;
     }
     /* T547: TEXT IN COLUMNS. One, two or three; the words flow down the
@@ -934,9 +963,9 @@
     /* alignment and the two lists are buttons in the row again
        (T189); the window keeps what is set once */
     var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve'),
-        vt=$('#fmt-para-va'),
+        vt=$('#fmt-para-va'),ft=$('#fmt-para-fit'),          /* T572 */
         cl=$('#fmt-para-cols'),cg=$('#fmt-para-colgap');   /* T547 */
-    [ind,cv,vt,cl,cg].forEach(function(h){
+    [ind,cv,vt,ft,cl,cg].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
@@ -967,6 +996,19 @@
           +'the foot of it']].forEach(function(p){
         optChip(vt,p[1],((a.fh&&a.va)||'t')===p[0],p[2],
           function(){paraApply('v:'+p[0]);});
+      });
+      /* T572: AutoFit, in PowerPoint's words on the tooltips */
+      var fNow=!a.fh?'g':(a.fit==='shrink'?'s':'x');
+      if(ft) [['g','Grow the box','The box grows with its words '
+          +'(PowerPoint: Resize shape to fit text)'],
+        ['s','Shrink the words','The box keeps the height it has now and '
+          +'the words shrink to fit it, never past readable (PowerPoint: '
+          +'Shrink text on overflow)'],
+        ['x','Fixed box','The box keeps the height it has now and words '
+          +'that do not fit run over it, marked while you edit '
+          +'(PowerPoint: Do not Autofit)']].forEach(function(p){
+        optChip(ft,p[1],fNow===p[0],p[2],
+          function(){paraApply('f:'+p[0]);});
       });
       /* T547: how many columns, and -- only once there are two -- the
          gap between them */

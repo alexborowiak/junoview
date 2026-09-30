@@ -2074,9 +2074,12 @@ def test_a_box_that_cannot_fit_says_so(out):
     assert 'content:"does not fit"' in out
     assert "#print-root .an-overflowing{outline:none!important;}" in out
     # the toggle takes the height from what the box IS now, which is the
-    # only version of this anybody can predict
-    assert "function toggleFit(i){" in out
-    assert "a.fh=r?Math.round((r.b-r.t)*100)/100:12;" in out
+    # only version of this anybody can predict (T572: Paragraph's AutoFit
+    # row and the right-click menu share paraApply('f:...'); toggleFit
+    # and its separate "Forget the fit height" are gone)
+    body = out.split("if(v.indexOf('f:')===0){")[1].split("return;\n    }")[0]
+    assert "a.fh=rr?Math.round((rr.b-rr.t+0.5)*100)/100:12;" in body
+    assert "function toggleFit(i){" not in out
 
 
 def test_the_fit_pass_runs_at_the_text_commit_too(out):

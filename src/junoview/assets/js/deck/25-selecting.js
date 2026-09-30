@@ -3056,16 +3056,20 @@
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];
         if(fa&&fa.k==='text'){
-          menuHead(m,'fit');
-          var onFit=(fa.fit==='shrink');
-          row(onFit?'Shrink to fit: on':'Shrink to fit: off','',
-            function(){toggleFit(selIdxs()[0]);},
-            'Shrink the drawn text to fit the box\u2019s height. The size '
-            +'you chose is kept, and it never shrinks past readable')
-            .classList.toggle('on',onFit);
-          if(fa.fh) row('Forget the fit height','',
-            function(){clearFit(selIdxs()[0]);},
-            'Back to a box that simply grows with its words');
+          /* T572: the Paragraph window's three AutoFit answers, in the
+             same words -- one vocabulary on the row and on this menu */
+          menuHead(m,'autofit');
+          var fNow=!fa.fh?'g':(fa.fit==='shrink'?'s':'x');
+          [['g','Grow the box','The box grows with its words'],
+           ['s','Shrink the words','The box keeps its height and the '
+             +'words shrink to fit it. The size you chose is kept, and it '
+             +'never shrinks past readable'],
+           ['x','Fixed box','The box keeps its height; words that do not '
+             +'fit run over it, marked while you edit']]
+            .forEach(function(p){
+              row(p[1],'',function(){paraApply('f:'+p[0]);},p[2])
+                .classList.toggle('on',fNow===p[0]);
+            });
           if(fa.style&&styleDef(fa.style)){
             menuHead(m,'make default / style for '
               +styleDef(fa.style).label);

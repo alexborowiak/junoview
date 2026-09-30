@@ -2525,8 +2525,9 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Indent the whole box, bend its text along a curve,
- sit the words at the top, middle or bottom, or set them in columns"
+                  title="Indent the box, curve its words, sit them at the
+ top, middle or bottom, grow the box or shrink the words (AutoFit), or set
+ columns"
                   ><i data-ic="route"></i> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
@@ -2537,6 +2538,12 @@ items snap to both. Guides, not ink: never printed or exported"
                   <!-- T542: top, middle or bottom of the box -->
                   <div class="hd-lab">where the words sit</div>
                   <div class="opt-row" id="fmt-para-va"></div>
+                  <!-- T572: AutoFit -- the box grows, the words shrink,
+                       or neither -- beside where the words sit, which is
+                       the other half of the box's height -->
+                  <div class="hd-lab">autofit &#8212; when the words
+                    outgrow the box</div>
+                  <div class="opt-row" id="fmt-para-fit"></div>
                   <!-- T547: one, two or three columns, and their gap -->
                   <div class="hd-lab">columns</div>
                   <div class="opt-row" id="fmt-para-cols"></div>

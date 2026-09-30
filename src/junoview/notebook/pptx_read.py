@@ -706,8 +706,12 @@ class _TextReader:
             if ncol > 3:
                 self.ctx.tally.add("manycols")
                 ncol = 3
+        # T572: "Shrink text on overflow" comes across as Shrink the words
+        fit = ""
         if bp is not None:
             na = bp.find("a:normAutofit", NS)
+            if na is not None:
+                fit = "shrink"
             if na is not None and na.get("fontScale"):
                 scale = max(0.1, _int(na.get("fontScale"), 100000) / 100000)
             if (bp.get("vert") or "horz") != "horz":
@@ -721,7 +725,7 @@ class _TextReader:
         if not any(r["t"].strip() for pa in paras for r in pa["runs"]):
             return None
         return {"paras": paras, "anchor": _anchor(bp, ph_shape_chain),
-                "ncol": ncol, "colGapPt": col_gap_pt}
+                "ncol": ncol, "colGapPt": col_gap_pt, "fit": fit}
 
     def _para(self, sp: ET.Element, p: ET.Element, kind: str,
               chain_shapes: list, scale: float) -> dict:
@@ -1161,6 +1165,8 @@ class _SlideReader:
             "ph": ph[0] if ph else "", "kind": kind})
         if in_shape:
             item["inShape"] = 1
+        if text.get("fit") == "shrink":
+            item["fit"] = "shrink"
         # T547: columns, their gap in em of the box's words
         if text.get("ncol", 1) > 1:
             item["ncol"] = text["ncol"]

@@ -2261,37 +2261,6 @@
     var cl=$('#oh-ov-close');
     if(cl) cl.addEventListener('click',function(){overlayHide(ov);});
   }
-  /* the fit height is taken from what the box is NOW: you set it by
-     making the box the size you want and saying "stay this big", which
-     is the only version of this anybody can predict. */
-  function toggleFit(i){
-    var s2=pres.slides[cur];
-    var a=s2&&(s2.annots||[])[i];
-    if(!a||a.k!=='text') return;
-    var l=stage.querySelector('.annot-layer');
-    if(a.fit==='shrink'){delete a.fit;}
-    else{
-      if(!a.fh){
-        var r=l?annotRectPct(l,s2,i):null;
-        a.fh=r?Math.round((r.b-r.t)*100)/100:12;
-      }
-      a.fit='shrink';
-    }
-    markDirty();
-    if(l){renderAnnots(l,s2);paintSel(l);}
-    toast(a.fit?('Shrinking to fit '+a.fh.toFixed(1)+'% of the page')
-      :'Fit off — the box grows with its words again');
-  }
-  function clearFit(i){
-    var s2=pres.slides[cur];
-    var a=s2&&(s2.annots||[])[i];
-    if(!a) return;
-    delete a.fh;delete a.fit;
-    markDirty();
-    var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s2);paintSel(l);}
-    toast('Fit height forgotten');
-  }
   function ohRestore(past){
     var s=pres.slides[cur];
     var at=-1;

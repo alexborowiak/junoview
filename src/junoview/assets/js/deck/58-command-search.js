@@ -42,6 +42,9 @@
     'fmt-case-btn':'change case uppercase lowercase sentence case '
       +'capitalise capitalize title case toggle case capitals',
     'fmt-fillcol-btn':'shape fill background colour highlight box',
+    /* T572: what the Paragraph window holds, by PowerPoint's names */
+    'fmt-para':'autofit auto fit shrink text on overflow do not autofit '
+      +'resize shape to fit text columns indent curve vertical alignment',
     'dc-nums':'slide number slide numbers numbering',
     'dc-head':'header footer date',
     'dc-foot':'header footer date',

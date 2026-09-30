@@ -395,10 +395,19 @@ window.JunoPptx = (function () {
         + ' spcCol="' + Math.round((+item.colGapEm || 0) * colPt * 12700)
         + '"';
     }
+    /* T572: AutoFit. Shrink is normAutofit, with the scale the slide
+       drew the words at; a box that keeps its height any other way
+       (Fixed, a curve, words in its middle or foot) is noAutofit; a box
+       that grows with its words is spAutoFit */
+    var fs = +item.fontScale;
+    var autofit = arc ? '<a:noAutofit/>'
+      : item.fit === 'shrink'
+        ? '<a:normAutofit' + (fs > 0 && fs < 1
+          ? ' fontScale="' + Math.round(fs * 100000) + '"' : '') + '/>'
+      : (item.va || item.fit === 'fixed') ? '<a:noAutofit/>'
+      : '<a:spAutoFit/>';
     var bodyPr = '<a:bodyPr wrap="square"' + cols + ' anchor="' + anchor
-      + '">' + warp
-      + ((arc || item.va) ? '<a:noAutofit/>' : '<a:spAutoFit/>')
-      + '</a:bodyPr>';
+      + '">' + warp + autofit + '</a:bodyPr>';
     return '<p:sp>'
       + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)

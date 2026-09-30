@@ -2231,8 +2231,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T569 (2026-09-30): Discard changes always asks and says what it goes
 # back to; a browser Save names its history version (savedSnap) and
 # Discard restores it undoably; nothing changed is nothing to discard.
-EXPECTED_MD5 = "4405597c7eebfe6176662b506f83108a"
-EXPECTED_BYTES = 4890683
+# T572 (2026-10-01): AutoFit on the row -- Paragraph's Grow the box /
+# Shrink the words / Fixed box and the same three on the right-click menu,
+# a Search commands alias, the .pptx normAutofit/noAutofit/spAutoFit both
+# ways, and the help entry.
+EXPECTED_MD5 = "b5111c920074383fabb0fb07b4717cb6"
+EXPECTED_BYTES = 4895221
 
 
 def _render_example() -> str:

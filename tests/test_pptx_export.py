@@ -191,7 +191,9 @@ def test_anchored_boxes_export_at_their_page_position(out):
     assert "var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);" in out
     items = out[out.index("function pptxItems(s,note,ink,layer){"):
                 out.index("function exportDeckPptx(){")]
-    assert "var box=(a.k==='arrow')?null:pptxBox(a,false);" in items
+    # (T572: a text box that keeps its height is resolved at that height)
+    assert ("var box=(a.k==='arrow')?null:pptxBox((a.k==='text'&&a.fh>0)\n"
+            "        ?Object.assign({},a,{h:a.fh}):a,false);") in items
     # every push resolves the box once, at this boundary. 9 since T117
     # added the chart push beside T109's scraped-notebook-table one.
     assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 9
