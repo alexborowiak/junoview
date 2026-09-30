@@ -1662,7 +1662,7 @@ body.th-colorful .pr-btn,body.th-colorful .pr-item{
      5px of side padding, which is what PowerPoint's small command
      spends. The height stays 28px -- it is a target, and shrinking it
      was never the complaint. */
-  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:35px;}
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:37px;}
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- compact file utility line, optional tabs, reader controls --- */
@@ -1910,6 +1910,11 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
    on the right. The existing Info panel shows the complete source path. */
 .apptop{display:flex;flex-direction:column;}
 .nb-filebar{min-height:42px;padding:4px 8px;}
+/* T602: while the open files are tabs, the tab names the file (its
+   tooltip is the path, and Info has all of it), so the two-line
+   identity steps aside and the row is one button high */
+body.tabs-row-on .nb-file-ident{display:none!important;}
+body.tabs-row-on .nb-filebar{min-height:var(--open-tabs-h);}
 .nb-file-spacer{flex:1;min-width:8px;}
 .nb-file-utils{display:flex;align-items:center;gap:4px;flex:none;}
 .nb-file-utils .toggle{height:var(--ab-btn-h);font-size:11.5px;
@@ -1919,30 +1924,48 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 #ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
 #ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
-.open-tabs-row{display:flex;align-items:end;gap:8px;height:var(--open-tabs-h);
-  box-sizing:border-box;
-  padding:0 8px;background:var(--chrome-1,#0d1a26);
-  border-bottom:1px solid #ffffff12;}
+/* T602: THE OPEN TABS ARE A STRETCH OF THE TITLE ROW -- the reader's
+   (#nb-filebar) or, while it is up, the editor's (#deck-qat; app.js
+   moves the one node) -- not a row of their own (2026-09-30, user:
+   "there is to many layers to our ribbon"). They take what the row can
+   spare: each tab gives up width to an ellipsis first, then the strip
+   scrolls, and the row keeps 220px for Home and a tab before the bar's
+   own fitter starts compacting its buttons. */
+.open-tabs-row{display:flex;align-items:center;gap:5px;flex:0 1 auto;
+  min-width:220px;align-self:stretch;box-sizing:border-box;
+  padding:0 0 0 8px;margin-left:2px;
+  border-left:1px solid var(--chrome-line,#ffffff1a);}
 .open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
-/* T596: Home before the tabs, New and Open after them -- the side panel's
-   doors, where the list of open files now lives */
-.open-tabs-row .ot-home,.open-tabs-row .ot-door{align-self:center;flex:none;
-  height:26px;display:inline-flex;align-items:center;gap:6px;
-  padding:0 9px;font-size:11.5px;white-space:nowrap;}
+/* T596: Home before the tabs */
+.open-tabs-row .ot-home{flex:none;height:26px;display:inline-flex;
+  align-items:center;gap:6px;padding:0 9px;font-size:11.5px;
+  white-space:nowrap;}
 .open-tabs-row .ot-home .jv-logo{width:17px;height:17px;flex:none;}
 .open-tabs-row .ot-home.current{color:var(--accent);
   border-color:color-mix(in srgb,var(--accent) 55%,transparent);
   background:color-mix(in srgb,var(--accent) 12%,transparent);}
-.ot-doors{display:flex;align-items:center;gap:4px;flex:none;
-  align-self:center;}
-/* at Home no tab is the one on screen, whatever was last active */
-body.welcoming .top-tabstrip .tab.current{background:none;
-  box-shadow:none;color:inherit;}
-.top-tabstrip{display:flex;align-items:stretch;gap:4px;min-width:0;
-  overflow-x:auto;scrollbar-width:thin;padding-top:5px;}
-.top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
-  padding:0 8px 0 10px;border-radius:7px 7px 0 0;}
-.top-tabstrip .tab-t{max-width:180px;}
+/* at Home no tab is the one on screen, whatever was last active -- and
+   in the slide editor the presentation is, not the notebook that was
+   last active behind it (T602: two lit tabs on one row) */
+body.welcoming .top-tabstrip .tab.current,
+body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
+  background:none;box-shadow:none;color:inherit;border-color:#ffffff14;
+  font-weight:400;}
+/* no scrollbar: in a one-button-high row it drew a white bar under the
+   tabs and made the whole bar taller. The strip still scrolls (wheel,
+   trackpad), and app.js keeps the tab on screen in view. */
+.top-tabstrip{display:flex;align-items:center;gap:4px;min-width:0;
+  overflow-x:auto;scrollbar-width:none;}
+/* on a row of buttons a tab is a rounded box the height of a button,
+   lit the way Home is lit -- not a browser tab hanging from a strip.
+   110px keeps a readable start of the name ("presentat...") */
+.top-tabstrip .tab{height:26px;box-sizing:border-box;flex:0 1 auto;
+  min-width:110px;max-width:220px;padding:0 6px 0 10px;border-radius:7px;
+  border-bottom:1px solid #ffffff14;font-size:12px;}
+.top-tabstrip .tab.current{color:var(--chrome-ink,#e6edf3);
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+.top-tabstrip .tab-t{max-width:170px;}
 .top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
   justify-content:center;flex:none;color:var(--cyan);}
 .top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
@@ -2204,10 +2227,14 @@ body{padding-top:var(--chrome-h);padding-left:var(--presrail-w);}
    header and stays at its last value while hidden, hence padding-top:0. */
 body.welcoming .apptop{display:none;}
 body.welcoming{padding-top:0;}
-/* T596: at Home the tab row stays up while anything is open -- it is the
-   way back to it -- and nothing else of the header does */
+/* T596: at Home the tabs stay up while anything is open -- they are the
+   way back to it. T602: they are part of the title row now, so at Home
+   that row shows with File and the tabs, and nothing else of the header
+   does (Info, Reload and Find act on a notebook Home is covering). */
 body.welcoming.tabs-row-on .apptop{display:flex;}
-body.welcoming.tabs-row-on .apptop>:not(.open-tabs-row){display:none!important;}
+body.welcoming.tabs-row-on .apptop>:not(.nb-filebar),
+body.welcoming.tabs-row-on .nb-filebar>:not(#app-filewrap):not(.open-tabs-row):not(.nb-file-spacer){
+  display:none!important;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}
 .rail{top:var(--chrome-h);height:calc(100vh - var(--chrome-h));}
@@ -4116,6 +4143,24 @@ body.deck-open{overflow:hidden;}
 .deck-qat.qat-c2 .deck-status{display:none;}
 .deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
   scrollbar-width:thin;}
+/* ---- T602: THE OPEN TABS, IN THIS BAR ------------------------------
+   app.js moves #open-tabs-row in before the first spring while the
+   editor is up, so the editor has one title row rather than a row of
+   tabs over a row of controls. The tab names the presentation, so the
+   centred name steps aside while they are here; File > Rename... and a
+   double-click on the tab still rename it, and the edit field takes the
+   name's place while you type. Tabs and Home are the bar's own height. */
+.deck-qat:has(> .open-tabs-row:not([hidden])) .qat-name{display:none;}
+/* the save readout gives up its width before the tabs do: at 1440px
+   with four decks open it kept all 34ch while every tab was down to
+   "p...". Its width still comes from the room, never from its words, so
+   a new state does not move the controls after it (the reason it has a
+   fixed slot); the full words are its tooltip */
+.deck-qat:has(> .open-tabs-row:not([hidden])) .deck-status{
+  flex:0 4 34ch;width:auto;min-width:11ch;}
+.deck-qat .open-tabs-row .ot-home,
+.deck-qat .top-tabstrip .tab{height:var(--rbn-btn-h);}
+.deck-qat.qat-c1 .open-tabs-row{min-width:160px;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
    It lived in the ribbon, then in the top bar, and was wrong in both: it
    is a property of the CANVAS, so it belongs at the canvas. Bottom-right
@@ -5019,6 +5064,17 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
    reader's App menu, once opened, stayed on screen after Esc, an outside
    click or a pick, and a menu on the tab row showed before it was asked */
 .dc-menu[hidden]{display:none!important;}
+/* T602: File in TWO COLUMNS, since New, Open and the App menu's rows
+   joined it -- one column was taller than a laptop screen. Each column
+   is an ordinary column of rows; a window too narrow for two gets one,
+   and a window too short for the menu scrolls it rather than cut it */
+.dc-menu.dc-menu-cols{flex-direction:row;align-items:flex-start;gap:4px;
+  max-height:calc(100vh - 16px);overflow-y:auto;}
+.dc-menu-cols>.dc-mcol{display:flex;flex-direction:column;min-width:214px;}
+.dc-menu-cols>.dc-mcol+.dc-mcol{border-left:1px solid #ffffff14;
+  padding-left:4px;}
+@media (max-width:560px){.dc-menu.dc-menu-cols{flex-direction:column;}
+  .dc-menu-cols>.dc-mcol+.dc-mcol{border-left:0;padding-left:0;}}
 .dc-mi{text-align:left;background:none;border:none;color:#dce6ee;
   font-size:12.5px;font-family:var(--sans);padding:8px 11px;
   border-radius:5px;cursor:pointer;transition:background .12s;}
@@ -5198,28 +5254,17 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    filters) is hidden while editing — it acts on the hidden documents —
    and comes back for cell-picking / on Done. */
 /* The editor starts after the shared app rail, so its logo and live open
-   items remain the same navigation in both views. When there is more than
-   one open item, the ordinary horizontal tab row stays above it too; the
-   reader-only file and filter controls remain out of the editor. */
+   items remain the same navigation in both views. The reader's header is
+   not shown at all: T602 moved the open tabs INTO the editor's own top
+   bar (app.js re-homes #open-tabs-row), where T596 had kept the reader's
+   header up above the editor for them -- a row of tabs stacked over a
+   row of controls, which is the layer the user asked to lose. */
 .deck.editing{left:var(--presrail-w);top:0;}
 body.slide-editing .apptop{display:none;}
 /* The editor's auto-hidden slide strip translates left over its own grid
    column. Keep the shared application rail above it, including while an
    auto-hidden rail peeks back in, so Home is never covered. */
 body.slide-editing .presrail,body.slide-editing .presrail-show{z-index:134;}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{
-  display:flex;z-index:133;pointer-events:none;}
-/* T596: the tab row spans the editor from its left edge. Editing also
-   sets creating-docs, whose rule moves the header right by the builder
-   panel's width -- a panel the full-window editor does not have -- so the
-   tabs began 430px in, over nothing. */
-body.slide-editing.creating-docs .apptop{left:var(--presrail-w);}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .nb-filebar,
-body.slide-editing:has(#open-tabs-row:not([hidden])) .appbar{display:none;}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .open-tabs-row{
-  pointer-events:auto;}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
-  top:var(--open-tabs-h);}
 /* while editing, the panel is just chrome + film strip (the template
    catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
    slide canvas gets the width */
@@ -11022,98 +11067,105 @@ window.MathJax = {
 };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-<meta name="junoview-build" content="5429c88fdb86">
+<meta name="junoview-build" content="dcdfb39708bb">
 <script src="web-runtime.js"></script>
 </head>
 <body>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
-  <!-- T596: ONE LIST OF WHAT IS OPEN (2026-09-30, user: "there is now a
-       side-bar and tab (one or the other) ... these should be the same
-       thing not both"). The open notebooks and presentations are either
-       these tabs, across the top of every view, or the list down the side
-       -- never both at once. Tabs are the default; App > Open files
-       switches. As tabs, the row carries what the side panel did: Home
-       first, then New and Open after the tabs, the way a browser does. -->
-  <div class="open-tabs-row" id="open-tabs-row" hidden>
-    <button class="toggle ot-home" id="ot-home" type="button"
-      title="Home &mdash; the Junoview start screen. Nothing is closed."
-      ><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg><span class="btxt">Home</span></button>
-    <div class="top-tabstrip" id="top-tabstrip" role="tablist"
-      aria-label="Open documents"></div>
-    <span class="ot-doors">
-      <span class="dc-menuwrap" id="ot-newwrap">
-        <button class="toggle ot-door" id="ot-new" type="button"
-          aria-haspopup="true" aria-expanded="false"
-          aria-controls="ot-newmenu" title="Create something new"
-          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> New &#9662;</button>
-        <div class="dc-menu" id="ot-newmenu" hidden>
-          <button class="dc-mi" type="button" data-for="pr-new"
-            >Presentation</button>
-          <button class="dc-mi" type="button" data-for="pr-newpost"
-            >Poster</button>
-          <button class="dc-mi" type="button" data-for="pr-newview"
-            >Custom view</button>
-          <button class="dc-mi" type="button" data-for="pr-newfold"
-            >Folder</button>
-        </div>
-      </span>
-      <button class="toggle ot-door" id="ot-open" type="button"
-        title="Open a presentation: the recent ones, everything saved
- here, or a file from this computer (Ctrl+K)"
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Open&#8230;</button>
-    </span>
-  </div>
+  <!-- T602: ONE TITLE ROW, the way PowerPoint has one (2026-09-30, user:
+       "there is to many layers to our ribbon ... Its too much all the
+       stuff that appears above the home, images etc. ribbon. I feel like
+       a lot of this stuff could all just be put under the file button
+       e.g. the app button, and stuff like new and open. Also the tabs is
+       good, but is all just too much now"). T596 put the open files in a
+       row of their own above this one, so every view carried two bars of
+       chrome before its own controls began. Now there is one: File, this
+       notebook's own Info and Reload, then Home and the open tabs, then
+       Find. New, Open and everything the App menu held are rows of File,
+       and the editor's top bar takes the same tabs while it is on screen
+       (app.js moves the one #open-tabs-row between the two). -->
   <!-- File provenance is a thin utility bar ABOVE the notebook controls.
        It used to consume a whole left-most ribbon group, making the
        filters needlessly wide before they even began. The active shell's
        real .railfile node still moves here, so its reload/info handlers
        stay live rather than being copied (2026-09-11). -->
   <div class="nb-filebar" id="nb-filebar" hidden>
-    <button class="toggle primary" id="tab-open" hidden
-      title="Open a notebook (.ipynb) from your computer or a
- URL"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg><span class="btxt">Open</span></button>
-    <!-- The file itself belongs with Open / Info / Reload.  Keeping the
+    <!-- FILE FIRST, as in the editor and in PowerPoint: making something,
+         opening something, and the app's own settings. -->
+    <span class="dc-menuwrap" id="app-filewrap">
+      <button class="toggle" id="app-file" type="button" aria-haspopup="true"
+        aria-expanded="false" aria-controls="app-file-menu"
+        title="New and open; the colour theme, where open files are
+ listed, help and support">File &#9662;</button>
+      <div class="dc-menu" id="app-file-menu" hidden>
+        <!-- New makes the four things the side panel's New made, each by
+             pressing the one real button for it (T596) -->
+        <div class="dc-mhead">new</div>
+        <button class="dc-mi" type="button" data-for="pr-new"
+          >Presentation</button>
+        <button class="dc-mi" type="button" data-for="pr-newpost"
+          >Poster</button>
+        <button class="dc-mi" type="button" data-for="pr-newview"
+          >Custom view</button>
+        <button class="dc-mi" type="button" data-for="pr-newfold"
+          >Folder</button>
+        <div class="dc-mhead">open</div>
+        <button class="dc-mi" type="button" id="ot-open"
+          title="The recent ones, everything saved here, or a file from
+ this computer (Ctrl+K)">Open a presentation&#8230;</button>
+        <button class="dc-mi" type="button" id="tab-open" hidden
+          title="Open a notebook (.ipynb) from your computer or a
+ URL">Open a notebook&#8230;</button>
+        <div class="dc-mhead">app</div>
+        <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
+          aria-expanded="false" aria-controls="jv-scheme-menu"
+          title="Choose a colour scheme">Theme&#8230;</button>
+        <button class="dc-mi" id="help-btn"
+          title="How to use this, and everything it can do (?)">How to
+          use&#8230;</button>
+        <a class="dc-mi" id="support-btn" href="https://ko-fi.com/plotline"
+          target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
+          >Support Junoview &#9829;</a>
+        <!-- T596: where the open files are listed -- in ONE place -->
+        <div class="dc-mhead">open files</div>
+        <button class="dc-mi jv-files-at" type="button" data-at="top"
+          aria-pressed="true" title="Open notebooks and presentations are tabs
+ along the top bar, with Home before them. The side panel goes
+ away.">As tabs along the top</button>
+        <button class="dc-mi jv-files-at" type="button" data-at="side"
+          aria-pressed="false" title="Open notebooks and presentations are a
+ list down the left, with Recents, All presentations and New under it. The
+ tabs go away.">As a list down the side</button>
+      </div>
+    </span>
+    <!-- The file itself belongs with Info / Reload.  Keeping the
          visible name and the (ellipsised) path here means there is one
          stable place to answer “what am I looking at?”, rather than a
-         second identity strip inside the document (2026-09-11). -->
+         second identity strip inside the document (2026-09-11). While the
+         open files are tabs, the tab answers it (its tooltip is the path)
+         and this steps aside (T602). -->
     <span class="nb-file-ident" id="nb-file-ident" hidden>
       <span class="nb-file-name" id="nb-file-name"></span>
       <button type="button" class="nb-file-path" id="nb-file-path" dir="ltr"
         aria-label="View full file path"></button>
     </span>
     <span class="fgrp-row" id="file-dock"></span>
+    <!-- T596: ONE LIST OF WHAT IS OPEN -- these tabs, or the list down
+         the side, never both. Home first, then the open files. T602: in
+         this row, not a row of its own; while the slide editor is on
+         screen app.js moves it into the editor's top bar. -->
+    <div class="open-tabs-row" id="open-tabs-row" hidden>
+      <button class="toggle ot-home" id="ot-home" type="button"
+        title="Home &mdash; the Junoview start screen. Nothing is closed."
+        ><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg><span class="btxt">Home</span></button>
+      <div class="top-tabstrip" id="top-tabstrip" role="tablist"
+        aria-label="Open documents"></div>
+    </div>
     <span class="nb-file-spacer" aria-hidden="true"></span>
-    <!-- App-wide choices are one quiet menu, just as they are in the
-         presentation editor.  Find stays direct because it is a document
-         command rather than an application preference. -->
-    <span class="nb-file-utils" aria-label="Application controls">
-      <span class="dc-menuwrap" id="app-appwrap">
-        <button class="toggle" id="app-app" aria-haspopup="true"
-          aria-expanded="false" aria-controls="app-app-menu"
-          title="Theme, where open files are listed, help and support"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> App &#9662;</button>
-        <div class="dc-menu" id="app-app-menu" hidden>
-          <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
-            aria-expanded="false" aria-controls="jv-scheme-menu"
-            title="Choose a colour scheme">Theme&#8230;</button>
-          <!-- T596: where the open files are listed -- in ONE place -->
-          <div class="dc-mhead">open files</div>
-          <button class="dc-mi jv-files-at" type="button" data-at="top"
-            aria-pressed="true" title="Open notebooks and presentations are tabs
- across the top, with Home, New and Open beside them. The side panel goes
- away.">As tabs across the top</button>
-          <button class="dc-mi jv-files-at" type="button" data-at="side"
-            aria-pressed="false" title="Open notebooks and presentations are a
- list down the left, with Recents, All presentations and New under it. The
- tabs go away.">As a list down the side</button>
-          <button class="dc-mi" id="help-btn"
-            title="How to use this, and everything it can do (?)">How to
-            use&#8230;</button>
-          <a class="dc-mi" id="support-btn" href="https://ko-fi.com/plotline"
-            target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
-            >Support Junoview &#9829;</a>
-        </div>
-      </span>
+    <!-- Find stays direct because it is a document command rather than an
+         application preference. -->
+    <span class="nb-file-utils" aria-label="Find">
       <button class="toggle" id="doc-find"
         title="Find words anywhere in this notebook — titles, prose,
  code and output, folded cells included (Ctrl+F)"
@@ -11859,12 +11911,12 @@ processed <i>in your browser</i> and never uploaded anywhere.</p>
 <ul>
 <li><b>Drag &amp; drop</b> one or more <code>.ipynb</code> files
 anywhere onto the window.</li>
-<li><b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg> Open</b> (top left) &mdash; a file picker, or paste a
+<li><b>File &#9662;</b> &rarr; <b>Open a notebook&#8230;</b> (top left) &mdash; a file picker, or paste a
 <b>URL</b> to a notebook (GitHub links are converted automatically).</li>
 <li>Notebooks must be <b>executed</b> (run once in Jupyter so outputs
 are saved) &mdash; nothing is re-run here.</li>
-<li>Every open notebook is a <b>tab</b> across the top (or a row in
-the list down the side, if you choose that under <i>App &#9662;</i>):
+<li>Every open notebook is a <b>tab</b> along the top bar (or a row in
+the list down the side, if you choose that under <i>File &#9662;</i>):
 click to switch, <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg></b> (beside <b>File
 info</b>) re-reads it after you re-run it in Jupyter,
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></b> closes.</li>
@@ -12082,7 +12134,7 @@ several cells under one figure (see the README for details)</td></tr>
 
 <h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
 <ul>
-<li><b>New &#9662;</b> &rarr; <b>Custom view</b> in the left rail
+<li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New)
 saves <i>how the notebook itself looks</i>. It is not
 slides: it opens in the document, with a styling bar under the
 ribbon.</li>
@@ -12103,10 +12155,12 @@ document to its normal styling.</li>
 
 <h3>Presentations</h3>
 <ul>
-<li>Open notebooks and presentations are <b>one list</b>: tabs across
-the top, with <b>Home</b> before them and <b>New</b> and
-<b>Open&#8230;</b> after them &mdash; or, if you prefer, a list down the
-left side (<i>App &#9662;</i>, <i>Open files</i>). Never both. As a
+<li>Open notebooks and presentations are <b>one list</b>: tabs along
+the top bar, with <b>Home</b> before them &mdash; or, if you prefer, a
+list down the left side (<i>File &#9662;</i>, <i>Open files</i>). Never
+both. <b>File &#9662;</b> is where you make something new, open a
+presentation, and choose the theme; the top bar is one row, with File,
+Save, undo and Find, then the tabs, then Present. As a
 side list, the <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at its foot
 collapse or auto-hide it.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
@@ -12622,7 +12676,8 @@ no re-picking, no downloads folder full of near-identical JSON.</li>
 <code>junoview_project.json</code> next to where you launched it,
 along with your open tabs.</li>
 </ul></li>
-<li><b>See one before you open it.</b> In <b>Open&#8230;</b>, point at
+<li><b>See one before you open it.</b> In <b>File &rarr; Open a
+presentation&#8230;</b> (Ctrl+K), point at
 a presentation (or tab to it) and its slides appear beside the list,
 drawn as the thumbnail strip draws them; <b>Find</b> keeps the ones whose
 name or slides hold your words, and lights those slides. On Home, pointing
@@ -12633,7 +12688,7 @@ searchable before any is opened, and one opened from there saves back to
 its file.</li>
 <li><b>Each presentation remembers its own place</b>, between visits
 too: one can live in a file and the next in this browser, and switching
-between them never moves either. <b>Open&#8230;</b> and Home's recent
+between them never moves either. <b>Open a presentation&#8230;</b> and Home's recent
 list say where each one is and when you last worked on it &mdash;
 <i>talk.junoview.html &middot; 2 h ago &middot; 12 slides</i>.</li>
 <li>A saved presentation is a <code>.junoview.html</code> file: a page
@@ -12978,10 +13033,32 @@ writes or resembles and implies no endorsement.</small></p>
            marks stay as PAGE rows here because print setup is part of
            getting a file out the door, and Design's furniture group
            carries the other door to Numbers. -->
-      <div class="dc-menu" id="dc-menu" hidden>
-        <div class="dc-mhead">file</div>
-        <button class="dc-mi" id="mi-new">New presentation</button>
-        <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
+      <!-- T602: TWO COLUMNS. New, Open and the App menu's rows joined
+           this menu (2026-09-30, user: "a lot of this stuff could all
+           just be put under the file button e.g. the app button, and
+           stuff like new and open"), which made it too tall for one
+           column on a laptop. Making and opening things, and this
+           presentation, on the left; getting it out of the door, the
+           app, and the two rows that lose work on the right -- still
+           last, still under their own warning. -->
+      <div class="dc-menu dc-menu-cols" id="dc-menu" hidden>
+        <div class="dc-mcol">
+        <!-- New makes the same four things the side panel's New made;
+             the three after Presentation press the one real button for
+             each (T596) -->
+        <div class="dc-mhead">new</div>
+        <button class="dc-mi" id="mi-new">Presentation</button>
+        <button class="dc-mi" type="button" data-for="pr-newpost"
+          >Poster</button>
+        <button class="dc-mi" type="button" data-for="pr-newview"
+          >Custom view</button>
+        <button class="dc-mi" type="button" data-for="pr-newfold"
+          >Folder</button>
+        <div class="dc-mhead">open</div>
+        <!-- the library: recents, everything saved here, a file -->
+        <button class="dc-mi" id="mi-open"
+          title="The recent ones, everything saved here, or a file from
+ this computer (Ctrl+K)">Open a presentation&#8230;</button>
         <button class="dc-mi" id="mi-load">Open a .junoview
           file&#8230;</button>
         <!-- T320: .pptx IMPORT. Beside Open because it is the other
@@ -12992,6 +13069,8 @@ writes or resembles and implies no endorsement.</small></p>
  editable; shapes, pictures, tables, charts, notes and builds come
  across; whatever cannot is listed first"
           >Import .pptx&#8230;</button>
+        <div class="dc-mhead">this presentation</div>
+        <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
         <!-- T601: a talk made of other presentations, like \input in a
              LaTeX document -- the list of its parts, and the doors to
              add, make, update and unlink them -->
@@ -13016,6 +13095,8 @@ writes or resembles and implies no endorsement.</small></p>
              made to lay the notebook out again, which is what a NEW
              presentation already does ("the auto presentation isn’t
              really a thing"). -->
+        </div>
+        <div class="dc-mcol">
         <div class="dc-mhead">export &amp; share</div>
         <!-- THE CONTENT, as text (T35). -->
         <button class="dc-mi" id="mi-review"
@@ -13041,11 +13122,33 @@ writes or resembles and implies no endorsement.</small></p>
           title="A single .html file anyone can open — no Junoview
  needed. Arrow keys page through it; Ctrl+P prints at page size">Export
  standalone HTML</button>
+        <!-- T602: the App menu's rows. They were a menu of their own at
+             the far end of this bar; app.js owns what each one does. -->
+        <div class="dc-mhead">app</div>
+        <button class="dc-mi" id="deck-scheme" aria-haspopup="menu"
+          aria-expanded="false" aria-controls="jv-scheme-menu"
+          title="Choose a colour scheme">Theme&#8230;</button>
+        <button class="dc-mi" id="deck-howto"
+          title="How to use this, and everything it can do (?)">How to
+          use&#8230;</button>
+        <a class="dc-mi" id="deck-support" target="_blank" rel="noopener"
+          title="Support Junoview on Ko-fi">Support Junoview &#9829;</a>
+        <!-- T596: where the open files are listed -- in ONE place -->
+        <div class="dc-mhead">open files</div>
+        <button class="dc-mi jv-files-at" type="button" data-at="top"
+          aria-pressed="true" title="Open notebooks and presentations are tabs
+ along the top bar, with Home before them. The side panel goes
+ away.">As tabs along the top</button>
+        <button class="dc-mi jv-files-at" type="button" data-at="side"
+          aria-pressed="false" title="Open notebooks and presentations are a
+ list down the left, with Recents, All presentations and New under it. The
+ tabs go away.">As a list down the side</button>
         <div class="dc-mhead dc-mhead-warn">careful — these lose work</div>
         <button class="dc-mi dc-mi-warn" id="mi-discard">Discard
           changes</button>
         <button class="dc-mi dc-mi-warn" id="mi-del">Delete
           presentation</button>
+        </div>
       </div>
     </div>
     <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
@@ -13127,7 +13230,14 @@ writes or resembles and implies no endorsement.</small></p>
     <button class="dbtn qat-btn" id="qat-find"
       title="Find and replace text anywhere in this presentation
  (Ctrl+F)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg> Find</button>
-    <span class="deck-spring"></span>
+    <!-- T602: THE OPEN TABS COME HERE. While this bar is on screen app.js
+         moves the one #open-tabs-row (Home and the open files) in just
+         before this spring, so the editor has ONE title row -- the
+         document's controls, then its tabs -- instead of a row of tabs
+         stacked over a row of controls. While they are here the tab
+         names the presentation, so the centred name steps aside (its
+         rename is File > Rename... and a double-click on the tab). -->
+    <span class="deck-spring qat-tabs-at"></span>
     <!-- the presentation's NAME, in the middle, where a title bar puts it.
          Click it to rename — the old rename lived in a File-menu item that
          un-hid an input inside a display:none block. -->
@@ -13149,43 +13259,11 @@ writes or resembles and implies no endorsement.</small></p>
          user: "I find the location of the zoom still really annoying.
          That is a prominent feature, and it needs to be somewhere
          good"). See #deck-zoombar. -->
-    <span class="qat-sep"></span>
-    <!-- The APP controls, the same three the document view's App group
-         carries, and WORDED like everything else. They were two bare
-         glyphs (a ring and a heart) tucked at the end of the ribbon,
-         which is the icon-only button this project has rejected twice —
-         you could not tell what either one was, so the theme picker
-         might as well not have existed (2026-08-20, user: "the themes and
-         stuff need to go into this top bar as well"). Help is new here:
-         editing hides the app bar, so from inside a poster there was no
-         way to reach it at all. -->
-    <!-- App-wide choices are one quiet menu. The deck name and the
-         actions people use while editing keep the top bar instead. -->
-    <span class="dc-menuwrap" id="deck-appwrap">
-      <button class="dbtn qat-btn" id="deck-app" aria-haspopup="true"
-        aria-expanded="false" aria-controls="deck-app-menu"
-        title="Theme, where open files are listed, help and support"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> App &#9662;</button>
-      <div class="dc-menu" id="deck-app-menu" hidden>
-        <button class="dc-mi" id="deck-scheme" aria-haspopup="menu"
-          aria-expanded="false" aria-controls="jv-scheme-menu"
-          title="Choose a colour scheme">Theme&#8230;</button>
-        <!-- T596: where the open files are listed -- in ONE place -->
-        <div class="dc-mhead">open files</div>
-        <button class="dc-mi jv-files-at" type="button" data-at="top"
-          aria-pressed="true" title="Open notebooks and presentations are tabs
- across the top, with Home, New and Open beside them. The side panel goes
- away.">As tabs across the top</button>
-        <button class="dc-mi jv-files-at" type="button" data-at="side"
-          aria-pressed="false" title="Open notebooks and presentations are a
- list down the left, with Recents, All presentations and New under it. The
- tabs go away.">As a list down the side</button>
-        <button class="dc-mi" id="deck-howto"
-          title="How to use this, and everything it can do (?)">How to
-          use&#8230;</button>
-        <a class="dc-mi" id="deck-support" target="_blank" rel="noopener"
-          title="Support Junoview on Ko-fi">Support Junoview &#9829;</a>
-      </div>
-    </span>
+    <!-- T602: no App menu here. Theme, How to use, Support and where the
+         open files are listed are rows of File now (2026-09-30, user: "a
+         lot of this stuff could all just be put under the file button
+         e.g. the app button"). They are still WORDED rows, never the bare
+         glyphs that sat at the end of the ribbon before 2026-08-20. -->
     <!-- Present is a SPLIT control: press it to play, press the chevron
          for presenter view — the second screen with your notes, the next
          slide and the clock (2026-08-20, user asked for "the different
@@ -17308,13 +17386,14 @@ items snap to both. Guides, not ink: never printed or exported"
      panel remains a simultaneous library view of those same live tabs",
      so every open notebook and presentation was listed twice -- and in
      the editor the side copy peeked out from the left edge on top of the
-     tabs. They are ONE list now, in one of two places: TABS across the
-     top (the default, with Home, New and Open on the same row, the way a
-     browser has them), or the LIST down the side (the side panel as it
-     was, and no tab row at all). App > Open files switches; the choice
-     is the person's, not the window's, so it is one key for every
-     project. The side panel's own collapse and auto-hide are unchanged
-     and only mean anything while it is the list. */
+     tabs. They are ONE list now, in one of two places: TABS along the
+     top (the default, with Home before them), or the LIST down the side
+     (the side panel as it was, and no tabs at all). File > Open files
+     switches; the choice is the person's, not the window's, so it is
+     one key for every project. The side panel's own collapse and
+     auto-hide are unchanged and only mean anything while it is the list.
+     T602 took New and Open off the tabs (they are rows of File) and the
+     tabs out of a row of their own (they sit in the title row). */
   var FILES_AT_KEY='junoview:openfiles';
   function filesAt(){
     var v=null;
@@ -17343,7 +17422,43 @@ items snap to both. Guides, not ink: never printed or exported"
       b.addEventListener('click',function(){setFilesAt(b.dataset.at);});});
     var h=$('#ot-home');
     if(h) h.addEventListener('click',function(){goHome(true);});
+    /* the body's class says which title row is on screen: watching it
+       catches every way into and out of the editor from one place */
+    if(window.MutationObserver) new MutationObserver(homeTabsRow)
+      .observe(document.body,{attributes:true,attributeFilter:['class']});
+    homeTabsRow();
     applyFilesAt();
+  }
+  /* ---- T602: THE TABS SIT IN THE TITLE ROW --------------------------
+     (2026-09-30, user: "there is to many layers to our ribbon ... Its too
+     much all the stuff that appears above the home, images etc. ribbon
+     ... the tabs is good, but is all just too much now".) The tabs are
+     not a row of their own: they sit in whichever title row is on screen
+     -- the reader's (File, Info, Reload, the tabs, Find) or, while the
+     slide editor is up, the editor's (File, Save, undo, Find, the tabs,
+     Present). One node, MOVED and never copied, so Home, every tab and
+     their handlers go with it (the rule the file bar's .railfile keeps). */
+  function homeTabsRow(){
+    if(!openTabsRow) return;
+    var at=document.body.classList.contains('slide-editing')
+      ?$('#deck-qat .qat-tabs-at'):$('#nb-filebar .nb-file-spacer');
+    if(!at||openTabsRow.nextSibling===at) return;
+    at.parentNode.insertBefore(openTabsRow,at);
+    keepTabInView();
+  }
+  /* the strip scrolls without a scrollbar (one in a button-high row drew
+     a white bar and made the row taller), so the tab on screen is kept
+     in view -- in the editor the presentation's, not the notebook's */
+  function keepTabInView(){
+    var strip=topTabstrip; if(!strip) return;
+    var cur=strip.querySelector(
+      document.body.classList.contains('slide-editing')
+        ?'.top-pres-tab.current':'.tab.current');
+    var sr=strip.getBoundingClientRect();
+    if(!cur||!sr.width) return;
+    var cr=cur.getBoundingClientRect();
+    if(cr.left<sr.left) strip.scrollLeft-=sr.left-cr.left;
+    else if(cr.right>sr.right) strip.scrollLeft+=cr.right-sr.right;
   }
   /* Home is lit while it is on screen -- the tab row stays up at Home
      whenever something is open, so there is a way back to it */
@@ -17359,13 +17474,14 @@ items snap to both. Guides, not ink: never printed or exported"
   function refreshOpenTabsRow(){
     var n=topTabstrip?topTabstrip.querySelectorAll('.tab').length:0;
     /* T596: as tabs, the row IS the list -- one open item included,
-       because Home, New and Open live on it now (T503 hid a single item
-       as "nothing useful", which was true only while the side panel was
-       carrying those). As a side list, there is no row at all. */
+       because Home lives on it (T503 hid a single item as "nothing
+       useful", which was true only while the side panel was carrying
+       Home). As a side list, there are no tabs at all. */
     var on=filesAt()==='top'&&n>0;
     if(openTabsRow) openTabsRow.hidden=!on;
     document.body.classList.toggle('tabs-row-on',on);
     syncHomeTab();
+    if(on) keepTabInView();
     if(APP.measureChrome) APP.measureChrome();
   }
   APP.refreshOpenTabsRow=refreshOpenTabsRow;
@@ -19975,6 +20091,14 @@ items snap to both. Guides, not ink: never printed or exported"
     });
     document.body.appendChild(m);
     var r=btn.getBoundingClientRect();
+    /* T602: Theme is a row of File, and the menu it sat in may have
+       closed before this is placed -- a zero box put the picker in the
+       window's corner. Place it under File instead. */
+    if(!r.width){
+      var wrap=btn.closest('.dc-menuwrap'),
+          door=wrap&&wrap.querySelector('[aria-haspopup="true"]');
+      if(door) r=door.getBoundingClientRect();
+    }
     m.style.top=(r.bottom+6)+'px';
     m.style.left=Math.max(8,Math.min(innerWidth-m.offsetWidth-8,
       r.right-m.offsetWidth))+'px';
@@ -20373,14 +20497,16 @@ items snap to both. Guides, not ink: never printed or exported"
      text:'Plot trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    {sel:'#ot-new,#pr-newbtn',title:'Build presentations',
-     text:'New makes a presentation or a poster, and Open finds one you '
-       +'made before; the ones you have open sit with your notebooks. Lay '
-       +'out slides, drop in cards from any open notebook, and present '
-       +'full screen.'},
-    {sel:'#help-btn',title:'Help & support',
-     text:'Full docs live here. If Junoview helps you, Support funds a '
-       +'hosted version with accounts — thank you!'}
+    /* T602: New, Open, How to use and Support are rows of File */
+    {sel:'#app-file,#pr-newbtn',title:'Build presentations',
+     text:'File > New makes a presentation or a poster, and File > Open '
+       +'finds one you made before; the ones you have open are tabs beside '
+       +'your notebooks. Lay out slides, drop in cards from any open '
+       +'notebook, and present full screen.'},
+    {sel:'#app-file,#help-btn',title:'Help & support',
+     text:'File > How to use has the full docs, and File > Theme the '
+       +'colours. If Junoview helps you, File > Support funds a hosted '
+       +'version with accounts — thank you!'}
   ];
   var tourI=0;
   function tourEl(step){
@@ -32112,6 +32238,10 @@ window.JunoPptx = (function () {
            next window resize (driven). Its children are fixed markup,
            so watching them once at boot is watching every label. */
         [].forEach.call(qb.children,function(c){qro.observe(c);});
+        /* T602: and the open tabs, which app.js moves into this bar
+           while the editor is up and out again after: a tab opened or
+           closed changes the row's width without changing the bar's */
+        var otr=$('#open-tabs-row'); if(otr) qro.observe(otr);
       }
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything
@@ -70911,8 +71041,12 @@ window.JunoPptx = (function () {
     if(vwOpen) t.className+=' current editing';
     var kindWord=isView?'custom view':isPoster?'poster':'presentation';
     var selected=isCur&&(editing||vwOpen);
+    /* T602: on the editor's title row the tab IS the name, so it is also
+       where the rename is -- the centred name steps aside while the tabs
+       are there */
     var title=selected
-      ?('Editing "'+nm+'" — use the Junoview logo to return')
+      ?('Editing "'+nm+'"'+(top&&!isView?' — double-click to rename'
+        :' — Home returns to the start screen'))
       :('Open '+kindWord+' "'+nm+'"'
         +(isView?' — restyles the notebook itself':' in the builder'));
     var action=top?document.createElement('button'):t;
@@ -70961,6 +71095,12 @@ window.JunoPptx = (function () {
       if(isCur&&!deckEl.hidden) return;
       if(vwOpen) return;              /* already the open custom view */
       choosePresentation(nm);
+    });
+    /* T602: the tab you are editing renames the deck, the way a
+       double-click on a file's name does everywhere else */
+    if(top&&!isView) action.addEventListener('dblclick',function(e){
+      if(!(isCur&&!deckEl.hidden&&mode==='edit')) return;
+      e.preventDefault();startQatRename();
     });
     return t;
   }
@@ -72171,23 +72311,30 @@ window.JunoPptx = (function () {
     renderPresentationHub();renderDeckPresentationDrawer();
     if(APP.refreshChrome) APP.refreshChrome();
   }
-  /* ---- T596: THE TAB ROW'S NEW AND OPEN ------------------------------
-     As tabs, the open files' row carries the doors the side panel held:
-     New (the same four things the side panel's New made -- each row
-     presses the one real button, so there is one implementation of each)
-     and Open (the library, where Recents, every saved presentation and a
-     file from this computer are). */
+  /* ---- T596 / T602: NEW AND OPEN, UNDER FILE ------------------------
+     The side panel's doors: New (the same four things the side panel's
+     New made -- each row presses the one real button, so there is one
+     implementation of each) and Open (the library, where Recents, every
+     saved presentation and a file from this computer are). T596 put
+     them on the tab row; T602 made them rows of File in both views,
+     because the tab row is part of the title row now and "stuff like new
+     and open" was what the user asked to go under File. */
   function tabRowBoot(){
-    var m=wireMenuToggle('ot-newwrap','ot-new','ot-newmenu');
-    if(m) $$('.dc-mi',m.menu).forEach(function(b){
-      b.addEventListener('click',function(e){
-        e.stopPropagation();overlayHide(m.menu);
-        var real=$('#'+b.dataset.for);
-        if(real) real.click();
+    ['#app-file-menu','#dc-menu'].forEach(function(sel){
+      var menu=$(sel); if(!menu) return;
+      $$('.dc-mi[data-for]',menu).forEach(function(b){
+        b.addEventListener('click',function(e){
+          e.stopPropagation();overlayHide(menu);
+          var real=$('#'+b.dataset.for);
+          if(real) real.click();
+        });
       });
     });
-    var o=$('#ot-open');
-    if(o) o.addEventListener('click',function(){openPresentationHub();});
+    [['#ot-open','#app-file-menu'],['#mi-open','#dc-menu']].forEach(function(p){
+      var o=$(p[0]),menu=$(p[1]);
+      if(o) o.addEventListener('click',function(){
+        if(menu) overlayHide(menu);openPresentationHub();});
+    });
   }
   function choosePresentation(nm){
     var A=window.SemApp||{};
@@ -78937,13 +79084,15 @@ window.JunoPptx = (function () {
     var b=$(id);
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
-  /* ---- App menu: Theme, help and support. app.js owns the actions. ---- */
+  /* ---- T602: the App menu's rows live in File, in both views --------
+     Theme, How to use, Support and where the open files are listed.
+     app.js owns what each row does; a pick closes the menu it was in.
+     The reader's File is the same kind of menu as this one. */
   (function(){
-    var h=wireMenuToggle('deck-appwrap','deck-app','deck-app-menu');
-    var reader=wireMenuToggle('app-appwrap','app-app','app-app-menu');
-    [h,reader].filter(Boolean).forEach(function(menu){
-      $$('.dc-mi',menu.menu).forEach(function(b){
-        b.addEventListener('click',function(){overlayHide(menu.menu);});
+    var reader=wireMenuToggle('app-filewrap','app-file','app-file-menu');
+    [reader&&reader.menu,fileMenu].filter(Boolean).forEach(function(menu){
+      $$('.dc-mi',menu).forEach(function(b){
+        b.addEventListener('click',function(){overlayHide(menu);});
       });
     });
   })();
