@@ -68,6 +68,8 @@ src/junoview/
 │   │                      · sw.js  (the web build's offline service worker)
 │   │                      · web-runtime.js  (async import bridge + PWA)
 │   │                      · web-worker.js  (Python parsing off the UI thread)
+│   │                      · saved-file.js  (what a saved .junoview.html
+│   │                        runs: Open in Junoview hands its deck over)
 │   │   └── deck/          the slide editor: ONE IIFE, one file per
 │   │                      fragment, in the order DECK_PARTS names
 │   └── html/              page.html · shell.html · deck.html · help.html · …

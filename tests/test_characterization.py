@@ -2190,8 +2190,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (Home, New and Open on the row) or the side panel's list, never both;
 # App > Open files switches. Also: the draft dot's doubled backslash, a
 # .dc-menu [hidden] rule, and the editor's header no longer offset.
-EXPECTED_MD5 = "f525f17ed311bf1e8cff9ab5c4bd5374"
-EXPECTED_BYTES = 4760094
+# T597 (2026-09-30): a saved .junoview.html opens its presentation --
+# Open in Junoview hands it to a Junoview tab (saved-file.js, carried as
+# inert text in #jv-savedfile-js), the app takes it from its opener after
+# one question, and a dropped file keeps its handle.
+EXPECTED_MD5 = "c2d5939e9ab0584b343692c4db88ae39"
+EXPECTED_BYTES = 4776073
 
 
 def _render_example() -> str:
@@ -2248,6 +2252,7 @@ def test_every_asset_loader_returns_something():
         "core.css": assets.core_css, "app.css": assets.app_css,
         "deck.css": assets.deck_css, "app.js": assets.app_js,
         "deck.js": assets.deck_js, "pptx.js": assets.pptx_js,
+        "saved-file.js": assets.saved_file_js,
         "page.html": assets.page_template,
         "shell.html": assets.shell_template, "deck.html": assets.deck_html,
         "help.html": assets.help_html, "mathjax.html": assets.mathjax_html,
@@ -2272,6 +2277,7 @@ def test_page_template_placeholders_match_what_render_page_supplies():
         "title", "shells", "css", "app_css", "js", "mathjax", "deck_shell",
         "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
         "help_html", "logo", "favicon", "head_extra", "icons_js",
+        "saved_file_js",    # T597: what a saved file runs, as inert text
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

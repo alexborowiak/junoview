@@ -19,7 +19,7 @@ from importlib.resources import files
 __all__ = [
     "load",
     "core_css", "app_css", "deck_css",
-    "app_js", "deck_js", "pptx_js", "DECK_PARTS",
+    "app_js", "deck_js", "pptx_js", "saved_file_js", "DECK_PARTS",
     "page_template", "shell_template",
     "deck_html", "help_html", "mathjax_html", "third_party_notices",
     "web_loader",
@@ -153,6 +153,16 @@ def deck_js() -> str:
 def pptx_js() -> str:
     """The .pptx writer: an OOXML ZIP built in the browser, no dependencies."""
     return load("js/pptx.js")
+
+
+def saved_file_js() -> str:
+    """The script a saved ``.junoview.html`` carries: Open in Junoview.
+
+    The app never runs it. The page holds it as inert text and the save
+    writes it into the file, where it hands the file's presentation to a
+    Junoview tab (T597).
+    """
+    return load("js/saved-file.js")
 
 
 def page_template() -> str:

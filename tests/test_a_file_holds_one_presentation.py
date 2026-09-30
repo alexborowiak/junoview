@@ -29,7 +29,9 @@ def test_the_file_is_this_deck_only(out):
     assert ("      presentations:embedAssets(plainIfSingle("
             "filePresentations()))},") in out
     assert "    var list=plainIfSingle(filePresentations());   /* T433" in out
-    assert "    var name=esc(pres.name||APP.order[0]||'presentation');" in out
+    # T597 named it once for the page and once for the file's config
+    assert "    var nm=pres.name||APP.order[0]||'presentation';" in out
+    assert "    var name=esc(nm);" in out
     assert "plainIfSingle(mergedPresentations())" not in out
     # the project file is still the whole library
     assert "    var merged=mergedPresentations();" in out

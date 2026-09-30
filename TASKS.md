@@ -10617,3 +10617,37 @@ a presentation before opening it, and the colour themes' background.
   the full-window editor does not have. Driven in the app and the web
   build: reader, editor, Home and presenting as tabs; the App menu
   switching to the list and back; light theme.
+- [x] **T597 — A saved presentation file opens its presentation.** "when I
+  try and open a file from local that is a junoview, junoview opens, but
+  it just says that this file can be opened with juno view, why can't it
+  be opened?" A .junoview.html is a real page so the OS opens it in a
+  browser (2026-08-18), and the page then told you to go and find
+  Junoview. It carries **Open in Junoview** now: assets/js/saved-file.js,
+  held by the app page as inert text (#jv-savedfile-js) and written into
+  every save, opens the Junoview the file was saved from -- or
+  junoview.com -- in a new tab with #junoview-handoff, waits for that tab
+  to say it is ready, and posts it the deck: to that tab only, to that
+  tab's own origin when it has one, once. The app (handoffBoot, before
+  the route, whose hash it clears) says ready once the draft store has
+  answered (T430's clash question depends on it), takes a deck only from
+  its opener and only once, and asks one question before opening it --
+  any web page could open Junoview the same way, so the click that opens
+  a presentation is always the person's -- then opens it through File >
+  Open's importer (T527's question included), names it after the file
+  (T398, when that name is free) and says honestly where Save goes: back
+  into the folder when the file sits in the default one, else the first
+  Save asks and the toast names the file to pick. No answer in 20s offers
+  the next place; a blocked pop-up is said; "Opened" and "Not opened"
+  come back to the file's page. The Junoview app on this computer records
+  no address -- its carries a session token that is not written into
+  files and changes every start -- so its files offer the web and say how
+  to open them in the app. The page also lists the slides by name, so
+  which file is which shows before anything opens. And a saved file
+  DROPPED on Junoview keeps its file now: where the drop hands over a
+  file handle (Chrome, Edge) it goes through File > Open's handle path, so
+  Save writes back to it; otherwise it imports as before. Both Python
+  readers still read the richer page, and the deck API keeps it and its
+  script on save. Driven: a deck saved in one browser profile, the file
+  opened from file:// in a fresh one, Open in Junoview -> the question ->
+  "Climate talk" open in the editor, and the file page reported Opened; a
+  synthetic drop fell back to the import.
