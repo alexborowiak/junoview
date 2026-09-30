@@ -10483,3 +10483,15 @@ create animation. This gets congested very easily."
   source picture -- Shift still frees it, and reshaping the crop is the
   Crop button's job. Driven: a cropped 307x141 picture dragged to 84x38,
   ratio 2.18 -> 2.21 (pixel rounding), nothing more cut away.
+- [x] **T589 — Build order is a door before it is clipped.** "the
+  annimaion pannel is still not opening", with the Animation tab cut off
+  at "All to..." and "Rem...". Whole slide and Build order never fold
+  (T441/T445) and sit at the right-hand end of the tab (T453), so once
+  every other group was a door and the row still did not fit, they were
+  what the ribbon's clip took: at 1280px with a text box selected Build
+  order began past the edge and the Animation panel button could not be
+  pressed. As a last resort before the edge, Whole slide folds and then
+  Build order; the give-back opens either again when there is room.
+  Driven at 1280x800: Whole slide is a door, Build order ends at the
+  ribbon's edge, and Animation panel opens the pane. (T583 fixed the
+  other cause: a throw that stopped the ribbon fitting at all.)

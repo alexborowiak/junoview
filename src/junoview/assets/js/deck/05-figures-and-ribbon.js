@@ -1682,6 +1682,28 @@
     var guard=0;
     while(over()&&guard++<12&&rbnFoldOne())
       sizeRibbonGroups();
+    /* T589: THE LAST RESORT IS A DOOR, NEVER THE EDGE. Whole slide and
+       Build order never fold (T441/T445, user: "make sure buttons like
+       those in 'Order' are not getting squashed out, as they are really
+       important") -- and they are the right-hand end of the Animation
+       tab (T453), so below the floor THEY were what the clip took. At
+       1280px with a text box selected Build order began past the
+       ribbon's edge, and the Animation panel button could not be
+       pressed at all (2026-09-30, user: "the annimaion pannel is still
+       not opening"). A door is one click from its row; the edge is
+       none. So once every other group is a door and the row still does
+       not fit, Whole slide folds, then Build order; the give-back below
+       opens either again if the row has room. */
+    if(over()){
+      var last=$$('.rbn-grp.rbn-nofold',bar).filter(function(g){
+        return !g.hidden&&!g.hasAttribute('data-off')
+          &&!g.classList.contains('rbn-folded');});
+      last.sort(function(x,y){
+        return (x.classList.contains('rbn-order')?1:0)
+          -(y.classList.contains('rbn-order')?1:0);});
+      for(var li=0;li<last.length&&over();li++){
+        rbnFoldGroup(last[li]);sizeRibbonGroups();}
+    }
     /* T464: GIVE BACK WHAT THE LAST FOLD OVER-BOUGHT. Folding from the
        right, one group at a time, stops the moment the row fits -- and
        the fold that finally makes it fit is often a wide group whose
