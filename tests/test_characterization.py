@@ -2200,8 +2200,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T599 (2026-09-30): see a presentation before opening it -- the Open
 # dialog's Find and Preview column, Home's hover card, and a folder's
 # presentation files listed and previewed before any is opened.
-EXPECTED_MD5 = "a8b3fd5078311563e7a11a45dd14e3ac"
-EXPECTED_BYTES = 4810674
+# T600 (2026-09-30): a .pptx that opens ready to edit -- the local app
+# writes it itself (no Mark of the Web), and a browser download on Windows
+# explains Protected View once, with how to stop it.
+EXPECTED_MD5 = "1d5a7eadb396cb3e2f25ab1eba060c16"
+EXPECTED_BYTES = 4814988
 
 
 def _render_example() -> str:

@@ -10709,3 +10709,29 @@ a presentation before opening it, and the colour themes' background.
   "enso" kept a deck by name and one by a slide ("1 slide match", that
   slide lit); a folder of three files listed, searched for "composite"
   (two files, one slide each), and one opened bound to its file.
+- [x] **T600 — A .pptx that opens ready to edit.** "One thing that happens
+  is that when downloading a junoview as pptx for some reason it is
+  downloaded in protected view" (with a screenshot of PowerPoint's
+  "This command is not available in Protected View"). The file was
+  checked first and is sound: every part parses, every part has a
+  content type, every relationship resolves, no slide repeats a shape id,
+  and python-pptx reads every slide and the notes. Protected View is
+  Windows marking everything a web browser downloads as from the
+  internet (the Zone.Identifier "Mark of the Web"), and no page can
+  download a file without it. So the Junoview app on this computer no
+  longer downloads: the page sends the bytes to /api/export, and
+  server/exports.py writes them into Downloads the way a desktop program
+  does -- unmarked, so PowerPoint opens them ready to edit -- held to
+  .pptx only, a real ZIP, a 256 MB cap, a name that cannot climb out of
+  the folder, and a free name ("talk (2).pptx") rather than an overwrite;
+  the toast offers **Open it** and **Show in folder** (/api/reveal, which
+  opens only files this run exported, so the page cannot launch anything
+  else, and says in words when the computer has no program to open it
+  with). A server that cannot write falls back to the browser download.
+  In a browser, the first .pptx download on Windows says PowerPoint will
+  open it in Protected View and offers "Why, and how to stop it...":
+  Enable Editing; Trusted Locations for the Downloads folder; or Unblock
+  on one file. The help says the same. Driven: the app wrote "ENSO
+  seminar.pptx" into Downloads and a second export "ENSO seminar (2).pptx";
+  a Windows-agent browser download showed the note once and plain toasts
+  after.

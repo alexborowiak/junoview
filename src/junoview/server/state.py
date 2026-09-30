@@ -51,6 +51,9 @@ class _AppState:
         self.revision: int = 0
         self.open: list[str] = []
         self.recent: list[str] = []
+        # T600: the files this run wrote as exports -- the only ones
+        # /api/reveal will open or show, so it cannot launch anything else
+        self.exported: set[str] = set()
         self._load()
 
     @property
