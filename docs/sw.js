@@ -7,11 +7,11 @@
    "Install app" offer rides on this too; see web-runtime.js for the
    registration and manifest.webmanifest for the identity.
 
-   dcdfb39708bb is replaced by build_web() with a hash of junoview.zip:
+   a7542e13e7fc is replaced by build_web() with a hash of junoview.zip:
    a new build retires the old cache on activate, and an unchanged package
    produces an unchanged worker, so the committed docs/ build stays
    diff-free (same rule as the zip itself). */
-var VERSION = 'dcdfb39708bb';
+var VERSION = 'a7542e13e7fc';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,

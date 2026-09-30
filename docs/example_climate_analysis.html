@@ -1755,7 +1755,10 @@ body.presrail-min{--presrail-w:46px;}
   white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);
   background:none;border:0;padding:0;text-align:left;cursor:pointer;}
 .nb-file-path:hover{text-decoration:underline;}
-.nb-filebar #file-dock{min-width:0;}
+/* T602: Info and Reload keep their width -- beside the tabs, a dock that
+   could shrink let Reload's word run under Find in a narrow column; the
+   tabs give way instead (their strip scrolls) */
+.nb-filebar #file-dock{flex:none;}
 .nb-filebar #file-dock .railfile{margin-top:0;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
@@ -1891,48 +1894,63 @@ body.tabs-row-on .nb-filebar{min-height:var(--open-tabs-h);}
 #ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
 #ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
-/* T602: THE OPEN TABS ARE A STRETCH OF THE TITLE ROW -- the reader's
+/* T602: THE OPEN TABS ARE THE LEFT OF THE TITLE ROW -- the reader's
    (#nb-filebar) or, while it is up, the editor's (#deck-qat; app.js
    moves the one node) -- not a row of their own (2026-09-30, user:
-   "there is to many layers to our ribbon"). They take what the row can
-   spare: each tab gives up width to an ellipsis first, then the strip
-   scrolls, and the row keeps 220px for Home and a tab before the bar's
-   own fitter starts compacting its buttons. */
-.open-tabs-row{display:flex;align-items:center;gap:5px;flex:0 1 auto;
+   "there is to many layers to our ribbon"). The first try set them
+   between Find and Present as boxed buttons, and they read as more
+   buttons crammed into a full row ("super cursed with the tabs crowded
+   in here"); the user chose the PowerPoint split. So they are REAL
+   TABS: they hang from the row's bottom edge, quiet until pointed at,
+   and the one on screen takes the colour of the row under it
+   (--tab-on, set by each title row) so it joins that row, the way a
+   browser's tab joins its toolbar. Each tab gives up width to an
+   ellipsis first, then the strip scrolls; the row keeps 220px for Home
+   and a tab before the bar's own fitter compacts anything else. */
+.open-tabs-row{display:flex;align-items:flex-end;gap:2px;flex:0 1 auto;
   min-width:220px;align-self:stretch;box-sizing:border-box;
-  padding:0 0 0 8px;margin-left:2px;
-  border-left:1px solid var(--chrome-line,#ffffff1a);}
+  margin-bottom:-4px;}
 .open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
-/* T596: Home before the tabs */
-.open-tabs-row .ot-home{flex:none;height:26px;display:inline-flex;
-  align-items:center;gap:6px;padding:0 9px;font-size:11.5px;
+/* no scrollbar: in a one-button-high row it drew a white bar under the
+   tabs and made the whole bar taller. The strip still scrolls (wheel,
+   trackpad), and app.js keeps the tab on screen in view. */
+.top-tabstrip{display:flex;align-items:flex-end;gap:2px;min-width:0;
+  align-self:stretch;overflow-x:auto;scrollbar-width:none;}
+/* T596: Home before the tabs, and shaped like one */
+.open-tabs-row .ot-home,.top-tabstrip .tab{height:29px;box-sizing:border-box;
+  border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;
+  background:none;color:var(--chrome-ink-2,#8ba0b2);box-shadow:none;}
+.open-tabs-row .ot-home{flex:none;display:inline-flex;align-items:center;
+  gap:6px;padding:0 11px;font:12px var(--sans);letter-spacing:0;
   white-space:nowrap;}
 .open-tabs-row .ot-home .jv-logo{width:17px;height:17px;flex:none;}
-.open-tabs-row .ot-home.current{color:var(--accent);
-  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
-  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+/* 110px keeps a readable start of the name ("presentat...") */
+.top-tabstrip .tab{flex:0 1 auto;min-width:110px;max-width:220px;
+  padding:0 6px 0 12px;font-size:12px;font-weight:400;}
+.open-tabs-row .ot-home:hover,.top-tabstrip .tab:hover{
+  background:color-mix(in srgb,var(--chrome-ink,#d7e3ec) 7%,transparent);
+  color:var(--chrome-ink,#d7e3ec);}
+/* the one on screen: the row below's colour, a line of accent along
+   its top, and no edge between it and that row */
+.open-tabs-row .ot-home.current,.top-tabstrip .tab.current{
+  background:var(--tab-on,var(--chrome-0,#0b141d));
+  border-color:var(--chrome-line,#ffffff1f);
+  box-shadow:inset 0 2px 0 var(--accent);color:var(--chrome-ink,#e6edf3);
+  font-weight:600;}
 /* at Home no tab is the one on screen, whatever was last active -- and
    in the slide editor the presentation is, not the notebook that was
    last active behind it (T602: two lit tabs on one row) */
 body.welcoming .top-tabstrip .tab.current,
 body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
-  background:none;box-shadow:none;color:inherit;border-color:#ffffff14;
-  font-weight:400;}
-/* no scrollbar: in a one-button-high row it drew a white bar under the
-   tabs and made the whole bar taller. The strip still scrolls (wheel,
-   trackpad), and app.js keeps the tab on screen in view. */
-.top-tabstrip{display:flex;align-items:center;gap:4px;min-width:0;
-  overflow-x:auto;scrollbar-width:none;}
-/* on a row of buttons a tab is a rounded box the height of a button,
-   lit the way Home is lit -- not a browser tab hanging from a strip.
-   110px keeps a readable start of the name ("presentat...") */
-.top-tabstrip .tab{height:26px;box-sizing:border-box;flex:0 1 auto;
-  min-width:110px;max-width:220px;padding:0 6px 0 10px;border-radius:7px;
-  border-bottom:1px solid #ffffff14;font-size:12px;}
-.top-tabstrip .tab.current{color:var(--chrome-ink,#e6edf3);
-  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
-  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+  background:none;box-shadow:none;color:var(--chrome-ink-2,#8ba0b2);
+  border-color:transparent;font-weight:400;}
 .top-tabstrip .tab-t{max-width:170px;}
+/* the reader's title row: its tabs join the filter row under it, which
+   is the header's own colour; the line along the bottom is drawn inside
+   the row so the tab on screen can cover it */
+.nb-filebar{--tab-on:var(--chrome-0,#0b141d);}
+body.tabs-row-on .nb-filebar{border-bottom-width:0;
+  box-shadow:inset 0 -1px 0 var(--chrome-line,#ffffff12);}
 .top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
   justify-content:center;flex:none;color:var(--cyan);}
 .top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
@@ -2196,11 +2214,12 @@ body.welcoming .apptop{display:none;}
 body.welcoming{padding-top:0;}
 /* T596: at Home the tabs stay up while anything is open -- they are the
    way back to it. T602: they are part of the title row now, so at Home
-   that row shows with File and the tabs, and nothing else of the header
-   does (Info, Reload and Find act on a notebook Home is covering). */
+   that row shows with the tabs and nothing else of the header does
+   (Info, Reload and Find act on a notebook Home is covering, and Home
+   has its own New, Open and How to use). */
 body.welcoming.tabs-row-on .apptop{display:flex;}
 body.welcoming.tabs-row-on .apptop>:not(.nb-filebar),
-body.welcoming.tabs-row-on .nb-filebar>:not(#app-filewrap):not(.open-tabs-row):not(.nb-file-spacer){
+body.welcoming.tabs-row-on .nb-filebar>:not(.open-tabs-row):not(.nb-file-spacer){
   display:none!important;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}
@@ -4110,24 +4129,73 @@ body.deck-open{overflow:hidden;}
 .deck-qat.qat-c2 .deck-status{display:none;}
 .deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
   scrollbar-width:thin;}
-/* ---- T602: THE OPEN TABS, IN THIS BAR ------------------------------
-   app.js moves #open-tabs-row in before the first spring while the
-   editor is up, so the editor has one title row rather than a row of
-   tabs over a row of controls. The tab names the presentation, so the
-   centred name steps aside while they are here; File > Rename... and a
-   double-click on the tab still rename it, and the edit field takes the
-   name's place while you type. Tabs and Home are the bar's own height. */
+/* ---- T602: THIS BAR IS THE TITLE ROW, SPLIT AS POWERPOINT SPLITS IT --
+   (2026-09-30: the user picked this after a first try crowded the tabs
+   in among File, Find and Present.) Left: app.js moves #open-tabs-row
+   in (Home and the open files, as tabs). Middle: the command search.
+   Right: Save, the readout, Autosave and undo/redo -- PowerPoint's
+   quick-access corner. File, Find, Full screen and Present are on the
+   strip below. While the tabs are here the bar is a shade darker than
+   the strip, the tab on screen wears the STRIP's colour (--tab-on) and
+   the line under the bar is drawn inside it, so that tab joins the
+   strip; and the tab names the deck, so the name steps aside (File >
+   Rename... and a double-click on the tab rename it, the edit field
+   taking the name's place while you type). */
+.deck-qat{--tab-on:var(--chrome-1);}
+.deck-qat:has(> .open-tabs-row:not([hidden])){background:var(--chrome-0);
+  border-bottom-width:0;box-shadow:inset 0 -1px 0 var(--chrome-line);}
 .deck-qat:has(> .open-tabs-row:not([hidden])) .qat-name{display:none;}
+.deck-qat .open-tabs-row{margin-left:-6px;}
 /* the save readout gives up its width before the tabs do: at 1440px
    with four decks open it kept all 34ch while every tab was down to
    "p...". Its width still comes from the room, never from its words, so
    a new state does not move the controls after it (the reason it has a
    fixed slot); the full words are its tooltip */
-.deck-qat:has(> .open-tabs-row:not([hidden])) .deck-status{
-  flex:0 4 34ch;width:auto;min-width:11ch;}
-.deck-qat .open-tabs-row .ot-home,
-.deck-qat .top-tabstrip .tab{height:var(--rbn-btn-h);}
+.deck-qat .deck-status{flex:0 4 34ch;width:auto;min-width:11ch;}
 .deck-qat.qat-c1 .open-tabs-row{min-width:160px;}
+/* the command search, centred between the tabs and the saving corner */
+.deck-qat .rbn-search{flex:0 1 260px;min-width:140px;height:var(--rbn-btn-h);
+  box-sizing:border-box;margin:0 8px;}
+/* building: no ribbon to search, and the panel is narrow */
+.deck.creating .deck-qat .rbn-search{display:none;}
+/* ---- T602: the strip under it is PowerPoint's File Home Insert row ----
+   File first, the ribbon's tabs, then the document's verbs at the right
+   (Find, Full screen, Present) before the ribbon's own three settings.
+   Button-high for a 28px strip. While building there is no ribbon, so
+   the strip is File and the verbs alone. */
+.rbn-tabs .rbn-filewrap,.rbn-tabs .qat-playgrp{align-self:center;
+  display:inline-flex;align-items:center;flex:none;}
+.rbn-tabs .rbn-filewrap{margin-right:10px;}
+.rbn-tabs #dc-file,.rbn-tabs #qat-find,.rbn-tabs .qat-full,
+.rbn-tabs .qat-playgrp .dbtn{height:22px;box-sizing:border-box;
+  padding:0 9px;line-height:1;font-size:11px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;
+  transition-property:border-color,color,background-color,box-shadow;}
+.rbn-tabs #qat-find,.rbn-tabs .qat-full{align-self:center;flex:none;
+  margin-left:4px;}
+.rbn-tabs .qat-playgrp{margin:0 10px 0 4px;}
+.rbn-tabs .qat-playgrp #dc-playmore{padding:0 7px;}
+.rbn-tabs #qat-find .bic,.rbn-tabs .qat-full .bic,
+.rbn-tabs .qat-play .bic{width:12px;height:12px;}
+.deck.creating .rbn-tabs .rbn-tabset,.deck.creating .rbn-tabs .et-hint,
+.deck.creating .rbn-tabs .rbn-autobtn,.deck.creating .rbn-tabs .rbn-layouts,
+.deck.creating .rbn-tabs .rbn-fold{display:none;}
+/* fitTabStrip's rungs (05-figures-and-ribbon.js), each a step down from
+   the resting sizes above: tighter tabs and buttons and no hint; then
+   the tab words a point smaller; then the strip scrolls. Geometry must
+   not transition under a fitter (T487), so the strip's buttons ease
+   their colours only. */
+.rbn-tabs .dbtn{
+  transition-property:border-color,color,background-color,box-shadow;}
+.rbn-tabs.rt-c1 .rbn-tab{padding:0 8px;}
+.rbn-tabs.rt-c1 .rbn-filewrap{margin-right:6px;}
+.rbn-tabs.rt-c1 .qat-playgrp{margin-right:6px;}
+.rbn-tabs.rt-c1 #dc-file,.rbn-tabs.rt-c1 #qat-find,.rbn-tabs.rt-c1 .qat-full,
+.rbn-tabs.rt-c1 .qat-playgrp .dbtn,.rbn-tabs.rt-c1 .rbn-autobtn,
+.rbn-tabs.rt-c1 .rbn-layouts{padding-left:6px;padding-right:6px;}
+.rbn-tabs.rt-c1 .et-hint{display:none;}
+.rbn-tabs.rt-c2 .rbn-tab{padding:0 6px;font-size:12px;}
+.rbn-tabs.rt-scroll{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
    It lived in the ribbon, then in the top bar, and was wrong in both: it
    is a property of the CANVAS, so it belongs at the canvas. Bottom-right
@@ -4244,14 +4312,14 @@ body.deck-open{overflow:hidden;}
   flex:none;font-size:10px;display:inline-flex;align-items:center;gap:4px;
   white-space:nowrap;}
 .rbn-tabs .rbn-autobtn .bic{width:12px;height:12px;}
-/* T538: search the commands -- a field in the tab strip, its list a
-   floating surface of the editor's */
-.rbn-tabs .rbn-search{align-self:center;display:inline-flex;align-items:center;
+/* T538: search the commands -- a field in the title row since T602 (it
+   was in the tab strip), its list a floating surface of the editor's */
+.rbn-search{align-self:center;display:inline-flex;align-items:center;
   gap:5px;flex:0 1 210px;min-width:120px;margin-right:6px;height:22px;
   padding:0 7px;border:1px solid var(--chrome-line);border-radius:6px;
-  background:var(--chrome-0);}
-.rbn-tabs .rbn-search:focus-within{border-color:var(--cyan);}
-.rbn-tabs .rbn-search .bic{width:12px;height:12px;flex:none;opacity:.7;}
+  background:var(--chrome-1);}
+.rbn-search:focus-within{border-color:var(--cyan);}
+.rbn-search .bic{width:12px;height:12px;flex:none;opacity:.7;}
 .rbn-search input{flex:1;min-width:0;border:none;outline:none;
   background:none;color:var(--chrome-ink);font:12px var(--sans);}
 .rbn-search input::placeholder{color:var(--chrome-ink-3);}
@@ -11044,11 +11112,13 @@ window.MathJax = {
        a lot of this stuff could all just be put under the file button
        e.g. the app button, and stuff like new and open. Also the tabs is
        good, but is all just too much now"). T596 put the open files in a
-       row of their own above this one, so every view carried two bars of
-       chrome before its own controls began. Now there is one: File, this
-       notebook's own Info and Reload, then Home and the open tabs, then
-       Find. New, Open and everything the App menu held are rows of File,
-       and the editor's top bar takes the same tabs while it is on screen
+       row of their own above this one. Now this is the title row, split
+       the way PowerPoint splits it (the user's pick of three, after a
+       first try crowded the tabs among the buttons): what is open on the
+       left, as tabs, and this notebook's own Info, Reload and Find on the
+       right. File leads the row under it, as PowerPoint's File leads its
+       tabs; New, Open and everything the App menu held are rows of File.
+       The editor's top bar takes the same tabs while it is on screen
        (app.js moves the one #open-tabs-row between the two). -->
   <!-- File provenance is a thin utility bar ABOVE the notebook controls.
        It used to consume a whole left-most ribbon group, making the
@@ -11056,54 +11126,6 @@ window.MathJax = {
        real .railfile node still moves here, so its reload/info handlers
        stay live rather than being copied (2026-09-11). -->
   <div class="nb-filebar" id="nb-filebar" hidden>
-    <!-- FILE FIRST, as in the editor and in PowerPoint: making something,
-         opening something, and the app's own settings. -->
-    <span class="dc-menuwrap" id="app-filewrap">
-      <button class="toggle" id="app-file" type="button" aria-haspopup="true"
-        aria-expanded="false" aria-controls="app-file-menu"
-        title="New and open; the colour theme, where open files are
- listed, help and support">File &#9662;</button>
-      <div class="dc-menu" id="app-file-menu" hidden>
-        <!-- New makes the four things the side panel's New made, each by
-             pressing the one real button for it (T596) -->
-        <div class="dc-mhead">new</div>
-        <button class="dc-mi" type="button" data-for="pr-new"
-          >Presentation</button>
-        <button class="dc-mi" type="button" data-for="pr-newpost"
-          >Poster</button>
-        <button class="dc-mi" type="button" data-for="pr-newview"
-          >Custom view</button>
-        <button class="dc-mi" type="button" data-for="pr-newfold"
-          >Folder</button>
-        <div class="dc-mhead">open</div>
-        <button class="dc-mi" type="button" id="ot-open"
-          title="The recent ones, everything saved here, or a file from
- this computer (Ctrl+K)">Open a presentation&#8230;</button>
-        <button class="dc-mi" type="button" id="tab-open" hidden
-          title="Open a notebook (.ipynb) from your computer or a
- URL">Open a notebook&#8230;</button>
-        <div class="dc-mhead">app</div>
-        <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
-          aria-expanded="false" aria-controls="jv-scheme-menu"
-          title="Choose a colour scheme">Theme&#8230;</button>
-        <button class="dc-mi" id="help-btn"
-          title="How to use this, and everything it can do (?)">How to
-          use&#8230;</button>
-        <a class="dc-mi" id="support-btn" href="https://ko-fi.com/plotline"
-          target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
-          >Support Junoview &#9829;</a>
-        <!-- T596: where the open files are listed -- in ONE place -->
-        <div class="dc-mhead">open files</div>
-        <button class="dc-mi jv-files-at" type="button" data-at="top"
-          aria-pressed="true" title="Open notebooks and presentations are tabs
- along the top bar, with Home before them. The side panel goes
- away.">As tabs along the top</button>
-        <button class="dc-mi jv-files-at" type="button" data-at="side"
-          aria-pressed="false" title="Open notebooks and presentations are a
- list down the left, with Recents, All presentations and New under it. The
- tabs go away.">As a list down the side</button>
-      </div>
-    </span>
     <!-- The file itself belongs with Info / Reload.  Keeping the
          visible name and the (ellipsised) path here means there is one
          stable place to answer “what am I looking at?”, rather than a
@@ -11115,7 +11137,6 @@ window.MathJax = {
       <button type="button" class="nb-file-path" id="nb-file-path" dir="ltr"
         aria-label="View full file path"></button>
     </span>
-    <span class="fgrp-row" id="file-dock"></span>
     <!-- T596: ONE LIST OF WHAT IS OPEN -- these tabs, or the list down
          the side, never both. Home first, then the open files. T602: in
          this row, not a row of its own; while the slide editor is on
@@ -11128,6 +11149,9 @@ window.MathJax = {
         aria-label="Open documents"></div>
     </div>
     <span class="nb-file-spacer" aria-hidden="true"></span>
+    <!-- T602: this notebook's own Info and Reload on the right, beside
+         Find -- PowerPoint keeps a file's name menu and its Search there -->
+    <span class="fgrp-row" id="file-dock"></span>
     <!-- Find stays direct because it is a document command rather than an
          application preference. -->
     <span class="nb-file-utils" aria-label="Find">
@@ -11139,6 +11163,55 @@ window.MathJax = {
   </div>
   <div class="appbar">
     <span class="abgrp ab-nav" id="ab-nav"><span class="abgrp-row">
+      <!-- T602: FILE LEADS THIS ROW, as File leads the editor's ribbon
+           tabs and PowerPoint's: making something, opening something,
+           and the app's own settings. -->
+      <span class="dc-menuwrap" id="app-filewrap">
+        <button class="toggle" id="app-file" type="button" aria-haspopup="true"
+          aria-expanded="false" aria-controls="app-file-menu"
+          title="New and open; the colour theme, where open files are
+ listed, help and support">File &#9662;</button>
+        <div class="dc-menu" id="app-file-menu" hidden>
+          <!-- New makes the four things the side panel's New made, each by
+               pressing the one real button for it (T596) -->
+          <div class="dc-mhead">new</div>
+          <button class="dc-mi" type="button" data-for="pr-new"
+            >Presentation</button>
+          <button class="dc-mi" type="button" data-for="pr-newpost"
+            >Poster</button>
+          <button class="dc-mi" type="button" data-for="pr-newview"
+            >Custom view</button>
+          <button class="dc-mi" type="button" data-for="pr-newfold"
+            >Folder</button>
+          <div class="dc-mhead">open</div>
+          <button class="dc-mi" type="button" id="ot-open"
+            title="The recent ones, everything saved here, or a file from
+ this computer (Ctrl+K)">Open a presentation&#8230;</button>
+          <button class="dc-mi" type="button" id="tab-open" hidden
+            title="Open a notebook (.ipynb) from your computer or a
+ URL">Open a notebook&#8230;</button>
+          <div class="dc-mhead">app</div>
+          <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
+            aria-expanded="false" aria-controls="jv-scheme-menu"
+            title="Choose a colour scheme">Theme&#8230;</button>
+          <button class="dc-mi" id="help-btn"
+            title="How to use this, and everything it can do (?)">How to
+            use&#8230;</button>
+          <a class="dc-mi" id="support-btn" href="https://ko-fi.com/plotline"
+            target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
+            >Support Junoview &#9829;</a>
+          <!-- T596: where the open files are listed -- in ONE place -->
+          <div class="dc-mhead">open files</div>
+          <button class="dc-mi jv-files-at" type="button" data-at="top"
+            aria-pressed="true" title="Open notebooks and presentations are tabs
+ along the top bar, with Home before them. The side panel goes
+ away.">As tabs along the top</button>
+          <button class="dc-mi jv-files-at" type="button" data-at="side"
+            aria-pressed="false" title="Open notebooks and presentations are a
+ list down the left, with Recents, All presentations and New under it. The
+ tabs go away.">As a list down the side</button>
+        </div>
+      </span>
       <button class="menubtn" id="menubtn" aria-label="Toggle sections"
         title="Show or hide the section sidebar (table of contents)">
         <span></span> Outline</button>
@@ -13556,7 +13629,8 @@ processed <i>in your browser</i> and never uploaded anywhere.</p>
 <ul>
 <li><b>Drag &amp; drop</b> one or more <code>.ipynb</code> files
 anywhere onto the window.</li>
-<li><b>File &#9662;</b> &rarr; <b>Open a notebook&#8230;</b> (top left) &mdash; a file picker, or paste a
+<li><b>File &#9662;</b> &rarr; <b>Open a notebook&#8230;</b> (File starts the row under
+the tabs) &mdash; a file picker, or paste a
 <b>URL</b> to a notebook (GitHub links are converted automatically).</li>
 <li>Notebooks must be <b>executed</b> (run once in Jupyter so outputs
 are saved) &mdash; nothing is re-run here.</li>
@@ -13804,8 +13878,10 @@ document to its normal styling.</li>
 the top bar, with <b>Home</b> before them &mdash; or, if you prefer, a
 list down the left side (<i>File &#9662;</i>, <i>Open files</i>). Never
 both. <b>File &#9662;</b> is where you make something new, open a
-presentation, and choose the theme; the top bar is one row, with File,
-Save, undo and Find, then the tabs, then Present. As a
+presentation, and choose the theme. The top is laid out as PowerPoint's
+is: the title row has your tabs on the left, the command search in the
+middle and Save, Autosave and undo on the right; File starts the row
+under it, with Find, Full screen and Present at that row's end. As a
 side list, the <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at its foot
 collapse or auto-hide it.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
@@ -14658,14 +14734,229 @@ writes or resembles and implies no endorsement.</small></p>
     <!-- The shared left rail stays live while editing. Its Junoview logo
          is the one Home control and its live lists are the one source of
          open notebooks and presentations; do not recreate either here. -->
-    <!-- File OVER Save, one cell two rows deep, the way PowerPoint
-         stacks the small controls beside Paste (2026-08-17, user: "the
-         save could go below the file"). Stacking them halves the
-         group's width, and they are the two halves of the same
-         errand. The wrapper stays a plain row inside the builder
-         panel's header, which is a one-line bar. -->
-    <span class="rbn-stack">
-    <div class="dc-menuwrap">
+    <!-- T602: ONE TITLE ROW, SPLIT THE WAY POWERPOINT SPLITS IT (2026-09-30,
+         user, choosing between three layouts after the first try put the
+         tabs between Find and Present: "This is super cursed with the tabs
+         crowded in here"). This row is PowerPoint's title bar: what is
+         open on the left -- app.js moves the one #open-tabs-row (Home and
+         the open files, drawn as tabs) in before this marker while the
+         editor is up -- the command search in the middle, and saving on
+         the right: the readout, Autosave, Save and undo/redo, PowerPoint's
+         quick-access corner. File, Find, Full screen and Present are on
+         the row under it, which is PowerPoint's File Home Insert row. -->
+    <span class="qat-tabs-at"></span>
+    <!-- the presentation's NAME, where a title bar puts it -- shown only
+         while the open files are a list down the side; as tabs, the
+         tab is the name (T602).
+         Click it to rename — the old rename lived in a File-menu item that
+         un-hid an input inside a display:none block. -->
+    <button class="qat-name" id="qat-name"
+      title="Click to rename this presentation"></button>
+    <input class="qat-nameedit" id="qat-nameedit" type="text" hidden
+      spellcheck="false" autocomplete="off" aria-label="Presentation name">
+    <span class="deck-spring"></span>
+    <!-- T538: SEARCH THE COMMANDS (Alt+Q), PowerPoint's "Tell me" box.
+         In the title row's middle since T602, the place PowerPoint
+         puts its Search; its list floats, so no row can clip it. -->
+    <span class="rbn-search" id="rbn-search">
+      <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg>
+      <input id="rbn-search-in" type="search" autocomplete="off"
+        spellcheck="false" placeholder="Search commands (Alt+Q)"
+        aria-label="Search commands" role="combobox"
+        aria-controls="rbn-search-list" aria-expanded="false">
+      <div class="rbn-search-list" id="rbn-search-list" role="listbox"
+        aria-label="Commands" hidden></div>
+    </span>
+    <span class="deck-spring"></span>
+    <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
+         two competing save buttons and nobody could tell what the
+         second one did (2026-08-07, user: "even I am confused"). It is
+         now a split button: press Save to save, press the chevron to
+         choose where. The destination lives in the menu, which is
+         where a destination belongs. -->
+    <span class="dc-savegrp">
+      <button class="dbtn" id="dc-save">Save</button>
+      <span class="dc-menuwrap">
+        <button class="dbtn dc-target" id="dc-target"
+          aria-haspopup="true" aria-expanded="false"
+          aria-label="Choose where this is saved"
+          title="Choose where this is saved">&#9662;</button>
+        <div class="dc-menu" id="target-menu" hidden>
+          <div class="dc-mhead" id="tg-head">save to</div>
+        <button class="dc-mi" id="tg-project" hidden>This project</button>
+        <button class="dc-mi" id="tg-browser">This browser</button>
+        <button class="dc-mi" id="tg-file">A file on your
+          computer&#8230;</button>
+        <!-- T235: A FOLDER, ONCE, FOR EVERYTHING AFTER (2026-09-04,
+             user: "the save to browser thing isn't working too great
+             ... I just got 'browser full' error. Is there a way to
+             make it so that the default is local, and you can set up
+             a default save to location that becomes the default for
+             all?"). Pick it once and Junoview makes its own file in
+             there and keeps saving to it, with no dialog and no
+             browser quota to run into. -->
+        <button class="dc-mi" id="tg-folder">A folder on this
+          computer&#8230;</button>
+        <div class="dc-msep"></div>
+          <button class="dc-mi" id="tg-pick" hidden>Choose a different
+            file&#8230;</button>
+          <button class="dc-mi" id="tg-folder-forget" hidden>Stop using
+            that folder</button>
+        </div>
+      </span>
+    </span>
+    <!-- THE SAVE READOUT, beside the button it reports on. It lived at
+         the far end of the bar, two springs away from Save, so the fact
+         and the control that produces it were at opposite ends of the
+         window (2026-08-29, T70, user: "please put that next to the save
+         button"). -->
+    <span class="deck-status" id="deck-status"></span>
+    <!-- how often it saves itself, said out loud rather than buried as a
+         File-menu toggle you had to open the menu to read. It is a MENU
+         now, not a toggle: "every 5 seconds" is a setting, and the same
+         button counts the seconds down so the timer can be watched while
+         it runs (T70, user: "please make there be an auto-save timer").
+         aria-haspopup was already on this button and had never had a
+         menu behind it. -->
+    <span class="dc-menuwrap">
+      <button class="dbtn qat-btn qat-auto" id="qat-auto" hidden
+        aria-haspopup="true" aria-expanded="false"></button>
+      <!-- T365: #qat-auto-menu, not #auto-menu. page.html's three-scope
+           slides chooser wore that id too and both are in one document,
+           so getElementById returned the chooser: pressing Autosave
+           emptied it and refilled it with "Every 5 seconds", and
+           "Slides from this notebook" was dead for the rest of the
+           session. Named after the button it belongs to. -->
+      <div class="dc-menu" id="qat-auto-menu" hidden></div>
+    </span>
+    <!-- ONE cell, like the zoom stepper: undo and redo are the same
+         decision in two directions and must never end up on different
+         lines. In the side rail's wrapping flow they did exactly that
+         — undo closed one line and redo opened the next, alone and
+         stretched the full width of the rail (2026-08-16). -->
+    <span class="rbn-cell">
+      <button class="dbtn dc-icon" id="dc-undo" disabled
+        title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6"/><path d="M5.8 3.4 3 6.2 5.8 9"/></svg></button>
+      <button class="dbtn dc-icon" id="dc-redo" disabled
+        title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6"/><path d="M10.2 3.4 13 6.2 10.2 9"/></svg></button>
+    </span>
+    <!-- The SECOND deck-status/qat-auto pair stood here from 2026-08-20
+         until 2026-08-31: T70 moved the readout beside Save and left
+         this one behind, and because $() is querySelector the leftovers
+         were dead markup that still fooled every DOM count (JVUX-04).
+         The unique-id test in test_js_contract.py now fails on ANY
+         duplicate, so a half-finished move cannot park here again. -->
+    <!-- Zoom is not here any more. It went to the ribbon, then to this
+         bar, and it was wrong in both: it is a property of the CANVAS, so
+         it belongs at the canvas, and the bottom-right corner is where
+         Word, PowerPoint, Figma and Illustrator all put it (2026-08-20,
+         user: "I find the location of the zoom still really annoying.
+         That is a prominent feature, and it needs to be somewhere
+         good"). See #deck-zoombar. -->
+    <!-- T602: no App menu here. Theme, How to use, Support and where the
+         open files are listed are rows of File now (2026-09-30, user: "a
+         lot of this stuff could all just be put under the file button
+         e.g. the app button"). They are still WORDED rows, never the bare
+         glyphs that sat at the end of the ribbon before 2026-08-20. -->
+  </div>
+  <aside class="deck-create" id="deck-create" hidden>
+      <div class="dc-resize" id="dc-resize"
+        title="Drag to resize the builder panel"></div>
+      <!-- T381: nothing above the thumbnails. The notebook list that
+           used to lead this column (a back link, a row per notebook,
+           Refresh all, More) is gone: a presentation is its own thing,
+           refreshing is Home > Update, and the rail is the way to a
+           notebook (2026-09-12). -->
+      <!-- the NAME lives outside .dc-controls: that block is display:none
+           while editing, so File → Rename… un-hid an input inside a hidden
+           ancestor — 0x0, unfocusable, "renaming doesn't work" in the
+           primary flow (2026-08-20 diagnosis). Both children stay [hidden]
+           except during an active rename, so the row costs no height. -->
+      <div class="dc-block dc-name">
+        <div class="dc-presname" id="pres-current" hidden></div>
+        <input id="pres-name" type="text" placeholder="presentation name"
+          spellcheck="false" autocomplete="off" hidden>
+      </div>
+      <div class="dc-block dc-controls">
+        <button class="dbtn" id="dc-edit"
+          title="Swap to the slide editor — add text, arrows and boxes">
+          <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.6c2.6.4 4-1 4.6-2.4"/><path d="m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z"/></svg> Swap to edit view</button>
+        <div class="lay-picker" id="layout-row"
+          aria-label="Slide layouts"></div>
+        <div class="title-editor" id="title-editor" hidden>
+          <input id="ts-title" type="text" placeholder="Slide title"
+            spellcheck="false" autocomplete="off">
+          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
+            spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+      <div class="dc-block dc-film">
+        <!-- one line above the strip: how the slides are listed. It is a
+             chooser for the list underneath it rather than chrome of its
+             own, and it MOVES with the list into the Versions pane the
+             same way #film-list does (2026-08-22, user: "there should
+             also be the option have thumbnails (default), headings, or
+             thumbnails and headings"). -->
+        <div class="film-head" id="film-head">
+          <div class="dc-menuwrap">
+            <button class="dbtn film-view-btn" id="film-view-btn"
+              aria-haspopup="true" aria-expanded="false"
+              title="How the slides are listed down this column"
+              ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Thumbnails &#9662;</button>
+            <div class="dc-menu" id="film-view-menu" hidden></div>
+          </div>
+        </div>
+        <div class="film-list" id="film-list"></div>
+        <!-- Add slide and Section sit on one row: a section IS a slide
+             boundary, so the verb that makes one belongs beside the verb
+             that makes the other, not up in a ribbon where the thing
+             being divided is out of sight (2026-08-22, user: "there
+             should be the ability to create slide sections in the
+             thumbnails part"). -->
+        <div class="film-adds" id="film-adds">
+          <button class="dbtn addslide" id="film-add">+ Add slide</button>
+          <button class="dbtn addsec" id="film-sec"
+            title="Start a section at the slide you are on. Everything
+ from there down to the next divider goes in it">&#167; Section</button>
+        </div>
+      </div>
+      <!-- the strip's own resize handle. #dc-resize next to it drives the
+           BUILDER panel and is hidden while editing; this one drives the
+           slide column, which is the thing anyone actually wants wider
+           (2026-08-22, user: "the thumbnail part should be dragable to
+           make bigger or smaller"). -->
+      <div class="film-resize" id="film-resize" role="separator"
+        aria-orientation="vertical" tabindex="0"
+        aria-label="Slide column width"
+        title="Drag to make the slide thumbnails bigger or smaller
+ (or focus it and use the left and right arrow keys)"></div>
+    </aside>
+  <!-- The ribbon spans the WHOLE window, like the document view's app
+       bar — it used to live inside the stage column, so the slide strip
+       and rail came out of its width on every screen (2026-08-19, user:
+       "the ribbon needs to go all the way across the top ... then this
+       gives more space to the ribbon and all the options"). -->
+  <!-- TABS. One ribbon could not hold what this editor now does — every
+       new feature made the row denser until the density ladder was doing
+       all the work and nothing had room to breathe (2026-08-20, user:
+       "there might not need to be tabs like power point and foxit pdf
+       has"). A tab shows one job's worth of groups at a time, so the
+       groups that ARE showing can be full size.
+       The strip is deliberately the same height as a button row and
+       carries no second copy of anything: it is a chooser, not chrome.
+       #rbn-tab-style and #rbn-tab-object are contextual: they appear when
+       something is selected. Style is the small, focused surface for how a
+       thing looks; Object is the equally focused surface for what it is and
+       where it sits. The
+       page-level Home tools no longer reshape themselves after an ordinary
+       canvas click (2026-08-26, user: "just have an own tab for the
+       selected object"). -->
+  <div class="rbn-tabs" id="rbn-tabs" hidden>
+    <!-- T602: FILE LEADS THIS ROW, as PowerPoint's File leads its tabs.
+         IN THE MARKUP, before .rbn-tabset and not a .rbn-tab, for the
+         reason written beside #rbn-auto below: rbnHome() snapshots this
+         strip's children once and puts exactly those back. -->
+    <div class="dc-menuwrap rbn-filewrap">
       <button class="dbtn" id="dc-file" aria-haspopup="true"
         aria-expanded="false">File &#9662;</button>
       <!-- NAMED SECTIONS (T143 / JVUX-07). Nineteen rows separated by
@@ -14796,277 +15087,6 @@ writes or resembles and implies no endorsement.</small></p>
         </div>
       </div>
     </div>
-    <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
-         two competing save buttons and nobody could tell what the
-         second one did (2026-08-07, user: "even I am confused"). It is
-         now a split button: press Save to save, press the chevron to
-         choose where. The destination lives in the menu, which is
-         where a destination belongs. -->
-    <span class="dc-savegrp">
-      <button class="dbtn" id="dc-save">Save</button>
-      <span class="dc-menuwrap">
-        <button class="dbtn dc-target" id="dc-target"
-          aria-haspopup="true" aria-expanded="false"
-          aria-label="Choose where this is saved"
-          title="Choose where this is saved">&#9662;</button>
-        <div class="dc-menu" id="target-menu" hidden>
-          <div class="dc-mhead" id="tg-head">save to</div>
-        <button class="dc-mi" id="tg-project" hidden>This project</button>
-        <button class="dc-mi" id="tg-browser">This browser</button>
-        <button class="dc-mi" id="tg-file">A file on your
-          computer&#8230;</button>
-        <!-- T235: A FOLDER, ONCE, FOR EVERYTHING AFTER (2026-09-04,
-             user: "the save to browser thing isn't working too great
-             ... I just got 'browser full' error. Is there a way to
-             make it so that the default is local, and you can set up
-             a default save to location that becomes the default for
-             all?"). Pick it once and Junoview makes its own file in
-             there and keeps saving to it, with no dialog and no
-             browser quota to run into. -->
-        <button class="dc-mi" id="tg-folder">A folder on this
-          computer&#8230;</button>
-        <div class="dc-msep"></div>
-          <button class="dc-mi" id="tg-pick" hidden>Choose a different
-            file&#8230;</button>
-          <button class="dc-mi" id="tg-folder-forget" hidden>Stop using
-            that folder</button>
-        </div>
-      </span>
-    </span>
-    </span>
-    <!-- THE SAVE READOUT, beside the button it reports on. It lived at
-         the far end of the bar, two springs away from Save, so the fact
-         and the control that produces it were at opposite ends of the
-         window (2026-08-29, T70, user: "please put that next to the save
-         button"). -->
-    <span class="deck-status" id="deck-status"></span>
-    <!-- how often it saves itself, said out loud rather than buried as a
-         File-menu toggle you had to open the menu to read. It is a MENU
-         now, not a toggle: "every 5 seconds" is a setting, and the same
-         button counts the seconds down so the timer can be watched while
-         it runs (T70, user: "please make there be an auto-save timer").
-         aria-haspopup was already on this button and had never had a
-         menu behind it. -->
-    <span class="dc-menuwrap">
-      <button class="dbtn qat-btn qat-auto" id="qat-auto" hidden
-        aria-haspopup="true" aria-expanded="false"></button>
-      <!-- T365: #qat-auto-menu, not #auto-menu. page.html's three-scope
-           slides chooser wore that id too and both are in one document,
-           so getElementById returned the chooser: pressing Autosave
-           emptied it and refilled it with "Every 5 seconds", and
-           "Slides from this notebook" was dead for the rest of the
-           session. Named after the button it belongs to. -->
-      <div class="dc-menu" id="qat-auto-menu" hidden></div>
-    </span>
-    <!-- ONE cell, like the zoom stepper: undo and redo are the same
-         decision in two directions and must never end up on different
-         lines. In the side rail's wrapping flow they did exactly that
-         — undo closed one line and redo opened the next, alone and
-         stretched the full width of the rail (2026-08-16). -->
-    <span class="rbn-cell">
-      <button class="dbtn dc-icon" id="dc-undo" disabled
-        title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6"/><path d="M5.8 3.4 3 6.2 5.8 9"/></svg></button>
-      <button class="dbtn dc-icon" id="dc-redo" disabled
-        title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6"/><path d="M10.2 3.4 13 6.2 10.2 9"/></svg></button>
-    </span>
-    <span class="qat-sep"></span>
-    <!-- Find is a document-wide action, so it lives with the document
-         controls rather than in a formatting group -->
-    <button class="dbtn qat-btn" id="qat-find"
-      title="Find and replace text anywhere in this presentation
- (Ctrl+F)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg> Find</button>
-    <!-- T602: THE OPEN TABS COME HERE. While this bar is on screen app.js
-         moves the one #open-tabs-row (Home and the open files) in just
-         before this spring, so the editor has ONE title row -- the
-         document's controls, then its tabs -- instead of a row of tabs
-         stacked over a row of controls. While they are here the tab
-         names the presentation, so the centred name steps aside (its
-         rename is File > Rename... and a double-click on the tab). -->
-    <span class="deck-spring qat-tabs-at"></span>
-    <!-- the presentation's NAME, in the middle, where a title bar puts it.
-         Click it to rename — the old rename lived in a File-menu item that
-         un-hid an input inside a display:none block. -->
-    <button class="qat-name" id="qat-name"
-      title="Click to rename this presentation"></button>
-    <input class="qat-nameedit" id="qat-nameedit" type="text" hidden
-      spellcheck="false" autocomplete="off" aria-label="Presentation name">
-    <span class="deck-spring"></span>
-    <!-- The SECOND deck-status/qat-auto pair stood here from 2026-08-20
-         until 2026-08-31: T70 moved the readout beside Save and left
-         this one behind, and because $() is querySelector the leftovers
-         were dead markup that still fooled every DOM count (JVUX-04).
-         The unique-id test in test_js_contract.py now fails on ANY
-         duplicate, so a half-finished move cannot park here again. -->
-    <!-- Zoom is not here any more. It went to the ribbon, then to this
-         bar, and it was wrong in both: it is a property of the CANVAS, so
-         it belongs at the canvas, and the bottom-right corner is where
-         Word, PowerPoint, Figma and Illustrator all put it (2026-08-20,
-         user: "I find the location of the zoom still really annoying.
-         That is a prominent feature, and it needs to be somewhere
-         good"). See #deck-zoombar. -->
-    <!-- T602: no App menu here. Theme, How to use, Support and where the
-         open files are listed are rows of File now (2026-09-30, user: "a
-         lot of this stuff could all just be put under the file button
-         e.g. the app button"). They are still WORDED rows, never the bare
-         glyphs that sat at the end of the ribbon before 2026-08-20. -->
-    <!-- Present is a SPLIT control: press it to play, press the chevron
-         for presenter view — the second screen with your notes, the next
-         slide and the clock (2026-08-20, user asked for "the different
-         screens one with the slides and the other with like notes and the
-         next slide"). -->
-    <!-- Full screen lives up here beside Present (T216; 2026-09-03, user:
-         "the full screen needs to go up the top where present is") -->
-    <button class="dbtn qat-full" id="vw-full" aria-pressed="false"
-      title="Edit full screen: the browser chrome goes away and the page
- gets the whole display (Esc to leave). Unlike Present, you keep every
- editing tool"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Full screen</button>
-    <span class="dc-savegrp qat-playgrp">
-      <button class="dbtn primary qat-play" id="dc-play"
-        title="Play this full screen, from this page (F5)">
-        <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</button>
-      <span class="dc-menuwrap">
-        <button class="dbtn primary dc-target" id="dc-playmore"
-          aria-haspopup="true" aria-expanded="false"
-          aria-label="Presenting options"
-          title="Presenting options">&#9662;</button>
-        <div class="dc-menu" id="play-menu" hidden>
-          <div class="dc-mhead">present</div>
-          <button class="dc-mi" id="pl-here">Play from this slide</button>
-          <button class="dc-mi" id="pl-start">Play from the start</button>
-          <!-- T389: every slide on one scrolling page, each animating
-               the first time it scrolls into view and then staying. -->
-          <button class="dc-mi" id="pl-scroll"
-            title="Every slide on one page you scroll through. Each slide's
- animations play the first time it comes into view, then stay">Play as a
-            scrolling page</button>
-          <div class="dc-msep"></div>
-          <button class="dc-mi" id="pl-presenter"
-            title="Opens a second window with your notes, the next slide
- and a clock. Drag it to the other screen, then play.">Presenter
-            view&#8230;</button>
-          <button class="dc-mi" id="pl-notes">Notes &amp; timing&#8230;</button>
-          <!-- the Talk panel's row in the menu the user called "the
-               present menu" (T126): its only other door is a faint
-               corner button that exists once you are already
-               presenting, which is the wrong side of the decision. -->
-          <button class="dc-mi" id="pl-talk"
-            title="Play from this slide with the talk settings open:
- skip the animations, or size headings, body text and captions for
- the room.">Talk settings&#8230;</button>
-          <!-- A SETTING and not the new default, because a plain click
-               advancing the talk is a standing instruction from
-               2026-08-07 and this would overload it. Only the item itself
-               is claimed; the rest of the slide still advances. -->
-          <button class="dc-mi" id="pl-tap">Click a figure to enlarge it:
-            off</button>
-          <!-- THE CODE TRAIL, on or off. It is the whole point of a
-               Junoview deck for some talks and unwanted noise for the
-               rest, and until now there was no door at all: the trail,
-               the "Show code" pill and the scroll region appeared
-               whenever the slide happened to have a lineage (2026-08-29,
-               user: "there is no option to remove the 'show code' little
-               arrow that appears with something in presentations").
-               A menu row and not a ribbon button, so it costs no ribbon
-               width and no arrangement in 07-ribbon-layouts.js. -->
-          <button class="dc-mi" id="pl-trace">Show the code trail under
-            the slide: on</button>
-        </div>
-      </span>
-    </span>
-  </div>
-  <aside class="deck-create" id="deck-create" hidden>
-      <div class="dc-resize" id="dc-resize"
-        title="Drag to resize the builder panel"></div>
-      <!-- T381: nothing above the thumbnails. The notebook list that
-           used to lead this column (a back link, a row per notebook,
-           Refresh all, More) is gone: a presentation is its own thing,
-           refreshing is Home > Update, and the rail is the way to a
-           notebook (2026-09-12). -->
-      <!-- the NAME lives outside .dc-controls: that block is display:none
-           while editing, so File → Rename… un-hid an input inside a hidden
-           ancestor — 0x0, unfocusable, "renaming doesn't work" in the
-           primary flow (2026-08-20 diagnosis). Both children stay [hidden]
-           except during an active rename, so the row costs no height. -->
-      <div class="dc-block dc-name">
-        <div class="dc-presname" id="pres-current" hidden></div>
-        <input id="pres-name" type="text" placeholder="presentation name"
-          spellcheck="false" autocomplete="off" hidden>
-      </div>
-      <div class="dc-block dc-controls">
-        <button class="dbtn" id="dc-edit"
-          title="Swap to the slide editor — add text, arrows and boxes">
-          <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.6c2.6.4 4-1 4.6-2.4"/><path d="m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z"/></svg> Swap to edit view</button>
-        <div class="lay-picker" id="layout-row"
-          aria-label="Slide layouts"></div>
-        <div class="title-editor" id="title-editor" hidden>
-          <input id="ts-title" type="text" placeholder="Slide title"
-            spellcheck="false" autocomplete="off">
-          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
-            spellcheck="false" autocomplete="off">
-        </div>
-      </div>
-      <div class="dc-block dc-film">
-        <!-- one line above the strip: how the slides are listed. It is a
-             chooser for the list underneath it rather than chrome of its
-             own, and it MOVES with the list into the Versions pane the
-             same way #film-list does (2026-08-22, user: "there should
-             also be the option have thumbnails (default), headings, or
-             thumbnails and headings"). -->
-        <div class="film-head" id="film-head">
-          <div class="dc-menuwrap">
-            <button class="dbtn film-view-btn" id="film-view-btn"
-              aria-haspopup="true" aria-expanded="false"
-              title="How the slides are listed down this column"
-              ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Thumbnails &#9662;</button>
-            <div class="dc-menu" id="film-view-menu" hidden></div>
-          </div>
-        </div>
-        <div class="film-list" id="film-list"></div>
-        <!-- Add slide and Section sit on one row: a section IS a slide
-             boundary, so the verb that makes one belongs beside the verb
-             that makes the other, not up in a ribbon where the thing
-             being divided is out of sight (2026-08-22, user: "there
-             should be the ability to create slide sections in the
-             thumbnails part"). -->
-        <div class="film-adds" id="film-adds">
-          <button class="dbtn addslide" id="film-add">+ Add slide</button>
-          <button class="dbtn addsec" id="film-sec"
-            title="Start a section at the slide you are on. Everything
- from there down to the next divider goes in it">&#167; Section</button>
-        </div>
-      </div>
-      <!-- the strip's own resize handle. #dc-resize next to it drives the
-           BUILDER panel and is hidden while editing; this one drives the
-           slide column, which is the thing anyone actually wants wider
-           (2026-08-22, user: "the thumbnail part should be dragable to
-           make bigger or smaller"). -->
-      <div class="film-resize" id="film-resize" role="separator"
-        aria-orientation="vertical" tabindex="0"
-        aria-label="Slide column width"
-        title="Drag to make the slide thumbnails bigger or smaller
- (or focus it and use the left and right arrow keys)"></div>
-    </aside>
-  <!-- The ribbon spans the WHOLE window, like the document view's app
-       bar — it used to live inside the stage column, so the slide strip
-       and rail came out of its width on every screen (2026-08-19, user:
-       "the ribbon needs to go all the way across the top ... then this
-       gives more space to the ribbon and all the options"). -->
-  <!-- TABS. One ribbon could not hold what this editor now does — every
-       new feature made the row denser until the density ladder was doing
-       all the work and nothing had room to breathe (2026-08-20, user:
-       "there might not need to be tabs like power point and foxit pdf
-       has"). A tab shows one job's worth of groups at a time, so the
-       groups that ARE showing can be full size.
-       The strip is deliberately the same height as a button row and
-       carries no second copy of anything: it is a chooser, not chrome.
-       #rbn-tab-style and #rbn-tab-object are contextual: they appear when
-       something is selected. Style is the small, focused surface for how a
-       thing looks; Object is the equally focused surface for what it is and
-       where it sits. The
-       page-level Home tools no longer reshape themselves after an ordinary
-       canvas click (2026-08-26, user: "just have an own tab for the
-       selected object"). -->
-  <div class="rbn-tabs" id="rbn-tabs" hidden>
     <!-- the tablist ROLE wraps only the four real tabs (T139 /
          JVUX-05): the layouts chooser beside them is a button,
          and sitting inside the role it read as a fifth tab to
@@ -15132,19 +15152,79 @@ writes or resembles and implies no endorsement.</small></p>
       title="Format and arrange what is selected">Object</button>
     </span>
     <span class="deck-spring"></span>
-    <!-- T538: SEARCH THE COMMANDS (Alt+Q), PowerPoint's "Tell me" box.
-         In the markup and outside .rbn-tabset for the reason written
-         beside #rbn-auto below: rbnHome() snapshots this strip once. -->
-    <span class="rbn-search" id="rbn-search">
-      <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg>
-      <input id="rbn-search-in" type="search" autocomplete="off"
-        spellcheck="false" placeholder="Search commands (Alt+Q)"
-        aria-label="Search commands" role="combobox"
-        aria-controls="rbn-search-list" aria-expanded="false">
-      <div class="rbn-search-list" id="rbn-search-list" role="listbox"
-        aria-label="Commands" hidden></div>
-    </span>
     <span class="et-hint" id="et-hint"></span>
+    <!-- T602: the document's verbs at this row's right, where
+         PowerPoint keeps Record, Present and Share: Find, Full screen and
+         Present, then the ribbon's own three settings. -->
+    <!-- Find is a document-wide action, so it lives with the document
+         controls rather than in a formatting group -->
+    <button class="dbtn qat-btn" id="qat-find"
+      title="Find and replace text anywhere in this presentation
+ (Ctrl+F)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg> Find</button>
+    <!-- Present is a SPLIT control: press it to play, press the chevron
+         for presenter view — the second screen with your notes, the next
+         slide and the clock (2026-08-20, user asked for "the different
+         screens one with the slides and the other with like notes and the
+         next slide"). -->
+    <!-- Full screen lives up here beside Present (T216; 2026-09-03, user:
+         "the full screen needs to go up the top where present is") -->
+    <button class="dbtn qat-full" id="vw-full" aria-pressed="false"
+      title="Edit full screen: the browser chrome goes away and the page
+ gets the whole display (Esc to leave). Unlike Present, you keep every
+ editing tool"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Full screen</button>
+    <span class="dc-savegrp qat-playgrp">
+      <button class="dbtn primary qat-play" id="dc-play"
+        title="Play this full screen, from this page (F5)">
+        <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</button>
+      <span class="dc-menuwrap">
+        <button class="dbtn primary dc-target" id="dc-playmore"
+          aria-haspopup="true" aria-expanded="false"
+          aria-label="Presenting options"
+          title="Presenting options">&#9662;</button>
+        <div class="dc-menu" id="play-menu" hidden>
+          <div class="dc-mhead">present</div>
+          <button class="dc-mi" id="pl-here">Play from this slide</button>
+          <button class="dc-mi" id="pl-start">Play from the start</button>
+          <!-- T389: every slide on one scrolling page, each animating
+               the first time it scrolls into view and then staying. -->
+          <button class="dc-mi" id="pl-scroll"
+            title="Every slide on one page you scroll through. Each slide's
+ animations play the first time it comes into view, then stay">Play as a
+            scrolling page</button>
+          <div class="dc-msep"></div>
+          <button class="dc-mi" id="pl-presenter"
+            title="Opens a second window with your notes, the next slide
+ and a clock. Drag it to the other screen, then play.">Presenter
+            view&#8230;</button>
+          <button class="dc-mi" id="pl-notes">Notes &amp; timing&#8230;</button>
+          <!-- the Talk panel's row in the menu the user called "the
+               present menu" (T126): its only other door is a faint
+               corner button that exists once you are already
+               presenting, which is the wrong side of the decision. -->
+          <button class="dc-mi" id="pl-talk"
+            title="Play from this slide with the talk settings open:
+ skip the animations, or size headings, body text and captions for
+ the room.">Talk settings&#8230;</button>
+          <!-- A SETTING and not the new default, because a plain click
+               advancing the talk is a standing instruction from
+               2026-08-07 and this would overload it. Only the item itself
+               is claimed; the rest of the slide still advances. -->
+          <button class="dc-mi" id="pl-tap">Click a figure to enlarge it:
+            off</button>
+          <!-- THE CODE TRAIL, on or off. It is the whole point of a
+               Junoview deck for some talks and unwanted noise for the
+               rest, and until now there was no door at all: the trail,
+               the "Show code" pill and the scroll region appeared
+               whenever the slide happened to have a lineage (2026-08-29,
+               user: "there is no option to remove the 'show code' little
+               arrow that appears with something in presentations").
+               A menu row and not a ribbon button, so it costs no ribbon
+               width and no arrangement in 07-ribbon-layouts.js. -->
+          <button class="dc-mi" id="pl-trace">Show the code trail under
+            the slide: on</button>
+        </div>
+      </span>
+    </span>
     <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
          window, and there are long stretches — reading, rehearsing,
          nudging one thing into place — where you want the page and not
@@ -33219,6 +33299,7 @@ window.JunoPptx = (function () {
                             (floatMenu, position:fixed), so the scroll
                             box cannot cut them off. */
   function fitQat(){
+    fitTabStrip();   /* T602: the rows are fitted together */
     var bar=$('#deck-qat');
     if(!bar||bar.hidden) return;
     var cl=bar.classList;
@@ -33228,6 +33309,24 @@ window.JunoPptx = (function () {
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-c1');
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-c2');
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-scroll');
+  }
+  /* ---- T602: the tab strip's own rungs ---------------------------------
+     The strip carries File, Find, Full screen and Present since T602 (the
+     PowerPoint split), so a narrow window runs out of room: at 1100px it
+     was 28px over with nothing selected, and Style and Object add two
+     tabs more. The same ladder as fitQat's, each rung a step down: the
+     tabs and buttons pack tighter and the hint goes, then the tab words
+     are set a point smaller, and last the strip scrolls sideways. Never a
+     second row, never a word lost. */
+  function fitTabStrip(){
+    var s=$('#rbn-tabs');
+    if(!s||s.hidden) return;
+    var cl=s.classList;
+    cl.remove('rt-c1');cl.remove('rt-c2');cl.remove('rt-scroll');
+    if(!s.clientWidth) return;
+    if(s.scrollWidth>s.clientWidth+1) cl.add('rt-c1');
+    if(s.scrollWidth>s.clientWidth+1) cl.add('rt-c2');
+    if(s.scrollWidth>s.clientWidth+1) cl.add('rt-scroll');
   }
   function syncViewBtns(){
     var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full'),sd=$('#vw-side');
@@ -33888,6 +33987,17 @@ window.JunoPptx = (function () {
            closed changes the row's width without changing the bar's */
         var otr=$('#open-tabs-row'); if(otr) qro.observe(otr);
       }
+      /* T602: and the tab strip's contents -- Style and Object come and
+         go with the selection, and a layout rebuilds the tabs, without
+         the strip's box changing. Its own rung classes are ignored, or
+         each fit would schedule the next. */
+      var ts=$('#rbn-tabs');
+      if(ts&&window.MutationObserver) new MutationObserver(function(ms){
+        if(deckEl.hidden) return;
+        for(var i=0;i<ms.length;i++)
+          if(ms[i].target!==ts){scheduleQatFit();return;}
+      }).observe(ts,{subtree:true,childList:true,attributes:true,
+        attributeFilter:['hidden','class']});
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything
        that moves the slide has to redraw them. The ribbon observer above
@@ -78741,8 +78851,11 @@ window.JunoPptx = (function () {
     if(qat) qat.hidden=!editing;
     /* the first moment the bar has a real width to be judged against */
     if(editing) requestAnimationFrame(fitQat);
+    /* T602: the strip carries File, Find, Full screen and Present now
+       (PowerPoint's File Home Insert row), so it shows while building
+       too -- without its ribbon tabs and settings there (deck.css) */
     var tabs=$('#rbn-tabs',deckEl);
-    if(tabs) tabs.hidden=(mode!=='edit');
+    if(tabs) tabs.hidden=!editing;
     var xb=$('#deck-exit');
     if(xb){
       /* This bar is shown only while presenting. Keeping its wording fixed
