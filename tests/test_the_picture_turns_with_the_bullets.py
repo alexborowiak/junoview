@@ -17,12 +17,18 @@ def test_a_synced_book_has_no_stops_of_its_own(out):
     assert "    var steps=slideBuildSteps(s),anch={},tail=[],synced={};" in out
     assert ("      if(a&&a.anim&&a.anim.sync&&!a.hide&&textBy(a)"
             "&&flipById(s,a.anim.sync))") in out
-    assert "        synced[a.anim.sync]=a.anim.order||0;" in out
+    assert ("        synced[a.anim.sync]=a.anim.order||0;"
+            "syncText[a.anim.sync]=a;}") in out
     assert "      if(p.a.k==='flip'&&p.a.fid&&synced[p.a.fid]!=null) return;" in out
     # the walk index IS the piece index: figure 1 stays up until the first
     # piece arrives (driven: without the +1 the book was a page ahead)
     assert "      if(b0!=null) base[p.i]=stop[b0]+1;" in out
-    assert "synced:synced};" in out
+    assert "synced:synced,\n      syncStops:syncStops};" in out
+    # T577: bullets with clicks of their own are not a run of stops, so
+    # the book counts the ones that have arrived
+    assert "      if(ta&&piecePartsOf(ta)) syncStops[p.i]=pieceSteps(steps,ta)" in out
+    assert ("      var n=hit.filter(function(sp){return sp!=null&&sp<cursor;})"
+            ".length;") in out
 
 
 def test_the_turns_box_is_offered_for_a_box_in_pieces(out):
@@ -41,9 +47,10 @@ def test_the_turns_box_is_offered_for_a_box_in_pieces(out):
 
 
 def test_the_pane_names_the_figure_each_piece_turns_to(out):
-    assert ("          var sfb=pieceA.anim.sync"
-            "?flipById(s,pieceA.anim.sync):null;") in out
-    assert "            if(sfr[k]) t+=' \\u00b7 '+frameLabel(sfr[k],k);" in out
+    assert ("          var sfb=a.anim.sync"
+            "?flipById(s,a.anim.sync):null;") in out
+    assert ("          if(sfr[cl.j]) t+=' \\u00b7 '"
+            "+frameLabel(sfr[cl.j],cl.j);") in out
 
 
 def test_the_format_says_what_sync_is():

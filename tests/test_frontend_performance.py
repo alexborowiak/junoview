@@ -355,11 +355,21 @@ function drawTable(layer,s,a,i,editing,place){const el=new Element('div');
 """
 
 
+def _pieces():
+    """T577: the renderer asks which step each piece lands on; the real
+    readers are lifted rather than stubbed, so a box with `anim.parts`
+    and the old block both go through the code that ships."""
+    src = assets.load("js/deck/15-annotations.js")
+    return "\n".join(lift_fn(src, name) for name in (
+        "pieceClaimsN", "pieceClaims", "pieceSteps")) + "\n"
+
+
 def test_build_updates_preserve_nodes_motion_and_z_order(tmp_path):
     src = assets.load("js/deck/20-notes-and-tables.js")
     renderer = src[src.index("  function renderAnnots("):
                    src.index("  function selectAnnot(")]
-    code = DOM + lift_fn(src, "annotRenderKey") + "\n" + renderer + r"""
+    code = DOM + _pieces() + lift_fn(src, "annotRenderKey") + "\n" \
+        + renderer + r"""
 const layer=new Element('div');
 const s={layout:'blank',annots:Array.from({length:200},()=>({k:'rect'}))};
 s.annots[5]={k:'rect',anim:{order:0,type:'fade'},motion:'bob',out:1};
@@ -492,7 +502,7 @@ function animOut(a){return a.out==null?null:a.out;}
 function animFocus(a){return a.focus||null;}
 function animGoing(){return false;} function animGone(){return false;}
 function animFocusing(){return false;} function stepShows(){return true;}
-""" + lift_fn(src, "annotRenderKey") + r"""
+""" + _pieces() + lift_fn(src, "annotRenderKey") + r"""
 const exit={k:'rect',out:5},focus={k:'rect',focus:{at:5,fx:'spot'}};
 const before={map:{0:0,5:1}},after={map:{5:0}},plan={stop:[0,1]};
 const exitChanged=annotRenderKey({},exit,before,plan)

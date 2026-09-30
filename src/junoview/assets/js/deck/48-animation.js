@@ -384,18 +384,18 @@
       if(typeof animPaneSync==='function') animPaneSync();
     }
     var row=cfgRow(host);
-    var own=!animSeq(s).some(function(st){return st.order===f.at;});
+    /* T577: the clicks, bullets included, not only the builds */
+    var ac=arrivalClicks(s,selAnnot,'focus');
+    var own=!ac.list.some(function(x){return x.c===ac.now;});
     cfgChip(row,bic('locate'),'On a click of its own',own,
       'Adds a click on which this is the point',function(){
-        if(!own){a.focus.at=nextAnimOrder(s);put();}});
-    var mine=a.anim?(a.anim.order||0):-1;
-    animSeq(s).forEach(function(st){
-      if(st.order<=mine) return;
-      var who=st.items.map(function(i2){
-        return annotLabel((s.annots||[])[i2]);}).join(', ');
+        if(!own){claimSet(s,ac.tl,selAnnot,'focus',null);put();}});
+    ac.list.forEach(function(x){
+      var who=x.who;
       if(who.length>26) who=who.slice(0,25)+'…';
-      cfgChip(row,bic('together'),'When '+who+' arrives',f.at===st.order,
-        'On the click that arrives',function(){a.focus.at=st.order;put();});
+      cfgChip(row,bic('together'),'When '+who+' arrives',ac.now===x.c,
+        'On the click that arrives',function(){
+          claimSet(s,ac.tl,selAnnot,'focus',x.c);put();});
     });
   }
   function focusSync(){
@@ -471,22 +471,19 @@
     row('Stays on the slide',
       'What every object did before this existed','none',now==null,
       function(){delete a.out;});
-    var mine=a.anim?(a.anim.order||0):-1,offered={};
-    animSeq(s).forEach(function(st){
-      if(st.order<=mine||offered[st.order]) return;
-      offered[st.order]=1;
-      var who=st.items.map(function(i2){
-        return annotLabel((s.annots||[])[i2]);
-      }).join(', ').slice(0,34);
-      row('Goes when '+who+' arrives',
+    /* T577: every click something arrives on, bullets included */
+    var idx=selAnnot,ac=arrivalClicks(s,idx,'out'),hit=false;
+    ac.list.forEach(function(x){
+      if(ac.now===x.c) hit=true;
+      row('Goes when '+x.who.slice(0,34)+' arrives',
         'One click: that arrives, this goes \u2014 which is what '
-        +'replacing a picture actually is','exit',now===st.order,
-        function(){a.out=st.order;});
+        +'replacing a picture actually is','exit',ac.now===x.c,
+        function(){claimSet(s,ac.tl,idx,'out',x.c);});
     });
     row('Goes on one more click at the end',
       'Adds a click of its own, on which this object leaves and '
-      +'nothing arrives','exit',now!=null&&!offered[now],
-      function(){a.out=nextAnimOrder(s);});
+      +'nothing arrives','exit',now!=null&&!hit,
+      function(){claimSet(s,ac.tl,idx,'out',null);});
   }
   function animOutSync(){
     var wrap=$('#anim-outwrap'),say=$('#anim-out-say');
@@ -710,7 +707,9 @@
     /* the chosen effect, not a hardcoded fade (T170). An object that
        already has one keeps its own only when the mode has not been
        told otherwise -- picking an effect is an instruction. */
-    if(a.anim) {a.anim.order=ord;a.anim.type=seqType;}
+    /* T577: pointing at a box says "this arrives now", as a block --
+       any clicks its pieces had of their own were about another order */
+    if(a.anim) {a.anim.order=ord;a.anim.type=seqType;delete a.anim.parts;}
     else a.anim={type:seqType,order:ord};
     if(seqType==='none') delete a.anim;
     seqApplyBy(a);   /* T471 */
@@ -945,10 +944,20 @@
     function rerender(){
       repaintAnimation();
     }
-    function renumber(s){animSeq(s).forEach(function(st,i){
-      st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
-    function stepOf(s,idx){var r=-1;animSeq(s).forEach(function(st,i){
-      if(st.items.indexOf(idx)>=0) r=i;});return r;}
+    /* T577: renumbering is writing the list of clicks back -- orders,
+       per-piece clicks, exits and focuses together. The old pass
+       compacted anim.order alone, so an exit could end up naming
+       whichever build now carried its old number. */
+    function renumber(s){timelineWrite(s,timelineOf(s));}
+    /* where the object first arrives: {c, x} into timelineOf, or null */
+    function entryOf(tl,idx){
+      for(var c=0;c<tl.length;c++) for(var x=0;x<tl[c].length;x++){
+        var cl=tl[c][x];
+        if(cl.i===idx&&(cl.k==='in'||cl.k==='p')) return {c:c,x:x};
+      }
+      return null;
+    }
+    function stepOf(s,idx){var e=entryOf(timelineOf(s),idx);return e?e.c:-1;}
     /* AND THE STRIP. The filmstrip's build mark is the only thing that
        says a slide is animated once the Timeline pane is shut (T76), and
        until this it was drawn on the next re-render of the strip and not
@@ -1002,14 +1011,18 @@
       var fig=!!a&&num&&(a.k==='cell'||a.k==='image');   /* T473 */
       if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false,
         fig:fig,grid:''};
-      var q=animSeq(s),si=stepOf(s,selAnnot);
+      var tl=timelineOf(s),si=stepOf(s,selAnnot);
       var after=(a.anim.after)|0,shared=false;
-      if(si>=0&&q[si].items.length>1){
+      /* T577: who is on that CLICK, pieces of other boxes included */
+      var mates=[];
+      if(si>=0) tl[si].forEach(function(cl){
+        if(mates.indexOf(cl.i)<0) mates.push(cl.i);});
+      if(mates.length>1){
         /* it joined an earlier thing's click if it is not the first
            of its stop in reading order */
         var first=null;
         orderedIdx(s).forEach(function(i){
-          if(first===null&&q[si].items.indexOf(i)>=0) first=i;});
+          if(first===null&&mates.indexOf(i)>=0) first=i;});
         shared=(first!==selAnnot);
       }
       var pg=(typeof panelsOf==='function')?panelsOf(a):null;
@@ -1298,8 +1311,14 @@
       selIdxs().forEach(function(i){
         var a=s.annots[i];
         if(!a||a.k!=='text') return;
-        if(by==='para'||by==='sent') ensureAnim(s,a,no).by=by;
-        else if(a.anim){delete a.anim.by;delete a.anim.hl;}  /* absent IS "all at once" */
+        if(by==='para'||by==='sent'){
+          var an=ensureAnim(s,a,no);
+          /* T577: bullets and sentences are different pieces, so clicks
+             given to the one kind mean nothing for the other */
+          if(an.by!==by) delete an.parts;
+          an.by=by;
+        }
+        else if(a.anim){delete a.anim.by;delete a.anim.hl;delete a.anim.parts;}  /* absent IS "all at once" */
         else return;   /* no entrance and "whole box": nothing to change */
         n++;
       });
@@ -1322,130 +1341,51 @@
         }});
       commit(s);
     }
+    /* START's two answers, on the list of clicks (T577): With previous
+       puts the object's arrival on the click before; On click gives it
+       a click of its own straight after the one it shared. A box in
+       pieces moves its FIRST piece and the rest follow where they were,
+       which for the old block is exactly the old answer. */
     function mergeUp(){
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      if(!a||!a.anim) return;var q=animSeq(s),si=stepOf(s,selAnnot);
-      if(si>0){a.anim.order=q[si-1].order;renumber(s);commit(s);}
+      if(!a||!a.anim) return;
+      var tl=timelineOf(s),e=entryOf(tl,selAnnot);
+      if(!e||e.c<=0) return;
+      timelineWrite(s,tlMove(tl,e.c,e.x,e.c-1,'with'));commit(s);
     }
     function splitOwn(){
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       if(!a||!a.anim) return;
-      a.anim.order=(a.anim.order||0)+0.5;renumber(s);commit(s);
-    }
-    function moveStep(si,dir){
-      var s=pres.slides[cur],q=animSeq(s),tj=si+dir;
-      if(tj<0||tj>=q.length) return;
-      var oa=q[si].order,ob=q[tj].order;
-      q[si].items.forEach(function(i){s.annots[i].anim.order=ob;});
-      q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
-      renumber(s);commit(s);
+      var tl=timelineOf(s),e=entryOf(tl,selAnnot);
+      if(!e) return;
+      timelineWrite(s,tlMove(tl,e.c,e.x,e.c,'after'));commit(s);
     }
     /* ---- T427: EVERY ROW MOVES, AND EVERY ROW CAN GO ------------------
        (2026-09-14, user: "I still can't change the order of animations.
        Like these are stuck in place. I also can't delete these as
-       well.") Earlier and Later sat on the build's first row only; a
-       bullet's row and a page's row had nothing, and nothing on the
-       pane removed anything. A build row's Remove takes its animation
-       off; a page row moves its page through the book or takes it out;
-       a bullet row moves its paragraph through the text or takes it
-       out -- the words themselves, so the slide and the show agree. */
+       well.") Every row of the pane has Earlier and Later; the row where
+       a thing arrives has Remove. T577 (2026-09-30, user: "I currently
+       can't mix them, like they are all tied together") made the rows
+       move in TIME, not through the text: a bullet's row walks among
+       the other clicks and can land on a photo's, instead of trading
+       words with the bullet beside it. The words stay where you typed
+       them. */
     /* T432: REMOVE TAKES THE ANIMATION OFF AND NOTHING ELSE (2026-09-14,
        user: "When removing the animation it would remove the image/the
-       dot point, not just remove animation"). T427 put a Remove on the
-       page rows and the bullet rows that took the page out of the book
-       and the bullet out of the text -- content, in a pane about
-       clicks. Only the build row has Remove now, and it says what
-       stayed. */
-    function removeBuild(si){
-      var s=pres.slides[cur],q=animSeq(s);
-      if(!q[si]) return;
-      var names=q[si].items.map(function(i){return itemLabel(s,i);});
-      q[si].items.forEach(function(i){delete s.annots[i].anim;});
+       dot point, not just remove animation"). It says what stayed. */
+    function removeAnim(i){
+      var s=pres.slides[cur],a=(s.annots||[])[i];
+      if(!a||!a.anim) return;
+      var name=itemLabel(s,i);
+      delete a.anim;
       renumber(s);commit(s);
-      toast('Animation removed \u2014 '+names.join(', ')
-        +(names.length===1?' is':' are')+' still on the slide');
-    }
-    /* a build to another click: the whole list is renumbered, so a
-       drag from click 2 to click 7 is one move, not five swaps */
-    function moveStepTo(si,tj){
-      var s=pres.slides[cur],q=animSeq(s);
-      if(si<0||si>=q.length||tj<0||tj>=q.length||si===tj) return;
-      var it=q.splice(si,1)[0];q.splice(tj,0,it);
-      q.forEach(function(st,i){
-        st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});
-      commit(s);
+      toast('Animation removed \u2014 '+name+' is still on the slide');
     }
     function movePage(a,k,t){
       var fr=flipFrames(a);
       if(k<0||k>=fr.length||t<0||t>=fr.length||k===t) return;
       fr.splice(t,0,fr.splice(k,1)[0]);
       commit(pres.slides[cur]);
-    }
-    /* a paragraph to another place in its text -- the words move, so
-       the slide and the show agree. Plain and Markdown text are lines;
-       rich text is the block children of its one list or of the box,
-       or, when the lines were typed with Shift+Enter, the runs between
-       <br>s inside one block (T432: "the re-ordering didn't work" was
-       this shape). Only a by-paragraph build: a sentence is not a
-       line, and the row says so by having no such buttons. */
-    function pieceMove(a,k,t){
-      var lines=String(a.text||'').split('\n');
-      function shift(list){
-        if(k<0||k>=list.length||t<0||t>=list.length||k===t) return false;
-        list.splice(t,0,list.splice(k,1)[0]);return true;
-      }
-      if(a.html){
-        var host=document.createElement('div');host.innerHTML=a.html;
-        function isBlock(nd){return !!nd&&nd.nodeType===1
-          &&/^(LI|P|DIV|H[1-6])$/i.test(nd.tagName);}
-        function isBr(nd){return !!nd&&nd.nodeType===1&&nd.tagName==='BR';}
-        function blank(nd){return nd.nodeType===3&&!String(nd.nodeValue||'').trim();}
-        var kids=[].slice.call(host.children);
-        var wrap=(kids.length===1&&/^(UL|OL)$/i.test(kids[0].tagName))
-          ?kids[0]:host;
-        var nodes=[].slice.call(wrap.childNodes),groups,runs;
-        /* blocks side by side (list items, paragraphs): one group each */
-        var blocky=nodes.length>0&&nodes.every(function(nd){
-          return isBlock(nd)||blank(nd);});
-        if(blocky&&nodes.filter(isBlock).length>1){
-          runs=false;
-          groups=nodes.filter(isBlock).map(function(el){return [el];});
-        } else {
-          /* one block: its runs between <br>s, each run with its <br>.
-             The box itself, or the single block it holds. */
-          runs=true;
-          var box=(kids.length===1&&isBlock(kids[0]))?kids[0]:wrap;
-          wrap=box;nodes=[].slice.call(box.childNodes);
-          groups=[[]];
-          nodes.forEach(function(nd){
-            groups[groups.length-1].push(nd);
-            if(isBr(nd)) groups.push([]);
-          });
-          groups=groups.filter(function(g){
-            return g.some(function(nd){return !isBr(nd)&&!blank(nd);});});
-        }
-        if(groups.length<2||!shift(groups)) return false;
-        var frag=document.createDocumentFragment();
-        groups.forEach(function(g,gi){
-          if(runs){
-            /* every run but the last ends in its <br>; the last has none:
-               a run moved from the end brings no <br> with it, and one
-               moved to the end must not keep the one it had */
-            while(g.length&&isBr(g[g.length-1])) g.pop();
-            if(gi<groups.length-1) g.push(document.createElement('br'));
-          }
-          g.forEach(function(nd){frag.appendChild(nd);});
-        });
-        wrap.innerHTML='';wrap.appendChild(frag);
-        a.html=host.innerHTML;
-        if(lines.length===groups.length) shift(lines);
-        a.text=lines.join('\n');
-      } else {
-        if(!shift(lines)) return false;
-        a.text=lines.join('\n');
-      }
-      commit(pres.slides[cur]);
-      return true;
     }
     /* ---- THE PANE IS THE LIST OF CLICKS, AND NOTHING ELSE (T402) -----
        (2026-09-13, user: "What is up with the animation pane? How am I
@@ -1469,6 +1409,47 @@
       var w='';SEQ_FX.forEach(function(f){if(f[0]===t) w=f[1];});
       return w||'Fade';
     }
+    function short(t,n){
+      t=String(t||'').replace(/\s+/g,' ').trim();
+      return t.length>n?(t.slice(0,n-1)+'\u2026'):t;
+    }
+    /* T577: A ROW IS ONE THING HAPPENING, not one build. A bullet on a
+       click of its own is named by its own words, because the rest of
+       its box may be three clicks away; an exit and a focus say what
+       they do to whom. */
+    function claimName(s,cl){
+      var a=s.annots[cl.i];
+      if(cl.k==='p'){
+        if(textBy(a)){
+          var t=short(textPieces(a)[cl.j]||('Piece '+(cl.j+1)),40);
+          /* T418: the figure that turns with this piece, on its row */
+          var sfb=a.anim.sync?flipById(s,a.anim.sync):null;
+          var sfr=sfb?flipFrames(sfb):[];
+          if(sfr[cl.j]) t+=' \u00b7 '+frameLabel(sfr[cl.j],cl.j);
+          return '\u2022 '+t;
+        }
+        var g=panelsOf(a);   /* T473: a figure's panels are its pieces */
+        return 'Panel '+(cl.j+1)+' of '+(g?g.c*g.r:'?')+' \u00b7 '
+          +itemLabel(s,cl.i);
+      }
+      if(cl.k==='out') return itemLabel(s,cl.i)+' leaves';
+      if(cl.k==='focus') return itemLabel(s,cl.i)+' in focus';
+      return itemLabel(s,cl.i);
+    }
+    function claimTag(s,cl,first){
+      var a=s.annots[cl.i];
+      if(cl.k==='out') return 'Send it away';
+      if(cl.k==='focus'){
+        var f=animFocus(a);
+        return (FOCUS_FX.filter(function(p){
+          return p[0]===(f&&f.fx);})[0]||[])[1]||'Focus';
+      }
+      var t=a.anim.hl?'Highlight'
+        :(first?fxWord(a.anim.type)
+          :(textBy(a)==='sent'?'sentence':textBy(a)?'bullet':'panel'));
+      if(first&&a.anim.after) t+=' \u00b7 after '+(a.anim.after|0)+' s';
+      return t;
+    }
     function render(){
       var s=pres.slides[cur];
       menu.innerHTML='';
@@ -1482,13 +1463,16 @@
         menu.appendChild(qa);
         cfgSeq(qa);
       }
-      var seq=animSeq(s),steps=slideBuildSteps(s),plan=flipPlan(s);
+      var plan=flipPlan(s),tl=timelineOf(s);
       var total=plan.count;
       var h1=document.createElement('div');h1.className='anim-h';
       h1.textContent=total?(total+' click'+(total===1?'':'s')):'No clicks yet';
       menu.appendChild(h1);
       var list=document.createElement('div');list.className='anim-seq';
-      var dragKey='';   /* T432: the row being dragged, by its key */
+      /* T432: the row being dragged -- {kind:'claim', c, x} for anything
+         on a click, {kind:'page', i, k} for a page of a flip book */
+      var drag=null;
+      function redo(next){timelineWrite(s,next);commit(s);}
       /* T417: ONE LINE PER ROW (2026-09-13, user: "All that text is
          soo unnecessary ... DON'T FILL IT WITH VERBOSE UNNECESSARY
          TEXT"). The number, the name, the effect word. Nothing that
@@ -1496,10 +1480,13 @@
       function row(clickNo,names,tag,opts){
         opts=opts||{};
         var r=document.createElement('div');
-        r.className='anim-step'+(opts.sub?' anim-sub':'')+(opts.cur?' cur':'');
+        r.className='anim-step'+(opts.sub?' anim-sub':'')+(opts.cur?' cur':'')
+          +(opts.with?' anim-with':'');
         var n=document.createElement('span');
         n.className='anim-num'+(String(clickNo).length>2?' wide':'');
         n.textContent=clickNo;
+        /* T577: a second row on the same click says so on its number */
+        if(opts.with) n.title='The same click as the row above';
         r.appendChild(n);
         var body=document.createElement('span');body.className='anim-body';
         names.forEach(function(p){
@@ -1515,81 +1502,68 @@
           var d=document.createElement('span');d.className='anim-tag';
           d.textContent=tag;r.appendChild(d);
         }
-        if(opts.ctr){
-          ctrls(r,[
-            ['\u2191 Earlier','Move this build one click earlier',
-             function(){moveStep(opts.si,-1);},opts.si===0],
-            ['\u2193 Later','Move this build one click later',
-             function(){moveStep(opts.si,1);},opts.si===seq.length-1],
-            ['\u2715 Remove','Take the animation off \u2014 the object '
-             +'stays on the slide',
-             function(){removeBuild(opts.si);},false]]);
-        }
-        /* T427: a page's or a bullet's own controls */
         if(opts.acts) ctrls(r,opts.acts);
         /* T432: ...AND EVERY ROW DRAGS (user: "would be good to be able
            to drag and drop order, not just having to press arrows").
-           A row carries a key -- build, page of a book, bullet of a
-           text -- and lands on a row of the same kind and owner; the
-           build's first row also stands for bullet 0, so a bullet can
-           be dragged to the top. */
-        if(opts.dk){
-          r.draggable=true;r.dataset.dk=opts.dk;
-          if(opts.dk2) r.dataset.dk2=opts.dk2;
+           T577: any row onto any other: the top of a row puts it on a
+           click of its own before that one, the bottom after it, and
+           the middle ONTO it -- the same click, which is how a photo
+           joins the bullet it belongs to. A page still moves only
+           through its own book. */
+        if(opts.drag){
+          r.draggable=true;
           r.addEventListener('dragstart',function(e){
-            dragKey=opts.dk;r.classList.add('dragging');
+            drag=opts.drag;r.classList.add('dragging');
             try{e.dataTransfer.effectAllowed='move';
-              e.dataTransfer.setData('text/plain',opts.dk);}catch(err){}
+              e.dataTransfer.setData('text/plain',opts.drag.kind);}catch(err){}
           });
           r.addEventListener('dragend',function(){
-            dragKey='';r.classList.remove('dragging');
-            $$('.anim-step.drop-above,.anim-step.drop-below',list)
-              .forEach(function(x){x.classList.remove('drop-above','drop-below');});
-          });
+            drag=null;r.classList.remove('dragging');clearDrop();});
           r.addEventListener('dragover',function(e){
-            var tk=dropKeyFor(r,dragKey); if(!tk) return;
+            var how=dropHow(r,opts.drag,e); if(!how) return;
             e.preventDefault();e.dataTransfer.dropEffect='move';
-            var bb=r.getBoundingClientRect();
-            var below=e.clientY>bb.top+bb.height/2;
-            r.classList.toggle('drop-below',below);
-            r.classList.toggle('drop-above',!below);
+            r.classList.toggle('drop-above',how==='before');
+            r.classList.toggle('drop-below',how==='after');
+            r.classList.toggle('drop-with',how==='with');
           });
           r.addEventListener('dragleave',function(){
-            r.classList.remove('drop-above','drop-below');});
+            r.classList.remove('drop-above','drop-below','drop-with');});
           r.addEventListener('drop',function(e){
-            var tk=dropKeyFor(r,dragKey); if(!tk) return;
+            var how=dropHow(r,opts.drag,e); if(!how) return;
             e.preventDefault();e.stopPropagation();
-            var below=r.classList.contains('drop-below');
-            r.classList.remove('drop-above','drop-below');
-            dropRow(dragKey,tk,below);dragKey='';
+            var d=drag;drag=null;clearDrop();
+            dropOn(d,opts.drag,how);
           });
         }
         list.appendChild(r);
         return r;
       }
-      /* the key on this row that matches the dragged one's kind and
-         owner: 'b:si', 'p:annot:k' or 't:annot:k' */
-      function dropKeyFor(r,dk){
-        if(!dk) return '';
-        var own=dk.replace(/:\d+$/,'');
-        var ks=[r.dataset.dk,r.dataset.dk2];
-        for(var i=0;i<ks.length;i++)
-          if(ks[i]&&ks[i]!==dk&&ks[i].replace(/:\d+$/,'')===own) return ks[i];
-        return '';
+      function clearDrop(){
+        $$('.anim-step.drop-above,.anim-step.drop-below,.anim-step.drop-with',
+          list).forEach(function(x){
+          x.classList.remove('drop-above','drop-below','drop-with');});
       }
-      function dropRow(from,to,below){
-        var fk=from.split(':'),tk=to.split(':');
-        var k=+fk[fk.length-1],j=+tk[tk.length-1];
-        var t=below?j+1:j; if(k<t) t-=1;
-        if(fk[0]==='b') moveStepTo(k,t);
-        else {
-          var a=s.annots[+fk[1]]; if(!a) return;
-          if(fk[0]==='p') movePage(a,k,t);
-          else pieceMove(a,k,t);
+      /* where a drop on this row lands, or '' when it cannot land here */
+      function dropHow(r,target,e){
+        if(!drag||drag===target||drag.kind!==target.kind) return '';
+        if(drag.kind==='page'&&drag.i!==target.i) return '';
+        var bb=r.getBoundingClientRect();
+        var f=(e.clientY-bb.top)/Math.max(1,bb.height);
+        if(drag.kind==='page') return f<.5?'before':'after';
+        return f<.3?'before':(f>.7?'after':'with');
+      }
+      function dropOn(d,t,how){
+        if(d.kind==='page'){
+          var a=s.annots[d.i]; if(!a) return;
+          var to=(how==='after')?t.k+1:t.k; if(d.k<to) to-=1;
+          movePage(a,d.k,to);
+          return;
         }
+        if(how==='with'&&d.c===t.c) return;
+        redo(tlMove(tl,d.c,d.x,t.c,how));
       }
-      /* Earlier and Later stacked, Remove beside them: the same shape on
-         every row that has them */
+      /* Earlier and Later stacked, the rest beside them: the same shape
+         on every row that has them */
       function ctrls(r,acts){
         var ctr=document.createElement('span');ctr.className='anim-stepctr';
         var col=document.createElement('span');col.className='anim-updown';
@@ -1603,6 +1577,30 @@
         });
         ctr.insertBefore(col,ctr.firstChild);
         r.appendChild(ctr);
+      }
+      /* T577: EARLIER AND LATER MOVE ONE THING ONE STEP. Alone on its
+         click, the click swaps with its neighbour; sharing a click, it
+         steps out onto a click of its own just before or just after --
+         so a bullet, a photo or an exit can each be walked anywhere
+         with the arrows, not only the build it used to be locked in. */
+      function moveActs(c,x){
+        var alone=tl[c].length===1;
+        return [
+          ['\u2191 Earlier','One step earlier',function(){
+            redo(alone?tlMoveClick(tl,c,c-1,'before')
+              :tlMove(tl,c,x,c,'before'));},alone&&c<=0],
+          ['\u2193 Later','One step later',function(){
+            redo(alone?tlMoveClick(tl,c,c+1,'after')
+              :tlMove(tl,c,x,c,'after'));},alone&&c>=tl.length-1]];
+      }
+      /* ...and one button that says whether it shares the click above */
+      function joinAct(c,x){
+        if(x>0) return ['\u2702 Own click',
+          'Give this a click of its own, straight after',
+          function(){redo(tlMove(tl,c,x,c,'after'));},false];
+        return ['\u21c8 With prev',
+          'Put this on the click before, so they happen together',
+          function(){redo(tlMove(tl,c,x,c-1,'with'));},c<=0];
       }
       /* the stops a flip book, a chart or a paged text box takes AFTER
          the click it arrives on, each on its own numbered row (T163);
@@ -1627,7 +1625,7 @@
                 ['\u2193 Later','Show this page one page later',
                  function(){movePage(a,k,k+1);},k>=fr.length-1]];})(w.k);
               row(base+d,[[name,p.i]],fx,{sub:true,cur:cur2,acts:acts,
-                dk:w.j?'':('p:'+p.i+':'+w.k)});
+                drag:w.j?null:{kind:'page',i:p.i,k:w.k}});
             }
           } else if(a.k==='chart'){
             chartParse(a).series.forEach(function(se,k){
@@ -1640,135 +1638,40 @@
           }
         });
       }
-      function short(t,n){
-        t=String(t||'').replace(/\s+/g,' ').trim();
-        return t.length>n?(t.slice(0,n-1)+'\u2026'):t;
-      }
-      /* T465: EXITS ARE CLICKS TOO. The header counted them (an exit
-         claims a stop, T174) and the Story strip listed them, but this
-         list walked only the builds -- "5 clicks" over three rows, and
-         no way to move or remove a Send it away from here (2026-09-15
-         review). An exit on a build's click follows that build's rows;
-         one on a click of its own is a row of its own, at the end, in
-         stop order. Earlier / Later walk the slide's stops; Stays is
-         the menu's own first answer. */
-      var exits=[];
-      (s.annots||[]).forEach(function(a,i){
-        if(!a||a.hide) return;
-        var o=animOut(a); if(o!=null) exits.push({i:i,a:a,o:o,kind:'out'});
-        /* T472: a focus is a click too, listed the same way */
-        var f=animFocus(a);
-        if(f) exits.push({i:i,a:a,o:f.at,kind:'focus',f:f});});
-      var stopOrders=Object.keys(steps.map).map(Number)
-        .sort(function(x,y){return x-y;});
-      function exitCommit(){
-        markDirty();repaintAnimation();
-        if(typeof animRibbonSync==='function') animRibbonSync();
-        if(typeof animPaneSync==='function') animPaneSync();
-      }
-      function exitRow(x){
-        var k=stopOrders.indexOf(x.o);
-        var isBuild=seq.some(function(st){return st.order===x.o;});
-        var st0=steps.map[x.o],sp0=(st0!=null)?plan.stop[st0]:null;
-        var no=(st0==null)?'\u2013':(((sp0==null?st0:sp0)|0)+1);
-        function setAt(v){
-          if(x.kind==='focus') x.a.focus.at=v; else x.a.out=v;
-          exitCommit();
-        }
-        var word=x.kind==='focus'
-          ?(FOCUS_FX.filter(function(p){return p[0]===x.f.fx;})[0]||[])[1]
-          :'Send it away';
-        row(no,[[itemLabel(s,x.i)+(x.kind==='focus'?' in focus':' leaves'),
-          x.i]],word,
-          {sub:true,cur:x.i===selAnnot,acts:[
-            ['\u2191 Earlier','One click earlier',
-             function(){setAt(stopOrders[k-1]);},k<=0],
-            ['\u2193 Later','One click later',
-             function(){
-               setAt((k<stopOrders.length-1)?stopOrders[k+1]:nextAnimOrder(s));},
-             k>=stopOrders.length-1&&!isBuild],
-            x.kind==='focus'
-              ?['\u2715 None','No focus click',
-                function(){delete x.a.focus;exitCommit();},false]
-              :['\u2715 Stays','Keep it on the slide to the end',
-                function(){delete x.a.out;exitCommit();},false]]});
-        x.done=true;
-      }
-      function exitRowsFor(o){
-        exits.forEach(function(x){if(!x.done&&x.o===o) exitRow(x);});
-      }
-      seq.forEach(function(st,si){
-        var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;
-        /* T491: an exit or focus on a click of its own BEFORE this
-           build is listed before it -- appended after every build, the
-           numbered list ran 1, 2, 4, 4, 3 (third review pass) */
-        exits.filter(function(x){return !x.done&&x.o<o;})
-          .sort(function(x,y){return x.o-y.o;}).forEach(exitRow);
-        var first=(plan.stop[b0]|0)+1;
-        var names=st.items.map(function(idx){return [itemLabel(s,idx),idx];});
-        var kinds={};
-        st.items.forEach(function(idx){
-          kinds[fxWord(s.annots[idx].anim.type)]=1;});
-        var tag=Object.keys(kinds).join('/');
-        var aft=0;
-        st.items.forEach(function(idx){
-          var v=(s.annots[idx].anim.after)|0; if(v>aft) aft=v;});
-        if(aft) tag+=' \u00b7 after '+aft+' s';
-        var cur2=st.items.indexOf(selAnnot)>=0;
-        /* T417: A BUILD IN PIECES IS ONE ROW PER PIECE (2026-09-13,
-           user: "Why cannot I see the per dot point for the
-           paragraph"). The first piece carries the name's row and the
-           controls; every piece after it is a row of its own, with the
-           words that appear on that click. */
-        var pieceA=null;
-        st.items.forEach(function(idx){
-          var a=s.annots[idx];
-          if(!pieceA&&nsub>1&&(textBy(a)
-             ||(typeof panelsOf==='function'&&panelsOf(a)))) pieceA=a;});
-        if(pieceA&&st.items.length===1){
-          /* T473: a figure's panels are its pieces */
-          var pcs=textBy(pieceA)?textPieces(pieceA)
-            :(function(){var g=panelsOf(pieceA),o=[];
-              for(var q3=0;q3<g.c*g.r;q3++) o.push('Panel '+(q3+1)+' of '+(g.c*g.r));
-              return o;})();
-          var ii=st.items[0];
-          /* T418: the figure that turns with each piece, on its row */
-          var sfb=pieceA.anim.sync?flipById(s,pieceA.anim.sync):null;
-          var sfr=sfb?flipFrames(sfb):[];
-          function pieceName(k){
-            var t=short(pcs[k]||('Piece '+(k+1)),40);
-            if(sfr[k]) t+=' \u00b7 '+frameLabel(sfr[k],k);
-            return t;
-          }
-          /* T427: a bullet moves through its text -- the words move, so
-             the slide and the show agree (T432: never out of it). Only
-             a by-paragraph build: a sentence is not a line. */
-          var para=textBy(pieceA)==='para';
-          row(first,[[pieceName(0),ii]],tag,{si:si,ctr:true,cur:cur2,
-            dk:'b:'+si,dk2:para?('t:'+ii+':0'):''});
-          for(var k=1;k<nsub;k++)
-            row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],'',
-              {sub:true,cur:cur2,dk:para?('t:'+ii+':'+k):'',
-               acts:para?(function(kk){return [
-                ['\u2191 Earlier','Move this bullet up one',
-                 function(){pieceMove(pieceA,kk,kk-1);},false],
-                ['\u2193 Later','Move this bullet down one',
-                 function(){pieceMove(pieceA,kk,kk+1);},kk>=nsub-1]];})(k)
-               :null});
-        } else {
-          var last=(plan.stop[b0+nsub-1]|0)+1;
-          row(first===last?first:(first+'\u2013'+last),names,
-            tag+(nsub>1?(' \u00b7 '+nsub+' pieces'):''),
-            {si:si,ctr:true,cur:cur2,dk:'b:'+si});
-        }
-        stepperRows(plan.anch[b0]);
-        exitRowsFor(st.order);
+      /* T402/T577: ONE ROW PER THING THAT HAPPENS, in the order the space
+         bar takes them. Everything on one click is listed together and
+         wears that click's number; a flip book's pages follow the click
+         the book arrives on, exactly as flipPlan lays them out. */
+      var seen={};
+      tl.forEach(function(claims,c){
+        var sp=plan.stop[c],no=((sp==null?c:sp)|0)+1;
+        claims.forEach(function(cl,x){
+          var a=s.annots[cl.i];
+          var arrive=(cl.k==='in'||cl.k==='p');
+          var first=arrive&&!seen[cl.i];
+          if(arrive) seen[cl.i]=1;
+          var acts=moveActs(c,x);
+          acts.push(joinAct(c,x));
+          /* T432: REMOVE TAKES THE ANIMATION OFF AND NOTHING ELSE, and it
+             sits on the row where the thing arrives; an exit's row says
+             it stays instead, a focus's that there is none */
+          if(cl.k==='out') acts.push(['\u2715 Stays',
+            'Keep it on the slide to the end',
+            function(){delete a.out;renumber(s);commit(s);},false]);
+          else if(cl.k==='focus') acts.push(['\u2715 None','No focus click',
+            function(){delete a.focus;renumber(s);commit(s);},false]);
+          else if(first) acts.push(['\u2715 Remove','Take the animation off \u2014 the object '
+             +'stays on the slide',
+             function(){removeAnim(cl.i);},false]);
+          row(no,[[claimName(s,cl),cl.i]],claimTag(s,cl,first),
+            {sub:!first&&cl.k!=='in',with:x>0,cur:cl.i===selAnnot,
+             acts:acts,drag:{kind:'claim',c:c,x:x}});
+        });
+        stepperRows(plan.anch[c]);
       });
       /* anything that steps but carries no build of its own lands
          after every build, exactly as flipPlan lays it out */
       stepperRows(plan.tail);
-      exits.filter(function(x){return !x.done;})
-        .sort(function(x,y){return x.o-y.o;}).forEach(exitRow);
       if(total) menu.appendChild(list);
       /* T417: the thing you have selected, when it is not on the list
          yet -- with the two ways onto it, so a box with bullets is one

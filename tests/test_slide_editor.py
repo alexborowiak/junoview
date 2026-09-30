@@ -3490,14 +3490,16 @@ def test_the_build_list_shows_every_stop_not_only_the_builds(out):
     used to disagree.
     """
     assert ("return {count:n,stop:stop,base:base,anch:anch,tail:tail,"
-            "synced:synced};") in out
+            "synced:synced,\n      syncStops:syncStops};") in out
     # T402: the anchored pages are looked up by the build's STOP index
     # (steps.map[order]), which is how flipPlan keys them -- the build
     # index it used before put a book's pages under nothing at all once
     # a split text box came before it
     assert "      function stepperRows(ps){" in out
-    assert "        var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;" in out
-    assert "        stepperRows(plan.anch[b0]);" in out
+    # (T577: the pane walks the list of clicks, whose index IS the build
+    # step flipPlan keys them by)
+    assert "      tl.forEach(function(claims,c){" in out
+    assert "        stepperRows(plan.anch[c]);" in out
     assert "      stepperRows(plan.tail);" in out
     # a chart contributes its series by NAME, a book its pages by figure
     assert "            chartParse(a).series.forEach(function(se,k){" in out
@@ -3506,7 +3508,7 @@ def test_the_build_list_shows_every_stop_not_only_the_builds(out):
     # every row carries the click the space bar counts
     assert ("              row(base+d,[[name,p.i]],fx,"
             "{sub:true,cur:cur2,acts:acts,\n") in out   # T427: a page moves
-    assert "        var first=(plan.stop[b0]|0)+1;" in out
+    assert "        var sp=plan.stop[c],no=((sp==null?c:sp)|0)+1;" in out
 
 
 def test_a_chart_is_positioned_like_every_other_object(out):
@@ -3636,7 +3638,8 @@ def test_a_build_can_run_itself_after_a_pause(out):
     assert "if(delay) x.anim.after=delay; else delete x.anim.after;" in out
     # the pane says a stop runs itself, where the order is read
     # (T417: as the row's effect tag, "Fade · after 2 s")
-    assert "if(aft) tag+=' \\u00b7 after '+aft+' s';" in out
+    assert ("      if(first&&a.anim.after) t+=' \\u00b7 after '"
+            "+(a.anim.after|0)+' s';") in out
 
 
 def test_one_pending_self_advance_and_any_movement_cancels_it(out):
@@ -3843,8 +3846,11 @@ def test_a_text_box_can_arrive_a_bullet_at_a_time(out):
     # ONE counter: slideBuildSteps expands a cut box, and extraStops must
     # NOT count it again -- that made three bullets worth five clicks
     assert "/* A CUT TEXT BOX IS NOT COUNTED HERE (T172)." in out
-    # each piece is read off the plan everything else uses
-    assert "var jp=plan.stop[st+j];" in out
+    # each piece is read off the plan everything else uses (T577: at the
+    # step pieceSteps gives it, which is st+j for the old block)
+    assert "            var vpst=pieceSteps(steps,ba);" in out
+    assert "              var jb=vpst[j]; if(jb==null) jb=st+j;" in out
+    assert "              var jp=plan.stop[jb];" in out
 
 def test_an_exit_is_a_peer_of_the_entrance_not_a_field_inside_it(out):
     """T174. `out` is the build order on which an object GOES AWAY --

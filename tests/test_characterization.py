@@ -2133,8 +2133,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the mini toolbar; links on words; presenting, links, clips and
 # tap-to-enlarge take a click; the ask dialog focuses at once.
 # T544 (2026-09-30): Clear on the mini toolbar too.
-EXPECTED_MD5 = "a6e32f6caf06a5dbb5fc56e99fde9c12"
-EXPECTED_BYTES = 4697585
+# T577 (2026-09-30): a bullet has a click of its own -- anim.parts, one
+# list of clicks the pane and Start rearrange, rows that move in time.
+EXPECTED_MD5 = "947a7a2972f3e992fcc0f50eeba379f0"
+EXPECTED_BYTES = 4704730
 
 
 def _render_example() -> str:

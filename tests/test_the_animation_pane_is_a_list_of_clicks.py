@@ -31,7 +31,7 @@ def test_no_second_effect_chooser_in_the_pane(out):
     assert "sq.innerHTML=bic('stagger')+' Quick animate\\u2026';" in body
 
 
-def test_one_row_per_click_numbered_by_the_space_bar(out):
+def test_one_row_per_thing_numbered_by_the_space_bar(out):
     start = out.index("    function fxWord(t){")
     body = out[start:out.index("    /* ONE door. There were briefly two", start)]
     # T417: the heading is a count, and a row is number + name + effect
@@ -40,17 +40,19 @@ def test_one_row_per_click_numbered_by_the_space_bar(out):
     assert "      function row(clickNo,names,tag,opts){" in body
     assert "anim-empty" not in body
     assert "anim-detail" not in body
-    # a build's number comes from flipPlan, so a page turn before it counts
-    assert "        var first=(plan.stop[b0]|0)+1;" in body
-    assert "          var last=(plan.stop[b0+nsub-1]|0)+1;" in body
-    assert "          row(first===last?first:(first+'\\u2013'+last),names," in body
-    # T417: a build in pieces is one row per piece, the words on each
-    # (T473: a figure's panels are pieces too)
-    assert "          if(!pieceA&&nsub>1&&(textBy(a)" in body
-    assert "          var pcs=textBy(pieceA)?textPieces(pieceA)" in body   # T473
-    assert "          var ii=st.items[0];" in body
-    assert "          for(var k=1;k<nsub;k++)" in body
-    assert "            row((plan.stop[b0+k]|0)+1,[[pieceName(k),ii]],''," in body
+    # T577: the rows are the list of clicks -- one row per thing that
+    # happens, numbered with its click from flipPlan, so a page turn
+    # before it counts
+    assert "      var plan=flipPlan(s),tl=timelineOf(s);" in body
+    assert "        var sp=plan.stop[c],no=((sp==null?c:sp)|0)+1;" in body
+    # a bullet is a row of its own, named by its words (T473: a figure's
+    # panels are pieces too)
+    assert "          var t=short(textPieces(a)[cl.j]||('Piece '+(cl.j+1)),40);" \
+        in body
+    assert "          return '\\u2022 '+t;" in body
+    # a second row on the same click hangs off the first
+    assert "            {sub:!first&&cl.k!=='in',with:x>0,cur:cl.i===selAnnot," \
+        in body
     # T417: the selected thing that is not on the list yet, with its two
     # ways onto it
     assert "        sr.className='anim-step anim-off cur';" in body
@@ -58,11 +60,10 @@ def test_one_row_per_click_numbered_by_the_space_bar(out):
     assert ("        if(sa.k==='text') acts.push(['By bullet',"
             "function(){setBy('para');}]);") in body
     # the mover buttons are words, never a bare arrow
-    # T427: the same three on every build row, built by ctrls()
-    assert "            ['\\u2191 Earlier','Move this build one click earlier'," in body
-    assert "            ['\\u2193 Later','Move this build one click later'," in body
-    assert ("            ['\\u2715 Remove','Take the animation off \\u2014 "
-            "the object '\n"
+    assert "          ['\\u2191 Earlier','One step earlier',function(){" in body
+    assert "          ['\\u2193 Later','One step later',function(){" in body
+    assert ("          else if(first) acts.push(['\\u2715 Remove',"
+            "'Take the animation off \\u2014 the object '\n"
             "             +'stays on the slide',") in body
 
 
@@ -72,9 +73,9 @@ def test_a_flip_books_pages_are_rows_with_their_own_click(out):
     assert "      function stepperRows(ps){" in body
     assert "          var a=p.a,base=plan.base[p.i],cur2=(p.i===selAnnot);" in body
     assert "            var walk=flipWalk(s,a),fr=flipFrames(a);" in body
-    # anchored by the build's STOP index, as flipPlan keys them
-    assert "        var o=st.order,b0=steps.map[o],nsub=steps.sub[o]||1;" in body
-    assert "        stepperRows(plan.anch[b0]);" in body
+    # anchored by the build STEP, as flipPlan keys them -- the list of
+    # clicks is indexed the same way
+    assert "        stepperRows(plan.anch[c]);" in body
     assert "      stepperRows(plan.tail);" in body
 
 

@@ -41,7 +41,11 @@ def test_the_button_is_the_common_case_and_the_caret_the_rest(out):
     assert "      else a.out=nextAnimOrder(s);" in out
     assert "  function animOutMenu(m){" in out
     assert "    menuHead(m,'when it goes');" in out
-    assert "      row('Goes when '+who+' arrives'," in out
+    # T577: the clicks it can go on are every ARRIVAL, a bullet on a
+    # click of its own included -- read off the list of clicks
+    assert "    var idx=selAnnot,ac=arrivalClicks(s,idx,'out'),hit=false;" in out
+    assert "      row('Goes when '+x.who.slice(0,34)+' arrives'," in out
+    assert "        function(){claimSet(s,ac.tl,idx,'out',x.c);});" in out
     assert "    row('Goes on one more click at the end'," in out
 
 

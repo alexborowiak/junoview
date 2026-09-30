@@ -22,8 +22,15 @@ def test_the_three_render_sites_skip_a_hidden_object_in_every_mode(out):
 
 
 def test_a_hidden_object_claims_no_click(out):
+    # T577: what it claims is read by pieceClaims, after the same gate
     assert ("      if(!a||!a.anim||a.hide) return;\n"
-            "      var o=a.anim.order||0;") in out
+            "      /* the WIDEST claim on this order wins") in out
+    assert "      pieceClaims(a).forEach(function(c){" in out
+    # ...and the list of clicks every rearrangement writes skips it too
+    assert ("    ((s&&s.annots)||[]).forEach(function(a,i){\n"
+            "      if(!a||a.hide) return;\n"
+            "      if(a.anim){\n"
+            "        var cs=pieceClaims(a);") in out
     assert ("      if(a&&a.anim&&!a.hide){var o=a.anim.order||0;"
             "   /* T404 */") in out
     assert ("      if(a&&!a.hide&&stopsFor(s,a)>0) out.push({a:a,i:i});});"

@@ -3508,30 +3508,25 @@
         commit();
       },'What every object did before this existed',bic('none'),
         nowOut==null);
-      var mine=a4.anim?(a4.anim.order||0):-1;
-      var offered={};
-      animSeq(pres.slides[cur]).forEach(function(st){
-        if(st.order<=mine||offered[st.order]) return;
-        offered[st.order]=1;
-        var inf=spStepInfo(pres.slides[cur],
-          (pres.slides[cur].annots||[])[st.items[0]]);
-        var who=st.items.map(function(i2){
-          return annotLabel((pres.slides[cur].annots||[])[i2]);
-        }).join(', ').slice(0,34);
-        rowIn('Goes when '+who+' arrives',function(){
-          live().out=st.order;
+      /* T577: every click something arrives on, bullets included */
+      var s4=pres.slides[cur],ac=arrivalClicks(s4,idx,'out'),hit=false;
+      var pl4=flipPlan(s4);
+      ac.list.forEach(function(x){
+        if(ac.now===x.c) hit=true;
+        var n4=pl4.stop[x.c]; if(n4==null) n4=x.c;
+        rowIn('Goes when '+x.who.slice(0,34)+' arrives',function(){
+          claimSet(s4,ac.tl,idx,'out',x.c);
           commit();
         },'One click: that arrives, this goes \u2014 which is what '
-          +'replacing a picture actually is'
-          +(inf.n!=null?(' (click '+inf.n+')'):''),
-          bic('exit'),nowOut===st.order);
+          +'replacing a picture actually is (click '+(n4+1)+')',
+          bic('exit'),ac.now===x.c);
       });
       rowIn('Goes on one more click at the end',function(){
-        live().out=nextAnimOrder(pres.slides[cur]);
+        claimSet(s4,ac.tl,idx,'out',null);
         commit();
       },'Adds a click of its own, on which this object leaves and '
         +'nothing arrives',bic('exit'),
-        nowOut!=null&&!offered[nowOut]);
+        nowOut!=null&&!hit);
     }
     build();
     deckEl.appendChild(m);

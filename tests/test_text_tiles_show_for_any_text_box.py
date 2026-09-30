@@ -33,7 +33,10 @@ def test_the_tiles_are_live_for_a_plain_box_and_say_whole_box(out):
 def test_a_piecewise_build_gives_a_plain_box_an_entrance(out):
     assert "    function ensureAnim(s,a,no){" in out
     assert "      if(!a.anim) a.anim={type:'appear',order:no};" in out
-    assert "        if(by==='para'||by==='sent') ensureAnim(s,a,no).by=by;" in out
+    assert "        if(by==='para'||by==='sent'){" in out
+    assert "          var an=ensureAnim(s,a,no);" in out
+    # T577: clicks given to bullets mean nothing for sentences
+    assert "          if(an.by!==by) delete an.parts;" in out
     # whole box on a box with no entrance changes nothing
     assert ("        else return;   /* no entrance and \"whole box\": "
             "nothing to change */") in out
