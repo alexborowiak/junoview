@@ -4591,6 +4591,14 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-rs-w{left:-4px;}
 .an-rs-e{right:-4px;}
 .an-item.sel .an-resize{display:block;}
+/* T584: a small selected thing (paintSel, under 48px) keeps its middle
+   for moving: no side bars, and the corners stand clear of it */
+.an-item.sel.an-small .an-rs-n,.an-item.sel.an-small .an-rs-s,
+.an-item.sel.an-small .an-rs-e,.an-item.sel.an-small .an-rs-w{display:none;}
+.an-item.an-small .an-rs-se{right:-16px;bottom:-16px;}
+.an-item.an-small .an-rs-nw{left:-16px;top:-16px;}
+.an-item.an-small .an-rs-ne{right:-16px;top:-16px;}
+.an-item.an-small .an-rs-sw{left:-16px;bottom:-16px;}
 /* free-rotation grip above the item (drag; Shift snaps to 15 deg) */
 .an-rotate{position:absolute;top:-30px;left:50%;margin-left:-8px;
   width:16px;height:16px;border-radius:50%;background:var(--chrome-1,#0e1926);

@@ -1663,6 +1663,12 @@
     var anyArrow=(s.annots||[]).some(function(m){
       return m&&m.k==='arrow';});
     var movedAny=false;
+    /* T584: THE FLOOR IS A FEW PIXELS, NOT 4% OF THE SLIDE. 4% was about
+       60px on a laptop, so a dot marking a town on a map could not be
+       made smaller than a coin (2026-09-30, user: "I tried drawing an
+       oval just then, but it seems like there is a minimum size").
+       Six screen pixels still leaves something to take hold of. */
+    var mnX=lr.width?600/lr.width:0.5,mnY=lr.height?600/lr.height:0.5;
     /* T542: a text box that KEEPS a height (the fit line a.fh -- words
        at its middle or foot, or shrinking to fit) has that height moved
        by the vertical handles. A box that grows with its words still has
@@ -1679,17 +1685,17 @@
         :(ev.shiftKey?boxRatio:0);
       /* the dragged corner moves; the opposite corner stays anchored */
       var nx=ox,ny=oy,nw=ow,nh=oh;
-      if(east) nw=Math.max(4,ow+dx);
-      if(west){nw=Math.max(4,ow-dx);nx=ox+(ow-nw);}
+      if(east) nw=Math.max(mnX,ow+dx);
+      if(west){nw=Math.max(mnX,ow-dx);nx=ox+(ow-nw);}
       if(a.k!=='text'){
-        if(south) nh=Math.max(4,oh+dy);
-        if(north){nh=Math.max(4,oh-dy);ny=oy+(oh-nh);}
+        if(south) nh=Math.max(mnY,oh+dy);
+        if(north){nh=Math.max(mnY,oh-dy);ny=oy+(oh-nh);}
       }
       var sx=null,sy=null;
       if(!ev.altKey){
         /* the moving edges snap; an aspect-locked figure snaps its width
            and lets the height follow the plot's ratio. A guide only shows
-           when the snap actually landed (the 4% minimum can cancel it). */
+           when the snap actually landed (the size floor can cancel it). */
         /* ONLY THE AXIS BEING DRAGGED SNAPS. With four corners every
            handle moved both axes, so the `else` arms below were only
            ever reached by a real west/north drag. A side handle makes
@@ -1698,8 +1704,8 @@
         if(east||west){
           var bx=bestSnap(targets.xs,[east?nx+nw:nx],thr.x);
           if(bx){
-            if(east){if(nw+bx.d>=4){nw+=bx.d;sx=bx.at;}}
-            else if(nw-bx.d>=4){nx+=bx.d;nw-=bx.d;sx=bx.at;}
+            if(east){if(nw+bx.d>=mnX){nw+=bx.d;sx=bx.at;}}
+            else if(nw-bx.d>=mnX){nx+=bx.d;nw-=bx.d;sx=bx.at;}
           }
         }
         /* an aspect-locked drag snaps the axis that LEADS and lets the
@@ -1708,8 +1714,8 @@
         if(a.k!=='text'&&(north||south)&&(!ratio||axisY)){
           var by=bestSnap(targets.ys,[south?ny+nh:ny],thr.y);
           if(by){
-            if(south){if(nh+by.d>=4){nh+=by.d;sy=by.at;}}
-            else if(nh-by.d>=4){ny+=by.d;nh-=by.d;sy=by.at;}
+            if(south){if(nh+by.d>=mnY){nh+=by.d;sy=by.at;}}
+            else if(nh-by.d>=mnY){ny+=by.d;nh-=by.d;sy=by.at;}
           }
         }
       }
@@ -1904,9 +1910,14 @@
          must not follow the selection this time — otherwise placing five
          shapes in a row throws you off Insert after every one */
       justDrew=true;
+      /* T584: a CLICK is under 4 screen pixels of travel, the usual
+         click-or-drag line. It was 1.5% of the slide (~22px on a laptop),
+         so a small dot drawn on purpose was thrown away as a stray click */
+      var lr=layer.getBoundingClientRect();
+      var cx=lr.width?400/lr.width:1.5,cy=lr.height?400/lr.height:1.5;
       var tiny=raw?(raw.length<3)
-        :boxed?(a.w<1.5&&a.h<1.5)
-        :(Math.abs(a.x2-a.x1)<1.5&&Math.abs(a.y2-a.y1)<1.5);
+        :boxed?(a.w<cx&&a.h<cy)
+        :(Math.abs(a.x2-a.x1)<cx&&Math.abs(a.y2-a.y1)<cy);
       /* A CLICK IS STILL A CLICK. Dragging says how big; clicking asks
          for the usual one, which is the fast way when the size does not
          matter yet — and it is what these two tools have always done, so
