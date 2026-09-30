@@ -18,7 +18,6 @@ from __future__ import annotations
 import re
 
 from helpers_js import js_engine, lift_fn
-
 from junoview import assets
 
 
@@ -131,10 +130,12 @@ def test_ctrl_k_finds_in_the_open_dialog_as_tabs():
 
 def test_the_row_is_wired_from_the_boot_sequence():
     deck = assets.deck_js()
-    assert "  tabRowBoot();               /* New and Open beside the tabs (T596) */" in deck
+    assert ("  tabRowBoot();               "
+            "/* New and Open beside the tabs (T596) */") in deck
     body = deck.split("function tabRowBoot(){")[1].split("\n  }\n")[0]
     assert "wireMenuToggle('ot-newwrap','ot-new','ot-newmenu');" in body
-    assert "if(o) o.addEventListener('click',function(){openPresentationHub();});" in body
+    assert ("if(o) o.addEventListener('click',"
+            "function(){openPresentationHub();});") in body
     js = assets.app_js()
     assert "if(h) h.addEventListener('click',function(){goHome(true);});" in js
 
