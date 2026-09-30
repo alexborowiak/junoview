@@ -1020,8 +1020,13 @@
          TEXT!!!!!"). The tiles show for any text box; picking one gives
          the box an entrance (setBy). */
       var fig=!!a&&num&&(a.k==='cell'||a.k==='image');   /* T473 */
+      /* hlin belongs in this answer too: timingSync calls .toString()
+         on (st.text&&st.hlin), and for a text box with no entrance yet
+         undefined threw there -- which aborted showFmt, left the ribbon
+         unfitted and the Animation panel button off its right edge,
+         every time a plain text box was selected (T578 regression) */
       if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false,
-        fig:fig,grid:''};
+        hlin:false,fig:fig,grid:''};
       var tl=timelineOf(s),si=stepOf(s,selAnnot);
       var after=(a.anim.after)|0,shared=false;
       /* T577: who is on that CLICK, pieces of other boxes included */

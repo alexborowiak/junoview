@@ -10412,3 +10412,12 @@ create animation. This gets congested very easily."
   else read them. Selecting an object no longer moves the strip either.
   Driven: 1500px window, handle dragged 200px -> 450px -> 330px, stays at
   330px on selecting a text box and on the Animation tab.
+- [x] **T583 — The Animation panel opens again.** "the animation pane is
+  no longer opening." T578 added `hlin` to timingState's full answer but
+  not to its early one (a text box with no entrance yet), and timingSync
+  calls `.toString()` on `st.text&&st.hlin` -- so selecting any plain text
+  box threw inside showFmt. The throw skipped the rest of the selection
+  sync, the ribbon was never re-fitted, and the Animation panel button sat
+  past the Animation tab's clipped right edge. The early answer carries
+  `hlin:false`. Driven at 1500x950 and 1366x768 with the title selected:
+  the pane opens, and the page logs no error.
