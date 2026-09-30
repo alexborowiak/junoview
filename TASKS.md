@@ -10232,8 +10232,23 @@ choice in the editor (T506, T507).
   layout; the first correction a browser ever makes says what happened
   with a Turn AutoCorrect off button. Search commands and the help page
   know it. Driven at 1440x900 with one input event per character.
-- [ ] **T546 — Link has a button.** "Make this a link…" is only on the
+- [x] **T546 — Link has a button.** "Make this a link…" is only on the
   right-click menu; a Link button (Ctrl+K) on Text and the mini toolbar.
+  *Done 2026-09-30.* A Link tile in its own Links group on Text (after
+  Write, and in every ribbon layout), Ctrl+K and Link on the mini toolbar
+  are one door: highlighted words are linked, else the one selected object
+  (titles too), and with nothing selected Ctrl+K stays the rail's Find
+  (T534). Words are a link of their own, as in PowerPoint: an <a> in the
+  rich text, href for an allowed address or data-sid for a slide, the only
+  anchors the sanitizer keeps; a bare example.org is taken as https. The
+  .pptx writes run hyperlinks (a relationship each, slide jumps too) and
+  the reader brings them back as linked words, where it used to keep only
+  the first as a click on the box. In the editor a click on linked words
+  selects; presenting, it follows (a Markdown box's [words](#7) too).
+  Found driving it and fixed: presenting, .an-item took no pointer, so a
+  linked object (T118), a clip (T321) and tap-to-enlarge had never
+  answered a mouse click; and askText focused its field a tick late, so an
+  answer typed straight after Ctrl+K went into the box over the words.
 - [ ] **T547 — Text in columns.** One, two or three columns in a box, with
   a gap, exported as the .pptx column count.
 

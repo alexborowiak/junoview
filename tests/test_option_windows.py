@@ -276,7 +276,9 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
     assert out.count('data-tab="images" data-fold-ic=') == 4
     # Text is now only its compact write gallery; presentation-wide styles
     # moved to Home because they also govern colours and non-text objects.
-    assert out.count('data-tab="text" data-fold-ic=') == 1
+    # T546: ...and Links, Link's own group, beside Write
+    assert out.count('data-tab="text" data-fold-ic=') == 2
+    assert 'data-tab="text" data-fold-ic="link"' in out
     assert 'data-tab="insert"' not in out
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it

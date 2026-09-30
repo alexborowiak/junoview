@@ -58,7 +58,8 @@ def test_the_pptx_anchors_and_does_not_autofit():
 
 
 def test_an_imported_anchor_keeps_its_place(out):
-    imp = out.split("  function pptTextAnnot(it){")[1].split("\n  }\n")[0]
+    # (T546 gave it the import's slide ids, for links on words)
+    imp = out.split("  function pptTextAnnot(it,sids){")[1].split("\n  }\n")[0]
     assert "if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){" in imp
     assert "a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}" \
         in imp

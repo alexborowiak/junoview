@@ -205,9 +205,23 @@
     dlg.classList.toggle('over-design',!!$('#deck-design'));
     dlg.classList.toggle('ask-form',!!rows);
     dlg.hidden=false;
-    setTimeout(function(){if(!field) return;field.focus();
+    /* T546: NOW, and again a tick later only if the focus went. Chrome
+       runs queued key input ahead of timers, so the answer typed straight
+       after Ctrl+K landed in the text box being edited -- over the
+       highlighted words -- and not in the question (driven). The late
+       grab is for a caller inside a click, whose own default takes the
+       focus back; it must not run when the focus stayed, or its select()
+       would take whatever had been typed meanwhile and the next key
+       would replace it. */
+    function grab(){
+      if(!field) return;
+      try{field.focus();}catch(e){}
       if(!multi&&o.select!==false&&field.select&&field.type!=='color')
-        field.select();},0);
+        field.select();
+    }
+    grab();
+    setTimeout(function(){
+      if(field&&document.activeElement!==field) grab();},0);
     if(askWired) return;
     askWired=true;
     function done(v,why){
@@ -2195,7 +2209,8 @@
         if(!t.trim()&&!cur) return;
         if(!cur) para('',0,0);
         cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
-          color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||''});
+          color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||'',
+          link:st.link||null});
         return;
       }
       if(n.nodeType!==1) return;
@@ -2214,6 +2229,17 @@
         var hr=rgbOf(n.style.backgroundColor);
         if(hr) s2.hl='#'+[hr[0],hr[1],hr[2]].map(function(v){
           return ('0'+Math.round(v).toString(16)).slice(-2);}).join('');
+      }
+      /* T546: linked words -- a web address, or a slide by its index,
+         turned into an output slide number with the objects' links */
+      if(tag==='a'){
+        var ws=n.getAttribute('data-sid'),wh=mdHref(n.getAttribute('href')||'');
+        /* a Markdown box's [words](#7) says its slide by number */
+        var wn=n.getAttribute('data-slide');
+        if(ws){var wi=linkSlideIdx(ws); if(wi>=0) s2.link={to:'slide',si:wi};}
+        else if(wn&&/^\d+$/.test(wn)&&+wn>=1&&+wn<=(pres.slides||[]).length)
+          s2.link={to:'slide',si:+wn-1};
+        else if(wh&&wh.charAt(0)!=='#') s2.link={to:'url',href:wh};
       }
       if(tag==='br'){cur=null;return;}
       var hd=/^h([1-6])$/.exec(tag);
@@ -2774,6 +2800,14 @@
           if(it.link&&it.link.to==='slide')
             it.link=(it.link.si in firstOut)
               ?{to:'slide',slide:firstOut[it.link.si]}:null;
+          /* T546: and the words' own */
+          (it.paras||[]).forEach(function(p){
+            (p.runs||[]).forEach(function(r){
+              if(r.link&&r.link.to==='slide')
+                r.link=(r.link.si in firstOut)
+                  ?{to:'slide',slide:firstOut[r.link.si]}:null;
+            });
+          });
         });
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:tokVal(ent.s.border.c)||'#39a9c0',

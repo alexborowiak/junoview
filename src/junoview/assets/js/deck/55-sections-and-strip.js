@@ -2396,6 +2396,8 @@
       return applyCase('next');
     if(!(e.ctrlKey||e.metaKey)||e.altKey) return false;
     var k=e.key;
+    /* T546: Ctrl+K links the highlighted words, or the box */
+    if(!e.shiftKey&&(k==='k'||k==='K')) return linkNow();
     /* T544: Ctrl+Space clears the formatting -- of words: the eraser is
        shown for text alone, and a table's key must not press it unseen */
     if(!e.shiftKey&&(k===' '||e.code==='Space')){
@@ -2457,6 +2459,10 @@
       return pptClick(e.shiftKey?'#fmt-front':'#fmt-forward');
     if(e.code==='BracketLeft'&&any)
       return pptClick(e.shiftKey?'#fmt-back':'#fmt-backward');
+    /* T546: Ctrl+K links what is selected, as PowerPoint's does; with
+       nothing selected the key stays the rail's Find (app.js asks
+       SemDeckLinkable before it takes it) */
+    if(!e.shiftKey&&(e.key==='k'||e.key==='K')&&any) return linkNow();
     if(!pptTextish()) return false;
     if(!e.shiftKey&&(e.key==='b'||e.key==='B')) return pptClick('#fmt-bold');
     if(!e.shiftKey&&(e.key==='i'||e.key==='I')) return pptClick('#fmt-ital');

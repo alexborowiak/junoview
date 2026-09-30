@@ -292,6 +292,9 @@ window.JunoPptx = (function () {
     if (item.hl) body += '<a:highlight><a:srgbClr val="'
       + hex(item.hl, 'FFFF00') + '"/></a:highlight>';
     if (item.font) body += '<a:latin typeface="' + esc(item.font) + '"/>';
+    /* T546: a link on these words, after the typeface as the schema
+       orders it; its relationship was made with the slide's (below) */
+    if (item._hlink) body += item._hlink;
     return '<a:' + tag + out + '>' + body + '</a:' + tag + '>';
   }
 
@@ -310,6 +313,7 @@ window.JunoPptx = (function () {
     else if (run.sub) r.baseline = -25000;
     if (run.color) r.color = run.color;
     r.hl = run.hl || '';
+    r._hlink = run._hlink || '';
     if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
     return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
   }
@@ -1312,6 +1316,26 @@ window.JunoPptx = (function () {
           item._link = '<a:hlinkClick r:id="' + srid
             + '" action="ppaction://hlinksldjump"/>';
         }
+        /* T546: links on words, one relationship each, the same two
+           kinds as a whole shape's */
+        (item.paras || []).forEach(function (pa) {
+          (pa.runs || []).forEach(function (run) {
+            run._hlink = '';
+            var l = run.link;
+            if (l && l.to === 'url' && l.href) {
+              var wrid = 'rIdH' + (rels.length + 1);
+              rels.push({ id: wrid, type: DOC_NS + '/relationships/hyperlink',
+                target: l.href, mode: 'External' });
+              run._hlink = '<a:hlinkClick r:id="' + wrid + '"/>';
+            } else if (l && l.to === 'slide' && l.slide) {
+              var wsrid = 'rIdH' + (rels.length + 1);
+              rels.push({ id: wsrid, type: DOC_NS + '/relationships/slide',
+                target: 'slide' + l.slide + '.xml' });
+              run._hlink = '<a:hlinkClick r:id="' + wsrid
+                + '" action="ppaction://hlinksldjump"/>';
+            }
+          });
+        });
         var emitted = body.length;
         if (item.t === 'text') {
           body += textShape(item, id, page);

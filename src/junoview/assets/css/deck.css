@@ -1907,6 +1907,8 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
 .rbn-write{order:6;}
+/* T546: Links follows Write on the same rung, by source order */
+.rbn-links{order:6;}
 /* Shapes sit between Write and Draw (T197) */
 .rbn-shapes{order:6;}
 .rbn-draw{order:6;}
@@ -4272,6 +4274,15 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   top:2px;font:600 9px/1 var(--mono);color:inherit;opacity:.9;}
 .an-item{pointer-events:none;}
 .deck.editing .an-item{pointer-events:auto;}
+/* T546: WHAT A CLICK MEANS SOMETHING ON, WHILE PRESENTING. An item takes
+   no pointer so a click anywhere advances -- and so the four things the
+   playback click handler claims were never reached by a mouse: a linked
+   object (T118), linked words, a clip (T321) and, with tap-to-enlarge
+   on, any item. Found driving T546: a click on a link moved the talk on. */
+.deck:not(.editing) .an-linked,
+.deck:not(.editing) .an-tx a,
+.deck:not(.editing) .an-video,
+.deck:not(.editing) .slide.tapzoom .an-item{pointer-events:auto;}
 /* the corner is a DECK TOKEN (T12): one value, written onto the slide
    as --tk-rad, so every drawn box follows it and none of them stores a
    radius of its own. The literal is the fallback for anything rendered
@@ -5708,6 +5719,10 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .an-md hr{border:0;border-top:.08em solid currentColor;opacity:.4;
   margin:.5em 0;}
 .an-md a{color:inherit;text-decoration:underline;}
+/* T546: linked words wear their box's colour, underlined, as a Markdown
+   box's links do; a pointer only where a click follows them */
+.an-tx a{color:inherit;text-decoration:underline;}
+.deck:not(.editing) .an-tx a{cursor:pointer;}
 /* the editor's cheat sheet, under the source box */
 .md-help{font-size:11px;line-height:1.7;color:#54677a;padding:8px 2px 0;}
 .md-help b{font-weight:600;color:#28394a;}

@@ -208,8 +208,6 @@ _LOST_TEXT = {
                "— each box takes the size of its first words",
     "levels": "{n} text box{es} with indented bullet levels — every "
               "bullet arrives at the first level",
-    "runlink": "{n} link{s} on words inside a text box — each box "
-               "takes its first link as a click on the whole box",
     "hiddenobj": "{n} hidden object{s} — left out",
     "merged": "{n} merged table cell{s} — split back into single "
               "cells",
@@ -680,11 +678,13 @@ class _TextReader:
     """One shape's words, with the formatting each run resolves to."""
 
     def __init__(self, ctx: _Ctx, master: _Master, layout: _Layout,
-                 slide_part: str) -> None:
+                 slide_part: str, slide_parts: list[str] | None = None) -> None:
         self.ctx = ctx
         self.master = master
         self.layout = layout
         self.slide_part = slide_part
+        # T546: a link on words can jump to a slide, named by its part
+        self.slide_parts = slide_parts or []
 
     def read(self, sp: ET.Element, kind: str, ph_shape_chain: list,
              txbody: ET.Element | None = None) -> dict | None:
@@ -770,11 +770,11 @@ class _TextReader:
                 self.ctx.tally.add("gradtext")
                 break
         font = self.ctx.font(_first(srcs, "a:latin"))
-        href = ""
+        href, jump = "", -1
         if rpr is not None:
             hl = rpr.find("a:hlinkClick", NS)
             if hl is not None:
-                href = self._href(hl)
+                href, jump = self._href(hl)
         out = {"t": text,
                "sizePct": self.ctx.sz(round(_int(sz, 0) * scale))
                if sz else 0.0,
@@ -798,17 +798,28 @@ class _TextReader:
             out["op"] = round(alpha, 3)
         if href:
             out["href"] = href
+        elif jump >= 0:
+            out["jump"] = jump          # T546: words that go to a slide
         return out
 
-    def _href(self, hl: ET.Element) -> str:
+    def _href(self, hl: ET.Element) -> tuple[str, int]:
+        """A link on words: (web address, -1), or ("", slide index) for a
+        jump to another slide of this deck, or ("", -1)."""
         rid = hl.get(f"{{{_R}}}id")
         if not rid:
-            return ""
+            return "", -1
         got = self.ctx.pkg.rels(self.slide_part).get(rid)
-        if not got or not got[2]:
-            return ""
+        if not got:
+            return "", -1
+        if "hlinksldjump" in (hl.get("action") or "") and not got[2]:
+            if got[1] in self.slide_parts:
+                return "", self.slide_parts.index(got[1])
+            return "", -1
+        if not got[2]:
+            return "", -1
         url = got[1]
-        return url if re.match(r"^(https?://|mailto:)", url, re.I) else ""
+        ok = re.match(r"^(https?://|mailto:)", url, re.I)
+        return (url if ok else ""), -1
 
 
 def _anchor(bp: ET.Element | None, chain_shapes: list) -> str:
@@ -965,7 +976,7 @@ class _SlideReader:
         self.lost = lost
         self.items: list[dict] = []
         self.spids: dict[int, list[int]] = {}      # cNvPr id -> item idxs
-        self.text = _TextReader(ctx, master, layout, part)
+        self.text = _TextReader(ctx, master, layout, part, slide_parts)
 
     # -- the tree -----------------------------------------------------------
 
@@ -1117,8 +1128,6 @@ class _SlideReader:
             self.lost.add("mixsize")
         if any(p["lvl"] > 0 and p["runs"] for p in paras):
             self.lost.add("levels")
-        if sum(1 for r in runs if r.get("href")) > 1:
-            self.lost.add("runlink")
         size = first["sizePct"] or (
             self.ctx.sz(4400) if kind == "title" else self.ctx.sz(1800))
         item: dict[str, Any] = dict(box)

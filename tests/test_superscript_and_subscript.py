@@ -23,8 +23,9 @@ from junoview import assets
 
 
 def test_the_sanitizer_keeps_them(out):
-    assert "ul:1,ol:1,li:1,sup:1,sub:1};" in out
-    assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub')" in out
+    # (T546 added the link on words after them)
+    assert "ul:1,ol:1,li:1,sup:1,sub:1," in out
+    assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub,a')" in out
 
 
 def test_the_doors_and_the_keys(out):

@@ -753,8 +753,15 @@
       if(mode==='view'){
         /* click anywhere on the slide advances the build / next slide */
         slideEl.style.cursor='pointer';
+        /* T546: tap-to-enlarge makes every item a target (deck.css) */
+        slideEl.classList.toggle('tapzoom',!!pres.tapzoom);
         slideEl.addEventListener('keydown',linkKey);
         slideEl.addEventListener('click',function(e){
+          /* T546: LINKED WORDS, before the guard below lets any <a> do
+             its own thing -- which for these would be to take this
+             window to the page, or to a hash the app routes on */
+          var wl=e.target.closest&&e.target.closest('.an-tx a');
+          if(wl&&followLink(wl)){e.preventDefault();e.stopPropagation();return;}
           if(e.target.closest&&e.target.closest('button,a,input,select'))
             return;
           /* Alt+click blows the thing under the pointer up instead of
@@ -2181,7 +2188,8 @@
      sanitiser: bold inside a bullet, or a sub-level, silently vanished
      (2026-08-20, user: "the bullet list on/off is cursed"). */
   var RICH_TAGS={span:1,div:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1,
-    ul:1,ol:1,li:1,sup:1,sub:1};   /* T541: m², CO₂ */
+    ul:1,ol:1,li:1,sup:1,sub:1,    /* T541: m², CO₂ */
+    a:1};                          /* T546: a link on words */
   function sanitizeRich(html){
     /* parse into an INERT template fragment — no image loads, no inline event
        handlers ever run (unlike a live-document div), so merely sanitising
@@ -2235,7 +2243,17 @@
           while(n.firstChild) sTag.appendChild(n.firstChild);
           node.replaceChild(sTag,n);n=sTag;tag='s';
         }
-        if(!RICH_TAGS[tag]){                       /* unwrap unknown tags */
+        /* T546: A LINK ON WORDS goes somewhere this deck may follow -- a
+           web address mdHref allows, or a slide by its sid -- or it is
+           just words, and is unwrapped like any other unknown tag */
+        var aHref='',aSid='';
+        if(tag==='a'){
+          aHref=mdHref(n.getAttribute('href')||'');
+          if(aHref.charAt(0)==='#') aHref='';
+          aSid=String(n.getAttribute('data-sid')||'');
+          if(!/^[A-Za-z0-9_-]{1,40}$/.test(aSid)) aSid='';
+        }
+        if(!RICH_TAGS[tag]||(tag==='a'&&!aHref&&!aSid)){  /* unwrap unknown tags */
           var first=n.firstChild;
           while(n.firstChild) node.insertBefore(n.firstChild,n);
           node.removeChild(n);
@@ -2262,6 +2280,8 @@
         names.forEach(function(nm){n.removeAttribute(nm);});
         if(color) n.style.color=color;
         if(hlBg){n.style.backgroundColor=hlBg;n.setAttribute('data-hl','1');}
+        if(aSid) n.setAttribute('data-sid',aSid);
+        else if(aHref) n.setAttribute('href',aHref);
         if(listStyle&&listKind(listStyle)
            &&listIsOrdered(listStyle)===(tag==='ol'))
           n.setAttribute('data-list',listStyle);
@@ -2290,7 +2310,7 @@
          just escaped from was rebuilt from a.list on the next render
          (T72, 2026-08-29). */
       rich:hasList||!!tpl.content.querySelector(
-        'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub')};
+        'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub,a')};
   }
   /* ---- PASTED CODE (T92) ----------------------------------------------
      "Like how Slack you can paste code and it formats" (2026-08-29,
@@ -3873,6 +3893,27 @@
   }
   function followLink(el){
     if(!el) return false;
+    /* T546: words carry their target on the anchor itself -- a slide by
+       sid (the editor's), by number (a Markdown box's [words](#7)), or a
+       web address */
+    if(el.tagName==='A'){
+      var wsid=el.getAttribute('data-sid'),wnum=el.getAttribute('data-slide');
+      if(wsid){
+        var wi=linkSlideIdx(wsid);
+        if(wi<0) toast('That link points at a slide that is no longer here');
+        else go(wi);
+        return true;
+      }
+      if(wnum&&/^\d+$/.test(wnum)){
+        if(+wnum>=1&&+wnum<=(pres.slides||[]).length) go(+wnum-1);
+        else toast('There is no slide '+wnum+' in this deck');
+        return true;
+      }
+      var wh=mdHref(el.getAttribute('href')||'');
+      if(!wh||wh.charAt(0)==='#') return false;
+      window.open(wh,'_blank','noopener,noreferrer');
+      return true;
+    }
     if(el.getAttribute('data-link')==='url'){
       var h=el.getAttribute('data-href');
       if(!h) return false;

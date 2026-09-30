@@ -636,7 +636,9 @@ def test_an_internal_jump_follows_the_slide_not_its_number(out):
     -- and never stored."""
     assert "if(l.to==='slide'&&typeof l.sid==='string'&&l.sid) {" in out
     assert "function linkSlideIdx(sid){" in out
-    assert "a.link={to:'slide',sid:pres.slides[idx].sid};" in out
+    # T546: one reading of a typed link for an object and for words
+    assert "return {to:'slide',sid:pres.slides[idx].sid};" in out
+    assert "    a.link=t;" in out
     assert "ensureSids();" in out
 
 

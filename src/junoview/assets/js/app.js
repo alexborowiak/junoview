@@ -321,6 +321,9 @@
       if(!(e.ctrlKey||e.metaKey)) return;
       if(String(e.key).toLowerCase()!=='k') return;
       if(document.body.classList.contains('doc-presenting')) return;
+      /* T546: in the slide editor with something selected, Ctrl+K is
+         PowerPoint's Link -- the deck's own key handler takes it */
+      if(window.SemDeckLinkable&&window.SemDeckLinkable()) return;
       e.preventDefault();
       f.focus();f.select();
     });

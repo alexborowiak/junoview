@@ -56,8 +56,10 @@
     return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;');
   }
-  /* one run as rich HTML, wearing only what the whole box does not */
-  function pptRunHtml(r,box){
+  /* one run as rich HTML, wearing only what the whole box does not.
+     T546: a link on the words stays a link on the words -- a web
+     address, or a slide by the sid the import gives it */
+  function pptRunHtml(r,box,sids){
     var h=pptEsc(r.t).replace(/\n/g,'<br>');
     if(!h) return '';
     if(r.b&&!box.b) h='<b>'+h+'</b>';
@@ -70,6 +72,10 @@
       h='<span data-hl="1" style="background-color:'+r.hl+'">'+h+'</span>';
     if(r.color&&r.color!==(box.color||''))
       h='<span style="color:'+r.color+'">'+h+'</span>';
+    var wh=r.href?mdHref(String(r.href)):'';
+    if(wh&&wh.charAt(0)!=='#') h='<a href="'+pptEsc(wh)+'">'+h+'</a>';
+    else if(r.jump!=null&&sids&&sids[r.jump])
+      h='<a data-sid="'+sids[r.jump]+'">'+h+'</a>';
     return h;
   }
   /* a text item -> a text annot. PLAIN when every run agrees with the
@@ -77,7 +83,7 @@
      inside it, which is the deck's own model for exactly that
      (sanitizeRich, listOf) -- so "then bold and red" stays bold and red
      and stays editable, rather than arriving as Markdown source. */
-  function pptTextAnnot(it){
+  function pptTextAnnot(it,sids){
     var a={k:'text',x:it.x,y:it.y,w:it.w,h:it.h,
       text:String(it.text||''),size:it.sizePct||2.6};
     if(it.color) a.color=it.color;
@@ -104,11 +110,12 @@
       return p.runs.some(function(r){
         return (!!r.b!==!!it.b)||(!!r.i!==!!it.i)||(!!r.u!==!!it.u)
           ||(!!r.strike!==!!it.strike)||!!r.sup||!!r.sub||!!r.hl
+          ||!!r.href||r.jump!=null
           ||((r.color||'')!==(it.color||''));
       });
     });
     function line(p){
-      return p.runs.map(function(r){return pptRunHtml(r,it);}).join('');
+      return p.runs.map(function(r){return pptRunHtml(r,it,sids);}).join('');
     }
     function plain(p){
       return p.runs.map(function(r){return String(r.t||'');}).join('');
@@ -126,11 +133,6 @@
       if(anyList) a.text=paras.map(function(p){
         return (p.bullet?'• ':'')+plain(p);}).join('\n');
     }
-    /* a link on words inside the box: the box takes the first one */
-    var href='';
-    paras.forEach(function(p){p.runs.forEach(function(r){
-      if(!href&&r.href) href=String(r.href);});});
-    if(href&&!it.link) a.link={to:'url',href:href};
     return a;
   }
   /* line weight arrives as a percentage of the page height, the same
@@ -144,7 +146,7 @@
     if(!it||!it.t) return null;
     var a=null,st;
     if(it.t==='text'){
-      a=pptTextAnnot(it);
+      a=pptTextAnnot(it,sids);
     } else if(it.t==='rect'){
       a={k:'rect',x:it.x,y:it.y,w:it.w,h:it.h,shape:it.shape||'rect',
         color:it.color||'#000000',sw:pptSw(it.swPct,it.noline)};

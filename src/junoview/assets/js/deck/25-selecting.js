@@ -2135,35 +2135,156 @@
      and a slide number is resolved to that slide's `sid` HERE -- once,
      while the number still means what the author meant -- so the stored
      link survives every later reorder (T118). */
-  function setObjLink(i){
-    var a=(pres.slides[cur].annots||[])[i]; if(!a) return;
-    var was=a.link?(a.link.to==='url'?a.link.href
-      :('slide '+(linkSlideIdx(a.link.sid)+1))):'';
-    askText({title:'Where clicking this goes, while you present',
-      label:'A link (https://\u2026 or mailto:\u2026), or a slide\u2019s '
-        +'number, like 7',value:was,placeholder:'https://\u2026 or 7',
-      note:'Empty removes the link',ok:'Link'},function(got){
-    if(got===null) return;
-    got=String(got).trim();
-    if(!got){delete a.link;markDirty();renderSlide();
-      toast('Link removed');return;}
+  /* WHERE A TYPED LINK GOES (T546: one reading for an object and for
+     words). A slide's number is a jump held by sid; anything else must
+     be an address mdHref allows -- and a bare www.example.org or
+     example.org/page is taken to mean https, as PowerPoint takes it.
+     null for empty (remove the link), {err} for something unusable. */
+  function linkTarget(got){
+    got=String(got||'').trim();
+    if(!got) return null;
     var n=got.match(/^(?:slide\s*)?(\d+)$/i);
     if(n){
       var idx=parseInt(n[1],10)-1;
-      if(idx<0||idx>=(pres.slides||[]).length){
-        toast('There is no slide '+n[1]);return;}
+      if(idx<0||idx>=(pres.slides||[]).length)
+        return {err:'There is no slide '+n[1]};
       ensureSids();
-      a.link={to:'slide',sid:pres.slides[idx].sid};
-    } else {
-      var h=mdHref(got);
-      if(!h||h.charAt(0)==='#'){
-        toast('That is not a link this can follow \u2014 http, https '
-          +'and mailto only');return;}
-      a.link={to:'url',href:h};
+      return {to:'slide',sid:pres.slides[idx].sid};
     }
+    if(/^(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:[\/?#]\S*)?$/i.test(got))
+      got='https://'+got;
+    var h=mdHref(got);
+    if(!h||h.charAt(0)==='#')
+      return {err:'That is not a link this can follow \u2014 http, https '
+        +'and mailto only'};
+    return {to:'url',href:h};
+  }
+  var LINK_LABEL='A link (https://\u2026 or mailto:\u2026), or a slide\u2019s '
+    +'number, like 7';
+  /* `i` is an item's index, or 't' / 's' for a title slide's two lines,
+     which carry a link the same way (applyCommon marks them) */
+  function setObjLink(i){
+    var a=annotByIdx(pres.slides[cur],i); if(!a) return;
+    var was=a.link?(a.link.to==='url'?a.link.href
+      :('slide '+(linkSlideIdx(a.link.sid)+1))):'';
+    askText({title:'Where clicking this goes, while you present',
+      label:LINK_LABEL,value:was,placeholder:'https://\u2026 or 7',
+      note:'Empty removes the link',ok:'Link'},function(got){
+    if(got===null) return;
+    var t=linkTarget(got);
+    if(!t){delete a.link;markDirty();renderSlide();
+      toast('Link removed');return;}
+    if(t.err){toast(t.err);return;}
+    a.link=t;
     markDirty();renderSlide();
     toast('Linked to '+linkLabel(a.link));
     });
+  }
+  /* ---- T546: LINKED WORDS ------------------------------------------------
+     Highlighted words become an <a> in the box's rich text: href for a
+     web address, data-sid for a slide -- the two the sanitizer keeps.
+     The question takes the focus, and a box that loses the focus stops
+     being edited, so the highlight is kept as character offsets and put
+     back in the box's editor (whichever element holds it by then) when
+     the answer comes; the browser's own createLink / unlink does the
+     cutting, and richSelectionEdit the committing. */
+  function wordLinkAt(el){
+    var sel=window.getSelection();
+    if(!sel||!sel.rangeCount) return null;
+    var n=sel.getRangeAt(0).commonAncestorContainer;
+    if(n&&n.nodeType===3) n=n.parentNode;
+    var a=(n&&n.closest)?n.closest('a'):null;
+    return (a&&el.contains(a))?a:null;
+  }
+  function linkWords(el){
+    var sel=window.getSelection();
+    var inA=wordLinkAt(el);
+    /* a bare caret inside a link means that link's words */
+    if(sel.isCollapsed&&inA){
+      var r0=document.createRange();r0.selectNodeContents(inA);
+      sel.removeAllRanges();sel.addRange(r0);
+    }
+    if(sel.isCollapsed) return false;
+    var item=el.closest?el.closest('.an-item[data-idx]'):null;
+    var idx=item?item.getAttribute('data-idx'):null;
+    var at=caretAt(el),words=sel.toString();
+    var was='';
+    if(inA) was=inA.getAttribute('data-sid')
+      ?('slide '+(linkSlideIdx(inA.getAttribute('data-sid'))+1))
+      :(inA.getAttribute('href')||'');
+    function again(){
+      var layer=stage.querySelector('.annot-layer');
+      var nt=(layer&&idx!=null)?layer.querySelector('.an-item[data-idx="'
+        +idx+'"] .an-tx'):null;
+      if(!nt) return null;
+      if(nt._beginEdit) nt._beginEdit();
+      nt.focus();caretPut(nt,at);
+      return nt;
+    }
+    askText({title:'Link these words',
+      what:'\u201c'+words.slice(0,60)+(words.length>60?'\u2026':'')
+        +'\u201d \u2014 while you present, a click on them opens the page '
+        +'or goes to the slide.',
+      label:LINK_LABEL,value:was,placeholder:'https://\u2026 or 7',
+      note:'Empty removes the link',ok:'Link'},function(got){
+      if(got===null){again();return;}
+      var t=linkTarget(got);
+      if(t&&t.err){toast(t.err);again();return;}
+      if(!again()) return;
+      var mark='https://jv-link.invalid/'+Date.now().toString(36);
+      richSelectionEdit(function(){
+        var ed=activeTextEditable();
+        if(!t){try{document.execCommand('unlink',false,null);}catch(e){}
+          return;}
+        try{document.execCommand('createLink',false,t.href||mark);}
+        catch(e){}
+        if(t.sid&&ed) $$('a',ed).forEach(function(x){
+          if(x.getAttribute('href')!==mark) return;
+          x.removeAttribute('href');x.setAttribute('data-sid',t.sid);});
+      });
+      toast(t?('Linked to '+linkLabel(t)):'Link removed');
+    });
+    return true;
+  }
+  /* THE ONE DOOR: the Text tile, Ctrl+K and the mini toolbar. Words if
+     any are highlighted (or the caret is in a link), otherwise the one
+     selected object. False when there is nothing to link. */
+  function linkNow(){
+    var el=activeTextEditable(),sel=window.getSelection();
+    if(el&&sel&&sel.rangeCount&&el.contains(sel.anchorNode)
+       &&(!sel.isCollapsed||wordLinkAt(el))) return linkWords(el);
+    if(selAnnot==='t'||selAnnot==='s'){setObjLink(selAnnot);return true;}
+    var ids=selIdxs();
+    if(ids.length===1){setObjLink(ids[0]);return true;}
+    if(ids.length>1){
+      toast('Select one object to link \u2014 or highlight words in a '
+        +'text box');
+      return true;
+    }
+    return false;
+  }
+  function linkBoot(){
+    var b=$('#tx-link');
+    if(b){
+      b.addEventListener('mousedown',function(e){
+        if(activeTextEditable()) e.preventDefault();});
+      b.addEventListener('click',function(){
+        if(!linkNow()) toast('Select an object, or highlight words in a '
+          +'text box, to link it');
+      });
+    }
+    /* in the editor a click on linked words selects and types, never
+       follows: the anchor would otherwise take this window with it */
+    stage.addEventListener('click',function(e){
+      if(mode!=='edit') return;
+      var a=e.target.closest&&e.target.closest('.an-tx a');
+      if(a) e.preventDefault();
+    },true);
+    /* the rail's Find owns Ctrl+K until there is something to link */
+    window.SemDeckLinkable=function(){
+      return !deckEl.hidden&&mode==='edit'
+        &&(selAnnot!==null||selIdxs().length>0);
+    };
   }
   function setAltText(idxs){
     var ans=(pres.slides[cur].annots||[]);

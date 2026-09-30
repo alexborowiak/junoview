@@ -2129,8 +2129,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T544 (2026-09-30): ...and both sit with Bold in every ribbon layout.
 # T545 (2026-09-30): AutoCorrect as you type -- a new part, a Typing
 # group on Text with its switch, an icon, a help line.
-EXPECTED_MD5 = "bf33ec8a183e8ba917423d1c330286eb"
-EXPECTED_BYTES = 4683898
+# T546 (2026-09-30): Link has a button -- a Links group on Text, Ctrl+K,
+# the mini toolbar; links on words; presenting, links, clips and
+# tap-to-enlarge take a click; the ask dialog focuses at once.
+EXPECTED_MD5 = "1fc84922b7043d71d6a160483ed65fcc"
+EXPECTED_BYTES = 4697479
 
 
 def _render_example() -> str:

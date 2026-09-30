@@ -31,7 +31,8 @@
     ['#fmt-sup','x\u00b2','Superscript (Ctrl+Shift+=)',''],
     ['#fmt-sub','x\u2082','Subscript (Ctrl+=)',''],
     ['#fmt-smaller','A−','Smaller text (Ctrl+Shift+<)',''],
-    ['#fmt-bigger','A+','Bigger text (Ctrl+Shift+>)','']
+    ['#fmt-bigger','A+','Bigger text (Ctrl+Shift+>)',''],
+    ['#tx-link','Link','Link the highlighted words (Ctrl+K)','mini-link']
   ];
   var miniEl=null,miniPend=false;
   function miniBuild(){
