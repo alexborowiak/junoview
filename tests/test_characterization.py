@@ -2152,8 +2152,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and no longer reads the ribbon's floor -- the ribbon spans the window
 # above the strip since T514 -- so the eight-tab walk that measured it is
 # gone and the handle widens the column again.
-EXPECTED_MD5 = "5101e78eca15902617242d5ea37efd4d"
-EXPECTED_BYTES = 4715435
+# T583 (2026-09-30): timingState's early answer carries hlin:false, so
+# selecting a text box with no entrance no longer throws in timingSync.
+EXPECTED_MD5 = "84b44f43f1edd783239f7e18201957c0"
+EXPECTED_BYTES = 4715802
 
 
 def _render_example() -> str:
