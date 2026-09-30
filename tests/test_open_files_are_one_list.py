@@ -11,6 +11,12 @@ notebook and presentation was listed twice, and in the editor the side
 copy peeked out of the left edge over the tabs. Now: TABS across the top
 (the default, with Home, New and Open on the same row), or the LIST down
 the side (and no tab row at all). App > Open files switches.
+
+T602 (the same day) kept the one list and moved it: the tabs sit in the
+title row rather than a row of their own, New and Open are rows of File,
+and the App menu (with this choice in it) is a section of File too. The
+tests below that pinned T596's row are updated to that, and T602's own
+are in test_one_title_row.py.
 """
 
 from __future__ import annotations
@@ -57,37 +63,39 @@ def test_the_default_is_tabs_and_only_side_means_side():
 
 
 def test_the_tab_row_carries_the_side_panels_doors():
-    """Home before the tabs, New and Open after them -- and the row is the
-    first thing in the header, above the notebook's own lines, the way a
-    browser's tabs are above its page."""
+    """Home before the tabs. T596 had New and Open after them, on a row of
+    their own that was the first thing in the header; T602 put the tabs
+    in the title row (after File, Info and Reload, before Find) and New
+    and Open in File, which leads that row."""
     page = assets.page_template()
     head = page[page.index('<header class="apptop" id="apptop">'):]
     head = head[:head.index("</header>")]
     first = re.search(r"\n  <div class=\"([a-z-]+)\"", head).group(1)
-    assert first == "open-tabs-row", first
-    row = head[:head.index('<div class="nb-filebar"')]
-    home = row.index('id="ot-home"')
-    strip = row.index('id="top-tabstrip"')
-    new = row.index('id="ot-new"')
-    open_ = row.index('id="ot-open"')
-    assert home < strip < new < open_
+    assert first == "nb-filebar", first
+    bar = head[:head.index('<div class="appbar">')]
+    row = bar[bar.index('<div class="open-tabs-row"'):]
+    assert row.index('id="ot-home"') < row.index('id="top-tabstrip"')
+    assert 'id="ot-new"' not in page and "ot-doors" not in page
     # words plus icons, never icon-only (the UI invariant)
     assert '>{logo}<span class="btxt">Home</span></button>' in row
-    assert '><i data-ic="plus"></i> New &#9662;</button>' in row
-    assert '><i data-ic="open"></i> Open&#8230;</button>' in row
     # New makes the same four things the side panel's New made, by
-    # pressing the one real button for each
+    # pressing the one real button for each -- from File now
+    menu = bar[bar.index('id="app-file-menu"'):bar.index("</span>")]
     for real in ("pr-new", "pr-newpost", "pr-newview", "pr-newfold"):
-        assert f'data-for="{real}"' in row, real
+        assert f'data-for="{real}"' in menu, real
+    assert "Open a presentation&#8230;</button>" in menu
+    assert (bar.index('id="app-file"') < bar.index('id="file-dock"')
+            < bar.index('id="open-tabs-row"') < bar.index('id="doc-find"'))
     # no stray label: Home says where the row starts
     assert "open-tabs-label" not in page
 
 
 def test_both_app_menus_offer_the_one_choice():
+    # T602: both are File menus now
     for html in (assets.page_template(), assets.deck_html()):
         assert '<div class="dc-mhead">open files</div>' in html
         assert html.count('class="dc-mi jv-files-at"') == 2
-        assert ">As tabs across the top</button>" in html
+        assert ">As tabs along the top</button>" in html
         assert ">As a list down the side</button>" in html
 
 
@@ -134,9 +142,12 @@ def test_the_row_is_wired_from_the_boot_sequence():
     assert ("  tabRowBoot();               "
             "/* New and Open beside the tabs (T596) */") in deck
     body = deck.split("function tabRowBoot(){")[1].split("\n  }\n")[0]
-    assert "wireMenuToggle('ot-newwrap','ot-new','ot-newmenu');" in body
-    assert ("if(o) o.addEventListener('click',"
-            "function(){openPresentationHub();});") in body
+    # T602: New's rows and Open are wired in whichever File they are in
+    assert "['#app-file-menu','#dc-menu'].forEach(function(sel){" in body
+    assert "$$('.dc-mi[data-for]',menu).forEach(function(b){" in body
+    assert ("[['#ot-open','#app-file-menu'],['#mi-open','#dc-menu']]"
+            in body)
+    assert "if(menu) overlayHide(menu);openPresentationHub();});" in body
     js = assets.app_js()
     assert "if(h) h.addEventListener('click',function(){goHome(true);});" in js
 
@@ -146,11 +157,13 @@ def test_three_faults_found_on_the_way():
     the draft dot printed a literal backslash-2022; the reader's App menu
     stayed on screen after Esc or a pick (display:flex beat [hidden]);
     and the editor's header sat 430px in, behind the builder panel's
-    offset the full-window editor does not have."""
+    offset the full-window editor does not have. (T602 retired that last
+    fix with the thing it fixed: the reader's header is never shown over
+    the editor now, because the tabs are in the editor's own bar.)"""
     css = assets.app_css()
     assert 'content:" \\\\2022"' not in css
     assert 'content:" \\2022";color:var(--amber);}' in css
     deck_css = assets.deck_css()
     assert ".dc-menu[hidden]{display:none!important;}" in deck_css
-    assert ("body.slide-editing.creating-docs .apptop{left:var(--presrail-w);}"
-            in deck_css)
+    assert "body.slide-editing .apptop{display:none;}" in deck_css
+    assert "body.slide-editing.creating-docs .apptop" not in deck_css

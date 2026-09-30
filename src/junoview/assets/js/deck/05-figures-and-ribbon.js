@@ -2490,6 +2490,10 @@
            next window resize (driven). Its children are fixed markup,
            so watching them once at boot is watching every label. */
         [].forEach.call(qb.children,function(c){qro.observe(c);});
+        /* T602: and the open tabs, which app.js moves into this bar
+           while the editor is up and out again after: a tab opened or
+           closed changes the row's width without changing the bar's */
+        var otr=$('#open-tabs-row'); if(otr) qro.observe(otr);
       }
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything

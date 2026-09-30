@@ -369,13 +369,14 @@
      panel remains a simultaneous library view of those same live tabs",
      so every open notebook and presentation was listed twice -- and in
      the editor the side copy peeked out from the left edge on top of the
-     tabs. They are ONE list now, in one of two places: TABS across the
-     top (the default, with Home, New and Open on the same row, the way a
-     browser has them), or the LIST down the side (the side panel as it
-     was, and no tab row at all). App > Open files switches; the choice
-     is the person's, not the window's, so it is one key for every
-     project. The side panel's own collapse and auto-hide are unchanged
-     and only mean anything while it is the list. */
+     tabs. They are ONE list now, in one of two places: TABS along the
+     top (the default, with Home before them), or the LIST down the side
+     (the side panel as it was, and no tabs at all). File > Open files
+     switches; the choice is the person's, not the window's, so it is
+     one key for every project. The side panel's own collapse and
+     auto-hide are unchanged and only mean anything while it is the list.
+     T602 took New and Open off the tabs (they are rows of File) and the
+     tabs out of a row of their own (they sit in the title row). */
   var FILES_AT_KEY='junoview:openfiles';
   function filesAt(){
     var v=null;
@@ -404,7 +405,43 @@
       b.addEventListener('click',function(){setFilesAt(b.dataset.at);});});
     var h=$('#ot-home');
     if(h) h.addEventListener('click',function(){goHome(true);});
+    /* the body's class says which title row is on screen: watching it
+       catches every way into and out of the editor from one place */
+    if(window.MutationObserver) new MutationObserver(homeTabsRow)
+      .observe(document.body,{attributes:true,attributeFilter:['class']});
+    homeTabsRow();
     applyFilesAt();
+  }
+  /* ---- T602: THE TABS SIT IN THE TITLE ROW --------------------------
+     (2026-09-30, user: "there is to many layers to our ribbon ... Its too
+     much all the stuff that appears above the home, images etc. ribbon
+     ... the tabs is good, but is all just too much now".) The tabs are
+     not a row of their own: they sit in whichever title row is on screen
+     -- the reader's (File, Info, Reload, the tabs, Find) or, while the
+     slide editor is up, the editor's (File, Save, undo, Find, the tabs,
+     Present). One node, MOVED and never copied, so Home, every tab and
+     their handlers go with it (the rule the file bar's .railfile keeps). */
+  function homeTabsRow(){
+    if(!openTabsRow) return;
+    var at=document.body.classList.contains('slide-editing')
+      ?$('#deck-qat .qat-tabs-at'):$('#nb-filebar .nb-file-spacer');
+    if(!at||openTabsRow.nextSibling===at) return;
+    at.parentNode.insertBefore(openTabsRow,at);
+    keepTabInView();
+  }
+  /* the strip scrolls without a scrollbar (one in a button-high row drew
+     a white bar and made the row taller), so the tab on screen is kept
+     in view -- in the editor the presentation's, not the notebook's */
+  function keepTabInView(){
+    var strip=topTabstrip; if(!strip) return;
+    var cur=strip.querySelector(
+      document.body.classList.contains('slide-editing')
+        ?'.top-pres-tab.current':'.tab.current');
+    var sr=strip.getBoundingClientRect();
+    if(!cur||!sr.width) return;
+    var cr=cur.getBoundingClientRect();
+    if(cr.left<sr.left) strip.scrollLeft-=sr.left-cr.left;
+    else if(cr.right>sr.right) strip.scrollLeft+=cr.right-sr.right;
   }
   /* Home is lit while it is on screen -- the tab row stays up at Home
      whenever something is open, so there is a way back to it */
@@ -420,13 +457,14 @@
   function refreshOpenTabsRow(){
     var n=topTabstrip?topTabstrip.querySelectorAll('.tab').length:0;
     /* T596: as tabs, the row IS the list -- one open item included,
-       because Home, New and Open live on it now (T503 hid a single item
-       as "nothing useful", which was true only while the side panel was
-       carrying those). As a side list, there is no row at all. */
+       because Home lives on it (T503 hid a single item as "nothing
+       useful", which was true only while the side panel was carrying
+       Home). As a side list, there are no tabs at all. */
     var on=filesAt()==='top'&&n>0;
     if(openTabsRow) openTabsRow.hidden=!on;
     document.body.classList.toggle('tabs-row-on',on);
     syncHomeTab();
+    if(on) keepTabInView();
     if(APP.measureChrome) APP.measureChrome();
   }
   APP.refreshOpenTabsRow=refreshOpenTabsRow;
@@ -3036,6 +3074,14 @@
     });
     document.body.appendChild(m);
     var r=btn.getBoundingClientRect();
+    /* T602: Theme is a row of File, and the menu it sat in may have
+       closed before this is placed -- a zero box put the picker in the
+       window's corner. Place it under File instead. */
+    if(!r.width){
+      var wrap=btn.closest('.dc-menuwrap'),
+          door=wrap&&wrap.querySelector('[aria-haspopup="true"]');
+      if(door) r=door.getBoundingClientRect();
+    }
     m.style.top=(r.bottom+6)+'px';
     m.style.left=Math.max(8,Math.min(innerWidth-m.offsetWidth-8,
       r.right-m.offsetWidth))+'px';
@@ -3434,14 +3480,16 @@
      text:'Plot trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    {sel:'#ot-new,#pr-newbtn',title:'Build presentations',
-     text:'New makes a presentation or a poster, and Open finds one you '
-       +'made before; the ones you have open sit with your notebooks. Lay '
-       +'out slides, drop in cards from any open notebook, and present '
-       +'full screen.'},
-    {sel:'#help-btn',title:'Help & support',
-     text:'Full docs live here. If Junoview helps you, Support funds a '
-       +'hosted version with accounts — thank you!'}
+    /* T602: New, Open, How to use and Support are rows of File */
+    {sel:'#app-file,#pr-newbtn',title:'Build presentations',
+     text:'File > New makes a presentation or a poster, and File > Open '
+       +'finds one you made before; the ones you have open are tabs beside '
+       +'your notebooks. Lay out slides, drop in cards from any open '
+       +'notebook, and present full screen.'},
+    {sel:'#app-file,#help-btn',title:'Help & support',
+     text:'File > How to use has the full docs, and File > Theme the '
+       +'colours. If Junoview helps you, File > Support funds a hosted '
+       +'version with accounts — thank you!'}
   ];
   var tourI=0;
   function tourEl(step){

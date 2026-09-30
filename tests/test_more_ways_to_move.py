@@ -435,9 +435,10 @@ def test_the_frame_after_the_second_pass(out):
     assert "  function tourEl(step){" in out
     assert "  function tourVisible(){" in out
     assert "        try{tel.scrollIntoView({block:'center'});}catch(err){}" in out
-    # T596: New is on the tab row while the open files are tabs, and in
+    # T596: New is where the open files are -- T602 made it a row of
+    # File (the title row's first button) rather than of the tab row; in
     # the side panel while they are a list -- the first visible one wins
-    assert "    {sel:'#ot-new,#pr-newbtn',title:'Build presentations'," in out
+    assert "    {sel:'#app-file,#pr-newbtn',title:'Build presentations'," in out
 
 
 def test_the_small_ends_of_the_second_pass(out):

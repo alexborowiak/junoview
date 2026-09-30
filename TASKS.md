@@ -10776,3 +10776,46 @@ a presentation before opening it, and the colour themes' background.
   here" and Update put it back; Unlink kept the slides unlocked and Ctrl+Z
   relinked; a section made into a part stayed six slides; a new part
   opened saying "Part of Thesis chapter 3", which it could not include.
+
+## Group 21 — the 2026-09-30 title-row round
+
+The user, beside a screenshot of PowerPoint's title bar and tabs: "see on
+power point how their ribbon looks so much better than ours. Like there
+is to many layers to our ribbon, now expecitally since all this tab
+stuff ... Its too much all the sutff that appears aboe the home, images
+etc. ribbon. I feel like a lot of this stuff could is all just be put
+under the file button e.g. the app button, and stuff like new and open.
+Also the tabs is good, but is all just too much now."
+
+- [x] **T602 — One title row, the way PowerPoint has one.** T596 put the
+  open files in a row of their own at the top of the header, so the
+  editor stacked three bars over its ribbon (Home and the tabs with New
+  and Open; File, Save, the readout, Autosave, undo, Find, the name, App,
+  Full screen and Present; the ribbon's own tabs) and the reader three
+  over its document (the tabs; File info, Reload, App and Find; the
+  filters). Now each view has ONE title row. The tabs (Home first) are a
+  stretch of it: in the reader after File, Info and Reload and before
+  Find; in the editor after Find and before Full screen and Present,
+  moved there by app.js while the editor is up (one node, never a copy;
+  a MutationObserver on the body's class catches every way in and out).
+  New (its four rows), Open a presentation, Open a notebook, and the App
+  menu's rows (Theme, How to use, Support, and where the open files are
+  listed) are rows of File in both views -- the reader's App button is
+  its File button now, and the editor's App button is gone. The editor's
+  File is two columns (making and opening, and this presentation; export,
+  the app, and the two rows that lose work, still last). While the tabs
+  are in a row the tab names the document, so the reader's two-line file
+  identity and the editor's centred name step aside (the tab's tooltip is
+  the path; a double-click on the tab being edited renames it, as File >
+  Rename... still does); as a side list both come back as they were. In
+  the editor only the presentation's tab is lit, not the notebook behind
+  it; tabs give up width to an ellipsis down to 110px, and the save
+  readout gives up its width before they do; the strip scrolls without a
+  scrollbar and keeps the tab on screen in view. File > Theme... opens
+  under File (the row it was on has closed by then). The tour and the
+  help name File where they named New, Open and App. Driven at 1440, 1280
+  and 1100 wide: the editor's ribbon starts at 63px instead of 98px and
+  the reader's document 40px higher, one bar 35px high with Present on
+  screen at every width, four decks open, File's two columns, Theme,
+  rename by double-click, the side list and back, presenting and back,
+  Home (File and the tabs only), light theme.

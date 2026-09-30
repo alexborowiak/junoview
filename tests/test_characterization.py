@@ -2207,8 +2207,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 57-parts.js (the Parts view, a part's link on its section, the copy kept
 # up to date), File > Parts of this talk..., the corner's From/Part of
 # button, the part word on a divider, and the help says how.
-EXPECTED_MD5 = "062b432c80403f157a7a0f0f55fc8706"
-EXPECTED_BYTES = 4861687
+# T602 (2026-09-30): one title row -- the open tabs sit in the reader's
+# file bar and move into the editor's top bar (no row of their own), New,
+# Open and the App menu's rows are rows of File in both views (the
+# editor's in two columns), and the help names File where it named App.
+EXPECTED_MD5 = "be5391a02ad21870f05a916d8a42cbd1"
+EXPECTED_BYTES = 4869723
 
 
 def _render_example() -> str:

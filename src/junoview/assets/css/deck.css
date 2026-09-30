@@ -297,6 +297,24 @@ body.deck-open{overflow:hidden;}
 .deck-qat.qat-c2 .deck-status{display:none;}
 .deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
   scrollbar-width:thin;}
+/* ---- T602: THE OPEN TABS, IN THIS BAR ------------------------------
+   app.js moves #open-tabs-row in before the first spring while the
+   editor is up, so the editor has one title row rather than a row of
+   tabs over a row of controls. The tab names the presentation, so the
+   centred name steps aside while they are here; File > Rename... and a
+   double-click on the tab still rename it, and the edit field takes the
+   name's place while you type. Tabs and Home are the bar's own height. */
+.deck-qat:has(> .open-tabs-row:not([hidden])) .qat-name{display:none;}
+/* the save readout gives up its width before the tabs do: at 1440px
+   with four decks open it kept all 34ch while every tab was down to
+   "p...". Its width still comes from the room, never from its words, so
+   a new state does not move the controls after it (the reason it has a
+   fixed slot); the full words are its tooltip */
+.deck-qat:has(> .open-tabs-row:not([hidden])) .deck-status{
+  flex:0 4 34ch;width:auto;min-width:11ch;}
+.deck-qat .open-tabs-row .ot-home,
+.deck-qat .top-tabstrip .tab{height:var(--rbn-btn-h);}
+.deck-qat.qat-c1 .open-tabs-row{min-width:160px;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
    It lived in the ribbon, then in the top bar, and was wrong in both: it
    is a property of the CANVAS, so it belongs at the canvas. Bottom-right
@@ -1200,6 +1218,17 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
    reader's App menu, once opened, stayed on screen after Esc, an outside
    click or a pick, and a menu on the tab row showed before it was asked */
 .dc-menu[hidden]{display:none!important;}
+/* T602: File in TWO COLUMNS, since New, Open and the App menu's rows
+   joined it -- one column was taller than a laptop screen. Each column
+   is an ordinary column of rows; a window too narrow for two gets one,
+   and a window too short for the menu scrolls it rather than cut it */
+.dc-menu.dc-menu-cols{flex-direction:row;align-items:flex-start;gap:4px;
+  max-height:calc(100vh - 16px);overflow-y:auto;}
+.dc-menu-cols>.dc-mcol{display:flex;flex-direction:column;min-width:214px;}
+.dc-menu-cols>.dc-mcol+.dc-mcol{border-left:1px solid #ffffff14;
+  padding-left:4px;}
+@media (max-width:560px){.dc-menu.dc-menu-cols{flex-direction:column;}
+  .dc-menu-cols>.dc-mcol+.dc-mcol{border-left:0;padding-left:0;}}
 .dc-mi{text-align:left;background:none;border:none;color:#dce6ee;
   font-size:12.5px;font-family:var(--sans);padding:8px 11px;
   border-radius:5px;cursor:pointer;transition:background .12s;}
@@ -1379,28 +1408,17 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    filters) is hidden while editing — it acts on the hidden documents —
    and comes back for cell-picking / on Done. */
 /* The editor starts after the shared app rail, so its logo and live open
-   items remain the same navigation in both views. When there is more than
-   one open item, the ordinary horizontal tab row stays above it too; the
-   reader-only file and filter controls remain out of the editor. */
+   items remain the same navigation in both views. The reader's header is
+   not shown at all: T602 moved the open tabs INTO the editor's own top
+   bar (app.js re-homes #open-tabs-row), where T596 had kept the reader's
+   header up above the editor for them -- a row of tabs stacked over a
+   row of controls, which is the layer the user asked to lose. */
 .deck.editing{left:var(--presrail-w);top:0;}
 body.slide-editing .apptop{display:none;}
 /* The editor's auto-hidden slide strip translates left over its own grid
    column. Keep the shared application rail above it, including while an
    auto-hidden rail peeks back in, so Home is never covered. */
 body.slide-editing .presrail,body.slide-editing .presrail-show{z-index:134;}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{
-  display:flex;z-index:133;pointer-events:none;}
-/* T596: the tab row spans the editor from its left edge. Editing also
-   sets creating-docs, whose rule moves the header right by the builder
-   panel's width -- a panel the full-window editor does not have -- so the
-   tabs began 430px in, over nothing. */
-body.slide-editing.creating-docs .apptop{left:var(--presrail-w);}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .nb-filebar,
-body.slide-editing:has(#open-tabs-row:not([hidden])) .appbar{display:none;}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .open-tabs-row{
-  pointer-events:auto;}
-body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
-  top:var(--open-tabs-h);}
 /* while editing, the panel is just chrome + film strip (the template
    catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
    slide canvas gets the width */

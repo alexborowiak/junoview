@@ -454,11 +454,12 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     for bid in ("pt-filter-btn", "ck-filter-btn", "ot-filter-btn"):
         btn = out.split(f'id="{bid}"')[1].split("</button>")[0]
         assert '<span class="btxt">Choose</span>' in btn, bid
-    # The reader now uses the deck's compact App menu, so its How to use
-    # item is a full row rather than a loose square control.
+    # The reader uses a compact menu like the deck's, so its How to use
+    # item is a full row rather than a loose square control (T602: a row
+    # of File, since the App menu's rows moved there).
     assert "#help-btn{padding:0;justify-content:center;" not in out
-    assert 'id="app-app-menu"' in out
-    assert 'id="help-btn"' in out and "How to\n            use&#8230;</button>" in out
+    assert 'id="app-file-menu"' in out
+    assert 'id="help-btn"' in out and "How to\n          use&#8230;</button>" in out
     # the width comes from the column, so there is nothing to keep in sync
     assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
            "align-items:stretch;" in out

@@ -28,9 +28,11 @@ def test_editor_uses_the_live_logo_rail(out):
     assert 'id="presrail-home"' in assets.page_template()
     assert "    return [$('#deck-pres-open')].filter(Boolean);" in out
     assert ".deck.editing{left:var(--presrail-w);top:0;}" in out
-    assert ("body.slide-editing:has(#open-tabs-row:not([hidden])) "
-            ".apptop{" in out)
-    assert "top:var(--open-tabs-h);" in out
+    # T602: the open tabs (Home first) are in the editor's own top bar,
+    # moved there by app.js, rather than the reader's header held up over
+    # the editor for them -- the editor starts at the very top
+    assert "body.slide-editing:has(#open-tabs-row" not in out
+    assert "?$('#deck-qat .qat-tabs-at'):$('#nb-filebar .nb-file-spacer');" in out
     assert "deckIsolate(full,editing);" in out
     assert "if(appNavLive&&(sel==='#apptop'||sel==='#presrail'" in out
     assert "if(document.body.classList.contains('slide-editing')&&APP.deckClose)" in out

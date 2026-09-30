@@ -19,19 +19,27 @@ def test_the_name_never_gives_way_first(out):
 
 
 def test_global_deck_options_are_one_quiet_app_menu():
+    """T602 (2026-09-30, user: "a lot of this stuff could all just be put
+    under the file button e.g. the app button"): the quiet App menu is a
+    section of File, so the bar has one menu button fewer and the rows
+    are the same words."""
     html = assets.deck_html()
-    assert 'id="deck-appwrap"' in html
-    assert '<i data-ic="theme"></i> App &#9662;</button>' in html
-    assert 'id="deck-scheme"' in html
-    assert 'id="deck-howto"' in html
-    assert '<a class="dc-mi" id="deck-support" target="_blank" rel="noopener"' in html
-    assert 'Support Junoview &#9829;</a>' in html
+    assert 'id="deck-appwrap"' not in html and "App &#9662;" not in html
+    menu = html[html.index('id="dc-menu"'):html.index('id="mi-del"')]
+    assert '<div class="dc-mhead">app</div>' in menu
+    assert 'id="deck-scheme"' in menu
+    assert 'id="deck-howto"' in menu
+    assert '<a class="dc-mi" id="deck-support" target="_blank" rel="noopener"' in menu
+    assert 'Support Junoview &#9829;</a>' in menu
     # Theme, Help and Support are no longer loose top-bar buttons.
     assert '<a class="dbtn qat-btn" id="deck-support"' not in html
 
 
 def test_the_menu_is_wired_and_how_to_use_still_opens_help(out):
-    assert "wireMenuToggle('deck-appwrap','deck-app','deck-app-menu')" in out
+    # a pick closes whichever File it was in, the reader's or the editor's
+    assert ("    var reader=wireMenuToggle('app-filewrap','app-file',"
+            "'app-file-menu');") in out
+    assert "    [reader&&reader.menu,fileMenu].filter(Boolean)" in out
     assert "  ['#help-btn','#deck-howto'].forEach(function(sel){" in out
     assert "a.dc-mi{display:block;text-decoration:none;}" in out
 

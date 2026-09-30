@@ -14,7 +14,8 @@ and checked against the markup that ships.
   own groups (their captions, buttons and doors), except that a step
   after the second may be a control a door or screen opens (any
   button's words anywhere in the editor).
-- File first: the next step must be an item of the File menu.
+- File first: the next step must be an item of a File menu (the
+  editor's or, since T602, the reader's).
 - Anything else (a door, the rail's New): every step must be a real
   control's words somewhere in the page.
 """
@@ -66,13 +67,25 @@ def _tab_texts(deck: str) -> dict[str, str]:
     return {lab: groups.get(key, "") for lab, key in tabs.items()}
 
 
+def _menu(src: str, menu_id: str) -> str:
+    """The markup of one File menu: from its opening tag to the end of
+    the wrapper it sits in."""
+    start = src.index(f'id="{menu_id}"')
+    return src[start:src.index("</span>", start) if menu_id == "app-file-menu"
+               else src.index('<!-- ONE control, not two.', start)]
+
+
 def test_every_help_path_names_a_real_control(out):
     deck = assets.deck_html()
     tabs = _tab_texts(deck)
     assert "home" in tabs and "design" in tabs and "images" in tabs
+    # T602: File is a menu in both views -- the editor's (#dc-menu) and
+    # the reader's (#app-file-menu) -- and a row may press a real button
+    # (data-for) rather than wear an mi- id, so every row of either counts
     file_menu = " ".join(_norm(t) for t in re.findall(
-        r'<button class="dc-mi" id="mi-[a-z-]+"[^>]*>(.*?)</button>', deck,
-        flags=re.S))
+        r'<(?:button|a) class="dc-mi[^"]*"[^>]*>(.*?)</(?:button|a)>',
+        _menu(deck, "dc-menu") + _menu(assets.page_template(),
+                                       "app-file-menu"), flags=re.S))
     anywhere = _norm(out) + " " + " ".join(
         _norm(t) for t in re.findall(r"'([^'\\]{2,80})'", out))
     paths = _paths()

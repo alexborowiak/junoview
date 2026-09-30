@@ -157,19 +157,28 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     that have had Home buttons since T196 plus two Auto-build rows that
     threw the deck away; "page" held slide numbers, which is a button on
     Design, and crop marks, which moved in beside the PDF they are for.
+
+    T602 (2026-09-30, user: "a lot of this stuff could all just be put
+    under the file button e.g. the app button, and stuff like new and
+    open") grew it again, on purpose: New's four, Open a presentation,
+    and the App menu's rows joined, so "file" split into "new", "open"
+    and "this presentation", and "app" and "open files" came in -- in two
+    columns, with the dangerous pair still last.
     """
     html = assets.deck_html()
     i = html.index('id="dc-menu"')
     j = html.index('</div>', html.index('id="mi-del"'))
     menu = html[i:j]
     heads = re.findall(r'class="dc-mhead[^"]*">([^<]+)<', menu)
-    assert heads == ["file", "export &amp; share",
+    assert heads == ["new", "open", "this presentation",
+                     "export &amp; share", "app", "open files",
                      "careful — these lose work"], heads
-    # fourteen rows you can see, down from nineteen and then up one for
-    # T320's .pptx import and one for T601's Parts of this talk (the
-    # fifteenth is #mi-autosave, hidden unless the build has a project
-    # to save to)
-    assert menu.count('class="dc-mi') == 15, menu.count('class="dc-mi')
+    # the fifteen rows from before (fourteen you can see, and
+    # #mi-autosave, hidden unless the build has a project to save to),
+    # plus T602's nine: Poster, Custom view, Folder, Open a
+    # presentation, Theme, How to use, Support and the two open-files rows
+    assert menu.count('class="dc-mi') == 24, menu.count('class="dc-mi')
+    assert menu.count('class="dc-mcol"') == 2
     for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",
                  "mi-auto-figdocs", "mi-nums", "mi-hist", "mi-check"):
         assert f'id="{gone}"' not in menu, gone

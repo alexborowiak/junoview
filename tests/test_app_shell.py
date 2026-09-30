@@ -40,10 +40,15 @@ def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
     duplicated: the ACTIVE notebook's own ``.railfile`` node is moved
     into ``#file-dock``, so wireFileInfo's handlers stay live and each
     notebook keeps its own paths.
+
+    T602 (2026-09-30, user: "a lot of this stuff could all just be put
+    under the file button e.g. the app button, and stuff like new and
+    open"): Open a notebook is a row of that line's File menu, and File
+    leads the line.
     """
-    assert 'class="toggle primary" id="tab-open"' in out
-    assert (out.index('id="nb-filebar"') < out.index('class="appbar"'))
-    assert (out.index('id="tab-open"') < out.index('class="appbar"'))
+    assert '<button class="dc-mi" type="button" id="tab-open" hidden' in out
+    assert (out.index('id="nb-filebar"') < out.index('id="app-file"')
+            < out.index('id="tab-open"') < out.index('class="appbar"'))
     assert '<span class="fgrp-row" id="file-dock"></span>' in out
     # the bar is still authored in the shell, and moved
     shell = assets.load("html/shell.html")
@@ -106,8 +111,10 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     assert "overflow-x:auto;scrollbar-width:thin;" in out
     assert "function fitRibbon" in out
     # dense, PowerPoint-style: --ab-btn-h is THE viewer button height
+    # (T602: --open-tabs-h is the title row's height now, one button and
+    # its padding, since the tabs sit in that row)
     assert ("--ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;"
-            "--open-tabs-h:35px;}" in out)
+            "--open-tabs-h:37px;}" in out)
     assert "flex:none;white-space:nowrap;height:var(--ab-btn-h);" in out
     # the stages: tighter spacing, then the redundant state words —
     # NEVER the labels. No rule may ever hide .btxt in the ribbon.
@@ -220,13 +227,14 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
     assert 'id="theme-btn"' not in out
     assert 'id="scheme-btn"' in out
     # Raw / Tree / Full screen / Present are one unit on the right; global
-    # Theme, help and support are one App menu beside the file identity.
+    # Theme, help and support are rows of File (T602; they were an App
+    # menu of their own) at the head of the title row.
     assert 'class="btn-grp" id="view-grp"' in out
     assert (out.index('id="scheme-btn"') < out.index('id="view-grp"')
             < out.index('id="view-raw"'))
     assert out.index('id="doc-full"') < out.index('id="doc-present"')
     assert '<button class="toggle primary" id="doc-present"' in out
-    assert 'id="app-appwrap"' in out
+    assert 'id="app-filewrap"' in out and 'id="app-appwrap"' not in out
     assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
@@ -249,15 +257,17 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
 
 
 def test_top_left_declutter_keeps_navigation_in_the_reader_bar(out):
-    """Navigation is beside Filters, while conventional tabs appear only
-    when there is more than one open document and reuse a fixed slim row.
+    """Navigation is beside Filters, while conventional tabs sit in the
+    slim title row above it (T602: in that row, not a row of their own).
     """
     assert 'class="tabs-label"' not in out
     assert (out.index('id="menubtn"') < out.index('id="filters-toggle"')
             < out.index('id="view-grp"'))
     assert 'id="open-tabs-row"' in out and 'id="top-tabstrip"' in out
+    assert (out.index('id="nb-filebar"') < out.index('id="open-tabs-row"')
+            < out.index('class="appbar"'))
     assert 'class="tabrow-open"' not in out
-    assert '--open-tabs-h:35px' in out
+    assert '--open-tabs-h:37px' in out
     assert ".appbar .menubtn{display:inline-flex;" in out
 
 
@@ -453,15 +463,17 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
 
 def test_app_buttons_share_the_file_utility_line(out):
     """Global commands are grouped with document identity, not filter
-    controls, and the old quick-access row is gone.
+    controls, and the old quick-access row is gone. T602: they are rows
+    of File, which leads the line, ahead of the identity.
     """
-    assert (out.index('id="nb-file-ident"') < out.index('id="scheme-btn"')
-            < out.index('class="appbar"'))
+    assert (out.index('id="nb-filebar"') < out.index('id="scheme-btn"')
+            < out.index('id="nb-file-ident"') < out.index('class="appbar"'))
     assert 'class="nb-file-utils"' in out
     assert 'class="tabsrow nb-quickbar"' not in out
     assert '.nb-quickbar' not in out
     assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
-    assert 'id="app-app"' in out and 'id="app-app-menu"' in out
+    assert 'id="app-file"' in out and 'id="app-file-menu"' in out
+    assert 'id="app-app"' not in out
     # the group's buttons came with it (the dark/light toggle became a
     # theme in the palette menu, 2026-08-19)
     for button in ('id="scheme-btn"', 'id="support-btn"', 'id="help-btn"'):

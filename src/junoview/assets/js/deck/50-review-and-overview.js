@@ -1267,8 +1267,12 @@
     if(vwOpen) t.className+=' current editing';
     var kindWord=isView?'custom view':isPoster?'poster':'presentation';
     var selected=isCur&&(editing||vwOpen);
+    /* T602: on the editor's title row the tab IS the name, so it is also
+       where the rename is -- the centred name steps aside while the tabs
+       are there */
     var title=selected
-      ?('Editing "'+nm+'" — use the Junoview logo to return')
+      ?('Editing "'+nm+'"'+(top&&!isView?' — double-click to rename'
+        :' — Home returns to the start screen'))
       :('Open '+kindWord+' "'+nm+'"'
         +(isView?' — restyles the notebook itself':' in the builder'));
     var action=top?document.createElement('button'):t;
@@ -1317,6 +1321,12 @@
       if(isCur&&!deckEl.hidden) return;
       if(vwOpen) return;              /* already the open custom view */
       choosePresentation(nm);
+    });
+    /* T602: the tab you are editing renames the deck, the way a
+       double-click on a file's name does everywhere else */
+    if(top&&!isView) action.addEventListener('dblclick',function(e){
+      if(!(isCur&&!deckEl.hidden&&mode==='edit')) return;
+      e.preventDefault();startQatRename();
     });
     return t;
   }
@@ -2527,23 +2537,30 @@
     renderPresentationHub();renderDeckPresentationDrawer();
     if(APP.refreshChrome) APP.refreshChrome();
   }
-  /* ---- T596: THE TAB ROW'S NEW AND OPEN ------------------------------
-     As tabs, the open files' row carries the doors the side panel held:
-     New (the same four things the side panel's New made -- each row
-     presses the one real button, so there is one implementation of each)
-     and Open (the library, where Recents, every saved presentation and a
-     file from this computer are). */
+  /* ---- T596 / T602: NEW AND OPEN, UNDER FILE ------------------------
+     The side panel's doors: New (the same four things the side panel's
+     New made -- each row presses the one real button, so there is one
+     implementation of each) and Open (the library, where Recents, every
+     saved presentation and a file from this computer are). T596 put
+     them on the tab row; T602 made them rows of File in both views,
+     because the tab row is part of the title row now and "stuff like new
+     and open" was what the user asked to go under File. */
   function tabRowBoot(){
-    var m=wireMenuToggle('ot-newwrap','ot-new','ot-newmenu');
-    if(m) $$('.dc-mi',m.menu).forEach(function(b){
-      b.addEventListener('click',function(e){
-        e.stopPropagation();overlayHide(m.menu);
-        var real=$('#'+b.dataset.for);
-        if(real) real.click();
+    ['#app-file-menu','#dc-menu'].forEach(function(sel){
+      var menu=$(sel); if(!menu) return;
+      $$('.dc-mi[data-for]',menu).forEach(function(b){
+        b.addEventListener('click',function(e){
+          e.stopPropagation();overlayHide(menu);
+          var real=$('#'+b.dataset.for);
+          if(real) real.click();
+        });
       });
     });
-    var o=$('#ot-open');
-    if(o) o.addEventListener('click',function(){openPresentationHub();});
+    [['#ot-open','#app-file-menu'],['#mi-open','#dc-menu']].forEach(function(p){
+      var o=$(p[0]),menu=$(p[1]);
+      if(o) o.addEventListener('click',function(){
+        if(menu) overlayHide(menu);openPresentationHub();});
+    });
   }
   function choosePresentation(nm){
     var A=window.SemApp||{};

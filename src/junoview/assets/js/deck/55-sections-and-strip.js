@@ -3169,13 +3169,15 @@
     var b=$(id);
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
-  /* ---- App menu: Theme, help and support. app.js owns the actions. ---- */
+  /* ---- T602: the App menu's rows live in File, in both views --------
+     Theme, How to use, Support and where the open files are listed.
+     app.js owns what each row does; a pick closes the menu it was in.
+     The reader's File is the same kind of menu as this one. */
   (function(){
-    var h=wireMenuToggle('deck-appwrap','deck-app','deck-app-menu');
-    var reader=wireMenuToggle('app-appwrap','app-app','app-app-menu');
-    [h,reader].filter(Boolean).forEach(function(menu){
-      $$('.dc-mi',menu.menu).forEach(function(b){
-        b.addEventListener('click',function(){overlayHide(menu.menu);});
+    var reader=wireMenuToggle('app-filewrap','app-file','app-file-menu');
+    [reader&&reader.menu,fileMenu].filter(Boolean).forEach(function(menu){
+      $$('.dc-mi',menu).forEach(function(b){
+        b.addEventListener('click',function(){overlayHide(menu);});
       });
     });
   })();

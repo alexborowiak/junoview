@@ -48,18 +48,25 @@ def test_global_buttons_are_grouped_in_the_file_utility_line():
 
 
 def test_reader_uses_the_editor_app_menu():
+    """T602 (2026-09-30, user: "a lot of this stuff could all just be put
+    under the file button e.g. the app button, and stuff like new and
+    open"): the reader's App menu is its File menu now, the same kind of
+    menu as the editor's, with New and Open above the app's own rows."""
     css = assets.load("css/app.css")
     assert "#help-btn{padding:0;justify-content:center;" not in css
     page = assets.load("html/page.html")
-    assert 'id="app-appwrap"' in page
-    assert '<i data-ic="theme"></i> App &#9662;</button>' in page
-    # the menu holds a heading <div> since T596, so it ends at the wrap
-    menu = page.split('id="app-app-menu"')[1].split("</span>")[0]
+    assert 'id="app-appwrap"' not in page and "App &#9662;" not in page
+    assert 'id="app-filewrap"' in page
+    assert 'listed, help and support">File &#9662;</button>' in page
+    # the menu holds heading <div>s, so it ends at the wrap
+    menu = page.split('id="app-file-menu"')[1].split("</span>")[0]
+    heads = re.findall(r'<div class="dc-mhead">([^<]+)</div>', menu)
+    assert heads == ["new", "open", "app", "open files"], heads
+    assert 'id="ot-open"' in menu and 'id="tab-open" hidden' in menu
     assert 'id="scheme-btn"' in menu
-    assert 'id="help-btn"' in menu and "How to\n            use&#8230;" in menu
+    assert 'id="help-btn"' in menu and "How to\n          use&#8230;" in menu
     assert 'id="support-btn"' in menu
     # T596: where the open files are listed is an app-wide choice
-    assert '<div class="dc-mhead">open files</div>' in menu
     assert 'class="dc-mi jv-files-at" type="button" data-at="top"' in menu
     assert 'class="dc-mi jv-files-at" type="button" data-at="side"' in menu
 

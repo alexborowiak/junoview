@@ -24,8 +24,9 @@ def test_custom_view_entry_points_and_style_panel(out):
     # and the feature is documented where people look for it
     assert "Custom views &mdash; a styled, filtered copy" in out
     # help follows the chrome (2026-08-24): the rail's four "+ New ..."
-    # buttons are one "New…" menu, so help names the menu row
-    assert "Custom view</b> in the left rail" in out
+    # buttons are one "New…" menu, so help names the menu row -- and
+    # since T602 that menu is File's "new" section in every view
+    assert "<b>File &#9662;</b> &rarr; <b>Custom view</b> (under New)" in out
     assert "function openCustomView" in out and "function isViewPres" in out
     assert 'id="stylebar"' in out and 'id="stylepanel"' in out
     for _sb in ("sb-md", "sb-hd", "sb-doc", "sb-override", "sb-reset",

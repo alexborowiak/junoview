@@ -1282,7 +1282,10 @@ def test_open_documents_are_one_list_tabs_or_the_side(out):
     assert ("body.files-top .presrail,body.files-top .presrail-show"
             "{display:none!important;}") in out
     assert ".presrail .tabstrip{display:flex;flex-direction:column;" in out
-    assert "body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{" in out
+    # T602: the tabs sit in the editor's own top bar while it is up, not
+    # in the reader's header held up over it
+    assert "body.slide-editing:has(#open-tabs-row" not in out
+    assert '<span class="deck-spring qat-tabs-at"></span>' in out
     assert "body.slide-editing .presrail,body.slide-editing .presrail-show" in out
     # the side label only appears when there is something to list
     assert "var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;" in out

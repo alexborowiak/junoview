@@ -9,7 +9,7 @@
      5px of side padding, which is what PowerPoint's small command
      spends. The height stays 28px -- it is a target, and shrinking it
      was never the complaint. */
-  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:35px;}
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:37px;}
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- compact file utility line, optional tabs, reader controls --- */
@@ -257,6 +257,11 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
    on the right. The existing Info panel shows the complete source path. */
 .apptop{display:flex;flex-direction:column;}
 .nb-filebar{min-height:42px;padding:4px 8px;}
+/* T602: while the open files are tabs, the tab names the file (its
+   tooltip is the path, and Info has all of it), so the two-line
+   identity steps aside and the row is one button high */
+body.tabs-row-on .nb-file-ident{display:none!important;}
+body.tabs-row-on .nb-filebar{min-height:var(--open-tabs-h);}
 .nb-file-spacer{flex:1;min-width:8px;}
 .nb-file-utils{display:flex;align-items:center;gap:4px;flex:none;}
 .nb-file-utils .toggle{height:var(--ab-btn-h);font-size:11.5px;
@@ -266,30 +271,48 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
 #ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
 #ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
-.open-tabs-row{display:flex;align-items:end;gap:8px;height:var(--open-tabs-h);
-  box-sizing:border-box;
-  padding:0 8px;background:var(--chrome-1,#0d1a26);
-  border-bottom:1px solid #ffffff12;}
+/* T602: THE OPEN TABS ARE A STRETCH OF THE TITLE ROW -- the reader's
+   (#nb-filebar) or, while it is up, the editor's (#deck-qat; app.js
+   moves the one node) -- not a row of their own (2026-09-30, user:
+   "there is to many layers to our ribbon"). They take what the row can
+   spare: each tab gives up width to an ellipsis first, then the strip
+   scrolls, and the row keeps 220px for Home and a tab before the bar's
+   own fitter starts compacting its buttons. */
+.open-tabs-row{display:flex;align-items:center;gap:5px;flex:0 1 auto;
+  min-width:220px;align-self:stretch;box-sizing:border-box;
+  padding:0 0 0 8px;margin-left:2px;
+  border-left:1px solid var(--chrome-line,#ffffff1a);}
 .open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
-/* T596: Home before the tabs, New and Open after them -- the side panel's
-   doors, where the list of open files now lives */
-.open-tabs-row .ot-home,.open-tabs-row .ot-door{align-self:center;flex:none;
-  height:26px;display:inline-flex;align-items:center;gap:6px;
-  padding:0 9px;font-size:11.5px;white-space:nowrap;}
+/* T596: Home before the tabs */
+.open-tabs-row .ot-home{flex:none;height:26px;display:inline-flex;
+  align-items:center;gap:6px;padding:0 9px;font-size:11.5px;
+  white-space:nowrap;}
 .open-tabs-row .ot-home .jv-logo{width:17px;height:17px;flex:none;}
 .open-tabs-row .ot-home.current{color:var(--accent);
   border-color:color-mix(in srgb,var(--accent) 55%,transparent);
   background:color-mix(in srgb,var(--accent) 12%,transparent);}
-.ot-doors{display:flex;align-items:center;gap:4px;flex:none;
-  align-self:center;}
-/* at Home no tab is the one on screen, whatever was last active */
-body.welcoming .top-tabstrip .tab.current{background:none;
-  box-shadow:none;color:inherit;}
-.top-tabstrip{display:flex;align-items:stretch;gap:4px;min-width:0;
-  overflow-x:auto;scrollbar-width:thin;padding-top:5px;}
-.top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
-  padding:0 8px 0 10px;border-radius:7px 7px 0 0;}
-.top-tabstrip .tab-t{max-width:180px;}
+/* at Home no tab is the one on screen, whatever was last active -- and
+   in the slide editor the presentation is, not the notebook that was
+   last active behind it (T602: two lit tabs on one row) */
+body.welcoming .top-tabstrip .tab.current,
+body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
+  background:none;box-shadow:none;color:inherit;border-color:#ffffff14;
+  font-weight:400;}
+/* no scrollbar: in a one-button-high row it drew a white bar under the
+   tabs and made the whole bar taller. The strip still scrolls (wheel,
+   trackpad), and app.js keeps the tab on screen in view. */
+.top-tabstrip{display:flex;align-items:center;gap:4px;min-width:0;
+  overflow-x:auto;scrollbar-width:none;}
+/* on a row of buttons a tab is a rounded box the height of a button,
+   lit the way Home is lit -- not a browser tab hanging from a strip.
+   110px keeps a readable start of the name ("presentat...") */
+.top-tabstrip .tab{height:26px;box-sizing:border-box;flex:0 1 auto;
+  min-width:110px;max-width:220px;padding:0 6px 0 10px;border-radius:7px;
+  border-bottom:1px solid #ffffff14;font-size:12px;}
+.top-tabstrip .tab.current{color:var(--chrome-ink,#e6edf3);
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+.top-tabstrip .tab-t{max-width:170px;}
 .top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
   justify-content:center;flex:none;color:var(--cyan);}
 .top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
@@ -551,10 +574,14 @@ body{padding-top:var(--chrome-h);padding-left:var(--presrail-w);}
    header and stays at its last value while hidden, hence padding-top:0. */
 body.welcoming .apptop{display:none;}
 body.welcoming{padding-top:0;}
-/* T596: at Home the tab row stays up while anything is open -- it is the
-   way back to it -- and nothing else of the header does */
+/* T596: at Home the tabs stay up while anything is open -- they are the
+   way back to it. T602: they are part of the title row now, so at Home
+   that row shows with File and the tabs, and nothing else of the header
+   does (Info, Reload and Find act on a notebook Home is covering). */
 body.welcoming.tabs-row-on .apptop{display:flex;}
-body.welcoming.tabs-row-on .apptop>:not(.open-tabs-row){display:none!important;}
+body.welcoming.tabs-row-on .apptop>:not(.nb-filebar),
+body.welcoming.tabs-row-on .nb-filebar>:not(#app-filewrap):not(.open-tabs-row):not(.nb-file-spacer){
+  display:none!important;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}
 .rail{top:var(--chrome-h);height:calc(100vh - var(--chrome-h));}
