@@ -147,6 +147,7 @@ def test_every_asset_the_code_loads_is_readable():
     for name in ("css/core.css", "css/app.css", "css/deck.css",
                  "css/widget.css", "css/widget-media.css",
                  "js/app.js", "js/pptx.js", "js/sw.js", "js/widget.js",
+                 "js/saved-file.js",
                  "html/page.html", "html/shell.html", "html/deck.html",
                  "html/help.html", "html/mathjax.html",
                  "html/third-party-notices.html",
@@ -169,6 +170,7 @@ def test_the_asset_loaders_and_the_files_agree():
               "css/widget.css", "css/widget-media.css",
               "js/app.js", "js/pptx.js", "js/sw.js", "js/widget.js",
               "js/web-runtime.js", "js/web-worker.js",
+              "js/saved-file.js",      # T597: assets.saved_file_js()
               "html/page.html", "html/shell.html", "html/deck.html",
               "html/help.html", "html/mathjax.html",
               "html/third-party-notices.html",

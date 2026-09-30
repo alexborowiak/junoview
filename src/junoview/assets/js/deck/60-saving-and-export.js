@@ -699,35 +699,104 @@
      (here and the Python sidecar reader) unwrap it, and plain old .junoview
      files still parse, so nothing already saved is stranded. `<` is
      escaped inside the JSON so no content can close the script block. */
+  /* ---- T597: AND IT OPENS ---------------------------------------------
+     (2026-09-30, user: "when I try and open a file from local that is a
+     junoview, junoview opens, but it just says that this file can be
+     opened with juno view, why can't it be opened?") The page told you
+     to go and find Junoview. It carries Open in Junoview now
+     (saved-file.js, the page's own copy of #jv-savedfile-js): a new tab
+     on the Junoview this was saved from, or on the web, which asks and
+     then opens the deck through File > Open's importer (handoffBoot,
+     below). And it lists the slides by name, so which file is which can
+     be told before anything opens. The Junoview app on this computer is
+     not a place a file can send you back to -- its address carries a
+     session token that is not written into files and changes on every
+     start -- so a file saved there offers the web, and says how to open
+     it in the app. Every closing tag below is split: this file runs
+     inline in the page, and a whole one would end the script there. */
+  var JV_WEB='https://junoview.com/';
+  function handoffAppUrl(){
+    if(APP.mode==='app') return '';
+    var u=String(location.href||'').split('#')[0];
+    return /^(https?|file):/i.test(u)?u:'';
+  }
+  var SAVED_FILE_CSS='body{margin:0;min-height:100vh;display:flex;'
+    +'align-items:center;justify-content:center;background:#0b141d;'
+    +'color:#dce6ee;font-family:system-ui,sans-serif}'
+    +'main{text-align:center;padding:40px 24px;max-width:600px;width:100%;'
+    +'box-sizing:border-box}img{width:88px;height:88px}h1{font-size:22px;'
+    +'margin:16px 0 4px}p{color:#8ba0b2;font-size:14px;line-height:1.6;'
+    +'margin:8px 0}code{background:#16273a;border-radius:4px;'
+    +'padding:1px 6px;font-size:13px}[hidden]{display:none!important}'
+    +'.jv-actions{display:flex;gap:8px;justify-content:center;'
+    +'flex-wrap:wrap;margin:14px 0 4px}button{font:inherit;font-size:14px;'
+    +'border-radius:8px;padding:9px 18px;cursor:pointer;'
+    +'border:1px solid #2c4257;background:#16273a;color:#dce6ee}'
+    +'button:hover{border-color:#39a9c0}.jv-primary{background:#39a9c0;'
+    +'border-color:#39a9c0;color:#04222b;font-weight:600;font-size:15px;'
+    +'padding:11px 26px}.jv-primary:hover{background:#56c1d6}'
+    +'.jv-msg{min-height:1.6em;color:#dce6ee}.jv-warn{color:#f0a848}'
+    +'.jv-ok{color:#46a892}.jv-slides{text-align:left;margin:20px auto 8px;'
+    +'padding:12px 16px 12px 42px;max-height:38vh;overflow:auto;'
+    +'background:#0f1c29;border:1px solid #1d3246;border-radius:10px;'
+    +'font-size:13.5px;line-height:1.75;color:#b8c7d3}'
+    +'.jv-slides i{color:#6f8597}.jv-small{font-size:12.5px;margin-top:16px}';
+  /* the slides by what they are called in the strip -- a heading where
+     there is one -- one line each */
+  function savedSlideNames(){
+    return (pres.slides||[]).map(function(s){
+      var t='';
+      try{t=(typeof slideHeading==='function'&&slideHeading(s))
+        ||slideTitle(s)||'';}catch(e){t='';}
+      return String(t).replace(/\s+/g,' ').trim().slice(0,90);
+    });
+  }
   function junoviewFileHtml(){
     var json=deckFileText().replace(/</g,'\\u003c');
     var list=plainIfSingle(filePresentations());   /* T433: this deck */
-    var n=Array.isArray(list)?list.length:1;
     var slides=(Array.isArray(list)?list:[list]).reduce(function(k,p2){
       return k+((p2&&p2.slides&&p2.slides.length)||0);},0);
     var icon=(document.querySelector('link[rel="icon"]')||{}).href||'';
-    var name=esc(pres.name||APP.order[0]||'presentation');
+    var nm=pres.name||APP.order[0]||'presentation';
+    var name=esc(nm);
+    var names=savedSlideNames();
+    var cfg=JSON.stringify({name:nm,file:fileName||deckFileName(),
+      app:handoffAppUrl(),web:JV_WEB,from:APP.mode||'page'})
+      .replace(/</g,'\\u003c');
+    var js=String(($('#jv-savedfile-js')||{}).textContent||'')
+      .replace(/<\/(script)/gi,'<\\/$1');
     return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
       +'<meta name="viewport" content="width=device-width,initial-scale=1">'
       +'<title>'+name+' — Junoview presentation</title>'
       +(icon?'<link rel="icon" href="'+icon+'">':'')
-      +'<style>body{margin:0;min-height:100vh;display:flex;align-items:center;'
-      +'justify-content:center;background:#0b141d;color:#dce6ee;'
-      +'font-family:system-ui,sans-serif}main{text-align:center;padding:40px;'
-      +'max-width:560px}img{width:96px;height:96px}h1{font-size:20px;'
-      +'margin:18px 0 4px}p{color:#8ba0b2;font-size:14px;line-height:1.6;'
-      +'margin:8px 0}code{background:#16273a;border-radius:4px;'
-      +'padding:1px 6px;font-size:13px}</style></head><body><main>'
+      +'<style>'+SAVED_FILE_CSS+'</style></head><body><main>'
       +(icon?'<img src="'+icon+'" alt="Junoview">':'')
       +'<h1>'+name+'</h1>'
-      +'<p>A saved <b>Junoview</b> presentation — '+n+' presentation'
-      +(n===1?'':'s')+', '+slides+' slide'+(slides===1?'':'s')+'.</p>'
-      +'<p>To edit it, open Junoview and pick <code>+ New… → Open a '
-      +'.junoview file…</code> (or <code>File → Open</code> inside any '
-      +'presentation), or keep it next to its notebook and '
-      +'<code>junoview notebook.ipynb</code> loads it itself.</p>'
-      +'</main><script type="application/json" id="junoview-data">\n'
-      +json+'\n</'+'script></body></html>\n';
+      +'<p>A saved <b>Junoview</b> presentation &mdash; '+slides+' slide'
+      +(slides===1?'':'s')+'.</p>'
+      +(js?'<p class="jv-actions"><button type="button" id="jv-open" '
+        +'class="jv-primary">Open in Junoview</button></p>'
+        +'<p class="jv-msg" id="jv-open-msg" role="status" '
+        +'aria-live="polite"></p>'
+        +'<p class="jv-actions"><button type="button" id="jv-open-next" '
+        +'hidden></button><button type="button" id="jv-open-close" hidden>'
+        +'Close this tab</button></p>':'')
+      +(names.length?'<ol class="jv-slides">'+names.map(function(t,i){
+          return '<li>'+(t?esc(t):'<i>slide '+(i+1)+'</i>')+'</li>';
+        }).join('')+'</ol>':'')
+      +'<p class="jv-small">This file <i>is</i> the presentation, and '
+      +'Junoview reads it back from here: press <b>Open in Junoview</b>, '
+      +'use <code>Open&hellip;</code> inside Junoview, or drop the file '
+      +'onto a Junoview window'
+      +(APP.mode==='app'?' &mdash; the Junoview app on this computer '
+        +'included, once it is running':'')
+      +'. Kept next to its notebook, <code>junoview notebook.ipynb</code> '
+      +'loads it too.</p>'
+      +'</main><script type="application/json" id="junoview-open">'+cfg
+      +'</'+'script><script type="application/json" id="junoview-data">\n'
+      +json+'\n</'+'script>'
+      +(js?'<script>'+js+'</'+'script>':'')
+      +'</body></html>\n';
   }
   /* both file forms — the HTML wrapper and a bare-JSON .junoview from
      before it existed — hand back the same object */
@@ -3109,6 +3178,129 @@
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
   window.SemDeckImportAsk=importDeckTextAsk; /* ...and the asking door (T527) */
   window.SemDeckFileHtml=function(){return junoviewFileHtml();};
+  /* ---- T597: A SAVED FILE HANDS ITS PRESENTATION OVER ------------------
+     The other end of a saved file's Open in Junoview (saved-file.js). It
+     opens this page at #junoview-handoff and waits. Once the draft store
+     has answered -- a deck of the same name kept here is only visible
+     after it has, and T430's question depends on seeing it -- this tab
+     says it is ready and the file posts its deck. The deck is taken only
+     from the window that opened this one, only once, and only after one
+     question, because any web page could open Junoview this way: the
+     click that opens a presentation is always the person's. After that
+     it is File > Open's importer, T527's question included, and the deck
+     is bound to the file's name -- and to the file itself when it sits in
+     the folder Junoview already saves into. A page cannot be handed a
+     file it did not pick, so otherwise the first Save asks where, and
+     the toast says to pick the same file. */
+  var handoffTaken=false;
+  function handoffBoot(){
+    if(!/^#junoview-handoff/.test(String(location.hash||''))) return;
+    try{history.replaceState(null,'',location.pathname+location.search);}
+    catch(e){}
+    var src=window.opener;
+    if(!src){
+      toast('Nothing was handed over \u2014 to open a saved presentation, '
+        +'use Open\u2026 or drop the file onto this window',9000);
+      return;
+    }
+    window.addEventListener('message',function(e){
+      if(handoffTaken||e.source!==src) return;
+      var d=e.data||{};
+      if(d.junoview!=='deck'||typeof d.text!=='string') return;
+      handoffTaken=true;
+      handoffOpen(d,function(word){
+        try{src.postMessage({junoview:word},'*');}catch(err){}
+      });
+    });
+    handoffReady(src,0);
+  }
+  /* "ready" waits for the draft store, up to eight seconds */
+  function handoffReady(src,n){
+    if(APP.draftsPending&&APP.draftsPending()&&n<80){
+      setTimeout(function(){handoffReady(src,n+1);},100);
+      return;
+    }
+    try{src.postMessage({junoview:'ready'},'*');}catch(e){}
+  }
+  /* the one deck a handed-over file holds, or null */
+  function handoffDeck(text){
+    try{
+      var obj=parseDeckText(text);
+      var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+        :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:[];
+      return list.filter(function(p){
+        return p&&Array.isArray(p.slides);})[0]||null;
+    }catch(e){return null;}
+  }
+  function handoffOpen(d,reply){
+    var one=handoffDeck(d.text);
+    if(!one){
+      reply('declined');
+      toast('That file holds no presentation Junoview can read',8000);
+      return;
+    }
+    var file=String(d.file||'').replace(/[\\/]/g,'').slice(0,160);
+    var k=one.slides.length;
+    askYes({title:'Open \u201c'+String(one.name||'presentation')+'\u201d?',
+      what:'From '+(file||'a saved presentation file')+', '+k+' slide'
+        +(k===1?'':'s')+'. Opened by that file\u2019s Open in Junoview '
+        +'button \u2014 if you did not just press it, choose Cancel.',
+      ok:'Open it',cancel:'Cancel'},function(y){
+      if(y!==true){reply('declined');return;}
+      Promise.resolve(importDeckTextAsk(d.text)).then(function(got){
+        if(!got){reply('declined');return;}
+        handoffBind(file,String(d.path||''),one);
+        reply('opened');
+      }).catch(function(e){
+        reply('declined');
+        toast('Could not open that file: '+((e&&e.message)||e),9000);
+      });
+    });
+  }
+  /* the name of the folder a file: address is in */
+  function handoffFolder(path){
+    var p=String(path||'').split('?')[0].split('#')[0];
+    try{p=decodeURIComponent(p);}catch(e){}
+    var parts=p.split(/[\\/]/).filter(Boolean);
+    return parts.length>1?parts[parts.length-2]:'';
+  }
+  function handoffBind(file,path,one){
+    if(!pres||!file) return;
+    var dir=handoffFolder(path);
+    /* a file whose deck was kept beside one of the same name ("keep
+       both") is not the file of the deck on screen */
+    var same=(pres.name===String(one&&one.name||''));
+    var stem=fileStem(file);
+    /* T398: the file's name is the deck's name, when it is free */
+    if(same&&stem&&stem!==pres.name&&!savedByName(stem)&&!draftGet(stem))
+      renamePresentation(stem);
+    bindFile(pres.name,null);
+    if(deckDir){
+      /* the folder Junoview saves into mints this deck's file there */
+      setTarget('file');
+      if(same&&dir&&dir===deckDirName&&file===deckFileName())
+        toast('Opened \u2014 Save writes back to '+file+' in your '+dir
+          +' folder',8000);
+      else
+        toast('Opened from '+file+'. It saves into your '+deckDirName
+          +' folder as '+deckFileName()+' \u2014 to keep using '+file
+          +' instead, choose it under Save \u25be \u203a A file on your '
+          +'computer\u2026',12000);
+      return;
+    }
+    fileName=file;
+    if(canPickFile){
+      setTarget('file');
+      toast('Opened from '+file+'. A browser page cannot write to a file '
+        +'it did not pick itself, so the first Save asks where \u2014 '
+        +'choose '+file+(dir?(' in '+dir):'')+' to keep saving to it.',
+        12000);
+    } else {
+      setTarget('browser');
+      toast('Opened from '+file+' \u2014 kept in this browser. Use '
+        +'Download a copy to write it back out.',10000);
+    }
+  }
   /* ---- OPENING A .junoview FILE ---------------------------------------
      Opening a file used to import its contents and then carry on saving
      to the BROWSER, so the file you opened never changed again and your
@@ -3176,6 +3368,8 @@
             last=fileName;
     }
   }
+  /* T597: a dropped file with a handle goes through the same door */
+  APP.deckOpenHandles=openDeckHandles;
   function openDeckFile(){
     if(window.showOpenFilePicker){
       window.showOpenFilePicker({

@@ -8061,10 +8061,35 @@
             +'try again in a moment.');
         });
       /* a dropped saved presentation imports, in either mode */
-      files.filter(function(f){return isDeckPath(f.name);})
-        .forEach(function(f){
+      /* T597: AND STAYS ITS FILE'S. Where the browser hands a drop over
+         as a file handle (Chromium), the deck is opened through File >
+         Open's own path, so Save writes back to the file that was
+         dropped -- the saved file's own page tells you to drop it here.
+         The handles must be asked for inside this event; they arrive
+         later. Anywhere else it imports as it did. */
+      var deckFiles=files.filter(function(f){return isDeckPath(f.name);});
+      var hs=[];
+      if(deckFiles.length&&APP.deckOpenHandles)
+        Array.prototype.slice.call((e.dataTransfer||{}).items||[])
+          .forEach(function(it){
+            if(it.kind!=='file'||!it.getAsFileSystemHandle) return;
+            var f=it.getAsFile&&it.getAsFile();
+            if(f&&isDeckPath(f.name)) hs.push(it.getAsFileSystemHandle());
+          });
+      function deckPlain(){
+        deckFiles.forEach(function(f){
           f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
         });
+      }
+      /* a drop that yields no handle for every file (a synthetic one, an
+         older browser) imports as it always did */
+      if(hs.length&&hs.length===deckFiles.length){
+        Promise.all(hs).then(function(got){
+          got=got.filter(function(h){return h&&h.kind==='file';});
+          if(got.length===deckFiles.length) APP.deckOpenHandles(got);
+          else deckPlain();
+        }).catch(deckPlain);
+      } else deckPlain();
       /* SRC_RE, not /\.ipynb$/ (T100). This handler filtered to
          notebooks in BOTH modes, so dropping a .tex or a .csv did
          nothing at all -- silently, which is the worse failure the
