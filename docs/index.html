@@ -4119,12 +4119,11 @@ body.deck-open{overflow:hidden;}
    completely leaves you no way to ask for it back (2026-08-20). */
 .deck.rbn-fold>.edit-tools{display:none;}
 /* ---- ...and the bar can put ITSELF away (off by default) --------------
-   TRANSFORM, never display:none. fitEditRibbon and ribbonMinW both bail
-   on a folded bar because it measures 0, and ribbonMinW is what publishes
-   --film-max: a peek that used the fold would swing the strip's ceiling
-   between a real number and nothing sixty times a second. Rolled up the
-   bar is still laid out, still measurable, and the density ladder is
-   unaffected.
+   TRANSFORM, never display:none. fitEditRibbon bails on a folded bar
+   because it measures 0 (and so did the strip's ceiling until T582), so
+   a peek that used the fold would re-fit the row from nothing sixty
+   times a second. Rolled up the bar is still laid out, still
+   measurable, and the density ladder is unaffected.
    The ROW goes to zero so the stage takes the height; the bar keeps its
    106px and parks behind the tab strip, which never moves -- so the
    guarantee above still holds, there is always something to reach for.
@@ -5086,6 +5085,7 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .mini-it.is-img img{width:100%;height:100%;object-fit:contain;
   display:block;}
 .mini-it.is-img.is-crop img{object-fit:cover;}
+.mini-it.is-img.is-win img{position:absolute;object-fit:fill;max-width:none;}
 /* T522: a placed note or code cell is its own rendered body, zoomed to
    the thumbnail by the canvas's rule; nothing inside a miniature scrolls */
 .mini-it.is-cell.an-cell .note,.mini-it.is-cell.an-cell pre,
@@ -5527,7 +5527,7 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
 .deck:not(.rbn-side) .edit-tools.ribbon>.rbn-shelf:not([hidden]){
   grid-row:2;grid-column:1/-1;contain:inline-size;min-width:0;}
 .rbn-shelf{min-width:0;display:flex;
-  align-items:center;gap:9px;padding:4px 12px;
+  align-items:center;gap:9px;padding:2px 12px;
   border-top:1px solid var(--chrome-line,#ffffff1f);}
 .rbn-shelf[hidden]{display:none!important;}
 .rbn-shelf-name{flex:none;color:var(--chrome-ink-2);
@@ -5568,6 +5568,25 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
 /* last in the line, outside the scroller, so it is always reachable and
    never over a tile */
 .rbn-shelf-close{flex:none;align-self:center;}
+/* ---- T586: THE SHELF IS ONE SLIM LINE --------------------------------
+   (2026-09-30, user: "the drop down menu like this with things like
+   shapes here, just makes the actual view of the screen so so small.
+   This is on a laptop, but even on my big monitor before I was finding
+   that it was getting really squished".) The shelf laid its options out
+   as full ribbon tiles -- 56px, icon over word, in a 60px band -- over a
+   scrollbar of its own, so opening Shapes stacked ~75px more chrome on
+   the ribbon and the slide shrank to fit what was left. On the shelf a
+   tile is its icon BESIDE its word, 30px tall; the scrollbar is thin,
+   and the wheel scrolls the line (rbnShelfBoot). By id, so no strip's
+   own size rule further down can put the tall tile back. */
+#rbn-shelf-body{scrollbar-width:thin;}
+#rbn-shelf-body .strip-frame,#rbn-shelf-body .fx-strip{height:auto;}
+#rbn-shelf-body .strip-frame{border:0;background:none;}
+#rbn-shelf-body .fx-tile{flex-direction:row;height:30px;min-height:0;
+  width:auto;min-width:0;flex:none;padding:0 9px;gap:6px;
+  white-space:nowrap;}
+#rbn-shelf-body .fx-tile .bic{width:16px;height:16px;}
+#rbn-shelf-body .fx-tile .sh-ico{width:18px;height:15px;}
 /* the door that owns the shelf reads as pressed while it does */
 .rbn-grp.rbn-shelved .rbn-foldbtn{
   background:color-mix(in srgb,var(--accent) 30%,transparent);
@@ -6583,8 +6602,14 @@ select#fmt-font[hidden]{display:none;}
 .an-image.an-cropped .an-imgel{object-fit:cover;}
 /* T387: a window onto the picture -- the img is scaled and offset so
    the window fills the box, and the box clips the rest */
-.an-image.an-win{overflow:hidden;}
+/* T587: the window clips in a wrapper, not the item, so the item's own
+   handles (which stand outside its box) are never cut off */
+.an-imgwin{position:absolute;inset:0;overflow:hidden;border-radius:inherit;}
 .an-image.an-win .an-imgel{position:absolute;object-fit:fill;max-width:none;}
+/* T587: while trimming, the part being cut away is still there, faint,
+   so you can see what you are giving up -- as PowerPoint shows it */
+.an-crop-ghost{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;opacity:.28;pointer-events:none;}
 .zc-box{position:absolute;border:1.5px dashed var(--cyan);
   background:color-mix(in srgb,var(--cyan) 14%,transparent);
   pointer-events:none;}
@@ -8304,9 +8329,12 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-arrow-line.sel{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 80%,transparent));}
 .an-arrow-hit{stroke:transparent;stroke-width:16;fill:none;}
 .deck.editing .an-arrow-hit{cursor:move;}
+/* z-index 6, above the arrows' svg (5): while editing an arrow's grab
+   path is up there (T585), and one attached at an edge would otherwise
+   sit on that edge's handle */
 .an-resize{position:absolute;width:15px;
   height:15px;border-radius:4px;background:var(--cyan);
-  border:2px solid var(--chrome-0,#0b141d);display:none;z-index:3;}
+  border:2px solid var(--chrome-0,#0b141d);display:none;z-index:6;}
 .an-rs-se{right:-7px;bottom:-7px;cursor:nwse-resize;}
 .an-rs-nw{left:-7px;top:-7px;cursor:nwse-resize;}
 .an-rs-ne{right:-7px;top:-7px;cursor:nesw-resize;}
@@ -8324,10 +8352,18 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-rs-w{left:-4px;}
 .an-rs-e{right:-4px;}
 .an-item.sel .an-resize{display:block;}
+/* T584: a small selected thing (paintSel, under 48px) keeps its middle
+   for moving: no side bars, and the corners stand clear of it */
+.an-item.sel.an-small .an-rs-n,.an-item.sel.an-small .an-rs-s,
+.an-item.sel.an-small .an-rs-e,.an-item.sel.an-small .an-rs-w{display:none;}
+.an-item.an-small .an-rs-se{right:-16px;bottom:-16px;}
+.an-item.an-small .an-rs-nw{left:-16px;top:-16px;}
+.an-item.an-small .an-rs-ne{right:-16px;top:-16px;}
+.an-item.an-small .an-rs-sw{left:-16px;bottom:-16px;}
 /* free-rotation grip above the item (drag; Shift snaps to 15 deg) */
 .an-rotate{position:absolute;top:-30px;left:50%;margin-left:-8px;
   width:16px;height:16px;border-radius:50%;background:var(--chrome-1,#0e1926);
-  border:2px solid var(--cyan);cursor:grab;display:none;z-index:3;}
+  border:2px solid var(--cyan);cursor:grab;display:none;z-index:6;}
 .an-rotate::after{content:"";position:absolute;left:50%;top:100%;
   width:2px;height:11px;background:var(--cyan);margin-left:-1px;}
 .an-item.sel .an-rotate{display:block;}
@@ -10810,7 +10846,7 @@ window.MathJax = {
 };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-<meta name="junoview-build" content="dcaf4feb5805">
+<meta name="junoview-build" content="00c0b1fe8b4f">
 <script src="web-runtime.js"></script>
 </head>
 <body>
@@ -30281,9 +30317,10 @@ window.JunoPptx = (function () {
       b.classList.toggle('rbn-tab-off',!on&&!tabHasContent(b.dataset.tab));
     });
   }
-  /* the data-off half of applyTab and NOTHING else. ribbonMinW walks
-     every tab to find the widest, and must not dispatch sem:ribbon-tab
-     or repaint the tab strip eight times to do it. */
+  /* the data-off half of applyTab and NOTHING else: which tab's groups
+     are in the row, without dispatching sem:ribbon-tab or repainting
+     the tab strip (it was split out for the strip's eight-tab floor
+     walk, which T582 retired) */
   function tabGroupsOn(t){
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp[data-tab]',bar).forEach(function(g){
@@ -30621,6 +30658,28 @@ window.JunoPptx = (function () {
     var guard=0;
     while(over()&&guard++<12&&rbnFoldOne())
       sizeRibbonGroups();
+    /* T589: THE LAST RESORT IS A DOOR, NEVER THE EDGE. Whole slide and
+       Build order never fold (T441/T445, user: "make sure buttons like
+       those in 'Order' are not getting squashed out, as they are really
+       important") -- and they are the right-hand end of the Animation
+       tab (T453), so below the floor THEY were what the clip took. At
+       1280px with a text box selected Build order began past the
+       ribbon's edge, and the Animation panel button could not be
+       pressed at all (2026-09-30, user: "the annimaion pannel is still
+       not opening"). A door is one click from its row; the edge is
+       none. So once every other group is a door and the row still does
+       not fit, Whole slide folds, then Build order; the give-back below
+       opens either again if the row has room. */
+    if(over()){
+      var last=$$('.rbn-grp.rbn-nofold',bar).filter(function(g){
+        return !g.hidden&&!g.hasAttribute('data-off')
+          &&!g.classList.contains('rbn-folded');});
+      last.sort(function(x,y){
+        return (x.classList.contains('rbn-order')?1:0)
+          -(y.classList.contains('rbn-order')?1:0);});
+      for(var li=0;li<last.length&&over();li++){
+        rbnFoldGroup(last[li]);sizeRibbonGroups();}
+    }
     /* T464: GIVE BACK WHAT THE LAST FOLD OVER-BOUGHT. Folding from the
        right, one group at a time, stops the moment the row fits -- and
        the fold that finally makes it fit is often a wide group whose
@@ -30697,174 +30756,27 @@ window.JunoPptx = (function () {
     bar._fitKey=null;
     return false;
   }
-  /* ---- the strip may not eat the ribbon --------------------------------
-     The slide column and the ribbon are two tracks of ONE grid, so every
-     pixel the strip's drag handle takes comes straight out of the row of
-     tools -- and the drag was clamped to 46vw/900px, numbers that know
-     nothing about how wide the tools actually are. Past the bottom of the
-     ladder there is no rung left and .edit-tools is overflow-x:clip, so
-     the right-hand end of the row is simply cut off; with an object
-     selected the contextual groups need ~90px more, which is why it bit
-     there first (2026-08-29, T80, user: "making the thumbnail view bigger
-     can result in the ribbon getting eaten").
-     ribbonMinW MEASURES that floor rather than guessing it: it stamps on
-     the whole ladder at once -- every width rung, both text drops, the
-     tight rung and a folded View group -- reads what the row still needs,
-     then puts the classes and the fold back exactly as it found them.
-     That is the state fitEditRibbon reaches at the bottom of its own
-     climb, so the two cannot disagree. */
-  function ribbonMinW(){
-    var bar=$('#edit-tools');
-    if(!bar||bar.hidden||mode!=='edit') return 0;
-    /* nothing to measure: a folded bar reads 0 (the same reason
-       fitEditRibbon bails), and a side-docked one is a column that does
-       not compete with the strip for width at all */
-    if(deckEl.classList.contains('rbn-fold')) return 0;
-    if(deckEl.classList.contains('rbn-side')) return 0;
-    if(!bar.clientWidth) return 0;
-    /* MEASURED ONCE PER RIBBON, NOT ONCE PER SELECTION. The walk below
-       is eight max-content layouts with a fold and an unfold around each,
-       and fitFilmMax calls this on every selection change as well as on
-       every tab click. max-content does not depend on the container's
-       width, so the answer only moves when the ribbon's CONTENTS do. */
-    var sig=ribbonMinSig();
-    if(sig===filmFloorSig&&filmFloorW) return filmFloorW;
-    /* T539: ONE ANSWER PER STATE, KEPT. The single-entry memo above was
-       beaten by every change of selection KIND -- a text box, a figure,
-       nothing -- each of which shows a different set of contextual
-       controls, so selecting a figure after a title re-ran the whole
-       eight-tab walk: 100ms of forced layout inside the mousedown, the
-       hitch you felt on the first click of every drag (measured
-       2026-09-29 with a CPU profile: showFmt 120ms, of it ribbonMinW
-       98ms). A deck has a handful of such states; each is measured once. */
-    if(filmFloorMemo[sig]){filmFloorSig=sig;return filmFloorMemo[sig];}
-    var cl=deckEl.classList,rungs=[],had={},wasFolded=viewFolded,min;
-    ERCW.forEach(function(r){rungs.push(r[0]);});
-    ERC.forEach(function(c){rungs.push(c);});
-    rungs.push('erc-nohint');rungs.push('erc-nostatus');rungs.push('erc-tight');
-    rungs.forEach(function(c){had[c]=cl.contains(c);cl.add(c);});
-    foldViewGroup(true);
-    sizeRibbonGroups();
-    /* WHAT THE ROW NEEDS, WHICH IS NOT WHAT scrollWidth REPORTS (T152).
-       scrollWidth is floored at the element's own client width: a bar
-       with slack returns its BOX, never its content. So this measured
-       (deck width - strip width) instead of the ribbon's real floor, and
-       fitFilmMax's `W - filmFloorW` gave back exactly the strip's
-       CURRENT width. The ceiling was the current width at every window
-       size, so the drag could shrink the column and never widen it, and
-       the handle sat frozen against its own limit. Measured on a 1900px
-       window: box 1685px, true need ~635px, ceiling 200px where 867px
-       was available. (890px is the row's RESTING need; this measures it
-       with the whole ladder stamped on and View folded, which is the
-       state fitEditRibbon reaches at the bottom of its own climb. The
-       shipped number is visible at a 1200px window, where the floor is
-       the binding term: --film-max comes back 545px on a 1185px deck.) width:max-content asks the flex row what it actually
-       wants; the bar is already stamped with the whole compaction ladder
-       here, and both are put back below. */
-    var hadW=bar.style.width;
-    bar.style.width='max-content';
-    /* EVERY TAB, NOT THE ONE SHOWING, AND FOLDED AS THE LADDER WOULD.
-       Two faults, and they had to be fixed together.
-
-       (1) `.rbn-grp[data-off]` is display:none, so measuring the active
-       tab made --film-max -- and therefore the rendered strip and every
-       thumbnail in it -- a function of which tab you had last clicked.
-       Measured 2026-09-04 on a 1425px deck the per-tab floors ran view
-       484px, present 627, images 690, text 784, animation 1049, home
-       1152, design 1388: clicking Design took --film-max from 656px to
-       150px, the column from 200px to 150px, and every thumbnail shrank
-       31% (2026-09-05, user: "the slide thumbnails change size when you
-       click on different ribbons now").
-
-       (2) This measurement predates T187's group-fold rung and never
-       applied it, so it reported what the row needs UNFOLDED. That was
-       survivable while only one tab was measured; taking the max over
-       all of them would have pinned the strip at its 150px minimum on
-       every tab, which is worse than the bug. So the walk folds every
-       group that may fold -- which is exactly the bottom of
-       fitEditRibbon's own climb, and keeps the two from disagreeing.
-
-       Folding also makes the floors far more uniform across tabs (a
-       folded group is one door tile whatever it holds), so the max is
-       no longer set by whichever tab happens to be fattest. */
-    var wasTab=activeTab(),reFold=$$('#edit-tools .rbn-grp.rbn-folded');
-    min=0;
-    TABS.forEach(function(t){
-      if(!tabHasContent(t)) return;
-      tabGroupsOn(t);
-      sizeRibbonGroups();
-      var guard=0;
-      while(guard++<12&&rbnFoldOne()) sizeRibbonGroups();
-      var w=Math.ceil(bar.getBoundingClientRect().width);
-      if(w>min) min=w;
-      rbnUnfoldAll();
-    });
-    tabGroupsOn(wasTab);
-    reFold.forEach(rbnFoldGroup);
-    rbnShelfRestore();      /* T453: the eight walks unfolded it */
-    sizeRibbonGroups();
-    /* the single-tab reading is still taken, and is still the floor when
-       there is only one tab to have (the 'All tools' layout) */
-    if(!min) min=Math.ceil(bar.getBoundingClientRect().width);
-    bar.style.width=hadW;
-    rungs.forEach(function(c){cl.toggle(c,had[c]);});
-    foldViewGroup(wasFolded);
-    sizeRibbonGroups();
-    filmFloorSig=sig;
-    if(Object.keys(filmFloorMemo).length>40) filmFloorMemo={};
-    filmFloorMemo[sig]=min;
-    return min;
-  }
-  /* what the ribbon's floor depends on: the layout's tabs, which have
-     content, and how many groups and controls are showing */
-  function ribbonMinSig(){
-    return TABS.join(',')+'|'+TABS.filter(tabHasContent).join(',')+'|'
-      +$$('#edit-tools .rbn-grp').filter(function(g){
-        return !g.hidden;}).length
-      +'|'+$$('#edit-tools .rbn-grp .rbn-row>*').filter(function(n){
-        return !n.hidden;}).length;
-  }
-  /* The ceiling the strip is allowed to reach, published to CSS as
-     --film-max so ONE number drives the rendered column, the handle's own
-     position and the drag. The two old caps stay as the other terms: 46vw
+  /* ---- the strip's ceiling ---------------------------------------------
+     published to CSS as --film-max so ONE number drives the rendered
+     column, the handle's own position and the drag: 46% of the editor,
      and the 900px the drag has always stopped at.
-     The last measured floor is REMEMBERED, so folding the ribbon -- the
-     one state where the floor cannot be read -- does not let the strip
-     lurch wider only to be shoved back the moment it unfolds. */
-  var filmFloorW=0,filmFloorSig='',filmFloorMemo={},filmFloorT=0;
-  /* T539: A NEW STATE IS MEASURED AFTER THE GESTURE, NOT DURING IT. The
-     floor only caps how wide the slide strip may be dragged; nothing on
-     screen waits for it. So once there is a first answer, a state not
-     yet seen is measured a beat later, and never while a mouse button is
-     down -- the walk folds and unfolds every group, and doing that in
-     the middle of a drag is exactly the stutter this avoids. */
-  var filmPtrDown=false;
-  document.addEventListener('mousedown',function(){filmPtrDown=true;},true);
-  document.addEventListener('mouseup',function(){filmPtrDown=false;},true);
-  function fitFilmLater(){
-    if(filmFloorT) return;
-    filmFloorT=setTimeout(function run(){
-      if(filmPtrDown){filmFloorT=setTimeout(run,300);return;}
-      filmFloorT=0;
-      if(deckEl.hidden) return;
-      var f2=ribbonMinW();
-      if(f2){filmFloorW=f2;fitFilmMax();}
-    },350);
-  }
+     It USED to be the editor's width less the ribbon's measured floor as
+     well (T80, T152, T539): the ribbon and the strip were two tracks of
+     one row, so every pixel the handle took came out of the tools. T514
+     moved the ribbon to span the window ABOVE the strip, and from then
+     the term guarded nothing -- but it went on shrinking the ceiling as
+     the widest tab grew. When T579 kept Disappear on the Animation tab
+     with nothing selected, that tab's floor reached 1127px of a 1309px
+     editor and the ceiling came out at the strip's own width: the handle
+     could shrink the column and never widen it (2026-09-30, user: "the
+     thumbnail view can now no longer be re-sized"). The eight-tab walk
+     that measured the floor, and the memo T539 kept to hide its 98ms,
+     went with it; nothing else read them. */
   function fitFilmMax(){
     var W=deckEl.clientWidth||window.innerWidth||0;
     if(!W) return 900;
-    var sig=ribbonMinSig();
-    var f=(sig===filmFloorSig&&filmFloorW)?filmFloorW:filmFloorMemo[sig];
-    if(!f&&!filmFloorW) f=ribbonMinW();   /* the first answer, now */
-    else if(!f) fitFilmLater();
-    if(f){filmFloorW=f;filmFloorSig=sig;}
-    var hi=Math.min(900,Math.round(W*0.46));
-    if(filmFloorW) hi=Math.min(hi,W-filmFloorW);
-    /* 150px is the strip's own minimum and wins the tie: below the
-       ribbon's floor the honest answer is the side toolbar, which
-       rbnOverflowNotice already offers, not a strip too narrow to read */
-    hi=Math.max(150,Math.round(hi));
+    /* 150px is the strip's own minimum and wins the tie */
+    var hi=Math.max(150,Math.min(900,Math.round(W*0.46)));
     deckEl.style.setProperty('--film-max',hi+'px');
     return hi;
   }
@@ -31035,7 +30947,6 @@ window.JunoPptx = (function () {
      back on every pass and a refit from inside that would re-enter it. */
   function rbnShelfRefit(){
     if(typeof applyZoom==='function') applyZoom();
-    if(typeof fitFilmMax==='function') fitFilmMax();
   }
   /* clicking the open door again closes it; clicking another swaps */
   function rbnShelfOpen(g){
@@ -31091,6 +31002,14 @@ window.JunoPptx = (function () {
     var x=$('#rbn-shelf-close');
     if(x) x.addEventListener('click',function(e){
       e.stopPropagation();rbnShelfDismiss();rbnShelfRefit();});
+    /* T586: the slim line scrolls with the wheel -- its thin scrollbar
+       is a small target, and the wheel is where a hand on a mouse is */
+    var body=$('#rbn-shelf-body');
+    if(body) body.addEventListener('wheel',function(e){
+      if(Math.abs(e.deltaY)<=Math.abs(e.deltaX)) return;
+      if(body.scrollWidth<=body.clientWidth+1) return;
+      body.scrollLeft+=e.deltaY;e.preventDefault();
+    },{passive:false});
   }
   function rbnFoldGroup(g){
     if(!g||g.classList.contains('rbn-folded')) return false;
@@ -31296,8 +31215,7 @@ window.JunoPptx = (function () {
   }
   function rbnUnfoldAll(){
     /* T453: EVERY measuring pass unfolds the whole bar and folds it
-       again -- fitEditRibbon to judge the row, ribbonMinW eight times
-       over to find the strip's ceiling -- and each one hands the
+       again -- fitEditRibbon to judge the row -- and each one hands the
        shelf's row back to its group. Remember whose it was here, once,
        so whoever refolds can put it back; patching the callers one at
        a time is how the shelf shut itself on every selection change. */
@@ -39082,6 +39000,16 @@ window.JunoPptx = (function () {
       var on=selSet.indexOf(key)>=0;
       el.classList.toggle('sel',on);
       el.classList.toggle('grpsel',on&&multi);
+      /* T584: A SMALL THING KEEPS ITS MIDDLE. Eight 15px handles round
+         a 20px dot cover all of it, so it could be resized but never
+         moved; under 48px the side bars go and the corners stand off */
+      var small=false;
+      if(on&&!multi&&el.classList.contains('an-item')
+         &&!el.classList.contains('an-arrow-hit')){
+        var br=el.getBoundingClientRect();
+        small=br.width<48||br.height<48;
+      }
+      el.classList.toggle('an-small',small);
       el.classList.toggle('an-grouped',on&&oneGrp);
       /* the group you have stepped into is outlined as a whole, so it is
          obvious that clicks are landing on members and not on the group */
@@ -42707,6 +42635,21 @@ window.JunoPptx = (function () {
     var r=sel.getRangeAt(0);
     return el.contains(r.startContainer)&&el.contains(r.endContainer);
   }
+  /* T590: the list item whose very start the caret is at, or null --
+     nothing but empty markup between the item's first position and it */
+  function caretAtItemStart(el){
+    var sel=window.getSelection();
+    if(!sel||!sel.rangeCount||!sel.isCollapsed) return null;
+    var n=sel.focusNode;
+    if(!n||!el.contains(n)) return null;
+    var li=(n.nodeType===1?n:n.parentNode);
+    li=(li&&li.closest)?li.closest('li'):null;
+    if(!li||!el.contains(li)) return null;
+    var r=document.createRange();
+    try{r.setStart(li,0);r.setEnd(sel.focusNode,sel.focusOffset);}
+    catch(e){return null;}
+    return r.toString().replace(/\u200b/g,'')===''?li:null;
+  }
   function caretList(el){
     var sel=window.getSelection(),n=sel&&sel.rangeCount?sel.focusNode:null;
     if(!n||!el.contains(n)) return null;
@@ -43527,6 +43470,40 @@ window.JunoPptx = (function () {
       toast(kind==='number'?'Numbered list \u2014 Tab indents'
         :'Bullet list \u2014 Tab indents, Shift+Tab goes back');
     });
+    /* T591: ...AND AT THE START OF ANY LINE. The rule above only fires
+       on the first characters of a box that is not a list yet, so "1. "
+       under a heading line, or under a list, stayed "1. " (2026-09-30,
+       user: "There is not auto-numbering like dot points being created
+       automatically"). A marker typed at the start of any other plain
+       line takes that line into a list, through the same per-paragraph
+       toggle as the List button. Never inside a list (its own marker is
+       already there) and never in a Markdown box (T74). */
+    el.addEventListener('input',function(){
+      if(!el.isContentEditable) return;
+      var s4=pres.slides[cur],a4=s4&&annotByIdx(s4,idx);
+      if(!a4||a4.k!=='text'||a4.md) return;
+      var sel4=window.getSelection();
+      if(!sel4||!sel4.rangeCount||!sel4.isCollapsed) return;
+      var tn=sel4.focusNode;
+      if(!tn||tn.nodeType!==3||!el.contains(tn)) return;
+      if(tn.parentNode&&tn.parentNode.closest&&tn.parentNode.closest('li'))
+        return;
+      var before=String(tn.nodeValue||'').slice(0,sel4.focusOffset);
+      var m4=/^([-*\u2022]|1[.)])[ \u00a0]$/.exec(before);
+      if(!m4) return;
+      /* ...at the START of its line: nothing but a line break, or the
+         start of a block, before it */
+      var pv=tn.previousSibling;
+      if(pv&&!(pv.nodeType===1&&pv.tagName==='BR')) return;
+      if(!pv&&tn.parentNode!==el&&!/^(DIV|P)$/.test(tn.parentNode.tagName))
+        return;
+      tn.nodeValue=String(tn.nodeValue||'').slice(sel4.focusOffset);
+      try{
+        var r4=document.createRange();r4.setStart(tn,0);r4.collapse(true);
+        sel4.removeAllRanges();sel4.addRange(r4);
+      }catch(err){}
+      listSelection(/^1/.test(m4[1])?'number':'bullet');
+    });
     /* Tab makes a SUB-BULLET, the way it does in every outliner and in
        PowerPoint — not a jump to the next control. Only inside a list:
        in a plain text box Tab still has nothing useful to do and is left
@@ -43550,6 +43527,35 @@ window.JunoPptx = (function () {
         el.style.listStyle='none';el.style.paddingLeft='0';
         setVal('',null);markDirty();
         return;
+      }
+      /* T590: BACKSPACE AT THE START OF A BULLET TAKES THE BULLET OFF.
+         Left to the browser it merged the line into the one above, words
+         and all, and on the first line of a box it did nothing -- so a
+         bullet could only be removed from a line that was already empty
+         (2026-09-30, user: "It's still really hard to get rid-of dot
+         points ... if there is a line above and you try and delete, then
+         it just takes everything back to the line before. If the dot
+         points there is no line before e.g. at the top, then dot points
+         cannot be backspaced"). Word and PowerPoint: the first Backspace
+         at the start of a bullet takes a sub-bullet up a level, or the
+         bullet off, and leaves the words on their own line; the next one
+         joins the lines. The marker comes off through listSelection, the
+         same toggle the List button uses on the caret's paragraph. */
+      if(e.key==='Backspace'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey
+         &&!e.altKey){
+        var li0=caretAtItemStart(el);
+        if(li0){
+          e.preventDefault();e.stopPropagation();
+          var up0=li0.parentNode&&li0.parentNode.parentNode;
+          if(up0&&up0.tagName==='LI'){
+            try{document.execCommand('outdent',false,null);}catch(err){}
+          } else {
+            var ls0=li0.parentNode;
+            listSelection((ls0&&ls0.getAttribute('data-list'))
+              ||(ls0&&ls0.tagName==='OL'?'number':'bullet'));
+          }
+          return;
+        }
       }
       if(e.key==='Tab'&&caretList(el)){
         e.preventDefault();e.stopPropagation();
@@ -43778,7 +43784,16 @@ window.JunoPptx = (function () {
     hit.setAttribute('stroke-width',Math.max(16,swPx+10));
     hit.setAttribute('class','an-arrow-hit an-item');
     hit.setAttribute('data-idx',i);
-    svg.appendChild(hit);
+    /* T585: WHILE EDITING, THE GRAB PATH IS ON TOP WITH THE INK. Under
+       the items it kept frames clickable -- and made an arrow drawn over
+       a picture unclickable, because the picture took every click on it
+       (2026-09-30, user: "I cannot click on it with the map in the
+       background"). The ink is always on top, so the thing you can see
+       is the thing you get; a frame under it stays clickable everywhere
+       but the arrow's own band. svgTop is pointer-events:none, and only
+       this path (an .an-item) takes clicks inside it. Presenting keeps
+       it underneath, so tapping a picture to zoom still reaches it. */
+    (editing?svgTop:svg).appendChild(hit);
     if(editing&&!pinned(a)){  /* a pinned arrow gets no live endpoints */
       /* a handle per corner, plus a faint one halfway along each segment
          that ADDS a corner there - the gesture every vector editor uses,
@@ -43856,7 +43871,7 @@ window.JunoPptx = (function () {
     if(!defs){defs=document.createElementNS(AN_NS,'defs');
       svgTop.insertBefore(defs,svgTop.firstChild);}
     $$('.an-arrow-line,.an-endpt',layer).forEach(function(n){n.remove();});
-    $$('.an-arrow-hit',svg).forEach(function(n){n.remove();});
+    $$('.an-arrow-hit',layer).forEach(function(n){n.remove();});   /* T585: either svg */
     $$('marker',defs).forEach(function(n){n.remove();});
     var editing=(mode==='edit');
     (s.annots||[]).forEach(function(a,i){
@@ -44332,9 +44347,10 @@ window.JunoPptx = (function () {
         if(se&&mode==='edit') checkFigDpi(se);
       },300);
     }
-    /* two svg layers: fat invisible hit-lines UNDER the items (so
-       frames stay clickable), visible strokes ON TOP of everything
-       (click-transparent) so arrows are never hidden behind frames */
+    /* two svg layers: visible strokes ON TOP of everything (click-
+       transparent) so arrows are never hidden behind frames, and the fat
+       invisible hit-lines -- on top with them while editing (T585),
+       UNDER the items while presenting, where frames take the taps */
     var svg=document.createElementNS(AN_NS,'svg');
     layer.insertBefore(svg,layer.firstChild);
     var svgTop=document.createElementNS(AN_NS,'svg');
@@ -44943,28 +44959,33 @@ window.JunoPptx = (function () {
         img.draggable=false;
         altAttrs(img,a);
         if(a.crop) im.classList.add('an-cropped');
-        applyCrop(img,a);
         /* T387: A WINDOW ONTO THE PICTURE. a.win names a region of the
            picture, in percent of the picture, and the box shows THAT,
            filled -- the picture is scaled so the window fills the box.
-           A zoom callout is an ordinary picture wearing a window. */
+           A zoom callout is an ordinary picture wearing a window, and
+           since T587 so is every picture whose trim is finished.
+           The window CLIPS in a wrapper of its own, and a shape crop is
+           cut there too: on the <img> it would be measured on the whole
+           picture, and on the item it would cut off the handles (which
+           the item's own overflow:hidden used to do to a callout). */
         if(a.win&&a.win.w>0&&a.win.h>0){
           im.classList.add('an-win');
           img.style.width=(10000/a.win.w).toFixed(2)+'%';
           img.style.height=(10000/a.win.h).toFixed(2)+'%';
           img.style.left=(-(a.win.x||0)*100/a.win.w).toFixed(2)+'%';
           img.style.top=(-(a.win.y||0)*100/a.win.h).toFixed(2)+'%';
-        }
-        im.appendChild(img);
+          var iw=document.createElement('div');iw.className='an-imgwin';
+          applyCrop(iw,a);
+          iw.appendChild(img);im.appendChild(iw);
+        } else {applyCrop(img,a);im.appendChild(img);}
         /* a DRAWN crop has no edges to drag: the outline is the crop,
            and four inset handles over it would claim to move something
            they cannot (T64) */
         if(editing){if(cropMode&&selAnnot===i&&!(a.crop&&a.crop.path))
             mkCropHandles(im,layer,s,i);
-          else {im.appendChild(mkResize(a.crop
-              ?'Drag to resize the crop window'
-              :'Drag to resize — the picture keeps its shape. '
-                +'Hold Shift to stretch it'));
+          else {im.appendChild(mkResize(
+              'Drag to resize — the picture keeps its shape. '
+                +'Hold Shift to stretch it'));   /* T588: cropped too */
             im.appendChild(mkRotate());}}
         placeAnnot(im);
       } else if(a.k==='video'){
@@ -45545,7 +45566,12 @@ window.JunoPptx = (function () {
     });
   }
   function selectAnnot(layer,idx,additive){
-    if(cropMode&&idx!==selAnnot) cropMode=false;
+    if(cropMode&&idx!==selAnnot){
+      cropModeOff();
+      /* T587: the picture has just taken its trimmed frame; draw it now,
+         before anything that follows measures the layer */
+      if(layer&&pres.slides[cur]) renderAnnots(layer,pres.slides[cur]);
+    }
     var s=pres.slides[cur];
     if(idx===null){selAnnot=null;selSet=[];}
     else {
@@ -47635,11 +47661,9 @@ window.JunoPptx = (function () {
        lines of bookkeeping maintained for no reader (2026-08-17 audit). */
     sizeRibbonGroups();
     /* groups appearing or leaving changes the width the row needs, so the
-       density has to be re-judged every time the selection does -- and so
-       does the STRIP's ceiling, because the contextual groups raise the
-       ribbon's floor by ~90px and a strip still sitting at its old width
-       is exactly how clicking an object ate the row (T80) */
-    fitFilmMax();
+       density has to be re-judged every time the selection does. (The
+       strip's ceiling no longer is: the ribbon spans the window above
+       the strip (T514), so a selection cannot move it -- T582.) */
     fitEditRibbon();
   }
   /* How many columns each group needs to fill two rows ACROSS: half its
@@ -47725,7 +47749,12 @@ window.JunoPptx = (function () {
       if(n%2===1&&last) last.classList.add('rbn-odd');
     });
   }
+  /* T585: a drawn menu option that is only POINTED AT applies as a
+     preview (30-format-bar.js, drawnOpt): no history, no dirty mark --
+     the same quiet a held Trim stepper gets */
+  var fmtPreview=false;
   function fmtApply(fn,quiet){
+    quiet=quiet||fmtPreview;
     var s=pres.slides[cur]; if(!s) return;
     /* T494: the words being typed get their own entry BEFORE the format
        mutates the box, or the first Ctrl+Z after Bold takes the
@@ -48277,11 +48306,24 @@ window.JunoPptx = (function () {
        So: snap the stored box onto the picture (killing any letterbox
        already banked), then hold the picture's aspect for the drag, which
        is what every other tool does with a photo. Hold SHIFT to stretch
-       it out of shape on purpose, and a CROPPED image keeps free-form
-       resizing because there the box IS the crop window (object-fit is
-       cover) and reshaping it is the whole point. */
-    var imgFree=false;
-    if(a.k==='image'&&!a.crop&&el){
+       it out of shape on purpose.
+       T588: A CROPPED PICTURE KEEPS ITS SHAPE TOO. It used to resize
+       free-form, "because the box IS the crop window and reshaping it is
+       the whole point" -- but a cropped picture is object-fit:cover, so
+       every drag that changed the box's shape cut more of the picture
+       away, and a picture shrunk until one side hit the size floor was
+       cropped by the other (2026-09-30, user: "when trying to re-size and
+       image a lot of the time it just ends up cropping it if it gets too
+       small, which is definently not what i want"). Resizing resizes;
+       reshaping the crop is the Crop button's job. So a picture with a
+       crop or a window (T587) holds the shape it has now, read off the
+       box -- not the source picture's, which is not what it shows -- and
+       Shift still frees it. Not while trimming: those are the trim
+       handles' drags, not this one. */
+    var imgFree=false,cropHold=false;
+    if(a.k==='image'&&el&&(a.crop||a.win)&&!cropMode){
+      cropHold=true;imgFree=true;
+    } else if(a.k==='image'&&!a.crop&&el){
       var ie=el.querySelector('.an-imgel');
       var fi=ie?figFit(layer,a,ie):null;
       if(takeFit(fi)){figRatio=fi.ratio;imgFree=true;}
@@ -48305,7 +48347,7 @@ window.JunoPptx = (function () {
        cannot reach it (that is what imgFree marks). */
     var boxRatio=(oh>0&&lr.height&&lr.width)
       ?((ow*lr.width)/(oh*lr.height)):0;
-    var baseRatio=figRatio||(a.lockar?boxRatio:0);
+    var baseRatio=figRatio||((a.lockar||cropHold)?boxRatio:0);
     var canFree=imgFree||!!a.lockar;
     /* A ONE-AXIS HANDLE. The untouched axis is not this drag's business:
        nothing below writes to it, and only an aspect lock may move it --
@@ -48324,6 +48366,12 @@ window.JunoPptx = (function () {
     var anyArrow=(s.annots||[]).some(function(m){
       return m&&m.k==='arrow';});
     var movedAny=false;
+    /* T584: THE FLOOR IS A FEW PIXELS, NOT 4% OF THE SLIDE. 4% was about
+       60px on a laptop, so a dot marking a town on a map could not be
+       made smaller than a coin (2026-09-30, user: "I tried drawing an
+       oval just then, but it seems like there is a minimum size").
+       Six screen pixels still leaves something to take hold of. */
+    var mnX=lr.width?600/lr.width:0.5,mnY=lr.height?600/lr.height:0.5;
     /* T542: a text box that KEEPS a height (the fit line a.fh -- words
        at its middle or foot, or shrinking to fit) has that height moved
        by the vertical handles. A box that grows with its words still has
@@ -48340,17 +48388,17 @@ window.JunoPptx = (function () {
         :(ev.shiftKey?boxRatio:0);
       /* the dragged corner moves; the opposite corner stays anchored */
       var nx=ox,ny=oy,nw=ow,nh=oh;
-      if(east) nw=Math.max(4,ow+dx);
-      if(west){nw=Math.max(4,ow-dx);nx=ox+(ow-nw);}
+      if(east) nw=Math.max(mnX,ow+dx);
+      if(west){nw=Math.max(mnX,ow-dx);nx=ox+(ow-nw);}
       if(a.k!=='text'){
-        if(south) nh=Math.max(4,oh+dy);
-        if(north){nh=Math.max(4,oh-dy);ny=oy+(oh-nh);}
+        if(south) nh=Math.max(mnY,oh+dy);
+        if(north){nh=Math.max(mnY,oh-dy);ny=oy+(oh-nh);}
       }
       var sx=null,sy=null;
       if(!ev.altKey){
         /* the moving edges snap; an aspect-locked figure snaps its width
            and lets the height follow the plot's ratio. A guide only shows
-           when the snap actually landed (the 4% minimum can cancel it). */
+           when the snap actually landed (the size floor can cancel it). */
         /* ONLY THE AXIS BEING DRAGGED SNAPS. With four corners every
            handle moved both axes, so the `else` arms below were only
            ever reached by a real west/north drag. A side handle makes
@@ -48359,8 +48407,8 @@ window.JunoPptx = (function () {
         if(east||west){
           var bx=bestSnap(targets.xs,[east?nx+nw:nx],thr.x);
           if(bx){
-            if(east){if(nw+bx.d>=4){nw+=bx.d;sx=bx.at;}}
-            else if(nw-bx.d>=4){nx+=bx.d;nw-=bx.d;sx=bx.at;}
+            if(east){if(nw+bx.d>=mnX){nw+=bx.d;sx=bx.at;}}
+            else if(nw-bx.d>=mnX){nx+=bx.d;nw-=bx.d;sx=bx.at;}
           }
         }
         /* an aspect-locked drag snaps the axis that LEADS and lets the
@@ -48369,8 +48417,8 @@ window.JunoPptx = (function () {
         if(a.k!=='text'&&(north||south)&&(!ratio||axisY)){
           var by=bestSnap(targets.ys,[south?ny+nh:ny],thr.y);
           if(by){
-            if(south){if(nh+by.d>=4){nh+=by.d;sy=by.at;}}
-            else if(nh-by.d>=4){ny+=by.d;nh-=by.d;sy=by.at;}
+            if(south){if(nh+by.d>=mnY){nh+=by.d;sy=by.at;}}
+            else if(nh-by.d>=mnY){ny+=by.d;nh-=by.d;sy=by.at;}
           }
         }
       }
@@ -48565,9 +48613,14 @@ window.JunoPptx = (function () {
          must not follow the selection this time — otherwise placing five
          shapes in a row throws you off Insert after every one */
       justDrew=true;
+      /* T584: a CLICK is under 4 screen pixels of travel, the usual
+         click-or-drag line. It was 1.5% of the slide (~22px on a laptop),
+         so a small dot drawn on purpose was thrown away as a stray click */
+      var lr=layer.getBoundingClientRect();
+      var cx=lr.width?400/lr.width:1.5,cy=lr.height?400/lr.height:1.5;
       var tiny=raw?(raw.length<3)
-        :boxed?(a.w<1.5&&a.h<1.5)
-        :(Math.abs(a.x2-a.x1)<1.5&&Math.abs(a.y2-a.y1)<1.5);
+        :boxed?(a.w<cx&&a.h<cy)
+        :(Math.abs(a.x2-a.x1)<cx&&Math.abs(a.y2-a.y1)<cy);
       /* A CLICK IS STILL A CLICK. Dragging says how big; clicking asks
          for the usual one, which is the fast way when the size does not
          matter yet — and it is what these two tools have always done, so
@@ -48678,6 +48731,17 @@ window.JunoPptx = (function () {
     var best=-1,bestD=12;
     s.annots.forEach(function(a,i){
       if(a.k!=='arrow'||lockedAll(a)||a.hide) return;
+      /* T585: THE LINE YOU CAN SEE, not the chord between its ends. The
+         straight x1,y1 -> x2,y2 found a curved or bent arrow where it is
+         not drawn and missed it where it is. Its rendered grab path has
+         the real shape and a width that is its tolerance, so ask that;
+         a later arrow (drawn on top) wins a tie. */
+      var hp=layer.querySelector('.an-arrow-hit[data-idx="'+i+'"]');
+      if(hp&&typeof hp.isPointInStroke==='function'&&window.DOMPoint){
+        var inS=null;
+        try{inS=hp.isPointInStroke(new DOMPoint(px,py));}catch(e){}
+        if(inS!==null){if(inS){best=i;bestD=0;}return;}
+      }
       var d=distToSeg(px,py,
         a.x1/100*r.width,a.y1/100*r.height,
         a.x2/100*r.width,a.y2/100*r.height);
@@ -50235,7 +50299,10 @@ window.JunoPptx = (function () {
        drops and the exit must never be droppable. */
     var cx=$('#et-cancel');
     if(cx) cx.hidden=(t==='select');
-    if(t!=='select') cropMode=false;
+    if(t!=='select'&&cropMode){
+      cropModeOff();                     /* T587: the frame takes the trim */
+      if(l&&pres.slides[cur]) renderAnnots(l,pres.slides[cur]);
+    }
     var hint=$('#et-hint');
     /* "the slide" is wrong on a poster, which is one printed page and has
        no slides — the word leaked into every one of these (2026-08-07
@@ -50874,8 +50941,28 @@ window.JunoPptx = (function () {
     o.setAttribute('aria-pressed','false');
     o.dataset.optKey=key;
     o.appendChild(node);
+    /* T585: POINTING SHOWS IT (2026-09-30, user: "would be good if on
+       hover you could preview how the arrow looks"). The option goes on
+       the selection while the pointer is on it; leaving, or the menu
+       closing, puts back what was there; a click keeps it -- after the
+       original is put back, so its one undo entry returns to what you
+       had before you pointed. */
+    o.addEventListener('mouseenter',function(){
+      if(o.disabled) return;
+      drawnPreviewStart();
+      fmtPreview=true;
+      try{onPick();}finally{fmtPreview=false;}
+    });
+    o.addEventListener('mouseleave',drawnPreviewEnd);
+    /* a section of a window (T177) closes with the window, not itself */
+    var box=(menu.closest&&menu.closest('.opt-panel'))||menu;
+    if(!box._pvWatch&&window.MutationObserver){
+      box._pvWatch=new MutationObserver(function(){
+        if(box.hidden) drawnPreviewEnd();});
+      box._pvWatch.observe(box,{attributes:true,attributeFilter:['hidden']});
+    }
     o.addEventListener('click',function(e){
-      e.stopPropagation();onPick();
+      e.stopPropagation();drawnPreviewEnd();onPick();
       /* a menu that is a SECTION of a window stays up: you set the
          weight after the style without opening the window twice,
          and showFmt re-marks the rows (T177) */
@@ -50884,6 +50971,30 @@ window.JunoPptx = (function () {
     });
     menu.appendChild(o);
     return o;
+  }
+  /* the selection's items as they were before the pointer arrived, put
+     back IN PLACE (same objects: nothing that holds one goes stale) */
+  var drawnPrev=null;
+  function drawnPreviewStart(){
+    if(drawnPrev) return;
+    var s=pres.slides[cur]; if(!s) return;
+    var ids=selSet.filter(function(i){return typeof i==='number';});
+    if(!ids.length&&typeof selAnnot==='number') ids=[selAnnot];
+    drawnPrev={s:s,sel:selSet.slice(),items:ids.map(function(i){
+      return [s.annots[i],deep(s.annots[i])];})};
+  }
+  function drawnPreviewEnd(){
+    var p=drawnPrev; drawnPrev=null;
+    if(!p||p.s!==pres.slides[cur]) return;
+    p.items.forEach(function(q){
+      if(!q[0]) return;
+      Object.keys(q[0]).forEach(function(k){delete q[0][k];});
+      Object.keys(q[1]).forEach(function(k){q[0][k]=q[1][k];});
+    });
+    var l=stage.querySelector('.annot-layer'); if(!l) return;
+    renderAnnots(l,p.s);
+    if(p.sel.length>1){selSet=p.sel;paintSel(l);showFmt();}
+    else selectAnnot(l,selAnnot);
   }
   function menuHead(menu,text){
     var h=document.createElement('div');
@@ -61121,10 +61232,102 @@ window.JunoPptx = (function () {
      live, Esc or reselecting leaves the mode. ---- */
   var cropMode=false;
   function setCropMode(on){
-    cropMode=!!on;
+    on=!!on;
+    if(on&&!cropMode) cropBegin();
+    var ended=!on&&cropMode;
+    cropMode=on;
+    if(ended) cropFinish();
     var l=stage.querySelector('.annot-layer');
     if(l&&pres.slides[cur]){renderAnnots(l,pres.slides[cur]);paintSel(l);}
     if(on) toast('Drag the edge handles to trim. Esc to finish.');
+  }
+  /* the ways OUT that are not setCropMode -- selecting something else,
+     arming a tool -- end the trim the same way; they re-render anyway */
+  function cropModeOff(){
+    if(!cropMode) return;
+    cropMode=false;cropFinish();
+  }
+  /* ---- T587: A FINISHED CROP IS THE FRAME ------------------------------
+     (2026-09-30, user: "cropping an object is aweful. The outline of it
+     still stays the pre-cropped".) A trim was a mask over a frame that
+     never changed size: a.crop's insets clipped the picture inside the
+     box, and the box -- its outline, its handles, what snaps and aligns
+     and what an arrow attaches to -- stayed the uncropped picture.
+     PowerPoint's frame IS what you kept. So a picture's trim is edited
+     on the WHOLE picture (cropBegin puts the frame back round all of it,
+     insets over the part that is hidden) and, when the trim ends, the
+     frame becomes the part you kept and the picture wears that part as
+     its window (a.win, T387 -- the same thing a zoom callout is, and
+     what PowerPoint's own srcRect already exports it as). A shape crop
+     rides along inside the new frame; a drawn outline (a.crop.path) is
+     in the box's own coordinates and stays as it was. */
+  var cropOn=null;
+  function cropBegin(){
+    cropOn=null;
+    var s=pres.slides[cur],i=selAnnot;
+    var a=(typeof i==='number'&&s&&s.annots)?s.annots[i]:null;
+    if(!a||a.k!=='image') return;
+    var l=stage.querySelector('.annot-layer');
+    var im=l&&l.querySelector('.an-item[data-idx="'+i+'"] .an-imgel');
+    var lr=l?l.getBoundingClientRect():null;
+    cropOn={s:s,a:a,orig:deep(a),
+      nat:(im&&im.naturalWidth&&im.naturalHeight)
+        ?[im.naturalWidth,im.naturalHeight]:null,
+      ar:(lr&&lr.width&&lr.height)?lr.width/lr.height:0};
+    cropUnbake(a);
+    cropOn.trim=JSON.stringify(a.crop||null);
+  }
+  function cropFinish(){
+    var c=cropOn; cropOn=null;
+    if(!c||!c.s.annots||c.s.annots.indexOf(c.a)<0) return;
+    var a=c.a;
+    /* nothing trimmed: put back exactly what was there, so looking at
+       the handles and leaving costs no rounding and no undo entry */
+    if(JSON.stringify(a.crop||null)===c.trim){
+      Object.keys(a).forEach(function(k){delete a[k];});
+      Object.keys(c.orig).forEach(function(k){a[k]=c.orig[k];});
+      return;
+    }
+    if(cropBake(a,c.nat,c.ar)) markDirty();
+  }
+  function cropRound(v){return Math.round(v*1e4)/1e4;}
+  /* the window back into a whole-picture frame with insets over it */
+  function cropUnbake(a){
+    var wn=a&&a.win;
+    if(!a||a.k!=='image'||!wn||!(wn.w>0&&wn.h>0)) return false;
+    if(a.crop&&a.crop.path) return false;
+    var aw=a.w||30,ah=a.h||24,p=anchorPos(a,aw,ah);
+    var fw=aw*100/wn.w,fh=ah*100/wn.h;
+    var fx=p.x-fw*(wn.x||0)/100,fy=p.y-fh*(wn.y||0)/100;
+    var c={},e={t:wn.y||0,l:wn.x||0,
+      r:100-(wn.x||0)-wn.w,b:100-(wn.y||0)-wn.h};
+    Object.keys(e).forEach(function(k){if(e[k]>0.01) c[k]=cropRound(e[k]);});
+    if(a.crop&&a.crop.shape) c.shape=a.crop.shape;
+    delete a.win;
+    a.w=cropRound(fw);a.h=cropRound(fh);anchorSet(a,fx,fy,a.w,a.h);
+    if(Object.keys(c).length) a.crop=c; else delete a.crop;
+    return true;
+  }
+  /* ...and the trimmed frame into the part kept, wearing it as a window.
+     A cropped picture is drawn object-fit:cover in its box, so the
+     window is measured off the picture as cover lays it there. `ar` is
+     the page's width over its height, for the box's true shape. */
+  function cropBake(a,nat,ar){
+    if(!a||a.k!=='image'||!a.crop||a.crop.path||a.win||!nat||!ar) return false;
+    var c=a.crop,t=+c.t||0,r=+c.r||0,b=+c.b||0,l=+c.l||0;
+    if(!(t||r||b||l)||t+b>=100||l+r>=100) return false;
+    var aw=a.w||30,ah=a.h||24;
+    var W=aw/100*ar,H=ah/100;
+    var sc=Math.max(W/nat[0],H/nat[1]),PW=nat[0]*sc,PH=nat[1]*sc;
+    var ox=(W-PW)/2,oy=(H-PH)/2;
+    var vx=l/100*W,vy=t/100*H,vw=(100-l-r)/100*W,vh=(100-t-b)/100*H;
+    a.win={x:cropRound((vx-ox)/PW*100),y:cropRound((vy-oy)/PH*100),
+      w:cropRound(vw/PW*100),h:cropRound(vh/PH*100)};
+    var p=anchorPos(a,aw,ah);
+    var nw=cropRound(aw*(100-l-r)/100),nh=cropRound(ah*(100-t-b)/100);
+    a.w=nw;a.h=nh;anchorSet(a,p.x+aw*l/100,p.y+ah*t/100,nw,nh);
+    if(c.shape) a.crop={shape:c.shape}; else delete a.crop;
+    return true;
   }
   /* ---- FREE CROP: DRAW THE OUTLINE (T64) ------------------------------
      A lasso over the selected picture. Points are collected in PERCENT
@@ -61331,8 +61534,14 @@ window.JunoPptx = (function () {
     var col='#39a9c0';
     var outline={k:'rect',x:rx,y:ry,w:rw,h:rh,color:col};
     outline.sw=SW_DEFAULT;
+    /* T587: the box dragged is in percent of the FRAME; a cropped picture
+       is itself a window onto its source, so the callout's window is that
+       part of the part it already shows */
+    var sw0=a.win&&a.win.w>0&&a.win.h>0?a.win:null;
+    var cwin=sw0?{x:(sw0.x||0)+win.x*sw0.w/100,y:(sw0.y||0)+win.y*sw0.h/100,
+      w:win.w*sw0.w/100,h:win.h*sw0.h/100}:win;
     var call={k:'image',x:x,y:y,w:wc,h:hc,src:a.src,
-      win:{x:win.x,y:win.y,w:win.w,h:win.h},
+      win:{x:cwin.x,y:cwin.y,w:cwin.w,h:cwin.h},
       anim:{type:'zoom',order:nextAnimOrder(s)}};
     if(a.okey) call.okey=a.okey;
     if(a.alt) call.alt=a.alt;
@@ -61408,6 +61617,13 @@ window.JunoPptx = (function () {
   }
   function mkCropHandles(host,layer,s2,idx){
     var a=s2.annots[idx]; if(!a) return;
+    /* T587: the whole picture, faint, under the part being kept */
+    if(a.k==='image'&&a.src&&!a.win){
+      var gh=document.createElement('img');
+      gh.className='an-crop-ghost';gh.src=a.src;gh.alt='';gh.draggable=false;
+      gh.setAttribute('aria-hidden','true');
+      host.insertBefore(gh,host.firstChild);
+    }
     ['t','r','b','l'].forEach(function(side){
       var h=document.createElement('div');
       h.className='an-crop-h an-crop-'+side;
@@ -61542,6 +61758,9 @@ window.JunoPptx = (function () {
       e.stopPropagation();
       SIDES.forEach(function(p){inputs[p[0]].value='';});
       fmtApply(function(a){
+        /* T587: a finished trim lives in the window, so all of it is
+           the window going back to the whole picture as well */
+        if(a.k==='image') cropUnbake(a);
         if(a.crop) delete a.crop;
       });
     });
@@ -61585,9 +61804,12 @@ window.JunoPptx = (function () {
     var lz=$('#fmt-linkzoom');
     if(lz) lz.addEventListener('click',function(e){
       e.stopPropagation();linkZoomSel();});
-    /* opening the menu shows the SELECTION's current trim */
+    /* opening the menu shows the SELECTION's current trim -- T587: on the
+       whole picture, so it is the trim mode the Crop button opens (the
+       numbers and the handles are one trim, and it ends the same way) */
     btn.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;
+      if(!cropMode&&typeof selAnnot==='number') setCropMode(true);
       var a=annotByIdx(s,selAnnot)
         ||(selSet.length?s.annots[selSet[0]]:null);
       SIDES.forEach(function(p){
@@ -66387,8 +66609,13 @@ window.JunoPptx = (function () {
          TEXT!!!!!"). The tiles show for any text box; picking one gives
          the box an entrance (setBy). */
       var fig=!!a&&num&&(a.k==='cell'||a.k==='image');   /* T473 */
+      /* hlin belongs in this answer too: timingSync calls .toString()
+         on (st.text&&st.hlin), and for a text box with no entrance yet
+         undefined threw there -- which aborted showFmt, left the ribbon
+         unfitted and the Animation panel button off its right edge,
+         every time a plain text box was selected (T578 regression) */
       if(!on) return {on:false,text:!!a&&num&&a.k==='text',by:'',hl:false,
-        fig:fig,grid:''};
+        hlin:false,fig:fig,grid:''};
       var tl=timelineOf(s),si=stepOf(s,selAnnot);
       var after=(a.anim.after)|0,shared=false;
       /* T577: who is on that CLICK, pieces of other boxes included */
@@ -72953,6 +73180,14 @@ window.JunoPptx = (function () {
           im.src=a.src;im.alt='';im.loading='lazy';im.draggable=false;
           im.setAttribute('aria-hidden','true');   /* decorative (T105) */
           if(a.crop) bx.classList.add('is-crop');
+          /* T587: a finished crop is a window; the thumbnail shows it */
+          if(a.win&&a.win.w>0&&a.win.h>0){
+            bx.classList.add('is-win');
+            im.style.width=(10000/a.win.w).toFixed(2)+'%';
+            im.style.height=(10000/a.win.h).toFixed(2)+'%';
+            im.style.left=(-(a.win.x||0)*100/a.win.w).toFixed(2)+'%';
+            im.style.top=(-(a.win.y||0)*100/a.win.h).toFixed(2)+'%';
+          }
           bx.appendChild(im);
         }
         return;
@@ -75506,10 +75741,10 @@ window.JunoPptx = (function () {
     }
     applySideRibbon();
     syncViewBtns();
-    /* entering edit mode is the first moment the ribbon has a real width
+    /* entering edit mode is the first moment the deck has a real width
        -- and therefore the first moment the strip's ceiling can be
-       measured. A width restored from localStorage is clamped by
-       --film-max here rather than eating the row on open (T80) */
+       worked out. A width restored from localStorage is clamped by
+       --film-max here rather than squeezing the stage on open (T80) */
     if(m==='edit') requestAnimationFrame(function(){
       fitFilmMax();fitEditRibbon();});
     if(creating||editing){
@@ -77254,9 +77489,8 @@ window.JunoPptx = (function () {
       e.preventDefault();
       h.classList.add('on');
       try{h.setPointerCapture(e.pointerId);}catch(err){}
-      /* the ceiling is measured ONCE, here: the ribbon cannot change what
-         it holds while you are holding the handle, and re-measuring would
-         stamp the whole density ladder on and off sixty times a second */
+      /* the ceiling is read ONCE, here: it is a share of the editor's
+         width, and the window does not change size under a held handle */
       var hi=fitFilmMax();
       var w=0;
       function mv(ev){
