@@ -5435,7 +5435,9 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
    arriving ahead of "Appear" (the same latent bug deck.css:1341
    already records for Page furniture, and the 2026-09-05 review found
    again on Home). */
-.rbn-trans{order:0;}
+/* T594: Slide transition is on the Present tab now, after the talk's
+   own groups (Play, Version, Talk are 1-3) */
+.rbn-trans{order:4;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
 .rbn-focus{order:3;}      /* T472: after Leaves early, before Motion */
@@ -5452,7 +5454,12 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
    pack from the left (2026-09-15, user: "the animations tab still
    looks odd"). */
 .rbn-build{order:8;}
-.rbn-order{order:9;}
+/* T594: BUILD ORDER LEADS. With four groups on the tab there is no row
+   to squeeze it out of, and the Animation panel is the one door that
+   holds everything the tab no longer shows, so it comes first, where a
+   narrow window never reaches it (T589 was the rescue for its old seat
+   at the far right). */
+.rbn-order{order:0;}
 /* ---- T453: THE SHELF ------------------------------------------------
    One strip in the ribbon that a chooser's whole row moves into, so the
    options land IN the bar rather than in a pop-up over the slide, and
@@ -5635,8 +5642,14 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
    when on the animation tab always") */
 .deck.tab-animation .an-buildno{display:flex;}
 /* T185/T518: Start, sequence and text-step behaviour sit beside the
-   entrance effect, but remain separate choices. */
-.rbn-start,.rbn-sequence,.rbn-textmode{order:2;}
+   entrance effect, but remain separate choices -- since T594, labelled
+   sections of the one Timing door */
+.rbn-timing{order:2;}
+.tm-sec{display:flex;align-items:center;gap:6px;flex:none;}
+.tm-sec+.tm-sec{border-left:1px solid var(--chrome-line,#ffffff1f);
+  padding-left:10px;margin-left:4px;}
+.tm-lab{flex:none;font:600 9.5px var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
 .anim-delaywrap .fmt-num{width:44px;}
 .rbn-start .dbtn:disabled{opacity:.4;cursor:default;}
 /* WHICH ONE IS ON, said louder than a theme can quiet. The colourful
@@ -13551,8 +13564,15 @@ one; animate an item so it appears on click
 switch on
 <b>slide numbers</b> from <i>Design &rarr; Header &amp; footer &rarr; Page
 numbers</i>.</li>
-<li><b>Text a piece at a time:</b> select a text box, open the Animation
-tab, and in <b>Text sequence</b> pick <b>By bullet</b> (one click per
+<li><b>Animation, one question at a time:</b> the Animation tab starts
+with <b>Build order</b> (Preview, the Animation panel, Quick animate,
+Layers) and the <b>Add animation</b> gallery. Pick an effect and
+<b>Timing</b> and <b>Disappear</b> appear beside it; Focus and Motion are
+in the Animation panel&rsquo;s Configure tab, and how a slide arrives is
+<b>Slide transition</b> on the Present tab.</li>
+<li><b>Text a piece at a time:</b> select a text box, give it an effect in
+<b>Add animation</b>, open <b>Timing</b>, and in <b>Text sequence</b> pick
+<b>By bullet</b> (one click per
 bullet, or per line you pressed Enter on) or <b>By sentence</b>. Then
 choose what each text step does: <b>Reveal</b> shows the piece;
 <b>Appear + highlight</b> shows it lit up and puts the one before back
@@ -13562,15 +13582,17 @@ click of its own anywhere in the list, beside a picture: move its row in
 the Animation panel&rsquo;s <b>Order</b> tab. A box with no
 effect yet arrives with Appear.
 <b>Whole box</b> puts it back to one click.</li>
-<li><b>The animation story:</b> <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 4.2h3.6v7.6H1.6z"/><path d="M6.2 4.2h3.6v7.6H6.2z"/><path d="M10.8 4.2h3.6v7.6h-3.6z"/></svg> Story</b> on
-the Animation tab shows the slide at every click. Pick a card to edit the
+<li><b>The animation story:</b> <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 4.2h3.6v7.6H1.6z"/><path d="M6.2 4.2h3.6v7.6H6.2z"/><path d="M10.8 4.2h3.6v7.6h-3.6z"/></svg> Story</b>, in
+the Animation tab&rsquo;s <b>Whole slide</b> door, shows the slide at every
+click. Pick a card to edit the
 slide as it is at that point; <b>Whole slide</b>, the lit card again, or
 <kbd>Esc</kbd> brings everything back. Drag a card to change when that
 click happens &mdash; onto the middle of another card and the two happen
 together.</li>
 <li><b>Making something disappear:</b> select it and press
-<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Disappear</b> on the Animation tab (or
-right-click it &rarr; <i>Disappear on a click</i>). It goes on a click of
+<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Disappear</b> on the Animation tab once it has an
+effect (or, for anything at all, right-click it &rarr; <i>Disappear on a
+click</i>, or the Animation panel&rsquo;s <i>when it leaves</i>). It goes on a click of
 its own; the caret beside the button makes it go on the click something
 else arrives instead &mdash; which is how one picture replaces another.
 The tile reads <i>never</i> or the click it goes on.</li>
@@ -15230,7 +15252,18 @@ items snap to both. Guides, not ink: never printed or exported"
                effect option when there is nothing to appear" -- and the
                whole-slide builds sit beside them as words. Built by
                galSync, which the selection already calls. -->
-          <span class="rbn-grp rbn-anim rbn-compact" data-tab="animation" data-fold-ic="appear">
+          <!-- T594: ADD ANIMATION, IN THE ROW (2026-09-30, user: "the
+               animations are sooo confusing. Have all these boxes with
+               all these categories is so weird ... when I click on
+               something without any animations there are all these
+               options"). Nine doors became four: this gallery and the
+               Build order verbs are always there; Timing and Disappear
+               appear once the thing has an animation; Focus and Motion
+               live in the Animation panel's Configure tab; Slide
+               transition is on the Present tab; Whole slide is a door.
+               With room to spare the gallery is tiles again (T182),
+               one click from nothing to an entrance. -->
+          <span class="rbn-grp rbn-anim" data-tab="animation" data-fold-ic="appear">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
@@ -15244,7 +15277,7 @@ items snap to both. Guides, not ink: never printed or exported"
                     aria-expanded="false" title="Show all"
                     aria-label="Show every effect">&#9662;</button></span></span>
             </span>
-            <span class="rbn-lab" id="anim-strip-lab">Entrance effect</span>
+            <span class="rbn-lab" id="anim-strip-lab">Add animation</span>
           </span>
           <!-- EVERYTHING ON THE SLIDE, in one press. Three verbs about
                the whole slide; the effect they give is Fade, or what
@@ -15314,7 +15347,11 @@ items snap to both. Guides, not ink: never printed or exported"
                thing already on the slide gets a click on which it is
                the point; the click is its own at the end, or the one
                something else arrives on (the Configure panel). -->
-          <span class="rbn-grp rbn-focus rbn-compact" data-tab="animation"
+          <!-- T594: IN THE ANIMATION PANEL ONLY. data-tab="panel" is no
+               tab, so the group never shows on the ribbon; its controls
+               stay in the page for ribbon layouts that place them. The
+               Configure tab's Focus section is the way in. -->
+          <span class="rbn-grp rbn-focus rbn-compact" data-tab="panel"
             data-fold-ic="expand">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-focus">
@@ -15373,7 +15410,10 @@ items snap to both. Guides, not ink: never printed or exported"
                is the same three answers, where you would go for them.
                Apply to all is PowerPoint's own verb and was missing
                everywhere. -->
-          <span class="rbn-grp rbn-trans rbn-compact" data-tab="animation"
+          <!-- T594: ON THE PRESENT TAB. How a SLIDE arrives is a
+               question about the talk, not about the objects on it, and
+               it was the first of nine doors on a tab about objects. -->
+          <span class="rbn-grp rbn-trans rbn-compact" data-tab="present"
             data-fold-ic="play">
             <span class="rbn-row">
               <!-- T372: THE SAME TILE AS THE EFFECT STRIP. Picking how
@@ -15435,7 +15475,8 @@ items snap to both. Guides, not ink: never printed or exported"
                wobbling and moving"). An entrance plays once; these loop
                while the object is on the slide, in the show only. Tiles,
                like Effect, because it is the same kind of choice. -->
-          <span class="rbn-grp rbn-motion rbn-compact" data-tab="animation"
+          <!-- T594: in the Animation panel only, as Focus above -->
+          <span class="rbn-grp rbn-motion rbn-compact" data-tab="panel"
             data-fold-ic="wobble">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-move">
@@ -15503,7 +15544,9 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Flip book</span>
           </span>
-          <span class="rbn-grp rbn-build rbn-nofold" data-tab="animation" data-fold-ic="stagger">
+          <!-- T594: one door (compact): four verbs about the whole slide
+               in the shelf, one tile on the tab -->
+          <span class="rbn-grp rbn-build rbn-compact" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <!-- T391: the story -- the slide at every stop, editable -->
               <button class="dbtn rbn-sm" id="anim-story"
@@ -15574,9 +15617,19 @@ items snap to both. Guides, not ink: never printed or exported"
                (T169's delay, which used to be reachable only by holding
                a digit in Quick animate). It is deliberately separate
                from how text is divided across clicks (T518). -->
-          <span class="rbn-grp rbn-start rbn-compact" id="anim-start-group"
+          <!-- T594: ONE TIMING DOOR, THREE LABELLED SECTIONS. T518 split
+               a Timing door that made three unrelated choices look like
+               one setting; the sections keep them apart, each under its
+               own name, behind the one door that appears once the thing
+               HAS an animation -- the tab is not a wall of doors before
+               you have chosen to animate anything. The sections keep the
+               old groups' ids, so the syncs that hide what does not apply
+               (text only, figures only) are unchanged. -->
+          <span class="rbn-grp rbn-timing rbn-compact" id="anim-timing-group"
             data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
+            <span class="tm-sec rbn-start" id="anim-start-group">
+              <span class="tm-lab">Start</span>
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-start">
                 <span class="fx-strip trans-strip" id="anim-start-strip"
@@ -15605,14 +15658,9 @@ items snap to both. Guides, not ink: never printed or exported"
                   <span class="fmt-unit">s</span></span>
               </span>
             </span>
-            <span class="rbn-lab">Start</span>
-          </span>
-          <!-- TEXT SEQUENCE: which piece gets each click. This used to
-               share one Timing door with Start and Highlight, making
-               three unrelated choices look like one setting (T518). -->
-          <span class="rbn-grp rbn-sequence rbn-compact" id="anim-sequence-group"
-            data-tab="animation" data-fold-ic="spacing">
-            <span class="rbn-row">
+            <!-- TEXT SEQUENCE: which piece gets each click (T518) -->
+            <span class="tm-sec rbn-sequence" id="anim-sequence-group">
+              <span class="tm-lab" id="anim-sequence-lab">Text sequence</span>
               <!-- T372: tiles, like Effect and like Transition. -->
               <span class="rbn-tall strip-frame" id="anim-by">
                 <span class="fx-strip trans-strip" id="anim-by-strip"
@@ -15667,14 +15715,11 @@ items snap to both. Guides, not ink: never printed or exported"
                   </select></span>
               </span>
             </span>
-            <span class="rbn-lab" id="anim-sequence-lab">Text sequence</span>
-          </span>
-          <!-- WHAT EACH TEXT STEP DOES. Reveal and Highlight use the same
-               bullet/sentence stops, so they are a second choice rather
-               than pretending Highlight is another unit of text (T518). -->
-          <span class="rbn-grp rbn-textmode rbn-compact" id="anim-textmode-group"
-            data-tab="animation" data-fold-ic="star">
-            <span class="rbn-row">
+            <!-- WHAT EACH TEXT STEP DOES. Reveal and Highlight use the same
+                 bullet/sentence stops, so they are a second choice rather
+                 than pretending Highlight is another unit of text (T518). -->
+            <span class="tm-sec rbn-textmode" id="anim-textmode-group">
+              <span class="tm-lab">Each text step</span>
               <span class="rbn-tall strip-frame" id="anim-textmode">
                 <span class="fx-strip trans-strip" id="anim-textmode-strip"
                   role="group" aria-label="What happens on each text step">
@@ -15698,7 +15743,8 @@ items snap to both. Guides, not ink: never printed or exported"
                 </span>
               </span>
             </span>
-            <span class="rbn-lab">Each text step</span>
+            </span>
+            <span class="rbn-lab">Timing</span>
           </span>
           <!-- T445: QUICK ANIMATE IS A PANEL NOW (2026-09-14, user:
                "the quick animate should pop up as a side panel. too
@@ -32810,7 +32856,8 @@ window.JunoPptx = (function () {
          what you picked (2026-09-29 audit) */
       var picked=(typeof selAnnot!=='undefined'&&selAnnot!==null);
       var why=!picked?'no selection'
-        :g.classList.contains('rbn-start')?'no entrance'
+        :(g.classList.contains('rbn-start')
+          ||g.classList.contains('rbn-timing'))?'no entrance'
         :'not for this';
       if(dead){val.textContent=why;val.hidden=false;
         btn.classList.add('has-val');}
@@ -67766,11 +67813,17 @@ window.JunoPptx = (function () {
     var wrap=$('#anim-outwrap'),say=$('#anim-out-say');
     var s=pres.slides[cur],a=animOutItem();
     var poster=!!(pageOf&&pageOf().poster);
-    /* T579: ON THE TAB WITH NOTHING SELECTED, like every tile beside it
-       -- disabled and saying so -- or a person scanning the Animation
-       tab for a way to make something disappear finds none */
-    if(wrap) wrap.hidden=poster;
-    if(say) say.hidden=poster;
+    /* T579 kept this on the tab with nothing selected, so a person
+       scanning the Animation tab for a way to make something disappear
+       found one. T594: ...ONCE THE THING HAS AN ANIMATION. The redesign
+       keeps the tab to what applies (2026-09-30, user: "when I click on
+       something without any animations there are all these options"):
+       it shows for anything that arrives or already leaves, and the
+       right-click menu (T579) and the Animation panel's "when it
+       leaves" offer it for anything at all. */
+    var live=!!a&&(!!a.anim||animOut(a)!=null);
+    if(wrap) wrap.hidden=poster||!live;
+    if(say) say.hidden=poster||!live;
     var b=$('#anim-out'),cr=$('#anim-out-caret');
     if(b) b.disabled=!a;
     if(cr) cr.disabled=!a;
@@ -68171,7 +68224,7 @@ window.JunoPptx = (function () {
     var lab=$('#anim-strip-lab');
     /* The noun says WHAT this chooser changes; Start says WHEN beside it.
        (2026-09-02, user: "that is unnecessary text lol") */
-    if(lab) lab.textContent='Entrance effect';
+    if(lab) lab.textContent='Add animation';   /* T594 */
   }
   function galBoot(){
     var strip=$('#anim-strip');
@@ -68387,9 +68440,17 @@ window.JunoPptx = (function () {
       var start=$('#anim-start'),by=$('#anim-by');
       if(start) start.hidden=poster||armed;
       if(by) by.hidden=poster||armed||!st.text;
+      /* T594: THE TIMING DOOR IS FOR A THING THAT ARRIVES. Its three
+         sections are hidden until the selection has an entrance, so the
+         door (empty) leaves the tab: something with no animation shows
+         the gallery and the verbs and nothing else (2026-09-30, user:
+         "when I click on something without any animations there are
+         all these options"). Pick an effect and Timing appears. */
+      var stg=$('#anim-start-group');
+      if(stg) stg.hidden=poster||armed||!st.on;
       var sg=$('#anim-sequence-group'),mg=$('#anim-textmode-group');
-      if(sg) sg.hidden=poster||armed||(!st.text&&!st.fig);
-      if(mg) mg.hidden=poster||armed||!st.text;
+      if(sg) sg.hidden=poster||armed||!st.on||(!st.text&&!st.fig);
+      if(mg) mg.hidden=poster||armed||!st.on||!st.text;
       /* T473: a figure or a picture arrives in panels, the way a text
          box arrives by bullet -- the strip shows for either */
       var pf=$('#anim-panels');
@@ -69172,7 +69233,28 @@ window.JunoPptx = (function () {
     });
     /* the effect buttons act on the SELECTION, so they show the selected
        item's effect and stand down when there is nothing selected */
+    /* T594: TIMING AND DISAPPEAR COME AND GO WITH THE ANIMATION. Whether
+       their groups are empty is syncRibbonGroups' call, and a selection
+       runs it after this -- but picking an effect is not a selection, so
+       the first effect chosen left Timing off the tab until you clicked
+       away and back. When one of the parts that decide it has just
+       shown or hidden, the groups are judged again, once. */
+    var ANIM_COMES_GOES=['#anim-start-group','#anim-sequence-group',
+      '#anim-textmode-group','#anim-outwrap'],animJudging=false;
+    function animShownSig(){
+      return ANIM_COMES_GOES.map(function(id){
+        var e=$(id);return e&&!e.hidden?'1':'0';}).join('');
+    }
     animRibbonSync=function(){
+      var sig0=animShownSig();
+      animRibbonSyncNow();
+      if(animShownSig()!==sig0&&!animJudging
+         &&typeof syncRibbonGroups==='function'){
+        animJudging=true;
+        try{syncRibbonGroups();}finally{animJudging=false;}
+      }
+    };
+    function animRibbonSyncNow(){
       timingSync();
       flipFxSync();
       animOutSync();
@@ -69195,7 +69277,7 @@ window.JunoPptx = (function () {
          (2026-09-03, user: "getting rid of the animations from the
          object page would be good. This only needs to go on
          animations"). What is left here is the Animation tab's. */
-    };
+    }
   }
 /* 48b-motion.js — movement that keeps going, with numbers on it, and the Animation panel that sets them.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
@@ -69648,6 +69730,7 @@ window.JunoPptx = (function () {
     });
     if(!a.anim){
       cfgNote(host,'It is on the slide from the start.');
+      cfgLeaves(host);   /* T594 */
       return;
     }
     cfgHead(host,'when it starts');
@@ -69747,8 +69830,14 @@ window.JunoPptx = (function () {
           +'The covers are the page\u2019s own colour.');
       }
     }
-    var ow=$('#anim-outwrap');
-    if(ow&&!ow.hidden){
+    cfgLeaves(host);
+  }
+  /* WHEN IT LEAVES, for anything selected (T594). It asked whether the
+     ribbon's Disappear tile was showing; that tile now waits for an
+     animation, and the panel is where anything at all can be sent away.
+     Not on a poster, which has no clicks. */
+  function cfgLeaves(host){
+    if(!(pageOf&&pageOf().poster)){
       cfgHead(host,'when it leaves');
       var r4=cfgRow(host);
       /* T467: the ribbon's own words (T453 renamed the verb for exactly
@@ -79792,7 +79881,10 @@ window.JunoPptx = (function () {
     'hm-paste-look':'format painter paste formatting',
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
-    'vw-anim':'animation pane animations list',
+    /* T594: Focus and Motion are the panel's now, so their words
+       find the door onto it */
+    'vw-anim':'animation pane animations list focus blur zoom magnify '
+      +'motion movement wobble float pulse spin sway shake',
     /* T579: the words people look for it by */
     'anim-out':'disappear exit animation hide leave go away fade out '
       +'remove from slide vanish',
