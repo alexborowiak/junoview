@@ -1654,10 +1654,102 @@
      live, Esc or reselecting leaves the mode. ---- */
   var cropMode=false;
   function setCropMode(on){
-    cropMode=!!on;
+    on=!!on;
+    if(on&&!cropMode) cropBegin();
+    var ended=!on&&cropMode;
+    cropMode=on;
+    if(ended) cropFinish();
     var l=stage.querySelector('.annot-layer');
     if(l&&pres.slides[cur]){renderAnnots(l,pres.slides[cur]);paintSel(l);}
     if(on) toast('Drag the edge handles to trim. Esc to finish.');
+  }
+  /* the ways OUT that are not setCropMode -- selecting something else,
+     arming a tool -- end the trim the same way; they re-render anyway */
+  function cropModeOff(){
+    if(!cropMode) return;
+    cropMode=false;cropFinish();
+  }
+  /* ---- T587: A FINISHED CROP IS THE FRAME ------------------------------
+     (2026-09-30, user: "cropping an object is aweful. The outline of it
+     still stays the pre-cropped".) A trim was a mask over a frame that
+     never changed size: a.crop's insets clipped the picture inside the
+     box, and the box -- its outline, its handles, what snaps and aligns
+     and what an arrow attaches to -- stayed the uncropped picture.
+     PowerPoint's frame IS what you kept. So a picture's trim is edited
+     on the WHOLE picture (cropBegin puts the frame back round all of it,
+     insets over the part that is hidden) and, when the trim ends, the
+     frame becomes the part you kept and the picture wears that part as
+     its window (a.win, T387 -- the same thing a zoom callout is, and
+     what PowerPoint's own srcRect already exports it as). A shape crop
+     rides along inside the new frame; a drawn outline (a.crop.path) is
+     in the box's own coordinates and stays as it was. */
+  var cropOn=null;
+  function cropBegin(){
+    cropOn=null;
+    var s=pres.slides[cur],i=selAnnot;
+    var a=(typeof i==='number'&&s&&s.annots)?s.annots[i]:null;
+    if(!a||a.k!=='image') return;
+    var l=stage.querySelector('.annot-layer');
+    var im=l&&l.querySelector('.an-item[data-idx="'+i+'"] .an-imgel');
+    var lr=l?l.getBoundingClientRect():null;
+    cropOn={s:s,a:a,orig:deep(a),
+      nat:(im&&im.naturalWidth&&im.naturalHeight)
+        ?[im.naturalWidth,im.naturalHeight]:null,
+      ar:(lr&&lr.width&&lr.height)?lr.width/lr.height:0};
+    cropUnbake(a);
+    cropOn.trim=JSON.stringify(a.crop||null);
+  }
+  function cropFinish(){
+    var c=cropOn; cropOn=null;
+    if(!c||!c.s.annots||c.s.annots.indexOf(c.a)<0) return;
+    var a=c.a;
+    /* nothing trimmed: put back exactly what was there, so looking at
+       the handles and leaving costs no rounding and no undo entry */
+    if(JSON.stringify(a.crop||null)===c.trim){
+      Object.keys(a).forEach(function(k){delete a[k];});
+      Object.keys(c.orig).forEach(function(k){a[k]=c.orig[k];});
+      return;
+    }
+    if(cropBake(a,c.nat,c.ar)) markDirty();
+  }
+  function cropRound(v){return Math.round(v*1e4)/1e4;}
+  /* the window back into a whole-picture frame with insets over it */
+  function cropUnbake(a){
+    var wn=a&&a.win;
+    if(!a||a.k!=='image'||!wn||!(wn.w>0&&wn.h>0)) return false;
+    if(a.crop&&a.crop.path) return false;
+    var aw=a.w||30,ah=a.h||24,p=anchorPos(a,aw,ah);
+    var fw=aw*100/wn.w,fh=ah*100/wn.h;
+    var fx=p.x-fw*(wn.x||0)/100,fy=p.y-fh*(wn.y||0)/100;
+    var c={},e={t:wn.y||0,l:wn.x||0,
+      r:100-(wn.x||0)-wn.w,b:100-(wn.y||0)-wn.h};
+    Object.keys(e).forEach(function(k){if(e[k]>0.01) c[k]=cropRound(e[k]);});
+    if(a.crop&&a.crop.shape) c.shape=a.crop.shape;
+    delete a.win;
+    a.w=cropRound(fw);a.h=cropRound(fh);anchorSet(a,fx,fy,a.w,a.h);
+    if(Object.keys(c).length) a.crop=c; else delete a.crop;
+    return true;
+  }
+  /* ...and the trimmed frame into the part kept, wearing it as a window.
+     A cropped picture is drawn object-fit:cover in its box, so the
+     window is measured off the picture as cover lays it there. `ar` is
+     the page's width over its height, for the box's true shape. */
+  function cropBake(a,nat,ar){
+    if(!a||a.k!=='image'||!a.crop||a.crop.path||a.win||!nat||!ar) return false;
+    var c=a.crop,t=+c.t||0,r=+c.r||0,b=+c.b||0,l=+c.l||0;
+    if(!(t||r||b||l)||t+b>=100||l+r>=100) return false;
+    var aw=a.w||30,ah=a.h||24;
+    var W=aw/100*ar,H=ah/100;
+    var sc=Math.max(W/nat[0],H/nat[1]),PW=nat[0]*sc,PH=nat[1]*sc;
+    var ox=(W-PW)/2,oy=(H-PH)/2;
+    var vx=l/100*W,vy=t/100*H,vw=(100-l-r)/100*W,vh=(100-t-b)/100*H;
+    a.win={x:cropRound((vx-ox)/PW*100),y:cropRound((vy-oy)/PH*100),
+      w:cropRound(vw/PW*100),h:cropRound(vh/PH*100)};
+    var p=anchorPos(a,aw,ah);
+    var nw=cropRound(aw*(100-l-r)/100),nh=cropRound(ah*(100-t-b)/100);
+    a.w=nw;a.h=nh;anchorSet(a,p.x+aw*l/100,p.y+ah*t/100,nw,nh);
+    if(c.shape) a.crop={shape:c.shape}; else delete a.crop;
+    return true;
   }
   /* ---- FREE CROP: DRAW THE OUTLINE (T64) ------------------------------
      A lasso over the selected picture. Points are collected in PERCENT
@@ -1864,8 +1956,14 @@
     var col='#39a9c0';
     var outline={k:'rect',x:rx,y:ry,w:rw,h:rh,color:col};
     outline.sw=SW_DEFAULT;
+    /* T587: the box dragged is in percent of the FRAME; a cropped picture
+       is itself a window onto its source, so the callout's window is that
+       part of the part it already shows */
+    var sw0=a.win&&a.win.w>0&&a.win.h>0?a.win:null;
+    var cwin=sw0?{x:(sw0.x||0)+win.x*sw0.w/100,y:(sw0.y||0)+win.y*sw0.h/100,
+      w:win.w*sw0.w/100,h:win.h*sw0.h/100}:win;
     var call={k:'image',x:x,y:y,w:wc,h:hc,src:a.src,
-      win:{x:win.x,y:win.y,w:win.w,h:win.h},
+      win:{x:cwin.x,y:cwin.y,w:cwin.w,h:cwin.h},
       anim:{type:'zoom',order:nextAnimOrder(s)}};
     if(a.okey) call.okey=a.okey;
     if(a.alt) call.alt=a.alt;
@@ -1941,6 +2039,13 @@
   }
   function mkCropHandles(host,layer,s2,idx){
     var a=s2.annots[idx]; if(!a) return;
+    /* T587: the whole picture, faint, under the part being kept */
+    if(a.k==='image'&&a.src&&!a.win){
+      var gh=document.createElement('img');
+      gh.className='an-crop-ghost';gh.src=a.src;gh.alt='';gh.draggable=false;
+      gh.setAttribute('aria-hidden','true');
+      host.insertBefore(gh,host.firstChild);
+    }
     ['t','r','b','l'].forEach(function(side){
       var h=document.createElement('div');
       h.className='an-crop-h an-crop-'+side;
@@ -2075,6 +2180,9 @@
       e.stopPropagation();
       SIDES.forEach(function(p){inputs[p[0]].value='';});
       fmtApply(function(a){
+        /* T587: a finished trim lives in the window, so all of it is
+           the window going back to the whole picture as well */
+        if(a.k==='image') cropUnbake(a);
         if(a.crop) delete a.crop;
       });
     });
@@ -2118,9 +2226,12 @@
     var lz=$('#fmt-linkzoom');
     if(lz) lz.addEventListener('click',function(e){
       e.stopPropagation();linkZoomSel();});
-    /* opening the menu shows the SELECTION's current trim */
+    /* opening the menu shows the SELECTION's current trim -- T587: on the
+       whole picture, so it is the trim mode the Crop button opens (the
+       numbers and the handles are one trim, and it ends the same way) */
     btn.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;
+      if(!cropMode&&typeof selAnnot==='number') setCropMode(true);
       var a=annotByIdx(s,selAnnot)
         ||(selSet.length?s.annots[selSet[0]]:null);
       SIDES.forEach(function(p){

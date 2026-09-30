@@ -4441,6 +4441,14 @@
           im.src=a.src;im.alt='';im.loading='lazy';im.draggable=false;
           im.setAttribute('aria-hidden','true');   /* decorative (T105) */
           if(a.crop) bx.classList.add('is-crop');
+          /* T587: a finished crop is a window; the thumbnail shows it */
+          if(a.win&&a.win.w>0&&a.win.h>0){
+            bx.classList.add('is-win');
+            im.style.width=(10000/a.win.w).toFixed(2)+'%';
+            im.style.height=(10000/a.win.h).toFixed(2)+'%';
+            im.style.left=(-(a.win.x||0)*100/a.win.w).toFixed(2)+'%';
+            im.style.top=(-(a.win.y||0)*100/a.win.h).toFixed(2)+'%';
+          }
           bx.appendChild(im);
         }
         return;

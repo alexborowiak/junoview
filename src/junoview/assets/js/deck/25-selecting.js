@@ -3601,7 +3601,10 @@
        drops and the exit must never be droppable. */
     var cx=$('#et-cancel');
     if(cx) cx.hidden=(t==='select');
-    if(t!=='select') cropMode=false;
+    if(t!=='select'&&cropMode){
+      cropModeOff();                     /* T587: the frame takes the trim */
+      if(l&&pres.slides[cur]) renderAnnots(l,pres.slides[cur]);
+    }
     var hint=$('#et-hint');
     /* "the slide" is wrong on a poster, which is one printed page and has
        no slides — the word leaked into every one of these (2026-08-07

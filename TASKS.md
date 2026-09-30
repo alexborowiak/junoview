@@ -10455,3 +10455,21 @@ create animation. This gets congested very easily."
   from 92px to 162px. On the shelf a tile is its icon beside its word,
   30px tall, the scrollbar is thin, and the wheel scrolls the line.
   Measured at 1500x950: the shelf 69px -> 37px.
+- [x] **T587 — A finished crop is the frame.** "cropping and object is
+  aweful. The outline of it still stays the pre-cropped." A trim was a
+  mask -- a.crop's insets, a clip-path -- over a frame that never changed
+  size, so the outline, the handles, snapping, alignment and anything
+  attached all treated the picture as uncropped. Now a picture's trim is
+  edited on the WHOLE picture (entering trim mode puts the frame back
+  round all of it, the kept part lit and the rest faint), and when the
+  trim ends -- Esc, the Crop button, selecting something else, arming a
+  tool -- the frame becomes the part kept and the picture wears that part
+  as its window (a.win, T387), which is what PowerPoint's frame is and
+  what the .pptx export already writes as srcRect. Leaving without a
+  change puts back exactly what was there. The Crop menu is the same
+  trim; Reset clears the window too; a window clips in a wrapper so the
+  handles are no longer cut off (as a zoom callout's were); thumbnails
+  show the window; a callout made from a cropped picture enlarges the
+  part it shows. Drawn outlines and figure frames are unchanged. Driven:
+  a 400x200 picture trimmed 25% right and 30% bottom went from a 415x207
+  frame to 307x141, showing the three bands kept.

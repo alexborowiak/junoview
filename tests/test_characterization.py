@@ -2162,8 +2162,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pointing at a Line window option previews it.
 # T586 (2026-09-30): the ribbon's shelf is one slim line -- chips 30px
 # tall, a thin scrollbar, and the wheel scrolls it.
-EXPECTED_MD5 = "6fe97a9c55a6eee39bd637f53e0f6877"
-EXPECTED_BYTES = 4723015
+# T587 (2026-09-30): a finished crop is the frame -- the trim is edited
+# on the whole picture and, when it ends, the box becomes the part kept
+# and the picture wears it as its window (a.win); the window clips in a
+# wrapper so the handles are never cut off.
+EXPECTED_MD5 = "451000cf9bf05f6ac88201786906a98c"
+EXPECTED_BYTES = 4730289
 
 
 def _render_example() -> str:
