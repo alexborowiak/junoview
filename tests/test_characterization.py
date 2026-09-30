@@ -2228,8 +2228,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # for every editor dialog and brings each up with the focus in it, the
 # chart's numbers put Cancel first, and the notebook's note saves on
 # Ctrl+Enter.
-EXPECTED_MD5 = "f532fac2ba695d32d3681c0621e257b3"
-EXPECTED_BYTES = 4887593
+# T569 (2026-09-30): Discard changes always asks and says what it goes
+# back to; a browser Save names its history version (savedSnap) and
+# Discard restores it undoably; nothing changed is nothing to discard.
+EXPECTED_MD5 = "4405597c7eebfe6176662b506f83108a"
+EXPECTED_BYTES = 4890683
 
 
 def _render_example() -> str:

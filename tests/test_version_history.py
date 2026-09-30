@@ -138,8 +138,9 @@ def test_the_same_snapshot_rule_the_notebook_uses(out):
                   out.index('/* ---- the "Saved to" picker')]
     assert browser.index("var savedHist=histCapture();") < \
         browser.index("var ok=draftSet(")
+    # (T569: the snapshot's id is kept afterwards, for Discard changes)
     assert browser.index("if(!ok){") < \
-        browser.index("if(savedHist) snapTake('saved',savedHist);")
+        browser.index("snapTake('saved',savedHist).then(")
     assert "if(ok){\n      try{localStorage.setItem(PFX+'last'" in browser
     # Project and file saves enqueue a captured snapshot immediately, but
     # its success promise gates the write. silent autosaves capture none.

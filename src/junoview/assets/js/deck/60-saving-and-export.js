@@ -1532,7 +1532,20 @@
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
        same rule the notebook's snapshots follow (T32) */
-    if(savedHist) snapTake('saved',savedHist);
+    if(savedHist){
+      var snapNm=pres.name||'untitled',snapLen=savedHist.txt.length;
+      snapTake('saved',savedHist).then(function(){
+        return histIndexAt(snapNm);
+      }).then(function(ix){
+        /* T569: in this browser the save and the autosave write the same
+           draft, so the version a Save took IS the saved copy -- named
+           here for Discard changes to go back to. A deduped snapshot
+           leaves the newest entry holding the same words, so it is the
+           one either way; a failed write names nothing. */
+        var e=ix[ix.length-1];
+        if(e&&e.len===snapLen) deckMetaSet(snapNm,{savedSnap:e.id});
+      }).catch(function(){});
+    }
     saveStamp=new Date();saveKind='manual';
     saveWhere='browser';   /* T483 */
     deckMetaSet(pres.name||'untitled',{saved:Date.now(),
@@ -3692,30 +3705,84 @@
        deleted and replaced with the notebook's own deck, with no
        question asked (2026-09-15 review) -- it asks now. */
     var nm=pres.name||'untitled';
+    /* T569: DISCARD ASKS, EVERY TIME. It asked only when there was no
+       saved copy; with one, a single click on a row beside Rename threw
+       away every change since the last save. It says what it goes back
+       to, and there is nothing to ask about when nothing has changed. */
+    if(source==='saved'||saveKind==='manual'){
+      toast('Nothing to discard — “'+nm+'” is as it was '
+        +'last saved');
+      return;
+    }
     if(saveTarget==='file'&&fileHandle&&fileHandle.getFile){
-      fileHandle.getFile().then(function(f){return f.text();}).then(function(txt){
-        var obj=parseDeckText(txt);
-        var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
-          :(obj&&Array.isArray(obj.slides))?[obj]:[];
-        var hit=list.filter(function(p){return p&&(p.name||'')===nm;})[0]||list[0];
-        if(!hit){toast('The file has no copy of \u201c'+nm+'\u201d to go back to');return;}
-        cancelDraftWrite();draftDel(nm);
-        var np=normPres(hit);np.name=nm;loadPresentationObj(np);
-        cur=0;activePane=-1;status();refresh();
-        toast('Back to \u201c'+nm+'\u201d as saved in '+(fileName||'the file'));
-      }).catch(function(){toast('Could not read '+(fileName||'the file'));});
+      askYes({title:'Discard your changes to “'+nm+'”?',
+        what:'It goes back to the copy saved in '+(fileName||'its file')
+          +'. Everything changed since then is lost.',
+        ok:'Discard changes',cancel:'Keep editing',danger:true},
+        function(y){if(y===true) discardFromFile(nm);});
+      return;
+    }
+    /* kept in this browser: back to the version the last Save took. It
+       used to find no "saved copy" here at all, and offered to delete a
+       deck that had just been saved -- or, for a deck that came with the
+       notebook, threw every save away and went back to the notebook's. */
+    var sp=saveTarget==='browser'?deckMeta(nm).savedSnap:null;
+    if(sp){
+      var at=deckMeta(nm).saved;
+      askYes({title:'Discard your changes to “'+nm+'”?',
+        what:'It goes back to how it was when you last saved it'
+          +(at&&typeof histWhen==='function'?' ('+histWhen(at)+')':'')
+          +'. Everything changed since then is lost.',
+        ok:'Discard changes',cancel:'Keep editing',danger:true},
+        function(y){
+          if(y!==true) return;
+          snapRead(sp).then(function(then){
+            if(!then||!Array.isArray(then.slides)){
+              toast('That save is no longer in this browser’s '
+                +'history — History has the versions it still has');
+              return;
+            }
+            histRestoreDeck(then,sp);
+            toast('Changes discarded — “'+nm+'” is as you '
+              +'last saved it. Ctrl+Z brings the changes back');
+          });
+        });
       return;
     }
     if(!savedByName(nm)){
-      askYes({title:'Discard \u201c'+nm+'\u201d?',
+      askYes({title:'Discard “'+nm+'”?',
         what:'It has no saved copy to go back to, so discarding its '
           +'changes deletes it from this browser.',
         ok:'Delete it',cancel:'Keep it',danger:true},function(y){
         if(y===true) discardNow(nm);});
       return;
     }
-    discardNow(nm);
+    askYes({title:'Discard your changes to “'+nm+'”?',
+      what:'It goes back to its last save. Everything changed since '
+        +'then is lost.',
+      ok:'Discard changes',cancel:'Keep editing',danger:true},
+      function(y){
+        if(y!==true) return;
+        discardNow(nm);
+        toast('Changes discarded — “'+nm+'” is as it was '
+          +'last saved');
+      });
   });
+  /* a deck kept in a file is re-read from it */
+  function discardFromFile(nm){
+    if(!fileHandle||!fileHandle.getFile) return;
+    fileHandle.getFile().then(function(f){return f.text();}).then(function(txt){
+      var obj=parseDeckText(txt);
+      var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+        :(obj&&Array.isArray(obj.slides))?[obj]:[];
+      var hit=list.filter(function(p){return p&&(p.name||'')===nm;})[0]||list[0];
+      if(!hit){toast('The file has no copy of \u201c'+nm+'\u201d to go back to');return;}
+      cancelDraftWrite();draftDel(nm);
+      var np=normPres(hit);np.name=nm;loadPresentationObj(np);
+      cur=0;activePane=-1;status();refresh();
+      toast('Back to \u201c'+nm+'\u201d as saved in '+(fileName||'the file'));
+    }).catch(function(){toast('Could not read '+(fileName||'the file'));});
+  }
   function discardNow(nm){
     cancelDraftWrite();   /* a pending write would resurrect the discard */
     draftDel(nm);

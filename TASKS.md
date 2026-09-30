@@ -10349,9 +10349,26 @@ choice in the editor (T506, T507).
   look and Copy layout: focus inside on open, Escape closes each with the
   editor still editing, Enter applied "3 text boxes at about 14 pt",
   plain Enter in the equation kept it open and Ctrl+Enter placed it.
-- [ ] **T569 — The File menu keeps the destructive rows apart.** Discard
+- [x] **T569 — The File menu keeps the destructive rows apart.** Discard
   changes and Delete presentation sit at the foot, in their own section,
   and confirm in the app.
+  *Done 2026-09-30.* The rows were already last, under "Careful -- these
+  lose work" (T602/T603 moved File), and Delete already asked. Discard
+  asked only when there was no saved copy: with one, a click threw every
+  change away; and in this browser, where Save and the autosave write the
+  same draft, it found no saved copy at all and offered to delete a deck
+  saved a minute before -- or, for a deck that came with the notebook,
+  quietly went back to the notebook's and lost every save. Now a browser
+  Save names the version it took (deckMeta savedSnap, the newest history
+  entry, which a deduped snapshot leaves holding the same words), and
+  Discard always asks, saying what it goes back to: the file, the version
+  that Save took ("when you last saved it (just now)"), the saved copy,
+  or -- with none -- that it deletes. The browser case goes back through
+  the history's own restore, so Ctrl+Z brings the changes back. With
+  nothing changed since the save it says there is nothing to discard.
+  Driven at 1440x900: Save, Discard ("Nothing to discard"), Duplicate a
+  slide (4), Discard asks with Keep editing / Discard changes, Escape
+  keeps 4, Discard changes gives 3, Ctrl+Z gives 4 again.
 - [ ] **T570 — The typeface list shows the typefaces.** Each name drawn in
   its own face, and the faces you used recently at the top.
 - [ ] **T571 — Bullets you can style.** A bullet's colour and size, and a
