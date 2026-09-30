@@ -10508,3 +10508,12 @@ create animation. This gets congested very easily."
   and the words stay on their line; the next Backspace joins lines.
   Driven: "one / two / three" as bullets; Backspace at "two" and at "one"
   left both as plain lines above the "three" bullet.
+- [x] **T591 — "- ", "* " or "1. " at the start of any line starts a
+  list.** "There is not auto-numbering like dot points being created
+  automatically." Auto-bullets (2026-08-20) fired only on the first
+  characters of a box that was not a list yet, so "1. " typed under a
+  heading line stayed "1. ". A marker typed at the start of any plain
+  line now takes that line into a list through the List button's own
+  toggle, and Enter carries the numbering on. Never inside a list, never
+  in a Markdown box. Driven: "1. first", Enter, "second" under two plain
+  lines became a numbered list of two.

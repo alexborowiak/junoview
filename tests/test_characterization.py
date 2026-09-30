@@ -2172,8 +2172,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # into doors rather than the ribbon clipping them.
 # T590 (2026-09-30): Backspace at the start of a bullet takes a
 # sub-bullet up a level or the bullet off, keeping the words.
-EXPECTED_MD5 = "88e435b36c9b8bd7c8250b406584b73e"
-EXPECTED_BYTES = 4734591
+# T591 (2026-09-30): "- ", "* " or "1. " at the start of any plain line
+# takes that line into a list.
+EXPECTED_MD5 = "ade748be6a7de184c503890a43d7b4d6"
+EXPECTED_BYTES = 4736354
 
 
 def _render_example() -> str:

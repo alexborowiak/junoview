@@ -1792,6 +1792,40 @@
       toast(kind==='number'?'Numbered list \u2014 Tab indents'
         :'Bullet list \u2014 Tab indents, Shift+Tab goes back');
     });
+    /* T591: ...AND AT THE START OF ANY LINE. The rule above only fires
+       on the first characters of a box that is not a list yet, so "1. "
+       under a heading line, or under a list, stayed "1. " (2026-09-30,
+       user: "There is not auto-numbering like dot points being created
+       automatically"). A marker typed at the start of any other plain
+       line takes that line into a list, through the same per-paragraph
+       toggle as the List button. Never inside a list (its own marker is
+       already there) and never in a Markdown box (T74). */
+    el.addEventListener('input',function(){
+      if(!el.isContentEditable) return;
+      var s4=pres.slides[cur],a4=s4&&annotByIdx(s4,idx);
+      if(!a4||a4.k!=='text'||a4.md) return;
+      var sel4=window.getSelection();
+      if(!sel4||!sel4.rangeCount||!sel4.isCollapsed) return;
+      var tn=sel4.focusNode;
+      if(!tn||tn.nodeType!==3||!el.contains(tn)) return;
+      if(tn.parentNode&&tn.parentNode.closest&&tn.parentNode.closest('li'))
+        return;
+      var before=String(tn.nodeValue||'').slice(0,sel4.focusOffset);
+      var m4=/^([-*\u2022]|1[.)])[ \u00a0]$/.exec(before);
+      if(!m4) return;
+      /* ...at the START of its line: nothing but a line break, or the
+         start of a block, before it */
+      var pv=tn.previousSibling;
+      if(pv&&!(pv.nodeType===1&&pv.tagName==='BR')) return;
+      if(!pv&&tn.parentNode!==el&&!/^(DIV|P)$/.test(tn.parentNode.tagName))
+        return;
+      tn.nodeValue=String(tn.nodeValue||'').slice(sel4.focusOffset);
+      try{
+        var r4=document.createRange();r4.setStart(tn,0);r4.collapse(true);
+        sel4.removeAllRanges();sel4.addRange(r4);
+      }catch(err){}
+      listSelection(/^1/.test(m4[1])?'number':'bullet');
+    });
     /* Tab makes a SUB-BULLET, the way it does in every outliner and in
        PowerPoint — not a jump to the next control. Only inside a list:
        in a plain text box Tab still has nothing useful to do and is left
