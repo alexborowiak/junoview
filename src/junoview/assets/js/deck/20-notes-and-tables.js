@@ -2028,7 +2028,16 @@
     hit.setAttribute('stroke-width',Math.max(16,swPx+10));
     hit.setAttribute('class','an-arrow-hit an-item');
     hit.setAttribute('data-idx',i);
-    svg.appendChild(hit);
+    /* T585: WHILE EDITING, THE GRAB PATH IS ON TOP WITH THE INK. Under
+       the items it kept frames clickable -- and made an arrow drawn over
+       a picture unclickable, because the picture took every click on it
+       (2026-09-30, user: "I cannot click on it with the map in the
+       background"). The ink is always on top, so the thing you can see
+       is the thing you get; a frame under it stays clickable everywhere
+       but the arrow's own band. svgTop is pointer-events:none, and only
+       this path (an .an-item) takes clicks inside it. Presenting keeps
+       it underneath, so tapping a picture to zoom still reaches it. */
+    (editing?svgTop:svg).appendChild(hit);
     if(editing&&!pinned(a)){  /* a pinned arrow gets no live endpoints */
       /* a handle per corner, plus a faint one halfway along each segment
          that ADDS a corner there - the gesture every vector editor uses,
@@ -2106,7 +2115,7 @@
     if(!defs){defs=document.createElementNS(AN_NS,'defs');
       svgTop.insertBefore(defs,svgTop.firstChild);}
     $$('.an-arrow-line,.an-endpt',layer).forEach(function(n){n.remove();});
-    $$('.an-arrow-hit',svg).forEach(function(n){n.remove();});
+    $$('.an-arrow-hit',layer).forEach(function(n){n.remove();});   /* T585: either svg */
     $$('marker',defs).forEach(function(n){n.remove();});
     var editing=(mode==='edit');
     (s.annots||[]).forEach(function(a,i){
@@ -2582,9 +2591,10 @@
         if(se&&mode==='edit') checkFigDpi(se);
       },300);
     }
-    /* two svg layers: fat invisible hit-lines UNDER the items (so
-       frames stay clickable), visible strokes ON TOP of everything
-       (click-transparent) so arrows are never hidden behind frames */
+    /* two svg layers: visible strokes ON TOP of everything (click-
+       transparent) so arrows are never hidden behind frames, and the fat
+       invisible hit-lines -- on top with them while editing (T585),
+       UNDER the items while presenting, where frames take the taps */
     var svg=document.createElementNS(AN_NS,'svg');
     layer.insertBefore(svg,layer.firstChild);
     var svgTop=document.createElementNS(AN_NS,'svg');

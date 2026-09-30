@@ -445,8 +445,28 @@
     o.setAttribute('aria-pressed','false');
     o.dataset.optKey=key;
     o.appendChild(node);
+    /* T585: POINTING SHOWS IT (2026-09-30, user: "would be good if on
+       hover you could preview how the arrow looks"). The option goes on
+       the selection while the pointer is on it; leaving, or the menu
+       closing, puts back what was there; a click keeps it -- after the
+       original is put back, so its one undo entry returns to what you
+       had before you pointed. */
+    o.addEventListener('mouseenter',function(){
+      if(o.disabled) return;
+      drawnPreviewStart();
+      fmtPreview=true;
+      try{onPick();}finally{fmtPreview=false;}
+    });
+    o.addEventListener('mouseleave',drawnPreviewEnd);
+    /* a section of a window (T177) closes with the window, not itself */
+    var box=(menu.closest&&menu.closest('.opt-panel'))||menu;
+    if(!box._pvWatch&&window.MutationObserver){
+      box._pvWatch=new MutationObserver(function(){
+        if(box.hidden) drawnPreviewEnd();});
+      box._pvWatch.observe(box,{attributes:true,attributeFilter:['hidden']});
+    }
     o.addEventListener('click',function(e){
-      e.stopPropagation();onPick();
+      e.stopPropagation();drawnPreviewEnd();onPick();
       /* a menu that is a SECTION of a window stays up: you set the
          weight after the style without opening the window twice,
          and showFmt re-marks the rows (T177) */
@@ -455,6 +475,30 @@
     });
     menu.appendChild(o);
     return o;
+  }
+  /* the selection's items as they were before the pointer arrived, put
+     back IN PLACE (same objects: nothing that holds one goes stale) */
+  var drawnPrev=null;
+  function drawnPreviewStart(){
+    if(drawnPrev) return;
+    var s=pres.slides[cur]; if(!s) return;
+    var ids=selSet.filter(function(i){return typeof i==='number';});
+    if(!ids.length&&typeof selAnnot==='number') ids=[selAnnot];
+    drawnPrev={s:s,sel:selSet.slice(),items:ids.map(function(i){
+      return [s.annots[i],deep(s.annots[i])];})};
+  }
+  function drawnPreviewEnd(){
+    var p=drawnPrev; drawnPrev=null;
+    if(!p||p.s!==pres.slides[cur]) return;
+    p.items.forEach(function(q){
+      if(!q[0]) return;
+      Object.keys(q[0]).forEach(function(k){delete q[0][k];});
+      Object.keys(q[1]).forEach(function(k){q[0][k]=q[1][k];});
+    });
+    var l=stage.querySelector('.annot-layer'); if(!l) return;
+    renderAnnots(l,p.s);
+    if(p.sel.length>1){selSet=p.sel;paintSel(l);showFmt();}
+    else selectAnnot(l,selAnnot);
   }
   function menuHead(menu,text){
     var h=document.createElement('div');

@@ -1064,7 +1064,12 @@
       if(n%2===1&&last) last.classList.add('rbn-odd');
     });
   }
+  /* T585: a drawn menu option that is only POINTED AT applies as a
+     preview (30-format-bar.js, drawnOpt): no history, no dirty mark --
+     the same quiet a held Trim stepper gets */
+  var fmtPreview=false;
   function fmtApply(fn,quiet){
+    quiet=quiet||fmtPreview;
     var s=pres.slides[cur]; if(!s) return;
     /* T494: the words being typed get their own entry BEFORE the format
        mutates the box, or the first Ctrl+Z after Bold takes the
@@ -2028,6 +2033,17 @@
     var best=-1,bestD=12;
     s.annots.forEach(function(a,i){
       if(a.k!=='arrow'||lockedAll(a)||a.hide) return;
+      /* T585: THE LINE YOU CAN SEE, not the chord between its ends. The
+         straight x1,y1 -> x2,y2 found a curved or bent arrow where it is
+         not drawn and missed it where it is. Its rendered grab path has
+         the real shape and a width that is its tolerance, so ask that;
+         a later arrow (drawn on top) wins a tie. */
+      var hp=layer.querySelector('.an-arrow-hit[data-idx="'+i+'"]');
+      if(hp&&typeof hp.isPointInStroke==='function'&&window.DOMPoint){
+        var inS=null;
+        try{inS=hp.isPointInStroke(new DOMPoint(px,py));}catch(e){}
+        if(inS!==null){if(inS){best=i;bestD=0;}return;}
+      }
       var d=distToSeg(px,py,
         a.x1/100*r.width,a.y1/100*r.height,
         a.x2/100*r.width,a.y2/100*r.height);
