@@ -2168,8 +2168,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # wrapper so the handles are never cut off.
 # T588 (2026-09-30): a cropped picture holds its box's shape on resize,
 # Shift frees it, and its handles say so.
-EXPECTED_MD5 = "b22e96138f65ac4606aa788213e3e906"
-EXPECTED_BYTES = 4731127
+# T589 (2026-09-30): below the floor Whole slide and then Build order fold
+# into doors rather than the ribbon clipping them.
+EXPECTED_MD5 = "6f58b6372e5c142d5796d4cfcae3ad93"
+EXPECTED_BYTES = 4732388
 
 
 def _render_example() -> str:
