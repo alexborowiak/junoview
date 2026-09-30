@@ -10446,3 +10446,12 @@ create animation. This gets congested very easily."
   the selection while pointed at; leaving or closing puts it back, a
   click keeps it with one undo entry. Driven: before, a click on the
   visible curve selected the chart under it; after, the arrow.
+- [x] **T586 — The shelf is one slim line.** "the drop down menu like
+  this with things like shapes here, just makes the actual view of the
+  screen so so small. This is on a laptop, but even on my big monitor
+  before I was finding that it was getting really squished." The shelf
+  (T453) laid its options out as full ribbon tiles -- 56px, icon over
+  word -- over a scrollbar of its own, so opening Shapes took the ribbon
+  from 92px to 162px. On the shelf a tile is its icon beside its word,
+  30px tall, the scrollbar is thin, and the wheel scrolls the line.
+  Measured at 1500x950: the shelf 69px -> 37px.

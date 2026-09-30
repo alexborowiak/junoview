@@ -1794,7 +1794,7 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
 .deck:not(.rbn-side) .edit-tools.ribbon>.rbn-shelf:not([hidden]){
   grid-row:2;grid-column:1/-1;contain:inline-size;min-width:0;}
 .rbn-shelf{min-width:0;display:flex;
-  align-items:center;gap:9px;padding:4px 12px;
+  align-items:center;gap:9px;padding:2px 12px;
   border-top:1px solid var(--chrome-line,#ffffff1f);}
 .rbn-shelf[hidden]{display:none!important;}
 .rbn-shelf-name{flex:none;color:var(--chrome-ink-2);
@@ -1835,6 +1835,25 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
 /* last in the line, outside the scroller, so it is always reachable and
    never over a tile */
 .rbn-shelf-close{flex:none;align-self:center;}
+/* ---- T586: THE SHELF IS ONE SLIM LINE --------------------------------
+   (2026-09-30, user: "the drop down menu like this with things like
+   shapes here, just makes the actual view of the screen so so small.
+   This is on a laptop, but even on my big monitor before I was finding
+   that it was getting really squished".) The shelf laid its options out
+   as full ribbon tiles -- 56px, icon over word, in a 60px band -- over a
+   scrollbar of its own, so opening Shapes stacked ~75px more chrome on
+   the ribbon and the slide shrank to fit what was left. On the shelf a
+   tile is its icon BESIDE its word, 30px tall; the scrollbar is thin,
+   and the wheel scrolls the line (rbnShelfBoot). By id, so no strip's
+   own size rule further down can put the tall tile back. */
+#rbn-shelf-body{scrollbar-width:thin;}
+#rbn-shelf-body .strip-frame,#rbn-shelf-body .fx-strip{height:auto;}
+#rbn-shelf-body .strip-frame{border:0;background:none;}
+#rbn-shelf-body .fx-tile{flex-direction:row;height:30px;min-height:0;
+  width:auto;min-width:0;flex:none;padding:0 9px;gap:6px;
+  white-space:nowrap;}
+#rbn-shelf-body .fx-tile .bic{width:16px;height:16px;}
+#rbn-shelf-body .fx-tile .sh-ico{width:18px;height:15px;}
 /* the door that owns the shelf reads as pressed while it does */
 .rbn-grp.rbn-shelved .rbn-foldbtn{
   background:color-mix(in srgb,var(--accent) 30%,transparent);

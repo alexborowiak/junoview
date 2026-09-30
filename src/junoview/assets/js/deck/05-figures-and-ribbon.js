@@ -2004,6 +2004,14 @@
     var x=$('#rbn-shelf-close');
     if(x) x.addEventListener('click',function(e){
       e.stopPropagation();rbnShelfDismiss();rbnShelfRefit();});
+    /* T586: the slim line scrolls with the wheel -- its thin scrollbar
+       is a small target, and the wheel is where a hand on a mouse is */
+    var body=$('#rbn-shelf-body');
+    if(body) body.addEventListener('wheel',function(e){
+      if(Math.abs(e.deltaY)<=Math.abs(e.deltaX)) return;
+      if(body.scrollWidth<=body.clientWidth+1) return;
+      body.scrollLeft+=e.deltaY;e.preventDefault();
+    },{passive:false});
   }
   function rbnFoldGroup(g){
     if(!g||g.classList.contains('rbn-folded')) return false;
