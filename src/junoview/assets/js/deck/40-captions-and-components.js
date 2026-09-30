@@ -2060,6 +2060,21 @@
      ['largest','Match the largest'],
      ['smallest','Match the smallest']],'same',
     function(mode){sameSize(mode);});
+  /* T548: Shadow -- each row wears its own shadow as its picture */
+  wireFloatDropdown('fmt-shdwrap','fmt-shd','fmt-shd-menu',
+    [['none','No shadow'],['soft','Soft'],['hard','Hard'],
+     ['lift','Lifted']],'shd',
+    function(v){
+      fmtApply(function(a){
+        if(!SHADOWABLE[a.k]) return;
+        if(v==='none') delete a.shadow; else a.shadow=v;
+      });
+    },function(v){
+      var sw=document.createElement('span');
+      sw.className='shd-sw';
+      if(SHADOWS[v]) sw.style.boxShadow=shadowCss(SHADOWS[v],0.6,true);
+      return sw;
+    });
   /* T549: Rotate, PowerPoint's four and a straighten, then the small
      steps the old Rotate left/right buttons took */
   wireFloatDropdown('fmt-rotwrap','fmt-rot','fmt-rot-menu',

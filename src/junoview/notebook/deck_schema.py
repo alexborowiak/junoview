@@ -257,6 +257,11 @@ ANNOT_COMMON: dict[str, tuple[type | tuple[type, ...], str]] = {
                             "before (1 for none, 'pos' for position "
                             "only), given back when the part is "
                             "unlinked."),
+    "shadow": (str, "A shadow under it: `soft`, `hard` or `lift` "
+                    "(absent is none). A shape, picture, notebook figure, "
+                    "table, flip book, clip or text box can cast one; a "
+                    ".pptx carries it as PowerPoint's outer shadow, both "
+                    "ways."),
     "flipH": (int, "1 when what this shows is mirrored left to right — "
                    "a picture, a shape, a notebook figure's picture, a "
                    "flip book's pages, a clip. The box and a text box's "

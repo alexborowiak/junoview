@@ -10269,8 +10269,29 @@ choice in the editor (T506, T507).
 
 ### Shapes, pictures, tables
 
-- [ ] **T548 — Shadow.** None / soft / hard / lifted on any shape,
+- [x] **T548 — Shadow.** None / soft / hard / lifted on any shape,
   picture, figure or box; exported as a .pptx outer shadow.
+  *Done 2026-10-01.* a.shadow is soft, hard or lift (absent none), for a
+  shape, picture, notebook figure, table, flip book, clip or text box
+  (SHADOWABLE; in the schema and DECK-FORMAT). The presets are px on a
+  720px page scaled like a stroke, so a shadow is the same share of the
+  page in the editor, full screen and print. shadowPaint, after the layer
+  is built, puts each where it looks right and where a handle never
+  shares it: a box-shadow from a box (figure, table, book, clip, filled
+  text box, plain rectangle or ellipse), a drop-shadow from a drawn
+  shape's SVG and from a picture (so a star's shadow is a star and a
+  logo's follows its outline), a text box with no fill shadows its
+  words, and a cropped picture casts from its box, which a crop cannot
+  clip. The door is Shadow ▾ beside Opacity in the Object tab's
+  Appearance group, in every layout that places Opacity, each row
+  wearing its own shadow on a small card and the one that is on marked;
+  Search commands finds it by "shadow" and "shape effects". A .pptx
+  writes PowerPoint's outerShdw (distance, direction, blur and alpha from
+  the page's height) on shapes, pictures and text boxes, and the reader
+  maps an outer shadow back to the nearest of the three (no blur is
+  hard, a long drop lifted, else soft). Driven at 1440x900: lifted on a
+  picture, hard on a diamond (its SVG), soft on a text box (its words)
+  and on a filled rectangle (a box-shadow); a chart offers no door.
 - [x] **T549 — Flip and quarter turns.** Flip horizontal, flip vertical,
   rotate 90° either way; saved, rendered and exported.
   *Done 2026-10-01.* Arrange ▾ had "Flip left to right", "Turn a quarter

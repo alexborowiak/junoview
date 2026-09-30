@@ -405,6 +405,9 @@ _ICON_PATHS = {
     # T552: a picture, said out loud -- alt text is what is read instead
     # of it, which neither `caption` (words everyone reads) nor `eye`
     # (hide and show) says
+    # T548: a box with its shadow down and to the right
+    "shadow": '<rect x="2" y="2" width="9" height="9" rx="1"/>'
+              '<path d="M13.6 5.2v8.4H5.2"/>',
     # T554: a slide struck through -- PowerPoint's Hide Slide
     "hideslide": '<rect x="2" y="3.4" width="12" height="9.2" rx="1"/>'
                  '<path d="M2.6 13.8 13.4 2.2"/>',

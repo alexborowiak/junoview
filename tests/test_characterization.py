@@ -2254,8 +2254,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # shape, figure, book or clip's content (flipH/flipV, drawn by class,
 # mirrored in the thumbnails), Rotate on the Object tab with the four
 # PowerPoint rows, and flipH/flipV in a .pptx both ways.
-EXPECTED_MD5 = "0574c4cad443e5f7975ee398ef415206"
-EXPECTED_BYTES = 4913498
+# T548 (2026-10-01): Shadow -- soft, hard and lifted presets scaled with
+# the page, cast by each kind where it looks right (shadowPaint), Shadow
+# beside Opacity on the Object tab, and PowerPoint's outer shadow in a
+# .pptx both ways.
+EXPECTED_MD5 = "67fe3b496a31e3075c1066b6af692288"
+EXPECTED_BYTES = 4920140
 
 
 def _render_example() -> str:

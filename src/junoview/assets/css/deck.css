@@ -5199,6 +5199,9 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .an-item.an-flh.an-flip img,.an-item.an-flv.an-flip img,
 .an-item.an-flh video,.an-item.an-flv video{
   transform:scale(var(--an-sx),var(--an-sy));}
+/* T548: the Shadow menu's rows show their shadow on a small card */
+.shd-sw{display:inline-block;width:18px;height:14px;border-radius:2px;
+  background:var(--chrome-ink-2,#9fb0c0);margin:2px 4px 6px 0;flex:none;}
 /* T554: a hidden slide, as PowerPoint draws one -- its number struck
    through, the picture dimmed (by .cut, since the show skips it), and
    the current slide dimmed too, so hiding the slide you are on shows */

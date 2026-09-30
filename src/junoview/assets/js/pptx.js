@@ -269,6 +269,25 @@ window.JunoPptx = (function () {
       + '"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>';
   }
 
+  /* T548: A SHADOW is PowerPoint's own outer shadow. The deck's presets
+     arrive as fractions of the page's height (dx, dy, blur) and an
+     alpha, so they are the same share of a 16:9 slide and an A0 poster;
+     it goes last in spPr, after the outline, where the schema wants the
+     effect list. */
+  function shadowXml(item, page) {
+    var s = item.shadow;
+    if (!s || !(s.alpha > 0)) return '';
+    var pt = page.hPt * 12700;
+    var dist = Math.round(Math.sqrt(s.dx * s.dx + s.dy * s.dy) * pt);
+    var dir = Math.round(((Math.atan2(s.dy, s.dx) * 180 / Math.PI) + 360)
+      % 360 * 60000);
+    return '<a:effectLst><a:outerShdw blurRad="' + Math.round(s.blur * pt)
+      + '" dist="' + dist + '" dir="' + dir + '" algn="tl"'
+      + ' rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="'
+      + Math.round(s.alpha * 100000) + '"/></a:srgbClr></a:outerShdw>'
+      + '</a:effectLst>';
+  }
+
   function nvSp(id, name, extra, link) {
     return '<p:nvSpPr><p:cNvPr id="' + id + '" name="' + esc(name) + '"'
       + (link ? '>' + link + '</p:cNvPr>' : '/>')
@@ -414,7 +433,8 @@ window.JunoPptx = (function () {
     return '<p:sp>'
       + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)
-      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill + '</p:spPr>'
+      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill
+      + shadowXml(item, page) + '</p:spPr>'
       + '<p:txBody>' + bodyPr
       + '<a:lstStyle/>' + paragraphs(item, page) + '</p:txBody></p:sp>';
   }
@@ -578,7 +598,7 @@ window.JunoPptx = (function () {
       + '</p:blipFill>'
       + '<p:spPr>' + xfrm(geo, page)
       + '<a:prstGeom prst="' + geom + '"><a:avLst/></a:prstGeom>'
-      + '</p:spPr></p:pic>';
+      + shadowXml(item, page) + '</p:spPr></p:pic>';
   }
 
   /* A VIDEO OR AUDIO CLIP (T321): PowerPoint's own media picture. The
@@ -646,7 +666,8 @@ window.JunoPptx = (function () {
     return '<p:sp>'
       + nvSp(id, item.name || ('Shape ' + id), '', item._link)
       + '<p:spPr>' + xfrm(item, page) + geom + fill
-      + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
+      + stroke + shadowXml(item, page)
+      + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
       + '</p:txBody></p:sp>';
   }
 

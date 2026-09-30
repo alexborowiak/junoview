@@ -515,6 +515,18 @@ def _xfrm(el: ET.Element | None) -> dict | None:
             "chext": _pair(el.find("a:chExt", NS), "cx", "cy")}
 
 
+def _shadow_preset(sh: ET.Element) -> str:
+    """PowerPoint's outer shadow as the deck's nearest preset (T548):
+    no blur is hard, a long drop is lifted, anything else is soft."""
+    blur = _int(sh.get("blurRad"), 0) / EMU_PER_PT
+    dist = _int(sh.get("dist"), 0) / EMU_PER_PT
+    if blur < 1.5 and dist > 0:
+        return "hard"
+    if dist >= 6:
+        return "lift"
+    return "soft"
+
+
 def _pair(el: ET.Element | None, a: str, b: str) -> tuple[int, int]:
     if el is None:
         return (0, 0)
@@ -1052,6 +1064,10 @@ class _SlideReader:
         link = _link_of(self.ctx, self.part, cnv, self.slide_parts)
         if link:
             item["link"] = link
+        # T548: an outer shadow is one of the deck's four, by its look
+        sh = el.find("./p:spPr/a:effectLst/a:outerShdw", NS)
+        if sh is not None and item.get("t") != "line":
+            item["shadow"] = _shadow_preset(sh)
         self.spids.setdefault(spid, []).append(len(self.items))
         self.items.append(item)
 

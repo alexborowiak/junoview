@@ -63,7 +63,9 @@ def test_the_grab_bag_became_focused_sections():
         assert cid in pic, cid
     # appearance and reuse are separate jobs, so neither makes the other
     # look like a stray control in a half-full column.
-    assert appearance == ["fmt-opcell", "fmt-opwrap", "fmt-op", "fmt-opval"]
+    # T548: a shadow is appearance too, beside opacity
+    assert appearance == ["fmt-opcell", "fmt-opwrap", "fmt-op", "fmt-opval",
+                          "fmt-shdwrap", "fmt-shd", "fmt-shd-menu"]
     assert reuse == ["fmt-match", "fmt-cmp-make", "fmt-cmp-add", "fmt-cmp-find"]
 
 

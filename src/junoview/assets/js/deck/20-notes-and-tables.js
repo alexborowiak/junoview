@@ -2574,6 +2574,54 @@
     else if(extra&&!t) t=String(extra);
     img.alt=t;
   }
+  /* ---- T548: SHADOWS ---------------------------------------------------
+     Four answers, PowerPoint's Shadow gallery cut to what gets used:
+     none, soft (just off the page), hard (a flat offset copy, no blur)
+     and lifted (a card held up). The numbers are px on a 720px-tall page
+     (SW_REF_H), scaled like a stroke, so a shadow is the same share of
+     the page in the editor, a thumbnail and full screen. What casts it
+     depends on the thing: a box (a figure, a table, a book, a clip, a
+     filled text box, a plain rectangle or ellipse) casts a box-shadow
+     from the item, which its handles never share; a drawn shape and a
+     picture cast one from their own ink (drop-shadow on the SVG or the
+     picture, so a star's shadow is a star and a logo's follows its
+     outline); a text box with no fill shadows its words, as PowerPoint
+     does; and a cropped picture casts from the item, since a crop would
+     clip a shadow drawn inside it. */
+  var SHADOWS={soft:{x:0,y:3,b:10,a:0.45},hard:{x:4,y:4,b:0,a:0.55},
+    lift:{x:0,y:9,b:20,a:0.42}};
+  var SHADOWABLE={rect:1,image:1,cell:1,table:1,text:1,flip:1,video:1};
+  function shadowCss(p,k,box){
+    var f=function(v){return (v*k).toFixed(1)+'px';};
+    var c='rgba(0,0,0,'+p.a+')';
+    return box?(f(p.x)+' '+f(p.y)+' '+f(p.b)+' '+c)
+      :('drop-shadow('+f(p.x)+' '+f(p.y)+' '+f(p.b/2)+' '+c+')');
+  }
+  function shadowPaint(layer,s){
+    if(!layer||!s) return;
+    var k=null;
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||!SHADOWABLE[a.k]) return;
+      var p=SHADOWS[a.shadow]; if(!p) return;
+      var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      if(k===null) k=pageScale(layer);
+      var kid=function(sel){
+        return [].filter.call(el.children,function(c){
+          return c.matches&&c.matches(sel);})[0]||null;};
+      if(a.k==='rect'){
+        var sv=kid('.an-shape-svg');
+        if(sv) sv.style.filter=shadowCss(p,k,false);
+        else el.style.boxShadow=shadowCss(p,k,true);
+      } else if(a.k==='image'){
+        var pic=a.crop?null:(kid('.an-imgwin')||kid('.an-imgel'));
+        (pic||el).style.filter=shadowCss(p,k,false);
+      } else if(a.k==='text'&&!(a.bg!==0&&a.bgc)){
+        [].forEach.call(el.querySelectorAll('.an-tx'),function(t){
+          t.style.filter=shadowCss(p,k,false);});
+      } else el.style.boxShadow=shadowCss(p,k,true);
+    });
+  }
   /* T552: THE OTHER PICTURES. A placed picture and a flip book's page
      take their alt text as they are drawn (altAttrs, above); a figure
      placed from a notebook, a chart and a clip are drawn by code of
@@ -3884,6 +3932,7 @@
        (2026-08-25, found in the browser). */
     fitTexts(layer,s,editing,kept);
     altPaint(layer,s);    /* T552: charts, clips and notebook figures */
+    shadowPaint(layer,s); /* T548 */
     /* ...and AFTER the fit pass, which can change a box's height */
     if(_anchorFixWanted) anchorFix(layer,s);
     /* ---- STRAYS ------------------------------------------------------

@@ -87,7 +87,7 @@
     +'#fmt-bulletswrap #fmt-bullets-caret #fmt-bullets-menu '
     +'#fmt-numberswrap #fmt-numbers-caret #fmt-numbers-menu '
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
-    +'#fmt-rotl #fmt-rotr #fmt-rotwrap #fmt-arline #fmt-argrid #fmt-samewrap '
+    +'#fmt-shdwrap #fmt-rotl #fmt-rotr #fmt-rotwrap #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
     /* the wrappers around the two colour dropdowns. They got ids so a
        ribbon layout could move a button and its swatch menu as ONE
@@ -539,6 +539,18 @@
        goes with the slider rather than standing on its own */
     var opw=$('#fmt-opwrap');
     show('#fmt-opcell',!!opw&&!opw.hidden);
+    /* T548: a shadow, for anything that can cast one; the row that is
+       on is marked */
+    var shdIx=selIdxs().filter(function(i){
+      var x=(pres.slides[cur].annots||[])[i];
+      return typeof i==='number'&&x&&SHADOWABLE[x.k];});
+    show('#fmt-shdwrap',shdIx.length>0);
+    if(shdIx.length){
+      var shNow=(pres.slides[cur].annots||[])[shdIx[0]].shadow||'none';
+      $$('#fmt-shd-menu [data-shd]').forEach(function(o){
+        o.setAttribute('aria-pressed',
+          o.getAttribute('data-shd')===shNow?'true':'false');});
+    }
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');

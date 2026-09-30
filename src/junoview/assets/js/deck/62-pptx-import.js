@@ -227,6 +227,8 @@
     }
     if(!a) return null;
     if(it.rot&&a.k!=='arrow') a.rot=it.rot;
+    /* T548: its shadow, for what can cast one */
+    if(it.shadow&&SHADOWS[it.shadow]&&SHADOWABLE[a.k]) a.shadow=it.shadow;
     /* T549: mirrored, for what can be (a text box never is) */
     if(a.k==='image'||a.k==='rect'||a.k==='video'){
       if(it.flipH) a.flipH=1;

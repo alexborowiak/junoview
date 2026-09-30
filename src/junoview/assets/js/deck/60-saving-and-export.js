@@ -2871,6 +2871,11 @@
            flipH / flipV (a notebook figure or a book's page leaves as a
            picture, and takes them the same way) */
         var fpt=items[pq].t;
+        /* T548: its shadow, as fractions of the page's height */
+        var shp=SHADOWABLE[a.k]&&SHADOWS[a.shadow];
+        if(shp&&(fpt==='image'||fpt==='rect'||fpt==='text'))
+          items[pq].shadow={dx:shp.x/SW_REF_H,dy:shp.y/SW_REF_H,
+            blur:shp.b/SW_REF_H,alpha:shp.a};
         if(fpt==='image'||fpt==='rect'||fpt==='video'){
           if(a.flipH) items[pq].flipH=1;
           if(a.flipV) items[pq].flipV=1;
