@@ -976,11 +976,9 @@
        lines of bookkeeping maintained for no reader (2026-08-17 audit). */
     sizeRibbonGroups();
     /* groups appearing or leaving changes the width the row needs, so the
-       density has to be re-judged every time the selection does -- and so
-       does the STRIP's ceiling, because the contextual groups raise the
-       ribbon's floor by ~90px and a strip still sitting at its old width
-       is exactly how clicking an object ate the row (T80) */
-    fitFilmMax();
+       density has to be re-judged every time the selection does. (The
+       strip's ceiling no longer is: the ribbon spans the window above
+       the strip (T514), so a selection cannot move it -- T582.) */
     fitEditRibbon();
   }
   /* How many columns each group needs to fill two rows ACROSS: half its

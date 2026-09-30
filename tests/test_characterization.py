@@ -2148,8 +2148,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Controls tab, the top edge peeks it, Hide folds it.
 # T577 (2026-09-30): the pane's local rewrite() no longer shares a name
 # with the editor's redo().
-EXPECTED_MD5 = "90712936545728ebb5b9103c461a7050"
-EXPECTED_BYTES = 4723644
+# T582 (2026-09-30): the strip's ceiling is 46% of the editor (max 900px)
+# and no longer reads the ribbon's floor -- the ribbon spans the window
+# above the strip since T514 -- so the eight-tab walk that measured it is
+# gone and the handle widens the column again.
+EXPECTED_MD5 = "5101e78eca15902617242d5ea37efd4d"
+EXPECTED_BYTES = 4715435
 
 
 def _render_example() -> str:

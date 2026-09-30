@@ -387,12 +387,11 @@ body.deck-open{overflow:hidden;}
    completely leaves you no way to ask for it back (2026-08-20). */
 .deck.rbn-fold>.edit-tools{display:none;}
 /* ---- ...and the bar can put ITSELF away (off by default) --------------
-   TRANSFORM, never display:none. fitEditRibbon and ribbonMinW both bail
-   on a folded bar because it measures 0, and ribbonMinW is what publishes
-   --film-max: a peek that used the fold would swing the strip's ceiling
-   between a real number and nothing sixty times a second. Rolled up the
-   bar is still laid out, still measurable, and the density ladder is
-   unaffected.
+   TRANSFORM, never display:none. fitEditRibbon bails on a folded bar
+   because it measures 0 (and so did the strip's ceiling until T582), so
+   a peek that used the fold would re-fit the row from nothing sixty
+   times a second. Rolled up the bar is still laid out, still
+   measurable, and the density ladder is unaffected.
    The ROW goes to zero so the stage takes the height; the bar keeps its
    106px and parks behind the tab strip, which never moves -- so the
    guarantee above still holds, there is always something to reach for.

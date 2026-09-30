@@ -10398,3 +10398,17 @@ create animation. This gets congested very easily."
   drawer it anchors is out), the tab keeps it until Hide, and a focused
   control keeps it too (:focus-within). Esc and L are unchanged. Kept or
   folded is remembered per project like the editor's auto-hides.
+- [x] **T582 — The thumbnail strip can be dragged wider again.** "the
+  thumbnail view can now no longer be re-sized." The strip's ceiling was
+  46% of the editor, 900px, AND the editor's width less the ribbon's
+  narrowest layout on its widest tab (T80) -- a guard from when the ribbon
+  and the strip shared a row. T514 moved the ribbon to span the window
+  above the strip, so the term protected nothing, but it kept shrinking the
+  ceiling as tabs grew: T579's always-there Disappear tile took the
+  Animation tab's floor from 1040px to 1127px, and on a 1500px window the
+  ceiling came out at 182px, the strip's own width, so the handle could
+  shrink the column and never widen it. The term is gone, and with it the
+  eight-tab measuring walk (and T539's memo that hid its 98ms) -- nothing
+  else read them. Selecting an object no longer moves the strip either.
+  Driven: 1500px window, handle dragged 200px -> 450px -> 330px, stays at
+  330px on selecting a text box and on the Animation tab.

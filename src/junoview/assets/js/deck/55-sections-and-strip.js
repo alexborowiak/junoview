@@ -1300,10 +1300,10 @@
     }
     applySideRibbon();
     syncViewBtns();
-    /* entering edit mode is the first moment the ribbon has a real width
+    /* entering edit mode is the first moment the deck has a real width
        -- and therefore the first moment the strip's ceiling can be
-       measured. A width restored from localStorage is clamped by
-       --film-max here rather than eating the row on open (T80) */
+       worked out. A width restored from localStorage is clamped by
+       --film-max here rather than squeezing the stage on open (T80) */
     if(m==='edit') requestAnimationFrame(function(){
       fitFilmMax();fitEditRibbon();});
     if(creating||editing){
@@ -3048,9 +3048,8 @@
       e.preventDefault();
       h.classList.add('on');
       try{h.setPointerCapture(e.pointerId);}catch(err){}
-      /* the ceiling is measured ONCE, here: the ribbon cannot change what
-         it holds while you are holding the handle, and re-measuring would
-         stamp the whole density ladder on and off sixty times a second */
+      /* the ceiling is read ONCE, here: it is a share of the editor's
+         width, and the window does not change size under a held handle */
       var hi=fitFilmMax();
       var w=0;
       function mv(ev){
