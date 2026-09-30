@@ -328,7 +328,7 @@
       e.preventDefault();
       /* T596: as tabs there is no side panel to find in -- the Open
          dialog is where "find the thing I am looking for" goes */
-      if(filesAt()==='top'&&APP.deckHub){APP.deckHub();return;}
+      if(filesAt()==='top'&&APP.deckHub){APP.deckHub({find:true});return;}
       f.focus();f.select();
     });
   })();
@@ -7804,6 +7804,65 @@
   /* Home is intentionally a RECENT list, not a second presentation rail.
      The full library has its own Open door, where folders, posters and
      imports do not compete with notebook opening. */
+  /* ---- T599: A RECENT PRESENTATION SHOWS ITS SLIDES WHEN POINTED AT --
+     (2026-09-30, user: "would be cool if when hovering or something the
+     little thumbnails that you have during a presentation could appear
+     and you could scroll through to see if it is the right
+     presentation".) A card beside the row, painted by the deck's own
+     preview (APP.deckPreview -- the strip's thumbnails, that deck's
+     colours). It waits a moment so sweeping down the list does not
+     flash one for every row, stays while the pointer is on it so it can
+     be scrolled, and its Open button opens that deck. */
+  var pvCard=null,pvShowT=null,pvHideT=null,pvFor='';
+  function pvCardEl(){
+    if(pvCard) return pvCard;
+    pvCard=document.createElement('div');
+    pvCard.className='pv-card';pvCard.hidden=true;
+    pvCard.setAttribute('role','group');
+    pvCard.setAttribute('aria-label','Preview of the presentation');
+    pvCard.addEventListener('mouseenter',function(){clearTimeout(pvHideT);});
+    pvCard.addEventListener('mouseleave',pvCardHideSoon);
+    document.body.appendChild(pvCard);
+    return pvCard;
+  }
+  function pvCardHide(){
+    clearTimeout(pvShowT);clearTimeout(pvHideT);
+    if(pvCard) pvCard.hidden=true;
+    if(pvFor&&APP.deckPreviewForget) APP.deckPreviewForget();
+    pvFor='';
+  }
+  function pvCardHideSoon(){
+    clearTimeout(pvShowT);clearTimeout(pvHideT);
+    pvHideT=setTimeout(pvCardHide,220);
+  }
+  function pvCardShow(row,name){
+    clearTimeout(pvHideT);clearTimeout(pvShowT);
+    pvShowT=setTimeout(function(){
+      if(!APP.deckPreview||!row.isConnected) return;
+      var c=pvCardEl();
+      if(pvFor!==name){
+        pvFor=name;
+        APP.deckPreview(c,name,{w:172,open:function(nm){
+          pvCardHide();
+          if(APP.deckChoose) APP.deckChoose(nm);
+          goHome(false);
+        }});
+      }
+      c.hidden=false;
+      /* beside the row: right when there is room, else left, and kept
+         on the screen top to bottom */
+      var r=row.getBoundingClientRect(),cw=c.offsetWidth,ch=c.offsetHeight;
+      var x=r.right+12;
+      if(x+cw>window.innerWidth-12) x=Math.max(12,r.left-cw-12);
+      var y=Math.min(r.top-16,window.innerHeight-ch-12);
+      c.style.left=Math.round(x)+'px';
+      c.style.top=Math.round(Math.max(12,y))+'px';
+    },280);
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&pvCard&&!pvCard.hidden) pvCardHide();});
+  window.addEventListener('scroll',function(){
+    if(pvCard&&!pvCard.hidden) pvCardHide();},true);
   function renderWelcomePres(){
     var host=$('#welcome-pres');
     if(!host) return;
@@ -7856,9 +7915,15 @@
       });
       b.appendChild(pin);
       b.addEventListener('click',function(){
+        pvCardHide();   /* T599 */
         if(APP.deckChoose) APP.deckChoose(p.name);
         goHome(false);
       });
+      /* T599: pointing at it, or tabbing to it, shows its slides */
+      b.addEventListener('mouseenter',function(){pvCardShow(b,p.name);});
+      b.addEventListener('mouseleave',pvCardHideSoon);
+      b.addEventListener('focus',function(){pvCardShow(b,p.name);});
+      b.addEventListener('blur',pvCardHideSoon);
       host.appendChild(b);
     }
     var npin=list.filter(function(p){return p.pinned;}).length;

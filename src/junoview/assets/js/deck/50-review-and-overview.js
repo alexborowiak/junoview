@@ -1370,6 +1370,317 @@
   function presentationIcon(p){
     return bic(p.view?'newview':p.poster?'newposter':'newdeck');
   }
+  /* ---- T599: SEE A PRESENTATION BEFORE OPENING IT --------------------
+     (2026-09-30, user: "would be cool when opening files if there was a
+     way to preview files. like I have been trying to find the one correct
+     file, but I had to keep opening heaps. Like would be cool if when
+     hovering or something the little thumbnails that you have during a
+     presentation could appear and you could scroll through to see if it
+     is the right presentation.")
+     The strip's own thumbnails (miniDiagram), of a deck that is not the
+     one on screen. The renderer reads `pres` for the palette, the page
+     and the masters, so for one synchronous paint `pres` IS that deck,
+     and everything the paint touches is put back in a finally. Nothing
+     is written: the deck is the library's parsed copy, cached while the
+     dialog is open, and no slide is selected, dirtied or staged. The same
+     paint serves Home's recent rows (app.js, APP.deckPreview). */
+  var PV_LIMIT=60,pvDecks={},pvText={};
+  function pvDeck(name){
+    if(pres&&pres.name===name) return pres;
+    if(!pvDecks.hasOwnProperty(name))
+      pvDecks[name]=presentationByName(name)||null;
+    return pvDecks[name];
+  }
+  function pvForget(){pvDecks={};pvText={};}
+  /* every word one slide shows, lower-cased, for Find */
+  function pvSlideWords(s){
+    var bits=[s.title||'',s.sub||'',s.label||'',s.notes||''];
+    (s.annots||[]).forEach(function(a){
+      if(!a||a.ph) return;
+      if(a.k==='text') bits.push(a.text||'');
+      else if(a.k==='table'){
+        try{tableRows(a).forEach(function(r){bits.push(r.join(' '));});}
+        catch(e){}
+      }
+    });
+    return bits.join(' ').toLowerCase();
+  }
+  function pvWords(name){
+    if(!pvText.hasOwnProperty(name)){
+      var d=pvDeck(name);
+      pvText[name]=((d&&d.slides)||[]).map(pvSlideWords);
+    }
+    return pvText[name];
+  }
+  /* the slides (by index) that hold every word of the query */
+  function pvMatchWords(words,q){
+    var terms=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
+    if(!terms.length) return [];
+    var out=[];
+    (words||[]).forEach(function(w,i){
+      if(terms.every(function(t){return w.indexOf(t)>=0;})) out.push(i);
+    });
+    return out;
+  }
+  function pvMatches(name,q){return pvMatchWords(pvWords(name),q);}
+  /* paint `name`'s slides into host. opts.w: thumbnail width; opts.q:
+     a query whose slides are lit; opts.open: a button that opens it */
+  function renderDeckPreview(host,name,opts){
+    opts=opts||{};
+    host.innerHTML='';
+    var d=pvDeck(name);
+    function note(t){
+      var e=document.createElement('div');e.className='pv-note';
+      e.textContent=t;host.appendChild(e);
+    }
+    if(opts.deck!==undefined) d=opts.deck;   /* a file's, not the library's */
+    if(!d){note('Nothing to show for \u201c'+name+'\u201d.');return 0;}
+    var head=document.createElement('div');head.className='pv-head';
+    var nm=document.createElement('div');nm.className='pv-name';
+    nm.textContent=name;
+    var sub=document.createElement('div');sub.className='pv-sub';
+    sub.textContent=(opts.sub!=null)?opts.sub
+      :deckRowWords(presentationSummary(name));
+    var tx=document.createElement('div');tx.className='pv-txt';
+    tx.appendChild(nm);tx.appendChild(sub);head.appendChild(tx);
+    if(opts.open){
+      var ob=document.createElement('button');
+      ob.type='button';ob.className='dbtn primary pv-open';
+      ob.innerHTML=bic('open')+' Open';
+      ob.title='Open \u201c'+name+'\u201d';
+      ob.addEventListener('click',function(e){
+        e.stopPropagation();opts.open(name);});
+      head.appendChild(ob);
+    }
+    host.appendChild(head);
+    if(isViewPres(d)){
+      note('A custom view restyles its notebook \u2014 it has no slides.');
+      return 0;
+    }
+    var slides=Array.isArray(d.slides)?d.slides:[];
+    if(!slides.length){note('No slides yet.');return 0;}
+    var hits=!opts.q?[]:(opts.deck!==undefined)
+      ?pvMatchWords((d.slides||[]).map(pvSlideWords),opts.q)
+      :pvMatches(name,opts.q);
+    var list=document.createElement('div');list.className='pv-list';
+    host.appendChild(list);
+    var W=opts.w||164,n=0,first=null;
+    var keep={p:pres,paint:paintSlide,h:miniHNow};
+    try{
+      pres=d;
+      var pg=pageOf(),H=Math.max(24,Math.round(W*pg.mm[1]/pg.mm[0]));
+      miniHNow=H;
+      /* the deck's own ink for text with no colour of its own: the CSS
+         defaults read --tk-* and .page-light, which the stage carries
+         for the deck ON screen, not this one */
+      applyTokens(list);
+      list.classList.toggle('page-light',pageIsLight(tokVal('@page')));
+      slides.forEach(function(s,i){
+        if(i>=PV_LIMIT) return;
+        var fig=document.createElement('figure');fig.className='pv-slide';
+        var m;
+        try{m=miniDiagram(s);}
+        catch(err){m=document.createElement('span');
+          m.className='mini-diagram free';}
+        m.style.width=W+'px';m.style.height=H+'px';
+        fig.appendChild(m);
+        var cap=document.createElement('figcaption');
+        var t='';
+        try{t=slideHeading(s)||slideTitle(s)||'';}catch(err){t='';}
+        var num=document.createElement('b');num.textContent=String(i+1);
+        cap.appendChild(num);
+        cap.appendChild(document.createTextNode(' '+t));
+        cap.title=t;
+        fig.appendChild(cap);
+        if(hits.indexOf(i)>=0){
+          fig.classList.add('pv-hit');
+          if(!first) first=fig;
+        }
+        list.appendChild(fig);n++;
+      });
+    } finally {
+      pres=keep.p;paintSlide=keep.paint;miniHNow=keep.h;
+    }
+    if(slides.length>PV_LIMIT)
+      note('\u2026and '+(slides.length-PV_LIMIT)+' more slide'
+        +(slides.length-PV_LIMIT===1?'':'s')+'.');
+    if(first) try{first.scrollIntoView({block:'nearest'});}catch(err){}
+    return n;
+  }
+  window.SemApp.deckPreview=renderDeckPreview;
+  window.SemApp.deckPreviewForget=pvForget;
+  /* the Open dialog's query, lower-cased */
+  function hubQuery(){
+    var f=$('#presentation-hub-find');
+    return f?String(f.value||'').trim().toLowerCase():'';
+  }
+  /* a row the query keeps: by name, or by words on its slides -- which it
+     then carries, so the row can say how many slides matched */
+  function hubMatch(p,q){
+    if(!q) return true;
+    if(String(p.name||'').toLowerCase().indexOf(q)>=0) return true;
+    p.hits=pvMatches(p.name,q);
+    return p.hits.length>0;
+  }
+  var hubPvName='',hubPvT=null;
+  function hubPreview(name,now){
+    clearTimeout(hubPvT);
+    function go(){
+      var host=$('#presentation-hub-pv'); if(!host) return;
+      hubPvName=name;
+      if(!name){host.innerHTML='';return;}
+      renderDeckPreview(host,name,{w:164,q:hubQuery(),open:function(nm){
+        closePresentationHub();choosePresentation(nm);}});
+    }
+    if(now) go(); else hubPvT=setTimeout(go,90);
+  }
+  /* ---- T599: THE PRESENTATION FILES IN A FOLDER, SEEN FIRST ----------
+     The library only knows decks this browser has opened. The ones on
+     disk -- the folder Junoview saves into, or any folder you point it
+     at -- are listed here too, newest first, each previewed on pointing
+     and searched by its words like any other row, and read only when
+     they are pointed at or searched. Opening one goes through File >
+     Open's handle path, so Save writes back to that file. */
+  var hubDirH=null,hubDirRows=null,hubDirReading=false;
+  function hubDirList(dir){
+    var hs=[],it;
+    try{it=dir.values();}catch(e){return Promise.resolve([]);}
+    function step(){
+      return it.next().then(function(r){
+        if(r.done) return hs;
+        var h=r.value;
+        if(h&&h.kind==='file'&&/\.junoview(\.html)?$/i.test(h.name||''))
+          hs.push(h);
+        return step();
+      });
+    }
+    return step().then(function(list){
+      return Promise.all(list.map(function(h){
+        return h.getFile().then(function(f){
+          return {h:h,name:h.name,at:f.lastModified||0,file:f};
+        }).catch(function(){return null;});
+      }));
+    }).then(function(rows){
+      return rows.filter(Boolean).sort(function(a,b){return b.at-a.at;});
+    });
+  }
+  function hubDirShow(dir){
+    return hubDirList(dir).then(function(rows){
+      hubDirH=dir;hubDirRows=rows;
+      renderPresentationHub();
+      return rows.length;
+    }).catch(function(e){
+      toast('Could not read that folder: '+((e&&e.message)||e),8000);
+      return 0;
+    });
+  }
+  /* the one deck a file holds, parsed once and kept on its row */
+  function hubDirDeck(r){
+    if(r.deck!==undefined) return Promise.resolve(r.deck);
+    return r.file.text().then(function(txt){
+      var obj=parseDeckText(txt);
+      var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+        :Array.isArray(obj)?obj:(obj&&Array.isArray(obj.slides))?[obj]:[];
+      var one=list.filter(function(p){
+        return p&&Array.isArray(p.slides);})[0];
+      r.deck=one?normPres(one):null;
+      r.words=r.deck?r.deck.slides.map(pvSlideWords):[];
+      return r.deck;
+    }).catch(function(){r.deck=null;r.words=[];return null;});
+  }
+  function hubDirWords(r){
+    var slides=r.deck&&r.deck.slides?r.deck.slides.length:null;
+    return [r.name,r.at&&typeof histWhen==='function'?histWhen(r.at):'',
+      slides!=null?(slides+' slide'+(slides===1?'':'s')):'']
+      .filter(Boolean).join(' \u00b7 ');
+  }
+  function hubDirOpen(r){
+    closePresentationHub();
+    openDeckHandles([r.h]);
+  }
+  function hubDirPreview(r){
+    clearTimeout(hubPvT);
+    hubPvT=setTimeout(function(){
+      hubDirDeck(r).then(function(d){
+        var host=$('#presentation-hub-pv'); if(!host) return;
+        hubPvName='file:'+r.name;
+        renderDeckPreview(host,fileStem(r.name)||r.name,{deck:d,w:164,
+          q:hubQuery(),sub:hubDirWords(r),open:function(){hubDirOpen(r);}});
+      });
+    },90);
+  }
+  function hubDirRow(r){
+    var b=document.createElement('button');
+    b.type='button';b.className='presentation-hub-row is-file';
+    b.title='Open '+r.name+' \u2014 Save writes back to it';
+    var ic=document.createElement('span');ic.innerHTML=bic('doc');
+    var nm=document.createElement('span');nm.className='presentation-hub-row-name';
+    nm.textContent=fileStem(r.name)||r.name;
+    var sub=document.createElement('span');sub.className='presentation-hub-row-sub';
+    var hits=hubQuery()&&r.words?pvMatchWords(r.words,hubQuery()).length:0;
+    sub.textContent=hubDirWords(r)+(hits?(' \u00b7 '+hits+' slide'
+      +(hits===1?'':'s')+' match'):'');
+    var tx=document.createElement('span');tx.className='presentation-hub-row-txt';
+    tx.appendChild(nm);tx.appendChild(sub);
+    b.appendChild(ic);b.appendChild(tx);
+    b.addEventListener('mouseenter',function(){hubDirPreview(r);});
+    b.addEventListener('focus',function(){hubDirPreview(r);});
+    b.addEventListener('click',function(){hubDirOpen(r);});
+    return b;
+  }
+  /* a folder row the query keeps -- by name, or, once every file has
+     been read, by its words */
+  function hubDirMatch(r,q){
+    if(!q) return true;
+    if(String(r.name).toLowerCase().indexOf(q)>=0) return true;
+    return !!(r.words&&pvMatchWords(r.words,q).length);
+  }
+  function hubDirRender(q){
+    var host=$('#presentation-hub-dir'),head=$('#presentation-hub-dirhead');
+    var btn=$('#presentation-hub-dirbtn');
+    if(btn){
+      var can=!!window.showDirectoryPicker||!!deckDir;
+      btn.hidden=!can;
+      btn.innerHTML=bic('open')+' '+((deckDir&&!hubDirRows)
+        ?('Show the files in '+esc(deckDirName||'your folder'))
+        :'Look in a folder\u2026');
+    }
+    if(!host||!head) return [];
+    host.innerHTML='';
+    var on=!!hubDirRows;
+    host.hidden=head.hidden=!on;
+    if(!on) return [];
+    head.textContent='In '+((hubDirH&&hubDirH.name)||'the folder');
+    /* searching reads the files once, then draws again */
+    if(q&&!hubDirReading&&hubDirRows.some(function(r){return !r.words;})){
+      hubDirReading=true;
+      Promise.all(hubDirRows.map(hubDirDeck)).then(function(){
+        hubDirReading=false;renderPresentationHub();});
+    }
+    var rows=hubDirRows.filter(function(r){return hubDirMatch(r,q);});
+    if(!rows.length) emptyPresentationList(host,
+      q?'No file here matches.':'No presentation files in this folder.');
+    rows.forEach(function(r){host.appendChild(hubDirRow(r));});
+    return rows;
+  }
+  function hubDirDoor(){
+    /* the remembered folder, once the browser lets it be read -- the
+       click is what lets it */
+    if(deckDir&&!hubDirRows){
+      var ask=deckDir.requestPermission
+        ?deckDir.requestPermission({mode:'read'}):Promise.resolve('granted');
+      return Promise.resolve(ask).then(function(st){
+        if(st==='granted') return hubDirShow(deckDir);
+        toast('Junoview was not allowed to read '+deckDirName,6000);
+      }).catch(function(){});
+    }
+    if(!window.showDirectoryPicker) return Promise.resolve();
+    return window.showDirectoryPicker({id:'junoview-decks',mode:'read'})
+      .then(hubDirShow).catch(function(e){
+        if(!e||e.name!=='AbortError')
+          toast('Could not open that folder: '+((e&&e.message)||e),8000);
+      });
+  }
   function libraryRows(){
     var names=[],seen={};
     function add(name){
@@ -1416,7 +1727,9 @@
        two decks both called "talk" are two different lines now */
     var sub=document.createElement('span');
     sub.className='presentation-hub-row-sub';
-    sub.textContent=deckRowWords(p);
+    sub.textContent=deckRowWords(p)
+      +((p.hits&&p.hits.length)?(' \u00b7 '+p.hits.length+' slide'
+        +(p.hits.length===1?'':'s')+' match'):'');
     var txt=document.createElement('span');
     txt.className='presentation-hub-row-txt';
     txt.appendChild(name);txt.appendChild(sub);
@@ -1472,6 +1785,9 @@
       });
     });
     b.appendChild(pin);
+    /* T599: pointing at it, or tabbing to it, shows its slides */
+    b.addEventListener('mouseenter',function(){hubPreview(p.name);});
+    b.addEventListener('focus',function(){hubPreview(p.name);});
     b.addEventListener('click',function(e){
       if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
         noteSessionOpen(p.name);
@@ -1557,9 +1873,12 @@
     var recentHost=$('#presentation-hub-recent'),allHost=$('#presentation-hub-all');
     if(!root||!recentHost||!allHost) return;
     recentHost.innerHTML='';allHost.innerHTML='';
-    var recent=savedRecentPresentationNames();
-    var all=libraryRows();
+    var q=hubQuery();
+    var recent=savedRecentPresentationNames().filter(function(p){
+      return hubMatch(p,q);});
+    var all=libraryRows().filter(function(p){return hubMatch(p,q);});
     if(!recent.length) emptyPresentationList(recentHost,
+      q?'No recent presentation matches.':
       'No recent presentations yet. Create one or open a saved deck.');
     recent.forEach(function(p){
       recentHost.appendChild(presentationLibraryRow(p,function(){
@@ -1595,15 +1914,37 @@
       });
       return b;
     }
-    if(!all.length&&!order.length) emptyPresentationList(allHost,
+    if(!all.length&&!order.length&&!q) emptyPresentationList(allHost,
       'No saved presentations yet.');
     loose.forEach(function(p){allHost.appendChild(rowFor(p));});
     order.sort().forEach(function(f){
+      /* a folder with nothing matching is not listed while finding */
+      if(q&&!folders[f].length) return;
       allHost.appendChild(hubFolderHead(f,folders[f].length));
       folders[f].forEach(function(p){
         var r=rowFor(p);r.classList.add('infolder');allHost.appendChild(r);
       });
     });
+    /* T599: the preview follows the rows -- the one it showed if it is
+       still listed, else the first that is */
+    var dirRows=hubDirRender(q);
+    /* found nowhere at all: said once, where the eye starts */
+    if(q&&!recent.length&&!all.length&&!dirRows.length){
+      recentHost.innerHTML='';
+      emptyPresentationList(recentHost,
+        'Nothing is called \u201c'+q+'\u201d or has it on a slide.');
+    }
+    var names=recent.concat(all).map(function(p){return p.name;});
+    if(!root.hidden){  /* a list re-drawn behind a closed dialog paints none */
+      if(/^file:/.test(hubPvName)){
+        var still=dirRows.filter(function(r){
+          return 'file:'+r.name===hubPvName;})[0];
+        if(still) return;
+      }
+      if(names.length||!dirRows.length)
+        hubPreview(names.indexOf(hubPvName)>=0?hubPvName:(names[0]||''),true);
+      else hubDirPreview(dirRows[0]);
+    }
   }
   /* dropping on the column's own background takes a presentation OUT of
      its folder; wired once, the column survives every re-render */
@@ -1630,6 +1971,8 @@
     var root=$('#presentation-hub');
     if(root) root.hidden=true;
     presentationHubDeckInert(false);
+    pvForget();hubPvName='';   /* T599: parsed copies are for one visit */
+    hubDirRows=null;hubDirH=null;
   }
   /* T414: OPEN MEANS OPEN (2026-09-13, user: "why when you click open
      is there all the 'new poster options', like THAT WAS THERE ON THE
@@ -1642,7 +1985,13 @@
     var root=$('#presentation-hub');if(!root) return;
     var create=!!(opts&&opts.create===true);
     closeDeckPresentationDrawer();
-    renderPresentationHub();root.hidden=false;
+    pvForget();   /* T599: what was saved since the last visit shows */
+    var fq=$('#presentation-hub-find'); if(fq) fq.value='';
+    root.hidden=false;renderPresentationHub();
+    /* T599: the folder Junoview saves into lists itself when the
+       browser already lets it be read; otherwise its button asks */
+    if(deckDir) permReadOK(deckDir).then(function(ok){
+      if(ok&&!root.hidden&&!hubDirRows) hubDirShow(deckDir);});
     ['#presentation-hub-new','#presentation-hub-poster',
      '#presentation-hub-folder'].forEach(function(id){
       var b=$(id); if(b) b.hidden=!create;});
@@ -1652,7 +2001,9 @@
     if(form&&!create) form.hidden=true;
     presentationHubDeckInert(true);
     setTimeout(function(){
-      var b=$(create?'#presentation-hub-new':'#presentation-hub-file');
+      /* T599: Find is the door when finding is what was asked for */
+      var b=$(create?'#presentation-hub-new'
+        :(opts&&opts.find)?'#presentation-hub-find':'#presentation-hub-file');
       if(b) b.focus();},0);
   }
   /* The audience view owns one compact open-items drawer. The editor uses
@@ -2127,6 +2478,26 @@
         field.value='';form.hidden=true;renderPresentationHub();
       }
     });
+    /* T599: Find filters as you type; Escape clears it before it closes
+       the dialog, and Enter opens the first presentation it kept */
+    var find=$('#presentation-hub-find');
+    if(find){
+      find.addEventListener('input',function(){renderPresentationHub();});
+      find.addEventListener('keydown',function(e){
+        if(e.key==='Escape'&&find.value){
+          e.preventDefault();e.stopPropagation();
+          find.value='';renderPresentationHub();
+        } else if(e.key==='Enter'){
+          var first=$('#presentation-hub .presentation-hub-row');
+          if(first){e.preventDefault();first.click();}
+        } else if(e.key==='ArrowDown'){
+          var r0=$('#presentation-hub .presentation-hub-row');
+          if(r0){e.preventDefault();r0.focus();}
+        }
+      });
+    }
+    var dirb=$('#presentation-hub-dirbtn');
+    if(dirb) dirb.addEventListener('click',function(){hubDirDoor();});
     var file=$('#presentation-hub-file');
     if(file) file.addEventListener('click',function(){
       /* T414: the same door the rail's row uses -- a real file handle

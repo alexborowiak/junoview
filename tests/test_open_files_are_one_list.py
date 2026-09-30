@@ -124,7 +124,8 @@ def test_ctrl_k_finds_in_the_open_dialog_as_tabs():
     """Ctrl+K put the caret in the side panel's Find field; with no side
     panel on screen it opens the Open dialog instead."""
     js = assets.app_js()
-    assert ("      if(filesAt()==='top'&&APP.deckHub){APP.deckHub();return;}\n"
+    assert ("      if(filesAt()==='top'&&APP.deckHub){"
+            "APP.deckHub({find:true});return;}\n"
             "      f.focus();f.select();") in js
 
 
