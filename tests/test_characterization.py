@@ -2184,8 +2184,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Whole slide one door.
 # T595 (2026-09-30): a tick box beside the colour themes says whether a
 # theme (or a style set carrying a palette) changes the slide background.
-EXPECTED_MD5 = "cf33f28b7f051bee144e3b2e19bf19ec"
-EXPECTED_BYTES = 4748642
+# ...and again for T595's follow-up: the tick box's tooltip is under the
+# 160-character ceiling, and the help names the real path to it.
+EXPECTED_MD5 = "78228f8da269221ebdc498239a68e414"
+EXPECTED_BYTES = 4748555
 
 
 def _render_example() -> str:
