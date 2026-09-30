@@ -4939,6 +4939,9 @@ body.light .ar-row:hover,body.light .ar-srow:hover{
 /* T315: the two bands of the gallery, and a theme card's palette */
 .ss-band{font-family:var(--sans);font-size:11px;letter-spacing:.06em;
   text-transform:uppercase;color:var(--chrome-ink-3);margin:10px 0 4px;}
+/* T595: the colour band's own switch, under its label */
+.ss-bgck{margin:0 0 7px;width:max-content;gap:6px;cursor:pointer;
+  font-size:12px;}
 .ss-chips{display:flex;gap:4px;padding:6px;border-radius:6px;margin:6px 0;}
 .ss-chip{flex:1 1 0;height:14px;border-radius:3px;
   border:1px solid #00000033;}

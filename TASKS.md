@@ -10558,3 +10558,33 @@ create animation. This gets congested very easily."
   groups when Timing or Disappear comes or goes. Driven at 1500x900:
   Build order | Add animation | Whole slide, then Timing and Exit after
   Fade; Timing opens one 37px line of three labelled sections.
+
+## Group 20 — the 2026-09-30 files round (from the user's own review)
+
+The user, with a screenshot of PowerPoint refusing edits in Protected View:
+five things about getting presentations in and out -- the .pptx arriving
+locked, a way to build one talk out of several linked files "like
+Overleaf", opening and saving ("still really cursed and confusing ... a
+side-bar and tab (one or the other)", a saved file that "just says that
+this file can be opened with juno view, why can't it be opened?"), seeing
+a presentation before opening it, and the colour themes' background.
+
+- [x] **T595 — A colour theme can leave the slide background alone.**
+  "In the last chat as well we discussed the themes affecting the
+  backbround. There should be a tick box with the themes that determines
+  this." The page is one of a palette's colours, so picking Business
+  turned every slide of a dark deck light whether or not the page was
+  what you meant to change. A tick box under the Colour themes band --
+  "Change the slide background too" -- says whether the page comes along.
+  Ticked is what a theme always did (and what its inks were chosen
+  against); unticked, the deck keeps the page it named, or stays on the
+  default if it named none, and the theme brings everything else. The
+  same box governs a style set that carries a palette (it replaces the
+  same pres.tokens). The theme cards are painted on the page they would
+  get, so a heading that will not read on a kept page is seen not
+  reading before the click, and the toast says the background stayed --
+  and, when the headings or body no longer clear 3:1 on it, names the
+  tick box as the fix. A slide's own background and a master's were
+  never a theme's and are untouched either way. Remembered per project.
+  Driven: default dark deck, box off, Business -> the page stays
+  #0b141d; Paper -> the warning; box on again, Business -> #eef1f4.

@@ -2182,8 +2182,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and Add animation always, Timing and Disappear once the thing is
 # animated, Focus and Motion in the panel, Slide transition on Present,
 # Whole slide one door.
-EXPECTED_MD5 = "56cd8a49fb660936eef4741a695245ad"
-EXPECTED_BYTES = 4744229
+# T595 (2026-09-30): a tick box beside the colour themes says whether a
+# theme (or a style set carrying a palette) changes the slide background.
+EXPECTED_MD5 = "cf33f28b7f051bee144e3b2e19bf19ec"
+EXPECTED_BYTES = 4748642
 
 
 def _render_example() -> str:

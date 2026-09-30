@@ -3531,6 +3531,31 @@
         if(t.tokens.c[k]) c[k]=t.tokens.c[k];});
     return c;
   }
+  /* ---- T595: A THEME CAN LEAVE THE BACKGROUND ALONE --------------------
+     (2026-09-30, user: "we discussed the themes affecting the
+     background. There should be a tick box with the themes that
+     determines this".) The page is one of a palette's colours, so
+     picking Business turned every slide of a dark deck light whether or
+     not the page was what you were changing. The tick box beside the
+     theme cards says whether the page comes along. Ticked is what a
+     theme always did, and what its inks were chosen against; unticked,
+     the deck keeps the page it has and the theme brings everything
+     else. A style set that carries a palette (T12) replaces the same
+     pres.tokens, so the same box governs it. A slide's own background
+     and a master's were never a theme's and are untouched either way.
+     Remembered per project, like the other options. */
+  var THEMEBG_KEY='semopts:'+SCOPE+':theme-page';
+  function themeTakesPage(){return lsGet(THEMEBG_KEY)!=='0';}
+  function setThemeTakesPage(on){lsSet(THEMEBG_KEY,on?'1':'0');}
+  /* put the deck's own page back over a palette that has just replaced
+     it: the colour it named, or none at all when it named none -- a
+     deck on the default page stays on the default page */
+  function keepDeckPage(prev){
+    var pg=prev&&prev.c&&prev.c.page;
+    pres.tokens=pres.tokens||{};
+    if(pg){pres.tokens.c=pres.tokens.c||{};pres.tokens.c.page=pg;}
+    else if(pres.tokens.c) delete pres.tokens.c.page;
+  }
   /* apply a theme: the palette REPLACES (a colour the theme does not
      name is the built-in one, not whatever the last theme left), the
      colour fields of every ROOT style are written or cleared, a
@@ -3538,6 +3563,7 @@
      type -- size, weight, face -- is not touched: that is the set's. */
   function applyColourTheme(id){
     var t=colourThemeById(id); if(!t) return 0;
+    var prevTok=deep(pres.tokens||{});   /* T595 */
     pres.tokens=deep(t.tokens||{});
     var st=deckStyles();
     styleOrder().forEach(function(k){
@@ -3552,8 +3578,23 @@
        carries it inside tokens.c already; `page` is the older field) */
     if(t.page&&t.page!=='@page'){
       pres.tokens.c=pres.tokens.c||{};pres.tokens.c.page=t.page;}
+    if(!themeTakesPage()) keepDeckPage(prevTok);   /* T595 */
     if(typeof applyPageBg==='function') applyPageBg();
     return restyleAll(null);
+  }
+  /* T595: whether the headings and the body text still read on the
+     page they have landed on -- asked after a theme that kept the
+     deck's page, whose inks were chosen for another one. The ground is
+     the style's own box where it has one, else the page. */
+  function themeReadsOnPage(){
+    var pg=tokVal('@page'),bad=0;
+    [['h1','@heading'],['body','@ink']].forEach(function(p){
+      var d=styleDef(p[0])||{};
+      var gr=(d.bg&&d.bg!=='none')?tokVal(d.bg):pg;
+      var c=contrast(tokVal(d.color||p[1]),gr);
+      if(c!=null&&c<3) bad++;
+    });
+    return !bad;
   }
   /* a theme of your own: the RESOLVED palette, so every name is present
      even on a deck that only ever changed one, and the colour fields of
@@ -3642,7 +3683,9 @@
        exactly what it says, and a colour it does not name should be the
        built-in one rather than whatever the last set happened to leave
        behind. */
+    var prevTok=deep(pres.tokens||{});   /* T595: the same box governs */
     if(t.tokens) pres.tokens=deep(t.tokens);
+    if(t.tokens&&!themeTakesPage()) keepDeckPage(prevTok);
     return restyleAll(null);
   }
   /* ---- AUTO-STYLE ------------------------------------------------------
