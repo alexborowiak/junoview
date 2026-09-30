@@ -63,8 +63,10 @@ def test_effect_start_sequence_and_step_behaviour_are_separate(out):
         assert f">{label}</span>" in out
     assert 'id="anim-by-reveal"' in out
     assert 'id="anim-by-hl"' in out
-    assert "function setTextMode(highlight){" in out
-    assert "if(highlight) an.hl=1; else delete an.hl;" in out
+    # T578: three answers -- reveal, appear lit, all there and lit
+    assert "function setTextMode(how){" in out
+    assert "if(how==='in') an.hl=2;" in out
+    assert "else if(highlight) an.hl=1; else delete an.hl;" in out
 
 
 def test_the_numbers_show_whenever_the_animation_tab_is_up(out):

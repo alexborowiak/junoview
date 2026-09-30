@@ -45,7 +45,8 @@ def test_editing_at_a_stop_removes_what_is_not_there(out):
     # gone already
     assert "            if(storyK>so) el.classList.add('an-storyout');" in out
     # not arrived yet, and the pieces of a box arriving in pieces
-    assert "            if(spk>=storyK) el.classList.add('an-storyout');" in out
+    # (T578: text that is all there is there at every stop)
+    assert "            else if(spk>=storyK) el.classList.add('an-storyout');" in out
     assert "                pe.style.visibility=(jp>=storyK)?'hidden':'';" in out
     # a flip book is on the page of that stop
     assert "        return Math.max(0,Math.min(last,storyAt-sb));" in out

@@ -2982,8 +2982,13 @@ select#fmt-font[hidden]{display:none;}
    the accent and 4% are what a box that says nothing gets */
 .an-part.an-hl{color:var(--hl-col,var(--accent,#39a9c0));
   scale:var(--hl-scale,1.04);
-  transform-origin:left center;transition:scale .25s ease,color .25s ease;
-  display:inline-block;}
+  transform-origin:left center;transition:scale .25s ease,color .25s ease;}
+/* T578: inline-block ONLY for an inline run, which needs it to take a
+   scale at all. A promoted piece IS the <li> (17-text-builds.js), and
+   inline-block took its list-item display away -- so the lit bullet lost
+   its dot (2026-09-30, user: "they don't appear with the dot points
+   when doing the highlight animation"). A block already scales. */
+.an-part.an-hl:not(.an-blk){display:inline-block;}
 .an-part.an-hl-wait{opacity:.45;transition:opacity .25s ease;}
 /* ---- T473: A FIGURE IN PANELS. The covers sit over the item in the
    page's colour and lift one per click; in the editor they are faint
@@ -3015,6 +3020,11 @@ select#fmt-font[hidden]{display:none;}
 [data-hlrest="blur"] .an-part.an-hl-rest{filter:blur(2.5px);
   opacity:.7;transition:filter .3s ease,opacity .3s ease;}
 [data-hlrest="plain"] .an-part.an-hl-wait{opacity:1;}
+/* T578: APPEAR + HIGHLIGHT. The pieces to come are hidden, so the ones
+   already said are "the rest" -- dimmed is theirs. Blurred already acts
+   on every other piece, and as-they-are needs nothing. */
+[data-hlin="1"][data-hlrest="dim"] .an-part.an-hl-rest{opacity:.45;
+  transition:opacity .25s ease;}
 /* T493: THE SAMPLE. Three bullets in the Configure pane, the middle
    one lit, drawn by the same classes and variables as the slide -- so
    a colour or a size chosen here is seen before the show. */

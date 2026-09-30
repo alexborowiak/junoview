@@ -1489,10 +1489,19 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-pressed="false"
                   title="Keep later bullets or sentences hidden until their click"
                   ><i data-ic="appear"></i><span>Reveal</span></button>
+                <!-- T578 (2026-09-30, user: "there should be an appear
+                     where they appear and are highlighted when they
+                     appear, and also a just plain highlight where they
+                     are all there"). Two highlights, named for what you
+                     see before the click. -->
+                <button class="fx-tile" id="anim-by-hlin"
+                  aria-pressed="false"
+                  title="Later bullets stay hidden; each appears on its click already highlighted, and the one before steps back. Its look is in the Animation panel"
+                  ><i data-ic="star"></i><span>Appear + highlight</span></button>
                 <button class="fx-tile" id="anim-by-hl"
                   aria-pressed="false"
-                  title="Show all text from the start and highlight the bullet or sentence for this click. Configure its look in the Animation panel"
-                  ><i data-ic="star"></i><span>Highlight</span></button>
+                  title="Every bullet is on the slide from the start; each click highlights the next one. Configure the look in the Animation panel"
+                  ><i data-ic="laser"></i><span>Highlight only</span></button>
                 </span>
               </span>
             </span>
