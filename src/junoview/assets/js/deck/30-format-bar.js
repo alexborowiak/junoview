@@ -2476,6 +2476,35 @@
     var s=pres.slides[cur];
     if(!s||!clipBuf.length) return 0;
     s.annots=s.annots||[];
+    /* T592: PICTURES COPIED OFF A SLIDE GO INTO A SELECTED FLIP BOOK TOO.
+       T408 made a picture from the system clipboard a page of the book,
+       but a picture copied on the canvas (Ctrl+C on it) travels in this
+       buffer, and pasting it onto the book dropped a loose copy beside
+       it -- which then took the selection, so every paste after it did
+       the same (2026-09-30, user: "You can only paste on image into a
+       flip book. Would be cool if when selected hitting paste pasted
+       another image into a flip book"). With a book selected and nothing
+       but pictures copied, each is a page, the book turns to the last
+       and stays selected for the next. A copy of anything else pastes
+       as it always has. */
+    var fbi=(!how&&typeof flipSelIdx==='function')?flipSelIdx():null;
+    var fbk=(fbi!==null)?s.annots[fbi]:null;
+    if(fbk&&clipBuf.every(function(c){return c&&c.k==='image'&&c.src;})){
+      fbk.frames=flipFrames(fbk).slice();
+      clipBuf.forEach(function(c){
+        var fr={src:c.src};
+        if(c.okey) fr.okey=c.okey;   /* the original travels (T58) */
+        fbk.frames.push(fr);
+      });
+      fbk.at=fbk.frames.length-1;
+      markDirty();renderSlide();
+      if(typeof renderFlipPane==='function') renderFlipPane();
+      toast(clipBuf.length>1
+        ?(clipBuf.length+' pictures pasted as pages — the flip book '
+          +'has '+fbk.frames.length+' now')
+        :('Pasted as page '+fbk.frames.length+' of the flip book'));
+      return clipBuf.length;
+    }
     var first=s.annots.length;
     var dx=0,dy=0;
     if(how==='here'){

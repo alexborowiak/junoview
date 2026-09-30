@@ -2174,8 +2174,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # sub-bullet up a level or the bullet off, keeping the words.
 # T591 (2026-09-30): "- ", "* " or "1. " at the start of any plain line
 # takes that line into a list.
-EXPECTED_MD5 = "ade748be6a7de184c503890a43d7b4d6"
-EXPECTED_BYTES = 4736354
+# T592 (2026-09-30): pictures copied on the canvas and pasted onto a
+# selected flip book become its pages.
+EXPECTED_MD5 = "e41ae926fe2129435a6796e11aff6c21"
+EXPECTED_BYTES = 4737884
 
 
 def _render_example() -> str:
