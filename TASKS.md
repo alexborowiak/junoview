@@ -10421,3 +10421,13 @@ create animation. This gets congested very easily."
   past the Animation tab's clipped right edge. The early answer carries
   `hlin:false`. Driven at 1500x950 and 1366x768 with the title selected:
   the pane opens, and the page logs no error.
+- [x] **T584 — A small shape can be drawn, sized and moved.** "I tried
+  drawing an oval just then, but it seems like there is a minimum size
+  that it can be for some reason" -- a dot marking a town on a map. A
+  resize stopped every edge at 4% of the slide (about 60px on a laptop);
+  it stops at six screen pixels now. A draw under 1.5% of the slide on
+  both axes (~22px) was discarded as a stray click; a click is under 4px
+  of travel now. And a selected item under 48px drops its side bars and
+  stands its corner handles off, because eight 15px handles buried a 20px
+  dot and left nothing to drag it by. Driven: a 12x10px oval is kept,
+  shrinks to 6px, and drags by its middle.

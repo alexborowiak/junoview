@@ -2232,6 +2232,16 @@
       var on=selSet.indexOf(key)>=0;
       el.classList.toggle('sel',on);
       el.classList.toggle('grpsel',on&&multi);
+      /* T584: A SMALL THING KEEPS ITS MIDDLE. Eight 15px handles round
+         a 20px dot cover all of it, so it could be resized but never
+         moved; under 48px the side bars go and the corners stand off */
+      var small=false;
+      if(on&&!multi&&el.classList.contains('an-item')
+         &&!el.classList.contains('an-arrow-hit')){
+        var br=el.getBoundingClientRect();
+        small=br.width<48||br.height<48;
+      }
+      el.classList.toggle('an-small',small);
       el.classList.toggle('an-grouped',on&&oneGrp);
       /* the group you have stepped into is outlined as a whole, so it is
          obvious that clicks are landing on members and not on the group */

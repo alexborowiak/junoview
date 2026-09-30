@@ -2154,8 +2154,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # gone and the handle widens the column again.
 # T583 (2026-09-30): timingState's early answer carries hlin:false, so
 # selecting a text box with no entrance no longer throws in timingSync.
-EXPECTED_MD5 = "84b44f43f1edd783239f7e18201957c0"
-EXPECTED_BYTES = 4715802
+# T584 (2026-09-30): a resize stops at six screen pixels, not 4% of the
+# slide; a draw under 4px of travel is a click; a small selection hides
+# its side bars and stands its corners off.
+EXPECTED_MD5 = "8acda9a830741b8b444fa9019e40bc52"
+EXPECTED_BYTES = 4717544
 
 
 def _render_example() -> str:
