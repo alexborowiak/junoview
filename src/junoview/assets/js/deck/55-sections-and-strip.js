@@ -2546,6 +2546,11 @@
          third exit route (exit button and fullscreen-change had this, the
          Esc branch still dumped an edit-mode presenter into the builder:
          the "cursed view", 2026-08-20 re-verify) */
+      /* T580: the Story at a stop is inner to the editor -- one Esc
+         goes back to the whole slide, before the next leaves */
+      else if(mode==='edit'&&typeof storyAt==='number'
+              &&typeof storyOpen==='function'&&storyOpen())
+        setStoryAt(null);
       else if(mode==='view')
         setUIMode(presentFrom==='edit'?'edit':'create');
       else if(mode==='edit'){setUIMode('create');}

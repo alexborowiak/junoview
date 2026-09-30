@@ -10374,10 +10374,19 @@ create animation. This gets congested very easily."
   saying when), is found by "disappear", "hide", "exit", "go away"...,
   and a single object's right-click menu has "Disappear on a click" in
   its first screen. The Order tab's rows say "X disappears".
-- [ ] **T580 — The Story: the whole slide without closing it, drag to
+- [x] **T580 — The Story: the whole slide without closing it, drag to
   reorder, less of the screen.** "would be cool if you could drag and
   re-arrange the slides here as well ... the only way to view the
-  original slide at the moment is to close the story".
+  original slide at the moment is to close the story". "Whole slide" was
+  a word in the strip's head that did not look pressable, and Close sat
+  at the far right, under the Animation panel. The head is a column at
+  the left now (no height, nothing can cover it), Whole slide is the
+  first card (painted with everything on it), the lit card pressed again
+  goes back, and Esc does too -- as a step of the editor's own Escape
+  ladder, after dropping a selection and before leaving the editor.
+  Cards that are clicks of the build sequence drag: left edge before,
+  right edge after, middle onto (same click), through T577's list of
+  clicks, so Ctrl+Z undoes it. Thumbnails 150px -> 128px.
 - [ ] **T581 — Present mode starts with its bar folded away.** "why does
   present mode have these options up the top. They are distracting and
   not necessary ... collapsable by default not always there."

@@ -2141,8 +2141,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T579 (2026-09-30): Disappear -- the exit tile keeps its place on the
 # tab with nothing selected, wears the user's word, is in command search
 # and in the right-click menu.
-EXPECTED_MD5 = "12b58452d73bc991125510cc5e4d8b5e"
-EXPECTED_BYTES = 4711509
+# T580 (2026-09-30): the Story -- Whole slide is the first card, the lit
+# card or Esc goes back, cards drag to reorder or merge clicks, and its
+# head is a column at the left.
+EXPECTED_MD5 = "5180e74850d6f3663f7bda6630e8d05a"
+EXPECTED_BYTES = 4717362
 
 
 def _render_example() -> str:
