@@ -100,4 +100,6 @@ def test_a_browser_with_no_save_picker_is_not_told_it_has_one():
     assert "          setTarget('browser');" in fallback
     assert "this browser cannot save straight back " in fallback
     # the guard that made saveTarget='file' unreachable-but-silent
-    assert "  if(saveTarget==='file'&&!canPickFile) saveTarget='browser';" in deck
+    # (T598: the guard lives in the default, and in each deck's home)
+    assert "    if(t==='file'&&!canPickFile) t='browser';" in deck
+    assert "    if(m==='file'&&!canPickFile&&!fileHandles[nm]) m='';" in deck

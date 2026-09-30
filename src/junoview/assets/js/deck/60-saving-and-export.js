@@ -358,6 +358,7 @@
     }
     saveStamp=new Date();saveKind=silent?'auto':'manual';
     saveWhere='project';   /* T483 */
+    deckMetaSet(savedName,{saved:Date.now(),home:'project'});   /* T598 */
     status();renderPresRow();
     if(conflict){
       renderPresTabs();
@@ -453,10 +454,16 @@
   var canPickDir=!!window.showDirectoryPicker;
   var deckDir=null,deckDirName=lsGet(DNKEY)||'';
   var canPickFile=!!window.showSaveFilePicker;
-  var saveTarget=lsGet(TGKEY)
-    ||(APP.mode==='app'?'project':'browser');
-  if(saveTarget==='project'&&APP.mode!=='app') saveTarget='browser';
-  if(saveTarget==='file'&&!canPickFile) saveTarget='browser';
+  /* T598: TGKEY is the DEFAULT -- where a deck saves when it has no home
+     of its own yet. `saveTarget` is the deck on screen's, set from its
+     own record on every switch (fileSync). */
+  function defaultSaveTarget(){
+    var t=lsGet(TGKEY)||(APP.mode==='app'?'project':'browser');
+    if(t==='project'&&APP.mode!=='app') t='browser';
+    if(t==='file'&&!canPickFile) t='browser';
+    return t;
+  }
+  var saveTarget=defaultSaveTarget();
   var fileHandle=null,fileName='';
   /* ---- T416: A FILE BELONGS TO ONE PRESENTATION -----------------------
      One remembered handle served every deck: switch to another deck
@@ -470,6 +477,10 @@
      one. The last binding is remembered (HKEY + HNKEY) so the next
      visit can offer the file back. */
   var HNKEY='semopts:'+SCOPE+':filefor';
+  /* T598: and every deck's own handle, under its own key, so a reload
+     loses none of them -- HKEY above is still the last one, whose deck
+     the boot can reopen */
+  var HKEYD=HKEY+'::';
   var fileFor='',fileHandles={};
   function bindFile(name,h){
     fileFor=name||'';
@@ -477,6 +488,16 @@
     fileHandle=h||null;fileName=h?(h.name||''):'';
     if(h){idbPut(HKEY,h).catch(function(){});lsSet(HNKEY,fileFor,true);}
     else {idbDel(HKEY).catch(function(){});lsDel(HNKEY);}
+    /* T598: this deck's own, and its record names the file */
+    if(fileFor){
+      if(h){
+        idbPut(HKEYD+fileFor,h).catch(function(){});
+        deckMetaSet(fileFor,{file:h.name||'',home:'file'});
+      } else {
+        idbDel(HKEYD+fileFor).catch(function(){});
+        deckMetaSet(fileFor,{file:null});
+      }
+    }
     /* T431: a file bound by hand settles what the boot readout was
        waiting on -- "click to reopen" went on showing after a file had
        been opened and saved, and its click then said "nothing to
@@ -491,6 +512,26 @@
     var h=fileHandles[nm]||null;
     fileHandle=h;fileName=h?(h.name||''):'';
     if(fileWaits!=='reopen') fileWaits='';
+    /* T598: THE DECK SAVES WHERE IT LIVES. A deck kept in a file was
+       followed by one kept here, and the second began asking for a file
+       because the destination was one setting for every deck. */
+    var home=deckHomeOf(nm);
+    if(home!==saveTarget){
+      saveTarget=home;
+      if(typeof renderTargetBtn==='function') renderTargetBtn();
+      if(typeof renderSaveBtn==='function') renderSaveBtn();
+      if(typeof renderAutosaveItem==='function') renderAutosaveItem();
+    }
+  }
+  /* a deck's home: the one it was given (a Save, a pick, a file opened
+     into it), else the file it holds a handle to, else the default --
+     each only where this page can save there */
+  function deckHomeOf(nm){
+    var m=(nm&&deckMeta(nm).home)||'';
+    if(m==='project'&&APP.mode!=='app') m='';
+    if(m==='file'&&!canPickFile&&!fileHandles[nm]) m='';
+    if(!m&&fileHandles[nm]) m='file';
+    return m||defaultSaveTarget();
   }
   /* idb / idbPut / idbDel / idbGet live in 10-decks.js since T429 (the
      draft store needs them too); the 'handles' store is their default */
@@ -869,6 +910,8 @@
                tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
             saveWhere=fileName||'file';   /* T483 */
+            deckMetaSet(savedName,{saved:Date.now(),home:'file',
+              file:fileName||''});   /* T598 */
             if(stillSaved(savedName,savedSig)) source='saved';
             else {source='draft';scheduleDraftWrite();}
             status();renderTargetBtn();renderPresRow();
@@ -965,6 +1008,8 @@
   }
   function setTarget(t){
     saveTarget=t;lsSet(TGKEY,t);
+    /* T598: this deck's home, and the default for decks with none */
+    if(pres&&pres.name) deckMetaSet(pres.name,{home:t});
     renderTargetBtn();renderSaveBtn();status();
     /* T483: the Autosave door's words name the destination too; they
        kept saying "to project" after the target changed */
@@ -1385,6 +1430,8 @@
     if(savedHist) snapTake('saved',savedHist);
     saveStamp=new Date();saveKind='manual';
     saveWhere='browser';   /* T483 */
+    deckMetaSet(pres.name||'untitled',{saved:Date.now(),
+      home:'browser'});   /* T598 */
     status();
     /* T266: a toast says what just happened. Where it is kept and what
        the caret beside Save does are on the button's own tooltip,
@@ -1466,7 +1513,11 @@
            default, including for a presentation made after it was
            chosen. Only 'browser' is overridden -- a project build
            keeps writing junoview_project.json. */
-        if(saveTarget==='browser') setTarget('file');
+        /* T598: the DEFAULT -- a deck given this browser as its home by
+           name keeps it; the one on screen follows its own record */
+        if(defaultSaveTarget()==='browser') lsSet(TGKEY,'file');
+        var home0=deckHomeOf((pres&&pres.name)||'');
+        if(home0!==saveTarget){saveTarget=home0;status();}
         renderTargetBtn();renderSaveBtn();
       });
     }).catch(function(){});
@@ -1475,6 +1526,7 @@
       if(!h) return;
       return rememberedFileBoot(h,lsGet(HNKEY)||lsGet(PFX+'last')||'');
     }).catch(function(){});
+    fileHandlesBoot();   /* T598: and every other deck's */
     renderTargetBtn();
   })();
   /* ---- T416: THE REMEMBERED FILE, ON THE NEXT VISIT --------------------
@@ -1519,6 +1571,25 @@
     }).catch(function(){});
   }
   window.SemDeckFileBoot=rememberedFileBoot;   /* browser-verification hook */
+  /* ---- T598: EVERY DECK'S FILE, BACK AFTER A RELOAD -------------------
+     Only the handles; nothing is read (a read may need a click). A deck
+     already bound this visit keeps the binding it has. When the deck on
+     screen had none and now does, it re-syncs, so its readout and Save
+     name its file. */
+  function fileHandlesBoot(){
+    return idbAll('handles').then(function(rows){
+      (rows||[]).forEach(function(r){
+        if(!r||typeof r.key!=='string'||r.key.indexOf(HKEYD)!==0) return;
+        var nm=r.key.slice(HKEYD.length);
+        if(nm&&r.value&&fileHandles[nm]===undefined) fileHandles[nm]=r.value;
+      });
+      var cur0=(pres&&pres.name)||'';
+      if(cur0&&!fileHandle&&fileHandles[cur0]){fileFor='';fileSync();}
+      status();
+      if(typeof renderPresentationHub==='function') renderPresentationHub();
+      if(APP.refreshChrome) APP.refreshChrome();
+    }).catch(function(){});
+  }
   /* T433: A REMEMBERED BUNDLE IS LET GO. A handle bound before a file
      held one deck may be a file of every deck; the next autosave would
      write one deck over all of them. Its decks come into the library
@@ -3559,6 +3630,9 @@
   function deletePresByName(nm){
     if(pres&&nm===pres.name) cancelDraftWrite();
     draftDel(nm);
+    /* T598: the handle to its file goes too; the file itself stays */
+    delete fileHandles[nm];
+    idbDel(HKEYD+nm).catch(function(){});
     if(typeof forgetRememberedPresentation==='function')
       forgetRememberedPresentation(nm);
     /* embedded-in-a-notebook presentations come back on reload — say so,
@@ -3719,6 +3793,9 @@
     if(!had) return Promise.resolve(false);
     var h=fileHandles[old]||null;
     delete fileHandles[old];fileHandles[nm]=h;
+    /* T598: its own key moves with it */
+    idbDel(HKEYD+old).catch(function(){});
+    if(h) idbPut(HKEYD+nm,h).catch(function(){});
     if(fileFor===old){fileFor=nm;fileHandle=h;fileName=h?(h.name||''):'';}
     if(h) lsSet(HNKEY,nm,true);
     if(!h||fileStem(fileName)===nm) return Promise.resolve(false);
@@ -3737,6 +3814,8 @@
       fileHandles[nm]=null;
       if(fileFor===nm){fileHandle=null;fileName='';}
       idbDel(HKEY).catch(function(){});lsDel(HNKEY);
+      idbDel(HKEYD+nm).catch(function(){});   /* T598 */
+      deckMetaSet(nm,{file:null});
       if(saveTarget==='file') fileWaits='pick';
       renderTargetBtn();renderSaveBtn();status();
       toast('Renamed to \u201c'+nm+'\u201d. '+oldFile+' keeps the old '

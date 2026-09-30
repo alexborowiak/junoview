@@ -566,7 +566,8 @@
      the only thing that can make the readout say "browser full" now. */
   var DRAFTS={},draftsDbFull=false,draftsLoaded=false;
   var DRAFT_META={'last':1,'recent-presentations':1,
-    'pinned-presentations':1};   /* T435 */
+    'pinned-presentations':1,    /* T435 */
+    'deck-meta':1};              /* T598: not a draft, a record of them */
   function draftGet(name){
     var v=DRAFTS[name]; return (v==null)?null:v;
   }
@@ -737,6 +738,8 @@
     var spare=(typeof saveTarget!=='undefined'&&saveTarget!=='browser');
     draftSet(pres.name||'untitled',JSON.stringify(pres),spare);
     lsSet(PFX+'last',pres.name||'untitled',spare);
+    deckMetaSet(pres.name||'untitled',{edited:Date.now(),
+      slides:(pres.slides||[]).length});   /* T598 */
   }
   function scheduleDraftWrite(){
     if(draftT) clearTimeout(draftT);
@@ -768,11 +771,93 @@
   function presentationSummary(name){
     var p=presentationByName(name);
     if(!p) return null;
+    var w=deckWhere(name),m=deckMeta(name);
     return {name:name,slides:((p.slides)||[]).length,
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
       /* T483: a deck whose home IS this browser is not an "unsaved
          draft" -- Home tagged every browser-kept deck DRAFT */
-      folder:p.folder||'',draft:!!loadDraft(name)&&saveTarget!=='browser'};
+      /* T598: nor is a deck kept in a file (the browser copy always
+         stays beside it, T234): a browser copy means changes not yet
+         where the deck lives only for the project, a notebook, or a
+         deck with no home yet -- whatever the deck on screen saves to */
+      folder:p.folder||'',
+      draft:!!loadDraft(name)&&w.kind!=='browser'&&w.kind!=='file',
+      where:w.text,whereKind:w.kind,
+      at:Math.max(m.edited||0,m.saved||0,m.opened||0)};
+  }
+  /* ---- T598: WHERE EACH PRESENTATION LIVES, AND WHEN IT WAS TOUCHED ---
+     (2026-09-30, user: "the file saving is and recents is confusing".)
+     Recent and the library listed names and nothing else, so two decks
+     called "talk" -- one in a file, one in this browser -- were two
+     identical rows, and nothing said which was last week's. And where a
+     deck saved to was ONE setting for every deck, beside ONE remembered
+     file handle: open a deck that lives in a file, then one that lives
+     here, and the second began asking for a file; reload, and only the
+     last deck still knew its file. Each deck keeps a small record now --
+     its home (file / project / browser), the name of its file, and when
+     it was last edited, saved and opened -- in localStorage beside the
+     recent list (a few hundred bytes a deck), and each deck's file handle
+     is remembered under its own key (60-saving-and-export.js). Nothing
+     here is a copy of the deck. */
+  var DECK_META_KEY=PFX+'deck-meta';
+  /* the line a row prints under a deck's name: where it lives, when it
+     was last touched, how long it is -- "talk.junoview.html · 2 h ago ·
+     12 slides" */
+  function deckRowWords(p){
+    if(!p) return '';
+    var bits=[];
+    if(p.where) bits.push(p.where);
+    if(p.at&&typeof histWhen==='function') bits.push(histWhen(p.at));
+    if(p.slides!=null) bits.push(p.slides+' slide'+(p.slides===1?'':'s'));
+    return bits.join(' \u00b7 ');
+  }
+  function deckMetaAll(){
+    var m=null;
+    try{m=JSON.parse(lsGet(DECK_META_KEY)||'{}');}catch(e){m=null;}
+    return (m&&typeof m==='object'&&!Array.isArray(m))?m:{};
+  }
+  function deckMeta(name){return deckMetaAll()[name]||{};}
+  /* write fields; a null deletes one. Quiet: this is bookkeeping, and a
+     full browser has already said so about the draft it came with. */
+  function deckMetaSet(name,patch){
+    if(!name) return;
+    var all=deckMetaAll(),m=all[name]||{};
+    Object.keys(patch||{}).forEach(function(k){
+      if(patch[k]==null) delete m[k]; else m[k]=patch[k];});
+    all[name]=m;
+    lsSet(DECK_META_KEY,JSON.stringify(all),true);
+  }
+  function deckMetaMove(oldName,newName){
+    var all=deckMetaAll();
+    if(!all[oldName]) return;
+    all[newName]=all[oldName];delete all[oldName];
+    lsSet(DECK_META_KEY,JSON.stringify(all),true);
+  }
+  function deckMetaDrop(name){
+    var all=deckMetaAll();
+    if(!all[name]) return;
+    delete all[name];
+    lsSet(DECK_META_KEY,JSON.stringify(all),true);
+  }
+  /* where a deck lives, in words a row can print. `kind` is file,
+     project, notebook, browser -- or none: a deck with no home but this
+     browser's convenience copy, on a page whose default is elsewhere. */
+  function deckWhere(name){
+    var h=(typeof fileHandles!=='undefined'&&fileHandles)?fileHandles[name]:null;
+    var m=deckMeta(name);
+    if((h&&h.name)||m.file)
+      return {kind:'file',text:(h&&h.name)||m.file};
+    if(projectPres.some(function(p){return p.name===name;}))
+      return {kind:'project',text:'this project'};
+    var nb=nbPres.filter(function(p){return p.name===name;})[0];
+    if(nb&&nb.origin) return {kind:'notebook',text:'in '+nb.origin};
+    /* the rest are only in this browser: that is their home when it was
+       chosen for them, or when nothing else is the default */
+    var dflt=(typeof defaultSaveTarget==='function')?defaultSaveTarget()
+      :'browser';
+    if(m.home==='browser'||(!m.home&&dflt==='browser'))
+      return {kind:'browser',text:'this browser'};
+    return {kind:'none',text:'not saved yet'};
   }
   /* ---- T435: PINS (2026-09-14, user: "would be cool to be able to pin
      files to recent. I feel like I am always losing files and hard to
@@ -825,6 +910,7 @@
     recent=recent.filter(function(n){return n!==name;});
     recent.unshift(name);
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent.slice(0,12)));
+    deckMetaSet(name,{opened:Date.now()});   /* T598 */
     noteSessionOpen(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
@@ -841,6 +927,7 @@
     if(!Array.isArray(recent)) recent=[];
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(rename(recent).slice(0,12)));
     lsSet(PRESENT_PIN_KEY,JSON.stringify(rename(pinnedPresentationNames())));
+    deckMetaMove(oldName,newName);   /* T598: its home goes with it */
     renameOpenPresentation(oldName,newName);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
@@ -854,6 +941,7 @@
     lsSet(PRESENT_RECENT_KEY,JSON.stringify(recent));
     lsSet(PRESENT_PIN_KEY,JSON.stringify(pinnedPresentationNames()
       .filter(function(n){return n!==name;})));
+    deckMetaDrop(name);   /* T598 */
     closeOpenPresentation(name);
     if(typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();

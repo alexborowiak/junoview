@@ -1249,9 +1249,14 @@
     if(!top) t.type='button';
     /* The same item has a rail and a regular-tab skin. Both call the same
        switch and close paths, so opening a deck cannot drift by location. */
+    /* T598: the dot is "changes not where this deck lives yet", judged
+       by the deck's own home -- it read the destination of whichever
+       deck was on screen, so a deck kept here wore it beside one kept in
+       a file, and a file's deck wore it always */
+    var sum=presentationSummary(nm);
     t.className=(top?'tab top-pres-tab':'pr-item ptab')
       +(isCur&&editing?' current editing':'')
-      +((savedNames.indexOf(nm)<0&&saveTarget!=='browser')?' draftonly':'');
+      +((sum&&sum.draft)?' draftonly':'');
     t.dataset.pres=nm;
     var isPoster=/^a\d/.test(String(p.page||''));
     var isView=isViewPres(p);
@@ -1402,8 +1407,21 @@
     var name=document.createElement('span');name.className='presentation-hub-row-name';
     name.textContent=p.name;
     var kind=document.createElement('span');kind.className='presentation-hub-row-kind';
-    kind.textContent=presentationKind(p)+(p.folder?' · '+p.folder:'');
-    b.appendChild(ic);b.appendChild(name);b.appendChild(kind);
+    /* T598: only when it says something -- every row read PRESENTATION,
+       squeezing the line that tells two rows apart */
+    var kw=presentationKind(p);
+    kind.textContent=(kw==='presentation'?'':kw)
+      +(p.folder?((kw==='presentation'?'':' · ')+p.folder):'');
+    /* T598: where it lives and when it was touched, under its name --
+       two decks both called "talk" are two different lines now */
+    var sub=document.createElement('span');
+    sub.className='presentation-hub-row-sub';
+    sub.textContent=deckRowWords(p);
+    var txt=document.createElement('span');
+    txt.className='presentation-hub-row-txt';
+    txt.appendChild(name);txt.appendChild(sub);
+    b.appendChild(ic);b.appendChild(txt);b.appendChild(kind);
+    if(sub.textContent) b.title+='\n'+sub.textContent;
     /* T435: the pin. A pinned row heads Recent and never drops off it. */
     var pinned=isPinnedPresentation(p.name);
     if(pinned) b.classList.add('pinned');
@@ -2133,6 +2151,7 @@
       if(form){form.hidden=false;if(field) field.focus();}
     };
     window.SemApp.deckRecentNames=savedRecentPresentationNames;
+    window.SemApp.deckRowWords=deckRowWords;   /* T598 */
     window.SemApp.deckPinToggle=togglePinPresentation;   /* T435 */
     renderPresentationHub();renderDeckPresentationDrawer();
     if(APP.refreshChrome) APP.refreshChrome();

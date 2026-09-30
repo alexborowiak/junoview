@@ -2194,8 +2194,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Open in Junoview hands it to a Junoview tab (saved-file.js, carried as
 # inert text in #jv-savedfile-js), the app takes it from its opener after
 # one question, and a dropped file keeps its handle.
-EXPECTED_MD5 = "c2d5939e9ab0584b343692c4db88ae39"
-EXPECTED_BYTES = 4776073
+# T598 (2026-09-30): every presentation remembers where it lives -- its
+# own home and file handle, kept between visits -- and Recent, the library
+# and Home print where each lives and when it was last touched.
+EXPECTED_MD5 = "bea1082c6b7a5713578e995e0572796a"
+EXPECTED_BYTES = 4786684
 
 
 def _render_example() -> str:

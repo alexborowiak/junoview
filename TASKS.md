@@ -10651,3 +10651,32 @@ a presentation before opening it, and the colour themes' background.
   opened from file:// in a fresh one, Open in Junoview -> the question ->
   "Climate talk" open in the editor, and the file page reported Opened; a
   synthetic drop fell back to the import.
+- [x] **T598 — Every presentation remembers where it lives, and Recent
+  says so.** "the file saving is and recents is confusing." Recent, the
+  library and Home listed names and nothing else, so two decks called
+  "talk" -- one in a file, one in this browser -- were two identical
+  rows. And where a deck saved to was ONE setting for every deck beside
+  ONE remembered file handle (T416 bound the handle to its deck for the
+  session, but only the last one survived a reload): open a deck kept in
+  a file, then one kept here, and the second began asking for a file;
+  reload, and only the last deck still knew its file. Each deck keeps a
+  small record now (`PFX+'deck-meta'`: its home, its file's name, when it
+  was last edited, saved and opened -- a few hundred bytes, never a copy;
+  named in DRAFT_META so the legacy draft scan cannot mistake it for a
+  deck) and its own file handle under its own IndexedDB key (`HKEYD`),
+  moved by a rename and dropped by a delete; `fileHandlesBoot` brings
+  every handle back after a reload without reading a file. The Save ▾
+  choice is now the deck's home and the default for decks with none:
+  switching decks restores each one's own destination (fileSync ->
+  deckHomeOf), and a remembered folder is the default rather than an
+  override of a deck given this browser by name. Every row that lists
+  decks prints where each lives, when, and how long -- "talk.junoview.html
+  · 2 h ago · 12 slides", "this browser", "this project", "in
+  analysis", or "not saved yet" -- and the tabs' amber dot is judged by
+  each deck's own home (a browser-kept deck wore it beside a file-kept
+  one; a file's deck wore it always). The library row's PRESENTATION
+  label is gone (only poster, custom view and a folder name are said).
+  Driven: two decks saved to two files and one kept here; after a reload
+  the FIRST file deck saved straight to its file with no picker, the
+  browser deck saved here, and the library read each one's home; in the
+  local app a Save wrote the project and the row read "this project".
