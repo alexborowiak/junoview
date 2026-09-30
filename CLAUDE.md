@@ -4,6 +4,14 @@ Repo-wide code-structure rules are in AGENTS.md; the feature backlog is
 TASKS.md (one commit per task, tick the box in the same commit). This file
 is only what's specific to this machine.
 
+## Committing: straight to main
+
+Commit and push directly to `main`. No feature branches and no pull
+requests -- the owner is the only user of the site, so work lands on
+`main` (and, when it changes the page, a `docs/` rebuild goes with it)
+rather than waiting on a merge. This overrides any default to develop on
+a separate branch (owner, 2026-09-30).
+
 ## Running things
 
 - Tests: `python -m pytest -q` from the repo root (about 1,900 tests,
