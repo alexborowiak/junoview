@@ -2672,8 +2672,9 @@ def test_the_furniture_prompts_name_every_token_they_accept(out):
     assert out.count("+'{sec} its name.\\nLeave it empty to remove it.'") == 2
     # ...and the ribbon tooltips, which are the other place you read
     # before clicking
-    assert "{sn} and {sN} the same within the" in out
-    assert "{sn}/{sN} the same within the section," in out
+    # (T555: the two tooltips now word them alike, and name the date)
+    assert out.count("{sn}/{sN} the same within the section,") == 2
+    assert out.count("{name}, {date}, {n}/{N} page and total,") == 2
 
 
 def test_the_figure_reference_list_can_actually_appear(out):

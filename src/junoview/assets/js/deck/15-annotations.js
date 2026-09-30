@@ -579,6 +579,11 @@
       .replace(/\{n\}/g,String(slideNo(idx)))
       .replace(/\{N\}/g,String(slideCount()))
       .replace(/\{name\}/g,pres.name||'')
+      /* T555: PowerPoint's date that updates itself, in two forms --
+         {date:long} written out ("1 October 2026"), {date} short. A date
+         typed as words is PowerPoint's Fixed one. */
+      .replace(/\{date:long\}/g,new Date().toLocaleDateString(undefined,
+        {day:'numeric',month:'long',year:'numeric'}))
       .replace(/\{date\}/g,new Date().toLocaleDateString());
   }
   function paintFurniture(slideEl,idx){

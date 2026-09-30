@@ -3354,7 +3354,8 @@
   if(hdB) hdB.addEventListener('click',function(){
     furnEdit('head','Header',
       'A line along the top of every page.\n'
-      +'{name} the presentation, {date} today, {n} this page, {N} the '
+      +'{name} the presentation, {date} today ({date:long} written out; '
+      +'type a date instead to keep it fixed), {n} this page, {N} the '
       +'total, {sn}/{sN} the number and count within the section, '
       +'{sec} its name.\nLeave it empty to remove it.','{name}');
   });
@@ -3362,7 +3363,8 @@
   if(ftB) ftB.addEventListener('click',function(){
     furnEdit('foot','Footer',
       'A line along the bottom of every page.\n'
-      +'{name} the presentation, {date} today, {n} this page, {N} the '
+      +'{name} the presentation, {date} today ({date:long} written out; '
+      +'type a date instead to keep it fixed), {n} this page, {N} the '
       +'total, {sn}/{sN} the number and count within the section, '
       +'{sec} its name.\nLeave it empty to remove it.','{n} / {N}');
   });

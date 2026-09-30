@@ -10367,9 +10367,18 @@ choice in the editor (T506, T507).
   Driven at 1440x900: slide 2 hidden from the Present tab (pressed, the
   toast, the strip's struck "2" and pill), From the start then right
   arrow went 1 -> 3 and left arrow 3 -> 1.
-- [ ] **T555 — Header & footer, with the date.** The Page furniture group
+- [x] **T555 — Header & footer, with the date.** The Page furniture group
   says what it is, and a {date} field joins {n}, {N} and the section
   fields.
+  *Done 2026-10-01.* Checked first: T529 had already named the group
+  "Header & footer" (PowerPoint's name) and {date} and {name} already
+  resolved in furnText, on the canvas, in print and in the .pptx; the
+  Header's tooltip listed them and the Footer's did not, and the help
+  never mentioned the date. What PowerPoint also has is the written-out
+  date: {date:long} ("1 October 2026") joins {date}, both updating
+  themselves, and the editor's note says to type a date to keep one
+  fixed (PowerPoint's Fixed). The Footer's tooltip lists the same fields
+  as the Header's, and the help has a Header & footer entry.
 - [ ] **T556 — Handouts and notes pages.** Export PDF can print three or
   six slides a page with lines, or each slide above its notes.
 - [ ] **T557 — A slide sorter.** A full-screen grid of the slides you can

@@ -2258,8 +2258,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the page, cast by each kind where it looks right (shadowPaint), Shadow
 # beside Opacity on the Object tab, and PowerPoint's outer shadow in a
 # .pptx both ways.
-EXPECTED_MD5 = "67fe3b496a31e3075c1066b6af692288"
-EXPECTED_BYTES = 4920140
+# T555 (2026-10-01): header and footer -- {date:long} joins {date}, both
+# doors' tooltips list the fields, the editor says how to keep a date
+# fixed, and the help has an entry.
+EXPECTED_MD5 = "8e652bb0bba370acf0859c2a1d1dc744"
+EXPECTED_BYTES = 4921173
 
 
 def _render_example() -> str:
