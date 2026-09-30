@@ -2812,8 +2812,10 @@
               if(!comes.anim)
                 comes.anim={type:'fade',order:nextAnimOrder(s5)};
               if(comes.anim&&gone.anim
-                &&(gone.anim.order||0)>=(comes.anim.order||0))
+                &&(gone.anim.order||0)>=(comes.anim.order||0)){
                 comes.anim.order=nextAnimOrder(s5);
+                delete comes.anim.parts;   /* T577: a block again */
+              }
               gone.out=comes.anim.order||0;
               markDirty();renderSlide();renderFilm();
               if(typeof animPaneSync==='function') animPaneSync();

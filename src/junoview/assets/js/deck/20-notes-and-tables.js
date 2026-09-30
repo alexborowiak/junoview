@@ -2498,9 +2498,9 @@
       (typeof storyAt==='number'?storyAt:null);
     var pieces=[];
     if(st!=null&&(cursor!=null||mode==='edit')){
-      var n=pieceCount(a);
-      for(var j=0;j<n;j++){
-        var p=plan.stop[st+j];if(p==null) p=st+j;
+      var pst=pieceSteps(steps,a);   /* T577: a piece's own step */
+      for(var j=0;j<pst.length;j++){
+        var p=plan.stop[pst[j]];if(p==null) p=pst[j];
         /* Editor badges number actual clicks, even in Whole slide mode. */
         if(mode==='edit') pieces.push(p);
         pieces.push(cursor==null?null:(p<cursor?1:0));
@@ -3582,9 +3582,11 @@
             var spk=plan.stop[st]; if(spk==null) spk=st;
             if(spk>=storyK) el.classList.add('an-storyout');
             else if(typeof textBy==='function'&&textBy(ba)){
+              var spst=pieceSteps(steps,ba);   /* T577 */
               $$('[data-part]',el).forEach(function(pe){
                 var j=+pe.getAttribute('data-part');
-                var jp=plan.stop[st+j]; if(jp==null) jp=st+j;
+                var jb=spst[j]; if(jb==null) jb=st+j;
+                var jp=plan.stop[jb]; if(jp==null) jp=jb;
                 pe.style.visibility=(jp>=storyK)?'hidden':'';
               });
             }
@@ -3627,10 +3629,13 @@
               el.style.setProperty('--hl-scale',
                 String((ba.anim.hlsize>0?ba.anim.hlsize:104)/100));
             }
+            var vpst=pieceSteps(steps,ba);   /* T577: its own step */
+            var firstAt=-1;   /* the piece that arrives WITH the box */
             $$('[data-part]',el).forEach(function(pe){
               var j=+pe.getAttribute('data-part');
-              var jp=plan.stop[st+j];
-              if(jp==null) jp=st+j;
+              var jb=vpst[j]; if(jb==null) jb=st+j;
+              var jp=plan.stop[jb];
+              if(jp==null) jp=jb;
               var wait=(mode==='view'&&jp>=revealCount);
               pe.style.visibility=(wait&&!hl)?'hidden':'';
               if(hl&&mode==='view'){
@@ -3640,7 +3645,8 @@
               }
               /* T471: a typewriter box types each bullet on its own
                  click, not the whole box on the first */
-              if(!hl&&mode==='view'&&j>0&&jp===revealCount-1
+              if(jp===sp&&(firstAt<0||j<firstAt)) firstAt=j;
+              if(!hl&&mode==='view'&&jp!==sp&&jp===revealCount-1
                  &&ba.anim.type==='type'&&typeof typeInto==='function'
                  &&!(typeof storyPaint!=='undefined'&&storyPaint))
                 typeInto(el,j);
@@ -3665,7 +3671,7 @@
             if(atype==='type'&&typeof typeInto==='function'
                &&!(typeof storyPaint!=='undefined'&&storyPaint))
               typeInto(el,(typeof textBy==='function'&&textBy(ba)
-                &&!ba.anim.hl)?0:undefined);   /* T471: the first piece */
+                &&!ba.anim.hl)?Math.max(0,firstAt):undefined);   /* T471 */
           }
         }
       });

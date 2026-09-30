@@ -1258,9 +1258,10 @@
        base is the piece build's first stop, so the walk index IS the
        piece index. Drop the `by`, or the book, and the book is back to
        its own stops; nothing else about the plan changes. */
+    var syncText={};
     ((s&&s.annots)||[]).forEach(function(a){
-      if(a&&a.anim&&a.anim.sync&&!a.hide&&textBy(a)&&flipById(s,a.anim.sync))
-        synced[a.anim.sync]=a.anim.order||0;
+      if(a&&a.anim&&a.anim.sync&&!a.hide&&textBy(a)&&flipById(s,a.anim.sync)){
+        synced[a.anim.sync]=a.anim.order||0;syncText[a.anim.sync]=a;}
     });
     steppersOn(s).forEach(function(p){
       if(p.a.k==='flip'&&p.a.fid&&synced[p.a.fid]!=null) return;
@@ -1268,7 +1269,7 @@
       if(b==null) tail.push(p);
       else (anch[b]||(anch[b]=[])).push(p);
     });
-    var n=0,stop=[],base={};
+    var n=0,stop=[],base={},syncStops={};
     function frames(p){
       base[p.i]=n;
       n+=stopsFor(s,p.a);
@@ -1286,13 +1287,21 @@
          stays up until the first piece arrives, and turns with the
          second (driven: without it the book was a page ahead) */
       if(b0!=null) base[p.i]=stop[b0]+1;
+      /* T577: pieces on clicks of their own are not a run of stops, so
+         the book counts the pieces that have arrived instead of
+         subtracting a base -- same answer for a block, right one for
+         a box whose bullets have photos between them */
+      var ta=syncText[p.a.fid];
+      if(ta&&piecePartsOf(ta)) syncStops[p.i]=pieceSteps(steps,ta)
+        .map(function(b){return b==null?null:stop[b];});
     });
     /* `anch` and `tail` are handed back so the ANIMATIONS PANE can
        show the same sequence playback walks, instead of re-deriving a
        weaker one from slideBuildSteps (T163). They were already computed
        here; throwing them away is what left a flip book's five clicks
        invisible in a panel headed "Build order". */
-    return {count:n,stop:stop,base:base,anch:anch,tail:tail,synced:synced};
+    return {count:n,stop:stop,base:base,anch:anch,tail:tail,synced:synced,
+      syncStops:syncStops};
   }
   /* ---- A STOP THAT RUNS ITSELF (T169) -------------------------------
      `a.anim.after` is a whole number of seconds: this build runs that
@@ -1308,13 +1317,16 @@
      oversight: those are the stops a presenter talks over. */
   function autoAfter(s,stop){
     if(!s||stop==null) return 0;
-    var plan=flipPlan(s),seq=animSeq(s),b=-1;
+    var plan=flipPlan(s),steps=slideBuildSteps(s),b=-1;
     for(var i=0;i<plan.stop.length;i++) if(plan.stop[i]===stop) b=i;
-    if(b<0||!seq[b]) return 0;
+    if(b<0) return 0;
+    /* T577: the builds whose ORDER begins on step b. It indexed
+       animSeq by the step, which is the same number only while no box
+       on the slide spends more than one click */
     var out=0;
-    seq[b].items.forEach(function(idx){
-      var a=(s.annots||[])[idx];
-      var v=(a&&a.anim&&a.anim.after)|0;
+    (s.annots||[]).forEach(function(a){
+      if(!a||!a.anim||a.hide||steps.map[a.anim.order||0]!==b) return;
+      var v=(a.anim.after)|0;
       if(v>out) out=v;
     });
     return Math.max(0,Math.min(60,out));
@@ -1364,16 +1376,28 @@
       if(slideBook(s)===a) return Math.max(0,Math.min(last,flipForce));
       return Math.max(0,Math.min(last,a.at||0));
     }
+    /* T577: a book turning with bullets that have clicks of their own
+       is on the page of the last bullet to arrive */
+    function synced(cursor){
+      var plan=flipPlan(s),hit=null;
+      flipsOn(s).forEach(function(p){
+        if(p.a===a&&plan.syncStops[p.i]) hit=plan.syncStops[p.i];});
+      if(!hit) return null;
+      var n=hit.filter(function(sp){return sp!=null&&sp<cursor;}).length;
+      return Math.max(0,Math.min(last,n-1));
+    }
     if(mode!=='view'){
       /* T391: the editor at a stop of the story reads the story's
          cursor the way the show reads its own */
       if(typeof storyAt==='number'){
+        var sy=synced(storyAt); if(sy!=null) return sy;
         var sb=flipBase(s,a);
         if(sb==null) return 0;
         return Math.max(0,Math.min(last,storyAt-sb));
       }
       return Math.max(0,Math.min(last,a.at||0));
     }
+    var sv=synced(revealCount); if(sv!=null) return sv;
     var base=flipBase(s,a);
     if(base==null) return 0;
     return Math.max(0,Math.min(last,revealCount-base));
@@ -1740,13 +1764,14 @@
       /* T404: a hidden object is not on the slide, so it claims no
          click -- or the show would stop on nothing */
       if(!a||!a.anim||a.hide) return;
-      var o=a.anim.order||0;
       /* the WIDEST claim on this order wins: two boxes on one build, one
          of them split four ways, is four clicks and the other box
-         arrives on the first of them */
-      var n=(typeof pieceCount==='function')?pieceCount(a)
-        :(textBy(a)?textPieceCount(a):1);   /* T473: panels count too */
-      if(!(o in seen)||n>seen[o]) seen[o]=n;});
+         arrives on the first of them. T577: a box whose pieces were
+         given clicks of their own (anim.parts) claims one click on
+         each of those orders instead, so pieceClaims says which. */
+      pieceClaims(a).forEach(function(c){
+        var need=c.sub+1;
+        if(!(c.o in seen)||need>seen[c.o]) seen[c.o]=need;});});
     /* AN EXIT IS A CLAIM ON A STOP TOO (T174). Usually it lands on a
        build that already exists -- the click the replacement arrives on
        -- and this changes nothing. It matters for the last one: "goes on
@@ -1782,12 +1807,215 @@
          focus's click (third review pass) */
       if(!a) return;
       if(a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;
+      /* T577: a piece on a click of its own claims that order too */
+      if(a.anim) pieceClaims(a).forEach(function(c){if(c.o>mx) mx=c.o;});
       /* an EXIT claims an order too (T174), or asking twice for "on one
          more click at the end" would hand out the same number twice and
          the second object would leave on the first one's click */
       var o=animOut(a); if(o!=null&&o>mx) mx=o;
       var f=animFocus(a); if(f&&f.at>mx) mx=f.at;});   /* T472 */
     return mx+1;
+  }
+  /* ---- T577: A PIECE ON A CLICK OF ITS OWN ----------------------------
+     (2026-09-30, user: "the dot points animation is sooo annoying. Like
+     I currently can't mix them, like they are all tied together".) A
+     box built in pieces spent a BLOCK of consecutive clicks on its one
+     anim.order, and nothing else could sit inside the block -- so a
+     photo meant for the first bullet could only arrive after the last.
+
+     `a.anim.parts` is an optional list of build ORDERS, one per piece:
+     piece j arrives on the click of order parts[j]. It shares that
+     click with anything else on the same order (the photo beside its
+     bullet) and other builds can sit between two pieces. Absent --
+     every deck before this -- is the old block: every piece on
+     anim.order, one sub-click each, which is exactly what pieceClaimsN
+     returns for it, so nothing already written moves.
+
+     A piece the list does not reach (a bullet typed after the clicks
+     were arranged) takes a click of its own straight after the last
+     piece it does name: a new bullet costs a click like any other and
+     never lands on somebody else's.
+
+     anim.order stays the box's own arrival -- its earliest piece --
+     so every reader that asks when the BOX arrives (the badge, Layers,
+     Start, the .pptx writer) is unchanged. timelineWrite keeps it so. */
+  /* PURE, and lifted out by the tests: the {o: order, sub: click within
+     that order's block} of each of n pieces */
+  function pieceClaimsN(anim,n){
+    var o0=(anim&&anim.order)||0,out=[],j;
+    var p=(n>1&&anim&&Array.isArray(anim.parts)&&anim.parts.length)
+      ?anim.parts:null;
+    if(!p){for(j=0;j<n;j++) out.push({o:o0,sub:j});return out;}
+    var last=o0,P=Math.min(p.length,n);
+    for(j=0;j<P;j++){
+      var v=p[j];
+      /* a hand-edited hole joins the piece before it rather than
+         inventing an order nobody chose */
+      if(typeof v!=='number'||!isFinite(v)||v<0) v=last;
+      out.push({o:v,sub:0});last=v;
+    }
+    for(j=P;j<n;j++) out.push({o:last,sub:j-P+1});
+    return out;
+  }
+  /* the box has been given clicks per piece, not the old block */
+  function piecePartsOf(a){
+    var p=a&&a.anim&&a.anim.parts;
+    return (Array.isArray(p)&&p.length&&pieceClaims(a).length>1)?p:null;
+  }
+  function pieceClaims(a){
+    if(!a||!a.anim) return [];
+    var n=(typeof pieceCount==='function')?pieceCount(a)
+      :(textBy(a)?textPieceCount(a):1);   /* T473: panels count too */
+    return pieceClaimsN(a.anim,n);
+  }
+  /* the build STEP each piece lands on -- what `st+j` used to assume */
+  function pieceSteps(steps,a){
+    return pieceClaims(a).map(function(c){
+      var b=steps.map[c.o];
+      return b==null?null:b+c.sub;
+    });
+  }
+  /* THE SLIDE AS A LIST OF CLICKS. clicks[b] is everything that happens
+     on build step b: {i, k:'in'} an entrance, {i, k:'p', j} piece j of a
+     box, {i, k:'out'} an exit, {i, k:'focus'} a focus. The pane, the
+     Story and Start all rearrange THIS list and hand it to
+     timelineWrite, so there is one way to move a click and it keeps
+     parts, exits and focuses in step with each other. */
+  function timelineOf(s){
+    var steps=slideBuildSteps(s),clicks=[],k;
+    for(k=0;k<steps.count;k++) clicks.push([]);
+    function put(b,cl){if(b!=null&&clicks[b]) clicks[b].push(cl);}
+    ((s&&s.annots)||[]).forEach(function(a,i){
+      if(!a||a.hide) return;
+      if(a.anim){
+        var cs=pieceClaims(a);
+        if(cs.length>1) cs.forEach(function(c,j){
+          var b=steps.map[c.o];
+          put(b==null?null:b+c.sub,{i:i,k:'p',j:j});});
+        else put(steps.map[a.anim.order||0],{i:i,k:'in'});
+      }
+      var o=animOut(a); if(o!=null) put(steps.map[o],{i:i,k:'out'});
+      var f=animFocus(a); if(f) put(steps.map[f.at],{i:i,k:'focus'});
+    });
+    return clicks;
+  }
+  /* PURE. One claim -- clicks[c][x] -- to click t: 'with' joins it,
+     'before' / 'after' gives it a click of its own there. Indices are
+     the list as it stands; an emptied click goes. */
+  function tlMove(clicks,c,x,t,how){
+    var out=clicks.map(function(cl){return cl.slice();});
+    if(!out[c]||!out[c][x]||!out[t]) return out;
+    var it=out[c].splice(x,1)[0];
+    if(how==='with') out[t].push(it);
+    else out.splice(how==='after'?t+1:t,0,[it]);
+    return out.filter(function(cl){return cl.length;});
+  }
+  /* PURE. A whole click to another place, or onto another click */
+  function tlMoveClick(clicks,f,t,how){
+    var out=clicks.map(function(cl){return cl.slice();});
+    if(f===t||!out[f]||!out[t]) return out;
+    var moving=out[f];out[f]=[];
+    if(how==='with') out[t]=out[t].concat(moving);
+    else out.splice(how==='after'?t+1:t,0,moving);
+    return out.filter(function(cl){return cl.length;});
+  }
+  /* PURE. Nothing leaves before it has arrived: an exit dragged onto or
+     before its object's entrance gets a click of its own straight after
+     the object's last piece, and a focus before the arrival joins it --
+     rather than being silently ignored by animOut / animFocus, which is
+     what fails open means for a deck but is not what a drag meant. */
+  function tlFix(clicks){
+    var out=clicks.map(function(c){return c.slice();}),first={},last={},bad=[];
+    out.forEach(function(c,k){c.forEach(function(cl){
+      if(cl.k!=='in'&&cl.k!=='p') return;
+      if(!(cl.i in first)) first[cl.i]=k;
+      last[cl.i]=k;});});
+    out.forEach(function(c,k){
+      for(var x=c.length-1;x>=0;x--){
+        var cl=c[x];
+        if(!(cl.i in first)) continue;
+        if(cl.k==='out'&&k<=first[cl.i]) bad.push(c.splice(x,1)[0]);
+        else if(cl.k==='focus'&&k<first[cl.i]){
+          c.splice(x,1);out[first[cl.i]].push(cl);}
+      }
+    });
+    bad.sort(function(p,q){return last[q.i]-last[p.i];})
+      .forEach(function(cl){out.splice(last[cl.i]+1,0,[cl]);});
+    return out.filter(function(c){return c.length;});
+  }
+  /* WRITE A LIST OF CLICKS BACK: click k is order k, for everything.
+     A box whose pieces ended up on consecutive clicks with nothing else
+     on the later ones goes back to being a plain block (no `parts`), so
+     a deck only carries the list when it actually says something. */
+  function timelineWrite(s,clicks){
+    clicks=tlFix(clicks);
+    var per={};
+    clicks.forEach(function(c,k){c.forEach(function(cl){
+      var r=per[cl.i]||(per[cl.i]={p:[],inn:null,out:null,focus:null});
+      if(cl.k==='p') r.p[cl.j]=k;
+      else if(cl.k==='in') r.inn=k;
+      else if(cl.k==='out') r.out=k;
+      else if(cl.k==='focus') r.focus=k;
+    });});
+    Object.keys(per).forEach(function(key){
+      var i=+key,a=(s.annots||[])[i],r=per[key];
+      if(!a) return;
+      if(a.anim){
+        if(r.p.length){
+          var ks=[];
+          for(var j=0;j<r.p.length;j++)
+            ks.push(r.p[j]!=null?r.p[j]:(j?ks[j-1]:0));
+          var block=ks.every(function(k,j){return k===ks[0]+j;})
+            &&ks.slice(1).every(function(k){
+              return clicks[k].every(function(cl){
+                return cl.i===i&&cl.k==='p';});});
+          a.anim.order=Math.min.apply(null,ks);
+          if(block) delete a.anim.parts; else a.anim.parts=ks;
+        } else if(r.inn!=null){
+          a.anim.order=r.inn;delete a.anim.parts;
+        }
+      }
+      if(r.out!=null) a.out=r.out;
+      if(r.focus!=null&&a.focus) a.focus.at=r.focus;
+    });
+    return clicks;
+  }
+  /* T577: THE CLICKS SOMETHING COULD GO ON -- every click after this
+     object's own arrival on which something else ARRIVES, bullets
+     included, named by what arrives. The exit menus and the focus
+     panel offered builds, so "goes when the second bullet arrives"
+     was not an answer they could give. `now` is the click this
+     object's `kind` claim is on, or -1. */
+  function arrivalClicks(s,idx,kind){
+    var tl=timelineOf(s),mine=-1,now=-1,list=[];
+    tl.forEach(function(c,k){c.forEach(function(cl){
+      if(cl.i!==idx) return;
+      if((cl.k==='in'||cl.k==='p')&&mine<0) mine=k;
+      if(cl.k===kind) now=k;});});
+    tl.forEach(function(c,k){
+      if(k<=mine) return;
+      var who=[];
+      c.forEach(function(cl){
+        if(cl.i===idx) return;
+        var a=(s.annots||[])[cl.i];
+        if(cl.k==='in') who.push(annotLabel(a));
+        else if(cl.k==='p'){
+          var w=textBy(a)?textPieces(a)[cl.j]:'';
+          who.push(w?('\u2022 '+w):('panel '+(cl.j+1)+' of '+annotLabel(a)));
+        }
+      });
+      if(who.length) list.push({c:k,who:who.join(', ')});
+    });
+    return {tl:tl,list:list,now:now};
+  }
+  /* ...and put this object's exit or focus on click c of that list, or
+     on a click of its own at the end when c is null */
+  function claimSet(s,tl,idx,kind,c){
+    var next=tl.map(function(cl){
+      return cl.filter(function(x){return !(x.i===idx&&x.k===kind);});});
+    if(c==null||!next[c]) next.push([{i:idx,k:kind}]);
+    else next[c].push({i:idx,k:kind});
+    timelineWrite(s,next.filter(function(cl){return cl.length;}));
   }
   /* ---- THE WALK-THROUGH (T175) ---------------------------------------
      Five findings, five plots, one sentence each, in order: the

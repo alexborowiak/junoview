@@ -51,16 +51,19 @@
     (s.annots||[]).forEach(function(a){
       if(!a) return;
       if(a.anim){
-        var st=steps.map[a.anim.order||0];
-        if(st!=null){
-          if(stopOf(st)===k-1) arr.push(annotLabel(a));
-          else if((typeof textBy==='function'&&textBy(a))
-                  ||(typeof panelsOf==='function'&&panelsOf(a))){
-            var n=(typeof pieceCount==='function')?pieceCount(a)
-              :textPieceCount(a);   /* T473: panels too */
-            for(var j=1;j<n;j++) if(stopOf(st+j)===k-1)
-              arr.push('more of '+annotLabel(a));
-          }
+        var pst=pieceSteps(steps,a);
+        if(pst.length>1){
+          /* T577: a piece is named by its own words -- its click may be
+             nowhere near the rest of its box's */
+          var words=textBy(a)?textPieces(a):[];
+          pst.forEach(function(b,j){
+            if(b==null||stopOf(b)!==k-1) return;
+            arr.push(words[j]?('\u2022 '+words[j])
+              :('panel '+(j+1)+' of '+annotLabel(a)));
+          });
+        } else {
+          var st=steps.map[a.anim.order||0];
+          if(st!=null&&stopOf(st)===k-1) arr.push(annotLabel(a));
         }
       }
       var o=animOut(a);

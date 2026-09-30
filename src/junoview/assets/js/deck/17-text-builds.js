@@ -374,9 +374,11 @@
           return cb;}catch(err){}
       return (typeof pageBgOf==='function')?pageBgOf(s):deckPageBg();
     })();
+    var pst=pieceSteps(slideBuildSteps(s),a);   /* T577: a panel's own step */
     panelCovers(el,a,bg).forEach(function(cv){
       var j=+cv.getAttribute('data-part');
-      var jp=plan.stop[st+j]; if(jp==null) jp=st+j;
+      var jb=pst[j]; if(jb==null) jb=st+j;
+      var jp=plan.stop[jb]; if(jp==null) jp=jb;
       var covered=(!editing&&mode==='view'&&jp>=revealCount)
         ||(storyK!=null&&jp>=storyK);
       cv.classList.toggle('on',covered);

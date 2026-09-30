@@ -10323,3 +10323,43 @@ choice in the editor (T506, T507).
 - [ ] **T576 — Selection like PowerPoint.** Shift-click toggles, a second
   click on stacked objects reaches the one underneath, Esc steps out of
   a group; each checked and whatever is missing added.
+
+## Group 19 — the 2026-09-30 animation round (from the user's own review)
+
+The user, finishing a talk, with a screenshot of the Animation tab, the
+Story strip and the Animation pane all open at once: "this is trying to
+create animation. This gets congested very easily."
+
+- [x] **T577 — A bullet has a click of its own.** (2026-09-30, user: "the
+  dot points animation is sooo annoying. Like I currently can't mix
+  them, like they are all tied together".) A box built bullet by bullet
+  spent a BLOCK of consecutive clicks on its one `anim.order` and nothing
+  could sit inside it, so the photo for the first bullet could only
+  arrive after the last. `anim.parts` gives each piece its own build
+  order (absent is the old block, so no deck moves). The pane, the
+  Story's writers, Start's With previous / On click and the three
+  "Goes when X arrives" menus all rearrange ONE list of clicks
+  (`timelineOf`) and write it back through `timelineWrite`, which also
+  keeps exits after entrances and folds a box back to a plain block
+  when its pieces are unbroken. The pane is now one row per thing that
+  happens: Earlier / Later walk a bullet, a photo or an exit through
+  time (T427's "the words move" is gone: rows move in time, the words
+  stay where they were typed), With prev puts it on the click above,
+  and a drag onto the middle of a row joins that click. `autoAfter`
+  looked a stop's builds up in `animSeq` by STEP index, which was wrong
+  as soon as any box spent more than one click; it reads orders now.
+  Driven on the user's slide shape: bullet 1 with the orange photo,
+  bullet 2 with the green one, then bullet 3.
+- [ ] **T578 — Appear and highlight, or only highlight.** "there should
+  be an appear where they appear and are highlighted when they appear,
+  and also a just plain highlight where they are all there".
+- [ ] **T579 — Disappear is where you look for it.** "I cannot figure out
+  how to make an image disappear. The UI for the animations is really
+  confusing overall."
+- [ ] **T580 — The Story: the whole slide without closing it, drag to
+  reorder, less of the screen.** "would be cool if you could drag and
+  re-arrange the slides here as well ... the only way to view the
+  original slide at the moment is to close the story".
+- [ ] **T581 — Present mode starts with its bar folded away.** "why does
+  present mode have these options up the top. They are distracting and
+  not necessary ... collapsable by default not always there."

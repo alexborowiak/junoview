@@ -2596,7 +2596,22 @@ body.light .cfg-rv{color:var(--cyan-deep);}
 .anim-step.dragging{opacity:.5;}
 .anim-step.drop-above{box-shadow:0 -3px 0 0 var(--cyan);}
 .anim-step.drop-below{box-shadow:0 3px 0 0 var(--cyan);}
+/* T577: the middle of a row takes the drop ONTO its click, so the whole
+   row lights rather than one edge */
+.anim-step.drop-with{box-shadow:inset 0 0 0 2px var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 12%,var(--chrome-3,#101c28));}
+/* T577: a second row on the same click hangs off the first -- close
+   under it, its number an outline -- so "these two happen together"
+   is read from the list's shape, not from a sentence */
+.anim-step.anim-with{margin-top:-3px;border-top-left-radius:2px;
+  border-top-right-radius:2px;border-top-color:transparent;}
+.anim-step.anim-with .anim-num{background:none;border:1px dashed var(--amber);
+  color:var(--amber);}
 .anim-stepctr .anim-mini{padding:2px 6px;font-size:10.5px;}
+/* T577: four on a row now (Earlier, Later, With prev, Remove); in a pane
+   this narrow they wrap to a second line rather than clip the last */
+.anim-stepctr{flex-wrap:wrap;row-gap:3px;}
+.anim-stepctr .anim-mini{padding:2px 5px;white-space:nowrap;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
 

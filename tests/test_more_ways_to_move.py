@@ -45,8 +45,10 @@ def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
     assert ("            if(atype==='type'&&typeof typeInto==='function'\n"
             "               &&!(typeof storyPaint!=='undefined'&&storyPaint))\n"
             "              typeInto(el,(typeof textBy==='function'&&textBy(ba)\n"
-            "                &&!ba.anim.hl)?0:undefined);") in out
-    # ...and each later bullet types on its own click
+            "                &&!ba.anim.hl)?Math.max(0,firstAt):undefined);") in out
+    # ...and each later bullet types on its own click (T577: whichever
+    # piece arrives with the box types first, not always bullet one)
+    assert "              if(jp===sp&&(firstAt<0||j<firstAt)) firstAt=j;" in out
     assert "                typeInto(el,j);" in out
     # a stale run is stopped when the element leaves the page
     assert "      if(!el.isConnected){typeStop();return;}" in out
@@ -90,7 +92,8 @@ def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert "        var an=ensureAnim(s,a,no);if(!an.by) an.by='para';" in out
     assert "        if(highlight) an.hl=1; else delete an.hl;" in out
     # whole-box takes the highlight with it: no pieces, nothing to light
-    assert "        else if(a.anim){delete a.anim.by;delete a.anim.hl;}" in out
+    assert ("        else if(a.anim){delete a.anim.by;delete a.anim.hl;"
+            "delete a.anim.parts;}") in out
     # the renderer keeps every piece visible and marks the current one
     assert "              pe.style.visibility=(wait&&!hl)?'hidden':'';" in out
     assert "                pe.classList.toggle('an-hl',jp===revealCount-1);" in out
@@ -153,7 +156,10 @@ def test_a_focus_is_a_click_of_its_own(out):
     # the panel's section and its when-rows; the Order tab's row; Remove all
     assert "    cfgHead(host,'focus, on a click');" in out
     assert "    cfgChip(row,bic('locate'),'On a click of its own',own," in out
-    assert "        if(f) exits.push({i:i,a:a,o:f.at,kind:'focus',f:f});});" in out
+    # T577: the Order tab lists a focus as a row of the click it is on
+    assert "      if(cl.k==='focus') return itemLabel(s,cl.i)+' in focus';" in out
+    assert ("      var f=animFocus(a); if(f) put(steps.map[f.at],"
+            "{i:i,k:'focus'});") in out
     assert "        if(animFocus(a)){delete a.focus;nf++;}   /* T472 */" in out
     # the show's CSS: the rest soften, the stage moves, the lens floats
     assert ".annot-layer.an-spotlit .an-item:not(.an-spot):not(.an-lens){" in out
@@ -176,8 +182,10 @@ def test_a_figure_arrives_panel_by_panel(out):
     assert "  function pieceCount(a){" in out
     assert "  function panelCovers(el,a,bg){" in out
     assert "  function panelPaint(el,a,s,st,plan,editing,storyK){" in out
-    # the plan counts panels the way it counts bullets
-    assert "      var n=(typeof pieceCount==='function')?pieceCount(a)" in out
+    # the plan counts panels the way it counts bullets (T577: through
+    # pieceClaims, which asks pieceCount)
+    assert "    var n=(typeof pieceCount==='function')?pieceCount(a)" in out
+    assert "    var pst=pieceSteps(slideBuildSteps(s),a);" in out
     # painted in the editor (faint, numbered) and in the show (lifted per click)
     assert ("          if(typeof panelPaint==='function') "
             "panelPaint(el,ba,s,st,plan,true,storyK);") in out
@@ -194,9 +202,11 @@ def test_a_figure_arrives_panel_by_panel(out):
     assert ("        cfgRange(host,'Across',g.c,1,6,1,"
             "function(v){return String(v);},") in out
     # the Order tab names the panels; the story strip counts them
-    assert ("              for(var q3=0;q3<g.c*g.r;q3++) "
-            "o.push('Panel '+(q3+1)+' of '+(g.c*g.r));") in out
-    assert "              :textPieceCount(a);   /* T473: panels too */" in out
+    # (T577: a panel is a row of its own, on the click it is on)
+    assert ("        return 'Panel '+(cl.j+1)+' of '+(g?g.c*g.r:'?')"
+            "+' \\u00b7 '") in out
+    assert ("            arr.push(words[j]?('\\u2022 '+words[j])\n"
+            "              :('panel '+(j+1)+' of '+annotLabel(a)));") in out
     # the CSS: covers down in the show, outlines in the editor
     assert ".an-cover.on{display:flex;}" in out
     assert (".an-cover.an-cover-edit{display:flex;"
@@ -599,8 +609,10 @@ def test_the_animation_model_after_the_third_pass(out):
     assert "      if(a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;" in out
     assert "    if(a.anim&&f.at<(a.anim.order||0)) return null;" in out
     assert "            a.focus.at=nextAnimOrder(s);" in out
-    # [27] the Order tab in stop order
-    assert "        exits.filter(function(x){return !x.done&&x.o<o;})" in out
+    # [27] the Order tab in stop order (T577: it walks the list of
+    #      clicks, so an exit is simply a row on the click it is on)
+    assert "      tl.forEach(function(claims,c){" in out
+    assert "      var o=animOut(a); if(o!=null) put(steps.map[o],{i:i,k:'out'});" in out
     # [28] the mode's letters stay out of text fields
     assert "  function seqInField(e){" in out
     assert "    if(!seqArm||seqInField(e)) return;" in out
