@@ -53,7 +53,8 @@ def test_editing_at_a_stop_removes_what_is_not_there(out):
     # the caption says who arrives and who leaves
     assert "  function storyWhat(s,k){" in out
     assert "    return out||'nothing changes';" in out
-    # Whole slide puts the editor back; closing the strip clears the stop
-    assert ("    whole.addEventListener('click',function(e)"
+    # Whole slide puts the editor back (T580: a card of its own, first);
+    # closing the strip clears the stop
+    assert ("    wc.addEventListener('click',function(e)"
             "{e.stopPropagation();setStoryAt(null);});") in out
     assert "      storyAt=null;deckEl.classList.remove('storying');" in out
