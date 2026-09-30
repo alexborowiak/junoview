@@ -27,8 +27,12 @@ def test_the_door_is_on_the_animation_tab():
     assert '<span class="rbn-lab">Exit</span>' in html
     # T463: a tall tile, its readout inside it
     assert '<button class="fx-tile big-tile" id="anim-out"' in html
-    assert '<span>Send it away</span>' in html
-    assert 'Disappear</button>' not in html
+    # T579 (2026-09-30, user: "I cannot figure out how to make an image
+    # disappear"): the user's own word is back on the tile. What T453
+    # objected to was the word twice, tile and label, with nothing
+    # saying when; the label is Exit and the readout says when.
+    assert '<span>Disappear</span>' in html
+    assert '<span>Send it away</span>' not in html
     for cid in ("anim-outwrap", "anim-out", "anim-out-caret",
                 "anim-out-menu", "anim-out-say"):
         assert f'id="{cid}"' in html, cid

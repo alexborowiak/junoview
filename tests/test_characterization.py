@@ -2138,8 +2138,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T578 (2026-09-30): Appear + highlight beside Highlight only (anim.hl 2);
 # highlight-only text is on the slide from the start; a lit bullet keeps
 # its dot.
-EXPECTED_MD5 = "57b9b094438d9bbe071e6fd33fc204c6"
-EXPECTED_BYTES = 4708236
+# T579 (2026-09-30): Disappear -- the exit tile keeps its place on the
+# tab with nothing selected, wears the user's word, is in command search
+# and in the right-click menu.
+EXPECTED_MD5 = "12b58452d73bc991125510cc5e4d8b5e"
+EXPECTED_BYTES = 4711509
 
 
 def _render_example() -> str:

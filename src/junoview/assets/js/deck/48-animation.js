@@ -489,10 +489,21 @@
     var wrap=$('#anim-outwrap'),say=$('#anim-out-say');
     var s=pres.slides[cur],a=animOutItem();
     var poster=!!(pageOf&&pageOf().poster);
-    if(wrap) wrap.hidden=!a||poster;
-    if(say) say.hidden=!a||poster;
-    if(!a||poster) return;
-    var now=animOut(a),b=$('#anim-out');
+    /* T579: ON THE TAB WITH NOTHING SELECTED, like every tile beside it
+       -- disabled and saying so -- or a person scanning the Animation
+       tab for a way to make something disappear finds none */
+    if(wrap) wrap.hidden=poster;
+    if(say) say.hidden=poster;
+    var b=$('#anim-out'),cr=$('#anim-out-caret');
+    if(b) b.disabled=!a;
+    if(cr) cr.disabled=!a;
+    if(poster) return;
+    if(!a){
+      if(b){b.setAttribute('aria-pressed','false');b.classList.add('has-val');}
+      if(say) say.textContent='no selection';
+      return;
+    }
+    var now=animOut(a);
     if(b) b.setAttribute('aria-pressed',(now!=null).toString());
     /* T463: the readout is the tile's own second line, the way a
        chooser door wears its choice -- "never", or the click it goes */
@@ -1447,13 +1458,13 @@
         return 'Panel '+(cl.j+1)+' of '+(g?g.c*g.r:'?')+' \u00b7 '
           +itemLabel(s,cl.i);
       }
-      if(cl.k==='out') return itemLabel(s,cl.i)+' leaves';
+      if(cl.k==='out') return itemLabel(s,cl.i)+' disappears';
       if(cl.k==='focus') return itemLabel(s,cl.i)+' in focus';
       return itemLabel(s,cl.i);
     }
     function claimTag(s,cl,first){
       var a=s.annots[cl.i];
-      if(cl.k==='out') return 'Send it away';
+      if(cl.k==='out') return 'Disappear';
       if(cl.k==='focus'){
         var f=animFocus(a);
         return (FOCUS_FX.filter(function(p){

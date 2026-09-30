@@ -560,9 +560,9 @@
       cfgChip(r4,bic('none'),'Stays',!leaving,
         'On the slide to the end',
         function(){if(leaving){cfgPress('#anim-out');animCfgSync();}});
-      cfgChip(r4,bic('exit'),'Send it away',leaving,
+      cfgChip(r4,bic('exit'),'Disappear',leaving,
         'Leaves partway through, on a click of its own. The caret beside '
-        +'Send it away on the ribbon sends it away as something else '
+        +'Disappear on the ribbon makes it go as something else '
         +'arrives instead',
         function(){if(!leaving){cfgPress('#anim-out');animCfgSync();}});
       if(leaving){

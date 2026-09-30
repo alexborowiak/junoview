@@ -2829,6 +2829,34 @@
           });
         }
       }
+      /* T579: DISAPPEAR, WHERE YOU ARE ALREADY POINTING AT THE THING
+         (2026-09-30, user: "I cannot figure out how to make an image
+         disappear"). The Animation tab's own verb, one click from the
+         object: a click of its own at the end, or back to staying. The
+         caret on the tab still says WHEN, beside another arrival. */
+      if(swapN.length===1&&!(pageOf&&pageOf().poster)){
+        var dA=(pres.slides[cur].annots||[])[swapN[0]];
+        if(dA&&!dA.hide){
+          var dGone=animOut(dA)!=null;
+          menuHead(m,'animation');
+          row(dGone?'Stay on the slide':'Disappear on a click','',function(){
+            var s6=pres.slides[cur];
+            if(animOut(dA)!=null) delete dA.out;
+            else dA.out=nextAnimOrder(s6);
+            markDirty();repaintAnimation();
+            if(typeof animRibbonSync==='function') animRibbonSync();
+            if(typeof animPaneSync==='function') animPaneSync();
+            toast(animOut(dA)!=null
+              ?('\u201c'+String(annotLabel(dA)).slice(0,18)+'\u201d '
+                +'disappears on its own click \u2014 Animation \u2192 '
+                +'Disappear says when')
+              :('\u201c'+String(annotLabel(dA)).slice(0,18)+'\u201d '
+                +'stays on the slide'));
+          },dGone?'Keep it on the slide to the end'
+            :'It goes away on a click of its own, after everything else '
+            +'on this slide so far','exit');
+        }
+      }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
          time: an anchor is a fact about that item, and a menu that
          set nine of them at once would be a menu nobody could undo in
@@ -3243,10 +3271,12 @@
      section exists precisely because the feature had been re-requested
      twice as though it did not exist; folding it repeats the mistake it
      was written to correct. */
+  /* T579: 'animation' for the same reason -- its one row, Disappear,
+     is there because the verb could not be found on the tab */
   var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
     'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
     'chart':1,'shows with':1,'flip book':1,'repeat on slides':1,
-    'this slide':1,'this section':1};
+    'this slide':1,'this section':1,'animation':1};
   function cmFold(m){
     m.setAttribute('role','menu');
     $$('button',m).forEach(function(b){
