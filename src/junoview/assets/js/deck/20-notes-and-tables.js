@@ -957,6 +957,21 @@
     var r=sel.getRangeAt(0);
     return el.contains(r.startContainer)&&el.contains(r.endContainer);
   }
+  /* T590: the list item whose very start the caret is at, or null --
+     nothing but empty markup between the item's first position and it */
+  function caretAtItemStart(el){
+    var sel=window.getSelection();
+    if(!sel||!sel.rangeCount||!sel.isCollapsed) return null;
+    var n=sel.focusNode;
+    if(!n||!el.contains(n)) return null;
+    var li=(n.nodeType===1?n:n.parentNode);
+    li=(li&&li.closest)?li.closest('li'):null;
+    if(!li||!el.contains(li)) return null;
+    var r=document.createRange();
+    try{r.setStart(li,0);r.setEnd(sel.focusNode,sel.focusOffset);}
+    catch(e){return null;}
+    return r.toString().replace(/\u200b/g,'')===''?li:null;
+  }
   function caretList(el){
     var sel=window.getSelection(),n=sel&&sel.rangeCount?sel.focusNode:null;
     if(!n||!el.contains(n)) return null;
@@ -1800,6 +1815,35 @@
         el.style.listStyle='none';el.style.paddingLeft='0';
         setVal('',null);markDirty();
         return;
+      }
+      /* T590: BACKSPACE AT THE START OF A BULLET TAKES THE BULLET OFF.
+         Left to the browser it merged the line into the one above, words
+         and all, and on the first line of a box it did nothing -- so a
+         bullet could only be removed from a line that was already empty
+         (2026-09-30, user: "It's still really hard to get rid-of dot
+         points ... if there is a line above and you try and delete, then
+         it just takes everything back to the line before. If the dot
+         points there is no line before e.g. at the top, then dot points
+         cannot be backspaced"). Word and PowerPoint: the first Backspace
+         at the start of a bullet takes a sub-bullet up a level, or the
+         bullet off, and leaves the words on their own line; the next one
+         joins the lines. The marker comes off through listSelection, the
+         same toggle the List button uses on the caret's paragraph. */
+      if(e.key==='Backspace'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey
+         &&!e.altKey){
+        var li0=caretAtItemStart(el);
+        if(li0){
+          e.preventDefault();e.stopPropagation();
+          var up0=li0.parentNode&&li0.parentNode.parentNode;
+          if(up0&&up0.tagName==='LI'){
+            try{document.execCommand('outdent',false,null);}catch(err){}
+          } else {
+            var ls0=li0.parentNode;
+            listSelection((ls0&&ls0.getAttribute('data-list'))
+              ||(ls0&&ls0.tagName==='OL'?'number':'bullet'));
+          }
+          return;
+        }
       }
       if(e.key==='Tab'&&caretList(el)){
         e.preventDefault();e.stopPropagation();
