@@ -485,8 +485,9 @@
       cfgHead(host,'what each text step does');
       var r4=cfgRow(host);
       [['#anim-by-reveal','Reveal','appear'],
-       ['#anim-by-hl','Highlight','star']].forEach(function(p){
-        cfgChip(r4,p[2]==='appear'?bic('appear'):bic('star'),p[1],
+       ['#anim-by-hlin','Appear + highlight','star'],   /* T578 */
+       ['#anim-by-hl','Highlight only','laser']].forEach(function(p){
+        cfgChip(r4,bic(p[2]),p[1],
           cfgOn(p[0]),'',function(){cfgPress(p[0]);animCfgSync();});
       });
       /* T471: the highlight's two choices, once it is on. T493: and

@@ -3580,7 +3580,11 @@
              either; a box arriving in pieces shows the pieces that are */
           if(storyK!=null){
             var spk=plan.stop[st]; if(spk==null) spk=st;
-            if(spk>=storyK) el.classList.add('an-storyout');
+            /* T578: text that is all there is there at every stop */
+            var hlAll=(ba.anim.hl===1||ba.anim.hl===true)
+              &&typeof textBy==='function'&&!!textBy(ba);
+            if(hlAll){}
+            else if(spk>=storyK) el.classList.add('an-storyout');
             else if(typeof textBy==='function'&&textBy(ba)){
               var spst=pieceSteps(steps,ba);   /* T577 */
               $$('[data-part]',el).forEach(function(pe){
@@ -3614,6 +3618,12 @@
                whose stop was just taken is lit, the ones still to come
                sit quiet, the ones already done are plain. */
             var hl=!!ba.anim.hl;
+            /* T578: APPEAR + HIGHLIGHT (anim.hl 2). The pieces still to
+               come are hidden as Reveal hides them, the one arriving is
+               lit, and "the rest" are the ones already said -- so the
+               dimmed / blurred choice acts on those. */
+            var hlIn=(ba.anim.hl===2);
+            if(hl) el.setAttribute('data-hlin',hlIn?'1':'0');
             /* T471: the lit piece's look and the rest's, as data the
                CSS reads (hlfx: bigger & coloured / bigger / coloured;
                hlrest: dimmed / blurred / as they are) */
@@ -3637,7 +3647,7 @@
               var jp=plan.stop[jb];
               if(jp==null) jp=jb;
               var wait=(mode==='view'&&jp>=revealCount);
-              pe.style.visibility=(wait&&!hl)?'hidden':'';
+              pe.style.visibility=(wait&&(!hl||hlIn))?'hidden':'';
               if(hl&&mode==='view'){
                 pe.classList.toggle('an-hl',jp===revealCount-1);
                 pe.classList.toggle('an-hl-wait',wait);
@@ -3646,7 +3656,7 @@
               /* T471: a typewriter box types each bullet on its own
                  click, not the whole box on the first */
               if(jp===sp&&(firstAt<0||j<firstAt)) firstAt=j;
-              if(!hl&&mode==='view'&&jp!==sp&&jp===revealCount-1
+              if((!hl||hlIn)&&mode==='view'&&jp!==sp&&jp===revealCount-1
                  &&ba.anim.type==='type'&&typeof typeInto==='function'
                  &&!(typeof storyPaint!=='undefined'&&storyPaint))
                 typeInto(el,j);
@@ -3655,7 +3665,13 @@
           /* T473: a figure in panels -- cover k lifts on build step
              st+k, read off the same plan as a text piece */
           if(typeof panelPaint==='function') panelPaint(el,ba,s,st,plan,false,null);
-          if(sp>=revealCount) el.classList.add('an-prebuild');
+          /* T578: HIGHLIGHT ONLY is text that is ALL THERE -- on the
+             slide from the start, every piece waiting to be lit -- so
+             the box is never held back and has no entrance to play */
+          var allThere=(ba.anim.hl===1||ba.anim.hl===true)
+            &&typeof textBy==='function'&&!!textBy(ba);
+          if(allThere){}
+          else if(sp>=revealCount) el.classList.add('an-prebuild');
           else if(sp===revealCount-1){
             var atype=ba.anim.type||'fade';
             /* "appear" is instant (no keyframe); rise/zoom animate transform,
@@ -3671,7 +3687,8 @@
             if(atype==='type'&&typeof typeInto==='function'
                &&!(typeof storyPaint!=='undefined'&&storyPaint))
               typeInto(el,(typeof textBy==='function'&&textBy(ba)
-                &&!ba.anim.hl)?Math.max(0,firstAt):undefined);   /* T471 */
+                &&(!ba.anim.hl||ba.anim.hl===2))?Math.max(0,firstAt)
+                :undefined);   /* T471 */
           }
         }
       });

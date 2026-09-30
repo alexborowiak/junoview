@@ -2135,8 +2135,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T544 (2026-09-30): Clear on the mini toolbar too.
 # T577 (2026-09-30): a bullet has a click of its own -- anim.parts, one
 # list of clicks the pane and Start rearrange, rows that move in time.
-EXPECTED_MD5 = "947a7a2972f3e992fcc0f50eeba379f0"
-EXPECTED_BYTES = 4704730
+# T578 (2026-09-30): Appear + highlight beside Highlight only (anim.hl 2);
+# highlight-only text is on the slide from the start; a lit bullet keeps
+# its dot.
+EXPECTED_MD5 = "57b9b094438d9bbe071e6fd33fc204c6"
+EXPECTED_BYTES = 4708236
 
 
 def _render_example() -> str:

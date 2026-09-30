@@ -10350,9 +10350,19 @@ create animation. This gets congested very easily."
   as soon as any box spent more than one click; it reads orders now.
   Driven on the user's slide shape: bullet 1 with the orange photo,
   bullet 2 with the green one, then bullet 3.
-- [ ] **T578 — Appear and highlight, or only highlight.** "there should
+- [x] **T578 — Appear and highlight, or only highlight.** "there should
   be an appear where they appear and are highlighted when they appear,
-  and also a just plain highlight where they are all there".
+  and also a just plain highlight where they are all there". Each text
+  step is now Reveal / Appear + highlight / Highlight only. `anim.hl` 2
+  hides the pieces still to come, lights the arriving one and lets the
+  dimmed / blurred choice act on the ones already said. `anim.hl` 1 is
+  what its tooltip always promised -- all the text there from the start,
+  the box never held back -- where the box used to arrive on the first
+  highlight. And the first line of the message ("they don't appear with
+  the dot points when doing the highlight animation") was a real bug:
+  the lit piece was forced to inline-block, and a promoted piece IS the
+  <li>, so the lit bullet lost its dot. Only an inline run is made
+  inline-block now. Driven with photos on the bullets' clicks (T577).
 - [ ] **T579 — Disappear is where you look for it.** "I cannot figure out
   how to make an image disappear. The UI for the animations is really
   confusing overall."

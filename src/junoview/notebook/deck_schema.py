@@ -302,6 +302,9 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                    "piece past the end of the list takes a click of its "
                    "own straight after the last one it names, and "
                    "`order` stays the earliest of them."
+                   " `hl` 1 shows every piece from the start and lights "
+                   "the piece each click is about; 2 hides the pieces "
+                   "still to come and lights each one as it arrives."
                    " `after` is a whole number of seconds: this build "
                    "runs that long after the one before it, with no "
                    "click."),

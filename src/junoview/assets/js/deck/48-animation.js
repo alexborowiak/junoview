@@ -1030,7 +1030,7 @@
         mode:after?'after':(shared?'with':'click'),
         text:a.k==='text',
         by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:'',
-        hl:!!a.anim.hl,
+        hl:!!a.anim.hl,hlin:a.anim.hl===2,   /* T578 */
         fig:fig,grid:pg?(pg.c+'x'+pg.r):''};
     }
     /* T473: the grids the strip offers -- key, words, what it is */
@@ -1139,10 +1139,18 @@
       /* T385: highlight is a way of arriving piece by piece; T401 lets
          it be the first click too, and setBy-style it brings the
          entrance and the bullet split with it */
+      /* T578: two highlights -- all there from the start (hl 1), or
+         each piece appearing already lit (hl 2) */
       var hb=$('#anim-by-hl');
       if(hb){
         hb.disabled=!st.text;
-        hb.setAttribute('aria-pressed',(st.text&&st.hl).toString());
+        hb.setAttribute('aria-pressed',
+          (st.text&&st.hl&&!st.hlin).toString());
+      }
+      var hib=$('#anim-by-hlin');
+      if(hib){
+        hib.disabled=!st.text;
+        hib.setAttribute('aria-pressed',(st.text&&st.hlin).toString());
       }
       var rb=$('#anim-by-reveal');
       if(rb){
@@ -1269,14 +1277,17 @@
       if(!n) return;
       commit(s);
     };
-    function setTextMode(highlight){
+    /* T578: '' reveals, 'in' appears already lit, 'all' lights a piece
+       of text that was all there from the start */
+    function setTextMode(how){
       var s=pres.slides[cur]; if(!s) return;
-      var n=0,no=nextAnimOrder(s);
+      var n=0,no=nextAnimOrder(s),highlight=!!how;
       selIdxs().forEach(function(i){
         var a=s.annots[i];
         if(!a||a.k!=='text') return;
         var an=ensureAnim(s,a,no);if(!an.by) an.by='para';
-        if(highlight) an.hl=1; else delete an.hl;
+        if(how==='in') an.hl=2;
+        else if(highlight) an.hl=1; else delete an.hl;
         n++;
       });
       if(!n) return;
@@ -1295,11 +1306,15 @@
     }
     var revealb=$('#anim-by-reveal');
     if(revealb) revealb.addEventListener('click',function(e){
-      e.stopPropagation();setTextMode(false);
+      e.stopPropagation();setTextMode('');
+    });
+    var hlinb=$('#anim-by-hlin');
+    if(hlinb) hlinb.addEventListener('click',function(e){
+      e.stopPropagation();setTextMode('in');
     });
     var hlb=$('#anim-by-hl');
     if(hlb) hlb.addEventListener('click',function(e){
-      e.stopPropagation();setTextMode(true);
+      e.stopPropagation();setTextMode('all');
     });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it

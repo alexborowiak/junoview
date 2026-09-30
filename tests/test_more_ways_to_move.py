@@ -45,7 +45,8 @@ def test_the_typewriter_types_in_place_and_puts_every_word_back(out):
     assert ("            if(atype==='type'&&typeof typeInto==='function'\n"
             "               &&!(typeof storyPaint!=='undefined'&&storyPaint))\n"
             "              typeInto(el,(typeof textBy==='function'&&textBy(ba)\n"
-            "                &&!ba.anim.hl)?Math.max(0,firstAt):undefined);") in out
+            "                &&(!ba.anim.hl||ba.anim.hl===2))?Math.max(0,firstAt)\n"
+            "                :undefined);") in out
     # ...and each later bullet types on its own click (T577: whichever
     # piece arrives with the box types first, not always bullet one)
     assert "              if(jp===sp&&(firstAt<0||j<firstAt)) firstAt=j;" in out
@@ -90,12 +91,14 @@ def test_highlight_lights_a_piece_instead_of_hiding_the_rest(out):
     assert 'id="anim-by-hl"' in out
     # (T401: a box with no entrance gets one on the way)
     assert "        var an=ensureAnim(s,a,no);if(!an.by) an.by='para';" in out
-    assert "        if(highlight) an.hl=1; else delete an.hl;" in out
+    assert "        else if(highlight) an.hl=1; else delete an.hl;" in out
     # whole-box takes the highlight with it: no pieces, nothing to light
     assert ("        else if(a.anim){delete a.anim.by;delete a.anim.hl;"
             "delete a.anim.parts;}") in out
     # the renderer keeps every piece visible and marks the current one
-    assert "              pe.style.visibility=(wait&&!hl)?'hidden':'';" in out
+    # (T578: except Appear + highlight, which hides what is to come)
+    assert ("              pe.style.visibility=(wait&&(!hl||hlIn))"
+            "?'hidden':'';") in out
     assert "                pe.classList.toggle('an-hl',jp===revealCount-1);" in out
     assert "                pe.classList.toggle('an-hl-wait',wait);" in out
     # T471: the highlight configured -- the lit piece's look and the rest's
