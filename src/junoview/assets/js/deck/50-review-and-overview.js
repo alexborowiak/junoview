@@ -311,15 +311,17 @@
     (pres.slides||[]).forEach(function(sl,si){
       (sl.annots||[]).forEach(function(a,i){
         if(!a||a.priv) return;
-        if(a.k!=='image'&&a.k!=='flip') return;
+        /* T552: a chart is a picture of numbers, and asked the same */
+        if(a.k!=='image'&&a.k!=='flip'&&a.k!=='chart') return;
         if(a.dec||(a.alt&&String(a.alt).trim())) return;
+        var what=a.k==='chart'?'chart':'picture';
         out.push({sev:'warn',si:si,i:i,
-          head:'This picture does not say what it shows',
+          head:'This '+what+' does not say what it shows',
           why:'Somebody who cannot see it gets “'
-            +(annotLabel(a)||'image')+'” — the name of the box, not '
-            +'what is in it. Right-click the picture and write its alt '
-            +'text, or leave that empty to mark it decorative if it '
-            +'really carries nothing.'});
+            +(annotLabel(a)||what)+'” — the name of the box, not '
+            +'what is in it. Select it and use Object › Alt text '
+            +'(or right-click it), or leave that empty to mark it '
+            +'decorative if it really carries nothing.'});
       });
     });
     /* --- 5. the talk does not fit the time it has (T121) ---

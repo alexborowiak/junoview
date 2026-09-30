@@ -2218,7 +2218,9 @@ def test_an_anchored_item_is_placed_from_what_it_measured(out):
     # target sits) and after the fit pass (which changes heights)
     assert "if(_anchorFixWanted) anchorFix(layer,s);\n    _arrows.forEach(" \
         in out
-    assert "fitTexts(layer,s,editing,kept);\n    /* ...and AFTER the fit pass" in out
+    # (T552: the alt text pass sits between them; it moves nothing)
+    assert out.index("fitTexts(layer,s,editing,kept);") < \
+        out.index("/* ...and AFTER the fit pass")
 
 
 def test_resize_keeps_anchored_items_in_page_coordinates(out):

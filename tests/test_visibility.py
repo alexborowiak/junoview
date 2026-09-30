@@ -646,15 +646,19 @@ def test_the_thumbnails_say_they_are_decorative(out):
     assert "im.src=src;im.alt='';im.setAttribute('aria-hidden','true');" in out
 
 
-def test_alt_text_has_a_door_that_costs_no_ribbon_width(out):
-    """The ribbon never wraps, so a control for one kind of object earns
-    its place on the menu that already knows what you clicked -- the same
-    reasoning as T5's select-by-type. Offered only when the selection
-    actually holds a picture: a row that does nothing is worse than no
-    row."""
+def test_alt_text_has_a_door_on_the_menu_and_the_ribbon(out):
+    """It began on the right-click menu only, because the ribbon never
+    wraps. T552 gave it a door on the Object tab's Picture group too --
+    hidden unless the selection holds something it is for, like every
+    contextual control there, so it costs no width the rest of the time.
+    Offered only when the selection actually holds a picture: a row or a
+    button that does nothing is worse than none."""
     assert "function setAltText(idxs){" in out
-    assert "return a&&(a.k==='image'||a.k==='flip');});" in out
+    assert "var altSel=altSelIdxs();" in out
+    assert "return !!a&&(isFigure(a)||a.k==='chart');" in out
     assert "if(altSel.length){" in out
+    assert 'id="fmt-alt" hidden' in out
+    assert "show('#fmt-alt',altIx.length>0);" in out
     # the label says which of the three states this picture is in
     assert "'Alt text \\u2014 marked decorative'" in out
     # empty means decorative, and the prompt says so -- "I have not
@@ -672,7 +676,8 @@ def test_the_review_reports_only_the_undecided_pictures(out):
     nobody has decided about. Browser-verified: of three images -- one
     described, one decorative, one neither -- the review named exactly
     one."""
-    assert "This picture does not say what it shows" in out
+    # (T552: charts are asked too, so the noun is the object's own)
+    assert "head:'This '+what+' does not say what it shows'," in out
     assert "if(a.dec||(a.alt&&String(a.alt).trim())) return;" in out
 
 

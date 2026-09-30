@@ -402,6 +402,13 @@ _ICON_PATHS = {
     # that belongs to a figure, and neither `text` nor `image` says that
     "caption": '<rect x="2.2" y="2.4" width="11.6" height="7.2" rx="1"/>'
                '<path d="M2.2 12.2h8.4"/><path d="M2.2 14.2h5.6"/>',
+    # T552: a picture, said out loud -- alt text is what is read instead
+    # of it, which neither `caption` (words everyone reads) nor `eye`
+    # (hide and show) says
+    "alttext": '<rect x="1.8" y="3.6" width="8.4" height="8.8" rx="1"/>'
+               '<path d="m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7"/>'
+               '<path d="M11.8 6.3a2.4 2.4 0 0 1 0 3.4"/>'
+               '<path d="M13.4 4.8a4.6 4.6 0 0 1 0 6.4"/>',
     "find": '<circle cx="7" cy="7" r="4.3"/>'
             '<path d="m10.2 10.2 3.6 3.6"/>',
     "undo": '<path d="M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6"/>'

@@ -2242,8 +2242,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # is selected reaches the object underneath (clickThroughArm/Next), and
 # the help's key table lists click again, Shift/Ctrl+click and a group's
 # double-click and Esc.
-EXPECTED_MD5 = "35efabe3f39d058ad8667788d2f129b4"
-EXPECTED_BYTES = 4899627
+# T552 (2026-10-01): alt text has a door -- Object's Picture group gains
+# Alt text... (icon alttext, in every layout beside Caption), alt text is
+# for notebook figures, clips and charts too (altPaint draws it, the .pptx
+# carries it), the Review asks about charts, and the help has an entry.
+EXPECTED_MD5 = "bd760a7a4c596b58f5507d7a998e52f3"
+EXPECTED_BYTES = 4904107
 
 
 def _render_example() -> str:

@@ -2574,6 +2574,35 @@
     else if(extra&&!t) t=String(extra);
     img.alt=t;
   }
+  /* T552: THE OTHER PICTURES. A placed picture and a flip book's page
+     take their alt text as they are drawn (altAttrs, above); a figure
+     placed from a notebook, a chart and a clip are drawn by code of
+     their own, so what the author wrote is put on them here, after the
+     layer is built. A notebook figure with nothing written keeps the
+     notebook's own alt; the author's words, or "decorative", win. */
+  function altPaint(layer,s){
+    if(!layer||!s) return;
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||!(a.alt||a.dec)) return;
+      if(a.k!=='cell'&&a.k!=='chart'&&a.k!=='video') return;
+      var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      if(a.k==='cell'){
+        [].forEach.call(el.querySelectorAll('img'),function(im){
+          altAttrs(im,a);});
+        return;
+      }
+      var tgt=(a.k==='video')?(el.querySelector('video,audio')||el):el;
+      if(a.dec){
+        tgt.setAttribute('aria-hidden','true');
+        tgt.removeAttribute('aria-label');
+      } else {
+        if(a.k==='chart') tgt.setAttribute('role','img');
+        tgt.setAttribute('aria-label',String(a.alt));
+        tgt.removeAttribute('aria-hidden');
+      }
+    });
+  }
   /* Only animation edits and playback use this key. Content/geometry
      edits still take the normal render path, so large image payloads
      never need serialising just to advance a bullet. */
@@ -3854,6 +3883,7 @@
        past its fit height was measured before the words arrived
        (2026-08-25, found in the browser). */
     fitTexts(layer,s,editing,kept);
+    altPaint(layer,s);    /* T552: charts, clips and notebook figures */
     /* ...and AFTER the fit pass, which can change a box's height */
     if(_anchorFixWanted) anchorFix(layer,s);
     /* ---- STRAYS ------------------------------------------------------

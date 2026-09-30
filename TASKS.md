@@ -10278,7 +10278,27 @@ choice in the editor (T506, T507).
   untouched original, exported to .pptx.
 - [ ] **T551 — Tables grow up.** Merge and split cells, cell fill colour,
   and a small table style gallery (header, banded rows, first column).
-- [ ] **T552 — Alt text has a door on the Object tab.**
+- [x] **T552 — Alt text has a door on the Object tab.**
+  *Done 2026-10-01.* Alt text (T105) lived on the right-click menu only,
+  for pictures and flip books. Object's Picture group now has Alt text...
+  beside Caption (the caption says what to think about a figure, the alt
+  text what is in it), with an icon of its own (a picture said out loud),
+  shown like every contextual control there only when the selection holds
+  something it is for, and placed beside Caption in all eight ribbon
+  layouts that place Caption. Its tooltip says what is written so far, or
+  that it is marked decorative, or that nothing is yet. It is for more
+  kinds now -- a figure placed from a notebook, a clip and a chart as well
+  as a picture and a flip book (altable) -- on the menu too; the question
+  says "What this chart shows" for a chart. Drawn: altPaint puts it on a
+  notebook figure's picture (the notebook's own alt stays unless you write
+  one), a chart (role=img with the words as its label) and a clip, and
+  "decorative" hides each from a screen reader. Exported: a flip book's
+  page, a notebook figure (falling back to the notebook's alt) and a chart
+  carry it as PowerPoint's descr, as pictures and clips already did. The
+  Review centre asks about charts too, and names the new door. Driven at
+  1440x900: a picture's button, "A blue square" on its img, the tooltip
+  quoting it; a chart's "What this chart shows" and role=img with its
+  label; no button for a text box.
 
 ### Slides, shows and output
 

@@ -2753,7 +2753,8 @@
             return o;}),
           numeric:cd.numeric,title:a.title||'',leg:a.leg!==0,ink:ink,
           stack:cd.stack,ylog:cd.ylog,labels:cd.labels,
-          xlab:cd.xlab,ylab:cd.ylab,y2lab:cd.y2lab});
+          xlab:cd.xlab,ylab:cd.ylab,y2lab:cd.y2lab,
+          alt:a.alt,dec:a.dec});   /* T552 */
       } else if(a.k==='flip'){
         /* the frame this exported page is FOR. pptxItems is handed the
            slide plus, for an exploded page, which frame it represents —
@@ -2772,7 +2773,7 @@
         }
         if(fsrc) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
-          name:(fsel&&fsel.label)||'Figure'});
+          name:(fsel&&fsel.label)||'Figure',alt:a.alt,dec:a.dec});
         /* T403: a page that is its own object is exported AS that
            object (it is tied to this page), so the blank leaf is not
            a figure that went missing */
@@ -2786,7 +2787,8 @@
         var img=node?node.querySelector('img'):null;
         if(img&&img.src&&img.src.indexOf('data:')===0){
           items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
-            rot:a.rot,op:a.op,src:img.src,name:(it&&it.title)||'Figure'});
+            rot:a.rot,op:a.op,src:img.src,name:(it&&it.title)||'Figure',
+            alt:a.alt||img.alt||'',dec:a.dec});   /* T552 */
           return;
         }
         /* no figure to lift — but prose and code ARE just text, and a text

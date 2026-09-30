@@ -99,7 +99,7 @@
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
-    +'#fmt-caption #fmt-prov #fmt-lockar #fmt-sizepos '
+    +'#fmt-caption #fmt-alt #fmt-prov #fmt-lockar #fmt-sizepos '
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
@@ -594,6 +594,20 @@
        right-click row (2026-08-26 audit, T58). */
     var figSel=isNum&&isFigure(a);
     show('#fmt-caption',figSel);
+    /* T552: alt text, for every picture in the selection; the tooltip
+       says whether it has been written */
+    var altIx=altSelIdxs();
+    show('#fmt-alt',altIx.length>0);
+    if(altIx.length){
+      var ab=$('#fmt-alt'),a0=(pres.slides[cur].annots||[])[altIx[0]];
+      if(ab) ab.title=(a0&&a0.dec?'Marked decorative — a screen reader '
+          +'skips it. '
+        :(a0&&a0.alt)?'Alt text: “'+String(a0.alt).slice(0,80)
+          +(String(a0.alt).length>80?'…':'')+'”. '
+        :'No alt text yet. ')
+        +'Say what this shows, for somebody who cannot see it; empty '
+        +'marks it decorative';
+    }
     if(figSel){
       var cb=$('#fmt-caption'),hasCap=capHasOne(a);
       if(cb){
@@ -2377,11 +2391,29 @@
         &&(selAnnot!==null||selIdxs().length>0);
     };
   }
+  /* T552: what alt text is for -- a picture, a figure from a notebook, a
+     flip book, a clip or a chart: whatever a screen reader would otherwise
+     announce as an unlabelled image */
+  function altable(a){
+    return !!a&&(isFigure(a)||a.k==='chart');
+  }
+  function altSelIdxs(){
+    var an=(pres.slides[cur]&&pres.slides[cur].annots)||[];
+    return selIdxs().filter(function(i){
+      return typeof i==='number'&&altable(an[i]);});
+  }
+  var altBtn=$('#fmt-alt');
+  if(altBtn) altBtn.addEventListener('click',function(e){
+    e.stopPropagation();
+    var ix=altSelIdxs();
+    if(ix.length) setAltText(ix);
+  });
   function setAltText(idxs){
     var ans=(pres.slides[cur].annots||[]);
     var first=ans[idxs[0]]||{};
     var was=first.dec?'':(first.alt||'');
-    askText({title:'What this picture shows',
+    askText({title:first.k==='chart'?'What this chart shows'
+        :'What this picture shows',
       what:'Somebody who cannot see it reads this instead of it.',
       label:'Alt text',value:was,multi:true,ok:'Set',
       note:'Empty marks the picture decorative \u2014 a rule, a texture, '
@@ -2551,9 +2583,7 @@
          on the menu that already knows what you clicked. Offered only
          when the selection actually contains a picture -- a row that
          does nothing is worse than no row. */
-      var altSel=selIdxs().filter(function(i){
-        var a=(pres.slides[cur].annots||[])[i];
-        return a&&(a.k==='image'||a.k==='flip');});
+      var altSel=altSelIdxs();   /* T552: every kind a picture can be */
       /* LINK (T118). Any object can be one, so unlike Alt text this
          needs no kind test -- but like it, it lives on the menu that
          already knows what you clicked rather than on a ribbon that
