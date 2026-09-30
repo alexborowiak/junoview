@@ -1016,11 +1016,14 @@ def test_an_image_resizes_the_picture_not_the_letterbox(out):
     A picture now behaves like a picture: the stored box is first snapped
     onto the image (killing any letterbox already banked) and then the
     aspect is held for the drag, which is what figure frames have always
-    done. Shift releases it, live, mid-gesture. A CROPPED image keeps
-    free-form resizing, because there the box IS the crop window
-    (object-fit switches to cover) and reshaping it is the whole point.
+    done. Shift releases it, live, mid-gesture. A CROPPED image kept
+    free-form resizing, because there the box was the crop window
+    (object-fit switches to cover) -- until T588: every drag that changed
+    its shape cropped more, so it holds the shape it has now (read off
+    the box), and reshaping the crop is the Crop button's job.
     """
-    assert "if(a.k==='image'&&!a.crop&&el){" in out
+    assert "} else if(a.k==='image'&&!a.crop&&el){" in out
+    assert "if(a.k==='image'&&el&&(a.crop||a.win)&&!cropMode){" in out
     assert "var ie=el.querySelector('.an-imgel');" in out
     # Shift is the momentary OPPOSITE of whatever lock is in force now,
     # not just a release for pictures (T65)

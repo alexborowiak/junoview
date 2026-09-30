@@ -1621,11 +1621,24 @@
        So: snap the stored box onto the picture (killing any letterbox
        already banked), then hold the picture's aspect for the drag, which
        is what every other tool does with a photo. Hold SHIFT to stretch
-       it out of shape on purpose, and a CROPPED image keeps free-form
-       resizing because there the box IS the crop window (object-fit is
-       cover) and reshaping it is the whole point. */
-    var imgFree=false;
-    if(a.k==='image'&&!a.crop&&el){
+       it out of shape on purpose.
+       T588: A CROPPED PICTURE KEEPS ITS SHAPE TOO. It used to resize
+       free-form, "because the box IS the crop window and reshaping it is
+       the whole point" -- but a cropped picture is object-fit:cover, so
+       every drag that changed the box's shape cut more of the picture
+       away, and a picture shrunk until one side hit the size floor was
+       cropped by the other (2026-09-30, user: "when trying to re-size and
+       image a lot of the time it just ends up cropping it if it gets too
+       small, which is definently not what i want"). Resizing resizes;
+       reshaping the crop is the Crop button's job. So a picture with a
+       crop or a window (T587) holds the shape it has now, read off the
+       box -- not the source picture's, which is not what it shows -- and
+       Shift still frees it. Not while trimming: those are the trim
+       handles' drags, not this one. */
+    var imgFree=false,cropHold=false;
+    if(a.k==='image'&&el&&(a.crop||a.win)&&!cropMode){
+      cropHold=true;imgFree=true;
+    } else if(a.k==='image'&&!a.crop&&el){
       var ie=el.querySelector('.an-imgel');
       var fi=ie?figFit(layer,a,ie):null;
       if(takeFit(fi)){figRatio=fi.ratio;imgFree=true;}
@@ -1649,7 +1662,7 @@
        cannot reach it (that is what imgFree marks). */
     var boxRatio=(oh>0&&lr.height&&lr.width)
       ?((ow*lr.width)/(oh*lr.height)):0;
-    var baseRatio=figRatio||(a.lockar?boxRatio:0);
+    var baseRatio=figRatio||((a.lockar||cropHold)?boxRatio:0);
     var canFree=imgFree||!!a.lockar;
     /* A ONE-AXIS HANDLE. The untouched axis is not this drag's business:
        nothing below writes to it, and only an aspect lock may move it --

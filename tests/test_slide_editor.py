@@ -2913,7 +2913,8 @@ def test_keep_shape_is_a_per_item_flag_with_shift_as_its_opposite(out):
     annots wholesale -- but ANNOT_COMMON and DECK-FORMAT.md are a matched
     pair, so it is documented in both.
     """
-    assert "var baseRatio=figRatio||(a.lockar?boxRatio:0);" in out
+    # (T588: a cropped picture holds its box's shape the same way)
+    assert "var baseRatio=figRatio||((a.lockar||cropHold)?boxRatio:0);" in out
     assert "var canFree=imgFree||!!a.lockar;" in out
     assert "?((canFree&&ev.shiftKey)?0:baseRatio)" in out
     assert ":(ev.shiftKey?boxRatio:0);" in out

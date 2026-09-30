@@ -10473,3 +10473,13 @@ create animation. This gets congested very easily."
   part it shows. Drawn outlines and figure frames are unchanged. Driven:
   a 400x200 picture trimmed 25% right and 30% bottom went from a 415x207
   frame to 307x141, showing the three bands kept.
+- [x] **T588 — Resizing a cropped picture resizes it.** "when trying to
+  re-size and image a lot of the time it just ends up cropping it if it
+  gets too small, which is definently not what i want." A picture with a
+  crop resized free-form ("the box IS the crop window"), but it is drawn
+  object-fit:cover, so every drag that changed the box's shape cut more
+  away, and one shrunk until an edge met the size floor was cropped by
+  the other. It holds the shape it has now -- read off the box, not the
+  source picture -- Shift still frees it, and reshaping the crop is the
+  Crop button's job. Driven: a cropped 307x141 picture dragged to 84x38,
+  ratio 2.18 -> 2.21 (pixel rounding), nothing more cut away.

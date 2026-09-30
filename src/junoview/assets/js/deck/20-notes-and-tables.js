@@ -3227,10 +3227,9 @@
            they cannot (T64) */
         if(editing){if(cropMode&&selAnnot===i&&!(a.crop&&a.crop.path))
             mkCropHandles(im,layer,s,i);
-          else {im.appendChild(mkResize(a.crop
-              ?'Drag to resize the crop window'
-              :'Drag to resize — the picture keeps its shape. '
-                +'Hold Shift to stretch it'));
+          else {im.appendChild(mkResize(
+              'Drag to resize — the picture keeps its shape. '
+                +'Hold Shift to stretch it'));   /* T588: cropped too */
             im.appendChild(mkRotate());}}
         placeAnnot(im);
       } else if(a.k==='video'){
