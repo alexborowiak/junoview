@@ -72,7 +72,10 @@
     'fmt-sizepos':'size position format shape width height',
     'mi-pdf':'export pdf print save as pdf',
     'mi-pptx':'export powerpoint pptx save as',
-    'mi-import-pptx':'open powerpoint import pptx'
+    'mi-import-pptx':'open powerpoint import pptx',
+    /* T601: what Overleaf and LaTeX call it, and what Word calls it */
+    'mi-parts':'parts include input subfile master document linked '
+      +'presentations chapters combine talks join decks'
   };
   function cmdLabel(b){
     var c=b.cloneNode(true);

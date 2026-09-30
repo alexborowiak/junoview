@@ -1498,7 +1498,9 @@
     ['both','Thumbnails and headings','Both'],
     /* not a strip mode at all, but the same question — how do I want to
        look at this deck — so it is the same menu (T26) */
-    ['overview','Overview map…','Overview map…']];
+    ['overview','Overview map…','Overview map…'],
+    /* T601: the talk as its parts -- the other presentations it shows */
+    ['parts','Parts of this talk…','Parts…']];
   var filmView=null;
   function filmMode(){
     if(filmView===null){

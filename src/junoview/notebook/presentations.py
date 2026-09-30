@@ -122,6 +122,11 @@ def as_presentations(obj: Any) -> list:
                 # all (2026-08-22).
                 if isinstance(s.get("sec"), str) and s["sec"].strip():
                     slide["sec"] = s["sec"].strip()
+                # the part this slide was copied from (T601): without it
+                # the part's copies read as the deck's own, and the next
+                # update would add them a second time.
+                if isinstance(s.get("lk"), str) and s["lk"].strip():
+                    slide["lk"] = s["lk"].strip()
                 # optional slides and named cuts (2026-08-25). Both are
                 # membership stored ON the slide, so they ride through
                 # every reorder; losing them here would silently turn a

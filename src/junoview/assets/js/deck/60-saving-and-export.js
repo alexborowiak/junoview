@@ -178,6 +178,9 @@
      the same there) and back inside the editor when it is not. */
   function askHost(dlg){
     var host=(deckEl&&!deckEl.hidden)?deckEl:document.body;
+    /* T601: .deck is a stacking context under the Parts view, which sits
+       on the body -- a question it asks has to come up over it */
+    if($('#deck-parts')) host=document.body;
     var fs=document.fullscreenElement;
     if(fs&&fs!==document.documentElement&&!fs.contains(host)) host=fs;
     if(dlg.parentNode!==host) host.appendChild(dlg);
@@ -216,7 +219,8 @@
       field.placeholder=o.placeholder||'';
     }
     askCb=cb;
-    dlg.classList.toggle('over-design',!!$('#deck-design'));
+    /* T601: the Parts view is one of the full-window views it asks over */
+    dlg.classList.toggle('over-design',!!($('#deck-design')||$('#deck-parts')));
     dlg.classList.toggle('ask-form',!!rows);
     dlg.hidden=false;
     /* T546: NOW, and again a tick later only if the focus went. Chrome
@@ -3808,6 +3812,7 @@
       renameRememberedPresentation(old,nm);
     saveProject({from:old,to:nm});
     fileRename(old,nm);   /* T416: the file follows the name */
+    partRenamed(old,nm);   /* T601: and so does every talk showing it */
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');
     return true;
@@ -3854,6 +3859,7 @@
       renameOpenPresentation(old,nm);
     saveProject({from:old,to:nm});
     fileRename(old,nm);
+    partRenamed(old,nm);   /* T601 */
     status();renderPresTabs();renderPresRow();
     toast('Renamed \u201c'+old+'\u201d to \u201c'+nm+'\u201d');
     return true;

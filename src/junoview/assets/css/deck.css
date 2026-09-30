@@ -4169,6 +4169,59 @@ body.light .deck-overview{background:var(--chrome-0);}
 body.light .ovw-t{color:var(--ink);}
 body.light .ovw-lab{color:var(--ink-2);}
 
+/* ---------- T601: the Parts view ----------
+   The overview map's overlay and grouping, one group per part or section
+   in the talk's order; a part's header says what it shows, whether that
+   is up to date, and carries what can be done with it. */
+.deck-parts .prt-head{flex-wrap:wrap;row-gap:6px;}
+.deck-parts .dbtn[hidden]{display:none;}
+.prt-intro{margin:10px 16px 0;font-size:12px;line-height:1.45;
+  color:var(--chrome-ink-2);max-width:86ch;}
+.prt-say{margin:8px 16px 0;padding:6px 10px;border-radius:6px;font-size:12px;
+  color:#dbe7ef;background:color-mix(in srgb,var(--cyan) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--cyan) 40%,transparent);}
+.prt-say.warn{background:color-mix(in srgb,var(--warning) 14%,transparent);
+  border-color:color-mix(in srgb,var(--warning) 50%,transparent);}
+.prt-say[hidden]{display:none;}
+.prt-grp{border:1px solid #ffffff17;border-radius:9px;padding:10px 12px 12px;}
+.prt-grp.linked{border-color:color-mix(in srgb,var(--accent) 50%,transparent);
+  background:color-mix(in srgb,var(--accent) 6%,transparent);}
+.prt-gh{display:flex;align-items:center;gap:10px;margin-bottom:9px;
+  flex-wrap:wrap;}
+.prt-ic{display:inline-flex;color:var(--chrome-ink-2);}
+.prt-grp.linked .prt-ic{color:var(--accent);}
+.prt-tx{flex:1;min-width:200px;}
+.prt-name{font-size:13.5px;font-weight:600;color:#dbe7ef;}
+.prt-from{font-weight:400;color:var(--chrome-ink-2);}
+.prt-sub{font-size:11.5px;color:var(--chrome-ink-2);margin-top:2px;}
+.prt-sub.warn{color:var(--warning);}
+.prt-acts{display:flex;gap:5px;flex-wrap:wrap;}
+.prt-acts .dbtn:disabled{opacity:.4;cursor:default;}
+/* the chevrons turned to point where the part goes */
+.prt-up .bic,.prt-dn .bic{transform:rotate(90deg);}
+.prt-none{color:var(--chrome-ink-2);font-size:12.5px;margin:0 0 14px;}
+.prt-pick{display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:16px;}
+.prt-pick-list{display:flex;flex-direction:column;gap:4px;}
+.prt-row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  text-align:left;background:#ffffff08;border:1px solid #ffffff1f;
+  border-radius:7px;padding:7px 10px;cursor:pointer;color:#dbe7ef;
+  font-family:var(--sans);}
+.prt-row:hover,.prt-row:focus-visible{border-color:var(--cyan);
+  background:#ffffff12;outline:none;}
+.prt-row.off{opacity:.55;}
+.prt-row-name{font-size:13px;font-weight:600;}
+.prt-row-sub{font-size:11px;color:var(--chrome-ink-2);}
+.prt-pick-pv{min-width:0;}
+@media (max-width:720px){.prt-pick{grid-template-columns:1fr;}}
+body.light .prt-name,body.light .prt-row,body.light .prt-say{color:var(--ink);}
+body.light .prt-grp{border-color:var(--chrome-line);}
+body.light .prt-row{background:var(--chrome-1);border-color:var(--chrome-line);}
+/* the corner's second button: a part's slide says where it comes from */
+.deck-where{gap:4px;}
+.deck-where .where-part.from{border-color:color-mix(in srgb,var(--accent) 60%,transparent);
+  color:var(--accent);}
+.deck-where .where-part[hidden]{display:none;}
+
 /* ---------- one object's history ----------
    A row is a schematic of a past state, a sentence about what changed,
    and (for anything but the current state) a button. Not a .pf-row for
@@ -5139,6 +5192,16 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .film-sec-n{flex:none;font-family:var(--mono);font-size:9px;color:var(--chrome-ink-3);}
 .film-sec:hover .film-ctr{display:flex;}
+/* T601: a divider that is a PART says so -- a tinted rule, and the word
+   "part" as the door to the Parts view */
+.film-sec.linked{border-bottom-color:color-mix(in srgb,var(--accent) 70%,transparent);
+  background:color-mix(in srgb,var(--accent) 8%,transparent);}
+.film-sec-part{flex:none;display:inline-flex;align-items:center;gap:3px;
+  background:none;border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);
+  border-radius:9px;color:var(--accent);cursor:pointer;
+  font:9px var(--mono);letter-spacing:.06em;padding:1px 6px 1px 4px;}
+.film-sec-part .bic{width:10px;height:10px;}
+.film-sec-part:hover{background:color-mix(in srgb,var(--accent) 18%,transparent);}
 /* slides inside a section step in, so the run is visible without having
    to read the divider each time */
 .film-row.in-sec{margin-left:7px;}

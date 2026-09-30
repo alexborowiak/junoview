@@ -170,6 +170,13 @@
  editable; shapes, pictures, tables, charts, notes and builds come
  across; whatever cannot is listed first"
           >Import .pptx&#8230;</button>
+        <!-- T601: a talk made of other presentations, like \input in a
+             LaTeX document -- the list of its parts, and the doors to
+             add, make, update and unlink them -->
+        <button class="dc-mi" id="mi-parts"
+          title="A talk made of other presentations: each part is edited on
+ its own and shown here as a section"
+          >Parts of this talk&#8230;</button>
         <!-- T236: HISTORY AND CHECKPOINTS MOVED TO HOME (2026-09-04,
              user: "the history as well I don’t like here, should be
              a button on the home tab"). They are things you do WHILE
@@ -3615,6 +3622,11 @@ items snap to both. Guides, not ink: never printed or exported"
         <button class="dbtn rbn-sm" id="where-btn"
           title="Every slide as a tile (the Overview map)">
           <i data-ic="film"></i> <span id="where-t">Slide 1 of 1</span></button>
+        <!-- T601: where this slide comes from, when it is a part's, or
+             which talk this presentation is a part of -- one click to
+             the other -->
+        <button class="dbtn rbn-sm where-part" id="where-part" hidden
+          ><i data-ic="link"></i> <span id="where-part-t">Part</span></button>
       </span>
       <span class="deck-zoombar" id="deck-zoombar">
         <button class="dbtn rbn-ico" id="zoom-out" aria-label="Zoom out"

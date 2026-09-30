@@ -165,10 +165,11 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     heads = re.findall(r'class="dc-mhead[^"]*">([^<]+)<', menu)
     assert heads == ["file", "export &amp; share",
                      "careful — these lose work"], heads
-    # thirteen rows you can see, down from nineteen and then up one for
-    # T320's .pptx import (the fourteenth is #mi-autosave, hidden
-    # unless the build has a project to save to)
-    assert menu.count('class="dc-mi') == 14, menu.count('class="dc-mi')
+    # fourteen rows you can see, down from nineteen and then up one for
+    # T320's .pptx import and one for T601's Parts of this talk (the
+    # fifteenth is #mi-autosave, hidden unless the build has a project
+    # to save to)
+    assert menu.count('class="dc-mi') == 15, menu.count('class="dc-mi')
     for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",
                  "mi-auto-figdocs", "mi-nums", "mi-hist", "mi-check"):
         assert f'id="{gone}"' not in menu, gone

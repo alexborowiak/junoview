@@ -126,6 +126,10 @@ RUNTIME_IDS = {
     # deck.js, THE OVERVIEW. Its search box is built with it:
     # deck.js, FINDING A SLIDE WHILE YOU ARE TALKING.
     "deck-overview", "ovw-find",
+    # The Parts view, the same kind of overlay, built per open with its
+    # header, message line and body: 57-parts.js, THE PARTS VIEW (T601).
+    "deck-parts", "prt-title", "prt-say", "prt-body", "prt-add",
+    "prt-back", "prt-upall",
     # The deck-token editor, built on demand: deck.js, DESIGN TOKENS.
     "tok-pop",
     # The animation story's off-screen paint host, built the first time a

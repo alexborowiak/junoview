@@ -501,6 +501,8 @@
     var b=$('#where-btn');
     if(b) b.title=txt+' — click for every slide as a tile (the '
       +'Overview map)';
+    /* T601: and where this slide comes from, or what this deck is part of */
+    if(typeof partChipSync==='function') partChipSync();
   }
   function whereBoot(){
     var b=$('#where-btn');
