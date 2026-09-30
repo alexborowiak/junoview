@@ -22,6 +22,33 @@ body.deck-open{overflow:hidden;}
 .deck-top{display:flex;align-items:center;gap:9px;padding:10px 18px;
   border-bottom:1px solid var(--chrome-line);background:var(--chrome-1);
   flex:none;}
+/* ---- T581: PRESENTING, THE BAR IS FOLDED AWAY -----------------------
+   Out of the grid (so the slide has the whole height) and above the top
+   edge until it is asked for: .top-peek while the pointer is at the top,
+   .top-pinned from the Controls tab, or a control inside it focused.
+   Only while presenting -- editing never shows .deck-top at all. */
+.deck:not(.editing):not(.creating) .deck-top{position:absolute;left:0;
+  right:0;top:0;z-index:40;transform:translateY(-100%);opacity:0;
+  pointer-events:none;box-shadow:0 10px 30px #0007;
+  transition:transform .18s ease,opacity .18s ease;}
+.deck.top-peek:not(.editing):not(.creating) .deck-top,
+.deck.top-pinned:not(.editing):not(.creating) .deck-top,
+.deck:not(.editing):not(.creating) .deck-top:focus-within{transform:none;
+  opacity:1;pointer-events:auto;}
+/* the faint tab that is left: half-hidden until the pointer finds it,
+   gone while the bar is out, and never in the editor */
+.deck-top-handle{position:absolute;top:0;left:50%;translate:-50% 0;
+  z-index:39;height:20px;padding:0 10px;display:flex;align-items:center;
+  gap:5px;border:1px solid var(--chrome-line);border-top:none;
+  border-radius:0 0 8px 8px;background:var(--chrome-1);
+  color:var(--chrome-ink-2);font:10.5px var(--sans);cursor:pointer;
+  opacity:.22;transition:opacity .15s ease;}
+.deck-top-handle .bic{width:12px;height:12px;}
+.deck-top-handle:hover,.deck-top-handle:focus-visible{opacity:1;}
+.deck.editing .deck-top-handle,.deck.creating .deck-top-handle,
+.deck.top-peek .deck-top-handle,.deck.top-pinned .deck-top-handle{
+  display:none;}
+@media print{.deck-top-handle{display:none!important;}}
 /* The global presentations rail is inert behind a full-screen deck.  This
    drawer is owned by the deck instead, so it can take focus and remains
    usable while presenting; it lists what is open right now: the deck on

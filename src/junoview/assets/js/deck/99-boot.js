@@ -112,6 +112,7 @@
   initFilmAuto();
   initRibbonAuto();
   talkToolsBoot();            /* laser, magnifier, black screen (T386) */
+  presBarBoot();              /* the presenting bar folds away (T581) */
   scrollShowBoot();           /* the scrolling version (T389) */
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */

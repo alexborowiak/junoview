@@ -189,3 +189,65 @@
       talkToolsReset();
     },true);
   }
+  /* ---- T581: THE PRESENTING BAR FOLDS AWAY -----------------------------
+     (2026-09-30, user: "why does present mode have these options up the
+     top. They are distracting and not necessary. I would also want
+     options to be things that are collapsable by default not always
+     there.") Stop presenting, Open now and Running late sat in a bar
+     across the top of the audience's screen for the whole talk. The bar
+     is folded away now, and what is left is a faint Controls tab at the
+     top edge. Three ways back, none of them needing the bar first: the
+     pointer at the top edge (it folds again once the pointer leaves),
+     the tab (it stays until Hide), and the keyboard (a focused control
+     keeps it open). Esc still stops presenting, and L is still Running
+     late. Kept open or not is remembered, the way the other auto-hides
+     are. */
+  var PRESBAR_KEY='jv-deck-presbar:';
+  var presBarPinned=false,presBarT=null;
+  function presBarApply(){
+    if(!deckEl) return;
+    var peek=deckEl.classList.contains('top-peek');
+    deckEl.classList.toggle('top-pinned',presBarPinned);
+    var h=$('#deck-top-handle');
+    if(h) h.setAttribute('aria-expanded',String(presBarPinned||peek));
+  }
+  function presBarPeek(on){
+    clearTimeout(presBarT);presBarT=null;
+    if(deckEl) deckEl.classList.toggle('top-peek',!!on);
+    presBarApply();
+  }
+  function presBarPin(on){
+    presBarPinned=!!on;
+    lsSet(PRESBAR_KEY+SCOPE,presBarPinned?'1':'0',true);
+    presBarPeek(false);
+  }
+  function presBarBoot(){
+    presBarPinned=lsGet(PRESBAR_KEY+SCOPE)==='1';
+    var h=$('#deck-top-handle'),fold=$('#deck-top-fold');
+    var bar=$('#deck-top-bar');
+    if(h) h.addEventListener('click',function(e){
+      e.stopPropagation();presBarPin(true);});
+    if(fold) fold.addEventListener('click',function(e){
+      e.stopPropagation();presBarPin(false);
+      if(document.activeElement&&document.activeElement.blur)
+        document.activeElement.blur();
+    });
+    /* the top edge brings it; leaving lets it go a beat later, so a
+       pointer on its way to a button does not lose the bar under it --
+       and never while the Open now drawer it anchors is out */
+    if(deckEl) deckEl.addEventListener('mousemove',function(e){
+      if(mode!=='view'||presBarPinned) return;
+      var peek=deckEl.classList.contains('top-peek');
+      if(!peek){if(e.clientY<=6) presBarPeek(true);return;}
+      var r=bar?bar.getBoundingClientRect():null;
+      var dr=$('#deck-pres-drawer');
+      if((r&&e.clientY<=r.bottom+14)||(dr&&!dr.hidden)){
+        clearTimeout(presBarT);presBarT=null;return;}
+      if(!presBarT) presBarT=setTimeout(function(){
+        presBarT=null;
+        if(bar&&bar.contains(document.activeElement)) return;
+        presBarPeek(false);
+      },450);
+    });
+    presBarApply();
+  }

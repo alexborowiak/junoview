@@ -1158,6 +1158,8 @@
         +'is closed or lost.';
     }
     syncLateButton();
+    /* T581: every talk starts with the bar folded (unless it was kept) */
+    if(typeof presBarPeek==='function') presBarPeek(false);
     if(mode==='view'&&typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
   }

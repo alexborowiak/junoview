@@ -2144,8 +2144,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T580 (2026-09-30): the Story -- Whole slide is the first card, the lit
 # card or Esc goes back, cards drag to reorder or merge clicks, and its
 # head is a column at the left.
-EXPECTED_MD5 = "5180e74850d6f3663f7bda6630e8d05a"
-EXPECTED_BYTES = 4717362
+# T581 (2026-09-30): presenting starts with its bar folded away -- a
+# Controls tab, the top edge peeks it, Hide folds it.
+EXPECTED_MD5 = "80d609a684a0a87e0cf696508c686f4c"
+EXPECTED_BYTES = 4723626
 
 
 def _render_example() -> str:
