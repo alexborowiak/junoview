@@ -86,6 +86,7 @@
        filter, size and view control is inert, and Open is already on the
        welcome screen itself. Hiding it lets the welcome own the window. */
     document.body.classList.toggle('welcoming',welcoming);
+    syncHomeTab();   /* T596: Home is lit while it is on screen */
     var back=$('#welcome-back');
     if(back) back.hidden=!(welcoming&&APP.order.length);
     /* T264: the example is a link in the row below the cards now, and
@@ -325,6 +326,9 @@
          PowerPoint's Link -- the deck's own key handler takes it */
       if(window.SemDeckLinkable&&window.SemDeckLinkable()) return;
       e.preventDefault();
+      /* T596: as tabs there is no side panel to find in -- the Open
+         dialog is where "find the thing I am looking for" goes */
+      if(filesAt()==='top'&&APP.deckHub){APP.deckHub();return;}
       f.focus();f.select();
     });
   })();
@@ -357,10 +361,72 @@
     railFilter();
     refreshChrome();
   }
+  /* ---- T596: ONE LIST OF WHAT IS OPEN ------------------------------
+     (2026-09-30, user: "looks like there is now a side-bar and tab (one
+     or the other) e.g. there is a little thing that pops up on the lhs
+     in presentations, and then there are tabs, these should be the same
+     thing not both".) T503 made open files top tabs "while the side
+     panel remains a simultaneous library view of those same live tabs",
+     so every open notebook and presentation was listed twice -- and in
+     the editor the side copy peeked out from the left edge on top of the
+     tabs. They are ONE list now, in one of two places: TABS across the
+     top (the default, with Home, New and Open on the same row, the way a
+     browser has them), or the LIST down the side (the side panel as it
+     was, and no tab row at all). App > Open files switches; the choice
+     is the person's, not the window's, so it is one key for every
+     project. The side panel's own collapse and auto-hide are unchanged
+     and only mean anything while it is the list. */
+  var FILES_AT_KEY='junoview:openfiles';
+  function filesAt(){
+    var v=null;
+    try{v=localStorage.getItem(FILES_AT_KEY);}catch(e){}
+    return v==='side'?'side':'top';
+  }
+  APP.filesAt=filesAt;
+  function applyFilesAt(){
+    var at=filesAt(),cl=document.body.classList;
+    cl.toggle('files-top',at==='top');
+    cl.toggle('files-side',at==='side');
+    /* nothing may be left peeking from a panel that is no longer there */
+    if(at==='top') cl.remove('prrail-peek');
+    $$('.jv-files-at').forEach(function(b){
+      b.setAttribute('aria-pressed',(b.dataset.at===at).toString());});
+    refreshOpenTabsRow();
+  }
+  function setFilesAt(at){
+    try{localStorage.setItem(FILES_AT_KEY,at==='side'?'side':'top');}
+    catch(e){}
+    applyFilesAt();
+  }
+  APP.setFilesAt=setFilesAt;
+  function initFilesAt(){
+    $$('.jv-files-at').forEach(function(b){
+      b.addEventListener('click',function(){setFilesAt(b.dataset.at);});});
+    var h=$('#ot-home');
+    if(h) h.addEventListener('click',function(){goHome(true);});
+    applyFilesAt();
+  }
+  /* Home is lit while it is on screen -- the tab row stays up at Home
+     whenever something is open, so there is a way back to it */
+  function syncHomeTab(){
+    var h=$('#ot-home'); if(!h) return;
+    /* a page exported from a notebook has no Home to go to (goHome only
+       means anything in the app and the web build) */
+    h.hidden=!(APP.mode==='app'||APP.mode==='web');
+    var on=document.body.classList.contains('welcoming');
+    h.classList.toggle('current',on);
+    h.setAttribute('aria-pressed',on.toString());
+  }
   function refreshOpenTabsRow(){
     var n=topTabstrip?topTabstrip.querySelectorAll('.tab').length:0;
-    /* A single open item says nothing useful but costs a whole row. */
-    if(openTabsRow) openTabsRow.hidden=n<2;
+    /* T596: as tabs, the row IS the list -- one open item included,
+       because Home, New and Open live on it now (T503 hid a single item
+       as "nothing useful", which was true only while the side panel was
+       carrying those). As a side list, there is no row at all. */
+    var on=filesAt()==='top'&&n>0;
+    if(openTabsRow) openTabsRow.hidden=!on;
+    document.body.classList.toggle('tabs-row-on',on);
+    syncHomeTab();
     if(APP.measureChrome) APP.measureChrome();
   }
   APP.refreshOpenTabsRow=refreshOpenTabsRow;
@@ -3349,7 +3415,8 @@
     {title:'Welcome to Junoview',
      text:'A figure-first view of your notebooks, plus a presentation '
        +'builder. Here is a quick tour — skip it anytime.'},
-    {sel:'#tabstrip',title:'Notebooks are tabs',
+    /* T596: the tabs, or the side list when that is where they are */
+    {sel:'#top-tabstrip,#tabstrip',title:'Notebooks are tabs',
      text:'Every notebook you open is a tab. Drop .ipynb files anywhere on '
        +'the window, or use + Open.'},
     {sel:'#tv-code',title:'Filter what you see',
@@ -3367,10 +3434,11 @@
      text:'Plot trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    {sel:'#pr-newbtn',title:'Build presentations',
-     text:'Presentations you have open are listed here; New and All '
-       +'presentations\u2026 are below. Lay out slides, drop in cards from '
-       +'any open notebook, and present full screen.'},
+    {sel:'#ot-new,#pr-newbtn',title:'Build presentations',
+     text:'New makes a presentation or a poster, and Open finds one you '
+       +'made before; the ones you have open sit with your notebooks. Lay '
+       +'out slides, drop in cards from any open notebook, and present '
+       +'full screen.'},
     {sel:'#help-btn',title:'Help & support',
      text:'Full docs live here. If Junoview helps you, Support funds a '
        +'hosted version with accounts — thank you!'}
@@ -3546,6 +3614,8 @@
       e.stopPropagation();on=!on;apply();});
     document.addEventListener('mousemove',function(e){
       if(!on) return;
+      /* T596: as tabs, the side panel is not the list -- nothing peeks */
+      if(filesAt()==='top') return;
       /* The audience view owns the left edge, but the editor deliberately
          keeps this real rail live. That makes auto-hide the same useful
          choice in both document and editor views, rather than a dead
@@ -8122,6 +8192,7 @@
      measure, TOC, tooltip host) are order-safe where they are — each
      only touches what is declared above it — but do not add more. */
   initRailAuto();
+  initFilesAt();              /* T596: tabs or the side list, not both */
   pagesBoot();                /* one section at a time (T390) */
   /* An update may arrive before the body exists; show the saved notice
      now that the application markup is ready (T206). */

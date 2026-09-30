@@ -1195,6 +1195,11 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   background:var(--chrome-2,#16273a);border:1px solid #ffffff22;border-radius:8px;
   padding:5px;min-width:214px;display:flex;flex-direction:column;
   box-shadow:0 12px 34px #00000066;}
+/* the house rule (T596): `display:flex` beats the UA's [hidden], and only
+   menus inside .deck had `.deck [hidden]` to fall back on -- so the
+   reader's App menu, once opened, stayed on screen after Esc, an outside
+   click or a pick, and a menu on the tab row showed before it was asked */
+.dc-menu[hidden]{display:none!important;}
 .dc-mi{text-align:left;background:none;border:none;color:#dce6ee;
   font-size:12.5px;font-family:var(--sans);padding:8px 11px;
   border-radius:5px;cursor:pointer;transition:background .12s;}
@@ -1385,6 +1390,11 @@ body.slide-editing .apptop{display:none;}
 body.slide-editing .presrail,body.slide-editing .presrail-show{z-index:134;}
 body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{
   display:flex;z-index:133;pointer-events:none;}
+/* T596: the tab row spans the editor from its left edge. Editing also
+   sets creating-docs, whose rule moves the header right by the builder
+   panel's width -- a panel the full-window editor does not have -- so the
+   tabs began 430px in, over nothing. */
+body.slide-editing.creating-docs .apptop{left:var(--presrail-w);}
 body.slide-editing:has(#open-tabs-row:not([hidden])) .nb-filebar,
 body.slide-editing:has(#open-tabs-row:not([hidden])) .appbar{display:none;}
 body.slide-editing:has(#open-tabs-row:not([hidden])) .open-tabs-row{

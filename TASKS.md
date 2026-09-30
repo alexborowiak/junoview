@@ -10588,3 +10588,32 @@ a presentation before opening it, and the colour themes' background.
   never a theme's and are untouched either way. Remembered per project.
   Driven: default dark deck, box off, Business -> the page stays
   #0b141d; Paper -> the warning; box on again, Business -> #eef1f4.
+- [x] **T596 — The open files are one list, in one place.** "looks like
+  there is now a side-bar and tab (one or the other) e.g. there is a
+  little thing that pops up on the lhs in presentations, and then there
+  are tabs, these should be the same thing not both." T503 made open
+  files top tabs "while the side panel remains a simultaneous library
+  view of those same live tabs", so every open notebook and presentation
+  was listed twice, and in the editor the side copy peeked out of the
+  left edge over the tabs. Now they are TABS across the top (the
+  default) or the LIST down the side, never both; App > Open files
+  switches, remembered for every project. As tabs, the row is the first
+  thing in the header and carries what the side panel did -- Home before
+  the tabs (lit while it is on screen, and hidden on an exported page,
+  which has no Home), New (the side panel's four, each pressing the one
+  real button) and Open... (the library) after them -- so it shows with
+  one item too, and at Home whenever anything is open. The side panel,
+  its edge handle and its width are gone; Ctrl+K opens the Open dialog
+  instead of a Find field no one can see; and nothing pops out of the
+  left edge: not the side panel's auto-hide peek in the editor, and not
+  the open-items drawer while presenting ("Open now" on the presenting
+  bar is the way to it during a talk). As a side list, all of that is as
+  it was and no tab row shows. Three faults found driving it, each on
+  the original code too: the draft dot printed a literal "\2022"
+  (a doubled backslash in a stylesheet); the reader's App menu stayed on
+  screen after Esc, an outside click or a pick (`display:flex` beat
+  [hidden] outside .deck -- one `.dc-menu[hidden]` rule); and the
+  editor's header sat 430px in, behind the builder panel's offset that
+  the full-window editor does not have. Driven in the app and the web
+  build: reader, editor, Home and presenting as tabs; the App menu
+  switching to the list and back; light theme.

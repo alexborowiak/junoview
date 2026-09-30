@@ -53,10 +53,15 @@ def test_reader_uses_the_editor_app_menu():
     page = assets.load("html/page.html")
     assert 'id="app-appwrap"' in page
     assert '<i data-ic="theme"></i> App &#9662;</button>' in page
-    menu = page.split('id="app-app-menu"')[1].split("</div>")[0]
+    # the menu holds a heading <div> since T596, so it ends at the wrap
+    menu = page.split('id="app-app-menu"')[1].split("</span>")[0]
     assert 'id="scheme-btn"' in menu
     assert 'id="help-btn"' in menu and "How to\n            use&#8230;" in menu
     assert 'id="support-btn"' in menu
+    # T596: where the open files are listed is an app-wide choice
+    assert '<div class="dc-mhead">open files</div>' in menu
+    assert 'class="dc-mi jv-files-at" type="button" data-at="top"' in menu
+    assert 'class="dc-mi jv-files-at" type="button" data-at="side"' in menu
 
 
 def test_the_icon_only_square_rule_names_only_icon_only_buttons():

@@ -19,6 +19,42 @@
 <body>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
+  <!-- T596: ONE LIST OF WHAT IS OPEN (2026-09-30, user: "there is now a
+       side-bar and tab (one or the other) ... these should be the same
+       thing not both"). The open notebooks and presentations are either
+       these tabs, across the top of every view, or the list down the side
+       -- never both at once. Tabs are the default; App > Open files
+       switches. As tabs, the row carries what the side panel did: Home
+       first, then New and Open after the tabs, the way a browser does. -->
+  <div class="open-tabs-row" id="open-tabs-row" hidden>
+    <button class="toggle ot-home" id="ot-home" type="button"
+      title="Home &mdash; the Junoview start screen. Nothing is closed."
+      >{logo}<span class="btxt">Home</span></button>
+    <div class="top-tabstrip" id="top-tabstrip" role="tablist"
+      aria-label="Open documents"></div>
+    <span class="ot-doors">
+      <span class="dc-menuwrap" id="ot-newwrap">
+        <button class="toggle ot-door" id="ot-new" type="button"
+          aria-haspopup="true" aria-expanded="false"
+          aria-controls="ot-newmenu" title="Create something new"
+          ><i data-ic="plus"></i> New &#9662;</button>
+        <div class="dc-menu" id="ot-newmenu" hidden>
+          <button class="dc-mi" type="button" data-for="pr-new"
+            >Presentation</button>
+          <button class="dc-mi" type="button" data-for="pr-newpost"
+            >Poster</button>
+          <button class="dc-mi" type="button" data-for="pr-newview"
+            >Custom view</button>
+          <button class="dc-mi" type="button" data-for="pr-newfold"
+            >Folder</button>
+        </div>
+      </span>
+      <button class="toggle ot-door" id="ot-open" type="button"
+        title="Open a presentation: the recent ones, everything saved
+ here, or a file from this computer (Ctrl+K)"
+        ><i data-ic="open"></i> Open&#8230;</button>
+    </span>
+  </div>
   <!-- File provenance is a thin utility bar ABOVE the notebook controls.
        It used to consume a whole left-most ribbon group, making the
        filters needlessly wide before they even began. The active shell's
@@ -46,11 +82,21 @@
       <span class="dc-menuwrap" id="app-appwrap">
         <button class="toggle" id="app-app" aria-haspopup="true"
           aria-expanded="false" aria-controls="app-app-menu"
-          title="Theme, help and support"><i data-ic="theme"></i> App &#9662;</button>
+          title="Theme, where open files are listed, help and support"><i data-ic="theme"></i> App &#9662;</button>
         <div class="dc-menu" id="app-app-menu" hidden>
           <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
             aria-expanded="false" aria-controls="jv-scheme-menu"
             title="Choose a colour scheme">Theme&#8230;</button>
+          <!-- T596: where the open files are listed -- in ONE place -->
+          <div class="dc-mhead">open files</div>
+          <button class="dc-mi jv-files-at" type="button" data-at="top"
+            aria-pressed="true" title="Open notebooks and presentations are tabs
+ across the top, with Home, New and Open beside them. The side panel goes
+ away.">As tabs across the top</button>
+          <button class="dc-mi jv-files-at" type="button" data-at="side"
+            aria-pressed="false" title="Open notebooks and presentations are a
+ list down the left, with Recents, All presentations and New under it. The
+ tabs go away.">As a list down the side</button>
           <button class="dc-mi" id="help-btn"
             title="How to use this, and everything it can do (?)">How to
             use&#8230;</button>
@@ -64,13 +110,6 @@
  code and output, folded cells included (Ctrl+F)"
         ><i data-ic="find"></i> Find</button>
     </span>
-  </div>
-  <!-- Open documents are conventional tabs when there is a choice. The
-       side panel remains available at the same time as the library view. -->
-  <div class="open-tabs-row" id="open-tabs-row" hidden>
-    <span class="open-tabs-label">Open</span>
-    <div class="top-tabstrip" id="top-tabstrip" role="tablist"
-      aria-label="Open documents"></div>
   </div>
   <div class="appbar">
     <span class="abgrp ab-nav" id="ab-nav"><span class="abgrp-row">
