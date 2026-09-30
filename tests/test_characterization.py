@@ -2235,8 +2235,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Shrink the words / Fixed box and the same three on the right-click menu,
 # a Search commands alias, the .pptx normAutofit/noAutofit/spAutoFit both
 # ways, and the help entry.
-EXPECTED_MD5 = "b5111c920074383fabb0fb07b4717cb6"
-EXPECTED_BYTES = 4895221
+# Thumbnails (2026-10-01): drawShapeSvg gives a rectangle and an ellipse
+# an outline path (they were d="" in every thumbnail) and a thumbnail
+# shape's stroke is not clipped at its own edge.
+EXPECTED_MD5 = "ff50c5d418b08d3bb8544be5524d78d6"
+EXPECTED_BYTES = 4895860
 
 
 def _render_example() -> str:

@@ -1433,6 +1433,9 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
 .mini-it{position:absolute;overflow:hidden;pointer-events:none;}
 .mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}
+/* a shape's outline sits ON its edge, half outside: clipped, a thin
+   rectangle lost its bottom edge in the strip */
+.mini-it.is-shape{overflow:visible;}
 .mini-it.is-img img{width:100%;height:100%;object-fit:contain;
   display:block;}
 .mini-it.is-img.is-crop img{object-fit:cover;}

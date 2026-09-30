@@ -2625,7 +2625,14 @@
     } else {
       svg.setAttribute('preserveAspectRatio','none');
       var p=document.createElementNS(SVGNS,'path');
-      p.setAttribute('d',SHAPE_PATHS[shp]||'');
+      /* The canvas draws a rectangle and an ellipse as a CSS box, so
+         neither is in SHAPE_PATHS -- and the thumbnails, which draw every
+         shape through here, wrote them as d="": the two commonest shapes
+         were missing from every slide in the strip (2026-10-01, found
+         driving T572). Their outlines, for the callers that need a path. */
+      p.setAttribute('d',SHAPE_PATHS[shp]||(shp==='ellipse'
+        ?'M1 50 A49 49 0 1 0 99 50 A49 49 0 1 0 1 50 Z'
+        :shp==='rect'?'M1 1 H99 V99 H1 Z':''));
       var fillVal='none';
       if(SHAPE_OPEN[shp]){
         /* T419: a bracket is a stroke; a fill would paint the page
