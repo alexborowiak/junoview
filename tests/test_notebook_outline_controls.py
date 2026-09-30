@@ -66,10 +66,13 @@ if(flags.has('sec-collapsed')||!flags.has('sec-off')||saves!==2)
     assert result.returncode == 0, result.stderr
 
 
-def test_open_tabs_are_always_available_in_both_places():
-    """The top strip is a normal tab row, and the side panel remains a
-    simultaneous library view. There is no placement preference that makes
-    one of them disappear.
+def test_open_tabs_are_one_list_in_one_place():
+    """The top strip is a normal tab row and the side panel a list, both
+    built from one source. T503 kept them on screen together; T596 made
+    them one list in one place (2026-09-30, user: "these should be the
+    same thing not both") -- tabs by default, the side list by choice
+    (App > Open files). A single open item is a tab too now: the row
+    carries Home, New and Open once the side panel is not there to.
     """
     page = assets.page_template()
     js = assets.app_js()
@@ -82,5 +85,8 @@ def test_open_tabs_are_always_available_in_both_places():
     assert "if(APP.renderPresentationTabs) APP.renderPresentationTabs();" in js
     assert "function refreshOpenTabsRow(){" in js
     assert "topTabstrip.querySelectorAll('.tab').length" in js
-    assert "if(openTabsRow) openTabsRow.hidden=n<2;" in js
+    assert "    var on=filesAt()==='top'&&n>0;" in js
+    assert "    if(openTabsRow) openTabsRow.hidden=!on;" in js
+    assert "var FILES_AT_KEY='junoview:openfiles';" in js
+    # one choice, not a placement per surface
     assert "setTabPlacement" not in js

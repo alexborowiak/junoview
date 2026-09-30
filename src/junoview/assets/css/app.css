@@ -270,9 +270,21 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
   box-sizing:border-box;
   padding:0 8px;background:var(--chrome-1,#0d1a26);
   border-bottom:1px solid #ffffff12;}
-.open-tabs-row[hidden]{display:none!important;}
-.open-tabs-label{font:9px var(--mono);letter-spacing:.16em;
-  text-transform:uppercase;color:var(--chrome-ink-2);padding:0 2px 8px;}
+.open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
+/* T596: Home before the tabs, New and Open after them -- the side panel's
+   doors, where the list of open files now lives */
+.open-tabs-row .ot-home,.open-tabs-row .ot-door{align-self:center;flex:none;
+  height:26px;display:inline-flex;align-items:center;gap:6px;
+  padding:0 9px;font-size:11.5px;white-space:nowrap;}
+.open-tabs-row .ot-home .jv-logo{width:17px;height:17px;flex:none;}
+.open-tabs-row .ot-home.current{color:var(--accent);
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+.ot-doors{display:flex;align-items:center;gap:4px;flex:none;
+  align-self:center;}
+/* at Home no tab is the one on screen, whatever was last active */
+body.welcoming .top-tabstrip .tab.current{background:none;
+  box-shadow:none;color:inherit;}
 .top-tabstrip{display:flex;align-items:stretch;gap:4px;min-width:0;
   overflow-x:auto;scrollbar-width:thin;padding-top:5px;}
 .top-tabstrip .tab{height:28px;box-sizing:border-box;max-width:240px;
@@ -282,8 +294,10 @@ body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
   justify-content:center;flex:none;color:var(--cyan);}
 .top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
 .top-tabstrip .top-pres-tab.current .top-pres-ico{color:currentColor;}
+/* one backslash: this is a stylesheet, not a Python string -- the doubled
+   one printed a literal "\2022" after the name (T596) */
 .top-tabstrip .top-pres-tab.draftonly .tab-t::after{
-  content:" \\2022";color:var(--amber);}
+  content:" \2022";color:var(--amber);}
 .top-tabstrip .top-pres-main{display:flex;align-items:center;gap:8px;
   flex:1;min-width:0;border:0;padding:0;background:none;color:inherit;
   font:inherit;text-align:left;cursor:pointer;}
@@ -483,6 +497,12 @@ body.presrail-min .pr-ico{width:auto;}
 /* fully hidden: a small edge handle brings it back */
 body.presrail-hidden{--presrail-w:0px;}
 body.presrail-hidden .presrail{display:none;}
+/* T596: as tabs, the side panel is not the list of open files, and it is
+   not on screen at all -- its doors are on the tab row. Its collapse and
+   auto-hide states are kept for when it is the list again. */
+body.files-top,body.files-top.presrail-min,body.files-top.prrail-auto{
+  --presrail-w:0px;}
+body.files-top .presrail,body.files-top .presrail-show{display:none!important;}
 /* ---- rail auto-hide (OFF by default), same taskbar model as the
    present bar: the panel leaves, the document takes the full width, and
    the panel slides back when the pointer reaches the left edge ---- */
@@ -531,6 +551,10 @@ body{padding-top:var(--chrome-h);padding-left:var(--presrail-w);}
    header and stays at its last value while hidden, hence padding-top:0. */
 body.welcoming .apptop{display:none;}
 body.welcoming{padding-top:0;}
+/* T596: at Home the tab row stays up while anything is open -- it is the
+   way back to it -- and nothing else of the header does */
+body.welcoming.tabs-row-on .apptop{display:flex;}
+body.welcoming.tabs-row-on .apptop>:not(.open-tabs-row){display:none!important;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}
 .rail{top:var(--chrome-h);height:calc(100vh - var(--chrome-h));}
@@ -557,6 +581,7 @@ body.creating-docs .apptop{
 /* the ribbon is hidden while this is up, so start at the very top rather
    than leaving its reserved band as an empty strip above the hero */
 body.welcoming .welcome{top:0;}
+body.welcoming.tabs-row-on .welcome{top:var(--open-tabs-h);}
 body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-box{text-align:center;max-width:760px;margin:0 auto;
   padding:0 30px 60px;}

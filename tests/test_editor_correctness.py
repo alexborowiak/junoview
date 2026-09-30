@@ -1257,9 +1257,13 @@ def test_the_tools_fold_away(out):
     assert ".rbn-tabs .rbn-fold{align-self:center;" in out
 
 
-def test_open_documents_live_in_both_top_and_side_tab_views(out):
-    """Open files and presentations have one vertical library and one
-    ordinary top strip. The editor keeps both navigation surfaces live.
+def test_open_documents_are_one_list_tabs_or_the_side(out):
+    """Open files and presentations are built into one vertical list and
+    one ordinary top strip from the same source -- but since T596 only
+    ONE is ever on screen (2026-09-30, user: "there is now a side-bar and
+    tab (one or the other) ... these should be the same thing not both"):
+    the top strip while they are tabs, the side panel while they are a
+    list.
     """
     rail = out.split('class="presrail"')[1].split("</nav>")[0]
     assert 'id="tabstrip"' in rail
@@ -1273,7 +1277,10 @@ def test_open_documents_live_in_both_top_and_side_tab_views(out):
     assert "top.appendChild(presItem(nm,savedNames,editing,true));" in out
     assert "action.setAttribute('role','tab');" in out
     assert "action.setAttribute('aria-selected',selected?'true':'false');" in out
-    assert "if(openTabsRow) openTabsRow.hidden=n<2;" in out
+    assert "    var on=filesAt()==='top'&&n>0;" in out
+    assert "    if(openTabsRow) openTabsRow.hidden=!on;" in out
+    assert ("body.files-top .presrail,body.files-top .presrail-show"
+            "{display:none!important;}") in out
     assert ".presrail .tabstrip{display:flex;flex-direction:column;" in out
     assert "body.slide-editing:has(#open-tabs-row:not([hidden])) .apptop{" in out
     assert "body.slide-editing .presrail,body.slide-editing .presrail-show" in out

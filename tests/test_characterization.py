@@ -2186,8 +2186,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # theme (or a style set carrying a palette) changes the slide background.
 # ...and again for T595's follow-up: the tick box's tooltip is under the
 # 160-character ceiling, and the help names the real path to it.
-EXPECTED_MD5 = "78228f8da269221ebdc498239a68e414"
-EXPECTED_BYTES = 4748555
+# T596 (2026-09-30): the open files are one list -- tabs across the top
+# (Home, New and Open on the row) or the side panel's list, never both;
+# App > Open files switches. Also: the draft dot's doubled backslash, a
+# .dc-menu [hidden] rule, and the editor's header no longer offset.
+EXPECTED_MD5 = "f525f17ed311bf1e8cff9ab5c4bd5374"
+EXPECTED_BYTES = 4760094
 
 
 def _render_example() -> str:

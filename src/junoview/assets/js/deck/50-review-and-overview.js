@@ -1947,8 +1947,10 @@
     var c=barCfg();
     menuHead(m,'where this bar sits');
     [['pop','A pop-up',
-      'It opens from the chevron beside Home and when you reach the left '
-      +'edge, and closes when you leave it'],
+      (APP.filesAt&&APP.filesAt()==='top')
+        ?'It opens from Open now, and closes when you leave it'
+        :'It opens from the chevron beside Home and when you reach the '
+          +'left edge, and closes when you leave it'],
      ['left','A rail down the left',
       'It stays open and the slide makes room for it'],
      ['top','A strip across the top',
@@ -2009,6 +2011,10 @@
       var d=$('#deck-pres-drawer'); if(!d) return;
       /* T448: a docked bar is already open and stays open */
       if(barDocked()) return;
+      /* T596: while the open files are tabs across the top, nothing
+         pops out of the left edge -- "Open now" on the presenting bar
+         is the way to the list during a talk */
+      if(APP.filesAt&&APP.filesAt()==='top'&&d.hidden) return;
       if(deckEl.hidden||mode!=='view') return;
       var hub=$('#presentation-hub');
       if(hub&&!hub.hidden) return;
@@ -2130,6 +2136,24 @@
     window.SemApp.deckPinToggle=togglePinPresentation;   /* T435 */
     renderPresentationHub();renderDeckPresentationDrawer();
     if(APP.refreshChrome) APP.refreshChrome();
+  }
+  /* ---- T596: THE TAB ROW'S NEW AND OPEN ------------------------------
+     As tabs, the open files' row carries the doors the side panel held:
+     New (the same four things the side panel's New made -- each row
+     presses the one real button, so there is one implementation of each)
+     and Open (the library, where Recents, every saved presentation and a
+     file from this computer are). */
+  function tabRowBoot(){
+    var m=wireMenuToggle('ot-newwrap','ot-new','ot-newmenu');
+    if(m) $$('.dc-mi',m.menu).forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayHide(m.menu);
+        var real=$('#'+b.dataset.for);
+        if(real) real.click();
+      });
+    });
+    var o=$('#ot-open');
+    if(o) o.addEventListener('click',function(){openPresentationHub();});
   }
   function choosePresentation(nm){
     var A=window.SemApp||{};
