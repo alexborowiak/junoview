@@ -79,6 +79,8 @@ src/junoview/
 │   ├── routes.py          the HTTP surface
 │   ├── state.py           open tabs, the project file, the file browser
 │   ├── notebook_edit.py   writing notes back into an .ipynb, with snapshots
+│   ├── exports.py         a .pptx the page built, written unmarked into
+│   │                      Downloads (no Protected View), and opened
 │   └── vcs.py             optional git awareness
 │
 ├── web.py             the client-side (Pyodide) build

@@ -47,6 +47,7 @@ from ..notebook.sources import (
 )
 from ..render.items import render_item
 from ..render.page import render_shell
+from .exports import export_folder, reveal, write_export
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
 from .state import StaleWrite, _app_page, _AppState, _is_deck_file, _list_dir
 from .vcs import (
@@ -317,6 +318,10 @@ def _make_handler(state: _AppState):
                     self._json(self._read_pptx(body))
                 elif url.path == "/api/importpptx":
                     self._json(self._import_pptx(body))
+                elif url.path == "/api/export":
+                    self._json(self._export(body))
+                elif url.path == "/api/reveal":
+                    self._json(self._reveal(body))
                 elif url.path == "/api/parse":
                     self._json(self._parse_nb(body))
                 elif url.path == "/api/save":
@@ -373,6 +378,33 @@ def _make_handler(state: _AppState):
             come up as base64 and go back down as the spec (T320)."""
             return read_pptx_b64(str(body.get("name") or ""),
                                  str(body.get("b64") or ""))
+
+        def _export(self, body: dict) -> dict:
+            """A .pptx the page built, written where a download would go
+            but by this server -- so it carries no mark of the internet
+            and PowerPoint opens it ready to edit (T600)."""
+            path = write_export(export_folder(),
+                                str(body.get("name") or ""),
+                                str(body.get("b64") or ""))
+            with state.lock:
+                state.exported.add(str(path))
+            return {"path": str(path), "name": path.name,
+                    "folder": path.parent.name}
+
+        def _reveal(self, body: dict) -> dict:
+            """Open, or show in its folder, a file THIS run exported --
+            nothing else, so the page cannot use it to launch a file."""
+            raw = str(body.get("path") or "")
+            with state.lock:
+                known = raw in state.exported
+            if not known:
+                raise ValueError("only a file Junoview exported in this "
+                                 "session can be opened from here")
+            path = Path(raw)
+            if not path.exists():
+                raise FileNotFoundError(f"{path.name} is no longer there")
+            reveal(path, "folder" if body.get("how") == "folder" else "open")
+            return {"ok": True}
 
         def _read_deck(self, body: dict) -> dict:
             """Hand back a saved .junoview presentation file's TEXT — the

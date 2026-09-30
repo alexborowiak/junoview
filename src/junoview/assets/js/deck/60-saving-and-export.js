@@ -28,6 +28,20 @@
     clearTimeout(toastTimer);
     toastTimer=setTimeout(function(){t.hidden=true;},ms||9000);
   }
+  /* T600: the same, with more than one reply ([label, fn] pairs) */
+  function toastActs(msg,acts,ms){
+    var t=$('#deck-toast'); if(!t){toast(msg);return;}
+    t.textContent=msg+' ';
+    (acts||[]).forEach(function(a){
+      var b=document.createElement('button');
+      b.type='button';b.className='toast-act';b.textContent=a[0];
+      b.addEventListener('click',function(){t.hidden=true;a[1]();});
+      t.appendChild(b);
+    });
+    t.hidden=false;
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){t.hidden=true;},ms||9000);
+  }
   /* ---- T475: THE EDITOR'S OWN QUESTION ---------------------------------
      window.prompt was the browser's box: unstyled, un-themed, the one
      dialog in the editor that did not look like the editor, blocked
@@ -2901,6 +2915,74 @@
         ok:'Export .pptx',cancel:'Not now'},function(y){res(y===true);});
     });
   }
+  /* ---- T600: A .pptx THAT OPENS READY TO EDIT -----------------------
+     (2026-09-30, user, with PowerPoint refusing edits: "when downloading
+     a junoview as pptx for some reason it is downloaded in protected
+     view".) The file is sound -- every part, type and relationship
+     checks out -- but Windows marks everything a browser downloads as
+     from the internet, and PowerPoint opens every such file in
+     Protected View. No page can download a file without that mark. The
+     Junoview app on this computer does not need to: the server writes
+     the bytes into Downloads the way a desktop program writes a file,
+     unmarked (server/exports.py), and the toast can open it or show it
+     in its folder. In a browser the download is all there is, so the
+     first one on Windows says why PowerPoint will ask, and how to make
+     it stop asking. */
+  var PV_TOLD_KEY='semopts:pptx-protected-told';
+  function pptxDownload(blob,fname){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=fname;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  }
+  function pptxProtectedHelp(){
+    askTell({title:'Why PowerPoint opens it in Protected View',
+      what:'Windows marks every file a web browser downloads as coming '
+        +'from the internet, and PowerPoint opens those read-only until '
+        +'you press Enable Editing. Nothing is wrong with the file.\n\n'
+        +'To stop it for good, either:\n'
+        +'\u2022 in PowerPoint, File \u203a Options \u203a Trust Center '
+        +'\u203a Trust Center Settings\u2026 \u203a Trusted Locations '
+        +'\u203a Add new location\u2026, and add your Downloads folder; or\n'
+        +'\u2022 right-click the file \u203a Properties \u203a tick '
+        +'Unblock \u203a OK (that file only).',
+      note:'The Junoview app on your computer writes the .pptx itself, '
+        +'so its files open ready to edit.'});
+  }
+  function pptxDeliver(blob,fname,msg){
+    if(APP.mode==='app'&&APP.api){
+      readAsDataURL(blob).then(function(url){
+        return APP.api('/api/export',{name:fname,
+          b64:String(url).split(',')[1]||''});
+      }).then(function(j){
+        function reveal(how){
+          APP.api('/api/reveal',{path:j.path,how:how}).catch(function(e){
+            toast('Could not open it: '+((e&&e.message)||e),8000);});
+        }
+        toastActs(msg.replace('.pptx saved','Saved '+j.name+' in '
+          +(j.folder||'Downloads'))+' \u2014 it opens ready to edit.',
+          [['Open it',function(){reveal('open');}],
+           ['Show in folder',function(){reveal('folder');}]],12000);
+      }).catch(function(e){
+        /* the server could not write it: the browser still can */
+        pptxDownload(blob,fname);
+        toast(msg+' (downloaded by the browser: '
+          +((e&&e.message)||e)+')',9000);
+      });
+      return;
+    }
+    pptxDownload(blob,fname);
+    var windows=/Windows/i.test(String(navigator.userAgent||''));
+    if(windows&&lsGet(PV_TOLD_KEY)!=='1'){
+      lsSet(PV_TOLD_KEY,'1',true);
+      toastActs(msg+'. PowerPoint will open it in Protected View \u2014 '
+        +'press Enable Editing there.',
+        [['Why, and how to stop it\u2026',pptxProtectedHelp]],14000);
+      return;
+    }
+    toast(msg);
+  }
   function pptxBuildAndSave(orig){
     var pg=pageOf(),
       note={skipped:0,cropped:0,maths:0,tied:0,exits:0,
@@ -2968,11 +3050,7 @@
           section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):''};
       }),
     });
-    var a=document.createElement('a');
-    a.href=URL.createObjectURL(out.blob);
-    a.download=(pres.name||'presentation')+'.pptx';
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+    var fname=(pres.name||'presentation')+'.pptx';
     var msg='.pptx saved — text stays editable'+outputNote();
     var noted=outputSlides().filter(function(e){
       return e.s&&e.s.notes&&e.s.notes.trim();}).length;
@@ -2996,7 +3074,7 @@
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
       +'this writer has no LaTeX-to-.pptx path, so they were flattened';
-    toast(msg);
+    pptxDeliver(out.blob,fname,msg);
     /* one honest tally for the caller: the builder counts items IT could not
        write, this counts cells that never became items — reporting only one
        of the two reads as "nothing was lost" when something was */
