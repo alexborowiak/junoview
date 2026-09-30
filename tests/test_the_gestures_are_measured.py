@@ -35,11 +35,14 @@ def test_the_fit_is_replayed_per_state(out):
 
 
 def test_the_strip_floor_waits_for_the_gesture(out):
-    assert "if(filmFloorMemo[sig]){filmFloorSig=sig;return filmFloorMemo[sig];}" \
-        in out
-    later = out.split("  function fitFilmLater(){")[1].split("\n  }\n")[0]
-    assert "if(filmPtrDown){filmFloorT=setTimeout(run,300);return;}" in later
-    fit = out.split("  function fitFilmMax(){")[1].split("\n  }\n")[0]
-    assert "if(!f&&!filmFloorW) f=ribbonMinW();   /* the first answer, now */" \
-        in fit
-    assert "else if(!f) fitFilmLater();" in fit
+    """T539 kept the strip's floor per ribbon state and measured a new
+    state after the gesture. T582 removed the floor and its 98ms walk
+    outright (the ribbon no longer shares a row with the strip), so a
+    selection has no strip measurement to wait for at all."""
+    assert "function fitFilmLater(){" not in out
+    assert "filmPtrDown" not in out
+    # selecting re-judges the ribbon's density and nothing else
+    sel = out.split("    /* groups appearing or leaving changes the width")[1] \
+        .split("\n  }\n")[0]
+    assert "fitFilmMax" not in sel.split("*/", 1)[1]
+    assert "    fitEditRibbon();" in sel

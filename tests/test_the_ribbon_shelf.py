@@ -71,17 +71,16 @@ def test_one_row_at_a_time_and_it_is_the_same_row(out):
 
 
 def test_the_shelf_survives_every_measuring_pass(out):
-    """fitEditRibbon unfolds the whole bar to judge the row, and
-    ribbonMinW does it eight times over to find the strip's ceiling.
-    Each one hands the shelf's row back, so without this the shelf shut
-    itself on every selection change."""
+    """fitEditRibbon unfolds the whole bar to judge the row (and
+    ribbonMinW did it eight times over to find the strip's ceiling, until
+    T582 retired it). Each one hands the shelf's row back, so without
+    this the shelf shut itself on every selection change."""
     assert "    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;" in out
     assert "  function rbnShelfRestore(){" in out
     assert "    if(!g||rbnShelfFor) return;" in out
     # both ends of every cycle
     assert ("      if(!g.hidden&&!g.classList.contains('rbn-folded')) "
             "rbnFoldGroup(g);});\n    rbnShelfRestore();") in out
-    assert "    rbnShelfRestore();      /* T453: the eight walks unfolded it */" in out
     # a user close forgets it; bookkeeping does not
     assert "  function rbnShelfDismiss(){rbnShelfWant=null;rbnShelfClose();}" in out
     # ...and a tab change gives the row back to the tab it came from

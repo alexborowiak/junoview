@@ -460,35 +460,35 @@ def test_the_slide_column_can_be_dragged_wider(out):
 
 
 def test_the_strip_cannot_eat_the_ribbon(out):
-    """The column and the ribbon are two tracks of ONE grid, so the drag
-    has to stop where the ribbon's floor starts. 46vw knows nothing about
-    how wide the tools are, and past the floor #edit-tools is
-    overflow-x:clip -- the end of the row just vanishes, worst with an
-    object selected because the contextual groups need ~90px more (T80).
+    """The column and the ribbon WERE two tracks of one grid row, so the
+    drag had to stop where the ribbon's floor started: past it
+    #edit-tools is overflow-x:clip and the end of the row just vanished
+    (T80). The floor was measured at the bottom of the density ladder and
+    published as --film-max.
 
-    The floor is MEASURED at the bottom of the density ladder, not
-    guessed, and published as --film-max so the CSS clamp, the handle's
-    position and the drag all obey one number.
+    T514 (2026-09-28) moved the ribbon to span the window above the
+    strip, and the strip has not been able to eat it since -- so T582
+    (2026-09-30) took the floor term out. Left in, it kept shrinking the
+    ceiling as the widest tab grew, until T579's Disappear tile on the
+    Animation tab left it at the strip's own width and the handle could
+    not widen the column at all ("the thumbnail view can now no longer
+    be re-sized").
     """
-    assert "function ribbonMinW(){" in out
-    assert "function fitFilmMax(){" in out
-    assert "deckEl.style.setProperty('--film-max',hi+'px');" in out
-    # what the row NEEDS, read off flex:none groups at the tightest rung.
-    # NOT scrollWidth (T152): it is floored at the element's own client
-    # width, so a bar with slack reported its BOX -- the floor came back
-    # as (deck - strip) and the ceiling as the strip's own current width,
-    # which is why the drag could shrink the column but never widen it.
-    assert "bar.style.width='max-content';" in out
-    assert "min=Math.ceil(bar.getBoundingClientRect().width);" in out
-    assert "min=bar.scrollWidth;" not in out
-    # the drag obeys the measured ceiling, not the old blind 900px. The
+    # the ribbon spans both columns, so the strip is not beside it
+    css = out
+    assert ".deck>.edit-tools{grid-column:1/-1;grid-row:3;}" in css
+    assert ".deck.openbar-left>.rbn-tabs,.deck.openbar-left>.edit-tools" \
+        "{grid-column:1/-1;}" in css
+    # ...so the ceiling is a share of the editor and nothing else
+    fit = out.split("  function fitFilmMax(){")[1].split("\n  }\n")[0]
+    assert "var hi=Math.max(150,Math.min(900,Math.round(W*0.46)));" in fit
+    assert "ribbonMinW" not in out and "filmFloor" not in out
+    assert "deckEl.style.setProperty('--film-max',hi+'px');" in fit
+    # one number still drives the clamp, the handle and the drag. The
     # shared app rail shifts the editor right, so convert pointer x first.
     assert "var x=ev.clientX-deckEl.getBoundingClientRect().left;" in out
     assert "w=Math.max(150,Math.min(hi,x));" in out
-    # ...and the ladder is re-run once the handle is let go
     assert "fitFilmMax();fitEditRibbon();" in out
-    # the measurement leaves the ribbon exactly as it found it
-    assert "rungs.forEach(function(c){cl.toggle(c,had[c]);});" in out
 
 
 def test_the_strips_ceiling_does_not_move_with_the_ribbon_tab(out):
@@ -507,22 +507,19 @@ def test_the_strips_ceiling_does_not_move_with_the_ribbon_tab(out):
     minimum everywhere -- worse than the bug. Folded, it is also the
     state the bottom of fitEditRibbon's climb reaches, so the two cannot
     disagree.
+
+    T582 retired the walk with the floor term it fed (see
+    test_the_strip_cannot_eat_the_ribbon). The ceiling now reads nothing
+    off the ribbon at all, so no tab and no selection can move it.
     """
     assert "  function tabGroupsOn(t){" in out
     # applyTab delegates, so there is one implementation of data-off
     assert "    tabGroupsOn(t);\n    syncTabStrip();" in out
-    # the walk itself
+    # the walk is gone, and with it the per-tab dependency
     assert ("    var wasTab=activeTab(),"
-            "reFold=$$('#edit-tools .rbn-grp.rbn-folded');") in out
-    assert "      if(!tabHasContent(t)) return;" in out
-    assert "      while(guard++<12&&rbnFoldOne()) sizeRibbonGroups();" in out
-    # ...and it puts the ribbon back the way it found it
-    assert "    tabGroupsOn(wasTab);" in out
-    assert "    reFold.forEach(rbnFoldGroup);" in out
-    # once per ribbon, not once per selection: fitFilmMax runs on every
-    # selection change and this is now eight layouts, not one
-    assert "    if(sig===filmFloorSig&&filmFloorW) return filmFloorW;" in out
-    assert "    filmFloorSig=sig;" in out
+            "reFold=$$('#edit-tools .rbn-grp.rbn-folded');") not in out
+    fit = out.split("  function fitFilmMax(){")[1].split("\n  }\n")[0]
+    assert "activeTab" not in fit and "rbn" not in fit
 
 
 def test_a_thumbnail_grows_with_the_room_it_is_given(out):

@@ -1341,9 +1341,10 @@
       b.classList.toggle('rbn-tab-off',!on&&!tabHasContent(b.dataset.tab));
     });
   }
-  /* the data-off half of applyTab and NOTHING else. ribbonMinW walks
-     every tab to find the widest, and must not dispatch sem:ribbon-tab
-     or repaint the tab strip eight times to do it. */
+  /* the data-off half of applyTab and NOTHING else: which tab's groups
+     are in the row, without dispatching sem:ribbon-tab or repainting
+     the tab strip (it was split out for the strip's eight-tab floor
+     walk, which T582 retired) */
   function tabGroupsOn(t){
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp[data-tab]',bar).forEach(function(g){
@@ -1757,174 +1758,27 @@
     bar._fitKey=null;
     return false;
   }
-  /* ---- the strip may not eat the ribbon --------------------------------
-     The slide column and the ribbon are two tracks of ONE grid, so every
-     pixel the strip's drag handle takes comes straight out of the row of
-     tools -- and the drag was clamped to 46vw/900px, numbers that know
-     nothing about how wide the tools actually are. Past the bottom of the
-     ladder there is no rung left and .edit-tools is overflow-x:clip, so
-     the right-hand end of the row is simply cut off; with an object
-     selected the contextual groups need ~90px more, which is why it bit
-     there first (2026-08-29, T80, user: "making the thumbnail view bigger
-     can result in the ribbon getting eaten").
-     ribbonMinW MEASURES that floor rather than guessing it: it stamps on
-     the whole ladder at once -- every width rung, both text drops, the
-     tight rung and a folded View group -- reads what the row still needs,
-     then puts the classes and the fold back exactly as it found them.
-     That is the state fitEditRibbon reaches at the bottom of its own
-     climb, so the two cannot disagree. */
-  function ribbonMinW(){
-    var bar=$('#edit-tools');
-    if(!bar||bar.hidden||mode!=='edit') return 0;
-    /* nothing to measure: a folded bar reads 0 (the same reason
-       fitEditRibbon bails), and a side-docked one is a column that does
-       not compete with the strip for width at all */
-    if(deckEl.classList.contains('rbn-fold')) return 0;
-    if(deckEl.classList.contains('rbn-side')) return 0;
-    if(!bar.clientWidth) return 0;
-    /* MEASURED ONCE PER RIBBON, NOT ONCE PER SELECTION. The walk below
-       is eight max-content layouts with a fold and an unfold around each,
-       and fitFilmMax calls this on every selection change as well as on
-       every tab click. max-content does not depend on the container's
-       width, so the answer only moves when the ribbon's CONTENTS do. */
-    var sig=ribbonMinSig();
-    if(sig===filmFloorSig&&filmFloorW) return filmFloorW;
-    /* T539: ONE ANSWER PER STATE, KEPT. The single-entry memo above was
-       beaten by every change of selection KIND -- a text box, a figure,
-       nothing -- each of which shows a different set of contextual
-       controls, so selecting a figure after a title re-ran the whole
-       eight-tab walk: 100ms of forced layout inside the mousedown, the
-       hitch you felt on the first click of every drag (measured
-       2026-09-29 with a CPU profile: showFmt 120ms, of it ribbonMinW
-       98ms). A deck has a handful of such states; each is measured once. */
-    if(filmFloorMemo[sig]){filmFloorSig=sig;return filmFloorMemo[sig];}
-    var cl=deckEl.classList,rungs=[],had={},wasFolded=viewFolded,min;
-    ERCW.forEach(function(r){rungs.push(r[0]);});
-    ERC.forEach(function(c){rungs.push(c);});
-    rungs.push('erc-nohint');rungs.push('erc-nostatus');rungs.push('erc-tight');
-    rungs.forEach(function(c){had[c]=cl.contains(c);cl.add(c);});
-    foldViewGroup(true);
-    sizeRibbonGroups();
-    /* WHAT THE ROW NEEDS, WHICH IS NOT WHAT scrollWidth REPORTS (T152).
-       scrollWidth is floored at the element's own client width: a bar
-       with slack returns its BOX, never its content. So this measured
-       (deck width - strip width) instead of the ribbon's real floor, and
-       fitFilmMax's `W - filmFloorW` gave back exactly the strip's
-       CURRENT width. The ceiling was the current width at every window
-       size, so the drag could shrink the column and never widen it, and
-       the handle sat frozen against its own limit. Measured on a 1900px
-       window: box 1685px, true need ~635px, ceiling 200px where 867px
-       was available. (890px is the row's RESTING need; this measures it
-       with the whole ladder stamped on and View folded, which is the
-       state fitEditRibbon reaches at the bottom of its own climb. The
-       shipped number is visible at a 1200px window, where the floor is
-       the binding term: --film-max comes back 545px on a 1185px deck.) width:max-content asks the flex row what it actually
-       wants; the bar is already stamped with the whole compaction ladder
-       here, and both are put back below. */
-    var hadW=bar.style.width;
-    bar.style.width='max-content';
-    /* EVERY TAB, NOT THE ONE SHOWING, AND FOLDED AS THE LADDER WOULD.
-       Two faults, and they had to be fixed together.
-
-       (1) `.rbn-grp[data-off]` is display:none, so measuring the active
-       tab made --film-max -- and therefore the rendered strip and every
-       thumbnail in it -- a function of which tab you had last clicked.
-       Measured 2026-09-04 on a 1425px deck the per-tab floors ran view
-       484px, present 627, images 690, text 784, animation 1049, home
-       1152, design 1388: clicking Design took --film-max from 656px to
-       150px, the column from 200px to 150px, and every thumbnail shrank
-       31% (2026-09-05, user: "the slide thumbnails change size when you
-       click on different ribbons now").
-
-       (2) This measurement predates T187's group-fold rung and never
-       applied it, so it reported what the row needs UNFOLDED. That was
-       survivable while only one tab was measured; taking the max over
-       all of them would have pinned the strip at its 150px minimum on
-       every tab, which is worse than the bug. So the walk folds every
-       group that may fold -- which is exactly the bottom of
-       fitEditRibbon's own climb, and keeps the two from disagreeing.
-
-       Folding also makes the floors far more uniform across tabs (a
-       folded group is one door tile whatever it holds), so the max is
-       no longer set by whichever tab happens to be fattest. */
-    var wasTab=activeTab(),reFold=$$('#edit-tools .rbn-grp.rbn-folded');
-    min=0;
-    TABS.forEach(function(t){
-      if(!tabHasContent(t)) return;
-      tabGroupsOn(t);
-      sizeRibbonGroups();
-      var guard=0;
-      while(guard++<12&&rbnFoldOne()) sizeRibbonGroups();
-      var w=Math.ceil(bar.getBoundingClientRect().width);
-      if(w>min) min=w;
-      rbnUnfoldAll();
-    });
-    tabGroupsOn(wasTab);
-    reFold.forEach(rbnFoldGroup);
-    rbnShelfRestore();      /* T453: the eight walks unfolded it */
-    sizeRibbonGroups();
-    /* the single-tab reading is still taken, and is still the floor when
-       there is only one tab to have (the 'All tools' layout) */
-    if(!min) min=Math.ceil(bar.getBoundingClientRect().width);
-    bar.style.width=hadW;
-    rungs.forEach(function(c){cl.toggle(c,had[c]);});
-    foldViewGroup(wasFolded);
-    sizeRibbonGroups();
-    filmFloorSig=sig;
-    if(Object.keys(filmFloorMemo).length>40) filmFloorMemo={};
-    filmFloorMemo[sig]=min;
-    return min;
-  }
-  /* what the ribbon's floor depends on: the layout's tabs, which have
-     content, and how many groups and controls are showing */
-  function ribbonMinSig(){
-    return TABS.join(',')+'|'+TABS.filter(tabHasContent).join(',')+'|'
-      +$$('#edit-tools .rbn-grp').filter(function(g){
-        return !g.hidden;}).length
-      +'|'+$$('#edit-tools .rbn-grp .rbn-row>*').filter(function(n){
-        return !n.hidden;}).length;
-  }
-  /* The ceiling the strip is allowed to reach, published to CSS as
-     --film-max so ONE number drives the rendered column, the handle's own
-     position and the drag. The two old caps stay as the other terms: 46vw
+  /* ---- the strip's ceiling ---------------------------------------------
+     published to CSS as --film-max so ONE number drives the rendered
+     column, the handle's own position and the drag: 46% of the editor,
      and the 900px the drag has always stopped at.
-     The last measured floor is REMEMBERED, so folding the ribbon -- the
-     one state where the floor cannot be read -- does not let the strip
-     lurch wider only to be shoved back the moment it unfolds. */
-  var filmFloorW=0,filmFloorSig='',filmFloorMemo={},filmFloorT=0;
-  /* T539: A NEW STATE IS MEASURED AFTER THE GESTURE, NOT DURING IT. The
-     floor only caps how wide the slide strip may be dragged; nothing on
-     screen waits for it. So once there is a first answer, a state not
-     yet seen is measured a beat later, and never while a mouse button is
-     down -- the walk folds and unfolds every group, and doing that in
-     the middle of a drag is exactly the stutter this avoids. */
-  var filmPtrDown=false;
-  document.addEventListener('mousedown',function(){filmPtrDown=true;},true);
-  document.addEventListener('mouseup',function(){filmPtrDown=false;},true);
-  function fitFilmLater(){
-    if(filmFloorT) return;
-    filmFloorT=setTimeout(function run(){
-      if(filmPtrDown){filmFloorT=setTimeout(run,300);return;}
-      filmFloorT=0;
-      if(deckEl.hidden) return;
-      var f2=ribbonMinW();
-      if(f2){filmFloorW=f2;fitFilmMax();}
-    },350);
-  }
+     It USED to be the editor's width less the ribbon's measured floor as
+     well (T80, T152, T539): the ribbon and the strip were two tracks of
+     one row, so every pixel the handle took came out of the tools. T514
+     moved the ribbon to span the window ABOVE the strip, and from then
+     the term guarded nothing -- but it went on shrinking the ceiling as
+     the widest tab grew. When T579 kept Disappear on the Animation tab
+     with nothing selected, that tab's floor reached 1127px of a 1309px
+     editor and the ceiling came out at the strip's own width: the handle
+     could shrink the column and never widen it (2026-09-30, user: "the
+     thumbnail view can now no longer be re-sized"). The eight-tab walk
+     that measured the floor, and the memo T539 kept to hide its 98ms,
+     went with it; nothing else read them. */
   function fitFilmMax(){
     var W=deckEl.clientWidth||window.innerWidth||0;
     if(!W) return 900;
-    var sig=ribbonMinSig();
-    var f=(sig===filmFloorSig&&filmFloorW)?filmFloorW:filmFloorMemo[sig];
-    if(!f&&!filmFloorW) f=ribbonMinW();   /* the first answer, now */
-    else if(!f) fitFilmLater();
-    if(f){filmFloorW=f;filmFloorSig=sig;}
-    var hi=Math.min(900,Math.round(W*0.46));
-    if(filmFloorW) hi=Math.min(hi,W-filmFloorW);
-    /* 150px is the strip's own minimum and wins the tie: below the
-       ribbon's floor the honest answer is the side toolbar, which
-       rbnOverflowNotice already offers, not a strip too narrow to read */
-    hi=Math.max(150,Math.round(hi));
+    /* 150px is the strip's own minimum and wins the tie */
+    var hi=Math.max(150,Math.min(900,Math.round(W*0.46)));
     deckEl.style.setProperty('--film-max',hi+'px');
     return hi;
   }
@@ -2095,7 +1949,6 @@
      back on every pass and a refit from inside that would re-enter it. */
   function rbnShelfRefit(){
     if(typeof applyZoom==='function') applyZoom();
-    if(typeof fitFilmMax==='function') fitFilmMax();
   }
   /* clicking the open door again closes it; clicking another swaps */
   function rbnShelfOpen(g){
@@ -2356,8 +2209,7 @@
   }
   function rbnUnfoldAll(){
     /* T453: EVERY measuring pass unfolds the whole bar and folds it
-       again -- fitEditRibbon to judge the row, ribbonMinW eight times
-       over to find the strip's ceiling -- and each one hands the
+       again -- fitEditRibbon to judge the row -- and each one hands the
        shelf's row back to its group. Remember whose it was here, once,
        so whoever refolds can put it back; patching the callers one at
        a time is how the shelf shut itself on every selection change. */

@@ -3148,16 +3148,18 @@ def test_the_strips_ceiling_is_measured_from_content_not_from_its_box(out):
     need; the code measures ~635px, with the whole ladder stamped on).
     After: 867px, and a drag to 500px
     lands on 500px.
+
+    T582 (2026-09-30) retired the floor term altogether: T514 had moved
+    the ribbon to span the window above the strip, so it guarded nothing,
+    and once T579 widened the Animation tab it froze the handle exactly
+    as T152 had -- the ceiling came out at the strip's own width again.
     """
-    assert "bar.style.width='max-content';" in out
-    assert "min=Math.ceil(bar.getBoundingClientRect().width);" in out
-    assert "bar.style.width=hadW;" in out
-    # the measurement that could only ever return the box is gone
+    # the measurement, and the term it fed, are gone
     assert "min=bar.scrollWidth;" not in out
-    # the ceiling still has its other two terms, and still protects the
-    # ribbon's floor -- this fix widens the range, it does not remove it
-    assert "var hi=Math.min(900,Math.round(W*0.46));" in out
-    assert "if(filmFloorW) hi=Math.min(hi,W-filmFloorW);" in out
+    assert "function ribbonMinW(){" not in out
+    assert "W-filmFloorW" not in out
+    # the ceiling keeps its other two terms
+    assert "var hi=Math.max(150,Math.min(900,Math.round(W*0.46)));" in out
     assert "deckEl.style.setProperty('--film-max',hi+'px');" in out
 
 
