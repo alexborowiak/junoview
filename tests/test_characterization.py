@@ -2166,8 +2166,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # on the whole picture and, when it ends, the box becomes the part kept
 # and the picture wears it as its window (a.win); the window clips in a
 # wrapper so the handles are never cut off.
-EXPECTED_MD5 = "451000cf9bf05f6ac88201786906a98c"
-EXPECTED_BYTES = 4730289
+# T588 (2026-09-30): a cropped picture holds its box's shape on resize,
+# Shift frees it, and its handles say so.
+EXPECTED_MD5 = "b22e96138f65ac4606aa788213e3e906"
+EXPECTED_BYTES = 4731127
 
 
 def _render_example() -> str:
