@@ -10517,3 +10517,14 @@ create animation. This gets congested very easily."
   toggle, and Enter carries the numbering on. Never inside a list, never
   in a Markdown box. Driven: "1. first", Enter, "second" under two plain
   lines became a numbered list of two.
+- [x] **T592 — Every picture pasted onto a selected flip book is a page
+  of it.** "You can only paste on image into a flip book. Would be cool if
+  when selected hitting paste pasted another image into a flip book." T408
+  made a picture from the system clipboard a page, but a picture copied on
+  the canvas (Ctrl+C on it) travels in the deck's own buffer, and pasting
+  that onto the book dropped a loose copy beside it -- which took the
+  selection, so every paste after it did the same. With a book selected
+  and nothing but pictures copied, each is now a page (its original
+  travels), the book turns to the last and stays selected. Driven: copy a
+  picture, click the book, Ctrl+V twice -- before, two loose copies and
+  an empty book; after, page 2 of 2 and no loose copies.
