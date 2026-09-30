@@ -2170,8 +2170,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Shift frees it, and its handles say so.
 # T589 (2026-09-30): below the floor Whole slide and then Build order fold
 # into doors rather than the ribbon clipping them.
-EXPECTED_MD5 = "6f58b6372e5c142d5796d4cfcae3ad93"
-EXPECTED_BYTES = 4732388
+# T590 (2026-09-30): Backspace at the start of a bullet takes a
+# sub-bullet up a level or the bullet off, keeping the words.
+EXPECTED_MD5 = "88e435b36c9b8bd7c8250b406584b73e"
+EXPECTED_BYTES = 4734591
 
 
 def _render_example() -> str:

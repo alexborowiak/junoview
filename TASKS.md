@@ -10495,3 +10495,16 @@ create animation. This gets congested very easily."
   Driven at 1280x800: Whole slide is a door, Build order ends at the
   ribbon's edge, and Animation panel opens the pane. (T583 fixed the
   other cause: a throw that stopped the ribbon fitting at all.)
+- [x] **T590 — Backspace at the start of a bullet takes the bullet
+  off.** "It's still really hard to get rid-of dot points ... if there is
+  a line above and you try and delete, then it just takes everything back
+  to the line before. IF the dot points there is no line before e.g. at
+  the top, then dot points cannot be backspaced." Left to the browser,
+  Backspace at the start of a bullet merged it into the line above, words
+  and all, and on the first line did nothing; only the lone empty bullet
+  had a rule. Now, as in Word and PowerPoint, the first Backspace at the
+  start of a bullet takes a sub-bullet up a level, or the bullet off
+  (through listSelection, the List button's own per-paragraph toggle),
+  and the words stay on their line; the next Backspace joins lines.
+  Driven: "one / two / three" as bullets; Backspace at "two" and at "one"
+  left both as plain lines above the "three" bullet.
