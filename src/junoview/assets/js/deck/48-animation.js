@@ -1498,7 +1498,7 @@
       /* T432: the row being dragged -- {kind:'claim', c, x} for anything
          on a click, {kind:'page', i, k} for a page of a flip book */
       var drag=null;
-      function redo(next){timelineWrite(s,next);commit(s);}
+      function rewrite(next){timelineWrite(s,next);commit(s);}
       /* T417: ONE LINE PER ROW (2026-09-13, user: "All that text is
          soo unnecessary ... DON'T FILL IT WITH VERBOSE UNNECESSARY
          TEXT"). The number, the name, the effect word. Nothing that
@@ -1586,7 +1586,7 @@
           return;
         }
         if(how==='with'&&d.c===t.c) return;
-        redo(tlMove(tl,d.c,d.x,t.c,how));
+        rewrite(tlMove(tl,d.c,d.x,t.c,how));
       }
       /* Earlier and Later stacked, the rest beside them: the same shape
          on every row that has them */
@@ -1613,20 +1613,20 @@
         var alone=tl[c].length===1;
         return [
           ['\u2191 Earlier','One step earlier',function(){
-            redo(alone?tlMoveClick(tl,c,c-1,'before')
+            rewrite(alone?tlMoveClick(tl,c,c-1,'before')
               :tlMove(tl,c,x,c,'before'));},alone&&c<=0],
           ['\u2193 Later','One step later',function(){
-            redo(alone?tlMoveClick(tl,c,c+1,'after')
+            rewrite(alone?tlMoveClick(tl,c,c+1,'after')
               :tlMove(tl,c,x,c,'after'));},alone&&c>=tl.length-1]];
       }
       /* ...and one button that says whether it shares the click above */
       function joinAct(c,x){
         if(x>0) return ['\u2702 Own click',
           'Give this a click of its own, straight after',
-          function(){redo(tlMove(tl,c,x,c,'after'));},false];
+          function(){rewrite(tlMove(tl,c,x,c,'after'));},false];
         return ['\u21c8 With prev',
           'Put this on the click before, so they happen together',
-          function(){redo(tlMove(tl,c,x,c-1,'with'));},c<=0];
+          function(){rewrite(tlMove(tl,c,x,c-1,'with'));},c<=0];
       }
       /* the stops a flip book, a chart or a paged text box takes AFTER
          the click it arrives on, each on its own numbered row (T163);

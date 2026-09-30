@@ -49,10 +49,10 @@ def test_a_page_moves_through_its_book_and_a_bullet_through_time(out):
     assert "    function pieceMove(" not in out
     # Earlier / Later step one thing one place along the list of clicks
     assert "      function moveActs(c,x){" in out
-    assert ("            redo(alone?tlMoveClick(tl,c,c-1,'before')\n"
+    assert ("            rewrite(alone?tlMoveClick(tl,c,c-1,'before')\n"
             "              :tlMove(tl,c,x,c,'before'));},alone&&c<=0],") in out
     # ...and one button says whether it shares the click above
-    assert ("          function(){redo(tlMove(tl,c,x,c-1,'with'));},"
+    assert ("          function(){rewrite(tlMove(tl,c,x,c-1,'with'));},"
             "c<=0];") in out
 
 
@@ -63,7 +63,7 @@ def test_every_row_drags_before_after_or_onto_another(out):
     # the top of a row is before it, the bottom after, the middle ONTO
     # its click -- the same click, which is how a photo joins its bullet
     assert "        return f<.3?'before':(f>.7?'after':'with');" in out
-    assert "        redo(tlMove(tl,d.c,d.x,t.c,how));" in out
+    assert "        rewrite(tlMove(tl,d.c,d.x,t.c,how));" in out
     # pages land only in their own book
     assert "        if(drag.kind==='page'&&drag.i!==target.i) return '';" in out
     assert "                drag:w.j?null:{kind:'page',i:p.i,k:w.k}});" in out
