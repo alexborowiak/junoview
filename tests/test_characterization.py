@@ -2146,8 +2146,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # head is a column at the left.
 # T581 (2026-09-30): presenting starts with its bar folded away -- a
 # Controls tab, the top edge peeks it, Hide folds it.
-EXPECTED_MD5 = "80d609a684a0a87e0cf696508c686f4c"
-EXPECTED_BYTES = 4723626
+# T577 (2026-09-30): the pane's local rewrite() no longer shares a name
+# with the editor's redo().
+EXPECTED_MD5 = "90712936545728ebb5b9103c461a7050"
+EXPECTED_BYTES = 4723644
 
 
 def _render_example() -> str:
