@@ -3788,8 +3788,9 @@ def test_the_effects_are_tiles_in_the_row(out):
     assert "b.className='fx-tile'+(on&&now===f[0]?' on':'');" in out
     assert "b.disabled=!on;" in out
     # the label lost its instruction in T191 ("that is unnecessary text
-    # lol"): the greyed tiles already say to select something
-    assert "if(lab) lab.textContent='Entrance effect';" in out
+    # lol"): the greyed tiles already say to select something. T594
+    # named the gallery for what you do with it.
+    assert "if(lab) lab.textContent='Add animation';   /* T594 */" in out
     # one list feeds the strip AND the Quick animate chooser, so the two
     # surfaces cannot drift into two vocabularies
     assert "SEQ_FX.forEach(function(f){" in out

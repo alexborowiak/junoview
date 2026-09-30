@@ -489,11 +489,17 @@
     var wrap=$('#anim-outwrap'),say=$('#anim-out-say');
     var s=pres.slides[cur],a=animOutItem();
     var poster=!!(pageOf&&pageOf().poster);
-    /* T579: ON THE TAB WITH NOTHING SELECTED, like every tile beside it
-       -- disabled and saying so -- or a person scanning the Animation
-       tab for a way to make something disappear finds none */
-    if(wrap) wrap.hidden=poster;
-    if(say) say.hidden=poster;
+    /* T579 kept this on the tab with nothing selected, so a person
+       scanning the Animation tab for a way to make something disappear
+       found one. T594: ...ONCE THE THING HAS AN ANIMATION. The redesign
+       keeps the tab to what applies (2026-09-30, user: "when I click on
+       something without any animations there are all these options"):
+       it shows for anything that arrives or already leaves, and the
+       right-click menu (T579) and the Animation panel's "when it
+       leaves" offer it for anything at all. */
+    var live=!!a&&(!!a.anim||animOut(a)!=null);
+    if(wrap) wrap.hidden=poster||!live;
+    if(say) say.hidden=poster||!live;
     var b=$('#anim-out'),cr=$('#anim-out-caret');
     if(b) b.disabled=!a;
     if(cr) cr.disabled=!a;
@@ -894,7 +900,7 @@
     var lab=$('#anim-strip-lab');
     /* The noun says WHAT this chooser changes; Start says WHEN beside it.
        (2026-09-02, user: "that is unnecessary text lol") */
-    if(lab) lab.textContent='Entrance effect';
+    if(lab) lab.textContent='Add animation';   /* T594 */
   }
   function galBoot(){
     var strip=$('#anim-strip');
@@ -1110,9 +1116,17 @@
       var start=$('#anim-start'),by=$('#anim-by');
       if(start) start.hidden=poster||armed;
       if(by) by.hidden=poster||armed||!st.text;
+      /* T594: THE TIMING DOOR IS FOR A THING THAT ARRIVES. Its three
+         sections are hidden until the selection has an entrance, so the
+         door (empty) leaves the tab: something with no animation shows
+         the gallery and the verbs and nothing else (2026-09-30, user:
+         "when I click on something without any animations there are
+         all these options"). Pick an effect and Timing appears. */
+      var stg=$('#anim-start-group');
+      if(stg) stg.hidden=poster||armed||!st.on;
       var sg=$('#anim-sequence-group'),mg=$('#anim-textmode-group');
-      if(sg) sg.hidden=poster||armed||(!st.text&&!st.fig);
-      if(mg) mg.hidden=poster||armed||!st.text;
+      if(sg) sg.hidden=poster||armed||!st.on||(!st.text&&!st.fig);
+      if(mg) mg.hidden=poster||armed||!st.on||!st.text;
       /* T473: a figure or a picture arrives in panels, the way a text
          box arrives by bullet -- the strip shows for either */
       var pf=$('#anim-panels');
@@ -1895,7 +1909,28 @@
     });
     /* the effect buttons act on the SELECTION, so they show the selected
        item's effect and stand down when there is nothing selected */
+    /* T594: TIMING AND DISAPPEAR COME AND GO WITH THE ANIMATION. Whether
+       their groups are empty is syncRibbonGroups' call, and a selection
+       runs it after this -- but picking an effect is not a selection, so
+       the first effect chosen left Timing off the tab until you clicked
+       away and back. When one of the parts that decide it has just
+       shown or hidden, the groups are judged again, once. */
+    var ANIM_COMES_GOES=['#anim-start-group','#anim-sequence-group',
+      '#anim-textmode-group','#anim-outwrap'],animJudging=false;
+    function animShownSig(){
+      return ANIM_COMES_GOES.map(function(id){
+        var e=$(id);return e&&!e.hidden?'1':'0';}).join('');
+    }
     animRibbonSync=function(){
+      var sig0=animShownSig();
+      animRibbonSyncNow();
+      if(animShownSig()!==sig0&&!animJudging
+         &&typeof syncRibbonGroups==='function'){
+        animJudging=true;
+        try{syncRibbonGroups();}finally{animJudging=false;}
+      }
+    };
+    function animRibbonSyncNow(){
       timingSync();
       flipFxSync();
       animOutSync();
@@ -1918,5 +1953,5 @@
          (2026-09-03, user: "getting rid of the animations from the
          object page would be good. This only needs to go on
          animations"). What is left here is the Animation tab's. */
-    };
+    }
   }

@@ -24,8 +24,11 @@ from junoview import assets
 
 
 def test_the_three_transitions_are_on_the_animation_tab():
+    """(T594: on the Present tab since the approved Animation redesign --
+    how a SLIDE arrives is about the talk, and it was the first of nine
+    doors on a tab about objects. The name is history.)"""
     html = assets.deck_html()
-    assert 'class="rbn-grp rbn-trans rbn-compact" data-tab="animation"' in html
+    assert 'class="rbn-grp rbn-trans rbn-compact" data-tab="present"' in html
     # T372: the same frame-of-tiles as the entrance-effect strip two
     # groups along, because it is the same kind of choice
     assert 'class="rbn-tall strip-frame" id="trans-frame"' in html
@@ -106,7 +109,8 @@ def test_it_leads_the_tab_and_the_rungless_groups_got_rungs(out):
     deck.css already records this exact failure for Page furniture, and
     the 2026-09-05 review found it a third time on Home."""
     css = assets.load("css/deck.css")
-    assert ".rbn-trans{order:0;}" in css
+    # T594: after the Present tab's own Play, Version and Talk (1-3)
+    assert ".rbn-trans{order:4;}" in css
     assert ".rbn-anim{order:1;}" in css
     assert ".rbn-exit{order:3;}" in css
     # T453 gave the shelf rung 6 and moved Page turn up one

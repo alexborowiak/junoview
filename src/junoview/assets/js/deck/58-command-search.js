@@ -26,7 +26,10 @@
     'hm-paste-look':'format painter paste formatting',
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
-    'vw-anim':'animation pane animations list',
+    /* T594: Focus and Motion are the panel's now, so their words
+       find the door onto it */
+    'vw-anim':'animation pane animations list focus blur zoom magnify '
+      +'motion movement wobble float pulse spin sway shake',
     /* T579: the words people look for it by */
     'anim-out':'disappear exit animation hide leave go away fade out '
       +'remove from slide vanish',

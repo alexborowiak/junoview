@@ -449,6 +449,7 @@
     });
     if(!a.anim){
       cfgNote(host,'It is on the slide from the start.');
+      cfgLeaves(host);   /* T594 */
       return;
     }
     cfgHead(host,'when it starts');
@@ -548,8 +549,14 @@
           +'The covers are the page\u2019s own colour.');
       }
     }
-    var ow=$('#anim-outwrap');
-    if(ow&&!ow.hidden){
+    cfgLeaves(host);
+  }
+  /* WHEN IT LEAVES, for anything selected (T594). It asked whether the
+     ribbon's Disappear tile was showing; that tile now waits for an
+     animation, and the panel is where anything at all can be sent away.
+     Not on a poster, which has no clicks. */
+  function cfgLeaves(host){
+    if(!(pageOf&&pageOf().poster)){
       cfgHead(host,'when it leaves');
       var r4=cfgRow(host);
       /* T467: the ribbon's own words (T453 renamed the verb for exactly

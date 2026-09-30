@@ -2189,7 +2189,8 @@
          what you picked (2026-09-29 audit) */
       var picked=(typeof selAnnot!=='undefined'&&selAnnot!==null);
       var why=!picked?'no selection'
-        :g.classList.contains('rbn-start')?'no entrance'
+        :(g.classList.contains('rbn-start')
+          ||g.classList.contains('rbn-timing'))?'no entrance'
         :'not for this';
       if(dead){val.textContent=why;val.hidden=false;
         btn.classList.add('has-val');}

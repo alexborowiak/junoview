@@ -21,7 +21,8 @@ def test_start_is_on_click_with_previous_or_after_previous(out):
     for cid in ("anim-onclick", "anim-withprev", "anim-afterprev",
                 "anim-delay", "anim-delaywrap", "anim-start"):
         assert f'id="{cid}"' in out, cid
-    assert 'class="rbn-grp rbn-start rbn-compact"' in out
+    # T594: a labelled section of the Timing door, keeping its id
+    assert '<span class="tm-sec rbn-start" id="anim-start-group">' in out
     assert "function setDelay(sec){" in out
     assert "function timingState(){" in out
     assert "function timingSync(){" in out
@@ -31,8 +32,10 @@ def test_start_is_on_click_with_previous_or_after_previous(out):
     assert "mode:after?'after':(shared?'with':'click')," in out
     # nothing to be "with" on the first build
     assert "b.disabled=!st.on||(p[1]==='with'&&st.si<=0&&st.mode!=='with');" in out
-    # every selection change and every commit re-reads it
-    assert "    animRibbonSync=function(){\n      timingSync();" in out
+    # every selection change and every commit re-reads it (T594: through
+    # a wrapper that re-judges the groups when Timing comes or goes)
+    assert "    function animRibbonSyncNow(){\n      timingSync();" in out
+    assert "      animRibbonSyncNow();" in out
     # and the group stands down while Quick animate has the row
     assert "if(start) start.hidden=poster||armed;" in out
 
@@ -56,11 +59,17 @@ def test_effect_start_sequence_and_step_behaviour_are_separate(out):
     text-step mode says whether that piece is revealed or highlighted.
     None of those choices shares a misleading Timing door any more.
     """
-    for group in ("rbn-anim", "rbn-start", "rbn-sequence", "rbn-textmode"):
-        assert f'class="rbn-grp {group} rbn-compact"' in out
-    for label in ("Entrance effect", "Start", "Text sequence",
-                  "Each text step"):
-        assert f">{label}</span>" in out
+    # T594: the three are labelled SECTIONS of one Timing door -- still
+    # three decisions under three names, behind the one door that shows
+    # once the thing has an animation; the effect gallery is "Add
+    # animation"
+    for sec in ("rbn-start", "rbn-sequence", "rbn-textmode"):
+        assert f'<span class="tm-sec {sec}"' in out, sec
+    assert 'class="rbn-grp rbn-timing rbn-compact" id="anim-timing-group"' \
+        in out
+    for label in ("Add animation", "Start", "Text sequence",
+                  "Each text step", "Timing"):
+        assert f">{label}</span>" in out, label
     assert 'id="anim-by-reveal"' in out
     assert 'id="anim-by-hl"' in out
     # T578: three answers -- reveal, appear lit, all there and lit

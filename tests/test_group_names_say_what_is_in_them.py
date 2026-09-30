@@ -36,6 +36,7 @@ def test_a_dead_door_says_why(out):
     fn = out.split("  function rbnFoldReadout(g){")[1].split("\n  }\n")[0]
     assert "var picked=(typeof selAnnot!=='undefined'&&selAnnot!==null);" \
         in fn
-    assert ":g.classList.contains('rbn-start')?'no entrance'" in fn
+    assert ":(g.classList.contains('rbn-start')" in fn
+    assert "||g.classList.contains('rbn-timing'))?'no entrance'" in fn   # T594
     assert ":'not for this';" in fn
     assert "'give it an entrance effect first'" in fn

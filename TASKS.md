@@ -10539,3 +10539,22 @@ create animation. This gets congested very easily."
   guards showFmt, reports the fault in the console, and the drag goes
   ahead. Driven with the T578 fault put back into a scratch build: the
   box selects and resizes 519 -> 269 -> 389px, re-wrapping its words.
+- [x] **T594 — The Animation tab shows what applies.** "the animations
+  are sooo confusing. Have all these boxes with all these categories is
+  so weird. Like when I click on something without any animations there
+  are all these options." Nine doors stood on the tab before anything was
+  animated -- Slide transition, Entrance effect, Start, Text sequence,
+  Each text step, Disappear, Focus, Motion, Whole slide -- with Build
+  order squeezed off the right edge on a laptop. The redesign the user
+  approved: Build order (Preview, Animation panel, Quick animate, Layers)
+  leads and the Add animation gallery is tiles in the row, always; one
+  Timing door (Start, Text sequence and Each text step as labelled
+  sections, T518's three decisions kept apart) and Disappear appear once
+  the thing arrives or leaves; Focus and Motion are the Animation panel's
+  Configure tab (their groups stay in the page, data-tab="panel", for
+  ribbon layouts; command search takes their words to the panel); Slide
+  transition is on the Present tab; Whole slide is one door. The panel
+  offers "when it leaves" for anything, and animRibbonSync re-judges the
+  groups when Timing or Disappear comes or goes. Driven at 1500x900:
+  Build order | Add animation | Whole slide, then Timing and Exit after
+  Fade; Timing opens one 37px line of three labelled sections.

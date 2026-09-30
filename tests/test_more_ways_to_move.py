@@ -66,7 +66,9 @@ def test_motion_keeps_going(out):
     for cid in ("anim-move-none", "anim-move-wobble", "anim-move-bob",
                 "anim-move-pulse"):
         assert f'id="{cid}"' in out, cid
-    assert '<span class="rbn-grp rbn-motion rbn-compact" data-tab="animation"' \
+    # T594: the Animation panel's Configure tab is its door; the group
+    # stays in the page (data-tab="panel" is no tab) for ribbon layouts
+    assert '<span class="rbn-grp rbn-motion rbn-compact" data-tab="panel"' \
         in out
     # T453: Leaves early keeps rung 3, Motion moved to 4
     assert ".rbn-motion{order:4;}" in out

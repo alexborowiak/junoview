@@ -45,11 +45,15 @@ def test_the_verb_groups_follow_the_choosers(out):
     # T463: after the choosers, packed against them -- the shelf takes a
     # line of its own, so the hole margin-left:auto left was buying nothing
     assert ".rbn-build{order:8;}" in out
-    assert ".rbn-order{order:9;}" in out
-    # the choosers keep the left, in the order they were already in
-    assert ".rbn-trans{order:0;}" in out
+    # T594: Build order leads the tab now -- the Animation panel is the
+    # door onto everything the tab stopped showing, so it goes where a
+    # narrow window never reaches
+    assert ".rbn-order{order:0;}" in out
+    # the choosers follow it, in the order they were already in; the
+    # transition went to the Present tab (after Play, Version, Talk)
+    assert ".rbn-trans{order:4;}" in out
     assert ".rbn-anim{order:1;}" in out
-    assert ".rbn-start,.rbn-sequence,.rbn-textmode{order:2;}" in out
+    assert ".rbn-timing{order:2;}" in out
     assert ".rbn-exit{order:3;}" in out
     assert ".rbn-motion{order:4;}" in out
 

@@ -122,5 +122,6 @@ def test_a_born_empty_text_box_says_it_is_there(out):
     """
     # (and since T203 it says so whether or not the caret is in it)
     assert '.deck.editing .an-item.an-text .an-tx:empty::before{' in out
-    assert "if(lab) lab.textContent='Entrance effect';" in out
+    # (T594: the gallery is named for what you do with it)
+    assert "if(lab) lab.textContent='Add animation';   /* T594 */" in out
     assert "if(lab) lab.textContent=st.fig?'Panel sequence':'Text sequence';" in out

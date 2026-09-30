@@ -2178,8 +2178,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # selected flip book become its pages.
 # T593 (2026-09-30): selectAnnot guards showFmt, so a fault in a ribbon
 # sync is logged and no longer cancels the gesture that selected.
-EXPECTED_MD5 = "b24c4af67ff52e7f54bb1253ce9700b7"
-EXPECTED_BYTES = 4738662
+# T594 (2026-09-30): the Animation tab shows what applies -- Build order
+# and Add animation always, Timing and Disappear once the thing is
+# animated, Focus and Motion in the panel, Slide transition on Present,
+# Whole slide one door.
+EXPECTED_MD5 = "56cd8a49fb660936eef4741a695245ad"
+EXPECTED_BYTES = 4744229
 
 
 def _render_example() -> str:
