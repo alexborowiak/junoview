@@ -190,7 +190,7 @@ def test_every_save_and_open_is_stamped(out):
 def test_the_rows_print_it(out):
     lib = out.split("  function presentationLibraryRow(p,click){")[1] \
         .split("\n  }\n")[0]
-    assert "    sub.textContent=deckRowWords(p);" in lib
+    assert "    sub.textContent=deckRowWords(p)" in lib
     js = assets.app_js()
     assert "      var words=APP.deckRowWords?APP.deckRowWords(p):'';" in js
     assert "    window.SemApp.deckRowWords=deckRowWords;   /* T598 */" in out

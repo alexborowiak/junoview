@@ -2197,8 +2197,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T598 (2026-09-30): every presentation remembers where it lives -- its
 # own home and file handle, kept between visits -- and Recent, the library
 # and Home print where each lives and when it was last touched.
-EXPECTED_MD5 = "bea1082c6b7a5713578e995e0572796a"
-EXPECTED_BYTES = 4786684
+# T599 (2026-09-30): see a presentation before opening it -- the Open
+# dialog's Find and Preview column, Home's hover card, and a folder's
+# presentation files listed and previewed before any is opened.
+EXPECTED_MD5 = "a8b3fd5078311563e7a11a45dd14e3ac"
+EXPECTED_BYTES = 4810674
 
 
 def _render_example() -> str:

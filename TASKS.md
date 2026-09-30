@@ -10680,3 +10680,32 @@ a presentation before opening it, and the colour themes' background.
   the FIRST file deck saved straight to its file with no picker, the
   browser deck saved here, and the library read each one's home; in the
   local app a Save wrote the project and the row read "this project".
+- [x] **T599 — See a presentation before opening it.** "would be cool when
+  opening files if there was a way to preview files. like I have been
+  trying to find the one correct file, but I had to keep opening heaps.
+  Like would be cool if when hovering or something the little thumbnails
+  that you have during a presentation could appear and you could scroll
+  through to see if it is the right presentation." The Open dialog grew
+  a **Preview** column and a **Find** field. Pointing at a row, or tabbing
+  to it, paints that deck's slides as the thumbnail strip draws them
+  (miniDiagram) -- in that deck's own palette, page and masters: for one
+  synchronous paint `pres` IS the previewed deck, and it, paintSlide and
+  miniHNow are put back in a finally; applyTokens and .page-light are set
+  on the preview so text with no colour of its own takes that deck's ink,
+  not the one on screen. Nothing is written; the parsed copies live for
+  one visit of the dialog. Find keeps the presentations whose name, or
+  any slide's titles, text, table cells or notes, hold every word typed,
+  says "N slides match" on each row and lights those slides in the
+  preview; Enter opens the first, Down walks the rows, Esc clears before
+  it closes; Ctrl+K (as tabs, T596) lands in it. Home's recent rows show
+  the same preview in a card beside the row after a short pause, kept
+  while the pointer is on it so it scrolls, with Open on it. And **Look
+  in a folder...** lists the presentation files in a folder -- the one
+  Junoview saves into lists itself when the browser already lets it be
+  read, and asks with one click when not -- newest first, each read only
+  when pointed at or searched, previewed and searched the same way, and
+  opened through File > Open's handle path so Save writes back to it.
+  Driven: three decks with a light-paged one previewed in its own ink;
+  "enso" kept a deck by name and one by a slide ("1 slide match", that
+  slide lit); a folder of three files listed, searched for "composite"
+  (two files, one slide each), and one opened bound to its file.

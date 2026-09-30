@@ -782,6 +782,19 @@
         ><i data-ic="open"></i> Open a file</button>
       <button class="dbtn" id="presentation-hub-pptx" type="button"
         ><i data-ic="open"></i> Import .pptx</button>
+      <!-- T599: the presentation files in a folder, listed and previewed
+           before any is opened -->
+      <button class="dbtn" id="presentation-hub-dirbtn" type="button" hidden
+        title="List the presentation files in a folder on this computer, and
+ see each one's slides before you open it"
+        ><i data-ic="open"></i> Look in a folder&#8230;</button>
+      <!-- T599: find the one you mean -- by its name, or by any words on
+           its slides -- without opening a dozen to look -->
+      <label class="presentation-hub-find"><i data-ic="find"></i><input
+        type="search" id="presentation-hub-find" autocomplete="off"
+        spellcheck="false" placeholder="Find by name or by words on a slide"
+        aria-label="Find a presentation by its name or by words on its
+ slides"></label>
     </div>
     <form class="presentation-hub-folderform" id="presentation-hub-folderform"
       hidden>
@@ -794,10 +807,19 @@
       <section>
         <h3>Recent</h3>
         <div class="presentation-hub-list" id="presentation-hub-recent"></div>
+        <h3 class="presentation-hub-dirhead" id="presentation-hub-dirhead"
+          hidden>In the folder</h3>
+        <div class="presentation-hub-list" id="presentation-hub-dir" hidden></div>
       </section>
       <section>
         <h3>All presentations</h3>
         <div class="presentation-hub-list" id="presentation-hub-all"></div>
+      </section>
+      <!-- T599: the slides of the row under the pointer (or the keyboard),
+           as the strip draws them, scrollable -->
+      <section class="presentation-hub-preview" aria-live="polite">
+        <h3>Preview</h3>
+        <div class="pv-host" id="presentation-hub-pv"></div>
       </section>
     </div>
   </section>
