@@ -2126,8 +2126,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # door and the mini toolbar, kept only on marked runs, .pptx both ways.
 # T544 (2026-09-30): Clear formatting (Ctrl+Space) and Change case
 # (Shift+F3) -- a Case door over an eraser in the Font group, two icons.
-EXPECTED_MD5 = "9d309f68fe6ee0c0833b372240a4b88b"
-EXPECTED_BYTES = 4674970
+# T544 (2026-09-30): ...and both sit with Bold in every ribbon layout.
+EXPECTED_MD5 = "9e57313af32bcc44568f88ea03b0c8d9"
+EXPECTED_BYTES = 4675186
 
 
 def _render_example() -> str:
