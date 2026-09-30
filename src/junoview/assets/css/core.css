@@ -583,6 +583,11 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
    just because a filter changed (On / Folded / Off / Mixed) */
 .tvstate{display:inline-block;width:4.4ch;text-align:left;
   margin-left:.4em;overflow:hidden;}
+/* T566: the state word wears its icon's colour, so "Plots On" reads as
+   a setting and its value rather than as one two-word name */
+.toggle.tv .tvstate{color:var(--cyan);}
+.toggle.tv.half .tvstate,.toggle.tv.mixed .tvstate{color:var(--amber);}
+.toggle.tv.off .tvstate{color:inherit;}
 .toggle[aria-pressed="true"] .tdot{opacity:1;background:var(--cyan);}
 /* view-mode buttons (Docs / Present): pressed = the view you are in */
 .toggle.mode[aria-pressed="true"]{background:var(--accent-deep);

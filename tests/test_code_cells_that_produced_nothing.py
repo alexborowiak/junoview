@@ -122,9 +122,12 @@ def test_the_chooser_buttons_carry_a_word():
     """Icon-only was rejected twice, and an unlabelled funnel is also the
     door to this feature."""
     page = assets.load("html/page.html")
-    for bid in ("pt-filter-btn", "ck-filter-btn", "ot-filter-btn"):
+    # T566: the word says WHAT it chooses; three "Choose" read alike
+    for bid, word in (("pt-filter-btn", "Which plots"),
+                      ("ck-filter-btn", "Which code"),
+                      ("ot-filter-btn", "Which output")):
         btn = page.split(f'id="{bid}"')[1].split("</button>")[0]
-        assert '<span class="btxt">Choose</span>' in btn, bid
+        assert f'<span class="btxt">{word}</span>' in btn, bid
         assert 'data-ic="types"' in btn, bid
     # and they are laid out like a worded button, not an icon square
     css = assets.load("css/app.css")

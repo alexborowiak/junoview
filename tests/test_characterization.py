@@ -2219,8 +2219,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T547 (2026-09-30): text in columns -- Paragraph's Columns and gap rows,
 # the render's column-count on the words, the .pptx numCol/spcCol both
 # ways, and a help entry.
-EXPECTED_MD5 = "aa94fafb9a4e314f888198a5c47896d2"
-EXPECTED_BYTES = 4881697
+# T566 (2026-09-30): the notebook toolbar reads -- each filter is named as
+# a setting and its value (Plots: On), its state word wears its icon's
+# colour, the three Choose buttons say Which plots / Which code / Which
+# output, the two size readouts are named and the Outline button's name
+# matches its word.
+EXPECTED_MD5 = "9ba6425abd97f62f090c685f7c6fbb98"
+EXPECTED_BYTES = 4883080
 
 
 def _render_example() -> str:

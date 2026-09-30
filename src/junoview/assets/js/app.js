@@ -1204,6 +1204,10 @@
     }
     txt.textContent=label;
     st.textContent=CODE_LABEL[state]||state;
+    /* T566: the two spans have no space between them, so a screen reader
+       (and the accessibility tree) read the name as "PlotsOn". Say it as
+       a setting and its value; the title still explains the cycle. */
+    b.setAttribute('aria-label',label+': '+st.textContent);
     b.classList.toggle('off',state==='hidden');
     b.classList.toggle('half',state==='collapsed');
     b.classList.toggle('mixed',state==='mixed');
@@ -2183,6 +2187,10 @@
       ?'Tree zoom — click to reset to 100%'
       :'Figure size across the whole feed — click to reset to 100%';
     if(isTree&&APP.treeZoomPct) applyTreeZoomLabel();
+    /* back from the tree, the readout is the figures' again (it went on
+       showing the tree's zoom until the next +/-) */
+    else if(fv&&APP.sizeReadout&&APP.getFigAll)
+      APP.sizeReadout(fv,'Figure size',Math.round(APP.getFigAll()*100));
   }
   function activeTreeHost(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -2192,8 +2200,9 @@
     var host=activeTreeHost(); if(!host) return;
     var cv=host.querySelector('.tree-canvas'); if(!cv) return;
     var v=$('#fig-size-val');
-    if(v) v.textContent=Math.round(
-      (parseFloat(cv.style.zoom||'1')||1)*100)+'%';
+    var pct=Math.round((parseFloat(cv.style.zoom||'1')||1)*100);
+    if(v&&APP.sizeReadout) APP.sizeReadout(v,'Tree zoom',pct);
+    else if(v) v.textContent=pct+'%';
   }
   APP.treeZoomPct=applyTreeZoomLabel;
   /* ---- the tree's own controls, on the RIBBON. They used to live in a
@@ -3470,7 +3479,8 @@
        +'Off — the words on the buttons. Code folds the source in '
        +'EVERY cell at once.'},
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
-     text:'The Choose buttons under each filter pick specific kinds — '
+     text:'Which plots, Which code and Which output, under their '
+       +'filters, pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
     {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
      text:'A key at the top; collapse or hide a whole section (also from its '
@@ -4333,6 +4343,13 @@
     },true);
   })();
   /* ---- universal figure size for the whole feed (appbar +/-) ---- */
+  /* T566: a bare "100%" button named nothing, and there are two of them;
+     the readout says what it measures and that a click resets it */
+  function sizeReadout(el,what,pct){
+    el.textContent=pct+'%';
+    el.setAttribute('aria-label',what+' '+pct+'% (click to reset to 100%)');
+  }
+  APP.sizeReadout=sizeReadout;
   var figAll=1;
   function applyFigAll(){
     $$('.nbshell').forEach(function(sh){
@@ -4341,7 +4358,7 @@
       $$('.card.has-fig',sh).forEach(syncZoomed);
     });
     var lab=$('#fig-size-val');
-    if(lab) lab.textContent=Math.round(figAll*100)+'%';
+    if(lab) sizeReadout(lab,'Figure size',Math.round(figAll*100));
     resizeEmbeds(document);
     scheduleSaveLayout();
   }
@@ -4375,7 +4392,7 @@
       if(mdAll===1) sh.style.removeProperty('--mdscale');
       else sh.style.setProperty('--mdscale',mdAll);});
     var lab=$('#md-size-val');
-    if(lab) lab.textContent=Math.round(mdAll*100)+'%';
+    if(lab) sizeReadout(lab,'Text size',Math.round(mdAll*100));
     scheduleSaveLayout();
   }
   APP.applyMdAll=applyMdAll;

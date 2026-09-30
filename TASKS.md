@@ -10313,8 +10313,20 @@ choice in the editor (T506, T507).
 
 ### Around the editor
 
-- [ ] **T566 — The notebook toolbar reads.** "PlotsOn", "CodeFold", three
+- [x] **T566 — The notebook toolbar reads.** "PlotsOn", "CodeFold", three
   unnamed "Choose" buttons and two unexplained 100% controls.
+  *Done 2026-09-30.* The four filters are named as a setting and its value
+  ("Plots: On", "Code: Fold"), set wherever setTvBtn writes the state, and
+  the state word wears its icon's colour (cyan On, amber Fold or Mixed,
+  grey Off) so it reads as a value, not half a two-word name. The three
+  choosers say what they choose -- Which plots, Which code, Which output --
+  and the tour's step names them. The two 100% readouts are named "Figure
+  size 115% (click to reset to 100%)" and "Text size ..." as they change;
+  the tree borrows the first for its zoom and now hands it back when you
+  leave the tree (it went on showing the tree's zoom until the next +/-).
+  Outline's accessible name was "Toggle sections"; it is Outline. Driven
+  at 1440x900: names read back from the live page, Code cycled to Off and
+  the figures to 115%, the row still one line with no sideways scroll.
 - [ ] **T567 — A tour of the editor.** The welcome tour covers the
   notebook; the slide editor gets its own short one on first entry.
 - [ ] **T568 — Dialogs agree on their buttons.** Cancel on the left, the

@@ -451,9 +451,12 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     assert ("#pt-filter-btn,#ck-filter-btn,#ot-filter-btn"
             "{width:100%;flex:none;}" in out)
     # ...and it is a word plus an icon, never the bare funnel again
-    for bid in ("pt-filter-btn", "ck-filter-btn", "ot-filter-btn"):
+    # (T566: each names what it chooses -- three bare "Choose" read alike)
+    for bid, word in (("pt-filter-btn", "Which plots"),
+                      ("ck-filter-btn", "Which code"),
+                      ("ot-filter-btn", "Which output")):
         btn = out.split(f'id="{bid}"')[1].split("</button>")[0]
-        assert '<span class="btxt">Choose</span>' in btn, bid
+        assert f'<span class="btxt">{word}</span>' in btn, bid
     # The reader uses a compact menu like the deck's, so its How to use
     # item is a full row rather than a loose square control (T602: a row
     # of File, since the App menu's rows moved there).
