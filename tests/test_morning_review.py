@@ -31,10 +31,13 @@ def _row(html: str, label: str) -> list[str]:
 def test_design_and_animation_are_ordered_as_asked(out):
     assert ".rbn-slide{order:0;}" in out
     assert ".rbn-anim{order:1;}" in out
-    assert ".rbn-start,.rbn-sequence,.rbn-textmode{order:2;}" in out
-    # T453 moved both after the choosers (T463: packed, not pushed)
+    # T594: the three are sections of the one Timing door
+    assert ".rbn-timing{order:2;}" in out
+    # T453 moved both after the choosers (T463: packed, not pushed);
+    # T594 brought Build order to the front, where the Animation panel's
+    # door can never be squeezed off the row
     assert ".rbn-build{order:8;}" in out
-    assert ".rbn-order{order:9;}" in out
+    assert ".rbn-order{order:0;}" in out
     html = assets.deck_html()
     lay = _row(html, "Layout")
     # T373: Spacing left Layout for a group of its own, so the pairing

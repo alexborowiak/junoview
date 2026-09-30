@@ -31,9 +31,13 @@ def test_a_compact_group_folds_by_design(out):
     assert ("    rbnUnfoldAll();\n    sizeRibbonGroups();\n"
             "    /* T441: the choosers are compact by design, not by width */\n"
             "    rbnFoldCompact();") in out
-    for grp in ("rbn-anim", "rbn-start", "rbn-sequence", "rbn-textmode",
-                "rbn-motion", "rbn-trans", "rbn-flipfx", "rbn-shapes"):
+    # T594: Start, Text sequence and Each text step are sections of one
+    # Timing door, Whole slide is a door, and Add animation is tiles in
+    # the row again (the tab has room for them now)
+    for grp in ("rbn-timing", "rbn-build", "rbn-motion", "rbn-trans",
+                "rbn-flipfx", "rbn-shapes"):
         assert f'class="rbn-grp {grp} rbn-compact"' in out, grp
+    assert 'class="rbn-grp rbn-anim" data-tab="animation"' in out
     # never the text groups
     for grp in ("rbn-fontgrp", "rbn-paragrp", "rbn-write"):
         assert f'class="rbn-grp {grp} rbn-compact"' not in out, grp
@@ -60,7 +64,9 @@ def test_the_door_reads_out_the_choice(out):
 
 
 def test_build_order_and_whole_slide_never_fold(out):
-    assert 'class="rbn-grp rbn-build rbn-nofold" data-tab="animation"' in out
+    # T594: Whole slide is one door now (the user approved the redesign
+    # that made it one); Build order still never folds, and leads the tab
+    assert 'class="rbn-grp rbn-build rbn-compact" data-tab="animation"' in out
     assert 'class="rbn-grp rbn-order rbn-nofold" data-tab="animation"' in out
     assert "        &&!g.classList.contains('rbn-nofold')" in out
     assert '<span class="rbn-lab">Build order</span>' in out

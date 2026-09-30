@@ -1736,7 +1736,9 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
    arriving ahead of "Appear" (the same latent bug deck.css:1341
    already records for Page furniture, and the 2026-09-05 review found
    again on Home). */
-.rbn-trans{order:0;}
+/* T594: Slide transition is on the Present tab now, after the talk's
+   own groups (Play, Version, Talk are 1-3) */
+.rbn-trans{order:4;}
 .rbn-anim{order:1;}
 .rbn-exit{order:3;}
 .rbn-focus{order:3;}      /* T472: after Leaves early, before Motion */
@@ -1753,7 +1755,12 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
    pack from the left (2026-09-15, user: "the animations tab still
    looks odd"). */
 .rbn-build{order:8;}
-.rbn-order{order:9;}
+/* T594: BUILD ORDER LEADS. With four groups on the tab there is no row
+   to squeeze it out of, and the Animation panel is the one door that
+   holds everything the tab no longer shows, so it comes first, where a
+   narrow window never reaches it (T589 was the rescue for its old seat
+   at the far right). */
+.rbn-order{order:0;}
 /* ---- T453: THE SHELF ------------------------------------------------
    One strip in the ribbon that a chooser's whole row moves into, so the
    options land IN the bar rather than in a pop-up over the slide, and
@@ -1936,8 +1943,14 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
    when on the animation tab always") */
 .deck.tab-animation .an-buildno{display:flex;}
 /* T185/T518: Start, sequence and text-step behaviour sit beside the
-   entrance effect, but remain separate choices. */
-.rbn-start,.rbn-sequence,.rbn-textmode{order:2;}
+   entrance effect, but remain separate choices -- since T594, labelled
+   sections of the one Timing door */
+.rbn-timing{order:2;}
+.tm-sec{display:flex;align-items:center;gap:6px;flex:none;}
+.tm-sec+.tm-sec{border-left:1px solid var(--chrome-line,#ffffff1f);
+  padding-left:10px;margin-left:4px;}
+.tm-lab{flex:none;font:600 9.5px var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
 .anim-delaywrap .fmt-num{width:44px;}
 .rbn-start .dbtn:disabled{opacity:.4;cursor:default;}
 /* WHICH ONE IS ON, said louder than a theme can quiet. The colourful

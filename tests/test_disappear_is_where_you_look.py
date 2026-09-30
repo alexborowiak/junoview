@@ -23,11 +23,19 @@ from junoview import assets
 
 
 def test_the_tile_stays_on_the_tab_with_nothing_selected(out):
+    """T594 (2026-09-30, the approved Animation redesign) narrowed this:
+    the tile shows once the thing ARRIVES or already LEAVES, so a thing
+    with no animation shows only the gallery and the verbs. Anything at
+    all can still be sent away from the right-click menu (below) and the
+    Animation panel's "when it leaves", which no longer asks whether
+    this tile is showing."""
     fn = out.split("  function animOutSync(){")[1].split("\n  }")[0]
-    assert "    if(wrap) wrap.hidden=poster;" in fn
+    assert "    var live=!!a&&(!!a.anim||animOut(a)!=null);" in fn
+    assert "    if(wrap) wrap.hidden=poster||!live;" in fn
     assert "    if(b) b.disabled=!a;" in fn
     assert "      if(say) say.textContent='no selection';" in fn
-    assert "wrap.hidden=!a" not in fn
+    assert "  function cfgLeaves(host){" in out
+    assert "var ow=$('#anim-outwrap');" not in out
 
 
 def test_search_finds_it_by_the_words_people_use():
