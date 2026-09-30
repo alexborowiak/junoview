@@ -1826,6 +1826,7 @@
                             (floatMenu, position:fixed), so the scroll
                             box cannot cut them off. */
   function fitQat(){
+    fitTabStrip();   /* T602: the rows are fitted together */
     var bar=$('#deck-qat');
     if(!bar||bar.hidden) return;
     var cl=bar.classList;
@@ -1835,6 +1836,24 @@
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-c1');
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-c2');
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-scroll');
+  }
+  /* ---- T602: the tab strip's own rungs ---------------------------------
+     The strip carries File, Find, Full screen and Present since T602 (the
+     PowerPoint split), so a narrow window runs out of room: at 1100px it
+     was 28px over with nothing selected, and Style and Object add two
+     tabs more. The same ladder as fitQat's, each rung a step down: the
+     tabs and buttons pack tighter and the hint goes, then the tab words
+     are set a point smaller, and last the strip scrolls sideways. Never a
+     second row, never a word lost. */
+  function fitTabStrip(){
+    var s=$('#rbn-tabs');
+    if(!s||s.hidden) return;
+    var cl=s.classList;
+    cl.remove('rt-c1');cl.remove('rt-c2');cl.remove('rt-scroll');
+    if(!s.clientWidth) return;
+    if(s.scrollWidth>s.clientWidth+1) cl.add('rt-c1');
+    if(s.scrollWidth>s.clientWidth+1) cl.add('rt-c2');
+    if(s.scrollWidth>s.clientWidth+1) cl.add('rt-scroll');
   }
   function syncViewBtns(){
     var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full'),sd=$('#vw-side');
@@ -2495,6 +2514,17 @@
            closed changes the row's width without changing the bar's */
         var otr=$('#open-tabs-row'); if(otr) qro.observe(otr);
       }
+      /* T602: and the tab strip's contents -- Style and Object come and
+         go with the selection, and a layout rebuilds the tabs, without
+         the strip's box changing. Its own rung classes are ignored, or
+         each fit would schedule the next. */
+      var ts=$('#rbn-tabs');
+      if(ts&&window.MutationObserver) new MutationObserver(function(ms){
+        if(deckEl.hidden) return;
+        for(var i=0;i<ms.length;i++)
+          if(ms[i].target!==ts){scheduleQatFit();return;}
+      }).observe(ts,{subtree:true,childList:true,attributes:true,
+        attributeFilter:['hidden','class']});
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything
        that moves the slide has to redraw them. The ribbon observer above

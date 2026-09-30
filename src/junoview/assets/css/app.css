@@ -135,7 +135,10 @@ body.presrail-min{--presrail-w:46px;}
   white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);
   background:none;border:0;padding:0;text-align:left;cursor:pointer;}
 .nb-file-path:hover{text-decoration:underline;}
-.nb-filebar #file-dock{min-width:0;}
+/* T602: Info and Reload keep their width -- beside the tabs, a dock that
+   could shrink let Reload's word run under Find in a narrow column; the
+   tabs give way instead (their strip scrolls) */
+.nb-filebar #file-dock{flex:none;}
 .nb-filebar #file-dock .railfile{margin-top:0;}
 /* Present had dead space under it, so T-era CSS let it span both rows
    beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
@@ -271,48 +274,63 @@ body.tabs-row-on .nb-filebar{min-height:var(--open-tabs-h);}
 #ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
   transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
 #ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
-/* T602: THE OPEN TABS ARE A STRETCH OF THE TITLE ROW -- the reader's
+/* T602: THE OPEN TABS ARE THE LEFT OF THE TITLE ROW -- the reader's
    (#nb-filebar) or, while it is up, the editor's (#deck-qat; app.js
    moves the one node) -- not a row of their own (2026-09-30, user:
-   "there is to many layers to our ribbon"). They take what the row can
-   spare: each tab gives up width to an ellipsis first, then the strip
-   scrolls, and the row keeps 220px for Home and a tab before the bar's
-   own fitter starts compacting its buttons. */
-.open-tabs-row{display:flex;align-items:center;gap:5px;flex:0 1 auto;
+   "there is to many layers to our ribbon"). The first try set them
+   between Find and Present as boxed buttons, and they read as more
+   buttons crammed into a full row ("super cursed with the tabs crowded
+   in here"); the user chose the PowerPoint split. So they are REAL
+   TABS: they hang from the row's bottom edge, quiet until pointed at,
+   and the one on screen takes the colour of the row under it
+   (--tab-on, set by each title row) so it joins that row, the way a
+   browser's tab joins its toolbar. Each tab gives up width to an
+   ellipsis first, then the strip scrolls; the row keeps 220px for Home
+   and a tab before the bar's own fitter compacts anything else. */
+.open-tabs-row{display:flex;align-items:flex-end;gap:2px;flex:0 1 auto;
   min-width:220px;align-self:stretch;box-sizing:border-box;
-  padding:0 0 0 8px;margin-left:2px;
-  border-left:1px solid var(--chrome-line,#ffffff1a);}
+  margin-bottom:-4px;}
 .open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
-/* T596: Home before the tabs */
-.open-tabs-row .ot-home{flex:none;height:26px;display:inline-flex;
-  align-items:center;gap:6px;padding:0 9px;font-size:11.5px;
+/* no scrollbar: in a one-button-high row it drew a white bar under the
+   tabs and made the whole bar taller. The strip still scrolls (wheel,
+   trackpad), and app.js keeps the tab on screen in view. */
+.top-tabstrip{display:flex;align-items:flex-end;gap:2px;min-width:0;
+  align-self:stretch;overflow-x:auto;scrollbar-width:none;}
+/* T596: Home before the tabs, and shaped like one */
+.open-tabs-row .ot-home,.top-tabstrip .tab{height:29px;box-sizing:border-box;
+  border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;
+  background:none;color:var(--chrome-ink-2,#8ba0b2);box-shadow:none;}
+.open-tabs-row .ot-home{flex:none;display:inline-flex;align-items:center;
+  gap:6px;padding:0 11px;font:12px var(--sans);letter-spacing:0;
   white-space:nowrap;}
 .open-tabs-row .ot-home .jv-logo{width:17px;height:17px;flex:none;}
-.open-tabs-row .ot-home.current{color:var(--accent);
-  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
-  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+/* 110px keeps a readable start of the name ("presentat...") */
+.top-tabstrip .tab{flex:0 1 auto;min-width:110px;max-width:220px;
+  padding:0 6px 0 12px;font-size:12px;font-weight:400;}
+.open-tabs-row .ot-home:hover,.top-tabstrip .tab:hover{
+  background:color-mix(in srgb,var(--chrome-ink,#d7e3ec) 7%,transparent);
+  color:var(--chrome-ink,#d7e3ec);}
+/* the one on screen: the row below's colour, a line of accent along
+   its top, and no edge between it and that row */
+.open-tabs-row .ot-home.current,.top-tabstrip .tab.current{
+  background:var(--tab-on,var(--chrome-0,#0b141d));
+  border-color:var(--chrome-line,#ffffff1f);
+  box-shadow:inset 0 2px 0 var(--accent);color:var(--chrome-ink,#e6edf3);
+  font-weight:600;}
 /* at Home no tab is the one on screen, whatever was last active -- and
    in the slide editor the presentation is, not the notebook that was
    last active behind it (T602: two lit tabs on one row) */
 body.welcoming .top-tabstrip .tab.current,
 body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
-  background:none;box-shadow:none;color:inherit;border-color:#ffffff14;
-  font-weight:400;}
-/* no scrollbar: in a one-button-high row it drew a white bar under the
-   tabs and made the whole bar taller. The strip still scrolls (wheel,
-   trackpad), and app.js keeps the tab on screen in view. */
-.top-tabstrip{display:flex;align-items:center;gap:4px;min-width:0;
-  overflow-x:auto;scrollbar-width:none;}
-/* on a row of buttons a tab is a rounded box the height of a button,
-   lit the way Home is lit -- not a browser tab hanging from a strip.
-   110px keeps a readable start of the name ("presentat...") */
-.top-tabstrip .tab{height:26px;box-sizing:border-box;flex:0 1 auto;
-  min-width:110px;max-width:220px;padding:0 6px 0 10px;border-radius:7px;
-  border-bottom:1px solid #ffffff14;font-size:12px;}
-.top-tabstrip .tab.current{color:var(--chrome-ink,#e6edf3);
-  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
-  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+  background:none;box-shadow:none;color:var(--chrome-ink-2,#8ba0b2);
+  border-color:transparent;font-weight:400;}
 .top-tabstrip .tab-t{max-width:170px;}
+/* the reader's title row: its tabs join the filter row under it, which
+   is the header's own colour; the line along the bottom is drawn inside
+   the row so the tab on screen can cover it */
+.nb-filebar{--tab-on:var(--chrome-0,#0b141d);}
+body.tabs-row-on .nb-filebar{border-bottom-width:0;
+  box-shadow:inset 0 -1px 0 var(--chrome-line,#ffffff12);}
 .top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
   justify-content:center;flex:none;color:var(--cyan);}
 .top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
@@ -576,11 +594,12 @@ body.welcoming .apptop{display:none;}
 body.welcoming{padding-top:0;}
 /* T596: at Home the tabs stay up while anything is open -- they are the
    way back to it. T602: they are part of the title row now, so at Home
-   that row shows with File and the tabs, and nothing else of the header
-   does (Info, Reload and Find act on a notebook Home is covering). */
+   that row shows with the tabs and nothing else of the header does
+   (Info, Reload and Find act on a notebook Home is covering, and Home
+   has its own New, Open and How to use). */
 body.welcoming.tabs-row-on .apptop{display:flex;}
 body.welcoming.tabs-row-on .apptop>:not(.nb-filebar),
-body.welcoming.tabs-row-on .nb-filebar>:not(#app-filewrap):not(.open-tabs-row):not(.nb-file-spacer){
+body.welcoming.tabs-row-on .nb-filebar>:not(.open-tabs-row):not(.nb-file-spacer){
   display:none!important;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}

@@ -72,7 +72,7 @@ def _menu(src: str, menu_id: str) -> str:
     the wrapper it sits in."""
     start = src.index(f'id="{menu_id}"')
     return src[start:src.index("</span>", start) if menu_id == "app-file-menu"
-               else src.index('<!-- ONE control, not two.', start)]
+               else src.index('<span class="rbn-tabset"', start)]
 
 
 def test_every_help_path_names_a_real_control(out):

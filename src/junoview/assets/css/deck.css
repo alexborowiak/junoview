@@ -297,24 +297,73 @@ body.deck-open{overflow:hidden;}
 .deck-qat.qat-c2 .deck-status{display:none;}
 .deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
   scrollbar-width:thin;}
-/* ---- T602: THE OPEN TABS, IN THIS BAR ------------------------------
-   app.js moves #open-tabs-row in before the first spring while the
-   editor is up, so the editor has one title row rather than a row of
-   tabs over a row of controls. The tab names the presentation, so the
-   centred name steps aside while they are here; File > Rename... and a
-   double-click on the tab still rename it, and the edit field takes the
-   name's place while you type. Tabs and Home are the bar's own height. */
+/* ---- T602: THIS BAR IS THE TITLE ROW, SPLIT AS POWERPOINT SPLITS IT --
+   (2026-09-30: the user picked this after a first try crowded the tabs
+   in among File, Find and Present.) Left: app.js moves #open-tabs-row
+   in (Home and the open files, as tabs). Middle: the command search.
+   Right: Save, the readout, Autosave and undo/redo -- PowerPoint's
+   quick-access corner. File, Find, Full screen and Present are on the
+   strip below. While the tabs are here the bar is a shade darker than
+   the strip, the tab on screen wears the STRIP's colour (--tab-on) and
+   the line under the bar is drawn inside it, so that tab joins the
+   strip; and the tab names the deck, so the name steps aside (File >
+   Rename... and a double-click on the tab rename it, the edit field
+   taking the name's place while you type). */
+.deck-qat{--tab-on:var(--chrome-1);}
+.deck-qat:has(> .open-tabs-row:not([hidden])){background:var(--chrome-0);
+  border-bottom-width:0;box-shadow:inset 0 -1px 0 var(--chrome-line);}
 .deck-qat:has(> .open-tabs-row:not([hidden])) .qat-name{display:none;}
+.deck-qat .open-tabs-row{margin-left:-6px;}
 /* the save readout gives up its width before the tabs do: at 1440px
    with four decks open it kept all 34ch while every tab was down to
    "p...". Its width still comes from the room, never from its words, so
    a new state does not move the controls after it (the reason it has a
    fixed slot); the full words are its tooltip */
-.deck-qat:has(> .open-tabs-row:not([hidden])) .deck-status{
-  flex:0 4 34ch;width:auto;min-width:11ch;}
-.deck-qat .open-tabs-row .ot-home,
-.deck-qat .top-tabstrip .tab{height:var(--rbn-btn-h);}
+.deck-qat .deck-status{flex:0 4 34ch;width:auto;min-width:11ch;}
 .deck-qat.qat-c1 .open-tabs-row{min-width:160px;}
+/* the command search, centred between the tabs and the saving corner */
+.deck-qat .rbn-search{flex:0 1 260px;min-width:140px;height:var(--rbn-btn-h);
+  box-sizing:border-box;margin:0 8px;}
+/* building: no ribbon to search, and the panel is narrow */
+.deck.creating .deck-qat .rbn-search{display:none;}
+/* ---- T602: the strip under it is PowerPoint's File Home Insert row ----
+   File first, the ribbon's tabs, then the document's verbs at the right
+   (Find, Full screen, Present) before the ribbon's own three settings.
+   Button-high for a 28px strip. While building there is no ribbon, so
+   the strip is File and the verbs alone. */
+.rbn-tabs .rbn-filewrap,.rbn-tabs .qat-playgrp{align-self:center;
+  display:inline-flex;align-items:center;flex:none;}
+.rbn-tabs .rbn-filewrap{margin-right:10px;}
+.rbn-tabs #dc-file,.rbn-tabs #qat-find,.rbn-tabs .qat-full,
+.rbn-tabs .qat-playgrp .dbtn{height:22px;box-sizing:border-box;
+  padding:0 9px;line-height:1;font-size:11px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;
+  transition-property:border-color,color,background-color,box-shadow;}
+.rbn-tabs #qat-find,.rbn-tabs .qat-full{align-self:center;flex:none;
+  margin-left:4px;}
+.rbn-tabs .qat-playgrp{margin:0 10px 0 4px;}
+.rbn-tabs .qat-playgrp #dc-playmore{padding:0 7px;}
+.rbn-tabs #qat-find .bic,.rbn-tabs .qat-full .bic,
+.rbn-tabs .qat-play .bic{width:12px;height:12px;}
+.deck.creating .rbn-tabs .rbn-tabset,.deck.creating .rbn-tabs .et-hint,
+.deck.creating .rbn-tabs .rbn-autobtn,.deck.creating .rbn-tabs .rbn-layouts,
+.deck.creating .rbn-tabs .rbn-fold{display:none;}
+/* fitTabStrip's rungs (05-figures-and-ribbon.js), each a step down from
+   the resting sizes above: tighter tabs and buttons and no hint; then
+   the tab words a point smaller; then the strip scrolls. Geometry must
+   not transition under a fitter (T487), so the strip's buttons ease
+   their colours only. */
+.rbn-tabs .dbtn{
+  transition-property:border-color,color,background-color,box-shadow;}
+.rbn-tabs.rt-c1 .rbn-tab{padding:0 8px;}
+.rbn-tabs.rt-c1 .rbn-filewrap{margin-right:6px;}
+.rbn-tabs.rt-c1 .qat-playgrp{margin-right:6px;}
+.rbn-tabs.rt-c1 #dc-file,.rbn-tabs.rt-c1 #qat-find,.rbn-tabs.rt-c1 .qat-full,
+.rbn-tabs.rt-c1 .qat-playgrp .dbtn,.rbn-tabs.rt-c1 .rbn-autobtn,
+.rbn-tabs.rt-c1 .rbn-layouts{padding-left:6px;padding-right:6px;}
+.rbn-tabs.rt-c1 .et-hint{display:none;}
+.rbn-tabs.rt-c2 .rbn-tab{padding:0 6px;font-size:12px;}
+.rbn-tabs.rt-scroll{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
    It lived in the ribbon, then in the top bar, and was wrong in both: it
    is a property of the CANVAS, so it belongs at the canvas. Bottom-right
@@ -431,14 +480,14 @@ body.deck-open{overflow:hidden;}
   flex:none;font-size:10px;display:inline-flex;align-items:center;gap:4px;
   white-space:nowrap;}
 .rbn-tabs .rbn-autobtn .bic{width:12px;height:12px;}
-/* T538: search the commands -- a field in the tab strip, its list a
-   floating surface of the editor's */
-.rbn-tabs .rbn-search{align-self:center;display:inline-flex;align-items:center;
+/* T538: search the commands -- a field in the title row since T602 (it
+   was in the tab strip), its list a floating surface of the editor's */
+.rbn-search{align-self:center;display:inline-flex;align-items:center;
   gap:5px;flex:0 1 210px;min-width:120px;margin-right:6px;height:22px;
   padding:0 7px;border:1px solid var(--chrome-line);border-radius:6px;
-  background:var(--chrome-0);}
-.rbn-tabs .rbn-search:focus-within{border-color:var(--cyan);}
-.rbn-tabs .rbn-search .bic{width:12px;height:12px;flex:none;opacity:.7;}
+  background:var(--chrome-1);}
+.rbn-search:focus-within{border-color:var(--cyan);}
+.rbn-search .bic{width:12px;height:12px;flex:none;opacity:.7;}
 .rbn-search input{flex:1;min-width:0;border:none;outline:none;
   background:none;color:var(--chrome-ink);font:12px var(--sans);}
 .rbn-search input::placeholder{color:var(--chrome-ink-3);}

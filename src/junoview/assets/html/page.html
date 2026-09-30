@@ -25,11 +25,13 @@
        a lot of this stuff could all just be put under the file button
        e.g. the app button, and stuff like new and open. Also the tabs is
        good, but is all just too much now"). T596 put the open files in a
-       row of their own above this one, so every view carried two bars of
-       chrome before its own controls began. Now there is one: File, this
-       notebook's own Info and Reload, then Home and the open tabs, then
-       Find. New, Open and everything the App menu held are rows of File,
-       and the editor's top bar takes the same tabs while it is on screen
+       row of their own above this one. Now this is the title row, split
+       the way PowerPoint splits it (the user's pick of three, after a
+       first try crowded the tabs among the buttons): what is open on the
+       left, as tabs, and this notebook's own Info, Reload and Find on the
+       right. File leads the row under it, as PowerPoint's File leads its
+       tabs; New, Open and everything the App menu held are rows of File.
+       The editor's top bar takes the same tabs while it is on screen
        (app.js moves the one #open-tabs-row between the two). -->
   <!-- File provenance is a thin utility bar ABOVE the notebook controls.
        It used to consume a whole left-most ribbon group, making the
@@ -37,54 +39,6 @@
        real .railfile node still moves here, so its reload/info handlers
        stay live rather than being copied (2026-09-11). -->
   <div class="nb-filebar" id="nb-filebar" hidden>
-    <!-- FILE FIRST, as in the editor and in PowerPoint: making something,
-         opening something, and the app's own settings. -->
-    <span class="dc-menuwrap" id="app-filewrap">
-      <button class="toggle" id="app-file" type="button" aria-haspopup="true"
-        aria-expanded="false" aria-controls="app-file-menu"
-        title="New and open; the colour theme, where open files are
- listed, help and support">File &#9662;</button>
-      <div class="dc-menu" id="app-file-menu" hidden>
-        <!-- New makes the four things the side panel's New made, each by
-             pressing the one real button for it (T596) -->
-        <div class="dc-mhead">new</div>
-        <button class="dc-mi" type="button" data-for="pr-new"
-          >Presentation</button>
-        <button class="dc-mi" type="button" data-for="pr-newpost"
-          >Poster</button>
-        <button class="dc-mi" type="button" data-for="pr-newview"
-          >Custom view</button>
-        <button class="dc-mi" type="button" data-for="pr-newfold"
-          >Folder</button>
-        <div class="dc-mhead">open</div>
-        <button class="dc-mi" type="button" id="ot-open"
-          title="The recent ones, everything saved here, or a file from
- this computer (Ctrl+K)">Open a presentation&#8230;</button>
-        <button class="dc-mi" type="button" id="tab-open" hidden
-          title="Open a notebook (.ipynb) from your computer or a
- URL">Open a notebook&#8230;</button>
-        <div class="dc-mhead">app</div>
-        <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
-          aria-expanded="false" aria-controls="jv-scheme-menu"
-          title="Choose a colour scheme">Theme&#8230;</button>
-        <button class="dc-mi" id="help-btn"
-          title="How to use this, and everything it can do (?)">How to
-          use&#8230;</button>
-        <a class="dc-mi" id="support-btn" href="{kofi}"
-          target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
-          >Support Junoview &#9829;</a>
-        <!-- T596: where the open files are listed -- in ONE place -->
-        <div class="dc-mhead">open files</div>
-        <button class="dc-mi jv-files-at" type="button" data-at="top"
-          aria-pressed="true" title="Open notebooks and presentations are tabs
- along the top bar, with Home before them. The side panel goes
- away.">As tabs along the top</button>
-        <button class="dc-mi jv-files-at" type="button" data-at="side"
-          aria-pressed="false" title="Open notebooks and presentations are a
- list down the left, with Recents, All presentations and New under it. The
- tabs go away.">As a list down the side</button>
-      </div>
-    </span>
     <!-- The file itself belongs with Info / Reload.  Keeping the
          visible name and the (ellipsised) path here means there is one
          stable place to answer “what am I looking at?”, rather than a
@@ -96,7 +50,6 @@
       <button type="button" class="nb-file-path" id="nb-file-path" dir="ltr"
         aria-label="View full file path"></button>
     </span>
-    <span class="fgrp-row" id="file-dock"></span>
     <!-- T596: ONE LIST OF WHAT IS OPEN -- these tabs, or the list down
          the side, never both. Home first, then the open files. T602: in
          this row, not a row of its own; while the slide editor is on
@@ -109,6 +62,9 @@
         aria-label="Open documents"></div>
     </div>
     <span class="nb-file-spacer" aria-hidden="true"></span>
+    <!-- T602: this notebook's own Info and Reload on the right, beside
+         Find -- PowerPoint keeps a file's name menu and its Search there -->
+    <span class="fgrp-row" id="file-dock"></span>
     <!-- Find stays direct because it is a document command rather than an
          application preference. -->
     <span class="nb-file-utils" aria-label="Find">
@@ -120,6 +76,55 @@
   </div>
   <div class="appbar">
     <span class="abgrp ab-nav" id="ab-nav"><span class="abgrp-row">
+      <!-- T602: FILE LEADS THIS ROW, as File leads the editor's ribbon
+           tabs and PowerPoint's: making something, opening something,
+           and the app's own settings. -->
+      <span class="dc-menuwrap" id="app-filewrap">
+        <button class="toggle" id="app-file" type="button" aria-haspopup="true"
+          aria-expanded="false" aria-controls="app-file-menu"
+          title="New and open; the colour theme, where open files are
+ listed, help and support">File &#9662;</button>
+        <div class="dc-menu" id="app-file-menu" hidden>
+          <!-- New makes the four things the side panel's New made, each by
+               pressing the one real button for it (T596) -->
+          <div class="dc-mhead">new</div>
+          <button class="dc-mi" type="button" data-for="pr-new"
+            >Presentation</button>
+          <button class="dc-mi" type="button" data-for="pr-newpost"
+            >Poster</button>
+          <button class="dc-mi" type="button" data-for="pr-newview"
+            >Custom view</button>
+          <button class="dc-mi" type="button" data-for="pr-newfold"
+            >Folder</button>
+          <div class="dc-mhead">open</div>
+          <button class="dc-mi" type="button" id="ot-open"
+            title="The recent ones, everything saved here, or a file from
+ this computer (Ctrl+K)">Open a presentation&#8230;</button>
+          <button class="dc-mi" type="button" id="tab-open" hidden
+            title="Open a notebook (.ipynb) from your computer or a
+ URL">Open a notebook&#8230;</button>
+          <div class="dc-mhead">app</div>
+          <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
+            aria-expanded="false" aria-controls="jv-scheme-menu"
+            title="Choose a colour scheme">Theme&#8230;</button>
+          <button class="dc-mi" id="help-btn"
+            title="How to use this, and everything it can do (?)">How to
+            use&#8230;</button>
+          <a class="dc-mi" id="support-btn" href="{kofi}"
+            target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
+            >Support Junoview &#9829;</a>
+          <!-- T596: where the open files are listed -- in ONE place -->
+          <div class="dc-mhead">open files</div>
+          <button class="dc-mi jv-files-at" type="button" data-at="top"
+            aria-pressed="true" title="Open notebooks and presentations are tabs
+ along the top bar, with Home before them. The side panel goes
+ away.">As tabs along the top</button>
+          <button class="dc-mi jv-files-at" type="button" data-at="side"
+            aria-pressed="false" title="Open notebooks and presentations are a
+ list down the left, with Recents, All presentations and New under it. The
+ tabs go away.">As a list down the side</button>
+        </div>
+      </span>
       <button class="menubtn" id="menubtn" aria-label="Toggle sections"
         title="Show or hide the section sidebar (table of contents)">
         <span></span> Outline</button>

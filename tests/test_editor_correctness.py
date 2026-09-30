@@ -666,16 +666,25 @@ def test_the_document_actions_are_in_one_thin_bar_across_the_top(out):
     chrome rather than adding it: a block in the left column plus two
     ribbon groups became one line, and nothing in it changes with the
     selection, so no tab can take it away.
+
+    T602 (2026-09-30) split it the way PowerPoint splits it, which is the
+    layout the user chose: the title row keeps the name (or the open
+    tabs), Save, the readout and undo/redo, with the command search in
+    the middle; File, Find and Present lead and close the ribbon's tab
+    strip under it, as PowerPoint's File and Present sit on its tab row.
     """
     # T381: the left column is the thumbnails alone -- the notebooks
     # strip and its "back" header went on 2026-09-12
     assert 'id="dc-nbs"' not in out
     # markup order IS the bar's order
     qat = out.split('class="deck-qat"')[1].split('class="rbn-tabs"')[0]
-    for cid in ('id="dc-file"', 'id="dc-save"', 'id="dc-undo"',
-                'id="dc-redo"', 'id="qat-find"', 'id="qat-name"',
-                'id="deck-status"', 'id="dc-play"'):
+    for cid in ('id="dc-save"', 'id="dc-undo"', 'id="dc-redo"',
+                'id="qat-name"', 'id="deck-status"', 'id="rbn-search"'):
         assert cid in qat, cid
+    strip = out.split('class="rbn-tabs"')[1].split('class="edit-tools')[0]
+    for cid in ('id="dc-file"', 'id="qat-find"', 'id="dc-play"'):
+        assert cid in strip and cid not in qat, cid
+    assert strip.index('id="dc-file"') < strip.index('class="rbn-tabset"')
     # ZOOM is NOT here. It went ribbon -> top bar -> the corner of the
     # canvas, which is where Word, PowerPoint, Figma and Illustrator all
     # put it: it is a property of the canvas, so it belongs at the canvas
@@ -1285,7 +1294,7 @@ def test_open_documents_are_one_list_tabs_or_the_side(out):
     # T602: the tabs sit in the editor's own top bar while it is up, not
     # in the reader's header held up over it
     assert "body.slide-editing:has(#open-tabs-row" not in out
-    assert '<span class="deck-spring qat-tabs-at"></span>' in out
+    assert '<span class="qat-tabs-at"></span>' in out
     assert "body.slide-editing .presrail,body.slide-editing .presrail-show" in out
     # the side label only appears when there is something to list
     assert "var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;" in out

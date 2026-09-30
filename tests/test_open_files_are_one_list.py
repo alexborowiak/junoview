@@ -65,8 +65,8 @@ def test_the_default_is_tabs_and_only_side_means_side():
 def test_the_tab_row_carries_the_side_panels_doors():
     """Home before the tabs. T596 had New and Open after them, on a row of
     their own that was the first thing in the header; T602 put the tabs
-    in the title row (after File, Info and Reload, before Find) and New
-    and Open in File, which leads that row."""
+    at the left of the title row (Info, Reload and Find at its right) and
+    New and Open in File, which leads the row under it."""
     page = assets.page_template()
     head = page[page.index('<header class="apptop" id="apptop">'):]
     head = head[:head.index("</header>")]
@@ -74,18 +74,21 @@ def test_the_tab_row_carries_the_side_panels_doors():
     assert first == "nb-filebar", first
     bar = head[:head.index('<div class="appbar">')]
     row = bar[bar.index('<div class="open-tabs-row"'):]
+    nav = head[head.index('<div class="appbar">'):]
     assert row.index('id="ot-home"') < row.index('id="top-tabstrip"')
     assert 'id="ot-new"' not in page and "ot-doors" not in page
     # words plus icons, never icon-only (the UI invariant)
     assert '>{logo}<span class="btxt">Home</span></button>' in row
     # New makes the same four things the side panel's New made, by
     # pressing the one real button for each -- from File now
-    menu = bar[bar.index('id="app-file-menu"'):bar.index("</span>")]
+    menu = nav[nav.index('id="app-file-menu"'):]
+    menu = menu[:menu.index("</span>")]
     for real in ("pr-new", "pr-newpost", "pr-newview", "pr-newfold"):
         assert f'data-for="{real}"' in menu, real
     assert "Open a presentation&#8230;</button>" in menu
-    assert (bar.index('id="app-file"') < bar.index('id="file-dock"')
-            < bar.index('id="open-tabs-row"') < bar.index('id="doc-find"'))
+    assert (bar.index('id="open-tabs-row"') < bar.index('id="file-dock"')
+            < bar.index('id="doc-find"'))
+    assert nav.index('id="app-file"') < nav.index('id="menubtn"')
     # no stray label: Home says where the row starts
     assert "open-tabs-label" not in page
 

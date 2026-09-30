@@ -1181,8 +1181,11 @@
     if(qat) qat.hidden=!editing;
     /* the first moment the bar has a real width to be judged against */
     if(editing) requestAnimationFrame(fitQat);
+    /* T602: the strip carries File, Find, Full screen and Present now
+       (PowerPoint's File Home Insert row), so it shows while building
+       too -- without its ribbon tabs and settings there (deck.css) */
     var tabs=$('#rbn-tabs',deckEl);
-    if(tabs) tabs.hidden=(mode!=='edit');
+    if(tabs) tabs.hidden=!editing;
     var xb=$('#deck-exit');
     if(xb){
       /* This bar is shown only while presenting. Keeping its wording fixed

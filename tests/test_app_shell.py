@@ -43,12 +43,14 @@ def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
 
     T602 (2026-09-30, user: "a lot of this stuff could all just be put
     under the file button e.g. the app button, and stuff like new and
-    open"): Open a notebook is a row of that line's File menu, and File
-    leads the line.
+    open"): Open a notebook is a row of File, and File leads the row
+    under this line (the user's pick, the PowerPoint split), while Info
+    and Reload sit at this line's right beside Find.
     """
     assert '<button class="dc-mi" type="button" id="tab-open" hidden' in out
-    assert (out.index('id="nb-filebar"') < out.index('id="app-file"')
-            < out.index('id="tab-open"') < out.index('class="appbar"'))
+    assert (out.index('id="nb-filebar"') < out.index('id="file-dock"')
+            < out.index('class="appbar"') < out.index('id="app-file"')
+            < out.index('id="tab-open"'))
     assert '<span class="fgrp-row" id="file-dock"></span>' in out
     # the bar is still authored in the shell, and moved
     shell = assets.load("html/shell.html")
@@ -464,10 +466,10 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
 def test_app_buttons_share_the_file_utility_line(out):
     """Global commands are grouped with document identity, not filter
     controls, and the old quick-access row is gone. T602: they are rows
-    of File, which leads the line, ahead of the identity.
+    of File, which leads the row under the identity's line.
     """
-    assert (out.index('id="nb-filebar"') < out.index('id="scheme-btn"')
-            < out.index('id="nb-file-ident"') < out.index('class="appbar"'))
+    assert (out.index('id="nb-filebar"') < out.index('id="nb-file-ident"')
+            < out.index('class="appbar"') < out.index('id="scheme-btn"'))
     assert 'class="nb-file-utils"' in out
     assert 'class="tabsrow nb-quickbar"' not in out
     assert '.nb-quickbar' not in out

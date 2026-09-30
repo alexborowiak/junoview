@@ -459,7 +459,7 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     # of File, since the App menu's rows moved there).
     assert "#help-btn{padding:0;justify-content:center;" not in out
     assert 'id="app-file-menu"' in out
-    assert 'id="help-btn"' in out and "How to\n          use&#8230;</button>" in out
+    assert 'id="help-btn"' in out and "How to\n            use&#8230;</button>" in out
     # the width comes from the column, so there is nothing to keep in sync
     assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
            "align-items:stretch;" in out

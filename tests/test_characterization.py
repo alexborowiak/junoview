@@ -2211,8 +2211,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # file bar and move into the editor's top bar (no row of their own), New,
 # Open and the App menu's rows are rows of File in both views (the
 # editor's in two columns), and the help names File where it named App.
-EXPECTED_MD5 = "be5391a02ad21870f05a916d8a42cbd1"
-EXPECTED_BYTES = 4869723
+# T603 (2026-09-30): the title row split as PowerPoint splits it -- tabs
+# drawn as real tabs on the left, the command search in the middle,
+# saving on the right; File, Find, Full screen and Present moved to the
+# ribbon's tab strip (with its own fitter), File to the head of the
+# reader's Outline row, and the help describes the split.
+EXPECTED_MD5 = "c3c9afc8890c5c5890dcc6ea5a0f7346"
+EXPECTED_BYTES = 4876635
 
 
 def _render_example() -> str:

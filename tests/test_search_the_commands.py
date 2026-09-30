@@ -19,12 +19,19 @@ from junoview import assets
 
 
 def test_the_field_is_in_the_strip_markup():
+    """T602 moved it from the tab strip to the middle of the title row,
+    where PowerPoint puts its Search -- still in the markup, between the
+    two springs, with its list floating free of any row."""
     html = assets.deck_html()
-    tabs = html.split('<div class="rbn-tabs" id="rbn-tabs"')[1] \
-        .split('<div class="edit-tools ribbon"')[0]
-    assert 'id="rbn-search-in"' in tabs
-    assert 'placeholder="Search commands (Alt+Q)"' in tabs
-    assert tabs.index('class="rbn-tabset"') < tabs.index('id="rbn-search"')
+    qat = html.split('<div class="deck-qat" id="deck-qat"')[1] \
+        .split('<div class="rbn-tabs" id="rbn-tabs"')[0]
+    assert 'id="rbn-search-in"' in qat
+    assert 'placeholder="Search commands (Alt+Q)"' in qat
+    assert (qat.index('id="qat-name"') < qat.index('id="rbn-search"')
+            < qat.index('id="dc-save"'))
+    assert 'id="rbn-search"' not in html.split(
+        '<div class="rbn-tabs" id="rbn-tabs"')[1].split(
+        '<div class="edit-tools ribbon"')[0]
     assert "58-command-search" in assets.DECK_PARTS
 
 

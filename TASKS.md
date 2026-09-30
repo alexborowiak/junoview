@@ -10819,3 +10819,26 @@ Also the tabs is good, but is all just too much now."
   screen at every width, four decks open, File's two columns, Theme,
   rename by double-click, the side list and back, presenting and back,
   Home (File and the tabs only), light theme.
+- [x] **T603 — The title row, split the way PowerPoint splits it.** The
+  user, on T602's editor with the tabs between Find and Full screen:
+  "This is super cursed with the tabs crowded in here." They were boxed
+  buttons in a row already full of buttons. Three layouts were offered
+  and the user chose the PowerPoint split. The title row is PowerPoint's
+  title bar: the open files on the left, drawn as REAL tabs (quiet,
+  hanging from the row's bottom edge, the one on screen wearing the
+  colour of the row under it so it joins that row, with a line of accent
+  along its top); the command search (Alt+Q) in the middle, where
+  PowerPoint has its Search; and Save, the readout, Autosave and undo on
+  the right, PowerPoint's quick-access corner. The ribbon's tab strip is
+  PowerPoint's File Home Insert row: File first, then the tabs, then
+  Find, Full screen and Present at its end before Auto-hide, Ribbon
+  layouts and the fold. The reader matches: its title row is the tabs
+  then Info, Reload and Find, and File leads the Outline / Filters row.
+  While building (the narrow panel beside a notebook) the strip shows
+  File and the verbs only, and the search steps aside. The strip has its
+  own fitter now (fitTabStrip, run with fitQat and whenever Style and
+  Object come or go): tighter tabs and no hint, then the tab words a
+  point smaller, then a sideways scroll. Info and Reload no longer shrink
+  under Find in a narrow column. Driven at 1440, 1280 and 1100 wide
+  (at 1100 with all nine tabs showing, two rungs and nothing clipped),
+  File's two columns under File, building, Home, and the light theme.

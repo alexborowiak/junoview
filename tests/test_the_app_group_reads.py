@@ -64,7 +64,7 @@ def test_reader_uses_the_editor_app_menu():
     assert heads == ["new", "open", "app", "open files"], heads
     assert 'id="ot-open"' in menu and 'id="tab-open" hidden' in menu
     assert 'id="scheme-btn"' in menu
-    assert 'id="help-btn"' in menu and "How to\n          use&#8230;" in menu
+    assert 'id="help-btn"' in menu and "How to\n            use&#8230;" in menu
     assert 'id="support-btn"' in menu
     # T596: where the open files are listed is an app-wide choice
     assert 'class="dc-mi jv-files-at" type="button" data-at="top"' in menu
