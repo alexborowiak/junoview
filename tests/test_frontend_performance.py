@@ -333,7 +333,7 @@ var TOKENS_DEFAULT={c:{line:'line'}};
 var typeRun=null;
 function ensureOids(){} function flushTextEdits(){} function markPrivateItems(){}
 function slideHasMaths(){return false;} function fitTexts(){} function focusSettle(){}
-function altPaint(){}
+function altPaint(){} function shadowPaint(){}
 function tokens(){return TOKENS_DEFAULT;} function tokVal(v){return v;}
 function strokePx(){return 1;} function dashFor(){return false;}
 function cssFill(){return 'none';} function applyCommon(){}
