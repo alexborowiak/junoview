@@ -2867,6 +2867,14 @@
         }
       }
       for(var pq=pushedAt;pq<items.length;pq++){
+        /* T549: a mirrored picture, shape or clip is PowerPoint's own
+           flipH / flipV (a notebook figure or a book's page leaves as a
+           picture, and takes them the same way) */
+        var fpt=items[pq].t;
+        if(fpt==='image'||fpt==='rect'||fpt==='video'){
+          if(a.flipH) items[pq].flipH=1;
+          if(a.flipV) items[pq].flipV=1;
+        }
         if(xstep!=null){
           items[pq].animStep=xstep;
           items[pq].animType=(a.anim&&a.anim.type)||'fade';

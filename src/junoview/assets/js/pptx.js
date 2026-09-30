@@ -262,7 +262,10 @@ window.JunoPptx = (function () {
     var y = Math.round((geo.y || 0) / 100 * page.hEmu);
     var cx = Math.max(1, Math.round((geo.w || 10) / 100 * page.wEmu));
     var cy = Math.max(1, Math.round((geo.h || 10) / 100 * page.hEmu));
-    return '<a:xfrm' + rotAttr(geo.rot) + '><a:off x="' + x + '" y="' + y
+    /* T549: a mirrored shape or picture */
+    return '<a:xfrm' + rotAttr(geo.rot)
+      + (geo.flipH ? ' flipH="1"' : '') + (geo.flipV ? ' flipV="1"' : '')
+      + '><a:off x="' + x + '" y="' + y
       + '"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>';
   }
 
@@ -558,7 +561,7 @@ window.JunoPptx = (function () {
         y: (item.y || 0) + (item.h || 0) * c.t / 100,
         w: (item.w || 0) * (100 - c.l - c.r) / 100,
         h: (item.h || 0) * (100 - c.t - c.b) / 100,
-        rot: item.rot };
+        rot: item.rot, flipH: item.flipH, flipV: item.flipV };
       src = '<a:srcRect l="' + Math.round(c.l * 1000) + '" t="'
         + Math.round(c.t * 1000) + '" r="' + Math.round(c.r * 1000)
         + '" b="' + Math.round(c.b * 1000) + '"/>';

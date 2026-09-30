@@ -156,6 +156,8 @@ Whatever its kind, an item may also carry these.
 | `md` | int | 1 when this text box's words are Markdown source and what is drawn is that source rendered — headings, bullets, numbers, quotes, code, emphasis and links. Editing goes through the Markdown editor rather than the caret, because the face of the box is the output. |
 | `maths` | int | 1 when this text box was built by the equation editor: its words are LaTeX between `$` or `$$` delimiters, typeset after every edit. |
 | `lkLock` | int or str | Set on an object of a part's slide: the part locked it, and this is the lock it had before (`1` for none, `"pos"` for position only), given back when the part is unlinked. |
+| `flipH` | int | 1 when what this shows is mirrored left to right — a picture, a shape, a notebook figure's picture, a flip book's pages, a clip. The box and a text box's words are never mirrored. A .pptx carries it as PowerPoint's own flipH, both ways. |
+| `flipV` | int | 1 when what this shows is mirrored top to bottom, as flipH is left to right. |
 | `lockar` | int | 1 to keep this item's shape while it is dragged by a resize handle: the other side follows, so a logo stays square and a plot keeps its proportions. The shape itself is not stored — it is read off the box when the drag begins — and holding Shift during a drag does the opposite of whatever this says. |
 | `fbtn` | int | Flip books only: 1 to give the book one button per figure instead of the back/forward arrows, so any figure is one click away. A named frame names its button. |
 | `name` | str | What to call this object in the Objects pane, in the Selection Pane of an exported `.pptx`, and anywhere else it has to be listed. Absent means the object is described by its kind and its content. |

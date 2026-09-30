@@ -227,6 +227,11 @@
     }
     if(!a) return null;
     if(it.rot&&a.k!=='arrow') a.rot=it.rot;
+    /* T549: mirrored, for what can be (a text box never is) */
+    if(a.k==='image'||a.k==='rect'||a.k==='video'){
+      if(it.flipH) a.flipH=1;
+      if(it.flipV) a.flipV=1;
+    }
     if(it.op!=null&&it.op<1) a.op=it.op;
     if(it.name) a.name=String(it.name);
     if(it.link&&it.link.to==='url'&&it.link.href)

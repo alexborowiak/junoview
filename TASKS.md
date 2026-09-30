@@ -10271,8 +10271,28 @@ choice in the editor (T506, T507).
 
 - [ ] **T548 — Shadow.** None / soft / hard / lifted on any shape,
   picture, figure or box; exported as a .pptx outer shadow.
-- [ ] **T549 — Flip and quarter turns.** Flip horizontal, flip vertical,
+- [x] **T549 — Flip and quarter turns.** Flip horizontal, flip vertical,
   rotate 90° either way; saved, rendered and exported.
+  *Done 2026-10-01.* Arrange ▾ had "Flip left to right", "Turn a quarter
+  turn right" and friends, but a flip only mirrored the selection's
+  places: one picture flipped moved nowhere and looked the same. Now a
+  flip also mirrors what a picture, shape, notebook figure, flip book or
+  clip shows (a.flipH / a.flipV, in the schema and DECK-FORMAT); a text
+  box, table, chart or web page is never mirrored, as in PowerPoint, and
+  a turned object's angle negates, since it mirrors about the page's
+  axis. The canvas mirrors the content, not the box (applyCommon's
+  an-flh/an-flv classes and deck.css), so the handles and the grip stay
+  put; the thumbnails mirror the whole miniature. The door is Rotate ▾
+  on the Object tab's Arrange group, PowerPoint's four (Rotate right and
+  left 90°, Flip vertical, Flip horizontal) and Straighten, then the 15°
+  steps the hidden Rotate left/right buttons took, placed in all eight
+  layouts beside them; Search commands finds it by "flip", "mirror" and
+  "rotate". A .pptx writes flipH/flipV on the shape's xfrm (a cropped
+  picture keeps them) and the reader brings them back for pictures,
+  shapes and clips. Undo takes both back. Driven at 1440x900: Flip
+  horizontal on a picture (the img's matrix(-1,0,0,1), the box where it
+  was), Rotate right 90° (rotate(90deg)), the strip's miniature "rotate(90deg)
+  scale(-1, 1)", two undos back to plain.
 - [ ] **T550 — Picture corrections.** Brightness, contrast, saturation and
   greyscale presets with Reset picture, kept as settings over the
   untouched original, exported to .pptx.

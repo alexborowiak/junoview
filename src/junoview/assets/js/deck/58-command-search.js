@@ -52,6 +52,8 @@
     'vw-rulers':'ruler',
     'dsg-masters':'slide master master slide',
     'pr-newversion':'custom slide show custom show shorter talk',
+    'fmt-rot':'rotate flip horizontal flip vertical mirror rotate right '
+      +'90 rotate left 90 quarter turn straighten',
     'pr-hide':'hide slide hidden slide skip slide unhide show slide',
     'pr-timing':'rehearse timings rehearsal timer',
     'hm-notes':'speaker notes notes pane',

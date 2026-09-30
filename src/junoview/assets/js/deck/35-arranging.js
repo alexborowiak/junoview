@@ -222,6 +222,10 @@
      is a no-op on its position and only matters to arrows and freehand,
      which carry real geometry to mirror; with several it reverses their
      order, which is the useful case. */
+  /* T549: the kinds whose CONTENT can be mirrored. A text box, a table,
+     a chart and a web page are not -- their words would read backwards,
+     and PowerPoint does not mirror them either. */
+  var FLIPPABLE={image:1,cell:1,flip:1,rect:1,video:1};
   function flipSel(axis){
     var items=selRects();
     if(!items.length){toast('Select something first');return;}
@@ -237,6 +241,14 @@
       } else if(a.k==='draw'&&Array.isArray(a.pts)){
         a.pts=a.pts.map(function(q){
           return horiz?[1-q[0],q[1]]:[q[0],1-q[1]];});
+      } else if(FLIPPABLE[a.k]){
+        /* T549: and what it shows is mirrored too -- before, flipping
+           one picture moved it nowhere and changed nothing */
+        var key=horiz?'flipH':'flipV';
+        if(a[key]) delete a[key]; else a[key]=1;
+        /* a turned thing mirrors about the page's axis, not its own */
+        if(a.rot) a.rot=(360-a.rot)%360||undefined;
+        if(a.rot===undefined) delete a.rot;
       }
     });
     rerenderSel();

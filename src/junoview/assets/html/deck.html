@@ -2212,6 +2212,18 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn etm" id="fmt-ungroup"
                 title="Ungroup (Ctrl+Shift+G)"><i data-ic="ungroup"></i>
                 Ungroup</button>
+              <!-- T549: ROTATE, where PowerPoint keeps it -- the quarter
+                   turns and the two flips in one door. They were rows
+                   deep in Arrange (which keeps them), and a single
+                   picture's flip mirrored nothing. -->
+              <span class="sh-drop" id="fmt-rotwrap" hidden>
+                <button class="dbtn etm" id="fmt-rot" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Turn a quarter turn either way, flip left to right
+ or top to bottom, or straighten"><i data-ic="rotr"></i>
+                  Rotate &#9662;</button>
+                <div class="sh-menu" id="fmt-rot-menu" hidden></div>
+              </span>
               <button class="dbtn etm" id="fmt-forward" hidden
                 title="Bring forward one place (Ctrl+])"><i data-ic="forward"></i>
                   Forward</button>

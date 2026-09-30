@@ -2060,6 +2060,22 @@
      ['largest','Match the largest'],
      ['smallest','Match the smallest']],'same',
     function(mode){sameSize(mode);});
+  /* T549: Rotate, PowerPoint's four and a straighten, then the small
+     steps the old Rotate left/right buttons took */
+  wireFloatDropdown('fmt-rotwrap','fmt-rot','fmt-rot-menu',
+    [['r:90','Rotate right 90°'],['r:-90','Rotate left 90°'],
+     ['f:v','Flip vertical'],['f:h','Flip horizontal'],
+     ['r:0','Straighten'],['r:15','Rotate right 15°'],
+     ['r:-15','Rotate left 15°']],'rot',
+    function(v){
+      if(v.indexOf('f:')===0) flipSel(v.slice(2));
+      else turnSel(+v.slice(2));
+    },function(v){
+      var i=document.createElement('span');
+      i.innerHTML=bic(v==='f:h'||v==='f:v'?'swap'
+        :v==='r:0'?'reset':(+v.slice(2)<0?'rotl':'rotr'));
+      return i.firstChild;
+    });
   var capBtn=$('#fmt-caption');
   if(capBtn) capBtn.addEventListener('click',function(){
     if(typeof selAnnot!=='number') return;

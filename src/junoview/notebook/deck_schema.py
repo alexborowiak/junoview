@@ -257,6 +257,13 @@ ANNOT_COMMON: dict[str, tuple[type | tuple[type, ...], str]] = {
                             "before (1 for none, 'pos' for position "
                             "only), given back when the part is "
                             "unlinked."),
+    "flipH": (int, "1 when what this shows is mirrored left to right — "
+                   "a picture, a shape, a notebook figure's picture, a "
+                   "flip book's pages, a clip. The box and a text box's "
+                   "words are never mirrored. A .pptx carries it as "
+                   "PowerPoint's own flipH, both ways."),
+    "flipV": (int, "1 when what this shows is mirrored top to bottom, as "
+                   "flipH is left to right."),
     "lockar": (int, "1 to keep this item's shape while it is dragged by "
                     "a resize handle: the other side follows, so a logo "
                     "stays square and a plot keeps its proportions. The "

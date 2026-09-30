@@ -2328,6 +2328,12 @@
     var tr=extraTransform||'';
     if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
     if(tr) el.style.transform=tr;
+    /* T549: a mirrored picture, shape, figure, book or clip. The item
+       carries the flip as a class and deck.css mirrors its CONTENT, so
+       the box and its handles (and the rotate grip, on top) stay where
+       they are -- as in PowerPoint, where flipping moves no handle. */
+    el.classList.toggle('an-flh',!!a.flipH);
+    el.classList.toggle('an-flv',!!a.flipV);
   }
   /* a markdown cell frame can carry its own text + background colour, so the
      note is readable on any slide (the default light-box grey is not) */

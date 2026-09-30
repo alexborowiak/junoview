@@ -527,6 +527,12 @@ def _box(ctx: _Ctx, xf: _Xf, g: dict) -> dict:
     out = {"x": ctx.px(x), "y": ctx.py(y), "w": ctx.px(w), "h": ctx.py(h)}
     if g.get("rot"):
         out["rot"] = round(g["rot"], 2)
+    # T549: a mirrored picture or shape (the importer keeps it only for
+    # the kinds whose content can be mirrored)
+    if g.get("flipH"):
+        out["flipH"] = 1
+    if g.get("flipV"):
+        out["flipV"] = 1
     return out
 
 

@@ -2917,7 +2917,10 @@
     b.className='mini-it'+(cls?' '+cls:'');
     b.style.left=(a.x||0)+'%';b.style.top=(a.y||0)+'%';
     b.style.width=(a.w||10)+'%';b.style.height=(a.h||10)+'%';
-    if(a.rot) b.style.transform='rotate('+a.rot+'deg)';
+    /* T549: a thumbnail has no handles, so the whole box mirrors */
+    var mtr=(a.rot?'rotate('+a.rot+'deg)':'')
+      +((a.flipH||a.flipV)?' scale('+(a.flipH?-1:1)+','+(a.flipV?-1:1)+')':'');
+    if(mtr) b.style.transform=mtr.trim();
     if(a.op!=null&&a.op<1) b.style.opacity=a.op;
     d.appendChild(b);
     return b;

@@ -2250,8 +2250,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # show, a Present-tab button and a strip menu row, the strip's struck
 # number and hidden pill, PDF/page exports leave it out and the .pptx
 # keeps it with show=0 both ways, and the help entry.
-EXPECTED_MD5 = "333d84e79ac044f1267de56b265bdedd"
-EXPECTED_BYTES = 4908421
+# T549 (2026-10-01): flip and quarter turns -- a flip mirrors a picture,
+# shape, figure, book or clip's content (flipH/flipV, drawn by class,
+# mirrored in the thumbnails), Rotate on the Object tab with the four
+# PowerPoint rows, and flipH/flipV in a .pptx both ways.
+EXPECTED_MD5 = "0574c4cad443e5f7975ee398ef415206"
+EXPECTED_BYTES = 4913498
 
 
 def _render_example() -> str:

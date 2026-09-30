@@ -87,7 +87,7 @@
     +'#fmt-bulletswrap #fmt-bullets-caret #fmt-bullets-menu '
     +'#fmt-numberswrap #fmt-numbers-caret #fmt-numbers-menu '
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
-    +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
+    +'#fmt-rotl #fmt-rotr #fmt-rotwrap #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
     /* the wrappers around the two colour dropdowns. They got ids so a
        ribbon layout could move a button and its swatch menu as ONE
@@ -470,6 +470,7 @@
     show('#fmt-argrid',false);
     show('#fmt-rotl',false);
     show('#fmt-rotr',false);
+    show('#fmt-rotwrap',isNum);   /* T549 */
     /* count what can actually be RESIZED, not what is selected. selRects
        drops arrows (no box), locked and hidden items, so two selected
        arrows offered "Same size" and then did nothing at all when you
