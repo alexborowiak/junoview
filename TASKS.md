@@ -10402,9 +10402,29 @@ choice in the editor (T506, T507).
   missing is added.
 - [ ] **T575 — Touch and pen.** Move, resize and rotate answer pointer
   events, so a touchscreen or a pen works on the canvas.
-- [ ] **T576 — Selection like PowerPoint.** Shift-click toggles, a second
+- [x] **T576 — Selection like PowerPoint.** Shift-click toggles, a second
   click on stacked objects reaches the one underneath, Esc steps out of
   a group; each checked and whatever is missing added.
+  *Done 2026-10-01.* Checked live on a slide with a picture over a shape,
+  a diamond over both and a two-object group: Shift- and Ctrl-click add
+  and take out, a click on a group takes the group, a double-click steps
+  in and a click then takes one member, Esc steps out with the whole
+  group selected and a second Esc lets go, Ctrl+A takes everything, Tab
+  walks the objects, and a drag box adds with Shift. The drag box picks
+  what it TOUCHES, where PowerPoint wants it enclosed; that was chosen on
+  purpose (a poster's figures are bigger than the gaps you can drag in)
+  and stays. What was missing was the stack: the object on top took every
+  click. Now a separate click on what is already selected -- not the
+  start of a drag, not the second press of a double-click (which types),
+  and not while typing in it -- selects the next object down at that
+  point after the double-click has had its chance (300 ms, cancelled by
+  any press), and further clicks at the same spot carry on from there
+  rather than the top taking the click back; a group you have not stepped
+  into is one object, and it goes round to the top again. The first time
+  says so, and that Tab walks every object. The help's key table lists
+  click again, Shift/Ctrl+click and a group's double-click and Esc.
+  Driven at 1440x900: diamond, picture, rectangle, diamond, picture on
+  five clicks at one point; a double-click kept the picture.
 
 ## Group 19 — the 2026-09-30 animation round (from the user's own review)
 

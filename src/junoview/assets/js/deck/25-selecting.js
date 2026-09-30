@@ -2064,6 +2064,59 @@
     });
     return best;
   }
+  /* ---- T576: CLICK AGAIN TO REACH WHAT IS UNDERNEATH -------------------
+     A picture over a shape, a box over a background panel: the one on top
+     took every click, and the only ways to the one below were Tab and the
+     Layers pane. Now a click on what is already selected -- a separate
+     click, not the start of a drag and not the second half of a
+     double-click (which types) -- selects the next object down at that
+     point, the next click the one below that, and round to the top again.
+     A group you have not stepped into counts as one object. It waits out
+     a double-click's second press before it acts, and any press on an
+     object in the meantime cancels it. */
+  var ctTimer=0,ctHinted=false,ctLast=null;
+  function clickThroughArm(layer,idx,ev0){
+    if(ev0.button!==0||ev0.detail>1) return;
+    var x0=ev0.clientX,y0=ev0.clientY;
+    function up(ev){
+      document.removeEventListener('mouseup',up,true);
+      if(Math.abs(ev.clientX-x0)>3||Math.abs(ev.clientY-y0)>3) return;
+      ctTimer=setTimeout(function(){
+        ctTimer=0;clickThroughNext(layer,idx,x0,y0);},300);
+    }
+    document.addEventListener('mouseup',up,true);
+  }
+  function clickThroughNext(layer,idx,x,y){
+    var s=pres.slides[cur];
+    if(!s||mode!=='edit'||!layer||!document.body.contains(layer)) return;
+    if(selSet.indexOf(idx)<0) return;       /* the selection moved on */
+    function unit(i){
+      var a=(typeof i==='number')?(s.annots||[])[i]:null;
+      return (a&&a.grp!=null&&inGroup!==a.grp)?'g:'+a.grp:'i:'+i;
+    }
+    var units=[],seen={};
+    (document.elementsFromPoint?document.elementsFromPoint(x,y):[])
+      .forEach(function(e){
+        var it=e.closest&&e.closest('.an-item');
+        if(!it||!layer.contains(it)) return;
+        var raw=it.getAttribute('data-idx'); if(raw==null) return;
+        var i=(raw==='t'||raw==='s')?raw:+raw;
+        var k=unit(i); if(seen[k]) return;
+        seen[k]=1;units.push(i);
+      });
+    if(units.length<2) return;
+    var at=-1,mine=unit(idx);
+    units.forEach(function(u,k){if(unit(u)===mine) at=k;});
+    var next=units[(at+1)%units.length];
+    if(unit(next)===mine) return;
+    selectAnnot(layer,next,false);
+    ctLast={x:x,y:y,idx:next};
+    if(!ctHinted){
+      ctHinted=true;
+      toast('The object underneath — click again to go deeper. Tab '
+        +'walks every object on the slide',5000);
+    }
+  }
   /* ---- MARQUEE: drag a box on empty canvas to select what it touches --
      Mousedown on nothing used to deselect and stop there, so the only way
      to select several items was to shift-click each one - and shift-click
@@ -3539,6 +3592,24 @@
             var ga=(s.annots||[])[idx];
             if(!ga||ga.grp!==inGroup) leaveGroup(null);
           }
+          /* T576: a second, separate click on what is already selected
+             (and only that) reaches the object underneath it -- see
+             clickThroughArm */
+          if(ctTimer){clearTimeout(ctTimer);ctTimer=0;}
+          /* ...and a click at the same spot as the last one that reached
+             underneath carries on from THAT object: the top one would
+             otherwise take the click back and the third never came */
+          if(ctLast&&selSet.indexOf(idx)<0&&selSet.indexOf(ctLast.idx)>=0
+             &&Math.abs(ev.clientX-ctLast.x)<=4
+             &&Math.abs(ev.clientY-ctLast.y)<=4){
+            var ctIt=layer.querySelector('.an-item[data-idx="'
+              +ctLast.idx+'"]');
+            if(ctIt){idx=ctLast.idx;item=ctIt;}
+          }
+          if(selSet.indexOf(idx)>=0
+             &&selSet.length===groupMembers(s,idx).length
+             &&!item.classList.contains('an-editing'))
+            clickThroughArm(layer,idx,ev);
           /* clicking an item already in a multi-selection keeps the set and
              drags the whole group */
           if(selSet.indexOf(idx)<0) selectAnnot(layer,idx,false);

@@ -2238,8 +2238,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Thumbnails (2026-10-01): drawShapeSvg gives a rectangle and an ellipse
 # an outline path (they were d="" in every thumbnail) and a thumbnail
 # shape's stroke is not clipped at its own edge.
-EXPECTED_MD5 = "ff50c5d418b08d3bb8544be5524d78d6"
-EXPECTED_BYTES = 4895860
+# T576 (2026-10-01): selection like PowerPoint -- a separate click on what
+# is selected reaches the object underneath (clickThroughArm/Next), and
+# the help's key table lists click again, Shift/Ctrl+click and a group's
+# double-click and Esc.
+EXPECTED_MD5 = "35efabe3f39d058ad8667788d2f129b4"
+EXPECTED_BYTES = 4899627
 
 
 def _render_example() -> str:
