@@ -88,13 +88,20 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                        "inherit live. `bg` is the wearers' background "
                        "(the slide's own still wins), `cmp` names the "
                        "component drawn behind their content, `pos` its "
-                       "corner. Membership is the slide's `mast` tag."),
-    "sections": (dict, "{id: {name, fold, trans, color}}. Membership is "
+                       "corner. Membership is the slide's `mast` tag. "
+                       "`lk` marks one a part brought in (T601); it goes "
+                       "when no slide wears it."),
+    "sections": (dict, "{id: {name, fold, trans, color, link}}. "
+                       "Membership is "
                        "the slide's `sec` tag; the ORDER is read back off "
                        "the slide list and never stored. `color` is the "
                        "section's own colour when the author chose one; "
                        "without it a box wearing '@section' takes the "
-                       "section's turn in the built-in cycle."),
+                       "section's turn in the built-in cycle. `link` makes "
+                       "the section a PART: {deck, sig, at} names another "
+                       "presentation whose slides this section shows, as "
+                       "copies brought up to date when the deck opens -- "
+                       "`sig` is a hash of what was copied, `at` when."),
     "guides": (dict, "The guides you drew on this page: {x, y} lists of "
                      "line positions and `b` of [x, y, w, h] boxes, all "
                      "in page percentages. An editing aid -- never "
@@ -161,6 +168,11 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "mast": (str, "Which master this slide wears -- a look "
                   "inherited live, never stamped."),
     "sec": (str, "Which section this slide belongs to."),
+    "lk": (str, "The part this slide was copied from: the id of the "
+                "section it came with, whose `link` names the "
+                "presentation. Replaced when that presentation changes; "
+                "a slide without it in the same section is the deck's "
+                "own."),
     "bg": (str, "This slide's own background colour."),
     "notes": (str, "Speaker notes for this slide."),
     "goal": ((int, float), "Minutes this slide should take."),
@@ -187,7 +199,7 @@ LAYOUTS: dict[str, int] = {"full": 1, "halves": 2, "rows": 2,
                            "quarters": 4, "title": 0, "blank": 0}
 
 #: Fields any annot may carry, whatever its kind.
-ANNOT_COMMON: dict[str, tuple[type, str]] = {
+ANNOT_COMMON: dict[str, tuple[type | tuple[type, ...], str]] = {
     "hide": (int, "1 when this is hidden: not drawn while editing, in "
                   "playback, in print or in an exported .pptx, and it claims no "
                   "click. A spare kept on the slide."),
@@ -237,6 +249,11 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
     "maths": (int, "1 when this text box was built by the equation "
                    "editor: its words are LaTeX between $ or $$ "
                    "delimiters, typeset after every edit."),
+    "lkLock": ((int, str), "Set on an object of a part's slide: the part "
+                            "locked it, and this is the lock it had "
+                            "before (1 for none, 'pos' for position "
+                            "only), given back when the part is "
+                            "unlinked."),
     "lockar": (int, "1 to keep this item's shape while it is dragged by "
                     "a resize handle: the other side follows, so a logo "
                     "stays square and a plot keeps its proportions. The "

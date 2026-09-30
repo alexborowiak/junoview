@@ -163,6 +163,8 @@
   /* the verbs */
   function addVersion(i){
     var s=pres.slides[i]; if(!s) return;
+    /* T601: the part's own versions are made in the part */
+    if(typeof partGuardMove==='function'&&partGuardMove(i)) return;
     var r=altRun(i);
     var gid=(r&&r.gid)||s.alt||altId();
     if(!s.alt) s.alt=gid;
@@ -198,6 +200,7 @@
     return {n:i+1,of:(pres.slides||[]).length,id:'',name:''};
   }
   function moveSlideToSection(i,id){
+    if(typeof partGuardMove==='function'&&partGuardMove(i,id)) return;   /* T601 */
     var runs=sectionRuns(),r=null,j,to;
     for(j=0;j<runs.length;j++) if(runs[j].id===id) r=runs[j];
     /* a tag on its own would break contiguity, so the slide MOVES to the
@@ -277,6 +280,22 @@
     el.appendChild(dot);
     var t=document.createElement('span');
     t.className='film-sec-t';t.textContent=r.name;el.appendChild(t);
+    /* T601: A PART says so on its divider, in words, and the words are
+       the door to the Parts view */
+    var lkd=(typeof partLink==='function')?partLink(r.id):null;
+    if(lkd){
+      el.classList.add('linked');
+      el.title='A part: these slides are \u201c'+lkd.deck+'\u201d, '
+        +'edited on its own. Drag to move the whole part';
+      var pb=document.createElement('button');
+      pb.type='button';pb.className='film-sec-part';
+      pb.innerHTML=bic('link')+' part';
+      pb.title='These slides are \u201c'+lkd.deck+'\u201d \u2014 open the '
+        +'Parts view';
+      pb.addEventListener('click',function(e){
+        e.stopPropagation();openParts();});
+      el.appendChild(pb);
+    }
     var n=document.createElement('span');
     n.className='film-sec-n';
     /* the count is the whole point of a collapsed section — a divider
@@ -287,7 +306,9 @@
     var ctr=document.createElement('span');ctr.className='film-ctr';
     [[bic('pen'),function(){renameSection(r.id);},'Rename this section'],
      [bic('minus'),function(){removeSection(r.id,false);},
-      'Remove this divider — the slides stay, and join the section '
+      lkd?'Remove this divider \u2014 the slides stay, as this talk\u2019s '
+        +'own, and \u201c'+lkd.deck+'\u201d no longer updates them'
+      :'Remove this divider — the slides stay, and join the section '
       +'above']]
       .forEach(function(p){
         var b=document.createElement('button');b.className='film-mini';
@@ -601,6 +622,10 @@
       var tgt=filmDropTarget(row,e.clientY);
       /* a whole section moves as a block and refinds `cur` by identity */
       if(sec){moveSectionTo(sec,tgt.to);return;}
+      /* T601: a part's slides keep its order, and a part takes in no
+         slide dropped into it */
+      if(typeof partGuardMove==='function'&&partGuardMove(from,tgt.sec))
+        return;
       var to=tgt.to;
       if(to>from) to--;
       var moved=pres.slides.splice(from,1)[0];
@@ -1042,6 +1067,9 @@
   }
   function moveSlide(i,d){
     var j=i+d; if(j<0||j>=pres.slides.length) return;
+    /* T601: stepping past a part's slide would reorder the part */
+    if(typeof partGuardMove==='function'
+       &&(partGuardMove(i)||partGuardMove(j))) return;
     var t=pres.slides[i];pres.slides[i]=pres.slides[j];pres.slides[j]=t;
     if(cur===i)cur=j; else if(cur===j)cur=i;
     /* BOTH swapped slides take their section from the neighbour on their
@@ -1086,6 +1114,13 @@
     delete cp.alt;delete cp.sid;
     var ar=altRun(i);
     var at=ar?(ar.at+ar.n):(i+1);
+    /* T601: a copy of a part's slide is the talk's own, and a copy is
+       never put inside a part -- it goes after it */
+    if(typeof partFree==='function'){
+      if(cp.lk) partFree(cp);
+      if(cp.sec&&partLink(cp.sec)) delete cp.sec;
+      at=partSafeAt(at);
+    }
     pres.slides.splice(at,0,cp);
     cur=at;activePane=-1;selAnnot=null;selSet=[];
     normSections();markDirty();refresh();
@@ -2961,6 +2996,9 @@
   (function(){
     var sec=$('#film-sec');
     if(sec) sec.addEventListener('click',function(){
+      /* T601: a part's sections are made in the part */
+      var pid=(typeof partOfSlide==='function')?partOfSlide(pres.slides[cur]):'';
+      if(pid){toast(partSays(pid),7000);return;}
       /* T499: ONE GESTURE, ONE ENTRY. Creating pushed an entry and the
          rename pushed another, so the first Ctrl+Z only renamed it back
          to "New section" -- a name you never chose (2026-09-15 review,
@@ -2990,6 +3028,7 @@
       /* the overview is a VIEW of the deck, not a mode of the strip: it
          opens and the strip keeps whatever it was showing */
       if(m==='overview'){openOverview();return;}
+      if(m==='parts'){openParts();return;}   /* T601: the same kind of door */
       filmView=m;
       lsSet(FILMKEY+SCOPE,m);
       syncFilmBtn();renderFilm();
@@ -3002,6 +3041,8 @@
           menu.innerHTML='';
           var pg=pageOf().poster?2:1;
           FILM_VIEWS.forEach(function(v){
+            /* T601: a poster's pages are versions, not parts of a talk */
+            if(v[0]==='parts'&&pageOf().poster) return;
             var b=document.createElement('button');
             b.className='dc-mi';
             b.textContent=v[pg];

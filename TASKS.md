@@ -10735,3 +10735,44 @@ a presentation before opening it, and the colour themes' background.
   seminar.pptx" into Downloads and a second export "ENSO seminar (2).pptx";
   a Windows-agent browser download showed the note once and plain toasts
   after.
+- [x] **T601 — One talk made of parts.** "like how you can with overleaf,
+  where you can have multiple documents feed into the one that are linked
+  so you don't have to have them open all at once, it would be good to
+  have something like this. idk how it could look, perhaps you have
+  ideas, but it would be cool if there was a view to have something like
+  this." Overleaf's main file says \input{methods}; here a SECTION is that
+  line: `sections[id].link = {deck, sig, at}` names another presentation,
+  and the section's slides are that presentation's. They are COPIES kept
+  up to date, not references resolved while drawing, so every reader of a
+  deck (strip, talk, PDF, .pptx, standalone page, saved file, Python API)
+  sees ordinary slides unchanged, and a talk whose part cannot be found
+  keeps its slides as last copied. A copied slide carries `lk`; every
+  copied object is locked, `lkLock` remembering the lock it had so Unlink
+  gives exactly those back; a master a part's slides wear comes with them
+  (matched by what it looks like, since master ids are m1, m2 in every
+  deck) and goes when nothing wears it. When the talk opens -- once the
+  draft store has answered (T494) -- each part whose presentation changed
+  since it was copied (`sig`, a hash of the copy) is brought up to date in
+  place, keeping any of the talk's own slides put in its section; copies
+  that were changed HERE too are never overwritten unasked. The Parts
+  view (File > Parts of this talk..., the strip's Thumbnails menu, the
+  "part" word on a part's divider, or search "parts"/"include") lists the
+  talk as its parts in order with their slides: Add a presentation (with
+  a preview, refusing the talk itself, a custom view, a poster, one that
+  already is a part, and any that shows this talk through any chain),
+  New part (a new presentation with the talk's page, colours and types),
+  Make it a part (a section of the talk becomes a presentation of its
+  own), and per part Edit, Update, Choose another..., Unlink, Up, Down
+  and Remove. The corner beside "Slide 3 of 14" says "From <part>" on a
+  part's slide and "Part of <talk>" in a part, one click to the other;
+  going back brings the talk up to date with a toast. A part keeps its
+  order: its slides are not dragged, stepped, versioned or sectioned in
+  the talk (each says so), a new or pasted slide asked for inside a part
+  goes after it, and a slide that leaves its part is the talk's own. A
+  renamed part is followed in every kept talk that shows it. Driven: two
+  decks added as parts of a new talk; a locked copy refused typing; the
+  part edited through the corner and the talk brought up to date on the
+  way back; a reload found nothing new; a deleted copy read "changed
+  here" and Update put it back; Unlink kept the slides unlocked and Ctrl+Z
+  relinked; a section made into a part stayed six slides; a new part
+  opened saying "Part of Thesis chapter 3", which it could not include.

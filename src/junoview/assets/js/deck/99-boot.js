@@ -117,6 +117,7 @@
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   tabRowBoot();               /* New and Open beside the tabs (T596) */
+  partsBoot();                /* the Parts view's doors (T601) */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
   overlayBoot();              /* the one outside-click + Escape closer

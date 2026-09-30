@@ -2203,8 +2203,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T600 (2026-09-30): a .pptx that opens ready to edit -- the local app
 # writes it itself (no Mark of the Web), and a browser download on Windows
 # explains Protected View once, with how to stop it.
-EXPECTED_MD5 = "1d5a7eadb396cb3e2f25ab1eba060c16"
-EXPECTED_BYTES = 4814988
+# T601 (2026-09-30): one talk made of parts -- the deck carries
+# 57-parts.js (the Parts view, a part's link on its section, the copy kept
+# up to date), File > Parts of this talk..., the corner's From/Part of
+# button, the part word on a divider, and the help says how.
+EXPECTED_MD5 = "062b432c80403f157a7a0f0f55fc8706"
+EXPECTED_BYTES = 4861687
 
 
 def _render_example() -> str:

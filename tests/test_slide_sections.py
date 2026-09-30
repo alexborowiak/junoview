@@ -110,8 +110,10 @@ def test_stepping_a_slide_across_a_divider_retags_both(out):
     """
     assert "var sj=far(j,d),si=far(i,-d);" in out
     # an inserted slide joins the run it was inserted into, or it splits
-    # the section and grows a divider out of nowhere
-    assert "if(prev&&prev.sec) pres.slides[at].sec=prev.sec;" in out
+    # the section and grows a divider out of nowhere -- unless that run
+    # is a part (T601), whose slides are another presentation's
+    assert ("    if(prev&&prev.sec&&!(typeof partLink==='function'"
+            "&&partLink(prev.sec)))\n      pres.slides[at].sec=prev.sec;") in out
 
 
 def test_sections_survive_normpres_and_the_python_rebuild(out):
@@ -807,7 +809,7 @@ def test_the_overview_closes_before_the_editors_esc_ladder(out):
     assert "      overviewClose();" in out
     # and it is reached from the menu that already asks "how do I want to
     # look at this deck"
-    assert "['overview','Overview map\u2026','Overview map\u2026']];" in out
+    assert "['overview','Overview map\u2026','Overview map\u2026']," in out
     assert "if(m==='overview'){openOverview();return;}" in out
 
 

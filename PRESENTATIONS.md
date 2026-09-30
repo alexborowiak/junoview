@@ -216,6 +216,29 @@ The overview map shows every slide grouped by section, with optional slides
 labelled and slides outside the current version dimmed. Use it for navigation;
 it is not another editing canvas.
 
+### One talk made of parts
+
+A long talk can be built from shorter presentations, the way a LaTeX document
+pulls in chapters with `\input`. Open **File → Parts of this talk…** (also on
+the strip's *Thumbnails* menu). It lists the talk as its parts, in order. From
+there you can:
+
+- **Add a presentation** you already have, with a preview of its slides.
+- Start a **New part**.
+- **Make it a part**: move one of the talk's sections into a presentation of
+  its own.
+
+Each part is a section of the talk whose slides are that presentation's. They
+are locked in the talk. **Edit** opens the part, and while it is open its corner
+says which talk it belongs to. Whenever the talk opens, it picks up whatever
+changed in its parts. If a part's slides were also changed inside the talk, it
+waits for you to press **Update** rather than overwrite them.
+
+The talk stores a copy of every part's slides. Presenting, PDF, `.pptx`, the
+standalone page and the Python API therefore see ordinary slides. A talk whose
+part cannot be found (a different computer, a deleted presentation) keeps the
+slides as last copied.
+
 ## Present and rehearse
 
 **Present** plays the chosen version full-screen. Arrow keys and clicks move

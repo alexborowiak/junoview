@@ -206,6 +206,9 @@
            is why reordering slides can never desynchronise it
            (2026-08-22) */
         if(typeof s.sec==='string'&&s.sec) o.sec=s.sec;
+        /* T601: the part this slide was copied from -- the section it
+           came in with, whose link names the presentation */
+        if(typeof s.lk==='string'&&s.lk) o.lk=s.lk;
         /* optional, and which named cuts this slide is in. Membership
            lives on the SLIDE so it survives every splice and drag for
            free — the same argument s.sec makes above (T24). */
@@ -355,6 +358,12 @@
         if(typeof d.trans==='string'&&d.trans) keep[k].trans=d.trans;
         /* T316: a section's own colour, when the author chose one */
         if(/^#[0-9a-f]{6}$/i.test(d.color||'')) keep[k].color=d.color;
+        /* T601: the presentation this section shows, when it is a part */
+        if(d.link&&typeof d.link==='object'&&typeof d.link.deck==='string'
+           &&d.link.deck){
+          keep[k].link={deck:d.link.deck,sig:String(d.link.sig||''),
+            at:+d.link.at||0};
+        }
         anySec=true;
       });
       if(anySec) out.sections=keep;
@@ -1061,6 +1070,8 @@
     /* T321: the deck's clips into the session cache, so a save made
        before any of its slides was looked at still carries them */
     if(typeof mediaWarm==='function') mediaWarm(pres);
+    /* T601: its parts as they are now -- the state undo starts from */
+    if(typeof partsOnLoad==='function'&&partsOnLoad()) histReset();
   }
   /* T414: A DECK OPENED FROM A FILE THAT IS TOO BIG FOR THE DRAFT STORE
      STILL OPENS -- from the object in hand, with no browser copy. Its
@@ -1075,6 +1086,7 @@
     pres=np;source='draft';
     histReset();
     if(typeof mediaWarm==='function') mediaWarm(pres);
+    if(typeof partsOnLoad==='function'&&partsOnLoad()) histReset();   /* T601 */
   }
   /* which presentation the page opens with. Called from THE BOOT
      SEQUENCE at the end of the file — never from here: loadPresentation
@@ -1120,6 +1132,8 @@
          open; and when the store does not hold it either, the router
          stamps the view that is showing, as it always did. */
       if(typeof APP.tryRoute==='function') APP.tryRoute();
+      /* T601: the parts of the talk on screen, now they can be found */
+      if(typeof partsAfterDrafts==='function') partsAfterDrafts();
       if(!fresh.length) return;
       if(typeof renderPresTabs==='function') renderPresTabs();
       if(typeof renderPresentationHub==='function') renderPresentationHub();
@@ -1433,10 +1447,12 @@
       out=out||{};
       /* the NAME and the arrival are content; whether a section is
          folded is a way of looking at the strip and stays out (T23) */
-      if(m[k].trans||m[k].color){
+      if(m[k].trans||m[k].color||m[k].link){
         out[k]={name:(m[k].name)||'Untitled section'};
         if(m[k].trans) out[k].trans=m[k].trans;
         if(m[k].color) out[k].color=m[k].color;   /* T316 */
+        /* T601: linking and unlinking a part are edits like any other */
+        if(m[k].link) out[k].link=m[k].link;
       } else out[k]=(m[k].name)||'Untitled section';
     });
     return out;
@@ -1687,10 +1703,12 @@
       Object.keys(d.sections).forEach(function(k){
         var v=d.sections[k];
         pres.sections[k]=(v&&typeof v==='object')
-          ?{name:v.name||'Untitled section',trans:v.trans,color:v.color}
+          ?{name:v.name||'Untitled section',trans:v.trans,color:v.color,
+            link:v.link}
           :{name:v};
         if(!pres.sections[k].trans) delete pres.sections[k].trans;
         if(!pres.sections[k].color) delete pres.sections[k].color;
+        if(!pres.sections[k].link) delete pres.sections[k].link;   /* T601 */
         if(was[k]&&was[k].fold) pres.sections[k].fold=1;
       });
     } else delete pres.sections;

@@ -5046,6 +5046,8 @@
        review). A poster has no runs, so its branch is unchanged. */
     var ar=(typeof altRun==='function')?altRun(cur):null;
     var at=ar?(ar.at+ar.n):(pres.slides.length?cur+1:0);
+    /* T601: a new slide asked for inside a part goes after the part */
+    if(typeof partSafeAt==='function') at=partSafeAt(at);
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
          than "Slide 3" — so no label is stamped here */
@@ -5100,7 +5102,8 @@
     /* a new slide joins the section it was inserted into. Without this an
        insert splits the run in two and grows a divider out of nowhere. */
     var prev=pres.slides[at-1];
-    if(prev&&prev.sec) pres.slides[at].sec=prev.sec;
+    if(prev&&prev.sec&&!(typeof partLink==='function'&&partLink(prev.sec)))
+      pres.slides[at].sec=prev.sec;
     cur=at;activePane=-1;selAnnot=null;selSet=[];
     normSections();markDirty();refresh();
     if(!$('#verpane').hidden) renderFilm();
@@ -5247,6 +5250,8 @@
       if(id) sl[i].sec=id; else delete sl[i].sec;
       prev=id;
     }
+    /* T601: a part's slide that left its section is the talk's own now */
+    if(typeof partNorm==='function') partNorm();
     var m=pres.sections;
     if(m){
       Object.keys(m).forEach(function(k){if(!seen[k]) delete m[k];});
@@ -5260,6 +5265,9 @@
   /* T499: `quiet` for the strip's Section button, whose rename question
      follows at once -- the naming is the entry, see #film-sec */
   function newSection(at,name,quiet){
+    /* T601: a part's sections are made in the part */
+    if(typeof partOfSlide==='function'&&partOfSlide(pres.slides[at])){
+      toast(partSays(partOfSlide(pres.slides[at])),7000);return;}
     var id=secId(),i;
     secMap()[id]={name:name||'New section'};
     /* a new section OWNS everything from `at` down to the next divider —

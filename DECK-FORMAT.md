@@ -54,8 +54,8 @@ supported state, and the editor marks it rather than forbidding it.
 | `page` | str | Page-size preset id ("a4", "a0", "wide", …). |
 | `pageBg` | str | The page's own background colour. |
 | `layouts` | list | Slide layouts this deck designed: [{id, label, items}], each item a slot rect in page percent. They join the built-in catalogue in the New slide gallery and Change layout; a slide names the one it wears in its `lay`. |
-| `masters` | dict | {id: {name, bg, cmp, pos}}: looks slides inherit live. `bg` is the wearers' background (the slide's own still wins), `cmp` names the component drawn behind their content, `pos` its corner. Membership is the slide's `mast` tag. |
-| `sections` | dict | {id: {name, fold, trans, color}}. Membership is the slide's `sec` tag; the ORDER is read back off the slide list and never stored. `color` is the section's own colour when the author chose one; a box wearing `@section` otherwise takes the section's turn in the built-in cycle, resolved when the slide is painted. |
+| `masters` | dict | {id: {name, bg, cmp, pos}}: looks slides inherit live. `bg` is the wearers' background (the slide's own still wins), `cmp` names the component drawn behind their content, `pos` its corner. Membership is the slide's `mast` tag. `lk` marks a master a part brought in with its slides (T601); it goes when no slide wears it. |
+| `sections` | dict | {id: {name, fold, trans, color, link}}. Membership is the slide's `sec` tag; the ORDER is read back off the slide list and never stored. `color` is the section's own colour when the author chose one; a box wearing `@section` otherwise takes the section's turn in the built-in cycle, resolved when the slide is painted. `link` makes the section a **part** (T601): `{deck, sig, at}` names another presentation whose slides this section shows. They are stored here as copies — so every reader of the deck sees ordinary slides, and a deck whose part cannot be found still has them — and are brought up to date when the deck opens and the part has changed: `sig` is a hash of what was copied, `at` when. |
 | `showNums` | int | 1 when slide numbers are drawn. |
 | `slides` | list | The slides, in order. The order IS the story. |
 | `style` | dict | For a view: its saved styling. |
@@ -89,6 +89,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `rord` | list | The authored reading order: annotation oids, first-to-last. Absent means automatic (top-to-bottom, left-to-right); objects the list does not name read last. |
 | `mast` | str | Which master this slide wears — a look inherited live, never stamped. |
 | `sec` | str | Which section this slide belongs to. |
+| `lk` | str | The part this slide was copied from: the id of the section it came with, whose `link` names the presentation. Replaced when that presentation changes; a slide in the same section without it is the deck's own. |
 | `sprops` | dict | Geometry and look of the subtitle text. |
 | `sub` | str | Title-slide subheading. |
 | `title` | str | Title-slide heading. |
@@ -153,6 +154,7 @@ Whatever its kind, an item may also carry these.
 | `crop` | dict | How this picture or figure is cropped. `t`/`r`/`b`/`l` trim each edge by a percentage; `shape` names one of the preset outlines, drawn **inside** the trim box so the same four handles move and size it; `path` is an outline you drew yourself, a list of `[x, y]` points in percent of the item's own box, which wins over both. The picture itself is never altered — a crop is a mask, so clearing it brings everything back. |
 | `md` | int | 1 when this text box's words are Markdown source and what is drawn is that source rendered — headings, bullets, numbers, quotes, code, emphasis and links. Editing goes through the Markdown editor rather than the caret, because the face of the box is the output. |
 | `maths` | int | 1 when this text box was built by the equation editor: its words are LaTeX between `$` or `$$` delimiters, typeset after every edit. |
+| `lkLock` | int or str | Set on an object of a part's slide: the part locked it, and this is the lock it had before (`1` for none, `"pos"` for position only), given back when the part is unlinked. |
 | `lockar` | int | 1 to keep this item's shape while it is dragged by a resize handle: the other side follows, so a logo stays square and a plot keeps its proportions. The shape itself is not stored — it is read off the box when the drag begins — and holding Shift during a drag does the opposite of whatever this says. |
 | `fbtn` | int | Flip books only: 1 to give the book one button per figure instead of the back/forward arrows, so any figure is one click away. A named frame names its button. |
 | `name` | str | What to call this object in the Objects pane, in the Selection Pane of an exported `.pptx`, and anywhere else it has to be listed. Absent means the object is described by its kind and its content. |

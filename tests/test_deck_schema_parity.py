@@ -132,6 +132,8 @@ SLIDE_SENTINELS = {
     "lay": "title-figure",
     "label": "poster v2",
     "sec": "s1",
+    # the part this slide was copied from (T601)
+    "lk": "s1",
     "bg": "#123456",
     "notes": "speaker notes",
     "goal": 3,
