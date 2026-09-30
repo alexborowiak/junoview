@@ -2216,8 +2216,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # saving on the right; File, Find, Full screen and Present moved to the
 # ribbon's tab strip (with its own fitter), File to the head of the
 # reader's Outline row, and the help describes the split.
-EXPECTED_MD5 = "c3c9afc8890c5c5890dcc6ea5a0f7346"
-EXPECTED_BYTES = 4876635
+# T547 (2026-09-30): text in columns -- Paragraph's Columns and gap rows,
+# the render's column-count on the words, the .pptx numCol/spcCol both
+# ways, and a help entry.
+EXPECTED_MD5 = "aa94fafb9a4e314f888198a5c47896d2"
+EXPECTED_BYTES = 4881697
 
 
 def _render_example() -> str:

@@ -97,6 +97,13 @@
        longer climbs to the top of where it was) */
     if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){
       a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}
+    /* T547: columns come across, the gap as the reader measured it in em
+       of the words (PowerPoint's own default gap is none at all) */
+    if(it.ncol>1){
+      a.ncol=Math.min(3,Math.round(it.ncol));
+      var cge=+it.colGapEm||0;
+      if(cge!==COL_GAP_DEF) a.cgap=Math.round(cge*10)/10;
+    }
     var f=pptFontId(it.font);
     if(f) a.font=f;
     if(it.bgc) a.bgc=it.bgc;

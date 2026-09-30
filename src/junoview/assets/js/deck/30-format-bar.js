@@ -821,6 +821,14 @@
   var ALIGNS=[['left','Left'],['center','Centre'],['right','Right']];
   var CURVES=[[0,'Straight'],[12,'Gentle arch'],[30,'Arch'],
     [55,'Strong arch'],[-12,'Gentle sag'],[-30,'Sag']];
+  /* T547: a text box's column count is a.ncol (a.cols is a TABLE's
+     list of column widths, and the two must never be mistaken for each
+     other). The gap between columns is in em of the box's own type size --
+     the currency a.ind and a.pspace already use, so it means the same on
+     a 16:9 slide and an A0 poster. a.cgap is stored only when it is not
+     Normal. */
+  var COL_GAP_DEF=1.5;
+  var COL_GAPS=[[0.8,'Narrow'],[1.5,'Normal'],[3,'Wide']];
   function paraApply(v){
     /* Bullets and numbering are BUTTONS in this window, not a line of
        a menu: burying a toggle whose state you cannot see inside a
@@ -857,7 +865,33 @@
       fmtApply(function(a){boxIndent(a,out);});
       return;
     }
-    var n=+v.slice(2);
+    /* T547: TEXT IN COLUMNS. One, two or three; the words flow down the
+       first and on into the next, and a box that grows with its words
+       comes out as tall as its longest column. A curve has one baseline
+       and no columns to flow into, so the two cannot both be on: columns
+       straighten a curved box, and saying so is the point of the toast */
+    if(v.indexOf('n:')===0){
+      var nn=+v.slice(2),straightened=false;
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        if(nn>1){
+          a.ncol=nn;
+          if(a.arc){delete a.arc;straightened=true;}
+        } else {delete a.ncol;delete a.cgap;}
+      });
+      if(straightened) toast('Columns and a curve cannot both be on — the '
+        +'curve is off now',4000);
+      return;
+    }
+    if(v.indexOf('g:')===0){
+      var gg=+v.slice(2);
+      fmtApply(function(a){
+        if(a.k!=='text'||!(a.ncol>1)) return;
+        if(gg===COL_GAP_DEF) delete a.cgap; else a.cgap=gg;
+      });
+      return;
+    }
+    var n=+v.slice(2),unColumned=false;
     fmtApply(function(a){
       if(!n){delete a.arc;return;}
       /* a list has several baselines and no single curve to follow, so
@@ -866,8 +900,12 @@
          back to lines instead of DELETING it, which is what the old
          `delete a.html` did (2026-08-20). */
       if(listOf(a)) setListStyle(a,0);
+      /* T547: nor can columns -- a curve is one line of words */
+      if(a.ncol>1){delete a.ncol;delete a.cgap;unColumned=true;}
       a.arc=n;
     });
+    if(unColumned) toast('A curve and columns cannot both be on — the box '
+      +'is one column now',4000);
   }
   /* one of several answers, and it shows whether it is the one that
      is on. The window stays open after a pick; the rows are rebuilt
@@ -896,8 +934,9 @@
     /* alignment and the two lists are buttons in the row again
        (T189); the window keeps what is set once */
     var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve'),
-        vt=$('#fmt-para-va');
-    [ind,cv,vt].forEach(function(h){
+        vt=$('#fmt-para-va'),
+        cl=$('#fmt-para-cols'),cg=$('#fmt-para-colgap');   /* T547 */
+    [ind,cv,vt,cl,cg].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
@@ -929,6 +968,27 @@
         optChip(vt,p[1],((a.fh&&a.va)||'t')===p[0],p[2],
           function(){paraApply('v:'+p[0]);});
       });
+      /* T547: how many columns, and -- only once there are two -- the
+         gap between them */
+      var nc=(a.ncol>1)?a.ncol:1;
+      if(cl) [[1,'One','The words in one column'],
+        [2,'Two','The words flow down one column and on into a second'],
+        [3,'Three','The words flow across three columns']]
+        .forEach(function(p){
+          optChip(cl,p[1],nc===p[0],
+            p[2]+(a.arc&&p[0]>1?'. The curve goes: a curve is one line'
+              :''),
+            function(){paraApply('n:'+p[0]);});
+        });
+      if(cg){
+        optSection(cg,nc>1);
+        var gap=(a.cgap!=null)?+a.cgap:COL_GAP_DEF;
+        COL_GAPS.forEach(function(p){
+          optChip(cg,p[1],gap===p[0],
+            'A gap of '+p[0]+' times the size of the words',
+            function(){paraApply('g:'+p[0]);});
+        });
+      }
     }
     buildSpacingRows();
   }

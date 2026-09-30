@@ -63,4 +63,5 @@ def test_an_imported_anchor_keeps_its_place(out):
     assert "if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){" in imp
     assert "a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}" \
         in imp
-    assert "va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:''};" in out
+    # (T547 added the columns after it, so the line ends with a comma)
+    assert "va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:''," in out

@@ -220,6 +220,8 @@ _LOST_TEXT = {
     "picfill": "{n} shape{s} filled with a picture — the outline "
                "arrives, the picture does not",
     "vertical": "{n} text box{es} set vertically — shown horizontal",
+    "manycols": "{n} text box{es} in more than three columns — set in "
+                "three",
     "gradtext": "{n} text box{es} with gradient or patterned letters "
                 "— shown in one colour",
 }
@@ -695,6 +697,15 @@ class _TextReader:
             return None
         bp = body.find("a:bodyPr", NS)
         scale = 1.0
+        # T547: text in columns -- how many, and the gap in points (the
+        # item turns it into em once it knows the size of the words)
+        ncol, col_gap_pt = 1, 0.0
+        if bp is not None:
+            ncol = max(1, _int(bp.get("numCol"), 1))
+            col_gap_pt = _int(bp.get("spcCol"), 0) / EMU_PER_PT
+            if ncol > 3:
+                self.ctx.tally.add("manycols")
+                ncol = 3
         if bp is not None:
             na = bp.find("a:normAutofit", NS)
             if na is not None and na.get("fontScale"):
@@ -709,7 +720,8 @@ class _TextReader:
             paras.pop()
         if not any(r["t"].strip() for pa in paras for r in pa["runs"]):
             return None
-        return {"paras": paras, "anchor": _anchor(bp, ph_shape_chain)}
+        return {"paras": paras, "anchor": _anchor(bp, ph_shape_chain),
+                "ncol": ncol, "colGapPt": col_gap_pt}
 
     def _para(self, sp: ET.Element, p: ET.Element, kind: str,
               chain_shapes: list, scale: float) -> dict:
@@ -1149,6 +1161,13 @@ class _SlideReader:
             "ph": ph[0] if ph else "", "kind": kind})
         if in_shape:
             item["inShape"] = 1
+        # T547: columns, their gap in em of the box's words
+        if text.get("ncol", 1) > 1:
+            item["ncol"] = text["ncol"]
+            size_f = float(size) if isinstance(size, (int, float)) else 0.0
+            size_pt = size_f / 100 * self.ctx.hpt
+            item["colGapEm"] = round(text.get("colGapPt", 0.0)
+                                     / max(size_pt, 0.01), 2)
         self._push(el, item)
 
     def _line_item(self, el: ET.Element, box: dict, xf: _Xf,

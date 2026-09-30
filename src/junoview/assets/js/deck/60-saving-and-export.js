@@ -2434,7 +2434,12 @@
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
-      va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:''};
+      va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',
+      /* T547: its columns and the gap between them (em of its words);
+         a curved box has none, as on the canvas */
+      ncol:(a.ncol>1&&!a.arc)?Math.min(3,a.ncol):0,
+      colGapEm:(a.ncol>1&&!a.arc)
+        ?((a.cgap!=null)?+a.cgap:COL_GAP_DEF):0};
   }
   /* one slide's annots -> spec items, plus a tally of what could not go */
   /* `layer` is the rendered annotation layer for THIS slide, or null. It is

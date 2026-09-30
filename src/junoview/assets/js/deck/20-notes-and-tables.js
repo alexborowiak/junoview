@@ -3116,6 +3116,16 @@
           else if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else tx2.textContent=showTx||'';
         }
+        /* T547: TEXT IN COLUMNS. The words' own element is the
+           multi-column box, so plain words, a list (and the editor's
+           wrapper round it) and a Markdown box all flow the same way, and
+           balancing makes a growing box as tall as its longest column. A
+           curved box has one baseline and takes none. */
+        if(a.ncol>1&&!a.arc){
+          tx2.style.columnCount=String(Math.min(3,a.ncol));
+          tx2.style.columnGap=((a.cgap!=null)?+a.cgap:COL_GAP_DEF)+'em';
+          tx2.classList.add('an-cols');
+        }
         if(editing){
           /* THE PAGE, THROUGH THE SAME TWO CLOSURES (T163). editableText
              never knew where the words lived -- it was handed accessors

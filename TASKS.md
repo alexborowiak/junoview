@@ -10249,8 +10249,23 @@ choice in the editor (T506, T507).
   linked object (T118), a clip (T321) and tap-to-enlarge had never
   answered a mouse click; and askText focused its field a tick late, so an
   answer typed straight after Ctrl+K went into the box over the words.
-- [ ] **T547 — Text in columns.** One, two or three columns in a box, with
+- [x] **T547 — Text in columns.** One, two or three columns in a box, with
   a gap, exported as the .pptx column count.
+  *Done 2026-09-30.* Begun by another session that morning (the menu's
+  two headings, left uncommitted with nothing behind them) and finished
+  when the user asked for it to be committed. Paragraph ▾ gains Columns
+  (One, Two, Three) and, once there are two, the gap between them
+  (Narrow, Normal, Wide -- in em of the box's own words, like the indent
+  and paragraph spacing). The words' own element is the multi-column box,
+  so plain words, lists and Markdown flow alike, and a growing box is as
+  tall as its longest column. A curve has one baseline: choosing columns
+  straightens a curved box and choosing a curve takes the columns away,
+  each with a toast. The count is a.ncol -- a.cols is a table's column
+  widths. The .pptx writes numCol and spcCol (from the gap at the size
+  the runs are written at); the reader brings them back, more than three
+  arriving as three with a line in the import's list. Driven: a nine-line
+  box set in two columns (5 + 4), Wide then Three, a curve and back, and
+  a reload keeping two columns.
 
 ### Shapes, pictures, tables
 

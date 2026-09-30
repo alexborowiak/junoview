@@ -385,7 +385,18 @@ window.JunoPptx = (function () {
        round the words and there would be nowhere left to sit */
     var anchor = item.va === 'm' ? 'ctr' : item.va === 'b' ? 'b'
       : (item.centred ? 'ctr' : 't');
-    var bodyPr = '<a:bodyPr wrap="square" anchor="' + anchor + '">' + warp
+    /* T547: text in columns -- PowerPoint's own column count, and the
+       gap (spcCol, EMU) from the gap in em of the words, at the size the
+       runs are written at. A curved box never has columns. */
+    var cols = '';
+    if (+item.ncol > 1 && !arc) {
+      var colPt = Math.max(1, (item.sizePct || 2.6) / 100 * page.hPt);
+      cols = ' numCol="' + Math.min(3, Math.round(+item.ncol)) + '"'
+        + ' spcCol="' + Math.round((+item.colGapEm || 0) * colPt * 12700)
+        + '"';
+    }
+    var bodyPr = '<a:bodyPr wrap="square"' + cols + ' anchor="' + anchor
+      + '">' + warp
       + ((arc || item.va) ? '<a:noAutofit/>' : '<a:spAutoFit/>')
       + '</a:bodyPr>';
     return '<p:sp>'
