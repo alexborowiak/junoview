@@ -2176,8 +2176,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # takes that line into a list.
 # T592 (2026-09-30): pictures copied on the canvas and pasted onto a
 # selected flip book become its pages.
-EXPECTED_MD5 = "e41ae926fe2129435a6796e11aff6c21"
-EXPECTED_BYTES = 4737884
+# T593 (2026-09-30): selectAnnot guards showFmt, so a fault in a ribbon
+# sync is logged and no longer cancels the gesture that selected.
+EXPECTED_MD5 = "b24c4af67ff52e7f54bb1253ce9700b7"
+EXPECTED_BYTES = 4738662
 
 
 def _render_example() -> str:
