@@ -1654,9 +1654,14 @@
     }
     el.__jvFlush=function(){commitNow(true);};
     var typeT=null;
-    el.addEventListener('input',function(){
+    el.addEventListener('input',function(e){
       clearTimeout(typeT);
       typeT=setTimeout(function(){commitNow(true);},900);
+      /* T545: AutoCorrect, as the last character of a rule lands */
+      if(el.isContentEditable){
+        var s5=pres.slides[cur];
+        autoCorrect(el,e,s5&&annotByIdx(s5,idx));
+      }
     });
     el.addEventListener('blur',function(){
       clearTimeout(typeT);
@@ -2306,9 +2311,10 @@
     /* a table cell is a text edit too, and had the same blur-only commit */
     td.__jvFlush=function(){writeCell();markDirty(true);};
     var cellT=null;
-    td.addEventListener('input',function(){
+    td.addEventListener('input',function(e){
       clearTimeout(cellT);
       cellT=setTimeout(function(){writeCell();markDirty(true);},900);
+      autoCorrect(td,e,a);      /* T545: a cell is typed in too */
     });
     function commit(){
       clearTimeout(cellT);

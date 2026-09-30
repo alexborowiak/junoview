@@ -28,6 +28,8 @@
     'hm-layers':'selection pane layers list objects',
     'vw-anim':'animation pane animations list',
     'fmt-txcol-btn':'font colour font color text color',
+    'tx-autocorrect':'autocorrect auto correct smart quotes curly quotes '
+      +'dashes autoformat as you type',
     'fmt-clear':'clear formatting clear all formatting remove formatting '
       +'plain text reset',
     'fmt-case-btn':'change case uppercase lowercase sentence case '

@@ -1690,6 +1690,9 @@ body.slide-editing:has(#open-tabs-row:not([hidden])) .deck.editing{
 /* T444: the deck's type on Text follows Write; the deck-wide colours
    and spacing on Design follow Page furniture */
 .rbn-decktype{order:6;}
+/* T545: Typing -- AutoCorrect's switch -- after the deck's type; with
+   no rung it sat at 0 and came first */
+.rbn-typing{order:7;}
 .rbn-deckwide{order:4;}
 /* T444: the Style system is a tall tile, like History (T463: sized by
    the one standing-tile rule beside .fx-tile) */

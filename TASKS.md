@@ -10217,8 +10217,21 @@ choice in the editor (T506, T507).
   typing or not; Search commands finds both by PowerPoint's names; the
   help page lists the keys (and T541's). Driven at 1440x900 on titles,
   plain, rich, list and Markdown boxes, one and four at a time, with undo.
-- [ ] **T545 — AutoCorrect as you type.** Straight quotes curl, -- becomes
+- [x] **T545 — AutoCorrect as you type.** Straight quotes curl, -- becomes
   an en dash, (c) ©, -> →; one switch turns it off.
+  *Done 2026-09-30.* A new part, 22-autocorrect.js, PowerPoint's set:
+  quotes curl (opening at a line's start, after a space, bracket or dash;
+  "it's" gets its apostrophe), -- is an en dash and a third hyphen an em
+  dash, (c) (r) (tm), ... an ellipsis, -> <- => <=> arrows (and --> after
+  the dash). Each fires as its last character is typed, through the
+  browser's own insertText, so Ctrl+Z straight after puts back what was
+  typed. Text boxes, titles and table cells; never a Markdown, mono (code)
+  or equation box, nor inside $maths$, \( \) or `code` on the line being
+  typed. The switch is a tile, Text > Typing > AutoCorrect, lit while on,
+  kept in this browser and placed with the deck's text in every ribbon
+  layout; the first correction a browser ever makes says what happened
+  with a Turn AutoCorrect off button. Search commands and the help page
+  know it. Driven at 1440x900 with one input event per character.
 - [ ] **T546 — Link has a button.** "Make this a link…" is only on the
   right-click menu; a Link button (Ctrl+K) on Text and the mini toolbar.
 - [ ] **T547 — Text in columns.** One, two or three columns in a box, with

@@ -2127,8 +2127,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T544 (2026-09-30): Clear formatting (Ctrl+Space) and Change case
 # (Shift+F3) -- a Case door over an eraser in the Font group, two icons.
 # T544 (2026-09-30): ...and both sit with Bold in every ribbon layout.
-EXPECTED_MD5 = "9e57313af32bcc44568f88ea03b0c8d9"
-EXPECTED_BYTES = 4675186
+# T545 (2026-09-30): AutoCorrect as you type -- a new part, a Typing
+# group on Text with its switch, an icon, a help line.
+EXPECTED_MD5 = "bf33ec8a183e8ba917423d1c330286eb"
+EXPECTED_BYTES = 4683898
 
 
 def _render_example() -> str:

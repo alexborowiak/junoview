@@ -263,6 +263,8 @@ _ICON_PATHS = {
     "textcase": '<path d="M1.8 13 4.6 5.4 7.4 13"/><path d="M2.8 10.4h3.6"/>'
                 '<circle cx="11.6" cy="11" r="1.9"/><path d="M13.5 9.1V13"/>'
                 '<path d="M5.4 2.8h6.2"/><path d="m10.2 1.4 1.4 1.4-1.4 1.4"/>',
+    # T545: Office's lightning bolt -- AutoCorrect
+    "autocorrect": '<path d="M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z"/>',
     # T544: an eraser at an angle over the line it rubs out -- Clear
     # formatting
     "eraser": '<path d="m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z"/>'
