@@ -10528,3 +10528,14 @@ create animation. This gets congested very easily."
   travels), the book turns to the last and stays selected. Driven: copy a
   picture, click the book, Ctrl+V twice -- before, two loose copies and
   an empty book; after, page 2 of 2 and no loose copies.
+- [x] **T593 — A ribbon fault cannot cancel the gesture that selected.**
+  "For some reason I have a text box that cannot be resized at all."
+  Every canvas gesture selects first (selectAnnot -> showFmt) and starts
+  its drag second, so T578's missing key (T583) made showFmt throw for
+  every text box with no animation and ended the resize before it began:
+  handles showing, nothing moving them -- and only un-animated boxes,
+  which is why it looked like one box. T583 removed that fault; this
+  makes the next one non-fatal to direct manipulation: selectAnnot
+  guards showFmt, reports the fault in the console, and the drag goes
+  ahead. Driven with the T578 fault put back into a scratch build: the
+  box selects and resizes 519 -> 269 -> 389px, re-wrapping its words.
