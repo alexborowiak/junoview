@@ -2160,8 +2160,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T585 (2026-09-30): an arrow's grab path is on top while editing and
 # arrowAt asks the drawn path, so an arrow over a picture can be clicked;
 # pointing at a Line window option previews it.
-EXPECTED_MD5 = "fa6485cdf8359d121fd40379a1915da4"
-EXPECTED_BYTES = 4721384
+# T586 (2026-09-30): the ribbon's shelf is one slim line -- chips 30px
+# tall, a thin scrollbar, and the wheel scrolls it.
+EXPECTED_MD5 = "6fe97a9c55a6eee39bd637f53e0f6877"
+EXPECTED_BYTES = 4723015
 
 
 def _render_example() -> str:
