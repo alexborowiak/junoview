@@ -2132,8 +2132,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T546 (2026-09-30): Link has a button -- a Links group on Text, Ctrl+K,
 # the mini toolbar; links on words; presenting, links, clips and
 # tap-to-enlarge take a click; the ask dialog focuses at once.
-EXPECTED_MD5 = "1fc84922b7043d71d6a160483ed65fcc"
-EXPECTED_BYTES = 4697479
+# T544 (2026-09-30): Clear on the mini toolbar too.
+EXPECTED_MD5 = "a6e32f6caf06a5dbb5fc56e99fde9c12"
+EXPECTED_BYTES = 4697585
 
 
 def _render_example() -> str:

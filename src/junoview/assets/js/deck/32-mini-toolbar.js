@@ -32,7 +32,9 @@
     ['#fmt-sub','x\u2082','Subscript (Ctrl+=)',''],
     ['#fmt-smaller','A−','Smaller text (Ctrl+Shift+<)',''],
     ['#fmt-bigger','A+','Bigger text (Ctrl+Shift+>)',''],
-    ['#tx-link','Link','Link the highlighted words (Ctrl+K)','mini-link']
+    ['#tx-link','Link','Link the highlighted words (Ctrl+K)','mini-link'],
+    ['#fmt-clear','Clear','Clear the highlighted words’ formatting '
+      +'(Ctrl+Space)','mini-clear']
   ];
   var miniEl=null,miniPend=false;
   function miniBuild(){

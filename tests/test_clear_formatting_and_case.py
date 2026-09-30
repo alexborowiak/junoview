@@ -121,6 +121,9 @@ def test_the_column_in_the_font_group(out):
     assert "show('#fmt-clear',isText);" in out
     assert "if(id==='fmt-case-menu') return buildCaseRows;" in out
     assert "caseClearBoot();" in out
+    # ...and on the mini toolbar, which T536 left a place for: driven,
+    # its Clear stripped a highlighted bold-and-red run and kept it lit
+    assert "['#fmt-clear','Clear','Clear the highlighted words" in out
 
 
 def test_clear_goes_back_to_the_style(out):
