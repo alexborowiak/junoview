@@ -1545,10 +1545,15 @@
        (page, box, heading, ink, accent), so a colour is chosen by
        looking, and painted with tokValIn rather than tokVal because
        the deck's current palette is exactly what it is not. */
+    /* T595: the page a theme card is painted on is the page the deck
+       will have -- the deck's own while the tick box is off, so a
+       heading that will not read on it is seen not reading here */
+    var keptPage='';
     function themeCard(t){
       var c=document.createElement('button');
       c.className='ss-card ss-theme';c.type='button';
       var pal=themePalette(t);
+      if(keptPage) pal.page=keptPage;
       var h=document.createElement('div');h.className='ss-name';
       h.textContent=t.label;
       if(t.mine){
@@ -1598,13 +1603,21 @@
       }
       c.addEventListener('click',function(){
         var n=applyColourTheme(t.id);
+        var kept=!themeTakesPage();   /* T595 */
         markDirty();refresh();build();
         if(onClose) onClose();   /* T470 */
         toast('\u201c'+t.label+'\u201d colours applied'
           +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
-            +'undoes it.':' \u2014 the page and the deck\u2019s colours '
-            +'changed; nothing here wears a named style yet, so pick a '
-            +'style set above to recolour the text too.'),6000);
+            +'undoes it.':' \u2014 the '+(kept?'':'page and the ')
+            +'deck\u2019s colours changed; nothing here wears a named '
+            +'style yet, so pick a style set above to recolour the text '
+            +'too.')
+          +(kept?(' The slide background stayed as it was'
+            +(themeReadsOnPage()?'.':' \u2014 and these colours were '
+              +'made for another page, so some text is hard to read on '
+              +'it. Tick \u201cChange the slide background too\u201d and '
+              +'pick the theme again to take its page as well.')):''),
+          kept?9000:6000);
       });
       return c;
     }
@@ -1617,6 +1630,9 @@
         g.appendChild(card(m));});
       var cg=$('#ss-cgrid');
       if(cg){
+        keptPage=themeTakesPage()?'':tokens().c.page;   /* T595 */
+        var bgck=$('#ss-bg');
+        if(bgck) bgck.checked=!keptPage;
         cg.innerHTML='';
         COLOUR_THEMES.forEach(function(t){cg.appendChild(themeCard(t));});
         myColourThemes().forEach(function(t){
@@ -1659,6 +1675,10 @@
     }
     $('#ss-close').addEventListener('click',close);
     $('#ss-cancel').addEventListener('click',close);
+    /* T595: the tick box repaints the cards on the page they would get */
+    var bgck=$('#ss-bg');
+    if(bgck) bgck.addEventListener('change',function(){
+      setThemeTakesPage(bgck.checked);build();});
     dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
     dlg.addEventListener('keydown',function(e){
       e.stopPropagation();
