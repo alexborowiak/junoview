@@ -10329,8 +10329,26 @@ choice in the editor (T506, T507).
   the figures to 115%, the row still one line with no sideways scroll.
 - [ ] **T567 — A tour of the editor.** The welcome tour covers the
   notebook; the slide editor gets its own short one on first entry.
-- [ ] **T568 — Dialogs agree on their buttons.** Cancel on the left, the
+- [x] **T568 — Dialogs agree on their buttons.** Cancel on the left, the
   verb on the right, Esc cancels, Enter does the verb, everywhere.
+  *Done 2026-09-30.* The markup already put Cancel first; one popover did
+  not (the chart's numbers read Apply, Cancel) and now does. The keys were
+  each dialog's own, wired on its own box, and a box only hears a key
+  while the focus is in it -- after a ribbon door opened Saved layouts the
+  focus was still on the ribbon, so Escape went past the dialog to the
+  canvas behind, and Delete would have reached the shape under the shade
+  (driven). dlgKeysBoot is one listener on window, in capture, for every
+  editor dialog (DLG_KEYED; a test fails if a new .aa-dlg or .eq-dlg is
+  left out): Escape presses its Cancel or close, Enter in a field presses
+  its verb, a text area needs Ctrl+Enter, a button or list answers Enter
+  itself, and any other key aimed past the dialog stops there. Each comes
+  up with the focus in it (first field, else the verb). The question
+  (#ask-dlg) keeps the keys it has had since T475 and this stands down
+  while it is open. The notebook's Add a note saves on Ctrl+Enter. Driven
+  at 1440x900 on Saved layouts, Style sets, Equation, Markdown, Apply this
+  look and Copy layout: focus inside on open, Escape closes each with the
+  editor still editing, Enter applied "3 text boxes at about 14 pt",
+  plain Enter in the equation kept it open and Ctrl+Enter placed it.
 - [ ] **T569 — The File menu keeps the destructive rows apart.** Discard
   changes and Delete presentation sit at the foot, in their own section,
   and confirm in the app.

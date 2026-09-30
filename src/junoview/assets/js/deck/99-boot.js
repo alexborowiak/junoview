@@ -122,6 +122,8 @@
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
+  dlgKeysBoot();              /* every dialog: Esc cancels, Enter the verb
+                                 (T568) */
   handoffBoot();              /* a saved file's Open in Junoview (T597) --
                                  before the route, whose hash it clears */
   /* both IIFEs + their route hooks are now wired — restore the URL's view */

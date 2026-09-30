@@ -3978,6 +3978,11 @@
     document.addEventListener('keydown',function(ev){
       if(ev.key==='Escape'&&!e.dlg.hidden){
         ev.stopPropagation();closeNoteDlg();}
+      /* T568: the verb from the keyboard, as in every other dialog -- the
+         note is several lines, so Enter alone stays a new line */
+      else if(ev.key==='Enter'&&(ev.ctrlKey||ev.metaKey)&&!e.dlg.hidden
+        &&!e.save.disabled){
+        ev.preventDefault();ev.stopPropagation();e.save.click();}
     },true);
     e.save.addEventListener('click',function(){
       if(!noteCtx) return;

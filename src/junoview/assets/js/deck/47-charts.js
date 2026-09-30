@@ -897,7 +897,10 @@
     no.className='dbtn';no.textContent='Cancel';
     no.addEventListener('click',function(e){
       e.stopPropagation();chartDlgClose();});
-    rowb.appendChild(ok);rowb.appendChild(no);
+    /* T568: Cancel on the left and the verb on the right, as in every
+       other dialog; Ctrl+Enter in the numbers applies them */
+    no.id='chart-data-cancel';
+    rowb.appendChild(no);rowb.appendChild(ok);
     p.appendChild(rowb);
     document.body.appendChild(p);
     ta.focus();

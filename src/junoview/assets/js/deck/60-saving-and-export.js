@@ -300,6 +300,93 @@
     askText({tell:true,title:o.title||'Junoview',what:o.what,
       note:o.note,ok:o.ok||'OK'},function(){if(cb) cb();});
   }
+  /* ---- T568: EVERY DIALOG ANSWERS THE SAME KEYS -----------------------
+     Cancel on the left and the verb on the right was already the markup's
+     habit; the keys were not. Each dialog wired its own Escape on its own
+     box, and a box only hears a key when the focus is inside it -- which
+     it never was after a ribbon door opened it -- so Escape in Saved
+     layouts went past the dialog to the canvas behind (driven). Enter did
+     the verb in two of them. One listener on window, in capture (before
+     the canvas and the overlay owner), answers for whichever of these is
+     open: Escape presses its Cancel (or its close), Enter in a field
+     presses its verb -- a text area needs Ctrl+Enter, a button, link or
+     list answers Enter itself -- and any other key aimed past the
+     dialog stops there, so Delete cannot reach a shape under the shade.
+     The question (#ask-dlg) has had these keys since T475 and keeps its
+     own; while it is open, over one of these or not, this stands down. */
+  var DLG_KEYED='#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,#ss-dlg,#ms-dlg,#ts-dlg,'
+    +'#chart-data';
+  function dlgShown(el){
+    if(!el||el.hidden||el.closest('[hidden]')) return false;
+    var r=el.getBoundingClientRect();
+    return r.width>0&&r.height>0;
+  }
+  function dlgTop(){
+    var list=[].slice.call(document.querySelectorAll(DLG_KEYED))
+      .filter(dlgShown);
+    return list.length?list[list.length-1]:null;
+  }
+  function dlgButton(d,which){
+    var sel=which==='verb'?'.primary'
+      :'[id$="-cancel"],[id$="-close"],[data-dlg-cancel]';
+    var hit=null;
+    [].slice.call(d.querySelectorAll(sel)).forEach(function(b){
+      if(b.tagName==='BUTTON'&&dlgShown(b)&&!b.disabled&&!hit) hit=b;});
+    return hit;
+  }
+  /* a dialog comes up with the focus in it: its first field, else its
+     verb, else the box -- so Tab walks the dialog, not the ribbon behind */
+  function dlgFocus(d){
+    if(!d||d.contains(document.activeElement)) return;
+    var f=null;
+    [].slice.call(d.querySelectorAll('input,textarea,select'))
+      .forEach(function(x){
+        if(!f&&dlgShown(x)&&!x.disabled&&x.type!=='hidden') f=x;});
+    f=f||dlgButton(d,'verb')||dlgButton(d,'cancel');
+    if(!f){if(!d.hasAttribute('tabindex')) d.tabIndex=-1;f=d;}
+    try{f.focus({preventScroll:true});}catch(e){}
+  }
+  function dlgKeysBoot(){
+    if(typeof MutationObserver==='function'){
+      [].slice.call(document.querySelectorAll(DLG_KEYED)).forEach(function(d){
+        new MutationObserver(function(){
+          if(dlgShown(d)) dlgFocus(d);
+        }).observe(d,{attributes:true,attributeFilter:['hidden']});
+      });
+    }
+    window.addEventListener('keydown',function(e){
+      var ask=$('#ask-dlg');
+      if(ask&&dlgShown(ask)) return;
+      var d=dlgTop(); if(!d) return;
+      var t=e.target,inside=d.contains(t);
+      /* the chart's numbers are a popover beside the canvas, not a
+         shade over it: only keys typed in it are its own */
+      if(!inside&&d.id==='chart-data') return;
+      /* a menu opened from inside the dialog answers its own keys */
+      if(!inside&&t&&t.closest&&t.closest('.dc-menu,.sh-menu,.canvas-menu'))
+        return;
+      if(e.key==='Escape'){
+        var c=dlgButton(d,'cancel');
+        e.preventDefault();e.stopImmediatePropagation();
+        if(c) c.click();
+        else if(d.id==='chart-data') d.remove();
+        else d.hidden=true;
+        return;
+      }
+      if(e.key==='Enter'&&!e.shiftKey&&!e.altKey&&!e.isComposing){
+        var tag=t&&t.tagName;
+        var own=inside&&(tag==='BUTTON'||tag==='A'||tag==='SELECT'
+          ||tag==='SUMMARY'||(t.isContentEditable)
+          ||(tag==='TEXTAREA'&&!(e.ctrlKey||e.metaKey)));
+        if(own) return;
+        var v=dlgButton(d,'verb');
+        e.preventDefault();e.stopImmediatePropagation();
+        if(v) v.click();
+        return;
+      }
+      if(!inside){e.stopImmediatePropagation();}
+    },true);
+  }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
       .map(function(p){var c=deep(p);delete c.origin;return c;});

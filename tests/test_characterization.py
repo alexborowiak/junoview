@@ -2224,8 +2224,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # colour, the three Choose buttons say Which plots / Which code / Which
 # output, the two size readouts are named and the Outline button's name
 # matches its word.
-EXPECTED_MD5 = "9ba6425abd97f62f090c685f7c6fbb98"
-EXPECTED_BYTES = 4883080
+# T568 (2026-09-30): dialogs agree -- dlgKeysBoot answers Escape and Enter
+# for every editor dialog and brings each up with the focus in it, the
+# chart's numbers put Cancel first, and the notebook's note saves on
+# Ctrl+Enter.
+EXPECTED_MD5 = "f532fac2ba695d32d3681c0621e257b3"
+EXPECTED_BYTES = 4887593
 
 
 def _render_example() -> str:
