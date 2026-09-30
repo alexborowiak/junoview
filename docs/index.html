@@ -629,6 +629,11 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
    just because a filter changed (On / Folded / Off / Mixed) */
 .tvstate{display:inline-block;width:4.4ch;text-align:left;
   margin-left:.4em;overflow:hidden;}
+/* T566: the state word wears its icon's colour, so "Plots On" reads as
+   a setting and its value rather than as one two-word name */
+.toggle.tv .tvstate{color:var(--cyan);}
+.toggle.tv.half .tvstate,.toggle.tv.mixed .tvstate{color:var(--amber);}
+.toggle.tv.off .tvstate{color:inherit;}
 .toggle[aria-pressed="true"] .tdot{opacity:1;background:var(--cyan);}
 /* view-mode buttons (Docs / Present): pressed = the view you are in */
 .toggle.mode[aria-pressed="true"]{background:var(--accent-deep);
@@ -5298,6 +5303,9 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
 .mini-it{position:absolute;overflow:hidden;pointer-events:none;}
 .mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}
+/* a shape's outline sits ON its edge, half outside: clipped, a thin
+   rectangle lost its bottom edge in the strip */
+.mini-it.is-shape{overflow:visible;}
 .mini-it.is-img img{width:100%;height:100%;object-fit:contain;
   display:block;}
 .mini-it.is-img.is-crop img{object-fit:cover;}
@@ -11135,7 +11143,7 @@ window.MathJax = {
 };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-<meta name="junoview-build" content="e781fa23fbd9">
+<meta name="junoview-build" content="4fa3a58c1297">
 <script src="web-runtime.js"></script>
 </head>
 <body>
@@ -11247,7 +11255,7 @@ window.MathJax = {
  tabs go away.">As a list down the side</button>
         </div>
       </span>
-      <button class="menubtn" id="menubtn" aria-label="Toggle sections"
+      <button class="menubtn" id="menubtn" aria-label="Outline"
         title="Show or hide the section sidebar (table of contents)">
         <span></span> Outline</button>
       <button class="menubtn vars-menubtn" id="vars-btn"
@@ -11267,10 +11275,10 @@ window.MathJax = {
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
  On -> Fold -> Off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/><path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
-      <button class="toggle sub" id="pt-filter-btn" aria-label="Choose which plots"
+      <button class="toggle sub" id="pt-filter-btn" aria-label="Which plots"
         title="Choose which plots you see — matplotlib, plotly, bokeh,
  vega, folium, and titled or untitled — each with its own
- On / Fold / Off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Choose</span></button>
+ On / Fold / Off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Which plots</span></button>
     </span>
     <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
@@ -11280,10 +11288,10 @@ window.MathJax = {
       <button class="toggle tv" id="tv-code"
         title="Code — the source in every cell (imports, prints, plotting, …).
  Click to cycle: On -> Fold -> Off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.6 5.2 2.4 8l3.2 2.8"/><path d="M10.4 5.2 13.6 8l-3.2 2.8"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
-      <button class="toggle sub" id="ck-filter-btn" aria-label="Choose which code cells"
+      <button class="toggle sub" id="ck-filter-btn" aria-label="Which code cells"
         title="Choose which code cells you see — including the ones that
  produced nothing at all — each with its own On / Fold / Off"
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Choose</span></button>
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Which code</span></button>
     </span>
     <span class="fgrp" id="ot-grp">
       <button class="toggle tv" id="tv-output"
@@ -11291,10 +11299,10 @@ window.MathJax = {
  Everything a notebook produces is 'output'; plots are just the one kind
  pulled out into their own filter (on the left). Clicks cycle
  On -> Fold -> Off &mdash; the label shows where you are"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3.2" width="11.6" height="9.6" rx="1.2"/><path d="M4.6 6.6 6.4 8l-1.8 1.4"/><path d="M8.4 10h3"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
-      <button class="toggle sub" id="ot-filter-btn" aria-label="Choose which output"
+      <button class="toggle sub" id="ot-filter-btn" aria-label="Which output"
         title="Choose which printed output you see — print, dataset,
  result, error — each with its own On / Fold / Off"
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Choose</span></button>
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg><span class="btxt">Which output</span></button>
     </span>
     <!-- Reactions and categories live behind one Labels control here in
          Filters. It stays out of the sidebar, but a notebook using many
@@ -11361,6 +11369,7 @@ window.MathJax = {
         <button class="toggle fz-step" id="fig-smaller" aria-label="Smaller figures"
           title="Make every figure in the feed smaller"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg></button>
         <button class="toggle fz-val" id="fig-size-val"
+          aria-label="Figure size 100% (click to reset to 100%)"
           title="Figure size across the whole feed — click to reset to 100%"
           >100%</button>
         <button class="toggle fz-step" id="fig-bigger" aria-label="Bigger figures"
@@ -11374,6 +11383,7 @@ window.MathJax = {
         <button class="toggle fz-step" id="md-smaller" aria-label="Smaller text"
           title="Smaller markdown / prose text"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg></button>
         <button class="toggle fz-val" id="md-size-val"
+          aria-label="Text size 100% (click to reset to 100%)"
           title="Markdown text size — click to reset to 100%"
           >100%</button>
         <button class="toggle fz-step" id="md-bigger" aria-label="Bigger text"
@@ -12607,15 +12617,20 @@ rest. Each copy keeps its <b>own words and its own figure</b>, because
 only the arrangement and the look travel, never the content. <i>Detach
 this one</i> turns a copy back into ordinary objects. A component has
 one size &mdash; copies are placed, not stretched.</li>
-<li><b>Text that will not fit.</b> Right-click a text box and turn on
-<b>Shrink to fit</b>: it remembers the height the box has now and asks
-the words to live inside it. What you chose is never rewritten &mdash;
-only what is <i>drawn</i> shrinks, so shortening the words later brings
-the size straight back. It stops before the text stops being readable,
-and if it runs out of room it says <b>does not fit</b> on the box rather
-than shrinking into illegibility. With fit off, a box that overruns is
-marked the same way. Both marks are editing aids: they never print,
-export or appear while you present.</li>
+<li><b>Text that will not fit (AutoFit).</b> <i>Paragraph &#9662;
+&rarr; Autofit</i> (or the right-click menu) says what happens when the
+words outgrow their box, with PowerPoint's three answers. <b>Grow the
+box</b> is where every box starts: it grows with its words. <b>Shrink the
+words</b> remembers the height the box has now and asks the words to live
+inside it. What you chose is never rewritten &mdash; only what is
+<i>drawn</i> shrinks, so shortening the words later brings the size
+straight back. It stops before the text stops being readable, and if it
+runs out of room it says <b>does not fit</b> on the box rather than
+shrinking into illegibility. <b>Fixed box</b> keeps the height too, and
+words that overrun it are marked the same way. Both marks are editing
+aids: they never print, export or appear while you present. A .pptx
+keeps the choice as PowerPoint's own AutoFit, at the size the slide drew
+the words.</li>
 <li><b>The deck's own colours.</b> A deck carries a small set of named
 colours &mdash; Accent, Warm, Lift, Calm, Ink, Quiet &mdash; plus its
 corner radius and the gap the arrange commands space things at. Give an
@@ -15485,8 +15500,9 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Indent the whole box, bend its text along a curve,
- sit the words at the top, middle or bottom, or set them in columns"
+                  title="Indent the box, curve its words, sit them at the
+ top, middle or bottom, grow the box or shrink the words (AutoFit), or set
+ columns"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6"/><path d="m9.8 2.8 2.4 2.4-2.4 2.4"/></svg> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
@@ -15497,6 +15513,12 @@ items snap to both. Guides, not ink: never printed or exported"
                   <!-- T542: top, middle or bottom of the box -->
                   <div class="hd-lab">where the words sit</div>
                   <div class="opt-row" id="fmt-para-va"></div>
+                  <!-- T572: AutoFit -- the box grows, the words shrink,
+                       or neither -- beside where the words sit, which is
+                       the other half of the box's height -->
+                  <div class="hd-lab">autofit &#8212; when the words
+                    outgrow the box</div>
+                  <div class="opt-row" id="fmt-para-fit"></div>
                   <!-- T547: one, two or three columns, and their gap -->
                   <div class="hd-lab">columns</div>
                   <div class="opt-row" id="fmt-para-cols"></div>
@@ -18313,6 +18335,10 @@ items snap to both. Guides, not ink: never printed or exported"
     }
     txt.textContent=label;
     st.textContent=CODE_LABEL[state]||state;
+    /* T566: the two spans have no space between them, so a screen reader
+       (and the accessibility tree) read the name as "PlotsOn". Say it as
+       a setting and its value; the title still explains the cycle. */
+    b.setAttribute('aria-label',label+': '+st.textContent);
     b.classList.toggle('off',state==='hidden');
     b.classList.toggle('half',state==='collapsed');
     b.classList.toggle('mixed',state==='mixed');
@@ -19292,6 +19318,10 @@ items snap to both. Guides, not ink: never printed or exported"
       ?'Tree zoom — click to reset to 100%'
       :'Figure size across the whole feed — click to reset to 100%';
     if(isTree&&APP.treeZoomPct) applyTreeZoomLabel();
+    /* back from the tree, the readout is the figures' again (it went on
+       showing the tree's zoom until the next +/-) */
+    else if(fv&&APP.sizeReadout&&APP.getFigAll)
+      APP.sizeReadout(fv,'Figure size',Math.round(APP.getFigAll()*100));
   }
   function activeTreeHost(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -19301,8 +19331,9 @@ items snap to both. Guides, not ink: never printed or exported"
     var host=activeTreeHost(); if(!host) return;
     var cv=host.querySelector('.tree-canvas'); if(!cv) return;
     var v=$('#fig-size-val');
-    if(v) v.textContent=Math.round(
-      (parseFloat(cv.style.zoom||'1')||1)*100)+'%';
+    var pct=Math.round((parseFloat(cv.style.zoom||'1')||1)*100);
+    if(v&&APP.sizeReadout) APP.sizeReadout(v,'Tree zoom',pct);
+    else if(v) v.textContent=pct+'%';
   }
   APP.treeZoomPct=applyTreeZoomLabel;
   /* ---- the tree's own controls, on the RIBBON. They used to live in a
@@ -20579,7 +20610,8 @@ items snap to both. Guides, not ink: never printed or exported"
        +'Off — the words on the buttons. Code folds the source in '
        +'EVERY cell at once.'},
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
-     text:'The Choose buttons under each filter pick specific kinds — '
+     text:'Which plots, Which code and Which output, under their '
+       +'filters, pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
     {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
      text:'A key at the top; collapse or hide a whole section (also from its '
@@ -21077,6 +21109,11 @@ items snap to both. Guides, not ink: never printed or exported"
     document.addEventListener('keydown',function(ev){
       if(ev.key==='Escape'&&!e.dlg.hidden){
         ev.stopPropagation();closeNoteDlg();}
+      /* T568: the verb from the keyboard, as in every other dialog -- the
+         note is several lines, so Enter alone stays a new line */
+      else if(ev.key==='Enter'&&(ev.ctrlKey||ev.metaKey)&&!e.dlg.hidden
+        &&!e.save.disabled){
+        ev.preventDefault();ev.stopPropagation();e.save.click();}
     },true);
     e.save.addEventListener('click',function(){
       if(!noteCtx) return;
@@ -21442,6 +21479,13 @@ items snap to both. Guides, not ink: never printed or exported"
     },true);
   })();
   /* ---- universal figure size for the whole feed (appbar +/-) ---- */
+  /* T566: a bare "100%" button named nothing, and there are two of them;
+     the readout says what it measures and that a click resets it */
+  function sizeReadout(el,what,pct){
+    el.textContent=pct+'%';
+    el.setAttribute('aria-label',what+' '+pct+'% (click to reset to 100%)');
+  }
+  APP.sizeReadout=sizeReadout;
   var figAll=1;
   function applyFigAll(){
     $$('.nbshell').forEach(function(sh){
@@ -21450,7 +21494,7 @@ items snap to both. Guides, not ink: never printed or exported"
       $$('.card.has-fig',sh).forEach(syncZoomed);
     });
     var lab=$('#fig-size-val');
-    if(lab) lab.textContent=Math.round(figAll*100)+'%';
+    if(lab) sizeReadout(lab,'Figure size',Math.round(figAll*100));
     resizeEmbeds(document);
     scheduleSaveLayout();
   }
@@ -21484,7 +21528,7 @@ items snap to both. Guides, not ink: never printed or exported"
       if(mdAll===1) sh.style.removeProperty('--mdscale');
       else sh.style.setProperty('--mdscale',mdAll);});
     var lab=$('#md-size-val');
-    if(lab) lab.textContent=Math.round(mdAll*100)+'%';
+    if(lab) sizeReadout(lab,'Text size',Math.round(mdAll*100));
     scheduleSaveLayout();
   }
   APP.applyMdAll=applyMdAll;
@@ -25857,10 +25901,19 @@ window.JunoPptx = (function () {
         + ' spcCol="' + Math.round((+item.colGapEm || 0) * colPt * 12700)
         + '"';
     }
+    /* T572: AutoFit. Shrink is normAutofit, with the scale the slide
+       drew the words at; a box that keeps its height any other way
+       (Fixed, a curve, words in its middle or foot) is noAutofit; a box
+       that grows with its words is spAutoFit */
+    var fs = +item.fontScale;
+    var autofit = arc ? '<a:noAutofit/>'
+      : item.fit === 'shrink'
+        ? '<a:normAutofit' + (fs > 0 && fs < 1
+          ? ' fontScale="' + Math.round(fs * 100000) + '"' : '') + '/>'
+      : (item.va || item.fit === 'fixed') ? '<a:noAutofit/>'
+      : '<a:spAutoFit/>';
     var bodyPr = '<a:bodyPr wrap="square"' + cols + ' anchor="' + anchor
-      + '">' + warp
-      + ((arc || item.va) ? '<a:noAutofit/>' : '<a:spAutoFit/>')
-      + '</a:bodyPr>';
+      + '">' + warp + autofit + '</a:bodyPr>';
     return '<p:sp>'
       + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)
@@ -29479,37 +29532,6 @@ window.JunoPptx = (function () {
     });
     var cl=$('#oh-ov-close');
     if(cl) cl.addEventListener('click',function(){overlayHide(ov);});
-  }
-  /* the fit height is taken from what the box is NOW: you set it by
-     making the box the size you want and saying "stay this big", which
-     is the only version of this anybody can predict. */
-  function toggleFit(i){
-    var s2=pres.slides[cur];
-    var a=s2&&(s2.annots||[])[i];
-    if(!a||a.k!=='text') return;
-    var l=stage.querySelector('.annot-layer');
-    if(a.fit==='shrink'){delete a.fit;}
-    else{
-      if(!a.fh){
-        var r=l?annotRectPct(l,s2,i):null;
-        a.fh=r?Math.round((r.b-r.t)*100)/100:12;
-      }
-      a.fit='shrink';
-    }
-    markDirty();
-    if(l){renderAnnots(l,s2);paintSel(l);}
-    toast(a.fit?('Shrinking to fit '+a.fh.toFixed(1)+'% of the page')
-      :'Fit off — the box grows with its words again');
-  }
-  function clearFit(i){
-    var s2=pres.slides[cur];
-    var a=s2&&(s2.annots||[])[i];
-    if(!a) return;
-    delete a.fh;delete a.fit;
-    markDirty();
-    var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s2);paintSel(l);}
-    toast('Fit height forgotten');
   }
   function ohRestore(past){
     var s=pres.slides[cur];
@@ -37221,7 +37243,14 @@ window.JunoPptx = (function () {
     } else {
       svg.setAttribute('preserveAspectRatio','none');
       var p=document.createElementNS(SVGNS,'path');
-      p.setAttribute('d',SHAPE_PATHS[shp]||'');
+      /* The canvas draws a rectangle and an ellipse as a CSS box, so
+         neither is in SHAPE_PATHS -- and the thumbnails, which draw every
+         shape through here, wrote them as d="": the two commonest shapes
+         were missing from every slide in the strip (2026-10-01, found
+         driving T572). Their outlines, for the callers that need a path. */
+      p.setAttribute('d',SHAPE_PATHS[shp]||(shp==='ellipse'
+        ?'M1 50 A49 49 0 1 0 99 50 A49 49 0 1 0 1 50 Z'
+        :shp==='rect'?'M1 1 H99 V99 H1 Z':''));
       var fillVal='none';
       if(SHAPE_OPEN[shp]){
         /* T419: a bracket is a stroke; a fill would paint the page
@@ -50828,16 +50857,20 @@ window.JunoPptx = (function () {
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];
         if(fa&&fa.k==='text'){
-          menuHead(m,'fit');
-          var onFit=(fa.fit==='shrink');
-          row(onFit?'Shrink to fit: on':'Shrink to fit: off','',
-            function(){toggleFit(selIdxs()[0]);},
-            'Shrink the drawn text to fit the box\u2019s height. The size '
-            +'you chose is kept, and it never shrinks past readable')
-            .classList.toggle('on',onFit);
-          if(fa.fh) row('Forget the fit height','',
-            function(){clearFit(selIdxs()[0]);},
-            'Back to a box that simply grows with its words');
+          /* T572: the Paragraph window's three AutoFit answers, in the
+             same words -- one vocabulary on the row and on this menu */
+          menuHead(m,'autofit');
+          var fNow=!fa.fh?'g':(fa.fit==='shrink'?'s':'x');
+          [['g','Grow the box','The box grows with its words'],
+           ['s','Shrink the words','The box keeps its height and the '
+             +'words shrink to fit it. The size you chose is kept, and it '
+             +'never shrinks past readable'],
+           ['x','Fixed box','The box keeps its height; words that do not '
+             +'fit run over it, marked while you edit']]
+            .forEach(function(p){
+              row(p[1],'',function(){paraApply('f:'+p[0]);},p[2])
+                .classList.toggle('on',fNow===p[0]);
+            });
           if(fa.style&&styleDef(fa.style)){
             menuHead(m,'make default / style for '
               +styleDef(fa.style).label);
@@ -52423,7 +52456,7 @@ window.JunoPptx = (function () {
       return;
     }
     /* T542: where the words sit. Middle or bottom needs a height to sit
-       in, so the box keeps the height it has now -- toggleFit's "stay
+       in, so the box keeps the height it has now -- AutoFit's "stay
        this big" rule -- and Top gives the words back their growing box */
     if(v.indexOf('v:')===0){
       var vv=v.slice(2),ly=stage.querySelector('.annot-layer'),
@@ -52446,6 +52479,35 @@ window.JunoPptx = (function () {
     if(v.indexOf('i:')===0){
       var out=v.slice(2)==='-';
       fmtApply(function(a){boxIndent(a,out);});
+      return;
+    }
+    /* T572: AUTOFIT, PowerPoint's three answers to words that outgrow
+       their box. Grow ('g') is the box growing with its words, which is
+       every box with no a.fh; Shrink ('s') keeps the height the box has
+       now -- make the box the size you want and say "stay this big", the
+       only version of this anybody can predict -- and scales the drawn
+       words into it (a.fit, T15); Fixed ('x')
+       keeps the height and lets the words run over, marked while you
+       edit. Middle and bottom need a height to sit in, so Grow puts the
+       words back at the top -- and says so. */
+    if(v.indexOf('f:')===0){
+      var ff=v.slice(2),ly2=stage.querySelector('.annot-layer'),
+          s4=pres.slides[cur],unSat=false;
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        if(ff==='g'){
+          if(a.va){delete a.va;unSat=true;}
+          delete a.fit;delete a.fh;return;
+        }
+        if(!a.fh){
+          var ix=(s4&&s4.annots||[]).indexOf(a);
+          var rr=(ly2&&ix>=0)?annotRectPct(ly2,s4,ix):null;
+          a.fh=rr?Math.round((rr.b-rr.t+0.5)*100)/100:12;
+        }
+        if(ff==='s') a.fit='shrink'; else delete a.fit;
+      });
+      if(unSat) toast('A box that grows has no middle or bottom — the '
+        +'words sit at the top again',4000);
       return;
     }
     /* T547: TEXT IN COLUMNS. One, two or three; the words flow down the
@@ -52517,9 +52579,9 @@ window.JunoPptx = (function () {
     /* alignment and the two lists are buttons in the row again
        (T189); the window keeps what is set once */
     var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve'),
-        vt=$('#fmt-para-va'),
+        vt=$('#fmt-para-va'),ft=$('#fmt-para-fit'),          /* T572 */
         cl=$('#fmt-para-cols'),cg=$('#fmt-para-colgap');   /* T547 */
-    [ind,cv,vt,cl,cg].forEach(function(h){
+    [ind,cv,vt,ft,cl,cg].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
@@ -52550,6 +52612,19 @@ window.JunoPptx = (function () {
           +'the foot of it']].forEach(function(p){
         optChip(vt,p[1],((a.fh&&a.va)||'t')===p[0],p[2],
           function(){paraApply('v:'+p[0]);});
+      });
+      /* T572: AutoFit, in PowerPoint's words on the tooltips */
+      var fNow=!a.fh?'g':(a.fit==='shrink'?'s':'x');
+      if(ft) [['g','Grow the box','The box grows with its words '
+          +'(PowerPoint: Resize shape to fit text)'],
+        ['s','Shrink the words','The box keeps the height it has now and '
+          +'the words shrink to fit it, never past readable (PowerPoint: '
+          +'Shrink text on overflow)'],
+        ['x','Fixed box','The box keeps the height it has now and words '
+          +'that do not fit run over it, marked while you edit '
+          +'(PowerPoint: Do not Autofit)']].forEach(function(p){
+        optChip(ft,p[1],fNow===p[0],p[2],
+          function(){paraApply('f:'+p[0]);});
       });
       /* T547: how many columns, and -- only once there are two -- the
          gap between them */
@@ -66383,7 +66458,10 @@ window.JunoPptx = (function () {
     no.className='dbtn';no.textContent='Cancel';
     no.addEventListener('click',function(e){
       e.stopPropagation();chartDlgClose();});
-    rowb.appendChild(ok);rowb.appendChild(no);
+    /* T568: Cancel on the left and the verb on the right, as in every
+       other dialog; Ctrl+Enter in the numbers applies them */
+    no.id='chart-data-cancel';
+    rowb.appendChild(no);rowb.appendChild(ok);
     p.appendChild(rowb);
     document.body.appendChild(p);
     ta.focus();
@@ -80706,6 +80784,9 @@ window.JunoPptx = (function () {
     'fmt-case-btn':'change case uppercase lowercase sentence case '
       +'capitalise capitalize title case toggle case capitals',
     'fmt-fillcol-btn':'shape fill background colour highlight box',
+    /* T572: what the Paragraph window holds, by PowerPoint's names */
+    'fmt-para':'autofit auto fit shrink text on overflow do not autofit '
+      +'resize shape to fit text columns indent curve vertical alignment',
     'dc-nums':'slide number slide numbers numbering',
     'dc-head':'header footer date',
     'dc-foot':'header footer date',
@@ -81226,6 +81307,93 @@ window.JunoPptx = (function () {
     if(typeof o==='string') o={title:'Junoview',what:o};
     askText({tell:true,title:o.title||'Junoview',what:o.what,
       note:o.note,ok:o.ok||'OK'},function(){if(cb) cb();});
+  }
+  /* ---- T568: EVERY DIALOG ANSWERS THE SAME KEYS -----------------------
+     Cancel on the left and the verb on the right was already the markup's
+     habit; the keys were not. Each dialog wired its own Escape on its own
+     box, and a box only hears a key when the focus is inside it -- which
+     it never was after a ribbon door opened it -- so Escape in Saved
+     layouts went past the dialog to the canvas behind (driven). Enter did
+     the verb in two of them. One listener on window, in capture (before
+     the canvas and the overlay owner), answers for whichever of these is
+     open: Escape presses its Cancel (or its close), Enter in a field
+     presses its verb -- a text area needs Ctrl+Enter, a button, link or
+     list answers Enter itself -- and any other key aimed past the
+     dialog stops there, so Delete cannot reach a shape under the shade.
+     The question (#ask-dlg) has had these keys since T475 and keeps its
+     own; while it is open, over one of these or not, this stands down. */
+  var DLG_KEYED='#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,#ss-dlg,#ms-dlg,#ts-dlg,'
+    +'#chart-data';
+  function dlgShown(el){
+    if(!el||el.hidden||el.closest('[hidden]')) return false;
+    var r=el.getBoundingClientRect();
+    return r.width>0&&r.height>0;
+  }
+  function dlgTop(){
+    var list=[].slice.call(document.querySelectorAll(DLG_KEYED))
+      .filter(dlgShown);
+    return list.length?list[list.length-1]:null;
+  }
+  function dlgButton(d,which){
+    var sel=which==='verb'?'.primary'
+      :'[id$="-cancel"],[id$="-close"],[data-dlg-cancel]';
+    var hit=null;
+    [].slice.call(d.querySelectorAll(sel)).forEach(function(b){
+      if(b.tagName==='BUTTON'&&dlgShown(b)&&!b.disabled&&!hit) hit=b;});
+    return hit;
+  }
+  /* a dialog comes up with the focus in it: its first field, else its
+     verb, else the box -- so Tab walks the dialog, not the ribbon behind */
+  function dlgFocus(d){
+    if(!d||d.contains(document.activeElement)) return;
+    var f=null;
+    [].slice.call(d.querySelectorAll('input,textarea,select'))
+      .forEach(function(x){
+        if(!f&&dlgShown(x)&&!x.disabled&&x.type!=='hidden') f=x;});
+    f=f||dlgButton(d,'verb')||dlgButton(d,'cancel');
+    if(!f){if(!d.hasAttribute('tabindex')) d.tabIndex=-1;f=d;}
+    try{f.focus({preventScroll:true});}catch(e){}
+  }
+  function dlgKeysBoot(){
+    if(typeof MutationObserver==='function'){
+      [].slice.call(document.querySelectorAll(DLG_KEYED)).forEach(function(d){
+        new MutationObserver(function(){
+          if(dlgShown(d)) dlgFocus(d);
+        }).observe(d,{attributes:true,attributeFilter:['hidden']});
+      });
+    }
+    window.addEventListener('keydown',function(e){
+      var ask=$('#ask-dlg');
+      if(ask&&dlgShown(ask)) return;
+      var d=dlgTop(); if(!d) return;
+      var t=e.target,inside=d.contains(t);
+      /* the chart's numbers are a popover beside the canvas, not a
+         shade over it: only keys typed in it are its own */
+      if(!inside&&d.id==='chart-data') return;
+      /* a menu opened from inside the dialog answers its own keys */
+      if(!inside&&t&&t.closest&&t.closest('.dc-menu,.sh-menu,.canvas-menu'))
+        return;
+      if(e.key==='Escape'){
+        var c=dlgButton(d,'cancel');
+        e.preventDefault();e.stopImmediatePropagation();
+        if(c) c.click();
+        else if(d.id==='chart-data') d.remove();
+        else d.hidden=true;
+        return;
+      }
+      if(e.key==='Enter'&&!e.shiftKey&&!e.altKey&&!e.isComposing){
+        var tag=t&&t.tagName;
+        var own=inside&&(tag==='BUTTON'||tag==='A'||tag==='SELECT'
+          ||tag==='SUMMARY'||(t.isContentEditable)
+          ||(tag==='TEXTAREA'&&!(e.ctrlKey||e.metaKey)));
+        if(own) return;
+        var v=dlgButton(d,'verb');
+        e.preventDefault();e.stopImmediatePropagation();
+        if(v) v.click();
+        return;
+      }
+      if(!inside){e.stopImmediatePropagation();}
+    },true);
   }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
@@ -82372,7 +82540,20 @@ window.JunoPptx = (function () {
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
        same rule the notebook's snapshots follow (T32) */
-    if(savedHist) snapTake('saved',savedHist);
+    if(savedHist){
+      var snapNm=pres.name||'untitled',snapLen=savedHist.txt.length;
+      snapTake('saved',savedHist).then(function(){
+        return histIndexAt(snapNm);
+      }).then(function(ix){
+        /* T569: in this browser the save and the autosave write the same
+           draft, so the version a Save took IS the saved copy -- named
+           here for Discard changes to go back to. A deduped snapshot
+           leaves the newest entry holding the same words, so it is the
+           one either way; a failed write names nothing. */
+        var e=ix[ix.length-1];
+        if(e&&e.len===snapLen) deckMetaSet(snapNm,{savedSnap:e.id});
+      }).catch(function(){});
+    }
     saveStamp=new Date();saveKind='manual';
     saveWhere='browser';   /* T483 */
     deckMetaSet(pres.name||'untitled',{saved:Date.now(),
@@ -83362,6 +83543,9 @@ window.JunoPptx = (function () {
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
       va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',
+      /* T572: AutoFit -- 'shrink' (normAutofit), 'fixed' (noAutofit) or
+         '' for a box that grows with its words (spAutoFit) */
+      fit:!a.fh?'':(a.fit==='shrink'?'shrink':'fixed'),
       /* T547: its columns and the gap between them (em of its words);
          a curved box has none, as on the canvas */
       ncol:(a.ncol>1&&!a.arc)?Math.min(3,a.ncol):0,
@@ -83381,6 +83565,7 @@ window.JunoPptx = (function () {
   }
   function pptxItems(s,note,ink,layer){
     var items=[];
+    var fitHost=null;   /* T572: where a shrunk box's scale is read */
     /* which CLICK each annot appears on, the same grouping the badges
        and playback use \u2014 exported as real PowerPoint timing (T110) */
     var bsteps=slideBuildSteps(s).map;
@@ -83427,10 +83612,31 @@ window.JunoPptx = (function () {
       /* Every editable box leaves in PAGE coordinates. An anchored
          object's stored x/y are distances from an edge or centre, and
          its export fallback size matters to that conversion. */
-      var box=(a.k==='arrow')?null:pptxBox(a,false);
+      /* T572: a text box that keeps its height -- AutoFit's Shrink or
+         Fixed, or words sat in its middle or at its foot -- leaves at
+         that height, not at a guess */
+      var box=(a.k==='arrow')?null:pptxBox((a.k==='text'&&a.fh>0)
+        ?Object.assign({},a,{h:a.fh}):a,false);
       var pushedAt=items.length;
       if(a.k==='text'){
         var ti=pptxTextItem(a,false,ink,box);
+        /* ...and a shrunk box takes the scale the slide drew it at, as
+           PowerPoint's own fontScale: PowerPoint only works the shrink
+           out again once the words are edited, so without it the words
+           would open at full size, running out of the box. Only the
+           slide on screen has a live layer; another is drawn off screen
+           once, the way the presenter view draws its previews. */
+        if(a.fit==='shrink'&&a.fh){
+          if(!fitHost){
+            var fsi=(pres.slides||[]).indexOf(s);
+            fitHost=layer||(fsi>=0&&typeof buildSlideNode==='function'
+              ?buildSlideNode(fsi):null)||false;
+          }
+          var fel=fitHost?fitHost.querySelector('div.an-item[data-idx="'
+            +(s.annots||[]).indexOf(a)+'"]'):null;
+          var fk=fel?parseFloat(fel.style.getPropertyValue('--an-fit')):NaN;
+          if(fk>0&&fk<1) ti.fontScale=fk;
+        }
         /* T483: THE PAGE THIS OUTPUT SLIDE IS ABOUT. A box with pages
            left as N identical slides of page one (2026-09-15 review);
            textAt honours flipForce, which the exporter sets per output
@@ -84532,30 +84738,84 @@ window.JunoPptx = (function () {
        deleted and replaced with the notebook's own deck, with no
        question asked (2026-09-15 review) -- it asks now. */
     var nm=pres.name||'untitled';
+    /* T569: DISCARD ASKS, EVERY TIME. It asked only when there was no
+       saved copy; with one, a single click on a row beside Rename threw
+       away every change since the last save. It says what it goes back
+       to, and there is nothing to ask about when nothing has changed. */
+    if(source==='saved'||saveKind==='manual'){
+      toast('Nothing to discard — “'+nm+'” is as it was '
+        +'last saved');
+      return;
+    }
     if(saveTarget==='file'&&fileHandle&&fileHandle.getFile){
-      fileHandle.getFile().then(function(f){return f.text();}).then(function(txt){
-        var obj=parseDeckText(txt);
-        var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
-          :(obj&&Array.isArray(obj.slides))?[obj]:[];
-        var hit=list.filter(function(p){return p&&(p.name||'')===nm;})[0]||list[0];
-        if(!hit){toast('The file has no copy of \u201c'+nm+'\u201d to go back to');return;}
-        cancelDraftWrite();draftDel(nm);
-        var np=normPres(hit);np.name=nm;loadPresentationObj(np);
-        cur=0;activePane=-1;status();refresh();
-        toast('Back to \u201c'+nm+'\u201d as saved in '+(fileName||'the file'));
-      }).catch(function(){toast('Could not read '+(fileName||'the file'));});
+      askYes({title:'Discard your changes to “'+nm+'”?',
+        what:'It goes back to the copy saved in '+(fileName||'its file')
+          +'. Everything changed since then is lost.',
+        ok:'Discard changes',cancel:'Keep editing',danger:true},
+        function(y){if(y===true) discardFromFile(nm);});
+      return;
+    }
+    /* kept in this browser: back to the version the last Save took. It
+       used to find no "saved copy" here at all, and offered to delete a
+       deck that had just been saved -- or, for a deck that came with the
+       notebook, threw every save away and went back to the notebook's. */
+    var sp=saveTarget==='browser'?deckMeta(nm).savedSnap:null;
+    if(sp){
+      var at=deckMeta(nm).saved;
+      askYes({title:'Discard your changes to “'+nm+'”?',
+        what:'It goes back to how it was when you last saved it'
+          +(at&&typeof histWhen==='function'?' ('+histWhen(at)+')':'')
+          +'. Everything changed since then is lost.',
+        ok:'Discard changes',cancel:'Keep editing',danger:true},
+        function(y){
+          if(y!==true) return;
+          snapRead(sp).then(function(then){
+            if(!then||!Array.isArray(then.slides)){
+              toast('That save is no longer in this browser’s '
+                +'history — History has the versions it still has');
+              return;
+            }
+            histRestoreDeck(then,sp);
+            toast('Changes discarded — “'+nm+'” is as you '
+              +'last saved it. Ctrl+Z brings the changes back');
+          });
+        });
       return;
     }
     if(!savedByName(nm)){
-      askYes({title:'Discard \u201c'+nm+'\u201d?',
+      askYes({title:'Discard “'+nm+'”?',
         what:'It has no saved copy to go back to, so discarding its '
           +'changes deletes it from this browser.',
         ok:'Delete it',cancel:'Keep it',danger:true},function(y){
         if(y===true) discardNow(nm);});
       return;
     }
-    discardNow(nm);
+    askYes({title:'Discard your changes to “'+nm+'”?',
+      what:'It goes back to its last save. Everything changed since '
+        +'then is lost.',
+      ok:'Discard changes',cancel:'Keep editing',danger:true},
+      function(y){
+        if(y!==true) return;
+        discardNow(nm);
+        toast('Changes discarded — “'+nm+'” is as it was '
+          +'last saved');
+      });
   });
+  /* a deck kept in a file is re-read from it */
+  function discardFromFile(nm){
+    if(!fileHandle||!fileHandle.getFile) return;
+    fileHandle.getFile().then(function(f){return f.text();}).then(function(txt){
+      var obj=parseDeckText(txt);
+      var list=(obj&&Array.isArray(obj.presentations))?obj.presentations
+        :(obj&&Array.isArray(obj.slides))?[obj]:[];
+      var hit=list.filter(function(p){return p&&(p.name||'')===nm;})[0]||list[0];
+      if(!hit){toast('The file has no copy of \u201c'+nm+'\u201d to go back to');return;}
+      cancelDraftWrite();draftDel(nm);
+      var np=normPres(hit);np.name=nm;loadPresentationObj(np);
+      cur=0;activePane=-1;status();refresh();
+      toast('Back to \u201c'+nm+'\u201d as saved in '+(fileName||'the file'));
+    }).catch(function(){toast('Could not read '+(fileName||'the file'));});
+  }
   function discardNow(nm){
     cancelDraftWrite();   /* a pending write would resurrect the discard */
     draftDel(nm);
@@ -85475,6 +85735,12 @@ window.JunoPptx = (function () {
        longer climbs to the top of where it was) */
     if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){
       a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}
+    /* T572: Shrink text on overflow is AutoFit's Shrink the words, in the
+       box's own height (the reader has already set the words at the
+       scale PowerPoint drew them, so they fit on arrival and shrink
+       further only if more are added) */
+    if(it.fit==='shrink'&&it.h>0){
+      a.fit='shrink';if(!a.fh) a.fh=Math.round(it.h*100)/100;}
     /* T547: columns come across, the gap as the reader measured it in em
        of the words (PowerPoint's own default gap is none at all) */
     if(it.ncol>1){
@@ -85935,6 +86201,8 @@ window.JunoPptx = (function () {
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
+  dlgKeysBoot();              /* every dialog: Esc cancels, Enter the verb
+                                 (T568) */
   handoffBoot();              /* a saved file's Open in Junoview (T597) --
                                  before the route, whose hash it clears */
   /* both IIFEs + their route hooks are now wired — restore the URL's view */
