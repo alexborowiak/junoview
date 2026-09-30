@@ -14007,6 +14007,13 @@ text box along an arc. Click
 into the box and it straightens while you type, then curves again when
 you click away &mdash; a caret cannot sit on a curve. A deeper curve needs
 a taller box, so the arch always stays inside it.</li>
+<li><b>Text in columns.</b> <i>Paragraph &#9662; &rarr; Columns</i> sets a
+text box's words in one, two or three columns, with a narrow, normal or
+wide gap between them; the words flow down one column and on into the
+next, and a box that grows with its words is as tall as its longest
+column. A curve and columns cannot both be on &mdash; choosing one turns
+the other off, and says so. Columns travel into a .pptx as PowerPoint's
+own, and come back in from one.</li>
 <li><b>Lay these out like those.</b> Select some objects, then
 <i>Arrange &#9662; &rarr; Lay these out like a group I click</i> and click
 one member of a tidy row or column. What travels is the <b>pattern</b>
@@ -17124,7 +17131,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
                   title="Indent the whole box, bend its text along a curve,
- or sit the words at the top, middle or bottom of the box"
+ sit the words at the top, middle or bottom, or set them in columns"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6"/><path d="m9.8 2.8 2.4 2.4-2.4 2.4"/></svg> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
@@ -17135,6 +17142,11 @@ items snap to both. Guides, not ink: never printed or exported"
                   <!-- T542: top, middle or bottom of the box -->
                   <div class="hd-lab">where the words sit</div>
                   <div class="opt-row" id="fmt-para-va"></div>
+                  <!-- T547: one, two or three columns, and their gap -->
+                  <div class="hd-lab">columns</div>
+                  <div class="opt-row" id="fmt-para-cols"></div>
+                  <div class="hd-lab">gap between the columns</div>
+                  <div class="opt-row" id="fmt-para-colgap"></div>
                 </div>
               </span>
               <button class="dbtn etm" id="fmt-eqedit" hidden
@@ -27480,7 +27492,18 @@ window.JunoPptx = (function () {
        round the words and there would be nowhere left to sit */
     var anchor = item.va === 'm' ? 'ctr' : item.va === 'b' ? 'b'
       : (item.centred ? 'ctr' : 't');
-    var bodyPr = '<a:bodyPr wrap="square" anchor="' + anchor + '">' + warp
+    /* T547: text in columns -- PowerPoint's own column count, and the
+       gap (spcCol, EMU) from the gap in em of the words, at the size the
+       runs are written at. A curved box never has columns. */
+    var cols = '';
+    if (+item.ncol > 1 && !arc) {
+      var colPt = Math.max(1, (item.sizePct || 2.6) / 100 * page.hPt);
+      cols = ' numCol="' + Math.min(3, Math.round(+item.ncol)) + '"'
+        + ' spcCol="' + Math.round((+item.colGapEm || 0) * colPt * 12700)
+        + '"';
+    }
+    var bodyPr = '<a:bodyPr wrap="square"' + cols + ' anchor="' + anchor
+      + '">' + warp
       + ((arc || item.va) ? '<a:noAutofit/>' : '<a:spAutoFit/>')
       + '</a:bodyPr>';
     return '<p:sp>'
@@ -47479,6 +47502,16 @@ window.JunoPptx = (function () {
           else if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else tx2.textContent=showTx||'';
         }
+        /* T547: TEXT IN COLUMNS. The words' own element is the
+           multi-column box, so plain words, a list (and the editor's
+           wrapper round it) and a Markdown box all flow the same way, and
+           balancing makes a growing box as tall as its longest column. A
+           curved box has one baseline and takes none. */
+        if(a.ncol>1&&!a.arc){
+          tx2.style.columnCount=String(Math.min(3,a.ncol));
+          tx2.style.columnGap=((a.cgap!=null)?+a.cgap:COL_GAP_DEF)+'em';
+          tx2.classList.add('an-cols');
+        }
         if(editing){
           /* THE PAGE, THROUGH THE SAME TWO CLOSURES (T163). editableText
              never knew where the words lived -- it was handed accessors
@@ -54016,6 +54049,14 @@ window.JunoPptx = (function () {
   var ALIGNS=[['left','Left'],['center','Centre'],['right','Right']];
   var CURVES=[[0,'Straight'],[12,'Gentle arch'],[30,'Arch'],
     [55,'Strong arch'],[-12,'Gentle sag'],[-30,'Sag']];
+  /* T547: a text box's column count is a.ncol (a.cols is a TABLE's
+     list of column widths, and the two must never be mistaken for each
+     other). The gap between columns is in em of the box's own type size --
+     the currency a.ind and a.pspace already use, so it means the same on
+     a 16:9 slide and an A0 poster. a.cgap is stored only when it is not
+     Normal. */
+  var COL_GAP_DEF=1.5;
+  var COL_GAPS=[[0.8,'Narrow'],[1.5,'Normal'],[3,'Wide']];
   function paraApply(v){
     /* Bullets and numbering are BUTTONS in this window, not a line of
        a menu: burying a toggle whose state you cannot see inside a
@@ -54052,7 +54093,33 @@ window.JunoPptx = (function () {
       fmtApply(function(a){boxIndent(a,out);});
       return;
     }
-    var n=+v.slice(2);
+    /* T547: TEXT IN COLUMNS. One, two or three; the words flow down the
+       first and on into the next, and a box that grows with its words
+       comes out as tall as its longest column. A curve has one baseline
+       and no columns to flow into, so the two cannot both be on: columns
+       straighten a curved box, and saying so is the point of the toast */
+    if(v.indexOf('n:')===0){
+      var nn=+v.slice(2),straightened=false;
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        if(nn>1){
+          a.ncol=nn;
+          if(a.arc){delete a.arc;straightened=true;}
+        } else {delete a.ncol;delete a.cgap;}
+      });
+      if(straightened) toast('Columns and a curve cannot both be on — the '
+        +'curve is off now',4000);
+      return;
+    }
+    if(v.indexOf('g:')===0){
+      var gg=+v.slice(2);
+      fmtApply(function(a){
+        if(a.k!=='text'||!(a.ncol>1)) return;
+        if(gg===COL_GAP_DEF) delete a.cgap; else a.cgap=gg;
+      });
+      return;
+    }
+    var n=+v.slice(2),unColumned=false;
     fmtApply(function(a){
       if(!n){delete a.arc;return;}
       /* a list has several baselines and no single curve to follow, so
@@ -54061,8 +54128,12 @@ window.JunoPptx = (function () {
          back to lines instead of DELETING it, which is what the old
          `delete a.html` did (2026-08-20). */
       if(listOf(a)) setListStyle(a,0);
+      /* T547: nor can columns -- a curve is one line of words */
+      if(a.ncol>1){delete a.ncol;delete a.cgap;unColumned=true;}
       a.arc=n;
     });
+    if(unColumned) toast('A curve and columns cannot both be on — the box '
+      +'is one column now',4000);
   }
   /* one of several answers, and it shows whether it is the one that
      is on. The window stays open after a pick; the rows are rebuilt
@@ -54091,8 +54162,9 @@ window.JunoPptx = (function () {
     /* alignment and the two lists are buttons in the row again
        (T189); the window keeps what is set once */
     var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve'),
-        vt=$('#fmt-para-va');
-    [ind,cv,vt].forEach(function(h){
+        vt=$('#fmt-para-va'),
+        cl=$('#fmt-para-cols'),cg=$('#fmt-para-colgap');   /* T547 */
+    [ind,cv,vt,cl,cg].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
@@ -54124,6 +54196,27 @@ window.JunoPptx = (function () {
         optChip(vt,p[1],((a.fh&&a.va)||'t')===p[0],p[2],
           function(){paraApply('v:'+p[0]);});
       });
+      /* T547: how many columns, and -- only once there are two -- the
+         gap between them */
+      var nc=(a.ncol>1)?a.ncol:1;
+      if(cl) [[1,'One','The words in one column'],
+        [2,'Two','The words flow down one column and on into a second'],
+        [3,'Three','The words flow across three columns']]
+        .forEach(function(p){
+          optChip(cl,p[1],nc===p[0],
+            p[2]+(a.arc&&p[0]>1?'. The curve goes: a curve is one line'
+              :''),
+            function(){paraApply('n:'+p[0]);});
+        });
+      if(cg){
+        optSection(cg,nc>1);
+        var gap=(a.cgap!=null)?+a.cgap:COL_GAP_DEF;
+        COL_GAPS.forEach(function(p){
+          optChip(cg,p[1],gap===p[0],
+            'A gap of '+p[0]+' times the size of the words',
+            function(){paraApply('g:'+p[0]);});
+        });
+      }
     }
     buildSpacingRows();
   }
@@ -84913,7 +85006,12 @@ window.JunoPptx = (function () {
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
-      va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:''};
+      va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',
+      /* T547: its columns and the gap between them (em of its words);
+         a curved box has none, as on the canvas */
+      ncol:(a.ncol>1&&!a.arc)?Math.min(3,a.ncol):0,
+      colGapEm:(a.ncol>1&&!a.arc)
+        ?((a.cgap!=null)?+a.cgap:COL_GAP_DEF):0};
   }
   /* one slide's annots -> spec items, plus a tally of what could not go */
   /* `layer` is the rendered annotation layer for THIS slide, or null. It is
@@ -87022,6 +87120,13 @@ window.JunoPptx = (function () {
        longer climbs to the top of where it was) */
     if((it.anchor==='ctr'||it.anchor==='b')&&it.h>0){
       a.va=it.anchor==='ctr'?'m':'b';a.fh=Math.round(it.h*100)/100;}
+    /* T547: columns come across, the gap as the reader measured it in em
+       of the words (PowerPoint's own default gap is none at all) */
+    if(it.ncol>1){
+      a.ncol=Math.min(3,Math.round(it.ncol));
+      var cge=+it.colGapEm||0;
+      if(cge!==COL_GAP_DEF) a.cgap=Math.round(cge*10)/10;
+    }
     var f=pptFontId(it.font);
     if(f) a.font=f;
     if(it.bgc) a.bgc=it.bgc;
