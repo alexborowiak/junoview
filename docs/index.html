@@ -10846,7 +10846,7 @@ window.MathJax = {
 };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-<meta name="junoview-build" content="a83f145c46e2">
+<meta name="junoview-build" content="24dddb65cf8d">
 <script src="web-runtime.js"></script>
 </head>
 <body>
@@ -45587,7 +45587,21 @@ window.JunoPptx = (function () {
       } else {selAnnot=idx;selSet=mem.slice();}
     }
     paintSel(layer);
-    showFmt();
+    /* T593: THE RIBBON FOLLOWING A SELECTION MUST NOT BE ABLE TO CANCEL
+       IT. Every gesture on the canvas -- a resize handle, a rotate grip,
+       an arrow's end -- selects first and starts its drag second, so a
+       throw anywhere in showFmt's dozens of syncs ended the gesture
+       before it began: one missing key in T578 (see T583) left plain
+       text boxes selectable but impossible to resize (2026-09-30, user:
+       "I have a text box that cannot be resized at all"), and the
+       Animation panel unreachable. The fault is still reported, loudly,
+       in the console; the drag goes ahead. */
+    try{showFmt();}
+    catch(err){
+      if(window.console&&console.error)
+        console.error('Junoview: the ribbon could not follow the selection',
+          err);
+    }
     /* refresh the Objects pane only when the selection actually CHANGED
        (resize/endpoint drags re-select every mousemove) */
     var sig=String(selAnnot)+'|'+selSet.join(',');
