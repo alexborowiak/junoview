@@ -989,6 +989,7 @@
     /* T220: spacing is its own door on the row now, so it builds
        itself rather than riding on the Paragraph window */
     if(id==='fmt-lh-menu') return buildSpacingRows;
+    if(id==='fmt-case-menu') return buildCaseRows;     /* T544 */
     return null;
   }
   function optKids(w){
@@ -1498,20 +1499,15 @@
      next key -- after Ctrl+E, the one PowerPoint users press mid-line --
      went nowhere. The caret's place is read as a character offset
      before, and put back in the new box after. */
+  /* T544: a title or a subtitle is typed in as plain text and is kept
+     typing too (liveTextEditable); the offsets are caretAt / caretPut,
+     shared with the case change */
   function keepTyping(fn){
-    var el=activeTextEditable();
+    var el=liveTextEditable();
     if(!el){fn();return;}
     var item=el.closest?el.closest('.an-item[data-idx]'):null;
     var idx=item?item.getAttribute('data-idx'):null;
-    var at=null;
-    try{
-      var sel=window.getSelection();
-      if(sel&&sel.rangeCount){
-        var r=sel.getRangeAt(0),pre=r.cloneRange();
-        pre.selectNodeContents(el);pre.setEnd(r.startContainer,r.startOffset);
-        at={s:pre.toString().length,n:r.toString().length};
-      }
-    }catch(e){}
+    var at=caretAt(el);
     fn();
     if(idx==null) return;
     var layer=stage.querySelector('.annot-layer');
@@ -1519,21 +1515,7 @@
     if(!nt||nt===el) return;
     if(nt._beginEdit) nt._beginEdit();
     nt.focus();
-    if(!at) return;
-    try{
-      var walk=document.createTreeWalker(nt,NodeFilter.SHOW_TEXT,null);
-      var node,seen=0,rg=document.createRange(),started=false;
-      while((node=walk.nextNode())){
-        var len=node.nodeValue.length;
-        if(!started&&seen+len>=at.s){
-          rg.setStart(node,at.s-seen);started=true;}
-        if(started&&seen+len>=at.s+at.n){
-          rg.setEnd(node,at.s+at.n-seen);break;}
-        seen+=len;
-      }
-      if(started){
-        var sl2=window.getSelection();sl2.removeAllRanges();sl2.addRange(rg);}
-    }catch(e2){}
+    caretPut(nt,at);
   }
   /* indent/outdent only mean anything with the caret inside the box, so
      they act on the live contenteditable rather than the model, and the
@@ -1889,6 +1871,69 @@
         +'select them');
     });
   });
+  /* T544: CLEAR FORMATTING (Ctrl+Space) and the CHANGE CASE door, wired
+     from THE BOOT SEQUENCE. Both keep the caret on mousedown: a click
+     would otherwise blur the highlighted words away before the eraser,
+     or a row of the door, could ask for them. */
+  function caseClearBoot(){
+    [$('#fmt-clear'),$('#fmt-case-btn')].forEach(function(x){
+      if(x) x.addEventListener('mousedown',function(e){
+        if(liveTextEditable()) e.preventDefault();});
+    });
+    var b=$('#fmt-clear');
+    if(b) b.addEventListener('click',clearFormatting);
+  }
+  /* the highlighted words lose every look a run can carry and stay
+     highlighted; with none highlighted, every selected box's words go
+     back to the style it wears -- and a caret in the box is put back
+     where it was */
+  function clearFormatting(){
+    if(clearRunSelection()){
+      if(typeof showFmt==='function') showFmt();
+      return;
+    }
+    var s=pres.slides[cur]; if(!s) return;
+    var to=clearedTo();
+    keepTyping(function(){
+      fmtApply(function(a){
+        clearBoxLook(a,a===s.tprops?'t':a===s.sprops?'s':'');});
+    });
+    toast('Formatting cleared \u2014 back to '+to);
+  }
+  /* what "back to" means for the primary, said in the toast */
+  function clearedTo(){
+    var s=pres.slides[cur];
+    if(selAnnot==='t'||selAnnot==='s') return 'the title slide\u2019s look';
+    var a=s&&annotByIdx(s,selAnnot);
+    var d=a&&a.style&&styleDef(a.style);
+    return d?('its style, '+d.label):'Body';
+  }
+  function buildCaseRows(){
+    var menu=$('#fmt-case-menu'); if(!menu) return;
+    menu.innerHTML='';
+    var typing=liveTextEditable(),sel=window.getSelection();
+    var run=!!(typing&&sel&&!sel.isCollapsed);
+    menuHead(menu,run?'the highlighted words':'the whole box');
+    CASE_MODES.forEach(function(m){
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn vw-opt case-opt';
+      b.id='fmt-case-'+m[0];
+      b.textContent=m[1];
+      b.title=m[1]+(run?' \u2014 the highlighted words'
+        :' \u2014 every word in the box');
+      b.addEventListener('mousedown',function(e){e.preventDefault();});
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!applyCase(m[0])) toast('Select a text box, or highlight '
+          +'some words, to change their case');
+      });
+      menu.appendChild(b);
+    });
+    var k=document.createElement('div');k.className='case-key';
+    k.textContent='Shift+F3 steps through lowercase, Capitalise Each '
+      +'Word and UPPERCASE';
+    menu.appendChild(k);
+  }
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out

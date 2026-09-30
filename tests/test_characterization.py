@@ -2124,8 +2124,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # keeps its height; its height has handles; the .pptx anchors both ways.
 # T543 (2026-09-29): a highlighter for words -- markers in the Text colour
 # door and the mini toolbar, kept only on marked runs, .pptx both ways.
-EXPECTED_MD5 = "523cac1d316234448539273bc518e9df"
-EXPECTED_BYTES = 4657414
+# T544 (2026-09-30): Clear formatting (Ctrl+Space) and Change case
+# (Shift+F3) -- a Case door over an eraser in the Font group, two icons.
+EXPECTED_MD5 = "9d309f68fe6ee0c0833b372240a4b88b"
+EXPECTED_BYTES = 4674970
 
 
 def _render_example() -> str:

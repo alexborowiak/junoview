@@ -2391,8 +2391,17 @@
   }
   /* the keys that also work with a caret in a box */
   function pptTextKey(e){
+    /* T544: Shift+F3 steps the case of the words round, as PowerPoint */
+    if(e.key==='F3'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey)
+      return applyCase('next');
     if(!(e.ctrlKey||e.metaKey)||e.altKey) return false;
     var k=e.key;
+    /* T544: Ctrl+Space clears the formatting -- of words: the eraser is
+       shown for text alone, and a table's key must not press it unseen */
+    if(!e.shiftKey&&(k===' '||e.code==='Space')){
+      var cb=$('#fmt-clear');
+      return !!(cb&&!cb.hidden)&&pptClick('#fmt-clear');
+    }
     if(!e.shiftKey&&(k==='l'||k==='L')) return pptClick('#fmt-al-left');
     if(!e.shiftKey&&(k==='e'||k==='E')) return pptClick('#fmt-al-center');
     if(!e.shiftKey&&(k==='r'||k==='R')) return pptClick('#fmt-al-right');
@@ -2436,6 +2445,9 @@
       selectAnnot(layer,ring[nx]);
       return true;
     }
+    /* T544: Shift+F3 with a text box selected changes its case */
+    if(e.key==='F3'&&e.shiftKey&&!ctrl&&!e.altKey&&pptTextish())
+      return pptTextKey(e);
     if(!ctrl||e.altKey) return false;
     if(!e.shiftKey&&(e.key==='m'||e.key==='M')) return pptClick('#hm-newslide');
     /* T540: Ctrl+0 fits the page -- the browser's own reset would zoom

@@ -2204,6 +2204,26 @@ items snap to both. Guides, not ink: never printed or exported"
                 <button class="dbtn etm" id="fmt-bigger"
                   title="Bigger text">A+</button>
               </span>
+              <!-- T544: CHANGE CASE OVER CLEAR FORMATTING, one column
+                   beside the size, where PowerPoint's Font group keeps
+                   its Aa and its eraser. Both act on the highlighted
+                   words while you type and on the whole box otherwise,
+                   as B, I and U do (T290). -->
+              <span class="sh-drop opt-drop" id="fmt-casewrap">
+                <button class="dbtn etm" id="fmt-case-btn" hidden
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Change case: Sentence case, lowercase, UPPERCASE,
+ Capitalise Each Word or tOGGLE cASE, for the highlighted words or the
+ whole box (Shift+F3 steps through them)"><i data-ic="textcase"></i>
+                  Case &#9662;</button>
+                <div class="sh-menu opt-panel case-menu" id="fmt-case-menu"
+                  hidden data-built="1" data-close="1"></div>
+              </span>
+              <button class="dbtn etm" id="fmt-clear" hidden
+                title="Clear formatting: the highlighted words lose bold,
+ colour, highlight and the rest, or the whole box goes back to its text
+ style (Ctrl+Space)"><i data-ic="eraser"></i>
+                Clear</button>
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn etm" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"

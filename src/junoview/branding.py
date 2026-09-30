@@ -258,6 +258,15 @@ _ICON_PATHS = {
     "styles": '<path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/>'
               '<circle cx="11.8" cy="9.9" r="2.1"/>'
               '<path d="M13.9 7.8V12"/>',
+    # T544: "A" turning into "a" -- Change case, told apart from Styles
+    # by the arrow over it
+    "textcase": '<path d="M1.8 13 4.6 5.4 7.4 13"/><path d="M2.8 10.4h3.6"/>'
+                '<circle cx="11.6" cy="11" r="1.9"/><path d="M13.5 9.1V13"/>'
+                '<path d="M5.4 2.8h6.2"/><path d="m10.2 1.4 1.4 1.4-1.4 1.4"/>',
+    # T544: an eraser at an angle over the line it rubs out -- Clear
+    # formatting
+    "eraser": '<path d="m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z"/>'
+              '<path d="m6.2 5.4 4.4 4.4"/><path d="M8.6 13.4H14"/>',
     # three plain lines: the generic list / overflow menu (never the
     # markdown filter, whose third line is short)
     "menu": '<path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/>',

@@ -39,6 +39,8 @@
      Listed so the completeness check knows they are deliberate. */
   var FMT_MANUAL=('#fmt-geom-xy #fmt-geom-wh #fmt-lhwrap '
     +'#fmt-sup #fmt-sub '   /* T541: shown for text by hand, beside Bold */
+    /* T544: Change case (a door and its menu) and Clear formatting */
+    +'#fmt-casewrap #fmt-case-btn #fmt-case-menu #fmt-clear '
     /* the four windows of options (T177): a wrapper, its door, the
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
@@ -350,6 +352,10 @@
     /* T541: characters, so words only -- a text box's own */
     show('#fmt-sup',isText);
     show('#fmt-sub',isText);
+    /* T544: words too -- a text box, a title, a subtitle */
+    show('#fmt-casewrap',isText);
+    show('#fmt-case-btn',isText);
+    show('#fmt-clear',isText);
     show('#fmt-szwrap',isText||isTbl);
     /* T220: the size cell is on the row now that the Font window
        is gone */

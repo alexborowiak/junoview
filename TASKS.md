@@ -10198,8 +10198,25 @@ choice in the editor (T506, T507).
   the mini toolbar survived Escape and a slide change. Like PowerPoint,
   the highlight does not change the words' colour, so white words on a
   yellow marker are the user's call.
-- [ ] **T544 — Clear formatting and Change case.** Ctrl+Space, and
+- [x] **T544 — Clear formatting and Change case.** Ctrl+Space, and
   Sentence case / lowercase / UPPERCASE / Capitalise Each Word.
+  *Done 2026-09-30.* Style › Font gains a column beside the size: Case ▾
+  (Sentence case., lowercase, UPPERCASE, Capitalise Each Word, tOGGLE
+  cASE, each row written in its own case) over Clear, with icons of their
+  own. Both act on the highlighted words while typing (the door and the
+  eraser keep the caret) and on every selected box otherwise, as B, I and
+  U do. A whole box goes back to the style it wears (Body if none): size,
+  weight, slant, face and colour from the style, underline and strike off,
+  every run's look stripped while lines and bullets stay; alignment,
+  spacing and fill are the paragraph's and the box's, and stay. A title
+  slide's two lines go back to a fresh slide's look. Case is decided over
+  the whole text (a sentence ends at a line, "don't" is one word) and
+  leaves maths, code, {fields}, [@citations], link targets and web
+  addresses as typed; a case change keeps the highlight so Shift+F3 steps
+  lowercase, Capitalise Each Word, UPPERCASE. Ctrl+Space and Shift+F3 work
+  typing or not; Search commands finds both by PowerPoint's names; the
+  help page lists the keys (and T541's). Driven at 1440x900 on titles,
+  plain, rich, list and Markdown boxes, one and four at a time, with undo.
 - [ ] **T545 — AutoCorrect as you type.** Straight quotes curl, -- becomes
   an en dash, (c) ©, -> →; one switch turns it off.
 - [ ] **T546 — Link has a button.** "Make this a link…" is only on the

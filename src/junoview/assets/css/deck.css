@@ -5585,6 +5585,12 @@ body.light .np-notes,body.light .np-goal{background:var(--paper-2);
 .qat-playgrp{display:inline-flex;align-items:stretch;flex:none;}
 .qat-playgrp #dc-playmore{padding:4px 7px;}
 
+/* T544: Change case -- five worded rows, each written in the case it
+   makes, and the key that steps through them */
+.sh-menu.case-menu{display:flex;flex-direction:column;width:224px;
+  padding:6px;gap:3px;}
+.case-menu .case-key{font-size:11px;line-height:1.35;
+  color:var(--chrome-ink-2);padding:6px 4px 2px;}
 /* line + paragraph spacing */
 .sh-menu.lh-menu{display:block;width:186px;padding:5px;}
 .lh-menu .vw-opt{width:100%;text-align:left;}

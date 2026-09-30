@@ -47,6 +47,7 @@
     imgPaneBoot();
     quickSwatchBoot();          /* the deck's six colours, on the row */
     miniBoot();                 /* formatting beside highlighted words (T536) */
+    caseClearBoot();            /* Clear formatting and Change case (T544) */
     clipBoot();                 /* Clipboard, first on Home (T537) */
     cmdSearchBoot();            /* search the commands, Alt+Q (T538) */
     ohOverviewBoot();           /* History of this object, full screen */

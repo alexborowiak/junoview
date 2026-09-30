@@ -1125,6 +1125,281 @@
     }
     return true;
   }
+  /* ---- T544: CLEAR FORMATTING AND CHANGE CASE -------------------------
+     PowerPoint's eraser (Ctrl+Space) and its Aa (Shift+F3 steps through
+     the cases). Both follow the rule B, I and U keep (T290): the
+     highlighted words while you type, the whole box otherwise.
+     A WHOLE BOX GOES BACK TO ITS TEXT STYLE -- Body when it wears none,
+     which is what every drawn box is born wearing -- and that is this
+     editor's "default formatting". What a paragraph is (its alignment,
+     spacing, bullets) and what the BOX is (its fill, its edge) are not
+     formatting of the words, and PowerPoint's Ctrl+Space leaves them
+     too. */
+  /* the box being typed in, rich OR plain: a title, a subtitle and a
+     Markdown box edit as plain text, and a case change, or a caret kept
+     across a redraw, means them as well (activeTextEditable is the rich
+     ones alone, because only those can hold a run of bold) */
+  function liveTextEditable(){
+    var ae=document.activeElement;
+    return (ae&&ae.classList&&ae.classList.contains('an-tx')
+      &&ae.isContentEditable)?ae:null;
+  }
+  /* where the caret is, as characters into the box, and back again --
+     the node it sat in may not survive what happens in between */
+  function caretAt(el){
+    try{
+      var sel=window.getSelection();
+      if(!sel||!sel.rangeCount) return null;
+      var r=sel.getRangeAt(0),pre=r.cloneRange();
+      if(!el.contains(r.startContainer)) return null;
+      pre.selectNodeContents(el);pre.setEnd(r.startContainer,r.startOffset);
+      return {s:pre.toString().length,n:r.toString().length};
+    }catch(e){return null;}
+  }
+  function caretPut(el,at){
+    if(!el||!at) return;
+    try{
+      var walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null);
+      var node,seen=0,rg=document.createRange(),started=false;
+      while((node=walk.nextNode())){
+        var len=node.nodeValue.length;
+        if(!started&&seen+len>=at.s){
+          rg.setStart(node,at.s-seen);started=true;}
+        if(started&&seen+len>=at.s+at.n){
+          rg.setEnd(node,at.s+at.n-seen);break;}
+        seen+=len;
+      }
+      if(started){
+        var sl=window.getSelection();sl.removeAllRanges();sl.addRange(rg);}
+    }catch(e){}
+  }
+  /* the words and their lines without their looks: every inline wrapper
+     comes off (bold, a colour, a highlight, a raised run, a face) and the
+     structure stays -- the lines, and a list's items and marker kind */
+  var PLAIN_DROP={b:1,strong:1,i:1,em:1,u:1,s:1,strike:1,sup:1,sub:1,
+    font:1,span:1};
+  function plainRuns(html){
+    var t=document.createElement('template');t.innerHTML=String(html||'');
+    [].slice.call(t.content.querySelectorAll('*')).reverse()
+      .forEach(function(n){
+        if(!PLAIN_DROP[(n.tagName||'').toLowerCase()]) return;
+        while(n.firstChild) n.parentNode.insertBefore(n.firstChild,n);
+        n.parentNode.removeChild(n);
+      });
+    return t.innerHTML;
+  }
+  /* a whole box's words, back to the style it wears */
+  function clearBoxLook(a,which){
+    if(!a) return;
+    if(which==='t'||which==='s'){
+      /* a title slide's two lines wear no style: their look is the one
+         titleProps gives them on a fresh slide */
+      ['b','i','u','strike','font'].forEach(function(k){delete a[k];});
+      a.size=(which==='t')?6:2.6;
+      if(which==='s') a.color='@quiet'; else delete a.color;
+      return;
+    }
+    if(a.k!=='text') return;
+    var d=styleDef(a.style&&styleDef(a.style)?a.style:'body')||{};
+    if(d.size) a.size=d.size;
+    if(d.b) a.b=1; else delete a.b;
+    if(d.i) a.i=1; else delete a.i;
+    if(d.font) a.font=d.font; else delete a.font;
+    if(d.color) a.color=d.color; else delete a.color;
+    delete a.u;delete a.strike;
+    textPages(a).forEach(function(p,n){
+      if(!p.h) return;
+      var r=sanitizeRich(plainRuns(p.h));
+      textPageSet(a,n,p.t,r.rich?r.html:'');
+    });
+  }
+  /* the highlighted run, stripped by the browser's own removeFormat --
+     it splits the bold or the colour at the run's edges, which is the
+     fiddly half -- and committed like every other run edit */
+  function clearRunSelection(){
+    return richSelectionEdit(function(){
+      try{document.execCommand('removeFormat',false,null);}catch(e){}
+    });
+  }
+  /* CHANGE CASE. What each character becomes -- 'U', 'L' or '' to leave
+     it -- is decided over the whole run of words, because a sentence or
+     a word does not end where a text node does, and applied only where
+     asked. Maths, code, a {field}, a [@citation] and a web address stay
+     exactly as typed: upper-casing \alpha, {fig:a} or a link breaks it. */
+  var CASE_MODES=[['sentence','Sentence case.'],['lower','lowercase'],
+    ['upper','UPPERCASE'],['title','Capitalise Each Word'],
+    ['toggle','tOGGLE cASE']];
+  var CASE_KEEP=new RegExp(['\\$\\$[\\s\\S]*?\\$\\$','\\$[^$\\n]+\\$',
+    '\\\\\\([\\s\\S]*?\\\\\\)','`[^`\\n]*`','\\{[^{}\\n]*\\}',
+    '\\[@[^\\]\\n]*\\]','\\\\[a-zA-Z]+(\\{[^}\\n]*\\})?',
+    '\\]\\([^)\\n]*\\)','(https?:\\/\\/|www\\.)[^\\s<>"]+',
+    '[^\\s@<>"()]+@[^\\s@<>"()]+\\.[a-zA-Z]{2,}'].join('|'),'g');
+  function caseIsLetter(c){return c.toUpperCase()!==c.toLowerCase();}
+  function caseWordStart(str,i){
+    if(i<=0) return true;
+    var p=str.charAt(i-1);
+    if(caseIsLetter(p)||/[0-9]/.test(p)) return false;
+    /* don't, it's: an apostrophe between two letters is inside a word */
+    if((p==='\''||p==='\u2019')&&i>1&&caseIsLetter(str.charAt(i-2)))
+      return false;
+    return true;
+  }
+  function caseMarks(str,mode){
+    var n=str.length,out=[],keep=[],m,k;
+    CASE_KEEP.lastIndex=0;
+    while((m=CASE_KEEP.exec(str))){
+      for(k=m.index;k<m.index+m[0].length;k++) keep[k]=1;
+      if(!m[0].length) CASE_KEEP.lastIndex++;
+    }
+    var start=true,ended=false;
+    for(var i=0;i<n;i++){
+      var c=str.charAt(i);
+      out[i]='';
+      if(keep[i]){start=false;ended=false;continue;}
+      if(!caseIsLetter(c)){
+        if(c==='\n'){start=true;ended=false;}
+        else if(/[.!?]/.test(c)) ended=true;
+        else if(/\s/.test(c)){if(ended){start=true;ended=false;}}
+        else if(/[0-9]/.test(c)){start=false;ended=false;}
+        continue;
+      }
+      if(mode==='upper') out[i]='U';
+      else if(mode==='lower') out[i]='L';
+      else if(mode==='toggle') out[i]=(c===c.toUpperCase())?'L':'U';
+      else if(mode==='title') out[i]=caseWordStart(str,i)?'U':'L';
+      else out[i]=start?'U':'L';
+      start=false;ended=false;
+    }
+    return out;
+  }
+  /* one character; a mapping that would change the length (ß to SS)
+     leaves it alone, so every caret offset still means the same place */
+  function caseChar(c,mk){
+    if(!mk) return c;
+    var x=(mk==='U')?c.toUpperCase():c.toLowerCase();
+    return x.length===c.length?x:c;
+  }
+  function caseString(str,mode){
+    str=String(str||'');
+    var mk=caseMarks(str,mode),o='';
+    for(var i=0;i<str.length;i++) o+=caseChar(str.charAt(i),mk[i]);
+    return o;
+  }
+  /* Shift+F3's next step, PowerPoint's order: lowercase becomes
+     Capitalise Each Word, that becomes UPPERCASE, and UPPERCASE comes
+     back down to lowercase */
+  function caseNext(sample){
+    sample=String(sample||'');
+    if(sample.toUpperCase()===sample&&sample.toLowerCase()!==sample)
+      return 'lower';
+    if(sample.toLowerCase()===sample) return 'title';
+    return 'upper';
+  }
+  /* the text nodes of a box in reading order, with a line break where a
+     line or a list item begins, so a sentence ends where a line does */
+  function caseNodes(root){
+    var list=[],full='';
+    function brk(){if(full&&full.charAt(full.length-1)!=='\n') full+='\n';}
+    (function walk(n){
+      for(var c=n.firstChild;c;c=c.nextSibling){
+        if(c.nodeType===3){list.push({n:c,at:full.length});full+=c.nodeValue;}
+        else if(c.nodeType===1){
+          if(c.tagName==='BR'){full+='\n';continue;}
+          var blk=/^(DIV|P|LI|UL|OL|H[1-6])$/.test(c.tagName);
+          if(blk) brk();
+          walk(c);
+          if(blk) brk();
+        }
+      }
+    })(root);
+    return {list:list,full:full};
+  }
+  /* change the case of a box's words in place: inside `range`, or all
+     of them. Text nodes are rewritten, never replaced, so the bold and
+     the colours around them stay exactly where they were. Every edit is
+     worked out BEFORE the first is written: writing a node moves a live
+     range's boundary inside it, and the range is what says where the
+     next node's edit starts. */
+  function caseDom(root,mode,range){
+    var cn=caseNodes(root),mk=caseMarks(cn.full,mode),edits=[];
+    cn.list.forEach(function(e){
+      var t=e.n.nodeValue,from=0,to=t.length;
+      if(range){
+        if(!range.intersectsNode(e.n)) return;
+        if(e.n===range.startContainer) from=range.startOffset;
+        if(e.n===range.endContainer) to=range.endOffset;
+      }
+      var o=t.slice(0,from);
+      for(var i=from;i<to;i++) o+=caseChar(t.charAt(i),mk[e.at+i]);
+      o+=t.slice(to);
+      if(o!==t) edits.push([e.n,o]);
+    });
+    edits.forEach(function(x){x[0].nodeValue=x[1];});
+    return edits.length>0;
+  }
+  /* a whole box, in the model: every page of it, its plain words and its
+     rich ones alike. An equation's words are LaTeX and are left alone. */
+  function caseBox(a,which,s,mode){
+    if(which==='t'){s.title=caseString(s.title,mode);return;}
+    if(which==='s'){s.sub=caseString(s.sub,mode);return;}
+    if(!a||a.k!=='text'||a.maths) return;
+    textPages(a).forEach(function(p,n){
+      var h='';
+      if(p.h){
+        var t=document.createElement('template');t.innerHTML=p.h;
+        caseDom(t.content,mode,null);
+        h=t.innerHTML;
+      }
+      textPageSet(a,n,caseString(p.t,mode),h);
+    });
+  }
+  /* the words the next Shift+F3 is about, for deciding where it goes */
+  function caseSample(){
+    var el=liveTextEditable();
+    if(el){
+      var sel=window.getSelection();
+      if(sel&&sel.rangeCount&&!sel.isCollapsed&&el.contains(sel.anchorNode))
+        return sel.toString();
+      return el.textContent||'';
+    }
+    var s=pres.slides[cur];
+    if(selAnnot==='t') return (s&&s.title)||'';
+    if(selAnnot==='s') return (s&&s.sub)||'';
+    var a=s&&annotByIdx(s,selAnnot);
+    return (a&&a.k==='text')?(textPage(a,0).t||''):'';
+  }
+  /* CHANGE CASE, from the door or the key. Typing: the highlighted
+     words (or, with none, the whole box) change where they stand, the
+     highlight stays so Shift+F3 can go round again, and the box commits
+     through its own editor. Otherwise every selected text box, in the
+     model. Returns false when there is no text to change. */
+  function applyCase(mode){
+    if(mode==='next') mode=caseNext(caseSample());
+    var el=liveTextEditable();
+    if(el){
+      var sel=window.getSelection(),rg=null;
+      if(sel&&sel.rangeCount&&!sel.isCollapsed){
+        var r=sel.getRangeAt(0);
+        if(el.contains(r.startContainer)&&el.contains(r.endContainer)) rg=r;
+      }
+      var at=caretAt(el);
+      histSettle();
+      caseDom(el,mode,rg);
+      if(typeof el.__jvFlush==='function') el.__jvFlush();
+      markDirty();
+      caretPut(el,at);
+      return true;
+    }
+    var s=pres.slides[cur]; if(!s) return false;
+    var any=selAnnot==='t'||selAnnot==='s';
+    selIdxs().forEach(function(i){
+      var x=(s.annots||[])[i]; if(x&&x.k==='text'&&!x.maths) any=true;});
+    if(!any) return false;
+    fmtApply(function(a){
+      caseBox(a,a===s.tprops?'t':a===s.sprops?'s':'',s,mode);
+    });
+    return true;
+  }
   /* the ⠿ move handle is gone: everything drags from its own body now,
      and the handle was both fiddly to hit and sat on top of the artwork
      you were trying to judge (2026-08-07, user) */

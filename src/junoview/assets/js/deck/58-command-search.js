@@ -28,6 +28,10 @@
     'hm-layers':'selection pane layers list objects',
     'vw-anim':'animation pane animations list',
     'fmt-txcol-btn':'font colour font color text color',
+    'fmt-clear':'clear formatting clear all formatting remove formatting '
+      +'plain text reset',
+    'fmt-case-btn':'change case uppercase lowercase sentence case '
+      +'capitalise capitalize title case toggle case capitals',
     'fmt-fillcol-btn':'shape fill background colour highlight box',
     'dc-nums':'slide number slide numbers numbering',
     'dc-head':'header footer date',
