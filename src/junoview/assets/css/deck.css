@@ -1353,6 +1353,7 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .mini-it.is-img img{width:100%;height:100%;object-fit:contain;
   display:block;}
 .mini-it.is-img.is-crop img{object-fit:cover;}
+.mini-it.is-img.is-win img{position:absolute;object-fit:fill;max-width:none;}
 /* T522: a placed note or code cell is its own rendered body, zoomed to
    the thumbnail by the canvas's rule; nothing inside a miniature scrolls */
 .mini-it.is-cell.an-cell .note,.mini-it.is-cell.an-cell pre,
@@ -2869,8 +2870,14 @@ select#fmt-font[hidden]{display:none;}
 .an-image.an-cropped .an-imgel{object-fit:cover;}
 /* T387: a window onto the picture -- the img is scaled and offset so
    the window fills the box, and the box clips the rest */
-.an-image.an-win{overflow:hidden;}
+/* T587: the window clips in a wrapper, not the item, so the item's own
+   handles (which stand outside its box) are never cut off */
+.an-imgwin{position:absolute;inset:0;overflow:hidden;border-radius:inherit;}
 .an-image.an-win .an-imgel{position:absolute;object-fit:fill;max-width:none;}
+/* T587: while trimming, the part being cut away is still there, faint,
+   so you can see what you are giving up -- as PowerPoint shows it */
+.an-crop-ghost{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;opacity:.28;pointer-events:none;}
 .zc-box{position:absolute;border:1.5px dashed var(--cyan);
   background:color-mix(in srgb,var(--cyan) 14%,transparent);
   pointer-events:none;}

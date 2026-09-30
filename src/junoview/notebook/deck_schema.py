@@ -204,7 +204,9 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                  "\"move\" transition."),
     "win": (dict, "Pictures only: a window onto the picture, `{x, y, w, "
                   "h}` in percent of the picture, shown filling the box. "
-                  "A zoom callout is a picture wearing a window."),
+                  "A zoom callout is a picture wearing a window, and so "
+                  "is a picture whose rectangular trim is finished: the "
+                  "box is the part kept, as PowerPoint's frame is."),
     "sync": (int, "Pictures and figures that zoom together: every item "
                   "on the slide with the same number is enlarged "
                   "alongside this one in playback."),

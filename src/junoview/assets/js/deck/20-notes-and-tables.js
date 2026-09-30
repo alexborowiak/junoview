@@ -3203,19 +3203,25 @@
         img.draggable=false;
         altAttrs(img,a);
         if(a.crop) im.classList.add('an-cropped');
-        applyCrop(img,a);
         /* T387: A WINDOW ONTO THE PICTURE. a.win names a region of the
            picture, in percent of the picture, and the box shows THAT,
            filled -- the picture is scaled so the window fills the box.
-           A zoom callout is an ordinary picture wearing a window. */
+           A zoom callout is an ordinary picture wearing a window, and
+           since T587 so is every picture whose trim is finished.
+           The window CLIPS in a wrapper of its own, and a shape crop is
+           cut there too: on the <img> it would be measured on the whole
+           picture, and on the item it would cut off the handles (which
+           the item's own overflow:hidden used to do to a callout). */
         if(a.win&&a.win.w>0&&a.win.h>0){
           im.classList.add('an-win');
           img.style.width=(10000/a.win.w).toFixed(2)+'%';
           img.style.height=(10000/a.win.h).toFixed(2)+'%';
           img.style.left=(-(a.win.x||0)*100/a.win.w).toFixed(2)+'%';
           img.style.top=(-(a.win.y||0)*100/a.win.h).toFixed(2)+'%';
-        }
-        im.appendChild(img);
+          var iw=document.createElement('div');iw.className='an-imgwin';
+          applyCrop(iw,a);
+          iw.appendChild(img);im.appendChild(iw);
+        } else {applyCrop(img,a);im.appendChild(img);}
         /* a DRAWN crop has no edges to drag: the outline is the crop,
            and four inset handles over it would claim to move something
            they cannot (T64) */
@@ -3805,7 +3811,12 @@
     });
   }
   function selectAnnot(layer,idx,additive){
-    if(cropMode&&idx!==selAnnot) cropMode=false;
+    if(cropMode&&idx!==selAnnot){
+      cropModeOff();
+      /* T587: the picture has just taken its trimmed frame; draw it now,
+         before anything that follows measures the layer */
+      if(layer&&pres.slides[cur]) renderAnnots(layer,pres.slides[cur]);
+    }
     var s=pres.slides[cur];
     if(idx===null){selAnnot=null;selSet=[];}
     else {
