@@ -1,6 +1,6 @@
 
 <div class="deck" id="deck" hidden>
-  <div class="deck-top">
+  <div class="deck-top" id="deck-top-bar">
     <!-- no "Docs" button: getting back to the document view is already a
          button on the presentations rail, and one redundant control was
          holding a whole row open (2026-08-07) -->
@@ -51,8 +51,23 @@
         aria-pressed="false"
         title="Skip the remaining optional slides from here (L)">
         <i data-ic="flag"></i> Running late</button>
+      <!-- T581: the bar folds away while presenting; this puts it back
+           to folded when it was kept open from the Controls tab -->
+      <button class="dbtn" id="deck-top-fold" type="button"
+        title="Fold these away. The top edge of the screen, or the
+ Controls tab, brings them back"><i data-ic="collapse"></i> Hide</button>
     </span>
   </div>
+  <!-- T581: PRESENTING STARTS WITH ITS BAR FOLDED AWAY (2026-09-30,
+       user: "why does present mode have these options up the top. They
+       are distracting and not necessary ... collapsable by default not
+       always there"). A faint tab at the top edge is all that shows;
+       the pointer at the edge, or a click on the tab, brings the bar.
+       Esc still stops presenting. -->
+  <button class="deck-top-handle" id="deck-top-handle" type="button"
+    aria-expanded="false" aria-controls="deck-top-bar"
+    title="Show the presenting controls: Stop presenting, Open now,
+ Running late"><i data-ic="menu"></i> Controls</button>
   <!-- T382: no Close button. It closed the drawer, not the deck, beside a
        heading that repeated the words on the button that opened it
        (2026-09-12, user: "the close button doesn't make sense"). The

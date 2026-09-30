@@ -101,7 +101,8 @@ def test_the_present_tab_and_its_buttons(out):
 
 
 def test_full_screen_is_up_top_and_layers_is_on_home(out):
-    top = out[out.index('<div class="deck-top">'):out.index('id="dc-play"')]
+    top = out[out.index('<div class="deck-top" id="deck-top-bar">'):
+              out.index('id="dc-play"')]
     assert 'class="dbtn qat-full" id="vw-full"' in top
     assert "['vw-full','Full screen']," not in out          # no longer folds with View
     assert 'class="fx-tile big-tile" id="hm-layers"' in out

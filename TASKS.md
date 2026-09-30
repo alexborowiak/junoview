@@ -10387,6 +10387,14 @@ create animation. This gets congested very easily."
   Cards that are clicks of the build sequence drag: left edge before,
   right edge after, middle onto (same click), through T577's list of
   clicks, so Ctrl+Z undoes it. Thumbnails 150px -> 128px.
-- [ ] **T581 — Present mode starts with its bar folded away.** "why does
+- [x] **T581 — Present mode starts with its bar folded away.** "why does
   present mode have these options up the top. They are distracting and
-  not necessary ... collapsable by default not always there."
+  not necessary ... collapsable by default not always there." Stop
+  presenting / Open now / Running late sat across the top of the
+  audience's screen for the whole talk. While presenting the bar is out
+  of the grid (the slide gets the height) and above the top edge; a faint
+  Controls tab is all that shows. The pointer at the top edge peeks it
+  (and it folds again when the pointer leaves, never while the Open now
+  drawer it anchors is out), the tab keeps it until Hide, and a focused
+  control keeps it too (:focus-within). Esc and L are unchanged. Kept or
+  folded is remembered per project like the editor's auto-hides.

@@ -765,7 +765,8 @@ def test_view_and_output_became_one_group(out):
     # T216: Full screen moved up beside Present ("the full screen needs to
     # go up the top where present is")
     assert 'id="vw-full"' not in view
-    top = out[out.index('<div class="deck-top">'):out.index('id="dc-play"')]
+    top = out[out.index('<div class="deck-top" id="deck-top-bar">'):
+              out.index('id="dc-play"')]
     assert 'id="vw-full"' in top
     assert 'id="vw-check"' in view
     assert 'id="dc-play"' not in view
