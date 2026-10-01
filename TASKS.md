@@ -10455,8 +10455,28 @@ choice in the editor (T506, T507).
   show, never saved into the slides unless you keep them.
 - [ ] **T559 — Start from a template.** New presentation offers a handful
   of starting decks (talk, lab meeting, poster, defence) as well as blank.
-- [ ] **T560 — Icons.** An Icons gallery inserts a simple line icon as a
+- [x] **T560 — Icons.** An Icons gallery inserts a simple line icon as a
   shape you can recolour and resize.
+  *Done 2026-10-01.* Images > Icons, a gallery beside Shapes, holds 46
+  line icons (tick, cross, arrows, cycle, information, warning, question,
+  star, heart, idea, people, clock, calendar, mail, speech, lock, search,
+  home, settings, bar and line charts, globe, target, flag, trophy, book,
+  document, folder, place, camera, play, pause, leaf, sun, cloud, flask,
+  data, code, edit, percent). AN ICON IS A SHAPE -- k:'rect',
+  shape:'ic-NAME' -- so line colour, weight, dash, fill, rotate, flip,
+  shadow, Layers, undo and thumbnails needed nothing new. The icons are
+  DATA (12-icons.js): polylines, circles and ellipse arcs on a 24-unit
+  grid, three kinds of part SVG and DrawingML both say exactly, so the
+  slide draws them as one path (viewBox 24, meet, non-scaling stroke) and
+  the .pptx as a custGeom of moveTo/lnTo/arcTo, round caps and joins,
+  noFill unless the shape is filled, in the square the slide shows. A
+  drag draws square on the screen, a click drops one a seventh of the
+  slide tall, and lockar keeps it in proportion after. Show all searches
+  them, and so does command search, by the words people use (data-find
+  is now in the search index, which helps the shapes too). Driven live
+  at 1440x900 (folded door, shelf, square drag 273x273, click-drop
+  85x85); exported and rendered in PowerPoint: outline, filled, rotated,
+  flipped and thick icons match the slide.
 - [ ] **T561 — Diagrams.** Process, cycle, list and hierarchy diagrams
   placed as ordinary grouped shapes and arrows you can edit.
 - [x] **T562 — Chart data you can type into.** A grid editor for a chart's

@@ -385,7 +385,9 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                          "pentagon, hexagon, star, cross, arrow, heart, "
                          "cloud, bubble, lightning, exclaim, question, or "
                          "an open stroke that takes no fill: langle, "
-                         "rangle, lbrace, rbrace, lbracket, rbracket."),
+                         "rangle, lbrace, rbrace, lbracket, rbracket; "
+                         "or a line icon, ic-NAME (ic-check, ic-bulb, "
+                         "...: the Icons gallery)."),
     "image": (("x", "y"), "A placed picture, carried as a data URI."),
     "video": (("x", "y"), "A video or audio clip. `vkey` names its bytes "
                           "in the deck's media store, `poster` is the "

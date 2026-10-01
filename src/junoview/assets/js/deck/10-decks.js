@@ -2618,6 +2618,25 @@
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','an-shape-svg');
     svg.setAttribute('viewBox','0 0 100 100');
+    var licon=(typeof lineIcon==='function')?lineIcon(shp):null;
+    if(licon){
+      /* T560: an icon, on its 24-unit grid, kept in proportion, its
+         lines the shape's own colour and weight */
+      svg.setAttribute('viewBox','0 0 24 24');
+      svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+      var ip=document.createElementNS(SVGNS,'path');
+      ip.setAttribute('d',lineIconD(licon[3]));
+      ip.setAttribute('fill',a.fill?(tokVal(a.fillc)||shapeFill(col,0x2b/255))
+        :'none');
+      ip.setAttribute('stroke',col);
+      ip.setAttribute('stroke-width',sw);
+      ip.setAttribute('vector-effect','non-scaling-stroke');
+      ip.setAttribute('stroke-linecap','round');
+      ip.setAttribute('stroke-linejoin','round');
+      if(dash) ip.setAttribute('stroke-dasharray',dash);
+      svg.appendChild(ip);
+      return svg;
+    }
     if(SHAPE_GLYPH[shp]){
       svg.setAttribute('preserveAspectRatio','xMidYMid meet');
       var tx=document.createElementNS(SVGNS,'text');

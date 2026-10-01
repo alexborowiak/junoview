@@ -719,17 +719,66 @@ window.JunoPptx = (function () {
     return Math.max(1, Math.round(pct / 100 * page.hPt * 12700));
   }
 
+  /* T560: an icon's parts (12-icons.js) as a freeform: polylines as
+     moveTo/lnTo, circles and ellipse arcs as arcTo, on its 24-unit grid
+     scaled to 24000. Stroked; filled only when the shape is. */
+  function iconGeom(parts, filled) {
+    var U = 1000, path = '';
+    function pt(x, y) {
+      return '<a:pt x="' + Math.round(x * U) + '" y="' + Math.round(y * U)
+        + '"/>';
+    }
+    function arc(cx, cy, rx, ry, a0, a1) {
+      var t = a0 * Math.PI / 180;
+      path += '<a:moveTo>' + pt(cx + rx * Math.cos(t), cy + ry * Math.sin(t))
+        + '</a:moveTo>';
+      var sw = a1 - a0, st = a0;
+      /* in halves, so a whole circle is never one 360-degree arc */
+      while (Math.abs(sw) > 0.01) {
+        var step = Math.max(-180, Math.min(180, sw));
+        path += '<a:arcTo wR="' + Math.round(rx * U) + '" hR="'
+          + Math.round(ry * U) + '" stAng="' + Math.round(st * 60000)
+          + '" swAng="' + Math.round(step * 60000) + '"/>';
+        st += step; sw -= step;
+      }
+    }
+    (parts || []).forEach(function (p) {
+      if (p[0] === 'l') {
+        var q = p[1];
+        for (var k = 0; k < q.length; k += 2)
+          path += (k ? '<a:lnTo>' : '<a:moveTo>') + pt(q[k], q[k + 1])
+            + (k ? '</a:lnTo>' : '</a:moveTo>');
+        if (p[2]) path += '<a:close/>';
+      } else if (p[0] === 'c') {
+        arc(p[1], p[2], p[3], p[3], 0, 360);
+        path += '<a:close/>';
+      } else if (p[0] === 'e') {
+        if (p[5] == null) { arc(p[1], p[2], p[3], p[4], 0, 360);
+          path += '<a:close/>'; }
+        else arc(p[1], p[2], p[3], p[4], p[5], p[6]);
+      }
+    });
+    return '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="'
+      + (24 * U) + '" h="' + (24 * U) + '"' + (filled ? '' : ' fill="none"')
+      + '>' + path + '</a:path></a:pathLst></a:custGeom>';
+  }
+
   function rectShape(item, id, page) {
     var open = SHAPE_OPEN_PTS[item.shape];
     var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '"'
       + (open ? ' cap="rnd"><a:round/>' : '>')
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
-    var geom = open ? freeformGeom(open)
+    var geom = item.icon ? iconGeom(item.icon, !!(item.fill || item.grad))
+      : open ? freeformGeom(open)
       : '<a:prstGeom prst="' + (SHAPE_GEOM[item.shape] || 'rect')
         + '"><a:avLst/></a:prstGeom>';
-    var fill = (open || SHAPE_OPEN_PRESET[item.shape])
+    var fill = (open || SHAPE_OPEN_PRESET[item.shape]
+      || (item.icon && !item.fill && !item.grad))
       ? '<a:noFill/>' : shapeFillXml(item);
+    if (item.icon) stroke = stroke.replace('<a:ln w=', '<a:ln cap="rnd" w=')
+      .replace('</a:ln>', '<a:round/></a:ln>');
     return '<p:sp>'
       + nvSp(id, item.name || ('Shape ' + id), '', item._link)
       + '<p:spPr>' + xfrm(item, page) + geom + fill

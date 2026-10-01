@@ -2796,10 +2796,22 @@
         if(grad) fillCol='';
         else if(a.fill) fillCol=tokVal(a.fillc)||shapeFill(lineCol,
           0x2b/255);
-        items.push({t:'rect',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
-          op:a.op,color:lineCol,fill:fillCol,grad:grad,
+        /* T560: an icon goes as its own lines, in the square it is
+           drawn in (meet), so PowerPoint does not stretch it */
+        var lic=(typeof lineIcon==='function')?lineIcon(a.shape):null;
+        var ibox=box;
+        if(lic){
+          var pgI=pageOf();
+          var wmm=box.w/100*pgI.mm[0],hmm=box.h/100*pgI.mm[1];
+          var side=Math.min(wmm,hmm);
+          var nw=side/pgI.mm[0]*100,nh=side/pgI.mm[1]*100;
+          ibox={x:box.x+(box.w-nw)/2,y:box.y+(box.h-nh)/2,w:nw,h:nh};
+        }
+        items.push({t:'rect',x:ibox.x,y:ibox.y,w:ibox.w,h:ibox.h,rot:a.rot,
+          op:a.op,color:lineCol,fill:lic&&!a.fill?'':fillCol,grad:grad,
           swPct:swOf(a)/SW_REF_H*100,
-          dash:LINE_PPT[lineStyle(a)],shape:a.shape});
+          dash:LINE_PPT[lineStyle(a)],shape:a.shape,
+          icon:lic?lic[3]:null});
       } else if(a.k==='draw'){
         items.push({t:'draw',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
           op:a.op,color:tokVal(a.color),swPct:swOf(a)/SW_REF_H*100,

@@ -2879,7 +2879,8 @@
         var col=tokVal(a.color)
           ||(tokens().c.line!==TOKENS_DEFAULT.c.line?tokVal('@line'):'#ff6b57');
         var r=document.createElement('div');
-        var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]);
+        var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]
+          ||(typeof lineIcon==='function'&&lineIcon(shp)));   /* T560 */
         r.className='an-item an-rect'+(svgShape?' an-svgshape':'')
           +(selAnnot===i?' sel':'');
         var ap1=anchorPos(a,a.w,a.h);

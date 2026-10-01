@@ -44,6 +44,7 @@
     galBoot();       /* the effect gallery's door (T171) */
     txStripBoot();              /* the kinds of text box, as tiles (T188) */
     shapeStripBoot();           /* the shapes, as tiles (T197) */
+    iconStripBoot();            /* the icons, as tiles (T560) */
     imgPaneBoot();
     quickSwatchBoot();          /* the deck's six colours, on the row */
     miniBoot();                 /* formatting beside highlighted words (T536) */

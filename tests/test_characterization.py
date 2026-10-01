@@ -2296,8 +2296,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T556 (2026-10-01): handouts and notes pages -- Export PDF asks for full-
 # page slides, handouts of three with lines or six, or notes pages, laid
 # out on A4 from the same print pages.
-EXPECTED_MD5 = "87b17235572511a5c09d51684205894d"
-EXPECTED_BYTES = 5001211
+# T560: the Icons gallery -- 12-icons.js joins the deck IIFE, an Icons
+# group beside Shapes, icon drawing in drawShapeSvg, square drawing, the
+# custGeom export and the search index reading data-find.
+EXPECTED_MD5 = "09a06c658801f2229fe93eabbd2aec52"
+EXPECTED_BYTES = 5019389
 
 
 def _render_example() -> str:

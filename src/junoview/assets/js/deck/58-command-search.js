@@ -120,8 +120,11 @@
       if(!b||seen.indexOf(b)>=0||!cmdLive(b)) return;
       var lab=cmdLabel(b); if(!lab||lab.length<2) return;
       seen.push(b);
+      /* a gallery tile's data-find is the words people use for it
+         (T573 shapes, T560 icons): "lightbulb" finds the Idea icon */
       var hay=(lab+' '+(b.title||'')+' '+where+' '
-        +(CMD_ALIASES[b.id]||'')).toLowerCase();
+        +(CMD_ALIASES[b.id]||'')+' '+((b.dataset&&b.dataset.find)||''))
+        .toLowerCase();
       out.push({el:b,label:lab,where:where,tab:tab,g:g,hay:hay,
         lab:lab.toLowerCase()});
     }

@@ -1934,6 +1934,19 @@
   function shapeIcon(shp){
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','sh-ico');svg.setAttribute('viewBox','0 0 100 100');
+    var li=(typeof lineIcon==='function')?lineIcon(shp):null;
+    if(li){
+      /* T560: an icon is drawn as the lines it is */
+      svg.setAttribute('viewBox','0 0 24 24');
+      var ip=document.createElementNS(SVGNS,'path');
+      ip.setAttribute('d',lineIconD(li[3]));
+      ip.setAttribute('fill','none');ip.setAttribute('stroke','#c9d6e2');
+      ip.setAttribute('stroke-width','1.8');
+      ip.setAttribute('stroke-linecap','round');
+      ip.setAttribute('stroke-linejoin','round');
+      svg.appendChild(ip);
+      return svg;
+    }
     if(shp==='rect'){
       var rc=document.createElementNS(SVGNS,'rect');
       rc.setAttribute('x','12');rc.setAttribute('y','22');
@@ -2369,6 +2382,40 @@
     try{localStorage.setItem('jv-recent-shapes',
       JSON.stringify(arr.slice(0,4)));}catch(e){}
     shapeOrderSync();
+  }
+  /* T560: THE ICONS GALLERY. One tile per icon, drawn as itself; a
+     click arms the shape tool for it, as a shape tile does, and Show all
+     searches them by name and by the words they are known by. */
+  var iconStripSync=function(){};
+  function iconStripBoot(){
+    var strip=$('#icon-strip'); if(!strip) return;
+    strip.setAttribute('data-find','icons');
+    LINE_ICONS.forEach(function(ic){
+      var b=document.createElement('button');
+      b.type='button';b.className='fx-tile shape-tile icon-tile';
+      b.dataset.shape='ic-'+ic[0];
+      b.dataset.find=ic[1]+' '+ic[2];
+      b.appendChild(shapeIcon('ic-'+ic[0]));
+      var t=document.createElement('span');t.textContent=ic[1];
+      b.appendChild(t);
+      b.title='Draw a '+ic[1].toLowerCase()+' icon \u2014 drag on the '
+        +'slide, or click it for one';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(tool==='rect'&&pendingShape===b.dataset.shape){
+          setTool('select');return;}
+        pendingShape=b.dataset.shape;
+        setTool('rect');
+      });
+      strip.appendChild(b);
+    });
+    iconStripSync=function(){
+      $$('.icon-tile',strip).forEach(function(b){
+        var on=(tool==='rect'&&pendingShape===b.dataset.shape);
+        b.classList.toggle('on',on);
+        b.setAttribute('aria-pressed',on.toString());
+      });
+    };
   }
   function shapeStripBoot(){
     var strip=$('#shape-strip'); if(!strip) return;

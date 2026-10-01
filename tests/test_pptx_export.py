@@ -195,8 +195,12 @@ def test_anchored_boxes_export_at_their_page_position(out):
     assert ("var box=(a.k==='arrow')?null:pptxBox((a.k==='text'&&a.fh>0)\n"
             "        ?Object.assign({},a,{h:a.fh}):a,false);") in items
     # every push resolves the box once, at this boundary. 9 since T117
-    # added the chart push beside T109's scraped-notebook-table one.
-    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 9
+    # added the chart push beside T109's scraped-notebook-table one; 8
+    # and one ibox since T560, where an icon is narrowed to the square it
+    # is drawn in -- still resolved from the same box.
+    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 8
+    assert "var ibox=box;" in items
+    assert "x:ibox.x,y:ibox.y,w:ibox.w,h:ibox.h" in items
     assert "x:a.x,y:a.y" not in items
 
 

@@ -2050,6 +2050,8 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
 .rbn-links{order:6;}
 /* Shapes sit between Write and Draw (T197) */
 .rbn-shapes{order:6;}
+/* T560: Icons follow Shapes, by source order */
+.rbn-icons{order:6;}
 .rbn-draw{order:6;}
 /* Home's layout groups follow Slides; View keeps its seat; the saved
    layouts and the refresh doors come LAST, so they are what folds first

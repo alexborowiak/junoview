@@ -41,8 +41,10 @@ def test_powerpoint_gets_presets_where_it_has_them_and_a_freeform_where_not():
     assert "lbracket: 'leftBracket', rbracket: 'rightBracket' };" in js
     assert "var SHAPE_OPEN_PTS = { langle: [[1, 0], [0, 0.5], [1, 1]]," in js
     assert "function freeformGeom(pts) {" in js
-    assert "    var geom = open ? freeformGeom(open)" in js
-    assert ("    var fill = (open || SHAPE_OPEN_PRESET[item.shape])\n"
+    # (T560 put an icon's own geometry first, on the line before)
+    assert "      : open ? freeformGeom(open)" in js
+    assert ("    var fill = (open || SHAPE_OPEN_PRESET[item.shape]\n"
+            "      || (item.icon && !item.fill && !item.grad))\n"
             "      ? '<a:noFill/>' : shapeFillXml(item);") in js
     # the drawn stroke uses the same freeform builder
     assert "      + freeformGeom(pts) + '<a:noFill/>'" in js

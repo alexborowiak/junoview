@@ -1888,7 +1888,10 @@
       shapeUsed(pendingShape);   /* T573: yours lead the gallery */
     var a=(kind==='rect')
       ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:SW_DEFAULT,
-        shape:(pendingShape!=='rect'?pendingShape:undefined)}
+        shape:(pendingShape!=='rect'?pendingShape:undefined),
+        /* T560: an icon keeps its proportions when it is resized */
+        lockar:(typeof lineIcon==='function'&&lineIcon(pendingShape))
+          ?1:undefined}
       :(kind==='draw')
       ?{k:'draw',x:p0.x,y:p0.y,w:0,h:0,pts:[[0,0]],sw:SW_DEFAULT,
         color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'}
@@ -1922,6 +1925,8 @@
         color:'#ff6b57',sw:SW_DEFAULT};
     var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text'
       ||a.k==='table'||a.k==='flip');
+    /* T560: an icon is drawn square, the way PowerPoint inserts one */
+    var square=(a.k==='rect'&&!!a.lockar);
     s.annots=s.annots||[];
     s.annots.push(a);
     var idx=s.annots.length-1;
@@ -1951,6 +1956,14 @@
         var last=raw[raw.length-1];
         if(Math.abs(p.x-last[0])+Math.abs(p.y-last[1])>=0.35) raw.push([p.x,p.y]);
         foldTrail();
+      } else if(square){
+        /* square on the SCREEN, so the side is the longer drag in
+           pixels, turned back into each axis's own percentage */
+        var lq=layer.getBoundingClientRect();
+        var dxp=(p.x-p0.x)/100*lq.width,dyp=(p.y-p0.y)/100*lq.height;
+        var side=Math.max(Math.abs(dxp),Math.abs(dyp));
+        a.w=lq.width?side/lq.width*100:0;a.h=lq.height?side/lq.height*100:0;
+        a.x=dxp<0?p0.x-a.w:p0.x;a.y=dyp<0?p0.y-a.h:p0.y;
       } else if(boxed){
         a.x=Math.min(p0.x,p.x);a.y=Math.min(p0.y,p.y);
         a.w=Math.abs(p.x-p0.x);a.h=Math.abs(p.y-p0.y);
@@ -1987,6 +2000,12 @@
         a.x=Math.min(p0.x,64);a.y=Math.min(p0.y,64);a.w=34;a.h=30;
       } else if(tiny&&a.k==='text'){
         delete a.w;delete a.h;          /* auto-size to its own words */
+      } else if(tiny&&square){
+        /* T560: an icon HAS a usual size -- a click drops one, square,
+           a seventh of the slide tall, centred where you clicked */
+        a.h=14;a.w=lr.width?a.h*lr.height/lr.width:a.h;
+        a.x=Math.max(0,Math.min(100-a.w,p0.x-a.w/2));
+        a.y=Math.max(0,Math.min(100-a.h,p0.y-a.h/2));
       } else if(tiny) s.annots.splice(idx,1);
       markDirty();setTool('select');
       renderAnnots(layer,s);
@@ -3834,6 +3853,7 @@
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
     /* the armed shape's tile lights (T197) */
     if(typeof shapeStripSync==='function') shapeStripSync();
+    if(typeof iconStripSync==='function') iconStripSync();   /* T560 */
     var l=stage.querySelector('.annot-layer');
     if(l) l.className='annot-layer tool-'+t;
     /* The way OUT, shown exactly when there is something to get out of.
@@ -3865,6 +3885,8 @@
         var nm='shape';
         (typeof SHAPE_LIST!=='undefined'?SHAPE_LIST:[]).forEach(function(p){
           if(p[0]===pendingShape) nm=String(p[1]).toLowerCase();});
+        var li=(typeof lineIcon==='function')?lineIcon(pendingShape):null;
+        if(li) nm=String(li[1]).toLowerCase()+' icon';   /* T560 */
         if(pendingShape==='rect') nm='rectangle';
         return 'Drag on '+pw+' to draw '+(/^[aeiou]/.test(nm)?'an ':'a ')+nm;
       })()
