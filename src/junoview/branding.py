@@ -409,6 +409,16 @@ _ICON_PATHS = {
     "picfix": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
               '<path d="M8 3v10"/><path d="M9.6 5.4h2.6M9.6 8h2.6'
               'M9.6 10.6h2.6"/>',
+    # T606: Collections -- a bookmark that takes something in, a stack of
+    # kept cards, a note of your own, and moving a card up or down
+    "collect": '<path d="M4.2 2.4h7.6v11.2L8 10.8l-3.8 2.8Z"/>'
+               '<path d="M8 4.6v3.8M6.1 6.5h3.8"/>',
+    "newcol": '<rect x="2.4" y="5.4" width="11.2" height="8.2" rx="1"/>'
+              '<path d="M3.8 3.6h8.4M5.4 1.9h5.2"/>',
+    "newnote": '<path d="M3 2.4h7.4l2.6 2.6v8.6H3Z"/>'
+               '<path d="M5.4 7.2h5.2M5.4 9.8h3.4"/>',
+    "up": '<path d="M8 13V3.4"/><path d="m4.2 7.2 3.8-3.8 3.8 3.8"/>',
+    "down": '<path d="M8 3v9.6"/><path d="m4.2 8.8 3.8 3.8 3.8-3.8"/>',
     # T557: slides laid out in a grid
     "sorter": '<rect x="1.6" y="2.6" width="5.6" height="4.2" rx=".6"/>'
               '<rect x="8.8" y="2.6" width="5.6" height="4.2" rx=".6"/>'

@@ -27,6 +27,66 @@ _LAYOUT_PANES = {"full": 1, "halves": 2, "rows": 2, "quarters": 4,
                  "title": 0, "blank": 0}
 
 
+
+_COL_META_KEYS = ("cls", "kind", "role", "note", "noout", "labelled", "ck",
+                  "badge", "cw", "cwOpen")
+
+
+def _collection_item(it: Any, top: bool) -> dict[str, Any] | None:
+    """One collection item, shape-checked: a collected cell (a ref, with
+    the card's own facts in `meta`) or a note of your own (`md`).
+    `under` -- what is linked beneath an item -- is one level deep."""
+    if not isinstance(it, dict):
+        return None
+    out: dict[str, Any] = {}
+    if isinstance(it.get("id"), str) and it["id"]:
+        out["id"] = it["id"]
+    if it.get("k") == "note":
+        out["k"] = "note"
+        out["md"] = it["md"] if isinstance(it.get("md"), str) else ""
+    elif isinstance(it.get("ref"), str) and it["ref"]:
+        out["k"] = "cell"
+        out["ref"] = it["ref"]
+        for key in ("src", "title", "cap"):
+            if isinstance(it.get(key), str) and it[key]:
+                out[key] = it[key]
+        if isinstance(it.get("meta"), dict):
+            meta = {k: v for k, v in it["meta"].items()
+                    if k in _COL_META_KEYS
+                    and isinstance(v, (str, int, float))}
+            if meta:
+                out["meta"] = meta
+    else:
+        return None
+    if top and isinstance(it.get("under"), list):
+        under = [u for u in (_collection_item(x, False)
+                             for x in it["under"]) if u]
+        if under:
+            out["under"] = under
+    if it.get("fold"):
+        out["fold"] = 1
+    if isinstance(it.get("at"), (int, float)) and it["at"] > 0:
+        out["at"] = it["at"]
+    return out
+
+
+def _collection_entry(p: dict[str, Any]) -> dict[str, Any]:
+    entry: dict[str, Any] = {"name": str(p.get("name") or "collection"),
+                             "kind": "collection", "slides": []}
+    items = [i for i in (_collection_item(x, True)
+                         for x in (p.get("items") or [])
+                         if isinstance(p.get("items"), list)) if i]
+    entry["items"] = items
+    if isinstance(p.get("folder"), str) and p["folder"].strip():
+        entry["folder"] = p["folder"].strip()
+    if isinstance(p.get("emb"), dict):
+        emb = {k: v for k, v in p["emb"].items()
+               if isinstance(k, str) and isinstance(v, dict)
+               and isinstance(v.get("html"), str) and v["html"]}
+        if emb:
+            entry["emb"] = emb
+    return entry
+
 def as_presentations(obj: Any) -> list:
     """Normalize saved presentation data to [{name, slides}, ...].
 
@@ -60,6 +120,12 @@ def as_presentations(obj: Any) -> list:
         # heterogeneous by design: a name, a list of slides, and whichever of
         # kind / nb / style / view / filters / folder / page apply
         entry: dict[str, Any]
+        if p.get("kind") == "collection":
+            # T606: a COLLECTION is cells from any notebook plus notes of
+            # your own, in order -- `items`, not slides. Its kept copies
+            # ride in `emb` exactly as a deck's do.
+            out.append(_collection_entry(p))
+            continue
         if p.get("kind") == "view":
             entry = {"name": str(p.get("name") or "view"), "kind": "view",
                      "slides": []}

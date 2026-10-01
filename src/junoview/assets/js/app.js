@@ -22,7 +22,10 @@
   APP.active=null;
   window.SemApp=APP;
   /* every tab shown in the strip: notebooks first, then their trace tabs */
-  function tabList(){return APP.order.concat(APP.traces);}
+  APP.cols=[];            /* T606: open collections' feeds -- shells with
+                             no notebook tab: their tab is the saved
+                             thing's own, beside the presentations */
+  function tabList(){return APP.order.concat(APP.traces,APP.cols);}
 
   function api(path,body){
     var url=path+(path.indexOf('?')<0?'?':'&')
@@ -80,7 +83,10 @@
     /* an open presentation owns the window even with no notebook behind
        it — a self-contained deck is a document in its own right */
     var deckOn=!!(APP.deckState&&APP.deckState());
-    var welcoming=canOpen&&!deckOn&&(!APP.order.length||atHome);
+    /* T606: so does an open collection, which needs no notebook either */
+    var act=APP.active&&APP.shells[APP.active];
+    var colOn=!!(act&&act.collection)&&!atHome;
+    var welcoming=canOpen&&!deckOn&&!colOn&&(!APP.order.length||atHome);
     if(wel) wel.hidden=!welcoming;
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
@@ -550,6 +556,8 @@
        a presentation opened from Home lands on Home, not on a notebook */
     if(atHome&&APP.order.length){setHash('#/home');return;}
     var a=APP.active&&APP.shells[APP.active];
+    /* T606: a collection's address is its saved name's, as a deck's is */
+    if(a&&a.collection){setHash('#/pres/'+encodeURIComponent(a.title));return;}
     var stem=a&&a.trace?a.source:APP.active;   /* a trace tab -> its source */
     setHash(stem?('#/doc/'+encodeURIComponent(stem)):'#/');
   }
@@ -678,7 +686,8 @@
     var k=String(stem||'');
     if(!defBy[k]){
       var sh=APP.shells&&APP.shells[k];
-      defBy[k]=newF(!!(sh&&sh.trace));
+      /* a collection reads like a notebook: code folded, not a trace */
+      defBy[k]=newF(!!(sh&&sh.trace&&!sh.collection));
     }
     return defBy[k];
   }
@@ -1019,7 +1028,7 @@
   function resetFilters(){
     var stem=String(activeStem()),pre=stem+'::';
     var sh=APP.shells&&APP.shells[stem];
-    defBy[stem]=newF(!!(sh&&sh.trace));
+    defBy[stem]=newF(!!(sh&&sh.trace&&!sh.collection));
     [secF,secScope,scopeOpen].forEach(function(m){
       for(var k in m){if(k.indexOf(pre)===0) delete m[k];}
     });
@@ -1221,7 +1230,7 @@
     var dp=$('#doc-present');
     if(dp) dp.hidden=document.body.classList.contains('doc-presenting');
     var ti=$('#trace-inherit');
-    if(ti) ti.hidden=!isTrace;
+    if(ti) ti.hidden=!isTrace||!sh.source;   /* T606: a collection has none */
     /* an empty group still costs a gap in the bar */
     var cg=$('#copy-grp');
     if(cg) cg.hidden=!isTrace;
@@ -5251,6 +5260,27 @@
       });
       head.insertBefore(b,head.querySelector('.cell-pin')||null);
     });
+    /* ---- T606: COLLECT -- this cell into a collection. On a notebook's
+       cards and a trace's clones (they file the real notebook's cell);
+       never on a collection's own cards, which are already kept. ---- */
+    var colStem=shell.classList&&shell.classList.contains('coltab')?null
+      :(shell.dataset&&(shell.dataset.src||shell.dataset.nb))||stem;
+    if(colStem) $$('.card',shell).forEach(function(card){
+      var head=card.querySelector('.cardhead');
+      if(!head||!card.dataset.anchor||head.querySelector('.cell-collect')) return;
+      var b=document.createElement('button');b.type='button';
+      b.className='cell-collect';
+      b.innerHTML=bic('collect')+' Collect';
+      b.title='Keep this cell in a collection, with notes of your own '
+        +'beside it';
+      b.setAttribute('aria-haspopup','menu');
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        if(window.SemCollect) window.SemCollect.card(b,colStem,card);
+      });
+      head.insertBefore(b,head.querySelector('.cell-pin')
+        ||head.querySelector('.cell-eye')||null);
+    });
     /* ---- code toggles ---- */
     $$('.codetoggle',shell).forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -7344,6 +7374,9 @@
     return key;
   }
   APP.openTraceTab=openTraceTab;
+  /* T606: what a collection's feed needs from this side */
+  APP.refilter=function(root){applyFilters();applyCodeState(root);};
+  APP.activateOutputs=activateOutputs;
   /* one open per source at a time: repeated Enter/clicks are ignored
      while the fetch runs, and the dialog shows a loading bar */
   var OPENBUSY={},dlgBusyN=0;
@@ -8082,7 +8115,8 @@
     host.hidden=!list.length;
     syncJump();
     function row(p){
-      var kind=p.view?'custom view':p.poster?'poster':'presentation';
+      var kind=p.col?'collection':p.view?'custom view'
+        :p.poster?'poster':'presentation';
       var b=document.createElement('button');b.className='recent-i';
       b.type='button';
       b.title='Open the '+kind+' “'+p.name+'”'
@@ -8092,7 +8126,8 @@
       /* NOT the newdeck/newposter/newview icons: those carry the "make a
          new one" affordance; these rows OPEN something that exists */
       var ic=document.createElement('span');ic.className='recent-ic';
-      ic.innerHTML=p.view?bic('eye'):p.poster?bic('pagep'):bic('present');
+      ic.innerHTML=p.col?bic('collect'):p.view?bic('eye')
+        :p.poster?bic('pagep'):bic('present');
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=p.name;
       /* T598: where it lives and when -- not a path repeated six times

@@ -176,6 +176,8 @@
        nb / style / view or it comes back as a plain deck and clicking its
        row opens the slide editor instead (that was the bug where a custom
        view "took you to the presentation below it"). */
+    /* T606: a collection is cells and notes, not slides (64-collections) */
+    if(p&&p.kind==='collection') return colNorm(p,stem);
     if(p&&p.kind==='view'){
       var v={name:String(p.name||'view'),kind:'view',slides:[],
         nb:typeof p.nb==='string'?p.nb:'',
@@ -426,6 +428,16 @@
     if(p.live&&typeof p.live==='object')
       Object.keys(p.live).forEach(function(k){
         if(p.live[k]) out.live[ns(k)||k]=1;});
+    embAbsorb(p,ns);
+    /* T321: the clips ride the same rule as `emb` -- absorbed into the
+       session store and IndexedDB on the way in, never kept on `out` */
+    if(p.media&&typeof p.media==='object'&&typeof mediaAbsorb==='function')
+      mediaAbsorb(p);
+    return out;
+  }
+  /* a saved thing's embedded copies into the session store -- a deck's
+     (normPres) and a collection's (colNorm) by the one rule */
+  function embAbsorb(p,ns){
     if(p.emb&&typeof p.emb==='object'){
       /* T305: A COPY THIS SESSION ALREADY HOLDS IS THE FRESHER ONE.
          EMBED is session-global and keyed by ref, not per deck, and
@@ -448,11 +460,6 @@
       });
       embSaveSoon();
     }
-    /* T321: the clips ride the same rule as `emb` -- absorbed into the
-       session store and IndexedDB on the way in, never kept on `out` */
-    if(p.media&&typeof p.media==='object'&&typeof mediaAbsorb==='function')
-      mediaAbsorb(p);
-    return out;
   }
   function registerShell(stem,data){
     Object.keys(ITEMS).forEach(function(k){
@@ -789,6 +796,7 @@
     var w=deckWhere(name),m=deckMeta(name);
     return {name:name,slides:((p.slides)||[]).length,
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
+      col:isColPres(p),items:isColPres(p)?(p.items||[]).length:0,
       /* T483: a deck whose home IS this browser is not an "unsaved
          draft" -- Home tagged every browser-kept deck DRAFT */
       /* T598: nor is a deck kept in a file (the browser copy always

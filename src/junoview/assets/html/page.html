@@ -103,6 +103,8 @@
             >Poster</button>
           <button class="dc-mi" type="button" data-for="pr-newview"
             >Custom view</button>
+          <button class="dc-mi" type="button" data-for="pr-newcol"
+            >Collection</button>
           <button class="dc-mi" type="button" data-for="pr-newfold"
             >Folder</button>
           <div class="dc-mhead">open</div>
@@ -240,13 +242,20 @@
     </span><span class="abgrp-lab">Apply to</span></span>
     <!-- the filters you keep setting, kept: a custom view remembers them
          with the hidden cells and sizes (File > New > Custom view is the
-         same thing; this is its door where the filters are) -->
+         same thing; this is its door where the filters are); T606's
+         Collect showing files every cell they leave on screen into a
+         collection, where it stays put -->
     <span class="abgrp" id="ab-saveview" data-abtab="filters"><span class="abgrp-row">
       <button class="toggle" id="ab-newview" type="button" data-for="pr-newview"
         title="Keep these filters, hidden cells and sizes as a custom view
  you can reopen from File &gt; Open"><i data-ic="newview"></i><span
         class="btxt">Save as view</span></button>
-    </span><span class="abgrp-lab">Custom view</span></span>
+      <button class="toggle" id="ab-collect" type="button"
+        aria-haspopup="menu"
+        title="Put every cell showing now into a collection, where it
+ stays without filtering again"><i data-ic="collect"></i><span
+        class="btxt">Collect showing</span></button>
+    </span><span class="abgrp-lab">Keep</span></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
          because it plays the same role -- it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
@@ -484,6 +493,7 @@
       <button class="pr-mi" data-for="pr-new">Presentation</button>
       <button class="pr-mi" data-for="pr-newpost">Poster</button>
       <button class="pr-mi" data-for="pr-newview">Custom view</button>
+      <button class="pr-mi" data-for="pr-newcol">Collection</button>
       <button class="pr-mi" data-for="pr-newfold">Folder</button>
       <!-- the way back IN for a presentation saved to disk — without it
            a .junoview.html file could only be opened from the File menu
@@ -502,6 +512,12 @@
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
        already looking at, so it belongs nearest the notebook list -->
+  <!-- T606: a collection -- cells from any notebook, with your notes -->
+  <button class="pr-btn" hidden id="pr-newcol"
+    title="New collection &mdash; cells from any of your notebooks kept in
+ one view, in your order, with notes of your own">
+    <span class="pr-ico"><i data-ic="newcol"></i></span>
+    <span class="pr-t">+ New collection</span></button>
   <button class="pr-btn" hidden id="pr-newview"
     title="New custom view &mdash; a saved, restyled, filtered view of the
  notebook itself (not slides). Style all markdown cells, one section or a

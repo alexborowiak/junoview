@@ -183,7 +183,9 @@ def test_the_tabs_are_real_tabs():
 
 def test_the_tab_being_edited_renames_and_is_the_only_one_lit():
     deck = assets.deck_js()
-    assert "    if(top&&!isView) action.addEventListener('dblclick'," in deck
+    # (T606: a collection renames from its own heading, not its tab)
+    assert ("    if(top&&!isView&&!isCol) action.addEventListener("
+            "'dblclick',") in deck
     assert "      if(!(isCur&&!deckEl.hidden&&mode==='edit')) return;" in deck
     css = assets.app_css()
     assert ("body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab)"

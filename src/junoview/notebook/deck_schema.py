@@ -57,8 +57,13 @@ class Problem(NamedTuple):
 DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "name": (str, "What the deck is called."),
     "slides": (list, "The slides, in order. The order IS the story."),
-    "kind": (str, 'Only ever "view" — a saved filtered view of one '
-                  "notebook rather than a deck of slides."),
+    "kind": (str, 'Absent for a deck; "view" for a saved filtered view of '
+                  'one notebook; "collection" for a collection -- cells '
+                  "from any notebook and notes of your own (T606)."),
+    "items": (list, "For a collection: its cells ({k: \"cell\", ref, "
+                    "src, title, cap, meta}) and notes ({k: \"note\", "
+                    "md}), in order; each may carry `under`, what is "
+                    "linked beneath it, and `fold`."),
     "nb": (str, "For a view: which notebook it is a view of."),
     "style": (dict, "For a view: its saved styling."),
     "view": (dict, "For a view: its saved view state."),
@@ -573,9 +578,9 @@ def validate_deck(obj: Any) -> list[Problem]:
                                f"got {type(p).__name__}"))
             continue
         _check_keys(p, DECK_KEYS, path, out)
-        if p.get("kind") == "view":
-            # a view carries no slides by design, and says so with an
-            # empty list rather than by omission
+        if p.get("kind") in ("view", "collection"):
+            # a view or a collection carries no slides by design, and
+            # says so with an empty list rather than by omission
             continue
         slides = p.get("slides")
         if not isinstance(slides, list):

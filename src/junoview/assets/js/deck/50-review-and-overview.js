@@ -1513,8 +1513,13 @@
        the slide stage is (it never opens the slide stage). */
     var vwOpen=isView&&isCur
       &&document.body.classList.contains('styling');
+    /* T606: a collection while its feed is the tab on screen */
+    var isCol=isColPres(p);
+    if(isCol&&(window.SemApp||{}).active===colKey(nm)
+       &&!document.body.classList.contains('welcoming')) vwOpen=true;
     if(vwOpen) t.className+=' current editing';
-    var kindWord=isView?'custom view':isPoster?'poster':'presentation';
+    var kindWord=isCol?'collection':isView?'custom view'
+      :isPoster?'poster':'presentation';
     var selected=isCur&&(editing||vwOpen);
     /* T602: on the editor's title row the tab IS the name, so it is also
        where the rename is -- the centred name steps aside while the tabs
@@ -1523,7 +1528,8 @@
       ?('Editing "'+nm+'"'+(top&&!isView?' — double-click to rename'
         :' — Home returns to the start screen'))
       :('Open '+kindWord+' "'+nm+'"'
-        +(isView?' — restyles the notebook itself':' in the builder'));
+        +(isCol?' — cells from your notebooks, with your notes'
+          :isView?' — restyles the notebook itself':' in the builder'));
     var action=top?document.createElement('button'):t;
     if(top){
       /* A regular tab has its own focusable button; the close button is
@@ -1537,7 +1543,8 @@
     }
     var ic=document.createElement('span');
     ic.className=top?'tab-pres-ico':'pr-ico';
-    ic.innerHTML=bic(isView?'newview':isPoster?'newposter':'newdeck');
+    ic.innerHTML=bic(isCol?'newcol':isView?'newview'
+      :isPoster?'newposter':'newdeck');
     action.appendChild(ic);
     var lbl=document.createElement('span');lbl.className=top?'tab-t':'pr-t';
     lbl.textContent=nm||'(unnamed)';
@@ -1573,7 +1580,7 @@
     });
     /* T602: the tab you are editing renames the deck, the way a
        double-click on a file's name does everywhere else */
-    if(top&&!isView) action.addEventListener('dblclick',function(e){
+    if(top&&!isView&&!isCol) action.addEventListener('dblclick',function(e){
       if(!(isCur&&!deckEl.hidden&&mode==='edit')) return;
       e.preventDefault();startQatRename();
     });
@@ -1605,6 +1612,8 @@
       presstrip.appendChild(none);
     }
     renderTopPresTabs();
+    /* T606: a collection's feed closes with its tab */
+    if(typeof colSync==='function') colSync();
     /* ...and re-applied, now the rail rows are back (T75). */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
@@ -1624,10 +1633,12 @@
      both it and Home share a complete library dialog for recent work,
      folders, new decks and files. */
   function presentationKind(p){
-    return p.view?'custom view':p.poster?'poster':'presentation';
+    return p.col?'collection':p.view?'custom view'
+      :p.poster?'poster':'presentation';
   }
   function presentationIcon(p){
-    return bic(p.view?'newview':p.poster?'newposter':'newdeck');
+    return bic(p.col?'newcol':p.view?'newview'
+      :p.poster?'newposter':'newdeck');
   }
   /* ---- T599: SEE A PRESENTATION BEFORE OPENING IT --------------------
      (2026-09-30, user: "would be cool when opening files if there was a
@@ -1714,6 +1725,14 @@
     host.appendChild(head);
     if(isViewPres(d)){
       note('A custom view restyles its notebook \u2014 it has no slides.');
+      return 0;
+    }
+    if(isColPres(d)){
+      var ni=(d.items||[]).length;
+      note(ni?('A collection of '+ni+' item'+(ni===1?'':'s')
+        +' \u2014 '+(d.items||[]).slice(0,6).map(function(x){
+          return colTitleOf(x,true);}).join(' \u00b7 ')
+        +(ni>6?' \u2026':'')):'An empty collection.');
       return 0;
     }
     var slides=Array.isArray(d.slides)?d.slides:[];
@@ -2822,6 +2841,7 @@
     noteSessionOpen(nm);   /* T394: it is open now, whichever kind it is */
     /* a custom view is edited in the document; a deck on the slide stage */
     if(isViewPres(pres)){openCustomView();return;}
+    if(isColPres(pres)){openCollection(nm);return;}   /* T606 */
     openDeck('edit');   /* land straight in the slide editor */
   }
   function newPresentation(){

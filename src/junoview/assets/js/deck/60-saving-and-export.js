@@ -745,6 +745,9 @@
     list.forEach(function(p){
       if(p.kind==='view') return;
       var emb={};
+      /* T606: a collection's cells are refs exactly as a frame's are, and
+         travel the same way, so it too opens with no notebook */
+      var refs=isColPres(p)?colRefsOf(p):[];
       (p.slides||[]).forEach(function(s){
         /* every notebook card this slide places, from BOTH the kinds that
            can hold one. A flip book's frames are refs exactly like a
@@ -752,14 +755,14 @@
            opened with every frame blank — the one failure the embedded
            snapshots exist to prevent (2026-08-22). They dedupe by ref, so
            a flip book costs the same as placing its figures one by one. */
-        var refs=[];
         (s.annots||[]).forEach(function(a){
           if(!a) return;
           if(a.k==='cell'&&a.ref) refs.push(a.ref);
           else if(a.k==='flip') flipFrames(a).forEach(function(f){
             if(f&&f.ref) refs.push(f.ref);});
         });
-        refs.forEach(function(ref){
+      });
+      refs.forEach(function(ref){
           if(emb[ref]) return;
           var it=resolveRef(ref);
           if(it&&!it.emb){
@@ -782,7 +785,6 @@
               emb[ref]=cp;
             }
           }
-        });
       });
       if(Object.keys(emb).length) p.emb=emb;
       /* T321: the clips, from the session store -- the one copy a

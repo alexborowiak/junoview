@@ -11293,3 +11293,42 @@ them. And a bug: Peek at hidden showed code with Code turned off.
   Ctrl+F1, a Which menu under its joined button, Apply to's door with
   its section menu open inside it, Present and back (the groups return
   to the band), light theme.
+- [x] **T606 — Collections.** "I am consistently filtering a notebook
+  over and over again ... create something ... that creates a view
+  similar to the notebooks perhaps, but you can add cells and images etc.
+  from other notebooks", with notes of your own under a figure that can
+  be hidden, and code and notes linked to it so that "clicking the
+  expand shows the code and such that I have linked to it".
+  *Done 2026-10-01.* A COLLECTION is a fourth saved kind beside a
+  presentation, a poster and a custom view (kind:'collection', `items`),
+  so it saves, lists, opens as a tab, renames and deletes the way they
+  do. It reads like a notebook -- a feed of cards in your order, an
+  outline, each card naming the notebook it came from (click to see it
+  there) -- and the Filters work on it as on a notebook (Code folded to
+  start). A collected cell is a REF, as a placed slide frame is, and its
+  picture is the deck's kept copy, taken when you collect it and saved
+  with the collection (embedAssets): it opens with no notebook and does
+  not change when a notebook is re-run; Update from notebooks takes the
+  new copies on purpose. The card's own kind classes and data-* ride in
+  `meta`, so the filters read a collected card as they read the
+  original. DOORS: Collect on every notebook card (and a Plot trace's
+  clones), a menu of your collections with New collection... and, for a
+  figure, "With the code that makes it"; Collect showing on the Filters
+  tab (Keep group, beside Save as view) files every cell the filters
+  leave on screen -- the setup you kept redoing, filed once; File > New
+  > Collection. IN A COLLECTION: Add a note / Add a cell / Update /
+  Rename at its head; under each card Note (Markdown, double-click to
+  edit, Ctrl+Enter keeps), Its code (the cells Plot trace finds behind
+  it), Link a cell (a searchable list of every open notebook's cells),
+  Up, Down, Remove (with Undo). What is linked hangs under its card
+  behind "Linked: 1 note, 4 cells", which folds it away and back. A
+  note that opens with a heading wears it as its title. Python keeps the
+  kind in the project file (presentations.py, shape-checked items, one
+  level of `under`, `emb`); the schema and DECK-FORMAT.md document it.
+  Driven at 1440 x 900 on the example: a figure collected with its four
+  code cells into a new collection, opened from the toast as its own
+  tab (#/pres/<name>, its top tab lit); a note under the figure rendered
+  from Markdown; the drawer folded and back; a note at the end moved up;
+  Code off and Markdown off in the collection; Collect showing filed 19
+  more (the 20th was already there); Remove and Undo; Update; a reload
+  reopened it from its address with every figure.

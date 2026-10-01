@@ -1611,7 +1611,7 @@
       out.push({name:nm,
         slides:(((p||{}).slides)||[]).length,
         poster:/^a\d/.test(String((p||{}).page||'')),
-        view:isViewPres(p||{}),
+        view:isViewPres(p||{}),col:isColPres(p||{}),
         folder:(p||{}).folder||'',
         draft:!!draft});
     }
@@ -1655,6 +1655,8 @@
       loadPresentation(name);
       activePane=-1;
     }
+    /* T606: a collection's address opens its feed, not the slide stage */
+    if(isColPres(pres)){openCollection(name);return true;}
     cur=0;
     if(typeof slide==='number'&&slide>0)
       cur=Math.max(0,Math.min(((pres.slides||[]).length||1)-1,slide));

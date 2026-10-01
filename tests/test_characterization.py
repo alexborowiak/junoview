@@ -2307,8 +2307,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tab's groups; app.css drops the grid header for .ab-tabs and .ab-band;
 # app.js gains the tab and fold handling and the band's fold ladder;
 # help.html describes the ribbon.
-EXPECTED_MD5 = "3f7ac86a9dde112565ca27ea614d64a5"
-EXPECTED_BYTES = 5032181
+# T606: Collections -- File > New gains a Collection row, the side panel a
+# + New collection button and its New menu a row, the Filters tab's Keep
+# group a Collect showing button, help.html a Collections section, and the
+# deck script the 64-collections part.
+EXPECTED_MD5 = "2a565b5a6ab92675268210ebafcca6ec"
+EXPECTED_BYTES = 5085897
 
 
 def _render_example() -> str:
