@@ -150,6 +150,23 @@
      list should also be the last colours used"). A deck reference
      (@accent) is stored as the reference, so a recent that IS the
      deck's accent still follows the deck. */
+  /* T570: the faces you used last, newest first, kept in this browser */
+  var fontListRebuild=function(){};
+  function recentFonts(){
+    try{
+      var a=JSON.parse(localStorage.getItem('jv-recent-fonts')||'[]');
+      return Array.isArray(a)?a.filter(function(s){
+        return typeof s==='string'&&s&&s!=='__custom';}).slice(0,4):[];
+    }catch(e){return [];}
+  }
+  function pushRecentFont(id){
+    if(typeof id!=='string'||!id||id==='__custom') return;
+    var arr=recentFonts().filter(function(x){return x!==id;});
+    arr.unshift(id);
+    try{localStorage.setItem('jv-recent-fonts',
+      JSON.stringify(arr.slice(0,4)));}catch(e){}
+    fontListRebuild();
+  }
   function recentColors(){
     try{
       var a=JSON.parse(localStorage.getItem('plotline-colors')||'[]');
@@ -1935,12 +1952,35 @@
         'trebuchet']],
       ['Serif',['times','georgia','cambria','garamond']],
       ['Handwritten',['hand']]];
-    fontSelEl.innerHTML=fontGroups.map(function(g){
-      var rows=FONTS.filter(function(f){return g[1].indexOf(f.id)>=0;})
-        .map(function(f){return '<option value="'+f.id+'">'
-          +esc(f.label)+'</option>';}).join('');
-      return '<optgroup label="'+g[0]+'">'+rows+'</optgroup>';
-    }).join('')+'<option value="__custom">Other…</option>';
+    /* T570: EACH NAME IN ITS OWN FACE, AND YOURS FIRST. The list read as
+       nine words in the ribbon's own font, so choosing a face meant
+       trying them one by one on the slide. Every option is drawn in the
+       face it names (Chrome and Edge draw a list's options in their own
+       font) and the faces you used last head the list, as PowerPoint's
+       Recently Used Fonts do -- a typed family too. */
+    /* esc() leaves quotes alone, and a typed family's CSS is quoted */
+    var attr=function(t){return esc(t).replace(/"/g,'&quot;');};
+    var fontOpt=function(id,label){
+      return '<option value="'+attr(id)+'" style="font-family:'
+        +attr(fontCss(id)||'inherit')+'">'+esc(label)+'</option>';
+    };
+    var fontLabel=function(id){
+      var hit=FONTS.filter(function(f){return f.id===id;})[0];
+      return hit?hit.label:id;
+    };
+    var buildFontList=function(){
+      var rec=recentFonts();
+      fontSelEl.innerHTML=(rec.length?'<optgroup label="Recently used">'
+          +rec.map(function(id){return fontOpt(id,fontLabel(id));}).join('')
+          +'</optgroup>':'')
+        +fontGroups.map(function(g){
+          var rows=FONTS.filter(function(f){return g[1].indexOf(f.id)>=0;})
+            .map(function(f){return fontOpt(f.id,f.label);}).join('');
+          return '<optgroup label="'+g[0]+'">'+rows+'</optgroup>';
+        }).join('')+'<option value="__custom">Other…</option>';
+    };
+    fontListRebuild=buildFontList;
+    buildFontList();
     fontSelEl.addEventListener('change',function(){
       var v=this.value;
       if(v==='__custom'){
@@ -1952,10 +1992,12 @@
             +'you see.'},function(typed){
         typed=(typed||'').trim();
         if(!typed){renderControls();return;}
+        pushRecentFont(typed);
         fmtApply(function(a){a.font=typed;});
         });
         return;
       }
+      pushRecentFont(v);
       fmtApply(function(a){
         if(v==='sans') delete a.font; else a.font=v;
       });

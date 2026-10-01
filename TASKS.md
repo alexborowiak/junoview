@@ -10459,8 +10459,19 @@ choice in the editor (T506, T507).
   Driven at 1440x900: Save, Discard ("Nothing to discard"), Duplicate a
   slide (4), Discard asks with Keep editing / Discard changes, Escape
   keeps 4, Discard changes gives 3, Ctrl+Z gives 4 again.
-- [ ] **T570 — The typeface list shows the typefaces.** Each name drawn in
+- [x] **T570 — The typeface list shows the typefaces.** Each name drawn in
   its own face, and the faces you used recently at the top.
+  *Done 2026-10-01.* The list stays the native select (keyboard-friendly,
+  and Chrome and Edge draw a list's options in their own font), built by
+  buildFontList: every option wears the face it names, and a "Recently
+  used" group of the last four faces chosen (typed families too, kept in
+  this browser) heads the list, as PowerPoint's Recently Used Fonts do.
+  The closed list wears the current face. A typed family that is already
+  among the recent ones is not listed twice, and a typed name's quotes no
+  longer break the option's markup. The help has a Typefaces entry.
+  Driven at 1440x900: options styled (Georgia in Georgia), Georgia then
+  Calibri chosen, the recent group read "calibri, georgia", the text box
+  and the closed list in Georgia after the first pick.
 - [ ] **T571 — Bullets you can style.** A bullet's colour and size, and a
   numbered list that starts at any number.
 - [x] **T572 — AutoFit is on the row.** Shrink to fit / Do not autofit sit

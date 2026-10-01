@@ -2261,8 +2261,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T555 (2026-10-01): header and footer -- {date:long} joins {date}, both
 # doors' tooltips list the fields, the editor says how to keep a date
 # fixed, and the help has an entry.
-EXPECTED_MD5 = "8e652bb0bba370acf0859c2a1d1dc744"
-EXPECTED_BYTES = 4921173
+# T570 (2026-10-01): the typeface list draws each face in itself, a
+# Recently used group heads it, the closed list wears the current face,
+# and the help has an entry.
+EXPECTED_MD5 = "c7bce0f13513b4f571b089d33ae07972"
+EXPECTED_BYTES = 4923585
 
 
 def _render_example() -> str:

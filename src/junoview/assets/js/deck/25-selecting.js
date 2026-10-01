@@ -335,14 +335,20 @@
         var fv=a.font||'sans';
         /* a typed family is not one of the listed options — show it as
            its own entry rather than silently reading back as "Sans" */
-        if(!FONTMAP[fv]){
-          var ex=fontSel.querySelector('option[data-typed]');
-          if(ex) ex.remove();
+        var ex=fontSel.querySelector('option[data-typed]');
+        if(ex) ex.remove();
+        /* (T570: unless it is already there, among the recent faces) */
+        var listed=[].some.call(fontSel.options,function(o){
+          return o.value===fv;});
+        if(!FONTMAP[fv]&&!listed){
           fontSel.insertAdjacentHTML('afterbegin',
-            '<option data-typed="1" value="'+esc(fv)+'">'+esc(fv)
+            '<option data-typed="1" value="'
+            +esc(fv).replace(/"/g,'&quot;')+'">'+esc(fv)
             +'</option>');
         }
         fontSel.value=fv;
+        /* T570: the closed list wears the face it names, too */
+        fontSel.style.fontFamily=fontCss(fv)||'';
       }
     }
     show('#fmt-bold',isText,!!a.b);
