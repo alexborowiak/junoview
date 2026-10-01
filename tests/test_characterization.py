@@ -2293,8 +2293,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # with brightness, contrast, saturation, greyscale and Reset picture as
 # settings over the untouched picture, and brightness, contrast and
 # greyscale in a .pptx both ways.
-EXPECTED_MD5 = "2efc77465005e79b338c03dd34b67ca8"
-EXPECTED_BYTES = 4995287
+# T556 (2026-10-01): handouts and notes pages -- Export PDF asks for full-
+# page slides, handouts of three with lines or six, or notes pages, laid
+# out on A4 from the same print pages.
+EXPECTED_MD5 = "87b17235572511a5c09d51684205894d"
+EXPECTED_BYTES = 5001211
 
 
 def _render_example() -> str:

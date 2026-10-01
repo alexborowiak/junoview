@@ -10417,8 +10417,21 @@ choice in the editor (T506, T507).
   themselves, and the editor's note says to type a date to keep one
   fixed (PowerPoint's Fixed). The Footer's tooltip lists the same fields
   as the Header's, and the help has a Header & footer entry.
-- [ ] **T556 — Handouts and notes pages.** Export PDF can print three or
+- [x] **T556 — Handouts and notes pages.** Export PDF can print three or
   six slides a page with lines, or each slide above its notes.
+  *Done 2026-10-01.* File > Export PDF / print... now asks what goes on
+  each sheet (PowerPoint's Print Layout): Full-page slides, as it always
+  printed; Handouts of three a page with eight lines beside each slide;
+  Handouts of six a page; and Notes pages, each slide above its speaker
+  notes (rendered Markdown, as the presenter view shows them). The last
+  choice is remembered and Enter prints it. They are LAYOUTS OF THE SAME
+  PAGES: buildPrintRoot draws every slide exactly as the PDF does and
+  handoutify scales those pages onto white A4 sheets (an @page of A4
+  portrait), each headed with the deck's name, the date and the page, the
+  slides spread down the sheet -- so a handout cannot show a slide the
+  PDF would not. Driven at 900x1200 on seven slides: three sheets of
+  three (56 lines), two of six, seven notes pages with the two slides'
+  notes and "No notes for this slide." on the rest; screenshots checked.
 - [x] **T557 — A slide sorter.** A full-screen grid of the slides you can
   drag to reorder, select several of and delete, duplicate or section.
   *Done 2026-10-01.* The Overview map (T26) was already the full-screen

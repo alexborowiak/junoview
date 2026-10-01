@@ -2044,9 +2044,83 @@
     go();
     return undefined;
   }
-  function printDeck(){
+  /* ---- T556: HANDOUTS AND NOTES PAGES --------------------------------
+     PowerPoint's Print Layout, three of them beside Full page slides: a
+     handout of three slides a sheet with lines to write beside each, one
+     of six, and notes pages -- each slide above its speaker notes. They
+     are LAYOUTS OF THE SAME PAGES: buildPrintRoot draws every slide
+     exactly as the PDF does, and these lay those pages out, scaled, on A4
+     sheets, so a handout can never show a slide the PDF would not. The
+     sheets are white, with the deck's name and the page along the top. */
+  var PRINT_LAYOUTS=[['slides','Full-page slides'],
+    ['ho3','Handouts \u2014 3 slides a page, with lines for notes'],
+    ['ho6','Handouts \u2014 6 slides a page'],
+    ['notes','Notes pages \u2014 each slide above its speaker notes']];
+  var SHEET_W=794,SHEET_H=1123;     /* A4 at 96 px to the inch */
+  function handoutify(root,kind){
+    var pages=$$('.print-page',root);
+    if(!pages.length) return;
+    var ents=outputSlides();
+    var pw=pages[0].offsetWidth||1280,ph=pages[0].offsetHeight||720;
+    var per=kind==='ho6'?6:kind==='ho3'?3:1;
+    root.classList.add('ho-mode');
+    var st=document.createElement('style');
+    st.textContent='@media print{@page{size:A4 portrait;margin:0;}'
+      +'html,body{background:#fff!important;}}';
+    root.appendChild(st);
+    var sheet=null,n=0,sheets=0,when=new Date().toLocaleDateString();
+    function newSheet(){
+      sheets++;
+      sheet=document.createElement('div');sheet.className='ho-sheet ho-k-'+kind;
+      var hd=document.createElement('div');hd.className='ho-head';
+      var nm=document.createElement('span');nm.textContent=pres.name||'';
+      var pg=document.createElement('span');
+      pg.textContent=when+' \u00b7 page '+sheets;
+      hd.appendChild(nm);hd.appendChild(pg);
+      sheet.appendChild(hd);
+      var body=document.createElement('div');body.className='ho-body';
+      sheet.appendChild(body);
+      root.appendChild(sheet);
+      return body;
+    }
+    var body=null;
+    var slotW=kind==='notes'?600:kind==='ho3'?330:320;
+    var k=slotW/pw;
+    pages.forEach(function(page,i){
+      if(n%per===0) body=newSheet();
+      n++;
+      var row=document.createElement('div');row.className='ho-row';
+      var slot=document.createElement('div');slot.className='ho-slot';
+      slot.style.width=slotW+'px';slot.style.height=Math.round(ph*k)+'px';
+      page.style.transformOrigin='0 0';
+      page.style.transform='scale('+k.toFixed(4)+')';
+      page.style.margin='0';
+      slot.appendChild(page);
+      row.appendChild(slot);
+      if(kind==='ho3'){
+        var lines=document.createElement('div');lines.className='ho-lines';
+        for(var l=0;l<8;l++){
+          var ln=document.createElement('div');ln.className='ho-line';
+          lines.appendChild(ln);
+        }
+        row.appendChild(lines);
+      }
+      if(kind==='notes'){
+        var ent=ents[i],sl=ent&&ent.s;
+        var nt=document.createElement('div');nt.className='ho-notes';
+        var txt=sl&&String(sl.notes||'').trim();
+        if(txt) nt.innerHTML=notesHtml(sl.notes);
+        else {nt.textContent='No notes for this slide.';
+          nt.classList.add('ho-nonotes');}
+        row.appendChild(nt);
+      }
+      body.appendChild(row);
+    });
+  }
+  function printDeck(kind){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var root=buildPrintRoot();
+    if(kind&&kind!=='slides') handoutify(root,kind);
     document.body.classList.add('printing');
     var done=false;
     function cleanup(){
@@ -2073,6 +2147,9 @@
     return root;   /* returned for headless testing */
   }
   window.SemDeckPrint=printDeck;   /* test hook */
+  /* T556: a handout's sheets, built and kept for a test to read */
+  window.SemDeckHandout=function(kind){
+    var root=buildPrintRoot();handoutify(root,kind);return root;};
   /* the pages an export will actually write, flip books already exploded.
      A hook rather than a guess: "one flip book of six figures becomes six
      slides" is the claim the whole feature rests on, and it is only
@@ -2104,7 +2181,20 @@
       openDesign();});
   })();
   menuAction('#mi-review',openReview);
-  menuAction('#mi-pdf',function(){printDeck();});
+  /* T556: which layout, asked each time, the last answer first */
+  menuAction('#mi-pdf',function(){
+    var last='slides';
+    try{last=localStorage.getItem('jv-print-layout')||'slides';}catch(e){}
+    askText({title:'Export PDF / print',
+      what:'What goes on each sheet. In the print dialog, choose "Save as '
+        +'PDF" for a file.',
+      rows:[{k:'lay',label:'Print',type:'select',value:last,
+        options:PRINT_LAYOUTS}],ok:'Print\u2026'},function(v){
+      if(!v) return;
+      try{localStorage.setItem('jv-print-layout',v.lay);}catch(e){}
+      printDeck(v.lay);
+    });
+  });
   /* ---- standalone HTML export (2026-08-04): ONE self-contained .html
      anyone can open without Junoview. The page styles are already inline
      in this document's <head>, and every notebook figure is a data: URI,

@@ -3540,6 +3540,35 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
   .print-page:last-child{page-break-after:auto;break-after:auto;}
 }
 
+/* T556: handouts and notes pages -- A4 sheets of the same pages */
+#print-root.ho-mode{width:794px;}
+.ho-sheet{width:794px;height:1123px;box-sizing:border-box;
+  padding:36px 44px;background:#fff;color:#111;overflow:hidden;
+  font-family:var(--sans,system-ui);display:flex;flex-direction:column;}
+.ho-head{display:flex;justify-content:space-between;font-size:11px;
+  color:#555;border-bottom:1px solid #ccc;padding-bottom:6px;
+  margin-bottom:18px;}
+.ho-body{flex:1;display:flex;flex-direction:column;gap:26px;}
+.ho-k-ho6 .ho-body{display:grid;grid-template-columns:1fr 1fr;
+  grid-auto-rows:min-content;gap:30px 26px;align-content:space-evenly;}
+/* the slides spread down the sheet, as PowerPoint's handouts do */
+.ho-k-ho3 .ho-body{justify-content:space-evenly;}
+.ho-row{display:flex;gap:22px;align-items:flex-start;}
+.ho-k-notes .ho-row{flex-direction:column;
+  align-items:center;}
+.ho-slot{flex:none;overflow:hidden;position:relative;
+  box-shadow:0 0 0 1px #bbb;}
+.ho-slot .print-page{position:absolute;left:0;top:0;}
+.ho-lines{flex:1;display:flex;flex-direction:column;gap:20px;
+  padding-top:8px;}
+.ho-line{border-bottom:1px solid #bbb;height:1px;}
+.ho-sheet .ho-notes{width:600px;font-size:13px;line-height:1.5;color:#111;}
+.ho-sheet .ho-notes.ho-nonotes{color:#666;font-style:italic;}
+@media print{
+  .ho-sheet{page-break-after:always;break-after:page;}
+  .ho-sheet:last-child{page-break-after:auto;break-after:auto;}
+  .ho-sheet .print-page{page-break-after:auto;break-after:auto;}
+}
 /* a frame LOCKED to a git commit */
 .an-lockchip{position:absolute;top:5px;left:5px;z-index:3;
   font-family:var(--mono);font-size:9px;letter-spacing:.04em;
