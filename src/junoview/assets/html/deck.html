@@ -2858,6 +2858,26 @@ items snap to both. Guides, not ink: never printed or exported"
                   >&#9662;</button>
                 <div class="sh-menu" id="fmt-crop-menu" hidden></div>
               </span>
+              <!-- T550: PowerPoint's Corrections and Color, as settings
+                   over the untouched picture -->
+              <span class="sh-drop opt-drop" id="fmt-picwrap" hidden>
+                <button class="dbtn etm" id="fmt-pic" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Brightness, contrast, colour and greyscale &mdash;
+ kept over the untouched picture, so Reset picture puts it back"
+                  ><i data-ic="picfix"></i> Corrections &#9662;</button>
+                <div class="sh-menu opt-panel pic-panel" id="fmt-pic-menu"
+                  hidden data-built="1">
+                  <div class="hd-lab">brightness</div>
+                  <div class="opt-row" id="fmt-pic-b"></div>
+                  <div class="hd-lab">contrast</div>
+                  <div class="opt-row" id="fmt-pic-c"></div>
+                  <div class="hd-lab">colour saturation</div>
+                  <div class="opt-row" id="fmt-pic-s"></div>
+                  <div class="hd-lab">colour</div>
+                  <div class="opt-row" id="fmt-pic-g"></div>
+                </div>
+              </span>
               <!-- T387: A ZOOM CALLOUT (2026-09-12, user: "a zoom on a
                    feature in an image, like a new box gets created with a
                    zoom"). Drag a box on the picture; a second picture

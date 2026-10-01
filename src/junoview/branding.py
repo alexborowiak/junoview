@@ -405,6 +405,10 @@ _ICON_PATHS = {
     # T552: a picture, said out loud -- alt text is what is read instead
     # of it, which neither `caption` (words everyone reads) nor `eye`
     # (hide and show) says
+    # T550: a picture, half of it brightened
+    "picfix": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
+              '<path d="M8 3v10"/><path d="M9.6 5.4h2.6M9.6 8h2.6'
+              'M9.6 10.6h2.6"/>',
     # T557: slides laid out in a grid
     "sorter": '<rect x="1.6" y="2.6" width="5.6" height="4.2" rx=".6"/>'
               '<rect x="8.8" y="2.6" width="5.6" height="4.2" rx=".6"/>'

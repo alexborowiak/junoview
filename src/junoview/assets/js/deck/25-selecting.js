@@ -24,6 +24,7 @@
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
     '#fmt-shapewrap':'rect',
     '#fmt-cropwrap':'image cell',
+    '#fmt-picwrap':'image cell flip', /* T550: picture corrections */
     '#fmt-zoomcall':'image',          /* T387: a window onto the picture */
     '#fmt-linkzoom':'image cell',     /* T387: pictures that zoom together */
     '#fmt-weburl':'web',              /* T388: the page's address */

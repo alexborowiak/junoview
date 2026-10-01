@@ -953,6 +953,57 @@
     if(unColumned) toast('A curve and columns cannot both be on — the box '
       +'is one column now',4000);
   }
+  /* ---- T550: PICTURE CORRECTIONS --------------------------------------
+     PowerPoint's Corrections and Color, cut to presets: brightness and
+     contrast from -40% to +40%, saturation from none to double, and
+     greyscale, kept in a.pfx as SETTINGS ({b, c, s, g}; a default is not
+     stored) over a picture that is never altered -- so Reset picture is
+     deleting one key. Drawn by picPaint as a CSS filter on the picture
+     alone; a .pptx carries them as the blip's own lum, hsl and grayscl. */
+  var PIC_STEPS=[-40,-20,0,20,40],SAT_STEPS=[0,50,100,150,200];
+  function picApply(fn,say){
+    fmtApply(function(a){
+      if(a.k!=='image'&&a.k!=='flip'&&a.k!=='cell') return;
+      var p=a.pfx?deep(a.pfx):{};
+      fn(p);
+      ['b','c'].forEach(function(k){if(!p[k]) delete p[k];});
+      if(p.s==null||p.s===100) delete p.s;
+      if(!p.g) delete p.g;
+      if(Object.keys(p).length) a.pfx=p; else delete a.pfx;
+    });
+    if(say) toast(say);
+  }
+  function buildPicPanel(){
+    var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot); if(!a) return;
+    var p=a.pfx||{};
+    var hosts={b:$('#fmt-pic-b'),c:$('#fmt-pic-c'),s:$('#fmt-pic-s'),
+      g:$('#fmt-pic-g')};
+    Object.keys(hosts).forEach(function(k){
+      if(hosts[k]) hosts[k].innerHTML='';});
+    var sign=function(v){return v>0?'+'+v+'%':v<0?'\u2212'+(-v)+'%':'0';};
+    if(hosts.b) PIC_STEPS.forEach(function(v){
+      optChip(hosts.b,sign(v),(p.b||0)===v,'Brightness '+sign(v),
+        function(){picApply(function(q){q.b=v;});});});
+    if(hosts.c) PIC_STEPS.forEach(function(v){
+      optChip(hosts.c,sign(v),(p.c||0)===v,'Contrast '+sign(v),
+        function(){picApply(function(q){q.c=v;});});});
+    if(hosts.s) SAT_STEPS.forEach(function(v){
+      optChip(hosts.s,v+'%',(p.s==null?100:p.s)===v,
+        v===0?'No colour at all':v===100?'As it was taken'
+          :'Colour at '+v+'%',
+        function(){picApply(function(q){q.s=v;});});});
+    if(hosts.g){
+      optChip(hosts.g,'Greyscale',!!p.g,'Shades of grey',
+        function(){picApply(function(q){q.g=q.g?0:1;});});
+      optChip(hosts.g,'Reset picture',false,
+        'Back to the picture as it came -- the corrections go, the '
+          +'crop and the size stay',
+        function(){picApply(function(q){
+          delete q.b;delete q.c;delete q.s;delete q.g;},
+          'Picture reset \u2014 Ctrl+Z puts the corrections back');})
+        .disabled=!a.pfx;
+    }
+  }
   /* one of several answers, and it shows whether it is the one that
      is on. The window stays open after a pick; the rows are rebuilt
      by showFmt (optPanelsSync) so the mark moves at once. */
@@ -1149,6 +1200,7 @@
      SEQUENCE, so a window added to the markup needs no JS of its own. */
   function optBuilder(id){
     if(id==='fmt-para-menu') return buildParaPanel;
+    if(id==='fmt-pic-menu') return buildPicPanel;   /* T550 */
     /* T220: spacing is its own door on the row now, so it builds
        itself rather than riding on the Paragraph window */
     if(id==='fmt-lh-menu') return buildSpacingRows;

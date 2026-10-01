@@ -623,6 +623,23 @@ window.JunoPptx = (function () {
     return item.alt ? ' descr="' + esc(item.alt) + '"' : '';
   }
 
+  /* T550: a picture's corrections, as the blip's own effects --
+     greyscale and brightness/contrast (lum), which PowerPoint reads back
+     as its own Brightness, Contrast and Grayscale (checked over COM).
+     No saturation: PowerPoint draws the blip's hsl effect as an absolute
+     colour, not an adjustment (no colour came out black), so only "none"
+     goes, as the greyscale it is; the deck counts the rest as not
+     carried. */
+  function pfxXml(p) {
+    if (!p) return '';
+    var out = '';
+    if (p.g || (p.s != null && +p.s === 0)) out += '<a:grayscl/>';
+    if (p.b || p.c)
+      out += '<a:lum' + (p.b ? ' bright="' + Math.round(+p.b * 1000) + '"' : '')
+        + (p.c ? ' contrast="' + Math.round(+p.c * 1000) + '"' : '') + '/>';
+    return out;
+  }
+
   function picShape(item, id, rid, page) {
     var c = cropRect(item), geo = item, src = '';
     if (c) {
@@ -643,6 +660,7 @@ window.JunoPptx = (function () {
       + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
       + (item.op != null && item.op < 1
         ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
+      + pfxXml(item.pfx)
       + '</a:blip>' + src + '<a:stretch><a:fillRect/></a:stretch>'
       + '</p:blipFill>'
       + '<p:spPr>' + xfrm(geo, page)

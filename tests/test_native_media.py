@@ -326,7 +326,9 @@ def test_the_doors(out):
     assert "window.SemApp.deckDropMedia=function(file){" in boot
     assert "    '#fmt-mediawrap':'video'," in out
     assert out.count("'et-image','et-media',") >= 3
-    assert out.count("'fmt-mediawrap','fmt-cropwrap','fmt-lockar'") >= 8
+    # (T550: Corrections sits beside Crop in every layout)
+    assert out.count("'fmt-mediawrap','fmt-cropwrap','fmt-picwrap',"
+                     "'fmt-lockar'") >= 8
     app = assets.app_js()
     drop = app.split("window.addEventListener('drop',function(e){")[1]
     assert "if(APP.deckDropMedia(f)) tookM++;" in drop

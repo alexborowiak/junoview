@@ -260,6 +260,11 @@ ANNOT_COMMON: dict[str, tuple[type | tuple[type, ...], str]] = {
                             "before (1 for none, 'pos' for position "
                             "only), given back when the part is "
                             "unlinked."),
+    "pfx": (dict, "A picture's corrections, kept as settings over the "
+                  "untouched picture: `b` brightness and `c` contrast in "
+                  "percent (-100..100), `s` colour saturation in percent "
+                  "(0..200, 100 is as taken), `g` 1 for greyscale. Absent "
+                  "is the picture as it came."),
     "shadow": (str, "A shadow under it: `soft`, `hard` or `lift` "
                     "(absent is none). A shape, picture, notebook figure, "
                     "table, flip book, clip or text box can cast one; a "

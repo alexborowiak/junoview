@@ -2878,6 +2878,13 @@
            flipH / flipV (a notebook figure or a book's page leaves as a
            picture, and takes them the same way) */
         var fpt=items[pq].t;
+        /* T550: a picture's corrections; a saturation between none and
+           double has no PowerPoint twin the writer can trust, and says so */
+        if(fpt==='image'&&a.pfx){
+          items[pq].pfx=a.pfx;
+          if(a.pfx.s!=null&&a.pfx.s!==0&&a.pfx.s!==100)
+            note.sat=(note.sat|0)+1;
+        }
         /* T548: its shadow, as fractions of the page's height */
         var shp=SHADOWABLE[a.k]&&SHADOWS[a.shadow];
         if(shp&&(fpt==='image'||fpt==='rect'||fpt==='text'))
@@ -3228,6 +3235,9 @@
       +(note.tied===1?'':'s')+' will stay once shown — '
       +'“only” and “until” need an exit this '
       +'writer does not have';
+    if(note.sat) msg+='. '+note.sat+' picture'+(note.sat===1?'':'s')
+      +' keep their colour saturation only here \u2014 the .pptx has the '
+      +'brightness, contrast and greyscale';
     if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
       +(note.cropped===1?'':'s')+' not carried (the .pptx keeps the '
       +'trim, not the outline)';

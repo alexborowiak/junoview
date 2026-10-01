@@ -10314,9 +10314,25 @@ choice in the editor (T506, T507).
   horizontal on a picture (the img's matrix(-1,0,0,1), the box where it
   was), Rotate right 90° (rotate(90deg)), the strip's miniature "rotate(90deg)
   scale(-1, 1)", two undos back to plain.
-- [ ] **T550 — Picture corrections.** Brightness, contrast, saturation and
+- [x] **T550 — Picture corrections.** Brightness, contrast, saturation and
   greyscale presets with Reset picture, kept as settings over the
   untouched original, exported to .pptx.
+  *Done 2026-10-01.* Corrections ▾ in the Object tab's Picture group,
+  for a picture, a notebook figure or a flip book (and in every layout
+  beside Crop), opens a window of presets: brightness and contrast -40%
+  to +40%, colour saturation 0-200%, Greyscale, and Reset picture. They
+  are a.pfx, settings with defaults never stored, over a picture that is
+  never altered; picPaint draws them as a CSS filter on the picture
+  alone, and a shadow on the same picture keeps them. The .pptx writes
+  the blip's lum and grayscl, which PowerPoint reads back as its own --
+  checked over COM: Brightness 0.7 for +40%, Contrast 0.3 for -40%,
+  ColorType grayscale, and the rendered slides matched. It does NOT write
+  saturation: PowerPoint drew the blip's hsl effect as an absolute colour
+  (0% came out black) -- so 0% goes as the greyscale it is, and any other
+  level is counted in the export's message as staying here. The reader
+  brings brightness, contrast and greyscale back. Driven at 1440x900: +20%
+  and 0% gave "brightness(1.2) saturate(0)", the chips lit, Reset picture
+  cleared it.
 - [ ] **T551 — Tables grow up.** Merge and split cells, cell fill colour,
   and a small table style gallery (header, banded rows, first column).
 - [x] **T552 — Alt text has a door on the Object tab.**

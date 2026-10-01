@@ -157,6 +157,7 @@ Whatever its kind, an item may also carry these.
 | `md` | int | 1 when this text box's words are Markdown source and what is drawn is that source rendered — headings, bullets, numbers, quotes, code, emphasis and links. Editing goes through the Markdown editor rather than the caret, because the face of the box is the output. |
 | `maths` | int | 1 when this text box was built by the equation editor: its words are LaTeX between `$` or `$$` delimiters, typeset after every edit. |
 | `lkLock` | int or str | Set on an object of a part's slide: the part locked it, and this is the lock it had before (`1` for none, `"pos"` for position only), given back when the part is unlinked. |
+| `pfx` | dict | A picture's corrections, kept as settings over the untouched picture: `b` brightness and `c` contrast in percent (-100..100), `s` colour saturation in percent (0..200, 100 is as taken), `g` 1 for greyscale. Absent is the picture as it came. |
 | `shadow` | str | A shadow under it: `soft`, `hard` or `lift` (absent is none). A shape, picture, notebook figure, table, flip book, clip or text box can cast one; a .pptx carries it as PowerPoint's outer shadow, both ways. |
 | `flipH` | int | 1 when what this shows is mirrored left to right — a picture, a shape, a notebook figure's picture, a flip book's pages, a clip. The box and a text box's words are never mirrored. A .pptx carries it as PowerPoint's own flipH, both ways. |
 | `flipV` | int | 1 when what this shows is mirrored top to bottom, as flipH is left to right. |

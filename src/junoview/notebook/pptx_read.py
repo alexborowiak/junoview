@@ -1370,6 +1370,20 @@ class _SlideReader:
         am = blip.find("a:alphaModFix", NS)
         if am is not None:
             item["op"] = round(_int(am.get("amt"), 100000) / 100000, 3)
+        # T550: brightness, contrast, saturation and greyscale
+        pfx: dict[str, int] = {}
+        lum = blip.find("a:lum", NS)
+        if lum is not None:
+            b = round(_int(lum.get("bright"), 0) / 1000)
+            c = round(_int(lum.get("contrast"), 0) / 1000)
+            if b:
+                pfx["b"] = b
+            if c:
+                pfx["c"] = c
+        if blip.find("a:grayscl", NS) is not None:
+            pfx["g"] = 1
+        if pfx:
+            item["pfx"] = pfx
         self._push(el, item)
 
     def _clip(self, el: ET.Element, audio: bool) -> dict | None:

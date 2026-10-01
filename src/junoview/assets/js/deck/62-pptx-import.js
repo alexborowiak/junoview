@@ -238,6 +238,8 @@
     }
     if(!a) return null;
     if(it.rot&&a.k!=='arrow') a.rot=it.rot;
+    /* T550: a picture's corrections */
+    if(it.pfx&&a.k==='image') a.pfx=it.pfx;
     /* T548: its shadow, for what can cast one */
     if(it.shadow&&SHADOWS[it.shadow]&&SHADOWABLE[a.k]) a.shadow=it.shadow;
     /* T549: mirrored, for what can be (a text box never is) */

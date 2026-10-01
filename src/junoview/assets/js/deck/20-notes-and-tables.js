@@ -2591,6 +2591,27 @@
   var SHADOWS={soft:{x:0,y:3,b:10,a:0.45},hard:{x:4,y:4,b:0,a:0.55},
     lift:{x:0,y:9,b:20,a:0.42}};
   var SHADOWABLE={rect:1,image:1,cell:1,table:1,text:1,flip:1,video:1};
+  /* T550: a picture's corrections as a CSS filter, '' for none */
+  function pfxCss(a){
+    var p=a&&a.pfx; if(!p) return '';
+    var f=[];
+    if(p.b) f.push('brightness('+(1+p.b/100).toFixed(2)+')');
+    if(p.c) f.push('contrast('+(1+p.c/100).toFixed(2)+')');
+    if(p.s!=null&&p.s!==100) f.push('saturate('+(p.s/100).toFixed(2)+')');
+    if(p.g) f.push('grayscale(1)');
+    return f.join(' ');
+  }
+  function picPaint(layer,s){
+    if(!layer||!s) return;
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||(a.k!=='image'&&a.k!=='flip'&&a.k!=='cell')) return;
+      var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      var f=pfxCss(a);
+      [].forEach.call(el.querySelectorAll('img'),function(im){
+        im.style.filter=f;});
+    });
+  }
   function shadowCss(p,k,box){
     var f=function(v){return (v*k).toFixed(1)+'px';};
     var c='rgba(0,0,0,'+p.a+')';
@@ -2615,7 +2636,9 @@
         else el.style.boxShadow=shadowCss(p,k,true);
       } else if(a.k==='image'){
         var pic=a.crop?null:(kid('.an-imgwin')||kid('.an-imgel'));
-        (pic||el).style.filter=shadowCss(p,k,false);
+        /* T550: a picture's own corrections ride with its shadow */
+        var pf=(pic&&pic.classList.contains('an-imgel'))?pfxCss(a):'';
+        (pic||el).style.filter=(pf?pf+' ':'')+shadowCss(p,k,false);
       } else if(a.k==='text'&&!(a.bg!==0&&a.bgc)){
         [].forEach.call(el.querySelectorAll('.an-tx'),function(t){
           t.style.filter=shadowCss(p,k,false);});
@@ -3939,6 +3962,7 @@
        (2026-08-25, found in the browser). */
     fitTexts(layer,s,editing,kept);
     altPaint(layer,s);    /* T552: charts, clips and notebook figures */
+    picPaint(layer,s);    /* T550: picture corrections */
     shadowPaint(layer,s); /* T548 */
     /* ...and AFTER the fit pass, which can change a box's height */
     if(_anchorFixWanted) anchorFix(layer,s);

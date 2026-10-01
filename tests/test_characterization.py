@@ -2289,8 +2289,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T565 (2026-10-01): the accessibility check -- a sixth Review centre row
 # and pane over the whole deck for alt text, the heading read first and
 # contrast, each finding with its one-click fix.
-EXPECTED_MD5 = "35e71880f2322a0e71020ffbc4d7ed0b"
-EXPECTED_BYTES = 4988100
+# T550 (2026-10-01): picture corrections -- Corrections on the Object tab
+# with brightness, contrast, saturation, greyscale and Reset picture as
+# settings over the untouched picture, and brightness, contrast and
+# greyscale in a .pptx both ways.
+EXPECTED_MD5 = "2efc77465005e79b338c03dd34b67ca8"
+EXPECTED_BYTES = 4995287
 
 
 def _render_example() -> str:

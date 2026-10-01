@@ -5211,6 +5211,8 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .an-item.an-flh.an-flip img,.an-item.an-flv.an-flip img,
 .an-item.an-flh video,.an-item.an-flv video{
   transform:scale(var(--an-sx),var(--an-sy));}
+/* T550: the Corrections window's rows are short; keep them on a line */
+.pic-panel .opt-row{flex-wrap:nowrap;}
 /* T565: an accessibility finding, and its fix beside it */
 .a11y-row{display:flex;flex-direction:column;align-items:stretch;gap:6px;}
 .a11y-go{all:unset;cursor:pointer;display:flex;flex-direction:column;
