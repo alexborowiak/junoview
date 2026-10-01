@@ -88,9 +88,10 @@ def test_the_labels_menu_is_in_the_ribbon_with_the_filters_it_gates():
     page = assets.load("html/page.html")
     assert '<span class="fgrp" id="marks-grp" hidden>' in page
     assert '<span class="fgrp-row" id="marks-row"></span>' in page
-    # inside the Filters section, not a section of its own
-    assert (page.index('id="marks-grp"')
-            < page.index('<span class="abgrp-lab">Filters</span>'))
+    # inside the filters' own group (named Show since T605), not a
+    # section of its own
+    assert (page.index('id="ab-filters"') < page.index('id="marks-grp"')
+            < page.index('<span class="abgrp-lab">Show</span>'))
     assert "  function renderMarkGate(){" in app
     assert "navonly" not in app
     # and it follows the notebook you switch to

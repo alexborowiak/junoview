@@ -219,8 +219,10 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
 /* ---- TREE VIEW: its controls replace the document filters inside the
    panel. They no longer need to reserve an invisible ribbon-sized slot. */
 body.tree-mode #ab-tree{min-width:0;}
-/* the Tree section takes the Filters slot while the tree is on */
-body.tree-mode #ab-tree{display:flex!important;}
+/* the Tree section takes the Filters slot while the tree is on -- on
+   the Filters tab, which says Tree then (T605) */
+body.tree-mode .ab-band:not([data-tab="view"]) #ab-tree{
+  display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
 body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
 body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
@@ -342,18 +344,95 @@ body.tabs-row-on .nb-filebar{border-bottom-width:0;
 .top-tabstrip .top-pres-main{display:flex;align-items:center;gap:8px;
   flex:1;min-width:0;border:0;padding:0;background:none;color:inherit;
   font:inherit;text-align:left;cursor:pointer;}
-/* The navigation and view commands stay on one short row. The controls
-   they operate are a real second header row by default, not a menu that
-   covers the notebook; Filters can collapse that row when space matters. */
-.appbar{position:relative;min-height:38px;padding:5px 8px;
-  display:grid;grid-template-columns:max-content max-content minmax(0,1fr) max-content;
-  grid-template-rows:auto;align-items:center;column-gap:3px;row-gap:5px;
-  overflow-x:auto;overflow-y:visible;}
-.appbar>.abgrp .abgrp-lab{display:none;}
-.appbar .ab-nav{grid-column:1;grid-row:1;}
-.appbar #filters-toggle{grid-column:2;grid-row:1;}
-.appbar-spring{grid-column:3;grid-row:1;}
-.appbar .ab-nav .abgrp-row{align-items:center;gap:4px;}
+/* ---- T605: THE READER'S RIBBON IS TABS -------------------------------
+   The editor's shape: File, the tabs and the verbs on one strip; under
+   it ONE row of the chosen tab's groups, each named underneath. It was
+   a row of commands over a panel of every control at once, which
+   wrapped to three rows on a laptop (2026-10-01, user: "too big and eats
+   up too much of the vertical and things don't line up well"). The band
+   never wraps: fitRibbon tightens it (rbc1), then it scrolls sideways.
+   A group belongs to one tab (data-abtab) and is display:none on the
+   other, so it costs no width in the fit. */
+.appbar{position:relative;display:flex;flex-direction:column;
+  align-items:stretch;gap:0;min-height:0;padding:0;overflow:visible;}
+.ab-tabs{display:flex;align-items:center;gap:4px;height:34px;
+  box-sizing:border-box;padding:0 8px;min-width:0;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;
+  border-bottom:1px solid var(--chrome-line,#ffffff12);}
+.ab-tablist{display:flex;align-items:stretch;align-self:stretch;gap:2px;
+  margin-left:6px;flex:none;}
+.ab-tab{font-family:var(--sans);font-size:13px;letter-spacing:0;
+  font-weight:500;background:none;border:none;
+  border-bottom:2px solid transparent;color:var(--chrome-ink-2);
+  padding:0 13px;cursor:pointer;white-space:nowrap;display:inline-flex;
+  align-items:center;gap:6px;transition:color .12s,border-color .12s;}
+.ab-tab:hover{color:var(--chrome-ink);}
+.ab-tab[aria-selected="true"]{color:var(--chrome-ink);
+  border-bottom-color:var(--cyan);}
+/* in the tree the Filters tab holds the tree's own controls, and says so */
+.ab-tab .abt-tree{display:none;}
+body.tree-mode .ab-tab .abt-doc{display:none;}
+body.tree-mode .ab-tab .abt-tree{display:inline;}
+.ab-tabs .appbar-spring{flex:1;min-width:8px;}
+.ab-tabs>.abgrp .abgrp-lab{display:none;}
+.ab-tabs #ab-view .abgrp-row,.ab-tabs #ab-view .btn-grp,
+.ab-tabs #ab-view .vw-stack{flex-direction:row;align-items:center;gap:4px;}
+.ab-tabs #ab-view .vw-stack{min-width:0;}
+.ab-tabs #ab-view .vw-stack .toggle{width:auto;}
+.appbar .toggle.ab-fold{width:var(--ab-btn-h);padding:0;
+  justify-content:center;font-size:12px;}
+/* THE BAND */
+.ab-band{display:flex;flex-wrap:nowrap;align-items:stretch;gap:0;
+  box-sizing:border-box;padding:4px 8px 3px;min-width:0;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;
+  border-bottom:1px solid var(--chrome-line,#ffffff12);}
+.ab-band[hidden]{display:none!important;}
+.ab-band[data-tab="filters"] [data-abtab="view"],
+.ab-band[data-tab="view"] [data-abtab="filters"]{display:none!important;}
+.ab-band>.abgrp{flex:none;gap:3px;padding:0 10px;
+  border-right:1px solid var(--chrome-line,#ffffff12);}
+.ab-band>.abgrp:first-child{padding-left:2px;}
+.ab-band .abgrp-row,.ab-band .abgrp-row.abgrp-stack{flex-direction:row;
+  align-items:center;flex-wrap:nowrap;gap:4px;flex:none;}
+.ab-band .abgrp-row.abgrp-stack{gap:12px;}
+/* the group's NAME under it, as the editor's ribbon names its groups */
+.ab-band .abgrp-lab{display:block;order:0;font-family:var(--sans);
+  font-size:10.5px;letter-spacing:0;text-transform:none;opacity:1;
+  line-height:12px;color:var(--chrome-ink-2);text-align:center;}
+.ab-band .fgrp{flex-direction:row;align-items:center;gap:0;
+  justify-content:flex-start;}
+.ab-band .fgrp .toggle,.ab-band #pt-filter-btn,.ab-band #ck-filter-btn,
+.ab-band #ot-filter-btn{width:auto;}
+/* a filter and its chooser are ONE control, joined down the middle:
+   "Plots On | Which plots" -- so the row reads as four filters, not
+   seven buttons, and nothing has to line up with anything under it */
+.ab-band .fgrp>.toggle.tv:not(:last-child){border-top-right-radius:0;
+  border-bottom-right-radius:0;}
+.ab-band .fgrp>.toggle.tv+.toggle.sub{border-top-left-radius:0;
+  border-bottom-left-radius:0;margin-left:-1px;}
+.ab-band .fgrp+.fgrp{margin-left:2px;}
+.ab-band #sec-scope-grp,.ab-band #pages-grp,.ab-band #tree-fold-grp,
+.ab-band #tree-width-grp{gap:4px;}
+.ab-band .vw-stack{flex-direction:row;min-width:0;gap:4px;}
+.ab-band .vw-stack .toggle{width:auto;}
+/* Outline wore the sans face beside a row of mono words */
+.ab-band .menubtn{font-family:var(--mono);letter-spacing:.04em;}
+.ab-band .fgrp-h{gap:6px;}
+/* a folded group: one door, its row in a menu under it (fitRibbon) */
+.ab-band .ab-foldwrap{display:flex;align-items:center;}
+.ab-foldmenu{position:fixed;z-index:190;display:flex;padding:6px;
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:8px;box-shadow:0 12px 40px var(--shadow);}
+.ab-foldmenu[hidden]{display:none!important;}
+/* THE FITTER MEASURES WHAT IS THERE: a toggle's padding must not ease
+   between rungs, or fitRibbon reads the old padding mid-transition and
+   folds a group that would have fitted (the deck's T-era lesson, "a
+   fitter measures the old padding") */
+.appbar .toggle{transition:color .15s,background-color .15s,
+  border-color .15s,opacity .15s;}
+.ab-band .fgrp-h .fgrp-cap{min-width:0;height:auto;line-height:1;}
+body.light .ab-tabs,body.light .ab-band{border-bottom-color:var(--chrome-line);}
+body.light .ab-band>.abgrp{border-right-color:var(--chrome-line);}
 .appbar .menubtn{display:inline-flex;align-items:center;justify-content:center;
   height:var(--ab-btn-h);box-sizing:border-box;margin:0;padding:0 7px;
   gap:7px;white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);
@@ -370,26 +449,7 @@ body.tabs-row-on .nb-filebar{border-bottom-width:0;
   min-width:14px;height:14px;padding:0 3px;border-radius:8px;
   background:color-mix(in srgb,var(--accent) 24%,transparent);
   color:var(--cyan);font:9px var(--mono);}
-.filter-panel{position:static;z-index:auto;grid-column:1/-1;grid-row:2;
-  display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;width:100%;
-  min-width:0;max-height:none;overflow:visible;box-sizing:border-box;
-  padding:5px 0 3px;border:0;border-top:1px solid var(--chrome-line);
-  border-radius:0;background:transparent;box-shadow:none;}
 .filter-panel[hidden]{display:none!important;}
-.filter-panel .abgrp{flex:none;}
-.filter-panel .abgrp-lab{display:block;}
-.filter-panel #ab-filters{flex:1 1 390px;min-width:0;}
-.filter-panel #ab-filters .abgrp-row{flex-wrap:wrap;}
-.filter-panel #ab-filters .fgrp{min-width:106px;}
-.filter-panel #ab-scope{min-width:122px;}
-.filter-panel #ab-pages{min-width:92px;}
-.filter-panel #ab-size .abgrp-row{flex-direction:row;gap:12px;}
-.filter-panel #ab-size .fgrp{justify-content:flex-start;}
-.appbar>#ab-view{grid-column:4;grid-row:1;margin-left:0;padding-left:0;}
-.appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp,
-.appbar #ab-view .vw-stack{align-items:center;flex-direction:row;}
-.appbar #ab-view .vw-stack{min-width:0;gap:4px;}
-.appbar #ab-view .vw-stack .toggle{width:auto;}
 body.light .appbar .menubtn{border-color:var(--line);color:var(--ink);}
 body.light .appbar .menubtn:hover{color:var(--ink);}
 body.light .filter-panel{background:transparent;color:var(--ink);box-shadow:none;}

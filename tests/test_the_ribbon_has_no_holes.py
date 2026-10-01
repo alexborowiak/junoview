@@ -156,12 +156,11 @@ def test_the_reader_bar_uses_a_filter_door_not_an_extra_ribbon_row():
     them, while the reader bar retains the labelled view controls.
     """
     css = assets.load("css/app.css")
-    assert (
-        ".filter-panel{position:static;z-index:auto;grid-column:1/-1;"
-        "grid-row:2;" in css
-    )
-    assert ".filter-panel #ab-filters{flex:1 1 390px;min-width:0;}" in css
-    assert ".appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp," in css
+    # T605: the panel is the tab's ONE band; the filter and its chooser
+    # are joined, so the row reads as four filters, with no holes
+    assert ".ab-band .fgrp>.toggle.tv+.toggle.sub{" in css
+    assert "flex-wrap:wrap" not in css.split(".ab-band{")[1].split("}")[0]
+    assert ".ab-tabs #ab-view .abgrp-row,.ab-tabs #ab-view .btn-grp," in css
     assert ".nb-quickbar" not in css
     assert "overflow-x:auto;scrollbar-width:thin;" in css
 

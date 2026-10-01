@@ -2055,20 +2055,67 @@
   }
   renderTypeButtons();
 
-  /* The full controls are visible by default. Filters only collapses this
-     header row when a shorter reader bar is useful; it is not a menu. */
+  /* ---- T605: THE RIBBON'S TABS AND ITS FOLD --------------------------
+     The editor's rules, so one hand serves both: a click on a tab shows
+     its groups (and brings a folded ribbon back); a double-click on a tab,
+     the chevron at the end of the strip, or Ctrl+F1 folds it away. The
+     tab and the fold are remembered. Escape no longer folds it -- Escape
+     closes menus, and a ribbon that vanished with them was a surprise. */
   (function(){
     var wrap=$('#filter-wrap'),btn=$('#filters-toggle'),panel=$('#filters-panel');
     if(!wrap||!btn||!panel) return;
+    var tabs=$$('.ab-tab');
+    var TAB_KEY='jv-reader-tab',FOLD_KEY='jv-reader-fold';
+    function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+    function lsPut(k,v){try{localStorage.setItem(k,v);}catch(e){}}
     function set(open){
       panel.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false');
+      btn.innerHTML=open?'&#9652;':'&#9662;';
+      btn.title=open
+        ?'Hide the ribbon and give the notebook the room (Ctrl+F1). '
+          +'Click a tab, or this, to bring it back'
+        :'Show the ribbon again (Ctrl+F1)';
       if(!open) closeFilterMenus();
+      lsPut(FOLD_KEY,open?'0':'1');
       if(APP.measureChrome) APP.measureChrome();
     }
+    function show(t){
+      panel.dataset.tab=t;
+      tabs.forEach(function(b){
+        b.setAttribute('aria-selected',b.dataset.abtab===t?'true':'false');});
+      closeFilterMenus();
+      lsPut(TAB_KEY,t);
+      if(APP.measureChrome) APP.measureChrome();
+    }
+    APP.ribbonTab=show;
+    tabs.forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        show(b.dataset.abtab);
+        if(panel.hidden) set(true);
+      });
+      b.addEventListener('dblclick',function(e){
+        e.preventDefault();set(panel.hidden);});
+    });
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(panel.hidden);});
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&!panel.hidden){set(false);btn.focus();}});
+      if(e.key!=='F1'||!(e.ctrlKey||e.metaKey)) return;
+      var b=document.body.classList;
+      if(b.contains('deck-open')||b.contains('doc-presenting')) return;
+      e.preventDefault();set(panel.hidden);
+    });
+    show(lsGet(TAB_KEY)==='view'?'view':'filters');
+    if(lsGet(FOLD_KEY)==='1') set(false);
+  })();
+  /* the Save as view door presses the one real New custom view button */
+  (function(){
+    var b=$('#ab-newview');
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var real=$('#'+b.dataset.for);
+      if(real) real.click();
+    });
   })();
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */
@@ -2688,6 +2735,8 @@
                 '#sec-scope-menu'];
   function pbTakeTools(){
     var host=$('#pb-tools'); if(!host) return;
+    /* the present bar wraps; it carries the groups whole, never a door */
+    if(APP.bandUnfoldAll) APP.bandUnfoldAll();
     pbMoved=[];
     PB_TOOLS.forEach(function(sel){
       var el=$(sel); if(!el) return;
@@ -3487,7 +3536,7 @@
        +'Off — the words on the buttons. Code folds the source in '
        +'EVERY cell at once.'},
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
-     text:'Which plots, Which code and Which output, under their '
+     text:'Which plots, Which code and Which output, joined to their '
        +'filters, pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
     {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
@@ -3797,12 +3846,80 @@
      back; past rbc1 the bar scrolls sideways (overflow-x:auto) — a thin
      scrollbar, never a second row, never missing words. rbc2/rbc3 are
      also removed here in case an older session left them stamped. */
+  /* ---- T605: THE BAND FOLDS; IT NEVER WRAPS AND NEVER LOSES A WORD.
+     Past rbc1's spacing, a group that does not fit becomes ONE door
+     wearing its name -- the editor's rung (rbnFoldGroup): "Apply to ▾"
+     opens the group's own row under it, every control the same node
+     with the same handler. Least-used first; the four filters
+     themselves never fold. Every fit unfolds everything and folds again,
+     so a wider window opens them back out. */
+  var BAND_FOLD=['#ab-saveview','#ab-scope','#ab-tree','#ab-size',
+    '#ab-pages','#ab-look','#ab-nav'];
+  function bandMenus(){return $$('.ab-foldmenu');}
+  function closeBandFolds(){
+    bandMenus().forEach(function(m){
+      if(m.hidden) return;
+      m.hidden=true;
+      var b=m.parentNode&&m.parentNode.querySelector('.ab-foldbtn');
+      if(b) b.setAttribute('aria-expanded','false');
+    });
+  }
+  function bandFold(g){
+    if(!g||g.classList.contains('ab-folded')) return;
+    var row=g.querySelector('.abgrp-row'); if(!row) return;
+    var lab=g.querySelector('.abgrp-lab');
+    var name=lab?lab.textContent.trim():'More';
+    var wrap=document.createElement('span');wrap.className='ab-foldwrap';
+    var btn=document.createElement('button');
+    btn.type='button';btn.className='toggle ab-foldbtn';
+    btn.setAttribute('aria-haspopup','true');
+    btn.setAttribute('aria-expanded','false');
+    var t=document.createElement('span');t.className='btxt';
+    t.textContent=name+'\u00a0\u25be';btn.appendChild(t);
+    btn.title=name+' \u2014 folded because the window is too narrow to '
+      +'show the whole row. Widen the window and it opens out again';
+    var menu=document.createElement('div');
+    menu.className='ab-foldmenu';menu.hidden=true;
+    menu.appendChild(row);
+    wrap.appendChild(btn);wrap.appendChild(menu);
+    g.insertBefore(wrap,lab||null);
+    g.classList.add('ab-folded');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      closeBandFolds();closeFilterMenus();
+      if(!open) return;
+      menu.hidden=false;btn.setAttribute('aria-expanded','true');
+      var r=btn.getBoundingClientRect();
+      menu.style.top=Math.round(r.bottom+4)+'px';
+      menu.style.left=Math.round(Math.max(6,Math.min(r.left,
+        window.innerWidth-menu.offsetWidth-6)))+'px';
+    });
+  }
+  function bandUnfold(g){
+    var wrap=g.querySelector('.ab-foldwrap'); if(!wrap) return;
+    var row=wrap.querySelector('.abgrp-row');
+    if(row) g.insertBefore(row,wrap);
+    wrap.parentNode.removeChild(wrap);
+    g.classList.remove('ab-folded');
+  }
+  function bandUnfoldAll(){$$('.abgrp.ab-folded').forEach(bandUnfold);}
+  APP.bandUnfoldAll=bandUnfoldAll;
+  /* a click anywhere else closes an open door -- except inside the menus
+     its own controls open (Apply to's section list, a Which menu) */
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    if(t&&t.closest&&t.closest('.ab-foldmenu,.ckfilter-menu,#sec-scope-menu'))
+      return;
+    closeBandFolds();
+  });
   function fitRibbon(){
     var bar=$('.appbar');
     /* a HIDDEN bar (welcome screen, present mode) measures 0 wide — do
        not escalate against that, it is not a real fit */
     if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
+    bandUnfoldAll();
     cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
     /* the custom-view styling bar rides the same pass: it sits in
        #apptop under this bar and used to WRAP into a second band of
@@ -3814,7 +3931,22 @@
       return !!(el&&!el.hidden&&el.clientWidth
         &&el.scrollWidth>el.clientWidth+1);
     }
-    if(over(bar)||over(sb)) cl.add('rbc1');
+    /* T605: the tab strip and the band each scroll on their own */
+    var band=$('#filters-panel');
+    if(over($('#ab-tabs'))||over(band)||over(bar)||over(sb))
+      cl.add('rbc1');
+    /* ...and the band folds its least-used groups, one at a time, until
+       it fits; past the last of them it scrolls, as before */
+    BAND_FOLD.forEach(function(sel){
+      if(!over(band)) return;
+      var g=$(sel);
+      if(!g||!band.contains(g)||!g.getClientRects().length) return;
+      /* a door that opens onto one button saves nothing and hides it */
+      var live=$$('button',g).filter(function(x){
+        return x.getClientRects().length;});
+      if(live.length<2) return;
+      bandFold(g);
+    });
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
      under their filters), so the page offset has to follow its REAL

@@ -2302,8 +2302,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T604: a peek leaves the filters applied -- the blanket display:revert
 # reveal rule is gone from core.css, cards the filters removed are .filt-
 # gone, and the Peek count and title say what you hid.
-EXPECTED_MD5 = "4bd5e6ab76ad6f8812f028094271c80d"
-EXPECTED_BYTES = 5020045
+# T605: the reader's ribbon as tabs -- page.html's appbar is a tab strip
+# (File, Filters, View, the verbs, the fold) over one band of the chosen
+# tab's groups; app.css drops the grid header for .ab-tabs and .ab-band;
+# app.js gains the tab and fold handling and the band's fold ladder;
+# help.html describes the ribbon.
+EXPECTED_MD5 = "3f7ac86a9dde112565ca27ea614d64a5"
+EXPECTED_BYTES = 5032181
 
 
 def _render_example() -> str:

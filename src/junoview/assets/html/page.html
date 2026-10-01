@@ -74,11 +74,20 @@
         ><i data-ic="find"></i> Find</button>
     </span>
   </div>
+  <!-- T605: THE READER'S RIBBON IS TABS, the editor's shape (2026-10-01,
+       user: "the ribbon in the notebooks thing is a bit cursed. It is
+       still too big and eats up too much of the vertical and things don't
+       line up well. Maybe there needs to be different tabs like
+       presentation: a filter tab etc."). It was one row of commands over
+       a panel of every control at once, which wrapped to three rows on a
+       laptop with Markdown floating between them. Now: File, the tabs and
+       the verbs on one strip; under it ONE row of the chosen tab's
+       controls, each group named underneath, never wrapping (fitRibbon
+       tightens it, then it scrolls sideways). The ribbon folds away with
+       Hide ribbon or by clicking the tab you are on; a tab brings it back.
+       Every control keeps its id, its handler and its word. -->
   <div class="appbar">
-    <span class="abgrp ab-nav" id="ab-nav"><span class="abgrp-row">
-      <!-- T602: FILE LEADS THIS ROW, as File leads the editor's ribbon
-           tabs and PowerPoint's: making something, opening something,
-           and the app's own settings. -->
+    <div class="ab-tabs" id="ab-tabs">
       <span class="dc-menuwrap" id="app-filewrap">
         <button class="toggle" id="app-file" type="button" aria-haspopup="true"
           aria-expanded="false" aria-controls="app-file-menu"
@@ -125,23 +134,56 @@
  tabs go away.">As a list down the side</button>
         </div>
       </span>
-      <button class="menubtn" id="menubtn" aria-label="Outline"
-        title="Show or hide the section sidebar (table of contents)">
-        <span></span> Outline</button>
-      <button class="menubtn vars-menubtn" id="vars-btn"
-        aria-label="Variables" aria-pressed="false"
-        title="Every variable in this notebook — filter by type, and click
- a name or use-site to jump to it">x&#178; Variables</button>
-    </span></span>
+      <span class="ab-tablist" role="tablist" aria-label="Ribbon tabs">
+        <button class="ab-tab" type="button" role="tab" id="ab-tab-filters"
+          data-abtab="filters" aria-selected="true" aria-controls="filters-panel"
+          title="What you see: plots, markdown, code and output, which
+ sections the filters reach, and custom views"
+          ><span class="abt-doc">Filters</span><span class="abt-tree">Tree</span
+          ><span class="filter-count" id="filters-count" hidden></span></button>
+        <button class="ab-tab" type="button" role="tab" id="ab-tab-view"
+          data-abtab="view" aria-selected="false" aria-controls="filters-panel"
+          title="How you see it: the outline and variables, raw or tree,
+ pages, and the size of figures and text">View</button>
+      </span>
+      <span class="appbar-spring" aria-hidden="true"></span>
+      <!-- View commands belong at the right of the notebook ribbon: how you
+           present what you are looking at, where the editor keeps Present -->
+      <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
+    <!-- These are the same two viewer-level actions as the editor's
+         Full screen / Present pair. The document has no alternate start
+         point, so Present stays a direct button rather than a fake split
+         menu. -->
+    <span class="vw-stack">
+    <button class="toggle" id="doc-full" aria-pressed="false"
+      title="Fill the display with Junoview (Esc to leave)"
+      ><i data-ic="expand"></i><span class="btxt">Full screen</span></button>
+    <button class="toggle primary" id="doc-present"
+      title="Present this document full screen (Narrative or Tree). Esc to
+ exit."><i data-ic="play"></i><span class="btxt">Present</span></button>
+    </span>
+    <!-- Creating a presentation is one deliberate action.  The dialog
+         shows every choice at once, rather than scattering “from this
+         section” shortcuts across the rail and section headers. -->
+    <span class="vw-stack">
+    <button class="toggle" id="doc-autoslides"
+      aria-haspopup="dialog" aria-expanded="false"
+      aria-controls="auto-slides-dialog"
+      title="Build a presentation from this notebook &mdash; section
+ headings become slide titles, with their markdown and figures beneath"
+      ><i data-ic="newdeck"></i><span class="btxt">Create slides</span></button>
+    </span>
+    </span></span><span class="abgrp-lab">View</span></span>
+      <button class="toggle ab-fold" id="filters-toggle" type="button"
+        aria-expanded="true" aria-controls="filters-panel"
+        aria-label="Hide or show the ribbon"
+        title="Hide the ribbon and give the notebook the room (Ctrl+F1).
+ Click a tab, or this, to bring it back">&#9652;</button>
+    </div>
     <span class="filter-wrap" id="filter-wrap">
-      <button class="toggle" id="filters-toggle" type="button"
-        aria-expanded="true"
-        aria-controls="filters-panel"
-        title="Collapse or show the notebook controls"><i data-ic="types"></i>
-        Filters <span class="filter-count" id="filters-count" hidden></span>
-        &#9662;</button>
-      <span class="filter-panel" id="filters-panel">
-    <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
+      <span class="filter-panel ab-band" id="filters-panel" data-tab="filters"
+        role="tabpanel">
+    <span class="abgrp" id="ab-filters" data-abtab="filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
  On -> Fold -> Off"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
@@ -179,8 +221,8 @@
          labels does not make this already-dense ribbon wider. -->
     <span class="fgrp" id="marks-grp" hidden>
       <span class="fgrp-row" id="marks-row"></span>
-    </span></span><span class="abgrp-lab">Filters</span></span>
-    <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
+    </span></span><span class="abgrp-lab">Show</span></span>
+    <span class="abgrp" id="ab-scope" data-abtab="filters"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Which sections the filters act on"
         ><i data-ic="scope"></i><span class="btxt">All sections</span></button>
@@ -196,27 +238,19 @@
         ><i data-ic="inherit"></i><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
-    <!-- T390: PAGES. One top-level section at a time, with a way to the
-         page before and after (2026-09-12, user: "could the notebook view
-         have pages ... split into pages"). A way of looking, kept per
-         notebook with the layout; the filters still decide what a page
-         contains. -->
-    <span class="abgrp" id="ab-pages"><span class="abgrp-row"><span class="fgrp" id="pages-grp">
-      <button class="toggle" id="sec-pages" aria-pressed="false"
-        title="Split the notebook into pages, one top-level section each"
-        ><i data-ic="pagep"></i><span class="btxt">Pages</span></button>
-      <span class="fgrp-row" id="pages-nav">
-        <button class="toggle sub" id="sec-prevpage" hidden
-          title="The page before"><i data-ic="prev"></i><span class="btxt">Back</span></button>
-        <button class="toggle sub" id="sec-nextpage" hidden
-          title="The page after"><i data-ic="next"></i><span class="btxt">Next</span></button>
-      </span>
-    </span>
-    </span><span class="abgrp-lab">Pages</span></span>
+    <!-- the filters you keep setting, kept: a custom view remembers them
+         with the hidden cells and sizes (File > New > Custom view is the
+         same thing; this is its door where the filters are) -->
+    <span class="abgrp" id="ab-saveview" data-abtab="filters"><span class="abgrp-row">
+      <button class="toggle" id="ab-newview" type="button" data-for="pr-newview"
+        title="Keep these filters, hidden cells and sizes as a custom view
+ you can reopen from File &gt; Open"><i data-ic="newview"></i><span
+        class="btxt">Save as view</span></button>
+    </span><span class="abgrp-lab">Custom view</span></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
-         because it plays the same role — it is what shapes WHAT YOU SEE
+         because it plays the same role -- it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
-    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
+    <span class="abgrp" id="ab-tree" data-abtab="filters" hidden><span class="abgrp-row">
       <span class="fgrp" id="tree-fold-grp">
         <button class="toggle" id="tree-expand" type="button"
           title="Expand every cell — show its content in the map"
@@ -234,7 +268,44 @@
           ><i data-ic="eye"></i><span class="btxt">Unhide all</span></button>
       </span>
     </span><span class="abgrp-lab">Tree</span></span>
-    <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
+    <span class="abgrp ab-nav" id="ab-nav" data-abtab="view"><span class="abgrp-row">
+      <button class="menubtn" id="menubtn" aria-label="Outline"
+        title="Show or hide the section sidebar (table of contents)">
+        <span></span> Outline</button>
+      <button class="menubtn vars-menubtn" id="vars-btn"
+        aria-label="Variables" aria-pressed="false"
+        title="Every variable in this notebook — filter by type, and click
+ a name or use-site to jump to it">x&#178; Variables</button>
+    </span><span class="abgrp-lab">Panels</span></span>
+    <span class="abgrp" id="ab-look" data-abtab="view"><span class="abgrp-row">
+    <span class="vw-stack">
+    <button class="toggle" id="view-raw"
+      title="Toggle between the semantic view and the raw notebook
+ (cells in order, directives visible)"><i data-ic="raw"></i><span class="btxt">Raw</span></button>
+    <button class="toggle" id="view-tree"
+      title="Tree view: the analysis as a dependency map you can expand,
+ collapse and hide cell by cell. Toggle back for the narrative document."
+      ><i data-ic="tree"></i><span class="btxt">Tree</span></button>
+    </span>
+    </span><span class="abgrp-lab">Show as</span></span>
+    <!-- T390: PAGES. One top-level section at a time, with a way to the
+         page before and after (2026-09-12, user: "could the notebook view
+         have pages ... split into pages"). A way of looking, kept per
+         notebook with the layout; the filters still decide what a page
+         contains. -->
+    <span class="abgrp" id="ab-pages" data-abtab="view"><span class="abgrp-row"><span class="fgrp" id="pages-grp">
+      <button class="toggle" id="sec-pages" aria-pressed="false"
+        title="Split the notebook into pages, one top-level section each"
+        ><i data-ic="pagep"></i><span class="btxt">Pages</span></button>
+      <span class="fgrp-row" id="pages-nav">
+        <button class="toggle sub" id="sec-prevpage" hidden
+          title="The page before"><i data-ic="prev"></i><span class="btxt">Back</span></button>
+        <button class="toggle sub" id="sec-nextpage" hidden
+          title="The page after"><i data-ic="next"></i><span class="btxt">Next</span></button>
+      </span>
+    </span>
+    </span><span class="abgrp-lab">Pages</span></span>
+    <span class="abgrp" id="ab-size" data-abtab="view"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller" aria-label="Smaller figures"
           title="Make every figure in the feed smaller"><i data-ic="minus"></i></button>
@@ -263,46 +334,6 @@
     </span></span><span class="abgrp-lab">Size</span></span>
       </span>
     </span>
-    <span class="appbar-spring" aria-hidden="true"></span>
-    <!-- View commands belong at the right of the notebook ribbon. -->
-    <!-- Raw / Tree / Present stay together: they are one idea (how you are
-         looking at the document) and must not wrap apart -->
-    <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
-    <!-- Raw over Tree in one column, Present beside them: two short
-         buttons stacked cost the bar half the width of three in a line -->
-    <span class="vw-stack">
-    <button class="toggle" id="view-raw"
-      title="Toggle between the semantic view and the raw notebook
- (cells in order, directives visible)"><i data-ic="raw"></i><span class="btxt">Raw</span></button>
-    <button class="toggle" id="view-tree"
-      title="Tree view: the analysis as a dependency map you can expand,
- collapse and hide cell by cell. Toggle back for the narrative document."
-      ><i data-ic="tree"></i><span class="btxt">Tree</span></button>
-    </span>
-    <!-- These are the same two viewer-level actions as the editor's
-         Full screen / Present pair. The document has no alternate start
-         point, so Present stays a direct button rather than a fake split
-         menu. -->
-    <span class="vw-stack">
-    <button class="toggle" id="doc-full" aria-pressed="false"
-      title="Fill the display with Junoview (Esc to leave)"
-      ><i data-ic="expand"></i><span class="btxt">Full screen</span></button>
-    <button class="toggle primary" id="doc-present"
-      title="Present this document full screen (Narrative or Tree). Esc to
- exit."><i data-ic="play"></i><span class="btxt">Present</span></button>
-    </span>
-    <!-- Creating a presentation is one deliberate action.  The dialog
-         shows every choice at once, rather than scattering “from this
-         section” shortcuts across the rail and section headers. -->
-    <span class="vw-stack">
-    <button class="toggle" id="doc-autoslides"
-      aria-haspopup="dialog" aria-expanded="false"
-      aria-controls="auto-slides-dialog"
-      title="Build a presentation from this notebook &mdash; section
- headings become slide titles, with their markdown and figures beneath"
-      ><i data-ic="newdeck"></i><span class="btxt">Create slides</span></button>
-    </span>
-    </span></span><span class="abgrp-lab">View</span></span>
   </div>
   <!-- The top strip and side panel deliberately show the same live tabs:
        the former is quick navigation; the latter is the library view. -->

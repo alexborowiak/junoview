@@ -19,16 +19,21 @@ from junoview.render.page import render_html
 
 
 def test_ribbon_group_counts(out):
-    """Full controls live behind one labelled Filters door, not in the
-    permanent reader bar. The panel retains the grouped controls.
+    """T605: the reader's ribbon is tabs over ONE band. Every group is
+    named; each belongs to the Filters tab or the View tab.
     """
     assert out.count('class="fgrp"') == 10
     assert out.count('class="fgrp fgrp-h"') == 2
-    assert out.count('class="abgrp-lab"') == 6   # + Tree (tree view only)
-    assert 'class="abgrp" id="ab-filters"' in out
+    # View (the verbs on the tab strip, unnamed there), Show, Apply to,
+    # Custom view, Tree (tree view only), Panels, Show as, Pages, Size
+    assert out.count('class="abgrp-lab"') == 9
+    assert 'class="abgrp" id="ab-filters" data-abtab="filters"' in out
     assert 'id="filters-toggle"' in out
-    assert 'class="filter-panel" id="filters-panel">' in out
+    assert ('class="filter-panel ab-band" id="filters-panel" '
+            'data-tab="filters"') in out
     assert 'aria-expanded="true"' in out
+    for tab in ("filters", "view"):
+        assert f'id="ab-tab-{tab}"' in out and f'data-abtab="{tab}"' in out
 
 
 def test_file_utility_line_leads_and_docks_the_live_file_bar(out):
@@ -172,21 +177,18 @@ def test_keyboard_shortcuts_are_conventional_and_advertised(out):
 
 
 def test_appbar_uses_a_compact_filter_door_without_fake_spacing(out):
-    """The reader bar contains navigation, Filters and view actions only.
-
-    The dense control grid is visible below it by default, but can collapse
-    into the short reader bar without creating spacer-shaped holes.
+    """T605: the tab strip (File, Filters, View, the verbs, the fold) over
+    ONE band of the chosen tab's groups, which never wraps. The band folds
+    away and comes back from a tab, as the editor's does.
     """
     assert 'class="filter-wrap" id="filter-wrap"' in out
     assert ".filter-wrap{display:contents;}" in out
-    assert (
-        ".filter-panel{position:static;z-index:auto;grid-column:1/-1;"
-        "grid-row:2;" in out
-    )
-    assert (
-        "display:grid;grid-template-columns:max-content max-content "
-        "minmax(0,1fr) max-content;" in out
-    )
+    assert ".ab-band{display:flex;flex-wrap:nowrap;align-items:stretch;" in out
+    assert (".ab-band[data-tab=\"filters\"] [data-abtab=\"view\"],\n"
+            ".ab-band[data-tab=\"view\"] [data-abtab=\"filters\"]"
+            "{display:none!important;}") in out
+    assert ("grid-template-columns:max-content max-content "
+            "minmax(0,1fr) max-content;") not in out
     assert ".filter-panel[hidden]{display:none!important;}" in out
     assert "if(APP.measureChrome) APP.measureChrome();" in out
     assert "if(filterPanel) filterPanel.hidden=true;" not in out
@@ -211,7 +213,8 @@ def test_filter_panel_keeps_size_stepper_and_right_view_actions(out):
         ".vw-stack{display:flex;flex-direction:column;gap:3px;flex:none;"
         "\n  min-width:92px;}"
     ) in out
-    assert ".appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp," in out
+    # (T605: on the tab strip now, at its end, where the editor's are)
+    assert ".ab-tabs #ab-view .abgrp-row,.ab-tabs #ab-view .btn-grp," in out
     assert '<span class="btxt">Match document</span></button>' in out
 
 
@@ -263,8 +266,11 @@ def test_top_left_declutter_keeps_navigation_in_the_reader_bar(out):
     slim title row above it (T602: in that row, not a row of their own).
     """
     assert 'class="tabs-label"' not in out
-    assert (out.index('id="menubtn"') < out.index('id="filters-toggle"')
-            < out.index('id="view-grp"'))
+    # T605: File, then the tabs, then the verbs and the fold on the strip;
+    # Outline and Variables are the View tab's Panels group, in the band
+    assert (out.index('id="app-file"') < out.index('id="ab-tab-filters"')
+            < out.index('id="view-grp"') < out.index('id="filters-toggle"')
+            < out.index('id="menubtn"'))
     assert 'id="open-tabs-row"' in out and 'id="top-tabstrip"' in out
     assert (out.index('id="nb-filebar"') < out.index('id="open-tabs-row"')
             < out.index('class="appbar"'))
@@ -435,10 +441,13 @@ def test_tree_view_replaces_document_filters_inside_the_panel(out):
     assert "#ab-size{margin-left:auto;}" not in out
     assert "body.tree-mode #ab-tree{min-width:0;}" in out
     assert "'--filters-slot',w+'px'" not in out
-    # the tree's own controls are available from the Filters panel
+    # the tree's own controls are available from the Filters tab, which
+    # says Tree while the tree is on (T605)
+    assert ("body.tree-mode .ab-band:not([data-tab=\"view\"]) #ab-tree{"
+            in out)
+    assert '<span class="abt-tree">Tree</span' in out
     assert 'id="ab-tree"' in out and 'id="tree-expand"' in out
     assert 'id="tree-collapse"' in out and 'id="tree-width"' in out
-    assert "body.tree-mode #ab-tree{display:flex!important;}" in out
     assert ".abgrp[hidden]{display:none!important;}" in out
 
 

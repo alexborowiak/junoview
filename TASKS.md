@@ -11263,3 +11263,33 @@ them. And a bug: Peek at hidden showed code with Code turned off.
   Driven on the example page: Code off hides all 18 code blocks and 7
   code-only cells; one cell hidden by its eye; Peek shows that cell and
   still no code and none of the 7.
+- [x] **T605 — The reader's ribbon as tabs.** "The ribbon in the
+  notebooks thing is a bit cursed. It is still too big and eats up too
+  much of the vertical and things don't line up well. Maybe there needs
+  to be different tabs like presentation: a filter tab etc."
+  *Done 2026-10-01.* The editor's shape. The strip under the title row
+  is File, the tabs **Filters** and **View**, then Full screen, Present
+  and Create slides at its end and the fold chevron. Under it ONE row of
+  the chosen tab's groups, each named underneath: Filters holds Show
+  (each filter JOINED to its chooser -- "Plots On | Which plots" -- so
+  the row reads as four filters with nothing to line up under them, and
+  Labels), Apply to (All sections, Reset) and Custom view (Save as view,
+  a door to the one New custom view button: the filters you keep setting,
+  kept); View holds Panels (Outline, Variables), Show as (Raw, Tree),
+  Pages and Size. In the tree the Filters tab says Tree and holds the
+  tree's controls, as the panel did. The tab and the fold are remembered;
+  a click on a tab brings a folded ribbon back, a double-click, the
+  chevron or Ctrl+F1 folds it (Escape no longer does -- it closes menus).
+  THE BAND NEVER WRAPS AND NEVER LOSES A WORD: fitRibbon's spacing rung,
+  then the least-used groups fold one at a time into a door wearing their
+  name ("Apply to ▾" opens the group's own row; a one-button group is not
+  folded), then it scrolls; the present bar unfolds them before it
+  borrows the groups. Toggles no longer ease their padding, so the fit
+  measures the real widths. Every control kept its id and handler.
+  Measured at 1440 x 900: the header is 124px (it was 162, and three rows
+  of controls at the user's size), the band one row of 51px on either
+  tab; at 1100 Apply to folds and the row fits; at 900 it scrolls after
+  folding. Driven: both tabs, tree and back, fold by chevron, tab and
+  Ctrl+F1, a Which menu under its joined button, Apply to's door with
+  its section menu open inside it, Present and back (the groups return
+  to the band), light theme.

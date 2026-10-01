@@ -40,13 +40,23 @@ The notebook is the whole thing; other files are sources you can read,
 quote and refresh.</li>
 </ul>
 
+<h3>The ribbon</h3>
+<p>Like the presentation editor's: <b>File</b>, then two tabs &mdash;
+<b>Filters</b> (what you see) and <b>View</b> (how you see it: Outline,
+Variables, Raw, Tree, Pages and the figure and text sizes) &mdash; with
+<b>Create slides</b>, <b>Full screen</b> and <b>Present</b> at the end
+of the row. The chosen tab's controls are one row under it. The
+<b>&#9652;</b> at the end, a double-click on a tab, or
+<kbd>Ctrl</kbd>+<kbd>F1</kbd> folds that row away; click a tab to bring
+it back. On a narrow window, groups you reach for less (Apply to, Size,
+Pages&hellip;) fold into a button wearing their name.</p>
+
 <h3>Filtering what you see</h3>
-<p>Four buttons in the top bar &mdash; <b>Plots</b>, <b>Markdown</b>,
-<b>Code</b>, <b>Output</b> &mdash; each shows its CURRENT state and
-cycles when clicked. They apply to every tab at once. A thin divider
-sets them apart from the view controls (Raw notebook, theme) on the
-right. <b>Plots</b> comes first because a figure is the headline of a
-cell; everything else a notebook produces is, loosely, its
+<p>Four buttons on the <b>Filters</b> tab &mdash; <b>Plots</b>,
+<b>Markdown</b>, <b>Code</b>, <b>Output</b> &mdash; each shows its
+CURRENT state and cycles when clicked. They apply to every tab at once.
+<b>Plots</b> comes first because a figure is the headline of a cell;
+everything else a notebook produces is, loosely, its
 <i>output</i>.</p>
 <ul>
 <li>All four &mdash; <b>Plots</b>, <b>Markdown</b>, <b>Code</b> and
@@ -59,8 +69,9 @@ plotting, a bare expression &mdash; not just standalone code cells. So
 <i>Code: Fold</i> tucks the source away under every figure and
 result at once, and a cell that is <i>only</i> code disappears entirely
 when Code is Off.</li>
-<li><b>Code types</b> and <b>Output types</b> (the two
-<b><i data-ic="types"></i></b> funnel buttons) are finer control: untick <i>imports</i>,
+<li><b>Which plots</b>, <b>Which code</b> and <b>Which output</b>
+(the <b><i data-ic="types"></i></b> half joined to each filter) are
+finer control: untick <i>imports</i>,
 <i>plotting</i>&hellip; on the code side, or <i>print</i>,
 <i>dataset</i>, <i>numeric</i>, <i>string</i>, <i>list</i>,
 <i>dict</i>, <i>error</i>&hellip; on the output side, to hide just
@@ -77,7 +88,7 @@ back to the defaults.</li>
 
 <h3>Figure size</h3>
 <ul>
-<li><b>Figures 100%</b> in the top bar (with
+<li><b>Figures 100%</b> on the View tab (with
 <b><i data-ic="minus"></i></b> and <b><i data-ic="plus"></i></b>
 either side) resizes <i>every</i> figure in the feed &mdash;
 click the percentage to snap back to 100%. Figures grow past the text
@@ -245,7 +256,8 @@ several cells under one figure (see the README for details)</td></tr>
 
 <h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
 <ul>
-<li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New)
+<li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New), or
+<b>Save as view</b> on the Filters tab,
 saves <i>how the notebook itself looks</i>. It is not
 slides: it opens in the document, with a styling bar under the
 ribbon.</li>
