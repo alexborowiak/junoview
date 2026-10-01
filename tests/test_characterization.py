@@ -2299,8 +2299,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T560: the Icons gallery -- 12-icons.js joins the deck IIFE, an Icons
 # group beside Shapes, icon drawing in drawShapeSvg, square drawing, the
 # custGeom export and the search index reading data-find.
-EXPECTED_MD5 = "09a06c658801f2229fe93eabbd2aec52"
-EXPECTED_BYTES = 5019389
+# T604: a peek leaves the filters applied -- the blanket display:revert
+# reveal rule is gone from core.css, cards the filters removed are .filt-
+# gone, and the Peek count and title say what you hid.
+EXPECTED_MD5 = "4bd5e6ab76ad6f8812f028094271c80d"
+EXPECTED_BYTES = 5020045
 
 
 def _render_example() -> str:

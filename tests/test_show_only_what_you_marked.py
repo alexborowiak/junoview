@@ -63,7 +63,8 @@ def test_the_gate_runs_before_the_pin_bypass():
     assert gate < bypass, "the mark gate must come first"
     assert "      var only=onlyFor(stem);" in app
     # a gated-out card leaves the document AND the sidebar
-    assert "          c.classList.add('is-hidden');" in app
+    # (T604: and marked filt-gone, so a Peek leaves it out too)
+    assert "          c.classList.add('is-hidden','filt-gone');" in app
     assert "          if(onav){onav.classList.add('nav-hidden');" in app
 
 

@@ -44,7 +44,8 @@ def test_the_eye_still_works_on_a_pinned_cell():
     assert "var poff=c.classList.contains('cell-off');" in pinned
     assert "c.classList.toggle('is-hidden',poff);" in pinned
     # the filter classes are still cleared -- that half was the point
-    assert "c.classList.remove('collapsed','expanded');" in pinned
+    # (T604 added filt-gone, the mark of a card a filter removed)
+    assert "c.classList.remove('collapsed','expanded','filt-gone');"         in pinned
     assert "'cell-off','collapsed'" not in pinned
 
 

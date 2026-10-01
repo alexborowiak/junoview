@@ -11231,3 +11231,35 @@ Also the tabs is good, but is all just too much now."
   under Find in a narrow column. Driven at 1440, 1280 and 1100 wide
   (at 1100 with all nine tabs showing, two rungs and nothing clipped),
   File's two columns under File, building, Home, and the light theme.
+
+## Group 22 — the 2026-10-01 notebook round (from the user's own review)
+
+The user, looking at a notebook with the Filters panel open: the ribbon
+"is a bit cursed. It is still too big and eats up too much of the
+vertical and things don't line up well. Maybe there needs to be
+different tabs like presentation: a filter tab etc." Then a new kind of
+document -- "I am consistently filtering a notebook over and over again
+... it would be good if I could create something ... that creates a view
+similar to the notebooks, but you can add cells and images etc. from
+other notebooks", with notes of your own under a figure that can be
+hidden, and code and notes LINKED to a figure so that expanding it shows
+them. And a bug: Peek at hidden showed code with Code turned off.
+
+- [x] **T604 — A peek leaves the filters applied.** "With the 'peek at
+  hidden', the filter should still apply. E.g. it is currently showing
+  code when I peek at hidden even though I have code turned off."
+  *Done 2026-10-01.* T502 had added a blanket `display:revert!important`
+  on every section, card, code block and output part while peeking, and
+  T510 counted filtered cells as hidden -- so a peek undid every filter
+  along with every eye. A peek now shows what YOU hid: cells hidden with
+  their eye, hidden sections and headings, folded sections. A card the
+  filters removed carries .filt-gone (applyFilters) and stays out; a
+  section empty only because of the filters stays out, one empty only
+  because of cells you hid is .sec-peek and shows; code, plot and output
+  parts keep their filter classes, so Code off stays off. The count
+  beside Peek is what you hid. The eye on a filtered cell can no longer
+  be reached through a peek, so it only hides and shows (a cell kept
+  visible that way before keeps its state until its eye hands it back).
+  Driven on the example page: Code off hides all 18 code blocks and 7
+  code-only cells; one cell hidden by its eye; Peek shows that cell and
+  still no code and none of the 7.

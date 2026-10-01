@@ -1277,7 +1277,7 @@
            pinned cell is out of view under a label filter like any
            other. "Only pinned" is the case where the two agree. */
         if(!onlyKeeps(c,only)&&!c.classList.contains('cell-keep-visible')){
-          c.classList.add('is-hidden');
+          c.classList.add('is-hidden','filt-gone');
           var onav=sh.querySelector('.navitem[data-item="'
             +c.id.replace(/^card-/,'')+'"]');
           if(onav){onav.classList.add('nav-hidden');
@@ -1297,7 +1297,7 @@
              live and did nothing at all: the class went back on, the next
              pass took it off again, and the card never moved. */
           var poff=c.classList.contains('cell-off');
-          c.classList.remove('collapsed','expanded');
+          c.classList.remove('collapsed','expanded','filt-gone');
           c.classList.toggle('is-hidden',poff);
           $$('.part-off,.part-fold,.part-open,.code-off,.pt-off,'
             +'.pt-fold,.pt-open,.ot-off,.ot-fold,.ot-open',c)
@@ -1538,6 +1538,9 @@
         }
         var id=c.id.replace(/^card-/,'');
         c.classList.toggle('is-hidden',filtGone||off);
+        /* what the FILTERS removed, apart from what you hid: a Peek
+           brings back the second and never the first */
+        c.classList.toggle('filt-gone',!!filtGone);
         var nav=sh.querySelector('.navitem[data-item="'+id+'"]');
         if(nav){
           /* filtered out -> gone from the sidebar; manually hidden -> STAYS
@@ -1559,6 +1562,11 @@
         var allGone=cards.length>0&&cards.every(function(c){
           return c.classList.contains('is-hidden');});
         sec.classList.toggle('is-hidden',allGone&&!secOff);
+        /* empty only because of cells you hid: a Peek shows it */
+        sec.classList.toggle('sec-peek',allGone&&!secOff
+          &&cards.some(function(c){
+            return c.classList.contains('cell-off')
+              &&!c.classList.contains('filt-gone');}));
         var sid=sec.dataset.sec;
         var row=sh.querySelector('.navsec-row[data-sec="'+sid+'"]');
         var items=sh.querySelector('.navitems[data-sec="'+sid+'"]');
@@ -4770,13 +4778,16 @@
   function syncUnhideBtn(sh){
     var b=sh.querySelector('.rf-unhide');
     var peeking=sh.classList.contains('reveal-hidden');
+    /* what you hid by hand -- a filter's work is not hidden, it is
+       filtered, and a peek leaves it filtered */
     var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff').length
-      +sh.querySelectorAll('.content .card.is-hidden').length;
+      +sh.querySelectorAll('.content .card.cell-off:not(.filt-gone)').length;
     if(b){
       b.disabled=false;b.setAttribute('aria-pressed',peeking?'true':'false');
       b.innerHTML=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';
       b.title=peeking?'End peek; your visibility changes stay saved'
-        :'Temporarily show hidden content so you can choose what to restore';
+        :'Temporarily show the cells, sections and headings you hid, so '
+          +'you can choose what to restore. The filters still apply';
     }
     function status(el,hidden,what){
       el.setAttribute('aria-pressed',hidden?'true':'false');
@@ -4788,13 +4799,11 @@
     $$('.cell-eye,.navitem-eye',sh).forEach(function(el){
       var item=el.closest('.card,.navitem');
       var manual=!!(item&&item.classList.contains('cell-off'));
-      var filtered=!!(item&&item.classList.contains(
-        item.classList.contains('card')?'is-hidden':'nav-hidden'));
       if(item&&item.classList.contains('cell-keep-visible')){
         el.setAttribute('aria-pressed','false');
         el.title='Visible — follow filters for this cell again';
         el.setAttribute('aria-label',el.title);
-      } else status(el,manual||(peeking&&filtered),'this cell');
+      } else status(el,manual,'this cell');
     });
     $$('.sec-eye,.navsec-eye',sh).forEach(function(el){
       var sec=el.closest('.section'),row=el.closest('.navsec-row');
@@ -5134,14 +5143,13 @@
     }
     function toggleCellEye(id){
       var card=shell.querySelector('.card[id="card-'+id+'"]');
-      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
       if(!card) return;
-      var filtered=shell.classList.contains('reveal-hidden')
-        &&!!(nav&&nav.classList.contains('nav-hidden'));
-      if(card.classList.contains('cell-off')) setCellOff(id,false,filtered);
+      /* a peek no longer shows what the filters removed, so the eye only
+         ever hides, shows, or hands a kept-visible cell back to the
+         filters (an older kept-visible cell still has that state) */
+      if(card.classList.contains('cell-off')) setCellOff(id,false,false);
       else if(card.classList.contains('cell-keep-visible'))
         setCellOff(id,false,false);
-      else if(filtered) setCellOff(id,false,true);
       else setCellOff(id,true,false);
     }
     $$('.cell-eye',shell).forEach(function(btn){

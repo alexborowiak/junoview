@@ -108,27 +108,29 @@ console.log(JSON.stringify({before,after:eye.attrs['aria-label']}));
     assert "hide this cell permanently" in result["after"]
 
 
-def test_peek_filtered_cell_can_be_kept_visible(tmp_path):
+def test_the_eye_hides_shows_and_hands_a_kept_cell_back(tmp_path):
+    # 2026-10-01: a peek no longer shows what the filters removed, so the
+    # eye cannot be used on a filtered cell to keep it visible any more;
+    # a cell kept visible before then is handed back to the filters.
     src = assets.load("js/app.js")
     code = lift_fn(src, "toggleCellEye") + r"""
 function classes(names){return {contains:n=>names.includes(n)};}
-const card={classList:classes([])},nav={classList:classes(['nav-hidden'])};
-var shell={classList:classes(['reveal-hidden']),querySelector:s=>
-  s.startsWith('.card')?card:nav},calls=[];
+const card={classList:classes([])};
+var shell={classList:classes(['reveal-hidden']),querySelector:s=>card},
+  calls=[];
 function setCellOff(...args){calls.push(args);}
 toggleCellEye('a');
 card.classList=classes(['cell-keep-visible']);
-nav.classList=classes([]);
 toggleCellEye('a');
 card.classList=classes(['cell-off','is-pinned']);
 toggleCellEye('a');
 console.log(JSON.stringify(calls));
 """
     assert run_js(tmp_path, code) == [
-        ["a", False, True], ["a", False, False], ["a", False, False]]
+        ["a", True, False], ["a", False, False], ["a", False, False]]
 
 
-def test_peek_eyes_identify_filtered_and_overridden_cells(tmp_path):
+def test_peek_eyes_leave_filtered_cells_to_the_filters(tmp_path):
     src = assets.load("js/app.js")
     code = lift_fn(src, "syncUnhideBtn") + r"""
 function classes(items){return {contains:x=>items.includes(x)};}
@@ -147,18 +149,20 @@ console.log(JSON.stringify({hidden:a.attrs['aria-label'],
   shown:b.attrs['aria-label']}));
 """
     result = run_js(tmp_path, code)
-    assert "show this cell permanently" in result["hidden"]
+    # filtered is not hidden: its eye still offers to hide it
+    assert "hide this cell permanently" in result["hidden"]
     assert "follow filters for this cell again" in result["shown"]
 
 
-def test_peek_count_includes_filter_hidden_cells_before_opening(tmp_path):
+def test_peek_counts_what_you_hid_not_what_a_filter_did(tmp_path):
     src = assets.load("js/app.js")
     filters = lift_fn(src, "applyFilters")
     assert "      syncUnhideBtn(sh);" in filters
     code = lift_fn(src, "syncUnhideBtn") + r"""
 var peek={attrs:{},setAttribute(k,v){this.attrs[k]=v;}};
 var shell={classList:{contains:()=>false},querySelector:()=>peek,
-  querySelectorAll:s=>s==='.content .card.is-hidden'?[{},{}]:[{}]};
+  querySelectorAll:s=>s==='.content .card.cell-off:not(.filt-gone)'
+    ?[{},{}]:[{}]};
 function $$(){return [];}
 function bic(){return '<i></i>';}
 syncUnhideBtn(shell);
@@ -518,3 +522,24 @@ console.log(JSON.stringify({exitChanged,focusChanged,panelsChanged}));
 """
     assert run_js(tmp_path, code) == {
         "exitChanged": True, "focusChanged": True, "panelsChanged": True}
+
+
+def test_a_peek_leaves_the_filters_applied():
+    """2026-10-01, user: "with the 'peek at hidden', the filter should
+    still apply. E.g. it is currently showing code when I peek at hidden
+    even though I have code turned off." The blanket display:revert on
+    every section, card and part is gone; a peek shows what you hid."""
+    css = assets.load("css/core.css")
+    peek = css.split(
+        ".nbshell.reveal-hidden .section.sec-headoff .sectionhead{")[1]
+    peek = peek.split(".section.sec-headoff .sec-eye{")[0]
+    assert "display:revert!important" not in peek
+    assert (".nbshell.reveal-hidden .content .card.cell-off:not(.filt-gone)"
+            in css)
+    assert ".nbshell.reveal-hidden .content .card.is-hidden" not in css
+    assert ".nbshell.reveal-hidden .navitem.nav-hidden" not in css
+    js = assets.load("js/app.js")
+    filters = lift_fn(js, "applyFilters")
+    assert "c.classList.toggle('filt-gone',!!filtGone);" in filters
+    assert "c.classList.add('is-hidden','filt-gone');" in filters
+    assert "sec.classList.toggle('sec-peek',allGone&&!secOff" in filters
