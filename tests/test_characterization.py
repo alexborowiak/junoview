@@ -2264,8 +2264,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T570 (2026-10-01): the typeface list draws each face in itself, a
 # Recently used group heads it, the closed list wears the current face,
 # and the help has an entry.
-EXPECTED_MD5 = "c7bce0f13513b4f571b089d33ae07972"
-EXPECTED_BYTES = 4923585
+# T573 (2026-10-01): find a shape -- Show all on the Shapes gallery has a
+# search by name and everyday words, Enter arms the first found, and the
+# shapes drawn last lead the gallery.
+EXPECTED_MD5 = "530a24dcd9a3288c7047b612d1732ca6"
+EXPECTED_BYTES = 4928841
 
 
 def _render_example() -> str:

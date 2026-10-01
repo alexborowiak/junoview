@@ -1883,6 +1883,8 @@
        click line, it just creates a line — can it please be drawn like it
        does with the shapes"), and it stays a theme-aware divider colour
        instead of alarm-orange. */
+    if(kind==='rect'&&typeof shapeUsed==='function')
+      shapeUsed(pendingShape);   /* T573: yours lead the gallery */
     var a=(kind==='rect')
       ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:SW_DEFAULT,
         shape:(pendingShape!=='rect'?pendingShape:undefined)}

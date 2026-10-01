@@ -10496,8 +10496,21 @@ choice in the editor (T506, T507).
   as Shrink the words. Driven at 1440x900: Grow lit on a new box, Shrink
   lit after a click, five more lines typed drew at 0.62 with "does not
   fit", Fixed marked the overrun unscaled, Grow grew the box to 195px.
-- [ ] **T573 — Find a shape by name.** The Shapes gallery takes a search
+- [x] **T573 — Find a shape by name.** The Shapes gallery takes a search
   and keeps the shapes you used last at the front.
+  *Done 2026-10-01.* Show all on the Shapes gallery opens with a search
+  field in its header, focused: a shape is found by its name and by the
+  words people use for it (SHAPE_FIND -- "circle" and "oval" find the
+  ellipse, "callout" the speech bubble, "curly" the braces), every word
+  must match, "No shape called ..." says when nothing does, and Enter
+  arms the first shape found. Back on the ribbon every tile shows again.
+  It is generic: any strip that says data-find gets the field. The shapes
+  you drew last (four, kept in this browser) lead the gallery as
+  PowerPoint's Recently Used Shapes do -- recorded as a shape is drawn,
+  not as its tile is picked, so the gallery never rearranges itself under
+  the pointer. Driven at 1440x900: "circle" left only the ellipse,
+  "callout" the speech bubble, "zzz" said so, "star" + Enter armed the
+  star, and after drawing one the gallery led with the star.
 - [ ] **T574 — Presenter view, checked against PowerPoint's.** Timer pause
   and reset, next-slide preview, notes text size, slide jump; whatever is
   missing is added.

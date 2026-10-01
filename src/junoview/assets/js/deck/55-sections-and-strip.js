@@ -2233,6 +2233,8 @@
       var panel=null;
       function home(){
         if(strip.parentNode===frame) return;
+        /* T573: back on the ribbon, every tile shows again */
+        if(findIn){findIn.value='';findApply();}
         frame.insertBefore(strip,nav||more);
         frame.style.width='';
         more.setAttribute('aria-expanded','false');
@@ -2243,6 +2245,24 @@
         if(typeof fitEditRibbon==='function') fitEditRibbon();
         setTimeout(ends,0);
       }
+      /* T573: a gallery that says it can be searched gets a field at
+         the head of its Show all window; a tile is found by its words
+         (data-find) or its name */
+      var findIn=null,findNone=null;
+      function findApply(){
+        var q=String(findIn?findIn.value:'').trim().toLowerCase();
+        var n=0;
+        tiles().forEach(function(t){
+          var hay=((t.dataset.find||'')+' '+t.textContent).toLowerCase();
+          var hit=!q||q.split(/\s+/).every(function(w){
+            return hay.indexOf(w)>=0;});
+          t.hidden=!hit;if(hit) n++;
+        });
+        if(findNone){
+          findNone.hidden=n>0;
+          findNone.textContent='No shape called \u201c'+q+'\u201d';
+        }
+      }
       function build(){
         panel=document.createElement('div');
         panel.className='sh-menu strip-all';
@@ -2252,6 +2272,25 @@
         h.className='strip-all-h';
         h.textContent=strip.getAttribute('aria-label')||'All';
         panel.appendChild(h);
+        if(strip.hasAttribute('data-find')){
+          findIn=document.createElement('input');
+          findIn.type='search';findIn.className='strip-find';
+          findIn.placeholder='Find a shape \u2014 circle, arrow, '
+            +'callout\u2026';
+          findIn.setAttribute('aria-label','Find a shape by name');
+          findIn.addEventListener('input',findApply);
+          /* Enter arms the first shape found; the window's owner keeps
+             its keys, so this listens on the field itself */
+          findIn.addEventListener('keydown',function(e){
+            if(e.key!=='Enter') return;
+            var first=tiles().filter(function(t){return !t.hidden;})[0];
+            if(first){e.preventDefault();first.click();}
+          });
+          h.appendChild(findIn);
+          findNone=document.createElement('div');
+          findNone.className='strip-find-none';findNone.hidden=true;
+          panel.appendChild(findNone);
+        }
         /* inside the editor's own layer: the editor sits above the
            page, so a window appended to body opens underneath it */
         ((typeof deckEl!=='undefined'&&deckEl)||document.body)
@@ -2285,15 +2324,53 @@
             pw=panel.offsetWidth,vw=window.innerWidth;
         panel.style.left=Math.max(8,Math.min(fr.left,vw-pw-8))+'px';
         panel.style.top=(fr.bottom+4)+'px';
+        if(findIn) setTimeout(function(){findIn.focus();},0);
       });
     });
   }
+  /* T573: FIND A SHAPE, AND YOURS FIRST. The words a shape is found by
+     -- its own name and the ones people reach for ("circle" is the
+     ellipse, "callout" the speech bubble) -- and the shapes you drew
+     last, which lead the gallery the way PowerPoint's Recently Used
+     Shapes row does. Kept in this browser; four of them. */
+  var SHAPE_FIND={rect:'rectangle square box',ellipse:'ellipse oval circle',
+    triangle:'triangle',diamond:'diamond rhombus',pentagon:'pentagon',
+    hexagon:'hexagon',star:'star',cross:'plus cross add',
+    arrow:'arrow block arrow',heart:'heart love',cloud:'cloud thought',
+    bubble:'speech bubble callout balloon',lightning:'bolt lightning flash',
+    exclaim:'exclamation warning alert',question:'question',
+    langle:'angle chevron bracket less than',
+    rangle:'angle chevron bracket greater than',
+    lbrace:'brace curly bracket',rbrace:'brace curly bracket',
+    lbracket:'bracket square bracket',rbracket:'bracket square bracket'};
+  function recentShapes(){
+    try{
+      var a=JSON.parse(localStorage.getItem('jv-recent-shapes')||'[]');
+      return Array.isArray(a)?a.filter(function(s){
+        return SHAPE_LIST.some(function(p){return p[0]===s;});}).slice(0,4)
+        :[];
+    }catch(e){return [];}
+  }
+  /* called as a shape is drawn (startDraw), not as its tile is picked:
+     a tile that jumped to the front under the pointer the moment you
+     chose it would be a gallery rearranging itself mid-gesture */
+  var shapeOrderSync=function(){};
+  function shapeUsed(id){
+    if(!id) return;
+    var arr=recentShapes().filter(function(x){return x!==id;});
+    arr.unshift(id);
+    try{localStorage.setItem('jv-recent-shapes',
+      JSON.stringify(arr.slice(0,4)));}catch(e){}
+    shapeOrderSync();
+  }
   function shapeStripBoot(){
     var strip=$('#shape-strip'); if(!strip) return;
+    strip.setAttribute('data-find','shapes');   /* T573: Show all searches */
     SHAPE_LIST.forEach(function(pair){
       var b=document.createElement('button');
       b.type='button';b.className='fx-tile shape-tile';
       b.dataset.shape=pair[0];
+      b.dataset.find=pair[1]+' '+(SHAPE_FIND[pair[0]]||'');
       b.appendChild(shapeIcon(pair[0]));
       var t=document.createElement('span');t.textContent=pair[1];
       b.appendChild(t);
@@ -2306,6 +2383,19 @@
       });
       strip.appendChild(b);
     });
+    /* the recent ones first, the rest in the catalogue's order */
+    shapeOrderSync=function(){
+      var rec=recentShapes(),ids=SHAPE_LIST.map(function(p){return p[0];});
+      var rank=function(b){
+        var k=rec.indexOf(b.dataset.shape);
+        return k<0?100+ids.indexOf(b.dataset.shape):k;
+      };
+      $$('.shape-tile',strip).sort(function(p,q){return rank(p)-rank(q);})
+        .forEach(function(b){
+          b.classList.toggle('recent',rec.indexOf(b.dataset.shape)>=0);
+          strip.appendChild(b);});
+    };
+    shapeOrderSync();
     shapeStripSync=function(){
       $$('.shape-tile',strip).forEach(function(b){
         var on=(tool==='rect'&&pendingShape===b.dataset.shape);

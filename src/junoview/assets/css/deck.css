@@ -5199,6 +5199,14 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .an-item.an-flh.an-flip img,.an-item.an-flv.an-flip img,
 .an-item.an-flh video,.an-item.an-flv video{
   transform:scale(var(--an-sx),var(--an-sy));}
+/* T573: the Shapes window's search, in its header */
+.strip-all-h{display:flex;align-items:center;gap:8px;}
+.strip-find{flex:1;min-width:0;max-width:260px;margin-left:auto;
+  font:inherit;font-size:12px;text-transform:none;letter-spacing:0;
+  padding:4px 8px;border-radius:6px;border:1px solid var(--line);
+  background:var(--chrome-1,#0f1b26);color:var(--chrome-ink,#d7e3ec);}
+.strip-find-none{padding:6px 10px;font-size:12px;
+  color:var(--chrome-ink-2,#93a8ba);}
 /* T548: the Shadow menu's rows show their shadow on a small card */
 .shd-sw{display:inline-block;width:18px;height:14px;border-radius:2px;
   background:var(--chrome-ink-2,#9fb0c0);margin:2px 4px 6px 0;flex:none;}
