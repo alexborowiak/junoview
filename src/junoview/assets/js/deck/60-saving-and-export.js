@@ -2532,6 +2532,9 @@
       text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
+      /* T571: which marker, its colour and size, where numbering starts */
+      lkind:listOf(a)||'',lcol:a.lcol?tokVal(a.lcol):'',lsz:a.lsz||0,
+      lstart:a.lstart||0,
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
       va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',

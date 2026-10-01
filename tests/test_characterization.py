@@ -2267,8 +2267,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T573 (2026-10-01): find a shape -- Show all on the Shapes gallery has a
 # search by name and everyday words, Enter arms the first found, and the
 # shapes drawn last lead the gallery.
-EXPECTED_MD5 = "530a24dcd9a3288c7047b612d1732ca6"
-EXPECTED_BYTES = 4928841
+# T571 (2026-10-01): bullets you can style -- the marker's colour and size
+# and a numbered list's start, Bullet/Numbering options at the foot of
+# both galleries, and the marker's kind, colour, size and start in a .pptx
+# both ways.
+EXPECTED_MD5 = "691989d6b324459f2e39629b716fcbf0"
+EXPECTED_BYTES = 4933898
 
 
 def _render_example() -> str:

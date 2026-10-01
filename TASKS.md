@@ -10472,8 +10472,22 @@ choice in the editor (T506, T507).
   Driven at 1440x900: options styled (Georgia in Georgia), Georgia then
   Calibri chosen, the recent group read "calibri, georgia", the text box
   and the closed list in Georgia after the first pick.
-- [ ] **T571 — Bullets you can style.** A bullet's colour and size, and a
+- [x] **T571 — Bullets you can style.** A bullet's colour and size, and a
   numbered list that starts at any number.
+  *Done 2026-10-01.* a.lcol (the marker's colour, a token or a colour),
+  a.lsz (its size as a share of the words', 75-150%) and a.lstart (where a
+  numbered list starts), drawn on the list element as --an-lc / --an-ls
+  and start="", so the ::marker alone changes and the items stay words.
+  The door is PowerPoint's: "Bullet options..." and "Numbering options..."
+  at the foot of the two list galleries open one form (colour with a
+  Default, size, and Start at for numbering) that acts on every selected
+  text box, turning on a list of the gallery's family where there is
+  none. The .pptx export now also says WHICH marker -- it wrote a dot or
+  1. 2. 3. whatever the kind -- with buClr, buSzPct and buAutoNum's
+  startAt, and the reader brings back the kind (by buAutoNum type or
+  buChar character, Wingdings' tick and arrow included), colour, size and
+  start. Driven at 1440x900: red bullets at 150% (marker 25.2px over
+  16.8px words), then numbering from 5 (5. 6. 7. in the screenshot).
 - [x] **T572 — AutoFit is on the row.** Shrink to fit / Do not autofit sit
   with Paragraph, not only on the right-click menu.
   *Done 2026-10-01.* The model already had PowerPoint's three answers --

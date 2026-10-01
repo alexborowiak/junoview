@@ -339,6 +339,28 @@ window.JunoPptx = (function () {
     if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
     return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
   }
+  /* T571: a list's marker as PowerPoint's: the kind (one of the deck's
+     six bullets or six numberings), its own colour and size, and the
+     number a numbered list starts at. In pPr order: colour, size, then
+     the marker. */
+  var BU_CHAR = { bullet: '&#8226;', circle: '&#9702;', square: '&#9642;',
+    dash: '&#8211;', arrow: '&#9656;', check: '&#10003;' };
+  var BU_NUM = { number: 'arabicPeriod', paren: 'arabicParenR',
+    alpha: 'alphaLcPeriod', 'alpha-upper': 'alphaUcPeriod',
+    roman: 'romanLcPeriod', 'roman-upper': 'romanUcPeriod' };
+  function buXml(item, num) {
+    var out = '';
+    if (item.lcol) out += '<a:buClr><a:srgbClr val="' + hex(item.lcol,
+      'FFFFFF') + '"/></a:buClr>';
+    if (item.lsz && +item.lsz !== 1)
+      out += '<a:buSzPct val="' + Math.round(+item.lsz * 100000) + '"/>';
+    if (num)
+      return out + '<a:buAutoNum type="' + (BU_NUM[item.lkind]
+        || 'arabicPeriod') + '"' + (+item.lstart > 1
+        ? ' startAt="' + Math.round(+item.lstart) + '"' : '') + '/>';
+    return out + '<a:buChar char="' + (BU_CHAR[item.lkind] || '&#8226;')
+      + '"/>';
+  }
   function paragraphs(item, page) {
     var align = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[
       item.align] || 'l';
@@ -348,8 +370,8 @@ window.JunoPptx = (function () {
         var props = '<a:pPr algn="' + align + '"'
           + ((pa.bullet || pa.num) ? ' indent="-228600" marL="' + mar + '"' : '')
           + (lvl ? ' lvl="' + lvl + '"' : '') + '>'
-          + (pa.bullet ? '<a:buChar char="&#8226;"/>'
-            : pa.num ? '<a:buAutoNum type="arabicPeriod"/>' : '<a:buNone/>')
+          + (pa.bullet ? buXml(item, false)
+            : pa.num ? buXml(item, true) : '<a:buNone/>')
           + '</a:pPr>';
         var runs = (pa.runs || []).filter(function (r) { return r.t; });
         if (!runs.length)
@@ -362,7 +384,7 @@ window.JunoPptx = (function () {
     return lines.map(function (line) {
       var props = '<a:pPr algn="' + align + '"'
         + (item.bullets ? ' indent="-228600" marL="228600"' : '') + '>'
-        + (item.bullets ? '<a:buChar char="&#8226;"/>' : '<a:buNone/>')
+        + (item.bullets ? buXml(item, !!BU_NUM[item.lkind]) : '<a:buNone/>')
         + '</a:pPr>';
       if (!line)
         return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';

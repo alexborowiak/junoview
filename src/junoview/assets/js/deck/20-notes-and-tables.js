@@ -3157,6 +3157,13 @@
              content at all */
           tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
+          /* T571: the marker's own colour and size, and the number a
+             numbered list starts at -- on the list element, so the
+             items stay words and nothing else */
+          if(a.lcol) tx2.style.setProperty('--an-lc',tokVal(a.lcol));
+          if(a.lsz&&a.lsz!==1) tx2.style.setProperty('--an-ls',a.lsz);
+          if(a.lstart>1&&listIsOrdered(lst))
+            tx2.setAttribute('start',String(a.lstart|0));
           if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else String(_pg.t||'').split('\n').forEach(function(line){
             var li=document.createElement('li');

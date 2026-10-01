@@ -752,6 +752,7 @@ class _TextReader:
         align = {"l": "left", "ctr": "center", "r": "right",
                  "just": "justify"}.get(_first_attr(chain, "", "algn"), "")
         bullet, num = self._bullet(chain, kind)
+        style = self._bullet_style(chain) if bullet else {}
         runs = []
         for ch in p:
             t = _local(ch.tag)
@@ -764,8 +765,47 @@ class _TextReader:
             elif t == "br":
                 runs.append(self._run(ch.find("a:rPr", NS), "\n", chain,
                                       scale))
-        return {"lvl": lvl, "align": align, "bullet": bullet, "num": num,
-                "runs": runs}
+        out = {"lvl": lvl, "align": align, "bullet": bullet, "num": num,
+               "runs": runs}
+        out.update(style)
+        return out
+
+    # T571: the marker's kind, colour, size and starting number
+    _NUM_KIND = {"arabicPeriod": "number", "arabicParenR": "paren",
+                 "arabicParenBoth": "paren", "alphaLcPeriod": "alpha",
+                 "alphaUcPeriod": "alpha-upper",
+                 "romanLcPeriod": "roman", "romanUcPeriod": "roman-upper"}
+    _CHAR_KIND = {"\u2022": "bullet", "\u25e6": "circle", "o": "circle",
+                  "\u25aa": "square", "\u25a0": "square",
+                  "\u00a7": "square", "\u2013": "dash", "-": "dash",
+                  "\u25b8": "arrow", "\u27a2": "arrow", "\u00d8": "arrow",
+                  "\u2713": "check", "\u00fc": "check"}
+
+    def _bullet_style(self, chain: list[ET.Element]) -> dict:
+        out: dict = {}
+        for el in chain:
+            for ch in el:
+                t = _local(ch.tag)
+                if t == "buClr" and "lcol" not in out:
+                    c = ch.find("a:srgbClr", NS)
+                    if c is not None and c.get("val"):
+                        out["lcol"] = "#" + c.get("val", "").lower()
+                elif t == "buSzPct" and "lsz" not in out:
+                    v = _int(ch.get("val"), 100000) / 100000
+                    if abs(v - 1) > 0.01:
+                        out["lsz"] = round(v, 2)
+                elif t == "buAutoNum" and "lkind" not in out:
+                    out["lkind"] = self._NUM_KIND.get(ch.get("type", ""),
+                                                      "number")
+                    start = _int(ch.get("startAt"), 1)
+                    if start > 1:
+                        out["lstart"] = start
+                elif t == "buChar" and "lkind" not in out:
+                    out["lkind"] = self._CHAR_KIND.get(ch.get("char", ""),
+                                                       "bullet")
+            if "lkind" in out:
+                break
+        return out
 
     def _bullet(self, chain: list[ET.Element], kind: str) -> tuple[bool, bool]:
         for el in chain:

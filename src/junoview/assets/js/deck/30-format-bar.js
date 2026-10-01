@@ -1644,7 +1644,58 @@
             });
             w.menu.appendChild(o);
           });
+        /* T571: PowerPoint's Bullets and Numbering..., at the foot of
+           the gallery -- the marker's colour and size, and for a
+           numbered list where it starts */
+        var more=document.createElement('button');
+        more.type='button';more.className='dc-mi ls-more';
+        more.textContent=g.ord?'Numbering options\u2026'
+          :'Bullet options\u2026';
+        more.title=g.ord?'Colour and size of the numbers, and the number '
+          +'the list starts at':'Colour and size of the bullets';
+        more.addEventListener('click',function(e){
+          e.stopPropagation();overlayHide(w.menu);
+          listOptions(!!g.ord);
+        });
+        w.menu.appendChild(more);
       });
+  }
+  /* T571: one form for both galleries. It acts on every selected text
+     box; one that is not a list yet becomes one of the gallery's kind,
+     since "the bullets' colour" of a box with no bullets means "these
+     bullets", as in PowerPoint. */
+  var LIST_SIZES=[[0.75,'75% of the words'],[1,'The words\u2019 size'],
+    [1.25,'125%'],[1.5,'150%']];
+  function listOptions(ord){
+    var s2=pres.slides[cur],a0=annotByIdx(s2,selAnnot);
+    if(!a0||a0.k!=='text'){toast('Select a text box first');return;}
+    var rows=[
+      {k:'col',label:'Colour',type:'color',
+       value:a0.lcol?tokVal(a0.lcol):'',clear:true,
+       note:'Default is the words\u2019 own colour'},
+      {k:'sz',label:'Size',type:'select',value:String(a0.lsz||1),
+       options:LIST_SIZES.map(function(p){return [String(p[0]),p[1]];})}];
+    if(ord) rows.push({k:'start',label:'Start at',type:'number',
+      value:a0.lstart||1,min:1,max:999,step:1});
+    askText({title:ord?'Numbering':'Bullets',
+      what:ord?'How the numbers look, and where they start.'
+        :'How the bullets look.',
+      rows:rows,ok:'Apply'},function(v){
+      if(!v) return;
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        var lst=listOf(a);
+        if(!lst||listIsOrdered(lst)!==ord)
+          setListStyle(a,ord?(lastNumber||'number'):(lastBullet||'bullet'));
+        if(v.col) a.lcol=v.col; else delete a.lcol;
+        var sz=parseFloat(v.sz);
+        if(sz&&sz!==1) a.lsz=sz; else delete a.lsz;
+        if(ord){
+          var st=Math.max(1,Math.min(999,Math.round(+v.start||1)));
+          if(st>1) a.lstart=st; else delete a.lstart;
+        }
+      });
+    });
   }
   /* which kind is on, marked in whichever gallery owns it */
   function listGallerySync(lst){

@@ -135,6 +135,17 @@
     }
     if(allList){
       a.list=full.every(function(p){return p.num;})?'number':'bullet';
+      /* T571: the first item says which marker, its colour and size,
+         and where numbering starts -- if it is a kind of the same
+         family this deck has */
+      var p0=full[0];
+      if(p0&&p0.lkind&&listKind(p0.lkind)
+         &&listIsOrdered(p0.lkind)===(a.list==='number'))
+        a.list=p0.lkind;
+      if(p0&&p0.lcol) a.lcol=p0.lcol;
+      if(p0&&p0.lsz&&p0.lsz!==1) a.lsz=p0.lsz;
+      if(p0&&p0.lstart>1&&a.list!=='bullet'&&listIsOrdered(a.list))
+        a.lstart=p0.lstart;
       a.html=full.map(function(p){
         return '<li>'+(line(p)||'<br>')+'</li>';}).join('');
       a.text=full.map(plain).join('\n');
