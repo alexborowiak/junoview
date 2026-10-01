@@ -2071,11 +2071,115 @@ body.light .ab-band>.abgrp{border-right-color:var(--chrome-line);}
 .appbar .menubtn span::before{position:absolute;top:-5px;}
 .appbar .menubtn span::after{position:absolute;top:5px;}
 .filter-wrap{display:contents;}
+/* the house rule: an author display beats [hidden], so say it again */
+.filter-count[hidden]{display:none;}
 .filter-count{display:inline-flex;align-items:center;justify-content:center;
   min-width:14px;height:14px;padding:0 3px;border-radius:8px;
   background:color-mix(in srgb,var(--accent) 24%,transparent);
   color:var(--cyan);font:9px var(--mono);}
 .filter-panel[hidden]{display:none!important;}
+/* ---- T606: COLLECTIONS ------------------------------------------------
+   A feed like a notebook's, in the trace tab's frame: the cards are the
+   document's own .card, the controls a quiet bar under each. */
+.cell-collect{flex:none;display:inline-flex;align-items:center;gap:5px;
+  margin-left:auto;padding:3px 9px;border:1px solid var(--line);
+  border-radius:20px;background:var(--paper-2);color:var(--ink-2);
+  font:10.5px var(--mono);letter-spacing:.02em;cursor:pointer;
+  white-space:nowrap;}
+.cell-collect .bic{width:11px;height:11px;}
+.cardhead .cell-collect~.cell-history-btn,.cardhead .plot-trace-btn~.cell-collect,
+.cardhead .cell-history-btn~.cell-collect{margin-left:0;}
+.cardhead .cell-collect~.cell-pin,.cardhead .cell-collect~.cell-eye{margin-left:0;}
+.cell-collect:hover,.cell-collect:focus-visible{
+  border-color:color-mix(in srgb,var(--accent) 40%,transparent);
+  color:var(--cyan-deep);}
+body:not(.light) .cell-collect{background:#0e1824;color:var(--chrome-ink-2);
+  border-color:#ffffff1f;}
+body:not(.light) .cell-collect:hover{color:var(--cyan);}
+.col-menu{position:fixed;z-index:420;min-width:220px;max-width:320px;
+  max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:2px;
+  padding:6px;background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:8px;box-shadow:0 12px 40px var(--shadow);}
+.col-menu-h{font:600 9.5px var(--mono);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:4px 6px 6px;}
+.col-menu-row,.col-menu-chip{display:flex;align-items:center;gap:8px;
+  padding:6px 8px;border:0;border-radius:6px;background:none;
+  color:var(--chrome-ink);font:12.5px var(--sans);text-align:left;
+  cursor:pointer;}
+.col-menu-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-menu-row:hover,.col-menu-row:focus-visible,.col-menu-chip:hover{
+  background:var(--surface-hover);}
+.col-menu-new{border-top:1px solid var(--chrome-line);margin-top:2px;
+  border-radius:0 0 6px 6px;color:var(--cyan);}
+.col-menu-chip{font-size:11.5px;color:var(--chrome-ink-2);
+  border:1px dashed var(--chrome-line);margin-bottom:4px;}
+.col-menu-chip[aria-pressed="true"]{color:var(--cyan);
+  border-style:solid;border-color:color-mix(in srgb,var(--accent) 45%,transparent);}
+.col-menu .bic,.col-btn .bic,.col-src .bic{width:13px;height:13px;flex:none;}
+.coltab .col-head{padding-right:0;}
+.col-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.col-btn{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+  border:1px solid var(--line);border-radius:6px;background:none;
+  color:var(--ink-2);font:11px var(--mono);cursor:pointer;white-space:nowrap;}
+.col-btn:hover,.col-btn:focus-visible{border-color:var(--cyan);color:var(--ink);}
+.col-btn.primary{background:var(--cyan);border-color:var(--cyan);color:#04222b;}
+.col-btn.col-rm:hover{border-color:#e0757c;color:#e0757c;}
+body:not(.light) .col-btn{border-color:#ffffff26;color:var(--chrome-ink-2);}
+body:not(.light) .col-btn:hover{color:#fff;border-color:var(--cyan);}
+.col-src{margin-left:auto;flex:none;display:inline-flex;align-items:center;
+  gap:5px;padding:2px 8px;border:1px solid var(--line);border-radius:20px;
+  background:none;color:var(--ink-3);font:10px var(--mono);cursor:pointer;
+  max-width:40%;}
+.col-src span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-src:hover{color:var(--cyan-deep);border-color:var(--cyan);}
+.col-bar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;
+  margin-top:12px;padding-top:9px;border-top:1px dashed var(--line);
+  opacity:.55;transition:opacity .15s;}
+.col-card:hover>.col-bar,.col-bar:focus-within{opacity:1;}
+.col-bar-sp{flex:1;}
+.col-group{margin-bottom:18px;}
+.col-group>.card{margin-bottom:0;}
+/* what is linked hangs from its card, on a rail of the accent */
+.col-under{margin:6px 0 0 22px;padding-left:14px;
+  border-left:2px solid color-mix(in srgb,var(--accent) 38%,transparent);}
+.col-under-body>.card{margin:8px 0 0;}
+.col-fold{display:inline-flex;align-items:center;gap:7px;padding:3px 2px;
+  border:0;background:none;color:var(--ink-3);font:11px var(--mono);
+  cursor:pointer;}
+.col-fold .chev{display:inline-block;transition:transform .15s;}
+.col-fold[aria-expanded="true"] .chev{transform:rotate(90deg);}
+.col-fold:hover{color:var(--cyan-deep);}
+.col-note .note .col-hint{color:var(--ink-3);font-style:italic;}
+.col-edit textarea{width:100%;box-sizing:border-box;font:12.5px/1.5 var(--mono);
+  padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--ink);resize:vertical;}
+.col-edit-row{display:flex;justify-content:flex-end;gap:6px;margin-top:6px;}
+.col-missing{color:var(--ink-3);font-style:italic;}
+.col-empty{padding:28px 22px;border:1px dashed var(--line);border-radius:12px;
+  color:var(--ink-2);line-height:1.6;}
+.col-empty .bic{width:12px;height:12px;vertical-align:-1px;}
+.col-pick{position:fixed;inset:0;z-index:430;background:#0009;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:10vh;}
+.col-pick-box{width:min(600px,92vw);max-height:72vh;display:flex;
+  flex-direction:column;gap:8px;padding:14px;background:var(--chrome-2);
+  border:1px solid var(--chrome-line);border-radius:12px;
+  box-shadow:0 18px 60px var(--shadow);color:var(--chrome-ink);}
+.col-pick-h{font:600 14px var(--sans);}
+.col-pick-q{padding:7px 10px;border:1px solid var(--chrome-line);
+  border-radius:6px;background:var(--chrome-1);color:var(--chrome-ink);
+  font:13px var(--sans);}
+.col-pick-list{overflow:auto;display:flex;flex-direction:column;gap:2px;
+  min-height:80px;}
+.col-pick-row{display:flex;align-items:center;gap:9px;padding:6px 8px;
+  border:0;border-radius:6px;background:none;color:var(--chrome-ink);
+  font:12.5px var(--sans);text-align:left;cursor:pointer;}
+.col-pick-row:hover,.col-pick-row:focus-visible{background:var(--surface-hover);}
+.col-pick-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.col-pick-s{flex:none;font:10.5px var(--mono);color:var(--chrome-ink-2);}
+.col-pick-none{padding:16px;color:var(--chrome-ink-2);text-align:center;}
+.col-pick-foot{display:flex;justify-content:flex-end;}
 body.light .appbar .menubtn{border-color:var(--line);color:var(--ink);}
 body.light .appbar .menubtn:hover{color:var(--ink);}
 body.light .filter-panel{background:transparent;color:var(--ink);box-shadow:none;}
@@ -11380,6 +11484,8 @@ window.MathJax = {
             >Poster</button>
           <button class="dc-mi" type="button" data-for="pr-newview"
             >Custom view</button>
+          <button class="dc-mi" type="button" data-for="pr-newcol"
+            >Collection</button>
           <button class="dc-mi" type="button" data-for="pr-newfold"
             >Folder</button>
           <div class="dc-mhead">open</div>
@@ -11517,13 +11623,20 @@ window.MathJax = {
     </span><span class="abgrp-lab">Apply to</span></span>
     <!-- the filters you keep setting, kept: a custom view remembers them
          with the hidden cells and sizes (File > New > Custom view is the
-         same thing; this is its door where the filters are) -->
+         same thing; this is its door where the filters are); T606's
+         Collect showing files every cell they leave on screen into a
+         collection, where it stays put -->
     <span class="abgrp" id="ab-saveview" data-abtab="filters"><span class="abgrp-row">
       <button class="toggle" id="ab-newview" type="button" data-for="pr-newview"
         title="Keep these filters, hidden cells and sizes as a custom view
  you can reopen from File &gt; Open"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/><path d="M4.6 8.4h4M4.6 10.8h2.6"/><path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/></svg><span
         class="btxt">Save as view</span></button>
-    </span><span class="abgrp-lab">Custom view</span></span>
+      <button class="toggle" id="ab-collect" type="button"
+        aria-haspopup="menu"
+        title="Put every cell showing now into a collection, where it
+ stays without filtering again"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.2 2.4h7.6v11.2L8 10.8l-3.8 2.8Z"/><path d="M8 4.6v3.8M6.1 6.5h3.8"/></svg><span
+        class="btxt">Collect showing</span></button>
+    </span><span class="abgrp-lab">Keep</span></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
          because it plays the same role -- it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
@@ -11761,6 +11874,7 @@ window.MathJax = {
       <button class="pr-mi" data-for="pr-new">Presentation</button>
       <button class="pr-mi" data-for="pr-newpost">Poster</button>
       <button class="pr-mi" data-for="pr-newview">Custom view</button>
+      <button class="pr-mi" data-for="pr-newcol">Collection</button>
       <button class="pr-mi" data-for="pr-newfold">Folder</button>
       <!-- the way back IN for a presentation saved to disk — without it
            a .junoview.html file could only be opened from the File menu
@@ -11779,6 +11893,12 @@ window.MathJax = {
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
        already looking at, so it belongs nearest the notebook list -->
+  <!-- T606: a collection -- cells from any notebook, with your notes -->
+  <button class="pr-btn" hidden id="pr-newcol"
+    title="New collection &mdash; cells from any of your notebooks kept in
+ one view, in your order, with notes of your own">
+    <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="5.4" width="11.2" height="8.2" rx="1"/><path d="M3.8 3.6h8.4M5.4 1.9h5.2"/></svg></span>
+    <span class="pr-t">+ New collection</span></button>
   <button class="pr-btn" hidden id="pr-newview"
     title="New custom view &mdash; a saved, restyled, filtered view of the
  notebook itself (not slides). Style all markdown cells, one section or a
@@ -14093,6 +14213,33 @@ dataset, metric, text, code, hidden</td></tr>
 several cells under one figure (see the README for details)</td></tr>
 </table>
 
+<h3>Collections &mdash; cells from any notebook, with your notes</h3>
+<ul>
+<li>Press <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.2 2.4h7.6v11.2L8 10.8l-3.8 2.8Z"/><path d="M8 4.6v3.8M6.1 6.5h3.8"/></svg> Collect</b> on any cell to keep it
+in a collection &mdash; pick one, or <b>New collection&hellip;</b>. For a
+figure, <b>With the code that makes it</b> also links the cells Plot
+trace finds behind it.</li>
+<li><b>Collect showing</b> on the Filters tab puts every cell the filters
+leave on screen into a collection at once &mdash; the setup you keep
+redoing, filed once, where it stays without filtering again.</li>
+<li>A collection opens as its own tab and reads like a notebook: your
+order, each card saying which notebook it came from (click that to see
+the cell there), and the Filters work on it as they do on a notebook.
+<b>File &#9662;</b> &rarr; <b>Collection</b> (under New) starts an empty
+one.</li>
+<li>Under each card: <b>Note</b> adds a note of your own beneath it
+(Markdown; double-click a note to edit, <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
+keeps it), <b>Its code</b> links the code that makes it, <b>Link a
+cell</b> links any cell from an open notebook. What is linked hangs
+under the card behind <b>Linked: &hellip;</b>, which folds it away and
+brings it back. <b>Up</b>, <b>Down</b> and <b>Remove</b> (with Undo)
+arrange it.</li>
+<li>A collection keeps its own copy of every cell, so it opens without
+the notebooks and does not change when you re-run one. <b>Update from
+notebooks</b> takes the current copy of every cell whose notebook is
+open. It saves, opens, renames and deletes like a presentation.</li>
+</ul>
+
 <h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
 <ul>
 <li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New), or
@@ -15364,6 +15511,8 @@ writes or resembles and implies no endorsement.</small></p>
           >Poster</button>
         <button class="dc-mi" type="button" data-for="pr-newview"
           >Custom view</button>
+        <button class="dc-mi" type="button" data-for="pr-newcol"
+          >Collection</button>
         <button class="dc-mi" type="button" data-for="pr-newfold"
           >Folder</button>
         <div class="dc-mhead">open</div>
@@ -19242,7 +19391,7 @@ items snap to both. Guides, not ink: never printed or exported"
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "alttext": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"8.4\" height=\"8.8\" rx=\"1\"/><path d=\"m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7\"/><path d=\"M11.8 6.3a2.4 2.4 0 0 1 0 3.4\"/><path d=\"M13.4 4.8a4.6 4.6 0 0 1 0 6.4\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autocorrect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "cut": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.7\" cy=\"4\" r=\"1.7\"/><circle cx=\"3.7\" cy=\"12\" r=\"1.7\"/><path d=\"m5.1 5 7.3 6.5M5.1 11l7.3-6.5\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "drift": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8-4.4-2.6-2-4.4 5.6-.6 6.6 1.8\"/><\/svg>", "eraser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z\"/><path d=\"m6.2 5.4 4.4 4.4\"/><path d=\"M8.6 13.4H14\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flicker": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M12.4 8h1.8\"/><path d=\"M4.8 4.8l1.5 1.5\"/><path d=\"M8 12v2.2\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "hideslide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.4\" width=\"12\" height=\"9.2\" rx=\"1\"/><path d=\"M2.6 13.8 13.4 2.2\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "jelly": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><ellipse cx=\"8\" cy=\"8\" rx=\"6.1\" ry=\"3.4\"/><ellipse cx=\"8\" cy=\"8\" rx=\"3.4\" ry=\"6.1\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "picfix": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M8 3v10\"/><path d=\"M9.6 5.4h2.6M9.6 8h2.6M9.6 10.6h2.6\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "push": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"6\" y=\"3.6\" width=\"8.6\" height=\"8.8\" rx=\"1\"/><path d=\"M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shadow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2\" width=\"9\" height=\"9\" rx=\"1\"/><path d=\"M13.6 5.2v8.4H5.2\"/><\/svg>", "shake": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "sorter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"2.6\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"1.6\" y=\"9.2\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"8.8\" y=\"9.2\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "sway": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h12.4\"/><path d=\"M4.6 5.2L1.8 8l2.8 2.8\"/><path d=\"M11.4 5.2L14.2 8l-2.8 2.8\"/><\/svg>", "swing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"2.8\" r=\"1\"/><path d=\"M8 3.8v5.2\"/><circle cx=\"8\" cy=\"11.4\" r=\"2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "textcase": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 13 4.6 5.4 7.4 13\"/><path d=\"M2.8 10.4h3.6\"/><circle cx=\"11.6\" cy=\"11\" r=\"1.9\"/><path d=\"M13.5 9.1V13\"/><path d=\"M5.4 2.8h6.2\"/><path d=\"m10.2 1.4 1.4 1.4-1.4 1.4\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wipe": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"12.4\" height=\"8.8\" rx=\"1\"/><path d=\"M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "alttext": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"8.4\" height=\"8.8\" rx=\"1\"/><path d=\"m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7\"/><path d=\"M11.8 6.3a2.4 2.4 0 0 1 0 3.4\"/><path d=\"M13.4 4.8a4.6 4.6 0 0 1 0 6.4\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autocorrect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "collect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.2 2.4h7.6v11.2L8 10.8l-3.8 2.8Z\"/><path d=\"M8 4.6v3.8M6.1 6.5h3.8\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "cut": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.7\" cy=\"4\" r=\"1.7\"/><circle cx=\"3.7\" cy=\"12\" r=\"1.7\"/><path d=\"m5.1 5 7.3 6.5M5.1 11l7.3-6.5\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "down": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3v9.6\"/><path d=\"m4.2 8.8 3.8 3.8 3.8-3.8\"/><\/svg>", "drift": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8-4.4-2.6-2-4.4 5.6-.6 6.6 1.8\"/><\/svg>", "eraser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z\"/><path d=\"m6.2 5.4 4.4 4.4\"/><path d=\"M8.6 13.4H14\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flicker": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M12.4 8h1.8\"/><path d=\"M4.8 4.8l1.5 1.5\"/><path d=\"M8 12v2.2\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "hideslide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.4\" width=\"12\" height=\"9.2\" rx=\"1\"/><path d=\"M2.6 13.8 13.4 2.2\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "jelly": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><ellipse cx=\"8\" cy=\"8\" rx=\"6.1\" ry=\"3.4\"/><ellipse cx=\"8\" cy=\"8\" rx=\"3.4\" ry=\"6.1\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newcol": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"5.4\" width=\"11.2\" height=\"8.2\" rx=\"1\"/><path d=\"M3.8 3.6h8.4M5.4 1.9h5.2\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newnote": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 2.4h7.4l2.6 2.6v8.6H3Z\"/><path d=\"M5.4 7.2h5.2M5.4 9.8h3.4\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "picfix": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M8 3v10\"/><path d=\"M9.6 5.4h2.6M9.6 8h2.6M9.6 10.6h2.6\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "push": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"6\" y=\"3.6\" width=\"8.6\" height=\"8.8\" rx=\"1\"/><path d=\"M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shadow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2\" width=\"9\" height=\"9\" rx=\"1\"/><path d=\"M13.6 5.2v8.4H5.2\"/><\/svg>", "shake": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "sorter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"2.6\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"1.6\" y=\"9.2\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"8.8\" y=\"9.2\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "sway": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h12.4\"/><path d=\"M4.6 5.2L1.8 8l2.8 2.8\"/><path d=\"M11.4 5.2L14.2 8l-2.8 2.8\"/><\/svg>", "swing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"2.8\" r=\"1\"/><path d=\"M8 3.8v5.2\"/><circle cx=\"8\" cy=\"11.4\" r=\"2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "textcase": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 13 4.6 5.4 7.4 13\"/><path d=\"M2.8 10.4h3.6\"/><circle cx=\"11.6\" cy=\"11\" r=\"1.9\"/><path d=\"M13.5 9.1V13\"/><path d=\"M5.4 2.8h6.2\"/><path d=\"m10.2 1.4 1.4 1.4-1.4 1.4\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "up": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13V3.4\"/><path d=\"m4.2 7.2 3.8-3.8 3.8 3.8\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wipe": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"12.4\" height=\"8.8\" rx=\"1\"/><path d=\"M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -19267,7 +19416,10 @@ items snap to both. Guides, not ink: never printed or exported"
   APP.active=null;
   window.SemApp=APP;
   /* every tab shown in the strip: notebooks first, then their trace tabs */
-  function tabList(){return APP.order.concat(APP.traces);}
+  APP.cols=[];            /* T606: open collections' feeds -- shells with
+                             no notebook tab: their tab is the saved
+                             thing's own, beside the presentations */
+  function tabList(){return APP.order.concat(APP.traces,APP.cols);}
 
   function api(path,body){
     var url=path+(path.indexOf('?')<0?'?':'&')
@@ -19325,7 +19477,10 @@ items snap to both. Guides, not ink: never printed or exported"
     /* an open presentation owns the window even with no notebook behind
        it — a self-contained deck is a document in its own right */
     var deckOn=!!(APP.deckState&&APP.deckState());
-    var welcoming=canOpen&&!deckOn&&(!APP.order.length||atHome);
+    /* T606: so does an open collection, which needs no notebook either */
+    var act=APP.active&&APP.shells[APP.active];
+    var colOn=!!(act&&act.collection)&&!atHome;
+    var welcoming=canOpen&&!deckOn&&!colOn&&(!APP.order.length||atHome);
     if(wel) wel.hidden=!welcoming;
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
@@ -19795,6 +19950,8 @@ items snap to both. Guides, not ink: never printed or exported"
        a presentation opened from Home lands on Home, not on a notebook */
     if(atHome&&APP.order.length){setHash('#/home');return;}
     var a=APP.active&&APP.shells[APP.active];
+    /* T606: a collection's address is its saved name's, as a deck's is */
+    if(a&&a.collection){setHash('#/pres/'+encodeURIComponent(a.title));return;}
     var stem=a&&a.trace?a.source:APP.active;   /* a trace tab -> its source */
     setHash(stem?('#/doc/'+encodeURIComponent(stem)):'#/');
   }
@@ -19923,7 +20080,8 @@ items snap to both. Guides, not ink: never printed or exported"
     var k=String(stem||'');
     if(!defBy[k]){
       var sh=APP.shells&&APP.shells[k];
-      defBy[k]=newF(!!(sh&&sh.trace));
+      /* a collection reads like a notebook: code folded, not a trace */
+      defBy[k]=newF(!!(sh&&sh.trace&&!sh.collection));
     }
     return defBy[k];
   }
@@ -20264,7 +20422,7 @@ items snap to both. Guides, not ink: never printed or exported"
   function resetFilters(){
     var stem=String(activeStem()),pre=stem+'::';
     var sh=APP.shells&&APP.shells[stem];
-    defBy[stem]=newF(!!(sh&&sh.trace));
+    defBy[stem]=newF(!!(sh&&sh.trace&&!sh.collection));
     [secF,secScope,scopeOpen].forEach(function(m){
       for(var k in m){if(k.indexOf(pre)===0) delete m[k];}
     });
@@ -20466,7 +20624,7 @@ items snap to both. Guides, not ink: never printed or exported"
     var dp=$('#doc-present');
     if(dp) dp.hidden=document.body.classList.contains('doc-presenting');
     var ti=$('#trace-inherit');
-    if(ti) ti.hidden=!isTrace;
+    if(ti) ti.hidden=!isTrace||!sh.source;   /* T606: a collection has none */
     /* an empty group still costs a gap in the bar */
     var cg=$('#copy-grp');
     if(cg) cg.hidden=!isTrace;
@@ -24496,6 +24654,27 @@ items snap to both. Guides, not ink: never printed or exported"
       });
       head.insertBefore(b,head.querySelector('.cell-pin')||null);
     });
+    /* ---- T606: COLLECT -- this cell into a collection. On a notebook's
+       cards and a trace's clones (they file the real notebook's cell);
+       never on a collection's own cards, which are already kept. ---- */
+    var colStem=shell.classList&&shell.classList.contains('coltab')?null
+      :(shell.dataset&&(shell.dataset.src||shell.dataset.nb))||stem;
+    if(colStem) $$('.card',shell).forEach(function(card){
+      var head=card.querySelector('.cardhead');
+      if(!head||!card.dataset.anchor||head.querySelector('.cell-collect')) return;
+      var b=document.createElement('button');b.type='button';
+      b.className='cell-collect';
+      b.innerHTML=bic('collect')+' Collect';
+      b.title='Keep this cell in a collection, with notes of your own '
+        +'beside it';
+      b.setAttribute('aria-haspopup','menu');
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        if(window.SemCollect) window.SemCollect.card(b,colStem,card);
+      });
+      head.insertBefore(b,head.querySelector('.cell-pin')
+        ||head.querySelector('.cell-eye')||null);
+    });
     /* ---- code toggles ---- */
     $$('.codetoggle',shell).forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -26589,6 +26768,9 @@ items snap to both. Guides, not ink: never printed or exported"
     return key;
   }
   APP.openTraceTab=openTraceTab;
+  /* T606: what a collection's feed needs from this side */
+  APP.refilter=function(root){applyFilters();applyCodeState(root);};
+  APP.activateOutputs=activateOutputs;
   /* one open per source at a time: repeated Enter/clicks are ignored
      while the fetch runs, and the dialog shows a loading bar */
   var OPENBUSY={},dlgBusyN=0;
@@ -27327,7 +27509,8 @@ items snap to both. Guides, not ink: never printed or exported"
     host.hidden=!list.length;
     syncJump();
     function row(p){
-      var kind=p.view?'custom view':p.poster?'poster':'presentation';
+      var kind=p.col?'collection':p.view?'custom view'
+        :p.poster?'poster':'presentation';
       var b=document.createElement('button');b.className='recent-i';
       b.type='button';
       b.title='Open the '+kind+' “'+p.name+'”'
@@ -27337,7 +27520,8 @@ items snap to both. Guides, not ink: never printed or exported"
       /* NOT the newdeck/newposter/newview icons: those carry the "make a
          new one" affordance; these rows OPEN something that exists */
       var ic=document.createElement('span');ic.className='recent-ic';
-      ic.innerHTML=p.view?bic('eye'):p.poster?bic('pagep'):bic('present');
+      ic.innerHTML=p.col?bic('collect'):p.view?bic('eye')
+        :p.poster?bic('pagep'):bic('present');
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=p.name;
       /* T598: where it lives and when -- not a path repeated six times
@@ -37347,6 +37531,8 @@ window.JunoPptx = (function () {
        nb / style / view or it comes back as a plain deck and clicking its
        row opens the slide editor instead (that was the bug where a custom
        view "took you to the presentation below it"). */
+    /* T606: a collection is cells and notes, not slides (64-collections) */
+    if(p&&p.kind==='collection') return colNorm(p,stem);
     if(p&&p.kind==='view'){
       var v={name:String(p.name||'view'),kind:'view',slides:[],
         nb:typeof p.nb==='string'?p.nb:'',
@@ -37597,6 +37783,16 @@ window.JunoPptx = (function () {
     if(p.live&&typeof p.live==='object')
       Object.keys(p.live).forEach(function(k){
         if(p.live[k]) out.live[ns(k)||k]=1;});
+    embAbsorb(p,ns);
+    /* T321: the clips ride the same rule as `emb` -- absorbed into the
+       session store and IndexedDB on the way in, never kept on `out` */
+    if(p.media&&typeof p.media==='object'&&typeof mediaAbsorb==='function')
+      mediaAbsorb(p);
+    return out;
+  }
+  /* a saved thing's embedded copies into the session store -- a deck's
+     (normPres) and a collection's (colNorm) by the one rule */
+  function embAbsorb(p,ns){
     if(p.emb&&typeof p.emb==='object'){
       /* T305: A COPY THIS SESSION ALREADY HOLDS IS THE FRESHER ONE.
          EMBED is session-global and keyed by ref, not per deck, and
@@ -37619,11 +37815,6 @@ window.JunoPptx = (function () {
       });
       embSaveSoon();
     }
-    /* T321: the clips ride the same rule as `emb` -- absorbed into the
-       session store and IndexedDB on the way in, never kept on `out` */
-    if(p.media&&typeof p.media==='object'&&typeof mediaAbsorb==='function')
-      mediaAbsorb(p);
-    return out;
   }
   function registerShell(stem,data){
     Object.keys(ITEMS).forEach(function(k){
@@ -37960,6 +38151,7 @@ window.JunoPptx = (function () {
     var w=deckWhere(name),m=deckMeta(name);
     return {name:name,slides:((p.slides)||[]).length,
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
+      col:isColPres(p),items:isColPres(p)?(p.items||[]).length:0,
       /* T483: a deck whose home IS this browser is not an "unsaved
          draft" -- Home tagged every browser-kept deck DRAFT */
       /* T598: nor is a deck kept in a file (the browser copy always
@@ -75276,8 +75468,13 @@ window.JunoPptx = (function () {
        the slide stage is (it never opens the slide stage). */
     var vwOpen=isView&&isCur
       &&document.body.classList.contains('styling');
+    /* T606: a collection while its feed is the tab on screen */
+    var isCol=isColPres(p);
+    if(isCol&&(window.SemApp||{}).active===colKey(nm)
+       &&!document.body.classList.contains('welcoming')) vwOpen=true;
     if(vwOpen) t.className+=' current editing';
-    var kindWord=isView?'custom view':isPoster?'poster':'presentation';
+    var kindWord=isCol?'collection':isView?'custom view'
+      :isPoster?'poster':'presentation';
     var selected=isCur&&(editing||vwOpen);
     /* T602: on the editor's title row the tab IS the name, so it is also
        where the rename is -- the centred name steps aside while the tabs
@@ -75286,7 +75483,8 @@ window.JunoPptx = (function () {
       ?('Editing "'+nm+'"'+(top&&!isView?' — double-click to rename'
         :' — Home returns to the start screen'))
       :('Open '+kindWord+' "'+nm+'"'
-        +(isView?' — restyles the notebook itself':' in the builder'));
+        +(isCol?' — cells from your notebooks, with your notes'
+          :isView?' — restyles the notebook itself':' in the builder'));
     var action=top?document.createElement('button'):t;
     if(top){
       /* A regular tab has its own focusable button; the close button is
@@ -75300,7 +75498,8 @@ window.JunoPptx = (function () {
     }
     var ic=document.createElement('span');
     ic.className=top?'tab-pres-ico':'pr-ico';
-    ic.innerHTML=bic(isView?'newview':isPoster?'newposter':'newdeck');
+    ic.innerHTML=bic(isCol?'newcol':isView?'newview'
+      :isPoster?'newposter':'newdeck');
     action.appendChild(ic);
     var lbl=document.createElement('span');lbl.className=top?'tab-t':'pr-t';
     lbl.textContent=nm||'(unnamed)';
@@ -75336,7 +75535,7 @@ window.JunoPptx = (function () {
     });
     /* T602: the tab you are editing renames the deck, the way a
        double-click on a file's name does everywhere else */
-    if(top&&!isView) action.addEventListener('dblclick',function(e){
+    if(top&&!isView&&!isCol) action.addEventListener('dblclick',function(e){
       if(!(isCur&&!deckEl.hidden&&mode==='edit')) return;
       e.preventDefault();startQatRename();
     });
@@ -75368,6 +75567,8 @@ window.JunoPptx = (function () {
       presstrip.appendChild(none);
     }
     renderTopPresTabs();
+    /* T606: a collection's feed closes with its tab */
+    if(typeof colSync==='function') colSync();
     /* ...and re-applied, now the rail rows are back (T75). */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
@@ -75387,10 +75588,12 @@ window.JunoPptx = (function () {
      both it and Home share a complete library dialog for recent work,
      folders, new decks and files. */
   function presentationKind(p){
-    return p.view?'custom view':p.poster?'poster':'presentation';
+    return p.col?'collection':p.view?'custom view'
+      :p.poster?'poster':'presentation';
   }
   function presentationIcon(p){
-    return bic(p.view?'newview':p.poster?'newposter':'newdeck');
+    return bic(p.col?'newcol':p.view?'newview'
+      :p.poster?'newposter':'newdeck');
   }
   /* ---- T599: SEE A PRESENTATION BEFORE OPENING IT --------------------
      (2026-09-30, user: "would be cool when opening files if there was a
@@ -75477,6 +75680,14 @@ window.JunoPptx = (function () {
     host.appendChild(head);
     if(isViewPres(d)){
       note('A custom view restyles its notebook \u2014 it has no slides.');
+      return 0;
+    }
+    if(isColPres(d)){
+      var ni=(d.items||[]).length;
+      note(ni?('A collection of '+ni+' item'+(ni===1?'':'s')
+        +' \u2014 '+(d.items||[]).slice(0,6).map(function(x){
+          return colTitleOf(x,true);}).join(' \u00b7 ')
+        +(ni>6?' \u2026':'')):'An empty collection.');
       return 0;
     }
     var slides=Array.isArray(d.slides)?d.slides:[];
@@ -76585,6 +76796,7 @@ window.JunoPptx = (function () {
     noteSessionOpen(nm);   /* T394: it is open now, whichever kind it is */
     /* a custom view is edited in the document; a deck on the slide stage */
     if(isViewPres(pres)){openCustomView();return;}
+    if(isColPres(pres)){openCollection(nm);return;}   /* T606 */
     openDeck('edit');   /* land straight in the slide editor */
   }
   function newPresentation(){
@@ -81800,7 +82012,7 @@ window.JunoPptx = (function () {
       out.push({name:nm,
         slides:(((p||{}).slides)||[]).length,
         poster:/^a\d/.test(String((p||{}).page||'')),
-        view:isViewPres(p||{}),
+        view:isViewPres(p||{}),col:isColPres(p||{}),
         folder:(p||{}).folder||'',
         draft:!!draft});
     }
@@ -81844,6 +82056,8 @@ window.JunoPptx = (function () {
       loadPresentation(name);
       activePane=-1;
     }
+    /* T606: a collection's address opens its feed, not the slide stage */
+    if(isColPres(pres)){openCollection(name);return true;}
     cur=0;
     if(typeof slide==='number'&&slide>0)
       cur=Math.max(0,Math.min(((pres.slides||[]).length||1)-1,slide));
@@ -85931,6 +86145,9 @@ window.JunoPptx = (function () {
     list.forEach(function(p){
       if(p.kind==='view') return;
       var emb={};
+      /* T606: a collection's cells are refs exactly as a frame's are, and
+         travel the same way, so it too opens with no notebook */
+      var refs=isColPres(p)?colRefsOf(p):[];
       (p.slides||[]).forEach(function(s){
         /* every notebook card this slide places, from BOTH the kinds that
            can hold one. A flip book's frames are refs exactly like a
@@ -85938,14 +86155,14 @@ window.JunoPptx = (function () {
            opened with every frame blank — the one failure the embedded
            snapshots exist to prevent (2026-08-22). They dedupe by ref, so
            a flip book costs the same as placing its figures one by one. */
-        var refs=[];
         (s.annots||[]).forEach(function(a){
           if(!a) return;
           if(a.k==='cell'&&a.ref) refs.push(a.ref);
           else if(a.k==='flip') flipFrames(a).forEach(function(f){
             if(f&&f.ref) refs.push(f.ref);});
         });
-        refs.forEach(function(ref){
+      });
+      refs.forEach(function(ref){
           if(emb[ref]) return;
           var it=resolveRef(ref);
           if(it&&!it.emb){
@@ -85968,7 +86185,6 @@ window.JunoPptx = (function () {
               emb[ref]=cp;
             }
           }
-        });
       });
       if(Object.keys(emb).length) p.emb=emb;
       /* T321: the clips, from the session store -- the one copy a
@@ -90414,6 +90630,932 @@ window.JunoPptx = (function () {
     window.SemDeckImportPptx=importPptxFile;
     window.SemDeckImportPptxSpec=importPptxSpec;
   }
+/* 64-collections.js — Collections: cells from any notebook, kept in one
+   view with notes of your own (T606-T608).
+   ONE FRAGMENT of deck.js's single IIFE, concatenated with its
+   siblings in the order assets.DECK_PARTS names. It does not parse
+   alone and is not meant to: see 00-page.js. */
+  /* ---- COLLECTIONS -----------------------------------------------------
+     (2026-10-01, user: "one thing that is annoying is that i am
+     consistently filter a notebook over and over again ... it would be
+     good if I could create something ... that creates a view similar to
+     the notebooks perhaps, but you can add cells and images etc. from
+     other notebooks. Would be good to be able to add new cells to this,
+     so I could add a figure, then attach some notes to it that appear
+     below in a cell like thing, or can be hidden. Also would be cool to
+     link things together, like I can add code cells and notes below a
+     figure, and clicking the expand shows the code and such that I have
+     linked to it.")
+
+     A COLLECTION is a fourth kind of saved thing beside a presentation,
+     a poster and a custom view -- kind:'collection' in the same store,
+     so it is saved, listed, opened as a tab, renamed and deleted the way
+     they are. It reads like a notebook: a feed of cards, in your order,
+     each saying which notebook it came from, and the notebook's own
+     filters work on it.
+
+       items: [{id, k:'cell', ref, src, title, cap, meta, under, fold}
+               {id, k:'note', md, under, fold}]
+
+     A collected CELL is a ref, exactly as a placed slide frame is, and
+     its picture is the deck's KEPT COPY (EMBED, embedAssets): taken when
+     you collect it, saved with the collection, so it opens with no
+     notebook and does not change under you when a notebook is re-run
+     ("Update from notebooks" takes the new copies on purpose). `meta`
+     carries what the card itself said about the cell -- its kind
+     classes and data-* -- so the filters read a collected card as they
+     read the original. A NOTE is your own markdown cell. `under` is
+     what you linked to an item: notes, its code (the cells Plot trace
+     finds), other cells -- shown beneath it in a drawer you can fold. */
+  function isColPres(p){return !!(p&&p.kind==='collection');}
+  var COL_PFX='col::';
+  function colKey(name){return COL_PFX+name;}
+  function colId(){
+    return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+  function colNormItem(it,ns,top){
+    if(!it||typeof it!=='object') return null;
+    var o={id:(typeof it.id==='string'&&it.id)?it.id:colId()};
+    if(it.k==='note'){
+      o.k='note';o.md=typeof it.md==='string'?it.md:'';
+    } else if(typeof it.ref==='string'&&it.ref){
+      o.k='cell';o.ref=ns(it.ref);
+      o.src=(typeof it.src==='string'&&it.src)?it.src
+        :(splitRef(o.ref)[0]||'');
+      if(typeof it.title==='string') o.title=it.title;
+      if(typeof it.cap==='string'&&it.cap) o.cap=it.cap;
+      if(it.meta&&typeof it.meta==='object') o.meta=deep(it.meta);
+    } else return null;
+    if(top&&Array.isArray(it.under)){
+      var u=it.under.map(function(x){return colNormItem(x,ns,false);})
+        .filter(Boolean);
+      if(u.length) o.under=u;
+    }
+    if(it.fold) o.fold=1;
+    if(+it.at>0) o.at=+it.at;
+    return o;
+  }
+  /* normPres hands a collection here: the same namespacing of refs, the
+     same absorbing of its embedded copies, and nothing a deck carries */
+  function colNorm(p,stem){
+    function ns(a){
+      if(!a) return a;
+      if(String(a).indexOf('::')>=0) return a;
+      return stem?nsKey(stem,a):(normRef(a)||a);
+    }
+    var out={name:String(p.name||'collection'),kind:'collection',
+      slides:[],items:[]};
+    (Array.isArray(p.items)?p.items:[]).forEach(function(it){
+      var o=colNormItem(it,ns,true); if(o) out.items.push(o);});
+    if(typeof p.folder==='string'&&p.folder) out.folder=p.folder;
+    embAbsorb(p,ns);
+    return out;
+  }
+  /* every cell a collection shows, for embedAssets */
+  function colRefsOf(p){
+    var out=[];
+    (p&&p.items||[]).forEach(function(it){
+      if(it.k==='cell'&&it.ref) out.push(it.ref);
+      (it.under||[]).forEach(function(u){
+        if(u.k==='cell'&&u.ref) out.push(u.ref);});
+    });
+    return out;
+  }
+  function colNames(){
+    var seen={},out=[];
+    allSaved().concat(draftNames().map(function(n){
+      return loadDraft(n)||{};})).forEach(function(p){
+      if(isColPres(p)&&p.name&&!seen[p.name]){seen[p.name]=1;out.push(p.name);}
+    });
+    if(isColPres(pres)&&pres.name&&!seen[pres.name]) out.push(pres.name);
+    /* the one you used last first */
+    var meta=deckMetaAll();
+    out.sort(function(a,b){
+      return ((meta[b]||{}).edited||0)-((meta[a]||{}).edited||0);});
+    return out;
+  }
+  /* ---- the model, current or not ---------------------------------------
+     A collection is edited where it is: as `pres` when it is the one open
+     (so undo, autosave and the readout see it like any deck), or as its
+     stored copy when something is collected INTO it from a notebook
+     while a presentation is the current one -- switching `pres` under an
+     open builder to file a figure would be the wrong surprise. */
+  function colModel(name){
+    if(pres&&pres.name===name&&isColPres(pres)) return pres;
+    var p=presentationByName(name);
+    return isColPres(p)?normPres(deep(p)):null;
+  }
+  function colCommit(model){
+    if(model===pres){markDirty();}
+    else {
+      /* its browser copy, which is what opening it reads first; the
+         project file takes it the next time it is open and saved, by the
+         one path every deck takes there */
+      draftSet(model.name,JSON.stringify(model));
+      deckMetaSet(model.name,{edited:Date.now(),slides:0});
+    }
+    colRefresh(model.name);
+  }
+  /* ---- taking a cell out of a notebook ---------------------------------
+     The kept copy is captured NOW, from the live card (fromLive, so a
+     deck's own kept copy of the same ref is not what gets filed), the way
+     embedAssets captures a frame; the card's own facts ride in `meta`. */
+  function colCapture(ref){
+    var it=resolveRef(ref); if(!it) return false;
+    var b=cloneBody(ref,true); if(!b) return false;
+    var e={title:it.title||'',kind:it.kind||'',html:b.outerHTML};
+    var cc=cloneCode(ref);
+    if(cc) e.code=cc.outerHTML;
+    embStore(normRef(ref)||ref,e);
+    embSaveSoon();
+    return true;
+  }
+  function colItemFromCard(stem,card){
+    if(!stem||!card||!card.dataset.anchor) return null;
+    var ref=nsKey(stem,card.dataset.anchor);
+    if(!resolveRef(ref)) return null;
+    colCapture(ref);
+    var d=card.dataset;
+    var keep=[].filter.call(card.classList,function(c){
+      return /^(k-|has-|ckmain-)/.test(c);});
+    var meta={cls:keep.join(' ')};
+    ['kind','role','note','noout','labelled','ck'].forEach(function(k){
+      if(d[k]!=null&&d[k]!=='') meta[k]=d[k];});
+    var bd=card.querySelector('.cardhead .badge');
+    if(bd) meta.badge=bd.textContent.trim();
+    var cw=card.querySelector(':scope>.codewrap');
+    if(cw){meta.cw=cw.className.replace(/\bcode-off\b/g,'').trim();
+      if(cw.classList.contains('bare')) meta.cwOpen=1;}
+    var ti=card.querySelector('.cardhead .cardtitle');
+    var o={id:colId(),k:'cell',ref:normRef(ref)||ref,src:stem,
+      title:ti?ti.textContent.trim():'',meta:meta,at:Date.now()};
+    var cap=card.querySelector(':scope>.caption');
+    if(cap&&cap.innerHTML.trim()) o.cap=cap.innerHTML;
+    return o;
+  }
+  /* the cells Plot trace finds behind a figure, minus the figure itself:
+     what "its code" means when you attach it */
+  function colCodeCards(stem,card){
+    if(!card||!card.dataset.anchor) return [];
+    var it=traceItemFor(stem,card.dataset.anchor);
+    if(!it||it.emb) return [];
+    var g=lineageForItem(it.ns); if(!g) return [];
+    var out=[];
+    g.steps.forEach(function(s){
+      if(s.ns===it.ns||!s.hasCode) return;
+      var c=cardEl(s.ns); if(c) out.push(c);
+    });
+    return out;
+  }
+  /* ---- adding -------------------------------------------------------- */
+  function colAdd(name,items,underId){
+    var model=colModel(name); if(!model||!items.length) return 0;
+    var host=model.items;
+    if(underId){
+      var par=null;
+      model.items.forEach(function(x){if(x.id===underId) par=x;});
+      if(!par) return 0;
+      par.under=par.under||[];host=par.under;
+      delete par.fold;   /* what you just linked is what you want to see */
+    }
+    var have={},n=0;
+    host.forEach(function(x){if(x.ref) have[x.ref]=1;});
+    items.forEach(function(it){
+      if(!it) return;
+      if(it.ref&&have[it.ref]) return;
+      if(it.ref) have[it.ref]=1;
+      host.push(it);n++;
+    });
+    if(n) colCommit(model);
+    return n;
+  }
+  function newCollection(then){
+    var n=1,nm='collection';
+    while(presentationByName(nm)){n++;nm='collection '+n;}
+    askText({title:'New collection',
+      what:'A collection keeps cells from any of your notebooks in one '
+        +'view, in your order, with notes of your own beside them.',
+      value:nm,ok:'Create'},function(v){
+      v=String(v==null?'':v).trim();
+      if(!v) return;
+      if(presentationByName(v)){
+        colToast('There is already something called “'+v+'”');
+        return;}
+      var model={name:v,kind:'collection',slides:[],items:[]};
+      draftSet(v,JSON.stringify(model));
+      deckMetaSet(v,{edited:Date.now(),slides:0});
+      if(then) then(v); else openCollection(v);
+    });
+  }
+  /* ---- saying so, on the document side -------------------------------- */
+  function colToast(msg,acts){
+    var t=$('#doc-toast'); if(!t){toast(msg);return;}
+    t.textContent=msg+' ';
+    (acts||[]).forEach(function(a){
+      var b=document.createElement('button');
+      b.type='button';b.className='toast-act';b.textContent=a[0];
+      b.addEventListener('click',function(){t.hidden=true;a[1]();});
+      t.appendChild(b);
+    });
+    t.hidden=false;
+    clearTimeout(t._tm);
+    t._tm=setTimeout(function(){t.hidden=true;},acts&&acts.length?9000:4500);
+  }
+  function colSaid(name,n,what){
+    if(!n){colToast('Already in “'+name+'”');return;}
+    colToast((what||(n+' cell'+(n===1?'':'s')))+' added to “'
+      +name+'”.',[['Open',function(){openCollection(name);}]]);
+  }
+  /* ---- THE COLLECT MENU ------------------------------------------------
+     One small menu for every door: a cell's Collect, the Filters tab's
+     Collect showing, a collection's own Link. Each collection is a row,
+     the one you used last first; New collection... makes one and files
+     into it. `pick(name)` does the filing. */
+  var colMenuEl=null;
+  function colMenuClose(){
+    if(colMenuEl){colMenuEl.remove();colMenuEl=null;}
+  }
+  document.addEventListener('click',function(e){
+    if(colMenuEl&&!colMenuEl.contains(e.target)) colMenuClose();});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&colMenuEl){e.stopPropagation();colMenuClose();}
+  },true);
+  function colMenu(anchor,o){
+    var again=colMenuEl&&colMenuEl._for===anchor;
+    colMenuClose();
+    if(again) return;
+    var m=document.createElement('div');
+    m.className='col-menu';m.setAttribute('role','menu');m._for=anchor;
+    var h=document.createElement('div');h.className='col-menu-h';
+    h.textContent=o.head||'Add to a collection';
+    m.appendChild(h);
+    var withCode=null;
+    if(o.code){
+      withCode=document.createElement('button');
+      withCode.type='button';withCode.className='col-menu-chip';
+      var on=false;
+      try{on=localStorage.getItem('jv-collect-code')==='1';}catch(e){}
+      withCode.setAttribute('aria-pressed',on?'true':'false');
+      withCode.innerHTML=bic('code')+' With the code that makes it';
+      withCode.title='Also link the cells Plot trace finds behind this '
+        +'figure, under it';
+      withCode.addEventListener('click',function(e){
+        e.stopPropagation();
+        var v=withCode.getAttribute('aria-pressed')!=='true';
+        withCode.setAttribute('aria-pressed',v?'true':'false');
+        try{localStorage.setItem('jv-collect-code',v?'1':'0');}catch(e2){}
+      });
+      m.appendChild(withCode);
+    }
+    function wants(){
+      return !!(withCode&&withCode.getAttribute('aria-pressed')==='true');}
+    colNames().forEach(function(nm){
+      var r=document.createElement('button');
+      r.type='button';r.className='col-menu-row';r.setAttribute('role','menuitem');
+      r.innerHTML=bic('newcol')+'<span></span>';
+      r.querySelector('span').textContent=nm;
+      r.addEventListener('click',function(e){
+        e.stopPropagation();colMenuClose();o.pick(nm,wants());});
+      m.appendChild(r);
+    });
+    var nw=document.createElement('button');
+    nw.type='button';nw.className='col-menu-row col-menu-new';
+    nw.setAttribute('role','menuitem');
+    nw.innerHTML=bic('plus')+'<span>New collection…</span>';
+    nw.addEventListener('click',function(e){
+      e.stopPropagation();
+      var w=wants();
+      colMenuClose();
+      newCollection(function(nm){o.pick(nm,w);});
+    });
+    m.appendChild(nw);
+    document.body.appendChild(m);
+    colMenuEl=m;
+    var r=anchor.getBoundingClientRect();
+    var top=r.bottom+4;
+    if(top+m.offsetHeight>window.innerHeight-8)
+      top=Math.max(8,r.top-4-m.offsetHeight);
+    m.style.top=Math.round(top)+'px';
+    m.style.left=Math.round(Math.max(6,Math.min(r.left,
+      window.innerWidth-m.offsetWidth-6)))+'px';
+    var first=m.querySelector('.col-menu-row');
+    if(first) first.focus();
+  }
+  /* a notebook card's Collect */
+  function colCollectCard(btn,stem,card){
+    var fig=!!card.querySelector('.cb-fig');
+    colMenu(btn,{code:fig,pick:function(name,withCode){
+      var it=colItemFromCard(stem,card);
+      if(!it){colToast('That cell could not be read');return;}
+      if(withCode){
+        var under=colCodeCards(stem,card).map(function(c){
+          return colItemFromCard(stem,c);}).filter(Boolean);
+        if(under.length) it.under=under;
+      }
+      var n=colAdd(name,[it]);
+      colSaid(name,n,n?('“'+(it.title||'This cell')+'”'
+        +(it.under?(' and '+it.under.length+' cell'
+          +(it.under.length===1?'':'s')+' of its code'):'')):'');
+    }});
+  }
+  /* the Filters tab's Collect showing: every card the filters leave on
+     screen in this notebook, in order -- the setup you keep redoing,
+     filed once */
+  function colShowingCards(){
+    var A=window.SemApp||{};
+    var sh=A.active&&A.shells&&A.shells[A.active];
+    if(!sh||!sh.el||sh.collection) return null;
+    var stem=sh.trace?sh.source:A.active;
+    var cards=$$('.content .card',sh.el).filter(function(c){
+      return c.getClientRects().length&&!c.classList.contains('is-hidden');});
+    return {stem:stem,cards:cards};
+  }
+  function colCollectShowing(btn){
+    var s=colShowingCards();
+    if(!s){colToast('Open a notebook first — Collect showing keeps '
+      +'the cells it shows');return;}
+    if(!s.cards.length){colToast('Nothing is showing to collect');return;}
+    colMenu(btn,{head:'Add the '+s.cards.length+' cells showing to',
+      pick:function(name){
+        var items=s.cards.map(function(c){
+          return colItemFromCard(s.stem,c);}).filter(Boolean);
+        var n=colAdd(name,items);
+        colSaid(name,n);
+      }});
+  }
+  /* ---- opening one -------------------------------------------------- */
+  function openCollection(name){
+    var A=window.SemApp||{};
+    name=name||(pres&&pres.name);
+    if(!name) return;
+    if(!(pres&&pres.name===name&&isColPres(pres))){
+      if(A.exitStyling) A.exitStyling();
+      lsSet(PFX+'last',name);
+      loadPresentation(name);
+    }
+    if(!isColPres(pres)) return;
+    if(!deckEl.hidden) closeDeck();
+    notePresentationOpen(name);
+    colShow();
+  }
+  function colShell(name){
+    var A=window.SemApp||{};
+    var key=colKey(name),sh=A.shells&&A.shells[key];
+    if(sh) return sh;
+    var el=document.createElement('div');
+    el.className='shell nbshell tracetab coltab';
+    el.dataset.nb=key;el.dataset.col=name;
+    var rail=document.createElement('aside');rail.className='rail';
+    el.appendChild(rail);
+    var stage=document.createElement('main');stage.className='stage';
+    var content=document.createElement('div');content.className='content';
+    stage.appendChild(content);
+    var tv=document.createElement('div');tv.className='treeview';
+    stage.appendChild(tv);
+    el.appendChild(stage);
+    ($('#docs')||document.body).appendChild(el);
+    sh={el:el,data:{stem:key,items:[]},path:'',title:name,
+      trace:true,collection:true,source:null};
+    A.shells[key]=sh;
+    if(!A.cols) A.cols=[];
+    if(A.cols.indexOf(key)<0) A.cols.push(key);
+    return sh;
+  }
+  function colShow(){
+    var A=window.SemApp||{};
+    var sh=colShell(pres.name);
+    colRender(sh,pres);
+    if(A.activate) A.activate(colKey(pres.name));
+    if(A.refilter) A.refilter(sh.el);
+    renderPresTabs();
+  }
+  function colClose(key){
+    var A=window.SemApp||{};
+    var sh=A.shells&&A.shells[key]; if(!sh) return;
+    if(sh.el.parentNode) sh.el.parentNode.removeChild(sh.el);
+    delete A.shells[key];
+    if(A.cols) A.cols=A.cols.filter(function(k){return k!==key;});
+    if(A.active===key){
+      A.active=null;
+      var back=(A.order||[]).slice(-1)[0];
+      if(back&&A.activate) A.activate(back);
+      else if(A.refreshChrome) A.refreshChrome();
+    }
+  }
+  /* an open collection's shell follows its tab: closed, deleted or
+     renamed, the shell goes (renderPresTabs calls this) */
+  function colSync(){
+    var A=window.SemApp||{};
+    var open=openPresentationNames();
+    (A.cols||[]).slice().forEach(function(key){
+      var nm=key.slice(COL_PFX.length);
+      if(open.indexOf(nm)<0||!isColPres(presentationByName(nm))) colClose(key);
+    });
+  }
+  function colRefresh(name){
+    var A=window.SemApp||{};
+    var sh=A.shells&&A.shells[colKey(name)]; if(!sh) return;
+    var model=colModel(name); if(!model) return;
+    colRender(sh,model);
+    if(A.refilter) A.refilter(sh.el);
+  }
+  /* ---- THE FEED --------------------------------------------------------
+     Rebuilt whole on every change: a collection is a page of cards, not
+     thousands, and one renderer cannot disagree with itself. */
+  var COL_CODETOGGLE='<button class="codetoggle" aria-expanded="false">'
+    +'<span class="chev">›</span><span class="ct-show">Show code</span>'
+    +'<span class="ct-hide">Hide code</span></button>';
+  function colBtn(icon,word,title,fn,cls){
+    var b=document.createElement('button');
+    b.type='button';b.className='col-btn'+(cls?' '+cls:'');
+    b.innerHTML=icon+'<span>'+esc(word)+'</span>';
+    b.title=title;
+    b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
+    return b;
+  }
+  /* a note's title is its opening heading, if it has one; `nav` asks
+     for the outline's row, which says the first line either way */
+  function colTitleOf(it,nav){
+    if(it.k==='note'){
+      var first=String(it.md||'').split('\n').filter(function(l){
+        return l.trim();})[0]||'';
+      var head=/^\s*#{1,4}\s+/.test(first);
+      if(!head&&!nav) return 'Note';
+      first=first.replace(/^\s*#+\s*/,'').replace(/[*_`]/g,'').trim();
+      return first.length>70?first.slice(0,68)+'…':(first||'Note');
+    }
+    return it.title||'Cell';
+  }
+  function colCellCard(it){
+    var m=it.meta||{};
+    var c=document.createElement('article');
+    c.className='card in col-card '+(m.cls||'');
+    c.id='card-col-'+it.id;
+    c.dataset.col=it.id;c.dataset.secid='col';
+    ['kind','role','note','noout','labelled','ck'].forEach(function(k){
+      if(m[k]!=null&&m[k]!=='') c.dataset[k]=m[k];});
+    var head=document.createElement('header');head.className='cardhead';
+    var bd=document.createElement('span');bd.className='badge';
+    bd.textContent=m.badge||m.kind||'cell';
+    var t=document.createElement('h3');t.className='cardtitle';
+    t.textContent=colTitleOf(it);
+    head.appendChild(bd);head.appendChild(t);
+    var src=document.createElement('button');
+    src.type='button';src.className='col-src';
+    src.innerHTML=bic('open')+'<span></span>';
+    src.querySelector('span').textContent=it.src||'notebook';
+    src.title='From '+(it.src||'a notebook')
+      +' — click to see this cell there';
+    src.addEventListener('click',function(e){
+      e.stopPropagation();colGoSource(it);});
+    head.appendChild(src);
+    c.appendChild(head);
+    var b=cloneBody(it.ref);
+    if(!b){
+      b=document.createElement('div');b.className='cardbody col-missing';
+      b.textContent='Open '+(it.src||'its notebook')+' and press Update '
+        +'from notebooks — there is no copy of this cell here yet.';
+    }
+    c.appendChild(b);
+    if(it.cap){
+      var p=document.createElement('p');p.className='caption';
+      p.innerHTML=it.cap;c.appendChild(p);
+    }
+    var code=frameCode(it.ref);
+    if(code){
+      var cw=document.createElement('div');
+      cw.className=m.cw||'codewrap';
+      if(m.cwOpen) cw.setAttribute('data-open','1');
+      cw.innerHTML=COL_CODETOGGLE;
+      var cb=document.createElement('div');cb.className='codebody';
+      cb.appendChild(code);cw.appendChild(cb);
+      c.appendChild(cw);
+    }
+    return c;
+  }
+  function colNoteCard(it,model){
+    var c=document.createElement('article');
+    c.className='card in k-note col-card col-note';
+    c.id='card-col-'+it.id;
+    c.dataset.col=it.id;c.dataset.secid='col';
+    c.dataset.kind='note';c.dataset.role='markdown';c.dataset.note='1';
+    c.dataset.noout='0';c.dataset.labelled='1';
+    var head=document.createElement('header');head.className='cardhead';
+    var bd=document.createElement('span');bd.className='badge';
+    bd.textContent='your note';
+    var t=document.createElement('h3');t.className='cardtitle';
+    t.textContent=colTitleOf(it);
+    head.appendChild(bd);head.appendChild(t);
+    c.appendChild(head);
+    var body=document.createElement('div');body.className='cardbody';
+    var nt=document.createElement('div');nt.className='note';
+    /* a note that opens with a heading wears it as its title, once */
+    var md=String(it.md||'');
+    var lead=/^\s*#{1,4}\s+[^\n]*\n?/.exec(md);
+    if(lead) md=md.slice(lead[0].length);
+    nt.innerHTML=md.trim()?notesHtml(md)
+      :(it.md?'':'<p class="col-hint">An empty note — Edit to write it.</p>');
+    body.appendChild(nt);c.appendChild(body);
+    /* a double-click is the quick way in, as on a slide's text */
+    nt.addEventListener('dblclick',function(){colEditNote(c,it,model);});
+    return c;
+  }
+  function colEditNote(card,it,model){
+    if(card.querySelector('.col-edit')) return;
+    var body=card.querySelector('.cardbody');
+    var nt=body.querySelector('.note');
+    var box=document.createElement('div');box.className='col-edit';
+    var ta=document.createElement('textarea');
+    ta.value=it.md||'';ta.rows=Math.max(4,Math.min(18,
+      String(it.md||'').split('\n').length+2));
+    ta.setAttribute('aria-label','Your note, in Markdown');
+    ta.placeholder='Write in Markdown: **bold**, *italic*, - lists, '
+      +'# headings, `code`';
+    var row=document.createElement('div');row.className='col-edit-row';
+    var save=document.createElement('button');save.type='button';
+    save.className='col-btn primary';save.textContent='Save';
+    save.title='Keep this note (Ctrl+Enter)';
+    var cancel=document.createElement('button');cancel.type='button';
+    cancel.className='col-btn';cancel.textContent='Cancel';
+    cancel.title='Leave the note as it was (Esc)';
+    row.appendChild(cancel);row.appendChild(save);
+    box.appendChild(ta);box.appendChild(row);
+    if(nt) nt.hidden=true;
+    body.appendChild(box);
+    function done(keep){
+      if(keep){it.md=ta.value;colCommit(model);}
+      else colRefresh(model.name);
+    }
+    save.addEventListener('click',function(e){e.stopPropagation();done(true);});
+    cancel.addEventListener('click',function(e){e.stopPropagation();done(false);});
+    ta.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();done(true);}
+      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();done(false);}
+    });
+    ta.focus();
+  }
+  /* where an item sits: its list and its place in it */
+  function colWhere(model,id){
+    var hit=null;
+    model.items.forEach(function(x,i){
+      if(x.id===id) hit={list:model.items,i:i,top:true,item:x};
+      (x.under||[]).forEach(function(u,j){
+        if(u.id===id) hit={list:x.under,i:j,top:false,item:u,parent:x};});
+    });
+    return hit;
+  }
+  function colMove(model,id,dir){
+    var w=colWhere(model,id); if(!w) return;
+    var j=w.i+dir; if(j<0||j>=w.list.length) return;
+    var t=w.list[j];w.list[j]=w.list[w.i];w.list[w.i]=t;
+    colCommit(model);
+  }
+  function colRemove(model,id){
+    var w=colWhere(model,id); if(!w) return;
+    var gone=w.list.splice(w.i,1)[0];
+    if(w.parent&&!w.parent.under.length) delete w.parent.under;
+    colCommit(model);
+    colToast('Removed “'+colTitleOf(gone,true)+'”.',[['Undo',function(){
+      var m2=colModel(model.name); if(!m2) return;
+      var list=m2.items;
+      if(w.parent){
+        var par=null;m2.items.forEach(function(x){
+          if(x.id===w.parent.id) par=x;});
+        if(!par) return;
+        par.under=par.under||[];list=par.under;
+      }
+      list.splice(Math.min(w.i,list.length),0,gone);
+      colCommit(m2);
+    }]]);
+  }
+  function colAddNote(model,underId){
+    var it={id:colId(),k:'note',md:'',at:Date.now()};
+    if(underId){
+      var w=colWhere(model,underId); if(!w) return;
+      w.item.under=w.item.under||[];w.item.under.push(it);
+      delete w.item.fold;
+    } else model.items.push(it);
+    colCommit(model);
+    var A=window.SemApp||{};
+    var sh=A.shells&&A.shells[colKey(model.name)];
+    var card=sh&&sh.el.querySelector('#card-col-'+it.id);
+    if(card){
+      card.scrollIntoView({block:'center'});
+      colEditNote(card,it,colModel(model.name)||model);
+    }
+  }
+  /* T608: what "its code" is, read from the notebook it came from */
+  function colAttachCode(model,it){
+    var card=cardEl(it.ref);
+    if(!card){
+      colToast('Open '+(it.src||'its notebook')+' to find the code that '
+        +'makes this — Plot trace reads it from the notebook');
+      return;
+    }
+    var stem=(resolveRef(it.ref)||{}).nb||it.src;
+    var under=colCodeCards(stem,card).map(function(c){
+      return colItemFromCard(stem,c);}).filter(Boolean);
+    if(!under.length){
+      colToast('Plot trace finds no other code behind this cell');return;}
+    var n=colAdd(model.name,under,it.id);
+    colToast(n?(n+' cell'+(n===1?'':'s')+' of code linked under “'
+      +colTitleOf(it,true)+'”'):'Its code is already linked here');
+  }
+  /* T608: link any cell from an open notebook under an item */
+  function colPick(title,cb){
+    var A=window.SemApp||{};
+    var rows=[];
+    (A.order||[]).forEach(function(stem){
+      var sh=A.shells[stem]; if(!sh||!sh.el) return;
+      $$('.content .card',sh.el).forEach(function(c){
+        if(!c.dataset.anchor) return;
+        var ti=c.querySelector('.cardhead .cardtitle');
+        var bd=c.querySelector('.cardhead .badge');
+        rows.push({stem:stem,card:c,title:ti?ti.textContent.trim():'',
+          badge:bd?bd.textContent.trim():''});
+      });
+    });
+    if(!rows.length){
+      colToast('Open a notebook to link one of its cells');return;}
+    var ov=document.createElement('div');ov.className='col-pick';
+    var box=document.createElement('div');box.className='col-pick-box';
+    box.setAttribute('role','dialog');box.setAttribute('aria-label',title);
+    var h=document.createElement('div');h.className='col-pick-h';
+    h.textContent=title;
+    var q=document.createElement('input');q.type='search';
+    q.className='col-pick-q';q.placeholder='Find a cell by its title or notebook';
+    q.setAttribute('aria-label','Find a cell');
+    var list=document.createElement('div');list.className='col-pick-list';
+    var foot=document.createElement('div');foot.className='col-pick-foot';
+    var x=document.createElement('button');x.type='button';
+    x.className='col-btn';x.textContent='Cancel';
+    foot.appendChild(x);
+    box.appendChild(h);box.appendChild(q);box.appendChild(list);
+    box.appendChild(foot);ov.appendChild(box);
+    document.body.appendChild(ov);
+    function shut(){ov.remove();document.removeEventListener('keydown',key,true);}
+    function key(e){if(e.key==='Escape'){e.preventDefault();e.stopPropagation();shut();}}
+    document.addEventListener('keydown',key,true);
+    ov.addEventListener('click',function(e){if(e.target===ov) shut();});
+    x.addEventListener('click',shut);
+    function paint(){
+      var words=q.value.toLowerCase().split(/\s+/).filter(Boolean);
+      list.innerHTML='';
+      rows.filter(function(r){
+        var hay=(r.title+' '+r.stem+' '+r.badge).toLowerCase();
+        return words.every(function(w){return hay.indexOf(w)>=0;});
+      }).slice(0,200).forEach(function(r){
+        var b=document.createElement('button');b.type='button';
+        b.className='col-pick-row';
+        var bd=document.createElement('span');bd.className='badge';
+        bd.textContent=r.badge||'cell';
+        var t=document.createElement('span');t.className='col-pick-t';
+        t.textContent=r.title||'(untitled cell)';
+        var s=document.createElement('span');s.className='col-pick-s';
+        s.textContent=r.stem;
+        b.appendChild(bd);b.appendChild(t);b.appendChild(s);
+        b.addEventListener('click',function(){shut();cb(r.stem,r.card);});
+        list.appendChild(b);
+      });
+      if(!list.children.length){
+        var none=document.createElement('div');none.className='col-pick-none';
+        none.textContent='No cell matches';list.appendChild(none);
+      }
+    }
+    q.addEventListener('input',paint);
+    q.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){var f=list.querySelector('.col-pick-row');
+        if(f){e.preventDefault();f.click();}}
+    });
+    paint();q.focus();
+  }
+  function colLinkCell(model,it){
+    colPick('Link a cell under “'+colTitleOf(it,true)+'”',
+      function(stem,card){
+        var o=colItemFromCard(stem,card); if(!o) return;
+        var n=colAdd(model.name,[o],it.id);
+        colToast(n?('Linked “'+o.title+'”'):'That cell is already linked here');
+      });
+  }
+  function colGoSource(it){
+    var A=window.SemApp||{};
+    var ri=resolveRef(it.ref);
+    var stem=(ri&&!ri.emb&&ri.nb)||'';
+    if(!stem||!A.shells[stem]){
+      colToast((it.src||'Its notebook')+' is not open — open it to '
+        +'see this cell in place');return;}
+    A.activate(stem);
+    var c=cardEl(it.ref);
+    if(c){c.scrollIntoView({behavior:'smooth',block:'center'});
+      c.classList.add('target-flash');
+      setTimeout(function(){c.classList.remove('target-flash');},1400);}
+  }
+  /* "Update from notebooks": every collected cell whose notebook is open
+     takes that notebook's current copy -- on purpose, never by itself */
+  function colUpdate(model){
+    var n=0,miss={};
+    colRefsOf(model).forEach(function(ref){
+      if(cardEl(ref)){if(colCapture(ref)) n++;}
+      else miss[splitRef(ref)[0]||'?']=1;
+    });
+    colRefresh(model.name);
+    var m=Object.keys(miss);
+    colToast(n?('Updated '+n+' cell'+(n===1?'':'s')+' from '
+      +'their notebooks'+(m.length?(' — '+m.join(', ')+' '
+        +(m.length===1?'is':'are')+' not open'):'')+'.')
+      :('Nothing to update — open the notebooks these cells came '
+        +'from first.'));
+  }
+  function colBar(model,it,top){
+    var bar=document.createElement('footer');bar.className='col-bar';
+    if(it.k==='note') bar.appendChild(colBtn(bic('pen'),'Edit','Write this note '
+      +'(or double-click it)',function(){
+        var A=window.SemApp||{};
+        var sh=A.shells[colKey(model.name)];
+        var card=sh&&sh.el.querySelector('#card-col-'+it.id);
+        if(card) colEditNote(card,it,model);}));
+    if(top){
+      bar.appendChild(colBtn(bic('newnote'),'Note','Add a note of your own '
+        +'under this',function(){colAddNote(model,it.id);}));
+      if(it.k==='cell'){
+        bar.appendChild(colBtn(bic('code'),'Its code','Link the cells Plot '
+          +'trace finds behind this, under it',function(){
+            colAttachCode(model,it);}));
+        bar.appendChild(colBtn(bic('link'),'Link a cell','Link any cell from '
+          +'an open notebook under this',function(){
+            colLinkCell(model,it);}));
+      }
+    }
+    var sp=document.createElement('span');sp.className='col-bar-sp';
+    bar.appendChild(sp);
+    bar.appendChild(colBtn(bic('up'),'Up','Move this up',function(){
+      colMove(model,it.id,-1);}));
+    bar.appendChild(colBtn(bic('down'),'Down','Move this down',function(){
+      colMove(model,it.id,1);}));
+    bar.appendChild(colBtn(bic('exit'),'Remove','Take this out of the '
+      +'collection (its notebook keeps it)',function(){
+        colRemove(model,it.id);},'col-rm'));
+    return bar;
+  }
+  function colItemEl(model,it,top){
+    var card=it.k==='note'?colNoteCard(it,model):colCellCard(it);
+    card.appendChild(colBar(model,it,top));
+    if(!top) card.classList.add('col-att');
+    return card;
+  }
+  function colUnderWords(list){
+    var notes=list.filter(function(u){return u.k==='note';}).length;
+    var cells=list.length-notes,w=[];
+    if(notes) w.push(notes+' note'+(notes===1?'':'s'));
+    if(cells) w.push(cells+' cell'+(cells===1?'':'s'));
+    return w.join(', ');
+  }
+  function colRender(sh,model){
+    var A=window.SemApp||{};
+    var el=sh.el,name=model.name;
+    sh.title=name;
+    var items=model.items||[];
+    var srcs={};
+    colRefsOf(model).forEach(function(r){srcs[splitRef(r)[0]||'?']=1;});
+    var nsrc=Object.keys(srcs);
+    /* the rail: one row per item, as a notebook's outline has */
+    var rail=el.querySelector('.rail');rail.innerHTML='';
+    var rh=document.createElement('div');rh.className='railhead';
+    var rt=document.createElement('h1');rt.className='railtitle';
+    rt.textContent=name;
+    var rm=document.createElement('div');rm.className='railmeta';
+    rm.textContent=items.length+' item'+(items.length===1?'':'s')
+      +(nsrc.length?(' · from '+nsrc.join(', ')):'');
+    rh.appendChild(rt);rh.appendChild(rm);rail.appendChild(rh);
+    var nav=document.createElement('nav');nav.className='nav';
+    nav.setAttribute('aria-label','Collection');
+    items.forEach(function(it){
+      var a=document.createElement('a');
+      a.className='navitem '+(it.k==='note'?'k-note'
+        :((it.meta||{}).cls||'').split(' ').filter(function(c){
+          return /^k-/.test(c);})[0]||'k-code');
+      a.href='#card-col-'+it.id;
+      var d=document.createElement('span');d.className='dot';
+      var t=document.createElement('span');t.className='navitem-t';
+      t.textContent=colTitleOf(it,true);
+      a.appendChild(d);a.appendChild(t);nav.appendChild(a);
+    });
+    nav.addEventListener('click',function(e){
+      var a=e.target.closest?e.target.closest('.navitem'):null;
+      if(!a) return;
+      e.preventDefault();
+      var c=el.querySelector(a.getAttribute('href'));
+      if(c){c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.classList.add('target-flash');
+        setTimeout(function(){c.classList.remove('target-flash');},1200);}
+    });
+    rail.appendChild(nav);
+    /* the feed */
+    var content=el.querySelector('.content');content.innerHTML='';
+    var head=document.createElement('div');
+    head.className='tracetab-head col-head';
+    var eb=document.createElement('span');eb.className='tracetab-eyebrow';
+    eb.textContent='collection';
+    var h=document.createElement('h2');h.className='tracetab-t';
+    h.textContent=name;
+    h.title='Double-click to rename';
+    h.addEventListener('dblclick',function(){colRename(model);});
+    var sub=document.createElement('span');sub.className='tracetab-sub';
+    sub.textContent=items.length
+      ?(items.length+' item'+(items.length===1?'':'s')
+        +(nsrc.length?(' from '+nsrc.join(', ')):''))
+      :'empty';
+    var tools=document.createElement('div');tools.className='col-tools';
+    tools.appendChild(colBtn(bic('newnote'),'Add a note','A note of your own, '
+      +'at the end',function(){colAddNote(model,null);}));
+    tools.appendChild(colBtn(bic('link'),'Add a cell','Any cell from an open '
+      +'notebook, at the end',function(){
+        colPick('Add a cell to “'+name+'”',function(stem,card){
+          var o=colItemFromCard(stem,card); if(!o) return;
+          var n=colAdd(name,[o]);
+          colToast(n?('Added “'+o.title+'”'):'Already in this collection');
+        });}));
+    tools.appendChild(colBtn(bic('reload'),'Update from notebooks','Take the '
+      +'current copy of every cell whose notebook is open',function(){
+        colUpdate(colModel(name)||model);}));
+    tools.appendChild(colBtn(bic('pen'),'Rename','Give this collection a new '
+      +'name',function(){colRename(model);}));
+    head.appendChild(eb);head.appendChild(h);head.appendChild(sub);
+    head.appendChild(tools);
+    content.appendChild(head);
+    var sec=document.createElement('section');
+    sec.className='section col-sec';sec.dataset.sec='col';
+    sec.id='sec-col';
+    if(!items.length){
+      var empty=document.createElement('div');empty.className='col-empty';
+      empty.innerHTML='<b>Nothing collected yet.</b> Press <b>'
+        +bic('collect')+' Collect</b> on any cell in a notebook, or '
+        +'<b>Collect showing</b> on the Filters tab to keep everything '
+        +'the filters leave on screen. <b>Add a note</b> above writes one '
+        +'of your own.';
+      sec.appendChild(empty);
+    }
+    items.forEach(function(it){
+      var g=document.createElement('div');g.className='col-group';
+      g.dataset.col=it.id;
+      g.appendChild(colItemEl(model,it,true));
+      if(it.under&&it.under.length){
+        var u=document.createElement('div');u.className='col-under';
+        var open=!it.fold;
+        var fb=document.createElement('button');fb.type='button';
+        fb.className='col-fold';
+        fb.setAttribute('aria-expanded',open?'true':'false');
+        fb.innerHTML='<span class="chev">›</span><span></span>';
+        fb.querySelector('span:last-child').textContent='Linked: '
+          +colUnderWords(it.under);
+        fb.title=open?'Fold away what is linked under this'
+          :'Show what is linked under this';
+        fb.addEventListener('click',function(e){
+          e.stopPropagation();
+          if(it.fold) delete it.fold; else it.fold=1;
+          colCommit(model);
+        });
+        var ub=document.createElement('div');ub.className='col-under-body';
+        ub.hidden=!open;
+        it.under.forEach(function(x){ub.appendChild(colItemEl(model,x,false));});
+        u.appendChild(fb);u.appendChild(ub);
+        g.appendChild(u);
+      }
+      sec.appendChild(g);
+    });
+    content.appendChild(sec);
+    /* the document side's own wiring: code toggles, figure zoom, plots */
+    if(A.wireCardBehaviors) A.wireCardBehaviors(sec,colKey(name));
+    if(A.activateOutputs) A.activateOutputs(sec,true);
+    if(window.MathJax&&MathJax.typesetPromise)
+      MathJax.typesetPromise([sec]).catch(function(){});
+  }
+  function colRename(model){
+    askText({title:'Rename collection',value:model.name,ok:'Rename'},
+      function(v){
+        v=String(v==null?'':v).trim();
+        if(!v||v===model.name) return;
+        var old=model.name;
+        if(!(pres&&pres.name===old)) openCollection(old);
+        if(renamePresentation(v)){
+          colClose(colKey(old));
+          openCollection(v);
+        }
+      });
+  }
+  /* ---- the doors ------------------------------------------------------ */
+  window.SemCollect={
+    card:colCollectCard,
+    showing:colCollectShowing,
+    open:openCollection,
+    names:colNames
+  };
+  function colBoot(){
+    var nb=$('#pr-newcol');
+    if(nb) nb.addEventListener('click',function(){newCollection();});
+    var cs=$('#ab-collect');
+    if(cs) cs.addEventListener('click',function(e){
+      e.stopPropagation();colCollectShowing(cs);});
+  }
 /* 99-boot.js — THE BOOT SEQUENCE. Last on purpose, and last by filename: everything above only declares.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
    siblings in filename order by assets.deck_js(). It does not
@@ -90534,6 +91676,7 @@ window.JunoPptx = (function () {
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   tabRowBoot();               /* New and Open beside the tabs (T596) */
+  colBoot();                  /* Collections: New, Collect showing (T606) */
   partsBoot();                /* the Parts view's doors (T601) */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
