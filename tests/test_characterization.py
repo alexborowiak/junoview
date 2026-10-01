@@ -2280,8 +2280,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T557 (2026-10-01): the slide sorter -- the overview map while editing
 # picks slides, drags them as a block, duplicates, sections and deletes
 # them in one undo step each; View has its door.
-EXPECTED_MD5 = "d8c40907a6daf2cae033450b523c89f4"
-EXPECTED_BYTES = 4968345
+# T574 (2026-10-01): the presenter view checked against PowerPoint's --
+# notes size, a slide by its number in the show and the presenter window,
+# Black screen and End show there, and the time of day.
+EXPECTED_MD5 = "41190c104661c1da02545293f8a9fe58"
+EXPECTED_BYTES = 4973935
 
 
 def _render_example() -> str:

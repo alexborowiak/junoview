@@ -66,6 +66,8 @@ RUNTIME_IDS = {
     "jvp-clock", "jvp-count", "jvp-goal", "jvp-next-b", "jvp-notes",
     "jvp-now", "jvp-pace", "jvp-pause", "jvp-prev", "jvp-reset",
     "jvp-late",   # T476: Running late in the presenter window
+    # T574: the time of day, Black screen, End show and the notes' size
+    "jvp-tod", "jvp-black", "jvp-end", "jvp-nsmall", "jvp-nbig",
     "jvp-slideclock",
     "jvp-talk", "jvp-find", "jvp-hits",
     # The PDF/print export builds a throwaway container:

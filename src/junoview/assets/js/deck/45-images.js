@@ -2417,6 +2417,15 @@
     else if(msg.do==='late'){   /* T476 */
       if(typeof runLate==='function') runLate(lateFrom<0);
     }
+    /* T574: black the room's screen, and end the show, from here */
+    else if(msg.do==='black'){
+      if(typeof talkBlack==='function') talkBlack();
+    }
+    else if(msg.do==='end'){
+      var xb=$('#deck-exit');
+      if(xb) xb.click();
+      return;
+    }
     else if(msg.do==='closed'){presWin=null;return;}
     presenterPush();
   }
@@ -2528,6 +2537,13 @@
       pauseAt:presPauseAt,goal:slideGoal(sl),
       talk:pres.talkMins||0,slide:shownAt,count:shown.length,
       planned:Math.round(planned),slideIndex:cur};
+    /* T574: and Black screen wears its own */
+    var bk=doc.getElementById('jvp-black');
+    if(bk){
+      var blackOn=(typeof talkBlackEl!=='undefined'&&!!talkBlackEl);
+      bk.setAttribute('aria-pressed',blackOn?'true':'false');
+      bk.textContent=blackOn?'Screen is black':'Black screen';
+    }
     /* T476: the button wears the state, like the show's own */
     var lb2=doc.getElementById('jvp-late');
     if(lb2){
@@ -2618,6 +2634,9 @@
       +'.jvp-hit i{color:#8ea4b6;font-style:normal;}'
       +'.jvp-nohit{color:#6e8394;font-size:12px;padding:6px 2px;}'
       +'.jvp-foot{grid-column:1/-1;display:flex;gap:8px;align-items:center;}'
+      +'.jvp-notesh{display:flex;align-items:center;gap:6px;}'
+      +'.jvp-mini{font-size:10px;padding:1px 7px;}'
+      +'#jvp-tod{font-size:15px;color:#dce6ee;}'
       +'</style></head><body><div class="jvp">'
       +'<div class="jvp-bar">'
       +'<span class="jvp-clock" id="jvp-clock">0:00</span>'
@@ -2634,12 +2653,25 @@
       +'Running late</button>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
       +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
+      /* T574: what PowerPoint's presenter view also has -- the time of
+         day, a black screen for the room, and a way to end the show */
+      +'<span class="jvp-sub" id="jvp-tod" title="The time now"></span>'
+      +'<button class="jvp-b" id="jvp-black" aria-pressed="false" '
+      +'title="Black the screen the audience sees (B). Again to bring it '
+      +'back">Black screen</button>'
+      +'<button class="jvp-b" id="jvp-end" title="Stop presenting">'
+      +'End show</button>'
       +'</div>'
       +'<div class="jvp-stage" id="jvp-now"></div>'
       +'<div class="jvp-side">'
       +'<div class="jvp-nextwrap"><span class="jvp-lab">next</span>'
       +'<div class="jvp-stage" id="jvp-next"></div></div>'
-      +'<span class="jvp-lab">notes</span>'
+      /* T574: the notes' own size, kept in this browser */
+      +'<span class="jvp-lab jvp-notesh">notes'
+      +'<button class="jvp-b jvp-mini" id="jvp-nsmall" '
+      +'title="Smaller notes">A\u2212 smaller</button>'
+      +'<button class="jvp-b jvp-mini" id="jvp-nbig" '
+      +'title="Larger notes">A+ larger</button></span>'
       +'<div class="jvp-notes" id="jvp-notes"></div>'
       /* SEARCH, in the window you are actually looking at (T30). The
          same slideHits the map filters with -- one matcher, two doors. */
@@ -2686,6 +2718,27 @@
       send({jv:'cmd',do:'timer',act:'reset'});};
     var lb=d.getElementById('jvp-late');   /* T476 */
     if(lb) lb.onclick=function(){send({jv:'cmd',do:'late'});};
+    /* T574 */
+    var bkb=d.getElementById('jvp-black');
+    if(bkb) bkb.onclick=function(){send({jv:'cmd',do:'black'});};
+    var enb=d.getElementById('jvp-end');
+    if(enb) enb.onclick=function(){send({jv:'cmd',do:'end'});};
+    var NOTES_PX_KEY='jv-presenter-notes-px';
+    var notesPx=function(){
+      var v=18;
+      try{v=+localStorage.getItem(NOTES_PX_KEY)||18;}catch(err){}
+      return Math.max(12,Math.min(44,v));
+    };
+    var setNotesPx=function(v){
+      v=Math.max(12,Math.min(44,v));
+      try{localStorage.setItem(NOTES_PX_KEY,String(v));}catch(err){}
+      var nn=d.getElementById('jvp-notes');
+      if(nn) nn.style.fontSize=v+'px';
+    };
+    setNotesPx(notesPx());
+    var nsm=d.getElementById('jvp-nsmall'),nbg=d.getElementById('jvp-nbig');
+    if(nsm) nsm.onclick=function(){setNotesPx(notesPx()-2);};
+    if(nbg) nbg.onclick=function(){setNotesPx(notesPx()+2);};
     var pb=d.getElementById('jvp-pause');
     pb.onclick=function(){
       var paused=!!(presWin.__jvState&&presWin.__jvState.pauseAt);
@@ -2703,7 +2756,23 @@
       hits.classList.toggle('on',!!q);
       if(!q) return;
       var found=slideHits(q);
+      /* T574: a number is a slide number first -- PowerPoint's jump */
+      if(/^[0-9]{1,4}$/.test(q)){
+        var at=slideAtNumber(+q);
+        if(at>=0){
+          var gb=d.createElement('button');
+          gb.className='jvp-hit';
+          var gn=d.createElement('b');gn.textContent=q;
+          gb.appendChild(gn);
+          gb.appendChild(d.createTextNode('Go to slide '+q+' \u2014 '
+            +(filmText(pres.slides[at])||'')));
+          gb.onclick=function(){
+            send({jv:'cmd',do:'goto',n:at});fi.value='';drawHits();};
+          hits.appendChild(gb);
+        }
+      }
       if(!found.length){
+        if(hits.firstChild) return;   /* the number found one */
         var no=d.createElement('div');
         no.className='jvp-nohit';no.textContent='No slide says that.';
         hits.appendChild(no);return;
@@ -2747,7 +2816,24 @@
     });
     /* the arrow keys work in the presenter window too - you will have the
        clicker pointed at whichever window has focus */
+    var pvNum='',pvNumT=0;
     d.addEventListener('keydown',function(e){
+      /* T574: a number then Enter, and B, as in the show */
+      if(/^[0-9]$/.test(e.key)){
+        pvNum=(pvNum+e.key).slice(-4);
+        clearTimeout(pvNumT);
+        pvNumT=setTimeout(function(){pvNum='';},2500);
+        return;
+      }
+      if(e.key==='Enter'&&pvNum){
+        e.preventDefault();
+        var at=slideAtNumber(+pvNum);pvNum='';
+        if(at>=0) send({jv:'cmd',do:'goto',n:at});
+        return;
+      }
+      pvNum='';
+      if(e.key==='b'||e.key==='B'){
+        e.preventDefault();send({jv:'cmd',do:'black'});return;}
       if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){
         e.preventDefault();send({jv:'cmd',do:'next'});}
       else if(e.key==='ArrowLeft'||e.key==='PageUp'){
@@ -2758,6 +2844,9 @@
        owns - so pausing on either side agrees */
     w.setInterval(function(){
       var st=w.__jvState; if(!st) return;
+      var tod=d.getElementById('jvp-tod');   /* T574: the time now */
+      if(tod) tod.textContent=new Date().toLocaleTimeString([],
+        {hour:'2-digit',minute:'2-digit'});
       var now=st.pauseAt||Date.now();
       var ms=now-st.start-st.paused;
       var sec=Math.max(0,Math.round(ms/1000));

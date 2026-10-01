@@ -139,6 +139,12 @@
       document.body.appendChild(talkBlackEl);
     }
     talkToolsSync();
+    talkBlackSync();
+  }
+  /* T574: whichever window blacked it, the presenter view's button
+     follows */
+  function talkBlackSync(){
+    if(typeof presenterPush==='function') presenterPush();
   }
   /* leaving the show puts every tool down: setUIMode calls this */
   function talkToolsReset(){
@@ -147,10 +153,37 @@
   }
   /* the show's keys for these (55-sections-and-strip's key map calls
      this first in view mode); true when the key was taken */
+  /* T574: A SLIDE BY ITS NUMBER. PowerPoint's own: type the number the
+     strip gives it, then Enter. The digits wait a moment for the next
+     one; anything else lets them go. A hidden slide can be reached this
+     way, as in PowerPoint -- it is the one way into it during a show. */
+  var talkNum='',talkNumT=0;
+  function slideAtNumber(n){
+    for(var i=0;i<(pres.slides||[]).length;i++)
+      if(!slideIsAlt(i)&&slideNo(i)===n) return i;
+    return -1;
+  }
+  function talkNumKey(k){
+    if(/^[0-9]$/.test(k)){
+      talkNum=(talkNum+k).slice(-4);
+      clearTimeout(talkNumT);
+      talkNumT=setTimeout(function(){talkNum='';},2500);
+      return true;
+    }
+    if(k==='Enter'&&talkNum){
+      var want=+talkNum,at=slideAtNumber(want);
+      talkNum='';clearTimeout(talkNumT);
+      if(at>=0) go(at); else toast('There is no slide '+want);
+      return true;
+    }
+    talkNum='';
+    return false;
+  }
   function talkToolKey(e){
     if(mode!=='view'||deckEl.hidden) return false;
     if(e.ctrlKey||e.metaKey||e.altKey) return false;
     var k=String(e.key||'');
+    if(talkNumKey(k)) return true;
     if(k==='Escape'&&(talkTool||talkBlackEl)){talkToolsReset();return true;}
     if(k==='p'||k==='P'){setTalkTool('laser');return true;}
     if(k==='m'||k==='M'){setTalkTool('lens');return true;}

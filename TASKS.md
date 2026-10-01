@@ -10580,9 +10580,24 @@ choice in the editor (T506, T507).
   the pointer. Driven at 1440x900: "circle" left only the ellipse,
   "callout" the speech bubble, "zzz" said so, "star" + Enter armed the
   star, and after drawing one the gallery led with the star.
-- [ ] **T574 — Presenter view, checked against PowerPoint's.** Timer pause
+- [x] **T574 — Presenter view, checked against PowerPoint's.** Timer pause
   and reset, next-slide preview, notes text size, slide jump; whatever is
   missing is added.
+  *Done 2026-10-01.* Checked: the clock's Pause and Reset clock, the
+  next-slide preview, the notes (Markdown), Running late, the pace
+  against the plan and a word search to jump were there. Missing and
+  added: the notes' size (A- smaller / A+ larger, 12-44px, kept in this
+  browser); a slide by its NUMBER -- PowerPoint's number then Enter, in
+  the show (talkNumKey, the digits waiting 2.5 s; a hidden slide can be
+  reached this way, as in PowerPoint) and in the presenter window, and a
+  number in its search offers "Go to slide N" first; Black screen for the
+  room, from the presenter window as well as B, its button following
+  whichever window blacked it; End show; and the time of day beside the
+  clock. Driven at 1440x900 with a real presenter window: 5 Enter went to
+  slide 5, 2 Enter to 2, 9 Enter said there is no slide 9; the notes went
+  to 22px; "4" offered Go to slide 4 and went there; Black screen blacked
+  the show and read "Screen is black", again brought it back; End show
+  left the show.
 - [ ] **T575 — Touch and pen.** Move, resize and rotate answer pointer
   events, so a touchscreen or a pen works on the canvas.
 - [x] **T576 — Selection like PowerPoint.** Shift-click toggles, a second
