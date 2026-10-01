@@ -124,6 +124,8 @@
                                  for every transient menu (T135) */
   dlgKeysBoot();              /* every dialog: Esc cancels, Enter the verb
                                  (T568) */
+  touchBoot();                /* a finger or a pen moves, sizes, turns
+                                 (T575) */
   handoffBoot();              /* a saved file's Open in Junoview (T597) --
                                  before the route, whose hash it clears */
   /* both IIFEs + their route hooks are now wired — restore the URL's view */

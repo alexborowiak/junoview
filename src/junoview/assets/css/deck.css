@@ -5211,6 +5211,10 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .an-item.an-flh.an-flip img,.an-item.an-flv.an-flip img,
 .an-item.an-flh video,.an-item.an-flv video{
   transform:scale(var(--an-sx),var(--an-sy));}
+/* T575: a finger on the editing canvas edits it rather than scrolling
+   or zooming the page; presenting, only a sideways swipe is the show's */
+.deck.editing .annot-layer{touch-action:none;}
+.deck:not(.editing) .deck-stage{touch-action:pan-y pinch-zoom;}
 /* T573: the Shapes window's search, in its header */
 .strip-all-h{display:flex;align-items:center;gap:8px;}
 .strip-find{flex:1;min-width:0;max-width:260px;margin-left:auto;

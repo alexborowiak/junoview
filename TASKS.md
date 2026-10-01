@@ -10598,8 +10598,29 @@ choice in the editor (T506, T507).
   to 22px; "4" offered Go to slide 4 and went there; Black screen blacked
   the show and read "Screen is black", again brought it back; End show
   left the show.
-- [ ] **T575 — Touch and pen.** Move, resize and rotate answer pointer
+- [x] **T575 — Touch and pen.** Move, resize and rotate answer pointer
   events, so a touchscreen or a pen works on the canvas.
+  *Done 2026-10-01.* Every canvas gesture -- select, move, resize,
+  rotate, draw, an arrow's ends, the drag box -- is written against
+  mousedown on the layer and mousemove/mouseup on the document; a pen
+  sends those only sometimes and a finger drag never (the page
+  scrolls), so on a touchscreen the canvas could be tapped and nothing
+  moved. Rather than give forty handlers a second language, touchBoot
+  speaks a finger or a pen to them in the one they know: pointerdown on
+  the editing canvas becomes their mousedown on what was touched, each
+  pointermove a mousemove on what is under it, pointerup the mouseup;
+  preventDefault on the pointerdown stops the browser adding its own
+  copies, and the canvas takes touch-action:none while editing. A second
+  finger is ignored while the first is down; the mouse is never bridged;
+  the crop handles, already on pointer events, are left alone; a box
+  being typed in places its own caret. Two taps in one place are a
+  double-click (start typing), a touch held still for 600 ms opens the
+  right-click menu, and presenting, a quick sideways swipe is the next or
+  the last step (the stage keeps pan-y and pinch-zoom). Driven with touch
+  pointer events at 1440x900: a diamond dragged 72 by 33 px, its corner
+  handle widened it from 115 to 159 px, a double-tap on a text box
+  started typing, a held touch opened the canvas menu, and a swipe left
+  in the show went to slide 2.
 - [x] **T576 — Selection like PowerPoint.** Shift-click toggles, a second
   click on stacked objects reaches the one underneath, Esc steps out of
   a group; each checked and whatever is missing added.

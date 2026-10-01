@@ -2283,8 +2283,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T574 (2026-10-01): the presenter view checked against PowerPoint's --
 # notes size, a slide by its number in the show and the presenter window,
 # Black screen and End show there, and the time of day.
-EXPECTED_MD5 = "41190c104661c1da02545293f8a9fe58"
-EXPECTED_BYTES = 4973935
+# T575 (2026-10-01): touch and pen -- touchBoot bridges a finger or a pen
+# on the editing canvas to the mouse handlers, with double-tap, hold-for-
+# menu and a swipe in the show.
+EXPECTED_MD5 = "6f318b8c1b88150a2fe29a2e1cca193a"
+EXPECTED_BYTES = 4979444
 
 
 def _render_example() -> str:

@@ -2152,6 +2152,109 @@
         +'walks every object on the slide',5000);
     }
   }
+  /* ---- TOUCH AND PEN (T575) -------------------------------------------
+     Every gesture on the canvas -- select, move, resize, rotate, draw,
+     an arrow's ends, the drag box -- is written against mouse events: a
+     mousedown on the layer, then mousemove and mouseup on the document.
+     A pen sends those only sometimes and a finger drag never does (the
+     browser scrolls instead), so on a touchscreen the canvas could be
+     tapped but nothing could be moved. Rather than teach forty handlers
+     a second language, a finger or a pen on the editing canvas is spoken
+     to them in the one they know: pointerdown becomes their mousedown on
+     what was touched, each pointermove a mousemove on what is under it,
+     pointerup the mouseup -- and preventDefault on the pointerdown stops
+     the browser adding its own copies, so nothing happens twice. A
+     second finger is ignored while the first is down. Two taps in the
+     same place are a double-click (which starts typing in a box), and a
+     touch held still is the right-click menu. Presenting, a finger swipe
+     left or right is the next or the last step. The mouse is untouched:
+     pointerType 'mouse' is never bridged. */
+  var touchId=null;
+  function touchFire(target,type,src,buttons){
+    if(!target||!target.dispatchEvent) return;
+    target.dispatchEvent(new MouseEvent(type,{bubbles:true,cancelable:true,
+      view:window,clientX:src.clientX,clientY:src.clientY,
+      screenX:src.screenX,screenY:src.screenY,button:0,
+      buttons:buttons,shiftKey:!!src.shiftKey,ctrlKey:!!src.ctrlKey,
+      altKey:!!src.altKey,metaKey:!!src.metaKey,
+      detail:type==='dblclick'?2:1}));
+  }
+  function touchBoot(){
+    if(!stage||typeof PointerEvent!=='function') return;
+    var lastTap=null,holdT=0;
+    stage.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='mouse'||!e.isPrimary) return;
+      if(mode==='view'){touchSwipe(e);return;}
+      if(mode!=='edit') return;
+      var t=e.target;
+      if(!t||!t.closest||!t.closest('.annot-layer')) return;
+      /* typing in a box: the caret is the browser's to place */
+      if(t.closest('[contenteditable="true"]')) return;
+      if(touchId!==null) return;
+      touchId=e.pointerId;
+      e.preventDefault();
+      var x0=e.clientX,y0=e.clientY,moved=false;
+      touchFire(t,'mousedown',e,1);
+      /* held still for 600 ms: the right-click menu */
+      clearTimeout(holdT);
+      holdT=setTimeout(function(){
+        if(moved||touchId===null) return;
+        var tg=document.elementFromPoint(x0,y0)||t;
+        touchFire(document,'mouseup',{clientX:x0,clientY:y0,
+          screenX:e.screenX,screenY:e.screenY},0);
+        tg.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,
+          cancelable:true,view:window,clientX:x0,clientY:y0,button:2}));
+        end();
+      },600);
+      function mv(ev){
+        if(ev.pointerId!==touchId) return;
+        ev.preventDefault();
+        if(Math.abs(ev.clientX-x0)>4||Math.abs(ev.clientY-y0)>4){
+          moved=true;clearTimeout(holdT);}
+        var tg=document.elementFromPoint(ev.clientX,ev.clientY)||document;
+        touchFire(tg,'mousemove',ev,1);
+      }
+      function up(ev){
+        if(ev.pointerId!==touchId) return;
+        clearTimeout(holdT);
+        touchFire(document,'mouseup',ev,0);
+        end();
+        if(ev.type==='pointercancel') return;
+        /* two taps in one place are a double-click */
+        var now=Date.now();
+        if(!moved&&lastTap&&now-lastTap.t<400
+           &&Math.abs(ev.clientX-lastTap.x)<24
+           &&Math.abs(ev.clientY-lastTap.y)<24){
+          var tg=document.elementFromPoint(ev.clientX,ev.clientY)||t;
+          touchFire(tg,'dblclick',ev,0);
+          lastTap=null;
+        } else lastTap=moved?null:{t:now,x:ev.clientX,y:ev.clientY};
+      }
+      function end(){
+        touchId=null;
+        document.removeEventListener('pointermove',mv,true);
+        document.removeEventListener('pointerup',up,true);
+        document.removeEventListener('pointercancel',up,true);
+      }
+      document.addEventListener('pointermove',mv,true);
+      document.addEventListener('pointerup',up,true);
+      document.addEventListener('pointercancel',up,true);
+    });
+  }
+  /* presenting: a quick sideways swipe is the next or the last step */
+  function touchSwipe(e){
+    if(e.pointerType!=='touch') return;
+    var x0=e.clientX,y0=e.clientY,t0=Date.now();
+    function up(ev){
+      document.removeEventListener('pointerup',up,true);
+      if(ev.pointerId!==e.pointerId||mode!=='view') return;
+      var dx=ev.clientX-x0,dy=ev.clientY-y0;
+      if(Date.now()-t0>700||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5)
+        return;
+      if(dx<0) advance(); else backStep();
+    }
+    document.addEventListener('pointerup',up,true);
+  }
   /* ---- MARQUEE: drag a box on empty canvas to select what it touches --
      Mousedown on nothing used to deselect and stop there, so the only way
      to select several items was to shift-click each one - and shift-click
