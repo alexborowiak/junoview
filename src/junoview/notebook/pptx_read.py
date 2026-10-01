@@ -1064,8 +1064,9 @@ class _SlideReader:
         csld = root.find("./p:cSld", NS)
         if csld is not None:
             name = csld.get("name") or ""
-        out = {"bg": bg, "items": self.items, "trans": trans,
-               "notes": self._notes(), "name": name}
+        out: dict[str, Any] = {"bg": bg, "items": self.items,
+                               "trans": trans, "notes": self._notes(),
+                               "name": name}
         if tdur:
             out["tdur"] = tdur
         return out
@@ -1374,12 +1375,12 @@ class _SlideReader:
         pfx: dict[str, int] = {}
         lum = blip.find("a:lum", NS)
         if lum is not None:
-            b = round(_int(lum.get("bright"), 0) / 1000)
-            c = round(_int(lum.get("contrast"), 0) / 1000)
-            if b:
-                pfx["b"] = b
-            if c:
-                pfx["c"] = c
+            bright = round(_int(lum.get("bright"), 0) / 1000)
+            contrast = round(_int(lum.get("contrast"), 0) / 1000)
+            if bright:
+                pfx["b"] = bright
+            if contrast:
+                pfx["c"] = contrast
         if blip.find("a:grayscl", NS) is not None:
             pfx["g"] = 1
         if pfx:
