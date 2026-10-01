@@ -8103,6 +8103,15 @@ body.light .ovw-find{background:var(--input-bg);color:var(--ink);
   border-color:var(--border-strong);}
 .ovw-n{font-family:var(--mono);font-size:9px;color:var(--chrome-ink-2);}
 .ovw-tile .mini-diagram{width:100%;height:76px;}
+/* T557: the sorter's picked slides, its drop marks and its tools */
+.deck-overview.sorting .ovw-tiles{gap:14px;}
+.ovw-tile.pick{border-color:var(--accent);background:color-mix(in srgb,
+  var(--accent) 16%,transparent);box-shadow:0 0 0 2px var(--accent);}
+.ovw-tile.drop-before{box-shadow:-5px 0 0 -1px var(--accent);}
+.ovw-tile.drop-after{box-shadow:5px 0 0 -1px var(--accent);}
+.ovw-tile.hid .ovw-n{text-decoration:line-through;}
+.ovw-tools{display:flex;gap:6px;margin-left:8px;}
+.ovw-tools .dbtn{height:28px;}
 .ovw-lab{font-size:10.5px;color:#b9cad8;line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 body.light .deck-overview{background:var(--chrome-0);}
@@ -9072,6 +9081,10 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .an-item.an-flh.an-flip img,.an-item.an-flv.an-flip img,
 .an-item.an-flh video,.an-item.an-flv video{
   transform:scale(var(--an-sx),var(--an-sy));}
+/* T575: a finger on the editing canvas edits it rather than scrolling
+   or zooming the page; presenting, only a sideways swipe is the show's */
+.deck.editing .annot-layer{touch-action:none;}
+.deck:not(.editing) .deck-stage{touch-action:pan-y pinch-zoom;}
 /* T573: the Shapes window's search, in its header */
 .strip-all-h{display:flex;align-items:center;gap:8px;}
 .strip-find{flex:1;min-width:0;max-width:260px;margin-left:auto;
@@ -10411,6 +10424,34 @@ body.light .seq-cell b{color:var(--ink);}
   color:#dbe7ef;background:#0d1722;border:1px solid #ffffff22;
   border-radius:5px;padding:7px 9px;}
 .chart-btns{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+/* T562: the numbers as a grid */
+.chart-data{width:min(620px,94vw);display:flex;flex-direction:column;
+  align-items:stretch;}
+.chart-data .chart-btns{align-self:flex-end;}
+.cd-modes{display:flex;gap:4px;margin:2px 0 6px;}
+.cd-mode{height:24px;padding:0 10px;font-size:12px;}
+.cd-mode[aria-pressed="true"]{background:color-mix(in srgb,var(--accent)
+  22%,transparent);border-color:var(--accent);}
+.cd-host{max-height:min(46vh,380px);overflow:auto;margin-top:6px;}
+.cd-grid{border-collapse:collapse;font-size:12px;}
+.cd-grid th,.cd-grid td{padding:0;border:1px solid #ffffff1f;
+  position:relative;}
+.cd-grid td.cd-rowx{border:0;padding-left:3px;}
+.cd-in{width:86px;height:24px;box-sizing:border-box;padding:2px 6px;
+  font:inherit;font-variant-numeric:tabular-nums;text-align:right;
+  color:#dbe7ef;background:#0d1722;border:0;border-radius:0;}
+.cd-in.cd-cat{text-align:left;width:110px;}
+.cd-in.cd-head{font-weight:600;text-align:left;background:#132131;}
+.cd-in:disabled{background:#132131;}
+.cd-in:focus{outline:2px solid var(--accent);outline-offset:-2px;}
+.cd-x{position:absolute;right:1px;top:3px;width:16px;height:16px;
+  padding:0;border:0;border-radius:3px;background:transparent;
+  color:var(--chrome-ink-2,#93a8ba);font-size:12px;line-height:16px;
+  cursor:pointer;opacity:.55;}
+.cd-rowx .cd-x{position:static;}
+.cd-x:hover{opacity:1;color:var(--warning,#e8a33d);}
+.cd-adds{display:flex;gap:6px;margin-top:6px;}
+.cd-adds .dbtn{height:24px;font-size:12px;}
 /* T106: the reading-order panel and its on-slide numbers */
 /* left:auto, or .sh-menu's left:0 wins the over-constrained box and the
    panel opens on the LEFT over the slide (T184; the screenshot showed
@@ -11185,7 +11226,7 @@ window.MathJax = {
 };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-<meta name="junoview-build" content="c283e438a489">
+<meta name="junoview-build" content="ed530f76948a">
 <script src="web-runtime.js"></script>
 </head>
 <body>
@@ -12437,6 +12478,29 @@ next, and a box that grows with its words is as tall as its longest
 column. A curve and columns cannot both be on &mdash; choosing one turns
 the other off, and says so. Columns travel into a .pptx as PowerPoint's
 own, and come back in from one.</li>
+<li><b>Touch and pen.</b> On a touchscreen or with a pen, the slide
+works as it does with the mouse: touch something to select it, drag it
+to move it, drag a handle to size or turn it, tap twice to type in a
+box, and hold a finger still for the menu a right-click opens. While
+presenting, swipe left for the next step and right for the last.</li>
+<li><b>Slide sorter.</b> <i>View &rarr; Slide sorter</i> (or the
+<i>Slide 3 of 14</i> readout at the foot of the page) shows every slide as
+a tile. Click to pick one, <kbd>Ctrl</kbd>+click to add or take out,
+<kbd>Shift</kbd>+click for a run, <kbd>Ctrl</kbd>+<kbd>A</kbd> for all;
+drag the picked slides to a new place (they join the section they land
+in); <b>Duplicate</b> (<kbd>Ctrl</kbd>+<kbd>D</kbd>), <b>New section</b>
+and <b>Delete</b> act on them, each one step for <kbd>Ctrl</kbd>+<kbd>Z</kbd>;
+a double-click or <kbd>Enter</kbd> opens a slide. While presenting it is
+the overview map: a click goes to the slide.</li>
+<li><b>A chart's numbers.</b> <i>Edit numbers&hellip;</i> (in Chart
+options, or right-click the chart) opens them as a grid: the categories
+down the left, a series per column with its name at the head. Type in
+any cell and the chart on the slide changes as you type; <b>+ Row</b>
+and <b>+ Series</b> add, the &times; beside a row or at a column's head
+takes it out, <kbd>Enter</kbd> goes down a column and <kbd>Tab</kbd>
+across, and a block copied from a spreadsheet pastes across the cells.
+<i>Apply</i> keeps it, <i>Cancel</i> puts the chart back. <i>Text</i>
+shows the same numbers as comma-separated lines.</li>
 <li><b>Bullets and numbering.</b> The &#9662; beside List or Numbered
 opens the kinds of marker; <i>Bullet options&hellip;</i> or
 <i>Numbering options&hellip;</i> at its foot sets the marker's own
@@ -12590,6 +12654,15 @@ slide &mdash; its text, a table cell, a caption or your speaker notes
 the first. The presenter view has the same search under the notes. A hit
 that is only in your notes says so, so you never jump expecting to see a
 word on the screen that is not there.</li>
+<li><b>The presenter view</b> (<i>Present &rarr; Presenter view</i>, or
+<kbd>N</kbd> while presenting) shows this slide and the next, your notes
+(<i>A&minus; smaller</i> / <i>A+ larger</i> sizes them, and the size is
+remembered), the talk's clock with <i>Pause</i> and <i>Reset clock</i>,
+the time now, where you are against your plan, <i>Running late</i>,
+<i>Black screen</i> for the room (<kbd>B</kbd>) and <i>End show</i>.
+Type a slide's number and <kbd>Enter</kbd> &mdash; in the show or in the
+presenter view &mdash; to go straight there, as in PowerPoint (a hidden
+slide too); the search under the notes takes a number as well.</li>
 <li><b>Rehearse, and the deck remembers.</b> Every run of Present mode
 that reaches a second slide and lasts half a minute is recorded, per
 slide and per section. The Notes pane then tells you what you
@@ -14073,6 +14146,11 @@ writes or resembles and implies no endorsement.</small></p>
                 title="Other versions of this poster — drafts and variants.
  Opens the strip; close it again to give the page the whole window"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="8.2" width="11.6" height="5.2" rx="1"/><path d="M3.6 5.8h8.8"/><path d="M5 3.4h6"/></svg> Versions</button>
+              <!-- T557: PowerPoint's Slide Sorter, on View -->
+              <button class="fx-tile view-tile rbn-tall" id="vw-sorter"
+                title="Every slide as a tile: pick some, drag them to a new
+ place, duplicate, delete or put them in a section"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="2.6" width="5.6" height="4.2" rx=".6"/><rect x="8.8" y="2.6" width="5.6" height="4.2" rx=".6"/><rect x="1.6" y="9.2" width="5.6" height="4.2" rx=".6"/><rect x="8.8" y="9.2" width="5.6" height="4.2" rx=".6"/></svg> Slide sorter</button>
               <button class="fx-tile view-tile rbn-tall" id="vw-rulers"
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres
@@ -17298,7 +17376,7 @@ items snap to both. Guides, not ink: never printed or exported"
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "alttext": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"8.4\" height=\"8.8\" rx=\"1\"/><path d=\"m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7\"/><path d=\"M11.8 6.3a2.4 2.4 0 0 1 0 3.4\"/><path d=\"M13.4 4.8a4.6 4.6 0 0 1 0 6.4\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autocorrect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "cut": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.7\" cy=\"4\" r=\"1.7\"/><circle cx=\"3.7\" cy=\"12\" r=\"1.7\"/><path d=\"m5.1 5 7.3 6.5M5.1 11l7.3-6.5\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "drift": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8-4.4-2.6-2-4.4 5.6-.6 6.6 1.8\"/><\/svg>", "eraser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z\"/><path d=\"m6.2 5.4 4.4 4.4\"/><path d=\"M8.6 13.4H14\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flicker": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M12.4 8h1.8\"/><path d=\"M4.8 4.8l1.5 1.5\"/><path d=\"M8 12v2.2\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "hideslide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.4\" width=\"12\" height=\"9.2\" rx=\"1\"/><path d=\"M2.6 13.8 13.4 2.2\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "jelly": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><ellipse cx=\"8\" cy=\"8\" rx=\"6.1\" ry=\"3.4\"/><ellipse cx=\"8\" cy=\"8\" rx=\"3.4\" ry=\"6.1\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "push": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"6\" y=\"3.6\" width=\"8.6\" height=\"8.8\" rx=\"1\"/><path d=\"M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shadow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2\" width=\"9\" height=\"9\" rx=\"1\"/><path d=\"M13.6 5.2v8.4H5.2\"/><\/svg>", "shake": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "sway": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h12.4\"/><path d=\"M4.6 5.2L1.8 8l2.8 2.8\"/><path d=\"M11.4 5.2L14.2 8l-2.8 2.8\"/><\/svg>", "swing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"2.8\" r=\"1\"/><path d=\"M8 3.8v5.2\"/><circle cx=\"8\" cy=\"11.4\" r=\"2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "textcase": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 13 4.6 5.4 7.4 13\"/><path d=\"M2.8 10.4h3.6\"/><circle cx=\"11.6\" cy=\"11\" r=\"1.9\"/><path d=\"M13.5 9.1V13\"/><path d=\"M5.4 2.8h6.2\"/><path d=\"m10.2 1.4 1.4 1.4-1.4 1.4\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wipe": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"12.4\" height=\"8.8\" rx=\"1\"/><path d=\"M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "alttext": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"8.4\" height=\"8.8\" rx=\"1\"/><path d=\"m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7\"/><path d=\"M11.8 6.3a2.4 2.4 0 0 1 0 3.4\"/><path d=\"M13.4 4.8a4.6 4.6 0 0 1 0 6.4\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autocorrect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "cut": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.7\" cy=\"4\" r=\"1.7\"/><circle cx=\"3.7\" cy=\"12\" r=\"1.7\"/><path d=\"m5.1 5 7.3 6.5M5.1 11l7.3-6.5\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "drift": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8-4.4-2.6-2-4.4 5.6-.6 6.6 1.8\"/><\/svg>", "eraser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z\"/><path d=\"m6.2 5.4 4.4 4.4\"/><path d=\"M8.6 13.4H14\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flicker": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M12.4 8h1.8\"/><path d=\"M4.8 4.8l1.5 1.5\"/><path d=\"M8 12v2.2\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "hideslide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.4\" width=\"12\" height=\"9.2\" rx=\"1\"/><path d=\"M2.6 13.8 13.4 2.2\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "jelly": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><ellipse cx=\"8\" cy=\"8\" rx=\"6.1\" ry=\"3.4\"/><ellipse cx=\"8\" cy=\"8\" rx=\"3.4\" ry=\"6.1\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "push": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"6\" y=\"3.6\" width=\"8.6\" height=\"8.8\" rx=\"1\"/><path d=\"M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shadow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2\" width=\"9\" height=\"9\" rx=\"1\"/><path d=\"M13.6 5.2v8.4H5.2\"/><\/svg>", "shake": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "sorter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"2.6\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"1.6\" y=\"9.2\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><rect x=\"8.8\" y=\"9.2\" width=\"5.6\" height=\"4.2\" rx=\".6\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "sway": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h12.4\"/><path d=\"M4.6 5.2L1.8 8l2.8 2.8\"/><path d=\"M11.4 5.2L14.2 8l-2.8 2.8\"/><\/svg>", "swing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"2.8\" r=\"1\"/><path d=\"M8 3.8v5.2\"/><circle cx=\"8\" cy=\"11.4\" r=\"2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "textcase": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 13 4.6 5.4 7.4 13\"/><path d=\"M2.8 10.4h3.6\"/><circle cx=\"11.6\" cy=\"11\" r=\"1.9\"/><path d=\"M13.5 9.1V13\"/><path d=\"M5.4 2.8h6.2\"/><path d=\"m10.2 1.4 1.4 1.4-1.4 1.4\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wipe": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"12.4\" height=\"8.8\" rx=\"1\"/><path d=\"M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -34476,7 +34554,7 @@ window.JunoPptx = (function () {
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'of-view',label:'View',tab:'design',
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-check','vw-morewrap']},
       {id:'of-panes',label:'Panes',tab:'design',
        items:['objects-btn','notes-btn','vw-versions']},
@@ -34503,7 +34581,7 @@ window.JunoPptx = (function () {
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'dk-view',label:'View',tab:'deck',rest:1,
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-morewrap']},
       {id:'dk-panes',label:'Review',tab:'deck',
        items:['vw-versions','notes-btn','vw-check']},
@@ -34571,7 +34649,7 @@ window.JunoPptx = (function () {
        items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'s1-guides',label:'Guides and layers',tab:'format',
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox',
          'objects-btn']},
       {id:'s1-text',label:'Text',tab:'format',
        items:['fmt-font','fmt-szwrap','fmt-smaller','fmt-bigger',
@@ -34650,7 +34728,7 @@ window.JunoPptx = (function () {
       {id:'day-maths',label:'Other inserts',tab:'more',
        items:['dc-maths','dc-md','dc-draw']},
       {id:'day-workspace',label:'Workspace',tab:'more',
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-check','objects-btn','vw-morewrap']},
       /* T484: the strays in a group of their own, not in Workspace */
       {id:'day-rest',label:'Everything else',tab:'more',rest:1,items:[]},
@@ -34670,7 +34748,7 @@ window.JunoPptx = (function () {
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'j3-guides',label:'Workspace',tab:'page',rest:1,
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn']},
       {id:'j3-proof',label:'Proof and versions',tab:'page',
        items:['vw-check','vw-versions']},
@@ -34747,7 +34825,7 @@ window.JunoPptx = (function () {
          'fmt-tbl-colminus','fmt-tbl-head','fmt-tbl-grid']},
       {id:'one-view',label:'Animate and view',tab:'all',rest:1,
        items:['vw-anim','anim-strip-frame',
-         'anim-stagger','anim-together','anim-clear','vw-rulers',
+         'anim-stagger','anim-together','anim-clear','vw-sorter','vw-rulers',
          'vw-grid','vw-guides','vw-guidebox','vw-full','vw-side',
          'vw-check','objects-btn','notes-btn','vw-morewrap']},
      ]},
@@ -34800,7 +34878,7 @@ window.JunoPptx = (function () {
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'mi-view',label:'View',tab:'mi-board',
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-check','vw-morewrap']},
       {id:'mi-panes',label:'Panes',tab:'mi-board',
        items:['objects-btn','notes-btn']},
@@ -34858,7 +34936,7 @@ window.JunoPptx = (function () {
       {id:'tt-anim',label:'Animate',tab:'tt-more',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'tt-rest',label:'The rest',tab:'tt-more',rest:1,
-       items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
+       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn','vw-check','vw-versions']},
      ]}
   ];
@@ -38574,6 +38652,10 @@ window.JunoPptx = (function () {
   function whereBoot(){
     var b=$('#where-btn');
     if(b) b.addEventListener('click',function(){openOverview();});
+    /* T557: and View's own door, PowerPoint's Slide Sorter */
+    var srt=$('#vw-sorter');
+    if(srt) srt.addEventListener('click',function(e){
+      e.stopPropagation();openOverview();});
     syncWhere();
   }
   function scrollToTrace(){
@@ -50301,6 +50383,109 @@ window.JunoPptx = (function () {
       toast('The object underneath — click again to go deeper. Tab '
         +'walks every object on the slide',5000);
     }
+  }
+  /* ---- TOUCH AND PEN (T575) -------------------------------------------
+     Every gesture on the canvas -- select, move, resize, rotate, draw,
+     an arrow's ends, the drag box -- is written against mouse events: a
+     mousedown on the layer, then mousemove and mouseup on the document.
+     A pen sends those only sometimes and a finger drag never does (the
+     browser scrolls instead), so on a touchscreen the canvas could be
+     tapped but nothing could be moved. Rather than teach forty handlers
+     a second language, a finger or a pen on the editing canvas is spoken
+     to them in the one they know: pointerdown becomes their mousedown on
+     what was touched, each pointermove a mousemove on what is under it,
+     pointerup the mouseup -- and preventDefault on the pointerdown stops
+     the browser adding its own copies, so nothing happens twice. A
+     second finger is ignored while the first is down. Two taps in the
+     same place are a double-click (which starts typing in a box), and a
+     touch held still is the right-click menu. Presenting, a finger swipe
+     left or right is the next or the last step. The mouse is untouched:
+     pointerType 'mouse' is never bridged. */
+  var touchId=null;
+  function touchFire(target,type,src,buttons){
+    if(!target||!target.dispatchEvent) return;
+    target.dispatchEvent(new MouseEvent(type,{bubbles:true,cancelable:true,
+      view:window,clientX:src.clientX,clientY:src.clientY,
+      screenX:src.screenX,screenY:src.screenY,button:0,
+      buttons:buttons,shiftKey:!!src.shiftKey,ctrlKey:!!src.ctrlKey,
+      altKey:!!src.altKey,metaKey:!!src.metaKey,
+      detail:type==='dblclick'?2:1}));
+  }
+  function touchBoot(){
+    if(!stage||typeof PointerEvent!=='function') return;
+    var lastTap=null,holdT=0;
+    stage.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='mouse'||!e.isPrimary) return;
+      if(mode==='view'){touchSwipe(e);return;}
+      if(mode!=='edit') return;
+      var t=e.target;
+      if(!t||!t.closest||!t.closest('.annot-layer')) return;
+      /* typing in a box: the caret is the browser's to place */
+      if(t.closest('[contenteditable="true"]')) return;
+      if(touchId!==null) return;
+      touchId=e.pointerId;
+      e.preventDefault();
+      var x0=e.clientX,y0=e.clientY,moved=false;
+      touchFire(t,'mousedown',e,1);
+      /* held still for 600 ms: the right-click menu */
+      clearTimeout(holdT);
+      holdT=setTimeout(function(){
+        if(moved||touchId===null) return;
+        var tg=document.elementFromPoint(x0,y0)||t;
+        touchFire(document,'mouseup',{clientX:x0,clientY:y0,
+          screenX:e.screenX,screenY:e.screenY},0);
+        tg.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,
+          cancelable:true,view:window,clientX:x0,clientY:y0,button:2}));
+        end();
+      },600);
+      function mv(ev){
+        if(ev.pointerId!==touchId) return;
+        ev.preventDefault();
+        if(Math.abs(ev.clientX-x0)>4||Math.abs(ev.clientY-y0)>4){
+          moved=true;clearTimeout(holdT);}
+        var tg=document.elementFromPoint(ev.clientX,ev.clientY)||document;
+        touchFire(tg,'mousemove',ev,1);
+      }
+      function up(ev){
+        if(ev.pointerId!==touchId) return;
+        clearTimeout(holdT);
+        touchFire(document,'mouseup',ev,0);
+        end();
+        if(ev.type==='pointercancel') return;
+        /* two taps in one place are a double-click */
+        var now=Date.now();
+        if(!moved&&lastTap&&now-lastTap.t<400
+           &&Math.abs(ev.clientX-lastTap.x)<24
+           &&Math.abs(ev.clientY-lastTap.y)<24){
+          var tg=document.elementFromPoint(ev.clientX,ev.clientY)||t;
+          touchFire(tg,'dblclick',ev,0);
+          lastTap=null;
+        } else lastTap=moved?null:{t:now,x:ev.clientX,y:ev.clientY};
+      }
+      function end(){
+        touchId=null;
+        document.removeEventListener('pointermove',mv,true);
+        document.removeEventListener('pointerup',up,true);
+        document.removeEventListener('pointercancel',up,true);
+      }
+      document.addEventListener('pointermove',mv,true);
+      document.addEventListener('pointerup',up,true);
+      document.addEventListener('pointercancel',up,true);
+    });
+  }
+  /* presenting: a quick sideways swipe is the next or the last step */
+  function touchSwipe(e){
+    if(e.pointerType!=='touch') return;
+    var x0=e.clientX,y0=e.clientY,t0=Date.now();
+    function up(ev){
+      document.removeEventListener('pointerup',up,true);
+      if(ev.pointerId!==e.pointerId||mode!=='view') return;
+      var dx=ev.clientX-x0,dy=ev.clientY-y0;
+      if(Date.now()-t0>700||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5)
+        return;
+      if(dx<0) advance(); else backStep();
+    }
+    document.addEventListener('pointerup',up,true);
   }
   /* ---- MARQUEE: drag a box on empty canvas to select what it touches --
      Mousedown on nothing used to deselect and stop there, so the only way
@@ -63873,6 +64058,15 @@ window.JunoPptx = (function () {
     else if(msg.do==='late'){   /* T476 */
       if(typeof runLate==='function') runLate(lateFrom<0);
     }
+    /* T574: black the room's screen, and end the show, from here */
+    else if(msg.do==='black'){
+      if(typeof talkBlack==='function') talkBlack();
+    }
+    else if(msg.do==='end'){
+      var xb=$('#deck-exit');
+      if(xb) xb.click();
+      return;
+    }
     else if(msg.do==='closed'){presWin=null;return;}
     presenterPush();
   }
@@ -63984,6 +64178,13 @@ window.JunoPptx = (function () {
       pauseAt:presPauseAt,goal:slideGoal(sl),
       talk:pres.talkMins||0,slide:shownAt,count:shown.length,
       planned:Math.round(planned),slideIndex:cur};
+    /* T574: and Black screen wears its own */
+    var bk=doc.getElementById('jvp-black');
+    if(bk){
+      var blackOn=(typeof talkBlackEl!=='undefined'&&!!talkBlackEl);
+      bk.setAttribute('aria-pressed',blackOn?'true':'false');
+      bk.textContent=blackOn?'Screen is black':'Black screen';
+    }
     /* T476: the button wears the state, like the show's own */
     var lb2=doc.getElementById('jvp-late');
     if(lb2){
@@ -64074,6 +64275,9 @@ window.JunoPptx = (function () {
       +'.jvp-hit i{color:#8ea4b6;font-style:normal;}'
       +'.jvp-nohit{color:#6e8394;font-size:12px;padding:6px 2px;}'
       +'.jvp-foot{grid-column:1/-1;display:flex;gap:8px;align-items:center;}'
+      +'.jvp-notesh{display:flex;align-items:center;gap:6px;}'
+      +'.jvp-mini{font-size:10px;padding:1px 7px;}'
+      +'#jvp-tod{font-size:15px;color:#dce6ee;}'
       +'</style></head><body><div class="jvp">'
       +'<div class="jvp-bar">'
       +'<span class="jvp-clock" id="jvp-clock">0:00</span>'
@@ -64090,12 +64294,25 @@ window.JunoPptx = (function () {
       +'Running late</button>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
       +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
+      /* T574: what PowerPoint's presenter view also has -- the time of
+         day, a black screen for the room, and a way to end the show */
+      +'<span class="jvp-sub" id="jvp-tod" title="The time now"></span>'
+      +'<button class="jvp-b" id="jvp-black" aria-pressed="false" '
+      +'title="Black the screen the audience sees (B). Again to bring it '
+      +'back">Black screen</button>'
+      +'<button class="jvp-b" id="jvp-end" title="Stop presenting">'
+      +'End show</button>'
       +'</div>'
       +'<div class="jvp-stage" id="jvp-now"></div>'
       +'<div class="jvp-side">'
       +'<div class="jvp-nextwrap"><span class="jvp-lab">next</span>'
       +'<div class="jvp-stage" id="jvp-next"></div></div>'
-      +'<span class="jvp-lab">notes</span>'
+      /* T574: the notes' own size, kept in this browser */
+      +'<span class="jvp-lab jvp-notesh">notes'
+      +'<button class="jvp-b jvp-mini" id="jvp-nsmall" '
+      +'title="Smaller notes">A\u2212 smaller</button>'
+      +'<button class="jvp-b jvp-mini" id="jvp-nbig" '
+      +'title="Larger notes">A+ larger</button></span>'
       +'<div class="jvp-notes" id="jvp-notes"></div>'
       /* SEARCH, in the window you are actually looking at (T30). The
          same slideHits the map filters with -- one matcher, two doors. */
@@ -64142,6 +64359,27 @@ window.JunoPptx = (function () {
       send({jv:'cmd',do:'timer',act:'reset'});};
     var lb=d.getElementById('jvp-late');   /* T476 */
     if(lb) lb.onclick=function(){send({jv:'cmd',do:'late'});};
+    /* T574 */
+    var bkb=d.getElementById('jvp-black');
+    if(bkb) bkb.onclick=function(){send({jv:'cmd',do:'black'});};
+    var enb=d.getElementById('jvp-end');
+    if(enb) enb.onclick=function(){send({jv:'cmd',do:'end'});};
+    var NOTES_PX_KEY='jv-presenter-notes-px';
+    var notesPx=function(){
+      var v=18;
+      try{v=+localStorage.getItem(NOTES_PX_KEY)||18;}catch(err){}
+      return Math.max(12,Math.min(44,v));
+    };
+    var setNotesPx=function(v){
+      v=Math.max(12,Math.min(44,v));
+      try{localStorage.setItem(NOTES_PX_KEY,String(v));}catch(err){}
+      var nn=d.getElementById('jvp-notes');
+      if(nn) nn.style.fontSize=v+'px';
+    };
+    setNotesPx(notesPx());
+    var nsm=d.getElementById('jvp-nsmall'),nbg=d.getElementById('jvp-nbig');
+    if(nsm) nsm.onclick=function(){setNotesPx(notesPx()-2);};
+    if(nbg) nbg.onclick=function(){setNotesPx(notesPx()+2);};
     var pb=d.getElementById('jvp-pause');
     pb.onclick=function(){
       var paused=!!(presWin.__jvState&&presWin.__jvState.pauseAt);
@@ -64159,7 +64397,23 @@ window.JunoPptx = (function () {
       hits.classList.toggle('on',!!q);
       if(!q) return;
       var found=slideHits(q);
+      /* T574: a number is a slide number first -- PowerPoint's jump */
+      if(/^[0-9]{1,4}$/.test(q)){
+        var at=slideAtNumber(+q);
+        if(at>=0){
+          var gb=d.createElement('button');
+          gb.className='jvp-hit';
+          var gn=d.createElement('b');gn.textContent=q;
+          gb.appendChild(gn);
+          gb.appendChild(d.createTextNode('Go to slide '+q+' \u2014 '
+            +(filmText(pres.slides[at])||'')));
+          gb.onclick=function(){
+            send({jv:'cmd',do:'goto',n:at});fi.value='';drawHits();};
+          hits.appendChild(gb);
+        }
+      }
       if(!found.length){
+        if(hits.firstChild) return;   /* the number found one */
         var no=d.createElement('div');
         no.className='jvp-nohit';no.textContent='No slide says that.';
         hits.appendChild(no);return;
@@ -64203,7 +64457,24 @@ window.JunoPptx = (function () {
     });
     /* the arrow keys work in the presenter window too - you will have the
        clicker pointed at whichever window has focus */
+    var pvNum='',pvNumT=0;
     d.addEventListener('keydown',function(e){
+      /* T574: a number then Enter, and B, as in the show */
+      if(/^[0-9]$/.test(e.key)){
+        pvNum=(pvNum+e.key).slice(-4);
+        clearTimeout(pvNumT);
+        pvNumT=setTimeout(function(){pvNum='';},2500);
+        return;
+      }
+      if(e.key==='Enter'&&pvNum){
+        e.preventDefault();
+        var at=slideAtNumber(+pvNum);pvNum='';
+        if(at>=0) send({jv:'cmd',do:'goto',n:at});
+        return;
+      }
+      pvNum='';
+      if(e.key==='b'||e.key==='B'){
+        e.preventDefault();send({jv:'cmd',do:'black'});return;}
       if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){
         e.preventDefault();send({jv:'cmd',do:'next'});}
       else if(e.key==='ArrowLeft'||e.key==='PageUp'){
@@ -64214,6 +64485,9 @@ window.JunoPptx = (function () {
        owns - so pausing on either side agrees */
     w.setInterval(function(){
       var st=w.__jvState; if(!st) return;
+      var tod=d.getElementById('jvp-tod');   /* T574: the time now */
+      if(tod) tod.textContent=new Date().toLocaleTimeString([],
+        {hour:'2-digit',minute:'2-digit'});
       var now=st.pauseAt||Date.now();
       var ms=now-st.start-st.paused;
       var sec=Math.max(0,Math.round(ms/1000));
@@ -67107,55 +67381,239 @@ window.JunoPptx = (function () {
     return out.join('\n');
   }
   function chartDlgClose(){
-    var p=$('#chart-data'); if(p) p.remove();
+    var p=$('#chart-data'); if(!p) return;
+    /* T562: closed any way but Apply, the preview is put back */
+    var undoPreview=p._putBack;p._putBack=null;
+    p.remove();
+    if(typeof undoPreview==='function') undoPreview();
+  }
+  /* T562: THE NUMBERS AS A GRID. They were a box of comma-separated text,
+     which is how a parser wants them and nobody types them: a cell per
+     number, the category down the left, a series per column with its
+     name at the head, + Row and + Series, a cell's x to take its row or
+     column out, Tab and the arrow keys between cells, and a block pasted
+     from a spreadsheet spread across the cells from the one it lands in.
+     The slide is the preview: every edit redraws the chart (nothing is
+     stored until Apply, and Cancel puts it back). Text keeps the old box
+     for anyone who would rather type commas. Rows in and rows out are
+     the same rows chartCsvOf writes and chartFromRows reads, helper
+     columns (Name +-, lo, hi) included, so the two views cannot drift. */
+  function chartRowsOf(a){
+    return chartCsvOf(a).split('\n').map(function(ln){
+      return ln.split(',').map(function(c){return c.trim();});});
   }
   function chartDataDlg(idx){
     chartDlgClose();
     var s=pres.slides[cur];
     var a=s&&(s.annots||[])[idx];
     if(!a||a.k!=='chart') return;
+    var snap={cats:deep(a.cats||[]),series:deep(a.series||[]),ref:a.ref};
+    var rows=chartRowsOf(a),asText=false,previewT=0;
     var p=document.createElement('div');
     p.className='sh-menu chart-data';p.id='chart-data';
     menuHead(p,'the chart’s numbers');
+    var modes=document.createElement('div');modes.className='cd-modes';
+    var gridB=document.createElement('button'),textB=document.createElement('button');
+    gridB.type=textB.type='button';
+    gridB.className=textB.className='dbtn cd-mode';
+    gridB.textContent='Grid';textB.textContent='Text';
+    gridB.title='A cell for every number';
+    textB.title='The same numbers as lines of comma-separated text';
+    modes.appendChild(gridB);modes.appendChild(textB);
+    p.appendChild(modes);
     var note=document.createElement('div');note.className='rd-note';
-    note.textContent='One row per category. The first row names the '
-      +'series, the first column is the category (numbers make a '
-      +'numeric axis for line and scatter). A column \u201cName \u00b1\u201d '
+    note.textContent='The first column is the category (numbers make a '
+      +'numeric axis for line and scatter); each other column is a '
+      +'series, named at its head. A column \u201cName \u00b1\u201d '
       +'is Name\u2019s error bar; \u201cName lo\u201d and \u201cName hi\u201d '
-      +'are its band.';
+      +'are its band. Paste a block from a spreadsheet into any cell.';
     p.appendChild(note);
-    var ta=document.createElement('textarea');
-    ta.className='chart-ta';
-    ta.value=chartCsvOf(a);
-    ta.spellcheck=false;
-    p.appendChild(ta);
-    var rowb=document.createElement('div');rowb.className='chart-btns';
-    var ok=document.createElement('button');
-    ok.className='dbtn primary';ok.textContent='Apply';
-    ok.addEventListener('click',function(e){
-      e.stopPropagation();
-      var rows=ta.value.split(/\r?\n/).map(function(ln){
-        return ln.split(',').map(function(c){return c.trim();});
-      }).filter(function(r){return r.join('')!=='';});
-      var data=chartFromRows(rows);
-      if(!data){toast('Could not read that — a header row plus '
-        +'at least one data row, comma-separated');return;}
-      /* keep each series' colour -- and, T322, its own switches --
-         where the name survives the edit */
-      var old={};(a.series||[]).forEach(function(se){
+    var host=document.createElement('div');host.className='cd-host';
+    /* Enter moves down a column here, as in a spreadsheet; the dialog
+       keys (T568) leave it to the grid */
+    host.setAttribute('data-own-enter','1');
+    p.appendChild(host);
+    var ta=null;
+    function width(){
+      return rows.reduce(function(m,r){return Math.max(m,r.length);},2);}
+    function pad(){
+      var w=width();
+      rows.forEach(function(r){while(r.length<w) r.push('');});
+      if(!rows.length) rows.push(['','Series 1']);
+    }
+    function preview(){
+      clearTimeout(previewT);
+      previewT=setTimeout(function(){
+        /* the slide moved on under the dialog: nothing to preview on */
+        if(pres.slides[cur]!==s||(s.annots||[]).indexOf(a)<0){
+          chartDlgClose();return;}
+        var data=chartFromRows(rows.filter(function(r){
+          return r.join('')!=='';}));
+        if(!data) return;
+        a.cats=data.cats;a.series=keepLooks(data.series);
+        renderSlide();
+      },180);
+    }
+    /* each series keeps its colour and its switches where its name
+       survives the edit (T322) */
+    function keepLooks(series){
+      var old={};(snap.series||[]).forEach(function(se){
         if(se&&se.name) old[se.name]=se;});
-      data.series.forEach(function(se){
+      series.forEach(function(se){
         var o=old[se.name]; if(!o) return;
         if(o.color) se.color=o.color;
         ['axis','trend','ct','hide'].forEach(function(k){
           if(o[k]) se[k]=o[k];});
       });
+      return series;
+    }
+    function cellAt(r,c){
+      return host.querySelector('input[data-r="'+r+'"][data-c="'+c+'"]');}
+    function build(focusR,focusC){
+      host.innerHTML='';
+      if(asText){
+        ta=document.createElement('textarea');
+        ta.className='chart-ta';ta.spellcheck=false;
+        ta.value=rows.map(function(r){return r.join(', ');}).join('\n');
+        ta.addEventListener('input',function(){
+          rows=ta.value.split(/\r?\n/).map(function(ln){
+            return ln.split(',').map(function(c){return c.trim();});});
+          preview();
+        });
+        host.appendChild(ta);
+        ta.focus();
+        return;
+      }
+      ta=null;pad();
+      var w=width();
+      var tbl=document.createElement('table');tbl.className='cd-grid';
+      rows.forEach(function(r,ri){
+        var tr=document.createElement('tr');
+        r.forEach(function(v,ci){
+          var td=document.createElement(ri===0?'th':'td');
+          var inp=document.createElement('input');
+          inp.type='text';inp.value=v;inp.spellcheck=false;
+          inp.dataset.r=ri;inp.dataset.c=ci;
+          inp.className='cd-in'+(ci===0?' cd-cat':'')+(ri===0?' cd-head':'');
+          inp.placeholder=ri===0?(ci===0?'Category':'Series name'):'';
+          if(ri===0&&ci===0) inp.disabled=true;
+          inp.setAttribute('aria-label',ri===0?(ci===0?'':'Name of series '+ci)
+            :(ci===0?'Category '+ri:(rows[0][ci]||'Series '+ci)+', '
+              +(r[0]||'row '+ri)));
+          inp.addEventListener('input',function(){
+            rows[ri][ci]=inp.value;preview();});
+          inp.addEventListener('keydown',function(e){
+            var to=null;
+            if(e.key==='Enter'||e.key==='ArrowDown') to=[ri+1,ci];
+            else if(e.key==='ArrowUp') to=[ri-1,ci];
+            if(!to) return;
+            e.preventDefault();e.stopPropagation();
+            if(to[0]>=rows.length&&e.key==='Enter'){addRow();to=[ri+1,ci];}
+            var n=cellAt(to[0],to[1]);
+            if(n){n.focus();n.select();}
+          });
+          /* a block from a spreadsheet: tabs between cells, lines
+             between rows, spread from here and grown to fit */
+          inp.addEventListener('paste',function(e){
+            var t=(e.clipboardData||window.clipboardData).getData('text');
+            if(!t||!/[\t\n]/.test(t)) return;
+            e.preventDefault();
+            t.replace(/\r/g,'').replace(/\n$/,'').split('\n')
+              .forEach(function(line,dr){
+                line.split('\t').forEach(function(val,dc){
+                  var R=ri+dr,C=ci+dc;
+                  while(rows.length<=R) rows.push([]);
+                  while(rows[R].length<=C) rows[R].push('');
+                  rows[R][C]=val.trim();
+                });
+              });
+            build(ri,ci);preview();
+          });
+          td.appendChild(inp);
+          /* a column's x at its head; a row's x at its end */
+          if(ri===0&&ci>0&&w>2){
+            var xc=document.createElement('button');
+            xc.type='button';xc.className='cd-x';xc.textContent='\u00d7';
+            xc.title='Take this series out';
+            xc.setAttribute('aria-label','Remove series '+(r[ci]||ci));
+            xc.addEventListener('click',function(e){
+              e.stopPropagation();
+              rows.forEach(function(rr){rr.splice(ci,1);});
+              build();preview();});
+            td.appendChild(xc);
+          }
+          tr.appendChild(td);
+        });
+        var tdx=document.createElement('td');tdx.className='cd-rowx';
+        if(ri>0&&rows.length>2){
+          var xr=document.createElement('button');
+          xr.type='button';xr.className='cd-x';xr.textContent='\u00d7';
+          xr.title='Take this row out';
+          xr.setAttribute('aria-label','Remove row '+(r[0]||ri));
+          xr.addEventListener('click',function(e){
+            e.stopPropagation();rows.splice(ri,1);build();preview();});
+          tdx.appendChild(xr);
+        }
+        tr.appendChild(tdx);
+        tbl.appendChild(tr);
+      });
+      host.appendChild(tbl);
+      var adds=document.createElement('div');adds.className='cd-adds';
+      var ar=document.createElement('button');
+      ar.type='button';ar.className='dbtn';ar.textContent='+ Row';
+      ar.title='Another category';
+      ar.addEventListener('click',function(e){
+        e.stopPropagation();addRow();build(rows.length-1,0);});
+      var as=document.createElement('button');
+      as.type='button';as.className='dbtn';as.textContent='+ Series';
+      as.title='Another column of numbers';
+      as.addEventListener('click',function(e){
+        e.stopPropagation();
+        var n=width();
+        rows.forEach(function(rr,i){rr.push(i===0?'Series '+n:'');});
+        build(0,n);preview();});
+      adds.appendChild(ar);adds.appendChild(as);
+      host.appendChild(adds);
+      var f=(focusR!=null)?cellAt(focusR,focusC||0):cellAt(1,1);
+      if(f){f.focus();f.select();}
+    }
+    function addRow(){
+      var r=[];for(var i=0;i<width();i++) r.push('');
+      rows.push(r);
+    }
+    function mode(text){
+      asText=text;
+      gridB.setAttribute('aria-pressed',(!text).toString());
+      textB.setAttribute('aria-pressed',text.toString());
+      build();
+    }
+    gridB.addEventListener('click',function(e){e.stopPropagation();mode(false);});
+    textB.addEventListener('click',function(e){e.stopPropagation();mode(true);});
+    function putBack(){
+      clearTimeout(previewT);
+      a.cats=snap.cats;a.series=snap.series;
+      if(snap.ref) a.ref=snap.ref;
+      renderSlide();
+    }
+    var rowb=document.createElement('div');rowb.className='chart-btns';
+    var ok=document.createElement('button');
+    ok.className='dbtn primary';ok.textContent='Apply';
+    ok.addEventListener('click',function(e){
+      e.stopPropagation();
+      clearTimeout(previewT);
+      var data=chartFromRows(rows.filter(function(r){
+        return r.join('')!=='';}));
+      if(!data){toast('Could not read that — a row of series names plus '
+        +'at least one row of numbers');return;}
+      keepLooks(data.series);
       /* A TIE POINTS AT A SERIES BY NAME (T162), and a hand edit can
          rename or drop one. The tie then fails OPEN -- the item shows
          all the time rather than vanishing -- but silently reverting to
          "always shown" is still a change worth being told about, and
          this is the one moment the old names and the new ones are both
          in hand. */
+      var old={};(snap.series||[]).forEach(function(se){
+        if(se&&se.name) old[se.name]=se;});
       var nowNm={};data.series.forEach(function(se){nowNm[se.name]=1;});
       var orph=0;
       (s.annots||[]).forEach(function(x){
@@ -67164,6 +67622,7 @@ window.JunoPptx = (function () {
       a.cats=data.cats;a.series=data.series;
       /* hand-edited numbers are yours now, not the table's */
       delete a.ref;
+      p._putBack=null;   /* applied: nothing to put back */
       markDirty();refresh();chartDlgClose();
       toast('Chart updated — Ctrl+Z undoes it'
         +(orph?('. '+orph+' item'+(orph===1?'':'s')+' tied to a series '
@@ -67175,12 +67634,13 @@ window.JunoPptx = (function () {
     no.addEventListener('click',function(e){
       e.stopPropagation();chartDlgClose();});
     /* T568: Cancel on the left and the verb on the right, as in every
-       other dialog; Ctrl+Enter in the numbers applies them */
+       other dialog; Ctrl+Enter applies them */
     no.id='chart-data-cancel';
     rowb.appendChild(no);rowb.appendChild(ok);
     p.appendChild(rowb);
+    p._putBack=putBack;
     document.body.appendChild(p);
-    ta.focus();
+    mode(false);
   }
 
   /* ---- WHICH SERIES DOES THIS BELONG TO (T162) ------------------------
@@ -71322,7 +71782,11 @@ window.JunoPptx = (function () {
     var ov=$('#deck-overview');
     if(ov) ov.remove();
     document.removeEventListener('keydown',overviewKey,true);
+    ovwKeys=null;
   }
+  /* T557: while the map is a sorter, its keys are the sorter's; set by
+     openOverview, cleared on close */
+  var ovwKeys=null;
   function overviewKey(e){
     if(!$('#deck-overview')) return;
     if(e.key==='Escape'){
@@ -71335,25 +71799,55 @@ window.JunoPptx = (function () {
         fi.focus();return;
       }
       overviewClose();
+      return;
     }
+    if(ovwKeys) ovwKeys(e);
   }
+  /* ---- T557: THE SLIDE SORTER ------------------------------------------
+     The map was a way to look and to go. While editing it is PowerPoint's
+     Slide Sorter as well: a click picks a slide (Ctrl adds or takes one
+     out, Shift takes a run), a double-click or Enter opens it, and the
+     picked slides drag as one block to anywhere in the deck -- landing in
+     the section of the slide they are dropped beside, as the strip's
+     drop does. Duplicate, New section and Delete act on what is picked,
+     on the buttons and on Ctrl+D and Delete; Ctrl+A picks everything and
+     Ctrl+Z undoes, redrawing the sorter. The picked set is held as the
+     slide OBJECTS, not their numbers, so it survives every reorder. While
+     presenting it stays the map: a click goes there. */
   function openOverview(){
     overviewClose();
+    var sorting=(mode!=='view');
+    var picked=[],anchor=null;
+    if(sorting&&pres.slides[cur]){picked=[pres.slides[cur]];anchor=picked[0];}
     var ov=document.createElement('div');
-    ov.className='deck-overview';ov.id='deck-overview';
+    ov.className='deck-overview'+(sorting?' sorting':'');
+    ov.id='deck-overview';
+    ov.setAttribute('role','dialog');
+    ov.setAttribute('aria-label',sorting?'Slide sorter':'Overview map');
     var head=document.createElement('div');
     head.className='ovw-head';
     var t=document.createElement('span');
     t.className='ovw-t';
-    var runs=sectionRuns();
-    var n=(pres.slides||[]).length;
-    t.textContent=(pres.name||'This deck')+' \u2014 '+n+' slide'
-      +(n===1?'':'s')
-      +(function(){
-        var ns=runs.filter(function(r){return r.id;}).length;
-        return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
-      })();
     head.appendChild(t);
+    var tools=null,tb={};
+    if(sorting){
+      tools=document.createElement('span');tools.className='ovw-tools';
+      [['open','play','Open','Go to this slide (Enter, or a double-click)'],
+       ['dup','copy','Duplicate','A copy of each picked slide, after it '
+         +'(Ctrl+D)'],
+       ['sec','plus','New section','Start a section at the first picked '
+         +'slide'],
+       ['del','exit','Delete','Delete the picked slides (Delete). Ctrl+Z '
+         +'brings them back']].forEach(function(b){
+        var x=document.createElement('button');
+        x.type='button';x.className='dbtn'+(b[0]==='del'?' dbtn-warn':'');
+        x.innerHTML=bic(b[1])+' '+b[2];x.title=b[3];
+        x.addEventListener('click',function(e){
+          e.stopPropagation();act(b[0]);});
+        tools.appendChild(x);tb[b[0]]=x;
+      });
+      head.appendChild(tools);
+    }
     var sp=document.createElement('span');
     sp.className='deck-spring';head.appendChild(sp);
     /* THE SEARCH BOX IS THE MAP'S (T30). Filtering a map you can already
@@ -71373,50 +71867,245 @@ window.JunoPptx = (function () {
     ov.appendChild(head);
     var body=document.createElement('div');
     body.className='ovw-body';
-    runs.forEach(function(r){
-      var grp=document.createElement('div');
-      grp.className='ovw-grp';
-      var gh=document.createElement('div');
-      gh.className='ovw-gh';
-      gh.textContent=r.id?(r.name||'Section')
-        :(runs.length>1?'(no section)':'');
-      if(gh.textContent) grp.appendChild(gh);
-      var tiles=document.createElement('div');
-      tiles.className='ovw-tiles';
-      for(var k=0;k<r.n;k++){
-        (function(i){
-          var sl=pres.slides[i];
-          var tile=document.createElement('button');
-          tile.className='ovw-tile'+(i===cur?' cur':'')
-            +(sl&&sl.opt?' opt':'')
-            +(slideSkipped(i)?' cut':'');
-          var num=document.createElement('span');
-          num.className='ovw-n';num.textContent=String(i+1);
-          tile.appendChild(num);
-          tile.appendChild(miniDiagram(sl));
-          var lab=document.createElement('span');
-          lab.className='ovw-lab';
-          lab.textContent=filmText(sl)||'';
-          tile.appendChild(lab);
-          tile.dataset.i=String(i);
-          tile.title=(sl&&sl.opt?'Optional \u2014 ':'')
-            +'Go to slide '+(i+1);
-          tile.addEventListener('click',function(){
-            overviewClose();
-            /* PRESENTING, go() -- so the transition plays, the rehearsal
-               clock attributes the time and the presenter view follows.
-               Setting cur by hand would skip all three (T30). */
-            if(mode==='view'){go(i);return;}
-            cur=i;activePane=-1;selAnnot=null;selSet=[];
-            refresh();
-          });
-          tiles.appendChild(tile);
-        })(r.at+k);
-      }
-      grp.appendChild(tiles);
-      body.appendChild(grp);
-    });
     ov.appendChild(body);
+    var dragging=false;
+    function pickedIdx(){
+      return picked.map(function(s){return pres.slides.indexOf(s);})
+        .filter(function(i){return i>=0;}).sort(function(a,b){return a-b;});
+    }
+    function openAt(i){
+      overviewClose();
+      /* PRESENTING, go() -- so the transition plays, the rehearsal
+         clock attributes the time and the presenter view follows.
+         Setting cur by hand would skip all three (T30). */
+      if(mode==='view'){go(i);return;}
+      cur=i;activePane=-1;selAnnot=null;selSet=[];
+      refresh();
+    }
+    function draw(){
+      body.innerHTML='';
+      var runs=sectionRuns();
+      var n=(pres.slides||[]).length;
+      t.textContent=(sorting?'Slide sorter \u2014 ':'')
+        +(pres.name||'This deck')+' \u2014 '+n+' slide'+(n===1?'':'s')
+        +(function(){
+          var ns=runs.filter(function(r){return r.id;}).length;
+          return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
+        })();
+      runs.forEach(function(r){
+        var grp=document.createElement('div');
+        grp.className='ovw-grp';
+        grp.dataset.at=String(r.at);grp.dataset.n=String(r.n);
+        grp.dataset.sec=r.id||'';
+        var gh=document.createElement('div');
+        gh.className='ovw-gh';
+        gh.textContent=r.id?(r.name||'Section')
+          :(runs.length>1?'(no section)':'');
+        if(gh.textContent) grp.appendChild(gh);
+        var tiles=document.createElement('div');
+        tiles.className='ovw-tiles';
+        for(var k=0;k<r.n;k++){
+          (function(i){
+            var sl=pres.slides[i];
+            var tile=document.createElement('button');
+            tile.className='ovw-tile'+(i===cur?' cur':'')
+              +(sl&&sl.opt?' opt':'')
+              +(sl&&sl.hide?' hid':'')
+              +(slideSkipped(i)?' cut':'');
+            var num=document.createElement('span');
+            num.className='ovw-n';num.textContent=String(i+1);
+            tile.appendChild(num);
+            tile.appendChild(miniDiagram(sl));
+            var lab=document.createElement('span');
+            lab.className='ovw-lab';
+            lab.textContent=filmText(sl)||'';
+            tile.appendChild(lab);
+            tile.dataset.i=String(i);
+            tile.title=sorting?('Slide '+(i+1)+' \u2014 click to pick, '
+                +'double-click to open, drag to move')
+              :((sl&&sl.opt?'Optional \u2014 ':'')+'Go to slide '+(i+1));
+            tile.addEventListener('click',function(e){
+              if(!sorting){openAt(i);return;}
+              if(e.shiftKey&&anchor&&pres.slides.indexOf(anchor)>=0){
+                var a0=pres.slides.indexOf(anchor);
+                var lo=Math.min(a0,i),hi=Math.max(a0,i);
+                picked=pres.slides.slice(lo,hi+1);
+              } else if(e.ctrlKey||e.metaKey){
+                var at=picked.indexOf(sl);
+                if(at>=0) picked.splice(at,1); else picked.push(sl);
+                anchor=sl;
+              } else {picked=[sl];anchor=sl;}
+              paint();
+            });
+            if(sorting){
+              tile.addEventListener('dblclick',function(){openAt(i);});
+              tile.draggable=true;
+              tile.addEventListener('dragstart',function(e){
+                if(picked.indexOf(sl)<0){picked=[sl];anchor=sl;paint();}
+                dragging=true;
+                try{e.dataTransfer.setData('text/plain','slides');
+                  e.dataTransfer.effectAllowed='move';}catch(err){}
+              });
+              tile.addEventListener('dragend',function(){
+                dragging=false;clearMarks();});
+            }
+            tiles.appendChild(tile);
+          })(r.at+k);
+        }
+        grp.appendChild(tiles);
+        body.appendChild(grp);
+      });
+      paint();
+      if(find.value) applyFind();
+    }
+    function paint(){
+      $$('.ovw-tile',body).forEach(function(tl){
+        var on=picked.indexOf(pres.slides[+tl.dataset.i])>=0;
+        tl.classList.toggle('pick',on);
+        if(sorting) tl.setAttribute('aria-pressed',on?'true':'false');
+      });
+      if(!sorting) return;
+      var k=pickedIdx().length,many=k>1?(' '+k):'';
+      tb.open.disabled=k!==1;
+      tb.dup.disabled=!k;tb.sec.disabled=!k;tb.del.disabled=!k;
+      tb.dup.innerHTML=bic('copy')+' Duplicate'+many;
+      tb.del.innerHTML=bic('exit')+' Delete'+many;
+    }
+    function clearMarks(){
+      $$('.ovw-tile.drop-before,.ovw-tile.drop-after',body)
+        .forEach(function(x){
+          x.classList.remove('drop-before');x.classList.remove('drop-after');});
+    }
+    /* where a drop lands: before or after the tile under the pointer, and
+       in that tile's section */
+    function dropAt(e){
+      var tl=e.target.closest&&e.target.closest('.ovw-tile');
+      if(tl&&body.contains(tl)){
+        var r=tl.getBoundingClientRect(),i=+tl.dataset.i;
+        var after=e.clientX>r.left+r.width/2;
+        var s0=pres.slides[i];
+        return {tile:tl,after:after,to:after?i+1:i,sec:(s0&&s0.sec)||''};
+      }
+      var g=e.target.closest&&e.target.closest('.ovw-grp');
+      if(g&&body.contains(g))
+        return {tile:null,to:+g.dataset.at+(+g.dataset.n),
+          sec:g.dataset.sec||''};
+      return null;
+    }
+    if(sorting){
+      body.addEventListener('dragover',function(e){
+        if(!dragging) return;
+        e.preventDefault();
+        clearMarks();
+        var d=dropAt(e);
+        if(d&&d.tile) d.tile.classList.add(d.after?'drop-after':'drop-before');
+      });
+      body.addEventListener('drop',function(e){
+        if(!dragging) return;
+        e.preventDefault();dragging=false;clearMarks();
+        var d=dropAt(e); if(!d) return;
+        moveBlock(d.to,d.sec);
+      });
+    }
+    function moveBlock(to,sec){
+      var idxs=pickedIdx(); if(!idxs.length) return;
+      /* T601: a part keeps its own order and takes in no slide */
+      if(typeof partGuardMove==='function'){
+        for(var q=0;q<idxs.length;q++)
+          if(partGuardMove(idxs[q],sec)) return;
+      }
+      var block=idxs.map(function(i){return pres.slides[i];});
+      var curSl=pres.slides[cur];
+      var before=idxs.filter(function(i){return i<to;}).length;
+      idxs.slice().reverse().forEach(function(i){pres.slides.splice(i,1);});
+      var at=Math.max(0,Math.min(pres.slides.length,to-before));
+      Array.prototype.splice.apply(pres.slides,[at,0].concat(block));
+      /* the slides join the section they landed in, as a strip drop does
+         -- a section is one contiguous run, and normSections would drag
+         a stray straight back */
+      block.forEach(function(s2){if(sec) s2.sec=sec; else delete s2.sec;});
+      var ci=pres.slides.indexOf(curSl); if(ci>=0) cur=ci;
+      normSections();markDirty();refresh();draw();
+      toast(block.length===1?'Slide moved':block.length+' slides moved');
+    }
+    function act(what){
+      var idxs=pickedIdx(); if(!idxs.length&&what!=='all') return;
+      if(what==='open'){openAt(idxs[0]);return;}
+      if(what==='dup'){
+        var copies=[];
+        /* last first, so each copy lands after its own slide and the
+           numbers of the ones still to copy do not move -- and ONE undo
+           step for the lot */
+        idxs.slice().reverse().forEach(function(i){
+          var at=slideCopyAt(pres.slides[i],i);
+          if(at>=0) copies.unshift(pres.slides[at]);});
+        if(copies.length) cur=pres.slides.indexOf(copies[0]);
+        activePane=-1;selAnnot=null;selSet=[];
+        normSections();markDirty();refresh();
+        picked=copies;anchor=copies[0]||null;draw();
+        toast(copies.length===1?'Slide duplicated'
+          :copies.length+' slides duplicated');
+        return;
+      }
+      if(what==='sec'){
+        var first=pres.slides[idxs[0]];
+        newSection(idxs[0],'New section');
+        var id=first&&first.sec;
+        draw();
+        if(id&&typeof renameSection==='function')
+          renameSection(id,function(){draw();});
+        return;
+      }
+      if(what==='del'){
+        var n=idxs.length;
+        /* T601: a part's slides are deleted in the part */
+        if(typeof partOfSlide==='function'&&idxs.some(function(i){
+            return partOfSlide(pres.slides[i]);})){
+          toast(partSays(partOfSlide(pres.slides[idxs.filter(function(i){
+            return partOfSlide(pres.slides[i]);})[0]])),7000);
+          return;
+        }
+        /* one undo step for the lot */
+        idxs.slice().reverse().forEach(function(i){pres.slides.splice(i,1);});
+        cur=Math.max(0,Math.min(idxs[0],pres.slides.length-1));
+        activePane=-1;selAnnot=null;selSet=[];
+        normSections();markDirty();refresh();
+        picked=pres.slides[cur]?[pres.slides[cur]]:[];
+        anchor=picked[0]||null;draw();
+        toast(n===1?'Slide deleted \u2014 Ctrl+Z brings it back'
+          :n+' slides deleted \u2014 Ctrl+Z brings them back');
+      }
+    }
+    ovwKeys=!sorting?null:function(e){
+      if(e.target===find) return;
+      var ctrl=e.ctrlKey||e.metaKey,k=e.key;
+      var stop=function(){e.preventDefault();e.stopPropagation();};
+      if(k==='Delete'||k==='Backspace'){stop();act('del');return;}
+      if(k==='Enter'){stop();act('open');return;}
+      if(ctrl&&(k==='a'||k==='A')){
+        stop();picked=pres.slides.slice();anchor=picked[0]||null;paint();
+        return;}
+      if(ctrl&&(k==='d'||k==='D')){stop();act('dup');return;}
+      if(ctrl&&(k==='z'||k==='Z'||k==='y'||k==='Y')){
+        stop();
+        if(k==='y'||k==='Y'||e.shiftKey) redo(); else undo();
+        /* undo hands back new slide objects: the current one stays
+           picked, so the keys go on working */
+        picked=picked.filter(function(s2){
+          return pres.slides.indexOf(s2)>=0;});
+        if(!picked.length&&pres.slides[cur]){
+          picked=[pres.slides[cur]];anchor=picked[0];}
+        draw();return;
+      }
+      if(k==='ArrowRight'||k==='ArrowLeft'){
+        var at=pickedIdx(),i=at.length?at[at.length-1]:cur;
+        var j=Math.max(0,Math.min(pres.slides.length-1,
+          i+(k==='ArrowRight'?1:-1)));
+        stop();picked=[pres.slides[j]];anchor=picked[0];paint();
+        var tl=body.querySelector('.ovw-tile[data-i="'+j+'"]');
+        if(tl) tl.focus();
+      }
+    };
     /* TYPE TO NARROW. The tiles are already drawn; a hit hides the ones
        that do not match rather than rebuilding the map, so the slides
        do not jump about under the pointer as you type. */
@@ -71463,10 +72152,15 @@ window.JunoPptx = (function () {
       if(e.key==='Enter'){
         var first=$$('.ovw-tile',ov).filter(function(t){
           return !t.hidden;})[0];
-        if(first){e.preventDefault();first.click();}
+        if(first){e.preventDefault();openAt(+first.dataset.i);}
       }
     });
+    draw();
     document.body.appendChild(ov);
+    /* the picked tile in view, so a long deck opens where you are */
+    var curT=body.querySelector('.ovw-tile.cur');
+    if(curT&&curT.scrollIntoView) curT.scrollIntoView({block:'center'});
+    if(sorting&&curT) curT.focus();
     /* CAPTURE, so Esc closes the map before the editor's own Esc ladder
        reads it as "drop the tool" — the innermost state wins, which is
        the rule that ladder already follows */
@@ -76276,6 +76970,12 @@ window.JunoPptx = (function () {
       document.body.appendChild(talkBlackEl);
     }
     talkToolsSync();
+    talkBlackSync();
+  }
+  /* T574: whichever window blacked it, the presenter view's button
+     follows */
+  function talkBlackSync(){
+    if(typeof presenterPush==='function') presenterPush();
   }
   /* leaving the show puts every tool down: setUIMode calls this */
   function talkToolsReset(){
@@ -76284,10 +76984,37 @@ window.JunoPptx = (function () {
   }
   /* the show's keys for these (55-sections-and-strip's key map calls
      this first in view mode); true when the key was taken */
+  /* T574: A SLIDE BY ITS NUMBER. PowerPoint's own: type the number the
+     strip gives it, then Enter. The digits wait a moment for the next
+     one; anything else lets them go. A hidden slide can be reached this
+     way, as in PowerPoint -- it is the one way into it during a show. */
+  var talkNum='',talkNumT=0;
+  function slideAtNumber(n){
+    for(var i=0;i<(pres.slides||[]).length;i++)
+      if(!slideIsAlt(i)&&slideNo(i)===n) return i;
+    return -1;
+  }
+  function talkNumKey(k){
+    if(/^[0-9]$/.test(k)){
+      talkNum=(talkNum+k).slice(-4);
+      clearTimeout(talkNumT);
+      talkNumT=setTimeout(function(){talkNum='';},2500);
+      return true;
+    }
+    if(k==='Enter'&&talkNum){
+      var want=+talkNum,at=slideAtNumber(want);
+      talkNum='';clearTimeout(talkNumT);
+      if(at>=0) go(at); else toast('There is no slide '+want);
+      return true;
+    }
+    talkNum='';
+    return false;
+  }
   function talkToolKey(e){
     if(mode!=='view'||deckEl.hidden) return false;
     if(e.ctrlKey||e.metaKey||e.altKey) return false;
     var k=String(e.key||'');
+    if(talkNumKey(k)) return true;
     if(k==='Escape'&&(talkTool||talkBlackEl)){talkToolsReset();return true;}
     if(k==='p'||k==='P'){setTalkTool('laser');return true;}
     if(k==='m'||k==='M'){setTalkTool('lens');return true;}
@@ -78043,7 +78770,16 @@ window.JunoPptx = (function () {
      selection, so the same familiar keys then address the slide (T516). */
   var slideClip=null;
   function putSlideCopy(source,i){
-    if(!source) return false;
+    var at=slideCopyAt(source,i);
+    if(at<0) return false;
+    cur=at;activePane=-1;selAnnot=null;selSet=[];
+    normSections();markDirty();refresh();
+    return true;
+  }
+  /* the copy itself, placed, with nothing redrawn or recorded -- so the
+     slide sorter (T557) can copy several and make them one undo step */
+  function slideCopyAt(source,i){
+    if(!source) return -1;
     var cp=deep(source);
     if(pageOf().poster) cp.label=nextVersionName();
     else delete cp.label;
@@ -78061,9 +78797,7 @@ window.JunoPptx = (function () {
       at=partSafeAt(at);
     }
     pres.slides.splice(at,0,cp);
-    cur=at;activePane=-1;selAnnot=null;selSet=[];
-    normSections();markDirty();refresh();
-    return true;
+    return at;
   }
   function slideCopy(i){
     var s=pres.slides[i]; if(!s) return false;
@@ -82245,7 +82979,11 @@ window.JunoPptx = (function () {
         var tag=t&&t.tagName;
         var own=inside&&(tag==='BUTTON'||tag==='A'||tag==='SELECT'
           ||tag==='SUMMARY'||(t.isContentEditable)
-          ||(tag==='TEXTAREA'&&!(e.ctrlKey||e.metaKey)));
+          ||(tag==='TEXTAREA'&&!(e.ctrlKey||e.metaKey))
+          /* T562: a grid moves down a column on Enter, as a sheet does;
+             Ctrl+Enter is still the verb */
+          ||(!(e.ctrlKey||e.metaKey)&&t.closest
+            &&t.closest('[data-own-enter]')));
         if(own) return;
         var v=dlgButton(d,'verb');
         e.preventDefault();e.stopImmediatePropagation();
@@ -87104,6 +87842,8 @@ window.JunoPptx = (function () {
                                  for every transient menu (T135) */
   dlgKeysBoot();              /* every dialog: Esc cancels, Enter the verb
                                  (T568) */
+  touchBoot();                /* a finger or a pen moves, sizes, turns
+                                 (T575) */
   handoffBoot();              /* a saved file's Open in Junoview (T597) --
                                  before the route, whose hash it clears */
   /* both IIFEs + their route hooks are now wired — restore the URL's view */
