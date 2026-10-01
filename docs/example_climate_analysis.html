@@ -8538,6 +8538,9 @@ ol.an-ul.an-ul-roman-upper{list-style-type:upper-roman;}
 ol.an-ul.an-ul-paren{list-style-type:decimal;}
 ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
+/* T571: a bullet's own colour and size (the words keep theirs) */
+.an-ul li::marker{color:var(--an-lc,currentColor);
+  font-size:calc(var(--an-ls,1) * 1em);}
 .an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}
 .an-tx.an-ul ul ul{list-style:square;}
 .an-tx.an-ul ol{list-style:lower-alpha;margin:0;padding-left:1.25em;}
@@ -9036,6 +9039,22 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 .an-item.an-flh.an-flip img,.an-item.an-flv.an-flip img,
 .an-item.an-flh video,.an-item.an-flv video{
   transform:scale(var(--an-sx),var(--an-sy));}
+/* T573: the Shapes window's search, in its header */
+.strip-all-h{display:flex;align-items:center;gap:8px;}
+.strip-find{flex:1;min-width:0;max-width:260px;margin-left:auto;
+  font:inherit;font-size:12px;text-transform:none;letter-spacing:0;
+  padding:4px 8px;border-radius:6px;border:1px solid var(--line);
+  background:var(--chrome-1,#0f1b26);color:var(--chrome-ink,#d7e3ec);}
+.strip-find-none{padding:6px 10px;font-size:12px;
+  color:var(--chrome-ink-2,#93a8ba);}
+/* T553: the Duration box beside the transitions */
+.trans-dur{flex:none;width:52px;align-self:stretch;font:inherit;
+  font-size:12px;padding:0 2px 0 6px;border:0;border-left:1px solid
+  var(--line);border-radius:0;background:transparent;
+  color:var(--chrome-ink,#d7e3ec);}
+.trans-dur:disabled{opacity:.45;}
+.cell-unit{flex:none;padding:0 7px 0 1px;font-size:11px;
+  color:var(--chrome-ink-2,#93a8ba);}
 /* T548: the Shadow menu's rows show their shadow on a small card */
 .shd-sw{display:inline-block;width:18px;height:14px;border-radius:2px;
   background:var(--chrome-ink-2,#9fb0c0);margin:2px 4px 6px 0;flex:none;}
@@ -13968,6 +13987,14 @@ Layers) and the <b>Add animation</b> gallery. Pick an effect and
 <b>Timing</b> and <b>Disappear</b> appear beside it; Focus and Motion are
 in the Animation panel&rsquo;s Configure tab, and how a slide arrives is
 <b>Slide transition</b> on the Present tab.</li>
+<li><b>Slide transitions.</b> <i>Present &rarr; Slide transition</i>:
+<b>Cut</b>, <b>Fade</b> (the old slide fades into the new one),
+<b>Push</b> (the new slide pushes the old one off), <b>Wipe</b> (the new
+slide is uncovered from the left), <b>Zoom</b>, and <b>Move</b>, which
+moves anything on both slides from where it was to where it is.
+<b>Duration</b> beside them is how long it takes, in seconds; <i>Give it
+to</i> passes the transition, and its length, to other slides. A .pptx
+keeps each as PowerPoint's own, at its length (Move as Morph).</li>
 <li><b>Text a piece at a time:</b> select a text box, give it an effect in
 <b>Add animation</b>, open <b>Timing</b>, and in <b>Text sequence</b> pick
 <b>By bullet</b> (one click per
@@ -14055,6 +14082,22 @@ next, and a box that grows with its words is as tall as its longest
 column. A curve and columns cannot both be on &mdash; choosing one turns
 the other off, and says so. Columns travel into a .pptx as PowerPoint's
 own, and come back in from one.</li>
+<li><b>Bullets and numbering.</b> The &#9662; beside List or Numbered
+opens the kinds of marker; <i>Bullet options&hellip;</i> or
+<i>Numbering options&hellip;</i> at its foot sets the marker's own
+<b>colour</b> and <b>size</b> (the words keep theirs), and where a
+numbered list <b>starts</b>. A .pptx keeps all of it, and the marker's
+kind, both ways.</li>
+<li><b>Find a shape.</b> On <i>Images &rarr; Shapes</i>, the &#9662; at the
+gallery's edge shows every shape with a search at the top: type
+<i>circle</i>, <i>callout</i> or <i>arrow</i> (a shape is found by the
+words people use for it, not only its name) and press <kbd>Enter</kbd>
+to draw with the first one found. The shapes you drew last lead the
+gallery.</li>
+<li><b>Typefaces.</b> The typeface list on <i>Style</i> draws every name
+in its own face, and the faces you used last are at the top under
+<b>Recently used</b>. <i>Other&hellip;</i> takes any font installed on
+this computer by name.</li>
 <li><b>Shadow.</b> <i>Object &rarr; Shadow &#9662;</i> puts a shadow
 under what you have selected: <b>soft</b> (just off the page),
 <b>hard</b> (a flat offset copy) or <b>lifted</b> (a card held up), or
@@ -14448,8 +14491,8 @@ page. <b>Builds travel</b>: each click reveals the same objects it does
 here (rise and zoom arrive as fades &mdash; the click timing is exact).
 <b>Links travel</b>: a click action opens its page or jumps to its
 slide in the exported deck too, and so does a link on words. Cropped pictures keep their trim and
-their shape, and slide transitions come across (<i>Move matching
-objects</i> becomes a push). What does <b>not</b> travel: a crop you
+their shape, and slide transitions come across at their own length
+(<i>Move matching objects</i> becomes PowerPoint's Morph). What does <b>not</b> travel: a crop you
 drew freehand, and equations (they arrive as plain text). Everything lost
 is counted and named when you export, not silently dropped &mdash; use
 Export PDF when any of it matters.</li>
@@ -15981,8 +16024,21 @@ items snap to both. Guides, not ink: never printed or exported"
  there"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg><span>Cut</span></button>
                 <button class="fx-tile" id="trans-fade"
                   aria-pressed="false"
-                  title="A short cross-fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg><span
-                  >Fade</span></button>
+                  title="The old slide fades into the new one"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg><span>Fade</span></button>
+                <!-- T553: three of PowerPoint's own -->
+                <button class="fx-tile" id="trans-push"
+                  aria-pressed="false"
+                  title="The new slide pushes the old one off to the left"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="6" y="3.6" width="8.6" height="8.8" rx="1"/><path d="M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4"/></svg><span>Push</span></button>
+                <button class="fx-tile" id="trans-wipe"
+                  aria-pressed="false"
+                  title="The new slide is uncovered from the left"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="3.6" width="12.4" height="8.8" rx="1"/><path d="M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5"/></svg><span>Wipe</span></button>
+                <button class="fx-tile" id="trans-zoom"
+                  aria-pressed="false"
+                  title="The old slide grows and fades into the new one"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg><span>Zoom</span></button>
                 <button class="fx-tile" id="trans-move"
                   aria-pressed="false"
                   title="Anything on both slides slides, grows or
@@ -16007,6 +16063,17 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-haspopup="true" aria-expanded="false"
                   title="Which slides get this transition"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg><span>Give it to &#9662;</span></button>
+              </span>
+              <!-- T553: how long it takes, as PowerPoint's Duration box -->
+              <span class="rbn-cell rbn-seg" id="trans-durcell"
+                role="group" aria-label="Duration">
+                <span class="cell-lab">Duration</span>
+                <input class="trans-dur" id="trans-dur" type="number"
+                  min="0.1" max="10" step="0.05"
+                  aria-label="Duration in seconds"
+                  title="How long this slide's transition takes, in
+ seconds">
+                <span class="cell-unit">s</span>
               </span>
             </span>
             <span class="rbn-lab">Slide transition</span>
@@ -18876,7 +18943,7 @@ items snap to both. Guides, not ink: never printed or exported"
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "alttext": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"8.4\" height=\"8.8\" rx=\"1\"/><path d=\"m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7\"/><path d=\"M11.8 6.3a2.4 2.4 0 0 1 0 3.4\"/><path d=\"M13.4 4.8a4.6 4.6 0 0 1 0 6.4\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autocorrect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "cut": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.7\" cy=\"4\" r=\"1.7\"/><circle cx=\"3.7\" cy=\"12\" r=\"1.7\"/><path d=\"m5.1 5 7.3 6.5M5.1 11l7.3-6.5\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "drift": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8-4.4-2.6-2-4.4 5.6-.6 6.6 1.8\"/><\/svg>", "eraser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z\"/><path d=\"m6.2 5.4 4.4 4.4\"/><path d=\"M8.6 13.4H14\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flicker": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M12.4 8h1.8\"/><path d=\"M4.8 4.8l1.5 1.5\"/><path d=\"M8 12v2.2\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "hideslide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.4\" width=\"12\" height=\"9.2\" rx=\"1\"/><path d=\"M2.6 13.8 13.4 2.2\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "jelly": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><ellipse cx=\"8\" cy=\"8\" rx=\"6.1\" ry=\"3.4\"/><ellipse cx=\"8\" cy=\"8\" rx=\"3.4\" ry=\"6.1\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shadow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2\" width=\"9\" height=\"9\" rx=\"1\"/><path d=\"M13.6 5.2v8.4H5.2\"/><\/svg>", "shake": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "sway": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h12.4\"/><path d=\"M4.6 5.2L1.8 8l2.8 2.8\"/><path d=\"M11.4 5.2L14.2 8l-2.8 2.8\"/><\/svg>", "swing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"2.8\" r=\"1\"/><path d=\"M8 3.8v5.2\"/><circle cx=\"8\" cy=\"11.4\" r=\"2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "textcase": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 13 4.6 5.4 7.4 13\"/><path d=\"M2.8 10.4h3.6\"/><circle cx=\"11.6\" cy=\"11\" r=\"1.9\"/><path d=\"M13.5 9.1V13\"/><path d=\"M5.4 2.8h6.2\"/><path d=\"m10.2 1.4 1.4 1.4-1.4 1.4\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "alttext": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"8.4\" height=\"8.8\" rx=\"1\"/><path d=\"m2.6 11.2 2.6-3 1.8 1.9 1.5-1.6 1.6 1.7\"/><path d=\"M11.8 6.3a2.4 2.4 0 0 1 0 3.4\"/><path d=\"M13.4 4.8a4.6 4.6 0 0 1 0 6.4\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autocorrect": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M9.4 1.6 3.6 9.2h4l-1 5.2 5.8-7.6h-4Z\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "blackout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.4h11.2v11.2H2.4z\" fill=\"currentColor\"/><\/svg>", "bob": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4v11.2\"/><path d=\"M4.8 5.6L8 2.4l3.2 3.2\"/><path d=\"M4.8 10.4L8 13.6l3.2-3.2\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "callout": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 2.6h6.4v5.2H1.8z\"/><path d=\"M3.6 4.4h2.6v1.8H3.6z\"/><path d=\"M8.4 8.4h5.8v5.2H8.4z\"/><path d=\"M6.2 6.2l2.2 2.2\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "cut": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.7\" cy=\"4\" r=\"1.7\"/><circle cx=\"3.7\" cy=\"12\" r=\"1.7\"/><path d=\"m5.1 5 7.3 6.5M5.1 11l7.3-6.5\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "drift": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 10.8c-1.6-3.4 2-6.6 4.6-5.2s2.2 5.2-.4 5.8-4.4-2.6-2-4.4 5.6-.6 6.6 1.8\"/><\/svg>", "eraser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z\"/><path d=\"m6.2 5.4 4.4 4.4\"/><path d=\"M8.6 13.4H14\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "film": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><path d=\"M4.6 3v10M11.4 3v10M2 6h2.6M2 10h2.6M11.4 6H14M11.4 10H14\"/><path d=\"M7 6.3v3.4L9.7 8Z\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flicker": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M12.4 8h1.8\"/><path d=\"M4.8 4.8l1.5 1.5\"/><path d=\"M8 12v2.2\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "flyin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h8.4\"/><path d=\"M7.2 5l3 3-3 3\"/><path d=\"M12.2 3.4h2v9.2h-2\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "hideslide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.4\" width=\"12\" height=\"9.2\" rx=\"1\"/><path d=\"M2.6 13.8 13.4 2.2\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "jelly": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><ellipse cx=\"8\" cy=\"8\" rx=\"6.1\" ry=\"3.4\"/><ellipse cx=\"8\" cy=\"8\" rx=\"3.4\" ry=\"6.1\"/><\/svg>", "laser": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.4\"/><path d=\"M8 1.8v2.2\"/><path d=\"M8 12v2.2\"/><path d=\"M1.8 8H4\"/><path d=\"M12 8h2.2\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "pageturn": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h11.2v10.8H2.4z\"/><path d=\"M8 2.6c3 2.6 3 8.2 0 10.8\"/><path d=\"M8 2.6c-3 2.6-3 8.2 0 10.8\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "pulse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"2.2\"/><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><\/svg>", "push": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"6\" y=\"3.6\" width=\"8.6\" height=\"8.8\" rx=\"1\"/><path d=\"M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shadow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2\" width=\"9\" height=\"9\" rx=\"1\"/><path d=\"M13.6 5.2v8.4H5.2\"/><\/svg>", "shake": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8l2.4-4 2.4 8 2.4-8 2.4 8 2.4-4\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "smile": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><path d=\"M5.4 9.6c.7 1 1.6 1.5 2.6 1.5s1.9-.5 2.6-1.5\"/><path d=\"M5.8 6.4h.1M10.1 6.4h.1\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "star": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9 .7-4-2.9-2.8 4-.6Z\"/><\/svg>", "story": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 4.2h3.6v7.6H1.6z\"/><path d=\"M6.2 4.2h3.6v7.6H6.2z\"/><path d=\"M10.8 4.2h3.6v7.6h-3.6z\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "sway": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8h12.4\"/><path d=\"M4.6 5.2L1.8 8l2.8 2.8\"/><path d=\"M11.4 5.2L14.2 8l-2.8 2.8\"/><\/svg>", "swing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"2.8\" r=\"1\"/><path d=\"M8 3.8v5.2\"/><circle cx=\"8\" cy=\"11.4\" r=\"2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "tag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h6.1l4.9 4.6-4.9 4.6H2.4Z\"/><circle cx=\"5.3\" cy=\"6.3\" r=\".8\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "textcase": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 13 4.6 5.4 7.4 13\"/><path d=\"M2.8 10.4h3.6\"/><circle cx=\"11.6\" cy=\"11\" r=\"1.9\"/><path d=\"M13.5 9.1V13\"/><path d=\"M5.4 2.8h6.2\"/><path d=\"m10.2 1.4 1.4 1.4-1.4 1.4\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "typewriter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.2 11.6h6.6\"/><path d=\"M2.2 8h4\"/><path d=\"M2.2 4.4h9\"/><path d=\"M11.4 7.6v5.4\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wipe": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"3.6\" width=\"12.4\" height=\"8.8\" rx=\"1\"/><path d=\"M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "wobble": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8c1.6-3 3.4-3 5 0s3.4 3 5 0 2.2-2 2.4-1\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>", "zoomlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"5\" cy=\"8\" r=\"3\"/><circle cx=\"11\" cy=\"8\" r=\"3\"/><path d=\"M8 8h0\"/><path d=\"M7.2 6.4l1.6 3.2\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -27593,6 +27660,28 @@ window.JunoPptx = (function () {
     if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
     return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
   }
+  /* T571: a list's marker as PowerPoint's: the kind (one of the deck's
+     six bullets or six numberings), its own colour and size, and the
+     number a numbered list starts at. In pPr order: colour, size, then
+     the marker. */
+  var BU_CHAR = { bullet: '&#8226;', circle: '&#9702;', square: '&#9642;',
+    dash: '&#8211;', arrow: '&#9656;', check: '&#10003;' };
+  var BU_NUM = { number: 'arabicPeriod', paren: 'arabicParenR',
+    alpha: 'alphaLcPeriod', 'alpha-upper': 'alphaUcPeriod',
+    roman: 'romanLcPeriod', 'roman-upper': 'romanUcPeriod' };
+  function buXml(item, num) {
+    var out = '';
+    if (item.lcol) out += '<a:buClr><a:srgbClr val="' + hex(item.lcol,
+      'FFFFFF') + '"/></a:buClr>';
+    if (item.lsz && +item.lsz !== 1)
+      out += '<a:buSzPct val="' + Math.round(+item.lsz * 100000) + '"/>';
+    if (num)
+      return out + '<a:buAutoNum type="' + (BU_NUM[item.lkind]
+        || 'arabicPeriod') + '"' + (+item.lstart > 1
+        ? ' startAt="' + Math.round(+item.lstart) + '"' : '') + '/>';
+    return out + '<a:buChar char="' + (BU_CHAR[item.lkind] || '&#8226;')
+      + '"/>';
+  }
   function paragraphs(item, page) {
     var align = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[
       item.align] || 'l';
@@ -27602,8 +27691,8 @@ window.JunoPptx = (function () {
         var props = '<a:pPr algn="' + align + '"'
           + ((pa.bullet || pa.num) ? ' indent="-228600" marL="' + mar + '"' : '')
           + (lvl ? ' lvl="' + lvl + '"' : '') + '>'
-          + (pa.bullet ? '<a:buChar char="&#8226;"/>'
-            : pa.num ? '<a:buAutoNum type="arabicPeriod"/>' : '<a:buNone/>')
+          + (pa.bullet ? buXml(item, false)
+            : pa.num ? buXml(item, true) : '<a:buNone/>')
           + '</a:pPr>';
         var runs = (pa.runs || []).filter(function (r) { return r.t; });
         if (!runs.length)
@@ -27616,7 +27705,7 @@ window.JunoPptx = (function () {
     return lines.map(function (line) {
       var props = '<a:pPr algn="' + align + '"'
         + (item.bullets ? ' indent="-228600" marL="228600"' : '') + '>'
-        + (item.bullets ? '<a:buChar char="&#8226;"/>' : '<a:buNone/>')
+        + (item.bullets ? buXml(item, !!BU_NUM[item.lkind]) : '<a:buNone/>')
         + '</a:pPr>';
       if (!line)
         return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';
@@ -27811,12 +27900,39 @@ window.JunoPptx = (function () {
      is approximated by `push` and the caller is told, rather than
      silently promised something PowerPoint will not do.
      <p:transition> belongs AFTER <p:clrMapOvr> in the slide part. */
-  var TRANSITION = { fade: '<p:fade/>', move: '<p:push dir="l"/>' };
+  /* T553: PowerPoint's own for each kind. A push from the right is
+     dir="l" (the slide travels left); a wipe that uncovers from the left
+     is dir="r". Move is PowerPoint's Morph, which is what it is -- it
+     used to go as a push, the nearest thing in the 2007 schema. */
+  var TRANSITION = { fade: '<p:fade/>', push: '<p:push dir="l"/>',
+    wipe: '<p:wipe dir="r"/>', zoom: '<p:zoom/>' };
+  var MC_NS = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
+  var P14_TR_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
+  var P159_NS = 'http://schemas.microsoft.com/office/powerpoint/2015/09/main';
 
-  function transition(kind) {
+  function transition(kind, ms) {
+    ms = Math.round(+ms || 0);
+    /* the 2007 speed, for a reader that knows no exact length */
+    var spd = !ms ? 'med' : ms <= 500 ? 'fast' : ms <= 750 ? 'med' : 'slow';
+    if (kind === 'move')
+      return '<mc:AlternateContent xmlns:mc="' + MC_NS + '">'
+        + '<mc:Choice xmlns:p159="' + P159_NS + '" xmlns:p14="'
+        + P14_TR_NS + '" Requires="p159">'
+        + '<p:transition spd="' + spd + '"' + (ms ? ' p14:dur="' + ms + '"' : '')
+        + '><p159:morph option="byObject"/></p:transition></mc:Choice>'
+        + '<mc:Fallback><p:transition spd="' + spd + '"><p:fade/>'
+        + '</p:transition></mc:Fallback></mc:AlternateContent>';
     var body = TRANSITION[kind];
     if (!body) return '';
-    return '<p:transition spd="med">' + body + '</p:transition>';
+    if (!ms) return '<p:transition spd="' + spd + '">' + body + '</p:transition>';
+    /* the exact length is PowerPoint 2010's p14:dur, in a Choice it
+       understands, with the 2007 form as the Fallback */
+    return '<mc:AlternateContent xmlns:mc="' + MC_NS + '">'
+      + '<mc:Choice xmlns:p14="' + P14_TR_NS + '" Requires="p14">'
+      + '<p:transition spd="' + spd + '" p14:dur="' + ms + '">' + body
+      + '</p:transition></mc:Choice><mc:Fallback><p:transition spd="'
+      + spd + '">' + body + '</p:transition></mc:Fallback>'
+      + '</mc:AlternateContent>';
   }
 
   /* A shape's non-visual DESCRIPTION is what PowerPoint's own
@@ -28715,7 +28831,8 @@ window.JunoPptx = (function () {
         xml: XML_HEAD + '<p:sld' + nsAttrs() + (slide.hide ? ' show="0"' : '')
           + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
-          + transition(slide.trans) + timingXml(anims) + '</p:sld>' };
+          + transition(slide.trans, slide.tdur) + timingXml(anims)
+          + '</p:sld>' };
     });
 
     /* which slides have notes, decided once: the parts, the rels,
@@ -36620,6 +36737,8 @@ window.JunoPptx = (function () {
            truthiness test here dropped it on every reload, so the slide
            faded again and every readout said Fade. */
         if(typeof s.trans==='string') o.trans=s.trans;
+        /* T553: how long it takes, in seconds; absent is its kind's own */
+        if(+s.tdur>0) o.tdur=+s.tdur;
         if(Array.isArray(s.cuts)&&s.cuts.length)
           o.cuts=s.cuts.filter(function(c){
             return typeof c==='string'&&c;});
@@ -47716,6 +47835,13 @@ window.JunoPptx = (function () {
              content at all */
           tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
+          /* T571: the marker's own colour and size, and the number a
+             numbered list starts at -- on the list element, so the
+             items stay words and nothing else */
+          if(a.lcol) tx2.style.setProperty('--an-lc',tokVal(a.lcol));
+          if(a.lsz&&a.lsz!==1) tx2.style.setProperty('--an-ls',a.lsz);
+          if(a.lstart>1&&listIsOrdered(lst))
+            tx2.setAttribute('start',String(a.lstart|0));
           if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else String(_pg.t||'').split('\n').forEach(function(line){
             var li=document.createElement('li');
@@ -50004,14 +50130,20 @@ window.JunoPptx = (function () {
         var fv=a.font||'sans';
         /* a typed family is not one of the listed options — show it as
            its own entry rather than silently reading back as "Sans" */
-        if(!FONTMAP[fv]){
-          var ex=fontSel.querySelector('option[data-typed]');
-          if(ex) ex.remove();
+        var ex=fontSel.querySelector('option[data-typed]');
+        if(ex) ex.remove();
+        /* (T570: unless it is already there, among the recent faces) */
+        var listed=[].some.call(fontSel.options,function(o){
+          return o.value===fv;});
+        if(!FONTMAP[fv]&&!listed){
           fontSel.insertAdjacentHTML('afterbegin',
-            '<option data-typed="1" value="'+esc(fv)+'">'+esc(fv)
+            '<option data-typed="1" value="'
+            +esc(fv).replace(/"/g,'&quot;')+'">'+esc(fv)
             +'</option>');
         }
         fontSel.value=fv;
+        /* T570: the closed list wears the face it names, too */
+        fontSel.style.fontFamily=fontCss(fv)||'';
       }
     }
     show('#fmt-bold',isText,!!a.b);
@@ -51546,6 +51678,8 @@ window.JunoPptx = (function () {
        click line, it just creates a line — can it please be drawn like it
        does with the shapes"), and it stays a theme-aware divider colour
        instead of alarm-orange. */
+    if(kind==='rect'&&typeof shapeUsed==='function')
+      shapeUsed(pendingShape);   /* T573: yours lead the gallery */
     var a=(kind==='rect')
       ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:SW_DEFAULT,
         shape:(pendingShape!=='rect'?pendingShape:undefined)}
@@ -53748,6 +53882,23 @@ window.JunoPptx = (function () {
      list should also be the last colours used"). A deck reference
      (@accent) is stored as the reference, so a recent that IS the
      deck's accent still follows the deck. */
+  /* T570: the faces you used last, newest first, kept in this browser */
+  var fontListRebuild=function(){};
+  function recentFonts(){
+    try{
+      var a=JSON.parse(localStorage.getItem('jv-recent-fonts')||'[]');
+      return Array.isArray(a)?a.filter(function(s){
+        return typeof s==='string'&&s&&s!=='__custom';}).slice(0,4):[];
+    }catch(e){return [];}
+  }
+  function pushRecentFont(id){
+    if(typeof id!=='string'||!id||id==='__custom') return;
+    var arr=recentFonts().filter(function(x){return x!==id;});
+    arr.unshift(id);
+    try{localStorage.setItem('jv-recent-fonts',
+      JSON.stringify(arr.slice(0,4)));}catch(e){}
+    fontListRebuild();
+  }
   function recentColors(){
     try{
       var a=JSON.parse(localStorage.getItem('plotline-colors')||'[]');
@@ -55225,7 +55376,58 @@ window.JunoPptx = (function () {
             });
             w.menu.appendChild(o);
           });
+        /* T571: PowerPoint's Bullets and Numbering..., at the foot of
+           the gallery -- the marker's colour and size, and for a
+           numbered list where it starts */
+        var more=document.createElement('button');
+        more.type='button';more.className='dc-mi ls-more';
+        more.textContent=g.ord?'Numbering options\u2026'
+          :'Bullet options\u2026';
+        more.title=g.ord?'Colour and size of the numbers, and the number '
+          +'the list starts at':'Colour and size of the bullets';
+        more.addEventListener('click',function(e){
+          e.stopPropagation();overlayHide(w.menu);
+          listOptions(!!g.ord);
+        });
+        w.menu.appendChild(more);
       });
+  }
+  /* T571: one form for both galleries. It acts on every selected text
+     box; one that is not a list yet becomes one of the gallery's kind,
+     since "the bullets' colour" of a box with no bullets means "these
+     bullets", as in PowerPoint. */
+  var LIST_SIZES=[[0.75,'75% of the words'],[1,'The words\u2019 size'],
+    [1.25,'125%'],[1.5,'150%']];
+  function listOptions(ord){
+    var s2=pres.slides[cur],a0=annotByIdx(s2,selAnnot);
+    if(!a0||a0.k!=='text'){toast('Select a text box first');return;}
+    var rows=[
+      {k:'col',label:'Colour',type:'color',
+       value:a0.lcol?tokVal(a0.lcol):'',clear:true,
+       note:'Default is the words\u2019 own colour'},
+      {k:'sz',label:'Size',type:'select',value:String(a0.lsz||1),
+       options:LIST_SIZES.map(function(p){return [String(p[0]),p[1]];})}];
+    if(ord) rows.push({k:'start',label:'Start at',type:'number',
+      value:a0.lstart||1,min:1,max:999,step:1});
+    askText({title:ord?'Numbering':'Bullets',
+      what:ord?'How the numbers look, and where they start.'
+        :'How the bullets look.',
+      rows:rows,ok:'Apply'},function(v){
+      if(!v) return;
+      fmtApply(function(a){
+        if(a.k!=='text') return;
+        var lst=listOf(a);
+        if(!lst||listIsOrdered(lst)!==ord)
+          setListStyle(a,ord?(lastNumber||'number'):(lastBullet||'bullet'));
+        if(v.col) a.lcol=v.col; else delete a.lcol;
+        var sz=parseFloat(v.sz);
+        if(sz&&sz!==1) a.lsz=sz; else delete a.lsz;
+        if(ord){
+          var st=Math.max(1,Math.min(999,Math.round(+v.start||1)));
+          if(st>1) a.lstart=st; else delete a.lstart;
+        }
+      });
+    });
   }
   /* which kind is on, marked in whichever gallery owns it */
   function listGallerySync(lst){
@@ -55533,12 +55735,35 @@ window.JunoPptx = (function () {
         'trebuchet']],
       ['Serif',['times','georgia','cambria','garamond']],
       ['Handwritten',['hand']]];
-    fontSelEl.innerHTML=fontGroups.map(function(g){
-      var rows=FONTS.filter(function(f){return g[1].indexOf(f.id)>=0;})
-        .map(function(f){return '<option value="'+f.id+'">'
-          +esc(f.label)+'</option>';}).join('');
-      return '<optgroup label="'+g[0]+'">'+rows+'</optgroup>';
-    }).join('')+'<option value="__custom">Other…</option>';
+    /* T570: EACH NAME IN ITS OWN FACE, AND YOURS FIRST. The list read as
+       nine words in the ribbon's own font, so choosing a face meant
+       trying them one by one on the slide. Every option is drawn in the
+       face it names (Chrome and Edge draw a list's options in their own
+       font) and the faces you used last head the list, as PowerPoint's
+       Recently Used Fonts do -- a typed family too. */
+    /* esc() leaves quotes alone, and a typed family's CSS is quoted */
+    var attr=function(t){return esc(t).replace(/"/g,'&quot;');};
+    var fontOpt=function(id,label){
+      return '<option value="'+attr(id)+'" style="font-family:'
+        +attr(fontCss(id)||'inherit')+'">'+esc(label)+'</option>';
+    };
+    var fontLabel=function(id){
+      var hit=FONTS.filter(function(f){return f.id===id;})[0];
+      return hit?hit.label:id;
+    };
+    var buildFontList=function(){
+      var rec=recentFonts();
+      fontSelEl.innerHTML=(rec.length?'<optgroup label="Recently used">'
+          +rec.map(function(id){return fontOpt(id,fontLabel(id));}).join('')
+          +'</optgroup>':'')
+        +fontGroups.map(function(g){
+          var rows=FONTS.filter(function(f){return g[1].indexOf(f.id)>=0;})
+            .map(function(f){return fontOpt(f.id,f.label);}).join('');
+          return '<optgroup label="'+g[0]+'">'+rows+'</optgroup>';
+        }).join('')+'<option value="__custom">Other…</option>';
+    };
+    fontListRebuild=buildFontList;
+    buildFontList();
     fontSelEl.addEventListener('change',function(){
       var v=this.value;
       if(v==='__custom'){
@@ -55550,10 +55775,12 @@ window.JunoPptx = (function () {
             +'you see.'},function(typed){
         typed=(typed||'').trim();
         if(!typed){renderControls();return;}
+        pushRecentFont(typed);
         fmtApply(function(a){a.font=typed;});
         });
         return;
       }
+      pushRecentFont(v);
       fmtApply(function(a){
         if(v==='sans') delete a.font; else a.font=v;
       });
@@ -65722,13 +65949,27 @@ window.JunoPptx = (function () {
         it. Getting that wrong un-rotates every rotated object mid-talk. */
   var TRANS=[
     ['','Cut','Nothing — the next slide is simply there.'],
-    ['fade','Fade','A short cross-fade.'],
+    ['fade','Fade','The old slide fades into the new one.'],
+    /* T553: three of PowerPoint's own, beside the three there were */
+    ['push','Push','The new slide pushes the old one off to the left.'],
+    ['wipe','Wipe','The new slide is uncovered from the left.'],
+    ['zoom','Zoom','The old slide grows and fades into the new one.'],
     ['move','Move matching objects',
      'Anything on both slides slides, grows or shrinks from where it '
      +'was to where it is. Duplicate a slide and move something, and '
      +'this is what you get.']
   ];
   var TRANS_MS=420;
+  /* T553: HOW LONG. Each kind has its own natural length (a push that
+     takes as long as a fade looks sluggish, a wipe that quick looks like
+     a glitch); a slide's s.tdur, in seconds, overrides it. */
+  var TRANS_DEF_MS={fade:420,push:600,wipe:700,zoom:500,move:420};
+  function transDurMs(i){
+    var sl=(pres.slides||[])[i],k=transFor(i);
+    var d=sl&&+sl.tdur;
+    if(d>0) return Math.round(Math.max(0.1,Math.min(10,d))*1000);
+    return TRANS_DEF_MS[k]||TRANS_MS;
+  }
   function transLabel(kind){
     var lab='';
     TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
@@ -65779,11 +66020,20 @@ window.JunoPptx = (function () {
         ||!matchMedia('(prefers-reduced-motion: reduce)').matches;
     }catch(e){return true;}
   }
-  var _flipFrom=null;
+  var _flipFrom=null,_transOld=null;
   /* measure the OUTGOING slide, before renderSlide empties the stage */
   function captureFlip(fromIdx){
-    _flipFrom=null;
+    _flipFrom=null;_transOld=null;
     if(mode!=='view') return;
+    /* T553: and keep the outgoing slide itself. renderSlide empties the
+       stage with innerHTML, so the element survives, detached and
+       intact -- the old slide a push, a wipe, a zoom and a real
+       cross-fade need, with nothing drawn twice */
+    var oldEl=stage?stage.querySelector('.slide'):null;
+    if(oldEl){
+      var orr=oldEl.getBoundingClientRect();
+      if(orr.width&&orr.height) _transOld={el:oldEl,r:orr};
+    }
     var sl=(pres.slides||[])[fromIdx];
     var layer=stage?stage.querySelector('.annot-layer'):null;
     if(!sl||!layer) return;
@@ -65821,6 +66071,63 @@ window.JunoPptx = (function () {
     return {x:r.left-lr.left,y:r.top-lr.top,w:r.width,h:r.height,
       clip:n.style.clipPath||n.style.webkitClipPath||''};
   }
+  /* T553: A SLIDE TRANSITION WITH BOTH SLIDES IN IT. The outgoing slide
+     goes into a ghost over the stage, clipped to it, at exactly the
+     place it was drawn; the new slide is underneath, already right. A
+     fade fades the ghost out (a real cross-fade, where the old Fade
+     brought the new slide up from the page); a wipe uncovers the new
+     one from the left; a zoom grows the old one and fades it; a push
+     moves the old one off to the left while the new one comes in from
+     the right. When it ends the ghost goes and the page is what it
+     would have been. Media and live pages in the ghost are taken out
+     first, so a clip cannot start again for half a second. */
+  function playSlideTrans(kind,old,dur){
+    var nEl=stage?stage.querySelector('.slide'):null;
+    var wrap=stage?stage.parentNode:null;
+    if(!old||!old.el||!nEl||!wrap) return false;
+    var sr=stage.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+    if(!sr.width||!sr.height) return false;
+    $$('video,audio,iframe',old.el).forEach(function(m){m.remove();});
+    var ghost=document.createElement('div');
+    ghost.className='trans-ghost';
+    ghost.style.cssText='position:absolute;overflow:hidden;'
+      +'pointer-events:none;z-index:6;left:'+(sr.left-wr.left)+'px;top:'
+      +(sr.top-wr.top)+'px;width:'+sr.width+'px;height:'+sr.height+'px;';
+    var o=old.el;
+    o.style.position='absolute';o.style.margin='0';o.style.animation='none';
+    o.style.left=(old.r.left-sr.left)+'px';o.style.top=(old.r.top-sr.top)+'px';
+    o.style.width=old.r.width+'px';o.style.height=old.r.height+'px';
+    o.style.flex='none';o.style.transformOrigin='50% 50%';
+    ghost.appendChild(o);
+    wrap.appendChild(ghost);
+    nEl.style.animation='none';   /* the render's own little slide-in */
+    var ease='cubic-bezier(.4,0,.2,1)';
+    if(kind==='push'){
+      nEl.style.transition='none';
+      nEl.style.transform='translateX('+sr.width+'px)';
+    }
+    if(kind==='wipe') o.style.clipPath='inset(0 0 0 0)';
+    void ghost.offsetWidth;
+    if(kind==='fade'){
+      o.style.transition='opacity '+dur+'ms ease';o.style.opacity='0';
+    } else if(kind==='wipe'){
+      o.style.transition='clip-path '+dur+'ms '+ease;
+      o.style.clipPath='inset(0 0 0 100%)';
+    } else if(kind==='zoom'){
+      o.style.transition='opacity '+dur+'ms ease, transform '+dur+'ms '+ease;
+      o.style.opacity='0';o.style.transform='scale(1.25)';
+    } else if(kind==='push'){
+      o.style.transition='transform '+dur+'ms '+ease;
+      o.style.transform='translateX(-'+sr.width+'px)';
+      nEl.style.transition='transform '+dur+'ms '+ease;
+      nEl.style.transform='';
+    }
+    setTimeout(function(){
+      ghost.remove();
+      nEl.style.transition='';nEl.style.transform='';
+    },dur+60);
+    return true;
+  }
   /* put the survivors back where they were, then let them travel */
   function playFlip(){
     var from=_flipFrom;
@@ -65829,20 +66136,25 @@ window.JunoPptx = (function () {
        (T126) -- a build held back and a transition still playing would
        be half an answer to "goes without animations" */
     if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;
-    var kind=transFor(cur);
+    var kind=transFor(cur),dur=transDurMs(cur);
+    var old=_transOld;_transOld=null;
     var sl=pres.slides[cur];
     var layer=stage?stage.querySelector('.annot-layer'):null;
     if(!sl||!layer) return;
-    if(kind==='fade'){
-      var sEl=stage.querySelector('.slide');
-      if(sEl){
-        sEl.style.transition='none';
-        sEl.style.opacity='0';
-        void sEl.offsetWidth;
-        sEl.style.transition='opacity '+TRANS_MS+'ms ease';
-        sEl.style.opacity='';
-        setTimeout(function(){
-          sEl.style.transition='';},TRANS_MS+60);
+    if(kind==='fade'||kind==='push'||kind==='wipe'||kind==='zoom'){
+      if(!playSlideTrans(kind,old,dur)&&kind==='fade'){
+        /* no old slide to fade from (the first slide of a talk): the
+           new one fades in from the page, as it always did */
+        var sEl=stage.querySelector('.slide');
+        if(sEl){
+          sEl.style.transition='none';
+          sEl.style.opacity='0';
+          void sEl.offsetWidth;
+          sEl.style.transition='opacity '+dur+'ms ease';
+          sEl.style.opacity='';
+          setTimeout(function(){
+            sEl.style.transition='';},dur+60);
+        }
       }
       return;
     }
@@ -65909,14 +66221,14 @@ window.JunoPptx = (function () {
     if(!moved.length&&!clipped.length) return;
     void layer.offsetWidth;         /* one reflow for the whole set */
     moved.forEach(function(el){
-      el.style.transition='transform '+TRANS_MS+'ms cubic-bezier('
+      el.style.transition='transform '+dur+'ms cubic-bezier('
         +'.4,0,.2,1)';
       el.style.transform=el.dataset.jvFlip||'';
     });
     clipped.forEach(function(el){
       var tr=el.style.transition;
       el.style.transition=(tr&&tr!=='none'?tr+',':'')
-        +'clip-path '+TRANS_MS+'ms cubic-bezier(.4,0,.2,1)';
+        +'clip-path '+dur+'ms cubic-bezier(.4,0,.2,1)';
       el.style.clipPath=el.dataset.jvClip;
       el.style.webkitClipPath=el.dataset.jvClip;
     });
@@ -65933,7 +66245,7 @@ window.JunoPptx = (function () {
         el.style.transition='';
         delete el.dataset.jvClip;
       });
-    },TRANS_MS+80);
+    },dur+80);
   }
   /* CUT IS AN ANSWER, not the absence of one. TRANS[0][0] is '', and
      this used to `delete sl.trans` for any falsy kind — so "arrives cut"
@@ -65969,6 +66281,20 @@ window.JunoPptx = (function () {
     var door=$('#trans-scope');
     if(door) door.addEventListener('click',function(e){
       e.stopPropagation();openTransScope(door);});
+    /* T553: how long this slide's transition takes, in seconds, the way
+       PowerPoint's Duration box reads. Its kind's own length is shown
+       until you change it, and putting that back stores nothing. */
+    var du=$('#trans-dur');
+    if(du) du.addEventListener('change',function(){
+      var sl=(pres.slides||[])[cur]; if(!sl) return;
+      var v=parseFloat(du.value),k=transFor(cur);
+      var def=(TRANS_DEF_MS[k]||TRANS_MS)/1000;
+      if(!(v>0)||Math.abs(v-def)<0.005) delete sl.tdur;
+      else sl.tdur=Math.round(Math.max(0.1,Math.min(10,v))*100)/100;
+      markDirty();transRibbonSync();
+      toast('This slide\u2019s transition takes '
+        +(transDurMs(cur)/1000)+' s');
+    });
   }
   /* ---- T373: WHO GETS THIS TRANSITION --------------------------------
      "All slides" was one verb on a stranded 26px button, and it was the
@@ -65993,8 +66319,12 @@ window.JunoPptx = (function () {
   }
   function transGiveTo(idxs,kind,what){
     if(!idxs||!idxs.length) return;
+    /* T553: and its length, as it is on this slide */
+    var td=(pres.slides||[])[cur]&&(pres.slides||[])[cur].tdur;
     idxs.forEach(function(i){
-      var s=(pres.slides||[])[i]; if(s) s.trans=String(kind);
+      var s=(pres.slides||[])[i]; if(!s) return;
+      s.trans=String(kind);
+      if(td) s.tdur=td; else delete s.tdur;
     });
     markDirty();renderFilm();transRibbonSync();
     toast(what+': '+transLabel(kind).toLowerCase()
@@ -66132,7 +66462,7 @@ window.JunoPptx = (function () {
     dlg.hidden=false;
   }
   function transBtnId(kind){
-    return '#trans-'+(kind===''?'cut':(kind==='move'?'move':kind));
+    return '#trans-'+(kind===''?'cut':kind);
   }
   function transRibbonSync(){
     if(!(pres.slides||[]).length) return;
@@ -66141,6 +66471,12 @@ window.JunoPptx = (function () {
       var b=$(transBtnId(t[0]));
       if(b) b.setAttribute('aria-pressed',(now===t[0]).toString());
     });
+    /* T553: a cut takes no time */
+    var du=$('#trans-dur');
+    if(du){
+      du.disabled=!now;
+      du.value=now?String(transDurMs(cur)/1000):'';
+    }
   }
   /* T316: a section's own colour. '' puts it back on the automatic
      cycle. refresh, because a heading wearing '@section' has to repaint
@@ -80472,6 +80808,8 @@ window.JunoPptx = (function () {
       var panel=null;
       function home(){
         if(strip.parentNode===frame) return;
+        /* T573: back on the ribbon, every tile shows again */
+        if(findIn){findIn.value='';findApply();}
         frame.insertBefore(strip,nav||more);
         frame.style.width='';
         more.setAttribute('aria-expanded','false');
@@ -80482,6 +80820,24 @@ window.JunoPptx = (function () {
         if(typeof fitEditRibbon==='function') fitEditRibbon();
         setTimeout(ends,0);
       }
+      /* T573: a gallery that says it can be searched gets a field at
+         the head of its Show all window; a tile is found by its words
+         (data-find) or its name */
+      var findIn=null,findNone=null;
+      function findApply(){
+        var q=String(findIn?findIn.value:'').trim().toLowerCase();
+        var n=0;
+        tiles().forEach(function(t){
+          var hay=((t.dataset.find||'')+' '+t.textContent).toLowerCase();
+          var hit=!q||q.split(/\s+/).every(function(w){
+            return hay.indexOf(w)>=0;});
+          t.hidden=!hit;if(hit) n++;
+        });
+        if(findNone){
+          findNone.hidden=n>0;
+          findNone.textContent='No shape called \u201c'+q+'\u201d';
+        }
+      }
       function build(){
         panel=document.createElement('div');
         panel.className='sh-menu strip-all';
@@ -80491,6 +80847,25 @@ window.JunoPptx = (function () {
         h.className='strip-all-h';
         h.textContent=strip.getAttribute('aria-label')||'All';
         panel.appendChild(h);
+        if(strip.hasAttribute('data-find')){
+          findIn=document.createElement('input');
+          findIn.type='search';findIn.className='strip-find';
+          findIn.placeholder='Find a shape \u2014 circle, arrow, '
+            +'callout\u2026';
+          findIn.setAttribute('aria-label','Find a shape by name');
+          findIn.addEventListener('input',findApply);
+          /* Enter arms the first shape found; the window's owner keeps
+             its keys, so this listens on the field itself */
+          findIn.addEventListener('keydown',function(e){
+            if(e.key!=='Enter') return;
+            var first=tiles().filter(function(t){return !t.hidden;})[0];
+            if(first){e.preventDefault();first.click();}
+          });
+          h.appendChild(findIn);
+          findNone=document.createElement('div');
+          findNone.className='strip-find-none';findNone.hidden=true;
+          panel.appendChild(findNone);
+        }
         /* inside the editor's own layer: the editor sits above the
            page, so a window appended to body opens underneath it */
         ((typeof deckEl!=='undefined'&&deckEl)||document.body)
@@ -80524,15 +80899,53 @@ window.JunoPptx = (function () {
             pw=panel.offsetWidth,vw=window.innerWidth;
         panel.style.left=Math.max(8,Math.min(fr.left,vw-pw-8))+'px';
         panel.style.top=(fr.bottom+4)+'px';
+        if(findIn) setTimeout(function(){findIn.focus();},0);
       });
     });
   }
+  /* T573: FIND A SHAPE, AND YOURS FIRST. The words a shape is found by
+     -- its own name and the ones people reach for ("circle" is the
+     ellipse, "callout" the speech bubble) -- and the shapes you drew
+     last, which lead the gallery the way PowerPoint's Recently Used
+     Shapes row does. Kept in this browser; four of them. */
+  var SHAPE_FIND={rect:'rectangle square box',ellipse:'ellipse oval circle',
+    triangle:'triangle',diamond:'diamond rhombus',pentagon:'pentagon',
+    hexagon:'hexagon',star:'star',cross:'plus cross add',
+    arrow:'arrow block arrow',heart:'heart love',cloud:'cloud thought',
+    bubble:'speech bubble callout balloon',lightning:'bolt lightning flash',
+    exclaim:'exclamation warning alert',question:'question',
+    langle:'angle chevron bracket less than',
+    rangle:'angle chevron bracket greater than',
+    lbrace:'brace curly bracket',rbrace:'brace curly bracket',
+    lbracket:'bracket square bracket',rbracket:'bracket square bracket'};
+  function recentShapes(){
+    try{
+      var a=JSON.parse(localStorage.getItem('jv-recent-shapes')||'[]');
+      return Array.isArray(a)?a.filter(function(s){
+        return SHAPE_LIST.some(function(p){return p[0]===s;});}).slice(0,4)
+        :[];
+    }catch(e){return [];}
+  }
+  /* called as a shape is drawn (startDraw), not as its tile is picked:
+     a tile that jumped to the front under the pointer the moment you
+     chose it would be a gallery rearranging itself mid-gesture */
+  var shapeOrderSync=function(){};
+  function shapeUsed(id){
+    if(!id) return;
+    var arr=recentShapes().filter(function(x){return x!==id;});
+    arr.unshift(id);
+    try{localStorage.setItem('jv-recent-shapes',
+      JSON.stringify(arr.slice(0,4)));}catch(e){}
+    shapeOrderSync();
+  }
   function shapeStripBoot(){
     var strip=$('#shape-strip'); if(!strip) return;
+    strip.setAttribute('data-find','shapes');   /* T573: Show all searches */
     SHAPE_LIST.forEach(function(pair){
       var b=document.createElement('button');
       b.type='button';b.className='fx-tile shape-tile';
       b.dataset.shape=pair[0];
+      b.dataset.find=pair[1]+' '+(SHAPE_FIND[pair[0]]||'');
       b.appendChild(shapeIcon(pair[0]));
       var t=document.createElement('span');t.textContent=pair[1];
       b.appendChild(t);
@@ -80545,6 +80958,19 @@ window.JunoPptx = (function () {
       });
       strip.appendChild(b);
     });
+    /* the recent ones first, the rest in the catalogue's order */
+    shapeOrderSync=function(){
+      var rec=recentShapes(),ids=SHAPE_LIST.map(function(p){return p[0];});
+      var rank=function(b){
+        var k=rec.indexOf(b.dataset.shape);
+        return k<0?100+ids.indexOf(b.dataset.shape):k;
+      };
+      $$('.shape-tile',strip).sort(function(p,q){return rank(p)-rank(q);})
+        .forEach(function(b){
+          b.classList.toggle('recent',rec.indexOf(b.dataset.shape)>=0);
+          strip.appendChild(b);});
+    };
+    shapeOrderSync();
     shapeStripSync=function(){
       $$('.shape-tile',strip).forEach(function(b){
         var on=(tool==='rect'&&pendingShape===b.dataset.shape);
@@ -85619,6 +86045,9 @@ window.JunoPptx = (function () {
       text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
+      /* T571: which marker, its colour and size, where numbering starts */
+      lkind:listOf(a)||'',lcol:a.lcol?tokVal(a.lcol):'',lsz:a.lsz||0,
+      lstart:a.lstart||0,
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
       va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',
@@ -86283,6 +86712,8 @@ window.JunoPptx = (function () {
         return {bg:bgSolid(tokVal(ent.s.bg)
             ||(mm3&&tokVal(mm3.bg))||bg),items:its,
           trans:transFor(ent.i),notes:ent.s.notes||'',
+          /* T553: and how long, so PowerPoint plays it at that length */
+          tdur:transFor(ent.i)?transDurMs(ent.i):0,
           /* T485: the slide's section, by name, for the writer's list */
           section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):'',
           hide:!!ent.s.hide};
@@ -87869,6 +88300,17 @@ window.JunoPptx = (function () {
     }
     if(allList){
       a.list=full.every(function(p){return p.num;})?'number':'bullet';
+      /* T571: the first item says which marker, its colour and size,
+         and where numbering starts -- if it is a kind of the same
+         family this deck has */
+      var p0=full[0];
+      if(p0&&p0.lkind&&listKind(p0.lkind)
+         &&listIsOrdered(p0.lkind)===(a.list==='number'))
+        a.list=p0.lkind;
+      if(p0&&p0.lcol) a.lcol=p0.lcol;
+      if(p0&&p0.lsz&&p0.lsz!==1) a.lsz=p0.lsz;
+      if(p0&&p0.lstart>1&&a.list!=='bullet'&&listIsOrdered(a.list))
+        a.lstart=p0.lstart;
       a.html=full.map(function(p){
         return '<li>'+(line(p)||'<br>')+'</li>';}).join('');
       a.text=full.map(plain).join('\n');
@@ -88004,6 +88446,7 @@ window.JunoPptx = (function () {
       if(sl.bg&&sl.bg!==pr.pageBg) s.bg=sl.bg;
       if(sl.notes) s.notes=String(sl.notes);
       if(sl.trans) s.trans=sl.trans;
+      if(sl.trans&&+sl.tdur>0) s.tdur=+sl.tdur;   /* T553 */
       if(sl.hidden) s.hide=1;   /* T554: hidden stays hidden */
       if(sl.section){
         if(!secIds[sl.section]){
