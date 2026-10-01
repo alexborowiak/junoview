@@ -10413,9 +10413,25 @@ choice in the editor (T506, T507).
   shape you can recolour and resize.
 - [ ] **T561 — Diagrams.** Process, cycle, list and hierarchy diagrams
   placed as ordinary grouped shapes and arrows you can edit.
-- [ ] **T562 — Chart data you can type into.** A grid editor for a chart's
+- [x] **T562 — Chart data you can type into.** A grid editor for a chart's
   numbers, beside the preview (if the chart pane does not already have
   one, which this task checks first).
+  *Done 2026-10-01.* Checked first: the pane had none -- Edit numbers...
+  opened a box of comma-separated text. It is a grid now: the category
+  column, a column per series named at its head, + Row and + Series, an
+  x to take a row or a series out, Enter and the arrows down and up a
+  column (the dialog keys leave Enter to a grid that says data-own-enter;
+  Ctrl+Enter still applies), Tab across, and a block pasted from a
+  spreadsheet spread from the cell it lands in, growing the grid to fit.
+  The slide is the preview: each edit redraws the chart (180 ms after
+  the last key), nothing is stored until Apply, and closing it any other
+  way -- Cancel, Escape, the slide moving on -- puts the chart back
+  (chartDlgClose runs the put-back). Text shows the same rows as the old
+  comma box, both views reading and writing what chartCsvOf writes, so
+  error bars and bands (Name +-, lo, hi) still come in as columns.
+  Driven at 1440x900: a 5 typed and previewed, Enter moved down a
+  column, + Series and a pasted 7/8/9 grew the grid to three rows,
+  Cancel put the numbers back, Ctrl+Enter applied a 10, Escape closed.
 - [ ] **T563 — Comments.** A comment pinned to a slide or an object,
   listed in a Comments pane, never presented, printed or exported.
 - [ ] **T564 — Record narration.** Record audio per slide while

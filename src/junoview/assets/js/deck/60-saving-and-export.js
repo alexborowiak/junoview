@@ -377,7 +377,11 @@
         var tag=t&&t.tagName;
         var own=inside&&(tag==='BUTTON'||tag==='A'||tag==='SELECT'
           ||tag==='SUMMARY'||(t.isContentEditable)
-          ||(tag==='TEXTAREA'&&!(e.ctrlKey||e.metaKey)));
+          ||(tag==='TEXTAREA'&&!(e.ctrlKey||e.metaKey))
+          /* T562: a grid moves down a column on Enter, as a sheet does;
+             Ctrl+Enter is still the verb */
+          ||(!(e.ctrlKey||e.metaKey)&&t.closest
+            &&t.closest('[data-own-enter]')));
         if(own) return;
         var v=dlgButton(d,'verb');
         e.preventDefault();e.stopImmediatePropagation();

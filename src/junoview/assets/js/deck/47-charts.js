@@ -830,55 +830,239 @@
     return out.join('\n');
   }
   function chartDlgClose(){
-    var p=$('#chart-data'); if(p) p.remove();
+    var p=$('#chart-data'); if(!p) return;
+    /* T562: closed any way but Apply, the preview is put back */
+    var undoPreview=p._putBack;p._putBack=null;
+    p.remove();
+    if(typeof undoPreview==='function') undoPreview();
+  }
+  /* T562: THE NUMBERS AS A GRID. They were a box of comma-separated text,
+     which is how a parser wants them and nobody types them: a cell per
+     number, the category down the left, a series per column with its
+     name at the head, + Row and + Series, a cell's x to take its row or
+     column out, Tab and the arrow keys between cells, and a block pasted
+     from a spreadsheet spread across the cells from the one it lands in.
+     The slide is the preview: every edit redraws the chart (nothing is
+     stored until Apply, and Cancel puts it back). Text keeps the old box
+     for anyone who would rather type commas. Rows in and rows out are
+     the same rows chartCsvOf writes and chartFromRows reads, helper
+     columns (Name +-, lo, hi) included, so the two views cannot drift. */
+  function chartRowsOf(a){
+    return chartCsvOf(a).split('\n').map(function(ln){
+      return ln.split(',').map(function(c){return c.trim();});});
   }
   function chartDataDlg(idx){
     chartDlgClose();
     var s=pres.slides[cur];
     var a=s&&(s.annots||[])[idx];
     if(!a||a.k!=='chart') return;
+    var snap={cats:deep(a.cats||[]),series:deep(a.series||[]),ref:a.ref};
+    var rows=chartRowsOf(a),asText=false,previewT=0;
     var p=document.createElement('div');
     p.className='sh-menu chart-data';p.id='chart-data';
     menuHead(p,'the chart’s numbers');
+    var modes=document.createElement('div');modes.className='cd-modes';
+    var gridB=document.createElement('button'),textB=document.createElement('button');
+    gridB.type=textB.type='button';
+    gridB.className=textB.className='dbtn cd-mode';
+    gridB.textContent='Grid';textB.textContent='Text';
+    gridB.title='A cell for every number';
+    textB.title='The same numbers as lines of comma-separated text';
+    modes.appendChild(gridB);modes.appendChild(textB);
+    p.appendChild(modes);
     var note=document.createElement('div');note.className='rd-note';
-    note.textContent='One row per category. The first row names the '
-      +'series, the first column is the category (numbers make a '
-      +'numeric axis for line and scatter). A column \u201cName \u00b1\u201d '
+    note.textContent='The first column is the category (numbers make a '
+      +'numeric axis for line and scatter); each other column is a '
+      +'series, named at its head. A column \u201cName \u00b1\u201d '
       +'is Name\u2019s error bar; \u201cName lo\u201d and \u201cName hi\u201d '
-      +'are its band.';
+      +'are its band. Paste a block from a spreadsheet into any cell.';
     p.appendChild(note);
-    var ta=document.createElement('textarea');
-    ta.className='chart-ta';
-    ta.value=chartCsvOf(a);
-    ta.spellcheck=false;
-    p.appendChild(ta);
-    var rowb=document.createElement('div');rowb.className='chart-btns';
-    var ok=document.createElement('button');
-    ok.className='dbtn primary';ok.textContent='Apply';
-    ok.addEventListener('click',function(e){
-      e.stopPropagation();
-      var rows=ta.value.split(/\r?\n/).map(function(ln){
-        return ln.split(',').map(function(c){return c.trim();});
-      }).filter(function(r){return r.join('')!=='';});
-      var data=chartFromRows(rows);
-      if(!data){toast('Could not read that — a header row plus '
-        +'at least one data row, comma-separated');return;}
-      /* keep each series' colour -- and, T322, its own switches --
-         where the name survives the edit */
-      var old={};(a.series||[]).forEach(function(se){
+    var host=document.createElement('div');host.className='cd-host';
+    /* Enter moves down a column here, as in a spreadsheet; the dialog
+       keys (T568) leave it to the grid */
+    host.setAttribute('data-own-enter','1');
+    p.appendChild(host);
+    var ta=null;
+    function width(){
+      return rows.reduce(function(m,r){return Math.max(m,r.length);},2);}
+    function pad(){
+      var w=width();
+      rows.forEach(function(r){while(r.length<w) r.push('');});
+      if(!rows.length) rows.push(['','Series 1']);
+    }
+    function preview(){
+      clearTimeout(previewT);
+      previewT=setTimeout(function(){
+        /* the slide moved on under the dialog: nothing to preview on */
+        if(pres.slides[cur]!==s||(s.annots||[]).indexOf(a)<0){
+          chartDlgClose();return;}
+        var data=chartFromRows(rows.filter(function(r){
+          return r.join('')!=='';}));
+        if(!data) return;
+        a.cats=data.cats;a.series=keepLooks(data.series);
+        renderSlide();
+      },180);
+    }
+    /* each series keeps its colour and its switches where its name
+       survives the edit (T322) */
+    function keepLooks(series){
+      var old={};(snap.series||[]).forEach(function(se){
         if(se&&se.name) old[se.name]=se;});
-      data.series.forEach(function(se){
+      series.forEach(function(se){
         var o=old[se.name]; if(!o) return;
         if(o.color) se.color=o.color;
         ['axis','trend','ct','hide'].forEach(function(k){
           if(o[k]) se[k]=o[k];});
       });
+      return series;
+    }
+    function cellAt(r,c){
+      return host.querySelector('input[data-r="'+r+'"][data-c="'+c+'"]');}
+    function build(focusR,focusC){
+      host.innerHTML='';
+      if(asText){
+        ta=document.createElement('textarea');
+        ta.className='chart-ta';ta.spellcheck=false;
+        ta.value=rows.map(function(r){return r.join(', ');}).join('\n');
+        ta.addEventListener('input',function(){
+          rows=ta.value.split(/\r?\n/).map(function(ln){
+            return ln.split(',').map(function(c){return c.trim();});});
+          preview();
+        });
+        host.appendChild(ta);
+        ta.focus();
+        return;
+      }
+      ta=null;pad();
+      var w=width();
+      var tbl=document.createElement('table');tbl.className='cd-grid';
+      rows.forEach(function(r,ri){
+        var tr=document.createElement('tr');
+        r.forEach(function(v,ci){
+          var td=document.createElement(ri===0?'th':'td');
+          var inp=document.createElement('input');
+          inp.type='text';inp.value=v;inp.spellcheck=false;
+          inp.dataset.r=ri;inp.dataset.c=ci;
+          inp.className='cd-in'+(ci===0?' cd-cat':'')+(ri===0?' cd-head':'');
+          inp.placeholder=ri===0?(ci===0?'Category':'Series name'):'';
+          if(ri===0&&ci===0) inp.disabled=true;
+          inp.setAttribute('aria-label',ri===0?(ci===0?'':'Name of series '+ci)
+            :(ci===0?'Category '+ri:(rows[0][ci]||'Series '+ci)+', '
+              +(r[0]||'row '+ri)));
+          inp.addEventListener('input',function(){
+            rows[ri][ci]=inp.value;preview();});
+          inp.addEventListener('keydown',function(e){
+            var to=null;
+            if(e.key==='Enter'||e.key==='ArrowDown') to=[ri+1,ci];
+            else if(e.key==='ArrowUp') to=[ri-1,ci];
+            if(!to) return;
+            e.preventDefault();e.stopPropagation();
+            if(to[0]>=rows.length&&e.key==='Enter'){addRow();to=[ri+1,ci];}
+            var n=cellAt(to[0],to[1]);
+            if(n){n.focus();n.select();}
+          });
+          /* a block from a spreadsheet: tabs between cells, lines
+             between rows, spread from here and grown to fit */
+          inp.addEventListener('paste',function(e){
+            var t=(e.clipboardData||window.clipboardData).getData('text');
+            if(!t||!/[\t\n]/.test(t)) return;
+            e.preventDefault();
+            t.replace(/\r/g,'').replace(/\n$/,'').split('\n')
+              .forEach(function(line,dr){
+                line.split('\t').forEach(function(val,dc){
+                  var R=ri+dr,C=ci+dc;
+                  while(rows.length<=R) rows.push([]);
+                  while(rows[R].length<=C) rows[R].push('');
+                  rows[R][C]=val.trim();
+                });
+              });
+            build(ri,ci);preview();
+          });
+          td.appendChild(inp);
+          /* a column's x at its head; a row's x at its end */
+          if(ri===0&&ci>0&&w>2){
+            var xc=document.createElement('button');
+            xc.type='button';xc.className='cd-x';xc.textContent='\u00d7';
+            xc.title='Take this series out';
+            xc.setAttribute('aria-label','Remove series '+(r[ci]||ci));
+            xc.addEventListener('click',function(e){
+              e.stopPropagation();
+              rows.forEach(function(rr){rr.splice(ci,1);});
+              build();preview();});
+            td.appendChild(xc);
+          }
+          tr.appendChild(td);
+        });
+        var tdx=document.createElement('td');tdx.className='cd-rowx';
+        if(ri>0&&rows.length>2){
+          var xr=document.createElement('button');
+          xr.type='button';xr.className='cd-x';xr.textContent='\u00d7';
+          xr.title='Take this row out';
+          xr.setAttribute('aria-label','Remove row '+(r[0]||ri));
+          xr.addEventListener('click',function(e){
+            e.stopPropagation();rows.splice(ri,1);build();preview();});
+          tdx.appendChild(xr);
+        }
+        tr.appendChild(tdx);
+        tbl.appendChild(tr);
+      });
+      host.appendChild(tbl);
+      var adds=document.createElement('div');adds.className='cd-adds';
+      var ar=document.createElement('button');
+      ar.type='button';ar.className='dbtn';ar.textContent='+ Row';
+      ar.title='Another category';
+      ar.addEventListener('click',function(e){
+        e.stopPropagation();addRow();build(rows.length-1,0);});
+      var as=document.createElement('button');
+      as.type='button';as.className='dbtn';as.textContent='+ Series';
+      as.title='Another column of numbers';
+      as.addEventListener('click',function(e){
+        e.stopPropagation();
+        var n=width();
+        rows.forEach(function(rr,i){rr.push(i===0?'Series '+n:'');});
+        build(0,n);preview();});
+      adds.appendChild(ar);adds.appendChild(as);
+      host.appendChild(adds);
+      var f=(focusR!=null)?cellAt(focusR,focusC||0):cellAt(1,1);
+      if(f){f.focus();f.select();}
+    }
+    function addRow(){
+      var r=[];for(var i=0;i<width();i++) r.push('');
+      rows.push(r);
+    }
+    function mode(text){
+      asText=text;
+      gridB.setAttribute('aria-pressed',(!text).toString());
+      textB.setAttribute('aria-pressed',text.toString());
+      build();
+    }
+    gridB.addEventListener('click',function(e){e.stopPropagation();mode(false);});
+    textB.addEventListener('click',function(e){e.stopPropagation();mode(true);});
+    function putBack(){
+      clearTimeout(previewT);
+      a.cats=snap.cats;a.series=snap.series;
+      if(snap.ref) a.ref=snap.ref;
+      renderSlide();
+    }
+    var rowb=document.createElement('div');rowb.className='chart-btns';
+    var ok=document.createElement('button');
+    ok.className='dbtn primary';ok.textContent='Apply';
+    ok.addEventListener('click',function(e){
+      e.stopPropagation();
+      clearTimeout(previewT);
+      var data=chartFromRows(rows.filter(function(r){
+        return r.join('')!=='';}));
+      if(!data){toast('Could not read that — a row of series names plus '
+        +'at least one row of numbers');return;}
+      keepLooks(data.series);
       /* A TIE POINTS AT A SERIES BY NAME (T162), and a hand edit can
          rename or drop one. The tie then fails OPEN -- the item shows
          all the time rather than vanishing -- but silently reverting to
          "always shown" is still a change worth being told about, and
          this is the one moment the old names and the new ones are both
          in hand. */
+      var old={};(snap.series||[]).forEach(function(se){
+        if(se&&se.name) old[se.name]=se;});
       var nowNm={};data.series.forEach(function(se){nowNm[se.name]=1;});
       var orph=0;
       (s.annots||[]).forEach(function(x){
@@ -887,6 +1071,7 @@
       a.cats=data.cats;a.series=data.series;
       /* hand-edited numbers are yours now, not the table's */
       delete a.ref;
+      p._putBack=null;   /* applied: nothing to put back */
       markDirty();refresh();chartDlgClose();
       toast('Chart updated — Ctrl+Z undoes it'
         +(orph?('. '+orph+' item'+(orph===1?'':'s')+' tied to a series '
@@ -898,12 +1083,13 @@
     no.addEventListener('click',function(e){
       e.stopPropagation();chartDlgClose();});
     /* T568: Cancel on the left and the verb on the right, as in every
-       other dialog; Ctrl+Enter in the numbers applies them */
+       other dialog; Ctrl+Enter applies them */
     no.id='chart-data-cancel';
     rowb.appendChild(no);rowb.appendChild(ok);
     p.appendChild(rowb);
+    p._putBack=putBack;
     document.body.appendChild(p);
-    ta.focus();
+    mode(false);
   }
 
   /* ---- WHICH SERIES DOES THIS BELONG TO (T162) ------------------------

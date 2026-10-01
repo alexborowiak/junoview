@@ -6541,6 +6541,34 @@ body.light .seq-cell b{color:var(--ink);}
   color:#dbe7ef;background:#0d1722;border:1px solid #ffffff22;
   border-radius:5px;padding:7px 9px;}
 .chart-btns{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+/* T562: the numbers as a grid */
+.chart-data{width:min(620px,94vw);display:flex;flex-direction:column;
+  align-items:stretch;}
+.chart-data .chart-btns{align-self:flex-end;}
+.cd-modes{display:flex;gap:4px;margin:2px 0 6px;}
+.cd-mode{height:24px;padding:0 10px;font-size:12px;}
+.cd-mode[aria-pressed="true"]{background:color-mix(in srgb,var(--accent)
+  22%,transparent);border-color:var(--accent);}
+.cd-host{max-height:min(46vh,380px);overflow:auto;margin-top:6px;}
+.cd-grid{border-collapse:collapse;font-size:12px;}
+.cd-grid th,.cd-grid td{padding:0;border:1px solid #ffffff1f;
+  position:relative;}
+.cd-grid td.cd-rowx{border:0;padding-left:3px;}
+.cd-in{width:86px;height:24px;box-sizing:border-box;padding:2px 6px;
+  font:inherit;font-variant-numeric:tabular-nums;text-align:right;
+  color:#dbe7ef;background:#0d1722;border:0;border-radius:0;}
+.cd-in.cd-cat{text-align:left;width:110px;}
+.cd-in.cd-head{font-weight:600;text-align:left;background:#132131;}
+.cd-in:disabled{background:#132131;}
+.cd-in:focus{outline:2px solid var(--accent);outline-offset:-2px;}
+.cd-x{position:absolute;right:1px;top:3px;width:16px;height:16px;
+  padding:0;border:0;border-radius:3px;background:transparent;
+  color:var(--chrome-ink-2,#93a8ba);font-size:12px;line-height:16px;
+  cursor:pointer;opacity:.55;}
+.cd-rowx .cd-x{position:static;}
+.cd-x:hover{opacity:1;color:var(--warning,#e8a33d);}
+.cd-adds{display:flex;gap:6px;margin-top:6px;}
+.cd-adds .dbtn{height:24px;font-size:12px;}
 /* T106: the reading-order panel and its on-slide numbers */
 /* left:auto, or .sh-menu's left:0 wins the over-constrained box and the
    panel opens on the LEFT over the slide (T184; the screenshot showed

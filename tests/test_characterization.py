@@ -2274,8 +2274,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T553 (2026-10-01): transitions -- Push, Wipe and Zoom, a Duration box,
 # the outgoing slide kept as a ghost (Fade a real cross-fade), and the
 # .pptx at exact lengths with Move as Morph.
-EXPECTED_MD5 = "e572601f24fe34419e9ffe872859e21e"
-EXPECTED_BYTES = 4944556
+# T562 (2026-10-01): the chart's numbers are a grid -- cells, + Row and +
+# Series, keys between cells, spreadsheet paste, the slide as live preview
+# that Cancel puts back, and Text for the comma view.
+EXPECTED_MD5 = "0f643ee23712c68493ec79c40d15615f"
+EXPECTED_BYTES = 4955181
 
 
 def _render_example() -> str:
