@@ -2271,8 +2271,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and a numbered list's start, Bullet/Numbering options at the foot of
 # both galleries, and the marker's kind, colour, size and start in a .pptx
 # both ways.
-EXPECTED_MD5 = "691989d6b324459f2e39629b716fcbf0"
-EXPECTED_BYTES = 4933898
+# T553 (2026-10-01): transitions -- Push, Wipe and Zoom, a Duration box,
+# the outgoing slide kept as a ghost (Fade a real cross-fade), and the
+# .pptx at exact lengths with Move as Morph.
+EXPECTED_MD5 = "e572601f24fe34419e9ffe872859e21e"
+EXPECTED_BYTES = 4944556
 
 
 def _render_example() -> str:

@@ -3199,6 +3199,8 @@
         return {bg:bgSolid(tokVal(ent.s.bg)
             ||(mm3&&tokVal(mm3.bg))||bg),items:its,
           trans:transFor(ent.i),notes:ent.s.notes||'',
+          /* T553: and how long, so PowerPoint plays it at that length */
+          tdur:transFor(ent.i)?transDurMs(ent.i):0,
           /* T485: the slide's section, by name, for the writer's list */
           section:(ent.s.sec&&typeof secName==='function')?secName(ent.s.sec):'',
           hide:!!ent.s.hide};

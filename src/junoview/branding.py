@@ -405,6 +405,11 @@ _ICON_PATHS = {
     # T552: a picture, said out loud -- alt text is what is read instead
     # of it, which neither `caption` (words everyone reads) nor `eye`
     # (hide and show) says
+    # T553: a slide pushed in from the right, and one uncovered
+    "push": '<rect x="6" y="3.6" width="8.6" height="8.8" rx="1"/>'
+            '<path d="M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4"/>',
+    "wipe": '<rect x="1.8" y="3.6" width="12.4" height="8.8" rx="1"/>'
+            '<path d="M8 3.6v8.8M2.6 7.4 5.8 4.2M2.6 11.2l5-5"/>',
     # T548: a box with its shadow down and to the right
     "shadow": '<rect x="2" y="2" width="9" height="9" rx="1"/>'
               '<path d="M13.6 5.2v8.4H5.2"/>',

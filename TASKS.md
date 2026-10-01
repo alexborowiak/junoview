@@ -10343,8 +10343,30 @@ choice in the editor (T506, T507).
 
 ### Slides, shows and output
 
-- [ ] **T553 — Transitions: a duration and three more.** Push, Wipe and
+- [x] **T553 — Transitions: a duration and three more.** Push, Wipe and
   Zoom beside Cut, Fade and Move, each with a duration; exported.
+  *Done 2026-10-01.* Push, Wipe and Zoom join the strip (and every menu
+  that lists the kinds, which read TRANS), with icons of their own for
+  push and wipe. They need the slide being left, and renderSlide empties
+  the stage with innerHTML, so captureFlip now keeps the outgoing .slide
+  element, detached and intact; playSlideTrans puts it in a ghost over
+  the stage, clipped to it, where it was drawn, and animates: a push
+  moves it off left while the new slide comes in from the right, a wipe
+  uncovers the new one from the left (clip-path), a zoom grows and fades
+  the old one -- and Fade now fades the old slide out over the new one, a
+  real cross-fade, where it used to bring the new slide up from the page.
+  Media and live pages leave the ghost first so nothing restarts. Each
+  kind has its own length (TRANS_DEF_MS); a slide's tdur, set in the
+  Duration box (seconds, disabled for Cut, a kind's own length stores
+  nothing), overrides it, and Give it to passes it on; tdur rides both
+  normalisers, the schema and DECK-FORMAT. The .pptx writes each kind as
+  PowerPoint's own at its exact length (p14:dur in an AlternateContent,
+  the 2007 spd as the fallback), and Move as Morph-by-object (it went as
+  a push) -- checked in PowerPoint over COM: no repair, the five effects
+  and lengths read back. The reader brings push, wipe and zoom and their
+  lengths back (push no longer comes back as Move). Driven at 1440x900
+  with motion on: a 1.5 s push caught mid-way (old -190px, new +1234px)
+  and a wipe at 52%, both ghosts gone afterwards.
 - [x] **T554 — Hide slide.** A slide that never plays (PowerPoint's Hide
   Slide), distinct from Optional (skipped only when running late).
   *Done 2026-10-01.* A slide's `hide` (1 = hidden; in the JS and Python

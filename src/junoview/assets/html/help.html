@@ -319,6 +319,14 @@ Layers) and the <b>Add animation</b> gallery. Pick an effect and
 <b>Timing</b> and <b>Disappear</b> appear beside it; Focus and Motion are
 in the Animation panel&rsquo;s Configure tab, and how a slide arrives is
 <b>Slide transition</b> on the Present tab.</li>
+<li><b>Slide transitions.</b> <i>Present &rarr; Slide transition</i>:
+<b>Cut</b>, <b>Fade</b> (the old slide fades into the new one),
+<b>Push</b> (the new slide pushes the old one off), <b>Wipe</b> (the new
+slide is uncovered from the left), <b>Zoom</b>, and <b>Move</b>, which
+moves anything on both slides from where it was to where it is.
+<b>Duration</b> beside them is how long it takes, in seconds; <i>Give it
+to</i> passes the transition, and its length, to other slides. A .pptx
+keeps each as PowerPoint's own, at its length (Move as Morph).</li>
 <li><b>Text a piece at a time:</b> select a text box, give it an effect in
 <b>Add animation</b>, open <b>Timing</b>, and in <b>Text sequence</b> pick
 <b>By bullet</b> (one click per
@@ -815,8 +823,8 @@ page. <b>Builds travel</b>: each click reveals the same objects it does
 here (rise and zoom arrive as fades &mdash; the click timing is exact).
 <b>Links travel</b>: a click action opens its page or jumps to its
 slide in the exported deck too, and so does a link on words. Cropped pictures keep their trim and
-their shape, and slide transitions come across (<i>Move matching
-objects</i> becomes a push). What does <b>not</b> travel: a crop you
+their shape, and slide transitions come across at their own length
+(<i>Move matching objects</i> becomes PowerPoint's Morph). What does <b>not</b> travel: a crop you
 drew freehand, and equations (they arrive as plain text). Everything lost
 is counted and named when you export, not silently dropped &mdash; use
 Export PDF when any of it matters.</li>

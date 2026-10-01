@@ -2848,13 +2848,27 @@
         it. Getting that wrong un-rotates every rotated object mid-talk. */
   var TRANS=[
     ['','Cut','Nothing — the next slide is simply there.'],
-    ['fade','Fade','A short cross-fade.'],
+    ['fade','Fade','The old slide fades into the new one.'],
+    /* T553: three of PowerPoint's own, beside the three there were */
+    ['push','Push','The new slide pushes the old one off to the left.'],
+    ['wipe','Wipe','The new slide is uncovered from the left.'],
+    ['zoom','Zoom','The old slide grows and fades into the new one.'],
     ['move','Move matching objects',
      'Anything on both slides slides, grows or shrinks from where it '
      +'was to where it is. Duplicate a slide and move something, and '
      +'this is what you get.']
   ];
   var TRANS_MS=420;
+  /* T553: HOW LONG. Each kind has its own natural length (a push that
+     takes as long as a fade looks sluggish, a wipe that quick looks like
+     a glitch); a slide's s.tdur, in seconds, overrides it. */
+  var TRANS_DEF_MS={fade:420,push:600,wipe:700,zoom:500,move:420};
+  function transDurMs(i){
+    var sl=(pres.slides||[])[i],k=transFor(i);
+    var d=sl&&+sl.tdur;
+    if(d>0) return Math.round(Math.max(0.1,Math.min(10,d))*1000);
+    return TRANS_DEF_MS[k]||TRANS_MS;
+  }
   function transLabel(kind){
     var lab='';
     TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
@@ -2905,11 +2919,20 @@
         ||!matchMedia('(prefers-reduced-motion: reduce)').matches;
     }catch(e){return true;}
   }
-  var _flipFrom=null;
+  var _flipFrom=null,_transOld=null;
   /* measure the OUTGOING slide, before renderSlide empties the stage */
   function captureFlip(fromIdx){
-    _flipFrom=null;
+    _flipFrom=null;_transOld=null;
     if(mode!=='view') return;
+    /* T553: and keep the outgoing slide itself. renderSlide empties the
+       stage with innerHTML, so the element survives, detached and
+       intact -- the old slide a push, a wipe, a zoom and a real
+       cross-fade need, with nothing drawn twice */
+    var oldEl=stage?stage.querySelector('.slide'):null;
+    if(oldEl){
+      var orr=oldEl.getBoundingClientRect();
+      if(orr.width&&orr.height) _transOld={el:oldEl,r:orr};
+    }
     var sl=(pres.slides||[])[fromIdx];
     var layer=stage?stage.querySelector('.annot-layer'):null;
     if(!sl||!layer) return;
@@ -2947,6 +2970,63 @@
     return {x:r.left-lr.left,y:r.top-lr.top,w:r.width,h:r.height,
       clip:n.style.clipPath||n.style.webkitClipPath||''};
   }
+  /* T553: A SLIDE TRANSITION WITH BOTH SLIDES IN IT. The outgoing slide
+     goes into a ghost over the stage, clipped to it, at exactly the
+     place it was drawn; the new slide is underneath, already right. A
+     fade fades the ghost out (a real cross-fade, where the old Fade
+     brought the new slide up from the page); a wipe uncovers the new
+     one from the left; a zoom grows the old one and fades it; a push
+     moves the old one off to the left while the new one comes in from
+     the right. When it ends the ghost goes and the page is what it
+     would have been. Media and live pages in the ghost are taken out
+     first, so a clip cannot start again for half a second. */
+  function playSlideTrans(kind,old,dur){
+    var nEl=stage?stage.querySelector('.slide'):null;
+    var wrap=stage?stage.parentNode:null;
+    if(!old||!old.el||!nEl||!wrap) return false;
+    var sr=stage.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+    if(!sr.width||!sr.height) return false;
+    $$('video,audio,iframe',old.el).forEach(function(m){m.remove();});
+    var ghost=document.createElement('div');
+    ghost.className='trans-ghost';
+    ghost.style.cssText='position:absolute;overflow:hidden;'
+      +'pointer-events:none;z-index:6;left:'+(sr.left-wr.left)+'px;top:'
+      +(sr.top-wr.top)+'px;width:'+sr.width+'px;height:'+sr.height+'px;';
+    var o=old.el;
+    o.style.position='absolute';o.style.margin='0';o.style.animation='none';
+    o.style.left=(old.r.left-sr.left)+'px';o.style.top=(old.r.top-sr.top)+'px';
+    o.style.width=old.r.width+'px';o.style.height=old.r.height+'px';
+    o.style.flex='none';o.style.transformOrigin='50% 50%';
+    ghost.appendChild(o);
+    wrap.appendChild(ghost);
+    nEl.style.animation='none';   /* the render's own little slide-in */
+    var ease='cubic-bezier(.4,0,.2,1)';
+    if(kind==='push'){
+      nEl.style.transition='none';
+      nEl.style.transform='translateX('+sr.width+'px)';
+    }
+    if(kind==='wipe') o.style.clipPath='inset(0 0 0 0)';
+    void ghost.offsetWidth;
+    if(kind==='fade'){
+      o.style.transition='opacity '+dur+'ms ease';o.style.opacity='0';
+    } else if(kind==='wipe'){
+      o.style.transition='clip-path '+dur+'ms '+ease;
+      o.style.clipPath='inset(0 0 0 100%)';
+    } else if(kind==='zoom'){
+      o.style.transition='opacity '+dur+'ms ease, transform '+dur+'ms '+ease;
+      o.style.opacity='0';o.style.transform='scale(1.25)';
+    } else if(kind==='push'){
+      o.style.transition='transform '+dur+'ms '+ease;
+      o.style.transform='translateX(-'+sr.width+'px)';
+      nEl.style.transition='transform '+dur+'ms '+ease;
+      nEl.style.transform='';
+    }
+    setTimeout(function(){
+      ghost.remove();
+      nEl.style.transition='';nEl.style.transform='';
+    },dur+60);
+    return true;
+  }
   /* put the survivors back where they were, then let them travel */
   function playFlip(){
     var from=_flipFrom;
@@ -2955,20 +3035,25 @@
        (T126) -- a build held back and a transition still playing would
        be half an answer to "goes without animations" */
     if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;
-    var kind=transFor(cur);
+    var kind=transFor(cur),dur=transDurMs(cur);
+    var old=_transOld;_transOld=null;
     var sl=pres.slides[cur];
     var layer=stage?stage.querySelector('.annot-layer'):null;
     if(!sl||!layer) return;
-    if(kind==='fade'){
-      var sEl=stage.querySelector('.slide');
-      if(sEl){
-        sEl.style.transition='none';
-        sEl.style.opacity='0';
-        void sEl.offsetWidth;
-        sEl.style.transition='opacity '+TRANS_MS+'ms ease';
-        sEl.style.opacity='';
-        setTimeout(function(){
-          sEl.style.transition='';},TRANS_MS+60);
+    if(kind==='fade'||kind==='push'||kind==='wipe'||kind==='zoom'){
+      if(!playSlideTrans(kind,old,dur)&&kind==='fade'){
+        /* no old slide to fade from (the first slide of a talk): the
+           new one fades in from the page, as it always did */
+        var sEl=stage.querySelector('.slide');
+        if(sEl){
+          sEl.style.transition='none';
+          sEl.style.opacity='0';
+          void sEl.offsetWidth;
+          sEl.style.transition='opacity '+dur+'ms ease';
+          sEl.style.opacity='';
+          setTimeout(function(){
+            sEl.style.transition='';},dur+60);
+        }
       }
       return;
     }
@@ -3035,14 +3120,14 @@
     if(!moved.length&&!clipped.length) return;
     void layer.offsetWidth;         /* one reflow for the whole set */
     moved.forEach(function(el){
-      el.style.transition='transform '+TRANS_MS+'ms cubic-bezier('
+      el.style.transition='transform '+dur+'ms cubic-bezier('
         +'.4,0,.2,1)';
       el.style.transform=el.dataset.jvFlip||'';
     });
     clipped.forEach(function(el){
       var tr=el.style.transition;
       el.style.transition=(tr&&tr!=='none'?tr+',':'')
-        +'clip-path '+TRANS_MS+'ms cubic-bezier(.4,0,.2,1)';
+        +'clip-path '+dur+'ms cubic-bezier(.4,0,.2,1)';
       el.style.clipPath=el.dataset.jvClip;
       el.style.webkitClipPath=el.dataset.jvClip;
     });
@@ -3059,7 +3144,7 @@
         el.style.transition='';
         delete el.dataset.jvClip;
       });
-    },TRANS_MS+80);
+    },dur+80);
   }
   /* CUT IS AN ANSWER, not the absence of one. TRANS[0][0] is '', and
      this used to `delete sl.trans` for any falsy kind — so "arrives cut"
@@ -3095,6 +3180,20 @@
     var door=$('#trans-scope');
     if(door) door.addEventListener('click',function(e){
       e.stopPropagation();openTransScope(door);});
+    /* T553: how long this slide's transition takes, in seconds, the way
+       PowerPoint's Duration box reads. Its kind's own length is shown
+       until you change it, and putting that back stores nothing. */
+    var du=$('#trans-dur');
+    if(du) du.addEventListener('change',function(){
+      var sl=(pres.slides||[])[cur]; if(!sl) return;
+      var v=parseFloat(du.value),k=transFor(cur);
+      var def=(TRANS_DEF_MS[k]||TRANS_MS)/1000;
+      if(!(v>0)||Math.abs(v-def)<0.005) delete sl.tdur;
+      else sl.tdur=Math.round(Math.max(0.1,Math.min(10,v))*100)/100;
+      markDirty();transRibbonSync();
+      toast('This slide\u2019s transition takes '
+        +(transDurMs(cur)/1000)+' s');
+    });
   }
   /* ---- T373: WHO GETS THIS TRANSITION --------------------------------
      "All slides" was one verb on a stranded 26px button, and it was the
@@ -3119,8 +3218,12 @@
   }
   function transGiveTo(idxs,kind,what){
     if(!idxs||!idxs.length) return;
+    /* T553: and its length, as it is on this slide */
+    var td=(pres.slides||[])[cur]&&(pres.slides||[])[cur].tdur;
     idxs.forEach(function(i){
-      var s=(pres.slides||[])[i]; if(s) s.trans=String(kind);
+      var s=(pres.slides||[])[i]; if(!s) return;
+      s.trans=String(kind);
+      if(td) s.tdur=td; else delete s.tdur;
     });
     markDirty();renderFilm();transRibbonSync();
     toast(what+': '+transLabel(kind).toLowerCase()
@@ -3258,7 +3361,7 @@
     dlg.hidden=false;
   }
   function transBtnId(kind){
-    return '#trans-'+(kind===''?'cut':(kind==='move'?'move':kind));
+    return '#trans-'+(kind===''?'cut':kind);
   }
   function transRibbonSync(){
     if(!(pres.slides||[]).length) return;
@@ -3267,6 +3370,12 @@
       var b=$(transBtnId(t[0]));
       if(b) b.setAttribute('aria-pressed',(now===t[0]).toString());
     });
+    /* T553: a cut takes no time */
+    var du=$('#trans-dur');
+    if(du){
+      du.disabled=!now;
+      du.value=now?String(transDurMs(cur)/1000):'';
+    }
   }
   /* T316: a section's own colour. '' puts it back on the automatic
      cycle. refresh, because a heading wearing '@section' has to repaint

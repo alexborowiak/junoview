@@ -376,9 +376,14 @@ def test_a_transition_lands_after_the_colour_map():
     assert one.index("<p:clrMapOvr") < one.index("<p:transition")
     assert "<p:fade/>" in one
 
-    # `move` has no faithful OOXML equivalent this writer can be sure of,
-    # so it is approximated rather than silently promised
-    assert "<p:push" in z.read("ppt/slides/slide2.xml").decode("utf-8")
+    # `move` IS PowerPoint's Morph (T553: it used to be approximated as a
+    # push), in an AlternateContent PowerPoint 2016 reads, with a fade as
+    # the fallback for anything older. Checked against PowerPoint itself
+    # over COM: ppEffectMorphByObject, no repair prompt.
+    two = z.read("ppt/slides/slide2.xml").decode("utf-8")
+    assert '<p159:morph option="byObject"/>' in two
+    assert "<mc:Fallback><p:transition" in two
+    assert two.index("<p:clrMapOvr") < two.index("<mc:AlternateContent")
 
     # `cut` IS the absence of a transition, and writes nothing
     assert "<p:transition" not in z.read("ppt/slides/slide3.xml")\

@@ -228,6 +228,8 @@
            truthiness test here dropped it on every reload, so the slide
            faded again and every readout said Fade. */
         if(typeof s.trans==='string') o.trans=s.trans;
+        /* T553: how long it takes, in seconds; absent is its kind's own */
+        if(+s.tdur>0) o.tdur=+s.tdur;
         if(Array.isArray(s.cuts)&&s.cuts.length)
           o.cuts=s.cuts.filter(function(c){
             return typeof c==='string'&&c;});

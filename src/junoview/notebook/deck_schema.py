@@ -181,9 +181,12 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "sid": (str, "This slide's durable name, minted the first time the "
             "deck is rehearsed. Rehearsal times are keyed by it and live "
             "beside the deck, never inside it."),
-    "trans": (str, "How this slide arrives: \"\" (cut), \"fade\" or "
-                   "\"move\" (matching objects travel). A section may "
-                   "set a default for the slides in it."),
+    "trans": (str, "How this slide arrives: \"\" (cut), \"fade\", "
+                   "\"push\", \"wipe\", \"zoom\" or \"move\" "
+                   "(matching objects travel). A section may set a "
+                   "default for the slides in it."),
+    "tdur": ((int, float), "How long this slide's transition takes, in "
+                           "seconds. Absent is its kind's own length."),
     "opt": (int, "1 when this slide is optional — \"Running late\" in "
                  "present mode skips it."),
     "hide": (int, "1 when this slide is hidden: kept in the deck and in "

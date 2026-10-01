@@ -150,6 +150,11 @@ def as_presentations(obj: Any) -> list:
                 # handed the slide back to the section on the next load.
                 if isinstance(s.get("trans"), str):
                     slide["trans"] = s["trans"].strip()
+                # T553: how long the transition takes, in seconds
+                tdur = s.get("tdur")
+                if (isinstance(tdur, (int, float))
+                        and not isinstance(tdur, bool) and tdur > 0):
+                    slide["tdur"] = float(tdur)
                 # the slide's durable name, minted on first rehearsal.
                 # Losing it here would make every rehearsal recorded
                 # before a project save unattributable (2026-08-25, T29).

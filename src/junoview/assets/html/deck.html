@@ -1293,8 +1293,21 @@ items snap to both. Guides, not ink: never printed or exported"
  there"><i data-ic="none"></i><span>Cut</span></button>
                 <button class="fx-tile" id="trans-fade"
                   aria-pressed="false"
-                  title="A short cross-fade"><i data-ic="fade"></i><span
-                  >Fade</span></button>
+                  title="The old slide fades into the new one"
+                  ><i data-ic="fade"></i><span>Fade</span></button>
+                <!-- T553: three of PowerPoint's own -->
+                <button class="fx-tile" id="trans-push"
+                  aria-pressed="false"
+                  title="The new slide pushes the old one off to the left"
+                  ><i data-ic="push"></i><span>Push</span></button>
+                <button class="fx-tile" id="trans-wipe"
+                  aria-pressed="false"
+                  title="The new slide is uncovered from the left"
+                  ><i data-ic="wipe"></i><span>Wipe</span></button>
+                <button class="fx-tile" id="trans-zoom"
+                  aria-pressed="false"
+                  title="The old slide grows and fades into the new one"
+                  ><i data-ic="zoom"></i><span>Zoom</span></button>
                 <button class="fx-tile" id="trans-move"
                   aria-pressed="false"
                   title="Anything on both slides slides, grows or
@@ -1319,6 +1332,17 @@ items snap to both. Guides, not ink: never printed or exported"
                   aria-haspopup="true" aria-expanded="false"
                   title="Which slides get this transition"
                   ><i data-ic="scope"></i><span>Give it to &#9662;</span></button>
+              </span>
+              <!-- T553: how long it takes, as PowerPoint's Duration box -->
+              <span class="rbn-cell rbn-seg" id="trans-durcell"
+                role="group" aria-label="Duration">
+                <span class="cell-lab">Duration</span>
+                <input class="trans-dur" id="trans-dur" type="number"
+                  min="0.1" max="10" step="0.05"
+                  aria-label="Duration in seconds"
+                  title="How long this slide's transition takes, in
+ seconds">
+                <span class="cell-unit">s</span>
               </span>
             </span>
             <span class="rbn-lab">Slide transition</span>

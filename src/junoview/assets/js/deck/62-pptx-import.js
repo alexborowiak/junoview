@@ -281,6 +281,7 @@
       if(sl.bg&&sl.bg!==pr.pageBg) s.bg=sl.bg;
       if(sl.notes) s.notes=String(sl.notes);
       if(sl.trans) s.trans=sl.trans;
+      if(sl.trans&&+sl.tdur>0) s.tdur=+sl.tdur;   /* T553 */
       if(sl.hidden) s.hide=1;   /* T554: hidden stays hidden */
       if(sl.section){
         if(!secIds[sl.section]){

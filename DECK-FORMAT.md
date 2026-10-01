@@ -96,7 +96,8 @@ supported state, and the editor marks it rather than forbidding it.
 | `title` | str | Title-slide heading. |
 | `tprops` | dict | Geometry and look of the title text. |
 | `sid` | str | This slide's durable name, minted the first time the deck is rehearsed. Rehearsal times are keyed by it and live beside the deck, never inside it. |
-| `trans` | str | How this slide arrives: "" (cut), "fade" or "move" (matching objects travel). A section may set a default for the slides in it. |
+| `trans` | str | How this slide arrives: "" (cut), "fade", "push", "wipe", "zoom" or "move" (matching objects travel). A section may set a default for the slides in it. |
+| `tdur` | int or float | How long this slide's transition takes, in seconds. Absent is its kind's own length. |
 
 ### Layouts
 

@@ -145,6 +145,7 @@ SLIDE_SENTINELS = {
     "alt": "v1",
     "cuts": ["k1"],
     "trans": "move",
+    "tdur": 1.5,    # T553: how long it takes, in seconds
     "sid": "sab12cd",
     "rord": ["oid2", "oid1"],
     "mast": "m1",

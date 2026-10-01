@@ -5210,6 +5210,14 @@ body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
   background:var(--chrome-1,#0f1b26);color:var(--chrome-ink,#d7e3ec);}
 .strip-find-none{padding:6px 10px;font-size:12px;
   color:var(--chrome-ink-2,#93a8ba);}
+/* T553: the Duration box beside the transitions */
+.trans-dur{flex:none;width:52px;align-self:stretch;font:inherit;
+  font-size:12px;padding:0 2px 0 6px;border:0;border-left:1px solid
+  var(--line);border-radius:0;background:transparent;
+  color:var(--chrome-ink,#d7e3ec);}
+.trans-dur:disabled{opacity:.45;}
+.cell-unit{flex:none;padding:0 7px 0 1px;font-size:11px;
+  color:var(--chrome-ink-2,#93a8ba);}
 /* T548: the Shadow menu's rows show their shadow on a small card */
 .shd-sw{display:inline-block;width:18px;height:14px;border-radius:2px;
   background:var(--chrome-ink-2,#9fb0c0);margin:2px 4px 6px 0;flex:none;}

@@ -1058,13 +1058,29 @@ class _SlideReader:
             self._walk(tree, _Xf())
         bg = self._bg(root.find("./p:cSld/p:bg", NS))
         trans = self._trans(root)
+        tdur = self._trans_dur(root) if trans else 0.0
         self._timing(root.find("./p:timing", NS))
         name = ""
         csld = root.find("./p:cSld", NS)
         if csld is not None:
             name = csld.get("name") or ""
-        return {"bg": bg, "items": self.items, "trans": trans,
-                "notes": self._notes(), "name": name}
+        out = {"bg": bg, "items": self.items, "trans": trans,
+               "notes": self._notes(), "name": name}
+        if tdur:
+            out["tdur"] = tdur
+        return out
+
+    def _trans_dur(self, root: ET.Element) -> float:
+        """T553: a transition's exact length (PowerPoint 2010's p14:dur,
+        in ms) in seconds, or 0 for its kind's own."""
+        for el in root.iter():
+            if _local(el.tag) == "transition":
+                for k, v in el.attrib.items():
+                    if k.endswith("}dur") or k == "dur":
+                        ms = _int(v, 0)
+                        if ms > 0:
+                            return round(ms / 1000, 2)
+        return 0.0
 
     def _walk(self, tree: ET.Element, xf: _Xf) -> None:
         for el in tree:
@@ -1748,10 +1764,11 @@ class _SlideReader:
             return "fade"
         if k == "morph":
             return "move"
-        if k == "push":
-            # T483: the writer's own approximation of "move" comes back
-            # as move, not as a loss
-            return "move"
+        # T553: PowerPoint's push, wipe and zoom are this deck's too (a
+        # push used to come back as "move", the writer's old stand-in
+        # for it; move is written as a morph now)
+        if k in ("push", "wipe", "zoom"):
+            return k
         self.lost.add("trans", k)
         return "fade"
 

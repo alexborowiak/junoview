@@ -77,7 +77,9 @@ def test_who_gets_this_transition_is_a_menu_of_scopes(out):
     # every scope writes the SLIDES it names; it deliberately does not
     # set a section default, which the slides' own answers would beat
     assert "  function transGiveTo(idxs,kind,what){" in out
-    assert "      var s=(pres.slides||[])[i]; if(s) s.trans=String(kind);" in out
+    # (T553: and the slide's duration goes with it)
+    assert "      s.trans=String(kind);\n      if(td) s.tdur=td; else delete s.tdur;" \
+        in out
     assert "pres.sections" not in out.split("function transGiveTo")[1][:600]
     # the four scopes
     for row in ("'This slide'", "'All slides'", "'Choose slides\\u2026'"):

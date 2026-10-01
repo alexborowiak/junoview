@@ -579,12 +579,39 @@ window.JunoPptx = (function () {
      is approximated by `push` and the caller is told, rather than
      silently promised something PowerPoint will not do.
      <p:transition> belongs AFTER <p:clrMapOvr> in the slide part. */
-  var TRANSITION = { fade: '<p:fade/>', move: '<p:push dir="l"/>' };
+  /* T553: PowerPoint's own for each kind. A push from the right is
+     dir="l" (the slide travels left); a wipe that uncovers from the left
+     is dir="r". Move is PowerPoint's Morph, which is what it is -- it
+     used to go as a push, the nearest thing in the 2007 schema. */
+  var TRANSITION = { fade: '<p:fade/>', push: '<p:push dir="l"/>',
+    wipe: '<p:wipe dir="r"/>', zoom: '<p:zoom/>' };
+  var MC_NS = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
+  var P14_TR_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
+  var P159_NS = 'http://schemas.microsoft.com/office/powerpoint/2015/09/main';
 
-  function transition(kind) {
+  function transition(kind, ms) {
+    ms = Math.round(+ms || 0);
+    /* the 2007 speed, for a reader that knows no exact length */
+    var spd = !ms ? 'med' : ms <= 500 ? 'fast' : ms <= 750 ? 'med' : 'slow';
+    if (kind === 'move')
+      return '<mc:AlternateContent xmlns:mc="' + MC_NS + '">'
+        + '<mc:Choice xmlns:p159="' + P159_NS + '" xmlns:p14="'
+        + P14_TR_NS + '" Requires="p159">'
+        + '<p:transition spd="' + spd + '"' + (ms ? ' p14:dur="' + ms + '"' : '')
+        + '><p159:morph option="byObject"/></p:transition></mc:Choice>'
+        + '<mc:Fallback><p:transition spd="' + spd + '"><p:fade/>'
+        + '</p:transition></mc:Fallback></mc:AlternateContent>';
     var body = TRANSITION[kind];
     if (!body) return '';
-    return '<p:transition spd="med">' + body + '</p:transition>';
+    if (!ms) return '<p:transition spd="' + spd + '">' + body + '</p:transition>';
+    /* the exact length is PowerPoint 2010's p14:dur, in a Choice it
+       understands, with the 2007 form as the Fallback */
+    return '<mc:AlternateContent xmlns:mc="' + MC_NS + '">'
+      + '<mc:Choice xmlns:p14="' + P14_TR_NS + '" Requires="p14">'
+      + '<p:transition spd="' + spd + '" p14:dur="' + ms + '">' + body
+      + '</p:transition></mc:Choice><mc:Fallback><p:transition spd="'
+      + spd + '">' + body + '</p:transition></mc:Fallback>'
+      + '</mc:AlternateContent>';
   }
 
   /* A shape's non-visual DESCRIPTION is what PowerPoint's own
@@ -1483,7 +1510,8 @@ window.JunoPptx = (function () {
         xml: XML_HEAD + '<p:sld' + nsAttrs() + (slide.hide ? ' show="0"' : '')
           + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
-          + transition(slide.trans) + timingXml(anims) + '</p:sld>' };
+          + transition(slide.trans, slide.tdur) + timingXml(anims)
+          + '</p:sld>' };
     });
 
     /* which slides have notes, decided once: the parts, the rels,
