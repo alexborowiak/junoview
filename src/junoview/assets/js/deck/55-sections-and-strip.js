@@ -1113,7 +1113,16 @@
      selection, so the same familiar keys then address the slide (T516). */
   var slideClip=null;
   function putSlideCopy(source,i){
-    if(!source) return false;
+    var at=slideCopyAt(source,i);
+    if(at<0) return false;
+    cur=at;activePane=-1;selAnnot=null;selSet=[];
+    normSections();markDirty();refresh();
+    return true;
+  }
+  /* the copy itself, placed, with nothing redrawn or recorded -- so the
+     slide sorter (T557) can copy several and make them one undo step */
+  function slideCopyAt(source,i){
+    if(!source) return -1;
     var cp=deep(source);
     if(pageOf().poster) cp.label=nextVersionName();
     else delete cp.label;
@@ -1131,9 +1140,7 @@
       at=partSafeAt(at);
     }
     pres.slides.splice(at,0,cp);
-    cur=at;activePane=-1;selAnnot=null;selSet=[];
-    normSections();markDirty();refresh();
-    return true;
+    return at;
   }
   function slideCopy(i){
     var s=pres.slides[i]; if(!s) return false;

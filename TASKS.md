@@ -10403,8 +10403,25 @@ choice in the editor (T506, T507).
   as the Header's, and the help has a Header & footer entry.
 - [ ] **T556 — Handouts and notes pages.** Export PDF can print three or
   six slides a page with lines, or each slide above its notes.
-- [ ] **T557 — A slide sorter.** A full-screen grid of the slides you can
+- [x] **T557 — A slide sorter.** A full-screen grid of the slides you can
   drag to reorder, select several of and delete, duplicate or section.
+  *Done 2026-10-01.* The Overview map (T26) was already the full-screen
+  grid, in sections, with its search; it only looked and went. While
+  editing it is now the Slide Sorter: a click picks a slide, Ctrl adds or
+  takes one out, Shift takes a run, Ctrl+A all; a double-click or Enter
+  opens one; the picked slides drag as one block to before or after any
+  tile (a mark shows which), joining that tile's section as a strip drop
+  does, with a part's slides guarded (T601). Duplicate, New section and
+  Delete are buttons in its head (with counts) and Ctrl+D / Delete keys,
+  each ONE undo step -- putSlideCopy's placing was lifted out as
+  slideCopyAt so several copies make one entry, and a multi-delete
+  splices once -- and Ctrl+Z inside the sorter undoes and redraws it.
+  The picked set is the slide objects, so it survives every reorder.
+  Presenting, it stays the map (a click goes there). The doors: View >
+  Slide sorter (PowerPoint's place; its own icon; in every layout that
+  places Rulers) and the "Slide 3 of 14" readout. Driven at 1440x900 on
+  six slides: S2 and Ctrl+S4 dragged after S6 (S1 S3 S5 S6 S2 S4),
+  Ctrl+D (two copies), Delete (both), Ctrl+Z (both back in one step).
 - [ ] **T558 — Ink while presenting.** Pen, highlighter and eraser in the
   show, never saved into the slides unless you keep them.
 - [ ] **T559 — Start from a template.** New presentation offers a handful

@@ -288,7 +288,7 @@ def test_a_part_keeps_its_order_and_takes_no_slide_in(out):
     assert "&&(partGuardMove(i)||partGuardMove(j))) return;" in mv
     nv = out.split("  function newVersion(lay,arr){")[1].split("\n  }\n")[0]
     assert "    if(typeof partSafeAt==='function') at=partSafeAt(at);" in nv
-    cp = out.split("  function putSlideCopy(source,i){")[1] \
+    cp = out.split("  function slideCopyAt(source,i){")[1] \
         .split("\n  }\n")[0]
     assert "      if(cp.lk) partFree(cp);" in cp
     assert "      at=partSafeAt(at);" in cp

@@ -551,7 +551,11 @@
     var ov=$('#deck-overview');
     if(ov) ov.remove();
     document.removeEventListener('keydown',overviewKey,true);
+    ovwKeys=null;
   }
+  /* T557: while the map is a sorter, its keys are the sorter's; set by
+     openOverview, cleared on close */
+  var ovwKeys=null;
   function overviewKey(e){
     if(!$('#deck-overview')) return;
     if(e.key==='Escape'){
@@ -564,25 +568,55 @@
         fi.focus();return;
       }
       overviewClose();
+      return;
     }
+    if(ovwKeys) ovwKeys(e);
   }
+  /* ---- T557: THE SLIDE SORTER ------------------------------------------
+     The map was a way to look and to go. While editing it is PowerPoint's
+     Slide Sorter as well: a click picks a slide (Ctrl adds or takes one
+     out, Shift takes a run), a double-click or Enter opens it, and the
+     picked slides drag as one block to anywhere in the deck -- landing in
+     the section of the slide they are dropped beside, as the strip's
+     drop does. Duplicate, New section and Delete act on what is picked,
+     on the buttons and on Ctrl+D and Delete; Ctrl+A picks everything and
+     Ctrl+Z undoes, redrawing the sorter. The picked set is held as the
+     slide OBJECTS, not their numbers, so it survives every reorder. While
+     presenting it stays the map: a click goes there. */
   function openOverview(){
     overviewClose();
+    var sorting=(mode!=='view');
+    var picked=[],anchor=null;
+    if(sorting&&pres.slides[cur]){picked=[pres.slides[cur]];anchor=picked[0];}
     var ov=document.createElement('div');
-    ov.className='deck-overview';ov.id='deck-overview';
+    ov.className='deck-overview'+(sorting?' sorting':'');
+    ov.id='deck-overview';
+    ov.setAttribute('role','dialog');
+    ov.setAttribute('aria-label',sorting?'Slide sorter':'Overview map');
     var head=document.createElement('div');
     head.className='ovw-head';
     var t=document.createElement('span');
     t.className='ovw-t';
-    var runs=sectionRuns();
-    var n=(pres.slides||[]).length;
-    t.textContent=(pres.name||'This deck')+' \u2014 '+n+' slide'
-      +(n===1?'':'s')
-      +(function(){
-        var ns=runs.filter(function(r){return r.id;}).length;
-        return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
-      })();
     head.appendChild(t);
+    var tools=null,tb={};
+    if(sorting){
+      tools=document.createElement('span');tools.className='ovw-tools';
+      [['open','play','Open','Go to this slide (Enter, or a double-click)'],
+       ['dup','copy','Duplicate','A copy of each picked slide, after it '
+         +'(Ctrl+D)'],
+       ['sec','plus','New section','Start a section at the first picked '
+         +'slide'],
+       ['del','exit','Delete','Delete the picked slides (Delete). Ctrl+Z '
+         +'brings them back']].forEach(function(b){
+        var x=document.createElement('button');
+        x.type='button';x.className='dbtn'+(b[0]==='del'?' dbtn-warn':'');
+        x.innerHTML=bic(b[1])+' '+b[2];x.title=b[3];
+        x.addEventListener('click',function(e){
+          e.stopPropagation();act(b[0]);});
+        tools.appendChild(x);tb[b[0]]=x;
+      });
+      head.appendChild(tools);
+    }
     var sp=document.createElement('span');
     sp.className='deck-spring';head.appendChild(sp);
     /* THE SEARCH BOX IS THE MAP'S (T30). Filtering a map you can already
@@ -602,50 +636,245 @@
     ov.appendChild(head);
     var body=document.createElement('div');
     body.className='ovw-body';
-    runs.forEach(function(r){
-      var grp=document.createElement('div');
-      grp.className='ovw-grp';
-      var gh=document.createElement('div');
-      gh.className='ovw-gh';
-      gh.textContent=r.id?(r.name||'Section')
-        :(runs.length>1?'(no section)':'');
-      if(gh.textContent) grp.appendChild(gh);
-      var tiles=document.createElement('div');
-      tiles.className='ovw-tiles';
-      for(var k=0;k<r.n;k++){
-        (function(i){
-          var sl=pres.slides[i];
-          var tile=document.createElement('button');
-          tile.className='ovw-tile'+(i===cur?' cur':'')
-            +(sl&&sl.opt?' opt':'')
-            +(slideSkipped(i)?' cut':'');
-          var num=document.createElement('span');
-          num.className='ovw-n';num.textContent=String(i+1);
-          tile.appendChild(num);
-          tile.appendChild(miniDiagram(sl));
-          var lab=document.createElement('span');
-          lab.className='ovw-lab';
-          lab.textContent=filmText(sl)||'';
-          tile.appendChild(lab);
-          tile.dataset.i=String(i);
-          tile.title=(sl&&sl.opt?'Optional \u2014 ':'')
-            +'Go to slide '+(i+1);
-          tile.addEventListener('click',function(){
-            overviewClose();
-            /* PRESENTING, go() -- so the transition plays, the rehearsal
-               clock attributes the time and the presenter view follows.
-               Setting cur by hand would skip all three (T30). */
-            if(mode==='view'){go(i);return;}
-            cur=i;activePane=-1;selAnnot=null;selSet=[];
-            refresh();
-          });
-          tiles.appendChild(tile);
-        })(r.at+k);
-      }
-      grp.appendChild(tiles);
-      body.appendChild(grp);
-    });
     ov.appendChild(body);
+    var dragging=false;
+    function pickedIdx(){
+      return picked.map(function(s){return pres.slides.indexOf(s);})
+        .filter(function(i){return i>=0;}).sort(function(a,b){return a-b;});
+    }
+    function openAt(i){
+      overviewClose();
+      /* PRESENTING, go() -- so the transition plays, the rehearsal
+         clock attributes the time and the presenter view follows.
+         Setting cur by hand would skip all three (T30). */
+      if(mode==='view'){go(i);return;}
+      cur=i;activePane=-1;selAnnot=null;selSet=[];
+      refresh();
+    }
+    function draw(){
+      body.innerHTML='';
+      var runs=sectionRuns();
+      var n=(pres.slides||[]).length;
+      t.textContent=(sorting?'Slide sorter \u2014 ':'')
+        +(pres.name||'This deck')+' \u2014 '+n+' slide'+(n===1?'':'s')
+        +(function(){
+          var ns=runs.filter(function(r){return r.id;}).length;
+          return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
+        })();
+      runs.forEach(function(r){
+        var grp=document.createElement('div');
+        grp.className='ovw-grp';
+        grp.dataset.at=String(r.at);grp.dataset.n=String(r.n);
+        grp.dataset.sec=r.id||'';
+        var gh=document.createElement('div');
+        gh.className='ovw-gh';
+        gh.textContent=r.id?(r.name||'Section')
+          :(runs.length>1?'(no section)':'');
+        if(gh.textContent) grp.appendChild(gh);
+        var tiles=document.createElement('div');
+        tiles.className='ovw-tiles';
+        for(var k=0;k<r.n;k++){
+          (function(i){
+            var sl=pres.slides[i];
+            var tile=document.createElement('button');
+            tile.className='ovw-tile'+(i===cur?' cur':'')
+              +(sl&&sl.opt?' opt':'')
+              +(sl&&sl.hide?' hid':'')
+              +(slideSkipped(i)?' cut':'');
+            var num=document.createElement('span');
+            num.className='ovw-n';num.textContent=String(i+1);
+            tile.appendChild(num);
+            tile.appendChild(miniDiagram(sl));
+            var lab=document.createElement('span');
+            lab.className='ovw-lab';
+            lab.textContent=filmText(sl)||'';
+            tile.appendChild(lab);
+            tile.dataset.i=String(i);
+            tile.title=sorting?('Slide '+(i+1)+' \u2014 click to pick, '
+                +'double-click to open, drag to move')
+              :((sl&&sl.opt?'Optional \u2014 ':'')+'Go to slide '+(i+1));
+            tile.addEventListener('click',function(e){
+              if(!sorting){openAt(i);return;}
+              if(e.shiftKey&&anchor&&pres.slides.indexOf(anchor)>=0){
+                var a0=pres.slides.indexOf(anchor);
+                var lo=Math.min(a0,i),hi=Math.max(a0,i);
+                picked=pres.slides.slice(lo,hi+1);
+              } else if(e.ctrlKey||e.metaKey){
+                var at=picked.indexOf(sl);
+                if(at>=0) picked.splice(at,1); else picked.push(sl);
+                anchor=sl;
+              } else {picked=[sl];anchor=sl;}
+              paint();
+            });
+            if(sorting){
+              tile.addEventListener('dblclick',function(){openAt(i);});
+              tile.draggable=true;
+              tile.addEventListener('dragstart',function(e){
+                if(picked.indexOf(sl)<0){picked=[sl];anchor=sl;paint();}
+                dragging=true;
+                try{e.dataTransfer.setData('text/plain','slides');
+                  e.dataTransfer.effectAllowed='move';}catch(err){}
+              });
+              tile.addEventListener('dragend',function(){
+                dragging=false;clearMarks();});
+            }
+            tiles.appendChild(tile);
+          })(r.at+k);
+        }
+        grp.appendChild(tiles);
+        body.appendChild(grp);
+      });
+      paint();
+      if(find.value) applyFind();
+    }
+    function paint(){
+      $$('.ovw-tile',body).forEach(function(tl){
+        var on=picked.indexOf(pres.slides[+tl.dataset.i])>=0;
+        tl.classList.toggle('pick',on);
+        if(sorting) tl.setAttribute('aria-pressed',on?'true':'false');
+      });
+      if(!sorting) return;
+      var k=pickedIdx().length,many=k>1?(' '+k):'';
+      tb.open.disabled=k!==1;
+      tb.dup.disabled=!k;tb.sec.disabled=!k;tb.del.disabled=!k;
+      tb.dup.innerHTML=bic('copy')+' Duplicate'+many;
+      tb.del.innerHTML=bic('exit')+' Delete'+many;
+    }
+    function clearMarks(){
+      $$('.ovw-tile.drop-before,.ovw-tile.drop-after',body)
+        .forEach(function(x){
+          x.classList.remove('drop-before');x.classList.remove('drop-after');});
+    }
+    /* where a drop lands: before or after the tile under the pointer, and
+       in that tile's section */
+    function dropAt(e){
+      var tl=e.target.closest&&e.target.closest('.ovw-tile');
+      if(tl&&body.contains(tl)){
+        var r=tl.getBoundingClientRect(),i=+tl.dataset.i;
+        var after=e.clientX>r.left+r.width/2;
+        var s0=pres.slides[i];
+        return {tile:tl,after:after,to:after?i+1:i,sec:(s0&&s0.sec)||''};
+      }
+      var g=e.target.closest&&e.target.closest('.ovw-grp');
+      if(g&&body.contains(g))
+        return {tile:null,to:+g.dataset.at+(+g.dataset.n),
+          sec:g.dataset.sec||''};
+      return null;
+    }
+    if(sorting){
+      body.addEventListener('dragover',function(e){
+        if(!dragging) return;
+        e.preventDefault();
+        clearMarks();
+        var d=dropAt(e);
+        if(d&&d.tile) d.tile.classList.add(d.after?'drop-after':'drop-before');
+      });
+      body.addEventListener('drop',function(e){
+        if(!dragging) return;
+        e.preventDefault();dragging=false;clearMarks();
+        var d=dropAt(e); if(!d) return;
+        moveBlock(d.to,d.sec);
+      });
+    }
+    function moveBlock(to,sec){
+      var idxs=pickedIdx(); if(!idxs.length) return;
+      /* T601: a part keeps its own order and takes in no slide */
+      if(typeof partGuardMove==='function'){
+        for(var q=0;q<idxs.length;q++)
+          if(partGuardMove(idxs[q],sec)) return;
+      }
+      var block=idxs.map(function(i){return pres.slides[i];});
+      var curSl=pres.slides[cur];
+      var before=idxs.filter(function(i){return i<to;}).length;
+      idxs.slice().reverse().forEach(function(i){pres.slides.splice(i,1);});
+      var at=Math.max(0,Math.min(pres.slides.length,to-before));
+      Array.prototype.splice.apply(pres.slides,[at,0].concat(block));
+      /* the slides join the section they landed in, as a strip drop does
+         -- a section is one contiguous run, and normSections would drag
+         a stray straight back */
+      block.forEach(function(s2){if(sec) s2.sec=sec; else delete s2.sec;});
+      var ci=pres.slides.indexOf(curSl); if(ci>=0) cur=ci;
+      normSections();markDirty();refresh();draw();
+      toast(block.length===1?'Slide moved':block.length+' slides moved');
+    }
+    function act(what){
+      var idxs=pickedIdx(); if(!idxs.length&&what!=='all') return;
+      if(what==='open'){openAt(idxs[0]);return;}
+      if(what==='dup'){
+        var copies=[];
+        /* last first, so each copy lands after its own slide and the
+           numbers of the ones still to copy do not move -- and ONE undo
+           step for the lot */
+        idxs.slice().reverse().forEach(function(i){
+          var at=slideCopyAt(pres.slides[i],i);
+          if(at>=0) copies.unshift(pres.slides[at]);});
+        if(copies.length) cur=pres.slides.indexOf(copies[0]);
+        activePane=-1;selAnnot=null;selSet=[];
+        normSections();markDirty();refresh();
+        picked=copies;anchor=copies[0]||null;draw();
+        toast(copies.length===1?'Slide duplicated'
+          :copies.length+' slides duplicated');
+        return;
+      }
+      if(what==='sec'){
+        var first=pres.slides[idxs[0]];
+        newSection(idxs[0],'New section');
+        var id=first&&first.sec;
+        draw();
+        if(id&&typeof renameSection==='function')
+          renameSection(id,function(){draw();});
+        return;
+      }
+      if(what==='del'){
+        var n=idxs.length;
+        /* T601: a part's slides are deleted in the part */
+        if(typeof partOfSlide==='function'&&idxs.some(function(i){
+            return partOfSlide(pres.slides[i]);})){
+          toast(partSays(partOfSlide(pres.slides[idxs.filter(function(i){
+            return partOfSlide(pres.slides[i]);})[0]])),7000);
+          return;
+        }
+        /* one undo step for the lot */
+        idxs.slice().reverse().forEach(function(i){pres.slides.splice(i,1);});
+        cur=Math.max(0,Math.min(idxs[0],pres.slides.length-1));
+        activePane=-1;selAnnot=null;selSet=[];
+        normSections();markDirty();refresh();
+        picked=pres.slides[cur]?[pres.slides[cur]]:[];
+        anchor=picked[0]||null;draw();
+        toast(n===1?'Slide deleted \u2014 Ctrl+Z brings it back'
+          :n+' slides deleted \u2014 Ctrl+Z brings them back');
+      }
+    }
+    ovwKeys=!sorting?null:function(e){
+      if(e.target===find) return;
+      var ctrl=e.ctrlKey||e.metaKey,k=e.key;
+      var stop=function(){e.preventDefault();e.stopPropagation();};
+      if(k==='Delete'||k==='Backspace'){stop();act('del');return;}
+      if(k==='Enter'){stop();act('open');return;}
+      if(ctrl&&(k==='a'||k==='A')){
+        stop();picked=pres.slides.slice();anchor=picked[0]||null;paint();
+        return;}
+      if(ctrl&&(k==='d'||k==='D')){stop();act('dup');return;}
+      if(ctrl&&(k==='z'||k==='Z'||k==='y'||k==='Y')){
+        stop();
+        if(k==='y'||k==='Y'||e.shiftKey) redo(); else undo();
+        /* undo hands back new slide objects: the current one stays
+           picked, so the keys go on working */
+        picked=picked.filter(function(s2){
+          return pres.slides.indexOf(s2)>=0;});
+        if(!picked.length&&pres.slides[cur]){
+          picked=[pres.slides[cur]];anchor=picked[0];}
+        draw();return;
+      }
+      if(k==='ArrowRight'||k==='ArrowLeft'){
+        var at=pickedIdx(),i=at.length?at[at.length-1]:cur;
+        var j=Math.max(0,Math.min(pres.slides.length-1,
+          i+(k==='ArrowRight'?1:-1)));
+        stop();picked=[pres.slides[j]];anchor=picked[0];paint();
+        var tl=body.querySelector('.ovw-tile[data-i="'+j+'"]');
+        if(tl) tl.focus();
+      }
+    };
     /* TYPE TO NARROW. The tiles are already drawn; a hit hides the ones
        that do not match rather than rebuilding the map, so the slides
        do not jump about under the pointer as you type. */
@@ -692,10 +921,15 @@
       if(e.key==='Enter'){
         var first=$$('.ovw-tile',ov).filter(function(t){
           return !t.hidden;})[0];
-        if(first){e.preventDefault();first.click();}
+        if(first){e.preventDefault();openAt(+first.dataset.i);}
       }
     });
+    draw();
     document.body.appendChild(ov);
+    /* the picked tile in view, so a long deck opens where you are */
+    var curT=body.querySelector('.ovw-tile.cur');
+    if(curT&&curT.scrollIntoView) curT.scrollIntoView({block:'center'});
+    if(sorting&&curT) curT.focus();
     /* CAPTURE, so Esc closes the map before the editor's own Esc ladder
        reads it as "drop the tool" — the innermost state wins, which is
        the rule that ladder already follows */

@@ -507,6 +507,10 @@
   function whereBoot(){
     var b=$('#where-btn');
     if(b) b.addEventListener('click',function(){openOverview();});
+    /* T557: and View's own door, PowerPoint's Slide Sorter */
+    var srt=$('#vw-sorter');
+    if(srt) srt.addEventListener('click',function(e){
+      e.stopPropagation();openOverview();});
     syncWhere();
   }
   function scrollToTrace(){

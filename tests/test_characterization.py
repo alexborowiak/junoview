@@ -2277,8 +2277,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T562 (2026-10-01): the chart's numbers are a grid -- cells, + Row and +
 # Series, keys between cells, spreadsheet paste, the slide as live preview
 # that Cancel puts back, and Text for the comma view.
-EXPECTED_MD5 = "0f643ee23712c68493ec79c40d15615f"
-EXPECTED_BYTES = 4955181
+# T557 (2026-10-01): the slide sorter -- the overview map while editing
+# picks slides, drags them as a block, duplicates, sections and deletes
+# them in one undo step each; View has its door.
+EXPECTED_MD5 = "d8c40907a6daf2cae033450b523c89f4"
+EXPECTED_BYTES = 4968345
 
 
 def _render_example() -> str:
