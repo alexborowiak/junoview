@@ -365,13 +365,12 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
   content-visibility:visible;contain-intrinsic-size:none;}
 @media print{.content .card{content-visibility:visible!important;
   contain-intrinsic-size:none!important;}}
-/* fully hidden (filtered out) cards + their sidebar entries disappear */
+/* fully hidden (filtered out) cards + their sidebar entries disappear --
+   and stay gone while you Peek: a peek shows what YOU hid, never what a
+   filter did (2026-10-01, user: "the filter should still apply") */
 .card.is-hidden,.section.is-hidden{display:none;}
 .navitem.nav-hidden,.navsec-row.nav-hidden,.navitems.nav-hidden{
   display:none;}
-.nbshell.reveal-hidden .navitem.nav-hidden,
-.nbshell.reveal-hidden .navsec-row.nav-hidden{display:flex;}
-.nbshell.reveal-hidden .navitems.nav-hidden{display:block;}
 .navsec-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .navsec-c{font-family:var(--mono);font-size:10px;color:var(--cyan);
   background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:20px;padding:1px 7px;min-width:18px;
@@ -401,15 +400,13 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 .navitem-eye:hover{opacity:1;background:var(--surface-active);}
 .navitem.cell-off{opacity:.5;}
 .navitem.cell-off .navitem-eye{opacity:.9;}
-.nbshell.reveal-hidden .navitem.nav-hidden .navitem-eye,
 .navitem.cell-keep-visible .navitem-eye{opacity:.9;}
 .card.cell-keep-visible .cell-eye,
 .navitem.cell-keep-visible .navitem-eye{opacity:1;color:var(--cyan);}
 /* ONE slash for every crossed-out eye: the item eye, the section-heading
    eyes, and the hide-all control (deck.css draws its own, larger one) */
 .navitem.cell-off .navitem-eye::after,
-.nbshell.reveal-hidden .navitem.nav-hidden .navitem-eye::after,
-.nbshell.reveal-hidden .card.is-hidden .cell-eye::after,
+.nbshell.reveal-hidden .card.cell-off .cell-eye::after,
 .section.sec-headoff .sec-eye::after,
 .navsec-row.head-off .navsec-eye::after,
 .navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
@@ -690,40 +687,44 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
    to remain read as a rendering artefact. It lives in the sidebar only,
    which is where you bring it back from (2026-07-30). */
 .section.sec-headoff .sectionhead{display:none;}
-/* ...unless the sidebar's "Show all hidden" is revealing them. That is a
+/* ...unless the sidebar's "Peek at hidden" is revealing them. That is a
    PEEK, not a reset: everything stays hidden underneath, marked amber so
    you can tell what you are looking at, and one more click puts it all
    away again. Each item's own eye still works while revealed, which is
-   how you keep just the one you wanted back. */
+   how you keep just the one you wanted back.
+   IT REVEALS WHAT YOU HID BY HAND -- a cell's eye, a section's, a
+   heading's, a folded section -- and NOTHING A FILTER HID. With Code
+   off, a peek showed every code block in the notebook, because a blanket
+   `display:revert!important` on every section, card and part undid the
+   filters along with the eyes (2026-10-01, user: "with the 'peek at
+   hidden', the filter should still apply"). A card a filter removed is
+   .filt-gone (applyFilters), a section that is only empty because of
+   the filters stays .is-hidden, and the parts (code, plots, output)
+   keep their filter classes untouched. */
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead{display:flex;}
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead-txt{display:block;}
-.nbshell.reveal-hidden .section.sec-under,
-.nbshell.reveal-hidden .section.sec-collapsed .card{display:block;}
+.nbshell.reveal-hidden .section.sec-under:not(.is-hidden),
+.nbshell.reveal-hidden .section.sec-collapsed .card:not(.is-hidden){
+  display:block;}
+.nbshell.reveal-hidden .section.sec-off,
+.nbshell.reveal-hidden .section.sec-under-off:not(.is-hidden),
+.nbshell.reveal-hidden .section.sec-peek,
+.nbshell.reveal-hidden .content .card.cell-off:not(.filt-gone){
+  display:block;}
+.nbshell.reveal-hidden .content .section.pg-out{display:none;}
 .nbshell.reveal-hidden .section.sec-off,
 .nbshell.reveal-hidden .section.sec-under-off,
-.nbshell.reveal-hidden .content .card.is-hidden{display:block;}
-.nbshell.reveal-hidden .section.sec-off,
-.nbshell.reveal-hidden .section.sec-under-off,
-.nbshell.reveal-hidden .content .card.is-hidden,
+.nbshell.reveal-hidden .content .card.cell-off:not(.filt-gone),
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead{
   outline:1px dashed var(--amber);outline-offset:4px;opacity:.62;}
 .nbshell.reveal-hidden .section.sec-off:hover,
-.nbshell.reveal-hidden .content .card.is-hidden:hover,
+.nbshell.reveal-hidden .content .card.cell-off:not(.filt-gone):hover,
 .nbshell.reveal-hidden .section.sec-headoff .sectionhead:hover{opacity:1;}
-.nbshell.reveal-hidden .card.is-hidden .cell-eye,
+.nbshell.reveal-hidden .card.cell-off .cell-eye,
 .nbshell.reveal-hidden .section.sec-off .sec-hideall{
   opacity:1;position:relative;color:var(--amber);}
 .rf-unhide[aria-pressed="true"]{border-color:var(--amber);
   color:var(--amber);}
-/* Preview changes only presentation: all stored hide/fold flags survive. */
-.nbshell.reveal-hidden .content .section,
-.nbshell.reveal-hidden .content .card,
-.nbshell.reveal-hidden .content .cardbody,
-.nbshell.reveal-hidden .content .codewrap,
-.nbshell.reveal-hidden .content .cb-part,
-.nbshell.reveal-hidden .content .cb-part>*{display:revert!important;}
-.nbshell.reveal-hidden .content .section.pg-out{display:none!important;}
-.nbshell.reveal-hidden .content .part-fold::before{display:none!important;}
 .section.sec-headoff .sec-eye{opacity:.5;position:relative;}
 /* the struck-through eye = "hidden, click to bring it back" mark is the
    shared slash rule beside .navitem-eye above */
@@ -1844,8 +1845,10 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
 /* ---- TREE VIEW: its controls replace the document filters inside the
    panel. They no longer need to reserve an invisible ribbon-sized slot. */
 body.tree-mode #ab-tree{min-width:0;}
-/* the Tree section takes the Filters slot while the tree is on */
-body.tree-mode #ab-tree{display:flex!important;}
+/* the Tree section takes the Filters slot while the tree is on -- on
+   the Filters tab, which says Tree then (T605) */
+body.tree-mode .ab-band:not([data-tab="view"]) #ab-tree{
+  display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
 body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
 body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
@@ -1967,18 +1970,95 @@ body.tabs-row-on .nb-filebar{border-bottom-width:0;
 .top-tabstrip .top-pres-main{display:flex;align-items:center;gap:8px;
   flex:1;min-width:0;border:0;padding:0;background:none;color:inherit;
   font:inherit;text-align:left;cursor:pointer;}
-/* The navigation and view commands stay on one short row. The controls
-   they operate are a real second header row by default, not a menu that
-   covers the notebook; Filters can collapse that row when space matters. */
-.appbar{position:relative;min-height:38px;padding:5px 8px;
-  display:grid;grid-template-columns:max-content max-content minmax(0,1fr) max-content;
-  grid-template-rows:auto;align-items:center;column-gap:3px;row-gap:5px;
-  overflow-x:auto;overflow-y:visible;}
-.appbar>.abgrp .abgrp-lab{display:none;}
-.appbar .ab-nav{grid-column:1;grid-row:1;}
-.appbar #filters-toggle{grid-column:2;grid-row:1;}
-.appbar-spring{grid-column:3;grid-row:1;}
-.appbar .ab-nav .abgrp-row{align-items:center;gap:4px;}
+/* ---- T605: THE READER'S RIBBON IS TABS -------------------------------
+   The editor's shape: File, the tabs and the verbs on one strip; under
+   it ONE row of the chosen tab's groups, each named underneath. It was
+   a row of commands over a panel of every control at once, which
+   wrapped to three rows on a laptop (2026-10-01, user: "too big and eats
+   up too much of the vertical and things don't line up well"). The band
+   never wraps: fitRibbon tightens it (rbc1), then it scrolls sideways.
+   A group belongs to one tab (data-abtab) and is display:none on the
+   other, so it costs no width in the fit. */
+.appbar{position:relative;display:flex;flex-direction:column;
+  align-items:stretch;gap:0;min-height:0;padding:0;overflow:visible;}
+.ab-tabs{display:flex;align-items:center;gap:4px;height:34px;
+  box-sizing:border-box;padding:0 8px;min-width:0;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;
+  border-bottom:1px solid var(--chrome-line,#ffffff12);}
+.ab-tablist{display:flex;align-items:stretch;align-self:stretch;gap:2px;
+  margin-left:6px;flex:none;}
+.ab-tab{font-family:var(--sans);font-size:13px;letter-spacing:0;
+  font-weight:500;background:none;border:none;
+  border-bottom:2px solid transparent;color:var(--chrome-ink-2);
+  padding:0 13px;cursor:pointer;white-space:nowrap;display:inline-flex;
+  align-items:center;gap:6px;transition:color .12s,border-color .12s;}
+.ab-tab:hover{color:var(--chrome-ink);}
+.ab-tab[aria-selected="true"]{color:var(--chrome-ink);
+  border-bottom-color:var(--cyan);}
+/* in the tree the Filters tab holds the tree's own controls, and says so */
+.ab-tab .abt-tree{display:none;}
+body.tree-mode .ab-tab .abt-doc{display:none;}
+body.tree-mode .ab-tab .abt-tree{display:inline;}
+.ab-tabs .appbar-spring{flex:1;min-width:8px;}
+.ab-tabs>.abgrp .abgrp-lab{display:none;}
+.ab-tabs #ab-view .abgrp-row,.ab-tabs #ab-view .btn-grp,
+.ab-tabs #ab-view .vw-stack{flex-direction:row;align-items:center;gap:4px;}
+.ab-tabs #ab-view .vw-stack{min-width:0;}
+.ab-tabs #ab-view .vw-stack .toggle{width:auto;}
+.appbar .toggle.ab-fold{width:var(--ab-btn-h);padding:0;
+  justify-content:center;font-size:12px;}
+/* THE BAND */
+.ab-band{display:flex;flex-wrap:nowrap;align-items:stretch;gap:0;
+  box-sizing:border-box;padding:4px 8px 3px;min-width:0;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;
+  border-bottom:1px solid var(--chrome-line,#ffffff12);}
+.ab-band[hidden]{display:none!important;}
+.ab-band[data-tab="filters"] [data-abtab="view"],
+.ab-band[data-tab="view"] [data-abtab="filters"]{display:none!important;}
+.ab-band>.abgrp{flex:none;gap:3px;padding:0 10px;
+  border-right:1px solid var(--chrome-line,#ffffff12);}
+.ab-band>.abgrp:first-child{padding-left:2px;}
+.ab-band .abgrp-row,.ab-band .abgrp-row.abgrp-stack{flex-direction:row;
+  align-items:center;flex-wrap:nowrap;gap:4px;flex:none;}
+.ab-band .abgrp-row.abgrp-stack{gap:12px;}
+/* the group's NAME under it, as the editor's ribbon names its groups */
+.ab-band .abgrp-lab{display:block;order:0;font-family:var(--sans);
+  font-size:10.5px;letter-spacing:0;text-transform:none;opacity:1;
+  line-height:12px;color:var(--chrome-ink-2);text-align:center;}
+.ab-band .fgrp{flex-direction:row;align-items:center;gap:0;
+  justify-content:flex-start;}
+.ab-band .fgrp .toggle,.ab-band #pt-filter-btn,.ab-band #ck-filter-btn,
+.ab-band #ot-filter-btn{width:auto;}
+/* a filter and its chooser are ONE control, joined down the middle:
+   "Plots On | Which plots" -- so the row reads as four filters, not
+   seven buttons, and nothing has to line up with anything under it */
+.ab-band .fgrp>.toggle.tv:not(:last-child){border-top-right-radius:0;
+  border-bottom-right-radius:0;}
+.ab-band .fgrp>.toggle.tv+.toggle.sub{border-top-left-radius:0;
+  border-bottom-left-radius:0;margin-left:-1px;}
+.ab-band .fgrp+.fgrp{margin-left:2px;}
+.ab-band #sec-scope-grp,.ab-band #pages-grp,.ab-band #tree-fold-grp,
+.ab-band #tree-width-grp{gap:4px;}
+.ab-band .vw-stack{flex-direction:row;min-width:0;gap:4px;}
+.ab-band .vw-stack .toggle{width:auto;}
+/* Outline wore the sans face beside a row of mono words */
+.ab-band .menubtn{font-family:var(--mono);letter-spacing:.04em;}
+.ab-band .fgrp-h{gap:6px;}
+/* a folded group: one door, its row in a menu under it (fitRibbon) */
+.ab-band .ab-foldwrap{display:flex;align-items:center;}
+.ab-foldmenu{position:fixed;z-index:190;display:flex;padding:6px;
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:8px;box-shadow:0 12px 40px var(--shadow);}
+.ab-foldmenu[hidden]{display:none!important;}
+/* THE FITTER MEASURES WHAT IS THERE: a toggle's padding must not ease
+   between rungs, or fitRibbon reads the old padding mid-transition and
+   folds a group that would have fitted (the deck's T-era lesson, "a
+   fitter measures the old padding") */
+.appbar .toggle{transition:color .15s,background-color .15s,
+  border-color .15s,opacity .15s;}
+.ab-band .fgrp-h .fgrp-cap{min-width:0;height:auto;line-height:1;}
+body.light .ab-tabs,body.light .ab-band{border-bottom-color:var(--chrome-line);}
+body.light .ab-band>.abgrp{border-right-color:var(--chrome-line);}
 .appbar .menubtn{display:inline-flex;align-items:center;justify-content:center;
   height:var(--ab-btn-h);box-sizing:border-box;margin:0;padding:0 7px;
   gap:7px;white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);
@@ -1995,26 +2075,7 @@ body.tabs-row-on .nb-filebar{border-bottom-width:0;
   min-width:14px;height:14px;padding:0 3px;border-radius:8px;
   background:color-mix(in srgb,var(--accent) 24%,transparent);
   color:var(--cyan);font:9px var(--mono);}
-.filter-panel{position:static;z-index:auto;grid-column:1/-1;grid-row:2;
-  display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;width:100%;
-  min-width:0;max-height:none;overflow:visible;box-sizing:border-box;
-  padding:5px 0 3px;border:0;border-top:1px solid var(--chrome-line);
-  border-radius:0;background:transparent;box-shadow:none;}
 .filter-panel[hidden]{display:none!important;}
-.filter-panel .abgrp{flex:none;}
-.filter-panel .abgrp-lab{display:block;}
-.filter-panel #ab-filters{flex:1 1 390px;min-width:0;}
-.filter-panel #ab-filters .abgrp-row{flex-wrap:wrap;}
-.filter-panel #ab-filters .fgrp{min-width:106px;}
-.filter-panel #ab-scope{min-width:122px;}
-.filter-panel #ab-pages{min-width:92px;}
-.filter-panel #ab-size .abgrp-row{flex-direction:row;gap:12px;}
-.filter-panel #ab-size .fgrp{justify-content:flex-start;}
-.appbar>#ab-view{grid-column:4;grid-row:1;margin-left:0;padding-left:0;}
-.appbar #ab-view .abgrp-row,.appbar #ab-view .btn-grp,
-.appbar #ab-view .vw-stack{align-items:center;flex-direction:row;}
-.appbar #ab-view .vw-stack{min-width:0;gap:4px;}
-.appbar #ab-view .vw-stack .toggle{width:auto;}
 body.light .appbar .menubtn{border-color:var(--line);color:var(--ink);}
 body.light .appbar .menubtn:hover{color:var(--ink);}
 body.light .filter-panel{background:transparent;color:var(--ink);box-shadow:none;}
@@ -5887,6 +5948,8 @@ body.light .fx-tile>.rbn-foldval{color:var(--cyan-deep);}
 .rbn-links{order:6;}
 /* Shapes sit between Write and Draw (T197) */
 .rbn-shapes{order:6;}
+/* T560: Icons follow Shapes, by source order */
+.rbn-icons{order:6;}
 .rbn-draw{order:6;}
 /* Home's layout groups follow Slides; View keeps its seat; the saved
    layouts and the refresh doors come LAST, so they are what folds first
@@ -11288,11 +11351,20 @@ window.MathJax = {
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.3"/><path d="m10.2 10.2 3.6 3.6"/></svg> Find</button>
     </span>
   </div>
+  <!-- T605: THE READER'S RIBBON IS TABS, the editor's shape (2026-10-01,
+       user: "the ribbon in the notebooks thing is a bit cursed. It is
+       still too big and eats up too much of the vertical and things don't
+       line up well. Maybe there needs to be different tabs like
+       presentation: a filter tab etc."). It was one row of commands over
+       a panel of every control at once, which wrapped to three rows on a
+       laptop with Markdown floating between them. Now: File, the tabs and
+       the verbs on one strip; under it ONE row of the chosen tab's
+       controls, each group named underneath, never wrapping (fitRibbon
+       tightens it, then it scrolls sideways). The ribbon folds away with
+       Hide ribbon or by clicking the tab you are on; a tab brings it back.
+       Every control keeps its id, its handler and its word. -->
   <div class="appbar">
-    <span class="abgrp ab-nav" id="ab-nav"><span class="abgrp-row">
-      <!-- T602: FILE LEADS THIS ROW, as File leads the editor's ribbon
-           tabs and PowerPoint's: making something, opening something,
-           and the app's own settings. -->
+    <div class="ab-tabs" id="ab-tabs">
       <span class="dc-menuwrap" id="app-filewrap">
         <button class="toggle" id="app-file" type="button" aria-haspopup="true"
           aria-expanded="false" aria-controls="app-file-menu"
@@ -11339,23 +11411,56 @@ window.MathJax = {
  tabs go away.">As a list down the side</button>
         </div>
       </span>
-      <button class="menubtn" id="menubtn" aria-label="Outline"
-        title="Show or hide the section sidebar (table of contents)">
-        <span></span> Outline</button>
-      <button class="menubtn vars-menubtn" id="vars-btn"
-        aria-label="Variables" aria-pressed="false"
-        title="Every variable in this notebook — filter by type, and click
- a name or use-site to jump to it">x&#178; Variables</button>
-    </span></span>
+      <span class="ab-tablist" role="tablist" aria-label="Ribbon tabs">
+        <button class="ab-tab" type="button" role="tab" id="ab-tab-filters"
+          data-abtab="filters" aria-selected="true" aria-controls="filters-panel"
+          title="What you see: plots, markdown, code and output, which
+ sections the filters reach, and custom views"
+          ><span class="abt-doc">Filters</span><span class="abt-tree">Tree</span
+          ><span class="filter-count" id="filters-count" hidden></span></button>
+        <button class="ab-tab" type="button" role="tab" id="ab-tab-view"
+          data-abtab="view" aria-selected="false" aria-controls="filters-panel"
+          title="How you see it: the outline and variables, raw or tree,
+ pages, and the size of figures and text">View</button>
+      </span>
+      <span class="appbar-spring" aria-hidden="true"></span>
+      <!-- View commands belong at the right of the notebook ribbon: how you
+           present what you are looking at, where the editor keeps Present -->
+      <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
+    <!-- These are the same two viewer-level actions as the editor's
+         Full screen / Present pair. The document has no alternate start
+         point, so Present stays a direct button rather than a fake split
+         menu. -->
+    <span class="vw-stack">
+    <button class="toggle" id="doc-full" aria-pressed="false"
+      title="Fill the display with Junoview (Esc to leave)"
+      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span class="btxt">Full screen</span></button>
+    <button class="toggle primary" id="doc-present"
+      title="Present this document full screen (Narrative or Tree). Esc to
+ exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg><span class="btxt">Present</span></button>
+    </span>
+    <!-- Creating a presentation is one deliberate action.  The dialog
+         shows every choice at once, rather than scattering “from this
+         section” shortcuts across the rail and section headers. -->
+    <span class="vw-stack">
+    <button class="toggle" id="doc-autoslides"
+      aria-haspopup="dialog" aria-expanded="false"
+      aria-controls="auto-slides-dialog"
+      title="Build a presentation from this notebook &mdash; section
+ headings become slide titles, with their markdown and figures beneath"
+      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/><path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg><span class="btxt">Create slides</span></button>
+    </span>
+    </span></span><span class="abgrp-lab">View</span></span>
+      <button class="toggle ab-fold" id="filters-toggle" type="button"
+        aria-expanded="true" aria-controls="filters-panel"
+        aria-label="Hide or show the ribbon"
+        title="Hide the ribbon and give the notebook the room (Ctrl+F1).
+ Click a tab, or this, to bring it back">&#9652;</button>
+    </div>
     <span class="filter-wrap" id="filter-wrap">
-      <button class="toggle" id="filters-toggle" type="button"
-        aria-expanded="true"
-        aria-controls="filters-panel"
-        title="Collapse or show the notebook controls"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg>
-        Filters <span class="filter-count" id="filters-count" hidden></span>
-        &#9662;</button>
-      <span class="filter-panel" id="filters-panel">
-    <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
+      <span class="filter-panel ab-band" id="filters-panel" data-tab="filters"
+        role="tabpanel">
+    <span class="abgrp" id="ab-filters" data-abtab="filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
  On -> Fold -> Off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/><path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
@@ -11393,8 +11498,8 @@ window.MathJax = {
          labels does not make this already-dense ribbon wider. -->
     <span class="fgrp" id="marks-grp" hidden>
       <span class="fgrp-row" id="marks-row"></span>
-    </span></span><span class="abgrp-lab">Filters</span></span>
-    <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
+    </span></span><span class="abgrp-lab">Show</span></span>
+    <span class="abgrp" id="ab-scope" data-abtab="filters"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Which sections the filters act on"
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg><span class="btxt">All sections</span></button>
@@ -11410,27 +11515,19 @@ window.MathJax = {
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
-    <!-- T390: PAGES. One top-level section at a time, with a way to the
-         page before and after (2026-09-12, user: "could the notebook view
-         have pages ... split into pages"). A way of looking, kept per
-         notebook with the layout; the filters still decide what a page
-         contains. -->
-    <span class="abgrp" id="ab-pages"><span class="abgrp-row"><span class="fgrp" id="pages-grp">
-      <button class="toggle" id="sec-pages" aria-pressed="false"
-        title="Split the notebook into pages, one top-level section each"
-        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4" y="1.8" width="8" height="12.4" rx="1"/></svg><span class="btxt">Pages</span></button>
-      <span class="fgrp-row" id="pages-nav">
-        <button class="toggle sub" id="sec-prevpage" hidden
-          title="The page before"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m10.4 3.2-4.8 4.8 4.8 4.8"/></svg><span class="btxt">Back</span></button>
-        <button class="toggle sub" id="sec-nextpage" hidden
-          title="The page after"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m5.6 3.2 4.8 4.8-4.8 4.8"/></svg><span class="btxt">Next</span></button>
-      </span>
-    </span>
-    </span><span class="abgrp-lab">Pages</span></span>
+    <!-- the filters you keep setting, kept: a custom view remembers them
+         with the hidden cells and sizes (File > New > Custom view is the
+         same thing; this is its door where the filters are) -->
+    <span class="abgrp" id="ab-saveview" data-abtab="filters"><span class="abgrp-row">
+      <button class="toggle" id="ab-newview" type="button" data-for="pr-newview"
+        title="Keep these filters, hidden cells and sizes as a custom view
+ you can reopen from File &gt; Open"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/><path d="M4.6 8.4h4M4.6 10.8h2.6"/><path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/></svg><span
+        class="btxt">Save as view</span></button>
+    </span><span class="abgrp-lab">Custom view</span></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
-         because it plays the same role — it is what shapes WHAT YOU SEE
+         because it plays the same role -- it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
-    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
+    <span class="abgrp" id="ab-tree" data-abtab="filters" hidden><span class="abgrp-row">
       <span class="fgrp" id="tree-fold-grp">
         <button class="toggle" id="tree-expand" type="button"
           title="Expand every cell — show its content in the map"
@@ -11448,7 +11545,44 @@ window.MathJax = {
           ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/></svg><span class="btxt">Unhide all</span></button>
       </span>
     </span><span class="abgrp-lab">Tree</span></span>
-    <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
+    <span class="abgrp ab-nav" id="ab-nav" data-abtab="view"><span class="abgrp-row">
+      <button class="menubtn" id="menubtn" aria-label="Outline"
+        title="Show or hide the section sidebar (table of contents)">
+        <span></span> Outline</button>
+      <button class="menubtn vars-menubtn" id="vars-btn"
+        aria-label="Variables" aria-pressed="false"
+        title="Every variable in this notebook — filter by type, and click
+ a name or use-site to jump to it">x&#178; Variables</button>
+    </span><span class="abgrp-lab">Panels</span></span>
+    <span class="abgrp" id="ab-look" data-abtab="view"><span class="abgrp-row">
+    <span class="vw-stack">
+    <button class="toggle" id="view-raw"
+      title="Toggle between the semantic view and the raw notebook
+ (cells in order, directives visible)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.2 3.2 4 12.8"/><path d="M9.8 3.2 12 12.8"/><path d="M2.6 6.4h10.8"/><path d="M2.6 9.6h10.8"/></svg><span class="btxt">Raw</span></button>
+    <button class="toggle" id="view-tree"
+      title="Tree view: the analysis as a dependency map you can expand,
+ collapse and hide cell by cell. Toggle back for the narrative document."
+      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/><rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/><rect x="10" y="11" width="4.4" height="3.2" rx=".8"/><path d="M8 5v3.2M3.8 11V8.2h8.4V11"/></svg><span class="btxt">Tree</span></button>
+    </span>
+    </span><span class="abgrp-lab">Show as</span></span>
+    <!-- T390: PAGES. One top-level section at a time, with a way to the
+         page before and after (2026-09-12, user: "could the notebook view
+         have pages ... split into pages"). A way of looking, kept per
+         notebook with the layout; the filters still decide what a page
+         contains. -->
+    <span class="abgrp" id="ab-pages" data-abtab="view"><span class="abgrp-row"><span class="fgrp" id="pages-grp">
+      <button class="toggle" id="sec-pages" aria-pressed="false"
+        title="Split the notebook into pages, one top-level section each"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4" y="1.8" width="8" height="12.4" rx="1"/></svg><span class="btxt">Pages</span></button>
+      <span class="fgrp-row" id="pages-nav">
+        <button class="toggle sub" id="sec-prevpage" hidden
+          title="The page before"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m10.4 3.2-4.8 4.8 4.8 4.8"/></svg><span class="btxt">Back</span></button>
+        <button class="toggle sub" id="sec-nextpage" hidden
+          title="The page after"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m5.6 3.2 4.8 4.8-4.8 4.8"/></svg><span class="btxt">Next</span></button>
+      </span>
+    </span>
+    </span><span class="abgrp-lab">Pages</span></span>
+    <span class="abgrp" id="ab-size" data-abtab="view"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller" aria-label="Smaller figures"
           title="Make every figure in the feed smaller"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg></button>
@@ -11477,46 +11611,6 @@ window.MathJax = {
     </span></span><span class="abgrp-lab">Size</span></span>
       </span>
     </span>
-    <span class="appbar-spring" aria-hidden="true"></span>
-    <!-- View commands belong at the right of the notebook ribbon. -->
-    <!-- Raw / Tree / Present stay together: they are one idea (how you are
-         looking at the document) and must not wrap apart -->
-    <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
-    <!-- Raw over Tree in one column, Present beside them: two short
-         buttons stacked cost the bar half the width of three in a line -->
-    <span class="vw-stack">
-    <button class="toggle" id="view-raw"
-      title="Toggle between the semantic view and the raw notebook
- (cells in order, directives visible)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.2 3.2 4 12.8"/><path d="M9.8 3.2 12 12.8"/><path d="M2.6 6.4h10.8"/><path d="M2.6 9.6h10.8"/></svg><span class="btxt">Raw</span></button>
-    <button class="toggle" id="view-tree"
-      title="Tree view: the analysis as a dependency map you can expand,
- collapse and hide cell by cell. Toggle back for the narrative document."
-      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/><rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/><rect x="10" y="11" width="4.4" height="3.2" rx=".8"/><path d="M8 5v3.2M3.8 11V8.2h8.4V11"/></svg><span class="btxt">Tree</span></button>
-    </span>
-    <!-- These are the same two viewer-level actions as the editor's
-         Full screen / Present pair. The document has no alternate start
-         point, so Present stays a direct button rather than a fake split
-         menu. -->
-    <span class="vw-stack">
-    <button class="toggle" id="doc-full" aria-pressed="false"
-      title="Fill the display with Junoview (Esc to leave)"
-      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span class="btxt">Full screen</span></button>
-    <button class="toggle primary" id="doc-present"
-      title="Present this document full screen (Narrative or Tree). Esc to
- exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg><span class="btxt">Present</span></button>
-    </span>
-    <!-- Creating a presentation is one deliberate action.  The dialog
-         shows every choice at once, rather than scattering “from this
-         section” shortcuts across the rail and section headers. -->
-    <span class="vw-stack">
-    <button class="toggle" id="doc-autoslides"
-      aria-haspopup="dialog" aria-expanded="false"
-      aria-controls="auto-slides-dialog"
-      title="Build a presentation from this notebook &mdash; section
- headings become slide titles, with their markdown and figures beneath"
-      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/><path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg><span class="btxt">Create slides</span></button>
-    </span>
-    </span></span><span class="abgrp-lab">View</span></span>
   </div>
   <!-- The top strip and side panel deliberately show the same live tabs:
        the former is quick navigation; the latter is the library view. -->
@@ -13785,13 +13879,23 @@ The notebook is the whole thing; other files are sources you can read,
 quote and refresh.</li>
 </ul>
 
+<h3>The ribbon</h3>
+<p>Like the presentation editor's: <b>File</b>, then two tabs &mdash;
+<b>Filters</b> (what you see) and <b>View</b> (how you see it: Outline,
+Variables, Raw, Tree, Pages and the figure and text sizes) &mdash; with
+<b>Create slides</b>, <b>Full screen</b> and <b>Present</b> at the end
+of the row. The chosen tab's controls are one row under it. The
+<b>&#9652;</b> at the end, a double-click on a tab, or
+<kbd>Ctrl</kbd>+<kbd>F1</kbd> folds that row away; click a tab to bring
+it back. On a narrow window, groups you reach for less (Apply to, Size,
+Pages&hellip;) fold into a button wearing their name.</p>
+
 <h3>Filtering what you see</h3>
-<p>Four buttons in the top bar &mdash; <b>Plots</b>, <b>Markdown</b>,
-<b>Code</b>, <b>Output</b> &mdash; each shows its CURRENT state and
-cycles when clicked. They apply to every tab at once. A thin divider
-sets them apart from the view controls (Raw notebook, theme) on the
-right. <b>Plots</b> comes first because a figure is the headline of a
-cell; everything else a notebook produces is, loosely, its
+<p>Four buttons on the <b>Filters</b> tab &mdash; <b>Plots</b>,
+<b>Markdown</b>, <b>Code</b>, <b>Output</b> &mdash; each shows its
+CURRENT state and cycles when clicked. They apply to every tab at once.
+<b>Plots</b> comes first because a figure is the headline of a cell;
+everything else a notebook produces is, loosely, its
 <i>output</i>.</p>
 <ul>
 <li>All four &mdash; <b>Plots</b>, <b>Markdown</b>, <b>Code</b> and
@@ -13804,8 +13908,9 @@ plotting, a bare expression &mdash; not just standalone code cells. So
 <i>Code: Fold</i> tucks the source away under every figure and
 result at once, and a cell that is <i>only</i> code disappears entirely
 when Code is Off.</li>
-<li><b>Code types</b> and <b>Output types</b> (the two
-<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg></b> funnel buttons) are finer control: untick <i>imports</i>,
+<li><b>Which plots</b>, <b>Which code</b> and <b>Which output</b>
+(the <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg></b> half joined to each filter) are
+finer control: untick <i>imports</i>,
 <i>plotting</i>&hellip; on the code side, or <i>print</i>,
 <i>dataset</i>, <i>numeric</i>, <i>string</i>, <i>list</i>,
 <i>dict</i>, <i>error</i>&hellip; on the output side, to hide just
@@ -13822,7 +13927,7 @@ back to the defaults.</li>
 
 <h3>Figure size</h3>
 <ul>
-<li><b>Figures 100%</b> in the top bar (with
+<li><b>Figures 100%</b> on the View tab (with
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg></b> and <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg></b>
 either side) resizes <i>every</i> figure in the feed &mdash;
 click the percentage to snap back to 100%. Figures grow past the text
@@ -13990,7 +14095,8 @@ several cells under one figure (see the README for details)</td></tr>
 
 <h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
 <ul>
-<li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New)
+<li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New), or
+<b>Save as view</b> on the Filters tab,
 saves <i>how the notebook itself looks</i>. It is not
 slides: it opens in the document, with a styling bar under the
 ribbon.</li>
@@ -14194,6 +14300,14 @@ gallery's edge shows every shape with a search at the top: type
 words people use for it, not only its name) and press <kbd>Enter</kbd>
 to draw with the first one found. The shapes you drew last lead the
 gallery.</li>
+<li><b>Icons.</b> <i>Images &rarr; Icons</i> holds simple line icons
+&mdash; a tick, arrows, a warning, a lightbulb, people, charts, a
+calendar and more. Click one, then drag on the slide (it stays square),
+or just click the slide for one of the usual size. An icon is a shape:
+its line colour, weight, fill, rotation, flip and shadow are the
+shape's, it keeps its proportions when resized, and a .pptx carries it
+as a freeform PowerPoint can edit. Search finds them by the words people
+use (<i>lightbulb</i>, <i>settings</i>, <i>refresh</i>).</li>
 <li><b>Typefaces.</b> The typeface list on <i>Style</i> draws every name
 in its own face, and the faces you used last are at the top under
 <b>Recently used</b>. <i>Other&hellip;</i> takes any font installed on
@@ -16716,6 +16830,25 @@ items snap to both. Guides, not ink: never printed or exported"
                     aria-label="Show every shape">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab">Shapes</span>
+          </span>
+          <!-- T560: PowerPoint's Icons -- line icons drawn as shapes, so
+               they recolour, resize and export like any shape -->
+          <span class="rbn-grp rbn-icons rbn-compact" data-tab="images"
+            data-fold-ic="smile">
+            <span class="rbn-row">
+              <span class="rbn-tall strip-frame" id="icon-strip-frame">
+                <span class="fx-strip shape-strip icon-strip" id="icon-strip"
+                  role="group" aria-label="Icons"></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="icon-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="icon-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="icon-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every icon">&#9662;</button></span></span>
+            </span>
+            <span class="rbn-lab">Icons</span>
           </span>
           <span class="rbn-grp rbn-draw" data-tab="images" data-fold-ic="pen">
             <span class="rbn-row">
@@ -20389,7 +20522,7 @@ items snap to both. Guides, not ink: never printed or exported"
            pinned cell is out of view under a label filter like any
            other. "Only pinned" is the case where the two agree. */
         if(!onlyKeeps(c,only)&&!c.classList.contains('cell-keep-visible')){
-          c.classList.add('is-hidden');
+          c.classList.add('is-hidden','filt-gone');
           var onav=sh.querySelector('.navitem[data-item="'
             +c.id.replace(/^card-/,'')+'"]');
           if(onav){onav.classList.add('nav-hidden');
@@ -20409,7 +20542,7 @@ items snap to both. Guides, not ink: never printed or exported"
              live and did nothing at all: the class went back on, the next
              pass took it off again, and the card never moved. */
           var poff=c.classList.contains('cell-off');
-          c.classList.remove('collapsed','expanded');
+          c.classList.remove('collapsed','expanded','filt-gone');
           c.classList.toggle('is-hidden',poff);
           $$('.part-off,.part-fold,.part-open,.code-off,.pt-off,'
             +'.pt-fold,.pt-open,.ot-off,.ot-fold,.ot-open',c)
@@ -20650,6 +20783,9 @@ items snap to both. Guides, not ink: never printed or exported"
         }
         var id=c.id.replace(/^card-/,'');
         c.classList.toggle('is-hidden',filtGone||off);
+        /* what the FILTERS removed, apart from what you hid: a Peek
+           brings back the second and never the first */
+        c.classList.toggle('filt-gone',!!filtGone);
         var nav=sh.querySelector('.navitem[data-item="'+id+'"]');
         if(nav){
           /* filtered out -> gone from the sidebar; manually hidden -> STAYS
@@ -20671,6 +20807,11 @@ items snap to both. Guides, not ink: never printed or exported"
         var allGone=cards.length>0&&cards.every(function(c){
           return c.classList.contains('is-hidden');});
         sec.classList.toggle('is-hidden',allGone&&!secOff);
+        /* empty only because of cells you hid: a Peek shows it */
+        sec.classList.toggle('sec-peek',allGone&&!secOff
+          &&cards.some(function(c){
+            return c.classList.contains('cell-off')
+              &&!c.classList.contains('filt-gone');}));
         var sid=sec.dataset.sec;
         var row=sh.querySelector('.navsec-row[data-sec="'+sid+'"]');
         var items=sh.querySelector('.navitems[data-sec="'+sid+'"]');
@@ -21159,20 +21300,67 @@ items snap to both. Guides, not ink: never printed or exported"
   }
   renderTypeButtons();
 
-  /* The full controls are visible by default. Filters only collapses this
-     header row when a shorter reader bar is useful; it is not a menu. */
+  /* ---- T605: THE RIBBON'S TABS AND ITS FOLD --------------------------
+     The editor's rules, so one hand serves both: a click on a tab shows
+     its groups (and brings a folded ribbon back); a double-click on a tab,
+     the chevron at the end of the strip, or Ctrl+F1 folds it away. The
+     tab and the fold are remembered. Escape no longer folds it -- Escape
+     closes menus, and a ribbon that vanished with them was a surprise. */
   (function(){
     var wrap=$('#filter-wrap'),btn=$('#filters-toggle'),panel=$('#filters-panel');
     if(!wrap||!btn||!panel) return;
+    var tabs=$$('.ab-tab');
+    var TAB_KEY='jv-reader-tab',FOLD_KEY='jv-reader-fold';
+    function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+    function lsPut(k,v){try{localStorage.setItem(k,v);}catch(e){}}
     function set(open){
       panel.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false');
+      btn.innerHTML=open?'&#9652;':'&#9662;';
+      btn.title=open
+        ?'Hide the ribbon and give the notebook the room (Ctrl+F1). '
+          +'Click a tab, or this, to bring it back'
+        :'Show the ribbon again (Ctrl+F1)';
       if(!open) closeFilterMenus();
+      lsPut(FOLD_KEY,open?'0':'1');
       if(APP.measureChrome) APP.measureChrome();
     }
+    function show(t){
+      panel.dataset.tab=t;
+      tabs.forEach(function(b){
+        b.setAttribute('aria-selected',b.dataset.abtab===t?'true':'false');});
+      closeFilterMenus();
+      lsPut(TAB_KEY,t);
+      if(APP.measureChrome) APP.measureChrome();
+    }
+    APP.ribbonTab=show;
+    tabs.forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        show(b.dataset.abtab);
+        if(panel.hidden) set(true);
+      });
+      b.addEventListener('dblclick',function(e){
+        e.preventDefault();set(panel.hidden);});
+    });
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(panel.hidden);});
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&!panel.hidden){set(false);btn.focus();}});
+      if(e.key!=='F1'||!(e.ctrlKey||e.metaKey)) return;
+      var b=document.body.classList;
+      if(b.contains('deck-open')||b.contains('doc-presenting')) return;
+      e.preventDefault();set(panel.hidden);
+    });
+    show(lsGet(TAB_KEY)==='view'?'view':'filters');
+    if(lsGet(FOLD_KEY)==='1') set(false);
+  })();
+  /* the Save as view door presses the one real New custom view button */
+  (function(){
+    var b=$('#ab-newview');
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var real=$('#'+b.dataset.for);
+      if(real) real.click();
+    });
   })();
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */
@@ -21792,6 +21980,8 @@ items snap to both. Guides, not ink: never printed or exported"
                 '#sec-scope-menu'];
   function pbTakeTools(){
     var host=$('#pb-tools'); if(!host) return;
+    /* the present bar wraps; it carries the groups whole, never a door */
+    if(APP.bandUnfoldAll) APP.bandUnfoldAll();
     pbMoved=[];
     PB_TOOLS.forEach(function(sel){
       var el=$(sel); if(!el) return;
@@ -22591,7 +22781,7 @@ items snap to both. Guides, not ink: never printed or exported"
        +'Off — the words on the buttons. Code folds the source in '
        +'EVERY cell at once.'},
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
-     text:'Which plots, Which code and Which output, under their '
+     text:'Which plots, Which code and Which output, joined to their '
        +'filters, pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
     {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
@@ -22901,12 +23091,80 @@ items snap to both. Guides, not ink: never printed or exported"
      back; past rbc1 the bar scrolls sideways (overflow-x:auto) — a thin
      scrollbar, never a second row, never missing words. rbc2/rbc3 are
      also removed here in case an older session left them stamped. */
+  /* ---- T605: THE BAND FOLDS; IT NEVER WRAPS AND NEVER LOSES A WORD.
+     Past rbc1's spacing, a group that does not fit becomes ONE door
+     wearing its name -- the editor's rung (rbnFoldGroup): "Apply to ▾"
+     opens the group's own row under it, every control the same node
+     with the same handler. Least-used first; the four filters
+     themselves never fold. Every fit unfolds everything and folds again,
+     so a wider window opens them back out. */
+  var BAND_FOLD=['#ab-saveview','#ab-scope','#ab-tree','#ab-size',
+    '#ab-pages','#ab-look','#ab-nav'];
+  function bandMenus(){return $$('.ab-foldmenu');}
+  function closeBandFolds(){
+    bandMenus().forEach(function(m){
+      if(m.hidden) return;
+      m.hidden=true;
+      var b=m.parentNode&&m.parentNode.querySelector('.ab-foldbtn');
+      if(b) b.setAttribute('aria-expanded','false');
+    });
+  }
+  function bandFold(g){
+    if(!g||g.classList.contains('ab-folded')) return;
+    var row=g.querySelector('.abgrp-row'); if(!row) return;
+    var lab=g.querySelector('.abgrp-lab');
+    var name=lab?lab.textContent.trim():'More';
+    var wrap=document.createElement('span');wrap.className='ab-foldwrap';
+    var btn=document.createElement('button');
+    btn.type='button';btn.className='toggle ab-foldbtn';
+    btn.setAttribute('aria-haspopup','true');
+    btn.setAttribute('aria-expanded','false');
+    var t=document.createElement('span');t.className='btxt';
+    t.textContent=name+'\u00a0\u25be';btn.appendChild(t);
+    btn.title=name+' \u2014 folded because the window is too narrow to '
+      +'show the whole row. Widen the window and it opens out again';
+    var menu=document.createElement('div');
+    menu.className='ab-foldmenu';menu.hidden=true;
+    menu.appendChild(row);
+    wrap.appendChild(btn);wrap.appendChild(menu);
+    g.insertBefore(wrap,lab||null);
+    g.classList.add('ab-folded');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      closeBandFolds();closeFilterMenus();
+      if(!open) return;
+      menu.hidden=false;btn.setAttribute('aria-expanded','true');
+      var r=btn.getBoundingClientRect();
+      menu.style.top=Math.round(r.bottom+4)+'px';
+      menu.style.left=Math.round(Math.max(6,Math.min(r.left,
+        window.innerWidth-menu.offsetWidth-6)))+'px';
+    });
+  }
+  function bandUnfold(g){
+    var wrap=g.querySelector('.ab-foldwrap'); if(!wrap) return;
+    var row=wrap.querySelector('.abgrp-row');
+    if(row) g.insertBefore(row,wrap);
+    wrap.parentNode.removeChild(wrap);
+    g.classList.remove('ab-folded');
+  }
+  function bandUnfoldAll(){$$('.abgrp.ab-folded').forEach(bandUnfold);}
+  APP.bandUnfoldAll=bandUnfoldAll;
+  /* a click anywhere else closes an open door -- except inside the menus
+     its own controls open (Apply to's section list, a Which menu) */
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    if(t&&t.closest&&t.closest('.ab-foldmenu,.ckfilter-menu,#sec-scope-menu'))
+      return;
+    closeBandFolds();
+  });
   function fitRibbon(){
     var bar=$('.appbar');
     /* a HIDDEN bar (welcome screen, present mode) measures 0 wide — do
        not escalate against that, it is not a real fit */
     if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
+    bandUnfoldAll();
     cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
     /* the custom-view styling bar rides the same pass: it sits in
        #apptop under this bar and used to WRAP into a second band of
@@ -22918,7 +23176,22 @@ items snap to both. Guides, not ink: never printed or exported"
       return !!(el&&!el.hidden&&el.clientWidth
         &&el.scrollWidth>el.clientWidth+1);
     }
-    if(over(bar)||over(sb)) cl.add('rbc1');
+    /* T605: the tab strip and the band each scroll on their own */
+    var band=$('#filters-panel');
+    if(over($('#ab-tabs'))||over(band)||over(bar)||over(sb))
+      cl.add('rbc1');
+    /* ...and the band folds its least-used groups, one at a time, until
+       it fits; past the last of them it scrolls, as before */
+    BAND_FOLD.forEach(function(sel){
+      if(!over(band)) return;
+      var g=$(sel);
+      if(!g||!band.contains(g)||!g.getClientRects().length) return;
+      /* a door that opens onto one button saves nothing and hides it */
+      var live=$$('button',g).filter(function(x){
+        return x.getClientRects().length;});
+      if(live.length<2) return;
+      bandFold(g);
+    });
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
      under their filters), so the page offset has to follow its REAL
@@ -23882,13 +24155,16 @@ items snap to both. Guides, not ink: never printed or exported"
   function syncUnhideBtn(sh){
     var b=sh.querySelector('.rf-unhide');
     var peeking=sh.classList.contains('reveal-hidden');
+    /* what you hid by hand -- a filter's work is not hidden, it is
+       filtered, and a peek leaves it filtered */
     var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff').length
-      +sh.querySelectorAll('.content .card.is-hidden').length;
+      +sh.querySelectorAll('.content .card.cell-off:not(.filt-gone)').length;
     if(b){
       b.disabled=false;b.setAttribute('aria-pressed',peeking?'true':'false');
       b.innerHTML=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';
       b.title=peeking?'End peek; your visibility changes stay saved'
-        :'Temporarily show hidden content so you can choose what to restore';
+        :'Temporarily show the cells, sections and headings you hid, so '
+          +'you can choose what to restore. The filters still apply';
     }
     function status(el,hidden,what){
       el.setAttribute('aria-pressed',hidden?'true':'false');
@@ -23900,13 +24176,11 @@ items snap to both. Guides, not ink: never printed or exported"
     $$('.cell-eye,.navitem-eye',sh).forEach(function(el){
       var item=el.closest('.card,.navitem');
       var manual=!!(item&&item.classList.contains('cell-off'));
-      var filtered=!!(item&&item.classList.contains(
-        item.classList.contains('card')?'is-hidden':'nav-hidden'));
       if(item&&item.classList.contains('cell-keep-visible')){
         el.setAttribute('aria-pressed','false');
         el.title='Visible — follow filters for this cell again';
         el.setAttribute('aria-label',el.title);
-      } else status(el,manual||(peeking&&filtered),'this cell');
+      } else status(el,manual,'this cell');
     });
     $$('.sec-eye,.navsec-eye',sh).forEach(function(el){
       var sec=el.closest('.section'),row=el.closest('.navsec-row');
@@ -24246,14 +24520,13 @@ items snap to both. Guides, not ink: never printed or exported"
     }
     function toggleCellEye(id){
       var card=shell.querySelector('.card[id="card-'+id+'"]');
-      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
       if(!card) return;
-      var filtered=shell.classList.contains('reveal-hidden')
-        &&!!(nav&&nav.classList.contains('nav-hidden'));
-      if(card.classList.contains('cell-off')) setCellOff(id,false,filtered);
+      /* a peek no longer shows what the filters removed, so the eye only
+         ever hides, shows, or hands a kept-visible cell back to the
+         filters (an older kept-visible cell still has that state) */
+      if(card.classList.contains('cell-off')) setCellOff(id,false,false);
       else if(card.classList.contains('cell-keep-visible'))
         setCellOff(id,false,false);
-      else if(filtered) setCellOff(id,false,true);
       else setCellOff(id,true,false);
     }
     $$('.cell-eye',shell).forEach(function(btn){
@@ -28206,17 +28479,66 @@ window.JunoPptx = (function () {
     return Math.max(1, Math.round(pct / 100 * page.hPt * 12700));
   }
 
+  /* T560: an icon's parts (12-icons.js) as a freeform: polylines as
+     moveTo/lnTo, circles and ellipse arcs as arcTo, on its 24-unit grid
+     scaled to 24000. Stroked; filled only when the shape is. */
+  function iconGeom(parts, filled) {
+    var U = 1000, path = '';
+    function pt(x, y) {
+      return '<a:pt x="' + Math.round(x * U) + '" y="' + Math.round(y * U)
+        + '"/>';
+    }
+    function arc(cx, cy, rx, ry, a0, a1) {
+      var t = a0 * Math.PI / 180;
+      path += '<a:moveTo>' + pt(cx + rx * Math.cos(t), cy + ry * Math.sin(t))
+        + '</a:moveTo>';
+      var sw = a1 - a0, st = a0;
+      /* in halves, so a whole circle is never one 360-degree arc */
+      while (Math.abs(sw) > 0.01) {
+        var step = Math.max(-180, Math.min(180, sw));
+        path += '<a:arcTo wR="' + Math.round(rx * U) + '" hR="'
+          + Math.round(ry * U) + '" stAng="' + Math.round(st * 60000)
+          + '" swAng="' + Math.round(step * 60000) + '"/>';
+        st += step; sw -= step;
+      }
+    }
+    (parts || []).forEach(function (p) {
+      if (p[0] === 'l') {
+        var q = p[1];
+        for (var k = 0; k < q.length; k += 2)
+          path += (k ? '<a:lnTo>' : '<a:moveTo>') + pt(q[k], q[k + 1])
+            + (k ? '</a:lnTo>' : '</a:moveTo>');
+        if (p[2]) path += '<a:close/>';
+      } else if (p[0] === 'c') {
+        arc(p[1], p[2], p[3], p[3], 0, 360);
+        path += '<a:close/>';
+      } else if (p[0] === 'e') {
+        if (p[5] == null) { arc(p[1], p[2], p[3], p[4], 0, 360);
+          path += '<a:close/>'; }
+        else arc(p[1], p[2], p[3], p[4], p[5], p[6]);
+      }
+    });
+    return '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="'
+      + (24 * U) + '" h="' + (24 * U) + '"' + (filled ? '' : ' fill="none"')
+      + '>' + path + '</a:path></a:pathLst></a:custGeom>';
+  }
+
   function rectShape(item, id, page) {
     var open = SHAPE_OPEN_PTS[item.shape];
     var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '"'
       + (open ? ' cap="rnd"><a:round/>' : '>')
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
-    var geom = open ? freeformGeom(open)
+    var geom = item.icon ? iconGeom(item.icon, !!(item.fill || item.grad))
+      : open ? freeformGeom(open)
       : '<a:prstGeom prst="' + (SHAPE_GEOM[item.shape] || 'rect')
         + '"><a:avLst/></a:prstGeom>';
-    var fill = (open || SHAPE_OPEN_PRESET[item.shape])
+    var fill = (open || SHAPE_OPEN_PRESET[item.shape]
+      || (item.icon && !item.fill && !item.grad))
       ? '<a:noFill/>' : shapeFillXml(item);
+    if (item.icon) stroke = stroke.replace('<a:ln w=', '<a:ln cap="rnd" w=')
+      .replace('</a:ln>', '<a:round/></a:ln>');
     return '<p:sp>'
       + nvSp(id, item.name || ('Shape ' + id), '', item._link)
       + '<p:spPr>' + xfrm(item, page) + geom + fill
@@ -36451,7 +36773,7 @@ window.JunoPptx = (function () {
       {id:'of-text',label:'Text',tab:'insert',
        items:['tx-strip','dc-maths','dc-md']},
       {id:'of-illus',label:'Illustrations',tab:'insert',
-       items:['et-image','et-media','shape-strip-frame','dc-line','dc-draw','et-table',
+       items:['et-image','et-media','shape-strip-frame','icon-strip-frame','dc-line','dc-draw','et-table',
          'et-flip','et-clone','et-arrow','et-cancel']},
       {id:'of-furn',label:'Header & footer',tab:'insert',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
@@ -36498,7 +36820,7 @@ window.JunoPptx = (function () {
       {id:'sl-insert',label:'Insert',tab:'slide',
        items:['tx-strip','et-image','et-media','dc-maths','dc-md']},
       {id:'sl-draw',label:'Draw',tab:'slide',
-       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
+       items:['shape-strip-frame','icon-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'sl-anim',label:'Build order',tab:'slide',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
@@ -36553,7 +36875,7 @@ window.JunoPptx = (function () {
       {id:'s1-typed',label:'Typed content',tab:'sources',
        items:['tx-strip','dc-maths','dc-md']},
       {id:'s1-drawn',label:'Drawn content',tab:'sources',
-       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
+       items:['shape-strip-frame','icon-strip-frame','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'s1-guides',label:'Guides and layers',tab:'format',
        items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox',
@@ -36597,7 +36919,7 @@ window.JunoPptx = (function () {
        items:['hm-newslide','hm-dupslide','hm-version','hm-main','hm-delslide','hm-laywrap',
          'vw-versions']},
       {id:'day-insert',label:'Insert',tab:'start',
-       items:['tx-strip','et-image','et-media','shape-strip-frame','dc-line','et-table',
+       items:['tx-strip','et-image','et-media','shape-strip-frame','icon-strip-frame','dc-line','et-table',
          'et-flip','et-clone','et-arrow','et-cancel']},
       {id:'day-look',label:'Deck look',tab:'start',
        items:['lay-drop','dsg-tidy','bg-drop','dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link']},
@@ -36660,7 +36982,7 @@ window.JunoPptx = (function () {
       {id:'j3-proof',label:'Proof and versions',tab:'page',
        items:['vw-check','vw-versions']},
       {id:'j3-insert',label:'Insert',tab:'content',
-       items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
+       items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','icon-strip-frame','dc-line',
          'dc-draw','et-table','et-flip','et-clone','et-arrow','et-cancel']},
       {id:'j3-figures',label:'Figure source',tab:'content',
        items:['fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-alt','fmt-imgrefresh','fmt-imglink',
@@ -36706,7 +37028,7 @@ window.JunoPptx = (function () {
          'hm-delslide','lay-drop','dsg-tidy','page-strip-frame','bg-drop','dc-wmark',
          'dc-head','dc-foot','dc-nums','vw-versions']},
       {id:'one-insert',label:'Insert and sources',tab:'all',
-       items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','dc-line',
+       items:['tx-strip','et-image','et-media','dc-maths','dc-md','shape-strip-frame','icon-strip-frame','dc-line',
          'dc-draw','fmt-figures','fmt-flip-imgs','fmt-flip-pages','fmt-flip-own','fmt-replace','fmt-caption','fmt-alt','fmt-locate',
          'fmt-prov','fmt-imgrefresh','fmt-imglink','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-tablewrap','fmt-chartwrap','fmt-mediawrap','fmt-cropwrap','fmt-picwrap','fmt-lockar','fmt-sizepos','et-cell',
@@ -36744,7 +37066,7 @@ window.JunoPptx = (function () {
      tabs:[{id:'mi-rail',label:'Tools'},{id:'mi-sel',label:'Selection'},{id:'mi-board',label:'Board'}],
      groups:[
       {id:'mi-create',label:'Create',tab:'mi-rail',rest:1,
-       items:['tx-strip','shape-strip-frame','dc-line','et-arrow','dc-draw',
+       items:['tx-strip','shape-strip-frame','icon-strip-frame','dc-line','et-arrow','dc-draw',
          'et-cancel']},
       {id:'mi-place',label:'Place',tab:'mi-rail',
        items:['et-cell','et-image','et-media','et-table','et-flip','et-clone','dc-maths','dc-md',
@@ -36831,7 +37153,7 @@ window.JunoPptx = (function () {
        items:['fmt-shapewrap','fmt-stylewrap','fmt-swwrap',
          'fmt-headwrap','fmt-bendwrap']},
       {id:'tt-ins',label:'Insert',tab:'tt-more',
-       items:['et-table','et-flip','et-clone','shape-strip-frame','dc-line','et-arrow',
+       items:['et-table','et-flip','et-clone','shape-strip-frame','icon-strip-frame','dc-line','et-arrow',
          'dc-draw','dc-maths','dc-md','et-cancel']},
       {id:'tt-lay',label:'Slides',tab:'tt-more',
        items:['hm-laywrap','hm-match']},
@@ -39467,6 +39789,25 @@ window.JunoPptx = (function () {
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','an-shape-svg');
     svg.setAttribute('viewBox','0 0 100 100');
+    var licon=(typeof lineIcon==='function')?lineIcon(shp):null;
+    if(licon){
+      /* T560: an icon, on its 24-unit grid, kept in proportion, its
+         lines the shape's own colour and weight */
+      svg.setAttribute('viewBox','0 0 24 24');
+      svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+      var ip=document.createElementNS(SVGNS,'path');
+      ip.setAttribute('d',lineIconD(licon[3]));
+      ip.setAttribute('fill',a.fill?(tokVal(a.fillc)||shapeFill(col,0x2b/255))
+        :'none');
+      ip.setAttribute('stroke',col);
+      ip.setAttribute('stroke-width',sw);
+      ip.setAttribute('vector-effect','non-scaling-stroke');
+      ip.setAttribute('stroke-linecap','round');
+      ip.setAttribute('stroke-linejoin','round');
+      if(dash) ip.setAttribute('stroke-dasharray',dash);
+      svg.appendChild(ip);
+      return svg;
+    }
     if(SHAPE_GLYPH[shp]){
       svg.setAttribute('preserveAspectRatio','xMidYMid meet');
       var tx=document.createElementNS(SVGNS,'text');
@@ -40049,6 +40390,190 @@ window.JunoPptx = (function () {
   function autoDeckBoot(){
     window.SemApp.deckAuto=autoDeckImport;
     window.SemDeckAutoBuild=autoDeckBuild;    /* browser-verification hook */
+  }
+/* 12-icons.js — the Icons gallery's line icons (T560), as data.
+   ONE FRAGMENT of deck.js's single IIFE, concatenated with its
+   siblings in the order assets.DECK_PARTS names. It does not parse
+   alone and is not meant to: see 00-page.js. */
+  /* ---- LINE ICONS (T560) -----------------------------------------------
+     PowerPoint's Icons, the everyday ones: a tick, an arrow, a warning, a
+     lightbulb, a person, a chart. An icon is a SHAPE (k:'rect',
+     shape:'ic-NAME'), so everything a shape already has -- its line
+     colour, its weight, a fill, resize, rotate, flip, a shadow, the
+     Layers pane, the .pptx -- is the icon's without a line of its own.
+
+     Each is drawn on a 24-unit grid from three kinds of part, chosen
+     because SVG and PowerPoint's freeform geometry both say them
+     exactly, so the slide and the .pptx draw the same lines:
+       ['l', [x,y, x,y, ...], closed]   a polyline (closed: a polygon)
+       ['c', cx, cy, r]                 a circle
+       ['e', cx, cy, rx, ry, a0, a1]    an ellipse, or its arc from
+                                        angle a0 to a1 (degrees, 0 is
+                                        +x and 90 is DOWN, as on screen)
+     The icon keeps its proportions in its box (drawn "meet"); a new one
+     is drawn square and keeps its shape when resized (lockar). */
+  var LINE_ICONS=[
+    ['check','Tick','tick check done yes correct',
+      [['l',[5,12.5,10,17.5,19,7]]]],
+    ['cross','Cross','cross x no wrong close cancel',
+      [['l',[6,6,18,18]],['l',[18,6,6,18]]]],
+    ['plus','Plus','plus add more new',
+      [['l',[12,5,12,19]],['l',[5,12,19,12]]]],
+    ['minus','Minus','minus subtract less',
+      [['l',[5,12,19,12]]]],
+    ['arrowr','Arrow right','arrow right next forward',
+      [['l',[4,12,20,12]],['l',[14,6,20,12,14,18]]]],
+    ['arrowl','Arrow left','arrow left back previous',
+      [['l',[20,12,4,12]],['l',[10,6,4,12,10,18]]]],
+    ['arrowu','Arrow up','arrow up increase rise',
+      [['l',[12,20,12,4]],['l',[6,10,12,4,18,10]]]],
+    ['arrowd','Arrow down','arrow down decrease fall',
+      [['l',[12,4,12,20]],['l',[6,14,12,20,18,14]]]],
+    ['cycle','Cycle','cycle refresh repeat loop again',
+      [['e',12,12,7,7,-20,270],['l',[9.4,2.4,12.2,5,9.4,7.6]]]],
+    ['info','Information','information info about help',
+      [['c',12,12,9],['l',[12,11,12,17]],['c',12,7.7,0.6]]],
+    ['warning','Warning','warning caution alert danger exclamation',
+      [['l',[12,3.5,21.5,20,2.5,20],1],['l',[12,9.5,12,14]],
+       ['c',12,17,0.5]]],
+    ['question','Question','question help unknown ask',
+      [['c',12,12,9],['l',[9.3,9.4,9.9,7.9,11,7.2,12.4,7.1,13.8,7.6,
+        14.6,8.8,14.5,10.2,13.6,11.2,12.4,12,12,13.4,12,14.2]],
+       ['c',12,16.8,0.5]]],
+    ['star','Star','star favourite favorite rating best',
+      [['l',[12,3,14.6,8.6,20.6,9.3,16.1,13.4,17.3,19.4,12,16.4,6.7,
+        19.4,7.9,13.4,3.4,9.3,9.4,8.6],1]]],
+    ['heart','Heart','heart love like health',
+      [['l',[12,20,4.6,12.6,3.5,9.8,4.4,6.8,7,5.1,9.8,5.3,12,7.6,14.2,
+        5.3,17,5.1,19.6,6.8,20.5,9.8,19.4,12.6],1]]],
+    ['bulb','Idea','idea lightbulb light bulb insight',
+      [['c',12,9.5,5.5],['l',[9.6,14.6,9.6,18,14.4,18,14.4,14.6]],
+       ['l',[10.4,21,13.6,21]]]],
+    ['user','Person','person user people individual profile',
+      [['c',12,8,4],['e',12,21,8,7,180,360]]],
+    ['users','People','people group team users',
+      [['c',9,8.5,3.5],['e',9,21,6.5,6,180,360],['c',16.5,7.5,3],
+       ['e',17.5,18.5,4.5,5,240,360]]],
+    ['clock','Time','time clock hour schedule',
+      [['c',12,12,9],['l',[12,7,12,12,15.5,14.5]]]],
+    ['calendar','Calendar','calendar date day month schedule',
+      [['l',[4,6,20,6,20,20,4,20],1],['l',[4,10,20,10]],
+       ['l',[8,3.5,8,8]],['l',[16,3.5,16,8]]]],
+    ['mail','Mail','mail email envelope message',
+      [['l',[3,6,21,6,21,18,3,18],1],['l',[3,6,12,13,21,6]]]],
+    ['chat','Speech','speech chat talk comment message',
+      [['l',[4,5,20,5,20,16,10,16,6,20,6,16,4,16],1]]],
+    ['lock','Lock','lock secure private closed',
+      [['l',[6,11,18,11,18,20,6,20],1],['l',[8,11,8,8]],
+       ['e',12,8,4,4,180,360],['l',[16,8,16,11]]]],
+    ['search','Search','search find magnifier look',
+      [['c',10.5,10.5,6],['l',[15,15,20.5,20.5]]]],
+    ['home','Home','home house start',
+      [['l',[3,11.5,12,3.5,21,11.5]],['l',[5.5,9.5,5.5,20,18.5,20,18.5,
+        9.5]]]],
+    ['sliders','Settings','settings sliders options adjust controls',
+      [['l',[4,7,20,7]],['l',[4,12,20,12]],['l',[4,17,20,17]],
+       ['c',9,7,2],['c',15,12,2],['c',8,17,2]]],
+    ['bars','Bar chart','bar chart graph statistics results',
+      [['l',[4,20,20,20]],['l',[7,20,7,13]],['l',[12,20,12,6]],
+       ['l',[17,20,17,10]]]],
+    ['line','Line chart','line chart graph trend growth',
+      [['l',[4,4,4,20,20,20]],['l',[6.5,16,10,11,13,14,19,6.5]]]],
+    ['globe','Globe','globe world earth international web',
+      [['c',12,12,9],['l',[3,12,21,12]],['e',12,12,4.2,9]]],
+    ['target','Target','target goal aim objective',
+      [['c',12,12,9],['c',12,12,5],['c',12,12,1.3]]],
+    ['flag','Flag','flag milestone goal finish',
+      [['l',[5,21,5,4]],['l',[5,4,18,4,15,8,18,12,5,12]]]],
+    ['trophy','Trophy','trophy award prize win',
+      [['l',[7,4,17,4,17,9]],['e',12,9,5,5,0,180],['l',[7,9,7,4]],
+       ['l',[7,6,4,6,4,8,7,11]],['l',[17,6,20,6,20,8,17,11]],
+       ['l',[12,14,12,18]],['l',[8.5,20,15.5,20]]]],
+    ['book','Book','book read study reference',
+      [['l',[3.5,5,10,5,12,7,14,5,20.5,5,20.5,18,14,18,12,20,10,18,3.5,
+        18],1],['l',[12,7,12,20]]]],
+    ['doc','Document','document page paper file report',
+      [['l',[6,3,14,3,19,8,19,21,6,21],1],['l',[14,3,14,8,19,8]],
+       ['l',[9,13,16,13]],['l',[9,17,16,17]]]],
+    ['folder','Folder','folder directory files',
+      [['l',[3,6,10,6,12,8.5,21,8.5,21,19,3,19],1]]],
+    ['pin','Place','place pin location map marker where',
+      [['e',12,10,6,6,150,390],['l',[6.8,13,12,21,17.2,13]],
+       ['c',12,10,2]]],
+    ['camera','Camera','camera photo picture image',
+      [['l',[3,8,7,8,9,5,15,5,17,8,21,8,21,19,3,19],1],
+       ['c',12,13,3.5]]],
+    ['play','Play','play start video run',
+      [['c',12,12,9],['l',[10,8,16,12,10,16],1]]],
+    ['pause','Pause','pause stop wait',
+      [['c',12,12,9],['l',[10,8,10,16]],['l',[14,8,14,16]]]],
+    ['leaf','Leaf','leaf nature plant environment green',
+      [['e',5,5,14,14,0,90],['e',19,19,14,14,180,270],
+       ['l',[3,21,15,9]]]],
+    ['sun','Sun','sun weather light day warm',
+      [['c',12,12,4],['l',[12,2.5,12,5]],['l',[12,19,12,21.5]],
+       ['l',[2.5,12,5,12]],['l',[19,12,21.5,12]],['l',[5.3,5.3,7,7]],
+       ['l',[17,17,18.7,18.7]],['l',[5.3,18.7,7,17]],
+       ['l',[17,7,18.7,5.3]]]],
+    ['cloud','Cloud','cloud weather sky storage',
+      [['l',[6.5,18,3.8,16.6,3,14,4.4,11.6,7,10.6,8.1,7.6,11,5.7,14.4,6,
+        16.6,8.5,17.5,10.6,20,11.6,21,14,20.1,16.8,17.5,18],1]]],
+    ['flask','Flask','flask experiment chemistry science lab',
+      [['l',[8.5,3,15.5,3]],['l',[10,3,10,9,4.5,19,5.5,21,18.5,21,19.5,
+        19,14,9,14,3]],['l',[7.2,15,16.8,15]]]],
+    ['data','Data','data database storage records',
+      [['e',12,6,7,2.5],['l',[5,6,5,18]],['l',[19,6,19,18]],
+       ['e',12,18,7,2.5,0,180],['e',12,12,7,2.5,0,180]]],
+    ['code','Code','code programming software brackets',
+      [['l',[8,7,3,12,8,17]],['l',[16,7,21,12,16,17]]]],
+    ['pencil','Edit','edit pencil write draw',
+      [['l',[4,20,8,19,19,8,16,5,5,16],1],['l',[14,7,17,10]]]],
+    ['percent','Percent','percent percentage rate proportion',
+      [['c',7,7,2.5],['c',17,17,2.5],['l',[18,5,6,19]]]]
+  ];
+  function lineIcon(shp){
+    var id=String(shp||'');
+    if(id.indexOf('ic-')!==0) return null;
+    id=id.slice(3);
+    for(var i=0;i<LINE_ICONS.length;i++)
+      if(LINE_ICONS[i][0]===id) return LINE_ICONS[i];
+    return null;
+  }
+  /* a point on an ellipse at an angle, y down */
+  function icPt(cx,cy,rx,ry,deg){
+    var t=deg*Math.PI/180;
+    return [cx+rx*Math.cos(t),cy+ry*Math.sin(t)];
+  }
+  function icN(v){return String(Math.round(v*100)/100);}
+  /* the SVG path of an icon's parts */
+  function lineIconD(parts){
+    var d=[];
+    (parts||[]).forEach(function(p){
+      if(p[0]==='l'){
+        var q=p[1];
+        for(var k=0;k<q.length;k+=2)
+          d.push((k?'L':'M')+icN(q[k])+' '+icN(q[k+1]));
+        if(p[2]) d.push('Z');
+      } else if(p[0]==='c'){
+        var r=p[3];
+        d.push('M'+icN(p[1]+r)+' '+icN(p[2])+'A'+r+' '+r+' 0 1 1 '
+          +icN(p[1]-r)+' '+icN(p[2])+'A'+r+' '+r+' 0 1 1 '
+          +icN(p[1]+r)+' '+icN(p[2])+'Z');
+      } else if(p[0]==='e'){
+        var cx=p[1],cy=p[2],rx=p[3],ry=p[4];
+        if(p[5]==null){
+          d.push('M'+icN(cx+rx)+' '+icN(cy)+'A'+rx+' '+ry+' 0 1 1 '
+            +icN(cx-rx)+' '+icN(cy)+'A'+rx+' '+ry+' 0 1 1 '
+            +icN(cx+rx)+' '+icN(cy)+'Z');
+        } else {
+          var a0=p[5],a1=p[6],s0=icPt(cx,cy,rx,ry,a0),s1=icPt(cx,cy,rx,ry,a1);
+          d.push('M'+icN(s0[0])+' '+icN(s0[1])+'A'+rx+' '+ry+' 0 '
+            +(Math.abs(a1-a0)>180?1:0)+' '+(a1>a0?1:0)+' '
+            +icN(s1[0])+' '+icN(s1[1]));
+        }
+      }
+    });
+    return d.join('');
   }
 /* 15-annotations.js — what can sit on a slide: text, shapes, frames, flip books, styles and tokens.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
@@ -47901,7 +48426,8 @@ window.JunoPptx = (function () {
         var col=tokVal(a.color)
           ||(tokens().c.line!==TOKENS_DEFAULT.c.line?tokVal('@line'):'#ff6b57');
         var r=document.createElement('div');
-        var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]);
+        var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]
+          ||(typeof lineIcon==='function'&&lineIcon(shp)));   /* T560 */
         r.className='an-item an-rect'+(svgShape?' an-svgshape':'')
           +(selAnnot===i?' sel':'');
         var ap1=anchorPos(a,a.w,a.h);
@@ -52051,7 +52577,10 @@ window.JunoPptx = (function () {
       shapeUsed(pendingShape);   /* T573: yours lead the gallery */
     var a=(kind==='rect')
       ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:SW_DEFAULT,
-        shape:(pendingShape!=='rect'?pendingShape:undefined)}
+        shape:(pendingShape!=='rect'?pendingShape:undefined),
+        /* T560: an icon keeps its proportions when it is resized */
+        lockar:(typeof lineIcon==='function'&&lineIcon(pendingShape))
+          ?1:undefined}
       :(kind==='draw')
       ?{k:'draw',x:p0.x,y:p0.y,w:0,h:0,pts:[[0,0]],sw:SW_DEFAULT,
         color:pageIsLight(deckPageBg())?'#44525c':'#8aa0b0'}
@@ -52085,6 +52614,8 @@ window.JunoPptx = (function () {
         color:'#ff6b57',sw:SW_DEFAULT};
     var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text'
       ||a.k==='table'||a.k==='flip');
+    /* T560: an icon is drawn square, the way PowerPoint inserts one */
+    var square=(a.k==='rect'&&!!a.lockar);
     s.annots=s.annots||[];
     s.annots.push(a);
     var idx=s.annots.length-1;
@@ -52114,6 +52645,14 @@ window.JunoPptx = (function () {
         var last=raw[raw.length-1];
         if(Math.abs(p.x-last[0])+Math.abs(p.y-last[1])>=0.35) raw.push([p.x,p.y]);
         foldTrail();
+      } else if(square){
+        /* square on the SCREEN, so the side is the longer drag in
+           pixels, turned back into each axis's own percentage */
+        var lq=layer.getBoundingClientRect();
+        var dxp=(p.x-p0.x)/100*lq.width,dyp=(p.y-p0.y)/100*lq.height;
+        var side=Math.max(Math.abs(dxp),Math.abs(dyp));
+        a.w=lq.width?side/lq.width*100:0;a.h=lq.height?side/lq.height*100:0;
+        a.x=dxp<0?p0.x-a.w:p0.x;a.y=dyp<0?p0.y-a.h:p0.y;
       } else if(boxed){
         a.x=Math.min(p0.x,p.x);a.y=Math.min(p0.y,p.y);
         a.w=Math.abs(p.x-p0.x);a.h=Math.abs(p.y-p0.y);
@@ -52150,6 +52689,12 @@ window.JunoPptx = (function () {
         a.x=Math.min(p0.x,64);a.y=Math.min(p0.y,64);a.w=34;a.h=30;
       } else if(tiny&&a.k==='text'){
         delete a.w;delete a.h;          /* auto-size to its own words */
+      } else if(tiny&&square){
+        /* T560: an icon HAS a usual size -- a click drops one, square,
+           a seventh of the slide tall, centred where you clicked */
+        a.h=14;a.w=lr.width?a.h*lr.height/lr.width:a.h;
+        a.x=Math.max(0,Math.min(100-a.w,p0.x-a.w/2));
+        a.y=Math.max(0,Math.min(100-a.h,p0.y-a.h/2));
       } else if(tiny) s.annots.splice(idx,1);
       markDirty();setTool('select');
       renderAnnots(layer,s);
@@ -53997,6 +54542,7 @@ window.JunoPptx = (function () {
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
     /* the armed shape's tile lights (T197) */
     if(typeof shapeStripSync==='function') shapeStripSync();
+    if(typeof iconStripSync==='function') iconStripSync();   /* T560 */
     var l=stage.querySelector('.annot-layer');
     if(l) l.className='annot-layer tool-'+t;
     /* The way OUT, shown exactly when there is something to get out of.
@@ -54028,6 +54574,8 @@ window.JunoPptx = (function () {
         var nm='shape';
         (typeof SHAPE_LIST!=='undefined'?SHAPE_LIST:[]).forEach(function(p){
           if(p[0]===pendingShape) nm=String(p[1]).toLowerCase();});
+        var li=(typeof lineIcon==='function')?lineIcon(pendingShape):null;
+        if(li) nm=String(li[1]).toLowerCase()+' icon';   /* T560 */
         if(pendingShape==='rect') nm='rectangle';
         return 'Drag on '+pw+' to draw '+(/^[aeiou]/.test(nm)?'an ':'a ')+nm;
       })()
@@ -81575,6 +82123,19 @@ window.JunoPptx = (function () {
   function shapeIcon(shp){
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','sh-ico');svg.setAttribute('viewBox','0 0 100 100');
+    var li=(typeof lineIcon==='function')?lineIcon(shp):null;
+    if(li){
+      /* T560: an icon is drawn as the lines it is */
+      svg.setAttribute('viewBox','0 0 24 24');
+      var ip=document.createElementNS(SVGNS,'path');
+      ip.setAttribute('d',lineIconD(li[3]));
+      ip.setAttribute('fill','none');ip.setAttribute('stroke','#c9d6e2');
+      ip.setAttribute('stroke-width','1.8');
+      ip.setAttribute('stroke-linecap','round');
+      ip.setAttribute('stroke-linejoin','round');
+      svg.appendChild(ip);
+      return svg;
+    }
     if(shp==='rect'){
       var rc=document.createElementNS(SVGNS,'rect');
       rc.setAttribute('x','12');rc.setAttribute('y','22');
@@ -82010,6 +82571,40 @@ window.JunoPptx = (function () {
     try{localStorage.setItem('jv-recent-shapes',
       JSON.stringify(arr.slice(0,4)));}catch(e){}
     shapeOrderSync();
+  }
+  /* T560: THE ICONS GALLERY. One tile per icon, drawn as itself; a
+     click arms the shape tool for it, as a shape tile does, and Show all
+     searches them by name and by the words they are known by. */
+  var iconStripSync=function(){};
+  function iconStripBoot(){
+    var strip=$('#icon-strip'); if(!strip) return;
+    strip.setAttribute('data-find','icons');
+    LINE_ICONS.forEach(function(ic){
+      var b=document.createElement('button');
+      b.type='button';b.className='fx-tile shape-tile icon-tile';
+      b.dataset.shape='ic-'+ic[0];
+      b.dataset.find=ic[1]+' '+ic[2];
+      b.appendChild(shapeIcon('ic-'+ic[0]));
+      var t=document.createElement('span');t.textContent=ic[1];
+      b.appendChild(t);
+      b.title='Draw a '+ic[1].toLowerCase()+' icon \u2014 drag on the '
+        +'slide, or click it for one';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(tool==='rect'&&pendingShape===b.dataset.shape){
+          setTool('select');return;}
+        pendingShape=b.dataset.shape;
+        setTool('rect');
+      });
+      strip.appendChild(b);
+    });
+    iconStripSync=function(){
+      $$('.icon-tile',strip).forEach(function(b){
+        var on=(tool==='rect'&&pendingShape===b.dataset.shape);
+        b.classList.toggle('on',on);
+        b.setAttribute('aria-pressed',on.toString());
+      });
+    };
   }
   function shapeStripBoot(){
     var strip=$('#shape-strip'); if(!strip) return;
@@ -84435,8 +85030,11 @@ window.JunoPptx = (function () {
       if(!b||seen.indexOf(b)>=0||!cmdLive(b)) return;
       var lab=cmdLabel(b); if(!lab||lab.length<2) return;
       seen.push(b);
+      /* a gallery tile's data-find is the words people use for it
+         (T573 shapes, T560 icons): "lightbulb" finds the Idea icon */
       var hay=(lab+' '+(b.title||'')+' '+where+' '
-        +(CMD_ALIASES[b.id]||'')).toLowerCase();
+        +(CMD_ALIASES[b.id]||'')+' '+((b.dataset&&b.dataset.find)||''))
+        .toLowerCase();
       out.push({el:b,label:lab,where:where,tab:tab,g:g,hay:hay,
         lab:lab.toLowerCase()});
     }
@@ -87384,10 +87982,22 @@ window.JunoPptx = (function () {
         if(grad) fillCol='';
         else if(a.fill) fillCol=tokVal(a.fillc)||shapeFill(lineCol,
           0x2b/255);
-        items.push({t:'rect',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
-          op:a.op,color:lineCol,fill:fillCol,grad:grad,
+        /* T560: an icon goes as its own lines, in the square it is
+           drawn in (meet), so PowerPoint does not stretch it */
+        var lic=(typeof lineIcon==='function')?lineIcon(a.shape):null;
+        var ibox=box;
+        if(lic){
+          var pgI=pageOf();
+          var wmm=box.w/100*pgI.mm[0],hmm=box.h/100*pgI.mm[1];
+          var side=Math.min(wmm,hmm);
+          var nw=side/pgI.mm[0]*100,nh=side/pgI.mm[1]*100;
+          ibox={x:box.x+(box.w-nw)/2,y:box.y+(box.h-nh)/2,w:nw,h:nh};
+        }
+        items.push({t:'rect',x:ibox.x,y:ibox.y,w:ibox.w,h:ibox.h,rot:a.rot,
+          op:a.op,color:lineCol,fill:lic&&!a.fill?'':fillCol,grad:grad,
           swPct:swOf(a)/SW_REF_H*100,
-          dash:LINE_PPT[lineStyle(a)],shape:a.shape});
+          dash:LINE_PPT[lineStyle(a)],shape:a.shape,
+          icon:lic?lic[3]:null});
       } else if(a.k==='draw'){
         items.push({t:'draw',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
           op:a.op,color:tokVal(a.color),swPct:swOf(a)/SW_REF_H*100,
@@ -89850,6 +90460,7 @@ window.JunoPptx = (function () {
     galBoot();       /* the effect gallery's door (T171) */
     txStripBoot();              /* the kinds of text box, as tiles (T188) */
     shapeStripBoot();           /* the shapes, as tiles (T197) */
+    iconStripBoot();            /* the icons, as tiles (T560) */
     imgPaneBoot();
     quickSwatchBoot();          /* the deck's six colours, on the row */
     miniBoot();                 /* formatting beside highlighted words (T536) */
