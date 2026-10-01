@@ -2286,8 +2286,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T575 (2026-10-01): touch and pen -- touchBoot bridges a finger or a pen
 # on the editing canvas to the mouse handlers, with double-tap, hold-for-
 # menu and a swipe in the show.
-EXPECTED_MD5 = "6f318b8c1b88150a2fe29a2e1cca193a"
-EXPECTED_BYTES = 4979444
+# T565 (2026-10-01): the accessibility check -- a sixth Review centre row
+# and pane over the whole deck for alt text, the heading read first and
+# contrast, each finding with its one-click fix.
+EXPECTED_MD5 = "35e71880f2322a0e71020ffbc4d7ed0b"
+EXPECTED_BYTES = 4988100
 
 
 def _render_example() -> str:

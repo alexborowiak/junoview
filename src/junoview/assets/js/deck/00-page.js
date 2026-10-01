@@ -1904,14 +1904,165 @@
       function(){var b3=$('#mi-review'); if(b3) b3.click();},
       'What the deck says, written out as markdown to send to a reader, '
       +'with the things to look at alongside it');
+    /* T565 */
+    cat('Accessibility','whole deck',a11yFindings().length,
+      bic('alttext')+' Open the accessibility check',
+      function(){showA11y();},
+      'Pictures with no alt text, slides whose heading is not read '
+      +'first, and words too faint to read -- each with a fix');
     cat('Source freshness','whole deck',staleFigures().length,
       bic('reload')+' Update figures from their sources',
       function(){resyncAllFigures();},
       'Placed figures whose notebook or file has moved on \u2014 one '
       +'click re-reads them, keeping position, size and crop');
     if(head) head.textContent=total
-      ?(total+' to look at, across five checks')
-      :'Five checks, all clear';
+      ?(total+' to look at, across six checks')
+      :'Six checks, all clear';
+  }
+  /* ---- T565: THE ACCESSIBILITY CHECK -----------------------------------
+     PowerPoint's Check Accessibility, for the three things it finds most:
+     a picture nobody has described, a slide whose heading is not the
+     first thing a screen reader reads, and words too faint against what
+     is behind them. Over the WHOLE deck (Before you print is this slide's
+     ink), and every finding carries its fix, done in one click: write the
+     alt text, read the heading first, or give the words the colour that
+     reads. Contrast is WCAG's: 4.5:1, or 3:1 for large words (18pt, or
+     14pt bold). */
+  function a11yFindings(){
+    var out=[];
+    var deckBg=deckPageBg();
+    (pres.slides||[]).forEach(function(sl,si){
+      if(!sl) return;
+      var bgS=(typeof pageBgOf==='function'?pageBgOf(sl):'')||deckBg;
+      var ink=pageIsLight(bgS)?'#0b141d':'#ffffff';
+      /* 1. a picture or a chart nobody has decided about */
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.hide||a.priv) return;
+        if(a.k!=='image'&&a.k!=='flip'&&a.k!=='chart') return;
+        if(a.dec||(a.alt&&String(a.alt).trim())) return;
+        out.push({sev:'err',si:si,i:i,
+          what:(a.k==='chart'?'A chart':'A picture')+' with no alt text',
+          why:'A screen reader can only say “'+(annotLabel(a)
+            ||'image')+'”. Say what it shows, or mark it decorative.',
+          fix:'Write alt text\u2026',
+          run:function(){
+            a11yGo(si,i);
+            if(typeof setAltText==='function') setAltText([i]);
+            /* the answer comes later: check again when the question
+               closes, so the list says what is left */
+            var ask=$('#ask-dlg');
+            if(ask&&typeof MutationObserver==='function'){
+              var mo=new MutationObserver(function(){
+                if(!ask.hidden) return;
+                mo.disconnect();setTimeout(renderA11y,0);});
+              mo.observe(ask,{attributes:true,attributeFilter:['hidden']});
+            }
+          }});
+      });
+      /* 2. the heading is not read first */
+      var hd=-1,hdAt=99;
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.k!=='text'||a.hide||a.ph||!String(a.text||'').trim()) return;
+        if(!a.style||!isHeadingStyle(a.style)) return;
+        var at=headingStyles().indexOf(a.style);
+        if(at>=0&&at<hdAt){hdAt=at;hd=i;}
+      });
+      if(hd>=0){
+        var ord=orderedIdx(sl).filter(function(j){
+          var b=sl.annots[j];return b&&!b.priv&&!b.ph;});
+        if(ord.length>1&&ord[0]!==hd){
+          out.push({sev:'warn',si:si,i:hd,
+            what:'The heading is not read first',
+            why:'A screen reader starts with “'+(annotLabel(
+              sl.annots[ord[0]])||'another object')+'” and reaches '
+              +'the heading later. Put the heading first in the reading '
+              +'order.',
+            fix:'Read the heading first',
+            run:function(){
+              ensureOids(sl);
+              var rest=orderedIdx(sl).filter(function(j){return j!==hd;});
+              sl.rord=[sl.annots[hd].oid].concat(rest.map(function(j){
+                return sl.annots[j].oid;})).filter(Boolean);
+              markDirty();
+              a11yGo(si,hd);
+              toast('The heading is read first now — Reading order '
+                +'shows the whole order');
+            }});
+        }
+      }
+      /* 3. words too faint to read */
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.k!=='text'||a.hide||a.priv||a.ph) return;
+        if(!String(a.text||'').trim()&&!listOf(a)) return;
+        var fg=tokVal(a.color)||ink;
+        var against=(a.bg!==0&&a.bgc)?tokVal(a.bgc):bgS;
+        var cr=contrast(fg,against);
+        if(cr==null) return;
+        var pt=(+a.size||2.6)*5.4;
+        var need=(pt>=18||(pt>=14&&a.b))?3:4.5;
+        if(cr>=need) return;
+        var light=contrast('#ffffff',against)||0,
+            dark=contrast('#0b141d',against)||0;
+        var to=light>=dark?'#ffffff':'#0b141d';
+        out.push({sev:cr<3?'err':'warn',si:si,i:i,
+          what:'Words too faint to read',
+          why:'“'+String(a.text||'').trim().split('\n')[0].slice(0,40)
+            +'” is '+cr.toFixed(1)+':1 against what is behind it; '
+            +'words this size need '+need+':1.',
+          fix:to==='#ffffff'?'Use white words':'Use dark words',
+          run:function(){
+            a.color=to;markDirty();a11yGo(si,i);
+            toast('Readable now — '+((contrast(to,against)||0)
+              .toFixed(1))+':1. Ctrl+Z puts the old colour back');
+          }});
+      });
+    });
+    return out;
+  }
+  /* go to the finding: its slide, with the object selected */
+  function a11yGo(si,i){
+    if(si!==cur){cur=si;activePane=-1;}
+    selAnnot=(i==null?null:i);selSet=(i==null?[]:[i]);
+    refresh();
+  }
+  function renderA11y(){
+    var list=$('#a11ypane-list'),head=$('#a11ypane-count');
+    if(!list) return;
+    var found=a11yFindings();
+    var errs=found.filter(function(f){return f.sev==='err';}).length;
+    if(head) head.textContent=found.length
+      ?(found.length+' to look at'+(errs?' \u00b7 '+errs+' serious':''))
+      :'Nothing to fix';
+    list.innerHTML='';
+    if(!found.length){
+      list.innerHTML='<div class="pf-ok">Every picture says what it '
+        +'shows, every heading is read first, and the words can be '
+        +'read against what is behind them.</div>';
+      return;
+    }
+    found.forEach(function(f){
+      var row=document.createElement('div');
+      row.className='pf-row pf-'+f.sev+' a11y-row';
+      var go=document.createElement('button');
+      go.type='button';go.className='a11y-go';
+      go.title='Go to slide '+(f.si+1);
+      go.innerHTML='<span class="pf-what">'+esc('Slide '+(f.si+1)+': '
+        +f.what)+'</span><span class="pf-why">'+esc(f.why)+'</span>';
+      go.addEventListener('click',function(){a11yGo(f.si,f.i);});
+      row.appendChild(go);
+      var fx=document.createElement('button');
+      fx.type='button';fx.className='dbtn a11y-fix';
+      fx.textContent=f.fix;
+      fx.addEventListener('click',function(e){
+        e.stopPropagation();f.run();
+        setTimeout(renderA11y,0);});
+      row.appendChild(fx);
+      list.appendChild(row);
+    });
+  }
+  function showA11y(){
+    var p=$('#a11ypane'); if(!p) return;
+    paneShow('a11ypane');renderA11y();
   }
   function renderPreflightInto(list,head){
     if(!list) return;
@@ -1981,6 +2132,11 @@
     });
     var rvr=$('#reviewpane-rerun');
     if(rvr) rvr.addEventListener('click',renderReviewPane);
+    /* T565 */
+    var axc=$('#a11ypane-close');
+    if(axc) axc.addEventListener('click',function(){paneHide('a11ypane');});
+    var axr=$('#a11ypane-rerun');
+    if(axr) axr.addEventListener('click',renderA11y);
     var cl=$('#preflight-close');
     if(cl) cl.addEventListener('click',function(){
       paneHide('preflight');

@@ -56,6 +56,8 @@
       +'shadow',
     'fmt-rot':'rotate flip horizontal flip vertical mirror rotate right '
       +'90 rotate left 90 quarter turn straighten',
+    'vw-check':'check accessibility accessibility checker alt text '
+      +'contrast reading order review inspect',
     'pr-hide':'hide slide hidden slide skip slide unhide show slide',
     'pr-timing':'rehearse timings rehearsal timer',
     'hm-notes':'speaker notes notes pane',

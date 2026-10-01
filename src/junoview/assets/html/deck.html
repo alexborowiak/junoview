@@ -3057,11 +3057,23 @@ items snap to both. Guides, not ink: never printed or exported"
         <div class="selpane-h"><span>Is this ready?</span>
           <button class="dbtn dc-icon" id="reviewpane-rerun"
             aria-label="Check again"
-            title="Run the five checks again"><i data-ic="reload"></i></button>
+            title="Run the checks again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="reviewpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
         <div class="pf-count" id="reviewpane-count"></div>
         <div class="selpane-list" id="reviewpane-list"></div>
+      </aside>
+      <!-- T565: THE ACCESSIBILITY CHECK, in the same shell as Before
+           you print: the whole deck, each finding with its own fix -->
+      <aside class="selpane preflight" id="a11ypane" hidden>
+        <div class="selpane-h"><span>Accessibility</span>
+          <button class="dbtn dc-icon" id="a11ypane-rerun"
+            aria-label="Check again" title="Check again"
+            ><i data-ic="reload"></i></button>
+          <button class="dbtn dc-icon" id="a11ypane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="pf-count" id="a11ypane-count"></div>
+        <div class="selpane-list" id="a11ypane-list"></div>
       </aside>
       <aside class="selpane preflight" id="preflight" hidden>
         <div class="selpane-h"><span>Before you print</span>

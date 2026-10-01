@@ -10453,8 +10453,27 @@ choice in the editor (T506, T507).
   listed in a Comments pane, never presented, printed or exported.
 - [ ] **T564 — Record narration.** Record audio per slide while
   rehearsing; it plays in the show and travels in the saved deck.
-- [ ] **T565 — The accessibility check.** Missing alt text, reading order
+- [x] **T565 — The accessibility check.** Missing alt text, reading order
   and contrast in the Review centre, each with a fix.
+  *Done 2026-10-01.* A sixth row in the Review centre, Accessibility
+  (whole deck), opens an Accessibility pane in Before you print's shell
+  (registered with the pane owner). a11yFindings asks three things of
+  every slide: a picture, flip book or chart nobody has described (alt or
+  decorative) -- fix: Write alt text..., which goes there and asks, the
+  list checking again when the question closes; a slide whose heading
+  (the highest heading style on it, as the strip names slides) is not
+  first in the reading order -- fix: Read the heading first, which writes
+  the slide's rord (T106) with the heading first and the rest as they
+  were; and words too faint against their box or the slide's background
+  by WCAG's measure (4.5:1, 3:1 for 18pt or 14pt bold) -- fix: Use white
+  words or Use dark words, whichever reads better there. A click on a
+  finding goes to its slide with the object selected; every fix is one
+  undoable edit. Search commands finds the Review door by "accessibility",
+  "contrast" and "alt text". Driven at 1440x900 on a slide with an
+  undescribed picture, a title below it and dark-on-dark words: three
+  findings; Use white words and Read the heading first cleared two, Write
+  alt text asked "What this picture shows" and, answered, left "Nothing
+  to fix".
 
 ### Around the editor
 

@@ -2675,7 +2675,7 @@
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
     'imgpane','mediapane','chartpane','tablepane','citepane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
-    'reviewpane'];
+    'reviewpane','a11ypane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
     imgpane:'#hm-images',citepane:'#dsg-cites',   /* T469: Citations too */
     notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
