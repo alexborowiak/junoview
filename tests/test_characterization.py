@@ -2317,8 +2317,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # frames and keeps Autosave and undo in its top row, the Variables pane
 # wraps its chips and the stage makes room for it, Theme hangs from File,
 # and the Notes tabs, the sorter's head and the toast stop overrunning.
-EXPECTED_MD5 = "a81556698723a61c8936664a26061599"
-EXPECTED_BYTES = 5095429
+# T567: the slide editor's tour -- app.js gains EDITOR_TOUR_STEPS, a
+# tour machine that takes its list and flag, and the first-entry hook;
+# help.html and Take a tour's tooltip say which tour runs.
+EXPECTED_MD5 = "6b98e5458037a97dcd7786f7d4c9286a"
+EXPECTED_BYTES = 5100146
 
 
 def _render_example() -> str:

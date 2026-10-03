@@ -3574,6 +3574,52 @@
        +'colours. If Junoview helps you, File > Support funds a hosted '
        +'version with accounts — thank you!'}
   ];
+  /* ---- T567: THE EDITOR'S OWN TOUR -------------------------------------
+     The welcome tour is the notebook's; the slide editor, where a talk is
+     actually made, had none, so a first visit met a ribbon of seven tabs
+     and a canvas with nothing to say where to start. Short, in the order
+     a talk is made (the tabs, a figure in, the slides, the slide, finding
+     a command, saving, where you are, presenting), and shown once on the
+     first entry to the editor -- or again from Take a tour while the
+     editor is up. Same spotlight and tooltip as the notebook's: one tour
+     machine, two lists. */
+  var EDITOR_TOUR_STEPS=[
+    {title:'The slide editor',
+     text:'A short look round — it works the way PowerPoint does. Skip '
+       +'it any time; File > How to use > Take a tour brings it back.'},
+    {sel:'#rbn-tabs',title:'The ribbon',
+     text:'Home, Images, Text, Design, Animation, View and Present, as in '
+       +'PowerPoint. Select something and Style and Object join them, '
+       +'holding what it can do. ▴ at the end folds the ribbon away.'},
+    {sel:'#rbn-tab-images',title:'Your figures',
+     text:'Images > From notebook draws a frame and fills it with a '
+       +'figure from any open notebook. It stays linked: Home > Update '
+       +'brings in the new one when you re-run. Pictures, shapes and icons '
+       +'are on Images too; text boxes, tables and equations on Text.'},
+    {sel:'#film-list',title:'Your slides',
+     text:'Drag a slide to move it; right-click one for duplicate, hide, '
+       +'sections and the rest. + Add slide and § Section are at the foot.'},
+    {sel:'#deck-stage .slide',title:'The slide',
+     text:'Click to select, drag to move, pull a corner to resize, '
+       +'double-click words to type. Right-click for paste here and more.'},
+    {sel:'#rbn-search',title:'Find any command',
+     text:'Press Alt+Q, or click here, and type what you want to do — every '
+       +'button on every tab can be found by its name.'},
+    {sel:'#dc-save',title:'Saving',
+     text:'Save keeps the presentation in your project; the chip beside it '
+       +'says Saved, Saving… or Not saved, and Autosave counts down to '
+       +'the next one. ▾ chooses where it saves.'},
+    {sel:'#where-btn',title:'Where you are',
+     text:'Which slide you are on, of how many — click it to see every '
+       +'slide at once and rearrange them. The zoom is at the other end '
+       +'of the row.'},
+    {sel:'#dc-play',title:'Present',
+     text:'Present plays from the start; ▾ beside it has presenter view '
+       +'and the other ways to play. With nothing selected, Escape steps '
+       +'back to your notebook with the slides beside it.'}
+  ];
+  var EDITOR_TOUR_KEY='plotline-tour-editor';
+  var tourSteps=TOUR_STEPS,tourKey='plotline-tour';
   var tourI=0;
   function tourEl(step){
     if(!step.sel) return null;
@@ -3596,10 +3642,10 @@
   /* T484: only the steps that will show are counted, so the counter
      never jumps 4 -> 6 -> 8 */
   function tourVisible(){
-    return TOUR_STEPS.filter(function(st){return !st.sel||tourRect(st);});
+    return tourSteps.filter(function(st){return !st.sel||tourRect(st);});
   }
   function tourShow(i){
-    var steps=TOUR_STEPS,dir=(i>=tourI)?1:-1;
+    var steps=tourSteps,dir=(i>=tourI)?1:-1;
     while(i>=0&&i<steps.length){
       if(!steps[i].sel||tourRect(steps[i])) break;
       i+=dir;
@@ -3646,26 +3692,33 @@
       tip.style.transform='translate(-50%,-50%)';
     }
   }
-  function tourStart(){
+  /* which tour: the editor's while the editor is up (or when asked for
+     by name), the notebook's otherwise -- so Take a tour in the help,
+     opened from either, tours the place it was opened from */
+  function tourStart(which){
+    var ed=which==='editor'||(which!=='notebook'
+      &&document.body.classList.contains('slide-editing'));
+    tourSteps=ed?EDITOR_TOUR_STEPS:TOUR_STEPS;
+    tourKey=ed?EDITOR_TOUR_KEY:'plotline-tour';
     var hd=$('#helpdlg'); if(hd) hd.hidden=true;
     var wl=$('#welcome'); /* keep welcome as the backdrop is fine */
     tourI=0;tourShow(0);
   }
   function tourEnd(){
     var t=$('#tour'); if(t) t.hidden=true;
-    try{localStorage.setItem('plotline-tour','1');}catch(e){}
+    try{localStorage.setItem(tourKey,'1');}catch(e){}
   }
   (function(){
     var nx=$('#tour-next'),bk=$('#tour-back'),sk=$('#tour-skip');
     if(nx) nx.addEventListener('click',function(){
-      if(tourI>=TOUR_STEPS.length-1) tourEnd(); else tourShow(tourI+1);});
+      if(tourI>=tourSteps.length-1) tourEnd(); else tourShow(tourI+1);});
     if(bk) bk.addEventListener('click',function(){tourShow(tourI-1);});
     if(sk) sk.addEventListener('click',tourEnd);
     document.addEventListener('keydown',function(e){
       var t=$('#tour'); if(!t||t.hidden) return;
       if(e.key==='Escape'){e.preventDefault();tourEnd();}
       else if(e.key==='ArrowRight'||e.key==='Enter'){e.preventDefault();
-        if(tourI>=TOUR_STEPS.length-1) tourEnd(); else tourShow(tourI+1);}
+        if(tourI>=tourSteps.length-1) tourEnd(); else tourShow(tourI+1);}
       else if(e.key==='ArrowLeft'){e.preventDefault();tourShow(tourI-1);}
     });
     window.addEventListener('resize',function(){
@@ -3683,6 +3736,29 @@
   }
   APP.startTour=tourStart;
   document.addEventListener('sem:activate',maybeAutoTour);
+  /* T567: the editor's tour, once, on the first time the editor comes
+     up -- watched on the body's class, which every way in sets. Not over
+     the notebook's tour if that is still running; a later entry tries
+     again until it has been seen. */
+  var edTourArmed=false;
+  function maybeEditorTour(){
+    if(edTourArmed||!document.body.classList.contains('slide-editing'))
+      return;
+    try{if(localStorage.getItem(EDITOR_TOUR_KEY)) return;}catch(e){return;}
+    var t=$('#tour'); if(!t||!t.hidden) return;
+    edTourArmed=true;
+    setTimeout(function(){
+      edTourArmed=false;
+      /* still editing: a show is not slide-editing, so this is also
+         "not while presenting" */
+      if(!document.body.classList.contains('slide-editing')) return;
+      var tt=$('#tour'); if(!tt||!tt.hidden) return;
+      try{if(localStorage.getItem(EDITOR_TOUR_KEY)) return;}catch(e){return;}
+      tourStart('editor');
+    },900);
+  }
+  if(window.MutationObserver) new MutationObserver(maybeEditorTour)
+    .observe(document.body,{attributes:true,attributeFilter:['class']});
 
   /* ---- figure pager: ‹ › flips between figures of one cell -------- */
   /* delegated so it works in cloned slide frames too */

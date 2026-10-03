@@ -10540,8 +10540,24 @@ choice in the editor (T506, T507).
   Outline's accessible name was "Toggle sections"; it is Outline. Driven
   at 1440x900: names read back from the live page, Code cycled to Off and
   the figures to 115%, the row still one line with no sideways scroll.
-- [ ] **T567 — A tour of the editor.** The welcome tour covers the
+- [x] **T567 — A tour of the editor.** The welcome tour covers the
   notebook; the slide editor gets its own short one on first entry.
+  *Done 2026-10-03.* Nine steps in the order a talk is made -- the
+  editor, the ribbon (and that Style and Object join it on a
+  selection), Images > From notebook and Home > Update, the slide strip,
+  the slide, the command search (Alt+Q), saving, the Slide N of M readout
+  and Present (with Escape back to the notebook) -- through the notebook
+  tour's own spotlight and tooltip: the tour machine takes its step list
+  and its shown-once flag now (plotline-tour-editor beside the old
+  plotline-tour, so nobody is re-shown the notebook's), and Take a tour
+  runs the tour of whatever is open. It starts 0.9s after the first time
+  the body becomes slide-editing (every way into the editor sets it),
+  never over the notebook's tour, and a later entry tries again until it
+  has been seen. The help's Presentations section says so. Driven at
+  1366x657: all nine tips on screen beside or under what they name,
+  Done sets the flag, a second entry shows nothing, Take a tour from the
+  editor's File > How to use runs the editor's tour and from the
+  reader's the notebook's.
 - [x] **T568 — Dialogs agree on their buttons.** Cancel on the left, the
   verb on the right, Esc cancels, Enter does the verb, everywhere.
   *Done 2026-09-30.* The markup already put Cancel first; one popover did
