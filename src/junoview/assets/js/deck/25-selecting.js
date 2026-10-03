@@ -80,6 +80,8 @@
     +'#fmt-stylewrap-tx #fmt-style-tx #fmt-style-menu-tx '
     +'#fmt-tbl-rowplus #fmt-tbl-rowminus #fmt-tbl-colplus '
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
+    +'#fmt-tbl-merge #fmt-tbl-splitwrap #fmt-tbl-split #fmt-tbl-fillwrap '
+    +'#fmt-tbl-fill #fmt-tbl-stylewrap #fmt-tbl-style '
     +'#fmt-forward #fmt-backward '
     +'#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
     /* the split wrappers and their carets: the wrapper has to be
@@ -591,6 +593,17 @@
      '#fmt-tbl-colminus'].forEach(function(id){show(id,isTbl);});
     show('#fmt-tbl-head',isTbl,isTbl&&!!a.thead);
     show('#fmt-tbl-grid',isTbl,isTbl&&a.grid!==0);
+    /* T551: merge and split, a cell's fill, the look. Merge says how
+       many cells it would join; the doors stay up with nothing picked
+       (their menus say to click a cell), so they never jump about */
+    ['#fmt-tbl-merge','#fmt-tbl-splitwrap','#fmt-tbl-split',
+     '#fmt-tbl-fillwrap','#fmt-tbl-fill','#fmt-tbl-stylewrap',
+     '#fmt-tbl-style'].forEach(function(id){show(id,isTbl);});
+    var tpk=isTbl?tblPick(a):null,tmg=$('#fmt-tbl-merge');
+    if(tmg&&isTbl) tmg.title=(tpk&&!tpk.one)
+      ?('Merge these '+tpk.n+' cells into one')
+      :'Merge the chosen cells into one (click a cell, then Shift+click '
+        +'another)';
     show('#fmt-replace',kind==='cell');
     show('#fmt-locate',kind==='cell'&&!!a.ref);
     /* for anything that came OUT of a notebook, which since T58 means a
@@ -3759,6 +3772,14 @@
              Ctrl is here because half the world reaches for it first and
              it did nothing at all before (2026-08-20). */
           if((ev.shiftKey||ev.ctrlKey||ev.metaKey)&&typeof idx==='number'){
+            /* T551: Shift+click on a cell of the table that is already
+               the selection stretches its cell pick (the cell's own click
+               does that); it does not take the table out of the
+               selection, nor start the browser's text selection */
+            if(ev.shiftKey&&selAnnot===idx&&selSet.length<=1
+               &&t.closest&&t.closest('.an-table [data-r]')){
+              ev.preventDefault();return;
+            }
             selectAnnot(layer,idx,true);return;
           }
           /* clicking outside the group you are inside leaves it */

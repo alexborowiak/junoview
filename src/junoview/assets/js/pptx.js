@@ -499,36 +499,66 @@ window.JunoPptx = (function () {
        cell plus hMerge="1" on the ones it swallows, which have to be
        written and left empty rather than omitted. */
     var spans = (item.spans && item.spans.length) ? item.spans : null;
+    /* T551: EVERY MERGE, NOT ONLY THE GROUP ROW'S. `merge` is a list of
+       [row, col, rows, cols] regions in the rows written here; OOXML
+       marks the top-left cell with gridSpan and rowSpan, the rest of its
+       first row hMerge, and every cell of the rows below vMerge (their
+       first column carrying the gridSpan again, and the others hMerge as
+       well) -- written and left empty, never omitted. */
+    var cover = rows.map(function () { return []; });
+    if (spans) {
+      var at0 = 0;
+      spans.forEach(function (n) {
+        n = Math.max(1, n | 0);
+        cover[0][at0] = { r: 0, c: at0, rs: 1, cs: n };
+        for (var k = 1; k < n; k++) cover[0][at0 + k] = { r: 0, c: at0, rs: 1, cs: n };
+        at0 += n;
+      });
+    }
+    (item.merge || []).forEach(function (m) {
+      var r0 = m[0] | 0, c0 = m[1] | 0;
+      var rs = Math.max(1, m[2] | 0), cs = Math.max(1, m[3] | 0);
+      if (r0 >= rows.length || c0 >= nCols) return;
+      rs = Math.min(rs, rows.length - r0); cs = Math.min(cs, nCols - c0);
+      for (var i = r0; i < r0 + rs; i++)
+        for (var j = c0; j < c0 + cs; j++)
+          if (!cover[i][j]) cover[i][j] = { r: r0, c: c0, rs: rs, cs: cs };
+    });
+    var looks = item.looks || null;
     var body = rows.map(function (row, ri) {
       var head = item.thead && ri === 0 && !spans;
       var groupRow = !!spans && ri === 0;
       var cells = [];
-      var ci, span = 0, eaten = 0;
+      var ci;
       for (ci = 0; ci < nCols; ci++) {
-        var merged = false;
-        if (groupRow) {
-          if (eaten <= 0) { eaten = Math.max(1, spans[span++] | 0); }
-          else { merged = true; }
-          eaten--;
-        }
+        var cv = cover[ri][ci];
+        var corner = !!cv && cv.r === ri && cv.c === ci;
+        var merged = !!cv && !corner;
         var val = merged ? '' : (row[ci] == null ? '' : String(row[ci]));
-        var run = { sizePct: item.sizePct, color: item.color,
-          font: item.font, b: head || groupRow };
+        var lk = (looks && looks[ri] && looks[ri][ci]) || {};
+        var run = { sizePct: item.sizePct, color: lk.ink || item.color,
+          font: item.font, b: head || groupRow || !!lk.b };
         var para = val
           ? '<a:p><a:pPr algn="l"/><a:r>' + runProps(run, page, 'rPr')
             + '<a:t>' + esc(val) + '</a:t></a:r></a:p>'
           : '<a:p><a:pPr algn="l"/>' + runProps(run, page, 'endParaRPr')
             + '</a:p>';
-        var attr = merged ? ' hMerge="1"' : '';
-        if (groupRow && !merged) {
-          /* how many this one swallows: the span just consumed */
-          var n = Math.max(1, spans[span - 1] | 0);
-          if (n > 1) attr = ' gridSpan="' + n + '"';
+        var attr = '';
+        if (corner) {
+          if (cv.cs > 1) attr += ' gridSpan="' + cv.cs + '"';
+          if (cv.rs > 1) attr += ' rowSpan="' + cv.rs + '"';
+        } else if (merged) {
+          if (ci === cv.c && cv.cs > 1) attr += ' gridSpan="' + cv.cs + '"';
+          if (ci > cv.c) attr += ' hMerge="1"';
+          if (ri > cv.r) attr += ' vMerge="1"';
         }
+        /* a cell's fill comes after its rules, as CT_TableCellProperties
+           orders them */
+        var fill = lk.bg ? solidFill(lk.bg, null, '') : '';
         cells.push('<a:tc' + attr + '><a:txBody><a:bodyPr/><a:lstStyle/>'
           + para
           + '</a:txBody><a:tcPr marL="45720" marR="45720" marT="27432" '
-          + 'marB="27432">' + border + '</a:tcPr></a:tc>');
+          + 'marB="27432">' + border + fill + '</a:tcPr></a:tc>');
       }
       return '<a:tr h="' + rowH + '">' + cells.join('') + '</a:tr>';
     }).join('');
@@ -536,7 +566,8 @@ window.JunoPptx = (function () {
        header; the run is bolded above as well so it looks right even with
        the style stripped */
     var tblPr = '<a:tblPr firstRow="' + ((item.thead || spans) ? 1 : 0)
-      + '" bandRow="1"/>';
+      + '"' + (item.first ? ' firstCol="1"' : '')
+      + ' bandRow="' + (item.looks ? (item.band ? 1 : 0) : 1) + '"/>';
     return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="' + id
       + '" name="' + esc('Table ' + id) + '"/><p:cNvGraphicFramePr/>'
       + '<p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'

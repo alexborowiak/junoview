@@ -1320,22 +1320,226 @@
      Rows and columns are added at the END. "Insert above the cell I am
      in" needs a selected CELL, which would be a second kind of selection
      living beside the item selection, and nothing else in this editor has
-     one - so the honest version is the one that always works. */
+     one - so the honest version is the one that always works.
+     T551: it has one now (THE CELL SELECTION, 21-table-columns.js), so a
+     picked cell says where: Add row goes under it, Add column to its
+     right, and Remove takes ITS row or column away. With nothing picked
+     they act on the end, as they always have. */
   function tblApply(fn){
     fmtApply(function(a){if(a.k==='table') fn(a);});
   }
+  /* the one table these act on, and its pick */
+  function tblCur(){
+    var s=pres.slides[cur],a=s&&annotByIdx(s,selAnnot);
+    return (a&&a.k==='table')?a:null;
+  }
+  function tblAt(a,what,low){
+    var p=tblPick(a); if(!p) return null;
+    return what==='row'?(low?p.r0:p.r1):(low?p.c0:p.c1);
+  }
+  function tblLines(a,what){
+    var p=tblPick(a); if(!p) return null;
+    var out=[],i;
+    for(i=(what==='row'?p.r0:p.c0);i<=(what==='row'?p.r1:p.c1);i++)
+      out.push(i);
+    return out;
+  }
   onBtn('#fmt-tbl-rowplus',function(){tblApply(function(a){
-    tableGrow(a,'row',1);});});
+    var at=tblAt(a,'row',false);
+    tableGrow(a,'row',1,at);
+    if(at!=null&&tblSel){tblSel.r0=tblSel.r1=at+1;}});});
   onBtn('#fmt-tbl-rowminus',function(){tblApply(function(a){
-    tableGrow(a,'row',-1);});});
+    var ls=tblLines(a,'row');
+    if(!ls) tableGrow(a,'row',-1);
+    /* from the bottom, so each index still names the row it meant */
+    else ls.reverse().forEach(function(r){
+      if(tableRows(a).length>1) tableGrow(a,'row',-1,r);});
+    tblSel=null;});});
   onBtn('#fmt-tbl-colplus',function(){tblApply(function(a){
-    tableGrow(a,'col',1);});});
+    var at=tblAt(a,'col',false);
+    tableGrow(a,'col',1,at);
+    if(at!=null&&tblSel){tblSel.c0=tblSel.c1=at+1;}});});
   onBtn('#fmt-tbl-colminus',function(){tblApply(function(a){
-    tableGrow(a,'col',-1);});});
+    var ls=tblLines(a,'col');
+    if(!ls) tableGrow(a,'col',-1);
+    else ls.reverse().forEach(function(c){
+      if((tableRows(a)[0]||[]).length>1) tableGrow(a,'col',-1,c);});
+    tblSel=null;});});
   onBtn('#fmt-tbl-head',function(){tblApply(function(a){
     if(a.thead) delete a.thead; else a.thead=1;});});
   onBtn('#fmt-tbl-grid',function(){tblApply(function(a){
     if(a.grid===0) a.grid=1; else a.grid=0;});});
+  /* ---- T551: merge, split, fill a cell, and the table's look ---------- */
+  onBtn('#fmt-tbl-merge',function(){
+    var a=tblCur(),p=tblPick(a);
+    if(!a||!p||p.one){
+      toast('Click a cell, then Shift+click another, to choose the cells '
+        +'to merge');
+      return;
+    }
+    tblApply(function(t){
+      if(t!==a) return;
+      tableMerge(t,p.r0,p.c0,p.r1,p.c1);
+      tblSel.r0=p.r0;tblSel.c0=p.c0;tblSel.r1=p.r0;tblSel.c1=p.c0;
+    });
+  });
+  function tblSplitMenu(btn){
+    var a=tblCur(),p=tblPick(a);
+    var m=document.createElement('div');
+    m.className='sh-menu tbl-menu';
+    menuHead(m,'split the chosen cell');
+    var merged=!!(a&&p&&tableMergeAt(a,p.r0,p.c0));
+    function row(label,note,on,fn){
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn vw-opt';
+      b.innerHTML='<span class="sa-t">'+esc(label)+'</span>'
+        +'<span class="sa-n">'+esc(note)+'</span>';
+      b.disabled=!on;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);fn();});
+      m.appendChild(b);
+    }
+    var one=!!(p&&p.one);
+    row('Unmerge','Back into the cells it was made of',one&&merged,
+      function(){tblApply(function(t){
+        if(t===a) tableUnmerge(t,p.r0,p.c0);});});
+    row('Into two columns','A new column beside it; the cells above and '
+      +'below stay whole',one&&!merged,function(){tblApply(function(t){
+        if(t===a) tableSplit(t,p.r0,p.c0,'col');});});
+    row('Into two rows','A new row under it; the cells beside it stay '
+      +'whole',one&&!merged&&!(a&&a.thead&&p.r0===0),function(){
+        tblApply(function(t){if(t===a) tableSplit(t,p.r0,p.c0,'row');});});
+    if(!one){
+      var n=document.createElement('div');n.className='tbl-note';
+      n.textContent=p?'Choose one cell to split it.'
+        :'Click a cell first.';
+      m.appendChild(n);
+    }
+    overlayMount(btn,m);
+  }
+  var tblSplitB=$('#fmt-tbl-split');
+  if(tblSplitB) tblSplitB.addEventListener('click',function(e){
+    e.stopPropagation();tblSplitMenu(tblSplitB);});
+  /* the deck's own colours first, so a filled cell follows a colour
+     theme; then the ones you used last; then any colour at all */
+  var TBL_FILLS=['@accent','@warm','@lift','@calm','@quiet','@surface',
+    '@line'];
+  function tblFillMenu(btn){
+    var a=tblCur(),p=tblPick(a);
+    var m=document.createElement('div');
+    m.className='sh-menu tbl-menu tbl-fill-menu';
+    menuHead(m,p?('fill '+(p.one?'this cell':'these cells'))
+      :'click a cell first');
+    function put(v){
+      overlayDrop(m);
+      if(!a||!p) return;
+      tblApply(function(t){
+        if(t!==a) return;
+        for(var r=p.r0;r<=p.r1;r++) for(var c=p.c0;c<=p.c1;c++){
+          var cov=tableMergeAt(t,r,c);
+          if(cov&&(cov.r!==r||cov.c!==c)) continue;
+          tableFillSet(t,r,c,v);
+        }
+      });
+      if(v&&v.charAt(0)!=='@') pushRecentColor(v);
+    }
+    var sw=document.createElement('div');sw.className='tbl-swatches';
+    TBL_FILLS.concat(recentColors().filter(function(c){
+      return TBL_FILLS.indexOf(c)<0;}).slice(0,7)).forEach(function(c){
+      var b=document.createElement('button');
+      b.type='button';b.className='tbl-sw';
+      b.style.background=tokVal(c);b.title=colorLabel(c);
+      b.setAttribute('aria-label',colorLabel(c));
+      b.disabled=!p;
+      b.addEventListener('click',function(e){e.stopPropagation();put(c);});
+      sw.appendChild(b);
+    });
+    m.appendChild(sw);
+    var foot=document.createElement('div');foot.className='tbl-fill-foot';
+    var none=document.createElement('button');
+    none.type='button';none.className='dbtn';none.textContent='No fill';
+    none.disabled=!p;
+    none.addEventListener('click',function(e){e.stopPropagation();put('');});
+    var any=document.createElement('input');
+    any.type='color';any.className='tbl-any';any.disabled=!p;
+    any.title='Any other colour';any.value='#39a9c0';
+    any.addEventListener('change',function(){put(any.value);});
+    var al=document.createElement('label');al.className='tbl-anylab';
+    al.appendChild(any);
+    al.appendChild(document.createTextNode(' Other colour'));
+    foot.appendChild(none);foot.appendChild(al);
+    m.appendChild(foot);
+    overlayMount(btn,m);
+  }
+  var tblFillB=$('#fmt-tbl-fill');
+  if(tblFillB) tblFillB.addEventListener('click',function(e){
+    e.stopPropagation();tblFillMenu(tblFillB);});
+  /* the gallery: each look drawn as a small table in this deck's colours,
+     then the three switches that decide where it lands */
+  function tblStyleCard(a,id){
+    var keep=a.tstyle,L;
+    if(id) a.tstyle=id; else delete a.tstyle;
+    try{L=tableLook(a);}finally{if(keep) a.tstyle=keep; else delete a.tstyle;}
+    var t=document.createElement('span');t.className='tbl-prev';
+    for(var r=0;r<4;r++){
+      var tr=document.createElement('span');tr.className='tbl-prev-r';
+      for(var c=0;c<3;c++){
+        var td=document.createElement('span');td.className='tbl-prev-c';
+        var o=tableCellLook({thead:1,band:a.band,first:a.first},L,r,c,r===0);
+        if(o.bg) td.style.background=o.bg;
+        if(r===0&&L.rule>1) td.style.borderBottomWidth='2px';
+        tr.appendChild(td);
+      }
+      t.appendChild(tr);
+    }
+    return t;
+  }
+  function tblStyleMenu(btn){
+    var a=tblCur(); if(!a) return;
+    var m=document.createElement('div');
+    m.className='sh-menu tbl-menu tbl-style-menu';
+    menuHead(m,'table style');
+    var g=document.createElement('div');g.className='tbl-gal';
+    TBL_STYLES.forEach(function(st){
+      var b=document.createElement('button');
+      b.type='button';b.className='tbl-card';
+      b.setAttribute('aria-pressed',((a.tstyle||'')===st[0]).toString());
+      b.title=st[2];
+      b.appendChild(tblStyleCard(a,st[0]));
+      var l=document.createElement('span');l.className='tbl-card-l';
+      l.textContent=st[1];b.appendChild(l);
+      /* a pick closes the gallery, as a gallery does: the ribbon
+         redraws under it, and a folded Table door closes with it */
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayDrop(m);
+        tblApply(function(t){if(st[0]) t.tstyle=st[0]; else delete t.tstyle;});
+      });
+      g.appendChild(b);
+    });
+    m.appendChild(g);
+    menuHead(m,'where it shows');
+    [['thead','Header row','The first row is the headings'],
+     ['band','Banded rows','Every other row shaded, to follow a row across'],
+     ['first','First column','The first column bold, and tinted in a '
+       +'look that has a header colour']].forEach(function(o){
+      var lab=document.createElement('label');lab.className='tbl-opt';
+      var ck=document.createElement('input');ck.type='checkbox';
+      ck.checked=!!a[o[0]];
+      ck.addEventListener('change',function(){
+        overlayDrop(m);
+        tblApply(function(t){if(ck.checked) t[o[0]]=1; else delete t[o[0]];});
+      });
+      lab.appendChild(ck);
+      var tx=document.createElement('span');
+      tx.innerHTML='<b>'+esc(o[1])+'</b> '+esc(o[2]);
+      lab.appendChild(tx);
+      m.appendChild(lab);
+    });
+    overlayMount(btn,m);
+  }
+  var tblStyleB=$('#fmt-tbl-style');
+  if(tblStyleB) tblStyleB.addEventListener('click',function(e){
+    e.stopPropagation();tblStyleMenu(tblStyleB);});
   /* ---- the Styles menu ------------------------------------------------
      Picking a style stamps it. "Update from this one" is the other half
      and the reason a style registry is worth having at all: format ONE

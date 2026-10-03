@@ -1497,14 +1497,31 @@ class _SlideReader:
             "./a:tblGrid/a:gridCol", NS)]
         rows: list[list[str]] = []
         size, color = 0.0, ""
+        # T551: merged cells come in as REGIONS ([row, col, rows, cols]),
+        # and a cell's own fill as one, rather than being split back into
+        # single cells. Cells are placed by their GRID position: a
+        # gridSpan cell's neighbours are written as hMerge cells by
+        # PowerPoint (they hold their own columns), but a writer that
+        # leaves them out still gets its row padded to the grid.
+        merges: list[list[int]] = []
+        fills: list[list[str]] = []
         for tr in tbl.findall("a:tr", NS):
-            row = []
+            row: list[str] = []
+            frow: list[str] = []
+            span_end = 0
             for tc in tr.findall("a:tc", NS):
-                if tc.get("gridSpan") or tc.get("rowSpan") or (
-                        tc.get("hMerge") or tc.get("vMerge")):
-                    self.lost.add("merged")
-                if tc.get("hMerge") == "1" or tc.get("vMerge") == "1":
+                hm = tc.get("hMerge") == "1"
+                vm = tc.get("vMerge") == "1"
+                if not hm:
+                    # a writer that omitted the hMerge cells of a span
+                    while len(row) < span_end:
+                        row.append("")
+                        frow.append("")
+                if hm or vm:
                     row.append("")
+                    frow.append("")
+                    if not hm:
+                        span_end = len(row) - 1 + _int(tc.get("gridSpan"), 1)
                     continue
                 text = self.text.read(tc, "other", [],
                                       tc.find("a:txBody", NS))
@@ -1518,16 +1535,26 @@ class _SlideReader:
                         size = runs[0]["sizePct"]
                     if runs and not color:
                         color = runs[0]["color"]
+                gs = max(1, _int(tc.get("gridSpan"), 1))
+                rs = max(1, _int(tc.get("rowSpan"), 1))
+                if gs > 1 or rs > 1:
+                    merges.append([len(rows), len(row), rs, gs])
+                tcpr = tc.find("a:tcPr", NS)
+                sf = tcpr.find("a:solidFill", NS) if tcpr is not None else None
+                frow.append(self.ctx.color(sf)[0] if sf is not None else "")
                 row.append(cell)
-                span = _int(tc.get("gridSpan"), 1)
-                for _ in range(span - 1):
-                    row.append("")
+                span_end = len(row) - 1 + gs
+            while len(row) < span_end:
+                row.append("")
+                frow.append("")
             if row:
                 rows.append(row)
+                fills.append(frow)
         if not rows:
             return
         n = max(len(r) for r in rows)
         rows = [r + [""] * (n - len(r)) for r in rows]
+        fills = [f + [""] * (n - len(f)) for f in fills]
         total = sum(widths) or 1
         cols = [round(w / total * 100, 2) for w in widths] if (
             len(widths) == n) else []
@@ -1537,6 +1564,12 @@ class _SlideReader:
                      else False,
                      "grid": 1, "sizePct": size or self.ctx.sz(1400),
                      "color": color})
+        if merges:
+            item["merge"] = merges
+        if any(c for f in fills for c in f):
+            item["fills"] = fills
+        if pr is not None and pr.get("firstCol") == "1":
+            item["first"] = 1
         self._push(el, item)
 
     def _chart(self, el: ET.Element, box: dict, part: str) -> None:

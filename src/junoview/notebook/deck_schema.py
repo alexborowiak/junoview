@@ -420,7 +420,16 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
                           "its conditional format ({kind: 'scale' | "
                           "'above' | 'below', at, color}); `groups` is "
                           "a spanning row above the header, a list of "
-                          "{at, n, text}."),
+                          "{at, n, text}. `merge` is the merged cells, a "
+                          "list of [row, col, rows, cols] regions whose "
+                          "words are in the top-left cell; `fills` a "
+                          "cell's own fill, rows of colours (or '') the "
+                          "shape of `rows`; `tstyle` the table's look "
+                          "(soft, accent, ink, warm or lines; absent is "
+                          "plain), drawn from the deck's colours where "
+                          "`band` (banded rows) and `first` (the first "
+                          "column) say. Merges and fills travel in a "
+                          ".pptx both ways (T551)."),
     "chart": (("x", "y"), "A native chart: `ct` (bar/line/scatter/pie), "
                           "`cats`, and `series` [{name, ys, color}] "
                           "carry the numbers; `ref` links it to the "

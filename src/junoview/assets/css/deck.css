@@ -7485,3 +7485,54 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 .nt-n{margin-left:auto;font:400 10px var(--mono);color:var(--chrome-ink-3);
   white-space:nowrap;}
 .nt-blurb{font-size:11px;line-height:1.4;color:var(--chrome-ink-2);}
+
+/* ---- T551: the picked cells, the Lines look, and the table menus -------
+   A picked cell is tinted and ringed in the accent, inside its own rules
+   so the grid does not shift; only while editing (drawTable adds the
+   class from the pick, and nothing is picked in a show or a print). */
+.deck.editing .an-tbl td.tc-sel,.deck.editing .an-tbl th.tc-sel{
+  box-shadow:inset 0 0 0 2px var(--accent,var(--cyan)),
+    inset 0 0 0 999px color-mix(in srgb,var(--accent,#39a9c0) 16%,transparent);}
+.an-table.tst-lines .an-tbl th{background:none;
+  border-bottom-width:calc(var(--tbl-sw,1px) * 2.5);}
+.sh-menu.tbl-menu{display:flex;flex-direction:column;gap:3px;
+  width:288px;padding:8px;}
+.tbl-menu .vw-opt{width:100%;text-align:left;align-items:flex-start;
+  flex-direction:column;gap:2px;padding:7px 10px;height:auto;}
+.tbl-menu .vw-opt[disabled]{opacity:.45;}
+.tbl-note{font:11.5px var(--sans);color:var(--chrome-ink-3);
+  padding:4px 4px 2px;}
+.tbl-swatches{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;
+  padding:2px 2px 4px;}
+.tbl-sw{height:24px;border-radius:5px;border:1px solid var(--chrome-line);
+  cursor:pointer;padding:0;}
+.tbl-sw:hover{outline:2px solid var(--accent,var(--cyan));outline-offset:1px;}
+.tbl-sw[disabled]{opacity:.4;cursor:default;outline:none;}
+.tbl-fill-foot{display:flex;align-items:center;gap:8px;padding:2px;}
+.tbl-anylab{display:flex;align-items:center;gap:6px;font:12px var(--sans);
+  color:var(--chrome-ink-2);cursor:pointer;}
+.tbl-any{width:30px;height:24px;padding:0;border:1px solid var(--chrome-line);
+  border-radius:5px;background:none;cursor:pointer;}
+.sh-menu.tbl-style-menu{width:330px;}
+.tbl-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  padding:2px 2px 4px;}
+.tbl-card{display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px;border-radius:7px;cursor:pointer;color:var(--chrome-ink-2);
+  background:var(--page-bg,var(--chrome-0));border:1px solid var(--chrome-line);
+  font:11px var(--sans);}
+.tbl-card:hover{border-color:var(--accent,var(--cyan));}
+.tbl-card[aria-pressed="true"]{border-color:var(--accent,var(--cyan));
+  box-shadow:0 0 0 1px var(--accent,var(--cyan));color:var(--chrome-ink);}
+.tbl-prev{display:flex;flex-direction:column;width:84px;
+  border:1px solid color-mix(in srgb,var(--chrome-ink) 30%,transparent);}
+.tbl-prev-r{display:flex;}
+.tbl-prev-c{flex:1;height:9px;border-right:1px solid
+  color-mix(in srgb,var(--chrome-ink) 22%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--chrome-ink) 22%,transparent);}
+.tbl-prev-c:last-child{border-right:0;}
+.tbl-opt{display:flex;align-items:flex-start;gap:8px;padding:5px 6px;
+  font:12px/1.4 var(--sans);color:var(--chrome-ink-2);cursor:pointer;
+  border-radius:6px;}
+.tbl-opt:hover{background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.tbl-opt b{color:var(--chrome-ink);font-weight:600;}
+.tbl-opt input{margin:2px 0 0;accent-color:var(--accent,var(--cyan));}

@@ -5428,11 +5428,20 @@
         if(a.bg!==0&&a.bgc) bt.style.background=tokVal(a.bgc);
         mt.style.fontSize=Math.max(1.5,
           miniHNow*(a.size||2.2)/100).toFixed(2)+'px';
+        /* T551: merged regions and the cells' colours, as the slide
+           draws them, so a styled table is recognisable in the strip */
+        var tcov=tableCover(a),tlk=tableResolvedLook(a);
         trows.forEach(function(row,ri){
           var tr=document.createElement('tr');
           row.forEach(function(v,ci){
+            var cv=tcov[ri]&&tcov[ri][ci];
+            if(cv&&cv.at) return;
             var td=document.createElement((a.thead&&ri===0)?'th':'td');
+            if(cv){td.rowSpan=cv.rs;td.colSpan=cv.cs;}
             td.style.width=tcols[ci]+'%';
+            var lk=(tlk[ri]||[])[ci]||{};
+            if(lk.bg) td.style.background=lk.bg;
+            if(lk.ink) td.style.color=lk.ink;
             td.textContent=v==null?'':String(v);
             tr.appendChild(td);});
           mt.appendChild(tr);});

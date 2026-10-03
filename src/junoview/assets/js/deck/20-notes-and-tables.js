@@ -2254,7 +2254,8 @@
     var rows=tableRows(a),cols=tableCols(a);
     var host=document.createElement('div');
     host.className='an-item an-table'+(selAnnot===i?' sel':'')
-      +(a.grid===0?' nogrid':'');
+      +(a.grid===0?' nogrid':'')
+      +(a.tstyle?' tst-'+a.tstyle:'');
     var ap0=anchorPos(a,a.w,a.h);
     host.style.left=ap0.x+'%';host.style.top=ap0.y+'%';
     host.style.width=(a.w||40)+'%';host.style.height=(a.h||20)+'%';
@@ -2290,6 +2291,10 @@
       return (tableRuleOf(a,ci)||{}).kind==='scale'
         ?tableColRange(a,ci,tableBodyFrom(a)):null;});
     var groups=tableGroups(a);
+    /* T551: who draws each cell (a region's top-left draws it all), the
+       look the table wears, and which cells are picked */
+    var cover=tableCover(a),look=tableLook(a);
+    var pick=(editing&&selAnnot===i)?tblPick(a):null;
     if(groups){
       var gtr=document.createElement('tr');
       gtr.className='an-tbl-head an-tbl-grouprow';
@@ -2297,6 +2302,7 @@
         var gth=document.createElement('th');
         gth.colSpan=g.n;gth.textContent=g.text;
         if(!g.text) gth.className='an-tbl-gapgroup';
+        if(look.hd){gth.style.background=look.hd;gth.style.color=look.hdInk;}
         gtr.appendChild(gth);
       });
       tbl.appendChild(gtr);
@@ -2311,8 +2317,11 @@
       tr.style.height=rowPct;
       if(a.thead&&ri===0) tr.className='an-tbl-head';
       row.forEach(function(val,ci){
+        var cov=cover[ri]&&cover[ri][ci];
+        if(cov&&cov.at) return;          /* drawn by its region's corner */
         var isHead=(a.thead&&ri===0);
         var td=document.createElement(isHead?'th':'td');
+        if(cov){td.rowSpan=cov.rs;td.colSpan=cov.cs;}
         var m=metas[ci]||{};
         td.textContent=isHead?(val==null?'':String(val))
           :tableFmtCell(val,m);
@@ -2321,13 +2330,34 @@
            decimals IS alignment on the point */
         if(a.align) td.style.textAlign=a.align;
         else if(!isHead&&m.align) td.style.textAlign=m.align;
-        if(!isHead){
-          var fill=tableRuleFill(a,ci,val,ranges[ci]);
-          if(fill) td.style.background=fill;
-          if(m.t==='num') td.classList.add('an-tbl-num');
-        }
+        /* T551: a cell's own fill, else its column's colour rule, else
+           the table's look; the look's words and weight likewise */
+        var lk=tableCellLook(a,look,ri,ci,isHead);
+        var own=tableFillAt(a,ri,ci);
+        var fill=isHead?'':tableRuleFill(a,ci,val,ranges[ci]);
+        if(own) td.style.background=tokVal(own);
+        else if(fill) td.style.background=fill;
+        else if(lk.bg) td.style.background=lk.bg;
+        var oink=own?tableInkOver(a,own):'';
+        if(oink||lk.ink) td.style.color=oink||lk.ink;
+        if(lk.b) td.style.fontWeight='700';
+        if(!isHead&&m.t==='num') td.classList.add('an-tbl-num');
+        td.dataset.r=ri;td.dataset.c=ci;
+        if(pick&&ri>=pick.r0&&ri<=pick.r1&&ci>=pick.c0&&ci<=pick.c1)
+          td.classList.add('tc-sel');
         if(editing){
-          td.dataset.r=ri;td.dataset.c=ci;
+          /* T551: a click that does not move the table picks the cell;
+             Shift+click stretches the pick to a rectangle */
+          var down=null;
+          td.addEventListener('mousedown',function(e){
+            down={x:e.clientX,y:e.clientY};});
+          td.addEventListener('click',function(e){
+            if(!down||e.detail>1) return;
+            if(Math.abs(e.clientX-down.x)>4||Math.abs(e.clientY-down.y)>4)
+              return;
+            if(td.isContentEditable) return;
+            tblPickCell(i,ri,ci,!!e.shiftKey);
+          });
           /* the WHOLE table drags from any cell; only a double-click puts
              a caret in one, the same contract text boxes keep */
           td.addEventListener('dblclick',function(e){
@@ -2384,6 +2414,9 @@
      selection and spellcheck all behave the way they do in a text box. */
   function startTableEdit(layer,s,a,idx,td,ri,ci){
     if(lockedAll(a)) return;
+    /* T551: the cell being typed in is the picked cell, so Cell fill and
+       Merge act on it without leaving the words */
+    tblSel={s:s,i:idx,r0:ri,c0:ci,r1:ri,c1:ci};
     td.contentEditable='plaintext-only';
     td.spellcheck=true;
     td.focus();
@@ -2431,6 +2464,23 @@
       } else if(e.key==='Escape'){e.preventDefault();td.blur();return;}
       else return;
       commit();
+      /* T551: past the cells a region covers, to the next one drawn --
+         a region's corner is reached from its own row and column */
+      var cv=tableCover(a),guard=0;
+      while(nr>=0&&nr<a.rows.length&&nc>=0&&nc<a.rows[0].length
+            &&cv[nr][nc]&&cv[nr][nc].at&&guard++<500){
+        var anc=cv[nr][nc].at;
+        if(e.key==='Tab'){
+          if(anc[0]===ri&&anc[1]===ci){
+            nc+=e.shiftKey?-1:1;
+            if(nc>=a.rows[nr].length){nc=0;nr++;}
+            else if(nc<0){nc=a.rows[0].length-1;nr--;}
+          } else {nr=anc[0];nc=anc[1];}
+        } else {
+          if(anc[0]===ri&&anc[1]===ci) nr+=e.shiftKey?-1:1;
+          else {nr=anc[0];nc=anc[1];}
+        }
+      }
       if(nr<0||nr>=a.rows.length||nc<0||nc>=a.rows[0].length){
         td.blur();return;
       }
@@ -2466,20 +2516,17 @@
   /* add / remove rows and columns, relative to nothing in particular -
      the ribbon buttons act on the END, which is what you want 90% of the
      time and needs no cell to be selected first */
-  function tableGrow(a,what,by){
+  /* T551: through tblInsert / tblDelete, so merged regions, cell fills
+     and the per-column lists move with the line that went; `at` is the
+     line to add after or take away, the end when absent */
+  function tableGrow(a,what,by,at){
     tableNormalise(a);
     var rows=a.rows,n=(rows[0]||[]).length;
-    if(what==='row'){
-      if(by>0){
-        var blank=[],j;
-        for(j=0;j<n;j++) blank.push('');
-        rows.push(blank);
-      } else if(rows.length>1) rows.pop();
-    } else {
-      if(by>0) rows.forEach(function(r){r.push('');});
-      else if(n>1) rows.forEach(function(r){r.pop();});
+    var len=what==='row'?rows.length:n;
+    if(by>0) tblInsert(a,what,at==null?len:at+1);
+    else tblDelete(a,what,at==null?len-1:at);
+    if(what!=='row')
       delete a.cols;   /* equal widths again rather than a stale set */
-    }
     tableNormalise(a);
   }
   /* the fit pass itself. Called from renderAnnots and from the text

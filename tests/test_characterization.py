@@ -2324,8 +2324,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # dialog (#nt-dlg), the deck script DECK_TEMPLATES, tplSlide, tplBuild and
 # the chooser, deck.css the dialog's cards, the A0 three-column poster a
 # shorter title prompt, and help.html a line on the starting decks.
-EXPECTED_MD5 = "78c56c168958f5d722ecadac88d4584c"
-EXPECTED_BYTES = 5112505
+# T551: tables grow up -- deck.html's Table group gains Merge cells,
+# Split, Cell fill and Table style; the deck script merged regions, cell
+# fills, the looks, the cell pick and their commands, regions and fills
+# in the thumbnail and the .pptx; deck.css the pick and the menus; and
+# help.html a Tables entry.
+EXPECTED_MD5 = "30d290aa9cd915bb91efb88ec0a9db16"
+EXPECTED_BYTES = 5151756
 
 
 def _render_example() -> str:

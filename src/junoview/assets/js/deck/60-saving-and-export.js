@@ -2835,12 +2835,28 @@
         /* T324: the FORMATTED rows, with the group row on top and the
            footer underneath -- the .pptx shows the table the slide
            shows, rather than the raw cells with the structure dropped */
-        var tgs=tableGroups(a);
+        var tgs=tableGroups(a),toff=tgs?1:0;
+        /* T551: merged cells as PowerPoint's own merges, and every
+           cell's fill, words and weight resolved to plain colours -- a
+           cell's own fill, its column's rule, the table's look -- so the
+           .pptx shows the table the slide does. The group row (when
+           there is one) is the view's first row, so the regions move
+           down one and it wears the header's look. */
+        var tlook=tableResolvedLook(a),thd=tableLook(a);
+        if(tgs){
+          var grow=[];
+          for(var gk=0;gk<(tlook[0]||[]).length;gk++)
+            grow.push({bg:tblHex(thd.hd)||'',ink:thd.hdInk||'',b:true});
+          tlook.unshift(grow);
+        }
         items.push({t:'table',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,rows:tableViewRows(a),
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
           /* the spans of the group row, so PowerPoint merges it too */
           spans:tgs?tgs.map(function(g){return g.n;}):null,
+          merge:tableMerges(a).map(function(m){
+            return [m.r+toff,m.c,m.rs,m.cs];}),
+          looks:tlook,band:!!a.band,first:!!a.first,
           sizePct:a.size||2.2,color:tokVal(a.color)||ink,
           font:fontPpt(a.font)});
       } else if(a.k==='chart'){

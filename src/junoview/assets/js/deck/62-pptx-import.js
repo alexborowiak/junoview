@@ -216,6 +216,12 @@
       if(it.cols&&it.cols.length===it.rows[0].length) a.cols=it.cols;
       if(it.thead) a.thead=1;
       if(it.color) a.color=it.color;
+      /* T551: merged cells as regions and each cell's own fill, as the
+         reader found them; tableMerges drops a region that no longer
+         fits, so a malformed one cannot draw a cell twice */
+      if(Array.isArray(it.merge)&&it.merge.length) a.merge=it.merge;
+      if(Array.isArray(it.fills)&&it.fills.length) a.fills=it.fills;
+      if(it.first) a.first=1;
     } else if(it.t==='chart'){
       if(!it.series||!it.series.length) return null;
       a={k:'chart',x:it.x,y:it.y,w:it.w,h:it.h,ct:it.ct||'bar',

@@ -10333,8 +10333,46 @@ choice in the editor (T506, T507).
   brings brightness, contrast and greyscale back. Driven at 1440x900: +20%
   and 0% gave "brightness(1.2) saturate(0)", the chips lit, Reset picture
   cleared it.
-- [ ] **T551 — Tables grow up.** Merge and split cells, cell fill colour,
+- [x] **T551 — Tables grow up.** Merge and split cells, cell fill colour,
   and a small table style gallery (header, banded rows, first column).
+  *Done 2026-10-03.* A table had no cell selection ("a second kind of
+  selection ... nothing else in this editor has one"); merging needs
+  one, so it got the smallest there is: a click on a cell that does not
+  move the table picks it, Shift+click stretches the pick to a rectangle
+  (the canvas's Shift no longer takes the table out of the selection
+  when the press is on one of its cells), typing in a cell picks it, and
+  choosing anything else drops it; a merged region is picked whole. The
+  Table group (Object tab; it folds into its door at laptop widths, the
+  controls paired column-major) gains **Merge cells** (the rectangle's
+  words gathered into its corner, as PowerPoint does), **Split ▾**
+  (Unmerge, or PowerPoint's split of one cell into two columns or two
+  rows: a new line beside it with the other cells of that line merged
+  across), **Cell fill ▾** (the deck's own colours, the recent ones, No
+  fill, any colour) and **Table style ▾** (Plain, Soft, Accent, Strong,
+  Warm, Lines -- each drawn from the deck's accent, ink, warm and page
+  colours, so a table follows a colour theme -- with Header row, Banded
+  rows and First column as switches). Add / Remove row and column now
+  act at the pick (under it, right of it, its own lines) and at the end
+  without one. MODEL: `merge` [[row, col, rows, cols]], `fills` rows of
+  colours the shape of `rows`, `tstyle`, `band`, `first`; tableMerges
+  drops what no longer fits and the later of two overlaps, and tblInsert
+  / tblDelete move the regions, the fills and every per-column list
+  (widths, ctype, calc, rules, groups) with the line. Precedence per
+  cell: its own fill, its column's colour rule, the look; words over a
+  cell's own fill turn to the page colour when the ink would not read
+  (3:1). Tab and Enter step past the cells a region covers. The strip's
+  thumbnail draws the regions and colours. THE .pptx: every region is a
+  real merge (gridSpan / rowSpan on the corner, hMerge and vMerge on the
+  rest, written and left empty), every cell's resolved fill a solidFill
+  after its rules, its words' colour and weight in the run, firstCol
+  set; the reader brings regions, fills and firstCol back and no longer
+  reports merged cells as lost -- placing cells by grid position, which
+  also fixes rows that came back a cell too long when a gridSpan cell
+  was followed by its hMerge cells. Driven at 1366x657: a 4x3 table
+  typed in, a two-cell pick merged, a cell filled amber (its words went
+  dark), Accent with bands and first column, a cell split into two
+  columns, a merge across the header and a body row under Soft, the
+  thumbnail, and Export .pptx with no errors; the round trip is a test.
 - [x] **T552 — Alt text has a door on the Object tab.**
   *Done 2026-10-01.* Alt text (T105) lived on the right-click menu only,
   for pictures and flip books. Object's Picture group now has Alt text...

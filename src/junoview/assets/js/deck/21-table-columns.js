@@ -235,6 +235,393 @@
     return rows;
   }
 
+  /* ---- MERGED CELLS (T551) --------------------------------------------
+     "Tables grow up": merge and split cells, fill a cell, and a small
+     gallery of table styles. A merge is a REGION, `a.merge` a list of
+     [r, c, rows, cols] with its words in the top-left cell -- the cells
+     it covers keep a slot in `a.rows` (so every row stays as long as the
+     header, the rule tableNormalise keeps) and are drawn by nobody.
+     Regions are read through tableMerges, which drops what no longer
+     fits the table and the later of two that overlap, so a hand-edited
+     or stale list can never draw a cell twice. Rows and columns are
+     inserted and removed through tblInsert/tblDelete, which move the
+     regions, the fills and every per-column list (widths, what a column
+     holds, its footer, its colour rule, the header groups) with them. */
+  function tableMerges(a){
+    var rows=tableRows(a),nr=rows.length,nc=(rows[0]||[]).length;
+    var raw=(a&&Array.isArray(a.merge))?a.merge:[];
+    var taken={},out=[];
+    raw.forEach(function(m){
+      if(!Array.isArray(m)||m.length<4) return;
+      var r=m[0]|0,c=m[1]|0,rs=Math.max(1,m[2]|0),cs=Math.max(1,m[3]|0);
+      if(r<0||c<0||r>=nr||c>=nc) return;
+      rs=Math.min(rs,nr-r);cs=Math.min(cs,nc-c);
+      if(rs===1&&cs===1) return;
+      var i,j;
+      for(i=r;i<r+rs;i++) for(j=c;j<c+cs;j++) if(taken[i+','+j]) return;
+      for(i=r;i<r+rs;i++) for(j=c;j<c+cs;j++) taken[i+','+j]=1;
+      out.push({r:r,c:c,rs:rs,cs:cs});
+    });
+    return out;
+  }
+  /* who draws each cell: null for a plain cell, {rs,cs} for the top-left
+     of a region, and {at:[r,c]} for a cell a region covers */
+  function tableCover(a){
+    var rows=tableRows(a),grid=rows.map(function(row){
+      return row.map(function(){return null;});});
+    tableMerges(a).forEach(function(m){
+      for(var i=m.r;i<m.r+m.rs;i++)
+        for(var j=m.c;j<m.c+m.cs;j++)
+          grid[i][j]=(i===m.r&&j===m.c)?{rs:m.rs,cs:m.cs}:{at:[m.r,m.c]};
+    });
+    return grid;
+  }
+  function tableMergeAt(a,r,c){
+    var hit=null;
+    tableMerges(a).forEach(function(m){
+      if(!hit&&r>=m.r&&r<m.r+m.rs&&c>=m.c&&c<m.c+m.cs) hit=m;});
+    return hit;
+  }
+  function tableMergeWrite(a,list){
+    var keep=list.filter(function(m){return m.rs>1||m.cs>1;})
+      .map(function(m){return [m.r,m.c,m.rs,m.cs];});
+    if(keep.length) a.merge=keep; else delete a.merge;
+  }
+  /* a cell's own fill: a colour, '@token' or '' -- kept as rows of the
+     same shape as a.rows, and absent when no cell has one */
+  function tableFillAt(a,r,c){
+    var f=a&&a.fills;
+    return (Array.isArray(f)&&Array.isArray(f[r])&&f[r][c])||'';
+  }
+  function tableFillSet(a,r,c,v){
+    var rows=tableRows(a),nr=rows.length,nc=(rows[0]||[]).length;
+    var f=Array.isArray(a.fills)?a.fills:[];
+    var out=[],i,j;
+    for(i=0;i<nr;i++){
+      var row=[];
+      for(j=0;j<nc;j++)
+        row.push((Array.isArray(f[i])&&f[i][j])?String(f[i][j]):'');
+      out.push(row);
+    }
+    if(r>=0&&r<nr&&c>=0&&c<nc) out[r][c]=v||'';
+    if(out.some(function(row){return row.some(function(x){return x;});}))
+      a.fills=out;
+    else delete a.fills;
+  }
+  /* insert ONE row or column before `at` (at === length appends) */
+  function tblInsert(a,what,at){
+    tableNormalise(a);
+    var rows=a.rows,nr=rows.length,nc=(rows[0]||[]).length,i;
+    var ms=tableMerges(a),fills=a.fills;
+    if(what==='row'){
+      at=Math.max(0,Math.min(nr,at));
+      var blank=[];for(i=0;i<nc;i++) blank.push('');
+      rows.splice(at,0,blank);
+      if(Array.isArray(fills)){
+        var fb=[];for(i=0;i<nc;i++) fb.push('');
+        fills.splice(at,0,fb);
+      }
+      ms.forEach(function(m){
+        if(m.r>=at) m.r++;
+        else if(m.r+m.rs>at) m.rs++;     /* the new row runs through it */
+      });
+    } else {
+      at=Math.max(0,Math.min(nc,at));
+      rows.forEach(function(row){row.splice(at,0,'');});
+      if(Array.isArray(fills)) fills.forEach(function(row){
+        if(Array.isArray(row)) row.splice(at,0,'');});
+      ms.forEach(function(m){
+        if(m.c>=at) m.c++;
+        else if(m.c+m.cs>at) m.cs++;
+      });
+      ['ctype','calc','rules'].forEach(function(k){
+        if(Array.isArray(a[k])&&a[k].length>at) a[k].splice(at,0,null);
+      });
+      if(Array.isArray(a.calc)) a.calc=a.calc.map(function(x){
+        return x||'';});
+      if(Array.isArray(a.groups)) a.groups.forEach(function(g){
+        if((g.at|0)>=at) g.at=(g.at|0)+1;
+        else if((g.at|0)+(g.n|0)>at) g.n=(g.n|0)+1;
+      });
+    }
+    tableMergeWrite(a,ms);
+    tableNormalise(a);
+    if(Array.isArray(a.fills)) tableFillSet(a,-1,-1,'');
+  }
+  /* remove row or column `at`; a region loses that line, and one left a
+     single cell is no region at all */
+  function tblDelete(a,what,at){
+    tableNormalise(a);
+    var rows=a.rows,nr=rows.length,nc=(rows[0]||[]).length;
+    if(what==='row'?nr<=1:nc<=1) return false;
+    var ms=tableMerges(a),fills=a.fills,out=[];
+    if(what==='row'){
+      at=Math.max(0,Math.min(nr-1,at));
+      /* the words of a region's top-left cell go down a row rather than
+         out with the row they started on */
+      ms.forEach(function(m){
+        if(m.r===at&&m.rs>1&&!String(rows[at+1][m.c]||'').trim())
+          rows[at+1][m.c]=rows[at][m.c];
+      });
+      rows.splice(at,1);
+      if(Array.isArray(fills)&&fills.length>at) fills.splice(at,1);
+      ms.forEach(function(m){
+        if(m.r>at){m.r--;out.push(m);}
+        else if(m.r+m.rs>at){m.rs--;out.push(m);}
+        else out.push(m);
+      });
+    } else {
+      at=Math.max(0,Math.min(nc-1,at));
+      ms.forEach(function(m){
+        if(m.c===at&&m.cs>1&&!String(rows[m.r][at+1]||'').trim())
+          rows[m.r][at+1]=rows[m.r][at];
+      });
+      rows.forEach(function(row){row.splice(at,1);});
+      if(Array.isArray(fills)) fills.forEach(function(row){
+        if(Array.isArray(row)&&row.length>at) row.splice(at,1);});
+      ms.forEach(function(m){
+        if(m.c>at){m.c--;out.push(m);}
+        else if(m.c+m.cs>at){m.cs--;out.push(m);}
+        else out.push(m);
+      });
+      ['ctype','calc','rules'].forEach(function(k){
+        if(Array.isArray(a[k])&&a[k].length>at) a[k].splice(at,1);
+        if(Array.isArray(a[k])&&!a[k].some(function(x){return x;}))
+          delete a[k];
+      });
+      if(Array.isArray(a.groups)){
+        a.groups=a.groups.filter(function(g){
+          if((g.at|0)>at){g.at=(g.at|0)-1;return true;}
+          if((g.at|0)+(g.n|0)>at){g.n=(g.n|0)-1;return g.n>0;}
+          return true;
+        });
+        if(!a.groups.length) delete a.groups;
+      }
+    }
+    tableMergeWrite(a,out);
+    tableNormalise(a);
+    if(Array.isArray(a.fills)) tableFillSet(a,-1,-1,'');
+    return true;
+  }
+  /* one region over the rectangle; its words are every non-empty cell's
+     in reading order, as PowerPoint gathers them -- joined by a space,
+     since a cell's words are drawn as one run that wraps */
+  function tableMerge(a,r0,c0,r1,c1){
+    tableNormalise(a);
+    var words=[],i,j;
+    for(i=r0;i<=r1;i++) for(j=c0;j<=c1;j++){
+      var cov=tableMergeAt(a,i,j);
+      if(cov&&(cov.r!==i||cov.c!==j)) continue;
+      var w=String(a.rows[i][j]||'').trim();
+      if(w) words.push(w);
+      if(i!==r0||j!==c0) a.rows[i][j]='';
+    }
+    a.rows[r0][c0]=words.join(' ');
+    var ms=tableMerges(a).filter(function(m){
+      return m.r+m.rs-1<r0||m.r>r1||m.c+m.cs-1<c0||m.c>c1;});
+    ms.push({r:r0,c:c0,rs:r1-r0+1,cs:c1-c0+1});
+    tableMergeWrite(a,ms);
+  }
+  function tableUnmerge(a,r,c){
+    var m=tableMergeAt(a,r,c); if(!m) return false;
+    tableMergeWrite(a,tableMerges(a).filter(function(x){
+      return x.r!==m.r||x.c!==m.c;}));
+    return true;
+  }
+  /* SPLIT A SINGLE CELL in two, PowerPoint's Split Cells for 2 x 1: a new
+     column (or row) beside it, and every other cell on that line merged
+     across the new one so only this cell is divided. A merged cell is
+     split by taking its region apart (tableUnmerge). */
+  function tableSplit(a,r,c,what){
+    if(what==='col'){
+      var ws=tableCols(a).slice(),w=ws[c]/2;
+      tblInsert(a,'col',c+1);
+      ws.splice(c,1,w,w);a.cols=ws;
+      var ms=tableMerges(a);
+      for(var i=0;i<a.rows.length;i++){
+        if(i===r||tableMergeAt(a,i,c)) continue;
+        ms.push({r:i,c:c,rs:1,cs:2});
+      }
+      tableMergeWrite(a,ms);
+    } else {
+      tblInsert(a,'row',r+1);
+      var ms2=tableMerges(a);
+      for(var j=0;j<a.rows[0].length;j++){
+        if(j===c||tableMergeAt(a,r,j)) continue;
+        ms2.push({r:r,c:j,rs:2,cs:1});
+      }
+      tableMergeWrite(a,ms2);
+    }
+  }
+
+  /* ---- TABLE STYLES (T551) ----------------------------------------------
+     PowerPoint's Table Design, cut to what a slide table wants: a gallery
+     of looks and three switches -- Header row (a.thead, which the table
+     has had since it was made), Banded rows (a.band) and First column
+     (a.first). A look is drawn from the DECK'S colours (the accent, the
+     ink, the page), never from fixed ones, so a table follows a colour
+     theme the way the words around it do; and it is resolved to plain
+     colours here, once, for the slide, the thumbnail and the .pptx alike.
+     Precedence, cell by cell: a cell's own fill, then its column's colour
+     rule, then the look. */
+  var TBL_STYLES=[
+    ['','Plain','No fills: the rules and the words'],
+    ['soft','Soft','A pale accent header and pale bands'],
+    ['accent','Accent','The header in the accent colour'],
+    ['ink','Strong','The header in the ink colour, words in the page colour'],
+    ['warm','Warm','The header in the warm colour'],
+    ['lines','Lines','No fills; a heavier rule under the header']];
+  function tblHex(c){
+    var rgb=Array.isArray(c)?c:rgbOf(c); if(!rgb) return '';
+    return '#'+rgb.map(function(v){
+      return ('0'+Math.max(0,Math.min(255,Math.round(v))).toString(16))
+        .slice(-2);}).join('');
+  }
+  /* t of the way from b to a: tblMix(accent, page, .2) is a pale accent */
+  function tblMix(a,b,t){
+    var x=rgbOf(a),y=rgbOf(b);
+    if(!x||!y) return tblHex(a)||tblHex(b);
+    return tblHex([0,1,2].map(function(k){return x[k]*t+y[k]*(1-t);}));
+  }
+  function tblContrast(x,y){
+    var p=rgbOf(x),q=rgbOf(y); if(!p||!q) return 1;
+    var l1=relLum(p),l2=relLum(q);
+    return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);
+  }
+  /* the look as colours: hd/hdInk the header's fill and words, band the
+     banded rows', first the first column's fill, rule the header's
+     underline weight (1 is the table's own) */
+  function tableLook(a){
+    var id=(a&&a.tstyle)||'';
+    var page=tblHex(tokVal('@page'))||'#0b141d';
+    var ink=tblHex(tokVal(a&&a.color)||tokVal('@ink'))||'#ffffff';
+    var acc=tblHex(tokVal('@accent'))||'#39a9c0';
+    var warm=tblHex(tokVal('@warm'))||'#ff6b57';
+    function on(bg){return tblContrast(bg,ink)>=tblContrast(bg,page)?ink:page;}
+    var L={id:id,hd:'',hdInk:'',band:'',first:'',rule:1};
+    if(id==='soft'){L.hd=tblMix(acc,page,.40);L.hdInk=on(L.hd);
+      L.band=tblMix(acc,page,.14);}
+    else if(id==='accent'){L.hd=acc;L.hdInk=on(acc);
+      L.band=tblMix(acc,page,.18);}
+    else if(id==='ink'){L.hd=ink;L.hdInk=page;L.band=tblMix(ink,page,.11);}
+    else if(id==='warm'){L.hd=warm;L.hdInk=on(warm);
+      L.band=tblMix(warm,page,.16);}
+    else {L.band=tblMix(ink,page,.10);if(id==='lines') L.rule=2.5;}
+    if(L.hd) L.first=tblMix(L.hd,page,.30);
+    return L;
+  }
+  /* the words over a cell's OWN fill: the table's ink while it reads
+     there (3:1, WCAG's large-text floor, since a slide table is big
+     type), else the page colour when that reads better -- so a cell
+     filled amber on a dark deck does not keep white words on it */
+  function tableInkOver(a,bg){
+    var b=tblHex(tokVal(bg)); if(!b) return '';
+    var ink=tblHex(tokVal(a&&a.color)||tokVal('@ink'))||'#ffffff';
+    var page=tblHex(tokVal('@page'))||'#0b141d';
+    if(tblContrast(b,ink)>=3) return '';
+    return tblContrast(b,page)>tblContrast(b,ink)?page:'';
+  }
+  /* one cell's fill, words and weight under the look -- '' where the look
+     says nothing, so the table's own colours show through */
+  function tableCellLook(a,L,ri,ci,head){
+    var o={bg:'',ink:'',b:false};
+    if(head){o.bg=L.hd;o.ink=L.hdInk;return o;}
+    var from=tableBodyFrom(a);
+    if(a.band&&((ri-from)%2===1)) o.bg=L.band;
+    if(a.first&&ci===0){o.b=true;if(L.first) o.bg=L.first;}
+    return o;
+  }
+  /* every cell's resolved fill, words and weight, as rows: what the
+     .pptx writes, so PowerPoint shows the table the slide does */
+  function tableResolvedLook(a){
+    var L=tableLook(a),rows=tableRows(a),metas=tableColMeta(a);
+    var ranges=metas.map(function(m,ci){
+      return (tableRuleOf(a,ci)||{}).kind==='scale'
+        ?tableColRange(a,ci,tableBodyFrom(a)):null;});
+    return rows.map(function(row,ri){
+      return row.map(function(val,ci){
+        var head=!!(a.thead&&ri===0);
+        var o=tableCellLook(a,L,ri,ci,head);
+        var own=tableFillAt(a,ri,ci);
+        var rule=head?'':tableRuleFill(a,ci,val,ranges[ci]);
+        var bg=own?tokVal(own):(rule?'':o.bg);
+        /* a rule is a share of a colour over whatever is under it; the
+           .pptx needs a plain colour, so it is mixed over the page */
+        if(!own&&rule){
+          var m=/color-mix\(in srgb,(.+) (\d+)%,transparent\)/.exec(rule);
+          if(m) bg=tblMix(tokVal(m[1]),tokVal('@page'),(+m[2])/100);
+        }
+        var ink=own?(tableInkOver(a,own)||o.ink):o.ink;
+        return {bg:tblHex(bg)||'',ink:ink||'',b:o.b||head};
+      });
+    });
+  }
+
+  /* ---- THE CELL SELECTION (T551) ------------------------------------------
+     A table had no cell selection: "a second kind of selection living
+     beside the item selection, and nothing else in this editor has one"
+     (30-format-bar.js). Merging needs one. It is as small as it can be:
+     a click on a cell that does not move the table picks that cell, a
+     Shift+click stretches it to a rectangle, typing in a cell picks it,
+     and it belongs to the one table that is selected -- choose anything
+     else and it is gone. A region is picked whole. The commands read it
+     through tblPick(), which answers null when it is stale. */
+  var tblSel=null;
+  function tblPick(a){
+    if(!tblSel||!a||a.k!=='table') return null;
+    var s=pres.slides[cur];
+    if(tblSel.s!==s||tblSel.i!==selAnnot||(s.annots||[])[tblSel.i]!==a)
+      return null;
+    var nr=tableRows(a).length,nc=(tableRows(a)[0]||[]).length;
+    var r0=Math.min(tblSel.r0,tblSel.r1),r1=Math.max(tblSel.r0,tblSel.r1);
+    var c0=Math.min(tblSel.c0,tblSel.c1),c1=Math.max(tblSel.c0,tblSel.c1);
+    if(r1>=nr||c1>=nc) return null;
+    /* grow until no region is cut by the edge */
+    var grew=true,ms=tableMerges(a);
+    while(grew){
+      grew=false;
+      ms.forEach(function(m){
+        var hit=m.r<=r1&&m.r+m.rs-1>=r0&&m.c<=c1&&m.c+m.cs-1>=c0;
+        if(!hit) return;
+        if(m.r<r0){r0=m.r;grew=true;}
+        if(m.c<c0){c0=m.c;grew=true;}
+        if(m.r+m.rs-1>r1){r1=m.r+m.rs-1;grew=true;}
+        if(m.c+m.cs-1>c1){c1=m.c+m.cs-1;grew=true;}
+      });
+    }
+    return {r0:r0,c0:c0,r1:r1,c1:c1,
+      n:(r1-r0+1)*(c1-c0+1),one:!!(function(){
+        var m=tableMergeAt(a,r0,c0);
+        return (r0===r1&&c0===c1)||(m&&m.r===r0&&m.c===c0
+          &&m.r+m.rs-1===r1&&m.c+m.cs-1===c1);})()};
+  }
+  function tblPickCell(i,r,c,extend){
+    var s=pres.slides[cur];
+    if(extend&&tblSel&&tblSel.s===s&&tblSel.i===i){tblSel.r1=r;tblSel.c1=c;}
+    else tblSel={s:s,i:i,r0:r,c0:c,r1:r,c1:c};
+    tblPaint();
+    if(typeof showFmt==='function') showFmt();
+  }
+  function tblUnpick(){
+    if(!tblSel) return;
+    tblSel=null;tblPaint();
+  }
+  /* the picked cells wear .tc-sel; drawn on the live table without a
+     re-render, and again by drawTable on every render after */
+  function tblPaint(){
+    $$('.an-table td.tc-sel,.an-table th.tc-sel').forEach(function(td){
+      td.classList.remove('tc-sel');});
+    var s=pres.slides[cur],a=s&&(s.annots||[])[selAnnot];
+    var p=tblPick(a); if(!p) return;
+    var host=document.querySelector('.deck-stage .an-item.an-table[data-idx="'
+      +selAnnot+'"]');
+    if(!host) return;
+    $$('[data-r]',host).forEach(function(td){
+      var r=+td.dataset.r,c=+td.dataset.c;
+      if(r>=p.r0&&r<=p.r1&&c>=p.c0&&c<=p.c1) td.classList.add('tc-sel');
+    });
+  }
+
   /* ---- THE TABLE PANE ------------------------------------------------
      Per COLUMN, because that is what the feature is about, and one
      column at a time so the pane is a column's card rather than a

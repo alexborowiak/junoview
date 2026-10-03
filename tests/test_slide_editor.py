@@ -728,7 +728,8 @@ def test_tables_are_a_real_item_kind(out):
     assert 'data-tool="table"' in out
     assert "function drawTable(layer,s,a,i,editing,place){" in out
     assert "function tableNormalise(a){" in out
-    assert "function tableGrow(a,what,by){" in out
+    # T551: and WHERE -- under / beside a picked cell, the end without one
+    assert "function tableGrow(a,what,by,at){" in out
     assert "function startTableEdit(layer,s,a,idx,td,ri,ci){" in out
     assert "function startColDrag(layer,s,a,idx,at,ev0){" in out
     # Tab along, Enter down -- the two moves that make a table usable
