@@ -269,6 +269,12 @@ _ICON_PATHS = {
     # formatting
     "eraser": '<path d="m9.2 2.4 4.4 4.4-6 6-4.4-4.4Z"/>'
               '<path d="m6.2 5.4 4.4 4.4"/><path d="M8.6 13.4H14"/>',
+    # T558: a highlighter's chisel tip over the band it lays down, and the
+    # tick that puts a tool down
+    "highlighter": '<path d="m5.4 9.4 5.4-5.4 2.2 2.2-5.4 5.4Z"/>'
+                   '<path d="m5.4 9.4-1.6 2.8 1.2 1.2 2.8-1.6"/>'
+                   '<path d="M2 14h12" stroke-width="2.2" opacity=".5"/>',
+    "tick": '<path d="m3 8.4 3.2 3.2L13 4.8"/>',
     # three plain lines: the generic list / overflow menu (never the
     # markdown filter, whose third line is short)
     "menu": '<path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/>',

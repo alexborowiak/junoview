@@ -863,6 +863,8 @@
     stage.scrollTop=0;
     updateVNav();
     syncBuildNav(s);
+    /* T558: the talk's ink goes back on over the slide it was drawn on */
+    if(typeof inkMount==='function') inkMount();
   }
   function syncBuildNav(s){
     /* Next stays live while builds remain on the last slide; Prev while any

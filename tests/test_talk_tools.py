@@ -31,8 +31,9 @@ def test_each_tool_is_a_key_in_the_show_and_a_button_on_the_panel(out):
     assert "    if(k==='b'||k==='B'){talkBlack();return true;}" in out
     # the show's key map asks first, and Escape puts everything down
     assert "      if(typeof talkToolKey==='function'&&talkToolKey(e)){" in out
-    assert ("    if(k==='Escape'&&(talkTool||talkBlackEl))"
-            "{talkToolsReset();return true;}") in out
+    # T558: and the ink tool with them
+    assert ("    if(k==='Escape'&&(talkTool||talkBlackEl||inkTool)){\n"
+            "      talkToolsReset();return true;}") in out
     # view mode only, and leaving the show puts the tools down
     assert "    if(mode!=='view'||deckEl.hidden) t='';" in out
     assert ("    if(m!=='view'&&typeof talkToolsReset==='function') "

@@ -5873,6 +5873,10 @@ body.light .eq-box{background:var(--chrome-2);
 .aa-slide-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   min-width:0;}
 .aa-foot{display:flex;align-items:center;gap:8px;}
+/* T558: a dialog's verbs keep their words on one line; the note beside
+   them is what wraps ("Keep ink" broke into "Keep / ink" under a
+   three-line note at 1366px) */
+.aa-foot>.dbtn{flex:none;white-space:nowrap;}
 .aa-tie{display:inline-flex;align-items:center;gap:6px;
   font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-2);
   cursor:pointer;white-space:nowrap;}
@@ -7536,3 +7540,32 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 .tbl-opt:hover{background:color-mix(in srgb,var(--accent) 10%,transparent);}
 .tbl-opt b{color:var(--chrome-ink);font-weight:600;}
 .tbl-opt input{margin:2px 0 0;accent-color:var(--accent,var(--cyan));}
+
+/* ---- T558: ink while presenting ----------------------------------------
+   The ink lies over the slide in its own percentages, above everything on
+   it; it takes the pointer only while a tool is up, so a click on the
+   slide still advances otherwise. The bar is small, bottom-left, and only
+   there while a tool is: the room is looking at the slide. */
+.jv-ink{position:absolute;inset:0;width:100%;height:100%;z-index:30;
+  pointer-events:none;overflow:visible;}
+.jv-ink.jv-ink-live{pointer-events:auto;cursor:crosshair;touch-action:none;}
+.jv-ink.jv-ink-live.jv-ink-erase{cursor:cell;}
+.jv-inkbar{position:fixed;left:14px;bottom:14px;z-index:440;display:flex;
+  align-items:center;gap:4px;padding:5px;border-radius:10px;
+  background:color-mix(in srgb,var(--chrome-1,#0e1926) 88%,transparent);
+  border:1px solid var(--chrome-line,#ffffff24);
+  box-shadow:0 8px 26px #00000066;opacity:.55;transition:opacity .2s;}
+.jv-inkbar:hover,.jv-inkbar:focus-within{opacity:1;}
+.jv-inkbar[hidden]{display:none;}
+.jv-ink-b{white-space:nowrap;padding:4px 8px;font-size:11px;}
+.jv-ink-b[aria-pressed="true"]{border-color:var(--accent,var(--cyan));
+  color:var(--chrome-ink);background:color-mix(in srgb,var(--accent) 18%,
+  transparent);}
+.jv-ink-cols{display:flex;gap:4px;padding:0 4px;}
+.jv-ink-col{width:18px;height:18px;border-radius:50%;padding:0;
+  cursor:pointer;border:2px solid var(--chrome-line,#ffffff33);}
+.jv-ink-col[aria-pressed="true"]{border-color:var(--chrome-ink,#fff);
+  box-shadow:0 0 0 2px var(--accent,var(--cyan));}
+/* on a light page a highlighter darkens what is under it, as a real one
+   does, rather than laying a pale film over the words */
+.deck.page-light .jv-ink .jv-hl{mix-blend-mode:multiply;}

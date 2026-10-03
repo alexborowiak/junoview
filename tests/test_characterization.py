@@ -2329,8 +2329,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # fills, the looks, the cell pick and their commands, regions and fills
 # in the thumbnail and the .pptx; deck.css the pick and the menus; and
 # help.html a Tables entry.
-EXPECTED_MD5 = "30d290aa9cd915bb91efb88ec0a9db16"
-EXPECTED_BYTES = 5151756
+# T558: ink while presenting -- the deck script's ink section (the
+# overlay, the bar, the keys, the keep-or-discard question), the Talk
+# panel's Ink row, two icons (highlighter, tick), deck.css's ink and a
+# dialog's verbs kept on one line, and help.html an Ink entry.
+EXPECTED_MD5 = "e5c40f6b22937f3dac99c013af3a2350"
+EXPECTED_BYTES = 5169128
 
 
 def _render_example() -> str:

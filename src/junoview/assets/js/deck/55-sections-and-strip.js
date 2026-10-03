@@ -1270,6 +1270,7 @@
     if(m!=='view'&&typeof closeDeckPresentationDrawer==='function')
       closeDeckPresentationDrawer();
     if(m!=='view'&&typeof talkToolsReset==='function') talkToolsReset();
+
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
@@ -1378,6 +1379,9 @@
        One more group pass, now that the page kind is on the bar. */
     if(editing&&typeof syncRibbonGroups==='function') syncRibbonGroups();
     if(startingTalk||endingTalk) presenterSync();
+    /* T558: the talk's ink is offered to the slides once the show has
+       ended -- asked over whatever the show went back to -- or let go */
+    if(endingTalk&&typeof inkLeave==='function') inkLeave();
   }
   function refresh(){
     if(mode==='create'){renderCreate();}

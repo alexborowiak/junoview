@@ -88,6 +88,9 @@
   function setTalkTool(t){
     if(mode!=='view'||deckEl.hidden) t='';
     if(t===talkTool) t='';
+    /* T558: one pointer at a time -- the laser or the lens puts the ink
+       down (what was drawn stays) */
+    if(t&&typeof inkTool!=='undefined'&&inkTool) setInkTool('');
     /* put the old one down */
     if(laserEl){laserEl.remove();laserEl=null;
       document.removeEventListener('mousemove',laserMove);}
@@ -150,6 +153,7 @@
   function talkToolsReset(){
     if(talkTool) setTalkTool('');
     if(talkBlackEl) talkBlack(false);
+    if(inkTool) setInkTool('');
   }
   /* the show's keys for these (55-sections-and-strip's key map calls
      this first in view mode); true when the key was taken */
@@ -184,8 +188,15 @@
     if(e.ctrlKey||e.metaKey||e.altKey) return false;
     var k=String(e.key||'');
     if(talkNumKey(k)) return true;
-    if(k==='Escape'&&(talkTool||talkBlackEl)){talkToolsReset();return true;}
+    if(k==='Escape'&&(talkTool||talkBlackEl||inkTool)){
+      talkToolsReset();return true;}
     if(k==='p'||k==='P'){setTalkTool('laser');return true;}
+    /* T558: the ink -- I the pen, H the highlighter, X the eraser, E wipes
+       this slide (PowerPoint's E) */
+    if(k==='i'||k==='I'){setInkTool('pen');return true;}
+    if(k==='h'||k==='H'){setInkTool('hl');return true;}
+    if(k==='x'||k==='X'){setInkTool('erase');return true;}
+    if(k==='e'||k==='E'){inkClearHere();return true;}
     if(k==='m'||k==='M'){setTalkTool('lens');return true;}
     if(k==='b'||k==='B'){talkBlack();return true;}
     /* T476: the presenter window, from the lectern */
@@ -203,6 +214,16 @@
       e.stopPropagation();setTalkTool('lens');});
     if(bl) bl.addEventListener('click',function(e){
       e.stopPropagation();talkBlack();});
+    /* T558: the Ink row */
+    [['#talk-pen','pen'],['#talk-hl','hl'],['#talk-erase','erase']]
+      .forEach(function(p){
+        var x=$(p[0]);
+        if(x) x.addEventListener('click',function(e){
+          e.stopPropagation();setInkTool(p[1]);});
+      });
+    /* the strokes are drawn at the slide's height: a new window size is a
+       new stroke weight */
+    window.addEventListener('resize',function(){if(inkSvg) inkDraw();});
     var pv=$('#talk-presenter');   /* T476 */
     if(pv) pv.addEventListener('click',function(e){
       e.stopPropagation();
@@ -216,11 +237,281 @@
        read it as "stop presenting": that ladder runs at capture, so
        this has to as well, and it only speaks when a tool is up */
     document.addEventListener('keydown',function(e){
-      if(e.key!=='Escape'||!(talkTool||talkBlackEl)) return;
+      if(e.key!=='Escape'||!(talkTool||talkBlackEl||inkTool)) return;
       if(mode!=='view'||deckEl.hidden) return;
       e.preventDefault();e.stopPropagation();
       talkToolsReset();
     },true);
+  }
+  /* ---- T558: INK WHILE PRESENTING --------------------------------------
+     PowerPoint's pen, highlighter and eraser in the show: I for the pen,
+     H for the highlighter, X for the eraser (a stroke you touch goes), E
+     to wipe this slide's ink, and the Talk panel's Ink row for the same.
+     While one is up a small bar sits in the bottom-left corner -- the
+     three tools, six colours, Erase all and Done -- and goes again with
+     the tool, so the room sees the slide and not the editor's chrome.
+     INK IS NOT THE DECK. It is kept per slide for this run of the show
+     only (a Map keyed by the slide object, so it is still there when you
+     come back to the slide), drawn in an overlay laid over the slide in
+     the slide's own percentages, so it scales with the window; and when
+     the show ends with ink on any slide you are asked whether to keep
+     it. Kept, each stroke becomes an ordinary freehand drawing on its
+     slide, all in one undo step; discarded, it is gone. Nothing else
+     ever writes it into the slides. Pointer events, so a pen or a finger
+     draws as well as a mouse; a press on the ink layer never advances
+     the slide. */
+  var inkTool='',inkStore=new Map(),inkSvg=null,inkBar=null,inkCur=null;
+  var INK_COLS=['#ff3b30','#ffd60a','#34c759','#0a84ff','#ffffff',
+    '#111111'];
+  var inkCol={pen:'#ff3b30',hl:'#ffd60a'};
+  var INK_SW={pen:4,hl:22};                 /* px at SW_REF_H, as `sw` is */
+  var INK_HL_OP=0.4;
+  function inkHere(){
+    var s=pres.slides[cur]; if(!s) return [];
+    if(!inkStore.has(s)) inkStore.set(s,[]);
+    return inkStore.get(s);
+  }
+  function inkCount(){
+    var n=0;inkStore.forEach(function(v){if(v.length) n++;});
+    return n;
+  }
+  function inkSlideEl(){
+    return (stage&&stage.querySelector('.slide'))||null;
+  }
+  function inkPathD(pts){
+    if(!pts.length) return '';
+    if(pts.length===1)    /* a dot: a hair of a line, so the cap draws it */
+      return 'M'+pts[0][0]+' '+pts[0][1]+'L'+(pts[0][0]+0.01)+' '+pts[0][1];
+    /* the Draw tool's smoothing, which reads points 0..1 of a box; the
+       ink's box is the whole slide, so its percentages come down to that */
+    return drawPathD(pts.map(function(q){return [q[0]/100,q[1]/100];}));
+  }
+  function inkStrokeEl(st,h){
+    var p=document.createElementNS(SVGNS,'path');
+    p.setAttribute('d',inkPathD(st.pts));
+    p.setAttribute('fill','none');
+    p.setAttribute('stroke',st.c);
+    p.setAttribute('stroke-width',(st.sw*h/SW_REF_H).toFixed(2));
+    p.setAttribute('vector-effect','non-scaling-stroke');
+    p.setAttribute('stroke-linecap',st.t==='hl'?'butt':'round');
+    p.setAttribute('stroke-linejoin','round');
+    if(st.t==='hl'){
+      p.setAttribute('stroke-opacity',String(INK_HL_OP));
+      p.setAttribute('class','jv-hl');
+    }
+    return p;
+  }
+  /* put the layer on the slide on screen (renderSlide empties the stage,
+     so this runs after every render) and draw this slide's strokes */
+  function inkMount(){
+    var on=mode==='view'&&!deckEl.hidden;
+    var list=on?inkHere():[];
+    var sl=on?inkSlideEl():null;
+    if(!sl||(!inkTool&&!list.length)){
+      if(inkSvg){inkSvg.remove();inkSvg=null;}
+      return;
+    }
+    if(!inkSvg){
+      inkSvg=document.createElementNS(SVGNS,'svg');
+      inkSvg.setAttribute('class','jv-ink');
+      inkSvg.setAttribute('viewBox','0 0 100 100');
+      inkSvg.setAttribute('preserveAspectRatio','none');
+      inkSvg.setAttribute('aria-hidden','true');
+      inkSvg.addEventListener('pointerdown',inkDown);
+      inkSvg.addEventListener('click',function(e){
+        if(inkTool){e.preventDefault();e.stopPropagation();}});
+    }
+    if(inkSvg.parentNode!==sl) sl.appendChild(inkSvg);
+    inkSvg.classList.toggle('jv-ink-live',!!inkTool);
+    inkSvg.classList.toggle('jv-ink-erase',inkTool==='erase');
+    inkDraw();
+  }
+  function inkDraw(){
+    if(!inkSvg) return;
+    var h=inkSvg.getBoundingClientRect().height||SW_REF_H;
+    while(inkSvg.firstChild) inkSvg.removeChild(inkSvg.firstChild);
+    inkHere().forEach(function(st){inkSvg.appendChild(inkStrokeEl(st,h));});
+    if(inkCur) inkSvg.appendChild(inkCur.el);
+  }
+  function inkPt(e){
+    var r=inkSvg.getBoundingClientRect();
+    return [Math.round((e.clientX-r.left)/(r.width||1)*10000)/100,
+            Math.round((e.clientY-r.top)/(r.height||1)*10000)/100];
+  }
+  /* the strokes within reach of a point, for the eraser: any point of a
+     stroke within its own half-width plus a little, in screen pixels */
+  function inkErase(p){
+    var r=inkSvg.getBoundingClientRect(),list=inkHere(),gone=false;
+    for(var i=list.length-1;i>=0;i--){
+      var st=list[i],reach=st.sw*(r.height/SW_REF_H)/2+8;
+      var hit=st.pts.some(function(q){
+        var dx=(q[0]-p[0])/100*r.width,dy=(q[1]-p[1])/100*r.height;
+        return dx*dx+dy*dy<=reach*reach;});
+      if(hit){list.splice(i,1);gone=true;}
+    }
+    if(gone){inkDraw();inkSync();}
+  }
+  function inkDown(e){
+    if(!inkTool||e.button>0) return;
+    e.preventDefault();e.stopPropagation();
+    try{inkSvg.setPointerCapture(e.pointerId);}catch(err){}
+    var p=inkPt(e);
+    if(inkTool==='erase'){
+      inkErase(p);
+      var em=function(ev){inkErase(inkPt(ev));};
+      var eu=function(){
+        inkSvg.removeEventListener('pointermove',em);
+        inkSvg.removeEventListener('pointerup',eu);
+        inkSvg.removeEventListener('pointercancel',eu);
+      };
+      inkSvg.addEventListener('pointermove',em);
+      inkSvg.addEventListener('pointerup',eu);
+      inkSvg.addEventListener('pointercancel',eu);
+      return;
+    }
+    var h=inkSvg.getBoundingClientRect().height||SW_REF_H;
+    var st={t:inkTool,c:inkCol[inkTool],sw:INK_SW[inkTool],pts:[p]};
+    inkCur={st:st,el:inkStrokeEl(st,h)};
+    inkSvg.appendChild(inkCur.el);
+    var mm=function(ev){
+      var q=inkPt(ev),last=st.pts[st.pts.length-1];
+      /* thinned, as a drawn stroke's trail is: a point a pixel would
+         be thousands of points a slide */
+      if(Math.abs(q[0]-last[0])+Math.abs(q[1]-last[1])<0.25) return;
+      st.pts.push(q);
+      inkCur.el.setAttribute('d',inkPathD(st.pts));
+    };
+    var mu=function(){
+      inkSvg.removeEventListener('pointermove',mm);
+      inkSvg.removeEventListener('pointerup',mu);
+      inkSvg.removeEventListener('pointercancel',mu);
+      inkHere().push(st);inkCur=null;
+      inkDraw();inkSync();
+    };
+    inkSvg.addEventListener('pointermove',mm);
+    inkSvg.addEventListener('pointerup',mu);
+    inkSvg.addEventListener('pointercancel',mu);
+  }
+  function inkClearHere(){
+    var s=pres.slides[cur];
+    if(s) inkStore.set(s,[]);
+    inkDraw();inkSync();
+  }
+  /* the bar: built once, shown only while a tool is up */
+  function inkBarBuild(){
+    if(inkBar) return inkBar;
+    inkBar=document.createElement('div');
+    inkBar.className='jv-inkbar';inkBar.setAttribute('role','toolbar');
+    inkBar.setAttribute('aria-label','Ink');
+    function b(id,ic,label,title,fn){
+      var x=document.createElement('button');
+      x.type='button';x.className='dbtn jv-ink-b';x.dataset.ink=id;
+      x.innerHTML=ic+' '+label;x.title=title;
+      x.addEventListener('click',function(e){e.stopPropagation();fn();});
+      inkBar.appendChild(x);return x;
+    }
+    b('pen',bic('pen'),'Pen','Draw on the slide (I)',function(){setInkTool('pen');});
+    b('hl',bic('highlighter'),'Highlighter','Mark it in a see-through colour (H)',
+      function(){setInkTool('hl');});
+    b('erase',bic('eraser'),'Eraser','Rub out the strokes you touch (X)',
+      function(){setInkTool('erase');});
+    var sw=document.createElement('span');sw.className='jv-ink-cols';
+    INK_COLS.forEach(function(c){
+      var x=document.createElement('button');
+      x.type='button';x.className='jv-ink-col';x.style.background=c;
+      x.dataset.c=c;x.title='Ink colour';x.setAttribute('aria-label',
+        'Ink colour '+c);
+      x.addEventListener('click',function(e){
+        e.stopPropagation();
+        var t=(inkTool==='hl')?'hl':'pen';
+        inkCol[t]=c;if(inkTool==='erase') setInkTool('pen');
+        inkSync();
+      });
+      sw.appendChild(x);
+    });
+    inkBar.appendChild(sw);
+    b('clear',bic('exit'),'Erase all','Wipe this slide’s ink (E)',inkClearHere);
+    b('done',bic('tick'),'Done','Put the ink down (Esc); what you drew stays '
+      +'until the show ends',function(){setInkTool('');});
+    return inkBar;
+  }
+  function inkSync(){
+    if(inkBar){
+      $$('.jv-ink-b',inkBar).forEach(function(x){
+        var on=x.dataset.ink===inkTool;
+        x.setAttribute('aria-pressed',on.toString());});
+      var t=(inkTool==='hl')?'hl':'pen';
+      $$('.jv-ink-col',inkBar).forEach(function(x){
+        x.setAttribute('aria-pressed',(x.dataset.c===inkCol[t]).toString());});
+      var cl=inkBar.querySelector('[data-ink="clear"]');
+      if(cl) cl.disabled=!inkHere().length;
+    }
+    [['talk-pen','pen'],['talk-hl','hl'],['talk-erase','erase']]
+      .forEach(function(p){
+        var x=$('#'+p[0]);
+        if(x) x.setAttribute('aria-pressed',(inkTool===p[1]).toString());});
+    document.body.classList.toggle('jv-inking',!!inkTool);
+  }
+  function setInkTool(t){
+    if(mode!=='view'||deckEl.hidden) t='';
+    if(t&&t===inkTool&&t!=='erase') t='';
+    if(t&&talkTool) setTalkTool('');   /* one pointer at a time */
+    inkTool=t||'';
+    if(inkTool){
+      var bar=inkBarBuild();
+      if(!bar.isConnected) document.body.appendChild(bar);
+      bar.hidden=false;
+    } else if(inkBar) inkBar.hidden=true;
+    inkMount();inkSync();
+  }
+  /* the show ended: keep the ink as drawings, or let it go */
+  function inkLeave(){
+    var keep=[];
+    inkStore.forEach(function(list,s){if(list.length) keep.push([s,list]);});
+    inkStore=new Map();inkCur=null;
+    if(inkTool) setInkTool('');
+    if(inkSvg){inkSvg.remove();inkSvg=null;}
+    if(!keep.length) return;
+    var n=keep.reduce(function(t,k){return t+k[1].length;},0);
+    askYes({title:'Keep your ink?',
+      what:'You drew '+n+' stroke'+(n===1?'':'s')+' on '+keep.length
+        +' slide'+(keep.length===1?'':'s')+' during the talk.',
+      note:'Kept, each stroke becomes a drawing on its slide that you can '
+        +'move, recolour or delete. Ctrl+Z takes them all back off.',
+      ok:'Keep ink',cancel:'Discard'},function(yes){
+      if(!yes) return;
+      var made=0;
+      keep.forEach(function(k){
+        if((pres.slides||[]).indexOf(k[0])<0) return;
+        k[1].forEach(function(st){
+          var a=inkToDraw(st); if(!a) return;
+          k[0].annots=k[0].annots||[];k[0].annots.push(a);made++;
+        });
+      });
+      if(!made) return;
+      markDirty();renderSlide();
+      if(typeof renderFilm==='function') renderFilm();
+      toast(made+' ink stroke'+(made===1?'':'s')+' kept as drawings');
+    });
+  }
+  /* a stroke as the freehand drawing the Draw tool would have made: a
+     box, and its points 0..1 inside it */
+  function inkToDraw(st){
+    if(!st||!st.pts||!st.pts.length) return null;
+    var xs=st.pts.map(function(q){return q[0];});
+    var ys=st.pts.map(function(q){return q[1];});
+    var x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs);
+    var y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+    var w=x1-x0,h=y1-y0,MIN=1.5;
+    if(w<MIN){x0-=(MIN-w)/2;w=MIN;}
+    if(h<MIN){y0-=(MIN-h)/2;h=MIN;}
+    var a={k:'draw',x:x0,y:y0,w:w,h:h,color:st.c,sw:st.sw,
+      pts:st.pts.map(function(q){
+        return [Math.round((q[0]-x0)/w*1000)/1000,
+          Math.round((q[1]-y0)/h*1000)/1000];}),
+      name:st.t==='hl'?'Highlighter ink':'Ink'};
+    if(st.t==='hl') a.op=INK_HL_OP;
+    return a;
   }
   /* ---- T581: THE PRESENTING BAR FOLDS AWAY -----------------------------
      (2026-09-30, user: "why does present mode have these options up the

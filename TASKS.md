@@ -10489,8 +10489,32 @@ choice in the editor (T506, T507).
   places Rulers) and the "Slide 3 of 14" readout. Driven at 1440x900 on
   six slides: S2 and Ctrl+S4 dragged after S6 (S1 S3 S5 S6 S2 S4),
   Ctrl+D (two copies), Delete (both), Ctrl+Z (both back in one step).
-- [ ] **T558 — Ink while presenting.** Pen, highlighter and eraser in the
+- [x] **T558 — Ink while presenting.** Pen, highlighter and eraser in the
   show, never saved into the slides unless you keep them.
+  *Done 2026-10-03.* In the show I picks up a pen, H a highlighter, X an
+  eraser that rubs out the strokes it touches, E wipes the slide (as in
+  PowerPoint) and Escape puts the tool down; the Talk panel gains an Ink
+  row with the same three. While a tool is up a small bar sits in the
+  bottom-left corner, faint until the pointer reaches it -- the tools,
+  six colours, Erase all and Done -- and goes with the tool, so the room
+  sees the slide and not chrome. Ink is not the deck: it is held per
+  slide for the run (a Map keyed by the slide, so it is there when you
+  come back), drawn in an SVG overlay in the slide's percentages (the
+  Draw tool's smoothing, strokes weighted by the slide's height like
+  every `sw`), and a press on it never advances the slide. Pointer
+  events, so a pen or a finger draws, and a finger's swipe cannot turn
+  the page under it. The laser and the magnifier put the ink down, and
+  the ink puts them down. When the show ends with ink anywhere the
+  editor asks "Keep your ink?" (Keep ink / Discard): kept, each stroke
+  is an ordinary freehand drawing on its slide (a highlighter stroke at
+  40% opacity), named Ink, all in one undo step. On a light page the
+  highlighter multiplies, as a real one darkens what is under it. A
+  dialog's verb no longer wraps beside a long note ("Keep / ink"). Not
+  done: inking from the presenter view's window, which would need the
+  strokes sent across. Driven at 1366x657: a pen stroke and a dot, a
+  highlighter band, the eraser taking the pen stroke, the next slide
+  clean and the ink back on returning, Escape out of the show, Keep ink
+  (two drawings) and Ctrl+Z (both gone).
 - [x] **T559 — Start from a template.** New presentation offers a handful
   of starting decks (talk, lab meeting, poster, defence) as well as blank.
   *Done 2026-10-03.* Every door to a new presentation (File > New >
