@@ -2844,7 +2844,7 @@
     if(isColPres(pres)){openCollection(nm);return;}   /* T606 */
     openDeck('edit');   /* land straight in the slide editor */
   }
-  function newPresentation(){
+  function newBlankPresentation(){
     var n2=1,name='presentation';
     while(savedByName(name)||loadDraft(name)){
       n2++;name='presentation-'+n2;}
@@ -2857,6 +2857,203 @@
     openDeck('edit');   /* land straight in the slide editor */
     /* T283: and ask where it is going to live, the first time only */
     if(typeof askWhereToSave==='function') askWhereToSave();
+  }
+  /* ---- T559: START FROM A TEMPLATE ------------------------------------
+     New presentation asks what kind of talk this is. Blank is still the
+     verb (and Enter); beside it are four decks already in the order that
+     kind of talk runs. A starting deck is DATA: each slide names a layout
+     from the catalogue and what goes in that layout's text slots, in
+     order -- a string is real words (a section's own name, "Conclusions"),
+     {ph:...} a prompt, the placeholder T366 made: faint while you edit,
+     never shown or printed, gone on the first key. The slides are made by
+     the applyLayout New slide uses, so every box wears the type its slot
+     names, and a slot you redirected to a variation (T368) or a style
+     set reaches them as it reaches any slide. `secs` are [name, first
+     slide] pairs. */
+  var DECK_TEMPLATES=[
+    {id:'talk',label:'Conference talk',stem:'talk',
+     blurb:'The question, what you did, two results and the take-home, '
+       +'in the order a twelve-minute talk runs.',
+     secs:[['Introduction',0],['Methods',2],['Results',3],
+       ['Conclusions',5]],
+     slides:[
+      ['title',[{ph:'Talk title \u2014 the finding in one line'},
+        {ph:'Your name \u00b7 Institution \u00b7 Meeting, date'}]],
+      ['title-body',['Why this matters',{ph:'The question, why this '
+        +'room should care, and what was already known.'}]],
+      ['text-cell',['Data and method',{ph:'The data, the method in '
+        +'brief, and what is new about it.'}]],
+      ['title-full',[{ph:'Result 1 \u2014 say it as a sentence'}]],
+      ['title-halves',[{ph:'Result 2 \u2014 say it as a sentence'}]],
+      ['title-body',['Conclusions',{ph:'Three take-home points, one '
+        +'line each.'}]],
+      ['section',['Thank you \u2014 questions?']]]},
+    {id:'lab',label:'Lab meeting',stem:'lab meeting',
+     blurb:'Since last time, a result or two, where you are stuck and '
+       +'what is next.',
+     slides:[
+      ['title',[{ph:'What I have been working on'},
+        {ph:'Your name \u00b7 Lab meeting, date'}]],
+      ['title-body',['Since last time',{ph:'What you set out to do, '
+        +'and what got done.'}]],
+      ['cell-text',[{ph:'The result \u2014 say it as a sentence'},
+        {ph:'What it shows, and how sure you are.'}]],
+      ['title-halves',[{ph:'A comparison \u2014 say it as a sentence'}]],
+      ['title-body',['Where I\u2019m stuck',{ph:'The problems, and '
+        +'what you want the room\u2019s help with.'}]],
+      ['title-body',['Next steps',{ph:'What you will do before the '
+        +'next meeting.'}]]]},
+    {id:'defence',label:'Thesis defence',stem:'defence',
+     blurb:'The question, a section and a result for each chapter, '
+       +'contributions and future work.',
+     secs:[['Introduction',0],['Chapter 1',4],['Chapter 2',6],
+       ['Chapter 3',8],['Conclusions',10]],
+     slides:[
+      ['title',[{ph:'Thesis title'},{ph:'Your name \u00b7 Department '
+        +'\u00b7 Date \u00b7 Supervisors'}]],
+      ['title-body',['Outline',{ph:'The chapters, and the question '
+        +'that ties them together.'}]],
+      ['title-body',['Background',{ph:'What is known, and the gap '
+        +'this thesis fills.'}]],
+      ['title-body',['The question',{ph:'The question in one '
+        +'sentence, and why it matters.'}]],
+      ['section',['Chapter 1']],
+      ['title-full',[{ph:'Chapter 1\u2019s main result \u2014 say it '
+        +'as a sentence'}]],
+      ['section',['Chapter 2']],
+      ['title-full',[{ph:'Chapter 2\u2019s main result \u2014 say it '
+        +'as a sentence'}]],
+      ['section',['Chapter 3']],
+      ['title-full',[{ph:'Chapter 3\u2019s main result \u2014 say it '
+        +'as a sentence'}]],
+      ['title-body',['Contributions',{ph:'What the thesis adds \u2014 '
+        +'one line per chapter.'}]],
+      ['title-body',['Future work',{ph:'The questions this opens, and '
+        +'what you would do next.'}]],
+      ['title-body',['Acknowledgements',{ph:'Supervisors, '
+        +'collaborators, funders, family.'}]],
+      ['section',['Thank you \u2014 questions?']]]},
+    /* the conference poster hall's classic: the A0 three-column
+       template from Layouts, on the white page a new poster gets */
+    {id:'poster',label:'Poster',stem:'poster',page:'a0p',
+     tokens:{c:{page:'#ffffff'}},
+     blurb:'An A0 conference poster in three numbered columns, ready '
+       +'for your figures.',
+     slides:[['poster-3col',[]]]}
+  ];
+  function tplSlide(spec){
+    var s=emptySlide();
+    applyLayout(s,layoutById(spec[0]));
+    var words=spec[1]||[],ti=0;
+    (s.annots||[]).forEach(function(a){
+      if(!a||a.k!=='text') return;
+      var w=words[ti++];
+      if(w==null) return;
+      if(typeof w==='string'){a.text=w;delete a.ph;}
+      else if(w.ph){a.text=w.ph;a.ph=1;}
+    });
+    return s;
+  }
+  /* the deck a template makes; built with `pres` pointing at it, since
+     applyLayout and the section registry read the deck in hand */
+  function tplBuild(t){
+    var keep=pres,d={name:'',slides:[]};
+    if(t.page) d.page=t.page;
+    if(t.tokens) d.tokens=deep(t.tokens);
+    pres=d;
+    try{
+      (t.slides||[]).forEach(function(spec){d.slides.push(tplSlide(spec));});
+      var secs=t.secs||[];
+      secs.forEach(function(sc,k){
+        var id=secId();
+        secMap()[id]={name:sc[0]};
+        var end=k+1<secs.length?secs[k+1][1]:d.slides.length;
+        for(var i=sc[1];i<end&&i<d.slides.length;i++) d.slides[i].sec=id;
+      });
+    } finally {pres=keep;}
+    return d;
+  }
+  function newPresentationFrom(t){
+    if(!t){newBlankPresentation();return;}
+    var stem=t.stem||'presentation',n2=1,name=stem;
+    while(savedByName(name)||loadDraft(name)){n2++;name=stem+'-'+n2;}
+    var d=tplBuild(t);
+    d.name=name;
+    /* not persisted until the first edit, as a blank deck is not */
+    pres=d;source='auto';
+    cur=0;activePane=-1;
+    openDeck('edit');
+    if(typeof askWhereToSave==='function') askWhereToSave();
+  }
+  /* a card draws the deck it makes: its first four slides as a contact
+     sheet, or the one page of a one-page template at the sheet's height,
+     with the deck's own ink and page (renderDeckPreview's swap) */
+  var NT_W=80,NT_H=45;
+  function ntSheet(d){
+    var sh=document.createElement('span');sh.className='nt-sheet';
+    var keep={p:pres,paint:paintSlide,h:miniHNow};
+    try{
+      pres=d;
+      var pg=pageOf(),one=d.slides.length<4;
+      var H=one?(NT_H*2+4):NT_H;
+      var W=one?Math.round(H*pg.aw/pg.ah):NT_W;
+      if(one&&W>NT_W*2+4){W=NT_W*2+4;H=Math.round(W*pg.ah/pg.aw);}
+      miniHNow=H;
+      applyTokens(sh);
+      sh.classList.toggle('page-light',pageIsLight(tokVal('@page')));
+      sh.classList.toggle('nt-one',one);
+      d.slides.slice(0,one?1:4).forEach(function(s){
+        var m;
+        try{m=miniDiagram(s);}
+        catch(err){m=document.createElement('span');
+          m.className='mini-diagram free';}
+        m.style.width=W+'px';m.style.height=H+'px';
+        m.setAttribute('aria-hidden','true');
+        sh.appendChild(m);
+      });
+    } finally {pres=keep.p;paintSlide=keep.paint;miniHNow=keep.h;}
+    return sh;
+  }
+  function ntClose(){var d=$('#nt-dlg'); if(d) d.hidden=true;}
+  function ntCard(t){
+    var d=t?tplBuild(t):{name:'',slides:[emptySlide()]};
+    var b=document.createElement('button');
+    b.type='button';b.className='nt-card';b.setAttribute('role','listitem');
+    b.dataset.tpl=t?t.id:'blank';
+    b.appendChild(ntSheet(d));
+    var nm=document.createElement('span');nm.className='nt-name';
+    nm.textContent=t?t.label:'Blank';
+    var n=document.createElement('span');n.className='nt-n';
+    n.textContent=d.slides.length+(t&&t.page?' page':' slide')
+      +(d.slides.length===1?'':'s');
+    nm.appendChild(n);
+    b.appendChild(nm);
+    var bl=document.createElement('span');bl.className='nt-blurb';
+    bl.textContent=t?t.blurb:'One empty slide.';
+    b.appendChild(bl);
+    b.title='Make a '+(t?t.label.toLowerCase():'blank presentation')
+      +(t?' presentation':'');
+    b.addEventListener('click',function(){ntClose();newPresentationFrom(t);});
+    return b;
+  }
+  var ntWired=false;
+  function newPresentation(){
+    var dlg=$('#nt-dlg'),grid=$('#nt-grid');
+    if(!dlg||!grid){newBlankPresentation();return;}
+    if(!ntWired){
+      ntWired=true;
+      ['#nt-close','#nt-cancel'].forEach(function(sel){
+        var x=$(sel); if(x) x.addEventListener('click',ntClose);});
+      var bl=$('#nt-blank');
+      if(bl) bl.addEventListener('click',function(){
+        ntClose();newBlankPresentation();});
+      dlg.addEventListener('click',function(e){
+        if(e.target===dlg) ntClose();});
+    }
+    grid.innerHTML='';
+    grid.appendChild(ntCard(null));
+    DECK_TEMPLATES.forEach(function(t){grid.appendChild(ntCard(t));});
+    dlg.hidden=false;
   }
   /* ---- CUSTOM VIEW: a third kind of saved thing (2026-07-29) ---------
      Not slides. A custom view remembers how the NOTEBOOK looks: the

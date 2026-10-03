@@ -10453,8 +10453,31 @@ choice in the editor (T506, T507).
   Ctrl+D (two copies), Delete (both), Ctrl+Z (both back in one step).
 - [ ] **T558 — Ink while presenting.** Pen, highlighter and eraser in the
   show, never saved into the slides unless you keep them.
-- [ ] **T559 — Start from a template.** New presentation offers a handful
+- [x] **T559 — Start from a template.** New presentation offers a handful
   of starting decks (talk, lab meeting, poster, defence) as well as blank.
+  *Done 2026-10-03.* Every door to a new presentation (File > New >
+  Presentation in both views, Home, the side panel, the library) now
+  asks first, in a small dialog (#nt-dlg, on the shared Esc / Enter keys)
+  rather than a screen: Blank is the verb and Enter; beside it a
+  conference talk (7 slides in Introduction, Methods, Results and
+  Conclusions), a lab meeting (6: since last time, results, where I'm
+  stuck, next steps), a thesis defence (14, a section and a result slide
+  per chapter, contributions, future work, acknowledgements) and an A0
+  poster (the three-column template on a white page). A starting deck is
+  DATA (DECK_TEMPLATES): each slide names a catalogue layout and what
+  goes in its text slots -- real words for a section's own name
+  ("Conclusions"), {ph} prompts for what you will write, so the prompts
+  are T366 placeholders, faint while editing and never shown -- and
+  tplBuild makes it with the applyLayout New slide uses, so every box
+  wears its slot's type and a slot redirected to a variation reaches it.
+  Each card is drawn from the deck it makes: a contact sheet of the
+  first four slides in the deck's own ink, or its one page. Like a blank
+  deck, nothing is saved until the first edit. The poster template's
+  title prompt broke onto a second line and ran into the author line;
+  it is shorter now. Driven at 1366x657: the dialog's five cards in one
+  row, each template created, saved and read back by deck_schema's
+  validate_deck with no problems, the talk's four sections in the strip,
+  the poster's title on one line.
 - [x] **T560 — Icons.** An Icons gallery inserts a simple line icon as a
   shape you can recolour and resize.
   *Done 2026-10-01.* Images > Icons, a gallery beside Shapes, holds 46

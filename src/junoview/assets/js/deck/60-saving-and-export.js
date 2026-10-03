@@ -315,7 +315,7 @@
      The question (#ask-dlg) has had these keys since T475 and keeps its
      own; while it is open, over one of these or not, this stands down. */
   var DLG_KEYED='#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,#ss-dlg,#ms-dlg,#ts-dlg,'
-    +'#chart-data';
+    +'#nt-dlg,#chart-data';
   function dlgShown(el){
     if(!el||el.hidden||el.closest('[hidden]')) return false;
     var r=el.getBoundingClientRect();

@@ -2320,8 +2320,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T567: the slide editor's tour -- app.js gains EDITOR_TOUR_STEPS, a
 # tour machine that takes its list and flag, and the first-entry hook;
 # help.html and Take a tour's tooltip say which tour runs.
-EXPECTED_MD5 = "6b98e5458037a97dcd7786f7d4c9286a"
-EXPECTED_BYTES = 5100146
+# T559: start from a template -- deck.html gains the New presentation
+# dialog (#nt-dlg), the deck script DECK_TEMPLATES, tplSlide, tplBuild and
+# the chooser, deck.css the dialog's cards, the A0 three-column poster a
+# shorter title prompt, and help.html a line on the starting decks.
+EXPECTED_MD5 = "78c56c168958f5d722ecadac88d4584c"
+EXPECTED_BYTES = 5112505
 
 
 def _render_example() -> str:

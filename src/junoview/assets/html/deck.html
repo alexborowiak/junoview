@@ -4183,6 +4183,33 @@ items snap to both. Guides, not ink: never printed or exported"
     </div>
   </div>
 </div>
+<!-- T559: START FROM A TEMPLATE. New presentation asks what kind of
+     talk this is: a blank deck (still the verb, still Enter) or one of
+     four starting decks whose slides are already in the order that kind
+     of talk runs. A card is drawn from the deck it makes, so what you
+     pick is what you get. A small dialog over the window, not a screen
+     of its own (T607). -->
+<div class="aa-dlg" id="nt-dlg" hidden role="dialog"
+  aria-labelledby="nt-title">
+  <div class="aa-box nt-box">
+    <div class="aa-head">
+      <span class="eq-t" id="nt-title">New presentation</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="nt-close" aria-label="Cancel"
+        title="Cancel (Esc)"><i data-ic="exit"></i></button>
+    </div>
+    <p class="nt-lead">Start blank, or from a deck already laid out the
+      way that kind of talk runs. The faint words are prompts: they are
+      never shown, and they go as soon as you type.</p>
+    <div class="nt-grid" id="nt-grid" role="list"></div>
+    <div class="aa-foot">
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="nt-cancel">Cancel</button>
+      <button class="dbtn primary" id="nt-blank"
+        title="An empty presentation (Enter)">Blank presentation</button>
+    </div>
+  </div>
+</div>
 <!-- FIND AND REPLACE across the whole presentation. A panel rather than a
      browser find: what you are searching is the model (every text box,
      every slide title, every list item on every slide), not the one slide

@@ -182,8 +182,11 @@
        larger numbers for the same physical type size. ---- */
     {id:'poster-3col',label:'3 columns · classic',poster:1,short:'3 columns',
       scale:{title:3.1,subtitle:1.4,h2:1.9,body:1.35,small:1.1},items:[
+      /* T559: a prompt that fits its own box -- the old one broke onto
+         a second line at this size and ran into the author line under
+         it, the first thing a poster made from the template showed */
       {k:'text',x:3,y:1.4,w:94,h:3.6,
-        text:'Poster title — the finding in one line',size:3.1,b:1,
+        text:'Your finding, in one line',size:3.1,b:1,
         align:'center',style:'title'},
       {k:'text',x:8,y:5.4,w:84,h:2.2,
         text:'Author, Author · Institution · contact@institution.edu',

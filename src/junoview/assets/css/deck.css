@@ -7458,3 +7458,30 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 body.light .deck-history,body.light .deck-design,body.light .deck-review,
 body.light .deck-notesed,body.light .img-ov,body.light .vfull{
   box-shadow:0 24px 70px #0000004d,0 0 0 100vmax rgb(20 30 40 / .34);}
+
+/* ---- T559: New presentation -- blank, or a starting deck --------------
+   A small dialog: five cards in one row at a laptop's width, each drawn
+   from the deck it makes (a contact sheet of its first four slides, or
+   its one page), its name and slide count, and one line on what it is
+   for. Wraps to two rows below ~1000px; never a screen of its own. */
+.aa-box.nt-box{width:min(980px,94vw);}
+.nt-lead{margin:0;font-size:12.5px;line-height:1.5;
+  color:var(--chrome-ink-2);}
+.nt-grid{display:grid;gap:10px;overflow-y:auto;min-height:0;
+  grid-template-columns:repeat(auto-fill,minmax(176px,1fr));}
+.nt-card{display:flex;flex-direction:column;gap:6px;text-align:left;
+  padding:8px;border-radius:9px;cursor:pointer;color:var(--chrome-ink);
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  font-family:var(--sans);}
+.nt-card:hover,.nt-card:focus-visible{border-color:var(--accent,var(--cyan));
+  background:color-mix(in srgb,var(--accent) 9%,var(--chrome-1));
+  outline:none;}
+.nt-sheet{display:grid;grid-template-columns:repeat(2,max-content);
+  gap:4px;justify-content:center;align-content:center;height:94px;}
+.nt-sheet.nt-one{grid-template-columns:max-content;}
+.nt-sheet .mini-diagram{border-radius:3px;pointer-events:none;}
+.nt-name{display:flex;align-items:baseline;gap:6px;font-size:13px;
+  font-weight:600;}
+.nt-n{margin-left:auto;font:400 10px var(--mono);color:var(--chrome-ink-3);
+  white-space:nowrap;}
+.nt-blurb{font-size:11px;line-height:1.4;color:var(--chrome-ink-2);}
