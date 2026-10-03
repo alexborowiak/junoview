@@ -124,7 +124,9 @@
   autoDeckBoot();             /* slides from the notebook viewer (T362) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
-  dlgKeysBoot();              /* every dialog: Esc cancels, Enter the verb
+  sheetBoot();                /* a press outside a work view's sheet
+                                 closes it (T607) */
+  dlgKeysBoot();             /* every dialog: Esc cancels, Enter the verb
                                  (T568) */
   touchBoot();                /* a finger or a pen moves, sizes, turns
                                  (T575) */

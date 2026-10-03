@@ -3152,12 +3152,19 @@
     /* T602: Theme is a row of File, and the menu it sat in may have
        closed before this is placed -- a zero box put the picker in the
        window's corner. Place it under File instead. */
-    if(!r.width){
-      var wrap=btn.closest('.dc-menuwrap'),
-          door=wrap&&wrap.querySelector('[aria-haspopup="true"]');
-      if(door) r=door.getBoundingClientRect();
+    /* T607: ...and under File whenever it IS a row of File, not only
+       when the row has already gone. The reader's File was still open
+       when this ran, so the picker hung from the Theme row, 400px down
+       the window, and ran off its bottom edge once File closed (at
+       1366x657 the last three themes were below the screen). */
+    var wrap=btn.closest('.dc-menuwrap'),
+        door=wrap&&wrap.querySelector('[aria-haspopup="true"]');
+    if(door&&door!==btn){
+      var dr=door.getBoundingClientRect();
+      if(dr.width) r=dr;
     }
-    m.style.top=(r.bottom+6)+'px';
+    var top=Math.min(r.bottom+6,innerHeight-m.offsetHeight-8);
+    m.style.top=Math.max(8,top)+'px';
     m.style.left=Math.max(8,Math.min(innerWidth-m.offsetWidth-8,
       r.right-m.offsetWidth))+'px';
     schemeMenu=m;

@@ -1612,6 +1612,48 @@
       if(b&&b.focus) b.focus();
     },true);
   }
+  /* ---- T607: A SHEET CLOSES ON A PRESS OUTSIDE IT ----------------------
+     The work views are sheets over a dimmed editor now (deck.css, T607),
+     and the dimmed part is each sheet's own transparent ::before -- so a
+     press there has the SHEET as its target, from outside its box. That
+     press closes the sheet (through its own Close, so each view tidies
+     up the way it always has) and goes no further: the ribbon and the
+     slide under the dimming are not live, the way they were not while
+     the view was the whole window. A press inside the box, on anything
+     the view put on top of it, or anywhere while no sheet is open, is
+     not this listener's. */
+  var SHEETS='.deck-history,.deck-design,.deck-review,.deck-notesed,'
+    +'.img-ov,.vfull,.sh-menu.lay-ideas';
+  function sheetOutside(e){
+    var t=e.target;
+    if(!t||t.nodeType!==1||!t.matches||!t.matches(SHEETS)) return null;
+    var r=t.getBoundingClientRect();
+    if(e.clientX>=r.left&&e.clientX<=r.right
+        &&e.clientY>=r.top&&e.clientY<=r.bottom) return null;
+    return t;
+  }
+  function sheetClose(sh){
+    var x=sh.querySelector('[id$="-close"],[id$="-done"]')
+      ||[].slice.call(sh.querySelectorAll('button')).filter(function(b){
+        return /^\s*(Close|Done)\b/.test(b.textContent||'');})[0];
+    if(x) x.click();
+    else if(sh.classList.contains('lay-ideas')&&typeof overlayHide==='function')
+      overlayHide(sh);
+    else sh.hidden=true;
+  }
+  function sheetBoot(){
+    ['pointerdown','mousedown','mouseup'].forEach(function(k){
+      document.addEventListener(k,function(e){
+        if(!sheetOutside(e)) return;
+        e.preventDefault();e.stopPropagation();
+      },true);
+    });
+    document.addEventListener('click',function(e){
+      var sh=sheetOutside(e); if(!sh) return;
+      e.preventDefault();e.stopPropagation();
+      sheetClose(sh);
+    },true);
+  }
   /* Open/close, shared by the WORDED dropdowns below and the DRAWN ones
      (line style, weight, ends, route) -- now just registration with the
      one owner above, which is what makes every wired menu exclusive and

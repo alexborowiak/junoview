@@ -2996,6 +2996,16 @@
         +'</span></div>';
       return ed;
     }
+    /* T607: THE SLIDE BEHIND ITS FRAMES. This view drew only the frames,
+       each a bare .an-cell without the canvas's frame classes -- so the
+       first slide Create slides makes (a heading over a note) showed as
+       a white card of grey words cut off after one line, with no heading
+       at all, beside a strip whose thumbnails (T522) and a canvas that
+       both showed the dark slide. The slide is drawn by the renderer the
+       strip uses, at this view's own height, and the frames are the
+       outlines over it you click to fill. */
+    var back=slideBackdrop(s);
+    if(back){ed.appendChild(back);ed.classList.add('has-back');}
     cells.forEach(function(pair){
       var a=pair.a, ai=pair.i;
       var it=a.ref?resolveRef(a.ref):null;
@@ -3021,7 +3031,9 @@
         }
         if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
         frame.appendChild(ch);
-        var b=framePart(it.ns,a.part);
+        /* drawn by the backdrop when there is one; the frame keeps its
+           head (shown while chosen) and its hit area */
+        var b=back?null:framePart(it.ns,a.part);
         if(b){if(a.ts) b.style.zoom=a.ts;applyCrop(b,a);frame.appendChild(b);}
         applyCellColor(frame,a);
         p.title=it.nb+' — '+it.title;
@@ -3047,6 +3059,19 @@
       ed.appendChild(p);
     });
     return ed;
+  }
+  /* the whole slide as the strip draws it, sized for the big view: the
+     view is the list's width less its row gutters (it is built before it
+     is attached, so it cannot measure itself) and the page's own shape */
+  function slideBackdrop(s){
+    var l=$('#film-list'),w=l?l.clientWidth-20:0;
+    if(w<=0) return null;
+    var pg=pageOf(),H=Math.round(w*pg.ah/pg.aw);
+    var mh=miniHNow,d;miniHNow=H;
+    try{d=miniDiagram(s);}finally{miniHNow=mh;}
+    d.classList.add('pe-back');
+    d.setAttribute('aria-hidden','true');
+    return d;
   }
   /* T303: THE INDEX HAS TO MATCH THE DECK. This read the live card
      first -- the order T298 inverted in cloneBody -- and it is

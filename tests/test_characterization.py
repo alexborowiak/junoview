@@ -2311,8 +2311,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # + New collection button and its New menu a row, the Filters tab's Keep
 # group a Collect showing button, help.html a Collections section, and the
 # deck script the 64-collections part.
-EXPECTED_MD5 = "2a565b5a6ab92675268210ebafcca6ec"
-EXPECTED_BYTES = 5085897
+# T607: nothing eats the whole screen -- the editor's work views are
+# centred sheets over the dimmed editor (deck.css's sheet block, sheetBoot
+# in the deck script), the building panel draws its slide behind the
+# frames and keeps Autosave and undo in its top row, the Variables pane
+# wraps its chips and the stage makes room for it, Theme hangs from File,
+# and the Notes tabs, the sorter's head and the toast stop overrunning.
+EXPECTED_MD5 = "a81556698723a61c8936664a26061599"
+EXPECTED_BYTES = 5095429
 
 
 def _render_example() -> str:

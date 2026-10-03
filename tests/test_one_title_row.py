@@ -197,9 +197,15 @@ def test_the_tab_being_edited_renames_and_is_the_only_one_lit():
 
 def test_theme_opens_under_file_when_its_menu_has_closed():
     js = assets.app_js()
-    assert ("      var wrap=btn.closest('.dc-menuwrap'),\n"
-            "          door=wrap&&wrap.querySelector('[aria-haspopup=\"true\"]');"
+    assert ("    var wrap=btn.closest('.dc-menuwrap'),\n"
+            "        door=wrap&&wrap.querySelector('[aria-haspopup=\"true\"]');"
             ) in js
+    # T607: under File whenever Theme IS a row of File -- the reader's File
+    # was still open when the picker was placed, so it hung from the Theme
+    # row and ran off the bottom of a laptop screen -- and kept on screen
+    assert "    if(door&&door!==btn){" in js
+    assert ("    var top=Math.min(r.bottom+6,innerHeight-m.offsetHeight-8);\n"
+            "    m.style.top=Math.max(8,top)+'px';") in js
 
 
 def test_home_shows_the_tabs_and_nothing_else():

@@ -39,8 +39,10 @@ def test_the_cards_are_drawn_once_for_pane_and_view(out):
 def test_layout_ideas_is_full_screen_and_on_the_overlay_stack(out):
     assert ".sh-menu.lay-ideas{display:block;position:fixed;inset:0;" in out
     assert "ht.textContent='Ways to lay this slide out';" in out
-    assert ("var W=Math.max(220,Math.min(420,"
-            "Math.round(window.innerWidth*0.28)));") in out
+    # T607: the view is a sheet now (at most 1180px wide), and the cards
+    # are a third of THAT, so all three candidates share one row
+    assert ("var W=Math.max(220,Math.min(420,Math.floor(\n"
+            "        (Math.min(1180,window.innerWidth-48)-160)/3)));") in out
     assert "overlayShow($('#hm-lay-ideas'),p);" in out
     assert "if(p){if(!p.hidden) overlayHide(p); p.remove();}" in out
     # its private dismissal is gone

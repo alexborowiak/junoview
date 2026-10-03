@@ -326,6 +326,17 @@ body.deck-open{overflow:hidden;}
   box-sizing:border-box;margin:0 8px;}
 /* building: no ribbon to search, and the panel is narrow */
 .deck.creating .deck-qat .rbn-search{display:none;}
+/* T607: ...so narrow that the name's kept width (T397, above) pushed
+   Autosave half out of the 430px panel and undo and redo off its end at
+   every window size: the bar went straight to its scroll rung with the
+   two buttons you reach for most scrolled away. In the panel the name is
+   the one thing that can give: it shrinks to an ellipsis (its tooltip
+   and File > Rename... keep it whole) before fitQat's rungs start.
+   While the open files are tabs, the presentation's own tab is lit in
+   the notebook's title row right beside the panel, so the name steps
+   aside there as it does in the editor's title row. */
+.deck.creating .deck-qat .qat-name{flex:0 1 auto;min-width:72px;}
+body.tabs-row-on .deck.creating .deck-qat .qat-name{display:none;}
 /* ---- T602: the strip under it is PowerPoint's File Home Insert row ----
    File first, the ribbon's tabs, then the document's verbs at the right
    (Find, Full screen, Present) before the ribbon's own three settings.
@@ -1416,6 +1427,17 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   4px 6px;}
 .pane-editor.freeform .pane.slot .pane-t{font-size:9.5px;
   -webkit-line-clamp:2;}
+/* T607: the slide drawn behind the frames (slideBackdrop), filling the
+   view edge to edge, as the frames' percentages do; the frames over it
+   are outlines -- dashed when you point at one, solid when chosen */
+.pane-editor.freeform .pe-back{position:absolute;inset:0;width:auto;
+  height:auto;padding:0;border:0;border-radius:inherit;
+  pointer-events:none;}
+.pane-editor.has-back .pane.filled .an-cell{background:none;
+  border-color:transparent;}
+.pane-editor.has-back .pane.slot.filled:hover{
+  outline:1px dashed color-mix(in srgb,var(--accent) 70%,transparent);
+  outline-offset:1px;}
 .mini-diagram.free{display:block;position:relative;}
 .mini-diagram.free .mini-pane{position:absolute;}
 /* a thumbnail draws EVERY kind of item, not just placed cells. Each one
@@ -4273,6 +4295,15 @@ body.light .ovw-find{background:var(--input-bg);color:var(--ink);
 .ovw-tile.hid .ovw-n{text-decoration:line-through;}
 .ovw-tools{display:flex;gap:6px;margin-left:8px;}
 .ovw-tools .dbtn{height:28px;}
+/* T607: the TITLE gives way, never the buttons (the house rule .rv-head
+   keeps). At 1366px the sorter's head ran out of room and every button
+   shrank: Open, Duplicate, New section, Delete and Close each broke into
+   an icon over a word that hung below the button's box, and the title
+   took two lines. */
+.ovw-head .dbtn{flex:none;white-space:nowrap;}
+.ovw-head .ovw-t{flex:0 1 auto;min-width:0;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;}
+.ovw-head .ovw-find{flex:0 1 210px;min-width:120px;}
 .ovw-lab{font-size:10.5px;color:#b9cad8;line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 body.light .deck-overview{background:var(--chrome-0);}
@@ -5536,6 +5567,10 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
   background:var(--chrome-2,#16273a);border:1px solid var(--cyan);color:#e6eef4;
   font-size:12.5px;font-family:var(--mono);padding:9px 16px;border-radius:8px;
   z-index:120;box-shadow:0 8px 30px #00000066;max-width:80vw;}
+/* T607: while editing, above the status and zoom row rather than on it
+   -- the toast Create slides ends with sat over "Slide 1 of 14" and the
+   zoom for its six seconds at a laptop's width */
+.deck.editing .deck-toast{bottom:58px;max-width:min(80vw,760px);}
 
 @media (max-width:860px){
   .deck-stage{padding:16px 52px 4px;}
@@ -5961,6 +5996,9 @@ body.light .np-notes,body.light .np-goal{background:var(--paper-2);
    .anim-tab now; five of them in a 272px pane means the words are set
    a step smaller than Animation's two. */
 .np-tabs .anim-tab{font-size:10.5px;padding:6px 3px 5px;letter-spacing:0;}
+/* T607: the five words came to 278px in a 270px row, so Rehearsals
+   ran into the pane's edge; the row's own gutters are what gives */
+.anim-tabs.np-tabs{padding:0 4px;gap:0;}
 .np-tall{min-height:230px;}
 .np-padbar{display:flex;gap:5px;}
 .np-padb{padding:3px 9px;font-size:10.5px;}
@@ -7385,3 +7423,38 @@ body.light .img-ov .pf-row{background:var(--surface-hover);
 .rbn-foldbtn.has-val>span:first-of-type{font-size:11px;color:var(--ink-2);}
 #anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
 #anim-delaycell .cell-lab{padding-left:2px;}
+
+/* ---- T607: A WORK VIEW IS A SHEET, NOT THE WHOLE WINDOW ----------------
+   (2026-10-03, user: "make sure layouts are good and not eating up the
+   entire screen which seems to be common. I think this gets missed as
+   this is ok for you but not humans.") History, the Style system, the
+   deck in words, the bigger notes editor, the item view and the card
+   lists T209 and T214 gave room to read were each the whole window,
+   edge to edge, in the page colour -- at a laptop's 1366x657 History was
+   a 360px list in a black page with its two footnotes stranded in the
+   middle and at the bottom, and the Style system a quarter-filled form
+   with nothing of the deck in sight. A machine reading the DOM never
+   notices it has lost the room; a person does. Each is now a sheet:
+   centred, at most 1180px wide, as tall as what is in it (the views
+   that ARE a writing surface keep the full height), over the editor
+   dimmed but still there. The slide sorter and the shows stay full
+   screen -- the window is what they are for. The room to read T209
+   asked for is kept: the card lists are still the width of a page,
+   never a 272px pane again. */
+.deck-history,.deck-design,.deck-review,.deck-notesed,.img-ov,.vfull,
+.sh-menu.lay-ideas{inset:24px;margin:auto;box-sizing:border-box;
+  width:min(1180px,calc(100vw - 48px));height:fit-content;
+  max-height:calc(100vh - 48px);
+  border:1px solid var(--chrome-line,#ffffff24);border-radius:12px;
+  box-shadow:0 24px 70px #000000a6,0 0 0 100vmax rgb(3 8 13 / .58);}
+/* writing surfaces fill the height the sheet may have */
+.deck-review,.deck-notesed,.vfull{height:calc(100vh - 48px);}
+/* the dimmed editor is not clickable through the sheet: this layer is
+   the sheet's own (a press on it is a press on the sheet, which
+   sheetBoot reads as "close"), transparent, under everything in it */
+.deck-history::before,.deck-design::before,.deck-review::before,
+.deck-notesed::before,.img-ov::before,.vfull::before,
+.sh-menu.lay-ideas::before{content:"";position:fixed;inset:0;z-index:-1;}
+body.light .deck-history,body.light .deck-design,body.light .deck-review,
+body.light .deck-notesed,body.light .img-ov,body.light .vfull{
+  box-shadow:0 24px 70px #0000004d,0 0 0 100vmax rgb(20 30 40 / .34);}

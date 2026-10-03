@@ -11332,3 +11332,59 @@ them. And a bug: Peek at hidden showed code with Code turned off.
   Code off and Markdown off in the collection; Collect showing filed 19
   more (the 20th was already there); Remove and Undo; Update; a reload
   reopened it from its address with every figure.
+
+## Group 23 — the 2026-10-03 laptop-screen pass
+
+The user, 2026-10-03: "Please make sure layouts are good and not eating
+up the entire screen which seems to be common. I think this gets missed
+as this is ok for you but not humans." Every earlier pass was driven at
+1440x900 with no browser around it. A person's window is smaller: a
+1366x768 laptop leaves about 1366x657 once the browser's own bars are
+drawn, and a 1080p laptop at 150% leaves about 1280x600. From now on a
+change to a surface is driven at those sizes as well.
+
+- [x] **T607 — Nothing eats the whole screen that does not need it.**
+  *Done 2026-10-03.* Every ribbon button on every editor tab was pressed
+  at 1366x657 by a script that measured what opened, and the reader's
+  menus, panes and views were driven by hand; then each finding was
+  looked at as a screenshot. **The work views are sheets.** History, the
+  Style system, the deck in words (Review), the bigger notes editor, the
+  item view and the card lists T209 and T214 made full screen (All
+  images, Make a slide layout, Check consistency, Tidy page, Before you
+  print, Layout ideas) were each the whole window in the page colour --
+  History a 360px list with its footnotes stranded halfway down a black
+  page, the Style system a quarter-filled form, and no slide in sight in
+  any of them. Each is now a centred sheet, at most 1180px wide and as
+  tall as what is in it (Review, the notes editor and the item view are
+  writing surfaces and keep the full height), over the editor dimmed but
+  still there. The dimming is the sheet's own transparent layer, so a
+  press on it is caught by sheetBoot (capture) and closes the sheet
+  through its own Close (or Done) and goes no further: nothing under the
+  dimming is live, as it was not while the view was the window. T209's
+  "room to read" is kept -- the card lists are a page wide, never a pane
+  -- and Layout ideas sizes its cards to a third of the sheet, so its
+  three candidates share one row again. The slide sorter and the shows
+  stay full screen. **Building** (Escape out of the editor), the slide
+  panel's top row pushed Autosave half out of its 430px and undo and redo
+  off the end at every window size: the name gives way first now, and
+  steps aside altogether while the open files are tabs, since the
+  presentation's own tab is lit beside the panel. The panel's big view
+  drew only the frames, each a bare card -- the first slide Create slides
+  makes showed as a white box of clipped grey words with no heading. It
+  draws the whole slide behind its frames now, with the strip's renderer
+  at the view's own height, and the frames are outlines over it.
+  **Reader:** the Variables pane covered the notebook's right 200px (the
+  stage makes room for it above 1100px wide, as the editor's stage does
+  for its panes) and its filter field was squeezed to an empty 18px box
+  by the chips and the order switch sharing its line (the chips have a
+  row of their own); File > Theme hung from the Theme row, 400px down,
+  and ran off the bottom of the screen once File closed (it hangs from
+  File and is kept on screen). **Small rows:** the Notes pane's five
+  tabs came to 278px in 270, the slide sorter's head shrank its buttons
+  until each broke into an icon over a word below its own box (the
+  title gives way now), and the editor's toasts sat on the status and
+  zoom row (they sit above it while editing). Driven at 1366x657 and
+  1280x600: each sheet opened, read and closed by a press outside;
+  building with all of its row on screen and slide 1 and a figure slide
+  drawn as the slide; the Variables pane beside the notebook; Theme under
+  File; the sorter's head on one line.

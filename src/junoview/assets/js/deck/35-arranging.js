@@ -1309,7 +1309,12 @@
       var b=document.createElement('button');
       b.className='dbtn li-card';
       b.title=note||'';
-      var W=Math.max(220,Math.min(420,Math.round(window.innerWidth*0.28)));
+      /* T607: three to a row of the SHEET the view is now (1180px at
+         most, 24px off each edge), less its padding, the cards' own
+         padding and two gaps -- a third of the window put the third
+         card on a second row */
+      var W=Math.max(220,Math.min(420,Math.floor(
+        (Math.min(1180,window.innerWidth-48)-160)/3)));
       var H=Math.round(W*ratio);
       /* T490: DRAWN AT THE CARD'S OWN SCALE. miniDiagram sizes type
          and strokes off miniHNow, the film strip's thumbnail height
