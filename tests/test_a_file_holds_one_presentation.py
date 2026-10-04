@@ -26,8 +26,10 @@ from __future__ import annotations
 
 def test_the_file_is_this_deck_only(out):
     assert "  function filePresentations(){" in out
-    assert ("      presentations:embedAssets(plainIfSingle("
-            "filePresentations()))},") in out
+    # T563: the list is built first, so the web page can leave the
+    # comments out of it
+    assert ("    var list=embedAssets(plainIfSingle("
+            "filePresentations()));") in out
     assert "    var list=plainIfSingle(filePresentations());   /* T433" in out
     # T597 named it once for the page and once for the file's config
     assert "    var nm=pres.name||APP.order[0]||'presentation';" in out

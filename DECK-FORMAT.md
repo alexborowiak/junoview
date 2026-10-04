@@ -84,6 +84,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `lay` | str | The id of the slide template last applied; annotations hold its actual geometry. |
 | `layout` | str | Which pane arrangement this slide uses. |
 | `notes` | str | Speaker notes for this slide. |
+| `comments` | list | Comments on this slide (T563): `[{id, text, t, oid?, x?, y?, done?, re?}]` — `t` when (ms since 1970), `oid` the object it is pinned to, `x`/`y` the spot (page percent) when it is on the slide, `done` 1 once resolved, `re` the replies `[{text, t}]`. Part of the working deck like the notes; never presented, printed or exported. |
 | `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
 | `hide` | int | 1 when this slide is hidden: kept in the deck and in its .pptx (hidden there too), but never played and left out of a PDF — PowerPoint's Hide Slide. |
 | `alt` | str | The version group this slide belongs to. A group is a contiguous run sharing it; the FIRST is the main — what the talk and every export show — and the rest are alternatives kept under it. Starring one moves it to the head. |

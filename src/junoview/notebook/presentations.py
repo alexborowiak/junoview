@@ -240,6 +240,15 @@ def as_presentations(obj: Any) -> list:
                     slide["bg"] = s["bg"].strip()
                 if isinstance(s.get("notes"), str) and s["notes"]:
                     slide["notes"] = s["notes"]
+                # T563: comments pinned to the slide or an object. The
+                # working deck's, like the notes: kept here or a project
+                # save would cost them, never drawn in the talk.
+                if isinstance(s.get("comments"), list):
+                    cms = [dict(c) for c in s["comments"]
+                           if isinstance(c, dict)
+                           and isinstance(c.get("text"), str) and c["text"]]
+                    if cms:
+                        slide["comments"] = cms
                 if isinstance(s.get("goal"), (int, float)) and s["goal"] > 0:
                     slide["goal"] = s["goal"]
                 for k in ("border", "grpmeta"):

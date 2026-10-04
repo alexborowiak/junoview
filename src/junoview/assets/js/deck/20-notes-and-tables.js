@@ -4042,6 +4042,9 @@
       $$('.an-item[data-idx="'+i+'"]',layer).forEach(function(el){
         el.classList.add(lm==='all'?'an-locked':'an-pinned');});
     });
+    /* T563: the comment markers, while editing only -- after the items,
+       whose boxes they sit on */
+    if(typeof cmtMount==='function') cmtMount(layer,s);
     layer._paintSlide=s;layer._paintMode=mode;layer._paintItems=nextItems;
     /* Replacing the object whose contents changed must not reset its
        independent looping motion. Unchanged objects never leave the DOM. */

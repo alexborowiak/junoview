@@ -1892,7 +1892,8 @@
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
     ['vw-side','Side toolbar'],
     ['vw-check','Review'],['vw-preflight','Print check'],
-    ['objects-btn','Layers'],['notes-btn','Notes']];
+    ['objects-btn','Layers'],['notes-btn','Notes'],
+    ['comments-btn','Comments']];
   var viewFolded=false,viewWasHidden=null;
   function foldViewGroup(on){
     on=!!on;
@@ -2675,10 +2676,11 @@
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
     'imgpane','mediapane','chartpane','tablepane','citepane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
-    'reviewpane','a11ypane'];
+    'reviewpane','a11ypane','compane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
     imgpane:'#hm-images',citepane:'#dsg-cites',   /* T469: Citations too */
-    notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
+    notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std',
+    compane:'#comments-btn'};   /* T563 */
   function paneSyncBtns(){
     Object.keys(PANE_BTN).forEach(function(p){
       var b=$(PANE_BTN[p]); if(!b) return;

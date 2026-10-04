@@ -1068,6 +1068,13 @@ items snap to both. Guides, not ink: never printed or exported"
                 title="Speaker notes for this slide, and how long you want
  to spend on it. Only you ever see them"><i data-ic="style"></i>
                 Notes</button>
+              <!-- T563: comments pinned to a slide or an object; part of
+                   the working deck, never of the talk -->
+              <button class="fx-tile view-tile rbn-tall" id="comments-btn"
+                aria-pressed="false"
+                title="Comments on this slide and its objects (Ctrl+Alt+M for
+ a new one). Never shown in the talk, a print or an export"
+                ><i data-ic="comment"></i> Comments</button>
               <!-- Zoom has left this group for the thin bar at the top.
                    It is the one control you reach for on EVERY tab, and a
                    control that a tab can take away from you is a control
@@ -3503,6 +3510,16 @@ items snap to both. Guides, not ink: never printed or exported"
            timeline, because it is the same kind of thing: a panel you keep
            open beside the page while you work on it. The notes are what
            the presenter view reads (2026-08-20). -->
+      <!-- T563: THE COMMENTS PANE. This slide's comments (or every
+           slide's), a box for a new one on what is selected, replies,
+           Resolve and Delete; filled by cmtRender (63-comments.js). -->
+      <aside class="selpane compane" id="compane" hidden
+        aria-label="Comments">
+        <div class="selpane-h"><span>Comments</span>
+          <button class="dbtn dc-icon" id="compane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="selpane-list" id="compane-body"></div>
+      </aside>
       <aside class="selpane notespane" id="notespane" hidden>
         <div class="selpane-h"><span>Notes &amp; timing</span>
           <button class="dbtn dc-icon" id="notespane-close" aria-label="Close"

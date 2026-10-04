@@ -10583,8 +10583,30 @@ choice in the editor (T506, T507).
   Driven at 1440x900: a 5 typed and previewed, Enter moved down a
   column, + Series and a pasted 7/8/9 grew the grid to three rows,
   Cancel put the numbers back, Ctrl+Enter applied a 10, Escape closed.
-- [ ] **T563 — Comments.** A comment pinned to a slide or an object,
+- [x] **T563 — Comments.** A comment pinned to a slide or an object,
   listed in a Comments pane, never presented, printed or exported.
+  *Done 2026-10-04.* View gains a Comments door (beside Notes in all
+  eight ribbon layouts, the folded View menu and command search) onto a
+  pane like the others: This slide / All slides tabs with open counts, a
+  box that says where the next comment goes, the open comments as cards
+  (where it is, when, the text, replies; Reply, Resolve, Delete with an
+  Undo toast) and a Resolved fold. With one object selected a comment is
+  pinned to it by its oid, so it follows the object through every move;
+  with nothing selected it is on the slide; right-click > New comment
+  pins one to the spot clicked, and Ctrl+Alt+M (PowerPoint's) starts one
+  from anywhere in the editor. Every change is one undo step. Open
+  comments show as an amber marker -- on the object's top-right corner,
+  grouped with a count -- on the live editing page only (never a
+  thumbnail, ghost, print page or the show), and as a count on the
+  slide in the strip; a resolved one leaves no marker. Kept by the
+  normaliser on both sides (`s.comments`, documented in DECK-FORMAT.md
+  and deck_schema), so a project save and a .junoview file keep them;
+  the exported web page leaves them out of the deck it carries, the
+  .pptx and the review markdown never read them, and presenting closes
+  the pane. A duplicated slide's copies get their own ids before the
+  pane keys anything by them, and an action always lands on its own
+  card's slide. Driven at 1366x657 and 1280x600. Tests in
+  tests/test_comments.py.
 - [ ] **T564 — Record narration.** Record audio per slide while
   rehearsing; it plays in the show and travels in the saved deck.
 - [x] **T565 — The accessibility check.** Missing alt text, reading order

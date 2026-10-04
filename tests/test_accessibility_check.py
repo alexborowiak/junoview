@@ -17,7 +17,7 @@ def test_the_review_centre_has_a_sixth_check():
     html = assets.load("html/deck.html")
     assert 'id="a11ypane"' in html
     ribbon = assets.load("js/deck/05-figures-and-ribbon.js")
-    assert "'reviewpane','a11ypane'];" in ribbon
+    assert "'reviewpane','a11ypane'" in ribbon
 
 
 def test_the_three_findings_and_their_fixes():

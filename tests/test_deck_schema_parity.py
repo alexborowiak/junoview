@@ -150,6 +150,8 @@ SLIDE_SENTINELS = {
     "rord": ["oid2", "oid1"],
     "mast": "m1",
     "annots": [{"k": "text", "x": 1, "y": 1}],
+    # T563: the review comments pinned to the slide
+    "comments": [{"id": "c1", "text": "Cite this?", "t": 1}],
     "hidden": ["demo::clim"],
     "title": "The headline",
     "sub": "The subtitle",

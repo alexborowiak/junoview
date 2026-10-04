@@ -25,6 +25,7 @@ VIEW_IDS = (
     "vw-preflight",
     "objects-btn",
     "notes-btn",
+    "comments-btn",   # T563
 )
 
 

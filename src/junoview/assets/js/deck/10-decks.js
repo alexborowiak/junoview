@@ -243,6 +243,14 @@
            on the page, and lost on every reload until they were
            whitelisted here (2026-08-20) */
         if(typeof s.notes==='string'&&s.notes) o.notes=s.notes;
+        /* T563: comments, pinned to the slide or an object -- the working
+           deck's, like the notes, and never drawn in the talk */
+        if(Array.isArray(s.comments)){
+          var cms=s.comments.filter(function(c){
+            return c&&typeof c==='object'&&typeof c.text==='string'
+              &&c.text;}).map(deep);
+          if(cms.length) o.comments=cms;
+        }
         if(typeof s.goal==='number'&&s.goal>0) o.goal=s.goal;
         /* the slide's durable name. Minted on first rehearsal, and the
            only reason a run made on Tuesday can be compared with one

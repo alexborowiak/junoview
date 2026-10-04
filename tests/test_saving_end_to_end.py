@@ -85,5 +85,6 @@ def test_the_standalone_html_can_be_opened_again(out):
     # (the closing tag is split, or the inline editor script would end
     # right there -- the page threw "Invalid or unexpected token")
     assert ("        +'<script type=\"application/json\" id=\"junoview-data\">\\n'\n"
-            "        +deckFileText().replace(/</g,'\\\\u003c')+'\\n</scr'+'ipt>'\n"
+            "        +deckFileText({noComments:1}).replace(/</g,'\\\\u003c')"
+            "+'\\n</scr'+'ipt>'\n"
             "        +'</body></html>';") in out

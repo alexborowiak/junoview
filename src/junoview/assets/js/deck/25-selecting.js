@@ -140,6 +140,9 @@
        no walking (T65). */
     if(typeof sizePaneSync==='function') sizePaneSync();
     if(typeof mediaPaneSync==='function') mediaPaneSync();
+    /* T563: the Comments pane's "New comment on ..." follows the
+       selection and the slide */
+    if(typeof cmtRender==='function') cmtRender();
     if(typeof chartPaneSync==='function') chartPaneSync();
     if(typeof tablePaneSync==='function') tablePaneSync();
     var hp=$('#objhist');
@@ -3520,6 +3523,8 @@
       row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);},
         'Centred on the point you right-clicked');
     }
+    /* T563: a comment on what was clicked, or on the spot */
+    if(typeof cmtMenuRows==='function') cmtMenuRows(m,row,at);
     cmPasteUp(m);
     cmFold(m);
     floatAt(m,ev);

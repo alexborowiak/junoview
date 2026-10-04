@@ -119,6 +119,8 @@
   presentationHubBoot();      /* Home + presenting drawer, one library */
   tabRowBoot();               /* New and Open beside the tabs (T596) */
   colBoot();                  /* Collections: New, Collect showing (T606) */
+  commentsBoot();             /* Comments: the pane, its door, Ctrl+Alt+M
+                                 (T563) */
   partsBoot();                /* the Parts view's doors (T601) */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */

@@ -180,6 +180,13 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                 "own."),
     "bg": (str, "This slide's own background colour."),
     "notes": (str, "Speaker notes for this slide."),
+    "comments": (list, "Comments on this slide (T563): [{id, text, t, "
+                       "oid?, x?, y?, done?, re?}] -- `t` when (ms since "
+                       "1970), `oid` the object it is pinned to, `x`/`y` "
+                       "the spot (page percent) when it is on the slide, "
+                       "`done` 1 once resolved, `re` the replies [{text, "
+                       "t}]. Part of the working deck like the notes; "
+                       "never presented, printed or exported."),
     "goal": ((int, float), "Minutes this slide should take."),
     "border": (dict, "This slide's own border."),
     "grpmeta": (dict, "Names for the groups on this slide."),

@@ -825,10 +825,24 @@
     var cp=deep(pres);delete cp.origin;
     return [cp];
   }
-  function deckFileText(){
-    return JSON.stringify({junoview:1,
-      presentations:embedAssets(plainIfSingle(filePresentations()))},
-      null,2);
+  function deckFileText(opts){
+    var list=embedAssets(plainIfSingle(filePresentations()));
+    /* T563: a comment is the working deck's, never an export's -- the
+       standalone page carries the deck so it can be opened again, but
+       not the notes people left each other on it */
+    if(opts&&opts.noComments) list=list.map(function(p){
+      if(!p||!Array.isArray(p.slides)) return p;
+      var q={};
+      Object.keys(p).forEach(function(k){q[k]=p[k];});
+      q.slides=p.slides.map(function(s){
+        if(!s||!s.comments) return s;
+        var t={};
+        Object.keys(s).forEach(function(k){if(k!=='comments') t[k]=s[k];});
+        return t;
+      });
+      return q;
+    });
+    return JSON.stringify({junoview:1,presentations:list},null,2);
   }
   /* how many decks a file's text holds, for the doors that open one */
   function fileDeckCount(txt){
@@ -2300,7 +2314,7 @@
            could never be opened for editing again. The same data block
            a .junoview.html carries, so Open a file takes this too. */
         +'<script type="application/json" id="junoview-data">\n'
-        +deckFileText().replace(/</g,'\\u003c')+'\n</scr'+'ipt>'
+        +deckFileText({noComments:1}).replace(/</g,'\\u003c')+'\n</scr'+'ipt>'
         +'</body></html>';
       var blob=new Blob([doc],{type:'text/html'});
       var a=document.createElement('a');

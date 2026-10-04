@@ -509,6 +509,17 @@
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'
         :'Skipped by Running late');
+      /* T563: how many open comments the slide has, with the speech
+         bubble the pane and the markers wear */
+      var ncm=(typeof cmtOpen==='function')?cmtOpen(s):0;
+      if(ncm){
+        var cmk=document.createElement('span');
+        cmk.className='film-mark cmt';
+        cmk.innerHTML=bic('comment')+' '+ncm;
+        cmk.title=ncm+' open comment'+(ncm===1?'':'s')
+          +' — View › Comments';
+        marks.appendChild(cmk);
+      }
       if(marks.childNodes.length) lbl.appendChild(marks);
       /* WHILE ARMED the thumbnail is a target, not a destination --
          and every row is one, including the current slide, which is why
@@ -1324,6 +1335,11 @@
       var np=$('#notespane'); if(np) np.hidden=true;
       var nb=$('#notes-btn');
       if(nb) nb.setAttribute('aria-pressed','false');
+      /* ...and Comments (T563), which are the working deck's and never
+         the talk's */
+      var cpn=$('#compane'); if(cpn) cpn.hidden=true;
+      var cbn=$('#comments-btn');
+      if(cbn) cbn.setAttribute('aria-pressed','false');
       /* ...and so is the Versions pane. Put the strip back where the
          builder expects to find it before the builder renders. */
       showVerpane(false);

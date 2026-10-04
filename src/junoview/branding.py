@@ -275,6 +275,9 @@ _ICON_PATHS = {
                    '<path d="m5.4 9.4-1.6 2.8 1.2 1.2 2.8-1.6"/>'
                    '<path d="M2 14h12" stroke-width="2.2" opacity=".5"/>',
     "tick": '<path d="m3 8.4 3.2 3.2L13 4.8"/>',
+    # T563: a speech bubble -- a comment left on the slide
+    "comment": '<path d="M2.4 3.4h11.2v7.4H8.2L5 13.4v-2.6H2.4z"/>'
+               '<path d="M5 6.2h6M5 8.2h4"/>',
     # three plain lines: the generic list / overflow menu (never the
     # markdown filter, whose third line is short)
     "menu": '<path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/>',

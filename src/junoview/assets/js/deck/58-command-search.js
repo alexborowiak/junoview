@@ -26,6 +26,7 @@
     'hm-paste-look':'format painter paste formatting',
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
+    'comments-btn':'comments comment review note feedback new comment',
     /* T594: Focus and Motion are the panel's now, so their words
        find the door onto it */
     'vw-anim':'animation pane animations list focus blur zoom magnify '

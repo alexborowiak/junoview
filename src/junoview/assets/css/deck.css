@@ -7569,3 +7569,52 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 /* on a light page a highlighter darkens what is under it, as a real one
    does, rather than laying a pale film over the words */
 .deck.page-light .jv-ink .jv-hl{mix-blend-mode:multiply;}
+
+/* ---- T563: comments ------------------------------------------------------
+   A marker is a small amber speech bubble on the corner of what it is
+   about -- drawn only while editing (cmtMount), never in the show, a print
+   or an export -- with a count when there is more than one there. */
+.cmt-pins{position:absolute;inset:0;pointer-events:none;z-index:9;}
+.cmt-pin{position:absolute;transform:translate(-50%,-50%);
+  pointer-events:auto;display:inline-flex;align-items:center;gap:2px;
+  height:22px;min-width:22px;padding:0 5px;border-radius:11px 11px 11px 3px;
+  border:1px solid color-mix(in srgb,var(--warning,#f0a848) 70%,#000);
+  background:var(--warning,#f0a848);color:#1a1205;cursor:pointer;
+  box-shadow:0 2px 8px #0006;font:700 10.5px var(--sans);}
+.cmt-pin .bic{width:12px;height:12px;}
+.cmt-pin:hover{outline:2px solid var(--accent,var(--cyan));outline-offset:1px;}
+.film-mark.cmt{display:inline-flex;align-items:center;gap:2px;
+  color:var(--warning,#f0a848);}
+.film-mark.cmt .bic{width:10px;height:10px;}
+.compane .selpane-list{display:flex;flex-direction:column;gap:8px;}
+.cmt-tabs{margin:-2px -10px 2px;}
+.cmt-compose{display:flex;flex-direction:column;gap:5px;}
+.cmt-on{font:11.5px var(--sans);color:var(--chrome-ink-2);}
+.cmt-ta{min-height:54px;font:12.5px/1.45 var(--sans);}
+.cmt-row{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+.cmt-hint{margin-right:auto;font:10.5px var(--mono);color:var(--chrome-ink-3);}
+.cmt-link{background:none;border:0;padding:0;cursor:pointer;
+  color:var(--accent,var(--cyan));font:inherit;text-align:left;}
+.cmt-link:hover{text-decoration:underline;}
+.cmt-empty{font:12px var(--sans);color:var(--chrome-ink-3);padding:6px 2px;}
+.cmt-slide{background:none;border:0;padding:6px 0 0;cursor:pointer;
+  text-align:left;font:600 11px var(--sans);color:var(--chrome-ink-2);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.cmt-card{background:var(--chrome-1);border:1px solid var(--chrome-line);
+  border-left:3px solid var(--warning,#f0a848);border-radius:8px;
+  padding:7px 9px;display:flex;flex-direction:column;gap:5px;}
+.cmt-card.done{border-left-color:var(--chrome-line);opacity:.75;}
+.cmt-card.cmt-flash{box-shadow:0 0 0 2px var(--accent,var(--cyan));}
+.cmt-head{display:flex;align-items:baseline;gap:8px;font:11px var(--sans);}
+.cmt-head .cmt-link{flex:1;min-width:0;overflow:hidden;white-space:nowrap;
+  text-overflow:ellipsis;}
+.cmt-when{font:10px var(--mono);color:var(--chrome-ink-3);white-space:nowrap;}
+.cmt-text{font:12.5px/1.45 var(--sans);color:var(--chrome-ink);
+  white-space:pre-wrap;overflow-wrap:anywhere;}
+.cmt-re{margin-left:10px;padding-left:8px;border-left:2px solid
+  var(--chrome-line);display:flex;flex-direction:column;gap:2px;}
+.cmt-acts{display:flex;gap:4px;flex-wrap:wrap;}
+.cmt-act{padding:3px 8px;font-size:10.5px;}
+.cmt-done>summary{cursor:pointer;font:600 11px var(--sans);
+  color:var(--chrome-ink-2);padding:4px 0;}
+.cmt-done>.cmt-card{margin-top:6px;}

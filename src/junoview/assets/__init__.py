@@ -133,6 +133,7 @@ DECK_PARTS = (
     "58-command-search",
     "60-saving-and-export",
     "62-pptx-import",
+    "63-comments",
     "64-collections",
     "99-boot",
 )

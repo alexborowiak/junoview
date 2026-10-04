@@ -2333,8 +2333,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # overlay, the bar, the keys, the keep-or-discard question), the Talk
 # panel's Ink row, two icons (highlighter, tick), deck.css's ink and a
 # dialog's verbs kept on one line, and help.html an Ink entry.
-EXPECTED_MD5 = "e5c40f6b22937f3dac99c013af3a2350"
-EXPECTED_BYTES = 5169128
+# T563: comments -- deck.html gains View's Comments door and the pane,
+# the deck script 63-comments.js (markers, pane, the right-click row,
+# Ctrl+Alt+M), the strip's count, the normaliser's key and the web
+# page's strip; branding a comment icon; deck.css the pane, the cards and
+# the markers; and help.html a Comments entry and its shortcut.
+EXPECTED_MD5 = "2946a69f706234fa991d11af220cd2df"
+EXPECTED_BYTES = 5195235
 
 
 def _render_example() -> str:

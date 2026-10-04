@@ -73,6 +73,9 @@ RUNTIME_IDS = {
     # The PDF/print export builds a throwaway container:
     # deck.js ~line 17471, root.id='print-root'.
     "print-root",
+    # T563: the Comments pane's new-comment box, built by cmtRender in
+    # 63-comments.js every time the pane draws
+    "cmt-new",
     # Auto-arrange's live count badge: deck.js ~line 12696, n.id='aa-n'
     # (the rest of the aa- dialog is static markup in deck.html).
     "aa-n",
