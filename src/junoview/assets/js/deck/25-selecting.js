@@ -1807,7 +1807,7 @@
         var nf=Math.max(3,fh0+(south?dy:-dy));
         a.fh=Math.round(nf*100)/100;
         if(north) ny=oy+(fh0-nf);
-        if(el) el.style.minHeight='calc('+a.fh+'% - 0.7em - 2px)';
+        if(el) el.style.minHeight=a.fh+'%';
       }
       a.w=nw;
       if(a.k!=='text') a.h=nh;

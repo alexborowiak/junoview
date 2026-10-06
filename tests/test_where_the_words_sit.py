@@ -28,7 +28,9 @@ from helpers_js import build_pptx, js_engine
 
 def test_the_model_and_the_render(out):
     assert "if(a.fh&&(a.va==='m'||a.va==='b')){" in out
-    assert "d2.style.minHeight='calc('+a.fh+'% - 0.7em - 2px)';" in out
+    # the box is border-box (core.css), so min-height IS the whole box
+    assert "d2.style.minHeight=a.fh+'%';" in out
+    assert "0.7em - 2px" not in out
     assert ".an-item.an-text.an-va-m{align-items:center;}" in out
     assert ".an-item.an-text.an-va-b{align-items:flex-end;}" in out
     # a box that keeps a height has vertical handles

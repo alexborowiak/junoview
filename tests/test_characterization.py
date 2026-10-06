@@ -2338,8 +2338,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Ctrl+Alt+M), the strip's count, the normaliser's key and the web
 # page's strip; branding a comment icon; deck.css the pane, the cards and
 # the markers; and help.html a Comments entry and its shortcut.
-EXPECTED_MD5 = "2946a69f706234fa991d11af220cd2df"
-EXPECTED_BYTES = 5195235
+# T542 follow-up: a box that keeps a height is drawn that height --
+# min-height is the whole fit line, as the page is border-box.
+EXPECTED_MD5 = "81db7223d5f31fede47ac16119cd6514"
+EXPECTED_BYTES = 5195459
 
 
 def _render_example() -> str:

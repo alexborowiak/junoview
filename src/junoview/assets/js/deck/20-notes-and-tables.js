@@ -3127,9 +3127,13 @@
            box that grows with its words has no spare room to sit
            anywhere in, which is the T15 model and is not changed. */
         if(a.fh&&(a.va==='m'||a.va==='b')){
-          /* the WHOLE box is the fit line: min-height is the content
-             box's, so the .35em padding and 1px border come off it */
-          d2.style.minHeight='calc('+a.fh+'% - 0.7em - 2px)';
+          /* the WHOLE box is the fit line. core.css makes every box
+             border-box, so min-height already counts the .35em padding
+             and the 1px border: taking them off again drew the box
+             0.7em+2px short of its height -- shorter than the .pptx
+             writes it, and off-centre for an arrow attached to it,
+             which measures the stored box (T561, 2026-10-06) */
+          d2.style.minHeight=a.fh+'%';
           d2.classList.add('an-va-'+a.va);
         }
         /* the fit multiplier rides on the element as a variable, so
