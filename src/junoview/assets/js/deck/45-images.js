@@ -1641,15 +1641,26 @@
       overlayHide(sh);
     else sh.hidden=true;
   }
+  /* where the press BEGAN. A drag that starts in the sheet -- selecting
+     words in Review or the notes editor -- and is let go over the shade
+     clicks the sheet itself (the nearest element both ends share), which
+     read as a press outside and closed it (2026-10-06 review). Kept from
+     pointerdown, because a pointerdown we swallow is followed by no
+     mousedown or mouseup at all, though the click still comes. */
+  var sheetDown=null;
   function sheetBoot(){
     ['pointerdown','mousedown','mouseup'].forEach(function(k){
       document.addEventListener(k,function(e){
-        if(!sheetOutside(e)) return;
+        var sh=sheetOutside(e);
+        if(k!=='mouseup') sheetDown=sh;
+        if(!sh||!sheetDown) return;
         e.preventDefault();e.stopPropagation();
       },true);
     });
     document.addEventListener('click',function(e){
-      var sh=sheetOutside(e); if(!sh) return;
+      var sh=sheetOutside(e),down=sheetDown;
+      sheetDown=null;
+      if(!sh||sh!==down) return;
       e.preventDefault();e.stopPropagation();
       sheetClose(sh);
     },true);

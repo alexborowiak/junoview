@@ -2354,8 +2354,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T558/T567 follow-up: a stroke belongs to the slide it began on, a
 # half-drawn one goes with its layer, closeDeck ends a show's ink, the
 # tour's keys stop on window, and the editor tour waits for a question.
-EXPECTED_MD5 = "4d376a23e4ec5ac15726b010a63f2f2a"
-EXPECTED_BYTES = 5221302
+# T607 follow-up: a sheet closes only for a press that began outside it
+# (sheetDown), not a word-selection let go over the shade.
+EXPECTED_MD5 = "e21bf8925cfbe3f308011e41ed9ea771"
+EXPECTED_BYTES = 5221879
 
 
 def _render_example() -> str:

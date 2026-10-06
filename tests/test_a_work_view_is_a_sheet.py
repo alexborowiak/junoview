@@ -167,3 +167,47 @@ def test_small_rows_that_overran():
     assert ".anim-tabs.np-tabs{padding:0 4px;gap:0;}" in css
     assert ".ovw-head .dbtn{flex:none;white-space:nowrap;}" in css
     assert ".deck.editing .deck-toast{bottom:58px;" in css
+
+
+def test_a_drag_from_inside_let_go_over_the_shade_keeps_the_sheet():
+    """2026-10-06 review: selecting words in Review and letting go past
+    the sheet's edge clicks the sheet itself, which read as outside."""
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no JS engine")
+    cmd, env = eng
+    js = assets.deck_js()
+    src = (js[js.index("  var SHEETS="):js.index("  function sheetOutside(")]
+           + lift_fn(js, "sheetOutside") + "\nvar sheetDown=null;\n"
+           + lift_fn(js, "sheetBoot") + r"""
+var L={},closed=0,stopped=[];
+var document={addEventListener:function(k,f){(L[k]=L[k]||[]).push(f);}};
+function sheetClose(){closed++;}
+sheetBoot();
+var sheet={nodeType:1,matches:function(s){return /deck-review/.test(s);},
+  getBoundingClientRect:function(){return {left:100,top:50,right:900,bottom:450};}};
+var word={nodeType:1,matches:function(){return false;}};
+function fire(k,t,x,y){
+  var e={type:k,target:t,clientX:x,clientY:y,
+    preventDefault:function(){},stopPropagation:function(){stopped.push(k);}};
+  (L[k]||[]).forEach(function(f){f(e);});
+}
+/* a drag: pressed on a word inside, let go over the shade */
+fire('pointerdown',word,300,200);fire('mousedown',word,300,200);
+fire('mouseup',sheet,20,20);fire('click',sheet,20,20);
+var afterDrag=[closed,stopped.slice()];
+/* a press on the shade */
+stopped=[];
+fire('pointerdown',sheet,20,20);fire('click',sheet,20,20);
+console.log(JSON.stringify([afterDrag,closed,stopped]));
+""")
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "t.js"
+        p.write_text(src, encoding="utf-8", newline="\n")
+        r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
+                           env=env, timeout=60)
+    assert r.returncode == 0, r.stderr[:2000]
+    after_drag, closed, stopped = json.loads(r.stdout.strip().splitlines()[-1])
+    assert after_drag == [0, []]          # kept, and nothing swallowed
+    assert closed == 1                    # a real press outside still closes
+    assert stopped == ["pointerdown", "click"]
