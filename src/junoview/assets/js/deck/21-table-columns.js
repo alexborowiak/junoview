@@ -365,9 +365,12 @@
       });
       rows.splice(at,1);
       if(Array.isArray(fills)&&fills.length>at) fills.splice(at,1);
+      /* a region whose last row this was goes with it: kept at 0 rows
+         it read back as 1 and merged the row that moved up into its
+         place (2026-10-06 review) */
       ms.forEach(function(m){
         if(m.r>at){m.r--;out.push(m);}
-        else if(m.r+m.rs>at){m.rs--;out.push(m);}
+        else if(m.r+m.rs>at){m.rs--;if(m.rs>0) out.push(m);}
         else out.push(m);
       });
     } else {
@@ -381,7 +384,7 @@
         if(Array.isArray(row)&&row.length>at) row.splice(at,1);});
       ms.forEach(function(m){
         if(m.c>at){m.c--;out.push(m);}
-        else if(m.c+m.cs>at){m.cs--;out.push(m);}
+        else if(m.c+m.cs>at){m.cs--;if(m.cs>0) out.push(m);}
         else out.push(m);
       });
       ['ctype','calc','rules'].forEach(function(k){
@@ -438,6 +441,10 @@
       tblInsert(a,'col',c+1);
       ws.splice(c,1,w,w);a.cols=ws;
       var ms=tableMerges(a);
+      /* a region ENDING on the split column runs across the new one
+         too, or its rows grew a stray empty cell beside it (the split
+         cell itself is never in a region) */
+      ms.forEach(function(m){if(m.c+m.cs-1===c) m.cs++;});
       for(var i=0;i<a.rows.length;i++){
         if(i===r||tableMergeAt(a,i,c)) continue;
         ms.push({r:i,c:c,rs:1,cs:2});
@@ -446,6 +453,7 @@
     } else {
       tblInsert(a,'row',r+1);
       var ms2=tableMerges(a);
+      ms2.forEach(function(m){if(m.r+m.rs-1===r) m.rs++;});
       for(var j=0;j<a.rows[0].length;j++){
         if(j===c||tableMergeAt(a,r,j)) continue;
         ms2.push({r:r,c:j,rs:2,cs:1});

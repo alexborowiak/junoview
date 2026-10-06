@@ -230,3 +230,89 @@ def test_a_pptx_brings_the_merges_and_fills_back():
     assert tb["first"] == 1
     # merged cells are carried now, so they are no longer reported lost
     assert "merged" not in json.dumps(got.get("lost", {}))
+
+
+# ---- 2026-10-06 review fixes ---------------------------------------------
+
+def test_removing_a_regions_last_row_or_column_removes_the_region():
+    got = _run(GRID + """
+tableMerge(a,1,0,1,1);           /* d e, across one row */
+tableGrow(a,'row',-1,1);
+var one={merge:a.merge||null,rows:a.rows,cover:tableCover(a)};
+var b={k:'table',rows:[['a','b','c'],['d','e','f'],['g','h','i']]};
+tableMerge(b,0,1,1,1);           /* b e, down one column */
+tableGrow(b,'col',-1,1);
+var two={merge:b.merge||null,cover:tableCover(b)};
+var c={k:'table',rows:[['a','b','c'],['d','e','f'],['g','h','i']]};
+tableMerge(c,0,0,1,1);           /* the 2x2, rows removed bottom-up */
+tableGrow(c,'row',-1,1);tableGrow(c,'row',-1,0);
+var three={merge:c.merge||null,rows:c.rows};
+console.log(JSON.stringify([one,two,three]));""")
+    one, two, three = got
+    # the row that moved up is not merged in the region's place
+    assert one["merge"] is None
+    assert one["rows"] == [["a", "b", "c"], ["g", "h", "i"]]
+    assert all(c is None for row in one["cover"] for c in row)
+    assert two["merge"] is None
+    assert all(c is None for row in two["cover"] for c in row)
+    assert three["merge"] is None and three["rows"] == [["g", "h", "i"]]
+
+
+def test_split_runs_a_neighbouring_region_across_the_new_line():
+    got = _run(GRID + """
+tableMerge(a,0,0,0,1);           /* a b, ending on column 1 */
+tableSplit(a,1,1,'col');         /* split e */
+var one={rows:a.rows,merge:a.merge,cover:tableCover(a)};
+var b={k:'table',rows:[['a','b','c'],['d','e','f'],['g','h','i']]};
+tableMerge(b,0,0,1,0);           /* a d, ending on row 1 */
+tableSplit(b,1,2,'row');         /* split f */
+console.log(JSON.stringify([one,{merge:b.merge,cover:tableCover(b)}]));""")
+    one, two = got
+    # a b now runs across the new column: no stray cell beside it
+    assert [0, 0, 1, 3] in one["merge"]
+    assert one["cover"][0][2] == {"at": [0, 0]}
+    assert [0, 0, 3, 1] in two["merge"]
+    assert two["cover"][2][0] == {"at": [0, 0]}
+
+
+def test_tab_walks_past_a_vertical_region_in_reading_order():
+    js = assets.deck_js()
+    assert ("          if((anc[0]===ri&&anc[1]===ci)||anc[0]!==nr){"
+            in js)
+    # the same walk, run: merge (0,1)-(1,1), then Tab from (0,0)
+    tab = js.split("      var cv=tableCover(a),guard=0;\n", 1)[1]
+    tab = tab.split("      if(nr<0||nr>=a.rows.length", 1)[0]
+    got = _run(GRID + """
+tableMerge(a,0,1,1,1);
+var at=[0,0],seen=[];
+for(var step=0;step<7;step++){
+  var ri=at[0],ci=at[1],e={key:'Tab',shiftKey:false};
+  var nc=ci+1,nr=ri;
+  if(nc>=a.rows[ri].length){nc=0;nr=ri+1;}
+  var cv=tableCover(a),guard=0;
+""" + tab + """
+  if(nr>=a.rows.length) break;
+  at=[nr,nc];seen.push(nr+','+nc);
+}
+console.log(JSON.stringify(seen));""")
+    assert got == ["0,1", "0,2", "1,0", "1,2", "2,0", "2,1", "2,2"]
+
+
+def test_a_table_change_commits_the_cell_being_typed_in_first():
+    fmt = assets.load("js/deck/30-format-bar.js")
+    body = fmt.split("  function tblApply(fn){", 1)[1].split("\n  }\n")[0]
+    blur = ("if(ae&&ae.isContentEditable&&ae.closest&&ae.closest('.an-table'))"
+            "\n        ae.blur();")
+    assert blur in body
+    assert body.index("ae.blur();") < body.index("fn(a);")
+
+
+def test_a_styled_header_does_not_colour_the_whole_imported_table():
+    if js_engine() is None:
+        pytest.skip("no JS engine")
+    data, _ = build_pptx(json.loads(json.dumps(SPEC)))
+    tb = [it for it in read_pptx(data, "t.pptx")["spec"]["slides"][0]["items"]
+          if it["t"] == "table"][0]
+    # the header's ink is the page colour on the accent; the table's
+    # words are the body's
+    assert tb["color"] == "#ffffff"

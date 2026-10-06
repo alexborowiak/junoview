@@ -2348,8 +2348,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T563 follow-up: the reply box takes the focus once, half-written
 # comments survive a redraw, AltGr+M types its character, and the
 # toast's Undo puts back the deleted comment (cmtRestore).
-EXPECTED_MD5 = "e39f298107398e128daaa149d1f68a89"
-EXPECTED_BYTES = 5218694
+# T551 follow-up: removing a region's last line removes the region,
+# Split runs a neighbouring region across the new line, Tab walks past a
+# vertical region, and a table change commits the cell being typed in.
+EXPECTED_MD5 = "e9d9e57a23ade6119c72e62fe1e6be6e"
+EXPECTED_BYTES = 5219788
 
 
 def _render_example() -> str:

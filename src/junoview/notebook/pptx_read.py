@@ -1505,7 +1505,15 @@ class _SlideReader:
         # leaves them out still gets its row padded to the grid.
         merges: list[list[int]] = []
         fills: list[list[str]] = []
-        for tr in tbl.findall("a:tr", NS):
+        # the table's words are a PLAIN body cell's: a styled header, a
+        # first column or a cell with its own fill carries its look's ink
+        # (the page colour on an accent header), which as the colour of
+        # the whole table made the body unreadable (2026-10-06 review).
+        # Those are the fallback only.
+        head = pr is not None and pr.get("firstRow") == "1"
+        first_col = pr is not None and pr.get("firstCol") == "1"
+        fb_size, fb_color = 0.0, ""
+        for ri, tr in enumerate(tbl.findall("a:tr", NS)):
             row: list[str] = []
             frow: list[str] = []
             span_end = 0
@@ -1525,22 +1533,30 @@ class _SlideReader:
                     continue
                 text = self.text.read(tc, "other", [],
                                       tc.find("a:txBody", NS))
+                tcpr = tc.find("a:tcPr", NS)
+                sf = tcpr.find("a:solidFill", NS) if tcpr is not None else None
                 cell = ""
                 if text:
                     cell = "\n".join("".join(r["t"] for r in p["runs"])
                                      for p in text["paras"])
                     runs = [r for p in text["paras"] for r in p["runs"]
                             if r["t"].strip()]
-                    if runs and not size and runs[0]["sizePct"]:
-                        size = runs[0]["sizePct"]
-                    if runs and not color:
-                        color = runs[0]["color"]
+                    plain = (sf is None and not (head and ri == 0)
+                             and not (first_col and not row))
+                    if runs and plain:
+                        if not size and runs[0]["sizePct"]:
+                            size = runs[0]["sizePct"]
+                        if not color:
+                            color = runs[0]["color"]
+                    elif runs:
+                        if not fb_size and runs[0]["sizePct"]:
+                            fb_size = runs[0]["sizePct"]
+                        if not fb_color:
+                            fb_color = runs[0]["color"]
                 gs = max(1, _int(tc.get("gridSpan"), 1))
                 rs = max(1, _int(tc.get("rowSpan"), 1))
                 if gs > 1 or rs > 1:
                     merges.append([len(rows), len(row), rs, gs])
-                tcpr = tc.find("a:tcPr", NS)
-                sf = tcpr.find("a:solidFill", NS) if tcpr is not None else None
                 frow.append(self.ctx.color(sf)[0] if sf is not None else "")
                 row.append(cell)
                 span_end = len(row) - 1 + gs
@@ -1552,6 +1568,8 @@ class _SlideReader:
                 fills.append(frow)
         if not rows:
             return
+        size = size or fb_size
+        color = color or fb_color
         n = max(len(r) for r in rows)
         rows = [r + [""] * (n - len(r)) for r in rows]
         fills = [f + [""] * (n - len(f)) for f in fills]

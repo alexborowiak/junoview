@@ -2471,7 +2471,10 @@
             &&cv[nr][nc]&&cv[nr][nc].at&&guard++<500){
         var anc=cv[nr][nc].at;
         if(e.key==='Tab'){
-          if(anc[0]===ri&&anc[1]===ci){
+          /* jump to a corner only on the row being entered: a corner a
+             row up (a vertical region's) is behind us, and going back
+             to it looped Tab round it forever (2026-10-06 review) */
+          if((anc[0]===ri&&anc[1]===ci)||anc[0]!==nr){
             nc+=e.shiftKey?-1:1;
             if(nc>=a.rows[nr].length){nc=0;nr++;}
             else if(nc<0){nc=a.rows[0].length-1;nr--;}

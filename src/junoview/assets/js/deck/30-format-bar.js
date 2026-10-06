@@ -1326,7 +1326,16 @@
      right, and Remove takes ITS row or column away. With nothing picked
      they act on the end, as they always have. */
   function tblApply(fn){
-    fmtApply(function(a){if(a.k==='table') fn(a);});
+    fmtApply(function(a){
+      if(a.k!=='table') return;
+      /* a cell being typed in is committed BEFORE the table changes
+         shape: its pending write names a row and column, and after a
+         Remove row those are another cell's (2026-10-06 review) */
+      var ae=document.activeElement;
+      if(ae&&ae.isContentEditable&&ae.closest&&ae.closest('.an-table'))
+        ae.blur();
+      fn(a);
+    });
   }
   /* the one table these act on, and its pick */
   function tblCur(){
