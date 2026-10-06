@@ -25,6 +25,13 @@
                                 (the right-click, Ctrl+Alt+M) said so */
   var cmtFlash=null;          /* the comment a marker click asked to see */
   var cmtReplyTo=null;        /* the comment whose reply box is open */
+  var cmtReplyFocus=false;    /* focus that box once, when Reply opens it:
+                                 every later redraw of the pane rebuilt it
+                                 and pulled the keys off the slide */
+  /* what is half written, in the new-comment box and the reply box: the
+     pane is redrawn whenever the selection or the slide changes, and a
+     redraw is a fresh box (2026-10-06 review) */
+  var cmtDraft='',cmtReplyDraft='';
   var cmtSeq=0;
   function cmtId(){
     cmtSeq++;
@@ -113,14 +120,31 @@
     markDirty();
     cmtRefresh();
   }
+  /* the toast's Undo puts back THIS comment, where it was -- not the
+     deck's last edit, which by the time it is pressed may be something
+     else entirely (2026-10-06 review) */
   function cmtDelete(id,on){
     var h=cmtFind(id,on); if(!h) return;
+    var at=cmtList(h.s).indexOf(h.c);
     h.s.comments=cmtList(h.s).filter(function(c){return c!==h.c;});
     if(!h.s.comments.length) delete h.s.comments;
     markDirty();
     cmtRefresh();
-    toastUndo('Comment deleted','Undo',function(){
-      if(typeof undo==='function') undo();});
+    toastUndo('Comment deleted','Undo',function(){cmtRestore(h.s,h.c,at);});
+  }
+  function cmtRestore(s,c,at){
+    /* the slide went, or an undo or another deck replaced it */
+    if((pres.slides||[]).indexOf(s)<0){
+      toast('That slide has changed since \u2014 Ctrl+Z steps back '
+        +'through every edit');
+      return;
+    }
+    var l=cmtList(s).slice();
+    if(l.indexOf(c)>=0) return;
+    l.splice(Math.max(0,Math.min(at,l.length)),0,c);
+    s.comments=l;
+    markDirty();
+    cmtRefresh();
   }
   /* ---- THE MARKERS -------------------------------------------------------
      While editing only. One marker per thing commented on -- an object's
@@ -238,6 +262,8 @@
     ta.className='ask-in ask-area cmt-ta';ta.id='cmt-new';ta.rows=3;
     ta.placeholder='Select an object to comment on it, or leave nothing '
       +'selected to comment on the slide';
+    ta.value=cmtDraft;
+    ta.addEventListener('input',function(){cmtDraft=ta.value;});
     comp.appendChild(ta);
     var row=document.createElement('div');row.className='cmt-row';
     var hint=document.createElement('span');hint.className='cmt-hint';
@@ -247,7 +273,7 @@
     function doPost(){
       if(!ta.value.trim()){ta.focus();return;}
       var c=cmtAdd(ta.value);
-      if(c){cmtFlash=c.id;ta.value='';cmtRender(true);}
+      if(c){cmtFlash=c.id;ta.value='';cmtDraft='';cmtRender(true);}
     }
     post.addEventListener('click',doPost);
     ta.addEventListener('keydown',function(e){
@@ -334,15 +360,18 @@
     if(cmtReplyTo===c.id){
       var ra=document.createElement('textarea');
       ra.className='ask-in ask-area cmt-ta';ra.rows=2;ra.placeholder='Reply';
+      ra.value=cmtReplyDraft;
+      ra.addEventListener('input',function(){cmtReplyDraft=ra.value;});
       var rr=document.createElement('div');rr.className='cmt-row';
       var rc=document.createElement('button');
       rc.type='button';rc.className='dbtn';rc.textContent='Cancel';
-      rc.addEventListener('click',function(){cmtReplyTo=null;cmtRender(true);});
+      rc.addEventListener('click',function(){
+        cmtReplyTo=null;cmtReplyDraft='';cmtRender(true);});
       var rp2=document.createElement('button');
       rp2.type='button';rp2.className='dbtn primary';rp2.textContent='Reply';
       function send(){
         var v=ra.value.trim(); if(!v) return;
-        cmtReplyTo=null;cmtFlash=c.id;
+        cmtReplyTo=null;cmtReplyDraft='';cmtFlash=c.id;
         cmtEdit(c.id,function(cc){
           cc.re=(Array.isArray(cc.re)?cc.re:[]).concat([{text:v,t:Date.now()}]);
           /* answering a resolved comment opens it again */
@@ -354,11 +383,15 @@
       ra.addEventListener('keydown',function(e){
         e.stopPropagation();
         if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send();}
-        if(e.key==='Escape'){e.preventDefault();cmtReplyTo=null;cmtRender(true);}
+        if(e.key==='Escape'){e.preventDefault();
+          cmtReplyTo=null;cmtReplyDraft='';cmtRender(true);}
       });
       rr.appendChild(rc);rr.appendChild(rp2);
       card.appendChild(ra);card.appendChild(rr);
-      setTimeout(function(){try{ra.focus();}catch(e){}},0);
+      if(cmtReplyFocus){
+        cmtReplyFocus=false;
+        setTimeout(function(){try{ra.focus();}catch(e){}},0);
+      }
     }
     var acts=document.createElement('div');acts.className='cmt-acts';
     function act(label,title,fn){
@@ -370,7 +403,8 @@
     }
     if(cmtReplyTo!==c.id)
       act('Reply','Answer this comment',function(){
-        cmtReplyTo=c.id;cmtRender(true);});
+        cmtReplyTo=c.id;cmtReplyDraft='';cmtReplyFocus=true;
+        cmtRender(true);});
     act(c.done?'Reopen':'Resolve',c.done
       ?'Bring this back as an open comment'
       :'Mark it dealt with: it leaves the slide and waits under Resolved',
@@ -423,6 +457,9 @@
     if(cl) cl.addEventListener('click',function(){cmtShow(false);});
     document.addEventListener('keydown',function(e){
       if(!(e.ctrlKey||e.metaKey)||!e.altKey) return;
+      /* AltGr is Ctrl+Alt to a browser: AltGr+M types a character (\u00b5
+         on a German keyboard) and must reach the box it is typed in */
+      if(e.getModifierState&&e.getModifierState('AltGraph')) return;
       if(String(e.key).toLowerCase()!=='m'&&e.code!=='KeyM') return;
       if(deckEl.hidden||mode!=='edit') return;
       e.preventDefault();e.stopPropagation();

@@ -2345,8 +2345,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # boxes and attached arrows, the preview), the .pptx text item its edge
 # colour, branding a diagram icon, deck.css the dialog, and help.html a
 # Diagrams entry.
-EXPECTED_MD5 = "cb81ad8da922cc3b36f789c37f83faa0"
-EXPECTED_BYTES = 5217014
+# T563 follow-up: the reply box takes the focus once, half-written
+# comments survive a redraw, AltGr+M types its character, and the
+# toast's Undo puts back the deleted comment (cmtRestore).
+EXPECTED_MD5 = "e39f298107398e128daaa149d1f68a89"
+EXPECTED_BYTES = 5218694
 
 
 def _render_example() -> str:

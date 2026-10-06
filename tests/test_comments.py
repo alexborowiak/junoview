@@ -180,3 +180,60 @@ def test_when_reads_like_a_person_wrote_it():
     assert mins == "5 min ago"
     assert hours == "3 h ago"
     assert future == ""
+
+
+# ---- 2026-10-06 review fixes ---------------------------------------------
+
+def test_the_reply_box_takes_the_focus_once_not_on_every_redraw():
+    js = assets.deck_js()
+    card = lift_fn(js, "cmtCard")
+    assert ("      if(cmtReplyFocus){\n        cmtReplyFocus=false;\n"
+            "        setTimeout(function(){try{ra.focus();}catch(e){}},0);"
+            ) in card
+    assert "cmtReplyTo=c.id;cmtReplyDraft='';cmtReplyFocus=true;" in card
+    # the only focus() in the card is the guarded one
+    assert card.count(".focus()") == 1
+
+
+def test_half_written_words_survive_a_redraw():
+    js = assets.deck_js()
+    render = lift_fn(js, "cmtRender")
+    assert "ta.value=cmtDraft;" in render
+    assert "ta.addEventListener('input',function(){cmtDraft=ta.value;});" \
+        in render
+    assert "ta.value='';cmtDraft='';" in render
+    card = lift_fn(js, "cmtCard")
+    assert "ra.value=cmtReplyDraft;" in card
+    # every way the reply box closes forgets its words
+    assert card.count("cmtReplyDraft=''") >= 4
+
+
+def test_altgr_m_is_a_character_not_a_comment():
+    boot = lift_fn(assets.deck_js(), "commentsBoot")
+    guard = "if(e.getModifierState&&e.getModifierState('AltGraph')) return;"
+    assert guard in boot
+    assert boot.index(guard) < boot.index("cmtNew(null);")
+
+
+def test_undo_on_the_toast_puts_back_that_comment_and_nothing_else():
+    js = assets.deck_js()
+    assert ("toastUndo('Comment deleted','Undo',function(){"
+            "cmtRestore(h.s,h.c,at);});") in lift_fn(js, "cmtDelete")
+    assert "undo()" not in lift_fn(js, "cmtDelete")
+    src = (
+        "var dirty=0,said='';function markDirty(){dirty++;}"
+        "function cmtRefresh(){}function toast(m){said=m;}\n"
+        + lift_fn(js, "cmtList") + "\n" + lift_fn(js, "cmtRestore") + "\n"
+        "var a={id:'a',text:'A'},b={id:'b',text:'B'},c={id:'c',text:'C'};\n"
+        "var S={comments:[a,c],annots:[{k:'rect'}]},T={};\n"
+        "var pres={slides:[S]};\n"
+        "cmtRestore(S,b,1);var one=S.comments.map(function(x){return x.id;});\n"
+        "cmtRestore(S,b,1);var twice=S.comments.length;\n"
+        "cmtRestore(T,b,0);\n"
+        "console.log(JSON.stringify([one,twice,dirty,said,"
+        "S.annots.length,'comments' in T]));\n")
+    one, twice, dirty, said, kept, t_has = _run(src)
+    assert one == ["a", "b", "c"]          # back where it was
+    assert twice == 3 and dirty == 1        # a second press does nothing
+    assert said.startswith("That slide has changed")
+    assert kept == 1 and t_has is False     # nothing else touched
