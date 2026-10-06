@@ -2340,8 +2340,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the markers; and help.html a Comments entry and its shortcut.
 # T542 follow-up: a box that keeps a height is drawn that height --
 # min-height is the whole fit line, as the page is border-box.
-EXPECTED_MD5 = "81db7223d5f31fede47ac16119cd6514"
-EXPECTED_BYTES = 5195459
+# T561: diagrams -- deck.html gains Images > Draw > Diagram and its
+# dialog (#dgm-dlg), the deck script 36-diagrams.js (the layouts, the
+# boxes and attached arrows, the preview), the .pptx text item its edge
+# colour, branding a diagram icon, deck.css the dialog, and help.html a
+# Diagrams entry.
+EXPECTED_MD5 = "cb81ad8da922cc3b36f789c37f83faa0"
+EXPECTED_BYTES = 5217014
 
 
 def _render_example() -> str:

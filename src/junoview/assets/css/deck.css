@@ -7618,3 +7618,35 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 .cmt-done>summary{cursor:pointer;font:600 11px var(--sans);
   color:var(--chrome-ink-2);padding:4px 0;}
 .cmt-done>.cmt-card{margin-top:6px;}
+
+/* ---- T561: Diagram -- the kinds, the steps and the preview ----------
+   A small dialog, never a screen: four kinds across the top (each drawn
+   by the layout it places), the steps on the left in a fixed-width face
+   so the indents read, and the preview at the slide's own shape on the
+   right. One column on a phone. */
+.aa-box.dgm-box{width:min(640px,94vw);}
+.dgm-kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.dgm-kind{display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px 6px 5px;border-radius:8px;cursor:pointer;
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  color:var(--chrome-ink);font:600 12px var(--sans);}
+.dgm-kind:hover,.dgm-kind:focus-visible{outline:none;
+  border-color:color-mix(in srgb,var(--accent) 60%,var(--chrome-line));}
+.dgm-kind.on{border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 12%,var(--chrome-1));}
+.dgm-mini{display:block;width:100%;max-width:118px;height:auto;
+  border-radius:4px;pointer-events:none;}
+.dgm-body{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;
+  min-height:0;}
+.dgm-col{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.dgm-lab{font-size:11.5px;line-height:1.35;color:var(--chrome-ink-2);}
+.dgm-text{font:12.5px/1.5 var(--mono);tab-size:2;resize:vertical;
+  min-height:118px;}
+.dgm-preview .dgm-svg{display:block;border-radius:6px;
+  border:1px solid var(--chrome-line);}
+.dgm-count{font:10.5px var(--mono);color:var(--chrome-ink-3);}
+.dgm-hint{font-size:11px;line-height:1.35;color:var(--chrome-ink-3);}
+@media (max-width:560px){
+  .dgm-kinds{grid-template-columns:repeat(2,1fr);}
+  .dgm-body{grid-template-columns:minmax(0,1fr);}
+}

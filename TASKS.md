@@ -10562,8 +10562,31 @@ choice in the editor (T506, T507).
   at 1440x900 (folded door, shelf, square drag 273x273, click-drop
   85x85); exported and rendered in PowerPoint: outline, filled, rotated,
   flipped and thick icons match the slide.
-- [ ] **T561 — Diagrams.** Process, cycle, list and hierarchy diagrams
+- [x] **T561 — Diagrams.** Process, cycle, list and hierarchy diagrams
   placed as ordinary grouped shapes and arrows you can edit.
+  *Done 2026-10-06.* Images > Draw > Diagram (in all eight ribbon
+  layouts and command search, as "SmartArt" too) opens a small dialog:
+  the four kinds as tiles, each drawn by the layout it places; the
+  steps typed one to a line, Tab and Shift+Tab moving a line under the
+  one above or back out (a hierarchy's branches, a list's sub-points);
+  and a preview at the page's own shape, drawn by the same pure layout
+  function Insert uses (Ctrl+Enter). What lands is ORDINARY: per step a
+  text box that keeps its height, sits its words in the middle and
+  shrinks them to fit, on @surface with an @accent edge (a hierarchy's
+  top on @accent), and an arrow between steps with BOTH ENDS ATTACHED,
+  so moving a box drags its arrows -- all one named group, one undo
+  step, selected. No text style, so editing Body never strips a
+  diagram. A process is a row; a cycle runs clockwise from the top
+  round a ring let out sideways on a wide page, its arrows bowed
+  outward by a fifth of their length; a list stacks bars, sub-points
+  indented; a hierarchy is a tidy tree (equal leaf slots, a parent over
+  the middle of its children, elbowed lines). Up to 8/8/10/15 steps;
+  more says it took the first ones. The .pptx now writes a text box's
+  edge colour (it dropped every bdc). Found on the way and fixed first:
+  a box that keeps a height was drawn 0.7em+2px short of it, as the
+  page is border-box. Driven at 1366x657 and 1280x600 (each kind
+  inserted, edited, undone, redone; spec captured and built). Tests in
+  tests/test_diagrams.py.
 - [x] **T562 — Chart data you can type into.** A grid editor for a chart's
   numbers, beside the preview (if the chart pane does not already have
   one, which this task checks first).

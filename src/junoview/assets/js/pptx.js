@@ -404,6 +404,11 @@ window.JunoPptx = (function () {
       geo.y = (item.y || 0) - geo.h / 2;
     }
     var fill = item.bgc ? solidFill(item.bgc, item.op) : '<a:noFill/>';
+    /* T561: the box's own edge colour (a text style's, or a diagram
+       step's accent edge) -- a hairline, as the canvas draws it; a box
+       with none says nothing and PowerPoint draws none */
+    var edge = item.bdc ? '<a:ln w="9525">' + solidFill(item.bdc, item.op)
+      + '</a:ln>' : '';
     /* Curved text is a real PowerPoint effect, so it arrives warped and
        still editable rather than as a picture. prstTxWarp must come
        FIRST inside bodyPr, and it cannot share the box with autofit —
@@ -455,7 +460,7 @@ window.JunoPptx = (function () {
     return '<p:sp>'
       + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)
-      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill
+      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill + edge
       + shadowXml(item, page) + '</p:spPr>'
       + '<p:txBody>' + bodyPr
       + '<a:lstStyle/>' + paragraphs(item, page) + '</p:txBody></p:sp>';

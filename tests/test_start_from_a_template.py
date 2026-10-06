@@ -93,7 +93,7 @@ def test_new_presentation_asks_and_blank_is_the_verb(out):
             'Blank presentation</button>') in html
     js = assets.deck_js()
     # the shared Esc / Enter keys know the dialog
-    assert "+'#nt-dlg,#chart-data';" in js
+    assert "+'#nt-dlg," in js and "#chart-data';" in js
     # every door that made a blank deck now asks first
     assert "  function newPresentation(){\n    var dlg=$('#nt-dlg')" in js
     assert "  function newBlankPresentation(){" in js

@@ -1887,6 +1887,12 @@ items snap to both. Guides, not ink: never printed or exported"
           </span>
           <span class="rbn-grp rbn-draw" data-tab="images" data-fold-ic="pen">
             <span class="rbn-row">
+              <!-- T561: PowerPoint's SmartArt, placed as ordinary boxes
+                   and attached arrows in one group -->
+              <button class="fx-tile big-tile rbn-tall" id="dc-diagram"
+                title="A process, cycle, list or hierarchy: type the steps
+ one to a line and it is placed as ordinary boxes and arrows you can edit"
+                ><i data-ic="diagram"></i><span>Diagram</span></button>
               <!-- T463: tiles, with Place (above) -->
               <button class="fx-tile big-tile rbn-tall et" id="dc-line" data-tool="line"
                 aria-pressed="false"
@@ -4272,6 +4278,43 @@ items snap to both. Guides, not ink: never printed or exported"
       <button class="dbtn" id="nt-cancel">Cancel</button>
       <button class="dbtn primary" id="nt-blank"
         title="An empty presentation (Enter)">Blank presentation</button>
+    </div>
+  </div>
+</div>
+<!-- T561: a diagram, from steps typed one to a line. The kinds as tiles
+     drawn by the layout itself, the words, and a preview that is the
+     layout Insert places. -->
+<div class="aa-dlg" id="dgm-dlg" hidden role="dialog"
+  aria-labelledby="dgm-title">
+  <div class="aa-box dgm-box">
+    <div class="aa-head">
+      <span class="eq-t" id="dgm-title">Diagram</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="dgm-close" aria-label="Cancel"
+        title="Cancel (Esc)"><i data-ic="exit"></i></button>
+    </div>
+    <div class="dgm-kinds" id="dgm-kinds" role="group"
+      aria-label="Kind of diagram"></div>
+    <div class="dgm-body">
+      <label class="dgm-col">
+        <span class="dgm-lab">One step to a line &mdash; Tab puts a line
+          under the one above</span>
+        <textarea class="ask-in ask-area dgm-text" id="dgm-text" rows="7"
+          spellcheck="true"></textarea>
+      </label>
+      <div class="dgm-col">
+        <span class="dgm-lab">On the slide</span>
+        <div class="dgm-preview" id="dgm-preview"></div>
+        <span class="dgm-count" id="dgm-count"></span>
+      </div>
+    </div>
+    <div class="aa-foot">
+      <span class="dgm-hint">Placed as boxes and arrows in one group: edit,
+        move or recolour any of them afterwards.</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="dgm-cancel">Cancel</button>
+      <button class="dbtn primary" id="dgm-insert"
+        title="Put it on this slide (Ctrl+Enter)">Insert</button>
     </div>
   </div>
 </div>

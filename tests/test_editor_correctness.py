@@ -425,8 +425,9 @@ def test_line_weight_scales_with_the_page_like_text_does(out):
     # the default is named, so the three creation sites cannot drift from
     # it. Comma-anchored: swOf's own ternary ends `?a.sw:SW_DEFAULT` and
     # would otherwise be counted as a fourth.
-    # rect, line, arrow and now the freehand stroke (2026-08-17)
-    assert out.count(",sw:SW_DEFAULT") == 4
+    # rect, line, arrow and now the freehand stroke (2026-08-17), and a
+    # diagram's attached arrows (T561)
+    assert out.count(",sw:SW_DEFAULT") == 5
     assert "sw:3" not in out
 
 

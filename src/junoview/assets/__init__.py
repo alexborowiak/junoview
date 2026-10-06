@@ -115,6 +115,7 @@ DECK_PARTS = (
     "30-format-bar",
     "32-mini-toolbar",
     "35-arranging",
+    "36-diagrams",
     "40-captions-and-components",
     "45-images",
     "46-history",

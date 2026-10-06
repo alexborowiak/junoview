@@ -27,6 +27,8 @@
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
     'comments-btn':'comments comment review note feedback new comment',
+    'dc-diagram':'smartart diagram process cycle list hierarchy org chart '
+      +'organisation flow chart steps tree',
     /* T594: Focus and Motion are the panel's now, so their words
        find the door onto it */
     'vw-anim':'animation pane animations list focus blur zoom magnify '

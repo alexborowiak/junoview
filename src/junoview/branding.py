@@ -278,6 +278,11 @@ _ICON_PATHS = {
     # T563: a speech bubble -- a comment left on the slide
     "comment": '<path d="M2.4 3.4h11.2v7.4H8.2L5 13.4v-2.6H2.4z"/>'
                '<path d="M5 6.2h6M5 8.2h4"/>',
+    # T561: three boxes, one over two -- a diagram
+    "diagram": '<rect x="5.6" y="1.8" width="4.8" height="3.4" rx=".7"/>'
+               '<rect x="1.6" y="10.8" width="4.8" height="3.4" rx=".7"/>'
+               '<rect x="9.6" y="10.8" width="4.8" height="3.4" rx=".7"/>'
+               '<path d="M8 5.2v2.8M4 10.8V8h8v2.8"/>',
     # three plain lines: the generic list / overflow menu (never the
     # markdown filter, whose third line is short)
     "menu": '<path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/>',
