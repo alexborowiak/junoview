@@ -308,7 +308,11 @@
     var list=on?inkHere():[];
     var sl=on?inkSlideEl():null;
     if(!sl||(!inkTool&&!list.length)){
+      /* a stroke still being drawn goes with the layer: its listeners
+         were the layer's, so nothing would ever finish it, and kept in
+         inkCur it was redrawn on every slide after (2026-10-06 review) */
       if(inkSvg){inkSvg.remove();inkSvg=null;}
+      inkCur=null;
       return;
     }
     if(!inkSvg){
@@ -370,6 +374,9 @@
       return;
     }
     var h=inkSvg.getBoundingClientRect().height||SW_REF_H;
+    /* the slide the stroke began on is the one it belongs to, whatever
+       the clicker did before the pen came up */
+    var at=pres.slides[cur];
     var st={t:inkTool,c:inkCol[inkTool],sw:INK_SW[inkTool],pts:[p]};
     inkCur={st:st,el:inkStrokeEl(st,h)};
     inkSvg.appendChild(inkCur.el);
@@ -385,7 +392,8 @@
       inkSvg.removeEventListener('pointermove',mm);
       inkSvg.removeEventListener('pointerup',mu);
       inkSvg.removeEventListener('pointercancel',mu);
-      inkHere().push(st);inkCur=null;
+      if(at){if(!inkStore.has(at)) inkStore.set(at,[]);inkStore.get(at).push(st);}
+      inkCur=null;
       inkDraw();inkSync();
     };
     inkSvg.addEventListener('pointermove',mm);

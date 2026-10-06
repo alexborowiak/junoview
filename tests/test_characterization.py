@@ -2351,8 +2351,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T551 follow-up: removing a region's last line removes the region,
 # Split runs a neighbouring region across the new line, Tab walks past a
 # vertical region, and a table change commits the cell being typed in.
-EXPECTED_MD5 = "e9d9e57a23ade6119c72e62fe1e6be6e"
-EXPECTED_BYTES = 5219788
+# T558/T567 follow-up: a stroke belongs to the slide it began on, a
+# half-drawn one goes with its layer, closeDeck ends a show's ink, the
+# tour's keys stop on window, and the editor tour waits for a question.
+EXPECTED_MD5 = "4d376a23e4ec5ac15726b010a63f2f2a"
+EXPECTED_BYTES = 5221302
 
 
 def _render_example() -> str:

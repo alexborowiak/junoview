@@ -3714,13 +3714,19 @@
       if(tourI>=tourSteps.length-1) tourEnd(); else tourShow(tourI+1);});
     if(bk) bk.addEventListener('click',function(){tourShow(tourI-1);});
     if(sk) sk.addEventListener('click',tourEnd);
-    document.addEventListener('keydown',function(e){
+    /* in capture on window, and the keys it answers stop here: the
+       deck's own Escape ladder listens on document and does not look at
+       defaultPrevented, so skipping the editor's tour with Escape also
+       left the editor (2026-10-06 review) */
+    window.addEventListener('keydown',function(e){
       var t=$('#tour'); if(!t||t.hidden) return;
-      if(e.key==='Escape'){e.preventDefault();tourEnd();}
-      else if(e.key==='ArrowRight'||e.key==='Enter'){e.preventDefault();
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();tourEnd();}
+      else if(e.key==='ArrowRight'||e.key==='Enter'){
+        e.preventDefault();e.stopPropagation();
         if(tourI>=tourSteps.length-1) tourEnd(); else tourShow(tourI+1);}
-      else if(e.key==='ArrowLeft'){e.preventDefault();tourShow(tourI-1);}
-    });
+      else if(e.key==='ArrowLeft'){
+        e.preventDefault();e.stopPropagation();tourShow(tourI-1);}
+    },true);
     window.addEventListener('resize',function(){
       var t=$('#tour'); if(t&&!t.hidden) tourShow(tourI);});
     var wt=$('#welcome-tour');
@@ -3747,13 +3753,19 @@
     try{if(localStorage.getItem(EDITOR_TOUR_KEY)) return;}catch(e){return;}
     var t=$('#tour'); if(!t||!t.hidden) return;
     edTourArmed=true;
-    setTimeout(function(){
+    setTimeout(function fire(){
       edTourArmed=false;
       /* still editing: a show is not slide-editing, so this is also
          "not while presenting" */
       if(!document.body.classList.contains('slide-editing')) return;
       var tt=$('#tour'); if(!tt||!tt.hidden) return;
       try{if(localStorage.getItem(EDITOR_TOUR_KEY)) return;}catch(e){return;}
+      /* not over a question: a first deck asks where it should be kept
+         (T283), and a press on the tour closed that unanswered -- wait
+         for the answer, and for any dialog (2026-10-06 review) */
+      if(document.querySelector('.save-ask:not([hidden]),'
+        +'.aa-dlg:not([hidden])')){
+        edTourArmed=true;setTimeout(fire,900);return;}
       tourStart('editor');
     },900);
   }

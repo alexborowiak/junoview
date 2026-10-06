@@ -1584,7 +1584,12 @@
     /* SPA navigation does not fire pagehide. Home/hash routing can close
        this surface directly, so it is just as real an end to a rehearsal
        as the visible Stop presenting button (T48). */
-    if(mode==='view') rehStop();
+    /* a show ended this way puts its tools down too, and asks about its
+       ink once the deck is hidden (so the question sits on the page,
+       not in the hidden deck): the ink bar stayed over the notebook and
+       the question waited for the next deck (2026-10-06 review) */
+    var wasTalk=(mode==='view');
+    if(wasTalk){rehStop();talkToolsReset();}
     try{
       if(document.fullscreenElement)
         document.exitFullscreen().catch(function(){});
@@ -1595,6 +1600,7 @@
     rbnGalleryClose();
     showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
+    if(wasTalk) inkLeave();
     document.body.classList.remove('deck-open');
     deckIsolate(false);
     deckReturnFocus();

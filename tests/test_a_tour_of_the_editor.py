@@ -105,3 +105,28 @@ def test_the_first_entry_to_the_editor_starts_it():
 
 def test_the_help_says_so():
     assert "walks you round\nitself in nine short steps" in assets.help_html()
+
+
+# ---- 2026-10-06 review fixes ---------------------------------------------
+
+def test_the_tours_keys_stop_before_the_deck_hears_them():
+    app = assets.load("js/app.js")
+    keys = app.split("    window.addEventListener('keydown',function(e){\n"
+                     "      var t=$('#tour'); if(!t||t.hidden) return;", 1)
+    assert len(keys) == 2, "the tour's keys are on window"
+    body = keys[1].split("},true);", 1)[0]
+    # Escape skips the tour and stops: the deck's Escape ladder would
+    # otherwise leave the editor
+    assert "if(e.key==='Escape'){e.preventDefault();e.stopPropagation();" \
+        "tourEnd();}" in body
+    assert body.count("e.stopPropagation();") == 3
+
+
+def test_the_editor_tour_waits_for_a_question_to_be_answered():
+    app = assets.load("js/app.js")
+    fn = app.split("  function maybeEditorTour(){", 1)[1].split(
+        "\n  }\n", 1)[0]
+    assert ("if(document.querySelector('.save-ask:not([hidden]),'\n"
+            "        +'.aa-dlg:not([hidden])')){\n"
+            "        edTourArmed=true;setTimeout(fire,900);return;}") in fn
+    assert fn.index("setTimeout(fire,900)") < fn.index("tourStart('editor')")

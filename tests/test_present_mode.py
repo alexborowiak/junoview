@@ -216,7 +216,10 @@ def test_every_real_rehearsal_exit_records_and_repaints(out):
 
     start = out.index("function closeDeck(){")
     close = out[start:out.index("  /* ---- URL routing hooks", start)]
-    assert "if(mode==='view') rehStop();" in close
+    # T558 follow-up: the same test, held so the show's tools and ink are
+    # ended on this door too
+    assert "var wasTalk=(mode==='view');" in close
+    assert "if(wasTalk){rehStop();talkToolsReset();}" in close
 
 
 def test_speaker_notes_and_time_goals(out):

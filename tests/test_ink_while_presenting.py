@@ -27,7 +27,7 @@ def test_ink_is_held_for_the_run_not_written_into_slides():
     down = lift_fn(js, "inkDown")
     # drawing touches the store and the overlay, never s.annots
     assert "annots" not in down and "markDirty" not in down
-    assert "inkHere().push(st);" in down
+    assert "inkStore.get(at).push(st);" in down
     # the ink goes back on after every render of the slide
     assert ("    /* T558: the talk's ink goes back on over the slide it was "
             "drawn on */\n    if(typeof inkMount==='function') inkMount();"
@@ -99,3 +99,27 @@ def test_the_talk_panel_and_the_bar():
 def test_the_help_says_so():
     h = assets.help_html()
     assert "<b>Ink while you talk.</b>" in h
+
+
+# ---- 2026-10-06 review fixes ---------------------------------------------
+
+def test_a_stroke_belongs_to_the_slide_it_began_on():
+    down = lift_fn(assets.deck_js(), "inkDown")
+    assert "var at=pres.slides[cur];" in down
+    assert ("if(at){if(!inkStore.has(at)) inkStore.set(at,[]);"
+            "inkStore.get(at).push(st);}") in down
+    assert "inkHere().push(st)" not in down
+
+
+def test_taking_the_layer_down_drops_a_half_drawn_stroke():
+    mount = lift_fn(assets.deck_js(), "inkMount")
+    assert ("      if(inkSvg){inkSvg.remove();inkSvg=null;}\n"
+            "      inkCur=null;\n      return;") in mount
+
+
+def test_leaving_the_show_by_any_door_puts_the_pen_down_and_asks():
+    close = lift_fn(assets.deck_js(), "closeDeck")
+    assert "if(wasTalk){rehStop();talkToolsReset();}" in close
+    # asked once the deck is hidden, so the question is on the page
+    assert close.index("deckEl.hidden=true;") < close.index(
+        "if(wasTalk) inkLeave();")
