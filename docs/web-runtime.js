@@ -38,7 +38,7 @@
     worker.onerror=function(e){fail(new Error(e.message||'The reader could not start. Reload to retry.'));};
     worker.onmessageerror=function(){fail(new Error('Could not receive the reader result. Reload to retry.'));};
   }catch(e){fail(e);}
-  window.__jvBuild='7d08e80ad4c5';
+  window.__jvBuild='db9cc0b7a78d';
   window.__jvUpdateBar=function(){
     if(document.getElementById('jv-newbuild')||!document.body) return;
     var bar=document.createElement('div');bar.id='jv-newbuild';
