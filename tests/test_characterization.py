@@ -2356,8 +2356,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tour's keys stop on window, and the editor tour waits for a question.
 # T607 follow-up: a sheet closes only for a press that began outside it
 # (sheetDown), not a word-selection let go over the shade.
-EXPECTED_MD5 = "e21bf8925cfbe3f308011e41ed9ea771"
-EXPECTED_BYTES = 5221879
+# T564: record narration -- deck.html gains Present > Record narration,
+# the Talk panel's Narration switch and the Notes pane's slot; the deck
+# script 65-narration.js (takes per slide, the recording bar, the
+# question, playback), its hooks in go, setUIMode, closeDeck, pagehide
+# and the presenter's Pause, the media walkers and normPres; branding
+# mic, pause and stop icons; deck.css the bar and the marks; help.html
+# a Record narration entry.
+EXPECTED_MD5 = "e13208da8217620eff00df648f56edb6"
+EXPECTED_BYTES = 5245310
 
 
 def _render_example() -> str:

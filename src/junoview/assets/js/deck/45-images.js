@@ -2463,9 +2463,11 @@
       if(msg.act==='reset'){presStart=Date.now();presPaused=0;presPauseAt=0;
         rehResume();}
       else if(msg.act==='pause'&&!presPauseAt){
-        presPauseAt=Date.now();rehPause();}
+        presPauseAt=Date.now();rehPause();
+        if(typeof narrPause==='function') narrPause(true);}
       else if(msg.act==='resume'&&presPauseAt){
-        presPaused+=Date.now()-presPauseAt;presPauseAt=0;rehResume();}
+        presPaused+=Date.now()-presPauseAt;presPauseAt=0;rehResume();
+        if(typeof narrPause==='function') narrPause(false);}
     }
     else if(msg.do==='late'){   /* T476 */
       if(typeof runLate==='function') runLate(lateFrom<0);

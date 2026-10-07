@@ -136,6 +136,7 @@ DECK_PARTS = (
     "62-pptx-import",
     "63-comments",
     "64-collections",
+    "65-narration",
     "99-boot",
 )
 

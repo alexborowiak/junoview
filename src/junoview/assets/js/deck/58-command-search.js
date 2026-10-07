@@ -27,6 +27,8 @@
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
     'comments-btn':'comments comment review note feedback new comment',
+    'pr-narrate':'record narration narrate voice over voiceover record '
+      +'slide show microphone mic audio',
     'dc-diagram':'smartart diagram process cycle list hierarchy org chart '
       +'organisation flow chart steps tree',
     /* T594: Focus and Motion are the panel's now, so their words

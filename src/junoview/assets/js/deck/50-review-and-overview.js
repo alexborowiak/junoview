@@ -1222,6 +1222,9 @@
     rehSlideChanged();
     refresh();
     playFlip();
+    /* T564: a recording run starts the next slide's take; otherwise
+       the slide that arrived speaks, if it has narration */
+    if(typeof narrSlideChanged==='function') narrSlideChanged();
     presenterSync();
     /* T289: the transition buttons describe the SLIDE, so they follow
        it. animRibbonSync -- where the rest of the Animation tab syncs

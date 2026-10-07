@@ -122,6 +122,8 @@
   colBoot();                  /* Collections: New, Collect showing (T606) */
   commentsBoot();             /* Comments: the pane, its door, Ctrl+Alt+M
                                  (T563) */
+  narrationBoot();            /* Record narration, and its switch in the
+                                 Talk panel (T564) */
   partsBoot();                /* the Parts view's doors (T601) */
   mediaBoot();                /* video and audio: Insert, pane, drop (T321) */
   autoDeckBoot();             /* slides from the notebook viewer (T362) */

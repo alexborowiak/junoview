@@ -249,6 +249,16 @@ def as_presentations(obj: Any) -> list:
                            and isinstance(c.get("text"), str) and c["text"]]
                     if cms:
                         slide["comments"] = cms
+                # T564: the slide's recorded narration -- a reference into
+                # the deck's media store; the bytes ride in p.media
+                nar = s.get("narr")
+                if (isinstance(nar, dict) and isinstance(nar.get("vkey"), str)
+                        and nar["vkey"]):
+                    slide["narr"] = {"vkey": nar["vkey"]}
+                    d = nar.get("dur")
+                    if (isinstance(d, (int, float)) and not isinstance(d, bool)
+                            and d > 0):
+                        slide["narr"]["dur"] = d
                 if isinstance(s.get("goal"), (int, float)) and s["goal"] > 0:
                     slide["goal"] = s["goal"]
                 for k in ("border", "grpmeta"):

@@ -252,6 +252,13 @@
           if(cms.length) o.comments=cms;
         }
         if(typeof s.goal==='number'&&s.goal>0) o.goal=s.goal;
+        /* T564: the slide's recorded narration -- a reference into the
+           media store, the bytes riding in p.media like a clip's */
+        if(s.narr&&typeof s.narr==='object'&&typeof s.narr.vkey==='string'
+           &&s.narr.vkey){
+          o.narr={vkey:s.narr.vkey};
+          if(+s.narr.dur>0) o.narr.dur=+s.narr.dur;
+        }
         /* the slide's durable name. Minted on first rehearsal, and the
            only reason a run made on Tuesday can be compared with one
            made on Friday after you reordered the deck (T29, 2026-08-25).

@@ -278,6 +278,11 @@ _ICON_PATHS = {
     # T563: a speech bubble -- a comment left on the slide
     "comment": '<path d="M2.4 3.4h11.2v7.4H8.2L5 13.4v-2.6H2.4z"/>'
                '<path d="M5 6.2h6M5 8.2h4"/>',
+    # T564: a microphone, and the recording bar's Pause and Stop
+    "mic": '<rect x="6" y="1.8" width="4" height="7.6" rx="2"/>'
+           '<path d="M3.6 7.8a4.4 4.4 0 0 0 8.8 0M8 12.2v2.2M5.6 14.4h4.8"/>',
+    "pause": '<path d="M5.6 3.6v8.8M10.4 3.6v8.8"/>',
+    "stop": '<rect x="4" y="4" width="8" height="8" rx="1.2"/>',
     # T561: three boxes, one over two -- a diagram
     "diagram": '<rect x="5.6" y="1.8" width="4.8" height="3.4" rx=".7"/>'
                '<rect x="1.6" y="10.8" width="4.8" height="3.4" rx=".7"/>'

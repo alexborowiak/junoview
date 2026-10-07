@@ -10630,8 +10630,41 @@ choice in the editor (T506, T507).
   pane keys anything by them, and an action always lands on its own
   card's slide. Driven at 1366x657 and 1280x600. Tests in
   tests/test_comments.py.
-- [ ] **T564 — Record narration.** Record audio per slide while
+- [x] **T564 — Record narration.** Record audio per slide while
   rehearsing; it plays in the show and travels in the saved deck.
+  *Done 2026-10-07.* Present > During the talk > Record narration...
+  asks for the microphone FIRST (a prompt over a full-screen show would
+  end it) and then starts the show from this slide. Every slide shown is
+  a take of its own, split in go() where the rehearsal clock splits and
+  filed against the slide OBJECT it began on (the recorder hands its
+  bytes over after the slide has changed); one MediaRecorder per slide,
+  as only a recording's first chunk carries its header; a slide passed
+  through in under 1.5 s is no take, and a slide shown again is recorded
+  again (the later take wins). A bar at the foot of the screen, between
+  the ink bar's corner and the slide count, says "Recording · slide 3 ·
+  0:42" with Pause and End show (words and icons); the presenter view's
+  Pause pauses the take with the clock. When the show ends -- Esc, End
+  show, Back or Home -- the microphone goes down and the takes are
+  offered after the ink's question (askText has one callback): Keep
+  narration or Discard, and Escape KEEPS, since two presses of Escape is
+  how a show is left. Kept, each is s.narr = {vkey, dur} with its bytes
+  stored under a new media key as a plain audio/webm data URI (the
+  codec parameter defeats every data-URI reader), one undo step. The
+  media walkers (mediaEmbed, mediaWarm, mediaMissing) read s.narr, so a
+  project save, a .junoview file and the exported page's data carry it;
+  normPres and as_presentations keep it (DECK-FORMAT.md, deck_schema
+  and the parity sentinel too). In the show a slide with narration
+  speaks as it arrives, from one player outside the stage, never during
+  a recording run; the Talk panel turns it off for a talk you give
+  yourself. The strip marks a slide that speaks with its length, and the
+  Notes pane plays or deletes a slide's take (Ctrl+Z puts it back).
+  Not carried: a .pptx (PowerPoint wants auto-play timing XML the
+  writer does not emit yet) and playback inside the exported page.
+  Driven at 1366x657 with Chromium's fake microphone: two slides
+  recorded and kept (0:04, 0:03), played on arrival, silenced from the
+  Talk panel, played and deleted and restored from the Notes pane, and
+  still there and playing after a reload. Tests in
+  tests/test_narration.py.
 - [x] **T565 — The accessibility check.** Missing alt text, reading order
   and contrast in the Review centre, each with a fix.
   *Done 2026-10-01.* A sixth row in the Review centre, Accessibility

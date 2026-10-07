@@ -118,6 +118,13 @@
         out[a.vkey]={src:rec.src,mime:rec.mime||'',name:rec.name||''};
         n++;
       });
+      /* T564: a slide's narration rides with the clips */
+      var nk=sl.narr&&sl.narr.vkey;
+      if(nk&&!out[nk]){
+        var nr=mediaStore()[nk];
+        if(nr&&nr.src){
+          out[nk]={src:nr.src,mime:nr.mime||'',name:nr.name||''};n++;}
+      }
     });
     if(n) p.media=out;
     return n;
@@ -150,6 +157,9 @@
             return b&&b.k==='video'&&b.vkey===a.vkey;})) renderAnnots(l,s);
         });
       });
+      /* T564: and its narration, which nothing on the slide shows */
+      var nk=sl.narr&&sl.narr.vkey;
+      if(nk&&!mediaStore()[nk]&&!seen[nk]){seen[nk]=1;mediaGet(nk);}
     });
   }
   /* the clips this deck names but this browser does not hold: the one
@@ -161,6 +171,8 @@
         if(a&&a.k==='video'&&a.vkey&&!mediaStore()[a.vkey]&&!seen[a.vkey]){
           seen[a.vkey]=1;n++;}
       });
+      var nk=sl.narr&&sl.narr.vkey;
+      if(nk&&!mediaStore()[nk]&&!seen[nk]){seen[nk]=1;n++;}
     });
     return n;
   }

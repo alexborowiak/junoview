@@ -7650,3 +7650,27 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
   .dgm-kinds{grid-template-columns:repeat(2,1fr);}
   .dgm-body{grid-template-columns:minmax(0,1fr);}
 }
+
+/* ---- T564: narration -- the recording bar, the strip mark, the pane --
+   The bar sits at the foot of the screen, centred: the ink bar has the
+   left corner and the slide count the right. Faint until the pointer
+   comes to it, like the ink bar, but its dot stays red: you always know
+   the microphone is on. */
+.jv-recbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+  z-index:440;display:flex;align-items:center;gap:8px;padding:5px 6px 5px 10px;
+  border-radius:999px;background:rgb(11 20 29 / .86);color:#e8eef3;
+  border:1px solid #ffffff22;font:12px var(--sans);opacity:.72;
+  box-shadow:0 8px 26px #0007;transition:opacity .15s;}
+.jv-recbar:hover{opacity:1;}
+.jv-recbar[hidden]{display:none;}
+.jv-recbar .rec-dot{width:10px;height:10px;border-radius:50%;flex:none;
+  background:#ff3b30;box-shadow:0 0 0 3px rgb(255 59 48 / .25);}
+.jv-recbar.paused .rec-dot{background:#f0a848;box-shadow:none;}
+.jv-recbar .rec-t{font-variant-numeric:tabular-nums;white-space:nowrap;}
+.jv-recbar .dbtn{font-size:11.5px;padding:3px 9px;white-space:nowrap;}
+.film-mark.narr{color:var(--danger);}
+.np-narr{display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+  margin-top:8px;padding-top:8px;border-top:1px solid var(--chrome-line);}
+.np-narr-lab{flex:1 1 auto;font-size:12px;color:var(--chrome-ink-2);
+  display:inline-flex;align-items:center;gap:5px;}
+.np-narr .dbtn{font-size:11.5px;padding:3px 9px;}

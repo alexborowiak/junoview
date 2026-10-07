@@ -144,7 +144,8 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                    "(author and year); `foot` 1 puts the references a "
                    "slide cites along its bottom edge."),
     "media": (dict, "{key: {src, mime, name}}. The deck's own copy of "
-                    "every video and audio clip placed on it, so a saved "
+                    "every video and audio clip placed on it, and every "
+                    "slide's narration, so a saved "
                     "deck plays with no file beside it. Written at save "
                     "time; absorbed into the browser's store on load."),
     "live": (dict, "{ref: 1} for the figures the author asked to load "
@@ -187,6 +188,11 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                        "`done` 1 once resolved, `re` the replies [{text, "
                        "t}]. Part of the working deck like the notes; "
                        "never presented, printed or exported."),
+    "narr": (dict, "This slide's recorded narration (T564): {vkey, dur} "
+                   "-- `vkey` names the recording in the deck's media "
+                   "store (its bytes ride in the deck's `media`), `dur` "
+                   "its length in seconds. Plays when the slide comes up "
+                   "in the show."),
     "goal": ((int, float), "Minutes this slide should take."),
     "border": (dict, "This slide's own border."),
     "grpmeta": (dict, "Names for the groups on this slide."),

@@ -37,7 +37,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `cuts` | dict | {id: {name}}. Named subsets of one deck — a 45-minute version and a 5-minute one in the same file. Membership is the slide's `cuts` list. |
 | `live` | dict | `{ref: 1}` for figures the author made LIVE LINKS: they re-read from the notebook every time the deck opens, instead of showing the copy kept in `emb`. Absence means kept. |
 | `emb` | dict | The deck's own copy of every placed card, so it shows its figures with no notebook and no network. |
-| `media` | dict | The deck's own copy of every video or audio clip placed on it — `{key: {src, mime, name}}` — so a saved deck plays with no file beside it. |
+| `media` | dict | The deck's own copy of every video or audio clip placed on it, and of every slide's narration — `{key: {src, mime, name}}` — so a saved deck plays with no file beside it. |
 | `bib` | dict | The deck's bibliography, `{cite key: {type, author, year, title, journal, doi, …}}`, read from BibTeX or looked up by DOI. `[@key]` (or `\cite{key}`) in any text resolves against it **at paint time**, so the numbers come from where the slides sit and reordering the deck renumbers everything. |
 | `cite` | dict | How this deck cites: `style` is `'num'` or `'ay'` (author-year); `foot` 1 puts each slide's references along its bottom edge. |
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |
@@ -84,6 +84,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `lay` | str | The id of the slide template last applied; annotations hold its actual geometry. |
 | `layout` | str | Which pane arrangement this slide uses. |
 | `notes` | str | Speaker notes for this slide. |
+| `narr` | dict | This slide's recorded narration (T564): `{vkey, dur}` — `vkey` names the recording in the deck's media store (its bytes ride in the deck's `media`), `dur` its length in seconds. Plays when the slide comes up in the show. |
 | `comments` | list | Comments on this slide (T563): `[{id, text, t, oid?, x?, y?, done?, re?}]` — `t` when (ms since 1970), `oid` the object it is pinned to, `x`/`y` the spot (page percent) when it is on the slide, `done` 1 once resolved, `re` the replies `[{text, t}]`. Part of the working deck like the notes; never presented, printed or exported. |
 | `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
 | `hide` | int | 1 when this slide is hidden: kept in the deck and in its .pptx (hidden there too), but never played and left out of a PDF — PowerPoint's Hide Slide. |

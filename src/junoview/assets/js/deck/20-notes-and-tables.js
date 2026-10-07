@@ -198,6 +198,8 @@
   function renderNotesPane(){
     var pane=$('#notespane');
     if(!pane||pane.hidden) return;
+    /* T564: this slide's narration, to hear or delete */
+    if(typeof narrPaneSync==='function') narrPaneSync();
     var sl=pres.slides[cur];
     var ta=$('#np-notes'),gi=$('#np-goal'),ti=$('#np-total'),
         tot=$('#np-tot');
@@ -1491,6 +1493,8 @@
       try{flushDraftWrite();}catch(e){}
       if(e&&e.type==='pagehide'){
         try{rehStop();}catch(err){}
+        /* T564: the microphone goes down with the page */
+        try{if(typeof narrHalt==='function') narrHalt();}catch(err){}
       }
     }
     /* Only leaving the page ends the run. Visibility hidden also fires

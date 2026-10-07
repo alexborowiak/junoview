@@ -2032,6 +2032,12 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn rbn-sm" id="pr-hide" aria-pressed="false"
                 title="Keep this slide in the deck but never play it"
                 ><i data-ic="hideslide"></i> Hide slide</button>
+              <!-- T564: PowerPoint's Record Slide Show -- the show from
+                   this slide, each slide's talking kept as its own -->
+              <button class="dbtn rbn-sm" id="pr-narrate"
+                title="Present from this slide and record what you say on
+ each one; it plays when that slide comes up in the show"
+                ><i data-ic="mic"></i> Record narration&#8230;</button>
             </span>
             <span class="rbn-lab">During the talk</span>
           </span>
@@ -3567,6 +3573,8 @@ items snap to both. Guides, not ink: never printed or exported"
           <button class="dbtn np-bigbtn" id="np-big"
             title="The slide, your notes and how they will read, side by
  side"><i data-ic="expand"></i> Bigger editor</button>
+          <!-- T564: this slide's recorded narration -->
+          <div class="np-narr" id="np-narr"></div>
         </div>
         <div class="selpane-list" id="notespane-time" hidden>
           <label class="np-lab" for="np-goal">How long you want to spend
@@ -3726,6 +3734,13 @@ items snap to both. Guides, not ink: never printed or exported"
                "Skip animations · PLAYING" read as two states at once -->
           <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
             ><i data-ic="stagger"></i> Animations
+            <span class="tk-state">playing</span></button>
+        </div>
+        <!-- T564: recorded narration, on or off for the talk -->
+        <div class="tk-row">
+          <span class="tk-lab">Narration</span>
+          <button class="dbtn tk-b" id="talk-narr" aria-pressed="false"
+            ><i data-ic="mic"></i> Narration
             <span class="tk-state">playing</span></button>
         </div>
         <!-- T386: the talk's tools. A laser dot, a magnifier, a black

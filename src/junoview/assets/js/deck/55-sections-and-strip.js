@@ -520,6 +520,15 @@
           +' — View › Comments';
         marks.appendChild(cmk);
       }
+      /* T564: a slide that speaks, and for how long */
+      if(typeof narrOf==='function'&&narrOf(s)){
+        var nmk=document.createElement('span');
+        nmk.className='film-mark narr';
+        nmk.innerHTML=bic('mic')+' '+mediaClock(narrOf(s).dur);
+        nmk.title='Recorded narration \u2014 it plays when this slide '
+          +'comes up in the show';
+        marks.appendChild(nmk);
+      }
       if(marks.childNodes.length) lbl.appendChild(marks);
       /* WHILE ARMED the thumbnail is a target, not a destination --
          and every row is one, including the current slide, which is why
@@ -1395,6 +1404,10 @@
        One more group pass, now that the page kind is on the bar. */
     if(editing&&typeof syncRibbonGroups==='function') syncRibbonGroups();
     if(startingTalk||endingTalk) presenterSync();
+    /* T564: the show's first slide records (a recording run) or speaks;
+       the end of the show puts the microphone and the voice down */
+    if(startingTalk&&typeof narrShowStart==='function') narrShowStart();
+    if(endingTalk&&typeof narrShowStop==='function') narrShowStop();
     /* T558: the talk's ink is offered to the slides once the show has
        ended -- asked over whatever the show went back to -- or let go */
     if(endingTalk&&typeof inkLeave==='function') inkLeave();
@@ -1601,6 +1614,7 @@
     showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
     if(wasTalk) inkLeave();
+    if(wasTalk&&typeof narrShowStop==='function') narrShowStop();
     document.body.classList.remove('deck-open');
     deckIsolate(false);
     deckReturnFocus();
