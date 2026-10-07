@@ -260,7 +260,8 @@
      ever writes it into the slides. Pointer events, so a pen or a finger
      draws as well as a mouse; a press on the ink layer never advances
      the slide. */
-  var inkTool='',inkStore=new Map(),inkSvg=null,inkBar=null,inkCur=null;
+  var inkTool='',inkStore=new Map(),inkSvg=null,inkBar=null,inkCur=null,
+    inkDeck=null;   /* the deck the ink was drawn on */
   var INK_COLS=['#ff3b30','#ffd60a','#34c759','#0a84ff','#ffffff',
     '#111111'];
   var inkCol={pen:'#ff3b30',hl:'#ffd60a'};
@@ -376,7 +377,7 @@
     var h=inkSvg.getBoundingClientRect().height||SW_REF_H;
     /* the slide the stroke began on is the one it belongs to, whatever
        the clicker did before the pen came up */
-    var at=pres.slides[cur];
+    var at=pres.slides[cur];inkDeck=pres;
     var st={t:inkTool,c:inkCol[inkTool],sw:INK_SW[inkTool],pts:[p]};
     inkCur={st:st,el:inkStrokeEl(st,h)};
     inkSvg.appendChild(inkCur.el);
@@ -473,8 +474,21 @@
     inkMount();inkSync();
   }
   /* the show ended: keep the ink as drawings, or let it go */
+  /* what a show leaves behind -- ink, narration -- belongs to the deck
+     it was made on. A show left by switching decks has replaced `pres`
+     before the question is answered, and Keep then found none of its
+     slides and kept nothing, silently (2026-10-06 review): it goes into
+     that deck's own draft instead, which is what opening it reads. */
+  function talkKeepInto(deck){
+    var spare=(typeof saveTarget!=='undefined'&&saveTarget!=='browser');
+    draftSet(deck.name||'untitled',JSON.stringify(deck),spare);
+    if(typeof deckMetaSet==='function')
+      deckMetaSet(deck.name||'untitled',{edited:Date.now(),
+        slides:(deck.slides||[]).length});
+  }
   function inkLeave(){
-    var keep=[];
+    var keep=[],deck=inkDeck||pres;
+    inkDeck=null;
     inkStore.forEach(function(list,s){if(list.length) keep.push([s,list]);});
     inkStore=new Map();inkCur=null;
     if(inkTool) setInkTool('');
@@ -490,16 +504,19 @@
       if(!yes) return;
       var made=0;
       keep.forEach(function(k){
-        if((pres.slides||[]).indexOf(k[0])<0) return;
+        if((deck.slides||[]).indexOf(k[0])<0) return;
         k[1].forEach(function(st){
           var a=inkToDraw(st); if(!a) return;
           k[0].annots=k[0].annots||[];k[0].annots.push(a);made++;
         });
       });
       if(!made) return;
-      markDirty();renderSlide();
-      if(typeof renderFilm==='function') renderFilm();
-      toast(made+' ink stroke'+(made===1?'':'s')+' kept as drawings');
+      if(deck===pres){
+        markDirty();renderSlide();
+        if(typeof renderFilm==='function') renderFilm();
+      } else talkKeepInto(deck);
+      toast(made+' ink stroke'+(made===1?'':'s')+' kept as drawings'
+        +(deck===pres?'':' on \u201c'+(deck.name||'untitled')+'\u201d'));
     });
   }
   /* a stroke as the freehand drawing the Draw tool would have made: a

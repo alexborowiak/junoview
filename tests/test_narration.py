@@ -104,7 +104,9 @@ def test_escape_keeps_and_only_discard_throws_away():
     keep = lift_fn(js, "narrKeep")
     assert keep.count("markDirty()") == 1
     assert "s.narr={vkey:k,dur:v.dur};" in keep
-    assert "if(R.deck!==pres){" in keep
+    # into the deck it was recorded on, even when another is open now
+    assert "var deck=R.deck||pres;" in keep
+    assert "talkKeepInto(deck);" in keep
 
 
 def test_takes_are_split_by_slide_and_short_ones_are_not_takes():

@@ -123,3 +123,17 @@ def test_leaving_the_show_by_any_door_puts_the_pen_down_and_asks():
     # asked once the deck is hidden, so the question is on the page
     assert close.index("deckEl.hidden=true;") < close.index(
         "if(wasTalk) inkLeave();")
+
+
+def test_ink_kept_after_a_deck_switch_goes_into_the_deck_it_was_drawn_on():
+    """2026-10-06 review: switching decks mid-show replaced `pres` before
+    the question was answered, and Keep then kept nothing, silently."""
+    js = assets.deck_js()
+    assert "var at=pres.slides[cur];inkDeck=pres;" in lift_fn(js, "inkDown")
+    leave = lift_fn(js, "inkLeave")
+    assert "var keep=[],deck=inkDeck||pres;" in leave
+    assert "if((deck.slides||[]).indexOf(k[0])<0) return;" in leave
+    assert "} else talkKeepInto(deck);" in leave
+    into = lift_fn(js, "talkKeepInto")
+    assert "draftSet(deck.name||'untitled',JSON.stringify(deck),spare);" \
+        in into

@@ -2363,8 +2363,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and the presenter's Pause, the media walkers and normPres; branding
 # mic, pause and stop icons; deck.css the bar and the marks; help.html
 # a Record narration entry.
-EXPECTED_MD5 = "e13208da8217620eff00df648f56edb6"
-EXPECTED_BYTES = 5245310
+# T558/T564 follow-up: ink and narration kept after a deck switch go
+# into the deck they were made on (talkKeepInto writes its draft).
+EXPECTED_MD5 = "8a7ca69e1317379e94277a8047bc01bd"
+EXPECTED_BYTES = 5246344
 
 
 def _render_example() -> str:

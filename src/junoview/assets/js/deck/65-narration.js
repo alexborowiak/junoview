@@ -240,21 +240,24 @@
     var c=$('#ask-cancel'); if(c) c.hidden=true;
   }
   function narrKeep(R,takes){
-    if(R.deck!==pres){
-      toast('That narration was for a presentation that is no longer '
-        +'open — record it again there');
-      return;
-    }
+    /* the deck it was recorded on, even when another is open now */
+    var deck=R.deck||pres;
     var n=0;
     takes.forEach(function(t){
       var s=t[0],v=t[1];
-      if((pres.slides||[]).indexOf(s)<0) return;
+      if((deck.slides||[]).indexOf(s)<0) return;
       var k=mediaKeyNew();
       mediaPut(k,v.rec);
       s.narr={vkey:k,dur:v.dur};
       n++;
     });
     if(!n) return;
+    if(deck!==pres){
+      talkKeepInto(deck);
+      toast('Narration kept on '+n+' slide'+(n===1?'':'s')+' of \u201c'
+        +(deck.name||'untitled')+'\u201d');
+      return;
+    }
     markDirty();
     if(!deckEl.hidden&&mode!=='view'&&typeof renderFilm==='function')
       renderFilm();
