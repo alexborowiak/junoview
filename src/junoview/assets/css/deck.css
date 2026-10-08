@@ -4630,6 +4630,11 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .an-tx>ul,.an-tx>ol{margin:.18em 0;padding-left:1.7em;}
 /* T609: Chromium builds a list inside the <div> line it was made on */
 .an-tx>div>ul,.an-tx>div>ol{margin:.18em 0;padding-left:1.7em;}
+/* ...however deep the line's block sits: a list begun on the line after
+   leaving another is built inside the <div> the browser made for that
+   line, and got the browser's own 10px margins and 40px indent */
+.an-tx:not(.an-ul) div>ul,.an-tx:not(.an-ul) div>ol{margin:.18em 0;
+  padding-left:1.7em;}
 .an-list-edit>.an-ul{margin:0;}
 /* T231: the slide column picks slides, so it gets the same two buttons
    the table has, and says how many are picked. */
@@ -4783,15 +4788,17 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-tx.an-ul ol ol{list-style:lower-roman;}
 /* The same list levels when .an-tx is the neutral mixed-content wrapper. */
 .an-tx:not(.an-ul) li{margin:.18em 0;white-space:pre-wrap;}
-.an-tx:not(.an-ul)>ul ul,
-.an-tx:not(.an-ul)>ol ul{list-style:circle;margin:0;padding-left:1.5em;}
-.an-tx:not(.an-ul)>ul ul ul,
-.an-tx:not(.an-ul)>ol ul ul{list-style:square;}
-.an-tx:not(.an-ul)>ol ol,
-.an-tx:not(.an-ul)>ul ol{list-style:lower-alpha;margin:0;
+/* (descendants, not children: a list on a later line sits in a <div>,
+   and its Tab levels went to decimal at a 40px indent) */
+.an-tx:not(.an-ul) ul ul,
+.an-tx:not(.an-ul) ol ul{list-style:circle;margin:0;padding-left:1.5em;}
+.an-tx:not(.an-ul) ul ul ul,
+.an-tx:not(.an-ul) ol ul ul{list-style:square;}
+.an-tx:not(.an-ul) ol ol,
+.an-tx:not(.an-ul) ul ol{list-style:lower-alpha;margin:0;
   padding-left:1.25em;}
-.an-tx:not(.an-ul)>ol ol ol,
-.an-tx:not(.an-ul)>ul ol ol{list-style:lower-roman;}
+.an-tx:not(.an-ul) ol ol ol,
+.an-tx:not(.an-ul) ul ol ol{list-style:lower-roman;}
 /* Once a box contains both plain and listed paragraphs, the kind travels
    on that list section instead of on the box-wide a.list flag. */
 .an-tx ul[data-list="bullet"]{list-style-type:disc;}

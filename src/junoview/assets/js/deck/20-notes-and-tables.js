@@ -903,6 +903,14 @@
     })(t.content,['','']);
     return out.length?out:[''];
   }
+  /* the words of an EDITOR, one line per line on screen. Since T609 a
+     rich box is edited in a block <div>, where Enter makes a <div> per
+     line and a blank line is <div><br></div> -- which innerText counts
+     twice, so every blank line typed came back doubled after a redraw
+     (2026-10-08 review). */
+  function editorText(el){
+    return htmlLines(el.innerHTML).map(plainOf).join('\n');
+  }
   function contentLines(a){
     var out=[],t=document.createElement('template');
     if(listOf(a)&&a.html){
@@ -1029,7 +1037,7 @@
          autosave. textAt returns 0 for a single-page box and for the
          title/subtitle annots, so nothing else changes. */
       var n=textAt(s,a); if(!(n>0)) n=0;
-      textPageSet(a,n,el.innerText,r.rich?r.html:'');
+      textPageSet(a,n,editorText(el),r.rich?r.html:'');
       markDirty();
     }
     return true;
@@ -1065,7 +1073,7 @@
     var live=caretList(el);
     if(live) live.setAttribute('data-list',style);
     var r=sanitizeRich(el.innerHTML),n=textAt(s,a); if(!(n>0)) n=0;
-    textPageSet(a,n,el.innerText,r.rich?r.html:'');
+    textPageSet(a,n,editorText(el),r.rich?r.html:'');
     /* A paragraph edit ends the old all-or-nothing box mode. Its remaining
        list sections are now explicit ul/ol nodes in a.html. */
     if(listOf(a)) delete a.list;
@@ -1096,7 +1104,7 @@
     if(a){
       var r=sanitizeRich(el.innerHTML);
       var n=textAt(s,a); if(!(n>0)) n=0;
-      textPageSet(a,n,el.innerText,r.rich?r.html:'');
+      textPageSet(a,n,editorText(el),r.rich?r.html:'');
       markDirty();
     }
     return true;
@@ -1154,7 +1162,7 @@
          autosave. textAt returns 0 for a single-page box and for the
          title/subtitle annots, so nothing else changes. */
       var n=textAt(s,a); if(!(n>0)) n=0;
-      textPageSet(a,n,el.innerText,r.rich?r.html:'');
+      textPageSet(a,n,editorText(el),r.rich?r.html:'');
       markDirty();
     }
     return true;
@@ -1683,7 +1691,7 @@
        costs a phrase rather than a slide. */
     function commitNow(quiet){
       if(!el.isContentEditable) return;
-      var v0=(el.innerText||'').replace(/\r/g,'').replace(/\n+$/,'');
+      var v0=editorText(el).replace(/\r/g,'').replace(/\n+$/,'');
       var r0=rich?sanitizeRich(el.innerHTML):null;
       setVal(v0,r0);
       markDirty(quiet);
@@ -1712,7 +1720,7 @@
         endEdit();
         return;
       }
-      var v=(el.innerText||'').replace(/\r/g,'')
+      var v=editorText(el).replace(/\r/g,'')
         .replace(/\n+$/,'');
       var r=rich?sanitizeRich(el.innerHTML):null;
       setVal(v,r);
@@ -1821,8 +1829,11 @@
        line takes that line into a list, through the same per-paragraph
        toggle as the List button. Never inside a list (its own marker is
        already there) and never in a Markdown box (T74). */
-    el.addEventListener('input',function(){
+    el.addEventListener('input',function(e){
       if(!el.isContentEditable) return;
+      /* a marker TYPED, not one left behind by deleting the words after
+         a literal "- " (2026-10-08 review) */
+      if(e&&e.inputType&&e.inputType!=='insertText') return;
       var s4=pres.slides[cur],a4=s4&&annotByIdx(s4,idx);
       if(!a4||a4.k!=='text'||a4.md) return;
       var sel4=window.getSelection();
@@ -1846,6 +1857,27 @@
         sel4.removeAllRanges();sel4.addRange(r4);
         document.execCommand('delete',false,null);
       }catch(err){return;}
+      /* a revisited plain box is ONE text node with hard \n lines, and
+         the browser's list command runs from the caret's line to the end
+         of the node: "1. " before the second of four lines made one item
+         of the last three (2026-10-08 review). The caret's line is cut
+         out into a node of its own first, its \n turned to <br>s. */
+      var s5=window.getSelection(),t5=s5.focusNode,o5=s5.focusOffset;
+      if(t5&&t5.nodeType===3&&t5.nodeValue.indexOf('\n')>=0){
+        var v5=t5.nodeValue,nl5=v5.indexOf('\n',o5),
+          bl5=o5>0?v5.lastIndexOf('\n',o5-1):-1;
+        if(nl5>=0){
+          var rest5=t5.splitText(nl5);rest5.deleteData(0,1);
+          rest5.parentNode.insertBefore(document.createElement('br'),rest5);
+        }
+        if(bl5>=0){
+          var ln5=t5.splitText(bl5+1);t5.deleteData(bl5,1);
+          ln5.parentNode.insertBefore(document.createElement('br'),ln5);
+          t5=ln5;o5-=bl5+1;
+        }
+        var r5=document.createRange();r5.setStart(t5,o5);r5.collapse(true);
+        s5.removeAllRanges();s5.addRange(r5);
+      }
       listSelection(/^1/.test(m4[1])?'number':'bullet');
     });
     /* Tab makes a SUB-BULLET, the way it does in every outliner and in

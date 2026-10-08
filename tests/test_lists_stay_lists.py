@@ -47,3 +47,43 @@ def test_a_list_made_on_a_later_line_is_spaced_like_the_others():
     css = assets.load("css/deck.css")
     assert ".an-tx>div>ul,.an-tx>div>ol{margin:.18em 0;padding-left:1.7em;}" \
         in css
+
+
+def test_a_blank_line_is_one_blank_line_after_a_redraw():
+    """2026-10-08 review: a block editor makes <div><br></div> for a blank
+    line and innerText counts it twice, so "Para one", Enter, Enter, "Para
+    two" came back with two blank lines (and every extra Enter added two).
+    The editor's words are read line by line (htmlLines). Driven: the box
+    is 78.8px tall while typing and after the redraw, text
+    'Para one\\n\\nPara two'."""
+    js = assets.deck_js()
+    assert ("  function editorText(el){\n"
+            "    return htmlLines(el.innerHTML).map(plainOf).join('\\n');\n"
+            "  }") in js
+    assert "el.innerText||'').replace(/\\r/g,'')" not in js
+    assert js.count("textPageSet(a,n,editorText(el),r.rich?r.html:'');") == 4
+
+
+def test_a_marker_on_one_line_lists_only_that_line():
+    """2026-10-08 review: a revisited plain box is one text node with hard
+    \\n lines, and the browser's list command ran from the caret's line to
+    the end of the node -- "1. " before the second of four lines made one
+    item of the last three. The caret's line is cut into a node of its own
+    first. Driven: only "Buy milk" numbered; "- " on the first line
+    bullets only "Intro"; a marker on a new last or middle line lists
+    only that line."""
+    js = assets.deck_js()
+    h = js.split("    el.addEventListener('input',function(e){\n"
+                 "      if(!el.isContentEditable) return;\n"
+                 "      /* a marker TYPED", 1)[1].split("\n    });\n", 1)[0]
+    assert "if(e&&e.inputType&&e.inputType!=='insertText') return;" in h
+    assert h.index("var s5=window.getSelection(),t5=s5.focusNode") \
+        < h.index("listSelection(/^1/.test(m4[1])?'number':'bullet');")
+
+
+def test_lists_deeper_in_a_box_are_spaced_and_levelled_alike():
+    css = assets.deck_css()
+    assert (".an-tx:not(.an-ul) div>ul,.an-tx:not(.an-ul) div>ol{"
+            "margin:.18em 0;\n  padding-left:1.7em;}") in css
+    assert ".an-tx:not(.an-ul) ol ol,\n.an-tx:not(.an-ul) ul ol{" in css
+    assert ".an-tx:not(.an-ul)>ol ol" not in css

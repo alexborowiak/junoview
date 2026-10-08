@@ -315,3 +315,20 @@ def test_the_losses_are_named_before_the_file_is_written(out):
             "        if(go) return pptxBuildAndSave(orig);") in out
     assert "var note={skipped:0,cropped:0,maths:0,tied:0,exits:0," \
         "orig:orig||{}};" in losses
+
+
+def test_a_list_box_leaves_as_bulleted_paragraphs(out):
+    """2026-10-08 review: a whole-box list keeps only its <li>s (the slide
+    supplies the list around them), so the .pptx ran every item into one
+    unbulleted paragraph ("alphabeta"); a Tab sub-level beside the items
+    came out at level 0; and a rich box's hard line breaks became spaces.
+    Driven: "- alpha / beta" -> two bullets; "- one / two / Tab sub" ->
+    one, two, and sub at level 1; a revisited four-line box with "1. "
+    before its second line -> four paragraphs, only that one numbered."""
+    assert ("          var lk5=!a.md&&listOf(a);\n"
+            "          if(lk5&&!/^\\s*<(ul|ol)\\b/i.test(html)){") in out
+    assert "var paras=pptxParasFromHtml(html,!a.md);" in out
+    assert ("          if(c.nodeType===1&&/^(ul|ol)$/i.test(c.tagName)){\n"
+            "            walk(c,s2,lvl+1);return;}") in out
+    assert "var segs=pre?String(n.nodeValue).split('\\n'):[n.nodeValue];" \
+        in out

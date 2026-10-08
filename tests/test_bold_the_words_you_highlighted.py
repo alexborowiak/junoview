@@ -28,7 +28,7 @@ def test_the_write_back_is_shared_not_copied(out):
     assert "  function richSelectionEdit(run){" in out
     assert "    if(!el||!selectionInside(el)) return false;" in out
     assert "      var n=textAt(s,a); if(!(n>0)) n=0;" in out
-    assert "      textPageSet(a,n,el.innerText,r.rich?r.html:'');" in out
+    assert "      textPageSet(a,n,editorText(el),r.rich?r.html:'');" in out
 
 
 def test_real_tags_not_inline_styles(out):

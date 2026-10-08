@@ -2395,8 +2395,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix: a cycle's ring widens (then its boxes narrow) until neighbours stand
 # clear, so 6-8 steps never overlap.
 # Fix: fitTexts measures a box without its selection handles (an-fitting).
-EXPECTED_MD5 = "fb7fb9cecdb6d404d729fe6337b1046f"
-EXPECTED_BYTES = 5276738
+# Fix (review of T609): a blank line stays one line (editorText), a line marker
+# lists only its line, nested lists are spaced alike, and a list box exports
+# to .pptx as bulleted paragraphs with its levels and line breaks.
+EXPECTED_MD5 = "c453080fdd03c544664a0c9caef9e517"
+EXPECTED_BYTES = 5280085
 
 
 def _render_example() -> str:

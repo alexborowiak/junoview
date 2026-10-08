@@ -2555,7 +2555,7 @@
      block elements are paragraphs (an <li> a bullet, at its nesting
      level; an <hN> a heading), inline marks are per-run bold, italic,
      underline, strike and colour. Links keep their words. */
-  function pptxParasFromHtml(html){
+  function pptxParasFromHtml(html,pre){
     var doc;
     try{doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');}
     catch(e){return null;}
@@ -2573,12 +2573,18 @@
     }
     function walk(n,st,lvl){
       if(n.nodeType===3){
-        var t=n.nodeValue.replace(/\s+/g,' ');
-        if(!t.trim()&&!cur) return;
-        if(!cur) para('',0,0);
-        cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
-          color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||'',
-          link:st.link||null});
+        /* a rich box is pre-wrap: its hard \n is a line of its own, as it
+           is on the slide (a Markdown box's \n is only a space) */
+        var segs=pre?String(n.nodeValue).split('\n'):[n.nodeValue];
+        segs.forEach(function(seg,j){
+          if(j) cur=null;
+          var t=seg.replace(/\s+/g,' ');
+          if(!t.trim()&&!cur) return;
+          if(!cur) para('',0,0);
+          cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
+            color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||'',
+            link:st.link||null});
+        });
         return;
       }
       if(n.nodeType!==1) return;
@@ -2618,6 +2624,10 @@
       }
       if(tag==='ul'||tag==='ol'){
         [].forEach.call(n.childNodes,function(c){
+          /* Tab nests the sub-list BESIDE the items, not inside one: it
+             is a level down all the same */
+          if(c.nodeType===1&&/^(ul|ol)$/i.test(c.tagName)){
+            walk(c,s2,lvl+1);return;}
           if(c.nodeType!==1||c.tagName.toLowerCase()!=='li'){walk(c,s2,lvl);return;}
           para(tag,lvl,0);
           [].forEach.call(c.childNodes,function(g){walk(g,s2,lvl+1);});
@@ -2769,7 +2779,15 @@
         if(!a.bib&&(a.md||_pg.h)){
           var html=a.md?notesHtml(figSubst(_pg.t,a,note.figs))
             :sanitizeRich(figSubst(_pg.h,a,note.figs)).html;
-          var paras=pptxParasFromHtml(html);
+          /* a whole-box list keeps only its items; the slide supplies the
+             list around them, and so must this, or every item ran into one
+             unbulleted paragraph (2026-10-08 review) */
+          var lk5=!a.md&&listOf(a);
+          if(lk5&&!/^\s*<(ul|ol)\b/i.test(html)){
+            var lt5=listIsOrdered(lk5)?'ol':'ul';
+            html='<'+lt5+'>'+html+'</'+lt5+'>';
+          }
+          var paras=pptxParasFromHtml(html,!a.md);
           if(/<a\s[^>]*href/i.test(html)) note.links=(note.links||0)+1;
           if(paras){
             paras.forEach(function(p){p.runs.forEach(function(r){
