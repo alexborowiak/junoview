@@ -5844,7 +5844,9 @@ body.light .eq-box{background:var(--chrome-2);
   border-radius:12px;box-shadow:0 24px 70px var(--shadow);
   font-family:var(--sans);}
 .aa-head{display:flex;align-items:center;gap:8px;}
-.aa-what{font-size:13px;color:var(--chrome-ink);line-height:1.5;
+/* positioned, so the type menu (.sh-menu, absolute) opens under the
+   chip and not 5px below the bottom of the window (2026-10-08 review) */
+.aa-what{position:relative;font-size:13px;color:var(--chrome-ink);line-height:1.5;
   background:var(--chrome-0,#0b141d);border:1px solid #ffffff1a;
   border-radius:8px;padding:8px 10px;display:flex;align-items:center;
   gap:7px;flex-wrap:wrap;}

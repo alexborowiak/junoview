@@ -2398,8 +2398,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix (review of T609): a blank line stays one line (editorText), a line marker
 # lists only its line, nested lists are spaced alike, and a list box exports
 # to .pptx as bulleted paragraphs with its levels and line breaks.
-EXPECTED_MD5 = "c453080fdd03c544664a0c9caef9e517"
-EXPECTED_BYTES = 5280085
+# Fix (review of T608): the Apply tie only for the source's own type, the
+# type menu opens on screen, and Style system changes re-stamp before the undo step.
+EXPECTED_MD5 = "7a4ba966c27ce3bd30bd8c5d5c807e2f"
+EXPECTED_BYTES = 5280246
 
 
 def _render_example() -> str:

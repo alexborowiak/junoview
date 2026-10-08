@@ -5030,7 +5030,7 @@
       b.className='dbtn dg-b';b.textContent=label;b.title=title;
       if(on!=null) b.setAttribute('aria-pressed',on?'true':'false');
       b.addEventListener('click',function(){
-        fn();markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);});
+        fn();dgRestamp(id);markDirty();refresh();dgRail(ov);dgBody(ov);});
       (cur_||row).appendChild(b);
       return b;
     }
@@ -5057,7 +5057,7 @@
       var pt=parseFloat(szIn.value);
       if(!isFinite(pt)||pt<=0) return;
       rec.size=Math.max(0.6,Math.min(30,Math.round(pt/5.4*100)/100));
-      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+      dgRestamp(id);markDirty();refresh();dgRail(ov);dgBody(ov);
     });
     sz.appendChild(szIn);
     var szU=document.createElement('span');szU.textContent=' pt';
@@ -5094,7 +5094,7 @@
       });
     fsel.addEventListener('change',function(){
       if(fsel.value) rec.font=fsel.value; else delete rec.font;
-      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+      dgRestamp(id);markDirty();refresh();dgRail(ov);dgBody(ov);
     });
     (cur_||row).appendChild(fsel);
     grp('Colours');
@@ -5112,7 +5112,7 @@
         +(tokRef(v)?(' (a deck colour: '+tokRef(v)+'; a change here '
           +'unhooks it)'):'');
       ci.addEventListener('input',function(){
-        rec[key]=ci.value;markDirty();dgRestamp(id);refresh();});
+        rec[key]=ci.value;dgRestamp(id);markDirty();refresh();});
       ci.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
       wrap.appendChild(ci);
       if(none){
@@ -5122,7 +5122,7 @@
         nb.setAttribute('aria-pressed',(v==='none').toString());
         nb.addEventListener('click',function(){
           if(v==='none') delete rec[key]; else rec[key]='none';
-          markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+          dgRestamp(id);markDirty();refresh();dgRail(ov);dgBody(ov);
         });
         wrap.appendChild(nb);
       }
@@ -5143,7 +5143,7 @@
       ['x','y','w'].forEach(function(k){
         if(st[id]&&st[id][k]!=null) keep[k]=st[id][k];});
       st[id]=keep;
-      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+      dgRestamp(id);markDirty();refresh();dgRail(ov);dgBody(ov);
     });
     (cur_||row).appendChild(rst);
     left.appendChild(row);

@@ -2831,7 +2831,12 @@
     function tieSync(){
       var w=$('#aa-tiewrap'),lab=$('#aa-tielab');
       if(!w) return;
+      /* only while the boxes being changed are the source's OWN type: a
+         chip set to another type made Apply rewrite the source's type
+         across the deck and leave the chosen one alone (2026-10-08
+         review) -- that case is a direct write to the chosen boxes */
       var ok=isStyleKey(srcKey)&&srcA&&srcA.style
+        &&srcKey==='text:'+srcA.style
         &&!!STYLE_DEFAULTS[srcA.style];
       w.hidden=!ok;
       if(ok&&lab)

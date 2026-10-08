@@ -82,3 +82,26 @@ def test_the_style_system_lists_a_type_with_its_looks():
     assert ("      return !parentOf(id)&&dgFamilyWearers(id).length>0;});"
             in js)
     assert "    var wear=dgFamilyWearers(id);" in js
+
+
+def test_the_tie_is_offered_only_for_the_sources_own_type():
+    """2026-10-08 review: with the Apply dialog's chip set to another
+    type, Apply rewrote the SOURCE's type across the whole deck (even on
+    unticked slides) and left the chosen type alone. The tie is only
+    offered while the chosen type is the source box's own."""
+    tie = assets.deck_js().split("    function tieSync(){", 1)[1].split(
+        "\n    }\n", 1)[0]
+    assert ("      var ok=isStyleKey(srcKey)&&srcA&&srcA.style\n"
+            "        &&srcKey==='text:'+srcA.style\n") in tie
+    # and the chip's menu opens under the chip, not below the window
+    css = assets.deck_css()
+    assert ".aa-what{position:relative;" in css
+
+
+def test_a_style_change_is_one_undo_step_with_its_boxes():
+    """2026-10-08 review: every Look control in the Style system recorded
+    the undo step (markDirty) BEFORE re-stamping the boxes, so redo -- or
+    undoing a later edit -- brought back the type without its boxes."""
+    js = assets.deck_js()
+    assert "markDirty();dgRestamp(id)" not in js
+    assert js.count("dgRestamp(id);markDirty();") == 6
