@@ -1991,7 +1991,10 @@
     el.addEventListener('cut',rememberTextCopy);
     el.addEventListener('paste',function(e){
       if(!el.isContentEditable) return;
-      if(codePlain){codePlain=0;return;}
+      /* plain, please: the browser's own plain paste, and nobody else's
+         -- the document's handler would have made a copied figure's
+         words a figure (2026-10-08 review) */
+      if(codePlain){codePlain=0;e.stopPropagation();return;}
       var cd=e.clipboardData;if(!cd) return;
       /* T612: a notebook figure this page has is the slide's, not this
          box's (the document's paste puts it there); one it does not

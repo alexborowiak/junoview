@@ -2850,7 +2850,14 @@
       return;
     }
     /* 'paste' and 'plain' */
-    if(which==='paste'&&cellClip&&pasteCellClip(cellClip)) return;   /* T612 */
+    /* T612: a figure goes on the slide, so a box being typed in closes
+       first -- its words are their own undo step, before the figure's
+       (2026-10-08 review: the first Ctrl+Z undid the typing instead) */
+    function closeBox(c){if(ed&&cellRefHere(c)) try{ed.blur();}catch(err){}}
+    if(which==='paste'&&cellClip){
+      closeBox(cellClip);
+      if(pasteCellClip(cellClip)) return;
+    }
     if(which==='paste'&&clipBuf.length){pasteBuf('auto');return;}
     if(which==='paste'&&!ed&&typeof slideClip!=='undefined'&&slideClip){
       slidePaste(cur);toast('Slide pasted');return;}
@@ -2883,7 +2890,7 @@
       /* T612: a notebook figure copied in another window */
       var cc=(which==='paste')?cellClipOf({getData:function(t){
         return t==='text/plain'?txt:'';}}):null;
-      if(cc){if(!pasteCellClip(cc)) cellNotHere(cc,false);return;}
+      if(cc){closeBox(cc);if(!pasteCellClip(cc)) cellNotHere(cc,false);return;}
       if(ed&&document.contains(ed)){
         ed.focus();
         try{document.execCommand('insertText',false,txt);}catch(e){}
@@ -3449,6 +3456,9 @@
         if(sh&&sh.path===c.path&&ITEMS[nsKey(st,anchor)])
           return nsKey(st,anchor);
       }
+      /* its notebook is not open, and ANOTHER with the same name is:
+         binding would show that one's figure (2026-10-08 review) */
+      if(ITEMS[c.ref]) return null;
     }
     var it=resolveRef(c.ref);
     return it?it.ns:null;
@@ -3464,6 +3474,7 @@
       return t===CELL_MIME?JSON.stringify(o||{}):'';}});
     if(!c) return;
     cellClip=c;clipBuf=[];clipGrpMeta={};
+    objStamp=++clipSeq;   /* and it outranks a look copied before it */
   }
   /* PLACEMENT, the fifth door (T300's four: endPick, pickAdd, the strip's
      click, autoSlides). A selected EMPTY frame takes the figure, as a

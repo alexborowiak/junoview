@@ -158,10 +158,12 @@ def test_the_newest_copy_wins_in_every_door():
     assert "cellClip=c;clipBuf=[];clipGrpMeta={};" in lift_fn(js,
                                                               "cellCopied")
     # the right-click menu, Home > Paste and the keydown fallback
-    assert "row('Paste '+cw,'Ctrl+V',function(){pasteCellClip(cellClip);}," \
-        in js
-    assert "if(which==='paste'&&cellClip&&pasteCellClip(cellClip)) return;" \
-        in js
+    assert ("      row('Paste '+cw,'Ctrl+V',function(){\n"
+            "        if(!pasteCellClip(cellClip)) cellNotHere(cellClip,false);},"
+            ) in js
+    assert ("    if(which==='paste'&&cellClip){\n"
+            "      closeBox(cellClip);\n"
+            "      if(pasteCellClip(cellClip)) return;\n    }") in js
     assert "if(cellClip&&pasteCellClip(cellClip)) return;   /* T612 */" in js
     assert "window.SemDeckCellCopied=cellCopied;" in js
 
@@ -279,3 +281,49 @@ def test_a_local_notebook_knows_its_github_page(tmp_path):
 def test_the_help_says_where_copy_is():
     helpp = assets.load("html/help.html")
     assert "<b><i data-ic=\"copy\"></i> Copy</b>. Paste on a slide" in helpp
+
+
+
+def test_the_review_of_t612():
+    """2026-10-08 review of T612, each driven or run before the fix:
+    Ctrl+Shift+V in a text box placed the figure instead of the words;
+    Home > Paste with the caret in a box placed the figure with the box
+    still open, so the first Ctrl+Z undid the typing; a copy whose
+    notebook was closed bound to another open notebook of the same name;
+    the right-click Paste figure and Ctrl+Alt+V said nothing when the
+    figure could not be placed; a look copied earlier outranked a newer
+    figure Copy for Ctrl+Shift+V; and the GitHub link broke on '#', '?',
+    non-ASCII and glob characters in a file name."""
+    js = assets.deck_js()
+    assert "if(codePlain){codePlain=0;e.stopPropagation();return;}" in js
+    assert ("      if(cc){closeBox(cc);if(!pasteCellClip(cc)) "
+            "cellNotHere(cc,false);return;}") in js
+    here = lift_fn(js, "cellRefHere")
+    assert here.index("sh.path===c.path") < here.index(
+        "      if(ITEMS[c.ref]) return null;")
+    assert "objStamp=++clipSeq;" in lift_fn(js, "cellCopied")
+    assert ("          if(!pasteCellClip(cellClip,'here')) "
+            "cellNotHere(cellClip,false);") in js
+    app = assets.load("js/app.js")
+    assert ("    function seg(p){return String(p).split('/')"
+            ".map(encodeURIComponent)") in app
+    assert "encodeURI(g.rel)" not in app
+
+
+def test_the_github_path_is_the_name_exactly(tmp_path):
+    import shutil
+    if not shutil.which("git"):
+        pytest.skip("git is not installed")
+    from junoview.server.vcs import _git_rel_path
+    sub = tmp_path / "ex"
+    sub.mkdir()
+    names = ["Análisis.ipynb", "fig1.ipynb", "fig[1].ipynb", "run #2.ipynb"]
+    for n in names:
+        (sub / n).write_text("{}", encoding="utf-8")
+    subprocess.run(["git", "-C", str(tmp_path), "init", "-q"], check=True)
+    subprocess.run(["git", "-C", str(tmp_path), "add", "ex/Análisis.ipynb",
+                    "ex/fig1.ipynb", "ex/run #2.ipynb"], check=True)
+    assert _git_rel_path(sub / "Análisis.ipynb") == "ex/Análisis.ipynb"
+    assert _git_rel_path(sub / "run #2.ipynb") == "ex/run #2.ipynb"
+    # a glob character is part of the name: untracked is untracked
+    assert _git_rel_path(sub / "fig[1].ipynb") == ""

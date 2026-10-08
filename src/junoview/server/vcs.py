@@ -63,9 +63,13 @@ def _git_rel_path(f: Path) -> str:
     """The file's path inside its repository, as GitHub shows it; '' when
     git does not track it (an untracked file has no page to link to)."""
     try:
-        r = _git_run(f, "ls-files", "--full-name", "--", f.name)
-        rel = r.stdout.strip().splitlines() if r.returncode == 0 else []
-        return rel[0] if rel else ""
+        # -z: the name exactly, never C-quoted (non-ASCII came back as
+        # "An\303\241lisis"); :(literal): "fig[1].ipynb" is a name, not a
+        # glob that matches fig1.ipynb
+        r = _git_run(f, "ls-files", "-z", "--full-name", "--",
+                     ":(literal)" + f.name)
+        rel = r.stdout.split("\0") if r.returncode == 0 else []
+        return rel[0] if rel and rel[0] else ""
     except Exception:
         return ""
 

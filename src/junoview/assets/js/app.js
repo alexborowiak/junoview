@@ -5797,10 +5797,14 @@
     if(!sh||sh.gitweb!==undefined||APP.mode!=='app'||!sh.path
        ||/^https?:/i.test(sh.path)||!APP.api) return;
     sh.gitweb='';
+    /* each path segment escaped on its own: encodeURI leaves '#' and '?'
+       in, and "run #2.ipynb" linked to "run " (2026-10-08 review) */
+    function seg(p){return String(p).split('/').map(encodeURIComponent)
+      .join('/');}
     APP.api('/api/gitstate',{path:sh.path}).then(function(g){
       if(g&&g.github&&g.rel)
-        sh.gitweb=g.github+'/blob/'+encodeURI(g.branch&&g.branch!=='HEAD'
-          ?g.branch:((g.commit||{}).id||'HEAD'))+'/'+encodeURI(g.rel);
+        sh.gitweb=g.github+'/blob/'+seg(g.branch&&g.branch!=='HEAD'
+          ?g.branch:((g.commit||{}).id||'HEAD'))+'/'+seg(g.rel);
     }).catch(function(){});
   }
   function cellCopyPayload(shell,stem,card){

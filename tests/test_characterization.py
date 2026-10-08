@@ -2403,8 +2403,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix (review of T610/T618): questions over the Open dialog and library are
 # asked on the body, Escape closes the question first, a pick is dropped when
 # the editor comes back, and the library hides its notebook door in a talk.
-EXPECTED_MD5 = "d026e954ab98397e81e465c92e39ff1f"
-EXPECTED_BYTES = 5282250
+# Fix (review of T612): Ctrl+Shift+V in a box is words, Home > Paste closes the
+# box first, same-name notebooks are not bound, unplaceable pastes say why,
+# a newer figure Copy outranks a look, and GitHub links survive odd names.
+EXPECTED_MD5 = "9439cd2189936c998f8768ad6cac5cd0"
+EXPECTED_BYTES = 5283485
 
 
 def _render_example() -> str:

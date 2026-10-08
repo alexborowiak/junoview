@@ -2961,7 +2961,10 @@
       else if((e.ctrlKey||e.metaKey)&&e.altKey
               &&(e.key==='v'||e.key==='V')){
         e.preventDefault();tookPaste();
-        if(cellClip&&pasteCellClip(cellClip,'here')) return;   /* T612 */
+        if(cellClip){   /* T612 */
+          if(!pasteCellClip(cellClip,'here')) cellNotHere(cellClip,false);
+          return;
+        }
         if(!clipBuf.length) toast('Nothing copied yet');
         else {pasteBuf('here');
           toast(pointerPct()?'Pasted at the pointer'

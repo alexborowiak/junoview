@@ -3521,10 +3521,13 @@
     if(cellClip){
       /* T612: the notebook figure copied last, in this page */
       var cw=(cellClip.kind==='figure'||!cellClip.kind)?'figure':'cell';
-      row('Paste '+cw,'Ctrl+V',function(){pasteCellClip(cellClip);},
+      /* (and when it cannot be placed, it says why, as Ctrl+V does) */
+      row('Paste '+cw,'Ctrl+V',function(){
+        if(!pasteCellClip(cellClip)) cellNotHere(cellClip,false);},
         cellClip.title||cellClip.ref);
       row('Paste '+cw+' here','Ctrl+Alt+V',
-        function(){pasteCellClip(cellClip,'here',at);},
+        function(){if(!pasteCellClip(cellClip,'here',at))
+          cellNotHere(cellClip,false);},
         'Centred on the point you right-clicked');
     } else if(!clipBuf.length){
       /* greyed, the way every editor shows a Paste with nothing to paste,
