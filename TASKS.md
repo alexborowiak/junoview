@@ -11605,6 +11605,23 @@ more pressing things before getting on to this."
   that figure, then when you pasted it into a presentation it just
   pasted as the figure."
 
+- [x] **T618 — Clicking a figure into a slide works again.** "The
+  regular adding a figure from a notebook by clicking on it is not
+  working" and "I have to click the esc key multiple times to get out of
+  the notebook select view."
+  *Done 2026-10-08.* A regression from T596: while a deck is open the
+  editor marks everything behind it INERT (#docs among them) and only
+  closeDeck lifted it, so the notebook a pick shows could not be clicked
+  -- a click on a card hit <body>, and no figure ever reached the frame.
+  startPick now calls deckIsolate(false) as it hides the deck, and
+  endPick's openDeck puts the isolation back. Escape ends a pick at the
+  first press: it was heard on document in the bubble phase, after any
+  notebook control that answers Escape first, and is now on window in
+  capture. Driven at 1366x657: a From notebook frame drawn, a figure
+  card clicked and the frame filled; a second pick ended by one Escape
+  with the notebook's Which plots menu open. Tests in
+  tests/test_picking_a_card.py.
+
 ### Later: between a notebook and a presentation
 
 The idea, gathered from several messages: a collection is already the

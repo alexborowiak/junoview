@@ -36,6 +36,12 @@
     pickTab=activeTab();   /* T470: the tab Figures was pressed from */
     rbnGalleryClose();
     deckEl.hidden=true;
+    /* T618: and the notebook under it comes back to life. T596 made the
+       editor INERT everything behind it (#docs among them), and only
+       closeDeck lifted it -- so the notebook a pick shows could not be
+       clicked at all, and no card ever reached the slide. endPick's
+       openDeck puts the isolation back. */
+    deckIsolate(false);
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
     document.body.classList.remove('slide-editing');
@@ -99,6 +105,16 @@
       setTab(pickTab,true);
     pickTab='';
   }
+  /* T618: Escape ends a pick at the first press. It was heard on
+     document in the bubble phase, after anything in the notebook that
+     answers Escape first (an open menu, the find bar) -- so it took
+     several presses to get back to the slide. On window, in capture,
+     it is the pick's before it is anyone else's. */
+  window.addEventListener('keydown',function(e){
+    if(picking<0||e.key!=='Escape') return;
+    e.preventDefault();e.stopImmediatePropagation();
+    endPick();
+  },true);
   document.addEventListener('click',function(e){
     if(picking<0) return;
     var t=e.target;

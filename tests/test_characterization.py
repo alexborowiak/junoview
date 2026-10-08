@@ -2365,8 +2365,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # a Record narration entry.
 # T558/T564 follow-up: ink and narration kept after a deck switch go
 # into the deck they were made on (talkKeepInto writes its draft).
-EXPECTED_MD5 = "8a7ca69e1317379e94277a8047bc01bd"
-EXPECTED_BYTES = 5246344
+# T618: a pick lifts the editor's isolation (deckIsolate(false)) so
+# the notebook can be clicked, and its Escape is on window in capture.
+EXPECTED_MD5 = "e7b4d46455a463742193d7e8814ad329"
+EXPECTED_BYTES = 5247197
 
 
 def _render_example() -> str:
