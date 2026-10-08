@@ -39,7 +39,9 @@
     var at=step
       ?(front?Math.min(rest.length,at0+1):Math.max(0,at0-1))
       :(front?rest.length:0);
+    var before=s.annots;
     s.annots=rest.slice(0,at).concat(moving,rest.slice(at));
+    retieAfter(s,before);   /* ties are indices too */
     /* the selection is a set of INDICES, so it has to be rebuilt */
     var moved=[];
     for(var k=0;k<moving.length;k++) moved.push(at+k);

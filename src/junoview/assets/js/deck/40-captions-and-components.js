@@ -1247,10 +1247,12 @@
           sl.annots.push(na);
         }
       });
+      var was=sl.annots.slice();
       Object.keys(byCi).forEach(function(k){
         var at=sl.annots.indexOf(byCi[k].a);
         if(at>=0) sl.annots.splice(at,1);
       });
+      retieAfter(sl,was);   /* arrows tied past a removed member */
       if(g.si===cur) onCur=true;
       n++;
     });

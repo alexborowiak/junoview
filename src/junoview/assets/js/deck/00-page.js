@@ -530,6 +530,7 @@
     for(;ci<cells.length;ci++) if(cells[ci].ref) next.push(cells[ci]);
     for(;ti<texts.length;ti++) next.push(texts[ti]);
     s.annots=keep.concat(next);
+    retieAfter(s,old);   /* arrows come first now: their ties follow */
     if(!s.annots.length) delete s.annots;
   }
   function layIcon(layout){
@@ -2654,7 +2655,10 @@
         act:'Delete the copy on top',
         fix:(function(k){return function(){
           var sl=pres.slides[cur];
-          if(sl&&sl.annots&&sl.annots[k]) sl.annots.splice(k,1);
+          if(sl&&sl.annots&&sl.annots[k]){
+            var was=sl.annots.slice(),ends=tiedEnds(sl);
+            sl.annots.splice(k,1);retieAfter(sl,was,ends);
+          }
           selAnnot=null;selSet=[];
           return 1;
         };})(Math.max(A.i,B.i))});

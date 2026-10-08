@@ -3976,6 +3976,36 @@
     /* the group appeared or went, so the row is re-judged */
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
   }
+  /* ---- ARROWS TIED BY INDEX FOLLOW A REORDER ------------------------
+     An attached end is c1/c2 = {i}, an index into s.annots, so anything
+     that removes or restacks items moved every tie after it onto the
+     wrong box: delete a slide's title and a diagram's Plan->Build arrow
+     vanished, the rest shifted one step, and the last pointed at an
+     arrow (2026-10-08 review). Every such change takes the old array
+     (the same objects) and calls retieAfter: a tie follows its box to
+     its new index, and a tie whose box has gone lets go where it was
+     last drawn (tiedEnds, read before the change). */
+  function tiedEnds(s){
+    var l=stage&&stage.querySelector('.annot-layer'),out=[];
+    if(l) (s.annots||[]).forEach(function(a,i){
+      if(a&&a.k==='arrow'&&(a.c1||a.c2)) out[i]=arrowEnds(l,s,a,i);});
+    return out;
+  }
+  function retieAfter(s,before,ends){
+    var now=s.annots||[];
+    var to=before.map(function(a){return now.indexOf(a);});
+    before.forEach(function(a,oi){
+      if(!a||a.k!=='arrow'||to[oi]<0) return;
+      ['1','2'].forEach(function(w){
+        var c=a['c'+w]; if(!c||typeof c.i!=='number') return;
+        var n=to[c.i];
+        if(n!=null&&n>=0){a['c'+w]={i:n};return;}
+        var e=ends&&ends[oi];
+        if(e){a['x'+w]=e['x'+w];a['y'+w]=e['y'+w];}
+        delete a['c'+w];
+      });
+    });
+  }
   function deleteSel(){
     var s=pres.slides[cur];
     if(!s||!s.annots) return;
@@ -4027,8 +4057,10 @@
       delete c.capOf;
       untied++;
     });
+    var before=s.annots.slice(),ends=tiedEnds(s);
     kept.sort(function(x,y){return y-x;}).forEach(function(i){
       if(i>=0&&i<s.annots.length) s.annots.splice(i,1);});
+    retieAfter(s,before,ends);
     if(!s.annots.length) delete s.annots;
     selAnnot=null;selSet=[];markDirty();
     var l=stage.querySelector('.annot-layer');

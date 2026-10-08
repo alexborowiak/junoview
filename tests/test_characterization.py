@@ -2385,8 +2385,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # placer (cellClipOf, pasteCellClip) wired into every paste door.
 # Fix: the .pptx loss check runs over the fetched originals, so a video or
 # audio clip no longer reads as a lost placed cell.
-EXPECTED_MD5 = "58e716c5a04b6f7ad3dc9be3316a9fd7"
-EXPECTED_BYTES = 5271609
+# Fix: arrows tied by index follow a delete or restack (retieAfter in
+# deleteSel, zReorder, applyLayout, the dup lint, flip own objects, components).
+EXPECTED_MD5 = "6aebe4190bc9c73a2e0c30f25744a236"
+EXPECTED_BYTES = 5273488
 
 
 def _render_example() -> str:

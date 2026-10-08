@@ -1121,7 +1121,10 @@
     if(f.label) back.label=f.label;
     fr[i]=back;a.frames=fr;a.at=i;
     var at=s.annots.indexOf(o);
-    if(at>=0) s.annots.splice(at,1);
+    if(at>=0){
+      var was=s.annots.slice(),ends=tiedEnds(s);
+      s.annots.splice(at,1);retieAfter(s,was,ends);
+    }
     markDirty();renderSlide();renderFlipPane();
     var l=stage.querySelector('.annot-layer');
     var bi=s.annots.indexOf(a);
