@@ -399,6 +399,14 @@
         <button class="dc-mi" id="mi-open"
           title="The recent ones, everything saved here, or a file from
  this computer (Ctrl+K)">Open a presentation&#8230;</button>
+        <!-- T610: the reader's File has had this row since T602; the
+             editor's never did, so a notebook could only be opened from
+             Home. It presses the one real door (#tab-open). -->
+        <button class="dc-mi" type="button" id="mi-open-nb" data-for="tab-open"
+          data-kbd="Ctrl+O" hidden
+          title="A notebook (.ipynb, .md, .tex or .csv) from this computer
+ or a URL. It opens as a tab beside this presentation"
+          >Open a notebook&#8230;</button>
         <button class="dc-mi" id="mi-load">Open a .junoview
           file&#8230;</button>
         <!-- T320: .pptx IMPORT. Beside Open because it is the other

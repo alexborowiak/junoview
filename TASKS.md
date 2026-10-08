@@ -11639,11 +11639,31 @@ more pressing things before getting on to this."
   list", away, next slide and back, Enter after "two", "three" -- a
   third numbered item; two plain lines still stored as text and shown
   as two lines in the show. Tests in tests/test_lists_stay_lists.py.
-- [ ] **T610 — Open a notebook from anywhere.** "When I am in a
+- [x] **T610 — Open a notebook from anywhere.** "When I am in a
   presentation in the app there is no way to open notebooks ... It would
   be good to be able to open notebooks as tabs as well. I don't think
   they should show up as any different. You have to go back to the home
   to be able to open a new notebook."
+  *Done 2026-10-08.* T602 meant Open a notebook to be a row of File in
+  both views; only the reader's File had it, so in the slide editor
+  nothing opened a notebook -- File, Ctrl+K's library, the keyboard
+  (Ctrl+O went to the browser's own Open File) -- and the only way was
+  Home. Now: File > Open a notebook... in the editor too (Ctrl+O), the
+  library Ctrl+K and Open a presentation land in has an Open a
+  notebook... door, and Ctrl+O works in the editor (not in a talk or a
+  pick); all press the one real door (#tab-open), so they show only
+  where a notebook can be opened. The notebook opens as an ordinary tab
+  beside the presentation's, and a notebook's tab now wears its kind's
+  icon as a presentation's does (the presentation icon's class and its
+  CSS had not matched since T596, so it was unstyled too). Escape over
+  the Open dialog no longer also leaves the editor (window capture).
+  No Open button on the tab row: T602/T603 took that clutter away at
+  the user's request. Driven at 1366x657: from the slide editor, File >
+  Open a notebook... and Ctrl+O each opened the dialog, Escape closed it
+  and kept the editor, and example_widget opened as a tab -- the row
+  read [nb] example_climate_analysis | [nb] example_widget | [deck]
+  presentation-9, one shape. Tests in
+  tests/test_open_a_notebook_from_anywhere.py.
 - [ ] **T611 — The tab layout lives on the tabs.** "I changed my tabs to
   be vertical now. However, I have no idea how to get back to the other
   view." and "Why is the tab layout inside the file option inside

@@ -73,6 +73,10 @@
   function refreshChrome(){
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
+    /* T610: every other door to it, in the editor's File, the Open
+       dialog, can open exactly when it can */
+    ['#mi-open-nb','#presentation-hub-nb'].forEach(function(s){
+      var b=$(s); if(b) b.hidden=!canOpen;});
     /* Open and the live file provenance deliberately have their own thin
        utility line ABOVE the notebook controls. A standalone page without
        an opener therefore hides that whole line, rather than leaving an
@@ -221,6 +225,12 @@
       t.appendChild(ic);
       lbl.textContent=sh.title||'Plot trace';
     } else {
+      /* T610: a notebook's tab is drawn as a presentation's is -- its
+         kind's icon, the name, the close -- so the open files read as
+         one row of tabs whatever each one is */
+      var nic=document.createElement('span');nic.className='tab-ico';
+      nic.innerHTML=sh.kind?bic('doc'):bic('nb');
+      t.appendChild(nic);
       /* a tab opened AT A COMMIT keeps the notebook's name and wears the
          short hash underneath — "draft_01-2" told you nothing */
       lbl.textContent=sh.label||stem;
@@ -3537,6 +3547,18 @@
     }
   });
 
+  /* T610: Ctrl+O opens a notebook from the slide editor too. APP_KEYS
+     stands down while a deck is open, so in the editor the key went to
+     the browser's own Open File. Not during a talk or a pick. */
+  document.addEventListener('keydown',function(e){
+    if(e.defaultPrevented||e.altKey||e.shiftKey) return;
+    if(!(e.ctrlKey||e.metaKey)||String(e.key).toLowerCase()!=='o') return;
+    var b=document.body.classList;
+    if(b.contains('doc-presenting')||b.contains('picking')) return;
+    if(b.contains('deck-open')&&!b.contains('slide-editing')) return;
+    if(!openBtn||openBtn.hidden) return;
+    e.preventDefault();openBtn.click();
+  });
   /* ---- guided tour: a spotlight + tooltip that steps through the UI;
      skippable, shown once, or re-run from "Take a tour" ---- */
   var TOUR_STEPS=[
@@ -8413,9 +8435,13 @@
     });
     var goBtn=$('#odlg-go');
     if(goBtn) goBtn.addEventListener('click',submitOpenInput);
-    document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&dlg&&!dlg.hidden) hideDlg();
-    });
+    /* T610: in capture on window -- the slide editor's Escape ladder
+       listens on document and does not look at defaultPrevented, so the
+       press that closed this over the editor also left the editor */
+    window.addEventListener('keydown',function(e){
+      if(e.key!=='Escape'||!dlg||dlg.hidden) return;
+      e.preventDefault();e.stopPropagation();hideDlg();
+    },true);
 
     /* ---- drag & drop .ipynb anywhere on the window ---- */
     var hint=$('#drophint'), dragDepth=0;

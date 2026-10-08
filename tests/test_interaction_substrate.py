@@ -177,8 +177,8 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     # #mi-autosave, hidden unless the build has a project to save to),
     # plus T602's nine: Poster, Custom view, Folder, Open a
     # presentation, Theme, How to use, Support and the two open-files rows,
-    # plus T606's Collection under New
-    assert menu.count('class="dc-mi') == 25, menu.count('class="dc-mi')
+    # plus T606's Collection under New, plus T610's Open a notebook
+    assert menu.count('class="dc-mi') == 26, menu.count('class="dc-mi')
     assert menu.count('class="dc-mcol"') == 2
     for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",
                  "mi-auto-figdocs", "mi-nums", "mi-hist", "mi-check"):

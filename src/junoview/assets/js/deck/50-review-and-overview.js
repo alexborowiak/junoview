@@ -1545,7 +1545,7 @@
       t.setAttribute('role','tab');t.title=title;
     }
     var ic=document.createElement('span');
-    ic.className=top?'tab-pres-ico':'pr-ico';
+    ic.className=top?'tab-ico':'pr-ico';
     ic.innerHTML=bic(isCol?'newcol':isView?'newview'
       :isPoster?'newposter':'newdeck');
     action.appendChild(ic);
@@ -2786,6 +2786,10 @@
          opened; the bare <input> only where it does not */
       closePresentationHub();openDeckFile();
     });
+    /* T610: a notebook, through the one real door */
+    var hubNb=$('#presentation-hub-nb');
+    if(hubNb) hubNb.addEventListener('click',function(){
+      closePresentationHub();var t=$('#tab-open');if(t) t.click();});
     var pptx=$('#presentation-hub-pptx');
     if(pptx) pptx.addEventListener('click',function(){
       closePresentationHub();var input=$('#pptxfile');if(input) input.click();

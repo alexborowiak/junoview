@@ -159,9 +159,10 @@ def test_file_holds_new_open_and_the_app_in_both_views():
     for menu in (reader, editor):
         for row in ("Poster", "Custom view", "Folder",
                     "Open a presentation&#8230;", "Theme&#8230;",
-                    "Support Junoview &#9829;"):
+                    "Support Junoview &#9829;",
+                    # T610: the editor's File had no notebook row
+                    "Open a notebook&#8230;"):
             assert row in menu, row
-    assert "Open a notebook&#8230;" in reader
     # the editor's File is two columns, the dangerous pair still last
     assert 'class="dc-menu dc-menu-cols" id="dc-menu"' in deck
     css = assets.deck_css()

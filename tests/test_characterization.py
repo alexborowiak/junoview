@@ -2373,8 +2373,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T609: lists stay lists -- the text editor is a block (div) host,
 # htmlLines splits a rich box on <br>, \n and blocks, T591 reads its
 # line with acLine, and a list made on a later line is spaced.
-EXPECTED_MD5 = "1fa70cedd60a3964dc9e718aae855859"
-EXPECTED_BYTES = 5249506
+# T610: open a notebook from anywhere -- the editor's File row
+# (#mi-open-nb), the library's door, Ctrl+O in the editor, the Open
+# dialog's Escape in capture, and every tab wearing its kind's icon.
+EXPECTED_MD5 = "07a8b094a331f3394bc774335cf9ffdd"
+EXPECTED_BYTES = 5252492
 
 
 def _render_example() -> str:

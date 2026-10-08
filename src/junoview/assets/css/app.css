@@ -326,6 +326,10 @@ body.welcoming .top-tabstrip .tab.current,
 body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
   background:none;box-shadow:none;color:var(--chrome-ink-2,#8ba0b2);
   border-color:transparent;font-weight:400;}
+/* T610: and its icon stays its colour, as an unlit tab's does */
+body.welcoming .top-tabstrip .tab.current .tab-ico,
+body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab) .tab-ico{
+  color:var(--cyan);}
 .top-tabstrip .tab-t{max-width:170px;}
 /* the reader's title row: its tabs join the filter row under it, which
    is the header's own colour; the line along the bottom is drawn inside
@@ -333,10 +337,10 @@ body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
 .nb-filebar{--tab-on:var(--chrome-0,#0b141d);}
 body.tabs-row-on .nb-filebar{border-bottom-width:0;
   box-shadow:inset 0 -1px 0 var(--chrome-line,#ffffff12);}
-.top-tabstrip .top-pres-ico{display:inline-flex;align-items:center;
+.top-tabstrip .tab-ico{display:inline-flex;align-items:center;
   justify-content:center;flex:none;color:var(--cyan);}
-.top-tabstrip .top-pres-ico .bic{width:12px;height:12px;}
-.top-tabstrip .top-pres-tab.current .top-pres-ico{color:currentColor;}
+.top-tabstrip .tab-ico .bic{width:12px;height:12px;}
+.top-tabstrip .tab.current .tab-ico{color:currentColor;}
 /* one backslash: this is a stylesheet, not a Python string -- the doubled
    one printed a literal "\2022" after the name (T596) */
 .top-tabstrip .top-pres-tab.draftonly .tab-t::after{
