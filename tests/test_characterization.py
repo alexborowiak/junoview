@@ -2390,8 +2390,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix: Fill None takes a text box's edge off in the .pptx too (bdc gated on bg).
 # Fix: a text box that keeps a height answers annotRectPct from fh (measured
 # on screen), so arrows follow a resized diagram step.
-EXPECTED_MD5 = "b898fee7a09b7e9fd11978043e281174"
-EXPECTED_BYTES = 5274132
+# Fix: tied elbow ends leave and enter a box at the middle of the facing side
+# (elbowPoint in arrowEnds).
+EXPECTED_MD5 = "5a3b87a1b8747387ee0a2bc649686f90"
+EXPECTED_BYTES = 5275084
 
 
 def _render_example() -> str:

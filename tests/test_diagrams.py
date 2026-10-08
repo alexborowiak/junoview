@@ -278,3 +278,32 @@ def test_a_step_dragged_taller_keeps_its_arrows_on_its_edge():
     assert got[1] == {"l": 1, "r": 4, "t": 2, "b": 6}
     body = lift_fn(js, "annotRectPct")
     assert "var keepsH=a.k==='text'&&a.fh>0;" in body
+
+
+def test_a_hierarchy_drops_from_the_middle_of_each_box():
+    """2026-10-08 review: elbow ends were where the centre line crosses
+    the border, so a parent's drops left it at scattered points and the
+    outer ones ran down its sides. They leave the bottom middle and enter
+    the top middle now, as the dialog's preview draws them."""
+    js = assets.deck_js()
+    src = ("function annotRectPct(l,s,i){var a=s.annots[i];"
+           "return {l:a.x,r:a.x+a.w,t:a.y,b:a.y+a.h};}\n"
+           + "\n".join(lift_fn(js, f) for f in
+                       ("tiedRect", "edgePoint", "elbowPoint", "arrowMids",
+                        "arrowEnds")) + "\n"
+           "var s={annots:[{k:'text',x:44,y:36,w:12,h:13},"
+           "{k:'text',x:9,y:62,w:12,h:8},{k:'text',x:23,y:62,w:12,h:8},"
+           "{k:'arrow',bend:'v',c1:{i:0},c2:{i:1}},"
+           "{k:'arrow',bend:'v',c1:{i:0},c2:{i:2}},"
+           "{k:'arrow',bend:'v',c1:{i:0},c2:{i:1},mid:[[30,50]]}]};\n"
+           "console.log(JSON.stringify([3,4,5].map(function(i){"
+           "return arrowEnds(null,s,s.annots[i],i);})));\n")
+    from test_a_custom_heading_is_a_heading import _run
+    got = _run(src)
+    if got is None:
+        pytest.skip("no JS engine")
+    for e, child_cx in ((got[0], 15), (got[1], 29)):
+        assert (e["x1"], e["y1"]) == (50, 49)          # parent bottom middle
+        assert (e["x2"], e["y2"]) == (child_cx, 62)    # child top middle
+    # a line with corners dragged in by hand keeps the border-crossing ends
+    assert (got[2]["x1"], got[2]["y1"]) != (50, 49)

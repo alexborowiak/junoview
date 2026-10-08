@@ -2460,6 +2460,23 @@
     if(!t||t.hide||t.k==='arrow') return null;
     return annotRectPct(layer,s,c.i);
   }
+  /* an ELBOW leaves and enters a box at the middle of the side facing
+     the other end -- the way an org chart is drawn, and the way the
+     diagram dialog's preview draws it. Where the centre line crosses the
+     border, a hierarchy's six drops left their parent at six scattered
+     points and the outer two ran down its sides (2026-10-08 review).
+     Null when the other end is not clear of the box on that axis. */
+  function elbowPoint(r,bend,far){
+    var cx=(r.l+r.r)/2,cy=(r.t+r.b)/2;
+    if(bend==='v'){
+      if(far.y>=r.b) return {x:cx,y:r.b};
+      if(far.y<=r.t) return {x:cx,y:r.t};
+    } else {
+      if(far.x>=r.r) return {x:r.r,y:cy};
+      if(far.x<=r.l) return {x:r.l,y:cy};
+    }
+    return null;
+  }
   function arrowEnds(layer,s,a,idx){
     var e={x1:a.x1,y1:a.y1,x2:a.x2,y2:a.y2};
     var r1=tiedRect(layer,s,a.c1),r2=tiedRect(layer,s,a.c2);
@@ -2467,8 +2484,12 @@
        item's border as either one moves */
     var far1=r2?{x:(r2.l+r2.r)/2,y:(r2.t+r2.b)/2}:{x:a.x2,y:a.y2};
     var far2=r1?{x:(r1.l+r1.r)/2,y:(r1.t+r1.b)/2}:{x:a.x1,y:a.y1};
-    if(r1){var p1=edgePoint(r1,far1.x,far1.y);e.x1=p1.x;e.y1=p1.y;}
-    if(r2){var p2=edgePoint(r2,far2.x,far2.y);e.x2=p2.x;e.y2=p2.y;}
+    /* corners dragged in by hand win over the canned route (arrowPath) */
+    var bd=((a.bend==='v'||a.bend==='h')&&!arrowMids(a).length)?a.bend:'';
+    if(r1){var p1=(bd&&elbowPoint(r1,bd,far1))||edgePoint(r1,far1.x,far1.y);
+      e.x1=p1.x;e.y1=p1.y;}
+    if(r2){var p2=(bd&&elbowPoint(r2,bd,far2))||edgePoint(r2,far2.x,far2.y);
+      e.x2=p2.x;e.y2=p2.y;}
     return e;
   }
   /* straight, curved (quadratic through an offset midpoint) or elbowed.
