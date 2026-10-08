@@ -82,6 +82,27 @@
          stand clear of the ones at the top and the foot */
       var ry=(R.h-ch)/2,rx=ry/ar*(ar>1.2?1.5:1);
       if(rx>(R.w-cw)/2){rx=(R.w-cw)/2;}
+      /* ...and far enough that NEIGHBOURS stand clear: from six steps on
+         a wide page the ring was too narrow for its boxes, they overlapped
+         and the arrows between them ran backwards (2026-10-08 review).
+         gap() is the shortest neighbour-to-neighbour run, border to
+         border, in page-height percent; widen the ring sideways to the
+         region's edge first, and only then narrow the boxes. */
+      var gap=function(){
+        var m=Infinity;
+        for(var k=0;k<n;k++){
+          var t0=-Math.PI/2+2*Math.PI*k/n,t1=t0+2*Math.PI/n;
+          var dx=rx*Math.abs(Math.cos(t1)-Math.cos(t0));
+          var dy=ry*Math.abs(Math.sin(t1)-Math.sin(t0));
+          var f=Math.min(dx?cw/2/dx:Infinity,dy?ch/2/dy:Infinity);
+          m=Math.min(m,Math.sqrt(dx*ar*dx*ar+dy*dy)*(1-2*f));
+        }
+        return m;
+      };
+      while(n>2&&gap()<4&&cw>6){
+        if(rx<(R.w-cw)/2) rx=Math.min(rx+0.5,(R.w-cw)/2);
+        else cw-=0.5;
+      }
       var cx=R.x+R.w/2,cy=R.y+R.h/2;
       for(i=0;i<n;i++){
         var th=-Math.PI/2+2*Math.PI*i/n;

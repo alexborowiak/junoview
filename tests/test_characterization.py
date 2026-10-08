@@ -2392,8 +2392,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # on screen), so arrows follow a resized diagram step.
 # Fix: tied elbow ends leave and enter a box at the middle of the facing side
 # (elbowPoint in arrowEnds).
-EXPECTED_MD5 = "5a3b87a1b8747387ee0a2bc649686f90"
-EXPECTED_BYTES = 5275084
+# Fix: a cycle's ring widens (then its boxes narrow) until neighbours stand
+# clear, so 6-8 steps never overlap.
+EXPECTED_MD5 = "2454648d49e9af68313b2261bf2d9791"
+EXPECTED_BYTES = 5276054
 
 
 def _render_example() -> str:

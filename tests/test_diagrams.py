@@ -307,3 +307,32 @@ def test_a_hierarchy_drops_from_the_middle_of_each_box():
         assert (e["x2"], e["y2"]) == (child_cx, 62)    # child top middle
     # a line with corners dragged in by hand keeps the border-crossing ends
     assert (got[2]["x1"], got[2]["y1"]) != (50, 49)
+
+
+def test_a_cycle_of_up_to_eight_never_overlaps_on_any_page():
+    """2026-10-08 review: from six steps on a 16:9 page (eight on A-sizes
+    landscape) the ring was too narrow for its boxes; neighbours overlapped
+    and the arrows between them pointed backwards. The ring now widens
+    sideways first, and only then are the boxes narrowed."""
+    L = _run("var out={};[16/9,4/3,297/210,210/297,1].forEach(function(ar){"
+             "for(var n=1;n<=8;n++){var it=[];for(var k=0;k<n;k++)"
+             "it.push('step '+k);"
+             "out[ar.toFixed(3)+':'+n]=diagLayout('cycle',"
+             "diagParse(it.join('\\n')),ar);}});"
+             "console.log(JSON.stringify(out));")
+    for key, lay in L.items():
+        ar = float(key.split(":")[0])
+        nodes = lay["nodes"]
+        assert all(_inside(n) for n in nodes), key
+        assert not any(_overlap(a, b) for i, a in enumerate(nodes)
+                       for b in nodes[i + 1:]), key
+        for lk in lay["links"]:
+            a, b = nodes[lk["a"]], nodes[lk["b"]]
+            # border to border, in page-height percent: room for an arrow
+            dx = abs((a["x"] + a["w"] / 2) - (b["x"] + b["w"] / 2))
+            dy = abs((a["y"] + a["h"] / 2) - (b["y"] + b["h"] / 2))
+            f = min(a["w"] / 2 / dx if dx else 1e9,
+                    a["h"] / 2 / dy if dy else 1e9)
+            if len(nodes) > 2:
+                assert ((dx * ar) ** 2 + dy ** 2) ** 0.5 * (1 - 2 * f) \
+                    >= 3.9, key
