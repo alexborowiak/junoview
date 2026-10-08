@@ -294,12 +294,12 @@ def test_the_losses_are_named_before_the_file_is_written(out):
     downloads folder and the choice, export the PDF instead, has been
     made for you. The same enumeration runs dry first.
     """
-    assert "function pptxLosses(){" in out
-    assert "function pptxConfirmLosses(){" in out
+    assert "function pptxLosses(orig){" in out
+    assert "function pptxConfirmLosses(orig){" in out
     # it runs pptxItems, so it can never disagree with what the export
     # actually does
-    losses = out[out.index("function pptxLosses(){"):
-                 out.index("function pptxConfirmLosses(){")]
+    losses = out[out.index("function pptxLosses(orig){"):
+                 out.index("function pptxConfirmLosses(orig){")]
     # T483: the tallies count SOURCE slides, never an exploded book's frames
     assert "pptxItems(s,note,'#ffffff',null);" in losses
     assert "note.skipped" in losses and "note.maths" in losses
@@ -308,6 +308,10 @@ def test_the_losses_are_named_before_the_file_is_written(out):
     assert "if(!lost.length) return Promise.resolve(true);" in out
     # and it gates the export rather than merely reporting (T527: the
     # answer arrives from the editor's own dialog, so it is a promise)
-    assert ("    return pptxConfirmLosses().then(function(go){\n"
-            "      if(!go) return;\n"
-            "      return pptxOriginals().then(pptxBuildAndSave);") in out
+    # ...over the same originals the build gets: a clip's bytes are
+    # among them, and without them every clip read as a loss
+    assert ("    return pptxOriginals().then(function(orig){\n"
+            "      return pptxConfirmLosses(orig).then(function(go){\n"
+            "        if(go) return pptxBuildAndSave(orig);") in out
+    assert "var note={skipped:0,cropped:0,maths:0,tied:0,exits:0," \
+        "orig:orig||{}};" in losses

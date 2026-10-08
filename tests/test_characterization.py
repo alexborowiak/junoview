@@ -2383,8 +2383,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T612: copy a figure, paste it on a slide -- a worded Copy on each figure's
 # bar (app.js copyCell, .fz-copy in core.css) and the deck's reader and
 # placer (cellClipOf, pasteCellClip) wired into every paste door.
-EXPECTED_MD5 = "fc6dee3f90fc0031031fb3f387440b38"
-EXPECTED_BYTES = 5271271
+# Fix: the .pptx loss check runs over the fetched originals, so a video or
+# audio clip no longer reads as a lost placed cell.
+EXPECTED_MD5 = "58e716c5a04b6f7ad3dc9be3316a9fd7"
+EXPECTED_BYTES = 5271609
 
 
 def _render_example() -> str:

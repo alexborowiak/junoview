@@ -3120,9 +3120,14 @@
        so it is one of the two consumers that most wants the full bytes —
        and it was embedding a.src, which is the shrunk display copy
        (2026-08-26 audit, T58) */
-    return pptxConfirmLosses().then(function(go){
-      if(!go) return;
-      return pptxOriginals().then(pptxBuildAndSave);
+    /* the originals come FIRST, so the dry run sees the same bytes the
+       build will: without them every video or audio clip counted as
+       "a placed cell with no .pptx shape" and the question was asked of
+       every deck with a clip in it, about a clip that exports fine */
+    return pptxOriginals().then(function(orig){
+      return pptxConfirmLosses(orig).then(function(go){
+        if(go) return pptxBuildAndSave(orig);
+      });
     });
   }
   /* WHAT THIS EXPORT WILL COST, said before it happens. The tally
@@ -3132,8 +3137,8 @@
      the same enumeration dry and, only when something really will be
      lost, asks. Nothing to lose means no dialog, so the ordinary export
      is still one click (T109). */
-  function pptxLosses(){
-    var note={skipped:0,cropped:0,maths:0,tied:0,exits:0,orig:{}};
+  function pptxLosses(orig){
+    var note={skipped:0,cropped:0,maths:0,tied:0,exits:0,orig:orig||{}};
     var lost=[];
     /* T483: the tallies count SOURCE slides -- an exploded flip book
        multiplied every count on its slide by its frames (three live
@@ -3204,8 +3209,8 @@
       +'more clicks there than it does on this slide');
     return lost;
   }
-  function pptxConfirmLosses(){
-    var lost=pptxLosses();
+  function pptxConfirmLosses(orig){
+    var lost=pptxLosses(orig);
     if(!lost.length) return Promise.resolve(true);
     return new Promise(function(res){
       askYes({title:'Export .pptx?',

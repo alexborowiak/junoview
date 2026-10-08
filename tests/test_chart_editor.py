@@ -367,7 +367,7 @@ def test_the_export_carries_the_switches_and_counts_the_bands(out):
         "} else if(a.k==='flip'){")[0]
     assert "stack:cd.stack,ylog:cd.ylog,labels:cd.labels," in items
     assert "if(se.band&&!se.hide) note.bands=(note.bands|0)+1;" in items
-    assert "confidence band" in out.split("function pptxLosses(){")[1].split(
+    assert "confidence band" in out.split("function pptxLosses(orig){")[1].split(
         "\n  }")[0]
 
 
