@@ -37,7 +37,10 @@ def test_put_back_is_the_reverse(out):
     assert "  function flipOwnObj(s,a,i){" in out
     assert "    if(o.k==='image'){back.src=o.src;if(o.okey) back.okey=o.okey;}" in out
     assert "    fr[i]=back;a.frames=fr;a.at=i;" in out
-    assert "    if(at>=0) s.annots.splice(at,1);" in out
+    # (the arrows tied past it follow it out: retieAfter, 2026-10-08)
+    assert ("    if(at>=0){\n"
+            "      var was=s.annots.slice(),ends=tiedEnds(s);\n"
+            "      s.annots.splice(at,1);retieAfter(s,was,ends);") in out
 
 
 def test_the_doors_are_the_pane_row_and_the_object_tab(out):
