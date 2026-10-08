@@ -2643,8 +2643,10 @@
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
       /* T561: its edge colour, which the canvas draws and the .pptx
-         used to drop ('none' is no edge, as on the canvas) */
-      bdc:(a.bdc&&a.bdc!=='none')?tokVal(a.bdc):'',
+         used to drop ('none' is no edge, as on the canvas). Fill None
+         takes the edge too on the canvas (.an-text.nobg has no border),
+         so it does here -- gated like bgc */
+      bdc:(a.bg!==0&&a.bdc&&a.bdc!=='none')?tokVal(a.bdc):'',
       /* T571: which marker, its colour and size, where numbering starts */
       lkind:listOf(a)||'',lcol:a.lcol?tokVal(a.lcol):'',lsz:a.lsz||0,
       lstart:a.lstart||0,

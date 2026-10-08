@@ -2387,8 +2387,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # audio clip no longer reads as a lost placed cell.
 # Fix: arrows tied by index follow a delete or restack (retieAfter in
 # deleteSel, zReorder, applyLayout, the dup lint, flip own objects, components).
-EXPECTED_MD5 = "6aebe4190bc9c73a2e0c30f25744a236"
-EXPECTED_BYTES = 5273488
+# Fix: Fill None takes a text box's edge off in the .pptx too (bdc gated on bg).
+EXPECTED_MD5 = "129bd1c186b4e135236a146a22df97b8"
+EXPECTED_BYTES = 5273625
 
 
 def _render_example() -> str:

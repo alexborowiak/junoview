@@ -231,4 +231,28 @@ def test_the_pptx_draws_the_boxes_edge():
             in sp)
     assert "<a:ln" not in plain.rsplit("<p:sp>", 1)[1].split("</p:spPr>")[0]
     js = assets.load("js/deck/60-saving-and-export.js")
-    assert "bdc:(a.bdc&&a.bdc!=='none')?tokVal(a.bdc):''," in js
+    # a box with Fill None has no edge on the canvas (.an-text.nobg), so
+    # it has none in the .pptx either (2026-10-08 review)
+    assert "bdc:(a.bg!==0&&a.bdc&&a.bdc!=='none')?tokVal(a.bdc):''," in js
+    css = assets.deck_css()
+    assert ".an-text.nobg{background:none;border:none;}" in css
+
+
+def test_fill_none_takes_the_edge_off_in_the_pptx_too():
+    """2026-10-08 review: Fill None hides a box's edge on the canvas
+    (.an-text.nobg{border:none}) but the .pptx still drew it."""
+    js = assets.deck_js()
+    src = ("function pptxBox(a){return {x:a.x,y:a.y,w:a.w,h:a.h||5};}\n"
+           "function tokVal(v){return v==='@accent'?'#39a9c0':v;}\n"
+           "function listOf(){return '';}\nfunction fontPpt(){return '';}\n"
+           "function mathsPlain(t){return t;}\n"
+           + lift_fn(js, "pptxTextItem") + "\n"
+           "var a={k:'text',x:1,y:1,w:9,text:'x',bdc:'@accent'};\n"
+           "var on=pptxTextItem(a,false,'#fff');\n"
+           "a.bg=0;var off=pptxTextItem(a,false,'#fff');\n"
+           "console.log(JSON.stringify([on.bdc,off.bdc]));\n")
+    from test_a_custom_heading_is_a_heading import _run
+    got = _run(src)
+    if got is None:
+        pytest.skip("no JS engine")
+    assert got == ["#39a9c0", ""]
