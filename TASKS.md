@@ -11567,3 +11567,63 @@ change to a surface is driven at those sizes as well.
   building with all of its row on screen and slide 1 and a figure slide
   drawn as the slide; the Variables pane beside the notebook; Theme under
   File; the sorter's head on one line.
+
+## Group 24 — the 2026-10-08 round (from the user's own review)
+
+The user, 2026-10-08, after using the app: five things that get in the
+way now, and one large idea to come back to. In their words: "the
+collections is pretty much what I meant with the message about the
+infinite scroll. But would be cool if there were presentation options in
+there as well, like adding boxes with text with different colours, and
+animations and such, but also the filter options that you have. These
+will sit somewhere between presentations and the notebooks. This is
+quite large, so maybe put this into a task for now, and fix some of the
+more pressing things before getting on to this."
+
+### Pressing
+
+- [ ] **T608 — A look applied to a type keeps it that type.** "In the
+  style system when you have applied a look to all of heading one, that
+  then doesn't still group it with the headings 1s in style systems.
+  That is just a different look not a different thing now."
+- [ ] **T609 — Lists stay lists when you come back to them.** "There are
+  issues with the auto-formatting with dot points and numbers again. It
+  seems like if you click away and click back in it forgets that it
+  should be auto-number etc."
+- [ ] **T610 — Open a notebook from anywhere.** "When I am in a
+  presentation in the app there is no way to open notebooks ... It would
+  be good to be able to open notebooks as tabs as well. I don't think
+  they should show up as any different. You have to go back to the home
+  to be able to open a new notebook."
+- [ ] **T611 — The tab layout lives on the tabs.** "I changed my tabs to
+  be vertical now. However, I have no idea how to get back to the other
+  view." and "Why is the tab layout inside the file option inside
+  presentation?" The switch belongs where the tabs are, reachable in
+  both layouts, from the notebook, Home and a presentation alike.
+- [ ] **T612 — Copy a figure, paste it on a slide.** "A copy code thing
+  ... that copied like the github url and figure code associated with
+  that figure, then when you pasted it into a presentation it just
+  pasted as the figure."
+
+### Later: between a notebook and a presentation
+
+The idea, gathered from several messages: a collection is already the
+"all the Jupyter boxes stacked" notes the user first described. Grow it
+toward the presentation without making it one.
+
+- [ ] **T613 — A collection as an endless canvas.** Scroll it vertically
+  only (as now), or in both directions, as a choice of layout; boxes
+  placed and sized freely when it is two-dimensional.
+- [ ] **T614 — A collection becomes a presentation, and back.** "Make as
+  presentation" options: pick and order boxes, each becomes a slide;
+  view it as a deck and go back and forth between the two modes, the
+  same boxes underneath.
+- [ ] **T615 — Animate the canvas.** Builds on the canvas itself, with
+  an option for the view to follow the animations (it travels to each
+  box as it arrives).
+- [ ] **T616 — Presentation tools in a collection.** Text boxes in
+  colours, shapes and animations from the editor, and the notebook's
+  filters (plots, code, output, sections) on the collected cells.
+- [ ] **T617 — Bubbles.** A view of linked bubbles that organises itself
+  as they are added -- one after another, linked -- which you can
+  rearrange, animate and gather into sections.
