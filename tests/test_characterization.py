@@ -2400,8 +2400,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # to .pptx as bulleted paragraphs with its levels and line breaks.
 # Fix (review of T608): the Apply tie only for the source's own type, the
 # type menu opens on screen, and Style system changes re-stamp before the undo step.
-EXPECTED_MD5 = "7a4ba966c27ce3bd30bd8c5d5c807e2f"
-EXPECTED_BYTES = 5280246
+# Fix (review of T610/T618): questions over the Open dialog and library are
+# asked on the body, Escape closes the question first, a pick is dropped when
+# the editor comes back, and the library hides its notebook door in a talk.
+EXPECTED_MD5 = "d026e954ab98397e81e465c92e39ff1f"
+EXPECTED_BYTES = 5282250
 
 
 def _render_example() -> str:

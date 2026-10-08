@@ -112,9 +112,26 @@
      it is the pick's before it is anyone else's. */
   window.addEventListener('keydown',function(e){
     if(picking<0||e.key!=='Escape') return;
+    /* a dialog opened over the pick (How to use, Create slides, Open) is
+       inner to it: its own Escape closes it first (2026-10-08 review) */
+    if(document.querySelector('#helpdlg:not([hidden]),'
+      +'#auto-slides-dialog:not([hidden]),#opendlg:not([hidden])')) return;
     e.preventDefault();e.stopImmediatePropagation();
     endPick();
   },true);
+  /* a pick still running when the editor comes back by any other door
+     (Home's Recent, New, Open, its tab, a route) is dropped: left on,
+     the editor looked normal and ignored every key but Escape
+     (2026-10-08 review) */
+  function dropPick(){
+    if(picking<0) return;
+    var wasMulti=pickMulti;
+    picking=-1;pickMulti=false;
+    document.body.classList.remove('picking');
+    var pb=$('#pickbar'); if(pb) pb.hidden=true;
+    if(wasMulti&&pickAdded) markDirty();   /* the batch's one undo step */
+    pickAdded=0;pickTab='';
+  }
   document.addEventListener('click',function(e){
     if(picking<0) return;
     var t=e.target;

@@ -181,6 +181,12 @@
     /* T601: .deck is a stacking context under the Parts view, which sits
        on the body -- a question it asks has to come up over it */
     if($('#deck-parts')) host=document.body;
+    /* ...and so do the body's own dialogs that open over the editor (the
+       Open dialog, the library): an Open that failed from the editor was
+       told underneath the Open dialog, unseen, holding the keyboard
+       (2026-10-08 review) */
+    if(document.querySelector('#opendlg:not([hidden]),'
+      +'#presentation-hub:not([hidden])')) host=document.body;
     var fs=document.fullscreenElement;
     if(fs&&fs!==document.documentElement&&!fs.contains(host)) host=fs;
     if(dlg.parentNode!==host) host.appendChild(dlg);

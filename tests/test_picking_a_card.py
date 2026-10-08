@@ -36,7 +36,23 @@ def test_a_pick_brings_the_notebook_back_to_life():
 def test_escape_ends_a_pick_at_the_first_press():
     js = assets.deck_js()
     guard = ("  window.addEventListener('keydown',function(e){\n"
-             "    if(picking<0||e.key!=='Escape') return;\n"
-             "    e.preventDefault();e.stopImmediatePropagation();\n"
-             "    endPick();\n  },true);")
+             "    if(picking<0||e.key!=='Escape') return;\n")
     assert guard in js
+    body = js.split(guard, 1)[1].split("  },true);", 1)[0]
+    # a dialog opened over the pick has the press first (2026-10-08)
+    assert body.index("#helpdlg:not([hidden])") \
+        < body.index("e.preventDefault();e.stopImmediatePropagation();") \
+        < body.index("endPick();")
+
+
+def test_a_pick_left_running_is_dropped_when_the_editor_comes_back():
+    """2026-10-08 review: since T618 Home is clickable during a pick, and
+    reopening the deck from Home's Recent (or New, Open, its tab, a route)
+    left the pick on: the editor looked normal and ignored every key but
+    Escape. openDeck drops it unless endPick itself is resuming."""
+    js = assets.deck_js()
+    od = js.split("  function openDeck(m,resume){\n", 1)[1]
+    assert od.startswith("    if(!resume) dropPick();\n")
+    drop = js.split("  function dropPick(){", 1)[1].split("\n  }\n", 1)[0]
+    assert "document.body.classList.remove('picking');" in drop
+    assert "if(wasMulti&&pickAdded) markDirty();" in drop

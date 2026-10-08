@@ -2276,6 +2276,12 @@
     ['#presentation-hub-new','#presentation-hub-poster',
      '#presentation-hub-folder'].forEach(function(id){
       var b=$(id); if(b) b.hidden=!create;});
+    /* T610's notebook door is for the editor and Home, never a talk: a
+       notebook opened from the show's drawer mounted out of sight behind
+       the slides (2026-10-08 review) */
+    var hn=$('#presentation-hub-nb');
+    if(hn) hn.hidden=!(APP.mode==='app'||APP.mode==='web')
+      ||(!deckEl.hidden&&mode==='view');
     var ttl=$('#presentation-hub-title');
     if(ttl) ttl.textContent=create?'Open or create':'Open a presentation';
     var form=$('#presentation-hub-folderform');

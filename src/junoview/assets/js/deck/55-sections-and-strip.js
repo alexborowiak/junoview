@@ -1521,6 +1521,7 @@
      to wipe it -- draw a frame, pick a figure, and Ctrl+Z did nothing
      (2026-09-15 review, driven). */
   function openDeck(m,resume){
+    if(!resume) dropPick();
     deckEl.hidden=false;
     if(pres&&typeof notePresentationOpen==='function')
       notePresentationOpen(pres.name);

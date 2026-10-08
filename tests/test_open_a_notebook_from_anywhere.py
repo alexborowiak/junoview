@@ -45,13 +45,19 @@ def test_ctrl_o_opens_one_from_the_editor():
             "return;\n"
             "    if(b.contains('deck-open')&&!b.contains('slide-editing')) "
             "return;\n"
-            "    if(!openBtn||openBtn.hidden) return;\n"
+            "    if(!openBtn||openBtn.hidden) return;\n") in app
+    # the library's own door, when the library is up (it sits over the
+    # Open dialog); otherwise the Open door itself
+    assert ("    if(hub&&!hub.hidden&&hn&&!hn.hidden){e.preventDefault();"
+            "hn.click();return;}\n"
             "    e.preventDefault();openBtn.click();") in app
 
 
 def test_escape_over_the_open_dialog_keeps_the_editor():
     app = assets.load("js/app.js")
-    assert ("      if(e.key!=='Escape'||!dlg||dlg.hidden) return;\n"
+    assert ("      if(e.key!=='Escape'||!dlg||dlg.hidden) return;\n") in app
+    # a question asked over it ("That did not open") has its own Escape
+    assert ("      var ask=$('#ask-dlg'); if(ask&&!ask.hidden) return;\n"
             "      e.preventDefault();e.stopPropagation();hideDlg();\n"
             "    },true);") in app
     assert "if(e.key==='Escape'&&dlg&&!dlg.hidden) hideDlg();" not in app
@@ -74,3 +80,18 @@ def test_a_notebook_tab_is_drawn_like_a_presentation_tab():
     assert "ic.className=top?'tab-ico':'pr-ico';" in assets.deck_js()
     css = assets.load("css/app.css")
     assert ".top-tabstrip .tab-ico{" in css and "top-pres-ico" not in css
+
+
+def test_what_the_open_dialog_says_is_seen_and_not_in_a_talk():
+    """2026-10-08 review: an Open that failed from the editor was told
+    underneath the Open dialog (the editor's stacking context), unseen,
+    holding the keyboard; and the library's notebook door was offered in
+    a slideshow, where the notebook opened out of sight."""
+    js = assets.deck_js()
+    host = js.split("  function askHost(dlg){", 1)[1].split("\n  }\n", 1)[0]
+    assert ("    if(document.querySelector('#opendlg:not([hidden]),'\n"
+            "      +'#presentation-hub:not([hidden])')) host=document.body;"
+            ) in host
+    hub = js.split("  function openPresentationHub(opts){", 1)[1].split(
+        "\n  }\n", 1)[0]
+    assert "||(!deckEl.hidden&&mode==='view');" in hub

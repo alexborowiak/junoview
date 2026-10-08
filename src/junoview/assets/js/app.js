@@ -3566,6 +3566,10 @@
     if(b.contains('doc-presenting')||b.contains('picking')) return;
     if(b.contains('deck-open')&&!b.contains('slide-editing')) return;
     if(!openBtn||openBtn.hidden) return;
+    /* the library (z 240) would sit over the Open dialog (z 130): its
+       own notebook door closes it first */
+    var hub=$('#presentation-hub'),hn=$('#presentation-hub-nb');
+    if(hub&&!hub.hidden&&hn&&!hn.hidden){e.preventDefault();hn.click();return;}
     e.preventDefault();openBtn.click();
   });
   /* ---- guided tour: a spotlight + tooltip that steps through the UI;
@@ -8570,6 +8574,9 @@
        press that closed this over the editor also left the editor */
     window.addEventListener('keydown',function(e){
       if(e.key!=='Escape'||!dlg||dlg.hidden) return;
+      /* a question over this dialog ("That did not open") is inner to
+         it: its Escape is the question's, and the typed path stays */
+      var ask=$('#ask-dlg'); if(ask&&!ask.hidden) return;
       e.preventDefault();e.stopPropagation();hideDlg();
     },true);
 
