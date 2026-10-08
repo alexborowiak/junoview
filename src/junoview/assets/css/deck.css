@@ -4857,6 +4857,9 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-rotate::after{content:"";position:absolute;left:50%;top:100%;
   width:2px;height:11px;background:var(--cyan);margin-left:-1px;}
 .an-item.sel .an-rotate{display:block;}
+/* T-review 2026-10-08: never measured as part of a box (fitTexts) */
+.annot-layer.an-fitting .an-resize,
+.annot-layer.an-fitting .an-rotate{display:none!important;}
 .deck.editing .an-item.grpsel .an-rotate{display:none!important;}
 .an-endpt{position:absolute;width:15px;height:15px;
   margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--cyan);

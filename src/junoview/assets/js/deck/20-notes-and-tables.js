@@ -2563,6 +2563,16 @@
      commit -- see the note at its call site. */
   function fitTexts(layer,s,editing,kept){
     if(!layer||!s) return;
+    /* the selection's handles hang below a box (bottom:-7px, -16px on a
+       small one) and scrollHeight counts them, so a selected box sized
+       exactly to its fit line read as overflowing: flagged "does not
+       fit", or its words shrunk, for words that fit (2026-10-08 review).
+       They are out of the measure while it runs. */
+    layer.classList.add('an-fitting');
+    try{fitEach(layer,s,editing,kept);}
+    finally{layer.classList.remove('an-fitting');}
+  }
+  function fitEach(layer,s,editing,kept){
       (s.annots||[]).forEach(function(a,i){
         if(!a||a.k!=='text'||!a.fh) return;
         if(a.hide) return;                   /* T404: hidden is hidden */

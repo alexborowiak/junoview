@@ -2394,8 +2394,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (elbowPoint in arrowEnds).
 # Fix: a cycle's ring widens (then its boxes narrow) until neighbours stand
 # clear, so 6-8 steps never overlap.
-EXPECTED_MD5 = "2454648d49e9af68313b2261bf2d9791"
-EXPECTED_BYTES = 5276054
+# Fix: fitTexts measures a box without its selection handles (an-fitting).
+EXPECTED_MD5 = "fb7fb9cecdb6d404d729fe6337b1046f"
+EXPECTED_BYTES = 5276738
 
 
 def _render_example() -> str:

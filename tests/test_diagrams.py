@@ -336,3 +336,20 @@ def test_a_cycle_of_up_to_eight_never_overlaps_on_any_page():
             if len(nodes) > 2:
                 assert ((dx * ar) ** 2 + dy ** 2) ** 0.5 * (1 - 2 * f) \
                     >= 3.9, key
+
+
+def test_a_selected_box_is_measured_without_its_handles():
+    """2026-10-08 review: the selection's resize handles hang below a box
+    and scrollHeight counted them, so a selected diagram step (or any box
+    sized to its fit line) shrank its words to 0.89 or was flagged "does
+    not fit". Driven: a Process step after Ctrl+I kept 12.45px and no
+    flag; at the previous commit it went to 11.08px and was flagged."""
+    js = assets.deck_js()
+    fit = lift_fn(js, "fitTexts")
+    assert fit.index("layer.classList.add('an-fitting');") \
+        < fit.index("try{fitEach(layer,s,editing,kept);}") \
+        < fit.index("finally{layer.classList.remove('an-fitting');}")
+    css = assets.deck_css()
+    assert (".annot-layer.an-fitting .an-resize,\n"
+            ".annot-layer.an-fitting .an-rotate{display:none!important;}"
+            ) in css
