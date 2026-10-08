@@ -256,3 +256,25 @@ def test_fill_none_takes_the_edge_off_in_the_pptx_too():
     if got is None:
         pytest.skip("no JS engine")
     assert got == ["#39a9c0", ""]
+
+
+def test_a_step_dragged_taller_keeps_its_arrows_on_its_edge():
+    """2026-10-08 review: resizing a text box that keeps a height moves
+    a.fh, not a.h, and annotRectPct answered from the stale a.h -- so the
+    arrows off a diagram step dragged taller started inside it, on screen
+    and in the .pptx."""
+    js = assets.deck_js()
+    src = ("function anchorPos(a,w,h){return {x:a.x,y:a.y};}\n"
+           + lift_fn(js, "annotRectPct") + "\n"
+           "var s={annots:[{k:'text',x:24,y:50,w:24,h:11.85,fh:21.49},"
+           "{k:'rect',x:1,y:2,w:3,h:4}]};\n"
+           "console.log(JSON.stringify([annotRectPct(null,s,0),"
+           "annotRectPct(null,s,1)]));\n")
+    from test_a_custom_heading_is_a_heading import _run
+    got = _run(src)
+    if got is None:
+        pytest.skip("no JS engine")
+    assert got[0] == {"l": 24, "r": 48, "t": 50, "b": 71.49}
+    assert got[1] == {"l": 1, "r": 4, "t": 2, "b": 6}
+    body = lift_fn(js, "annotRectPct")
+    assert "var keepsH=a.k==='text'&&a.fh>0;" in body

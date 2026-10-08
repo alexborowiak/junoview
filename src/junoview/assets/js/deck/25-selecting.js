@@ -1217,7 +1217,11 @@
     /* auto-sized items (text) AND aspect-fitted figure frames answer with
        their RENDERED rect — snapping must align to the visible plot, not
        a letterboxed stored box */
-    if(el&&(a.w==null||a.h==null
+    /* ...and a text box that keeps a height (fh): resizing one moves
+       a.fh, never a.h, so its stored h went stale and a diagram step
+       dragged taller kept its arrows on the old outline (2026-10-08) */
+    var keepsH=a.k==='text'&&a.fh>0;
+    if(el&&(a.w==null||a.h==null||keepsH
             ||el.classList.contains('an-figonly'))){
       var lr=layer.getBoundingClientRect();
       if(lr.width&&lr.height){
@@ -1227,6 +1231,12 @@
                 t:(er.top-lr.top)/lr.height*100,
                 b:(er.bottom-lr.top)/lr.height*100};
       }
+    }
+    /* with no layer (the .pptx, an off-screen slide) its height is fh,
+       as the canvas and the .pptx both draw it */
+    if(keepsH&&a.w!=null){
+      var fp=anchorPos(a,a.w,+a.fh);
+      return {l:fp.x,r:fp.x+a.w,t:fp.y,b:fp.y+(+a.fh)};
     }
     if(a.w==null||a.h==null) return null;
     var ap=anchorPos(a,a.w,a.h);

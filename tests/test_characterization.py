@@ -2388,8 +2388,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix: arrows tied by index follow a delete or restack (retieAfter in
 # deleteSel, zReorder, applyLayout, the dup lint, flip own objects, components).
 # Fix: Fill None takes a text box's edge off in the .pptx too (bdc gated on bg).
-EXPECTED_MD5 = "129bd1c186b4e135236a146a22df97b8"
-EXPECTED_BYTES = 5273625
+# Fix: a text box that keeps a height answers annotRectPct from fh (measured
+# on screen), so arrows follow a resized diagram step.
+EXPECTED_MD5 = "b898fee7a09b7e9fd11978043e281174"
+EXPECTED_BYTES = 5274132
 
 
 def _render_example() -> str:
