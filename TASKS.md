@@ -11664,11 +11664,24 @@ more pressing things before getting on to this."
   read [nb] example_climate_analysis | [nb] example_widget | [deck]
   presentation-9, one shape. Tests in
   tests/test_open_a_notebook_from_anywhere.py.
-- [ ] **T611 — The tab layout lives on the tabs.** "I changed my tabs to
+- [x] **T611 — The tab layout lives on the tabs.** "I changed my tabs to
   be vertical now. However, I have no idea how to get back to the other
   view." and "Why is the tab layout inside the file option inside
   presentation?" The switch belongs where the tabs are, reachable in
   both layouts, from the notebook, Home and a presentation alike.
+  *Done 2026-10-08.* The "open files" heading and its two rows are gone
+  from both File menus. Each list now carries the one button that leads
+  to the other: **Tabs at side** sits after the tabs (a quiet worded
+  button that never squeezes, with a new dockleft icon), and **Tabs on
+  top** heads the side list's foot, above Collapse. Only the button that
+  leads away shows, and pressing it hands the keyboard to its twin. So
+  the way back is on screen wherever the list is -- at Home with the
+  side list there was no File menu at all. Collapsed to 46px, the foot's
+  three words now stack small under their icons, where they had been
+  cropped ("Colla") or broken mid-row. Command search finds both
+  ("vertical tabs", "horizontal tabs"), and the help says where they
+  are. Driven at 1366x657 and 1280x600 from the reader, a presentation
+  and Home, both ways.
 - [ ] **T612 — Copy a figure, paste it on a slide.** "A copy code thing
   ... that copied like the github url and figure code associated with
   that figure, then when you pasted it into a presentation it just

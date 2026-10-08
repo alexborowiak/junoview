@@ -93,13 +93,19 @@ def test_the_tab_row_carries_the_side_panels_doors():
     assert "open-tabs-label" not in page
 
 
-def test_both_app_menus_offer_the_one_choice():
-    # T602: both are File menus now
+def test_the_choice_is_on_the_list_not_in_a_file_menu():
+    # T611 (user, 2026-10-08: "I changed my tabs to be vertical now.
+    # However, I have no idea how to get back to the other view" / "Why is
+    # the tab layout inside the file option inside presentation?"): each
+    # list carries the one button that leads to the other
     for html in (assets.page_template(), assets.deck_html()):
-        assert '<div class="dc-mhead">open files</div>' in html
-        assert html.count('class="dc-mi jv-files-at"') == 2
-        assert ">As tabs along the top</button>" in html
-        assert ">As a list down the side</button>" in html
+        assert '<div class="dc-mhead">open files</div>' not in html
+        assert "jv-files-at" not in html
+    page = assets.page_template()
+    row = page.split('id="open-tabs-row"', 1)[1].split("</nav>", 1)[0]
+    assert row.index('id="top-tabstrip"') < row.index('id="ot-files-side"')
+    foot = page.split('class="pr-foot"', 1)[1].split("</div>", 1)[0]
+    assert foot.index('id="pr-files-top"') < foot.index('id="pr-collapse"')
 
 
 def test_one_list_is_on_screen_at_a_time(out):

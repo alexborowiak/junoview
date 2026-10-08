@@ -2376,8 +2376,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T610: open a notebook from anywhere -- the editor's File row
 # (#mi-open-nb), the library's door, Ctrl+O in the editor, the Open
 # dialog's Escape in capture, and every tab wearing its kind's icon.
-EXPECTED_MD5 = "07a8b094a331f3394bc774335cf9ffdd"
-EXPECTED_BYTES = 5252492
+# T611: the tab layout lives on the tabs -- File's two "open files" rows
+# out, Tabs at side after the tabs (#ot-files-side) and Tabs on top at
+# the side list's foot (#pr-files-top), each shown only when it leads
+# away, a dockleft icon, and the collapsed foot's words stacked.
+EXPECTED_MD5 = "774196ae652c977594c07785064386ac"
+EXPECTED_BYTES = 5254441
 
 
 def _render_example() -> str:

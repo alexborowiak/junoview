@@ -27,6 +27,9 @@
     'objects-btn':'selection pane layers list objects',
     'hm-layers':'selection pane layers list objects',
     'comments-btn':'comments comment review note feedback new comment',
+    'ot-files-side':'vertical tabs side list sidebar left open files '
+      +'layout tab layout',
+    'pr-files-top':'horizontal tabs top open files layout tab layout',
     'mi-open-nb':'open notebook ipynb jupyter load markdown latex csv',
     'pr-narrate':'record narration narrate voice over voiceover record '
       +'slide show microphone mic audio',
@@ -154,6 +157,9 @@
       add(b,'Present ▾',null,null);});
     ['#dc-save','#qat-find','#dc-play','#vw-full','#dc-undo','#dc-redo']
       .forEach(function(id){add($(id),'Top bar',null,null);});
+    /* T611: the open files' layout, now on the list rather than in File */
+    ['#ot-files-side','#pr-files-top'].forEach(function(id){
+      add($(id),'Open files',null,null);});
     return out;
   }
   function cmdMatch(q,idx){

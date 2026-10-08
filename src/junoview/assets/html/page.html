@@ -60,6 +60,14 @@
         >{logo}<span class="btxt">Home</span></button>
       <div class="top-tabstrip" id="top-tabstrip" role="tablist"
         aria-label="Open documents"></div>
+      <!-- T611: where the open files are listed lives ON the list, so it
+           can be found wherever the list is (it was a File row, and from
+           the side list at Home it could not be reached at all) -->
+      <button class="toggle ot-files-at jv-files-to" id="ot-files-side"
+        type="button" data-at="side"
+        title="List the open files down the left side instead of as tabs.
+ Tabs on top, at the foot of that list, brings the tabs back"
+        ><i data-ic="dockleft"></i><span class="btxt">Tabs at side</span></button>
     </div>
     <span class="nb-file-spacer" aria-hidden="true"></span>
     <!-- T602: this notebook's own Info and Reload on the right, beside
@@ -91,8 +99,8 @@
       <span class="dc-menuwrap" id="app-filewrap">
         <button class="toggle" id="app-file" type="button" aria-haspopup="true"
           aria-expanded="false" aria-controls="app-file-menu"
-          title="New and open; the colour theme, where open files are
- listed, help and support">File &#9662;</button>
+          title="New and open; the colour theme, help and
+ support">File &#9662;</button>
         <div class="dc-menu" id="app-file-menu" hidden>
           <!-- New makes the four things the side panel's New made, each by
                pressing the one real button for it (T596) -->
@@ -124,16 +132,6 @@
           <a class="dc-mi" id="support-btn" href="{kofi}"
             target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
             >Support Junoview &#9829;</a>
-          <!-- T596: where the open files are listed -- in ONE place -->
-          <div class="dc-mhead">open files</div>
-          <button class="dc-mi jv-files-at" type="button" data-at="top"
-            aria-pressed="true" title="Open notebooks and presentations are tabs
- along the top bar, with Home before them. The side panel goes
- away.">As tabs along the top</button>
-          <button class="dc-mi jv-files-at" type="button" data-at="side"
-            aria-pressed="false" title="Open notebooks and presentations are a
- list down the left, with Recents, All presentations and New under it. The
- tabs go away.">As a list down the side</button>
         </div>
       </span>
       <span class="ab-tablist" role="tablist" aria-label="Ribbon tabs">
@@ -540,6 +538,12 @@
   <!-- the two panel controls as a pair: collapse it, or let it hide
        itself. Neither is "pin" — nothing is being pinned. -->
   <div class="pr-foot">
+    <!-- T611: and back to tabs, from the foot of the list itself -->
+    <button class="pr-collapse jv-files-to" id="pr-files-top" type="button"
+      data-at="top"
+      title="Show the open files as tabs along the top instead of this
+ list. Tabs at side, after the tabs, brings this list back"
+      ><i data-ic="docktop"></i> Tabs on top</button>
     <button class="pr-collapse" id="pr-collapse" aria-label="Collapse the presentations panel"
       title="Collapse this panel"><i data-ic="collapse"></i> Collapse</button>
     <button class="pr-collapse" id="pr-auto" aria-label="Auto-hide the presentations panel" aria-pressed="false"

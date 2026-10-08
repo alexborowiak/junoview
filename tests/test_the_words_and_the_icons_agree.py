@@ -103,6 +103,6 @@ def test_a_worded_rail_button_gets_a_row_of_its_own():
     assert ".pr-foot #pr-auto{flex:none;width:34px;" not in css
     page = assets.load("html/page.html")
     foot = page.split('class="pr-foot"')[1].split("</div>")[0]
-    for word in ("Collapse", "Auto-hide"):
+    for word in ("Tabs on top", "Collapse", "Auto-hide"):
         assert word in foot
-    assert foot.count("data-ic=") == 2
+    assert foot.count("data-ic=") == 3

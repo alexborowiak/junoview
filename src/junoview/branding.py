@@ -134,6 +134,9 @@ _ICON_PATHS = {
                '<path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/>',
     "dockright": '<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
                  '<path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/>',
+    # T611: its mirror, the open files listed down the left
+    "dockleft": '<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
+                '<path d="M6.2 2.4v11.2"/><path d="M3.3 5h1.2M3.3 7.4h1.2"/>',
     "autohide": '<rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/>'
                  '<path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/>',
     "pin": '<path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/>'

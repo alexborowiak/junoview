@@ -387,8 +387,9 @@
      the editor the side copy peeked out from the left edge on top of the
      tabs. They are ONE list now, in one of two places: TABS along the
      top (the default, with Home before them), or the LIST down the side
-     (the side panel as it was, and no tabs at all). File > Open files
-     switches; the choice is the person's, not the window's, so it is
+     (the side panel as it was, and no tabs at all). T611: the switch is
+     on the list itself -- Tabs at side after the tabs, Tabs on top at
+     the foot of the side list; the choice is the person's, not the window's, so it is
      one key for every project. The side panel's own collapse and
      auto-hide are unchanged and only mean anything while it is the list.
      T602 took New and Open off the tabs (they are rows of File) and the
@@ -406,8 +407,8 @@
     cl.toggle('files-side',at==='side');
     /* nothing may be left peeking from a panel that is no longer there */
     if(at==='top') cl.remove('prrail-peek');
-    $$('.jv-files-at').forEach(function(b){
-      b.setAttribute('aria-pressed',(b.dataset.at===at).toString());});
+    /* T611: each list carries the one button that leads to the other */
+    $$('.jv-files-to').forEach(function(b){b.hidden=(b.dataset.at===at);});
     refreshOpenTabsRow();
   }
   function setFilesAt(at){
@@ -417,8 +418,16 @@
   }
   APP.setFilesAt=setFilesAt;
   function initFilesAt(){
-    $$('.jv-files-at').forEach(function(b){
-      b.addEventListener('click',function(){setFilesAt(b.dataset.at);});});
+    $$('.jv-files-to').forEach(function(b){
+      b.addEventListener('click',function(){
+        setFilesAt(b.dataset.at);
+        /* the button pressed has just gone: hand the keyboard to the one
+           that leads back, where it is on screen */
+        $$('.jv-files-to').forEach(function(o){
+          if(!o.hidden&&o.getClientRects().length)
+            try{o.focus({preventScroll:true});}catch(e){}
+        });
+      });});
     var h=$('#ot-home');
     if(h) h.addEventListener('click',function(){goHome(true);});
     /* the body's class says which title row is on screen: watching it

@@ -57,18 +57,17 @@ def test_reader_uses_the_editor_app_menu():
     page = assets.load("html/page.html")
     assert 'id="app-appwrap"' not in page and "App &#9662;" not in page
     assert 'id="app-filewrap"' in page
-    assert 'listed, help and support">File &#9662;</button>' in page
+    assert 'help and\n support">File &#9662;</button>' in page
     # the menu holds heading <div>s, so it ends at the wrap
     menu = page.split('id="app-file-menu"')[1].split("</span>")[0]
     heads = re.findall(r'<div class="dc-mhead">([^<]+)</div>', menu)
-    assert heads == ["new", "open", "app", "open files"], heads
+    # T611: "open files" left -- the switch is on the list itself now
+    assert heads == ["new", "open", "app"], heads
     assert 'id="ot-open"' in menu and 'id="tab-open" hidden' in menu
     assert 'id="scheme-btn"' in menu
     assert 'id="help-btn"' in menu and "How to\n            use&#8230;" in menu
     assert 'id="support-btn"' in menu
-    # T596: where the open files are listed is an app-wide choice
-    assert 'class="dc-mi jv-files-at" type="button" data-at="top"' in menu
-    assert 'class="dc-mi jv-files-at" type="button" data-at="side"' in menu
+    assert "jv-files-at" not in menu and "jv-files-to" not in menu
 
 
 def test_the_icon_only_square_rule_names_only_icon_only_buttons():

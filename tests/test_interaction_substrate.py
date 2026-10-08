@@ -163,7 +163,10 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     open") grew it again, on purpose: New's four, Open a presentation,
     and the App menu's rows joined, so "file" split into "new", "open"
     and "this presentation", and "app" and "open files" came in -- in two
-    columns, with the dangerous pair still last.
+    columns, with the dangerous pair still last. T611 took "open files"
+    out again: where the open files are listed is switched on the list
+    itself (user: "Why is the tab layout inside the file option inside
+    presentation?").
     """
     html = assets.deck_html()
     i = html.index('id="dc-menu"')
@@ -171,14 +174,15 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     menu = html[i:j]
     heads = re.findall(r'class="dc-mhead[^"]*">([^<]+)<', menu)
     assert heads == ["new", "open", "this presentation",
-                     "export &amp; share", "app", "open files",
+                     "export &amp; share", "app",
                      "careful — these lose work"], heads
     # the fifteen rows from before (fourteen you can see, and
     # #mi-autosave, hidden unless the build has a project to save to),
     # plus T602's nine: Poster, Custom view, Folder, Open a
     # presentation, Theme, How to use, Support and the two open-files rows,
-    # plus T606's Collection under New, plus T610's Open a notebook
-    assert menu.count('class="dc-mi') == 26, menu.count('class="dc-mi')
+    # plus T606's Collection under New, plus T610's Open a notebook, less
+    # T611's two open-files rows (on the list itself now)
+    assert menu.count('class="dc-mi') == 24, menu.count('class="dc-mi')
     assert menu.count('class="dc-mcol"') == 2
     for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",
                  "mi-auto-figdocs", "mi-nums", "mi-hist", "mi-check"):

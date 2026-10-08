@@ -293,6 +293,15 @@ body.tabs-row-on .nb-filebar{min-height:var(--open-tabs-h);}
   min-width:220px;align-self:stretch;box-sizing:border-box;
   margin-bottom:-4px;}
 .open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
+/* T611: the way to the side list, after the tabs: a quiet worded button,
+   not a tab, and never squeezed -- the strip scrolls first */
+.open-tabs-row .ot-files-at{flex:none;align-self:center;height:24px;
+  margin:0 2px 2px 6px;padding:0 9px;gap:6px;background:none;
+  border:1px solid transparent;border-radius:6px;box-shadow:none;
+  color:var(--chrome-ink-2,#8ba0b2);font:11.5px var(--sans);
+  white-space:nowrap;}
+.open-tabs-row .ot-files-at:hover{border-color:var(--chrome-line,#ffffff40);
+  color:var(--chrome-ink,#d7e3ec);}
 /* no scrollbar: in a one-button-high row it drew a white bar under the
    tabs and made the whole bar taller. The strip still scrolls (wheel,
    trackpad), and app.js keeps the tab on screen in view. */
@@ -699,6 +708,12 @@ body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
   border-radius:7px;color:#69788a;font-size:13px;padding:5px 0;
   cursor:pointer;}
 .pr-collapse:hover{color:#cdd9e3;border-color:#ffffff40;}
+/* T611: collapsed to 46px the foot's words stack small under their icons
+   -- they were cropped ("Colla") or broke mid-row, and Tabs on top, the
+   way back to tabs, must still say what it does */
+body.presrail-min .pr-foot .pr-collapse{display:flex;flex-direction:column;
+  align-items:center;gap:2px;margin:0 -4px;padding:5px 0 4px;
+  font-size:8.5px;line-height:1.15;letter-spacing:0;text-align:center;}
 /* collapsed: icons only */
 body.presrail-min .pr-t,body.presrail-min .pr-label{display:none;}
 body.presrail-min .pr-item{justify-content:center;padding:9px 0;}
