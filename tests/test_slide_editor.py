@@ -2553,7 +2553,9 @@ def test_the_powerpoint_export_embeds_the_original(out):
     a plain map rather than being awaited inside them.
     """
     assert "function pptxOriginals(){" in out
-    assert "return pptxOriginals().then(pptxBuildAndSave);" in out
+    # (fetched before the loss check too, which must see the same bytes)
+    assert "    return pptxOriginals().then(function(orig){" in out
+    assert "        if(go) return pptxBuildAndSave(orig);" in out
     assert "function pptxBuildAndSave(orig){" in out
     # ONE lookup, so no branch can forget it
     assert "function pptxSrc(note,src){" in out
