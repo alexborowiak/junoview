@@ -1003,6 +1003,11 @@ body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 body:not(.light) .fz-btn{background:#0d1a24d9;border-color:#ffffff2b;
   color:#cfe0ea;}
 body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
+/* T612: the bar's one worded button -- words plus icon, like every
+   other action, so it is a pill rather than a square */
+.fz-btn.fz-copy{width:auto;display:inline-flex;align-items:center;gap:4px;
+  padding:0 8px;font-size:10.5px;}
+.fz-copy .bic{width:11px;height:11px;}
 /* the tree/trace clones and slide frames never carry the zoom chrome, and
    a cloned card is sized by its frame — never by the feed's zoom */
 .tree-node .figzoom,.an-cell .figzoom,.spane .figzoom,.slide-fig .figzoom,

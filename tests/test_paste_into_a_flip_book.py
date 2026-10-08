@@ -18,7 +18,7 @@ def test_the_paste_door_asks_the_flip_book_first(out):
     assert "    if(pasteIntoFlip(pic)) return true;   /* T408 */" in out
     # ...and only then does the loose-image path run
     assert ("    if(pasteIntoFlip(pic)) return true;   /* T408 */\n"
-            "    if(pic.file) return pasteImageFile(pic.file);") in out
+            "    if(pic.file) return pasteImageFile(pic.file,said);") in out
 
 
 def test_every_kind_of_clipboard_picture_becomes_a_page(out):

@@ -85,6 +85,8 @@
   }
   /* T527: the one dialog, for the notebook side too (app.js jvTell and
      jvAsk) -- no native alert, confirm or prompt anywhere */
+  /* T612: the notebook's Copy says what it put on the clipboard */
+  window.SemDeckCellCopied=cellCopied;
   window.SemAsk=askText;
   window.SemAskYes=askYes;
   window.SemAskTell=askTell;

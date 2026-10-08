@@ -3508,7 +3508,15 @@
       row('Clear every guide','',function(){clearGuides(false);},
         'The boxes and the lines dragged off the rulers');
     menuHead(m,'paste');
-    if(!clipBuf.length){
+    if(cellClip){
+      /* T612: the notebook figure copied last, in this page */
+      var cw=(cellClip.kind==='figure'||!cellClip.kind)?'figure':'cell';
+      row('Paste '+cw,'Ctrl+V',function(){pasteCellClip(cellClip);},
+        cellClip.title||cellClip.ref);
+      row('Paste '+cw+' here','Ctrl+Alt+V',
+        function(){pasteCellClip(cellClip,'here',at);},
+        'Centred on the point you right-clicked');
+    } else if(!clipBuf.length){
       /* greyed, the way every editor shows a Paste with nothing to paste,
          rather than a sentence standing in for the command (T533) */
       var pz=row('Paste','Ctrl+V',function(){});

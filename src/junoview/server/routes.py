@@ -56,6 +56,7 @@ from .vcs import (
     _git_commit_file,
     _git_file_log,
     _git_info,
+    _git_rel_path,
     _git_show_bytes,
     _git_show_notebook,
 )
@@ -536,6 +537,8 @@ def _make_handler(state: _AppState):
             f = self._resolve_src_path(raw)
             info = _git_info(f)
             if info.get("repo"):
+                # T612: the figure's Copy links to the file's GitHub page
+                info["rel"] = _git_rel_path(f)
                 log = _git_file_log(f, 1)
                 if log:            # the commit a figure LOCK binds to
                     info["commit"] = log[0]

@@ -2380,8 +2380,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # out, Tabs at side after the tabs (#ot-files-side) and Tabs on top at
 # the side list's foot (#pr-files-top), each shown only when it leads
 # away, a dockleft icon, and the collapsed foot's words stacked.
-EXPECTED_MD5 = "774196ae652c977594c07785064386ac"
-EXPECTED_BYTES = 5254441
+# T612: copy a figure, paste it on a slide -- a worded Copy on each figure's
+# bar (app.js copyCell, .fz-copy in core.css) and the deck's reader and
+# placer (cellClipOf, pasteCellClip) wired into every paste door.
+EXPECTED_MD5 = "fc6dee3f90fc0031031fb3f387440b38"
+EXPECTED_BYTES = 5271271
 
 
 def _render_example() -> str:

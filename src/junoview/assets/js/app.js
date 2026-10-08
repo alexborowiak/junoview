@@ -5724,6 +5724,26 @@
         e.stopPropagation();bump(1/1.25);});
       if(bx) bx.addEventListener('click',function(e){
         e.stopPropagation();openFigMax(fig);});
+      /* T612: Copy -- the figure, for a slide; its link and code for
+         anywhere else. Not on a collection's cards (their refs are
+         already kept copies), as Collect is not. */
+      var cst=shell.classList.contains('coltab')?null
+        :(shell.dataset.src||shell.dataset.nb||stem);
+      if(cst&&card.dataset&&card.dataset.anchor&&!$('.fz-copy',z)){
+        var bc=document.createElement('button');
+        bc.type='button';bc.className='fz-btn fz-copy';
+        bc.innerHTML=bic('copy')+' Copy';
+        bc.title='Copy this figure \u2014 paste it on a slide (Ctrl+V) and '
+          +'it arrives as the figure; anywhere else it is where the '
+          +'notebook lives and the code that draws it';
+        bc.addEventListener('pointerenter',function(){cellGitWeb(cst);});
+        bc.addEventListener('focus',function(){cellGitWeb(cst);});
+        bc.addEventListener('click',function(e){
+          e.preventDefault();e.stopPropagation();
+          copyCell(shell,cst,card);
+        });
+        z.appendChild(bc);
+      }
     });
     /* ---- output folded by Output = Collapsed reveals on click. Open-only
        (unlike a figure): the output is text/tables you may want to select,
@@ -5736,6 +5756,107 @@
     });
   }
   APP.wireCardBehaviors=wireCardBehaviors;
+  /* ---- T612: COPY A FIGURE, PASTE IT ON A SLIDE ------------------------
+     (2026-10-08, user: "a copy code thing ... that copied like the github
+     url and figure code associated with that figure, then when you
+     pasted it into a presentation it just pasted as the figure".)
+     Three flavours in ONE copy, because a clipboard is read by whoever
+     pastes: plain words (the title, where the notebook lives -- its
+     GitHub page when there is one -- and the code) for an editor or a
+     chat; HTML with the picture and a link for a document; and
+     application/x-junoview-cell, the ref and the path, for the deck,
+     which turns it into the figure (30-format-bar.js, cellClipOf). The
+     `# junoview-cell:` line is the same thing in words, for the doors
+     that can only read text, and is a comment wherever code is pasted.
+     A copy event and not navigator.clipboard: only a copy event can
+     carry a type of our own, and it works on a file:// page too. */
+  var CELL_MIME='application/x-junoview-cell';
+  function htmlEsc(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  /* where the notebook can be read by someone else: its GitHub page, or
+     the address it was opened from; a local file in a repository with a
+     GitHub remote learns its page from /api/gitstate, once, when the
+     pointer first reaches a Copy -- the click itself has to be
+     synchronous for the copy event to fire */
+  function cellWebUrl(path,sh){
+    if(/^https?:/i.test(path)){
+      var gh=ghFromUrl(path);
+      return gh?('https://github.com/'+gh.owner+'/'+gh.repo+'/blob/'
+        +gh.ref+'/'+gh.path):path;
+    }
+    return (sh&&sh.gitweb)||'';
+  }
+  function cellGitWeb(stem){
+    var sh=APP.shells[stem];
+    if(!sh||sh.gitweb!==undefined||APP.mode!=='app'||!sh.path
+       ||/^https?:/i.test(sh.path)||!APP.api) return;
+    sh.gitweb='';
+    APP.api('/api/gitstate',{path:sh.path}).then(function(g){
+      if(g&&g.github&&g.rel)
+        sh.gitweb=g.github+'/blob/'+encodeURI(g.branch&&g.branch!=='HEAD'
+          ?g.branch:((g.commit||{}).id||'HEAD'))+'/'+encodeURI(g.rel);
+    }).catch(function(){});
+  }
+  function cellCopyPayload(shell,stem,card){
+    var anchor=card.dataset.anchor,sh=APP.shells[stem]||{};
+    var path=sh.path||shell.dataset.path||'';
+    var ti=card.querySelector('.cardhead .cardtitle');
+    var title=(ti&&ti.textContent.trim())||anchor;
+    var code=[].map.call(
+      card.querySelectorAll(':scope>.codewrap .codestep pre'),
+      function(p){return p.textContent.replace(/\s+$/,'');})
+      .filter(Boolean).join('\n\n');
+    /* the page it was copied in: the deck only resolves the ref when it
+       is pasted in the same one (30-format-bar.js, cellWhere) */
+    var url=cellWebUrl(path,sh),where=location.host+location.pathname;
+    var ref=stem+'::'+anchor;
+    var text=['# '+title,
+      '# '+(url||path||stem)+'  (cell '+anchor+')',
+      '# junoview-cell: '+ref+' @'+where].join('\n')
+      +'\n'+(code?code+'\n':'');
+    var pg=card.querySelector('.cb-fig .figpage.current')
+      ||card.querySelector('.cb-fig');
+    var img=pg&&pg.querySelector('img[src^="data:image/"]');
+    var html='<figure data-junoview-cell="'+htmlEsc(ref)+'">'
+      +(img?'<img src="'+htmlEsc(img.getAttribute('src'))+'" alt="'
+        +htmlEsc(title)+'">':'')
+      +'<figcaption><b>'+htmlEsc(title)+'</b>'
+      +(url?' — <a href="'+htmlEsc(url)+'">'+htmlEsc(url)+'</a>':'')
+      +'</figcaption>'
+      +(code?'<pre><code>'+htmlEsc(code)+'</code></pre>':'')+'</figure>';
+    return {meta:{v:1,ref:ref,path:path,url:url,title:title,
+      kind:card.dataset.kind||'',where:where},text:text,html:html};
+  }
+  function copyCell(shell,stem,card){
+    var p=cellCopyPayload(shell,stem,card),done=false;
+    function onCopy(e){
+      if(!e.clipboardData) return;
+      e.clipboardData.setData('text/plain',p.text);
+      e.clipboardData.setData('text/html',p.html);
+      try{e.clipboardData.setData(CELL_MIME,JSON.stringify(p.meta));}
+      catch(err){}
+      e.preventDefault();done=true;
+    }
+    document.addEventListener('copy',onCopy,true);
+    try{document.execCommand('copy');}catch(err){}
+    document.removeEventListener('copy',onCopy,true);
+    if(typeof window.SemDeckCellCopied==='function')
+      window.SemDeckCellCopied(p.meta);
+    if(done){
+      docToast('Copied “'+p.meta.title+'” — paste it on a '
+        +'slide for the figure; anywhere else it is the link and its code',
+        null,null,3500);
+      return;
+    }
+    /* no copy event (an old engine): the words still carry the marker */
+    if(navigator.clipboard&&navigator.clipboard.writeText)
+      navigator.clipboard.writeText(p.text).then(function(){
+        docToast('Copied “'+p.meta.title+'”');
+      }).catch(function(){docToast('This browser would not copy that');});
+    else docToast('This browser would not copy that');
+  }
   /* ---- a notebook opened straight from GitHub still has a history: read
      it from the public API, so the hash + version list work with no local
      clone. Handles both the raw. and the blob/ form of the URL. ---- */

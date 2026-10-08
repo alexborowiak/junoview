@@ -1165,6 +1165,7 @@
   function slideCopy(i){
     var s=pres.slides[i]; if(!s) return false;
     slideClip=deep(s);
+    cellClip=null;   /* T612 */
     /* The last internal copy wins. The marker lets the real paste event
        distinguish this from unrelated text or pictures on the system
        clipboard; the keydown timer remains the permission-free fallback. */
@@ -2940,6 +2941,9 @@
             +' \u2014 Ctrl+Z undoes it'):'Nothing selected takes that look');
           return;
         }
+        /* T612: a notebook figure copied since -- Ctrl+Shift+V is its
+           words, as plain text, the way it is for anything from outside */
+        if(cellClip){armPlainPaste();return;}
         if(!clipBuf.length){
           /* nothing of ours to place: the same keys become "paste the
              clipboard as PLAIN text" (T128) -- the canvas's escape from
@@ -2956,6 +2960,7 @@
       else if((e.ctrlKey||e.metaKey)&&e.altKey
               &&(e.key==='v'||e.key==='V')){
         e.preventDefault();tookPaste();
+        if(cellClip&&pasteCellClip(cellClip,'here')) return;   /* T612 */
         if(!clipBuf.length) toast('Nothing copied yet');
         else {pasteBuf('here');
           toast(pointerPct()?'Pasted at the pointer'
@@ -2969,6 +2974,7 @@
         if(pendingPaste) clearTimeout(pendingPaste);
         pendingPaste=setTimeout(function(){
           pendingPaste=null;
+          if(cellClip&&pasteCellClip(cellClip)) return;   /* T612 */
           if(clipBuf.length) pasteBuf();
           else if(slidePaste(cur)) toast('Slide pasted');
         },150);
@@ -3143,7 +3149,7 @@
     if(!shellEl) return;
     var card=t.closest('.card');
     if(!card) return;
-    if(t.closest('.codetoggle,.depchip,a')) return;
+    if(t.closest('.codetoggle,.depchip,a,.figzoom')) return;
     var s=pres.slides[cur];
     if(!s){pres.slides.push(emptySlide());cur=pres.slides.length-1;
       s=pres.slides[cur];}

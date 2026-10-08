@@ -11682,10 +11682,29 @@ more pressing things before getting on to this."
   ("vertical tabs", "horizontal tabs"), and the help says where they
   are. Driven at 1366x657 and 1280x600 from the reader, a presentation
   and Home, both ways.
-- [ ] **T612 — Copy a figure, paste it on a slide.** "A copy code thing
+- [x] **T612 — Copy a figure, paste it on a slide.** "A copy code thing
   ... that copied like the github url and figure code associated with
   that figure, then when you pasted it into a presentation it just
   pasted as the figure."
+  *Done 2026-10-08.* A figure's own hover bar (beside − + ⤢) has a
+  worded **Copy**. One copy carries three things: words for anywhere
+  else (the title, where the notebook lives -- its GitHub page when the
+  file is tracked in a repository with a GitHub remote, via a new `rel`
+  from /api/gitstate -- and the code that draws it); HTML with the
+  picture and link, for documents; and `application/x-junoview-cell`,
+  the ref and the path. Pasted on a slide, it is resolved against this
+  page's own open notebooks (by path first, then the ref, then the
+  deck's kept copies) and placed as a live k:'cell' frame through
+  embedIfAbsent, like every other placement door. A selected empty frame
+  takes it, and so does a selected flip book (as a page). The figure's
+  HTML never crosses the clipboard. Every paste door knows it: Ctrl+V,
+  Ctrl+Alt+V, Ctrl+Shift+V (words, as ever), right-click Paste figure,
+  Home > Paste (through a `# junoview-cell:` text marker), a paste while
+  typing (the figure goes on the slide and the box is untouched) and the
+  builder screen. A notebook that is not open here gives the saved copy
+  or the picture, and says so with Open its notebook; a copy from
+  another Junoview is a picture and says why. Driven at 1366x657 and
+  1280x600.
 
 - [x] **T618 — Clicking a figure into a slide works again.** "The
   regular adding a figure from a notebook by clicking on it is not

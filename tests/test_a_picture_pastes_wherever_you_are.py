@@ -22,7 +22,7 @@ def test_one_reader_for_every_shape_a_picture_arrives_in(out):
             in out)
     assert ("    if(m&&/^(data:image\\/|https?:\\/\\/)/i.test(m[1])) "
             "return {src:m[1]};") in out
-    assert "  function pasteClipboardImage(pic){" in out
+    assert "  function pasteClipboardImage(pic,said){" in out
     # T437: an address is read in through the address door, not linked
     assert "    placeFromAddress(pic.src);\n    return true;" in out
 
@@ -36,7 +36,7 @@ def test_a_paste_while_typing_puts_the_picture_on_the_slide(out):
     assert ("    if(e.target.isContentEditable){\n"
             "      /* T400: a picture pasted while typing goes on the SLIDE") in body
     assert ("      try{e.target.blur();}catch(err){}\n"
-            "      pasteClipboardImage(pic);") in body
+            "      pasteClipboardImage(pic,cellSaid(cc));") in body
     # the old early return, which sent the picture to the box, is gone
     assert "e.target.isContentEditable) return;" not in body
 
@@ -46,7 +46,8 @@ def test_a_paste_on_the_builder_screen_opens_the_editor(out):
     body = out[start:start + 2600]
     assert ("    if(mode==='create'){\n"
             "      /* T400: the builder screen has no canvas") in body
-    assert "      setUIMode('edit');\n      pasteClipboardImage(pic);" in body
+    assert ("      setUIMode('edit');\n"
+            "      pasteClipboardImage(pic,cellSaid(cc));") in body
 
 
 def test_help_says_so():

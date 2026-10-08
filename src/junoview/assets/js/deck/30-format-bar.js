@@ -2833,6 +2833,7 @@
       return;
     }
     /* 'paste' and 'plain' */
+    if(which==='paste'&&cellClip&&pasteCellClip(cellClip)) return;   /* T612 */
     if(which==='paste'&&clipBuf.length){pasteBuf('auto');return;}
     if(which==='paste'&&!ed&&typeof slideClip!=='undefined'&&slideClip){
       slidePaste(cur);toast('Slide pasted');return;}
@@ -2862,6 +2863,10 @@
     function landText(txt){
       txt=String(txt||'');
       if(!txt.trim()){toast('The clipboard is empty');return;}
+      /* T612: a notebook figure copied in another window */
+      var cc=(which==='paste')?cellClipOf({getData:function(t){
+        return t==='text/plain'?txt:'';}}):null;
+      if(cc){if(!pasteCellClip(cc)) cellNotHere(cc,false);return;}
       if(ed&&document.contains(ed)){
         ed.focus();
         try{document.execCommand('insertText',false,txt);}catch(e){}
@@ -2903,6 +2908,7 @@
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
     clipFrom=cur;              /* where it came from - see pasteBuf */
     clipIdx=idxs.slice();
+    cellClip=null;             /* T612: the newest copy wins */
     objStamp=++clipSeq;        /* T535: the newest copy decides Ctrl+Shift+V */
     clipBuf=idxs.map(function(i){
       return deep(s.annots[i]);});
@@ -3148,7 +3154,7 @@
     if(deckEl.hidden||mode!=='edit') return false;
     return pasteImageFile(file);
   };
-  function pasteImageFile(file){
+  function pasteImageFile(file,said){
     if(!file) return false;
     var fr=new FileReader();
     fr.onload=function(){
@@ -3195,7 +3201,9 @@
         markDirty();
         var l=stage.querySelector('.annot-layer');
         if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-        toast(payload===fr.result?'Image pasted'
+        /* T612: a caller with more to say says it once the picture is in */
+        if(said) said();
+        else toast(payload===fr.result?'Image pasted'
           :'Image pasted — shown at '+IMG_VIEW_EDGE+'px, and the '
             +'full-size original is kept for exports');
       };
@@ -3355,13 +3363,13 @@
     }
     return true;
   }
-  function pasteClipboardImage(pic){
+  function pasteClipboardImage(pic,said){
     if(!pic) return false;
     if(pasteIntoFlip(pic)) return true;   /* T408 */
-    if(pic.file) return pasteImageFile(pic.file);
+    if(pic.file) return pasteImageFile(pic.file,said);
     if(/^data:/i.test(pic.src)){
       fetch(pic.src).then(function(r){return r.blob();})
-        .then(function(b){pasteImageFile(b);})
+        .then(function(b){pasteImageFile(b,said);})
         .catch(function(){toast('That image could not be read');});
       return true;
     }
@@ -3369,6 +3377,169 @@
        Images tab's own address door now does */
     placeFromAddress(pic.src);
     return true;
+  }
+  /* ---- T612: A NOTEBOOK FIGURE ON THE CLIPBOARD -------------------------
+     (2026-10-08, user: "a copy code thing ... that copied like the github
+     url and figure code associated with that figure, then when you pasted
+     it into a presentation it just pasted as the figure".) The notebook's
+     Copy (app.js, on the figure's own bar) puts three things on the
+     clipboard: words for anywhere else (the title, where the notebook
+     lives, the code), HTML with the picture for a document, and
+     CELL_MIME -- the REF and the notebook's path, as JSON. Never the
+     figure's HTML: anything on a clipboard may have come from any page,
+     so what lands on a slide is resolved HERE, from this page's own open
+     notebooks or its own kept copies, exactly as a pick or a click does.
+     The text's `# junoview-cell:` line is the same marker for the doors
+     that can only read text (Home > Paste asks navigator.clipboard,
+     which never hands over a custom type). */
+  var CELL_MIME='application/x-junoview-cell';
+  var CELL_MARK=/^#[ \t]*junoview-cell:[ \t]*(\S.*?)[ \t]+@(\S*)[ \t]*$/m;
+  /* what was copied, from anything with getData (a paste event's
+     clipboardData, or a stand-in over plain text). Null when it is not
+     one of ours. Pure: no page state, so a test can run it. */
+  function cellClipOf(cd){
+    if(!cd||typeof cd.getData!=='function') return null;
+    var o=null,raw='';
+    try{raw=cd.getData(CELL_MIME)||'';}catch(e){}
+    if(raw){try{o=JSON.parse(raw);}catch(e){o=null;}}
+    if(!o||typeof o!=='object'||typeof o.ref!=='string'){
+      var txt='';
+      try{txt=cd.getData('text/plain')||'';}catch(e){}
+      var m=CELL_MARK.exec(txt);
+      o=m?{ref:m[1],where:m[2]}:null;
+    }
+    if(!o) return null;
+    var ref=String(o.ref),cut=ref.indexOf('::');
+    if(cut<1||cut>=ref.length-2) return null;
+    function str(v){return typeof v==='string'?v:'';}
+    return {ref:ref,path:str(o.path),title:str(o.title),kind:str(o.kind),
+      url:str(o.url),where:str(o.where)};
+  }
+  /* the ref as THIS page knows it, or null. Copied in another Junoview
+     (another port, the Pages build) it is that app's ref, and a notebook
+     here with the same name is not the same notebook. By PATH before the
+     ref: the stem half is a display name another window may have
+     numbered differently (T309). A kept copy in EMBED counts -- it is
+     the deck's own, and it is what a placed frame shows anyway. */
+  function cellWhere(){return location.host+location.pathname;}
+  function cellRefHere(c){
+    if(!c) return null;
+    if(c.where&&c.where!==cellWhere()) return null;
+    var anchor=splitRef(c.ref)[1];
+    if(c.path){
+      for(var i=0;i<APP.order.length;i++){
+        var st=APP.order[i],sh=APP.shells[st];
+        if(sh&&sh.path===c.path&&ITEMS[nsKey(st,anchor)])
+          return nsKey(st,anchor);
+      }
+    }
+    var it=resolveRef(c.ref);
+    return it?it.ns:null;
+  }
+  /* the copy made in THIS page, for the doors that cannot read the
+     clipboard without asking (the right-click menu, Home > Paste, the
+     keydown fallback). The newest copy wins, as slideCopy's does: a
+     notebook Copy empties the object buffer, and copySel / slideCopy
+     clear this. */
+  var cellClip=null;
+  function cellCopied(o){
+    var c=cellClipOf({getData:function(t){
+      return t===CELL_MIME?JSON.stringify(o||{}):'';}});
+    if(!c) return;
+    cellClip=c;clipBuf=[];clipGrpMeta={};
+  }
+  /* PLACEMENT, the fifth door (T300's four: endPick, pickAdd, the strip's
+     click, autoSlides). A selected EMPTY frame takes the figure, as a
+     pick fills it; a selected flip book takes it as a page (T408); else
+     a new frame, centred or at the point ('here'), nudged clear of an
+     earlier paste of the same figure. embedIfAbsent keeps its pixels and
+     its notebook's path, as every door must. */
+  function pasteCellClip(c,how,at){
+    var s=pres.slides[cur]; if(!s||!c) return false;
+    var ref=cellRefHere(c); if(!ref) return false;
+    s.annots=s.annots||[];
+    var sel=(typeof selAnnot==='number')?s.annots[selAnnot]:null;
+    var fbi=(typeof flipSelIdx==='function')?flipSelIdx():null;
+    var a=null,idx=-1;
+    if(sel&&sel.k==='cell'&&!sel.ref){a=sel;a.ref=ref;idx=selAnnot;}
+    else if(fbi!==null&&s.annots[fbi]){
+      a=s.annots[fbi];idx=fbi;
+      a.frames=flipFrames(a).slice();
+      a.frames.push({ref:ref});
+      a.at=a.frames.length-1;
+    } else {
+      var w=46,h=40,pt=(how==='here'&&(at||pointerPct()))||{x:50,y:50};
+      var x=Math.max(0,Math.min(100-w,pt.x-w/2));
+      var y=Math.max(0,Math.min(100-h,pt.y-h/2));
+      if(how!=='here') s.annots.forEach(function(b){
+        if(b&&b.k==='cell'&&b.ref===ref&&Math.abs(b.x-x)<0.5
+           &&Math.abs(b.y-y)<0.5){x=Math.min(100-w,x+3);y=Math.min(100-h,y+3);}
+      });
+      a={k:'cell',x:x,y:y,w:w,h:h,ref:ref};
+      s.annots.push(a);idx=s.annots.length-1;
+    }
+    if(typeof embedIfAbsent==='function') embedIfAbsent(a);
+    markDirty();
+    if(a.k==='flip'){renderSlide();
+      if(typeof renderFlipPane==='function') renderFlipPane();}
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,idx);}
+    var nb=splitRef(ref)[0]||'the notebook';
+    var said=(a.k==='flip'?('Pasted as page '+a.frames.length+' of the flip '
+      +'book'):((c.kind==='figure'||!c.kind?'Figure':'Cell')
+      +' pasted from '+nb));
+    if(!ITEMS[ref]){
+      /* placed from the deck's kept copy (the notebook is not open
+         here): right, and it shows -- but say how to make it live */
+      var op=cellOpenAct(c);
+      var m=said+', from its saved copy — open “'+cellName(c)+'” and it '
+        +'follows the notebook. Ctrl+Z undoes it';
+      if(op) toastActs(m,[op]); else toast(m,7000);
+      return true;
+    }
+    toast(said+' — it follows the notebook. Ctrl+Z undoes it',5000);
+    return true;
+  }
+  /* the two places a paste event is not on the canvas: typing in a box
+     (it closes first, as T400's picture does) and the builder screen
+     (the editor opens) */
+  function cellPasteFrom(e,cc,opening){
+    if(!cc||!cellRefHere(cc)) return false;
+    e.preventDefault();
+    if(opening) setUIMode('edit');
+    else try{e.target.blur();}catch(err){}
+    return pasteCellClip(cc);
+  }
+  /* the copy names a notebook this page does not have open: say so, and
+     offer the one step that makes the next paste a live figure */
+  function cellName(c){
+    return (c.path||'').split(/[\\/]/).pop()||splitRef(c.ref)[0];
+  }
+  /* the one step that makes a paste live: open the notebook it names.
+     The path came off a clipboard, so it is offered only as a notebook,
+     only in the app, only on a click -- and the server's source gate
+     still decides */
+  function cellOpenAct(c){
+    var away=!!(c.where&&c.where!==cellWhere());
+    if(APP.mode!=='app'||away||!/\.ipynb$/i.test(c.path)
+       ||/^https?:/i.test(c.path)||typeof APP.openPath!=='function')
+      return null;
+    return ['Open its notebook',function(){APP.openPath(c.path);}];
+  }
+  function cellNotHere(c,pictured){
+    var away=!!(c.where&&c.where!==cellWhere());
+    var msg=(pictured?'Pasted as a picture — ':'')
+      +(away?'that figure was copied in another Junoview, so it cannot '
+        +'follow its notebook here'
+        :('“'+cellName(c)+'” is not open here. Open it, then paste '
+        +'again for a figure that updates with it'))+'.';
+    var op=cellOpenAct(c);
+    if(op) toastActs(msg,[op]); else toast(msg,7000);
+  }
+  /* for a picture that came WITH a figure this page cannot place: the
+     picture's own toast gives way to the explanation */
+  function cellSaid(cc){
+    return cc?function(){cellNotHere(cc,true);}:undefined;
   }
   document.addEventListener('paste',function(e){
     /* the Ctrl+V keydown armed a fallback in case this event never comes
@@ -3383,23 +3554,26 @@
     var tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='textarea') return;
     var pic=clipboardImage(e);
+    var cc=cellClipOf(e.clipboardData);   /* T612: before any picture */
     if(e.target.isContentEditable){
       /* T400: a picture pasted while typing goes on the SLIDE, beside
          the box, the way PowerPoint does it; the box closes first so
          its words are committed. Words still go into the box. */
+      if(cellPasteFrom(e,cc)) return;   /* T612: and so does a figure */
       if(!pic) return;
       e.preventDefault();
       try{e.target.blur();}catch(err){}
-      pasteClipboardImage(pic);
+      pasteClipboardImage(pic,cellSaid(cc));
       return;
     }
     if(mode==='create'){
       /* T400: the builder screen has no canvas to paste words onto, but
          a picture can open the editor and land on the current slide */
+      if(cellPasteFrom(e,cc,true)) return;   /* T612 */
       if(!pic) return;
       e.preventDefault();
       setUIMode('edit');
-      pasteClipboardImage(pic);
+      pasteClipboardImage(pic,cellSaid(cc));
       return;
     }
     /* a fresh internal copy left its marker on the OS clipboard — prefer
@@ -3412,6 +3586,21 @@
     }
     if(slideClip&&mk.indexOf('junoview/slide')===0){
       e.preventDefault();slidePaste(cur);toast('Slide pasted');return;
+    }
+    /* T612: a notebook figure. Ctrl+Shift+V still means plain words
+       (T128); a notebook this page does not have falls back to the
+       picture that came with it, and says so */
+    if(cc){
+      e.preventDefault();
+      if(plainPasteT){
+        clearTimeout(plainPasteT);plainPasteT=null;
+        if(mk) pasteTextBox(mk);
+        return;
+      }
+      if(pasteCellClip(cc)) return;
+      if(pic) pasteClipboardImage(pic,cellSaid(cc));
+      else cellNotHere(cc,false);
+      return;
     }
     if(pic){e.preventDefault();pasteClipboardImage(pic);return;}
     if(clipBuf.length){e.preventDefault();pasteBuf();return;}

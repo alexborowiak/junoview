@@ -1961,6 +1961,11 @@
       if(!el.isContentEditable) return;
       if(codePlain){codePlain=0;return;}
       var cd=e.clipboardData;if(!cd) return;
+      /* T612: a notebook figure this page has is the slide's, not this
+         box's (the document's paste puts it there); one it does not
+         have is words like any others */
+      var cc5=cellClipOf(cd);
+      if(cc5&&cellRefHere(cc5)) return;
       var txt='';
       try{txt=cd.getData('text/plain')||'';}catch(err){return;}
       if(!txt) return;
