@@ -2796,6 +2796,7 @@
     }
     function syncWords(){
       var idxs=pageOf().poster?[cur]:scopeIdxs();
+      tieSync();
       var c=$('#aa-count');
       if(c) c.textContent=pageOf().poster?'This page':scopeWords();
       var n=$('#aa-n');
@@ -2832,8 +2833,9 @@
         &&!!STYLE_DEFAULTS[srcA.style];
       w.hidden=!ok;
       if(ok&&lab)
-        lab.textContent='Keep them tied to '
-          +styleDef(srcA.style).label;
+        lab.textContent=wholeType(pageOf().poster?[cur]:scopeIdxs())
+          ?('Make this the '+styleDef(srcA.style).label+' look')
+          :('Keep them tied to '+styleDef(srcA.style).label);
     }
     function commit(){
       if(!srcA) return;
@@ -2862,8 +2864,33 @@
        Every matching box in scope -- the source included, or the box you
        copied from would be the one odd one out -- ends up wearing a new
        type whose parent is the style they all already wore. */
+    /* T608: does the scope hold EVERY box of this type in the deck? */
+    function wholeType(idxs){
+      var on={},all=true;
+      (idxs||[]).forEach(function(i){on[i]=1;});
+      (pres.slides||[]).forEach(function(sl,si){
+        if(on[si]) return;
+        (sl.annots||[]).forEach(function(a){
+          if(a&&a.k==='text'&&typeKeyOf(a)===srcKey) all=false;});
+      });
+      return all;
+    }
+    function commitToStyle(want,samp){
+      var base=srcA.style,p=styleDef(base);
+      var o=variantDeltaFrom(srcA,base,want);
+      var rec=deckStyles()[base]||{};
+      Object.keys(o).forEach(function(k){rec[k]=o[k];});
+      rec.label=p.label;
+      deckStyles()[base]=rec;
+      var n=restyleAll([base]);
+      close();
+      toast(p.label+' now looks like this \u2014 all '+n+' '
+        +typeLabel(srcKey,n!==1,samp)+', and its looks follow. Ctrl+Z '
+        +'undoes it.',6000);
+    }
     function commitAsVariation(idxs,want,samp){
       var base=srcA.style,p=styleDef(base);
+      if(wholeType(idxs)){commitToStyle(want,samp);return;}
       askText({title:'A variation of '+p.label,label:'Call this variation',
         value:'',ok:'Save',note:'It follows '+p.label+' for every '
           +'property you did not change'},function(nm){

@@ -36,7 +36,11 @@ def test_the_tie_is_offered_only_where_there_is_a_parent(out):
     assert ("      var ok=isStyleKey(srcKey)&&srcA&&srcA.style") in out
     assert "      w.hidden=!ok;" in out
     # ...and it names the parent, so the checkbox is not a riddle
-    assert ("        lab.textContent='Keep them tied to '") in out
+    # T608: over every box of the type, the tie edits the type itself
+    assert ("        lab.textContent=wholeType(pageOf().poster?[cur]"
+            ":scopeIdxs())") in out
+    assert "          :('Keep them tied to '+styleDef(srcA.style).label);" \
+        in out
 
 
 def test_it_names_and_wears_instead_of_writing_and_walking_away(out):

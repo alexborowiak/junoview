@@ -2367,8 +2367,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # into the deck they were made on (talkKeepInto writes its draft).
 # T618: a pick lifts the editor's isolation (deckIsolate(false)) so
 # the notebook can be clicked, and its Escape is on window in capture.
-EXPECTED_MD5 = "e7b4d46455a463742193d7e8814ad329"
-EXPECTED_BYTES = 5247197
+# T608: a look of a type is still that type -- dgInFamily and
+# dgFamilyWearers in the Style system, the Apply dialog's whole-type
+# path (wholeType, commitToStyle), and the variations toggle gone.
+EXPECTED_MD5 = "6a3a166f7e69f708e251ecb60282d760"
+EXPECTED_BYTES = 5247638
 
 
 def _render_example() -> str:

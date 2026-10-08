@@ -103,7 +103,8 @@ def test_the_board_shows_the_real_boxes_not_only_the_master(out):
     assert "  var dgShowOthers=false;" in out
     assert "  var DG_KIND_COL={text:'#6b9bff',cell:'#f0a848',image:'#a586e8'," in out
     assert "  function dgGhostsFor(board,id){" in out
-    assert "        var mine=(a.k==='text'&&a.style===id);" in out
+    # T608: a type's board shows its looks' boxes too
+    assert "        var mine=(a.k==='text'&&dgInFamily(a.style,id));" in out
     assert "        if(!mine&&!dgShowOthers) return;" in out
     # T470: the same boxed switch as the sheet column's Outlines
     assert "ck.className='dbtn dg-b dg-keyck';" in out

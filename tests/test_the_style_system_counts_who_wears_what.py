@@ -41,8 +41,9 @@ def test_the_rail_opens_with_the_counts(out):
     note = out.split("  function dgOddNote(id,d,ov,r){")[1].split("\n  }")[0]
     assert "    var odd=list.filter(function(p){return !stdMatchesStyle(p.a,d);});" \
         in note
+    # T608: "1 box differs", "2 boxes differ"
     assert ("    note.textContent=odd.length+' box'"
-            "+(odd.length===1?'':'es')+' differs';") in note
+            "+(odd.length===1?' differs':'es differ');") in note
     assert "    b.textContent='Reset';" in note
     assert "      var oddRow=dgOddNote(id,d,ov,std);" in out
 

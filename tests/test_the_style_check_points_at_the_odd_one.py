@@ -84,9 +84,12 @@ def test_the_style_board_marks_a_wearer_that_drifted(out):
     style. The verdict is the same stdMatchesStyle the other screen
     uses, read once per repaint rather than per annot."""
     assert "    var def=(typeof styleDef==='function')?styleDef(id):null;" in out
-    assert ("        var bad=!!(mine&&def&&typeof stdMatchesStyle==='function'"
+    # T608: a look's box is judged against its OWN look, or every look
+    # would read as drift from the type it varies
+    assert "        var own=mine&&a.style!==id?styleDef(a.style):def;" in out
+    assert ("        var bad=!!(mine&&own&&typeof stdMatchesStyle==='function'"
             ) in out
-    assert "          &&!stdMatchesStyle(a,def));" in out
+    assert "          &&!stdMatchesStyle(a,own));" in out
     assert ("        b.className=(mine?'dg-real':'dg-other')+(bad?' dg-off':'');"
             ) in out
     # ...and in words, because comparing box borders across a board is

@@ -11582,10 +11582,37 @@ more pressing things before getting on to this."
 
 ### Pressing
 
-- [ ] **T608 — A look applied to a type keeps it that type.** "In the
+- [x] **T608 — A look applied to a type keeps it that type.** "In the
   style system when you have applied a look to all of heading one, that
   then doesn't still group it with the headings 1s in style systems.
   That is just a different look not a different thing now."
+  *Done 2026-10-08.* Reproduced: a heading recoloured, then "Apply this
+  look to slides..." over every Heading 1 with the tie on (its default),
+  asked for a variation name and moved EVERY box onto the new variation,
+  so nothing wore Heading 1 any more -- the Style system showed an
+  unclickable HEADING 1 label, a collapsed "+ Show 1 variation", and
+  opened on Body. Two changes, and this reverses T295's "a variation
+  gets its own row, board and re-stamp" and the unclickable-parent rule
+  (item 14) on purpose. **Over the whole type, the look IS the type:**
+  when the scope holds every box of that type (wholeType), Apply writes
+  the delta into the type itself (commitToStyle, the shared
+  variantDeltaFrom reader), re-stamps the family with restyleAll, and
+  names nothing; the footer says "Make this the Heading 1 look". A
+  partial scope still names a variation, as T294 meant. **The Style
+  system groups a type with its looks:** dgFamilyWearers (the type and
+  its variations) gives the rail's count, the board, Individual boxes,
+  Placement and where the screen opens; the parent is always a normal
+  row with its looks listed under it (the toggle is gone); dgRestamp
+  re-stamps the whole family, each box with its OWN id, so italic on
+  Heading 1 reaches a "Warm" look and the look keeps its colour; a
+  look's box is judged against its own look, not as drift. dgWearers
+  stays exact for Check consistency. A type made "based on" another
+  (no `of`) keeps its own row. "2 boxes differs" reads "differ".
+  Driven at 1366x657: two slides of Heading 1, one recoloured warm and
+  applied to all -- the toast "Heading 1 now looks like this -- all 3
+  Heading 1 boxes", Check consistency "Heading 1 -- 3 boxes match", the
+  Style system "Heading 1 · 3 boxes" in the new colour. Tests in
+  tests/test_a_look_is_still_its_type.py.
 - [ ] **T609 — Lists stay lists when you come back to them.** "There are
   issues with the auto-formatting with dot points and numbers again. It
   seems like if you click away and click back in it forgets that it

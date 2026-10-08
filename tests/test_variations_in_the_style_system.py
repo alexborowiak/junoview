@@ -62,7 +62,10 @@ def test_dgwearers_stays_an_exact_match(out):
     assert "a.style===id" in fn
     assert "variantsOf" not in fn and "parentOf" not in fn
     restamp = out.split("  function dgRestamp(id){")[1].split("\n  }")[0]
-    assert "applyStyleTo(w.a,id)" in restamp
+    # T608: a type's looks are re-stamped with it, each with ITS OWN id --
+    # never the parent's, which would wipe the look (T295's worry)
+    assert "applyStyleTo(w.a,w.a.style)" in restamp
+    assert "applyStyleTo(w.a,id)" not in restamp
 
 
 def test_an_orphaned_variation_is_still_listed(out):

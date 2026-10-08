@@ -3445,7 +3445,7 @@
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
   var dgSel='title', dgView='look', dgSheetOpen=false,
-    dgOutline=false, dgVarOpen={};
+    dgOutline=false;
   /* the smallest a drag proxy in the outline sheet may be, in page
      percent. A horizontal or vertical line's bounding box is
      zero-thickness and there is nothing to grab; the canvas answers the
@@ -3563,9 +3563,24 @@
   /* re-stamp the registry onto everything wearing it. THE point of a
      standardise surface: a definition nobody is wearing is a preference,
      not a standard. */
+  /* T608: a look of a type is still that type. */
+  function dgInFamily(style,id){
+    return !!style&&(style===id
+      ||(typeof isVariantOf==='function'&&isVariantOf(style,id)));
+  }
+  function dgFamilyWearers(id){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,ai){
+        if(a&&a.k==='text'&&dgInFamily(a.style,id))
+          out.push({s:si,i:ai,a:a});});
+    });
+    return out;
+  }
   function dgRestamp(id){
     var n=0;
-    dgWearers(id).forEach(function(w){applyStyleTo(w.a,id);n++;});
+    dgFamilyWearers(id).forEach(function(w){
+      applyStyleTo(w.a,w.a.style);n++;});
     return n;
   }
   function dgClose(){
@@ -3657,7 +3672,7 @@
       if(k==='arrow') return a.k==='arrow'||a.k==='line'||a.k==='draw';
       return a.k===k;
     }
-    return a.k==='text'&&a.style===dgSel;
+    return a.k==='text'&&dgInFamily(a.style,dgSel);
   }
   /* every box of the chosen kind, everywhere, in slide order */
   function dgRows(){
@@ -4266,7 +4281,7 @@
   }
   function dgPlaceGroups(id){
     var by={},order=[];
-    dgWearers(id).forEach(function(w){
+    dgFamilyWearers(id).forEach(function(w){
       if(dgPickedAny()&&!dgSheetPick[w.s]) return;
       var k=dgPlaceKey(w.a);
       if(!by[k]){by[k]={key:k,a:w.a,ws:[]};order.push(k);}
@@ -4331,7 +4346,7 @@
     dgBoardSlides().forEach(function(e){
       (e.sl.annots||[]).forEach(function(a){
         if(!a||a.hide) return;
-        if(a.k==='text'&&a.style===id) return;
+        if(a.k==='text'&&dgInFamily(a.style,id)) return;
         seen[a.k]=1;
       });
     });
@@ -4367,7 +4382,7 @@
     var row=document.createElement('div');row.className='dg-cnt dg-cnt-odd dg-rownote';
     var note=document.createElement('span');
     note.className='dg-cnt-note';
-    note.textContent=odd.length+' box'+(odd.length===1?'':'es')+' differs';
+    note.textContent=odd.length+' box'+(odd.length===1?' differs':'es differ');
     row.appendChild(note);
     var b=document.createElement('button');
     b.type='button';b.className='dbtn dg-cnt-fix';
@@ -4441,7 +4456,7 @@
       }
       var ct=document.createElement('span');
       ct.className='dg-count';
-      var n=dgWearers(id).length;
+      var n=dgFamilyWearers(id).length;
       ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
       b.appendChild(nm);
       if(chip) b.appendChild(chip);
@@ -4490,28 +4505,8 @@
         return dgWearers(v).length||v===dgSel;});
       listed[id]=1;
       variantsOf(id).forEach(function(v){listed[v]=1;});
-      if(!dgWearers(id).length&&!vars.length&&id!==dgSel) return;
-      var baseUsed=dgWearers(id).length||id===dgSel;
-      if(baseUsed) styleRow(id,false);
-      else{
-        /* A used variation needs its family label, but an unused parent
-           is not itself a selectable type in this deck. */
-        var family=document.createElement('div');
-        family.className='dg-family-name';
-        family.textContent=(styleDef(id)||{}).label||id;
-        rail.appendChild(family);
-      }
-      if(vars.length){
-        var more=document.createElement('button');
-        more.type='button';more.className='dg-var-toggle';
-        more.textContent=(dgVarOpen[id]?'− Hide ':'+ Show ')
-          +vars.length+' variation'+(vars.length===1?'':'s');
-        more.title='Show the looks that vary '+(styleDef(id)||{}).label;
-        more.addEventListener('click',function(){
-          dgVarOpen[id]=!dgVarOpen[id];dgRail(ov);dgBody(ov);});
-        rail.appendChild(more);
-      }
-      if(!dgVarOpen[id]) return;
+      if(!dgFamilyWearers(id).length&&!vars.length&&id!==dgSel) return;
+      styleRow(id,false);
       vars.forEach(function(v){
         styleRow(v,true);
       });
@@ -4639,10 +4634,11 @@
     dgBoardSlides().forEach(function(e){
       (e.sl.annots||[]).forEach(function(a){
         if(!a||a.hide) return;
-        var mine=(a.k==='text'&&a.style===id);
+        var mine=(a.k==='text'&&dgInFamily(a.style,id));
         if(!mine&&!dgShowOthers) return;
-        var bad=!!(mine&&def&&typeof stdMatchesStyle==='function'
-          &&!stdMatchesStyle(a,def));
+        var own=mine&&a.style!==id?styleDef(a.style):def;
+        var bad=!!(mine&&own&&typeof stdMatchesStyle==='function'
+          &&!stdMatchesStyle(a,own));
         if(bad) off++;
         var b=document.createElement('div');
         b.className=(mine?'dg-real':'dg-other')+(bad?' dg-off':'');
@@ -4976,7 +4972,7 @@
     if(!d){body.innerHTML='<div class="selpane-empty">Pick a type on '
       +'the left.</div>';return;}
     var rec=dgStyleRec(id);
-    var wear=dgWearers(id);
+    var wear=dgFamilyWearers(id);
 
     /* ---- how it looks ----
        ONE line for the whole screen, and no other prose on it
@@ -5314,7 +5310,7 @@
     });
     document.addEventListener('keydown',dgKey,true);
     var usedStyles=styleOrder().filter(function(id){
-      return dgWearers(id).length>0;});
+      return !parentOf(id)&&dgFamilyWearers(id).length>0;});
     if(usedStyles.indexOf(dgSel)<0){
       if(usedStyles.length) dgSel=usedStyles[0];
       else {
