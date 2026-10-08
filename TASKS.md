@@ -11613,10 +11613,32 @@ more pressing things before getting on to this."
   Heading 1 boxes", Check consistency "Heading 1 -- 3 boxes match", the
   Style system "Heading 1 · 3 boxes" in the new colour. Tests in
   tests/test_a_look_is_still_its_type.py.
-- [ ] **T609 — Lists stay lists when you come back to them.** "There are
+- [x] **T609 — Lists stay lists when you come back to them.** "There are
   issues with the auto-formatting with dot points and numbers again. It
   seems like if you click away and click back in it forgets that it
   should be auto-number etc."
+  *Done 2026-10-08.* Reproduced: a list that is not the whole box -- one
+  typed out of with Enter, Enter, one made by the List button while
+  typing, or by "1. " on a later line (T591) -- kept its <ol> in the
+  box's html, but the box was drawn for editing as a <span>, and
+  Chromium makes no paragraphs inside a span editing host: Enter was a
+  line break, which pre-wrap writes as a bare \n, inside the <li> too.
+  So the first time the box was drawn again (a slide change, a reload)
+  "three" became a second line of "two", unnumbered. The editor is a
+  block now, as the whole-box list's already was (T513); the show,
+  thumbnails and export keep their span, and Markdown boxes stay plain
+  text. Three things follow from it: contentLines splits a rich box
+  with htmlLines, which knows a <br>, a hard \n and a block line (so
+  whole-box Bullets on a multi-line box with bold in it gives one bullet
+  per line, bold kept, where it gave one); T591's "1. " at a line start
+  reads the line as AutoCorrect does (acLine), so it fires under a
+  plain line, and deletes the marker through the editor (a hand-edited
+  empty text node took the line ABOVE into the list); and a list
+  Chromium builds inside a line <div> is spaced like the others.
+  Driven at 1366x657: "1. one", Enter, "two", Enter, Enter, "After the
+  list", away, next slide and back, Enter after "two", "three" -- a
+  third numbered item; two plain lines still stored as text and shown
+  as two lines in the show. Tests in tests/test_lists_stay_lists.py.
 - [ ] **T610 — Open a notebook from anywhere.** "When I am in a
   presentation in the app there is no way to open notebooks ... It would
   be good to be able to open notebooks as tabs as well. I don't think

@@ -875,6 +875,34 @@
     return t.content.textContent||'';
   }
   /* the box's content as ONE HTML CHUNK PER LINE, whichever form it is in */
+  /* T609: a rich box's lines, whichever editor left them: a <br>, a hard
+     \n (.an-tx is pre-wrap), or a block -- the <div> a block editor makes
+     for each Enter. A run that spans a break is closed and re-opened, so
+     bold stays bold on both lines; a block's last <br> is the browser's
+     placeholder, not a line. */
+  function htmlLines(html){
+    var t=document.createElement('template');t.innerHTML=String(html||'');
+    var out=[],open=false,BLOCK=/^(DIV|P|UL|OL|LI|H[1-6]|BLOCKQUOTE|PRE)$/;
+    function put(h){if(!open){out.push('');open=true;}out[out.length-1]+=h;}
+    function hard(){if(!open) out.push('');open=false;}
+    (function walk(n,wrap){
+      for(var c=n.firstChild;c;c=c.nextSibling){
+        if(c.nodeType===3){
+          String(c.nodeValue).split('\n').forEach(function(p,j){
+            if(j) hard();
+            if(p) put(wrap[0]+esc(p)+wrap[1]);
+          });
+        } else if(c.nodeType===1){
+          if(c.tagName==='BR'){hard();continue;}
+          if(BLOCK.test(c.tagName)){open=false;walk(c,wrap);open=false;continue;}
+          var tag=c.tagName.toLowerCase(),o=c.cloneNode(false).outerHTML;
+          o=o.slice(0,o.length-tag.length-3);
+          walk(c,[wrap[0]+o,'</'+tag+'>'+wrap[1]]);
+        }
+      }
+    })(t.content,['','']);
+    return out.length?out:[''];
+  }
   function contentLines(a){
     var out=[],t=document.createElement('template');
     if(listOf(a)&&a.html){
@@ -890,18 +918,7 @@
     }
     if(a.html){
       /* split on top-level <br>, keeping the inline markup around each */
-      t.innerHTML=a.html;
-      var cur=document.createElement('template');
-      var n=t.content.firstChild;
-      while(n){
-        var next=n.nextSibling;
-        if(n.nodeType===1&&(n.tagName||'').toLowerCase()==='br'){
-          out.push(cur.innerHTML);cur.innerHTML='';
-        } else cur.content.appendChild(n);
-        n=next;
-      }
-      out.push(cur.innerHTML);
-      return out;
+      return htmlLines(a.html);
     }
     return String(a.text||'').split('\n');
   }
@@ -1814,20 +1831,21 @@
       if(!tn||tn.nodeType!==3||!el.contains(tn)) return;
       if(tn.parentNode&&tn.parentNode.closest&&tn.parentNode.closest('li'))
         return;
-      var before=String(tn.nodeValue||'').slice(0,sel4.focusOffset);
-      var m4=/^([-*\u2022]|1[.)])[ \u00a0]$/.exec(before);
-      if(!m4) return;
-      /* ...at the START of its line: nothing but a line break, or the
-         start of a block, before it */
-      var pv=tn.previousSibling;
-      if(pv&&!(pv.nodeType===1&&pv.tagName==='BR')) return;
-      if(!pv&&tn.parentNode!==el&&!/^(DIV|P)$/.test(tn.parentNode.tagName))
-        return;
-      tn.nodeValue=String(tn.nodeValue||'').slice(sel4.focusOffset);
+      /* T609: the LINE so far, read as AutoCorrect reads it (a <br>, a
+         block, or a hard \n begins one) -- a box's own lines are \n
+         text, so a previous-sibling <br> test never saw them */
+      var off4=sel4.focusOffset;
+      var m4=/^([-*\u2022]|1[.)])[ \u00a0]$/.exec(acLine(el,tn,off4)||'');
+      if(!m4||off4<m4[0].length) return;
+      /* the marker goes through the editor, which leaves the emptied line
+         a <br> to stand on: an empty text node is no caret target, and
+         the list then took the line ABOVE */
       try{
-        var r4=document.createRange();r4.setStart(tn,0);r4.collapse(true);
+        var r4=document.createRange();
+        r4.setStart(tn,off4-m4[0].length);r4.setEnd(tn,off4);
         sel4.removeAllRanges();sel4.addRange(r4);
-      }catch(err){}
+        document.execCommand('delete',false,null);
+      }catch(err){return;}
       listSelection(/^1/.test(m4[1])?'number':'bullet');
     });
     /* Tab makes a SUB-BULLET, the way it does in every outliner and in
@@ -3264,7 +3282,16 @@
             tx2.appendChild(listTx);
           }
         } else {
-          tx2=document.createElement('span');
+          /* T609: A BLOCK TO TYPE IN. Chromium will not make a paragraph
+             inside a <span> editing host: Enter there is a line break,
+             which pre-wrap writes as a bare \n -- inside an <li> too, so
+             a list that was not the whole box (one made by the List
+             button, by a marker on a later line, or that you typed out
+             of) took "three" as a second line of "two", unnumbered, the
+             first time the box was drawn again: after a slide change, a
+             reload. The box-wide list's editor is a <div> for the same
+             reason (T513). The show keeps its span. */
+          tx2=document.createElement((editing&&!a.md)?'div':'span');
           /* A MARKDOWN BOX RENDERS FROM ITS SOURCE, EVERY TIME (T74).
              `a.text` is the markdown you typed and the only copy
              stored; the markup is derived here and dies with the layer,

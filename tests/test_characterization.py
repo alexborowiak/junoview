@@ -2370,8 +2370,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T608: a look of a type is still that type -- dgInFamily and
 # dgFamilyWearers in the Style system, the Apply dialog's whole-type
 # path (wholeType, commitToStyle), and the variations toggle gone.
-EXPECTED_MD5 = "6a3a166f7e69f708e251ecb60282d760"
-EXPECTED_BYTES = 5247638
+# T609: lists stay lists -- the text editor is a block (div) host,
+# htmlLines splits a rich box on <br>, \n and blocks, T591 reads its
+# line with acLine, and a list made on a later line is spaced.
+EXPECTED_MD5 = "1fa70cedd60a3964dc9e718aae855859"
+EXPECTED_BYTES = 5249506
 
 
 def _render_example() -> str:

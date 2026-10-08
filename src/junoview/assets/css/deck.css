@@ -4628,6 +4628,8 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 /* A list can be one paragraph-sized section inside a text box. The outer
    .an-tx owns the box indent; each inner list adds only its marker gutter. */
 .an-tx>ul,.an-tx>ol{margin:.18em 0;padding-left:1.7em;}
+/* T609: Chromium builds a list inside the <div> line it was made on */
+.an-tx>div>ul,.an-tx>div>ol{margin:.18em 0;padding-left:1.7em;}
 .an-list-edit>.an-ul{margin:0;}
 /* T231: the slide column picks slides, so it gets the same two buttons
    the table has, and says how many are picked. */

@@ -17,10 +17,17 @@ from __future__ import annotations
 def test_a_marker_at_a_lines_start_lists_that_line(out):
     h = out.split("    /* T591: ...AND AT THE START OF ANY LINE.")[1] \
         .split("\n    });\n")[0]
-    assert "var m4=/^([-*\\u2022]|1[.)])[ \\u00a0]$/.exec(before);" in h
+    # T609: the LINE is read as AutoCorrect reads it (a <br>, a block or a
+    # hard \n begins one), and the marker deleted through the editor
+    assert ("var m4=/^([-*\\u2022]|1[.)])[ \\u00a0]$/"
+            ".exec(acLine(el,tn,off4)||'');") in h
+    assert "document.execCommand('delete',false,null);" in h
     assert "listSelection(/^1/.test(m4[1])?'number':'bullet');" in h
     # never inside a list, never in a Markdown box
     assert "tn.parentNode.closest('li')" in h
     assert "if(!a4||a4.k!=='text'||a4.md) return;" in h
-    # only at the START of its line
-    assert "if(pv&&!(pv.nodeType===1&&pv.tagName==='BR')) return;" in h
+    # only at the START of its line: the whole line before the caret is
+    # the marker; and never by hand-editing the text node, which left an
+    # empty node and took the line ABOVE into the list
+    assert "if(!m4||off4<m4[0].length) return;" in h
+    assert "tn.nodeValue=" not in h
