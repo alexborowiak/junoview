@@ -2619,9 +2619,9 @@
   }
   function presenterHtml(){
     /* every stylesheet the deck uses, so the imported slide nodes look
-       exactly as they do on screen */
-    var css='';
-    $$('style').forEach(function(st){css+=st.textContent+'\n';});
+       exactly as they do on screen -- linked ones included (the app
+       serves its CSS as files; see pageCssTextNow) */
+    var css=pageCssTextNow(document);
     return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
       +'<title>Presenter view</title><style>'+css
       +'\nhtml,body{margin:0;height:100%;background:#070d13;color:#dce6ee;'

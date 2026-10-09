@@ -2406,13 +2406,26 @@
         verCards[pkey+'::'+an]=null;delete pend[an];});
     });
   }
-  /* undefined = loading, null = unavailable, object = the card */
+  /* undefined = loading, null = unavailable, object = the card.
+     Asked once per locked frame while a slide renders, so the misses of
+     one render are COLLECTED and fetched together after it: one request
+     per notebook version, not one per frame -- each request is a git
+     read on the server, several git processes apiece (2026-10-08). */
+  var verAsk={};
   function verCardFor(a){
     if(!(a.lockver&&a.lockver.commit)||APP.mode!=='app') return null;
     var lp=lockParts(a); if(!lp) return null;
     var hit=verCards[lp.key];
     if(hit!==undefined) return hit;
-    fetchVerCards(lp.path,a.lockver.commit,[lp.anchor]);
+    var q=verAsk[lp.pkey];
+    if(!q){
+      q=verAsk[lp.pkey]={path:lp.path,commit:a.lockver.commit,anchors:[]};
+      Promise.resolve().then(function(){
+        delete verAsk[lp.pkey];
+        fetchVerCards(q.path,q.commit,q.anchors);
+      });
+    }
+    if(q.anchors.indexOf(lp.anchor)<0) q.anchors.push(lp.anchor);
     return undefined;
   }
   /* resolve the part and filter a snapshot BODY node (snapshots hold no

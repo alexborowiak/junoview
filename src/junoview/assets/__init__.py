@@ -152,8 +152,21 @@ def deck_js() -> str:
     inlining every other asset already gets — and the split buys the
     thing a 24,000-line file costs most: being able to open the part you
     need. See ``js/deck/00-page.js`` for the rest of the argument.
+
+    The join is memoised on the parts themselves, so while no part
+    changes this hands back the SAME string object every call -- the
+    content hash the app serves it under (render/static.py) is then a
+    dictionary hit rather than three megabytes rehashed per page.
     """
-    return "".join(load(f"js/deck/{name}.js") for name in DECK_PARTS)
+    return _joined(tuple(load(f"js/deck/{name}.js") for name in DECK_PARTS))
+
+
+@functools.lru_cache(maxsize=2)
+def _joined(parts: tuple[str, ...]) -> str:
+    # keyed on the parts' text: load() returns one cached object per
+    # unchanged file, so the lookup compares by identity, and an edited
+    # part is a new key exactly as an edited file is a new load()
+    return "".join(parts)
 
 
 def pptx_js() -> str:

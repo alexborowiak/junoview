@@ -7,6 +7,7 @@ button reads as the same family.
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 import urllib.parse
@@ -511,6 +512,7 @@ def icons_map() -> dict[str, str]:
     return {k: icon_svg(k) for k in _ICON_PATHS}
 
 
+@functools.cache
 def icons_js() -> str:
     """A script-block body defining ``window.SemIcons``.
 
@@ -518,6 +520,10 @@ def icons_js() -> str:
     runtime stamps the SAME artwork the templates got at build time —
     no path data is ever copied into a .js file. ``</`` is escaped so no
     icon could ever close the inline <script> early.
+
+    Cached: the table is Python constants, so it cannot change while
+    the process runs, and one object per process is what lets the app
+    serve it as a content-hashed file without rehashing it per page.
     """
     return ("window.SemIcons="
             + json.dumps(icons_map(), ensure_ascii=False,

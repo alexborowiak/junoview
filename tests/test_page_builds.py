@@ -8,6 +8,7 @@ neutralised at build time and drawing deferred plot specs.
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 import zipfile
 from pathlib import Path
@@ -87,7 +88,13 @@ def test_build_web_emits_a_pyodide_bundle():
         worker = (Path(td) / "web-worker.js").read_text(encoding="utf-8")
         assert "pyodide" in worker and "sem:pyready" in runtime
         assert '<script src="web-runtime.js"></script>' in idx
-        assert idx.index('src="web-runtime.js"') < idx.index("window.SemApp")
+        # the bridge is installed before app.js runs -- app.js is a
+        # content-hashed file beside the page now (render/static.py)
+        app_js = re.search(r'<script src="(app\.[0-9a-f]{16}\.js)"', idx)
+        assert app_js, "index.html does not load app.js"
+        assert idx.index('src="web-runtime.js"') < app_js.start()
+        assert "window.SemApp" in (Path(td) / app_js.group(1)).read_text(
+            encoding="utf-8")
         assert 'id="deck"' in idx
         assert "document.write" not in runtime
         archive = Path(td) / "junoview.zip"

@@ -56,6 +56,7 @@ src/junoview/
 ├── render/            turning a Document into HTML
 │   ├── items.py           one card, the nav rail, the raw view
 │   ├── page.py            assembling the finished page from templates
+│   ├── static.py          the CSS/JS as content-hashed files (app, web)
 │   ├── highlight.py       Python syntax highlighting
 │   ├── markdown.py        just enough Markdown for notebook prose
 │   ├── sanitize.py        allow-list sanitizer for untrusted notebook HTML
@@ -78,6 +79,8 @@ src/junoview/
 │   ├── app.py             starts it
 │   ├── routes.py          the HTTP surface
 │   ├── state.py           open tabs, the project file, the file browser
+│   ├── shells.py          rendered notebooks kept between page builds,
+│   │                      their versions, URL notebooks downloaded at once
 │   ├── notebook_edit.py   writing notes back into an .ipynb, with snapshots
 │   ├── exports.py         a .pptx the page built, written unmarked into
 │   │                      Downloads (no Protected View), and opened

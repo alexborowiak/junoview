@@ -15,9 +15,14 @@ var VERSION = '__JV_VERSION__';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
-   because an "offline app" missing its renderer is a lie */
+   because an "offline app" missing its renderer is a lie. The page's
+   stylesheets and scripts are files beside it, named for their content
+   (render/static.py); build_web writes their names in at the marker. */
 var CORE = ['./', 'index.html', 'junoview.zip', 'web-runtime.js', 'web-worker.js', 'LICENSE', 'NOTICE',
-  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg'];
+  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg'/*__JV_ASSETS__*/];
+/* ...and a content-hashed name can never hold anything else, so a cached
+   copy of one is final, like a CDN file: no refresh behind it */
+var HASHED_RE = /\.[0-9a-f]{16}\.(css|js)$/;
 
 /* the runtime, best-effort: a blocked CDN or a renamed font file must not
    veto the install — the page still loads those live while online.
@@ -109,7 +114,7 @@ self.addEventListener('fetch', function(e){
       /* CDN files are version-stamped in their URLs: a hit is final.
          Our own files can change under the same name, so a hit serves
          instantly and refreshes behind it for the NEXT visit. */
-      if(hit && !mine) return hit;
+      if(hit && (!mine || HASHED_RE.test(url.pathname))) return hit;
       var refresh = fetch(req).then(function(res){
         if(res && res.ok) c.put(req, res.clone());
         return res;

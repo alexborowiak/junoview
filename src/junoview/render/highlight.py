@@ -7,6 +7,7 @@ error in someone's notebook never costs them the page.
 from __future__ import annotations
 
 import builtins
+import functools
 import html
 import io
 import keyword
@@ -19,8 +20,15 @@ import tokenize
 _BUILTIN_NAMES = frozenset(dir(builtins))
 
 
+@functools.lru_cache(maxsize=1024)
 def highlight_python(src: str) -> str:
-    """Return HTML for `src` with lightweight, safe Python highlighting."""
+    """Return HTML for `src` with lightweight, safe Python highlighting.
+
+    Memoised: a pure function of its text, and asked for the same text
+    over and over -- a cell with no ``#|`` lines is highlighted once for
+    its card and again for the raw view, and re-rendering a notebook
+    after one cell changed re-highlights every cell that did not.
+    """
     if not src.strip():
         return ""
     try:

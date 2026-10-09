@@ -6,7 +6,8 @@ them. It binds to localhost and guards every mutating request with a per-session
 token, because a page it did not serve must never be able to drive it.
 
 :mod:`~junoview.server.app` starts it; :mod:`~junoview.server.routes` is the
-request surface; :mod:`~junoview.server.state` is what a session remembers.
+request surface; :mod:`~junoview.server.state` is what a session remembers;
+:mod:`~junoview.server.shells` keeps rendered notebooks between page builds.
 """
 
 from __future__ import annotations

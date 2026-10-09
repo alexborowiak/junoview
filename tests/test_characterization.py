@@ -2414,8 +2414,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Colourful zone on visible surfaces; no transition:all.
 # Speed (save): the deck script carries embApply/embEnsure/embFetch, the generation
 # counter and the interned undo snapshots, so the inlined bytes moved.
-EXPECTED_MD5 = "754ef985bd785162962b88e14a4dd9a4"
-EXPECTED_BYTES = 5351162
+# Speed (server): the deck script reads linked stylesheets (pageCssText) for its
+# HTML export and presenter window, and Reload sends the shell's version.
+EXPECTED_MD5 = "91bd484a69a0294381b3579fc5ffa825"
+EXPECTED_BYTES = 5356390
 
 
 def _render_example() -> str:

@@ -33,6 +33,7 @@ from .notebook.parser import parse_notebook
 from .notebook.pptx_read import read_pptx_b64
 from .notebook.sources import doc_from_bytes, doc_from_text
 from .render.page import render_page, render_shell
+from .render.static import static_files
 
 # A fixed timestamp for every zip member. Without it the archive's bytes change
 # on every build, and the committed docs/ Pages build would show a diff each
@@ -155,6 +156,31 @@ def find_gifs() -> Path | None:
     return None
 
 
+#: A file _write_static_files wrote: <stem>.<16 hex>.<css|js>. Only names
+#: of exactly this shape are ever removed from a build directory.
+_HASHED_ASSET = re.compile(
+    r"^(core|app|deck|icons|pptx)\.[0-9a-f]{16}\.(css|js)$")
+
+
+def _write_static_files(outdir: Path) -> list[str]:
+    """Write the page's content-hashed CSS/JS beside it; return the names.
+
+    A rebuild with changed assets writes new names, so the previous
+    build's files are removed here -- otherwise a committed docs/ would
+    collect every version ever deployed.
+    """
+    files = static_files()
+    keep = {f.name for f in files}
+    for old in outdir.iterdir():
+        if _HASHED_ASSET.match(old.name) and old.name not in keep:
+            old.unlink()
+    for f in files:
+        target = outdir / f.name
+        if not target.exists() or target.read_bytes() != f.data:
+            target.write_bytes(f.data)
+    return [f.name for f in files]
+
+
 def build_web(outdir: Path, example: Path | None = None) -> None:
     """Write a deployable static web app (index.html + the packaged renderer)."""
     outdir.mkdir(parents=True, exist_ok=True)
@@ -165,7 +191,13 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     version = hashlib.md5(zip_path.read_bytes()).hexdigest()[:12]
     # Build the empty app here, where Python is already running. The
     # browser can show it immediately while its worker loads the parser.
-    page = render_page([], mode="web")
+    # Its stylesheets and scripts are files beside it, named for their
+    # content (render/static.py): inline, they were 4.2 MB of index.html
+    # that every visit re-tokenised and recompiled on the main thread,
+    # because an inline script gets no code cache -- so a repeat visit
+    # was barely faster than the first (2026-10-08 speed investigation).
+    page = render_page([], mode="web", asset_base="")
+    assets_out = _write_static_files(outdir)
     head = assets.web_loader().split("<head>", 1)[1].split("</head>", 1)[0]
     page = re.sub(r"<title>.*?</title>", "", page, count=1, flags=re.S)
     page = page.replace("<head>", "<head>\n" + head, 1)
@@ -190,7 +222,9 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     # new build retires the old cache while an unchanged package produces
     # byte-identical output, same as the zip itself.
     write_text(outdir / "sw.js",
-               assets.sw_js().replace("__JV_VERSION__", version))
+               assets.sw_js().replace("__JV_VERSION__", version).replace(
+                   "/*__JV_ASSETS__*/",
+                   "".join(f", '{name}'" for name in assets_out)))
     manifest = {
         "name": "Junoview",
         "short_name": "Junoview",

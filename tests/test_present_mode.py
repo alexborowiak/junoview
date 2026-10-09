@@ -128,8 +128,10 @@ def test_presenter_view_is_a_second_window(out):
     assert "function presenterPush(){" in out
     assert "function presenterCommand(msg){" in out
     assert 'id="pl-presenter"' in out
-    # every stylesheet rides along, or the imported nodes are unstyled
-    assert "$$('style').forEach(function(st){css+=st.textContent" in out
+    # every stylesheet rides along, or the imported nodes are unstyled --
+    # <style> text AND linked sheets (the app serves its CSS as files)
+    assert "var css=pageCssTextNow(document);" in out
+    assert "$$('style,link[rel=\"stylesheet\"]',root).forEach(" in out
     # presenter view does NOT start playback: you want to move the window
     # to the other screen before anything goes full screen
     assert "mi('#pl-presenter',openPresenter);" in out

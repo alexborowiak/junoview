@@ -27,11 +27,17 @@ from .sources import doc_from_bytes
 
 
 def load_doc(path: Path, title: str | None = None,
-             deck_path: Path | None = None) -> Document:
+             deck_path: Path | None = None,
+             data: bytes | None = None) -> Document:
     """Parse one notebook file into a Document, with its presentations.
 
     Deck priority: explicit deck_path > <notebook>.deck.json sidecar >
     embedded metadata (parse_notebook already loaded that).
+
+    ``data``: the file's bytes when the caller has already read them --
+    the app's shell cache keys a rendering on the very bytes it parsed,
+    so a file changing between the two reads cannot be filed under the
+    other version's key.
     """
     # by SUFFIX, not by assuming JSON: a .tex or a .csv is as much a
     # source as a notebook is, and the producer table is the one place
@@ -44,13 +50,13 @@ def load_doc(path: Path, title: str | None = None,
     # BYTES, decoded (and newline-normalised) inside doc_from_bytes:
     # the one seam T113 opened, so a .xlsx and a .tex come through the
     # same door and no caller has to know which kind it is holding.
-    doc = doc_from_bytes(path, path.read_bytes(), title=title,
-                         base=path.parent)
+    doc = doc_from_bytes(path, path.read_bytes() if data is None else data,
+                         title=title, base=path.parent)
     doc.source_name = path.stem
     if deck_path is not None:
         sidecars, lenient = [Path(deck_path)], False
     else:
-        sidecars, lenient = _sidecars(path)
+        sidecars, lenient = deck_sidecars(path)
     pres: list = []
     for sc in sidecars:
         try:
@@ -66,9 +72,13 @@ def load_doc(path: Path, title: str | None = None,
     return doc
 
 
-def _sidecars(path: Path) -> tuple[list[Path], bool]:
+def deck_sidecars(path: Path) -> tuple[list[Path], bool]:
     """The deck files a notebook loads by itself, and whether a broken
     one may be skipped.
+
+    Public because the app's shell cache (server/shells.py) keys a
+    rendered notebook on exactly these files: the same function decides
+    what load_doc reads and what a cached copy depends on.
 
     A deck saved from the browser lands next to the notebook as
     ``<stem>.junoview.html`` (an HTML page carrying the JSON, so
@@ -137,8 +147,13 @@ def _cache_bust(url: str) -> str:
     return url
 
 
-def _fetch_notebook_url(url: str) -> tuple[str, dict]:
-    """Download a notebook from a URL; returns (filename, nb dict)."""
+def fetch_url_bytes(url: str) -> tuple[str, bytes]:
+    """Download a notebook's bytes from a URL; returns (filename, bytes).
+
+    The bytes, not the parsed notebook, so the app can key its rendered
+    copy on what actually arrived (server/shells.py) and skip the parse
+    when a re-download brings the same file back.
+    """
     url = normalize_nb_url(url)
     req = urllib.request.Request(
         _cache_bust(url), headers={"User-Agent": "semantic-render",
@@ -146,20 +161,36 @@ def _fetch_notebook_url(url: str) -> tuple[str, dict]:
                                    "Pragma": "no-cache"})
     with urllib.request.urlopen(req, timeout=30) as r:
         data = r.read()
-    nb = json.loads(data.decode("utf-8"))
-    if not isinstance(nb, dict) or "cells" not in nb:
-        raise ValueError(f"{url} does not look like a notebook")
     name = urllib.parse.unquote(
         urllib.parse.urlsplit(url).path.rsplit("/", 1)[-1]) \
         or "notebook.ipynb"
-    return name, nb
+    return name, data
+
+
+def url_notebook(url: str, data: bytes) -> dict:
+    """Downloaded bytes as notebook JSON, or ValueError if they are not."""
+    nb = json.loads(data.decode("utf-8"))
+    if not isinstance(nb, dict) or "cells" not in nb:
+        raise ValueError(f"{normalize_nb_url(url)} does not look like a "
+                         "notebook")
+    return nb
+
+
+def url_stem(name: str) -> str:
+    """The tab stem a downloaded notebook's file name gives it."""
+    return re.sub(r"\.ipynb$", "", name, flags=re.I) or "notebook"
+
+
+def _fetch_notebook_url(url: str) -> tuple[str, dict]:
+    """Download a notebook from a URL; returns (filename, nb dict)."""
+    name, data = fetch_url_bytes(url)
+    return name, url_notebook(url, data)
 
 
 def doc_from_url(url: str) -> Document:
     name, nb = _fetch_notebook_url(url)
     doc = parse_notebook(nb)
-    doc.source_name = re.sub(r"\.ipynb$", "", name, flags=re.I) \
-        or "notebook"
+    doc.source_name = url_stem(name)
     return doc
 
 

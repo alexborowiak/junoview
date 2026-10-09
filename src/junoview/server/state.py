@@ -8,18 +8,18 @@ restart.
 from __future__ import annotations
 
 import json
+import os
 import secrets
-import sys
 import threading
 from pathlib import Path
 
 from .._write import write_text
-from ..notebook.loader import doc_from_url, is_url, load_doc, stem_for
-from ..notebook.parser import parse_notebook
+from ..notebook.loader import is_url, stem_for, url_stem
 from ..notebook.pptx_read import is_pptx_name
 from ..notebook.presentations import as_presentations
 from ..notebook.sources import source_label
-from ..render.page import render_page
+from ..render.page import app_data_json, encode_pieces, page_pieces, page_title
+from .shells import DOWNLOADS, Shell, local_shell, local_source, url_shell
 
 _PROJECT_FILE = "junoview_project.json"
 
@@ -56,6 +56,8 @@ class _AppState:
         self.exported: set[str] = set()
         # (name, position) -> (the deck dict, its encoded text): see _write
         self._deck_text: dict = {}
+        # (key, bytes) of the last boot JSON a page was built with
+        self.boot_json: tuple[tuple, bytes] | None = None
         self._load()
 
     @property
@@ -370,8 +372,14 @@ def _list_dir(raw: str) -> dict:
         raise FileNotFoundError(f"{d} is not a folder")
     d = d.resolve()
     dirs, nbs, decks, srcs = [], [], [], []
+    # os.scandir, not iterdir + is_dir()/stat() per entry: on Windows the
+    # listing itself already carries each entry's type and size, and a
+    # separate call per file made a big (or OneDrive) folder slow to show
+    # -- 4,500 stat calls for 3,500 entries (2026-10-08). DirEntry's
+    # is_dir() and stat() follow symlinks, exactly as Path's did.
     try:
-        entries = sorted(d.iterdir(), key=lambda p: p.name.lower())
+        with os.scandir(d) as it:
+            entries = sorted(it, key=lambda e: e.name.lower())
     except OSError:
         entries = []
     for p in entries:
@@ -380,24 +388,25 @@ def _list_dir(raw: str) -> dict:
             continue
         try:
             if p.is_dir():
-                dirs.append({"name": name, "path": str(p)})
-            elif p.suffix.lower() == ".ipynb":
+                dirs.append({"name": name, "path": str(d / name)})
+            elif Path(name).suffix.lower() == ".ipynb":
                 kb = max(1, p.stat().st_size // 1024)
-                nbs.append({"name": name, "path": str(p), "size": f"{kb} KB"})
+                nbs.append({"name": name, "path": str(d / name),
+                            "size": f"{kb} KB"})
             elif _is_deck_file(name):
                 # saved presentations open from the same dialog — on disk
                 # they carry the default browser's icon and no way back in
                 # (2026-08-20, user: "you can't click on them and open
                 # them, it just shows the firefox symbol")
                 kb = max(1, p.stat().st_size // 1024)
-                decks.append({"name": name, "path": str(p),
+                decks.append({"name": name, "path": str(d / name),
                               "size": f"{kb} KB"})
             elif is_pptx_name(name):
                 # T320: a .pptx presentation imports from this dialog too.
                 # Listed WITH the decks, carrying its kind, because that
                 # is the shelf a person looks on for a presentation.
                 kb = max(1, p.stat().st_size // 1024)
-                decks.append({"name": name, "path": str(p),
+                decks.append({"name": name, "path": str(d / name),
                               "size": f"{kb} KB", "kind": ".pptx"})
             elif source_label(name):
                 # every OTHER source the producer table knows: Markdown,
@@ -407,7 +416,7 @@ def _list_dir(raw: str) -> dict:
                 # which door you came through (T100). The label comes
                 # from SOURCES rather than a second list in this file.
                 kb = max(1, p.stat().st_size // 1024)
-                srcs.append({"name": name, "path": str(p),
+                srcs.append({"name": name, "path": str(d / name),
                              "size": f"{kb} KB",
                              "kind": source_label(name)})
         except OSError:
@@ -417,55 +426,76 @@ def _list_dir(raw: str) -> dict:
             "notebooks": nbs, "decks": decks, "sources": srcs}
 
 
-def _app_page(state: _AppState) -> str:
-    """Rebuild the whole app page from the session's open notebooks."""
-    docs, paths, pruned = [], {}, []
+def _app_page(state: _AppState, *, warm: bool = False) -> bytes:
+    """The whole app page for the session's open notebooks, as bytes.
+
+    Each notebook's shell comes from server/shells.py, so a notebook that
+    has not changed since the last build is not parsed or rendered again,
+    and the stylesheets and scripts are links to content-hashed files the
+    browser keeps (render/static.py). ``warm``: this is the startup
+    pre-render, run while the browser is still starting.
+    """
+    shells: list[Shell] = []
+    pruned: list[str] = []
     taken: set[str] = set()
-    for p in list(state.open):
+    opened = list(state.open)
+    # every URL notebook downloads at once, rather than one after another
+    # with a 30 s timeout each inside the loop below
+    fetched = DOWNLOADS.fetch([p for p in opened if is_url(p)], warm=warm)
+    for p in opened:
         if is_url(p):
+            got = fetched.get(p)
             try:
-                doc = doc_from_url(p)
+                if got is None:
+                    raise ValueError("not downloaded")
+                stem = stem_for(Path(url_stem(got[0]) + ".ipynb"), taken)
+                shell = url_shell(p, got[1], stem)
             except Exception:       # noqa: BLE001 -- likely transient
                 continue            # keep the URL in the session
-            doc.source_name = stem_for(
-                Path(doc.source_name + ".ipynb"), taken)
-            taken.add(doc.source_name)
-            paths[doc.source_name] = p
-            docs.append(doc)
+            taken.add(stem)
+            shells.append(shell)
             continue
         f = Path(p)
+        stem = stem_for(f, taken)
         try:
-            doc = load_doc(f)
+            # lenient: a corrupt deck file beside a healthy notebook opens
+            # it deckless; only a notebook that is really gone or bad is
+            # pruned below (2026-08-23)
+            shell = local_shell(local_source(f, stem, str(f)), lenient=True)
         except (OSError, ValueError):
-            # A corrupt DECK SIDECAR lands here too (JSONDecodeError is a
-            # ValueError), and it used to be treated exactly like a deleted
-            # notebook: the healthy tab was pruned and the project file
-            # rewritten without it. Retry on just the .ipynb — if the
-            # notebook itself parses, keep the tab and open it deckless;
-            # prune only when the notebook is really gone/bad (2026-08-23).
-            try:
-                doc = parse_notebook(json.loads(
-                    f.read_text(encoding="utf-8")))
-                doc.source_name = f.stem
-            except (OSError, ValueError):
-                pruned.append(p)
-                continue
-            print(f"warning: could not read the deck sidecar for {f.name};"
-                  " opened without its presentations", file=sys.stderr)
-        doc.source_name = stem_for(f, taken)
-        taken.add(doc.source_name)
-        paths[doc.source_name] = str(f)
-        docs.append(doc)
+            pruned.append(p)
+            continue
+        taken.add(stem)
+        shells.append(shell)
     if pruned:                      # notebooks meanwhile deleted / moved
         with state.lock:
             state.open = [p for p in state.open if p not in pruned]
             state._write()
+    return encode_pieces(page_pieces(
+        mode="app", title=page_title([s.title for s in shells]),
+        shells=b"".join(s.body() for s in shells),
+        app_data=_boot_json(state), asset_base="/static/"))
+
+
+def _boot_json(state: _AppState) -> bytes:
+    """The page's boot JSON, encoded once per state of the project.
+
+    On a project with many saved decks this is megabytes, and encoding it
+    was a large share of every page build. It changes only when a save
+    lands -- which replaces ``presentations`` and bumps ``revision`` --
+    or the recent list moves, so that is the key.
+    """
+    key = (state.revision, id(state.presentations), tuple(state.recent),
+           state.token, str(state.root))
+    cached = state.boot_json
+    if cached is not None and cached[0] == key:
+        return cached[1]
     # LEAN BOOT (2026-10-09): the decks without their figure and clip
     # copies, which the editor fetches from /api/emb once the page is up.
     # `lazyEmb` says there is something to fetch; without it the editor
     # behaves exactly as it did, which is what the static page relies on.
     held = state.presentations
-    return render_page(docs, mode="app", app_cfg={
+    body = app_data_json("app", {
         "token": state.token,
         "root": str(state.root),
         "presentations": [_lean(p) for p in held],
@@ -475,5 +505,6 @@ def _app_page(state: _AppState) -> str:
         # window's stale whole-array write is refused, not applied
         "rev": state.revision,
         "recent": state.recent,
-        "paths": paths,
-    })
+    }).encode("utf-8")
+    state.boot_json = (key, body)
+    return body

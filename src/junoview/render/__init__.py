@@ -2,7 +2,9 @@
 
 Split by scope: :mod:`~junoview.render.items` renders the pieces (a card, the
 nav rail, the raw view), :mod:`~junoview.render.page` assembles the finished
-page around them using the templates and bundles in :mod:`junoview.assets`.
+page around them using the templates and bundles in :mod:`junoview.assets`,
+and :mod:`~junoview.render.static` names those bundles as content-hashed
+files for the two pages that load them as files (the app, the web build).
 
 The rest are self-contained helpers with no knowledge of the page:
 :mod:`~junoview.render.highlight` for source, :mod:`~junoview.render.markdown`

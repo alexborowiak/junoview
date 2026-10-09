@@ -480,7 +480,10 @@ def test_the_small_ends_of_the_second_pass(out):
     assert "Keep it next to the .ipynb and it loads itself" not in out
     # [43] the standalone page carries the equation fonts it used
     assert "  function inlineFontUrls(css){" in out
-    assert "      inlineFontUrls(css0).then(function(fo){" in out
+    # (the page's CSS is read as text first -- linked sheets included,
+    # since the app serves its stylesheets as files)
+    assert ("      pageCssText(document.head).then(inlineFontUrls)"
+            ".then(function(fo){") in out
     assert "        if(f.status==='loaded'||f.status==='loading'){" in out
     assert "could not be packed in, so equations '" in out
 

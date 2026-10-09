@@ -23,11 +23,12 @@ from typing import Any
 
 from .._write import write_text
 from ..notebook.loader import (
-    doc_from_url,
+    fetch_url_bytes,
     is_url,
     load_doc,
     normalize_nb_url,
     stem_for,
+    url_stem,
 )
 from ..notebook.parser import parse_notebook
 from ..notebook.pptx_read import (
@@ -47,8 +48,10 @@ from ..notebook.sources import (
 )
 from ..render.items import render_item
 from ..render.page import render_shell
+from ..render.static import static_file
 from .exports import export_folder, reveal, write_export
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
+from .shells import local_shell, local_source, url_shell
 from .state import (
     StaleWrite,
     _app_page,
@@ -65,7 +68,7 @@ from .vcs import (
     _git_info,
     _git_rel_path,
     _git_show_bytes,
-    _git_show_notebook,
+    _git_version_items,
 )
 
 #: The first bytes each format must start with. A suffix is what the user
@@ -242,11 +245,12 @@ def _make_handler(state: _AppState):
         def log_message(self, *args):       # keep the terminal quiet
             pass
 
-        def _send(self, code: int, body: bytes, ctype: str) -> None:
+        def _send(self, code: int, body: bytes, ctype: str,
+                  cache: str = "no-store") -> None:
             self.send_response(code)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
+            self.send_header("Cache-Control", cache)
             self.end_headers()
             self.wfile.write(body)
 
@@ -283,7 +287,23 @@ def _make_handler(state: _AppState):
                                f"page: {html.escape(f'{type(e).__name__}: {e}')}"
                                "</p>", 500)
                     return
-                self._html(page)
+                self._send(200, page, "text/html; charset=utf-8")
+                return
+            if url.path.startswith("/static/"):
+                # The page's own stylesheets and scripts (render/static.py).
+                # No token, deliberately: they are the package's public
+                # code, the same bytes for every user, and a token in a
+                # <link> or <script src> would make every session's URL --
+                # and so every cache entry -- different. Only the CURRENT
+                # content-hashed names exist; anything else, an older hash
+                # included, is a 404, which is what lets the browser keep
+                # what it gets here forever.
+                sf = static_file(url.path[len("/static/"):])
+                if sf is None:
+                    self._json({"error": "not found"}, 404)
+                    return
+                self._send(200, sf.data, sf.content_type,
+                           "public, max-age=31536000, immutable")
                 return
             if not self._authed(query):
                 self._json({"error": "bad token"}, 403)
@@ -446,27 +466,43 @@ def _make_handler(state: _AppState):
             # same notebook): keep its name and leave the recent list alone
             into = str(body.get("stem") or "").strip()
             if is_url(raw):
+                # always downloaded afresh: an explicit open or Reload of a
+                # URL means "fetch it now". The rendering is still kept on
+                # the bytes, so the same file coming back is not re-parsed.
                 url = normalize_nb_url(raw)
-                doc = doc_from_url(url)
-                if into:
-                    doc.source_name = into
-                else:
-                    doc.source_name = stem_for(
-                        Path(doc.source_name + ".ipynb"),
-                        state.stems_taken(skip_str=url))
+                name, data = fetch_url_bytes(url)
+                stem = into or stem_for(Path(url_stem(name) + ".ipynb"),
+                                        state.stems_taken(skip_str=url))
+                shell = url_shell(url, data, stem)
+                if not into:
                     state.note_open(url)
-                return {"stem": doc.source_name, "path": url,
-                        "shell": render_shell(doc, path=url)}
+                return {"stem": stem, "path": url, "shell": shell.html}
             f = self._resolve_src_path(raw)
             _store_version(f)   # every open/reload keeps a snapshot
-            doc = load_doc(f)
-            if into:
-                doc.source_name = into
-            else:
-                doc.source_name = stem_for(f, state.stems_taken(skip=f))
+            stem = into or stem_for(f, state.stems_taken(skip=f))
+            # rendered (or found) BEFORE the session hears of it: an open
+            # that fails -- a corrupt deck file, a broken notebook -- must
+            # not land in the open or recent list, as it never did
+            shell = local_shell(local_source(f, stem, str(f)), lenient=False)
+            if not into:
                 state.note_open(f)
-            return {"stem": doc.source_name, "path": str(f),
-                    "shell": render_shell(doc, path=str(f))}
+            # THE CONDITIONAL RELOAD. `have` is the version the page's tab
+            # was rendered from (its data-ver). When the file, its deck
+            # files and everything else the shell depends on still give
+            # that version, the tab already holds exactly what a re-render
+            # would produce: say so, and the page skips a remount and a
+            # MathJax pass (seconds on a big notebook) that would rebuild
+            # identical DOM. The side effects of an open -- the snapshot
+            # above, the recent list -- still happen; it is still an open.
+            # (local_shell above either way: a cache hit costs nothing, and
+            # it raises whatever an open of this version raises -- a
+            # corrupt deck file is still reported, not called unchanged)
+            have = str(body.get("have") or "")
+            if have and have == shell.ver:
+                return {"stem": stem, "path": str(f), "ver": shell.ver,
+                        "unchanged": True}
+            return {"stem": stem, "path": str(f), "ver": shell.ver,
+                    "shell": shell.html}
 
         def _resolve_path(self, raw: str) -> Path:
             """Relative paths resolve against the app root — shared by the
@@ -536,11 +572,12 @@ def _make_handler(state: _AppState):
                 first = src.splitlines()[0][:60]
                 git["commit"] = _git_commit_file(
                     f, str(body.get("message") or "") or f"Note: {first}")
-            doc = load_doc(f)
-            doc.source_name = stem_for(f, state.stems_taken(skip=f))
-            return {"stem": doc.source_name, "path": str(f),
+            stem = stem_for(f, state.stems_taken(skip=f))
+            shell = local_shell(local_source(f, stem, str(f)),
+                                lenient=False)
+            return {"stem": stem, "path": str(f),
                     "cell": cell_id, "index": idx, "git": git,
-                    "shell": render_shell(doc, path=str(f))}
+                    "ver": shell.ver, "shell": shell.html}
 
         def _git_state(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')
@@ -567,12 +604,7 @@ def _make_handler(state: _AppState):
             if not re.fullmatch(r"[0-9a-fA-F]{4,40}", commit):
                 raise ValueError("bad commit id")
             f = self._resolve_nb_path(raw)
-            nb = _git_show_notebook(f, commit)
-            doc = parse_notebook(nb)
-            by_anchor = {}
-            for sec in doc.sections:
-                for it in sec.items:
-                    by_anchor[it.anchor or it.item_id] = it
+            by_anchor, meta = _git_version_items(f, commit)
             cards: dict = {}
             for an in anchors:
                 # a distinct name from the `it` above: an anchor that is not in
@@ -581,8 +613,6 @@ def _make_handler(state: _AppState):
                 card = by_anchor.get(an)
                 cards[an] = ({"html": render_item(card), "title": card.title}
                              if card is not None else None)
-            meta: dict = next((e for e in _git_file_log(f, 100)
-                               if e["id"] == commit), {})
             return {"commit": commit, "msg": meta.get("msg", ""),
                     "date": meta.get("date", ""), "cards": cards}
 
@@ -614,7 +644,7 @@ def _make_handler(state: _AppState):
             entries = _git_file_log(f, CELL_HISTORY_COMMITS)
             if not any(e["id"].lower() == commit.lower() for e in entries):
                 raise FileNotFoundError("commit is not in this cell history")
-            return _git_cell_version(f, commit, anchor)
+            return _git_cell_version(f, commit, anchor, entries)
 
         def _versions(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')

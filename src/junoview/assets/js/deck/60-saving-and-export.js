@@ -2435,11 +2435,50 @@
     });
   });
   /* ---- standalone HTML export (2026-08-04): ONE self-contained .html
-     anyone can open without Junoview. The page styles are already inline
-     in this document's <head>, and every notebook figure is a data: URI,
-     so the file travels whole. It reads as stacked pages, arrow keys
-     step through them, and Ctrl+P prints at true page size (the same
-     @page rules ride along). ---- */
+     anyone can open without Junoview. The page's styles are copied in as
+     text (pageCssText), and every notebook figure is a data: URI, so the
+     file travels whole. It reads as stacked pages, arrow keys step
+     through them, and Ctrl+P prints at true page size (the same @page
+     rules ride along). ---- */
+  /* THE PAGE'S OWN CSS, AS TEXT. A single-file export carries its
+     stylesheets inline as <style>, but the app and the web build load
+     them as files (<link rel="stylesheet">, content-hashed -- see
+     render/static.py) so the browser can cache them, and a copy that
+     read only <style> elements would arrive unstyled. Both kinds, in
+     document order. A linked sheet is fetched for its exact source text
+     -- same origin, and immutable, so it comes from the browser's cache
+     -- and only if that fails is it rebuilt from its parsed rules. */
+  function sheetRulesText(sheet){
+    var out='';
+    try{
+      [].forEach.call(sheet.cssRules,function(r){out+=r.cssText+'\n';});
+    }catch(e){}
+    return out;
+  }
+  function pageCssText(root){
+    var els=$$('style,link[rel="stylesheet"]',root);
+    return Promise.all(els.map(function(el){
+      if(el.tagName==='STYLE') return Promise.resolve(el.textContent);
+      return fetch(el.href).then(function(r){
+        if(!r.ok) throw new Error(String(r.status));
+        return r.text();
+      }).catch(function(){return sheetRulesText(el.sheet);});
+    })).then(function(parts){
+      return parts.map(function(t){return t+'\n';}).join('');
+    });
+  }
+  /* the same, synchronously, for a caller that cannot wait (the
+     presenter window is written in the click that opens it): a linked
+     sheet comes from its parsed rules, which is exact for a copy shown
+     in this same browser */
+  function pageCssTextNow(root){
+    var css='';
+    $$('style,link[rel="stylesheet"]',root).forEach(function(el){
+      css+=(el.tagName==='STYLE'?el.textContent:sheetRulesText(el.sheet))
+        +'\n';
+    });
+    return css;
+  }
   /* T487: THE FONTS RIDE INSIDE. MathJax's stylesheet is copied into
      the standalone page with its @font-face url(https://cdn.jsdelivr
      .net/...woff) rules, so "opens anywhere" opened offline with every
@@ -2500,10 +2539,7 @@
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var root=buildPrintRoot();
     afterTypeset(root,function(){
-      var css0='';
-      $$('style',document.head).forEach(function(st){
-        css0+=st.textContent+'\n';});
-      inlineFontUrls(css0).then(function(fo){
+      pageCssText(document.head).then(inlineFontUrls).then(function(fo){
       var css=fo.css;
       var nav='<scr'+'ipt>document.addEventListener("keydown",'
         +'function(e){'

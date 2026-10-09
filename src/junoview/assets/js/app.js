@@ -2189,8 +2189,12 @@
      render/items.py) arrive fully embedded and need no filling. */
   function populateRawView(shell){
     if(!shell) return;
+    /* the raw view arrives as an inert <template> (shell.html): it
+       becomes DOM here, the first time it is shown, and never before */
+    var tpl=shell.querySelector('.rawview>template.rawtpl');
+    if(tpl) tpl.parentNode.replaceChild(tpl.content,tpl);
     var phs=shell.querySelectorAll('.rawview .rawph:not([data-filled])');
-    if(!phs.length) return;
+    if(!phs.length&&!tpl) return;
     var content=$('.content',shell);
     [].forEach.call(phs,function(ph){
       ph.dataset.filled='1';
@@ -2208,8 +2212,12 @@
     });
     var rv=$('.rawview',shell);
     /* clones of not-yet-drawn plotly embeds carry their data-plotly spec:
-       draw them now (drawn ones carry .js-plotly-plot and are skipped) */
-    if(rv) activateOutputs(rv,true);
+       draw them now (drawn ones carry .js-plotly-plot and are skipped).
+       A raw view built from its template just now also runs its OWN
+       outputs' scripts -- a hidden cell's bokeh or vega, embedded here
+       in full -- which initShell's activateOutputs(shell) reached at load
+       back when the raw view was live DOM from the start. */
+    if(rv) activateOutputs(rv,!tpl);
   }
   if(rawBtn) rawBtn.addEventListener('click',function(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -7814,6 +7822,37 @@
       jvTell('Could not fetch '+url+'\n'+((e&&e.message)||e));
     });
   }
+  /* THE CONDITIONAL RELOAD. A tab rendered by the app carries the version
+     its notebook was rendered from (data-ver; server/shells.py). Opening
+     or reloading a file that is already open sends that back as `have`,
+     and when nothing the shell depends on has changed the server answers
+     {unchanged:true} instead of the same shell again -- so the tab is
+     kept rather than torn down, rebuilt, re-typeset and faded back in
+     (1.2-2.5 s on a big notebook at 4x CPU throttle; 2026-10-08). */
+  function shellVer(stem){
+    var sh=stem&&APP.shells[stem];
+    return (sh&&sh.el&&sh.el.dataset.ver)||'';
+  }
+  function tabForPath(path){
+    for(var i=0;i<APP.order.length;i++){
+      var sh=APP.shells[APP.order[i]];
+      if(sh&&sh.el&&sh.el.dataset.path===path) return APP.order[i];
+    }
+    return '';
+  }
+  function openShell(body,stem){
+    var have=shellVer(stem),req={};
+    for(var k in body) req[k]=body[k];
+    if(have) req.have=have;
+    return api('/api/open',req).then(function(j){
+      if(!j.unchanged) return j;
+      /* "unchanged" is about the version SENT. If this tab was replaced
+         while the request ran (a version view, a note), it no longer
+         holds that version: ask again for the real shell. */
+      if(j.stem===stem&&shellVer(stem)===j.ver) return j;
+      return api('/api/open',body);
+    });
+  }
   /* T436: `keep` leaves the open dialog up, so several notebooks can be
      opened one after another from the folder listing (Ctrl+click on a
      row) -- "the ability to open multiple notebook/presentations at
@@ -7863,9 +7902,18 @@
     }
     if(OPENBUSY[path]) return;
     OPENBUSY[path]=1;setDlgBusy(true);
-    api('/api/open',{path:path}).then(function(j){
+    var openTab=tabForPath(path),wasActive=!!openTab&&APP.active===openTab;
+    openShell({path:path},openTab).then(function(j){
       delete OPENBUSY[path];setDlgBusy(false);
-      mountShellHTML(j.shell,j.path||path);
+      if(j.unchanged){
+        /* what mounting the identical shell would have done, minus the
+           rebuild: the recent list and the tab coming forward */
+        if(APP.noteRecent) APP.noteRecent(j.path||path);
+        activate(j.stem);
+        /* the remount used to be the only sign a Reload had landed */
+        if(wasActive) docToast('Up to date — nothing in this file '
+          +'has changed on disk',null,null,3500);
+      } else mountShellHTML(j.shell,j.path||path);
       if(!keep) hideDlg();
     }).catch(function(e){
       delete OPENBUSY[path];setDlgBusy(false);
@@ -7903,9 +7951,13 @@
     var path=(sh&&sh.el&&sh.el.dataset.path)||String(pathHint||'');
     if(!path) return decline('closed');
     if(/^https?:/i.test(path)) return decline('url');
-    return api('/api/open',{path:path,stem:stem}).then(function(j){
-      mountShellHTML(j.shell,j.path||path,true);
-      return {stem:stem,ok:true,reason:'reread',msg:''};
+    return openShell({path:path,stem:stem},sh?stem:'').then(function(j){
+      /* unchanged: the disk WAS re-read -- it gave back the version
+         this tab already shows, so there is nothing to remount */
+      if(j.unchanged) activate(stem);
+      else mountShellHTML(j.shell,j.path||path,true);
+      return {stem:stem,ok:true,reason:'reread',msg:'',
+        unchanged:!!j.unchanged};
     }).catch(function(e){
       return {stem:stem,ok:false,reason:'failed',
         msg:(e&&e.message)||'could not be read'};

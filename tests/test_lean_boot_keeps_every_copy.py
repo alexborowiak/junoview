@@ -126,7 +126,7 @@ def _rebuild(payload: dict) -> dict:
 def test_the_page_boots_lean_and_says_there_is_more(tmp_path):
     decks = _project(tmp_path)
     st = _AppState(tmp_path)
-    page = _app_page(st)
+    page = _app_page(st).decode("utf-8")
     raw = page.split('id="app-data">', 1)[1].split("</script>", 1)[0]
     app = json.loads(raw.replace("<\\/", "</"))
     boot = app["project"]["presentations"]
@@ -144,7 +144,7 @@ def test_the_page_boots_lean_and_says_there_is_more(tmp_path):
 def test_a_project_with_no_copies_has_nothing_to_fetch(tmp_path):
     (tmp_path / _PROJECT_FILE).write_text(json.dumps(
         {"presentations": [{"name": "t", "slides": []}]}), encoding="utf-8")
-    page = _app_page(_AppState(tmp_path))
+    page = _app_page(_AppState(tmp_path)).decode("utf-8")
     assert '"lazyEmb"' not in page
 
 
@@ -343,7 +343,7 @@ def test_an_older_project_file_still_boots_lean(tmp_path):
     (tmp_path / "semantic_project.json").write_text(json.dumps(
         {"presentations": decks}), encoding="utf-8")
     st = _AppState(tmp_path)
-    page = _app_page(st)
+    page = _app_page(st).decode("utf-8")
     assert '"lazyEmb": 1' in page
     assert _rebuild(emb_payload(st.presentations, 0))["talk"]["emb"] \
         == decks[0]["emb"]

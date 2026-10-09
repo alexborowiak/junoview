@@ -42,9 +42,14 @@
     <div class="content">
       {sections}
     </div>
-    <div class="rawview">
+    <!-- The raw view ships INERT: hidden until Raw is pressed, it was
+         still live DOM on every load -- a fifth of the page's elements,
+         every equation in it typeset by MathJax while hidden (and so
+         mis-sized) -- for a view most loads never open (2026-10-08).
+         populateRawView builds it from this template when first shown. -->
+    <div class="rawview"><template class="rawtpl">
       {rawview}
-    </div>
+    </template></div>
     <div class="treeview" aria-label="Analysis tree view"></div>
   </main>
   <script type="application/json" class="nb-data">{nb_data}</script>

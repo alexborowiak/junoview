@@ -287,7 +287,8 @@ def test_a_failed_source_read_is_never_reported_as_up_to_date(out):
     fn = fn[:fn.index(chr(10) + "  };")]
     assert ".catch(function(){return false;});" not in fn
     assert "return {stem:stem,ok:false,reason:'failed'," in out
-    assert "return {stem:stem,ok:true,reason:'reread',msg:''};" in out
+    # (an unchanged file is still a successful re-read -- it says so)
+    assert "return {stem:stem,ok:true,reason:'reread',msg:''," in out
     # the three honest declines stay apart from the one real failure
     assert "if(APP.mode!=='app') return decline('notapp');" in out
     assert "if(!path) return decline('closed');" in out
@@ -358,8 +359,11 @@ def test_update_figures_re_reads_the_disk_first(out):
     file left no handle to re-read.
     """
     assert "APP.reloadTab=function(stem,pathHint){" in out
-    assert "return api('/api/open',{path:path,stem:stem}).then(function(j){" in out
-    assert "mountShellHTML(j.shell,j.path||path,true);" in out
+    # /api/open with `stem`, through openShell: the tab's version rides
+    # along, and an unchanged file is not remounted (server/shells.py)
+    assert ("return openShell({path:path,stem:stem},sh?stem:'')"
+            ".then(function(j){") in out
+    assert "else mountShellHTML(j.shell,j.path||path,true);" in out
     assert "var path=(sh&&sh.el&&sh.el.dataset.path)||String(pathHint||'');" \
         in out
     assert "if(!path) return decline('closed');" in out
