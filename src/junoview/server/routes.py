@@ -50,8 +50,13 @@ from ..render.items import render_item
 from ..render.page import render_shell
 from ..render.static import static_file
 from .exports import export_folder, reveal, write_export
-from .notebook_edit import _store_version, _versions_dir, insert_note_cell
-from .shells import local_shell, local_source, url_shell
+from .notebook_edit import (
+    _store_version,
+    _versions_dir,
+    insert_note_cell,
+    note_in_place,
+)
+from .shells import local_shell, local_source, url_shell, warm_local
 from .state import (
     StaleWrite,
     _app_page,
@@ -562,22 +567,42 @@ def _make_handler(state: _AppState):
             if not src:
                 raise ValueError("the note is empty")
             f = self._resolve_nb_path(raw)
+            stem = stem_for(f, state.stems_taken(skip=f))
+            # ONE read: the version check below and the cells the note goes
+            # into are the same bytes
+            cur = local_source(f, stem, str(f))
             _store_version(f)   # keep the pre-note state reachable
-            nb = json.loads(f.read_text(encoding="utf-8"))
+            nb = json.loads(cur.data.decode("utf-8"))
+            old = parse_notebook(nb, render_raw=False)
             nb, idx, cell_id = insert_note_cell(
-                nb, str(body.get("after") or ""), src)
-            write_text(f, json.dumps(nb, ensure_ascii=False, indent=1) + "\n")
+                nb, str(body.get("after") or ""), src, doc=old)
+            text = json.dumps(nb, ensure_ascii=False, indent=1) + "\n"
+            write_text(f, text)
             git = _git_info(f)
             if body.get("commit") and git.get("repo"):
                 first = src.splitlines()[0][:60]
                 git["commit"] = _git_commit_file(
                     f, str(body.get("message") or "") or f"Note: {first}")
-            stem = stem_for(f, state.stems_taken(skip=f))
-            shell = local_shell(local_source(f, stem, str(f)),
-                                lenient=False)
-            return {"stem": stem, "path": str(f),
-                    "cell": cell_id, "index": idx, "git": git,
-                    "ver": shell.ver, "shell": shell.html}
+            # the version of what was WRITTEN (write_text: UTF-8, LF)
+            new = local_source(f, stem, str(f), data=text.encode("utf-8"))
+            out = {"stem": stem, "path": str(f),
+                   "cell": cell_id, "index": idx, "git": git}
+            # critic #3: when the page's tab still shows exactly what was
+            # on disk (`have`, its data-ver -- the conditional Reload's
+            # version) and the note is the only change it would show, the
+            # page inserts that one card instead of re-mounting the shell.
+            # It then holds `new`, which is rendered for the cache in the
+            # background, not on the way out: the page has no use for it.
+            have = str(body.get("have") or "")
+            note = None
+            if have and have == cur.ver and new.ver:
+                note = note_in_place(old, parse_notebook(nb, render_raw=False),
+                                     cell_id, idx, nb)
+            if note:
+                warm_local(new)
+                return {**out, "ver": new.ver, "note": note}
+            shell = local_shell(new, lenient=False)
+            return {**out, "ver": shell.ver, "shell": shell.html}
 
         def _git_state(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')

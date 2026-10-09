@@ -2422,6 +2422,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix: a clip asked for before the lean boot's copies arrive waits for them.
 # Speed (MathJax): data-math marks, the pinned loader typeset as read (jvMath),
 # kept copies without MathJax's menu counter, hidden maths measured on a stand-in.
+# Speed (reader boot): cards visible without script, first layout sent by the
+# server, hidden notebooks wired on first view, delegated card listeners.
 # T619: the zoom moved into the tab row and "Slide 3 of 14" to the head of the
 # slide list, Ribbon layouts became a row of File, the stage's foot is 18px.
 # T620: the scrolling page's Between slides choice (its script, its CSS and a
@@ -2432,8 +2434,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T622: the scroll view -- its fragment, the View tab's two tiles and their
 # icon, the column CSS, fillPrintPage lifted out of buildPrintRoot, the
 # per-page .page-light and a help entry.
-EXPECTED_MD5 = "0d56aca6e86b4dc3bf9b0454b4c005ea"
-EXPECTED_BYTES = 5421687
+EXPECTED_MD5 = "8134a387eafe7436debd4219695861e7"
+EXPECTED_BYTES = 5447220
 
 
 def _render_example() -> str:
@@ -2517,6 +2519,9 @@ def test_page_template_placeholders_match_what_render_page_supplies():
         "help_html", "logo", "favicon", "head_extra", "icons_js",
         "saved_file_js",    # T597: what a saved file runs, as inert text
         "build",            # T621: the version on Home (app and web only)
+        # the first layout, painted as app.js will arrange it (page.py
+        # _first_layout; 2026-10-09 speed, load-static #8)
+        "html_attrs", "body_attrs", "bar_hidden",
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

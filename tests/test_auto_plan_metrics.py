@@ -33,6 +33,8 @@ function figure(attrs){return {getAttribute:key=>attrs[key],
   getBoundingClientRect:()=>({width:0,height:0})};}
 function card(anchor,note,fig){return {id:'card-'+anchor,
   dataset:{anchor:anchor},querySelector:s=>s==='.note'?note:fig};}
+/* autoPlan has every queued Plotly figure drawn before it measures */
+function plotFlush(){}
 """
     with tempfile.TemporaryDirectory() as directory:
         script = Path(directory) / "metrics.js"

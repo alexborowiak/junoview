@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en"{html_attrs}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,7 +16,15 @@
 <style>{deck_css}</style>
 {mathjax}
 </head>
-<body>
+<body{body_attrs}>
+<script>/* the server paints the open files as tabs on top (render/page.py
+_first_layout); a saved side list is painted as one from the start, not
+moved there by app.js after the first paint */
+try{{if(document.body.classList.contains('files-top')
+&&localStorage.getItem('junoview:openfiles')==='side'){{
+document.body.classList.remove('files-top','tabs-row-on');
+document.body.classList.add('files-side');
+document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</script>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <!-- T602: ONE TITLE ROW, the way PowerPoint has one (2026-09-30, user:
@@ -38,7 +46,7 @@
        filters needlessly wide before they even began. The active shell's
        real .railfile node still moves here, so its reload/info handlers
        stay live rather than being copied (2026-09-11). -->
-  <div class="nb-filebar" id="nb-filebar" hidden>
+  <div class="nb-filebar" id="nb-filebar"{bar_hidden}>
     <!-- The file itself belongs with Info / Reload.  Keeping the
          visible name and the (ellipsised) path here means there is one
          stable place to answer “what am I looking at?”, rather than a
@@ -54,7 +62,7 @@
          the side, never both. Home first, then the open files. T602: in
          this row, not a row of its own; while the slide editor is on
          screen app.js moves it into the editor's top bar. -->
-    <div class="open-tabs-row" id="open-tabs-row" hidden>
+    <div class="open-tabs-row" id="open-tabs-row"{bar_hidden}>
       <button class="toggle ot-home" id="ot-home" type="button"
         title="Home &mdash; the Junoview start screen. Nothing is closed."
         >{logo}<span class="btxt">Home</span></button>

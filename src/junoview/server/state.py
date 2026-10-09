@@ -18,7 +18,13 @@ from ..notebook.loader import is_url, stem_for, url_stem
 from ..notebook.pptx_read import is_pptx_name
 from ..notebook.presentations import as_presentations
 from ..notebook.sources import source_label
-from ..render.page import app_data_json, encode_pieces, page_pieces, page_title
+from ..render.page import (
+    app_data_json,
+    encode_pieces,
+    join_shells,
+    page_pieces,
+    page_title,
+)
 from .shells import DOWNLOADS, Shell, local_shell, local_source, url_shell
 
 _PROJECT_FILE = "junoview_project.json"
@@ -473,7 +479,8 @@ def _app_page(state: _AppState, *, warm: bool = False) -> bytes:
             state._write()
     return encode_pieces(page_pieces(
         mode="app", title=page_title([s.title for s in shells]),
-        shells=b"".join(s.body() for s in shells),
+        # every notebook but the first arrives hidden (join_shells)
+        shells=join_shells([s.body() for s in shells]),
         app_data=_boot_json(state), asset_base="/static/",
         math=any(s.math for s in shells)))
 

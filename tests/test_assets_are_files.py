@@ -107,11 +107,12 @@ def test_the_page_is_what_one_icons_pass_over_the_whole_page_gave(doc):
     over everything. The compiled template must give the same text."""
     from junoview.branding import FAVICON, KOFI_URL, LOGO_SVG
     from junoview.build_info import build_badge
-    from junoview.render.page import app_data_json, render_shell
+    from junoview.render.page import _first_layout, app_data_json, render_shell
 
     for mode in ("static", "app", "web"):
         page = render_page([doc], mode=mode)
         old = icons(assets.page_template().format(
+            **_first_layout(True),
             title=__import__("html").escape(doc.title),
             head_extra=('<link rel="manifest" href="manifest.webmanifest">'
                         '\n<meta name="theme-color" content="#0a141d">'
