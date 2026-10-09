@@ -23,8 +23,12 @@ def test_a_snapshot_can_be_marked(out):
     assert "  function snapWrite(cap,ix,why,mark){" in out
     assert "    if(mark) ent.mk=1;" in out
     # a checkpoint is taken even when nothing changed
-    assert "                if(prev===cap.txt&&!mark) return false;" in out
-    assert "                return snapWrite(cap,ix,why,mark);" in out
+    # (and a match is remembered, so an unchanged deck reopens without
+    # a snapshot -- histKept, 2026-10-09)
+    assert ("                if(prev===cap.txt&&!mark)"
+            "{histKept(cap);return false;}") in out
+    assert ("                return snapWrite(cap,ix,why,mark)"
+            ".then(function(r){") in out
 
 
 def test_a_checkpoint_is_never_the_one_thrown_away(out):

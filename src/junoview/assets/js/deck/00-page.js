@@ -2241,7 +2241,7 @@
     var snaps=undoStack.slice(-OH_DEPTH).concat([histState()]);
     var out=[];
     snaps.forEach(function(js){
-      var d;try{d=JSON.parse(js);}catch(e){return;}
+      var d;try{d=histParse(js);}catch(e){return;}
       var sl=(d.slides||[])[cur];
       if(!sl||!sl.annots) return;
       var hit=null;

@@ -1689,10 +1689,22 @@
        while the readout said "autosaved". Hence a named flush the other
        paths can call, plus a debounced one while you type, so a crash
        costs a phrase rather than a slide. */
+    /* WHAT THIS BOX LAST COMMITTED, so the same words are not committed
+       twice (2026-10-09). Every save flushes the box being typed in, the
+       flush called markDirty, and markDirty armed the next autosave: a
+       caret left in a box saved the whole project every 15 s for as long
+       as it sat there -- 400 ms of jank and a whole-file rewrite each
+       time -- and kept re-arming the 20-second consolidation so it never
+       ran. Words that changed since the last commit still commit; the
+       blur below always commits, as it always has. */
+    var lastCommit=null;
     function commitNow(quiet){
       if(!el.isContentEditable) return;
       var v0=editorText(el).replace(/\r/g,'').replace(/\n+$/,'');
       var r0=rich?sanitizeRich(el.innerHTML):null;
+      var sig=v0+'\u0000'+(r0?JSON.stringify(r0):'');
+      if(sig===lastCommit) return;
+      lastCommit=sig;
       setVal(v0,r0);
       markDirty(quiet);
     }
@@ -2492,12 +2504,21 @@
       a.rows[ri][ci]=(td.innerText||'').replace(/\r/g,'')
         .replace(/\n+$/,'');
     }
-    /* a table cell is a text edit too, and had the same blur-only commit */
-    td.__jvFlush=function(){writeCell();markDirty(true);};
+    /* a table cell is a text edit too, and had the same blur-only commit.
+       The flush commits words that changed since the last one, and only
+       those -- the same reason as commitNow's (2026-10-09) */
+    var cellWas=null;
+    function flushCell(){
+      var v=(td.innerText||'').replace(/\r/g,'').replace(/\n+$/,'');
+      if(v===cellWas) return;
+      cellWas=v;
+      writeCell();markDirty(true);
+    }
+    td.__jvFlush=flushCell;
     var cellT=null;
     td.addEventListener('input',function(e){
       clearTimeout(cellT);
-      cellT=setTimeout(function(){writeCell();markDirty(true);},900);
+      cellT=setTimeout(flushCell,900);
       autoCorrect(td,e,a);      /* T545: a cell is typed in too */
     });
     function commit(){

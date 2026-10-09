@@ -3803,9 +3803,24 @@
      while a file/server write was awaiting its result. */
   function histCapture(){
     if(!pres||!pres.slides) return null;
+    /* deck and deckGen come AFTER txt -- a literal's values are read in
+       order -- because histText's ensureSids can mint ids, which is an
+       edit (see histClean) */
     try{return {name:pres.name||'untitled',txt:histText(),
-      n:pres.slides.length};}
+      n:pres.slides.length,deck:pres,gen:deckGen};}
     catch(e){return null;}
+  }
+  /* ---- OPENING AN UNCHANGED DECK TAKES NO SNAPSHOT (2026-10-09) -------
+     openDeck's 'opened' snapshot serialised the whole deck on every
+     arrival -- every notebook-to-deck tab switch, 69 ms of a picture
+     deck at 4x -- and then read the last stored snapshot back to find
+     it identical and throw it away. This is the deck object and edit
+     count (deckGen) the last stored-or-matched snapshot was taken at:
+     the same deck at the same count has nothing new to keep. */
+  var histClean=null;
+  function histUnchanged(){
+    return !!(histClean&&pres&&histClean.deck===pres
+      &&histClean.gen===deckGen&&histClean.name===(pres.name||'untitled'));
   }
   /* ---- T225: A CHECKPOINT IS A SNAPSHOT YOU MEANT ------------------
      (2026-09-03, user: "there should be version of presentations
@@ -3837,13 +3852,19 @@
               .then(function(prev){
                 /* a checkpoint is taken even when nothing changed:
                    you are marking THIS moment, not this content */
-                if(prev===cap.txt&&!mark) return false;
-                return snapWrite(cap,ix,why,mark);
+                if(prev===cap.txt&&!mark){histKept(cap);return false;}
+                return snapWrite(cap,ix,why,mark).then(function(r){
+                  if(r) histKept(cap);return r;});
               });
-          return snapWrite(cap,ix,why,mark);
+          return snapWrite(cap,ix,why,mark).then(function(r){
+            if(r) histKept(cap);return r;});
         });
       });
     });
+  }
+  /* the stored history now ends with this capture's content */
+  function histKept(cap){
+    histClean=cap&&cap.deck?{deck:cap.deck,gen:cap.gen,name:cap.name}:null;
   }
   function snapWrite(cap,ix,why,mark){
     var id='v'+(Date.now().toString(36))

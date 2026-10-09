@@ -396,9 +396,10 @@ def _store_run(script):
     cmd, env = eng
     src = assets.deck_js()
     body = "\n".join(lift_fn(src, f) for f in
-                     ("embStore", "embRestore", "refIsLive", "setRefLive"))
-    # EMBPREV is declared beside embStore, not inside it
-    pre = _STORE_STUBS + "var EMBPREV={};\n" + body + "\n"
+                     ("embStore", "embPut", "embRestore", "refIsLive",
+                      "setRefLive"))
+    # EMBPREV and embWeak are declared beside embStore, not inside it
+    pre = _STORE_STUBS + "var EMBPREV={},embWeak={};\n" + body + "\n"
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "run.js"
         p.write_text(pre + script, encoding="utf-8")

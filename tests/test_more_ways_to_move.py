@@ -402,7 +402,8 @@ def test_saving_and_export_after_the_second_pass(out):
     assert "    saveStamp=null;saveKind='';saveWhere='';" in out
     # a browser-kept deck is not a draft; the tooltips follow the target
     # (T598: judged by the deck's own home, not the one on screen)
-    assert "      draft:!!loadDraft(name)&&w.kind!=='browser'&&w.kind!=='file'," in out
+    # (draftOk: whether a draft loads, asked once per draft written)
+    assert "      draft:draftOk(name)&&w.kind!=='browser'&&w.kind!=='file'," in out
     assert "  function targetPhrase(){" in out
     assert "    if(typeof renderAutosaveItem==='function') renderAutosaveItem();" in out
     # Discard reverts or asks; Delete asks; reopen always reopens

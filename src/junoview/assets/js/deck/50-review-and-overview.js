@@ -1591,6 +1591,7 @@
   }
   function renderTopPresTabs(){
     var top=$('#top-tabstrip'); if(!top) return;
+    presTabsSaveKey=null;   /* only a build of both lists sets it */
     $$('.top-pres-tab',top).forEach(function(t){t.remove();});
     var savedNames=allSaved().map(function(p){return p.name;});
     var editing=!deckEl.hidden;
@@ -1618,6 +1619,7 @@
     presTabsSide=[].slice.call(presstrip.childNodes);
     presTabsSideKey=presTabsInputs();
     renderTopPresTabs();
+    presTabsSaveKey=presTabsInputs(true);
     /* T606: a collection's feed closes with its tab */
     if(typeof colSync==='function') colSync();
     /* ...and re-applied, now the rail rows are back (T75). */
@@ -1644,20 +1646,20 @@
      names, homes and kinds, the deck records, the default home, and
      what a custom view or collection lights its tab by. */
   var presTabsSideKey=null,presTabsTopKey=null,presTabsSide=[],presTabsTop=[];
-  var presTabsDraft={raw:null,ok:false};
   /* the deck on screen's draft is rewritten after every edit, and its
      tab only asks whether there is one that loads -- asked once per
      write, not once per change */
   function presTabsDraftOk(name){
-    var raw=draftGet(name);
-    if(raw==null) return false;
-    if(presTabsDraft.raw!==raw) presTabsDraft={raw:raw,ok:!!loadDraft(name)};
-    return presTabsDraft.ok;
+    return draftOk(name);   /* 10-decks.js, memoised the same way */
   }
   /* ...and the deck records are rewritten with an `edited` time on every
      draft write; a tab reads only a record's file and home (deckWhere) */
   var presTabsMeta={raw:null,all:{}};
-  function presTabsInputs(){
+  /* `afterSave` leaves out the two things a finished project save
+     changes without changing what a tab draws from them: which list
+     object projectPres is, and whether the deck on screen still has a
+     draft (that one is its tab's mark, which presTabsAfterSave sets) */
+  function presTabsInputs(afterSave){
     var A=window.SemApp||{},cl=document.body.classList;
     var on=pres&&pres.name,metaRaw=lsGet(DECK_META_KEY);
     if(presTabsMeta.raw!==metaRaw)
@@ -1666,17 +1668,49 @@
       ssGet(OPEN_PRES_KEY),cl.contains('styling'),cl.contains('welcoming'),
       A.active,(A.cols||[]).join('\n'),
       (typeof defaultSaveTarget==='function')?defaultSaveTarget():'',
-      projectPres,nbPres,projectPres.concat(nbPres).map(function(p){
+      afterSave?0:projectPres,nbPres,projectPres.concat(nbPres).map(function(p){
         return [p.name,p.origin||'',p.page||'',p.kind||''].join('\u0001');
       }).join('\u0002')];
     rawOpenNames().concat(on?[on]:[]).forEach(function(n){
       var h=(typeof fileHandles!=='undefined'&&fileHandles)
         ?fileHandles[n]:null;
       var m=presTabsMeta.all[n]||{};
-      k.push(n,n===on?presTabsDraftOk(n):draftGet(n),h,h&&h.name,
-        m.file,m.home);
+      k.push(n,n===on?(afterSave?0:presTabsDraftOk(n)):draftGet(n),h,
+        h&&h.name,m.file,m.home);
     });
     return k;
+  }
+  /* ---- A FINISHED SAVE MOVES ONE MARK (2026-10-09) ---------------------
+     Every autosave, idle consolidation and Save ended in a full rebuild
+     of the side list and the top tabs plus a forced layout to keep the
+     tab in view -- 16-49 ms at 4x, every 15 s while editing. Routing it
+     through the slide-change gate did not help: the draft mark is in that
+     key, and a save is exactly what changes it. A save changes nothing
+     else a tab draws, so when everything else is as the last build left
+     it, the deck's mark is set in place and the tab kept in view at the
+     next frame. Anything else -- a rename, another home, a tab holding
+     the keyboard -- is the full rebuild it always was. */
+  var presTabsSaveKey=null;
+  function presTabsAfterSave(){
+    var top=$('#top-tabstrip');
+    var ae=document.activeElement;
+    if(!presstrip||!top||!presTabsSaveKey
+       ||(ae&&ae.closest&&ae.closest('.top-pres-tab,#presstrip'))
+       ||!presTabsKeyIs(presTabsSaveKey,presTabsInputs(true))
+       ||!presTabsKeyIs(presTabsSide,[].slice.call(presstrip.childNodes))
+       ||!presTabsTop.every(function(t){return t.parentNode===top;})
+       ||$$('.top-pres-tab',top).length!==presTabsTop.length){
+      renderPresTabs();return;
+    }
+    var on=pres&&pres.name;
+    if(on){
+      var sum=presentationSummary(on),d=!!(sum&&sum.draft);
+      presTabsSide.concat(presTabsTop).forEach(function(t){
+        if(t.dataset&&t.dataset.pres===on) t.classList.toggle('draftonly',d);
+      });
+    }
+    presTabsSideKey=presTabsTopKey=presTabsInputs();
+    presTabsKeepInView();
   }
   function presTabsKeyIs(a,b){
     if(!a||a.length!==b.length) return false;
@@ -3228,6 +3262,8 @@
     var inp=$('#pres-name');
     if(document.activeElement!==inp&&inp.value!==pres.name)
       inp.value=pres.name;
+    /* a finished project save: its mark in place (presTabsAfterSave) */
+    if(slideOnly==='save'){presTabsAfterSave();return;}
     /* renderCreate's call: skipped when no tab would change (above) */
     if(slideOnly&&presTabsSame()){presTabsKeepInView();return;}
     renderPresTabs();

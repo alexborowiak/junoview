@@ -1342,6 +1342,8 @@
     }
     else if(endingTalk){
       rehStop();lateFrom=-1;
+      /* the saves the talk held back (60-saving autoSaveNow), at idle */
+      releaseSaves();
       /* the panel belongs to the run; the SETTINGS survive it, because a
          projector does not change between runs (T88) */
       var tp=$('#talkpane');
@@ -1608,8 +1610,11 @@
          costs nothing (T32) */
       /* the opening snapshot waits for the stored head pointer, so a
          reload's first entry descends from where you actually were
-         rather than founding a new root (T127) */
-      snapTake('opened',undefined,histSeed());
+         rather than founding a new root (T127). A deck unchanged since
+         its last kept snapshot has nothing to add (histUnchanged), and
+         reads the head back all the same. */
+      if(histUnchanged()) histSeed();
+      else snapTake('opened',undefined,histSeed());
     }
     status();
     setUIMode(m||'view');
@@ -1680,6 +1685,8 @@
        the question waited for the next deck (2026-10-06 review) */
     var wasTalk=(mode==='view');
     if(wasTalk){rehStop();talkToolsReset();}
+    /* the saves the talk held back (60-saving autoSaveNow), at idle */
+    if(wasTalk) releaseSaves();
     try{
       if(document.fullscreenElement)
         document.exitFullscreen().catch(function(){});

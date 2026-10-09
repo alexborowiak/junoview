@@ -283,7 +283,7 @@ def test_a_self_contained_deck_carries_the_frames_too(out):
     They dedupe by ref, so a flip book costs the same as placing its
     figures one at a time.
     """
-    body = out.split("function embedAssets(list){")[1].split("\n  }")[0]
+    body = out.split("function embedAssets(list,opts){")[1].split("\n  }")[0]
     assert "if(a.k==='cell'&&a.ref) refs.push(a.ref);" in body
     assert "else if(a.k==='flip') flipFrames(a).forEach(function(f){" in body
     assert "if(emb[ref]) return;" in body

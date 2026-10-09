@@ -1685,7 +1685,9 @@ def test_typed_text_reaches_the_model_without_a_blur(out):
     # a tab can close or be backgrounded without ever firing blur
     assert "window.addEventListener('pagehide',lastChance);" in out
     # table cells had the identical blur-only shape
-    assert "td.__jvFlush=function(){writeCell();markDirty(true);};" in out
+    # (the flush commits only words that changed since the last one)
+    assert "td.__jvFlush=flushCell;" in out
+    assert "      writeCell();markDirty(true);" in out
 
 
 def test_a_failed_browser_save_is_not_reported_as_a_save(out):
@@ -1736,7 +1738,7 @@ def test_a_rename_or_delete_does_not_strip_the_embedded_figures(out):
     # ONE saveProject() helper owns the embedAssets save; rename and
     # delete (File menu and rail bins alike) route through it (2026-08-23)
     assert out.count(
-        "      {presentations:embedAssets(deep(projectPres)),rev:projectRev})"
+        "    var whole=embedAssets(projectPres.map(shallowDeck),{project:1});"
     ) == 1
     # T451: and the conflict retry must never re-post projectPres either
     # -- it posts the SERVER's list with this window's change re-applied,
@@ -1753,7 +1755,11 @@ def test_a_rename_or_delete_does_not_strip_the_embedded_figures(out):
     assert out.count("    saveProject({from:old,to:nm});") == 2
     # the idle consolidation that puts the figures back
     assert "function saveToProject(silent,embed){" in out
-    assert "var body=(silent&&!embed)?merged:embedAssets(deep(merged));" in out
+    # (a deliberate Save embeds every deck; the consolidation the decks
+    # the file may not hold as this window would write them, 2026-10-09)
+    assert ("    if(!silent) body=embedAssets(whole=merged.map(shallowDeck),"
+            "{project:1});") in out
+    assert "    else if(embed&&embEnsure()){" in out
 
 
 def test_pdf_export_prints_the_ink(out):

@@ -2412,8 +2412,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Speed (style): no body/descendant :has() -- state classes and child combinators;
 # custom properties written where consumed during drags; Home selectors scoped;
 # Colourful zone on visible surfaces; no transition:all.
-EXPECTED_MD5 = "b11746bd2a2780ae4f96c40123cc8a08"
-EXPECTED_BYTES = 5320238
+# Speed (save): the deck script carries embApply/embEnsure/embFetch, the generation
+# counter and the interned undo snapshots, so the inlined bytes moved.
+EXPECTED_MD5 = "754ef985bd785162962b88e14a4dd9a4"
+EXPECTED_BYTES = 5351162
 
 
 def _render_example() -> str:

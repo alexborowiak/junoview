@@ -411,9 +411,19 @@
       if(!inside){e.stopImmediatePropagation();}
     },true);
   }
+  /* every saved deck, with the one on screen as it is now. The OTHER
+     decks go by reference (2026-10-09): they are not being edited, the
+     request body is serialised the moment it is sent, and the list
+     becomes projectPres on success -- which is what they already are --
+     so deep-copying every deck in the project on every autosave bought
+     nothing (57 ms of a 350 ms autosave at 4x). A notebook's deck gets a
+     shallow copy so its `origin` can come off. The deck on screen is
+     still copied: it goes on changing while the request is out. */
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
-      .map(function(p){var c=deep(p);delete c.origin;return c;});
+      .map(function(p){
+        if(p.origin===undefined) return p;
+        var c=Object.assign({},p);delete c.origin;return c;});
     var cp=deep(pres);delete cp.origin;out.push(cp);
     return out;
   }
@@ -422,9 +432,110 @@
       var c=deep(p);delete c.origin;return JSON.stringify(c);
     }catch(e){return null;}
   }
+  /* what a save was sent with, to ask on its return whether the deck on
+     screen is still that deck (see deckGen, 10-decks.js) */
+  function deckGenSig(){return {deck:pres,gen:deckGen};}
   function stillSaved(name,sig){
-    return !!sig&&pres&&pres.name===name&&deckSaveSig(pres)===sig;
+    return !!sig&&!!pres&&sig.deck===pres&&pres.name===name
+      &&sig.gen===deckGen;
   }
+  /* ---- THE IDLE CONSOLIDATION SENDS ONLY WHAT THE FILE LACKS ----------
+     (2026-10-09.) Twenty seconds after the last edit the project file is
+     made self-contained again (scheduleAutosave) -- and that re-embedded
+     EVERY deck in the project, every figure each one shows: a 3.8 s
+     freeze and a 28.6 MB request with 31 decks, after every pause. The
+     server keeps a deck's stored copies when a write leaves them out
+     (state._keep_embedded), so a deck goes lean unless what the file
+     holds for it may differ from what this window would write:
+       - it was changed since its last self-contained write, or
+       - it shows a copy the file does not hold, or holds another of
+         (a figure refreshed in another deck, a new placement), or
+       - it shows a figure an open notebook could give that has no
+         kept copy yet (the capture embedAssets makes), or
+       - it shows a live link, which every self-contained write re-reads
+         from its notebook, or
+       - it plays a clip the file does not hold.
+     A deliberate Save still writes every deck whole. */
+  function embRefsOf(p){
+    var refs=isColPres(p)?colRefsOf(p):[];
+    (p.slides||[]).forEach(function(s){
+      (s.annots||[]).forEach(function(a){
+        if(!a) return;
+        if(a.k==='cell'&&a.ref) refs.push(a.ref);
+        else if(a.k==='flip') flipFrames(a).forEach(function(f){
+          if(f&&f.ref) refs.push(f.ref);});
+      });
+    });
+    return refs;
+  }
+  /* would embedAssets write this ref differently from what the file
+     holds for the deck? The same choices embedAssets makes, without the
+     clone and re-serialisation that make it expensive: a figure an open
+     notebook can give is written with that card's title and kind, the
+     kept copy's body (the notebook's, for a live link or no copy yet)
+     and the code facet when the card has one (kept first, then the
+     notebook's); any other is written as the copy this session holds. */
+  function embDiffers(ref,h){
+    var it=resolveRef(ref),e=embFor(ref);
+    if(it&&!it.emb){
+      if(refIsLive(ref)||!e||!h) return true;
+      if(h.html!==e.html||(h.title||'')!==(it.title||'')
+         ||(h.kind||'')!==(it.kind||'')) return true;
+      if(!it.hasCode) return !!h.code;
+      return !h.code||(!!e.code&&h.code!==e.code);
+    }
+    if(!e||!e.html) return false;   /* nothing this window could write */
+    return !h||h.html!==e.html||(h.code||'')!==(e.code||'')
+      ||(h.title||'')!==(e.title||'')||(h.kind||'')!==(e.kind||'');
+  }
+  function embNeedsSend(p){
+    if(!p||!p.name||p.kind==='view') return false;
+    if((embDirtyAt[p.name]||0)>(embSentAt[p.name]||0)) return true;
+    var held=embHeld[p.name]||{},heldC=embHeldClips[p.name]||{};
+    var refs=embRefsOf(p);
+    for(var i=0;i<refs.length;i++)
+      if(embDiffers(refs[i],held[refs[i]])) return true;
+    var clip=false;
+    (p.slides||[]).forEach(function(s){
+      (s.annots||[]).forEach(function(a){
+        if(a&&a.k==='video'&&a.vkey&&!heldC[a.vkey]
+           &&(mediaStore()[a.vkey]||{}).src) clip=true;
+      });
+      var nk=s.narr&&s.narr.vkey;
+      if(nk&&!heldC[nk]&&(mediaStore()[nk]||{}).src) clip=true;
+    });
+    return clip;
+  }
+  /* a deck the file now holds as sent: what the next consolidation
+     compares against. `g` is deckGen when the body was built; a deck
+     that went out with no copies at all left the stored ones in place
+     (state._keep_embedded), so what is held is unchanged. */
+  function embNoteHeld(p,g){
+    if(!p||!p.name) return;
+    if(g!=null) embSentAt[p.name]=g;
+    if(p.emb&&typeof p.emb==='object'){
+      var h={};
+      Object.keys(p.emb).forEach(function(r){
+        var e=p.emb[r]; if(e&&e.html) h[r]=e;});
+      embHeld[p.name]=h;
+    }
+    if(p.media&&typeof p.media==='object'){
+      var c={};
+      Object.keys(p.media).forEach(function(k){c[k]=1;});
+      embHeldClips[p.name]=c;
+    }
+  }
+  function shallowDeck(p){return Object.assign({},p);}
+  /* test hooks: the 20-second consolidation, now, and where the copies
+     stand (tests/test_lean_boot_in_the_browser.py) */
+  window.SemDeckConsolidate=function(){return saveToProject(true,true);};
+  window.SemDeckEmbState=function(){
+    return {lazy:embLazy,loaded:embLoaded,syncFetches:embSyncN,
+      keys:Object.keys(EMBED).sort(),weak:Object.keys(embWeak).sort(),
+      held:JSON.parse(JSON.stringify(embHeld)),
+      needs:embLoaded?allSaved().filter(embNeedsSend)
+        .map(function(p){return p.name;}):null};
+  };
   /* strip "stem::" when only one notebook is open, so decks saved from a
      single tab stay compatible with sidecars and --embed-deck */
   function plainIfSingle(list){
@@ -488,7 +599,7 @@
     saveStamp=new Date();saveKind=silent?'auto':'manual';
     saveWhere='project';   /* T483 */
     deckMetaSet(savedName,{saved:Date.now(),home:'project'});   /* T598 */
-    status();renderPresRow();
+    status();renderPresRow(conflict?undefined:'save');
     if(conflict){
       renderPresTabs();
       docToastOnce('Another window changed this project — merged '
@@ -498,24 +609,64 @@
     }
     return true;
   }
+  /* ONE AUTOSAVE AT A TIME (2026-10-09). Two writes in flight carry the
+     same revision, so the second comes back a conflict and is merged and
+     re-sent with every deck's copies -- this window colliding with
+     itself. An autosave asked for while one is out waits for it, and
+     several such asks become one (the consolidation if any asked for
+     it). A deliberate Save is never held back. */
+  var projSaving=null,projSaveNext=null;
   function saveToProject(silent,embed){
+    if(silent&&projSaving){
+      if(!projSaveNext){
+        var nx=projSaveNext={embed:!!embed,p:null};
+        nx.p=projSaving.then(function(){
+          projSaveNext=null;return saveToProject(true,nx.embed);});
+      } else if(embed) projSaveNext.embed=true;
+      return projSaveNext.p;
+    }
     flushTextEdits();   /* the words still in the DOM are part of the save */
     /* Mint slide ids before both payloads are frozen. History and the
        successful file must describe the same bytes, not adjacent states. */
     var savedHist=!silent?histCapture():null;
-    var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
+    var savedName=pres.name||'untitled',savedSig=deckGenSig();
     var merged=mergedPresentations();
     /* a deliberate Save writes the self-contained form (figures inside)
        into junoview_project.json; the every-second autosave stays refs-
        only so editing does not rewrite megabytes to a synced disk each
-       keystroke. `projectPres` keeps the lean copy either way.
+       keystroke. `projectPres` keeps the lean copy either way -- the
+       copies ride on shallow copies of the decks, never on `merged`.
        `embed` is the idle consolidation from scheduleAutosave: silent,
        but self-contained, so the file does not sit refs-only between a
-       manual Save and the next one. */
-    var body=(silent&&!embed)?merged:embedAssets(deep(merged));
+       manual Save and the next one -- and only for the decks whose
+       copies the file may not hold (embNeedsSend). */
+    var body=merged,whole=[];
+    if(!silent) body=embedAssets(whole=merged.map(shallowDeck),{project:1});
+    else if(embed&&embEnsure()){
+      /* until nothing more is owed: embedding one deck can refresh the
+         session's copy of a figure another deck shows too */
+      body=merged.slice();
+      for(var pass=0,more=true;more&&pass<4;pass++){
+        var now=[];
+        body.forEach(function(p,i){
+          if(whole.indexOf(p)>=0||!embNeedsSend(p)) return;
+          var c=shallowDeck(p);body[i]=c;now.push(c);});
+        more=now.length>0;
+        if(more){embedAssets(now,{project:1});whole=whole.concat(now);}
+      }
+    }
+    /* the copies could not be fetched: embedAssets left them lean */
+    if(!embLoaded) whole=[];
+    /* a consolidation with no copies owed and nothing asked to be saved
+       since the last write that landed has nothing to write */
+    if(silent&&embed&&!whole.length&&projAsked===projAnswered)
+      return Promise.resolve(true);
+    var sentGen=deckGen,asked=projAsked;
     var op=APP.api('/api/save',{presentations:body,rev:projectRev})
       .then(function(j){
         if(j&&typeof j.rev==='number') projectRev=j.rev;
+        projAnswered=asked;
+        whole.forEach(function(p){embNoteHeld(p,sentGen);});
         return projectSaved(merged,silent,false,savedName,savedSig);
       }).catch(function(e){
         /* ANOTHER WINDOW GOT THERE FIRST. This whole payload is every
@@ -538,6 +689,10 @@
             {presentations:reconciled,rev:projectRev})
             .then(function(j2){
               if(j2&&typeof j2.rev==='number') projectRev=j2.rev;
+              projAnswered=asked;
+              /* their copies are the file's now; this deck's went lean
+                 and stays owed to the next consolidation */
+              theirs.forEach(function(p){embNoteHeld(p,null);});
               return projectSaved(reconciled,silent,true,
                 savedName,savedSig);
             }).catch(function(e2){
@@ -554,6 +709,8 @@
     /* Enqueued immediately but gated on op=true: a rename after this
        click waits behind the saved snapshot and migrates it as one unit. */
     if(savedHist) snapTake('saved',savedHist,op);
+    projSaving=op;
+    op.then(function(){if(projSaving===op) projSaving=null;});
     return op;
   }
   /* one conflict notice per settling period: the autosave retries every
@@ -761,7 +918,17 @@
      fresh at save time (the deck tracks the notebook, as ever); a card
      whose notebook is closed keeps its last saved copy instead of losing
      it. normPres absorbs `emb` back into the session store on load. */
-  function embedAssets(list){
+  function embedAssets(list,opts){
+    /* THE PROJECT'S COPIES FIRST (2026-10-09). The page boots without
+       them (embEnsure, 10-decks.js); a self-contained write made before
+       they arrived would carry only what the open notebooks can give --
+       and, for a figure whose notebook is open, the notebook's version in
+       place of the kept one (T298). So this is the one door every such
+       write passes, and it fetches them if they have not come. For the
+       PROJECT file, a fetch that fails writes nothing self-contained at
+       all: lean, the server keeps every copy it holds. A FILE is written
+       with what can be had, as it always was. */
+    if(!embEnsure()&&opts&&opts.project){lastEmbCount=0;return list;}
     list.forEach(function(p){
       if(p.kind==='view') return;
       var emb={};
@@ -1018,7 +1185,7 @@
       return Promise.resolve(false);
     }
     var savedHist=!silent?histCapture():null;
-    var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
+    var savedName=pres.name||'untitled',savedSig=deckGenSig();
     var fileText;
     try{fileText=junoviewFileHtml();}
     catch(e){
@@ -1033,7 +1200,7 @@
         /* T398: picking a file may have renamed the deck after it, and
            the text was rendered before the pick */
         if(pres.name!==savedName){
-          savedName=pres.name||'untitled';savedSig=deckSaveSig(pres);
+          savedName=pres.name||'untitled';savedSig=deckGenSig();
           fileText=junoviewFileHtml();
         }
         return (silent?permOK(h):permAsk(h)).then(function(ok){
@@ -1310,15 +1477,49 @@
     clearTimeout(autoTimer);autoTimer=null;autoDue=0;
     clearInterval(autoTick);autoTick=null;
   }
+  /* ---- NOT DURING THE TALK (2026-10-09) -------------------------------
+     An edit made just before Present armed the autosave and the
+     20-second consolidation, and both fired mid-talk: a 430-620 ms
+     freeze at 4x in front of the audience, twice. A write to the project
+     or a file waits for the show to end and then runs when the page is
+     idle; the browser's own copy is not held back (it is the draft,
+     flushed when the show starts and on every edit since). */
+  var savesHeld=null;
+  function presenting(){
+    return mode==='view'&&typeof deckEl!=='undefined'&&deckEl&&!deckEl.hidden;
+  }
+  function holdSave(embed){
+    savesHeld=savesHeld||{auto:false,embed:false};
+    if(embed) savesHeld.embed=true; else savesHeld.auto=true;
+  }
+  function releaseSaves(){
+    var h=savesHeld; savesHeld=null;
+    if(!h) return;
+    (window.requestIdleCallback||function(f){return setTimeout(f,300);})(
+      function(){
+        if(presenting()){savesHeld=h;return;}   /* another show began */
+        /* the consolidation writes everything the autosave would, so
+           when both were held it is the one write */
+        if(h.embed&&saveTarget==='project'&&APP.mode==='app'&&autosaveOn)
+          saveToProject(true,true);
+        else if(h.auto&&!autoTimer) autoSaveNow();
+      },{timeout:3000});
+  }
   function autoSaveNow(){
     autoTimer=null;autoDue=0;
     clearInterval(autoTick);autoTick=null;
+    if(saveTarget!=='browser'&&presenting()){holdSave(false);return;}
     if(saveTarget==='file') saveToFile(true);
     else if(saveTarget==='project'&&APP.mode==='app') saveToProject(true);
     else autoSaveBrowser();
     renderAutoTick();
   }
+  /* every request for a save (scheduleAutosave) against the last that
+     reached the project: the idle consolidation writes nothing when
+     the two agree and no deck owes the file a copy */
+  var projAsked=0,projAnswered=0;
   function scheduleAutosave(){
+    projAsked++;
     /* a remembered file autosaves too — silently, and only while the
        browser still grants write permission (after a reload it waits for
        the first Save click, which carries the user gesture it needs) */
@@ -1348,8 +1549,10 @@
        refs-only is now ~20s of idle rather than forever. */
     clearTimeout(embedTimer);
     embedTimer=setTimeout(function(){
-      if(saveTarget==='project'&&APP.mode==='app'&&autosaveOn)
+      if(saveTarget==='project'&&APP.mode==='app'&&autosaveOn){
+        if(presenting()){holdSave(true);return;}   /* after the talk */
         saveToProject(true,true);
+      }
     },20000);
   }
   var embedTimer=null;
@@ -1836,7 +2039,7 @@
       closeMenu();
       if(!requireName()) return;
       var savedHist=histCapture();
-      var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
+      var savedName=pres.name||'untitled',savedSig=deckGenSig();
       var savedMerged=mergedPresentations();
       var op=(async function(){
         try{
@@ -4084,10 +4287,15 @@
   }
   function saveProject(change){
     if(APP.mode!=='app') return Promise.resolve(false);
+    /* shallow copies carry the copies: projectPres stays lean, and
+       nothing in it needed a deep copy to be read (2026-10-09) */
+    var whole=embedAssets(projectPres.map(shallowDeck),{project:1});
+    var sentGen=deckGen;
     return APP.api('/api/save',
-      {presentations:embedAssets(deep(projectPres)),rev:projectRev})
+      {presentations:whole,rev:projectRev})
       .then(function(j){
         if(j&&typeof j.rev==='number') projectRev=j.rev;
+        if(embLoaded) whole.forEach(function(p){embNoteHeld(p,sentGen);});
         return true;
       }).catch(function(e){
         if(!(e&&e.status===409&&e.data&&Array.isArray(e.data.presentations)))
@@ -4834,15 +5042,24 @@
      without this, a deck imported from a self-contained file kept its
      figures only until the tab closed — the drafts it left behind are
      refs-only by design, so the next session opened to empty frames. A
-     copy absorbed THIS session is fresher and is never overwritten. */
-  idbGet('emb:'+SCOPE).then(function(m){
-    if(!m||typeof m!=='object') return;
-    var added=0;
-    Object.keys(m).forEach(function(k){
-      var e=m[k];
-      if(EMBED[k]||!e||typeof e.html!=='string'||!e.html) return;
-      embStore(k,e);added++;
-    });
-    if(!added) return;
-    if(!deckEl.hidden) refresh(); else renderPresTabs();
-  }).catch(function(){});
+     copy absorbed THIS session is fresher and is never overwritten.
+     Called from THE BOOT SEQUENCE once the project's own copies are in
+     (they used to be absorbed before this read could answer, and still
+     are), and it settles embIdbDone either way, which the whole-store
+     write in embSaveSoon waits for. */
+  function embRehydrate(){
+    return idbGet('emb:'+SCOPE).then(function(m){
+      if(!m||typeof m!=='object') return;
+      var added=0;
+      Object.keys(m).forEach(function(k){
+        var e=m[k];
+        if(EMBED[k]||!e||typeof e.html!=='string'||!e.html) return;
+        embStore(k,e);added++;
+        /* the project's copies never arrived: theirs still win if a
+           later fetch brings them (embApply) */
+        if(!embLoaded) embWeak[k]=1;
+      });
+      if(!added) return;
+      if(!deckEl.hidden) refresh(); else renderPresTabs();
+    }).catch(function(){}).then(function(){embIdbSettle(true);});
+  }

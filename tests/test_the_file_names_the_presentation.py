@@ -26,6 +26,6 @@ def test_the_file_written_carries_the_new_name(out):
     """saveToFile renders the file's text BEFORE the pick; a rename during
     the pick would otherwise write the old name into the new file."""
     assert ("        if(pres.name!==savedName){\n"
-            "          savedName=pres.name||'untitled';savedSig=deckSaveSig(pres);\n"
+            "          savedName=pres.name||'untitled';savedSig=deckGenSig();\n"
             "          fileText=junoviewFileHtml();\n"
             "        }") in out

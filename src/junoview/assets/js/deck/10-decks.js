@@ -38,7 +38,123 @@
   var frameNodeCache={};
   var snapNodeCache=new Map();      /* snapshot html -> {part: node} */
   var verNodeCache=new WeakMap();   /* version card -> {part: node} */
+  /* ---- THE SAVED DECKS' COPIES ARRIVE AFTER THE PAGE (2026-10-09) -----
+     (owner: "if this is not able to load quick, and not be laggy, then no
+     matter how good the features are no one will ever use this".) The
+     app page carried every saved deck's `emb` inline in its boot JSON --
+     10 MB for an 18-deck project, the same figure once per deck that
+     shows it -- parsed, deep-copied and absorbed here before anything on
+     screen could answer, and the cost grew with every deck you kept. The
+     server now boots the decks lean and serves their copies, each one
+     once, from /api/emb (server/state.py emb_payload); APP.project.lazyEmb
+     says there is something to fetch.
+
+     THE RULE THAT MAKES IT SAFE: NOTHING READS OR WRITES A COPY BEFORE
+     THEY ARE HERE. Every reader goes through embKey, which calls
+     embEnsure() -- free once they have arrived, and before that a
+     same-origin synchronous fetch, so a deck opened in the first second
+     renders, captures and saves exactly as it did when the copies were
+     inline. The ordinary path is the idle fetch (embFetch, from THE
+     BOOT SEQUENCE), and nothing waits for it. Only the boot itself is
+     exempt (embBootDone), because normPres runs over the lean decks
+     there and fetching then would put the cost right back.
+     Order is kept too: the project's copies used to be absorbed first
+     (at eval), so a copy absorbed before they arrive -- a notebook's own
+     deck, a file opened at boot -- is WEAK and gives way to the
+     project's, while anything you did yourself since boot is fresher and
+     stays (T305). IndexedDB's copies come after both, as before. */
+  var embLazy=!!(APP.mode==='app'&&APP.project&&APP.project.lazyEmb);
+  var embLoaded=!embLazy;      /* the project's copies are in EMBED */
+  var embBootDone=false;       /* set by THE BOOT SEQUENCE */
+  var embAsync=null,embFailedAt=0,embSyncN=0;
+  var embWeak={};              /* keys absorbed before the project's */
+  /* what the project file is KNOWN to hold, per deck: {ref: copy} and
+     {vkey: 1}. Read off /api/emb, kept current by every embedded save,
+     and what the idle consolidation asks before re-sending a deck
+     (embNeedsSend). A name with no entry is one the file holds no
+     copies for -- a project with none, or a deck it has not seen. */
+  var embHeld={},embHeldClips={};
+  var embSettle=null,embSettled=new Promise(function(r){embSettle=r;});
+  if(embLoaded) embSettle(true);
+  /* the IndexedDB copies have been read back (or there were none): the
+     whole-store write in embSaveSoon waits for this, so a write made
+     before the read cannot replace the stored set with a smaller one */
+  var embIdbSettle=null,embIdbDone=new Promise(function(r){embIdbSettle=r;});
+  function embApply(j){
+    if(embLoaded) return;
+    var snaps=(j&&j.snaps)||[],clips=(j&&j.clips)||[];
+    ((j&&j.decks)||[]).forEach(function(d){
+      if(!d||!d.name) return;
+      var p={name:d.name,emb:{},media:{}},held={},heldC={};
+      Object.keys(d.emb||{}).forEach(function(r){
+        var s=snaps[d.emb[r]];
+        if(s&&typeof s.html==='string'&&s.html){p.emb[r]=s;held[r]=s;}
+      });
+      Object.keys(d.media||{}).forEach(function(k){
+        var c=clips[d.media[k]];
+        if(c&&typeof c.src==='string'&&c.src){p.media[k]=c;heldC[k]=1;}
+      });
+      embHeld[d.name]=held;embHeldClips[d.name]=heldC;
+      /* the key the eval-time absorb used: ITEMS was still empty then,
+         so a namespaced ref is itself and a plain one finds its
+         namespace among the copies absorbed before it */
+      Object.keys(p.emb).forEach(function(k){
+        var e=p.emb[k],key=embKeyRaw(k)||k;
+        if(EMBED[key]&&EMBED[key].html&&!embWeak[key]) return;
+        embPut(key,e);
+      });
+      if(typeof mediaAbsorb==='function') mediaAbsorb(p);
+    });
+    embLoaded=true;embWeak={};
+    embSettle(true);
+    embSaveSoon();
+  }
+  function embUrl(){
+    return '/api/emb?t='+encodeURIComponent(APP.token||'');
+  }
+  /* the idle fetch (THE BOOT SEQUENCE schedules it) */
+  function embFetch(){
+    if(embLoaded) return Promise.resolve(true);
+    if(embAsync) return embAsync;
+    embAsync=APP.api('/api/emb').then(function(j){
+      var was=embLoaded;
+      embApply(j);
+      /* whatever was drawn before they came (only the boot itself can
+         draw without asking) is drawn again from the kept copies */
+      if(!was&&typeof deckEl!=='undefined'&&deckEl&&!deckEl.hidden
+         &&typeof refresh==='function') refresh();
+      return true;
+    }).catch(function(){
+      if(embLoaded) return true;
+      embFailedAt=Date.now();embSettle(false);
+      return false;
+    }).then(function(ok){embAsync=null;return ok;});
+    return embAsync;
+  }
+  /* the synchronous door, for a reader that cannot wait. Never during
+     the boot, and not again within five seconds of a failure. */
+  function embEnsure(){
+    if(embLoaded) return true;
+    if(!embBootDone) return false;
+    if(embFailedAt&&Date.now()-embFailedAt<5000) return false;
+    try{
+      var x=new XMLHttpRequest();
+      x.open('GET',embUrl(),false);
+      x.send(null);
+      if(x.status!==200) throw new Error('HTTP '+x.status);
+      embSyncN++;
+      embApply(JSON.parse(x.responseText));
+      return true;
+    }catch(e){
+      embFailedAt=Date.now();embSettle(false);
+      return false;
+    }
+  }
   function embKey(ref){
+    if(!embLoaded) embEnsure();
+    return embKeyRaw(ref);
+  }
+  function embKeyRaw(ref){
     if(!ref) return null;
     if(EMBED[ref]) return ref;
     /* plain legacy anchor: find it under any namespace, like resolveRef */
@@ -85,6 +201,18 @@
      answer to that is the click you just made, taken back. */
   var EMBPREV={};
   function embStore(key,e){
+    delete embWeak[key];   /* written on purpose: fresher than the file's */
+    /* T-speed (2026-10-09): THE SAME COPY AGAIN IS NOT A NEW COPY. Every
+       embedded save re-stores what it just read, and each store threw
+       away the parsed body, the virtual item and every frame built from
+       it -- so the first slide change after each save re-parsed and
+       re-decoded its figures (+100-180 ms at 4x). Same four fields, same
+       entry: keep it. */
+    var was=EMBED[key];
+    if(was&&was.html===String(e.html||'')
+       &&was.code===(typeof e.code==='string'?e.code:'')
+       &&was.title===String(e.title||'')&&was.kind===String(e.kind||''))
+      return;
     /* a write that changes nothing is not a step to undo: embedAssets
        re-stores what it just read on every deliberate save, and each of
        those would otherwise overwrite the one slot that holds the copy
@@ -93,6 +221,14 @@
        &&EMBED[key].html!==String(e.html||''))
       EMBPREV[key]={title:EMBED[key].title,kind:EMBED[key].kind,
         html:EMBED[key].html,code:EMBED[key].code||''};
+    embPut(key,e);
+  }
+  /* the store itself, with no step to undo: what embStore does after
+     its EMBPREV bookkeeping, and how the project's copies take the place
+     of a weak one (embApply) -- which the boot order used to do by
+     absorbing them first, and which was never a step either */
+  function embPut(key,e){
+    delete embWeak[key];
     EMBED[key]={title:String(e.title||''),kind:String(e.kind||''),
       html:String(e.html||''),code:typeof e.code==='string'?e.code:''};
     delete embItems[key];
@@ -118,6 +254,7 @@
     var n=0,unlinked=0;
     (keys||Object.keys(EMBPREV)).forEach(function(k){
       var p=EMBPREV[k]; if(!p||!p.html) return;
+      delete embWeak[k];
       EMBED[k]={title:p.title,kind:p.kind,html:p.html,code:p.code||''};
       delete embItems[k];
       if(refIsLive(k)){setRefLive(k,0);unlinked++;}
@@ -136,14 +273,19 @@
   function embSaveSoon(){
     clearTimeout(embSaveT);
     embSaveT=setTimeout(function(){
-      /* plain copies only — the cached _node is a DOM element and would
-         make the structured clone throw */
-      var plain={};
-      Object.keys(EMBED).forEach(function(k){
-        var e=EMBED[k];
-        plain[k]={title:e.title,kind:e.kind,html:e.html,code:e.code||''};
+      /* the whole store replaces the stored one, so it waits until the
+         stored one has been read back into it (embRehydrate) -- and,
+         through that, until the project's copies are in too */
+      embIdbDone.then(function(){
+        /* plain copies only — the cached _node is a DOM element and
+           would make the structured clone throw */
+        var plain={};
+        Object.keys(EMBED).forEach(function(k){
+          var e=EMBED[k];
+          plain[k]={title:e.title,kind:e.kind,html:e.html,code:e.code||''};
+        });
+        idbPut('emb:'+SCOPE,plain).catch(function(){});
       });
-      idbPut('emb:'+SCOPE,plain).catch(function(){});
     },1000);
   }
   function resolveRef(ref){
@@ -472,6 +614,9 @@
         var key=ns(k)||k;
         if(EMBED[key]&&EMBED[key].html) return;
         embStore(key,e);
+        /* absorbed ahead of the project's copies, which this order used
+           to put first: theirs wins when they arrive (embApply) */
+        if(!embLoaded) embWeak[key]=1;
       });
       embSaveSoon();
     }
@@ -515,9 +660,15 @@
      window's changes (see the 409 branch in saveToProject) */
   var projectRev=(APP.project&&typeof APP.project.rev==='number')
     ?APP.project.rev:0;
+  /* normPres builds every deck afresh and copies each object it keeps,
+     so the boot list needs no deep() of its own first -- that was a
+     whole stringify-and-parse of the boot JSON (2026-10-09). The boot
+     copy is let go once read: nothing else reads it, and holding it kept
+     every byte the page arrived with alive for the session. */
   var projectPres=(APP.project&&Array.isArray(APP.project.presentations))
-    ?deep(APP.project.presentations).map(function(p){return normPres(p);})
+    ?APP.project.presentations.map(function(p){return normPres(p);})
     :[];
+  if(APP.project) APP.project.presentations=null;
   function allSaved(){
     var out=[],seen={};
     projectPres.forEach(function(p){out.push(p);seen[p.name]=1;});
@@ -674,7 +825,35 @@
      declarations hoist, `var` initialisers do not, and this runs from
      initFirstPresentation in THE BOOT SEQUENCE). Version 2 adds the
      'drafts' store beside 'handles'. */
+  /* ONE CONNECTION, kept (2026-10-09): every put, get and delete
+     opened the database afresh -- a draft write after each edit, the
+     copies, the history -- and the open is the slow part. The promise is
+     kept while the connection is good and dropped when the browser
+     closes it or another tab upgrades it, so the next call opens again;
+     a failed open is not kept either. */
+  var idbConn=null;
   function idb(){
+    if(idbConn) return idbConn;
+    var p=idbOpen();
+    idbConn=p;
+    p.then(function(db){
+      function drop(){if(idbConn===p) idbConn=null;}
+      db.onclose=drop;
+      db.onversionchange=function(){drop();try{db.close();}catch(e){}};
+    },function(){if(idbConn===p) idbConn=null;});
+    return p;
+  }
+  /* a kept connection the browser has since closed answers its next
+     transaction with InvalidStateError: open a fresh one and try once
+     more, rather than report a refused write that was never refused */
+  function idbDo(fn){
+    return idb().then(fn).catch(function(e){
+      if(!(e&&e.name==='InvalidStateError')) throw e;
+      idbConn=null;
+      return idb().then(fn);
+    });
+  }
+  function idbOpen(){
     return new Promise(function(res,rej){
       var r,done=false;
       function fail(e){if(!done){done=true;rej(e);}}
@@ -696,7 +875,7 @@
   }
   function idbPut(k,v,store){
     store=store||'handles';
-    return idb().then(function(db){
+    return idbDo(function(db){
       return new Promise(function(res,rej){
         var t=db.transaction(store,'readwrite');
         /* .put can throw synchronously (DataCloneError) */
@@ -709,7 +888,7 @@
   }
   function idbDel(k,store){
     store=store||'handles';
-    return idb().then(function(db){
+    return idbDo(function(db){
       return new Promise(function(res,rej){
         var t=db.transaction(store,'readwrite');
         try{t.objectStore(store).delete(k);}catch(e){rej(e);return;}
@@ -721,7 +900,7 @@
   }
   function idbGet(k,store){
     store=store||'handles';
-    return idb().then(function(db){
+    return idbDo(function(db){
       return new Promise(function(res,rej){
         var t=db.transaction(store,'readonly');
         var q=t.objectStore(store).get(k);
@@ -732,7 +911,7 @@
   }
   /* every row of a store, as [{key,value}] */
   function idbAll(store){
-    return idb().then(function(db){
+    return idbDo(function(db){
       return new Promise(function(res,rej){
         var t=db.transaction(store,'readonly'),os=t.objectStore(store);
         var out=[],q;
@@ -751,6 +930,21 @@
     try{var d=JSON.parse(raw);
       return (d&&Array.isArray(d.slides))?normPres(d):null;
     }catch(e){return null;}
+  }
+  /* whether there is a draft that loads -- asked once per draft WRITTEN,
+     not once per question. The library, Home's rows and every tab asked
+     it by loading the whole draft (a parse and a normPres of the deck)
+     just to throw it away (2026-10-09). Memoised on the stored string
+     itself, which every write replaces. */
+  var draftOkMemo={};
+  function draftOk(name){
+    var raw=draftGet(name);
+    if(!raw){delete draftOkMemo[name];return false;}
+    var m=draftOkMemo[name];
+    if(m&&m.raw===raw) return m.ok;
+    var ok=!!loadDraft(name);
+    draftOkMemo[name]={raw:raw,ok:ok};
+    return ok;
   }
   /* THE DRAFT WRITE IS DEBOUNCED (2026-08-23 perf). markDirty runs on
      every keystroke and every gesture commit, and JSON.stringify(pres)
@@ -819,7 +1013,7 @@
          where the deck lives only for the project, a notebook, or a
          deck with no home yet -- whatever the deck on screen saves to */
       folder:p.folder||'',
-      draft:!!loadDraft(name)&&w.kind!=='browser'&&w.kind!=='file',
+      draft:draftOk(name)&&w.kind!=='browser'&&w.kind!=='file',
       where:w.text,whereKind:w.kind,
       at:Math.max(m.edited||0,m.saved||0,m.opened||0)};
   }
@@ -1402,9 +1596,26 @@
      change while this still says what it said when it was built (see
      filmMoveMark, 55-sections-and-strip.js) */
   var filmGen=0;
+  /* WHETHER THE DECK HAS CHANGED SINCE A SAVE WAS SENT is this counter,
+     not a re-serialisation (2026-10-09). The save path used to deep-copy
+     and stringify the deck twice per save to compare it with itself --
+     150 ms of a 3.6 MB picture deck's 350 ms autosave at 4x, every 15 s.
+     Both doors that change the deck for keeps bump it: markDirty, and
+     histRestore, which writes without one. A save is "still exact" when
+     the deck on screen is the same object at the same count (60-saving
+     stillSaved) -- a change that went through neither door was missed
+     by the draft write as well, so the old serialised comparison caught
+     nothing the drafts kept. embDirtyAt says which deck, for the idle
+     consolidation (embNeedsSend). */
+  var deckGen=0,embDirtyAt={},embSentAt={};
+  function deckChanged(){
+    deckGen++;
+    if(pres&&pres.name) embDirtyAt[pres.name]=deckGen;
+  }
   function deckEdited(){return !!(pres&&editedDecks[pres.name]);}
   function markDirty(quiet){
     filmGen++;
+    deckChanged();
     /* T409: a committed edit to a clone reaches its clones FIRST, so
        the history entry and the draft below hold the synced deck */
     if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
@@ -1513,8 +1724,82 @@
      every keystroke, so snapshotting them would fill the 50-entry stack
      with single characters and evict the slide edits undo is for. Per
      SLIDE notes live on the slide and are covered. */
+  /* ---- A PICTURE IS NAMED IN THE SNAPSHOT, NOT COPIED (2026-10-09) ----
+     A pasted picture is a data: URL inside the slide, so every snapshot
+     -- one per committed edit, fifty deep -- carried every picture in
+     the deck: 50 copies of a 3.6 MB deck held 180 MB, and each edit
+     spent 85-90 ms at 4x serialising pictures that had not changed. A
+     string this long is the same picture from one snapshot to the next,
+     so the snapshot carries a short name for it (NUL + "jvpic<n>": a
+     NUL is not something a deck's text holds) and histParse puts the
+     picture back. V8 caches a string's hash, so
+     naming the same string object again is a lookup. Whatever parses a
+     snapshot goes through histParse: histRestore and Object history
+     (00-page.js), and nothing else reads them. The names are forgotten
+     with the stack (histReset) and pruned as the stack moves on. */
+  var HIST_BIG=8192,histBig=new Map(),histBigBack=new Map(),histBigN=0;
+  function histBigRep(k,v){
+    if(typeof v==='string'&&v.length>HIST_BIG){
+      var id=histBig.get(v);
+      if(!id){
+        id='\u0000jvpic'+(++histBigN);histBig.set(v,id);histBigBack.set(id,v);}
+      return id;
+    }
+    return v;
+  }
+  function histParse(snap){
+    if(snap.indexOf('\\u0000jvpic')<0) return JSON.parse(snap);
+    return JSON.parse(snap,function(k,v){
+      return (typeof v==='string'&&v.charCodeAt(0)===0&&histBigBack.has(v))
+        ?histBigBack.get(v):v;});
+  }
+  function histBigForget(){
+    histBig=new Map();histBigBack=new Map();histBigLast=null;}
+  /* A deck of words has nothing to name, and a replacer costs every
+     snapshot V8's fast path (2026-10-09: a 60-slide deck of text paid
+     ~2 ms an edit at 4x for nothing). So the snapshot is written plain
+     and kept when no quoted run in it is longer than HIST_BIG: an
+     unescaped quote opens and closes every string, so no such run means
+     no string the replacer would name, and the plain text IS what the
+     replacer writes. One that has a run goes through the replacer, and
+     the deck is remembered (histBigLast) so its next snapshot goes
+     straight there. Either way the same deck gives the same text. */
+  var histBigLast=null;
+  function histHasBig(s){
+    if(s.length<=HIST_BIG) return false;
+    var i=-1,j=s.indexOf('"');
+    while(j>=0){
+      var n=0;
+      while(s.charCodeAt(j-1-n)===92) n++;
+      if(!(n&1)){if(i>=0&&j-i>HIST_BIG) return true;i=j;}
+      j=s.indexOf('"',j+1);
+    }
+    return false;
+  }
+  function histJson(o){
+    if(histBigLast!==pres){
+      var s=JSON.stringify(o);
+      if(!histHasBig(s)) return s;
+      histBigLast=pres;
+    }
+    return JSON.stringify(o,histBigRep);
+  }
+  /* the names no snapshot still uses go, now and then: a picture
+     cropped twenty times leaves nineteen it no longer needs */
+  function histBigPrune(){
+    if(histBigBack.size<=24) return;
+    var used={},re=/\\u0000jvpic\d+/g;
+    undoStack.concat(redoStack,[histSnap]).forEach(function(s){
+      var m=String(s||'').match(re);
+      if(m) m.forEach(function(x){used[x]=1;});
+    });
+    histBigBack.forEach(function(v,id){
+      if(used[JSON.stringify(id).slice(1,-1)]) return;
+      histBigBack.delete(id);histBig.delete(v);
+    });
+  }
   function histState(){
-    return JSON.stringify({slides:pres.slides||[],
+    return histJson({slides:pres.slides||[],
       layouts:pres.layouts||[],
       talkMins:pres.talkMins||0,
       showNums:pres.showNums||0,tapzoom:pres.tapzoom||0,
@@ -1631,6 +1916,7 @@
        into the shared STYLE_DEFAULTS registry. Miss it and deck A's
        "Quote" is still on the menu after you open deck B. */
     syncCustomTypes();
+    histBigForget();
     histSnap=histState();undoStack=[];redoStack=[];histHeadMarks=[];
     updateUndoBtns();
   }
@@ -1639,10 +1925,31 @@
     if(st===histSnap) return;         /* nothing actually changed */
     undoStack.push(histSnap);
     if(undoStack.length>50){undoStack.shift();histMarksShift();}
+    if(undoStack.length>=50) histBigPrune();   /* the stack moved on */
     redoStack.length=0;histSnap=st;updateUndoBtns();
     /* T499: a restore that had been undone is now past reaching */
     histHeadMarks=histHeadMarks.filter(function(m){
       return m.depth<undoStack.length;});
+  }
+  /* ---- THE IDS A RENDER MINTED, TAKEN INTO THE BASELINE (2026-10-09) --
+     renderAnnots names each object it draws (oid) without calling that
+     an edit, and undo finds the selection again by those names (T494).
+     A plain click used to be a markDirty, whose histPush took the names
+     into the snapshot -- as an undo step of its own that changed
+     nothing. The click is no longer an edit (25-selecting.js), so it
+     takes them here instead: when the deck differs from the snapshot by
+     minted names ALONE, the snapshot becomes the deck, and no step is
+     pushed. Anything else pending (a typed word, a held nudge) is a
+     real difference and is left for its own commit. */
+  function histNoIds(snap){
+    return JSON.stringify(JSON.parse(snap),function(k,v){
+      return k==='oid'?undefined:v;});
+  }
+  function histAdoptIds(){
+    if(!pres||histSnap==null) return;
+    var st=histState();
+    if(st===histSnap) return;
+    try{if(histNoIds(st)===histNoIds(histSnap)) histSnap=st;}catch(e){}
   }
   /* ---- T499: WHERE IN THE TREE, ACROSS AN UNDO ------------------------
      "Go back to this version" said "so this is undoable" and then
@@ -1678,7 +1985,7 @@
     if(chip) chip.innerHTML=bic('route')+' on '+esc(histBranch||'main');
   }
   function histRestore(snap){
-    var d;try{d=JSON.parse(snap);}catch(e){return;}
+    var d;try{d=histParse(snap);}catch(e){return;}
     /* T494: WHERE THE CHANGE WAS, AND WHAT WAS SELECTED. This restored
        the model and left `cur` alone, so an edit made on another slide
        was undone out of sight -- press Ctrl+Z, see nothing move, press
@@ -1771,6 +2078,7 @@
     if(pageChanged||deckPageBg()!==bgWas) deckZoom=0;
     /* persist WITHOUT recording a new history entry */
     source='draft';
+    deckChanged();    /* a change all the same: see deckGen */
     draftSet(pres.name||'untitled',JSON.stringify(pres));   /* T429 */
     status();scheduleAutosave();
     if(pageChanged) applyPage();

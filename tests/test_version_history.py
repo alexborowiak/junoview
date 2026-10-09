@@ -169,7 +169,7 @@ def test_the_same_snapshot_rule_the_notebook_uses(out):
     assert "snapTake(" not in autosave
     # ...unless it is a checkpoint, which marks THIS moment
     # rather than this content (T225)
-    assert "if(prev===cap.txt&&!mark) return false;" in out
+    assert "if(prev===cap.txt&&!mark){histKept(cap);return false;}" in out
     i = out.index("return idbPut(histKeyFor(cap.name),next);")
     assert "idbDel(histVKeyFor(cap.name,d.id))" in out[i:i + 500]
 

@@ -22,8 +22,11 @@ def test_the_helper_sends_the_revision_and_says_what_it_is_for(out):
     losing it or flattening them."""
     assert "  function saveProject(change){" in out
     assert "    if(APP.mode!=='app') return Promise.resolve(false);" in out
-    assert ("      {presentations:embedAssets(deep(projectPres)),"
-            "rev:projectRev})") in out
+    # the copies ride on shallow copies, so projectPres stays lean
+    # (2026-10-09); the revision goes with them as before
+    assert ("    var whole=embedAssets(projectPres.map(shallowDeck),"
+            "{project:1});") in out
+    assert "      {presentations:whole,rev:projectRev})" in out
     assert "        if(j&&typeof j.rev==='number') projectRev=j.rev;" in out
     # the two intents, one per writer
     assert "  function projectApply(list,change){" in out

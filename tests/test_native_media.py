@@ -264,7 +264,7 @@ def test_the_bytes_never_sit_in_pres_but_ride_every_save(out):
     norm = out.split("function normPres(p,stem){")[1].split(
         "\n  function registerShell(")[0]
     assert "mediaAbsorb(p);" in norm
-    emb = out.split("function embedAssets(list){")[1].split("\n  }")[0]
+    emb = out.split("function embedAssets(list,opts){")[1].split("\n  }")[0]
     assert "if(typeof mediaEmbed==='function') mediaEmbed(p);" in emb
     branch = out.split("} else if(a.k==='video'){")[1].split(
         "} else if(a.k==='flip'){")[0]

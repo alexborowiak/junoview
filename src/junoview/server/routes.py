@@ -49,7 +49,14 @@ from ..render.items import render_item
 from ..render.page import render_shell
 from .exports import export_folder, reveal, write_export
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
-from .state import StaleWrite, _app_page, _AppState, _is_deck_file, _list_dir
+from .state import (
+    StaleWrite,
+    _app_page,
+    _AppState,
+    _is_deck_file,
+    _list_dir,
+    emb_payload,
+)
 from .vcs import (
     CELL_HISTORY_COMMITS,
     _git_cell_version,
@@ -285,6 +292,12 @@ def _make_handler(state: _AppState):
                 if url.path == "/api/list":
                     raw = (query.get("dir") or [""])[0] or str(state.root)
                     self._json(_list_dir(raw))
+                elif url.path == "/api/emb":
+                    # the saved decks' figure and clip copies, which the
+                    # app page no longer carries in its boot JSON
+                    with state.lock:
+                        held, rev = state.presentations, state.revision
+                    self._json(emb_payload(held, rev))
                 else:
                     self._json({"error": "not found"}, 404)
             except FileNotFoundError as e:

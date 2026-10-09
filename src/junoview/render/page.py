@@ -84,6 +84,11 @@ def render_page(docs: list[Document], mode: str = "static",
             "recent": cfg.get("recent", []),
         },
     }
+    # the app server boots the decks lean and serves their figure copies
+    # from /api/emb (server/state.py); only then does the key appear, so
+    # every other page is byte-for-byte what it was
+    if cfg.get("lazyEmb"):
+        app_data["project"]["lazyEmb"] = 1
     if len(docs) == 1:
         title = docs[0].title
     elif docs:

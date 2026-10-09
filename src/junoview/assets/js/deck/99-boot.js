@@ -137,6 +137,16 @@
                                  (T568) */
   touchBoot();                /* a finger or a pen moves, sizes, turns
                                  (T575) */
+  /* THE SAVED DECKS' COPIES (10-decks.js, 2026-10-09). From here on a
+     reader that needs one fetches them if they have not come yet -- the
+     two doors below can open a deck -- and otherwise they are fetched
+     when the page is idle. IndexedDB's own copies are read back after
+     the project's, the order the boot has always had. */
+  embBootDone=true;
+  embSettled.then(embRehydrate);
+  if(!embLoaded)
+    (window.requestIdleCallback||function(f){return setTimeout(f,300);})(
+      function(){embFetch();},{timeout:2000});
   handoffBoot();              /* a saved file's Open in Junoview (T597) --
                                  before the route, whose hash it clears */
   /* both IIFEs + their route hooks are now wired — restore the URL's view */

@@ -1640,7 +1640,16 @@
       /* the ONE rebuild per gesture (a moveless click keeps the old
          no-render path, so double-click-to-type is undisturbed) */
       if(movedAny){renderAnnots(layer,s);paintSel(layer);}
-      markDirty();
+      /* A CLICK THAT NEVER MOVED CHANGED NOTHING (2026-10-09). It was
+         recorded as an edit all the same: the readout flipped to
+         "unsaved — saving…" for merely selecting something, a draft
+         write, an undo snapshot of the whole deck and a thumbnail
+         redraw followed, and the autosave and the 20-second
+         consolidation were armed -- 246-358 ms a click at 4x. The
+         selection's own path keeps the panes in step (selectAnnot), and
+         histAdoptIds keeps what the click's snapshot used to: the names
+         undo finds the selection by. */
+      if(movedAny) markDirty(); else histAdoptIds();
     }
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
