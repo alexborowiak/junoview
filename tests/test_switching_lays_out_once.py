@@ -204,6 +204,8 @@ def test_going_back_to_a_deck_still_open_resumes_it():
 
 _GEN = """
 var deckViewGen=0,frameNodeCache={'nb::a::auto':1,'other::b::auto':2};
+var cardElMemo=new Map();   /* the strip package's: dropFrameCache empties it */
+var viewGens={n:0,all:0,of:Object.create(null)};   /* ...and counts where */
 var ITEMS={},SHELLITEMS={},nbPres=[];
 function nsKey(s,a){return s+'::'+a;}
 function normPres(p){return JSON.parse(JSON.stringify(p));}
@@ -241,10 +243,11 @@ def test_every_hidden_deck_branch_counts_its_change():
     # embedded copies (embPut -> dropFrameCache), notebooks
     # opened/reloaded/closed, a version's cards arriving
     assert "dropFrameCache(key);" in lift_fn(src, "embPut")
+    # (the strip package names WHERE: the notebook, or the card)
     for fn in ("registerShell", "unregisterShell"):
-        assert "deckViewChanged();" in lift_fn(src, fn)
+        assert "deckViewChanged(stem);" in lift_fn(src, fn)
     assert "deckViewChanged();   /* a locked frame can be drawn now */" in src
-    assert "deckViewChanged();" in lift_fn(src, "dropFrameCache")
+    assert "deckViewChanged(stemOrRef);" in lift_fn(src, "dropFrameCache")
     assert "filmGen,deckViewGen," in lift_fn(src, "filmStampKey")
 
 

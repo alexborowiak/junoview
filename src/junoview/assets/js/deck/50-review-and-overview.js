@@ -550,12 +550,48 @@
   function overviewClose(){
     var ov=$('#deck-overview');
     if(ov) ov.remove();
+    if(ovwIO){ovwIO.disconnect();ovwIO=null;}
     document.removeEventListener('keydown',overviewKey,true);
     ovwKeys=null;
   }
   /* T557: while the map is a sorter, its keys are the sorter's; set by
      openOverview, cleared on close */
   var ovwKeys=null;
+  /* ---- THE SORTER'S TILES (2026-10-09, editor #11) ----------------------
+     Opening the sorter drew sixty miniDiagrams (110 ms at 4x on a
+     60-slide deck), and every pick-up, duplicate and delete drew them
+     all again. A tile now takes a copy of the strip's thumbnail of its
+     slide whenever the strip holds one drawn from exactly what the
+     slide is now (filmThumbSource), and is drawn itself only when it
+     has to be: at once within OVW_NEAR of the current slide, and as it
+     comes into view (ovwIO) beyond that, in a box of the same size and
+     the slide's own colour. */
+  var ovwIO=null,OVW_NEAR=32;
+  function ovwThumb(sl,i,copyOf,body){
+    var c=copyOf(sl);
+    if(c) return c;
+    if(Math.abs(i-cur)<=OVW_NEAR||!window.IntersectionObserver)
+      return miniDiagram(sl);
+    if(!ovwIO) ovwIO=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(!e.isIntersecting) return;
+        ovwIO.unobserve(e.target);
+        var t=e.target.closest('.ovw-tile'),s2=t&&pres.slides[+t.dataset.i];
+        if(!s2||!e.target.parentNode) return;
+        var paintWas=paintSlide;
+        try{e.target.parentNode.replaceChild(miniDiagram(s2),e.target);}
+        finally{paintSlide=paintWas;}
+      });
+    },{root:body,rootMargin:'300px'});
+    var ph=document.createElement('span');
+    ph.className='mini-diagram free mini-lazy';
+    if(typeof pageBgOf==='function') ph.style.background=pageBgOf(sl);
+    /* the defaults a drawing fills in, filled in now (filmLazyBox) */
+    if(sl&&sl.layout==='title'){titleProps(sl,'t');titleProps(sl,'s');}
+    filmPrime(sl);   /* ...and the trail a drawing leaves (filmPrime) */
+    ovwIO.observe(ph);
+    return ph;
+  }
   function overviewKey(e){
     if(!$('#deck-overview')) return;
     if(e.key==='Escape'){
@@ -653,6 +689,8 @@
     }
     function draw(){
       body.innerHTML='';
+      if(ovwIO){ovwIO.disconnect();ovwIO=null;}
+      var copyOf=filmThumbSource();
       var runs=sectionRuns();
       var n=(pres.slides||[]).length;
       t.textContent=(sorting?'Slide sorter \u2014 ':'')
@@ -684,7 +722,8 @@
             var num=document.createElement('span');
             num.className='ovw-n';num.textContent=String(i+1);
             tile.appendChild(num);
-            tile.appendChild(miniDiagram(sl));
+            tile.dataset.i=String(i);
+            tile.appendChild(ovwThumb(sl,i,copyOf,body));
             var lab=document.createElement('span');
             lab.className='ovw-lab';
             lab.textContent=filmText(sl)||'';

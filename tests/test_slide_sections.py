@@ -67,7 +67,11 @@ def test_a_divider_row_is_not_a_slide_row(out):
     # (1..n straight through every section) and data-idx equal to the
     # array index
     assert "pres.slides.forEach(function(s,i){" in out
-    assert "if(head[i]) list.appendChild(secRow(head[i]));" in out
+    # (2026-10-09) the divider joins the list the strip is built into,
+    # kept like a row is when nothing it draws has changed
+    assert "if(head[i]) nodes.push(filmSecRowKept(head[i],old,next,base));" \
+        in out
+    assert "var el=filmTake(old,key)||secRow(r);" in out
     # T318: the loop is still flat and data-idx is still the array index;
     # the NUMBER shown counts mains only, so the strip agrees with the
     # talk and the paper, and a version shows a bullet where a number

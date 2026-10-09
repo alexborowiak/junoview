@@ -13,9 +13,16 @@ from __future__ import annotations
 
 
 def test_the_position_is_read_before_the_wipe_and_put_back_after(out):
-    assert ("    var keepTop=list.scrollTop,keepLeft=list.scrollLeft;\n"
-            "    list.innerHTML='';") in out
-    assert "    list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */" in out
+    # (2026-10-09) there is no wipe any more -- rows are kept and the list
+    # is changed by the least that gets it there -- but the position is
+    # still read first and put back after the rows have changed
+    film = out[out.index("  function renderFilm(){"):
+               out.index("  function filmKeepCurrent(list){")]
+    assert "    var keepTop=list.scrollTop,keepLeft=list.scrollLeft;\n" in film
+    assert "    list.innerHTML='';" not in film
+    back = "    list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */"
+    assert film.index("var keepTop=list.scrollTop") \
+        < film.index("    filmReconcile(list,nodes);") < film.index(back)
     assert "    filmKeepCurrent(list);" in out
 
 

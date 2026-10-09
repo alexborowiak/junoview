@@ -38,6 +38,26 @@
   var frameNodeCache={};
   var snapNodeCache=new Map();      /* snapshot html -> {part: node} */
   var verNodeCache=new WeakMap();   /* version card -> {part: node} */
+  /* cardEl's memo (2026-10-09), which dropFrameCache empties at once --
+     so a closed or reloaded notebook's cards are never held after it.
+     Declared here for the reason frameNodeCache is: normPres stores
+     copies at eval time, through embStore and dropFrameCache, and a
+     hoisted `undefined` has no clear(). (What a placed figure shows is
+     counted by deckViewGen, which dropFrameCache bumps too.) */
+  var cardElMemo=new Map();
+  /* WHERE WHAT A FIGURE IS DRAWN FROM CHANGED (2026-10-09, speed).
+     deckViewGen (below) counts every change to what a placed figure is
+     drawn from; this keeps beside that count WHERE each one happened --
+     one notebook (its stem: opened, reloaded, closed, a note added), one
+     card (its ref: a copy stored or put back, a link made or cut) or
+     everything -- so a row of the slide strip is drawn again only when
+     one of ITS figures may have changed (refViewGen, filmRefGens in
+     55-sections-and-strip.js). Without it the first figure placed on a
+     slide, or a notebook reloaded under a deck that shows another's,
+     redrew every row. Declared up here for cardElMemo's reason:
+     dropFrameCache runs at eval time, and a hoisted `undefined` has no
+     fields to write. */
+  var viewGens={n:0,all:0,of:Object.create(null)};
   /* ---- THE SAVED DECKS' COPIES ARRIVE AFTER THE PAGE (2026-10-09) -----
      (owner: "if this is not able to load quick, and not be laggy, then no
      matter how good the features are no one will ever use this".) The
@@ -649,7 +669,7 @@
     }
   }
   function registerShell(stem,data){
-    deckViewChanged();   /* its cards are what a frame resolves to */
+    deckViewChanged(stem);   /* its cards are what a frame resolves to */
     Object.keys(ITEMS).forEach(function(k){
       if(ITEMS[k].nb===stem) delete ITEMS[k];});
     SHELLITEMS[stem]=[];
@@ -670,7 +690,7 @@
     });
   }
   function unregisterShell(stem){
-    deckViewChanged();
+    deckViewChanged(stem);
     Object.keys(ITEMS).forEach(function(k){
       if(ITEMS[k].nb===stem) delete ITEMS[k];});
     delete SHELLITEMS[stem];
@@ -1698,7 +1718,13 @@
      refresh such a change asks for, so the way back (setUIMode's strip,
      filmStampKey) reuses what it drew only while this has not moved. */
   var deckViewGen=0;
-  function deckViewChanged(){deckViewGen++;}
+  function deckViewChanged(src){
+    deckViewGen++;
+    /* ...and where (viewGens, beside cardElMemo): a notebook's stem, a
+       card's ref, or -- named by nothing -- everything */
+    var g=viewGens;g.n++;
+    if(src==null) g.all=g.n; else g.of[String(src)]=g.n;
+  }
   /* WHETHER THE DECK HAS CHANGED SINCE A SAVE WAS SENT is this counter,
      not a re-serialisation (2026-10-09). The save path used to deep-copy
      and stringify the deck twice per save to compare it with itself --
@@ -1766,12 +1792,16 @@
       var s=pres.slides[i]; if(!s) return;
       var row=$('#film-list .film-row[data-idx="'+i+'"]');
       if(!row) return;
+      /* redrawn here, so no longer what the strip filed it under: the
+         next build draws it afresh rather than keeping it (renderFilm) */
+      row._key=null;
       var old=row.querySelector('.mini-diagram');
       /* the CURRENT row in notebook view is the big inline pane editor,
          not a thumbnail — leave that alone. In headings mode there is no
          thumbnail at all, and this correctly does nothing. */
       if(old&&old.parentNode){
         miniHNow=miniH();
+        filmUnlazy(row);   /* a box still waiting to be drawn is drawn now */
         old.parentNode.replaceChild(miniDiagram(s),old);
       }
       var tt=row.querySelector('.film-t');
@@ -2227,11 +2257,26 @@
   }
 
   /* ---------- DOM cloning from the cards already on the page ---------- */
+  /* ONE LOOKUP PER CARD, NOT PER ASK (2026-10-09). Every thumbnail of a
+     figure asks for its card twice (paneImgSrc, miniCell), and each ask
+     was a selector match over the whole notebook -- about 5,900
+     elements, 13 ms at 4x for one strip of 45 figures. The answer is
+     remembered per card, and trusted only while it is still true: the
+     same shell element, still in the document, still wearing that
+     anchor, and nothing remounted, closed or re-copied since
+     (dropFrameCache empties the memo; it is declared up beside
+     frameNodeCache). A miss is never remembered -- a card that is not
+     there yet may be inserted without a remount. */
   function cardEl(ref){
     var it=resolveRef(ref); if(!it) return null;
     var sh=APP.shells[it.nb]; if(!sh) return null;
-    return sh.el.querySelector(
-      '.card[data-anchor="'+String(it.anchor).replace(/"/g,'\\"')+'"]');
+    var anchor=String(it.anchor),k=it.nb+'::'+anchor,m=cardElMemo.get(k);
+    if(m&&m.sh===sh.el&&m.el.isConnected
+       &&m.el.getAttribute('data-anchor')===anchor) return m.el;
+    var el=sh.el.querySelector(
+      '.card[data-anchor="'+anchor.replace(/"/g,'\\"')+'"]');
+    if(el) cardElMemo.set(k,{sh:sh.el,el:el}); else cardElMemo.delete(k);
+    return el;
   }
   function stripIds(node){
     if(node.removeAttribute) node.removeAttribute('id');
@@ -2283,7 +2328,11 @@
   /* drop cached frame nodes for one notebook stem, one full ref, or all
      (both key shapes are prefixes of 'stem::anchor::part') */
   function dropFrameCache(stemOrRef){
-    deckViewChanged();   /* a frame may draw differently from now on */
+    /* a frame may draw differently from now on: the frames of this
+       notebook, or of this card, or (null) of every one */
+    deckViewChanged(stemOrRef);
+    cardElMemo.clear();  /* and a card may stand elsewhere: see its
+                            declaration beside frameNodeCache */
     if(stemOrRef==null){frameNodeCache={};return;}
     var pfx=stemOrRef+'::';
     Object.keys(frameNodeCache).forEach(function(k){

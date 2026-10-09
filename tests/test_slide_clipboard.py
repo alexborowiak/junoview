@@ -5,7 +5,9 @@ from __future__ import annotations
 
 def test_clicking_the_current_thumbnail_selects_the_slide(out):
     """A stale object selection must not steal the next Copy or Delete."""
-    assert ("        if(i===cur){\n"
+    # (2026-10-09) the row's index is read off the row: a kept row can
+    # stand somewhere else after an add, a delete or a drag
+    assert ("        if(at===cur){\n"
             "          var layer=stage.querySelector('.annot-layer');\n"
             "          if(layer) selectAnnot(layer,null);") in out
 

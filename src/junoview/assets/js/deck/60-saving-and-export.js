@@ -3938,8 +3938,14 @@
     cur=0;activePane=-1;
     /* picked from the launcher: go straight into the editor — the whole
        point of opening a file is to get back to the presentation in it */
-    if(deckEl.hidden) openDeck('edit');
-    status();refresh();
+    /* ...where openDeck has already drawn the strip and the slide
+       (setUIMode) and named it in the URL: a refresh after it built
+       both a second time, 170-610 ms at 4x on Create slides and every
+       File > Open (critic #1b). An editor already open is drawn here. */
+    var wasHidden=deckEl.hidden;
+    if(wasHidden) openDeck('edit');
+    status();
+    if(!wasHidden) refresh();
     if(first.kept)
       toast('Imported '+imported+' presentation'
         +(imported>1?'s':'')+' (as drafts)'

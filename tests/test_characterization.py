@@ -2426,8 +2426,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # server, hidden notebooks wired on first view, delegated card listeners.
 # Speed (switch): a mode switch renders and fits once, going back resumes a
 # deck, lazy library previews, cached presenter previews, presFacts.
-EXPECTED_MD5 = "b0b97c4c54d0817d50c46629e8a4c99d"
-EXPECTED_BYTES = 5436630
+# Speed (strip): keyed strip rows reused, thumbnails drawn as they near the
+# view, cardEl memo, the sorter copies the strip's thumbnails.
+EXPECTED_MD5 = "053c920e54514f254993cb065176b1ee"
+EXPECTED_BYTES = 5457885
 
 
 def _render_example() -> str:

@@ -334,6 +334,7 @@
   function syncFilmBuild(i){
     var row=$('#film-list .film-row[data-idx="'+i+'"]');
     var s=pres.slides[i];if(!row||!s) return;
+    row._key=null;   /* redrawn here: never kept as it was filed */
     var marks=row.querySelector('.film-marks'),tag=row.querySelector('.film-mark.anim');
     var n=slideStops(s);
     if(!n){
@@ -367,16 +368,32 @@
        brought on screen only when it is off it, by the least that
        does (filmKeepCurrent). */
     var keepTop=list.scrollTop,keepLeft=list.scrollLeft;
-    list.innerHTML='';
-    /* the strip rebuilds every row, so a context menu left open is
-       holding an index into nodes that no longer exist */
+    /* ---- THE STRIP KEEPS ITS ROWS (2026-10-09) ---------------------
+       This emptied the list (list.innerHTML='') and built every row
+       again -- each thumbnail's miniDiagram, its figures, tables and
+       svg -- after every edit, undo, redo, add, duplicate and delete,
+       and on the first slide change after any of them: 150-290 ms at
+       4x on a 60-slide deck, for one changed row. A row is now kept
+       under a key made of everything it is drawn from (filmRowKey: the
+       slide as JSON, the deck's look, the view, what its figures are
+       drawn from (filmRefGens), its place in a group or a fold), and a
+       row whose key comes round again is moved into the new list as it
+       is; only its number, its index and the current mark are brought
+       up to date. Then the list
+       is changed by the least that gets it there (filmReconcile), so
+       the rows that stayed are never taken out and put back. A row's
+       handlers read its index off the row, never out of the loop,
+       because a kept row can be standing somewhere else now. */
+    var old=filmRows,next=new Map(),nodes=[];
+    /* the strip changes its rows, so a context menu left open is
+       holding an index into rows that may mean another slide now */
     var om=$('#film-menu'); if(om) om.remove();
     /* Headers are INSERTED into the flat loop rather than the loop being
        rewritten sections-outer / slides-inner. `i` stays the ARRAY index,
        which is what keeps the numbers global (1..n straight through every
        section) and keeps row.dataset.idx equal to the array index —
        refreshThumb and the drop maths both read it back. */
-    var runs=sectionRuns(),head={},fold={};
+    var runs=sectionRuns(),head={},fold={},secOrd=filmSecOrds(runs);
     runs.forEach(function(r){
       if(r.id) head[r.at]=r;
       if(r.fold) for(var k=r.at;k<r.at+r.n;k++) fold[k]=1;
@@ -386,19 +403,40 @@
        on the body or the deck, because filmToPane MOVES this list into
        the Versions pane and an ancestor class would be left behind */
     var fv=filmMode();
-    list.setAttribute('data-fv',fv);
+    if(list.getAttribute('data-fv')!==fv) list.setAttribute('data-fv',fv);
     miniHNow=miniH();
+    var base=filmKeyBase(fv),lazy=filmLazyOK(list),no=0;
+    /* the strip draws AFTER the stage in some orders and BEFORE it in
+       others; the slide '@section' colours resolve against is left as
+       it was found (T316: the render funnels set it, and a strip that
+       keeps most of its rows no longer draws a predictable last one) */
+    var paintWas=paintSlide;
     pres.slides.forEach(function(s,i){
-      if(head[i]) list.appendChild(secRow(head[i]));
+      var ar=altRun(i),isAlt=!!(ar&&i>ar.at);
+      /* slideNo(i), counted as the loop goes rather than from the top
+         for every row */
+      if(!isAlt) no++;
+      if(head[i]) nodes.push(filmSecRowKept(head[i],old,next,base));
       /* the CURRENT slide is drawn even inside a folded section: it is
          where you are standing, and it is also the row refreshThumb goes
          looking for on every edit — hide it and the live thumbnail dies */
       if(fold[i]&&i!==cur) return;
       /* T318: an alternative hides under its main unless the group is
          open -- or it is the slide you are on, for the same reason */
-      var ar=altRun(i),isAlt=!!(ar&&i>ar.at);
       if(isAlt&&!altOpen[ar.gid]&&i!==cur) return;
       var filmCut=activeCut(),skipped=slideSkipped(i);
+      /* the current slide's inline pane editor (notebook view) is live,
+         and is built fresh every time, as it always was */
+      var editor=(i===cur&&mode==='create'&&s.layout!=='title');
+      var key=editor?null:filmRowKey(base,s,s.sec?secOrd[s.sec]:'',
+        [fold[i]?1:0,skipped?1:0,isAlt?(i-ar.at)+'/'+no:'',
+         ar?ar.n+(altOpen[ar.gid]?'+':'-'):''].join(','));
+      var kept=key?filmTake(old,key):null;
+      if(kept){
+        filmRowMoved(kept,i,isAlt?null:no);
+        filmPut(next,key,kept);nodes.push(kept);
+        return;
+      }
       var row=document.createElement('div');
       row.className='film-row'+(i===cur?' current':'')
         +(fold[i]?' peek':'')+(s.sec?' in-sec':'')
@@ -415,11 +453,12 @@
         :'Skipped by Running late');
       row.title=rowTips.join('\n');
       row.addEventListener('contextmenu',function(ev){
-        ev.preventDefault();openFilmMenu(i,ev,null);});
+        ev.preventDefault();openFilmMenu(+row.dataset.idx,ev,null);});
       row.addEventListener('dragstart',function(e){
-        draggingSlide=i;
+        var at=+row.dataset.idx;   /* a kept row can stand anywhere now */
+        draggingSlide=at;
         row.classList.add('dragging');
-        try{e.dataTransfer.setData('text/plain','slide-'+i);}
+        try{e.dataTransfer.setData('text/plain','slide-'+at);}
         catch(err){}
         /* drag the ROW as the ghost — the browser otherwise picks up the
            figure <img> inside the thumbnail as the drag image/payload */
@@ -438,7 +477,7 @@
          alternative shows its name where a number would be */
       num.textContent=isAlt?'\u2022':slideNo(i);
       lbl.appendChild(num);
-      if(i===cur&&mode==='create'&&s.layout!=='title'){
+      if(editor){
         /* notebook view: the current slide IS the big inline pane editor
            (paired with your visible notebook cells to fill it). In slide
            view the CANVAS is the single editor, so the strip stays thumbnails */
@@ -450,7 +489,10 @@
            built and hidden: miniDiagram emits an <img> per figure, a real
            <table> per table and an <svg> per slide, and a sixty-slide
            deck should not pay for all of that to draw a list of names */
-        lbl.appendChild(miniDiagram(s));
+        /* ...and away from the current slide it is built as it comes
+           into view (filmLazyIO), in a box of the same size and colour */
+        lbl.appendChild((!lazy||Math.abs(i-cur)<=FILM_NEAR)?miniDiagram(s)
+          :filmLazyBox(s,row,list));
       }
       var tt=document.createElement('span');tt.className='film-t';
       tt.textContent=filmText(s);lbl.appendChild(tt);
@@ -536,18 +578,19 @@
          and every row is one, including the current slide, which is why
          this listener is no longer conditional on i!==cur (T66) */
       lbl.addEventListener('click',function(){
-        if(slideMatchHit(i)) return;
+        var at=+row.dataset.idx;   /* a kept row can stand anywhere now */
+        if(slideMatchHit(at)) return;
         /* A thumbnail click selects the SLIDE. This matters even when it
            is already current: otherwise an object selection survives the
            click and Ctrl+C / Delete still act on that object instead of
            the thumbnail the user just chose (T516). */
-        if(i===cur){
+        if(at===cur){
           var layer=stage.querySelector('.annot-layer');
           if(layer) selectAnnot(layer,null);
           else {selAnnot=null;selSet=[];showFmt();}
           return;
         }
-        cur=i;activePane=-1;selAnnot=null;selSet=[];refreshNav();});
+        cur=at;activePane=-1;selAnnot=null;selSet=[];refreshNav();});
       /* T228: NO CONTROLS ON THE ROW. Four buttons appeared over
          every slide on hover -- move up, move down, duplicate,
          delete -- on top of the thumbnail you were trying to click
@@ -560,8 +603,23 @@
          keeps every one of them, move included. A poster's Rename
          goes there too. */
       row.appendChild(lbl);
-      list.appendChild(row);
+      if(key){
+        /* drawing a title slide fills in its title's defaults
+           (titleProps, and filmLazyBox asks for them as the drawing
+           would), so it is filed under what it is now */
+        if(s.layout==='title')
+          key=filmRowKey(base,s,s.sec?secOrd[s.sec]:'',
+            key.slice(key.lastIndexOf('\u0002')+1));
+        row._key=key;filmPut(next,key,row);
+      }
+      nodes.push(row);
     });
+    paintSlide=paintWas;
+    filmReconcile(list,nodes);
+    /* the rows that did not come round again are gone from the list:
+       their boxes no longer wait to be drawn */
+    old.forEach(function(rows){rows.forEach(filmUnlazy);});
+    filmRows=next;
     list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */
     filmKeepCurrent(list);
     var car=altRun(cur);
@@ -614,8 +672,285 @@
      always has. */
   var filmNav=false,filmStamp=null;
   function filmStampKey(){
+    /* deckViewGen: a figure that changed under the strip (a notebook
+       reloaded, the kept copies arriving, a version's card) is drawn
+       again on the next slide change, rather than at the next edit */
     return [mode,filmMode(),activeCut(),lateFrom,filmGen,deckViewGen,
       JSON.stringify(altOpen),JSON.stringify(pres.sections||null)].join('|');
+  }
+  /* ---- THE KEPT ROWS (see renderFilm) -----------------------------------
+     filmRows: key -> the rows the last build drew under it (a list,
+     because two slides can be alike in every respect). A key is
+     everything a row is drawn from, and nothing it is not:
+       filmKeyBase  -- what every row shares: the thumbnail size
+                       (miniHNow), the view (headings or pictures, the
+                       mode, the cut being shown) and the deck's own
+                       look -- its styles, colours, masters, page,
+                       types, cuts and links -- as JSON, empty and
+                       absent counted the same (histState's rule: a
+                       `{}` a read made, or a key an undo deleted, is
+                       not a change);
+       filmThumbKey -- with the base, all a THUMBNAIL is drawn from: the
+                       slide as JSON, its section's turn in the colour
+                       cycle, and what each of its figures is drawn
+                       from (filmRefGens: a notebook opened, reloaded or
+                       closed, a kept copy stored, a link made or cut,
+                       a version's card come -- counted where it
+                       happened, so a change to one notebook's figures
+                       redraws the rows that show them and no other);
+       filmRowKey   -- then its place: folded or peeking, skipped, and
+                       where it stands in a version group.
+     Its index, its number and whether it is current are NOT in it:
+     those are written onto a kept row as it is moved (filmRowMoved).
+     The thumbnail reads nothing else (miniDiagram: the slide, the
+     deck, the figures, the size) -- a new input there must join a key
+     here, or a kept row will show the old one. */
+  var filmRows=new Map(),FILM_NEAR=6,filmIO=null,filmIOList=null;
+  function filmKeyBase(fv){
+    var o={};
+    Object.keys(pres).sort().forEach(function(k){
+      if(k==='slides'||k==='notes'||k==='pad'||k==='emb'||k==='media') return;
+      var v=pres[k];
+      if(v==null||(typeof v==='object'&&!Object.keys(v).length)) return;
+      /* whether a section is folded is the strip's place, not what any
+         row draws (a peeking row says so in its own key): folding one
+         keeps every row it does not hide */
+      if(k==='sections'){
+        var u={};
+        Object.keys(v).forEach(function(id){
+          var e=v[id],c={};
+          if(e&&typeof e==='object') Object.keys(e).forEach(function(f){
+            if(f!=='fold') c[f]=e[f];});
+          else c=e;
+          u[id]=c;
+        });
+        v=u;
+      }
+      o[k]=v;
+    });
+    return [miniHNow,fv,mode,activeCut()||'',JSON.stringify(o)]
+      .join('\u0001');
+  }
+  function filmThumbKey(base,s,sord){
+    return base+'\u0001'+JSON.stringify(s)+'\u0001'+sord
+      +'\u0001'+filmRefGens(s);
+  }
+  /* every figure a thumbnail draws -- miniDiagram's cell and flip
+     branches, and the name slideTitle reads off a cell: the refs the
+     save path embeds -- each with the count of the latest change to
+     what it is drawn from (refViewGen) */
+  function filmRefGens(s){
+    var out='';
+    ((s&&s.annots)||[]).forEach(function(a){
+      if(!a) return;
+      if(a.k==='cell'&&a.ref) out+=refViewGen(a.ref)+',';
+      else if(a.k==='flip') flipFrames(a).forEach(function(f){
+        if(f&&f.ref) out+=refViewGen(f.ref)+',';});
+    });
+    return out;
+  }
+  /* the latest change (viewGens, 10-decks.js) to everything, to the
+     figure's notebook, or to its card -- as the ref is written and as
+     its notebook files it (an alias by the card's slug). A bare anchor
+     is looked for in every notebook and every copy, so for it every
+     change counts. ITEMS is read directly: normRef can go and fetch
+     the kept copies (embKey), and a key is no place for that. */
+  function refViewGen(ref){
+    var g=viewGens,r=String(ref),at=r.indexOf('::');
+    if(at<0) return g.n;
+    var it=ITEMS[r],nr=(it&&it.ns)?String(it.ns):r;
+    return Math.max(g.all,g.of[r]||0,g.of[r.slice(0,at)]||0,g.of[nr]||0);
+  }
+  /* each section's turn in the colour cycle ('@section', T316) for
+     every id at once, counted as sectionOrdinal counts it: EVERY run
+     with an id takes a turn, not every id. A section split in two (a
+     deck that arrived that way, until the next normSections joins it)
+     moves the sections after it along a colour, and joining it moves
+     them back -- so the key must move with it, or their rows keep the
+     colour they were drawn in. */
+  function filmSecOrds(runs){
+    var ord={},n=0;
+    runs.forEach(function(r){
+      if(r.id){if(!(r.id in ord)) ord[r.id]=n;n++;}});
+    return ord;
+  }
+  function filmRowKey(base,s,sord,place){
+    return filmThumbKey(base,s,sord)+'\u0002'+place;
+  }
+  /* THE SORTER DRAWS WITH THE STRIP'S PICTURES (editor #11). A function
+     that hands back a copy of the strip's thumbnail of a slide, when
+     the strip holds one drawn from exactly what the slide is now (the
+     same thumbnail key), or null. Asked once per sorter build. A
+     thumbnail with ids in it (a gradient's) is never copied: two copies
+     of an id would paint each other's. */
+  function filmThumbSource(){
+    var by=new Map();
+    filmRows.forEach(function(rows,key){
+      var at=key.lastIndexOf('\u0002');
+      if(at<0||key.charAt(0)==='S') return;
+      var tk=key.slice(0,at);
+      if(by.has(tk)) return;
+      for(var k=0;k<rows.length;k++){
+        var d=rows[k]._key===key
+          &&rows[k].querySelector('.film-label > .mini-diagram');
+        if(d&&!d.classList.contains('mini-lazy')&&!d.querySelector('[id]')){
+          by.set(tk,d);return;}
+      }
+    });
+    if(!by.size) return function(){return null;};
+    var base=filmKeyBase(filmMode()),ord=filmSecOrds(sectionRuns());
+    return function(s){
+      var d=s?by.get(filmThumbKey(base,s,s.sec?ord[s.sec]:'')):null;
+      return d?d.cloneNode(true):null;
+    };
+  }
+  /* a row whose picture was redrawn since it was filed (refreshThumb,
+     syncFilmBuild, a box drawn after its slide changed) no longer says
+     what its key says: its _key is cleared, and it is never taken */
+  function filmTake(map,key){
+    var a=map.get(key),r=null;
+    while(a&&a.length&&!r){
+      r=a.shift();
+      if(r._key!==key) r=null;
+    }
+    if(a&&!a.length) map['delete'](key);
+    return r;
+  }
+  function filmPut(map,key,row){
+    var a=map.get(key); if(a) a.push(row); else map.set(key,[row]);
+  }
+  /* a kept row, standing at `i`: the three things the key leaves out */
+  function filmRowMoved(row,i,no){
+    var on=(i===cur);
+    if(row.classList.contains('current')!==on) row.classList.toggle('current',on);
+    if(row.dataset.idx!==String(i)) row.dataset.idx=i;
+    if(no!=null){
+      var n=row.querySelector('.film-n');
+      if(n&&n.textContent!==String(no)) n.textContent=no;
+    }
+    /* where you are standing is always drawn */
+    if(on&&row._ph) filmFill(row._ph);
+  }
+  /* a section's divider, kept the same way: everything it draws is the
+     run (name, place, size, fold, colour), its colour as the cycle
+     gives it, and the part it may be */
+  function filmSecRowKept(r,old,next,base){
+    var lk=(typeof partLink==='function')?partLink(r.id):null;
+    var key='S'+base+'\u0001'+JSON.stringify(r)+'\u0001'
+      +sectionColorFor(pres.slides[r.at]||{sec:r.id})+'\u0001'
+      +JSON.stringify(lk||null);
+    var el=filmTake(old,key)||secRow(r);
+    el._key=key;filmPut(next,key,el);
+    return el;
+  }
+  /* THE LIST, CHANGED BY THE LEAST THAT GETS IT THERE. A row that is
+     not wanted any more goes; a wanted row already in its place is
+     passed over untouched; anything else is put in front of whatever
+     stands where it belongs. An edit leaves every other row where it
+     was, so the browser restyles and lays out one row, not sixty. */
+  function filmReconcile(list,nodes){
+    var want=new Set(nodes),ch=list.firstChild,nx;
+    for(var k=0;k<nodes.length;k++){
+      var n=nodes[k];
+      while(ch&&ch!==n&&!want.has(ch)){
+        nx=ch.nextSibling;list.removeChild(ch);ch=nx;}
+      if(ch===n) ch=ch.nextSibling;
+      else list.insertBefore(n,ch);
+    }
+    while(ch){nx=ch.nextSibling;list.removeChild(ch);ch=nx;}
+  }
+  /* ---- THUMBNAILS AS THEY COME INTO VIEW (2026-10-09) -------------------
+     Opening a deck drew all sixty thumbnails (miniDiagram, 95-190 ms at
+     4x) though six or seven show. Rows within FILM_NEAR of the current
+     slide are drawn at once; the rest get an empty box of the same
+     size and the slide's own colour, drawn when it comes within 300 px
+     of the strip's edge. Where the list does not scroll by itself (a
+     poster's Versions pane) or the browser cannot watch, all are
+     drawn, as before. */
+  function filmLazyOK(list){
+    return !!(window.IntersectionObserver&&list&&!list.closest('#verpane'));
+  }
+  function filmLazyIO(list){
+    if(filmIO&&filmIOList===list) return filmIO;
+    if(filmIO) filmIO.disconnect();
+    filmIOList=list;
+    filmIO=new IntersectionObserver(function(es){
+      var due=[];
+      es.forEach(function(e){if(e.isIntersecting) due.push(e.target);});
+      if(!due.length) return;
+      miniHNow=miniH();
+      due.forEach(filmFill);
+    },{root:list,rootMargin:'300px'});
+    return filmIO;
+  }
+  function filmLazyBox(s,row,list){
+    var ph=document.createElement('span');
+    ph.className='mini-diagram free mini-lazy';
+    if(typeof pageBgOf==='function') ph.style.background=pageBgOf(s);
+    /* drawing a title slide fills in its title's defaults (titleProps);
+       the box does the same now, so the deck is the same deck whether
+       or not its thumbnail has been drawn yet */
+    if(s.layout==='title'){titleProps(s,'t');titleProps(s,'s');}
+    filmPrime(s);   /* ...and leaves the trail a drawing leaves */
+    row._ph=ph;row._js=JSON.stringify(s);
+    filmLazyIO(list).observe(ph);
+    return ph;
+  }
+  /* WHAT A DRAWING LEAVES BEHIND, THE BOX LEAVES TOO. Drawing a
+     thumbnail clones a placed note or output (miniCell) and a flip
+     book's resting frame (framePart) from the open notebook, and that
+     clone is what a reload of the notebook files as the frame's
+     "Previous figure" (cloneBody -> frameSnaps, moved to frameSnapsPrev
+     by the sem:shell handler). A box draws nothing, so a frame on a
+     slide no one had scrolled to had nothing to go back to after a
+     reload -- the one-step rescue T301/T303 give a live frame. Only a
+     clone of the live card leaves that trail, once per card version
+     (frameSnaps is emptied for a notebook when it reloads), so only
+     those are taken here: not a picture (drawn from its <img>), not a
+     copy the deck keeps, and nothing that would make embKey fetch. */
+  function filmPrime(s){
+    ((s&&s.annots)||[]).forEach(function(a){
+      if(!a||a.hide) return;
+      var ref=null,part,ff;
+      if(a.k==='cell'){
+        if(a.ref&&!(a.lockver&&a.lockver.commit)){ref=a.ref;part=a.part;}
+      } else if(a.k==='flip'){
+        ff=flipFrames(a)[a.at||0];
+        if(ff&&!ff.src&&ff.ref){ref=ff.ref;part=ff.part;}
+      }
+      if(!ref) return;
+      var it=ITEMS[ref];
+      if(!it&&String(ref).indexOf('::')<0)
+        for(var k=0;k<APP.order.length&&!it;k++)
+          it=ITEMS[nsKey(APP.order[k],ref)];
+      if(!it||frameSnaps[it.ns]) return;
+      if(!refIsLive(ref)&&(!embLoaded||EMBED[embKeyRaw(ref)])) return;
+      var c=cardEl(ref); if(!c) return;
+      if(a.k==='cell'&&$('.figframe img',c)) return;
+      framePart(a.k==='cell'?it.ns:ref,part);
+    });
+  }
+  /* the box drawn: the slide the row stands for NOW, at the size the
+     strip is now -- what a build at this moment would draw */
+  function filmFill(ph){
+    var row=ph&&ph.parentNode&&ph.closest('.film-row');
+    if(!row||row._ph!==ph){if(filmIO&&ph) filmIO.unobserve(ph);return;}
+    var s=pres&&(pres.slides||[])[+row.dataset.idx];
+    if(!s) return;
+    if(filmIO) filmIO.unobserve(ph);
+    row._ph=null;
+    var paintWas=paintSlide;
+    try{ph.parentNode.replaceChild(miniDiagram(s),ph);}
+    finally{paintSlide=paintWas;}
+    /* drawn from the slide as it is NOW: if that is not what the row
+       was filed under (an edit that redrew no strip, a title's
+       defaults filled in by the drawing), the row is redrawn whole at
+       the next build rather than kept */
+    if(JSON.stringify(s)!==row._js) row._key=null;
+    row._js=null;
+  }
+  function filmUnlazy(row){
+    if(row&&row._ph){if(filmIO) filmIO.unobserve(row._ph);row._ph=null;}
   }
   function filmMoveMark(list){
     var st=filmStamp,sl=pres&&pres.slides;
@@ -645,6 +980,8 @@
     if(list.offsetWidth!==st.w) return false;
     if(row!==was){
       was.classList.remove('current');row.classList.add('current');
+      /* where you are standing is always drawn (see filmLazyBox) */
+      if(row._ph) filmFill(row._ph);
       /* T412's numbers, as the rebuild keeps them: the two rows change
          height, and the browser's scroll anchoring would otherwise
          nudge the strip by the difference */
