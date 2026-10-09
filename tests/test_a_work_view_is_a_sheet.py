@@ -167,7 +167,10 @@ def test_small_rows_that_overran():
     css = assets.deck_css()
     assert ".anim-tabs.np-tabs{padding:0 4px;gap:0;}" in css
     assert ".ovw-head .dbtn{flex:none;white-space:nowrap;}" in css
-    assert ".deck.editing .deck-toast{bottom:58px;" in css
+    # T619 took the status and zoom row off the canvas, so the lift
+    # T607 gave the editor's toasts went with it
+    assert ".deck.editing .deck-toast{max-width:min(80vw,760px);}" in css
+    assert "bottom:58px" not in css
 
 
 def test_a_drag_from_inside_let_go_over_the_shade_keeps_the_sheet():

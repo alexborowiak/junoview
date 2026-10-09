@@ -2132,6 +2132,35 @@
      pages, then hand off to the browser's Print -> Save as PDF ---- */
   /* build the fixed-size print/export pages off-screen. Shared by the
      PDF path (window.print) and the standalone-HTML export. */
+  /* ONE PAGE OF THE DECK AS A PICTURE: the slide, its items drawn the
+     way the show draws them, its furniture and its number, into a
+     .print-page that is already in the document (a detached layer
+     measures 0 and its text bakes in too small). The caller puts the
+     renderer in view mode, fully built, with nothing selected, and
+     takes it out again -- buildPrintRoot for the exports, and T622's
+     scroll view for the slides it is not editing. `i` is the number
+     the page wears. */
+  function fillPrintPage(page,s,i,pg){
+    var slideEl=document.createElement('div');
+    if(s&&s.layout==='title'){
+      slideEl.className='slide slide-titlefree';
+      slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
+    } else slideEl.className='slide slide-blank';
+    if(s&&s.bg)
+      slideEl.style.setProperty('background',tokVal(s.bg),'important');
+    if(s&&s.border) slideEl.style.boxShadow='inset 0 0 0 '
+      +((s.border.w||4)/SW_REF_H*Math.round(pg.mm[1]/25.4*96)).toFixed(2)
+      +'px '+(tokVal(s.border.c)||'#39a9c0');
+    page.appendChild(slideEl);
+    if(s) attachAnnots(slideEl,s);     /* view-style; fontPx reads 720px */
+    paintFurniture(slideEl,i);
+    if(pres.showNums){
+      var pn=document.createElement('div');
+      pn.className='slide-pageno';pn.textContent=(i+1);
+      slideEl.appendChild(pn);
+    }
+    return slideEl;
+  }
   function buildPrintRoot(){
     var old=document.getElementById('print-root');
     if(old) old.remove();
@@ -2206,25 +2235,8 @@
       /* the page renders for ITS frame, and the bindings follow */
       flipForce=ent.f;
       var page=document.createElement('div');page.className='print-page';
-      var slideEl=document.createElement('div');
-      if(s&&s.layout==='title'){
-        slideEl.className='slide slide-titlefree';
-        slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
-      } else slideEl.className='slide slide-blank';
-      if(s&&s.bg)
-        slideEl.style.setProperty('background',tokVal(s.bg),'important');
-      if(s&&s.border) slideEl.style.boxShadow='inset 0 0 0 '
-        +((s.border.w||4)/SW_REF_H*Math.round(pg.mm[1]/25.4*96)).toFixed(2)
-        +'px '+(tokVal(s.border.c)||'#39a9c0');
-      page.appendChild(slideEl);
       root.appendChild(page);            /* in the DOM before annots render */
-      if(s) attachAnnots(slideEl,s);     /* view-style; fontPx reads 720px */
-      paintFurniture(slideEl,i);
-      if(pres.showNums){
-        var pn=document.createElement('div');
-        pn.className='slide-pageno';pn.textContent=(i+1);
-        slideEl.appendChild(pn);
-      }
+      fillPrintPage(page,s,i,pg);
       /* trim marks at the four corners, drawn OUTSIDE the page in the
          bleed so they never touch the artwork */
       if(bleed){

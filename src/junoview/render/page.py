@@ -16,6 +16,7 @@ import string
 
 from .. import assets
 from ..branding import FAVICON, KOFI_URL, LOGO_SVG, icons
+from ..build_info import build_badge
 from ..notebook.model import Document
 from .items import (
     deck_payload,
@@ -226,6 +227,9 @@ def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
         "kofi": KOFI_URL,
         "logo": LOGO_SVG,
         "favicon": FAVICON,
+        # T621: which build this is, on Home -- in the app and the web
+        # build only, so a rendered notebook's bytes never depend on git
+        "build": build_badge() if mode in ("app", "web") else "",
     }
     files = static_files()
     links: tuple[tuple[str, str], ...] = ()

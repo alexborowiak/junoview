@@ -267,6 +267,9 @@
     var b=$('#rbn-layouts'); if(!b) return;
     b.addEventListener('click',function(e){
       e.stopPropagation();
+      /* T619: a row of File now, so the menu goes first -- the gallery
+         is a surface of its own, not something File holds open */
+      var fm=$('#dc-menu'); if(fm&&!fm.hidden) overlayHide(fm);
       /* A folded ribbon has no measured bottom, so unfold it before the
          gallery positions itself beneath the arrangement being previewed. */
       if(typeof ribbonFolded==='function'&&ribbonFolded())
@@ -712,7 +715,7 @@
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'of-view',label:'View',tab:'design',
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-check','vw-morewrap']},
       {id:'of-panes',label:'Panes',tab:'design',
        items:['objects-btn','notes-btn','comments-btn','vw-versions']},
@@ -739,7 +742,7 @@
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'dk-view',label:'View',tab:'deck',rest:1,
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-morewrap']},
       {id:'dk-panes',label:'Review',tab:'deck',
        items:['vw-versions','notes-btn','comments-btn','vw-check']},
@@ -809,7 +812,7 @@
        items:['shape-strip-frame','icon-strip-frame','dc-diagram','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'s1-guides',label:'Guides and layers',tab:'format',
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox',
          'objects-btn']},
       {id:'s1-text',label:'Text',tab:'format',
        items:['fmt-font','fmt-szwrap','fmt-smaller','fmt-bigger',
@@ -892,7 +895,7 @@
       {id:'day-maths',label:'Other inserts',tab:'more',
        items:['dc-maths','dc-md','dc-draw']},
       {id:'day-workspace',label:'Workspace',tab:'more',
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-check','objects-btn','vw-morewrap']},
       /* T484: the strays in a group of their own, not in Workspace */
       {id:'day-rest',label:'Everything else',tab:'more',rest:1,items:[]},
@@ -912,7 +915,7 @@
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'j3-guides',label:'Workspace',tab:'page',rest:1,
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn']},
       {id:'j3-proof',label:'Proof and versions',tab:'page',
        items:['vw-check','vw-versions']},
@@ -993,7 +996,7 @@
          'fmt-tbl-grid']},
       {id:'one-view',label:'Animate and view',tab:'all',rest:1,
        items:['vw-anim','anim-strip-frame',
-         'anim-stagger','anim-together','anim-clear','vw-sorter','vw-rulers',
+         'anim-stagger','anim-together','anim-clear','vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers',
          'vw-grid','vw-guides','vw-guidebox','vw-full','vw-side',
          'vw-check','objects-btn','notes-btn','comments-btn','vw-morewrap']},
      ]},
@@ -1048,7 +1051,7 @@
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'mi-view',label:'View',tab:'mi-board',
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-check','vw-morewrap']},
       {id:'mi-panes',label:'Panes',tab:'mi-board',
        items:['objects-btn','notes-btn','comments-btn']},
@@ -1108,7 +1111,7 @@
       {id:'tt-anim',label:'Animate',tab:'tt-more',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'tt-rest',label:'The rest',tab:'tt-more',rest:1,
-       items:['vw-sorter','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
+       items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn','vw-check','vw-versions']},
      ]}
   ];

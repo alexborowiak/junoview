@@ -2006,6 +2006,7 @@
     /* out of the menu and into the row, so it shows its state too */
     if(sd) sd.setAttribute('aria-pressed',
       deckEl.classList.contains('rbn-side')?'true':'false');
+    if(typeof svSyncBtns==='function') svSyncBtns();   /* T622 */
     var os=$('#vw-other-slides'),of=$('#vw-other-fill');
     if(os) os.setAttribute('aria-pressed',otherSlidesOn?'true':'false');
     if(of){
@@ -2025,6 +2026,7 @@
      one worded button whose menu still drives the real controls
      (2026-08-22; tiles completed 2026-09-12). */
   var VIEW_FOLD=[['vw-versions',null],
+    ['vw-scroll','Scroll view'],['vw-scroll-lines',null],   /* T622 */
     ['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-other-slides','Other slides'],['vw-other-fill','Ghost fills'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
@@ -2544,7 +2546,10 @@
       o.className='dbtn vw-opt';o.type='button';
       /* Slides renames itself Versions for posters; use the live word for
          that contextual control instead of freezing the menu's copy. */
-      o.textContent=p[1]||(real.textContent||'Slides').trim();
+      /* T622: a tile whose word is its state (Faint line) is named in
+         full by its aria-label (Between slides: Faint line) */
+      o.textContent=p[1]||(real.getAttribute('aria-label')
+        ||real.textContent||'Slides').replace(/\s+/g,' ').trim();
       if(real.getAttribute('aria-pressed')==='true'){
         o.setAttribute('aria-pressed','true');
         o.classList.add('on');
@@ -2982,19 +2987,20 @@
   function paneDockState(){
     return [deckEl.classList.contains('pane-open'),paneWNow,mode].join('|');
   }
-  /* THE PANE'S WIDTH, ON WHAT READS IT. deck.css sizes three things by
-     --pane-w: the stage's right padding, the zoom bar's offset and a
-     pane's own default width. It was written on the deck, and a custom
+  /* THE PANE'S WIDTH, ON WHAT READS IT. deck.css sizes two things by
+     --pane-w: the stage's right padding and a pane's own default width
+     (the zoom bar's offset was a third until T619 put the bar in the tab
+     row). It was written on the deck, and a custom
      property there is inherited by every element in the editor, so
      each step of dragging a pane's edge restyled all of them (2026-10-09,
-     speed). Written on the three kinds of element instead, the rules
+     speed). Written on those two kinds of element instead, the rules
      read the same value and nothing else is touched. deck.css's
      .deck{--pane-w:272px} is still the value before the first write. */
   var paneWNow='';
   function paneWSet(v){
     if(v===paneWNow) return;
     paneWNow=v;
-    $$('.deck-stage,.deck-zoombar,.selpane',deckEl).forEach(function(el){
+    $$('.deck-stage,.selpane',deckEl).forEach(function(el){
       el.style.setProperty('--pane-w',v);});
   }
   /* Five panes are opened from eight places between them, and one of them

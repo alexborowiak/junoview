@@ -74,6 +74,18 @@
     'dsg-sets':'themes theme variants design',
     'dsg-tokens':'theme colours palette colors',
     'dc-play':'slide show start presenting from beginning',
+    /* T619/T620: the names the user gave them */
+    'pl-scroll':'infinite scroll continuous scroll view scrolling page '
+      +'scroll through every slide long page',
+    'pr-scroll':'infinite scroll continuous scroll view scrolling page '
+      +'scroll through every slide long page',
+    'vw-scroll':'infinite scroll continuous scroll view scroll through '
+      +'slides one under another long page vertical stack',
+    'vw-scroll-lines':'lines between slides separator divider faint strong '
+      +'spaced gap',
+    'rbn-layouts':'ribbon layouts arrangement customise customize ribbon '
+      +'toolbar layout',
+    'zoom-val':'zoom fit to window fit page zoom level',
     'qat-find':'find replace search',
     'hm-newslide':'insert new slide add slide',
     'hm-dupslide':'duplicate slide copy slide',
@@ -157,6 +169,8 @@
       add(b,'Present ▾',null,null);});
     ['#dc-save','#qat-find','#dc-play','#vw-full','#dc-undo','#dc-redo']
       .forEach(function(id){add($(id),'Top bar',null,null);});
+    /* T619: the zoom, in the tab row since it left the canvas */
+    add($('#zoom-val'),'Tab row',null,null);
     /* T611: the open files' layout, now on the list rather than in File */
     ['#ot-files-side','#pr-files-top'].forEach(function(id){
       add($(id),'Open files',null,null);});

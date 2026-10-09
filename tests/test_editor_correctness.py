@@ -687,16 +687,17 @@ def test_the_document_actions_are_in_one_thin_bar_across_the_top(out):
         assert cid in strip and cid not in qat, cid
     assert strip.index('id="dc-file"') < strip.index('class="rbn-tabset"')
     # ZOOM is NOT here. It went ribbon -> top bar -> the corner of the
-    # canvas, which is where Word, PowerPoint, Figma and Illustrator all
-    # put it: it is a property of the canvas, so it belongs at the canvas
-    # (2026-08-20, user: "I find the location of the zoom still really
-    # annoying. That is a prominent feature, and it needs to be somewhere
-    # good"). It floats over the stage, so it costs no height.
+    # canvas (2026-08-20, user: "I find the location of the zoom still
+    # really annoying. That is a prominent feature, and it needs to be
+    # somewhere good") -> the tab strip, where Ribbon layouts stood
+    # (T619, 2026-10-09: floating over the canvas it ate the page on a
+    # laptop, "I'd put the zoom where ribbon layouts is"). The strip is
+    # on every tab and costs no height of its own.
     assert 'id="zoom-val"' not in qat
-    assert 'class="deck-zoombar" id="deck-zoombar"' in out
-    assert ".deck.editing .deck-zoombar{display:flex;}" in out
-    assert (".deck.pane-open .deck-zoombar{"
-            "right:calc(var(--pane-w) + 18px);}") in out
+    assert 'class="deck-zoombar" id="deck-zoombar"' in strip
+    assert ".deck.editing .deck-zoombar{display:inline-flex;}" in out
+    assert ".deck-zoombar{position:absolute" not in out
+    assert ".deck.pane-open .deck-zoombar" not in out
     # ...and .dc-head, which used to hold them in the column, is gone
     assert 'class="dc-head"' not in out
     # exactly one bar occupies row 1: .deck-qat while editing or building,
@@ -804,7 +805,8 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     # opens and closes a strip in the WINDOW; the page is unchanged.
     assert 'id="vw-versions"' in view and 'id="vw-versions"' not in slide
     # ZOOM has since left View entirely, for the thin bar across the top
-    # (2026-08-20). Same reasoning, taken one step further: it is the one
+    # (2026-08-20), and is in the tab strip since T619. Same reasoning,
+    # taken one step further: it is the one
     # control you reach for on every tab, and a control a tab can take
     # away from you is a control you cannot rely on. It is still not a
     # page property, which is the distinction this test exists for.

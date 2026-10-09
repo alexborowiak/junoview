@@ -2430,8 +2430,19 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # view, cardEl memo, the sorter copies the strip's thumbnails.
 # Fix (reviews of the server and style packages): hidden cells' style/script
 # outputs live at load, Reload retries failed embeds, a key ends a resize drag.
-EXPECTED_MD5 = "1b011a037d4c52c9457f6d81717b780d"
-EXPECTED_BYTES = 5460687
+# T619: the zoom moved into the tab row and "Slide 3 of 14" to the head of the
+# slide list, Ribbon layouts became a row of File, the stage's foot is 18px.
+# T620: the scrolling page's Between slides choice (its script, its CSS and a
+# help entry).
+# T621: the template's comment beside the wordmark and the .welcome-ver rule;
+# the build field itself is empty in a rendered notebook, so git never reaches
+# these bytes.
+# T622: the scroll view -- its fragment, the View tab's two tiles and their
+# icon, the column CSS, fillPrintPage lifted out of buildPrintRoot, the
+# per-page .page-light and a help entry.
+# Merge claude/version-scroll-zoom (T619-T622).
+EXPECTED_MD5 = "fceeeefa44275e9792c1cb6c0f2f0218"
+EXPECTED_BYTES = 5493550
 
 
 def _render_example() -> str:
@@ -2514,6 +2525,7 @@ def test_page_template_placeholders_match_what_render_page_supplies():
         "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
         "help_html", "logo", "favicon", "head_extra", "icons_js",
         "saved_file_js",    # T597: what a saved file runs, as inert text
+        "build",            # T621: the version on Home (app and web only)
         # the first layout, painted as app.js will arrange it (page.py
         # _first_layout; 2026-10-09 speed, load-static #8)
         "html_attrs", "body_attrs", "bar_hidden",

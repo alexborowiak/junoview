@@ -67,7 +67,7 @@
     animOutBoot();              /* Disappear, on the Animation tab (T238) */
     focusBoot();                /* T472: focus, on its click */
     versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
-    whereBoot();                /* "Slide 3 of 14", bottom-left (T524) */
+    whereBoot();                /* "Slide 3 of 14", atop the slides (T524) */
     chartBoot();                /* the Chart pane's door (T322) */
     tablePaneBoot();            /* the Table pane's door (T324) */
     citeBoot();                 /* the Citations pane's door (T325) */
@@ -118,6 +118,8 @@
   talkToolsBoot();            /* laser, magnifier, black screen (T386) */
   presBarBoot();              /* the presenting bar folds away (T581) */
   scrollShowBoot();           /* the scrolling version (T389) */
+  scrollViewBoot();           /* ...and the slides one under the next
+                                 while you build them (T622) */
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   tabRowBoot();               /* New and Open beside the tabs (T596) */

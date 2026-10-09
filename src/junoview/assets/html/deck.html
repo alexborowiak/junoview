@@ -307,6 +307,22 @@
               ><i data-ic="layouts"></i> Thumbnails &#9662;</button>
             <div class="dc-menu" id="film-view-menu" hidden></div>
           </div>
+          <!-- T524: where you are, "Slide 3 of 14 · Methods"; click it
+               for the Overview map. T619 brought it here from the
+               canvas's bottom-left corner, where it floated over the
+               page at a laptop's size: the slide list is where the
+               slides are, and it rides into the Versions pane with the
+               rest of this row. -->
+          <span class="deck-where" id="deck-where">
+            <button class="dbtn rbn-sm" id="where-btn"
+              title="Every slide as a tile (the Overview map)">
+              <i data-ic="film"></i> <span id="where-t">Slide 1 of 1</span></button>
+            <!-- T601: where this slide comes from, when it is a part's,
+                 or which talk this presentation is a part of -- one
+                 click to the other -->
+            <button class="dbtn rbn-sm where-part" id="where-part" hidden
+              ><i data-ic="link"></i> <span id="where-part-t">Part</span></button>
+          </span>
         </div>
         <div class="film-list" id="film-list"></div>
         <!-- Add slide and Section sit on one row: a section IS a slide
@@ -476,6 +492,15 @@
         <button class="dc-mi" id="deck-scheme" aria-haspopup="menu"
           aria-expanded="false" aria-controls="jv-scheme-menu"
           title="Choose a colour scheme">Theme&#8230;</button>
+        <!-- T619: the door to the ribbon's arrangements, which stood in
+             the tab row beside Auto-hide from T200 until the zoom took
+             its place (2026-10-09, user: "move the ribbon layouts into
+             file (this isn't so important that it always needs to be
+             visible)"). Still outside #edit-tools, so no arrangement it
+             chooses can hide the way back to the others. -->
+        <button class="dc-mi" id="rbn-layouts"
+          title="Choose a different arrangement of the ribbon"
+          >Ribbon layouts&#8230;</button>
         <button class="dc-mi" id="deck-howto"
           title="How to use this, and everything it can do (?)">How to
           use&#8230;</button>
@@ -647,14 +672,26 @@
     <button class="dbtn rbn-autobtn" id="rbn-auto" aria-pressed="false"
       title="Auto-hide: the tools roll up and come back when you reach the
  tab strip. Off by default."><i data-ic="autohide"></i> Auto-hide</button>
-    <!-- ON THE RIGHT, beside Auto-hide (T200): it is a setting of
-         the ribbon itself, like the two beside it, and it read as a
-         fifth tab on the left. RIBBON layout, not slide layout. This permanent door sits outside
-         #edit-tools, so no chosen layout, tab filter, per-button preference
-         or width rung can hide the way to choose another arrangement. -->
-    <button class="dbtn rbn-layouts" id="rbn-layouts"
-      title="Choose a different arrangement of the ribbon">
-      <i data-ic="layouts"></i> Ribbon layouts</button>
+    <!-- T619: THE ZOOM, IN THIS ROW (2026-10-09, user, at a laptop's
+         size: "the slide and zoom buttons really eat into the size that
+         you can view the page in. Even when you zoom to fill they really
+         start to eat in ... I'd put the zoom where ribbon layouts is,
+         then move the ribbon layouts into file"). It floated over the
+         canvas's bottom-right corner from 2026-08-20, and the stage kept
+         50px under the page so the bar never sat on it (T467) -- a strip
+         of every window spent on two floating pills. Here it costs no
+         height: the row is there anyway. Ribbon layouts, which stood
+         here, is a row of File (still outside #edit-tools, so no layout
+         can hide the way to the others). In the markup, outside
+         .rbn-tabset, for the reason written above #rbn-auto. -->
+    <span class="deck-zoombar" id="deck-zoombar">
+      <button class="dbtn rbn-ico" id="zoom-out" aria-label="Zoom out"
+        title="Zoom out">&#8722;</button>
+      <button class="dbtn rbn-sm" id="zoom-val"
+        title="Click to fit the whole page in the window (Ctrl+0). Ctrl+scroll
+ zooms at the pointer">Zoom 100%</button>
+      <button class="dbtn rbn-ico" id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+    </span>
     <button class="dbtn rbn-fold" id="rbn-fold" aria-label="Hide or show the editing tools" aria-pressed="false"
       title="Hide the tools and give the page the room (Ctrl+F1). Click a
  tab, or this, to bring them back">&#9652;</button>
@@ -992,6 +1029,26 @@
                 title="Every slide as a tile: pick some, drag them to a new
  place, duplicate, delete or put them in a section"
                 ><i data-ic="sorter"></i> Slide sorter</button>
+              <!-- T622: THE SCROLL VIEW (2026-10-09, user: "the infinite
+                   scroll is only a present thing, like I want it as a
+                   view when just creating slides as well"). Every slide
+                   one under the next while you build; the one you scroll
+                   to, or click, is the one you edit. Its partner says
+                   what sits between the slides -- the scrolling page's
+                   own choice (T620), one setting for both. -->
+              <button class="fx-tile view-tile rbn-tall" id="vw-scroll"
+                aria-pressed="false"
+                title="Every slide one under the next, to scroll through as
+ you build. The slide in the middle of the view is the one you edit; click
+ any slide to edit it"
+                ><i data-ic="scrollview"></i> Scroll view</button>
+              <button class="fx-tile view-tile rbn-tall" id="vw-scroll-lines"
+                disabled
+                title="What sits between the slides in Scroll view (and on
+ the scrolling page). Click for the next: faint line, strong line, no line,
+ spaced"
+                ><i data-ic="hline"></i> <span id="vw-scroll-lines-t">Faint
+                line</span></button>
               <button class="fx-tile view-tile rbn-tall" id="vw-rulers"
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres
@@ -3851,31 +3908,10 @@ items snap to both. Guides, not ink: never printed or exported"
           it is about the room you are in, so nothing here reaches a
           PDF, a .pptx or anyone else&rsquo;s copy.</p>
       </aside>
-      <!-- the zoom cluster, pinned to the corner of the canvas the way
-           every other page-based editor does it. It floats over the stage
-           rather than sitting in its flow, so it costs no height at all,
-           and it steps aside when a pane docks. -->
-      <!-- T524: where you are -- the zoom cluster's twin in the other
-           corner, floating for the same reason (the canvas keeps its
-           height). Click it for the Overview map. -->
-      <span class="deck-where" id="deck-where">
-        <button class="dbtn rbn-sm" id="where-btn"
-          title="Every slide as a tile (the Overview map)">
-          <i data-ic="film"></i> <span id="where-t">Slide 1 of 1</span></button>
-        <!-- T601: where this slide comes from, when it is a part's, or
-             which talk this presentation is a part of -- one click to
-             the other -->
-        <button class="dbtn rbn-sm where-part" id="where-part" hidden
-          ><i data-ic="link"></i> <span id="where-part-t">Part</span></button>
-      </span>
-      <span class="deck-zoombar" id="deck-zoombar">
-        <button class="dbtn rbn-ico" id="zoom-out" aria-label="Zoom out"
-          title="Zoom out">&#8722;</button>
-        <button class="dbtn rbn-sm" id="zoom-val"
-          title="Click to fit the whole page in the window (Ctrl+0). Ctrl+scroll
- zooms at the pointer">Zoom 100%</button>
-        <button class="dbtn rbn-ico" id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
-      </span>
+      <!-- T619: nothing floats over the canvas's foot any more. The zoom
+           is in the tab row (#deck-zoombar) and "Slide 3 of 14" heads
+           the slide list (#deck-where), so the page has the stage's
+           whole height. -->
     </div>
   </div>
   <div class="vfull" id="vfull" hidden>

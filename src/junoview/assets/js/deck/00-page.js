@@ -937,7 +937,15 @@
     var s0=pres&&pres.slides&&pres.slides[cur];
     var bg=pageBgOf(s0);
     deckEl.style.setProperty('--page-bg',bg);
-    deckEl.classList.toggle('page-light',pageIsLight(bg));
+    /* T622: in the scroll view every page is lit for ITSELF. The deck's
+       class would reach every picture in the column too, so a white
+       slide's picture drew the dark page's white words when a dark
+       slide was the live one (and the reverse): the live page and each
+       picture carry their own .page-light instead (54b-scroll-view.js) */
+    var perPage=typeof svActive==='function'&&svActive();
+    deckEl.classList.toggle('page-light',!perPage&&pageIsLight(bg));
+    var lp=perPage&&stage&&stage.querySelector('.slide');
+    if(lp) lp.classList.toggle('page-light',pageIsLight(bg));
     /* the chips live in the Background dropdown now, and it rebuilds
        itself each time it opens - nothing to sync here */
   }
@@ -1099,6 +1107,8 @@
         +(bd.c||'#39a9c0'))
       :'';
     stage.classList.toggle('zoomed',w>aw+1||h>ah+1);
+    /* T622: the scroll view's pictures are the live page's size */
+    if(mode==='edit'&&typeof svSize==='function') svSize(w,h);
   }
   /* `rendering`: renderSlide is the caller, and paints the furniture
      itself once the annots are in -- painting it here first only to be

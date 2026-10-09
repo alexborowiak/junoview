@@ -27,7 +27,8 @@ def test_the_pages_are_the_export_pages_scaled_to_the_window(out):
     # the id goes, so a later print builds its own root without deleting this
     assert "    root.removeAttribute('id');" in out
     assert "    root.classList.add('scroll-root');" in out
-    assert "      p.style.zoom=Math.max(0.1,Math.min(1,avail/w)).toFixed(4);" in out
+    assert "      var z=Math.max(0.1,Math.min(1,avail/w));" in out
+    assert "      p.style.zoom=z.toFixed(4);" in out
     assert (".deck-scroll .scroll-root{position:static;left:auto;top:auto;"
             "width:auto;") in out
 

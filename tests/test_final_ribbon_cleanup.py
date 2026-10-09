@@ -14,6 +14,8 @@ TILE_RULE = (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"
 
 VIEW_IDS = (
     "vw-versions",
+    "vw-scroll",        # T622
+    "vw-scroll-lines",  # T622
     "vw-rulers",
     "vw-grid",
     "vw-other-slides",
@@ -55,7 +57,10 @@ def test_every_view_tile_remains_reachable_when_the_group_folds(out):
     fold = out.split("var VIEW_FOLD=", 1)[1].split("];", 1)[0]
     for control_id in VIEW_IDS:
         assert f"'{control_id}'" in fold, control_id
-    assert "o.textContent=p[1]||(real.textContent||'Slides').trim();" in out
+    # T622: a tile whose word is its state is named by its aria-label
+    assert ("      o.textContent=p[1]||(real.getAttribute('aria-label')\n"
+            "        ||real.textContent||'Slides').replace(/\\s+/g,' ').trim();") \
+        in out
 
 
 def test_shared_colours_does_not_change_layout(out):

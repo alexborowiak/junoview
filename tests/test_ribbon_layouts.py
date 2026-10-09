@@ -196,11 +196,22 @@ def test_ribbon_layouts_have_a_persistent_worded_door(out):
     """
     i = out.index('id="rbn-layouts"')
     door = out[i:i + 700]
-    assert 'class="bic"' in door and "Ribbon layouts" in door
+    assert "Ribbon layouts&#8230;</button>" in door
     assert "function initRibbonLayoutDoor(){" in out
     assert "initRibbonLayoutDoor();" in out
     assert "ribbonFolded())" in out and "setRibbonFold(false);" in out
-    assert ".rbn-tabs .rbn-layouts{" in out
+    # T619 (2026-10-09, user: "move the ribbon layouts into file (this
+    # isn't so important that it always needs to be visible)"): a row of
+    # File, which is still outside #edit-tools, so no arrangement can
+    # hide the way back to the others -- and File closes before the
+    # gallery opens
+    menu = out.split('id="dc-menu"')[1].split('id="mi-discard"')[0]
+    assert 'class="dc-mi" id="rbn-layouts"' in menu
+    tools = out.split('<div class="edit-tools ribbon" id="edit-tools"')[1]
+    assert 'id="rbn-layouts"' not in tools
+    fn = out.split("  function initRibbonLayoutDoor(){")[1].split("\n  }\n")[0]
+    assert "var fm=$('#dc-menu'); if(fm&&!fm.hidden) overlayHide(fm);" in fn
+    assert ".rbn-tabs .rbn-layouts{" not in out
 
 
 def test_returning_to_default_removes_generated_tabs_first(out):
@@ -560,7 +571,8 @@ def test_every_markup_tab_sits_inside_the_tablist():
     # into Images and Text, and nine once Style left Object.
     assert inside.count('class="rbn-tab"') == 9, inside.count('class="rbn-tab"')
     assert html.count('class="rbn-tab"') == 9, "a tab escaped the tablist"
-    # and the Ribbon layouts door sits with the ribbon's own settings on
-    # the right, after Auto-hide, not beside the tabs (T200)
-    assert html.index('id="rbn-auto"') < html.index('id="rbn-layouts"') \
-        < html.index('id="rbn-fold"')
+    # and the ribbon's own settings sit on the right, after the tabs
+    # (T200). The Ribbon layouts door that stood between Auto-hide and
+    # the fold is a row of File since T619; the zoom took its place.
+    assert html.index('class="rbn-tabset"') < html.index('id="rbn-auto"') \
+        < html.index('id="deck-zoombar"') < html.index('id="rbn-fold"')

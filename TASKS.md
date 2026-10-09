@@ -11745,3 +11745,121 @@ toward the presentation without making it one.
 - [ ] **T617 — Bubbles.** A view of linked bubbles that organises itself
   as they are added -- one after another, linked -- which you can
   rearrange, animate and gather into sections.
+
+## Group 25 — the 2026-10-09 round (from the user's own review)
+
+The user, 2026-10-09, with a screenshot of the editor at a laptop's
+size: three things, sent to a branch and a pull request because other
+work was running on `main` at the time.
+
+- [x] **T619 — The zoom and "Slide 3 of 14" leave the canvas.** "On
+  small screen ... the slide and zoom buttons really eat into the size
+  that you can view the page in. Even when you zoom to fill they really
+  start to eat in. It would be good if these could go somewhere else so
+  they don't eat up the field of view. I'd put the zoom where ribbon
+  layouts is, then move the ribbon layouts into file (this isn't so
+  important that it always needs to be visible)."
+  *Done 2026-10-09.* The two pills floated over the stage's bottom
+  corners (the zoom since 2026-08-20, its twin since T524), and T467 kept
+  50px under the page so the zoom never sat on the page number. **The
+  zoom is in the tab row**, where Ribbon layouts stood, between Auto-hide
+  and the fold: button-high for the 28px strip, editing only, with two
+  classes on its buttons so the ribbon's density rungs cannot resize it
+  under fitTabStrip (the strip has its own rung for it). **Ribbon
+  layouts is a row of File** (app section, after Theme), still outside
+  #edit-tools so no arrangement can hide the way back; File closes before
+  the gallery opens. **"Slide 3 of 14" heads the slide list**, beside
+  the Thumbnails chooser, and rides into the Versions pane with it; the
+  column is ~185px on a 1366 laptop, so the head wraps and the readout
+  drops under the chooser rather than squeezing either word. **The stage's
+  foot is 18px**, the head's, so the page has the 32px back; the
+  editor's toasts lose T607's lift above the row that is gone, and
+  --pane-w is no longer written on a zoom bar. Command search finds
+  Zoom (Tab row) and Ribbon layouts (File). The help, the tour's "Where
+  you are" step and the comments say where they went. Driven at 1366x657
+  and 1280x600: the tab row fits on one line with Style and Object
+  showing (no rung needed at 1280), the slide is 394px tall at 1280x600
+  where the old foot left it 362px, File > Ribbon layouts... closes File
+  and opens the gallery, − + and the readout zoom and fit.
+- [x] **T620 — Lines between the slides of the scrolling page.** "I
+  think I figured out what I meant by the infinite scroll, we have some
+  other ideas and I don't want them removed, but this is just a simple
+  idea that can fit into the presentation mode ... it would be cool if
+  there was an infinite scroll view. Essentially just you can scroll
+  between all of the different slides and they are next to each other
+  instead of having to click. Then there is just a small feint grey line
+  or something that marks between slides (would be cool if this could be
+  ticked on or off as well, and be feint or strong actually)."
+  *Done 2026-10-09.* The view itself is T389's scrolling page
+  (Present ▾ > Play as a scrolling page, Present tab > Scrolling page),
+  which showed the slides as cards 24px apart with a shadow each; T613-
+  T617, the collection ideas, are untouched. Its bar now has **Between
+  slides**: Faint line (the default), Strong line, No line, and Spaced
+  (T389's cards). The first three run the pages edge to edge. The line is
+  a zero-height element between two pages, outside their zoom, so it is
+  a real 1px (faint) or 2px (strong) at every window width, as wide as
+  the page is drawn, and its stroke is a see-through grey drawn across
+  the join above both pages -- light grey on a white slide, dark grey on
+  a dark one, so "faint" stays faint on either. The choice is this
+  browser's (lsSet, quiet), never the deck's; changing it keeps the page
+  you were reading in view. Each choice wears a small picture of its
+  join. Command search finds the view by "infinite scroll" and
+  "continuous"; the help has an entry for it. Driven headless at
+  1280x600 on five slides: four lines on four joins, each the page's
+  width, on white and on dark slides; Spaced brings back the gap and the
+  shadow; Spaced survived a close and reopen. Tests in
+  tests/test_scroll_show_lines.py.
+- [x] **T621 — The version on Home.** "I think there have been a lot of
+  updates, but I don't think I am getting them ... be good to be able to
+  see a version number on the home page, maybe and then on hover a last
+  updated so I can keep track of this."
+  *Done 2026-10-09.* Beside the wordmark, a quiet pill: "v0.2.0 · build
+  879"; over it, "Last updated 9 Oct 2026 at 12:17 (commit 70c3964)", and
+  ", with changes not yet committed" when the app is running a working
+  copy. The package version alone never moves, so build_info.py reads
+  the PACKAGE's newest commit (git log -1 -- src/junoview) for the hash
+  and date, and counts the history up to it for the build number --
+  which only goes up, and does not move for a docs/, test or TASKS.md
+  commit, so a web build is the same bytes until the app changes (two
+  builds compared equal). Counting only the package's own commits
+  (rev-list --count HEAD -- .) was the first try and took 13 seconds on
+  this OneDrive checkout; this takes a tenth of one, once per process.
+  No git -- an installed wheel, Pyodide -- is the version alone, and the
+  tooltip says why. Only the app server and the web build carry it: a
+  rendered notebook is a file someone keeps, its bytes must not depend on
+  git, and the template's field is empty there. Driven at 1366x657
+  against the app server. Tests in tests/test_the_version_on_home.py.
+- [x] **T622 — The scroll view, while you build.** "they infinite scroll
+  is only a present thing, like I want it as a view when just creating
+  slides as well. Like that is better when creating slides to."
+  *Done 2026-10-09.* **View > Scroll view** stacks every slide in the
+  editor's stage, one under the next, and **the tile beside it** says
+  what sits between them -- Faint line, Strong line, No line, Spaced --
+  the scrolling page's own setting (T620), one choice for both, cycled
+  by a click. The editor still edits ONE slide, and everything that
+  reads `cur` and the stage's live page is untouched: the slide you are
+  on is the real page, in its place in the column, and every other slide
+  is a picture of itself drawn by the export's renderer (fillPrintPage,
+  now shared with buildPrintRoot) at the live page's size. Scroll and
+  the slide that settles in the middle becomes the one you edit; click a
+  picture and that slide is live with what you clicked selected; nothing
+  under the pointer selects the slide, so Style and Object step aside. A
+  scroll the view makes itself, a drag on the page and typing in a box
+  never switch slides. The live page stays the stage's FIRST child --
+  the editor's 140-odd stage lookups take the first .slide and
+  .annot-layer to mean it -- and the pictures follow it in the DOM, put
+  in deck order by CSS `order`; renderSlide notes the scroll before it
+  empties the stage and svAfterRender puts the column back round the new
+  page, so New slide, Delete, Undo, the strip, the sorter and a reorder
+  all land in it. A picture is redrawn only when its slide, its place or
+  the deck-wide things every slide wears change, and only near the view;
+  it has no ids or contenteditable, its page is inert, its clips are
+  stills, and its arrows redraw for its own slide on a timer of its own
+  (scheduleArrowRedraw drew `cur`'s into it, and cancelled the live
+  page's pending redraw). **Each page is lit for itself**: the deck's
+  .page-light, taken from the live slide, reached every picture, so a
+  white slide drew white words while a dark one was live -- in the
+  column the live page and each picture carry their own. A slide's
+  versions are one page, as in the strip. A zoom or a resize keeps the
+  live page in view. Driven headless at 1366x657 (see the test file's
+  header). Tests in tests/test_scroll_view.py.
