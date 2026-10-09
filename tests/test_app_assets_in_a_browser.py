@@ -93,23 +93,28 @@ def test_the_page_runs_and_is_styled_from_its_files(app):
     assert errors == []
 
 
-def test_the_raw_view_is_built_the_first_time_it_is_shown(app):
+def test_the_raw_view_holding_a_script_is_live_at_load(app):
+    # The raw view ships as an inert <template> and is built the first
+    # time Raw is shown -- EXCEPT when it holds a hidden cell's <style> or
+    # <script> output, which lives only there: then it goes live at load
+    # (liveRawView, from the review of the server package), so that output
+    # styles the page and runs as it did when the raw view was always live
+    # DOM. This fixture's hidden cell has a script, so its view is live
+    # and the script has run before Raw is ever pressed.
     page, _f, errors = app
-    before = page.evaluate(
-        "document.querySelectorAll('.rawview .rawcell').length")
-    assert before == 0
+    page.wait_for_function(
+        "(document.getElementById('rawonly')||{}).textContent==='RAN'")
+    assert page.evaluate(
+        "document.querySelectorAll('.rawview template').length") == 0
     page.evaluate("document.querySelector('#view-raw').click()")
     page.wait_for_function(
         "document.querySelectorAll('.nbshell.raw .rawview .rawcell')"
         ".length===3")
-    assert page.evaluate(
-        "document.querySelectorAll('.rawview template').length") == 0
     assert "x = 1" in page.evaluate(
         "document.querySelector('.rawview').innerText")
-    # a hidden cell's own output script runs once its view exists, as it
-    # did at load when the raw view was always live DOM
-    page.wait_for_function(
-        "(document.getElementById('rawonly')||{}).textContent==='RAN'")
+    # it ran once, at load -- not again when Raw was opened
+    assert page.evaluate(
+        "document.querySelectorAll('#rawonly').length") == 1
     assert errors == []
 
 
