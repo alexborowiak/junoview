@@ -245,7 +245,7 @@
        those would otherwise overwrite the one slot that holds the copy
        a real refresh replaced */
     if(EMBED[key]&&EMBED[key].html
-       &&EMBED[key].html!==String(e.html||''))
+       &&!sameCardHtml(EMBED[key].html,String(e.html||'')))
       EMBPREV[key]={title:EMBED[key].title,kind:EMBED[key].kind,
         html:EMBED[key].html,code:EMBED[key].code||''};
     embPut(key,e);
@@ -2260,6 +2260,11 @@
       var eb=embBody(ref);
       return eb?stripIds(eb.cloneNode(true)):null;
     }
+    /* the notebook typesets its maths as it is read, so a card nobody
+       has scrolled to may still hold raw TeX: set it now, before it is
+       cloned onto a slide, kept, compared or measured -- the same card
+       every one of those always saw once the page had loaded */
+    if(window.jvMath) window.jvMath.settle(c);
     var b=$('.cardbody',c); if(!b) return null;
     b=stripIds(b.cloneNode(true));
     /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
@@ -2273,6 +2278,12 @@
     /* per-output fold stubs are filter chrome, not content */
     $$('.ot-stub',b).forEach(function(n){n.remove();});
     $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
+    /* MathJax's menu numbers each equation in the order this page set
+       it -- the reading order, now -- so a kept copy taken from the same
+       card read differently came out different bytes on every save. The
+       number is the page menu's bookkeeping, not the figure (sameCardHtml) */
+    $$('mjx-container[ctxtmenu_counter]',b).forEach(function(n){
+      n.removeAttribute('ctxtmenu_counter');});
     /* T303: only a LIVE clone is a "previous figure". This line sits
        in the live-card branch, which a kept ref now returns before
        reaching -- so the snapshot stopped being taken, which is right.
@@ -2584,9 +2595,64 @@
     box.appendChild(sp);
     return box;
   }
+  /* through the page's one typesetter (app.js jvMath): synchronous
+     whenever MathJax is there -- callers re-fit and measure right after
+     -- loaded on first need, a no-op when nothing reads as TeX, and
+     serialised with every other MathJax call on the page */
   function typeset(el){
-    if(window.MathJax&&MathJax.typesetPromise){
-      MathJax.typesetPromise([el]).catch(function(){});}
+    if(window.jvMath) return window.jvMath.typeset(el);
+    if(window.MathJax&&MathJax.typesetPromise)
+      return MathJax.typesetPromise([el]).catch(function(){});
+  }
+  /* MathJax there -- loading it if this page has not needed it yet --
+     then ok(); no() when it cannot be had (offline, a blocked CDN) */
+  function mathsThen(ok,no){
+    var M=window.jvMath;
+    (M?M.ensure():Promise.resolve()).then(function(){
+      if(window.MathJax&&MathJax.typesetPromise) ok(); else no();
+    },no);
+  }
+  /* A <style>'s rules, as text. MathJax writes its stylesheet as text on
+     its FIRST typeset pass and adds every glyph after that through the
+     CSSOM (insertRule), which textContent never shows -- and since the
+     page typesets as it is read (2026-10-09), that first pass is only
+     the first screen's. So a copy of the page's CSS (the standalone HTML
+     export, the presenter window) reads MathJax's sheet rule by rule. */
+  function styleText(st){
+    if(st&&st.id==='MJX-CHTML-styles'&&st.sheet){
+      try{
+        return [].map.call(st.sheet.cssRules,function(r){
+          return r.cssText;}).join('\n');
+      }catch(e){}
+    }
+    return st.textContent;
+  }
+  /* the same figure, whatever MathJax did to it: its markup records the
+     ORDER this page typeset equations in (ctxtmenu_counter) and the font
+     scale it measured at that moment, neither of which is the figure.
+     The page typesets as it is read now, so that order follows your
+     scrolling -- and a kept copy must not read as "out of date" for it */
+  function sameCardHtml(a,b){
+    if(a===b) return true;
+    a=String(a||'');b=String(b||'');
+    if(a.indexOf('<mjx-container')<0||b.indexOf('<mjx-container')<0)
+      return false;
+    return mjxNeutral(a)===mjxNeutral(b);
+  }
+  function mjxNeutral(h){
+    return h.replace(/<mjx-container\b[^>]*>/g,function(t){
+      return t.replace(/\sctxtmenu_counter="\d+"/,'')
+        .replace(/font-size:\s*[\d.]+%;?\s*/,'');
+    });
+  }
+  /* fn calls MathJax itself: run once it is there, never overlapping the
+     page's own typesetting. Rejects when there is no MathJax to be had. */
+  function mathsRun(fn){
+    var M=window.jvMath;
+    if(M) return M.run(fn);
+    if(window.MathJax&&MathJax.typesetPromise)
+      return Promise.resolve().then(fn);
+    return Promise.reject(new Error('No maths renderer'));
   }
   function multiNb(){return APP.order.length>1;}
   function nbChip(cls,stem){
@@ -3310,6 +3376,7 @@
     (g.steps||[]).forEach(function(st){
       items.push(st);
       var c=cardEl(st.ns);
+      if(c&&window.jvMath) window.jvMath.settle(c);
       if(c) store.appendChild(c.cloneNode(true));  /* ids kept: the tree
         builder looks nodes up by card id WITHIN this wrapper */
     });

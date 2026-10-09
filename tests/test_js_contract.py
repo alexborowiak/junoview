@@ -40,7 +40,8 @@ HTML = ASSETS / "html"
 # The documents app.js and deck.js actually run inside are assembled from
 # these four templates (page.html is the static page, shell.html one
 # notebook tab, deck.html the presentation builder, help.html the overlay).
-TEMPLATES = ["deck.html", "page.html", "shell.html", "help.html"]
+TEMPLATES = ["deck.html", "page.html", "shell.html", "help.html",
+             "mathjax.html"]   # spliced into page.html's <head>
 
 # Ids the JS looks up that exist in NO template because the JS builds the
 # element itself at runtime. Curated by hand -- a new entry needs a note

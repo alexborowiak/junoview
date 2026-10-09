@@ -409,7 +409,9 @@ console.log(JSON.stringify({firstCost,buildCost,phase,removed,
 
 def test_import_queue_mounts_one_result_before_naming_next(tmp_path):
     src = assets.app_js()
-    code = "var webImports=Promise.resolve();\n" + lift_fn(src, "queueWebImport")
+    code = ("var webImports=Promise.resolve();\n"
+            "var jvMath={warm:function(){}};\n"     # MathJax, loaded early
+            + lift_fn(src, "queueWebImport"))
     code += r"""
 var names=[];
 const first=queueWebImport(()=>Promise.resolve().then(()=>names.push('notebook')));

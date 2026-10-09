@@ -59,6 +59,8 @@ src/junoview/
 │   ├── static.py          the CSS/JS as content-hashed files (app, web)
 │   ├── highlight.py       Python syntax highlighting
 │   ├── markdown.py        just enough Markdown for notebook prose
+│   ├── maths.py           which fragments hold maths (data-math), so the
+│   │                      page typesets as it is read
 │   ├── sanitize.py        allow-list sanitizer for untrusted notebook HTML
 │   └── graph.py           the provenance drawing, as SVG
 │

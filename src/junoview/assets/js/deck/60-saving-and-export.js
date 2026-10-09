@@ -2292,7 +2292,21 @@
   }
   function afterTypeset(root,fn){
     var go=function(){
+      /* jvMath loads MathJax if this page has not needed it yet (a
+         notebook with no maths, a deck with an equation) and waits for
+         it -- but never for ever: an unreachable CDN still exports, with
+         the LaTeX as written, after 15 s. Every open notebook's maths is
+         set first, as it was at load before the page typeset as it is
+         read: a kept copy on a slide is MathJax markup whose glyphs are
+         drawn by rules written for what this page has set (styleText). */
       try{
+        if(window.jvMath){
+          var M=window.jvMath,done=false;
+          var once=function(){if(!done){done=true;fn();}};
+          M.all().then(function(){return M.typeset(root);}).then(once,once);
+          setTimeout(once,15000);
+          return undefined;
+        }
         if(window.MathJax&&MathJax.typesetPromise)
           return MathJax.typesetPromise([root])
             .catch(function(){}).then(fn);
@@ -2478,7 +2492,7 @@
   function pageCssText(root){
     var els=$$('style,link[rel="stylesheet"]',root);
     return Promise.all(els.map(function(el){
-      if(el.tagName==='STYLE') return Promise.resolve(el.textContent);
+      if(el.tagName==='STYLE') return Promise.resolve(styleText(el));
       return fetch(el.href).then(function(r){
         if(!r.ok) throw new Error(String(r.status));
         return r.text();
@@ -2494,7 +2508,7 @@
   function pageCssTextNow(root){
     var css='';
     $$('style,link[rel="stylesheet"]',root).forEach(function(el){
-      css+=(el.tagName==='STYLE'?el.textContent:sheetRulesText(el.sheet))
+      css+=(el.tagName==='STYLE'?styleText(el):sheetRulesText(el.sheet))
         +'\n';
     });
     return css;
@@ -3387,6 +3401,12 @@
      and is handed down as a plain {displaySrc: fullBytes} map. */
   function pptxOriginals(){
     var jobs=[],out={};
+    /* and the MATHS, gathered like the bytes: a cell's equations reach
+       the .pptx as the characters MathJax set them in (blockText), and
+       the page typesets as it is read now rather than all at load, so
+       every open notebook's maths is typeset before anything is read */
+    if(window.jvMath&&window.jvMath.pending())
+      jobs.push(window.jvMath.all(null,15000));
     function want(o){
       if(!o||!o.okey||!o.src||out[o.src]!==undefined) return;
       out[o.src]=null;

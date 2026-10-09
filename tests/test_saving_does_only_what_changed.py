@@ -313,7 +313,7 @@ def test_a_store_of_the_same_copy_keeps_what_was_built_from_it():
     got = _run("""
 var EMBED={},embItems={},embWeak={},EMBPREV={},dropped=[];
 function dropFrameCache(k){dropped.push(k);}
-""", ("embStore", "embPut"), r"""
+""", ("embStore", "embPut", "sameCardHtml", "mjxNeutral"), r"""
       embStore('nb::a',{title:'t',kind:'figure',html:'<i>',code:''});
       EMBED['nb::a']._node='parsed';embItems['nb::a']='item';
       embStore('nb::a',{title:'t',kind:'figure',html:'<i>'});

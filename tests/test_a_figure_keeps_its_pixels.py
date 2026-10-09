@@ -395,9 +395,11 @@ def _store_run(script):
         pytest.skip("no node or VS Code Electron on this machine")
     cmd, env = eng
     src = assets.deck_js()
+    # sameCardHtml/mjxNeutral: "the same figure" ignores what MathJax
+    # recorded about when it typeset it (test_maths_typeset_as_read)
     body = "\n".join(lift_fn(src, f) for f in
                      ("embStore", "embPut", "embRestore", "refIsLive",
-                      "setRefLive"))
+                      "setRefLive", "sameCardHtml", "mjxNeutral"))
     # EMBPREV and embWeak are declared beside embStore, not inside it
     pre = _STORE_STUBS + "var EMBPREV={},embWeak={};\n" + body + "\n"
     with tempfile.TemporaryDirectory() as d:
@@ -756,6 +758,8 @@ function cardEl(r){return LIVE?{card:1}:null;}
 function stripIds(n){return n;}
 function $(sel,root){CALLS.push(sel); return LIVE;}
 function $$(sel,root){return [];}
+// no page typesetter here (app.js jvMath sets a live card's maths first)
+var window={};
 """
 
 

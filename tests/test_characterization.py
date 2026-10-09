@@ -2420,8 +2420,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the idle copies redraw only what went without, a rename waits for its
 # copies, and the edit before Present is saved as the show starts.
 # Fix: a clip asked for before the lean boot's copies arrive waits for them.
-EXPECTED_MD5 = "d73449b9717350e9cb5c68499aa7d334"
-EXPECTED_BYTES = 5359935
+# Speed (MathJax): data-math marks, the pinned loader typeset as read (jvMath),
+# kept copies without MathJax's menu counter, hidden maths measured on a stand-in.
+EXPECTED_MD5 = "f4a94eab5b33ac57e77780b367634d45"
+EXPECTED_BYTES = 5388824
 
 
 def _render_example() -> str:

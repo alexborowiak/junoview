@@ -474,7 +474,8 @@ def _app_page(state: _AppState, *, warm: bool = False) -> bytes:
     return encode_pieces(page_pieces(
         mode="app", title=page_title([s.title for s in shells]),
         shells=b"".join(s.body() for s in shells),
-        app_data=_boot_json(state), asset_base="/static/"))
+        app_data=_boot_json(state), asset_base="/static/",
+        math=any(s.math for s in shells)))
 
 
 def _boot_json(state: _AppState) -> bytes:

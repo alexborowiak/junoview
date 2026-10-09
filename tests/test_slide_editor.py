@@ -2447,7 +2447,11 @@ def test_staleness_is_answered_honestly_or_not_at_all(out):
     """
     assert "function provState(p){" in out
     assert "if(!p.live) return 'nolive';" in out
-    assert "return (a===b)?'same':'stale';" in out
+    # the same thing, whatever MathJax recorded about WHEN it typeset it:
+    # the page typesets as it is read (2026-10-09), so the order the
+    # equations were set in -- which MathJax writes into its markup --
+    # follows your scrolling, and is not a change to the figure
+    assert "return sameCardHtml(a,b)?'same':'stale';" in out
     # compared in the shape the SAVE path captures, not one rendering
     # against another -- and cloneBody falls back to the deck's own copy
     # when the notebook is shut, which would make everything look in step

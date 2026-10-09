@@ -21,6 +21,7 @@ from ..notebook.outputs import as_text, render_outputs
 from .graph import build_graph_svg
 from .highlight import highlight_python
 from .markdown import _MD_HTMLBLOCK_RE, _md_with_headings, md_to_html
+from .maths import math_attr
 
 _BADGE = {
     "figure": "figure", "dataset": "dataset", "transform": "transform",
@@ -222,16 +223,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
     # lot of the times these are the ones that I don't care about").
     no_out = "1" if (code_block and not item.outputs) else "0"
     note_idx = f'data-noteidx="{item.note_index}" ' if item.is_note else ""
-    return (
-        f'<article class="card {kclass}" id="card-{item.item_id}" '
-        f'data-kind="{item.kind}" data-role="{role}" '
-        f'data-node="{html.escape(item.node_id)}"{ck_attr} '
-        f'data-secid="{html.escape(sec_id)}" '
-        f'data-note="{"1" if item.is_note else "0"}" '
-        f'{note_idx}'
-        f'data-noout="{no_out}" '
-        f'data-labelled="{1 if item.labelled else 0}" '
-        f'data-anchor="{html.escape(item.anchor or item.item_id)}" tabindex="-1">'
+    inner = (
         f'<header class="cardhead">'
         f'<span class="badge">{badge}</span>'
         f'<h3 class="cardtitle{" echo" if item.title_echo else ""}">'
@@ -251,7 +243,22 @@ def render_item(item: Item, sec_id: str = "") -> str:
         f'it back)" aria-label="Hide this cell">{_ic("eye")}</button>'
         f'</header>'
         f'<div class="cardbody">{body}</div>'
-        f'{htmlsrc}{caption}{prov}{code_block}</article>')
+        f'{htmlsrc}{caption}{prov}{code_block}')
+    # data-math: the card holds something MathJax will typeset, so the
+    # page typesets it as it nears the screen (render/maths.py). Asked of
+    # the card's whole inner HTML -- title, prose, outputs, caption, step
+    # labels -- because that is what MathJax reads.
+    return (
+        f'<article class="card {kclass}" id="card-{item.item_id}" '
+        f'data-kind="{item.kind}" data-role="{role}" '
+        f'data-node="{html.escape(item.node_id)}"{ck_attr} '
+        f'data-secid="{html.escape(sec_id)}" '
+        f'data-note="{"1" if item.is_note else "0"}" '
+        f'{note_idx}'
+        f'data-noout="{no_out}" '
+        f'data-labelled="{1 if item.labelled else 0}" '
+        f'data-anchor="{html.escape(item.anchor or item.item_id)}" '
+        f'tabindex="-1"{math_attr(inner)}>{inner}</article>')
 
 
 def render_nav(doc: Document) -> str:
@@ -359,7 +366,14 @@ def render_nav(doc: Document) -> str:
                 f'aria-label="Hide or show this cell">{_ic("eye")}</span></a>')
         parts.append('</div>')
     parts.append('</nav>')
-    return "".join(parts)
+    # the outline repeats every section and cell title: marked as a whole
+    # when any of them holds maths (render/maths.py), so it is typeset
+    # with the page rather than left as raw TeX beside typeset cards
+    nav = "".join(parts)
+    attr = math_attr(nav)
+    if attr:
+        nav = nav.replace('<nav class="nav"', '<nav class="nav"' + attr, 1)
+    return nav
 
 
 def render_railtabs(doc: Document) -> str:
@@ -411,8 +425,10 @@ def render_varpanel(doc: Document) -> str:
             f'<span class="var-count" title="{count_tip}">{n or ""}</span>'
             f'</div>'
             f'<div class="var-uses" hidden>{sites}</div></div>')
+    # its rows repeat cell titles, which can hold maths (render/maths.py)
+    attr = math_attr("".join(rows))
     return (
-        '<div class="varpanel" hidden>'
+        f'<div class="varpanel"{attr} hidden>'
         '<div class="var-controls">'
         '<input class="var-filter" type="search" placeholder="filter" '
         'aria-label="Filter variables by name">'
@@ -433,10 +449,12 @@ def render_sections(doc: Document) -> str:
         sid = s.section_id
         cards = "".join(render_item(it, sid) for it in s.items)
         eyebrow = f'section {s.number}' if s.number else 'section'
+        title = html.escape(s.title)
         sections_html.append(
             f'<section class="section sec-l{s.level}" id="sec-{sid}" '
             f'data-sec="{sid}" data-level="{s.level}">'
-            f'<div class="sectionhead sectionhead-l{s.level}">'
+            f'<div class="sectionhead sectionhead-l{s.level}"'
+            f'{math_attr(title)}>'
             f'<button class="sec-chev" data-sec="{sid}" aria-expanded="true" '
             f'aria-label="Collapse this section" '
             f'title="Collapse this section"><span class="sec-chev-ic">'
@@ -445,7 +463,7 @@ def render_sections(doc: Document) -> str:
             f'tabindex="0" aria-expanded="true" '
             f'title="Collapse this section">'
             f'<span class="eyebrow">{eyebrow}</span>'
-            f'<h2>{html.escape(s.title)}</h2></div>'
+            f'<h2>{title}</h2></div>'
             f'<button class="sec-eye" data-sec="{sid}" '
             f'title="Hide just this heading (the cards below stay)" '
             f'aria-label="Hide just this heading">{_ic("eye")}</button>'
@@ -587,9 +605,11 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
         ctype = cell.get("cell_type")
         source = as_text(cell.get("source", ""))
         if ctype == "markdown":
+            md = _md_with_headings(source)
             parts.append(
-                '<div class="rawcell md"><span class="rawtag">markdown</span>'
-                f'<div class="rawmd">{_md_with_headings(source)}</div></div>')
+                f'<div class="rawcell md"{math_attr(md)}>'
+                '<span class="rawtag">markdown</span>'
+                f'<div class="rawmd">{md}</div></div>')
         elif ctype == "code":
             n = cell.get("execution_count")
             # T258: nbformat types this int|null, but this reader is
@@ -607,8 +627,13 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
                 else o.payload
                 for o in rendered)
             out_html = f'<div class="rawout">{outs}</div>' if outs else ""
+            # asked of every output's FULL payload, placeholders included:
+            # app.js fills a .rawph with a clone of the card's output when
+            # Raw first opens, and that clone is what gets typeset here
+            attr = math_attr(*(o.payload for o in rendered))
             parts.append(
-                f'<div class="rawcell code"><span class="rawtag">{label}'
+                f'<div class="rawcell code"{attr}>'
+                f'<span class="rawtag">{label}'
                 '</span><pre class="code"><code>'
                 f'{highlight_python(source)}</code></pre>{out_html}</div>')
     return "".join(parts) or '<p class="rawempty">Empty notebook.</p>'

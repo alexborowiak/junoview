@@ -2353,7 +2353,7 @@
     if(!p.saved) return 'nosaved';
     var a=liveCardHtml(p.ref),b=(p.saved&&p.saved.html)||'';
     if(!a) return 'nolive';
-    return (a===b)?'same':'stale';
+    return sameCardHtml(a,b)?'same':'stale';   /* MathJax-neutral */
   }
   /* the LIVE card's body, in exactly the shape the save path captures
      it (cloneBody(...).outerHTML) — so "has the notebook moved on" is a
@@ -2390,7 +2390,7 @@
         return;
       }
       var live=liveCardHtml(p.ref),saved=embFor(p.ref);
-      if(!live||((saved&&saved.html)===live)) return;
+      if(!live||sameCardHtml(saved&&saved.html,live)) return;
       rows.push({p:p,old:saved&&saved.html||'',newer:live,chart:false});
     });
     if(!rows.length) return Promise.resolve(false);

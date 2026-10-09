@@ -51,6 +51,503 @@
   }
   APP.api=api;
 
+  /* ================= MATHS: typeset as it is read =====================
+     MathJax used to typeset the WHOLE document in one long task: at load
+     (startup typeset over <body>, hidden notebooks and every hidden raw
+     view copy included) and again on every mount -- open, Reload, Update
+     figures, add a note, a version -- over the whole new shell. 1.1-2.2 s
+     with clicks dead at 4x, and a math-free page still downloaded and ran
+     it (2026-10-09 speed pass, findings load-app #2, load-static #1,
+     critic #2).
+
+     Now ONE typesetter for the page. The server marks every element that
+     holds maths with data-math="" (render/maths.py) and includes the
+     MathJax script only when something is marked; otherwise ensure()
+     loads it the first time anything needs it. Marked elements are
+     typeset as they come within a screen of view (IntersectionObserver),
+     the rest of the open notebooks at idle, a raw view only once it is
+     opened. A typeset element says data-math="1", so a clone of it says
+     so too, and a clone of one still waiting is typeset where it lands.
+     Anything that must see EVERY equation now -- Find, print, the
+     exports, a card cloned onto a slide -- asks with all() or settle().
+
+     Every MathJax call goes through here, one at a time: two overlapping
+     typesetPromise calls share MathJax's one document and its options,
+     and when one waits on an extension load the other's elements get
+     rendered in its place. */
+  var jvMath=(function(){
+    var noop=function(){};
+    var tag=document.getElementById('jv-mathjax');
+    var SRC=tag?(tag.getAttribute('src')||tag.getAttribute('data-src')||''):'';
+    var loadP=null,ready=false,dead=false;
+    var running=null;         /* a typeset waiting on an extension load */
+    var soonQ=[];             /* near the screen or asked for: first */
+    var soonOn=false,idleOn=false;
+    var allOn=false,allDone=false;   /* the eager pass for kept copies */
+    var gen=0;                /* bumped whenever new maths arrives */
+    var lists=typeof WeakMap==='function'?new WeakMap():null;
+    var finds=document.getElementsByClassName('jv-doc');   /* live */
+    /* "could MathJax find anything in this text" -- the TeX input's
+       delimiters and the escapes it rewrites, the same question
+       render/maths.py asks of the markup. A superset: text from <pre>
+       counts here, and a false yes only costs a pass that finds nothing */
+    var OPEN=/\\(?:[(\[$\\]|begin\s*\{|(?:eq)?ref\s*\{)/;
+    function hint(t){
+      t=String(t||'');
+      var i=t.indexOf('$');
+      return (i>=0&&t.indexOf('$',i+1)>=0)||OPEN.test(t);
+    }
+    function isPending(el){
+      return !!(el&&el.getAttribute&&el.getAttribute('data-math')==='');
+    }
+    function pendingIn(root){
+      if(!root||!root.querySelectorAll) return [];
+      var out=isPending(root)?[root]:[];
+      return out.concat($$('[data-math=""]',root));
+    }
+    function inClosedRaw(el){
+      var rv=el.closest&&el.closest('.rawview');
+      if(!rv) return false;
+      var sh=rv.closest('.nbshell');
+      return !(sh&&sh.classList.contains('raw'));
+    }
+    /* MathJax sizes an equation from the ex-height of the text around it,
+       and text with no box -- a tab in the background, the cards under
+       Raw or Tree -- has none, so it falls back to half an em: 113%
+       where the page's own text measures 104% (headings 127%). Typeset
+       as it is read, what is set while hidden then sits beside what was
+       set on screen, a size apart, for good. So a hidden container is
+       measured on an unseen stand-in that carries its font -- once per
+       font, the answer kept. (MathJax 3.2.2's CHTML measureMetrics; the
+       version is pinned.) */
+    function measureHidden(MJ){
+      var O=MJ&&MJ.startup&&MJ.startup.output;
+      if(!O||typeof O.measureMetrics!=='function'||O.__jvHidden) return;
+      var base=O.measureMetrics,byFont={};
+      O.__jvHidden=true;
+      O.measureMetrics=function(t,fam){
+        var m=base.call(this,t,fam);
+        var p=t&&t.parentNode;
+        if(m.containerWidth!==1e6||!p||!p.getClientRects
+           ||p.getClientRects().length) return m;
+        var cs=getComputedStyle(p),key=cs.fontFamily+'|'+cs.fontSize;
+        var m2=byFont[key];
+        if(!m2){
+          var host=document.createElement('div');
+          host.style.cssText='position:absolute;left:-10000px;top:0;'
+            +'visibility:hidden;contain:layout';
+          host.style.fontFamily=cs.fontFamily;host.style.fontSize=cs.fontSize;
+          var t2=t.cloneNode(true);host.appendChild(t2);
+          document.body.appendChild(host);
+          try{m2=base.call(this,t2,fam);}finally{host.remove();}
+          if(m2.containerWidth===1e6) return m;
+          byFont[key]=m2;
+        }
+        m.ex=m2.ex;m.scale=m2.scale;
+        return m;
+      };
+    }
+    /* ---- loading ---- */
+    function ensure(){
+      if(loadP) return loadP;
+      loadP=new Promise(function(res,rej){
+        var settled=false;
+        function fail(){
+          if(settled) return; settled=true;dead=true;
+          soonQ.forEach(function(el){el.__jvMq=0;});soonQ=[];
+          rej(new Error('MathJax could not be loaded'));
+        }
+        function started(){
+          var p=null;
+          try{p=MathJax.startup.promise;}catch(e){}
+          Promise.resolve(p).then(function(){
+            if(settled) return;
+            if(!window.MathJax||typeof MathJax.typeset!=='function'){
+              fail();return;}
+            settled=true;ready=true;lastSoon=Date.now();
+            measureHidden(window.MathJax);
+            res(window.MathJax);
+          },fail);
+        }
+        if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){
+          started();return;}
+        var s=tag,st=s&&s.getAttribute('data-state');
+        if(st==='failed') {fail();return;}
+        if(!s||!s.getAttribute('src')){
+          /* a page that had no maths when it was built: load it now */
+          if(!SRC){fail();return;}
+          s=document.createElement('script');
+          s.async=true;s.src=SRC;
+          document.head.appendChild(s);
+        } else if(st==='loaded'){fail();return;}  /* ran, no MathJax */
+        s.addEventListener('load',function(){
+          if(window.MathJax&&MathJax.startup) started(); else fail();});
+        s.addEventListener('error',fail);
+      });
+      return loadP;
+    }
+    function within(p,ms){
+      if(!ms) return p;
+      return Promise.race([p,new Promise(function(r){setTimeout(r,ms);})]);
+    }
+    /* ---- typesetting ---- */
+    function mark(els){
+      els.forEach(function(el){
+        pendingIn(el).forEach(function(n){
+          n.setAttribute('data-math','1');
+          if(io) io.unobserve(n);
+        });
+      });
+    }
+    /* MathJax.typeset is synchronous unless the TeX needs an extension
+       loaded first (\color, \cancel, ...): then it throws a retry, and
+       the render is resumed -- NOT restarted -- once that has loaded,
+       which is what MathJax's own typesetPromise does. Synchronous is
+       the point: a caller that typesets and then measures, or clones,
+       gets the typeset result. */
+    function resume(){
+      return new Promise(function run(ok,no){
+        try{MathJax.startup.document.render();ok();}
+        catch(e){
+          if(e&&e.retry&&e.retry.then) e.retry.then(function(){run(ok,no);},no);
+          else no(e);
+        }
+      });
+    }
+    function now(els){
+      /* ready && !running */
+      els=els.filter(function(el,i){
+        /* Find has wrapped words in <mark>: a $..$ split by one is not
+           maths any more. It stays waiting until Find lets go. */
+        if(finds.length&&el.querySelector&&el.querySelector('mark.jv-doc'))
+          return false;
+        /* one container per equation: inside another one asked for in
+           the same pass, MathJax would find it twice */
+        for(var j=0;j<els.length;j++)
+          if(j!==i&&els[j]!==el&&els[j].contains&&els[j].contains(el))
+            return false;
+        return true;
+      });
+      if(!els.length) return true;
+      try{MathJax.typeset(els);}
+      catch(e){
+        if(e&&e.retry&&e.retry.then){
+          mark(els);
+          var p=running=e.retry.then(resume).catch(noop).then(function(){
+            if(running===p) running=null;
+            pump();idleLater();
+          });
+          return false;
+        }
+        /* not a retry: TeX errors are drawn in place, never thrown, so
+           this is MathJax itself failing -- marked done, not looped on */
+      }
+      mark(els);
+      return true;
+    }
+    /* typeset `root` (an element, or a list) now if MathJax can, else as
+       soon as it can. Resolves once done; never rejects. Elements with
+       nothing marked and nothing that reads as TeX cost nothing -- the
+       deck asks this of every slide it draws. */
+    function typeset(root){
+      var els=(root&&root.length!=null&&!root.nodeType)?[].slice.call(root):[root];
+      els=els.filter(function(el){
+        if(!el) return false;
+        /* markup MathJax set earlier, brought in whole (a kept copy on
+           a slide): its glyphs are drawn by rules MathJax writes only
+           for characters it has set on THIS page -- which, before this
+           page typeset as it was read, meant every open notebook's. So
+           the rest of them is set now rather than at idle. */
+        if(!allOn&&!allDone&&el.querySelector
+           &&el.querySelector('mjx-container')){
+          allOn=true;all().then(function(){allOn=false;});
+        }
+        if(pendingIn(el).length) return true;
+        if(hint(el.textContent)) return true;
+        /* ...and needs MathJax's stylesheet even with nothing to do */
+        if(!ready&&el.querySelector&&el.querySelector('mjx-container'))
+          ensure().then(function(){if(!running) now([el]);}).catch(noop);
+        return false;
+      });
+      if(!els.length) return Promise.resolve();
+      if(ready&&!running){now(els);return idle();}
+      return ensure().then(function(){
+        return new Promise(function(res){
+          (function go(){
+            if(running){running.then(go);return;}
+            now(els);idle().then(res);
+          })();
+        });
+      }).catch(noop);
+    }
+    /* resolves once no typeset is waiting on an extension load */
+    function idle(){
+      return running?running.then(idle):Promise.resolve();
+    }
+    /* SYNCHRONOUS, or not at all: typeset what is still waiting in `el`
+       before it is cloned, measured or read. False when MathJax is not
+       there yet -- the caller gets what is on the page, as it always
+       did before MathJax finished loading. */
+    function settle(el){
+      var els=pendingIn(el);
+      if(!els.length) return true;
+      if(!ready||running) return false;
+      return now(els);
+    }
+    /* run fn (which calls MathJax itself) once MathJax is there and
+       nothing else is typesetting: the equation editor's own preview */
+    function run(fn){
+      return ensure().then(function(){
+        return new Promise(function(res,rej){
+          (function go(){
+            if(running){running.then(go);return;}
+            var p;
+            try{p=fn();}catch(e){rej(e);return;}
+            var me=running=Promise.resolve(p).catch(noop).then(function(){
+              if(running===me) running=null;
+              pump(0);idleLater();
+            });
+            Promise.resolve(p).then(res,rej);
+          })();
+        });
+      });
+    }
+    /* everything still waiting in `root` (default: every open notebook),
+       now, in short slices so the page keeps answering. For Find, print
+       and the exports. Resolves when done, when MathJax cannot be had,
+       or after `ms`. */
+    function all(root,ms){
+      var g=gen,els=pendingIn(root||document).filter(function(el){
+        return !inClosedRaw(el);});
+      /* the whole page done, and nothing new since: say so, so the next
+         kept copy does not walk the page again to find that out */
+      function done(){if(!root&&g===gen) allDone=true;}
+      if(!els.length){done();return Promise.resolve();}
+      return within(ensure().then(function(){
+        return new Promise(function(res){
+          var i=0;
+          (function go(){
+            if(running){running.then(go);return;}
+            var t0=Date.now();
+            while(i<els.length&&!running&&Date.now()-t0<40){
+              /* bigger batches than idle's: someone is waiting on this */
+              var b=[],n=0;
+              while(i<els.length&&b.length<8&&n<16){
+                var el=els[i++];
+                if(el.isConnected&&isPending(el)){b.push(el);n+=eqs(el);}
+              }
+              if(b.length) now(b);
+            }
+            if(i<els.length||running) setTimeout(go,0);
+            else idle().then(function(){done();res();});
+          })();
+        });
+      }).catch(noop),ms);
+    }
+    /* ---- reading order: near the screen first, then idle ---- */
+    var io=('IntersectionObserver' in window)?new IntersectionObserver(
+      function(es){
+        var vh=window.innerHeight||800,first=[],next=[];
+        es.forEach(function(e){
+          if(!e.isIntersecting) return;
+          io.unobserve(e.target);
+          if(!isPending(e.target)||e.target.__jvMq) return;
+          var r=e.boundingClientRect;
+          ((r.bottom>0&&r.top<vh)?first:next).push(e.target);
+        });
+        if(first.length||next.length) soon(first,next);
+      /* a screen ahead either way: the maths is set before you reach it */
+      },{rootMargin:'100% 0px 100% 0px'}):null;
+    function soon(first,next){
+      first.concat(next).forEach(function(el){el.__jvMq=1;});
+      soonQ=first.concat(soonQ,next);
+      pump(first.length);
+    }
+    /* what is ON the screen goes in one pass, before the next paint;
+       what is only near it goes a few at a time */
+    function pump(nOnScreen){
+      if(!soonQ.length) return;
+      if(!ready){if(!dead) ensure().then(function(){pump(-1);},noop);return;}
+      if(running) return;
+      /* -1: MathJax has just arrived and the queue is whatever the
+         observer saw meanwhile -- what is on screen NOW goes first */
+      if(nOnScreen<0){
+        var on=soonQ.filter(onScreen);
+        soonQ=on.concat(soonQ.filter(function(el){return on.indexOf(el)<0;}));
+        nOnScreen=on.length;
+      }
+      /* on screen: all of it, now. Near it: one small batch a task
+         (about 3 cards or 6 equations), so a scroll that outruns the
+         idle pass drops a frame at a time rather than a handful -- and
+         one card at a time while you are actually scrolling */
+      if(nOnScreen>0){
+        var b=soonQ.splice(0,nOnScreen).filter(function(el){
+          el.__jvMq=0;return el.isConnected&&isPending(el);});
+        if(b.length){now(b);lastSoon=Date.now();}
+      } else {
+        var nb=[],n=0,moving=Date.now()-lastInput<QUIET;
+        while(soonQ.length&&nb.length<(moving?1:3)&&n<6){
+          var el=soonQ.shift();el.__jvMq=0;
+          if(el.isConnected&&isPending(el)){nb.push(el);n+=eqs(el);}
+        }
+        if(nb.length&&!running){now(nb);lastSoon=Date.now();}
+      }
+      if(soonQ.length){
+        if(!soonOn){soonOn=true;
+          setTimeout(function(){soonOn=false;pump(0);},0);}
+      } else idleLater();
+    }
+    /* the rest, while nothing else is happening: the notebook you are
+       looking at first, then the others. Hidden raw views wait to be
+       opened. It starts a moment (QUIET) after the last on-screen
+       typeset, so the frame that shows a load or a Reload paints first,
+       and soon after that, so most of it is done before a first scroll.
+       It stands aside while you scroll, type or click -- those frames
+       are yours, and only what nears the screen is set meanwhile -- and
+       picks up again QUIET after the last of them. A few cards per call
+       (about 8 equations): a call is one task MathJax cannot split, ~13
+       ms an equation at 4x CPU, so that keeps each one short without
+       paying its fixed part (a forced layout, the context menu's walk
+       over the page) once per card. */
+    var QUIET=300,lastSoon=0,lastInput=0;
+    function touched(){lastInput=Date.now();}
+    ['wheel','scroll','keydown','pointerdown','touchstart'].forEach(
+      function(t){
+        document.addEventListener(t,touched,{passive:true,capture:true});});
+    var ric=window.requestIdleCallback||function(fn){
+      return setTimeout(function(){
+        fn({timeRemaining:function(){return 12;},didTimeout:false});},60);};
+    function quietFor(){
+      return Math.max(lastSoon,lastInput)+QUIET-Date.now();
+    }
+    function idleLater(){
+      if(idleOn||!ready||dead) return;
+      idleOn=true;
+      var wait=quietFor();
+      if(wait>0) setTimeout(function(){idleOn=false;idleLater();},wait);
+      /* with a deadline, so a page that is never quite idle (a plot
+         animating, a long-running output) still gets its maths */
+      else ric(idleStep,{timeout:1000});
+    }
+    /* about how many equations an element holds: what sizes a batch */
+    function eqs(el){
+      var t=el.textContent||'',n=0,i=-1;
+      while((i=t.indexOf('$',i+1))>=0) n++;
+      return Math.max(1,(n>>1)+(t.match(/\\[(\[]|\\begin\s*\{/g)||[]).length);
+    }
+    function roots(){
+      var a=APP.active&&APP.shells[APP.active];
+      var out=a&&a.el?[a.el]:[];
+      tabList().forEach(function(k){
+        var sh=APP.shells[k];
+        if(sh&&sh.el&&out.indexOf(sh.el)<0) out.push(sh.el);});
+      return out;
+    }
+    /* the next batch: up to 4 elements or about 8 equations */
+    function nextIdle(){
+      var rs=roots(),out=[],n=0;
+      for(var r=0;r<rs.length&&out.length<4&&n<8;r++){
+        var L=lists&&lists.get(rs[r]);
+        if(!L){L={els:pendingIn(rs[r]),i:0};if(lists) lists.set(rs[r],L);}
+        while(L.i<L.els.length&&out.length<4&&n<8){
+          var el=L.els[L.i];
+          if(!el.isConnected||!isPending(el)){L.i++;continue;}
+          if(inClosedRaw(el)){L.i++;continue;}
+          if(finds.length&&el.querySelector('mark.jv-doc')){L.i++;continue;}
+          out.push(el);n+=eqs(el);L.i++;
+        }
+      }
+      return out;
+    }
+    /* one batch per idle callback: input gets in between every call */
+    function idleStep(){
+      idleOn=false;
+      if(!ready||running||soonQ.length) return;   /* they re-arm idle */
+      if(quietFor()>0){idleLater();return;}   /* input since it was asked */
+      var b=nextIdle();
+      if(!b.length) return;
+      now(b);
+      idleLater();
+    }
+    /* a notebook is on its way (the server or Python is parsing it):
+       MathJax can load in that wait rather than after it -- on a page
+       that has not needed it yet, its 0.3-0.6 s of evaluation at 4x
+       otherwise lands on the open itself */
+    function warm(){
+      if(!loadP&&SRC) ensure().catch(noop);
+    }
+    /* start over the idle walk (a raw view opened, Find let go) */
+    function kick(){
+      tabList().forEach(function(k){
+        var sh=APP.shells[k];
+        if(sh&&sh.el&&lists) lists.delete(sh.el);});
+      idleLater();
+    }
+    function onScreen(el){
+      var r=el.getBoundingClientRect(),vh=window.innerHeight||800;
+      return r.bottom>0&&r.top<vh&&(r.width>0||r.height>0);
+    }
+    /* a shell (or anything holding cards) arrived: watch its maths.
+       With MathJax already here (an open, a Reload, a note, a version)
+       what lands on screen is set in the frame it first paints in --
+       the observer reports only after that paint -- once the mount has
+       finished and put the scroll back */
+    function watch(root){
+      var els=pendingIn(root);
+      if(lists){
+        lists.delete(root);
+        /* a part of a shell (its raw view, built on first open): the
+           shell's idle walk is listed again too */
+        var sh=root.closest&&root.closest('.nbshell');
+        if(sh) lists.delete(sh);
+      }
+      if(!els.length) return;
+      allDone=false;gen++;
+      lastSoon=Date.now();
+      if(io) els.forEach(function(el){io.observe(el);});
+      if(dead) return;
+      if(ready&&window.requestAnimationFrame)
+        requestAnimationFrame(function(){
+          if(!ready||running||!root.isConnected) return;
+          var on=pendingIn(root).filter(function(el){
+            return !inClosedRaw(el)&&onScreen(el);});
+          if(on.length){now(on);lastSoon=Date.now();}
+        });
+      ensure().then(function(){
+        if(!io) soon(els,[]);
+        idleLater();
+      },noop);
+    }
+    /* a shell is gone: stop watching it, and let MathJax drop its record
+       of the equations in it -- that list holds a node of each, so it
+       would otherwise keep the whole old notebook alive */
+    function forget(root){
+      if(!root) return;
+      if(io) pendingIn(root).forEach(function(el){io.unobserve(el);});
+      if(lists) lists.delete(root);
+      if(ready&&!running){
+        try{MathJax.typesetClear([root]);}catch(e){}
+      }
+    }
+    /* Ctrl+P on a notebook: beforeprint cannot wait, so whatever is
+       still waiting in what prints is typeset right here, synchronously.
+       The deck prints its own root and has typeset it already. */
+    function beforePrint(){
+      if(!ready||running||document.body.classList.contains('printing')) return;
+      var a=APP.active&&APP.shells[APP.active];
+      if(!a||!a.el) return;
+      var els=pendingIn(a.el).filter(function(el){return !inClosedRaw(el);});
+      if(els.length) now(els);
+    }
+    return {hint:hint,ensure:ensure,typeset:typeset,settle:settle,run:run,
+      all:all,watch:watch,forget:forget,kick:kick,beforePrint:beforePrint,
+      warm:warm,
+      ready:function(){return ready;},
+      pending:function(root){return pendingIn(root||document).length;}};
+  })();
+  window.jvMath=jvMath;
+  APP.math=jvMath;
+
   /* ================= tab strip ================= */
   var tabstrip=$('#tabstrip'),topTabstrip=$('#top-tabstrip'),
       openTabsRow=$('#open-tabs-row'),openBtn=$('#tab-open');
@@ -2218,6 +2715,9 @@
        in full -- which initShell's activateOutputs(shell) reached at load
        back when the raw view was live DOM from the start. */
     if(rv) activateOutputs(rv,!tpl);
+    /* ...and its maths, typeset as it is read like the cards' (jvMath):
+       what the raw view shows first goes before the next paint */
+    if(rv&&tpl) jvMath.watch(rv);
   }
   if(rawBtn) rawBtn.addEventListener('click',function(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -2225,12 +2725,11 @@
     var on=sh.el.classList.toggle('raw');
     if(on) sh.el.classList.remove('tree');   /* raw + tree are exclusive */
     if(on) populateRawView(sh.el);
-    if(on&&!sh.el.dataset.rawTypeset){
-      sh.el.dataset.rawTypeset='1';
-      var rv=$('.rawview',sh.el);
-      if(rv&&window.MathJax&&MathJax.typesetPromise)
-        MathJax.typesetPromise([rv]).catch(function(){});
-    }
+    /* the raw view's maths waits until it is opened: its cells are
+       typeset as they come into view, the rest at idle (jvMath) --
+       picked up again here on a second open, the idle walk having
+       stepped past them while the view was shut */
+    if(on) jvMath.kick();
     renderRawBtn();renderViewBtns();
   });
 
@@ -2608,8 +3107,7 @@
         bd.removeAttribute('data-mdclamp');
         bd.classList.remove('mdclamp');bd.classList.remove('mdopen');});
       mdClampScan(clone);
-      if(window.MathJax&&MathJax.typesetPromise)
-        MathJax.typesetPromise([body]).catch(function(){});
+      jvMath.typeset(body);
     }
     function updateHiddenNote(){
       var n=$$('.tree-node.tn-off',host).length;
@@ -3407,14 +3905,19 @@
      unwrap every .jv-hit on the page -- so running or closing document
      Find erased the highlight of a still-active Variables query. The
      document's marks carry jv-doc as well, and that is all this clears. */
+  var findTok=0;
   function findClear(){
-    $$('mark.jv-doc').forEach(function(m){
+    findTok++;     /* a run still waiting on the maths is now stale */
+    var marks=$$('mark.jv-doc');
+    marks.forEach(function(m){
       var p2=m.parentNode; if(!p2) return;
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
     });
     findRestore();
     findHits=[];findAt=-1;
+    /* maths the marks held back can be typeset again */
+    if(marks.length) jvMath.kick();
   }
   /* wrap every occurrence in the text nodes under `root` */
   function findMark(root,term){
@@ -3493,6 +3996,21 @@
     var sh=document.querySelector('.nbshell:not([hidden]) .content')
       ||document.querySelector('.nbshell .content');
     if(!sh){if(nEl) nEl.textContent='no notebook';return;}
+    /* THE MATHS FIRST. It is typeset as you read now, not all at load,
+       so a card further down can still hold raw $..$ -- and a <mark>
+       wrapped round words inside that would split it so it never
+       typesets. Find searches what the page shows, so everything here is
+       typeset before it marks anything (it was, at load, before). */
+    if(jvMath.pending(sh)){
+      var tok=findTok;
+      jvMath.all(sh,4000).then(function(){
+        if(tok===findTok) findMarkAll(sh);});
+      return;
+    }
+    findMarkAll(sh);
+  }
+  function findMarkAll(sh){
+    var nEl=$('#docfind-n');
     findHits=findMark(sh,findTerm);
     if(nEl) nEl.textContent=findHits.length
       ?('0 / '+findHits.length):'nothing found';
@@ -5286,8 +5804,9 @@
   }
   function historyCurrent(card,host){
     if(card.dataset.note==='1'){
+      jvMath.settle(card);
       var note=card.querySelector('.note');
-      if(note) host.appendChild(note.cloneNode(true));
+      if(note){host.appendChild(note.cloneNode(true));jvMath.typeset(host);}
       else host.textContent='No note text';
       return;
     }
@@ -5916,6 +6435,7 @@
     }).catch(function(){});
   }
   function cellCopyPayload(shell,stem,card){
+    jvMath.settle(card);   /* a title is copied as it reads on the page */
     var anchor=card.dataset.anchor,sh=APP.shells[stem]||{};
     var path=sh.path||shell.dataset.path||'';
     var ti=card.querySelector('.cardhead .cardtitle');
@@ -6924,6 +7444,7 @@
     if(APP.order.indexOf(stem)<0) APP.order.push(stem);
     applyFilters();
     applyCodeState(shell);   /* fold/hide code to match the current state */
+    jvMath.watch(shell);     /* its maths, typeset as it is read */
     document.dispatchEvent(new CustomEvent('sem:shell',
       {detail:{stem:stem,el:shell,data:data,replaced:replaced}}));
     renderTabs();
@@ -7545,6 +8066,7 @@
     });
     if(old&&old.el.parentNode) host.replaceChild(shell,old.el);
     else host.appendChild(shell);
+    if(old) jvMath.forget(old.el);
     initShell(shell);
     invalidateSids();   /* this notebook's sections were just replaced */
     /* a reload keeps the live view; a fresh open restores the layout you
@@ -7561,8 +8083,10 @@
       /* once more after images/math settle the layout */
       setTimeout(function(){window.scrollTo(0,keep.scroll);},150);
     }
-    if(window.MathJax&&MathJax.typesetPromise)
-      MathJax.typesetPromise([shell]).catch(function(){});
+    /* no whole-shell typeset here any more: initShell handed the new
+       shell to jvMath, which sets what is on screen before the next
+       paint and the rest at idle (critic #2: this one call was 0.7-1.6 s
+       of every open, Reload, Update figures, note and version) */
   }
   APP.mountShellHTML=mountShellHTML;
   /* ---- "Plot trace" opens in its OWN TAB: a genuine subset of the docs
@@ -7724,6 +8248,7 @@
     /* wire the clones so their code toggles, eyes, collapse + fig-fold work */
     wireCardBehaviors(shell,stem);
     activateOutputs(shell,true);   /* draw plotly specs on the clones */
+    jvMath.watch(shell);   /* a clone of a card still waiting on its maths */
     APP.shells[key]={el:shell,
       data:{stem:stem,items:lineage},   /* subset: feeds buildTree */
       path:'',title:title||'Plot trace',
@@ -7903,6 +8428,10 @@
     if(OPENBUSY[path]) return;
     OPENBUSY[path]=1;setDlgBusy(true);
     var openTab=tabForPath(path),wasActive=!!openTab&&APP.active===openTab;
+    /* MathJax loads while the server parses -- unless this is a Reload
+       of a tab that has no maths waiting (often unchanged, then nothing
+       is mounted at all) */
+    if(!openTab||jvMath.pending(APP.shells[openTab].el)) jvMath.warm();
     openShell({path:path},openTab).then(function(j){
       delete OPENBUSY[path];setDlgBusy(false);
       if(j.unchanged){
@@ -7970,6 +8499,7 @@
       if(APP.shells[k]&&APP.shells[k].source===stem) closeNotebook(k);
     });
     if(sh.el.parentNode) sh.el.parentNode.removeChild(sh.el);
+    jvMath.forget(sh.el);
     delete APP.shells[stem];
     /* drop this notebook's filter state — otherwise it lingers forever and
        a later notebook with the same stem reopens pre-filtered */
@@ -8014,6 +8544,7 @@
   function queueWebImport(run){
     /* Mount one result before allocating the next notebook's name. Two
        simultaneously dropped files may have the same filename. */
+    jvMath.warm();   /* MathJax loads while Python parses */
     var result=webImports.then(run);
     webImports=result.catch(function(){});
     return result;
@@ -8956,6 +9487,8 @@
   /* An update may arrive before the body exists; show the saved notice
      now that the application markup is ready (T206). */
   if(window.__jvNewBuild&&window.__jvUpdateBar) window.__jvUpdateBar();
+  /* Ctrl+P prints what is on the page, maths typeset (jvMath) */
+  window.addEventListener('beforeprint',jvMath.beforePrint);
   $$('.nbshell').forEach(function(sh){initShell(sh);});
   if(APP.order.length) activate(APP.order[0]);
   else renderTabs();

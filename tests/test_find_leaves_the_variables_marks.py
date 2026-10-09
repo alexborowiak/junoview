@@ -27,7 +27,8 @@ def test_document_marks_carry_their_own_class():
 def test_find_clears_only_its_own_marks():
     app = assets.load("js/app.js")
     clear = app.split("  function findClear(){")[1].split("\n  function ")[0]
-    assert "    $$('mark.jv-doc').forEach(function(m){" in clear
+    assert "    var marks=$$('mark.jv-doc');" in clear
+    assert "    marks.forEach(function(m){" in clear
     assert "$$('.jv-hit')" not in clear
     go = app.split("  function findGo(d){")[1].split("\n  function ")[0]
     assert "    $$('.jv-doc.on').forEach(function(m){m.classList.remove('on');});" in go
