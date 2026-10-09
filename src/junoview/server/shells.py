@@ -179,12 +179,17 @@ class LocalSource:
         return _token(self.key) if self.key is not None else ""
 
 
-def local_source(f: Path, stem: str, path: str) -> LocalSource:
+def local_source(f: Path, stem: str, path: str,
+                 data: bytes | None = None) -> LocalSource:
     """Read ``f`` and work out what a rendering of it depends on.
 
     Raises OSError when the file is gone, exactly as a load would.
+    ``data``: the file's bytes when the caller has just WRITTEN them (Add
+    a note), so the version names exactly what it wrote, whatever else
+    reaches the file afterwards.
     """
-    data = f.read_bytes()
+    if data is None:
+        data = f.read_bytes()
     if f.suffix.lower() not in _SELF_CONTAINED:
         return LocalSource(f, stem, path, data, None)
     sidecars, _lenient = deck_sidecars(f)
@@ -211,6 +216,25 @@ def local_shell(src: LocalSource, *, lenient: bool) -> Shell:
     if shell.fallback is not None and not lenient:
         raise shell.fallback
     return shell
+
+
+def warm_local(src: LocalSource) -> None:
+    """Render ``src`` into the cache in the background.
+
+    For a caller that answered the page without a shell (a note added in
+    place, server/notebook_edit.note_in_place) but whose file the next
+    page build or Reload will ask for: that one then finds it kept, as it
+    would have had the caller rendered it on the way out.
+    """
+    if src.key is None:
+        return
+
+    def run() -> None:
+        try:
+            local_shell(src, lenient=True)
+        except Exception:       # noqa: BLE001 -- the next ask renders it
+            pass
+    threading.Thread(target=run, daemon=True).start()
 
 
 def _render_local(src: LocalSource, ver: str) -> Shell:

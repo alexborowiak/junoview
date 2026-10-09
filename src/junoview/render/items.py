@@ -16,7 +16,7 @@ import json
 # Pyodide bridge and the widget — with branding.py still the single
 # source of the artwork (see the icon-set comment there)
 from ..branding import icon_svg as _ic
-from ..notebook.model import Document, Item
+from ..notebook.model import Document, Item, Section
 from ..notebook.outputs import as_text, render_outputs
 from .graph import build_graph_svg
 from .highlight import highlight_python
@@ -352,18 +352,7 @@ def render_nav(doc: Document) -> str:
                 parts.append(
                     f'<div class="navsub">{html.escape(it.subsection)}</div>')
                 last_sub = it.subsection
-            dot = _kind_class(it.kind)
-            if (it.kind not in ("figure", "diagnostic")
-                    and it.code_kinds != ["code"]):
-                dot += f" ckmain-{it.code_kind}"
-            parts.append(
-                f'<a class="navitem {dot}" href="#card-{it.item_id}" '
-                f'data-item="{it.item_id}">'
-                f'<span class="dot"></span>'
-                f'<span class="navitem-t">{html.escape(it.title)}</span>'
-                f'<span class="navitem-eye" role="button" tabindex="0" '
-                f'title="Hide or show this cell" '
-                f'aria-label="Hide or show this cell">{_ic("eye")}</span></a>')
+            parts.append(render_navitem(it))
         parts.append('</div>')
     parts.append('</nav>')
     # the outline repeats every section and cell title: marked as a whole
@@ -374,6 +363,22 @@ def render_nav(doc: Document) -> str:
     if attr:
         nav = nav.replace('<nav class="nav"', '<nav class="nav"' + attr, 1)
     return nav
+
+
+def render_navitem(it: Item) -> str:
+    """One card's row in the outline (render_nav; a note added in place)."""
+    dot = _kind_class(it.kind)
+    if (it.kind not in ("figure", "diagnostic")
+            and it.code_kinds != ["code"]):
+        dot += f" ckmain-{it.code_kind}"
+    return (
+        f'<a class="navitem {dot}" href="#card-{it.item_id}" '
+        f'data-item="{it.item_id}">'
+        f'<span class="dot"></span>'
+        f'<span class="navitem-t">{html.escape(it.title)}</span>'
+        f'<span class="navitem-eye" role="button" tabindex="0" '
+        f'title="Hide or show this cell" '
+        f'aria-label="Hide or show this cell">{_ic("eye")}</span></a>')
 
 
 def render_railtabs(doc: Document) -> str:
@@ -489,23 +494,7 @@ def deck_payload(doc: Document) -> str:
     Slide payloads are NOT duplicated here -- the deck JS clones card DOM
     nodes (figures, notes, code) already present on the page.
     """
-    items = []
-    for s in doc.sections:
-        for it in s.items:
-            items.append({
-                "anchor": it.anchor or it.item_id,
-                "card": it.item_id,
-                "title": it.title,
-                "kind": "note" if it.is_note else it.kind,
-                "codeKind": it.code_kind,
-                "codeKinds": it.code_kinds,
-                "section": s.section_id,
-                "sectitle": s.title,
-                "secnum": s.number,
-                "subsection": it.subsection or "",
-                "hasCode": any(st.code.strip() for st in it.steps),
-                "chain": it.chain,
-            })
+    items = [payload_item(s, it) for s in doc.sections for it in s.items]
     payload = {
         "title": doc.title,
         "meta": doc_meta(doc),
@@ -517,6 +506,24 @@ def deck_payload(doc: Document) -> str:
     }
     # "</" would terminate the inline <script> block early
     return json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+
+
+def payload_item(s: Section, it: Item) -> dict:
+    """One card's entry in the nb-data card index (deck_payload)."""
+    return {
+        "anchor": it.anchor or it.item_id,
+        "card": it.item_id,
+        "title": it.title,
+        "kind": "note" if it.is_note else it.kind,
+        "codeKind": it.code_kind,
+        "codeKinds": it.code_kinds,
+        "section": s.section_id,
+        "sectitle": s.title,
+        "secnum": s.number,
+        "subsection": it.subsection or "",
+        "hasCode": any(st.code.strip() for st in it.steps),
+        "chain": it.chain,
+    }
 
 
 def render_graph_panel(doc: Document) -> str:
@@ -605,11 +612,7 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
         ctype = cell.get("cell_type")
         source = as_text(cell.get("source", ""))
         if ctype == "markdown":
-            md = _md_with_headings(source)
-            parts.append(
-                f'<div class="rawcell md"{math_attr(md)}>'
-                '<span class="rawtag">markdown</span>'
-                f'<div class="rawmd">{md}</div></div>')
+            parts.append(render_raw_md(source))
         elif ctype == "code":
             n = cell.get("execution_count")
             # T258: nbformat types this int|null, but this reader is
@@ -637,3 +640,12 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
                 '</span><pre class="code"><code>'
                 f'{highlight_python(source)}</code></pre>{out_html}</div>')
     return "".join(parts) or '<p class="rawempty">Empty notebook.</p>'
+
+
+def render_raw_md(source: str) -> str:
+    """One markdown cell of the raw view (render_raw; a note added in
+    place)."""
+    md = _md_with_headings(source)
+    return (f'<div class="rawcell md"{math_attr(md)}>'
+            '<span class="rawtag">markdown</span>'
+            f'<div class="rawmd">{md}</div></div>')

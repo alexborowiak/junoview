@@ -403,7 +403,9 @@ def test_section_collapse_and_hide_css(out):
     assert "function setSecCollapsed" in out and "function setSecOff" in out
     assert 'class="sectionhead-txt" data-sec="' in out
     assert 'role="button" tabindex="0" aria-expanded="true"' in out
-    assert "$$('.sectionhead-txt',shell).forEach(function(t){" in out
+    # the title is keyboard-operable (Enter/Space collapse), through the
+    # shell's one delegated keydown listener (load-app #12)
+    assert "['.sectionhead-txt',function(e,t){" in out
     assert "var action=val?'Expand':'Collapse';" in out
 
 

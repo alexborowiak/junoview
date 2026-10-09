@@ -88,7 +88,13 @@ def test_the_icon_only_square_rule_names_only_icon_only_buttons():
 
 def test_the_file_utility_line_hides_when_it_has_no_job():
     page = assets.load("html/page.html")
-    assert '<div class="nb-filebar" id="nb-filebar" hidden>' in page
+    # the server sends it in the state app.js will put it in (load-static
+    # #8: no jump at boot) -- hidden with nothing open, shown with a
+    # notebook, which is what refreshChrome then confirms
+    assert '<div class="nb-filebar" id="nb-filebar"{bar_hidden}>' in page
+    from junoview.render.page import _first_layout
+    assert _first_layout(False)["bar_hidden"] == " hidden"
+    assert _first_layout(True)["bar_hidden"] == ""
     css = assets.load("css/app.css")
     assert ".nb-filebar[hidden]{display:none!important;}" in css
     app = assets.app_js()

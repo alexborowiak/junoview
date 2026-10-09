@@ -958,17 +958,32 @@
   }
   /* the strip scrolls without a scrollbar (one in a button-high row drew
      a white bar and made the row taller), so the tab on screen is kept
-     in view -- in the editor the presentation's, not the notebook's */
+     in view -- in the editor the presentation's, not the notebook's.
+     MEASURED ONCE, WITH THE FRAME. It used to read two rects right after
+     whatever had just rebuilt the row, forcing a full style and layout
+     each time -- several per boot and per tab switch, while the page was
+     still being written to (load-app #8: ~200 ms at 4x). The calls that
+     land before the next frame now share one read, made when the frame
+     lays out anyway; the strip scrolls one frame later. */
+  var tabViewFrame=0;
   function keepTabInView(){
-    var strip=topTabstrip; if(!strip) return;
-    var cur=strip.querySelector(
-      document.body.classList.contains('slide-editing')
-        ?'.top-pres-tab.current':'.tab.current');
-    var sr=strip.getBoundingClientRect();
-    if(!cur||!sr.width) return;
-    var cr=cur.getBoundingClientRect();
-    if(cr.left<sr.left) strip.scrollLeft-=sr.left-cr.left;
-    else if(cr.right>sr.right) strip.scrollLeft+=cr.right-sr.right;
+    if(tabViewFrame) return;
+    var raf=window.requestAnimationFrame||function(f){return setTimeout(f,16);};
+    tabViewFrame=raf(function(){
+      tabViewFrame=0;
+      var strip=topTabstrip; if(!strip) return;
+      var cur=strip.querySelector(
+        document.body.classList.contains('slide-editing')
+          ?'.top-pres-tab.current':'.tab.current');
+      if(!cur) return;
+      /* nothing to scroll when the strip holds all its tabs */
+      if(strip.scrollWidth<=strip.clientWidth&&!strip.scrollLeft) return;
+      var sr=strip.getBoundingClientRect();
+      if(!sr.width) return;
+      var cr=cur.getBoundingClientRect();
+      if(cr.left<sr.left) strip.scrollLeft-=sr.left-cr.left;
+      else if(cr.right>sr.right) strip.scrollLeft+=cr.right-sr.right;
+    });
   }
   /* Home is lit while it is on screen -- the tab row stays up at Home
      whenever something is open, so there is a way back to it */
@@ -1010,6 +1025,7 @@
     atHome=false;
     APP.active=stem;
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
+    wakeShell(stem);   /* first time on screen: wire it now, visible */
     renderTabs();
     invalidateSids();   /* the section list belongs to the new tab */
     renderRawBtn();renderViewBtns();relayoutActiveTree();
@@ -1796,6 +1812,8 @@
   function applyFilters(){
     $$('.nbshell').forEach(function(sh){
       var stem=sh.dataset.nb;
+      /* a notebook not shown yet is filtered when it is (wakeShell) */
+      if(APP.shells[stem]&&APP.shells[stem].lazy) return;
       /* T257: the gate, read once per notebook */
       var only=onlyFor(stem);
       /* only the DOCUMENT feed: the tree view holds clones of these same
@@ -2752,6 +2770,9 @@
     /* there is no #pb-view: while presenting, this very button moves into
        the present bar with the rest of the View section */
     syncTreeRibbon(isTree);
+    /* every change of what is on screen passes here: Plotly figures that
+       were waiting for their notebook to be shown get their turn */
+    plotPump();
   }
   /* ---- Tree replaces document-only controls inside the Filters panel.
      The compact reader bar does not shift when the view changes. ---- */
@@ -4780,15 +4801,23 @@
      Two passes on purpose: reading scrollHeight right after the previous
      note's classList/insertBefore writes forces a full reflow PER long
      note. All the measuring happens first, then all the mutating
-     (2026-08-23 perf) — same callers, same result. */
-  function mdClampScan(shell){
-    var longOnes=[];
-    $$('.card[data-note="1"] .cardbody',shell).forEach(function(bd){
+     (2026-08-23 perf) — same callers, same result.
+     A measured note says so either way (data-mdclamp "1" long, "0" not):
+     until it does, core.css holds a notebook's note at the clamp height,
+     so nothing paints long and then jumps short. */
+  function mdClamp(bodies){
+    var longOnes=[],shortOnes=[];
+    bodies.forEach(function(bd){
       if(bd.dataset.mdclamp) return;
-      var nt=$('.note',bd); if(!nt) return;
-      if(nt.scrollHeight<=460) return;        /* read phase only */
-      longOnes.push(bd);
+      var nt=$('.note',bd);
+      /* not laid out -- a Collapsed note's body: there is nothing to
+         measure, and calling it short would leave it unclamped for good
+         once it opens. It stays undecided (mdClampWatch) */
+      if(nt&&!nt.getClientRects().length) return;
+      /* read phase only */
+      (nt&&nt.scrollHeight>460?longOnes:shortOnes).push(bd);
     });
+    shortOnes.forEach(function(bd){bd.dataset.mdclamp='0';});
     longOnes.forEach(function(bd){            /* write phase */
       bd.dataset.mdclamp='1';
       bd.classList.add('mdclamp');
@@ -4803,7 +4832,51 @@
       bd.parentNode.insertBefore(btn,bd.nextSibling);
     });
   }
+  function mdClampScan(shell){
+    mdClamp($$('.card[data-note="1"] .cardbody',shell));
+  }
   APP.mdscan=mdClampScan;
+  /* ...and in a notebook, lazily: each scrollHeight read used to force
+     the layout of a card content-visibility was skipping, one per note
+     of every open notebook at load (load-app #8: 247 ms at 4x). A note
+     is measured now when its card comes within a screen of view -- the
+     observer watches the CARD, which keeps a box while its contents are
+     skipped -- so the cost is the layout that card was about to get. */
+  function mdClampWatch(shell,only){
+    var cards=(only||$$('.content .card[data-note="1"]',shell)).filter(function(c){
+      var bd=c.querySelector(':scope > .cardbody');
+      return bd&&!bd.dataset.mdclamp;
+    });
+    if(!cards.length) return;
+    function bodyOf(c){return c.querySelector(':scope > .cardbody');}
+    if(!('IntersectionObserver' in window)){mdClamp(cards.map(bodyOf));return;}
+    /* a note near the screen whose body is not laid out (Collapsed) is
+       decided when its card changes size: opened, or the filter lifted */
+    var ro=window.ResizeObserver?new ResizeObserver(function(es){
+      var bds=es.map(function(e){return bodyOf(e.target);})
+        .filter(function(bd){return bd&&!bd.dataset.mdclamp;});
+      if(bds.length) mdClamp(bds);
+      es.forEach(function(e){
+        var bd=bodyOf(e.target);
+        if(!bd||bd.dataset.mdclamp) ro.unobserve(e.target);
+      });
+    }):null;
+    var io=new IntersectionObserver(function(es){
+      var near=[];
+      es.forEach(function(e){
+        if(!e.isIntersecting) return;
+        io.unobserve(e.target);
+        var bd=bodyOf(e.target);
+        if(bd&&!bd.dataset.mdclamp) near.push(bd);
+      });
+      if(near.length) mdClamp(near);
+      if(ro) near.forEach(function(bd){
+        if(!bd.dataset.mdclamp) ro.observe(bd.parentNode);});
+    },{rootMargin:'100% 0px 100% 0px'});
+    cards.forEach(function(c){io.observe(c);});
+    shellObserver(shell,io);
+    if(ro) shellObserver(shell,ro);
+  }
 
   /* ---- "add a note": a pencil on every card (app mode, local files).
      Saves a markdown cell into the .ipynb right after that card's cells;
@@ -4894,21 +4967,15 @@
       var src=e.src.value.trim();
       if(!src){e.err.textContent='Write something first';return;}
       e.save.disabled=true;e.err.textContent='';
+      var stem=noteCtx.stem;
       api('/api/addnote',{path:noteCtx.path,after:noteCtx.anchor,
-        source:src,commit:!!(e.commit.checked&&!e.gitrow.hidden)})
+        source:src,commit:!!(e.commit.checked&&!e.gitrow.hidden),
+        /* the version this tab shows (data-ver): while that is still
+           what is on disk, the server can send just the one new card */
+        have:shellVer(stem)})
       .then(function(j){
         e.save.disabled=false;
         closeNoteDlg();
-        mountShellHTML(j.shell,j.path);
-        var sh2=APP.shells[j.stem];
-        var card=sh2&&sh2.el.querySelector(
-          '.card[data-anchor="cell:'+j.cell+'"]');
-        if(card){
-          card.scrollIntoView({behavior:'smooth',block:'center'});
-          card.classList.add('target-flash');
-          setTimeout(function(){
-            card.classList.remove('target-flash');},1400);
-        }
         var g=j.git&&j.git.commit;
         if(g&&g.ok)
           docToast('Note saved ✓ · committed '+(g.sha||''),
@@ -4917,12 +4984,174 @@
           docToast('Note saved ✓ · git commit failed: '
             +(g.error||''),'','',9000);
         else docToast('Note saved into the notebook ✓');
+        var card=noteInPlace(j,stem);
+        if(card){noteFlash(card);return;}
+        /* re-mounted from the shell the server rendered -- which it sends
+           only when it does not expect the note to go in in place; when
+           it did and this tab could not take it after all (switched to
+           the tree view meanwhile, say), the notebook is read again */
+        (j.shell?Promise.resolve(j)
+          :api('/api/open',{path:j.path,stem:j.stem})).then(function(k){
+          mountShellHTML(k.shell,k.path||j.path);
+          var sh2=APP.shells[j.stem];
+          noteFlash(sh2&&sh2.el.querySelector(
+            '.card[data-anchor="cell:'+j.cell+'"]'));
+        }).catch(function(err){
+          docToast('The note is saved, but the notebook could not be '
+            +'shown again: '+((err&&err.message)||err)
+            +' — reload it to see the note','','',9000);
+        });
       }).catch(function(err){
         e.save.disabled=false;
         e.err.textContent=(err&&err.message)||'save failed';
       });
     });
+    function noteFlash(card){
+      if(!card) return;
+      card.scrollIntoView({behavior:'smooth',block:'center'});
+      card.classList.add('target-flash');
+      setTimeout(function(){card.classList.remove('target-flash');},1400);
+    }
   })();
+  /* ---- A NOTE ADDED IN PLACE (critic #3) -------------------------------
+     Saving a note used to re-mount the whole notebook from the shell the
+     server re-rendered: every card rebuilt, rewired, re-laid-out and
+     re-typeset for one new markdown cell (2.2 s on the 116-cell notebook
+     at 4x), and the old shell leaked. When the server says the note is
+     the ONLY change to what this page shows (j.note, note_in_place), the
+     card, its outline row and its raw-view cell go in where they belong
+     and the rest of the notebook is left as it is. Every check comes
+     before the first write; any that fails returns null and the caller
+     re-mounts the notebook as before. Returns the new card.
+     The tab then carries the new file's version (data-ver), so a Reload
+     that finds nothing else changed keeps it, as it keeps any tab. Its
+     cards are named as a fresh rendering of that file names them: notes
+     are numbered in order, so the ones after the new note move up one
+     (n.renames) and their marks -- kept against a card's id -- go with
+     them. Keeping the old numbers sent those marks to the neighbouring
+     notes at the next page load, and lost the new note's own. */
+  function noteInPlace(j,stem){
+    var n=j&&j.note,sh=APP.shells[stem];
+    if(!n||!sh||!sh.el||sh.lazy||sh.version||sh.trace) return null;
+    if(j.stem!==stem||APP.active!==stem) return null;
+    var shell=sh.el;
+    /* the tree view is drawn from the card index: re-mount to redraw */
+    if(shell.classList.contains('tree')) return null;
+    if(typeof shell.__jvAddCard!=='function') return null;
+    function q(v){return String(v).replace(/\\/g,'\\\\').replace(/"/g,'\\"');}
+    var sec=shell.querySelector('.content .section[data-sec="'+q(n.section)+'"]');
+    var head=sec&&sec.querySelector(':scope > .sectionhead');
+    var items=shell.querySelector('.nav .navitems[data-sec="'+q(n.section)+'"]');
+    var raw=shell.querySelector('.rawview');
+    if(!sec||!head||!items||!raw) return null;
+    /* the raw view is still its inert template until Raw is first
+       pressed (populateRawView): the cell goes into that, then */
+    var tpl=raw.querySelector(':scope > template.rawtpl');
+    var rawHost=tpl?tpl.content:raw;
+    var prev=null,prevNav=null;
+    if(n.after){
+      prev=sec.querySelector(':scope > .card[data-anchor="'+q(n.after)+'"]');
+      prevNav=prev&&items.querySelector(
+        '.navitem[data-item="'+q(prev.id.replace(/^card-/,''))+'"]');
+      if(!prev||!prevNav) return null;
+    }
+    var rawCells=[].filter.call(rawHost.children,function(c){
+      return c.classList.contains('rawcell');});
+    if(rawCells.length!==n.rawcount-1) return null;
+    /* the notes after it, as they are named here and as a fresh load
+       names them */
+    var ren=[],map={};
+    for(var r=0;r<(n.renames||[]).length;r++){
+      var rf=String(n.renames[r][0]),rt=String(n.renames[r][1]);
+      var rc0=shell.querySelector('.content .card[id="card-'+q(rf)+'"]');
+      if(!rc0) return null;
+      ren.push({card:rc0,from:rf,to:rt,
+        nav:shell.querySelector('.nav .navitem[data-item="'+q(rf)+'"]')});
+      map[rf]=rt;
+    }
+    var moving=ren.map(function(x){return x.card;});
+    function free(id){
+      var x=shell.querySelector('[id="'+q(id)+'"]');
+      return !x||moving.indexOf(x)>=0;
+    }
+    function one(html){
+      var t=document.createElement('template');t.innerHTML=html||'';
+      return t.content.children.length===1?t.content.firstElementChild:null;
+    }
+    var card=one(n.card),nav=one(n.nav),rc=one(n.raw);
+    if(!card||!nav||!rc||!card.id) return null;
+    if(!free(card.id)) return null;
+    for(r=0;r<ren.length;r++) if(!free('card-'+ren[r].to)) return null;
+    /* its place in the card index: after the card before it, or -- the
+       first card of its section -- before the first card of that section
+       or of any section after it */
+    var data=sh.data||{},list=data.items||[];
+    var order=(data.sections||[]).map(function(s){return s.id;});
+    var mine=order.indexOf(n.section),at=-1;
+    if(mine<0) return null;
+    for(var i=0;i<list.length;i++){
+      if(n.after){if(list[i].anchor===n.after){at=i+1;break;}}
+      else if(order.indexOf(list[i].section)>=mine){at=i;break;}
+    }
+    if(at<0&&n.after) return null;
+    /* ---- writes ---- */
+    ren.forEach(function(x){
+      x.card.id='card-'+x.to;
+      if(x.nav){x.nav.dataset.item=x.to;x.nav.setAttribute('href','#card-'+x.to);}
+    });
+    list.forEach(function(it){
+      if(Object.prototype.hasOwnProperty.call(map,it.card)) it.card=map[it.card];});
+    if(ren.length){
+      var mk=marksFor(stem),m2={};
+      Object.keys(mk).forEach(function(id){
+        if(!Object.prototype.hasOwnProperty.call(map,id)) m2[id]=mk[id];});
+      Object.keys(mk).forEach(function(id){
+        if(Object.prototype.hasOwnProperty.call(map,id)) m2[map[id]]=mk[id];});
+      writeMarks(stem,m2);
+      if(typeof shell.__jvRenameItems==='function') shell.__jvRenameItems(map);
+    }
+    /* a Tree view built before is drawn from the card index as it was:
+       built again, with the note, the next time it is shown */
+    var tv=shell.querySelector('.treeview');
+    if(tv&&tv.dataset.built){delete tv.dataset.built;tv.textContent='';}
+    /* the notes after it moved down one notebook cell (note history
+       matches a note by its cell when it has no id) */
+    $$('.card[data-note="1"][data-noteidx]',shell).forEach(function(c){
+      var k=+c.dataset.noteidx;
+      if(k>=n.index) c.dataset.noteidx=String(k+1);
+    });
+    if(prev) prev.parentNode.insertBefore(card,prev.nextSibling);
+    else head.parentNode.insertBefore(card,head.nextSibling);
+    if(prevNav) items.insertBefore(nav,prevNav.nextSibling);
+    else items.insertBefore(nav,items.firstChild);
+    rawHost.insertBefore(rc,rawCells[n.rawpos]||null);
+    if(at<0) at=list.length;
+    list.splice(at,0,n.item);
+    data.items=list;
+    shell.dataset.ver=j.ver||'';
+    if(!j.ver) delete shell.dataset.ver;
+    /* wired as the server-rendered cards were: its buttons, the pencil,
+       the outline and scroll-spy, the clamp, the filters */
+    wireCardButtons(shell,stem,[card]);
+    wireAddNote(shell,stem);
+    shell.__jvAddCard(card,nav);
+    mdClampWatch(shell,[card]);
+    invalidateSids();
+    applyFilters();
+    /* its maths: the card now (it is where you are looking), the raw
+       view's copy as it is read (jvMath) */
+    jvMath.typeset(card);
+    if(!tpl) jvMath.watch(rc);
+    /* a Find in progress counts the new note too */
+    var fb=$('#docfind');
+    if(fb&&!fb.hidden&&findTerm) findRun(findTerm);
+    /* the deck learns the new card (its index); nothing that was on the
+       page changed, so this is not a reload: replaced stays false */
+    document.dispatchEvent(new CustomEvent('sem:shell',
+      {detail:{stem:stem,el:shell,data:data,replaced:false}}));
+    return card;
+  }
+  APP.noteInPlace=noteInPlace;
   function wireAddNote(shell,stem){
     /* only where the server can WRITE: app mode + a local .ipynb (never
        static exports, URL-opened notebooks or Plot-trace clones) */
@@ -5009,22 +5238,137 @@
       return !p||p.classList.contains('current');
     });
     if(!pe.length) return;
+    /* a notebook's own figures: one at a time, nearest first (plotQueue) */
+    if(!jsonOnly){plotQueue(pe);return;}
     ensurePlotly(function(){
       if(!window.Plotly) return;
-      [].forEach.call(pe,function(div){
-        if(div.isConnected===false) return;
-        /* a cloned card may carry a static copy already — leave it be */
-        if(div.querySelector('.js-plotly-plot,.plotly')) return;
-        var raw=div.getAttribute('data-plotly'); if(!raw) return;
-        try{
-          var spec=JSON.parse(raw);
-          window.Plotly.newPlot(div,spec.data||[],spec.layout||{},
-            {responsive:true,displaylogo:false});
-        }catch(e){}
-      });
+      [].forEach.call(pe,plotDraw);
     });
   }
   window.SemActivate=activateOutputs;
+  function plotDraw(div){
+    if(div.__jvPlotQ) div.__jvPlotQ=0;
+    if(div.isConnected===false) return;
+    /* a cloned card may carry a static copy already — leave it be */
+    if(div.querySelector('.js-plotly-plot,.plotly')) return;
+    var raw=div.getAttribute('data-plotly'); if(!raw) return;
+    try{
+      var spec=JSON.parse(raw);
+      window.Plotly.newPlot(div,spec.data||[],spec.layout||{},
+        {responsive:true,displaylogo:false});
+    }catch(e){}
+  }
+  /* ---- A NOTEBOOK'S PLOTLY FIGURES, ONE PER TASK -----------------------
+     They were all drawn in one callback the moment plotly.js arrived:
+     ~140 ms per figure at 4x, so twelve figures froze the page for 1.7 s
+     with every frame empty until the last was done (load-static #6). Now
+     each is queued and drawn in its own task -- those within a screen of
+     view first, the rest in document order behind them -- so the page
+     answers between figures and what you are looking at comes first.
+     Every figure is still drawn, as before; whatever has to see them all
+     drawn now (Create slides measuring them, printing) asks plotFlush. */
+  var plotQ=[],plotPumpOn=false,plotIO=null;
+  function plotQueue(divs){
+    if(!plotIO&&'IntersectionObserver' in window)
+      plotIO=new IntersectionObserver(function(es){
+        var any=false;
+        es.forEach(function(e){
+          if(!e.isIntersecting) return;
+          plotIO.unobserve(e.target);
+          if(e.target.__jvPlotQ){e.target.__jvPlotQ=2;any=true;}
+        });
+        if(any) plotPump();
+      },{rootMargin:'100% 0px 100% 0px'});
+    divs.forEach(function(div){
+      if(div.__jvPlotQ) return;
+      div.__jvPlotQ=1;plotQ.push(div);
+      if(plotIO) plotIO.observe(div);
+    });
+    ensurePlotly(plotPump);
+  }
+  function plotNext(){
+    var i,k=-1;
+    for(i=0;i<plotQ.length;i++){
+      if(!plotQ[i].__jvPlotQ||!plotQ[i].isConnected){
+        if(plotIO) plotIO.unobserve(plotQ[i]);
+        plotQ[i].__jvPlotQ=0;plotQ.splice(i,1);i--;continue;}
+      /* its notebook (or that notebook's document view) is not on screen:
+         a plot drawn into display:none has no width and keeps the wrong
+         one, so it waits for its turn (renderViewBtns resumes the pump) */
+      if(plotOffScreen(plotQ[i])) continue;
+      if(plotQ[i].__jvPlotQ===2){k=i;break;}   /* near the screen */
+      if(k<0) k=i;
+    }
+    if(k<0) return null;
+    return plotQ.splice(k,1)[0];
+  }
+  function plotOffScreen(div){
+    var sh=div.closest&&div.closest('.nbshell');
+    return !!(sh&&(sh.hidden||sh.classList.contains('raw')
+      ||sh.classList.contains('tree')));
+  }
+  function plotPump(){
+    if(plotPumpOn||!window.Plotly) return;
+    plotPumpOn=true;
+    setTimeout(function step(){
+      var div=plotNext();
+      if(!div){plotPumpOn=false;return;}
+      if(plotIO) plotIO.unobserve(div);
+      plotDraw(div);
+      setTimeout(step,0);
+    },0);
+  }
+  /* draw now whatever under `root` is still queued -- synchronous when
+     plotly.js is there (it is loaded with the first figure queued) */
+  function plotFlush(root){
+    if(!window.Plotly||!plotQ.length) return;
+    plotQ.slice().forEach(function(div){
+      if(div.__jvPlotQ&&(!root||root===document||root.contains(div))){
+        var i=plotQ.indexOf(div);
+        if(i>=0) plotQ.splice(i,1);
+        if(plotIO) plotIO.unobserve(div);
+        plotDraw(div);
+      }
+    });
+  }
+  APP.plotFlush=plotFlush;
+  /* plotly.js for a notebook not shown yet: fetched and evaluated once the
+     page is idle after load. Its evaluation is one long task (2.5 s at 4x
+     here) that used to sit inside every load of a page holding such a
+     notebook; waiting for that notebook's first showing would put it in
+     the click instead. Idle is neither -- and what the click then pays is
+     the drawing, one figure at a time, nearest first. */
+  function plotWarmLater(){
+    var need=APP.order.some(function(s){
+      var sh=APP.shells[s];
+      return !!(sh&&sh.lazy&&sh.el
+        &&sh.el.querySelector('.content .plotly-embed[data-plotly]'));
+    });
+    if(!need||window.Plotly) return;
+    function go(){ensurePlotly(function(){});}
+    function idle(){
+      if(window.requestIdleCallback) window.requestIdleCallback(go,{timeout:5000});
+      else setTimeout(go,1500);
+    }
+    if(document.readyState==='complete') idle();
+    else window.addEventListener('load',idle,{once:true});
+  }
+  /* a shell that goes takes its queued figures with it */
+  function plotForget(root){
+    for(var i=plotQ.length-1;i>=0;i--){
+      if(!root.contains(plotQ[i])) continue;
+      if(plotIO) plotIO.unobserve(plotQ[i]);
+      plotQ[i].__jvPlotQ=0;plotQ.splice(i,1);
+    }
+  }
+  /* Ctrl+P prints every figure of the notebook, as it always did, and
+     every note decided (mdClampWatch measures them as they near the
+     screen; the print is all of them at once) */
+  window.addEventListener('beforeprint',function(){
+    var a=APP.active&&APP.shells[APP.active];
+    plotFlush(a&&a.el);
+    if(a&&a.el) mdClampScan(a.el);
+  });
 
   /* The #/##/### section tiers form a real hierarchy: collapsing or hiding
      a section also folds every DEEPER section that follows it, until a
@@ -5175,6 +5519,9 @@
     $$('.figzoom',cl).forEach(function(n){
       if(n.parentNode) n.parentNode.removeChild(n);});
     sc.appendChild(cl);
+    /* a Plotly figure still waiting its turn on the page is drawn here,
+       from its spec, as a clone's would be */
+    activateOutputs(sc,true);
     /* every figure opens at 100% — a zoom carried over from the last one
        is a plot that opens already scrolled off its own edge */
     fmZoom=1;fmApply();
@@ -6002,53 +6349,42 @@
         timeline.textContent='Could not load commits: '+err.message;
     });
   }
-  function wireCardBehaviors(shell,stem){
-    /* The button is cheap; no history or image is fetched until it opens. */
-    var source=historySource(shell.dataset.path||'');
-    if(source) $$('.card',shell).forEach(function(card){
-      var head=card.querySelector('.cardhead');if(!head) return;
-      var b=document.createElement('button');b.type='button';
-      b.className='cell-history-btn';
-      b.innerHTML=bic('history')+' Versions';
-      b.title='Compare this cell across Git commits';
-      b.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        openCellHistory({path:shell.dataset.path||''},card);
-      });
-      head.insertBefore(b,head.querySelector('.cell-pin')||null);
+  /* ---- A CARD'S CONTROLS: one listener per notebook, not one per button.
+     wireCardBehaviors used to add a listener to every eye, pin, mark,
+     code toggle, chevron, figure bar and header of every card -- a dozen
+     whole-shell queries and hundreds of closures per notebook at load
+     (load-app #12). The buttons a card is given (Versions, Collect, Copy)
+     are still made per card, by wireCardButtons; what a click DOES is
+     looked up here, from the element clicked outwards, in the order the
+     per-element listeners used to fire in: the innermost first, and a
+     stopPropagation() ends the walk exactly where it ended the bubbling.
+     It also means a card that arrives later -- a note added in place, a
+     clone -- answers with no wiring of its own. ---- */
+  function shellDelegate(root,type,rules){
+    root.addEventListener(type,function(e){
+      /* a clone wired as a root of its own INSIDE this one -- a tree-view
+         node (fillNode) -- answers for its subtree, and only it: its
+         listener runs first, and this one must not act a second time
+         (a code toggle toggled twice is a code toggle that did nothing) */
+      if(e.__jvDelegated) return;
+      e.__jvDelegated=root;
+      for(var n=e.target;n&&n!==root;n=n.parentNode){
+        if(n.nodeType!==1) continue;
+        for(var i=0;i<rules.length;i++){
+          if(n.matches(rules[i][0])){
+            rules[i][1](e,n);
+            if(e.cancelBubble) return;
+          }
+        }
+      }
     });
-    /* ---- T606: COLLECT -- this cell into a collection. On a notebook's
-       cards and a trace's clones (they file the real notebook's cell);
-       never on a collection's own cards, which are already kept. ---- */
+  }
+  function wireCardBehaviors(shell,stem){
+    wireCardButtons(shell,stem);
     var colStem=shell.classList&&shell.classList.contains('coltab')?null
       :(shell.dataset&&(shell.dataset.src||shell.dataset.nb))||stem;
-    if(colStem) $$('.card',shell).forEach(function(card){
-      var head=card.querySelector('.cardhead');
-      if(!head||!card.dataset.anchor||head.querySelector('.cell-collect')) return;
-      var b=document.createElement('button');b.type='button';
-      b.className='cell-collect';
-      b.innerHTML=bic('collect')+' Collect';
-      b.title='Keep this cell in a collection, with notes of your own '
-        +'beside it';
-      b.setAttribute('aria-haspopup','menu');
-      b.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        if(window.SemCollect) window.SemCollect.card(b,colStem,card);
-      });
-      head.insertBefore(b,head.querySelector('.cell-pin')
-        ||head.querySelector('.cell-eye')||null);
-    });
-    /* ---- code toggles ---- */
-    $$('.codetoggle',shell).forEach(function(btn){
-      btn.addEventListener('click',function(){
-        var wrap=btn.closest('.codewrap');
-        var open=wrap.hasAttribute('data-open');
-        if(open){wrap.removeAttribute('data-open');
-          btn.setAttribute('aria-expanded','false');}
-        else{wrap.setAttribute('data-open','');
-          btn.setAttribute('aria-expanded','true');}
-      });
-    });
+    var cst=shell.classList.contains('coltab')?null
+      :(shell.dataset.src||shell.dataset.nb||stem);
     /* ---- per-cell eye: hide/show one cell (it stays in the sidebar) ---- */
     function setCellOff(id,off,keepVisible){
       var card=shell.querySelector('.card[id="card-'+id+'"]');
@@ -6071,70 +6407,9 @@
         setCellOff(id,false,false);
       else setCellOff(id,true,false);
     }
-    $$('.cell-eye',shell).forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var card=btn.closest('.card'); if(!card) return;
-        var id=card.id.replace(/^card-/,'');
-        toggleCellEye(id);
-      });
-    });
-    /* T242: the pin and the mark. Pinning a cell you had hidden by
-       hand un-hides it -- the two say opposite things about the same
-       cell and the newer press is the one you meant. */
-    $$('.cell-pin',shell).forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var card=btn.closest('.card'); if(!card) return;
-        var id=card.id.replace(/^card-/,'');
-        var st=markOf(stem,id);
-        setMarkState(stem,id,{p:st.p?0:1,tags:markTags(st)});
-        if(!st.p) setCellOff(id,false);
-        paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
-      });
-    });
-    $$('.cell-mark',shell).forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var card=btn.closest('.card'); if(!card) return;
-        var id=card.id.replace(/^card-/,'');
-        openCellLabels(btn,shell,stem,id);
-      });
-    });
     Object.keys(marksFor(stem)).forEach(function(id){
       paintMark(shell,stem,id);});
     renderMarks(shell,stem);
-    $$('.navitem-eye',shell).forEach(function(sp){
-      var toggle=function(e){
-        e.preventDefault();e.stopPropagation();
-        var nav=sp.closest('.navitem'); if(!nav) return;
-        toggleCellEye(nav.dataset.item);
-      };
-      sp.addEventListener('click',toggle);
-      /* role=button span: Enter/Space must act (keyboard users restore a
-         cell hidden via the card eye only through this control) */
-      sp.addEventListener('keydown',function(e){
-        if(e.key==='Enter'||e.key===' '||e.key==='Spacebar') toggle(e);
-      });
-    });
-    /* ---- figure "Plot trace" button -> the deck's trace tab ---- */
-    $$('.plot-trace-btn',shell).forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        if(window.SemTrace) window.SemTrace.open(stem,btn.dataset.trace);
-      });
-    });
-    /* ---- "derives from" dep chip -> scroll to its source card (scoped to
-       this shell, so it works in the docs AND the trace tab's clones) ---- */
-    $$('.depchip',shell).forEach(function(a){
-      a.addEventListener('click',function(e){
-        e.preventDefault();
-        var src=$('.card[data-node="'+a.dataset.dep+'"]',shell);
-        if(src){src.scrollIntoView({behavior:'smooth',block:'center'});
-          src.classList.add('target-flash');
-          setTimeout(function(){src.classList.remove('target-flash');},1400);}
-      });
-    });
     /* ---- section collapse + hide: available in the MAIN view and the sidebar,
        kept in sync. Collapse folds a section's cards; hide drops the whole
        section (it stays in the sidebar, dimmed, so you can bring it back).
@@ -6221,103 +6496,181 @@
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
       return !!(sec&&sec.classList.contains('sec-collapsed'));
     }
-    $$('.sec-chev',shell).forEach(function(ch){
-      ch.addEventListener('click',function(e){
+    function navsecHideAll(sp){
+      var row=sp.closest('.navsec-row'); if(!row) return;
+      if(row.classList.contains('sec-under-off')){
+        /* dimmed because an ANCESTOR is hidden: restore the hidden
+           ancestors (bringing this row back with them) instead of
+           stamping a stray hide on the child itself */
+        var rows=$$('.navsec-row',shell);
+        var lv=+(row.dataset.level||2);
+        for(var k=rows.indexOf(row)-1;k>=0;k--){
+          var r2=rows[k],l2=+(r2.dataset.level||2);
+          if(l2>=lv) continue;
+          if(r2.classList.contains('sec-off'))
+            setSecOff(r2.dataset.sec,false);
+          lv=l2;
+          if(l2<=1) break;
+        }
+        if(row.classList.contains('sec-off'))
+          setSecOff(row.dataset.sec,false);
+        return;
+      }
+      setSecOff(row.dataset.sec,!row.classList.contains('sec-off'));
+    }
+    /* ---- per-figure zoom (+ / - / expand full screen) ---- */
+    function bump(fig,mult){
+      /* the factor lives on the CARD: widening the card takes its border
+         and header with it, so the figure never sits outside its cell */
+      var card=fig.closest('.card')||fig;
+      var cur=parseFloat(card.style.getPropertyValue('--fz'))||1;
+      /* the ceiling is what actually fits — growing past the stage
+         would put a scrollbar under the whole document */
+      var cap=maxZoomFor(card)/(figAll||1);
+      var next=Math.max(0.35,Math.min(Math.max(1,cap),
+        Math.round(cur*mult*100)/100));
+      if(next===1) card.style.removeProperty('--fz');
+      else card.style.setProperty('--fz',next);
+      syncZoomed(card);
+      resizeEmbeds(card);
+      scheduleSaveLayout();   /* this size is yours to keep */
+    }
+    function idOf(btn){
+      var card=btn.closest('.card');
+      return card?card.id.replace(/^card-/,''):null;
+    }
+    function isKey(e){
+      return e.key==='Enter'||e.key===' '||e.key==='Spacebar';
+    }
+    if(shell.__jvCardsWired) return;
+    shell.__jvCardsWired=true;
+    shellDelegate(shell,'click',[
+      ['.cell-history-btn',function(e,b){
+        e.preventDefault();e.stopPropagation();
+        var card=b.closest('.card');
+        if(card) openCellHistory({path:shell.dataset.path||''},card);
+      }],
+      ['.cell-collect',function(e,b){
+        e.preventDefault();e.stopPropagation();
+        var card=b.closest('.card');
+        if(!colStem||!card) return;
+        if(window.SemCollect) window.SemCollect.card(b,colStem,card);
+      }],
+      /* ---- code toggles ---- */
+      ['.codetoggle',function(e,btn){
+        var wrap=btn.closest('.codewrap');
+        var open=wrap.hasAttribute('data-open');
+        if(open){wrap.removeAttribute('data-open');
+          btn.setAttribute('aria-expanded','false');}
+        else{wrap.setAttribute('data-open','');
+          btn.setAttribute('aria-expanded','true');}
+      }],
+      ['.cell-eye',function(e,btn){
+        e.preventDefault();e.stopPropagation();
+        var id=idOf(btn); if(id==null) return;
+        toggleCellEye(id);
+      }],
+      /* T242: the pin and the mark. Pinning a cell you had hidden by
+         hand un-hides it -- the two say opposite things about the same
+         cell and the newer press is the one you meant. */
+      ['.cell-pin',function(e,btn){
+        e.preventDefault();e.stopPropagation();
+        var id=idOf(btn); if(id==null) return;
+        var st=markOf(stem,id);
+        setMarkState(stem,id,{p:st.p?0:1,tags:markTags(st)});
+        if(!st.p) setCellOff(id,false);
+        paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
+      }],
+      ['.cell-mark',function(e,btn){
+        e.preventDefault();e.stopPropagation();
+        var id=idOf(btn); if(id==null) return;
+        openCellLabels(btn,shell,stem,id);
+      }],
+      /* the outline row's eye sits INSIDE the row's link: the link's own
+         listener (initShell, navLink) runs first and leaves a click on
+         the eye to this, which stops the link going anywhere */
+      ['.navitem-eye',function(e,sp){
+        e.preventDefault();e.stopPropagation();
+        var nav=sp.closest('.navitem'); if(!nav) return;
+        toggleCellEye(nav.dataset.item);
+      }],
+      /* ---- figure "Plot trace" button -> the deck's trace tab ---- */
+      ['.plot-trace-btn',function(e,btn){
+        e.preventDefault();e.stopPropagation();
+        if(window.SemTrace) window.SemTrace.open(stem,btn.dataset.trace);
+      }],
+      /* ---- "derives from" dep chip -> scroll to its source card (scoped
+         to this shell, so it works in the docs AND the trace tab's
+         clones) ---- */
+      ['.depchip',function(e,a){
+        e.preventDefault();
+        var src=$('.card[data-node="'+a.dataset.dep+'"]',shell);
+        if(src){src.scrollIntoView({behavior:'smooth',block:'center'});
+          src.classList.add('target-flash');
+          setTimeout(function(){src.classList.remove('target-flash');},1400);}
+      }],
+      ['.sec-chev',function(e,ch){
         e.preventDefault();e.stopPropagation();
         setSecCollapsed(ch.dataset.sec,!isCollapsed(ch.dataset.sec));
-      });
-    });
-    $$('.navsec-chev',shell).forEach(function(ch){
-      ch.addEventListener('click',function(e){
+      }],
+      ['.navsec-chev',function(e,ch){
         e.preventDefault();e.stopPropagation();
         var row=ch.closest('.navsec-row'); if(!row) return;
         setSecCollapsed(row.dataset.sec,!row.classList.contains('collapsed'));
-      });
-    });
-    /* clicking the section header (not a button) also collapses it */
-    $$('.sectionhead',shell).forEach(function(h){
-      h.addEventListener('click',function(e){
+      }],
+      /* clicking the section header (not a button) also collapses it */
+      ['.sectionhead',function(e,h){
         if(e.target.closest('button,a')) return;
         var sec=h.closest('.section'); if(!sec) return;
         setSecCollapsed(sec.dataset.sec,!sec.classList.contains('sec-collapsed'));
-      });
-    });
-    $$('.sectionhead-txt',shell).forEach(function(t){
-      t.addEventListener('keydown',function(e){
-        if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Spacebar') return;
-        e.preventDefault();
-        var sec=t.closest('.section'); if(!sec) return;
-        setSecCollapsed(sec.dataset.sec,!sec.classList.contains('sec-collapsed'));
-      });
-    });
-    $$('.sec-eye',shell).forEach(function(b){
-      b.addEventListener('click',function(e){
+      }],
+      ['.sec-eye',function(e,b){
         e.preventDefault();e.stopPropagation();
         /* the heading only — and it toggles, because the thin hover strip
            left behind still carries this button */
         setSecHeadOff(b.dataset.sec,!isHeadOff(b.dataset.sec));
-      });
-    });
-    $$('.sec-hideall',shell).forEach(function(b){
-      b.addEventListener('click',function(e){
+      }],
+      ['.sec-hideall',function(e,b){
         e.preventDefault();e.stopPropagation();
         var sec=b.closest('.section');
         setSecOff(b.dataset.sec,!sec.classList.contains('sec-off'));
-      });
-    });
-    $$('.navsec-eye',shell).forEach(function(sp){
-      var toggle=function(e){
+      }],
+      ['.navsec-eye',function(e,sp){
         e.preventDefault();e.stopPropagation();
         var row=sp.closest('.navsec-row'); if(!row) return;
         setSecHeadOff(row.dataset.sec,!isHeadOff(row.dataset.sec));
-      };
-      sp.addEventListener('click',toggle);
-      sp.addEventListener('keydown',function(e){
-        if(e.key==='Enter'||e.key===' '||e.key==='Spacebar') toggle(e);});
-    });
-    $$('.navsec-hideall',shell).forEach(function(sp){
-      var toggle=function(e){
+      }],
+      ['.navsec-hideall',function(e,sp){
         e.preventDefault();e.stopPropagation();
-        var row=sp.closest('.navsec-row'); if(!row) return;
-        if(row.classList.contains('sec-under-off')){
-          /* dimmed because an ANCESTOR is hidden: restore the hidden
-             ancestors (bringing this row back with them) instead of
-             stamping a stray hide on the child itself */
-          var rows=$$('.navsec-row',shell);
-          var lv=+(row.dataset.level||2);
-          for(var k=rows.indexOf(row)-1;k>=0;k--){
-            var r2=rows[k],l2=+(r2.dataset.level||2);
-            if(l2>=lv) continue;
-            if(r2.classList.contains('sec-off'))
-              setSecOff(r2.dataset.sec,false);
-            lv=l2;
-            if(l2<=1) break;
-          }
-          if(row.classList.contains('sec-off'))
-            setSecOff(row.dataset.sec,false);
-          return;
-        }
-        setSecOff(row.dataset.sec,!row.classList.contains('sec-off'));
-      };
-      sp.addEventListener('click',toggle);
-      sp.addEventListener('keydown',function(e){
-        if(e.key==='Enter'||e.key===' '||e.key==='Spacebar') toggle(e);});
-    });
-    /* ---- a Collapsed markdown note opens when its header is clicked;
-       clicking again folds it back ---- */
-    $$('.card',shell).forEach(function(c){
-      var head=$('.cardhead',c);
-      if(head) head.addEventListener('click',function(e){
+        navsecHideAll(sp);
+      }],
+      /* ---- a Collapsed markdown note opens when its header is clicked;
+         clicking again folds it back ---- */
+      ['.card>.cardhead',function(e,head){
         if(e.target.closest('button,a')) return;   /* leave eye/trace clicks */
+        var c=head.parentNode;
         if(c.classList.contains('collapsed')) c.classList.toggle('expanded');
-      });
-    });
-    /* ---- a figure folded by Plots = Collapsed opens on click; a FRAME
-       folded by its plot-type's own Fold toggles on its stub strip.
-       Open, only the strip itself refolds — a click on the figure
-       content must not snap it shut ---- */
-    $$('.cb-fig',shell).forEach(function(f){
-      f.addEventListener('click',function(e){
+      }],
+      /* ---- the figure bar: + / - / full screen / Copy. A click anywhere
+         on it stays on it (it must not fold the figure under it) ---- */
+      ['.cb-fig .figzoom .fz-in',function(e,b){
+        e.stopPropagation();bump(b.closest('.figzoom').parentNode,1.25);}],
+      ['.cb-fig .figzoom .fz-out',function(e,b){
+        e.stopPropagation();bump(b.closest('.figzoom').parentNode,1/1.25);}],
+      ['.cb-fig .figzoom .fz-max',function(e,b){
+        e.stopPropagation();openFigMax(b.closest('.figzoom').parentNode);}],
+      ['.cb-fig .figzoom .fz-copy',function(e,b){
+        e.preventDefault();e.stopPropagation();
+        var fig=b.closest('.figzoom').parentNode;
+        var card=fig.closest('.card')||fig;
+        if(cst) copyCell(shell,cst,card);
+      }],
+      ['.cb-fig .figzoom',function(e){e.stopPropagation();}],
+      /* ---- a figure folded by Plots = Collapsed opens on click; a FRAME
+         folded by its plot-type's own Fold toggles on its stub strip.
+         Open, only the strip itself refolds — a click on the figure
+         content must not snap it shut ---- */
+      ['.cb-fig',function(e,f){
         var fr=e.target&&e.target.closest
           ?e.target.closest('[data-pt].pt-fold'):null;
         if(fr){
@@ -6326,63 +6679,100 @@
           return;
         }
         if(f.classList.contains('part-fold')) f.classList.toggle('part-open');
-      });
-    });
-    /* ---- per-figure zoom (+ / - / expand full screen) ---- */
-    $$('.cb-fig .figzoom',shell).forEach(function(z){
-      var fig=z.parentNode;
-      /* the factor lives on the CARD: widening the card takes its border
-         and header with it, so the figure never sits outside its cell */
-      var card=fig.closest('.card')||fig;
-      function bump(mult){
-        var cur=parseFloat(card.style.getPropertyValue('--fz'))||1;
-        /* the ceiling is what actually fits — growing past the stage
-           would put a scrollbar under the whole document */
-        var cap=maxZoomFor(card)/(figAll||1);
-        var next=Math.max(0.35,Math.min(Math.max(1,cap),
-          Math.round(cur*mult*100)/100));
-        if(next===1) card.style.removeProperty('--fz');
-        else card.style.setProperty('--fz',next);
-        syncZoomed(card);
-        resizeEmbeds(card);
-        scheduleSaveLayout();   /* this size is yours to keep */
+      }],
+      /* ---- output folded by Output = Collapsed reveals on click. Open-only
+         (unlike a figure): the output is text/tables you may want to
+         select, so a click inside it must not fold it back up ---- */
+      ['.cb-out',function(e,o){
+        if(o.classList.contains('part-fold')&&!o.classList.contains('part-open'))
+          o.classList.add('part-open');
+      }]
+    ]);
+    /* the outline's role=button spans and the section titles: Enter and
+       Space must act */
+    shellDelegate(shell,'keydown',[
+      /* role=button span: Enter/Space must act (keyboard users restore a
+         cell hidden via the card eye only through this control) */
+      ['.navitem-eye',function(e,sp){
+        if(!isKey(e)) return;
+        e.preventDefault();e.stopPropagation();
+        var nav=sp.closest('.navitem'); if(!nav) return;
+        toggleCellEye(nav.dataset.item);
+      }],
+      ['.sectionhead-txt',function(e,t){
+        if(!isKey(e)) return;
+        e.preventDefault();
+        var sec=t.closest('.section'); if(!sec) return;
+        setSecCollapsed(sec.dataset.sec,!sec.classList.contains('sec-collapsed'));
+      }],
+      ['.navsec-eye',function(e,sp){
+        if(!isKey(e)) return;
+        e.preventDefault();e.stopPropagation();
+        var row=sp.closest('.navsec-row'); if(!row) return;
+        setSecHeadOff(row.dataset.sec,!isHeadOff(row.dataset.sec));
+      }],
+      ['.navsec-hideall',function(e,sp){
+        if(!isKey(e)) return;
+        e.preventDefault();e.stopPropagation();
+        navsecHideAll(sp);
+      }]
+    ]);
+    /* where the notebook can be read by someone else is looked up once,
+       when the pointer first reaches a Copy -- the click itself has to be
+       synchronous for the copy event to fire */
+    if(cst){
+      var warm=function(e){
+        var t=e.target;
+        if(t&&t.closest&&t.closest('.cb-fig .figzoom .fz-copy')) cellGitWeb(cst);
+      };
+      shell.addEventListener('pointerover',warm);
+      shell.addEventListener('focusin',warm);
+    }
+  }
+  /* the per-card buttons; `cards` defaults to every card under the root */
+  function wireCardButtons(shell,stem,cards){
+    /* The button is cheap; no history or image is fetched until it opens. */
+    var source=historySource(shell.dataset.path||'');
+    /* ---- T606: COLLECT -- this cell into a collection. On a notebook's
+       cards and a trace's clones (they file the real notebook's cell);
+       never on a collection's own cards, which are already kept. ---- */
+    var colStem=shell.classList&&shell.classList.contains('coltab')?null
+      :(shell.dataset&&(shell.dataset.src||shell.dataset.nb))||stem;
+    /* T612: Copy -- the figure, for a slide; its link and code for
+       anywhere else. Not on a collection's cards (their refs are
+       already kept copies), as Collect is not. */
+    var cst=shell.classList.contains('coltab')?null
+      :(shell.dataset.src||shell.dataset.nb||stem);
+    (cards||$$('.card',shell)).forEach(function(card){
+      var head=card.querySelector('.cardhead');
+      if(head&&source){
+        var hb=document.createElement('button');hb.type='button';
+        hb.className='cell-history-btn';
+        hb.innerHTML=bic('history')+' Versions';
+        hb.title='Compare this cell across Git commits';
+        head.insertBefore(hb,head.querySelector('.cell-pin')||null);
       }
-      z.addEventListener('click',function(e){e.stopPropagation();});
-      var bi=$('.fz-in',z),bo=$('.fz-out',z),bx=$('.fz-max',z);
-      if(bi) bi.addEventListener('click',function(e){
-        e.stopPropagation();bump(1.25);});
-      if(bo) bo.addEventListener('click',function(e){
-        e.stopPropagation();bump(1/1.25);});
-      if(bx) bx.addEventListener('click',function(e){
-        e.stopPropagation();openFigMax(fig);});
-      /* T612: Copy -- the figure, for a slide; its link and code for
-         anywhere else. Not on a collection's cards (their refs are
-         already kept copies), as Collect is not. */
-      var cst=shell.classList.contains('coltab')?null
-        :(shell.dataset.src||shell.dataset.nb||stem);
-      if(cst&&card.dataset&&card.dataset.anchor&&!$('.fz-copy',z)){
+      if(head&&colStem&&card.dataset.anchor
+         &&!head.querySelector('.cell-collect')){
+        var b=document.createElement('button');b.type='button';
+        b.className='cell-collect';
+        b.innerHTML=bic('collect')+' Collect';
+        b.title='Keep this cell in a collection, with notes of your own '
+          +'beside it';
+        b.setAttribute('aria-haspopup','menu');
+        head.insertBefore(b,head.querySelector('.cell-pin')
+          ||head.querySelector('.cell-eye')||null);
+      }
+      if(!cst||!card.dataset||!card.dataset.anchor) return;
+      $$('.cb-fig .figzoom',card).forEach(function(z){
+        if($('.fz-copy',z)) return;
         var bc=document.createElement('button');
         bc.type='button';bc.className='fz-btn fz-copy';
         bc.innerHTML=bic('copy')+' Copy';
-        bc.title='Copy this figure \u2014 paste it on a slide (Ctrl+V) and '
+        bc.title='Copy this figure — paste it on a slide (Ctrl+V) and '
           +'it arrives as the figure; anywhere else it is where the '
           +'notebook lives and the code that draws it';
-        bc.addEventListener('pointerenter',function(){cellGitWeb(cst);});
-        bc.addEventListener('focus',function(){cellGitWeb(cst);});
-        bc.addEventListener('click',function(e){
-          e.preventDefault();e.stopPropagation();
-          copyCell(shell,cst,card);
-        });
         z.appendChild(bc);
-      }
-    });
-    /* ---- output folded by Output = Collapsed reveals on click. Open-only
-       (unlike a figure): the output is text/tables you may want to select,
-       so a click inside it must not fold it back up ---- */
-    $$('.cb-out',shell).forEach(function(o){
-      o.addEventListener('click',function(){
-        if(o.classList.contains('part-fold')&&!o.classList.contains('part-open'))
-          o.classList.add('part-open');
       });
     });
   }
@@ -6645,10 +7035,16 @@
     var cur=APP.active&&APP.shells[APP.active];
     syncFileBarIdentity(cur);
     if(!dock) return;
-    /* whatever is parked here belongs to some other notebook now */
+    /* whatever is parked here belongs to some other notebook now -- back
+       into the shell it CAME FROM, never merely one with the same stem:
+       after a reload or a close and reopen the stem names the new shell,
+       and the old bar (wired to the old shell's panel) used to be parked
+       inside it, holding the whole previous notebook alive, a chain of
+       them one per reload (session #2) */
     $$('.railfile',dock).forEach(function(b){
       var sh=APP.shells[b.dataset.nb||''];
-      var head=sh&&sh.el&&sh.el.querySelector('.railhead');
+      var head=sh&&sh.el&&b.__jvHome===sh.el
+        &&sh.el.querySelector('.railhead');
       if(head) head.appendChild(b);
       else if(b.parentNode) b.parentNode.removeChild(b);
     });
@@ -6664,6 +7060,7 @@
   function wireFileInfo(shell,stem){
     var bar=$('.railfile',shell),panel=$('.rf-panel',shell);
     if(!bar||!panel) return;
+    bar.__jvHome=shell;   /* dockFileBar returns it only to this shell */
     var info=$('.rf-info',bar),rel=$('.rf-reload',bar);
     var path=shell.dataset.path||'';
     var isUrlPath=/^https?:/i.test(path);
@@ -6911,15 +7308,49 @@
     }
     if(info) info.addEventListener('click',function(e){
       e.stopPropagation();toggle();});
-    /* clicking anywhere else closes it */
+    /* clicking anywhere else closes it. Both listeners are the SHELL's:
+       they go with it (shellTeardown), or every reload left two more on
+       the document, each holding the old notebook */
+    var sig=shellSignal(shell);
     document.addEventListener('click',function(e){
       if(panel.hidden||panel.contains(e.target)) return;
       if(info&&info.contains(e.target)) return;
       closePanel();
-    });
+    },sig);
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&!panel.hidden) closePanel();});
+      if(e.key==='Escape'&&!panel.hidden) closePanel();},sig);
   }
+  /* ---- WHAT A NOTEBOOK'S SHELL HOLDS OUTSIDE ITSELF ------------------
+     A shell that is closed, reloaded or replaced by a version has to let
+     go of everything that reaches it from outside: its docked file bar,
+     its listeners on the document and its observers. Before, each reload
+     of a 29-cell notebook kept the previous DOM alive (+11.6k nodes, +765
+     listeners, 3.5-5.6 MB, ten reloads: 141k nodes -- session #2). */
+  function shellSignal(shell){
+    if(!shell.__jvAc&&typeof AbortController==='function')
+      shell.__jvAc=new AbortController();
+    return shell.__jvAc?{signal:shell.__jvAc.signal}:false;
+  }
+  function shellObserver(shell,ob){
+    (shell.__jvObs=shell.__jvObs||[]).push(ob);
+  }
+  function shellTeardown(el){
+    if(!el) return;
+    var dock=$('#file-dock');
+    if(dock) $$('.railfile',dock).forEach(function(b){
+      if(b.__jvHome===el&&b.parentNode) b.parentNode.removeChild(b);});
+    try{if(el.__jvAc) el.__jvAc.abort();}catch(e){}
+    el.__jvAc=null;
+    (el.__jvObs||[]).forEach(function(o){try{o.disconnect();}catch(e){}});
+    el.__jvObs=[];
+    /* its figures still waiting their turn to be drawn (plotQueue) */
+    plotForget(el);
+    /* MathJax keeps a record of every equation it typeset, a node of
+       each: without this the old notebook stays alive through it
+       (jvMath.forget, which also stops watching it) */
+    jvMath.forget(el);
+  }
+  APP.shellTeardown=shellTeardown;
   /* ---- SLIDES FROM THE NOTEBOOK (T362) --------------------------------
      The user: "auto generate presentations from notebooks but this
      should be just in the notebook viewer now ... From all / From just
@@ -7009,6 +7440,8 @@
   function autoPlan(stem,scope,sid){
     var sh=APP.shells[stem];
     if(!sh||!sh.data) return null;
+    /* a figure is measured as drawn, whether or not its turn came yet */
+    if(sh.el) plotFlush(sh.el);
     var data=sh.data,secs=data.sections||[],items=data.items||[];
     var cardsById=Object.create(null),cardsByAnchor=Object.create(null);
     if(sh.el) $$('.card',sh.el).forEach(function(card){
@@ -7162,24 +7595,57 @@
       }
     });
   })();
-  function initShell(shell){
+  /* a shell's card index (nb-data) and the stem it is filed under; the
+     stem is written back so a shell registered now and wired later
+     (registerLazyShell, then initShell) is filed under the same one */
+  function shellIdent(shell){
     var data={};
     var de=$('.nb-data',shell);
     if(de){try{data=JSON.parse(de.textContent);}catch(e){}}
     var stem=shell.dataset.nb||data.stem||('nb-'+(APP.order.length+1));
-    mdClampScan(shell);
+    if(!shell.dataset.nb) shell.dataset.nb=stem;
+    return {stem:stem,data:data};
+  }
+  /* ---- A NOTEBOOK YOU HAVE NOT LOOKED AT YET IS NOT WIRED YET ----------
+     Every open notebook used to be wired at load -- outline, scroll-spy,
+     every card's buttons and listeners, its filters, its figures drawn --
+     and laid out on screen to do it, stacked one under another until the
+     first activate() hid the rest: each extra open notebook added its
+     whole cost to every launch (load-app #4: -2.5 s of TTI with four).
+     The server now sends every notebook but the first one hidden, and
+     those are only REGISTERED here: in APP.shells and APP.order with
+     their card index, so the tabs, the deck (its frames clone these
+     cards' DOM, which is all there from the server), collections and
+     Create slides know them exactly as before. The wiring happens the
+     first time one is shown (activate -> wakeShell -> initShell), while
+     it is on screen, which is what its layout-reading parts need. */
+  function registerLazyShell(shell){
+    var id=shellIdent(shell),stem=id.stem;
+    APP.shells[stem]={el:shell,data:id.data,path:shell.dataset.path||'',
+      kind:shell.dataset.srckind||'',title:id.data.title||stem,lazy:true};
+    if(APP.order.indexOf(stem)<0) APP.order.push(stem);
+    document.dispatchEvent(new CustomEvent('sem:shell',
+      {detail:{stem:stem,el:shell,data:id.data,replaced:false}}));
+    return stem;
+  }
+  function wakeShell(stem){
+    var sh=APP.shells[stem];
+    if(sh&&sh.lazy&&sh.el) initShell(sh.el);
+  }
+  APP.wakeShell=wakeShell;
+  /* the boot wires ONE notebook, then filters and tabs once for all of
+     them (load-app #9: each initShell re-filtered every open notebook
+     and re-rendered the tabs, so boot grew as the square of the number
+     open) */
+  var BOOTING=false;
+  function initShell(shell){
+    var id=shellIdent(shell),data=id.data,stem=id.stem;
+    mdClampWatch(shell);
     wireFileInfo(shell,stem);
     if(stem===(APP.active||'')) dockFileBar();
 
-    /* ---- reveal on scroll ---- */
+    /* (no reveal-on-scroll: cards are visible from the first paint) */
     var cards=$$('.card',shell);
-    if('IntersectionObserver' in window){
-      var io=new IntersectionObserver(function(es){
-        es.forEach(function(e){if(e.isIntersecting){
-          e.target.classList.add('in');io.unobserve(e.target);}});
-      },{rootMargin:'0px 0px -8% 0px',threshold:0.04});
-      cards.forEach(function(c){io.observe(c);});
-    } else cards.forEach(function(c){c.classList.add('in');});
 
     /* ---- scroll-spy: active section + item + graph node ---- */
     var navSecs={},navItems={},graphNodes={};
@@ -7226,6 +7692,7 @@
       },{rootMargin:'-12% 0px -55% 0px',threshold:[0,0.25,0.6,1]});
       cards.forEach(function(c){spy.observe(c);});
     }
+    if(spy) shellObserver(shell,spy);   /* disconnected with the shell */
 
     /* ---- nav links: resolve inside THIS shell (ids repeat across tabs) */
     var rail=$('.rail',shell);
@@ -7233,8 +7700,12 @@
       if(rail) rail.classList.remove('open');
       if(scrim) scrim.classList.remove('show');
     }
-    $$('.navsec,.navitem',shell).forEach(function(a){
+    $$('.navsec,.navitem',shell).forEach(navLink);
+    function navLink(a){
       a.addEventListener('click',function(e){
+        /* the row's eye is inside the link: it answers for itself
+           (wireCardBehaviors) and must not also jump to the cell */
+        if(e.target.closest&&e.target.closest('.navitem-eye')) return;
         e.preventDefault();
         if(shell.classList.contains('raw')||shell.classList.contains('tree')){
           shell.classList.remove('raw');shell.classList.remove('tree');
@@ -7254,7 +7725,28 @@
         if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
         if(window.innerWidth<=860) closeRail();
       });
-    });
+    }
+    /* a card put into this shell later (a note added in place, see
+       noteInPlace) joins the outline's links and the scroll-spy exactly
+       as the server-rendered ones did here */
+    shell.__jvAddCard=function(card,nav){
+      if(nav){navItems[nav.dataset.item]=nav;navLink(nav);}
+      if(spy) spy.observe(card);
+    };
+    /* ...and cards renamed in it (noteInPlace: the notes after a new one
+       take a fresh load's numbers) keep their outline rows lit */
+    shell.__jvRenameItems=function(map){
+      var keep={},vis={},k;
+      for(k in map){keep[k]=navItems[k];delete navItems[k];}
+      for(k in map) if(keep[k]) navItems[map[k]]=keep[k];
+      if(!visible) return;
+      for(k in visible){vis[k]=visible[k];delete visible[k];}
+      for(k in vis){
+        var id=k.indexOf('card-')===0?k.slice(5):null;
+        visible[id!==null&&Object.prototype.hasOwnProperty.call(map,id)
+          ?'card-'+map[id]:k]=vis[k];
+      }
+    };
 
     /* ---- graph node / dep chip -> scroll to card ---- */
     function gotoItem(itemId){
@@ -7437,17 +7929,26 @@
     activateOutputs(shell);   /* run plotly/bokeh/vega + draw plotly specs */
 
     /* ---- register ---- */
-    var replaced=!!APP.shells[stem];
-    APP.shells[stem]={el:shell,data:data,path:shell.dataset.path||'',
+    /* WAKING a registered shell (this same element, first shown) is not a
+       new notebook and not a reload: its entry stays the one everything
+       already holds, and nothing is announced -- the deck reads a
+       sem:shell as "these cards changed" and would rebuild its frames
+       and file the figures they show as the previous ones */
+    var prev=APP.shells[stem];
+    var woke=!!(prev&&prev.el===shell);
+    var replaced=!!prev&&!woke;
+    if(woke) delete prev.lazy;
+    else APP.shells[stem]={el:shell,data:data,path:shell.dataset.path||'',
       kind:shell.dataset.srckind||'',  /* ''=notebook, the default (T124) */
       title:data.title||stem};
     if(APP.order.indexOf(stem)<0) APP.order.push(stem);
-    applyFilters();
+    if(!BOOTING) applyFilters();
     applyCodeState(shell);   /* fold/hide code to match the current state */
     jvMath.watch(shell);     /* its maths, typeset as it is read */
-    document.dispatchEvent(new CustomEvent('sem:shell',
+    if(!woke) document.dispatchEvent(new CustomEvent('sem:shell',
       {detail:{stem:stem,el:shell,data:data,replaced:replaced}}));
-    renderTabs();
+    /* activate() renders the tabs right after a wake, the boot once */
+    if(!BOOTING&&!woke) renderTabs();
     return stem;
   }
 
@@ -8066,7 +8567,7 @@
     });
     if(old&&old.el.parentNode) host.replaceChild(shell,old.el);
     else host.appendChild(shell);
-    if(old) jvMath.forget(old.el);
+    if(old) shellTeardown(old.el);
     initShell(shell);
     invalidateSids();   /* this notebook's sections were just replaced */
     /* a reload keeps the live view; a fresh open restores the layout you
@@ -8134,10 +8635,6 @@
         if(b.parentNode) b.parentNode.removeChild(b);});
     $$('.card.cell-off',section).forEach(function(c){
       c.classList.remove('cell-off');});
-    /* cards default to opacity:0 and are revealed by initShell's scroll
-       observer; the trace tab is a deliberate, fully-shown subset and has no
-       such observer, so force every clone visible up front */
-    $$('.card',section).forEach(function(c){c.classList.add('in');});
     var shell=document.createElement('div');
     shell.className='shell nbshell tracetab';
     shell.dataset.nb=key;
@@ -8499,7 +8996,7 @@
       if(APP.shells[k]&&APP.shells[k].source===stem) closeNotebook(k);
     });
     if(sh.el.parentNode) sh.el.parentNode.removeChild(sh.el);
-    jvMath.forget(sh.el);
+    shellTeardown(sh.el);
     delete APP.shells[stem];
     /* drop this notebook's filter state — otherwise it lingers forever and
        a later notebook with the same stem reopens pre-filtered */
@@ -9489,8 +9986,15 @@
   if(window.__jvNewBuild&&window.__jvUpdateBar) window.__jvUpdateBar();
   /* Ctrl+P prints what is on the page, maths typeset (jvMath) */
   window.addEventListener('beforeprint',jvMath.beforePrint);
-  $$('.nbshell').forEach(function(sh){initShell(sh);});
-  if(APP.order.length) activate(APP.order[0]);
+  /* the server sends every notebook but the first one hidden: those are
+     registered now and wired when first shown (registerLazyShell) */
+  BOOTING=true;
+  $$('.nbshell').forEach(function(sh){
+    if(sh.hidden) registerLazyShell(sh); else initShell(sh);
+  });
+  BOOTING=false;
+  if(APP.order.length){applyFilters();activate(APP.order[0]);}
   else renderTabs();
   renderRawBtn();
+  plotWarmLater();   /* a notebook not shown yet has Plotly figures */
 })();

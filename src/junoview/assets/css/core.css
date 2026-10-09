@@ -751,9 +751,13 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   margin:var(--vw-gap,14px) 0;
   scroll-margin-top:78px;position:relative;
   box-shadow:0 1px 2px color-mix(in srgb,var(--shadow) 16%,transparent);
-  opacity:0;transform:translateY(10px);
-  transition:opacity .5s ease,transform .5s ease,box-shadow .2s,border-color .2s;}
-.card.in{opacity:1;transform:none;}
+  /* VISIBLE FROM THE FIRST PAINT. Cards used to start at opacity:0 and
+     fade in when a scroll observer marked them, which could only happen
+     once every script on the page had run: the headings painted and the
+     cards stayed blank for seconds behind them (3.5 s on a four-notebook
+     project at 4x), and every card scrolled into view for the first time
+     paid an animation (2026-10-09, speed: load-app #1, reader #5). */
+  transition:box-shadow .2s,border-color .2s;}
 .card:hover{box-shadow:0 6px 22px color-mix(in srgb,var(--shadow) 34%,transparent);}
 .card::before{content:"";position:absolute;left:0;top:16px;bottom:16px;
   width:3px;border-radius:3px;background:var(--line);
@@ -1077,6 +1081,15 @@ body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
 
 /* huge markdown notes: clamped with a Show more toggle */
 .cardbody.mdclamp{max-height:440px;overflow:hidden;position:relative;}
+/* ...decided when the note first comes near the screen (app.js
+   mdClampWatch), not by measuring every note at load -- each measure
+   forced the layout of a card content-visibility was skipping. Until
+   then a notebook's note is held at the clamp's height, so a long one
+   never paints at full length and then jumps: the fade and Show more
+   are all that arrive. `clip`, not hidden: no new formatting context,
+   so a short note's margins lay out exactly as they will after. */
+.nbshell:not(.tracetab) .content .card[data-note="1"]>.cardbody:not([data-mdclamp]){
+  max-height:440px;overflow:clip;}
 .cardbody.mdclamp::after{content:"";position:absolute;left:0;right:0;
   bottom:0;height:64px;pointer-events:none;
   background:linear-gradient(#fbfcfd00,var(--paper));}
@@ -1276,7 +1289,6 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
 
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;scroll-behavior:auto!important;}
-  .card{opacity:1;transform:none;}
 }
 
 

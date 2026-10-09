@@ -2422,8 +2422,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix: a clip asked for before the lean boot's copies arrive waits for them.
 # Speed (MathJax): data-math marks, the pinned loader typeset as read (jvMath),
 # kept copies without MathJax's menu counter, hidden maths measured on a stand-in.
-EXPECTED_MD5 = "f4a94eab5b33ac57e77780b367634d45"
-EXPECTED_BYTES = 5388824
+# Speed (reader boot): cards visible without script, first layout sent by the
+# server, hidden notebooks wired on first view, delegated card listeners.
+EXPECTED_MD5 = "d643b9c7a643ff6a6581b7079f4b05b9"
+EXPECTED_BYTES = 5414357
 
 
 def _render_example() -> str:
@@ -2506,6 +2508,9 @@ def test_page_template_placeholders_match_what_render_page_supplies():
         "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
         "help_html", "logo", "favicon", "head_extra", "icons_js",
         "saved_file_js",    # T597: what a saved file runs, as inert text
+        # the first layout, painted as app.js will arrange it (page.py
+        # _first_layout; 2026-10-09 speed, load-static #8)
+        "html_attrs", "body_attrs", "bar_hidden",
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

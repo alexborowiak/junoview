@@ -113,8 +113,8 @@ def render_page(docs: list[Document], mode: str = "static",
     """
     cfg = app_cfg or {}
     paths = cfg.get("paths", {})
-    shells = "".join(render_shell(d, path=paths.get(d.source_name, ""))
-                     for d in docs)
+    shells = join_shells([render_shell(d, path=paths.get(d.source_name, ""))
+                          for d in docs])
     pieces = page_pieces(
         mode=mode, title=page_title([d.title for d in docs]),
         shells=shells, app_data=app_data_json(mode, cfg),
@@ -160,6 +160,39 @@ def app_data_json(mode: str, cfg: dict) -> str:
 Piece = str | bytes
 
 
+def join_shells(shells: list[str] | list[bytes]) -> Piece:
+    """The notebooks' shells as the page's ``{shells}``: every one but the
+    first sent HIDDEN.
+
+    app.js only registers a hidden shell at boot and wires it the first
+    time it is shown (registerLazyShell / wakeShell), so an extra open
+    notebook no longer adds its layout and its wiring to every launch
+    (2026-10-09, speed: load-app #4). The first is the one app.js shows.
+
+    The attribute is added HERE, where the page is put together, and not
+    by render_shell: a shell is the same rendering wherever it sits (the
+    app keeps it between page builds -- server/shells.py -- and serves it
+    on its own to Reload and Open), and only the page knows which comes
+    first. Bytes stay bytes: the app joins encoded shells it keeps, and a
+    memoryview slice adds the attribute without copying a shell twice.
+    """
+    if not shells:
+        return ""
+    text = [sh for sh in shells if isinstance(sh, str)]
+    data = [sh for sh in shells if isinstance(sh, bytes)]
+    if text and data:
+        raise TypeError("shells are all text or all bytes")
+    if not all(sh.startswith("<div ") for sh in text) \
+            or not all(sh.startswith(b"<div ") for sh in data):
+        raise ValueError("a shell starts with its own <div>")
+    if data:
+        parts: list[bytes | memoryview] = [data[0]]
+        for b in data[1:]:
+            parts += [b"<div hidden ", memoryview(b)[5:]]
+        return b"".join(parts)
+    return "".join([text[0]] + ["<div hidden " + t[5:] for t in text[1:]])
+
+
 def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
                 asset_base: str | None = None,
                 math: bool | None = None) -> list[Piece]:
@@ -182,6 +215,8 @@ def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
     fields: dict[str, Piece] = {
         "title": html.escape(title),
         "head_extra": _head_extra(mode),
+        # an empty `shells` is a page with no notebook open
+        **_first_layout(bool(shells)),
         "shells": shells,
         "app_data": app_data,
         "mathjax": mathjax_head(math),
@@ -219,6 +254,32 @@ def _encoded(text: str) -> bytes:
     # objects on every page build, so after the first build these are
     # identity hits
     return text.encode("utf-8")
+
+
+#: --chrome-h as app.js measures it for the default first screen -- the
+#: open files as tabs on top, so the title row with the tabs over the
+#: ribbon: 124px at 1366x657 (126 once the ribbon compacts, at 1280 and
+#: below). Only a first guess: measureChrome writes the real value.
+FIRST_CHROME_H = 124
+
+
+def _first_layout(has_docs: bool) -> dict[str, str]:
+    """Paint the page first the way app.js will arrange it.
+
+    The body used to arrive with no state classes, so the first layout
+    was the no-script one -- the side panel 176px wide, no tab row, the
+    header 80px -- and booting moved everything: the content 176px left
+    and 44px down (layout shift 0.196, load-static #8). With a notebook
+    open, app.js's default is the open files as tabs on top (filesAt()
+    'top', refreshOpenTabsRow), so that is what is sent. A saved
+    preference for the side list still changes it once, as before; with
+    nothing open the welcome screen decides, as before.
+    """
+    if not has_docs:
+        return {"html_attrs": "", "body_attrs": "", "bar_hidden": " hidden"}
+    return {"html_attrs": f' style="--chrome-h:{FIRST_CHROME_H}px"',
+            "body_attrs": ' class="files-top tabs-row-on"',
+            "bar_hidden": ""}
 
 
 def _head_extra(mode: str) -> str:
