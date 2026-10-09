@@ -67,6 +67,17 @@
   var embLoaded=!embLazy;      /* the project's copies are in EMBED */
   var embBootDone=false;       /* set by THE BOOT SEQUENCE */
   var embAsync=null,embFailedAt=0,embSyncN=0;
+  var embMissed=false;         /* a reader went without during the boot */
+  /* the clips on the slide on screen that have their bytes to play */
+  function embClipsShown(){
+    var s=(typeof pres!=='undefined'&&pres&&pres.slides)?pres.slides[cur]:null;
+    if(!s||typeof mediaStore!=='function') return 0;
+    var n=0,st=mediaStore();
+    (s.annots||[]).forEach(function(a){
+      if(a&&a.k==='video'&&a.vkey&&st[a.vkey]&&st[a.vkey].src) n++;});
+    if(s.narr&&s.narr.vkey&&st[s.narr.vkey]&&st[s.narr.vkey].src) n++;
+    return n;
+  }
   var embWeak={};              /* keys absorbed before the project's */
   /* what the project file is KNOWN to hold, per deck: {ref: copy} and
      {vkey: 1}. Read off /api/emb, kept current by every embedded save,
@@ -117,12 +128,15 @@
     if(embLoaded) return Promise.resolve(true);
     if(embAsync) return embAsync;
     embAsync=APP.api('/api/emb').then(function(j){
-      var was=embLoaded;
+      var was=embLoaded,clips=embClipsShown();
       embApply(j);
       /* whatever was drawn before they came (only the boot itself can
-         draw without asking) is drawn again from the kept copies */
-      if(!was&&typeof deckEl!=='undefined'&&deckEl&&!deckEl.hidden
-         &&typeof refresh==='function') refresh();
+         draw a figure without asking; a clip's player never asks) is
+         drawn again from the kept copies -- and ONLY that: a redraw
+         throws the caret out of a box being typed in, and the words
+         typed after it went nowhere. A box being typed in redraws
+         itself on its blur. */
+      if(!was&&(embMissed||embClipsShown()>clips)) embRedraw();
       return true;
     }).catch(function(){
       if(embLoaded) return true;
@@ -131,12 +145,25 @@
     }).then(function(ok){embAsync=null;return ok;});
     return embAsync;
   }
+  function embRedraw(){
+    if(typeof deckEl==='undefined'||!deckEl||deckEl.hidden
+       ||typeof refresh!=='function') return;
+    var ae=document.activeElement;
+    if(ae&&ae.isContentEditable&&deckEl.contains(ae)){
+      ae.addEventListener('blur',function(){setTimeout(embRedraw,0);},
+        {once:true});
+      return;
+    }
+    refresh();
+  }
   /* the synchronous door, for a reader that cannot wait. Never during
      the boot, and not again within five seconds of a failure. */
   function embEnsure(){
     if(embLoaded) return true;
-    if(!embBootDone) return false;
-    if(embFailedAt&&Date.now()-embFailedAt<5000) return false;
+    if(!embBootDone){embMissed=true;return false;}
+    /* a reader refused here draws without its copies, so the idle
+       arrival has to redraw (embFetch) */
+    if(embFailedAt&&Date.now()-embFailedAt<5000){embMissed=true;return false;}
     try{
       var x=new XMLHttpRequest();
       x.open('GET',embUrl(),false);
@@ -146,7 +173,7 @@
       embApply(JSON.parse(x.responseText));
       return true;
     }catch(e){
-      embFailedAt=Date.now();embSettle(false);
+      embFailedAt=Date.now();embSettle(false);embMissed=true;
       return false;
     }
   }
@@ -1925,8 +1952,11 @@
     if(st===histSnap) return;         /* nothing actually changed */
     undoStack.push(histSnap);
     if(undoStack.length>50){undoStack.shift();histMarksShift();}
-    if(undoStack.length>=50) histBigPrune();   /* the stack moved on */
     redoStack.length=0;histSnap=st;updateUndoBtns();
+    /* the stack moved on -- pruned only now, when the snapshot just
+       taken is histSnap: a picture that first appears in it is named
+       nowhere else yet, and pruning before would orphan its name */
+    if(undoStack.length>=50) histBigPrune();
     /* T499: a restore that had been undone is now past reaching */
     histHeadMarks=histHeadMarks.filter(function(m){
       return m.depth<undoStack.length;});

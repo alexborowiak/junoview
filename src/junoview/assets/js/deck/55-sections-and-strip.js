@@ -1332,6 +1332,9 @@
     /* entering Present must not leave a fresher deck in memory than in
        the draft — the debounced write lands before the talk starts */
     if(m==='view') flushDraftWrite();
+    /* ...and the pending autosave reaches its home now, before mode turns
+       'view' and holds it for the end of the talk (60-saving) */
+    if(startingTalk) saveBeforeShow();
     /* a rehearsal is exactly "present mode, from when it starts to when
        it ends" -- so it begins and ends where the mode does (T29) */
     if(startingTalk){

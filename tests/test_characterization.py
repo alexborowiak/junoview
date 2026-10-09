@@ -2416,8 +2416,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # counter and the interned undo snapshots, so the inlined bytes moved.
 # Speed (server): the deck script reads linked stylesheets (pageCssText) for its
 # HTML export and presenter window, and Reload sends the shell's version.
-EXPECTED_MD5 = "91bd484a69a0294381b3579fc5ffa825"
-EXPECTED_BYTES = 5356390
+# Fix (review of the save package): undo names pruned after the new snapshot,
+# the idle copies redraw only what went without, a rename waits for its
+# copies, and the edit before Present is saved as the show starts.
+EXPECTED_MD5 = "406d2d9e062d02e642391d6ec955edee"
+EXPECTED_BYTES = 5359542
 
 
 def _render_example() -> str:

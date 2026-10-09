@@ -1505,6 +1505,26 @@
         else if(h.auto&&!autoTimer) autoSaveNow();
       },{timeout:3000});
   }
+  /* ...but the edit made just before Present is written as the show
+     STARTS, not held for its end: a talk ended by closing the tab or the
+     lid never reaches releaseSaves, and that edit then lived nowhere but
+     this browser's draft. Only the plain autosave -- the consolidation,
+     the heavy one, still waits for the end of the talk. It runs once the
+     first slide has painted, so Present is not slower for it (a frame,
+     or a quarter second where frames are not drawn: a hidden tab). */
+  function saveBeforeShow(){
+    if(!autoTimer||saveTarget==='browser') return;
+    cancelAutosave();
+    var done=false;
+    function go(){
+      if(done) return; done=true;
+      if(saveTarget==='file') saveToFile(true);
+      else if(saveTarget==='project'&&APP.mode==='app') saveToProject(true);
+      renderAutoTick();
+    }
+    requestAnimationFrame(function(){setTimeout(go,0);});
+    setTimeout(go,250);
+  }
   function autoSaveNow(){
     autoTimer=null;autoDue=0;
     clearInterval(autoTick);autoTick=null;
@@ -4416,10 +4436,22 @@
      that kept the old name (2026-08-20 diagnosis).
      A rename moves the WORK, not just the label: the browser draft, the
      project entry, and the folder the presentation was filed in. */
+  /* the project file keeps a deck's figure and clip copies under its
+     NAME (server state._keep_embedded), so a rename's save has to carry
+     them itself -- and cannot while they have not been fetched (the lean
+     boot, 10-decks.js embEnsure). Refused rather than written without
+     them: the new name would hold no copy at all. */
+  function renameNeedsCopies(){
+    if(embEnsure()) return false;
+    toast('Not renamed — the saved figures have not loaded yet. Try '
+      +'again in a moment.',7000);
+    return true;
+  }
   function renamePresentation(nm){
     nm=String(nm||'').trim();
     var old=pres&&pres.name;
     if(!nm||!old||nm===old) return false;
+    if(renameNeedsCopies()) return false;
     var taken=allSaved().map(function(p){return p.name;})
       .concat(draftNames());
     if(taken.indexOf(nm)>=0){
@@ -4477,6 +4509,7 @@
     old=String(old||'');nm=String(nm||'').trim();
     if(!old||!nm||nm===old) return false;
     if(pres&&pres.name===old) return renamePresentation(nm);
+    if(renameNeedsCopies()) return false;
     var taken=allSaved().map(function(p){return p.name;})
       .concat(draftNames());
     if(taken.indexOf(nm)>=0){
