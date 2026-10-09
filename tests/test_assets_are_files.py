@@ -106,6 +106,7 @@ def test_the_page_is_what_one_icons_pass_over_the_whole_page_gave(doc):
     """The old assembly, spelled out: format the template, then icons()
     over everything. The compiled template must give the same text."""
     from junoview.branding import FAVICON, KOFI_URL, LOGO_SVG
+    from junoview.build_info import build_badge
     from junoview.render.page import app_data_json, render_shell
 
     for mode in ("static", "app", "web"):
@@ -122,7 +123,8 @@ def test_the_page_is_what_one_icons_pass_over_the_whole_page_gave(doc):
             deck_css=assets.deck_css(), deck_js=assets.deck_js(),
             pptx_js=assets.pptx_js(), saved_file_js=assets.saved_file_js(),
             kofi=KOFI_URL, help_html=assets.help_html(), logo=LOGO_SVG,
-            favicon=FAVICON))
+            favicon=FAVICON,
+            build=build_badge() if mode in ("app", "web") else ""))
         assert page == old, mode
 
 

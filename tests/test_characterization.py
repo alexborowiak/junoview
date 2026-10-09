@@ -2420,8 +2420,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # slide list, Ribbon layouts became a row of File, the stage's foot is 18px.
 # T620: the scrolling page's Between slides choice (its script, its CSS and a
 # help entry).
-EXPECTED_MD5 = "dce8af63ec41b2584b818df8c1f211e8"
-EXPECTED_BYTES = 5364731
+# T621: the template's comment beside the wordmark and the .welcome-ver rule;
+# the build field itself is empty in a rendered notebook, so git never reaches
+# these bytes.
+EXPECTED_MD5 = "89abbd3cbe4f1614c85486ff34790329"
+EXPECTED_BYTES = 5365581
 
 
 def _render_example() -> str:
@@ -2504,6 +2507,7 @@ def test_page_template_placeholders_match_what_render_page_supplies():
         "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
         "help_html", "logo", "favicon", "head_extra", "icons_js",
         "saved_file_js",    # T597: what a saved file runs, as inert text
+        "build",            # T621: the version on Home (app and web only)
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

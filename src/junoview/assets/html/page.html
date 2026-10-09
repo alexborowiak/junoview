@@ -625,7 +625,12 @@
            them out as a lockup rather than a column. -->
       <div class="welcome-id">
         <div class="welcome-hero">{logo}</div>
-        <div class="welcome-wordmark">Junoview</div>
+        <!-- T621: the build field is the version and build number, with the date
+             the app last changed as its tooltip (2026-10-09, user: "be good
+             to be able to see a version number on the home page, maybe and
+             then on hover a last updated so I can keep track of this").
+             Empty in a rendered notebook; see build_info.py. -->
+        <div class="welcome-wordmark">Junoview{build}</div>
         <p class="welcome-tag">Build a presentation, or open a notebook and
           pull the figures straight out of your analysis.</p>
       </div>

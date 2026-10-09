@@ -878,6 +878,13 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-wordmark{font-family:var(--mono);font-size:clamp(30px,4.4vw,44px);
   font-weight:600;letter-spacing:.06em;color:var(--cyan-deep);
   margin:0;line-height:1.05;}
+/* T621: which build this is, beside the name -- a quiet pill in the
+   tagline's sans, with the date the app last changed as its tooltip.
+   Only the app and the web build carry one (build_info.py). */
+.welcome-ver{display:inline-block;vertical-align:middle;margin-left:14px;
+  padding:2px 9px;border:1px solid var(--line);border-radius:999px;
+  font:500 12px/1.5 var(--sans);letter-spacing:0;color:var(--ink-3);
+  white-space:nowrap;cursor:help;position:relative;top:-3px;}
 @media (max-width:640px){
   .welcome-id{grid-template-columns:1fr;row-gap:6px;text-align:center;
     justify-items:center;}

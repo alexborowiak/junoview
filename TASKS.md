@@ -11809,4 +11809,23 @@ work was running on `main` at the time.
   width, on white and on dark slides; Spaced brings back the gap and the
   shadow; Spaced survived a close and reopen. Tests in
   tests/test_scroll_show_lines.py.
-- [ ] **T621 — The version on Home.**
+- [x] **T621 — The version on Home.** "I think there have been a lot of
+  updates, but I don't think I am getting them ... be good to be able to
+  see a version number on the home page, maybe and then on hover a last
+  updated so I can keep track of this."
+  *Done 2026-10-09.* Beside the wordmark, a quiet pill: "v0.2.0 · build
+  879"; over it, "Last updated 9 Oct 2026 at 12:17 (commit 70c3964)", and
+  ", with changes not yet committed" when the app is running a working
+  copy. The package version alone never moves, so build_info.py reads
+  the PACKAGE's newest commit (git log -1 -- src/junoview) for the hash
+  and date, and counts the history up to it for the build number --
+  which only goes up, and does not move for a docs/, test or TASKS.md
+  commit, so a web build is the same bytes until the app changes (two
+  builds compared equal). Counting only the package's own commits
+  (rev-list --count HEAD -- .) was the first try and took 13 seconds on
+  this OneDrive checkout; this takes a tenth of one, once per process.
+  No git -- an installed wheel, Pyodide -- is the version alone, and the
+  tooltip says why. Only the app server and the web build carry it: a
+  rendered notebook is a file someone keeps, its bytes must not depend on
+  git, and the template's field is empty there. Driven at 1366x657
+  against the app server. Tests in tests/test_the_version_on_home.py.
