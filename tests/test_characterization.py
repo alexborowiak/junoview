@@ -2419,8 +2419,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix (review of the save package): undo names pruned after the new snapshot,
 # the idle copies redraw only what went without, a rename waits for its
 # copies, and the edit before Present is saved as the show starts.
-EXPECTED_MD5 = "406d2d9e062d02e642391d6ec955edee"
-EXPECTED_BYTES = 5359542
+# Fix: a clip asked for before the lean boot's copies arrive waits for them.
+EXPECTED_MD5 = "d73449b9717350e9cb5c68499aa7d334"
+EXPECTED_BYTES = 5359935
 
 
 def _render_example() -> str:
