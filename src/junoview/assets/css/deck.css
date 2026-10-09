@@ -6252,6 +6252,41 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .deck-scroll .scroll-root{position:static;left:auto;top:auto;width:auto;
   z-index:auto;}
 .deck-scroll .print-page{margin:0 auto 24px;box-shadow:0 8px 40px #0008;}
+/* T620: between the slides. Spaced is T389's cards; the other three run
+   the pages edge to edge, as one long page, and differ in the line at
+   each join. The line is a zero-height element between two pages with
+   its stroke drawn across the join, above both (z-index), in a
+   see-through grey: lighter than a dark slide, darker than a white one,
+   so "faint" is faint on either. */
+.deck-scroll:not([data-sep="gap"]) .print-page{margin:0 auto;box-shadow:none;}
+.deck-scroll .scroll-sep{display:none;position:relative;z-index:1;height:0;
+  margin:0 auto;}
+.deck-scroll[data-sep="faint"] .scroll-sep,
+.deck-scroll[data-sep="strong"] .scroll-sep{display:block;}
+.deck-scroll .scroll-sep::after{content:"";position:absolute;left:0;right:0;}
+.deck-scroll[data-sep="faint"] .scroll-sep::after{top:0;height:1px;
+  background:#8a939c80;}
+.deck-scroll[data-sep="strong"] .scroll-sep::after{top:-1px;height:2px;
+  background:#7a838cf2;}
+/* the choice, in the bar: a label and four worded buttons, each with a
+   small picture of its join */
+.deck-scroll-bar{flex-wrap:wrap;row-gap:6px;}
+.deck-scroll-sep{display:inline-flex;align-items:center;gap:3px;flex:none;}
+.deck-scroll-seplab{font:11px var(--sans);color:var(--chrome-ink-2);
+  margin-right:4px;white-space:nowrap;}
+.deck-scroll-sepb{display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;padding:3px 9px;white-space:nowrap;}
+.deck-scroll-sepb[aria-pressed="true"]{border-color:var(--cyan);
+  color:var(--chrome-ink);background:color-mix(in srgb,var(--cyan) 18%,transparent);}
+.deck-scroll-sw{width:12px;height:14px;flex:none;border-radius:2px;
+  background:#d6dce1;}
+.deck-scroll-sepb[data-sep="faint"] .deck-scroll-sw{
+  background:linear-gradient(#d6dce1 0 6px,#8a939c 6px 7px,#d6dce1 7px);}
+.deck-scroll-sepb[data-sep="strong"] .deck-scroll-sw{
+  background:linear-gradient(#d6dce1 0 6px,#4d555c 6px 8px,#d6dce1 8px);}
+.deck-scroll-sepb[data-sep="gap"] .deck-scroll-sw{
+  background:linear-gradient(#d6dce1 0 5px,transparent 5px 9px,#d6dce1 9px);}
+@media (max-width:760px){.deck-scroll-seplab{display:none;}}
 /* belt and braces: a deferred re-render (text fitting runs a tick
    later) can put the editor's ring back on a page after buildPrintRoot
    has stripped it, so no page ever draws one */

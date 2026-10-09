@@ -11781,5 +11781,32 @@ work was running on `main` at the time.
   showing (no rung needed at 1280), the slide is 394px tall at 1280x600
   where the old foot left it 362px, File > Ribbon layouts... closes File
   and opens the gallery, − + and the readout zoom and fit.
-- [ ] **T620 — Lines between the slides of the scrolling page.**
+- [x] **T620 — Lines between the slides of the scrolling page.** "I
+  think I figured out what I meant by the infinite scroll, we have some
+  other ideas and I don't want them removed, but this is just a simple
+  idea that can fit into the presentation mode ... it would be cool if
+  there was an infinite scroll view. Essentially just you can scroll
+  between all of the different slides and they are next to each other
+  instead of having to click. Then there is just a small feint grey line
+  or something that marks between slides (would be cool if this could be
+  ticked on or off as well, and be feint or strong actually)."
+  *Done 2026-10-09.* The view itself is T389's scrolling page
+  (Present ▾ > Play as a scrolling page, Present tab > Scrolling page),
+  which showed the slides as cards 24px apart with a shadow each; T613-
+  T617, the collection ideas, are untouched. Its bar now has **Between
+  slides**: Faint line (the default), Strong line, No line, and Spaced
+  (T389's cards). The first three run the pages edge to edge. The line is
+  a zero-height element between two pages, outside their zoom, so it is
+  a real 1px (faint) or 2px (strong) at every window width, as wide as
+  the page is drawn, and its stroke is a see-through grey drawn across
+  the join above both pages -- light grey on a white slide, dark grey on
+  a dark one, so "faint" stays faint on either. The choice is this
+  browser's (lsSet, quiet), never the deck's; changing it keeps the page
+  you were reading in view. Each choice wears a small picture of its
+  join. Command search finds the view by "infinite scroll" and
+  "continuous"; the help has an entry for it. Driven headless at
+  1280x600 on five slides: four lines on four joins, each the page's
+  width, on white and on dark slides; Spaced brings back the gap and the
+  shadow; Spaced survived a close and reopen. Tests in
+  tests/test_scroll_show_lines.py.
 - [ ] **T621 — The version on Home.**

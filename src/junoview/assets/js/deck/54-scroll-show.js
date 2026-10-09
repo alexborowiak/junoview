@@ -14,6 +14,53 @@
      property of it. Esc closes it, the arrow keys step a page. */
   var scrollShowEl=null,scrollShowIo=null,scrollShowKey=null;
   var SCROLL_STAGGER=0.18;
+  /* ---- T620: WHAT SITS BETWEEN THE SLIDES ------------------------------
+     (2026-10-09, user: "it would be cool if there was an infinite scroll
+     view. Essentially just you can scroll between all of the different
+     slides and they are next to each other instead of having to click.
+     Then there is just a small feint grey line or something that marks
+     between slides (would be cool if this could be ticked on or off as
+     well, and be feint or strong actually)"). T389's pages were cards a
+     gap apart with a shadow under each. Now they run edge to edge with a
+     faint line between them, a strong one or none, and the spaced cards
+     are still one of the choices. The line is its own element between
+     two pages, outside their zoom, so it is a real 1px (or 2px) at every
+     window width; it is drawn ACROSS the join in a see-through grey, so
+     it reads as a quiet line on white slides and on dark ones alike.
+     A way of looking, like the scrolling page itself: remembered in this
+     browser, never stored with the deck. */
+  var SCROLL_SEP_KEY='junoview:deck:scrollsep';
+  var SCROLL_SEPS=[['faint','Faint line'],['strong','Strong line'],
+    ['none','No line'],['gap','Spaced']];
+  function scrollSepGet(){
+    var v=lsGet(SCROLL_SEP_KEY)||'';
+    for(var i=0;i<SCROLL_SEPS.length;i++)
+      if(SCROLL_SEPS[i][0]===v) return v;
+    return 'faint';
+  }
+  function scrollSepShow(v){
+    if(!scrollShowEl) return;
+    scrollShowEl.setAttribute('data-sep',v);
+    $$('.deck-scroll-sepb',scrollShowEl).forEach(function(b){
+      b.setAttribute('aria-pressed',b.dataset.sep===v?'true':'false');});
+  }
+  function scrollSepSet(v){
+    /* where you are stays where you are: the pages above you grow or
+       lose their gaps, so hold the page in view and put it back */
+    var body=scrollShowEl&&scrollShowEl.querySelector('.deck-scroll-body');
+    var pages=scrollShowPages(),at=null,off=0;
+    if(body){
+      var top=body.scrollTop;
+      pages.forEach(function(p){
+        if(scrollShowPageTop(body,p)<=top+1) at=p;});
+      if(at) off=top-scrollShowPageTop(body,at);
+    }
+    lsSet(SCROLL_SEP_KEY,v,true);
+    scrollSepShow(v);
+    scrollShowFit();
+    if(body&&at) body.scrollTop=scrollShowPageTop(body,at)+off;
+    scrollShowCount();
+  }
   function scrollShowPages(){
     return scrollShowEl?$$('.print-page',scrollShowEl):[];
   }
@@ -23,7 +70,12 @@
     var avail=(body?body.clientWidth:innerWidth)-48;
     scrollShowPages().forEach(function(p){
       var w=+p.dataset.pw||p.offsetWidth||1280;
-      p.style.zoom=Math.max(0.1,Math.min(1,avail/w)).toFixed(4);
+      var z=Math.max(0.1,Math.min(1,avail/w));
+      p.style.zoom=z.toFixed(4);
+      /* T620: the line above a page is as wide as the page is drawn */
+      var sep=p.previousElementSibling;
+      if(sep&&sep.classList.contains('scroll-sep'))
+        sep.style.width=Math.round(w*z)+'px';
     });
   }
   function scrollShowArm(page,s){
@@ -135,16 +187,37 @@
     var x=document.createElement('button');x.className='dbtn';
     x.innerHTML=bic('exit')+' Close (Esc)';
     x.addEventListener('click',function(e){e.stopPropagation();closeScrollShow();});
-    bar.appendChild(t);bar.appendChild(n);bar.appendChild(x);
+    /* T620: between the slides -- four worded choices, one pressed */
+    var sg=document.createElement('span');sg.className='deck-scroll-sep';
+    sg.setAttribute('role','group');sg.setAttribute('aria-label','Between slides');
+    var sgl=document.createElement('span');sgl.className='deck-scroll-seplab';
+    sgl.textContent='Between slides';
+    sg.appendChild(sgl);
+    SCROLL_SEPS.forEach(function(o){
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn deck-scroll-sepb';b.dataset.sep=o[0];
+      b.innerHTML='<span class="deck-scroll-sw" aria-hidden="true"></span>'+o[1];
+      b.addEventListener('click',function(e){
+        e.stopPropagation();scrollSepSet(o[0]);});
+      sg.appendChild(b);
+    });
+    bar.appendChild(t);bar.appendChild(n);bar.appendChild(sg);bar.appendChild(x);
     var body=document.createElement('div');body.className='deck-scroll-body';
     body.appendChild(root);
     ov.appendChild(bar);ov.appendChild(body);
     document.body.appendChild(ov);
     scrollShowEl=ov;
+    scrollSepShow(scrollSepGet());
     var pages=scrollShowPages();
     pages.forEach(function(p,i){
       p.dataset.pw=String(p.offsetWidth||1280);
       scrollShowArm(p,ents[i]&&ents[i].s);
+      /* T620: the line's place, between this page and the one before */
+      if(i){
+        var sep=document.createElement('div');sep.className='scroll-sep';
+        sep.setAttribute('aria-hidden','true');
+        p.parentNode.insertBefore(sep,p);
+      }
     });
     scrollShowFit();
     if(window.IntersectionObserver){

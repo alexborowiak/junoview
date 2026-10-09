@@ -2418,8 +2418,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # HTML export and presenter window, and Reload sends the shell's version.
 # T619: the zoom moved into the tab row and "Slide 3 of 14" to the head of the
 # slide list, Ribbon layouts became a row of File, the stage's foot is 18px.
-EXPECTED_MD5 = "370672dff99bfff46e768adf8a2eb798"
-EXPECTED_BYTES = 5358522
+# T620: the scrolling page's Between slides choice (its script, its CSS and a
+# help entry).
+EXPECTED_MD5 = "dce8af63ec41b2584b818df8c1f211e8"
+EXPECTED_BYTES = 5364731
 
 
 def _render_example() -> str:
