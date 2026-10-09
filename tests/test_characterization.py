@@ -2416,8 +2416,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # counter and the interned undo snapshots, so the inlined bytes moved.
 # Speed (server): the deck script reads linked stylesheets (pageCssText) for its
 # HTML export and presenter window, and Reload sends the shell's version.
-EXPECTED_MD5 = "91bd484a69a0294381b3579fc5ffa825"
-EXPECTED_BYTES = 5356390
+# T619: the zoom moved into the tab row and "Slide 3 of 14" to the head of the
+# slide list, Ribbon layouts became a row of File, the stage's foot is 18px.
+EXPECTED_MD5 = "370672dff99bfff46e768adf8a2eb798"
+EXPECTED_BYTES = 5358522
 
 
 def _render_example() -> str:

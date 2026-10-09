@@ -2966,19 +2966,20 @@
   function paneDockState(){
     return [deckEl.classList.contains('pane-open'),paneWNow,mode].join('|');
   }
-  /* THE PANE'S WIDTH, ON WHAT READS IT. deck.css sizes three things by
-     --pane-w: the stage's right padding, the zoom bar's offset and a
-     pane's own default width. It was written on the deck, and a custom
+  /* THE PANE'S WIDTH, ON WHAT READS IT. deck.css sizes two things by
+     --pane-w: the stage's right padding and a pane's own default width
+     (the zoom bar's offset was a third until T619 put the bar in the tab
+     row). It was written on the deck, and a custom
      property there is inherited by every element in the editor, so
      each step of dragging a pane's edge restyled all of them (2026-10-09,
-     speed). Written on the three kinds of element instead, the rules
+     speed). Written on those two kinds of element instead, the rules
      read the same value and nothing else is touched. deck.css's
      .deck{--pane-w:272px} is still the value before the first write. */
   var paneWNow='';
   function paneWSet(v){
     if(v===paneWNow) return;
     paneWNow=v;
-    $$('.deck-stage,.deck-zoombar,.selpane',deckEl).forEach(function(el){
+    $$('.deck-stage,.selpane',deckEl).forEach(function(el){
       el.style.setProperty('--pane-w',v);});
   }
   /* Five panes are opened from eight places between them, and one of them

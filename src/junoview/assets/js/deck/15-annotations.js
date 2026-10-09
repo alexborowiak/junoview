@@ -481,12 +481,12 @@
     syncWhere();
   }
   /* ---- T524: WHERE YOU ARE ---------------------------------------------
-     PowerPoint's status bar opens with "Slide 3 of 14". The zoom cluster
-     floats in the canvas's bottom-right corner so the canvas keeps its
-     height (2026-08-20, user); this is its twin in the bottom-left: the
+     PowerPoint's status bar opens with "Slide 3 of 14". This is ours: the
      slide you are on, of how many, the version it is and the section it
      sits in -- the same main-only numbers the strip and the talk use.
-     Click it for the Overview map, every slide as a tile. */
+     Click it for the Overview map, every slide as a tile. It floated in
+     the canvas's bottom-left corner until T619 put it at the head of the
+     slide list, where it no longer covers the page on a laptop. */
   function syncWhere(){
     var t=$('#where-t'); if(!t||!pres) return;
     var sl=pres.slides||[],s=sl[cur],n=slideCount();

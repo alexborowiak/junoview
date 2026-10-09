@@ -11745,3 +11745,41 @@ toward the presentation without making it one.
 - [ ] **T617 — Bubbles.** A view of linked bubbles that organises itself
   as they are added -- one after another, linked -- which you can
   rearrange, animate and gather into sections.
+
+## Group 25 — the 2026-10-09 round (from the user's own review)
+
+The user, 2026-10-09, with a screenshot of the editor at a laptop's
+size: three things, sent to a branch and a pull request because other
+work was running on `main` at the time.
+
+- [x] **T619 — The zoom and "Slide 3 of 14" leave the canvas.** "On
+  small screen ... the slide and zoom buttons really eat into the size
+  that you can view the page in. Even when you zoom to fill they really
+  start to eat in. It would be good if these could go somewhere else so
+  they don't eat up the field of view. I'd put the zoom where ribbon
+  layouts is, then move the ribbon layouts into file (this isn't so
+  important that it always needs to be visible)."
+  *Done 2026-10-09.* The two pills floated over the stage's bottom
+  corners (the zoom since 2026-08-20, its twin since T524), and T467 kept
+  50px under the page so the zoom never sat on the page number. **The
+  zoom is in the tab row**, where Ribbon layouts stood, between Auto-hide
+  and the fold: button-high for the 28px strip, editing only, with two
+  classes on its buttons so the ribbon's density rungs cannot resize it
+  under fitTabStrip (the strip has its own rung for it). **Ribbon
+  layouts is a row of File** (app section, after Theme), still outside
+  #edit-tools so no arrangement can hide the way back; File closes before
+  the gallery opens. **"Slide 3 of 14" heads the slide list**, beside
+  the Thumbnails chooser, and rides into the Versions pane with it; the
+  column is ~185px on a 1366 laptop, so the head wraps and the readout
+  drops under the chooser rather than squeezing either word. **The stage's
+  foot is 18px**, the head's, so the page has the 32px back; the
+  editor's toasts lose T607's lift above the row that is gone, and
+  --pane-w is no longer written on a zoom bar. Command search finds
+  Zoom (Tab row) and Ribbon layouts (File). The help, the tour's "Where
+  you are" step and the comments say where they went. Driven at 1366x657
+  and 1280x600: the tab row fits on one line with Style and Object
+  showing (no rung needed at 1280), the slide is 394px tall at 1280x600
+  where the old foot left it 362px, File > Ribbon layouts... closes File
+  and opens the gallery, − + and the readout zoom and fit.
+- [ ] **T620 — Lines between the slides of the scrolling page.**
+- [ ] **T621 — The version on Home.**

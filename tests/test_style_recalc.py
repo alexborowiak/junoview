@@ -455,7 +455,9 @@ var out={vals:[st,zb,p1,p2,deckEl].map(function(e){
 WRITES=0;paneWSet('300px');out.again=WRITES;
 console.log(JSON.stringify(out));
 """)
-    assert got["vals"] == ["300px"] * 4 + [""]
+    # the zoom bar was a third reader until T619 put it in the tab row;
+    # it is not written any more
+    assert got["vals"] == ["300px", "", "300px", "300px", ""]
     assert got["now"] == "300px" and got["again"] == 0
     assert "deckEl.style.setProperty('--pane-w'" not in js
     # every rule that reads --pane-w is on one of the three
@@ -463,7 +465,7 @@ console.log(JSON.stringify(out));
     for m in re.finditer(r"([^{}]*)\{[^}]*var\(--pane-w", css):
         for sel in m.group(1).split(","):
             last = re.split(r"[ >+~]", sel.strip())[-1]
-            assert re.search(r"\.(deck-stage|deck-zoombar|selpane)\b", last), sel
+            assert re.search(r"\.(deck-stage|selpane)\b", last), sel
 
 
 def _readers(var: str) -> list[str]:

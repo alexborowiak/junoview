@@ -67,7 +67,7 @@
     animOutBoot();              /* Disappear, on the Animation tab (T238) */
     focusBoot();                /* T472: focus, on its click */
     versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
-    whereBoot();                /* "Slide 3 of 14", bottom-left (T524) */
+    whereBoot();                /* "Slide 3 of 14", atop the slides (T524) */
     chartBoot();                /* the Chart pane's door (T322) */
     tablePaneBoot();            /* the Table pane's door (T324) */
     citeBoot();                 /* the Citations pane's door (T325) */

@@ -267,6 +267,9 @@
     var b=$('#rbn-layouts'); if(!b) return;
     b.addEventListener('click',function(e){
       e.stopPropagation();
+      /* T619: a row of File now, so the menu goes first -- the gallery
+         is a surface of its own, not something File holds open */
+      var fm=$('#dc-menu'); if(fm&&!fm.hidden) overlayHide(fm);
       /* A folded ribbon has no measured bottom, so unfold it before the
          gallery positions itself beneath the arrangement being previewed. */
       if(typeof ribbonFolded==='function'&&ribbonFolded())

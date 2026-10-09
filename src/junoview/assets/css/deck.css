@@ -363,7 +363,7 @@ body.tabs-row-on .deck.creating .deck-qat .qat-name{display:none;}
 .rbn-tabs #qat-find .bic,.rbn-tabs .qat-full .bic,
 .rbn-tabs .qat-play .bic{width:12px;height:12px;}
 .deck.creating .rbn-tabs .rbn-tabset,.deck.creating .rbn-tabs .et-hint,
-.deck.creating .rbn-tabs .rbn-autobtn,.deck.creating .rbn-tabs .rbn-layouts,
+.deck.creating .rbn-tabs .rbn-autobtn,
 .deck.creating .rbn-tabs .rbn-fold{display:none;}
 /* fitTabStrip's rungs (05-figures-and-ribbon.js), each a step down from
    the resting sizes above: tighter tabs and buttons and no hint; then
@@ -376,29 +376,33 @@ body.tabs-row-on .deck.creating .deck-qat .qat-name{display:none;}
 .rbn-tabs.rt-c1 .rbn-filewrap{margin-right:6px;}
 .rbn-tabs.rt-c1 .qat-playgrp{margin-right:6px;}
 .rbn-tabs.rt-c1 #dc-file,.rbn-tabs.rt-c1 #qat-find,.rbn-tabs.rt-c1 .qat-full,
-.rbn-tabs.rt-c1 .qat-playgrp .dbtn,.rbn-tabs.rt-c1 .rbn-autobtn,
-.rbn-tabs.rt-c1 .rbn-layouts{padding-left:6px;padding-right:6px;}
+.rbn-tabs.rt-c1 .qat-playgrp .dbtn,
+.rbn-tabs.rt-c1 .rbn-autobtn{padding-left:6px;padding-right:6px;}
 .rbn-tabs.rt-c1 .et-hint{display:none;}
 .rbn-tabs.rt-c2 .rbn-tab{padding:0 6px;font-size:12px;}
 .rbn-tabs.rt-scroll{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;}
-/* ---- the zoom cluster, in the corner of the canvas -------------------
-   It lived in the ribbon, then in the top bar, and was wrong in both: it
-   is a property of the CANVAS, so it belongs at the canvas. Bottom-right
-   is where Word, PowerPoint, Figma and Illustrator all put it, and this
-   floats over the stage rather than sitting in its flow, so it costs no
-   height at all (2026-08-20, user). */
-.deck-zoombar{position:absolute;right:18px;bottom:12px;z-index:8;
-  display:none;align-items:stretch;gap:3px;padding:4px;border-radius:9px;
-  background:var(--chrome-1);border:1px solid var(--chrome-line);
-  box-shadow:0 6px 20px var(--shadow);}
-.deck.editing .deck-zoombar{display:flex;}
-/* it steps aside for a docked pane, driven by the SAME width variable so
-   the two can never disagree */
-.deck.pane-open .deck-zoombar{right:calc(var(--pane-w) + 18px);}
-.deck.rbn-side .deck-zoombar{right:calc(var(--rbn-side-w) + 18px);}
-.deck.pane-open.rbn-side .deck-zoombar{
-  right:calc(var(--pane-w) + var(--rbn-side-w) + 18px);}
-.deck-zoombar .dbtn{padding:3px 9px;}
+/* ---- the zoom, in the tab row (T619) ----------------------------------
+   It lived in the ribbon, then in the top bar, then floated in the
+   canvas's bottom-right corner (2026-08-20) -- where, on a laptop, it
+   and its twin "Slide 3 of 14" sat over the page and the stage kept
+   50px under the page for them. In the tab row it costs no height: the
+   row is there anyway, and it is on every tab (2026-10-09, user: "I'd
+   put the zoom where ribbon layouts is"). Button-high for the 28px
+   strip, like Find and Present beside it; editing only, since the
+   builder has no page to zoom. */
+.deck-zoombar{display:none;align-self:center;align-items:center;gap:2px;
+  flex:none;margin-left:4px;}
+.deck.editing .deck-zoombar{display:inline-flex;}
+/* two classes on the button, so the RIBBON's density rungs (the erc1-3
+   and erc-tight rules on its small buttons) do not reach up into this
+   row: the strip has its own ladder, and a width the ribbon's fitter
+   changes under fitTabStrip is a width fitTabStrip measured wrong */
+.rbn-tabs .deck-zoombar .dbtn.rbn-sm,.rbn-tabs .deck-zoombar .dbtn.rbn-ico{
+  height:22px;min-height:0;box-sizing:border-box;padding:0 8px;
+  line-height:1;font-size:11px;white-space:nowrap;display:inline-flex;
+  align-items:center;justify-content:center;}
+.rbn-tabs .deck-zoombar .dbtn.rbn-ico{width:24px;padding:0;font-size:13px;}
+.rbn-tabs.rt-c1 .deck-zoombar .dbtn.rbn-sm{padding:0 6px;}
 /* T542: the words in the middle or at the foot of a box that keeps a
    height (min-height, so words that outgrow it still grow the box) */
 /* (.an-text is a flex ROW -- the words and the move handle -- so the
@@ -433,13 +437,21 @@ body.tabs-row-on .deck.creating .deck-qat .qat-name{display:none;}
 .mini-tb .hl-row{padding:0 2px;gap:3px;}
 .mini-tb .hl-sw{width:16px;height:16px;}
 .mini-tb .hl-none{height:22px;min-width:22px;padding:0 4px;margin-left:1px;}
-/* T524: "Slide 3 of 14 · Methods", the zoom cluster's twin bottom-left */
-.deck-where{position:absolute;left:18px;bottom:12px;z-index:8;
-  display:none;padding:4px;border-radius:9px;max-width:45%;
-  background:var(--chrome-1);border:1px solid var(--chrome-line);
-  box-shadow:0 6px 20px var(--shadow);}
+/* T524: "Slide 3 of 14 · Methods". T619 moved it from the canvas's
+   bottom-left corner to the head of the slide list, beside the chooser
+   of how the slides are listed. The column is ~185px on a 1366 laptop,
+   too narrow for both words on one line, so the head WRAPS: the chooser
+   keeps its word whole and the readout drops under it, giving way to an
+   ellipsis only if its own line is too short. In a wider column the two
+   share the line. The same face and height as the chooser. */
+.deck-where{display:none;flex:0 1 auto;min-width:0;max-width:100%;}
 .deck.editing .deck-where{display:flex;}
-.deck-where .dbtn{padding:3px 9px;min-width:0;}
+/* four classes, so neither the small-button base rule nor the
+   ribbon's density rungs (erc1-3 and erc-tight, later in this file)
+   resize it */
+.film-head .deck-where .dbtn.rbn-sm{min-width:0;font-size:11px;
+  padding:4px 8px;gap:5px;line-height:1.4;}
+.film-head .deck-where .dbtn.rbn-sm .bic{width:12px;height:12px;}
 .deck-where #where-t{overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
 .qat-play{flex:none;white-space:nowrap;}
@@ -459,10 +471,6 @@ body.tabs-row-on .deck.creating .deck-qat .qat-name{display:none;}
 .rbn-tab[aria-selected="true"]{color:var(--chrome-ink);
   border-bottom-color:var(--cyan);}
 .rbn-tab[hidden]{display:none;}
-.rbn-tabs .rbn-layouts{align-self:center;display:inline-flex;
-  align-items:center;gap:5px;padding:2px 8px;line-height:1;flex:none;
-  font-size:10px;white-space:nowrap;}
-.rbn-tabs .rbn-layouts .bic{width:14px;height:14px;}
 /* a group belongs to exactly one tab and is out of the row entirely when
    that tab is not the one showing — display:none, never visibility, so it
    costs no width in the fit measurement */
@@ -668,13 +676,13 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
 /* editing: the slide is a real bounded page surface (16:9 by default —
    the Page dropdown can make it 4:3 or a poster), so you can see exactly
    where things will sit when presented */
-/* T467: the bottom padding is the zoom bar's room. The bar sits over
-   the page's bottom-right corner, where the page number is drawn, so
-   pressing Page numbers showed the top half of a digit (2026-09-15
-   review). sizeSlideTo measures this padding, so the page fits above
-   the bar. */
+/* T467 kept 50px under the page as the zoom bar's room, since the bar
+   floated over the page's bottom-right corner where the page number is
+   drawn. T619 took the bar (and "Slide 3 of 14") off the canvas, so the
+   foot is the head's 18px again and the page gets the rest: sizeSlideTo
+   measures this padding. */
 .deck.editing .deck-stage{align-items:center;justify-content:center;
-  padding:18px 26px 50px;}
+  padding:18px 26px 18px;}
 .deck.editing .slide{flex:none;width:100%;max-height:100%;
   aspect-ratio:var(--page-ar,16/9);margin:auto;background:var(--chrome-0,#0b141d);
   border:2px solid #ffffff2b;border-radius:12px;
@@ -5554,9 +5562,12 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
    stamped on the LIST rather than on the body or the deck, because
    filmToPane MOVES #film-list into the Versions pane and a body class
    would then be styling a list that is somewhere else. */
-.film-head{display:flex;margin-bottom:6px;}
-.film-head .dc-menuwrap{flex:1;min-width:0;}
-.film-view-btn{width:100%;text-align:left;font-size:11px;padding:4px 8px;}
+.film-head{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+/* never narrower than its own word (T619): the readout beside it is
+   what wraps, never "Thumbnails ▾" into three lines */
+.film-head .dc-menuwrap{flex:1 0 auto;}
+.film-view-btn{width:100%;text-align:left;font-size:11px;padding:4px 8px;
+  white-space:nowrap;}
 /* headings mode: no picture at all, so the row is one line of text and
    forty slides fit on a laptop screen */
 #film-list[data-fv="head"] .film-t{white-space:normal;
@@ -5603,10 +5614,10 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
   background:var(--chrome-2,#16273a);border:1px solid var(--cyan);color:#e6eef4;
   font-size:12.5px;font-family:var(--mono);padding:9px 16px;border-radius:8px;
   z-index:120;box-shadow:0 8px 30px #00000066;max-width:80vw;}
-/* T607: while editing, above the status and zoom row rather than on it
-   -- the toast Create slides ends with sat over "Slide 1 of 14" and the
-   zoom for its six seconds at a laptop's width */
-.deck.editing .deck-toast{bottom:58px;max-width:min(80vw,760px);}
+/* T607 lifted the editor's toasts to 58px, above the status and zoom
+   row they sat on; T619 took that row off the canvas, so they keep the
+   ordinary 24px and only their width is the editor's own */
+.deck.editing .deck-toast{max-width:min(80vw,760px);}
 
 @media (max-width:860px){
   .deck-stage{padding:16px 52px 4px;}

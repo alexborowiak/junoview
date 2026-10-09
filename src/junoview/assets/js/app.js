@@ -3737,9 +3737,9 @@
        +'says Saved, Saving… or Not saved, and Autosave counts down to '
        +'the next one. ▾ chooses where it saves.'},
     {sel:'#where-btn',title:'Where you are',
-     text:'Which slide you are on, of how many — click it to see every '
-       +'slide at once and rearrange them. The zoom is at the other end '
-       +'of the row.'},
+     text:'Which slide you are on, of how many, at the head of the slide '
+       +'list — click it to see every slide at once and rearrange them. '
+       +'The zoom is in the tab row, beside Auto-hide.'},
     {sel:'#dc-play',title:'Present',
      text:'Present plays from the start; ▾ beside it has presenter view '
        +'and the other ways to play. With nothing selected, Escape steps '

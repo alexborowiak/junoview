@@ -181,8 +181,9 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     # plus T602's nine: Poster, Custom view, Folder, Open a
     # presentation, Theme, How to use, Support and the two open-files rows,
     # plus T606's Collection under New, plus T610's Open a notebook, less
-    # T611's two open-files rows (on the list itself now)
-    assert menu.count('class="dc-mi') == 24, menu.count('class="dc-mi')
+    # T611's two open-files rows (on the list itself now), plus T619's
+    # Ribbon layouts under App (it left the tab row to the zoom)
+    assert menu.count('class="dc-mi') == 25, menu.count('class="dc-mi')
     assert menu.count('class="dc-mcol"') == 2
     for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",
                  "mi-auto-figdocs", "mi-nums", "mi-hist", "mi-check"):
