@@ -1103,7 +1103,19 @@
   /* `rendering`: renderSlide is the caller, and paints the furniture
      itself once the annots are in -- painting it here first only to be
      torn down a moment later cost a forced layout per slide change */
+  /* ONE RENDER PER MODE SWITCH (2026-10-09, speed). Entering the editor
+     or a talk went through barApply, setRibbonFold, syncPaneDock and
+     applySideRibbon, and each re-fitted the page and re-rendered every
+     item on it -- the OLD slide, more than once, a moment before
+     renderSlide replaced it: 260 ms of Start show at 4x. While setUIMode
+     holds `zoomHold` a fit is only noted; the renderSlide that ends the
+     switch fits the page itself (applyZoom(true)) and settles the note,
+     and anything still owed when the hold lets go -- a switch with no
+     slide to render, such as the builder -- is fitted then, once. */
+  var zoomHold=0,zoomOwed=false;
   function applyZoom(rendering){
+    if(rendering) zoomOwed=false;
+    else if(zoomHold){zoomOwed=true;return;}
     if(deckEl.hidden) return;
     var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
     if(mode==='edit'){
@@ -1160,6 +1172,9 @@
        re-measured whenever the page changes size */
     if(s0&&!rendering) paintFurniture(slideEl,cur);
     syncGuides();   /* rulers and grid track whatever size the page ended up */
+    /* the page is fitted to the dock as it is now, so the dock's own
+       watcher (syncPaneDock) has nothing left to re-fit for it */
+    if(typeof paneDockState==='function') paneDockWas=paneDockState();
   }
   function setZoom(z){deckZoom=z;applyZoom();}
 

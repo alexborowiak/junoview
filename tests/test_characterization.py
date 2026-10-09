@@ -2424,8 +2424,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # kept copies without MathJax's menu counter, hidden maths measured on a stand-in.
 # Speed (reader boot): cards visible without script, first layout sent by the
 # server, hidden notebooks wired on first view, delegated card listeners.
-EXPECTED_MD5 = "d643b9c7a643ff6a6581b7079f4b05b9"
-EXPECTED_BYTES = 5414357
+# Speed (switch): a mode switch renders and fits once, going back resumes a
+# deck, lazy library previews, cached presenter previews, presFacts.
+EXPECTED_MD5 = "b0b97c4c54d0817d50c46629e8a4c99d"
+EXPECTED_BYTES = 5436630
 
 
 def _render_example() -> str:

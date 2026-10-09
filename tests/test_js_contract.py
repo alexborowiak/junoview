@@ -71,6 +71,9 @@ RUNTIME_IDS = {
     "jvp-tod", "jvp-black", "jvp-end", "jvp-nsmall", "jvp-nbig",
     "jvp-slideclock",
     "jvp-talk", "jvp-find", "jvp-hits",
+    # the next-slide preview box, looked up by its id since presenterPush
+    # keys the preview pair on both boxes' sizes (45-images.js)
+    "jvp-next",
     # The PDF/print export builds a throwaway container:
     # deck.js ~line 17471, root.id='print-root'.
     "print-root",

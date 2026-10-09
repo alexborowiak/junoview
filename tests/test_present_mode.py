@@ -526,7 +526,9 @@ def test_isolation_and_the_deck_open_class_are_one_expression(out):
     assert "var full=!creating&&!deckEl.hidden;" in out
     assert "document.body.classList.toggle('deck-open',full);" in out
     assert "deckIsolate(full,editing);" in out
-    assert "if(full) deckTakeFocus();" in out
+    # ...and the focus hand-over is decided by the same variable (it is
+    # made at the end of the switch, once the editor is laid out)
+    assert "var takeFocus=full&&deckFocusNote();" in out
 
 
 def test_presenting_has_a_deck_owned_drawer_of_what_is_open_now(out):

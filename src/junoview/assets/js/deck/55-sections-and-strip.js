@@ -614,7 +614,7 @@
      always has. */
   var filmNav=false,filmStamp=null;
   function filmStampKey(){
-    return [mode,filmMode(),activeCut(),lateFrom,filmGen,
+    return [mode,filmMode(),activeCut(),lateFrom,filmGen,deckViewGen,
       JSON.stringify(altOpen),JSON.stringify(pres.sections||null)].join('|');
   }
   function filmMoveMark(list){
@@ -624,6 +624,10 @@
     for(var k=0;k<sl.length;k++) if(st.ids[k]!==sl[k]) return false;
     if(st.only&&cur!==st.cur) return false;
     if(st.key!==filmStampKey()) return false;
+    /* a reader went without the project's figure copies (a failed
+       /api/emb) and they have not come since: the rows drew empty
+       frames, and a rebuild is what asks for the copies again */
+    if(embMissed&&!embLoaded) return false;
     /* a text box still open commits DURING this change (renderAnnots
        flushes it), and a title's setter redraws the strip before its
        markDirty is counted -- so while one is open, rebuild as before */
@@ -1307,7 +1311,43 @@
     if(mode==='view'&&typeof renderDeckPresentationDrawer==='function')
       renderDeckPresentationDrawer();
   }
+  /* ---- A MODE SWITCH LAYS THE EDITOR OUT ONCE (2026-10-09, speed) -----
+     Going to a deck, starting a talk and ending one each cost 0.6-1.2 s
+     at 4x, most of it the same work done over and over: the page fitted
+     and its items rendered by every step that changes the stage's size
+     (applyZoom, see zoomHold), the ribbon fitted by every step that
+     shows or hides a control (fitEditRibbon, see ribbonFitHold), and the
+     whole editor styled and laid out halfway through -- by the focus
+     hand-over's first offsetParent -- only for the strip, the stage and
+     the ribbon to dirty it all again. The outermost setUIMode holds the
+     first two and lets go where their answers are needed: the ribbon
+     before the strip and the slide are drawn, the page by the slide's
+     own render. The keyboard is handed to the editor at the end, when
+     everything it chooses between is in place. A switch nested inside
+     another (none today) runs under the outer one's hold. */
+  var modeSwitching=false;
   function setUIMode(m){
+    var outer=!modeSwitching;
+    if(outer){modeSwitching=true;zoomHold++;ribbonFitHold=true;}
+    try{setUIModeRun(m,outer);}
+    finally{
+      if(outer){
+        modeSwitching=false;
+        try{
+          if(ribbonFitHold) ribbonFitRelease();
+        } finally {
+          zoomHold--;
+          if(!zoomHold&&zoomOwed){zoomOwed=false;applyZoom();}
+        }
+      }
+    }
+  }
+  function setUIModeRun(m,outer){
+    /* a word still being typed is the deck's before the mode changes:
+       the renders that used to commit it on the way (applyZoom's) are
+       held now, and the slide's own render empties the stage first */
+    flushTextEdits();
+    routeFlush();   /* a talk's address, if its last click is still due */
     if(m==='edit'||m==='create') initEditorTools();
     var startingTalk=(m==='view'&&mode!=='view');
     var endingTalk=(m!=='view'&&mode==='view');
@@ -1407,7 +1447,8 @@
     /* the same condition as the class, so the two can never disagree
        about whether this is a full-screen surface (T104) */
     deckIsolate(full,editing);
-    if(full) deckTakeFocus();
+    /* where the keyboard was is read now; it is handed over at the end */
+    var takeFocus=full&&deckFocusNote();
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
     if(!editing){                   /* Objects pane is an editing tool */
@@ -1464,9 +1505,24 @@
        --film-max here rather than squeezing the stage on open (T80) */
     if(m==='edit') requestAnimationFrame(function(){
       fitFilmMax();fitEditRibbon();});
+    /* every control this switch shows or hides is in place: the ribbon
+       is fitted now, once, before the slide is fitted under it */
+    if(outer) ribbonFitRelease();
     if(creating||editing){
       activePane=-1;
-      renderCreate();
+      /* BACK TO A STRIP THAT IS STILL RIGHT (2026-10-09, speed). Coming
+         back to the editor -- from a notebook tab, Home, a pick or the
+         end of a talk -- rebuilt every row of the strip, 60 thumbnails
+         and their figures, to show what it already showed. Entering the
+         editor is a slide change as far as the strip is concerned:
+         filmMoveMark keeps the rows when nothing they draw has changed
+         since they were built (the deck, its slides, every edit, the
+         view, the width, and deckViewGen -- whatever reached the deck
+         while it was hidden) and rebuilds them otherwise. */
+      if(editing){
+        filmNav=true;
+        try{renderCreate();}finally{filmNav=false;}
+      } else renderCreate();
     }
     if(!creating) renderSlide();
     /* the bar's title depends on the mode, and openDeck calls status()
@@ -1478,6 +1534,10 @@
        Effect door live over an empty shelf until the next selection.
        One more group pass, now that the page kind is on the bar. */
     if(editing&&typeof syncRibbonGroups==='function') syncRibbonGroups();
+    /* the editor is laid out once, here, instead of twice: the first
+       visible control is asked for now that the strip, the slide and the
+       ribbon are what they will be (T104's focus hand-over) */
+    if(takeFocus&&!deckEl.hidden) deckFocusTake();
     if(startingTalk||endingTalk) presenterSync();
     /* T564: the show's first slide records (a recording run) or speaks;
        the end of the show puts the microphone and the voice down */
@@ -1504,9 +1564,27 @@
     filmNav=true;
     try{refresh();}finally{filmNav=false;}
   }
+  /* A TALK'S ADDRESS FOLLOWS IT A BEAT LATER (2026-10-09, speed). Each
+     click of a show rewrote the URL (history.replaceState, 7-11 ms at
+     4x) inside the click, before the next slide could paint. While
+     presenting, the write waits until the clicks pause (ROUTE_TALK_MS)
+     and writes where the talk is then; leaving the talk or the deck,
+     and the page being hidden or closed, write it at once. Moves inside
+     one deck never push a history entry, so nothing about Back changes. */
+  var routeT=null,ROUTE_TALK_MS=250;
   function routeSync(){
+    if(mode==='view'&&!deckEl.hidden){
+      clearTimeout(routeT);
+      routeT=setTimeout(routeSyncNow,ROUTE_TALK_MS);
+      return;
+    }
+    routeSyncNow();
+  }
+  function routeSyncNow(){
+    clearTimeout(routeT);routeT=null;
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
+  function routeFlush(){if(routeT) routeSyncNow();}
   /* ---- BACKGROUND ISOLATION -------------------------------------
      The deck is `position:fixed` over the whole window, and CSS had
      already isolated the three channels CSS can: the background does
@@ -1566,9 +1644,19 @@
      from the top of the document. And it has to come back, or closing
      the editor leaves the page focused on nothing. */
   function deckTakeFocus(){
+    if(deckFocusNote()) deckFocusTake();
+  }
+  /* the two halves, which setUIMode runs apart: where the keyboard was
+     (true when it is not already inside the editor and has to be
+     brought), read before the switch changes anything; and the
+     hand-over, which has to measure, made once the switch is done */
+  function deckFocusNote(){
     var live=document.activeElement;
     if(live&&live!==document.body&&!deckEl.contains(live))
       deckFocusReturn=live;
+    return !deckEl.contains(document.activeElement);
+  }
+  function deckFocusTake(){
     if(deckEl.contains(document.activeElement)) return;
     /* the first VISIBLE control, not the first in the markup. The deck
        carries a dozen panels that are hidden most of the time, and
@@ -1588,11 +1676,24 @@
     if(!deckEl.hasAttribute('tabindex')) deckEl.setAttribute('tabindex','-1');
     try{deckEl.focus();}catch(err){}
   }
+  /* GIVEN BACK WITH THE FRAME (2026-10-09, speed). focus() has to know
+     the page's layout, and closing the editor had just changed all of it:
+     the keyboard's return forced a whole layout of the notebook (40-80
+     ms at 4x) that the tabs and the frame then did again. It is handed
+     back at the next frame, when the layout is made anyway -- unless by
+     then the editor is open again or something else has taken the
+     keyboard, which keeps it. */
   function deckReturnFocus(){
     var back=deckFocusReturn;
     deckFocusReturn=null;
-    if(!back||!back.isConnected||back.hasAttribute('inert')) return;
-    try{back.focus();}catch(err){}
+    var raf=window.requestAnimationFrame||function(f){return setTimeout(f,16);};
+    raf(function(){
+      if(!deckEl.hidden) return;
+      var ae=document.activeElement;
+      if(ae&&ae!==document.body&&!deckEl.contains(ae)) return;
+      if(!back||!back.isConnected||back.hasAttribute('inert')) return;
+      try{back.focus();}catch(err){}
+    });
   }
   /* T465: openDeck(m, resume) -- `resume` is the notebook picker's way
      back: the deck was hidden for a trip to the notebook, not closed,
@@ -1679,6 +1780,19 @@
       +'goes out one version at a time; open Versions to switch.';
   }
   function closeDeck(){
+    /* A TAB BUTTON LETS GO FIRST (2026-10-09, speed). The deck's tab or
+       its X still holds the keyboard after the click that closes it, and
+       the rebuild below takes it off the page: a focused node removed
+       after the deck has gone made Chrome lay the whole notebook out
+       inside remove() (40-50 ms at 4x). Let go now, while nothing has
+       changed yet, it costs nothing; the keyboard ends on the page as it
+       did, and is handed back where it was (deckReturnFocus). */
+    var tf=document.activeElement;
+    if(tf&&tf.tagName==='BUTTON'&&tf.closest&&tf.closest('.top-pres-tab'))
+      try{tf.blur();}catch(e){}
+    /* a talk's address still waiting on its last click is written while
+       the talk is the view, or the history entry keeps an older slide */
+    routeFlush();
     /* SPA navigation does not fire pagehide. Home/hash routing can close
        this surface directly, so it is just as real an end to a rehearsal
        as the visible Stop presenting button (T48). */

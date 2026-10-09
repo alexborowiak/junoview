@@ -41,8 +41,10 @@ def test_the_store_knows_the_kind():
     # one rule for absorbing embedded copies, a deck's and a collection's
     assert "  function embAbsorb(p,ns){" in decks
     assert "    embAbsorb(p,ns);\n" in norm
-    assert "col:isColPres(p),items:isColPres(p)?(p.items||[]).length:0," \
-        in decks
+    # (the summary reads the deck's facts -- presFacts, its item count
+    # among them -- rather than the whole deck)
+    assert "col:isColPres(p),items:isColPres(p)?p.items:0," in decks
+    assert "items:Array.isArray(p.items)?p.items.length:0};" in decks
     save = assets.load("js/deck/60-saving-and-export.js")
     assert "var refs=isColPres(p)?colRefsOf(p):[];" in save
 

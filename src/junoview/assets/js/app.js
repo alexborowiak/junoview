@@ -4722,11 +4722,20 @@
      under their filters), so the page offset has to follow its REAL
      height — otherwise the controls hide under the document (or leave a
      gap) */
-  var chromeT=null;
+  var chromeT=null,chromeOwed=false;
   function measureChrome(){
     if(chromeT) return;
     chromeT=setTimeout(function(){
       chromeT=null;
+      /* NOT UNDER THE EDITOR (2026-10-09, speed). The slide editor and
+         the talk cover this header completely, and refitting it there
+         (a resize, full screen, a notebook mounting behind) measured and
+         folded a bar nobody could see -- 35-80 ms at 4x -- and its rbc
+         classes on body re-keyed the editor's own ribbon fit. It is
+         measured the moment the header is back (the observer below). */
+      if(document.body.classList.contains('deck-open')){
+        chromeOwed=true;return;}
+      chromeOwed=false;
       var top=$('#apptop'); if(!top) return;
       /* compact BEFORE measuring: the stages change the bar's height
          requirements as well as its width */
@@ -4753,6 +4762,10 @@
     },0);
   }
   APP.measureChrome=measureChrome;
+  if(window.MutationObserver) new MutationObserver(function(){
+    if(chromeOwed&&!document.body.classList.contains('deck-open'))
+      measureChrome();
+  }).observe(document.body,{attributes:true,attributeFilter:['class']});
   window.addEventListener('resize',measureChrome);
   document.addEventListener('sem:shell',measureChrome);
   document.addEventListener('sem:activate',measureChrome);

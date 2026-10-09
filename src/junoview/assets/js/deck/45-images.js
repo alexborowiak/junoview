@@ -2414,11 +2414,15 @@
     rdRepaint();   /* badges are built on render; make them current */
   }
   window.SemDeckReadingOrder=openReadingOrder;
+  /* ONCE PER FRAME, AT THE NEW SIZE (2026-10-09, speed). This rendered
+     every item on the slide inside each resize event -- at the page's
+     OLD size, since the page is re-fitted later -- and the frame then
+     rendered them all again through applyZoom (scheduleRibbonFit, the
+     ribbon's resize listener). Entering and leaving full screen, a
+     window snapped or dragged: one render a frame, fitted to the window. */
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
-    var s=pres.slides[cur];
-    var l=stage.querySelector('.annot-layer');
-    if(s&&l) renderAnnots(l,s);
+    scheduleRibbonFit();
   });
   /* ---- PRESENTER VIEW --------------------------------------------------
      A second window holding the things the audience must not see: your
@@ -2531,8 +2535,22 @@
     var sl=pres.slides[cur]||{};
     var shown=shownSlides(),shownAt=shown.indexOf(cur);
     var next=nextShown(cur,1);
+    /* THE PAIR IS DRAWN WHEN IT CHANGES (2026-10-09, speed). Both
+       previews were rebuilt -- every item of two slides rendered off
+       screen and imported -- on every click of the talk, and a build
+       click changes neither: they are drawn fully built. 65 ms a click at
+       4x, on the main thread the audience's screen runs on. They are
+       redrawn when what they show can differ: another slide or next
+       slide, an edit (filmGen, deckGen), a figure that changed under the
+       deck (deckViewGen), another deck, or boxes of another size. */
+    var nb=doc.getElementById('jvp-now'),xb=doc.getElementById('jvp-next');
+    var pairKey=[cur,next,n,filmGen,deckGen,deckViewGen,
+      nb?nb.clientWidth+'x'+nb.clientHeight:'',
+      xb?xb.clientWidth+'x'+xb.clientHeight:''].join('|');
+    var samePair=(doc._jvPair===pairKey&&doc._jvPres===pres);
+    doc._jvPair=pairKey;doc._jvPres=pres;
     /* the two slide previews */
-    [['jvp-now',cur],['jvp-next',next]].forEach(function(pr){
+    if(!samePair) [['jvp-now',cur],['jvp-next',next]].forEach(function(pr){
       var box=doc.getElementById(pr[0]);
       if(!box) return;
       box.innerHTML='';

@@ -67,7 +67,7 @@ def test_the_show_hooks():
     go = js.split("  function go(n){", 1)[1].split("\n  }\n", 1)[0]
     assert go.index("rehSlideChanged();") < go.index(
         "if(typeof narrSlideChanged==='function') narrSlideChanged();")
-    ui = lift_fn(js, "setUIMode")
+    ui = lift_fn(js, "setUIModeRun")   # the body of setUIMode
     assert ("if(startingTalk&&typeof narrShowStart==='function') "
             "narrShowStart();") in ui
     assert ("if(endingTalk&&typeof narrShowStop==='function') "

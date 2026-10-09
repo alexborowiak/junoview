@@ -4414,7 +4414,11 @@
         .concat(draftNames());
       names=names.filter(function(x){return x!==nm;});
       if(names.length) loadPresentation(names[0]);
-      else {pres=defaultPres();source='auto';}
+      /* a new pres passes through histReset, as loadPresentation's does:
+         the deleted deck's undo history (and its custom types) are not
+         this one's -- and a hidden editor now resumes rather than
+         reopens, so nothing else would clear them (2026-10-09 review) */
+      else {pres=defaultPres();source='auto';histReset();}
       if(pres&&typeof notePresentationOpen==='function')
         notePresentationOpen(pres.name);
       cur=0;activePane=-1;

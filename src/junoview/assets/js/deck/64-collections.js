@@ -388,10 +388,26 @@
     if(A.cols.indexOf(key)<0) A.cols.push(key);
     return sh;
   }
+  /* GOING BACK TO A COLLECTION IS NOT DRAWING IT AGAIN (2026-10-09,
+     speed). Its tab, after a notebook's, rebuilt every card from the
+     kept copies -- 240 ms at 4x for 27 items, growing with the list --
+     to show what the shell still held. Every change to a collection
+     redraws its shell where it is made (colCommit -> colRefresh), open
+     or not; so the shell is drawn again only when it was drawn from
+     another copy of the collection, from other items, or before a
+     notebook opened, reloaded or closed or a kept copy changed
+     (deckViewGen: what a cell's copy is read from). */
+  function colDrawSig(model){
+    return [model.name,JSON.stringify(model.items||[]),
+      JSON.stringify(model.live||null)].join('\n');
+  }
   function colShow(){
     var A=window.SemApp||{};
     var sh=colShell(pres.name);
-    colRender(sh,pres);
+    var drawn=sh._colDrawn;
+    if(!(drawn&&drawn.model===pres&&drawn.view===deckViewGen
+         &&drawn.sig===colDrawSig(pres)))
+      colRender(sh,pres);
     if(A.activate) A.activate(colKey(pres.name));
     if(A.refilter) A.refilter(sh.el);
     renderPresTabs();
@@ -895,6 +911,8 @@
     if(A.wireCardBehaviors) A.wireCardBehaviors(sec,colKey(name));
     if(A.activateOutputs) A.activateOutputs(sec,true);
     typeset(sec);   /* through the page's typesetter (jvMath) */
+    /* what this shell was drawn from (colShow's way back) */
+    sh._colDrawn={model:model,view:deckViewGen,sig:colDrawSig(model)};
   }
   function colRename(model){
     askText({title:'Rename collection',value:model.name,ok:'Rename'},

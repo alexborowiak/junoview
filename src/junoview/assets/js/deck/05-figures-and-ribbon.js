@@ -1692,7 +1692,23 @@
       if(!deckEl.hidden) syncGuides();
     });
   }
+  /* ONE FIT PER MODE SWITCH (2026-10-09, speed). Opening the editor fitted
+     the ribbon six times -- the fold restore, showFmt, setTool, the group
+     pass, the side layout -- each against a bar the next step was about
+     to change, and the first of them forced a style pass of the whole
+     page: 400 ms of the first deck opened in a session at 4x. While
+     setUIMode holds the fit it is only noted, and the switch fits once,
+     when every control it shows or hides is in place (ribbonFitRelease),
+     before the slide is fitted under the bar. */
+  var ribbonFitHold=false,ribbonFitOwed=false;
+  function ribbonFitRelease(){
+    ribbonFitHold=false;
+    if(!ribbonFitOwed) return;
+    ribbonFitOwed=false;
+    fitEditRibbon();
+  }
   function fitEditRibbon(){
+    if(ribbonFitHold){ribbonFitOwed=true;return;}
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
     /* a folded bar has no width to measure: scrollWidth would read 0 and

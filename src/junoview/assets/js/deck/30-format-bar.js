@@ -93,16 +93,28 @@
     if(wasMulti&&pickAdded) markDirty();
     pickAdded=0;
     openDeck('edit',true);   /* T465: resume, do not restart, the session */
-    var l=stage.querySelector('.annot-layer');
-    if(l&&idx>=0) selectAnnot(l,idx);
-    if(wasMulti) renderFlipPane();
-    /* T470: BACK ON THE TAB YOU LEFT. With the Pages pane open the
-       selection does not carry the ribbon to Object (the pane holds
-       it), and openDeck's redraw had already dropped it to Home -- so
-       Done on a flip book's Figures pick landed you a tab away from
-       the book (2026-09-15 review). */
-    if(pickTab&&pickTab!==activeTab()&&tabHasContent(pickTab))
-      setTab(pickTab,true);
+    /* ONE RIBBON FIT FOR THE WAY BACK (2026-10-09, speed). Selecting the
+       frame carries the ribbon to Object and T470 carries it straight
+       back to the tab the pick began on -- and each move fitted the
+       ribbon, the first visit to Object climbing every rung (0.4 s of
+       the 1-1.5 s click at 4x) for a tab that is gone before it paints.
+       The tabs move as they always did; the fit waits for where they
+       end, and is made once there. */
+    ribbonFitHold=true;
+    try{
+      var l=stage.querySelector('.annot-layer');
+      if(l&&idx>=0) selectAnnot(l,idx);
+      if(wasMulti) renderFlipPane();
+      /* T470: BACK ON THE TAB YOU LEFT. With the Pages pane open the
+         selection does not carry the ribbon to Object (the pane holds
+         it), and openDeck's redraw had already dropped it to Home -- so
+         Done on a flip book's Figures pick landed you a tab away from
+         the book (2026-09-15 review). */
+      if(pickTab&&pickTab!==activeTab()&&tabHasContent(pickTab))
+        setTab(pickTab,true);
+    } finally {
+      ribbonFitRelease();
+    }
     pickTab='';
   }
   /* T618: Escape ends a pick at the first press. It was heard on

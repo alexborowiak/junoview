@@ -1497,6 +1497,13 @@
      first; see the long note in editableText for what each of those used
      to lose. Safe to call when nothing is being edited. */
   function flushTextEdits(){
+    /* NOTHING IS TYPED INTO A TALK (2026-10-09, speed). Every step of a
+       show re-renders the slide, and each render asked the whole page --
+       the notebook behind it included, ~40k nodes -- for live editors:
+       8 ms a click at 4x. An editor exists only while editing (wireEditor),
+       and the one switch into a talk commits whatever was still open
+       before it changes anything (setUIModeRun's first line). */
+    if(mode==='view') return;
     var live=document.querySelectorAll(
       '[contenteditable="true"],[contenteditable="plaintext-only"]');
     for(var i=0;i<live.length;i++){
@@ -1514,6 +1521,8 @@
   (function(){
     function lastChance(e){
       try{flushTextEdits();}catch(e){}
+      /* a talk's address waits for its clicks to pause; not for this */
+      try{if(typeof routeFlush==='function') routeFlush();}catch(e){}
       /* the draft write is debounced now — a closing tab cannot wait */
       try{flushDraftWrite();}catch(e){}
       if(e&&e.type==='pagehide'){

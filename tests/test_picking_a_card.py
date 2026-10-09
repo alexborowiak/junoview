@@ -29,7 +29,7 @@ def test_a_pick_brings_the_notebook_back_to_life():
     # and leaving the pick restores the editor, isolation and all
     end = lift_fn(js, "endPick")
     assert "openDeck('edit',true);" in end
-    ui = lift_fn(js, "setUIMode")
+    ui = lift_fn(js, "setUIModeRun")   # the body of setUIMode
     assert "deckIsolate(full,editing);" in ui
 
 

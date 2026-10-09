@@ -56,10 +56,16 @@
      The time, unless you named it. "14:32" is what you look for on a
      timeline; "saved" is not a name, it is a reason, and it belongs in
      the second line with the slide count. */
+  /* ONE FORMATTER (2026-10-09, speed). toLocaleTimeString builds a whole
+     ICU date formatter on every call, and a list of six versions asked
+     twelve times: 50 ms at 4x, on every deck opened and every talk
+     started. The same options give the same words. */
+  var histClockFmt=null;
   function histClock(ms){
     try{
-      return new Date(ms).toLocaleTimeString([],
+      if(!histClockFmt) histClockFmt=new Intl.DateTimeFormat([],
         {hour:'2-digit',minute:'2-digit'});
+      return histClockFmt.format(new Date(ms));
     }catch(e){return '';}
   }
   function histLabel(e){

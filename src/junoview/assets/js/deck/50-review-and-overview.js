@@ -1232,7 +1232,7 @@
        to null without going through it; driven, the ribbon kept showing
        the previous slide's answer. */
     if(typeof transRibbonSync==='function') transRibbonSync();
-    if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
+    routeSync();   /* a talk's address is written when its clicks pause */
   }
   /* advance: reveal the next build, else move to the next slide (no-op at the
      very end, so the final slide never collapses back to its pre-build state) */
@@ -1495,7 +1495,7 @@
     return names;
   }
   function presItem(nm,savedNames,editing,top){
-    var p=presentationByName(nm)||{name:nm};
+    var p=presFacts(nm)||{name:nm};   /* its kind and page, not the deck */
     var isCur=nm===pres.name;
     var t=document.createElement(top?'div':'button');
     if(!top) t.type='button';
@@ -1593,7 +1593,7 @@
     var top=$('#top-tabstrip'); if(!top) return;
     presTabsSaveKey=null;   /* only a build of both lists sets it */
     $$('.top-pres-tab',top).forEach(function(t){t.remove();});
-    var savedNames=allSaved().map(function(p){return p.name;});
+    var savedNames=savedNameList();   /* the names, nothing copied */
     var editing=!deckEl.hidden;
     presentationTabNames(editing).forEach(function(nm){
       top.appendChild(presItem(nm,savedNames,editing,true));});
@@ -1605,7 +1605,7 @@
     /* The rail's filter is re-applied at the end: the strip is rebuilt
        from scratch here, so a deck created while filtering stays filtered. */
     presstrip.innerHTML='';
-    var savedNames=allSaved().map(function(p){return p.name;});
+    var savedNames=savedNameList();   /* the names, nothing copied */
     var editing=!deckEl.hidden;
     var names=presentationTabNames(editing);
     names.forEach(function(nm){
@@ -1867,9 +1867,19 @@
     host.appendChild(list);
     var W=opts.w||164,n=0,first=null;
     var keep={p:pres,paint:paintSlide,h:miniHNow};
+    /* THE SLIDES ON SCREEN FIRST (2026-10-09, speed). The library drew
+       all sixty of a deck's thumbnails the moment a row was pointed at
+       or the dialog opened -- 160 ms at 4x, again for every row the
+       pointer crossed -- for a column that shows about six. The first
+       PV_EAGER and every slide the query lit are drawn now; the rest
+       are boxes of the same size, each drawn as it scrolls near view
+       (pvLazyWatch). Their numbers and headings are there from the start. */
+    if(host._pvIO){host._pvIO.disconnect();host._pvIO=null;}
+    var lazy=[],H=0;
     try{
       pres=d;
-      var pg=pageOf(),H=Math.max(24,Math.round(W*pg.mm[1]/pg.mm[0]));
+      var pg=pageOf();
+      H=Math.max(24,Math.round(W*pg.mm[1]/pg.mm[0]));
       miniHNow=H;
       /* the deck's own ink for text with no colour of its own: the CSS
          defaults read --tk-* and .page-light, which the stage carries
@@ -1880,6 +1890,11 @@
         if(i>=PV_LIMIT) return;
         var fig=document.createElement('figure');fig.className='pv-slide';
         var m;
+        if(i>=PV_EAGER&&hits.indexOf(i)<0&&window.IntersectionObserver){
+          m=document.createElement('span');
+          m.className='mini-diagram free pv-lazy';
+          lazy.push({ph:m,s:s});
+        } else
         try{m=miniDiagram(s);}
         catch(err){m=document.createElement('span');
           m.className='mini-diagram free';}
@@ -1906,7 +1921,35 @@
       note('\u2026and '+(slides.length-PV_LIMIT)+' more slide'
         +(slides.length-PV_LIMIT===1?'':'s')+'.');
     if(first) try{first.scrollIntoView({block:'nearest'});}catch(err){}
+    if(lazy.length) pvLazyWatch(host,d,lazy,W,H);
     return n;
+  }
+  var PV_EAGER=8;
+  /* a preview's waiting thumbnails, each drawn the way renderDeckPreview
+     draws one -- against ITS deck, at its size -- once it comes within a
+     screen's reach of view (the observer's root is the viewport, and the
+     scrolling column clips what it reports) */
+  function pvLazyWatch(host,d,lazy,W,H){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(!e.isIntersecting) return;
+        io.unobserve(e.target);
+        var it=null;
+        for(var k=0;k<lazy.length;k++) if(lazy[k].ph===e.target) it=lazy[k];
+        if(!it||!it.ph.parentNode) return;
+        var keep={p:pres,paint:paintSlide,h:miniHNow},m;
+        try{
+          pres=d;miniHNow=H;
+          m=miniDiagram(it.s);
+        }catch(err){m=null;}
+        finally{pres=keep.p;paintSlide=keep.paint;miniHNow=keep.h;}
+        if(!m) return;   /* left as the empty box a failed one always was */
+        m.style.width=W+'px';m.style.height=H+'px';
+        it.ph.parentNode.replaceChild(m,it.ph);
+      });
+    },{rootMargin:'300px'});
+    host._pvIO=io;
+    lazy.forEach(function(it){io.observe(it.ph);});
   }
   window.SemApp.deckPreview=renderDeckPreview;
   window.SemApp.deckPreviewForget=pvForget;
@@ -2209,21 +2252,69 @@
      merely looking like one.  Keep its keyboard focus out of the deck
      until it closes; Home has no visible deck, so remember only the
      inertness this dialog itself introduced. */
-  var presentationHubInertedDeck=false;
+  /* KEPT OUT, NOT MADE INERT (2026-10-09, speed). `inert` on the editor
+     is a style of its own, so opening the library restyled every one of
+     the editor's 2,000-odd elements and closing it did it again: 60-100
+     ms each way at 4x, for a dialog that already covers the window. The
+     deck is hidden from assistive technology (aria-hidden, and the hub
+     is aria-modal) and the keyboard is kept in the dialog by hand: Tab
+     and Shift+Tab go round its own controls, and anything that still
+     lands in the deck -- a script, a stray focus() -- is sent back to
+     where it came from in the dialog. The backdrop takes the pointer. */
+  var presentationHubInertedDeck=false,presentationHubLast=null;
+  function hubFocusables(){
+    var hub=$('#presentation-hub'); if(!hub) return [];
+    return $$('button:not([disabled]),[href],input:not([disabled]),'
+      +'select:not([disabled]),textarea:not([disabled]),'
+      +'[tabindex]:not([tabindex="-1"])',hub).filter(function(el){
+        return !el.hidden&&el.getClientRects().length>0;});
+  }
+  function hubTrapFocusIn(e){
+    var hub=$('#presentation-hub');
+    if(!presentationHubInertedDeck||!hub||hub.hidden) return;
+    if(hub.contains(e.target)){presentationHubLast=e.target;return;}
+    if(!deckEl.contains(e.target)) return;
+    var back=(presentationHubLast&&presentationHubLast.isConnected
+      &&hub.contains(presentationHubLast))?presentationHubLast
+      :hubFocusables()[0];
+    if(back) try{back.focus();}catch(err){}
+  }
+  function hubTrapKey(e){
+    var hub=$('#presentation-hub');
+    if(e.key!=='Tab'||!presentationHubInertedDeck||!hub||hub.hidden) return;
+    /* ...nor is anything while such a dialog stands open: a Tab that has
+       left it for the library has to be able to come back to it */
+    if(document.querySelector('#ask-dlg:not([hidden]),#opendlg:not([hidden])'))
+      return;
+    var fs=hubFocusables(); if(!fs.length) return;
+    var ae=document.activeElement,at=fs.indexOf(ae),to=null;
+    /* a dialog opened over the library (a folder's name, a question)
+       keeps its own keyboard: only the library's edges, and a keyboard
+       that has somehow reached the editor, are this trap's business */
+    if(at<0){if(ae&&deckEl.contains(ae)) to=fs[0];}
+    else if(e.shiftKey){if(at===0) to=fs[fs.length-1];}
+    else if(at===fs.length-1) to=fs[0];
+    if(!to) return;
+    e.preventDefault();
+    try{to.focus();}catch(err){}
+  }
   function presentationHubDeckInert(on){
     if(!deckEl) return;
     if(on){
-      if(!deckEl.hidden&&!deckEl.hasAttribute('inert')){
-        deckEl.setAttribute('inert','');
+      if(!deckEl.hidden&&!deckEl.hasAttribute('inert')
+         &&!presentationHubInertedDeck){
         deckEl.setAttribute('aria-hidden','true');
-        presentationHubInertedDeck=true;
+        presentationHubInertedDeck=true;presentationHubLast=null;
+        document.addEventListener('focusin',hubTrapFocusIn,true);
+        document.addEventListener('keydown',hubTrapKey,true);
       }
       return;
     }
     if(!presentationHubInertedDeck) return;
-    deckEl.removeAttribute('inert');
     deckEl.removeAttribute('aria-hidden');
-    presentationHubInertedDeck=false;
+    presentationHubInertedDeck=false;presentationHubLast=null;
+    document.removeEventListener('focusin',hubTrapFocusIn,true);
+    document.removeEventListener('keydown',hubTrapKey,true);
   }
   /* T394: the All column is the library proper -- grouped by folder, with
      the folder verbs (rename, delete) on the heading and drag-and-drop
@@ -2273,6 +2364,11 @@
     var root=$('#presentation-hub');
     var recentHost=$('#presentation-hub-recent'),allHost=$('#presentation-hub-all');
     if(!root||!recentHost||!allHost) return;
+    /* A CLOSED LIBRARY IS NOT DRAWN (2026-10-09, speed): every deck
+       opened, renamed, pinned or saved rebuilt every row of a dialog
+       that was not on screen. openPresentationHub draws it as it opens,
+       and every change made while it is open still redraws it here. */
+    if(root.hidden) return;
     recentHost.innerHTML='';allHost.innerHTML='';
     var q=hubQuery();
     var recent=savedRecentPresentationNames().filter(function(p){
@@ -2556,8 +2652,16 @@
     host.appendChild(w);
     return w;
   }
+  /* A CLOSED DRAWER IS NOT DRAWN (2026-10-09, speed). Every deck opened
+     and every talk started redrew it -- each open deck's summary, and
+     the version list read from IndexedDB and formatted -- for a drawer
+     nobody could see: 55 ms of Start show at 4x. A hidden one is drawn
+     when it opens (openDeckPresentationDrawer, and barApply's docked
+     bar), which is the only time its rows can be read or clicked. */
   function renderDeckPresentationDrawer(){
     var host=$('#deck-pres-list');if(!host) return;
+    var dr=$('#deck-pres-drawer');
+    if(dr&&dr.hidden) return;
     var c=barCfg();
     host.innerHTML='';
     function row(cls,icon,name,kind,title,click){
@@ -2758,7 +2862,6 @@
   function openDeckPresentationDrawer(){
     var d=$('#deck-pres-drawer');
     if(!d||mode!=='view') return;
-    renderDeckPresentationDrawer();
     /* T482: a POP-UP is on the overlay owner's stack, like every menu:
        File opened underneath it and both stood open (2026-09-15
        review); opening File closes it now, and Escape and an outside
@@ -2766,6 +2869,8 @@
     if(!barDocked()&&typeof overlayShow==='function')
       overlayShow($('#deck-pres-open')||null,d);
     else d.hidden=false;
+    /* drawn as it opens: a closed drawer is never kept up to date */
+    renderDeckPresentationDrawer();
     drawerDoors().forEach(function(b){b.setAttribute('aria-expanded','true');});
   }
   /* T382: THE DRAWER SLIDES OUT AT THE LEFT EDGE while presenting, the
@@ -2965,6 +3070,17 @@
   }
   function choosePresentation(nm){
     var A=window.SemApp||{};
+    /* GOING BACK TO A DECK IS NOT OPENING IT AGAIN (2026-10-09, speed).
+       Its tab, Home's Recent or the library, with the deck on screen a
+       moment ago still open in its tab and only hidden behind a notebook
+       or Home, reopened it from scratch: the undo history went, and the
+       strip and the slide were rebuilt from nothing. That is T465's
+       resume -- the same editing session, the undo stack kept -- which
+       the picker's way back already takes. A deck closed with its X has
+       left the open list, and comes back fresh, as before; a pick still
+       running is dropped exactly as openDeck's fresh door drops one. */
+    var back=(nm===pres.name)&&deckEl.hidden&&mode==='edit'
+      &&rawOpenNames().indexOf(nm)>=0;
     if(nm!==pres.name){
       if(A.exitStyling) A.exitStyling();   /* leave any open custom view */
       lsSet(PFX+'last',nm);
@@ -2975,6 +3091,7 @@
     /* a custom view is edited in the document; a deck on the slide stage */
     if(isViewPres(pres)){openCustomView();return;}
     if(isColPres(pres)){openCollection(nm);return;}   /* T606 */
+    if(back){dropPick();openDeck('edit',true);return;}
     openDeck('edit');   /* land straight in the slide editor */
   }
   function newBlankPresentation(){

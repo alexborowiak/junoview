@@ -649,6 +649,7 @@
     }
   }
   function registerShell(stem,data){
+    deckViewChanged();   /* its cards are what a frame resolves to */
     Object.keys(ITEMS).forEach(function(k){
       if(ITEMS[k].nb===stem) delete ITEMS[k];});
     SHELLITEMS[stem]=[];
@@ -669,6 +670,7 @@
     });
   }
   function unregisterShell(stem){
+    deckViewChanged();
     Object.keys(ITEMS).forEach(function(k){
       if(ITEMS[k].nb===stem) delete ITEMS[k];});
     delete SHELLITEMS[stem];
@@ -1026,13 +1028,77 @@
     if(pres&&pres.name===name) return pres;
     return loadDraft(name)||savedByName(name)||null;
   }
+  /* WHAT A LIST NEEDS TO KNOW ABOUT A DECK IS NOT THE DECK (2026-10-09,
+     speed). Every tab, every library and Home row and the drawer asked
+     presentationByName for each deck it listed -- a whole draft parsed
+     and normalised, or every notebook deck deep-copied (allSaved) --
+     two or three times a row, to read its kind, page, folder and slide
+     count, on every deck opened, closed or switched to. presFacts reads
+     the same deck presentationByName would return and keeps only those
+     facts: memoised on the stored draft string itself (every write
+     replaces it), and read straight off the saved list, which is never
+     copied for it. Read-only, for listing; presentationByName stays the
+     door for anything that uses the deck. */
+  var presFactsMemo={};
+  function presFactsOf(p){
+    return {name:p.name,page:p.page||'',kind:p.kind||'',
+      slides:(p.slides||[]).length,folder:p.folder||'',
+      items:Array.isArray(p.items)?p.items.length:0};
+  }
+  /* the saved deck allSaved() would list under this name, uncopied --
+     the project's first, then a notebook's, whose clash with a name
+     already taken is listed as "name (notebook)" exactly as there */
+  function savedRawByName(name){
+    var seen={},i,p,n;
+    for(i=0;i<projectPres.length;i++){
+      p=projectPres[i];
+      if(p.name===name) return p;
+      seen[p.name]=1;
+    }
+    for(i=0;i<nbPres.length;i++){
+      p=nbPres[i];n=p.name;
+      if(seen[n]) n=p.name+' ('+p.origin+')';
+      if(seen[n]) continue;
+      if(n===name) return p;
+      seen[n]=1;
+    }
+    return null;
+  }
+  /* allSaved()'s names, in its order, with nothing copied */
+  function savedNameList(){
+    var out=[],seen={};
+    projectPres.forEach(function(p){out.push(p.name);seen[p.name]=1;});
+    nbPres.forEach(function(p){
+      var n=p.name;
+      if(seen[n]) n=p.name+' ('+p.origin+')';
+      if(seen[n]) return;
+      out.push(n);seen[n]=1;
+    });
+    return out;
+  }
+  function presFacts(name){
+    if(pres&&pres.name===name) return presFactsOf(pres);
+    var raw=draftGet(name);
+    if(raw){
+      var m=presFactsMemo[name];
+      if(!m||m.raw!==raw){
+        var d=loadDraft(name);
+        m=presFactsMemo[name]={raw:raw,f:d?presFactsOf(d):null};
+      }
+      if(m.f) return m.f;
+    } else delete presFactsMemo[name];
+    var s=savedRawByName(name);
+    if(!s) return null;
+    var f=presFactsOf(s);f.name=name;
+    return f;
+  }
   function presentationSummary(name){
-    var p=presentationByName(name);
+    var p=presFacts(name);
     if(!p) return null;
     var w=deckWhere(name),m=deckMeta(name);
-    return {name:name,slides:((p.slides)||[]).length,
+    return {name:name,slides:p.slides,
       poster:/^a\d/.test(String(p.page||'')),view:isViewPres(p),
-      col:isColPres(p),items:isColPres(p)?(p.items||[]).length:0,
+      col:isColPres(p),items:isColPres(p)?p.items:0,
       /* T483: a deck whose home IS this browser is not an "unsaved
          draft" -- Home tagged every browser-kept deck DRAFT */
       /* T598: nor is a deck kept in a file (the browser copy always
@@ -1154,7 +1220,7 @@
     /* T435: the pinned ones first, then the rest in recent order */
     var pins=pinnedPresentationNames();
     names=pins.concat(names.filter(function(n){return pins.indexOf(n)<0;}));
-    return names.filter(function(name){return !!presentationByName(name);})
+    return names.filter(function(name){return !!presFacts(name);})
       .map(function(name){
         var p=presentationSummary(name);
         if(p) p.pinned=pins.indexOf(name)>=0;
@@ -1228,7 +1294,7 @@
     return Array.isArray(names)?names:[];
   }
   function openPresentationNames(){
-    return rawOpenNames().filter(function(n){return !!presentationByName(n);});
+    return rawOpenNames().filter(function(n){return !!presFacts(n);});
   }
   function noteSessionOpen(name){
     if(!name) return;
@@ -1623,6 +1689,16 @@
      change while this still says what it said when it was built (see
      filmMoveMark, 55-sections-and-strip.js) */
   var filmGen=0;
+  /* ...and bumped by everything ELSE that changes what a slide draws
+     without being an edit: a notebook opened, reloaded or closed (its
+     figures are what the frames show), an embedded copy stored, a
+     version's card arriving (dropFrameCache, registerShell and
+     unregisterShell bump it, and the hidden-deck branches of their
+     callers with them). A deck hidden behind a notebook skips the
+     refresh such a change asks for, so the way back (setUIMode's strip,
+     filmStampKey) reuses what it drew only while this has not moved. */
+  var deckViewGen=0;
+  function deckViewChanged(){deckViewGen++;}
   /* WHETHER THE DECK HAS CHANGED SINCE A SAVE WAS SENT is this counter,
      not a re-serialisation (2026-10-09). The save path used to deep-copy
      and stringify the deck twice per save to compare it with itself --
@@ -2207,6 +2283,7 @@
   /* drop cached frame nodes for one notebook stem, one full ref, or all
      (both key shapes are prefixes of 'stem::anchor::part') */
   function dropFrameCache(stemOrRef){
+    deckViewChanged();   /* a frame may draw differently from now on */
     if(stemOrRef==null){frameNodeCache={};return;}
     var pfx=stemOrRef+'::';
     Object.keys(frameNodeCache).forEach(function(k){
@@ -2439,6 +2516,7 @@
         verCards[pkey+'::'+an]=(j.cards||{})[an]||null;
         delete pend[an];
       });
+      deckViewChanged();   /* a locked frame can be drawn now */
       var l=stage.querySelector('.annot-layer');
       var s=pres.slides[cur];
       if(l&&s&&!deckEl.hidden){renderAnnots(l,s);paintSel(l);}
