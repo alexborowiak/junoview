@@ -1100,7 +1100,10 @@
       :'';
     stage.classList.toggle('zoomed',w>aw+1||h>ah+1);
   }
-  function applyZoom(){
+  /* `rendering`: renderSlide is the caller, and paints the furniture
+     itself once the annots are in -- painting it here first only to be
+     torn down a moment later cost a forced layout per slide change */
+  function applyZoom(rendering){
     if(deckEl.hidden) return;
     var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
     if(mode==='edit'){
@@ -1120,10 +1123,13 @@
         /* the word is carried on the control itself: a bare "4%" between a
            minus and a plus is honest (an A0 page really is shown at about
            4%) but says nothing about WHAT is 4% */
-        zl.textContent='Zoom '+pct+'%';
-        zl.title=deckZoom
+        /* written only when it changed: a rewritten label is a new text
+           node to restyle and lay out again, on every slide change */
+        if(zl.textContent!=='Zoom '+pct+'%') zl.textContent='Zoom '+pct+'%';
+        var ztt=deckZoom
           ? 'Click to fit the whole page in the window'
           : 'Fitted to the window — click to re-fit after scrolling';
+        if(zl.title!==ztt) zl.title=ztt;
       }
     } else {
       /* playback letterboxes to the page — EVERY page, 16:9 included. It
@@ -1152,7 +1158,7 @@
     }
     /* the furniture is sized in page percentages too, so it has to be
        re-measured whenever the page changes size */
-    if(s0) paintFurniture(slideEl,cur);
+    if(s0&&!rendering) paintFurniture(slideEl,cur);
     syncGuides();   /* rulers and grid track whatever size the page ended up */
   }
   function setZoom(z){deckZoom=z;applyZoom();}

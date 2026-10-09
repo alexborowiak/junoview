@@ -335,7 +335,7 @@ def test_the_clock_starts_and_stops_where_present_mode_does(out):
             "presStart=Date.now();") in out
     assert "else if(endingTalk){\n      rehStop();lateFrom=-1;" in out
     assert "rehSlideChanged();" in out
-    assert out.index("rehSlideChanged();") < out.index("    refresh();\n"
+    assert out.index("rehSlideChanged();") < out.index("    refreshNav();\n"
                                                       "    playFlip();")
     # pausing the presenter clock pauses the rehearsal with it
     assert "presPauseAt=Date.now();rehPause();" in out

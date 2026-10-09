@@ -995,7 +995,7 @@
         }
         if(!blocked){vis=true;break;}
       }
-      g.hidden=!vis;
+      if(g.hidden!==!vis) g.hidden=!vis;   /* a same-value write is still a mutation */
     });
     /* A CONTEXTUAL TAB, and what happens when its reason goes away. A
        ribbon layout may put every object control on a tab of its own —
@@ -1062,9 +1062,12 @@
         while(buf.length>=2) pairs.push([buf.shift(),buf.shift()]);
         buf.length=0;
       }
-      [].slice.call(row.children).forEach(function(c){
-        c.classList.remove('rbn-odd');
-        c.classList.remove('rbn-fit');
+      /* the classes are worked out first and written once, at the end:
+         taking rbn-odd/rbn-fit off every cell and putting most of them
+         straight back restyled each of them on every refit for nothing
+         (2026-10-08, "clicking on things is super duper slow") */
+      var kids=[].slice.call(row.children);
+      kids.forEach(function(c){
         /* T365: `.rbn-hid` is how a customised ribbon layout hides a
            control (applyRibbonPrefs; deck.css makes it
            display:none!important). It is not the `hidden` attribute,
@@ -1105,13 +1108,17 @@
          segments; stretching a plain button to that is the "why is tidy
          page huge?" of 2026-09-03, so a pair holding one is left alone
          and the markup gives such runs a column of their own instead. */
+      var fit=[];
       pairs.forEach(function(p){
-        if(rbnCanFit(p[0])&&rbnCanFit(p[1])){
-          p[0].classList.add('rbn-fit');p[1].classList.add('rbn-fit');}
+        if(rbnCanFit(p[0])&&rbnCanFit(p[1])) fit.push(p[0],p[1]);
       });
       /* ...and the odd one out fills the band rather than hanging at
          the top of it with a hole underneath */
-      if(n%2===1&&last) last.classList.add('rbn-odd');
+      var odd=(n%2===1&&last)?last:null;
+      kids.forEach(function(c){
+        c.classList.toggle('rbn-fit',fit.indexOf(c)>=0);
+        c.classList.toggle('rbn-odd',c===odd);
+      });
     });
   }
   /* T585: a drawn menu option that is only POINTED AT applies as a
@@ -3973,8 +3980,12 @@
       var how=(t==='text'||t==='cell'||t==='table')
         ?'Drag to draw, or click for the usual size'
         :'Drag on '+pw+' to draw it';
-      stc.innerHTML='<span><b>Drawing: '+esc(word)+'</b></span>'
+      var drawing='<span><b>Drawing: '+esc(word)+'</b></span>'
         +'<span>'+esc(how)+'</span>';
+      /* only when it changes: every Escape re-arms select, and the same
+         words written again are still a change for the ribbon's fit to
+         re-read (2026-10-08) */
+      if(stc.innerHTML!==drawing) stc.innerHTML=drawing;
     }
     if(typeof txStripSync==='function') txStripSync();
     /* THE DRAWING GROUP FOLLOWS THE TAB THAT ARMED THE TOOL (T220).

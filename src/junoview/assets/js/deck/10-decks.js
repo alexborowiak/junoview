@@ -1398,8 +1398,13 @@
   /* T494: ...and WHICH decks, by name, so the readout can tell a deck
      merely switched to from the one that was worked on */
   var editedDecks={};
+  /* bumped by every edit: the strip moves only its mark on a slide
+     change while this still says what it said when it was built (see
+     filmMoveMark, 55-sections-and-strip.js) */
+  var filmGen=0;
   function deckEdited(){return !!(pres&&editedDecks[pres.name]);}
   function markDirty(quiet){
+    filmGen++;
     /* T409: a committed edit to a clone reaches its clones FIRST, so
        the history entry and the draft below hold the synced deck */
     if(!quiet&&typeof cmpFollowSel==='function') cmpFollowSel();
@@ -2381,8 +2386,17 @@
   var SW_REF_H=720;
   var SW_DEFAULT=3;
   function swOf(a){return (a&&a.sw!=null)?a.sw:SW_DEFAULT;}
+  /* the layer's height -- measured ONCE per render while renderAnnots
+     is drawing it (see ONE MEASURE OF THE PAGE there), and live at any
+     other time */
+  function layerH(layer){
+    var p=layer._hPass;
+    if(!p) return layer.getBoundingClientRect().height||0;
+    if(!p.h) p.h=layer.getBoundingClientRect().height||0;
+    return p.h;
+  }
   function pageScale(layer){
-    var h=layer?(layer.getBoundingClientRect().height||0):0;
+    var h=layer?layerH(layer):0;
     return (h||SW_REF_H)/SW_REF_H;
   }
   function strokePx(a,layer){

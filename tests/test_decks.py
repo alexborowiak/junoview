@@ -183,7 +183,7 @@ def test_no_notebook_block_leads_the_left_column(out):
     assert "bic('reload')+' Refresh all'" not in out
     assert "Back to all notebooks" not in out
     # the builder column renders without it
-    assert "    renderPresRow();renderControls();renderFilm();" in out
+    assert "    renderPresRow(true);renderControls();renderFilm();" in out
     # the lock verbs did not go with it: same words, in the Update menu
     for label in ("Lock all figures", "Unlock all", "Load locked versions"):
         assert label in out, label

@@ -760,7 +760,7 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # sized in percent of PAGE HEIGHT, resolved to px. Left as a CSS
     # percentage it resolved against the parent's font size instead, so a
     # 12% watermark came out under 2px and was invisible (found live)
-    assert "var ph=slideEl.getBoundingClientRect().height||720;" in out
+    assert "if(!ph) ph=slideEl.getBoundingClientRect().height||720;" in out
     assert "wm.style.fontSize=px(w.size,12);" in out
     # behind the content, never over it
     assert "slideEl.insertBefore(wm,slideEl.firstChild);" in out
@@ -3435,7 +3435,9 @@ def test_the_slide_mark_counts_the_clicks_the_space_bar_will_take(out):
     """
     assert "var nbuild=slideStops(s);" in out
     assert "' to walk this slide'" in out
-    assert "'\\nOpen Insert \u25b8 Animations to see the order'" in out
+    # (the tab is Animation now; the live mark says so too)
+    assert "'\\nOpen Animation to see the order');" in out
+    assert "Insert \u25b8 Animations" not in out
     # the weaker count, and the retired door, are both gone from the mark
     assert "var nbuild=slideBuildSteps(s).count;" not in out
     assert "Animate \u25b8 Timeline" not in out

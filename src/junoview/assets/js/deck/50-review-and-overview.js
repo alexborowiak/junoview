@@ -1220,7 +1220,7 @@
     /* ...and the time so far belongs to the slide you are LEAVING, which
        is why this is here rather than after the render (T29) */
     rehSlideChanged();
-    refresh();
+    refreshNav();
     playFlip();
     /* T564: a recording run starts the next slide's take; otherwise
        the slide that arrived speaks, if it has narration */
@@ -1596,6 +1596,7 @@
     var editing=!deckEl.hidden;
     presentationTabNames(editing).forEach(function(nm){
       top.appendChild(presItem(nm,savedNames,editing,true));});
+    presTabsTop=$$('.top-pres-tab',top);presTabsTopKey=presTabsInputs();
     if(APP.refreshOpenTabsRow) APP.refreshOpenTabsRow();
   }
   function renderPresTabs(){
@@ -1614,12 +1615,97 @@
       none.textContent='nothing open';
       presstrip.appendChild(none);
     }
+    presTabsSide=[].slice.call(presstrip.childNodes);
+    presTabsSideKey=presTabsInputs();
     renderTopPresTabs();
     /* T606: a collection's feed closes with its tab */
     if(typeof colSync==='function') colSync();
     /* ...and re-applied, now the rail rows are back (T75). */
     var A2=window.SemApp;
     if(A2&&typeof A2.railFilter==='function') A2.railFilter();
+  }
+  /* ---- A SLIDE CHANGE DOES NOT REBUILD THE TABS (2026-10-08) ---------
+     (user: "the slide changing and the clicking on things is super duper
+     slow".) renderCreate runs on every slide change, and renderPresRow
+     with it, and that rebuilt the side list and the top tabs from
+     scratch: every open deck's draft parsed several times over, the
+     notebook decks deep-copied, and a forced layout in keepTabInView --
+     5-9ms a change here with one to four decks open, several times that
+     on a laptop. Not one tab says anything about the slide. So THAT call
+     (renderPresRow(true), from renderCreate) first compares what the
+     tabs are built FROM -- the stores themselves, read raw and compared
+     as they are, a draft or a record parsed only once it has changed --
+     with what each list's last build saw, and the built nodes with where
+     it left them, and rebuilds only when something differs. Every other
+     caller still rebuilds outright.
+     Everything presItem and presentationTabNames read is in the key:
+     the deck on screen (and its page and kind), whether the editor is
+     up, the open list, each open deck's draft and file, the saved decks'
+     names, homes and kinds, the deck records, the default home, and
+     what a custom view or collection lights its tab by. */
+  var presTabsSideKey=null,presTabsTopKey=null,presTabsSide=[],presTabsTop=[];
+  var presTabsDraft={raw:null,ok:false};
+  /* the deck on screen's draft is rewritten after every edit, and its
+     tab only asks whether there is one that loads -- asked once per
+     write, not once per change */
+  function presTabsDraftOk(name){
+    var raw=draftGet(name);
+    if(raw==null) return false;
+    if(presTabsDraft.raw!==raw) presTabsDraft={raw:raw,ok:!!loadDraft(name)};
+    return presTabsDraft.ok;
+  }
+  /* ...and the deck records are rewritten with an `edited` time on every
+     draft write; a tab reads only a record's file and home (deckWhere) */
+  var presTabsMeta={raw:null,all:{}};
+  function presTabsInputs(){
+    var A=window.SemApp||{},cl=document.body.classList;
+    var on=pres&&pres.name,metaRaw=lsGet(DECK_META_KEY);
+    if(presTabsMeta.raw!==metaRaw)
+      presTabsMeta={raw:metaRaw,all:deckMetaAll()};
+    var k=[pres,on,pres&&pres.page,pres&&pres.kind,deckEl.hidden,
+      ssGet(OPEN_PRES_KEY),cl.contains('styling'),cl.contains('welcoming'),
+      A.active,(A.cols||[]).join('\n'),
+      (typeof defaultSaveTarget==='function')?defaultSaveTarget():'',
+      projectPres,nbPres,projectPres.concat(nbPres).map(function(p){
+        return [p.name,p.origin||'',p.page||'',p.kind||''].join('\u0001');
+      }).join('\u0002')];
+    rawOpenNames().concat(on?[on]:[]).forEach(function(n){
+      var h=(typeof fileHandles!=='undefined'&&fileHandles)
+        ?fileHandles[n]:null;
+      var m=presTabsMeta.all[n]||{};
+      k.push(n,n===on?presTabsDraftOk(n):draftGet(n),h,h&&h.name,
+        m.file,m.home);
+    });
+    return k;
+  }
+  function presTabsKeyIs(a,b){
+    if(!a||a.length!==b.length) return false;
+    for(var i=0;i<a.length;i++) if(a[i]!==b[i]) return false;
+    return true;
+  }
+  function presTabsSame(){
+    var top=$('#top-tabstrip');
+    if(!presstrip||!top) return false;
+    /* a deck tab holding the keyboard is rebuilt as it always was, which
+       hands the keyboard back to the slide (Tab, Enter work there) */
+    var ae=document.activeElement;
+    if(ae&&ae.closest&&ae.closest('.top-pres-tab,#presstrip')) return false;
+    var k=presTabsInputs();
+    if(!presTabsKeyIs(presTabsSideKey,k)||!presTabsKeyIs(presTabsTopKey,k))
+      return false;
+    if(!presTabsKeyIs(presTabsSide,[].slice.call(presstrip.childNodes)))
+      return false;
+    return presTabsTop.every(function(t){return t.parentNode===top;})
+      &&$$('.top-pres-tab',top).length===presTabsTop.length;
+  }
+  /* the rebuild kept the tab on screen in view (keepTabInView); so does
+     a skipped one, measured with the frame instead of forcing a layout
+     in the middle of the change */
+  var presTabsViewFrame=0;
+  function presTabsKeepInView(){
+    if(presTabsViewFrame||!APP.keepTabInView) return;
+    presTabsViewFrame=requestAnimationFrame(function(){
+      presTabsViewFrame=0;APP.keepTabInView();});
   }
   /* the rail's Folder row opens the library's folder form: a folder is
      made where folders are shown */
@@ -3136,18 +3222,24 @@
     if(typeof askWhereToSave==='function') askWhereToSave();
   }
 
-  function renderPresRow(){
-    var lbl=$('#pres-current');
-    if(lbl) lbl.textContent=pres.name||'(unnamed)';
+  function renderPresRow(slideOnly){
+    var lbl=$('#pres-current'),nm=pres.name||'(unnamed)';
+    if(lbl&&lbl.textContent!==nm) lbl.textContent=nm;
     var inp=$('#pres-name');
     if(document.activeElement!==inp&&inp.value!==pres.name)
       inp.value=pres.name;
+    /* renderCreate's call: skipped when no tab would change (above) */
+    if(slideOnly&&presTabsSame()){presTabsKeepInView();return;}
     renderPresTabs();
   }
   function renderControls(){
     syncFurnBtns();updateCropLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay,#layout-menu-grid .lay')
+    /* each grid by its id: a selector LIST misses the id fast path and
+       walked the whole page, notebook and all, on every slide change */
+    var lays=['#layout-row','#layout-menu-grid'].map(function(id){
+      var g=$(id);return g?$$('.lay',g):[];});
+    lays[0].concat(lays[1])
       .forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',

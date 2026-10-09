@@ -1349,7 +1349,7 @@
     var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp[data-tab]',bar).forEach(function(g){
       if(g.dataset.tab===t) g.removeAttribute('data-off');
-      else g.setAttribute('data-off','1');
+      else if(g.getAttribute('data-off')!=='1') g.setAttribute('data-off','1');
     });
   }
   function applyTab(){
@@ -1562,14 +1562,116 @@
   /* Content and available width determine a fit; selection highlights do
      not. Reuse the last arrangement before unfolding and measuring it. */
   function ribbonFitKey(bar){
-    return [bar.clientWidth,document.body.className,
-      deckEl.classList.contains('rbn-side'),
-      window.getComputedStyle(bar).font,
-      Array.from(bar.querySelectorAll(
+    return ribbonFitHead(bar,true)+'\n'+ribbonFitShape(bar);
+  }
+  /* THE KEY WITHOUT ITS LAYOUT (2026-10-08, user: "the clicking on things
+     is super duper slow"). The key was every group's words -- ~50KB --
+     rebuilt two or three times a click, and its clientWidth and computed
+     font were the reads that forced a style and layout pass over a ribbon
+     the selection had just changed -- which the replay then changed again
+     and laid out a second time. So it comes in two parts:
+     - the SHAPE (the bar's contents, the body's classes, the side rail)
+       needs neither, and is kept until something in the bar changes it.
+       A MutationObserver says so, read synchronously through
+       takeRecords(); a write of the value an attribute or a text already
+       had is not a change.
+     - the HEAD (width and font) is read for real at the end of every fit.
+       When the shape has not moved, it is trusted only while nothing that
+       could move it has happened: the bar's ResizeObserver and the
+       window's resize clear it, and the classes and inline styles of the
+       page, the deck and the bar are its signature. When the shape HAS
+       moved there is no early way out anyway, so the last head is only
+       the guess the memo is looked up by: a replay re-reads both before
+       it is believed (T539's own check), and a wrong guess costs a climb,
+       never a wrong row. */
+  var ribbonShapeObs=null,ribbonShapeBar=null,ribbonShapeVal=null;
+  var ribbonW=null;
+  var RBN_SHAPE_CLS=['rbn-grp','rbn-cell','strip-frame','rbn-hid'];
+  function ribbonShapeCls(v){
+    var t=String(v||'').split(/\s+/);
+    return RBN_SHAPE_CLS.map(function(c){return t.indexOf(c)>=0;}).join();
+  }
+  /* the words of a node list, or null if it holds anything but words */
+  function ribbonListText(list){
+    var s='';
+    for(var i=0;i<list.length;i++){
+      if(list[i].nodeType!==3) return null;
+      s+=list[i].data;
+    }
+    return s;
+  }
+  function ribbonShapeSeen(recs){
+    /* judged by where each thing ENDS, not by every step on the way: a
+       readout hidden and shown again inside one refresh is no change.
+       The first record of an attribute holds what it was before; the
+       first rewrite of a node's words (textContent=, no sibling either
+       side) took away all of its children, so what it removed is what
+       the node said before. */
+    var seen=new Map(),words=[];
+    function first(t,k){
+      var s=seen.get(t);
+      if(!s) seen.set(t,s={});
+      if(s[k]) return false;
+      s[k]=1;return true;
+    }
+    for(var i=0;i<recs.length&&ribbonShapeVal!==null;i++){
+      var r=recs[i],t=r.target;
+      if(r.type==='attributes'){
+        var k=r.attributeName;
+        if(!first(t,'@'+k)) continue;
+        var now=t.getAttribute(k);
+        if(now===r.oldValue) continue;
+        if(k==='class'&&ribbonShapeCls(now)===ribbonShapeCls(r.oldValue)) continue;
+      } else if(r.type==='characterData'){
+        if(!first(t,'#data')||t.data===r.oldValue) continue;
+      } else {
+        var gone=ribbonListText(r.removedNodes);
+        if(gone!==null&&ribbonListText(r.addedNodes)!==null){
+          if(!first(t,'#text')) continue;
+          if(!r.previousSibling&&!r.nextSibling){words.push([t,gone]);continue;}
+        }
+      }
+      ribbonShapeVal=null;
+    }
+    for(var j=0;j<words.length&&ribbonShapeVal!==null;j++)
+      if(words[j][0].textContent!==words[j][1]) ribbonShapeVal=null;
+  }
+  function ribbonFitShape(bar){
+    if(ribbonShapeBar!==bar){
+      if(ribbonShapeObs) ribbonShapeObs.disconnect();
+      ribbonShapeObs=null;ribbonShapeBar=bar;ribbonShapeVal=null;
+      if(window.MutationObserver){
+        ribbonShapeObs=new MutationObserver(ribbonShapeSeen);
+        ribbonShapeObs.observe(bar,{subtree:true,childList:true,
+          characterData:true,characterDataOldValue:true,
+          attributes:true,attributeOldValue:true,
+          attributeFilter:['id','hidden','data-off','class','data-say']});
+      }
+    }
+    if(ribbonShapeObs) ribbonShapeSeen(ribbonShapeObs.takeRecords());
+    else ribbonShapeVal=null;
+    if(ribbonShapeVal===null)
+      ribbonShapeVal=Array.from(bar.querySelectorAll(
         '.rbn-grp,.rbn-cell,.strip-frame,[hidden],[data-off],.rbn-hid')).map(function(el){
         return [el.id,el.hidden,el.getAttribute('data-off'),
           el.classList.contains('rbn-hid'),el.getAttribute('data-say'),el.textContent].join('|');
-      }).join('\n')].join('\n');
+      }).join('\n');
+    return [document.body.className,
+      deckEl.classList.contains('rbn-side'),ribbonShapeVal].join('\n');
+  }
+  function ribbonHeadSig(bar){
+    var de=document.documentElement,b=document.body;
+    return [de.className,de.getAttribute('style'),b.getAttribute('style'),
+      deckEl.className,deckEl.getAttribute('style'),deckEl.hidden,
+      bar.className,bar.getAttribute('style'),bar.hidden].join('|');
+  }
+  function ribbonFitHead(bar,fresh){
+    var sig=ribbonHeadSig(bar);
+    if(!fresh&&ribbonW&&ribbonW.bar===bar&&ribbonW.sig===sig) return ribbonW.head;
+    var w=bar.clientWidth,head=w+'\n'+window.getComputedStyle(bar).font;
+    /* a bar with no width (a hidden deck) is never the one trusted */
+    ribbonW=(window.ResizeObserver&&w)?{bar:bar,head:head,sig:sig}:null;
+    return head;
   }
   var ribbonFitFrame=null,qatFitFrame=null,guidesFitFrame=null;
   function scheduleRibbonFit(){
@@ -1596,7 +1698,14 @@
     /* a folded bar has no width to measure: scrollWidth would read 0 and
        the ladder would climb every rung for nothing */
     if(deckEl.classList.contains('rbn-fold')) return;
-    var fitKey=ribbonFitKey(bar);
+    var shape=ribbonFitShape(bar),last=bar._fitKey||'';
+    var nl=last.indexOf('\n'),head=null;
+    if(nl>=0) nl=last.indexOf('\n',nl+1);
+    /* nothing in the bar changed, so only its width or font can have */
+    if(nl>=0&&last.slice(nl+1)===shape) head=ribbonFitHead(bar);
+    /* the bar changed: look the memo up at the head last read */
+    else if(ribbonW&&ribbonW.bar===bar) head=ribbonW.head;
+    var fitKey=(head===null?ribbonFitHead(bar,true):head)+'\n'+shape;
     if(bar._fitKey===fitKey) return;
     /* T539: A STATE SEEN BEFORE IS REPLAYED, NOT RE-MEASURED. Selecting
        an object carries the ribbon to its contextual tab and deselecting
@@ -1609,6 +1718,8 @@
        through to the real climb. */
     var memo=ribbonFitMemo[fitKey];
     if(memo&&ribbonFitReplay(bar,memo,fitKey)) return;
+    /* the climb is kept under the width it is really judged at */
+    fitKey=ribbonFitHead(bar,true)+'\n'+shape;
     /* BEFORE anything is measured: a stale column count is a wrong width,
        so re-counting here is both the fix for a group that grew a control
        since the last count and the only way the density rungs below are
@@ -1767,7 +1878,18 @@
   function ribbonFitReplay(bar,m,key){
     if(deckEl.classList.contains('rbn-side')) return false;
     foldViewGroup(false);
-    rbnUnfoldAll();
+    /* A GROUP THAT ENDS FOLDED STAYS FOLDED (2026-10-08, "clicking on
+       things is super duper slow"). rbnUnfoldAll here unfolded every
+       group -- the compact choosers on every tab among them -- for most
+       to be folded straight back by the two calls below, rebuilding
+       their doors and moving their rows twice on every click. Those are
+       refreshed in place (rbnFoldRefresh); the rest unfold as before. */
+    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;
+    $$('.rbn-grp.rbn-folded',bar).forEach(function(g){
+      if((g.classList.contains('rbn-compact')&&!g.hidden)
+         ||m.folded.indexOf(g)>=0) rbnFoldRefresh(g);
+      else rbnUnfoldGroup(g);
+    });
     rbnFoldCompact();
     var cl=deckEl.classList;
     ribbonFitRungs().forEach(function(c){cl.toggle(c,m.rungs.indexOf(c)>=0);});
@@ -2057,6 +2179,13 @@
       body.scrollLeft+=e.deltaY;e.preventDefault();
     },{passive:false});
   }
+  function rbnFoldTitle(name,compact){
+    return compact
+      ?(name+' \u2014 click to choose. The current choice is on the '
+        +'button')
+      :(name+' \u2014 folded because the window is too narrow to show '
+        +'the whole row. Widen the window and it opens out again');
+  }
   function rbnFoldGroup(g){
     if(!g||g.classList.contains('rbn-folded')) return false;
     var row=null;
@@ -2092,11 +2221,7 @@
          has to wrap keeps its chevron on the last word rather than
          dropping it onto a line of its own ("Text sequence" / "\u25be") */
       +'<span>'+esc(name)+'\u00a0\u25be</span><span class="rbn-foldval"></span>';
-    btn.title=compact
-      ?(name+' \u2014 click to choose. The current choice is on the '
-        +'button')
-      :(name+' \u2014 folded because the window is too narrow to show '
-        +'the whole row. Widen the window and it opens out again');
+    btn.title=rbnFoldTitle(name,compact);
     /* T498: the live title, for the readout to put back after a dead spell */
     btn.setAttribute('data-title',btn.title);
     var menu=document.createElement('div');
@@ -2259,6 +2384,37 @@
     if(row) g.insertBefore(row,wrap);
     wrap.remove();
     g.classList.remove('rbn-folded');
+  }
+  /* WHAT REFOLDING WOULD HAVE GIVEN THE DOOR, without rebuilding it
+     (ribbonFitReplay keeps a group folded that it would only have
+     unfolded and folded straight back): the popover shut and the shelf
+     given up exactly as rbnUnfoldGroup and rbnShelfRestore would leave
+     them, and the name, title and readout read again as rbnFoldGroup
+     would write them */
+  function rbnFoldRefresh(g){
+    var wrap=null;
+    [].slice.call(g.children).forEach(function(c){
+      if(!wrap&&c.classList.contains('rbn-foldwrap')) wrap=c;});
+    if(!wrap) return;
+    if(rbnShelfFor===g&&(g.hidden||g.hasAttribute('data-off'))) rbnShelfClose();
+    var menu=wrap.querySelector('.rbn-foldmenu');
+    if(menu&&!menu.hidden) overlayHide(menu);
+    var btn=wrap.querySelector('.rbn-foldbtn');
+    if(btn){
+      var name=rbnGroupName(g)||'More';
+      var sp=btn.querySelector(':scope>span:not(.rbn-foldval)');
+      if(sp&&sp.textContent!==name+'\u00a0\u25be') sp.textContent=name+'\u00a0\u25be';
+      var t=rbnFoldTitle(name,g.classList.contains('rbn-compact'));
+      if(btn.getAttribute('data-title')!==t){
+        btn.title=t;btn.setAttribute('data-title',t);}
+      var ex=(rbnShelfFor===g)?'true':'false';
+      if(btn.getAttribute('aria-expanded')!==ex) btn.setAttribute('aria-expanded',ex);
+    }
+    if(rbnShelfFor===g){
+      var nm=$('#rbn-shelf-name'),w=rbnGroupName(g)||'Options';
+      if(nm&&nm.textContent!==w) nm.textContent=w;
+    }
+    rbnFoldReadout(g);
   }
   function rbnUnfoldAll(){
     /* T453: EVERY measuring pass unfolds the whole bar and folds it
@@ -2476,6 +2632,7 @@
       setZoom(Math.max(0.25,(deckZoom||1)/1.25));});
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
+      ribbonW=null;   /* the fit's trusted head (ribbonFitHead) */
       if(!deckEl.hidden){fitFilmMax();scheduleRibbonFit();scheduleQatFit();}});
     /* the ribbon's height CHANGES now (the contextual format groups
        leave the layout when hidden), and so does the page picker — any
@@ -2490,6 +2647,7 @@
          out, and never compacted again: the toolbar you saw was always
          full size and simply ran off the right-hand edge (2026-08-07). */
       if(et) new ResizeObserver(function(){
+        ribbonW=null;
         if(deckEl.hidden) return;
         scheduleRibbonFit();
       }).observe(et);
@@ -2700,9 +2858,33 @@
     syncPaneDock();
   }
   function paneHide(id){
-    var el=$('#'+id); if(el) el.hidden=true;
+    var el=$('#'+id);
+    /* ALREADY CLOSED IS NOTHING TO DO. applyPage closes the Versions
+       pane on every render of a deck slide, and writing `hidden` onto a
+       hidden pane is still a mutation: the observer below answered it
+       with a second syncPaneDock a tick later, so every slide change
+       re-fitted the page twice and re-rendered every item once more
+       (2026-10-08, user: "the slide changing ... is super duper slow").
+       Nothing docked or undocked, so the stage keeps its size -- unless
+       the strip already disagrees with the panes: a pane left open
+       through a talk still docks again on the way back to the editor,
+       which this call used to do in passing. */
+    if(el&&el.hidden){
+      paneSyncBtns();
+      if((!!dockedPane()&&mode==='edit')!==deckEl.classList.contains('pane-open'))
+        syncPaneDock();
+      return;
+    }
+    if(el) el.hidden=true;
     paneSyncBtns();
     syncPaneDock();
+  }
+  /* the open pane still in its default place, if any (syncPaneDock) */
+  function dockedPane(){
+    var docked=null;
+    $$('.selpane',deckEl).forEach(function(p){
+      if(!p.hidden&&p.style.right!=='auto') docked=p;});
+    return docked;
   }
   /* ---- one pane open at a time, and the stage makes room for it -------
      Every pane is an .selpane in the stage wrapper. Rather than have each
@@ -2714,9 +2896,8 @@
        moved somewhere else is one you have chosen to float — reserving a
        strip on the right for it would leave a gap beside nothing
        (2026-08-20). Drag it back to the edge, or reopen it, to re-dock. */
-    var docked=null;
-    $$('.selpane',deckEl).forEach(function(p){
-      if(!p.hidden&&p.style.right!=='auto') docked=p;});
+    var docked=dockedPane();
+    var was=paneDockState();
     /* reserve the width the pane ACTUALLY has: it is resizable, and a
        strip sized to the default would leave a widened pane over the
        page again */
@@ -2726,8 +2907,24 @@
     deckEl.classList.toggle('pane-open',!!docked&&mode==='edit');
     /* the page is fitted to the stage's width, so the stage changing size
        has to re-fit it — otherwise the slide keeps the size it had when
-       the pane was closed and the pane lands on top of it after all */
+       the pane was closed and the pane lands on top of it after all.
+       ...and ONLY then (2026-10-08, "really laggy again"): every slide
+       change hides the already-hidden Versions pane, the observer below
+       hears the write, and each call re-rendered every item on the slide
+       twice for a stage that had not moved. What the dock does to the
+       stage is the input: unchanged by this call and the same as the
+       last one fitted is no change. (applyZoom does nothing while the
+       deck is hidden or has no page, so neither counts as fitted.) */
+    var dock=paneDockState();
+    if(deckEl.hidden||!stage.querySelector('.slide')){paneDockWas=null;return;}
+    if(dock===was&&dock===paneDockWas) return;
+    paneDockWas=dock;
     applyZoom();
+  }
+  var paneDockWas=null;
+  function paneDockState(){
+    return [deckEl.classList.contains('pane-open'),
+      deckEl.style.getPropertyValue('--pane-w'),mode].join('|');
   }
   /* Five panes are opened from eight places between them, and one of them
      forgetting to dock would put us straight back to a pane covering the

@@ -2105,7 +2105,9 @@
      can ask for the arrows alone to be redrawn (redrawArrows). */
   function drawArrow(layer,s,a,i,svg,svgTop,defs,editing){
     var col=tokVal(a.color)||'#ff6b57';
-    var ends=arrowEnds(layer,s,a,i);
+    /* inside a render, measured up front with the rest (paintAnnots) */
+    var pre=layer._hPass&&layer._hPass.arrows;
+    var ends=(pre&&pre.ends[i])||arrowEnds(layer,s,a,i);
     var hs=headSize(a),sw=a.sw||3,swPx=strokePx(a,layer);
     /* a head is scaled by the LINE's width as well as its own size
        setting, so a fat arrow does not end in a pinhead.
@@ -2140,7 +2142,7 @@
       return 'url(#'+id+')';
     }
     var mEnd=mkHead('e',headEnd(a)),mStart=mkHead('s',headStart(a));
-    var lrA=layer.getBoundingClientRect();
+    var lrA=(pre&&pre.lr)||layer.getBoundingClientRect();
     var d=arrowPath(ends,a,lrA.width,lrA.height);
     var ln=document.createElementNS(AN_NS,'path');
     ln.setAttribute('d',d);
@@ -2598,6 +2600,10 @@
      commit -- see the note at its call site. */
   function fitTexts(layer,s,editing,kept){
     if(!layer||!s) return;
+    /* no box keeps a height, nothing to fit -- and nothing to restyle:
+       the class below re-styles every handle on the slide twice */
+    if(!(s.annots||[]).some(function(a){
+      return a&&a.k==='text'&&a.fh&&!a.hide;})) return;
     /* the selection's handles hang below a box (bottom:-7px, -16px on a
        small one) and scrollHeight counts them, so a selected box sized
        exactly to its fit line read as overflowing: flagged "does not
@@ -2828,7 +2834,24 @@
       a.k==='text'?textAt(s,a):null,
       cursor==null?null:stepShows(s,a)]);
   }
+  /* ONE MEASURE OF THE PAGE PER RENDER. Every text size and stroke
+     weight on a layer is a share of the layer's height (fontPx,
+     pageScale), and the render asked for that height item by item --
+     each time just after placing the item before, so each ask made the
+     browser style and lay out the page again: a forced layout per text
+     box or figure, on every slide change and every edit (2026-10-08,
+     user: "the slide changing and the clicking on things is super duper
+     slow"). A layer is position:absolute;inset:0, so nothing placed in
+     it can change its height: for the length of one render the first
+     measure is kept on the layer (layerH) and the rest read it back. A
+     render nested inside another keeps its own, and puts the outer one
+     back. */
   function renderAnnots(layer,s,incremental){
+    var was=layer._hPass;layer._hPass={h:0};
+    try{paintAnnots(layer,s,incremental);}
+    finally{layer._hPass=was;}
+  }
+  function paintAnnots(layer,s,incremental){
     /* the one funnel every slide render passes through, which makes it
        the only place identity has to be minted — see WHAT HAS THIS
        OBJECT LOOKED LIKE. Idempotent, and it re-mints a duplicate, so
@@ -3816,10 +3839,24 @@
     /* BEFORE the arrows: an attached endpoint is derived from where its
        target sits, and an anchored target has not finished moving until
        anchorFix has measured it */
+    /* ...and EVERY END MEASURED BEFORE ANY ARROW IS DRAWN. Drawing one
+       puts its paths and handles into the layer, so the next arrow's
+       measure laid the page out again: once per arrow, seven times for a
+       seven-step cycle (2026-10-08). Nothing an arrow draws moves an
+       item, so measuring first finds the same boxes; drawArrow reads
+       them back. */
+    var _pre={ends:{},lr:null};
     if(_anchorFixWanted) anchorFix(layer,s);
+    _arrows.forEach(function(i){
+      _pre.ends[i]=arrowEnds(layer,s,(s.annots||[])[i],i);});
+    if(_arrows.length){
+      _pre.lr=layer.getBoundingClientRect();
+      layer._hPass.arrows=_pre;
+    }
     _arrows.forEach(function(i){
       drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
     });
+    layer._hPass.arrows=null;
     /* The visible strokes live in svgTop. Attach it before the shared
        privacy/build passes query the layer; it is still the last child,
        so the z-order promise above is unchanged (T49). */

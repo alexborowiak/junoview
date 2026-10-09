@@ -65,8 +65,8 @@ def test_a_layout_tile_chooses_and_new_slide_adds(out):
     assert ("lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key)\n"
             "          ||layoutById('cell-text');") in out
     # the slide's own sweep leaves the strip alone
-    assert ("$$('#layout-row .lay,#layout-menu-grid .lay')\n"
-            "      .forEach(function(b){") in out
+    assert ("var lays=['#layout-row','#layout-menu-grid'].map(" in out
+            and "    lays[0].concat(lays[1])\n      .forEach(function(b){" in out)
     assert "newVersion(null,arr);" not in out
     assert ('aria-label="Layout for the next new slide: '
             'click one to choose it"') in out

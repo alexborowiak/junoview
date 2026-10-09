@@ -493,6 +493,7 @@
     if(APP.measureChrome) APP.measureChrome();
   }
   APP.refreshOpenTabsRow=refreshOpenTabsRow;
+  APP.keepTabInView=keepTabInView;
   APP.renderTabs=renderTabs;
   function activate(stem){
     if(!APP.shells[stem]) return;

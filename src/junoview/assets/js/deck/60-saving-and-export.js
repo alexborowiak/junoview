@@ -327,9 +327,23 @@
     var r=el.getBoundingClientRect();
     return r.width>0&&r.height>0;
   }
+  /* BY ID, ONE AT A TIME (2026-10-08, user: "the slide changing and the
+     clicking on things is super duper slow"). dlgTop runs on EVERY key
+     -- a slide change, a letter typed in a box -- and a selector LIST
+     misses the browser's id fast path: querySelectorAll(DLG_KEYED)
+     walked every element on the page, the notebook's thousands
+     included, ~4ms a key here and several times that on a laptop. One
+     id at a time is a lookup each; sorted back into document order it is
+     the same list, so the LAST shown is still the one on top. */
+  var DLG_IDS=DLG_KEYED.split(',');
   function dlgTop(){
-    var list=[].slice.call(document.querySelectorAll(DLG_KEYED))
-      .filter(dlgShown);
+    var list=[];
+    DLG_IDS.forEach(function(sel){
+      [].push.apply(list,document.querySelectorAll(sel));});
+    list.sort(function(a,b){
+      return (a.compareDocumentPosition(b)
+        &Node.DOCUMENT_POSITION_FOLLOWING)?-1:1;});
+    list=list.filter(dlgShown);
     return list.length?list[list.length-1]:null;
   }
   function dlgButton(d,which){

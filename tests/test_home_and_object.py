@@ -79,7 +79,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "['#layout-row','#layout-menu-grid','#layout-strip']" in out
     # the slide's own sweep leaves the strip alone since T218: the strip
     # lights the layout the NEXT slide takes
-    assert "$$('#layout-row .lay,#layout-menu-grid .lay')" in out
+    assert "var lays=['#layout-row','#layout-menu-grid'].map(" in out
     assert "if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();" in out
     for cid in ("hm-lay-ideas", "hm-lay-tidy", "hm-lay-arrs", "hm-lay-arrsave",
                 "hm-lay-give"):

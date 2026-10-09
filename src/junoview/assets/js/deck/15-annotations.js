@@ -632,8 +632,12 @@
        against the parent's FONT SIZE instead of the page, so a 12%
        watermark came out under 2px and was invisible (found live,
        2026-08-20). */
-    var ph=slideEl.getBoundingClientRect().height||720;
+    /* measured the first time a piece asks: a deck with no watermark,
+       header or footer -- most of them -- has nothing sized here, and
+       the measure was a forced layout on every slide change */
+    var ph=0;
     function px(pct,dflt){
+      if(!ph) ph=slideEl.getBoundingClientRect().height||720;
       return Math.max(1,ph*(pct==null?dflt:pct)/100).toFixed(2)+'px';
     }
     var w=pres.wmark;
@@ -744,8 +748,18 @@
       /* size the page BEFORE annots render, so % geometry, fonts and
          figure fits all read the final canvas dimensions */
       applyPage();
-      applyZoom();   /* every mode: playback letterboxes to the page too */
+      /* every mode: playback letterboxes to the page too. `true`: the
+         furniture is painted below, after the annots */
+      applyZoom(true);
       attachAnnots(slideEl,s);
+      /* the layer marks only selAnnot as it builds; the rest of a
+         surviving selection (its other members, a group's frame, the
+         small-item handles) is paintSel's. The deferred re-fit that used
+         to repaint it after every render is gone, so it is asked here */
+      if(mode==='edit'){
+        var selL=slideEl.querySelector('.annot-layer');
+        if(selL) paintSel(selL);
+      }
       /* T366: AN EMPTY SLIDE SAYS NOTHING. T61 put a paragraph on it
          -- "This slide is empty", how to insert an object, and a
          button -- which is a lecture printed on the one surface whose
@@ -2303,7 +2317,7 @@
      everybody hates actually is. Past the floor it stops and says so. */
   var FIT_MIN=0.62;
   function fontPx(layer,size){
-    var h=layer.getBoundingClientRect().height||600;
+    var h=layerH(layer)||600;
     /* NO legibility floor. Text is a percentage of the page height, and
        everything around it — boxes, figures, spacing — scales with the
        page. A 9px minimum stopped scaling while its box carried on

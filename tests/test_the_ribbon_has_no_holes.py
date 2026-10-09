@@ -62,16 +62,17 @@ def test_the_odd_cell_fills_the_band_instead_of_hanging_in_it():
     deck = assets.deck_js()
     # it is the LAST single-row cell that is alone, because the flow is
     # column-major: the count decides, and only an odd count leaves one
-    assert "      if(n%2===1&&last) last.classList.add('rbn-odd');" in deck
+    assert "      var odd=(n%2===1&&last)?last:null;" in deck
+    assert "        c.classList.toggle('rbn-odd',c===odd);" in deck
 
 
 def test_two_controls_sharing_a_column_share_its_width():
     css = assets.load("css/deck.css")
     assert ".rbn-row>.rbn-fit{justify-self:stretch;}" in css
     deck = assets.deck_js()
-    assert "        if(rbnCanFit(p[0])&&rbnCanFit(p[1])){" in deck
-    assert ("          p[0].classList.add('rbn-fit');"
-            "p[1].classList.add('rbn-fit');}") in deck
+    assert ("        if(rbnCanFit(p[0])&&rbnCanFit(p[1])) "
+            "fit.push(p[0],p[1]);") in deck
+    assert "        c.classList.toggle('rbn-fit',fit.indexOf(c)>=0);" in deck
 
 
 def test_a_joined_run_is_never_stretched_to_a_column():
@@ -120,8 +121,12 @@ def test_the_marks_are_cleared_before_they_are_set():
     """They are re-derived on every fit; a stale rbn-odd on a control that
     is no longer last would span a column that now has a partner."""
     deck = assets.deck_js()
-    assert "        c.classList.remove('rbn-odd');" in deck
-    assert "        c.classList.remove('rbn-fit');" in deck
+    # (2026-10-08: worked out first and written once, so a mark that is
+    # already right is not taken off and put back -- every cell is still
+    # set, which clears a stale one)
+    assert ("      kids.forEach(function(c){\n"
+            "        c.classList.toggle('rbn-fit',") in deck
+    assert "        c.classList.toggle('rbn-odd',c===odd);" in deck
 
 
 def test_a_spanning_control_resets_the_pairing():

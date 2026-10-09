@@ -2406,8 +2406,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix (review of T612): Ctrl+Shift+V in a box is words, Home > Paste closes the
 # box first, same-name notebooks are not bound, unplaceable pastes say why,
 # a newer figure Copy outranks a look, and GitHub links survive odd names.
-EXPECTED_MD5 = "9439cd2189936c998f8768ad6cac5cd0"
-EXPECTED_BYTES = 5283485
+# Speed round 1: a slide change moves the strip's mark instead of rebuilding it,
+# skips unchanged tabs, a hidden pane's re-fit and duplicate forced layouts; the
+# ribbon fit key is cached; selection repainted after a render.
+EXPECTED_MD5 = "f9de64f55546945187df6d5b663356cd"
+EXPECTED_BYTES = 5307339
 
 
 def _render_example() -> str:

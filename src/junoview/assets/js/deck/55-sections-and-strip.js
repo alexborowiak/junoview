@@ -355,6 +355,8 @@
   }
   function renderFilm(){
     var list=$('#film-list');
+    if(filmNav&&filmMoveMark(list)) return;
+    filmStamp=null;   /* a build that throws part-way is no base to move on */
     /* T412: THE STRIP STAYS WHERE YOU SCROLLED IT (2026-09-13, user:
        "Everytime you click a slide on the thumbnails, or add a slide
        or anything it always jumps and moves around the scroll
@@ -502,7 +504,7 @@
       var nbuild=slideStops(s);
       if(nbuild) mark('anim','▸'+nbuild,
         nbuild+(nbuild===1?' click':' clicks')+' to walk this slide'
-        +'\nOpen Insert ▸ Animations to see the order');
+        +'\nOpen Animation to see the order');   /* as syncFilmBuild says */
       /* (a hidden slide says "hidden" above; "not shown" would be the
          same fact twice) */
       if(skipped&&!isAlt&&!s.hide) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
@@ -545,7 +547,7 @@
           else {selAnnot=null;selSet=[];showFmt();}
           return;
         }
-        cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
+        cur=i;activePane=-1;selAnnot=null;selSet=[];refreshNav();});
       /* T228: NO CONTROLS ON THE ROW. Four buttons appeared over
          every slide on hover -- move up, move down, duplicate,
          delete -- on top of the thumbnail you were trying to click
@@ -562,6 +564,11 @@
     });
     list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */
     filmKeepCurrent(list);
+    var car=altRun(cur);
+    filmStamp={list:list,pres:pres,slides:pres.slides,
+      ids:pres.slides.slice(),key:filmStampKey(),cur:cur,
+      w:list.offsetWidth,   /* after filmKeepCurrent's layout: free */
+      only:!!(fold[cur]||(car&&cur>car.at&&!altOpen[car.gid]))};
     /* T318: the Home doors follow the slide you are ON. Synced here,
        at the end of the one repaint every change of `cur` goes through
        -- the strip click, the arrows, go(), undo -- rather than in
@@ -583,6 +590,68 @@
     if(rr.top>=lr.top&&rr.bottom<=lr.bottom) return;
     if(rr.top<lr.top) list.scrollTop-=(lr.top-rr.top);
     else list.scrollTop+=(rr.bottom-lr.bottom);
+  }
+  /* ---- A SLIDE CHANGE MOVES THE MARK, NOT THE STRIP ---------------------
+     (2026-10-08, user: "the desktop version of junoview is really laggy
+     again. The slide changing and the clicking on things is super duper
+     slow".) Every PageDown, arrow and thumbnail click came through
+     refresh() -> renderCreate() -> renderFilm(), which emptied the list
+     and rebuilt every row -- each thumbnail's miniDiagram, its figures,
+     tables and svg -- to move one class from one row to the next: a
+     third of the slide change on the 14-slide example, and it grows with
+     the deck. So a slide change (refreshNav) moves the mark, closes the
+     row menu, scrolls the row into view and syncs the Home doors, as the
+     rebuild did -- and ONLY when nothing the strip draws has changed
+     since it was built: the same deck and the same slide objects in the
+     same order, no markDirty since (filmGen: an edit of any kind, on any
+     slide, still rebuilds on the next slide change, exactly as before),
+     the same view (editing mode, headings or thumbnails, the cut,
+     Running late, open version groups, sections and their folds), the
+     same strip width, and no row on either side of the move that is
+     drawn only BECAUSE it is current (a folded section's peek, a closed
+     group's alternative). Anything else is the full rebuild. Every other
+     caller of renderFilm -- an edit, a fold, a reorder -- rebuilds as it
+     always has. */
+  var filmNav=false,filmStamp=null;
+  function filmStampKey(){
+    return [mode,filmMode(),activeCut(),lateFrom,filmGen,
+      JSON.stringify(altOpen),JSON.stringify(pres.sections||null)].join('|');
+  }
+  function filmMoveMark(list){
+    var st=filmStamp,sl=pres&&pres.slides;
+    if(!st||!list||st.list!==list||mode!=='edit'||st.pres!==pres
+       ||st.slides!==sl||!sl||st.ids.length!==sl.length) return false;
+    for(var k=0;k<sl.length;k++) if(st.ids[k]!==sl[k]) return false;
+    if(st.only&&cur!==st.cur) return false;
+    if(st.key!==filmStampKey()) return false;
+    /* a text box still open commits DURING this change (renderAnnots
+       flushes it), and a title's setter redraws the strip before its
+       markDirty is counted -- so while one is open, rebuild as before */
+    if(document.querySelector(
+      '[contenteditable="true"],[contenteditable="plaintext-only"]')) return false;
+    var was=list.querySelector('.film-row.current');
+    if(!was||+was.dataset.idx!==st.cur) return false;
+    var row=list.querySelector('.film-row[data-idx="'+cur+'"]');
+    /* no row: this slide is drawn only while current -- rebuild */
+    if(!row) return false;
+    /* read before anything is written, as the rebuild reads keepTop */
+    var keepTop=list.scrollTop,keepLeft=list.scrollLeft;
+    /* a strip resized since (the window, the panel) needs thumbnails
+       drawn at the new size */
+    if(list.offsetWidth!==st.w) return false;
+    if(row!==was){
+      was.classList.remove('current');row.classList.add('current');
+      /* T412's numbers, as the rebuild keeps them: the two rows change
+         height, and the browser's scroll anchoring would otherwise
+         nudge the strip by the difference */
+      list.scrollTop=keepTop;list.scrollLeft=keepLeft;
+    }
+    st.cur=cur;
+    var om=$('#film-menu'); if(om) om.remove();
+    filmKeepCurrent(list);
+    if(typeof syncHomeDoors==='function') syncHomeDoors();
+    if(typeof cutsSync==='function') cutsSync();
+    return true;
   }
   function clearFilmMarks(){
     $$('#film-list .film-row.drop-above,#film-list .film-row.drop-below,'
@@ -1091,7 +1160,7 @@
       e.stopPropagation();openMatchMenu(this);});
   })();
   function renderCreate(){
-    renderPresRow();renderControls();renderFilm();
+    renderPresRow(true);renderControls();renderFilm();
     syncFurnBtns();   /* the furniture toggles show their own state */
   }
   function moveSlide(i,d){
@@ -1423,6 +1492,12 @@
        and a reload restored the wrong slide. setHash is a no-op when
        nothing changed, and a slide move inside one deck never pushes. */
     if(!deckEl.hidden) routeSync();
+  }
+  /* refresh() for a change of `cur` and nothing else: the strip may then
+     move its mark instead of rebuilding (filmMoveMark) */
+  function refreshNav(){
+    filmNav=true;
+    try{refresh();}finally{filmNav=false;}
   }
   function routeSync(){
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
@@ -2090,7 +2165,11 @@
       st.setAttribute('aria-pressed',(r&&!isA)?'true':'false');
       /* T530: "Main" was a word with no verb -- the button MAKES a
          version the main one, and on the main one it says what it is */
-      st.innerHTML=bic('star')+' '+(isA?'Make main':'Main version');
+      var stLab=bic('star')+' '+(isA?'Make main':'Main version');
+      /* written only when it changes: rewritten on every slide change,
+         it dirtied the ribbon just before the fit check below measures
+         it, forcing a re-layout on every PageDown */
+      if(st._lab!==stLab){st.innerHTML=stLab;st._lab=stLab;}
       st.title=!r?'':(isA
         ?'Make this the main version \u2014 the talk, the arrows and every '
           +'export show it instead'
@@ -3007,7 +3086,7 @@
         var nn=cur+dd;
         if(nn>=0&&nn<pres.slides.length){
           e.preventDefault();
-          cur=nn;activePane=-1;selAnnot=null;selSet=[];refresh();
+          cur=nn;activePane=-1;selAnnot=null;selSet=[];refreshNav();
         }
       }
       /* Z spotlights whatever the pointer is over. Alt+click does the

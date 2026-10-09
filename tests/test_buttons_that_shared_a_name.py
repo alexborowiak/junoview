@@ -47,7 +47,7 @@ def test_rotate_and_arrange_say_what_they_do(out):
 
 
 def test_main_object_history_and_the_colour_doors(out):
-    assert "st.innerHTML=bic('star')+' '+(isA?'Make main':'Main version');" \
+    assert "var stLab=bic('star')+' '+(isA?'Make main':'Main version');" \
         in out
     assert "<span>Object history</span></button>" in out
     assert "((isText||kind==='cell')?'Text colour ▾'" in out
