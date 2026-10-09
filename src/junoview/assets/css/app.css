@@ -779,10 +779,15 @@ body.welcoming{padding-top:0;}
    way back to it. T602: they are part of the title row now, so at Home
    that row shows with the tabs and nothing else of the header does
    (Info, Reload and Find act on a notebook Home is covering, and Home
-   has its own New, Open and How to use). */
+   has its own New, Open and How to use).
+   The children are NAMED, not :not(.nb-filebar) and friends: a rule
+   whose last step names no class makes every change of `welcoming` or
+   `tabs-row-on` restyle the whole page -- three times per trip Home and
+   back (2026-10-09, speed). test_style_recalc.py holds these lists to
+   the markup's own children, so a new one cannot slip past. */
 body.welcoming.tabs-row-on .apptop{display:flex;}
-body.welcoming.tabs-row-on .apptop>:not(.nb-filebar),
-body.welcoming.tabs-row-on .nb-filebar>:not(.open-tabs-row):not(.nb-file-spacer){
+body.welcoming.tabs-row-on .apptop>:is(.appbar,.stylebar),
+body.welcoming.tabs-row-on .nb-filebar>:is(.nb-file-ident,.fgrp-row,.nb-file-utils){
   display:none!important;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}
@@ -1071,8 +1076,13 @@ body:not(.light) .wj-none{color:var(--ink-3);}
 /* T422: the Variables pane docks in the same corner (top 170px, right
    14px, and above this bar in z-order), so with both open the count and
    the prev/next/close buttons sat behind it. The bar steps left of the
-   pane while the pane is open. */
-body:has(#varspane:not([hidden])) .docfind{right:calc(14px + 280px + 12px);}
+   pane while the pane is open.
+   A CLASS, NOT body:has(#varspane:not([hidden])) (2026-10-09, speed):
+   a :has() on body made every DOM change anywhere re-check it, and each
+   check walked the whole document -- 70% of the style time of every
+   editor gesture. The pane's one opener and closer, set() in app.js,
+   sets body.vars-open beside the pane's `hidden`. */
+body.vars-open .docfind{right:calc(14px + 280px + 12px);}
 /* T607: and the document makes room for it. The pane floated over the
    notebook's right edge -- at 1366px with the Outline open it covered
    200px of every card, so a figure's right side and a line's last
@@ -1080,7 +1090,7 @@ body:has(#varspane:not([hidden])) .docfind{right:calc(14px + 280px + 12px);}
    room, the stage gives it, as the editor's stage does for its panes;
    below that the pane floats, as before. */
 @media (min-width:1100px){
-  body:has(#varspane:not([hidden])) .stage{
+  body.vars-open .stage{
     padding-right:calc(14px + 280px + 12px);}}
 .docfind>.bic{width:14px;height:14px;opacity:.6;flex:none;}
 .docfind-in{width:210px;border:none;background:none;outline:none;
@@ -1231,7 +1241,7 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   cursor:pointer;background:#ffffff05;}
 .auto-slide-scope:hover,.auto-anim:hover{border-color:var(--cyan);
   background:#ffffff0c;}
-.auto-slide-scope:has(input:checked),.auto-anim:has(input:checked){
+.auto-slide-scope:has(>input:checked),.auto-anim:has(>input:checked){
   border-color:color-mix(in srgb,var(--accent) 70%,transparent);
   background:color-mix(in srgb,var(--accent) 13%,transparent);
   color:var(--chrome-ink);}
@@ -2040,7 +2050,8 @@ body:not(.light) .welcome-links a{color:var(--accent);}
 .tt-btn{font-family:var(--mono);font-size:11px;letter-spacing:.02em;
   border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
   padding:5px 10px;border-radius:var(--rad);cursor:pointer;
-  transition:all .15s;}
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;}
 .tt-btn:hover{border-color:var(--cyan);color:var(--ink);}
 .tt-hidden-note{font-family:var(--mono);font-size:10.5px;color:var(--amber);
   display:none;align-items:center;gap:6px;}

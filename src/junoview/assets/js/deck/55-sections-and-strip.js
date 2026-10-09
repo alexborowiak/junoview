@@ -3400,11 +3400,21 @@
          width, and the window does not change size under a held handle */
       var hi=fitFilmMax();
       var w=0;
+      /* WHILE THE HANDLE IS HELD the width goes straight onto the two
+         things that show it -- the column and the handle -- and --film-w
+         is written once, on the way out. A custom property on the deck
+         is inherited by every element in the editor, so each pointermove
+         restyled all of them (2026-10-09, speed: 56ms of style per move
+         at 4x, frames of 100ms). `hi` is the --film-max the CSS clamps
+         to, published by fitFilmMax just above, so the clamp here gives
+         the width the rule would. */
+      var col=$('#deck-create');
       function mv(ev){
         /* The live app rail shifts the editor right of x=0. */
         var x=ev.clientX-deckEl.getBoundingClientRect().left;
         w=Math.max(150,Math.min(hi,x));
-        deckEl.style.setProperty('--film-w',w+'px');
+        if(col) col.style.width=w+'px';
+        h.style.left='calc(var(--presrail-w) + '+w+'px - 3px)';
         /* the stage just lost or gained that width, so the page has to
            re-fit as you drag or the slide sits wrong until you let go */
         applyZoom();
@@ -3413,6 +3423,11 @@
         h.classList.remove('on');
         document.removeEventListener('pointermove',mv);
         document.removeEventListener('pointerup',up);
+        document.removeEventListener('pointercancel',up);
+        /* hand the width back to the stylesheet, in one write */
+        if(col) col.style.width='';
+        h.style.left='';
+        if(w) deckEl.style.setProperty('--film-w',w+'px');
         /* ONE re-render at the end: the thumbnails re-measure their type
            off the new width, and doing that on every pointermove would
            rebuild sixty <svg>s a second */
@@ -3425,6 +3440,9 @@
       }
       document.addEventListener('pointermove',mv);
       document.addEventListener('pointerup',up);
+      /* a drag the browser takes away still ends: the inline width
+         must not outlive it */
+      document.addEventListener('pointercancel',up);
     });
     /* THE SAME DRAG, FROM THE KEYBOARD (T155). A splitter with no role,
        no tab stop and no keys is a pointer-only control, and this one

@@ -137,7 +137,7 @@ body.deck-open{overflow:hidden;}
   transition:opacity .12s;}
 .deck-pres-row:hover .deck-pres-acts,
 .deck-pres-row:focus-within .deck-pres-acts,
-.deck-pres-acts:has(.deck-pres-act.on){opacity:1;}
+.deck-pres-acts:has(>.deck-pres-act.on){opacity:1;}
 .deck-pres-act{display:inline-flex;align-items:center;justify-content:center;
   width:21px;height:21px;padding:0;border:1px solid transparent;
   border-radius:5px;background:none;color:var(--chrome-ink-2);
@@ -169,7 +169,13 @@ body.deck-open{overflow:hidden;}
   border:1px solid var(--btn-border,#ffffff22);
   background:var(--btn-bg,#ffffff0a);color:var(--btn-ink,#cdd9e3);
   padding:6px 11px;border-radius:6px;
-  cursor:pointer;transition:all .15s;}
+  cursor:pointer;
+  /* what changes on hover, press and disable -- not `all`
+     (2026-10-09, speed): `all` has every restyle of a button
+     compare every animatable property, and eases any geometry a
+     class changes (T487 below met that in the ribbon) */
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;}
 .dbtn:hover{border-color:var(--cyan);color:var(--chrome-ink);}
 /* the way out of a modal state: coral so it reads as "stop", but an
    outline rather than a fill, because it undoes rather than commits */
@@ -877,7 +883,9 @@ body.light .sp-act:hover{color:var(--ink);background:var(--surface-active);}
 .vo-xall,.vo-fbtn{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
   text-transform:none;background:#ffffff0a;border:1px solid #ffffff22;
   color:#cdd9e3;border-radius:var(--rad);padding:6px 12px;cursor:pointer;
-  display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+  display:inline-flex;align-items:center;gap:7px;
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;}
 .vo-xall:hover,.vo-fbtn:hover{border-color:var(--cyan);color:#fff;}
 /* the trail's Code-types / Output-types filter dropdowns */
 .vo-fdrop{position:relative;display:inline-block;}
@@ -1224,7 +1232,8 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
 .deck-arrow{position:absolute;top:50%;transform:translateY(-50%);width:52px;
   height:52px;border-radius:50%;border:1px solid #ffffff22;background:#ffffff0a;
   color:#cdd9e3;font-size:30px;line-height:1;cursor:pointer;z-index:5;
-  transition:all .15s;}
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;}
 .deck-arrow:hover{border-color:var(--cyan);color:#fff;background:color-mix(in srgb,var(--accent) 13%,transparent);}
 .deck-arrow:disabled{opacity:.22;cursor:default;}
 .deck-arrow.prev{left:13px;}
@@ -1353,7 +1362,7 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    exists so the rename input is NOT inside .dc-controls, which is
    display:none while editing (2026-08-20) */
 .dc-name{padding:0;border-bottom:none;}
-.dc-name:has(#pres-name:not([hidden])){padding:10px 14px 9px;
+.dc-name:has(>#pres-name:not([hidden])){padding:10px 14px 9px;
   border-bottom:1px solid #ffffff14;}
 .dc-controls{display:flex;flex-direction:column;gap:9px;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
@@ -1894,12 +1903,16 @@ body.slide-editing .presrail,body.slide-editing .presrail-show{z-index:134;}
    shelf's own width is contained so its content (twenty-two shapes)
    cannot widen the columns the groups sit in. Closing it restores the
    flex row and the ribbon's own height. A side rail (T465) never opens
-   a shelf and keeps its column. */
-.deck:not(.rbn-side) .edit-tools.ribbon:has(.rbn-shelf:not([hidden])){
+   a shelf and keeps its column.
+   .shelf-open is set by rbnShelfOpen and cleared by rbnShelfClose, the
+   only two writers of the shelf's `hidden` -- not a :has(.rbn-shelf...)
+   on the bar, which made every change anywhere in the ribbon re-walk
+   its three thousand elements (2026-10-09, speed). */
+.deck:not(.rbn-side) .edit-tools.ribbon.shelf-open{
   display:grid;grid-template-rows:92px auto;
   grid-template-columns:repeat(63,max-content) minmax(0,1fr);
   height:auto;min-height:92px;}
-.deck:not(.rbn-side) .edit-tools.ribbon:has(.rbn-shelf:not([hidden])) .rbn-grp{
+.deck:not(.rbn-side) .edit-tools.ribbon.shelf-open .rbn-grp{
   grid-row:1;}
 .deck:not(.rbn-side) .edit-tools.ribbon>.rbn-shelf:not([hidden]){
   grid-row:2;grid-column:1/-1;contain:inline-size;min-width:0;}
@@ -2224,9 +2237,9 @@ body.light .img-row{color:var(--ink-2);}
    in it wears a faint dashed edge until it has words */
 .deck.editing .an-item.an-text .an-tx:empty::before{
   content:"Type\2026";color:var(--chrome-ink-2);opacity:.8;pointer-events:none;}
-.deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
+.deck.editing .an-item.an-text:not(.sel):has(>.an-tx:empty){
   outline:1px dashed #ffffff3a;outline-offset:-1px;}
-body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
+body.light .deck.editing .an-item.an-text:not(.sel):has(>.an-tx:empty){
   outline-color:#0000002e;}
 /* the whole-deck commands at the foot of the Text styles window */
 .style-mgr .opt-row{margin-top:2px;}
@@ -2315,14 +2328,21 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .et-fmt #fmt-srcwrap{order:-1;}
 /* Object tools read from the thing itself outwards: source/basic
    appearance first, then geometry and finally structure. Typography and
-   line/shape treatment now belong to the focused Style tab. */
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-srcwrap){order:0;}
+   line/shape treatment now belong to the focused Style tab.
+   A group's place comes from the control it holds, and the layout
+   engine writes that once, as data-fmt-ord, when it puts the controls
+   in their groups (rbnFmtOrder, from applyRibbonLayout) -- these were five
+   :has(#fmt-...) rules that every change anywhere in the ribbon
+   re-checked (2026-10-09, speed). The held-control orders come AFTER
+   the two class rules on purpose: the :has() rules carried an id's
+   specificity and beat them, and source order keeps that. */
 .et-fmt .rbn-grp[data-tab="object"].rbn-picture{order:1;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-opwrap){order:2;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-geom-xy){order:3;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-alignwrap){order:4;}
-.et-fmt .rbn-grp[data-tab="object"]:has(#fmt-hist){order:5;}
 .et-fmt .rbn-grp[data-tab="object"].rbn-clones{order:6;}
+.et-fmt .rbn-grp[data-tab="object"][data-fmt-ord="0"]{order:0;}
+.et-fmt .rbn-grp[data-tab="object"][data-fmt-ord="2"]{order:2;}
+.et-fmt .rbn-grp[data-tab="object"][data-fmt-ord="3"]{order:3;}
+.et-fmt .rbn-grp[data-tab="object"][data-fmt-ord="4"]{order:4;}
+.et-fmt .rbn-grp[data-tab="object"][data-fmt-ord="5"]{order:5;}
 /* T409: the two clone menus -- a name box, and the kind that is on */
 .cmp-menu .cmp-name{display:block;width:100%;box-sizing:border-box;
   margin:2px 0 6px;padding:5px 7px;font:inherit;font-size:12.5px;
@@ -3338,12 +3358,16 @@ body.slide-editing .an-item.sel[class*="an-move-"]:not(.an-mo-preview){
    it is simply always right, and opening the pane costs no re-render
    because the badges are still built on every render.
    What says a slide is animated when the pane is shut is the filmstrip's
-   ▸N mark, which wears this same amber on purpose. */
+   ▸N mark, which wears this same amber on purpose.
+   The `>` matters: #animpane is a CHILD of the stage wrapper, and
+   without it every change anywhere under the stage (a keystroke, a
+   drag step) made the browser walk all of it again to answer this
+   (2026-10-09, speed). */
 .an-buildno{position:absolute;top:-9px;left:-9px;z-index:5;min-width:16px;
   height:16px;border-radius:8px;background:var(--amber);color:#241a05;
   font-family:var(--mono);font-size:10px;font-weight:700;display:none;
   align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
-.deck-stagewrap:has(#animpane:not([hidden])) .an-buildno{display:flex;}
+.deck-stagewrap:has(>#animpane:not([hidden])) .an-buildno{display:flex;}
 /* optional per-deck slide numbers (bottom-right, part of the slide) */
 .slide-pageno{position:absolute;right:2.6%;bottom:3.2%;z-index:4;
   font-family:var(--mono);font-size:2.4vh;line-height:1;color:var(--chrome-ink-2);
@@ -6693,13 +6717,17 @@ body.light .seq-cell b{color:var(--ink);}
   white-space:nowrap;font-size:11.5px;color:#dbe7ef;}
 .rd-reset{margin-top:8px;}
 /* the number badges: gated exactly like .an-buildno above — always
-   built, shown only while the panel is open */
+   built, shown only while the panel is open. The panel lives in body,
+   so the gate is body.rd-order-on, set by openReadingOrder and cleared
+   by rdClose, the panel's only maker and remover: a body:has(#rd-order)
+   was re-checked over the whole document on every DOM change
+   (2026-10-09, speed). */
 .an-readno{position:absolute;top:-9px;right:-9px;z-index:5;min-width:16px;
   height:16px;border-radius:8px;background:var(--cyan);color:#062028;
   font-family:var(--mono);font-size:10px;font-weight:700;display:none;
   align-items:center;justify-content:center;padding:0 3px;
   pointer-events:none;}
-body:has(#rd-order) .an-readno{display:flex;}
+body.rd-order-on .an-readno{display:flex;}
 /* T131: the layout-ideas chooser — live previews of THIS slide */
 /* T209: full screen, like All images; the cards a third of the window
    wide so a layout can actually be read */

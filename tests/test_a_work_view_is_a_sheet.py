@@ -158,7 +158,8 @@ def test_the_building_view_draws_the_slide_behind_its_frames():
 def test_the_variables_pane_neither_covers_nor_squeezes():
     css = assets.app_css()
     assert ".var-controls .var-chips{order:3;flex:1 0 100%;" in css
-    assert ("  body:has(#varspane:not([hidden])) .stage{\n"
+    # a class app.js sets with the pane, not a body:has() (speed)
+    assert ("  body.vars-open .stage{\n"
             "    padding-right:calc(14px + 280px + 12px);}}") in css
 
 

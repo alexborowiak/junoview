@@ -211,8 +211,11 @@ def test_theme_opens_under_file_when_its_menu_has_closed():
 
 def test_home_shows_the_tabs_and_nothing_else():
     css = assets.app_css()
-    assert ("body.welcoming.tabs-row-on .nb-filebar>:not(.open-tabs-row)"
-            ":not(.nb-file-spacer){") in css
+    # the hidden children by name (2026-10-09: a universal :not() made
+    # every Home toggle restyle the page); test_style_recalc.py holds the
+    # list to the markup
+    assert ("body.welcoming.tabs-row-on .nb-filebar>"
+            ":is(.nb-file-ident,.fgrp-row,.nb-file-utils){") in css
     # Info and Reload never shrink under Find in a narrow column
     assert ".nb-filebar #file-dock{flex:none;}" in css
     assert "body.tabs-row-on .nb-file-ident{display:none!important;}" in css

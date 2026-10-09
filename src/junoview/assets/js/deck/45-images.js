@@ -2307,6 +2307,8 @@
      panel being open — the same trick as the build bubbles (T76). */
   function rdClose(){
     var p=$('#rd-order'); if(p) p.remove();
+    /* the badges' gate (deck.css), beside the panel it stands for */
+    document.body.classList.remove('rd-order-on');
     document.removeEventListener('keydown',rdKey,true);
   }
   function rdKey(e){
@@ -2405,6 +2407,9 @@
     }
     render2();
     document.body.appendChild(p);
+    /* the number badges show while this class is on: a body:has(#rd-order)
+       re-checked the whole document on every DOM change (2026-10-09) */
+    document.body.classList.add('rd-order-on');
     document.addEventListener('keydown',rdKey,true);
     rdRepaint();   /* badges are built on render; make them current */
   }

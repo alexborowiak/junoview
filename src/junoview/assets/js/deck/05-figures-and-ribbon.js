@@ -2105,7 +2105,49 @@
       g.classList.remove('rbn-shelved');
     }
     sh.hidden=true;
+    rbnShelfMark(false);
     var nm=$('#rbn-shelf-name'); if(nm) nm.textContent='';
+  }
+  /* THE BAR SAYS A SHELF IS OPEN (deck.css .edit-tools.ribbon.shelf-open,
+     its two-row grid). Written here, beside the shelf's `hidden`, by the
+     only two functions that write it -- it was a :has(.rbn-shelf:not(
+     [hidden])) on the bar, and every change anywhere in the ribbon made
+     the browser walk the whole bar to re-answer it (2026-10-09, speed).
+     Only when it changes: rbnShelfClose runs on every fitting pass. */
+  function rbnShelfMark(on){
+    var bar=$('#edit-tools');
+    if(bar&&bar.classList.contains('shelf-open')!==on)
+      bar.classList.toggle('shelf-open',on);
+  }
+  /* WHERE AN OBJECT GROUP SITS. deck.css orders the Object tab's groups
+     by the control each one holds (source first, then appearance,
+     geometry, arranging, history). That was five :has(#fmt-...) rules,
+     and a :has() on a group is re-checked on every change anywhere in
+     the ribbon -- a keystroke, a selection, a fold (2026-10-09, speed).
+     WHICH group holds a control changes only when a layout moves it
+     (applyRibbonLayout, 07-ribbon-layouts.js), which calls this once the
+     controls have landed, so the answer is written then, as
+     data-fmt-ord. A later entry wins, as the later rule did. A row
+     parked on the shelf (T453) still belongs to its group: the shelf is
+     the group's, borrowed, and the group keeps its place. */
+  var RBN_FMT_ORD=[['fmt-srcwrap','0'],['fmt-opwrap','2'],
+    ['fmt-geom-xy','3'],['fmt-alignwrap','4'],['fmt-hist','5']];
+  function rbnFmtOrder(){
+    var bar=$('#edit-tools'); if(!bar) return;
+    var shelf=$('#rbn-shelf-body'),want=new Map();
+    RBN_FMT_ORD.forEach(function(p){
+      var el=document.getElementById(p[0]);
+      if(!el||!bar.contains(el)) return;
+      var g=el.closest('.rbn-grp');
+      if(!g&&shelf&&shelf.contains(el)) g=rbnShelfFor;
+      if(g) want.set(g,p[1]);
+    });
+    $$('.rbn-grp',bar).forEach(function(g){
+      var v=want.get(g)||null;
+      if(g.getAttribute('data-fmt-ord')===v) return;
+      if(v) g.setAttribute('data-fmt-ord',v);
+      else g.removeAttribute('data-fmt-ord');
+    });
   }
   /* The bar grows a line while the shelf is open and loses it again, so
      the stage is a different height either way and the page has to be
@@ -2129,6 +2171,7 @@
     var nm=$('#rbn-shelf-name');
     if(nm) nm.textContent=rbnGroupName(g)||'Options';
     sh.hidden=false;
+    rbnShelfMark(true);
     g.classList.add('rbn-shelved');
     var b=g.querySelector('.rbn-foldbtn');
     if(b) b.setAttribute('aria-expanded','true');
@@ -2901,9 +2944,7 @@
     /* reserve the width the pane ACTUALLY has: it is resizable, and a
        strip sized to the default would leave a widened pane over the
        page again */
-    if(docked)
-      deckEl.style.setProperty('--pane-w',
-        Math.round(docked.offsetWidth||232)+'px');
+    if(docked) paneWSet(Math.round(docked.offsetWidth||232)+'px');
     deckEl.classList.toggle('pane-open',!!docked&&mode==='edit');
     /* the page is fitted to the stage's width, so the stage changing size
        has to re-fit it — otherwise the slide keeps the size it had when
@@ -2923,8 +2964,22 @@
   }
   var paneDockWas=null;
   function paneDockState(){
-    return [deckEl.classList.contains('pane-open'),
-      deckEl.style.getPropertyValue('--pane-w'),mode].join('|');
+    return [deckEl.classList.contains('pane-open'),paneWNow,mode].join('|');
+  }
+  /* THE PANE'S WIDTH, ON WHAT READS IT. deck.css sizes three things by
+     --pane-w: the stage's right padding, the zoom bar's offset and a
+     pane's own default width. It was written on the deck, and a custom
+     property there is inherited by every element in the editor, so
+     each step of dragging a pane's edge restyled all of them (2026-10-09,
+     speed). Written on the three kinds of element instead, the rules
+     read the same value and nothing else is touched. deck.css's
+     .deck{--pane-w:272px} is still the value before the first write. */
+  var paneWNow='';
+  function paneWSet(v){
+    if(v===paneWNow) return;
+    paneWNow=v;
+    $$('.deck-stage,.deck-zoombar,.selpane',deckEl).forEach(function(el){
+      el.style.setProperty('--pane-w',v);});
   }
   /* Five panes are opened from eight places between them, and one of them
      forgetting to dock would put us straight back to a pane covering the

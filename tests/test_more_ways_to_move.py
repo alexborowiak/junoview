@@ -754,11 +754,11 @@ def test_the_ribbon_fit_after_the_third_pass(out):
     findings 7-13)."""
     # [7] the shelf is a grid ROW of its own, not a wrapped flex line:
     #     every group is pinned to row one and the shelf spans row two
-    assert (".deck:not(.rbn-side) .edit-tools.ribbon"
-            ":has(.rbn-shelf:not([hidden])){\n"
+    #     (.shelf-open is set with the shelf's `hidden`, 2026-10-09)
+    assert (".deck:not(.rbn-side) .edit-tools.ribbon.shelf-open{\n"
             "  display:grid;grid-template-rows:92px auto;\n"
             "  grid-template-columns:repeat(63,max-content) minmax(0,1fr);") in out
-    assert (".edit-tools.ribbon:has(.rbn-shelf:not([hidden])) .rbn-grp{\n"
+    assert (".edit-tools.ribbon.shelf-open .rbn-grp{\n"
             "  grid-row:1;}") in out
     assert (".edit-tools.ribbon>.rbn-shelf:not([hidden]){\n"
             "  grid-row:2;grid-column:1/-1;contain:inline-size;min-width:0;}") in out

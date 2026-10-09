@@ -384,6 +384,7 @@
         if(!used[cid]) restRow.appendChild(atoms[cid]);
       });
     }
+    rbnFmtOrder();           /* the groups hold what they hold now */
     /* the tab you were on may not exist in this layout */
     if(TABS.indexOf(activeTab())<0){
       curTab=TABS[0];

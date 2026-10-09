@@ -23,10 +23,10 @@ def test_the_shelf_is_in_the_bar(out):
     # T498: a grid row, not a wrapped flex line -- with the groups
     # items of the same wrapping container, the last group went onto
     # the shelf's line once the fold ladder had nothing left to give
-    assert (".deck:not(.rbn-side) .edit-tools.ribbon"
-            ":has(.rbn-shelf:not([hidden])){\n"
+    # (the bar wears .shelf-open while the shelf shows -- 2026-10-09)
+    assert (".deck:not(.rbn-side) .edit-tools.ribbon.shelf-open{\n"
             "  display:grid;grid-template-rows:92px auto;") in out
-    assert (".edit-tools.ribbon:has(.rbn-shelf:not([hidden])) .rbn-grp{\n"
+    assert (".edit-tools.ribbon.shelf-open .rbn-grp{\n"
             "  grid-row:1;}") in out
     assert (".edit-tools.ribbon>.rbn-shelf:not([hidden]){\n"
             "  grid-row:2;grid-column:1/-1;contain:inline-size;") in out

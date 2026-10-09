@@ -2409,8 +2409,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Speed round 1: a slide change moves the strip's mark instead of rebuilding it,
 # skips unchanged tabs, a hidden pane's re-fit and duplicate forced layouts; the
 # ribbon fit key is cached; selection repainted after a render.
-EXPECTED_MD5 = "f9de64f55546945187df6d5b663356cd"
-EXPECTED_BYTES = 5307339
+# Speed (style): no body/descendant :has() -- state classes and child combinators;
+# custom properties written where consumed during drags; Home selectors scoped;
+# Colourful zone on visible surfaces; no transition:all.
+EXPECTED_MD5 = "b11746bd2a2780ae4f96c40123cc8a08"
+EXPECTED_BYTES = 5320238
 
 
 def _render_example() -> str:

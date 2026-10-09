@@ -95,7 +95,12 @@
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
        welcome screen itself. Hiding it lets the welcome own the window. */
+    var wasWelcoming=document.body.classList.contains('welcoming');
     document.body.classList.toggle('welcoming',welcoming);
+    /* measureChrome leaves --chrome-h alone at Home; leaving Home is when
+       the header it describes is back, so measure it then, whatever else
+       does or does not (a window resized at Home changes it) */
+    if(wasWelcoming&&!welcoming&&APP.measureChrome) APP.measureChrome();
     syncHomeTab();   /* T596: Home is lit while it is on screen */
     var back=$('#welcome-back');
     if(back) back.hidden=!(welcoming&&APP.order.length);
@@ -3063,11 +3068,57 @@
      semantic zone wherever the overlay is mounted (T252). */
   var THEME_ZONES=['home','images','text','design','animation','view',
     'present','style','object'];
-  function setThemeZone(zone){
-    if(THEME_ZONES.indexOf(zone)<0) zone='';
+  /* ...BUT NOT ON BODY WHILE THE EDITOR COVERS THE PAGE (2026-10-09,
+     speed). The zone is a custom property, so a change on body restyles
+     every element in the document -- the notebook under the editor
+     included -- and in Colourful every selection and tab click changed
+     it: 80-100ms of style at 4x for a hue nobody could see. While the
+     slide editor is up (body.slide-editing) the zone goes on what can be
+     seen instead -- the editor itself, the rail beside it and anything
+     mounted on body, each of which carries the attribute (core.css
+     matches it on any element) -- and body catches up the moment the
+     editor stops covering it (a pick, the builder, closing). ZONE_UNDER
+     is what the editor covers; nothing there is ever tagged, so it
+     always reads body's zone. A node mounted on body later is tagged as
+     it arrives, and loses the tag when it leaves body. */
+  var ZONE_UNDER={docs:1,apptop:1,welcome:1};
+  var themeZoneNow='';
+  function zoneOn(el,zone){
+    if((el.getAttribute('data-theme-zone')||'')===zone) return;
+    if(zone) el.setAttribute('data-theme-zone',zone);
+    else el.removeAttribute('data-theme-zone');
+  }
+  function zoneBodySync(){
+    if(document.body.classList.contains('slide-editing')) return;
+    var now=document.body.getAttribute('data-theme-zone')||'';
+    if(now===themeZoneNow) return;
+    var zone=themeZoneNow;
     if(zone) document.body.setAttribute('data-theme-zone',zone);
     else document.body.removeAttribute('data-theme-zone');
   }
+  function setThemeZone(zone){
+    if(THEME_ZONES.indexOf(zone)<0) zone='';
+    /* every tab click announces its tab, the same one included; what is
+       already tagged is current (new arrivals are tagged on arrival) */
+    if(zone===themeZoneNow) return;
+    themeZoneNow=zone;
+    [].forEach.call(document.body.children,function(el){
+      if(!ZONE_UNDER[el.id]) zoneOn(el,zone);});
+    zoneBodySync();
+  }
+  if(window.MutationObserver) new MutationObserver(function(recs){
+    recs.forEach(function(r){
+      [].forEach.call(r.addedNodes,function(n){
+        if(n.nodeType===1&&n.parentNode===document.body&&!ZONE_UNDER[n.id])
+          zoneOn(n,themeZoneNow);});
+      [].forEach.call(r.removedNodes,function(n){
+        if(n.nodeType===1&&n.parentNode!==document.body
+           &&n.hasAttribute('data-theme-zone'))
+          n.removeAttribute('data-theme-zone');});
+    });
+    zoneBodySync();
+  }).observe(document.body,{childList:true,attributes:true,
+    attributeFilter:['class']});
   document.addEventListener('sem:ribbon-tab',function(e){
     setThemeZone(e.detail&&e.detail.tab);});
   var initialThemeTab=document.querySelector(
@@ -3234,6 +3285,11 @@
         vp.hidden=false;
       } else giveBack();
       pane.hidden=!open;
+      /* app.css steps the find bar and the stage aside on this class:
+         it was body:has(#varspane:not([hidden])), which every DOM
+         change in the page re-checked over the whole document
+         (2026-10-09, speed). This is the pane's only writer. */
+      document.body.classList.toggle('vars-open',!!open);
       btn.setAttribute('aria-pressed',open.toString());
     }
     btn.addEventListener('click',function(){set(pane.hidden);});
@@ -3258,20 +3314,47 @@
   catch(e){}
   if(dcwPref&&dcwPref>=300&&dcwPref<=760)
     document.documentElement.style.setProperty('--dc-w',dcwPref+'px');
+  /* WHILE THE EDGE IS HELD the width goes straight onto what shows it
+     -- the docked builder, its column, the handle, and the document and
+     header it pushes aside -- in the values the --dc-w rules (deck.css,
+     app.css) would give them, and --dc-w itself is written once, on the
+     way out. A custom property on <html> is inherited by every element
+     in the page, so each mousemove restyled all of them (2026-10-09,
+     speed). Only for the builder docked beside the document, which is
+     the one place this handle shows; anywhere else it is the old write.
+     Passing 0 hands everything back to the stylesheet. */
+  function dcwLive(w){
+    var v=w?'min('+w+'px,94vw)':'';
+    var dk=$('#deck'),col=$('#deck-create'),dd=$('#docs'),top=$('#apptop');
+    var docsOn=document.body.classList.contains('creating-docs');
+    if(dk) dk.style.width=v;
+    if(col) col.style.width=v;
+    dcR.style.left=w?'calc(var(--presrail-w) + '+v+' - 1px)':'';
+    if(dd) dd.style.marginLeft=(w&&docsOn)?v:'';
+    if(top) top.style.left=(w&&docsOn)?'calc(var(--presrail-w) + '+v+')':'';
+  }
   if(dcR) dcR.addEventListener('mousedown',function(e){
     e.preventDefault();
     dcR.classList.add('on');
     var host=$('#deck-create');
     var left=host?host.getBoundingClientRect().left:0;
+    var dk=$('#deck');
+    var live=!!(dk&&dk.classList.contains('creating')
+      &&!dk.classList.contains('editing'));
     var w=0;
     function mv(ev){
       w=Math.max(300,Math.min(760,ev.clientX-left));
-      document.documentElement.style.setProperty('--dc-w',w+'px');
+      if(live) dcwLive(w);
+      else document.documentElement.style.setProperty('--dc-w',w+'px');
     }
     function up(){
       dcR.classList.remove('on');
       document.removeEventListener('mousemove',mv);
       document.removeEventListener('mouseup',up);
+      if(live){
+        dcwLive(0);
+        if(w) document.documentElement.style.setProperty('--dc-w',w+'px');
+      }
       if(w) try{localStorage.setItem('plotline-dcw',w);}catch(e){}
     }
     document.addEventListener('mousemove',mv);
@@ -4102,6 +4185,22 @@
          requirements as well as its width */
       fitRibbon();
       var h=Math.ceil(top.getBoundingClientRect().height);
+      /* NOT ON THE PAGE AT HOME. Home shows only the tabs row of this
+         header, and the one thing over the welcome screen that reads
+         --chrome-h is the Find bar (the welcome screen sits under the
+         tabs row by --open-tabs-h, and the document's padding is 0
+         while welcoming). Measuring the short header onto <html> only
+         meant writing the tall one back on the way out -- two restyles
+         of the whole page per trip, the property being inherited by
+         every element (2026-10-09, speed) -- so at Home it goes on the
+         Find bar alone. The way back out runs this again (refreshChrome)
+         and that measures the header the document will have. */
+      var fb=$('#docfind');
+      if(document.body.classList.contains('welcoming')){
+        if(h>0&&fb) fb.style.setProperty('--chrome-h',h+'px');
+        return;
+      }
+      if(fb) fb.style.removeProperty('--chrome-h');
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
     },0);

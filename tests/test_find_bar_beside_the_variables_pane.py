@@ -17,8 +17,11 @@ from junoview import assets
 
 def test_the_bar_steps_left_of_an_open_pane():
     css = assets.load("css/app.css")
-    assert ("body:has(#varspane:not([hidden])) .docfind"
+    # body.vars-open is set beside the pane's `hidden` (app.js set())
+    assert ("body.vars-open .docfind"
             "{right:calc(14px + 280px + 12px);}") in css
+    assert "document.body.classList.toggle('vars-open',!!open);" in \
+        assets.app_js()
     # the numbers are the pane's own: right 14px, width 280px
     assert ".selpane.varspane{position:fixed;top:170px;right:14px;" in css
     assert "  height:min(62vh,560px);width:280px;z-index:220;}" in css

@@ -162,7 +162,9 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 .rf-btn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
   border:1px solid var(--btn-border);background:var(--btn-bg);
   color:var(--btn-ink);
-  padding:6px 10px;border-radius:5px;cursor:pointer;transition:all .13s;
+  padding:6px 10px;border-radius:5px;cursor:pointer;
+  transition:color .13s,background-color .13s,border-color .13s,
+    box-shadow .13s,opacity .13s;
   display:inline-flex;align-items:center;gap:5px;line-height:1;}
 .rf-btn:hover{border-color:var(--accent);color:var(--chrome-ink);
   background:var(--surface-active);}
@@ -559,7 +561,9 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   border:1px solid var(--btn-border);background:var(--btn-bg);
   color:var(--btn-ink);
   padding:7px 12px;border-radius:var(--rad);cursor:pointer;
-  transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;
+  display:inline-flex;align-items:center;gap:7px;}
 /* an author `display` beats the UA's [hidden] rule, so say it explicitly —
    without this, every el.hidden=true on a .toggle silently does nothing */
 .toggle[hidden],.dbtn[hidden],.fgrp[hidden],.fgrp-row[hidden]{
@@ -1181,7 +1185,9 @@ pre.error{background:#fbf0ee;border-color:#f0d2cc;color:#8a3221;}
   text-transform:uppercase;color:var(--amber);}
 .depchip{font-family:var(--mono);font-size:11px;color:var(--ink-2);
   text-decoration:none;background:#cf9a4e14;border:1px solid #cf9a4e33;
-  padding:2px 9px;border-radius:20px;transition:all .15s;}
+  padding:2px 9px;border-radius:20px;
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;}
 .depchip:hover{background:var(--amber);color:#fff;border-color:var(--amber);}
 
 /* ---------- code ---------- */
@@ -1521,22 +1527,36 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
 /* The body's data-theme-zone mirrors the ACTIVE tab (T252). Body-mounted
    dialogs and menus therefore inherit the same hue as the tab that opened
    them; a node can move out of the ribbon without falling back to cyan. The
-   base colourful violet remains the deterministic hue outside the editor. */
-body.th-colorful[data-theme-zone="home"]{
+   base colourful violet remains the deterministic hue outside the editor.
+   While the slide editor covers the page the zone rides on what can be
+   seen -- the editor, the rail, anything mounted on body -- rather than on
+   body, which would restyle the whole document per tab (setThemeZone,
+   app.js; 2026-10-09, speed), so each rule matches the attribute on body
+   AND on any element under it. */
+body.th-colorful[data-theme-zone="home"],
+body.th-colorful [data-theme-zone="home"]{
   --accent:#f2b85b;--accent-deep:#9a5c00;}
 body.th-colorful[data-theme-zone="images"],
 body.th-colorful[data-theme-zone="text"],
-body.th-colorful[data-theme-zone="style"]{
+body.th-colorful[data-theme-zone="style"],
+body.th-colorful [data-theme-zone="images"],
+body.th-colorful [data-theme-zone="text"],
+body.th-colorful [data-theme-zone="style"]{
   --accent:#b89bf4;--accent-deep:#7150b8;}
-body.th-colorful[data-theme-zone="design"]{
+body.th-colorful[data-theme-zone="design"],
+body.th-colorful [data-theme-zone="design"]{
   --accent:#82a8ff;--accent-deep:#3b61ba;}
-body.th-colorful[data-theme-zone="animation"]{
+body.th-colorful[data-theme-zone="animation"],
+body.th-colorful [data-theme-zone="animation"]{
   --accent:#65d7c0;--accent-deep:#167561;}
-body.th-colorful[data-theme-zone="view"]{
+body.th-colorful[data-theme-zone="view"],
+body.th-colorful [data-theme-zone="view"]{
   --accent:#62d49b;--accent-deep:#19764d;}
-body.th-colorful[data-theme-zone="object"]{
+body.th-colorful[data-theme-zone="object"],
+body.th-colorful [data-theme-zone="object"]{
   --accent:#eea4cc;--accent-deep:#a34276;}
-body.th-colorful[data-theme-zone="present"]{
+body.th-colorful[data-theme-zone="present"],
+body.th-colorful [data-theme-zone="present"]{
   --accent:#f18ab1;--accent-deep:#a63c68;}
 body.th-colorful .rbn-grp[data-tab="home"],body.th-colorful .nb-filebar{
   --accent:#f2b85b;--accent-deep:#9a5c00;}

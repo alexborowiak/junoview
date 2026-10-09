@@ -3113,7 +3113,10 @@ def test_the_order_badges_are_gated_like_the_build_bubbles():
     js = assets.deck_js()
     assert "rb.className='an-readno';rb.textContent=rmap[+raw];" in js
     css = assets.deck_css()
-    assert "body:has(#rd-order) .an-readno{display:flex;}" in css
+    # a class the panel's maker and remover set, not a body:has()
+    assert "body.rd-order-on .an-readno{display:flex;}" in css
+    assert "document.body.classList.add('rd-order-on');" in js
+    assert "document.body.classList.remove('rd-order-on');" in js
 
 
 def test_reading_order_has_a_door_where_you_would_look(out):

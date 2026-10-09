@@ -89,4 +89,5 @@ def test_an_empty_text_box_stays_visible(out):
     assert ".deck.editing .an-item.an-text .an-tx:empty::before{" in out
     assert ('.deck.editing .an-item.an-text .an-tx[contenteditable="true"]'
             ":empty::before{") not in out
-    assert ".deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){" in out
+    # (the words are the box's own child, so `>`: 2026-10-09, speed)
+    assert ".deck.editing .an-item.an-text:not(.sel):has(>.an-tx:empty){" in out
