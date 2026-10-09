@@ -75,9 +75,26 @@ def _file_stamp(p: str) -> tuple[int, int] | None:
     return (st.st_mtime_ns, st.st_size)
 
 
-def _repo_stamp(git_dir: str, common_dir: str) -> tuple:
+def _repo_stamp(git_dir: str, common_dir: str, folder: str = "",
+                top: str = "") -> tuple:
     return (_file_stamp(os.path.join(git_dir, "HEAD")),
-            _file_stamp(os.path.join(common_dir, "config")))
+            _file_stamp(os.path.join(common_dir, "config")),
+            _nested(folder, top))
+
+
+def _nested(folder: str, top: str) -> tuple[bool, ...]:
+    """Which folders between ``folder`` and its work tree's top hold a
+    ``.git`` of their own. A ``git init`` (or a clone moved in) below the
+    top makes the notebook another repository's, and neither HEAD nor
+    the config of the one it was in changes when that happens."""
+    if not folder or not top:
+        return ()
+    out = []
+    p, stop = Path(folder), Path(top)
+    while p != stop and p != p.parent:
+        out.append(os.path.exists(os.path.join(p, ".git")))
+        p = p.parent
+    return tuple(out)
 
 
 def _repo(f: Path) -> _Repo | None:
@@ -92,8 +109,8 @@ def _repo(f: Path) -> _Repo | None:
     """
     key = str(f.parent)
     held = _REPOS.get(key)
-    if held is not None and held.stamp == _repo_stamp(held.git_dir,
-                                                      held.common_dir):
+    if held is not None and held.stamp == _repo_stamp(
+            held.git_dir, held.common_dir, key, held.top):
         return held
     r = _git_run(f, "rev-parse", "--is-inside-work-tree", "--show-toplevel",
                  "--absolute-git-dir", "--git-common-dir")
@@ -104,7 +121,7 @@ def _repo(f: Path) -> _Repo | None:
     top, git_dir, common = lines[1], lines[2], lines[3]
     if not os.path.isabs(common):           # relative to the folder
         common = os.path.normpath(os.path.join(key, common))
-    stamp = _repo_stamp(git_dir, common)
+    stamp = _repo_stamp(git_dir, common, key, top)
     rem = _git_run(f, "config", "--get", "remote.origin.url")
     remote = rem.stdout.strip() if rem.returncode == 0 else ""
     br = _git_run(f, "rev-parse", "--abbrev-ref", "HEAD")

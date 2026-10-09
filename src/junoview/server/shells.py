@@ -12,7 +12,7 @@ keyed on exactly that:
   never be mistaken for the version already rendered;
 * the deck files ``load_doc`` reads beside it (``deck_sidecars``, the
   same function, so the cache and the loader cannot disagree about
-  which files count), by name, size and mtime;
+  which files count), by name and content;
 * the tab's stem and path, which are written into the shell;
 * the shell template's text, so the frontend edit loop still works;
 * this run of the server (a random salt): rendering code only changes
@@ -35,7 +35,6 @@ from __future__ import annotations
 import concurrent.futures
 import functools
 import hashlib
-import json
 import secrets
 import sys
 import threading
@@ -53,6 +52,7 @@ from ..notebook.loader import (
     url_notebook,
 )
 from ..notebook.parser import parse_notebook
+from ..notebook.sources import doc_from_bytes
 from ..render.page import has_marked_math, render_shell
 
 #: Different on every run: a version token from an earlier server never
@@ -147,12 +147,15 @@ class _Memo:
 _SHELLS = _Memo(cap=16)
 
 
-def _stat(p: Path) -> tuple[int, int] | None:
+def _digest(p: Path) -> str | None:
+    """A deck file's CONTENT, for the same reason the notebook's own is
+    keyed on its bytes: a copy that keeps its timestamp (``cp -p``, an
+    unzip, a sync client) at the same size would otherwise be taken for
+    the version already rendered, on Reload and on every page load."""
     try:
-        st = p.stat()
+        return hashlib.sha1(p.read_bytes()).hexdigest()
     except OSError:
         return None
-    return (st.st_mtime_ns, st.st_size)
 
 
 @functools.lru_cache(maxsize=4)
@@ -195,7 +198,7 @@ def local_source(f: Path, stem: str, path: str,
     sidecars, _lenient = deck_sidecars(f)
     key = ("file", str(f), stem, path,
            hashlib.sha1(data).hexdigest(),
-           tuple((str(s), _stat(s)) for s in sidecars),
+           tuple((str(s), _digest(s)) for s in sidecars),
            _template_hash(assets.shell_template()), _RUN)
     return LocalSource(f, stem, path, data, key)
 
@@ -248,8 +251,12 @@ def _render_local(src: LocalSource, ver: str) -> Shell:
         # rewritten without it. Retry on just the .ipynb — if the
         # notebook itself parses, keep the tab and open it deckless;
         # prune only when the notebook is really gone/bad (2026-08-23).
-        # (A non-notebook source raises again here, and is pruned.)
-        doc = parse_notebook(json.loads(src.data.decode("utf-8")))
+        # The retry is the source read by its OWN kind, just without its
+        # deck files: a .csv or .xlsx beside a broken deck opens too, and
+        # a source that is itself broken raises its own error (an open
+        # reported "UnicodeDecodeError" for a damaged workbook, from
+        # reading it as notebook JSON), and is pruned.
+        doc = doc_from_bytes(src.f, src.data, base=src.f.parent)
         fallback = e
         print(f"warning: could not read the deck sidecar for {src.f.name};"
               " opened without its presentations", file=sys.stderr)

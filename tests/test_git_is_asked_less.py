@@ -95,6 +95,32 @@ def test_repo_facts_are_read_once_until_head_or_config_changes(repo,
     assert vcs._git_info(repo)["github"] == "https://github.com/bob/second"
 
 
+def test_a_repository_made_inside_the_folder_is_seen(tmp_path):
+    """git init below a repository's top (or a clone moved in) makes the
+    notebook another repository's without HEAD or the config of the outer
+    one changing; removing it again hands it back."""
+    _git(tmp_path, "init", "-q", "-b", "outer")
+    _git(tmp_path, "config", "user.name", "T")
+    _git(tmp_path, "config", "user.email", "t@test.invalid")
+    _git(tmp_path, "remote", "add", "origin", "git@github.com:alice/out.git")
+    sub = tmp_path / "nbs"
+    sub.mkdir()
+    f = sub / "a.ipynb"
+    f.write_text(_nb("A"), encoding="utf-8")
+    _git(tmp_path, "add", "nbs/a.ipynb")
+    _git(tmp_path, "commit", "-q", "-m", "first")
+    vcs._REPOS.clear()
+    vcs._REL_PATHS.clear()
+    assert vcs._git_info(f)["github"] == "https://github.com/alice/out"
+    assert vcs._git_rel_path(f) == "nbs/a.ipynb"
+    _git(sub, "init", "-q", "-b", "inner")
+    assert vcs._git_info(f)["github"] == ""
+    assert vcs._git_rel_path(f) == ""
+    shutil.rmtree(sub / ".git")
+    assert vcs._git_info(f)["github"] == "https://github.com/alice/out"
+    assert vcs._git_rel_path(f) == "nbs/a.ipynb"
+
+
 def test_outside_a_repository_is_never_remembered(tmp_path):
     f = tmp_path / "loose.ipynb"
     f.write_text(_nb("X"), encoding="utf-8")

@@ -126,6 +126,27 @@ def test_a_deck_file_beside_the_notebook_is_part_of_the_key(
     assert "Talk" not in _shell(f).html
 
 
+def test_a_deck_file_edited_at_the_same_size_and_mtime_is_seen(
+        tmp_path, renders):
+    """The deck files are keyed on their CONTENT too: a copy that keeps
+    its timestamp (cp -p, an unzip, a sync client) at the same size."""
+    f = tmp_path / "nb.ipynb"
+    _write(f, _nb())
+    side = tmp_path / "nb.deck.json"
+    deck = {"presentations": [{"name": "Talk A", "slides": [
+        {"layout": "single", "panes": ["nb::x"]}]}]}
+    side.write_text(json.dumps(deck), encoding="utf-8")
+    a = _shell(f)
+    st = side.stat()
+    deck["presentations"][0]["name"] = "Talk B"
+    side.write_text(json.dumps(deck), encoding="utf-8")
+    os.utime(side, ns=(st.st_atime_ns, st.st_mtime_ns))
+    assert side.stat().st_size == st.st_size
+    b = _shell(f)
+    assert b.ver != a.ver and renders[0] == 2
+    assert "Talk B" in b.html and "Talk A" not in b.html
+
+
 def test_stem_path_and_template_are_part_of_the_key(tmp_path, renders,
                                                     monkeypatch):
     f = tmp_path / "nb.ipynb"
@@ -317,6 +338,22 @@ def test_an_unchanged_reload_still_reports_a_corrupt_deck_file(tmp_path):
     assert b'data-nb="alpha"' in _app_page(st)
     with pytest.raises(ValueError):
         h._open_nb({"path": f, "stem": "alpha", "have": ver})
+
+
+def test_an_open_of_a_broken_source_reports_its_own_error(tmp_path):
+    """The deckless retry reads the source by its own kind: a damaged
+    workbook says so, not "UnicodeDecodeError" from being read as
+    notebook JSON; and a table beside a broken deck file still opens."""
+    st = _AppState(tmp_path)
+    book = tmp_path / "book.xlsx"
+    book.write_bytes(b"PK\x03\x04 not really a workbook \xff\xfe")
+    with pytest.raises(ValueError, match="xlsx"):
+        _handler(st)._open_nb({"path": str(book)})
+    table = tmp_path / "t.csv"
+    table.write_text("a,b\n1,2\n", encoding="utf-8")
+    (tmp_path / "t.junoview").write_text("{broken", encoding="utf-8")
+    shell = local_shell(local_source(table, "t", str(table)), lenient=True)
+    assert shell.fallback is not None and 'data-nb="t"' in shell.html
 
 
 def test_a_failed_open_never_joins_the_session(tmp_path):
@@ -557,7 +594,8 @@ def test_the_page_sends_its_version_and_trusts_unchanged_only_for_it():
         pytest.skip("no JS engine")
     src = assets.app_js()
     fns = "\n".join(lift_fn(src, n)
-                    for n in ("shellVer", "tabForPath", "openShell"))
+                    for n in ("shellVer", "shellBroken", "tabForPath",
+                              "openShell"))
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "run.js"
         p.write_text(_OPEN_RUN.replace("__FNS__", fns), encoding="utf-8")
@@ -586,8 +624,22 @@ def test_reload_paths_use_the_conditional_open():
     op = js[js.index("  function openPath(path,keep){"):]
     op = op[:op.index("\n  APP.openPath=openPath;")]
     assert "openShell({path:path},openTab)" in op
+    # a tab whose embeds failed to load is remounted by a Reload
+    assert "var have=shellBroken(stem)?'':shellVer(stem)" in js
+    assert "s.setAttribute('data-jvfail','');" in js
     assert "if(APP.noteRecent) APP.noteRecent(j.path||path);" in op
     # the raw view is built from its template the first time it shows
     assert "tpl.parentNode.replaceChild(tpl.content,tpl);" in js
+    # ...a template holding a hidden cell's <style> or script goes live
+    # at setup, as the raw view always was, and a placeholder's copy of a
+    # card's output never runs that card's scripts a second time
+    init = js[js.index("  function initShell(shell){"):]
+    assert ("if(rawTpl&&rawTpl.content.querySelector('style,script'))"
+            in init[:init.index("/* ---- register ---- */")])
+    pop = js[js.index("  function populateRawView(shell){"):]
+    pop = pop[:pop.index("\n  }\n")]
+    assert "liveRawView(shell);" in pop
+    assert "if(rv&&phs.length) activateOutputs(rv,true);" in pop
+    assert pop.rstrip().endswith("jvMath.watch(rv);}")
     assert '<div class="rawview"><template class="rawtpl">' in \
         assets.shell_template()

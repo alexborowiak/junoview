@@ -2428,8 +2428,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # deck, lazy library previews, cached presenter previews, presFacts.
 # Speed (strip): keyed strip rows reused, thumbnails drawn as they near the
 # view, cardEl memo, the sorter copies the strip's thumbnails.
-EXPECTED_MD5 = "053c920e54514f254993cb065176b1ee"
-EXPECTED_BYTES = 5457885
+# Fix (reviews of the server and style packages): hidden cells' style/script
+# outputs live at load, Reload retries failed embeds, a key ends a resize drag.
+EXPECTED_MD5 = "1b011a037d4c52c9457f6d81717b780d"
+EXPECTED_BYTES = 5460687
 
 
 def _render_example() -> str:

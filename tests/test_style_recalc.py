@@ -533,3 +533,17 @@ def test_home_does_not_rewrite_the_header_height():
     assert "body.welcoming{padding-top:0;}" in css
     assert "body.welcoming .welcome{top:0;}" in css
     assert "body.welcoming .welcome-top{min-height:calc(100vh - 30px);}" in css
+
+
+def test_a_key_ends_a_resize_drag_before_the_deck_sees_it():
+    # review of the style package: the live widths written during a drag
+    # are only right for the surface being dragged -- F5 with the builder's
+    # edge held drew the show at the builder's width, and Esc with the
+    # strip's handle held left the builder at the strip's width. A key
+    # (not a modifier) ends the drag first, captured on window.
+    app = assets.app_js()
+    deck = assets.deck_js()
+    for src in (app, deck):
+        assert "if(!/^(Shift|Control|Alt|Meta)$/.test(ev.key)) up();" in src
+        assert "window.addEventListener('keydown',key,true);" in src
+        assert "window.removeEventListener('keydown',key,true);" in src

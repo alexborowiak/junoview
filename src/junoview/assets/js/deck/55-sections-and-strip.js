@@ -3885,6 +3885,7 @@
         document.removeEventListener('pointermove',mv);
         document.removeEventListener('pointerup',up);
         document.removeEventListener('pointercancel',up);
+        window.removeEventListener('keydown',key,true);
         /* hand the width back to the stylesheet, in one write */
         if(col) col.style.width='';
         h.style.left='';
@@ -3904,6 +3905,15 @@
       /* a drag the browser takes away still ends: the inline width
          must not outlive it */
       document.addEventListener('pointercancel',up);
+      /* ...and so does one a key interrupts. The inline width is the
+         EDITOR's column: Esc with the handle still held put the builder
+         up around it, and the builder's column stayed the strip's width
+         until the button came up. Capture on window, so the drag is
+         over before the deck's own key handlers change the mode. */
+      function key(ev){
+        if(!/^(Shift|Control|Alt|Meta)$/.test(ev.key)) up();
+      }
+      window.addEventListener('keydown',key,true);
     });
     /* THE SAME DRAG, FROM THE KEYBOARD (T155). A splitter with no role,
        no tab stop and no keys is a pointer-only control, and this one

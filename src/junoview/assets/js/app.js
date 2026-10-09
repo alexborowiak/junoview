@@ -2702,14 +2702,28 @@
      the same clone trick the deck uses for slides. Outputs the cards
      dropped (hidden cells, single-step folds — see _card_output_keys in
      render/items.py) arrive fully embedded and need no filling. */
+  /* The raw view arrives as an inert <template> (shell.html). Making it
+     live DOM runs its OWN outputs' scripts -- a hidden cell's bokeh or
+     vega, embedded there in full, which initShell's activateOutputs(shell)
+     reached at load back when the raw view was live from the start --
+     BEFORE any placeholder holds a copy of a card's output: a copy's
+     scripts are the card's, and running them again drew the card's plot
+     a second time whenever Raw opened before its library had loaded.
+     Returns whether there was a template. */
+  function liveRawView(shell){
+    var tpl=shell&&shell.querySelector('.rawview>template.rawtpl');
+    if(!tpl) return false;
+    tpl.parentNode.replaceChild(tpl.content,tpl);
+    var rv=$('.rawview',shell);
+    /* its maths waits for the first showing (populateRawView) */
+    if(rv){activateOutputs(rv);rv.dataset.mathWait='1';}
+    return true;
+  }
   function populateRawView(shell){
     if(!shell) return;
-    /* the raw view arrives as an inert <template> (shell.html): it
-       becomes DOM here, the first time it is shown, and never before */
-    var tpl=shell.querySelector('.rawview>template.rawtpl');
-    if(tpl) tpl.parentNode.replaceChild(tpl.content,tpl);
+    liveRawView(shell);
+    var rv=$('.rawview',shell);
     var phs=shell.querySelectorAll('.rawview .rawph:not([data-filled])');
-    if(!phs.length&&!tpl) return;
     var content=$('.content',shell);
     [].forEach.call(phs,function(ph){
       ph.dataset.filled='1';
@@ -2725,17 +2739,12 @@
           +'formatted view. Reload the notebook to rebuild the page.';
       }
     });
-    var rv=$('.rawview',shell);
     /* clones of not-yet-drawn plotly embeds carry their data-plotly spec:
-       draw them now (drawn ones carry .js-plotly-plot and are skipped).
-       A raw view built from its template just now also runs its OWN
-       outputs' scripts -- a hidden cell's bokeh or vega, embedded here
-       in full -- which initShell's activateOutputs(shell) reached at load
-       back when the raw view was live DOM from the start. */
-    if(rv) activateOutputs(rv,!tpl);
+       draw them now (drawn ones carry .js-plotly-plot and are skipped) */
+    if(rv&&phs.length) activateOutputs(rv,true);
     /* ...and its maths, typeset as it is read like the cards' (jvMath):
        what the raw view shows first goes before the next paint */
-    if(rv&&tpl) jvMath.watch(rv);
+    if(rv&&rv.dataset.mathWait){delete rv.dataset.mathWait;jvMath.watch(rv);}
   }
   if(rawBtn) rawBtn.addEventListener('click',function(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -3878,14 +3887,25 @@
       dcR.classList.remove('on');
       document.removeEventListener('mousemove',mv);
       document.removeEventListener('mouseup',up);
+      window.removeEventListener('keydown',key,true);
       if(live){
         dcwLive(0);
         if(w) document.documentElement.style.setProperty('--dc-w',w+'px');
       }
       if(w) try{localStorage.setItem('plotline-dcw',w);}catch(e){}
     }
+    /* A KEY ENDS THE DRAG FIRST. The live widths are inline on the deck
+       and are only right for the builder: F5 (the show) pressed with the
+       edge still held started the show inside the builder's width, and
+       its slide stayed that small after the button came up. Capture on
+       window, so this runs before the deck's own key handlers change
+       the mode. */
+    function key(ev){
+      if(!/^(Shift|Control|Alt|Meta)$/.test(ev.key)) up();
+    }
     document.addEventListener('mousemove',mv);
     document.addEventListener('mouseup',up);
+    window.addEventListener('keydown',key,true);
   });
 
   /* ---- T244: FIND IN THIS NOTEBOOK ------------------------------------
@@ -5237,7 +5257,11 @@
         }
         var hasSrc=!!old.getAttribute('src');
         if(hasSrc){s.async=false;
-          s.onload=s.onerror=function(){runNext(i+1);};}
+          s.onload=function(){runNext(i+1);};
+          /* marked, so a Reload knows this tab is not what a fresh mount
+             shows (shellBroken) and gives it another go */
+          s.onerror=function(){s.setAttribute('data-jvfail','');
+            runNext(i+1);};}
         else s.textContent=old.textContent;   /* inline runs on insert */
         if(old.parentNode) old.parentNode.replaceChild(s,old);
         if(!hasSrc) runNext(i+1);
@@ -7940,6 +7964,13 @@
     wireCardBehaviors(shell,stem);
     wireAddNote(shell,stem);  /* app mode: pencil to add a markdown note */
     activateOutputs(shell);   /* run plotly/bokeh/vega + draw plotly specs */
+    /* ...but a hidden cell's output lives ONLY in the raw view, which
+       ships as an inert template: its <style> no longer styled the page
+       and its scripts no longer ran until Raw was pressed. A template
+       holding either goes live now, as the raw view always was. */
+    var rawTpl=shell.querySelector('.rawview>template.rawtpl');
+    if(rawTpl&&rawTpl.content.querySelector('style,script'))
+      liveRawView(shell);
 
     /* ---- register ---- */
     /* WAKING a registered shell (this same element, first shown) is not a
@@ -8875,8 +8906,19 @@
     }
     return '';
   }
+  /* A tab an output failed to come up in -- an embed's library or
+     plotly.js that did not load (offline at the time, a blocked CDN) --
+     is NOT what mounting it again would show: that remount, which
+     retries them, is what a Reload has always been the way to get. */
+  function shellBroken(stem){
+    var sh=stem&&APP.shells[stem],el=sh&&sh.el;
+    if(!el||!el.querySelector) return false;
+    if(el.querySelector('.content script[data-jvfail]')) return true;
+    return window.__plLoading===0&&!window.Plotly
+      &&!!el.querySelector('.content .plotly-embed[data-plotly]');
+  }
   function openShell(body,stem){
-    var have=shellVer(stem),req={};
+    var have=shellBroken(stem)?'':shellVer(stem),req={};
     for(var k in body) req[k]=body[k];
     if(have) req.have=have;
     return api('/api/open',req).then(function(j){
