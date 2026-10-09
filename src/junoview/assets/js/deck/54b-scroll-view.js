@@ -43,7 +43,7 @@
   var svW=0,svH=0;                /* the live page's size, and every picture's */
   var svLastCur=-1,svFromScroll=false,svIgnoreUntil=0,svPointer=false;
   var svSettleT=null,svNearT=null,svFrame=0;
-  var svDeckSigAt=0,svDeckSigWas='';
+  var svDeckSigAt=0,svDeckSigWas='',svDeckSigGen=-1,svDeckSigOf=null;
   /* what every slide wears, so a change to one of these redraws them all */
   var SV_DECK_KEYS=['page','pageBg','tokens','styles','types','masters',
     'showNums','scale','pad','wmark','head','foot','sections','cite','bib',
@@ -71,16 +71,27 @@
   }
   function svDeckSig(){
     var now=Date.now();
-    if(now-svDeckSigAt<250) return svDeckSigWas;
+    /* the 250 ms memo is for a scroll's run of passes. An edit or an undo
+       (deckGen) or another deck is never answered from it: a deck-wide
+       change -- Numbers, a theme, a style -- made within 250 ms of the
+       last pass left every picture drawn the old way, for good */
+    if(now-svDeckSigAt<250&&svDeckSigGen===deckGen&&svDeckSigOf===pres)
+      return svDeckSigWas;
     var o={};
     SV_DECK_KEYS.forEach(function(k){if(pres[k]!==undefined) o[k]=pres[k];});
     try{svDeckSigWas=JSON.stringify(o);}catch(e){svDeckSigWas=String(now);}
-    svDeckSigAt=now;
+    svDeckSigAt=now;svDeckSigGen=deckGen;svDeckSigOf=pres;
     return svDeckSigWas;
   }
   function svSig(k,deck){
     var s=pres.slides[k];
-    try{return k+'|'+JSON.stringify(s)+'|'+deck;}catch(e){return '';}
+    /* ...and what its figures are drawn from: the strip's own count of a
+       notebook reloaded or closed, a kept copy arriving, a figure made
+       live (filmRefGens, 55-sections-and-strip.js). None is an edit, so
+       the slide's JSON alone kept the old figure in the picture for good
+       -- even after the slide had been visited and showed the new one */
+    var g=(typeof filmRefGens==='function')?filmRefGens(s):'';
+    try{return k+'|'+JSON.stringify(s)+'|'+g+'|'+deck;}catch(e){return '';}
   }
   function svSlot(k){
     var sl=svSlots[k];
@@ -147,6 +158,10 @@
     page.setAttribute('inert','');
     sl.el.appendChild(page);
     var m=mode,rc=revealCount,c=cur,sa=selAnnot,ss=selSet,ff=flipForce;
+    /* ...and the slide '@section' resolves against (T316), which the
+       picture's render sets to ITS slide: left there, the live page's
+       section chip and colour reads took the last picture's section */
+    var ps=paintSlide;
     mode='view';revealCount=99999;cur=k;selAnnot=null;selSet=[];
     flipForce=null;printAll=1;
     try{fillPrintPage(page,s,k,pageOf());}
@@ -156,7 +171,7 @@
     }
     finally{
       mode=m;revealCount=rc;cur=c;selAnnot=sa;selSet=ss;flipForce=ff;
-      printAll=0;
+      printAll=0;paintSlide=ps;
     }
     $$('[id],[contenteditable]',page).forEach(function(n){
       n.removeAttribute('id');n.removeAttribute('contenteditable');});

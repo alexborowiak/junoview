@@ -2441,8 +2441,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # icon, the column CSS, fillPrintPage lifted out of buildPrintRoot, the
 # per-page .page-light and a help entry.
 # Merge claude/version-scroll-zoom (T619-T622).
-EXPECTED_MD5 = "fceeeefa44275e9792c1cb6c0f2f0218"
-EXPECTED_BYTES = 5493550
+# Fix (review of the T619-T622 merge): a scroll-view picture is redrawn when its
+# figures' source changes (filmRefGens) and after any edit or undo however soon
+# after the last pass (deckGen), and puts paintSlide back.
+EXPECTED_MD5 = "284564a2ed3121384770fe5d2fb979b0"
+EXPECTED_BYTES = 5494643
 
 
 def _render_example() -> str:

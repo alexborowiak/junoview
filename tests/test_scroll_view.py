@@ -140,3 +140,23 @@ def test_help_search_and_icon(out):
     assert "    'vw-scroll':'infinite scroll continuous scroll view " in out
     from junoview.branding import icons_map
     assert "scrollview" in icons_map()
+
+
+def test_a_picture_follows_its_figures_and_every_edit():
+    # review of the T619-T622 merge: a figure updated from its notebook
+    # (Update > Use all new versions, a reload, a kept copy) is not an edit,
+    # so the slide's JSON alone kept the old figure in its picture for good;
+    # the strip's per-figure count (filmRefGens) is in the signature now
+    sig = PART.split("  function svSig(k,deck){")[1].split("\n  }\n")[0]
+    assert "filmRefGens(s)" in sig
+    assert "+'|'+g+'|'+deck" in sig
+    # a deck-wide change made within 250 ms of the last pass (Numbers twice,
+    # a quick undo) was answered from the memo and never drawn
+    deck = PART.split("  function svDeckSig(){")[1].split("\n  }\n")[0]
+    assert ("    if(now-svDeckSigAt<250&&svDeckSigGen===deckGen"
+            "&&svDeckSigOf===pres)") in deck
+    assert "    svDeckSigAt=now;svDeckSigGen=deckGen;svDeckSigOf=pres;" in deck
+    # the picture's render leaves '@section' resolving against the live slide
+    paint = PART.split("  function svPaint(k,deck){")[1].split("\n  }\n")[0]
+    assert "    var ps=paintSlide;" in paint
+    assert "      printAll=0;paintSlide=ps;" in paint
