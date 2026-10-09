@@ -49,9 +49,16 @@
   function mediaGet(key){
     if(!key) return Promise.resolve(null);
     if(mediaStore()[key]) return Promise.resolve(mediaStore()[key]);
-    return idbGet(key).then(function(v){
-      if(v&&typeof v.src==='string'&&v.src) mediaStore()[key]=v;
-      return mediaStore()[key]||null;
+    /* the lean boot (10-decks.js): the project's clips arrive with its
+       figure copies, after the page -- a player or an export asking in
+       those first seconds waits for them rather than finding nothing */
+    var wait=embLoaded?Promise.resolve():embFetch().catch(function(){});
+    return wait.then(function(){
+      if(mediaStore()[key]) return mediaStore()[key];
+      return idbGet(key).then(function(v){
+        if(v&&typeof v.src==='string'&&v.src) mediaStore()[key]=v;
+        return mediaStore()[key]||null;
+      });
     }).catch(function(){return null;});
   }
   function dataUriBytes(src){

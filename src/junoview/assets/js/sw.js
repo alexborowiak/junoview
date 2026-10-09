@@ -29,7 +29,7 @@ var HASHED_RE = /\.[0-9a-f]{16}\.(css|js)$/;
    The Pyodide version here MUST match the parser's PYODIDE_BASE in
    web-worker.js; bump the two together. */
 var PY = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
-var MJ = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/';
+var MJ = 'https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/';
 var RUNTIME = [
   PY + 'pyodide.js', PY + 'pyodide.asm.js', PY + 'pyodide.asm.wasm',
   PY + 'python_stdlib.zip', PY + 'pyodide-lock.json',

@@ -26,6 +26,7 @@ from .items import (
     render_sections,
     render_varpanel,
 )
+from .maths import MATH_ATTR
 from .static import static_files
 
 
@@ -68,6 +69,33 @@ def render_shell(doc: Document, path: str = "", ver: str = "") -> str:
         rawview=doc.raw_html or "",
         nb_data=deck_payload(doc),
     ))
+
+
+def has_marked_math(shells: str | bytes) -> bool:
+    """Whether any element in ``shells`` is marked as holding maths
+    (render/maths.py) -- text or already-encoded bytes alike."""
+    if isinstance(shells, bytes):
+        return MATH_ATTR.encode("ascii") in shells
+    return MATH_ATTR in shells
+
+
+def mathjax_head(math: bool) -> str:
+    """MathJax for a page whose notebooks do (``math``) or do not hold
+    maths.
+
+    The configuration always goes in -- a notebook opened later, or a
+    slide with an equation, can still need it, and app.js then loads the
+    script itself. The script tag fetches only when something on the page
+    is marked as holding maths (render/maths.py): a page with none -- the
+    web build's welcome screen, most code-only notebooks -- no longer
+    downloads, compiles and runs 1.2 MB of MathJax it will never use
+    (2026-10-09 speed pass). The address stays on the tag as data-src, so
+    there is one pinned URL on the page either way.
+    """
+    mj = assets.mathjax_html()
+    if math:
+        return mj
+    return mj.replace(' src="', ' data-src="', 1)
 
 
 def render_page(docs: list[Document], mode: str = "static",
@@ -134,7 +162,8 @@ Piece = str | bytes
 
 
 def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
-                asset_base: str | None = None) -> list[Piece]:
+                asset_base: str | None = None,
+                math: bool | None = None) -> list[Piece]:
     """page.html filled in, as the pieces to join -- not yet joined.
 
     The app server joins them as BYTES (:func:`encode_pieces`): it hands
@@ -144,13 +173,19 @@ def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
     copied the whole page, widened to four bytes a character the moment
     any notebook output held an emoji (xarray's HTML does), and then
     encoded all of it again -- on every page load.
+
+    ``math``: whether any shell holds maths (decides whether MathJax's
+    script fetches at load, see :func:`mathjax_head`). None works it out
+    from ``shells``; the app server already knows it per kept shell.
     """
+    if math is None:
+        math = has_marked_math(shells)
     fields: dict[str, Piece] = {
         "title": html.escape(title),
         "head_extra": _head_extra(mode),
         "shells": shells,
         "app_data": app_data,
-        "mathjax": assets.mathjax_html(),
+        "mathjax": mathjax_head(math),
         "deck_shell": _with_icons(assets.deck_html()),
         "help_html": _with_icons(assets.help_html()),
         "saved_file_js": assets.saved_file_js(),

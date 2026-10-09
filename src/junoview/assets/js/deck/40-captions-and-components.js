@@ -2232,8 +2232,9 @@
      (2026-08-10). */
   /* ---- EQUATION -------------------------------------------------------
      A text box that starts with the LaTeX delimiters already in it. There
-     is no new item kind and no new renderer: MathJax is loaded on every
-     page (render/page.py always splices it in) and renderSlide already
+     is no new item kind and no new renderer: MathJax is configured on
+     every page (render/page.py; since 2026-10-09 its script is fetched
+     on first need, by app.js jvMath) and renderSlide already
      calls typeset() on the finished slide, so an ordinary text box whose
      words happen to be "$$ ... $$" is typeset for free - and moves,
      colours, scales, exports and animates like any other text box
@@ -2367,7 +2368,10 @@
         absorb();
         var tex=src.value.trim();
         prev.textContent=tex?wrap(tex,disp.checked):'';
-        if(!window.MathJax||!MathJax.typesetPromise){
+        /* MathJax is loaded on first need now (app.js jvMath): a page
+           whose notebooks hold no maths fetches it here, the first time
+           the editor opens, and the preview waits for it */
+        mathsThen(preview,function(){
           /* MathJax comes from a CDN. Offline, or on a network that
              blocks it, there is no renderer at all — and a blank preview
              would read as "your LaTeX is wrong" rather than "nothing here
@@ -2377,36 +2381,40 @@
             +'loaded from the internet and could not be reached. The '
             +'LaTeX is still saved with the slide and will typeset '
             +'anywhere that can load it.';
-          return;
-        }
-        warn.hidden=true;
-        MathJax.typesetPromise([prev]).then(function(){
-          /* MathJax never REJECTS on bad input, and it fails in two
-             different ways depending on how bad it is: a command it does
-             not know gets a red "Math input error" box, while something
-             it cannot parse at all - an unclosed brace, say - is left as
-             raw "$$ ... $$" text with no container produced at all.
-             Neither throws, so the test is "did a container come out,
-             and is it clean", not "did anything reject" (2026-08-20,
-             both observed live in the browser). */
-          var bad=prev.querySelector('mjx-merror,.MathJax_Error');
-          var setOk=prev.querySelector('mjx-container');
-          if(setOk&&!bad) return;
-          warn.hidden=false;
-          warn.textContent=bad
-            ?('That is not valid LaTeX yet — '
-              +(bad.getAttribute('title')
-                ||'check the braces and backslashes')
-              +'. The red box shows where it gave up.')
-            :('That did not typeset — usually an unclosed { or a '
-              +'misspelt command. It is still saved exactly as you '
-              +'typed it.');
-        }).catch(function(e){
-          warn.hidden=false;
-          warn.textContent='That does not parse as LaTeX yet: '
-            +(e&&e.message?e.message:'check the braces');
         });
       },160);
+    }
+    /* the preview's typeset goes through jvMath.run, so it never overlaps
+       the page's own typesetting of the notebook behind this dialog */
+    function preview(){
+      warn.hidden=true;
+      mathsRun(function(){return MathJax.typesetPromise([prev]);})
+        .then(function(){
+        /* MathJax never REJECTS on bad input, and it fails in two
+           different ways depending on how bad it is: a command it does
+           not know gets a red "Math input error" box, while something
+           it cannot parse at all - an unclosed brace, say - is left as
+           raw "$$ ... $$" text with no container produced at all.
+           Neither throws, so the test is "did a container come out,
+           and is it clean", not "did anything reject" (2026-08-20,
+           both observed live in the browser). */
+        var bad=prev.querySelector('mjx-merror,.MathJax_Error');
+        var setOk=prev.querySelector('mjx-container');
+        if(setOk&&!bad) return;
+        warn.hidden=false;
+        warn.textContent=bad
+          ?('That is not valid LaTeX yet — '
+            +(bad.getAttribute('title')
+              ||'check the braces and backslashes')
+            +'. The red box shows where it gave up.')
+          :('That did not typeset — usually an unclosed { or a '
+            +'misspelt command. It is still saved exactly as you '
+            +'typed it.');
+      }).catch(function(e){
+        warn.hidden=false;
+        warn.textContent='That does not parse as LaTeX yet: '
+          +(e&&e.message?e.message:'check the braces');
+      });
     }
     function insert(txt){
       var a=src.selectionStart||0,b=src.selectionEnd||0;
@@ -2444,9 +2452,10 @@
         });
         pal.appendChild(row);
       });
-      /* ONE typeset pass over the whole palette, once it is built */
-      if(window.MathJax&&MathJax.typesetPromise)
-        MathJax.typesetPromise([pal]).catch(function(){
+      /* ONE typeset pass over the whole palette, once it is built --
+         loading MathJax first when this page has not needed it yet */
+      mathsRun(function(){return MathJax.typesetPromise([pal]);})
+        .catch(function(){
           /* no renderer reachable: fall back to the LaTeX, which is at
              least readable and is what you would have typed anyway */
           $$('.eq-key-tex',pal).forEach(function(b){

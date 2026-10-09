@@ -53,7 +53,7 @@ from ..notebook.loader import (
     url_notebook,
 )
 from ..notebook.parser import parse_notebook
-from ..render.page import render_shell
+from ..render.page import has_marked_math, render_shell
 
 #: Different on every run: a version token from an earlier server never
 #: matches, whatever the file says.
@@ -75,12 +75,21 @@ class Shell:
     #: strict caller (an explicit open) still raises it
     fallback: Exception | None = None
     _body: bytes | None = field(default=None, repr=False)
+    _math: bool | None = field(default=None, repr=False)
 
     def body(self) -> bytes:
         """The shell as UTF-8, encoded once."""
         if self._body is None:
             self._body = self.html.encode("utf-8")
         return self._body
+
+    @property
+    def math(self) -> bool:
+        """Whether this shell holds maths (render/maths.py marks it), so
+        the page fetches MathJax at load -- asked once per rendering."""
+        if self._math is None:
+            self._math = has_marked_math(self.html)
+        return self._math
 
 
 class _Memo:

@@ -239,8 +239,11 @@ def test_a_copy_of_the_page_css_reads_linked_sheets_too():
     if eng is None:
         pytest.skip("no JS engine")
     src = assets.deck_js()
+    # styleText: an inline <style> is read as text, MathJax's own sheet
+    # rule by rule (test_maths_typeset_as_read)
     fns = "\n".join(lift_fn(src, n) for n in
-                    ("sheetRulesText", "pageCssText", "pageCssTextNow"))
+                    ("styleText", "sheetRulesText", "pageCssText",
+                     "pageCssTextNow"))
     import subprocess
     import tempfile
 

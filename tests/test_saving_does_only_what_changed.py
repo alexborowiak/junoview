@@ -313,7 +313,7 @@ def test_a_store_of_the_same_copy_keeps_what_was_built_from_it():
     got = _run("""
 var EMBED={},embItems={},embWeak={},EMBPREV={},dropped=[];
 function dropFrameCache(k){dropped.push(k);}
-""", ("embStore", "embPut"), r"""
+""", ("embStore", "embPut", "sameCardHtml", "mjxNeutral"), r"""
       embStore('nb::a',{title:'t',kind:'figure',html:'<i>',code:''});
       EMBED['nb::a']._node='parsed';embItems['nb::a']='item';
       embStore('nb::a',{title:'t',kind:'figure',html:'<i>'});
@@ -385,3 +385,71 @@ def test_no_project_write_runs_during_a_talk():
     assert "releaseSaves();" in mode.split("else if(endingTalk){", 1)[1]
     close = js.split("  function closeDeck(){", 1)[1].split("\n  }", 1)[0]
     assert "if(wasTalk) releaseSaves();" in close
+
+
+# --------------------------------------------- from the review (2026-10-09)
+
+def test_a_picture_new_in_the_last_snapshot_keeps_its_name():
+    # the review of the save package: histBigPrune ran BEFORE the new
+    # snapshot became histSnap, so a picture (or a long text box) that
+    # first appeared in it was named nowhere yet and its name was let go
+    # -- and undo then put the bare name, '\0jvpicN', into the deck and
+    # the next save wrote it to the project file
+    got = _run(_HIST + """
+      var histHeadMarks=[],deck={src:'p0'+'x'.repeat(9000)};
+      function histMarksShift(){}
+      function updateUndoBtns(){}
+      function histState(){return JSON.stringify(deck,histBigRep);}
+    """, _HIST_FNS + ("histPush",), r"""
+      histSnap=histState();
+      for(var i=1;i<80;i++){
+        deck={src:'p'+i+'x'.repeat(9000),n:i};histPush();}
+      var all=undoStack.concat([histSnap]),bad=0;
+      all.forEach(function(s){
+        var src=histParse(s).src;
+        if(src.charCodeAt(0)===0||src.length<9000) bad++;});
+      console.log(JSON.stringify({bad:bad,n:all.length,
+        last:histParse(histSnap).src.slice(0,3)}));
+    """)
+    assert got == {"bad": 0, "n": 51, "last": "p79"}
+
+
+def test_the_edit_before_present_reaches_the_project_as_the_show_starts():
+    # a talk ended by closing the tab never reaches releaseSaves, so the
+    # pending autosave is written once the first slide has painted -- not
+    # through autoSaveNow, which would hold it for the end of the talk
+    js = assets.deck_js()
+    mode = js.split("  function setUIMode(m){", 1)[1].split("\n    mode=m;", 1)[0]
+    assert "if(startingTalk) saveBeforeShow();" in mode
+    assert mode.index("flushDraftWrite();") < mode.index("saveBeforeShow();")
+    fn = js.split("  function saveBeforeShow(){", 1)[1].split("\n  }\n", 1)[0]
+    assert "cancelAutosave();" in fn and "autoSaveNow" not in fn
+    assert "saveToProject(true);" in fn and "saveToFile(true);" in fn
+
+
+def test_a_rename_waits_for_the_copies_it_has_to_carry():
+    # the project keeps a deck's copies under its NAME: a rename written
+    # before the lean boot's copies arrived dropped every one of them
+    js = assets.deck_js()
+    for head in ("  function renamePresentation(nm){",
+                 "  function renamePresByName(old,nm){"):
+        body = js.split(head, 1)[1].split("\n  }\n", 1)[0]
+        assert "if(renameNeedsCopies()) return false;" in body, head
+    need = js.split("  function renameNeedsCopies(){", 1)[1].split("\n  }", 1)[0]
+    assert "if(embEnsure()) return false;" in need
+
+
+def test_the_copies_arriving_redraw_only_what_went_without():
+    # the idle arrival used to redraw whenever a deck was on screen, which
+    # threw the caret out of a box being typed in; now only a reader that
+    # was refused (or a clip that gained its bytes) asks for it, and a
+    # box being typed in redraws on its blur
+    js = assets.deck_js()
+    fetch = js.split("  function embFetch(){", 1)[1].split("\n  }\n", 1)[0]
+    assert "refresh()" not in fetch
+    assert "if(!was&&(embMissed||embClipsShown()>clips)) embRedraw();" in fetch
+    ens = js.split("  function embEnsure(){", 1)[1].split("\n  }\n", 1)[0]
+    assert ens.count("embMissed=true") == 3
+    redraw = js.split("  function embRedraw(){", 1)[1].split("\n  }\n", 1)[0]
+    assert "ae.isContentEditable&&deckEl.contains(ae)" in redraw
+    assert "addEventListener('blur'" in redraw

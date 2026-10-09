@@ -2,7 +2,9 @@
 window.MathJax = {
   tex: {inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']]},
-  options: {skipHtmlTags: ['script','noscript','style','textarea','pre','code']}
+  options: {skipHtmlTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreHtmlClass: 'mathjax_ignore|rawview'},
+  startup: {typeset: false}
 };
 </script>
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<script async id="jv-mathjax" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js" onload="this.setAttribute('data-state','loaded')" onerror="this.setAttribute('data-state','failed')"></script>

@@ -2416,6 +2416,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # counter and the interned undo snapshots, so the inlined bytes moved.
 # Speed (server): the deck script reads linked stylesheets (pageCssText) for its
 # HTML export and presenter window, and Reload sends the shell's version.
+# Fix (review of the save package): undo names pruned after the new snapshot,
+# the idle copies redraw only what went without, a rename waits for its
+# copies, and the edit before Present is saved as the show starts.
+# Fix: a clip asked for before the lean boot's copies arrive waits for them.
+# Speed (MathJax): data-math marks, the pinned loader typeset as read (jvMath),
+# kept copies without MathJax's menu counter, hidden maths measured on a stand-in.
 # T619: the zoom moved into the tab row and "Slide 3 of 14" to the head of the
 # slide list, Ribbon layouts became a row of File, the stage's foot is 18px.
 # T620: the scrolling page's Between slides choice (its script, its CSS and a
@@ -2423,8 +2429,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T621: the template's comment beside the wordmark and the .welcome-ver rule;
 # the build field itself is empty in a rendered notebook, so git never reaches
 # these bytes.
-EXPECTED_MD5 = "89abbd3cbe4f1614c85486ff34790329"
-EXPECTED_BYTES = 5365581
+EXPECTED_MD5 = "7df980bd10d9cb04e31b6f8b8f670c74"
+EXPECTED_BYTES = 5398015
 
 
 def _render_example() -> str:

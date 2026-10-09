@@ -894,8 +894,7 @@
     /* the document side's own wiring: code toggles, figure zoom, plots */
     if(A.wireCardBehaviors) A.wireCardBehaviors(sec,colKey(name));
     if(A.activateOutputs) A.activateOutputs(sec,true);
-    if(window.MathJax&&MathJax.typesetPromise)
-      MathJax.typesetPromise([sec]).catch(function(){});
+    typeset(sec);   /* through the page's typesetter (jvMath) */
   }
   function colRename(model){
     askText({title:'Rename collection',value:model.name,ok:'Rename'},
