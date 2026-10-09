@@ -363,7 +363,9 @@ def test_controls_that_cannot_act_say_so(out):
     # verb behind it uses. Gated on the plain selRects, two
     # position-locked boxes hid the control while sameSize would have
     # resized them happily (ported from the parallel branch, 2026-08-30).
-    assert "show('#fmt-samewrap',selRects(true).length>=2);" in out
+    # (counted rather than measured since 2026-10-09: selRectCount applies
+    # selRects' own filters without a forced layout per item)
+    assert "show('#fmt-samewrap',selRectCount(true)>=2);" in out
     assert "function needTwo(items,what){" in out
     assert "if(needTwo(items,'line up')) return;" in out
     assert "Select at least three items to space them out evenly" in out
@@ -1075,7 +1077,7 @@ def test_arrows_are_drawn_in_a_second_pass(out):
     settle.
     """
     assert "function drawArrow(layer,s,a,i,svg,svgTop,defs,editing){" in out
-    assert "function redrawArrows(layer,s){" in out
+    assert "function redrawArrows(layer,s,live){" in out
     assert "if(a.k==='arrow'){_arrows.push(i);return;}" in out
     assert "if(moved) scheduleArrowRedraw(layer);" in out
     # z-order is unchanged: the visible strokes have always gone into
@@ -1879,8 +1881,9 @@ def test_a_position_lock_does_not_excuse_an_item_from_a_resize(out):
     # which meant the fix below could not be reached from the ribbon in
     # exactly the case it was written for (2026-08-30).
     assert "var items=selRects(true); if(items.length<2) return;" in out
-    assert "show('#fmt-samewrap',selRects(true).length>=2);" in out
-    assert out.count("selRects(true)") == 2
+    assert "show('#fmt-samewrap',selRectCount(true)>=2);" in out
+    assert out.count("selRects(true)") == 1
+    assert out.count("selRectCount(true)") == 1
     # the MOVEMENT verbs must not have drifted onto it
     assert "selRects()" in out
 
@@ -1921,4 +1924,5 @@ def test_speaker_notes_cost_one_undo_entry_not_one_per_keystroke(out):
     # editor walks to another slide
     assert "if(ov&&typeof histPush==='function') histPush();" in out
     assert ("ta.addEventListener('blur',function(){\n"
+            "        if(notesT) notesDirty();\n"
             "        if(typeof histPush==='function') histPush();});") in out

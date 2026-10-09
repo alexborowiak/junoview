@@ -1123,6 +1123,19 @@
      and anything still owed when the hold lets go -- a switch with no
      slide to render, such as the builder -- is fitted then, once. */
   var zoomHold=0,zoomOwed=false;
+  /* what the stage's layer was last rendered from (see applyZoom); the
+     render itself writes it, on the stage's own layer only */
+  function zoomStamp(slideEl,s){
+    return [slideEl.style.width,slideEl.style.height,mode,tool,deckGen,
+      deckViewGen,(typeof privShown==='function'&&privShown())?1:0,
+      pres.slides.indexOf(s),String(selAnnot),selSet.join(','),
+      String(inGroup)].join('|');
+  }
+  function zoomStampMark(layer,s){
+    var sl=layer&&layer.parentNode;
+    if(!sl||sl.parentNode!==stage||!sl.style) return;
+    layer._zoomStamp=(pres.slides[cur]===s)?zoomStamp(sl,s):null;
+  }
   function applyZoom(rendering){
     if(rendering) zoomOwed=false;
     else if(zoomHold){zoomOwed=true;return;}
@@ -1174,7 +1187,17 @@
        transition. The edit branch has always re-rendered; the letterboxed
        playback branch never did (2026-08-10). */
     var s0=pres.slides[cur],l0=stage.querySelector('.annot-layer');
-    if(s0&&l0){
+    /* ...BUT ONLY WHEN SOMETHING IT DRAWS FROM HAS MOVED (2026-10-09,
+       speed, editor #8). A ribbon refit, a pane that docked beside a
+       page that kept its size, a zoom that came out the same: each
+       re-rendered every item on the slide, and its forced layouts. What
+       a render draws from is the page's size and the mode (fontPx,
+       strokePx, percentages), the slide, and the deck and what it shows
+       (deckGen: every edit and every undo; deckViewGen: a notebook or a
+       copy that changed what a frame shows) -- all of it in the stamp
+       the layer's last render left (zoomStamp). Any of them moved, or a
+       render that left no stamp, and it renders as it always did. */
+    if(s0&&l0&&l0._zoomStamp!==zoomStamp(slideEl,s0)){
       renderAnnots(l0,s0);
       if(mode==='edit') paintSel(l0);
     }

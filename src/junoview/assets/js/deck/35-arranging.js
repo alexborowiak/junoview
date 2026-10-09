@@ -85,6 +85,27 @@
         return r?{i:i,a:a,r:r,w:r.r-r.l,h:r.b-r.t}:null;
       }).filter(Boolean);
   }
+  /* HOW MANY selRects would answer, without measuring any of them
+     (2026-10-09, speed, editor #5). The Arrange menu and the Same-size
+     cell only ask whether there are two, and each asked by measuring
+     every selected item -- two forced layouts on every selection. The
+     same filters; and a box annotRectPct cannot answer for is one with
+     no stored size and nothing drawn to measure, which is asked here of
+     the model and the layer's markup instead. (One difference, on
+     purpose: a layer with no size at all -- the editor hidden -- counts
+     what is drawn on it; the next selection on screen recounts.) */
+  function selRectCount(sizeOnly){
+    var s=pres.slides[cur]; if(!s) return 0;
+    var l=stage.querySelector('.annot-layer'); if(!l) return 0;
+    return selSet.filter(function(i){
+      if(typeof i!=='number') return false;
+      var a=(s.annots||[])[i];
+      if(!a||a.k==='arrow'||a.hide) return false;
+      if(sizeOnly?lockedAll(a):pinned(a)) return false;
+      if(a.w!=null&&(a.h!=null||(a.k==='text'&&a.fh>0))) return true;
+      return !!l.querySelector('.an-item[data-idx="'+i+'"]');
+    }).length;
+  }
   function selBBox(items){
     var bb={l:1e9,r:-1e9,t:1e9,b:-1e9};
     items.forEach(function(x){
@@ -289,7 +310,7 @@
      selected box does not open a wall of disabled-sounding choices. */
   function arrangeMenuSync(){
     var menu=$('#fmt-align-menu'); if(!menu) return;
-    var n=selRects().length;
+    var n=selRectCount();
     $$('[data-al]',menu).forEach(function(b){
       var v=b.getAttribute('data-al')||'';
       var many=v==='o:row'||v==='o:grid'||v.indexOf('m:')===0
@@ -298,7 +319,8 @@
         ||['left','hcenter','right','top','vmiddle','bottom']
           .indexOf(v)>=0;
       var three=v.indexOf('d:')===0;
-      b.hidden=many&&(n<(three?3:2));
+      var hide=many&&(n<(three?3:2));
+      if(b.hidden!==hide) b.hidden=hide;
     });
   }
   function alignSel(edge){
@@ -2799,15 +2821,62 @@
   function geoEach(k,fn){
     GEO_HOSTS.forEach(function(pre){var el=$(pre+k); if(el) fn(el);});
   }
+  /* NUMBERS NOBODY CAN SEE ARE NOT WORKED OUT (2026-10-09, speed,
+     editor #5). Every edit, every selection and every resize mousemove
+     measured the item (sizeRect, a forced layout) to fill fields on a
+     shut pane and on a ribbon tab that was not showing. A field is out
+     of sight when something between it and the editor says so -- a
+     `hidden` (the pane, the cell showFmt hides, a fold's shut menu, the
+     shelf) or a `data-off` (another tab's group); anything else, a mode
+     or a class, counts as showing and is filled as it always was. What
+     is skipped is owed (geoOwed), and the moment a field comes back into
+     sight -- whichever path unhides it -- the watcher below pays it,
+     before the browser paints (a MutationObserver runs at the end of the
+     task that made the change). */
+  var geoOwed=false;
+  function geoHiddenField(el){
+    for(var n=el;n&&n!==deckEl&&n!==document.body;n=n.parentElement){
+      if(n.hidden||(n.hasAttribute&&n.hasAttribute('data-off'))) return true;
+    }
+    return false;
+  }
+  function geoInSight(){
+    var any=false;
+    GEO_HOSTS.forEach(function(pre){
+      var el=$(pre+'x'); if(el&&!geoHiddenField(el)) any=true;});
+    return any;
+  }
+  var geoWatch=null;
+  function geoWatchBoot(){
+    if(geoWatch||!window.MutationObserver) return;
+    geoWatch=new MutationObserver(function(){
+      if(geoOwed&&geoInSight()) sizePaneSync();
+    });
+    var bar=$('#edit-tools'),sp=$('#sizepane');
+    if(bar) geoWatch.observe(bar,{subtree:true,childList:true,
+      attributes:true,attributeFilter:['hidden','data-off']});
+    if(sp) geoWatch.observe(sp,{attributes:true,attributeFilter:['hidden']});
+  }
+  /* written only when it changed: a same-value `disabled` write still
+     tells the ribbon's readout watcher something changed (rbnFoldReadouts
+     ran 22 times per resize gesture), and a same-value text write is a
+     new text node to restyle */
+  function geoSet(el,prop,v){if(el[prop]!==v) el[prop]=v;}
+  /* ...and paid at once by a path that has just unhidden the fields
+     itself (showFmt, a new selection), so they are filled before it fits
+     the ribbon rather than in the watcher's microtask after the fit */
+  function geoPay(){if(geoOwed&&geoInSight()) sizePaneSync();}
   function sizePaneSync(){
+    if(geoWatch&&!geoInSight()){geoOwed=true;return;}
+    geoOwed=false;
     var a=sizeSubject(),cb=$('#sz-lockar'),note=$('#sz-note');
     var keys=['w','h','x','y'];
     if(!a){
       keys.forEach(function(k){
-        geoEach(k,function(el){el.value='';el.disabled=true;});});
-      if(cb){cb.checked=false;cb.disabled=true;}
-      if(note) note.textContent='Select one object on the page. An arrow '
-        +'is two endpoints rather than a box, so it has none of these.';
+        geoEach(k,function(el){geoSet(el,'value','');geoSet(el,'disabled',true);});});
+      if(cb){geoSet(cb,'checked',false);geoSet(cb,'disabled',true);}
+      if(note) geoSet(note,'textContent','Select one object on the page. An arrow '
+        +'is two endpoints rather than a box, so it has none of these.');
       return;
     }
     var r=sizeRect(a);
@@ -2816,22 +2885,22 @@
     keys.forEach(function(k){
       var horiz=(k==='w'||k==='x');
       geoEach(k,function(el){
-        el.disabled=all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos);
+        geoSet(el,'disabled',!!(all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos)));
         /* never overwrite the field you are typing in -- the rule every
            input in the notes pane already keeps */
         if(document.activeElement!==el)
-          el.value=Math.round(pctMm(v[k],horiz)*10)/10;
+          geoSet(el,'value',String(Math.round(pctMm(v[k],horiz)*10)/10));
       });
     });
-    if(cb){cb.disabled=all;cb.checked=!!a.lockar;}
-    if(note) note.textContent=
+    if(cb){geoSet(cb,'disabled',!!all);geoSet(cb,'checked',!!a.lockar);}
+    if(note) geoSet(note,'textContent',
       (all?'Fully locked — unlock it to change any of these. ':'')
       +(!all&&pos?'Position locked — its size is still yours. ':'')
       +(isText?'A text box heights itself from its words, so Height is a '
         +'readout. ':'')
       +(a.anch?('Pinned '+((ANCHORS[a.anch]||[a.anch])[0]+'')
         .toLowerCase()+' — X and Y are still measured from the top '
-        +'left of the page, and the pin is kept.'):'');
+        +'left of the page, and the pin is kept.'):''));
   }
   /* ONE write, whichever field you typed in. */
   function sizePaneWrite(k,mm){

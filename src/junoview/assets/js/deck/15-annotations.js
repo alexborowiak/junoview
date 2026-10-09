@@ -259,6 +259,26 @@
         !!traceCkHidden[ck]||(!!ot&&!!traceOtHidden[ot]));
     });
   }
+  /* EVERY CODE-TRAIL FILTER MENU EVER MADE, so the click that closes an
+     open one asks this list and not the whole page (2026-10-09, speed,
+     systemic #2: `$$('.vo-fmenu')` walked every element of every open
+     notebook on every click anywhere -- 4-11 ms a click at 4x). Held
+     weakly: a menu whose view was thrown away goes with it, and one
+     built before its view was put on the page is still found once it
+     is there -- the selector only ever found menus in the page. */
+  var voMenus=[];
+  function voMenuKeep(m){
+    voMenus.push(typeof WeakRef==='function'?new WeakRef(m):{deref:function(){return m;}});
+  }
+  function voMenusLive(){
+    var out=[];
+    voMenus=voMenus.filter(function(r){
+      var m=r.deref(); if(!m) return false;
+      if(m.isConnected) out.push(m);
+      return true;
+    });
+    return out;
+  }
   function traceFilterDropdown(kind,present,state,v){
     var wrap=document.createElement('span');wrap.className='vo-fdrop';
     var btn=document.createElement('button');
@@ -266,6 +286,7 @@
     btn.textContent=(kind==='code'?'Code types':'Output types')+' ▾';
     var menu=document.createElement('div');menu.className='vo-fmenu';
     menu.hidden=true;
+    voMenuKeep(menu);   /* the outside-click closer's list (voMenusLive) */
     present.forEach(function(t){
       var row=document.createElement('label');row.className='ckf-row';
       var cb=document.createElement('input');cb.type='checkbox';
@@ -2282,6 +2303,29 @@
         inGroup!=null&&!!ga&&ga.grp===inGroup);
     });
   }
+  /* paintSel's marks for the ARROWS ALONE, measuring nothing: what a
+     gesture that redraws only the arrows (redrawArrows' `live`) needs,
+     because every other item kept its marks and its size. The rules are
+     paintSel's own for these elements -- none of them is ever `small`
+     (that is for boxes) -- and a group, whose frame is drawn round the
+     members' measured union, still takes the whole paintSel. */
+  function paintSelArrows(layer){
+    if(selIsOneGroup()){paintSel(layer);return;}
+    var multi=selSet.length>1;
+    var s0=pres.slides[cur];
+    $$('.an-arrow-line[data-idx],.an-arrow-hit[data-idx],.an-endpt[data-idx]',
+       layer).forEach(function(el){
+      var key=+el.getAttribute('data-idx');
+      var on=selSet.indexOf(key)>=0;
+      el.classList.toggle('sel',on);
+      el.classList.toggle('grpsel',on&&multi);
+      el.classList.toggle('an-small',false);
+      el.classList.toggle('an-grouped',false);
+      var ga=s0?(s0.annots||[])[key]:null;
+      el.classList.toggle('an-ingrp',
+        inGroup!=null&&!!ga&&ga.grp===inGroup);
+    });
+  }
   var pendingShape='rect';   /* which shape the "+ Shapes" tool draws */
   /* which named type the next text box is born wearing, '' for a plain
      one. Module-local like pendingShape and for the same reason: a type
@@ -3034,9 +3078,20 @@
      the whole trick: one line of new wiring, and the difference between
      a copy and a reference is a single character in the stored value. */
   function renderTokenSwatches(){
+    /* REBUILT WHEN WHAT IT SHOWS CHANGED (2026-10-09, speed, editor #10).
+       renderSlide asks on every slide change, and both rows inside the
+       ribbon were thrown away and built again each time -- and every
+       ribbon watcher then looked at the bar again. What they show is the
+       deck's colours, and (text only) whether there are sections and the
+       colour this slide's section resolves to; the row keeps the stamp
+       it was built from. */
+    var t0=tokens();
+    var secOn=!!(pres&&pres.sections&&Object.keys(pres.sections).length);
+    var sig=JSON.stringify([t0.c,secOn,secOn?(tokVal('@section')||''):'']);
     ['#fmt-txcol-menu','#fmt-fillcol-menu'].forEach(function(sel){
       var menu=$(sel); if(!menu) return;
       var row=menu.querySelector('.sw-tokrow');
+      if(row&&row._tokSig===sig) return;
       if(!row){
         row=document.createElement('span');
         row.className='sw-tokrow';
@@ -3045,6 +3100,7 @@
            now the answer most of the time. */
         menu.insertBefore(row,menu.querySelector('.sw-stdlab'));
       }
+      row._tokSig=sig;
       row.innerHTML='';
       var isFill=(sel==='#fmt-fillcol-menu');
       var lab=document.createElement('span');

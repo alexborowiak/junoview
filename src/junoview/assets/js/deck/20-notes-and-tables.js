@@ -269,15 +269,36 @@
     var ta=$('#np-notes');
     if(ta){
       ta.addEventListener('keydown',function(e){e.stopPropagation();});
+      /* THE WORDS AT ONCE, THE BOOKKEEPING AT MOST EVERY 300 MS
+         (2026-10-09, speed, editor #12). Every keystroke was a whole
+         markDirty -- the readout, the Objects and numbers panes, the
+         thumbnail, the draft and autosave timers -- 25-55 ms a character
+         at 4x, competing with the typing on a slow laptop. The note is
+         in the model the moment it is typed; the quiet markDirty that
+         counts it runs once per 300 ms of typing (a timer, not a
+         debounce, so a long note still arms the autosave as it is typed),
+         and anything that saves, re-renders or leaves the page settles
+         it first (quietSettle, from flushTextEdits), as the blur does. */
+      var notesT=null,notesPres=null;
+      var notesDirty=function(){
+        clearTimeout(notesT);notesT=null;quietPaid(notesDirty);
+        /* a deck changed under the typing is not the deck it went into */
+        if(pres===notesPres) markDirty(true);
+      };
       ta.addEventListener('input',function(){
         var sl=pres.slides[cur]; if(!sl) return;
         var v=ta.value;
         if(v.trim()) sl.notes=v; else delete sl.notes;
         /* quiet, and one undo entry on blur — see the notes editor's
            copy of this handler (T57) */
-        markDirty(true);presenterPush();
+        if(!notesT){
+          notesPres=pres;quietOwe(notesDirty);
+          notesT=setTimeout(notesDirty,300);
+        }
+        presenterPush();
       });
       ta.addEventListener('blur',function(){
+        if(notesT) notesDirty();
         if(typeof histPush==='function') histPush();});
     }
     /* T228: the target is two boxes, minutes and seconds, and both
@@ -1496,6 +1517,43 @@
      that is about to persist, re-render or tear down the page calls this
      first; see the long note in editableText for what each of those used
      to lose. Safe to call when nothing is being edited. */
+  /* THE OPEN EDITORS, KEPT AS THEY OPEN (2026-10-09, speed). Finding the
+     box being typed in was a selector list over the whole document --
+     the notebook behind the editor included, 13-40k nodes -- on every
+     render, every save, every slide change and every format click: 5-7
+     ms a time at 4x, 60 times over in a print. Only two things in the
+     app ever become editable, a text box (beginEdit) and a table cell
+     (startTableEdit), and both say so here as they do. A member counts
+     while it is still in the page and still editable -- exactly what
+     the selector used to find -- and one that has left the page is
+     dropped the next time anyone asks. */
+  var liveEds=new Set();
+  function liveEdOn(el){if(el) liveEds.add(el);}
+  function liveEdOff(el){if(el) liveEds.delete(el);}
+  function liveEditors(){
+    var out=[];
+    liveEds.forEach(function(el){
+      if(!el.isConnected){liveEds.delete(el);return;}
+      var ce=el.getAttribute('contenteditable');
+      if(ce==='true'||ce==='plaintext-only') out.push(el);
+    });
+    return out;
+  }
+  /* DEFERRED COMMITS. An input whose every keystroke used to be a quiet
+     markDirty (the slide notes, editor #12) now writes the model at once
+     and owes the bookkeeping a moment later; anything about to save,
+     re-render or leave the page settles what is owed first, here, so the
+     draft and the save always see it counted. */
+  var quietOwed=[];
+  function quietOwe(fn){if(quietOwed.indexOf(fn)<0) quietOwed.push(fn);}
+  function quietPaid(fn){
+    var k=quietOwed.indexOf(fn); if(k>=0) quietOwed.splice(k,1);}
+  function quietSettle(){
+    while(quietOwed.length){
+      var f=quietOwed.shift();
+      try{f();}catch(e){}
+    }
+  }
   function flushTextEdits(){
     /* NOTHING IS TYPED INTO A TALK (2026-10-09, speed). Every step of a
        show re-renders the slide, and each render asked the whole page --
@@ -1503,9 +1561,16 @@
        8 ms a click at 4x. An editor exists only while editing (wireEditor),
        and the one switch into a talk commits whatever was still open
        before it changes anything (setUIModeRun's first line). */
+    /* ...and nothing is SETTLED in one either. View mode here is a render
+       borrowing the moment -- a print page, the presenter's previews, a
+       History thumbnail of another deck, a ghost of another slide -- with
+       cur, the selection or the deck itself swapped out, and the owed
+       markDirty would fill the panes from that, or (another deck) be
+       dropped. What is owed stays owed for the real moment. */
     if(mode==='view') return;
-    var live=document.querySelectorAll(
-      '[contenteditable="true"],[contenteditable="plaintext-only"]');
+    quietSettle();
+    if(!liveEds.size) return;
+    var live=liveEditors();
     for(var i=0;i<live.length;i++){
       var f=live[i].__jvFlush;
       if(typeof f==='function'){try{f();}catch(e){}}
@@ -1599,12 +1664,14 @@
          and the apparently-created box then vanished. */
       if(!getVal()&&!el.querySelector('li')) el.textContent='';
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
+      liveEdOn(el);   /* the open editors (flushTextEdits) */
       el.focus();
       var host=el.closest?el.closest('.an-item'):null;
       if(host) host.classList.add('an-editing');
     }
     function endEdit(){
       el.contentEditable='false';
+      liveEdOff(el);
       var host=el.closest?el.closest('.an-item'):null;
       if(host) host.classList.remove('an-editing');
     }
@@ -1819,6 +1886,7 @@
       delete el.__jvFlush;
       el.__jvSkipBlur=1;
       el.contentEditable='false';
+      liveEdOff(el);
       var host3=el.closest?el.closest('.an-item'):null;
       if(host3) host3.classList.remove('an-editing');
       a3.text='';delete a3.html;delete a3.ph;
@@ -2269,7 +2337,12 @@
      had moved — the arrow ended up somewhere else, most visibly on the
      first render of a slide in playback (2026-08-20, user: "arrows and
      lines when going to present do not stay in the same place"). */
-  function redrawArrows(layer,s){
+  /* `live`: a drag or a held arrow key is moving things RIGHT NOW. The
+     selection cannot change mid-gesture, so the arrows' own selection
+     marks are put on the strokes just drawn (paintSelArrows) instead of
+     a whole paintSel -- a class walk over every item and a measure of
+     the selected one, on every mousemove. */
+  function redrawArrows(layer,s,live){
     if(!layer||!layer.isConnected||!s) return;
     var svg=layer.querySelector('svg:not(.an-svgtop)');
     var svgTop=layer.querySelector('svg.an-svgtop');
@@ -2281,14 +2354,44 @@
     $$('.an-arrow-hit',layer).forEach(function(n){n.remove();});   /* T585: either svg */
     $$('marker',defs).forEach(function(n){n.remove();});
     var editing=(mode==='edit');
+    var draw=[];
     (s.annots||[]).forEach(function(a,i){
       if(!a||a.k!=='arrow') return;
       if(a.hide) return;                     /* T404: hidden is hidden */
       if(a.priv&&!privShown()) return;      /* T31 */
-      drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
+      draw.push(i);
     });
+    /* EVERY END MEASURED BEFORE ANY ARROW IS DRAWN, and the page's height
+       with them -- paintAnnots' rule, for the same reason: each arrow
+       drawn put paths and handles into the layer, so the next one's
+       measure (its ends, its stroke's share of the page) laid the page
+       out again. Per arrow, per mousemove, during every drag on a slide
+       with a diagram on it (2026-10-09, speed, editor #6). Nothing an
+       arrow draws moves an item, so the boxes measured first are the
+       boxes the old order found. */
+    var own=!layer._hPass,pass=own?{h:0}:layer._hPass,outer=pass.arrows;
+    if(own) layer._hPass=pass;
+    try{
+      if(draw.length){
+        var pre={ends:{},lr:null};
+        draw.forEach(function(i){
+          pre.ends[i]=arrowEnds(layer,s,s.annots[i],i);});
+        pre.lr=layer.getBoundingClientRect();
+        layerH(layer);
+        pass.arrows=pre;
+      }
+      draw.forEach(function(i){
+        drawArrow(layer,s,s.annots[i],i,svg,svgTop,defs,editing);
+      });
+    } finally {
+      pass.arrows=outer;
+      if(own) layer._hPass=undefined;
+    }
     markPrivateItems(layer,s);
-    if(editing) paintSel(layer);
+    if(editing){
+      if(live) paintSelArrows(layer);
+      else paintSel(layer);
+    }
   }
   /* several figures on a slide all settle within a frame or two of each
      other, so coalesce their redraw requests into one */
@@ -2512,6 +2615,7 @@
        Merge act on it without leaving the words */
     tblSel={s:s,i:idx,r0:ri,c0:ci,r1:ri,c1:ci};
     td.contentEditable='plaintext-only';
+    liveEdOn(td);   /* the open editors (flushTextEdits) */
     td.spellcheck=true;
     td.focus();
     try{
@@ -2544,6 +2648,7 @@
       delete td.__jvFlush;
       writeCell();
       td.contentEditable='false';
+      liveEdOff(td);
       markDirty();
     }
     td.addEventListener('blur',commit,{once:true});
@@ -2887,8 +2992,11 @@
      back. */
   function renderAnnots(layer,s,incremental){
     var was=layer._hPass;layer._hPass={h:0};
+    layer._zoomStamp=null;   /* a render that throws leaves none */
     try{paintAnnots(layer,s,incremental);}
     finally{layer._hPass=was;}
+    /* what applyZoom asks before re-rendering */
+    if(typeof zoomStampMark==='function') zoomStampMark(layer,s);
   }
   function paintAnnots(layer,s,incremental){
     /* the one funnel every slide render passes through, which makes it

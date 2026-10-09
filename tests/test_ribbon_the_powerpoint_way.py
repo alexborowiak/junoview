@@ -60,7 +60,8 @@ def test_x_y_width_and_height_sit_on_the_object_tab(out):
         assert f'id="{cid}"' in out, cid
     assert "show('#fmt-geom-xy',hasBox);show('#fmt-geom-wh',hasBox);" in out
     assert "var GEO_HOSTS=['#sz-','#rb-'];" in out
-    assert "geoEach(k,function(el){el.value='';el.disabled=true;});" in out
+    assert ("geoEach(k,function(el){geoSet(el,'value','');"
+            "geoSet(el,'disabled',true);});") in out
     assert "if(e.key==='Enter') el.blur();" in out
     # governed, so the completeness audit stays quiet
     assert "var FMT_MANUAL=('#fmt-geom-xy #fmt-geom-wh #fmt-lhwrap '" in out

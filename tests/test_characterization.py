@@ -2444,8 +2444,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Fix (review of the T619-T622 merge): a scroll-view picture is redrawn when its
 # figures' source changes (filmRefGens) and after any edit or undo however soon
 # after the last pass (deckGen), and puts paintSlide back.
-EXPECTED_MD5 = "284564a2ed3121384770fe5d2fb979b0"
-EXPECTED_BYTES = 5494643
+# Speed (gestures): light nudge, owed X/Y/W/H, zoom stamp, editor registry,
+# throttled notes bookkeeping, virtual Style system table; review fixes.
+EXPECTED_MD5 = "69db0cc0cb73dd378245f92a8988f10f"
+EXPECTED_BYTES = 5521443
 
 
 def _render_example() -> str:

@@ -361,21 +361,25 @@ def test_a_talk_writes_its_address_when_its_clicks_pause():
 
 
 _FLUSH = """
-var mode='view',asked=0,flushed=0;
-var document={querySelectorAll:function(){asked++;
-  return [{__jvFlush:function(){flushed++;}}];}};
+var mode='view',asked=0,flushed=0,liveEds=new Set(),quietOwed=[];
+var document={querySelectorAll:function(){asked++;return [];}};
+var ed={isConnected:true,getAttribute:function(){return 'true';},
+  __jvFlush:function(){flushed++;}};
 """
 
 
 def test_nothing_is_typed_into_a_talk():
-    got = _run(_FLUSH, ("flushTextEdits",), r"""
-      var out={};
+    # (since 2026-10-09 the open editors are a kept list, liveEditors,
+    # and no flush asks the page at all: `asked` stays 0)
+    got = _run(_FLUSH, ("liveEdOn", "liveEditors", "quietSettle",
+                        "flushTextEdits"), r"""
+      var out={};liveEdOn(ed);
       flushTextEdits();out.view=[asked,flushed];
       mode='edit';flushTextEdits();out.edit=[asked,flushed];
       mode='create';flushTextEdits();out.create=[asked,flushed];
       console.log(JSON.stringify(out));
     """)
-    assert got == {"view": [0, 0], "edit": [1, 1], "create": [2, 2]}
+    assert got == {"view": [0, 0], "edit": [0, 1], "create": [0, 2]}
     src = assets.deck_js()
     # every way out of the page still writes a pending address
     assert "routeFlush();" in src[src.index("function lastChance(e){"):][:400]

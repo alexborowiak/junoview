@@ -3832,12 +3832,31 @@
   /* re-render the body WITHOUT losing where you were in it: a drop in
      the sheet redraws everything, and snapping back to the top of a
      long panel would make a second drag a scroll hunt (T130) */
+  /* ...and the table's own scroll too, which a redraw used to throw
+     away: tick a box forty rows down and the table jumped back to its
+     first row (2026-10-09). Both are put back in the frame that draws
+     the new body, before it is painted, rather than by a write that laid
+     the new body out inside the click; a second redraw before that frame
+     keeps the place the first one was keeping. */
+  var dgKeepOwed=null;
   function dgBodyKeep(ov){
     var b=ov&&ov.querySelector('#dg-body');
-    var at=b?b.scrollTop:0;
-    dgBody(ov);
-    b=ov&&ov.querySelector('#dg-body');
-    if(b) b.scrollTop=at;
+    var g=ov&&ov.querySelector('.dgt-grid');
+    /* the table's place is kept for the same table only: another kind
+       or view opens at its top, as it always has */
+    var keep=dgKeepOwed||{at:b?b.scrollTop:0,
+      gat:(g&&g._dgWhat===dgTableWhat())?g.scrollTop:0};
+    dgKeepOwed=keep;
+    dgtKeepTop=keep.gat;
+    try{dgBody(ov);}finally{dgtKeepTop=0;}
+    requestAnimationFrame(function(){
+      if(dgKeepOwed!==keep) return;
+      dgKeepOwed=null;
+      var b2=ov&&ov.querySelector('#dg-body');
+      if(b2) b2.scrollTop=keep.at;
+      var g2=ov&&ov.querySelector('.dgt-grid');
+      if(g2&&keep.gat) g2.scrollTop=keep.gat;
+    });
   }
 
   function dgStyleRec(id){
@@ -4076,16 +4095,27 @@
     wrap.appendChild(nb);
     return wrap;
   }
+  /* ONE LIST OF TYPEFACES, copied into each row's menu (2026-10-09,
+     speed, editor #7): seventeen options built one by one per row was a
+     sixth of the table's cost. The copy is the same list, made once. */
+  var dgFaceTpl=null;
+  function dgFaceList(){
+    if(!dgFaceTpl){
+      dgFaceTpl=document.createElement('select');
+      var o0=document.createElement('option');
+      o0.value='';o0.textContent='default';dgFaceTpl.appendChild(o0);
+      FONTS.forEach(function(f){
+        var o=document.createElement('option');
+        o.value=f.id;o.textContent=f.label;dgFaceTpl.appendChild(o);
+      });
+    }
+    return dgFaceTpl;
+  }
   function dgFaceCell(r){
-    var sel=document.createElement('select');
+    var sel=dgFaceList().cloneNode(true);
     sel.className='dgt-face dgt-facesel';
-    var o0=document.createElement('option');
-    o0.value='';o0.textContent='default';sel.appendChild(o0);
     var seen={};
-    FONTS.forEach(function(f){
-      var o=document.createElement('option');
-      o.value=f.id;o.textContent=f.label;sel.appendChild(o);seen[f.id]=1;
-    });
+    FONTS.forEach(function(f){seen[f.id]=1;});
     /* a typed family name is not in the table: offer it as itself */
     if(r.a.font&&!seen[r.a.font]){
       var ox=document.createElement('option');
@@ -4268,7 +4298,8 @@
       tbl.appendChild(c);
     });
     tbl.style.setProperty('--dgt-cols',heads.length);
-    rows.forEach(function(r){
+    /* ONE ROW'S CELLS, built when the row comes into view (dgtVirtual) */
+    function rowCells(r){
       var on=!!dgMarked[dgRowKey(r)];
       /* T367: "you can click on one and it highlights in the table
          below". The table is a CSS grid, so a row is lit cell by cell. */
@@ -4365,11 +4396,117 @@
           else {dgMarked[dgRowKey(r)]=1;ck.checked=true;}
           dgBodyKeep(ov);
         });
-        tbl.appendChild(c);
       });
-    });
+      return cells;
+    }
+    tbl._dgWhat=dgTableWhat();   /* which table it is (dgBodyKeep) */
+    dgtVirtual(tbl,rows,rowCells);
     wrap.appendChild(tbl);
     body.appendChild(wrap);
+  }
+  /* ---- THE TABLE DRAWS THE ROWS YOU CAN SEE (2026-10-09, speed,
+     editor #7) ------------------------------------------------------------
+     "All text boxes" on a 60-slide deck is 120 rows of ten editable
+     cells -- a text field, four number boxes, a typeface list, two
+     colour pickers -- and every one was built, styled, laid out and
+     painted on the click: a 540-680 ms freeze at 4x, 1.0 s of main
+     thread, and again on every tick and edit (each redraws the body).
+     The table is its own scroller, ten rows tall, so the rows are drawn
+     as they come into view: the ones in sight and DGT_OVER either side,
+     and a spacer for the rest that is exactly as tall as the rows it
+     stands for, so the scrollbar, the scroll position and every row's
+     place are the table's as they always were. A row that holds the
+     focus is never taken away, and tabbing to the edge of what is drawn
+     draws the next rows, so the keyboard walks the whole table. */
+  var DGT_OVER=12,dgtPitch=35,dgtHeadH=31,dgtKeepTop=0;
+  function dgTableWhat(){return dgSel+'|'+dgView;}
+  function dgtVirtual(tbl,rows,rowCells){
+    var n=rows.length,drawn={},a=0,b=0;
+    var pre=document.createElement('div');pre.className='dgt-spacer';
+    var post=document.createElement('div');post.className='dgt-spacer';
+    tbl.appendChild(pre);tbl.appendChild(post);
+    function spacers(){
+      /* a spacer is one grid row standing for k rows: their heights and
+         the k-1 gaps between them (the grid adds its own gap after it) */
+      pre.hidden=!a;
+      if(a) pre.style.height=(a*dgtPitch-1)+'px';
+      post.hidden=b>=n;
+      if(b<n) post.style.height=((n-b)*dgtPitch-1)+'px';
+    }
+    function rowAt(el){
+      var c=el&&el.closest&&el.closest('.dgt-c');
+      return (c&&c.parentNode===tbl&&c.dataset.dgtRow!=null)?+c.dataset.dgtRow:-1;
+    }
+    function build(i){
+      var cs=rowCells(rows[i]);
+      cs.forEach(function(c){c.dataset.dgtRow=String(i);});
+      return cs;
+    }
+    function frag(from,to){
+      var f=document.createDocumentFragment();
+      for(var i=from;i<to;i++){
+        drawn[i]=build(i);
+        drawn[i].forEach(function(c){f.appendChild(c);});
+      }
+      return f;
+    }
+    function show(na,nb){
+      na=Math.max(0,Math.min(n,na));nb=Math.max(na,Math.min(n,nb));
+      /* the row being typed in stays, and the range stays one run */
+      var fi=rowAt(document.activeElement);
+      if(fi>=a&&fi<b){na=Math.min(na,fi);nb=Math.max(nb,fi+1);}
+      if(na===a&&nb===b) return;
+      var i;
+      if(nb<=a||na>=b){
+        for(i=a;i<b;i++) drawn[i].forEach(function(c){c.remove();});
+        drawn={};
+        tbl.insertBefore(frag(na,nb),post);
+      } else {
+        for(i=a;i<na;i++){drawn[i].forEach(function(c){c.remove();});delete drawn[i];}
+        for(i=nb;i<b;i++){drawn[i].forEach(function(c){c.remove();});delete drawn[i];}
+        if(na<a) tbl.insertBefore(frag(na,a),pre.nextSibling);
+        if(nb>b) tbl.insertBefore(frag(b,nb),post);
+      }
+      a=na;b=nb;
+      spacers();
+    }
+    function wantAt(top,h){
+      var first=Math.floor(Math.max(0,top-dgtHeadH)/dgtPitch);
+      var vis=Math.ceil(h/dgtPitch)+1;
+      return [first-DGT_OVER,first+vis+DGT_OVER];
+    }
+    /* first draw: the window the table will open at (its kept scroll),
+       at most 52vh tall (the table's own max-height) */
+    var w0=wantAt(dgtKeepTop,(window.innerHeight||700)*0.52);
+    show(w0[0],w0[1]);
+    var frame=null;
+    function sync(){
+      frame=null;
+      if(!tbl.isConnected) return;
+      var w=wantAt(tbl.scrollTop,tbl.clientHeight);
+      show(w[0],w[1]);
+    }
+    tbl.addEventListener('scroll',function(){
+      if(frame==null) frame=requestAnimationFrame(sync);
+    },{passive:true});
+    /* the keyboard: a field near either edge of what is drawn draws on */
+    tbl.addEventListener('focusin',function(e){
+      var i=rowAt(e.target); if(i<0) return;
+      if(i>=b-2&&b<n) show(a,b+DGT_OVER);
+      if(i<=a+1&&a>0) show(a-DGT_OVER,b);
+    });
+    /* the pitch is the grid's, measured once it is laid out (the frame
+       that draws it lays it out anyway) and the spacers corrected */
+    requestAnimationFrame(function(){
+      if(!tbl.isConnected) return;
+      var r0=drawn[a],r1=drawn[a+1];
+      if(r0&&r1&&r0[0]&&r1[0]){
+        var p=r1[0].getBoundingClientRect().top-r0[0].getBoundingClientRect().top;
+        var h0=tbl.querySelector('.dgt-h');
+        if(h0) dgtHeadH=h0.getBoundingClientRect().height+1;
+        if(p>0&&Math.abs(p-dgtPitch)>0.01){dgtPitch=p;spacers();sync();}
+      }
+    });
   }
   /* T224: the outline sheet, lifted out of dgBody so the object
      views can show it too. Not one line of it changed. */

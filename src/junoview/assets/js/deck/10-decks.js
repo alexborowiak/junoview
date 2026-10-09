@@ -1026,6 +1026,11 @@
     draftT=setTimeout(writeDraftNow,300);
   }
   function flushDraftWrite(){
+    /* bookkeeping still owed (notes typed a moment ago, editor #12) is
+       counted first, so the write it would have scheduled happens here
+       -- a deck switch by address (Back, a link) blurs nothing, and the
+       switch flushes the OUTGOING deck's draft with this */
+    if(typeof quietSettle==='function') quietSettle();
     if(draftT){clearTimeout(draftT);writeDraftNow();}
   }
   function cancelDraftWrite(){
@@ -2935,10 +2940,22 @@
      other time */
   function layerH(layer){
     var p=layer._hPass;
-    if(!p) return layer.getBoundingClientRect().height||0;
-    if(!p.h) p.h=layer.getBoundingClientRect().height||0;
-    return p.h;
+    if(p&&p.h) return p.h;
+    /* EVERY PAGE OF AN EXPORT IS THE SAME PAGE (2026-10-09, speed, critic
+       #6). buildPrintRoot lays out one .print-page per slide, all of the
+       one size the deck's page has, and each render measured its own --
+       a forced layout of the growing export per slide, 184 ms of a
+       60-slide PDF at 4x. The first page measured answers for the rest
+       of that build (printPageH, set and cleared by buildPrintRoot). */
+    var h;
+    if(printPageH&&printPageH.root.contains(layer)){
+      if(!printPageH.h) printPageH.h=layer.getBoundingClientRect().height||0;
+      h=printPageH.h;
+    } else h=layer.getBoundingClientRect().height||0;
+    if(p) p.h=h;
+    return h;
   }
+  var printPageH=null;
   function pageScale(layer){
     var h=layer?layerH(layer):0;
     return (h||SW_REF_H)/SW_REF_H;

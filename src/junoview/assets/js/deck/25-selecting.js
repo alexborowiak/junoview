@@ -493,7 +493,8 @@
        four modes behind it were unreachable in exactly the case the
        verb had just been fixed to handle. A gate stricter than its own
        verb is a feature you cannot get at (2026-08-30). */
-    show('#fmt-samewrap',selRects(true).length>=2);
+    /* ...counted, not measured (selRectCount) */
+    show('#fmt-samewrap',selRectCount(true)>=2);
     /* the menu now covers single-item actions (order, rotate) too */
     show('#fmt-alignwrap',isNum);
     var plainText=isText&&typeof selAnnot==='number';
@@ -533,7 +534,8 @@
       +((isText||kind==='cell')?'Text colour ▾'
       :kind==='rect'?'Border colour ▾'
       :(kind==='arrow'||kind==='draw')?'Line colour ▾':'Colour ▾');
-    var fgl=$('.rbn-fontgrp>.rbn-lab');
+    /* asked of the ribbon, not of the page (2026-10-09, speed) */
+    var fgl=$('.rbn-fontgrp>.rbn-lab',$('#edit-tools')||deckEl);
     if(fgl) fgl.textContent=(isText||isTbl||noteCell)?'Font':'Colour';
     if(tcb) tcb.title=(isText||kind==='cell')
       ?'Every colour for the words \u2014 and this deck\u2019s own colours, '
@@ -871,6 +873,9 @@
        go, and an open window is redrawn for what is selected now */
     syncOptDoors();
     if(typeof optPanelsSync==='function') optPanelsSync();
+    /* the X/Y/W/H cells were hidden when syncInspectorPanes ran above;
+       fill them now, before the fit below measures them */
+    if(typeof geoPay==='function') geoPay();
     /* ...and NOW the tab, with the controls that justify it in place.
        setTab re-runs syncRibbonGroups itself, so this is one call or the
        other, never both. */
@@ -1610,7 +1615,8 @@
         if(me){me.el.style.left=(me.l+dx)+'%';
                me.el.style.top=(me.t+dy)+'%';}
       });
-      if(anyArrow) redrawArrows(layer,s);
+      /* live: the selection is not changing mid-move (redrawArrows) */
+      if(anyArrow) redrawArrows(layer,s,true);
       drawSnapGuides(layer,sx,sy);
       drawGapMarks(layer,gapMarks);
     }
@@ -4001,7 +4007,7 @@
        It used to live on Insert, which was the only tab a tool could
        be armed from; Images and Text can both arm one, and a group
        whose Cancel is on the other tab is a trap. */
-    var cg=$('.rbn-grp.rbn-cancel');
+    var cg=$('.rbn-grp.rbn-cancel',$('#edit-tools')||deckEl);   /* the ribbon's */
     if(cg&&t!=='select'&&typeof activeTab==='function'){
       var at=activeTab();
       if(at==='images'||at==='text') cg.setAttribute('data-tab',at);

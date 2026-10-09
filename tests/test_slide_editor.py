@@ -1385,7 +1385,8 @@ def test_select_by_has_two_doors_and_neither_costs_ribbon_width(out):
     assert ".canvas-menu{display:block;width:308px;min-width:0;" in out
     assert "overflow-y:auto;overflow-x:hidden;}" in out
     assert "function arrangeMenuSync(){" in out
-    assert "b.hidden=many&&(n<(three?3:2));" in out
+    assert "var hide=many&&(n<(three?3:2));" in out
+    assert "if(b.hidden!==hide) b.hidden=hide;" in out
 
 
 def test_find_and_replace_has_a_formatting_half(out):

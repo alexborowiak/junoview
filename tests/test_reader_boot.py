@@ -440,7 +440,8 @@ def test_plotly_for_a_notebook_not_shown_yet_loads_when_idle():
     act = lift_fn(app, "activateOutputs")
     assert "if(!jsonOnly){plotQueue(pe);return;}" in act
     # whatever must see every figure drawn asks for it
-    assert "if(sh.el) plotFlush(sh.el);" in lift_fn(app, "autoPlan")
+    # (a plan that only counts, for the dialog, draws nothing)
+    assert "if(sh.el&&!countOnly) plotFlush(sh.el);" in lift_fn(app, "autoPlan")
     assert "window.addEventListener('beforeprint',function(){" in app
     # ...and every note decided: the print is all of them at once
     assert "if(a&&a.el) mdClampScan(a.el);" in app

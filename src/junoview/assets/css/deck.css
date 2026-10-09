@@ -7118,6 +7118,8 @@ body.light .lb-name{background:var(--input-bg);
   font-family:var(--sans);font-size:12px;color:#dce6ee;cursor:pointer;
   display:flex;align-items:center;min-width:0;}
 .dgt-c.on{background:color-mix(in srgb,var(--accent) 22%,var(--chrome-2,#16273a));}
+/* the rows not drawn yet (dgtVirtual): one grid row as tall as they are */
+.dgt-spacer{grid-column:1/-1;background:var(--chrome-2,#16273a);}
 .dgt-c:hover{background:color-mix(in srgb,var(--accent) 12%,var(--chrome-2,#16273a));}
 .dgt-what{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   display:block;line-height:1.9;}
@@ -7152,6 +7154,7 @@ body.light .dgt-facesel{background:var(--input-bg);
 /* the slide the strip is filtering by */
 .dg-cell.dg-pick{outline:2px solid var(--cyan);outline-offset:2px;}
 body.light .dgt-c{background:var(--chrome-2);color:var(--ink);}
+body.light .dgt-spacer{background:var(--chrome-2);}
 body.light .dgt-h{background:var(--chrome-1,#f4f7fa);}
 body.light .dgt-n{background:var(--input-bg);
   border-color:var(--border-strong);

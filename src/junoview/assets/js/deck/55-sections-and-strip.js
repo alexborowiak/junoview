@@ -641,6 +641,22 @@
      you can already see is left exactly where it is; one that is off
      the edge (a new slide at the end, the arrow keys, undo) comes in by
      the least that shows it, never to the top. */
+  /* ...in the frame's own layout, for a slide change (filmMoveMark): its
+     measure, made right after the mark moved, laid the page out once
+     more before renderSlide laid it out again (2026-10-09, speed,
+     editor #10). An animation-frame callback runs before that frame is
+     drawn, so the strip is still scrolled to the row in the first frame
+     that shows it, and the measure reuses the layout that frame needs. */
+  var filmKeepFrame=null,filmKeepList=null;
+  function filmKeepCurrentSoon(list){
+    filmKeepList=list;
+    if(filmKeepFrame!=null) return;
+    filmKeepFrame=requestAnimationFrame(function(){
+      filmKeepFrame=null;
+      var l=filmKeepList;filmKeepList=null;
+      if(l&&l.isConnected) filmKeepCurrent(l);
+    });
+  }
   function filmKeepCurrent(list){
     var cr=list.querySelector('.film-row.current'); if(!cr) return;
     var lr=list.getBoundingClientRect(),rr=cr.getBoundingClientRect();
@@ -966,8 +982,7 @@
     /* a text box still open commits DURING this change (renderAnnots
        flushes it), and a title's setter redraws the strip before its
        markDirty is counted -- so while one is open, rebuild as before */
-    if(document.querySelector(
-      '[contenteditable="true"],[contenteditable="plaintext-only"]')) return false;
+    if(liveEditors().length) return false;   /* the open editors, kept */
     var was=list.querySelector('.film-row.current');
     if(!was||+was.dataset.idx!==st.cur) return false;
     var row=list.querySelector('.film-row[data-idx="'+cur+'"]');
@@ -989,7 +1004,7 @@
     }
     st.cur=cur;
     var om=$('#film-menu'); if(om) om.remove();
-    filmKeepCurrent(list);
+    filmKeepCurrentSoon(list);
     if(typeof syncHomeDoors==='function') syncHomeDoors();
     if(typeof cutsSync==='function') cutsSync();
     return true;
@@ -3150,7 +3165,8 @@
   };
   /* close any open code-trail filter menu on an outside click */
   document.addEventListener('click',function(e){
-    $$('.vo-fmenu').forEach(function(m){
+    if(!voMenus.length) return;
+    voMenusLive().forEach(function(m){
       if(!m.hidden&&m.parentNode&&!m.parentNode.contains(e.target))
         m.hidden=true;});
   });
@@ -3266,6 +3282,24 @@
     if(!e.shiftKey&&(e.key==='u'||e.key==='U')) return pptClick('#fmt-under');
     return pptTextKey(e);
   }
+  /* THE FIRST OPEN BOX OF THE THREE MODAL KINDS, in page order -- what
+     `$('.aa-dlg:not([hidden]),.eq-dlg:not([hidden]),.ts-dlg:not([hidden])')`
+     answered, without walking every element of every open notebook on
+     each Escape (2026-10-09, speed, systemic #2). The boxes are the
+     page's own markup; the list is taken once and again only if one of
+     them has left the page, and the open ones are put in page order as
+     they are now (the question box moves between the editor and the
+     body). */
+  var escDlgs=null;
+  function escDlgUp(){
+    if(!escDlgs||escDlgs.some(function(d){return !d.isConnected;}))
+      escDlgs=$$('.aa-dlg,.eq-dlg,.ts-dlg');
+    var up=escDlgs.filter(function(d){return !d.hasAttribute('hidden');});
+    up.sort(function(a,b){
+      return (a.compareDocumentPosition(b)
+        &Node.DOCUMENT_POSITION_FOLLOWING)?-1:1;});
+    return up[0]||null;
+  }
   document.addEventListener('keydown',function(e){
     if(picking>=0){
       if(e.key==='Escape'){e.preventDefault();endPick();}
@@ -3300,8 +3334,7 @@
          the key came here instead and stepped the ladder: the first
          dropped the selection, the second left the editor with the
          dialog still up over the notebook (2026-09-15 review). */
-      var dlgUp=$('.aa-dlg:not([hidden]),.eq-dlg:not([hidden]),'
-        +'.ts-dlg:not([hidden])');
+      var dlgUp=escDlgUp();
       if(dlgUp){
         e.preventDefault();
         var x=dlgUp.querySelector('.aa-head .dc-icon,.eq-head .dc-icon,'

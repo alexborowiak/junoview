@@ -75,6 +75,7 @@
     stripMoreBoot();            /* every strip's Show-all door (T203) */
     presentTabBoot();           /* the Present tab and Layers on Home (T216) */
     optPanelBoot();             /* every window of options' door (T177) */
+    geoWatchBoot();             /* X/Y/W/H filled when they come into sight */
     /* The saved-layout rows walk real markup, so belong in boot (T89).
        Restore the layout BEFORE the per-button preferences: the layout
        decides each control's group, then preferences order/hide it there.

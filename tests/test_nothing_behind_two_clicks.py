@@ -177,7 +177,7 @@ def test_insert_is_images_and_text(out):
         assert f'id="{cid}"' in group("Draw"), cid
     # the Drawing group follows whichever half armed the tool
     assert 'class="rbn-grp rbn-cancel" data-tab="images"' in html
-    assert "    var cg=$('.rbn-grp.rbn-cancel');" in out
+    assert "    var cg=$('.rbn-grp.rbn-cancel',$('#edit-tools')||deckEl);" in out
     assert "if(at==='images'||at==='text') cg.setAttribute('data-tab',at);" in out
 
 

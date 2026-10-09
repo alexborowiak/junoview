@@ -7474,14 +7474,20 @@
     }
     return out;
   }
-  function autoPlan(stem,scope,sid){
+  /* `countOnly`: the dialog's "N sections with slide content" needs the
+     plan's SHAPE and nothing measured. It used to build the whole plan,
+     and the metrics of every note are a forced layout each, inside cards
+     the browser had skipped laying out -- 456-568 ms to open a dialog of
+     three radio buttons on a 116-cell notebook at 4x, and again on every
+     radio change (2026-10-09, speed, critic #1a). Create measures. */
+  function autoPlan(stem,scope,sid,countOnly){
     var sh=APP.shells[stem];
     if(!sh||!sh.data) return null;
     /* a figure is measured as drawn, whether or not its turn came yet */
-    if(sh.el) plotFlush(sh.el);
+    if(sh.el&&!countOnly) plotFlush(sh.el);
     var data=sh.data,secs=data.sections||[],items=data.items||[];
     var cardsById=Object.create(null),cardsByAnchor=Object.create(null);
-    if(sh.el) $$('.card',sh.el).forEach(function(card){
+    if(sh.el&&!countOnly) $$('.card',sh.el).forEach(function(card){
       cardsById[card.id]=card;
       if(card.dataset.anchor) cardsByAnchor[card.dataset.anchor]=card;
     });
@@ -7514,7 +7520,14 @@
       if(scope==='section'&&s.id!==sid) return;
       var its=items.filter(function(it){
         return it.section===s.id&&take(it);
-      }).map(function(it){
+      });
+      if(countOnly){
+        if(its.length) plan.sections.push({title:s.title||'',
+          items:its.map(function(it){
+            return {ref:stem+'::'+it.anchor,kind:it.kind};})});
+        return;
+      }
+      its=its.map(function(it){
         var card=cardsByAnchor[it.anchor]||cardsById['card-'+it.card];
         var meta=autoItemMetrics(card,it.kind);
         return Object.assign({ref:stem+'::'+it.anchor,kind:it.kind,
@@ -7566,7 +7579,7 @@
     var selected=$('input[name="auto-slides-scope"]:checked');
     var scope=selected?selected.value:'all';
     var plan=autoPlan(autoDialogStem,scope,
-      scope==='section'?autoDialogSection:'');
+      scope==='section'?autoDialogSection:'',true);   /* counted only */
     var n=plan?(plan.sections||[]).length:0;
     summary.textContent=n
       ?(n+' section'+(n===1?'':'s')+' with slide content')

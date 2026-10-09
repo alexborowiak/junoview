@@ -655,10 +655,15 @@
     SW_PT.forEach(function(p){
       if(Math.abs(p-pt)<Math.abs(best-pt)) best=p;});
     cur['sw:'+best]=1;
-    $$('#fmt-style-menu .sh-opt,#fmt-sw-menu .sh-opt,'
-      +'#fmt-head-menu .sh-opt,#fmt-bend-menu .sh-opt,'
-      +'#fmt-shape-menu .sh-opt').forEach(function(o){
-      o.setAttribute('aria-pressed',cur[o.dataset.optKey]?'true':'false');
+    /* menu by menu: ids inside a selector LIST lose the browser's id
+       fast path, and the list walked the whole page (2026-10-09, speed,
+       systemic #2) */
+    ['fmt-style-menu','fmt-sw-menu','fmt-head-menu','fmt-bend-menu',
+     'fmt-shape-menu'].forEach(function(id){
+      var m=document.getElementById(id); if(!m) return;
+      $$('.sh-opt',m).forEach(function(o){
+        o.setAttribute('aria-pressed',cur[o.dataset.optKey]?'true':'false');
+      });
     });
   }
   /* ---- THE FILL PANEL --------------------------------------------------
@@ -1261,14 +1266,16 @@
     return {door:door,panel:panel};
   }
   /* rebuild whatever window is open, so a pick inside it shows at once */
+  /* the windows of options are the ribbon's own: asked there, not of the
+     whole page on every selection (2026-10-09, speed, systemic #2) */
   function optPanelsSync(){
-    $$('.opt-panel').forEach(function(p){
+    $$('.opt-panel',$('#edit-tools')||deckEl).forEach(function(p){
       if(p.hidden) return;
       var fn=optBuilder(p.id); if(fn) fn();
     });
   }
   function optPanelsClose(){
-    $$('.opt-panel').forEach(function(p){
+    $$('.opt-panel',$('#edit-tools')||deckEl).forEach(function(p){
       if(p.closest&&p.closest('.opt-drop[data-flat]')) return;
       if(!p.hidden) overlayHide(p);
     });
@@ -2009,7 +2016,9 @@
   }
   /* which kind is on, marked in whichever gallery owns it */
   function listGallerySync(lst){
-    $$('.ls-opt').forEach(function(o){
+    /* the two galleries are on the ribbon: asked there, not of the page
+       with its notebooks (2026-10-09, speed, systemic #2) */
+    $$('.ls-opt',$('#edit-tools')||deckEl).forEach(function(o){
       o.setAttribute('aria-pressed',(o.dataset.list===lst).toString());
     });
   }
@@ -3740,13 +3749,80 @@
     clearTimeout(nudgeT);
     nudgeT=setTimeout(nudgeSettle,300);
   }
+  /* AN ARROW KEY MOVES WHAT IS DRAWN, as a drag does (2026-10-09, speed,
+     editor #6). Every press -- thirty a second while the key is held --
+     re-rendered the whole slide: 17 ms a press at 4x, 100 ms frames, and
+     every figure on it re-fitted. The press now moves the items already
+     on the page by the same page-percent the model moved (startMove's
+     gesture path), redraws the arrows, whose ends follow what they are
+     tied to, moves a group's frame with its members, and marks a moved
+     item that has left the page (paintAnnots' STRAYS) -- everything a
+     render would have drawn differently for a move. Anything this cannot
+     move exactly -- a title or subtitle, an item with nothing drawn for
+     it -- takes the old full render. `before` is every item's place
+     before the model moved, so a tied caption that travelled with its
+     figure moves on the page too. */
+  function nudgeLight(s,l,before,dx,dy){
+    var ann=s.annots||[],moved=[];
+    for(var i=0;i<ann.length;i++){
+      var a=ann[i]; if(!a) continue;
+      if(nudgeSpot(a)===before[i]) continue;
+      if(a.k==='arrow') continue;            /* redrawn below */
+      var els=$$('div.an-item[data-idx="'+i+'"]',l);
+      if(els.length!==1) return false;
+      moved.push({i:i,el:els[0]});
+    }
+    moved.forEach(function(m){
+      m.el.style.left=((parseFloat(m.el.style.left)||0)+dx)+'%';
+      m.el.style.top=((parseFloat(m.el.style.top)||0)+dy)+'%';
+    });
+    /* A GROUP'S FRAME IS DRAWN ROUND ITS MEMBERS AS THEY NOW STAND, not
+       the old frame moved: a position-locked member stays where it is,
+       so the union changes shape (paintSel; redrawArrows' live path
+       already hands a group to it) */
+    if(ann.some(function(m){return m&&m.k==='arrow';}))
+      redrawArrows(l,s,true);
+    else if(l.querySelector('.an-grpframe')) paintSel(l);
+    if(mode==='edit'){
+      moved.forEach(function(m){
+        var r=annotRectPct(l,s,m.i);
+        if(r) m.el.classList.toggle('an-offpage',
+          r.l<-1||r.t<-1||r.r>101||r.b>101);
+      });
+      /* the arrows' hit lines were just drawn afresh, unmarked: mark them
+         from the model, as paintAnnots' STRAYS pass does, or an arrow
+         nudged off the page takes the stage's scrollbars with it */
+      var spill=false;
+      ann.forEach(function(a,i){
+        if(!a||a.hide||a.k!=='arrow') return;
+        var r=annotRectPct(l,s,i); if(!r) return;
+        var out=(r.l<-1||r.t<-1||r.r>101||r.b>101);
+        if(out) spill=true;
+        $$('.an-item[data-idx="'+i+'"]',l).forEach(function(el){
+          el.classList.toggle('an-offpage',out);});
+      });
+      stage.classList.toggle('spill',
+        spill||!!l.querySelector('.an-item.an-offpage'));
+      /* T563: a comment's marker sits on its object's corner, so it
+         travels with it (cmtMount is a no-op with none open) */
+      if(typeof cmtMount==='function') cmtMount(l,s);
+    }
+    return true;
+  }
+  function nudgeSpot(a){
+    return a.k==='arrow'
+      ?[a.x1,a.y1,a.x2,a.y2,JSON.stringify(a.mid||null)].join(',')
+      :[a.x,a.y,a.anch||''].join(',');
+  }
   function nudgeSel(dx,dy,quiet){
     var s=pres.slides[cur]; if(!s) return;
+    var before=null;
     if(selAnnot==='t'||selAnnot==='s'){
       var tp=titleProps(s,selAnnot);tp.x+=dx;tp.y+=dy;
     } else {
       var idxs=dropTiedCaptions(s,selIdxs());
       if(!idxs.length||!s.annots) return;
+      if(quiet) before=s.annots.map(function(m){return m?nudgeSpot(m):'';});
       idxs.forEach(function(i){
         var a=s.annots[i]; if(!a||pinned(a)) return;   /* no nudge */
         shiftAnnot(a,dx,dy);
@@ -3754,7 +3830,9 @@
     }
     markDirty(!!quiet);
     var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s);paintSel(l);}
+    if(!l) return;
+    if(before&&nudgeLight(s,l,before,dx,dy)) return;
+    renderAnnots(l,s);paintSel(l);
   }
   var dupBtn=$('#fmt-dup');
   /* WRAPPED, not passed straight through. duplicateSel now takes a

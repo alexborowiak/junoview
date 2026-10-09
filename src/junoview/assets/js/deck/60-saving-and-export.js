@@ -2229,6 +2229,9 @@
        Cleared beside flipForce below, for the same reason and the same
        lifetime. */
     printAll=1;
+    /* one page height for the whole build (layerH) */
+    printPageH={root:root,h:0};
+    try{
     outputSlides().forEach(function(ent,i){
       var s=ent.s;
       cur=ent.i;
@@ -2248,6 +2251,7 @@
         });
       }
     });
+    } finally {printPageH=null;}
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
     selAnnot=savedSel;selSet=savedSet;
     /* ...and whatever a render path still marked, off: the ring is the

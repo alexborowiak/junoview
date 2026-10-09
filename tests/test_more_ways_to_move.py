@@ -377,7 +377,10 @@ def test_overlays_and_escape_after_the_second_pass(out):
     """T482 (2026-09-15, the second review pass): Escape reaches the thing
     that is open, and every transient surface is on the one owner."""
     # a modal dialog takes Escape before the ladder steps
-    assert "      var dlgUp=$('.aa-dlg:not([hidden]),.eq-dlg:not([hidden]),'" in out
+    # (the open box of those three kinds, found by escDlgUp from the
+    # boxes themselves rather than by a page-wide selector, 2026-10-09)
+    assert "      var dlgUp=escDlgUp();" in out
+    assert "escDlgs=$$('.aa-dlg,.eq-dlg,.ts-dlg');" in out
     # a context menu's Escape is in capture, like the owner's
     assert "      document.addEventListener('keydown',esc,true);" in out
     # picks close through the owner

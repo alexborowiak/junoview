@@ -58,7 +58,10 @@ def test_text_scales_with_the_page_at_every_zoom(out):
     # (2026-08-10). Since 2026-08-20 the guard is unconditional: 16:9
     # playback letterboxes too (text grew ~19% at 1400x900 because the
     # presented canvas took the WINDOW's shape), so every mode re-renders.
-    assert "if(s0&&l0){" in out
+    # (2026-10-09: ...when what it draws from moved -- the page's size is
+    # in the stamp, so a resize still re-renders, in every mode)
+    assert "if(s0&&l0&&l0._zoomStamp!==zoomStamp(slideEl,s0)){" in out
+    assert "return [slideEl.style.width,slideEl.style.height,mode," in out
     assert "if(mode==='edit') paintSel(l0);" in out
 
 

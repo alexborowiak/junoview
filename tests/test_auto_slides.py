@@ -187,7 +187,7 @@ def test_the_viewer_owns_one_complete_create_slides_dialog(out):
     css = assets.core_css()
     assert '.sec-slides' not in css
     app = assets.app_js()
-    assert "function autoPlan(stem,scope,sid){" in app
+    assert "function autoPlan(stem,scope,sid,countOnly){" in app
     assert "function autoSlidesFrom(stem,scope,sid,animations){" in app
     assert "function autoSlidesDialogOpen(){" in app
     assert "function autoSlidesDialogClose(){" in app
