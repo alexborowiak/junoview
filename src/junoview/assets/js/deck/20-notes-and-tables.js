@@ -2285,6 +2285,15 @@
      other, so coalesce their redraw requests into one */
   var arrowRedrawT=null;
   function scheduleArrowRedraw(layer){
+    /* T622: a layer that is a PICTURE of another slide (the scroll
+       view's) redraws its own slide's arrows, the way the show draws
+       them, on a timer of its own. Through the shared one below it drew
+       `cur`'s arrows into the picture, and cancelled the live page's
+       pending redraw on the way. */
+    if(layer&&layer.closest&&layer.closest('.sv-pic')){
+      if(typeof svArrowsSoon==='function') svArrowsSoon(layer);
+      return;
+    }
     clearTimeout(arrowRedrawT);
     arrowRedrawT=setTimeout(function(){
       var s=pres&&pres.slides&&pres.slides[cur];

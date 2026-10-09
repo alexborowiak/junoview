@@ -118,6 +118,8 @@
   talkToolsBoot();            /* laser, magnifier, black screen (T386) */
   presBarBoot();              /* the presenting bar folds away (T581) */
   scrollShowBoot();           /* the scrolling version (T389) */
+  scrollViewBoot();           /* ...and the slides one under the next
+                                 while you build them (T622) */
   pptxImportBoot();           /* .pptx import: File, launcher, drop (T320) */
   presentationHubBoot();      /* Home + presenting drawer, one library */
   tabRowBoot();               /* New and Open beside the tabs (T596) */

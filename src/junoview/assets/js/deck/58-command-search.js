@@ -79,6 +79,10 @@
       +'scroll through every slide long page',
     'pr-scroll':'infinite scroll continuous scroll view scrolling page '
       +'scroll through every slide long page',
+    'vw-scroll':'infinite scroll continuous scroll view scroll through '
+      +'slides one under another long page vertical stack',
+    'vw-scroll-lines':'lines between slides separator divider faint strong '
+      +'spaced gap',
     'rbn-layouts':'ribbon layouts arrangement customise customize ribbon '
       +'toolbar layout',
     'zoom-val':'zoom fit to window fit page zoom level',

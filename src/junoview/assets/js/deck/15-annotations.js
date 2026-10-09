@@ -682,6 +682,9 @@
   }
   function renderSlide(buildOnly){
     var s=pres.slides[cur];
+    /* T622: the scroll view's place in the column, before the stage is
+       emptied and the scroll collapses to the top */
+    var svTop=stage.scrollTop;
     if(typeof storyOpen==='function'&&storyOpen()
        &&(storySource!==s||storyDeck!==pres)){
       storyAt=null;storySlide=cur;storySoon();
@@ -879,6 +882,8 @@
     syncBuildNav(s);
     /* T558: the talk's ink goes back on over the slide it was drawn on */
     if(typeof inkMount==='function') inkMount();
+    /* T622: the other slides around this one, and the column's place */
+    if(typeof svAfterRender==='function') svAfterRender(svTop);
   }
   function syncBuildNav(s){
     /* Next stays live while builds remain on the last slide; Prev while any

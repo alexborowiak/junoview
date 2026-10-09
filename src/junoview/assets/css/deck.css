@@ -6287,6 +6287,55 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .deck-scroll-sepb[data-sep="gap"] .deck-scroll-sw{
   background:linear-gradient(#d6dce1 0 5px,transparent 5px 9px,#d6dce1 9px);}
 @media (max-width:760px){.deck-scroll-seplab{display:none;}}
+/* ---- T622: THE SCROLL VIEW ----------------------------------------------
+   The editor's stage as a column: the live page (always its first child,
+   see 54b-scroll-view.js) and a picture of every other slide, put in
+   deck order by `order`. The stage scrolls; its gutter is kept so the
+   page measured before the pictures arrive is the page that fits after.
+   `safe center`: a page zoomed wider than the stage starts at its left
+   edge instead of being cut off there. */
+.deck.editing .deck-stage.sv{flex-direction:column;justify-content:flex-start;
+  align-items:safe center;overflow:auto;scrollbar-gutter:stable;}
+.deck-stage.sv>.slide,.deck-stage.sv>.sv-pic{flex:none;}
+/* the pages meet edge to edge: no frame of their own, no entrance (the
+   swap from a picture to the live page must not be seen) */
+.deck.editing .deck-stage.sv>.slide{border:none;border-radius:0;
+  animation:none;}
+.deck.editing .deck-stage.sv:not([data-sep="gap"])>.slide{box-shadow:none;}
+/* each page lit for itself (applyPageBg): the class sits ON the live
+   page, where `.page-light .slide` cannot see it, so its two rules that
+   key on the page or the deck are said again for it */
+.deck-stage.sv>.slide.page-light{color:#1b2733;}
+.deck.editing .deck-stage.sv>.slide.page-light .an-cell.sel{
+  background:#ffffffd0;}
+.deck.editing .deck-stage.sv>.slide.page-light .an-cell.empty{
+  background:#00000008;border-color:#00000030;}
+/* above the pictures, so a handle or a box hanging off the page's edge
+   is drawn over the next slide rather than under it */
+.deck-stage.sv>.sv-live{position:relative;z-index:2;}
+.deck-stage.sv>.sv-pic{position:relative;overflow:hidden;margin:0 auto;
+  background:var(--page-bg,#0b141d);cursor:pointer;}
+.deck-stage.sv>.sv-pic:hover{outline:2px solid
+  color-mix(in srgb,var(--cyan) 45%,transparent);outline-offset:-2px;}
+.deck-stage.sv>.sv-pic>.print-page{position:absolute;left:0;top:0;
+  pointer-events:none;}
+.deck-stage.sv .sv-pic .slide{border:none;border-radius:0;box-shadow:none;
+  margin:0;width:auto;max-height:none;aspect-ratio:auto;animation:none;}
+/* Spaced: cards a gap apart, each with the editor's own shadow */
+.deck-stage.sv[data-sep="gap"]>.slide,
+.deck-stage.sv[data-sep="gap"]>.sv-pic{margin-bottom:22px;}
+.deck-stage.sv[data-sep="gap"]>.sv-pic{box-shadow:0 14px 60px #00000066;}
+/* the lines, as the scrolling page draws them (T620): zero height,
+   stroked across the join, above both pages */
+.deck-stage.sv>.sv-sep{display:none;flex:none;position:relative;z-index:3;
+  height:0;margin:0 auto;pointer-events:none;}
+.deck-stage.sv[data-sep="faint"]>.sv-sep,
+.deck-stage.sv[data-sep="strong"]>.sv-sep{display:block;}
+.deck-stage.sv>.sv-sep::after{content:"";position:absolute;left:0;right:0;}
+.deck-stage.sv[data-sep="faint"]>.sv-sep::after{top:0;height:1px;
+  background:#8a939c80;}
+.deck-stage.sv[data-sep="strong"]>.sv-sep::after{top:-1px;height:2px;
+  background:#7a838cf2;}
 /* belt and braces: a deferred re-render (text fitting runs a tick
    later) can put the editor's ring back on a page after buildPrintRoot
    has stripped it, so no page ever draws one */

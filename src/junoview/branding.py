@@ -447,6 +447,10 @@ _ICON_PATHS = {
               '<rect x="8.8" y="2.6" width="5.6" height="4.2" rx=".6"/>'
               '<rect x="1.6" y="9.2" width="5.6" height="4.2" rx=".6"/>'
               '<rect x="8.8" y="9.2" width="5.6" height="4.2" rx=".6"/>',
+    # T622: slides one under the other, and the way you scroll them
+    "scrollview": '<rect x="1.6" y="1.8" width="9.4" height="5.4" rx=".6"/>'
+                  '<rect x="1.6" y="8.8" width="9.4" height="5.4" rx=".6"/>'
+                  '<path d="M13.8 3.2v9.6M12.2 11.2l1.6 1.6 1.6-1.6"/>',
     # T553: a slide pushed in from the right, and one uncovered
     "push": '<rect x="6" y="3.6" width="8.6" height="8.8" rx="1"/>'
             '<path d="M1.4 8h6.2M5.2 5.6 7.6 8l-2.4 2.4"/>',

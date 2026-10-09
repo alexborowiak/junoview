@@ -59,4 +59,6 @@ def test_view_has_the_door():
     assert 'id="vw-sorter"' in html
     assert 'data-ic="sorter"></i> Slide sorter</button>' in html
     lay = assets.load("js/deck/07-ribbon-layouts.js")
-    assert lay.count("'vw-sorter','vw-rulers',") == lay.count("'vw-rulers',")
+    # T622: the scroll view's two tiles sit between the sorter and Rulers
+    assert lay.count("'vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers',") \
+        == lay.count("'vw-rulers',")

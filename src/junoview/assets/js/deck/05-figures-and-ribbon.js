@@ -1990,6 +1990,7 @@
     /* out of the menu and into the row, so it shows its state too */
     if(sd) sd.setAttribute('aria-pressed',
       deckEl.classList.contains('rbn-side')?'true':'false');
+    if(typeof svSyncBtns==='function') svSyncBtns();   /* T622 */
     var os=$('#vw-other-slides'),of=$('#vw-other-fill');
     if(os) os.setAttribute('aria-pressed',otherSlidesOn?'true':'false');
     if(of){
@@ -2009,6 +2010,7 @@
      one worded button whose menu still drives the real controls
      (2026-08-22; tiles completed 2026-09-12). */
   var VIEW_FOLD=[['vw-versions',null],
+    ['vw-scroll','Scroll view'],['vw-scroll-lines',null],   /* T622 */
     ['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-other-slides','Other slides'],['vw-other-fill','Ghost fills'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
@@ -2528,7 +2530,10 @@
       o.className='dbtn vw-opt';o.type='button';
       /* Slides renames itself Versions for posters; use the live word for
          that contextual control instead of freezing the menu's copy. */
-      o.textContent=p[1]||(real.textContent||'Slides').trim();
+      /* T622: a tile whose word is its state (Faint line) is named in
+         full by its aria-label (Between slides: Faint line) */
+      o.textContent=p[1]||(real.getAttribute('aria-label')
+        ||real.textContent||'Slides').replace(/\s+/g,' ').trim();
       if(real.getAttribute('aria-pressed')==='true'){
         o.setAttribute('aria-pressed','true');
         o.classList.add('on');

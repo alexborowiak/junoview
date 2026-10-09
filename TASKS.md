@@ -11829,3 +11829,37 @@ work was running on `main` at the time.
   rendered notebook is a file someone keeps, its bytes must not depend on
   git, and the template's field is empty there. Driven at 1366x657
   against the app server. Tests in tests/test_the_version_on_home.py.
+- [x] **T622 — The scroll view, while you build.** "they infinite scroll
+  is only a present thing, like I want it as a view when just creating
+  slides as well. Like that is better when creating slides to."
+  *Done 2026-10-09.* **View > Scroll view** stacks every slide in the
+  editor's stage, one under the next, and **the tile beside it** says
+  what sits between them -- Faint line, Strong line, No line, Spaced --
+  the scrolling page's own setting (T620), one choice for both, cycled
+  by a click. The editor still edits ONE slide, and everything that
+  reads `cur` and the stage's live page is untouched: the slide you are
+  on is the real page, in its place in the column, and every other slide
+  is a picture of itself drawn by the export's renderer (fillPrintPage,
+  now shared with buildPrintRoot) at the live page's size. Scroll and
+  the slide that settles in the middle becomes the one you edit; click a
+  picture and that slide is live with what you clicked selected; nothing
+  under the pointer selects the slide, so Style and Object step aside. A
+  scroll the view makes itself, a drag on the page and typing in a box
+  never switch slides. The live page stays the stage's FIRST child --
+  the editor's 140-odd stage lookups take the first .slide and
+  .annot-layer to mean it -- and the pictures follow it in the DOM, put
+  in deck order by CSS `order`; renderSlide notes the scroll before it
+  empties the stage and svAfterRender puts the column back round the new
+  page, so New slide, Delete, Undo, the strip, the sorter and a reorder
+  all land in it. A picture is redrawn only when its slide, its place or
+  the deck-wide things every slide wears change, and only near the view;
+  it has no ids or contenteditable, its page is inert, its clips are
+  stills, and its arrows redraw for its own slide on a timer of its own
+  (scheduleArrowRedraw drew `cur`'s into it, and cancelled the live
+  page's pending redraw). **Each page is lit for itself**: the deck's
+  .page-light, taken from the live slide, reached every picture, so a
+  white slide drew white words while a dark one was live -- in the
+  column the live page and each picture carry their own. A slide's
+  versions are one page, as in the strip. A zoom or a resize keeps the
+  live page in view. Driven headless at 1366x657 (see the test file's
+  header). Tests in tests/test_scroll_view.py.

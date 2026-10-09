@@ -2429,8 +2429,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T621: the template's comment beside the wordmark and the .welcome-ver rule;
 # the build field itself is empty in a rendered notebook, so git never reaches
 # these bytes.
-EXPECTED_MD5 = "7df980bd10d9cb04e31b6f8b8f670c74"
-EXPECTED_BYTES = 5398015
+# T622: the scroll view -- its fragment, the View tab's two tiles and their
+# icon, the column CSS, fillPrintPage lifted out of buildPrintRoot, the
+# per-page .page-light and a help entry.
+EXPECTED_MD5 = "0d56aca6e86b4dc3bf9b0454b4c005ea"
+EXPECTED_BYTES = 5421687
 
 
 def _render_example() -> str:

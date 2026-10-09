@@ -1029,6 +1029,26 @@
                 title="Every slide as a tile: pick some, drag them to a new
  place, duplicate, delete or put them in a section"
                 ><i data-ic="sorter"></i> Slide sorter</button>
+              <!-- T622: THE SCROLL VIEW (2026-10-09, user: "the infinite
+                   scroll is only a present thing, like I want it as a
+                   view when just creating slides as well"). Every slide
+                   one under the next while you build; the one you scroll
+                   to, or click, is the one you edit. Its partner says
+                   what sits between the slides -- the scrolling page's
+                   own choice (T620), one setting for both. -->
+              <button class="fx-tile view-tile rbn-tall" id="vw-scroll"
+                aria-pressed="false"
+                title="Every slide one under the next, to scroll through as
+ you build. The slide in the middle of the view is the one you edit; click
+ any slide to edit it"
+                ><i data-ic="scrollview"></i> Scroll view</button>
+              <button class="fx-tile view-tile rbn-tall" id="vw-scroll-lines"
+                disabled
+                title="What sits between the slides in Scroll view (and on
+ the scrolling page). Click for the next: faint line, strong line, no line,
+ spaced"
+                ><i data-ic="hline"></i> <span id="vw-scroll-lines-t">Faint
+                line</span></button>
               <button class="fx-tile view-tile rbn-tall" id="vw-rulers"
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres

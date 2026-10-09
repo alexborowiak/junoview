@@ -128,6 +128,7 @@ DECK_PARTS = (
     "52-layout-builder",
     "53-web-page",
     "54-scroll-show",
+    "54b-scroll-view",
     "55-sections-and-strip",
     "56-story",
     "57-parts",
