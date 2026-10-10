@@ -1,0 +1,2443 @@
+
+:root{--appbar-h:38px;--chrome-h:80px;--dc-w:430px;
+  --presrail-w:176px;
+  /* THE VIEWER BAR'S MEASUREMENTS, once (T369). The height was already
+     claimed to be "set exactly once" and was written out in five rules;
+     the padding and the icon gap were written out in eight between them
+     and the compaction rung. The values are the deck ribbon's, so the
+     two bars are one system: a ~14px icon, a 4px gap, the word, and
+     5px of side padding, which is what PowerPoint's small command
+     spends. The height stays 28px -- it is a target, and shrinking it
+     was never the complaint. */
+  --ab-btn-h:28px;--ab-btn-px:5px;--ab-btn-gap:4px;--open-tabs-h:37px;}
+body.presrail-min{--presrail-w:46px;}
+
+/* ---------- compact file utility line, optional tabs, reader controls --- */
+/* the header sizes to its content: --chrome-h is measured from the real
+   element (see measureChrome), so a bar that needs a second line pushes
+   the page down instead of hiding controls off the right-hand edge */
+.apptop{position:fixed;top:0;left:0;right:0;
+  z-index:90;display:flex;flex-direction:column;background:var(--chrome-0,#0a141d);
+  border-bottom:1px solid #ffffff14;}
+/* top-aligned: every main button sits on one first row; the small
+   "… types ▾" pickers hang underneath their parent filter. It NEVER
+   WRAPS (2026-08-03, user, on a narrower laptop: groups spilling onto a
+   second line cost a whole extra band of chrome and "make it soooo hard
+   to read the notebook"). Instead fitRibbon() applies ONE compaction
+   stage — body.rbc1, spacing only: tighter gap and padding, every word
+   intact — and past that the bar scrolls sideways (overflow-x:auto
+   above). The old rbc2 (icon-only) and rbc3 rungs were REJECTED and no
+   longer exist as rules; see fitRibbon's comment in app.js and the
+   compaction note above body.rbc1 below, which are the authority. A
+   thin scrollbar at the very edge of usable widths beats a second row
+   that appears at ordinary ones.
+   The ONE documented exception to never-wrap is the presenting bar:
+   .present-bar may wrap, because measurePb re-insets the slide under
+   the bar's REAL height after every wrap — its second row is paid for,
+   not stolen from the page. */
+/* align-items:stretch so every SECTION is as tall as the bar and a
+   single-button group (+ Open) can fill both rows rather than floating at
+   the top of an empty column */
+/* NOT centred: a centred bar re-centres whenever the viewport width
+   changes — switching to the tree removes the page scrollbar and every
+   button slid 15px sideways, which is precisely the "buttons move when I
+   change view" complaint. Left-aligned, a button's position depends only
+   on what is before it (2026-07-30). */
+.appbar{display:flex;align-items:stretch;gap:3px;flex-wrap:nowrap;
+  justify-content:flex-start;padding-left:8px;
+  min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
+  padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
+/* buttons keep one line and one uniform size no matter how narrow the
+   bar gets (the builder can squeeze it) or what glyph they hold.
+   28px is THE ribbon button height and it is set exactly once — a second
+   rule further down used to quietly win and leave the sub-pickers taller
+   than the buttons they hang under (2026-07-29).
+   DENSE on purpose (2026-08-04, user, pointing at PowerPoint): the way a
+   real ribbon fits everything on one row is small, tightly-packed
+   controls with their labels INTACT — never by degrading to icons. */
+.appbar .toggle,.appbar .appbar-link,.nb-filebar .toggle,
+.nb-filebar .appbar-link,.present-bar .toggle{
+  flex:none;white-space:nowrap;height:var(--ab-btn-h);box-sizing:border-box;
+  padding:0 var(--ab-btn-px);line-height:1;font-size:11.5px;
+  gap:var(--ab-btn-gap);}
+/* ---- button icons: the .bic BASE rule moved to core.css (2026-08-23)
+   so the widget's scoped bundle gets it too; only app-chrome overrides
+   live here. ---- */
+.toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
+/* An icon-only button is SQUARE and never shrinks. `padding:0` alone gave
+   it no floor, so the moment the bar ran short of room these were being
+   squeezed to 9px — narrower than the icon inside them — and the App
+   group read as a row of slivers (2026-07-31). */
+/* T260: this used to name #theme-btn and #support-btn as well. There is
+   no #theme-btn -- the button is #scheme-btn -- and neither of those is
+   icon-only any more, so the square rule no longer applies to either.
+   The size steppers are the genuinely icon-only case it was written for. */
+.appbar .toggle.fz-step,.present-bar .toggle.fz-step{
+  padding:0;justify-content:center;
+  width:var(--ab-btn-h);min-width:var(--ab-btn-h);flex:none;}
+.btxt{display:inline-block;}
+/* a filter GROUP stacks its advanced types picker under its main button
+   (Plot types under Plots, Code types under Code, …) so the bar stays
+   narrow instead of growing ever wider */
+.fgrp{flex:none;display:flex;flex-direction:column;align-items:stretch;
+  gap:3px;}
+.fgrp .toggle{width:100%;text-align:left;}
+/* a HORIZONTAL group: its caption sits to the LEFT of the buttons instead
+   of under them, so two of them stack in the height of one filter column
+   (the size steppers) */
+.fgrp-h{flex-direction:row;align-items:center;gap:8px;}
+.fgrp-h .fgrp-cap{order:-1;text-align:right;min-width:50px;line-height:1;
+  height:auto;}
+/* two small buttons sharing one row, so a group never grows past the two
+   rows the app bar is tall */
+/* a labelled SECTION of the ribbon: its NAME, then its controls — the
+   label reads as a heading for the group below it (2026-07-29: it used to
+   sit underneath and read as a caption for whatever came next) */
+.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:3px;
+  flex:none;}
+/* the house rule again: an author `display:` beats the UA [hidden] rule,
+   so every base rule that sets display needs its own [hidden] override —
+   without this the tree-only section showed in Document view too and
+   pushed the whole bar onto a second row */
+.abgrp[hidden]{display:none!important;}
+.abgrp-row{display:flex;align-items:flex-start;gap:4px;flex:1;}
+/* ---- T365: NO HOLES HERE EITHER ------------------------------------
+   2026-09-07, user: "there are weird gaps and spaces everywhere". The
+   deck ribbon's two shapes of gap are on this bar as well, and the cure
+   is the same principle: ONE height for every control, and a column
+   that does not fill the band is CENTRED in it rather than pinned to
+   the top with the leftover underneath.
+
+   Measured before: "Markdown On" sat at the top of the Filters group
+   with 33px of nothing under it (it is the one filter with no Choose
+   beneath it); the App group was one row of 34px buttons -- the only
+   34px controls on a 28px bar -- with 27px of nothing under all four;
+   and Open was 30px beside a 28px docked file bar. */
+.appbar .abgrp-row{align-items:stretch;}
+.appbar .fgrp{justify-content:center;}
+/* + Open is one button in its own section. It used to be told to fill
+   the band on its own, which made it 30px on a 28px bar the moment
+   T364 docked the file controls under it. */
+/* File provenance gets its own compact line above the controls it is not
+   changing. Keeping it out of .appbar gives the filters their width back. */
+.nb-filebar{display:flex;align-items:center;gap:5px;min-height:34px;
+  box-sizing:border-box;padding:3px 8px;background:var(--chrome-1,#0d1a26);
+  border-bottom:1px solid #ffffff12;overflow-x:auto;scrollbar-width:thin;}
+.nb-filebar[hidden]{display:none!important;}
+.nb-file-ident{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;
+  max-width:min(52vw,640px);padding:0 7px 0 2px;
+  border-right:1px solid #ffffff1a;}
+.nb-file-ident[hidden]{display:none!important;}
+.nb-file-name{flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:700 15px var(--sans);letter-spacing:-.01em;
+  color:var(--chrome-ink,#d7e3ec);}
+.nb-file-path{min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);
+  background:none;border:0;padding:0;text-align:left;cursor:pointer;}
+.nb-file-path:hover{text-decoration:underline;}
+/* T602: Info and Reload keep their width -- beside the tabs, a dock that
+   could shrink let Reload's word run under Find in a narrow column; the
+   tabs give way instead (their strip scrolls) */
+.nb-filebar #file-dock{flex:none;}
+.nb-filebar #file-dock .railfile{margin-top:0;}
+/* Present had dead space under it, so T-era CSS let it span both rows
+   beside the Raw/Tree stack. T364 gave it a neighbour instead: Full
+   screen is the same idea, and the two stack the way Raw and Tree do. */
+#ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
+/* T260: Help used to be icon-only, and this rule squared it off. It has
+   carried the word "Help" since; with the square kept, the word simply
+   painted outside the 28px box and over its neighbour. Sized by its
+   content now, like every other worded button. */
+/* The type pickers are NOT standalone: each sits directly under the filter
+   it refines and takes that filter's width. A narrow square under a wide
+   button reads as a separate control that happens to be nearby, instead of
+   as that filter's own "advanced" affordance — and it left the row of
+   groups with a ragged bottom edge. Width comes from the column
+   (align-items:stretch), so there is nothing to keep in sync by hand. */
+#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{width:100%;flex:none;}
+/* Present spans two rows: centre its content in the taller box */
+#ab-view #doc-present,#ab-view #doc-full,#ab-view #doc-autoslides{
+  justify-content:center;align-items:center;}
+/* a stack of one centres in the band rather than sitting at its top --
+   the same rule the rest of the bar got in T365 */
+.vw-stack{justify-content:center;}
+/* stacked rows inside one section (the two size steppers) */
+.abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:4px;}
+/* T390: a section off the current page is gone from the feed and
+   dimmed in the outline, where its row is the door to its page */
+.section.pg-out{display:none!important;}
+.navsec-row.nav-paged,.navitems.nav-paged{opacity:.4;}
+#pages-nav{display:flex;gap:4px;}
+.abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
+  line-height:1;opacity:.75;order:-1;}
+body.light .abgrp-lab{color:var(--ink-3);}
+/* buttons that belong together and must wrap as one unit */
+.btn-grp{display:flex;gap:3px;flex:none;align-items:flex-start;
+  position:relative;}
+.btn-grp[hidden]{display:none!important;}
+.fgrp-row{display:flex;gap:3px;align-items:stretch;}
+/* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
+   these below their natural width, so the label sat on the border. */
+.fgrp-row .toggle{flex:none;width:auto;justify-content:center;
+  text-align:center;padding-left:7px;padding-right:7px;}
+/* square steppers/icons sit beside the thing they act on */
+.fgrp-row .toggle.fz-step{flex:none;width:var(--ab-btn-h);padding:0;
+  justify-content:center;font-size:13px;}
+.fgrp-row .toggle.fz-val{flex:none;width:42px;padding:0;
+  justify-content:center;}
+/* a caption naming a group of small buttons, so the buttons stay narrow
+   instead of each carrying the label */
+.fgrp-cap{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
+  line-height:22px;height:22px;white-space:nowrap;}
+body.light .fgrp-cap{color:var(--ink-3);}
+.appbar .toggle.primary,.nb-filebar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
+  color:#04222b;font-weight:600;}
+.appbar .toggle.primary:hover,.nb-filebar .toggle.primary:hover{
+  filter:brightness(1.08);color:#04222b;}
+/* ONE button height across the whole ribbon (2026-07-29, user: "make all
+   buttons have same height"). A sub-picker is still visually quieter —
+   dimmer text, fainter border, smaller type — but it is never shorter,
+   because a short button beside a tall one reads as a broken grid. */
+.appbar .toggle.sub,.present-bar .toggle.sub{height:var(--ab-btn-h);
+  font-size:10.5px;padding:0 var(--ab-btn-px);
+  color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
+.appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
+  color:#fff;border-color:var(--cyan);}
+/* both selectors need the body.light prefix — without it the LIGHT rule
+   applies to the present bar in dark mode too */
+body.light .appbar .toggle.sub,body.light .present-bar .toggle.sub{
+  color:var(--ink-3);border-color:var(--line);background:#00000005;}
+body.light .appbar .toggle.sub:hover,
+body.light .present-bar .toggle.sub:hover{color:var(--ink);}
+/* push the trailing controls right WITHOUT a growing spacer: a flex:1
+   spacer fills the first line and shoves everything after it onto a
+   second row, even when there is room */
+
+.appbar-spring{flex:1;}
+/* ---- TREE VIEW: its controls replace the document filters inside the
+   panel. They no longer need to reserve an invisible ribbon-sized slot. */
+body.tree-mode #ab-tree{min-width:0;}
+/* the Tree section takes the Filters slot while the tree is on -- on
+   the Filters tab, which says Tree then (T605) */
+body.tree-mode .ab-band:not([data-tab="view"]) #ab-tree{
+  display:flex!important;}
+body.tree-mode #ab-filters,body.tree-mode #ab-scope,
+body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
+body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
+body.tree-mode #copy-grp{display:none!important;}
+/* the stacked View column: Raw over Tree. Its width is FIXED to the
+   longest label it can hold ("Document"), because the Tree button renames
+   itself and a wider word would shove Present sideways — the same fixed
+   slot the filter state words use, for the same reason (2026-07-30) */
+/* min-width, not width: it is the FLOOR that stops the group shifting
+   sideways when the Tree button renames itself "Document". A wider
+   word in one stack simply makes that stack wider, which is what every
+   other column on this bar does too. */
+.vw-stack{display:flex;flex-direction:column;gap:3px;flex:none;
+  min-width:92px;}
+.vw-stack .toggle{width:100%;justify-content:center;}
+.appbar-div{flex:none;width:1px;height:70px;background:#ffffff38;
+  margin:1px 0 0;border-radius:1px;}
+body.light .appbar-div{background:var(--chrome-line);}
+/* dark variants of the show/hide toggles */
+.appbar .toggle,.nb-filebar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
+.appbar-link{text-decoration:none;display:inline-flex;
+  align-items:center;}
+.appbar .toggle:hover,.nb-filebar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
+/* ---- ribbon COMPACTION (see fitRibbon in app.js): ONE stage, spacing
+   only, then the bar scrolls sideways. NO WORDS EVER DISAPPEAR
+   (2026-08-04, user, twice: first the icon-only stage "makes no sense to
+   look at", then hiding just the On/Fold state words was "confusing
+   without these"). Every act of hiding text to save width has been
+   rejected — the bar stays fully worded at every size, and width comes
+   from density and, at the very edge, a thin scrollbar. */
+body.rbc1 .appbar{gap:2px;}
+/* not the steppers/values: their fixed square boxes centre themselves */
+body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
+  padding-left:3px;padding-right:3px;}
+/* One utility row above the filters: identity on the left, app commands
+   on the right. The existing Info panel shows the complete source path. */
+.apptop{display:flex;flex-direction:column;}
+.nb-filebar{min-height:42px;padding:4px 8px;}
+/* T602: while the open files are tabs, the tab names the file (its
+   tooltip is the path, and Info has all of it), so the two-line
+   identity steps aside and the row is one button high */
+body.tabs-row-on .nb-file-ident{display:none!important;}
+body.tabs-row-on .nb-filebar{min-height:var(--open-tabs-h);}
+.nb-file-spacer{flex:1;min-width:8px;}
+.nb-file-utils{display:flex;align-items:center;gap:4px;flex:none;}
+.nb-file-utils .toggle{height:var(--ab-btn-h);font-size:11.5px;
+  white-space:nowrap;}
+/* The reader's primary Present action uses the editor's quiet accented
+   outline, not the filled state used for an already-selected toggle. */
+#ab-view #doc-present.primary{background:color-mix(in srgb,var(--accent) 14%,
+  transparent);color:var(--accent);border-color:var(--accent);font-weight:600;}
+#ab-view #doc-present.primary:hover{background:var(--accent);color:#04222b;}
+/* T602: THE OPEN TABS ARE THE LEFT OF THE TITLE ROW -- the reader's
+   (#nb-filebar) or, while it is up, the editor's (#deck-qat; app.js
+   moves the one node) -- not a row of their own (2026-09-30, user:
+   "there is to many layers to our ribbon"). The first try set them
+   between Find and Present as boxed buttons, and they read as more
+   buttons crammed into a full row ("super cursed with the tabs crowded
+   in here"); the user chose the PowerPoint split. So they are REAL
+   TABS: they hang from the row's bottom edge, quiet until pointed at,
+   and the one on screen takes the colour of the row under it
+   (--tab-on, set by each title row) so it joins that row, the way a
+   browser's tab joins its toolbar. Each tab gives up width to an
+   ellipsis first, then the strip scrolls; the row keeps 220px for Home
+   and a tab before the bar's own fitter compacts anything else. */
+.open-tabs-row{display:flex;align-items:flex-end;gap:2px;flex:0 1 auto;
+  min-width:220px;align-self:stretch;box-sizing:border-box;
+  margin-bottom:-4px;}
+.open-tabs-row[hidden],.open-tabs-row [hidden]{display:none!important;}
+/* T611: the way to the side list, after the tabs: a quiet worded button,
+   not a tab, and never squeezed -- the strip scrolls first */
+.open-tabs-row .ot-files-at{flex:none;align-self:center;height:24px;
+  margin:0 2px 2px 6px;padding:0 9px;gap:6px;background:none;
+  border:1px solid transparent;border-radius:6px;box-shadow:none;
+  color:var(--chrome-ink-2,#8ba0b2);font:11.5px var(--sans);
+  white-space:nowrap;}
+.open-tabs-row .ot-files-at:hover{border-color:var(--chrome-line,#ffffff40);
+  color:var(--chrome-ink,#d7e3ec);}
+/* no scrollbar: in a one-button-high row it drew a white bar under the
+   tabs and made the whole bar taller. The strip still scrolls (wheel,
+   trackpad), and app.js keeps the tab on screen in view. */
+.top-tabstrip{display:flex;align-items:flex-end;gap:2px;min-width:0;
+  align-self:stretch;overflow-x:auto;scrollbar-width:none;}
+/* T596: Home before the tabs, and shaped like one */
+.open-tabs-row .ot-home,.top-tabstrip .tab{height:29px;box-sizing:border-box;
+  border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;
+  background:none;color:var(--chrome-ink-2,#8ba0b2);box-shadow:none;}
+.open-tabs-row .ot-home{flex:none;display:inline-flex;align-items:center;
+  gap:6px;padding:0 11px;font:12px var(--sans);letter-spacing:0;
+  white-space:nowrap;}
+.open-tabs-row .ot-home .jv-logo{width:17px;height:17px;flex:none;}
+/* 110px keeps a readable start of the name ("presentat...") */
+.top-tabstrip .tab{flex:0 1 auto;min-width:110px;max-width:220px;
+  padding:0 6px 0 12px;font-size:12px;font-weight:400;}
+.open-tabs-row .ot-home:hover,.top-tabstrip .tab:hover{
+  background:color-mix(in srgb,var(--chrome-ink,#d7e3ec) 7%,transparent);
+  color:var(--chrome-ink,#d7e3ec);}
+/* the one on screen: the row below's colour, a line of accent along
+   its top, and no edge between it and that row */
+.open-tabs-row .ot-home.current,.top-tabstrip .tab.current{
+  background:var(--tab-on,var(--chrome-0,#0b141d));
+  border-color:var(--chrome-line,#ffffff1f);
+  box-shadow:inset 0 2px 0 var(--accent);color:var(--chrome-ink,#e6edf3);
+  font-weight:600;}
+/* at Home no tab is the one on screen, whatever was last active -- and
+   in the slide editor the presentation is, not the notebook that was
+   last active behind it (T602: two lit tabs on one row) */
+body.welcoming .top-tabstrip .tab.current,
+body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab){
+  background:none;box-shadow:none;color:var(--chrome-ink-2,#8ba0b2);
+  border-color:transparent;font-weight:400;}
+/* T610: and its icon stays its colour, as an unlit tab's does */
+body.welcoming .top-tabstrip .tab.current .tab-ico,
+body.slide-editing .top-tabstrip .tab.current:not(.top-pres-tab) .tab-ico{
+  color:var(--cyan);}
+.top-tabstrip .tab-t{max-width:170px;}
+/* the reader's title row: its tabs join the filter row under it, which
+   is the header's own colour; the line along the bottom is drawn inside
+   the row so the tab on screen can cover it */
+.nb-filebar{--tab-on:var(--chrome-0,#0b141d);}
+body.tabs-row-on .nb-filebar{border-bottom-width:0;
+  box-shadow:inset 0 -1px 0 var(--chrome-line,#ffffff12);}
+.top-tabstrip .tab-ico{display:inline-flex;align-items:center;
+  justify-content:center;flex:none;color:var(--cyan);}
+.top-tabstrip .tab-ico .bic{width:12px;height:12px;}
+.top-tabstrip .tab.current .tab-ico{color:currentColor;}
+/* one backslash: this is a stylesheet, not a Python string -- the doubled
+   one printed a literal "\2022" after the name (T596) */
+.top-tabstrip .top-pres-tab.draftonly .tab-t::after{
+  content:" \2022";color:var(--amber);}
+.top-tabstrip .top-pres-main{display:flex;align-items:center;gap:8px;
+  flex:1;min-width:0;border:0;padding:0;background:none;color:inherit;
+  font:inherit;text-align:left;cursor:pointer;}
+/* ---- T605: THE READER'S RIBBON IS TABS -------------------------------
+   The editor's shape: File, the tabs and the verbs on one strip; under
+   it ONE row of the chosen tab's groups, each named underneath. It was
+   a row of commands over a panel of every control at once, which
+   wrapped to three rows on a laptop (2026-10-01, user: "too big and eats
+   up too much of the vertical and things don't line up well"). The band
+   never wraps: fitRibbon tightens it (rbc1), then it scrolls sideways.
+   A group belongs to one tab (data-abtab) and is display:none on the
+   other, so it costs no width in the fit. */
+.appbar{position:relative;display:flex;flex-direction:column;
+  align-items:stretch;gap:0;min-height:0;padding:0;overflow:visible;}
+.ab-tabs{display:flex;align-items:center;gap:4px;height:34px;
+  box-sizing:border-box;padding:0 8px;min-width:0;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;
+  border-bottom:1px solid var(--chrome-line,#ffffff12);}
+.ab-tablist{display:flex;align-items:stretch;align-self:stretch;gap:2px;
+  margin-left:6px;flex:none;}
+.ab-tab{font-family:var(--sans);font-size:13px;letter-spacing:0;
+  font-weight:500;background:none;border:none;
+  border-bottom:2px solid transparent;color:var(--chrome-ink-2);
+  padding:0 13px;cursor:pointer;white-space:nowrap;display:inline-flex;
+  align-items:center;gap:6px;transition:color .12s,border-color .12s;}
+.ab-tab:hover{color:var(--chrome-ink);}
+.ab-tab[aria-selected="true"]{color:var(--chrome-ink);
+  border-bottom-color:var(--cyan);}
+/* in the tree the Filters tab holds the tree's own controls, and says so */
+.ab-tab .abt-tree{display:none;}
+body.tree-mode .ab-tab .abt-doc{display:none;}
+body.tree-mode .ab-tab .abt-tree{display:inline;}
+.ab-tabs .appbar-spring{flex:1;min-width:8px;}
+.ab-tabs>.abgrp .abgrp-lab{display:none;}
+.ab-tabs #ab-view .abgrp-row,.ab-tabs #ab-view .btn-grp,
+.ab-tabs #ab-view .vw-stack{flex-direction:row;align-items:center;gap:4px;}
+.ab-tabs #ab-view .vw-stack{min-width:0;}
+.ab-tabs #ab-view .vw-stack .toggle{width:auto;}
+.appbar .toggle.ab-fold{width:var(--ab-btn-h);padding:0;
+  justify-content:center;font-size:12px;}
+/* THE BAND */
+.ab-band{display:flex;flex-wrap:nowrap;align-items:stretch;gap:0;
+  box-sizing:border-box;padding:4px 8px 3px;min-width:0;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;
+  border-bottom:1px solid var(--chrome-line,#ffffff12);}
+.ab-band[hidden]{display:none!important;}
+.ab-band[data-tab="filters"] [data-abtab="view"],
+.ab-band[data-tab="view"] [data-abtab="filters"]{display:none!important;}
+.ab-band>.abgrp{flex:none;gap:3px;padding:0 10px;
+  border-right:1px solid var(--chrome-line,#ffffff12);}
+.ab-band>.abgrp:first-child{padding-left:2px;}
+.ab-band .abgrp-row,.ab-band .abgrp-row.abgrp-stack{flex-direction:row;
+  align-items:center;flex-wrap:nowrap;gap:4px;flex:none;}
+.ab-band .abgrp-row.abgrp-stack{gap:12px;}
+/* the group's NAME under it, as the editor's ribbon names its groups */
+.ab-band .abgrp-lab{display:block;order:0;font-family:var(--sans);
+  font-size:10.5px;letter-spacing:0;text-transform:none;opacity:1;
+  line-height:12px;color:var(--chrome-ink-2);text-align:center;}
+.ab-band .fgrp{flex-direction:row;align-items:center;gap:0;
+  justify-content:flex-start;}
+.ab-band .fgrp .toggle,.ab-band #pt-filter-btn,.ab-band #ck-filter-btn,
+.ab-band #ot-filter-btn{width:auto;}
+/* a filter and its chooser are ONE control, joined down the middle:
+   "Plots On | Which plots" -- so the row reads as four filters, not
+   seven buttons, and nothing has to line up with anything under it */
+.ab-band .fgrp>.toggle.tv:not(:last-child){border-top-right-radius:0;
+  border-bottom-right-radius:0;}
+.ab-band .fgrp>.toggle.tv+.toggle.sub{border-top-left-radius:0;
+  border-bottom-left-radius:0;margin-left:-1px;}
+.ab-band .fgrp+.fgrp{margin-left:2px;}
+.ab-band #sec-scope-grp,.ab-band #pages-grp,.ab-band #tree-fold-grp,
+.ab-band #tree-width-grp{gap:4px;}
+.ab-band .vw-stack{flex-direction:row;min-width:0;gap:4px;}
+.ab-band .vw-stack .toggle{width:auto;}
+/* Outline wore the sans face beside a row of mono words */
+.ab-band .menubtn{font-family:var(--mono);letter-spacing:.04em;}
+.ab-band .fgrp-h{gap:6px;}
+/* a folded group: one door, its row in a menu under it (fitRibbon) */
+.ab-band .ab-foldwrap{display:flex;align-items:center;}
+.ab-foldmenu{position:fixed;z-index:190;display:flex;padding:6px;
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:8px;box-shadow:0 12px 40px var(--shadow);}
+.ab-foldmenu[hidden]{display:none!important;}
+/* THE FITTER MEASURES WHAT IS THERE: a toggle's padding must not ease
+   between rungs, or fitRibbon reads the old padding mid-transition and
+   folds a group that would have fitted (the deck's T-era lesson, "a
+   fitter measures the old padding") */
+.appbar .toggle{transition:color .15s,background-color .15s,
+  border-color .15s,opacity .15s;}
+.ab-band .fgrp-h .fgrp-cap{min-width:0;height:auto;line-height:1;}
+body.light .ab-tabs,body.light .ab-band{border-bottom-color:var(--chrome-line);}
+body.light .ab-band>.abgrp{border-right-color:var(--chrome-line);}
+.appbar .menubtn{display:inline-flex;align-items:center;justify-content:center;
+  height:var(--ab-btn-h);box-sizing:border-box;margin:0;padding:0 7px;
+  gap:7px;white-space:nowrap;font-size:11.5px;color:var(--btn-ink,#d7e3ec);
+  border:1px solid var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);
+  border-radius:7px;cursor:pointer;}
+.appbar .menubtn:hover{border-color:var(--cyan);color:#fff;}
+.appbar .menubtn span,.appbar .menubtn span::before,
+.appbar .menubtn span::after{content:"";display:block;width:14px;height:2px;
+  background:currentColor;position:relative;}
+.appbar .menubtn span::before{position:absolute;top:-5px;}
+.appbar .menubtn span::after{position:absolute;top:5px;}
+.filter-wrap{display:contents;}
+/* the house rule: an author display beats [hidden], so say it again */
+.filter-count[hidden]{display:none;}
+.filter-count{display:inline-flex;align-items:center;justify-content:center;
+  min-width:14px;height:14px;padding:0 3px;border-radius:8px;
+  background:color-mix(in srgb,var(--accent) 24%,transparent);
+  color:var(--cyan);font:9px var(--mono);}
+.filter-panel[hidden]{display:none!important;}
+/* ---- T606: COLLECTIONS ------------------------------------------------
+   A feed like a notebook's, in the trace tab's frame: the cards are the
+   document's own .card, the controls a quiet bar under each. */
+.cell-collect{flex:none;display:inline-flex;align-items:center;gap:5px;
+  margin-left:auto;padding:3px 9px;border:1px solid var(--line);
+  border-radius:20px;background:var(--paper-2);color:var(--ink-2);
+  font:10.5px var(--mono);letter-spacing:.02em;cursor:pointer;
+  white-space:nowrap;}
+.cell-collect .bic{width:11px;height:11px;}
+.cardhead .cell-collect~.cell-history-btn,.cardhead .plot-trace-btn~.cell-collect,
+.cardhead .cell-history-btn~.cell-collect{margin-left:0;}
+.cardhead .cell-collect~.cell-pin,.cardhead .cell-collect~.cell-eye{margin-left:0;}
+.cell-collect:hover,.cell-collect:focus-visible{
+  border-color:color-mix(in srgb,var(--accent) 40%,transparent);
+  color:var(--cyan-deep);}
+body:not(.light) .cell-collect{background:#0e1824;color:var(--chrome-ink-2);
+  border-color:#ffffff1f;}
+body:not(.light) .cell-collect:hover{color:var(--cyan);}
+.col-menu{position:fixed;z-index:420;min-width:220px;max-width:320px;
+  max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:2px;
+  padding:6px;background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:8px;box-shadow:0 12px 40px var(--shadow);}
+.col-menu-h{font:600 9.5px var(--mono);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:4px 6px 6px;}
+.col-menu-row,.col-menu-chip{display:flex;align-items:center;gap:8px;
+  padding:6px 8px;border:0;border-radius:6px;background:none;
+  color:var(--chrome-ink);font:12.5px var(--sans);text-align:left;
+  cursor:pointer;}
+.col-menu-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-menu-row:hover,.col-menu-row:focus-visible,.col-menu-chip:hover{
+  background:var(--surface-hover);}
+.col-menu-new{border-top:1px solid var(--chrome-line);margin-top:2px;
+  border-radius:0 0 6px 6px;color:var(--cyan);}
+.col-menu-chip{font-size:11.5px;color:var(--chrome-ink-2);
+  border:1px dashed var(--chrome-line);margin-bottom:4px;}
+.col-menu-chip[aria-pressed="true"]{color:var(--cyan);
+  border-style:solid;border-color:color-mix(in srgb,var(--accent) 45%,transparent);}
+.col-menu .bic,.col-btn .bic,.col-src .bic{width:13px;height:13px;flex:none;}
+.coltab .col-head{padding-right:0;}
+.col-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.col-btn{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+  border:1px solid var(--line);border-radius:6px;background:none;
+  color:var(--ink-2);font:11px var(--mono);cursor:pointer;white-space:nowrap;}
+.col-btn:hover,.col-btn:focus-visible{border-color:var(--cyan);color:var(--ink);}
+.col-btn.primary{background:var(--cyan);border-color:var(--cyan);color:#04222b;}
+.col-btn.col-rm:hover{border-color:#e0757c;color:#e0757c;}
+body:not(.light) .col-btn{border-color:#ffffff26;color:var(--chrome-ink-2);}
+body:not(.light) .col-btn:hover{color:#fff;border-color:var(--cyan);}
+.col-src{margin-left:auto;flex:none;display:inline-flex;align-items:center;
+  gap:5px;padding:2px 8px;border:1px solid var(--line);border-radius:20px;
+  background:none;color:var(--ink-3);font:10px var(--mono);cursor:pointer;
+  max-width:40%;}
+.col-src span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-src:hover{color:var(--cyan-deep);border-color:var(--cyan);}
+.col-bar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;
+  margin-top:12px;padding-top:9px;border-top:1px dashed var(--line);
+  opacity:.55;transition:opacity .15s;}
+.col-card:hover>.col-bar,.col-bar:focus-within{opacity:1;}
+.col-bar-sp{flex:1;}
+.col-group{margin-bottom:18px;}
+.col-group>.card{margin-bottom:0;}
+/* what is linked hangs from its card, on a rail of the accent */
+.col-under{margin:6px 0 0 22px;padding-left:14px;
+  border-left:2px solid color-mix(in srgb,var(--accent) 38%,transparent);}
+.col-under-body>.card{margin:8px 0 0;}
+.col-fold{display:inline-flex;align-items:center;gap:7px;padding:3px 2px;
+  border:0;background:none;color:var(--ink-3);font:11px var(--mono);
+  cursor:pointer;}
+.col-fold .chev{display:inline-block;transition:transform .15s;}
+.col-fold[aria-expanded="true"] .chev{transform:rotate(90deg);}
+.col-fold:hover{color:var(--cyan-deep);}
+.col-note .note .col-hint{color:var(--ink-3);font-style:italic;}
+.col-edit textarea{width:100%;box-sizing:border-box;font:12.5px/1.5 var(--mono);
+  padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--ink);resize:vertical;}
+.col-edit-row{display:flex;justify-content:flex-end;gap:6px;margin-top:6px;}
+.col-missing{color:var(--ink-3);font-style:italic;}
+.col-empty{padding:28px 22px;border:1px dashed var(--line);border-radius:12px;
+  color:var(--ink-2);line-height:1.6;}
+.col-empty .bic{width:12px;height:12px;vertical-align:-1px;}
+.col-pick{position:fixed;inset:0;z-index:430;background:#0009;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:10vh;}
+.col-pick-box{width:min(600px,92vw);max-height:72vh;display:flex;
+  flex-direction:column;gap:8px;padding:14px;background:var(--chrome-2);
+  border:1px solid var(--chrome-line);border-radius:12px;
+  box-shadow:0 18px 60px var(--shadow);color:var(--chrome-ink);}
+.col-pick-h{font:600 14px var(--sans);}
+.col-pick-q{padding:7px 10px;border:1px solid var(--chrome-line);
+  border-radius:6px;background:var(--chrome-1);color:var(--chrome-ink);
+  font:13px var(--sans);}
+.col-pick-list{overflow:auto;display:flex;flex-direction:column;gap:2px;
+  min-height:80px;}
+.col-pick-row{display:flex;align-items:center;gap:9px;padding:6px 8px;
+  border:0;border-radius:6px;background:none;color:var(--chrome-ink);
+  font:12.5px var(--sans);text-align:left;cursor:pointer;}
+.col-pick-row:hover,.col-pick-row:focus-visible{background:var(--surface-hover);}
+.col-pick-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.col-pick-s{flex:none;font:10.5px var(--mono);color:var(--chrome-ink-2);}
+.col-pick-none{padding:16px;color:var(--chrome-ink-2);text-align:center;}
+.col-pick-foot{display:flex;justify-content:flex-end;}
+body.light .appbar .menubtn{border-color:var(--line);color:var(--ink);}
+body.light .appbar .menubtn:hover{color:var(--ink);}
+body.light .filter-panel{background:transparent;color:var(--ink);box-shadow:none;}
+/* tabs line up with the DOCUMENT, not with the outline beneath them —
+   the strip starts where the sidebar ends (and slides back when the
+   sidebar is toggled off) */
+.tabstrip{display:flex;align-items:stretch;overflow-x:auto;
+  min-width:0;scrollbar-width:thin;flex:0 1 auto;
+  gap:5px;padding:6px 8px 0;
+  margin-left:calc(var(--rail-w) - 52px);
+  transition:margin-left .2s ease;}
+body.no-rail .tabstrip{margin-left:0;}
+.tab{display:flex;align-items:center;gap:8px;padding:0 10px 0 15px;
+  max-width:260px;min-width:0;cursor:pointer;user-select:none;
+  font-size:13px;color:#96a9ba;background:#ffffff08;
+  border:1px solid #ffffff14;border-bottom:none;
+  border-radius:9px 9px 0 0;
+  white-space:nowrap;transition:background .12s,color .12s;}
+.tab:hover{background:#ffffff12;color:#cdd9e3;}
+.tab.current{background:var(--chrome-0,#0b141d);color:#e6edf3;font-weight:600;
+  border-color:#ffffff1f;}
+.tab-t{overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+/* a version tab: name on top, the commit it is pinned to underneath */
+.tab-t.tab-t-ver{display:flex;flex-direction:column;line-height:1.15;
+  padding:3px 0;}
+.tab-ver{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;
+  color:var(--cyan);opacity:.9;font-weight:400;}
+body.light .tab-ver{color:var(--cyan-deep);}
+.tab-b{background:none;border:none;color:inherit;opacity:.55;
+  cursor:pointer;font-size:13px;padding:4px 6px;border-radius:5px;
+  line-height:1;flex:none;}
+.tab-b:hover{opacity:1;background:#00000033;}
+/* ---------- left library: open files and presentations ----------------- */
+/* ---- the open-notebooks list, in the rail ---------------------------
+   It used to be a horizontal tab strip across the top of the document —
+   a row of chrome whose width ran out at about five notebooks. The nodes
+   MOVED rather than being rebuilt, so `.tab` still styles them; these
+   rules just stand the strip up (2026-08-20). */
+/* ...INCLUDING undoing the horizontal strip's offset. `.tabstrip` still
+   carries `margin-left:calc(var(--rail-w) - 52px)` from the days it ran
+   across the top of the document, lined up with the document's own left
+   edge. Standing it up in a 175px rail left that 248px offset in place:
+   the whole list was pushed clean off the rail and crushed to a 16px
+   sliver over the page, so the "open notebooks" heading stood above
+   nothing at all (2026-08-21, user: "the sidebar doesn't show notebooks
+   that are open"). */
+.presrail .tabstrip{display:flex;flex-direction:column;gap:2px;
+  overflow-y:auto;overflow-x:hidden;flex:0 1 auto;min-height:0;
+  max-height:38vh;margin-left:0;margin-bottom:4px;padding:0;}
+.presrail .tabstrip:empty{display:none;}
+.presrail .tabstrip:empty + .pr-label{margin-top:0;}
+.presrail .tab{width:100%;box-sizing:border-box;border-radius:7px;
+  border:1px solid transparent;background:none;justify-content:flex-start;
+  padding:5px 7px;min-width:0;max-width:none;height:auto;}
+.presrail .tab .tab-t{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;text-align:left;}
+.presrail .tab.current{background:color-mix(in srgb,var(--accent) 13%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 34%,
+  transparent);}
+.presrail .tab .tab-b{opacity:0;flex:none;}
+.presrail .tab:hover .tab-b,.presrail .tab.current .tab-b{opacity:.75;}
+/* a Plot-trace sub-tab still reads as a child of the notebook above it */
+.presrail .tab .tab-trace-ic{flex:none;margin-right:2px;opacity:.7;}
+.pr-nblabel[hidden]{display:none;}
+.presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
+  z-index:95;background:var(--chrome-0,#0a141d);border-right:1px solid #ffffff1f;
+  display:flex;flex-direction:column;padding:8px 6px;gap:2px;}
+#welcome-back{display:none!important;} /* Open tabs are the return route. */
+.presrail .tab .tab-t,.presrail .pr-t{white-space:normal;
+  overflow-wrap:anywhere;line-height:1.35;font-size:13px;}
+.presrail .pr-label{font-size:10px;letter-spacing:.06em;
+  color:var(--chrome-ink-2);}
+/* the Junoview wordmark now lives at the top of the left rail */
+.presrail-brand{font-family:var(--mono);font-size:13px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--cyan);font-weight:600;gap:9px;
+  padding:9px 10px 13px;display:flex;align-items:center;flex:none;
+  background:none;border:none;width:100%;cursor:pointer;text-align:left;
+  border-radius:8px;}
+.presrail-brand:hover{background:color-mix(in srgb,var(--accent) 12%,
+  transparent);}
+.presrail-brand .jv-logo{width:24px;height:auto;}
+body.presrail-min .presrail-brand .jv-logo{width:26px;}
+.prb-min{display:none;}
+body.presrail-min .prb-full{display:none;}
+body.presrail-min .presrail-brand{justify-content:center;padding:9px 0 13px;}
+body.presrail-min .prb-min{display:inline;font-size:16px;letter-spacing:0;}
+body.light .presrail-brand{color:var(--cyan-deep);}
+.pr-item{display:flex;align-items:center;gap:9px;width:100%;
+  background:none;border:none;border-radius:7px;padding:9px 10px;
+  font-family:var(--sans);font-size:12.5px;color:#8ba0b2;cursor:pointer;
+  text-align:left;min-width:0;transition:background .12s,color .12s;}
+.pr-item:hover{background:#ffffff0c;color:#cdd9e3;}
+/* ONE active style, radio-consistent: whichever of Notebooks / a
+   presentation is open gets the same filled-cyan treatment */
+.pr-item.current{background:var(--cyan-deep);color:var(--on-accent-deep);
+  font-weight:600;}
+.pr-item.editing{background:var(--cyan-deep);color:var(--on-accent-deep);
+  font-weight:600;}
+.pr-ico{font-size:11px;flex:none;width:16px;text-align:center;
+  opacity:.85;}
+.pr-item.ptab .pr-ico{font-size:8.5px;color:var(--cyan);}
+.pr-item.editing .pr-ico{color:var(--on-accent-deep);}
+.pr-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.pr-label{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:#4e93a6;padding:10px 10px 6px;
+  user-select:none;white-space:nowrap;overflow:hidden;}
+.pr-list{display:flex;flex-direction:column;gap:2px;overflow-y:auto;
+  min-height:0;flex:0 1 auto;}
+/* real buttons for the create actions */
+.pr-btn{display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;background:var(--btn-bg,#ffffff08);
+  border:1px solid var(--btn-border,#ffffff22);
+  border-radius:7px;padding:8px 10px;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.03em;
+  color:var(--btn-ink,#9fb2c2);cursor:pointer;
+  margin-top:6px;transition:border-color .15s,color .15s,
+  background .15s;}
+.pr-btn:hover{border-color:var(--cyan);color:#fff;
+  background:color-mix(in srgb,var(--accent) 8%,transparent);}
+/* the icon shows at every rail width: it is what makes the three
+   "+ New ..." buttons tellable apart, collapsed OR expanded */
+.pr-btn .pr-ico{display:flex;align-items:center;justify-content:center;}
+body.presrail-min .pr-btn .pr-t{display:none;}
+body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
+  justify-content:center;}
+/* the two panel controls sit together as a pair at the foot of the rail:
+   one collapses it, one makes it slide away by itself */
+/* T262: STACKED, not side by side. #pr-auto used to be pinned to a 34px
+   box -- fine when it was icon-only, but it carries the word "Auto-hide",
+   which then wrapped to "Auto-" / "hide" inside a box a third the width
+   of the Collapse button beside it. The rail is not wide enough for both
+   words on one line, and cropping a word is not an option here, so they
+   take a row each. */
+.pr-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;
+  align-items:stretch;}
+.pr-foot .pr-collapse{margin-top:0;justify-content:center;}
+#pr-auto .bic{width:14px;height:14px;}
+.pr-collapse{margin-top:auto;background:none;border:1px solid #ffffff1f;
+  border-radius:7px;color:#69788a;font-size:13px;padding:5px 0;
+  cursor:pointer;}
+.pr-collapse:hover{color:#cdd9e3;border-color:#ffffff40;}
+/* T611: collapsed to 46px the foot's words stack small under their icons
+   -- they were cropped ("Colla") or broke mid-row, and Tabs on top, the
+   way back to tabs, must still say what it does */
+body.presrail-min .pr-foot .pr-collapse{display:flex;flex-direction:column;
+  align-items:center;gap:2px;margin:0 -4px;padding:5px 0 4px;
+  font-size:8.5px;line-height:1.15;letter-spacing:0;text-align:center;}
+/* collapsed: icons only */
+body.presrail-min .pr-t,body.presrail-min .pr-label{display:none;}
+body.presrail-min .pr-item{justify-content:center;padding:9px 0;}
+body.presrail-min .pr-ico{width:auto;}
+/* fully hidden: a small edge handle brings it back */
+body.presrail-hidden{--presrail-w:0px;}
+body.presrail-hidden .presrail{display:none;}
+/* T596: as tabs, the side panel is not the list of open files, and it is
+   not on screen at all -- its doors are on the tab row. Its collapse and
+   auto-hide states are kept for when it is the list again. */
+body.files-top,body.files-top.presrail-min,body.files-top.prrail-auto{
+  --presrail-w:0px;}
+body.files-top .presrail,body.files-top .presrail-show{display:none!important;}
+/* ---- rail auto-hide (OFF by default), same taskbar model as the
+   present bar: the panel leaves, the document takes the full width, and
+   the panel slides back when the pointer reaches the left edge ---- */
+/* --presrail-w drives the DOCUMENT offset and goes to 0 so the page
+   takes the full width. The panel itself must keep a real width, or
+   translateX(-100%) is 100% of nothing — it never moved, and its
+   contents simply overflowed a 0px box as loose floating icons. */
+body.prrail-auto{--presrail-w:0px;}
+body.prrail-auto .presrail{width:176px;overflow:hidden;}
+body.prrail-auto.presrail-min .presrail{width:46px;}
+body.prrail-auto .presrail{transform:translateX(-100%);
+  transition:transform .18s ease;box-shadow:0 0 40px #00000066;}
+body.prrail-auto.prrail-peek .presrail{transform:none;}
+/* the peeking rail must ride ABOVE the deck editor (z-index:100): with
+   the rail on auto-hide, entering the poster/slide editor left no
+   visible way back — the rail slid in UNDERNEATH the deck and the user
+   "lost the sidebar" (2026-08-04) */
+body.prrail-auto.prrail-peek .presrail{z-index:130;}
+body.prrail-auto .presrail-show{display:none;}
+#pr-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
+#pr-auto .bic{width:13px;height:13px;}
+/* z-index 130: the reveal tab must stay clickable OVER the deck editor
+   (z-index:100), or a hidden rail has no way back while editing */
+.presrail-show{position:fixed;left:0;bottom:20px;z-index:130;width:22px;
+  height:46px;border:1px solid #ffffff22;border-left:none;
+  border-radius:0 8px 8px 0;background:var(--chrome-0,#0a141d);color:#7fb6c6;
+  cursor:pointer;display:none;font-size:12px;padding:0;}
+body.presrail-hidden .presrail-show{display:block;}
+.presrail-show:hover{color:#fff;border-color:var(--cyan);}
+/* draft-only presentations get an unsaved dot */
+.pr-item.draftonly .pr-t::after{content:" \2022";color:var(--amber);}
+/* T394: the rail's rows are what is OPEN, and the two doors under them
+   are dimmer than a row -- ways to more, not things that are here */
+.pr-door{color:#69788a;font-size:11.5px;padding:7px 10px;}
+.pr-door:hover{color:#cdd9e3;}
+.pr-none{padding:6px 10px;color:#4e5f70;font:11px var(--sans);
+  font-style:italic;}
+body.presrail-min .pr-none{display:none;}
+body.presrail-min .pr-item.infolder{padding-left:0;}
+
+.nbshell[hidden]{display:none;}
+body{padding-top:var(--chrome-h);padding-left:var(--presrail-w);}
+/* nothing open: the welcome screen is the whole window. The ribbon only
+   acts on a document, and Open lives on the welcome screen too, so the bar
+   would be a row of dead controls. --chrome-h is measured from the real
+   header and stays at its last value while hidden, hence padding-top:0. */
+body.welcoming .apptop{display:none;}
+body.welcoming{padding-top:0;}
+/* T596: at Home the tabs stay up while anything is open -- they are the
+   way back to it. T602: they are part of the title row now, so at Home
+   that row shows with the tabs and nothing else of the header does
+   (Info, Reload and Find act on a notebook Home is covering, and Home
+   has its own New, Open and How to use).
+   The children are NAMED, not :not(.nb-filebar) and friends: a rule
+   whose last step names no class makes every change of `welcoming` or
+   `tabs-row-on` restyle the whole page -- three times per trip Home and
+   back (2026-10-09, speed). test_style_recalc.py holds these lists to
+   the markup's own children, so a new one cannot slip past. */
+body.welcoming.tabs-row-on .apptop{display:flex;}
+body.welcoming.tabs-row-on .apptop>:is(.appbar,.stylebar),
+body.welcoming.tabs-row-on .nb-filebar>:is(.nb-file-ident,.fgrp-row,.nb-file-utils){
+  display:none!important;}
+.apptop{left:var(--presrail-w);}
+.welcome{left:var(--presrail-w);}
+.rail{top:var(--chrome-h);height:calc(100vh - var(--chrome-h));}
+.section{scroll-margin-top:calc(var(--chrome-h) + 12px);}
+.card{scroll-margin-top:calc(var(--chrome-h) + 18px);}
+/* builder docked: full-height panel right of the rail; tab / controls
+   chrome shifts right so it sits above the DOCUMENT (IDE-style) */
+.deck.creating{left:var(--presrail-w);}
+body.creating-docs .apptop{
+  left:calc(var(--presrail-w) + min(var(--dc-w),94vw));}
+@media (max-width:860px){
+  .deck.creating{top:var(--chrome-h);}
+  body.creating-docs .apptop{left:var(--presrail-w);}
+}
+
+/* ---------- welcome (app mode, nothing open) ---------- */
+/* T525: beside the rail, not under it. `left:0` here silently beat the
+   `left:var(--presrail-w)` above (same weight, later), and at 1440px the
+   centred box happened to clear the rail -- at 900px the logo and
+   "Recent presentations" sat underneath it (2026-09-29 audit). */
+.welcome{position:fixed;left:var(--presrail-w,0);right:0;top:var(--chrome-h);bottom:0;
+  overflow:auto;background:var(--paper-2);z-index:5;}
+.welcome[hidden]{display:none;}
+/* the ribbon is hidden while this is up, so start at the very top rather
+   than leaving its reserved band as an empty strip above the hero */
+body.welcoming .welcome{top:0;}
+body.welcoming.tabs-row-on .welcome{top:var(--open-tabs-h);}
+body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
+.welcome-box{text-align:center;max-width:760px;margin:0 auto;
+  padding:0 30px 60px;}
+/* an indeterminate bar across the very top of the welcome: the one place
+   every way in can report from (recent rows, the big buttons, a dropped
+   file), because until it existed a click on a remembered notebook
+   changed nothing on screen for as long as the fetch took */
+.welcome-load{position:sticky;top:0;height:3px;overflow:hidden;
+  background:color-mix(in srgb,var(--accent) 16%,transparent);z-index:2;}
+.welcome-load[hidden]{display:none;}
+.welcome-load span{position:absolute;left:-38%;top:0;width:38%;height:100%;
+  background:var(--cyan);animation:odlg-slide 1.05s ease-in-out infinite;}
+/* the way out of Home when notebooks are still open. TOP RIGHT, not
+   left: the welcome spans the full window and the presentations rail is
+   drawn over its left edge, so a left-anchored control sits underneath
+   the rail and is half-hidden. */
+.welcome-back{position:absolute;top:14px;right:18px;z-index:3;
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
+  color:var(--cyan-deep);padding:7px 12px;border-radius:7px;
+  cursor:pointer;}
+.welcome-back:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 18%,transparent);}
+.welcome-back[hidden]{display:none;}
+/* the hero fills the first screen; the numbered steps sit below it, seen on
+   scroll (with a small "How it works" cue) */
+.welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
+  flex-direction:column;justify-content:center;padding:24px 0;
+  /* `safe` centring: on a short window the hero is taller than its box, and
+     plain `center` overflows it EQUALLY both ways -- the top half goes above
+     the scroll container's origin, where it cannot be scrolled to, and the
+     logo gets sliced off. `safe` falls back to flex-start in that case.
+     Declared second so browsers that do not parse it keep plain `center`. */
+  justify-content:safe center;}
+.welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
+/* wide enough for the demo reel; the numbered steps keep their own narrow
+   measure below. The reel used to break OUT of this 560px column using a
+   VIEWPORT-relative width — on a page inset by the rail that overflowed
+   to the left and slid under the fixed rail, which is what clipped
+   "Hide the code" to "ide the code" (2026-07-31). */
+.welcome-more{padding:36px 0 10px;border-top:1px solid var(--line);
+  max-width:900px;margin:0 auto;}
+.welcome-steps{max-width:560px;margin-left:auto;margin-right:auto;}
+/* ONE lockup, not three stacked rows: the mark on the left, the name and
+   the tagline beside it. A 132px logo row, a 66px wordmark row and a
+   tagline row were ~300px of identity before the first button, and the
+   rail's own brand button already shows the same mark and the same word
+   (2026-08-29, T77). Grid, so the mark spans both text rows and stays
+   optically tied to them; on a narrow window it goes back to a centred
+   column, where a single stack is the right shape anyway. */
+.welcome-id{display:grid;grid-template-columns:auto minmax(0,1fr);
+  column-gap:20px;row-gap:3px;align-items:center;justify-content:center;
+  text-align:left;margin:0 0 26px;}
+.welcome-hero{grid-row:1 / span 2;display:flex;align-items:center;
+  justify-content:center;margin:0;}
+.welcome-hero .jv-logo{width:clamp(54px,7vw,78px);height:auto;
+  filter:drop-shadow(0 4px 12px #0006);}
+.welcome-wordmark{font-family:var(--mono);font-size:clamp(30px,4.4vw,44px);
+  font-weight:600;letter-spacing:.06em;color:var(--cyan-deep);
+  margin:0;line-height:1.05;}
+/* T621: which build this is, beside the name -- a quiet pill in the
+   tagline's sans, with the date the app last changed as its tooltip.
+   Only the app and the web build carry one (build_info.py). */
+.welcome-ver{display:inline-block;vertical-align:middle;margin-left:14px;
+  padding:2px 9px;border:1px solid var(--line);border-radius:999px;
+  font:500 12px/1.5 var(--sans);letter-spacing:0;color:var(--ink-3);
+  white-space:nowrap;cursor:help;position:relative;top:-3px;}
+@media (max-width:640px){
+  .welcome-id{grid-template-columns:1fr;row-gap:6px;text-align:center;
+    justify-items:center;}
+  .welcome-hero{grid-row:auto;}
+}
+.ww-dot{display:none;}
+/* the Junoview mark (peacock-eye ocellus) — sized by context */
+.jv-logo{flex:none;display:inline-block;vertical-align:middle;}
+/* the tagline is the lockup's second row now, so it neither centres
+   itself nor carries the gap down to the buttons -- .welcome-id does */
+.welcome-tag{font-size:clamp(15.5px,1.7vw,18px);line-height:1.45;
+  font-weight:500;color:var(--ink-2);margin:0;max-width:44ch;}
+@media (max-width:640px){.welcome-tag{margin:0 auto;}}
+.welcome-lead{font-size:15.5px;line-height:1.65;color:var(--ink-3);
+  margin:0 auto 30px;max-width:580px;}
+.welcome-lead b{color:var(--ink-2);}
+.welcome-note{max-width:560px;margin:26px auto 0;text-align:left;
+  font-size:14.5px;line-height:1.55;color:var(--ink-2);
+  background:color-mix(in srgb,var(--accent) 6%,transparent);border:1px solid color-mix(in srgb,var(--accent) 15%,transparent);
+  border-left:3px solid var(--cyan);border-radius:10px;padding:13px 16px;}
+.welcome-note b{color:var(--cyan-deep);}
+.welcome-steps{list-style:none;margin:0 auto 30px;padding:0;max-width:560px;
+  text-align:left;display:flex;flex-direction:column;gap:15px;}
+/* the welcome-screen demo reel */
+/* the demos are the point of this section, so they get the width: the
+   welcome box is narrow, the reel breaks out of it */
+.wtour{margin-top:30px;display:grid;gap:40px;text-align:left;
+  width:100%;max-width:880px;margin-left:auto;margin-right:auto;}
+.wtour[hidden]{display:none!important;}
+.wtour-head{display:flex;align-items:center;gap:12px;}
+.wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--cyan-deep);}
+/* the caption goes ABOVE its demo: read what you are about to watch,
+   then watch it. Below, a caption is ambiguous — it could belong to the
+   clip above or the one coming next. */
+.wtour figure{margin:0;display:flex;flex-direction:column;}
+.wtour figcaption{order:-1;}
+.wtour img{width:100%;height:auto;display:block;border-radius:10px;
+  border:1px solid var(--line);background:var(--paper-2);}
+.wtour.lite img{display:none;}
+.wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
+/* the text-only card: it has no image to carry it, so it gets the rule */
+.wtour-said{border-left:2px solid var(--cyan-deep);padding-left:15px;}
+/* one real quote, from a real person, with what they actually said */
+.wquote{margin:44px auto 0;max-width:560px;text-align:center;
+  padding:24px 22px;border:1px solid var(--line);border-radius:12px;
+  background:var(--paper-2);}
+.wq-stars{color:#e0a33a;font-size:15px;letter-spacing:3px;}
+.wquote blockquote{margin:11px 0 14px;font-family:var(--serif);
+  font-size:18px;line-height:1.5;color:var(--ink);}
+.wquote figcaption{font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);display:flex;flex-direction:column;gap:3px;}
+.wquote figcaption span{font-size:10px;opacity:.8;}
+.wtour-said figcaption{padding-top:0;}
+.wtour figcaption{font-size:15.5px;line-height:1.7;color:var(--ink-2);
+  padding:0 2px 13px;}
+/* dark mode sets text colour explicitly, so the reel needs its own pair
+   or the captions fall back to a washed-out grey that is hard to read */
+/* white, explicitly, not through a variable: every var-based colour here
+   landed too close to the welcome panel's own background to read */
+body:not(.light) .wtour figcaption{color:#dbe6ef;}
+body:not(.light) .wtour figcaption b{color:#fff;}
+body.light .wtour figcaption{color:var(--ink-2);}
+body.light .wtour figcaption b{color:var(--ink);}
+body:not(.light) .wquote blockquote{color:#eef4f8;}
+.wtour figcaption b{display:block;color:var(--ink);font-weight:700;
+  font-size:19px;line-height:1.35;margin-bottom:7px;}
+.welcome-steps li{display:flex;align-items:flex-start;gap:15px;
+  font-size:16.5px;line-height:1.5;color:var(--ink-2);}
+.ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);
+  color:var(--cyan-deep);font-family:var(--mono);font-size:15px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
+/* T364: the drop hint is not a line on this screen any more. What
+   formats parse and that you may drop them is a fact about Open, so it
+   is Open's tooltip (2026-09-07, user: "The open screen still has way
+   to much text"). T240 made it a card's second line, T282 moved it
+   under the Notebooks section's door; this takes the words off the
+   page altogether, and their five style rules with them. */
+/* ---- "jump back in": the two things you might be coming back to ----
+   Recent notebooks and the presentations built from them, side by side.
+   Both columns hide themselves when empty, and the band with them --
+   an empty list still holding 30px of margin was most of the dead space
+   under the buttons (2026-08-21, user: "the default screen could have
+   better layout"). */
+/* T264: TWO COLUMNS, ONE PER KIND. This was
+   repeat(auto-fit,minmax(240px,1fr)) capped at 660px, which resolves to
+   exactly two columns (three would need 240*3+52=772px) -- so the three
+   blocks flowed notebooks / notebooks / presentations and presentations
+   landed under "last time" with dead space beside it. A column that
+   hides itself is `display:none`, so one kind alone still fills the
+   width (2026-09-04, user: "why are the presentations and the notebooks
+   kind of mixed together, these are really different features"). */
+/* Home names only the two things it opens directly: recent presentations
+   and notebooks. Posters, folders and imports live in Open presentations
+   so the front door is not a second, crowded library. */
+.welcome-jump{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:22px 26px;margin:30px auto 0;text-align:left;
+  width:100%;max-width:820px;align-items:start;}
+/* ...and the box it sits in makes that room: two columns of a name and
+   three worded doors need ~380px each (T525) */
+@media (min-width:1000px){.welcome-box{max-width:880px;}}
+@media (max-width:720px){
+  .welcome-jump{grid-template-columns:minmax(0,1fr);gap:20px;}}
+.welcome-jump[hidden]{display:none;}
+.wj-col{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.wj-col[hidden]{display:none;}
+/* the kind's own name, a step louder than the little mono sub-labels
+   inside it -- the two were the same size and colour, which is why the
+   two kinds read as one list */
+/* T525: the doors WRAP beneath the name, as one group, when the column
+   is short of room -- nowrap alone let "Folder" run across the Notebooks
+   heading at 1440px (2026-09-29 audit). The name itself never breaks. */
+.wj-h{white-space:nowrap;   /* T484: never "Recent / presentations" */display:flex;align-items:center;gap:7px;margin:0;
+  flex-wrap:wrap;row-gap:6px;
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  letter-spacing:0;text-transform:none;color:var(--ink-2);
+  padding-bottom:7px;border-bottom:1px solid var(--line);}
+.wj-h .bic{width:14px;height:14px;flex:none;opacity:.75;}
+/* the section's own New. Small, worded and iconned like everything else
+   (the words-plus-icon rule), pushed to the far end of the header so the
+   three headers read as a row of names with a door on each. */
+.wj-new{margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--sans);font-size:11.5px;font-weight:600;
+  color:var(--cyan-deep);background:var(--surface,#fff);
+  border:1px solid var(--line);border-radius:5px;padding:3px 8px;
+  cursor:pointer;white-space:nowrap;
+  transition:border-color .13s,background .13s,color .13s;}
+.wj-new+.wj-new{margin-left:5px;}
+.wj-doors{margin-left:auto;display:inline-flex;align-items:center;}
+.wj-doors .wj-new:first-child{margin-left:0;}
+.wj-new .bic{width:12px;height:12px;opacity:1;}
+.wj-new:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 10%,transparent);
+  color:var(--cyan);}
+.wj-new:focus-visible{outline:2px solid var(--cyan);outline-offset:1px;}
+/* an empty section says so in one word rather than collapsing: the
+   header and its New button ARE the offer (T282) */
+.wj-none{font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  padding:2px 1px;}
+.wj-none[hidden]{display:none;}
+body:not(.light) .wj-new{background:var(--paper);}
+body:not(.light) .wj-none{color:var(--ink-3);}
+.recent,.wpres{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.recent[hidden],.wpres[hidden]{display:none;}
+.recent-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:2px;}
+/* A ROW IS A BUTTON. Icon, name, nothing else: the path lives in the
+   tooltip, because a column of ellipsised URLs is a column of the same
+   string six times over. */
+.recent-i{display:flex;align-items:center;gap:9px;position:relative;
+  font-family:var(--mono);font-size:12.5px;color:var(--cyan-deep);
+  background:#fff;border:1px solid var(--line);padding:9px 12px;
+  border-radius:6px;cursor:pointer;text-align:left;min-width:0;
+  transition:border-color .13s,background .13s;}
+.recent-i:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 7%,#fff);}
+.recent-ic{flex:none;font-size:12px;line-height:1;opacity:.85;}
+.recent-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* T598: a presentation row says where it lives and when, under its name */
+.recent-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.recent-sub{min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:10.5px var(--sans);color:var(--ink-3);}
+/* T435: the pin on a recent row. Faint until hovered, lit when on. */
+.recent-pin{flex:none;width:20px;height:20px;padding:0;border:0;
+  background:none;color:var(--ink-3);opacity:.35;cursor:pointer;
+  border-radius:4px;display:inline-flex;align-items:center;
+  justify-content:center;}
+.recent-pin .bic{width:12px;height:12px;}
+.recent-i:hover .recent-pin,.odlg-r:hover .recent-pin{opacity:.8;}
+.recent-pin:hover{opacity:1;background:color-mix(in srgb,var(--accent) 14%,transparent);}
+.recent-pin.on{opacity:1;color:var(--accent);}
+.recent-i.pinned{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));}
+.recent-tag{flex:none;font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--amber);
+  border:1px solid var(--amber-soft);border-radius:4px;padding:1px 5px;}
+/* the row you just clicked, while its notebook loads */
+.recent-i.busy{cursor:progress;border-color:var(--cyan);}
+.recent-i.busy::after{content:"";position:absolute;left:0;right:0;
+  bottom:-1px;height:2px;border-radius:0 0 6px 6px;overflow:hidden;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  background-size:44% 100%;background-repeat:no-repeat;
+  animation:recent-slide 1.05s ease-in-out infinite;}
+@keyframes recent-slide{from{background-position:-44% 0;}
+  to{background-position:144% 0;}}
+/* ---- T244: FIND IN THIS NOTEBOOK -------------------------------------
+   A bar over the document, not in the header: it belongs to what you are
+   reading, and the header is measured chrome every view insets itself
+   by. A hit opens whatever the filters had folded around it, which the
+   browser's own Ctrl+F cannot do. */
+.docfind{position:fixed;top:calc(var(--chrome-h,54px) + 10px);right:22px;
+  z-index:120;display:flex;align-items:center;gap:6px;
+  background:var(--paper);border:1px solid var(--line);border-radius:9px;
+  padding:6px 8px;box-shadow:0 10px 30px #0000002e;}
+.docfind[hidden]{display:none;}
+/* T422: the Variables pane docks in the same corner (top 170px, right
+   14px, and above this bar in z-order), so with both open the count and
+   the prev/next/close buttons sat behind it. The bar steps left of the
+   pane while the pane is open.
+   A CLASS, NOT body:has(#varspane:not([hidden])) (2026-10-09, speed):
+   a :has() on body made every DOM change anywhere re-check it, and each
+   check walked the whole document -- 70% of the style time of every
+   editor gesture. The pane's one opener and closer, set() in app.js,
+   sets body.vars-open beside the pane's `hidden`. */
+body.vars-open .docfind{right:calc(14px + 280px + 12px);}
+/* T607: and the document makes room for it. The pane floated over the
+   notebook's right edge -- at 1366px with the Outline open it covered
+   200px of every card, so a figure's right side and a line's last
+   words were under it. Where the window is wide enough to give that
+   room, the stage gives it, as the editor's stage does for its panes;
+   below that the pane floats, as before. */
+@media (min-width:1100px){
+  body.vars-open .stage{
+    padding-right:calc(14px + 280px + 12px);}}
+.docfind>.bic{width:14px;height:14px;opacity:.6;flex:none;}
+.docfind-in{width:210px;border:none;background:none;outline:none;
+  font-family:var(--sans);font-size:13px;color:var(--ink);}
+.docfind-n{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  min-width:60px;text-align:right;}
+.docfind-b{background:none;border:none;cursor:pointer;color:var(--ink-3);
+  font-size:11px;line-height:1;padding:3px 5px;border-radius:5px;}
+.docfind-b:hover{background:var(--paper-2);color:var(--ink);}
+.docfind-b .bic{width:12px;height:12px;}
+mark.jv-hit{background:color-mix(in srgb,var(--amber,#f0a848) 42%,transparent);
+  color:inherit;border-radius:2px;padding:0 1px;}
+mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--amber,#f0a848) 40%,transparent);}
+/* the card a hit is in, and the parts it had to open to show it */
+.card.jv-hitcard{outline:2px solid color-mix(in srgb,var(--amber,#f0a848)
+  55%,transparent);outline-offset:2px;}
+.jv-hitopen{display:revert!important;}
+
+/* ---- T243: THE SECTION SCOPE READS AS A LIST YOU TICK -----------------
+   It opened collapsed (one row on a ten-section notebook), offered only
+   Select all, and made the whole row the selector with a 9px chevron
+   inside it as the expander -- two gestures in one target. */
+.ckf-bulk{display:flex;align-items:center;gap:6px;padding:0 8px 8px;
+  border-bottom:1px solid var(--line);margin-bottom:6px;}
+.ckf-bulk .ckf-all{margin:0;}
+.ckf-count{margin-left:auto;font-family:var(--mono);font-size:10px;
+  color:var(--ink-3);}
+.scope-box{flex:none;width:13px;height:13px;border-radius:3px;
+  border:1.5px solid var(--line-2,#9fb0c0);position:relative;
+  background:var(--paper);}
+.scope-row.on .scope-box{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);}
+.scope-row.on .scope-box::after{content:"";position:absolute;
+  left:3.5px;top:.5px;width:4px;height:8px;
+  border:solid var(--on-accent-deep);
+  border-width:0 2px 2px 0;transform:rotate(42deg);}
+.scope-row.part .scope-box{border-color:var(--cyan-deep);}
+.scope-row.part .scope-box::after{content:"";position:absolute;
+  left:2px;top:4.5px;width:7px;height:0;border-top:2px solid
+  var(--cyan-deep);}
+
+/* T282: THE CARD GRID IS GONE, and T240's rule went with it rather than
+   being deleted. Its point was that the front door's doors must be one
+   SHAPE rather than buttons sized to their own words -- that now lives
+   in .wj-new above: three section headers, one door on each, all the
+   same box. The .welcome-btns / .wc-t / .wc-h / .wc-wide rules that
+   sized the cards went with the cards, because a rule matching nothing
+   is a rule the next reader has to disprove. */
+/* the same sans as everything else on this screen, one step quieter */
+.welcome-links{margin-top:20px;font-family:var(--sans);font-size:13px;
+  color:var(--ink-3);}
+.welcome-links a{color:var(--cyan-deep);text-decoration:none;}
+.welcome-links a:hover{text-decoration:underline;}
+.wl-sep{margin:0 8px;}
+
+/* ---------- help overlay: how to use / what it can do ---------- */
+.helpdlg{position:fixed;inset:0;z-index:135;background:var(--overlay);
+  display:flex;align-items:center;justify-content:center;padding:24px;}
+.helpdlg[hidden]{display:none;}
+/* ---- guided tour: a spotlight + a tooltip that steps through the UI ---- */
+.tour{position:fixed;inset:0;z-index:400;}
+.tour[hidden]{display:none;}
+.tour-hole{position:fixed;border-radius:8px;pointer-events:none;
+  box-shadow:0 0 0 9999px var(--overlay);transition:left .25s,top .25s,
+  width .25s,height .25s;}
+.tour-hole.center{box-shadow:0 0 0 9999px var(--overlay);}
+.tour-tip{position:fixed;width:min(400px,90vw);background:var(--chrome-2);
+  border:1px solid var(--chrome-line);border-radius:12px;
+  padding:17px 19px 14px;box-shadow:0 18px 50px var(--shadow);
+  color:var(--chrome-ink);transition:left .2s,top .2s;}
+.tour-tip-h{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
+.tour-step{font-family:var(--mono);font-size:11.5px;color:var(--accent);
+  flex:none;}
+.tour-title{font-size:18px;font-weight:600;color:var(--chrome-ink);}
+.tour-text{font-size:15.5px;line-height:1.6;color:var(--chrome-ink-2);
+  margin-bottom:15px;}
+.tour-btns{display:flex;align-items:center;gap:8px;}
+.tour-btns button{font-family:var(--sans);font-size:13.5px;border-radius:16px;
+  padding:7px 16px;cursor:pointer;border:1px solid var(--btn-border);
+  background:var(--btn-bg);color:var(--btn-ink);}
+.tour-btns button:hover{background:var(--surface-active);}
+.tour-next{background:color-mix(in srgb,var(--accent) 15%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 40%,transparent);
+  color:var(--accent);}
+.tour-skip{color:var(--chrome-ink-2);border-color:transparent;
+  background:none;padding:5px 6px;}
+.help-box{width:min(760px,94vw);height:min(720px,90vh);
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:12px;display:flex;color:var(--chrome-ink);
+  flex-direction:column;overflow:hidden;
+  box-shadow:0 24px 80px var(--shadow);}
+.help-head{display:flex;align-items:center;gap:12px;
+  padding:13px 18px;border-bottom:1px solid var(--chrome-line);}
+.help-title{font-family:var(--mono);font-size:11px;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);font-weight:600;}
+.help-gh{font-size:12.5px;color:var(--accent);text-decoration:none;}
+.help-gh:hover{text-decoration:underline;}
+.help-head .dbtn{border-color:var(--btn-border);background:var(--btn-bg);
+  color:var(--btn-ink);}
+.help-head .dbtn:hover{border-color:var(--accent);color:var(--chrome-ink);}
+.help-body{flex:1;overflow-y:auto;padding:6px 26px 30px;
+  color:var(--chrome-ink-2);font-size:13.5px;line-height:1.65;}
+.help-body h3{font-size:15px;color:var(--chrome-ink);letter-spacing:-.01em;
+  margin:24px 0 8px;padding-top:14px;
+  border-top:1px solid var(--chrome-line);}
+.help-body h3:first-child{border-top:none;margin-top:8px;}
+.help-body ul{margin:6px 0;padding-left:20px;}
+.help-body li{margin:5px 0;}
+.help-body a{color:var(--accent);}
+.help-body code{font-family:var(--mono);font-size:12px;
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  border-radius:4px;padding:1px 5px;}
+.help-body kbd{font-family:var(--mono);font-size:11.5px;
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  border-bottom-width:2px;border-radius:5px;padding:1px 6px;
+  color:var(--chrome-ink-2);white-space:nowrap;}
+.help-body table{border-collapse:collapse;margin:8px 0;width:100%;}
+.help-body td{border:1px solid var(--paper-3);padding:6px 10px;
+  vertical-align:top;}
+.help-body td:first-child{white-space:nowrap;}
+
+/* ---------- create slides: every choice before one commit ------------ */
+.auto-slides-dialog{position:fixed;inset:0;z-index:230;
+  display:flex;align-items:center;justify-content:center;padding:22px;
+  background:var(--overlay,#061019a8);}
+.auto-slides-dialog[hidden]{display:none;}
+.auto-slides-card{width:min(540px,96vw);display:flex;flex-direction:column;
+  gap:15px;padding:18px 20px 16px;border-radius:12px;
+  background:var(--chrome-2,#16273a);border:1px solid var(--chrome-line);
+  color:var(--chrome-ink);box-shadow:0 24px 80px var(--shadow);}
+.auto-slides-head,.auto-slides-foot{display:flex;align-items:center;gap:9px;}
+.auto-slides-head h2{margin:1px 0 0;font-size:19px;line-height:1.1;
+  color:var(--chrome-ink);}
+.auto-slides-kicker,.presentation-hub-kicker{font:600 9px var(--mono);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);}
+.auto-slides-close{margin-left:auto;}
+.auto-slides-copy{margin:0;color:var(--chrome-ink-2);font-size:13px;
+  line-height:1.45;}
+.auto-slides-scopes{display:flex;flex-direction:column;gap:6px;margin:0;
+  padding:0;border:0;}
+.auto-slides-scopes legend{padding:0 0 5px;font:600 10px var(--mono);
+  letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-ink-2);}
+.auto-slide-scope,.auto-anim{display:flex;align-items:flex-start;gap:10px;
+  padding:9px 10px;border:1px solid var(--chrome-line);border-radius:7px;
+  color:var(--chrome-ink-2);font:12px var(--sans);line-height:1.25;
+  cursor:pointer;background:#ffffff05;}
+.auto-slide-scope:hover,.auto-anim:hover{border-color:var(--cyan);
+  background:#ffffff0c;}
+.auto-slide-scope:has(>input:checked),.auto-anim:has(>input:checked){
+  border-color:color-mix(in srgb,var(--accent) 70%,transparent);
+  background:color-mix(in srgb,var(--accent) 13%,transparent);
+  color:var(--chrome-ink);}
+.auto-slide-scope input,.auto-anim input{margin:2px 0 0;accent-color:var(--accent);
+  flex:none;}
+.auto-slide-scope span,.auto-anim span{display:flex;flex-direction:column;gap:2px;
+  min-width:0;}
+.auto-slide-scope b,.auto-anim b{font-size:12.5px;color:var(--chrome-ink);}
+.auto-slide-scope small,.auto-anim small{font:11px var(--sans);
+  color:var(--chrome-ink-2);}
+.auto-slide-scope.disabled{opacity:.48;cursor:not-allowed;}
+.auto-slides-foot{margin-top:1px;}
+.auto-slides-summary{min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:10.5px var(--mono);color:var(--chrome-ink-2);}
+
+/* ---------- presentation library: shared by Home and the deck drawer -- */
+.presentation-hub{position:fixed;inset:0;z-index:240;display:flex;
+  align-items:center;justify-content:center;padding:22px;
+  background:var(--overlay,#061019a8);}
+.presentation-hub[hidden]{display:none;}
+.presentation-hub-card{width:min(1180px,96vw);max-height:min(800px,92vh);
+  display:flex;flex-direction:column;gap:15px;overflow:auto;padding:19px 20px;
+  border:1px solid var(--chrome-line);border-radius:12px;
+  background:var(--chrome-2,#16273a);color:var(--chrome-ink);
+  box-shadow:0 24px 80px var(--shadow);}
+.presentation-hub-head{display:flex;align-items:flex-start;gap:12px;}
+.presentation-hub-head h2{margin:1px 0 0;font-size:20px;color:var(--chrome-ink);}
+.presentation-hub-head .dbtn{margin-left:auto;}
+.presentation-hub-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.presentation-hub-folderform{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+  gap:8px;align-items:center;padding:10px;border-radius:8px;
+  border:1px solid var(--chrome-line);background:#ffffff06;
+  color:var(--chrome-ink-2);font:11.5px var(--sans);}
+.presentation-hub-folderform[hidden]{display:none;}
+.presentation-hub-folderform input{min-width:0;padding:6px 8px;border-radius:5px;
+  border:1px solid var(--chrome-line);background:var(--input-bg);
+  color:var(--chrome-ink);font:12px var(--sans);}
+.presentation-hub-folderform input:focus{outline:none;border-color:var(--cyan);}
+.presentation-hub-columns{display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(300px,1.1fr);
+  gap:16px;min-height:150px;}
+.presentation-hub-columns section{min-width:0;display:flex;flex-direction:column;
+  gap:8px;}
+.presentation-hub-columns h3{margin:0;font:600 10px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-ink-2);}
+.presentation-hub-list{display:flex;flex-direction:column;gap:5px;min-height:28px;}
+.presentation-hub-row{display:flex;align-items:center;gap:8px;min-width:0;
+  padding:8px 9px;border:1px solid var(--chrome-line);border-radius:7px;
+  background:#ffffff05;color:var(--chrome-ink);cursor:pointer;text-align:left;
+  font:12px var(--sans);}
+.presentation-hub-row:hover{border-color:var(--cyan);background:#ffffff0c;}
+.presentation-hub-row .bic{width:14px;height:14px;flex:none;color:var(--cyan);}
+.presentation-hub-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;flex:1;}
+.presentation-hub-row-kind{flex:none;color:var(--chrome-ink-2);
+  font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;}
+/* T598: the name, and under it where the deck lives and when */
+.presentation-hub-row-txt{flex:1;min-width:0;display:flex;
+  flex-direction:column;gap:2px;}
+.presentation-hub-row-sub{min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font:10.5px var(--sans);
+  color:var(--chrome-ink-2);}
+.presentation-hub-row-sub:empty,.presentation-hub-row-kind:empty{
+  display:none;}
+/* T435: the pin on a library row */
+.presentation-hub-pin{flex:none;width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:4px;
+  color:var(--chrome-ink-2);opacity:.35;cursor:pointer;}
+.presentation-hub-pin .bic{width:12px;height:12px;color:inherit;}
+.presentation-hub-row:hover .presentation-hub-pin{opacity:.85;}
+.presentation-hub-pin:hover{opacity:1;background:#ffffff14;}
+.presentation-hub-pin.on{opacity:1;color:var(--cyan);}
+.presentation-hub-row.pinned{border-color:color-mix(in srgb,var(--cyan) 45%,var(--chrome-line));}
+/* T450: duplicate, rename and delete, the pin's shape so all four
+   match. They are invisible until the row is under the pointer or one
+   of them has the keyboard, because the library is a list you read
+   before it is a list you act on. */
+.presentation-hub-act{flex:none;width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:4px;
+  color:var(--chrome-ink-2);opacity:0;cursor:pointer;
+  transition:opacity .12s;}
+.presentation-hub-act .bic{width:12px;height:12px;color:inherit;}
+.presentation-hub-row:hover .presentation-hub-act,
+.presentation-hub-act:focus{opacity:.8;}
+.presentation-hub-act:hover{opacity:1;background:#ffffff14;
+  color:var(--chrome-ink);}
+.presentation-hub-empty{padding:9px;color:var(--chrome-ink-2);
+  border:1px dashed var(--chrome-line);border-radius:7px;font:11px var(--sans);}
+/* T394: folders live in the library now. A heading is a drop target;
+   its verbs show on hover the way the rail's used to. */
+.presentation-hub-folder{display:flex;align-items:center;gap:7px;
+  margin-top:8px;padding:6px 9px;border:1px dashed transparent;
+  border-radius:7px;color:var(--chrome-ink-2);font:10px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;}
+.presentation-hub-folder .bic{width:13px;height:13px;flex:none;}
+.presentation-hub-folder-name{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.presentation-hub-folder-count{flex:none;font-size:9px;
+  background:#ffffff10;border-radius:8px;padding:1px 6px;}
+.presentation-hub-folder-btn{display:none;background:none;border:none;
+  color:var(--chrome-ink-2);cursor:pointer;padding:2px 4px;border-radius:4px;}
+.presentation-hub-folder-btn .bic{width:9px;height:9px;}
+.presentation-hub-folder:hover .presentation-hub-folder-btn{display:inline-flex;}
+.presentation-hub-folder-btn:hover{color:var(--chrome-ink);background:#ffffff14;}
+.presentation-hub-folder.dropping{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 11%,transparent);}
+.presentation-hub-row.infolder{margin-left:18px;}
+.presentation-hub-row.dragging{opacity:.5;}
+.presentation-hub-list.dropping-root{outline:2px dashed
+  color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:3px;
+  border-radius:7px;}
+/* ---- T599: Find, and the preview of the row you point at ---- */
+.presentation-hub-find{margin-left:auto;display:flex;align-items:center;
+  gap:6px;min-width:0;flex:0 1 330px;padding:0 9px;height:30px;
+  border:1px solid var(--chrome-line);border-radius:7px;
+  background:var(--input-bg,#0b141d);color:var(--chrome-ink-2);}
+.presentation-hub-find:focus-within{border-color:var(--cyan);}
+.presentation-hub-find .bic{width:13px;height:13px;flex:none;}
+.presentation-hub-find input{flex:1;min-width:0;border:0;outline:none;
+  background:none;color:var(--chrome-ink);font:12px var(--sans);}
+.presentation-hub-preview{border-left:1px solid var(--chrome-line);
+  padding-left:14px;}
+.pv-host{display:flex;flex-direction:column;gap:9px;min-height:0;}
+.pv-head{display:flex;align-items:center;gap:10px;}
+.pv-txt{flex:1;min-width:0;}
+.pv-name{font:600 13px var(--sans);color:var(--chrome-ink);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.pv-sub{font:10.5px var(--sans);color:var(--chrome-ink-2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.pv-open{flex:none;}
+.pv-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));
+  gap:10px 8px;max-height:min(52vh,470px);overflow-y:auto;padding:2px 2px 6px;
+  scrollbar-width:thin;align-content:start;}
+.pv-slide{margin:0;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.pv-slide .mini-diagram{max-width:100%;border-radius:4px;
+  box-shadow:0 1px 0 #00000040;}
+.pv-slide figcaption{font:10.5px var(--sans);color:var(--chrome-ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pv-slide figcaption b{font:600 10px var(--mono);color:var(--chrome-ink);
+  margin-right:2px;}
+/* a slide holding the words you searched for */
+.pv-slide.pv-hit .mini-diagram{outline:2px solid var(--accent,#39a9c0);
+  outline-offset:1px;}
+.pv-slide.pv-hit figcaption{color:var(--accent,#39a9c0);}
+.pv-note{font:11px var(--sans);color:var(--chrome-ink-2);padding:6px 0;}
+.presentation-hub-dirhead{margin-top:10px!important;}
+.presentation-hub-dirhead[hidden],#presentation-hub-dir[hidden]{display:none;}
+/* Home's recent rows show the same preview beside the row you point at */
+.pv-card{position:fixed;z-index:245;width:392px;max-width:calc(100vw - 24px);
+  padding:12px;border-radius:10px;border:1px solid var(--chrome-line);
+  background:var(--chrome-2,#16273a);color:var(--chrome-ink);
+  box-shadow:0 18px 60px var(--shadow,#0008);}
+.pv-card[hidden]{display:none;}
+.pv-card .pv-list{max-height:min(46vh,420px);}
+@media (max-width:980px){
+  .presentation-hub-columns{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .presentation-hub-preview{grid-column:1/-1;border-left:0;padding-left:0;
+    border-top:1px solid var(--chrome-line);padding-top:12px;}
+}
+@media (max-width:640px){
+  .presentation-hub-columns{grid-template-columns:1fr;}
+  .presentation-hub-folderform{grid-template-columns:1fr;}
+  .presentation-hub-find{flex-basis:100%;margin-left:0;}
+}
+
+/* ---------- open dialog (app mode file browser) ---------- */
+.opendlg{position:fixed;inset:0;z-index:130;background:#0a131b88;
+  display:flex;align-items:center;justify-content:center;padding:24px;}
+.opendlg[hidden]{display:none;}
+.odlg-box{width:min(580px,94vw);height:min(620px,86vh);
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:12px;display:flex;color:var(--chrome-ink);
+  flex-direction:column;overflow:hidden;box-shadow:0 24px 80px var(--shadow);}
+.odlg-head{display:flex;align-items:center;gap:10px;padding:12px 14px;
+  border-bottom:1px solid var(--chrome-line);}
+.odlg-head .dbtn{border-color:var(--btn-border);background:var(--btn-bg);
+  color:var(--btn-ink);}
+.odlg-head .dbtn:hover{border-color:var(--accent);color:var(--chrome-ink);}
+.odlg-path{flex:1;font-family:var(--mono);font-size:11px;
+  color:var(--chrome-ink-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  direction:rtl;text-align:left;}
+.odlg-list{flex:1;overflow-y:auto;padding:8px;}
+.odlg-i{display:flex;align-items:center;gap:10px;width:100%;
+  background:none;border:none;font-family:var(--sans);font-size:13px;
+  color:var(--chrome-ink-2);padding:8px 10px;border-radius:6px;cursor:pointer;
+  text-align:left;}
+.odlg-i:hover{background:var(--surface-hover);color:var(--chrome-ink);}
+.odlg-i .ic{font-size:13px;flex:none;width:20px;text-align:center;}
+.odlg-i.nb{color:var(--accent);font-weight:500;}
+.odlg-i .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  flex:1;min-width:0;}
+.odlg-i .sz{font-family:var(--mono);font-size:10px;color:var(--chrome-ink-3);
+  flex:none;}
+.odlg-empty{padding:26px;text-align:center;color:var(--chrome-ink-3);
+  font-size:12.5px;}
+/* remembered files: reopen anything you've had open, name over path */
+.odlg-recent{flex:none;border-bottom:1px solid var(--chrome-line);
+  padding:8px 8px 10px;max-height:190px;overflow-y:auto;}
+.odlg-recent[hidden]{display:none;}
+.odlg-recent-h{font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--chrome-ink-3);padding:2px 6px 6px;}
+/* A REMEMBERED FILE IS A BUTTON, and has to look like one. These rows
+   were two lines of bare text on the dialog's own background — nothing
+   said they could be clicked (2026-08-21, user: "the recents look just
+   like text, not a button or something"). Now: a card, an icon, and the
+   name over its path. */
+.odlg-r{display:grid;grid-template-columns:auto 1fr auto;
+  grid-template-rows:auto auto;column-gap:9px;row-gap:1px;width:100%;
+  background:var(--chrome-3);border:1px solid var(--chrome-line);
+  padding:7px 10px;border-radius:7px;cursor:pointer;text-align:left;
+  margin-bottom:5px;transition:border-color .13s,background .13s;}
+.odlg-r:hover{background:var(--surface-hover);border-color:var(--accent);}
+.odlg-r-ic{grid-row:1/3;align-self:center;font-size:13px;line-height:1;
+  opacity:.85;}
+/* T435: the pin takes the third column, both rows */
+.odlg-r .recent-pin{grid-column:3;grid-row:1/3;align-self:center;}
+.odlg-r-nm{font-size:12.5px;color:var(--accent);font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:100%;min-width:0;}
+.odlg-r-p{font-family:var(--mono);font-size:10px;color:var(--chrome-ink-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:100%;min-width:0;direction:rtl;text-align:left;}
+.odlg-foot{border-top:1px solid var(--chrome-line);padding:10px 12px;}
+#odlg-input{width:100%;box-sizing:border-box;font-family:var(--mono);
+  font-size:11.5px;border:1px solid var(--border-strong);border-radius:6px;
+  padding:8px 10px;background:var(--input-bg);color:var(--chrome-ink);}
+#odlg-input:focus{outline:none;border-color:var(--cyan);}
+.odlg-inrow{display:flex;gap:8px;align-items:stretch;}
+.odlg-inrow #odlg-input{flex:1;min-width:0;}
+#odlg-go{flex:none;font-weight:600;padding:8px 16px;
+  border-color:var(--accent);color:var(--accent);background:var(--btn-bg);}
+#odlg-go:hover:not(:disabled){background:var(--accent-deep);
+  color:var(--on-accent-deep);}
+#odlg-go:disabled,#odlg-input:disabled{opacity:.55;cursor:default;}
+.odlg-load{height:3px;margin-top:8px;border-radius:2px;overflow:hidden;
+  background:color-mix(in srgb,var(--accent) 13%,transparent);position:relative;}
+.odlg-load[hidden]{display:none;}
+.odlg-load span{position:absolute;left:-40%;top:0;width:40%;height:100%;
+  background:var(--cyan);border-radius:2px;
+  animation:odlg-slide 1.1s ease-in-out infinite;}
+@keyframes odlg-slide{to{left:100%;}}
+/* Dialog chrome reads only the complete theme contract above. The old
+   body.light/body:not(.light) repair pair was exactly how new schemes
+   acquired half-themed popups (T251, 2026-09-04). */
+
+/* ---------- section sidebar (TOC): hidden until ☰ toggles it ------- */
+@media(min-width:861px){
+  body:not(.tocshow) .shell{grid-template-columns:1fr;}
+  body:not(.tocshow) .nbshell .rail{display:none;}
+}
+
+/* ---------- advanced code-type filter menu ---------- */
+.ckfilter-menu{position:fixed;z-index:200;background:var(--chrome-2);
+  border:1px solid var(--chrome-line);border-radius:8px;padding:8px;
+  box-shadow:0 12px 40px var(--shadow);min-width:150px;}
+.ckfilter-menu[hidden]{display:none;}
+.ckf-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--chrome-ink-3);padding:2px 6px 6px;}
+.ckf-row{display:flex;align-items:center;gap:8px;padding:5px 6px;
+  font-family:var(--mono);font-size:11.5px;color:var(--chrome-ink-2);
+  cursor:pointer;
+  border-radius:5px;text-transform:capitalize;}
+/* capitalize is right for the one-word type names it was written for
+   ("data", "print"); on a row whose name is a PHRASE it Title Cases A
+   Sentence, so a phrase row opts out (T256) */
+.ckf-row.ckf-phrase{text-transform:none;}
+.ckf-row:hover{background:var(--surface-hover);}
+.ckf-row input{cursor:pointer;}
+.ckf-dot{width:8px;height:8px;border-radius:3px;flex:none;
+  background:var(--ck-code);}
+.ckf-dot.ckmain-imports{background:var(--ck-imports);}
+.ckf-dot.ckmain-function{background:var(--ck-function);}
+.ckf-dot.ckmain-data{background:var(--ck-data);}
+.ckf-dot.ckmain-constant{background:var(--ck-constant);}
+.ckf-dot.ckmain-settings{background:var(--ck-settings);}
+.ckf-dot.ckmain-plotting{background:var(--accent);}
+.ckf-dot.ckmain-print{background:var(--ck-print);}
+.ckf-dot.ckmain-comments{background:#5f7386;}
+/* T256: the row is an ABSENCE, not a kind of code, so its dot is
+   hollow rather than one more colour in the code-kind ladder */
+.ckf-dot.ckf-noout{background:transparent;
+  border:1px dashed var(--ink-3);}
+.ckf-dot.ot-sw-print{background:#5f7d8c;}
+.ckf-dot.ot-sw-dataset{background:#4d90c0;}
+.ckf-dot.ot-sw-result{background:#9a7cc0;}
+.ckf-dot.ot-sw-error{background:#cf6a5a;}
+/* finer text/plain repr types */
+.ckf-dot.ot-sw-numeric{background:#4fae8f;}
+.ckf-dot.ot-sw-string{background:#c9a24b;}
+.ckf-dot.ot-sw-list{background:#5b8fd0;}
+.ckf-dot.ot-sw-dict{background:#a878c8;}
+.ckf-dot.ot-sw-tuple{background:#7b86d0;}
+.ckf-dot.ot-sw-set{background:#4fb0c0;}
+.ckf-dot.ot-sw-bool{background:#d08a4f;}
+.ckf-dot.ot-sw-none{background:#7a8794;}
+.ckf-dot.ot-sw-array{background:#5b7589;}
+.ckf-dot.ot-sw-value{background:#8a93a0;}
+.ckf-dot.ot-sw-dataframe{background:#4d90c0;}
+.ckf-dot.ot-sw-series{background:#5aa0b8;}
+.ckf-dot.ot-sw-function{background:#46a892;}
+.ckf-dot.ot-sw-class{background:#9a7cc0;}
+.ckf-dot.ot-sw-module{background:#8a6d4a;}
+.ckf-dot.ot-sw-object{background:#8a93a0;}
+.ckf-empty{color:#7e93a4;font-size:11px;padding:8px;}
+/* the Output-types menu rows carry a per-type On/Fold/Off cycler instead
+   of a checkbox: the type's own three-state filter, independent of the
+   overall Output button once set. The name takes the slack so every
+   cycler sits in one right-aligned column. */
+.ckf-name{flex:1;min-width:0;}
+.ckf-state{flex:none;font-family:var(--mono);font-size:10px;width:44px;
+  padding:3px 0;text-align:center;border-radius:5px;cursor:pointer;
+  border:1px solid #ffffff2e;background:none;color:#93a8ba;
+  text-transform:none;}
+.ckf-state:hover{border-color:var(--cyan);color:#fff;}
+/* INHERITED (no override): dimmed and dashed — it merely reports what the
+   overall Output filter is doing. OVERRIDDEN: solid, it owns its state. */
+.ckf-state{border-style:dashed;}
+.ckf-state.ovr{border-style:solid;color:#d7e3ec;background:#ffffff0c;}
+.ckf-state.ovr.s-hidden{color:#69788a;}
+.ckf-state.ovr.s-collapsed{color:#9fc0d0;}
+/* hover must beat the per-state colours above, or the feedback dies on
+   exactly the overridden buttons */
+.ckf-state.ovr:hover{color:#fff;border-color:var(--cyan);}
+body.light .ckf-state{border-color:var(--line);color:var(--ink-3);}
+body.light .ckf-state.ovr{color:var(--ink);background:var(--surface-hover);}
+/* the light theme needs its own per-state colours: without these the
+   generic body.light .ovr rule out-specifies them and Off/Fold read
+   identically to On */
+body.light .ckf-state.ovr.s-hidden{color:var(--ink-3);}
+body.light .ckf-state.ovr.s-collapsed{color:var(--accent-deep);}
+body.light .ckf-state:hover,body.light .ckf-state.ovr:hover{
+  border-color:var(--cyan);color:var(--ink);}
+/* one click puts every type back under the overall Output filter */
+.ckf-reset{display:block;width:100%;margin-top:6px;padding:5px 6px;
+  font-family:var(--mono);font-size:10.5px;color:#93a8ba;background:none;
+  border:1px solid #ffffff22;border-radius:5px;cursor:pointer;}
+.ckf-reset:hover:enabled{border-color:var(--cyan);color:#fff;}
+.ckf-reset:disabled{opacity:.45;cursor:default;}
+body.light .ckf-reset{border-color:var(--line);color:var(--ink-3);}
+body.light .ckf-reset:hover:enabled{color:var(--ink);}
+/* the tab's ⌚ Versions menu */
+.vers-menu{min-width:232px;max-width:330px;
+  max-height:min(70vh,540px);overflow-y:auto;}
+.vers-row{display:block;width:100%;text-align:left;background:none;
+  border:none;color:#cdd9e3;font-family:var(--mono);font-size:11.5px;
+  padding:6px 8px;border-radius:5px;cursor:pointer;}
+.vers-row .vers-l{display:block;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.vers-row .vers-sub{display:block;font-size:9.5px;color:#7e93a4;
+  margin-top:1px;}
+.vers-row:hover{background:#ffffff0c;}
+.vers-row.on{color:#7fd0e0;}
+.vers-row.on .vers-l{color:#7fd0e0;}
+body.light .vers-row{color:var(--ink-2);}
+body.light .vers-row:hover{background:var(--surface-hover);}
+.tab-vermark{color:#f0a848;margin-right:4px;flex:none;font-size:12px;}
+#ck-filter-btn.on,#ot-filter-btn.on,#pt-filter-btn.on{
+  border-color:var(--cyan);color:#fff;background:color-mix(in srgb,var(--accent) 13%,transparent);}
+/* an output hidden by the advanced Output-types filter. Scoped + !important
+   on purpose: output payloads embed their OWN <style> blocks (xarray ships
+   `.xr-wrap{display:block !important}`), and a bare `.ot-off{display:none}`
+   lost that cascade fight — the wrapper rename (jv-xr) fixed the known case,
+   this rule is the general defence, mirroring .cb-fig .pt-off below. The
+   extra .cb-out> raises specificity so a same-specificity embedded
+   !important cannot win the document-order tiebreak. */
+.cb-out>.ot-off{display:none!important;}
+/* one output FOLDED by its own per-type state (Output-types menu): the
+   payload hides and a slim .ot-stub button stands in for it; clicking the
+   stub sets .ot-open on the payload */
+.cb-out>.ot-fold:not(.ot-open){display:none!important;}
+.ot-stub{display:block;width:100%;text-align:left;cursor:pointer;
+  border:1px dashed var(--line);border-radius:8px;background:none;
+  padding:8px 12px;margin-top:12px;font-family:var(--mono);
+  font-size:11px;color:var(--ink-3);letter-spacing:.02em;
+  text-transform:capitalize;}
+.ot-stub:hover{color:var(--cyan-deep);}
+body:not(.light) .ot-stub{border-color:#ffffff2a;color:#93a8ba;}
+body:not(.light) .ot-stub:hover{color:var(--cyan);}
+/* a figure hidden by the advanced Plot-types filter */
+.cb-fig .pt-off{display:none!important;}
+/* Plot-types menu swatches: one colour per plotting library */
+.ckf-dot.pt-sw-matplotlib{background:var(--accent);}
+.ckf-dot.pt-sw-plotly{background:#4d90c0;}
+.ckf-dot.pt-sw-bokeh{background:#cf9a4e;}
+.ckf-dot.pt-sw-vega{background:#9a7cc0;}
+.ckf-dot.pt-sw-folium{background:#46a892;}
+.ckf-dot.pt-sw-animation{background:#8fd4e4;}
+.ckf-dot.pt-sw-video{background:#5b7589;}
+.ckf-dot.pt-sw-widget{background:#8ba0b2;}
+/* the labelled dimension of the Plot-types menu */
+.ckf-dot.pt-sw-titled{background:#6cc08f;}
+.ckf-dot.pt-sw-untitled{background:#5f7386;}
+/* Labels are a single ribbon control: reactions and categories can grow
+   without taking a column each. The grouped menu is shared by card labels
+   and the filter, but only the filter gets this active state. */
+.mark-filter[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 18%,transparent);}
+.mark-menu{position:fixed;z-index:210;display:flex;flex-direction:column;
+  min-width:218px;max-width:min(330px,calc(100vw - 12px));padding:7px;
+  gap:3px;border:1px solid #ffffff2a;border-radius:8px;
+  background:var(--chrome-2,#16273a);box-shadow:0 12px 40px #0008;}
+.mark-menu-h{margin:4px 5px 1px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--chrome-ink-2);}
+.mark-menu-row{display:flex;align-items:center;gap:7px;width:100%;padding:6px 7px;
+  border:1px solid transparent;border-radius:5px;background:none;
+  color:var(--chrome-ink,#d7e3ec);font:11px var(--sans);text-align:left;
+  cursor:pointer;}
+.mark-menu-row:hover,.mark-menu-row.on{background:#ffffff12;border-color:#ffffff24;}
+.mark-menu-row.on{color:var(--cyan);}
+.mark-menu-row .bic{width:14px;height:14px;flex:none;}
+.mark-menu-row .mark-menu-name{flex:1;min-width:0;}
+.mark-menu-row .mark-menu-count{font-family:var(--mono);font-size:10px;
+  color:var(--chrome-ink-2);}
+.mark-menu-check{width:14px;text-align:center;flex:none;}
+.mark-menu-clear{margin-top:3px;border-top:1px solid #ffffff1b;padding-top:6px;}
+body.light .nb-filebar{background:var(--chrome-1);border-bottom-color:var(--chrome-line);}
+body.light .nb-file-ident{border-right-color:var(--chrome-line);}
+body.light .mark-menu{background:var(--chrome-2);border-color:var(--line);box-shadow:0 12px 40px #0003;}
+/* "Apply to" scope picker: the section tree, tier-indented + tickable */
+.scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
+  overflow-y:auto;}
+/* selection is the ROW itself — highlighted means "the filters act here" */
+.scope-row{text-transform:none;align-items:center;gap:5px;cursor:pointer;
+  border:1px solid transparent;user-select:none;}
+.scope-row.on{background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:color-mix(in srgb,var(--accent) 35%,transparent);color:#eaf6fa;}
+.scope-row.on:hover{background:color-mix(in srgb,var(--accent) 20%,transparent);}
+/* only some of the sub-headings inside are selected */
+.scope-row.part{background:color-mix(in srgb,var(--accent) 6%,transparent);border-color:color-mix(in srgb,var(--accent) 20%,transparent);}
+.scope-row:focus-visible{outline:2px solid var(--cyan);outline-offset:1px;}
+body.light .scope-row.on{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--ink);}
+.scope-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.scope-l2{padding-left:16px;}
+.scope-l3{padding-left:32px;opacity:.9;}
+/* the expand arrow that reveals a heading's sub-headings */
+.scope-tw{width:14px;flex:none;display:flex;justify-content:center;}
+.scope-chev{background:none;border:none;padding:0;cursor:pointer;
+  color:#7e93a4;font-size:10px;line-height:1;
+  transition:transform .13s,color .13s;}
+.scope-chev.open{transform:rotate(90deg);}
+.scope-chev:hover{color:var(--cyan);}
+/* how many sub-headings ride along with this one */
+.scope-n{font-family:var(--mono);font-size:9px;color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:20px;padding:1px 5px;margin-left:6px;}
+/* the footer action in the Apply-to menu */
+.scope-copy{margin:8px 0 0;border-top:1px solid #ffffff1f;
+  border-radius:0 0 5px 5px;padding-top:8px;}
+.scope-copy[disabled]{opacity:.45;cursor:default;}
+.ckf-all{display:block;width:100%;text-align:left;font-family:var(--mono);
+  font-size:11px;color:var(--cyan);background:color-mix(in srgb,var(--accent) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:5px;padding:5px 7px;
+  margin:0 0 6px;cursor:pointer;}
+.ckf-all:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);color:#eaf6fa;}
+body.light .ckfilter-menu{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
+body.light .ckf-row{color:var(--ink-2);}
+body.light .ckf-row:hover{background:var(--surface-hover);}
+
+/* ---------- add-a-note: a pencil on every card (app mode) that writes a
+   markdown cell into the .ipynb, with an optional git commit ---------- */
+.card-addnote{flex:none;background:none;border:none;cursor:pointer;
+  font-size:13px;line-height:1;padding:1px 4px;opacity:0;
+  color:var(--ink-3);}
+.card:hover .card-addnote,.card-addnote:focus{opacity:.55;}
+.card-addnote:hover{opacity:1;color:var(--cyan-deep);}
+.note-dlg{position:fixed;inset:0;z-index:230;background:var(--overlay);
+  display:flex;align-items:center;justify-content:center;}
+.note-dlg[hidden]{display:none;}
+.note-dlg-box{width:min(560px,92vw);background:var(--chrome-2);
+  border:1px solid var(--chrome-line);border-radius:12px;padding:16px 18px;
+  box-shadow:0 18px 60px var(--shadow);display:flex;
+  flex-direction:column;gap:10px;}
+.note-dlg-h{font-weight:600;color:var(--chrome-ink);font-size:15px;}
+.note-dlg-sub{font-size:11.5px;color:var(--chrome-ink-2);
+  font-family:var(--mono);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#note-dlg-src{background:var(--input-bg);border:1px solid var(--border-strong);
+  border-radius:8px;color:var(--chrome-ink);font-family:var(--mono);font-size:13px;
+  padding:10px 12px;resize:vertical;min-height:110px;}
+#note-dlg-src:focus{outline:none;border-color:var(--cyan);}
+.note-dlg-git{display:flex;align-items:center;gap:8px;font-size:12.5px;
+  color:var(--chrome-ink-2);cursor:pointer;}
+.note-dlg-btns{display:flex;gap:8px;justify-content:flex-end;
+  align-items:center;}
+.note-dlg-err{flex:1;font-size:11.5px;color:var(--danger);}
+.doc-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+  z-index:240;background:var(--chrome-2);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+  border-radius:9px;color:var(--chrome-ink);font-size:13px;
+  padding:10px 16px;box-shadow:0 10px 30px var(--shadow);
+  max-width:min(640px,92vw);}
+.doc-toast a{color:var(--accent);}
+.doc-toast[hidden]{display:none;}
+body.light .ckf-h{color:var(--ink-3);}
+
+/* ---------- instant tooltips (replaces slow native titles) -------- */
+/* a tooltip is a plain dark bubble, not a button: no accent border, a
+   small radius, and it waits half a second (T207; 2026-09-02, the Arrange
+   menu's tip read as a second copy of the row under it) */
+.apptip{position:fixed;z-index:300;background:var(--tooltip-bg);
+  color:var(--tooltip-ink);
+  font-family:var(--sans);font-size:11.5px;line-height:1.45;
+  padding:6px 10px;border-radius:5px;border:1px solid var(--border-strong);
+  box-shadow:0 6px 24px var(--shadow);pointer-events:none;max-width:300px;
+  white-space:pre-line;display:none;}
+/* the shortcut chip a data-kbd control appends to its tooltip */
+.apptip-kbd{display:inline-block;margin-left:8px;padding:1px 7px;
+  border:1px solid #ffffff33;border-bottom-width:2px;border-radius:4px;
+  background:#ffffff10;font-family:var(--mono);font-size:10px;
+  color:#8fd4e4;vertical-align:middle;}
+/* the Help overlay's shortcut reference uses the same chip look */
+.helpdlg kbd{display:inline-block;min-width:20px;text-align:center;
+  padding:1px 7px;border:1px solid #ffffff2e;border-bottom-width:2px;
+  border-radius:4px;background:#ffffff0c;font-family:var(--mono);
+  font-size:11px;}
+.help-keys{display:grid;grid-template-columns:max-content 1fr;
+  gap:6px 14px;align-items:center;margin:8px 0 4px;}
+body.light .apptip-kbd,body.light .helpdlg kbd{
+  border-color:var(--chrome-line);background:var(--surface-hover);}
+
+/* ---------- light theme: the app chrome flips, the presentation
+   canvas stays dark (decks look identical on every machine) -------- */
+body.light .apptop{background:var(--chrome-0);border-color:var(--chrome-line);}
+body.light .appbar{border-bottom-color:var(--chrome-line);}
+body.light .appbar .toggle,body.light .present-bar .toggle{
+  border-color:var(--btn-border);background:var(--btn-bg);
+  color:var(--btn-ink);}
+body.light .appbar .toggle:hover,body.light .present-bar .toggle:hover{border-color:var(--cyan);
+  color:var(--ink);}
+body.light .appbar .toggle.tv.off,body.light .present-bar .toggle.tv.off{color:var(--ink-3);}
+body.light .tab{border-color:var(--chrome-line);
+  background:var(--surface-hover);color:var(--chrome-ink-3);}
+body.light .tab:hover{background:var(--surface-active);
+  color:var(--chrome-ink);}
+body.light .tab.current{background:var(--paper);color:var(--ink);}
+body.light .presrail{background:var(--chrome-0);
+  border-right-color:var(--chrome-line);}
+body.light .pr-item{color:var(--chrome-ink-3);}
+body.light .pr-item:hover{background:var(--surface-hover);
+  color:var(--chrome-ink);}
+body.light .pr-item.current{background:var(--accent-deep);
+  color:var(--on-accent-deep);}
+body.light .pr-item.editing{background:var(--accent-deep);
+  color:var(--on-accent-deep);}
+body.light .pr-item.ptab .pr-ico{color:var(--cyan-deep);}
+body.light .pr-item.editing .pr-ico{color:var(--on-accent-deep);}
+body.light .pr-label{color:var(--cyan-deep);}
+body.light .pr-btn{background:var(--btn-bg);border-color:var(--btn-border);
+  color:var(--ink-2);}
+body.light .pr-btn:hover{border-color:var(--cyan);color:var(--ink);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);}
+body.light .pr-collapse{border-color:var(--line);
+  color:var(--ink-3);}
+body.light .pr-collapse:hover{color:var(--ink);
+  border-color:var(--ink-3);}
+body.light .presrail-show{background:var(--chrome-0);
+  border-color:var(--chrome-line);color:var(--chrome-ink-3);}
+body.light .deck-create{background:var(--chrome-0);}
+body.light .dc-block{border-bottom-color:var(--line);}
+body.light .dc-label{color:var(--ink-3);}
+body.light .deck-create .dbtn{border-color:var(--btn-border);
+  background:var(--btn-bg);color:var(--btn-ink);}
+body.light .deck-create .dbtn:hover{border-color:var(--cyan);
+  color:var(--ink);}
+body.light .deck-create .dbtn.primary{background:var(--accent-deep);
+  border-color:var(--accent-deep);color:var(--on-accent-deep);}
+body.light .deck-create .dbtn.lay .layico i{background:var(--chrome-ink-3);}
+body.light .deck-create .dbtn.lay[aria-pressed="true"]{
+  background:var(--accent-deep);border-color:var(--accent-deep);}
+body.light .dc-presname{color:var(--ink);}
+body.light #pres-name,body.light .title-editor input{
+  background:var(--input-bg);border-color:var(--border-strong);
+  color:var(--ink);}
+body.light .dc-hint{color:var(--ink-3);}
+body.light .dc-menu{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
+body.light .dc-mi{color:var(--ink-2);}
+body.light .dc-mi:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);}
+body.light .dc-msep{background:var(--line);}
+body.light .deck-status{background:var(--surface-active);color:var(--ink-3);}
+body.light .deck-status.draft{
+  background:color-mix(in srgb,var(--warning) 15%,transparent);
+  color:var(--warning);}
+body.light .deck-status.saved{
+  background:color-mix(in srgb,var(--success) 15%,transparent);
+  color:var(--success);}
+body.light .film-label{color:var(--ink-2);}
+body.light .film-row.current{background:color-mix(in srgb,var(--accent) 13%,transparent);
+  outline-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+body.light .film-mini{color:var(--ink-3);}
+body.light .film-mini:hover{background:var(--surface-active);color:var(--ink);}
+body.light .film-label .film-n{color:var(--ink-3);}
+/* slide-editing chrome flips too; the slide surface itself stays the
+   dark presentation design in every theme */
+body.light .deck.editing{background:var(--paper-3);}
+body.light .deck.creating{background:var(--chrome-0);}
+body.light .edit-tools{background:var(--chrome-0);
+  border-bottom-color:var(--chrome-line);}
+/* the thin document bar and the tab strip flip with the ribbon they sit
+   above — they took over the old .dc-head's job (2026-08-20) */
+body.light .deck-qat,body.light .rbn-tabs{background:var(--chrome-0);
+  border-bottom-color:var(--chrome-line);}
+body.light .deck-qat .dbtn{background:var(--btn-bg);
+  border-color:var(--btn-border);color:var(--btn-ink);}
+body.light .deck-qat .dbtn:hover{border-color:var(--cyan);color:var(--ink);}
+body.light .qat-name{color:var(--ink-2);}
+body.light .qat-name:hover{border-color:var(--line);color:var(--ink);}
+body.light .qat-sep{background:var(--line);}
+body.light .rbn-tab{color:var(--ink-3);}
+body.light .rbn-tab:hover{color:var(--ink);}
+body.light .rbn-tab[aria-selected="true"]{color:var(--ink);}
+body.light .find-pop{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
+body.light .find-in{background:var(--input-bg);
+  border-color:var(--border-strong);
+  color:var(--ink);}
+body.light .find-t,body.light .find-count{color:var(--ink-3);}
+body.light .find-ck{color:var(--ink-2);}
+body.light .find-hit{color:var(--ink-2);}
+body.light .find-hit:hover{background:var(--surface-hover);color:var(--ink);}
+body.light .mini-tx{color:var(--ink);}
+body.light .edit-tools .dbtn{background:var(--btn-bg);
+  border-color:var(--btn-border);color:var(--btn-ink);}
+body.light .edit-tools .dbtn:hover{border-color:var(--cyan);
+  color:var(--ink);}
+body.light .edit-tools .dbtn.et[aria-pressed="true"],
+body.light .edit-tools .dbtn.etm[aria-pressed="true"]{
+  background:var(--accent-deep);border-color:var(--accent-deep);
+  color:var(--on-accent-deep);}
+body.light .et-label{color:var(--warning);}
+body.light .et-hint{color:var(--ink-3);}
+body.light select#fmt-font{background:var(--btn-bg);
+  border-color:var(--btn-border);
+  color:var(--btn-ink);}   /* T489: the button surface, like its row */
+/* document rail (section nav aka Overview + analysis graph) */
+body.light .rail{background:var(--chrome);color:var(--chrome-ink);
+  border-right-color:var(--chrome-line);}
+body.light .railhead{border-bottom-color:var(--chrome-line);}
+body.light .railtitle{color:var(--chrome-ink);}
+body.light .raildoct{color:var(--chrome-ink-3);}
+body.light .railmeta{color:var(--chrome-ink-3);}
+body.light .brand{color:var(--cyan-deep);}
+body.light .navsec{color:var(--ink-2);}
+body.light .navsec:hover{background:var(--surface-hover);}
+body.light .navsec.active{background:color-mix(in srgb,var(--accent) 11%,transparent);color:var(--ink);}
+body.light .navitems{border-left-color:var(--line);}
+body.light .navsub{color:var(--ink-3);}
+body.light .navitem{color:var(--ink-3);}
+body.light .navitem:hover{color:var(--ink);background:var(--surface-hover);}
+body.light .navitem.active{color:var(--ink);}
+body.light .navitem.k-code .dot,body.light .nk.k-code .dot{
+  background:#56627022;border-color:#00000026;}
+body.light .navkey{border-top-color:var(--line);}
+body.light .navkey-h,body.light .nk{color:var(--ink-3);}
+body.light .nk .dot{background:var(--ink-3);}
+body.light .navitem .dot{background:var(--ink-3);}
+body.light .navitem.k-figure .dot,body.light .nk.k-figure .dot{
+  background:var(--cyan);}
+body.light .navitem.k-dataset .dot,body.light .nk.k-dataset .dot{
+  background:#4d90c0;}
+body.light .navitem.k-transform .dot,body.light .nk.k-transform .dot{
+  background:#5b7589;}
+body.light .navitem.k-metric .dot,body.light .nk.k-metric .dot{
+  background:#46a892;}
+body.light .navitem.k-note .dot,body.light .nk.k-note .dot{
+  background:var(--amber);}
+body.light .railgraph{background:var(--chrome-1);
+  border-top-color:var(--chrome-line);}
+body.light .rg-collapse{border-color:var(--line);color:var(--ink-3);}
+body.light .rg-collapse:hover{color:var(--ink);
+  border-color:#00000033;}
+
+/* ---------- dark document (default theme; body.light keeps paper) --- */
+body:not(.light){background:var(--chrome-0,#0b141d);}
+body:not(.light) .stage{background:var(--chrome-0,#0b141d);}
+/* dark mode is explicit overrides, not variable swaps — so every rule a
+   custom view can restyle must honour its var here TOO, or styling does
+   nothing at all in the default theme (2026-07-29) */
+body:not(.light) .sectionhead{
+  border-bottom-color:var(--hd-bd,var(--line));}
+body:not(.light) .sectionhead h2{color:var(--hd-col,var(--ink));}
+body:not(.light) .eyebrow{color:var(--hd-accent,var(--accent));}
+body:not(.light) .card{background:var(--paper);border-color:var(--line);
+  box-shadow:0 1px 2px color-mix(in srgb,var(--shadow) 16%,transparent);}
+body:not(.light) .card:hover{box-shadow:0 6px 22px
+  color-mix(in srgb,var(--shadow) 34%,transparent);}
+body:not(.light) .card.k-code::before{background:var(--paper-3);}
+body:not(.light) .cardtitle{color:var(--ink);}
+body:not(.light) .badge{background:var(--paper-2);color:var(--ink-3);}
+body:not(.light) .k-figure .badge{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent);}
+body:not(.light) .k-dataset .badge{background:#4d90c022;color:#7fb3d8;}
+body:not(.light) .k-transform .badge{background:#5b758922;
+  color:#93a7b8;}
+body:not(.light) .k-metric .badge{background:#46a89222;color:#6fcab4;}
+body:not(.light) .k-note .badge{background:#cf9a4e26;color:#dfb277;}
+body:not(.light) .k-print .badge{background:#5f7d8c2b;color:#a6c2cf;}
+body:not(.light) .nodeid{background:var(--paper-2);color:var(--ink-3);}
+body:not(.light) .note{color:var(--md-col,var(--ink-2));}
+body:not(.light) .note .caption{color:var(--md-col,var(--ink-2));}
+/* a markdown card's own box is view-stylable in dark mode too */
+body:not(.light) .card[data-note="1"]{background:var(--md-bg,var(--paper));
+  border-color:var(--md-bd,var(--line));}
+body:not(.light) .caption{color:var(--ink-2);}
+body:not(.light) pre.result,body:not(.light) pre.stream{
+  background:var(--paper-2);border-color:var(--paper-3);color:var(--ink-2);}
+body:not(.light) pre.error{
+  background:color-mix(in srgb,var(--danger) 12%,var(--paper));
+  border-color:color-mix(in srgb,var(--danger) 45%,var(--line));
+  color:var(--danger);}
+body:not(.light) .card.k-metric .cardbody pre.result{
+  background:#46a89216;border-color:#46a89240;color:#7fd0bd;}
+body:not(.light) .figframe{border-color:var(--line);}
+body:not(.light) .jv-xr,body:not(.light) .rich{
+  background:var(--output-paper);border:1px solid var(--output-line);
+  border-radius:8px;padding:8px;color:var(--output-ink);}
+body:not(.light) .codewrap{border-top-color:var(--line);}
+body:not(.light) .codetoggle,body:not(.light) .htmltoggle,
+body:not(.light) .steplabel,body:not(.light) .ct-steps{color:var(--ink-3);}
+body:not(.light) .codetoggle:hover,
+body:not(.light) .htmltoggle:hover{color:var(--accent);}
+body:not(.light) .depchip{color:var(--warning);}
+body:not(.light) .depchip:hover{color:var(--on-accent-deep);}
+body:not(.light) .mdmore{background:var(--paper);border-color:var(--line);
+  color:var(--accent);}
+body:not(.light) .mdmore:hover{border-color:var(--accent);color:var(--ink);}
+body:not(.light) .cardbody.mdclamp::after{
+  background:linear-gradient(color-mix(in srgb,var(--chrome-3,#101c28) 0%,transparent),var(--chrome-3,#101c28));}
+body:not(.light) .fp-btn{background:var(--paper);border-color:var(--line);
+  color:var(--ink-2);}
+body:not(.light) .fp-btn:hover{border-color:var(--accent);color:var(--ink);}
+body:not(.light) .fp-count{color:var(--ink-3);}
+body:not(.light) .rawcell{background:var(--paper);border-color:var(--line);}
+body:not(.light) .rawmd{color:var(--ink-2);}
+body:not(.light) .rawmd h1,body:not(.light) .rawmd h2,
+body:not(.light) .rawmd h3,body:not(.light) .rawmd h4,
+body:not(.light) .rawmd h5,body:not(.light) .rawmd h6{color:var(--ink);}
+body:not(.light) .welcome{background:var(--paper-2);}
+body:not(.light) .welcome-wordmark{color:var(--accent);}
+body:not(.light) .welcome-tag{color:var(--ink-2);}
+body:not(.light) .welcome-lead{color:var(--ink-3);}
+body:not(.light) .welcome-lead b{color:var(--ink-2);}
+body:not(.light) .welcome-note{background:color-mix(in srgb,var(--accent) 9%,transparent);border-color:color-mix(in srgb,var(--accent) 20%,transparent);
+  border-left-color:var(--accent);color:var(--ink-2);}
+body:not(.light) .welcome-note b{color:var(--accent);}
+/* the numbered steps, in the dark default. This whole demo-reel
+   block was duplicated here behind a dangling `body:not(.light)`
+   selector, which glued itself to the next rule and left THIS one
+   unscoped -- so the light theme drew its steps in dark-theme grey.
+   The reel's own rules live once, above. */
+body:not(.light) .welcome-steps li{color:var(--ink-2);}
+body:not(.light) .ws-n{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
+body:not(.light) .recent-i{background:var(--paper);
+  border-color:var(--line);color:var(--accent);}
+body:not(.light) .recent-i:hover{background:color-mix(in srgb,
+  var(--accent) 15%,var(--paper));border-color:var(--accent);}
+body:not(.light) .recent-h{color:var(--ink-3);}
+body:not(.light) .welcome-back{color:var(--accent);}
+body:not(.light) .welcome-links a{color:var(--accent);}
+
+/* ---------- drag-drop hint ---------- */
+.drophint{position:fixed;inset:10px;z-index:140;border:2px dashed var(--cyan);
+  border-radius:14px;background:color-mix(in srgb,var(--accent) 9%,transparent);display:flex;align-items:center;
+  justify-content:center;font-family:var(--mono);font-size:14px;
+  color:var(--cyan-deep);pointer-events:none;letter-spacing:.08em;}
+.drophint[hidden]{display:none;}
+
+/* ---------- notebook source chips on slides / panes ---------- */
+.spane-nb,.slide-nb{font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;color:#5fc3d8;
+  background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:4px;padding:2px 7px;flex:none;}
+.slide-head{display:flex;align-items:baseline;gap:10px;}
+.slide-head .slide-nb{position:relative;top:-2px;}
+.spane-h{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex:none;}
+.spane-h .spane-t{margin:0;flex:1;min-width:0;}
+.pane-nbtag{position:absolute;left:3px;bottom:2px;z-index:1;
+  font-family:var(--mono);font-size:8px;letter-spacing:.08em;
+  text-transform:uppercase;color:#5fc3d8;}
+
+/* ---------- raw notebook view (transparency: cells as authored) ------ */
+.rawview{display:none;max-width:920px;margin:0 auto;
+  padding:30px 28px 30vh;}
+.nbshell.raw .content{display:none;}
+.nbshell.raw .rawview{display:block;}
+#view-raw[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:var(--on-accent-deep);}
+
+/* ---------- tree view (the analysis graph as a full, expandable view) --- */
+#view-tree[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:var(--on-accent-deep);}
+.treeview{display:none;padding:14px 20px 24vh;}
+.nbshell.tree .content{display:none;}
+.nbshell.tree .rawview{display:none;}
+.nbshell.tree .treeview{display:block;}
+/* sticks BELOW the chrome, never under it: --chrome-h is the measured
+   height of the real header, so this tracks a one- or two-row ribbon */
+/* every control moved onto the ribbon (2026-07-30), so the floating bar
+   itself is gone — nothing hovers over the canvas or hides under the
+   chrome any more. The rule is kept for the title/hidden-note styling. */
+.tree-toolbar{display:none;
+  position:sticky;top:calc(var(--chrome-h) + 6px);z-index:3;
+  flex-wrap:wrap;
+  align-items:center;gap:8px;padding:8px 2px 12px;margin-bottom:6px;
+  background:linear-gradient(var(--paper-2) 72%,transparent);}
+.tree-toolbar .tt-title{font-family:var(--mono);font-size:10px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+  margin-right:auto;}
+.tt-btn{font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+  padding:5px 10px;border-radius:var(--rad);cursor:pointer;
+  transition:color .15s,background-color .15s,border-color .15s,
+    box-shadow .15s,opacity .15s;}
+.tt-btn:hover{border-color:var(--cyan);color:var(--ink);}
+.tt-hidden-note{font-family:var(--mono);font-size:10.5px;color:var(--amber);
+  display:none;align-items:center;gap:6px;}
+.tree-canvas.has-hidden ~ .tt-hidden-note,
+.tree-toolbar .tt-hidden-note.show{display:inline-flex;}
+.tree-scroll{overflow:auto;position:relative;
+  border:1px solid var(--line);border-radius:12px;background:
+  radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0) 0 0/22px 22px,
+  var(--paper);}
+.tree-canvas{position:relative;min-width:100%;width:max-content;
+  padding:26px 26px 40px;}
+.tree-edges{position:absolute;top:0;left:0;
+  pointer-events:none;overflow:visible;z-index:0;}
+/* branches are tinted per edge by the child's type (set inline in
+   treeLayoutEdges); this is the fallback for any edge without one.
+   !important so hover and dimming still beat the inline tint. */
+.tree-edge{fill:none;stroke:var(--amber-soft);stroke-width:1.6;
+  opacity:.75;}
+.tree-edge.lit{stroke:var(--cyan)!important;stroke-width:2.4;opacity:1;}
+.tree-edge.dim{opacity:.25;}
+.tree-lane{position:relative;z-index:1;display:flex;flex-wrap:nowrap;
+  justify-content:center;align-items:flex-start;gap:26px;
+  margin:0 0 52px;}
+.tree-lane:last-child{margin-bottom:0;}
+.tree-node{--nc:#4a5564;position:relative;flex:0 0 auto;width:190px;
+  background:color-mix(in srgb,var(--nc) 7%,var(--paper));
+  border:1px solid var(--line);border-radius:10px;
+  border-top:3px solid var(--nc);box-shadow:0 1px 3px #16202b12;
+  transition:box-shadow .15s,border-color .15s;}
+/* cell width presets (toolbar Width: S/M/L; default M) */
+.tree-canvas.tw-m .tree-node{width:260px;}
+.tree-canvas.tw-l .tree-node{width:340px;}
+.tree-canvas.tw-m .tree-node.expanded{width:min(440px,86vw);}
+.tree-canvas.tw-l .tree-node.expanded{width:min(540px,88vw);}
+.tree-canvas .tree-node.tn-off{width:auto;}
+.tree-node.active{border-color:var(--cyan);box-shadow:0 3px 14px color-mix(in srgb,var(--accent) 20%,transparent);}
+.tree-node-head .tn-title{overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;min-width:0;}
+.tree-node-head{display:flex;align-items:center;gap:7px;padding:9px 9px 9px 11px;
+  cursor:pointer;}
+.tn-dot{width:8px;height:8px;border-radius:50%;background:var(--nc);
+  flex:none;}
+.tn-title{flex:1;min-width:0;font-size:12.5px;font-weight:600;
+  color:var(--ink);line-height:1.3;overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.tn-kind{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--nc);font-weight:700;}
+.tn-btn{flex:none;background:none;border:none;color:var(--ink-3);
+  cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:5px;
+  opacity:.55;transition:opacity .12s,background .12s,transform .15s;}
+.tn-btn:hover{opacity:1;background:var(--paper-2);}
+.tree-node.expanded .tn-chev{transform:rotate(90deg);}
+/* an expanded node is a real card — give it room to breathe */
+.tree-node.expanded{width:min(380px,84vw);}
+.tree-node-body{display:none;border-top:1px solid var(--line);
+  max-height:360px;overflow:auto;padding:10px 12px;}
+.tree-node.expanded .tree-node-body{display:block;}
+.tree-node-body .card{margin:0;border:none;box-shadow:none;opacity:1;
+  transform:none;padding:0;}
+.tree-node-body .figframe img{max-height:260px;}
+/* hidden node -> slim dimmed chip (restore from its eye) */
+.tree-node.tn-off{width:auto;border-top-color:var(--line);opacity:.6;}
+.tree-node.tn-off .tn-title{-webkit-line-clamp:1;font-weight:500;
+  color:var(--ink-3);font-size:11px;}
+.tree-node.tn-off .tree-node-body,
+.tree-node.tn-off .tn-chev{display:none;}
+.tree-empty{padding:40px 10px;text-align:center;color:var(--ink-3);
+  font-size:13px;}
+/* per-cell resize corner (shows on hover) */
+.tn-resize{position:absolute;right:2px;bottom:2px;width:13px;height:13px;
+  cursor:nwse-resize;opacity:0;border-right:2px solid var(--ink-3);
+  border-bottom:2px solid var(--ink-3);border-radius:0 0 4px 0;
+  transition:opacity .12s;}
+.tree-node:hover .tn-resize{opacity:.6;}
+.tn-resize:hover{opacity:1;}
+.tree-node.tn-off .tn-resize{display:none;}
+/* dark theme: the tree canvas + nodes follow the app (the light-variable
+   styling above is the light theme; dark is explicit overrides) */
+body:not(.light) .tree-toolbar{
+  background:linear-gradient(var(--chrome-0,#0b141d) 72%,transparent);}
+body:not(.light) .tree-toolbar .tt-title{color:#7e93a4;}
+body:not(.light) .tt-btn{background:var(--chrome-3,#101c28);border-color:#ffffff22;
+  color:#cdd9e3;}
+body:not(.light) .tt-btn:hover{border-color:var(--cyan);color:#fff;}
+body:not(.light) .tree-scroll{border-color:#ffffff1a;background:
+  radial-gradient(circle at 1px 1px,#ffffff12 1px,transparent 0)
+  0 0/22px 22px,var(--chrome-1,#0e1926);}
+body:not(.light) .tree-node{
+  background:color-mix(in srgb,var(--nc) 12%,var(--chrome-3,#101c28));
+  border-color:#ffffff1c;
+  border-top-color:var(--nc);box-shadow:0 1px 3px #00000040;}
+body:not(.light) .tree-node.active{border-color:var(--cyan);
+  box-shadow:0 3px 14px color-mix(in srgb,var(--accent) 30%,transparent);}
+body:not(.light) .tn-title{color:#e6edf3;}
+body:not(.light) .tn-btn{color:#8ba0b2;}
+body:not(.light) .tn-resize{border-color:#8ba0b2;}
+body:not(.light) .tn-btn:hover{background:#ffffff14;}
+body:not(.light) .tree-node-body{border-top-color:#ffffff14;}
+body:not(.light) .tree-node.tn-off{border-top-color:#ffffff1c;}
+body:not(.light) .tree-node.tn-off .tn-title{color:#7e93a4;}
+body:not(.light) .tree-empty{color:#7e93a4;}
+
+/* ---------- present (full-screen document) mode -------------------- */
+body.doc-presenting{--presrail-w:0px;padding-top:0;padding-left:0;
+  overflow:hidden;}
+body.doc-presenting .apptop,
+body.doc-presenting .presrail,
+body.doc-presenting .presrail-show{display:none!important;}
+body.doc-presenting .docs{position:fixed;inset:0;z-index:82;overflow:auto;
+  background:var(--paper-2);}
+body.doc-presenting .shell{grid-template-columns:1fr;display:block;}
+body.doc-presenting .nbshell .rail{display:none;}
+/* the sidebar can slide back IN while presenting (⚌ Sections) */
+body.doc-presenting.present-rail .nbshell .rail{display:block;
+  position:fixed;left:0;top:0;bottom:0;width:290px;z-index:84;
+  /* height:auto matters. The docked rail is sized `100vh - --chrome-h` so
+     it clears the app ribbon; presenting hides that ribbon and pins the
+     rail top:0/bottom:0, but an explicit height beats `bottom`, so the
+     rail kept stopping one ribbon-height short of the floor. */
+  height:auto;
+  overflow-y:auto;background:var(--chrome);
+  border-right:1px solid var(--chrome-line);}
+body.doc-presenting.present-rail .content{margin-left:290px;}
+body.doc-presenting .content{max-width:1000px;margin:0 auto;
+  padding:56px 30px 30vh;}
+body.doc-presenting .treeview{padding:56px 26px 24vh;height:100vh;}
+/* ---- presenting controls: a DOCKED bar, top or right ---------------
+   Docked top it is the app bar, verbatim: same paddings, same groups,
+   same two rows. Docked right the same groups turn into stacked rows.
+   The document is inset by the bar, so nothing floats over content. */
+.present-bar{position:fixed;z-index:140;display:flex;
+  background:var(--chrome);border-color:#ffffff1f;}
+.present-bar[hidden]{display:none!important;}
+.pb-tools{display:flex;align-items:flex-start;}
+.pb-own{display:flex;align-items:flex-start;}
+/* --- docked across the TOP: identical to the app bar --- */
+body.pbpos-top .present-bar{top:0;left:0;right:0;
+  align-items:flex-start;gap:8px;padding:11px 16px;
+  border-bottom:1px solid #ffffff1f;
+  transition:transform .18s ease;}
+/* docked top the bar IS the ribbon: the same labelled sections, aligned
+   the same way, so nothing has to re-learn its layout.
+   display:contents is the whole trick. As flex ITEMS, .pb-tools and
+   .pb-own were each shrunk below their content width (flex-shrink:1) and
+   so each wrapped INSIDE itself — the bar grew to three ragged rows while
+   still having room to spare. With their boxes removed, the sections and
+   the bar's own buttons share ONE wrapping flow, exactly like .appbar. */
+body.pbpos-top .present-bar{align-items:stretch;flex-wrap:wrap;gap:6px;
+  /* keeps the wrap flow clear of the pinned Exit / fold corner; the real
+     width is measured in measurePb(), this is the pre-measurement guess */
+  padding-right:var(--pb-corner,232px);}
+body.pbpos-top .pb-tools,body.pbpos-top .pb-own{display:contents;}
+/* Outline sits at the LEFT edge, because the outline it opens is down the
+   left: a control that lives at the opposite end of the bar from the thing
+   it moves reads as belonging to something else. */
+body.pbpos-top .pb-own #pb-rail{order:-1;margin-right:6px;}
+/* an auto margin on the first of the REMAINING buttons right-aligns them
+   without a growing spacer (a spacer would fill line 1 and force a wrap) */
+body.pbpos-top .pb-own #pb-move{margin-left:auto;}
+/* never shrink these below their labels. They are flex items of the bar
+   (their wrapper is display:contents), so without this they were squeezed
+   narrower than their text and "Outline", "Exit presentation" and
+   "Auto-hide" overprinted each other in the top-right corner. */
+body.pbpos-top .pb-own .toggle{flex:none;}
+body.pbpos-right .pb-tools,body.pbpos-right .pb-own{display:contents;}
+body.pbpos-top .present-bar .pb-collapse{margin-left:6px;}
+body.doc-presenting.pbpos-top .docs{top:var(--pbh,64px);}
+body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%);}
+/* --- docked down the RIGHT: the groups become rows --- */
+body.pbpos-right .present-bar{top:0;right:0;bottom:0;width:var(--pbw,232px);
+  flex-direction:column;align-items:stretch;gap:8px;padding:12px;
+  overflow-y:auto;border-left:1px solid #ffffff1f;
+  transition:transform .18s ease;}
+body.pbpos-right .pb-tools{flex-direction:column;align-items:stretch;
+  gap:8px;}
+body.pbpos-right .pb-own{flex-direction:column;align-items:stretch;gap:6px;}
+/* a two-row group reads as one row per control when it is this narrow */
+body.pbpos-right .pb-tools .fgrp{width:100%;}
+/* NEVER wrap a group's own row here: with width:100% on every button, a
+   wrapping row put the -, the 100% and the + each on their own line and
+   the size steppers exploded down the sidebar */
+body.pbpos-right .pb-tools .fgrp-row{flex-wrap:nowrap;}
+body.pbpos-right .present-bar .toggle{width:100%;justify-content:flex-start;}
+/* a stepper stays one line: caption, then -, value, + sharing the width */
+body.pbpos-right .present-bar .fgrp-h{align-items:center;gap:6px;}
+body.pbpos-right .present-bar .fgrp-h .fgrp-cap{min-width:44px;}
+body.pbpos-right .present-bar .fgrp-h .fgrp-row{flex:1;}
+body.pbpos-right .present-bar .fgrp-row .toggle.fz-step{width:30px;
+  flex:none;justify-content:center;}
+body.pbpos-right .present-bar .fgrp-row .toggle.fz-val{flex:1;width:auto;
+  justify-content:center;}
+/* the labelled sections stack down the bar and keep their captions */
+body.pbpos-right .present-bar .abgrp{width:100%;}
+body.pbpos-right .present-bar .abgrp-row{flex:none;flex-wrap:wrap;}
+body.pbpos-right .present-bar .abgrp-lab{text-align:left;}
+body.pbpos-right .present-bar .btn-grp{width:100%;flex-wrap:wrap;}
+body.pbpos-right .present-bar .vw-stack{flex:1;}
+body.pbpos-right .present-bar .appbar-div{display:none;}
+body.doc-presenting.pbpos-right .docs{right:var(--pbw,232px);}
+body.pbpos-right.pb-folded .present-bar{transform:translateX(101%);}
+body.pbpos-right.pb-folded .docs{right:0;}
+body.pbpos-top.pb-folded .docs{top:0;}
+/* Exit sits in the VERY top-right corner, out of the wrap flow, so a
+   narrow window can never push the way out onto a second row */
+body.pbpos-top .pb-exit{position:absolute;top:8px;right:48px;z-index:3;}
+body.pbpos-right .pb-exit{order:-1;}
+.pb-exit{border-color:color-mix(in srgb,var(--accent) 35%,transparent)!important;color:#eaf6fa!important;}
+.pb-exit:hover{background:color-mix(in srgb,var(--accent) 15%,transparent)!important;}
+/* The fold/unfold button: ONE control, always in the same place and
+   always the same shape, whether the bar is showing or hidden. */
+.pb-toggle{position:fixed;top:9px;right:10px;z-index:142;
+  font-family:var(--mono);font-size:13px;line-height:1;
+  border:1px solid #ffffff22;background:color-mix(in srgb,var(--chrome-2,#16273a) 93%,transparent);color:#cfe0ea;
+  cursor:pointer;width:30px;height:30px;padding:0;
+  border-radius:var(--rad);display:none;align-items:center;
+  justify-content:center;box-shadow:0 4px 14px #00000055;}
+.pb-toggle[hidden]{display:none!important;}
+body.doc-presenting .pb-toggle{display:inline-flex;}
+.pb-toggle:hover{color:#fff;border-color:var(--cyan);}
+body.light .pb-toggle{background:var(--btn-bg);border-color:var(--btn-border);
+  color:var(--ink-2);}
+/* auto-hide (taskbar style): the bar sits off-screen and slides back the
+   moment the pointer reaches that edge. The document keeps the full
+   screen — the bar overlays on peek instead of pushing content around. */
+body.pb-auto.doc-presenting.pbpos-top .docs{top:0;}
+body.pb-auto.doc-presenting.pbpos-right .docs{right:0;}
+body.pb-auto.pbpos-top:not(.pb-peek) .present-bar{
+  transform:translateY(-101%);}
+body.pb-auto.pbpos-right:not(.pb-peek) .present-bar{
+  transform:translateX(101%);}
+/* :not(.pb-folded) matters — this rule used to win outright, so an
+   explicit fold was invisible and the fold handle looked dead */
+body.pb-auto.pb-peek:not(.pb-folded) .present-bar{transform:none!important;}
+body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%)!important;}
+body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
+.rawcell{position:relative;background:var(--paper);
+  border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px 14px 16px;margin:12px 0;}
+/* the raw view lays out the cells near the screen, as the formatted view
+   does its cards (core.css): opening it laid out every cell's source and
+   outputs in one go -- 430-500 ms at 4x on a 116-cell notebook (2026-10-09,
+   speed: reader #7). `auto` remembers each cell's real height once seen.
+   Printing lays everything out. */
+.rawview .rawcell{content-visibility:auto;contain-intrinsic-size:auto 160px;}
+@media print{.rawview .rawcell{content-visibility:visible!important;
+  contain-intrinsic-size:none!important;}}
+/* while the window scrolls, a clear sheet over the notebook takes the
+   pointer (app.js, reader #4): no hit-testing and no hover restyle at
+   each step. Under the app's chrome (#apptop 90), the find bar, menus
+   and dialogs, over everything in the feed (its own z-indexes are 20
+   and under). */
+.jv-scrollshield{position:fixed;inset:0;z-index:50;display:none;}
+.jv-scrollshield.on{display:block;}
+.rawtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);display:inline-block;
+  margin-bottom:8px;}
+.rawcell.code .rawtag{color:var(--cyan-deep);}
+.rawcell pre.code{margin:0;}
+.rawout{margin-top:10px;}
+.rawmd{font-family:var(--serif);font-size:15px;line-height:1.65;
+  color:var(--ink-2);}
+.rawmd h2,.rawmd h3,.rawmd h4,.rawmd h5,.rawmd h6{font-family:var(--sans);
+  color:var(--ink);margin:4px 0 8px;letter-spacing:-.01em;}
+.rawmd h2{font-size:24px;}
+.rawmd h3{font-size:19px;}
+.rawmd h4{font-size:16px;}
+.rawempty{color:var(--ink-3);text-align:center;padding:40px;}
+/* a .rawph placeholder is filled from its card's DOM on first open; when
+   the card copy cannot be found it says so instead of showing nothing */
+.rawph-missing{color:var(--ink-3);font-style:italic;font-size:13px;
+  border:1px dashed var(--line);border-radius:8px;padding:10px 12px;}
+
+/* ---- the rail's single + New menu, and per-row delete ---- */
+.pr-newwrap{position:relative;}
+.pr-newmenu{position:absolute;left:8px;right:8px;z-index:140;
+  background:var(--chrome-2,#16273a);border:1px solid #ffffff26;
+  border-radius:9px;padding:5px;display:flex;flex-direction:column;
+  gap:2px;box-shadow:0 12px 32px #0008;}
+.pr-newmenu[hidden]{display:none;}
+/* T365: the slides chooser, opened from the ribbon instead of the rail.
+   Fixed like .ckfilter-menu, for the same reason -- the header is
+   sticky, so a menu inside it paints behind the page. */
+.pr-mi{background:none;border:1px solid transparent;border-radius:6px;
+  padding:6px 10px;text-align:left;cursor:pointer;color:#c9d6e2;
+  font-family:var(--sans);font-size:12px;}
+.pr-mi:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 40%,transparent);
+  color:#fff;}
+/* the bin: invisible until the row is hovered or current, so the rail
+   stays quiet; coral on hover because it destroys. A real <button> since
+   2026-08-24 (it was a click-wired span), so the UA button chrome is
+   reset here to keep the row rendering exactly as before. */
+.pr-del{display:none;margin-left:auto;flex:none;padding:1px 5px;
+  border-radius:5px;color:#8ba0b2;font-size:11px;
+  background:none;border:0;cursor:pointer;line-height:1;
+  font-family:inherit;}
+.pr-item:hover .pr-del,.pr-item.current .pr-del{display:inline-block;}
+.pr-del:hover{background:#ff6b5726;color:#ff9d8c;}
+.deck-status.clickable{cursor:pointer;}
+.deck-status.clickable:hover{outline:1px solid var(--accent);}
+
+/* the document view's Variables pane: same shell as the editor panes,
+   fixed to the window because the document scrolls under it */
+.selpane.varspane{position:fixed;top:170px;right:14px;bottom:auto;
+  height:min(62vh,560px);width:280px;z-index:220;}
+.varspane .varpanel{padding:8px 10px;}
+.var-chips{display:flex;flex-wrap:wrap;gap:4px;padding:6px 0 2px;}
+/* T607: the chips are a row of their own under the filter and the
+   order switch. All three shared one line, so in the 280px pane the
+   filter field was squeezed to an empty 18px box at the left, the
+   chips stood in a column and Order / Type were pressed into a tall
+   box at the right. */
+.var-controls{flex-wrap:wrap;align-items:center;}
+.var-controls .var-chips{order:3;flex:1 0 100%;padding-top:0;}
+.var-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;
+  border:1px solid #ffffff2e;background:none;color:#7e93a4;
+  border-radius:9px;padding:2px 8px;cursor:pointer;}
+.var-chip.on{border-color:color-mix(in srgb,var(--accent) 60%,transparent);
+  color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,
+  transparent);}
+.varrow.vg-out{display:none;}
+
+/* the variables door, beside the sections hamburger: same square, its
+   own mark, and a pressed state while the pane is open */
+.vars-menubtn{font-family:var(--mono);font-size:12px;
+  color:var(--btn-ink,#cdd9e3);margin-left:2px;}
+.vars-menubtn[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--accent) 18%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 60%,transparent);}
+body.light .vars-menubtn{color:var(--ink-2);}
+/* the rail tabs are gone; any straggler CSS stays harmless, but the
+   varpanel must never render inside the rail again */
+.rail .varpanel{display:none;}
+#varspane-body .varpanel{display:block;}
+
+/* the house rule strikes again: .pr-btn sets display:flex, which beats
+   the UA's [hidden] rule — so the four original "+ New ..." buttons kept
+   rendering under the single "+ New…" for a full day, while the probe
+   that "verified" them hidden was reading the attribute, not the layout
+   (2026-08-19, user: "what happened to removing all the +new buttons").
+   Every base rule that sets display needs its own [hidden] override. */
+.pr-btn[hidden]{display:none!important;}
+/* ---- icon sizing where JS-built chrome swapped an emoji for a .bic
+   svg (2026-08-23). An emoji was sized by its button's font-size; the
+   svg needs its own, and only the tight little buttons are clamped
+   below the 14px default. ---- */
+.tab-b .bic{width:10px;height:10px;vertical-align:-1px;}
+.tab-vermark .bic{width:12px;height:12px;vertical-align:-2px;}
+.recent-ic .bic,.odlg-r-ic .bic{width:13px;height:13px;
+  vertical-align:-3px;}
+.odlg-i .ic .bic{vertical-align:-3px;}
+.card-addnote .bic{width:13px;height:13px;}
+.pr-del .bic{width:9px;height:9px;
+  vertical-align:-1px;}
+.tn-btn .bic{width:12px;height:12px;}
+.rf-btn .bic{width:12px;height:12px;}
+/* the rail's reveal tab points back INTO the page: the same
+   panel-and-arrow icon as #pr-collapse, mirrored */
+.presrail-show .bic{transform:scaleX(-1);}
+
+/* T75: the rail's filter. One field over both strips. */
+.pr-find{display:flex;align-items:center;gap:5px;margin:6px 4px 2px;
+  padding:3px 6px;border:1px solid #ffffff24;border-radius:7px;
+  background:#ffffff0d;}
+.pr-find-ic{display:flex;color:#4e93a6;flex:none;}
+.pr-find-ic svg{width:12px;height:12px;}
+.pr-find-in{flex:1 1 auto;min-width:0;background:transparent;border:0;
+  color:inherit;font:inherit;font-size:11px;padding:3px 0;outline:none;}
+.pr-find-in::placeholder{color:#5d7a8c;}
+.pr-find-in::-webkit-search-cancel-button{display:none;}
+.pr-find-x{display:flex;align-items:center;justify-content:center;
+  flex:none;background:transparent;border:0;color:#8fa6b6;cursor:pointer;
+  padding:2px;border-radius:4px;}
+.pr-find-x:hover{background:#ffffff1a;color:#e6eef5;}
+.pr-find-x svg{width:11px;height:11px;}
+.pr-find-none{font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:#6b8496;padding:8px 10px;}
+/* hidden, not removed: clearing the field costs no re-render */
+.pr-filtered{display:none !important;}
+/* no room for a field at 46px, the rule .prb-full already follows */
+body.presrail-min .pr-find,
+body.presrail-min .pr-find-none{display:none;}

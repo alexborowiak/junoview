@@ -1,0 +1,1821 @@
+/* PowerPoint (.pptx) writer — dependency-free, runs in the browser.
+ *
+ * A .pptx is a ZIP of XML parts (OOXML). Both halves are built here from
+ * scratch: a STORE-method ZIP writer (no compression, which a .pptx is
+ * perfectly allowed to be) and just enough PresentationML to carry text
+ * boxes, pictures, shapes and lines.
+ *
+ * This file knows NOTHING about Junoview's deck model. It takes a plain
+ * spec — slide size in millimetres, a background, and a list of items in
+ * PERCENT coordinates — and returns a Blob. deck.js does the translating.
+ * That seam is why this can be tested on its own.
+ *
+ *   JunoPptx.build({
+ *     title: 'My poster', widthMm: 841, heightMm: 1189,
+ *     slides: [{bg: '#ffffff', items: [
+ *       {t:'text', x:5, y:4, w:90, text:'Hello', sizePct:4, b:1},
+ *       {t:'image', x:10, y:20, w:40, h:30, src:'data:image/png;base64,…'},
+ *     ]}],
+ *   })  ->  {blob, skipped, slides}
+ *
+ * Units: OOXML measures length in EMU (914400 per inch, so 36000 per mm)
+ * and font size in hundredths of a point. Item coordinates arrive as
+ * percentages of the slide, which is also how Junoview stores them, so a
+ * poster and a 16:9 slide use the same numbers at different scales.
+ */
+window.JunoPptx = (function () {
+  'use strict';
+
+  var EMU_PER_MM = 36000;
+  var PT_PER_MM = 72 / 25.4;
+
+  /* ---------------------------------------------------------------- zip */
+
+  var CRC_TABLE = (function () {
+    var table = new Int32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var c = -1;
+    for (var i = 0; i < bytes.length; i++)
+      c = (c >>> 8) ^ CRC_TABLE[(c ^ bytes[i]) & 0xFF];
+    return (c ^ -1) >>> 0;
+  }
+
+  function utf8(str) { return new TextEncoder().encode(str); }
+
+  /* A ZIP with stored (uncompressed) entries. Timestamps are fixed rather
+     than "now" so the same deck exports byte-identically every time —
+     the same reason the Python side writes junoview.zip deterministically. */
+  function Zip() {
+    this.files = [];
+  }
+
+  Zip.prototype.add = function (name, bytes) {
+    this.files.push({ name: name, bytes: bytes, crc: crc32(bytes) });
+  };
+
+  Zip.prototype.addText = function (name, text) {
+    this.add(name, utf8(text));
+  };
+
+  /* T323: BYTES, not a Blob. An embedded chart workbook is a zip that
+     has to become a MEMBER of this zip, and Blob has no synchronous way
+     back to its bytes. blob() is the same archive wrapped for download. */
+  Zip.prototype.blob = function (mime) {
+    return new Blob([this.bytes()], { type: mime
+      || 'application/vnd.openxmlformats-officedocument.presentationml'
+        + '.presentation' });
+  };
+
+  Zip.prototype.bytes = function () {
+    var chunks = [], central = [], offset = 0, self = this;
+
+    function num(value, bytes) {
+      var out = new Uint8Array(bytes);
+      for (var i = 0; i < bytes; i++) out[i] = (value >>> (i * 8)) & 0xFF;
+      return out;
+    }
+
+    function push(target, parts) {
+      parts.forEach(function (p) { target.push(p); });
+    }
+
+    this.files.forEach(function (f) {
+      var name = utf8(f.name);
+      var size = f.bytes.length;
+      var local = [
+        num(0x04034B50, 4), num(20, 2), num(0, 2), num(0, 2),
+        num(0, 2), num(0x21, 2),             /* fixed 1980-01-01 time/date */
+        num(f.crc, 4), num(size, 4), num(size, 4),
+        num(name.length, 2), num(0, 2), name,
+      ];
+      push(chunks, local);
+      chunks.push(f.bytes);
+
+      push(central, [
+        num(0x02014B50, 4), num(20, 2), num(20, 2), num(0, 2), num(0, 2),
+        num(0, 2), num(0x21, 2),
+        num(f.crc, 4), num(size, 4), num(size, 4),
+        num(name.length, 2), num(0, 2), num(0, 2), num(0, 2), num(0, 2),
+        num(0, 4), num(offset, 4), name,
+      ]);
+
+      local.forEach(function (p) { offset += p.length; });
+      offset += size;
+    });
+
+    var centralSize = 0;
+    central.forEach(function (p) { centralSize += p.length; });
+    var end = [
+      num(0x06054B50, 4), num(0, 2), num(0, 2),
+      num(self.files.length, 2), num(self.files.length, 2),
+      num(centralSize, 4), num(offset, 4), num(0, 2),
+    ];
+
+    var parts = chunks.concat(central).concat(end);
+    var total = 0, i;
+    for (i = 0; i < parts.length; i++) total += parts[i].length;
+    var out = new Uint8Array(total), at = 0;
+    for (i = 0; i < parts.length; i++) { out.set(parts[i], at);
+      at += parts[i].length; }
+    return out;
+  };
+
+  /* ------------------------------------------------------------- helpers */
+
+  function esc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* "#4d90c0" / "#abc" / "rgb(1,2,3)" -> "4D90C0". OOXML wants bare hex. */
+  function hex(color, fallback) {
+    var c = String(color || '').trim();
+    var m = c.match(/^#?([0-9a-f]{3})$/i);
+    if (m) return m[1].split('').map(function (ch) { return ch + ch; })
+      .join('').toUpperCase();
+    m = c.match(/^#?([0-9a-f]{6})/i);
+    if (m) return m[1].toUpperCase();
+    m = c.match(/rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)/i);
+    if (m) return [m[1], m[2], m[3]].map(function (n) {
+      var s = (+n).toString(16).toUpperCase();
+      return s.length < 2 ? '0' + s : s;
+    }).join('');
+    return fallback || '000000';
+  }
+
+  /* PowerPoint rotates in 60000ths of a degree, positive clockwise. */
+  function rotAttr(deg) {
+    if (!deg) return '';
+    return ' rot="' + Math.round(((deg % 360) + 360) % 360 * 60000) + '"';
+  }
+
+  function alpha(op) {
+    if (op == null || op >= 1) return '';
+    return '<a:alpha val="' + Math.round(Math.max(0, op) * 100000) + '"/>';
+  }
+
+  /* A COLOUR CARRIES ITS OWN TRANSPARENCY, and OOXML has no fourth
+     channel, so it has to become a separate <a:alpha>. This read rgba()
+     only, and hex() truncates an 8-digit #rrggbbaa to its first six
+     digits — so every translucent colour in the editor exported opaque.
+     Three things that made visible: the Fill chip "Tint of the outline
+     colour" resolves to rgba(...,0.169) and became a solid block over the
+     figure it was tinting; both fade gradients ('#00000000' to
+     '#000000cc') became opaque-to-opaque slabs; and the colour picker's
+     whole 0-100 alpha slider was decorative as far as export went.
+     'transparent' is here because gradStops' legacy fallback emits it,
+     and hex() would otherwise fall through to opaque white — an old
+     deck's gradient exported as a white rectangle over the figure
+     (2026-08-22). */
+  function alphaOf(color) {
+    var c = String(color || '').trim();
+    if (/^transparent$/i.test(c)) return 0;
+    var m = c.match(/^#?[0-9a-f]{6}([0-9a-f]{2})$/i);
+    if (m) return parseInt(m[1], 16) / 255;
+    m = c.match(/rgba\(\s*\d+\D+\d+\D+\d+\D+([\d.]+)/i);
+    return m ? parseFloat(m[1]) : 1;
+  }
+  /* the colour's own alpha times the item's opacity slider */
+  function combinedAlpha(color, op) {
+    return alphaOf(color) * (op == null ? 1 : op);
+  }
+
+  function solidFill(color, op, fallback) {
+    return '<a:solidFill><a:srgbClr val="' + hex(color, fallback) + '">'
+      + alpha(combinedAlpha(color, op)) + '</a:srgbClr></a:solidFill>';
+  }
+  function gradFill(g, op) {
+    if (!g) return '';
+    var c1 = g.a, c2 = g.b;
+    var stops = '<a:gsLst>'
+      + '<a:gs pos="0"><a:srgbClr val="' + hex(c1, '39A9C0') + '">'
+      + alpha(combinedAlpha(c1, op)) + '</a:srgbClr></a:gs>'
+      + '<a:gs pos="100000"><a:srgbClr val="' + hex(c2, 'FFFFFF') + '">'
+      + alpha(combinedAlpha(c2, op)) + '</a:srgbClr></a:gs>'
+      + '</a:gsLst>';
+    if (g.type === 'radial')
+      /* path="circle" with the focus in the middle is PowerPoint's
+         "radiate from the centre" */
+      return '<a:gradFill rotWithShape="1">' + stops
+        + '<a:path path="circle"><a:fillToRect l="50000" t="50000" '
+        + 'r="50000" b="50000"/></a:path></a:gradFill>';
+    return '<a:gradFill rotWithShape="1">' + stops + '<a:lin ang="'
+      + Math.round((((+g.ang || 0) % 360) + 360) % 360 * 60000)
+      + '" scaled="0"/></a:gradFill>';
+  }
+  /* the paint for a shape: gradient wins, then a solid colour, else none */
+  function shapeFillXml(item) {
+    if (item.grad) return gradFill(item.grad, item.op);
+    if (item.fill) return solidFill(item.fill, item.op);
+    return '<a:noFill/>';
+  }
+  var DASHES = { solid: '', dash: 'dash', sysDot: 'sysDot',
+    dashDot: 'dashDot', lgDash: 'lgDash' };
+  function dashXml(d) {
+    var v = DASHES[d];
+    return v ? '<a:prstDash val="' + v + '"/>' : '';
+  }
+  var HEAD_OK = { triangle: 1, stealth: 1, arrow: 1, diamond: 1, oval: 1 };
+  function endXml(tag, type, size) {
+    if (!type || type === 'none' || !HEAD_OK[type]) return '';
+    var s = (size === 'sm' || size === 'lg') ? size : 'med';
+    return '<a:' + tag + ' type="' + type + '" w="' + s + '" len="'
+      + s + '"/>';
+  }
+
+  function dataUri(src) {
+    var m = String(src || '').match(/^data:([^;,]+)(;base64)?,(.*)$/);
+    if (!m) return null;
+    var mime = m[1].toLowerCase(), body = m[3];
+    var bytes;
+    if (m[2]) {
+      var bin = atob(body);
+      bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    } else {
+      bytes = utf8(decodeURIComponent(body));
+    }
+    var ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg',
+      'image/gif': 'gif', 'image/svg+xml': 'svg', 'image/webp': 'webp',
+      /* clips (T321): the suffix PowerPoint expects for each container */
+      'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov',
+      'video/ogg': 'ogv', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a',
+      'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/ogg': 'ogg',
+      'audio/webm': 'weba', 'audio/aac': 'aac', 'audio/flac': 'flac',
+    }[mime] || 'png';
+    return { ext: ext, mime: mime, bytes: bytes };
+  }
+
+  /* -------------------------------------------------------------- shapes */
+
+  function xfrm(geo, page) {
+    var x = Math.round((geo.x || 0) / 100 * page.wEmu);
+    var y = Math.round((geo.y || 0) / 100 * page.hEmu);
+    var cx = Math.max(1, Math.round((geo.w || 10) / 100 * page.wEmu));
+    var cy = Math.max(1, Math.round((geo.h || 10) / 100 * page.hEmu));
+    /* T549: a mirrored shape or picture */
+    return '<a:xfrm' + rotAttr(geo.rot)
+      + (geo.flipH ? ' flipH="1"' : '') + (geo.flipV ? ' flipV="1"' : '')
+      + '><a:off x="' + x + '" y="' + y
+      + '"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>';
+  }
+
+  /* T548: A SHADOW is PowerPoint's own outer shadow. The deck's presets
+     arrive as fractions of the page's height (dx, dy, blur) and an
+     alpha, so they are the same share of a 16:9 slide and an A0 poster;
+     it goes last in spPr, after the outline, where the schema wants the
+     effect list. */
+  function shadowXml(item, page) {
+    var s = item.shadow;
+    if (!s || !(s.alpha > 0)) return '';
+    var pt = page.hPt * 12700;
+    var dist = Math.round(Math.sqrt(s.dx * s.dx + s.dy * s.dy) * pt);
+    var dir = Math.round(((Math.atan2(s.dy, s.dx) * 180 / Math.PI) + 360)
+      % 360 * 60000);
+    return '<a:effectLst><a:outerShdw blurRad="' + Math.round(s.blur * pt)
+      + '" dist="' + dist + '" dir="' + dir + '" algn="tl"'
+      + ' rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="'
+      + Math.round(s.alpha * 100000) + '"/></a:srgbClr></a:outerShdw>'
+      + '</a:effectLst>';
+  }
+
+  function nvSp(id, name, extra, link) {
+    return '<p:nvSpPr><p:cNvPr id="' + id + '" name="' + esc(name) + '"'
+      + (link ? '>' + link + '</p:cNvPr>' : '/>')
+      + '<p:cNvSpPr' + (extra || '') + '/><p:nvPr/></p:nvSpPr>';
+  }
+
+  /* A run of text. `item` carries the character formatting; PowerPoint keeps
+     it editable, which is the whole point of exporting shapes not pictures. */
+  /* Character formatting, emitted into whichever element needs it: a real
+     run (<a:rPr>) or the empty-paragraph placeholder (<a:endParaRPr>), which
+     is what keeps a blank line's height right in PowerPoint. */
+  function runProps(item, page, tag) {
+    var pt = Math.max(1, (item.sizePct || 2.6) / 100 * page.hPt);
+    var out = ' lang="en-US" sz="' + Math.round(pt * 100) + '"';
+    if (item.b) out += ' b="1"';
+    if (item.i) out += ' i="1"';
+    if (item.u) out += ' u="sng"';
+    if (item.strike) out += ' strike="sngStrike"';
+    /* T541: PowerPoint's own offsets for superscript and subscript */
+    if (item.baseline) out += ' baseline="' + item.baseline + '"';
+    var body = solidFill(item.color, item.op, 'FFFFFF');
+    /* T543: a highlighter mark -- after the fill, before the typeface,
+       where the schema puts it */
+    if (item.hl) body += '<a:highlight><a:srgbClr val="'
+      + hex(item.hl, 'FFFF00') + '"/></a:highlight>';
+    if (item.font) body += '<a:latin typeface="' + esc(item.font) + '"/>';
+    /* T546: a link on these words, after the typeface as the schema
+       orders it; its relationship was made with the slide's (below) */
+    if (item._hlink) body += item._hlink;
+    return '<a:' + tag + out + '>' + body + '</a:' + tag + '>';
+  }
+
+  /* T486: A RUN MODEL. `item.paras` is [{runs:[{t,b,i,u,strike,color}],
+     bullet, num, lvl, head}] -- the shape pptx_read.py has always
+     produced -- and each run leaves as its own <a:r> with its own rPr,
+     so bold, colour and bullets inside a box arrive as themselves rather
+     than as '**bold**', '# Heading' and '- bullet' in plain text
+     (2026-09-15 review). item.text is the fallback, one run per line. */
+  function runXml(item, page, run, head) {
+    var r = {};
+    for (var k in item) r[k] = item[k];
+    if (run.b) r.b = 1; if (run.i) r.i = 1; if (run.u) r.u = 1;
+    if (run.strike) r.strike = 1;
+    if (run.sup) r.baseline = 30000;
+    else if (run.sub) r.baseline = -25000;
+    if (run.color) r.color = run.color;
+    r.hl = run.hl || '';
+    r._hlink = run._hlink || '';
+    if (head) { r.b = 1; r.sizePct = (item.sizePct || 2.6) * (head <= 3 ? 1.35 : 1.15); }
+    return '<a:r>' + runProps(r, page, 'rPr') + '<a:t>' + esc(run.t) + '</a:t></a:r>';
+  }
+  /* T571: a list's marker as PowerPoint's: the kind (one of the deck's
+     six bullets or six numberings), its own colour and size, and the
+     number a numbered list starts at. In pPr order: colour, size, then
+     the marker. */
+  var BU_CHAR = { bullet: '&#8226;', circle: '&#9702;', square: '&#9642;',
+    dash: '&#8211;', arrow: '&#9656;', check: '&#10003;' };
+  var BU_NUM = { number: 'arabicPeriod', paren: 'arabicParenR',
+    alpha: 'alphaLcPeriod', 'alpha-upper': 'alphaUcPeriod',
+    roman: 'romanLcPeriod', 'roman-upper': 'romanUcPeriod' };
+  function buXml(item, num) {
+    var out = '';
+    if (item.lcol) out += '<a:buClr><a:srgbClr val="' + hex(item.lcol,
+      'FFFFFF') + '"/></a:buClr>';
+    if (item.lsz && +item.lsz !== 1)
+      out += '<a:buSzPct val="' + Math.round(+item.lsz * 100000) + '"/>';
+    if (num)
+      return out + '<a:buAutoNum type="' + (BU_NUM[item.lkind]
+        || 'arabicPeriod') + '"' + (+item.lstart > 1
+        ? ' startAt="' + Math.round(+item.lstart) + '"' : '') + '/>';
+    return out + '<a:buChar char="' + (BU_CHAR[item.lkind] || '&#8226;')
+      + '"/>';
+  }
+  function paragraphs(item, page) {
+    var align = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[
+      item.align] || 'l';
+    if (item.paras && item.paras.length) {
+      return item.paras.map(function (pa) {
+        var lvl = pa.lvl || 0, mar = 228600 * (lvl + 1);
+        var props = '<a:pPr algn="' + align + '"'
+          + ((pa.bullet || pa.num) ? ' indent="-228600" marL="' + mar + '"' : '')
+          + (lvl ? ' lvl="' + lvl + '"' : '') + '>'
+          + (pa.bullet ? buXml(item, false)
+            : pa.num ? buXml(item, true) : '<a:buNone/>')
+          + '</a:pPr>';
+        var runs = (pa.runs || []).filter(function (r) { return r.t; });
+        if (!runs.length)
+          return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';
+        return '<a:p>' + props + runs.map(function (r) {
+          return runXml(item, page, r, pa.head); }).join('') + '</a:p>';
+      }).join('');
+    }
+    var lines = String(item.text == null ? '' : item.text).split('\n');
+    return lines.map(function (line) {
+      var props = '<a:pPr algn="' + align + '"'
+        + (item.bullets ? ' indent="-228600" marL="228600"' : '') + '>'
+        + (item.bullets ? buXml(item, !!BU_NUM[item.lkind]) : '<a:buNone/>')
+        + '</a:pPr>';
+      if (!line)
+        return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';
+      return '<a:p>' + props + '<a:r>' + runProps(item, page, 'rPr')
+        + '<a:t>' + esc(line) + '</a:t></a:r></a:p>';
+    }).join('');
+  }
+
+  function textShape(item, id, page) {
+    /* A title is positioned by its CENTRE in Junoview (it is translated
+       -50%,-50%); PowerPoint positions by the top-left corner, so recentre
+       it here rather than shipping every title half a box off. */
+    var geo = { x: item.x, y: item.y, w: item.w || 40, h: item.h || 10,
+      rot: item.rot };
+    if (item.centred) {
+      geo.x = (item.x || 0) - geo.w / 2;
+      geo.y = (item.y || 0) - geo.h / 2;
+    }
+    var fill = item.bgc ? solidFill(item.bgc, item.op) : '<a:noFill/>';
+    /* T561: the box's own edge colour (a text style's, or a diagram
+       step's accent edge) -- a hairline, as the canvas draws it; a box
+       with none says nothing and PowerPoint draws none */
+    var edge = item.bdc ? '<a:ln w="9525">' + solidFill(item.bdc, item.op)
+      + '</a:ln>' : '';
+    /* Curved text is a real PowerPoint effect, so it arrives warped and
+       still editable rather than as a picture. prstTxWarp must come
+       FIRST inside bodyPr, and it cannot share the box with autofit —
+       a warped run is sized by its path, not by the shape. */
+    var arc = +item.arc || 0;
+    /* Measured against real PowerPoint (2026-08-07): textArchUp is a true
+       symmetric arch and matches the canvas exactly. Its downward twin
+       wraps text around the BOTTOM of the circle, so it reads inverted
+       the way a badge does; textCurve* stays upright but is a ramp that
+       grows the letters, not a bow. textArch* is the closer shape, so it
+       wins — and the one asymmetry (a downward arch reads round the
+       bottom in PowerPoint, upright on the poster and in the PDF) is
+       stated in the Curve menu rather than left to be discovered.
+       The sweep must be given: an empty avLst renders all but flat. */
+    var sweep = Math.round(Math.min(180, Math.abs(arc) * 3.2) * 60000);
+    var warp = arc
+      ? '<a:prstTxWarp prst="' + (arc > 0 ? 'textArchUp' : 'textArchDown')
+        + '"><a:avLst><a:gd name="adj" fmla="val ' + sweep + '"/>'
+        + '</a:avLst></a:prstTxWarp>'
+      : '';
+    /* T542: middle or bottom of a box that keeps its height -- anchored
+       there, and NOT auto-fitted, or PowerPoint would shrink the shape
+       round the words and there would be nowhere left to sit */
+    var anchor = item.va === 'm' ? 'ctr' : item.va === 'b' ? 'b'
+      : (item.centred ? 'ctr' : 't');
+    /* T547: text in columns -- PowerPoint's own column count, and the
+       gap (spcCol, EMU) from the gap in em of the words, at the size the
+       runs are written at. A curved box never has columns. */
+    var cols = '';
+    if (+item.ncol > 1 && !arc) {
+      var colPt = Math.max(1, (item.sizePct || 2.6) / 100 * page.hPt);
+      cols = ' numCol="' + Math.min(3, Math.round(+item.ncol)) + '"'
+        + ' spcCol="' + Math.round((+item.colGapEm || 0) * colPt * 12700)
+        + '"';
+    }
+    /* T572: AutoFit. Shrink is normAutofit, with the scale the slide
+       drew the words at; a box that keeps its height any other way
+       (Fixed, a curve, words in its middle or foot) is noAutofit; a box
+       that grows with its words is spAutoFit */
+    var fs = +item.fontScale;
+    var autofit = arc ? '<a:noAutofit/>'
+      : item.fit === 'shrink'
+        ? '<a:normAutofit' + (fs > 0 && fs < 1
+          ? ' fontScale="' + Math.round(fs * 100000) + '"' : '') + '/>'
+      : (item.va || item.fit === 'fixed') ? '<a:noAutofit/>'
+      : '<a:spAutoFit/>';
+    var bodyPr = '<a:bodyPr wrap="square"' + cols + ' anchor="' + anchor
+      + '">' + warp + autofit + '</a:bodyPr>';
+    return '<p:sp>'
+      + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
+      + '<p:spPr>' + xfrm(geo, page)
+      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill + edge
+      + shadowXml(item, page) + '</p:spPr>'
+      + '<p:txBody>' + bodyPr
+      + '<a:lstStyle/>' + paragraphs(item, page) + '</p:txBody></p:sp>';
+  }
+
+  /* A REAL PowerPoint table, not a grid of rectangles with words on top.
+     OOXML's graphicFrame is the only shape that carries one, and its
+     column widths and row heights are absolute EMU rather than
+     percentages - so they are resolved here against the table's own box.
+     Flattening to rectangles would have been half the code and would have
+     produced a deck nobody could edit afterwards, which is the whole
+     reason this exporter emits shapes instead of pictures (2026-08-20). */
+  function tableShape(item, id, page) {
+    var rows = item.rows || [];
+    if (!rows.length) return '';
+    var nCols = (rows[0] || []).length || 1;
+    var cols = (item.cols && item.cols.length === nCols)
+      ? item.cols
+      : (function () { var o = [], i;
+          for (i = 0; i < nCols; i++) o.push(100 / nCols); return o; })();
+    var wEmu = Math.max(1, Math.round((item.w || 40) / 100 * page.wEmu));
+    var hEmu = Math.max(1, Math.round((item.h || 20) / 100 * page.hEmu));
+    var rowH = Math.max(1, Math.round(hEmu / rows.length));
+    var grid = cols.map(function (w) {
+      return '<a:gridCol w="' + Math.max(1, Math.round(w / 100 * wEmu))
+        + '"/>';
+    }).join('');
+    /* the cell rules use the same weight the canvas drew, converted from
+       "percent of page height" the way every other stroke here is */
+    var lnW = Math.max(1, Math.round(
+      (item.swPct != null ? item.swPct : 0.14) / 100 * page.hPt * 12700));
+    var border = item.grid
+      ? ['L', 'R', 'T', 'B'].map(function (side) {
+          return '<a:ln' + side + ' w="' + lnW + '">'
+            + solidFill(item.color, null, 'FFFFFF') + '</a:ln' + side + '>';
+        }).join('')
+      : '';
+    /* T324: A MERGED HEADER IS A REAL MERGE. `spans` describes the
+       GROUP row a structured table puts above its header -- "2020" over
+       three months -- and OOXML spells a span as gridSpan on the first
+       cell plus hMerge="1" on the ones it swallows, which have to be
+       written and left empty rather than omitted. */
+    var spans = (item.spans && item.spans.length) ? item.spans : null;
+    /* T551: EVERY MERGE, NOT ONLY THE GROUP ROW'S. `merge` is a list of
+       [row, col, rows, cols] regions in the rows written here; OOXML
+       marks the top-left cell with gridSpan and rowSpan, the rest of its
+       first row hMerge, and every cell of the rows below vMerge (their
+       first column carrying the gridSpan again, and the others hMerge as
+       well) -- written and left empty, never omitted. */
+    var cover = rows.map(function () { return []; });
+    if (spans) {
+      var at0 = 0;
+      spans.forEach(function (n) {
+        n = Math.max(1, n | 0);
+        cover[0][at0] = { r: 0, c: at0, rs: 1, cs: n };
+        for (var k = 1; k < n; k++) cover[0][at0 + k] = { r: 0, c: at0, rs: 1, cs: n };
+        at0 += n;
+      });
+    }
+    (item.merge || []).forEach(function (m) {
+      var r0 = m[0] | 0, c0 = m[1] | 0;
+      var rs = Math.max(1, m[2] | 0), cs = Math.max(1, m[3] | 0);
+      if (r0 >= rows.length || c0 >= nCols) return;
+      rs = Math.min(rs, rows.length - r0); cs = Math.min(cs, nCols - c0);
+      for (var i = r0; i < r0 + rs; i++)
+        for (var j = c0; j < c0 + cs; j++)
+          if (!cover[i][j]) cover[i][j] = { r: r0, c: c0, rs: rs, cs: cs };
+    });
+    var looks = item.looks || null;
+    var body = rows.map(function (row, ri) {
+      var head = item.thead && ri === 0 && !spans;
+      var groupRow = !!spans && ri === 0;
+      var cells = [];
+      var ci;
+      for (ci = 0; ci < nCols; ci++) {
+        var cv = cover[ri][ci];
+        var corner = !!cv && cv.r === ri && cv.c === ci;
+        var merged = !!cv && !corner;
+        var val = merged ? '' : (row[ci] == null ? '' : String(row[ci]));
+        var lk = (looks && looks[ri] && looks[ri][ci]) || {};
+        var run = { sizePct: item.sizePct, color: lk.ink || item.color,
+          font: item.font, b: head || groupRow || !!lk.b };
+        var para = val
+          ? '<a:p><a:pPr algn="l"/><a:r>' + runProps(run, page, 'rPr')
+            + '<a:t>' + esc(val) + '</a:t></a:r></a:p>'
+          : '<a:p><a:pPr algn="l"/>' + runProps(run, page, 'endParaRPr')
+            + '</a:p>';
+        var attr = '';
+        if (corner) {
+          if (cv.cs > 1) attr += ' gridSpan="' + cv.cs + '"';
+          if (cv.rs > 1) attr += ' rowSpan="' + cv.rs + '"';
+        } else if (merged) {
+          if (ci === cv.c && cv.cs > 1) attr += ' gridSpan="' + cv.cs + '"';
+          if (ci > cv.c) attr += ' hMerge="1"';
+          if (ri > cv.r) attr += ' vMerge="1"';
+        }
+        /* a cell's fill comes after its rules, as CT_TableCellProperties
+           orders them */
+        var fill = lk.bg ? solidFill(lk.bg, null, '') : '';
+        cells.push('<a:tc' + attr + '><a:txBody><a:bodyPr/><a:lstStyle/>'
+          + para
+          + '</a:txBody><a:tcPr marL="45720" marR="45720" marT="27432" '
+          + 'marB="27432">' + border + fill + '</a:tcPr></a:tc>');
+      }
+      return '<a:tr h="' + rowH + '">' + cells.join('') + '</a:tr>';
+    }).join('');
+    /* firstRow="1" is what makes PowerPoint's own table styles bold the
+       header; the run is bolded above as well so it looks right even with
+       the style stripped */
+    var tblPr = '<a:tblPr firstRow="' + ((item.thead || spans) ? 1 : 0)
+      + '"' + (item.first ? ' firstCol="1"' : '')
+      + ' bandRow="' + (item.looks ? (item.band ? 1 : 0) : 1) + '"/>';
+    return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="' + id
+      + '" name="' + esc('Table ' + id) + '"/><p:cNvGraphicFramePr/>'
+      + '<p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'
+      + Math.round((item.x || 0) / 100 * page.wEmu) + '" y="'
+      + Math.round((item.y || 0) / 100 * page.hEmu) + '"/><a:ext cx="'
+      + wEmu + '" cy="' + hEmu + '"/></p:xfrm>'
+      + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org'
+      + '/drawingml/2006/table"><a:tbl>' + tblPr
+      + '<a:tblGrid>' + grid + '</a:tblGrid>' + body
+      + '</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
+  }
+
+  /* A CROP, in the two currencies that differ.
+     Junoview's `crop` trims each edge by a percentage of the item's own
+     box and does NOT rescale what is left -- it is a CSS `inset()` mask,
+     so the visible part stays exactly where it was on the page.
+     DrawingML's <a:srcRect> also trims by percentage (in 1000ths), but
+     <a:stretch><a:fillRect/> then stretches the remainder over the whole
+     shape. Passing the insets through alone would therefore blow the
+     picture back up to its uncropped size.
+     So the shape's own box is shrunk to the visible fraction and moved
+     to where that fraction was, and srcRect trims the source to match.
+     The two together reproduce the mask. srcRect must come BEFORE
+     <a:stretch> inside <a:blipFill> or PowerPoint rejects the part. */
+  function cropRect(item) {
+    var c = item.crop;
+    if (!c) return null;
+    var l = Math.max(0, +c.l || 0), r = Math.max(0, +c.r || 0);
+    var t = Math.max(0, +c.t || 0), b = Math.max(0, +c.b || 0);
+    if (l + r >= 100 || t + b >= 100) return null;   /* nothing left */
+    if (!(l || r || t || b)) return null;
+    return { l: l, r: r, t: t, b: b };
+  }
+
+  /* SLIDE TRANSITIONS. Junoview has three and PowerPoint has
+     dozens, so this maps only what is honest. `cut` is the absence of a
+     transition and writes nothing. `fade` is <p:fade>, which is the
+     same effect. `move` -- Junoview's object-continuity morph -- has no
+     faithful equivalent in the OOXML this writer can be sure of, so it
+     is approximated by `push` and the caller is told, rather than
+     silently promised something PowerPoint will not do.
+     <p:transition> belongs AFTER <p:clrMapOvr> in the slide part. */
+  /* T553: PowerPoint's own for each kind. A push from the right is
+     dir="l" (the slide travels left); a wipe that uncovers from the left
+     is dir="r". Move is PowerPoint's Morph, which is what it is -- it
+     used to go as a push, the nearest thing in the 2007 schema. */
+  var TRANSITION = { fade: '<p:fade/>', push: '<p:push dir="l"/>',
+    wipe: '<p:wipe dir="r"/>', zoom: '<p:zoom/>' };
+  var MC_NS = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
+  var P14_TR_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
+  var P159_NS = 'http://schemas.microsoft.com/office/powerpoint/2015/09/main';
+
+  function transition(kind, ms) {
+    ms = Math.round(+ms || 0);
+    /* the 2007 speed, for a reader that knows no exact length */
+    var spd = !ms ? 'med' : ms <= 500 ? 'fast' : ms <= 750 ? 'med' : 'slow';
+    if (kind === 'move')
+      return '<mc:AlternateContent xmlns:mc="' + MC_NS + '">'
+        + '<mc:Choice xmlns:p159="' + P159_NS + '" xmlns:p14="'
+        + P14_TR_NS + '" Requires="p159">'
+        + '<p:transition spd="' + spd + '"' + (ms ? ' p14:dur="' + ms + '"' : '')
+        + '><p159:morph option="byObject"/></p:transition></mc:Choice>'
+        + '<mc:Fallback><p:transition spd="' + spd + '"><p:fade/>'
+        + '</p:transition></mc:Fallback></mc:AlternateContent>';
+    var body = TRANSITION[kind];
+    if (!body) return '';
+    if (!ms) return '<p:transition spd="' + spd + '">' + body + '</p:transition>';
+    /* the exact length is PowerPoint 2010's p14:dur, in a Choice it
+       understands, with the 2007 form as the Fallback */
+    return '<mc:AlternateContent xmlns:mc="' + MC_NS + '">'
+      + '<mc:Choice xmlns:p14="' + P14_TR_NS + '" Requires="p14">'
+      + '<p:transition spd="' + spd + '" p14:dur="' + ms + '">' + body
+      + '</p:transition></mc:Choice><mc:Fallback><p:transition spd="'
+      + spd + '">' + body + '</p:transition></mc:Fallback>'
+      + '</mc:AlternateContent>';
+  }
+
+  /* A shape's non-visual DESCRIPTION is what PowerPoint's own
+     accessibility checker reads and what a screen reader announces. It
+     is one attribute, and it had nowhere to come from until the deck
+     grew an alt field (T105). */
+  function descrAttr(item) {
+    if (item.dec) return '';
+    return item.alt ? ' descr="' + esc(item.alt) + '"' : '';
+  }
+
+  /* T550: a picture's corrections, as the blip's own effects --
+     greyscale and brightness/contrast (lum), which PowerPoint reads back
+     as its own Brightness, Contrast and Grayscale (checked over COM).
+     No saturation: PowerPoint draws the blip's hsl effect as an absolute
+     colour, not an adjustment (no colour came out black), so only "none"
+     goes, as the greyscale it is; the deck counts the rest as not
+     carried. */
+  function pfxXml(p) {
+    if (!p) return '';
+    var out = '';
+    if (p.g || (p.s != null && +p.s === 0)) out += '<a:grayscl/>';
+    if (p.b || p.c)
+      out += '<a:lum' + (p.b ? ' bright="' + Math.round(+p.b * 1000) + '"' : '')
+        + (p.c ? ' contrast="' + Math.round(+p.c * 1000) + '"' : '') + '/>';
+    return out;
+  }
+
+  function picShape(item, id, rid, page) {
+    var c = cropRect(item), geo = item, src = '';
+    if (c) {
+      geo = { x: (item.x || 0) + (item.w || 0) * c.l / 100,
+        y: (item.y || 0) + (item.h || 0) * c.t / 100,
+        w: (item.w || 0) * (100 - c.l - c.r) / 100,
+        h: (item.h || 0) * (100 - c.t - c.b) / 100,
+        rot: item.rot, flipH: item.flipH, flipV: item.flipV };
+      src = '<a:srcRect l="' + Math.round(c.l * 1000) + '" t="'
+        + Math.round(c.t * 1000) + '" r="' + Math.round(c.r * 1000)
+        + '" b="' + Math.round(c.b * 1000) + '"/>';
+    }
+    var geom = SHAPE_GEOM[item.cropShape] || 'rect';
+    return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
+      + esc(item.name || ('Picture ' + id)) + '"' + descrAttr(item)
+      + (item._link ? '>' + item._link + '</p:cNvPr>' : '/>')
+      + '<p:cNvPicPr/><p:nvPr/>'
+      + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
+      + (item.op != null && item.op < 1
+        ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
+      + pfxXml(item.pfx)
+      + '</a:blip>' + src + '<a:stretch><a:fillRect/></a:stretch>'
+      + '</p:blipFill>'
+      + '<p:spPr>' + xfrm(geo, page)
+      + '<a:prstGeom prst="' + geom + '"><a:avLst/></a:prstGeom>'
+      + shadowXml(item, page) + '</p:spPr></p:pic>';
+  }
+
+  /* A VIDEO OR AUDIO CLIP (T321): PowerPoint's own media picture. The
+     poster frame is the blip everyone sees; the clip rides in ppt/media
+     and is named TWICE -- once as the 2006 videoFile/audioFile link every
+     reader understands, once as the 2010 p14:media embed PowerPoint
+     itself writes, which is the half that makes it PLAY in PowerPoint
+     2010 and later. The ppaction://media click is what PowerPoint puts
+     on its own media shapes, so a click in the show plays it. */
+  var P14_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
+  function mediaShape(item, id, rids, page) {
+    var tag = item.audio ? 'audioFile' : 'videoFile';
+    return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
+      + esc(item.name || ((item.audio ? 'Audio ' : 'Video ') + id)) + '"'
+      + descrAttr(item) + '>'
+      + '<a:hlinkClick r:id="" action="ppaction://media"/></p:cNvPr>'
+      + '<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>'
+      + '<p:nvPr><a:' + tag + ' r:link="' + rids.link + '"/>'
+      + '<p:extLst><p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}">'
+      + '<p14:media xmlns:p14="' + P14_NS + '" r:embed="' + rids.media
+      + '"/></p:ext></p:extLst></p:nvPr></p:nvPicPr>'
+      + '<p:blipFill><a:blip r:embed="' + rids.poster + '"/>'
+      + '<a:stretch><a:fillRect/></a:stretch></p:blipFill>'
+      + '<p:spPr>' + xfrm(item, page)
+      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
+  }
+
+  /* declared below picShape, which reads it: `var` hoists and
+     picShape only runs from build(), long after this line. */
+  var SHAPE_GEOM = { rect: 'rect', ellipse: 'ellipse', oval: 'ellipse',
+    circle: 'ellipse', round: 'roundRect', roundRect: 'roundRect',
+    diamond: 'diamond', triangle: 'triangle', star: 'star5',
+    /* T419: PowerPoint has the braces and the square brackets as line
+       presets of its own */
+    lbrace: 'leftBrace', rbrace: 'rightBrace',
+    lbracket: 'leftBracket', rbracket: 'rightBracket' };
+  /* ...and no angle bracket, so those go as a freeform of two legs, the
+     way a drawn stroke does. A shape in this table, or an open preset
+     above, is a LINE: it gets no fill. */
+  var SHAPE_OPEN_PTS = { langle: [[1, 0], [0, 0.5], [1, 1]],
+    rangle: [[0, 0], [1, 0.5], [0, 1]] };
+  var SHAPE_OPEN_PRESET = { lbrace: 1, rbrace: 1, lbracket: 1, rbracket: 1 };
+
+  /* Line weight arrives as a PERCENTAGE OF PAGE HEIGHT, the same currency
+     runProps already uses for text size. It used to arrive as canvas
+     pixels and was multiplied by 12700 EMU — which is one POINT, not one
+     pixel — so every exported line came out 1.33x too fat, and a rect and
+     a line disagreed on the default (2 vs 3) into the bargain. */
+  function lineWidthEmu(item, page, fallbackPct) {
+    var pct = item.swPct != null ? item.swPct : fallbackPct;
+    return Math.max(1, Math.round(pct / 100 * page.hPt * 12700));
+  }
+
+  /* T560: an icon's parts (12-icons.js) as a freeform: polylines as
+     moveTo/lnTo, circles and ellipse arcs as arcTo, on its 24-unit grid
+     scaled to 24000. Stroked; filled only when the shape is. */
+  function iconGeom(parts, filled) {
+    var U = 1000, path = '';
+    function pt(x, y) {
+      return '<a:pt x="' + Math.round(x * U) + '" y="' + Math.round(y * U)
+        + '"/>';
+    }
+    function arc(cx, cy, rx, ry, a0, a1) {
+      var t = a0 * Math.PI / 180;
+      path += '<a:moveTo>' + pt(cx + rx * Math.cos(t), cy + ry * Math.sin(t))
+        + '</a:moveTo>';
+      var sw = a1 - a0, st = a0;
+      /* in halves, so a whole circle is never one 360-degree arc */
+      while (Math.abs(sw) > 0.01) {
+        var step = Math.max(-180, Math.min(180, sw));
+        path += '<a:arcTo wR="' + Math.round(rx * U) + '" hR="'
+          + Math.round(ry * U) + '" stAng="' + Math.round(st * 60000)
+          + '" swAng="' + Math.round(step * 60000) + '"/>';
+        st += step; sw -= step;
+      }
+    }
+    (parts || []).forEach(function (p) {
+      if (p[0] === 'l') {
+        var q = p[1];
+        for (var k = 0; k < q.length; k += 2)
+          path += (k ? '<a:lnTo>' : '<a:moveTo>') + pt(q[k], q[k + 1])
+            + (k ? '</a:lnTo>' : '</a:moveTo>');
+        if (p[2]) path += '<a:close/>';
+      } else if (p[0] === 'c') {
+        arc(p[1], p[2], p[3], p[3], 0, 360);
+        path += '<a:close/>';
+      } else if (p[0] === 'e') {
+        if (p[5] == null) { arc(p[1], p[2], p[3], p[4], 0, 360);
+          path += '<a:close/>'; }
+        else arc(p[1], p[2], p[3], p[4], p[5], p[6]);
+      }
+    });
+    return '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="'
+      + (24 * U) + '" h="' + (24 * U) + '"' + (filled ? '' : ' fill="none"')
+      + '>' + path + '</a:path></a:pathLst></a:custGeom>';
+  }
+
+  function rectShape(item, id, page) {
+    var open = SHAPE_OPEN_PTS[item.shape];
+    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '"'
+      + (open ? ' cap="rnd"><a:round/>' : '>')
+      + solidFill(item.color, item.op, 'FF6B57')
+      + dashXml(item.dash) + '</a:ln>';
+    var geom = item.icon ? iconGeom(item.icon, !!(item.fill || item.grad))
+      : open ? freeformGeom(open)
+      : '<a:prstGeom prst="' + (SHAPE_GEOM[item.shape] || 'rect')
+        + '"><a:avLst/></a:prstGeom>';
+    var fill = (open || SHAPE_OPEN_PRESET[item.shape]
+      || (item.icon && !item.fill && !item.grad))
+      ? '<a:noFill/>' : shapeFillXml(item);
+    if (item.icon) stroke = stroke.replace('<a:ln w=', '<a:ln cap="rnd" w=')
+      .replace('</a:ln>', '<a:round/></a:ln>');
+    return '<p:sp>'
+      + nvSp(id, item.name || ('Shape ' + id), '', item._link)
+      + '<p:spPr>' + xfrm(item, page) + geom + fill
+      + stroke + shadowXml(item, page)
+      + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
+      + '</p:txBody></p:sp>';
+  }
+
+  /* A freehand stroke is a real PowerPoint FREEFORM, not a picture: it
+     stays vector, keeps its colour, weight and dash, and can be reshaped
+     in PowerPoint afterwards. custGeom wants its own coordinate space, so
+     the points (already 0..1 inside the item's box) are scaled into a
+     fixed 100000-unit grid rather than into EMU, which keeps the numbers
+     integral and independent of the page size. */
+  var FREE_N = 100000;
+  /* the custGeom for a list of 0..1 points: one open polyline (T419
+     lifted it out of drawShape so an angle bracket can use it too) */
+  function freeformGeom(pts) {
+    var path = '<a:path w="' + FREE_N + '" h="' + FREE_N + '">';
+    pts.forEach(function (q, i) {
+      var x = Math.round(Math.max(0, Math.min(1, q[0])) * FREE_N);
+      var y = Math.round(Math.max(0, Math.min(1, q[1])) * FREE_N);
+      var pt = '<a:pt x="' + x + '" y="' + y + '"/>';
+      path += i === 0 ? '<a:moveTo>' + pt + '</a:moveTo>'
+        : '<a:lnTo>' + pt + '</a:lnTo>';
+    });
+    path += '</a:path>';
+    return '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst>' + path
+      + '</a:pathLst></a:custGeom>';
+  }
+  function drawShape(item, id, page) {
+    var pts = item.pts || [];
+    if (pts.length < 2) return '';
+    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667)
+      + '" cap="rnd"><a:round/>'
+      + solidFill(item.color, item.op, '8AA0B0')
+      + dashXml(item.dash) + '</a:ln>';
+    return '<p:sp>' + nvSp(id, item.name || ('Drawing ' + id))
+      + '<p:spPr>' + xfrm(item, page)
+      + freeformGeom(pts) + '<a:noFill/>'
+      + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
+      + '</p:txBody></p:sp>';
+  }
+
+  /* A line/arrow is a connector: its endpoints can run in any direction, so
+     the bounding box is normalised and the shape flipped to match. */
+  function lineShape(item, id, page) {
+    var x1 = (item.x1 || 0) / 100 * page.wEmu, y1 = (item.y1 || 0) / 100 * page.hEmu;
+    var x2 = (item.x2 || 0) / 100 * page.wEmu, y2 = (item.y2 || 0) / 100 * page.hEmu;
+    var flipH = x2 < x1, flipV = y2 < y1;
+    var off = '<a:off x="' + Math.round(Math.min(x1, x2)) + '" y="'
+      + Math.round(Math.min(y1, y2)) + '"/><a:ext cx="'
+      + Math.max(1, Math.round(Math.abs(x2 - x1))) + '" cy="'
+      + Math.max(1, Math.round(Math.abs(y2 - y1))) + '"/>';
+    var ln = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
+      + solidFill(item.color, item.op, 'FF6B57')
+      + dashXml(item.dash)
+      /* headEnd is the START of the line in OOXML, tailEnd the finish */
+      + endXml('headEnd', item.tail, item.hsz)
+      + endXml('tailEnd', item.head, item.hsz) + '</a:ln>';
+    /* PowerPoint has real curved and elbowed connectors, so a curve or a
+       bend stays editable there rather than being flattened to a
+       straight line */
+    var geom = item.bend ? 'bentConnector3'
+      : (item.curve ? 'curvedConnector3' : 'line');
+    return '<p:cxnSp><p:nvCxnSpPr><p:cNvPr id="' + id + '" name="Line '
+      + id + '"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr><p:spPr><a:xfrm'
+      + (flipH ? ' flipH="1"' : '') + (flipV ? ' flipV="1"' : '') + '>'
+      + off + '</a:xfrm><a:prstGeom prst="' + geom
+      + '"><a:avLst/></a:prstGeom>'
+      + ln + '</p:spPr></p:cxnSp>';
+  }
+
+  /* --------------------------------------------------------------- parts */
+
+  var RELS_NS = 'http://schemas.openxmlformats.org/package/2006/relationships';
+  var DOC_NS = 'http://schemas.openxmlformats.org/officeDocument/2006';
+  var PML_NS = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+  var DML_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  var XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+
+  /* ---- native charts (T117) ---------------------------------------
+     A <p:graphicFrame> on the slide points at a chart part; the part
+     carries the numbers in its caches (c:strCache / c:numCache), so
+     PowerPoint renders, restyles, retypes and recolours it natively.
+     No embedded workbook on purpose: only the "Edit Data" sheet needs
+     one, and that is a second file format -- the cut is recorded in
+     TASKS T117. The Sheet1! formulas name where a workbook WOULD put
+     the values, which is what PowerPoint expects to see. */
+  var CHART_NS = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
+  function chartFrame(item, id, rid, page) {
+    var geo = xfrm(item, page);
+    return '<p:graphicFrame><p:nvGraphicFramePr>'
+      + '<p:cNvPr id="' + id + '" name="Chart ' + id + '"' + descrAttr(item)
+      + (item._link ? '>' + item._link + '</p:cNvPr>' : '/>')
+      + '<p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>'
+      + geo.replace('<a:xfrm', '<p:xfrm').replace('</a:xfrm>', '</p:xfrm>')
+      + '<a:graphic><a:graphicData uri="' + CHART_NS + '">'
+      + '<c:chart xmlns:c="' + CHART_NS + '" xmlns:r="'
+      + 'http://schemas.openxmlformats.org/officeDocument/2006/'
+      + 'relationships" r:id="' + rid + '"/>'
+      + '</a:graphicData></a:graphic></p:graphicFrame>';
+  }
+  function chartStrCache(col, vals) {
+    return '<c:f>Sheet1!$' + col + '$2:$' + col + '$'
+      + (vals.length + 1) + '</c:f><c:strCache><c:ptCount val="'
+      + vals.length + '"/>' + vals.map(function (v, i) {
+        return '<c:pt idx="' + i + '"><c:v>' + esc(String(v))
+          + '</c:v></c:pt>';
+      }).join('') + '</c:strCache>';
+  }
+  function chartNumCache(col, vals) {
+    return '<c:f>Sheet1!$' + col + '$2:$' + col + '$'
+      + (vals.length + 1) + '</c:f><c:numCache>'
+      + '<c:formatCode>General</c:formatCode><c:ptCount val="'
+      + vals.length + '"/>' + vals.map(function (v, i) {
+        var n = Number(v);
+        return '<c:pt idx="' + i + '"><c:v>' + (isFinite(n) ? n : 0)
+          + '</c:v></c:pt>';
+      }).join('') + '</c:numCache>';
+  }
+  /* 0 -> B, 1 -> C ... the data starts beside the categories in column
+     A. Arithmetic rather than 66+i since T322 put the error columns at
+     series.length + i: a chart of thirteen series with error bars ran
+     off the end of the alphabet and wrote "[" into a c:f formula
+     (2026-09-07 review). */
+  function chartCol(i) {
+    var n = i + 1, s = '';
+    do {
+      s = String.fromCharCode(65 + (n % 26)) + s;
+      n = Math.floor(n / 26) - 1;
+    } while (n >= 0);
+    return s;
+  }
+  function chartSerHead(item, si) {
+    var se = item.series[si];
+    return '<c:idx val="' + si + '"/><c:order val="' + si + '"/>'
+      + '<c:tx><c:strRef><c:f>Sheet1!$' + chartCol(si) + '$1</c:f>'
+      + '<c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>'
+      + esc(se.name) + '</c:v></c:pt></c:strCache></c:strRef></c:tx>';
+  }
+  /* ---- axes (T322): the primary pair, and a second pair on the right
+     when any series asks for it; a log scale and a title per axis. The
+     order inside an axis is the schema's: axId, scaling, delete, axPos,
+     title, crossAx, crosses. The right-hand pair keeps a hidden
+     category axis of its own, which is how PowerPoint itself writes a
+     secondary axis. */
+  function chartAxTitle(t) {
+    return t ? '<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r>'
+      + '<a:t>' + esc(t) + '</a:t></a:r></a:p></c:rich></c:tx>'
+      + '<c:overlay val="0"/></c:title>' : '';
+  }
+  function chartScaling(log) {
+    return '<c:scaling>' + (log ? '<c:logBase val="10"/>' : '')
+      + '<c:orientation val="minMax"/></c:scaling>';
+  }
+  function chartAxes(item, hasY2) {
+    var cat = item.ct === 'scatter' && item.numeric;
+    var xTag = cat ? 'valAx' : 'catAx';
+    var x = '<c:' + xTag + '><c:axId val="111111111"/>' + chartScaling(false)
+      + '<c:delete val="0"/><c:axPos val="b"/>' + chartAxTitle(item.xlab)
+      + '<c:crossAx val="222222222"/></c:' + xTag + '>';
+    var y = '<c:valAx><c:axId val="222222222"/>'
+      + chartScaling(!!item.ylog && !item.stack)
+      + '<c:delete val="0"/><c:axPos val="l"/>' + chartAxTitle(item.ylab)
+      + '<c:crossAx val="111111111"/></c:valAx>';
+    if (!hasY2) return x + y;
+    var x2 = '<c:' + xTag + '><c:axId val="333333333"/>' + chartScaling(false)
+      + '<c:delete val="1"/><c:axPos val="b"/><c:crossAx val="444444444"/>'
+      + '</c:' + xTag + '>';
+    var y2 = '<c:valAx><c:axId val="444444444"/>' + chartScaling(false)
+      + '<c:delete val="0"/><c:axPos val="r"/>' + chartAxTitle(item.y2lab)
+      + '<c:crossAx val="333333333"/><c:crosses val="max"/></c:valAx>';
+    return x + y + x2 + y2;
+  }
+  /* what a series may carry besides its numbers (T322): data labels, a
+     linear trend line, custom error bars -- in the schema's order, which
+     puts all three between the series' look and its values */
+  function chartSerExtras(item, se, col) {
+    var out = '';
+    if (item.labels) out += '<c:dLbls><c:showLegendKey val="0"/>'
+      + '<c:showVal val="1"/><c:showCatName val="0"/>'
+      + '<c:showSerName val="0"/><c:showPercent val="0"/>'
+      + '<c:showBubbleSize val="0"/></c:dLbls>';
+    if (se.trend) out += '<c:trendline><c:trendlineType val="linear"/>'
+      + '<c:dispRSqr val="0"/><c:dispEq val="0"/></c:trendline>';
+    if (se.err && se.err.length) {
+      var errs = se.err.map(function (e) { return e == null ? 0 : e; });
+      out += '<c:errBars><c:errDir val="y"/><c:errBarType val="both"/>'
+        + '<c:errValType val="cust"/><c:noEndCap val="0"/>'
+        + '<c:plus><c:numRef>' + chartNumCache(col, errs)
+        + '</c:numRef></c:plus>'
+        + '<c:minus><c:numRef>' + chartNumCache(col, errs)
+        + '</c:numRef></c:minus></c:errBars>';
+    }
+    return out;
+  }
+  /* ---- THE EMBEDDED WORKBOOK (T323) --------------------------------
+     PowerPoint renders and restyles a chart from the caches alone --
+     which is why T117 shipped without this -- but "Edit Data" opens the
+     chart's own SHEET, and a chart with no sheet opens an empty one:
+     the numbers you typed in Junoview are not there to edit, and the
+     first edit on the other side overwrites the lot. So every chart now
+     carries a real .xlsx, whose grid is exactly the grid the c:f
+     formulas already claim: A1 blank, the series names along row 1, the
+     categories down column A, the values under their names, and each
+     error series in the column chartSerExtras points at.
+
+     Written with the same Zip as the .pptx itself (a zip inside a zip,
+     which is why Zip grew bytes()), and deterministically, so the same
+     deck still exports byte-identically. Strings go out inline rather
+     than through a sharedStrings part: one fewer part to keep in step,
+     and the sheet is small by construction. */
+  var XL_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  function xlCell(ref, v, isNum) {
+    if (v === '' || v == null) return '<c r="' + ref + '"/>';
+    if (isNum) {
+      var n = Number(v);
+      return '<c r="' + ref + '"><v>' + (isFinite(n) ? n : 0) + '</v></c>';
+    }
+    return '<c r="' + ref + '" t="inlineStr"><is><t xml:space="preserve">'
+      + esc(String(v)) + '</t></is></c>';
+  }
+  function chartWorkbook(item) {
+    var series = item.series || [];
+    var cats = item.cats || [];
+    /* the categories are numbers on a numeric scatter and words
+       everywhere else -- the same split chartXml's caches make */
+    var catNum = item.ct === 'scatter' && item.numeric;
+    var cols = [];      /* {col, head, ys} in sheet order, after A */
+    series.forEach(function (se, i) {
+      cols.push({ col: chartCol(i), head: se.name, ys: se.ys || [] });
+    });
+    series.forEach(function (se, i) {
+      if (!se.err || !se.err.length) return;
+      cols.push({ col: chartCol(series.length + i),
+        head: se.name + ' ±',
+        ys: se.err.map(function (e) { return e == null ? 0 : e; }) });
+    });
+    var n = cats.length;
+    cols.forEach(function (c) { n = Math.max(n, c.ys.length); });
+    var rows = ['<row r="1">' + xlCell('A1', '')
+      + cols.map(function (c) {
+        return xlCell(c.col + '1', c.head, false);
+      }).join('') + '</row>'];
+    for (var r = 0; r < n; r++) {
+      rows.push('<row r="' + (r + 2) + '">'
+        + xlCell('A' + (r + 2), cats[r] == null ? '' : cats[r], catNum)
+        + cols.map(function (c) {
+          return xlCell(c.col + (r + 2),
+            c.ys[r] == null ? '' : c.ys[r], true);
+        }).join('') + '</row>');
+    }
+    var z = new Zip();
+    z.addText('[Content_Types].xml', XML_HEAD
+      + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/'
+      + 'content-types"><Default Extension="rels" ContentType="application/'
+      + 'vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + '<Override PartName="/xl/workbook.xml" ContentType="application/'
+      + 'vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+      + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType='
+      + '"application/vnd.openxmlformats-officedocument.spreadsheetml.'
+      + 'worksheet+xml"/></Types>');
+    z.addText('_rels/.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/officeDocument',
+        target: 'xl/workbook.xml' }]));
+    z.addText('xl/workbook.xml', XML_HEAD
+      + '<workbook xmlns="' + XL_NS + '" xmlns:r="' + DOC_NS
+      + '/relationships"><sheets><sheet name="Sheet1" sheetId="1" '
+      + 'r:id="rId1"/></sheets></workbook>');
+    z.addText('xl/_rels/workbook.xml.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/worksheet',
+        target: 'worksheets/sheet1.xml' }]));
+    z.addText('xl/worksheets/sheet1.xml', XML_HEAD
+      + '<worksheet xmlns="' + XL_NS + '"><sheetData>' + rows.join('')
+      + '</sheetData></worksheet>');
+    return z.bytes();
+  }
+  function chartXml(item) {
+    var fill = function (c) {
+      return '<c:spPr>' + solidFill(c, null, '4FB3D9') + '</c:spPr>';
+    };
+    var series = item.series || [];
+    var all = series.filter(function (se) { return !se.hide; });
+    var hasY2 = item.ct !== 'pie'
+      && all.some(function (se) { return se.axis === 'y2'; });
+    var axIds = function (y2) {
+      return y2 ? '<c:axId val="333333333"/><c:axId val="444444444"/>'
+        : '<c:axId val="111111111"/><c:axId val="222222222"/>';
+    };
+    var idx = function (se) { return series.indexOf(se); };
+    /* error columns sit beyond the data columns of the imagined sheet */
+    var errCol = function (se) { return chartCol(series.length + idx(se)); };
+    var cats = '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+      + '</c:strRef></c:cat>';
+    var val = function (se) {
+      return '<c:val><c:numRef>' + chartNumCache(chartCol(idx(se)), se.ys)
+        + '</c:numRef></c:val>';
+    };
+    var body = '';
+    if (item.ct === 'pie') {
+      /* the pie plots the first VISIBLE series, so its name has to come
+         from that one too -- chartSerHead(item, 0) named the hidden one
+         over the visible one's values (2026-09-07 review) */
+      var pieAt = series.indexOf(all[0]);
+      if (pieAt < 0) pieAt = 0;
+      var se0 = all[0] || series[0] || { ys: [] };
+      body = '<c:pieChart><c:varyColors val="1"/><c:ser>'
+        + chartSerHead(item, pieAt)
+        + (item.labels ? '<c:dLbls><c:showLegendKey val="0"/>'
+          + '<c:showVal val="0"/><c:showCatName val="0"/>'
+          + '<c:showSerName val="0"/><c:showPercent val="1"/>'
+          + '<c:showBubbleSize val="0"/></c:dLbls>' : '')
+        + cats + '<c:val><c:numRef>' + chartNumCache('B', se0.ys)
+        + '</c:numRef></c:val></c:ser></c:pieChart>';
+    } else {
+      /* one GROUP per (kind, axis) pair: bars on the left axis, lines
+         drawn over them, and the right-axis members of each -- every
+         group non-empty, every one pointing at its own axes */
+      var stacked = item.stack === 'pct' ? 'percentStacked'
+        : item.stack ? 'stacked' : 'clustered';
+      function barGroup(list, y2) {
+        if (!list.length) return '';
+        return '<c:barChart><c:barDir val="col"/><c:grouping val="'
+          + stacked + '"/><c:varyColors val="0"/>'
+          + list.map(function (se) {
+            return '<c:ser>' + chartSerHead(item, idx(se)) + fill(se.color)
+              + chartSerExtras(item, se, errCol(se)) + cats + val(se)
+              + '</c:ser>';
+          }).join('')
+          + '<c:gapWidth val="60"/>'
+          + (item.stack ? '<c:overlap val="100"/>' : '')
+          + axIds(y2) + '</c:barChart>';
+      }
+      function lineGroup(list, y2, markerOnly) {
+        if (!list.length) return '';
+        /* a scatter over WORD categories has no x numbers to plot, so it
+           leaves as a marker-only line chart -- same picture */
+        var mk = '<c:spPr><a:ln w="28575"><a:noFill/></a:ln></c:spPr>';
+        return '<c:lineChart><c:grouping val="standard"/>'
+          + '<c:varyColors val="0"/>'
+          + list.map(function (se) {
+            return '<c:ser>' + chartSerHead(item, idx(se))
+              + (markerOnly ? mk : fill(se.color))
+              + '<c:marker><c:symbol val="circle"/><c:size val="5"/>'
+              + fill(se.color) + '</c:marker>'
+              + chartSerExtras(item, se, errCol(se)) + cats + val(se)
+              + '<c:smooth val="0"/></c:ser>';
+          }).join('')
+          + '<c:marker val="1"/>' + axIds(y2) + '</c:lineChart>';
+      }
+      function scatterGroup(list, y2) {
+        if (!list.length) return '';
+        return '<c:scatterChart><c:scatterStyle val="marker"/>'
+          + '<c:varyColors val="0"/>'
+          + list.map(function (se) {
+            return '<c:ser>' + chartSerHead(item, idx(se)) + fill(se.color)
+              + chartSerExtras(item, se, errCol(se))
+              + '<c:xVal><c:numRef>' + chartNumCache('A', item.cats)
+              + '</c:numRef></c:xVal><c:yVal><c:numRef>'
+              + chartNumCache(chartCol(idx(se)), se.ys)
+              + '</c:numRef></c:yVal></c:ser>';
+          }).join('')
+          + axIds(y2) + '</c:scatterChart>';
+      }
+      var prim = all.filter(function (se) { return se.axis !== 'y2'; });
+      var sec = all.filter(function (se) { return se.axis === 'y2'; });
+      /* A CHART WHOSE EVERY SERIES SITS ON THE RIGHT still has only one
+         axis to draw against: writing the primary pair with no series on
+         it is an axis PowerPoint has nothing to put there (2026-09-07
+         review). So when nothing is on the left, the right becomes the
+         left and the second pair is never written. */
+      if (!prim.length && sec.length) { prim = sec; sec = []; hasY2 = false; }
+      var groups = [];
+      if (item.ct === 'scatter' && item.numeric) {
+        groups.push(scatterGroup(prim, false), scatterGroup(sec, true));
+      } else if (item.ct === 'line' || item.ct === 'scatter') {
+        var mo = item.ct === 'scatter';
+        groups.push(lineGroup(prim, false, mo), lineGroup(sec, true, mo));
+      } else {
+        var isLine = function (se) { return se.ct === 'line'; };
+        var notLine = function (se) { return se.ct !== 'line'; };
+        groups.push(barGroup(prim.filter(notLine), false),
+          lineGroup(prim.filter(isLine), false, false),
+          barGroup(sec.filter(notLine), true),
+          lineGroup(sec.filter(isLine), true, false));
+      }
+      body = groups.join('');
+    }
+    var title = item.title
+      ? '<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r>'
+        + '<a:t>' + esc(item.title) + '</a:t></a:r></a:p></c:rich>'
+        + '</c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted '
+        + 'val="0"/>'
+      : '<c:autoTitleDeleted val="1"/>';
+    return XML_HEAD
+      + '<c:chartSpace xmlns:c="' + CHART_NS + '" xmlns:a="'
+      + 'http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="'
+      + 'http://schemas.openxmlformats.org/officeDocument/2006/'
+      + 'relationships"><c:chart>' + title
+      + '<c:plotArea><c:layout/>' + body
+      + (item.ct === 'pie' ? '' : chartAxes(item, hasY2))
+      + '</c:plotArea>'
+      + (item.leg ? '<c:legend><c:legendPos val="b"/>'
+        + '<c:overlay val="0"/></c:legend>' : '')
+      + '<c:plotVisOnly val="1"/></c:chart>'
+      /* the deck's ink, or chart text vanishes on a dark slide */
+      + '<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr>'
+      + solidFill(item.ink, null, 'DBE7EF')
+      + '</a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>'
+      /* T323: WHERE THE NUMBERS LIVE. CT_ChartSpace puts externalData
+         after txPr and before printSettings; autoUpdate 0 because the
+         sheet is a copy of the deck's numbers, not a link to a file on
+         somebody's disk. rId1 is safe -- every part has its own
+         relationship namespace, and a chart part has no other rel. */
+      + '<c:externalData r:id="rId1"><c:autoUpdate val="0"/>'
+      + '</c:externalData>'
+      + '</c:chartSpace>';
+  }
+
+  /* ---- build timing (T110) ----------------------------------------
+     Junoview's builds leave as a real <p:timing> main sequence: one
+     click per build step, every shape on the step revealed together --
+     the same grouping the editor's badges and playback use. Appear and
+     fade are exact; rise and zoom leave as fades, and the export
+     dialog counts them (an entrance spelled as position behaviours is
+     a bigger machine than two effects deserve). The set/animEffect
+     pair per shape is what PowerPoint itself writes for a fade. */
+  function timingXml(anims) {
+    if (!anims.length) return '';
+    var steps = {};
+    anims.forEach(function (an) {
+      /* A PARAGRAPH BUILD OCCUPIES SEVERAL CLICKS, one per paragraph,
+         starting at the step Junoview gave the shape -- which is the
+         same arithmetic slideBuildSteps does, so the numbers in the
+         Timeline pane and the clicks in PowerPoint are the same
+         numbers. */
+      if (an.by === 'para' && an.paras > 1) {
+        for (var p = 0; p < an.paras; p++)
+          (steps[an.step + p] = steps[an.step + p] || [])
+            .push({ spid: an.spid, type: an.type, para: p,
+                    /* the wait rides along, or the group loop below
+                       reads nothing and the delay is silently
+                       dropped -- caught by T169's own test */
+                    after: an.after | 0 });
+      } else {
+        (steps[an.step] = steps[an.step] || [])
+          .push({ spid: an.spid, type: an.type, para: -1,
+            after: an.after | 0 });
+      }
+    });
+    var order = Object.keys(steps).map(Number).sort(function (a, b) {
+      return a - b; });
+    var tid = 2;
+    function nid() { tid++; return tid; }
+    var groups = order.map(function (st, gi) {
+      /* AFTER PREVIOUS, WITH A DELAY (T169). PowerPoint's own model, so
+         this survives the round trip instead of becoming a line in the
+         loss report: a group whose stop carries `after` waits that many
+         milliseconds and runs itself, where an ordinary group waits
+         `indefinite` -- which is PowerPoint for "on click".
+         The first group on a slide is never automatic: something has to
+         start the sequence, and a slide that began playing itself the
+         moment it appeared would take the talk away from the presenter. */
+      var afterS = 0;
+      steps[st].forEach(function (an) {
+        var v = (an && an.after) | 0; if (v > afterS) afterS = v; });
+      if (gi === 0) afterS = 0;
+      var shapes = steps[st].map(function (an, i) {
+        var preset = an.type === 'appear' ? 1 : 10;
+        /* one PARAGRAPH of a shape, or the whole shape. <p:txEl> with a
+           single-paragraph <p:pRange> is the only sub-shape target
+           PowerPoint has, which is also why a sentence build cannot go
+           this way and is reported instead. */
+        var tgt = '<p:tgtEl><p:spTgt spid="' + an.spid + '"'
+          + (an.para >= 0
+            ? '><p:txEl><p:pRange st="' + an.para + '" end="' + an.para
+              + '"/></p:txEl></p:spTgt>'
+            : '/>')
+          + '</p:tgtEl>';
+        var eff = an.type === 'appear' ? ''
+          : '<p:animEffect transition="in" filter="fade"><p:cBhvr>'
+            + '<p:cTn id="' + nid() + '" dur="500"/>'
+            + tgt
+            + '</p:cBhvr></p:animEffect>';
+        return '<p:par><p:cTn id="' + nid() + '" presetID="' + preset
+          + '" presetClass="entr" presetSubtype="0" fill="hold" '
+          + 'grpId="0" nodeType="'
+          + (i === 0 ? 'clickEffect' : 'withEffect') + '">'
+          + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+          + '<p:childTnLst>'
+          + '<p:set><p:cBhvr><p:cTn id="' + nid()
+          + '" dur="1" fill="hold"><p:stCondLst>'
+          + '<p:cond delay="0"/></p:stCondLst></p:cTn>'
+          + tgt
+          + '<p:attrNameLst><p:attrName>style.visibility</p:attrName>'
+          + '</p:attrNameLst></p:cBhvr>'
+          + '<p:to><p:strVal val="visible"/></p:to></p:set>'
+          + eff + '</p:childTnLst></p:cTn></p:par>';
+      }).join('');
+      /* nodeType is added ONLY for the automatic case. clickEffect and
+         afterEffect name individual EFFECTS; a group is a clickPar or an
+         afterGroup, and the click path here has been verified in
+         PowerPoint itself over COM (T110) with no nodeType at all -- so
+         it is left byte-identical and only the new case declares one. */
+      return '<p:par><p:cTn id="' + nid() + '" fill="hold"'
+        + (afterS ? ' nodeType="afterGroup"' : '') + '>'
+        + '<p:stCondLst><p:cond delay="'
+        + (afterS ? String(afterS * 1000) : 'indefinite') + '"/></p:stCondLst>'
+        + '<p:childTnLst><p:par><p:cTn id="' + nid() + '" fill="hold">'
+        + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+        + '<p:childTnLst>' + shapes
+        + '</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>';
+    }).join('');
+    var blds = anims.map(function (an) {
+      /* build="p" is what makes the pRange targets above mean anything:
+         without it PowerPoint treats the shape as one object and the
+         paragraph timing is ignored. One bldP per SHAPE, which is why
+         this maps the original list and not the expanded steps. */
+      return '<p:bldP spid="' + an.spid + '" grpId="0"'
+        + (an.by === 'para' && an.paras > 1 ? ' build="p"' : '') + '/>';
+    }).join('');
+    return '<p:timing><p:tnLst><p:par>'
+      + '<p:cTn id="1" dur="indefinite" restart="never" '
+      + 'nodeType="tmRoot"><p:childTnLst>'
+      + '<p:seq concurrent="1" nextAc="seek">'
+      + '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+      + '<p:childTnLst>' + groups + '</p:childTnLst></p:cTn>'
+      + '<p:prevCondLst><p:cond evt="onPrev" delay="0">'
+      + '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'
+      + '<p:nextCondLst><p:cond evt="onNext" delay="0">'
+      + '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>'
+      + '</p:seq></p:childTnLst></p:cTn></p:par></p:tnLst>'
+      + '<p:bldLst>' + blds + '</p:bldLst></p:timing>';
+  }
+
+  function relsDoc(entries) {
+    return XML_HEAD + '<Relationships xmlns="' + RELS_NS + '">'
+      + entries.map(function (r) {
+        return '<Relationship Id="' + r.id + '" Type="' + r.type
+          + '" Target="' + r.target + '"'
+          + (r.mode ? ' TargetMode="' + r.mode + '"' : '') + '/>';
+      }).join('') + '</Relationships>';
+  }
+
+  function themeXml() {
+    var scheme = ['dk1', 'lt1', 'dk2', 'lt2', 'accent1', 'accent2', 'accent3',
+      'accent4', 'accent5', 'accent6', 'hlink', 'folHlink'];
+    var colors = ['000000', 'FFFFFF', '1F2A36', 'EEF4F8', '39A9C0', 'CF9A4E',
+      '46A892', '9A7CC0', '4D90C0', 'FF6B57', '39A9C0', '9A7CC0'];
+    return XML_HEAD + '<a:theme xmlns:a="' + DML_NS + '" name="Junoview">'
+      + '<a:themeElements><a:clrScheme name="Junoview">'
+      + scheme.map(function (n, i) {
+        return '<a:' + n + '><a:srgbClr val="' + colors[i] + '"/></a:' + n + '>';
+      }).join('')
+      + '</a:clrScheme><a:fontScheme name="Junoview">'
+      + '<a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/>'
+      + '<a:cs typeface=""/></a:majorFont>'
+      + '<a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/>'
+      + '<a:cs typeface=""/></a:minorFont></a:fontScheme>'
+      + '<a:fmtScheme name="Junoview">'
+      + '<a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
+      + '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
+      + '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst>'
+      + '<a:lnStyleLst><a:ln><a:solidFill><a:schemeClr val="phClr"/>'
+      + '</a:solidFill></a:ln><a:ln><a:solidFill><a:schemeClr val="phClr"/>'
+      + '</a:solidFill></a:ln><a:ln><a:solidFill><a:schemeClr val="phClr"/>'
+      + '</a:solidFill></a:ln></a:lnStyleLst>'
+      + '<a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle>'
+      + '<a:effectStyle><a:effectLst/></a:effectStyle>'
+      + '<a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst>'
+      + '<a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
+      + '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
+      + '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
+      + '</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>';
+  }
+
+  /* SPEAKER NOTES. A notes page is its own part, and it needs three
+     things around it or PowerPoint will not show it: a notes MASTER
+     (one, shared), a notesSlide part per slide that has notes, and a
+     relationship in BOTH directions -- the slide points at its notes
+     page and the notes page points back at the slide. The writer emitted
+     <p:notesSz> and then none of it, so a talk exported without the half
+     that is the talk.
+
+     Only slides that actually have notes get a part, and the notes
+     master appears only when at least one does, so a deck with no notes
+     produces exactly the bytes it produced before. */
+  function notesBody(text) {
+    var lines = String(text).replace(/\r\n/g, '\n').split('\n');
+    return lines.map(function (ln) {
+      return '<a:p><a:r><a:rPr lang="en-US" dirty="0"/><a:t>'
+        + esc(ln) + '</a:t></a:r></a:p>';
+    }).join('');
+  }
+
+  function notesSlideXml(text) {
+    /* type="body" idx="1" is what makes it THE notes placeholder rather
+       than a stray text box on the notes page. */
+    var sp = '<p:sp><p:nvSpPr><p:cNvPr id="2" name="Notes Placeholder 1"/>'
+      + '<p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>'
+      + '<p:ph type="body" idx="1"/></p:nvPr></p:nvSpPr><p:spPr/>'
+      + '<p:txBody><a:bodyPr/><a:lstStyle/>' + notesBody(text)
+      + '</p:txBody></p:sp>';
+    var tree = emptyTree('Notes').replace('</p:spTree>',
+      function () { return sp + '</p:spTree>'; });
+    return XML_HEAD + '<p:notes' + nsAttrs() + '><p:cSld>' + tree
+      + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
+      + '</p:notes>';
+  }
+
+  function notesMasterXml() {
+    return XML_HEAD + '<p:notesMaster' + nsAttrs() + '><p:cSld>'
+      + emptyTree('Notes Master') + '</p:cSld>'
+      + '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2"'
+      + ' accent1="accent1" accent2="accent2" accent3="accent3"'
+      + ' accent4="accent4" accent5="accent5" accent6="accent6"'
+      + ' hlink="hlink" folHlink="folHlink"/></p:notesMaster>';
+  }
+
+  function emptyTree(name) {
+    return '<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name="' + name + '"/>'
+      + '<p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm>'
+      + '<a:off x="0" y="0"/><a:ext cx="0" cy="0"/>'
+      + '<a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>'
+      + '</p:spTree>';
+  }
+
+  /* a stable, well-formed GUID per section run */
+  function secGuid(k) {
+    var h = ('00000000' + (k + 1).toString(16)).slice(-8).toUpperCase();
+    return '4A6E6F56-4A56-4A56-4A56-0000' + h;
+  }
+  function nsAttrs() {
+    return ' xmlns:a="' + DML_NS + '" xmlns:r="' + DOC_NS
+      + '/relationships" xmlns:p="' + PML_NS + '"';
+  }
+
+  /* ---------------------------------------------------------------- build */
+
+  /* T485: PowerPoint's own two sizes, byte-exact. The editor's 16:9 and
+     4:3 pages are 339x191 and 254x190 mm, a millimetre off PowerPoint's
+     Widescreen (12192000x6858000 EMU) and Standard (9144000x6858000);
+     a deck that started in PowerPoint came back a size it does not
+     know (2026-09-15 review). Within a millimetre of either, the
+     canonical EMU is written. */
+  var PPT_SIZES = [[338.667, 190.5, 12192000, 6858000],
+    [254, 190.5, 9144000, 6858000]];
+  function pageEmu(widthMm, heightMm) {
+    for (var i = 0; i < PPT_SIZES.length; i++) {
+      var s = PPT_SIZES[i];
+      if (Math.abs(widthMm - s[0]) <= 1 && Math.abs(heightMm - s[1]) <= 1)
+        return { wEmu: s[2], hEmu: s[3] };
+    }
+    return { wEmu: Math.round(widthMm * EMU_PER_MM),
+      hEmu: Math.round(heightMm * EMU_PER_MM) };
+  }
+  function build(spec) {
+    var widthMm = spec.widthMm || 339, heightMm = spec.heightMm || 191;
+    var emu = pageEmu(widthMm, heightMm);
+    var page = {
+      wEmu: emu.wEmu,
+      hEmu: emu.hEmu,
+      hPt: heightMm * PT_PER_MM,
+    };
+    var zip = new Zip();
+    var slides = spec.slides || [];
+    var media = [];          /* {name, mime, bytes} */
+    var charts = [];         /* chartSpace XML, one part each (T117) */
+    var extensions = {};
+    var skipped = 0;
+
+    var slideXml = slides.map(function (slide) {
+      var rels = [], id = 1, body = '', anims = [];
+      (slide.items || []).forEach(function (item) {
+        if (!item) return;
+        id++;
+        /* a click action becomes a real relationship (T110): a URL is
+           an External hyperlink rel, a slide jump a rel to the target
+           slide part plus the hlinksldjump action. The XML rides in
+           the shape's own cNvPr via item._link. */
+        item._link = '';
+        if (item.link && item.link.to === 'url' && item.link.href) {
+          var hrid = 'rIdH' + (rels.length + 1);
+          rels.push({ id: hrid, type: DOC_NS + '/relationships/hyperlink',
+            target: item.link.href, mode: 'External' });
+          item._link = '<a:hlinkClick r:id="' + hrid + '"/>';
+        } else if (item.link && item.link.to === 'slide'
+            && item.link.slide) {
+          var srid = 'rIdH' + (rels.length + 1);
+          rels.push({ id: srid, type: DOC_NS + '/relationships/slide',
+            target: 'slide' + item.link.slide + '.xml' });
+          item._link = '<a:hlinkClick r:id="' + srid
+            + '" action="ppaction://hlinksldjump"/>';
+        }
+        /* T546: links on words, one relationship each, the same two
+           kinds as a whole shape's */
+        (item.paras || []).forEach(function (pa) {
+          (pa.runs || []).forEach(function (run) {
+            run._hlink = '';
+            var l = run.link;
+            if (l && l.to === 'url' && l.href) {
+              var wrid = 'rIdH' + (rels.length + 1);
+              rels.push({ id: wrid, type: DOC_NS + '/relationships/hyperlink',
+                target: l.href, mode: 'External' });
+              run._hlink = '<a:hlinkClick r:id="' + wrid + '"/>';
+            } else if (l && l.to === 'slide' && l.slide) {
+              var wsrid = 'rIdH' + (rels.length + 1);
+              rels.push({ id: wsrid, type: DOC_NS + '/relationships/slide',
+                target: 'slide' + l.slide + '.xml' });
+              run._hlink = '<a:hlinkClick r:id="' + wsrid
+                + '" action="ppaction://hlinksldjump"/>';
+            }
+          });
+        });
+        var emitted = body.length;
+        if (item.t === 'text') {
+          body += textShape(item, id, page);
+        } else if (item.t === 'image') {
+          var img = dataUri(item.src);
+          if (!img) { skipped++; return; }
+          var name = 'image' + (media.length + 1) + '.' + img.ext;
+          media.push({ name: name, mime: img.mime, bytes: img.bytes });
+          extensions[img.ext] = img.mime;
+          var rid = 'rId' + (rels.length + 1);
+          rels.push({ id: rid, type: DOC_NS + '/relationships/image',
+            target: '../media/' + name });
+          body += picShape(item, id, rid, page);
+        } else if (item.t === 'video') {
+          /* the clip AND its poster are both media parts; three rels
+             name them (T321). No poster means no shape PowerPoint can
+             draw, so the item is counted rather than half-written. */
+          var clip = dataUri(item.src), post = dataUri(item.poster);
+          if (!clip || !post) { skipped++; return; }
+          var mname = 'media' + (media.length + 1) + '.' + clip.ext;
+          media.push({ name: mname, mime: clip.mime, bytes: clip.bytes });
+          extensions[clip.ext] = clip.mime;
+          var pname = 'image' + (media.length + 1) + '.' + post.ext;
+          media.push({ name: pname, mime: post.mime, bytes: post.bytes });
+          extensions[post.ext] = post.mime;
+          var base = rels.length;
+          var rids = { link: 'rId' + (base + 1), media: 'rId' + (base + 2),
+            poster: 'rId' + (base + 3) };
+          rels.push({ id: rids.link, type: DOC_NS + '/relationships/'
+            + (item.audio ? 'audio' : 'video'), target: '../media/' + mname });
+          rels.push({ id: rids.media,
+            type: 'http://schemas.microsoft.com/office/2007/relationships/media',
+            target: '../media/' + mname });
+          rels.push({ id: rids.poster, type: DOC_NS + '/relationships/image',
+            target: '../media/' + pname });
+          body += mediaShape(item, id, rids, page);
+        } else if (item.t === 'table') {
+          var tbl = tableShape(item, id, page);
+          if (tbl) body += tbl; else skipped++;
+        } else if (item.t === 'chart') {
+          /* VISIBLE series, not any series: an all-hidden chart used to
+             write a plotArea with no chart group in it (2026-09-07) */
+          var vis = (item.series || []).filter(function (se) {
+            return se && !se.hide; });
+          if (!vis.length) { skipped++; return; }
+          charts.push({ xml: chartXml(item), book: chartWorkbook(item) });
+          var crid = 'rIdC' + charts.length;
+          rels.push({ id: crid, type: DOC_NS + '/relationships/chart',
+            target: '../charts/chart' + charts.length + '.xml' });
+          body += chartFrame(item, id, crid, page);
+        } else if (item.t === 'rect') {
+          body += rectShape(item, id, page);
+        } else if (item.t === 'line') {
+          body += lineShape(item, id, page);
+        } else if (item.t === 'draw') {
+          var free = drawShape(item, id, page);
+          if (free) body += free; else skipped++;
+        } else {
+          skipped++;
+        }
+        /* only a shape that actually landed can be animated */
+        if (body.length > emitted && item.animStep != null) {
+          anims.push({ spid: id, step: item.animStep,
+            type: item.animType || 'fade',
+            /* the wait travels with the build, or the writer below has
+               nothing to read and the delay is silently dropped (T169) */
+            after: (item.after | 0) || 0 });
+        }
+      });
+      var bg = '<p:bg><p:bgPr>' + solidFill(slide.bg, null, '0B141D')
+        + '<a:effectLst/></p:bgPr></p:bg>';
+      /* function replacement, NOT a string: a "$&" or "$'" inside exported
+         text would otherwise be read as a replacement pattern and corrupt
+         the slide */
+      var tree = emptyTree('Slide').replace('</p:spTree>',
+        function () { return body + '</p:spTree>'; });
+      return { rels: rels,
+        /* T554: a hidden slide is PowerPoint's own Hide Slide */
+        xml: XML_HEAD + '<p:sld' + nsAttrs() + (slide.hide ? ' show="0"' : '')
+          + '><p:cSld>' + bg + tree
+          + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
+          + transition(slide.trans, slide.tdur) + timingXml(anims)
+          + '</p:sld>' };
+    });
+
+    /* which slides have notes, decided once: the parts, the rels,
+       the content types and presentation.xml all have to agree, and
+       three of the four are written far apart. */
+    var noted = slides.map(function (s) {
+      return (s && typeof s.notes === 'string' && s.notes.trim())
+        ? s.notes : '';
+    });
+    var anyNotes = noted.some(Boolean);
+
+    slideXml.forEach(function (s, i) {
+      zip.addText('ppt/slides/slide' + (i + 1) + '.xml', s.xml);
+      var rels = s.rels.concat([{ id: 'rIdL' + (i + 1),
+        type: DOC_NS + '/relationships/slideLayout',
+        target: '../slideLayouts/slideLayout1.xml' }]);
+      if (noted[i]) {
+        rels.push({ id: 'rIdN' + (i + 1),
+          type: DOC_NS + '/relationships/notesSlide',
+          target: '../notesSlides/notesSlide' + (i + 1) + '.xml' });
+        zip.addText('ppt/notesSlides/notesSlide' + (i + 1) + '.xml',
+          notesSlideXml(noted[i]));
+        zip.addText('ppt/notesSlides/_rels/notesSlide' + (i + 1)
+          + '.xml.rels', relsDoc([
+            { id: 'rId1', type: DOC_NS + '/relationships/notesMaster',
+              target: '../notesMasters/notesMaster1.xml' },
+            { id: 'rId2', type: DOC_NS + '/relationships/slide',
+              target: '../slides/slide' + (i + 1) + '.xml' }]));
+      }
+      zip.addText('ppt/slides/_rels/slide' + (i + 1) + '.xml.rels',
+        relsDoc(rels));
+    });
+    if (anyNotes) {
+      zip.addText('ppt/notesMasters/notesMaster1.xml', notesMasterXml());
+      zip.addText('ppt/notesMasters/_rels/notesMaster1.xml.rels', relsDoc([
+        { id: 'rId1', type: DOC_NS + '/relationships/theme',
+          target: '../theme/theme1.xml' }]));
+    }
+    media.forEach(function (m) { zip.add('ppt/media/' + m.name, m.bytes); });
+    charts.forEach(function (x, i) {
+      zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x.xml);
+      /* T323: the chart's own workbook, and the first rels part a chart
+         part has ever had. Readers follow that relationship, so its name
+         can identify Junoview without affecting Edit Data. */
+      var wbName = 'Junoview_Chart_Data' + (i + 1) + '.xlsx';
+      zip.add('ppt/embeddings/' + wbName, x.book);
+      zip.addText('ppt/charts/_rels/chart' + (i + 1) + '.xml.rels',
+        relsDoc([{ id: 'rId1', type: DOC_NS + '/relationships/package',
+          target: '../embeddings/' + wbName }]));
+    });
+
+    zip.addText('ppt/slideLayouts/slideLayout1.xml',
+      XML_HEAD + '<p:sldLayout' + nsAttrs() + ' type="blank" preserve="1">'
+      + '<p:cSld name="Blank">' + emptyTree('Layout') + '</p:cSld>'
+      + '<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>');
+    zip.addText('ppt/slideLayouts/_rels/slideLayout1.xml.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/slideMaster',
+        target: '../slideMasters/slideMaster1.xml' }]));
+
+    zip.addText('ppt/slideMasters/slideMaster1.xml',
+      XML_HEAD + '<p:sldMaster' + nsAttrs() + '><p:cSld>'
+      + '<p:bg><p:bgPr>' + solidFill(spec.bg, null, '0B141D')
+      + '<a:effectLst/></p:bgPr></p:bg>' + emptyTree('Master') + '</p:cSld>'
+      + '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1"'
+      + ' accent2="accent2" accent3="accent3" accent4="accent4"'
+      + ' accent5="accent5" accent6="accent6" hlink="hlink"'
+      + ' folHlink="folHlink"/><p:sldLayoutIdLst>'
+      + '<p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>'
+      + '</p:sldMaster>');
+    zip.addText('ppt/slideMasters/_rels/slideMaster1.xml.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/slideLayout',
+        target: '../slideLayouts/slideLayout1.xml' },
+      { id: 'rId2', type: DOC_NS + '/relationships/theme',
+        target: '../theme/theme1.xml' }]));
+
+    zip.addText('ppt/theme/theme1.xml', themeXml());
+
+    var sldIds = slides.map(function (_, i) {
+      return '<p:sldId id="' + (256 + i) + '" r:id="rId' + (i + 2) + '"/>';
+    }).join('');
+    /* T485: SECTIONS TRAVEL. The reader has read PowerPoint's 2010
+       section list since T320; the writer never wrote one, so a deck's
+       sections were lost on the way out (2026-09-15 review). One
+       p14:section per run of slides sharing a name; slides with none
+       go in an unnamed section only when some slide is named. */
+    var secXml = '';
+    if (slides.some(function (s) { return s && s.section; })) {
+      var runs = [];
+      slides.forEach(function (s, i) {
+        var nm = (s && s.section) || '';
+        if (!runs.length || runs[runs.length - 1].name !== nm)
+          runs.push({ name: nm, ids: [] });
+        runs[runs.length - 1].ids.push(256 + i);
+      });
+      secXml = '<p:extLst><p:ext uri="{521415D9-36F7-43E2-AB2F-B90AF26B5E84}">'
+        + '<p14:sectionLst xmlns:p14="http://schemas.microsoft.com/office/'
+        + 'powerpoint/2010/main">'
+        + runs.map(function (r, k) {
+          return '<p14:section name="' + esc(r.name || 'Untitled Section')
+            + '" id="{' + secGuid(k) + '}"><p14:sldIdLst>'
+            + r.ids.map(function (id) {
+              return '<p14:sldId id="' + id + '"/>'; }).join('')
+            + '</p14:sldIdLst></p14:section>';
+        }).join('')
+        + '</p14:sectionLst></p:ext></p:extLst>';
+    }
+    zip.addText('ppt/presentation.xml',
+      XML_HEAD + '<p:presentation' + nsAttrs() + ' saveSubsetFonts="1">'
+      + '<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/>'
+      + '</p:sldMasterIdLst>'
+      /* the schema fixes this order: sldMasterIdLst, notesMasterIdLst,
+         then sldIdLst */
+      + (anyNotes
+        ? '<p:notesMasterIdLst><p:notesMasterId r:id="rIdNotesM"/>'
+          + '</p:notesMasterIdLst>' : '')
+      + '<p:sldIdLst>' + sldIds + '</p:sldIdLst>'
+      + '<p:sldSz cx="' + page.wEmu + '" cy="' + page.hEmu + '"/>'
+      + '<p:notesSz cx="' + page.hEmu + '" cy="' + page.wEmu + '"/>'
+      + secXml
+      + '</p:presentation>');
+
+    var presRels = [{ id: 'rId1', type: DOC_NS + '/relationships/slideMaster',
+      target: 'slideMasters/slideMaster1.xml' }];
+    slides.forEach(function (_, i) {
+      presRels.push({ id: 'rId' + (i + 2),
+        type: DOC_NS + '/relationships/slide',
+        target: 'slides/slide' + (i + 1) + '.xml' });
+    });
+    if (anyNotes) {
+      presRels.push({ id: 'rIdNotesM',
+        type: DOC_NS + '/relationships/notesMaster',
+        target: 'notesMasters/notesMaster1.xml' });
+    }
+    presRels.push({ id: 'rIdTheme', type: DOC_NS + '/relationships/theme',
+      target: 'theme/theme1.xml' });
+    zip.addText('ppt/_rels/presentation.xml.rels', relsDoc(presRels));
+
+    zip.addText('_rels/.rels', relsDoc([
+      { id: 'rId1', type: DOC_NS + '/relationships/officeDocument',
+        target: 'ppt/presentation.xml' },
+      { id: 'rId2',
+        type: 'http://schemas.openxmlformats.org/package/2006/relationships/'
+          + 'metadata/core-properties', target: 'docProps/core.xml' }]));
+
+    zip.addText('docProps/core.xml',
+      XML_HEAD + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.'
+      + 'org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/'
+      + 'dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-'
+      + 'instance"><dc:title>' + esc(spec.title || 'Presentation')
+      + '</dc:title><dc:creator>Junoview</dc:creator>'
+      + '<cp:lastModifiedBy>Junoview</cp:lastModifiedBy></cp:coreProperties>');
+
+    var defaults = '<Default Extension="rels" ContentType="application/'
+      + 'vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + (charts.length ? '<Default Extension="xlsx" ContentType="'
+        + 'application/vnd.openxmlformats-officedocument.spreadsheetml'
+        + '.sheet"/>' : '');
+    Object.keys(extensions).forEach(function (ext) {
+      defaults += '<Default Extension="' + ext + '" ContentType="'
+        + extensions[ext] + '"/>';
+    });
+    var overrides = '<Override PartName="/ppt/presentation.xml" ContentType='
+      + '"application/vnd.openxmlformats-officedocument.presentationml.'
+      + 'presentation.main+xml"/>'
+      + '<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType='
+      + '"application/vnd.openxmlformats-officedocument.presentationml.'
+      + 'slideMaster+xml"/>'
+      + '<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType='
+      + '"application/vnd.openxmlformats-officedocument.presentationml.'
+      + 'slideLayout+xml"/>'
+      + '<Override PartName="/ppt/theme/theme1.xml" ContentType="application/'
+      + 'vnd.openxmlformats-officedocument.theme+xml"/>'
+      + '<Override PartName="/docProps/core.xml" ContentType="application/'
+      + 'vnd.openxmlformats-package.core-properties+xml"/>';
+    slides.forEach(function (_, i) {
+      overrides += '<Override PartName="/ppt/slides/slide' + (i + 1)
+        + '.xml" ContentType="application/vnd.openxmlformats-officedocument.'
+        + 'presentationml.slide+xml"/>';
+      if (noted[i]) {
+        overrides += '<Override PartName="/ppt/notesSlides/notesSlide'
+          + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-'
+          + 'officedocument.presentationml.notesSlide+xml"/>';
+      }
+    });
+    if (anyNotes) {
+      overrides += '<Override PartName="/ppt/notesMasters/notesMaster1.xml"'
+        + ' ContentType="application/vnd.openxmlformats-officedocument.'
+        + 'presentationml.notesMaster+xml"/>';
+    }
+    charts.forEach(function (_, i) {
+      overrides += '<Override PartName="/ppt/charts/chart' + (i + 1)
+        + '.xml" ContentType="application/vnd.openxmlformats-'
+        + 'officedocument.drawingml.chart+xml"/>';
+    });
+    zip.addText('[Content_Types].xml',
+      XML_HEAD + '<Types xmlns="http://schemas.openxmlformats.org/package/'
+      + '2006/content-types">' + defaults + overrides + '</Types>');
+
+    return { blob: zip.blob(), skipped: skipped, slides: slides.length };
+  }
+
+  return { build: build, _zip: Zip, _hex: hex, _crc32: crc32 };
+})();
