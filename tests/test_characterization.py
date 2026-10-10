@@ -2446,8 +2446,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # after the last pass (deckGen), and puts paintSlide back.
 # Speed (gestures): light nudge, owed X/Y/W/H, zoom stamp, editor registry,
 # throttled notes bookkeeping, virtual Style system table; review fixes.
-EXPECTED_MD5 = "69db0cc0cb73dd378245f92a8988f10f"
-EXPECTED_BYTES = 5521443
+# Speed (ribbon): fitEditRibbon remembers by its inputs (group signatures),
+# predicted folds, coalesced resize, readouts on change, reader band memo; review fixes.
+EXPECTED_MD5 = "03f5127fa702ac6066d58c6196f19acc"
+EXPECTED_BYTES = 5547964
 
 
 def _render_example() -> str:

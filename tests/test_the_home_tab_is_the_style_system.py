@@ -54,7 +54,8 @@ def test_the_style_system_never_folds(out):
     grp = out.split('<span class="rbn-grp rbn-type rbn-stylesys" data-tab="home"')[1] \
         .split('<span class="rbn-lab">Style system</span>')[0]
     assert 'class="fx-tile big-tile rbn-tall" id="dsg-design-btn"' in grp
-    assert "        &&!g.classList.contains('rbn-stylesys')" in out
+    assert "\n    'rbn-stylesys',\n" in out.split("  var RBN_NEVER_FOLD=[")[1] \
+        .split("];")[0]
     # T463: sized by the one standing-tile rule
     assert "#dsg-design-btn.big-tile{" not in out
     assert (".rbn-row>.fx-tile.rbn-tall,.rbn-row>.rbn-tall>.fx-tile{\n"

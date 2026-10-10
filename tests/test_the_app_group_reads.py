@@ -115,7 +115,10 @@ def test_the_ribbon_still_refuses_to_wrap():
     app = assets.app_js()
     # T605: the tab strip and the band are measured too, and the band
     # folds its least-used groups into doors before it would scroll
-    assert ("    if(over($('#ab-tabs'))||over(band)||over(bar)||over(sb))\n"
+    assert "    var els=[tabs,band,bar,sb];\n" in app
+    assert ("    var r0=els.map(function(e){return bandOver(e)?e.scrollWidth:null;});"
+            in app)
+    assert ("    if(r0.some(function(r){return r!==null;}))\n"
             "      cl.add('rbc1');") in app
     assert "BAND_FOLD.forEach(function(sel){" in app
     assert ".ab-band{display:flex;flex-wrap:nowrap;" in css

@@ -1559,119 +1559,274 @@
     if(f) f.addEventListener('click',function(){
       setRibbonFold(!ribbonFolded());});
   })();
-  /* Content and available width determine a fit; selection highlights do
-     not. Reuse the last arrangement before unfolding and measuring it. */
-  function ribbonFitKey(bar){
-    return ribbonFitHead(bar,true)+'\n'+ribbonFitShape(bar);
-  }
-  /* THE KEY WITHOUT ITS LAYOUT (2026-10-08, user: "the clicking on things
-     is super duper slow"). The key was every group's words -- ~50KB --
-     rebuilt two or three times a click, and its clientWidth and computed
-     font were the reads that forced a style and layout pass over a ribbon
-     the selection had just changed -- which the replay then changed again
-     and laid out a second time. So it comes in two parts:
-     - the SHAPE (the bar's contents, the body's classes, the side rail)
-       needs neither, and is kept until something in the bar changes it.
-       A MutationObserver says so, read synchronously through
-       takeRecords(); a write of the value an attribute or a text already
-       had is not a change.
-     - the HEAD (width and font) is read for real at the end of every fit.
-       When the shape has not moved, it is trusted only while nothing that
-       could move it has happened: the bar's ResizeObserver and the
-       window's resize clear it, and the classes and inline styles of the
-       page, the deck and the bar are its signature. When the shape HAS
-       moved there is no early way out anyway, so the last head is only
-       the guess the memo is looked up by: a replay re-reads both before
-       it is believed (T539's own check), and a wrong guess costs a climb,
-       never a wrong row. */
-  var ribbonShapeObs=null,ribbonShapeBar=null,ribbonShapeVal=null;
+  /* ---- FITTING THE ROW: WHAT GOES IN, WHAT EACH STATE NEEDS -----------
+     (2026-10-09, speed. The owner: "if this is not able to load quick,
+     and not be laggy, then no matter how good the features are no one
+     will ever use this".) A tab click, a selection and every step of a
+     window drag re-fitted the row, and each fit climbed the ladder below
+     from the bottom with a forced style-and-layout pass of the whole
+     ribbon after every rung and every fold: 7.2 s of a 22-step window
+     drag at 4x, 0.2-0.4 s for the Design tab or a figure selected.
+     T539's memo was meant to stop that and almost never hit, because its
+     key was the bar as the last fit LEFT it -- the doors it built and the
+     words on them -- and a key was good for one exact width.
+     Three parts now, and only the last one ever measures:
+     - WHAT GOES IN (ribbonFitInput): what the fit is given, never what it
+       did. Each group's controls, words and visibility -- its fold door
+       left out, the door being the fit's -- kept on the group until a
+       MutationObserver says that group changed; which groups are on the
+       row; the page's classes less the rungs; the width's BRACKET (the
+       ERCW rungs and the 1600px type step are functions of the width).
+       Not the width itself.
+     - WHAT EACH STATE NEEDS: a set of rungs and folded groups is a STATE,
+       and the length of the row a state makes is a fact about the
+       content, not the window -- every group is flex:none, so the row is
+       as long at 1000px as at 1900px (measured: Home at rest scrolls to
+       1339px at every width from 800 to 1300). A state is measured once
+       per input, as how far its last group reaches, and that answers
+       "does it fit?" at ANY width in the bracket: arithmetic for a tab
+       seen before, a selection seen before and every width a window drag
+       passes through again. A width within two pixels of the answer is
+       measured rather than guessed.
+     - THE CLIMB (ribbonFitClimb): the ladder exactly as it was -- the
+       spacing rungs, the View fold, folding from the right, the never-
+       fold groups last, the give-back -- asked of states instead of the
+       screen. The row is changed to a state only to measure it, and once
+       at the end for the answer; a fit that ends where the row already
+       is writes nothing at all.
+     What was decided without measuring is checked after the frame has
+     painted (ribbonFitVerify), when reading the layout costs nothing: a
+     row that did not come out as predicted is forgotten and fitted again
+     by measuring, so a wrong memory costs a frame, never a clipped row.
+     T539's "a state seen before is replayed, not re-measured" is this
+     memory, with a key that can come round again. */
   var ribbonW=null;
-  var RBN_SHAPE_CLS=['rbn-grp','rbn-cell','strip-frame','rbn-hid'];
-  function ribbonShapeCls(v){
-    var t=String(v||'').split(/\s+/);
-    return RBN_SHAPE_CLS.map(function(c){return t.indexOf(c)>=0;}).join();
+  /* what the fit itself writes on a group, a door or the bar -- never a
+     reason to fit again, and never part of what goes in */
+  var RBN_FIT_OUT={'rbn-folded':1,'rbn-shelved':1,'rbn-fit':1,'rbn-odd':1,
+    'has-val':1,'shelf-open':1,'fmt-open':1};
+  function ribbonOutCls(c){return RBN_FIT_OUT[c]===1;}
+  function ribbonRungCls(c){return c.indexOf('erc')===0;}
+  /* the auto-hides' peeks follow the pointer and move nothing in the bar;
+     tab-animation shows the slide's build numbers (its one rule) and comes
+     and goes with the Animation tab, which the groups on the row say */
+  function ribbonDeckVolatile(c){
+    return ribbonRungCls(c)||c==='film-peek'||c==='rbn-peek'
+      ||c==='tab-animation';
   }
-  /* the words of a node list, or null if it holds anything but words */
-  function ribbonListText(list){
-    var s='';
-    for(var i=0;i<list.length;i++){
-      if(list[i].nodeType!==3) return null;
-      s+=list[i].data;
-    }
-    return s;
+  function ribbonClsLess(v,drop){
+    var t=String(v||'').split(/\s+/),o=[];
+    for(var i=0;i<t.length;i++) if(t[i]&&!drop(t[i])) o.push(t[i]);
+    return o.join(' ');
   }
-  function ribbonShapeSeen(recs){
-    /* judged by where each thing ENDS, not by every step on the way: a
-       readout hidden and shown again inside one refresh is no change.
-       The first record of an attribute holds what it was before; the
-       first rewrite of a node's words (textContent=, no sibling either
-       side) took away all of its children, so what it removed is what
-       the node said before. */
-    var seen=new Map(),words=[];
-    function first(t,k){
-      var s=seen.get(t);
-      if(!s) seen.set(t,s={});
-      if(s[k]) return false;
-      s[k]=1;return true;
+  /* WHOSE CHANGE IS IT: the group a node sits in, or the group whose row
+     is on the shelf (T453). null: the bar's own holders, whose `hidden`
+     is read live at every fit. */
+  function ribbonSigOwner(el){
+    if(!el||!el.closest) return null;
+    var g=el.closest('.rbn-grp');
+    if(g) return g;
+    if(rbnShelfFor&&el.closest('#rbn-shelf-body')) return rbnShelfFor;
+    return null;
+  }
+  var ribbonSigObs=null,ribbonSigBar=null,ribbonSigAll=true;
+  /* SOMETHING ON THE BAR MOVED since the last fit -- a click in a door's
+     pop-up, a door's words read again -- whether or not it is what goes
+     in. Every fit used to rebuild the doors when anything on the bar had
+     changed, which shut their pop-ups and the View menu; a fit that finds
+     the row already right still does that much (ribbonFitClosePops). */
+  var ribbonBarStir=false;
+  /* the class changes T539's key saw: a control becoming or ceasing to be
+     a group, a cell, a strip or put away */
+  var RBN_STIR_CLS=['rbn-grp','rbn-cell','strip-frame','rbn-hid'];
+  function ribbonClsStir(a,b){
+    var x=' '+String(a||'')+' ',y=' '+String(b||'')+' ';
+    for(var i=0;i<RBN_STIR_CLS.length;i++){
+      var c=' '+RBN_STIR_CLS[i]+' ';
+      if((x.indexOf(c)>=0)!==(y.indexOf(c)>=0)) return true;
     }
-    for(var i=0;i<recs.length&&ribbonShapeVal!==null;i++){
+    return false;
+  }
+  function ribbonSigSeen(recs){
+    for(var i=0;i<recs.length;i++){
       var r=recs[i],t=r.target;
-      if(r.type==='attributes'){
-        var k=r.attributeName;
-        if(!first(t,'@'+k)) continue;
-        var now=t.getAttribute(k);
+      var el=(t&&t.nodeType===1)?t:(t&&t.parentNode);
+      if(r.type!=='attributes') ribbonBarStir=true;
+      else {
+        var k=r.attributeName,now=t.getAttribute(k);
         if(now===r.oldValue) continue;
-        if(k==='class'&&ribbonShapeCls(now)===ribbonShapeCls(r.oldValue)) continue;
-      } else if(r.type==='characterData'){
-        if(!first(t,'#data')||t.data===r.oldValue) continue;
-      } else {
-        var gone=ribbonListText(r.removedNodes);
-        if(gone!==null&&ribbonListText(r.addedNodes)!==null){
-          if(!first(t,'#text')) continue;
-          if(!r.previousSibling&&!r.nextSibling){words.push([t,gone]);continue;}
+        if(k!=='class'||ribbonClsStir(now,r.oldValue)) ribbonBarStir=true;
+        if(k==='class'&&ribbonClsLess(now,ribbonOutCls)
+           ===ribbonClsLess(r.oldValue,ribbonOutCls)) continue;
+      }
+      /* the door and the words on it are the fit's own */
+      if(el&&el.closest&&el.closest('.rbn-foldbtn')) continue;
+      var g=ribbonSigOwner(el);
+      if(g){
+        /* whether a group is on the row at all is read live, every fit */
+        if(!(r.type==='attributes'&&t===g
+             &&(r.attributeName==='hidden'||r.attributeName==='data-off')))
+          g._rbnSig=null;
+        continue;
+      }
+      if(r.type==='attributes') continue;
+      if(el&&el.closest&&el.closest('#rbn-shelf')) continue;
+      /* something outside every group: read them all again */
+      ribbonSigAll=true;
+    }
+  }
+  function ribbonSigWatch(bar){
+    if(ribbonSigBar===bar) return;
+    if(ribbonSigObs) ribbonSigObs.disconnect();
+    ribbonSigObs=null;ribbonSigBar=bar;ribbonSigAll=true;
+    if(window.MutationObserver){
+      ribbonSigObs=new MutationObserver(ribbonSigSeen);
+      ribbonSigObs.observe(bar,{subtree:true,childList:true,
+        characterData:true,characterDataOldValue:true,
+        attributes:true,attributeOldValue:true,
+        attributeFilter:['id','hidden','data-off','class','data-say']});
+    }
+  }
+  /* a group's row, wherever it is: in place, in its door, or on the shelf */
+  function ribbonGroupRow(g){
+    for(var c=g.firstElementChild;c;c=c.nextElementSibling)
+      if(c.classList.contains('rbn-row')) return c;
+    return rbnFoldRow(g);
+  }
+  /* ONE GROUP'S SHARE OF WHAT GOES IN, kept on the group until the
+     observer says it changed: its row and label -- what T539's key read
+     of it -- never its fold door. The View fold is the fit's too: while
+     it is down, the controls it hid are read as they were before it
+     (viewWasHidden), which is how it gives them back. Interned, so a
+     key holds a number per group rather than its words. */
+  var RBN_SIG_SEL='.rbn-cell,.strip-frame,[hidden],[data-off],.rbn-hid,[data-say]';
+  var RBN_VIEW_SEL=null,ribbonSigIds=new Map(),ribbonSigNext=0;
+  /* the controls the View fold hides, and its door */
+  function ribbonViewSel(){
+    if(RBN_VIEW_SEL===null) RBN_VIEW_SEL=VIEW_FOLD.map(function(p){
+      return '#'+p[0];}).join(',')+',#vw-morewrap';
+    return RBN_VIEW_SEL;
+  }
+  function ribbonGroupSig(g){
+    if(g._rbnSig!=null) return g._rbnSigId;
+    var row=ribbonGroupRow(g),nodes=row?[row]:[];
+    for(var c=g.firstElementChild;c;c=c.nextElementSibling)
+      if(c!==row&&!c.classList.contains('rbn-foldwrap')) nodes.push(c);
+    var sel=viewFolded?RBN_SIG_SEL+','+ribbonViewSel():RBN_SIG_SEL;
+    var parts=[ribbonClsLess(g.className,ribbonOutCls),
+      g.getAttribute('data-tab'),g.getAttribute('data-say'),
+      g.getAttribute('data-fold-ic'),g.nextElementSibling?'':'last'];
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i];
+      parts.push(n.textContent);
+      var els=[].slice.call(n.querySelectorAll(sel));
+      if(n.matches(sel)) els.unshift(n);
+      for(var j=0;j<els.length;j++){
+        var el=els[j],cl=el.classList,hid=el.hidden;
+        if(viewFolded&&el.id){
+          if(el.id==='vw-morewrap') hid=true;
+          else if(viewWasHidden&&Object.prototype.hasOwnProperty.call(
+            viewWasHidden,el.id)) hid=!!viewWasHidden[el.id];
         }
-      }
-      ribbonShapeVal=null;
-    }
-    for(var j=0;j<words.length&&ribbonShapeVal!==null;j++)
-      if(words[j][0].textContent!==words[j][1]) ribbonShapeVal=null;
-  }
-  function ribbonFitShape(bar){
-    if(ribbonShapeBar!==bar){
-      if(ribbonShapeObs) ribbonShapeObs.disconnect();
-      ribbonShapeObs=null;ribbonShapeBar=bar;ribbonShapeVal=null;
-      if(window.MutationObserver){
-        ribbonShapeObs=new MutationObserver(ribbonShapeSeen);
-        ribbonShapeObs.observe(bar,{subtree:true,childList:true,
-          characterData:true,characterDataOldValue:true,
-          attributes:true,attributeOldValue:true,
-          attributeFilter:['id','hidden','data-off','class','data-say']});
+        var off=el.getAttribute('data-off'),say=el.getAttribute('data-say');
+        var hc=cl.contains('rbn-hid');
+        if(!hid&&off===null&&say===null&&!hc&&!cl.contains('rbn-cell')
+           &&!cl.contains('strip-frame')) continue;
+        parts.push(el.id+'|'+hid+'|'+off+'|'+hc+'|'+say);
       }
     }
-    if(ribbonShapeObs) ribbonShapeSeen(ribbonShapeObs.takeRecords());
-    else ribbonShapeVal=null;
-    if(ribbonShapeVal===null)
-      ribbonShapeVal=Array.from(bar.querySelectorAll(
-        '.rbn-grp,.rbn-cell,.strip-frame,[hidden],[data-off],.rbn-hid')).map(function(el){
-        return [el.id,el.hidden,el.getAttribute('data-off'),
-          el.classList.contains('rbn-hid'),el.getAttribute('data-say'),el.textContent].join('|');
-      }).join('\n');
-    return [document.body.className,
-      deckEl.classList.contains('rbn-side'),ribbonShapeVal].join('\n');
+    var s=parts.join('\u0001'),id=ribbonSigIds.get(s);
+    if(id===undefined){
+      /* a long session's worth of distinct groups: start the table over,
+         and the memory keyed by it. A number is never given out twice,
+         so a group still holding an old one can never be taken for
+         another. */
+      if(ribbonSigIds.size>=1500){ribbonSigIds.clear();ribbonFitMemo.clear();}
+      id=++ribbonSigNext;ribbonSigIds.set(s,id);
+    }
+    g._rbnSig=s;g._rbnSigId=id;
+    return id;
   }
+  /* on the row: neither the group nor anything holding it is hidden or
+     off its tab (the selection's groups sit in .et-fmt, hidden whole) */
+  function ribbonGrpShown(g,bar){
+    for(var n=g;n&&n!==bar;n=n.parentNode)
+      if(n.hidden||(n.nodeType===1&&n.hasAttribute('data-off'))) return false;
+    return true;
+  }
+  /* WHAT GOES IN, as a key, with the groups it read. The key stops short
+     of the width, which ribbonFitRun puts in front of it. */
+  function ribbonFitInput(bar,head){
+    ribbonSigWatch(bar);
+    /* THE VIEW FOLD STAYS DOWN. A control it hid that something showed
+       again meanwhile (applyPage un-hides Slides/Versions on every slide
+       it draws) went back behind the fold on the next fit, which opened
+       and refolded View every time; a fit that keeps the fold where it is
+       has to put it back itself, or the control sits in the folded row
+       and syncRibbonGroups judges its group by it (an empty Panes group
+       on the Familiar layout's Design tab). */
+    if(viewFolded){
+      var vfix=[];
+      VIEW_FOLD.forEach(function(p){
+        var b=document.getElementById(p[0]);
+        if(!b||b.hidden) return;
+        b.hidden=true;
+        var g=b.closest('.rbn-grp');
+        if(g&&vfix.indexOf(g)<0) vfix.push(g);
+      });
+      if(vfix.length) sizeRibbonGroups(vfix);
+    }
+    if(ribbonSigObs) ribbonSigSeen(ribbonSigObs.takeRecords());
+    else ribbonSigAll=true;
+    var gs=$$('.rbn-grp',bar);
+    if(ribbonSigAll){
+      gs.forEach(function(g){g._rbnSig=null;});
+      ribbonSigAll=!ribbonSigObs;
+    }
+    var W=head.w;
+    var parts=[document.documentElement.className,document.body.className,
+      ribbonClsLess(deckEl.className,ribbonDeckVolatile),head.font,head.big,
+      window.devicePixelRatio||1,
+      ERCW.map(function(r){return W<r[1]?1:0;}).join('')];
+    var shown=[],idx=new Map(),calc=new Map();
+    gs.forEach(function(g,i){
+      idx.set(g,i);
+      if(!ribbonGrpShown(g,bar)) return;
+      shown.push(g);
+      var p=i+':'+ribbonGroupSig(g);
+      /* a chooser is a door at every width (T441), and a door is as wide
+         as the choice it wears */
+      if(g.classList.contains('rbn-compact')){
+        var c=rbnReadoutCalc(g);calc.set(g,c);p+=':'+c.fin;
+      }
+      parts.push(p);
+    });
+    return {key:parts.join('\n'),gs:gs,shown:shown,idx:idx,calc:calc};
+  }
+  /* WHAT CAN MOVE THE BAR'S WIDTH: the classes and inline styles of the
+     page, the deck and the bar -- less what only rearranges what is
+     INSIDE the bar (the rungs, the shelf, the selection's styling hook:
+     clientWidth reads 1351 under every rung at 1366px) */
   function ribbonHeadSig(bar){
     var de=document.documentElement,b=document.body;
     return [de.className,de.getAttribute('style'),b.getAttribute('style'),
-      deckEl.className,deckEl.getAttribute('style'),deckEl.hidden,
-      bar.className,bar.getAttribute('style'),bar.hidden].join('|');
+      ribbonClsLess(deckEl.className,ribbonDeckVolatile),
+      deckEl.getAttribute('style'),deckEl.hidden,
+      ribbonClsLess(bar.className,ribbonOutCls),bar.getAttribute('style'),
+      bar.hidden].join('|');
   }
+  /* the width and the type, read for real only when something that could
+     move them has happened: the bar's ResizeObserver and the window's
+     resize clear it, and the signature above is checked every time */
   function ribbonFitHead(bar,fresh){
     var sig=ribbonHeadSig(bar);
-    if(!fresh&&ribbonW&&ribbonW.bar===bar&&ribbonW.sig===sig) return ribbonW.head;
-    var w=bar.clientWidth,head=w+'\n'+window.getComputedStyle(bar).font;
+    if(!fresh&&ribbonW&&ribbonW.bar===bar&&ribbonW.sig===sig) return ribbonW;
+    var w=bar.clientWidth;
+    var h={bar:bar,sig:sig,w:w,font:window.getComputedStyle(bar).font,
+      big:!!(window.matchMedia&&window.matchMedia('(min-width:1600px)').matches)};
     /* a bar with no width (a hidden deck) is never the one trusted */
-    ribbonW=(window.ResizeObserver&&w)?{bar:bar,head:head,sig:sig}:null;
-    return head;
+    ribbonW=(window.ResizeObserver&&w)?h:null;
+    return h;
   }
   var ribbonFitFrame=null,qatFitFrame=null,guidesFitFrame=null;
   function scheduleRibbonFit(){
@@ -1714,212 +1869,552 @@
     /* a folded bar has no width to measure: scrollWidth would read 0 and
        the ladder would climb every rung for nothing */
     if(deckEl.classList.contains('rbn-fold')) return;
-    var shape=ribbonFitShape(bar),last=bar._fitKey||'';
-    var nl=last.indexOf('\n'),head=null;
-    if(nl>=0) nl=last.indexOf('\n',nl+1);
-    /* nothing in the bar changed, so only its width or font can have */
-    if(nl>=0&&last.slice(nl+1)===shape) head=ribbonFitHead(bar);
-    /* the bar changed: look the memo up at the head last read */
-    else if(ribbonW&&ribbonW.bar===bar) head=ribbonW.head;
-    var fitKey=(head===null?ribbonFitHead(bar,true):head)+'\n'+shape;
-    if(bar._fitKey===fitKey) return;
-    /* T539: A STATE SEEN BEFORE IS REPLAYED, NOT RE-MEASURED. Selecting
-       an object carries the ribbon to its contextual tab and deselecting
-       carries it back, and each move changed the key above -- so every
-       click on the canvas re-ran the climb below: 150ms of forced layout
-       (`over` alone 121ms) inside the mousedown, on the example deck at
-       1440px (2026-09-29 profile). The climb's answer depends only on
-       what the key already captures, so it is kept per key and put back
-       directly; a replay that does not land on the recorded result falls
-       through to the real climb. */
-    var memo=ribbonFitMemo[fitKey];
-    if(memo&&ribbonFitReplay(bar,memo,fitKey)) return;
-    /* the climb is kept under the width it is really judged at */
-    fitKey=ribbonFitHead(bar,true)+'\n'+shape;
-    /* BEFORE anything is measured: a stale column count is a wrong width,
-       so re-counting here is both the fix for a group that grew a control
-       since the last count and the only way the density rungs below are
-       judged against the row that is actually on screen.
-       Unfolding View first is part of that — every rung has to be judged
-       against the full row, or a bar that folded once at 1280px would
-       stay folded after you maximised the window. */
-    foldViewGroup(false);
-    rbnUnfoldAll();
-    sizeRibbonGroups();
-    /* T441: the choosers are compact by design, not by width */
-    rbnFoldCompact();
-    sizeRibbonGroups();
-    var cl=deckEl.classList;
-    ERC.forEach(function(c){cl.remove(c);});
-    cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
-    if(cl.contains('rbn-side')){
-      /* a column is not short of width and has no rungs at all — leaving
-         one stamped on would shrink the rail's type for no reason */
-      ERCW.forEach(function(r){cl.remove(r[0]);});
-      if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
-      bar._fitKey=ribbonFitKey(bar);
-      return;
+    /* a width taken on trust that the row turns out not to have (the bar
+       moved before its ResizeObserver said so) is read again, once */
+    if(!ribbonFitRun(bar,false)) ribbonFitRun(bar,true);
+  }
+  var ribbonFitLast=null;
+  var ribbonFitStats={fits:0,measured:0,guessed:0,verified:0,refit:0,late:0};
+  function ribbonFitRun(bar,fresh){
+    var head=ribbonFitHead(bar,fresh),W=head.w;
+    if(!W) return true;
+    var inp=ribbonFitInput(bar,head);
+    var side=deckEl.classList.contains('rbn-side');
+    var key=W+'\n'+(side?'side':'row')+'\n'+inp.key;
+    /* nothing that goes into the fit has changed, and the row is still
+       as the last fit left it */
+    if(bar._fitKey===key&&ribbonFitIntact(bar,inp)){
+      if(ribbonBarStir){ribbonBarStir=false;ribbonFitClosePops(bar);}
+      return true;
     }
-    if(!bar.clientWidth) return;
-    /* T464: "OVER" IS OVERFLOWED OR WRAPPED. While the shelf (T453) was
-       open the bar was flex-wrap:wrap so the shelf could take a line of
-       its own -- and a wrapping bar never overflows: a row too wide for
-       it puts its last group on the shelf's line instead, scrollWidth
-       reads as fitting, every rung comes off, and the Whole deck group
-       sat under the Design tab's row the moment Page size opened its
-       shelf. A group that is not on the first group's line is the
-       overflow, and is measured as such.
-       T498: the shelf is a grid row of its own now (deck.css), so the
-       groups' row never wraps and clips like the closed bar; the
-       wrapped test stays as the safety net it was written to be. */
-    var over=function(){
-      if(bar.scrollWidth>bar.clientWidth+1) return true;
-      var top=null,wrapped=false;
-      $$('.rbn-grp',bar).forEach(function(g){
-        if(wrapped||g.hidden||g.hasAttribute('data-off')) return;
-        var r=g.getBoundingClientRect(); if(!r.width) return;
-        if(top===null) top=r.top;
-        else if(Math.abs(r.top-top)>1) wrapped=true;
-      });
-      return wrapped;
+    ribbonFitStats.fits++;
+    var ctx={bar:bar,W:W,gs:inp.gs,shown:inp.shown,idx:inp.idx,
+      calc:inp.calc,fam:null,measured:0,guessed:0,stale:false};
+    ctx.calcOf=function(g){
+      var c=ctx.calc.get(g);
+      if(!c){c=rbnReadoutCalc(g);ctx.calc.set(g,c);}
+      return c;
     };
-    ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
-    /* the reminder text gives up its room before any control tightens */
-    if(over()) cl.add('erc-nohint');
-    for(var i=0;i<ERC.length;i++){
-      if(!over()) break;
-      cl.add(ERC[i]);
+    ctx.readout=function(g){return ctx.calcOf(g).fin;};
+    ribbonFitPrepare(ctx);
+    var cl=deckEl.classList,fin,finOver=false;
+    if(side){
+      /* a column is not short of width and has no rungs at all -- leaving
+         one stamped on would shrink the rail's type for no reason */
+      fin=ribbonFitBase();
+      ERCW.forEach(function(r){if(cl.contains(r[0])) cl.remove(r[0]);});
+      ribbonFitApply(fin,ctx,true);
+    } else {
+      /* the constant half's rungs are a pure function of the width */
+      ERCW.forEach(function(r){
+        var on=W<r[1]; if(cl.contains(r[0])!==on) cl.toggle(r[0],on);});
+      ctx.fam=ribbonFitFamily(inp.key);
+      ctx.r={};
+      /* what is already known about a state, without measuring it */
+      ctx.peek=function(st){
+        var m=ctx.fam.m.get(ribbonStateSig(st,ctx));
+        var d=m?ribbonFitDecide(m,W,ctx.fam):null;
+        if(d!==null){ctx.guessed++;ribbonFitStats.guessed++;}
+        return d;
+      };
+      ctx.over=function(st,quiet){
+        if(ctx.stale) return false;
+        var sig=ribbonStateSig(st,ctx),m=ctx.fam.m.get(sig),r=null;
+        var d=m?ribbonFitDecide(m,W,ctx.fam):null;
+        if(m) r=m.r;
+        /* a fold state never measured: the row it makes is the row of one
+           that was, less each newly folded group's width and plus its
+           door's (ribbonFitPredict) */
+        if(d===null&&st.F.length&&!ctx.fam.exact){
+          r=ribbonFitPredict(st,ctx);
+          if(r===null&&ribbonFitDoors(st,ctx)) r=ribbonFitPredict(st,ctx);
+          if(ctx.stale) return false;
+          d=(r===null)?null:ribbonFitDecideR(r,W);
+        }
+        if(d===null){
+          ribbonFitApply(st,ctx,false);
+          m=ribbonFitMeasure(ctx,st);
+          if(m.cw!==W){ctx.stale=true;return false;}
+          ctx.fam.m.set(sig,m);
+          d=ribbonFitDecide(m,W,ctx.fam);r=m.r;
+        } else if(!quiet){ctx.guessed++;ribbonFitStats.guessed++;}
+        ctx.r[sig]=r;
+        return d;
+      };
+      fin=ribbonFitClimb(ctx);
+      /* the answer was asked about on the way up: this is a look-up */
+      finOver=ctx.over(fin,true);
+      if(ctx.stale){ribbonW=null;bar._fitKey=null;ribbonFitLast=null;return false;}
+      ribbonFitApply(fin,ctx,false);
     }
-    /* the save readout goes AFTER the density rungs, not with the hint:
-       it is informative (where your work is) where the hint is
-       decorative — but it still goes before any control shrinks to its
-       last rung or the row clips (2026-08-18) */
-    if(over()) cl.add('erc-nostatus');
-    /* still over after every rung: fold the one group that is not about
-       the selection, rather than let the row clip. sizeRibbonGroups has
-       to run again — it counts the controls that are showing, and seven
-       of them just stopped */
-    if(over()){
-      cl.add('erc-tight');
-      foldViewGroup(true);
-      sizeRibbonGroups();
+    ribbonFitFinish(fin,ctx);
+    bar._fitKey=key;
+    ribbonFitLast={bar:bar,rungs:ribbonFitRungsOn(),view:viewFolded,
+      F:fin.F.slice(),over:finOver};
+    /* the fit's own changes -- doors built, rows moved, View folded -- are
+       what it DID, and never a reason to read what goes in again */
+    if(ribbonSigObs) ribbonSigObs.takeRecords();
+    ribbonBarStir=false;
+    var fsig=side?'':ribbonStateSig(fin,ctx);
+    ribbonFitVerifyLater(side?null:{key:key,input:inp.key,W:W,
+      fam:ctx.fam,fin:fin,idx:ctx.idx,sig:fsig,r:ctx.r[fsig],
+      over:finOver,check:ctx.guessed>0});
+    return true;
+  }
+  function ribbonFitDecideR(r,W){
+    if(r>=W+2.5) return true;
+    if(r<=W+0.5) return false;
+    return null;
+  }
+  function ribbonRungKey(st){
+    return ''+st.nohint+st.erc+st.nostatus+st.tight;
+  }
+  /* THE FOLDS ARE ARITHMETIC. Every group is its own flex:none item in one
+     row, so folding one changes the row by exactly what the group gives up
+     for its door: a state measured at the same rungs, less the width of
+     each group it folds and plus that group's door, is the state's own
+     length -- to the 1/64px the browser lays groups out in. The widths are
+     kept per rung (an unfolded group's, and a door's for the choice it
+     wears) from every measurement. null when one is not known. */
+  function ribbonFitPredict(st,ctx){
+    var fam=ctx.fam,rk=ribbonRungKey(st),list=fam.byRung.get(rk);
+    if(!list) return null;
+    var want=new Map();
+    st.F.forEach(function(g){want.set(ctx.idx.get(g),g);});
+    function door(i,g){return fam.d.get(rk+'|'+i+':'+ctx.readout(g));}
+    for(var b=0;b<list.length;b++){
+      var base=list[b],r=base.r,ok=!base.wrapped;
+      want.forEach(function(g,i){
+        if(!ok) return;
+        var d=door(i,g);
+        if(base.F.has(i)){
+          /* folded in both: the door may be wearing another choice now */
+          var was=fam.d.get(rk+'|'+i+':'+base.F.get(i));
+          if(d===undefined||was===undefined) ok=false; else r+=d-was;
+          return;
+        }
+        var u=fam.u.get(rk+'|'+i);
+        if(u===undefined||d===undefined) ok=false; else r+=d-u;
+      });
+      base.F.forEach(function(said,i){
+        if(!ok||want.has(i)) return;
+        var u=fam.u.get(rk+'|'+i),was=fam.d.get(rk+'|'+i+':'+said);
+        if(u===undefined||was===undefined) ok=false; else r+=u-was;
+      });
+      if(ok) return r;
     }
-    /* STILL OVER: fold the rightmost group into a button that opens
-       its row, and again until it fits (T187) -- the way PowerPoint
-       collapses a group on a narrow window. It is the rung that
-       makes spreading the controls out affordable at all. */
-    var guard=0;
-    while(over()&&guard++<12&&rbnFoldOne())
-      sizeRibbonGroups();
-    /* T589: THE LAST RESORT IS A DOOR, NEVER THE EDGE. Whole slide and
-       Build order never fold (T441/T445, user: "make sure buttons like
+    return null;
+  }
+  /* EVERY DOOR AT ONCE: the first fold the climb asks about at a set of
+     rungs folds every group that could ever fold and measures them all in
+     one layout, so the folds and the give-back after it are arithmetic
+     rather than a layout each (T187, T589, T464). Once per rung set. */
+  function ribbonFitDoors(st,ctx){
+    var fam=ctx.fam,rk=ribbonRungKey(st);
+    if(fam.doors.has(rk)) return false;
+    fam.doors.add(rk);
+    /* never the group you are in: folding it moves its row into a menu
+       and back, which drops the focus and ends a drag (the Opacity
+       slider stopped after one step, and the arrow keys went on to nudge
+       the selection) -- its door is measured if the climb ever asks */
+    var act=document.activeElement;
+    var all=ctx.shown.filter(function(g){
+      if(g.classList.contains('rbn-compact')||!ribbonGroupRow(g)) return false;
+      if(act&&act!==document.body&&g.contains(act)) return false;
+      for(var k=0;k<RBN_NEVER_FOLD.length;k++)
+        if(RBN_NEVER_FOLD[k]!=='rbn-nofold'&&g.classList.contains(RBN_NEVER_FOLD[k]))
+          return false;
+      return true;});
+    if(!all.length) return false;
+    var t={nohint:st.nohint,erc:st.erc,nostatus:st.nostatus,tight:st.tight,F:all};
+    var sig=ribbonStateSig(t,ctx);
+    if(fam.m.has(sig)) return false;
+    ribbonFitApply(t,ctx,false);
+    var m=ribbonFitMeasure(ctx,t);
+    if(m.cw!==ctx.W){ctx.stale=true;return false;}
+    fam.m.set(sig,m);
+    return true;
+  }
+  function ribbonFitBase(){
+    return {nohint:0,erc:0,nostatus:0,tight:0,F:[]};
+  }
+  function ribbonFitCopy(s){
+    return {nohint:s.nohint,erc:s.erc,nostatus:s.nostatus,tight:s.tight,
+      F:s.F.slice()};
+  }
+  function ribbonFitRungsOn(){
+    var cl=deckEl.classList,s='';
+    ['erc-nohint','erc1','erc2','erc3','erc-nostatus','erc-tight']
+      .forEach(function(c){s+=cl.contains(c)?'1':'0';});
+    return s;
+  }
+  /* the row is as the last fit left it: someone else (a layout, the
+     shelf's own clicks) may have unfolded or folded a group since */
+  function ribbonFitIntact(bar,inp){
+    var L=ribbonFitLast;
+    if(!L||L.bar!==bar||L.view!==viewFolded||L.rungs!==ribbonFitRungsOn())
+      return false;
+    for(var i=0;i<inp.shown.length;i++){
+      var g=inp.shown[i];
+      if(g.classList.contains('rbn-folded')
+         !==(g.classList.contains('rbn-compact')||L.F.indexOf(g)>=0))
+        return false;
+    }
+    return true;
+  }
+  /* THE ROW AS EVERY FIT STARTS IT: the choosers folded and wearing their
+     choice (T441), a chooser that went away given its row back, the
+     shelf's row back on the shelf (T453), and every group whose controls
+     changed counted again (sizeRibbonGroups). The width folds stay where
+     they are: the answer moves only what differs from it. */
+  function ribbonFitPrepare(ctx){
+    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;
+    ctx.gs.forEach(function(g){
+      if(!g.classList.contains('rbn-compact')) return;
+      var f=g.classList.contains('rbn-folded');
+      if(g.hidden){if(f) rbnUnfoldGroup(g);}
+      else if(!f) rbnFoldGroup(g);
+      /* the door wears the choice the key was made with (a pressed change
+         is read onto it a frame later otherwise, rbnReadoutBoot) */
+      else if(ctx.calc.has(g)) rbnFoldReadoutWrite(g,ctx.calc.get(g));
+    });
+    rbnShelfRestore();
+    var size=[];
+    ctx.gs.forEach(function(g){
+      /* the View fold changes the count only of the groups it hides in */
+      var want=(g._rbnSigId||0)
+        +(viewFolded&&g.querySelector(ribbonViewSel())?'v':'');
+      if(g._rbnSized!==want){size.push(g);g._rbnSized=want;}
+    });
+    if(size.length) sizeRibbonGroups(size);
+  }
+  /* BRING THE ROW TO A STATE, touching only what differs from it. `all`
+     unfolds every width fold, on the row or not (the side rail has none) */
+  function ribbonFitApply(st,ctx,all){
+    var cl=deckEl.classList;
+    function rung(c,on){if(cl.contains(c)!==!!on) cl.toggle(c,!!on);}
+    rung('erc-nohint',st.nohint);
+    for(var i=0;i<ERC.length;i++) rung(ERC[i],i<st.erc);
+    rung('erc-nostatus',st.nostatus);
+    rung('erc-tight',st.tight);
+    if(viewFolded!==!!st.tight){
+      foldViewGroup(!!st.tight);
+      /* sizeRibbonGroups counts the controls that are showing, and seven
+         of them just stopped (or started) */
+      var vg=[];
+      ribbonViewSel().split(',').forEach(function(s){
+        var el=document.querySelector(s),g=el&&el.closest('.rbn-grp');
+        if(g&&vg.indexOf(g)<0) vg.push(g);
+      });
+      vg.forEach(function(g){g._rbnSized=(g._rbnSigId||0)+(viewFolded?'v':'');});
+      if(vg.length) sizeRibbonGroups(vg);
+    }
+    (all?ctx.gs:ctx.shown).forEach(function(g){
+      if(g.classList.contains('rbn-compact')) return;
+      var want=st.F.indexOf(g)>=0,is=g.classList.contains('rbn-folded');
+      if(is&&!want) rbnUnfoldGroup(g);
+      else if(want&&!is) rbnFoldGroup(g);
+      /* a door kept from before wears the choice it is measured by */
+      else if(want&&ctx.calcOf) rbnFoldReadoutWrite(g,ctx.calcOf(g));
+    });
+  }
+  /* THE ONE PLACE THE ROW IS MEASURED: its width, what scrolled past it,
+     a group on a second line (T464), and how far the groups really reach
+     -- which is what the state needs at any width. */
+  function ribbonFitMeasure(ctx,st){
+    var bar=ctx.bar,cw=bar.clientWidth,sw=bar.scrollWidth,fam=ctx.fam;
+    var b=bar.getBoundingClientRect(),x0=b.left+bar.clientLeft;
+    var top=null,wrapped=false,reach=0,lefts=fam.order?null:[];
+    var rk=st?ribbonRungKey(st):null,F=new Map();
+    ctx.shown.forEach(function(g){
+      var r=g.getBoundingClientRect(),i=ctx.idx.get(g);
+      if(lefts) lefts.push([r.left,i]);
+      if(!r.width) return;
+      if(top===null) top=r.top;
+      else if(Math.abs(r.top-top)>1) wrapped=true;
+      if(r.right-x0>reach) reach=r.right-x0;
+      /* each group's own width at these rungs, folded or not (the
+         choosers are doors in every state, and need no keeping) */
+      if(rk===null||g.classList.contains('rbn-compact')) return;
+      if(g.classList.contains('rbn-folded')){
+        var said=ctx.readout(g);
+        F.set(i,said);fam.d.set(rk+'|'+i+':'+said,r.width);
+      } else fam.u.set(rk+'|'+i,r.width);
+    });
+    /* the order the groups stand in on screen (flex `order` decides it):
+       rightmost first to fold, leftmost first to be given back */
+    if(lefts){
+      lefts.sort(function(p,q){return p[0]-q[0];});
+      fam.order=new Map();
+      lefts.forEach(function(p,k){fam.order.set(p[1],k);});
+    }
+    /* what scrolled past IS the row's length when it did. A reach that
+       disagrees with it by more than rounding means something other than
+       the groups is in the row, and this input is measured, never guessed */
+    if(sw>cw+1&&Math.abs(sw-reach)>1.5) fam.exact=true;
+    var m={cw:cw,sw:sw,r:reach,wrapped:wrapped,F:F};
+    if(rk!==null){
+      var list=fam.byRung.get(rk);
+      if(!list) fam.byRung.set(rk,list=[]);
+      list.push(m);
+      ctx.measured++;ribbonFitStats.measured++;
+    }
+    return m;
+  }
+  /* DOES A STATE OVERFLOW AT WIDTH W. Measured at this very width, the
+     answer is the one T464's over() gave: scrollWidth past clientWidth+1,
+     or a group on a second line. Measured at another width, the row's own
+     length answers -- but only where rounding cannot matter: within two
+     pixels of the edge, after a wrap, or for a row with more than groups
+     in it, null, and the state is measured again. */
+  function ribbonFitDecide(m,W,fam){
+    if(m.cw===W) return m.wrapped||m.sw>W+1;
+    if(m.wrapped||fam.exact) return null;
+    if(m.r>=W+2.5) return true;
+    if(m.r<=W+0.5) return false;
+    return null;
+  }
+  /* a state's name: its rungs, and the groups it folds with the choice
+     each door would wear -- a door is as wide as its words */
+  function ribbonStateSig(st,ctx){
+    var s=''+st.nohint+st.erc+st.nostatus+st.tight;
+    if(!st.F.length) return s;
+    return s+'|'+st.F.map(function(g){
+      return ctx.idx.get(g)+':'+ctx.readout(g);}).sort().join('|');
+  }
+  /* THE LADDER, asked of states (T187, T441, T445, T464, T589).
+     Below the floor the row genuinely does not fit even flattened, and
+     the only moves left -- clip, scroll, wrap -- are all forbidden.
+     Standing the toolbar on its end is the layout that has room, and the
+     Side button does exactly that; it is NOT done automatically, because
+     a toolbar that teleports over a choice you just made was tried and
+     rejected (2026-08-07). Floor measured by squeezing the resting ribbon
+     10px at a time: 929px on 2026-08-10, 959px on 2026-08-16. Below it the
+     remedy is Guides > Toolbar on the right, and T498 SAYS so, once
+     (rbnOverflowNotice, after the frame). */
+  var RBN_NEVER_FOLD=['rbn-fixed',
+    /* Keep up to date never folds (T202: the point of it is to be seen) */
+    'rbn-sources',
+    /* T444: the Style system is never folded (2026-09-14, user: "I NEVER
+       want this to be hidden. NEVER") */
+    'rbn-stylesys',
+    /* Lists are an editing primitive, not an infrequent option: keeping
+       Paragraph open leaves List and Numbered direct targets when the
+       ribbon is tight (2026-09-21) */
+    'rbn-paragrp',
+    /* T441/T445: a group that says so never folds -- Build order and
+       Whole slide on Animation (2026-09-14, user: "make sure buttons like
        those in 'Order' are not getting squashed out, as they are really
-       important") -- and they are the right-hand end of the Animation
-       tab (T453), so below the floor THEY were what the clip took. At
-       1280px with a text box selected Build order began past the
-       ribbon's edge, and the Animation panel button could not be
-       pressed at all (2026-09-30, user: "the annimaion pannel is still
-       not opening"). A door is one click from its row; the edge is
-       none. So once every other group is a door and the row still does
-       not fit, Whole slide folds, then Build order; the give-back below
-       opens either again if the row has room. */
-    if(over()){
-      var last=$$('.rbn-grp.rbn-nofold',bar).filter(function(g){
-        return !g.hidden&&!g.hasAttribute('data-off')
-          &&!g.classList.contains('rbn-folded');});
+       important") -- until the last resort below */
+    'rbn-nofold',
+    /* T383: one tile folds into one tile -- nothing to gain, and the
+       check would wear a chevron for no reason */
+    'rbn-check','rbn-cancel'];
+  function ribbonFitClimb(ctx){
+    var over=ctx.over,st=ribbonFitBase();
+    var pos=function(g){
+      var p=ctx.fam.order&&ctx.fam.order.get(ctx.idx.get(g));
+      return p===undefined||p===null?-1:p;
+    };
+    var byLeft=function(list){
+      return list.sort(function(x,y){return pos(x)-pos(y);});};
+    var hasRow=function(g){return !!ribbonGroupRow(g);};
+    /* THE SPACING RUNGS, in the order they are given up: the reminder
+       text before any control tightens; the density rungs; then the save
+       readout -- it is informative (where your work is) where the hint is
+       decorative, but it still goes before any control shrinks to its
+       last rung or the row clips (2026-08-18). The answer is the first of
+       these that fits. Every rung only takes room away (measured over 750
+       ladders: five layouts, four selections, every tab, 1000-1900px), so
+       the first that fits is found by halving between what is already
+       known to run over and what is known to fit -- after the row at
+       rest, three measurements at most where the climb took up to six. */
+    var L=[];
+    for(var k=0;k<6;k++) L.push({nohint:k>=1?1:0,erc:Math.max(0,Math.min(3,k-1)),
+      nostatus:k>=5?1:0,tight:0,F:[]});
+    var lo=-1,hi=L.length;
+    for(k=0;k<L.length;k++){
+      var p=ctx.peek(L[k]);
+      if(p===true&&k>lo) lo=k;
+      if(p===false&&k<hi) hi=k;
+    }
+    if(lo<hi){
+      /* the row at rest first: on most tabs at most widths it fits, and
+         asking about a rung before it restyles the whole ribbon twice */
+      if(lo<0&&hi>0){if(over(L[0])) lo=0; else hi=0;}
+      while(hi-lo>1&&!ctx.stale){
+        var mid=(lo+hi)>>1;
+        if(over(L[mid])) lo=mid; else hi=mid;
+      }
+      st=ribbonFitCopy(L[Math.min(hi,L.length-1)]);
+    } else {
+      /* what is remembered disagrees with itself: ask in order, as the
+         ladder always did */
+      if(over(st)) st.nohint=1;
+      for(var i=0;i<ERC.length;i++){
+        if(ctx.stale||!over(st)) break;
+        st.erc=i+1;
+      }
+      if(over(st)) st.nostatus=1;
+    }
+    /* still over after every rung: fold the one group that is not about
+       the selection, rather than let the row clip (foldViewGroup) */
+    if(over(st)) st.tight=1;
+    /* STILL OVER: fold the rightmost group into a button that opens its
+       row, and again until it fits (T187) -- the way PowerPoint collapses
+       a group on a narrow window. A rightmost group with no row to fold
+       ends the folding, as rbnFoldGroup's false always ended it. */
+    var guard=0;
+    while(!ctx.stale&&over(st)&&guard++<12){
+      var cand=byLeft(ctx.shown.filter(function(g){
+        if(g.classList.contains('rbn-compact')||st.F.indexOf(g)>=0) return false;
+        for(var k=0;k<RBN_NEVER_FOLD.length;k++)
+          if(g.classList.contains(RBN_NEVER_FOLD[k])) return false;
+        return true;}));
+      var g=cand.length?cand[cand.length-1]:null;
+      if(!g||!hasRow(g)) break;
+      st.F=st.F.concat([g]);
+    }
+    /* T589: THE LAST RESORT IS A DOOR, NEVER THE EDGE. Once every other
+       group is a door and the row still does not fit, Whole slide folds,
+       then Build order (at 1280px with a text box selected Build order
+       began past the edge and the Animation panel could not be opened,
+       2026-09-30); the give-back below opens either again if it can. */
+    if(!ctx.stale&&over(st)){
+      var last=ctx.shown.filter(function(g){
+        return g.classList.contains('rbn-nofold')&&st.F.indexOf(g)<0
+          &&!g.classList.contains('rbn-compact')&&hasRow(g);});
       last.sort(function(x,y){
         return (x.classList.contains('rbn-order')?1:0)
           -(y.classList.contains('rbn-order')?1:0);});
-      for(var li=0;li<last.length&&over();li++){
-        rbnFoldGroup(last[li]);sizeRibbonGroups();}
+      for(var li=0;li<last.length&&!ctx.stale&&over(st);li++)
+        st.F=st.F.concat([last[li]]);
     }
     /* T464: GIVE BACK WHAT THE LAST FOLD OVER-BOUGHT. Folding from the
-       right, one group at a time, stops the moment the row fits -- and
-       the fold that finally makes it fit is often a wide group whose
-       107px door frees far more than was needed. On Design at 935px
-       that was Layout (407px): by the time it folded, Whole deck, Page
-       furniture, Spacing and Apply had all folded before it for 21, 86,
-       92 and 40px, and the row then sat at 624px of 935 with five doors
-       on it. Each folded group is offered its row back, leftmost first
-       (the tab's own order of importance), and keeps it if the row
-       still fits. Compact groups are folded by choice and stay so. */
-    var back=$$('.rbn-grp.rbn-folded',bar).filter(function(g){
-      return !g.hidden&&!g.hasAttribute('data-off')
-        &&!g.classList.contains('rbn-compact');});
-    back.sort(function(x,y){
-      return x.getBoundingClientRect().left-y.getBoundingClientRect().left;});
-    back.forEach(function(g){
-      rbnUnfoldGroup(g);sizeRibbonGroups();
-      if(over()){rbnFoldGroup(g);sizeRibbonGroups();}
+       right stops the moment the row fits, and the fold that makes it fit
+       is often a wide group whose door frees far more than was needed (on
+       Design at 935px, Layout's 407px after four small ones). Each folded
+       group is offered its row back, leftmost first -- the tab's own order
+       of importance -- and keeps it if the row still fits. */
+    byLeft(st.F.slice()).forEach(function(g){
+      if(ctx.stale) return;
+      var F=st.F.filter(function(x){return x!==g;});
+      var t={nohint:st.nohint,erc:st.erc,nostatus:st.nostatus,tight:st.tight,F:F};
+      if(!over(t)) st.F=F;
     });
-    /* Below the floor the row genuinely does not fit even flattened, and
-       the only moves left — clip, scroll, wrap — are all forbidden.
-       Standing the toolbar on its end is the layout that has room, and
-       the Side button does exactly that; it is NOT done automatically,
-       because a toolbar that teleports over a choice you just made was
-       tried and rejected (2026-08-07).
-       Floor measured by squeezing the resting ribbon 10px at a time:
-       929px on 2026-08-10, 959px on 2026-08-16. The 30px is what View
-       costs once its three controls are honestly sized across two columns
-       instead of stacking into a third row and printing over their own
-       label; the tight rung's spacing gave 40px of the ~70px back. Below
-       it the remedy is Guides ▸ Toolbar on the right.
-       T498: ...and the remedy is SAID, once. The notice only ever lit
-       the gallery's warning row, which nobody has open while resizing,
-       so below the floor Build order's Layers lost its door with no
-       sign (the third review pass). */
+    return st;
+  }
+  /* WHAT REBUILDING THE DOORS USED TO DO, done only where it is due: a
+     door over a group whose controls changed reads its name and title
+     again (rbnFoldRefresh), every door on the row wears its choice, and a
+     change of fit closes what the old row had open -- a door's pop-up and
+     the View menu -- as unfolding everything used to. */
+  function ribbonFitClosePops(bar){
+    $$('.rbn-foldmenu',bar).forEach(function(m){
+      if(!m.hidden) overlayHide(m);});
+    if(viewFolded) closeViewMenu();
+  }
+  function ribbonFitFinish(fin,ctx){
+    ribbonFitClosePops(ctx.bar);
+    ctx.shown.forEach(function(g){
+      if(!g.classList.contains('rbn-folded')) return;
+      if(g._rbnDoorSig!==g._rbnSigId){
+        g._rbnDoorSig=g._rbnSigId;rbnFoldRefresh(g);}
+      else rbnFoldReadoutWrite(g,ctx.calc.get(g)||rbnReadoutCalc(g));
+    });
+    rbnShelfRestore();
+  }
+  /* WHAT EACH STATE NEEDS, per input: a font and the width's bracket are
+     part of the input. The most recently used are kept. */
+  var ribbonFitMemo=new Map();
+  function ribbonFitFamily(key){
+    var f=ribbonFitMemo.get(key);
+    if(f){ribbonFitMemo.delete(key);ribbonFitMemo.set(key,f);return f;}
+    if(ribbonFitMemo.size>=48)
+      ribbonFitMemo.delete(ribbonFitMemo.keys().next().value);
+    /* m: state -> what it measured; u/d: each group's width at a set of
+       rungs, open and as a door; byRung: the measurements at each set;
+       doors: the sets every door has been measured at */
+    f={m:new Map(),order:null,exact:false,u:new Map(),d:new Map(),
+      byRung:new Map(),doors:new Set()};
+    ribbonFitMemo.set(key,f);
+    return f;
+  }
+  /* forget every answer: the next fit measures from the bottom of the
+     ladder the way the climb always did (a font arriving, a test) */
+  function ribbonFitForget(){
+    ribbonFitMemo.clear();ribbonW=null;ribbonFitLast=null;
+    var bar=$('#edit-tools'); if(bar) bar._fitKey=null;
+  }
+  /* AFTER THE FRAME, when the layout is already done and reading it costs
+     nothing: the overflow notice and the shelf's fade (T498), and the
+     check that a row decided from memory came out as predicted. One that
+     did not is forgotten and fitted again by measuring, at once.
+     A door that changed its words after the fit (rbnFoldReadouts, a frame
+     later) asks for the same look: a row that now runs past the edge is
+     fitted again -- the climb used to miss that until the next click. */
+  var ribbonVerifyWant=null,ribbonRecheck=false,ribbonVerifyT=0;
+  function ribbonFitVerifyLater(v){
+    if(v!==undefined) ribbonVerifyWant=v;
+    if(ribbonVerifyT) return;
+    ribbonVerifyT=1;
+    requestAnimationFrame(function(){
+      setTimeout(function(){ribbonVerifyT=0;ribbonFitVerify();},0);});
+  }
+  function ribbonFitRecheckLater(){
+    ribbonRecheck=true;ribbonFitVerifyLater();
+  }
+  function ribbonFitVerify(){
+    var v=ribbonVerifyWant,re=ribbonRecheck;
+    ribbonVerifyWant=null;ribbonRecheck=false;
+    var bar=$('#edit-tools');
+    if(!bar||bar.hidden||mode!=='edit'||deckEl.hidden||ribbonFolded()) return;
     if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
     rbnShelfScrollSync();
-    bar._fitKey=ribbonFitKey(bar);
-    ribbonFitRecord(fitKey,bar);
+    var L=ribbonFitLast;
+    if(ribbonFitHold||!L||L.bar!==bar||deckEl.classList.contains('rbn-side'))
+      return;
+    var own=!!(v&&v.check&&bar._fitKey===v.key);
+    if(!own&&!re) return;
+    var all=$$('.rbn-grp',bar),idx=new Map();
+    all.forEach(function(g,i){idx.set(g,i);});
+    var m=ribbonFitMeasure({bar:bar,idx:idx,fam:{order:true},
+      shown:all.filter(function(g){return ribbonGrpShown(g,bar);})});
+    var now=m.wrapped||m.sw>m.cw+1;
+    if(!own){
+      if(now&&!L.over){
+        ribbonFitStats.late++;
+        bar._fitKey=null;ribbonFitLast=null;fitEditRibbon();
+      }
+      return;
+    }
+    /* the width moved since: its own fit is on the way */
+    if(m.cw!==v.W) return;
+    ribbonFitStats.verified++;
+    /* the length it was decided by, measured or worked out */
+    if(now===v.over&&(typeof v.r!=='number'||Math.abs(v.r-m.r)<=0.75)){
+      if(!v.fam.m.has(v.sig)) v.fam.m.set(v.sig,m);
+      return;
+    }
+    /* not what the memory promised. If what goes in changed after the fit
+       (a door's choice read again), the fit was only late; otherwise the
+       memory is wrong, and all of it for this input goes */
+    var head=ribbonFitHead(bar,true);
+    var same=ribbonFitInput(bar,head).key===v.input
+      &&ribbonStateSig(v.fin,{idx:v.idx,readout:function(g){
+        return rbnReadoutCalc(g).fin;}})===v.sig;
+    if(same){
+      ribbonFitStats.refit++;
+      ribbonFitMemo.delete(v.input);
+    } else ribbonFitStats.late++;
+    bar._fitKey=null;ribbonFitLast=null;
+    fitEditRibbon();
   }
-  var ribbonFitMemo={};
-  function ribbonFitRungs(){
-    var out=[];
-    ERCW.forEach(function(r){out.push(r[0]);});
-    ERC.forEach(function(c){out.push(c);});
-    out.push('erc-nohint');out.push('erc-nostatus');out.push('erc-tight');
-    return out;
-  }
-  function ribbonFitRecord(key,bar){
-    if(Object.keys(ribbonFitMemo).length>60) ribbonFitMemo={};
-    var cl=deckEl.classList;
-    ribbonFitMemo[key]={
-      rungs:ribbonFitRungs().filter(function(c){return cl.contains(c);}),
-      view:!!viewFolded,
-      folded:$$('.rbn-grp.rbn-folded',bar).filter(function(g){
-        return !g.classList.contains('rbn-compact');}),
-      after:bar._fitKey};
-  }
-  function ribbonFitReplay(bar,m,key){
-    if(deckEl.classList.contains('rbn-side')) return false;
-    foldViewGroup(false);
-    /* A GROUP THAT ENDS FOLDED STAYS FOLDED (2026-10-08, "clicking on
-       things is super duper slow"). rbnUnfoldAll here unfolded every
-       group -- the compact choosers on every tab among them -- for most
-       to be folded straight back by the two calls below, rebuilding
-       their doors and moving their rows twice on every click. Those are
-       refreshed in place (rbnFoldRefresh); the rest unfold as before. */
-    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;
-    $$('.rbn-grp.rbn-folded',bar).forEach(function(g){
-      if((g.classList.contains('rbn-compact')&&!g.hidden)
-         ||m.folded.indexOf(g)>=0) rbnFoldRefresh(g);
-      else rbnUnfoldGroup(g);
-    });
-    rbnFoldCompact();
-    var cl=deckEl.classList;
-    ribbonFitRungs().forEach(function(c){cl.toggle(c,m.rungs.indexOf(c)>=0);});
-    if(m.view) foldViewGroup(true);
-    m.folded.forEach(function(g){if(bar.contains(g)) rbnFoldGroup(g);});
-    sizeRibbonGroups();
-    if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
-    rbnShelfScrollSync();
-    bar._fitKey=ribbonFitKey(bar);
-    if(bar._fitKey===m.after) return true;
-    delete ribbonFitMemo[key];
-    bar._fitKey=null;
-    return false;
-  }
+  /* for the browser checks */
+  window.SemDeckRibbonFit={stats:function(){return ribbonFitStats;},
+    forget:ribbonFitForget,
+    /* the fit as the climb always did it: nothing remembered */
+    refit:function(){ribbonFitForget();fitEditRibbon();}};   /* test hook */
   /* ---- the strip's ceiling ---------------------------------------------
      published to CSS as --film-max so ONE number drives the rendered
      column, the handle's own position and the drag: 46% of the editor,
@@ -2061,7 +2556,7 @@
      A group whose row does not fit becomes ONE worded button that
      opens the row as a popover -- the group's own name on the door,
      its controls untouched inside (the real elements, moved, never
-     copied). fitEditRibbon unfolds everything before it measures and
+     copied). fitEditRibbon judges every rung with nothing folded and
      folds from the right until the bar fits, so a wider window opens
      the groups out again by itself. Never the fixed groups, never the
      Drawing or Quick animate groups (a mode's exit must stay on the
@@ -2291,6 +2786,8 @@
     wrap.appendChild(btn);wrap.appendChild(menu);
     g.insertBefore(wrap,lab||null);
     g.classList.add('rbn-folded');
+    /* the door was built from what the group holds now (ribbonFitFinish) */
+    g._rbnDoorSig=g._rbnSigId;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       /* T453: a COMPACT group is one the user chose to keep folded, so
@@ -2311,13 +2808,18 @@
   }
   /* T441: the current choice of a folded group, read off the pressed
      control inside its row: a tile's word, a button's words, never a
-     chevron or a shortcut key */
-  function rbnFoldReadout(g){
-    var val=g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval');
-    if(!val) return;
+     chevron or a shortcut key.
+     WORKED OUT, THEN WRITTEN ONLY WHERE IT CHANGED (2026-10-09, speed).
+     The answer is a pure reading of the row (rbnReadoutCalc), which the
+     ribbon's fit also asks of a group it is only thinking of folding --
+     a door is as wide as its words -- and rbnFoldReadoutWrite puts it on
+     the door. Rewriting the same words, `hidden` and class on every
+     pressed or disabled change anywhere on the bar restyled every door
+     and woke the observers watching them, 22 times in one resize drag. */
+  function rbnReadoutCalc(g){
     /* T453: the row may be sitting in the shelf rather than in this
        group, and the readout is still this group's to keep true */
-    var row=rbnFoldRow(g);
+    var row=ribbonGroupRow(g);
     /* T467: EVERY choice in the row, one per strip or cell, joined.
        T518 split the former two-strip Timing group into separate doors,
        but custom layouts can still place several choosers in one group. */
@@ -2340,7 +2842,14 @@
     });
     ons.forEach(function(on){
       if(!shown(on)) return;
-      var box=(on.closest&&on.closest('.strip-frame,.rbn-cell,.sh-drop'))||on;
+      var box=on.closest&&on.closest('.strip-frame,.rbn-cell,.sh-drop');
+      /* past the row, the box is the door's own wrap (an .sh-drop), which
+         every loose choice in a folded row shares -- and so it is for a
+         row the fit is still only thinking of folding, in place. The
+         shelf is no wrap: there each loose choice is its own. */
+      if(!box||!row.contains(box))
+        box=(box||!(row.parentNode&&row.parentNode.id==='rbn-shelf-body'))
+          ?g:on;
       if(boxes.indexOf(box)>=0) return;
       boxes.push(box);
       /* T464: the WHOLE control's words, less what is not a word. The
@@ -2366,10 +2875,7 @@
     /* T479: a group may say its own answer (data-say) when the pressed
        controls are swatches with no words -- Background's */
     if(g.hasAttribute('data-say')) txt=g.getAttribute('data-say')||'';
-    val.textContent=txt;
-    val.hidden=!txt;
-    var btn=val.parentNode;
-    btn.classList.toggle('has-val',!!txt);
+    var res={row:!!row,txt:txt,fin:txt,dead:false,why:'',picked:false};
     /* T469: A DOOR OVER NOTHING LIVE IS NOT LIVE. Effect, Timing and
        Motion looked ready with nothing selected and opened shelves of
        disabled tiles (2026-09-15 review). A row whose every control
@@ -2388,9 +2894,6 @@
         for(var n=c;n&&n!==row;n=n.parentNode) if(n.hidden) return false;   /* nor hidden ones */
         return true;});
       var dead=ctl.every(function(c){return c.disabled;});
-      /* only when it changes: the observer that calls this watches
-         `disabled`, and re-setting the same value is still a mutation */
-      if(btn.disabled!==dead) btn.disabled=dead;
       /* T529: "no selection" was said with a figure selected -- the
          row is dead for another reason then, and the door says which:
          Start waits for an entrance, anything else does not apply to
@@ -2400,8 +2903,25 @@
         :(g.classList.contains('rbn-start')
           ||g.classList.contains('rbn-timing'))?'no entrance'
         :'not for this';
-      if(dead){val.textContent=why;val.hidden=false;
-        btn.classList.add('has-val');}
+      res.dead=dead;res.picked=picked;res.why=why;
+      if(dead) res.fin=why;
+    }
+    return res;
+  }
+  /* true when the door's words changed */
+  function rbnFoldReadoutWrite(g,c){
+    var val=g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval');
+    if(!val) return false;
+    var btn=val.parentNode,moved=false;
+    if(val.textContent!==c.fin){val.textContent=c.fin;moved=true;}
+    if(val.hidden!==!c.fin) val.hidden=!c.fin;
+    if(btn.classList.contains('has-val')!==!!c.fin)
+      btn.classList.toggle('has-val',!!c.fin);
+    if(c.row){
+      var dead=c.dead,picked=c.picked,why=c.why;
+      /* only when it changes: the observer that calls this watches
+         `disabled`, and re-setting the same value is still a mutation */
+      if(btn.disabled!==dead) btn.disabled=dead;
       var live=btn.getAttribute('data-title')||'';
       var want=dead?(live.split(' \u2014 ')[0]+' \u2014 '
         +(!picked?'select something on the slide first'
@@ -2409,26 +2929,47 @@
           :'not available for what is selected')):live;
       if(live&&btn.title!==want) btn.title=want;
     }
+    return moved;
   }
-  function rbnFoldReadouts(){
-    $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnFoldReadout);
+  function rbnFoldReadout(g){
+    if(!g.querySelector('.rbn-foldwrap>.rbn-foldbtn>.rbn-foldval')) return false;
+    return rbnFoldReadoutWrite(g,rbnReadoutCalc(g));
   }
-  /* T441: fold every compact group; the rest are the ladder's */
-  function rbnFoldCompact(){
-    var bar=$('#edit-tools'); if(!bar) return;
-    $$('.rbn-grp.rbn-compact',bar).forEach(function(g){
-      if(!g.hidden&&!g.classList.contains('rbn-folded')) rbnFoldGroup(g);});
-    rbnShelfRestore();
+  /* every folded door, or the ones named; true when any changed its words */
+  function rbnFoldReadouts(list){
+    var moved=false;
+    (list||$$('#edit-tools .rbn-grp.rbn-folded')).forEach(function(g){
+      if(g.classList.contains('rbn-folded')&&rbnFoldReadout(g)) moved=true;});
+    return moved;
   }
-  /* the readouts follow every pressed-state change on the bar */
+  /* THE READOUTS FOLLOW EVERY PRESSED-STATE CHANGE ON THE BAR -- of the
+     groups it happened in. A change outside every group reads them all,
+     as before; a door's own `disabled` is the readout's writing, not a
+     reason to read again. A door that changed its words may have changed
+     its width, so the row is looked at again after the frame. */
   function rbnReadoutBoot(){
     var bar=$('#edit-tools'); if(!bar||!window.MutationObserver) return;
-    var pending=false;
-    new MutationObserver(function(){
-      if(pending) return;pending=true;
-      requestAnimationFrame(function(){pending=false;rbnFoldReadouts();});
+    var pending=false,dirty=new Set(),all=false;
+    new MutationObserver(function(recs){
+      for(var i=0;i<recs.length;i++){
+        var r=recs[i],t=r.target;
+        if(t.classList&&t.classList.contains('rbn-foldbtn')) continue;
+        /* a write of the value it already had (sizePaneSync sets every
+           field's `disabled` on every refresh) changes no choice */
+        if(t.getAttribute(r.attributeName)===r.oldValue) continue;
+        var g=ribbonSigOwner(t);
+        if(g) dirty.add(g); else all=true;
+      }
+      if(pending||(!all&&!dirty.size)) return;
+      pending=true;
+      requestAnimationFrame(function(){
+        pending=false;
+        var list=all?null:Array.from(dirty);
+        all=false;dirty.clear();
+        if(rbnFoldReadouts(list)) ribbonFitRecheckLater();
+      });
     })
-      .observe(bar,{subtree:true,attributes:true,
+      .observe(bar,{subtree:true,attributes:true,attributeOldValue:true,
         attributeFilter:['aria-pressed','disabled','data-say']});
   }
   function rbnUnfoldGroup(g){
@@ -2447,8 +2988,9 @@
     g.classList.remove('rbn-folded');
   }
   /* WHAT REFOLDING WOULD HAVE GIVEN THE DOOR, without rebuilding it
-     (ribbonFitReplay keeps a group folded that it would only have
-     unfolded and folded straight back): the popover shut and the shelf
+     (the fit keeps a group folded that it would only have unfolded and
+     folded straight back, and calls this when what the group holds has
+     changed, ribbonFitFinish): the popover shut and the shelf
      given up exactly as rbnUnfoldGroup and rbnShelfRestore would leave
      them, and the name, title and readout read again as rbnFoldGroup
      would write them */
@@ -2478,11 +3020,11 @@
     rbnFoldReadout(g);
   }
   function rbnUnfoldAll(){
-    /* T453: EVERY measuring pass unfolds the whole bar and folds it
-       again -- fitEditRibbon to judge the row -- and each one hands the
-       shelf's row back to its group. Remember whose it was here, once,
-       so whoever refolds can put it back; patching the callers one at
-       a time is how the shelf shut itself on every selection change. */
+    /* T453: a pass that unfolds the whole bar (a layout moving its
+       controls; the fit did too, until 2026-10-09) hands the shelf's row
+       back to its group. Remember whose it was here, once, so whoever
+       refolds can put it back; patching the callers one at a time is how
+       the shelf shut itself on every selection change. */
     if(rbnShelfFor) rbnShelfWant=rbnShelfFor;
     $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnUnfoldGroup);
   }
@@ -2493,38 +3035,6 @@
     if(g.hidden||g.hasAttribute('data-off')||!document.contains(g)
        ||!g.classList.contains('rbn-folded')) return;
     rbnShelfOpen(g);
-  }
-  /* the rightmost group ON SCREEN that may fold: flex `order` decides
-     the visual order, so sort by position rather than by markup */
-  function rbnFoldOne(){
-    var bar=$('#edit-tools'); if(!bar) return false;
-    var gs=$$('.rbn-grp',bar).filter(function(g){
-      return !g.hidden&&!g.hasAttribute('data-off')
-        &&!g.classList.contains('rbn-folded')
-        &&!g.classList.contains('rbn-fixed')
-        /* Keep up to date never folds (T202: the point of it is to be
-           seen) */
-        &&!g.classList.contains('rbn-sources')
-        /* T444: the Style system is never folded (2026-09-14, user: "I
-           NEVER want this to be hidden. NEVER") */
-        &&!g.classList.contains('rbn-stylesys')
-        /* Lists are an editing primitive, not an infrequent option: keeping
-           Paragraph open leaves List and Numbered direct targets when the
-           ribbon is tight (2026-09-21). */
-        &&!g.classList.contains('rbn-paragrp')
-        /* T441/T445: a group that says so never folds -- Build order and
-           Whole slide on Animation (2026-09-14, user: "make sure buttons
-           like those in 'Order' are not getting squashed out, as they
-           are really important") */
-        &&!g.classList.contains('rbn-nofold')
-        /* T383: one tile folds into one tile -- nothing to gain, and
-           the check would wear a chevron for no reason */
-        &&!g.classList.contains('rbn-check')
-        &&!g.classList.contains('rbn-cancel');});
-    if(!gs.length) return false;
-    gs.sort(function(x,y){
-      return x.getBoundingClientRect().left-y.getBoundingClientRect().left;});
-    return rbnFoldGroup(gs[gs.length-1]);
   }
   function closeViewMenu(){
     var m=$('#vw-more-menu');
@@ -2763,19 +3273,27 @@
       }).observe(stage);
     }
     /* a fit measured against the fallback font sticks, because the bar's
-       box never changes when the real font finally arrives */
+       box never changes when the real font finally arrives -- and every
+       length the fit remembers was measured in the old one, so it forgets
+       them (ribbonFitForget) */
     try{
       if(document.fonts&&document.fonts.ready)
         document.fonts.ready.then(function(){
-          var bar=$('#edit-tools');if(bar) bar._fitKey=null;
+          ribbonFitForget();
           if(!deckEl.hidden){fitEditRibbon();fitQat();}});
       /* T487: .ready settles ONCE, for the batch in flight at boot; a
          face that arrives later (the bar's mono, first used when the
          deck opens) widened the thin bar 16px past its box at 1300px
-         and nothing re-judged it until the next window resize */
+         and nothing re-judged it until the next window resize.
+         MathJax's own faces (MJX*) arrive all through a reading session
+         as equations are typeset and never set a word on the ribbon, so
+         they leave its memory alone. */
       if(document.fonts&&document.fonts.addEventListener)
-        document.fonts.addEventListener('loadingdone',function(){
-          var bar=$('#edit-tools');if(bar) bar._fitKey=null;
+        document.fonts.addEventListener('loadingdone',function(e){
+          var faces=(e&&e.fontfaces)||[];
+          var math=faces.length&&[].every.call(faces,function(f){
+            return /^["']?MJX/i.test(String(f.family||''));});
+          if(!math) ribbonFitForget();
           if(!deckEl.hidden){fitEditRibbon();fitQat();}});
     }catch(e){}
     /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:

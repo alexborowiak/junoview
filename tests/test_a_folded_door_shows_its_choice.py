@@ -27,10 +27,20 @@ from __future__ import annotations
 
 
 def test_a_compact_group_folds_by_design(out):
-    assert "  function rbnFoldCompact(){" in out
-    assert ("    rbnUnfoldAll();\n    sizeRibbonGroups();\n"
-            "    /* T441: the choosers are compact by design, not by width */\n"
-            "    rbnFoldCompact();") in out
+    # every fit starts with the choosers folded (ribbonFitPrepare, which
+    # took over rbnFoldCompact's job), and the climb never folds or opens
+    # one for width (2026-10-09, speed)
+    prep = out.split("  function ribbonFitPrepare(ctx){")[1] \
+        .split("\n  }\n")[0]
+    assert ("      if(!g.classList.contains('rbn-compact')) return;\n"
+            "      var f=g.classList.contains('rbn-folded');\n"
+            "      if(g.hidden){if(f) rbnUnfoldGroup(g);}\n"
+            "      else if(!f) rbnFoldGroup(g);") in prep
+    assert "    rbnShelfRestore();" in prep
+    assert ("        if(g.classList.contains('rbn-compact')||st.F.indexOf(g)>=0)"
+            " return false;") in out
+    assert "      if(g.classList.contains('rbn-compact')) return;\n" \
+        "      var want=st.F.indexOf(g)>=0" in out
     # T594: Start, Text sequence and Each text step are sections of one
     # Timing door, Whole slide is a door, and Add animation is tiles in
     # the row again (the tab has room for them now)
@@ -44,10 +54,15 @@ def test_a_compact_group_folds_by_design(out):
 
 
 def test_the_door_reads_out_the_choice(out):
+    # worked out (rbnReadoutCalc, which the fit also asks of a group it is
+    # only thinking of folding), then written where it changed
     assert "  function rbnFoldReadout(g){" in out
+    assert "    return rbnFoldReadoutWrite(g,rbnReadoutCalc(g));" in out
     # T453: the row may be on the ribbon's shelf rather than inside
     # the group, and the readout is still that group's to keep true
-    assert "    var row=rbnFoldRow(g);" in out
+    assert "  function rbnReadoutCalc(g){" in out
+    assert "    var row=ribbonGroupRow(g);" in out
+    assert "    return rbnFoldRow(g);" in out
     # T467: every pressed control in the row, one per strip or cell,
     # joined -- "On click · By sentence"
     assert "    var ons=row?$$('[aria-pressed=\"true\"]',row):[];" in out
@@ -68,6 +83,7 @@ def test_build_order_and_whole_slide_never_fold(out):
     # that made it one); Build order still never folds, and leads the tab
     assert 'class="rbn-grp rbn-build rbn-compact" data-tab="animation"' in out
     assert 'class="rbn-grp rbn-order rbn-nofold" data-tab="animation"' in out
-    assert "        &&!g.classList.contains('rbn-nofold')" in out
+    assert "\n    'rbn-nofold',\n" in out.split("  var RBN_NEVER_FOLD=[")[1] \
+        .split("];")[0]
     assert '<span class="rbn-lab">Build order</span>' in out
     assert '<span class="rbn-lab">Whole slide</span>' in out

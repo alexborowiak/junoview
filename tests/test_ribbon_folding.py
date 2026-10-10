@@ -25,20 +25,24 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     assert "function rbnFoldGroup(g){" in out
     assert "function rbnUnfoldGroup(g){" in out
     assert "function rbnUnfoldAll(){" in out
-    assert "function rbnFoldOne(){" in out
-    # before anything is measured
-    assert ("    foldViewGroup(false);\n    rbnUnfoldAll();\n"
-            "    sizeRibbonGroups();") in out
-    # after every other rung -- and "over" means overflowed OR wrapped
-    # onto the shelf's line (T464), since a wrapping bar never overflows
-    assert ("    while(over()&&guard++<12&&rbnFoldOne())\n"
-            "      sizeRibbonGroups();") in out
-    assert "      if(bar.scrollWidth>bar.clientWidth+1) return true;\n" in out
-    assert "        else if(Math.abs(r.top-top)>1) wrapped=true;\n" in out
+    # the ladder is asked of states since 2026-10-09 (ribbonFitClimb):
+    # every rung is a state with nothing folded, and bringing the row to a
+    # state opens every group it does not fold -- before anything is measured
+    climb = out.split("  function ribbonFitClimb(ctx){")[1].split("\n  }\n")[0]
+    assert "nostatus:k>=5?1:0,tight:0,F:[]});" in climb
+    assert "      if(is&&!want) rbnUnfoldGroup(g);\n" in out
+    # after every other rung, the rightmost group that may fold, until it
+    # fits -- and "over" means overflowed OR wrapped onto the shelf's line
+    # (T464), since a wrapping bar never overflows
+    assert "    while(!ctx.stale&&over(st)&&guard++<12){" in climb
+    assert "      var g=cand.length?cand[cand.length-1]:null;\n" \
+        "      if(!g||!hasRow(g)) break;" in climb
+    assert "    if(m.cw===W) return m.wrapped||m.sw>W+1;\n" in out
+    assert "      else if(Math.abs(r.top-top)>1) wrapped=true;\n" in out
     # ...and the groups the greedy pass folded before the wide one that
     # made the row fit are offered their row back, leftmost first
-    assert "    var back=$$('.rbn-grp.rbn-folded',bar).filter(function(g){" in out
-    assert "      if(over()){rbnFoldGroup(g);sizeRibbonGroups();}\n" in out
+    assert "    byLeft(st.F.slice()).forEach(function(g){" in climb
+    assert "      if(!over(t)) st.F=F;\n" in climb
     # the real row moves into the popover; nothing is copied
     assert "    menu.appendChild(row);\n" in out
     assert "    if(row) g.insertBefore(row,wrap);\n" in out
@@ -51,12 +55,18 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     assert ("+'<span>'+esc(name)+'\\u00a0\\u25be</span><span class=\"rbn-foldval\">"
             "</span>';") in out
     # rightmost ON SCREEN, since flex order decides the visual order
-    assert ("return x.getBoundingClientRect().left"
-            "-y.getBoundingClientRect().left;") in out
+    # (read off the groups' rects when the row is measured, ribbonFitMeasure)
+    assert "      if(lefts) lefts.push([r.left,i]);\n" in out
+    assert "      lefts.sort(function(p,q){return p[0]-q[0];});\n" in out
     # (T445 took Quick animate off the ribbon, so its guard went too)
-    for never in ("'rbn-fixed'", "'rbn-cancel'", "'rbn-nofold'"):
-        assert f"&&!g.classList.contains({never})" in out, never
-    assert "&&!g.classList.contains('rbn-paragrp')" in out
+    never_fold = out.split("  var RBN_NEVER_FOLD=[")[1].split("];")[0]
+    for never in ("'rbn-fixed'", "'rbn-cancel'", "'rbn-nofold'",
+                  "'rbn-paragrp'"):
+        assert never in never_fold, never
+    climb = out.split("  function ribbonFitClimb(ctx){")[1].split("\n  }\n")[0]
+    assert ("        for(var k=0;k<RBN_NEVER_FOLD.length;k++)\n"
+            "          if(g.classList.contains(RBN_NEVER_FOLD[k])) return false;") \
+        in climb
     # a layout moves atoms out of rows; nothing may be folded meanwhile
     assert "if(typeof rbnUnfoldAll==='function') rbnUnfoldAll();" in out
     # T484: the popover is never wider than the window

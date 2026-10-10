@@ -1011,12 +1011,15 @@ def test_ribbon_group_columns_are_counted_before_every_fit(out):
     that is actually on screen. Measured after: View cols=2, row bottom
     65px, label top 83px -- no overlap, at 1400 and 1100px.
     """
-    assert "function sizeRibbonGroups(){" in out
+    assert "function sizeRibbonGroups(list){" in out
     # syncRibbonGroups delegates rather than keeping its own copy
     assert "sizeRibbonGroups();\n    /* groups appearing or leaving" in out
-    # ...and the fit re-counts BEFORE it measures anything
+    # ...and the fit re-counts BEFORE it measures anything -- every group
+    # whose controls changed since it was last counted (2026-10-09)
     fit = out.split("function fitEditRibbon(){")[1].split("function syncViewBtns")[0]
-    assert fit.index("sizeRibbonGroups();") < fit.index("bar.scrollWidth")
+    assert fit.index("if(size.length) sizeRibbonGroups(size);") \
+        < fit.index("bar.scrollWidth")
+    assert fit.index("ribbonFitPrepare(ctx);") < fit.index("fin=ribbonFitClimb(ctx);")
 
 
 def test_an_image_resizes_the_picture_not_the_letterbox(out):
@@ -1645,15 +1648,18 @@ def test_the_view_group_folds_rather_than_letting_the_row_clip(out):
     """
     assert 'id="vw-morewrap"' in out and 'id="vw-more-menu"' in out
     assert "function foldViewGroup(on){" in out
-    # folded exactly at the rung whose comment promised it
-    assert "cl.add('erc-tight');\n      foldViewGroup(true);" in out
+    # folded exactly at the rung whose comment promised it (a state of the
+    # ladder since 2026-10-09: ribbonFitApply brings the row to it)
+    assert ("rung('erc-tight',st.tight);\n    if(viewFolded!==!!st.tight){\n"
+            "      foldViewGroup(!!st.tight);") in out
     # ...and the count of showing controls re-run, since seven just left
-    assert "foldViewGroup(true);\n      sizeRibbonGroups();" in out
+    assert "      if(vg.length) sizeRibbonGroups(vg);" in out
     # every rung is judged against the FULL row, or a bar folded at 1280px
-    # would stay folded after the window is maximised
-    # ...and every folded GROUP opens out too before anything is measured
-    # (T187), for the same reason
-    assert "foldViewGroup(false);\n    rbnUnfoldAll();\n    sizeRibbonGroups();" in out
+    # would stay folded after the window is maximised: the spacing rungs
+    # are states with View open and no group folded (T187)...
+    assert "nostatus:k>=5?1:0,tight:0,F:[]});" in out
+    # ...and bringing the row to one opens every group it does not fold
+    assert "      if(is&&!want) rbnUnfoldGroup(g);" in out
     # the rows drive the real buttons, so each keeps its implementation
     assert "closeViewMenu();real.click();" in out
     # a row stands in for a toggle, so it has to show the toggle's state

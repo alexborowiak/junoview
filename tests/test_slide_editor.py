@@ -616,7 +616,7 @@ def test_the_ribbon_is_tabbed(out):
     # comment added inside the body used to push applyTab() past a fixed
     # 2600-char window and fail an ordering test for a reason that had
     # nothing to do with the ordering (2026-09-05)
-    block = out[i:out.index("function sizeRibbonGroups(){", i)]
+    block = out[i:out.index("function sizeRibbonGroups(list){", i)]
     assert "applyTab();" in block
     assert block.index("applyTab();") < block.index("sizeRibbonGroups();")
     # a poster has no build, so the whole Animate GROUP stands down there

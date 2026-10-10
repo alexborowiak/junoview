@@ -4703,40 +4703,94 @@
       return;
     closeBandFolds();
   });
+  /* WHAT THE LAST FIT LEARNED (2026-10-09, speed). A window drag re-ran
+     the whole climb below at every step -- every band unfolded, the
+     spacing stage taken off, the bar measured, refolded one group at a
+     time with a forced layout each: 1.4 s of main thread for a 22-step
+     drag over the 116-cell notebook at 4x. Most steps end where the last
+     one did, and that is decidable from what the climb measured: each
+     "too wide" it saw was a length the bar's contents need whatever the
+     window -- the bar scrolled by exactly that much -- so it is still too
+     wide while that length beats the new width, and the stage it bought
+     still stands. When the step would change nothing, nothing is
+     written; anything else, or anything changed in the header since
+     (bandFitDirty), is the climb as it always was. */
+  var bandFit=null,bandFitDirty=true,bandFitObs=null;
+  function bandOver(el){
+    return !!(el&&!el.hidden&&el.clientWidth
+      &&el.scrollWidth>el.clientWidth+1);
+  }
+  function bandFitKey(){
+    return document.body.className.replace(/\brbc\d\b/g,'')+'|'
+      +(window.devicePixelRatio||1);
+  }
+  function bandFitStill(els){
+    var F=bandFit;
+    if(!F||bandFitDirty||F.key!==bandFitKey()
+       ||F.rbc!==document.body.classList.contains('rbc1')) return false;
+    if(!F.rbc) return !els.some(bandOver);
+    var cw=els.map(function(e){return (e&&!e.hidden)?e.clientWidth:0;});
+    /* the spacing stage was bought by a bar that ran over; it stands while
+       that one still would */
+    if(!F.r0.some(function(r,i){return r!==null&&cw[i]&&r>cw[i]+1;}))
+      return false;
+    /* ...and each door the band grew, by the band it was folded from */
+    for(var j=0;j<F.rb.length;j++) if(!(F.rb[j]>cw[1]+1)) return false;
+    /* the band as it stands: fitting, or past its last door as before */
+    return !bandOver(els[1])||F.spent;
+  }
   function fitRibbon(){
     var bar=$('.appbar');
     /* a HIDDEN bar (welcome screen, present mode) measures 0 wide — do
        not escalate against that, it is not a real fit */
     if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
-    bandUnfoldAll();
-    cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
     /* the custom-view styling bar rides the same pass: it sits in
        #apptop under this bar and used to WRAP into a second band of
        chrome (2026-08-24). It now shares rbc1's spacing stage, and past
        that it scrolls sideways (its own overflow-x:auto floor) — the
        same ladder as the appbar, nothing clipped unreachable. */
     var sb=document.getElementById('stylebar');
-    function over(el){
-      return !!(el&&!el.hidden&&el.clientWidth
-        &&el.scrollWidth>el.clientWidth+1);
-    }
     /* T605: the tab strip and the band each scroll on their own */
-    var band=$('#filters-panel');
-    if(over($('#ab-tabs'))||over(band)||over(bar)||over(sb))
+    var band=$('#filters-panel'),tabs=$('#ab-tabs');
+    var top=$('#apptop');
+    if(!bandFitObs&&top&&window.MutationObserver){
+      bandFitObs=new MutationObserver(function(){bandFitDirty=true;});
+      /* data-tab: the band's tab decides which of its groups show
+         (.ab-band[data-tab] [data-abtab]), so a tab switch is new content */
+      bandFitObs.observe(top,{subtree:true,childList:true,
+        characterData:true,attributes:true,
+        attributeFilter:['hidden','class','style','data-tab']});
+    }
+    if(bandFitObs&&bandFitObs.takeRecords().length) bandFitDirty=true;
+    if(bandFitStill([tabs,band,bar,sb])) return;
+    /* the band's own doors, not the whole page's: the query walked every
+       card of every notebook open (77 ms of a resize drag at 4x) */
+    $$('.abgrp.ab-folded',top||document).forEach(bandUnfold);
+    cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
+    var els=[tabs,band,bar,sb];
+    var r0=els.map(function(e){return bandOver(e)?e.scrollWidth:null;});
+    var rb=[];
+    if(r0.some(function(r){return r!==null;}))
       cl.add('rbc1');
     /* ...and the band folds its least-used groups, one at a time, until
        it fits; past the last of them it scrolls, as before */
     BAND_FOLD.forEach(function(sel){
-      if(!over(band)) return;
+      if(!bandOver(band)) return;
       var g=$(sel);
       if(!g||!band.contains(g)||!g.getClientRects().length) return;
       /* a door that opens onto one button saves nothing and hides it */
       var live=$$('button',g).filter(function(x){
         return x.getClientRects().length;});
       if(live.length<2) return;
+      rb.push(band.scrollWidth);
       bandFold(g);
     });
+    bandFit={key:bandFitKey(),rbc:cl.contains('rbc1'),r0:r0,rb:rb,
+      spent:bandOver(band)};
+    /* the fit's own folding is no change to the header */
+    if(bandFitObs) bandFitObs.takeRecords();
+    bandFitDirty=false;
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
      under their filters), so the page offset has to follow its REAL
@@ -4803,8 +4857,10 @@
      never changes when the real font arrives, so neither resize nor the
      ResizeObserver re-fires. Re-fit once the fonts are truly in
      (2026-08-04: the ribbon sat icon-only beside a mile of empty bar). */
+  /* ...and every length the last fit kept was measured in the old face
+     (bandFitStill), so it is fitted from the bottom again */
   if(document.fonts&&document.fonts.ready)
-    document.fonts.ready.then(function(){measureChrome();});
+    document.fonts.ready.then(function(){bandFitDirty=true;measureChrome();});
   measureChrome();
   var menuBtn=$('#menubtn');
   function applyToc(show){

@@ -69,7 +69,8 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
         assert f'class="fx-tile big-tile" id="{tile}"' in out, tile
     assert ".big-strip .fx-tile{height:var(--rbn-tile-h);}" in out  # one tile
     # ...and it never folds: the point of it is to be seen
-    assert "&&!g.classList.contains('rbn-sources')" in out
+    assert "\n    'rbn-sources',\n" in out.split("  var RBN_NEVER_FOLD=[")[1] \
+        .split("];")[0]
     # the All images pane
     assert 'class="selpane imgpane" id="imgpane" hidden' in out
     assert "function renderImgPane(){" in out

@@ -89,5 +89,9 @@ def test_every_format_control_still_has_exactly_one_home():
 
 def test_a_folded_group_is_named_by_its_own_label(out):
     """A folded group must still say which focused job it opens."""
-    assert "  function rbnFoldOne(){" in out
-    assert "    return rbnFoldGroup(gs[gs.length-1]);" in out
+    # the climb picks the rightmost group that may fold (ribbonFitClimb,
+    # 2026-10-09), and the row is brought to that state through
+    # rbnFoldGroup, whose door wears the group's own label
+    assert "      var g=cand.length?cand[cand.length-1]:null;" in out
+    assert "      else if(want&&!is) rbnFoldGroup(g);" in out
+    assert "    var name=rbnGroupName(g)||'More';" in out

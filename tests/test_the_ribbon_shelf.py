@@ -82,9 +82,13 @@ def test_the_shelf_survives_every_measuring_pass(out):
     assert "    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;" in out
     assert "  function rbnShelfRestore(){" in out
     assert "    if(!g||rbnShelfFor) return;" in out
-    # both ends of every cycle
-    assert ("      if(!g.hidden&&!g.classList.contains('rbn-folded')) "
-            "rbnFoldGroup(g);});\n    rbnShelfRestore();") in out
+    # both ends of every cycle: a fit keeps the choosers folded (it no
+    # longer unfolds them, 2026-10-09) and puts the shelf back after
+    prep = out.split("  function ribbonFitPrepare(ctx){")[1] \
+        .split("\n  }\n")[0]
+    assert prep.index("    if(rbnShelfFor) rbnShelfWant=rbnShelfFor;") \
+        < prep.index("      else if(!f) rbnFoldGroup(g);") \
+        < prep.index("    rbnShelfRestore();")
     # a user close forgets it; bookkeeping does not
     assert "  function rbnShelfDismiss(){rbnShelfWant=null;rbnShelfClose();}" in out
     # ...and a tab change gives the row back to the tab it came from
@@ -108,9 +112,13 @@ def test_a_shelved_group_is_still_counted_as_occupied(out):
             "shelved.querySelectorAll(SEL)));") in out
     assert "        var stop=g.contains(n)?g:shelved;" in out
     assert "        while(n&&n!==stop){" in out
-    # and the readout reads the row wherever it is sitting
+    # and the readout reads the row wherever it is sitting (in place, in
+    # its door, or on the shelf: ribbonGroupRow falls back to rbnFoldRow)
     assert "  function rbnFoldRow(g){" in out
-    assert "    var row=rbnFoldRow(g);" in out
+    calc = out.split("  function rbnReadoutCalc(g){")[1].split("\n  }\n")[0]
+    assert "    var row=ribbonGroupRow(g);" in calc
+    grow = out.split("  function ribbonGroupRow(g){")[1].split("\n  }\n")[0]
+    assert "    return rbnFoldRow(g);" in grow
 
 
 def test_disappear_is_named_for_what_you_are_choosing(out):

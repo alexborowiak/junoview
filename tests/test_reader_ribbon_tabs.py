@@ -68,7 +68,11 @@ def test_the_band_folds_groups_and_never_wraps():
     assert ("var BAND_FOLD=['#ab-saveview','#ab-scope','#ab-tree','#ab-size',"
             in app)
     fit = app.split("  function fitRibbon(){")[1].split("\n  }\n")[0]
-    assert fit.index("bandUnfoldAll();") < fit.index("cl.add('rbc1');")
+    # a resize step that would change nothing writes nothing (bandFitStill,
+    # 2026-10-09); anything else unfolds the band's doors before it measures
+    assert fit.index("if(bandFitStill([tabs,band,bar,sb])) return;") \
+        < fit.index("$$('.abgrp.ab-folded',top||document).forEach(bandUnfold);") \
+        < fit.index("cl.add('rbc1');")
     assert "if(live.length<2) return;" in fit
     # the present bar carries whole groups, never a door
     take = app.split("  function pbTakeTools(){")[1].split("\n  }\n")[0]

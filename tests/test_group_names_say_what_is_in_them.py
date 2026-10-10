@@ -33,7 +33,11 @@ def test_the_two_names(out):
 
 
 def test_a_dead_door_says_why(out):
-    fn = out.split("  function rbnFoldReadout(g){")[1].split("\n  }\n")[0]
+    # worked out in rbnReadoutCalc, written in rbnFoldReadoutWrite
+    # (2026-10-09, speed: the fit asks the first of a door it may build)
+    fn = (out.split("  function rbnReadoutCalc(g){")[1].split("\n  }\n")[0]
+          + out.split("  function rbnFoldReadoutWrite(g,c){")[1]
+          .split("\n  }\n")[0])
     assert "var picked=(typeof selAnnot!=='undefined'&&selAnnot!==null);" \
         in fn
     assert ":(g.classList.contains('rbn-start')" in fn

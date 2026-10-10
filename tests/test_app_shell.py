@@ -142,8 +142,10 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     # the bar re-fits when its width changes WITHOUT a window resize
     # (rail collapse, docked builder, dragged builder edge)...
     assert "new ResizeObserver(function(){measureChrome();})" in out
-    # ...and when the fonts land: the fallback-font fit must not stick
-    assert "document.fonts.ready.then(function(){measureChrome();});" in out
+    # ...and when the fonts land: the fallback-font fit must not stick --
+    # nor what the last fit learned in that face (bandFitStill, 2026-10-09)
+    assert ("document.fonts.ready.then(function(){bandFitDirty=true;"
+            "measureChrome();});") in out
     assert "function measureChrome" in out
     assert "'--chrome-h',h+'px'" in out
 

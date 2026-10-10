@@ -336,13 +336,21 @@ def test_the_overflow_notice_tracks_every_ribbon_refit(out):
     """
     i = out.index("function fitEditRibbon(){")
     body = out[i:out.index("\n  /* ---- the thin top bar", i)]
-    # (T539: and the replay of a remembered fit is a refit too)
-    assert body.count("rbnOverflowNotice(bar);") == 3
-    side = body.index("if(cl.contains('rbn-side')){")
-    assert body.index("ERC.forEach(function(c){cl.remove(c);});") < side
-    assert body.index("cl.remove('erc-nohint')") < side
-    assert side < body.index("rbnOverflowNotice(bar);", side) < body.index(
-        "return;", side)
+    # since 2026-10-09 every fit -- the side rail's, a row worked out from
+    # memory, a row measured -- says so after the frame has painted, from
+    # the one place (ribbonFitVerify), when reading the layout is free
+    assert body.count("rbnOverflowNotice(bar);") == 1
+    run = body.split("  function ribbonFitRun(bar,fresh){")[1] \
+        .split("\n  }\n")[0]
+    assert "    ribbonFitVerifyLater(side?null:{" in run
+    side = run.index("    if(side){")
+    # the side rail is brought to the state with no rung at all
+    assert side < run.index("fin=ribbonFitBase();") \
+        < run.index("ribbonFitApply(fin,ctx,true);") \
+        < run.index("ribbonFitVerifyLater(")
+    verify = body.split("  function ribbonFitVerify(){")[1].split("\n  }\n")[0]
+    assert verify.index("rbnOverflowNotice(bar);") \
+        < verify.index("deckEl.classList.contains('rbn-side')")
 
 
 def test_every_control_on_the_ribbon_can_be_addressed(out):

@@ -18,11 +18,12 @@ from __future__ import annotations
 
 
 def test_the_never_fold_groups_fold_before_the_edge(out):
-    fit = out.split("  function fitEditRibbon(){")[1].split("\n  }\n")[0]
-    last = fit.index("var last=$$('.rbn-grp.rbn-nofold',bar)")
+    # the ladder is asked of states since 2026-10-09 (ribbonFitClimb)
+    fit = out.split("  function ribbonFitClimb(ctx){")[1].split("\n  }\n")[0]
+    last = fit.index("return g.classList.contains('rbn-nofold')&&st.F.indexOf(g)<0")
     # after every ordinary group has had its turn...
-    assert fit.index("while(over()&&guard++<12&&rbnFoldOne())") < last
+    assert fit.index("while(!ctx.stale&&over(st)&&guard++<12){") < last
     # ...and before the give-back, which may open them again
-    assert last < fit.index("var back=$$('.rbn-grp.rbn-folded',bar)")
+    assert last < fit.index("byLeft(st.F.slice()).forEach(function(g){")
     # Build order is the very last to go
     assert "return (x.classList.contains('rbn-order')?1:0)" in fit

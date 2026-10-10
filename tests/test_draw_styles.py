@@ -309,7 +309,8 @@ def test_nothing_is_ever_clipped_off_the_right(out):
     """
     assert ".deck.erc-tight .edit-tools.fmt-open .rbn-slide{display:none;}" \
         not in out
-    assert "cl.add('erc-tight')" in out
+    assert "if(over(st)) st.tight=1;" in out
+    assert "rung('erc-tight',st.tight);" in out
     # (the Slide group folds like the rest since T204, so Layout in
     # front of it stays in sight on a laptop)
     assert 'class="rbn-grp rbn-slide rbn-compact"' in out   # T479

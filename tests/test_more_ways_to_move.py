@@ -476,7 +476,7 @@ def test_the_small_ends_of_the_second_pass(out):
             "  transition-property:border-color,color,background-color,"
             "box-shadow;}") in out
     assert "        [].forEach.call(qb.children,function(c){qro.observe(c);});" in out
-    assert "        document.fonts.addEventListener('loadingdone',function(){" in out
+    assert "        document.fonts.addEventListener('loadingdone',function(e){" in out
     assert "      if(typeof fitQat==='function') requestAnimationFrame(fitQat);" in out
     # [22] the download says how it IS opened
     assert "    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '" in out
@@ -806,7 +806,8 @@ def test_the_ribbon_fit_after_the_third_pass(out):
             "{max-width:76px;}") in out
     # (T529: the state says WHY -- none of the three is longer than
     #  "no selection", so each still fits the 76px)
-    assert "      if(dead){val.textContent=why;val.hidden=false;" in out
+    assert "      if(dead) res.fin=why;" in out      # rbnReadoutCalc
+    assert "    if(val.hidden!==!c.fin) val.hidden=!c.fin;" in out
     assert "    var why=!picked?'no selection'" in out
     assert "        +(!picked?'select something on the slide first'" in out
     assert "    btn.setAttribute('data-title',btn.title);" in out

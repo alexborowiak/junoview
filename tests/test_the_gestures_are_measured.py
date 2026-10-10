@@ -23,15 +23,22 @@ from __future__ import annotations
 
 
 def test_the_fit_is_replayed_per_state(out):
-    fit = out.split("  function fitEditRibbon(){")[1].split("\n  }\n")[0]
-    assert "var memo=ribbonFitMemo[fitKey];" in fit
-    assert "if(memo&&ribbonFitReplay(bar,memo,fitKey)) return;" in fit
-    assert "ribbonFitRecord(fitKey,bar);" in out
-    rep = out.split("  function ribbonFitReplay(bar,m,key){")[1] \
+    # 2026-10-09: what each state of the row needs is remembered per input
+    # (ribbonFitFamily) and a state seen before is decided from it, at any
+    # width -- not re-measured
+    run = out.split("  function ribbonFitRun(bar,fresh){")[1] \
         .split("\n  }\n")[0]
-    # a replay that does not reproduce the climb's own result falls back
-    assert "if(bar._fitKey===m.after) return true;" in rep
-    assert "delete ribbonFitMemo[key];" in rep
+    assert "ctx.fam=ribbonFitFamily(inp.key);" in run
+    assert ("var sig=ribbonStateSig(st,ctx),m=ctx.fam.m.get(sig),r=null;\n"
+            "        var d=m?ribbonFitDecide(m,W,ctx.fam):null;") in run
+    # nothing that goes in has changed and the row is as it was left
+    assert "if(bar._fitKey===key&&ribbonFitIntact(bar,inp)){" in run
+    # a row decided from memory is checked after the frame, and a memory
+    # that does not reproduce the measured row is forgotten and refitted
+    assert "check:ctx.guessed>0});" in run
+    ver = out.split("  function ribbonFitVerify(){")[1].split("\n  }\n")[0]
+    assert "ribbonFitMemo.delete(v.input);" in ver
+    assert "bar._fitKey=null;ribbonFitLast=null;\n    fitEditRibbon();" in ver
 
 
 def test_the_strip_floor_waits_for_the_gesture(out):

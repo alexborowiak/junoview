@@ -1055,9 +1055,12 @@
     return c.classList.contains('dbtn')
       &&!c.classList.contains('big-tile');
   }
-  function sizeRibbonGroups(){
+  /* `list`: just these groups -- the ribbon's fit counts again only the
+     groups whose controls changed since it last counted them (2026-10-09,
+     speed); every other caller counts the whole row */
+  function sizeRibbonGroups(list){
     var bar=$('#edit-tools'); if(!bar) return;
-    $$('.rbn-grp',bar).forEach(function(g){
+    (list||$$('.rbn-grp',bar)).forEach(function(g){
       var row=g.querySelector('.rbn-row'); if(!row) return;
       var n=0,last=null,buf=[],pairs=[];
       /* T365: the cells fill DOWN then across, so consecutive single
