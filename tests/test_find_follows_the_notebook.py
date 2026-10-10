@@ -18,11 +18,11 @@ from junoview import assets
 
 def test_activating_a_tab_reruns_an_open_find():
     app = assets.load("js/app.js")
-    assert ("    document.addEventListener('sem:activate',function(){\n"
-            "      var bar=$('#docfind');\n"
-            "      if(!bar||bar.hidden) return;\n"
-            "      findRun(((inp&&inp.value)||'').trim());\n"
-            "    });") in app
+    assert "    document.addEventListener('sem:activate',findAgain);" in app
+    again = app.split("  function findAgain(){")[1].split("\n  function ")[0]
+    assert ("    var bar=$('#docfind'),inp=$('#docfind-in');\n"
+            "    if(!bar||bar.hidden) return;\n"
+            "    findRun(((inp&&inp.value)||'').trim());") in again
 
 
 def test_the_rerun_marks_the_visible_shell_and_clears_the_rest():

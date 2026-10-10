@@ -2453,8 +2453,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Speed (reader): per-shell lookups and spy maps, one notebook re-filtered,
 # a scroll sheet that hands each press on, idle layout saves, Versions without
 # a modal; review fixes.
-EXPECTED_MD5 = "910f35d85ccc675d05e2a042cf0e9fed"
-EXPECTED_BYTES = 5584754
+# Reader fixes: Expand all fills, Find follows Raw, Raw copies own
+# their ids, Find opens long notes, Reload keeps the card read,
+# folded plots wait for their width (app.js inlined).
+EXPECTED_MD5 = "f305e03d7cdb08da34b42900fab3cf53"
+EXPECTED_BYTES = 5594385
 
 
 def _render_example() -> str:

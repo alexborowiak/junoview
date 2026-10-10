@@ -294,7 +294,8 @@ var pageCopies=[];
 var document={querySelectorAll(sel){queries.push(sel);return pageCopies;},
   createTextNode(t){return {t:t};}};
 var jvMath={kick(){kicked++;}};
-var findTok=0,findHits=[],findAt=-1,findOpened=[],findOpenedParts=[];
+var findTok=0,findHits=[],findAt=-1,findOpened=[],findOpenedParts=[],
+    findOpenedNotes=[];
 /* 1. nothing marked: no query at all */
 findClear();
 var none=queries.length;

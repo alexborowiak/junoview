@@ -2867,6 +2867,63 @@
     if(rv){activateOutputs(rv);rv.dataset.mathWait='1';}
     return true;
   }
+  /* A COPY ANSWERS FOR ITS OWN IDS. The raw view's outputs are copies of
+     the cards' -- and copied with their ids, every id in them was on the
+     page twice: getElementById, a <label for>, an SVG's url(#clip) or
+     <use href="#glyph"> found the card's, hidden while Raw is shown (an
+     xarray section's label in the raw view folded the hidden card's
+     section, not the one clicked). So each id in the copy takes `suffix`
+     (letters, digits, - and _ only: it must stay a CSS name), and what
+     in the copy points at one of them -- an id-list attribute, a #href,
+     a url(#..) and a #id in its own <style> -- is pointed at the copy's.
+     Only the elements that can hold one are looked at (ID_REF_SEL: a
+     query, not a walk of every element -- an xarray repr is thousands),
+     and none at all in a copy without ids. Returns `root`. */
+  var ID_REFS={'for':1,'headers':1,'list':1,'form':1,'itemref':1,
+    'aria-labelledby':1,'aria-describedby':1,'aria-controls':1,
+    'aria-owns':1,'aria-activedescendant':1,'aria-flowto':1,
+    'aria-details':1,'aria-errormessage':1};
+  var ID_REF_SEL=Object.keys(ID_REFS).map(function(a){return '['+a+']';})
+    .concat(['[*|href]','style'],['style','fill','stroke','clip-path','mask',
+      'filter','marker-start','marker-mid','marker-end'].map(function(a){
+        return '['+a+'*="url("]';})).join(',');
+  function ownIds(root,suffix){
+    var els=$$('[id]',root),map=Object.create(null),any=false;
+    if(root.id) els.unshift(root);
+    els.forEach(function(el){
+      var id=el.getAttribute('id');
+      if(!id) return;
+      if(!(id in map)) map[id]=id+suffix;
+      el.setAttribute('id',map[id]);any=true;
+    });
+    if(!any) return root;
+    function urls(v){     /* url(#name), in a style or a paint attribute */
+      return v.replace(/url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/g,
+        function(m0,q,id){return map[id]?'url('+q+'#'+map[id]+q+')':m0;});
+    }
+    var refs=$$(ID_REF_SEL,root);
+    if(root.matches&&root.matches(ID_REF_SEL)) refs.unshift(root);
+    refs.forEach(function(el){
+      if(el.localName==='style'){   /* #name selectors, and url(#name) */
+        var css=el.textContent,nc=css.indexOf('#')<0?css:css.replace(
+          /#(-?[A-Za-z_][\w-]*)/g,function(m0,id){
+            return map[id]?'#'+map[id]:m0;});
+        if(nc!==css) el.textContent=nc;   /* a sheet re-parses when set */
+        return;
+      }
+      for(var i=0;i<el.attributes.length;i++){
+        var a=el.attributes[i],v=a.value,nv=v;
+        if(ID_REFS[a.name]) nv=v.split(/\s+/).map(function(t){
+          return map[t]||t;}).join(' ');
+        else if(/(^|:)href$/.test(a.name)){
+          if(v.charAt(0)==='#'&&map[v.slice(1)]) nv='#'+map[v.slice(1)];
+        }
+        else if(v.indexOf('url(')>=0) nv=urls(v);
+        if(nv!==v) a.value=nv;
+      }
+    });
+    return root;
+  }
   function populateRawView(shell){
     if(!shell) return;
     liveRawView(shell);
@@ -2885,7 +2942,7 @@
       var key=ph.dataset.jvout||'';
       /* scope to .content: tree-view/trace clones also carry the key */
       var src=(key&&content)?(byKey[key]||null):null;
-      if(src) ph.appendChild(src.cloneNode(true));
+      if(src) ph.appendChild(ownIds(src.cloneNode(true),'--raw-'+key));
       else{
         /* never silently nothing: say the mirror is missing */
         ph.classList.add('rawph-missing');
@@ -2912,6 +2969,7 @@
        stepped past them while the view was shut */
     if(on) jvMath.kick();
     renderRawBtn();renderViewBtns();
+    findAgain();   /* an open Find follows what is on screen */
   });
 
   /* ---- tree view: the analysis graph as a full, expandable view, plus a
@@ -3011,6 +3069,11 @@
         wd=$('#tree-width'),un=$('#tree-unhide');
     if(ex) ex.addEventListener('click',function(){
       var host=activeTreeHost(); if(!host) return;
+      /* the node filler is the tree's own (buildTree), handed over on
+         its host: called by name from out here it was not in scope, and
+         the first node threw "fillNode is not defined" -- left open and
+         empty, with every other node untouched */
+      var fill=host._fill; if(!fill) return;
       /* batch across frames — cloning every card at once janks a big
          notebook; yield between chunks, relayout once at the end */
       var els=$$('.tree-node',host).filter(function(el){
@@ -3019,7 +3082,7 @@
       var i=0,BATCH=6;
       (function step(){
         for(var end=Math.min(i+BATCH,els.length);i<end;i++){
-          els[i].classList.add('expanded');fillNode(els[i]);
+          els[i].classList.add('expanded');fill(els[i]);
           /* "Expand all" means SHOW THE CODE, not merely open the node:
              a card clone arrives with its code folded behind a "Show
              code" toggle, so expanding left you looking at a title and a
@@ -3077,6 +3140,7 @@
     if(on){ sh.el.classList.remove('raw'); buildTree(sh); }
     renderRawBtn();renderViewBtns();
     if(on) relayoutActiveTree();
+    findFollow();   /* Raw left for the Tree */
   }
   if(treeBtn) treeBtn.addEventListener('click',toggleTree);
 
@@ -3308,6 +3372,7 @@
       mdClampScan(clone);
       jvMath.typeset(body);
     }
+    host._fill=fillNode;   /* for the ribbon's Expand all */
     function updateHiddenNote(){
       var n=$$('.tree-node.tn-off',host).length;
       hnote.classList.toggle('show',n>0);
@@ -4090,6 +4155,7 @@
      looking rather than by turning filters off and trying again. */
   var FIND_SKIP={SCRIPT:1,STYLE:1,SVG:1,CANVAS:1,TEXTAREA:1,INPUT:1};
   var findHits=[],findAt=-1,findTerm='',findOpened=[];
+  var findRoot=null;   /* what findRun last searched (findFollow) */
   /* ---- T245: PUT BACK EXACTLY WHAT FIND OPENED ------------------------
      findGo un-hides the card a hit is in and forces it expanded, which is
      the whole point of finding inside folded content; before this, only
@@ -4114,6 +4180,8 @@
      no copy of a mark: every clear leaves none anywhere, and only
      findMark and findGo, which record what they do, make more. */
   var findOpenedParts=[];
+  /* ...and the long notes it opened past their clamp (findGo) */
+  var findOpenedNotes=[];
   function findSweep(unwrap,marks){
     [].forEach.call(document.querySelectorAll(
       'mark.jv-doc,.jv-hitcard,.jv-hitopen'),function(n){
@@ -4131,6 +4199,8 @@
     findOpened=[];
     findOpenedParts.forEach(function(n){n.classList.remove('jv-hitopen');});
     findOpenedParts=[];
+    findOpenedNotes.forEach(function(bd){mdSetOpen(bd,false);});
+    findOpenedNotes=[];
   }
   /* T246: ONLY THE DOCUMENT'S OWN MARKS. The Variables filter paints its
      matched letters with the same mark.jv-hit look, and this used to
@@ -4151,7 +4221,7 @@
     findRestore();
     /* ...and any copy of one, wherever a copied card took it */
     if(marked) findSweep(unwrap,marks);
-    findHits=[];findAt=-1;
+    findHits=[];findAt=-1;findRoot=null;
     /* maths the marks held back can be typeset again */
     if(marks.length) jvMath.kick();
   }
@@ -4222,6 +4292,19 @@
         +'.pt-fold',card).forEach(function(n){
           if(!n.classList.contains('jv-hitopen')) findOpenedParts.push(n);
           n.classList.add('jv-hitopen');});
+      /* A LONG NOTE IS HELD TO ITS FIRST SCREEN (mdClamp), and a hit
+         further down was out of sight: scrolled to inside the clamp,
+         which then stayed scrolled with nothing to scroll it back -- or,
+         a note not yet measured, not shown at all. It is opened, as its
+         Show more would open it, and closed again with the rest */
+      var bd=card.dataset.note==='1'?m.closest('.cardbody'):null;
+      if(bd&&bd.parentNode===card){
+        if(!bd.dataset.mdclamp) mdClamp([bd]);   /* decided now */
+        if(bd.classList.contains('mdclamp')
+           &&!bd.classList.contains('mdopen')){
+          findOpenedNotes.push(bd);mdSetOpen(bd,true);
+        }
+      }
     }
     m.scrollIntoView({block:'center',behavior:'smooth'});
     var nEl=$('#docfind-n');
@@ -4235,9 +4318,17 @@
       if(nEl) nEl.textContent=findTerm?'keep typing':'';
       return;
     }
-    var sh=document.querySelector('.nbshell:not([hidden]) .content')
+    /* WHAT IS ON SCREEN: with Raw shown the formatted feed is hidden,
+       and searching it counted matches no one could see and stepped to
+       marks with no place on the page. The raw view is what is read
+       then, so it is what is searched */
+    var shown=document.querySelector('.nbshell:not([hidden])');
+    var sh=(shown&&shown.classList.contains('raw')
+        &&shown.querySelector('.rawview'))
+      ||document.querySelector('.nbshell:not([hidden]) .content')
       ||document.querySelector('.nbshell .content');
     if(!sh){if(nEl) nEl.textContent='no notebook';return;}
+    findRoot=sh;
     /* THE MATHS FIRST. It is typeset as you read now, not all at load,
        so a card further down can still hold raw $..$ -- and a <mark>
        wrapped round words inside that would split it so it never
@@ -4258,6 +4349,25 @@
       ?('0 / '+findHits.length):'nothing found';
     if(findHits.length){findAt=-1;findGo(1);}
   }
+  /* the term again, over what is on screen now: another notebook (T247),
+     or the same one turned to Raw or back while the bar is open */
+  function findAgain(){
+    var bar=$('#docfind'),inp=$('#docfind-in');
+    if(!bar||bar.hidden) return;
+    findRun(((inp&&inp.value)||'').trim());
+  }
+  /* ...when what was searched is no longer what is shown. Raw is left
+     by more than its own button -- the Tree button, an outline or a
+     Variables link drop it too -- and Find stayed in the hidden raw
+     view: its count and Next described marks no one could see */
+  function findFollow(){
+    var r=findRoot; if(!r) return;
+    var sh=r.closest&&r.closest('.nbshell');
+    var raw=!!(sh&&sh.classList.contains('raw')
+      &&sh.querySelector('.rawview'));
+    if(!r.isConnected||!sh||sh.hidden
+       ||raw!==r.classList.contains('rawview')) findAgain();
+  }
   function findOpen(on){
     var bar=$('#docfind'); if(!bar) return;
     bar.hidden=!on;
@@ -4269,7 +4379,16 @@
     } else {
       /* findClear -> findRestore already puts back every flag find set,
          .jv-hitopen included */
+      /* ...a long note it opened included: one being read when the bar
+         closes takes the page below it up with it as it folds, and the
+         reader was left wherever that landed. They are left at the note
+         instead, its Show more on screen */
+      var on=$('mark.jv-doc.on'),bd=on&&on.closest('.cardbody');
+      var r=bd&&findOpenedNotes.indexOf(bd)>=0?bd.getBoundingClientRect():null;
       findClear();
+      var more=r&&r.bottom>0&&r.top<window.innerHeight
+        &&bd.parentNode.querySelector(':scope > .mdmore');
+      if(more) more.scrollIntoView({block:'center',behavior:'instant'});
     }
   }
   (function(){
@@ -4304,11 +4423,7 @@
        walked matches in the now-hidden shell and the count described a
        document you could not see. Re-run the term against the new one
        (findRun clears the old shell's marks first, wherever they are). */
-    document.addEventListener('sem:activate',function(){
-      var bar=$('#docfind');
-      if(!bar||bar.hidden) return;
-      findRun(((inp&&inp.value)||'').trim());
-    });
+    document.addEventListener('sem:activate',findAgain);
     document.addEventListener('keydown',function(e){
       if(!(e.ctrlKey||e.metaKey)||e.key!=='f') return;
       /* the deck editor has its own Find and owns the window while
@@ -5255,11 +5370,16 @@
       btn.textContent='Show more';
       btn.title='This note is long — expand it to full length';
       btn.addEventListener('click',function(){
-        var open=bd.classList.toggle('mdopen');
-        btn.textContent=open?'Show less':'Show more';
+        mdSetOpen(bd,!bd.classList.contains('mdopen'));
       });
       bd.parentNode.insertBefore(btn,bd.nextSibling);
     });
+  }
+  /* a clamped note opened or closed -- by its button, or by Find */
+  function mdSetOpen(bd,open){
+    bd.classList.toggle('mdopen',open);
+    var btn=bd.parentNode&&bd.parentNode.querySelector(':scope > .mdmore');
+    if(btn) btn.textContent=open?'Show less':'Show more';
   }
   function mdClampScan(shell){
     mdClamp($$('.card[data-note="1"] .cardbody',shell));
@@ -5702,12 +5822,13 @@
      drawn now (Create slides measuring them, printing) asks plotFlush. */
   var plotQ=[],plotPumpOn=false,plotIO=null;
   function plotQueue(divs){
+    /* watched until drawn (plotPump lets go), not only until first seen:
+       a figure found not shown (plotNext) is drawn when it is seen again */
     if(!plotIO&&'IntersectionObserver' in window)
       plotIO=new IntersectionObserver(function(es){
         var any=false;
         es.forEach(function(e){
           if(!e.isIntersecting) return;
-          plotIO.unobserve(e.target);
           if(e.target.__jvPlotQ){e.target.__jvPlotQ=2;any=true;}
         });
         if(any) plotPump();
@@ -5720,20 +5841,30 @@
     ensurePlotly(plotPump);
   }
   function plotNext(){
-    var i,k=-1;
-    for(i=0;i<plotQ.length;i++){
-      if(!plotQ[i].__jvPlotQ||!plotQ[i].isConnected){
-        if(plotIO) plotIO.unobserve(plotQ[i]);
-        plotQ[i].__jvPlotQ=0;plotQ.splice(i,1);i--;continue;}
-      /* its notebook (or that notebook's document view) is not on screen:
-         a plot drawn into display:none has no width and keeps the wrong
-         one, so it waits for its turn (renderViewBtns resumes the pump) */
-      if(plotOffScreen(plotQ[i])) continue;
-      if(plotQ[i].__jvPlotQ===2){k=i;break;}   /* near the screen */
-      if(k<0) k=i;
+    for(;;){
+      var i,k=-1;
+      for(i=0;i<plotQ.length;i++){
+        if(!plotQ[i].__jvPlotQ||!plotQ[i].isConnected){
+          if(plotIO) plotIO.unobserve(plotQ[i]);
+          plotQ[i].__jvPlotQ=0;plotQ.splice(i,1);i--;continue;}
+        /* its notebook (or that notebook's document view) is not on
+           screen: a plot drawn into display:none has no width and keeps
+           the wrong one, so it waits for its turn (renderViewBtns resumes
+           the pump) -- as does one already found not shown (3) */
+        if(plotQ[i].__jvPlotQ===3||plotOffScreen(plotQ[i])) continue;
+        if(plotQ[i].__jvPlotQ===2){k=i;break;}   /* near the screen */
+        if(k<0) k=i;
+      }
+      if(k<0) return null;
+      /* ...and on screen, the one chosen may still not be SHOWN: in a
+         collapsed section, say. Drawn there it took Plotly's default
+         700px and kept it when the section opened. It waits to be seen
+         (plotIO marks it near again); asked of the chosen one alone, so
+         a pump step still lays the page out at most once */
+      if(plotIO&&!plotQ[k].getClientRects().length){
+        plotQ[k].__jvPlotQ=3;continue;}
+      return plotQ.splice(k,1)[0];
     }
-    if(k<0) return null;
-    return plotQ.splice(k,1)[0];
   }
   function plotOffScreen(div){
     var sh=div.closest&&div.closest('.nbshell');
@@ -8332,7 +8463,7 @@
         e.preventDefault();
         if(shell.classList.contains('raw')||shell.classList.contains('tree')){
           shell.classList.remove('raw');shell.classList.remove('tree');
-          renderRawBtn();renderViewBtns();
+          renderRawBtn();renderViewBtns();findFollow();
         }
         var id=(a.getAttribute('href')||'').slice(1);
         var el=id?$('[id="'+id+'"]',shell):null;
@@ -8429,7 +8560,7 @@
           e.preventDefault();
           if(shell.classList.contains('raw')||shell.classList.contains('tree')){
             shell.classList.remove('raw');shell.classList.remove('tree');
-            renderRawBtn();renderViewBtns();
+            renderRawBtn();renderViewBtns();findFollow();
           }
           var id=(a.getAttribute('href')||'').slice(1);
           if(id.indexOf('card-')===0) gotoItem(id.slice(5));
@@ -9238,6 +9369,64 @@
       ensureStyBtns();applyViewStyle();
     });
   })();
+  /* WHERE YOU WERE READING, kept by the card, not by the pixel. A fresh
+     shell's cards are laid out lazily (content-visibility, 300px each
+     until seen), so the same scrollY lands on another card: a Reload
+     read half-way down the example put the card you were on most of a
+     screen lower. The first card of the feed on screen and how far down
+     it sat are taken from the outgoing shell; anchors survive a
+     re-parse (and an anchor a notebook repeats is told apart by which
+     of its cards it was, n). A shell showing Raw or Tree, or not shown,
+     has no card on screen, and its scrollY is all there is. */
+  function readingAt(el){
+    if(!el||el.hidden) return null;
+    var cards=$$('.content .card[data-anchor]',el);
+    for(var i=0;i<cards.length;i++){
+      var r=cards[i].getBoundingClientRect();
+      if(r.bottom>0&&cards[i].getClientRects().length){
+        var a=cards[i].dataset.anchor,n=0;
+        for(var j=0;j<i;j++) if(cards[j].dataset.anchor===a) n++;
+        return {anchor:a,n:n,top:r.top};
+      }
+    }
+    return null;
+  }
+  /* ...and put back: that card where it sat, every frame for a second
+     -- the cards around it are laid out for the first time as they come
+     on screen, and their maths typeset, each moving it -- unless you
+     take the page meanwhile (a wheel, a key, a press, a touch) */
+  function readingBack(shell,at,y){
+    /* the anchor compared, not put in a selector: a lenient read keeps
+       a cell id as it is, and one holding a newline made the selector
+       invalid -- the Reload then threw and said "Open failed" */
+    var cs=at?$$('.content .card[data-anchor]',shell).filter(function(x){
+      return x.dataset.anchor===at.anchor;}):[];
+    var c=cs[at&&at.n]||cs[0]||null;
+    if(!c||!c.getClientRects().length){
+      if(y){
+        window.scrollTo(0,y);
+        /* once more after images/math settle the layout */
+        setTimeout(function(){window.scrollTo(0,y);},150);
+      }
+      return;
+    }
+    var t0=Date.now(),mine=true,EVS=['wheel','keydown','mousedown',
+      'touchstart'],OPT={capture:true,passive:true};
+    function yours(){mine=false;}
+    EVS.forEach(function(t){window.addEventListener(t,yours,OPT);});
+    (function step(){
+      if(!mine||!c.isConnected||!c.getClientRects().length
+         ||Date.now()-t0>1000){
+        EVS.forEach(function(t){window.removeEventListener(t,yours,OPT);});
+        return;
+      }
+      /* instant: the page scrolls smoothly (core.css), and a glide
+         restarted every frame lands short of the card */
+      var d=c.getBoundingClientRect().top-at.top;
+      if(Math.abs(d)>=1) window.scrollBy({top:d,behavior:'instant'});
+      requestAnimationFrame(step);
+    })();
+  }
   function mountShellHTML(htmlStr,path,quiet){
     var host=$('#docs');
     var tmp=document.createElement('div');
@@ -9248,6 +9437,7 @@
     var stem=shell.dataset.nb;
     var old=APP.shells[stem];
     var keep=(old&&old.el)?captureViewState(old.el):null;
+    var at=keep?readingAt(old.el):null;
     /* a reload replaces the notebook's cards — its Plot-trace tabs now hold
        stale clones, so close them (a fresh trace re-clones the new cards) */
     if(old) APP.traces.slice().forEach(function(k){
@@ -9267,11 +9457,7 @@
        document — it must not turn up in Recent as a separate file */
     if(path&&!quiet&&APP.noteRecent) APP.noteRecent(path);
     activate(stem);
-    if(keep&&keep.scroll){
-      window.scrollTo(0,keep.scroll);
-      /* once more after images/math settle the layout */
-      setTimeout(function(){window.scrollTo(0,keep.scroll);},150);
-    }
+    if(keep&&(at||keep.scroll)) readingBack(shell,at,keep.scroll);
     /* no whole-shell typeset here any more: initShell handed the new
        shell to jvMath, which sets what is on screen before the next
        paint and the rest at idle (critic #2: this one call was 0.7-1.6 s

@@ -25,6 +25,22 @@ Opt-in like the theme matrix (it needs Playwright's Chromium): set
    move gives it straight back.
 10. The raw view mirrors every output and lays out its cells lazily.
 11. The tree's edges are routed once it has settled.
+
+And six reader bugs reviewers found during that work (2026-10-10; the
+pure halves are in test_reader_shows_what_it_says.py):
+
+12. The ribbon's Expand all opens and fills every tree node.
+13. Find searches what is on screen: the raw view while Raw is shown,
+    the formatted document again when it is not.
+14. The raw view's copies of the cards' outputs own their ids: no id is
+    on the page twice that was not already, and a label there works its
+    own checkbox.
+15. Find opens a clamped long note to show a match inside it, and closes
+    it again with the rest.
+16. Reload of a notebook changed on disk keeps the card being read where
+    it was on screen.
+17. A Plotly figure in a section left collapsed is drawn at its width
+    once the section is opened, not at the 700 px of a hidden draw.
 """
 
 from __future__ import annotations
@@ -124,7 +140,7 @@ def small(browser, tmp_path):
         srv.server_close()
 
 
-def _page(app, w=1366, h=657):
+def _page(app, w=1366, h=657, plotly=None):
     ctx = app["b"].new_context(viewport={"width": w, "height": h})
     ctx.add_init_script(
         "try{localStorage.setItem('plotline-tour','1');"
@@ -132,8 +148,13 @@ def _page(app, w=1366, h=657):
     pg = ctx.new_page()
     pg.route("https://cdn.jsdelivr.net/**",
              lambda r: r.fulfill(status=404, body=b""))
-    pg.route("https://cdn.plot.ly/**",
-             lambda r: r.fulfill(status=404, body=b""))
+    if plotly is None:
+        pg.route("https://cdn.plot.ly/**",
+                 lambda r: r.fulfill(status=404, body=b""))
+    else:   # a stand-in for plotly.js (the CDN is not ours to need)
+        pg.route("https://cdn.plot.ly/**", lambda r: r.fulfill(
+            status=200, body=plotly,
+            headers={"content-type": "application/javascript"}))
     errors: list[str] = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.goto(app["url"])
@@ -681,5 +702,334 @@ def test_a_drag_begun_on_the_sheet_selects_the_text_it_crosses(two):
     pg.mouse.move(pt[0] + 200, pt[1], steps=6)
     pg.mouse.up()
     assert len(pg.evaluate("String(getSelection())").strip()) > 5
+    ctx.close()
+    assert not errors, errors
+
+
+# ------------------------------------------- six reader bugs, 2026-10-10
+
+
+def _one(browser, tmp_path, nb: dict, name: str):
+    f = tmp_path / f"{name}.ipynb"
+    f.write_text(json.dumps(nb), encoding="utf-8")
+    (tmp_path / _PROJECT_FILE).write_text(json.dumps(
+        {"presentations": [], "open": [str(f)], "recent": [str(f)]},
+        indent=1) + "\n", encoding="utf-8")
+    return _serve(tmp_path)
+
+
+def _md(i, s):
+    return {"cell_type": "markdown", "id": f"m{i}", "metadata": {},
+            "source": s}
+
+
+LONG_NOTE = "\n\n".join(
+    f"Paragraph {k} of a long note that goes on about the method."
+    for k in range(40)) + "\n\nThe word zebrafinch is only here, at the end."
+
+
+@pytest.fixture
+def longnote(browser, tmp_path):
+    """a long note a few screens down: not measured until it nears them"""
+    cells = [_md(0, "# Report")]
+    cells += [_md(k, f"Filler note {k}. " * 40) for k in range(1, 9)]
+    cells += [_md(30, "## Method"), _md(31, LONG_NOTE),
+              {"cell_type": "code", "id": "c0", "metadata": {},
+               "source": "#| id: fit\nfit()", "outputs": []}]
+    srv, url = _one(browser, tmp_path, {"cells": cells}, "longnote")
+    try:
+        yield {"b": browser, "url": url}
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def _plotly_out(n):
+    return {"output_type": "display_data", "metadata": {},
+            "data": {"application/vnd.plotly.v1+json": {
+                "data": [{"y": [1, 3, 2], "type": "scatter"}],
+                "layout": {"title": {"text": f"Plot {n}"}}},
+                "text/plain": "<Figure>"}}
+
+
+@pytest.fixture
+def plots(browser, tmp_path):
+    cells = [_md(0, "# Plots"), _md(1, "## First"),
+             _md(2, "Some words. " * 40), _md(3, "## Second")]
+    for n in (1, 2):
+        cells.append({"cell_type": "code", "id": f"p{n}", "metadata": {},
+                      "execution_count": n,
+                      "source": f"#| display: figure\n#| id: p{n}\nfig",
+                      "outputs": [_plotly_out(n)]})
+    cells.append(_md(9, "## Third"))
+    srv, url = _one(browser, tmp_path, {"cells": cells}, "plots")
+    try:
+        yield {"b": browser, "url": url}
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def _find(pg, term):
+    pg.keyboard.press("Control+f")
+    pg.keyboard.type(term)
+    pg.wait_for_function("/\\//.test((document.getElementById('docfind-n')"
+                         "||{}).textContent||'')", timeout=10000)
+
+
+def test_the_ribbons_expand_all_opens_every_tree_node(two):
+    """it threw "fillNode is not defined" and left one node open, empty"""
+    ctx, pg, errors = _page(two)
+    pg.evaluate("window.SemView.tree()")
+    pg.wait_for_timeout(500)
+    pg.evaluate("document.getElementById('tree-expand').click()")
+    pg.wait_for_function(
+        "(()=>{const n=[...document.querySelectorAll('.nbshell:not([hidden])"
+        " .treeview .tree-node:not(.tn-off)')];return n.length>3&&n.every("
+        "e=>e.classList.contains('expanded')&&e.querySelector("
+        "'.tree-node-body[data-filled] .card'))})()", timeout=10000)
+    # Expand all shows the code
+    assert pg.evaluate("document.querySelectorAll('.nbshell:not([hidden]) "
+                       ".treeview .codewrap[data-open=\"1\"]').length") > 0
+    ctx.close()
+    assert not errors, errors
+
+
+FOUND = r"""
+()=>{const ms=[...document.querySelectorAll('mark.jv-doc')];
+ const on=document.querySelector('mark.jv-doc.on');
+ return {raw:ms.filter(m=>m.closest('.rawview')).length,
+  feed:ms.filter(m=>m.closest('.content')).length,
+  shown:!!(on&&on.getClientRects().length),
+  n:document.getElementById('docfind-n').textContent};}
+"""
+
+
+def test_find_searches_what_is_on_screen_raw_or_formatted(two):
+    ctx, pg, errors = _page(two)
+    pg.evaluate("document.getElementById('view-raw').click()")
+    pg.wait_for_timeout(500)
+    _find(pg, "anomaly")
+    st = pg.evaluate(FOUND)
+    assert st["raw"] > 0 and st["feed"] == 0 and st["shown"]
+    assert st["n"] == f"1 / {st['raw']}"
+    # Raw turned off with the bar open: the document is searched again
+    pg.evaluate("document.getElementById('view-raw').click()")
+    pg.wait_for_function("document.querySelectorAll('.nbshell:not([hidden])"
+                         " .content mark.jv-doc').length>0", timeout=10000)
+    st = pg.evaluate(FOUND)
+    # (not `shown`: the document's first match is in xarray's text
+    # fallback, which its HTML repr hides -- as it always was)
+    assert st["feed"] > 0 and st["raw"] == 0
+    assert st["n"] == f"1 / {st['feed']}"
+    ctx.close()
+    assert not errors, errors
+
+
+def test_find_leaves_the_raw_view_with_raw_whichever_way(two):
+    """an outline link and the Tree button leave Raw too, not only its
+    own button: Find then still counted and stepped through the hidden
+    raw view's marks"""
+    ctx, pg, errors = _page(two)
+    for leave in ("document.querySelectorAll('.nbshell:not([hidden]) "
+                  ".navitem')[3].click()",
+                  "window.SemView.tree();window.SemView.tree()"):
+        pg.evaluate("document.getElementById('view-raw').click()")
+        pg.wait_for_timeout(500)
+        if pg.evaluate("document.getElementById('docfind').hidden"):
+            _find(pg, "anomaly")
+        pg.wait_for_function("document.querySelectorAll('.nbshell:not("
+                             "[hidden]) .rawview mark.jv-doc').length>0",
+                             timeout=10000)
+        pg.evaluate(leave)
+        pg.wait_for_timeout(500)
+        pg.evaluate("document.getElementById('docfind-next').click()")
+        pg.wait_for_timeout(800)
+        st = pg.evaluate(FOUND)
+        assert st["raw"] == 0 and st["feed"] > 0 and st["shown"], (leave, st)
+        assert st["n"] == f"2 / {st['feed']}", (leave, st)
+    ctx.close()
+    assert not errors, errors
+
+
+DUPS = ("(()=>{const m={};document.querySelectorAll('[id]').forEach(e=>{"
+        "m[e.id]=(m[e.id]||0)+1});return Object.keys(m).filter(k=>m[k]>1)"
+        ".sort()})()")
+
+
+def test_the_raw_views_copies_own_their_ids(two):
+    ctx, pg, errors = _page(two)
+    # the notebook's own (each xarray output carries the same sprite)
+    before = pg.evaluate(DUPS)
+    pg.evaluate("document.getElementById('view-raw').click()")
+    pg.wait_for_timeout(500)
+    assert pg.evaluate("document.querySelectorAll('.nbshell:not([hidden]) "
+                       ".rawview .rawph[data-filled] [id]').length") > 0
+    assert pg.evaluate(DUPS) == before
+    # a label in the raw view works its own checkbox, not the hidden card's
+    got = pg.evaluate(
+        "(()=>{const rv=document.querySelector('.nbshell:not([hidden]) "
+        ".rawview');const l=[...rv.querySelectorAll('.rawph label[for]')]"
+        ".find(l=>{const i=document.getElementById(l.htmlFor);"
+        "return i&&!i.disabled});const own=document.getElementById(l.htmlFor);"
+        "const feed=[...document.querySelectorAll('.nbshell:not([hidden]) "
+        ".content input[id]')].find(i=>own.id.startsWith(i.id+'--raw-'));"
+        "const b=[own.checked,feed.checked];l.click();"
+        "return {inRaw:!!own.closest('.rawview'),own:[b[0],own.checked],"
+        "feed:[b[1],feed.checked]}})()")
+    assert got["inRaw"]
+    assert got["own"][0] != got["own"][1]
+    assert got["feed"][0] == got["feed"][1]
+    ctx.close()
+    assert not errors, errors
+
+
+NOTE = r"""
+()=>{const m=document.querySelector('mark.jv-doc.on')
+   ||document.querySelector('mark.jv-doc');
+ const bd=document.querySelector('.content .card[data-note="1"] > '
+   +'.cardbody.mdclamp');
+ const more=bd&&bd.parentNode.querySelector(':scope > .mdmore');
+ const r=m&&m.getBoundingClientRect(),b=bd&&bd.getBoundingClientRect();
+ const e=r&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+ return {open:!!bd&&bd.classList.contains('mdopen'),
+  more:more?more.textContent:null,
+  inside:!!(r&&b&&r.top>=b.top&&r.bottom<=b.bottom),
+  seen:!!(e&&(e===m||m.contains(e))),inner:bd?bd.scrollTop:-1};}
+"""
+
+
+def test_find_opens_a_long_note_to_show_a_match_inside_it(longnote):
+    ctx, pg, errors = _page(longnote)
+    # not measured yet: held at the clamp's height, clipped
+    assert pg.evaluate("[...document.querySelectorAll('.content "
+                       ".card[data-note=\"1\"] > .cardbody')].pop()"
+                       ".dataset.mdclamp") is None
+    _find(pg, "zebrafinch")
+    pg.wait_for_timeout(1500)          # the smooth scroll to it
+    assert pg.evaluate(NOTE) == {"open": True, "more": "Show less",
+                                 "inside": True, "seen": True, "inner": 0}
+    # closing Find puts it back as it was: clamped
+    pg.keyboard.press("Escape")
+    pg.wait_for_timeout(200)
+    st = pg.evaluate(NOTE)
+    assert not st["open"] and st["more"] == "Show more"
+    ctx.close()
+    assert not errors, errors
+
+
+@pytest.fixture
+def longread(browser, tmp_path):
+    """the long note, with more of the notebook after it to slide up"""
+    cells = [_md(0, "# Report")]
+    cells += [_md(k, f"Filler note {k}. " * 40) for k in range(1, 9)]
+    cells += [_md(30, "## Method"), _md(31, LONG_NOTE)]
+    cells += [_md(40 + k, f"After note {k}. " * 30) for k in range(6)]
+    srv, url = _one(browser, tmp_path, {"cells": cells}, "longread")
+    try:
+        yield {"b": browser, "url": url}
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def test_closing_find_leaves_the_reader_at_the_note_it_folds(longread):
+    """the note Find opened folds again when the bar closes -- and took
+    the page below it up with it: the reader, who was reading the match
+    in it, was left at whatever slid up (the end of the notebook here)"""
+    ctx, pg, errors = _page(longread)
+    _find(pg, "zebrafinch")
+    pg.wait_for_timeout(1500)
+    assert pg.evaluate(NOTE)["open"]
+    pg.keyboard.press("Escape")
+    pg.wait_for_timeout(300)
+    st = pg.evaluate(
+        "(()=>{const bd=[...document.querySelectorAll('.content .card"
+        "[data-note=\"1\"] > .cardbody.mdclamp')].pop();const b=bd.parentNode"
+        ".querySelector(':scope > .mdmore').getBoundingClientRect();"
+        "return {open:bd.classList.contains('mdopen'),top:b.top,"
+        "bottom:b.bottom,h:innerHeight}})()")
+    assert not st["open"]
+    assert 0 < st["top"] and st["bottom"] < st["h"], st
+    ctx.close()
+    assert not errors, errors
+
+
+ON_TOP = r"""
+()=>{const c=[...document.querySelectorAll('.nbshell:not([hidden]) .content '
+   +'.card[data-anchor]')].find(c=>c.getBoundingClientRect().bottom>140);
+ return {anchor:c.dataset.anchor,top:Math.round(c.getBoundingClientRect().top)};}
+"""
+
+
+def test_reload_keeps_the_card_being_read_where_it_was(two):
+    ctx, pg, errors = _page(two)
+    path = Path(pg.evaluate("window.SemApp.shells[window.SemApp.active].path"))
+    h = pg.evaluate("document.documentElement.scrollHeight")
+    pg.mouse.move(683, 400)
+    while pg.evaluate("scrollY") < h * 0.35:
+        pg.mouse.wheel(0, 600)
+        pg.wait_for_timeout(60)
+    pg.wait_for_timeout(800)
+    at = pg.evaluate(ON_TOP)
+    # the notebook changes on disk; Reload
+    nb = json.loads(path.read_text(encoding="utf-8"))
+    md = next(c for c in nb["cells"] if c["cell_type"] == "markdown")
+    src = md["source"]
+    md["source"] = (src if isinstance(src, str) else "".join(src)) + " (ed)"
+    path.write_text(json.dumps(nb), encoding="utf-8")
+    pg.evaluate("document.querySelector('.nbshell:not([hidden])').__old=1")
+    pg.evaluate("document.querySelector('#file-dock .rf-reload').click()")
+    pg.wait_for_function("(()=>{const s=document.querySelector("
+                         "'.nbshell:not([hidden])');return !!(s&&!s.__old"
+                         "&&s.querySelector('.card'))})()", timeout=20000)
+    pg.wait_for_timeout(1500)
+    now = pg.evaluate(
+        "(a)=>Math.round(document.querySelector('.nbshell:not([hidden]) "
+        ".content .card[data-anchor=\"'+a+'\"]').getBoundingClientRect().top)",
+        at["anchor"])
+    assert abs(now - at["top"]) <= 2, (at, now)
+    ctx.close()
+    assert not errors, errors
+
+
+# plotly.js stand-in: draws nothing, notes the width it was given
+PLOTLY_STUB = (
+    b"window.Plotly={newPlot:function(gd){gd.__drawnW="
+    b"gd.getBoundingClientRect().width;var d=document.createElement('div');"
+    b"d.className='js-plotly-plot';d.style.height='200px';gd.appendChild(d);"
+    b"return Promise.resolve(gd);},Plots:{resize:function(){}},"
+    b"purge:function(){}};")
+
+
+def test_a_figure_in_a_section_left_closed_is_drawn_at_its_width(plots):
+    ctx, pg, errors = _page(plots, plotly=PLOTLY_STUB)
+    pg.wait_for_function("!!window.Plotly", timeout=10000)
+    sid = pg.evaluate("document.querySelector('.nbshell:not([hidden]) "
+                      ".content .plotly-embed').closest('.section')"
+                      ".dataset.sec")
+    chev = f'.nbshell:not([hidden]) .sec-chev[data-sec="{sid}"]'
+    # close its section and the notebook; open it again: the layout it was
+    # left in comes back, and its figures are queued into a closed section
+    pg.evaluate(f"document.querySelector('{chev}').click()")
+    path = pg.evaluate("window.SemApp.shells[window.SemApp.active].path")
+    pg.evaluate("window.SemApp.closeNotebook(window.SemApp.active)")
+    pg.wait_for_timeout(300)
+    pg.evaluate("p=>window.SemApp.openPath(p)", path)
+    pg.wait_for_selector(f'.nbshell:not([hidden]) .section[data-sec="{sid}"]'
+                         '.sec-collapsed')
+    pg.wait_for_timeout(800)
+    pg.evaluate(f"document.querySelector('{chev}').click()")
+    pg.evaluate("document.querySelector('.nbshell:not([hidden]) .content "
+                ".plotly-embed').scrollIntoView({block:'center'})")
+    pg.wait_for_function("[...document.querySelectorAll('.nbshell:not("
+                         "[hidden]) .content .plotly-embed')].every(d=>"
+                         "d.__drawnW!==undefined)", timeout=5000)
+    got = pg.evaluate("[...document.querySelectorAll('.nbshell:not([hidden])"
+                      " .content .plotly-embed')].map(d=>[Math.round("
+                      "d.__drawnW),Math.round(d.getBoundingClientRect()"
+                      ".width)])")
+    assert len(got) == 2
+    assert all(w == box and w > 0 for w, box in got), got
     ctx.close()
     assert not errors, errors
