@@ -428,14 +428,19 @@ var PPT_DASH={solid:'solid',dash:'dash',sysDot:'dot',dashDot:'dashdot',
 var SW_REF_H=720;
 """
 _FNS = ("pptFontId", "pptPagePreset", "pptEsc", "pptRunHtml",
-        "pptTextAnnot", "pptSw", "pptAnnot", "specToPres")
+        "pptTextAnnot", "pptSw", "pptAnnot", "specToPres",
+        # T623: a box is its paragraphs, each with its level and marker
+        "listKind", "listIsOrdered", "paraNew", "paraRing", "paraBaseKind",
+        "paraOpen", "parasHtml")
+_VARS = ("LIST_KINDS", "PARA_LVL_MAX", "PARA_RINGS", "PARA_LC")
 
 
 def _to_pres(spec: dict, name: str = "deck.pptx") -> dict:
-    from helpers_js import lift_fn
+    from helpers_js import lift_fn, lift_var
     cmd, env = _engine()
     src = assets.deck_js()
-    pre = _STUBS + "\n".join(lift_fn(src, f) for f in _FNS) + "\n"
+    pre = (_STUBS + "\n".join(lift_var(src, v) for v in _VARS) + "\n"
+           + "\n".join(lift_fn(src, f) for f in _FNS) + "\n")
     script = pre + ("const spec=" + json.dumps(spec) + ";\nvar lost=[];\n"
                     "var pr=specToPres(spec," + json.dumps(name)
                     + ",lost);\n"
@@ -469,10 +474,13 @@ def test_then_bold_and_red_arrives_bold_and_red(got):
     title, body = pr["slides"][0]["annots"]
     assert title["text"] == "Blocking and ENSO" and title["b"] == 1
     assert "html" not in title
+    # T623: the bulleted paragraph is a bullet, not a "• " typed into its
+    # words, and the plain one beside it stays plain
     assert body["html"] == (
-        "• Plain body text <span style=\"color:#c0392b\"><b>then bold and "
-        "red</b></span><br>A second paragraph")
-    assert body["text"] == ("• Plain body text then bold and red\n"
+        "<p data-list=\"bullet\">Plain body text <span style=\"color:"
+        "#c0392b\"><b>then bold and red</b></span></p>"
+        "<p>A second paragraph</p>")
+    assert body["text"] == ("Plain body text then bold and red\n"
                             "A second paragraph")
     assert "b" not in body and "color" not in body
     assert body["size"] == pytest.approx(3.333, abs=0.01)
@@ -486,9 +494,36 @@ def test_a_wholly_bulleted_box_is_a_real_list():
              {"bullet": True, "num": False, "runs": [{"t": "b", "i": True}]},
          ]}]}]}
     a = _to_pres(spec)["pr"]["slides"][0]["annots"][0]
-    assert a["list"] == "bullet"
-    assert a["html"] == "<li>a</li><li><i>b</i></li>"
+    # T623: a list is its paragraphs' markers, not a flag on the box
+    assert "list" not in a
+    assert a["html"] == ('<p data-list="bullet">a</p>'
+                         '<p data-list="bullet"><i>b</i></p>')
     assert a["text"] == "a\nb"
+
+
+def test_levels_and_markers_arrive_as_each_paragraph_shows_them():
+    """T623: PowerPoint's levels used to arrive flat ("every bullet
+    arrives at the first level"), and a box's markers were the first
+    paragraph's. Each paragraph keeps its level, its kind as drawn at
+    that level (a ring under a dot is stored as the dot it turns from),
+    its colour, size and start."""
+    spec = {"widthMm": 339, "heightMm": 191, "slides": [{"items": [
+        {"t": "text", "x": 1, "y": 1, "w": 50, "h": 20, "text": "a\nb\nc",
+         "sizePct": 3, "paras": [
+             {"lvl": 0, "bullet": True, "lkind": "bullet",
+              "lcol": "#ff0000", "runs": [{"t": "a"}]},
+             {"lvl": 1, "bullet": True, "lkind": "circle",
+              "runs": [{"t": "b"}]},
+             {"lvl": 0, "bullet": True, "num": True, "lkind": "alpha",
+              "lstart": 3, "lsz": 1.5, "runs": [{"t": "c"}]},
+         ]}]}]}
+    res = _to_pres(spec)
+    a = res["pr"]["slides"][0]["annots"][0]
+    assert a["html"] == (
+        '<p data-list="bullet" data-lc="#ff0000">a</p>'
+        '<p data-lvl="1" data-list="bullet">b</p>'
+        '<p data-list="alpha" data-start="3" data-ls="1.5">c</p>')
+    assert "levels" not in str(res["lost"])
 
 
 def test_every_other_kind_maps_onto_the_deck_model():

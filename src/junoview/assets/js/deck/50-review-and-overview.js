@@ -3677,8 +3677,42 @@
     if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
     if(tr) t.style.transform=tr;
     if(a.op!=null&&a.op<1) t.style.opacity=a.op;
-    t.textContent=String(txt);
+    /* T623: a text box's PARAGRAPHS, markers and levels and all, as
+       lines of words (parasLines) -- it drew a.text, so a list was bare
+       lines flush left. One text node still, as before. A box whose
+       paragraphs have been read already draws them at once; one not yet
+       read draws its lines now and its markers when the page is idle
+       (miniLater), so scrolling the strip parses nothing (2026-10-10
+       review: 2.4x the script, 30 fps). A box with no marker and no
+       level is its lines. A title, its subtitle and a placeholder's
+       hint are their words. */
+    var mk=a.k==='text'&&!a.md&&!a.ph&&!a.bib
+      &&(listOf(a)||/data-l(?:ist|vl)|<li\b/i.test(a.html||''));
+    if(mk){
+      var tt=figSubst(a.text,a),hh=a.html?figSubst(a.html,a):'';
+      var ps=parasKnown(a,tt,hh);
+      if(ps) t.textContent=parasLines(ps);
+      else {t.textContent=String(txt);miniLater(t,a,tt,hh);}
+    } else t.textContent=String(txt);
     d.appendChild(t);
+  }
+  /* the thumbnails' markers, drawn when the page has a moment: a few
+     boxes an idle slice (a thumbnail may be waiting off the page, in the
+     strip's kept rows, and is drawn all the same) */
+  var miniQ=[],miniQOn=false;
+  function miniLater(t,a,tt,hh){
+    miniQ.push([t,a,tt,hh]);
+    if(miniQOn) return;
+    miniQOn=true;
+    var ric=window.requestIdleCallback||function(f){
+      return setTimeout(function(){f({timeRemaining:function(){return 8;}});},60);};
+    ric(function run(dl){
+      while(miniQ.length&&dl.timeRemaining()>2){
+        var q=miniQ.shift();
+        q[0].textContent=parasLines(parasFrom(q[1],q[2],q[3]));
+      }
+      if(miniQ.length) ric(run); else miniQOn=false;
+    });
   }
   /* T522: A PLACED NOTE OR CODE CELL IS DRAWN AS ITSELF. It used to be a
      white card of grey rules (.mini-pane.is-note), so every slide Create
@@ -4347,7 +4381,7 @@
       });
       cell(ck,'dgt-ckc');
       cell(String(r.si+1),'dgt-si');
-      if(r.a.k==='text'&&!listOf(r.a)){
+      if(r.a.k==='text'&&!boxHasList(r.a)){
         var ti=document.createElement('input');
         ti.type='text';ti.className='dgt-tx';
         ti.value=String(r.a.text||'');
@@ -4377,10 +4411,8 @@
         });
         ti.addEventListener('change',function(){
           var v=ti.value;
-          r.a.text=v;
-          /* the rich copy follows the plain one, escaped -- the
-             same pair setListStyle keeps in step */
-          if(r.a.html!==undefined) r.a.html=esc(v);
+          /* the words, as the box's one paragraph (T623) */
+          parasReplaceText(r.a,v);
           markDirty();refresh();renderFilm();
           var ov2=$('#deck-design'); if(ov2) dgBodyKeep(ov2);
         });
@@ -4388,7 +4420,7 @@
       } else {
         var lb2=document.createElement('span');
         lb2.className='dgt-lab';lb2.textContent=annotLabel(r.a);
-        lb2.title=listOf(r.a)
+        lb2.title=boxHasList(r.a)
           ?'A list: edit its words on the slide'
           :annotLabel(r.a);
         cell(lb2,'dgt-what');

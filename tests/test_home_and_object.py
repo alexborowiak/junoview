@@ -28,8 +28,12 @@ def test_the_bullet_marker_sits_inside_the_box(out):
 
     So this asserts the UNIT, which is the part that has to be right.
     """
-    assert ".an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0px));}" in out
-    assert ".an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}" in out
+    # T623: the gutter is each paragraph's own margin (paraPos: 1.7em at
+    # the first level, a step a level), the box indent .an-tx's padding
+    assert "if(k) return Math.round((1.7+l*(listIsOrdered(k)?1.25:1.5))*100)/100;" \
+        in out
+    assert "if(m.pos) css+='margin-left:'+m.pos+'em;';" in out
+    assert ".an-p[data-list]{display:list-item;" in out
     # no calc() anywhere may fall back to a bare 0: that is this bug's shape
     import re
     for m in re.finditer(r"calc\([^)]*var\(--[a-z-]+,\s*0\)", out):

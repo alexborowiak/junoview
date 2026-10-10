@@ -340,7 +340,10 @@ def test_a_text_box_can_carry_pages(out):
     # T366: ...and a placeholder opens the editor empty, so the first
     # keystroke is the first word
     assert "function(){return a.ph?'':textPage(a,_pi).t;}," in out
-    assert "textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');" in out
+    # (T623: as its paragraphs, to the same page -- the ones the commit
+    # read, or read from the markup it handed over)
+    assert "if(r) parasStore(a,_pi,ps||parasParse(r.html,null));" in out
+    assert "else textPageSet(a,_pi,v,'');}," in out
     # and it walks through the door T160 built for charts, not flipsOn --
     # everything asking "is this a flip book?" must keep getting flip books
     assert "if(a.k==='text') return Math.max(0,textPages(a).length-1);" in out

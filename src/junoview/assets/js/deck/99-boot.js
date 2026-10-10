@@ -49,6 +49,7 @@
     imgPaneBoot();
     quickSwatchBoot();          /* the deck's six colours, on the row */
     miniBoot();                 /* formatting beside highlighted words (T536) */
+    listStateBoot();            /* List / Numbered say the caret's paragraph (T623) */
     caseClearBoot();            /* Clear formatting and Change case (T544) */
     acBoot();                   /* AutoCorrect's switch (T545) */
     linkBoot();                 /* Link has a button, and Ctrl+K (T546) */

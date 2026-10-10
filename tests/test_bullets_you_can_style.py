@@ -17,11 +17,20 @@ from junoview import assets
 
 
 def test_the_marker_alone_takes_the_colour_and_size():
+    """T623: on each PARAGRAPH now (data-lc, data-ls, data-start), drawn
+    as its own --an-lc / --an-ls and counter, so taking one paragraph out
+    of the list, or typing a plain line after it, leaves the others'."""
     js = assets.load("js/deck/20-notes-and-tables.js")
-    assert "if(a.lcol) tx2.style.setProperty('--an-lc',tokVal(a.lcol));" in js
-    assert "tx2.setAttribute('start',String(a.lstart|0));" in js
+    deco = js.split("  function paraCss(p,m,cnt){")[1].split("\n  }\n")[0]
+    assert "if(p.lc) css+='--an-lc:'+tokVal(p.lc)+';';" in deco
+    assert "if(p.ls) css+='--an-ls:'+p.ls+';';" in deco
+    # a number is said only where counting on would not reach it (the
+    # 2026-10-10 review: every paragraph carrying its own made one Enter
+    # rewrite the style of every paragraph below it)
+    assert ("if(m.ord&&m.n!==cnt.v){css+='counter-set:list-item '+m.n+';';"
+            "cnt.v=m.n;}") in deco
     css = assets.load("css/deck.css")
-    assert ".an-ul li::marker{color:var(--an-lc,currentColor);" in css
+    assert ".an-p::marker{color:var(--an-lc,currentColor);" in css
     assert "font-size:calc(var(--an-ls,1) * 1em);}" in css
 
 
@@ -30,8 +39,10 @@ def test_both_galleries_end_in_the_options():
     assert "more.textContent=g.ord?'Numbering options\\u2026'" in js
     assert "function listOptions(ord){" in js
     body = js.split("function listOptions(ord){")[1].split("\n  }\n")[0]
-    # a box that is not a list yet becomes one of the gallery's family
-    assert "if(!lst||listIsOrdered(lst)!==ord)" in body
+    # a paragraph that is not a list yet becomes one of the gallery's
+    # family (T623: per paragraph)
+    assert "if(!p.list||listIsOrdered(p.list)!==ord) paraListSet(p,fam);" \
+        in body
     # start-at only for numbering
     assert "if(ord) rows.push({k:'start',label:'Start at'" in body
 
@@ -65,4 +76,6 @@ def test_the_pptx_carries_the_marker_both_ways():
     p1 = items[1]["paras"][0]
     assert p1["lkind"] == "roman" and p1["lstart"] == 5
     imp = assets.load("js/deck/62-pptx-import.js")
-    assert "if(p0&&p0.lcol) a.lcol=p0.lcol;" in imp
+    # T623: every paragraph keeps its own, not only the first's
+    assert "if(p.lcol&&PARA_LC.test(p.lcol)) at.lc=p.lcol;" in imp
+    assert "if(p.num&&p.lstart>1) at.start=Math.min(999,p.lstart|0);" in imp

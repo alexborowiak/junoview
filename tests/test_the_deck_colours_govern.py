@@ -37,7 +37,12 @@ def test_the_css_defaults_read_them(out):
     --tk-rad has had since T12."""
     assert ".an-text{position:absolute;max-width:60%;font-family:var(--sans);\n" \
            "  line-height:1.35;color:var(--tk-ink,#fff);" in out
-    assert "    var(--tk-surface,var(--chrome-1,#0e1926)) 85%,transparent);" in out
+    # T623: the deck's surface, or the dark the default white words were
+    # made for -- never the editor chrome's colour, which the light editor
+    # theme turned pale under white words, in the editor and in the show
+    box = out.split(".an-text{position:absolute;")[1].split("}")[0]
+    assert "    var(--tk-surface,#0e1926) 85%,transparent);" in box
+    assert "chrome-1" not in box
     assert ".an-title{color:var(--tk-heading,#f0f6fa);}" in out
     assert ".an-rect{position:absolute;border:3px solid var(--tk-line,#ff6b57);" in out
     # the page is resolved in JS, so its last fallback is the token itself

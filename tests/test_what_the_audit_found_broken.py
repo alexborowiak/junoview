@@ -102,7 +102,7 @@ def test_the_ribbon_gallery_resolves_its_own_bar():
 def test_recolouring_a_run_writes_to_the_page_you_are_on():
     deck = assets.deck_js()
     fn = deck.split("  function colorSelection(col){")[1].split("\n  function ")[0]
-    assert "textPageSet(a,n,editorText(el),r.rich?r.html:'');" in fn
+    assert "paraCommit(a,n,el);" in fn
     # the direct page-one assignment is gone
     assert "a.text=el.innerText;" not in fn
     assert "var n=textAt(s,a); if(!(n>0)) n=0;" in fn

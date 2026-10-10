@@ -837,7 +837,11 @@
      typed as a list disappeared and text from before it came back
      (2026-08-20, user: "the bullet list on/off is cursed. PLEASE DO
      EVERYTHING PROPERLY"). One content field, converted on the way in and
-     on the way out, is the fix. */
+     on the way out, is the fix.
+     (T623: a.list, and a.lcol / a.lsz / a.lstart with it, is now only how
+     an OLDER deck says its whole box is a list. The paragraphs carry their
+     own markers -- THE PARAGRAPH, below -- and parasFrom reads a.list into
+     them; the box-wide fields go the first time the box is edited.) */
   /* ---- KINDS OF LIST (T227) ----------------------------------------
      (2026-09-03, user: "there are no different types of bullet
      points, and different lists.") There were two: a disc and 1-2-3.
@@ -889,109 +893,1069 @@
     if(v&&!listKind(v)) v=(v==='number')?'number':'bullet';
     return v;
   }
-  /* strip markup for the plain projection */
+  /* strip markup for the plain projection (one inert template, reused:
+     a commit asks this of every paragraph of the box) */
+  var plainTpl=null;
   function plainOf(html){
-    var t=document.createElement('template');
+    var t=plainTpl||(plainTpl=document.createElement('template'));
     t.innerHTML=String(html||'');
-    return t.content.textContent||'';
+    var v=t.content.textContent||'';
+    t.innerHTML='';
+    return v;
   }
-  /* the box's content as ONE HTML CHUNK PER LINE, whichever form it is in */
-  /* T609: a rich box's lines, whichever editor left them: a <br>, a hard
-     \n (.an-tx is pre-wrap), or a block -- the <div> a block editor makes
-     for each Enter. A run that spans a break is closed and re-opened, so
-     bold stays bold on both lines; a block's last <br> is the browser's
-     placeholder, not a line. */
-  function htmlLines(html){
+  /* ---- THE PARAGRAPH (T623) -------------------------------------------
+     (2026-10-10, user: "indenting affects whole of text box, and still
+     issues with dot points and lists".) A text box is an ordered run of
+     PARAGRAPHS, as in PowerPoint, and each paragraph carries its own
+     level (0-8) and, if it has one, its own marker: the kind, the number
+     a numbered run starts at, the marker's colour and size. Stored flat
+     and canonical in a.html as sibling <p>s --
+       <p data-lvl="1" data-list="number" data-start="5" data-lc="@warm"
+          data-ls="1.5">words</p>
+     -- with no ul/ol/li nesting, and a line break inside a paragraph
+     (Shift+Enter) is a "\n" or a <br> INSIDE its <p>. a.text stays the
+     plain projection, one line per paragraph, and a box with no levels,
+     no markers and no formatting is still stored as a.text alone.
+
+     What was here before had no paragraph at all: a box's lines were
+     whatever the browser had left behind -- "\n" in one pre-wrap text
+     node, <div>s, <br>s or <li>s -- and the list was two models that
+     disagreed (the box-wide a.list with a.lcol/a.lsz/a.lstart drawn on a
+     root <ul>, and ul/ol sections inside a.html). So the List button on a
+     box you came back to made ONE bullet of every line from the caret to
+     the end (the browser's list command on one text node), Tab then
+     moved all of them -- "indenting affects whole of text box" -- a plain
+     line could not be indented at all (Tab left the box), an outdent at
+     the first level split the list and threw away every marker's colour,
+     and each surface (the editor, the show, the strip, the .pptx) read
+     the list from a different place.
+
+     ONE READER, parasFrom/parasParse, reads every shape a box has ever
+     been stored in, so an old deck opens exactly as it looked: a.text
+     lines, the box-wide a.list (its items, nested levels, colour, size
+     and start copied onto each paragraph), ul/ol sections with their
+     data-list, the <div> and <br> lines of the block editor. A box is
+     written back in the canonical form only when it is edited
+     (parasStore), and the box-wide fields go then -- for every page of
+     it at once, since a.list belonged to all of them.
+
+     ONE DRAWER, parasDraw, makes the same <p class="an-p">s for the
+     editor, the show, the strip's thumbnails, the presenter, the
+     scrolling page, the print root (HTML export, PDF) and the build
+     pieces, and paraDecorate works out what each one shows (parasMarks:
+     the marker and its number, and where the words start) -- so every
+     surface and the .pptx agree about every paragraph. The marker is
+     the paragraph's own ::marker (display:list-item, the shape and the
+     numbering the browser has always drawn) placed by a margin, which is
+     what lets each column of a two-column box have its own gutter. */
+  var PARA_LVL_MAX=8;
+  /* A dot, a ring and a square take turns down the levels, as 1. a. i.
+     do, so a sub-point never looks like its parent; any other marker you
+     picked stays at every level. The stored kind is the one the
+     paragraph would wear at the first level (paraBaseKind). */
+  var PARA_RINGS=[['bullet','circle','square'],['number','alpha','roman']];
+  function paraRing(k){
+    for(var i=0;i<PARA_RINGS.length;i++)
+      if(PARA_RINGS[i].indexOf(k)>=0) return PARA_RINGS[i];
+    return null;
+  }
+  function paraDrawKind(k,l){
+    var r=paraRing(k);
+    return r?r[(r.indexOf(k)+(l||0))%r.length]:k;
+  }
+  function paraBaseKind(drawn,l){
+    var r=paraRing(drawn); if(!r) return drawn;
+    var n=r.length;
+    return r[(((r.indexOf(drawn)-(l||0))%n)+n)%n];
+  }
+  /* a marker colour is a deck token or a colour, never anything that
+     could carry markup into an attribute */
+  var PARA_LC=/^(@[a-z][a-z0-9-]{0,24}|#[0-9a-f]{3,8}|rgba?\([0-9., %]{1,40}\)|[a-z]{3,24})$/i;
+  function paraNew(at,h){
+    at=at||{};
+    return {lvl:at.lvl||0,list:at.list||'',start:at.start||0,lc:at.lc||'',
+      ls:at.ls||0,h:h||''};
+  }
+  /* what one <p> says about itself, every value checked */
+  function paraAttrs(e){
+    var at=paraNew();
+    var l=parseInt(e.getAttribute('data-lvl'),10);
+    if(l>0) at.lvl=Math.min(PARA_LVL_MAX,l);
+    var k=e.getAttribute('data-list')||'';
+    /* a kind a later build invented is still a list */
+    if(k) at.list=listKind(k)?k:'bullet';
+    if(at.list){
+      var st=parseInt(e.getAttribute('data-start'),10);
+      if(st>=1&&st<=999&&listIsOrdered(at.list)) at.start=st;
+      var lc=e.getAttribute('data-lc')||'';
+      if(PARA_LC.test(lc)) at.lc=lc;
+      var ls=parseFloat(e.getAttribute('data-ls'));
+      if(ls>=0.5&&ls<=3&&ls!==1) at.ls=Math.round(ls*100)/100;
+    }
+    return at;
+  }
+  function paraAttrsSet(e,p){
+    function put(n,v){
+      if(v) {if(e.getAttribute(n)!==String(v)) e.setAttribute(n,String(v));}
+      else if(e.hasAttribute(n)) e.removeAttribute(n);
+    }
+    put('data-lvl',p.lvl||'');
+    put('data-list',p.list||'');
+    put('data-start',p.list&&p.start?p.start:'');
+    put('data-lc',p.list&&p.lc?p.lc:'');
+    put('data-ls',p.list&&p.ls?p.ls:'');
+  }
+  function paraKey(p){
+    return [p.lvl,p.list,p.start,p.lc,p.ls].join('|');
+  }
+  /* THE READER. `box` is the box-wide list of an older deck ({list, lc,
+     ls, start}); its items arrive wrapped in a root list so that they
+     are read exactly as they were drawn. Outside a <p> or an <li> a
+     "\n", a <br> and a block each begin a line (the T609 rules); inside
+     one they are a line break within the paragraph. A run that spans a
+     break is closed and re-opened, so bold stays bold on both lines. */
+  var PARA_BLOCK=/^(DIV|H[1-6]|BLOCKQUOTE|PRE|SECTION|ARTICLE|TABLE|TBODY|THEAD|TR|TD|TH)$/;
+  function parasParse(html,box){
     var t=document.createElement('template');t.innerHTML=String(html||'');
-    var out=[],open=false,BLOCK=/^(DIV|P|UL|OL|LI|H[1-6]|BLOCKQUOTE|PRE)$/;
-    function put(h){if(!open){out.push('');open=true;}out[out.length-1]+=h;}
-    function hard(){if(!open) out.push('');open=false;}
-    (function walk(n,wrap){
+    var out=[],cur=null;
+    function para(at){cur=paraNew(at,'');out.push(cur);return cur;}
+    /* a line ends -- with none open, it was an empty line of its own */
+    function hard(cx){if(!cur) para(cx.at);cur=null;}
+    function put(h,cx){if(!cur) para(cx.at);cur.h+=h;}
+    function walk(n,cx){
       for(var c=n.firstChild;c;c=c.nextSibling){
         if(c.nodeType===3){
-          String(c.nodeValue).split('\n').forEach(function(p,j){
-            if(j) hard();
-            if(p) put(wrap[0]+esc(p)+wrap[1]);
+          var v=String(c.nodeValue);
+          if(cx.soft){if(v) put(cx.w[0]+esc(v)+cx.w[1],cx);continue;}
+          v.split('\n').forEach(function(p,j){
+            if(j) hard(cx);
+            if(p) put(cx.w[0]+esc(p)+cx.w[1],cx);
           });
-        } else if(c.nodeType===1){
-          if(c.tagName==='BR'){hard();continue;}
-          if(BLOCK.test(c.tagName)){open=false;walk(c,wrap);open=false;continue;}
-          var tag=c.tagName.toLowerCase(),o=c.cloneNode(false).outerHTML;
-          o=o.slice(0,o.length-tag.length-3);
-          walk(c,[wrap[0]+o,'</'+tag+'>'+wrap[1]]);
+          continue;
+        }
+        if(c.nodeType!==1) continue;
+        var tg=c.tagName;
+        if(tg==='BR'){if(cx.soft) put(cx.w[0]+'<br>'+cx.w[1],cx); else hard(cx);continue;}
+        if(tg==='P'){
+          /* a <p> inside an item (as a pasted list brings them) is that
+             item's words, and a second one a line of it */
+          if(cx.li){
+            if(cur&&cur.h) put('<br>',cx);
+            walk(c,{w:cx.w,soft:true,d:cx.d,lk:cx.lk,at:cx.at,root:cx.root,
+              li:true});
+            continue;
+          }
+          cur=null;para(paraAttrs(c));
+          walk(c,{w:['',''],soft:true,d:cx.d,lk:cx.lk,at:cx.at,root:cx.root});
+          cur=null;continue;
+        }
+        if(tg==='UL'||tg==='OL'){
+          cur=null;
+          var d=cx.d+1,ord=(tg==='OL'),own=c.getAttribute('data-list')||'',k;
+          /* a list's own kind, at the depth it sits at; one that says
+             nothing wears its family's first kind, which the levels
+             then turn (circle under a dot, a. under 1.) as they did */
+          if(own&&listKind(own)&&listIsOrdered(own)===ord)
+            k=paraBaseKind(own,d-1);
+          else k=ord?'number':'bullet';
+          /* words loose in a list, outside any item, sit where its items'
+             words do, with no marker */
+          walk(c,{w:['',''],soft:false,d:d,lk:k,
+            at:{lvl:Math.min(PARA_LVL_MAX,d)},root:cx.root});
+          cur=null;continue;
+        }
+        if(tg==='LI'){
+          cur=null;
+          var at={lvl:Math.min(PARA_LVL_MAX,Math.max(0,cx.d-1)),
+            list:cx.lk||'bullet'};
+          if(cx.root){
+            at.lc=cx.root.lc;at.ls=cx.root.ls;
+            if(cx.d===1&&listIsOrdered(at.list)) at.start=cx.root.start;
+          }
+          para(at);
+          walk(c,{w:['',''],soft:true,d:cx.d,lk:cx.lk,at:at,root:cx.root,
+            li:true});
+          cur=null;continue;
+        }
+        if(PARA_BLOCK.test(tg)){cur=null;walk(c,cx);cur=null;continue;}
+        /* a <span> that says nothing -- what the sanitizer leaves of the
+           browser's tab span, or of an outdent's font-size -- is only its
+           words, and is no reason to keep a plain box as markup */
+        if(tg==='SPAN'&&!c.attributes.length){walk(c,cx);continue;}
+        var tag=tg.toLowerCase(),o=c.cloneNode(false).outerHTML;
+        o=o.slice(0,o.length-tag.length-3);
+        walk(c,{w:[cx.w[0]+o,'</'+tag+'>'+cx.w[1]],soft:cx.soft,d:cx.d,
+          lk:cx.lk,at:cx.at,root:cx.root,li:cx.li});
+      }
+    }
+    walk(t.content,{w:['',''],soft:false,d:0,lk:'',at:{},root:box||null});
+    /* a block's last <br> is the browser's placeholder, not a line */
+    out.forEach(function(p){
+      p.h=p.h.replace(/<br>((?:<\/[a-z0-9]+>)*)$/i,'$1');
+      if(!paraPlain(p.h)) p.h=p.h.replace(/^(?:<([a-z0-9]+)[^>]*><\/\1>)+$/i,'');
+    });
+    return parasMaths(out);
+  }
+  /* A DISPLAY FORMULA IS ONE PARAGRAPH (2026-10-10 review). "$$", a line
+     of LaTeX, "$$" -- typed with Enter, or an older box's a.text lines --
+     were one text node before T623, and MathJax paired the two "$$"
+     across the newlines. As three paragraphs they are three blocks, and
+     MathJax never looks for a pair across a block (only a <br> is a
+     newline to it): the slide, the show and the export printed the raw
+     LaTeX. So the lines from one that leaves a display formula open
+     ("$$" or "\[") to the one that closes it are read as ONE paragraph,
+     its lines kept as lines -- only plain lines at one level, never a
+     bullet, and never a formula that does not close. `open` is what was
+     open at the start of `s`; the answer is what is open at its end. */
+  function mathsOpen(s,open){
+    for(var i=0;i<s.length;){
+      var c=s.charAt(i);
+      if(c==='\\'){
+        var nx=s.charAt(i+1);
+        if(!open&&nx==='['){open=']';i+=2;continue;}
+        if(open===']'&&nx===']'){open='';i+=2;continue;}
+        i+=2;continue;            /* \$ is a dollar, \\ a LaTeX newline */
+      }
+      if(c==='$'&&s.charAt(i+1)==='$'){
+        if(!open) open='$'; else if(open==='$') open='';
+        i+=2;continue;
+      }
+      i++;
+    }
+    return open;
+  }
+  function parasMaths(ps){
+    var out=[],i=0;
+    function may(p){return !p.list&&(p.h.indexOf('$$')>=0||p.h.indexOf('\\')>=0);}
+    while(i<ps.length){
+      var p=ps[i],o=may(p)?mathsOpen(paraPlain(p.h),''):'';
+      if(o){
+        var j=i+1,st=o;
+        for(;j<ps.length;j++){
+          var q=ps[j];
+          if(q.list||(q.lvl||0)!==(p.lvl||0)){j=ps.length;break;}
+          st=mathsOpen(paraPlain(q.h),st);
+          if(!st) break;
+        }
+        if(j<ps.length){
+          var m=paraNew(p,'');
+          m.h=ps.slice(i,j+1).map(function(q){return q.h;}).join('\n');
+          out.push(m);i=j+1;continue;
         }
       }
-    })(t.content,['','']);
-    return out.length?out:[''];
-  }
-  /* the words of an EDITOR, one line per line on screen. Since T609 a
-     rich box is edited in a block <div>, where Enter makes a <div> per
-     line and a blank line is <div><br></div> -- which innerText counts
-     twice, so every blank line typed came back doubled after a redraw
-     (2026-10-08 review). */
-  function editorText(el){
-    return htmlLines(el.innerHTML).map(plainOf).join('\n');
-  }
-  function contentLines(a){
-    var out=[],t=document.createElement('template');
-    if(listOf(a)&&a.html){
-      t.innerHTML=a.html;
-      $$('li',t.content).forEach(function(li){
-        /* a nested list is a line of its own, at a deeper level; flattened
-           here because a plain run of text has no levels to keep */
-        var kid=li.querySelector('ul,ol');
-        if(kid) kid.remove();
-        out.push(li.innerHTML);
-      });
-      return out.length?out:[''];
+      out.push(p);i++;
     }
-    if(a.html){
-      /* split on top-level <br>, keeping the inline markup around each */
-      return htmlLines(a.html);
-    }
-    return String(a.text||'').split('\n');
+    return out;
   }
-  /* A box-wide list is edited inside a neutral contenteditable wrapper,
-     because only a NESTED list lets the browser turn one paragraph's
-     marker on or off. While it remains one list, keep the compact model's
-     bare <li>s. The moment it contains plain paragraphs or two list kinds,
-     it is ordinary rich text and the wrapper's whole HTML is the content. */
-  function listEditBody(html){
-    var t=document.createElement('template');t.innerHTML=String(html||'');
-    var one=t.content.firstElementChild,n=t.content.firstChild;
-    if(!one||one.nextElementSibling
-       ||(one.tagName!=='UL'&&one.tagName!=='OL')) return null;
-    while(n){
-      if(n!==one&&n.nodeType===3&&String(n.nodeValue||'').trim()) return null;
-      if(n!==one&&n.nodeType===1) return null;
-      n=n.nextSibling;
-    }
-    return one.innerHTML;
+  /* the paragraphs of a box, from any page's words: `t` and `h` are that
+     page's (figSubst'd by a renderer, raw for an editor).
+     READ ONCE PER WORDS (2026-10-10 review): the strip, the slide, the
+     buttons' state and the build pieces all ask this of the same box,
+     and each answer was a sanitise and a parse -- the strip's scroll
+     took 2.4x the script it did before T623. The answer is kept by what
+     it was read from, and each caller gets a copy of its own to change. */
+  var parasMemo=new Map();
+  function parasBox(a){
+    var lst=a&&a.k==='text'?listOf(a):0;
+    return lst?{list:lst,lc:(a.lcol&&PARA_LC.test(a.lcol))?a.lcol:'',
+      ls:(+a.lsz>=0.5&&+a.lsz<=3&&+a.lsz!==1)?+a.lsz:0,
+      start:(a.lstart>1&&listIsOrdered(lst))?Math.min(999,a.lstart|0):0}:null;
   }
-  /* set (or clear) the list style, converting the content either way */
-  function setListStyle(a,style){
+  function parasKey(a,t,h,box){
+    return (box?[box.list,box.lc,box.ls,box.start].join('|'):'')
+      +(a&&a.maths?'\u0001m':'')+(h?'\u0002'+h:'\u0003'+String(t||''));
+  }
+  function parasCopy(got){
+    return got.map(function(p){return paraNew(p,p.h);});
+  }
+  function parasFrom(a,t,h){
+    var box=parasBox(a),key=parasKey(a,t,h,box);
+    var got=parasMemo.get(key);
+    if(!got){
+      got=parasRead(a,t,h,box);
+      if(parasMemo.size>=600) parasMemo.clear();
+      parasMemo.set(key,got);
+    }
+    return parasCopy(got);
+  }
+  /* ...only if they have been read already, or null: for a surface that
+     can draw the words first and the markers when there is time */
+  function parasKnown(a,t,h){
+    var got=parasMemo.get(parasKey(a,t,h,parasBox(a)));
+    return got?parasCopy(got):null;
+  }
+  function parasRead(a,t,h,box){
+    var lst=box?box.list:0;
+    if(h){
+      h=sanitizeRich(h).html;
+      if(box){
+        var tg=listIsOrdered(lst)?'ol':'ul';
+        h='<'+tg+' data-list="'+lst+'">'+h+'</'+tg+'>';
+      }
+      return parasParse(h,box);
+    }
+    t=String(t||'');
+    if(box) return t.split('\n').map(function(l){
+      return paraNew({list:lst,start:box.start,lc:box.lc,ls:box.ls},esc(l));});
+    if(!t) return [];
+    /* an equation is one paragraph: a display formula over several lines
+       has to reach MathJax as one run of text */
+    if(a&&a.maths) return [paraNew({},esc(t))];
+    return parasMaths(t.split('\n').map(function(l){return paraNew({},esc(l));}));
+  }
+  function parasOf(a,n){
+    var pg=textPage(a,n||0);
+    return parasFrom(a,pg.t,pg.h);
+  }
+  /* written as it is read: every value checked again, so nothing a
+     form handed over reaches the stored markup unexamined */
+  function paraOpen(p){
+    var s='<p',l=Math.min(PARA_LVL_MAX,Math.max(0,p.lvl|0));
+    if(l) s+=' data-lvl="'+l+'"';
+    if(p.list){
+      s+=' data-list="'+(listKind(p.list)?p.list:'bullet')+'"';
+      if(p.start>=1&&p.start<=999) s+=' data-start="'+(p.start|0)+'"';
+      if(p.lc&&PARA_LC.test(p.lc)) s+=' data-lc="'+p.lc+'"';
+      if(+p.ls>=0.5&&+p.ls<=3&&+p.ls!==1) s+=' data-ls="'+(+p.ls)+'"';
+    }
+    return s+'>';
+  }
+  function parasHtml(ps){
+    return ps.map(function(p){return paraOpen(p)+p.h+'</p>';}).join('');
+  }
+  /* strip markup for the plain projection: a line break inside a
+     paragraph is still a line. Words with no markup and no entity are
+     their own plain text -- most paragraphs, and no parse at all. */
+  function paraPlain(h){
+    h=String(h||'');
+    if(h.indexOf('<')<0&&h.indexOf('&')<0) return h;
+    return plainOf(h.replace(/<br\s*\/?>/gi,'\n'));
+  }
+  function parasText(ps){
+    return ps.map(function(p){return paraPlain(p.h);}).join('\n');
+  }
+  /* can these be kept as a.text alone? Only plain lines: no level, no
+     marker, no markup and no line break inside a paragraph (a.text's
+     "\n" means a new paragraph). An equation's one paragraph is its
+     text, line breaks and all. */
+  function parasPlain(ps,a){
+    function bare(p){return !p.lvl&&!p.list&&p.h.indexOf('<')<0;}
+    if(a&&a.maths&&ps.length===1&&bare(ps[0])) return true;
+    if(!ps.every(bare)) return false;
+    if(ps.every(function(p){return p.h.indexOf('\n')<0;})) return true;
+    /* a display formula's lines are one paragraph (parasMaths) that a.text
+       says as lines: plain, if reading the lines back makes these very
+       paragraphs again */
+    var back=parasMaths(ps.map(function(p){return p.h;}).join('\n').split('\n')
+      .map(function(l){return paraNew({},l);}));
+    return back.length===ps.length&&back.every(function(q,i){
+      return q.h===ps[i].h;});
+  }
+  /* empty plain paragraphs at the end are not words (the plain text
+     always dropped its trailing newlines); an empty bullet is the
+     marker you are about to type after, and stays */
+  function parasTrim(ps){
+    while(ps.length){
+      var p=ps[ps.length-1];
+      if(p.list||p.lvl||paraPlain(p.h).replace(/\u200b/g,'')) break;
+      ps.pop();
+    }
+    return ps;
+  }
+  /* the box-wide list of an older deck, baked into the paragraphs of
+     every page but `skip`, then gone */
+  function parasMigrate(a,skip){
     if(!a) return;
-    var was=listOf(a);
-    style=style||0;
-    if(was===style) return;
-    /* T227: LIST TO LIST IS A WORD. Both being lists, the content is
-       already the items and only the marker changes -- and going
-       through contentLines would flatten every nested level, which
-       is what switching bullets to numbering used to do. */
-    if(was&&style){a.list=style;return;}
-    var lines=contentLines(a);
-    if(style){
-      /* an empty line still needs a bullet to stand on */
-      a.html=lines.map(function(h){
-        return '<li>'+(h||'<br>')+'</li>';}).join('');
-      a.list=style;
-      /* a list has several baselines and no single curve to follow */
-      delete a.arc;
-    } else {
-      a.html=lines.join('<br>');
-      delete a.list;
+    if(a.list&&listOf(a)) textPages(a).forEach(function(pg,n){
+      if(n===skip) return;
+      var ps=parasTrim(parasFrom(a,pg.t,pg.h));
+      textPageSet(a,n,parasText(ps),parasPlain(ps,a)?'':parasHtml(ps));
+    });
+    delete a.list;delete a.lcol;delete a.lsz;delete a.lstart;
+  }
+  /* write one page's paragraphs (an editor's commit) */
+  function parasStore(a,n,ps){
+    parasMigrate(a,n||0);
+    ps=parasTrim(ps);
+    textPageSet(a,n||0,parasText(ps),parasPlain(ps,a)?'':parasHtml(ps));
+    /* a list has several baselines and no single curve to follow */
+    if(ps.some(function(p){return p.list;})) delete a.arc;
+  }
+  /* change a box's paragraphs as a whole, every page: fn(p, i, page) */
+  function parasEdit(a,fn){
+    if(!a||a.k!=='text'||a.md) return false;
+    var pages=textPages(a).map(function(pg){
+      var ps=parasFrom(a,pg.t,pg.h);
+      /* an empty box is one empty paragraph to put a marker on */
+      return ps.length?ps:[paraNew({},'')];
+    });
+    parasMigrate(a,-1);
+    var anyList=false;
+    pages.forEach(function(ps,n){
+      ps.forEach(function(p,i){fn(p,i,n);});
+      if(ps.some(function(p){return p.list;})) anyList=true;
+      ps=parasTrim(ps);
+      textPageSet(a,n,parasText(ps),parasPlain(ps,a)?'':parasHtml(ps));
+    });
+    if(anyList) delete a.arc;
+    return true;
+  }
+  /* WHAT EACH PARAGRAPH DRAWS. A numbered run counts on at its level
+     while the paragraphs at that level keep the same kind; a paragraph
+     nearer the margin, or a different kind or none at the same level,
+     ends it, and data-start begins one at that number (a paragraph whose
+     start is the run's own goes on counting -- Enter copies it). A
+     paragraph with a start, after a plain one at its level that ended a
+     run with that same start, takes that list up again, as Word does:
+     the start says which list it belongs to -- so taking "6." out of a
+     list that starts at 5 leaves the next one 6, not a second 5. `pos`
+     is where the words start, in em of the box's type: the bullet gutter
+     (1.7em, T195) and a step a level -- 1.5em for a marker, 1.25em for a
+     number, the nested lists' own steps -- and a plain paragraph at a
+     level sits under the words of the level above it. `first` is where
+     the number its run began (a .pptx says it as startAt). */
+  function paraPos(l,k){
+    if(k) return Math.round((1.7+l*(listIsOrdered(k)?1.25:1.5))*100)/100;
+    return l?Math.round((1.7+1.5*(l-1))*100)/100:0;
+  }
+  function paraHang(l,k){
+    if(!k) return 0;
+    return l?(listIsOrdered(k)?1.25:1.5):1.7;
+  }
+  function parasMarks(ps){
+    var runs=[],gone=[];
+    return ps.map(function(p){
+      var L=p.lvl||0;
+      if(runs.length>L+1) runs.length=L+1;
+      if(gone.length>L+1) gone.length=L+1;
+      while(runs.length<L+1) runs.push(null);
+      while(gone.length<L+1) gone.push(null);
+      if(!p.list){
+        if(runs[L]&&runs[L].n) gone[L]=runs[L];
+        runs[L]=null;
+        return {k:'',n:0,first:0,ord:false,pos:paraPos(L,'')};
+      }
+      var ord=listIsOrdered(p.list),r=runs[L],g=gone[L],n=0,run;
+      if(!ord) run={list:p.list,n:0,start:0,first:0};
+      else if(r&&r.list===p.list&&(!p.start||p.start===r.start))
+        run={list:p.list,n:r.n+1,start:r.start,first:r.first};
+      else if(!r&&p.start&&g&&g.list===p.list&&g.start===p.start)
+        run={list:p.list,n:g.n+1,start:p.start,first:g.n+1};
+      else run={list:p.list,n:p.start||1,start:p.start||0,
+        first:p.start||1};
+      runs[L]=run;gone[L]=null;n=run.n;
+      return {k:paraDrawKind(p.list,L),n:n,first:run.first,ord:ord,
+        pos:paraPos(L,p.list)};
+    });
+  }
+  /* the marker each kind draws -- the browser's own shapes and counters,
+     so a dot is the dot every list here has always had */
+  /* (1) 2) 3) is deck.css's @counter-style jv-paren: a counter style
+     counts with the paragraphs, where a ::marker's counter() did not) */
+  var PARA_LST={bullet:'disc',circle:'circle',square:'square',
+    dash:'"\u2013\u00a0"',arrow:'"\u25b8\u00a0"',check:'"\u2713\u00a0"',
+    number:'decimal',paren:'jv-paren',alpha:'lower-alpha',
+    'alpha-upper':'upper-alpha',roman:'lower-roman',
+    'roman-upper':'upper-roman'};
+  /* put each paragraph of `host` where it goes, wearing its marker. Only
+     what changed is written, so running it on every structural keystroke
+     costs a walk over a box's few paragraphs.
+     A NUMBER IS WRITTEN ONLY WHERE COUNTING ON WOULD NOT REACH IT
+     (2026-10-10 review). The paragraphs are siblings, and the browser
+     counts every one with a marker on from the one before -- 1. 2. 3.
+     by itself, as an <ol> did. Writing every paragraph's number on it
+     made one Enter near the top of a numbered list rewrite the style of
+     every paragraph below it (26 writes, and a long task, in a 30-item
+     list); now only a paragraph that begins a run, picks one up again,
+     or follows a sub-list carries its number. */
+  function paraCss(p,m,cnt){
+    var css='';
+    if(m.pos) css+='margin-left:'+m.pos+'em;';
+    if(p.list){
+      css+='list-style-type:'+PARA_LST[m.k]+';';
+      cnt.v++;
+      if(m.ord&&m.n!==cnt.v){css+='counter-set:list-item '+m.n+';';cnt.v=m.n;}
+      if(p.lc) css+='--an-lc:'+tokVal(p.lc)+';';
+      if(p.ls) css+='--an-ls:'+p.ls+';';
     }
-    a.text=lines.map(plainOf).join('\n');
+    return css;
+  }
+  function paraDecorate(host){
+    var els=[],ps=[];
+    for(var c=host.firstElementChild;c;c=c.nextElementSibling)
+      if(c.tagName==='P'){els.push(c);ps.push(paraAttrs(c));}
+    var mk=parasMarks(ps),cnt={v:0};
+    els.forEach(function(e,i){
+      var m=mk[i],css=paraCss(ps[i],m,cnt);
+      if(e.className!=='an-p') e.className='an-p';
+      if((e.getAttribute('style')||'')!==css){
+        if(css) e.setAttribute('style',css); else e.removeAttribute('style');}
+      var dk=m.k||'';
+      if((e.getAttribute('data-k')||'')!==dk){
+        if(dk) e.setAttribute('data-k',dk); else e.removeAttribute('data-k');}
+    });
+    host.__jvN=host.childNodes.length;
+  }
+  /* THE ONE DRAWER: the paragraphs as one piece of markup, already
+     wearing what paraDecorate would give them -- one parse for the box,
+     where a <p> made and filled at a time was one parse a paragraph */
+  function parasDraw(host,ps){
+    if(host.firstElementChild){
+      ps.forEach(function(p){
+        var e=document.createElement('p');
+        paraAttrsSet(e,p);
+        e.innerHTML=p.h||'<br>';
+        host.appendChild(e);
+      });
+      paraDecorate(host);
+      return;
+    }
+    var mk=parasMarks(ps),cnt={v:0},out='';
+    ps.forEach(function(p,i){
+      var m=mk[i],css=paraCss(p,m,cnt),o=paraOpen(p);
+      out+=o.slice(0,-1)+' class="an-p"'
+        +(css?' style="'+css.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'"':'')
+        +(m.k?' data-k="'+m.k+'"':'')+'>'+(p.h||'<br>')+'</p>';
+    });
+    host.insertAdjacentHTML('beforeend',out);
+    host.__jvN=host.childNodes.length;
+  }
+  /* THE MARKER AS A CHARACTER: what a paragraph's ::marker shows, for a
+     surface that draws words and nothing else (the strip) */
+  var PARA_CH={bullet:'\u2022',circle:'\u25e6',square:'\u25aa',dash:'\u2013',
+    arrow:'\u25b8',check:'\u2713'};
+  function paraMarkText(k,n){
+    if(PARA_CH[k]) return PARA_CH[k];
+    var v=String(n),x=n;
+    if(k==='alpha'||k==='alpha-upper'){
+      v='';
+      while(x>0){x--;v=String.fromCharCode(97+x%26)+v;x=Math.floor(x/26);}
+    } else if(k==='roman'||k==='roman-upper'){
+      v='';
+      [[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],
+       [50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']]
+        .forEach(function(r){while(x>=r[0]){v+=r[1];x-=r[0];}});
+    }
+    if(/-upper$/.test(k)) v=v.toUpperCase();
+    return v+(k==='paren'?')':'.');
+  }
+  /* A BOX AS LINES OF WORDS, each wearing its marker and set in by its
+     level -- what the strip's thumbnail draws (2026-10-10 review): one
+     text node, as it drew a.text before T623, where a <p> a paragraph
+     sanitised, parsed and laid out every list box of every thumbnail
+     again as the strip scrolled (2.4x the script, 30 fps) */
+  function parasLines(ps){
+    var mk=parasMarks(ps);
+    return ps.map(function(p,i){
+      var m=mk[i],at=m.pos-paraHang(p.lvl||0,p.list);
+      var pad=new Array(Math.max(0,Math.round(at))+1).join('\u2003');
+      var lead=p.list?paraMarkText(m.k,m.n)+'\u00a0':'';
+      return pad+lead+paraPlain(p.h).replace(/\n/g,'\n'+pad
+        +(p.list?'\u2003':''));
+    }).join('\n');
+  }
+  /* the box as a whole, for the controls that show a state: the kind
+     every paragraph with words shares, or '' */
+  function boxListKind(a){
+    if(!a||a.k!=='text'||a.md) return '';
+    var ps=parasOf(a,0),full=ps.filter(function(p){
+      return paraPlain(p.h).trim();});
+    if(!full.length) full=ps;
+    if(!full.length||!full.every(function(p){return p.list;})) return '';
+    var fam=listIsOrdered(full[0].list);
+    return full.every(function(p){return listIsOrdered(p.list)===fam;})
+      ?paraDrawKind(full[0].list,full[0].lvl):'';
+  }
+  /* any marker or level at all -- a box that is more than its lines */
+  function boxHasList(a){
+    if(!a||a.k!=='text'||a.md) return false;
+    if(listOf(a)) return true;
+    if(!a.html) return false;
+    return parasOf(a,0).some(function(p){return p.list||p.lvl;});
+  }
+  /* new words for a box whose paragraphs should keep their markers and
+     levels: one line per paragraph (find and replace, the style table).
+     EACH PARAGRAPH TAKES ITS OWN LINES (2026-10-10 review): a.text has a
+     line for every paragraph AND for every line break inside one
+     (Shift+Enter), so the lines are handed out by how many each
+     paragraph has -- a break stays a break inside its bullet, where
+     counting paragraphs against lines threw every marker away. A
+     paragraph whose words did not change keeps its formatting too. */
+  function parasReplaceText(a,v){
+    v=String(v||'');
+    var ps=parasOf(a,0),lines=v.split('\n');
+    var marked=ps.some(function(p){return p.list||p.lvl;});
+    if(marked||a.html){
+      var has=ps.map(function(p){return paraPlain(p.h).split('\n');});
+      var total=has.reduce(function(n,l){return n+l.length;},0);
+      if(ps.length&&total===lines.length){
+        var k=0;
+        parasStore(a,0,ps.map(function(p,i){
+          var mine=lines.slice(k,k+has[i].length);k+=has[i].length;
+          if(mine.join('\n')===has[i].join('\n')) return p;
+          return paraNew(p,mine.map(esc).join(p.h.indexOf('<br')>=0?'<br>':'\n'));
+        }));
+        return;
+      }
+    }
+    var same=ps.length&&ps.every(function(p){return paraKey(p)===paraKey(ps[0]);});
+    if(marked&&same){
+      parasStore(a,0,lines.map(function(l){return paraNew(ps[0],esc(l));}));
+      return;
+    }
+    parasMigrate(a,0);
+    a.text=v;delete a.html;
+  }
+  /* ---- THE PARAGRAPHS OF THE BOX BEING TYPED IN -------------------------
+     The editor is a block of the same <p>s (parasDraw), so the browser
+     makes a paragraph per Enter, and Enter copies the paragraph's own
+     attributes -- its level and its marker carry on, as in PowerPoint. */
+  function paraEls(el){
+    var o=[];
+    for(var c=el.firstElementChild;c;c=c.nextElementSibling)
+      if(c.tagName==='P') o.push(c);
+    return o;
+  }
+  /* is `el` already exactly these paragraphs, as parasDraw would make
+     them? (its own attributes and words; what paraDecorate draws aside) */
+  var PARA_OWN=/^(class|style|data-k|data-lvl|data-list|data-start|data-lc|data-ls)$/;
+  function paraSame(el,ps){
+    var i=0;
+    for(var c=el.firstChild;c;c=c.nextSibling,i++){
+      if(c.nodeType!==1||c.tagName!=='P'||i>=ps.length) return false;
+      for(var k=0;k<c.attributes.length;k++)
+        if(!PARA_OWN.test(c.attributes[k].name)) return false;
+      if(paraKey(paraAttrs(c))!==paraKey(ps[i])
+         ||c.innerHTML!==(ps[i].h||'<br>')) return false;
+    }
+    return i===ps.length;
+  }
+  /* the paragraph (a <p> of the editor) a boundary point is in */
+  function paraAt(el,n,off){
+    if(!n||!el.contains(n)) return null;
+    if(n===el){
+      var k=el.childNodes; if(!k.length) return null;
+      n=k[Math.min(off,k.length-1)];
+    }
+    while(n&&n.parentNode!==el) n=n.parentNode;
+    return (n&&n.nodeType===1&&n.tagName==='P')?n:null;
+  }
+  /* nothing but empty markup between the paragraph's start and (n,off) */
+  function paraAtStart(p,n,off){
+    var r=document.createRange();
+    try{r.setStart(p,0);r.setEnd(n,off);}catch(e){return false;}
+    return r.toString().replace(/\u200b/g,'')==='';
+  }
+  function paraEmpty(p){
+    return !String(p.textContent||'').replace(/\u200b/g,'');
+  }
+  /* a line of code in by a tab, or out by one (or by up to four spaces),
+     in its own words: the live caret moves with the characters */
+  function codeIndent(p,out){
+    var w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT),t=w.nextNode();
+    while(t&&!t.nodeValue) t=w.nextNode();
+    if(!out){
+      if(t) t.insertData(0,'\t');
+      else p.insertBefore(document.createTextNode('\t'),p.firstChild);
+      return;
+    }
+    if(!t) return;
+    var m=/^(\t| {1,4})/.exec(t.nodeValue);
+    if(m) t.deleteData(0,m[0].length);
+  }
+  /* every paragraph the selection touches, first to last WHICHEVER WAY IT
+     WAS DRAGGED (a range runs start to end), or the caret's one. A drag
+     that ends at the very start of a paragraph does not take it. */
+  function paraTouched(el,look){
+    /* a command puts stray words into paragraphs first; a look (the
+       buttons' state, as the caret moves) changes nothing */
+    if(!look) paraNormalize(el);
+    var s=window.getSelection();
+    if(!s||!s.rangeCount) return [];
+    var r=s.getRangeAt(0);
+    if(!el.contains(r.startContainer)||!el.contains(r.endContainer)) return [];
+    var a=paraAt(el,r.startContainer,r.startOffset),
+        b=paraAt(el,r.endContainer,r.endOffset);
+    if(!a||!b) return [];
+    if(a===b) return [a];
+    /* from the first to the last, walking only the paragraphs between
+       them: the buttons ask this on every caret move, and a box's other
+       paragraphs are none of their business */
+    var out=[];
+    for(var c=a;c;c=c.nextElementSibling){
+      if(c.tagName==='P') out.push(c);
+      if(c===b) break;
+    }
+    if(out[out.length-1]!==b) return [a];
+    if(!r.collapsed&&paraAtStart(b,r.endContainer,r.endOffset)) out.pop();
+    return out;
+  }
+  /* where the selection is, and back -- by node, so the text nodes a
+     step moves keep the caret */
+  function edSel(el){
+    var s=window.getSelection();
+    if(!s||!s.rangeCount) return null;
+    var r=s.getRangeAt(0);
+    if(!el.contains(r.startContainer)) return null;
+    return {sc:r.startContainer,so:r.startOffset,ec:r.endContainer,
+      eo:r.endOffset};
+  }
+  function edSelPut(x){
+    if(!x) return;
+    try{
+      var r=document.createRange();
+      r.setStart(x.sc,x.so);r.setEnd(x.ec,x.eo);
+      var s=window.getSelection();s.removeAllRanges();s.addRange(r);
+    }catch(e){}
+  }
+  /* EVERYTHING IN A <p>. Words typed into an empty editor, a <div> line
+     or a list that arrived some other way are taken into paragraphs of
+     their own, nodes and caret kept. */
+  function paraNormalize(el){
+    var bad=false,c;
+    for(c=el.firstChild;c;c=c.nextSibling){
+      if(c.nodeType===1&&c.tagName==='P') continue;
+      if(c.nodeType===3&&!c.nodeValue) continue;
+      bad=true;break;
+    }
+    if(!bad){
+      if(!el.firstChild&&el.isContentEditable){
+        var e0=document.createElement('p');
+        e0.appendChild(document.createElement('br'));
+        el.appendChild(e0);
+        edSelPut({sc:e0,so:0,ec:e0,eo:0});
+        paraDecorate(el);
+      }
+      return false;
+    }
+    var sv=edSel(el),run=null,prev=null;
+    [].slice.call(el.childNodes).forEach(function(n){
+      if(n.nodeType===1&&n.tagName==='P'){run=null;prev=n;return;}
+      if(n.nodeType===3&&!n.nodeValue) return;
+      if(n.nodeType===1&&(n.tagName==='UL'||n.tagName==='OL')){
+        var f=document.createElement('div');
+        parasDraw(f,parasParse(sanitizeRich(n.outerHTML).html,null));
+        var last=null;
+        while(f.firstChild){last=f.firstChild;el.insertBefore(last,n);}
+        el.removeChild(n);run=null;prev=last;return;
+      }
+      if(n.nodeType===1&&PARA_BLOCK.test(n.tagName)){
+        /* a line the browser made a block of: a paragraph like the one
+           before it, as an Enter there would have made */
+        var p=prev?prev.cloneNode(false):document.createElement('p');
+        el.insertBefore(p,n);
+        while(n.firstChild) p.appendChild(n.firstChild);
+        el.removeChild(n);
+        if(!p.firstChild) p.appendChild(document.createElement('br'));
+        run=null;prev=p;return;
+      }
+      if(!run){
+        run=prev?prev.cloneNode(false):document.createElement('p');
+        el.insertBefore(run,n);prev=run;
+      }
+      run.appendChild(n);
+    });
+    edSelPut(sv);
+    paraDecorate(el);
+    return true;
+  }
+  /* what a paste brings, as words and structure only: no colour of its
+     own, nothing a page carries besides its text (Word's <style> block,
+     a <meta>) */
+  function pasteClean(html){
+    var t=document.createElement('template');t.innerHTML=String(html||'');
+    $$('style,script,meta,title,head,link,xml',t.content).forEach(function(n){
+      n.remove();});
+    $$('[style],[color]',t.content).forEach(function(n){
+      n.removeAttribute('style');n.removeAttribute('color');});
+    return sanitizeRich(t.innerHTML).html;
+  }
+  /* put pasted paragraphs in at the caret: the first joins the caret's
+     paragraph, the words after the caret follow the last, and each new
+     one is a copy of the caret's paragraph -- its level and marker --
+     unless it brought a marker of its own (its level then counted from
+     the caret's) */
+  function paraPaste(el,ps){
+    var s=window.getSelection();
+    if(!s||!s.rangeCount) return;
+    paraNormalize(el);
+    edOp(el,function(){
+      var s2=window.getSelection(); if(!s2.rangeCount) return;
+      var r=s2.getRangeAt(0),p0=paraAt(el,r.startContainer,r.startOffset);
+      if(!p0) return;
+      var tail=document.createRange();
+      tail.setStart(r.startContainer,r.startOffset);
+      tail.setEnd(p0,p0.childNodes.length);
+      var rest=tail.extractContents();
+      var empty0=paraEmpty(p0);
+      if(empty0) while(p0.firstChild) p0.removeChild(p0.firstChild);
+      var at0=paraAttrs(p0),last=p0,made=[p0];
+      ps.forEach(function(q,i){
+        var e=p0;
+        if(i){e=p0.cloneNode(false);el.insertBefore(e,last.nextSibling);
+          made.push(e);}
+        if(q.list&&(i||empty0)){
+          var at=paraNew(q,'');
+          at.lvl=Math.min(PARA_LVL_MAX,(at0.lvl||0)+(q.lvl||0));
+          paraAttrsSet(e,at);
+        }
+        var tp=document.createElement('template');tp.innerHTML=q.h;
+        e.appendChild(tp.content);
+        last=e;
+      });
+      var at1=last.childNodes.length;
+      /* the words after the caret follow the last line; an empty
+         paragraph's placeholder <br> is not words */
+      if(String(rest.textContent||'').replace(/​/g,''))
+        last.appendChild(rest);
+      made.forEach(function(e){
+        if(!e.firstChild) e.appendChild(document.createElement('br'));});
+      edSelPut({sc:last,so:at1,ec:last,eo:at1});
+    },s.isCollapsed?null:function(){
+      document.execCommand('delete',false,null);});
+    paraDecorate(el);
+    if(el.__jvFlush) el.__jvFlush();
+  }
+  /* ---- THE EDITOR'S OWN UNDO -----------------------------------------
+     A level or a marker is an attribute the browser's editing commands
+     know nothing of (execCommand's indent made <blockquote>s, split the
+     list at the first level and nested <ul> in <ul>), so the paragraph
+     commands write the DOM themselves -- which the browser's own undo
+     cannot see. So a box of paragraphs keeps ONE undo of its own, for
+     every step: what you type, Enter, a paste, a cut, a Tab, a marker.
+     A step is the mutation records it made, undone in reverse and
+     redone in order, so Ctrl+Z steps back strictly in the order things
+     happened and Ctrl+Y puts back every step it took.
+     (2026-10-10 review: the first version kept only the paragraph
+     commands, marked every run of the browser's steps as one entry and
+     left those to the browser -- so the two stacks drifted, an op's
+     execCommand('undo') popped whichever browser step was on top, and a
+     Ctrl+Y that found nothing of ours did nothing: "Second line", typed
+     and then undone, could never come back, and after an auto-bullet
+     Ctrl+Z jumped to states that never existed. The browser's stack is
+     now never used in a box of paragraphs.)
+     Typing is one step while it goes on where the last key left the
+     caret, as in Word; Enter, a paste, a cut and every command are a step
+     each. What paraDecorate draws (style, class, data-k) is not a step:
+     it follows from the paragraphs and is drawn again after each undo. */
+  var ED_DRAWN=/^(style|class|data-k)$/;
+  function edStart(el){
+    edStop(el);
+    var j={st:[],re:[],open:null,dirty:false,mute:0,inp:null};
+    j.mo=new MutationObserver(function(rs){edTake(el,rs);});
+    j.mo.observe(el,{subtree:true,childList:true,attributes:true,
+      attributeOldValue:true,characterData:true,characterDataOldValue:true});
+    el.__jvJ=j;
+  }
+  function edStop(el){
+    var j=el&&el.__jvJ;
+    if(!j) return;
+    try{j.mo.disconnect();}catch(e){}
+    delete el.__jvJ;
+  }
+  /* records into the step that is open (a new one if none is) */
+  function edTake(el,rs){
+    var j=el.__jvJ;
+    if(!j||!rs.length||j.mute) return;
+    var keep=[];
+    rs.forEach(function(r){
+      if(r.type==='attributes'&&(r.target===el||(ED_DRAWN.test(r.attributeName)
+         &&r.target.parentNode===el))) return;
+      keep.push({type:r.type,t:r.target,name:r.attributeName,old:r.oldValue,
+        add:[].slice.call(r.addedNodes||[]),rem:[].slice.call(r.removedNodes||[]),
+        prev:r.previousSibling,next:r.nextSibling});
+    });
+    if(!keep.length) return;
+    j.dirty=true;
+    if(!j.open) j.open=edPush(j,{kind:'',recs:[],before:j.sel||null,after:null});
+    j.open.recs.push.apply(j.open.recs,keep);
+    j.re.length=0;
+  }
+  /* whatever the observer still holds, into the open step, now */
+  function edFlush(el){
+    var j=el&&el.__jvJ;
+    if(j) edTake(el,j.mo.takeRecords());
+    return j;
+  }
+  /* the open step is done: nothing more joins it */
+  function edSeal(el){
+    var j=edFlush(el);
+    if(j){
+      if(j.open) j.open.after=j.open.after||edSel(el);
+      j.open=null;j.sel=edSel(el);
+    }
+    return j;
+  }
+  function edSame(x,y){
+    return !!(x&&y&&x.sc===y.sc&&x.so===y.so&&x.ec===y.ec&&x.eo===y.eo);
+  }
+  function edPush(j,st){
+    j.st.push(st);
+    if(j.st.length>200) j.st.shift();
+    return st;
+  }
+  /* a key the browser is about to act on (beforeinput): the same step
+     as the one before while you keep typing (or deleting) where the last
+     key left you, a step of its own otherwise */
+  var ED_RUN={insertText:'type',insertCompositionText:'type',
+    deleteContentBackward:'del',deleteContentForward:'del',
+    deleteWordBackward:'del',deleteWordForward:'del'};
+  function edBefore(el,t){
+    var j=edFlush(el);
+    if(!j) return;
+    /* the browser's input follows in this same task; one it never sends
+       (a Backspace with nothing before it) must not make the next
+       command's input look like this key's */
+    j.inp=true;
+    clearTimeout(j.inpT);
+    j.inpT=setTimeout(function(){j.inp=false;},0);
+    var kind=ED_RUN[t]||t,now=edSel(el),o=j.open;
+    if(o&&ED_RUN[t]&&o.kind===kind
+       &&(t==='insertCompositionText'||edSame(now,o.after))) return;
+    if(o&&!o.recs.length){o.kind=kind;o.before=now;o.after=null;return;}
+    if(o) o.after=o.after||now;
+    j.open=edPush(j,{kind:kind,recs:[],before:now,after:null});
+  }
+  /* ...and done (input): where it left the caret. An input with no
+     beforeinput is a command the browser ran for this page (execCommand:
+     bold, a colour from the ribbon) -- a step of its own: what the last
+     key did was taken into its step as that key's input arrived. */
+  function edAfter(el){
+    var j=el&&el.__jvJ;
+    if(!j) return;
+    if(!j.inp){
+      if(j.open) j.open.after=j.open.after||edSel(el);
+      j.open=null;j.sel=edSel(el);
+      edFlush(el);
+      if(j.open) j.open.kind='cmd';
+      edSeal(el);
+      return;
+    }
+    j.inp=false;
+    edFlush(el);
+    if(j.open) j.open.after=edSel(el);
+  }
+  /* ONE STEP of ours: fn's writes (and `native`'s first, a browser
+     command the step begins with -- the typed "- " an auto-list
+     deletes), so the first Ctrl+Z after an auto-list gives the "- " back.
+     One that writes nothing is no step, and typing goes on as one. */
+  function edOp(el,fn,native){
+    var j=edFlush(el),prev=j?j.open:null;
+    if(j){j.open=null;j.sel=edSel(el);}
+    el.__jvOp=1;
+    try{
+      if(native) native();
+      fn();
+    }finally{el.__jvOp=0;}
+    if(!j) return true;
+    edFlush(el);
+    if(!j.open){j.open=prev;return false;}
+    j.open.kind='op';
+    if(prev) prev.after=prev.after||j.open.before;
+    edSeal(el);
+    return true;
+  }
+  function edPut(r,fwd){
+    if(r.type==='attributes'){
+      if(!fwd) r.now=r.t.getAttribute(r.name);
+      var v=fwd?r.now:r.old;
+      if(v==null) r.t.removeAttribute(r.name); else r.t.setAttribute(r.name,v);
+    } else if(r.type==='characterData'){
+      if(!fwd) r.now=r.t.nodeValue;
+      r.t.nodeValue=fwd?r.now:r.old;
+    } else {
+      var out=fwd?r.rem:r.add,inn=fwd?r.add:r.rem;
+      out.forEach(function(n){if(n.parentNode===r.t) r.t.removeChild(n);});
+      var ref=(r.next&&r.next.parentNode===r.t)?r.next
+        :(r.prev&&r.prev.parentNode===r.t)?r.prev.nextSibling:null;
+      inn.forEach(function(n){r.t.insertBefore(n,ref);});
+    }
+  }
+  /* Ctrl+Z (back) or Ctrl+Y (forward) in a box of paragraphs. A step's
+     records are put back in reverse (each record's value after it is
+     read as it is undone, for the redo) and the caret goes where the
+     step found it, or left it. */
+  function edHistory(el,back){
+    var j=edSeal(el);
+    if(!j) return;
+    var from=back?j.st:j.re,to=back?j.re:j.st;
+    while(from.length&&!from[from.length-1].recs.length) from.pop();
+    var top=from.pop();
+    if(!top) return;
+    j.mute++;
+    try{
+      var i;
+      if(back){
+        for(i=top.recs.length-1;i>=0;i--) edPut(top.recs[i],false);
+        edSelPut(top.before);
+      } else {
+        for(i=0;i<top.recs.length;i++) edPut(top.recs[i],true);
+        edSelPut(top.after);
+      }
+    }catch(e){}
+    paraDecorate(el);
+    edFlush(el);
+    j.mute--;
+    to.push(top);
+    j.dirty=true;j.sel=edSel(el);
+    if(el.__jvSoon) el.__jvSoon();
+  }
+  /* ONE CHANGE to some of the editor's paragraphs: fn(p, i, element) on
+     each one's attributes. `loud` is a ribbon command -- a step of the
+     deck's undo too, as every other format change is; a key (Tab,
+     Backspace, Enter) is part of the typing, committed as typing is. */
+  function paraEdit(el,ps,fn,loud){
+    if(!el||!ps||!ps.length) return false;
+    if(loud) histSettle();
+    var did=edOp(el,function(){
+      ps.forEach(function(e,i){
+        var p=paraAttrs(e),was=paraKey(p);
+        fn(p,i,e);
+        if(paraKey(p)!==was) paraAttrsSet(e,p);
+      });
+    });
+    paraDecorate(el);
+    if(loud){
+      if(el.__jvFlush) el.__jvFlush();
+      if(did) markDirty();
+    } else {
+      if(el.__jvSoon) el.__jvSoon();
+      /* List and Numbered say what the caret's paragraph now is */
+      listButtonsSync(el,true);
+    }
+    return did;
+  }
+  /* the paragraphs a command found in the search box is about: noted as
+     the search opened, while the box was still being typed in
+     (58-command-search.js) -- {a, n (its page), set (indices), t} */
+  var paraHint=null;
+  /* the three things a paragraph command does to one paragraph */
+  /* a paragraph moved to another level joins the run there (or begins
+     one at a. or 1.) -- a start it carried was its old run's */
+  function paraLevel(p,d){
+    var l=Math.max(0,Math.min(PARA_LVL_MAX,(p.lvl||0)+d));
+    if(l!==(p.lvl||0)) p.start=0;
+    p.lvl=l;
+  }
+  /* a marker ON (a kind) or OFF (''). The List and Numbered buttons'
+     plain dot and 1. take the levels' turns; a kind picked from a gallery
+     is what every level draws */
+  function paraListSet(p,kind){
+    if(!kind){p.list='';p.start=0;p.lc='';p.ls=0;return;}
+    p.list=(kind==='bullet'||kind==='number')?kind:paraBaseKind(kind,p.lvl||0);
+    if(!listIsOrdered(p.list)) p.start=0;
+  }
+  /* the List / Numbered toggle over a set of paragraphs: OFF when every
+     one already has a marker of that family, otherwise ON for those
+     that do not (one that has that family's marker keeps its kind) */
+  function paraListToggle(list,kind){
+    var ord=listIsOrdered(kind);
+    var on=list.length&&list.every(function(p){
+      return p.list&&listIsOrdered(p.list)===ord;});
+    return function(p){
+      if(on) paraListSet(p,'');
+      else if(!(p.list&&listIsOrdered(p.list)===ord)) paraListSet(p,kind);
+    };
   }
   function activeTextEditable(){
     var ae=document.activeElement;
@@ -1005,31 +1969,13 @@
     var r=sel.getRangeAt(0);
     return el.contains(r.startContainer)&&el.contains(r.endContainer);
   }
-  /* T590: the list item whose very start the caret is at, or null --
-     nothing but empty markup between the item's first position and it */
-  function caretAtItemStart(el){
-    var sel=window.getSelection();
-    if(!sel||!sel.rangeCount||!sel.isCollapsed) return null;
-    var n=sel.focusNode;
-    if(!n||!el.contains(n)) return null;
-    var li=(n.nodeType===1?n:n.parentNode);
-    li=(li&&li.closest)?li.closest('li'):null;
-    if(!li||!el.contains(li)) return null;
-    var r=document.createRange();
-    try{r.setStart(li,0);r.setEnd(sel.focusNode,sel.focusOffset);}
-    catch(e){return null;}
-    return r.toString().replace(/\u200b/g,'')===''?li:null;
+  /* the words of an EDITOR, one line per paragraph */
+  function editorText(el){
+    return parasText(parasParse(el.innerHTML,null));
   }
-  function caretList(el){
-    var sel=window.getSelection(),n=sel&&sel.rangeCount?sel.focusNode:null;
-    if(!n||!el.contains(n)) return null;
-    if(n.nodeType===3) n=n.parentNode;
-    while(n){
-      if(n.tagName==='UL'||n.tagName==='OL') return n;
-      if(n===el) break;
-      n=n.parentNode;
-    }
-    return null;
+  /* an editor's words into the page it is turned to */
+  function paraCommit(a,n,el){
+    parasStore(a,n,parasParse(sanitizeRich(el.innerHTML).html,null));
   }
   /* colour just the highlighted run inside the text box being edited;
      returns false when there is no live selection to recolour */
@@ -1049,7 +1995,6 @@
     run();
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(a){
-      var r=sanitizeRich(el.innerHTML);
       /* T261: write to the page the box is TURNED TO, not always page
          one. renderAnnots binds the editor's get/set to textAt(s,a) via
          textPage/textPageSet; assigning a.text/a.html directly meant
@@ -1058,7 +2003,7 @@
          autosave. textAt returns 0 for a single-page box and for the
          title/subtitle annots, so nothing else changes. */
       var n=textAt(s,a); if(!(n>0)) n=0;
-      textPageSet(a,n,editorText(el),r.rich?r.html:'');
+      paraCommit(a,n,el);
       markDirty();
     }
     return true;
@@ -1075,31 +2020,6 @@
       try{document.execCommand('styleWithCSS',false,false);}catch(e){}
       try{document.execCommand(cmd,false,null);}catch(e){}
     });
-  }
-  /* A list is usually a property of the whole box, but while the caret is
-     live the browser already knows the paragraph(s) the user means. Keep
-     that structure as rich text instead of turning every line in the box
-     into a bullet. */
-  function listSelection(style){
-    var el=activeTextEditable();
-    if(!el) return false;
-    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-    if(!a||a.k!=='text') return false;
-    histSettle();
-    try{document.execCommand(listIsOrdered(style)
-      ?'insertOrderedList':'insertUnorderedList',false,null);}catch(e){}
-    /* The command leaves the caret in the list it just created. Carry the
-       chosen marker with that section; when it removed a marker there is
-       deliberately no list under the caret to label. */
-    var live=caretList(el);
-    if(live) live.setAttribute('data-list',style);
-    var r=sanitizeRich(el.innerHTML),n=textAt(s,a); if(!(n>0)) n=0;
-    textPageSet(a,n,editorText(el),r.rich?r.html:'');
-    /* A paragraph edit ends the old all-or-nothing box mode. Its remaining
-       list sections are now explicit ul/ol nodes in a.html. */
-    if(listOf(a)) delete a.list;
-    markDirty();
-    return true;
   }
   /* T543: THE HIGHLIGHTER. A marker colour behind the highlighted words
      -- or none, which takes it off. The browser's hiliteColor writes the
@@ -1123,9 +2043,8 @@
     });
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(a){
-      var r=sanitizeRich(el.innerHTML);
       var n=textAt(s,a); if(!(n>0)) n=0;
-      textPageSet(a,n,editorText(el),r.rich?r.html:'');
+      paraCommit(a,n,el);
       markDirty();
     }
     return true;
@@ -1174,7 +2093,6 @@
     try{document.execCommand('foreColor',false,col);}catch(e){}
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(a){
-      var r=sanitizeRich(el.innerHTML);
       /* T261: write to the page the box is TURNED TO, not always page
          one. renderAnnots binds the editor's get/set to textAt(s,a) via
          textPage/textPageSet; this assigned a.text/a.html directly, so
@@ -1183,7 +2101,7 @@
          autosave. textAt returns 0 for a single-page box and for the
          title/subtitle annots, so nothing else changes. */
       var n=textAt(s,a); if(!(n>0)) n=0;
-      textPageSet(a,n,editorText(el),r.rich?r.html:'');
+      paraCommit(a,n,el);
       markDirty();
     }
     return true;
@@ -1273,7 +2191,9 @@
     textPages(a).forEach(function(p,n){
       if(!p.h) return;
       var r=sanitizeRich(plainRuns(p.h));
-      textPageSet(a,n,p.t,r.rich?r.html:'');
+      /* a line break inside a paragraph (Shift+Enter, T623) is not a
+         new paragraph, which is all the plain text could say */
+      textPageSet(a,n,p.t,(r.rich||/<br\b/i.test(r.html))?r.html:'');
     });
   }
   /* the highlighted run, stripped by the browser's own removeFormat --
@@ -1604,7 +2524,7 @@
       if(document.visibilityState==='hidden') lastChance();
     });
   })();
-  function editableText(layer,el,getVal,setVal,idx,rich,getHtml){
+  function editableText(layer,el,getVal,setVal,idx,rich,getHtml,getParas){
     /* Text is NOT editable on contact. It used to be, which is why a text
        box could only be moved by a little ⠿ handle: clicking the words
        put a caret in them instead of picking the box up. So: click to
@@ -1612,6 +2532,10 @@
        what every other tool on the machine does (2026-08-07, user: "just
        make it normal moving controls"). */
     var editMode=(el.tagName==='UL'||rich)?'true':'plaintext-only';
+    /* T623: a rich box is edited as PARAGRAPHS -- its <p>s, their levels
+       and markers (THE PARAGRAPH). A title, a subtitle and a Markdown box
+       are typed as plain text and have none. */
+    var paraOn=(editMode==='true'&&typeof getParas==='function');
     /* WHAT YOU EDIT IS WHAT YOU TYPED. Two renderers replace the text
        node with markup of their own -- MathJax with an <mjx-container>,
        and notesHtml with the <h4>/<ul>/<p> of a markdown box -- and the
@@ -1643,12 +2567,37 @@
         return;
       }
       if(!el.querySelector('mjx-container')) return;
+      /* a box of paragraphs is drawn again from them, markers and all */
+      if(paraOn){el.innerHTML='';parasDraw(el,getParas());return;}
       var h=getHtml&&getHtml();
       if(h) el.innerHTML=sanitizeRich(h).html;
       else {
         var raw=getVal();
         if(raw) el.textContent=raw;
       }
+    }
+    /* AN EMPTY BOX OPENS EMPTY (T366). A box of paragraphs keeps one, with
+       its marker: an empty bullet is not an empty element -- the dot is
+       the caret target, and clearing it removed it the moment an
+       auto-list had made it. A box with words keeps them. A plain one
+       opens with nothing in it at all, so it still wears its "Type..."
+       while the caret waits in it (T191: a caret and nothing else read as
+       "nothing happened"); the first key makes it a paragraph. */
+    function openEmpty(){
+      if(getVal()) return;
+      if(!paraOn){if(!el.querySelector('li')) el.textContent='';return;}
+      var first=paraEls(el)[0];
+      if(!first||(!first.hasAttribute('data-list')
+                  &&!first.hasAttribute('data-lvl'))){
+        if(el.firstChild) el.innerHTML='';
+        el.__jvN=0;
+        return;
+      }
+      if(el.childNodes.length===1&&paraEmpty(first)) return;
+      var keep=first.cloneNode(false);
+      keep.appendChild(document.createElement('br'));
+      el.innerHTML='';el.appendChild(keep);
+      paraDecorate(el);
     }
     function beginEdit(){
       restoreSource();
@@ -1662,14 +2611,19 @@
          is the marker and caret target. Clearing the root here removed
          that item immediately after dash-to-bullet rebuilt the editor,
          and the apparently-created box then vanished. */
-      if(!getVal()&&!el.querySelector('li')) el.textContent='';
+      openEmpty();
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
       liveEdOn(el);   /* the open editors (flushTextEdits) */
       el.focus();
+      /* the box's own undo (THE EDITOR'S OWN UNDO), from the words it
+         opened with; a double-click inside a box being typed in keeps
+         the one it has */
+      if(paraOn&&!el.__jvJ) edStart(el);
       var host=el.closest?el.closest('.an-item'):null;
       if(host) host.classList.add('an-editing');
     }
     function endEdit(){
+      edStop(el);
       el.contentEditable='false';
       liveEdOff(el);
       var host=el.closest?el.closest('.an-item'):null;
@@ -1740,10 +2694,10 @@
       if(tool!=='select') el.blur();
     });
     el.addEventListener('focus',function(){
-      /* beginEdit already preserves an empty list's first <li>; focus
-         must make the same distinction or it erases that caret target
-         one event later. */
-      if(!getVal()&&!el.querySelector('li')) el.textContent='';
+      /* beginEdit already preserves an empty list's first paragraph;
+         focus must make the same distinction or it erases that caret
+         target one event later. */
+      openEmpty();
     });
     /* THE CARET NEVER ENTERS A BUILD WRAPPER. The pieces a text build is
        cut into are render-time <span>s (17-text-builds.js): typing
@@ -1774,23 +2728,47 @@
        ran. Words that changed since the last commit still commit; the
        blur below always commits, as it always has. */
     var lastCommit=null;
+    /* THE EDITOR'S WORDS, READ ONCE: the sanitised markup, its paragraphs
+       and their plain lines. A commit read the box three or four times
+       over (the plain text, the sanitiser, the paragraphs, then the
+       paragraphs again to store them) -- 40 ms a commit at 4x in a
+       30-item list (2026-10-10 review). */
+    function readNow(){
+      var r=rich?sanitizeRich(el.innerHTML):null;
+      var ps=(r&&paraOn)?parasParse(r.html,null):null;
+      var v=(ps?parasText(ps):editorText(el)).replace(/\r/g,'')
+        .replace(/\n+$/,'');
+      return {v:v,r:r,ps:ps};
+    }
     function commitNow(quiet){
       if(!el.isContentEditable) return;
-      var v0=editorText(el).replace(/\r/g,'').replace(/\n+$/,'');
-      var r0=rich?sanitizeRich(el.innerHTML):null;
-      var sig=v0+'\u0000'+(r0?JSON.stringify(r0):'');
+      /* nothing changed since the last commit: nothing to read. A ribbon
+         command settles the typing first (T494), and that read the whole
+         box even with nothing typed -- twice per click with the second
+         read after the change (2026-10-10 review) */
+      var j=paraOn?edFlush(el):null;
+      if(j&&!j.dirty) return;
+      var w=readNow();
+      if(j) j.dirty=false;
+      var sig=w.v+'\u0000'+(w.r?w.r.html:'');
       if(sig===lastCommit) return;
       lastCommit=sig;
-      setVal(v0,r0);
+      setVal(w.v,w.r,w.ps);
       markDirty(quiet);
     }
     el.__jvFlush=function(){commitNow(true);};
     var typeT=null;
+    /* a commit owed, as typing owes one: an undo or a redo */
+    el.__jvSoon=function(){
+      clearTimeout(typeT);
+      typeT=setTimeout(function(){commitNow(true);},900);
+    };
     el.addEventListener('input',function(e){
       clearTimeout(typeT);
       typeT=setTimeout(function(){commitNow(true);},900);
-      /* T545: AutoCorrect, as the last character of a rule lands */
-      if(el.isContentEditable){
+      /* T545: AutoCorrect, as the last character of a rule lands (in a
+         box of paragraphs, as a step of its undo -- below) */
+      if(el.isContentEditable&&!paraOn){
         var s5=pres.slides[cur];
         autoCorrect(el,e,s5&&annotByIdx(s5,idx));
       }
@@ -1798,20 +2776,11 @@
     el.addEventListener('blur',function(){
       clearTimeout(typeT);
       delete el.__jvFlush;
-      /* Auto-list replaces this node with a new <ul>/<ol> editor. The
-         detached plain node still receives blur in Chromium; committing
-         its deliberately-cleared contents would immediately remove the
-         list flag and then delete the box. The replacement already owns
-         the model and the caret, so this stale blur has nothing to save. */
-      if(el.__jvSkipBlur){
-        delete el.__jvSkipBlur;
-        endEdit();
-        return;
-      }
-      var v=editorText(el).replace(/\r/g,'')
-        .replace(/\n+$/,'');
-      var r=rich?sanitizeRich(el.innerHTML):null;
-      setVal(v,r);
+      delete el.__jvSoon;
+      /* (an auto-list no longer replaces this node -- T623 sets the
+         paragraph's marker in place -- so there is no stale blur to skip) */
+      var w=readNow();
+      setVal(w.v,w.r,w.ps);
       endEdit();
       /* An empty box is still an object the author placed. Keep it: its
          visible edit-state outline says where it is, and Delete remains the
@@ -1830,6 +2799,18 @@
          needs (T74). */
       if(a2&&a2.md&&String(a2.text||'').trim())
         el.innerHTML=notesHtml(figSubst(a2.text,a2));
+      /* T623: WHAT YOU SEE IS WHAT WAS SAVED. The box is drawn again from
+         the paragraphs it now holds -- a commit does not redraw, so
+         anything the browser left on screen that the model does not
+         keep (a <blockquote> its indent made, an empty last line) stayed
+         there until the next render, and went at a slide change */
+      else if(paraOn&&a2&&!a2.ph){
+        /* ...unless it already is exactly what was stored, as it nearly
+           always is: the redraw rebuilt every paragraph of a long list on
+           every click away (2026-10-10 review). w.ps is what the commit
+           stored, trimmed as it was stored. */
+        if(!(w.ps&&paraSame(el,w.ps))){el.innerHTML='';parasDraw(el,getParas());}
+      }
       /* MATHS YOU JUST TYPED. Committing a text box writes into the
          element in place — that is the whole point of the edit path,
          and it means renderAnnots (which carries the re-typeset gate)
@@ -1857,123 +2838,125 @@
       fitTexts(layer,s2,true);
       markDirty();
     });
-    /* AUTO-BULLETS. Typing "- " or "* " at the start of a plain text box
-       turns it into a bullet list, and "1. " into a numbered one — the
-       markdown habit everybody already has, and the reason nobody could
-       find the List button until they had already given up (2026-08-20,
-       user: "need auto-dot points"). It only fires on the FIRST
-       characters of a box that is not already a list, so it can never
-       eat a hyphen you meant to keep. */
-    el.addEventListener('input',function(){
-      if(!el.isContentEditable) return;
-      if(el.querySelector('li')) return;
-      var t=el.textContent||'';
-      var m=/^\s*([-*\u2022]|1[.)])\s$/.exec(t);
-      if(!m) return;
-      var s3=pres.slides[cur],a3=s3&&annotByIdx(s3,idx);
-      /* NOT IN A MARKDOWN BOX (T74). "- " there is a bullet you MEANT,
-         written in the language of the box; this handler would answer
-         it by emptying the box, deleting a.html and turning it into a
-         real list -- the source gone on the second keystroke. */
-      if(!a3||a3.k!=='text'||a3.md) return;
-      var kind=/^1/.test(m[1])?'number':'bullet';
-      el.textContent='';
-      /* The list is created while this editor is still the live content
-         editor.  renderAnnots() flushes live editors before rebuilding;
-         leaving this one armed would immediately write the old "- " back
-         through setVal(), then the list-exit guard would remove a.list.
-         Disarm the detached editor before asking for that rebuild. */
-      delete el.__jvFlush;
-      el.__jvSkipBlur=1;
-      el.contentEditable='false';
-      liveEdOff(el);
-      var host3=el.closest?el.closest('.an-item'):null;
-      if(host3) host3.classList.remove('an-editing');
-      a3.text='';delete a3.html;delete a3.ph;
-      setListStyle(a3,kind);
-      markDirty();
-      var l3=stage.querySelector('.annot-layer');
-      if(!l3) return;
-      renderAnnots(l3,s3);selectAnnot(l3,idx);
-      /* put the caret back in the first bullet so typing carries on */
-      var ne=l3.querySelector('.an-item[data-idx="'+idx+'"] .an-tx');
-      if(ne&&ne._beginEdit){
-        ne._beginEdit();
-        try{
-          var li=ne.querySelector('li')||ne;
-          var r3=document.createRange();r3.selectNodeContents(li);
-          r3.collapse(true);
-          var sel3=window.getSelection();
-          sel3.removeAllRanges();sel3.addRange(r3);
-        }catch(err){}
-      }
-      toast(kind==='number'?'Numbered list \u2014 Tab indents'
-        :'Bullet list \u2014 Tab indents, Shift+Tab goes back');
-    });
-    /* T591: ...AND AT THE START OF ANY LINE. The rule above only fires
-       on the first characters of a box that is not a list yet, so "1. "
-       under a heading line, or under a list, stayed "1. " (2026-09-30,
-       user: "There is not auto-numbering like dot points being created
-       automatically"). A marker typed at the start of any other plain
-       line takes that line into a list, through the same per-paragraph
-       toggle as the List button. Never inside a list (its own marker is
-       already there) and never in a Markdown box (T74). */
-    el.addEventListener('input',function(e){
-      if(!el.isContentEditable) return;
-      /* a marker TYPED, not one left behind by deleting the words after
-         a literal "- " (2026-10-08 review) */
-      if(e&&e.inputType&&e.inputType!=='insertText') return;
+    /* AUTO-BULLETS, ON ANY PARAGRAPH (2026-08-20, T591, T623). "- ", "* "
+       or "• " typed at the start of a paragraph makes it a bullet, "1. "
+       a number and "1) " a 1) 2) 3) -- the markdown habit everybody
+       already has, and the reason nobody could find the List button
+       until they had already given up (user: "need auto-dot points";
+       "There is not auto-numbering like dot points being created
+       automatically"). Only on a paragraph with no marker yet, never in a
+       Markdown box (T74: "- " there is a bullet you MEANT, in the
+       language of the box), and only for a marker TYPED, not one left
+       behind by deleting the words after a literal "- " (2026-10-08
+       review). The marker is deleted through the browser and the marker
+       set as ONE step of the editor's undo, so the first Ctrl+Z puts back
+       the "- " you typed, as AutoFormat's does -- it used to rebuild the
+       whole box, which emptied the browser's undo, and "1) " made 1. 2. */
+    function autoList(e){
+      if(!e||e.inputType!=='insertText'||el.__jvOp) return;
+      /* every marker ends in the space just typed: any other key costs
+         nothing here */
+      if(e.data!==' '&&e.data!=='\u00a0') return;
       var s4=pres.slides[cur],a4=s4&&annotByIdx(s4,idx);
-      if(!a4||a4.k!=='text'||a4.md) return;
+      /* nor in code, whose "- " is code (2026-10-10 review) */
+      if(!a4||a4.k!=='text'||a4.md||a4.font==='mono') return;
       var sel4=window.getSelection();
       if(!sel4||!sel4.rangeCount||!sel4.isCollapsed) return;
-      var tn=sel4.focusNode;
+      var tn=sel4.focusNode,off4=sel4.focusOffset;
       if(!tn||tn.nodeType!==3||!el.contains(tn)) return;
-      if(tn.parentNode&&tn.parentNode.closest&&tn.parentNode.closest('li'))
-        return;
-      /* T609: the LINE so far, read as AutoCorrect reads it (a <br>, a
-         block, or a hard \n begins one) -- a box's own lines are \n
-         text, so a previous-sibling <br> test never saw them */
-      var off4=sel4.focusOffset;
-      var m4=/^([-*\u2022]|1[.)])[ \u00a0]$/.exec(acLine(el,tn,off4)||'');
+      var p4=paraAt(el,tn,off4);
+      if(!p4||p4.hasAttribute('data-list')) return;
+      var r4=document.createRange();
+      try{r4.setStart(p4,0);r4.setEnd(tn,off4);}catch(err){return;}
+      var m4=/^([-*\u2022]|1[.)])[ \u00a0]$/.exec(r4.toString());
+      /* the whole marker in the words the caret is in */
       if(!m4||off4<m4[0].length) return;
-      /* the marker goes through the editor, which leaves the emptied line
-         a <br> to stand on: an empty text node is no caret target, and
-         the list then took the line ABOVE */
-      try{
-        var r4=document.createRange();
-        r4.setStart(tn,off4-m4[0].length);r4.setEnd(tn,off4);
-        sel4.removeAllRanges();sel4.addRange(r4);
+      var kind=m4[1]==='1.'?'number':m4[1]==='1)'?'paren':'bullet';
+      edOp(el,function(){
+        var s6=window.getSelection(),
+            p6=s6.rangeCount?paraAt(el,s6.focusNode,s6.focusOffset):null;
+        if(!p6) return;
+        var at=paraAttrs(p6);paraListSet(at,kind);paraAttrsSet(p6,at);
+      },function(){
+        var r5=document.createRange();
+        r5.setStart(tn,off4-m4[0].length);r5.setEnd(tn,off4);
+        sel4.removeAllRanges();sel4.addRange(r5);
         document.execCommand('delete',false,null);
-      }catch(err){return;}
-      /* a revisited plain box is ONE text node with hard \n lines, and
-         the browser's list command runs from the caret's line to the end
-         of the node: "1. " before the second of four lines made one item
-         of the last three (2026-10-08 review). The caret's line is cut
-         out into a node of its own first, its \n turned to <br>s. */
-      var s5=window.getSelection(),t5=s5.focusNode,o5=s5.focusOffset;
-      if(t5&&t5.nodeType===3&&t5.nodeValue.indexOf('\n')>=0){
-        var v5=t5.nodeValue,nl5=v5.indexOf('\n',o5),
-          bl5=o5>0?v5.lastIndexOf('\n',o5-1):-1;
-        if(nl5>=0){
-          var rest5=t5.splitText(nl5);rest5.deleteData(0,1);
-          rest5.parentNode.insertBefore(document.createElement('br'),rest5);
-        }
-        if(bl5>=0){
-          var ln5=t5.splitText(bl5+1);t5.deleteData(bl5,1);
-          ln5.parentNode.insertBefore(document.createElement('br'),ln5);
-          t5=ln5;o5-=bl5+1;
-        }
-        var r5=document.createRange();r5.setStart(t5,o5);r5.collapse(true);
-        s5.removeAllRanges();s5.addRange(r5);
+      });
+      paraDecorate(el);
+      commitNow(true);
+      toast((kind==='bullet'?'Bullet list \u2014 Tab indents, Shift+Tab goes '
+        +'back':'Numbered list \u2014 Tab indents')+'; Ctrl+Z gives back the '
+        +'\u201c'+m4[1]+'\u201d you typed');
+    }
+    /* ...and what the browser's own steps did to the paragraphs: a <div>
+       or bare words taken into a <p>, the numbers and the places worked
+       out again. Not on a plain keystroke that changed no paragraph --
+       typing a word costs nothing here. */
+    /* the browser is about to act on a key: a step of the box's undo
+       begins, or typing goes on in the one open (THE EDITOR'S OWN UNDO).
+       Undo and Redo from the menu are the box's own as well. */
+    el.addEventListener('beforeinput',function(e){
+      if(!el.isContentEditable||!paraOn||el.__jvOp) return;
+      var t=(e&&e.inputType)||'';
+      if(t==='historyUndo'||t==='historyRedo'){
+        e.preventDefault();
+        edHistory(el,t==='historyUndo');
+        return;
       }
-      listSelection(/^1/.test(m4[1])?'number':'bullet');
+      edBefore(el,t);
     });
-    /* Tab makes a SUB-BULLET, the way it does in every outliner and in
-       PowerPoint — not a jump to the next control. Only inside a list:
-       in a plain text box Tab still has nothing useful to do and is left
-       alone. execCommand builds the nested <ul>/<ol>, which is exactly
-       the structure the model now keeps (RICH_TAGS allows ul/ol/li). */
+    el.addEventListener('input',function(e){
+      /* a command of ours writes its own step and draws it itself */
+      if(!el.isContentEditable||!paraOn||el.__jvOp) return;
+      var t=(e&&e.inputType)||'';
+      if(t==='insertText'||t==='insertCompositionText'){
+        /* never move the words an input method is still composing */
+        if(e.isComposing){edAfter(el);return;}
+        /* the first words in an empty box arrive bare: a paragraph first,
+           so a marker typed there is the paragraph's */
+        var f0=el.firstChild;
+        if(el.childNodes.length!==el.__jvN||(f0&&f0.nodeName!=='P')){
+          paraNormalize(el);paraDecorate(el);}
+        edAfter(el);
+        /* T545: AutoCorrect, as the last character of a rule lands -- a
+           step of its own, so Ctrl+Z straight after puts back what you
+           typed, as its toast says. Only for a key that can end a rule:
+           a letter costs nothing here. */
+        var ch5=String(e.data||'');ch5=ch5.charAt(ch5.length-1);
+        if(ch5&&AC_LAST.indexOf(ch5)>=0){
+          var s5=pres.slides[cur],a5=s5&&annotByIdx(s5,idx);
+          edOp(el,function(){autoCorrect(el,e,a5);});
+        }
+        autoList(e);
+        return;
+      }
+      paraNormalize(el);
+      paraDecorate(el);
+      edAfter(el);
+    });
+    el.addEventListener('compositionend',function(){
+      if(!el.isContentEditable||!paraOn) return;
+      var f1=el.firstChild;
+      if(el.childNodes.length!==el.__jvN||(f1&&f1.nodeName!=='P')){
+        paraNormalize(el);paraDecorate(el);}
+    });
+    /* THE PARAGRAPH KEYS (T623), PowerPoint's and Word's:
+       * Tab and Shift+Tab move the paragraph(s) the caret or selection is
+         in a level in or out -- a bullet or a plain paragraph alike, never
+         the whole box, and never out of the box (Tab used to fall through
+         to the browser, which moved the focus away and ended the edit).
+         Mid-line in a plain paragraph Tab types a tab, as it does there.
+         At the first level Shift+Tab does nothing: the bullet stays.
+       * Backspace at the very start of a paragraph with a marker or a
+         level takes a sub-bullet up a level, or the bullet off, and
+         leaves the words on their line (T590: "IF the dot points there is
+         no line before e.g. at the top, then dot points cannot be
+         backspaced"); the next Backspace joins the lines.
+       * Enter on an EMPTY bullet takes it up a level, or off -- how you
+         leave a list.
+       * Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) are the box's own undo and
+         redo, every step of it (edHistory, THE EDITOR'S OWN UNDO). */
     el.addEventListener('keydown',function(e){
       if(!el.isContentEditable) return;
       /* T481: Escape ends the edit -- a rung the ladder ("one
@@ -1981,52 +2964,74 @@
          in a box; a table cell already did this (2026-09-15 review) */
       if(e.key==='Escape'){
         e.preventDefault();e.stopPropagation();el.blur();return;}
-      /* Backspace on the one blank list item is the native "leave this
-         list" gesture. The box-wide list model otherwise rebuilt its dot
-         on the next render, so the user could never remove it. */
-      if(e.key==='Backspace'&&caretList(el)
-         &&!String(el.innerText||'').trim()
-         &&el.querySelectorAll('li').length===1){
+      var mod=e.ctrlKey||e.metaKey;
+      if(e.key==='Tab'&&!mod&&!e.altKey){
         e.preventDefault();e.stopPropagation();
-        el.innerHTML='';
-        el.style.listStyle='none';el.style.paddingLeft='0';
-        setVal('',null);markDirty();
-        return;
-      }
-      /* T590: BACKSPACE AT THE START OF A BULLET TAKES THE BULLET OFF.
-         Left to the browser it merged the line into the one above, words
-         and all, and on the first line of a box it did nothing -- so a
-         bullet could only be removed from a line that was already empty
-         (2026-09-30, user: "It's still really hard to get rid-of dot
-         points ... if there is a line above and you try and delete, then
-         it just takes everything back to the line before. If the dot
-         points there is no line before e.g. at the top, then dot points
-         cannot be backspaced"). Word and PowerPoint: the first Backspace
-         at the start of a bullet takes a sub-bullet up a level, or the
-         bullet off, and leaves the words on their own line; the next one
-         joins the lines. The marker comes off through listSelection, the
-         same toggle the List button uses on the caret's paragraph. */
-      if(e.key==='Backspace'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey
-         &&!e.altKey){
-        var li0=caretAtItemStart(el);
-        if(li0){
-          e.preventDefault();e.stopPropagation();
-          var up0=li0.parentNode&&li0.parentNode.parentNode;
-          if(up0&&up0.tagName==='LI'){
-            try{document.execCommand('outdent',false,null);}catch(err){}
-          } else {
-            var ls0=li0.parentNode;
-            listSelection((ls0&&ls0.getAttribute('data-list'))
-              ||(ls0&&ls0.tagName==='OL'?'number':'bullet'));
+        /* a title, a subtitle or a Markdown box has no levels: Tab types
+           a tab there, as PowerPoint's title does, and Shift+Tab nothing
+           -- neither leaves the box */
+        if(!paraOn){
+          if(!e.shiftKey){
+            try{document.execCommand('insertText',false,'\t');}catch(err){}
           }
           return;
         }
-      }
-      if(e.key==='Tab'&&caretList(el)){
-        e.preventDefault();e.stopPropagation();
-        try{document.execCommand(e.shiftKey?'outdent':'indent',
-          false,null);}catch(err){}
+        var ps=paraTouched(el),s7=window.getSelection();
+        if(!ps.length) return;
+        /* CODE IS INDENTED BY ITS OWN CHARACTERS (2026-10-10 review): in
+           a code box Tab puts a tab at the caret, or at the start of each
+           line a selection touches, and Shift+Tab takes one off (or up
+           to four spaces) -- so the code, a copy of it and the export
+           carry the indent. A level is a paragraph's, and code has none. */
+        var s9=pres.slides[cur],a9=s9&&annotByIdx(s9,idx);
+        if(a9&&a9.font==='mono'){
+          if(!e.shiftKey&&s7.isCollapsed)
+            edOp(el,function(){
+              document.execCommand('insertText',false,'\t');});
+          else edOp(el,function(){
+            ps.forEach(function(q){codeIndent(q,e.shiftKey);});});
+          if(el.__jvSoon) el.__jvSoon();
+          return;
+        }
+        if(!e.shiftKey&&ps.length===1&&s7.isCollapsed
+           &&!ps[0].hasAttribute('data-list')
+           &&!paraAtStart(ps[0],s7.focusNode,s7.focusOffset)){
+          edOp(el,function(){
+            document.execCommand('insertText',false,'\t');});
+          if(el.__jvSoon) el.__jvSoon();
+          return;
+        }
+        paraEdit(el,ps,function(p){paraLevel(p,e.shiftKey?-1:1);});
         return;
+      }
+      if(paraOn){
+        if(mod&&!e.altKey&&(e.key==='z'||e.key==='Z'||e.key==='y'||e.key==='Y')){
+          /* the box's own undo, always: the browser's knows only some of
+             its steps (THE EDITOR'S OWN UNDO) */
+          e.preventDefault();e.stopPropagation();
+          edHistory(el,(e.key==='z'||e.key==='Z')&&!e.shiftKey);
+          return;
+        }
+        var s8=window.getSelection();
+        var p8=(s8&&s8.rangeCount&&s8.isCollapsed)
+          ?paraAt(el,s8.focusNode,s8.focusOffset):null;
+        if(p8&&e.key==='Backspace'&&!e.shiftKey&&!mod&&!e.altKey
+           &&(p8.hasAttribute('data-list')||p8.hasAttribute('data-lvl'))
+           &&paraAtStart(p8,s8.focusNode,s8.focusOffset)){
+          e.preventDefault();e.stopPropagation();
+          paraEdit(el,[p8],function(p){
+            if(p.list&&!p.lvl) paraListSet(p,''); else paraLevel(p,-1);
+          });
+          return;
+        }
+        if(p8&&e.key==='Enter'&&!e.shiftKey&&!mod&&!e.altKey
+           &&p8.hasAttribute('data-list')&&paraEmpty(p8)){
+          e.preventDefault();e.stopPropagation();
+          paraEdit(el,[p8],function(p){
+            if(p.lvl) paraLevel(p,-1); else paraListSet(p,'');
+          });
+          return;
+        }
       }
       /* T534: TWO KINDS OF KEY ARE THE DECK'S EVEN WHILE TYPING. Ctrl+S
          is the save: stopped here, it never reached the deck's handler
@@ -2070,21 +3075,92 @@
        editor's own), and pasteTextBox puts it back if the words on the
        clipboard are still these. Cleared when the selection is empty,
        so a copy of nothing cannot leave a stale type behind. */
-    function rememberTextCopy(){
+    function rememberTextCopy(txt){
       var s7=pres.slides[cur],a7=s7&&annotByIdx(s7,idx);
-      var sl=String((window.getSelection&&window.getSelection().toString())
-        ||'').replace(/\r/g,'').trim();
+      var sl=String((typeof txt==='string')?txt
+        :((window.getSelection&&window.getSelection().toString())||''))
+        .replace(/\r/g,'').trim();
       lastTextCopy=(a7&&a7.k==='text'&&sl)?{txt:sl,a:deep(a7)}:null;
     }
-    el.addEventListener('copy',rememberTextCopy);
-    el.addEventListener('cut',rememberTextCopy);
+    /* T623 review (2026-10-10): A COPY IS ONE LINE A PARAGRAPH. The browser
+       writes the plain text of <p>s with a blank line between every two
+       (innerText's rule for <p>), so three lines copied out of a box
+       pasted as five -- into notes, into another app, as a new box on the
+       canvas. The plain text is written here from the paragraphs, a line
+       each (a Shift+Enter break a line too), and the markup with them:
+       each paragraph as the slide draws it, its level and marker on it,
+       which a paste back into a box keeps (pasteParas). */
+    function copyParas(e,cut){
+      if(!paraOn||!el.isContentEditable||!e.clipboardData) return null;
+      var sel=window.getSelection();
+      if(!sel||!sel.rangeCount||sel.isCollapsed) return null;
+      var r=sel.getRangeAt(0);
+      if(!el.contains(r.startContainer)||!el.contains(r.endContainer)) return null;
+      var box=document.createElement('div');
+      box.appendChild(r.cloneContents());
+      var ps=parasParse(sanitizeRich(box.innerHTML).html,null);
+      /* a selection that ends at the very start of a paragraph does not
+         take it (paraTouched's rule) */
+      if(ps.length>1&&!paraPlain(ps[ps.length-1].h)) ps.pop();
+      if(!ps.length) return null;
+      var txt=parasText(ps).replace(/\u200b/g,'');
+      var host=document.createElement('div');
+      parasDraw(host,ps);
+      [].forEach.call(host.children,function(q){
+        if(q.hasAttribute('data-list')) q.style.display='list-item';});
+      try{
+        e.clipboardData.setData('text/plain',txt);
+        e.clipboardData.setData('text/html',host.innerHTML);
+      }catch(err){return null;}
+      e.preventDefault();
+      if(cut){
+        edOp(el,function(){
+          document.execCommand('delete',false,null);paraNormalize(el);});
+        paraDecorate(el);
+        if(el.__jvSoon) el.__jvSoon();
+      }
+      return txt;
+    }
+    el.addEventListener('copy',function(e){
+      rememberTextCopy(copyParas(e,false));});
+    el.addEventListener('cut',function(e){
+      rememberTextCopy(copyParas(e,true));});
+    /* T623: SEVERAL PARAGRAPHS PASTED ARE SEVERAL PARAGRAPHS. Left to the
+       browser, lines pasted as plain text stayed "\n"s inside the
+       paragraph the caret was in -- three pasted lines under one bullet,
+       and in the .pptx two of them unbulleted at the margin. As in
+       PowerPoint and Word, each line is a paragraph of its own and takes
+       the caret paragraph's level and marker; a pasted list keeps its
+       own. Its colours are the page's, not the source's (PowerPoint's
+       "use destination theme"): a copy from this editor carries the
+       white the words were drawn in. One step of the editor's undo. */
+    function pasteParas(cd,plainOnly,e){
+      var html='',txt='',ps=null;
+      try{txt=String(cd.getData('text/plain')||'').replace(/\r\n?/g,'\n');}
+      catch(err){}
+      if(!plainOnly){try{html=cd.getData('text/html')||'';}catch(err){}}
+      if(html&&/<(p|div|li|br|h[1-6]|tr|pre)\b/i.test(html))
+        ps=parasParse(pasteClean(html),null);
+      if((!ps||ps.length<2)&&txt.indexOf('\n')>=0)
+        ps=txt.replace(/\n+$/,'').split('\n').map(function(l){
+          return paraNew({},esc(l));});
+      if(!ps||ps.length<2) return false;
+      e.preventDefault();e.stopPropagation();
+      paraPaste(el,ps);
+      return true;
+    }
     el.addEventListener('paste',function(e){
       if(!el.isContentEditable) return;
+      var cd=e.clipboardData;
       /* plain, please: the browser's own plain paste, and nobody else's
          -- the document's handler would have made a copied figure's
-         words a figure (2026-10-08 review) */
-      if(codePlain){codePlain=0;e.stopPropagation();return;}
-      var cd=e.clipboardData;if(!cd) return;
+         words a figure (2026-10-08 review) -- its lines still lines */
+      if(codePlain){
+        codePlain=0;e.stopPropagation();
+        if(paraOn&&cd) pasteParas(cd,true,e);
+        return;
+      }
+      if(!cd) return;
       /* T612: a notebook figure this page has is the slide's, not this
          box's (the document's paste puts it there); one it does not
          have is words like any others */
@@ -2092,7 +3168,6 @@
       if(cc5&&cellRefHere(cc5)) return;
       var txt='';
       try{txt=cd.getData('text/plain')||'';}catch(err){return;}
-      if(!txt) return;
       var s5=pres.slides[cur],a5=s5&&annotByIdx(s5,idx);
       /* a title, a subtitle and a bullet list all reach editableText and
          none of them is a thing to turn into a code block */
@@ -2100,12 +3175,15 @@
          code block, and codeBoxify would answer it by repainting the
          box mono-on-navy and writing an a.html the renderer then
          ignores -- a state with no way back out (T74) */
-      if(!a5||a5.k!=='text'||listOf(a5)||a5.md) return;
-      if(String(el.innerText||'').trim()) return;
-      if(!looksLikeCode(txt)) return;
-      var f5=codeFence(txt);
-      var src5=(f5?f5.src:txt).replace(/\r/g,'').replace(/\s+$/,'');
-      if(!src5) return;
+      var code5=!!txt&&!!a5&&a5.k==='text'&&!a5.md&&!boxHasList(a5)
+        &&!paraEls(el).some(function(q){return q.hasAttribute('data-list');})
+        &&!String(el.innerText||'').trim()&&looksLikeCode(txt);
+      var f5=code5?codeFence(txt):null;
+      var src5=code5?(f5?f5.src:txt).replace(/\r/g,'').replace(/\s+$/,''):'';
+      if(!src5){
+        if(paraOn) pasteParas(cd,false,e);
+        return;
+      }
       e.preventDefault();e.stopPropagation();
       codeBoxify(a5,src5);
       /* the model is already right, so DO NOT go through commitNow: it
@@ -3470,68 +4548,38 @@
            text" printed on a slide is the bug this closes. */
         var _isPh=!!a.ph||_bibHint;
         if(_isPh&&mode!=='edit'){showTx='';showHtml=null;}
-        var tx2,lst=listOf(a);
-        if(lst){
-          /* the ELEMENT carries the marker style and a.html carries only
-             the items, so switching bullets to numbering rewrites no
-             content at all */
-          tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');
-          tx2.className='an-tx an-ul an-ul-'+lst;
-          /* T571: the marker's own colour and size, and the number a
-             numbered list starts at -- on the list element, so the
-             items stay words and nothing else */
-          if(a.lcol) tx2.style.setProperty('--an-lc',tokVal(a.lcol));
-          if(a.lsz&&a.lsz!==1) tx2.style.setProperty('--an-ls',a.lsz);
-          if(a.lstart>1&&listIsOrdered(lst))
-            tx2.setAttribute('start',String(a.lstart|0));
-          if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
-          else String(_pg.t||'').split('\n').forEach(function(line){
-            var li=document.createElement('li');
-            li.textContent=line;
-            tx2.appendChild(li);
-          });
-          /* In the editor a neutral wrapper is what lets the browser split
-             one paragraph out of this list. Playback/export keep the lean
-             root ul/ol they have always used. */
-          if(editing){
-            tx2.dataset.list=lst;
-            var listTx=tx2;
-            listTx.classList.remove('an-tx');
-            tx2=document.createElement('div');
-            tx2.className='an-tx an-list-edit';
-            tx2.appendChild(listTx);
-          }
-        } else {
-          /* T609: A BLOCK TO TYPE IN. Chromium will not make a paragraph
-             inside a <span> editing host: Enter there is a line break,
-             which pre-wrap writes as a bare \n -- inside an <li> too, so
-             a list that was not the whole box (one made by the List
-             button, by a marker on a later line, or that you typed out
-             of) took "three" as a second line of "two", unnumbered, the
-             first time the box was drawn again: after a slide change, a
-             reload. The box-wide list's editor is a <div> for the same
-             reason (T513). The show keeps its span. */
-          tx2=document.createElement((editing&&!a.md)?'div':'span');
-          /* A MARKDOWN BOX RENDERS FROM ITS SOURCE, EVERY TIME (T74).
-             `a.text` is the markdown you typed and the only copy
-             stored; the markup is derived here and dies with the layer,
-             so it can never go stale against the words -- which is the
-             one thing `a.html` has to be careful about. It is the same
-             notesHtml the notes pane, the notes overlay and the
-             presenter view already use, so there is ONE markdown in
-             this editor, it is the fifty-line subset T28 argued for,
-             and it escapes every character before it marks anything up.
-             Ahead of a.html on purpose: a stale rich copy left behind
-             by some earlier life of the box must not outrank the
-             source. */
-          tx2.className='an-tx'+(a.md?' an-md':'');
-          if(a.md) tx2.innerHTML=notesHtml(showTx);
-          else if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
-          else tx2.textContent=showTx||'';
-        }
+        /* T623: THE BOX AS ITS PARAGRAPHS (THE PARAGRAPH): one <p> each,
+           with its level and its marker, the SAME in the editor and in
+           the show -- a whole-box list used to be a root <ul> in the show
+           and a wrapper round it in the editor, so the spacing between
+           its items and the gutter of its second column differed between
+           the two. A block, so the browser makes a paragraph per Enter
+           (T609: inside a <span> Enter was a bare "\n", and a list typed
+           out of lost its next item the first time the box was drawn
+           again). A Markdown box renders from its source instead. */
+        var tx2=document.createElement(a.md?'span':'div');
+        /* A MARKDOWN BOX RENDERS FROM ITS SOURCE, EVERY TIME (T74).
+           `a.text` is the markdown you typed and the only copy
+           stored; the markup is derived here and dies with the layer,
+           so it can never go stale against the words -- which is the
+           one thing `a.html` has to be careful about. It is the same
+           notesHtml the notes pane, the notes overlay and the
+           presenter view already use, so there is ONE markdown in
+           this editor, it is the fifty-line subset T28 argued for,
+           and it escapes every character before it marks anything up.
+           Ahead of a.html on purpose: a stale rich copy left behind
+           by some earlier life of the box must not outrank the
+           source. */
+        tx2.className='an-tx'+(a.md?' an-md':'');
+        if(a.md) tx2.innerHTML=notesHtml(showTx);
+        /* a placeholder off the editor is nothing at all (T366) -- not
+           even the empty bullet an older box-wide list would draw */
+        else if(!(_isPh&&mode!=='edit'))
+          parasDraw(tx2,(a.bib||_bibHint)?parasFrom(null,showTx,'')
+            :parasFrom(a,showTx,showHtml||''));
         /* T547: TEXT IN COLUMNS. The words' own element is the
-           multi-column box, so plain words, a list (and the editor's
-           wrapper round it) and a Markdown box all flow the same way, and
+           multi-column box, so its paragraphs (each with its own marker
+           gutter, T623) and a Markdown box all flow the same way, and
            balancing makes a growing box as tall as its longest column. A
            curved box has one baseline and takes none. */
         if(a.ncol>1&&!a.arc){
@@ -3562,7 +4610,7 @@
             /* rich BOTH ways now. A list used to be saved as plain lines
                only, so bold inside a bullet — or a sub-level — was thrown
                away the moment the box lost focus. */
-            function(v,r){
+            function(v,r,ps){
               /* T366: the first real character makes the words yours.
                  Leaving without typing puts the placeholder back --
                  otherwise the empty-box rule below would delete every
@@ -3574,7 +4622,8 @@
                    next full render -- and the empty-box rule below
                    would then delete every untouched slot in a template. */
                 if(!String(v||'').trim()){
-                  tx2.textContent=String(textPage(a,_pi).t||'');
+                  tx2.innerHTML='';
+                  parasDraw(tx2,parasOf(a,_pi));
                   return;
                 }
                 delete a.ph;
@@ -3584,13 +4633,11 @@
                    just typed stay ghosted until the next full render */
                 tx2.classList.remove('an-ph');
               }
-              if(listOf(a)){
-                if(r&&r.rich){
-                  var body=listEditBody(r.html);
-                  if(body===null) delete a.list; else r.html=body;
-                } else delete a.list;
-              }
-              textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');},
+              /* T623: the editor's paragraphs ARE the box: every
+                 level and marker on them, an older box-wide list
+                 included (parasStore takes it off the box) */
+              if(r) parasStore(a,_pi,ps||parasParse(r.html,null));
+              else textPageSet(a,_pi,v,'');},
             /* a markdown box is NOT rich: what you edit is the SOURCE,
                so plaintext-only is the right editor (Enter must give a
                newline, not a <div>) and `a.html` has to stay empty, or
@@ -3600,7 +4647,9 @@
                formatting back rather than only its plain string: with
                no a.html there is nothing to restore but the LaTeX, and
                with one the box keeps its bold and its colours too. */
-            i,!a.md,function(){return textPage(a,_pi).h;});
+            i,!a.md,function(){return textPage(a,_pi).h;},
+            /* ...and a box of paragraphs is drawn again from them */
+            function(){return parasOf(a,_pi);});
         }
         d2.appendChild(tx2);
         /* CUT IT INTO PIECES (17-text-builds.js). After the content is
@@ -3678,7 +4727,7 @@
            version is what you edit and the curve is what you see the rest
            of the time. Measured in px after the box is in the DOM so the
            glyphs are never stretched by a viewBox. */
-        if(a.arc&&!listOf(a)&&d2!==document.activeElement
+        if(a.arc&&!boxHasList(a)&&d2!==document.activeElement
            &&!d2.contains(document.activeElement)){
           /* the box has to be tall enough to hold the arch before it is
              measured — a one-line box has no room to curve in */
@@ -4178,6 +5227,15 @@
               if(jp==null) jp=jb;
               var wait=(mode==='view'&&jp>=revealCount);
               pe.style.visibility=(wait&&(!hl||hlIn))?'hidden':'';
+              /* T623: a paragraph (or item) whose first words are still
+                 to come holds its marker back with them (deck.css,
+                 .an-mk-wait) -- a dot on its own in front of nothing
+                 reads as a fault, not as a build */
+              var bp=pe.parentNode;
+              if(bp&&bp.firstElementChild===pe&&bp.classList
+                 &&(bp.tagName==='LI'||bp.classList.contains('an-p')))
+                bp.classList.toggle('an-mk-wait',
+                  pe.style.visibility==='hidden');
               if(hl&&mode==='view'){
                 pe.classList.toggle('an-hl',jp===revealCount-1);
                 pe.classList.toggle('an-hl-wait',wait);

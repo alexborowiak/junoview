@@ -51,6 +51,13 @@
     'fmt-case-btn':'change case uppercase lowercase sentence case '
       +'capitalise capitalize title case toggle case capitals',
     'fmt-fillcol-btn':'shape fill background colour highlight box',
+    /* T623: PowerPoint's and Word's names for a paragraph's level */
+    'fmt-indent':'increase list level increase indent demote indent '
+      +'paragraph tab sub point sub bullet',
+    'fmt-outdent':'decrease list level decrease indent promote outdent '
+      +'paragraph shift tab',
+    'fmt-bullets':'bullets bullet points dot points unordered list',
+    'fmt-numbers':'numbering numbered list ordered list auto number',
     /* T572: what the Paragraph window holds, by PowerPoint's names */
     'fmt-para':'autofit auto fit shrink text on overflow do not autofit '
       +'resize shape to fit text columns indent curve vertical alignment',
@@ -205,7 +212,10 @@
       if(door) door.click();
     }
     setTimeout(function(){
+      /* T623: the paragraphs you were in, for this one command only */
+      paraHint=cmdHint;cmdHint=null;
       b.click();
+      paraHint=null;
       if(b.getClientRects().length){
         b.classList.add('cmd-found');
         setTimeout(function(){b.classList.remove('cmd-found');},1400);
@@ -257,6 +267,21 @@
     list.style.left=Math.round(Math.max(8,
       Math.min(rr.left,window.innerWidth-list.offsetWidth-8)))+'px';
   }
+  /* T623: THE PARAGRAPHS YOU WERE IN. The search box takes the focus, and
+     the box being typed in closes behind it -- so "indent" found here
+     could only ever act on the whole box (it said "Click into the list
+     first"). Which paragraphs the caret was in is noted as the search
+     opens, and a paragraph command run from it acts on those
+     (paraCmd); running anything clears it. */
+  var cmdHint=null;
+  function paraHintNote(){
+    var ed=activeTextEditable();
+    if(!ed){cmdHint=null;return;}
+    var all=paraEls(ed),s0=pres.slides[cur],a0=annotByIdx(s0,selAnnot);
+    var n0=a0?textAt(s0,a0):0;
+    cmdHint=a0?{a:a0,n:(n0>0?n0:0),t:Date.now(),
+      set:paraTouched(ed).map(function(e){return all.indexOf(e);})}:null;
+  }
   function cmdClose(){
     var list=$('#rbn-search-list'),inp=$('#rbn-search-in');
     if(list) list.hidden=true;
@@ -296,7 +321,10 @@
       if(e.altKey&&!e.ctrlKey&&!e.metaKey&&(e.key==='q'||e.key==='Q'
          ||e.code==='KeyQ')){
         e.preventDefault();e.stopPropagation();
+        paraHintNote();
         inp.focus();inp.select();
       }
     },true);
+    /* ...and by the mouse, before the box being typed in loses the focus */
+    inp.addEventListener('mousedown',paraHintNote);
   }

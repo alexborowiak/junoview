@@ -2507,9 +2507,13 @@
      flattened to its plain lines the moment it round-tripped through the
      sanitiser: bold inside a bullet, or a sub-level, silently vanished
      (2026-08-20, user: "the bullet list on/off is cursed"). */
+  /* T623: `p` is a PARAGRAPH, the unit a text box is made of -- its level
+     and its marker ride on it as data-* (20-notes-and-tables.js, THE
+     PARAGRAPH), each one checked below, and nothing else does */
   var RICH_TAGS={span:1,div:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1,
     ul:1,ol:1,li:1,sup:1,sub:1,    /* T541: m², CO₂ */
-    a:1};                          /* T546: a link on words */
+    a:1,                           /* T546: a link on words */
+    p:1};
   function sanitizeRich(html){
     /* parse into an INERT template fragment — no image loads, no inline event
        handlers ever run (unlike a live-document div), so merely sanitising
@@ -2579,8 +2583,12 @@
           node.removeChild(n);
           n=first||next;continue;                  /* re-walk promoted nodes */
         }
-        var color=(n.style&&n.style.color)||
+        var color=(tag!=='p'&&n.style&&n.style.color)||
           (tag==='font'?(n.getAttribute('color')||''):'');
+        /* a paragraph's level and marker, read the way the paragraph
+           model reads them (paraAttrs: every value checked) -- its style
+           is the drawing's, and is never stored */
+        var pAt=(tag==='p')?paraAttrs(n):null;
         /* A mixed text box keeps each list's marker kind on the list
            itself. It is the one safe structural attribute rich text
            needs: the value must be one of LIST_KINDS and must agree
@@ -2605,6 +2613,7 @@
         if(listStyle&&listKind(listStyle)
            &&listIsOrdered(listStyle)===(tag==='ol'))
           n.setAttribute('data-list',listStyle);
+        if(pAt) paraAttrsSet(n,pAt);
         walk(n);
         n=next;
       }
@@ -2613,7 +2622,7 @@
        is deleted (for example <b><br></b>). Keeping that empty wrapper
        makes the next character bold again. An empty list is different: its
        one blank item is the bullet and caret target, so it remains real. */
-    var hasList=!!tpl.content.querySelector('li');
+    var hasList=!!tpl.content.querySelector('li,p[data-list],p[data-lvl]');
     if(!hasList&&!String(tpl.content.textContent||'').trim())
       tpl.innerHTML='';
     return {html:tpl.innerHTML,
@@ -2629,6 +2638,7 @@
          made leaving a list impossible, because the structure you had
          just escaped from was rebuilt from a.list on the next render
          (T72, 2026-08-29). */
+      /* (a <p> that says nothing is a line, which plain text says too) */
       rich:hasList||!!tpl.content.querySelector(
         'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub,a')};
   }

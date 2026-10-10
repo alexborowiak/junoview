@@ -113,10 +113,9 @@
   /* WHICH BLOCK a node sits in. Two text nodes belong to the same piece
      when this returns the same element for both -- so an <li> (at any
      depth), a <p>, a heading, a blockquote and a <pre> each start one,
-     and the inline markup inside them does not. It is the same rule
-     contentLines() already uses to answer "what are this box's lines",
-     which is what keeps a piece, a \n in a.text and an <a:p> in the
-     .pptx the same unit. */
+     and the inline markup inside them does not. It is the same unit as
+     a paragraph of the box (THE PARAGRAPH, T623): a <p>, a line of
+     a.text and an <a:p> in the .pptx. */
   var BLOCK_TAG={LI:1,P:1,H1:1,H2:1,H3:1,H4:1,H5:1,H6:1,BLOCKQUOTE:1,
     PRE:1,DIV:1,UL:1,OL:1,HR:1};
   function blockOf(n,root){
@@ -287,19 +286,15 @@
     if(!by) return [];
     var sig=textPieceSig(a);
     if(_pcCache[sig]) return _pcCache[sig];
-    var host=document.createElement('template'),tx,lst=listOf(a);
+    var host=document.createElement('template'),tx;
     var showTx=figSubst(a.text,a),showHtml=a.html?figSubst(a.html,a):null;
-    if(lst){
-      tx=document.createElement(lst==='number'?'ol':'ul');
-      if(a.html) tx.innerHTML=sanitizeRich(showHtml).html;
-      else String(showTx||'').split('\n').forEach(function(line){
-        var li=document.createElement('li');
-        li.textContent=line;tx.appendChild(li);});
-    } else {
+    /* the same paragraphs renderAnnots draws (T623) */
+    if(a.md){
       tx=document.createElement('span');
-      if(a.md) tx.innerHTML=notesHtml(showTx);
-      else if(a.html) tx.innerHTML=sanitizeRich(showHtml).html;
-      else tx.textContent=showTx||'';
+      tx.innerHTML=notesHtml(showTx);
+    } else {
+      tx=document.createElement('div');
+      parasDraw(tx,parasFrom(a,showTx,showHtml||''));
     }
     host.content.appendChild(tx);
     var n=splitParts(tx,by),texts=[],j;

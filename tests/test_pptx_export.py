@@ -325,9 +325,16 @@ def test_a_list_box_leaves_as_bulleted_paragraphs(out):
     Driven: "- alpha / beta" -> two bullets; "- one / two / Tab sub" ->
     one, two, and sub at level 1; a revisited four-line box with "1. "
     before its second line -> four paragraphs, only that one numbered."""
-    assert ("          var lk5=!a.md&&listOf(a);\n"
-            "          if(lk5&&!/^\\s*<(ul|ol)\\b/i.test(html)){") in out
-    assert "var paras=pptxParasFromHtml(html,!a.md);" in out
+    # T623: a box that is not Markdown leaves as ITS PARAGRAPHS -- an
+    # older box-wide list's items read by parasFrom, which wraps them in
+    # their list as the slide did -- each at its own level with its own
+    # marker; a Markdown box's lists are still walked from its HTML
+    assert ("          var paras=a.md?pptxParasFromHtml(html,false)\n"
+            "            :pptxParas(parasFrom(a,ti.text,html),a.pspace);") in out
+    # a box with no markup goes as its lines with the maths flattened
+    # first: a display formula over several lines is one match
+    assert "var tp=mathsPlain(ti.text,!!a.maths);" in out
+    assert ("        h='<'+tg+' data-list=\"'+lst+'\">'+h+'</'+tg+'>';") in out
     assert ("          if(c.nodeType===1&&/^(ul|ol)$/i.test(c.tagName)){\n"
             "            walk(c,s2,lvl+1);return;}") in out
     assert "var segs=pre?String(n.nodeValue).split('\\n'):[n.nodeValue];" \

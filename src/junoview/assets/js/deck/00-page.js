@@ -1872,7 +1872,7 @@
             +'frames eat that strip.');
       }
       if(a.k==='text'){
-        if(!String(a.text||'').trim()&&!listOf(a))
+        if(!String(a.text||'').trim()&&!boxHasList(a))
           add(i,'warn','Empty text box','Nothing typed in it.');
         var fg=tokVal(a.color)||ink;
         var against=(a.bg!==0&&a.bgc)?tokVal(a.bgc):bg;
@@ -2051,7 +2051,7 @@
       /* 3. words too faint to read */
       (sl.annots||[]).forEach(function(a,i){
         if(!a||a.k!=='text'||a.hide||a.priv||a.ph) return;
-        if(!String(a.text||'').trim()&&!listOf(a)) return;
+        if(!String(a.text||'').trim()&&!boxHasList(a)) return;
         var fg=tokVal(a.color)||ink;
         var against=(a.bg!==0&&a.bgc)?tokVal(a.bgc):bgS;
         var cr=contrast(fg,against);

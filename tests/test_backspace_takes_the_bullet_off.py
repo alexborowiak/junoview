@@ -14,26 +14,36 @@ bullet off, keeping the words on their own line; the next one joins.
 Driven: "- one / two / three" typed as a list; Backspace at the start of
 "two" left <ul>one</ul> two <ul>three</ul>, and at the start of "one"
 left one and two plain above the "three" bullet.
+
+T623 (2026-10-10): the same rule on the paragraph model -- the marker
+comes off the paragraph (or its level goes down one) and the others keep
+theirs, colour and number included. Driven: "- one / sub / sub2 / three",
+Backspace at "three" took its bullet off, Ctrl+Z put it back, Ctrl+Y off
+again; at "sub2" (a sub-bullet) it went up a level.
 """
 
 from __future__ import annotations
 
 
-def test_the_caret_at_an_items_start_is_recognised(out):
-    assert "  function caretAtItemStart(el){" in out
-    fn = out.split("  function caretAtItemStart(el){")[1].split("\n  }\n")[0]
-    assert "li=(li&&li.closest)?li.closest('li'):null;" in fn
-    assert "r.toString().replace(/\\u200b/g,'')===''?li:null;" in fn
+def test_the_caret_at_a_paragraphs_start_is_recognised(out):
+    """T623: a bullet is a paragraph with a marker now, so the test is
+    the paragraph's own start -- nothing but empty markup before it."""
+    assert "  function paraAtStart(p,n,off){" in out
+    fn = out.split("  function paraAtStart(p,n,off){")[1].split("\n  }\n")[0]
+    assert "try{r.setStart(p,0);r.setEnd(n,off);}catch(e){return false;}" \
+        in fn
+    assert "return r.toString().replace(/\\u200b/g,'')==='';" in fn
 
 
 def test_backspace_there_outdents_or_unbullets(out):
-    kd = out.split("        var li0=caretAtItemStart(el);")[1] \
-        .split("          return;\n        }\n      }")[0]
-    # a sub-bullet goes up a level first
-    assert "if(up0&&up0.tagName==='LI'){" in kd
-    assert "document.execCommand('outdent',false,null);" in kd
-    # a top-level one loses its marker through the List button's toggle
-    assert "listSelection((ls0&&ls0.getAttribute('data-list'))" in kd
-    # the lone empty bullet keeps its own rule, which runs first
-    assert out.index("el.querySelectorAll('li').length===1){") \
-        < out.index("        var li0=caretAtItemStart(el);")
+    kd = out.split("        if(p8&&e.key==='Backspace'")[1] \
+        .split("          return;\n        }")[0]
+    assert "&&paraAtStart(p8,s8.focusNode,s8.focusOffset)){" in kd
+    # a sub-bullet goes up a level first; a first-level one loses its
+    # marker, and a plain paragraph with a level goes up one (T623)
+    assert "if(p.list&&!p.lvl) paraListSet(p,''); else paraLevel(p,-1);" \
+        in kd
+    # ...as one step of the editor's undo, and never the browser's
+    # outdent, which split the list and lost its markers' look
+    assert "paraEdit(el,[p8],function(p){" in kd
+    assert "execCommand('outdent'" not in out

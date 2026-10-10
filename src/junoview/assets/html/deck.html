@@ -2613,8 +2613,9 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop tx-split" id="fmt-bulletswrap">
                 <button class="dbtn etm" id="fmt-bullets"
                   aria-pressed="false"
-                  title="Bullet list on / off. The caret beside it
- holds the kinds of bullet"><i data-ic="bullets"></i> List</button>
+                  title="Bullets on / off for the paragraph(s) you are in --
+ with the box selected, every paragraph. The caret beside it holds the
+ kinds of bullet"><i data-ic="bullets"></i> List</button>
                 <button class="dbtn etm tx-caret" id="fmt-bullets-caret"
                   aria-label="Kinds of bullet" aria-haspopup="true"
                   aria-expanded="false"
@@ -2626,8 +2627,9 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop tx-split" id="fmt-numberswrap">
                 <button class="dbtn etm" id="fmt-numbers"
                   aria-pressed="false"
-                  title="Numbered list on / off. The caret beside it
- holds the kinds of numbering"><i data-ic="numlist"></i> Numbered</button>
+                  title="Numbering on / off for the paragraph(s) you are in
+ -- with the box selected, every paragraph. The caret beside it holds the
+ kinds of numbering"><i data-ic="numlist"></i> Numbered</button>
                 <button class="dbtn etm tx-caret" id="fmt-numbers-caret"
                   aria-label="Kinds of numbering" aria-haspopup="true"
                   aria-expanded="false"
@@ -2640,10 +2642,14 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="rbn-cell rbn-seg" id="tx-list-levels"
                 role="group" aria-label="List level">
                 <button class="dbtn etm" id="fmt-outdent" hidden
-                  title="Move this bullet out one level (Shift+Tab)"
+                  title="Decrease list level (Shift+Tab): the paragraph(s)
+ you are in move out a level; with the box selected, every paragraph.
+ Never the box itself"
                   ><i data-ic="outdent"></i> Outdent</button>
                 <button class="dbtn etm" id="fmt-indent" hidden
-                  title="Move this bullet in one level (Tab)"
+                  title="Increase list level (Tab): the paragraph(s) you
+ are in move in a level; with the box selected, every paragraph. Never
+ the box itself"
                   ><i data-ic="indent"></i> Indent</button>
               </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
@@ -2668,13 +2674,20 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Indent the box, curve its words, sit them at the
- top, middle or bottom, grow the box or shrink the words (AutoFit), or set
- columns"
+                  title="The level of the line you are in, the box indent,
+ the curve, where the words sit, AutoFit (grow the box or shrink the
+ words) and columns"
                   ><i data-ic="route"></i> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
-                  <div class="hd-lab">indent the whole box</div>
+                  <!-- T623: the line's level (PowerPoint's Increase /
+                       Decrease List Level), then the box's own indent,
+                       each named for what it moves -->
+                  <div class="hd-lab">level &#8212; the line(s) you are
+                    in, like Tab</div>
+                  <div class="opt-row" id="fmt-para-lvl"></div>
+                  <div class="hd-lab">box indent &#8212; moves the whole
+                    box, every line</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
                   <div class="hd-lab">curve</div>
                   <div class="opt-row" id="fmt-para-curve"></div>

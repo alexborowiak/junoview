@@ -53,6 +53,31 @@ def lift_fn(src: str, name: str) -> str:
     raise AssertionError(f"unbalanced braces lifting {name}")
 
 
+def lift_var(src: str, name: str) -> str:
+    """Cut one top-level ``var NAME=...;`` out of a larger file, by
+    bracket depth -- the tables the lifted functions read (T623)."""
+    head = f"var {name}="
+    i = src.index(head)
+    depth, quote, k = 0, "", i + len(head)
+    while k < len(src):
+        c = src[k]
+        if quote:
+            if c == "\\":
+                k += 1
+            elif c == quote:
+                quote = ""
+        elif c in "'\"":
+            quote = c
+        elif c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif c == ";" and depth == 0:
+            return src[i:k + 1]
+        k += 1
+    raise AssertionError(f"unterminated var {name}")
+
+
 def run_fn(src: str, name: str, calls: list[list[object]]) -> list[object]:
     """Run one lifted function over a list of argument lists.
 

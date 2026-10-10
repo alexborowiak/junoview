@@ -652,30 +652,31 @@ def test_bullets_are_a_real_list_model(out):
     bullet</li></ul>" came back byte-identical, and turning bullets off
     gave "EDITED <b>alpha</b><br>Beta<br>Gamma<br>sub bullet".
     """
+    # T623: still ONE content field -- the box's PARAGRAPHS, each with
+    # its level and marker, read from any shape ever stored (parasFrom)
+    # and written back canonical (parasStore). The box-wide a.list is an
+    # older deck's way of saying it, read and then taken off.
     assert "function listOf(a){" in out
-    assert "function setListStyle(a,style){" in out
-    assert "function contentLines(a){" in out
+    assert "function parasFrom(a,t,h){" in out
+    assert "function parasStore(a,n,ps){" in out
     assert "ul:1,ol:1,li:1" in out   # (T541 added sup/sub after them)
-    # T72: `li` belongs here too. A box-wide list stores bare <li>s, while
-    # T513's edit wrapper temporarily carries the outer ul/ol.
+    # T72: `li` belongs here too -- an older deck's box-wide list stores
+    # bare <li>s, and a pasted list arrives as ul/ol/li
     # (T546 added the link on words after them)
     assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li,sup,sub,a')};" in out
-    # A single nested list is folded back to bare items. Mixed paragraphs
-    # deliberately drop the old box-wide flag and keep their full HTML.
-    assert "function listEditBody(html){" in out
-    assert "if(body===null) delete a.list; else r.html=body;" in out
     # a legacy deck stored a.list as the boolean 1
     assert ("var v=a&&a.list?(a.list===true||a.list===1?'bullet'"
             ":a.list):0;") in out
     # ...and since T227 a kind this build does not know falls back to
     # its family rather than to no list at all
     assert "if(v&&!listKind(v)) v=(v==='number')?'number':'bullet';" in out
-    # the marker is on the ELEMENT, the items are the content
-    assert "tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');" in out
-    assert "ol.an-ul{list-style:decimal;}" in out
-    # Tab makes a sub-bullet, the way every outliner does -- and only
-    # inside a list, where it has something to mean
-    assert "if(e.key==='Tab'&&caretList(el)){" in out
+    # an older box-wide list's items are read inside their list, as the
+    # slide drew them
+    assert "h='<'+tg+' data-list=\"'+lst+'\">'+h+'</'+tg+'>';" in out
+    # Tab moves the paragraph(s) a level, bullet or not, and never
+    # leaves the box (T623)
+    assert "paraEdit(el,ps,function(p){paraLevel(p,e.shiftKey?-1:1);});" \
+        in out
 
 
 def test_find_and_replace_searches_the_model(out):
@@ -1889,12 +1890,16 @@ def test_maths_typesets_the_moment_you_click_away(out):
     assert "var h=getHtml&&getHtml();" in out
     assert "if(h) el.innerHTML=sanitizeRich(h).html;" in out
     assert "if(raw) el.textContent=raw;" in out
-    # and the seventh argument that carries a box's own markup in
-    assert "function editableText(layer,el,getVal,setVal,idx,rich,getHtml){" \
+    # and the seventh argument that carries a box's own markup in (T623:
+    # and the eighth its paragraphs, drawn again markers and all)
+    assert ("function editableText(layer,el,getVal,setVal,idx,rich,getHtml,"
+            "getParas){") in out
+    assert "if(paraOn){el.innerHTML='';parasDraw(el,getParas());return;}" \
         in out
     # the editor's accessors point at the current PAGE now (T165); the
     # closures are what made paging cost the in-place editor nothing
-    assert "i,!a.md,function(){return textPage(a,_pi).h;});" in out
+    assert "i,!a.md,function(){return textPage(a,_pi).h;}," in out
+    assert "function(){return parasOf(a,_pi);});" in out
     # the OLD gate is gone: leaving it would silently re-break this
     assert "||(!rich&&el.querySelector('mjx-container')))){" not in out
 
@@ -2841,10 +2846,12 @@ def test_the_consistency_check_says_what_it_is_opened_for(out):
 def test_an_empty_bullet_is_not_an_abandoned_box(out):
     """A blank text box is still intentional; a bullet is never an error."""
     assert "Empty text box removed" not in out
-    assert "if(!String(a.text||'').trim()&&!listOf(a))" in out
-    assert "function listSelection(style){" in out
-    assert "insertUnorderedList" in out
-    assert "e.key==='Backspace'&&caretList(el)" in out
+    # T623: a box with a marker or a level is more than its lines
+    assert "if(!String(a.text||'').trim()&&!boxHasList(a))" in out
+    assert "  function boxHasList(a){" in out
+    # Backspace at an empty bullet takes the marker off, not the box
+    assert "if(p.list&&!p.lvl) paraListSet(p,''); else paraLevel(p,-1);" \
+        in out
 
 
 def test_double_click_selects_a_word_once_you_are_editing(out):
@@ -3051,9 +3058,12 @@ def test_a_pasted_heading_is_still_a_heading(out):
     And NOT on T128's Ctrl+Shift+V escape, where "plain" has to keep
     meaning plain -- which is what the keepType argument is for."""
     assert "  var lastTextCopy=null;" in out
-    assert "    function rememberTextCopy(){" in out
-    assert "    el.addEventListener('copy',rememberTextCopy);" in out
-    assert "    el.addEventListener('cut',rememberTextCopy);" in out
+    assert "    function rememberTextCopy(txt){" in out
+    # (T623: the words are the ones the copy wrote, a line a paragraph)
+    assert ("    el.addEventListener('copy',function(e){\n"
+            "      rememberTextCopy(copyParas(e,false));});") in out
+    assert ("    el.addEventListener('cut',function(e){\n"
+            "      rememberTextCopy(copyParas(e,true));});") in out
     assert ("    var mem=(keepType&&lastTextCopy&&lastTextCopy.txt===src)"
             ) in out
     assert "      if(mem.style&&STYLE_DEFAULTS[mem.style]) na.style=mem.style;" in out
@@ -3382,8 +3392,9 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     # window grew once more; T445's ten more movements, each a keyframe
     # block and a default rule, grew it again)
     # (T471's highlight rules grew it again; T493's sample and colour
-    # rows once more)
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 10500
+    # rows once more; T623's rule for a paragraph's marker while its
+    # first words are still to come, once more)
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 11000
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 

@@ -361,23 +361,49 @@ window.JunoPptx = (function () {
     return out + '<a:buChar char="' + (BU_CHAR[item.lkind] || '&#8226;')
       + '"/>';
   }
+  /* T623: a paragraph's marker is its OWN -- the kind it draws at its
+     level, its colour and size, its run's start -- where the box's was
+     written on every one (a sub-point came out 1. under a.); a paragraph
+     that says nothing falls back to the box's (a title, an older item) */
+  function buOf(item, pa) {
+    var o = {};
+    ['lkind', 'lcol', 'lsz', 'lstart'].forEach(function (k) {
+      o[k] = (pa[k] != null && pa[k] !== '') ? pa[k] : item[k];
+    });
+    return o;
+  }
   function paragraphs(item, page) {
     var align = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[
       item.align] || 'l';
+    /* em of the box's words to EMU, at the size the runs are written at */
+    var pt = Math.max(1, (item.sizePct || 2.6) / 100 * page.hPt);
+    function emu(em) { return Math.round(em * pt * 12700); }
+    var boxInd = +item.indEm || 0;
     if (item.paras && item.paras.length) {
       return item.paras.map(function (pa) {
-        var lvl = pa.lvl || 0, mar = 228600 * (lvl + 1);
+        var lvl = pa.lvl || 0, listed = pa.bullet || pa.num;
+        /* T623: where the slide puts the words -- its margin for the
+           level, plus the box indent -- and the marker hanging in front;
+           a paragraph that does not say is the old fixed step */
+        var mar = pa.marEm != null ? emu(pa.marEm + boxInd)
+          : 228600 * (lvl + 1);
+        var hang = pa.hangEm != null ? emu(pa.hangEm) : 228600;
         var props = '<a:pPr algn="' + align + '"'
-          + ((pa.bullet || pa.num) ? ' indent="-228600" marL="' + mar + '"' : '')
+          + (listed ? ' indent="-' + hang + '" marL="' + mar + '"'
+            : (pa.marEm != null && mar > 0 ? ' marL="' + mar + '"' : ''))
           + (lvl ? ' lvl="' + lvl + '"' : '') + '>'
-          + (pa.bullet ? buXml(item, false)
-            : pa.num ? buXml(item, true) : '<a:buNone/>')
+          + (pa.spcEm > 0 ? '<a:spcBef><a:spcPts val="'
+            + Math.round(pa.spcEm * pt * 100) + '"/></a:spcBef>' : '')
+          + (pa.bullet ? buXml(buOf(item, pa), false)
+            : pa.num ? buXml(buOf(item, pa), true) : '<a:buNone/>')
           + '</a:pPr>';
-        var runs = (pa.runs || []).filter(function (r) { return r.t; });
-        if (!runs.length)
+        var runs = (pa.runs || []).filter(function (r) { return r.t || r.br; });
+        if (!runs.some(function (r) { return r.t; }))
           return '<a:p>' + props + runProps(item, page, 'endParaRPr') + '</a:p>';
+        /* a line break inside the paragraph (Shift+Enter) is <a:br/> */
         return '<a:p>' + props + runs.map(function (r) {
-          return runXml(item, page, r, pa.head); }).join('') + '</a:p>';
+          return r.br ? '<a:br>' + runProps(item, page, 'rPr') + '</a:br>'
+            : runXml(item, page, r, pa.head); }).join('') + '</a:p>';
       }).join('');
     }
     var lines = String(item.text == null ? '' : item.text).split('\n');

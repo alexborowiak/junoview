@@ -206,8 +206,6 @@ _LOST_TEXT = {
              "— {they} arrive{s3} as fades",
     "mixsize": "{n} text box{es} whose words change size part-way "
                "— each box takes the size of its first words",
-    "levels": "{n} text box{es} with indented bullet levels — every "
-              "bullet arrives at the first level",
     "hiddenobj": "{n} hidden object{s} — left out",
     "merged": "{n} merged table cell{s} — split back into single "
               "cells",
@@ -1219,8 +1217,8 @@ class _SlideReader:
         sizes = {r["sizePct"] for r in runs if r["sizePct"]}
         if len(sizes) > 1:
             self.lost.add("mixsize")
-        if any(p["lvl"] > 0 and p["runs"] for p in paras):
-            self.lost.add("levels")
+        # T623: a paragraph's level arrives with it (the deck's text
+        # boxes are paragraphs with levels now), so nothing is lost
         size = first["sizePct"] or (
             self.ctx.sz(4400) if kind == "title" else self.ctx.sz(1800))
         item: dict[str, Any] = dict(box)

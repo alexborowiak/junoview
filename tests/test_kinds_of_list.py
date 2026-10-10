@@ -32,30 +32,36 @@ def test_twelve_kinds_from_one_table(out):
     assert "    if(id==='roman') return ['i','ii','iii'][n-1]+tail;" in out
 
 
-def test_the_element_carries_the_kind_and_the_css_draws_it(out):
-    assert "          tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');" in out
-    assert "          tx2.className='an-tx an-ul an-ul-'+lst;" in out
-    for rule in ('ul.an-ul.an-ul-circle{list-style-type:circle;}',
-                 'ul.an-ul.an-ul-square{list-style-type:square;}',
-                 'ul.an-ul.an-ul-dash{list-style-type:"\\2013\\00a0";}',
-                 'ul.an-ul.an-ul-arrow{list-style-type:"\\25b8\\00a0";}',
-                 'ul.an-ul.an-ul-check{list-style-type:"\\2713\\00a0";}',
-                 'ol.an-ul.an-ul-alpha{list-style-type:lower-alpha;}',
-                 'ol.an-ul.an-ul-roman-upper{list-style-type:upper-roman;}'):
-        assert rule in out, rule
-    # a closing bracket is the one shape list-style-type cannot say
-    assert 'ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}' in out
-    # the families keep their old defaults, so an existing deck is unchanged
-    assert "ul.an-ul{list-style:disc;}" in out
-    assert "ol.an-ul{list-style:decimal;}" in out
+def test_the_paragraph_carries_the_kind_and_the_css_draws_it(out):
+    """T623: the kind rides on each PARAGRAPH (data-list), and the
+    browser's own list-style-type draws it -- one table, PARA_LST, for
+    every kind, so the dot, the ring and the square are the shapes every
+    list here has always had."""
+    assert "  var PARA_LST={bullet:'disc',circle:'circle',square:'square'," \
+        in out
+    lst = out.split("  var PARA_LST={")[1].split("};")[0]
+    for kind in ("dash", "arrow", "check", "number", "paren", "alpha",
+                 "alpha-upper", "roman", "roman-upper"):
+        assert (kind + ":" in lst) or ("'" + kind + "':" in lst), kind
+    assert "dash:'\"\\u2013\\u00a0\"'" in lst
+    assert "'alpha-upper':'upper-alpha'" in lst
+    assert "css+='list-style-type:'+PARA_LST[m.k]+';';" in out
+    # a closing bracket is the one shape the built-in styles cannot say: a
+    # counter style of its own, which counts on as the paragraphs do (a
+    # ::marker's counter() showed only a number the paragraph carried)
+    assert "number:'decimal',paren:'jv-paren'," in lst
+    assert '@counter-style jv-paren{system:extends decimal;suffix:") ";}' \
+        in out
+    assert 'content:counter(list-item) ")' not in out
 
 
 def test_switching_kind_rewrites_no_content(out):
-    """THE LATENT BUG THIS ROUND FIXED. Going from bullets to numbering
-    ran the content through contentLines, which flattens every nested
-    level -- so a two-level list came back as one. Both being lists, only
-    the word changes."""
-    assert "    if(was&&style){a.list=style;return;}" in out
+    """THE LATENT BUG T227 FIXED. Going from bullets to numbering ran the
+    content through contentLines, which flattened every nested level.
+    T623: a kind is a paragraph's attribute, so switching it touches the
+    attribute and nothing else -- the words and the level stay."""
+    fn = out.split("  function paraListSet(p,kind){")[1].split("\n  }\n")[0]
+    assert "p.h" not in fn and "p.lvl=" not in fn
 
 
 def test_an_unknown_kind_still_draws_a_list(out):
@@ -79,8 +85,9 @@ def test_each_button_is_a_split_control(out):
     # the doors are wired with literal id strings, as the contract insists
     assert "wireMenuToggle('fmt-bulletswrap','fmt-bullets-caret'," in out
     assert "wireMenuToggle('fmt-numberswrap','fmt-numbers-caret'," in out
-    # picking a kind turns the list on as well
-    assert "                setListStyle(a,k[0]);" in out
+    # picking a kind turns the list on as well -- for the paragraphs the
+    # caret is in, or every paragraph of a selected box (T623)
+    assert "              paraCmd(function(p){paraListSet(p,k[0]);});" in out
     assert "  function listGallerySync(lst){" in out
 
 

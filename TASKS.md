@@ -11863,3 +11863,117 @@ work was running on `main` at the time.
   versions are one page, as in the strip. A zoom or a resize keeps the
   live page in view. Driven headless at 1366x657 (see the test file's
   header). Tests in tests/test_scroll_view.py.
+- [x] **T623 — Indent moves the line, and lists hold.** "Also, I am
+  finding, but I might have been on an old version, indenting affects
+  whole of text box, and still issues with dot points and lists".
+  *Done 2026-10-10.* Not an old version: all of it reproduced on build
+  610 (3ae56ef). A text box had no paragraph. Drawn again after a slide
+  change or a reload, a box was one text node of "\n" lines, so List or
+  Numbered there -- after a drag, Ctrl+A or with a bare caret -- made ONE
+  bullet of every line from the caret down, and Tab or Indent in any of
+  them then moved them all: "indenting affects whole of text box". Tab
+  on a plain line left the box; Indent there, or on a selected box, said
+  "Click into the list first"; the Paragraph window's "+ In" moved the
+  whole box with the caret in one bullet; which end a drag finished at
+  decided whether Indent ran at all, and a plain line got a <blockquote>
+  that was drawn and never saved; Shift+Tab at the first level took the
+  number off, split the list and threw away every marker's colour, size
+  and start. And the dot points: a bullet kind picked while typing did
+  nothing; a styled list lost its look after any edit while the .pptx
+  kept it; pasted lines sat under one bullet; List on a selected box
+  flattened sub-points; "1) " numbered 1. 2.; Ctrl+Z after an auto-list
+  did not give back the "- "; the .pptx gave every level the first
+  level's marker, dropped a list's own kind and the box indent, and made
+  a Shift+Enter line an unbulleted paragraph at the margin; the strip
+  drew lists as bare lines; paragraph spacing reached only a whole-box
+  list in the show; a second column's bullets hung in the column gap in
+  the show; and in the light editor theme a default box drew white words
+  on pale grey.
+  **A text box is its paragraphs** (THE PARAGRAPH, 20-notes-and-tables.js),
+  as in PowerPoint: one <p> each with its own level (0-8) and, if it has
+  one, its own marker -- kind, start, colour, size -- as checked data-*
+  attributes, stored flat in a.html; a.text stays the plain lines, and a
+  box with neither markers, levels nor markup is still a.text alone. One
+  reader, parasFrom, reads every shape a deck has stored (a.text lines,
+  the box-wide a.list with a.lcol/a.lsz/a.lstart, ul/ol sections and
+  their data-list, nested levels, <div> and <br> lines), so an older deck
+  opens as it was -- measured line by line against 3ae56ef on 22 older
+  boxes, in the editor, while editing, in the show and in the exported
+  HTML, identical but for the columns and the spacing below -- and its
+  box-wide fields go the first time the box is edited. One drawer,
+  parasDraw, makes the same <p>s for the editor, the show, the presenter,
+  the scrolling page and scroll view, the HTML export and PDF, the strip,
+  History and the build pieces; numbering counts per level (a. under 1.,
+  i. under a.; a ring under a dot, a square under that), and a list
+  taken up again after a plain line goes on from its own start. The
+  .pptx writes each paragraph's own level, marker, start, colour and
+  size, its marL from the slide's own step in the box's type with the
+  box indent added, <a:br/> for Shift+Enter and spcBef for the spacing;
+  the reader brings levels and markers back ("every bullet arrives at
+  the first level" is gone from the import report).
+  **Every list command acts on paragraphs**, never the browser's list or
+  indent commands: Tab / Shift+Tab, Indent / Outdent (Increase / Decrease
+  List Level), List, Numbered, the two galleries and Bullet / Numbering
+  options act on the paragraph(s) the caret or the selection touches,
+  whichever way it was dragged -- or, with the box selected, on all of
+  them, as the button titles say. Tab at the start of a plain paragraph
+  is a level and mid-line a tab, and never leaves the box; Shift+Tab or
+  Outdent at the first level does nothing (and is no undo step). The
+  Paragraph window has a Level row first, the same thing, then "Box
+  indent -- moves the whole box, every line" (- Box out / + Box in),
+  which now keeps you typing. List and Numbered show the paragraph the
+  caret is in. Command search knows "increase list level" and "decrease
+  indent" and moves the paragraph you were in. "1) " gives 1) 2) 3); the
+  first Ctrl+Z after an auto-list gives back the "- " you typed; pasted
+  lines are a paragraph each with the caret's marker; Backspace at the
+  start of a bullet (T590) and Enter on an empty one act on that
+  paragraph. Also: the strip draws markers and levels (as characters, a
+  line each); paragraph spacing is between every paragraph, the same in
+  the editor, the show and the .pptx; each column has its own bullet
+  gutter and the columns' tops align; and a default box's fill is the
+  deck's dark, not the editor theme's, as the export always drew it.
+  **Then two reviews, and what they found, fixed.** (1) Undo: the box
+  kept only its paragraph commands and left typing to the browser's
+  stack, so the two drifted -- "Second line", typed, undone and redone,
+  came back as "S", and after an auto-bullet Ctrl+Z jumped to states that
+  never existed. A box of paragraphs now keeps ONE undo of its own for
+  every step (typing, Enter, a paste, a cut, a Tab, a marker, an
+  AutoCorrect), recorded as the mutations it made: Ctrl+Z steps back
+  strictly last-first and Ctrl+Y puts back every step. (2) A display
+  formula typed over several lines ("$$" / LaTeX / "$$") was three
+  paragraphs, which MathJax never pairs across: the slide, the show and
+  the export printed raw LaTeX, older decks too. Those lines are read as
+  one paragraph now, and the box is still stored as its lines. (3) A copy
+  put a blank line between every two lines (the browser's plain text of
+  a <p>), on the clipboard, in a plain paste and in a canvas paste: the
+  plain text is written from the paragraphs, a line each. (4) In a code
+  box Tab now indents the code by a tab character (Shift+Tab takes one
+  off) and "- " stays code. (5) Find and replace on a bullet with a
+  Shift+Enter line dropped every marker in the box: each paragraph now
+  takes its own lines. (6) Speed, measured against 3ae56ef at 4x,
+  interleaved, a fresh project a run (medians, base -> fix): the strip
+  draws a box as one text node, a line a paragraph with its marker as a
+  character, and a box it has not read yet gets its markers when the
+  page is idle -- scrolling 60 slides of lists is 47 -> 61 ms of script
+  over 20 wheel steps (the review had 118 -> 280), the frames the same
+  (p95 17 ms both); a box's paragraphs are read once per words; a number
+  is written only where counting on would not reach it, with 1) 2) 3) a
+  counter style of its own -- one Enter in a 30-item numbered list writes
+  no style at all (it rewrote 26) and costs 21 -> 24 ms of task a key (it
+  was 42 -> 61); a commit reads the box once, and not at all when
+  nothing changed, so a ribbon Indent while typing makes no long task;
+  click-away redraws only what differs; List / Numbered follow the caret
+  from the caret's paragraph alone, and AutoCorrect's step is taken only
+  for a key that can end a rule -- typing costs the same task a key as
+  before (17.3 -> 17.1 ms). Double-clicking into and clicking away from a
+  30-item box are within base's spread.
+  Driven with real keys and mouse at 1366x657 and 1280x600: every
+  confirmed repro script re-run against the fix (each now shows the
+  PowerPoint behaviour), each review finding's script before and after,
+  the older-deck comparison above, build by bullet and by sentence, and
+  the reviews' timing benches interleaved with 3ae56ef. The numbers a
+  list shows were read off the browser's own layout (its ::marker text)
+  on the slide, while typing, after Enter, Tab, Backspace and Ctrl+Z,
+  after a slide change, in the show, the strip and the exported HTML.
+  Tests in tests/test_lists_and_indent.py and, opt-in,
+  tests/test_lists_and_indent_in_a_browser.py.

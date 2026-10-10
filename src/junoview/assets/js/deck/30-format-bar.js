@@ -995,7 +995,7 @@
          nothing — the two cannot both be true. It converts the content
          back to lines instead of DELETING it, which is what the old
          `delete a.html` did (2026-08-20). */
-      if(listOf(a)) setListStyle(a,0);
+      if(boxHasList(a)) parasEdit(a,function(p){paraListSet(p,'');});
       /* T547: nor can columns -- a curve is one line of words */
       if(a.ncol>1){delete a.ncol;delete a.cgap;unColumned=true;}
       a.arc=n;
@@ -1087,20 +1087,44 @@
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
+    /* T623: THE LINE'S LEVEL FIRST, THE BOX'S INDENT SECOND, and each
+       saying which it is. PowerPoint's Paragraph window indents the
+       paragraphs you are in; this one only ever moved the whole box --
+       its row said "indent the whole box", and with the caret in one
+       bullet every line moved (2026-10-10, user: "indenting affects
+       whole of text box"). The level row is Increase / Decrease List
+       Level, the same as Tab and the ribbon's Indent; the box row stays,
+       named for what it does, and keeps you typing. */
+    var lvlRow=$('#fmt-para-lvl');
+    if(lvlRow){lvlRow.innerHTML='';optSection(lvlRow,isTx);}
+    if(isTx&&lvlRow){
+      optChip(lvlRow,'− Level',false,
+        'Move the paragraph(s) you are in out one level (Shift+Tab) -- '
+        +'with the box selected, every paragraph in it',
+        function(){listIndent(true);});
+      optChip(lvlRow,'+ Level',false,
+        'Move the paragraph(s) you are in in one level (Tab) -- with the '
+        +'box selected, every paragraph in it',
+        function(){listIndent(false);});
+    }
     if(isTx&&ind&&cv){
       /* the whole-box indent is a stepper with its count between the
          steps, because a level is a number rather than a choice */
       var steps=Math.round((a.ind||0)/IND_STEP);
-      optChip(ind,'− Out',false,
-        'Move the whole box out one step',
-        function(){paraApply('i:-');}).disabled=!steps;
+      optChip(ind,'− Box out',false,
+        'Move the WHOLE BOX out one step -- every line of it, bullets '
+        +'and all. To move only the line you are in, use Level above '
+        +'or Tab',
+        function(){keepTyping(function(){paraApply('i:-');});}).disabled=!steps;
       var lvl=document.createElement('span');
       lvl.className='opt-val';
       lvl.textContent=steps?(steps+' step'+(steps===1?'':'s')):'none';
       ind.appendChild(lvl);
-      optChip(ind,'+ In',false,
-        'Move the whole box in one step',
-        function(){paraApply('i:+');}).disabled=steps>=4;
+      optChip(ind,'+ Box in',false,
+        'Move the WHOLE BOX in one step -- every line of it, bullets and '
+        +'all. To move only the line you are in, use Level above or Tab',
+        function(){keepTyping(function(){paraApply('i:+');});})
+        .disabled=steps>=4;
       CURVES.forEach(function(p){
         optChip(cv,p[1],(a.arc||0)===p[0],
           p[0]<0?'Round the bottom':'',
@@ -1345,13 +1369,109 @@
   }
   /* ---- bullets / numbering / indent ----------------------------------
      Real buttons that show their own state, because a list is something
-     you can SEE is on. Indent and outdent drive the browser's own list
-     machinery, which is what builds the nested <ul> the model stores. */
-  function listApply(style){
-    if(listSelection(style)) return;
+     you can SEE is on.
+     T623: EVERY ONE OF THEM IS ABOUT PARAGRAPHS, PowerPoint's way. While
+     you type: the paragraph(s) the caret or the selection is in, however
+     the selection was dragged. With the box selected (not typing): every
+     paragraph in it. Never the browser's list commands, which made one
+     bullet of every line from the caret down in a box you came back to,
+     and nested <ul> in <ul> -- they write the paragraphs' own level and
+     marker (THE PARAGRAPH, 20-notes-and-tables.js), so Tab moves a line
+     and never the box. */
+  /* run `fn(p)` on the paragraphs a command is about: the editor's, as
+     one step of its undo and of the deck's, or every paragraph of every
+     selected box. `pre(list)` sees them all first (the toggles decide
+     on or off over the whole set). Returns 'ed', 'box', 'none' (a selected
+     box it would not change) or '' (nothing to act on). */
+  function paraCmd(fn,pre){
+    var el=activeTextEditable();
+    if(el){
+      var ps=paraTouched(el);
+      if(!ps.length) return '';
+      var f=pre?pre(ps.map(paraAttrs)):fn;
+      paraEdit(el,ps,f||fn,true);
+      listButtonsSync(el);
+      return 'ed';
+    }
+    var s0=pres.slides[cur],a0=annotByIdx(s0,selAnnot);
+    if(!a0||a0.k!=='text'||a0.md) return '';
+    /* run from the search box: the paragraphs the caret was in */
+    var hint=(paraHint&&paraHint.a===a0&&Date.now()-paraHint.t<120000)
+      ?paraHint:null;
+    paraHint=null;
+    function mine(a,i,pg){
+      return !hint||(a===hint.a&&pg===hint.n&&hint.set.indexOf(i)>=0);}
+    /* the decision is the primary box's, as the button shows it */
+    var f2=fn;
+    if(pre){
+      var all=parasOf(a0,hint?hint.n:0).filter(function(p,i){
+        return mine(a0,i,hint?hint.n:0);});
+      f2=pre(all.length?all:[paraNew({},'')])||fn;
+    }
+    /* a command that would change no paragraph (Decrease at the first
+       level) is not a step: no undo entry, and an older deck's box-wide
+       list is not rewritten for nothing */
+    function would(a){
+      if(!a||a.k!=='text'||a.md||(hint&&a!==hint.a)) return false;
+      return textPages(a).some(function(pg,n){
+        var ps=parasFrom(a,pg.t,pg.h);
+        if(!ps.length) ps=[paraNew({},'')];
+        return ps.some(function(p,i){
+          if(!mine(a,i,n)) return false;
+          var was=paraKey(p);f2(p,i,n);return paraKey(p)!==was;});
+      });
+    }
+    var tg=selSet.filter(function(i){return typeof i==='number';})
+      .map(function(i){return s0.annots[i];});
+    if(!(tg.length?tg:[a0]).some(would)) return 'none';
     fmtApply(function(a){
-      if(a.k!=='text') return;
-      setListStyle(a,listOf(a)===style?0:style);
+      if(hint&&a!==hint.a) return;
+      parasEdit(a,function(p,i,pg){if(mine(a,i,pg)) f2(p,i,pg);});
+    });
+    return 'box';
+  }
+  function listApply(style){
+    paraCmd(null,function(list){return paraListToggle(list,style);});
+  }
+  /* the List and Numbered buttons, pressed for the paragraphs the caret
+     is in, and the galleries' marks */
+  var listSyncSig='';
+  function listButtonsSync(el,quick){
+    /* what each paragraph under the caret draws is on it already (data-k,
+       paraDecorate's): no reading of the box's other paragraphs, which
+       cost every caret move of every keystroke a walk of the whole box
+       (2026-10-10 review) */
+    var kinds=[];
+    if(el) paraTouched(el,true).forEach(function(e){
+      kinds.push(e.getAttribute('data-k')||'');});
+    /* the same paragraphs' kinds as last time: nothing to redraw */
+    var sig=kinds.join('|');
+    if(quick&&sig===listSyncSig) return;
+    listSyncSig=sig;
+    var b=$('#fmt-bullets'),n=$('#fmt-numbers');
+    var allB=kinds.length&&kinds.every(function(k){return k&&!listIsOrdered(k);});
+    var allN=kinds.length&&kinds.every(function(k){return k&&listIsOrdered(k);});
+    if(b) b.setAttribute('aria-pressed',(!!allB).toString());
+    if(n) n.setAttribute('aria-pressed',(!!allN).toString());
+    listGallerySync(kinds.length&&kinds.every(function(k){return k===kinds[0];})
+      ?kinds[0]:'');
+  }
+  /* ...and as the caret moves while you type, so List and Numbered say
+     what the paragraph(s) under the caret are, as PowerPoint's do -- in a
+     box with a heading over its bullets they said the BOX's state ("not a
+     list") whichever line you were in. At most once a frame, only while a
+     box of paragraphs is being typed in, and the buttons are written only
+     when the answer changes. */
+  var listSyncPend=false;
+  function listStateBoot(){
+    document.addEventListener('selectionchange',function(){
+      if(listSyncPend) return;
+      listSyncPend=true;
+      requestAnimationFrame(function(){
+        listSyncPend=false;
+        var el=activeTextEditable();
+        if(el) listButtonsSync(el,true); else listSyncSig='';
+      });
     });
   }
   /* plain listeners, not onFmt: onFmt wraps its callback in fmtApply and
@@ -1952,11 +2072,12 @@
               if(g.ord) lastNumber=k[0]; else lastBullet=k[0];
               /* picking a kind TURNS THE LIST ON as well: a gallery
                  that needed the button pressed first would be a
-                 second click for the same decision */
-              fmtApply(function(a){
-                if(a.k!=='text') return;
-                setListStyle(a,k[0]);
-              });
+                 second click for the same decision.
+                 T623: on the paragraphs the caret is in while you type
+                 (paraCmd) -- it restyled the whole box behind the
+                 editor's back, the editor's own commit then wrote the
+                 old words over it, and nothing changed at all */
+              paraCmd(function(p){paraListSet(p,k[0]);});
               overlayHide(w.menu);
             });
             w.menu.appendChild(o);
@@ -1980,37 +2101,58 @@
   /* T571: one form for both galleries. It acts on every selected text
      box; one that is not a list yet becomes one of the gallery's kind,
      since "the bullets' colour" of a box with no bullets means "these
-     bullets", as in PowerPoint. */
+     bullets", as in PowerPoint.
+     T623: and it acts on PARAGRAPHS, like the buttons: the ones the caret
+     is in while you type -- read before the form opens, since the form
+     takes the focus and the editor closes behind it -- or, with the box
+     selected, all of them. The colour, the size and the start ride on
+     each paragraph, so typing a plain line after the list, or taking
+     one item out of it, no longer takes them off the rest. */
   var LIST_SIZES=[[0.75,'75% of the words'],[1,'The words\u2019 size'],
     [1.25,'125%'],[1.5,'150%']];
   function listOptions(ord){
     var s2=pres.slides[cur],a0=annotByIdx(s2,selAnnot);
-    if(!a0||a0.k!=='text'){toast('Select a text box first');return;}
+    if(!a0||a0.k!=='text'||a0.md){toast('Select a text box first');return;}
+    var n0=textAt(s2,a0); if(!(n0>0)) n0=0;
+    var el=activeTextEditable(),only=null;
+    if(el){
+      var all=paraEls(el);
+      only=paraTouched(el).map(function(e){return all.indexOf(e);});
+    }
+    var ps=parasOf(a0,n0),mk=parasMarks(ps);
+    var at=-1;
+    ps.forEach(function(p,i){
+      if(at<0&&p.list&&listIsOrdered(p.list)===ord&&(!only||only.indexOf(i)>=0))
+        at=i;});
+    var p0=at>=0?ps[at]:paraNew(),num=at>=0?mk[at].n:1;
     var rows=[
       {k:'col',label:'Colour',type:'color',
-       value:a0.lcol?tokVal(a0.lcol):'',clear:true,
+       value:p0.lc?tokVal(p0.lc):'',clear:true,
        note:'Default is the words\u2019 own colour'},
-      {k:'sz',label:'Size',type:'select',value:String(a0.lsz||1),
+      {k:'sz',label:'Size',type:'select',value:String(p0.ls||1),
        options:LIST_SIZES.map(function(p){return [String(p[0]),p[1]];})}];
     if(ord) rows.push({k:'start',label:'Start at',type:'number',
-      value:a0.lstart||1,min:1,max:999,step:1});
+      value:num||1,min:1,max:999,step:1});
     askText({title:ord?'Numbering':'Bullets',
-      what:ord?'How the numbers look, and where they start.'
-        :'How the bullets look.',
+      what:(ord?'How the numbers look, and where they start':
+        'How the bullets look')+(only?' \u2014 for the paragraph'
+        +(only.length===1?'':'s')+' you were in.':'.'),
       rows:rows,ok:'Apply'},function(v){
       if(!v) return;
+      var fam=ord?(lastNumber||'number'):(lastBullet||'bullet');
+      var sz=parseFloat(v.sz);
+      var st=Math.max(1,Math.min(999,Math.round(+v.start||1)));
       fmtApply(function(a){
-        if(a.k!=='text') return;
-        var lst=listOf(a);
-        if(!lst||listIsOrdered(lst)!==ord)
-          setListStyle(a,ord?(lastNumber||'number'):(lastBullet||'bullet'));
-        if(v.col) a.lcol=v.col; else delete a.lcol;
-        var sz=parseFloat(v.sz);
-        if(sz&&sz!==1) a.lsz=sz; else delete a.lsz;
-        if(ord){
-          var st=Math.max(1,Math.min(999,Math.round(+v.start||1)));
-          if(st>1) a.lstart=st; else delete a.lstart;
-        }
+        if(only&&a!==a0) return;
+        parasEdit(a,function(p,i,pg){
+          if(only&&(pg!==n0||only.indexOf(i)<0)) return;
+          if(!p.list||listIsOrdered(p.list)!==ord) paraListSet(p,fam);
+          p.lc=v.col||'';
+          p.ls=(sz&&sz!==1)?sz:0;
+          /* a start of 1 where the numbers already start at 1 says
+             nothing; anywhere else it is a restart */
+          if(ord) p.start=(st===1&&num===1)?0:st;
+        });
       });
     });
   }
@@ -2019,7 +2161,10 @@
     /* the two galleries are on the ribbon: asked there, not of the page
        with its notebooks (2026-10-09, speed, systemic #2) */
     $$('.ls-opt',$('#edit-tools')||deckEl).forEach(function(o){
-      o.setAttribute('aria-pressed',(o.dataset.list===lst).toString());
+      /* written only where it changes: both the selection and the caret
+         ask, and every tile rewritten each time was 10 ms at 4x */
+      var v=(o.dataset.list===lst).toString();
+      if(o.getAttribute('aria-pressed')!==v) o.setAttribute('aria-pressed',v);
     });
   }
   /* the three alignments, as buttons (T189) */
@@ -2050,16 +2195,25 @@
     nt.focus();
     caretPut(nt,at);
   }
-  /* indent/outdent only mean anything with the caret inside the box, so
-     they act on the live contenteditable rather than the model, and the
-     blur handler writes the result back like any other typing */
+  /* T623: INCREASE / DECREASE LIST LEVEL, PowerPoint's names. The
+     paragraph(s) the caret or the selection is in -- a bullet or a plain
+     paragraph -- or, with the box selected, every paragraph in it. At the
+     first level Decrease does nothing and the bullet stays (it used to
+     take the bullet off and split the list, numbering restarted and
+     every marker's colour gone). It used to say "Click into the list
+     first" for anything that was not a bullet already. */
   function listIndent(out){
-    var el=activeTextEditable();
-    if(!el||!caretList(el)){
-      toast('Click into the list first, then indent');return;
+    var low=true;
+    var how=paraCmd(function(p){paraLevel(p,out?-1:1);},function(list){
+      low=list.every(function(p){return !p.lvl;});
+      return null;});
+    if(!how){
+      toast('Select a text box, or click into its words, then '
+        +(out?'decrease':'increase')+' the level');
+      return;
     }
-    try{document.execCommand(out?'outdent':'indent',false,null);}catch(e){}
-    el.focus();
+    if(out&&low) toast(how==='ed'?'Already at the first level'
+      :'Every paragraph is at the first level');
   }
   onBtn('#fmt-indent',function(){listIndent(false);});
   onBtn('#fmt-outdent',function(){listIndent(true);});

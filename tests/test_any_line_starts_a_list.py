@@ -15,19 +15,26 @@ from __future__ import annotations
 
 
 def test_a_marker_at_a_lines_start_lists_that_line(out):
-    h = out.split("    /* T591: ...AND AT THE START OF ANY LINE.")[1] \
-        .split("\n    });\n")[0]
-    # T609: the LINE is read as AutoCorrect reads it (a <br>, a block or a
-    # hard \n begins one), and the marker deleted through the editor
-    assert ("var m4=/^([-*\\u2022]|1[.)])[ \\u00a0]$/"
-            ".exec(acLine(el,tn,off4)||'');") in h
+    """T623: one rule for every paragraph now (the box-start rule that
+    rebuilt the whole box is gone), and the paragraph is the unit -- the
+    marker must be the whole of it before the caret."""
+    h = out.split("    function autoList(e){")[1].split("\n    }\n")[0]
+    assert "var m4=/^([-*\\u2022]|1[.)])[ \\u00a0]$/.exec(r4.toString());" in h
+    assert "try{r4.setStart(p4,0);r4.setEnd(tn,off4);}" in h
     assert "document.execCommand('delete',false,null);" in h
-    assert "listSelection(/^1/.test(m4[1])?'number':'bullet');" in h
-    # never inside a list, never in a Markdown box
-    assert "tn.parentNode.closest('li')" in h
-    assert "if(!a4||a4.k!=='text'||a4.md) return;" in h
-    # only at the START of its line: the whole line before the caret is
-    # the marker; and never by hand-editing the text node, which left an
-    # empty node and took the line ABOVE into the list
+    # "1) " is the 1) 2) 3) kind, not 1. 2. 3.
+    assert ("var kind=m4[1]==='1.'?'number':m4[1]==='1)'?'paren':'bullet';"
+            in h)
+    # never inside a list, never in a Markdown box, and never in a code
+    # box, whose "- " is code (the 2026-10-10 review)
+    assert "if(!p4||p4.hasAttribute('data-list')) return;" in h
+    assert "if(!a4||a4.k!=='text'||a4.md||a4.font==='mono') return;" in h
+    # only at the START of its paragraph: the whole paragraph before the
+    # caret is the marker; and never by hand-editing the text node, which
+    # left an empty node and took the line ABOVE into the list
     assert "if(!m4||off4<m4[0].length) return;" in h
     assert "tn.nodeValue=" not in h
+    # the deletion is the browser's and the marker ours, ONE step of the
+    # editor's undo: the first Ctrl+Z gives the typed "- " back
+    assert h.index("edOp(el,function(){") < h.index(
+        "document.execCommand('delete',false,null);")

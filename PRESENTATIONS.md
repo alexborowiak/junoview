@@ -76,7 +76,11 @@ Drop or paste an image directly onto the page. Images retain their full-size
 originals: cropping changes the view rather than cutting away pixels, so a
 cropped export still uses the original resolution.
 
-Text boxes support ordinary rich text, bullets and numbering. Type LaTeX
+Text boxes support ordinary rich text, bullets and numbering. As in
+PowerPoint, a bullet belongs to a paragraph: List, Numbered, Tab and
+Shift+Tab (or Indent and Outdent) act on the paragraph(s) you are typing in,
+and with the box selected on every paragraph in it; **Paragraph ▾ > Box
+indent** is the one control that moves the whole box. Type LaTeX
 between `$...$` or `$$...$$`, or use the equation editor and its symbol
 palette. Equations are baked into standalone HTML and PDF exports, so those
 files do not need a network connection to display the maths.

@@ -109,7 +109,9 @@ def test_text_can_follow_a_curve(out):
     # menu entry that quietly does nothing. It CONVERTS the list back to
     # lines; it used to `delete a.html`, which threw the words away
     # (2026-08-20).
-    assert "if(listOf(a)) setListStyle(a,0);" in out
+    # T623: the markers come off every paragraph, the words and levels stay
+    assert "if(boxHasList(a)) parasEdit(a,function(p){paraListSet(p,'');});" \
+        in out
     assert "delete a.list;delete a.html;" not in out
     # alignment and curve share one worded Layout menu; bullets and
     # numbering are buttons of their own, because a toggle you cannot see

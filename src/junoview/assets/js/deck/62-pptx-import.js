@@ -81,7 +81,7 @@
   /* a text item -> a text annot. PLAIN when every run agrees with the
      box; RICH (a.html) when bold, italic, colour or bullets differ
      inside it, which is the deck's own model for exactly that
-     (sanitizeRich, listOf) -- so "then bold and red" stays bold and red
+     (sanitizeRich, THE PARAGRAPH) -- so "then bold and red" stays bold and red
      and stays editable, rather than arriving as Markdown source. */
   function pptTextAnnot(it,sids){
     var a={k:'text',x:it.x,y:it.y,w:it.w,h:it.h,
@@ -117,8 +117,8 @@
       return p&&Array.isArray(p.runs);});
     var full=paras.filter(function(p){
       return p.runs.some(function(r){return String(r.t||'').trim();});});
-    var allList=!!full.length&&full.every(function(p){return p.bullet;});
     var anyList=full.some(function(p){return p.bullet;});
+    var anyLvl=paras.some(function(p){return (p.lvl|0)>0;});
     var rich=paras.some(function(p){
       return p.runs.some(function(r){
         return (!!r.b!==!!it.b)||(!!r.i!==!!it.i)||(!!r.u!==!!it.u)
@@ -133,29 +133,35 @@
     function plain(p){
       return p.runs.map(function(r){return String(r.t||'');}).join('');
     }
-    if(allList){
-      a.list=full.every(function(p){return p.num;})?'number':'bullet';
-      /* T571: the first item says which marker, its colour and size,
-         and where numbering starts -- if it is a kind of the same
-         family this deck has */
-      var p0=full[0];
-      if(p0&&p0.lkind&&listKind(p0.lkind)
-         &&listIsOrdered(p0.lkind)===(a.list==='number'))
-        a.list=p0.lkind;
-      if(p0&&p0.lcol) a.lcol=p0.lcol;
-      if(p0&&p0.lsz&&p0.lsz!==1) a.lsz=p0.lsz;
-      if(p0&&p0.lstart>1&&a.list!=='bullet'&&listIsOrdered(a.list))
-        a.lstart=p0.lstart;
-      a.html=full.map(function(p){
-        return '<li>'+(line(p)||'<br>')+'</li>';}).join('');
-      a.text=full.map(plain).join('\n');
-    } else if(rich||anyList){
-      /* a box that is part bullets, part not: the marker is a
-         character, because one box is a list or it is not */
-      a.html=paras.map(function(p){
-        return (p.bullet?'• ':'')+line(p);}).join('<br>');
-      if(anyList) a.text=paras.map(function(p){
-        return (p.bullet?'• ':'')+plain(p);}).join('\n');
+    /* T623: EACH PARAGRAPH AS ITSELF (THE PARAGRAPH) -- its level, and if
+       it has one its own marker: the kind (by buAutoNum type or buChar
+       character, Wingdings' tick and arrow included), its colour, size
+       and start (T571). A box part bullets, part not, used to arrive with
+       "• " typed into its words, and every level at the first. The kind
+       a paragraph shows at its level is stored as the kind it wears at
+       the first (paraBaseKind), so it draws the same. Written here from
+       the runs, with no page to parse them in. */
+    if(anyList||anyLvl||rich){
+      var ps=[],txt=[];
+      paras.forEach(function(p){
+        var lvl=Math.max(0,Math.min(PARA_LVL_MAX,p.lvl|0)),at={lvl:lvl};
+        if(p.bullet){
+          var k=(p.lkind&&listKind(p.lkind)&&listIsOrdered(p.lkind)===!!p.num)
+            ?p.lkind:(p.num?'number':'bullet');
+          at.list=paraBaseKind(k,lvl);
+          if(p.lcol&&PARA_LC.test(p.lcol)) at.lc=p.lcol;
+          if(p.lsz&&p.lsz!==1&&p.lsz>=0.5&&p.lsz<=3) at.ls=p.lsz;
+          if(p.num&&p.lstart>1) at.start=Math.min(999,p.lstart|0);
+        }
+        ps.push(paraNew(at,line(p)));txt.push(plain(p));
+      });
+      /* empty plain paragraphs at the end are not words (parasTrim) */
+      while(ps.length&&!ps[ps.length-1].list&&!ps[ps.length-1].lvl
+            &&!txt[txt.length-1].trim()){ps.pop();txt.pop();}
+      a.text=txt.join('\n');
+      a.html=parasHtml(ps);
+      /* a list has several baselines and no single curve to follow */
+      if(ps.some(function(p){return p.list;})) delete a.arc;
     }
     return a;
   }

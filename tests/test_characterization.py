@@ -2459,8 +2459,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Deck fixes: the editor takes the keyboard on open, a file opened
 # in the editor keeps its tab, Update figures keeps the editor
 # and what is under it (app.js inlined).
-EXPECTED_MD5 = "45e9fe4360f67b33df3f360b4e88a8ae"
-EXPECTED_BYTES = 5597164
+# T623: a text box is its paragraphs (<p> with level and marker), one
+# reader and drawer for every surface; paragraph commands for Tab, Indent,
+# List and the galleries; Paragraph window's Level row and Box indent.
+# Then its review: one undo of the box's own, a display formula one
+# paragraph, a copy a line a paragraph, numbers written only where
+# counting on needs them, the strip's lines read when idle.
+EXPECTED_MD5 = "7e5b66162dac47ab07679cab93a822d3"
+EXPECTED_BYTES = 5659400
 
 
 def _render_example() -> str:

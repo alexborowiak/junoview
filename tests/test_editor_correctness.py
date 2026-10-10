@@ -1482,26 +1482,29 @@ def test_line_and_paragraph_spacing(out):
 def test_typing_a_dash_makes_a_bullet(out):
     """The markdown habit everybody already has, and the reason nobody
     could find the List button until they had given up (2026-08-20, user:
-    "need auto-dot points"). It fires only on the FIRST characters of a
-    box that is not already a list, so it can never eat a hyphen you meant
-    to keep. Measured: typing "- " produced a <ul> with one <li>.
+    "need auto-dot points"). It fires only on a paragraph with no marker
+    yet, so it can never eat a hyphen you meant to keep. Measured: typing
+    "- " produced a <ul> with one <li>.
+
+    T623: on the paragraph, in place -- the box is no longer rebuilt (that
+    emptied the browser's undo, so Ctrl+Z after it did nothing), and the
+    editor that made the list keeps it. Driven: "- " gave one bullet
+    paragraph; Ctrl+Z gave back "- " with the caret after it.
     """
-    assert "var m=/^\\s*([-*\\u2022]|1[.)])\\s$/.exec(t);" in out
-    # A mixed text box can have a list section without being a list root.
-    assert "if(el.querySelector('li')) return;" in out
-    assert "var kind=/^1/.test(m[1])?'number':'bullet';" in out
-    # Rebuilding the layer flushes live editors first. The auto-list path
-    # must disarm the old editor or that flush removes the list it just made.
-    assert "delete el.__jvFlush;" in out
-    assert "if(el.__jvSkipBlur){" in out
-    assert "el.__jvSkipBlur=1;" in out
-    assert "el.contentEditable='false';" in out
-    # The rebuilt editor contains an empty <ul> with one <li>. Treating it
-    # like an empty plain box clears the marker and deletes the whole object.
-    assert out.count(
-        "if(!getVal()&&!el.querySelector('li'))"
-    ) == 2
-    assert "a3.text='';delete a3.html;delete a3.ph;" in out
+    h = out.split("    function autoList(e){")[1].split("\n    }\n")[0]
+    assert "if(!p4||p4.hasAttribute('data-list')) return;" in h
+    assert "renderAnnots(" not in h
+    # An empty bullet is not an empty box: it keeps its marker and the
+    # caret, where clearing it would delete the whole object.
+    oe = out.split("    function openEmpty(){")[1].split("\n    }\n")[0]
+    assert "if(getVal()) return;" in oe
+    assert "var keep=first.cloneNode(false);" in oe
+    # ...while a plain empty box opens with nothing in it, so it still
+    # wears its "Type..." with the caret in it (T191)
+    assert ("      if(!first||(!first.hasAttribute('data-list')\n"
+            "                  &&!first.hasAttribute('data-lvl'))){\n"
+            "        if(el.firstChild) el.innerHTML='';") in oe
+    assert out.count("      openEmpty();") == 2
 
 
 def test_requested_right_click_workflows_are_not_hidden_behind_more(out):

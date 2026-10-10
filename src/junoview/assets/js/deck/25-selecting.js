@@ -46,7 +46,7 @@
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
        ribbon layout moves; the doors are what showFmt shows. */
-    +'#fmt-fontwrap #fmt-font-btn #fmt-para-ind '
+    +'#fmt-fontwrap #fmt-font-btn #fmt-para-ind #fmt-para-lvl '
     +'#fmt-al-left #fmt-al-center #fmt-al-right '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
@@ -412,7 +412,9 @@
     /* bullets / numbering / indent. The two list buttons show WHICH list
        is on, which the old menu line could not; indent and outdent only
        appear once there is a list to move a bullet inside. */
-    var lst=isText?listOf(a):0;
+    /* T623: the kind every paragraph with words shares (boxListKind):
+       a list is the paragraphs' now, not a flag on the box */
+    var lst=isText?boxListKind(a):'';
     /* T227: pressed when ANY kind of that family is on, and the
        gallery marks which one */
     /* the split wrappers are controls too, so they need a rule of
@@ -422,8 +424,9 @@
     show('#fmt-bullets',isText&&isNum,!!lst&&!listIsOrdered(lst));
     show('#fmt-numbers',isText&&isNum,!!lst&&listIsOrdered(lst));
     if(typeof listGallerySync==='function') listGallerySync(lst);
-    /* Keep these visible for every text box: caretList decides whether
-       the live paragraph is a list, including a list inside mixed text. */
+    /* Keep these visible for every text box: they move the paragraph(s)
+       the caret is in -- a bullet or a plain line -- or, with the box
+       selected, every paragraph in it (T623). */
     show('#fmt-indent',isText&&isNum);
     show('#fmt-outdent',isText&&isNum);
     /* the three alignments, in the row and showing which is on

@@ -46,7 +46,7 @@ def test_the_sanitizer_keeps_a_link_and_nothing_else(out):
     # an anchor going nowhere allowed is just its words
     assert "if(!RICH_TAGS[tag]||(tag==='a'&&!aHref&&!aSid)){" in san
     assert "if(aSid) n.setAttribute('data-sid',aSid);" in san
-    assert "a:1};                          /* T546: a link on words */" in out
+    assert "a:1,                           /* T546: a link on words */" in out
 
 
 def test_one_door_three_ways_in(out):

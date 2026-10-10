@@ -664,6 +664,23 @@
      cannot see. Matching means "look like this one", so a model with no
      name leaves the target's alone. Three loops share this. */
   function matchProp(from,to,p){
+    /* T623: BULLETS AND NUMBERING ARE THE PARAGRAPHS'. A box is a list
+       when the paragraphs with words in it all carry a marker
+       (boxListKind); the target's paragraphs take the source's kind, each
+       keeping its own level, or lose theirs -- a.list is only an older
+       deck's way of saying it, read by parasFrom */
+    if(p==='list'&&from&&to&&from.k==='text'&&to.k==='text'&&!to.md){
+      var base='';
+      if(boxListKind(from)) parasOf(from,0).some(function(q){
+        if(q.list){base=q.list;return true;}
+        return false;});
+      parasEdit(to,function(q){
+        if(!base) paraListSet(q,'');
+        else if(q.list!==base){q.list=base;
+          if(!listIsOrdered(base)) q.start=0;}
+      });
+      return;
+    }
     if(from[p]===undefined){
       if(p!=='style') delete to[p];
       return;

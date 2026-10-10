@@ -170,7 +170,7 @@ def test_the_newest_copy_wins_in_every_door():
 
 def test_a_box_being_typed_in_lets_the_figure_through():
     js = assets.deck_js()
-    box = js.split("      var cd=e.clipboardData;if(!cd) return;\n", 1)[1]
+    box = js.split("      if(!cd) return;\n      /* T612: a notebook figure", 1)[1]
     # only a figure this page can place; one it cannot is words
     assert box.split("      var txt='';", 1)[0].endswith(
         "      var cc5=cellClipOf(cd);\n"
@@ -295,7 +295,11 @@ def test_the_review_of_t612():
     figure Copy for Ctrl+Shift+V; and the GitHub link broke on '#', '?',
     non-ASCII and glob characters in a file name."""
     js = assets.deck_js()
-    assert "if(codePlain){codePlain=0;e.stopPropagation();return;}" in js
+    # Ctrl+Shift+V: the words, never the figure -- and since T623 its
+    # lines are still lines (pasteParas, plain only)
+    assert ("      if(codePlain){\n        codePlain=0;e.stopPropagation();\n"
+            "        if(paraOn&&cd) pasteParas(cd,true,e);\n        return;\n"
+            "      }") in js
     assert ("      if(cc){closeBox(cc);if(!pasteCellClip(cc)) "
             "cellNotHere(cc,false);return;}") in js
     here = lift_fn(js, "cellRefHere")

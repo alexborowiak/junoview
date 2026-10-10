@@ -3319,7 +3319,12 @@ body.slide-editing .an-item.sel[class*="an-move-"]:not(.an-mo-preview){
    is dropped here instead, for exactly as long as the bullet's own words
    are still to come. A dot sitting on its own in front of nothing reads
    as a rendering fault, not as a build. */
-.an-text li:has(> .an-part.an-prebuild){list-style-type:none;}
+/* (T623: a piece is held back by its visibility, set by the reveal
+   pass, which never added the .an-prebuild this rule once looked for --
+   so it read nothing. The reveal pass marks the paragraph or item whose
+   FIRST piece is still to come, and its marker waits with it; it is a
+   class and not a :has(), so typing never asks the style engine.) */
+.an-text .an-mk-wait::marker{color:transparent;}
 /* one badge per piece; it borrows .an-buildno wholesale, including the
    CSS gate that shows it only while the Timeline pane is open (T76) */
 .an-partno{top:-8px;left:-10px;z-index:6;}
@@ -4620,10 +4625,15 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 .deck.editing .an-rect{cursor:move;}
 .an-rect.sel,.an-text.sel,.an-title.sel,.an-cell.sel{
   outline:2px dashed var(--cyan);outline-offset:3px;}
+/* T623: the box's fill is the DECK's surface, or the dark one its white
+   words were made for -- never the editor's own chrome colour, which the
+   light editor theme turns pale: every default box drew white words on
+   pale grey there, in the editor and in the show, while the exported
+   page (no theme) drew them dark. A slide does not follow the app. */
 .an-text{position:absolute;max-width:60%;font-family:var(--sans);
   line-height:1.35;color:var(--tk-ink,#fff);
   background:color-mix(in srgb,
-    var(--tk-surface,var(--chrome-1,#0e1926)) 85%,transparent);
+    var(--tk-surface,#0e1926) 85%,transparent);
   border:1px solid var(--tk-line,#ffffff2e);border-radius:var(--tk-rad,8px);padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
 /* no text-shadow: it was meant to keep bare text legible on any page but
@@ -4634,40 +4644,46 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
    text — a content-sized flex item can't be aligned */
 .an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;
   padding-left:var(--an-ind,0);}
-/* a list box is a real <ul> or <ol>, and nested levels are real nested
-   lists — which is what lets Tab/Shift+Tab (the browser's own indent)
-   build sub-bullets that survive a round trip through the model */
-/* the box indent COMPOSES with the bullet gutter rather than replacing
-   it: 1.15em is what keeps a marker outside its text, so an indented list
-   that simply overwrote it would lose its bullets off the left edge */
-/* 1.7em, not 1.15 (T195): an outside marker sits about 1em left of the
-   text, so at 1.15 it was drawn on the box's edge, under the dashed
-   selection line (2026-09-02, user: "the dot points appear where the
-   dashed selection line is") */
-/* THE FALLBACK NEEDS ITS UNIT. `--an-ind` is only set on a box that
-   carries an explicit indent, so on nearly every list this reads
-   calc(1.7em + 0) -- and a unitless zero is illegal inside calc(),
-   even though `padding-left:0` is fine on its own. Arriving through
-   var() that makes it invalid AT COMPUTED-VALUE TIME, which does not
-   fall back to the earlier .an-tx declaration: padding-left computed
-   to 0, and with list-style-position:outside every marker was painted
-   left of the content box, on the border under the dashed selection
-   outline (2026-09-09, user: "bullet points still don't sit in right
-   place"). The gutter has not existed since 2026-08-22; T195 changed
-   1.15em to 1.7em inside the already-dead declaration, which is why
-   it was reported as STILL wrong. Measured: 0px before, 21.1px after. */
-.an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0px));}
-/* A list can be one paragraph-sized section inside a text box. The outer
-   .an-tx owns the box indent; each inner list adds only its marker gutter. */
-.an-tx>ul,.an-tx>ol{margin:.18em 0;padding-left:1.7em;}
-/* T609: Chromium builds a list inside the <div> line it was made on */
-.an-tx>div>ul,.an-tx>div>ol{margin:.18em 0;padding-left:1.7em;}
-/* ...however deep the line's block sits: a list begun on the line after
-   leaving another is built inside the <div> the browser made for that
-   line, and got the browser's own 10px margins and 40px indent */
-.an-tx:not(.an-ul) div>ul,.an-tx:not(.an-ul) div>ol{margin:.18em 0;
-  padding-left:1.7em;}
-.an-list-edit>.an-ul{margin:0;}
+/* THE BULLET GUTTER IS 1.7em (T195): an outside marker sits about 1em
+   left of its words, so at 1.15em it was drawn on the box's edge, under
+   the dashed selection line (2026-09-02, user: "the dot points appear
+   where the dashed selection line is"). Until T623 it was a root list's
+   padding, added to the box indent in a calc() whose unitless zero
+   fallback voided the whole declaration (2026-09-09, user: "bullet
+   points still don't sit in right place"). It is each paragraph's own
+   margin now (paraPos), and the box indent is still .an-tx's padding, so
+   the two add up with no calc() at all. */
+/* ---- T623: THE PARAGRAPH -------------------------------------------------
+   A text box is its paragraphs, one <p class="an-p"> each, drawn the same
+   in the editor, the show, the strip and every export (parasDraw in
+   20-notes-and-tables.js). paraDecorate puts each one where it goes -- a
+   margin for its level, so the box indent (.an-tx's padding, --an-ind)
+   composes with it -- and gives one with a marker its kind and number
+   (list-style-type and counter-set: the browser's own dots and counters,
+   so a bullet is the shape every list here has always had). The marker
+   is the paragraph's ::marker, OUTSIDE it, in the margin: 1.7em at the
+   first level, the gutter T195 settled on. A margin and not a padding,
+   because an outside marker sits outside the box it marks -- and because
+   each paragraph carries its own, each column of a two-column box has
+   its gutter (the show's single list had one, for the first column). */
+.an-p{margin:0;}
+.an-p[data-list]{display:list-item;margin-top:.18em;margin-bottom:.18em;}
+/* T571: a marker's own colour and size (the words keep theirs) */
+.an-p::marker{color:var(--an-lc,currentColor);
+  font-size:calc(var(--an-ls,1) * 1em);}
+/* a closing bracket is the one shape the built-in list styles cannot
+   say: a counter style of its own, so 1) 2) 3) counts on paragraph by
+   paragraph as 1. 2. 3. does (a ::marker's counter() only showed the
+   number a paragraph carried, so every paragraph had to carry one) */
+@counter-style jv-paren{system:extends decimal;suffix:") ";}
+/* a line break INSIDE a paragraph (Shift+Enter) is only a line break --
+   the gap between paragraphs is theirs (.an-tx br, below, is a Markdown
+   box's) */
+.an-tx .an-p br{display:inline;margin-top:0;}
+/* columns break between paragraphs, and a margin at a break is cut off:
+   the first column's first paragraph would start .18em below the next
+   column's */
+.an-cols>.an-p:first-child{margin-top:0;}
 /* T231: the slide column picks slides, so it gets the same two buttons
    the table has, and says how many are picked. */
 .dg-picks{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -4790,62 +4806,19 @@ body.light .oh-head{background:var(--chrome-2);}
 #film-list[data-fv="thumb"] .film-row.current .film-t{display:block;}
 
 /* ---- T227: KINDS OF BULLET, KINDS OF NUMBERING ----------------------
-   The element carries the kind as a class and the content is only the
-   items, so a marker is a rule here and never a rewrite of the words.
-   The families keep their old defaults, so every deck written before
-   this looks exactly as it did. */
-ul.an-ul{list-style:disc;}
-ol.an-ul{list-style:decimal;}
-ul.an-ul.an-ul-bullet{list-style-type:disc;}
-ul.an-ul.an-ul-circle{list-style-type:circle;}
-ul.an-ul.an-ul-square{list-style-type:square;}
-ul.an-ul.an-ul-dash{list-style-type:"\2013\00a0";}
-ul.an-ul.an-ul-arrow{list-style-type:"\25b8\00a0";}
-ul.an-ul.an-ul-check{list-style-type:"\2713\00a0";}
-ol.an-ul.an-ul-number{list-style-type:decimal;}
-ol.an-ul.an-ul-alpha{list-style-type:lower-alpha;}
-ol.an-ul.an-ul-alpha-upper{list-style-type:upper-alpha;}
-ol.an-ul.an-ul-roman{list-style-type:lower-roman;}
-ol.an-ul.an-ul-roman-upper{list-style-type:upper-roman;}
-/* a closing bracket is the one shape list-style-type cannot say */
-ol.an-ul.an-ul-paren{list-style-type:decimal;}
-ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
-.an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
-/* T571: a bullet's own colour and size (the words keep theirs) */
-.an-ul li::marker{color:var(--an-lc,currentColor);
-  font-size:calc(var(--an-ls,1) * 1em);}
-.an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}
-.an-tx.an-ul ul ul{list-style:square;}
-.an-tx.an-ul ol{list-style:lower-alpha;margin:0;padding-left:1.25em;}
-.an-tx.an-ul ol ol{list-style:lower-roman;}
-/* The same list levels when .an-tx is the neutral mixed-content wrapper. */
-.an-tx:not(.an-ul) li{margin:.18em 0;white-space:pre-wrap;}
-/* (descendants, not children: a list on a later line sits in a <div>,
-   and its Tab levels went to decimal at a 40px indent) */
-.an-tx:not(.an-ul) ul ul,
-.an-tx:not(.an-ul) ol ul{list-style:circle;margin:0;padding-left:1.5em;}
-.an-tx:not(.an-ul) ul ul ul,
-.an-tx:not(.an-ul) ol ul ul{list-style:square;}
-.an-tx:not(.an-ul) ol ol,
-.an-tx:not(.an-ul) ul ol{list-style:lower-alpha;margin:0;
+   A text box's markers are its paragraphs' (T623, above). These are the
+   levels of a list in a MARKDOWN box, which notesHtml draws as ul/ol. */
+.an-tx.an-md li{margin:.18em 0;white-space:pre-wrap;}
+/* (descendants, not children) */
+.an-tx.an-md ul ul,
+.an-tx.an-md ol ul{list-style:circle;margin:0;padding-left:1.5em;}
+.an-tx.an-md ul ul ul,
+.an-tx.an-md ol ul ul{list-style:square;}
+.an-tx.an-md ol ol,
+.an-tx.an-md ul ol{list-style:lower-alpha;margin:0;
   padding-left:1.25em;}
-.an-tx:not(.an-ul) ol ol ol,
-.an-tx:not(.an-ul) ul ol ol{list-style:lower-roman;}
-/* Once a box contains both plain and listed paragraphs, the kind travels
-   on that list section instead of on the box-wide a.list flag. */
-.an-tx ul[data-list="bullet"]{list-style-type:disc;}
-.an-tx ul[data-list="circle"]{list-style-type:circle;}
-.an-tx ul[data-list="square"]{list-style-type:square;}
-.an-tx ul[data-list="dash"]{list-style-type:"–\00a0";}
-.an-tx ul[data-list="arrow"]{list-style-type:"▸\00a0";}
-.an-tx ul[data-list="check"]{list-style-type:"✓\00a0";}
-.an-tx ol[data-list="number"]{list-style-type:decimal;}
-.an-tx ol[data-list="alpha"]{list-style-type:lower-alpha;}
-.an-tx ol[data-list="alpha-upper"]{list-style-type:upper-alpha;}
-.an-tx ol[data-list="roman"]{list-style-type:lower-roman;}
-.an-tx ol[data-list="roman-upper"]{list-style-type:upper-roman;}
-.an-tx ol[data-list="paren"]{list-style-type:decimal;}
-.an-tx ol[data-list="paren"]>li::marker{content:counter(list-item) ") ";}
+.an-tx.an-md ol ol ol,
+.an-tx.an-md ul ol ol{list-style:lower-roman;}
 /* text reads as draggable, and only turns into a text cursor once you are
    actually typing in it */
 .deck.editing .an-text,.deck.editing .an-title{cursor:move;}
@@ -6037,9 +6010,14 @@ body.light .np-notes,body.light .np-goal{background:var(--paper-2);
 .sh-menu.lh-menu{display:block;width:186px;padding:5px;}
 .lh-menu .vw-opt{width:100%;text-align:left;}
 #hm-upd-menu .vw-opt{width:100%;text-align:left;}
-/* paragraph spacing is the gap BETWEEN blocks, so it lands on every line
-   of a list and on every <br>-separated run except the first */
-.an-tx.an-ul li + li{margin-top:var(--an-pspace,.18em);}
+/* paragraph spacing is the gap BETWEEN paragraphs, so it lands on every
+   paragraph but the first -- a bullet or a plain line alike (T623: it
+   reached only a whole-box list in the show, never the editor's, a list
+   in a box with other lines, or lines typed with Enter). Between two
+   bullets it replaces their .18em; next to one it is never less. */
+.an-p+.an-p{margin-top:var(--an-pspace,0px);}
+.an-p[data-list]+.an-p[data-list]{margin-top:var(--an-pspace,.18em);}
+.an-p+.an-p[data-list]{margin-top:max(.18em,var(--an-pspace,0px));}
 .an-tx br{content:"";display:block;margin-top:var(--an-pspace,0);}
 
 /* ---- the notes pane's three tabs + the scratchpad -------------------- */

@@ -2864,6 +2864,88 @@
      block elements are paragraphs (an <li> a bullet, at its nesting
      level; an <hN> a heading), inline marks are per-run bold, italic,
      underline, strike and colour. Links keep their words. */
+  /* one inline element's marks on top of its parent's: bold, italic,
+     underline, strike, raised or lowered, colour, a highlighter mark and
+     a link */
+  function pptxColOf(n){
+    var c=n.style&&n.style.color; if(!c) return '';
+    var m=/^#([0-9a-f]{6})$/i.exec(c); if(m) return c;
+    var r=rgbOf(c); return r?('#'+[r[0],r[1],r[2]].map(function(v){
+      return ('0'+Math.round(v).toString(16)).slice(-2);}).join('')):'';
+  }
+  function pptxStyleOf(n,st){
+    var tag=n.tagName.toLowerCase(),s2={};
+    for(var k in st) s2[k]=st[k];
+    if(tag==='b'||tag==='strong') s2.b=1;
+    if(tag==='i'||tag==='em') s2.i=1;
+    if(tag==='u') s2.u=1;
+    if(tag==='s'||tag==='strike'||tag==='del') s2.s=1;
+    if(tag==='sup'){s2.sup=1;s2.sub=0;}      /* T541 */
+    if(tag==='sub'){s2.sub=1;s2.sup=0;}
+    var col=pptxColOf(n); if(col) s2.color=col;
+    /* T543: a highlighter mark (only a marked run is one) */
+    if(n.getAttribute&&n.getAttribute('data-hl')==='1'&&n.style
+       &&n.style.backgroundColor){
+      var hr=rgbOf(n.style.backgroundColor);
+      if(hr) s2.hl='#'+[hr[0],hr[1],hr[2]].map(function(v){
+        return ('0'+Math.round(v).toString(16)).slice(-2);}).join('');
+    }
+    /* T546: linked words -- a web address, or a slide by its index,
+       turned into an output slide number with the objects' links */
+    if(tag==='a'){
+      var ws=n.getAttribute('data-sid'),wh=mdHref(n.getAttribute('href')||'');
+      /* a Markdown box's [words](#7) says its slide by number */
+      var wn=n.getAttribute('data-slide');
+      if(ws){var wi=linkSlideIdx(ws); if(wi>=0) s2.link={to:'slide',si:wi};}
+      else if(wn&&/^\d+$/.test(wn)&&+wn>=1&&+wn<=(pres.slides||[]).length)
+        s2.link={to:'slide',si:+wn-1};
+      else if(wh&&wh.charAt(0)!=='#') s2.link={to:'url',href:wh};
+    }
+    return s2;
+  }
+  function pptxRun(t,st){
+    return {t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
+      color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||'',
+      link:st.link||null};
+  }
+  /* T623: A BOX'S PARAGRAPHS, AS THE SLIDE DRAWS THEM (THE PARAGRAPH,
+     20-notes-and-tables.js): one <a:p> each, at its own level with its
+     own marker -- the kind it draws at that level, its number's start,
+     its colour and size -- its words at the slide's indent (marL in em
+     of the box's type, as the slide's margin is), and the gap above it
+     the slide's (spcBef). A line break inside a paragraph is <a:br/>
+     (Shift+Enter), not a paragraph of its own at the margin. */
+  function pptxRunsOf(h){
+    var t=document.createElement('template');t.innerHTML=String(h||'');
+    var runs=[];
+    (function walk(n,st){
+      [].forEach.call(n.childNodes,function(c){
+        if(c.nodeType===3){
+          String(c.nodeValue).split('\n').forEach(function(seg,j){
+            if(j) runs.push({t:'',br:1});
+            if(seg) runs.push(pptxRun(seg,st));
+          });
+          return;
+        }
+        if(c.nodeType!==1) return;
+        if(c.tagName==='BR'){runs.push({t:'',br:1});return;}
+        walk(c,pptxStyleOf(c,st));
+      });
+    })(t.content,{});
+    return runs;
+  }
+  function pptxParas(ps,pspace){
+    var mk=parasMarks(ps),prevList=false;
+    return ps.map(function(p,i){
+      var m=mk[i],listed=!!p.list;
+      var gap=Math.max(i?(+pspace||0):0,(listed||(i&&prevList))?0.18:0);
+      prevList=listed;
+      return {runs:pptxRunsOf(p.h),bullet:listed&&!m.ord,num:listed&&m.ord,
+        lvl:p.lvl||0,head:0,lkind:m.k,lstart:m.ord?m.first:0,
+        lcol:p.lc?tokVal(p.lc):'',lsz:p.ls||0,
+        marEm:m.pos,hangEm:paraHang(p.lvl||0,p.list),spcEm:gap};
+    });
+  }
   function pptxParasFromHtml(html,pre){
     var doc;
     try{doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');}
@@ -2873,12 +2955,6 @@
     function para(kind,lvl,head){
       cur={runs:[],bullet:kind==='ul',num:kind==='ol',lvl:lvl||0,head:head||0};
       paras.push(cur);return cur;
-    }
-    function colOf(n){
-      var c=n.style&&n.style.color; if(!c) return '';
-      var m=/^#([0-9a-f]{6})$/i.exec(c); if(m) return c;
-      var r=rgbOf(c); return r?('#'+[r[0],r[1],r[2]].map(function(v){
-        return ('0'+Math.round(v).toString(16)).slice(-2);}).join('')):'';
     }
     function walk(n,st,lvl){
       if(n.nodeType===3){
@@ -2890,40 +2966,12 @@
           var t=seg.replace(/\s+/g,' ');
           if(!t.trim()&&!cur) return;
           if(!cur) para('',0,0);
-          cur.runs.push({t:t,b:!!st.b,i:!!st.i,u:!!st.u,strike:!!st.s,
-            color:st.color||'',sup:!!st.sup,sub:!!st.sub,hl:st.hl||'',
-            link:st.link||null});
+          cur.runs.push(pptxRun(t,st));
         });
         return;
       }
       if(n.nodeType!==1) return;
-      var tag=n.tagName.toLowerCase(),s2={};
-      for(var k in st) s2[k]=st[k];
-      if(tag==='b'||tag==='strong') s2.b=1;
-      if(tag==='i'||tag==='em') s2.i=1;
-      if(tag==='u') s2.u=1;
-      if(tag==='s'||tag==='strike'||tag==='del') s2.s=1;
-      if(tag==='sup'){s2.sup=1;s2.sub=0;}      /* T541 */
-      if(tag==='sub'){s2.sub=1;s2.sup=0;}
-      var col=colOf(n); if(col) s2.color=col;
-      /* T543: a highlighter mark (only a marked run is one) */
-      if(n.getAttribute&&n.getAttribute('data-hl')==='1'&&n.style
-         &&n.style.backgroundColor){
-        var hr=rgbOf(n.style.backgroundColor);
-        if(hr) s2.hl='#'+[hr[0],hr[1],hr[2]].map(function(v){
-          return ('0'+Math.round(v).toString(16)).slice(-2);}).join('');
-      }
-      /* T546: linked words -- a web address, or a slide by its index,
-         turned into an output slide number with the objects' links */
-      if(tag==='a'){
-        var ws=n.getAttribute('data-sid'),wh=mdHref(n.getAttribute('href')||'');
-        /* a Markdown box's [words](#7) says its slide by number */
-        var wn=n.getAttribute('data-slide');
-        if(ws){var wi=linkSlideIdx(ws); if(wi>=0) s2.link={to:'slide',si:wi};}
-        else if(wn&&/^\d+$/.test(wn)&&+wn>=1&&+wn<=(pres.slides||[]).length)
-          s2.link={to:'slide',si:+wn-1};
-        else if(wh&&wh.charAt(0)!=='#') s2.link={to:'url',href:wh};
-      }
+      var tag=n.tagName.toLowerCase(),s2=pptxStyleOf(n,st);
       if(tag==='br'){cur=null;return;}
       var hd=/^h([1-6])$/.exec(tag);
       if(hd){para('',0,+hd[1]);[].forEach.call(n.childNodes,function(c){walk(c,s2,lvl);});cur=null;return;}
@@ -2960,15 +3008,20 @@
       rot:a.rot,op:a.op,centred:!!centred,name:a.name||'',   /* T485 */
       text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
-      bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
+      bullets:!!listOf(a),bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
       /* T561: its edge colour, which the canvas draws and the .pptx
          used to drop ('none' is no edge, as on the canvas). Fill None
          takes the edge too on the canvas (.an-text.nobg has no border),
          so it does here -- gated like bgc */
       bdc:(a.bg!==0&&a.bdc&&a.bdc!=='none')?tokVal(a.bdc):'',
-      /* T571: which marker, its colour and size, where numbering starts */
+      /* T571: which marker, its colour and size, where numbering starts
+         -- the box's own only in a box with no paragraphs (a title); a
+         text box's paragraphs carry their own (T623, pptxParas) */
       lkind:listOf(a)||'',lcol:a.lcol?tokVal(a.lcol):'',lsz:a.lsz||0,
       lstart:a.lstart||0,
+      /* T623: the box indent (Paragraph > Box indent) and the gap between
+         paragraphs, in em of the words, as the slide draws them */
+      indEm:+a.ind||0,
       arc:a.arc,font:fontPpt(a.font),
       /* T542: a box that keeps its height, with its words placed in it */
       va:(a.fh&&(a.va==='m'||a.va==='b'))?a.va:'',
@@ -3084,19 +3137,19 @@
         if(tp.hit) note.maths++;
         ti.text=tp.text;
         /* T486: a Markdown or rich box leaves as paragraphs and runs,
-           from the HTML the slide itself shows */
-        if(!a.bib&&(a.md||_pg.h)){
+           from the HTML the slide itself shows. T623: every text box that
+           is not Markdown leaves as ITS PARAGRAPHS (pptxParas), plain
+           ones too, so a level, a marker, a line break and the box
+           indent reach PowerPoint as the slide draws them. */
+        if(!a.bib){
           var html=a.md?notesHtml(figSubst(_pg.t,a,note.figs))
-            :sanitizeRich(figSubst(_pg.h,a,note.figs)).html;
-          /* a whole-box list keeps only its items; the slide supplies the
-             list around them, and so must this, or every item ran into one
-             unbulleted paragraph (2026-10-08 review) */
-          var lk5=!a.md&&listOf(a);
-          if(lk5&&!/^\s*<(ul|ol)\b/i.test(html)){
-            var lt5=listIsOrdered(lk5)?'ol':'ul';
-            html='<'+lt5+'>'+html+'</'+lt5+'>';
-          }
-          var paras=pptxParasFromHtml(html,!a.md);
+            :(_pg.h?figSubst(_pg.h,a,note.figs):'');
+          /* a box with no markup is its lines with the maths already
+             flattened (ti.text): a display formula over several lines
+             is one match, which no line of it is on its own */
+          var paras=a.md?pptxParasFromHtml(html,false)
+            :pptxParas(parasFrom(a,ti.text,html),a.pspace);
+          if(paras&&!paras.length) paras=null;
           if(/<a\s[^>]*href/i.test(html)) note.links=(note.links||0)+1;
           if(paras){
             paras.forEach(function(p){p.runs.forEach(function(r){
@@ -4735,13 +4788,12 @@
           out.push({si:si,idx:i,label:itemLabel(s,i),
             get:function(){return a.text||'';},
             set:function(v){
-              a.text=v;
               /* rich markup cannot survive a plain-text substitution
                  without a mapping from characters to runs, so a replaced
                  box drops back to plain text — and says so in the toast
-                 rather than silently losing a colour */
-              if(a.html){delete a.html;
-                if(listOf(a)) setListStyle(a,listOf(a));}
+                 rather than silently losing a colour. Its paragraphs'
+                 levels and markers stay, line for line (T623). */
+              parasReplaceText(a,v);
             }});
         });
       });
