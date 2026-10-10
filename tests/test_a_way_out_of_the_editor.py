@@ -35,7 +35,10 @@ def test_editor_uses_the_live_logo_rail(out):
     assert "?$('#deck-qat .qat-tabs-at'):$('#nb-filebar .nb-file-spacer');" in out
     assert "deckIsolate(full,editing);" in out
     assert "if(appNavLive&&(sel==='#apptop'||sel==='#presrail'" in out
-    assert "if(document.body.classList.contains('slide-editing')&&APP.deckClose)" in out
+    # (not for the deck's own re-read of a notebook under it: Update
+    # figures leaves the editor up -- tests/test_deck_doors.py)
+    assert ("if(document.body.classList.contains('slide-editing')"
+            "&&APP.deckClose\n       &&!reloadUnderDeck)") in out
 
 
 def test_escape_keeps_the_editor_to_builder_journey(out):

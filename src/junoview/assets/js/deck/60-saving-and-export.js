@@ -3952,6 +3952,12 @@
       loadPresentation(first.name);
     } else loadPresentationObj(first.pres);   /* T414 */
     cur=0;activePane=-1;
+    /* openDeck is what puts a deck on the open list (its tab) and in
+       Recent. A file opened with the editor already up skips it, so its
+       tab showed only while it was the deck on screen and went the moment
+       you switched away -- with no tab to come back by. */
+    if(!deckEl.hidden&&typeof notePresentationOpen==='function')
+      notePresentationOpen(pres.name);
     /* picked from the launcher: go straight into the editor — the whole
        point of opening a file is to get back to the presentation in it */
     /* ...where openDeck has already drawn the strip and the slide
@@ -3962,6 +3968,10 @@
     if(wasHidden) openDeck('edit');
     status();
     if(!wasHidden) refresh();
+    /* ...and the keyboard goes to it, as openDeck hands it over: File >
+       Open a presentation closed its dialog before the file was chosen,
+       so with the editor already up the keyboard was left on the page */
+    if(!wasHidden&&mode==='edit') deckFocusTake();
     if(first.kept)
       toast('Imported '+imported+' presentation'
         +(imported>1?'s':'')+' (as drafts)'

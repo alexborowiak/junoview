@@ -1053,13 +1053,21 @@
   APP.refreshOpenTabsRow=refreshOpenTabsRow;
   APP.keepTabInView=keepTabInView;
   APP.renderTabs=renderTabs;
+  /* the editor places the row itself before it hands the keyboard over
+     (setUIMode): the observer above runs only after that, and the row's
+     arrival hides the control the keyboard was given (#qat-name) */
+  APP.homeTabsRow=homeTabsRow;
+  /* T123: the deck's Update re-reads a notebook IN PLACE, under the
+     editor (APP.reloadTab) -- that is not a notebook brought forward */
+  var reloadUnderDeck=false;
   function activate(stem){
     if(!APP.shells[stem]) return;
     /* The shared rail stays live beside the full deck editor. A notebook
        click there means leave the editor for that notebook, rather than
        leaving two competing document surfaces on screen. Create mode is
        deliberately excluded: it still uses the notebook as a live source. */
-    if(document.body.classList.contains('slide-editing')&&APP.deckClose)
+    if(document.body.classList.contains('slide-editing')&&APP.deckClose
+       &&!reloadUnderDeck)
       APP.deckClose();
     /* looking at a notebook is not being at Home; opening one from the
        welcome has to take you off it */
@@ -9869,9 +9877,25 @@
     if(/^https?:/i.test(path)) return decline('url');
     return openShell({path:path,stem:stem},sh?stem:'').then(function(j){
       /* unchanged: the disk WAS re-read -- it gave back the version
-         this tab already shows, so there is nothing to remount */
-      if(j.unchanged) activate(stem);
-      else mountShellHTML(j.shell,j.path||path,true);
+         this tab already shows, so there is nothing to remount.
+         Either way the editor that asked stays up: activate() leaves it
+         for a notebook clicked in the rail (f3ad31f), and Update figures
+         closed the editor on every press since (T123 is "the deck never
+         closing") */
+      /* ...and so does what is under it: leaving the editor goes back to
+         the notebook (or Home) it was opened from, not to whichever
+         source was re-read last -- activate() takes you off Home */
+      var under=document.body.classList.contains('slide-editing'),
+          back=APP.active,home=atHome;
+      reloadUnderDeck=true;
+      try{
+        if(j.unchanged) activate(stem);
+        else mountShellHTML(j.shell,j.path||path,true);
+        if(under){
+          if(back&&back!==APP.active&&APP.shells[back]) activate(back);
+          atHome=home;
+        }
+      }finally{reloadUnderDeck=false;}
       return {stem:stem,ok:true,reason:'reread',msg:'',
         unchanged:!!j.unchanged};
     }).catch(function(e){

@@ -2456,8 +2456,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Reader fixes: Expand all fills, Find follows Raw, Raw copies own
 # their ids, Find opens long notes, Reload keeps the card read,
 # folded plots wait for their width (app.js inlined).
-EXPECTED_MD5 = "f305e03d7cdb08da34b42900fab3cf53"
-EXPECTED_BYTES = 5594385
+# Deck fixes: the editor takes the keyboard on open, a file opened
+# in the editor keeps its tab, Update figures keeps the editor
+# and what is under it (app.js inlined).
+EXPECTED_MD5 = "45e9fe4360f67b33df3f360b4e88a8ae"
+EXPECTED_BYTES = 5597164
 
 
 def _render_example() -> str:

@@ -1889,6 +1889,13 @@
     /* the editor is laid out once, here, instead of twice: the first
        visible control is asked for now that the strip, the slide and the
        ribbon are what they will be (T104's focus hand-over) */
+    /* ...once the open files' tabs are in this title row. They come on
+       the body's class (app.js homeTabsRow, an observer that runs after
+       this returns), and their arrival hides the deck's name (T602): the
+       control chosen before they came was #qat-name, so the keyboard
+       ended on the page. Placed first, what is chosen stays. */
+    if(takeFocus&&!deckEl.hidden&&typeof APP.homeTabsRow==='function')
+      APP.homeTabsRow();
     if(takeFocus&&!deckEl.hidden) deckFocusTake();
     if(startingTalk||endingTalk) presenterSync();
     /* T564: the show's first slide records (a recording run) or speaks;
@@ -2020,6 +2027,13 @@
     for(var i=0;i<cand.length;i++){
       var el=cand[i];
       if(el.hidden||el.offsetParent===null) continue;
+      /* ...and the EDITOR's: not the open files' tabs, the app's own row
+         lent to this title row while the editor is up (T602), and not a
+         field -- the editor's keys skip whatever is typed into (the
+         command search is the first visible one), so PageDown and
+         Ctrl+Z would not have worked from where the keyboard was put */
+      if(el.closest('#open-tabs-row')) continue;
+      if(/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) continue;
       try{el.focus();}catch(err){continue;}
       if(document.activeElement===el) return;
     }
