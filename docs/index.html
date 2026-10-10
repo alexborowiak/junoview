@@ -46,7 +46,7 @@
 <meta name="theme-color" content="#0a141d">
 <link rel="stylesheet" href="core.8aa7e1037606dfef.css">
 <link rel="stylesheet" href="app.d52c1951a81f55ae.css">
-<link rel="stylesheet" href="deck.4fc8cc43ba11d174.css">
+<link rel="stylesheet" href="deck.3a81e33334ede2ca.css">
 <script>
 window.MathJax = {
   tex: {inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -58,7 +58,7 @@ window.MathJax = {
 </script>
 <script async id="jv-mathjax" data-src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js" onload="this.setAttribute('data-state','loaded')" onerror="this.setAttribute('data-state','failed')"></script>
 
-<meta name="junoview-build" content="aaad291532f5">
+<meta name="junoview-build" content="0a0407f92dcf">
 <script>/* The generated application is already on the page. This bridge is
    installed before app.js -- build_web writes it INTO the page's <head>,
    where a separate file cost a round trip before the body could parse --
@@ -146,7 +146,7 @@ window.MathJax = {
     else window.addEventListener('load',idle);
   }
   settled(function(){idleDue=true;if(!holds) start();});
-  window.__jvBuild='aaad291532f5';
+  window.__jvBuild='0a0407f92dcf';
   window.__jvUpdateBar=function(){
     if(document.getElementById('jv-newbuild')||!document.body) return;
     var bar=document.createElement('div');bar.id='jv-newbuild';
@@ -827,7 +827,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}catch(e){}</script
              to be able to see a version number on the home page, maybe and
              then on hover a last updated so I can keep track of this").
              Empty in a rendered notebook; see build_info.py. -->
-        <div class="welcome-wordmark">Junoview<span class="welcome-ver" title="Last updated 10 Oct 2026 at 08:16 (commit 32b98c0)">v0.2.0 · build 610</span></div>
+        <div class="welcome-wordmark">Junoview<span class="welcome-ver" title="Last updated 10 Oct 2026 at 23:45 (commit e2bee88)">v0.2.0 · build 616</span></div>
         <p class="welcome-tag">Build a presentation, or open a notebook and
           pull the figures straight out of your analysis.</p>
       </div>
@@ -4986,8 +4986,9 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop tx-split" id="fmt-bulletswrap">
                 <button class="dbtn etm" id="fmt-bullets"
                   aria-pressed="false"
-                  title="Bullet list on / off. The caret beside it
- holds the kinds of bullet"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="3.4" cy="4.6" r="1.2"/><circle cx="3.4" cy="11.4" r="1.2"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> List</button>
+                  title="Bullets on / off for the paragraph(s) you are in --
+ with the box selected, every paragraph. The caret beside it holds the
+ kinds of bullet"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="3.4" cy="4.6" r="1.2"/><circle cx="3.4" cy="11.4" r="1.2"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> List</button>
                 <button class="dbtn etm tx-caret" id="fmt-bullets-caret"
                   aria-label="Kinds of bullet" aria-haspopup="true"
                   aria-expanded="false"
@@ -4999,8 +5000,9 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop tx-split" id="fmt-numberswrap">
                 <button class="dbtn etm" id="fmt-numbers"
                   aria-pressed="false"
-                  title="Numbered list on / off. The caret beside it
- holds the kinds of numbering"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Numbered</button>
+                  title="Numbering on / off for the paragraph(s) you are in
+ -- with the box selected, every paragraph. The caret beside it holds the
+ kinds of numbering"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Numbered</button>
                 <button class="dbtn etm tx-caret" id="fmt-numbers-caret"
                   aria-label="Kinds of numbering" aria-haspopup="true"
                   aria-expanded="false"
@@ -5013,10 +5015,14 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="rbn-cell rbn-seg" id="tx-list-levels"
                 role="group" aria-label="List level">
                 <button class="dbtn etm" id="fmt-outdent" hidden
-                  title="Move this bullet out one level (Shift+Tab)"
+                  title="Decrease list level (Shift+Tab): the paragraph(s)
+ you are in move out a level; with the box selected, every paragraph.
+ Never the box itself"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="M5.4 5.6 3 8l2.4 2.4"/></svg> Outdent</button>
                 <button class="dbtn etm" id="fmt-indent" hidden
-                  title="Move this bullet in one level (Tab)"
+                  title="Increase list level (Tab): the paragraph(s) you
+ are in move in a level; with the box selected, every paragraph. Never
+ the box itself"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="m3 5.6 2.4 2.4L3 10.4"/></svg> Indent</button>
               </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
@@ -5041,13 +5047,20 @@ items snap to both. Guides, not ink: never printed or exported"
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Indent the box, curve its words, sit them at the
- top, middle or bottom, grow the box or shrink the words (AutoFit), or set
- columns"
+                  title="The level of the line you are in, the box indent,
+ the curve, where the words sit, AutoFit (grow the box or shrink the
+ words) and columns"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6"/><path d="m9.8 2.8 2.4 2.4-2.4 2.4"/></svg> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
-                  <div class="hd-lab">indent the whole box</div>
+                  <!-- T623: the line's level (PowerPoint's Increase /
+                       Decrease List Level), then the box's own indent,
+                       each named for what it moves -->
+                  <div class="hd-lab">level &#8212; the line(s) you are
+                    in, like Tab</div>
+                  <div class="opt-row" id="fmt-para-lvl"></div>
+                  <div class="hd-lab">box indent &#8212; moves the whole
+                    box, every line</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
                   <div class="hd-lab">curve</div>
                   <div class="opt-row" id="fmt-para-curve"></div>
@@ -6828,8 +6841,8 @@ items snap to both. Guides, not ink: never printed or exported"
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
 <script src="icons.5377b0f92bbbc947.js"></script>
-<script src="app.c0d1413a9a248001.js"></script>
-<script src="pptx.43d37915e97f8b3a.js"></script>
+<script src="app.63d28a914b60f86b.js"></script>
+<script src="pptx.b8b9671325057718.js"></script>
 <!-- T597: what a saved .junoview.html runs when it is opened -- inert
      text here, read by the save and written into the file -->
 <script type="text/plain" id="jv-savedfile-js">/* saved-file.js -- the script a saved presentation file carries (T597).
@@ -6953,6 +6966,6 @@ items snap to both. Guides, not ink: never printed or exported"
   });
 })();
 </script>
-<script src="deck.3802fb1732093178.js"></script>
+<script src="deck.3f19248d422d2fb0.js"></script>
 </body>
 </html>

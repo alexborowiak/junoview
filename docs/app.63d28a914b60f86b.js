@@ -51,6 +51,288 @@
   }
   APP.api=api;
 
+  /* ================= THE SLIDE EDITOR, WHEN IT IS NEEDED ==============
+     (2026-10-10, load cost.) deck.js is 3.3 MB of one IIFE, and every
+     page used to fetch, compile and boot all of it before it answered a
+     click -- even a launch that only ever reads a notebook. At 4x CPU
+     that was 0.4-0.6 s of a 3.2 s load on the example notebook (the
+     page with no editor script at all was ready that much sooner), and
+     its boot was one task of 160-280 ms on top of the compile.
+
+     So the LOCAL APP's page names it without running it: the server
+     sends an inert text/plain script element, #jv-deck-src, in its place,
+     and right after it a one-line inline gate that calls APP.deckGate
+     (render/static.py, deferred_link). The editor's script then comes in
+     one of three ways:
+       AT ONCE, when what is on screen at load is the editor's: nothing
+         open (Home lists the presentations), a #/pres or #/home address,
+         a saved file handing over its deck, or decks this tab still has
+         open after a reload (their tabs are the editor's) -- deckAtLoad.
+         The gate writes the script into the page right there, so the
+         parser runs it where and when it always did (jvDeck.now);
+       ON FIRST USE: a click on any control the editor answers (DOORS,
+         below) is held, the editor loaded, and the click made again once
+         it has booted -- never a dead button, only a later one; every
+         other way in from the notebook side (Ctrl+K, an address typed in,
+         a dropped deck or .pptx, a question or a message in its dialog)
+         waits for it the same way, through then(). The pointer coming to
+         rest on a door, or the keyboard landing on one, starts the load
+         early, so the click that follows waits less or not at all;
+       AT IDLE, once the loaded page has gone 1.5 s without a long task
+         (its layout and its maths done), so that in the usual case the
+         editor is there before anything asks -- and its boot is not one
+         more long task stacked on the load.
+     The last two put a real script in the reference's place -- the same
+     place, so the document is the one it always was.
+     Everywhere else -- a single-file export, the web build -- deck.js is
+     on the page as before, runs right after this file, and every call
+     here simply runs at once. The editor's own boot tells this when it
+     has finished (APP.deckBooted, the last line of 99-boot.js). */
+  var jvDeck=(function(){
+    /* the reference comes after this file in the page, so it is looked
+       for when the gate right after it runs (APP.deckGate), or once the
+       document is parsed */
+    var ph=null;
+    /* waiting | loading | booted | failed; 'parsed' where deck.js is on
+       the page itself and nothing waits for it -- which is also what
+       this says until arm() has looked */
+    var state='parsed';
+    var queue=[],held=null;
+    /* WHAT A CLICK CANNOT DO WITHOUT THE EDITOR: everything the editor
+       wires outside its own markup (its listeners, every one of them
+       checked against this list by
+       tests/test_the_editor_loads_on_first_use_in_a_browser.py), its own
+       markup whole, and the notebook-side
+       controls whose answer is the editor's -- Home lists its
+       presentations, Create slides hands it the plan, Collect files a
+       cell into one of its collections, a figure's Plot trace asks it for
+       the cells that build the plot (window.SemTrace, whose lineage is
+       the editor's). The File menu's own rows (Open a
+       notebook, Theme, How to use, Support) are not here: they are this
+       file's, and the File menu that shows them is a door itself. */
+    var DOORS='#deck,#matchbar,#pickbar,#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,'
+      +'#ss-dlg,#ms-dlg,#ts-dlg,#nt-dlg,#dgm-dlg,#find-pop,#color-pop,'
+      +'#presentation-hub,#app-file,#app-file-menu .dc-mi[data-for],'
+      +'#ot-open,#ab-collect,.cell-collect,.plot-trace-btn,#ot-home,'
+      +'#presrail-home,'
+      +'#presstrip,#pr-recent,#pr-library,#pr-newbtn,#pr-newmenu,'
+      +'#pr-newcol,#pr-newview,#pr-new,#pr-newpost,#pr-newfold,#sb-done,'
+      +'#deckfile,#pptxfile,#welcome-pres,#welcome-new,'
+      +'#welcome-presentations,#welcome-folder,#auto-slides-create,'
+      +'.top-pres-tab';
+    function pending(){return state==='waiting'||state==='loading';}
+    function drain(){
+      var q=queue;queue=[];
+      q.forEach(function(fn){
+        try{fn();}catch(e){if(window.console) console.error(e);}
+      });
+    }
+    function load(){
+      if(state!=='waiting') return;
+      state='loading';
+      var s=document.createElement('script');
+      s.src=ph.getAttribute('data-src')||'';
+      /* a script that ran without finishing its boot (it threw) is as
+         good as one that never came: what waits gets its fallback */
+      s.onload=function(){if(pending()) failed();};
+      s.onerror=failed;
+      if(ph.parentNode) ph.parentNode.replaceChild(s,ph);
+      else document.body.appendChild(s);
+    }
+    function failed(){
+      if(!pending()) return;
+      state='failed';held=null;disarm();
+      drain();
+    }
+    /* AT ONCE, while the page is still being parsed: from the gate's own
+       inline script (APP.deckGate) the editor is written into the
+       document right there -- a script the parser waits for, where and
+       when the page always ran it, so a deck the address names is on
+       screen as soon as it ever was. A script inserted from here instead
+       ran only after whatever the page had queued by then (MathJax's
+       startup, the first layouts): a #/pres address showed its deck
+       1.2 s later at 4x CPU (2026-10-10, measured). From anywhere but
+       that inline script -- a callback, a later call -- document.write
+       would replace the whole page, so it loads as on first use. */
+    var written=false;
+    function now(gate){
+      if(state!=='waiting') return;
+      if(!gate||gate.src||document.currentScript!==gate
+         ||document.readyState!=='loading'){load();return;}
+      state='loading';written=true;
+      var src=String(ph.getAttribute('data-src')||'').replace(/[<>"&]/g,'');
+      document.write('<script src="'+src+'"><\/script>');
+    }
+    /* the document is parsed: the parser waited for a written editor, so
+       a boot that has not said it finished threw, or never came */
+    function parsed(){
+      if(written&&pending()) failed();
+    }
+    /* APP.deckBooted: the editor's boot has finished */
+    function booted(){
+      var was=state;
+      state='booted';
+      if(was!=='waiting'&&was!=='loading') return;
+      disarm();
+      /* written beside it (now()): the reference has done its work */
+      if(written&&ph&&ph.parentNode) ph.parentNode.removeChild(ph);
+      /* What waited goes in a task of its own: the editor's script and
+         boot are one long task already, and the deck a held click opens
+         was a second one chained on to it -- 1.4-2.2 s at 4x CPU as one
+         task, the page frozen throughout (2026-10-10, measured). */
+      setTimeout(function(){
+        /* an address that named a deck or Home, held for it (applyHash) */
+        if(typeof APP.tryRoute==='function') APP.tryRoute();
+        drain();
+        var d=held;held=null;
+        if(d&&d.isConnected) d.click();
+      },0);
+    }
+    /* fn() now if the editor is up (or is not coming); else once it is */
+    function then(fn){
+      if(!pending()){fn();return;}
+      queue.push(fn);load();
+    }
+    /* ...the same, without asking for it: for what only the editor
+       needs to know, whenever it comes (a figure copied for a slide) */
+    function later(fn){
+      if(!pending()){fn();return;}
+      queue.push(fn);
+    }
+    function door(e){
+      if(!pending()) return;
+      var t=e.target,d=t&&t.closest?t.closest(DOORS):null;
+      /* a real click somewhere else is the user moving on: the held one
+         is not made behind their back once the editor arrives */
+      if(!d){if(e.isTrusted) held=null;return;}
+      e.preventDefault();e.stopImmediatePropagation();
+      held=d;load();
+    }
+    /* AT IDLE: once the page has loaded AND then gone `quiet` ms without
+       a long task -- not while the notebook is still laying out or
+       typesetting its maths, which is what a reader is waiting on, and
+       not as one more long task stacked on the load. Where the browser
+       cannot report long tasks, a fixed while after load instead. */
+    function preload(quiet){
+      var last=0,obs=null;
+      try{
+        if(window.PerformanceObserver&&(PerformanceObserver.supportedEntryTypes
+            ||[]).indexOf('longtask')>=0){
+          obs=new PerformanceObserver(function(list){
+            list.getEntries().forEach(function(e){
+              last=Math.max(last,e.startTime+e.duration);});
+          });
+          obs.observe({type:'longtask'});
+        }
+      }catch(e){obs=null;}
+      /* ...and without the reader scrolling, typing or pressing: the
+         boot is one long task, and landed in the middle of a scroll it
+         was a frame of 120-170 ms at 4x CPU the page never used to drop
+         after its load (2026-10-10 review) */
+      var IN=['wheel','scroll','keydown','pointerdown','touchstart'];
+      function input(){last=Math.max(last,performance.now());}
+      IN.forEach(function(t){
+        document.addEventListener(t,input,{passive:true,capture:true});});
+      function done(){
+        if(obs) obs.disconnect();
+        IN.forEach(function(t){
+          document.removeEventListener(t,input,{passive:true,capture:true});});
+      }
+      var ric=window.requestIdleCallback||function(f){return setTimeout(f,50);};
+      function check(){
+        if(state!=='waiting'){done();return;}
+        var since=performance.now()-last;
+        if(since<quiet){setTimeout(check,quiet-since+50);return;}
+        done();
+        ric(load,{timeout:2000});
+      }
+      function loaded(){
+        last=Math.max(last,performance.now());
+        setTimeout(check,obs?quiet:2*quiet);
+      }
+      if(document.readyState==='complete') loaded();
+      else window.addEventListener('load',loaded,{once:true});
+    }
+    /* ...and sooner, when the pointer comes to rest on a door or the
+       keyboard lands on one: the click that follows then waits less, or
+       not at all. Only after the pointer has really moved -- one resting
+       where a door is drawn when the page arrives is not a choice. */
+    var moved=false,dwell=null;
+    function intent(e){
+      if(!pending()||(e.type==='pointerover'&&!moved)) return;
+      var t=e.target,d=t&&t.closest?t.closest(DOORS):null;
+      if(!d) return;
+      if(e.type!=='pointerover'){load();return;}
+      /* COMES TO REST: a pointer only passing over one -- every card's
+         head has a Collect, every figure a Plot trace -- is the reader
+         moving the mouse, and loading on it put the editor's boot back
+         into the load for anyone who did (2026-10-10 review) */
+      clearTimeout(dwell);
+      dwell=setTimeout(function(){
+        dwell=null;
+        if(pending()&&d.isConnected&&d.matches(':hover')) load();
+      },150);
+    }
+    /* is the editor on the page, or only named for later? Once: from the
+       gate right after its reference, or when the document has been
+       parsed; true when it waits */
+    function arm(){
+      if(ph||state!=='parsed') return !!ph&&pending();
+      ph=document.getElementById('jv-deck-src');
+      if(!ph) return false;
+      state='waiting';
+      window.addEventListener('click',door,true);
+      window.addEventListener('keydown',function(e){
+        if(held&&e.key==='Escape') held=null;},true);
+      window.addEventListener('pointermove',function(){moved=true;},
+        {capture:true,once:true,passive:true});
+      window.addEventListener('pointerover',intent,{capture:true,passive:true});
+      window.addEventListener('focusin',intent,true);
+      return true;
+    }
+    function disarm(){
+      window.removeEventListener('click',door,true);
+      window.removeEventListener('pointerover',intent,{capture:true,passive:true});
+      window.removeEventListener('focusin',intent,true);
+    }
+    APP.deckBooted=booted;
+    return {pending:pending,then:then,later:later,load:load,now:now,
+      parsed:parsed,preload:preload,arm:arm,
+      state:function(){return state;},DOORS:DOORS};
+  })();
+  /* the editor, now, for whatever drives it from outside (a test, the
+     speed harness): resolves once it has booted, or has failed to */
+  APP.deckLoad=function(){
+    jvDeck.load();
+    return new Promise(function(res){jvDeck.then(function(){res(true);});});
+  };
+  APP.deckDoors=jvDeck.DOORS;   /* checked against the editor's listeners */
+  /* What the editor has to be up for AT LOAD, or '' when nothing on
+     screen is its yet. `open` is how many notebooks the page opened on,
+     `hash` the address it was opened at, `decks` whether this tab still
+     has presentations open from before a reload (the editor keeps that
+     list in sessionStorage, 10-decks.js OPEN_PRES_KEY). */
+  function deckAtLoad(open,hash,decks){
+    hash=String(hash||'');
+    if(!open) return 'home';
+    if(/^#junoview-handoff/.test(hash)) return 'handoff';
+    var first=hash.replace(/^#\/?/,'').split('/')[0];
+    if(first==='pres'||first==='home') return 'route';
+    if(decks) return 'tabs';
+    return '';
+  }
+  function decksOpenInTab(){
+    try{
+      for(var i=0;i<sessionStorage.length;i++){
+        var k=sessionStorage.key(i);
+        if(!k||k.indexOf('sempres-open:')!==0) continue;
+        var v=JSON.parse(sessionStorage.getItem(k)||'[]');
+        if(Array.isArray(v)&&v.length) return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
   /* ================= MATHS: typeset as it is read =====================
      MathJax used to typeset the WHOLE document in one long task: at load
      (startup typeset over <body>, hidden notebooks and every hidden raw
@@ -367,7 +649,7 @@
        what is only near it goes a few at a time */
     function pump(nOnScreen){
       if(!soonQ.length) return;
-      if(!ready){if(!dead) ensure().then(function(){pump(-1);},noop);return;}
+      if(!ready){if(!dead) ensure().then(arrived,noop);return;}
       if(running) return;
       /* -1: MathJax has just arrived and the queue is whatever the
          observer saw meanwhile -- what is on screen NOW goes first */
@@ -396,6 +678,22 @@
         if(!soonOn){soonOn=true;
           setTimeout(function(){soonOn=false;pump(0);},0);}
       } else idleLater();
+    }
+    /* MathJax has just arrived: what is on screen goes in a task of its
+       own, not in the task MathJax arrived in. Its own startup runs
+       there (its script, then its page-ready on the window's load, which
+       fires in that same task when MathJax is the last thing the page
+       waited for), and with this pass chained on the three were one of
+       the longest tasks of a load -- 0.8-1.1 s at 4x CPU -- once the
+       slide editor stopped loading with the page and the load came that
+       much sooner (2026-10-10, load cost). Not the next animation frame
+       either: the pass and that frame's layout of the whole page were
+       then one task of 0.65-0.72 s. Equations already on screen were
+       painted unset before MathJax came, as they always were; a frame
+       between its arrival and this pass is a frame the page had before
+       too, when the pass waited for DOMContentLoaded. */
+    function arrived(){
+      setTimeout(function(){pump(-1);},0);
     }
     /* the rest, while nothing else is happening: the notebook you are
        looking at first, then the others. Hidden raw views wait to be
@@ -589,6 +887,10 @@
     var colOn=!!(act&&act.collection)&&!atHome;
     var welcoming=canOpen&&!deckOn&&!colOn&&(!APP.order.length||atHome);
     if(wel) wel.hidden=!welcoming;
+    /* Home lists the presentations, which are the editor's to know: Home
+       reached before it has loaded (the last notebook closed) brings it,
+       and its boot paints this again (jvDeck) */
+    if(welcoming) jvDeck.load();
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
        welcome screen itself. Hiding it lets the welcome own the window. */
@@ -846,7 +1148,10 @@
       e.preventDefault();
       /* T596: as tabs there is no side panel to find in -- the Open
          dialog is where "find the thing I am looking for" goes */
-      if(filesAt()==='top'&&APP.deckHub){APP.deckHub({find:true});return;}
+      if(filesAt()==='top'&&(APP.deckHub||jvDeck.pending())){
+        jvDeck.then(function(){if(APP.deckHub) APP.deckHub({find:true});});
+        return;
+      }
       f.focus();f.select();
     });
   })();
@@ -1053,13 +1358,21 @@
   APP.refreshOpenTabsRow=refreshOpenTabsRow;
   APP.keepTabInView=keepTabInView;
   APP.renderTabs=renderTabs;
+  /* the editor places the row itself before it hands the keyboard over
+     (setUIMode): the observer above runs only after that, and the row's
+     arrival hides the control the keyboard was given (#qat-name) */
+  APP.homeTabsRow=homeTabsRow;
+  /* T123: the deck's Update re-reads a notebook IN PLACE, under the
+     editor (APP.reloadTab) -- that is not a notebook brought forward */
+  var reloadUnderDeck=false;
   function activate(stem){
     if(!APP.shells[stem]) return;
     /* The shared rail stays live beside the full deck editor. A notebook
        click there means leave the editor for that notebook, rather than
        leaving two competing document surfaces on screen. Create mode is
        deliberately excluded: it still uses the notebook as a live source. */
-    if(document.body.classList.contains('slide-editing')&&APP.deckClose)
+    if(document.body.classList.contains('slide-editing')&&APP.deckClose
+       &&!reloadUnderDeck)
       APP.deckClose();
     /* looking at a notebook is not being at Home; opening one from the
        welcome has to take you off it */
@@ -1150,6 +1463,20 @@
     var parts=routeParse(hash);
     var open=APP.deckState&&APP.deckState();
     routeWaits=false;
+    /* a deck, or Home with its presentations, is the editor's to show:
+       one typed in before it has loaded waits for it, as a route to a
+       deck the draft store has not answered for waits (T494) -- and is
+       tried again by jvDeck once the editor has booted. Not from inside
+       the editor's own boot (its hooks are in place, deckOpen among
+       them, before it applies the address): that opens the deck there
+       and then, in the task the editor runs in, as it always did --
+       waiting for jvDeck's next task put it behind MathJax's startup, a
+       #/pres address's deck on screen 0.6-1.2 s later at 4x CPU. */
+    if((parts[0]==='home'||(parts[0]==='pres'&&parts[1]))
+       &&jvDeck.pending()&&!APP.deckOpen){
+      pendingRoute=hash;routeWaits=true;jvDeck.load();
+      return;
+    }
     if(!parts.length){
       /* the default view: Back has arrived at the entry stamped on load,
          so whatever opened since (a presentation, Home) goes away */
@@ -1209,12 +1536,18 @@
   /* T494: the deck fragment calls this once the draft store has answered */
   APP.tryRoute=tryRoute;
   APP.applyInitialRoute=function(){
-    routeReady=true;
-    var parts=routeParse(initialHash);
-    if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'||parts[0]==='home'))
-      pendingRoute=initialHash;
-    tryRoute();
-    if(!location.hash) updateHash();   /* stamp the default view */
+    /* ONCE. The editor's boot ends with this call; where the editor came
+       after the page (jvDeck) this file made it already, and the address
+       it applied then may have been left since -- applying it again
+       would take the reader back to where the page opened */
+    if(!routeReady){
+      routeReady=true;
+      var parts=routeParse(initialHash);
+      if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'||parts[0]==='home'))
+        pendingRoute=initialHash;
+      tryRoute();
+      if(!location.hash) updateHash();   /* stamp the default view */
+    }
     /* a welcome control clicked before the scripts had run (web build,
        see the welcome's wiring) that needed the deck file too */
     if(APP.afterBoot){var f=APP.afterBoot;APP.afterBoot=null;f();}
@@ -2867,6 +3200,63 @@
     if(rv){activateOutputs(rv);rv.dataset.mathWait='1';}
     return true;
   }
+  /* A COPY ANSWERS FOR ITS OWN IDS. The raw view's outputs are copies of
+     the cards' -- and copied with their ids, every id in them was on the
+     page twice: getElementById, a <label for>, an SVG's url(#clip) or
+     <use href="#glyph"> found the card's, hidden while Raw is shown (an
+     xarray section's label in the raw view folded the hidden card's
+     section, not the one clicked). So each id in the copy takes `suffix`
+     (letters, digits, - and _ only: it must stay a CSS name), and what
+     in the copy points at one of them -- an id-list attribute, a #href,
+     a url(#..) and a #id in its own <style> -- is pointed at the copy's.
+     Only the elements that can hold one are looked at (ID_REF_SEL: a
+     query, not a walk of every element -- an xarray repr is thousands),
+     and none at all in a copy without ids. Returns `root`. */
+  var ID_REFS={'for':1,'headers':1,'list':1,'form':1,'itemref':1,
+    'aria-labelledby':1,'aria-describedby':1,'aria-controls':1,
+    'aria-owns':1,'aria-activedescendant':1,'aria-flowto':1,
+    'aria-details':1,'aria-errormessage':1};
+  var ID_REF_SEL=Object.keys(ID_REFS).map(function(a){return '['+a+']';})
+    .concat(['[*|href]','style'],['style','fill','stroke','clip-path','mask',
+      'filter','marker-start','marker-mid','marker-end'].map(function(a){
+        return '['+a+'*="url("]';})).join(',');
+  function ownIds(root,suffix){
+    var els=$$('[id]',root),map=Object.create(null),any=false;
+    if(root.id) els.unshift(root);
+    els.forEach(function(el){
+      var id=el.getAttribute('id');
+      if(!id) return;
+      if(!(id in map)) map[id]=id+suffix;
+      el.setAttribute('id',map[id]);any=true;
+    });
+    if(!any) return root;
+    function urls(v){     /* url(#name), in a style or a paint attribute */
+      return v.replace(/url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/g,
+        function(m0,q,id){return map[id]?'url('+q+'#'+map[id]+q+')':m0;});
+    }
+    var refs=$$(ID_REF_SEL,root);
+    if(root.matches&&root.matches(ID_REF_SEL)) refs.unshift(root);
+    refs.forEach(function(el){
+      if(el.localName==='style'){   /* #name selectors, and url(#name) */
+        var css=el.textContent,nc=css.indexOf('#')<0?css:css.replace(
+          /#(-?[A-Za-z_][\w-]*)/g,function(m0,id){
+            return map[id]?'#'+map[id]:m0;});
+        if(nc!==css) el.textContent=nc;   /* a sheet re-parses when set */
+        return;
+      }
+      for(var i=0;i<el.attributes.length;i++){
+        var a=el.attributes[i],v=a.value,nv=v;
+        if(ID_REFS[a.name]) nv=v.split(/\s+/).map(function(t){
+          return map[t]||t;}).join(' ');
+        else if(/(^|:)href$/.test(a.name)){
+          if(v.charAt(0)==='#'&&map[v.slice(1)]) nv='#'+map[v.slice(1)];
+        }
+        else if(v.indexOf('url(')>=0) nv=urls(v);
+        if(nv!==v) a.value=nv;
+      }
+    });
+    return root;
+  }
   function populateRawView(shell){
     if(!shell) return;
     liveRawView(shell);
@@ -2885,7 +3275,7 @@
       var key=ph.dataset.jvout||'';
       /* scope to .content: tree-view/trace clones also carry the key */
       var src=(key&&content)?(byKey[key]||null):null;
-      if(src) ph.appendChild(src.cloneNode(true));
+      if(src) ph.appendChild(ownIds(src.cloneNode(true),'--raw-'+key));
       else{
         /* never silently nothing: say the mirror is missing */
         ph.classList.add('rawph-missing');
@@ -2912,6 +3302,7 @@
        stepped past them while the view was shut */
     if(on) jvMath.kick();
     renderRawBtn();renderViewBtns();
+    findAgain();   /* an open Find follows what is on screen */
   });
 
   /* ---- tree view: the analysis graph as a full, expandable view, plus a
@@ -3011,6 +3402,11 @@
         wd=$('#tree-width'),un=$('#tree-unhide');
     if(ex) ex.addEventListener('click',function(){
       var host=activeTreeHost(); if(!host) return;
+      /* the node filler is the tree's own (buildTree), handed over on
+         its host: called by name from out here it was not in scope, and
+         the first node threw "fillNode is not defined" -- left open and
+         empty, with every other node untouched */
+      var fill=host._fill; if(!fill) return;
       /* batch across frames — cloning every card at once janks a big
          notebook; yield between chunks, relayout once at the end */
       var els=$$('.tree-node',host).filter(function(el){
@@ -3019,7 +3415,7 @@
       var i=0,BATCH=6;
       (function step(){
         for(var end=Math.min(i+BATCH,els.length);i<end;i++){
-          els[i].classList.add('expanded');fillNode(els[i]);
+          els[i].classList.add('expanded');fill(els[i]);
           /* "Expand all" means SHOW THE CODE, not merely open the node:
              a card clone arrives with its code folded behind a "Show
              code" toggle, so expanding left you looking at a title and a
@@ -3077,6 +3473,7 @@
     if(on){ sh.el.classList.remove('raw'); buildTree(sh); }
     renderRawBtn();renderViewBtns();
     if(on) relayoutActiveTree();
+    findFollow();   /* Raw left for the Tree */
   }
   if(treeBtn) treeBtn.addEventListener('click',toggleTree);
 
@@ -3308,6 +3705,7 @@
       mdClampScan(clone);
       jvMath.typeset(body);
     }
+    host._fill=fillNode;   /* for the ribbon's Expand all */
     function updateHiddenNote(){
       var n=$$('.tree-node.tn-off',host).length;
       hnote.classList.toggle('show',n>0);
@@ -4090,6 +4488,7 @@
      looking rather than by turning filters off and trying again. */
   var FIND_SKIP={SCRIPT:1,STYLE:1,SVG:1,CANVAS:1,TEXTAREA:1,INPUT:1};
   var findHits=[],findAt=-1,findTerm='',findOpened=[];
+  var findRoot=null;   /* what findRun last searched (findFollow) */
   /* ---- T245: PUT BACK EXACTLY WHAT FIND OPENED ------------------------
      findGo un-hides the card a hit is in and forces it expanded, which is
      the whole point of finding inside folded content; before this, only
@@ -4114,6 +4513,8 @@
      no copy of a mark: every clear leaves none anywhere, and only
      findMark and findGo, which record what they do, make more. */
   var findOpenedParts=[];
+  /* ...and the long notes it opened past their clamp (findGo) */
+  var findOpenedNotes=[];
   function findSweep(unwrap,marks){
     [].forEach.call(document.querySelectorAll(
       'mark.jv-doc,.jv-hitcard,.jv-hitopen'),function(n){
@@ -4131,6 +4532,8 @@
     findOpened=[];
     findOpenedParts.forEach(function(n){n.classList.remove('jv-hitopen');});
     findOpenedParts=[];
+    findOpenedNotes.forEach(function(bd){mdSetOpen(bd,false);});
+    findOpenedNotes=[];
   }
   /* T246: ONLY THE DOCUMENT'S OWN MARKS. The Variables filter paints its
      matched letters with the same mark.jv-hit look, and this used to
@@ -4151,7 +4554,7 @@
     findRestore();
     /* ...and any copy of one, wherever a copied card took it */
     if(marked) findSweep(unwrap,marks);
-    findHits=[];findAt=-1;
+    findHits=[];findAt=-1;findRoot=null;
     /* maths the marks held back can be typeset again */
     if(marks.length) jvMath.kick();
   }
@@ -4222,6 +4625,19 @@
         +'.pt-fold',card).forEach(function(n){
           if(!n.classList.contains('jv-hitopen')) findOpenedParts.push(n);
           n.classList.add('jv-hitopen');});
+      /* A LONG NOTE IS HELD TO ITS FIRST SCREEN (mdClamp), and a hit
+         further down was out of sight: scrolled to inside the clamp,
+         which then stayed scrolled with nothing to scroll it back -- or,
+         a note not yet measured, not shown at all. It is opened, as its
+         Show more would open it, and closed again with the rest */
+      var bd=card.dataset.note==='1'?m.closest('.cardbody'):null;
+      if(bd&&bd.parentNode===card){
+        if(!bd.dataset.mdclamp) mdClamp([bd]);   /* decided now */
+        if(bd.classList.contains('mdclamp')
+           &&!bd.classList.contains('mdopen')){
+          findOpenedNotes.push(bd);mdSetOpen(bd,true);
+        }
+      }
     }
     m.scrollIntoView({block:'center',behavior:'smooth'});
     var nEl=$('#docfind-n');
@@ -4235,9 +4651,17 @@
       if(nEl) nEl.textContent=findTerm?'keep typing':'';
       return;
     }
-    var sh=document.querySelector('.nbshell:not([hidden]) .content')
+    /* WHAT IS ON SCREEN: with Raw shown the formatted feed is hidden,
+       and searching it counted matches no one could see and stepped to
+       marks with no place on the page. The raw view is what is read
+       then, so it is what is searched */
+    var shown=document.querySelector('.nbshell:not([hidden])');
+    var sh=(shown&&shown.classList.contains('raw')
+        &&shown.querySelector('.rawview'))
+      ||document.querySelector('.nbshell:not([hidden]) .content')
       ||document.querySelector('.nbshell .content');
     if(!sh){if(nEl) nEl.textContent='no notebook';return;}
+    findRoot=sh;
     /* THE MATHS FIRST. It is typeset as you read now, not all at load,
        so a card further down can still hold raw $..$ -- and a <mark>
        wrapped round words inside that would split it so it never
@@ -4258,6 +4682,25 @@
       ?('0 / '+findHits.length):'nothing found';
     if(findHits.length){findAt=-1;findGo(1);}
   }
+  /* the term again, over what is on screen now: another notebook (T247),
+     or the same one turned to Raw or back while the bar is open */
+  function findAgain(){
+    var bar=$('#docfind'),inp=$('#docfind-in');
+    if(!bar||bar.hidden) return;
+    findRun(((inp&&inp.value)||'').trim());
+  }
+  /* ...when what was searched is no longer what is shown. Raw is left
+     by more than its own button -- the Tree button, an outline or a
+     Variables link drop it too -- and Find stayed in the hidden raw
+     view: its count and Next described marks no one could see */
+  function findFollow(){
+    var r=findRoot; if(!r) return;
+    var sh=r.closest&&r.closest('.nbshell');
+    var raw=!!(sh&&sh.classList.contains('raw')
+      &&sh.querySelector('.rawview'));
+    if(!r.isConnected||!sh||sh.hidden
+       ||raw!==r.classList.contains('rawview')) findAgain();
+  }
   function findOpen(on){
     var bar=$('#docfind'); if(!bar) return;
     bar.hidden=!on;
@@ -4269,7 +4712,16 @@
     } else {
       /* findClear -> findRestore already puts back every flag find set,
          .jv-hitopen included */
+      /* ...a long note it opened included: one being read when the bar
+         closes takes the page below it up with it as it folds, and the
+         reader was left wherever that landed. They are left at the note
+         instead, its Show more on screen */
+      var on=$('mark.jv-doc.on'),bd=on&&on.closest('.cardbody');
+      var r=bd&&findOpenedNotes.indexOf(bd)>=0?bd.getBoundingClientRect():null;
       findClear();
+      var more=r&&r.bottom>0&&r.top<window.innerHeight
+        &&bd.parentNode.querySelector(':scope > .mdmore');
+      if(more) more.scrollIntoView({block:'center',behavior:'instant'});
     }
   }
   (function(){
@@ -4304,11 +4756,7 @@
        walked matches in the now-hidden shell and the count described a
        document you could not see. Re-run the term against the new one
        (findRun clears the old shell's marks first, wherever they are). */
-    document.addEventListener('sem:activate',function(){
-      var bar=$('#docfind');
-      if(!bar||bar.hidden) return;
-      findRun(((inp&&inp.value)||'').trim());
-    });
+    document.addEventListener('sem:activate',findAgain);
     document.addEventListener('keydown',function(e){
       if(!(e.ctrlKey||e.metaKey)||e.key!=='f') return;
       /* the deck editor has its own Find and owns the window while
@@ -5255,11 +5703,16 @@
       btn.textContent='Show more';
       btn.title='This note is long — expand it to full length';
       btn.addEventListener('click',function(){
-        var open=bd.classList.toggle('mdopen');
-        btn.textContent=open?'Show less':'Show more';
+        mdSetOpen(bd,!bd.classList.contains('mdopen'));
       });
       bd.parentNode.insertBefore(btn,bd.nextSibling);
     });
+  }
+  /* a clamped note opened or closed -- by its button, or by Find */
+  function mdSetOpen(bd,open){
+    bd.classList.toggle('mdopen',open);
+    var btn=bd.parentNode&&bd.parentNode.querySelector(':scope > .mdmore');
+    if(btn) btn.textContent=open?'Show less':'Show more';
   }
   function mdClampScan(shell){
     mdClamp($$('.card[data-note="1"] .cardbody',shell));
@@ -5331,13 +5784,19 @@
       :/^Open a notebook first/.test(msg)?'Open a notebook first'
       :/^Paste an http/.test(msg)?'That is not a link'
       :'Junoview';
-    if(typeof window.SemAskTell==='function')
-      window.SemAskTell({title:title,what:msg});
-    else docToast(msg,null,null,9000);
+    /* the dialog is the editor's: before it has loaded (jvDeck) the
+       message waits for it rather than falling back to a toast */
+    jvDeck.then(function(){
+      if(typeof window.SemAskTell==='function')
+        window.SemAskTell({title:title,what:msg});
+      else docToast(msg,null,null,9000);
+    });
   }
   function jvAsk(o,cb){
-    if(typeof window.SemAsk==='function') window.SemAsk(o,cb);
-    else cb(null);
+    jvDeck.then(function(){
+      if(typeof window.SemAsk==='function') window.SemAsk(o,cb);
+      else cb(null);
+    });
   }
   function docToast(text,url,label,ms){
     var t=$('#doc-toast'); if(!t) return;
@@ -5702,12 +6161,13 @@
      drawn now (Create slides measuring them, printing) asks plotFlush. */
   var plotQ=[],plotPumpOn=false,plotIO=null;
   function plotQueue(divs){
+    /* watched until drawn (plotPump lets go), not only until first seen:
+       a figure found not shown (plotNext) is drawn when it is seen again */
     if(!plotIO&&'IntersectionObserver' in window)
       plotIO=new IntersectionObserver(function(es){
         var any=false;
         es.forEach(function(e){
           if(!e.isIntersecting) return;
-          plotIO.unobserve(e.target);
           if(e.target.__jvPlotQ){e.target.__jvPlotQ=2;any=true;}
         });
         if(any) plotPump();
@@ -5720,20 +6180,30 @@
     ensurePlotly(plotPump);
   }
   function plotNext(){
-    var i,k=-1;
-    for(i=0;i<plotQ.length;i++){
-      if(!plotQ[i].__jvPlotQ||!plotQ[i].isConnected){
-        if(plotIO) plotIO.unobserve(plotQ[i]);
-        plotQ[i].__jvPlotQ=0;plotQ.splice(i,1);i--;continue;}
-      /* its notebook (or that notebook's document view) is not on screen:
-         a plot drawn into display:none has no width and keeps the wrong
-         one, so it waits for its turn (renderViewBtns resumes the pump) */
-      if(plotOffScreen(plotQ[i])) continue;
-      if(plotQ[i].__jvPlotQ===2){k=i;break;}   /* near the screen */
-      if(k<0) k=i;
+    for(;;){
+      var i,k=-1;
+      for(i=0;i<plotQ.length;i++){
+        if(!plotQ[i].__jvPlotQ||!plotQ[i].isConnected){
+          if(plotIO) plotIO.unobserve(plotQ[i]);
+          plotQ[i].__jvPlotQ=0;plotQ.splice(i,1);i--;continue;}
+        /* its notebook (or that notebook's document view) is not on
+           screen: a plot drawn into display:none has no width and keeps
+           the wrong one, so it waits for its turn (renderViewBtns resumes
+           the pump) -- as does one already found not shown (3) */
+        if(plotQ[i].__jvPlotQ===3||plotOffScreen(plotQ[i])) continue;
+        if(plotQ[i].__jvPlotQ===2){k=i;break;}   /* near the screen */
+        if(k<0) k=i;
+      }
+      if(k<0) return null;
+      /* ...and on screen, the one chosen may still not be SHOWN: in a
+         collapsed section, say. Drawn there it took Plotly's default
+         700px and kept it when the section opened. It waits to be seen
+         (plotIO marks it near again); asked of the chosen one alone, so
+         a pump step still lays the page out at most once */
+      if(plotIO&&!plotQ[k].getClientRects().length){
+        plotQ[k].__jvPlotQ=3;continue;}
+      return plotQ.splice(k,1)[0];
     }
-    if(k<0) return null;
-    return plotQ.splice(k,1)[0];
   }
   function plotOffScreen(div){
     var sh=div.closest&&div.closest('.nbshell');
@@ -7453,8 +7923,11 @@
     document.addEventListener('copy',onCopy,true);
     try{document.execCommand('copy');}catch(err){}
     document.removeEventListener('copy',onCopy,true);
-    if(typeof window.SemDeckCellCopied==='function')
-      window.SemDeckCellCopied(p.meta);
+    /* the editor's paste needs to know; told whenever it comes (jvDeck) */
+    jvDeck.later(function(){
+      if(typeof window.SemDeckCellCopied==='function')
+        window.SemDeckCellCopied(p.meta);
+    });
     if(done){
       docToast('Copied “'+p.meta.title+'” — paste it on a '
         +'slide for the figure; anywhere else it is the link and its code',
@@ -8092,6 +8565,10 @@
         +'sections.');
       return;
     }
+    if(!APP.deckAuto&&jvDeck.pending()){
+      jvDeck.then(function(){autoSlidesFrom(stem,scope,sid,animations);});
+      return;
+    }
     if(!APP.deckAuto){
       jvTell('The presentation editor has not loaded yet \u2014 try again '
         +'in a moment.');
@@ -8161,6 +8638,9 @@
     if(b) b.setAttribute('aria-expanded','true');
     setTimeout(function(){
       var focus=$('#auto-slides-create');if(focus) focus.focus();},0);
+    /* the slides are the editor's to make: fetch it while the choices
+       are read, so Create does not wait for it (jvDeck) */
+    jvDeck.load();
   }
   (function(){
     var d=$('#auto-slides-dialog');
@@ -8332,7 +8812,7 @@
         e.preventDefault();
         if(shell.classList.contains('raw')||shell.classList.contains('tree')){
           shell.classList.remove('raw');shell.classList.remove('tree');
-          renderRawBtn();renderViewBtns();
+          renderRawBtn();renderViewBtns();findFollow();
         }
         var id=(a.getAttribute('href')||'').slice(1);
         var el=id?$('[id="'+id+'"]',shell):null;
@@ -8429,7 +8909,7 @@
           e.preventDefault();
           if(shell.classList.contains('raw')||shell.classList.contains('tree')){
             shell.classList.remove('raw');shell.classList.remove('tree');
-            renderRawBtn();renderViewBtns();
+            renderRawBtn();renderViewBtns();findFollow();
           }
           var id=(a.getAttribute('href')||'').slice(1);
           if(id.indexOf('card-')===0) gotoItem(id.slice(5));
@@ -9238,6 +9718,64 @@
       ensureStyBtns();applyViewStyle();
     });
   })();
+  /* WHERE YOU WERE READING, kept by the card, not by the pixel. A fresh
+     shell's cards are laid out lazily (content-visibility, 300px each
+     until seen), so the same scrollY lands on another card: a Reload
+     read half-way down the example put the card you were on most of a
+     screen lower. The first card of the feed on screen and how far down
+     it sat are taken from the outgoing shell; anchors survive a
+     re-parse (and an anchor a notebook repeats is told apart by which
+     of its cards it was, n). A shell showing Raw or Tree, or not shown,
+     has no card on screen, and its scrollY is all there is. */
+  function readingAt(el){
+    if(!el||el.hidden) return null;
+    var cards=$$('.content .card[data-anchor]',el);
+    for(var i=0;i<cards.length;i++){
+      var r=cards[i].getBoundingClientRect();
+      if(r.bottom>0&&cards[i].getClientRects().length){
+        var a=cards[i].dataset.anchor,n=0;
+        for(var j=0;j<i;j++) if(cards[j].dataset.anchor===a) n++;
+        return {anchor:a,n:n,top:r.top};
+      }
+    }
+    return null;
+  }
+  /* ...and put back: that card where it sat, every frame for a second
+     -- the cards around it are laid out for the first time as they come
+     on screen, and their maths typeset, each moving it -- unless you
+     take the page meanwhile (a wheel, a key, a press, a touch) */
+  function readingBack(shell,at,y){
+    /* the anchor compared, not put in a selector: a lenient read keeps
+       a cell id as it is, and one holding a newline made the selector
+       invalid -- the Reload then threw and said "Open failed" */
+    var cs=at?$$('.content .card[data-anchor]',shell).filter(function(x){
+      return x.dataset.anchor===at.anchor;}):[];
+    var c=cs[at&&at.n]||cs[0]||null;
+    if(!c||!c.getClientRects().length){
+      if(y){
+        window.scrollTo(0,y);
+        /* once more after images/math settle the layout */
+        setTimeout(function(){window.scrollTo(0,y);},150);
+      }
+      return;
+    }
+    var t0=Date.now(),mine=true,EVS=['wheel','keydown','mousedown',
+      'touchstart'],OPT={capture:true,passive:true};
+    function yours(){mine=false;}
+    EVS.forEach(function(t){window.addEventListener(t,yours,OPT);});
+    (function step(){
+      if(!mine||!c.isConnected||!c.getClientRects().length
+         ||Date.now()-t0>1000){
+        EVS.forEach(function(t){window.removeEventListener(t,yours,OPT);});
+        return;
+      }
+      /* instant: the page scrolls smoothly (core.css), and a glide
+         restarted every frame lands short of the card */
+      var d=c.getBoundingClientRect().top-at.top;
+      if(Math.abs(d)>=1) window.scrollBy({top:d,behavior:'instant'});
+      requestAnimationFrame(step);
+    })();
+  }
   function mountShellHTML(htmlStr,path,quiet){
     var host=$('#docs');
     var tmp=document.createElement('div');
@@ -9248,6 +9786,7 @@
     var stem=shell.dataset.nb;
     var old=APP.shells[stem];
     var keep=(old&&old.el)?captureViewState(old.el):null;
+    var at=keep?readingAt(old.el):null;
     /* a reload replaces the notebook's cards — its Plot-trace tabs now hold
        stale clones, so close them (a fresh trace re-clones the new cards) */
     if(old) APP.traces.slice().forEach(function(k){
@@ -9267,11 +9806,7 @@
        document — it must not turn up in Recent as a separate file */
     if(path&&!quiet&&APP.noteRecent) APP.noteRecent(path);
     activate(stem);
-    if(keep&&keep.scroll){
-      window.scrollTo(0,keep.scroll);
-      /* once more after images/math settle the layout */
-      setTimeout(function(){window.scrollTo(0,keep.scroll);},150);
-    }
+    if(keep&&(at||keep.scroll)) readingBack(shell,at,keep.scroll);
     /* no whole-shell typeset here any more: initShell handed the new
        shell to jvMath, which sets what is on screen before the next
        paint and the rest at idle (critic #2: this one call was 0.7-1.6 s
@@ -9489,14 +10024,16 @@
   /* hand text to the deck importer (deck.js) — the same importer behind
      "+ New… → Open a .junoview file…", so every road in behaves alike */
   function importDeckTextSafe(txt,label){
-    try{
-      if(window.SemDeckImport) window.SemDeckImport(txt,false);
-      else jvTell('The presentation editor has not loaded yet — '
-        +'try again in a moment.');
-    }catch(e){
-      jvTell('Could not open '+(label||'that file')+': '
-        +((e&&e.message)||e));
-    }
+    jvDeck.then(function(){   /* the importer is the editor (jvDeck) */
+      try{
+        if(window.SemDeckImport) window.SemDeckImport(txt,false);
+        else jvTell('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+      }catch(e){
+        jvTell('Could not open '+(label||'that file')+': '
+          +((e&&e.message)||e));
+      }
+    });
     hideDlg();
   }
   function fetchDeckUrl(url){
@@ -9529,9 +10066,11 @@
       setDlgBusy(false);hideDlg();
       var nm=decodeURIComponent(
         url.split('?')[0].split('/').pop()||'deck.pptx');
-      if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
-      else jvTell('The presentation editor has not loaded yet — '
-        +'try again in a moment.');
+      jvDeck.then(function(){
+        if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
+        else jvTell('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+      });
     }).catch(function(e){
       setDlgBusy(false);
       jvTell('Could not fetch '+url+'\n'+((e&&e.message)||e));
@@ -9588,13 +10127,17 @@
     if(isPptxPath(path)){
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
       if(APP.mode!=='app') return;
-      if(!APP.deckImportPptxPath){
+      if(!APP.deckImportPptxPath&&!jvDeck.pending()){
         jvTell('The presentation editor has not loaded yet — '
           +'try again in a moment.');
         return;
       }
       hideDlg();
-      APP.deckImportPptxPath(path);
+      jvDeck.then(function(){
+        if(APP.deckImportPptxPath) APP.deckImportPptxPath(path);
+        else jvTell('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+      });
       return;
     }
     /* saved presentations open from the SAME places notebooks do — the
@@ -9683,9 +10226,25 @@
     if(/^https?:/i.test(path)) return decline('url');
     return openShell({path:path,stem:stem},sh?stem:'').then(function(j){
       /* unchanged: the disk WAS re-read -- it gave back the version
-         this tab already shows, so there is nothing to remount */
-      if(j.unchanged) activate(stem);
-      else mountShellHTML(j.shell,j.path||path,true);
+         this tab already shows, so there is nothing to remount.
+         Either way the editor that asked stays up: activate() leaves it
+         for a notebook clicked in the rail (f3ad31f), and Update figures
+         closed the editor on every press since (T123 is "the deck never
+         closing") */
+      /* ...and so does what is under it: leaving the editor goes back to
+         the notebook (or Home) it was opened from, not to whichever
+         source was re-read last -- activate() takes you off Home */
+      var under=document.body.classList.contains('slide-editing'),
+          back=APP.active,home=atHome;
+      reloadUnderDeck=true;
+      try{
+        if(j.unchanged) activate(stem);
+        else mountShellHTML(j.shell,j.path||path,true);
+        if(under){
+          if(back&&back!==APP.active&&APP.shells[back]) activate(back);
+          atHome=home;
+        }
+      }finally{reloadUnderDeck=false;}
       return {stem:stem,ok:true,reason:'reread',msg:'',
         unchanged:!!j.unchanged};
     }).catch(function(e){
@@ -9812,7 +10371,7 @@
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
       } else if(isPptxPath(f.name)){
         /* T320: the same importer the drop and the launcher reach */
-        if(APP.deckImportPptx) APP.deckImportPptx(f);
+        jvDeck.then(function(){if(APP.deckImportPptx) APP.deckImportPptx(f);});
         hideDlg();
       } else if(BIN_RE.test(f.name)){
         fileB64(f).then(function(b){webParseB64(f.name,b);});
@@ -10585,9 +11144,11 @@
       /* T320: a .pptx presentation dropped anywhere imports, either mode */
       files.filter(function(f){return isPptxPath(f.name);})
         .forEach(function(f){
-          if(APP.deckImportPptx) APP.deckImportPptx(f);
-          else jvTell('The presentation editor has not loaded yet — '
-            +'try again in a moment.');
+          jvDeck.then(function(){   /* the importer is the editor's */
+            if(APP.deckImportPptx) APP.deckImportPptx(f);
+            else jvTell('The presentation editor has not loaded yet — '
+              +'try again in a moment.');
+          });
         });
       /* a dropped saved presentation imports, in either mode */
       /* T597: AND STAYS ITS FILE'S. Where the browser hands a drop over
@@ -10598,7 +11159,10 @@
          later. Anywhere else it imports as it did. */
       var deckFiles=files.filter(function(f){return isDeckPath(f.name);});
       var hs=[];
-      if(deckFiles.length&&APP.deckOpenHandles)
+      /* asked for now, inside the event, even when the editor that
+         opens them is still to load (jvDeck): they cannot be asked for
+         later, and without them the deck would open as a copy */
+      if(deckFiles.length&&(APP.deckOpenHandles||jvDeck.pending()))
         Array.prototype.slice.call((e.dataTransfer||{}).items||[])
           .forEach(function(it){
             if(it.kind!=='file'||!it.getAsFileSystemHandle) return;
@@ -10615,8 +11179,11 @@
       if(hs.length&&hs.length===deckFiles.length){
         Promise.all(hs).then(function(got){
           got=got.filter(function(h){return h&&h.kind==='file';});
-          if(got.length===deckFiles.length) APP.deckOpenHandles(got);
-          else deckPlain();
+          if(got.length!==deckFiles.length){deckPlain();return;}
+          jvDeck.then(function(){
+            if(APP.deckOpenHandles) APP.deckOpenHandles(got);
+            else deckPlain();
+          });
         }).catch(deckPlain);
       } else deckPlain();
       /* SRC_RE, not /\.ipynb$/ (T100). This handler filtered to
@@ -10783,4 +11350,39 @@
   else renderTabs();
   renderRawBtn();
   plotWarmLater();   /* a notebook not shown yet has Plotly figures */
+  /* THE SLIDE EDITOR (jvDeck, above): now, if what is on screen is its;
+     otherwise this page is a notebook being read, and the editor comes
+     on first use or at idle. Until then this file does the two things
+     its boot did that show: the address is stamped (applyInitialRoute,
+     which the editor's boot calls again as a no-op), and the side list
+     says "nothing open" under Presentations, as the editor's own
+     renderPresTabs does when no deck is open -- the same element, so the
+     list does not move when the editor redraws it. Decided by the gate,
+     the inline script the page puts right after the reference to the
+     editor (render/static.py deferred_link): the moment, and the place,
+     the editor's own boot used to run. Once the document is parsed if
+     no gate ran. */
+  var deckDecided=false;
+  function deckDecide(gate){
+    if(deckDecided) return;
+    deckDecided=true;
+    if(!jvDeck.arm()) return;
+    if(deckAtLoad(APP.order.length,location.hash,decksOpenInTab())){
+      jvDeck.now(gate);
+      return;
+    }
+    var prs=$('#presstrip');
+    if(prs&&!prs.firstChild){
+      var none=document.createElement('div');
+      none.className='pr-none';none.textContent='nothing open';
+      prs.appendChild(none);
+    }
+    APP.applyInitialRoute();
+    jvDeck.preload(1500);   /* 1.5 s without a long task */
+  }
+  APP.deckGate=function(){deckDecide(document.currentScript);};
+  function deckParsed(){deckDecide(null);jvDeck.parsed();}
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',deckParsed,{once:true});
+  else deckParsed();
 })();
