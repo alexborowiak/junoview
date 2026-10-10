@@ -28,7 +28,7 @@ from junoview import assets
 from junoview.branding import icons, icons_js
 from junoview.render import static
 from junoview.render.page import render_page
-from junoview.render.static import static_file, static_files
+from junoview.render.static import DEFERRED, static_file, static_files
 
 NAME = re.compile(r"(core|app|deck|icons|pptx)\.([0-9a-f]{16})\.(css|js)")
 
@@ -166,7 +166,14 @@ def test_the_app_serves_each_file_forever_cacheable_and_nothing_else(server):
     assert status == 200 and headers["Cache-Control"] == "no-store"
     text = page.decode("utf-8")
     for f in static_files():
-        assert f.link("/static/") in text
+        # the slide editor is named but not run at load (app.js jvDeck,
+        # tests/test_the_editor_loads_on_first_use.py); it is served the
+        # same way when it is asked for
+        if f.field in DEFERRED:
+            assert f.deferred_link("/static/") in text
+            assert f.link("/static/") not in text
+        else:
+            assert f.link("/static/") in text
         # no token: public code, the same bytes for every session
         status, headers, body = _get(f"{base}/static/{f.name}")
         assert status == 200 and body == f.data

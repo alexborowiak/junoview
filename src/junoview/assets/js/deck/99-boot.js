@@ -153,7 +153,13 @@
       function(){embFetch();},{timeout:2000});
   handoffBoot();              /* a saved file's Open in Junoview (T597) --
                                  before the route, whose hash it clears */
-  /* both IIFEs + their route hooks are now wired — restore the URL's view */
+  /* both IIFEs + their route hooks are now wired — restore the URL's view
+     (a no-op where this file came after the page: app.js applied it) */
   if(window.SemApp&&window.SemApp.applyInitialRoute)
     window.SemApp.applyInitialRoute();
+  /* LAST: the editor is up. In the local app this file may arrive well
+     after the page (app.js jvDeck: on first use, or at idle), and what
+     waited for it -- a held click, an address, a message for its dialog
+     -- goes now. Every hook it exports is in place by this line. */
+  if(window.SemApp&&window.SemApp.deckBooted) window.SemApp.deckBooted();
 })();

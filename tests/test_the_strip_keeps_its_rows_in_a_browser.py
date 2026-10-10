@@ -176,6 +176,9 @@ def test_a_kept_strip_is_the_strip_built_from_nothing(tmp_path):
             pg.on("pageerror", lambda e: errs.append(str(e)))
             pg.goto(url, wait_until="load")
             pg.wait_for_selector(".nbshell .card")
+            # the app loads the editor on first use (app.js jvDeck); this
+            # drives its API, so it asks for it first
+            pg.evaluate("window.SemApp.deckLoad()")
             stem = pg.evaluate("window.SemApp.active")
             cards = pg.evaluate(
                 "[...document.querySelectorAll('.nbshell .card[data-anchor]')]"

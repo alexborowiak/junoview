@@ -32,7 +32,9 @@ def test_home_over_open_notebooks_is_a_view_of_its_own(out):
 
 def test_back_to_the_first_entry_closes_what_opened_since(out):
     start = out.index("  function applyHash(hash){")
-    body = out[start:start + 700]
+    # (a deck or Home typed in before the editor has loaded waits for it
+    # first: app.js jvDeck)
+    body = out[start:start + 1400]
     assert "    if(!parts.length){" in body
     assert "      if(open&&APP.deckClose) APP.deckClose();" in body
     assert "      if(atHome&&APP.order.length) goHome(false);" in body

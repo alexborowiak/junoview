@@ -2465,8 +2465,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Then its review: one undo of the box's own, a display formula one
 # paragraph, a copy a line a paragraph, numbers written only where
 # counting on needs them, the strip's lines read when idle.
-EXPECTED_MD5 = "7e5b66162dac47ab07679cab93a822d3"
-EXPECTED_BYTES = 5659400
+# Load: the page names deck.js instead of carrying it; app.js loads
+# the editor when the screen needs it, on first use, or when the
+# reader has been idle for 1.5 s.
+EXPECTED_MD5 = "48b411353340f3f40ce224020ae85829"
+EXPECTED_BYTES = 5678973
 
 
 def _render_example() -> str:

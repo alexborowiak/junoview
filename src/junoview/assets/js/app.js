@@ -51,6 +51,288 @@
   }
   APP.api=api;
 
+  /* ================= THE SLIDE EDITOR, WHEN IT IS NEEDED ==============
+     (2026-10-10, load cost.) deck.js is 3.3 MB of one IIFE, and every
+     page used to fetch, compile and boot all of it before it answered a
+     click -- even a launch that only ever reads a notebook. At 4x CPU
+     that was 0.4-0.6 s of a 3.2 s load on the example notebook (the
+     page with no editor script at all was ready that much sooner), and
+     its boot was one task of 160-280 ms on top of the compile.
+
+     So the LOCAL APP's page names it without running it: the server
+     sends an inert text/plain script element, #jv-deck-src, in its place,
+     and right after it a one-line inline gate that calls APP.deckGate
+     (render/static.py, deferred_link). The editor's script then comes in
+     one of three ways:
+       AT ONCE, when what is on screen at load is the editor's: nothing
+         open (Home lists the presentations), a #/pres or #/home address,
+         a saved file handing over its deck, or decks this tab still has
+         open after a reload (their tabs are the editor's) -- deckAtLoad.
+         The gate writes the script into the page right there, so the
+         parser runs it where and when it always did (jvDeck.now);
+       ON FIRST USE: a click on any control the editor answers (DOORS,
+         below) is held, the editor loaded, and the click made again once
+         it has booted -- never a dead button, only a later one; every
+         other way in from the notebook side (Ctrl+K, an address typed in,
+         a dropped deck or .pptx, a question or a message in its dialog)
+         waits for it the same way, through then(). The pointer coming to
+         rest on a door, or the keyboard landing on one, starts the load
+         early, so the click that follows waits less or not at all;
+       AT IDLE, once the loaded page has gone 1.5 s without a long task
+         (its layout and its maths done), so that in the usual case the
+         editor is there before anything asks -- and its boot is not one
+         more long task stacked on the load.
+     The last two put a real script in the reference's place -- the same
+     place, so the document is the one it always was.
+     Everywhere else -- a single-file export, the web build -- deck.js is
+     on the page as before, runs right after this file, and every call
+     here simply runs at once. The editor's own boot tells this when it
+     has finished (APP.deckBooted, the last line of 99-boot.js). */
+  var jvDeck=(function(){
+    /* the reference comes after this file in the page, so it is looked
+       for when the gate right after it runs (APP.deckGate), or once the
+       document is parsed */
+    var ph=null;
+    /* waiting | loading | booted | failed; 'parsed' where deck.js is on
+       the page itself and nothing waits for it -- which is also what
+       this says until arm() has looked */
+    var state='parsed';
+    var queue=[],held=null;
+    /* WHAT A CLICK CANNOT DO WITHOUT THE EDITOR: everything the editor
+       wires outside its own markup (its listeners, every one of them
+       checked against this list by
+       tests/test_the_editor_loads_on_first_use_in_a_browser.py), its own
+       markup whole, and the notebook-side
+       controls whose answer is the editor's -- Home lists its
+       presentations, Create slides hands it the plan, Collect files a
+       cell into one of its collections, a figure's Plot trace asks it for
+       the cells that build the plot (window.SemTrace, whose lineage is
+       the editor's). The File menu's own rows (Open a
+       notebook, Theme, How to use, Support) are not here: they are this
+       file's, and the File menu that shows them is a door itself. */
+    var DOORS='#deck,#matchbar,#pickbar,#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,'
+      +'#ss-dlg,#ms-dlg,#ts-dlg,#nt-dlg,#dgm-dlg,#find-pop,#color-pop,'
+      +'#presentation-hub,#app-file,#app-file-menu .dc-mi[data-for],'
+      +'#ot-open,#ab-collect,.cell-collect,.plot-trace-btn,#ot-home,'
+      +'#presrail-home,'
+      +'#presstrip,#pr-recent,#pr-library,#pr-newbtn,#pr-newmenu,'
+      +'#pr-newcol,#pr-newview,#pr-new,#pr-newpost,#pr-newfold,#sb-done,'
+      +'#deckfile,#pptxfile,#welcome-pres,#welcome-new,'
+      +'#welcome-presentations,#welcome-folder,#auto-slides-create,'
+      +'.top-pres-tab';
+    function pending(){return state==='waiting'||state==='loading';}
+    function drain(){
+      var q=queue;queue=[];
+      q.forEach(function(fn){
+        try{fn();}catch(e){if(window.console) console.error(e);}
+      });
+    }
+    function load(){
+      if(state!=='waiting') return;
+      state='loading';
+      var s=document.createElement('script');
+      s.src=ph.getAttribute('data-src')||'';
+      /* a script that ran without finishing its boot (it threw) is as
+         good as one that never came: what waits gets its fallback */
+      s.onload=function(){if(pending()) failed();};
+      s.onerror=failed;
+      if(ph.parentNode) ph.parentNode.replaceChild(s,ph);
+      else document.body.appendChild(s);
+    }
+    function failed(){
+      if(!pending()) return;
+      state='failed';held=null;disarm();
+      drain();
+    }
+    /* AT ONCE, while the page is still being parsed: from the gate's own
+       inline script (APP.deckGate) the editor is written into the
+       document right there -- a script the parser waits for, where and
+       when the page always ran it, so a deck the address names is on
+       screen as soon as it ever was. A script inserted from here instead
+       ran only after whatever the page had queued by then (MathJax's
+       startup, the first layouts): a #/pres address showed its deck
+       1.2 s later at 4x CPU (2026-10-10, measured). From anywhere but
+       that inline script -- a callback, a later call -- document.write
+       would replace the whole page, so it loads as on first use. */
+    var written=false;
+    function now(gate){
+      if(state!=='waiting') return;
+      if(!gate||gate.src||document.currentScript!==gate
+         ||document.readyState!=='loading'){load();return;}
+      state='loading';written=true;
+      var src=String(ph.getAttribute('data-src')||'').replace(/[<>"&]/g,'');
+      document.write('<script src="'+src+'"><\/script>');
+    }
+    /* the document is parsed: the parser waited for a written editor, so
+       a boot that has not said it finished threw, or never came */
+    function parsed(){
+      if(written&&pending()) failed();
+    }
+    /* APP.deckBooted: the editor's boot has finished */
+    function booted(){
+      var was=state;
+      state='booted';
+      if(was!=='waiting'&&was!=='loading') return;
+      disarm();
+      /* written beside it (now()): the reference has done its work */
+      if(written&&ph&&ph.parentNode) ph.parentNode.removeChild(ph);
+      /* What waited goes in a task of its own: the editor's script and
+         boot are one long task already, and the deck a held click opens
+         was a second one chained on to it -- 1.4-2.2 s at 4x CPU as one
+         task, the page frozen throughout (2026-10-10, measured). */
+      setTimeout(function(){
+        /* an address that named a deck or Home, held for it (applyHash) */
+        if(typeof APP.tryRoute==='function') APP.tryRoute();
+        drain();
+        var d=held;held=null;
+        if(d&&d.isConnected) d.click();
+      },0);
+    }
+    /* fn() now if the editor is up (or is not coming); else once it is */
+    function then(fn){
+      if(!pending()){fn();return;}
+      queue.push(fn);load();
+    }
+    /* ...the same, without asking for it: for what only the editor
+       needs to know, whenever it comes (a figure copied for a slide) */
+    function later(fn){
+      if(!pending()){fn();return;}
+      queue.push(fn);
+    }
+    function door(e){
+      if(!pending()) return;
+      var t=e.target,d=t&&t.closest?t.closest(DOORS):null;
+      /* a real click somewhere else is the user moving on: the held one
+         is not made behind their back once the editor arrives */
+      if(!d){if(e.isTrusted) held=null;return;}
+      e.preventDefault();e.stopImmediatePropagation();
+      held=d;load();
+    }
+    /* AT IDLE: once the page has loaded AND then gone `quiet` ms without
+       a long task -- not while the notebook is still laying out or
+       typesetting its maths, which is what a reader is waiting on, and
+       not as one more long task stacked on the load. Where the browser
+       cannot report long tasks, a fixed while after load instead. */
+    function preload(quiet){
+      var last=0,obs=null;
+      try{
+        if(window.PerformanceObserver&&(PerformanceObserver.supportedEntryTypes
+            ||[]).indexOf('longtask')>=0){
+          obs=new PerformanceObserver(function(list){
+            list.getEntries().forEach(function(e){
+              last=Math.max(last,e.startTime+e.duration);});
+          });
+          obs.observe({type:'longtask'});
+        }
+      }catch(e){obs=null;}
+      /* ...and without the reader scrolling, typing or pressing: the
+         boot is one long task, and landed in the middle of a scroll it
+         was a frame of 120-170 ms at 4x CPU the page never used to drop
+         after its load (2026-10-10 review) */
+      var IN=['wheel','scroll','keydown','pointerdown','touchstart'];
+      function input(){last=Math.max(last,performance.now());}
+      IN.forEach(function(t){
+        document.addEventListener(t,input,{passive:true,capture:true});});
+      function done(){
+        if(obs) obs.disconnect();
+        IN.forEach(function(t){
+          document.removeEventListener(t,input,{passive:true,capture:true});});
+      }
+      var ric=window.requestIdleCallback||function(f){return setTimeout(f,50);};
+      function check(){
+        if(state!=='waiting'){done();return;}
+        var since=performance.now()-last;
+        if(since<quiet){setTimeout(check,quiet-since+50);return;}
+        done();
+        ric(load,{timeout:2000});
+      }
+      function loaded(){
+        last=Math.max(last,performance.now());
+        setTimeout(check,obs?quiet:2*quiet);
+      }
+      if(document.readyState==='complete') loaded();
+      else window.addEventListener('load',loaded,{once:true});
+    }
+    /* ...and sooner, when the pointer comes to rest on a door or the
+       keyboard lands on one: the click that follows then waits less, or
+       not at all. Only after the pointer has really moved -- one resting
+       where a door is drawn when the page arrives is not a choice. */
+    var moved=false,dwell=null;
+    function intent(e){
+      if(!pending()||(e.type==='pointerover'&&!moved)) return;
+      var t=e.target,d=t&&t.closest?t.closest(DOORS):null;
+      if(!d) return;
+      if(e.type!=='pointerover'){load();return;}
+      /* COMES TO REST: a pointer only passing over one -- every card's
+         head has a Collect, every figure a Plot trace -- is the reader
+         moving the mouse, and loading on it put the editor's boot back
+         into the load for anyone who did (2026-10-10 review) */
+      clearTimeout(dwell);
+      dwell=setTimeout(function(){
+        dwell=null;
+        if(pending()&&d.isConnected&&d.matches(':hover')) load();
+      },150);
+    }
+    /* is the editor on the page, or only named for later? Once: from the
+       gate right after its reference, or when the document has been
+       parsed; true when it waits */
+    function arm(){
+      if(ph||state!=='parsed') return !!ph&&pending();
+      ph=document.getElementById('jv-deck-src');
+      if(!ph) return false;
+      state='waiting';
+      window.addEventListener('click',door,true);
+      window.addEventListener('keydown',function(e){
+        if(held&&e.key==='Escape') held=null;},true);
+      window.addEventListener('pointermove',function(){moved=true;},
+        {capture:true,once:true,passive:true});
+      window.addEventListener('pointerover',intent,{capture:true,passive:true});
+      window.addEventListener('focusin',intent,true);
+      return true;
+    }
+    function disarm(){
+      window.removeEventListener('click',door,true);
+      window.removeEventListener('pointerover',intent,{capture:true,passive:true});
+      window.removeEventListener('focusin',intent,true);
+    }
+    APP.deckBooted=booted;
+    return {pending:pending,then:then,later:later,load:load,now:now,
+      parsed:parsed,preload:preload,arm:arm,
+      state:function(){return state;},DOORS:DOORS};
+  })();
+  /* the editor, now, for whatever drives it from outside (a test, the
+     speed harness): resolves once it has booted, or has failed to */
+  APP.deckLoad=function(){
+    jvDeck.load();
+    return new Promise(function(res){jvDeck.then(function(){res(true);});});
+  };
+  APP.deckDoors=jvDeck.DOORS;   /* checked against the editor's listeners */
+  /* What the editor has to be up for AT LOAD, or '' when nothing on
+     screen is its yet. `open` is how many notebooks the page opened on,
+     `hash` the address it was opened at, `decks` whether this tab still
+     has presentations open from before a reload (the editor keeps that
+     list in sessionStorage, 10-decks.js OPEN_PRES_KEY). */
+  function deckAtLoad(open,hash,decks){
+    hash=String(hash||'');
+    if(!open) return 'home';
+    if(/^#junoview-handoff/.test(hash)) return 'handoff';
+    var first=hash.replace(/^#\/?/,'').split('/')[0];
+    if(first==='pres'||first==='home') return 'route';
+    if(decks) return 'tabs';
+    return '';
+  }
+  function decksOpenInTab(){
+    try{
+      for(var i=0;i<sessionStorage.length;i++){
+        var k=sessionStorage.key(i);
+        if(!k||k.indexOf('sempres-open:')!==0) continue;
+        var v=JSON.parse(sessionStorage.getItem(k)||'[]');
+        if(Array.isArray(v)&&v.length) return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
   /* ================= MATHS: typeset as it is read =====================
      MathJax used to typeset the WHOLE document in one long task: at load
      (startup typeset over <body>, hidden notebooks and every hidden raw
@@ -367,7 +649,7 @@
        what is only near it goes a few at a time */
     function pump(nOnScreen){
       if(!soonQ.length) return;
-      if(!ready){if(!dead) ensure().then(function(){pump(-1);},noop);return;}
+      if(!ready){if(!dead) ensure().then(arrived,noop);return;}
       if(running) return;
       /* -1: MathJax has just arrived and the queue is whatever the
          observer saw meanwhile -- what is on screen NOW goes first */
@@ -396,6 +678,22 @@
         if(!soonOn){soonOn=true;
           setTimeout(function(){soonOn=false;pump(0);},0);}
       } else idleLater();
+    }
+    /* MathJax has just arrived: what is on screen goes in a task of its
+       own, not in the task MathJax arrived in. Its own startup runs
+       there (its script, then its page-ready on the window's load, which
+       fires in that same task when MathJax is the last thing the page
+       waited for), and with this pass chained on the three were one of
+       the longest tasks of a load -- 0.8-1.1 s at 4x CPU -- once the
+       slide editor stopped loading with the page and the load came that
+       much sooner (2026-10-10, load cost). Not the next animation frame
+       either: the pass and that frame's layout of the whole page were
+       then one task of 0.65-0.72 s. Equations already on screen were
+       painted unset before MathJax came, as they always were; a frame
+       between its arrival and this pass is a frame the page had before
+       too, when the pass waited for DOMContentLoaded. */
+    function arrived(){
+      setTimeout(function(){pump(-1);},0);
     }
     /* the rest, while nothing else is happening: the notebook you are
        looking at first, then the others. Hidden raw views wait to be
@@ -589,6 +887,10 @@
     var colOn=!!(act&&act.collection)&&!atHome;
     var welcoming=canOpen&&!deckOn&&!colOn&&(!APP.order.length||atHome);
     if(wel) wel.hidden=!welcoming;
+    /* Home lists the presentations, which are the editor's to know: Home
+       reached before it has loaded (the last notebook closed) brings it,
+       and its boot paints this again (jvDeck) */
+    if(welcoming) jvDeck.load();
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
        welcome screen itself. Hiding it lets the welcome own the window. */
@@ -846,7 +1148,10 @@
       e.preventDefault();
       /* T596: as tabs there is no side panel to find in -- the Open
          dialog is where "find the thing I am looking for" goes */
-      if(filesAt()==='top'&&APP.deckHub){APP.deckHub({find:true});return;}
+      if(filesAt()==='top'&&(APP.deckHub||jvDeck.pending())){
+        jvDeck.then(function(){if(APP.deckHub) APP.deckHub({find:true});});
+        return;
+      }
       f.focus();f.select();
     });
   })();
@@ -1158,6 +1463,20 @@
     var parts=routeParse(hash);
     var open=APP.deckState&&APP.deckState();
     routeWaits=false;
+    /* a deck, or Home with its presentations, is the editor's to show:
+       one typed in before it has loaded waits for it, as a route to a
+       deck the draft store has not answered for waits (T494) -- and is
+       tried again by jvDeck once the editor has booted. Not from inside
+       the editor's own boot (its hooks are in place, deckOpen among
+       them, before it applies the address): that opens the deck there
+       and then, in the task the editor runs in, as it always did --
+       waiting for jvDeck's next task put it behind MathJax's startup, a
+       #/pres address's deck on screen 0.6-1.2 s later at 4x CPU. */
+    if((parts[0]==='home'||(parts[0]==='pres'&&parts[1]))
+       &&jvDeck.pending()&&!APP.deckOpen){
+      pendingRoute=hash;routeWaits=true;jvDeck.load();
+      return;
+    }
     if(!parts.length){
       /* the default view: Back has arrived at the entry stamped on load,
          so whatever opened since (a presentation, Home) goes away */
@@ -1217,12 +1536,18 @@
   /* T494: the deck fragment calls this once the draft store has answered */
   APP.tryRoute=tryRoute;
   APP.applyInitialRoute=function(){
-    routeReady=true;
-    var parts=routeParse(initialHash);
-    if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'||parts[0]==='home'))
-      pendingRoute=initialHash;
-    tryRoute();
-    if(!location.hash) updateHash();   /* stamp the default view */
+    /* ONCE. The editor's boot ends with this call; where the editor came
+       after the page (jvDeck) this file made it already, and the address
+       it applied then may have been left since -- applying it again
+       would take the reader back to where the page opened */
+    if(!routeReady){
+      routeReady=true;
+      var parts=routeParse(initialHash);
+      if(parts.length&&(parts[0]==='doc'||parts[0]==='pres'||parts[0]==='home'))
+        pendingRoute=initialHash;
+      tryRoute();
+      if(!location.hash) updateHash();   /* stamp the default view */
+    }
     /* a welcome control clicked before the scripts had run (web build,
        see the welcome's wiring) that needed the deck file too */
     if(APP.afterBoot){var f=APP.afterBoot;APP.afterBoot=null;f();}
@@ -5459,13 +5784,19 @@
       :/^Open a notebook first/.test(msg)?'Open a notebook first'
       :/^Paste an http/.test(msg)?'That is not a link'
       :'Junoview';
-    if(typeof window.SemAskTell==='function')
-      window.SemAskTell({title:title,what:msg});
-    else docToast(msg,null,null,9000);
+    /* the dialog is the editor's: before it has loaded (jvDeck) the
+       message waits for it rather than falling back to a toast */
+    jvDeck.then(function(){
+      if(typeof window.SemAskTell==='function')
+        window.SemAskTell({title:title,what:msg});
+      else docToast(msg,null,null,9000);
+    });
   }
   function jvAsk(o,cb){
-    if(typeof window.SemAsk==='function') window.SemAsk(o,cb);
-    else cb(null);
+    jvDeck.then(function(){
+      if(typeof window.SemAsk==='function') window.SemAsk(o,cb);
+      else cb(null);
+    });
   }
   function docToast(text,url,label,ms){
     var t=$('#doc-toast'); if(!t) return;
@@ -7592,8 +7923,11 @@
     document.addEventListener('copy',onCopy,true);
     try{document.execCommand('copy');}catch(err){}
     document.removeEventListener('copy',onCopy,true);
-    if(typeof window.SemDeckCellCopied==='function')
-      window.SemDeckCellCopied(p.meta);
+    /* the editor's paste needs to know; told whenever it comes (jvDeck) */
+    jvDeck.later(function(){
+      if(typeof window.SemDeckCellCopied==='function')
+        window.SemDeckCellCopied(p.meta);
+    });
     if(done){
       docToast('Copied “'+p.meta.title+'” — paste it on a '
         +'slide for the figure; anywhere else it is the link and its code',
@@ -8231,6 +8565,10 @@
         +'sections.');
       return;
     }
+    if(!APP.deckAuto&&jvDeck.pending()){
+      jvDeck.then(function(){autoSlidesFrom(stem,scope,sid,animations);});
+      return;
+    }
     if(!APP.deckAuto){
       jvTell('The presentation editor has not loaded yet \u2014 try again '
         +'in a moment.');
@@ -8300,6 +8638,9 @@
     if(b) b.setAttribute('aria-expanded','true');
     setTimeout(function(){
       var focus=$('#auto-slides-create');if(focus) focus.focus();},0);
+    /* the slides are the editor's to make: fetch it while the choices
+       are read, so Create does not wait for it (jvDeck) */
+    jvDeck.load();
   }
   (function(){
     var d=$('#auto-slides-dialog');
@@ -9683,14 +10024,16 @@
   /* hand text to the deck importer (deck.js) — the same importer behind
      "+ New… → Open a .junoview file…", so every road in behaves alike */
   function importDeckTextSafe(txt,label){
-    try{
-      if(window.SemDeckImport) window.SemDeckImport(txt,false);
-      else jvTell('The presentation editor has not loaded yet — '
-        +'try again in a moment.');
-    }catch(e){
-      jvTell('Could not open '+(label||'that file')+': '
-        +((e&&e.message)||e));
-    }
+    jvDeck.then(function(){   /* the importer is the editor (jvDeck) */
+      try{
+        if(window.SemDeckImport) window.SemDeckImport(txt,false);
+        else jvTell('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+      }catch(e){
+        jvTell('Could not open '+(label||'that file')+': '
+          +((e&&e.message)||e));
+      }
+    });
     hideDlg();
   }
   function fetchDeckUrl(url){
@@ -9723,9 +10066,11 @@
       setDlgBusy(false);hideDlg();
       var nm=decodeURIComponent(
         url.split('?')[0].split('/').pop()||'deck.pptx');
-      if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
-      else jvTell('The presentation editor has not loaded yet — '
-        +'try again in a moment.');
+      jvDeck.then(function(){
+        if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
+        else jvTell('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+      });
     }).catch(function(e){
       setDlgBusy(false);
       jvTell('Could not fetch '+url+'\n'+((e&&e.message)||e));
@@ -9782,13 +10127,17 @@
     if(isPptxPath(path)){
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
       if(APP.mode!=='app') return;
-      if(!APP.deckImportPptxPath){
+      if(!APP.deckImportPptxPath&&!jvDeck.pending()){
         jvTell('The presentation editor has not loaded yet — '
           +'try again in a moment.');
         return;
       }
       hideDlg();
-      APP.deckImportPptxPath(path);
+      jvDeck.then(function(){
+        if(APP.deckImportPptxPath) APP.deckImportPptxPath(path);
+        else jvTell('The presentation editor has not loaded yet — '
+          +'try again in a moment.');
+      });
       return;
     }
     /* saved presentations open from the SAME places notebooks do — the
@@ -10022,7 +10371,7 @@
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
       } else if(isPptxPath(f.name)){
         /* T320: the same importer the drop and the launcher reach */
-        if(APP.deckImportPptx) APP.deckImportPptx(f);
+        jvDeck.then(function(){if(APP.deckImportPptx) APP.deckImportPptx(f);});
         hideDlg();
       } else if(BIN_RE.test(f.name)){
         fileB64(f).then(function(b){webParseB64(f.name,b);});
@@ -10795,9 +11144,11 @@
       /* T320: a .pptx presentation dropped anywhere imports, either mode */
       files.filter(function(f){return isPptxPath(f.name);})
         .forEach(function(f){
-          if(APP.deckImportPptx) APP.deckImportPptx(f);
-          else jvTell('The presentation editor has not loaded yet — '
-            +'try again in a moment.');
+          jvDeck.then(function(){   /* the importer is the editor's */
+            if(APP.deckImportPptx) APP.deckImportPptx(f);
+            else jvTell('The presentation editor has not loaded yet — '
+              +'try again in a moment.');
+          });
         });
       /* a dropped saved presentation imports, in either mode */
       /* T597: AND STAYS ITS FILE'S. Where the browser hands a drop over
@@ -10808,7 +11159,10 @@
          later. Anywhere else it imports as it did. */
       var deckFiles=files.filter(function(f){return isDeckPath(f.name);});
       var hs=[];
-      if(deckFiles.length&&APP.deckOpenHandles)
+      /* asked for now, inside the event, even when the editor that
+         opens them is still to load (jvDeck): they cannot be asked for
+         later, and without them the deck would open as a copy */
+      if(deckFiles.length&&(APP.deckOpenHandles||jvDeck.pending()))
         Array.prototype.slice.call((e.dataTransfer||{}).items||[])
           .forEach(function(it){
             if(it.kind!=='file'||!it.getAsFileSystemHandle) return;
@@ -10825,8 +11179,11 @@
       if(hs.length&&hs.length===deckFiles.length){
         Promise.all(hs).then(function(got){
           got=got.filter(function(h){return h&&h.kind==='file';});
-          if(got.length===deckFiles.length) APP.deckOpenHandles(got);
-          else deckPlain();
+          if(got.length!==deckFiles.length){deckPlain();return;}
+          jvDeck.then(function(){
+            if(APP.deckOpenHandles) APP.deckOpenHandles(got);
+            else deckPlain();
+          });
         }).catch(deckPlain);
       } else deckPlain();
       /* SRC_RE, not /\.ipynb$/ (T100). This handler filtered to
@@ -10993,4 +11350,39 @@
   else renderTabs();
   renderRawBtn();
   plotWarmLater();   /* a notebook not shown yet has Plotly figures */
+  /* THE SLIDE EDITOR (jvDeck, above): now, if what is on screen is its;
+     otherwise this page is a notebook being read, and the editor comes
+     on first use or at idle. Until then this file does the two things
+     its boot did that show: the address is stamped (applyInitialRoute,
+     which the editor's boot calls again as a no-op), and the side list
+     says "nothing open" under Presentations, as the editor's own
+     renderPresTabs does when no deck is open -- the same element, so the
+     list does not move when the editor redraws it. Decided by the gate,
+     the inline script the page puts right after the reference to the
+     editor (render/static.py deferred_link): the moment, and the place,
+     the editor's own boot used to run. Once the document is parsed if
+     no gate ran. */
+  var deckDecided=false;
+  function deckDecide(gate){
+    if(deckDecided) return;
+    deckDecided=true;
+    if(!jvDeck.arm()) return;
+    if(deckAtLoad(APP.order.length,location.hash,decksOpenInTab())){
+      jvDeck.now(gate);
+      return;
+    }
+    var prs=$('#presstrip');
+    if(prs&&!prs.firstChild){
+      var none=document.createElement('div');
+      none.className='pr-none';none.textContent='nothing open';
+      prs.appendChild(none);
+    }
+    APP.applyInitialRoute();
+    jvDeck.preload(1500);   /* 1.5 s without a long task */
+  }
+  APP.deckGate=function(){deckDecide(document.currentScript);};
+  function deckParsed(){deckDecide(null);jvDeck.parsed();}
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',deckParsed,{once:true});
+  else deckParsed();
 })();

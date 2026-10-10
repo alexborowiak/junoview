@@ -482,7 +482,9 @@ def _app_page(state: _AppState, *, warm: bool = False) -> bytes:
         # every notebook but the first arrives hidden (join_shells)
         shells=join_shells([s.body() for s in shells]),
         app_data=_boot_json(state), asset_base="/static/",
-        math=any(s.math for s in shells)))
+        math=any(s.math for s in shells),
+        # the slide editor loads when it is first needed (app.js jvDeck)
+        deferred=True))
 
 
 def _boot_json(state: _AppState) -> bytes:

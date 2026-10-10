@@ -470,6 +470,10 @@ def _measure_loads(app, errs, keep_last=True):
 
 
 def _open_deck(app, pg, name):
+    # the app loads the editor on first use (app.js jvDeck); the deck is
+    # opened through its API, so it is asked for first, untimed -- the
+    # gestures below are the editor's, not its first arrival
+    pg.evaluate("SemApp.deckLoad()")
     figs = pg.evaluate(
         "[...document.querySelectorAll('.nbshell .card[data-anchor]')]"
         ".filter(function(c){return c.dataset.kind==='figure';})"

@@ -252,7 +252,9 @@ def test_the_page_built_from_kept_shells_is_the_page_render_page_builds(
         d = load_doc(Path(p))
         d.source_name = Path(p).stem
         docs.append(d)
-    plain = render_page(docs, mode="app", asset_base="/static/", app_cfg={
+    # (the app's page names the slide editor for later: app.js jvDeck)
+    plain = render_page(docs, mode="app", asset_base="/static/",
+                        deferred=True, app_cfg={
         "token": st.token, "root": str(st.root),
         "presentations": st.presentations, "rev": st.revision,
         "recent": st.recent,

@@ -253,6 +253,13 @@ def test_the_app_takes_a_deck_only_from_its_opener_once_after_asking(out):
 def test_a_dropped_file_stays_its_files(out):
     js = assets.app_js()
     assert "if(f&&isDeckPath(f.name)) hs.push(it.getAsFileSystemHandle());" in js
-    assert ("if(got.length===deckFiles.length) APP.deckOpenHandles(got);\n"
-            "          else deckPlain();") in js
+    # every file a handle, or none of them goes through the handles; the
+    # editor that opens them may still be loading (app.js jvDeck), and the
+    # handles were asked for in the event all the same
+    assert ("if(got.length!==deckFiles.length){deckPlain();return;}\n"
+            "          jvDeck.then(function(){\n"
+            "            if(APP.deckOpenHandles) APP.deckOpenHandles(got);\n"
+            "            else deckPlain();") in js
+    assert ("if(deckFiles.length&&(APP.deckOpenHandles||jvDeck.pending()))"
+            in js)
     assert "  APP.deckOpenHandles=openDeckHandles;" in out

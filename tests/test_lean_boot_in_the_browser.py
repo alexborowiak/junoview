@@ -178,6 +178,9 @@ def test_every_copy_survives_the_lean_boot(tmp_path):
             assert not any("emb" in p or "media" in p for p in
                            json.loads(boot)["project"]["presentations"])
             # 2. open the closed notebook's deck before the idle fetch
+            # (the app loads the editor on first use -- app.js jvDeck --
+            # and its idle fetch is scheduled by the editor's own boot)
+            pg.evaluate("window.SemApp.deckLoad()")
             pg.evaluate("window.SemApp.deckOpen('closed')")
             pg.wait_for_timeout(600)
             state = pg.evaluate("window.SemDeckEmbState()")
@@ -211,6 +214,7 @@ def test_every_copy_survives_the_lean_boot(tmp_path):
             # ...reload: lean again, and the closed deck still shows
             ctx.unroute("**/api/emb*")
             pg.reload(wait_until="load")
+            pg.evaluate("window.SemApp.deckLoad()")
             pg.wait_for_timeout(2500)
             pg.evaluate("window.SemApp.deckOpen('closed')")
             pg.wait_for_timeout(500)

@@ -27,7 +27,7 @@ from .items import (
     render_varpanel,
 )
 from .maths import MATH_ATTR
-from .static import static_files
+from .static import DEFERRED, DEFERRED_HINT, static_files
 
 
 def render_shell(doc: Document, path: str = "", ver: str = "") -> str:
@@ -100,7 +100,8 @@ def mathjax_head(math: bool) -> str:
 
 def render_page(docs: list[Document], mode: str = "static",
                 app_cfg: dict | None = None, *,
-                asset_base: str | None = None) -> str:
+                asset_base: str | None = None,
+                deferred: bool = False) -> str:
     """The full HTML page: tab strip, one shell per notebook, deck, app UI.
 
     mode "static": fixed tabs, shareable file (tab strip hidden when only
@@ -111,6 +112,8 @@ def render_page(docs: list[Document], mode: str = "static",
     a single-file export must do. Given a prefix ("/static/" for the app
     server, "" for the web build's directory), each one is referenced as
     a content-hashed file under it instead -- see render/static.py.
+    ``deferred`` names the slide editor without running it at load, as
+    the local app's page does (see :func:`page_pieces`).
     """
     cfg = app_cfg or {}
     paths = cfg.get("paths", {})
@@ -119,7 +122,7 @@ def render_page(docs: list[Document], mode: str = "static",
     pieces = page_pieces(
         mode=mode, title=page_title([d.title for d in docs]),
         shells=shells, app_data=app_data_json(mode, cfg),
-        asset_base=asset_base)
+        asset_base=asset_base, deferred=deferred)
     # every piece is text here; only the app server passes in bytes
     return "".join(p if isinstance(p, str) else p.decode("utf-8")
                    for p in pieces)
@@ -201,7 +204,8 @@ def join_shells(shells: list[str] | list[bytes]) -> Piece:
 
 def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
                 asset_base: str | None = None,
-                math: bool | None = None) -> list[Piece]:
+                math: bool | None = None,
+                deferred: bool = False) -> list[Piece]:
     """page.html filled in, as the pieces to join -- not yet joined.
 
     The app server joins them as BYTES (:func:`encode_pieces`): it hands
@@ -215,6 +219,15 @@ def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
     ``math``: whether any shell holds maths (decides whether MathJax's
     script fetches at load, see :func:`mathjax_head`). None works it out
     from ``shells``; the app server already knows it per kept shell.
+
+    ``deferred`` (with an ``asset_base``): the scripts in
+    render/static.py's DEFERRED -- the slide editor -- are named on the
+    page but not run at load; app.js loads the editor when something on
+    screen needs it, on first use, or once the page is idle (``jvDeck``).
+    Only the local app asks for this. A single-file export has nothing
+    beside it to load later, and the web build keeps the editor at load
+    too: its welcome screen, which is what it opens on, lists the
+    presentations the editor knows about.
     """
     if math is None:
         math = has_marked_math(shells)
@@ -239,9 +252,19 @@ def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
     files = static_files()
     links: tuple[tuple[str, str], ...] = ()
     if asset_base is None:
+        if deferred:
+            raise ValueError("a script can only wait on a page that "
+                             "references its assets (asset_base)")
         fields.update({f.field: f.text for f in files})
     else:
-        links = tuple((f.tag, f.link(asset_base)) for f in files)
+        links = tuple(
+            (f.tag, f.deferred_link(asset_base)
+             if deferred and f.field in DEFERRED else f.link(asset_base))
+            for f in files)
+        if deferred:
+            fields["head_extra"] = str(fields["head_extra"]) + "".join(
+                _deferred_hint(asset_base + f.name, bool(shells))
+                for f in files if f.field in DEFERRED)
     out: list[Piece] = []
     for literal, field in _compiled(assets.page_template(), links):
         if literal:
@@ -340,6 +363,17 @@ def _first_layout(has_docs: bool, mode: str = "static") -> dict[str, str]:
     return {"html_attrs": f' style="--chrome-h:{FIRST_CHROME_H}px"',
             "body_attrs": ' class="files-top tabs-row-on"',
             "bar_hidden": "", **hidden}
+
+
+def _deferred_hint(url: str, open_any: bool) -> str:
+    """The top-of-page half of a script the page names for later (render/
+    static.py DEFERRED_HINT): fetched from the start when the page will
+    want it at once -- always, on a page with nothing open (Home lists the
+    presentations, app.js deckAtLoad), and otherwise when the address or
+    this tab's open decks say so, which only the browser knows."""
+    if not open_any:
+        return f'<link rel="preload" as="script" href="{url}">'
+    return f"<script>{DEFERRED_HINT % url}</script>"
 
 
 def _head_extra(mode: str) -> str:

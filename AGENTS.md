@@ -92,6 +92,21 @@ parser's internals.
   checking `pyproject.toml` still packages the directory (T95).
   `tests/test_js_contract.py` and `tests/test_packaging.py` fail on
   each half.
+- In the LOCAL APP the editor loads when it is first needed, not with
+  the page (app.js `jvDeck`; 2026-10-10 load cost): its boot may run
+  seconds after app.js's, so it must not assume the page is as it was
+  at load. A control outside the editor's own markup that the editor
+  wires, or whose answer is the editor's, must be in app.js's `DOORS`
+  (the click is held until the editor has booted), and app.js code that
+  calls an editor hook (`APP.deck*`, `window.Sem*`) from the notebook
+  side goes through `jvDeck.then()`.
+  `tests/test_the_editor_loads_on_first_use_in_a_browser.py` reads every
+  listener the editor adds and fails on one outside a door, and
+  `tests/test_the_editor_loads_on_first_use.py` fails on an editor hook
+  app.js calls that its `HOOKS` table does not account for. When the
+  editor IS needed at load (a `#/pres` address, Home, a deck's tab), the
+  inline gate after its reference writes it in while the page is parsed
+  (`jvDeck.now`) -- the one `document.write` in app.js, safe only there.
 - The only runtime network fetches are the pinned CDN URLs precached in
   `assets/js/sw.js` (Pyodide, MathJax, Plotly). Pins must match their
   loaders — `tests/test_js_contract.py` enforces this. Bump a pin in both

@@ -77,6 +77,12 @@ RUNTIME_IDS = {
     # The PDF/print export builds a throwaway container:
     # deck.js ~line 17471, root.id='print-root'.
     "print-root",
+    # The local app's page names the slide editor without running it:
+    # render/static.py StaticFile.deferred_link writes this element in
+    # place of deck.js's <script src>, and app.js jvDeck swaps in the
+    # real script when the editor is first needed. Only that page has
+    # it; everywhere else jvDeck finds none and the deck is on the page.
+    "jv-deck-src",
     # T563: the Comments pane's new-comment box, built by cmtRender in
     # 63-comments.js every time the pane draws
     "cmt-new",

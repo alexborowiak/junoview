@@ -191,6 +191,9 @@ def _page(app, w=1366, h=657, light=False, maths=False):
     pg.goto(app["url"], wait_until="load")
     pg.wait_for_selector(".nbshell .card")
     pg.wait_for_timeout(600)
+    # the app loads the editor on first use (app.js jvDeck); this drives
+    # its API, so it asks for it first
+    pg.evaluate("SemApp.deckLoad()")
     pg.evaluate("SemApp.deckChoose('lst')")
     pg.wait_for_timeout(900)
     return ctx, pg, errs
@@ -740,6 +743,9 @@ def test_a_reload_brings_back_every_level_and_marker(app):
     pg.reload(wait_until="load")
     pg.wait_for_selector(".nbshell .card")
     pg.wait_for_timeout(600)
+    # the app loads the editor on first use (app.js jvDeck); this drives
+    # its API, so it asks for it first
+    pg.evaluate("SemApp.deckLoad()")
     pg.evaluate("SemApp.deckChoose('lst')")
     pg.wait_for_timeout(900)
     go(pg, 5)

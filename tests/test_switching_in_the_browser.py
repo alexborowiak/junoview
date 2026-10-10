@@ -126,6 +126,9 @@ def _page(app, w=1366, h=657):
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(app["url"], wait_until="load")
     pg.wait_for_selector(".nbshell .card")
+    # the app loads the editor on first use (app.js jvDeck); these drive
+    # its API, so they ask for it first
+    pg.evaluate("SemApp.deckLoad()")
     pg.wait_for_timeout(800)
     return ctx, pg, errs
 
