@@ -73,6 +73,61 @@ notebook and compares against a recorded hash, so any unintended change to the
 output shows up immediately. When you change the output *on purpose*, update
 `EXPECTED_MD5` in the same commit and say in the message what changed and why.
 
+### The speed guard
+
+The app has twice become laggy one innocent-looking feature at a time, and
+nothing failed while it did. Two halves now stop that:
+
+- **Static, in every run of the suite.** `tests/test_speed_guard.py` and
+  `tests/test_style_recalc.py` fail on the patterns that caused the lag:
+  `:has()` on `body`/`html` or looking at the descendants of a big container,
+  a page-wide `[contenteditable]` or `.vo-fmenu` query, the slide strip
+  emptied and rebuilt, MathJax called anywhere but through `jvMath`.
+- **Timed, opt-in.** `tests/test_speed_guard_in_a_browser.py` drives the real
+  app in Chromium at 4x CPU throttle: the example notebook loads, a 60-slide
+  deck opens, and load, opening the deck, select, deselect, slide change,
+  undo, add slide, a ribbon tab, notebook-to-deck and start show are each
+  timed (median of three) against a budget about twice what they cost when
+  the budgets were set (load and the ribbon tab a little tighter). The slide
+  strip must come through all of it with its rows, not rebuilt. About a
+  minute (Playwright is not in `.[dev]`; the test skips without it):
+
+  ```bash
+  pip install playwright && python -m playwright install chromium   # once
+  JUNOVIEW_BROWSER_TESTS=1 python -m pytest -q -s tests/test_speed_guard_in_a_browser.py
+  # PowerShell: $env:JUNOVIEW_BROWSER_TESTS='1'; python -m pytest -q -s tests/test_speed_guard_in_a_browser.py
+  ```
+
+  `-s` prints the table of every number against its budget. Run it before
+  merging anything that touches the editor, the strip, the ribbon, loading or
+  switching. It never touches the network (MathJax is a stand-in unless
+  `JUNOVIEW_MATHJAX_DIR` points at an unpacked `mathjax@3.2.2/es5`).
+  `JUNOVIEW_SPEED_REPORT=out.json` writes every run; a machine known to be
+  slower than the one the budgets were set on can set
+  `JUNOVIEW_SPEED_SCALE=1.5`.
+
+**When it fails**, the message is the table with the gestures `<-- OVER`.
+
+1. Believe it. A gesture over budget has already been measured a second time
+   before the test fails, and budgets are about 2x: noise does not get there,
+   the regressions it is for do (the code from before the speed work, 2-12
+   times slower than today depending on the gesture, fails every budget).
+2. Confirm it is yours: run the guard on the commit before your change. Then
+   profile the gesture -- Chrome DevTools, Performance panel, CPU 4x slowdown --
+   and look for the usual causes: a query over the whole document, a list
+   emptied and rebuilt instead of reconciled, layout read inside a loop that
+   writes, an inherited custom property written on `html` or `#deck` while
+   dragging, work done at load that could wait for first use.
+3. Fix the cause. Do not raise the budget to make it pass, and do not add an
+   exception to a static guard: use what the guard points to (`liveEditors()`,
+   `voMenusLive()`, `filmReconcile`, `jvMath.typeset`/`jvMath.run`, a state
+   class its owner sets).
+4. Only if the slower gesture is the deliberate price of a feature: run the
+   guard five times with `JUNOVIEW_SPEED_REPORT`, set that budget from the
+   new median the way the comment above `BUDGETS` says the others were set
+   (about twice it), and say in the commit message which gesture got slower,
+   by how much and why.
+
 ## Style
 
 - Python 3.10+, standard library only in the core.

@@ -33,14 +33,18 @@ import json
 import re
 import subprocess
 from html.parser import HTMLParser
+from pathlib import Path
 
 import pytest
 
 from helpers_js import js_engine, lift_fn
 from junoview import assets
 
-CSS_FILES = ("css/core.css", "css/app.css", "css/deck.css", "css/widget.css",
-             "css/widget-media.css")
+ASSETS = Path(assets.__file__).resolve().parent
+# every stylesheet the package ships, found rather than listed: a new one
+# is judged by the same rules the day it is added (the speed guard)
+CSS_FILES = tuple(sorted("css/" + p.name
+                         for p in (ASSETS / "css").glob("*.css")))
 
 
 def _strip_comments(css: str) -> str:
@@ -49,6 +53,42 @@ def _strip_comments(css: str) -> str:
 
 def _all_css() -> dict[str, str]:
     return {f: _strip_comments(assets.load(f)) for f in CSS_FILES}
+
+
+def _style_text_elsewhere() -> dict[str, str]:
+    """Where a selector can hide outside the stylesheets: the HTML assets
+    (an inline <style>), every script the app ships (a <style> it writes,
+    a query it runs), and the Python that renders pages. Comments go:
+    they quote the rules that were taken out."""
+    out = {}
+    for p in sorted((ASSETS / "html").glob("*.html")):
+        out["html/" + p.name] = re.sub(r"<!--.*?-->", "",
+                                       p.read_text(encoding="utf-8"),
+                                       flags=re.S)
+    out["js/deck (assembled)"] = _strip_comments(assets.deck_js())
+    for p in sorted((ASSETS / "js").glob("*.js")):
+        out["js/" + p.name] = _strip_comments(p.read_text(encoding="utf-8"))
+    # (only whole-line comments: a '#' in a string is a selector's id)
+    for p in sorted(ASSETS.parent.rglob("*.py")):
+        out[p.relative_to(ASSETS.parent.parent).as_posix()] = re.sub(
+            r"(?m)^\s*#.*$", "", p.read_text(encoding="utf-8"))
+    return out
+
+
+def _all_style_sources() -> dict[str, str]:
+    return {**_all_css(), **_style_text_elsewhere()}
+
+
+def test_every_stylesheet_is_judged():
+    """The rules below read every stylesheet there is, and the scripts,
+    pages and Python beside them -- not a list someone has to remember to
+    extend."""
+    assert {"css/core.css", "css/app.css", "css/deck.css", "css/widget.css",
+            "css/widget-media.css"} <= set(CSS_FILES)
+    elsewhere = _style_text_elsewhere()
+    assert "html/page.html" in elsewhere and "html/deck.html" in elsewhere
+    assert "js/app.js" in elsewhere and "js/deck (assembled)" in elsewhere
+    assert "junoview/render/page.py" in elsewhere
 
 
 def _has_sites(css: str):
@@ -64,15 +104,16 @@ def _has_sites(css: str):
             k += 1
         arg = css[m.end():k - 1]
         # the compound it hangs on: back to a combinator outside any
-        # parentheses (`:not(:has(...))` hangs on what :not hangs on)
+        # parentheses (`:not(:has(...))` hangs on what :not hangs on) or
+        # attribute brackets (`body[data-x="a b"]:has(` hangs on body)
         depth, j = 0, m.start() - 1
         while j >= 0:
             c = css[j]
-            if c == ")":
+            if c in ")]":
                 depth += 1
-            elif c == "(":
+            elif c in "([":
                 depth -= 1
-            elif depth <= 0 and c in " >+~,{};\n":
+            elif depth <= 0 and c in " >+~,{};\n'\"`":
                 break
             j -= 1
         yield css[j + 1:m.start()], arg
@@ -98,6 +139,9 @@ def _top_level_parts(arg: str) -> list[str]:
     return parts + [cur]
 
 
+DOCUMENT = re.compile(r"^(body|html|:root)(?![\w-])")
+
+
 def test_no_has_on_the_document_itself():
     for name, css in _all_css().items():
         for bad in ("body:has(", "html:has(", ":root:has("):
@@ -105,6 +149,26 @@ def test_no_has_on_the_document_itself():
     # ...nor in a style a script writes (comments may tell the history)
     assert "body:has(" not in _strip_comments(assets.app_js())
     assert "body:has(" not in _strip_comments(assets.deck_js())
+    # ...nor hung on the document by any other spelling (body.x:has(,
+    # html[data-y]:has(, :root:not(.z):has(), with any combinator, in any
+    # stylesheet, page, script or renderer: the page's state is a class
+    # its owner sets on body (vars-open, rd-order-on), never a question
+    # put to the whole document
+    for name, src in _all_style_sources().items():
+        for anchor, arg in _has_sites(src):
+            assert not DOCUMENT.search(anchor), (name, anchor, arg)
+
+
+def test_the_document_anchor_is_recognised():
+    found = [a for a, _ in _has_sites(
+        "body.x:has(>.y){} html[data-t]:has(+a){} :root:not(.z):has(~b){}"
+        " .p body:has(.q){} el.querySelector('body:has(.r)')"
+        ' body[data-x="a b"]:has(>c){} :root[data-theme="dark"]:has(>d){}'
+        " el.querySelector(\"html[lang='en']:has(>e)\")")]
+    assert [bool(DOCUMENT.search(a)) for a in found] == [True] * 8
+    assert not DOCUMENT.search(".bodywrap")
+    assert not any(DOCUMENT.search(a) for a, _ in _has_sites(
+        ".tbody:has(>tr){} .x-html:has(+a){} #deck>.y:has(>z){}"))
 
 
 def test_no_descendant_has_on_the_big_anchors():
@@ -112,7 +176,7 @@ def test_no_descendant_has_on_the_big_anchors():
     of elements: a :has() looking at their DESCENDANTS is re-walked over
     all of them after every change inside."""
     seen = 0
-    for name, css in _all_css().items():
+    for name, css in _all_style_sources().items():
         for anchor, arg in _has_sites(css):
             seen += 1
             if not ANCHORS.search(anchor):
@@ -124,10 +188,11 @@ def test_no_descendant_has_on_the_big_anchors():
 
 def test_every_has_looks_one_step_away():
     """The ratchet the rule above is the floor of: every :has() in the
-    stylesheets is relative (>, + or ~). A plain descendant :has() on any
-    container re-walks that container after every change inside it; a
-    state the code knows belongs in a class its owner sets."""
-    for name, css in _all_css().items():
+    stylesheets -- and in any page, script or renderer that writes or
+    runs a selector -- is relative (>, + or ~). A plain descendant :has()
+    on any container re-walks that container after every change inside
+    it; a state the code knows belongs in a class its owner sets."""
+    for name, css in _all_style_sources().items():
         for anchor, arg in _has_sites(css):
             for part in _top_level_parts(arg):
                 assert part.lstrip()[:1] in (">", "+", "~"), (name, anchor, arg)
