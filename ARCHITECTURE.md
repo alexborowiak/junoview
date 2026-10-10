@@ -69,7 +69,8 @@ src/junoview/
 │   │                      · widget-media.css  (the widget's responsive rules)
 │   ├── js/                app.js · deck/ · pptx.js · widget.js
 │   │                      · sw.js  (the web build's offline service worker)
-│   │                      · web-runtime.js  (async import bridge + PWA)
+│   │                      · web-runtime.js  (async import bridge + PWA;
+│   │                        build_web writes it into the page's <head>)
 │   │                      · web-worker.js  (Python parsing off the UI thread)
 │   │                      · saved-file.js  (what a saved .junoview.html
 │   │                        runs: Open in Junoview hands its deck over)
@@ -139,23 +140,32 @@ visitor's browser via Pyodide. Because a package cannot be fetched as one file
 the way the old single module could, `build_web()` writes `junoview.zip` and
 `web-worker.js` hands it to Pyodide's `unpackArchive`. Imports and
 `importlib.resources` both work from that zip, so assets load normally.
-The application HTML is generated at build time: the UI opens while Python
-starts in the worker. `web-runtime.js` exposes a Promise-based import bridge;
-`app.js` serializes parse-and-mount jobs so simultaneous drops get unique
-names. Editor-only galleries and controls initialize on first editor entry.
+The application HTML is generated at build time and sent as the welcome
+screen. Python starts late: on the first call, the first sign that a notebook
+is coming (the Open dialog, a file dragged over the window), or once the page
+has loaded and gone quiet — never from `<head>`, where its ~7 MB used to
+share the line with the page itself. `web-runtime.js` (inlined into the page)
+exposes a Promise-based import bridge; `app.js` serializes parse-and-mount
+jobs so simultaneous drops get unique names. The bundled example is rendered
+at build time by the same `web_parse` the worker runs, so "Try the example"
+mounts it with no Python at all (unless its tab name is taken). Whether the
+demo clips were copied is stamped into the page (`web.demos`), not probed.
+Editor-only galleries and controls initialize on first editor entry.
 
 The archive is written deterministically — members sorted, timestamps fixed — so
 an unchanged package produces byte-identical output and the committed `docs/`
 build doesn't churn.
 
 The build is also an installable, offline-capable PWA: `build_web()` writes
-`sw.js` (a service worker that precaches the page, the bridge/parser scripts,
-`junoview.zip`, the Pyodide
-runtime and MathJax on first visit — version-stamped with the package hash so
-it follows the same determinism rule), `manifest.webmanifest` and `icon.svg`.
+`sw.js` (a service worker — version-stamped with the package hash so it
+follows the same determinism rule), `manifest.webmanifest` and `icon.svg`.
+The worker is registered once the page has loaded, and its install takes only
+the app (the page and its files); the page asks for the rest — `junoview.zip`,
+the Pyodide runtime, MathJax and the example — once Python is up, so it comes
+from what the browser already holds. Plotly is kept the first time a page uses
+it, and a new build carries the old one's pinned runtime files over.
 The Pyodide version is pinned in two places — `web-worker.js` and the service
-worker's precache list — bump them together. First-install precaching starts
-after the parser's critical downloads, so optional assets don't compete.
+worker's lists — bump them together.
 
 ## Testing
 

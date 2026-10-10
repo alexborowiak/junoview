@@ -264,24 +264,40 @@ worker.onmessage({data:{type:'ready'}});
 
 
 def test_offline_precache_waits_for_successful_reader_start(tmp_path):
+    """The heavy half of the offline copy (the Python runtime, MathJax,
+    the example) is asked for only once the reader has started -- and
+    never when it failed. The worker itself is registered once the page
+    has loaded (2026-10-09: it used to wait for Python too, which now
+    starts late itself), and only then; its install holds only the page."""
     code = r"""
 const vm=require('vm');
-function boot(fails){let worker,registered=0;
+function boot(fails){let worker,registered=0,warm=[],loaded=[];
   class Worker {constructor(){worker=this;} terminate(){}}
+  class MessageChannel {constructor(){this.port1={};this.port2={};}}
+  const active={postMessage:(m,ports)=>{warm.push(m.type+':'+ports.length);}};
   const serviceWorker={controller:null,addEventListener:()=>{},
+    ready:Promise.resolve({active}),
     register:()=>{registered++;return Promise.resolve();}};
-  const context={window:{addEventListener:()=>{}},navigator:{serviceWorker},
-    Worker,document:{dispatchEvent:()=>{}},Event:class {}};
+  const context={window:{addEventListener:(t,f)=>{if(t==='load')loaded.push(f);},
+      requestIdleCallback:f=>f()},
+    navigator:{serviceWorker},Worker,MessageChannel,
+    performance:{getEntriesByType:()=>[]},
+    document:{readyState:'interactive',dispatchEvent:()=>{}},Event:class {}};
   vm.runInNewContext(RUNTIME,context);
+  const before=registered+(worker?1:0);
+  loaded.forEach(f=>f());                /* the page has loaded */
   worker.onmessage({data:fails?{type:'fatal',error:'unavailable'}:{type:'ready'}});
-  return new Promise(resolve=>setTimeout(()=>resolve(registered),0));
+  return new Promise(resolve=>setTimeout(()=>resolve(
+    {before,registered,warm}),0));
 }
 (async()=>console.log(JSON.stringify({success:await boot(false),
   failure:await boot(true)})))();
 """
     result = run_js(tmp_path, "const RUNTIME=" + json.dumps(
         assets.load("js/web-runtime.js")) + ";\n" + code)
-    assert result == {"success": 1, "failure": 0}
+    assert result == {
+        "success": {"before": 0, "registered": 1, "warm": ["warm:1"]},
+        "failure": {"before": 0, "registered": 1, "warm": []}}
 
 
 DOM = r"""

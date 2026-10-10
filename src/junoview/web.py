@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import html
 import json
 import re
 import zipfile
@@ -32,7 +33,7 @@ from .notebook.loader import stem_for
 from .notebook.parser import parse_notebook
 from .notebook.pptx_read import read_pptx_b64
 from .notebook.sources import doc_from_bytes, doc_from_text
-from .render.page import render_page, render_shell
+from .render.page import has_marked_math, render_page, render_shell
 from .render.static import static_files
 
 # A fixed timestamp for every zip member. Without it the archive's bytes change
@@ -161,6 +162,18 @@ def find_gifs() -> Path | None:
 _HASHED_ASSET = re.compile(
     r"^(core|app|deck|icons|pptx)\.[0-9a-f]{16}\.(css|js)$")
 
+#: The example notebook as build_web renders it: the one URL the page
+#: opens it by, and the file the rendering is written to (with the hash
+#: of its content, like the assets -- see :func:`_write_example_shell`).
+EXAMPLE_URL = "example_climate_analysis.ipynb"
+_EXAMPLE_SHELL = re.compile(
+    r"^example_climate_analysis\.shell\.[0-9a-f]{16}\.html$")
+
+#: A name earlier builds wrote and this one no longer does: the page
+#: carries its runtime inline now. Removed like a stale hashed asset, so
+#: a rebuilt docs/ does not keep a file nothing loads.
+_RETIRED = ("web-runtime.js",)
+
 
 def _write_static_files(outdir: Path) -> list[str]:
     """Write the page's content-hashed CSS/JS beside it; return the names.
@@ -181,6 +194,85 @@ def _write_static_files(outdir: Path) -> list[str]:
     return [f.name for f in files]
 
 
+def _copy_gifs(outdir: Path) -> bool:
+    """Put the demo GIFs beside the page; say whether there are any.
+
+    The help overlay and welcome tour link to gifs/ relative to the page,
+    so a build into a fresh directory needs them copied across; without
+    this the demo reel silently never appears anywhere but the repo's own
+    docs/. The answer is stamped into the page (``web.demos``), which is
+    how it knows to offer the reel: it used to find out by downloading a
+    317 KB clip at startup (2026-10-09 speed pass, load-static #10).
+    """
+    gifs = find_gifs()
+    dest = outdir / "gifs"
+    if gifs and gifs.resolve() != dest.resolve():
+        dest.mkdir(exist_ok=True)
+        for gif in sorted(gifs.glob("*.gif")):
+            target = dest / gif.name
+            if not target.exists() or target.stat().st_size != gif.stat().st_size:
+                target.write_bytes(gif.read_bytes())
+    return dest.is_dir() and any(dest.glob("*.gif"))
+
+
+def _write_example_shell(outdir: Path, text: str) -> dict[str, object] | None:
+    """The example notebook, rendered now: what "Try the example" mounts.
+
+    It used to fetch the notebook and wait for Python -- downloaded and
+    started in the visitor's browser just for this -- to parse it: 4.1 s
+    from the click to the first card at 4x CPU on localhost, 13.8 s from
+    arriving on a 9 Mbps link (2026-10-09 speed pass, load-static #2).
+    Rendered here instead, by the very function the browser's worker
+    calls (``web_parse``, nothing else taken), it is the same markup
+    byte for byte, and the page mounts it with no Python at all.
+
+    The file is named for its content, like the page's other files: a
+    copy cached anywhere is final, and a new rendering is a new name. The
+    previous build's copy is removed. Returns what the page is told (the
+    file, the tab name it makes, whether it holds maths), or None if it
+    cannot be rendered -- the page then opens the example through Python,
+    as it always did.
+    """
+    try:
+        shell = web_parse(EXAMPLE_URL, text, "[]")
+    except Exception:
+        shell = ""
+    stem = re.search(r'data-nb="([^"]+)"', shell)
+    data = shell.encode("utf-8")
+    name = ("example_climate_analysis.shell."
+            f"{hashlib.sha256(data).hexdigest()[:16]}.html")
+    for old in outdir.iterdir():
+        if _EXAMPLE_SHELL.match(old.name) and (old.name != name or not stem):
+            old.unlink()
+    if not stem:
+        return None
+    target = outdir / name
+    if not target.exists() or target.read_bytes() != data:
+        target.write_bytes(data)
+    info: dict[str, object] = {"shell": name,
+                               "stem": html.unescape(stem.group(1))}
+    if has_marked_math(shell):
+        info["math"] = 1
+    return info
+
+
+def service_worker(version: str, core: list[str], warm: list[str]) -> str:
+    """sw.js for this build: its version, and the names of the files it
+    wrote that the worker keeps -- ``core`` at install (the page's own
+    files), ``warm`` with the runtime once Python is up (the example:
+    its rendering, and the notebook for when Python has to open it).
+
+    Version-stamped with the package hash (token replace, NOT str.format
+    -- the JS is full of braces) so a new build retires the old cache
+    while an unchanged package produces byte-identical output, same as
+    the zip itself. The names are ones this build wrote (letters, digits,
+    dots), so they need no escaping inside the quotes.
+    """
+    return assets.sw_js().replace("__JV_VERSION__", version).replace(
+        "/*__JV_ASSETS__*/", "".join(f", '{name}'" for name in core)).replace(
+        "/*__JV_WARM__*/", "".join(f", '{name}'" for name in warm))
+
+
 def build_web(outdir: Path, example: Path | None = None) -> None:
     """Write a deployable static web app (index.html + the packaged renderer)."""
     outdir.mkdir(parents=True, exist_ok=True)
@@ -189,6 +281,38 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     # the stamp the loader shows so a screenshot can say which build it
     # is (T206 -- three stale-build screenshots in one day)
     version = hashlib.md5(zip_path.read_bytes()).hexdigest()[:12]
+
+    # What the page is told about this build: whether the demo reel's
+    # clips are here, and which notebooks it can open already rendered.
+    web: dict[str, object] = {"demos": 1 if _copy_gifs(outdir) else 0}
+    pre: dict[str, dict[str, object]] = {}
+    # what the service worker keeps with the runtime once Python is up
+    warm: list[str] = []
+    # bundle the example so "Try the example notebook" works same-origin
+    example = example or find_example()
+    if example and example.exists():
+        (outdir / EXAMPLE_URL).write_bytes(example.read_bytes())
+        shell = _write_example_shell(
+            outdir, example.read_text(encoding="utf-8"))
+        if shell:
+            pre[EXAMPLE_URL] = shell
+            warm.append(str(shell["shell"]))
+        # ...and the notebook itself: with another document open under
+        # its name, "Try the example" goes through Python (webOpenUrl),
+        # which fetches this -- offline, the worker's copy is the only one
+        warm.append(EXAMPLE_URL)
+        # also render an INSTANT static demo (no Pyodide load, no install) —
+        # a hosted, clickable "live demo above the fold"
+        try:
+            doc = parse_notebook(json.loads(
+                example.read_text(encoding="utf-8")))
+            doc.source_name = "example_climate_analysis"
+            write_text(outdir / "example_climate_analysis.html",
+                       render_page([doc], mode="static"))
+        except Exception:
+            pass
+    web["pre"] = pre
+
     # Build the empty app here, where Python is already running. The
     # browser can show it immediately while its worker loads the parser.
     # Its stylesheets and scripts are files beside it, named for their
@@ -196,18 +320,28 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     # that every visit re-tokenised and recompiled on the main thread,
     # because an inline script gets no code cache -- so a repeat visit
     # was barely faster than the first (2026-10-08 speed investigation).
-    page = render_page([], mode="web", asset_base="")
+    page = render_page([], mode="web", app_cfg={"web": web}, asset_base="")
     assets_out = _write_static_files(outdir)
     head = assets.web_loader().split("<head>", 1)[1].split("</head>", 1)[0]
     page = re.sub(r"<title>.*?</title>", "", page, count=1, flags=re.S)
     page = page.replace("<head>", "<head>\n" + head, 1)
+    # The bridge to the parsing worker goes IN the page: as a file of its
+    # own it was a parser-blocking request in <head>, a round trip before
+    # the body could even start (load-static #11). It holds no "</".
+    runtime = assets.load("js/web-runtime.js").replace(
+        "__JV_VERSION__", version)
+    if "</" in runtime:
+        raise ValueError("web-runtime.js cannot be inlined: it holds '</'")
     page = page.replace("</head>",
                         f'<meta name="junoview-build" content="{version}">\n'
-                        '<script src="web-runtime.js"></script>\n</head>', 1)
+                        f"<script>{runtime}</script>\n</head>", 1)
     write_text(outdir / "index.html", page)
-    for name in ("web-runtime.js", "web-worker.js"):
-        write_text(outdir / name, assets.load("js/" + name).replace(
-            "__JV_VERSION__", version))
+    write_text(outdir / "web-worker.js", assets.load(
+        "js/web-worker.js").replace("__JV_VERSION__", version))
+    for name in _RETIRED:
+        stale = outdir / name
+        if stale.is_file():
+            stale.unlink()
     write_text(outdir / ".nojekyll", "")
     for name in _LEGAL_FILES:
         write_text(outdir / name, _legal_text(name))
@@ -217,14 +351,8 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     # The offline, installable app: a service worker plus a manifest turn
     # the page into a PWA -- one visit caches the app, the Pyodide runtime
     # and MathJax, after which it loads with no internet and the browser
-    # offers "Install app". The worker is version-stamped with the package
-    # hash (token replace, NOT str.format -- the JS is full of braces) so a
-    # new build retires the old cache while an unchanged package produces
-    # byte-identical output, same as the zip itself.
-    write_text(outdir / "sw.js",
-               assets.sw_js().replace("__JV_VERSION__", version).replace(
-                   "/*__JV_ASSETS__*/",
-                   "".join(f", '{name}'" for name in assets_out)))
+    # offers "Install app".
+    write_text(outdir / "sw.js", service_worker(version, assets_out, warm))
     manifest = {
         "name": "Junoview",
         "short_name": "Junoview",
@@ -242,31 +370,3 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     write_text(outdir / "manifest.webmanifest",
                json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     write_text(outdir / "icon.svg", LOGO_SVG + "\n")
-
-    # The help overlay and welcome tour link to gifs/ relative to the page, so
-    # a build into a fresh directory needs them copied across; without this the
-    # demo reel silently never appears anywhere but the repo's own docs/.
-    gifs = find_gifs()
-    if gifs and gifs.resolve() != (outdir / "gifs").resolve():
-        dest = outdir / "gifs"
-        dest.mkdir(exist_ok=True)
-        for gif in sorted(gifs.glob("*.gif")):
-            target = dest / gif.name
-            if not target.exists() or target.stat().st_size != gif.stat().st_size:
-                target.write_bytes(gif.read_bytes())
-
-    # bundle the example so "Try the example notebook" works same-origin
-    example = example or find_example()
-    if example and example.exists():
-        (outdir / "example_climate_analysis.ipynb").write_bytes(
-            example.read_bytes())
-        # also render an INSTANT static demo (no Pyodide load, no install) —
-        # a hosted, clickable "live demo above the fold"
-        try:
-            doc = parse_notebook(json.loads(
-                example.read_text(encoding="utf-8")))
-            doc.source_name = "example_climate_analysis"
-            write_text(outdir / "example_climate_analysis.html",
-                       render_page([doc], mode="static"))
-        except Exception:
-            pass

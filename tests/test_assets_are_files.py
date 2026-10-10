@@ -202,7 +202,7 @@ def test_the_web_build_writes_the_files_and_its_worker_precaches_them(
     # the inline copies are gone from the page itself
     assert len(idx.encode("utf-8")) < 600_000
     # a hashed name is final in the worker's cache: no refresh behind it
-    assert "var HASHED_RE = /\\.[0-9a-f]{16}\\.(css|js)$/;" in sw
+    assert "var HASHED_RE = /\\.[0-9a-f]{16}\\.(css|js|html)$/;" in sw
     assert "if(hit && (!mine || HASHED_RE.test(url.pathname)))" in sw
 
 

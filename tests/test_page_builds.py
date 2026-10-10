@@ -71,6 +71,14 @@ def test_github_urls_normalize_and_web_build_dedupes_stems(nb):
     assert 'data-nb="demo-2"' in shell
 
 
+def _inline_runtime(idx: str) -> str:
+    """The parsing bridge build_web writes into the page's <head>."""
+    head = idx[:idx.index("</head>")]
+    i = head.index("window.semPy=")
+    start = head.rindex("<script>", 0, i) + len("<script>")
+    return head[start:head.index("</script>", i)]
+
+
 def test_build_web_emits_a_pyodide_bundle():
     """The static web build ships Pyodide and the renderer source.
 
@@ -84,15 +92,18 @@ def test_build_web_emits_a_pyodide_bundle():
         build_web(Path(td))
         root = Path(__file__).resolve().parent.parent
         idx = (Path(td) / "index.html").read_text(encoding="utf-8")
-        runtime = (Path(td) / "web-runtime.js").read_text(encoding="utf-8")
+        runtime = _inline_runtime(idx)
         worker = (Path(td) / "web-worker.js").read_text(encoding="utf-8")
         assert "pyodide" in worker and "sem:pyready" in runtime
-        assert '<script src="web-runtime.js"></script>' in idx
+        # the bridge is IN the page now (2026-10-09 speed pass): as its
+        # own file it was a parser-blocking request in <head>
+        assert 'src="web-runtime.js"' not in idx
+        assert not (Path(td) / "web-runtime.js").exists()
         # the bridge is installed before app.js runs -- app.js is a
         # content-hashed file beside the page now (render/static.py)
         app_js = re.search(r'<script src="(app\.[0-9a-f]{16}\.js)"', idx)
         assert app_js, "index.html does not load app.js"
-        assert idx.index('src="web-runtime.js"') < app_js.start()
+        assert idx.index("window.semPy=") < app_js.start()
         assert "window.SemApp" in (Path(td) / app_js.group(1)).read_text(
             encoding="utf-8")
         assert 'id="deck"' in idx
@@ -128,7 +139,9 @@ def test_build_web_emits_the_offline_installable_app():
     package hash so a new build retires the old cache, deterministic so an
     unchanged build produces no diff), a manifest and an icon, and the
     offline cache is filled after the parsing worker's critical downloads
-    (2026-09-24). The complete offline asset set is retained.
+    (2026-09-24; since 2026-10-09 its heavy half is asked for by the page
+    once Python is up). The complete offline asset set is retained --
+    Plotly from the first time a page uses it.
     """
     with tempfile.TemporaryDirectory() as td:
         build_web(Path(td))
@@ -139,13 +152,17 @@ def test_build_web_emits_the_offline_installable_app():
         assert "THIRD_PARTY_NOTICES.html" in sw
         # The parser and offline cache must use the same Python runtime.
         idx = (Path(td) / "index.html").read_text(encoding="utf-8")
-        runtime = (Path(td) / "web-runtime.js").read_text(encoding="utf-8")
+        runtime = _inline_runtime(idx)
         worker = (Path(td) / "web-worker.js").read_text(encoding="utf-8")
         pin = "pyodide/v0.26.4/full/"
         assert pin in sw and pin in worker
         assert "serviceWorker" in runtime and "manifest.webmanifest" in idx
         assert "beforeinstallprompt" in runtime
-        assert "web-worker.js" in sw and "web-runtime.js" in sw
+        # the page carries its bridge inline, so the worker caches the
+        # page ('./') and the parser's script -- not a third copy
+        core = sw[sw.index("var CORE = ["):]
+        core = core[:core.index("];")]
+        assert "'web-worker.js'" in core and "web-runtime.js" not in core
         # T206: a newer build announces itself. The first visit after a
         # deploy boots the previous build from the worker's cache while
         # the new worker takes over; the loader now says so with a Reload
@@ -173,7 +190,7 @@ def test_build_web_emits_the_offline_installable_app():
         with tempfile.TemporaryDirectory() as td2:
             build_web(Path(td2))
             assert (Path(td2) / "sw.js").read_text(encoding="utf-8") == sw
-            for name in ("index.html", "web-runtime.js", "web-worker.js",
+            for name in ("index.html", "web-worker.js",
                          "junoview.zip", "LICENSE", "NOTICE",
                          "THIRD_PARTY_NOTICES.html"):
                 assert (Path(td2) / name).read_bytes() == \

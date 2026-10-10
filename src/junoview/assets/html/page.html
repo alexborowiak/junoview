@@ -608,7 +608,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
 <div class="docs" id="docs">
 {shells}
 </div>
-<div class="welcome" id="welcome" hidden>
+<div class="welcome" id="welcome"{welcome_hidden}>
   <!-- one bar for every way in. Opening a notebook is a fetch and a parse
        that can take seconds on a slow link, and clicking a remembered file
        used to give no sign at all that anything had happened (2026-08-21,
@@ -684,7 +684,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
         <!-- T264: the example lives here now, beside the other two ways
              of being shown around, instead of as a fourth primary card.
              Still web-build only -- app.js hides the separator with it. -->
-        <span id="welcome-demo-wrap" hidden><a href="#" id="welcome-demo"
+        <span id="welcome-demo-wrap"{web_hidden}><a href="#" id="welcome-demo"
           >Try the example notebook</a>
         <span class="wl-sep">&middot;</span></span>
         <a href="#" id="welcome-help">How to use</a>
@@ -702,8 +702,8 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
              It used to appear only while the browser had an install
              offer pending, which meant no door at all on the browsers
              that never fire that event (2026-08-29, T85). -->
-        <span class="wl-sep" id="welcome-install-sep" hidden>&middot;</span>
-        <a href="#" id="welcome-install" hidden>Install as an app</a>
+        <span class="wl-sep" id="welcome-install-sep"{web_hidden}>&middot;</span>
+        <a href="#" id="welcome-install"{web_hidden}>Install as an app</a>
       </div>
       <!-- The start screen is a launch point, not a second copy of the
            presentation rail.  It shows the presentations actually used
@@ -723,7 +723,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
               title="Create a presentation folder"
               ><i data-ic="open"></i> Folder</button></span></h2>
           <div class="wpres" id="welcome-pres" hidden></div>
-          <div class="wj-none" id="wj-none-pres" hidden>No recent
+          <div class="wj-none" id="wj-none-pres"{web_hidden}>No recent
             presentations</div>
         </section>
         <section class="wj-col" id="wj-nb">
@@ -752,7 +752,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
       </div>
       <div class="welcome-scrollcue" aria-hidden="true">How it works
         &#8595;</div>
-    </div>
+    </div>{welcome_reveal}
     <div class="welcome-more">
       <ol class="welcome-steps">
         <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from

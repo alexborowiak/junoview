@@ -154,6 +154,11 @@ def app_data_json(mode: str, cfg: dict) -> str:
     # every other page is byte-for-byte what it was
     if cfg.get("lazyEmb"):
         app_data["project"]["lazyEmb"] = 1
+    # what build_web knows about the directory the page sits in (whether
+    # the demo clips are there, which notebooks it holds already
+    # rendered); only that page has the key
+    if cfg.get("web"):
+        app_data["web"] = cfg["web"]
     return json.dumps(app_data, ensure_ascii=False).replace("</", "<\\/")
 
 
@@ -217,7 +222,7 @@ def page_pieces(*, mode: str, title: str, shells: Piece, app_data: Piece,
         "title": html.escape(title),
         "head_extra": _head_extra(mode),
         # an empty `shells` is a page with no notebook open
-        **_first_layout(bool(shells)),
+        **_first_layout(bool(shells), mode),
         "shells": shells,
         "app_data": app_data,
         "mathjax": mathjax_head(math),
@@ -260,6 +265,34 @@ def _encoded(text: str) -> bytes:
     return text.encode("utf-8")
 
 
+#: The web build's welcome, shown as soon as its first screen is parsed
+#: (see _first_layout). It is a field VALUE, not template text, so its
+#: braces are its own. ONLY AS SENT: a visitor coming back has Recent
+#: rows, the last-session offer and their presentations, which app.js
+#: puts in; shown before that, the screen said "No recent presentations"
+#: to someone who has some, and then the whole centred block jumped up
+#: as the lists arrived (layout shift 0.079 with six recents, vs 0). F5
+#: on a presentation's address (#/pres/...) is a deck about to open, not
+#: Home. Those wait for app.js, which shows the screen complete; an
+#: installed app is never offered to install itself, even for a moment.
+#: And a control on it clicked while app.js is still on its way (up to
+#: ~0.9 s on a 9 Mbps link) -- Try the example, Open, New, a link -- is
+#: remembered for app.js to carry out (__jvEarlyClick), not lost.
+WELCOME_REVEAL = (
+    "<script>(function(){try{if(/^#\\/./.test(location.hash))return;"
+    "var p=location.pathname,w='semweb:'+p+':',d='sempres:web:'+p+':',"
+    "k=[w+'recent',w+'open',w+'pinned-nb',d+'recent-presentations',"
+    "d+'pinned-presentations'];for(var i=0;i<k.length;i++){"
+    "var v=localStorage.getItem(k[i]);if(v&&v!=='[]')return;}"
+    "if(matchMedia('(display-mode: standalone)').matches)"
+    "['welcome-install','welcome-install-sep'].forEach(function(id){"
+    "document.getElementById(id).hidden=true;});}catch(e){}"
+    "document.getElementById('welcome').addEventListener('click',"
+    "function(e){var t=e.target.closest&&e.target.closest("
+    "'a[href=\"#\"][id],button[id]');if(!t||window.SemApp)return;"
+    "e.preventDefault();window.__jvEarlyClick=t.id;});"
+    "document.getElementById('welcome').hidden=false;})();</script>")
+
 #: --chrome-h as app.js measures it for the default first screen -- the
 #: open files as tabs on top, so the title row with the tabs over the
 #: ribbon: 124px at 1366x657 (126 once the ribbon compacts, at 1280 and
@@ -267,7 +300,7 @@ def _encoded(text: str) -> bytes:
 FIRST_CHROME_H = 124
 
 
-def _first_layout(has_docs: bool) -> dict[str, str]:
+def _first_layout(has_docs: bool, mode: str = "static") -> dict[str, str]:
     """Paint the page first the way app.js will arrange it.
 
     The body used to arrive with no state classes, so the first layout
@@ -276,14 +309,37 @@ def _first_layout(has_docs: bool) -> dict[str, str]:
     and 44px down (layout shift 0.196, load-static #8). With a notebook
     open, app.js's default is the open files as tabs on top (filesAt()
     'top', refreshOpenTabsRow), so that is what is sent. A saved
-    preference for the side list still changes it once, as before; with
-    nothing open the welcome screen decides, as before.
+    preference for the side list still changes it once, as before.
+
+    With nothing open, the WEB build is its welcome screen (refreshChrome:
+    nothing open, so `welcoming`; the open files as tabs, so the side
+    panel the welcome would sit beside is not there), and it is sent as
+    one: the screen used to arrive hidden, the ribbon painted in its
+    place, and the welcome text -- the largest thing on it -- appeared
+    only once every script had run, 0.4 s after the first paint at 4x CPU
+    (load-static #11). Its web-only links (the example, Install) and the
+    empty "No recent presentations" line app.js puts up at once are sent
+    shown for the same reason; app.js still hides Install when running
+    installed, and a saved side list still turns into one before the
+    first paint (page.html). It is shown by a line of script the moment
+    its first screen has been parsed, not before: shown while still
+    arriving, its centred block jumped up as each part came in. Every
+    other page with nothing open lets app.js decide, as before.
     """
+    hidden = {"welcome_hidden": " hidden", "web_hidden": " hidden",
+              "welcome_reveal": ""}
     if not has_docs:
-        return {"html_attrs": "", "body_attrs": "", "bar_hidden": " hidden"}
+        if mode == "web":
+            return {"html_attrs": "",
+                    "body_attrs": ' class="files-top welcoming"',
+                    "bar_hidden": " hidden",
+                    "welcome_hidden": " hidden", "web_hidden": "",
+                    "welcome_reveal": WELCOME_REVEAL}
+        return {"html_attrs": "", "body_attrs": "", "bar_hidden": " hidden",
+                **hidden}
     return {"html_attrs": f' style="--chrome-h:{FIRST_CHROME_H}px"',
             "body_attrs": ' class="files-top tabs-row-on"',
-            "bar_hidden": ""}
+            "bar_hidden": "", **hidden}
 
 
 def _head_extra(mode: str) -> str:

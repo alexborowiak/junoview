@@ -79,7 +79,9 @@ def test_welcome_tour_reel_is_deferred_and_laid_out_in_column(out):
     assert 'it updates straight away in the' in out
     assert "<img src=\"gifs/" not in out          # never fetched eagerly
     assert ".wtour.lite img{display:none;}" in out
-    assert "probe.src='gifs/code_folding.gif';" in out
+    # offered where the build put the clips beside the page (web.demos),
+    # which it says instead of the page downloading one to find out
+    assert "if(APP.mode!=='web'||!(APP.web&&APP.web.demos))" in out
 
 
 def test_welcome_open_button_and_getting_started_steps(out):

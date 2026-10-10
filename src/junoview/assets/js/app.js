@@ -1171,6 +1171,9 @@
       pendingRoute=initialHash;
     tryRoute();
     if(!location.hash) updateHash();   /* stamp the default view */
+    /* a welcome control clicked before the scripts had run (web build,
+       see the welcome's wiring) that needed the deck file too */
+    if(APP.afterBoot){var f=APP.afterBoot;APP.afterBoot=null;f();}
   };
   /* a tab mounting later (web restore) satisfies a still-pending route; debounce
      so it lands AFTER the restore's own mounting settles, not mid-storm */
@@ -9161,6 +9164,14 @@
     return u;
   }
   function webReady(){return !!window.semPy;}
+  /* Python starts late in the web build (web-runtime.js): at the first
+     sign a notebook is coming -- the Open dialog, a file dragged over
+     the window, a URL or a file on its way in -- it starts NOW, so the
+     parser is warming while the file is still being chosen or fetched */
+  function webWarmPython(){
+    if(APP.mode==='web'&&window.semPy&&window.semPy.start)
+      window.semPy.start();
+  }
   var webImports=Promise.resolve();
   function queueWebImport(run){
     /* Mount one result before allocating the next notebook's name. Two
@@ -9215,6 +9226,7 @@
     });
   }
   function webOpenFiles(files){
+    if(files&&files.length) webWarmPython();
     Array.prototype.slice.call(files||[]).forEach(function(f){
       if(isDeckPath(f.name)){
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
@@ -9251,28 +9263,78 @@
     var fu=url;
     if(/^https?:\/\/[^\/]*githubusercontent\.com\//i.test(url))
       fu=url+(url.indexOf('?')<0?'?':'&')+'jvr='+Date.now();
-    fetch(fu,{cache:'no-store'}).then(function(r){
-      if(!r.ok){
-        /* carry the status: the restore path below has to tell "the
-           server says this is gone" apart from "there is no network" */
-        var he=new Error('HTTP '+r.status);he.status=r.status;throw he;
-      }
-      return r.text();
-    }).then(function(txt){
-      if(!webReady()) throw new Error('Python is still loading');
-      var name=decodeURIComponent(
-        url.split('?')[0].split('/').pop()||'notebook.ipynb');
-      /* reloading: exclude the tab that already holds this URL from the
-         "taken" names so the parser reproduces its stem and we REPLACE
-         that tab in place instead of minting a new one */
-      return queueWebImport(function(){
-        var taken=APP.order.filter(function(s){
-          return !(APP.shells[s]&&APP.shells[s].path===url);});
-        return window.semPy.parse(name,txt,taken).then(function(shell){
-          mountShellHTML(shell,url);webNote(url);done();hideDlg();
+    /* reloading: exclude the tab that already holds this URL from the
+       "taken" names so the parser reproduces its stem and we REPLACE
+       that tab in place instead of minting a new one */
+    function takenNames(){
+      return APP.order.filter(function(s){
+        return !(APP.shells[s]&&APP.shells[s].path===url);});
+    }
+    function viaPython(){
+      webWarmPython();
+      return fetch(fu,{cache:'no-store'}).then(function(r){
+        if(!r.ok){
+          /* carry the status: the restore path below has to tell "the
+             server says this is gone" apart from "there is no network" */
+          var he=new Error('HTTP '+r.status);he.status=r.status;throw he;
+        }
+        return r.text();
+      }).then(function(txt){
+        if(!webReady()) throw new Error('Python is still loading');
+        var name=decodeURIComponent(
+          url.split('?')[0].split('/').pop()||'notebook.ipynb');
+        return queueWebImport(function(){
+          return window.semPy.parse(name,txt,takenNames()).then(function(shell){
+            mountShellHTML(shell,url);webNote(url);done();hideDlg();
+          });
         });
       });
-    }).catch(function(e){
+    }
+    /* A NOTEBOOK THE BUILD ALREADY RENDERED (the example) needs no
+       Python: build_web wrote the shell the parser would give it, so it
+       is fetched and mounted as it is. From the click to its first card
+       on screen, a first visit waited for 7 MB of Pyodide to arrive and
+       start: 4.1 s at 4x CPU on a fast link became 2.7 s, and 8.6 s on a
+       9 Mbps link became 2.8 s (2026-10-09 speed pass, load-static #2).
+       Only while its tab name is free (or already its
+       own): with another document called that, the parser has to pick
+       the next free name, so Python does it as before -- as it does if
+       the rendered copy cannot be had. */
+    var pre=(APP.web&&APP.web.pre&&Object.prototype.hasOwnProperty.call(
+      APP.web.pre,url))?APP.web.pre[url]:null;
+    /* its maths (the build says if it has any) loads while the shell
+       downloads, and the cards go up once it is there -- set as they
+       arrive, as they always were when Python took longer than MathJax
+       -- or after 1.5 s without it, raw until it comes. Python, not
+       wanted for this, does not start meanwhile. */
+    var mathP=(pre&&pre.math)?Promise.race([
+      jvMath.ensure().catch(function(){}),
+      new Promise(function(r){setTimeout(r,1500);})]):null;
+    var release=(pre&&window.semPy&&window.semPy.hold)?window.semPy.hold()
+      :function(){};
+    var opened=!pre?viaPython():fetch(pre.shell).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.text();
+    }).then(function(shell){
+      /* ...and only if what came back IS the rendering: a host that
+         answers a file it no longer has (a page left open across a new
+         build) with its index page and a 200 -- a single-page-app
+         fallback, a captive portal -- said "Open failed: bad response"
+         and put the example in Recent unopened */
+      if(!/^\s*<div class="[^"]*\bnbshell\b/.test(shell))
+        throw new Error('not a rendering');
+      return mathP?mathP.then(function(){return shell;}):shell;
+    }).then(function(shell){
+      return queueWebImport(function(){
+        if(takenNames().indexOf(pre.stem)>=0) return false;
+        mountShellHTML(shell,url);webNote(url);done();hideDlg();
+        return true;
+      });
+    },function(){return false;}).then(function(ok){
+      release();
+      if(!ok) return viaPython();
+    },function(e){release();throw e;});
+    opened.catch(function(e){
       var wasSilent=pend.s;
       done();
       if(wasSilent){
@@ -9425,6 +9487,7 @@
     var inp=$('#odlg-input'); if(inp) inp.value='';
     var up=$('#odlg-up'), fb=$('#odlg-files');
     if(APP.mode==='web'){
+      webWarmPython();
       if(up) up.hidden=true;
       if(fb) fb.hidden=false;
       if(dlgPath) dlgPath.textContent='Open notebooks';
@@ -9791,18 +9854,17 @@
       },{rootMargin:'400px 0px'});
       imgs.forEach(function(im){io.observe(im);});
     }
-    /* does the folder exist at all? one HEAD-ish probe decides whether the
-       section is offered, so a local render never shows broken frames.
-       T528: ONLY WHERE IT CAN. The folder is the published site's
-       (docs/gifs/); the app's own server and a file:// render never have
-       it, and asking anyway put a refused request (403 from the app, a
-       not-found from a file) in the console of every start. The web
-       build is the one place the answer can be yes. */
-    if(APP.mode!=='web'){t.hidden=true;return;}
-    var probe=new Image();
-    probe.addEventListener('load',function(){t.hidden=false;paint();});
-    probe.addEventListener('error',function(){t.hidden=true;});
-    probe.src='gifs/code_folding.gif';
+    /* does the folder exist at all? The build says: it stamps web.demos
+       when it put the clips beside the page, so a local render never
+       shows broken frames. T528: ONLY WHERE IT CAN. The folder is the
+       published site's (docs/gifs/); the app's own server and a file://
+       render never have it, and asking anyway put a refused request (403
+       from the app, a not-found from a file) in the console of every
+       start. The page used to ASK, by downloading a whole 317 KB clip at
+       every start before showing anything (2026-10-09 speed pass,
+       load-static #10); the build that copied the folder already knew. */
+    if(APP.mode!=='web'||!(APP.web&&APP.web.demos)){t.hidden=true;return;}
+    t.hidden=false;paint();
     btn.addEventListener('click',function(){
       on=!on;
       try{localStorage.setItem(KEY,on?'1':'0');}catch(e){}
@@ -9903,6 +9965,7 @@
     window.addEventListener('dragenter',function(e){
       e.preventDefault();
       if(!dragHasFiles(e)) return;
+      webWarmPython();
       dragDepth++;
       if(hint) hint.hidden=false;
     });
@@ -10010,6 +10073,23 @@
     if(demoBtn) demoBtn.addEventListener('click',function(){
       webOpenUrl('example_climate_analysis.ipynb',false);
     });
+    /* A WELCOME CONTROL CLICKED WHILE THIS FILE WAS ON ITS WAY. The web
+       build shows its welcome before any script file has run, and the
+       reveal (render/page.py WELCOME_REVEAL) remembers the last control
+       clicked meanwhile: carried out once it is wired, instead of lost.
+       New, Folder and the presentations are the deck file's to answer,
+       so those wait for its boot to end (applyInitialRoute). */
+    var early=window.__jvEarlyClick;
+    if(early){
+      window.__jvEarlyClick=0;
+      var replay=function(){
+        var el=document.getElementById(early),wl=$('#welcome');
+        if(el&&!el.hidden&&wl&&!wl.hidden) el.click();
+      };
+      if(/^welcome-(new|folder|presentations)$/.test(early))
+        APP.afterBoot=replay;
+      else setTimeout(replay,0);
+    }
     /* ---- the installable, offline-capable app (PWA) ----
        web-runtime.js keeps any early install offer on the window; this
        listener handles offers arriving after the welcome is wired. */
@@ -10055,18 +10135,20 @@
       e.preventDefault();window.__jvInstall=e;paintInstall();
     });
     paintInstall();
-    /* say ONCE when offline is actually ready — `ready` resolves after
-       the worker's install precached the app and runtime, so the promise
-       is the honest signal, not the registration */
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.ready.then(function(){
-        var K=WEBKEY+':offline-ready';
-        try{if(localStorage.getItem(K)) return;
-          localStorage.setItem(K,'1');}catch(e){}
-        docToast('Saved for offline — Junoview now opens here even '
-          +'without internet');
-      }).catch(function(){});
+    /* say ONCE when offline is actually ready — the service worker
+       answers the page's 'warm' request once the Python runtime is in its
+       cache too (web-runtime.js: sem:offline), so that is the honest
+       signal, not the registration; its install alone holds only the
+       page */
+    function offlineReady(){
+      var K=WEBKEY+':offline-ready';
+      try{if(localStorage.getItem(K)) return;
+        localStorage.setItem(K,'1');}catch(e){}
+      docToast('Saved for offline — Junoview now opens here even '
+        +'without internet');
     }
+    if(window.__jvOffline) offlineReady();
+    else document.addEventListener('sem:offline',offlineReady);
     try{
       APP.project.recent=JSON.parse(
         localStorage.getItem(WEBKEY+':recent')||'[]');

@@ -2448,8 +2448,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # throttled notes bookkeeping, virtual Style system table; review fixes.
 # Speed (ribbon): fitEditRibbon remembers by its inputs (group signatures),
 # predicted folds, coalesced resize, readouts on change, reader band memo; review fixes.
-EXPECTED_MD5 = "03f5127fa702ac6066d58c6196f19acc"
-EXPECTED_BYTES = 5547964
+# Speed (web): Python on intent, pre-rendered example shell, service worker after
+# load with a warm set, welcome painted visible; review fixes.
+EXPECTED_MD5 = "f84dd0fd7f11a65149f3ced50ec9ba9d"
+EXPECTED_BYTES = 5552126
 
 
 def _render_example() -> str:
@@ -2536,6 +2538,8 @@ def test_page_template_placeholders_match_what_render_page_supplies():
         # the first layout, painted as app.js will arrange it (page.py
         # _first_layout; 2026-10-09 speed, load-static #8)
         "html_attrs", "body_attrs", "bar_hidden",
+        # ...and the web build sent as its welcome screen (load-static #11)
+        "welcome_hidden", "web_hidden", "welcome_reveal",
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())
