@@ -110,8 +110,11 @@ def test_the_raw_view_holding_a_script_is_live_at_load(app):
     page.wait_for_function(
         "document.querySelectorAll('.nbshell.raw .rawview .rawcell')"
         ".length===3")
-    assert "x = 1" in page.evaluate(
-        "document.querySelector('.rawview').innerText")
+    # the cells are content-visibility:auto (reader #7): what is on screen
+    # is laid out by the next frame, so wait for it to read as shown
+    page.wait_for_function(
+        "document.querySelector('.nbshell.raw .rawview').innerText"
+        ".includes('x = 1')")
     # it ran once, at load -- not again when Raw was opened
     assert page.evaluate(
         "document.querySelectorAll('#rawonly').length") == 1

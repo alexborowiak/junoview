@@ -76,22 +76,22 @@ function fetch(){calls++;return Promise.resolve({ok:true,json:()=>Promise.resolv
 
 def test_peek_eyes_report_and_edit_saved_visibility(tmp_path):
     src = assets.load("js/app.js")
-    code = lift_fn(src, "syncUnhideBtn") + r"""
+    # the buttons and what they belong to come from the notebook's index
+    # (shellIdx, 2026-10-09 speed); attributes are written when they differ
+    code = lift_fn(src, "syncUnhideBtn") + lift_fn(src, "setAttrIf") + r"""
 function classes(items){return {items,contains:x=>items.includes(x)};}
-function control(owner,name){return {attrs:{},classList:classes([name]),
-  closest:()=>owner,
-  setAttribute(k,v){this.attrs[k]=v;}};}
+const ATTRS={setAttribute(k,v){this.attrs[k]=v;},
+  getAttribute(k){return k in this.attrs?this.attrs[k]:null;}};
+function control(owner,name){return Object.assign(Object.create(ATTRS),
+  {attrs:{},classList:classes([name]),closest:()=>owner});}
 const card={classList:classes(['cell-off'])},
   section={classList:classes(['sec-off'])},eye=control(card),
-  sectionButton=control(section,'sec-hideall'),peek={attrs:{},
-    setAttribute(k,v){this.attrs[k]=v;}};
+  sectionButton=control(section,'sec-hideall'),
+  peek=Object.assign(Object.create(ATTRS),{attrs:{}});
 const shell={classList:classes(['reveal-hidden']),
-  querySelector:()=>peek,querySelectorAll:()=>[card,section]};
-function $$(selector){
-  if(selector==='.cell-eye,.navitem-eye') return [eye];
-  if(selector==='.sec-hideall,.navsec-hideall') return [sectionButton];
-  return [];
-}
+  querySelector:()=>peek};
+function shellIdx(sh){return {cards:[card],secs:[section],eyes:[eye],
+  secEyes:[],secHide:[sectionButton]};}
 function bic(){return '<i></i>';}
 syncUnhideBtn(shell);
 const before={eye:eye.attrs['aria-label'],pressed:eye.attrs['aria-pressed'],
@@ -132,17 +132,20 @@ console.log(JSON.stringify(calls));
 
 def test_peek_eyes_leave_filtered_cells_to_the_filters(tmp_path):
     src = assets.load("js/app.js")
-    code = lift_fn(src, "syncUnhideBtn") + r"""
+    code = lift_fn(src, "syncUnhideBtn") + lift_fn(src, "setAttrIf") + r"""
 function classes(items){return {contains:x=>items.includes(x)};}
-function eye(owner){return {attrs:{},closest:()=>owner,
-  setAttribute(k,v){this.attrs[k]=v;}};}
+const ATTRS={setAttribute(k,v){this.attrs[k]=v;},
+  getAttribute(k){return k in this.attrs?this.attrs[k]:null;}};
+function eye(owner){return Object.assign(Object.create(ATTRS),
+  {attrs:{},closest:()=>owner});}
 const hidden={classList:classes(['nav-hidden'])};
 const shown={classList:classes(['cell-keep-visible'])};
-const a=eye(hidden),b=eye(shown),peek={attrs:{},
-  setAttribute(k,v){this.attrs[k]=v;}};
+const a=eye(hidden),b=eye(shown),
+  peek=Object.assign(Object.create(ATTRS),{attrs:{}});
 const shell={classList:classes(['reveal-hidden']),
-  querySelector:()=>peek,querySelectorAll:()=>[hidden]};
-function $$(selector){return selector==='.cell-eye,.navitem-eye'?[a,b]:[];}
+  querySelector:()=>peek};
+function shellIdx(sh){return {cards:[hidden],secs:[],eyes:[a,b],
+  secEyes:[],secHide:[]};}
 function bic(){return '<i></i>';}
 syncUnhideBtn(shell);
 console.log(JSON.stringify({hidden:a.attrs['aria-label'],
@@ -158,12 +161,16 @@ def test_peek_counts_what_you_hid_not_what_a_filter_did(tmp_path):
     src = assets.load("js/app.js")
     filters = lift_fn(src, "applyFilters")
     assert "      syncUnhideBtn(sh);" in filters
-    code = lift_fn(src, "syncUnhideBtn") + r"""
-var peek={attrs:{},setAttribute(k,v){this.attrs[k]=v;}};
-var shell={classList:{contains:()=>false},querySelector:()=>peek,
-  querySelectorAll:s=>s==='.content .card.cell-off:not(.filt-gone)'
-    ?[{},{}]:[{}]};
-function $$(){return [];}
+    code = lift_fn(src, "syncUnhideBtn") + lift_fn(src, "setAttrIf") + r"""
+var peek={attrs:{},setAttribute(k,v){this.attrs[k]=v;},
+  getAttribute(k){return k in this.attrs?this.attrs[k]:null;}};
+var shell={classList:{contains:()=>false},querySelector:()=>peek};
+function has(names){return {classList:{contains:n=>names.includes(n)}};}
+/* two cells hidden by hand, one filtered, one hidden AND filtered (not
+   counted: a filter's work), one section hidden by hand */
+function shellIdx(sh){return {cards:[has(['cell-off']),has(['cell-off']),
+    has(['filt-gone']),has(['cell-off','filt-gone'])],
+  secs:[has(['sec-off']),has([])],eyes:[],secEyes:[],secHide:[]};}
 function bic(){return '<i></i>';}
 syncUnhideBtn(shell);
 console.log(JSON.stringify({label:peek.innerHTML,pressed:peek.attrs['aria-pressed']}));

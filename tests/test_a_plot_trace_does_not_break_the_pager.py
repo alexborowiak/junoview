@@ -18,7 +18,9 @@ from junoview import assets
 
 def test_a_section_without_an_id_is_an_empty_id():
     app = assets.app_js()
-    runs = app.split("  function pageRuns(sh){")[1].split("\n  function ")[0]
+    # the runs are worked out in pageRunsOf (pageRuns keeps them per
+    # notebook, 2026-10-09 speed)
+    runs = app.split("  function pageRunsOf(rows){")[1].split("\n  function ")[0]
     assert "      var l=+(s2.dataset.level||2),sid=s2.dataset.sec||'';" in runs
 
 

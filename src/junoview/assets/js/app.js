@@ -850,25 +850,66 @@
       f.focus();f.select();
     });
   })();
-  function renderTabs(){
-    if(!tabstrip){refreshChrome();return;}
-    tabstrip.innerHTML='';
-    if(topTabstrip) topTabstrip.innerHTML='';
-    function add(stem){
-      var side=makeTab(stem); if(side) tabstrip.appendChild(side);
-      var top=makeTab(stem); if(top&&topTabstrip) topTabstrip.appendChild(top);
-    }
+  /* ---- SWITCHING TABS MOVES ONE HIGHLIGHT (2026-10-09, speed: reader
+     #10). Every activate() rebuilt both strips' notebook tabs from
+     nothing, to move the "current" mark from one tab to another. The
+     tabs are drawn from the notebooks open, their order, and each one's
+     name, path, kind, version and trace source (makeTab), so a build
+     keeps that as its key; while the key and the built tabs are where it
+     left them, only the mark moves. Anything else rebuilds, as before. */
+  var tabsBuilt=null;
+  function tabStems(){
+    var ks=[];
     /* Each notebook is followed by its own trace tabs in both places. */
     APP.order.forEach(function(stem){
-      add(stem);
+      ks.push(stem);
       APP.traces.forEach(function(k){
-        if(APP.shells[k]&&APP.shells[k].source===stem) add(k);
+        if(APP.shells[k]&&APP.shells[k].source===stem) ks.push(k);
       });
     });
     APP.traces.forEach(function(k){
       var sh=APP.shells[k];
-      if(sh&&APP.order.indexOf(sh.source)<0) add(k);
+      if(sh&&APP.order.indexOf(sh.source)<0) ks.push(k);
     });
+    return ks;
+  }
+  function tabsKeyOf(ks){
+    return [APP.mode].concat(ks.map(function(k){
+      var sh=APP.shells[k];
+      return sh?[k,sh.trace?1:0,sh.title,sh.source,sh.path,sh.kind,
+        sh.label,sh.version].join('\u0001'):k;
+    })).join('\u0002');
+  }
+  function tabsInPlace(){
+    var b=tabsBuilt;
+    if(!b||b.side.length!==tabstrip.children.length) return false;
+    for(var i=0;i<b.side.length;i++)
+      if(tabstrip.children[i]!==b.side[i]) return false;
+    return b.top.every(function(t){return t.parentNode===topTabstrip;});
+  }
+  function renderTabs(){
+    if(!tabstrip){refreshChrome();return;}
+    var ks=tabStems(),key=tabsKeyOf(ks);
+    if(tabsBuilt&&tabsBuilt.key===key&&tabsInPlace()){
+      tabsBuilt.side.concat(tabsBuilt.top).forEach(function(t){
+        var on=t.__jvStem===APP.active;
+        if(t.classList.contains('current')!==on)
+          t.classList.toggle('current',on);
+      });
+    } else {
+      tabstrip.innerHTML='';
+      if(topTabstrip) topTabstrip.innerHTML='';
+      var built={key:key,side:[],top:[]};
+      ks.forEach(function(stem){
+        var side=makeTab(stem);
+        if(side){side.__jvStem=stem;tabstrip.appendChild(side);
+          built.side.push(side);}
+        var top=makeTab(stem);
+        if(top&&topTabstrip){top.__jvStem=stem;topTabstrip.appendChild(top);
+          built.top.push(top);}
+      });
+      tabsBuilt=built;
+    }
     var n=tabstrip.childNodes.length;
     var nbl=$('#pr-nblabel'); if(nbl) nbl.hidden=!n;
     /* The deck registers its presentation tabs here. One source still
@@ -1026,6 +1067,9 @@
     APP.active=stem;
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
     wakeShell(stem);   /* first time on screen: wire it now, visible */
+    /* the feed-wide figure and text sizes, if they changed while it was
+       not on screen (syncShellSizes) */
+    if(APP.syncShellSizes) APP.syncShellSizes(APP.shells[stem].el);
     renderTabs();
     invalidateSids();   /* the section list belongs to the new tab */
     renderRawBtn();renderViewBtns();relayoutActiveTree();
@@ -1344,8 +1388,21 @@
      two can never disagree; the outline keeps every row, the rows off
      this page dimmed, and clicking one turns to its page. ---- */
   var pageBy={};                      /* stem -> section id of the page, '' = off */
+  /* A NOTEBOOK'S PAGES ARE WORKED OUT ONCE (2026-10-09, speed: reader
+     #11). Every filter change asked for them twice over (the Pages
+     button, then applyFilters' paging), each time walking every section
+     and reading its heading's text. They are made from the sections'
+     levels, ids and heading words, none of which a filter, a page turn
+     or a collapse changes, so they are kept with the notebook's index
+     (shellIdx) and go when it does. Callers get a copy to keep. */
   function pageRuns(sh){
-    var rows=$$('.section',sh),runs=[],count={};
+    var x=shellIdx(sh);
+    if(!x.pageRuns) x.pageRuns=pageRunsOf(x.secs);
+    return x.pageRuns.map(function(r){
+      return {sid:r.sid,sids:r.sids.slice(),title:r.title};});
+  }
+  function pageRunsOf(rows){
+    var runs=[],count={};
     rows.forEach(function(s2){
       var l=+(s2.dataset.level||2);count[l]=(count[l]||0)+1;});
     /* THE PAGE LEVEL is the shallowest level with more than one
@@ -1391,7 +1448,8 @@
   function setPage(stem,sid,scroll){
     if(!stem) return;
     pageBy[stem]=sid||'';
-    applyFilters();renderPagesBtn();scheduleSaveLayout();
+    /* a page is one notebook's: the others stay as they are */
+    applyFilters(stem);renderPagesBtn();scheduleSaveLayout();
     if(scroll!==false&&sid){
       var sh=APP.shells[stem];
       var sec=sh&&sh.el&&sh.el.querySelector('.section[data-sec="'+sid+'"]');
@@ -1472,8 +1530,8 @@
     if(sidMemoFor===APP.active&&sidMemo) return sidMemo;
     /* a Plot-trace tab builds bare <section> wrappers with no data-sec —
        they are not real notebook sections and must not become rows */
-    sidMemo=$$('.section',sh.el).map(function(s){return s.dataset.sec;})
-      .filter(Boolean);
+    sidMemo=(sh.lazy?$$('.section',sh.el):shellIdx(sh.el).secs)
+      .map(function(s){return s.dataset.sec;}).filter(Boolean);
     sidMemoFor=APP.active;
     return sidMemo;
   }
@@ -1527,7 +1585,8 @@
       });
     }
     pruneF(stem);
-    markSecOverrides();
+    /* the section headers' "filtered" marks are redrawn by the
+       applyFilters every caller runs next (markSecOverrides ran twice) */
   }
   function sameMap(x,y){
     var kx=Object.keys(x);
@@ -1555,12 +1614,17 @@
     }
   }
   /* a section filtered differently from the rest says so in its header */
-  function markSecOverrides(){
-    $$('.nbshell').forEach(function(sh){
+  function markSecOverrides(onlyStem){
+    filterShells(onlyStem).forEach(function(sh){
       var stem=sh.dataset.nb;
-      $$('.section',sh).forEach(function(s){
-        s.classList.toggle('has-fover',
-          !!secF[fkey(stem,s.dataset.sec)]);
+      /* a notebook not shown yet is marked when it is (wakeShell ->
+         initShell -> applyFilters(stem)): indexing it now, at every boot
+         and every all-notebook pass, built an index its wake throws away */
+      if(APP.shells[stem]&&APP.shells[stem].lazy) return;
+      shellIdx(sh).secs.forEach(function(s){
+        var on=!!secF[fkey(stem,s.dataset.sec)];
+        if(s.classList.contains('has-fover')!==on)
+          s.classList.toggle('has-fover',on);
       });
     });
   }
@@ -1575,10 +1639,16 @@
     });
     delete scopeSeeded[stem];
     seedScope();          /* back to "All sections" */
-    markSecOverrides();renderScopeBtn();
+    renderScopeBtn();
     var m=$('#sec-scope-menu');
     if(m&&!m.hidden) renderScopeMenu();   /* an open picker must not lie */
-    applyFilters();applyCodeState();
+    /* this notebook's filters, so this notebook (markSecOverrides with) */
+    applyFilters(stem);applyCodeState(activeShellEl());
+  }
+  /* the notebook on screen's shell, for the passes scoped to it */
+  function activeShellEl(){
+    var s=APP.active&&APP.shells[APP.active];
+    return (s&&s.el)||null;
   }
   var scopeOpen={};   /* which parent rows are expanded in the picker */
   function scopeTree(){
@@ -1619,7 +1689,7 @@
       b2.textContent=txt;b2.title=tip;
       b2.addEventListener('click',function(e){
         e.stopPropagation();fn();
-        renderScopeMenu();renderScopeBtn();applyFilters();
+        renderScopeMenu();renderScopeBtn();applyFilters(activeStem());
       });
       bulk.appendChild(b2);
     }
@@ -1723,7 +1793,7 @@
       function pick(e){
         e.preventDefault();e.stopPropagation();
         setSub(n,!selfOn);
-        renderScopeMenu();renderScopeBtn();applyFilters();
+        renderScopeMenu();renderScopeBtn();applyFilters(activeStem());
       }
       row.addEventListener('click',pick);
       row.addEventListener('keydown',function(e){
@@ -1812,16 +1882,92 @@
       if(!el.classList.contains('figzoom')) n++;});
     return n;
   }
-  function applyFilters(){
-    $$('.nbshell').forEach(function(sh){
+  /* ---- ONE NOTEBOOK'S INDEX, FOR THE FILTERS (2026-10-09, speed) ------
+     Every filter click walked every card of every open notebook, and for
+     each card ran a querySelector for its outline row; each section ran
+     four more, the eyes' sync two whole-notebook counts and a write to
+     some 300 buttons, the save that follows five whole-notebook queries:
+     66-111 ms of JavaScript per click at 4x on the 116-cell notebook,
+     three times that with three open (reader #3, #14, #17). The elements
+     those passes visit are found once per notebook and kept on its shell:
+     its feed's cards, its sections and each one's cards, outline rows and
+     items, and the eye and hide buttons. What they WEAR is still read
+     live -- the index holds elements, never their state. A change to
+     which cards a notebook has drops it (shellIdxDrop: a note added in
+     place, cards renamed, a collection drawn again); a reload or a
+     version is a new shell with none yet. */
+  function shellIdx(sh){
+    var x=sh.__jvIdx;
+    if(x) return x;
+    var nav=Object.create(null),row=Object.create(null),
+        items=Object.create(null);
+    $$('.navitem[data-item]',sh).forEach(function(n){
+      var k=n.dataset.item; if(!(k in nav)) nav[k]=n;});
+    $$('.navsec-row[data-sec]',sh).forEach(function(r){
+      var k=r.dataset.sec; if(!(k in row)) row[k]=r;});
+    $$('.navitems[data-sec]',sh).forEach(function(r){
+      var k=r.dataset.sec; if(!(k in items)) items[k]=r;});
+    x={cards:$$('.content .card',sh),secs:$$('.section',sh),nav:nav,
+      rowById:row,itemsById:items,secById:Object.create(null),
+      eyes:$$('.cell-eye,.navitem-eye',sh),
+      secEyes:$$('.sec-eye,.navsec-eye',sh),
+      secHide:$$('.sec-hideall,.navsec-hideall',sh)};
+    /* per section, in the order of x.secs: its cards, its outline row,
+       its outline items and their rows (a trace tab's bare sections have
+       no id and so no rows, as the attribute queries found none) */
+    x.secCards=x.secs.map(function(sec){return $$('.card',sec);});
+    x.secRow=x.secs.map(function(sec){
+      var sid=sec.dataset.sec;
+      return (sid!=null&&row[sid])||null;});
+    x.secItems=x.secs.map(function(sec){
+      var sid=sec.dataset.sec;
+      return (sid!=null&&items[sid])||null;});
+    x.secNavs=x.secItems.map(function(it){return it?$$('.navitem',it):[];});
+    x.secs.forEach(function(sec){
+      var sid=sec.dataset.sec;
+      if(sid!=null&&!(sid in x.secById)) x.secById[sid]=sec;});
+    sh.__jvIdx=x;
+    return x;
+  }
+  function shellIdxDrop(sh){if(sh) sh.__jvIdx=null;}
+  APP.shellIdxDrop=shellIdxDrop;
+  /* re-filter the notebook a shell element belongs to -- every one, as
+     before, when it is not a registered shell of its own */
+  function refilterShellEl(el){
+    var k=el&&el.dataset?el.dataset.nb:null;
+    if(k&&APP.shells[k]&&APP.shells[k].el===el) applyFilters(k);
+    else applyFilters();
+  }
+  /* the shells to filter: ONE notebook's, or every registered one */
+  function filterShells(stem){
+    if(stem!=null){
+      var s=APP.shells[stem];
+      return (s&&s.el&&s.el.isConnected)?[s.el]:[];
+    }
+    var out=[];
+    tabList().forEach(function(k){
+      var s=APP.shells[k];
+      if(s&&s.el&&s.el.isConnected&&out.indexOf(s.el)<0) out.push(s.el);
+    });
+    return out;
+  }
+  /* FILTER STATE IS PER NOTEBOOK, so a change made to one notebook --
+     every filter button, type menu, "Apply to" pick, page and reset acts
+     on the one on screen -- re-applies that notebook alone: the others
+     wear exactly what they wore (applyFilters(stem)). With no stem every
+     open notebook is done, as before: a layout restore, the filters
+     copied to all, a mark's gate, a shell (re)mounted. */
+  function applyFilters(onlyStem){
+    filterShells(onlyStem).forEach(function(sh){
       var stem=sh.dataset.nb;
       /* a notebook not shown yet is filtered when it is (wakeShell) */
       if(APP.shells[stem]&&APP.shells[stem].lazy) return;
+      var IX=shellIdx(sh);
       /* T257: the gate, read once per notebook */
       var only=onlyFor(stem);
       /* only the DOCUMENT feed: the tree view holds clones of these same
          cards and must always show every node in full */
-      $$('.content .card',sh).forEach(function(c){
+      IX.cards.forEach(function(c){
         /* T257: SHOW ONLY WHAT YOU MARKED, and it runs BEFORE the pin
            bypass below. Pin's promise is that the type and section
            filters cannot reach a cell; this is not one of those -- it
@@ -1830,8 +1976,7 @@
            other. "Only pinned" is the case where the two agree. */
         if(!onlyKeeps(c,only)&&!c.classList.contains('cell-keep-visible')){
           c.classList.add('is-hidden','filt-gone');
-          var onav=sh.querySelector('.navitem[data-item="'
-            +c.id.replace(/^card-/,'')+'"]');
+          var onav=IX.nav[c.id.replace(/^card-/,'')];
           if(onav){onav.classList.add('nav-hidden');
             onav.classList.toggle('cell-off',c.classList.contains('cell-off'));
             onav.classList.remove('cell-keep-visible');}
@@ -1858,8 +2003,7 @@
                 'code-off','pt-off','pt-fold','pt-open','ot-off',
                 'ot-fold','ot-open');});
           $$('.ot-stub',c).forEach(function(n){n.remove();});
-          var pnav=sh.querySelector('.navitem[data-item="'
-            +c.id.replace(/^card-/,'')+'"]');
+          var pnav=IX.nav[c.id.replace(/^card-/,'')];
           if(pnav){pnav.classList.remove('nav-hidden');
             pnav.classList.toggle('cell-off',poff);
             pnav.classList.toggle('cell-keep-visible',
@@ -2093,7 +2237,7 @@
         /* what the FILTERS removed, apart from what you hid: a Peek
            brings back the second and never the first */
         c.classList.toggle('filt-gone',!!filtGone);
-        var nav=sh.querySelector('.navitem[data-item="'+id+'"]');
+        var nav=IX.nav[id];
         if(nav){
           /* filtered out -> gone from the sidebar; manually hidden -> STAYS
              (dimmed, so you can bring it back) */
@@ -2103,13 +2247,13 @@
         }
       });
       var pgOut=pagedOut(sh);            /* T390: sections off this page */
-      $$('.section',sh).forEach(function(sec){
+      IX.secs.forEach(function(sec,si){
         /* a section hidden via its eye is a manual state, kept out of the
            filter-driven fold so its (dimmed) sidebar row survives to restore */
         var secOff=sec.classList.contains('sec-off');
         var paged=!!(pgOut&&pgOut[sec.dataset.sec]);
         sec.classList.toggle('pg-out',paged);
-        var cards=$$('.card',sec);
+        var cards=IX.secCards[si];
         /* doc: an empty section header (all its cards hidden) folds away */
         var allGone=cards.length>0&&cards.every(function(c){
           return c.classList.contains('is-hidden');});
@@ -2119,12 +2263,11 @@
           &&cards.some(function(c){
             return c.classList.contains('cell-off')
               &&!c.classList.contains('filt-gone');}));
-        var sid=sec.dataset.sec;
-        var row=sh.querySelector('.navsec-row[data-sec="'+sid+'"]');
-        var items=sh.querySelector('.navitems[data-sec="'+sid+'"]');
+        var row=IX.secRow[si];
+        var items=IX.secItems[si];
         /* nav: the section vanishes only if EVERY item is filtered out —
            manually-hidden cells/sections keep their (dimmed) rows to restore */
-        var navs=items?$$('.navitem',items):[];
+        var navs=IX.secNavs[si];
         var navGone=navs.length>0&&navs.every(function(n){
           return n.classList.contains('nav-hidden');});
         if(row) row.classList.toggle('nav-hidden',navGone&&!secOff);
@@ -2154,7 +2297,7 @@
     var pb=$('#pt-filter-btn');
     if(pb) pb.classList.toggle('on',anyType('pt'));
     renderScopeBtn();
-    markSecOverrides();
+    markSecOverrides(onlyStem);
     syncTypeMenus();
     scheduleSaveLayout();   /* remember this for next time */
   }
@@ -2237,8 +2380,8 @@
       var cur=vs.length===1?vs[0]:'hidden';   /* Mix -> next is On */
       var nx=cycle3(cur);
       writeF(function(s){s[map][t]=nx;});
-      applyFilters();
-      if(map==='ck') applyCodeState();
+      applyFilters(activeStem());
+      if(map==='ck') applyCodeState(activeShellEl());
     });
     row.addEventListener('click',function(e){
       if(e.target!==st) st.click();});
@@ -2260,9 +2403,9 @@
       FDEFof(stem)[map]={};
       var pre=String(stem)+'::';
       for(var k in secF){if(k.indexOf(pre)===0) secF[k][map]={};}
-      pruneF(stem);markSecOverrides();
-      applyFilters();
-      if(map==='ck') applyCodeState();
+      pruneF(stem);
+      applyFilters(stem);
+      if(map==='ck') applyCodeState(activeShellEl());
     });
     return rs;
   }
@@ -2564,8 +2707,9 @@
     var cur=readF(key);
     var next=(cur==='mixed')?'visible':cycle3(cur);
     writeF(function(s){s[key]=next;});
-    applyFilters();
-    if(key==='code') applyCodeState();
+    /* the notebook on screen's filter: the others did not change */
+    applyFilters(activeStem());
+    if(key==='code') applyCodeState(activeShellEl());
   }
   var mkBtn=$('#tv-markdown');
   if(mkBtn) mkBtn.addEventListener('click',function(){cycleF('md');});
@@ -2589,7 +2733,8 @@
     if(!sh||!sh.trace||!sh.source) return;
     copyFiltersTo(APP.active,sh.source,true);
     renderTypeButtons();renderScopeBtn();
-    applyFilters();applyCodeState();
+    /* the trace's own filters changed, nothing else's */
+    applyFilters(APP.active);applyCodeState(sh.el);
     docToast('Using the filters from '+sh.source);
   });
   /* "these filters, everywhere" — lives at the foot of the Apply-to menu,
@@ -2728,12 +2873,18 @@
     var rv=$('.rawview',shell);
     var phs=shell.querySelectorAll('.rawview .rawph:not([data-filled])');
     var content=$('.content',shell);
+    /* every output's key, looked up once: a query per placeholder walked
+       the whole feed each time (reader #7). The first in the feed wins,
+       as the query found it */
+    var byKey=Object.create(null);
+    if(content&&phs.length) $$('[data-jvout]',content).forEach(function(o){
+      var k=o.getAttribute('data-jvout');
+      if(!(k in byKey)) byKey[k]=o;});
     [].forEach.call(phs,function(ph){
       ph.dataset.filled='1';
       var key=ph.dataset.jvout||'';
       /* scope to .content: tree-view/trace clones also carry the key */
-      var src=(key&&content)
-        ?content.querySelector('[data-jvout="'+key+'"]'):null;
+      var src=(key&&content)?(byKey[key]||null):null;
       if(src) ph.appendChild(src.cloneNode(true));
       else{
         /* never silently nothing: say the mirror is missing */
@@ -2947,10 +3098,21 @@
      tree). rAF can be throttled (background tab / headless) and late
      content (MathJax, image decode) shifts nodes — the timer pass
      re-routes edges regardless; treeLayoutEdges is idempotent + cheap. */
+  /* ONE PASS A FRAME, ONE LATE PASS (2026-10-09, speed: reader #9).
+     Every caller -- the button, the build, and the ResizeObserver on
+     each node, which reports every node once as it is first laid out --
+     queued its own frame pass and its own timer pass, so opening the
+     tree routed the edges four or five times over, each a full style
+     and layout. Now a host has at most one frame pass waiting, and the
+     timer is pushed back by each new call: the late pass runs 120 ms
+     after the last change, still catching maths and images settling. */
   function relayoutTreeHost(host){
     if(!host) return;
-    requestAnimationFrame(function(){treeLayoutEdges(host);});
-    setTimeout(function(){treeLayoutEdges(host);},120);
+    if(!host.__jvRlRaf) host.__jvRlRaf=requestAnimationFrame(function(){
+      host.__jvRlRaf=0;treeLayoutEdges(host);});
+    clearTimeout(host.__jvRlT);
+    host.__jvRlT=setTimeout(function(){
+      host.__jvRlT=0;treeLayoutEdges(host);},120);
   }
   function relayoutActiveTree(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -2977,9 +3139,13 @@
     host.dataset.built='1';
     var items=(sh.data&&sh.data.items)||[];
     /* one node per card that is actually present in this shell's DOM */
-    var byAnchor={},nodes=[];
+    var byAnchor={},nodes=[],cardIdx=Object.create(null);
+    /* the cards by id, looked up once (a query per item was a third of
+       the build); the first in the shell wins, as the query found it */
+    $$('.card[id]',sh.el).forEach(function(c){
+      if(!(c.id in cardIdx)) cardIdx[c.id]=c;});
     items.forEach(function(it){
-      var card=$('.card[id="card-'+it.card+'"]',sh.el);
+      var card=cardIdx['card-'+it.card]||null;
       if(!card) return;
       var nd={it:it,card:card,anchor:it.anchor,parents:[],depth:0};
       byAnchor[it.anchor]=nd; nodes.push(nd);
@@ -3247,19 +3413,19 @@
   function treeLayoutEdges(host){
     var svg=$('.tree-edges',host),canvas=$('.tree-canvas',host);
     if(!svg||!canvas) return;
+    /* every READ first, then the writes: resizing the SVG and emptying
+       it before measuring the nodes made each measure a fresh style and
+       layout of the whole page (reader #9). The edge layer is absolutely
+       placed over the canvas, so its old size does not move the nodes. */
     var cb=canvas.getBoundingClientRect();
     if(!cb.width) return;                 /* not visible yet */
     var W=canvas.scrollWidth,H=canvas.scrollHeight;
-    svg.setAttribute('viewBox','0 0 '+W+' '+H);
-    svg.setAttribute('width',W);svg.setAttribute('height',H);
-    svg.style.width=W+'px';svg.style.height=H+'px';   /* px, not 100%, so the
-      viewBox maps 1:1 even when lanes overflow and the canvas scrolls */
-    while(svg.firstChild) svg.removeChild(svg.firstChild);
     /* measurements come back in VISUAL px — divide by the canvas zoom to
        get layout px, the space the SVG viewBox lives in */
     var z=parseFloat(canvas.style.zoom||'1')||1;
     var heads={};
-    $$('.tree-node',host).forEach(function(el){
+    var nodeEls=$$('.tree-node',host);
+    nodeEls.forEach(function(el){
       var h=$('.tree-node-head',el); if(!h) return;
       var r=h.getBoundingClientRect();
       heads[el.dataset.ti]={
@@ -3271,7 +3437,12 @@
           ||getComputedStyle(el).getPropertyValue('--nc'),
         off:el.classList.contains('tn-off')};
     });
-    $$('.tree-node',host).forEach(function(el){
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('width',W);svg.setAttribute('height',H);
+    svg.style.width=W+'px';svg.style.height=H+'px';   /* px, not 100%, so the
+      viewBox maps 1:1 even when lanes overflow and the canvas scrolls */
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+    nodeEls.forEach(function(el){
       var ci=heads[el.dataset.ti]; if(!ci) return;
       (el.dataset.parents||'').split(',').filter(Boolean).forEach(function(pi){
         var pr=heads[pi]; if(!pr) return;
@@ -3932,6 +4103,25 @@
      that flag is also the reader's own "I opened this one" -- and find's
      forced expand is indistinguishable from it. So the two flags find
      actually changes are recorded per card and put back verbatim. */
+  /* (2026-10-09, speed: reader #6) what find marked is what it RECORDED
+     marking -- the cards in findOpened, the parts in findOpenedParts,
+     the words in findHits -- and those are put back first. A copy of a
+     marked card made meanwhile (a tree node, a slide, a trace) carries
+     the marks too, so the page is then asked ONCE for anything of
+     find's left over (findSweep) -- where it used to be asked three
+     times, every keystroke -- and not at all when find had marked
+     nothing since the last time it was cleared, as then there can be
+     no copy of a mark: every clear leaves none anywhere, and only
+     findMark and findGo, which record what they do, make more. */
+  var findOpenedParts=[];
+  function findSweep(unwrap,marks){
+    [].forEach.call(document.querySelectorAll(
+      'mark.jv-doc,.jv-hitcard,.jv-hitopen'),function(n){
+      if(n.tagName==='MARK'&&n.classList.contains('jv-doc')){
+        marks.push(n);unwrap(n);
+      } else n.classList.remove('jv-hitcard','jv-hitopen');
+    });
+  }
   function findRestore(){
     findOpened.forEach(function(r){
       r.el.classList.toggle('is-hidden',r.hidden);
@@ -3939,10 +4129,8 @@
       r.el.classList.remove('jv-hitcard');
     });
     findOpened=[];
-    $$('.jv-hitcard').forEach(function(c){
-      c.classList.remove('jv-hitcard');});
-    $$('.jv-hitopen').forEach(function(n){
-      n.classList.remove('jv-hitopen');});
+    findOpenedParts.forEach(function(n){n.classList.remove('jv-hitopen');});
+    findOpenedParts=[];
   }
   /* T246: ONLY THE DOCUMENT'S OWN MARKS. The Variables filter paints its
      matched letters with the same mark.jv-hit look, and this used to
@@ -3952,13 +4140,17 @@
   var findTok=0;
   function findClear(){
     findTok++;     /* a run still waiting on the maths is now stale */
-    var marks=$$('mark.jv-doc');
-    marks.forEach(function(m){
+    var marked=findHits.length||findOpened.length||findOpenedParts.length;
+    var marks=findHits.slice();
+    function unwrap(m){
       var p2=m.parentNode; if(!p2) return;
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
-    });
+    }
+    marks.forEach(unwrap);
     findRestore();
+    /* ...and any copy of one, wherever a copied card took it */
+    if(marked) findSweep(unwrap,marks);
     findHits=[];findAt=-1;
     /* maths the marks held back can be typeset again */
     if(marks.length) jvMath.kick();
@@ -3966,22 +4158,27 @@
   /* wrap every occurrence in the text nodes under `root` */
   function findMark(root,term){
     var low=term.toLowerCase(),out=[];
-    var walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
-      acceptNode:function(n){
-        if(!n.nodeValue||n.nodeValue.indexOf('\n')===n.nodeValue.length)
-          return NodeFilter.FILTER_REJECT;
-        var p2=n.parentNode;
-        while(p2&&p2!==root){
-          if(FIND_SKIP[p2.nodeName]) return NodeFilter.FILTER_REJECT;
-          if(p2.classList&&p2.classList.contains('jv-hit'))
-            return NodeFilter.FILTER_REJECT;
-          p2=p2.parentNode;
-        }
-        return n.nodeValue.toLowerCase().indexOf(low)>=0
-          ?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
-      }});
+    /* (2026-10-09, speed: reader #6) the walk has no filter: the term is
+       looked for first, and only a text node that HAS it climbs its
+       ancestors for a skipped tag or a mark. The walker's filter climbed
+       every text node's -- some 10k on a big notebook, a call back into
+       script each: 150-430 ms a keystroke at 4x. Same nodes either way. */
+    function skipped(n){
+      var p2=n.parentNode;
+      while(p2&&p2!==root){
+        if(FIND_SKIP[p2.nodeName]) return true;
+        if(p2.classList&&p2.classList.contains('jv-hit')) return true;
+        p2=p2.parentNode;
+      }
+      return false;
+    }
+    var walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     var nodes=[],n2;
-    while((n2=walk.nextNode())) nodes.push(n2);
+    while((n2=walk.nextNode())){
+      var v=n2.nodeValue;
+      if(!v||v.toLowerCase().indexOf(low)<0) continue;
+      if(!skipped(n2)) nodes.push(n2);
+    }
     nodes.forEach(function(node){
       var txt=node.nodeValue,at=txt.toLowerCase().indexOf(low),from=0;
       var frag=document.createDocumentFragment();
@@ -4023,6 +4220,7 @@
       card.classList.remove('is-hidden');
       $$('.part-off,.part-fold,.code-off,.ot-off,.ot-fold,.pt-off,'
         +'.pt-fold',card).forEach(function(n){
+          if(!n.classList.contains('jv-hitopen')) findOpenedParts.push(n);
           n.classList.add('jv-hitopen');});
     }
     m.scrollIntoView({block:'center',behavior:'smooth'});
@@ -4118,6 +4316,133 @@
       if(document.body.classList.contains('deck-open')) return;
       e.preventDefault();findOpen(true);
     });
+  })();
+  /* ---- WHILE THE PAGE SCROLLS, THE FEED IS NOT UNDER THE POINTER
+     (2026-10-09, speed: reader #4). Scrolling past a still pointer made
+     the browser hit-test the notebook and re-style whichever card slid
+     under it -- its shadow, its five hover buttons -- at every step of
+     every scroll: a quarter of the cost of scrolling back over cards
+     already seen. While the window scrolls, a clear sheet lies over the
+     feed (.jv-scrollshield, under the app's own chrome), from the first
+     scroll until eight frames pass with none (about 130 ms), or the
+     moment the mouse really moves -- so the pointer is back on the page
+     before any click a person aims. Frames, not milliseconds: on a busy
+     page a frame can take longer than any fixed wait, and a sheet that
+     lifted between two frames of one scroll put the card under the
+     pointer back into hover, only to take it out again -- twice the
+     restyling it was there to save. A sheet, not pointer-events on the
+     feed: that is an inherited property, and switching it re-styled
+     every element of the notebook each time (measured: worse than the
+     hover it saved). ---- */
+  (function(){
+    var shield=null,raf=0,quiet=0,on=false,held=false;
+    var MOVE_OPTS={passive:true,capture:true},QUIET_FRAMES=8;
+    function off(){
+      if(raf){cancelAnimationFrame(raf);raf=0;}
+      if(on){on=false;shield.classList.remove('on');
+        document.removeEventListener('mousemove',moved,MOVE_OPTS);}
+    }
+    /* listened for only while the sheet is up: a pointer moving over the
+       page otherwise calls into script for nothing */
+    function moved(e){if(on&&(e.movementX||e.movementY)) off();}
+    /* a frame with no scroll in it counts; one with a scroll starts over */
+    function tick(){
+      raf=0;
+      if(!on) return;
+      if(++quiet>=QUIET_FRAMES){off();return;}
+      raf=requestAnimationFrame(tick);
+    }
+    /* never while a button is held: a selection dragged past the edge of
+       the window, or the scrollbar's thumb, scrolls by the pointer */
+    var rescue=null,selFrom=null;
+    /* a press on the sheet that goes on to drag selects the text it
+       crosses, as the same press on that text would have: the browser
+       began its selection on the sheet, where there is no text */
+    function selMove(e){
+      var c=selFrom&&document.caretRangeFromPoint(e.clientX,e.clientY);
+      if(c) try{getSelection().setBaseAndExtent(selFrom.startContainer,
+        selFrom.startOffset,c.startContainer,c.startOffset);}catch(er){}
+    }
+    /* (the selection made under the pointer is not a selection to drag) */
+    function noDrag(e){e.preventDefault();}
+    function selEnd(){
+      if(!selFrom) return;
+      selFrom=null;document.removeEventListener('mousemove',selMove,MOVE_OPTS);
+      document.removeEventListener('dragstart',noDrag,true);
+    }
+    document.addEventListener('mousedown',function(e){
+      held=true;
+      /* a press on the sheet itself -- a click made without moving, the
+         instant a scroll ends -- is not lost: the sheet goes, and the
+         click it would have been is handed to what is under it */
+      rescue=(on&&e.target===shield)?{x:e.clientX,y:e.clientY}:null;
+      off();
+      selEnd();
+      if(rescue&&e.button===0&&e.detail<2&&!e.shiftKey
+         &&document.caretRangeFromPoint){
+        var t=document.elementFromPoint(e.clientX,e.clientY);
+        var c=t&&!(t.closest&&t.closest('button,a,input,select,textarea,'
+          +'label,svg,img,canvas,iframe,[draggable="true"],'
+          +'[contenteditable]'))
+          &&document.caretRangeFromPoint(e.clientX,e.clientY);
+        if(c&&c.startContainer.nodeType===3){
+          selFrom=c;document.addEventListener('mousemove',selMove,MOVE_OPTS);
+          document.addEventListener('dragstart',noDrag,true);
+        }
+      }
+    },{passive:true,capture:true});
+    document.addEventListener('mouseup',function(){held=false;selEnd();},
+      {passive:true,capture:true});
+    /* handed over as the SAME click -- where it was, which button, which
+       modifier keys -- dispatched on what is under it. el.click() was
+       not that: an SVG icon (half of every button's face, and every
+       icon-only eye, pin and mark) has no click(), so a press on one was
+       lost; and Ctrl/Shift fell off. And it goes where the browser would
+       have sent it: to what the press and the release were both over (a
+       press dragged off its element clicks nothing but their common
+       ancestor -- not the element it began on). */
+    function handOn(e){
+      var r=rescue;rescue=null;
+      if(!r||(e.target!==document.body
+              &&e.target!==document.documentElement)) return;
+      var el=document.elementFromPoint(r.x,r.y),
+          up=document.elementFromPoint(e.clientX,e.clientY);
+      if(!up) return;
+      while(el&&!el.contains(up)) el=el.parentNode;
+      if(!el||el.nodeType!==1||el===shield||el===document.body
+         ||el===document.documentElement) return;
+      e.stopImmediatePropagation();
+      var go=el.dispatchEvent(new MouseEvent(e.type,{bubbles:true,
+        cancelable:true,composed:true,view:window,detail:e.detail,
+        screenX:e.screenX,screenY:e.screenY,
+        clientX:e.clientX,clientY:e.clientY,
+        ctrlKey:e.ctrlKey,shiftKey:e.shiftKey,altKey:e.altKey,
+        metaKey:e.metaKey,button:e.button,buttons:e.buttons}));
+      /* a link's middle click is the browser's own (a new tab), and the
+         browser does not act on one a page sends: open it here */
+      var a=go&&e.type==='auxclick'&&e.button===1
+        &&el.closest&&el.closest('a[href]');
+      if(a) try{window.open(a.href,'_blank','noopener');}catch(er){}
+    }
+    document.addEventListener('click',handOn,true);
+    document.addEventListener('auxclick',handOn,true);
+    window.addEventListener('blur',function(){held=false;selEnd();});
+    window.addEventListener('scroll',function(){
+      if(!on){
+        if(held||document.body.classList.contains('deck-open')
+           ||document.body.classList.contains('welcoming')) return;
+        if(!shield){
+          shield=document.createElement('div');
+          shield.className='jv-scrollshield';
+          shield.setAttribute('aria-hidden','true');
+          document.body.appendChild(shield);
+        }
+        shield.classList.add('on');on=true;
+        document.addEventListener('mousemove',moved,MOVE_OPTS);
+      }
+      quiet=0;
+      if(!raf) raf=requestAnimationFrame(tick);
+    },{passive:true});
   })();
   /* ---- instant tooltips: every [title] becomes a styled tip ------- */
   var tipEl=document.createElement('div');
@@ -4648,7 +4973,19 @@
      so a wider window opens them back out. */
   var BAND_FOLD=['#ab-saveview','#ab-scope','#ab-tree','#ab-size',
     '#ab-pages','#ab-look','#ab-nav'];
-  function bandMenus(){return $$('.ab-foldmenu');}
+  /* a fold's menu lives in its own group (bandFold), wherever that group
+     is -- the ribbon, or the present bar that borrows it -- so the groups
+     are asked, by id, instead of the whole page on every click anywhere
+     (2026-10-09, speed: reader #16: 4-8 ms a click at 4x) */
+  function bandMenus(){
+    var out=[];
+    BAND_FOLD.forEach(function(sel){
+      var g=document.getElementById(sel.slice(1));
+      var m=g&&g.querySelector('.ab-foldmenu');
+      if(m) out.push(m);
+    });
+    return out;
+  }
   function closeBandFolds(){
     bandMenus().forEach(function(m){
       if(m.hidden) return;
@@ -5229,7 +5566,7 @@
     shell.__jvAddCard(card,nav);
     mdClampWatch(shell,[card]);
     invalidateSids();
-    applyFilters();
+    applyFilters(stem);   /* the one notebook it went into */
     /* its maths: the card now (it is where you are looking), the raw
        view's copy as it is read (jvMath) */
     jvMath.typeset(card);
@@ -5470,25 +5807,31 @@
      a section also folds every DEEPER section that follows it, until a
      heading at the same tier (or shallower) closes the subtree. Sections
      stay flat siblings in the DOM — this pass just stamps the classes. */
+  /* (2026-10-09, speed: reader #14) the rows and items come from the
+     notebook's index, each section's buttons are found once, and only
+     what changed is written: a collapse rewrote every section's words
+     and ran three whole-notebook queries per section */
   function recalcSecCascade(sh){
-    var hideLv=null,offLv=null;
-    $$('.section',sh).forEach(function(sec){
+    var hideLv=null,offLv=null,IX=shellIdx(sh);
+    if(!IX.secBtns) IX.secBtns=IX.secs.map(function(sec){
+      return {btns:$$('.sec-chev,.sectionhead-txt',sec),
+        word:sec.querySelector('.sec-chev-ic+span')};});
+    IX.secs.forEach(function(sec,si){
       var lv=+(sec.dataset.level||2);
       if(hideLv!=null&&lv<=hideLv) hideLv=null;
       if(offLv!=null&&lv<=offLv) offLv=null;
       sec.classList.toggle('sec-under',hideLv!=null);
       sec.classList.toggle('sec-under-off',offLv!=null);
-      var sid=sec.dataset.sec;
       var closed=sec.classList.contains('sec-collapsed');
       var action=closed?'Expand':'Collapse';
-      $$('.sec-chev,.sectionhead-txt',sec).forEach(function(b){
-        b.setAttribute('aria-expanded',String(!closed));
-        b.title=action+' this section';
+      IX.secBtns[si].btns.forEach(function(b){
+        setAttrIf(b,'aria-expanded',String(!closed));
+        setAttrIf(b,'title',action+' this section');
       });
-      var word=sec.querySelector('.sec-chev-ic+span');
-      if(word) word.textContent=action;
-      var row=sh.querySelector('.navsec-row[data-sec="'+sid+'"]');
-      var items=sh.querySelector('.navitems[data-sec="'+sid+'"]');
+      var word=IX.secBtns[si].word;
+      if(word&&word.textContent!==action) word.textContent=action;
+      var row=IX.secRow[si];
+      var items=IX.secItems[si];
       if(row){
         row.classList.toggle('nav-under',hideLv!=null);
         row.classList.toggle('sec-under-off',offLv!=null);
@@ -5527,19 +5870,29 @@
      global resize event — which makes every other listener relayout — is
      fired ONLY when there is something that needs it. */
   var embedT=null;
+  /* the live embeds that re-fit on a window resize rather than being told
+     (Plotly is told, below) -- frames stamp their library in data-pt */
+  var RESIZE_ON_WINDOW='[data-pt~="bokeh"],[data-pt~="vega"],'
+    +'[data-pt~="folium"],[data-pt~="widget"]';
   function resizeEmbeds(root){
     clearTimeout(embedT);
     embedT=setTimeout(function(){
+      var host=root&&root.querySelectorAll?root:document;
       var plots=[];
-      try{plots=$$('.js-plotly-plot',root&&root.querySelectorAll
-        ?root:document);}catch(e){}
+      try{plots=$$('.js-plotly-plot',host);}catch(e){}
       if(!plots.length) return;
       try{
         if(window.Plotly&&Plotly.Plots)
           plots.forEach(function(g){
             try{Plotly.Plots.resize(g);}catch(e){}});
       }catch(e){}
-      try{window.dispatchEvent(new Event('resize'));}catch(e){}
+      /* the window-wide event made every resize listener on the page run
+         -- the ribbon's fit, the deck's gallery and the rest (reader
+         #15) -- to re-fit what the call above already re-fitted. It goes
+         out only when an embed that listens for it is here as well. */
+      var other=false;
+      try{other=!!host.querySelector(RESIZE_ON_WINDOW);}catch(e){}
+      if(other) try{window.dispatchEvent(new Event('resize'));}catch(e){}
     },80);
   }
   /* ---- ⤢ : one figure, full screen. The node is CLONED (ids stripped) so
@@ -5703,16 +6056,44 @@
     el.setAttribute('aria-label',what+' '+pct+'% (click to reset to 100%)');
   }
   APP.sizeReadout=sizeReadout;
-  var figAll=1;
+  var figAll=1,mdAll=1;
+  /* THE NOTEBOOK ON SCREEN TAKES THE SIZE NOW, THE OTHERS WHEN SHOWN
+     (2026-10-09, speed: reader #15). Each step set both feed-wide sizes
+     on every open notebook and re-checked every figure card in all of
+     them; only the one on screen can be seen. A shell wears the sizes it
+     was last given (__jvFzall/__jvMdall), and activate() brings one up
+     to date as it is shown -- a notebook just reloaded or woken too. */
+  function syncShellSizes(el){
+    if(!el||!el.style) return false;
+    var fig=false;
+    /* a shell never sized wears what the server sent: 1 and 1 */
+    if(el.__jvFzall===undefined) el.__jvFzall=1;
+    if(el.__jvMdall===undefined) el.__jvMdall=1;
+    if(el.__jvFzall!==figAll){
+      if(figAll===1) el.style.removeProperty('--fzall');
+      else el.style.setProperty('--fzall',figAll);
+      el.__jvFzall=figAll;fig=true;
+      var cards=(el.__jvIdx?el.__jvIdx.cards:null)||$$('.card.has-fig',el);
+      cards.forEach(function(c){
+        if(c.classList.contains('has-fig')) syncZoomed(c);});
+      /* a tree view's figure copies are cards of this shell too */
+      $$('.treeview .card.has-fig',el).forEach(syncZoomed);
+    }
+    if(el.__jvMdall!==mdAll){
+      if(mdAll===1) el.style.removeProperty('--mdscale');
+      else el.style.setProperty('--mdscale',mdAll);
+      el.__jvMdall=mdAll;
+    }
+    return fig;
+  }
+  APP.syncShellSizes=function(el){
+    if(syncShellSizes(el)) resizeEmbeds(el);};
   function applyFigAll(){
-    $$('.nbshell').forEach(function(sh){
-      if(figAll===1) sh.style.removeProperty('--fzall');
-      else sh.style.setProperty('--fzall',figAll);
-      $$('.card.has-fig',sh).forEach(syncZoomed);
-    });
+    var el=activeShellEl();
+    if(el) syncShellSizes(el);
     var lab=$('#fig-size-val');
     if(lab) sizeReadout(lab,'Figure size',Math.round(figAll*100));
-    resizeEmbeds(document);
+    resizeEmbeds(el||document);
     scheduleSaveLayout();
   }
   APP.getFigAll=function(){return figAll;};
@@ -5739,11 +6120,9 @@
       if(!APP.ribbonSizeStep(0)){figAll=1;applyFigAll();}});
   })();
   /* ---- markdown / prose text size (the same idea, for words) ---- */
-  var mdAll=1;
   function applyMdAll(){
-    $$('.nbshell').forEach(function(sh){
-      if(mdAll===1) sh.style.removeProperty('--mdscale');
-      else sh.style.setProperty('--mdscale',mdAll);});
+    var el=activeShellEl();
+    if(el) syncShellSizes(el);
     var lab=$('#md-size-val');
     if(lab) sizeReadout(lab,'Text size',Math.round(mdAll*100));
     scheduleSaveLayout();
@@ -5877,8 +6256,11 @@
     var m=marksFor(stem),have={pin:0},any=0;
     tagGroups(stem).forEach(function(g){g.tags.forEach(function(t){
       have[t.k]=0;});});
+    var IX=(shell.classList&&shell.classList.contains('nbshell'))
+      ?shellIdx(shell):null;
     Object.keys(m).forEach(function(id){
-      if(!shell.querySelector('.navitem[data-item="'+id+'"]')) return;
+      if(IX?!IX.nav[id]:!shell.querySelector('.navitem[data-item="'+id+'"]'))
+        return;
       var st=m[id]||{};
       if(st.p){have.pin++;any++;}
       markTags(st).forEach(function(k){have[k]=(have[k]||0)+1;any++;});
@@ -5940,7 +6322,7 @@
     function toggle(k){
       var next=onlyFor(stem),at=next.indexOf(k);
       if(at>=0) next.splice(at,1);else next.push(k);
-      setOnly(stem,next);renderMarkGate();applyFilters();
+      setOnly(stem,next);renderMarkGate();applyFilters(stem);
       var again=$('#marks-filter');
       if(again) openLabelFilter(again,shell,stem,markCounts(shell,stem));
     }
@@ -5951,7 +6333,7 @@
       clear.innerHTML=bic('cellcard')+'<span class="mark-menu-name">Show all cells</span>';
       clear.addEventListener('click',function(e){
         e.stopPropagation();setOnly(stem,[]);closeLabelMenu();
-        renderMarkGate();applyFilters();});
+        renderMarkGate();applyFilters(stem);});
       m.appendChild(clear);
     }
     placeLabelMenu(btn,m);
@@ -6008,7 +6390,7 @@
     if(!have.any){
       /* the last mark just went: a gate pointing at nothing would empty
          the whole notebook with no visible cause */
-      if(only.length){setOnly(stem,[]);applyFilters();}
+      if(only.length){setOnly(stem,[]);applyFilters(stem);}
       return;
     }
     only=only.filter(function(k){return have[k];});
@@ -6115,48 +6497,70 @@
   }
   /* A peek reveals the view temporarily. The eyes report and edit the
      SAVED state, so ending the peek only hides what still has a slash. */
+  /* WRITTEN ONLY WHERE IT CHANGED (2026-10-09, speed: reader #3). This
+     runs after every filter change and rewrote the title, label and
+     pressed state of every eye and hide button in the notebook -- some
+     300 on the 116-cell one -- each time, from two whole-notebook
+     counts: 24-52 ms of every filter click at 4x. The buttons come from
+     the notebook's index (shellIdx) and each attribute is written only
+     when it differs; what they end up saying is what they said. */
+  function setAttrIf(el,k,v){
+    if(el.getAttribute(k)!==v) el.setAttribute(k,v);
+  }
   function syncUnhideBtn(sh){
+    var IX=shellIdx(sh);
     var b=sh.querySelector('.rf-unhide');
     var peeking=sh.classList.contains('reveal-hidden');
     /* what you hid by hand -- a filter's work is not hidden, it is
        filtered, and a peek leaves it filtered */
-    var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff').length
-      +sh.querySelectorAll('.content .card.cell-off:not(.filt-gone)').length;
+    var n=0;
+    IX.secs.forEach(function(s){
+      if(s.classList.contains('sec-off')||s.classList.contains('sec-headoff'))
+        n++;});
+    IX.cards.forEach(function(c){
+      if(c.classList.contains('cell-off')&&!c.classList.contains('filt-gone'))
+        n++;});
     if(b){
-      b.disabled=false;b.setAttribute('aria-pressed',peeking?'true':'false');
-      b.innerHTML=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';
-      b.title=peeking?'End peek; your visibility changes stay saved'
+      if(b.disabled) b.disabled=false;
+      setAttrIf(b,'aria-pressed',peeking?'true':'false');
+      var html=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';
+      if(b.__jvHtml!==html||!b.firstChild){b.innerHTML=html;b.__jvHtml=html;}
+      setAttrIf(b,'title',peeking?'End peek; your visibility changes stay saved'
         :'Temporarily show the cells, sections and headings you hid, so '
-          +'you can choose what to restore. The filters still apply';
+          +'you can choose what to restore. The filters still apply');
     }
     function status(el,hidden,what){
-      el.setAttribute('aria-pressed',hidden?'true':'false');
+      setAttrIf(el,'aria-pressed',hidden?'true':'false');
       var say=hidden?'Hidden — show ':'Visible — hide ';
-      el.title=say+what+(sh.classList.contains('reveal-hidden')
+      var t=say+what+(sh.classList.contains('reveal-hidden')
         ?' permanently':'');
-      el.setAttribute('aria-label',el.title);
+      setAttrIf(el,'title',t);
+      setAttrIf(el,'aria-label',t);
     }
-    $$('.cell-eye,.navitem-eye',sh).forEach(function(el){
+    IX.eyes.forEach(function(el){
       var item=el.closest('.card,.navitem');
       var manual=!!(item&&item.classList.contains('cell-off'));
       if(item&&item.classList.contains('cell-keep-visible')){
-        el.setAttribute('aria-pressed','false');
-        el.title='Visible — follow filters for this cell again';
-        el.setAttribute('aria-label',el.title);
+        var t='Visible — follow filters for this cell again';
+        setAttrIf(el,'aria-pressed','false');
+        setAttrIf(el,'title',t);
+        setAttrIf(el,'aria-label',t);
       } else status(el,manual,'this cell');
     });
-    $$('.sec-eye,.navsec-eye',sh).forEach(function(el){
+    IX.secEyes.forEach(function(el){
       var sec=el.closest('.section'),row=el.closest('.navsec-row');
       status(el,!!(sec&&sec.classList.contains('sec-headoff')
         ||row&&row.classList.contains('head-off')),'this heading');
     });
-    $$('.sec-hideall,.navsec-hideall',sh).forEach(function(el){
+    IX.secHide.forEach(function(el){
       var sec=el.closest('.section'),row=el.closest('.navsec-row');
       var hidden=!!(sec&&sec.classList.contains('sec-off')
         ||row&&row.classList.contains('sec-off'));
       status(el,hidden,'this whole section');
-      if(el.classList.contains('sec-hideall'))
-        el.textContent=hidden?'Show section':'Hide section';
+      if(el.classList.contains('sec-hideall')){
+        var w=hidden?'Show section':'Hide section';
+        if(el.textContent!==w) el.textContent=w;
+      }
     });
   }
   /* ---- CELL HISTORY: one commit's output at a time -------------------
@@ -6355,8 +6759,70 @@
       (card.querySelector('.cardtitle')||{}).textContent||'Cell';
     dialog.querySelector('.ch-close').addEventListener('click',function(){
       dialog.close();});
+    /* NOT showModal (2026-10-09, speed: reader #8). A modal dialog makes
+       the rest of the page inert, and Chrome does that by restyling every
+       element in it -- the notebook and the slide editor, ~27k elements:
+       90-100 ms of style on open and 70 more on close at 4x, most of the
+       click. It is shown as an ordinary dialog over a backdrop of its
+       own, and does by hand what the modal did: the backdrop takes every
+       click outside, Tab stays inside, Escape closes, the first control
+       takes the keyboard and the button that opened it gets it back. */
+    /* ...except over a full screen. Present puts #docs full screen, and
+       there only the top layer is drawn: an ordinary dialog on <body>
+       opened unseen and unreachable behind it, to turn up when the show
+       ended. There it is the modal it was (the page is then just #docs). */
+    var modal=!!document.fullscreenElement;
+    var opener=document.activeElement;
+    var backdrop=document.createElement('div');
+    backdrop.className='ch-backdrop';
+    dialog.setAttribute('aria-modal','true');
+    if(!modal) document.body.appendChild(backdrop);
     document.body.appendChild(dialog);cellHistoryDialog=dialog;
+    /* and to a screen reader the page behind is not there, as it was not
+       behind the modal: Chrome does not honour aria-modal on a dialog
+       shown with show(), so the whole notebook stayed readable around
+       it. aria-hidden on the page's other parts -- no style rule reads
+       it, so none of the restyle the modal cost -- put back on close. */
+    var muted=[];
+    if(!modal) [].forEach.call(document.body.children,function(n){
+      if(n===dialog||n===backdrop||n.hasAttribute('aria-hidden')) return;
+      n.setAttribute('aria-hidden','true');muted.push(n);
+    });
+    /* the keyboard stays in the dialog: Tab moves through it as it did,
+       and focus that would land on the page behind comes back to it --
+       to its first stop going forward, its last going back (Shift+Tab),
+       the scrolling panels a keyboard can step to counted as stops */
+    var backward=false;
+    function tabStops(){
+      return $$('*',dialog).filter(function(n){
+        if(n.disabled||!n.getClientRects().length) return false;
+        if(n.matches('button,[href],input,select,textarea,[tabindex]'))
+          return n.tabIndex>=0;
+        var cs=getComputedStyle(n);
+        return /(auto|scroll)/.test(cs.overflowX+' '+cs.overflowY)
+          &&(n.scrollHeight>n.clientHeight||n.scrollWidth>n.clientWidth);
+      });
+    }
+    function keepIn(e){
+      var t=e.target;
+      if(!t||t===document||t===window||dialog.contains(t)) return;
+      var stops=backward?tabStops():[];
+      var c=stops.length?stops[stops.length-1]:dialog.querySelector('.ch-close');
+      if(c){
+        if(c.tabIndex<0&&!c.hasAttribute('tabindex')) c.tabIndex=-1;
+        try{c.focus({preventScroll:true});}catch(er){}
+      }
+    }
+    /* Escape closes it wherever the focus is, as a modal's did */
+    function escKey(e){
+      if(e.key==='Tab') backward=!!e.shiftKey;
+      if(e.key==='Escape'&&!e.defaultPrevented&&dialog.open) dialog.close();
+    }
+    document.addEventListener('focusin',keepIn,true);
+    document.addEventListener('keydown',escKey);
     dialog.addEventListener('close',function(){
+      document.removeEventListener('focusin',keepIn,true);
+      document.removeEventListener('keydown',escKey);
       if(cellHistoryDialog===dialog){
         cellHistoryRequest++;cellHistoryDialog=null;
       }
@@ -6364,9 +6830,19 @@
       if(abort) abort.abort();
       previews.clear();
       historyPurge(dialog);
+      var had=dialog.contains(document.activeElement)
+        ||document.activeElement===document.body;
       dialog.remove();
+      if(backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+      muted.forEach(function(n){n.removeAttribute('aria-hidden');});
+      if(had&&opener&&opener.isConnected&&opener.focus)
+        try{opener.focus({preventScroll:true});}catch(e){}
     });
-    dialog.showModal();
+    if(modal) dialog.showModal(); else dialog.show();
+    /* the modal's focusing steps: its first control */
+    var firstCtl=dialog.querySelector('.ch-close');
+    if(firstCtl&&document.activeElement!==firstCtl)
+      try{firstCtl.focus({preventScroll:true});}catch(e){}
     historyCurrent(card,dialog.querySelector('.ch-current'));
     var timeline=dialog.querySelector('.ch-timeline'),version=
       dialog.querySelector('.ch-version');
@@ -6489,7 +6965,7 @@
         if(keepVisible!==undefined)
           card.classList.toggle('cell-keep-visible',!!keepVisible);}
       if(nav) nav.classList.toggle('cell-off',off);
-      applyFilters();
+      refilterShellEl(shell);
       scheduleSaveLayout();
     }
     function toggleCellEye(id){
@@ -6510,20 +6986,36 @@
        kept in sync. Collapse folds a section's cards; hide drops the whole
        section (it stays in the sidebar, dimmed, so you can bring it back).
        Nav queries no-op on the trace tab (which has no sidebar). ---- */
+    /* a section's head and its outline row and items: from the
+       notebook's index (shellIdx) when this is a notebook's own shell --
+       three whole-notebook attribute queries a section, each click, were
+       most of a collapse (reader #14) -- and looked up as before
+       anywhere else */
+    function secParts(sid){
+      if(shell.classList&&shell.classList.contains('nbshell')){
+        var IX=shellIdx(shell),k=String(sid);
+        return {sec:IX.secById[k]||null,row:IX.rowById[k]||null,
+          items:IX.itemsById[k]||null};
+      }
+      return {sec:shell.querySelector('.section[data-sec="'+sid+'"]'),
+        row:shell.querySelector('.navsec-row[data-sec="'+sid+'"]'),
+        items:shell.querySelector('.navitems[data-sec="'+sid+'"]')};
+    }
     function setSecCollapsed(sid,val){
-      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
-      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
-      var items=shell.querySelector('.navitems[data-sec="'+sid+'"]');
+      var P=secParts(sid),sec=P.sec,row=P.row,items=P.items;
       if(sec) sec.classList.toggle('sec-collapsed',val);
       if(row) row.classList.toggle('collapsed',val);
       if(items) items.classList.toggle('nav-collapsed',val);
       var title=sec&&sec.querySelector('.sectionhead-txt[data-sec="'+sid+'"]');
       if(title) title.setAttribute('aria-expanded',(!val).toString());
-      var chevs=shell.querySelectorAll('.sec-chev[data-sec="'+sid+'"],'
-        +'.navsec-row[data-sec="'+sid+'"] .navsec-chev');
-      [].forEach.call(chevs,function(ch){
+      /* a section's own chevrons are in its head (render/items.py): look
+         there, or -- with no such section here -- in the whole shell */
+      var chevHost=sec||shell;
+      var chevs=$$('.sec-chev[data-sec="'+sid+'"]',chevHost);
+      var navChev=row&&row.querySelector('.navsec-chev');
+      chevs.concat(navChev?[navChev]:[]).forEach(function(ch){
         ch.setAttribute('aria-expanded',(!val).toString());});
-      $$('.sec-chev[data-sec="'+sid+'"]',shell).forEach(function(ch){
+      chevs.forEach(function(ch){
         var action=val?'Expand':'Collapse';
         ch.setAttribute('aria-label',action+' this section');
         ch.title=action+' this section';
@@ -6534,13 +7026,12 @@
       scheduleSaveLayout();
     }
     function setSecOff(sid,val){
-      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
-      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      var P=secParts(sid),sec=P.sec,row=P.row;
       if(sec) sec.classList.toggle('sec-off',val);
       if(row) row.classList.toggle('sec-off',val);
       recalcSecCascade(shell);   /* hide/restore the deeper tiers below */
       scheduleSaveLayout();
-      applyFilters();   /* keep the sidebar in step (a hidden section stays) */
+      refilterShellEl(shell);   /* keep the sidebar in step (a hidden section stays) */
       syncUnhideBtn(shell);
     }
     /* ---- "Show all hidden": a REVEAL TOGGLE, not a reset. It brings the
@@ -6575,21 +7066,19 @@
     /* hiding the HEADING is a different, smaller action than hiding the
        section: the cards stay in the document, only the title goes. */
     function setSecHeadOff(sid,val){
-      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
-      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      var P=secParts(sid),sec=P.sec,row=P.row;
       if(sec) sec.classList.toggle('sec-headoff',val);
       if(row) row.classList.toggle('head-off',val);
       scheduleSaveLayout();
       syncUnhideBtn(shell);
     }
     function isHeadOff(sid){
-      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
-      if(sec) return sec.classList.contains('sec-headoff');
-      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
-      return !!(row&&row.classList.contains('head-off'));
+      var P=secParts(sid);
+      if(P.sec) return P.sec.classList.contains('sec-headoff');
+      return !!(P.row&&P.row.classList.contains('head-off'));
     }
     function isCollapsed(sid){
-      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
+      var sec=secParts(sid).sec;
       return !!(sec&&sec.classList.contains('sec-collapsed'));
     }
     function navsecHideAll(sp){
@@ -7757,27 +8246,52 @@
     var cards=$$('.card',shell);
 
     /* ---- scroll-spy: active section + item + graph node ---- */
-    var navSecs={},navItems={},graphNodes={};
+    /* LOOKED UP ONCE, LIT ONLY WHEN IT MOVES (2026-10-09, speed: reader
+       #1). Every observer callback -- 15-25 of them per screenful of
+       scrolling -- ran five whole-notebook querySelectorAll to take the
+       highlight off and put it back, the same row and the same edges
+       nearly every time: 130-200 ms per wheel gesture on the 116-cell
+       notebook at 4x. Every element the spy lights is found here once
+       (cards by id, the graph's edges by the node at either end), the
+       lit ones are remembered, and a callback that lands where the
+       highlight already is changes nothing. A card added or renamed
+       later updates these maps (__jvAddCard, __jvRenameItems). */
+    var navSecs={},navItems={},graphNodes={},cardById={},edgesOf={};
     $$('.navsec',shell).forEach(function(a){navSecs[a.dataset.sec]=a;});
     $$('.navitem',shell).forEach(function(a){navItems[a.dataset.item]=a;});
     $$('.provnode',shell).forEach(function(g){graphNodes[g.dataset.node]=g;});
+    cards.forEach(function(c){if(c.id&&!cardById[c.id]) cardById[c.id]=c;});
+    $$('.provedge',shell).forEach(function(p){
+      var to=p.dataset.to,from=p.dataset.from;
+      if(to) (edgesOf[to]=edgesOf[to]||[]).push(p);
+      if(from&&from!==to) (edgesOf[from]=edgesOf[from]||[]).push(p);
+    });
+    var litSec=null,litSecEl=null,litItem=null,litNav=null,litNode=null,
+        litEdges=[];
     function setActiveSection(id){
-      $$('.navsec.active',shell).forEach(function(a){a.classList.remove('active');});
-      if(navSecs[id]) navSecs[id].classList.add('active');
+      if(id===litSec&&litSecEl===(navSecs[id]||null)) return;
+      litSec=id;
+      if(litSecEl) litSecEl.classList.remove('active');
+      litSecEl=navSecs[id]||null;
+      if(litSecEl) litSecEl.classList.add('active');
     }
     function setActiveItem(item){
-      $$('.navitem.active',shell).forEach(function(a){a.classList.remove('active');});
-      if(navItems[item]) navItems[item].classList.add('active');
-      var node=$('.card[id="card-'+item+'"]',shell);
+      var nav=navItems[item]||null;
+      if(item===litItem&&nav===litNav) return;
+      litItem=item;
+      if(litNav) litNav.classList.remove('active');
+      litNav=nav;
+      if(litNav) litNav.classList.add('active');
+      var node=cardById['card-'+item];
       var nodeId=node?node.dataset.node:'';
-      $$('.provnode.active',shell).forEach(function(g){g.classList.remove('active');});
-      $$('.provedge.lit',shell).forEach(function(p){p.classList.remove('lit');});
+      if(litNode) litNode.classList.remove('active');
+      litEdges.forEach(function(p){p.classList.remove('lit');});
+      litNode=null;litEdges=[];
       if(nodeId&&graphNodes[nodeId]){
-        graphNodes[nodeId].classList.add('active');
-        $$('.provedge',shell).forEach(function(p){
-          if(p.dataset.to===nodeId||p.dataset.from===nodeId)
-            p.classList.add('lit');
-        });
+        litNode=graphNodes[nodeId];
+        litNode.classList.add('active');
+        litEdges=(edgesOf[nodeId]||[]).slice();
+        litEdges.forEach(function(p){p.classList.add('lit');});
       }
     }
     if('IntersectionObserver' in window){
@@ -7794,7 +8308,7 @@
         if(bestC){
           var item=bestC.slice(5);
           setActiveItem(item);
-          var card=$('.card[id="'+bestC+'"]',shell);
+          var card=cardById[bestC];
           var sec=card?card.closest('.section'):null;
           if(sec) setActiveSection(sec.dataset.sec);
         }
@@ -7840,14 +8354,23 @@
        as the server-rendered ones did here */
     shell.__jvAddCard=function(card,nav){
       if(nav){navItems[nav.dataset.item]=nav;navLink(nav);}
+      if(card&&card.id) cardById[card.id]=card;
       if(spy) spy.observe(card);
+      /* the filters' index of this notebook holds its cards (shellIdx) */
+      shellIdxDrop(shell);
     };
     /* ...and cards renamed in it (noteInPlace: the notes after a new one
        take a fresh load's numbers) keep their outline rows lit */
     shell.__jvRenameItems=function(map){
-      var keep={},vis={},k;
-      for(k in map){keep[k]=navItems[k];delete navItems[k];}
+      var keep={},vis={},keepC={},k;
+      for(k in map){keep[k]=navItems[k];delete navItems[k];
+        keepC[k]=cardById['card-'+k];delete cardById['card-'+k];}
       for(k in map) if(keep[k]) navItems[map[k]]=keep[k];
+      for(k in map) if(keepC[k]) cardById['card-'+map[k]]=keepC[k];
+      /* the lit row is named by its item: rename it with the rest */
+      if(litItem!==null&&Object.prototype.hasOwnProperty.call(map,litItem))
+        litItem=map[litItem];
+      shellIdxDrop(shell);
       if(!visible) return;
       for(k in visible){vis[k]=visible[k];delete visible[k];}
       for(k in vis){
@@ -8058,7 +8581,10 @@
       kind:shell.dataset.srckind||'',  /* ''=notebook, the default (T124) */
       title:data.title||stem};
     if(APP.order.indexOf(stem)<0) APP.order.push(stem);
-    if(!BOOTING) applyFilters();
+    /* wired just now: its index is made from what it holds now, and only
+       it needs filtering -- the notebooks already up are as they were */
+    shellIdxDrop(shell);
+    if(!BOOTING) applyFilters(stem);
     applyCodeState(shell);   /* fold/hide code to match the current state */
     jvMath.watch(shell);     /* its maths, typeset as it is read */
     if(!woke) document.dispatchEvent(new CustomEvent('sem:shell',
@@ -8072,17 +8598,32 @@
   /* a refresh keeps YOUR VIEW: hidden cells/sections, collapsed sections,
      tree/raw mode and the scroll position carry over the shell swap
      (anchors + section ids are stable across re-parses) */
+  /* read from the notebook's index when it has one (shellIdx): the
+     layout save after every filter, collapse and size change ran five
+     whole-notebook queries here (reader #17). Its feed's cards are the
+     cards that carry this state -- a tree node's copy only ever repeats
+     one of them. A shell with no index yet (one being replaced) is read
+     as before rather than indexed for one look. */
   function captureViewState(el){
+    var IX=el.__jvIdx||null;
+    function cardsWith(cls){
+      return IX?IX.cards.filter(function(c){
+        return c.classList.contains(cls);}):$$('.card.'+cls,el);
+    }
+    function secsWith(cls){
+      return IX?IX.secs.filter(function(s2){
+        return s2.classList.contains(cls);}):$$('.section.'+cls,el);
+    }
     return {
-      cellsOff:$$('.card.cell-off',el).map(function(c){
+      cellsOff:cardsWith('cell-off').map(function(c){
         return c.dataset.anchor;}).filter(Boolean),
-      cellsShown:$$('.card.cell-keep-visible',el).map(function(c){
+      cellsShown:cardsWith('cell-keep-visible').map(function(c){
         return c.dataset.anchor;}).filter(Boolean),
-      secsOff:$$('.section.sec-off',el).map(function(s2){
+      secsOff:secsWith('sec-off').map(function(s2){
         return s2.dataset.sec;}).filter(Boolean),
-      secsHeadOff:$$('.section.sec-headoff',el).map(function(s2){
+      secsHeadOff:secsWith('sec-headoff').map(function(s2){
         return s2.dataset.sec;}).filter(Boolean),
-      secsClosed:$$('.section.sec-collapsed',el).map(function(s2){
+      secsClosed:secsWith('sec-collapsed').map(function(s2){
         return s2.dataset.sec;}).filter(Boolean),
       tree:el.classList.contains('tree'),
       raw:el.classList.contains('raw'),
@@ -8135,7 +8676,7 @@
       var sh=APP.shells[stem];
       if(sh) buildTree(sh);
     }
-    applyFilters();
+    refilterShellEl(shell);   /* the view restored is this notebook's */
     renderRawBtn();renderViewBtns();
     if(keep.tree) relayoutActiveTree();
   }
@@ -8153,6 +8694,7 @@
   function layoutSnapshot(stem){
     var sh=APP.shells[stem];
     if(!sh||!sh.el) return null;
+    if(!sh.lazy) shellIdx(sh.el);       /* one index for both reads below */
     var st=captureViewState(sh.el);
     delete st.scroll;                   /* where you were is not layout */
     var pre=String(stem)+'::';
@@ -8165,7 +8707,9 @@
         st.scope.push(k2.slice(pre.length));}
     /* the size you set on individual figures is part of your layout */
     st.figs={};
-    $$('.card.has-fig',sh.el).forEach(function(c){
+    (sh.el.__jvIdx?sh.el.__jvIdx.cards.filter(function(c){
+      return c.classList.contains('has-fig');}):$$('.card.has-fig',sh.el))
+      .forEach(function(c){
       var f=parseFloat(c.style.getPropertyValue('--fz'));
       if(f&&f!==1&&c.dataset.anchor) st.figs[c.dataset.anchor]=f;
     });
@@ -8243,17 +8787,43 @@
       localStorage.setItem(viewKey(key),JSON.stringify(st));
     }catch(e){}
   }
-  var saveT=null;
+  /* AT IDLE, AND NEVER LOST (2026-10-09, speed: reader #17). The save
+     ran 400 ms after a change as a task of its own -- 17-42 ms at 4x,
+     right where the next click lands. It now waits for the browser to be
+     idle after those 400 ms (or 1 s at most). The notebook it is for is
+     taken when the change is made: switching tabs inside that wait saved
+     the tab switched TO, and the change made was not kept until the next
+     one. Leaving the page saves what is still waiting. */
+  var saveT=null,saveIdle=0,saveFor={};
+  function saveLayoutsNow(){
+    clearTimeout(saveT);saveT=null;
+    if(saveIdle&&window.cancelIdleCallback) window.cancelIdleCallback(saveIdle);
+    saveIdle=0;
+    var stems=Object.keys(saveFor);saveFor={};
+    stems.forEach(function(st){
+      if(st!==APP.active&&APP.shells[st]) saveLayout(st);});
+    if(!APP.active) return;
+    saveLayout(APP.active);
+    /* a custom view IS this snapshot plus its styling, so every filter
+       or hide you change while editing one belongs to it */
+    if(APP.syncStylingView) APP.syncStylingView();
+  }
   function scheduleSaveLayout(){
+    if(APP.active) saveFor[APP.active]=1;
     clearTimeout(saveT);
+    if(saveIdle&&window.cancelIdleCallback) window.cancelIdleCallback(saveIdle);
+    saveIdle=0;
     saveT=setTimeout(function(){
-      if(!APP.active) return;
-      saveLayout(APP.active);
-      /* a custom view IS this snapshot plus its styling, so every filter
-         or hide you change while editing one belongs to it */
-      if(APP.syncStylingView) APP.syncStylingView();
+      saveT=null;
+      if(window.requestIdleCallback)
+        saveIdle=window.requestIdleCallback(function(){
+          saveIdle=0;saveLayoutsNow();},{timeout:1000});
+      else saveLayoutsNow();
     },400);
   }
+  window.addEventListener('pagehide',function(){
+    if(saveT||saveIdle) saveLayoutsNow();
+  });
   APP.scheduleSaveLayout=scheduleSaveLayout;
   function loadLayout(shell,stem,path){
     var st=null;
@@ -8603,6 +9173,8 @@
   };
   APP.exitStyling=function(){
     if(!STY) return;
+    /* a change still waiting to be saved belongs to the view being left */
+    if(saveT||saveIdle) saveLayoutsNow();
     closeStyPanel();
     clearStamps();
     dropStyBtns();
@@ -8868,7 +9440,7 @@
       trace:true,source:stem};
     if(APP.traces.indexOf(key)<0) APP.traces.push(key);
     activate(key);
-    applyFilters();
+    applyFilters(key);       /* the trace tab just made, alone */
     applyCodeState(shell);   /* fold/hide code to match the current state */
     var c=shell.querySelector('.content'); if(c) c.scrollTop=0;
     window.scrollTo(0,0);
@@ -8876,7 +9448,12 @@
   }
   APP.openTraceTab=openTraceTab;
   /* T606: what a collection's feed needs from this side */
-  APP.refilter=function(root){applyFilters();applyCodeState(root);};
+  /* a collection's feed drawn again: its cards are new (shellIdxDrop),
+     and only it needs filtering */
+  APP.refilter=function(root){
+    shellIdxDrop(root);
+    refilterShellEl(root);applyCodeState(root);
+  };
   APP.activateOutputs=activateOutputs;
   /* one open per source at a time: repeated Enter/clicks are ignored
      while the fetch runs, and the dialog shows a loading bar */
@@ -9118,6 +9695,9 @@
   };
   function closeNotebook(stem){
     var sh=APP.shells[stem]; if(!sh) return;
+    /* a layout change still waiting for its idle save is this notebook's
+       to keep: saved now, while there is a notebook to read it from */
+    if(saveFor[stem]){delete saveFor[stem];saveLayout(stem);}
     /* closing a notebook also closes any Plot-trace tabs derived from it */
     if(!sh.trace) APP.traces.slice().forEach(function(k){
       if(APP.shells[k]&&APP.shells[k].source===stem) closeNotebook(k);

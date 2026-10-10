@@ -52,6 +52,8 @@ const node={classList:{toggle:(k,v)=>v?flags.add(k):flags.delete(k)},
 const shell={querySelector:()=>node,querySelectorAll:()=>[]};
 const $$=()=>[];
 let saves=0;
+/* the section's head, row and items (from the notebook's index, 2026-10-09) */
+function secParts(sid){return {sec:node,row:node,items:node};}
 function recalcSecCascade(){}
 function scheduleSaveLayout(){saves++;}
 """ + lift_fn(assets.app_js(), "setSecCollapsed") + """
@@ -79,9 +81,12 @@ def test_open_tabs_are_one_list_in_one_place():
     assert 'id="open-tabs-row"' in page
     assert 'id="top-tabstrip"' in page
     assert "topTabstrip.innerHTML='';" in js
-    assert "var side=makeTab(stem); if(side) tabstrip.appendChild(side);" in js
-    assert ("var top=makeTab(stem); if(top&&topTabstrip) "
-            "topTabstrip.appendChild(top);" in js)
+    # one list of stems builds both strips (tabStems; a switch that changes
+    # nothing else only moves the highlight, 2026-10-09 speed)
+    assert "        var side=makeTab(stem);" in js
+    assert "tabstrip.appendChild(side);" in js
+    assert "        var top=makeTab(stem);" in js
+    assert "topTabstrip.appendChild(top);" in js
     assert "if(APP.renderPresentationTabs) APP.renderPresentationTabs();" in js
     assert "function refreshOpenTabsRow(){" in js
     assert "topTabstrip.querySelectorAll('.tab').length" in js

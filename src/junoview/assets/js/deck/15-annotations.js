@@ -261,7 +261,7 @@
   }
   /* EVERY CODE-TRAIL FILTER MENU EVER MADE, so the click that closes an
      open one asks this list and not the whole page (2026-10-09, speed,
-     systemic #2: `$$('.vo-fmenu')` walked every element of every open
+     systemic #2: a page-wide .vo-fmenu query walked every element of every open
      notebook on every click anywhere -- 4-11 ms a click at 4x). Held
      weakly: a menu whose view was thrown away goes with it, and one
      built before its view was put on the page is still found once it

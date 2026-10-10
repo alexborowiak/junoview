@@ -2450,8 +2450,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # predicted folds, coalesced resize, readouts on change, reader band memo; review fixes.
 # Speed (web): Python on intent, pre-rendered example shell, service worker after
 # load with a warm set, welcome painted visible; review fixes.
-EXPECTED_MD5 = "f84dd0fd7f11a65149f3ced50ec9ba9d"
-EXPECTED_BYTES = 5552126
+# Speed (reader): per-shell lookups and spy maps, one notebook re-filtered,
+# a scroll sheet that hands each press on, idle layout saves, Versions without
+# a modal; review fixes.
+EXPECTED_MD5 = "910f35d85ccc675d05e2a042cf0e9fed"
+EXPECTED_BYTES = 5584754
 
 
 def _render_example() -> str:

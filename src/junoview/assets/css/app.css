@@ -2297,6 +2297,21 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .rawcell{position:relative;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;
   padding:14px 16px 14px 16px;margin:12px 0;}
+/* the raw view lays out the cells near the screen, as the formatted view
+   does its cards (core.css): opening it laid out every cell's source and
+   outputs in one go -- 430-500 ms at 4x on a 116-cell notebook (2026-10-09,
+   speed: reader #7). `auto` remembers each cell's real height once seen.
+   Printing lays everything out. */
+.rawview .rawcell{content-visibility:auto;contain-intrinsic-size:auto 160px;}
+@media print{.rawview .rawcell{content-visibility:visible!important;
+  contain-intrinsic-size:none!important;}}
+/* while the window scrolls, a clear sheet over the notebook takes the
+   pointer (app.js, reader #4): no hit-testing and no hover restyle at
+   each step. Under the app's chrome (#apptop 90), the find bar, menus
+   and dialogs, over everything in the feed (its own z-indexes are 20
+   and under). */
+.jv-scrollshield{position:fixed;inset:0;z-index:50;display:none;}
+.jv-scrollshield.on{display:block;}
 .rawtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-3);display:inline-block;
   margin-bottom:8px;}

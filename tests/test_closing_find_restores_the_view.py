@@ -56,8 +56,14 @@ def test_closing_puts_both_flags_back():
     assert "      r.el.classList.toggle('is-hidden',r.hidden);" in app
     assert "      r.el.classList.toggle('expanded',r.expanded);" in app
     # ...and the part flags, in the same place, so one function undoes it all
-    assert "    $$('.jv-hitopen').forEach(function(n){" in app.split(
-        "  function findRestore(){")[1].split("\n  function ")[0]
+    # (the ones find recorded opening; any copy of one goes in the sweep
+    # that follows it in findClear: 2026-10-09)
+    restore = app.split("  function findRestore(){")[1].split(
+        "\n  function ")[0]
+    assert "n.classList.remove('jv-hitopen');" in restore
+    sweep = app.split("  function findSweep(unwrap,marks){")[1].split(
+        "\n  function ")[0]
+    assert "} else n.classList.remove('jv-hitcard','jv-hitopen');" in sweep
 
 
 def test_a_new_search_also_puts_the_last_one_back():

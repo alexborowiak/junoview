@@ -19,7 +19,8 @@ from junoview.server.state import _PROJECT_FILE, _AppState
 def test_layout_snapshot_records_hidden_heads_and_feed_sizers(out):
     """Hidden headings are part of the saved layout, like every other
     view setting -- and so are the two feed-wide sizers."""
-    assert "secsHeadOff:$$('.section.sec-headoff'" in out
+    # read off the notebook's index when it has one (2026-10-09, speed)
+    assert "secsHeadOff:secsWith('sec-headoff')" in out
     assert "(keep.secsHeadOff||[]).forEach" in out
     assert "st.secsHeadOff||[]" in out
     # the two feed-wide sizers are layout too

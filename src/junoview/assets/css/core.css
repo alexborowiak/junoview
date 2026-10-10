@@ -537,8 +537,11 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
 .railgraph.collapsed .railgraph-b{max-height:0;overflow:hidden;}
 .provsvg text{font-family:var(--mono);font-size:9.5px;fill:var(--chrome-ink);
   pointer-events:none;}
+/* the lit edge's colour fades; its width does not (2026-10-09, speed:
+   reader #13) -- a stroke-width in transition re-laid out the outline's
+   SVG paths every frame of a scroll with the outline open */
 .provedge{fill:none;stroke:var(--amber-soft);stroke-width:1.4;
-  transition:stroke .2s,stroke-width .2s;}
+  transition:stroke .2s;}
 .provedge.lit{stroke:var(--amber);stroke-width:2.2;}
 .provnode{cursor:pointer;}
 .provnode rect{transition:filter .2s,stroke .2s;stroke:transparent;stroke-width:2;}
@@ -756,8 +759,12 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
      once every script on the page had run: the headings painted and the
      cards stayed blank for seconds behind them (3.5 s on a four-notebook
      project at 4x), and every card scrolled into view for the first time
-     paid an animation (2026-10-09, speed: load-app #1, reader #5). */
-  transition:box-shadow .2s,border-color .2s;}
+     paid an animation (2026-10-09, speed: load-app #1, reader #5).
+     NO HOVER FADE EITHER (reader #2): the shadow below came in over
+     0.2 s, and while the page scrolls under a still pointer every card
+     that passes beneath it starts that fade -- a box-shadow, which the
+     main thread restyles and repaints over the whole card each frame:
+     25-40% of the cost of scrolling. It snaps on now. */}
 .card:hover{box-shadow:0 6px 22px color-mix(in srgb,var(--shadow) 34%,transparent);}
 .card::before{content:"";position:absolute;left:0;top:16px;bottom:16px;
   width:3px;border-radius:3px;background:var(--line);
@@ -886,6 +893,11 @@ dialog.cell-history{width:min(1120px,94vw);max-width:94vw;height:min(760px,86vh)
   border:1px solid var(--line);border-radius:12px;background:var(--paper);
   color:var(--ink);box-shadow:0 18px 55px var(--shadow);}
 dialog.cell-history::backdrop{background:#0009;}
+/* shown with show(), not showModal() (app.js openCellHistory, reader #8):
+   placed and stacked as the modal top layer placed it, over a backdrop
+   of its own that takes the clicks outside it */
+dialog.cell-history{position:fixed;inset:0;margin:auto;z-index:2001;}
+.ch-backdrop{position:fixed;inset:0;z-index:2000;background:#0009;}
 .ch-head{display:flex;align-items:center;justify-content:space-between;
   gap:16px;padding:17px 20px;border-bottom:1px solid var(--line);}
 .ch-head span{font:600 10px var(--mono);letter-spacing:.13em;

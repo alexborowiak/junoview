@@ -56,7 +56,7 @@ def test_the_gate_runs_before_the_pin_bypass():
     """A pinned cell is out of view under "only starred" like any other:
     pin's promise is about the TYPE and SECTION filters."""
     app = assets.app_js()
-    body = app.split("  function applyFilters(){")[1]
+    body = app.split("  function applyFilters(onlyStem){")[1]
     gate = body.index("if(!onlyKeeps(c,only)"
                       "&&!c.classList.contains('cell-keep-visible')){")
     bypass = body.index("if(c.classList.contains('is-pinned')")
@@ -78,8 +78,9 @@ def test_one_labels_control_only_appears_when_the_notebook_has_labels():
     assert "    host.hidden=!have.any;" in app
     # counted off the OUTLINE, so a mark from another notebook does not
     # raise a chip that gates on nothing
-    assert ("      if(!shell.querySelector('.navitem[data-item=\"'+id+'\"]'))"
-            " return;") in app
+    # (from the notebook's index when it is a notebook's shell, 2026-10-09)
+    assert ("      if(IX?!IX.nav[id]:!shell.querySelector('.navitem[data-item=\"'"
+            "+id+'\"]'))\n        return;") in app
 
 
 def test_the_labels_menu_is_in_the_ribbon_with_the_filters_it_gates():
@@ -116,7 +117,7 @@ def test_a_gate_with_nothing_left_to_show_lets_go():
     """Un-marking the last hearted cell while "Heart" is on would
     otherwise empty the notebook with no visible cause."""
     app = assets.app_js()
-    assert "if(only.length){setOnly(stem,[]);applyFilters();}" in app
+    assert "if(only.length){setOnly(stem,[]);applyFilters(stem);}" in app
     assert "if(only.length!==onlyFor(stem).length) setOnly(stem,only);" in app
 
 

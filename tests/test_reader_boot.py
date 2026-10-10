@@ -173,7 +173,9 @@ def test_boot_registers_hidden_notebooks_and_wires_them_when_shown():
                      "hidden=(s!==stem);});") < act.index("wakeShell(stem);")
     assert act.index("wakeShell(stem);") < act.index("renderTabs();")
     init = lift_fn(app, "initShell")
-    assert "if(!BOOTING) applyFilters();" in init
+    # the shell just wired, alone (2026-10-09, speed: filters are per
+    # notebook)
+    assert "if(!BOOTING) applyFilters(stem);" in init
     assert "if(!BOOTING&&!woke) renderTabs();" in init
     # a wake is not announced: the deck reads sem:shell as "cards changed"
     assert "if(!woke) document.dispatchEvent(new CustomEvent('sem:shell'," \
@@ -586,7 +588,7 @@ def test_the_page_inserts_it_and_falls_back_to_the_remount():
     assert "return null" not in fn[fn.index("/* ---- writes ---- */"):]
     for step in ("wireCardButtons(shell,stem,[card]);",
                  "wireAddNote(shell,stem);", "shell.__jvAddCard(card,nav);",
-                 "applyFilters();", "replaced:false",
+                 "applyFilters(stem);", "replaced:false",
                  # the tab holds the new version: a Reload keeps it
                  "shell.dataset.ver=j.ver||'';",
                  # the raw view may still be its inert template

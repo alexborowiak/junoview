@@ -251,6 +251,12 @@
     var again=colMenuEl&&colMenuEl._for===anchor;
     colMenuClose();
     if(again) return;
+    /* MEASURED BEFORE IT IS BUILT (2026-10-09, speed: reader #19): the
+       button's place read after the menu went in made the browser lay
+       out the page with the menu half-made, and focusing it scrolled it
+       into view -- a second layout. Read first, then write, and focus
+       without scrolling (it is placed on screen already). */
+    var r=anchor.getBoundingClientRect();
     var m=document.createElement('div');
     m.className='col-menu';m.setAttribute('role','menu');m._for=anchor;
     var h=document.createElement('div');h.className='col-menu-h';
@@ -298,15 +304,16 @@
     m.appendChild(nw);
     document.body.appendChild(m);
     colMenuEl=m;
-    var r=anchor.getBoundingClientRect();
+    var mh=m.offsetHeight,mw=m.offsetWidth;
     var top=r.bottom+4;
-    if(top+m.offsetHeight>window.innerHeight-8)
-      top=Math.max(8,r.top-4-m.offsetHeight);
+    if(top+mh>window.innerHeight-8)
+      top=Math.max(8,r.top-4-mh);
     m.style.top=Math.round(top)+'px';
     m.style.left=Math.round(Math.max(6,Math.min(r.left,
-      window.innerWidth-m.offsetWidth-6)))+'px';
+      window.innerWidth-mw-6)))+'px';
     var first=m.querySelector('.col-menu-row');
-    if(first) first.focus();
+    if(first) try{first.focus({preventScroll:true});}
+      catch(e){first.focus();}
   }
   /* a notebook card's Collect */
   function colCollectCard(btn,stem,card){

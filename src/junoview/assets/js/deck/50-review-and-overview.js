@@ -1631,6 +1631,14 @@
   function renderTopPresTabs(){
     var top=$('#top-tabstrip'); if(!top) return;
     presTabsSaveKey=null;   /* only a build of both lists sets it */
+    /* SWITCHING NOTEBOOKS DOES NOT REDRAW THE DECKS' TABS (2026-10-09,
+       speed: reader #10). renderTabs asks for these on every notebook
+       tab switch; when what they are drawn from (presTabsInputs) and the
+       tabs themselves are as the last build left them, they stay. */
+    if(presTabsTopSame(top)){
+      if(APP.refreshOpenTabsRow) APP.refreshOpenTabsRow();
+      return;
+    }
     $$('.top-pres-tab',top).forEach(function(t){t.remove();});
     var savedNames=savedNameList();   /* the names, nothing copied */
     var editing=!deckEl.hidden;
@@ -1705,7 +1713,10 @@
       presTabsMeta={raw:metaRaw,all:deckMetaAll()};
     var k=[pres,on,pres&&pres.page,pres&&pres.kind,deckEl.hidden,
       ssGet(OPEN_PRES_KEY),cl.contains('styling'),cl.contains('welcoming'),
-      A.active,(A.cols||[]).join('\n'),
+      /* the tab on screen matters to these tabs only when it is a
+         collection's (presItem lights that one): a notebook switch
+         changes nothing here */
+      presTabsColActive(A.active),(A.cols||[]).join('\n'),
       (typeof defaultSaveTarget==='function')?defaultSaveTarget():'',
       afterSave?0:projectPres,nbPres,projectPres.concat(nbPres).map(function(p){
         return [p.name,p.origin||'',p.page||'',p.kind||''].join('\u0001');
@@ -1751,10 +1762,21 @@
     presTabsSideKey=presTabsTopKey=presTabsInputs();
     presTabsKeepInView();
   }
+  function presTabsColActive(active){
+    var pfx=(typeof colKey==='function')?colKey(''):'col::';
+    return (active&&String(active).indexOf(pfx)===0)?active:'';
+  }
   function presTabsKeyIs(a,b){
     if(!a||a.length!==b.length) return false;
     for(var i=0;i<a.length;i++) if(a[i]!==b[i]) return false;
     return true;
+  }
+  function presTabsTopSame(top){
+    var ae=document.activeElement;
+    if(ae&&ae.closest&&ae.closest('.top-pres-tab')) return false;
+    if(!presTabsKeyIs(presTabsTopKey,presTabsInputs())) return false;
+    return presTabsTop.every(function(t){return t.parentNode===top;})
+      &&$$('.top-pres-tab',top).length===presTabsTop.length;
   }
   function presTabsSame(){
     var top=$('#top-tabstrip');

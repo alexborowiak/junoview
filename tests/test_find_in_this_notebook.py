@@ -32,13 +32,16 @@ def test_there_is_a_find_button_and_a_bar():
 def test_it_searches_the_documents_own_text():
     app = assets.app_js()
     assert "  function findMark(root,term){" in app
-    assert "    var walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{" in app
+    # the term is looked for first; only a node holding it climbs its
+    # ancestors (2026-10-09, speed: no filter callback per text node)
+    assert "    var walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);" in app
     # never inside a script, a style or an input
     assert ("  var FIND_SKIP={SCRIPT:1,STYLE:1,SVG:1,CANVAS:1,TEXTAREA:1,"
             "INPUT:1};") in app
     # ...and never inside a mark it has already made
-    assert ("          if(p2.classList&&p2.classList.contains('jv-hit'))\n"
-            "            return NodeFilter.FILTER_REJECT;") in app
+    assert ("        if(p2.classList&&p2.classList.contains('jv-hit'))"
+            " return true;") in app
+    assert "        if(FIND_SKIP[p2.nodeName]) return true;" in app
 
 
 def test_a_hit_opens_what_the_filters_folded_around_it():
@@ -53,9 +56,10 @@ def test_a_hit_opens_what_the_filters_folded_around_it():
     # out of findOpen into findRestore, beside the card-level flags it
     # had forgotten -- so a new SEARCH puts them back too, not only a
     # close.
-    assert "    $$('.jv-hitopen').forEach(function(n){" in app
     restore = app.split("  function findRestore(){")[1].split("\n  function ")[0]
-    assert "$$('.jv-hitopen')" in restore
+    assert "findOpenedParts.forEach(function(n){" in restore
+    # ...and a copy's, in the one sweep after it (2026-10-09, speed)
+    assert "'mark.jv-doc,.jv-hitcard,.jv-hitopen'" in app
     assert "  function findClear(){" in app
     assert "      p2.replaceChild(document.createTextNode(m.textContent),m);" in app
 

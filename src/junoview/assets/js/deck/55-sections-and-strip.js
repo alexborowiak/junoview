@@ -3164,6 +3164,9 @@
     }
   };
   /* close any open code-trail filter menu on an outside click */
+  /* from the menus made (voMenusLive, 15-annotations.js), not a query
+     over the whole page on every click anywhere (2026-10-09, speed:
+     reader #16: 3-7 ms a click at 4x) */
   document.addEventListener('click',function(e){
     if(!voMenus.length) return;
     voMenusLive().forEach(function(m){

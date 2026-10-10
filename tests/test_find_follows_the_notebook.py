@@ -33,4 +33,5 @@ def test_the_rerun_marks_the_visible_shell_and_clears_the_rest():
     assert run.index("findClear();") < run.index(
         "document.querySelector('.nbshell:not([hidden]) .content')")
     clear = app.split("  function findClear(){")[1].split("\n  function ")[0]
-    assert "$$('mark.jv-doc')" in clear
+    # its own marks, then any copy of one, wherever it went (2026-10-09)
+    assert "if(marked) findSweep(unwrap,marks);" in clear

@@ -184,7 +184,9 @@ def test_tree_view_ergonomics_and_edge_rerouting(out):
     # decode / resize): ResizeObserver on every node + a timer pass that
     # survives rAF throttling
     assert "new ResizeObserver" in out and "host._ro=ro" in out
-    assert "setTimeout(function(){treeLayoutEdges(host);},120)" in out
+    # (one frame pass and one late pass a host, 2026-10-09 speed)
+    assert ("host.__jvRlT=setTimeout(function(){\n"
+            "      host.__jvRlT=0;treeLayoutEdges(host);},120);") in out
     assert "'tree-canvas tw-m'" in out
     assert ".tree-canvas.tw-l .tree-node{width:340px" in out
     assert "tn-resize" in out and "barycenter" in out
