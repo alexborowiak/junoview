@@ -2510,6 +2510,9 @@
       try{if(typeof routeFlush==='function') routeFlush();}catch(e){}
       /* the draft write is debounced now — a closing tab cannot wait */
       try{flushDraftWrite();}catch(e){}
+      /* ...and nor can IndexedDB: what it has not confirmed goes where
+         the next page reads it before it opens anything (10-decks.js) */
+      try{draftsLastChance();}catch(e){}
       if(e&&e.type==='pagehide'){
         try{rehStop();}catch(err){}
         /* T564: the microphone goes down with the page */

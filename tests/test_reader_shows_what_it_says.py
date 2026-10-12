@@ -259,6 +259,8 @@ var findHits=[],findAt=-1,findOpened=[],findOpenedParts=[],
     findOpenedNotes=[];
 function $(s){return null;}
 function $$(s,r){return [];}
+/* where the match lands is findShow's (2026-10-11): the glide, here */
+function findShow(m){m.scrollIntoView({block:'center',behavior:'smooth'});}
 var clamped=0;
 function mdClamp(bds){bds.forEach(function(bd){clamped++;
   bd.dataset.mdclamp=bd.long?'1':'0';if(bd.long) bd.classList.add('mdclamp');});}
@@ -332,6 +334,7 @@ function box(top,h,shown){return {isConnected:true,
   dataset:{}};}
 var $$=function(s,el){return el.cards;};
 function setTimeout(f){f();}
+var findLand=null;   /* no Find landing under way (findShow) */
 """
 
 

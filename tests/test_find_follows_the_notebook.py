@@ -19,15 +19,19 @@ from junoview import assets
 def test_activating_a_tab_reruns_an_open_find():
     app = assets.load("js/app.js")
     assert "    document.addEventListener('sem:activate',findAgain);" in app
-    again = app.split("  function findAgain(){")[1].split("\n  function ")[0]
+    again = app.split("  function findAgain(e){")[1].split(
+        "\n  function ")[0]
     assert ("    var bar=$('#docfind'),inp=$('#docfind-in');\n"
-            "    if(!bar||bar.hidden) return;\n"
-            "    findRun(((inp&&inp.value)||'').trim());") in again
+            "    if(!bar||bar.hidden) return;\n") in again
+    # the same term, from the first match -- or, the same notebook
+    # mounted again (a Reload), from the one you were on (2026-10-11)
+    assert "    findRun(((inp&&inp.value)||'').trim(),keep);" in again
 
 
 def test_the_rerun_marks_the_visible_shell_and_clears_the_rest():
     app = assets.load("js/app.js")
-    run = app.split("  function findRun(term){")[1].split("\n  function ")[0]
+    run = app.split("  function findRun(term,keep){")[1].split(
+        "\n  function ")[0]
     # clears first -- wherever the old marks are -- then marks the shell
     # that is showing
     assert run.index("findClear();") < run.index(

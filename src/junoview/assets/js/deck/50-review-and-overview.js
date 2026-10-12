@@ -3386,9 +3386,15 @@
     while(savedByName(name)||loadDraft(name)){
       n2++;name='custom view '+n2;}
     /* seeded from what you are looking at right now, so a new view never
-       throws away the filters you already set up */
-    pres={name:name,kind:'view',nb:stem,style:{},
-          view:(A.layoutSnapshot&&A.layoutSnapshot(stem))||{}};
+       throws away the filters you already set up. Made by normPres, the
+       one place a view's shape is written: built here by hand it had no
+       `slides`, which every reopened view has (normPres gives it []), and
+       its first change -- the layout save Save as view itself schedules
+       -- went through markDirty to the size readout and the strip's
+       thumbnail, which read pres.slides[cur] and threw "Cannot read
+       properties of undefined (reading '0')" (2026-10-11) */
+    pres=normPres({name:name,kind:'view',nb:stem,style:{},
+          view:(A.layoutSnapshot&&A.layoutSnapshot(stem))||{}});
     source='auto';
     cur=0;activePane=-1;
     openCustomView();

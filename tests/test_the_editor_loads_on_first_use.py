@@ -409,6 +409,8 @@ HOOKS: dict[str, list[tuple[str, str]]] = {k: v if isinstance(v, list)
     "deckNewFolder": ("door", "#welcome-folder"),
     "deckPinToggle": ("door", "#welcome-pres"),
     "deckChoose": ("door", "#welcome-pres"),
+    "deckLastTab": ("absent", "no deck's or collection's tab is open, so "
+                              "closing the last notebook goes Home"),
     "deckPreview": ("absent", "Home's rows; Home loads the editor, whose "
                               "boot paints Home again (APP.refreshChrome)"),
     "deckPreviewForget": ("absent", "a preview only the editor drew"),

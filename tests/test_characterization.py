@@ -2468,8 +2468,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Load: the page names deck.js instead of carrying it; app.js loads
 # the editor when the screen needs it, on first use, or when the
 # reader has been idle for 1.5 s.
-EXPECTED_MD5 = "48b411353340f3f40ce224020ae85829"
-EXPECTED_BYTES = 5678973
+# Reader bugs: Save as view builds through normPres, Pages and
+# Variables say why through docToast, Find glides again until a match
+# lands below the chrome, closing the last notebook goes to the last
+# deck or collection tab.
+EXPECTED_MD5 = "2287ec6f339b011e3cedbdba93d5654a"
+EXPECTED_BYTES = 5688103
 
 
 def _render_example() -> str:

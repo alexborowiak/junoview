@@ -802,6 +802,7 @@
      that is refused (a private window, a disk that is really full) is
      the only thing that can make the readout say "browser full" now. */
   var DRAFTS={},draftsDbFull=false,draftsLoaded=false;
+  var draftsUnsure={},draftsInLs={};   /* draftsLastChance */
   var DRAFT_META={'last':1,'recent-presentations':1,
     'pinned-presentations':1,    /* T435 */
     'deck-meta':1};              /* T598: not a draft, a record of them */
@@ -811,7 +812,14 @@
   function draftSet(name,json,quiet){
     if(!name) return false;
     DRAFTS[name]=json;
+    draftsUnsure[name]=json;   /* until IndexedDB says it has it */
+    delete draftsInLs[name];
     idbPut(PFX+name,json,'drafts').then(function(){
+      if(draftsUnsure[name]===json){
+        delete draftsUnsure[name];
+        /* the last chance's copy of it is not needed now */
+        if(draftsInLs[name]===json){delete draftsInLs[name];lsDel(PFX+name);}
+      }
       if(draftsDbFull){draftsDbFull=false;if(typeof status==='function') status();}
     }).catch(function(){
       if(!draftsDbFull){
@@ -829,10 +837,36 @@
   function draftDel(name){
     if(!name) return;
     delete DRAFTS[name];
+    delete draftsUnsure[name];delete draftsInLs[name];
     lsDel(PFX+name);
     idbDel(PFX+name,'drafts').catch(function(){});
   }
   function draftsFull(){return draftsDbFull;}
+  /* ---- THE PAGE'S LAST CHANCE: WHAT IS NOT KEPT YET, KEPT NOW ---------
+     (2026-10-11) IndexedDB is asynchronous, and a page that is going
+     does not wait for it. The last chance flushed the debounced draft
+     write (flushDraftWrite) into IndexedDB as the page went, and the
+     page was gone before the write finished: a slide added, or words
+     typed in a box, and the page reloaded at once -- the edit was not
+     there. So the last chance
+     (pagehide, or the tab hidden: 20-notes-and-tables.js) also puts
+     every draft IndexedDB has not yet confirmed into localStorage,
+     which is synchronous -- the legacy key, which boot already reads
+     first (draftsLoadLocal), opens on, moves into IndexedDB and drops.
+     Nothing here runs per edit: draftSet only notes the string it was
+     handed (draftsUnsure), and drops the note when IndexedDB has it;
+     any later write of the same draft drops the copy too, so the
+     localStorage copy is never the older of the two. */
+  function draftsLastChance(){
+    Object.keys(draftsUnsure).forEach(function(nm){
+      var json=draftsUnsure[nm];
+      if(draftsInLs[nm]===json) return;   /* hidden twice: there already */
+      /* not lsSet: a copy refused here is not "the browser is full"
+         for the readout -- IndexedDB may yet have it */
+      try{localStorage.setItem(PFX+nm,json);draftsInLs[nm]=json;}
+      catch(e){}
+    });
+  }
   /* the legacy localStorage drafts, synchronously, so boot can open on
      one; each is moved into IndexedDB and dropped from localStorage */
   function draftsLoadLocal(){
@@ -977,7 +1011,11 @@
   function loadDraft(name){
     var raw=draftGet(name); if(!raw) return null;
     try{var d=JSON.parse(raw);
-      return (d&&Array.isArray(d.slides))?normPres(d):null;
+      /* a custom view kept by a build with the Save-as-view bug has no
+         `slides` (newCustomView wrote it by hand): normPres gives it
+         its []; refused here, it opened as the automatic deck */
+      return (d&&(Array.isArray(d.slides)||d.kind==='view'))
+        ?normPres(d):null;
     }catch(e){return null;}
   }
   /* whether there is a draft that loads -- asked once per draft WRITTEN,
@@ -1466,6 +1504,12 @@
         cur=0;activePane=-1;
         if(typeof status==='function') status();
         if(typeof refresh==='function'&&!deckEl.hidden) refresh();
+        /* ...and a collection open in its tab is drawn again from it: its
+           feed was drawn from the copy the lines above opened, so a
+           collection reordered and the page reloaded three seconds later
+           showed its old order -- and the next change went to the copy
+           on screen (2026-10-11) */
+        else if(isColPres(pres)) colRefresh(pres.name);
       }
       /* T494: the URL's #/pres route, which the router held back
          until now because the deck it names could be one of these.

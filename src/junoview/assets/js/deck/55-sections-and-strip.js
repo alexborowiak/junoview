@@ -2230,6 +2230,16 @@
   /* opening one is the rail's own action, so a deck, a poster and a
      custom view each land where they belong */
   window.SemApp.deckChoose=function(nm){choosePresentation(nm);};
+  /* the last of the open tabs that shows without a notebook (a custom
+     view is a notebook's own): where closing the last notebook goes,
+     through the door above, as pressing that tab would (app.js
+     closeNotebook, 2026-10-12) */
+  function deckLastTab(){
+    var ns=openPresentationNames().filter(function(nm){
+      return !isViewPres(presFacts(nm));});
+    return ns.length?ns[ns.length-1]:'';
+  }
+  window.SemApp.deckLastTab=deckLastTab;
   /* a presentation needs no notebook: every tool except the cell frame
      works on an empty deck, so the front door can offer this as a way
      IN rather than as something you reach after opening a notebook

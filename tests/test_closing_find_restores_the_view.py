@@ -72,7 +72,8 @@ def test_a_new_search_also_puts_the_last_one_back():
     app = assets.app_js()
     clear = app.split("  function findClear(){")[1].split("\n  function ")[0]
     assert "findRestore();" in clear
-    run = app.split("  function findRun(term){")[1].split("\n  function ")[0]
+    run = app.split("  function findRun(term,keep){")[1].split(
+        "\n  function ")[0]
     assert "findClear();" in run
 
 
