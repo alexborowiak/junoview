@@ -2525,12 +2525,31 @@
       setPresFolder(nm,'');
     });
   }
+  /* WHERE THE KEYBOARD GOES BACK TO (2026-10-11 review). Closing the
+     dialog hides the control the keyboard was on, so it fell to the
+     page: Escape on Open with the editor up left it on BODY, and the
+     next Tab started from the top of the document. With the editor up
+     it goes to the editor (its stage: deckFocusTake); over a notebook
+     or Home, to whatever opened the dialog, if that can still take it.
+     Only when it was in the dialog -- a closer that hands it on (a
+     file picker, the notebook dialog) moves it after this. */
+  var hubOpener=null;
   function closePresentationHub(){
     var root=$('#presentation-hub');
+    var ae=document.activeElement;
+    var had=!!(root&&!root.hidden
+      &&(!ae||ae===document.body||root.contains(ae)));
     if(root) root.hidden=true;
     presentationHubDeckInert(false);
     pvForget();hubPvName='';   /* T599: parsed copies are for one visit */
     hubDirRows=null;hubDirH=null;
+    var back=hubOpener;hubOpener=null;
+    if(!had) return;
+    if(!deckEl.hidden&&mode!=='create'){deckFocusTake();return;}
+    if(back&&back.isConnected&&!back.closest('[inert],[hidden]')
+       &&back.getClientRects().length){
+      try{back.focus({preventScroll:true});}catch(err){}
+    }
   }
   /* T414: OPEN MEANS OPEN (2026-09-13, user: "why when you click open
      is there all the 'new poster options', like THAT WAS THERE ON THE
@@ -2545,6 +2564,18 @@
     closeDeckPresentationDrawer();
     pvForget();   /* T599: what was saved since the last visit shows */
     var fq=$('#presentation-hub-find'); if(fq) fq.value='';
+    if(root.hidden){   /* closePresentationHub gives the keyboard back */
+      var from=document.activeElement;
+      /* a menu's row (File > Open a presentation...) is hidden with its
+         menu by the pick, so it cannot take the keyboard back: the
+         menu's own button does (2026-10-12 review) */
+      var fm=from&&from.closest?from.closest('.dc-menu'):null;
+      var fb=fm&&fm.parentNode
+        ?fm.parentNode.querySelector('[aria-haspopup="true"]'):null;
+      if(fb) from=fb;
+      hubOpener=(from&&from!==document.body&&!root.contains(from))
+        ?from:null;
+    }
     root.hidden=false;renderPresentationHub();
     /* T599: the folder Junoview saves into lists itself when the
        browser already lets it be read; otherwise its button asks */

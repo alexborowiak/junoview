@@ -2472,8 +2472,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Variables say why through docToast, Find glides again until a match
 # lands below the chrome, closing the last notebook goes to the last
 # deck or collection tab.
-EXPECTED_MD5 = "2287ec6f339b011e3cedbdba93d5654a"
-EXPECTED_BYTES = 5688103
+# Deck bugs: the editor's stage holds the keyboard when a deck opens,
+# after F5 and after the Open dialog (Tab still walks out to the ribbon),
+# the File menu opens at once without the editor, a .pptx export does
+# not wait on MathJax, Split in two fits the side rail.
+EXPECTED_MD5 = "1a7e98d9b9519f36cfb1a37409adaa18"
+EXPECTED_BYTES = 5700401
 
 
 def _render_example() -> str:

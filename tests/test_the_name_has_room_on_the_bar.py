@@ -36,10 +36,15 @@ def test_global_deck_options_are_one_quiet_app_menu():
 
 
 def test_the_menu_is_wired_and_how_to_use_still_opens_help(out):
-    # a pick closes whichever File it was in, the reader's or the editor's
-    assert ("    var reader=wireMenuToggle('app-filewrap','app-file',"
-            "'app-file-menu');") in out
-    assert "    [reader&&reader.menu,fileMenu].filter(Boolean)" in out
+    # a pick closes whichever File it was in, the reader's or the
+    # editor's: the editor's through its overlay owner, the reader's in
+    # app.js, which opens it before the editor has loaded (2026-10-11
+    # review; tests/test_the_file_menu_opens_at_once.py)
+    assert ("  if(fileMenu) $$('.dc-mi',fileMenu).forEach(function(b){\n"
+            "    b.addEventListener('click',function(){overlayHide(fileMenu);"
+            "});") in out
+    assert ("      if(t&&t.closest&&t.closest('.dc-mi')) shut();\n"
+            "    },true);") in out
     assert "  ['#help-btn','#deck-howto'].forEach(function(sel){" in out
     assert "a.dc-mi{display:block;text-decoration:none;}" in out
 

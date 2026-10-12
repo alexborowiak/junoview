@@ -1695,6 +1695,9 @@
     }
   }
   function setUIModeRun(m,outer){
+    /* the stage holds the keyboard (deckFocusTake), and the side panel
+       hides it: read before anything here changes the view */
+    var stageHad=document.activeElement===stage;
     /* a word still being typed is the deck's before the mode changes:
        the renders that used to commit it on the way (applyZoom's) are
        held now, and the slide's own render empties the stage first */
@@ -1801,6 +1804,10 @@
     deckIsolate(full,editing);
     /* where the keyboard was is read now; it is handed over at the end */
     var takeFocus=full&&deckFocusNote();
+    /* ...and when it was on the stage, which the side panel hides, it is
+       handed to the panel: Escape back to it dropped the keyboard on the
+       page, where it used to stay on Save (2026-10-12 review) */
+    if(stageHad&&creating&&!deckEl.hidden) takeFocus=true;
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
     if(!editing){                   /* Objects pane is an editing tool */
@@ -2016,7 +2023,24 @@
     return !deckEl.contains(document.activeElement);
   }
   function deckFocusTake(){
-    if(deckEl.contains(document.activeElement)) return;
+    var held=document.activeElement;
+    /* in the editor already -- unless it is a stage the view has hidden */
+    if(deckEl.contains(held)&&(held!==stage||stage.getClientRects().length))
+      return;
+    /* THE EDITOR ITSELF (2026-10-11 review): the slide stage. Every one
+       of the deck's keys is the document's (PageDown, Ctrl+Z, F5, the
+       show's Space and arrows) and the stage is no field they skip, so
+       they all work from it at once -- and a stage answers Enter and
+       Space with nothing of its own. The first visible CONTROL, which
+       is what this gave the keyboard to, was Save on opening a deck, so
+       Enter or Space right after opening one pressed Save (with a file
+       target, a picker), and in a show it was #deck-exit, so after F5
+       from the canvas Space ended the talk instead of advancing it.
+       tabindex -1 in deck.html: focusable, and outside the Tab order. */
+    if(stage&&stage.getClientRects().length){
+      try{stage.focus({preventScroll:true});}catch(err){}
+      if(document.activeElement===stage) return;
+    }
     /* the first VISIBLE control, not the first in the markup. The deck
        carries a dozen panels that are hidden most of the time, and
        focusing something inside a display:none subtree silently does
@@ -3281,6 +3305,12 @@
         if(x&&!x.hide&&!lockedAll(x)) ring.push(i);});
       if(!ring.length) return false;
       var at=ring.indexOf(selAnnot);
+      /* ...and past the last one (or before the first) the keyboard
+         goes on through the editor's Tab order. The stage holds the
+         keyboard once a deck opens (deckFocusTake), and a walk that went
+         round for ever left no way from it to the ribbon by keyboard
+         (2026-10-12 review). The selection stays, for the ribbon. */
+      if(at>=0&&at===(e.shiftKey?0:ring.length-1)) return false;
       var nx=at<0?(e.shiftKey?ring.length-1:0)
         :(at+(e.shiftKey?-1:1)+ring.length)%ring.length;
       leaveGroup(layer);
@@ -4028,15 +4058,13 @@
   /* ---- T602: the App menu's rows live in File, in both views --------
      Theme, How to use, Support and where the open files are listed.
      app.js owns what each row does; a pick closes the menu it was in.
-     The reader's File is the same kind of menu as this one. */
-  (function(){
-    var reader=wireMenuToggle('app-filewrap','app-file','app-file-menu');
-    [reader&&reader.menu,fileMenu].filter(Boolean).forEach(function(menu){
-      $$('.dc-mi',menu).forEach(function(b){
-        b.addEventListener('click',function(){overlayHide(menu);});
-      });
-    });
-  })();
+     The READER's File is app.js's, toggle and all (fileMenuBoot): it
+     opens before this editor has loaded (2026-10-11 review), and only
+     its New rows and Open a presentation are this editor's (tabRowBoot,
+     doors of jvDeck). */
+  if(fileMenu) $$('.dc-mi',fileMenu).forEach(function(b){
+    b.addEventListener('click',function(){overlayHide(fileMenu);});
+  });
   menuAction('#mi-new',newPresentation);
   /* ONE rename, reached from the File menu and from the name in the top
      bar. It used to un-hide #pres-name, which lives in .dc-controls — a

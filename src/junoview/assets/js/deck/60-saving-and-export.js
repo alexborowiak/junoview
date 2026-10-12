@@ -3351,6 +3351,11 @@
            but no longer an equation. Counted so the toast can say so. */
         if(node) note.maths+=node.querySelectorAll('mjx-container').length;   /* T483 */
         var txt=(node&&!isTable)?blockText(node):'';
+        /* ...and maths MathJax never set goes as the TeX it was written
+           in, delimiters and all -- counted (pptxMathsWait). Not in a
+           code frame, where a $ or a \\( is the code's own */
+        if(txt&&!code&&(mathsPlain(txt,false).hit||/\\[(\[]|\\begin\s*\{/.test(txt)))
+          note.tex=(note.tex||0)+1;
         if(txt){
           items.push({t:'text',x:box.x,y:box.y,w:box.w,h:box.h,
             rot:a.rot,op:a.op,text:txt,sizePct:code?1.3:1.8,
@@ -3468,14 +3473,73 @@
      JunoPptx.build is synchronous and pptxItems with it, so the
      IndexedDB lookup cannot happen inside them — it happens once, here,
      and is handed down as a plain {displaySrc: fullBytes} map. */
+  /* THE MATHS, AND NO LONGER THAN IT TAKES (2026-10-11 review). This
+     used to wait for every open notebook's maths to be typeset, for up
+     to 15 s, before anything else -- so with MathJax unreachable (the
+     user works offline at times; a blocked CDN that never answers) every
+     .pptx export sat silent for those 15 s, a deck with no equation in
+     it as much as one with. What the export needs MathJax for is much
+     less than that:
+       a TEXT BOX's equation is flattened from its own source (texPlain)
+         and never needed it;
+       a placed cell's KEPT COPY is cloned as it was kept (cloneBody);
+       a placed cell LIVE from its notebook is set on the spot when it is
+         cloned (jvMath.settle), provided MathJax is THERE.
+     So it waits only for MathJax to ARRIVE, only while a live cell still
+     has maths to set, and only briefly. What is still unset then goes as
+     the TeX it was written in, and the message says so (note.tex). */
+  var PPTX_MATHS_WAIT=2500;
+  /* ...and a frame cloned while MathJax was away keeps its TeX in the
+     frame cache after MathJax has come and set the card and the slide:
+     exported, it went as LaTeX the screen no longer showed. With MathJax
+     here, those frames are cloned again, set (2026-10-12 review). */
+  function frameHoldsTex(r,M){
+    /* the card wears the data-math mark, not its body: what a cloned
+       body still holds is its TeX (the test jvMath's own typeset asks).
+       Not a code frame, whose $ is the code's own -- the same rule
+       note.tex counts by (pptxItems) */
+    var p=r+'::';
+    return Object.keys(frameNodeCache).some(function(k){
+      var n=frameNodeCache[k];
+      return k.indexOf(p)===0&&!!n&&!n.querySelector('pre')
+        &&M.hint(n.textContent||'');
+    });
+  }
+  function pptxMathsWait(){
+    var M=window.jvMath;
+    if(!M) return null;
+    var ready=M.ready(),refs=[];
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.k!=='cell'||!a.ref) return;
+        /* the copy cloneBody will use: kept, unless the frame is live */
+        if(!refIsLive(a.ref)&&embBody(a.ref)) return;
+        var c=cardEl(a.ref),r=normRef(a.ref)||a.ref;
+        if(!c||refs.indexOf(r)>=0) return;
+        if(ready?frameHoldsTex(r,M):M.pending(c)) refs.push(r);
+      });
+    });
+    if(!refs.length) return null;
+    if(ready){refs.forEach(dropFrameCache);return null;}
+    return M.arrive(PPTX_MATHS_WAIT).then(function(ok){
+      /* a frame cloned while MathJax was away holds its TeX, and
+         typesetting the card does not drop it: cloned again, it is set */
+      if(ok) refs.forEach(dropFrameCache);
+    });
+  }
+  /* ...and how it is said: N cells whose maths went as TeX, and why */
+  function pptxTexNote(n){
+    if(!n) return '';
+    var M=window.jvMath;
+    return n+' placed cell'+(n===1?'':'s')+' kept '
+      +(n===1?'its':'their')+' equations as the LaTeX they were written '
+      +'in'+((M&&!M.ready())?' \u2014 MathJax, which sets them, has not '
+        +'loaded (offline, or its CDN blocked)':'');
+  }
   function pptxOriginals(){
     var jobs=[],out={};
-    /* and the MATHS, gathered like the bytes: a cell's equations reach
-       the .pptx as the characters MathJax set them in (blockText), and
-       the page typesets as it is read now rather than all at load, so
-       every open notebook's maths is typeset before anything is read */
-    if(window.jvMath&&window.jvMath.pending())
-      jobs.push(window.jvMath.all(null,15000));
+    var mw=pptxMathsWait();
+    if(mw) jobs.push(mw);
     function want(o){
       if(!o||!o.okey||!o.src||out[o.src]!==undefined) return;
       out[o.src]=null;
@@ -3547,6 +3611,7 @@
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
       +'path, so they arrive as plain characters');
+    if(note.tex) lost.push(pptxTexNote(note.tex));
     /* T486: Markdown and rich boxes travel as paragraphs and runs now;
        only a link inside the words is still words alone */
     if(note.links) lost.push(note.links+' link'+(note.links===1?'':'s')
@@ -3774,6 +3839,7 @@
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
       +'this writer has no LaTeX-to-.pptx path, so they were flattened';
+    if(note.tex) msg+='. '+pptxTexNote(note.tex);
     pptxDeliver(out.blob,fname,msg);
     /* one honest tally for the caller: the builder counts items IT could not
        write, this counts cells that never became items — reporting only one

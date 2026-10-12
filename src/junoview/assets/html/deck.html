@@ -3768,7 +3768,11 @@ items snap to both. Guides, not ink: never printed or exported"
            editable. Built by renderStory; hidden until asked for. -->
       <div class="story-strip" id="story-strip" hidden
         role="region" aria-label="Animation story"></div>
-      <div class="deck-stage" id="deck-stage"></div>
+      <!-- tabindex -1: the editor gives the keyboard to the stage itself
+           (deckFocusTake), which takes every deck key and presses
+           nothing on Enter or Space; it stays out of the Tab order -->
+      <div class="deck-stage" id="deck-stage" tabindex="-1"
+        role="region" aria-label="Slide"></div>
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"
         aria-label="Next slide">&#8250;</button>

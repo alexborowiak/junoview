@@ -15,6 +15,8 @@ What is pinned here, each against the page the app serves:
 * every way in works on its FIRST click, made while the editor is still
   on its way: the click is held and made again once it has booted (the
   editor's script is held back here until the click has landed);
+* File is not one of them: it opens at once, the editor still away, and
+  only its rows that are the editor's wait for it (2026-10-11 review);
 * an address that names a deck opens it, at load or typed in later, and
   a reload with a deck open boots the editor with the page;
 * every control the editor wires outside its own markup is one of
@@ -267,8 +269,6 @@ def test_a_deck_file_dropped_before_the_editor_opens(app):
 
 # (what is done, what shows once it has worked)
 WAYS_IN = {
-    "File": ("pg.click('#app-file')",
-             "!document.getElementById('app-file-menu').hidden"),
     "File > New > Presentation": (
         "pg.evaluate(\"document.querySelector('#app-file-menu"
         " [data-for=pr-new]').click()\")", NEW_DIALOG),
@@ -322,6 +322,49 @@ def test_every_way_in_works_on_its_first_click(app, way):
         p.close()
 
 
+FILE_OPEN = "!document.getElementById('app-file-menu').hidden"
+
+
+def test_file_opens_at_once_and_its_editor_rows_wait_for_the_editor(app):
+    """File is the reader's own menu (app.js fileMenuBoot): its first
+    click waited for the whole editor to load and boot -- 187 ms became
+    429 ms at 4x CPU (2026-10-11 review). It opens with the editor still
+    held back; a row whose answer is the editor's is held, and made once
+    the editor has booted; one that is app.js's works at once."""
+    p = Page(app, hold=True).open(app["url"])
+    pg = p.pg
+    try:
+        pg.click("#app-file")
+        assert pg.evaluate(FILE_OPEN)
+        assert not pg.evaluate(EDITOR_UP)
+        assert pg.evaluate("document.getElementById('app-file')"
+                           ".getAttribute('aria-expanded')") == "true"
+        # Escape shuts it and hands File the keyboard
+        pg.keyboard.press("Escape")
+        assert not pg.evaluate(FILE_OPEN)
+        assert pg.evaluate("document.activeElement.id") == "app-file"
+        # a row of app.js's: Theme, with the editor still away
+        pg.click("#app-file")
+        pg.click("#scheme-btn")
+        pg.wait_for_selector("#jv-scheme-menu")
+        assert not pg.evaluate(FILE_OPEN)
+        pg.keyboard.press("Escape")
+        # a row of the editor's: held until it has booted
+        pg.click("#app-file")
+        pg.click("#app-file-menu [data-for=pr-new]")
+        pg.wait_for_timeout(300)
+        assert not pg.evaluate(EDITOR_UP)
+        assert not pg.evaluate(NEW_DIALOG)
+        p.release()
+        pg.wait_for_function(NEW_DIALOG, timeout=20000)
+        assert not pg.evaluate(FILE_OPEN)
+        assert pg.evaluate("document.getElementById('app-file')"
+                           ".getAttribute('aria-expanded')") == "false"
+        assert p.errs == []
+    finally:
+        p.close()
+
+
 def test_the_side_list_doors_work_on_their_first_click(app):
     p = Page(app, hold=True, side=True).open(app["url"])
     pg = p.pg
@@ -346,12 +389,12 @@ def test_a_click_elsewhere_drops_the_held_one(app):
     p = Page(app, hold=True).open(app["url"])
     pg = p.pg
     try:
-        pg.click("#app-file")
+        pg.click("#ab-collect")
         pg.mouse.click(700, 420)          # changed their mind
         p.release()
         pg.wait_for_function(EDITOR_UP, timeout=20000)
         pg.wait_for_timeout(400)
-        assert pg.evaluate("document.getElementById('app-file-menu').hidden")
+        assert not pg.evaluate("!!document.querySelector('.col-menu')")
         assert p.errs == []
     finally:
         p.close()
@@ -422,9 +465,9 @@ def test_a_reload_with_a_deck_open_boots_the_editor_with_the_page(app):
 def test_every_control_the_editor_wires_outside_its_markup_is_a_door(app):
     """Read every listener on every element outside the notebook's
     content and outside the doors, through the DevTools protocol: none may
-    be the editor's. The File menu's own rows are the one exception: the
-    editor's listener on them only closes the menu, and the menu cannot be
-    open before the editor is (File itself is a door)."""
+    be the editor's. File and the rows of its menu that are app.js's are
+    held to it too: the menu is app.js's, opened and closed there
+    (fileMenuBoot), so it opens before the editor has loaded."""
     p = Page(app).open(app["url"])
     pg = p.pg
     try:
@@ -436,10 +479,8 @@ def test_every_control_the_editor_wires_outside_its_markup_is_a_door(app):
         cdp.send("Debugger.enable")
         pg.wait_for_timeout(300)
         n = pg.evaluate("""(()=>{const D=window.SemApp.deckDoors;
-          const menuOwn='#tab-open,#scheme-btn,#help-btn,#support-btn';
           window.__jvChk=[...document.querySelectorAll('body *')].filter(e=>
-            !e.closest(D)&&!e.closest('.nbshell .content,svg')
-            &&!e.matches(menuOwn));
+            !e.closest(D)&&!e.closest('.nbshell .content,svg'));
           return window.__jvChk.length})()""")
         assert n > 300
         wired = []

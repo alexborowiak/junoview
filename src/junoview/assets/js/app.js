@@ -107,12 +107,14 @@
        presentations, Create slides hands it the plan, Collect files a
        cell into one of its collections, a figure's Plot trace asks it for
        the cells that build the plot (window.SemTrace, whose lineage is
-       the editor's). The File menu's own rows (Open a
-       notebook, Theme, How to use, Support) are not here: they are this
-       file's, and the File menu that shows them is a door itself. */
+       the editor's). File itself is not here, nor the rows of its menu
+       that are this file's (Open a notebook, Theme, How to use,
+       Support): the menu is this file's and opens at once
+       (fileMenuBoot); only its New rows and Open a presentation are
+       the editor's. */
     var DOORS='#deck,#matchbar,#pickbar,#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,'
       +'#ss-dlg,#ms-dlg,#ts-dlg,#nt-dlg,#dgm-dlg,#find-pop,#color-pop,'
-      +'#presentation-hub,#app-file,#app-file-menu .dc-mi[data-for],'
+      +'#presentation-hub,#app-file-menu .dc-mi[data-for],'
       +'#ot-open,#ab-collect,.cell-collect,.plot-trace-btn,#ot-home,'
       +'#presrail-home,'
       +'#presstrip,#pr-recent,#pr-library,#pr-newbtn,#pr-newmenu,'
@@ -471,6 +473,18 @@
     function within(p,ms){
       if(!ms) return p;
       return Promise.race([p,new Promise(function(r){setTimeout(r,ms);})]);
+    }
+    /* MathJax here within `ms`, loaded if this page has not needed it
+       yet: true once it is, false when it cannot be had or has not come
+       by then. For a caller that can do without it and would rather not
+       wait on a CDN that is not answering -- the .pptx export writes an
+       equation MathJax did not set as the TeX it was written in
+       (2026-10-11 review). */
+    function arrive(ms){
+      if(ready) return Promise.resolve(true);
+      if(dead) return Promise.resolve(false);
+      return within(ensure().then(function(){return true;},
+        function(){return false;}),ms).then(function(ok){return ok===true;});
     }
     /* ---- typesetting ---- */
     function mark(els){
@@ -839,7 +853,7 @@
     }
     return {hint:hint,ensure:ensure,typeset:typeset,settle:settle,run:run,
       all:all,watch:watch,forget:forget,kick:kick,beforePrint:beforePrint,
-      warm:warm,
+      warm:warm,arrive:arrive,
       ready:function(){return ready;},
       pending:function(root){return pendingIn(root||document).length;}};
   })();
@@ -1284,6 +1298,82 @@
       .observe(document.body,{attributes:true,attributeFilter:['class']});
     homeTabsRow();
     applyFilesAt();
+  }
+  /* ---- THE READER'S FILE MENU OPENS AT ONCE ---------------------------
+     (2026-10-11 review.) Its toggle was the editor's (wireMenuToggle,
+     wired by the editor's boot), so once the editor came to load on
+     first use (jvDeck) File was a door, and its first click waited for
+     the whole editor to be fetched, compiled and booted before the menu
+     showed: 187 ms became 429 ms at 4x CPU (measured again: 310 ms to
+     the menu's paint, 50 ms once it is this file's). The menu is this
+     file's markup and most of its rows are this file's (Open a
+     notebook, Theme, How to use, Support), so it is this file's to
+     open. Only New's rows and Open a presentation are the editor's, and
+     they stay doors: a click on one before the editor is there is held
+     and made again once it has booted. The editor's own menus have one
+     owner (overlayShow, 45-images.js); this keeps the same rules by
+     itself: floated under its button (the bar scrolls), closed by a
+     pick, by a click anywhere else -- in capture, so a menu button that
+     stops its click still closes it -- and by Escape, which goes no
+     further (the editor's Escape ladder can be under it, beside the side
+     panel) and gives the keyboard back to File. aria-expanded follows
+     the menu however it closes: a New row hides it through the editor's
+     owner. Nothing is listened for while it is shut. */
+  function fileMenuBoot(){
+    var btn=$('#app-file'),menu=$('#app-file-menu');
+    if(!btn||!menu) return;
+    var on=false;
+    function outside(e){
+      var t=e.target;
+      if(!menu.contains(t)&&!btn.contains(t)) shut();
+    }
+    function esc(e){
+      if(e.key!=='Escape'||menu.hidden) return;
+      /* ...unless the keyboard has gone on into something opened over
+         the menu (Ctrl+K's Open dialog covers it): that Escape is the
+         dialog's, and the menu under it just goes with it. Taken here,
+         it shut a menu nobody could see and put the keyboard on File
+         behind the dialog, which stayed up (2026-10-12 review). */
+      var ae=document.activeElement;
+      var mine=!ae||ae===document.body||menu.contains(ae)||btn.contains(ae);
+      shut();
+      if(!mine) return;
+      e.preventDefault();e.stopPropagation();
+      try{btn.focus();}catch(err){}
+    }
+    function sync(){
+      var open=!menu.hidden;
+      if(open===on) return;
+      on=open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      var f=open?'addEventListener':'removeEventListener';
+      document[f]('click',outside,true);
+      window[f]('keydown',esc,true);
+    }
+    function shut(){menu.hidden=true;sync();}
+    /* as floatMenu (45-images.js) places the editor's */
+    function place(){
+      var s=menu.style;
+      s.position='fixed';s.zIndex='240';s.right='auto';s.bottom='auto';
+      var r=btn.getBoundingClientRect(),mw=menu.offsetWidth||170;
+      s.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
+      var mh=menu.offsetHeight||0,top=r.bottom+4;
+      if(mh&&top+mh>window.innerHeight-8)
+        top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
+      s.top=top+'px';
+    }
+    btn.addEventListener('click',function(){
+      if(!menu.hidden){shut();return;}
+      menu.hidden=false;place();sync();
+    });
+    /* a pick closes it before the row acts -- in capture, because two
+       rows stop their click (Theme; New's, which press the rail's) */
+    menu.addEventListener('click',function(e){
+      var t=e.target;
+      if(t&&t.closest&&t.closest('.dc-mi')) shut();
+    },true);
+    if(window.MutationObserver) new MutationObserver(sync)
+      .observe(menu,{attributes:true,attributeFilter:['hidden']});
   }
   /* ---- T602: THE TABS SIT IN THE TITLE ROW --------------------------
      (2026-09-30, user: "there is to many layers to our ribbon ... Its too
@@ -11444,6 +11534,7 @@
      only touches what is declared above it — but do not add more. */
   initRailAuto();
   initFilesAt();              /* T596: tabs or the side list, not both */
+  fileMenuBoot();             /* File opens before the editor is here */
   pagesBoot();                /* one section at a time (T390) */
   /* An update may arrive before the body exists; show the saved notice
      now that the application markup is ready (T206). */

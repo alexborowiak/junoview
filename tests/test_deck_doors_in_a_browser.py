@@ -9,8 +9,9 @@ same three lines are pinned as text in the ordinary suite
    #qat-name, and the open files' tabs then arrived in the title row
    (app.js homeTabsRow, a MutationObserver, after setUIMode returned) and
    hid it -- so Chrome dropped the keyboard on the page, every time, by
-   every door. It goes to the editor's own first control now: not a tab of
-   that row, and not the command search (a field takes the keys).
+   every door. It goes to the editor's own slide stage now (2026-10-11:
+   its first control was Save, which Enter or Space then pressed): not a
+   tab of that row, and not the command search (a field takes the keys).
 2. A presentation opened from a file with the editor already up keeps its
    tab. importDeckText skipped openDeck there, and openDeck is what puts
    a deck on the open list: its tab went the moment you switched away,
@@ -118,6 +119,9 @@ def _page(app, w=1366, h=657, init=""):
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(app["url"], wait_until="load")
     pg.wait_for_selector(".nbshell .card")
+    # the editor loads on first use (app.js jvDeck), and these drive its
+    # API (deckChoose, deckClose) directly: have it fetched first
+    pg.evaluate("window.SemApp.deckLoad()")
     pg.wait_for_timeout(800)
     return ctx, pg, errs
 
