@@ -9179,6 +9179,7 @@
      that is refused (a private window, a disk that is really full) is
      the only thing that can make the readout say "browser full" now. */
   var DRAFTS={},draftsDbFull=false,draftsLoaded=false;
+  var draftsUnsure={},draftsInLs={};   /* draftsLastChance */
   var DRAFT_META={'last':1,'recent-presentations':1,
     'pinned-presentations':1,    /* T435 */
     'deck-meta':1};              /* T598: not a draft, a record of them */
@@ -9188,7 +9189,14 @@
   function draftSet(name,json,quiet){
     if(!name) return false;
     DRAFTS[name]=json;
+    draftsUnsure[name]=json;   /* until IndexedDB says it has it */
+    delete draftsInLs[name];
     idbPut(PFX+name,json,'drafts').then(function(){
+      if(draftsUnsure[name]===json){
+        delete draftsUnsure[name];
+        /* the last chance's copy of it is not needed now */
+        if(draftsInLs[name]===json){delete draftsInLs[name];lsDel(PFX+name);}
+      }
       if(draftsDbFull){draftsDbFull=false;if(typeof status==='function') status();}
     }).catch(function(){
       if(!draftsDbFull){
@@ -9206,10 +9214,36 @@
   function draftDel(name){
     if(!name) return;
     delete DRAFTS[name];
+    delete draftsUnsure[name];delete draftsInLs[name];
     lsDel(PFX+name);
     idbDel(PFX+name,'drafts').catch(function(){});
   }
   function draftsFull(){return draftsDbFull;}
+  /* ---- THE PAGE'S LAST CHANCE: WHAT IS NOT KEPT YET, KEPT NOW ---------
+     (2026-10-11) IndexedDB is asynchronous, and a page that is going
+     does not wait for it. The last chance flushed the debounced draft
+     write (flushDraftWrite) into IndexedDB as the page went, and the
+     page was gone before the write finished: a slide added, or words
+     typed in a box, and the page reloaded at once -- the edit was not
+     there. So the last chance
+     (pagehide, or the tab hidden: 20-notes-and-tables.js) also puts
+     every draft IndexedDB has not yet confirmed into localStorage,
+     which is synchronous -- the legacy key, which boot already reads
+     first (draftsLoadLocal), opens on, moves into IndexedDB and drops.
+     Nothing here runs per edit: draftSet only notes the string it was
+     handed (draftsUnsure), and drops the note when IndexedDB has it;
+     any later write of the same draft drops the copy too, so the
+     localStorage copy is never the older of the two. */
+  function draftsLastChance(){
+    Object.keys(draftsUnsure).forEach(function(nm){
+      var json=draftsUnsure[nm];
+      if(draftsInLs[nm]===json) return;   /* hidden twice: there already */
+      /* not lsSet: a copy refused here is not "the browser is full"
+         for the readout -- IndexedDB may yet have it */
+      try{localStorage.setItem(PFX+nm,json);draftsInLs[nm]=json;}
+      catch(e){}
+    });
+  }
   /* the legacy localStorage drafts, synchronously, so boot can open on
      one; each is moved into IndexedDB and dropped from localStorage */
   function draftsLoadLocal(){
@@ -9354,7 +9388,11 @@
   function loadDraft(name){
     var raw=draftGet(name); if(!raw) return null;
     try{var d=JSON.parse(raw);
-      return (d&&Array.isArray(d.slides))?normPres(d):null;
+      /* a custom view kept by a build with the Save-as-view bug has no
+         `slides` (newCustomView wrote it by hand): normPres gives it
+         its []; refused here, it opened as the automatic deck */
+      return (d&&(Array.isArray(d.slides)||d.kind==='view'))
+        ?normPres(d):null;
     }catch(e){return null;}
   }
   /* whether there is a draft that loads -- asked once per draft WRITTEN,
@@ -9843,6 +9881,12 @@
         cur=0;activePane=-1;
         if(typeof status==='function') status();
         if(typeof refresh==='function'&&!deckEl.hidden) refresh();
+        /* ...and a collection open in its tab is drawn again from it: its
+           feed was drawn from the copy the lines above opened, so a
+           collection reordered and the page reloaded three seconds later
+           showed its old order -- and the next change went to the copy
+           on screen (2026-10-11) */
+        else if(isColPres(pres)) colRefresh(pres.name);
       }
       /* T494: the URL's #/pres route, which the router held back
          until now because the deck it names could be one of these.
@@ -19965,6 +20009,9 @@
       try{if(typeof routeFlush==='function') routeFlush();}catch(e){}
       /* the draft write is debounced now — a closing tab cannot wait */
       try{flushDraftWrite();}catch(e){}
+      /* ...and nor can IndexedDB: what it has not confirmed goes where
+         the next page reads it before it opens anything (10-decks.js) */
+      try{draftsLastChance();}catch(e){}
       if(e&&e.type==='pagehide'){
         try{rehStop();}catch(err){}
         /* T564: the microphone goes down with the page */
@@ -51408,12 +51455,31 @@
       setPresFolder(nm,'');
     });
   }
+  /* WHERE THE KEYBOARD GOES BACK TO (2026-10-11 review). Closing the
+     dialog hides the control the keyboard was on, so it fell to the
+     page: Escape on Open with the editor up left it on BODY, and the
+     next Tab started from the top of the document. With the editor up
+     it goes to the editor (its stage: deckFocusTake); over a notebook
+     or Home, to whatever opened the dialog, if that can still take it.
+     Only when it was in the dialog -- a closer that hands it on (a
+     file picker, the notebook dialog) moves it after this. */
+  var hubOpener=null;
   function closePresentationHub(){
     var root=$('#presentation-hub');
+    var ae=document.activeElement;
+    var had=!!(root&&!root.hidden
+      &&(!ae||ae===document.body||root.contains(ae)));
     if(root) root.hidden=true;
     presentationHubDeckInert(false);
     pvForget();hubPvName='';   /* T599: parsed copies are for one visit */
     hubDirRows=null;hubDirH=null;
+    var back=hubOpener;hubOpener=null;
+    if(!had) return;
+    if(!deckEl.hidden&&mode!=='create'){deckFocusTake();return;}
+    if(back&&back.isConnected&&!back.closest('[inert],[hidden]')
+       &&back.getClientRects().length){
+      try{back.focus({preventScroll:true});}catch(err){}
+    }
   }
   /* T414: OPEN MEANS OPEN (2026-09-13, user: "why when you click open
      is there all the 'new poster options', like THAT WAS THERE ON THE
@@ -51428,6 +51494,18 @@
     closeDeckPresentationDrawer();
     pvForget();   /* T599: what was saved since the last visit shows */
     var fq=$('#presentation-hub-find'); if(fq) fq.value='';
+    if(root.hidden){   /* closePresentationHub gives the keyboard back */
+      var from=document.activeElement;
+      /* a menu's row (File > Open a presentation...) is hidden with its
+         menu by the pick, so it cannot take the keyboard back: the
+         menu's own button does (2026-10-12 review) */
+      var fm=from&&from.closest?from.closest('.dc-menu'):null;
+      var fb=fm&&fm.parentNode
+        ?fm.parentNode.querySelector('[aria-haspopup="true"]'):null;
+      if(fb) from=fb;
+      hubOpener=(from&&from!==document.body&&!root.contains(from))
+        ?from:null;
+    }
     root.hidden=false;renderPresentationHub();
     /* T599: the folder Junoview saves into lists itself when the
        browser already lets it be read; otherwise its button asks */
@@ -52269,9 +52347,15 @@
     while(savedByName(name)||loadDraft(name)){
       n2++;name='custom view '+n2;}
     /* seeded from what you are looking at right now, so a new view never
-       throws away the filters you already set up */
-    pres={name:name,kind:'view',nb:stem,style:{},
-          view:(A.layoutSnapshot&&A.layoutSnapshot(stem))||{}};
+       throws away the filters you already set up. Made by normPres, the
+       one place a view's shape is written: built here by hand it had no
+       `slides`, which every reopened view has (normPres gives it []), and
+       its first change -- the layout save Save as view itself schedules
+       -- went through markDirty to the size readout and the strip's
+       thumbnail, which read pres.slides[cur] and threw "Cannot read
+       properties of undefined (reading '0')" (2026-10-11) */
+    pres=normPres({name:name,kind:'view',nb:stem,style:{},
+          view:(A.layoutSnapshot&&A.layoutSnapshot(stem))||{}});
     source='auto';
     cur=0;activePane=-1;
     openCustomView();
@@ -58521,6 +58605,9 @@
     }
   }
   function setUIModeRun(m,outer){
+    /* the stage holds the keyboard (deckFocusTake), and the side panel
+       hides it: read before anything here changes the view */
+    var stageHad=document.activeElement===stage;
     /* a word still being typed is the deck's before the mode changes:
        the renders that used to commit it on the way (applyZoom's) are
        held now, and the slide's own render empties the stage first */
@@ -58627,6 +58714,10 @@
     deckIsolate(full,editing);
     /* where the keyboard was is read now; it is handed over at the end */
     var takeFocus=full&&deckFocusNote();
+    /* ...and when it was on the stage, which the side panel hides, it is
+       handed to the panel: Escape back to it dropped the keyboard on the
+       page, where it used to stay on Save (2026-10-12 review) */
+    if(stageHad&&creating&&!deckEl.hidden) takeFocus=true;
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
     if(!editing){                   /* Objects pane is an editing tool */
@@ -58842,7 +58933,24 @@
     return !deckEl.contains(document.activeElement);
   }
   function deckFocusTake(){
-    if(deckEl.contains(document.activeElement)) return;
+    var held=document.activeElement;
+    /* in the editor already -- unless it is a stage the view has hidden */
+    if(deckEl.contains(held)&&(held!==stage||stage.getClientRects().length))
+      return;
+    /* THE EDITOR ITSELF (2026-10-11 review): the slide stage. Every one
+       of the deck's keys is the document's (PageDown, Ctrl+Z, F5, the
+       show's Space and arrows) and the stage is no field they skip, so
+       they all work from it at once -- and a stage answers Enter and
+       Space with nothing of its own. The first visible CONTROL, which
+       is what this gave the keyboard to, was Save on opening a deck, so
+       Enter or Space right after opening one pressed Save (with a file
+       target, a picker), and in a show it was #deck-exit, so after F5
+       from the canvas Space ended the talk instead of advancing it.
+       tabindex -1 in deck.html: focusable, and outside the Tab order. */
+    if(stage&&stage.getClientRects().length){
+      try{stage.focus({preventScroll:true});}catch(err){}
+      if(document.activeElement===stage) return;
+    }
     /* the first VISIBLE control, not the first in the markup. The deck
        carries a dozen panels that are hidden most of the time, and
        focusing something inside a display:none subtree silently does
@@ -59056,6 +59164,16 @@
   /* opening one is the rail's own action, so a deck, a poster and a
      custom view each land where they belong */
   window.SemApp.deckChoose=function(nm){choosePresentation(nm);};
+  /* the last of the open tabs that shows without a notebook (a custom
+     view is a notebook's own): where closing the last notebook goes,
+     through the door above, as pressing that tab would (app.js
+     closeNotebook, 2026-10-12) */
+  function deckLastTab(){
+    var ns=openPresentationNames().filter(function(nm){
+      return !isViewPres(presFacts(nm));});
+    return ns.length?ns[ns.length-1]:'';
+  }
+  window.SemApp.deckLastTab=deckLastTab;
   /* a presentation needs no notebook: every tool except the cell frame
      works on an empty deck, so the front door can offer this as a way
      IN rather than as something you reach after opening a notebook
@@ -60097,6 +60215,12 @@
         if(x&&!x.hide&&!lockedAll(x)) ring.push(i);});
       if(!ring.length) return false;
       var at=ring.indexOf(selAnnot);
+      /* ...and past the last one (or before the first) the keyboard
+         goes on through the editor's Tab order. The stage holds the
+         keyboard once a deck opens (deckFocusTake), and a walk that went
+         round for ever left no way from it to the ribbon by keyboard
+         (2026-10-12 review). The selection stays, for the ribbon. */
+      if(at>=0&&at===(e.shiftKey?0:ring.length-1)) return false;
       var nx=at<0?(e.shiftKey?ring.length-1:0)
         :(at+(e.shiftKey?-1:1)+ring.length)%ring.length;
       leaveGroup(layer);
@@ -60844,15 +60968,13 @@
   /* ---- T602: the App menu's rows live in File, in both views --------
      Theme, How to use, Support and where the open files are listed.
      app.js owns what each row does; a pick closes the menu it was in.
-     The reader's File is the same kind of menu as this one. */
-  (function(){
-    var reader=wireMenuToggle('app-filewrap','app-file','app-file-menu');
-    [reader&&reader.menu,fileMenu].filter(Boolean).forEach(function(menu){
-      $$('.dc-mi',menu).forEach(function(b){
-        b.addEventListener('click',function(){overlayHide(menu);});
-      });
-    });
-  })();
+     The READER's File is app.js's, toggle and all (fileMenuBoot): it
+     opens before this editor has loaded (2026-10-11 review), and only
+     its New rows and Open a presentation are this editor's (tabRowBoot,
+     doors of jvDeck). */
+  if(fileMenu) $$('.dc-mi',fileMenu).forEach(function(b){
+    b.addEventListener('click',function(){overlayHide(fileMenu);});
+  });
   menuAction('#mi-new',newPresentation);
   /* ONE rename, reached from the File menu and from the name in the top
      bar. It used to un-hide #pres-name, which lives in .dc-controls — a
@@ -65898,6 +66020,11 @@
            but no longer an equation. Counted so the toast can say so. */
         if(node) note.maths+=node.querySelectorAll('mjx-container').length;   /* T483 */
         var txt=(node&&!isTable)?blockText(node):'';
+        /* ...and maths MathJax never set goes as the TeX it was written
+           in, delimiters and all -- counted (pptxMathsWait). Not in a
+           code frame, where a $ or a \\( is the code's own */
+        if(txt&&!code&&(mathsPlain(txt,false).hit||/\\[(\[]|\\begin\s*\{/.test(txt)))
+          note.tex=(note.tex||0)+1;
         if(txt){
           items.push({t:'text',x:box.x,y:box.y,w:box.w,h:box.h,
             rot:a.rot,op:a.op,text:txt,sizePct:code?1.3:1.8,
@@ -66015,14 +66142,73 @@
      JunoPptx.build is synchronous and pptxItems with it, so the
      IndexedDB lookup cannot happen inside them — it happens once, here,
      and is handed down as a plain {displaySrc: fullBytes} map. */
+  /* THE MATHS, AND NO LONGER THAN IT TAKES (2026-10-11 review). This
+     used to wait for every open notebook's maths to be typeset, for up
+     to 15 s, before anything else -- so with MathJax unreachable (the
+     user works offline at times; a blocked CDN that never answers) every
+     .pptx export sat silent for those 15 s, a deck with no equation in
+     it as much as one with. What the export needs MathJax for is much
+     less than that:
+       a TEXT BOX's equation is flattened from its own source (texPlain)
+         and never needed it;
+       a placed cell's KEPT COPY is cloned as it was kept (cloneBody);
+       a placed cell LIVE from its notebook is set on the spot when it is
+         cloned (jvMath.settle), provided MathJax is THERE.
+     So it waits only for MathJax to ARRIVE, only while a live cell still
+     has maths to set, and only briefly. What is still unset then goes as
+     the TeX it was written in, and the message says so (note.tex). */
+  var PPTX_MATHS_WAIT=2500;
+  /* ...and a frame cloned while MathJax was away keeps its TeX in the
+     frame cache after MathJax has come and set the card and the slide:
+     exported, it went as LaTeX the screen no longer showed. With MathJax
+     here, those frames are cloned again, set (2026-10-12 review). */
+  function frameHoldsTex(r,M){
+    /* the card wears the data-math mark, not its body: what a cloned
+       body still holds is its TeX (the test jvMath's own typeset asks).
+       Not a code frame, whose $ is the code's own -- the same rule
+       note.tex counts by (pptxItems) */
+    var p=r+'::';
+    return Object.keys(frameNodeCache).some(function(k){
+      var n=frameNodeCache[k];
+      return k.indexOf(p)===0&&!!n&&!n.querySelector('pre')
+        &&M.hint(n.textContent||'');
+    });
+  }
+  function pptxMathsWait(){
+    var M=window.jvMath;
+    if(!M) return null;
+    var ready=M.ready(),refs=[];
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.k!=='cell'||!a.ref) return;
+        /* the copy cloneBody will use: kept, unless the frame is live */
+        if(!refIsLive(a.ref)&&embBody(a.ref)) return;
+        var c=cardEl(a.ref),r=normRef(a.ref)||a.ref;
+        if(!c||refs.indexOf(r)>=0) return;
+        if(ready?frameHoldsTex(r,M):M.pending(c)) refs.push(r);
+      });
+    });
+    if(!refs.length) return null;
+    if(ready){refs.forEach(dropFrameCache);return null;}
+    return M.arrive(PPTX_MATHS_WAIT).then(function(ok){
+      /* a frame cloned while MathJax was away holds its TeX, and
+         typesetting the card does not drop it: cloned again, it is set */
+      if(ok) refs.forEach(dropFrameCache);
+    });
+  }
+  /* ...and how it is said: N cells whose maths went as TeX, and why */
+  function pptxTexNote(n){
+    if(!n) return '';
+    var M=window.jvMath;
+    return n+' placed cell'+(n===1?'':'s')+' kept '
+      +(n===1?'its':'their')+' equations as the LaTeX they were written '
+      +'in'+((M&&!M.ready())?' \u2014 MathJax, which sets them, has not '
+        +'loaded (offline, or its CDN blocked)':'');
+  }
   function pptxOriginals(){
     var jobs=[],out={};
-    /* and the MATHS, gathered like the bytes: a cell's equations reach
-       the .pptx as the characters MathJax set them in (blockText), and
-       the page typesets as it is read now rather than all at load, so
-       every open notebook's maths is typeset before anything is read */
-    if(window.jvMath&&window.jvMath.pending())
-      jobs.push(window.jvMath.all(null,15000));
+    var mw=pptxMathsWait();
+    if(mw) jobs.push(mw);
     function want(o){
       if(!o||!o.okey||!o.src||out[o.src]!==undefined) return;
       out[o.src]=null;
@@ -66094,6 +66280,7 @@
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
       +'path, so they arrive as plain characters');
+    if(note.tex) lost.push(pptxTexNote(note.tex));
     /* T486: Markdown and rich boxes travel as paragraphs and runs now;
        only a link inside the words is still words alone */
     if(note.links) lost.push(note.links+' link'+(note.links===1?'':'s')
@@ -66321,6 +66508,7 @@
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
       +'this writer has no LaTeX-to-.pptx path, so they were flattened';
+    if(note.tex) msg+='. '+pptxTexNote(note.tex);
     pptxDeliver(out.blob,fname,msg);
     /* one honest tally for the caller: the builder counts items IT could not
        write, this counts cells that never became items — reporting only one

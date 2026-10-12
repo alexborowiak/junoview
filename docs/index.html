@@ -46,7 +46,7 @@
 <meta name="theme-color" content="#0a141d">
 <link rel="stylesheet" href="core.8aa7e1037606dfef.css">
 <link rel="stylesheet" href="app.d52c1951a81f55ae.css">
-<link rel="stylesheet" href="deck.3a81e33334ede2ca.css">
+<link rel="stylesheet" href="deck.4e420aebdca09b7c.css">
 <script>
 window.MathJax = {
   tex: {inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -58,7 +58,7 @@ window.MathJax = {
 </script>
 <script async id="jv-mathjax" data-src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js" onload="this.setAttribute('data-state','loaded')" onerror="this.setAttribute('data-state','failed')"></script>
 
-<meta name="junoview-build" content="0a0407f92dcf">
+<meta name="junoview-build" content="d76f5accfc4b">
 <script>/* The generated application is already on the page. This bridge is
    installed before app.js -- build_web writes it INTO the page's <head>,
    where a separate file cost a round trip before the body could parse --
@@ -146,7 +146,7 @@ window.MathJax = {
     else window.addEventListener('load',idle);
   }
   settled(function(){idleDue=true;if(!holds) start();});
-  window.__jvBuild='0a0407f92dcf';
+  window.__jvBuild='d76f5accfc4b';
   window.__jvUpdateBar=function(){
     if(document.getElementById('jv-newbuild')||!document.body) return;
     var bar=document.createElement('div');bar.id='jv-newbuild';
@@ -827,7 +827,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}catch(e){}</script
              to be able to see a version number on the home page, maybe and
              then on hover a last updated so I can keep track of this").
              Empty in a rendered notebook; see build_info.py. -->
-        <div class="welcome-wordmark">Junoview<span class="welcome-ver" title="Last updated 10 Oct 2026 at 23:45 (commit e2bee88)">v0.2.0 · build 616</span></div>
+        <div class="welcome-wordmark">Junoview<span class="welcome-ver" title="Last updated 12 Oct 2026 at 13:55 (commit 4e42ade)">v0.2.0 · build 619</span></div>
         <p class="welcome-tag">Build a presentation, or open a notebook and
           pull the figures straight out of your analysis.</p>
       </div>
@@ -6141,7 +6141,11 @@ items snap to both. Guides, not ink: never printed or exported"
            editable. Built by renderStory; hidden until asked for. -->
       <div class="story-strip" id="story-strip" hidden
         role="region" aria-label="Animation story"></div>
-      <div class="deck-stage" id="deck-stage"></div>
+      <!-- tabindex -1: the editor gives the keyboard to the stage itself
+           (deckFocusTake), which takes every deck key and presses
+           nothing on Enter or Space; it stays out of the Tab order -->
+      <div class="deck-stage" id="deck-stage" tabindex="-1"
+        role="region" aria-label="Slide"></div>
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"
         aria-label="Next slide">&#8250;</button>
@@ -6841,7 +6845,7 @@ items snap to both. Guides, not ink: never printed or exported"
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
 <script src="icons.5377b0f92bbbc947.js"></script>
-<script src="app.63d28a914b60f86b.js"></script>
+<script src="app.3e63ef300826cba5.js"></script>
 <script src="pptx.b8b9671325057718.js"></script>
 <!-- T597: what a saved .junoview.html runs when it is opened -- inert
      text here, read by the save and written into the file -->
@@ -6966,6 +6970,6 @@ items snap to both. Guides, not ink: never printed or exported"
   });
 })();
 </script>
-<script src="deck.3f19248d422d2fb0.js"></script>
+<script src="deck.ff77ebca10718c21.js"></script>
 </body>
 </html>

@@ -107,12 +107,14 @@
        presentations, Create slides hands it the plan, Collect files a
        cell into one of its collections, a figure's Plot trace asks it for
        the cells that build the plot (window.SemTrace, whose lineage is
-       the editor's). The File menu's own rows (Open a
-       notebook, Theme, How to use, Support) are not here: they are this
-       file's, and the File menu that shows them is a door itself. */
+       the editor's). File itself is not here, nor the rows of its menu
+       that are this file's (Open a notebook, Theme, How to use,
+       Support): the menu is this file's and opens at once
+       (fileMenuBoot); only its New rows and Open a presentation are
+       the editor's. */
     var DOORS='#deck,#matchbar,#pickbar,#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,'
       +'#ss-dlg,#ms-dlg,#ts-dlg,#nt-dlg,#dgm-dlg,#find-pop,#color-pop,'
-      +'#presentation-hub,#app-file,#app-file-menu .dc-mi[data-for],'
+      +'#presentation-hub,#app-file-menu .dc-mi[data-for],'
       +'#ot-open,#ab-collect,.cell-collect,.plot-trace-btn,#ot-home,'
       +'#presrail-home,'
       +'#presstrip,#pr-recent,#pr-library,#pr-newbtn,#pr-newmenu,'
@@ -471,6 +473,18 @@
     function within(p,ms){
       if(!ms) return p;
       return Promise.race([p,new Promise(function(r){setTimeout(r,ms);})]);
+    }
+    /* MathJax here within `ms`, loaded if this page has not needed it
+       yet: true once it is, false when it cannot be had or has not come
+       by then. For a caller that can do without it and would rather not
+       wait on a CDN that is not answering -- the .pptx export writes an
+       equation MathJax did not set as the TeX it was written in
+       (2026-10-11 review). */
+    function arrive(ms){
+      if(ready) return Promise.resolve(true);
+      if(dead) return Promise.resolve(false);
+      return within(ensure().then(function(){return true;},
+        function(){return false;}),ms).then(function(ok){return ok===true;});
     }
     /* ---- typesetting ---- */
     function mark(els){
@@ -839,7 +853,7 @@
     }
     return {hint:hint,ensure:ensure,typeset:typeset,settle:settle,run:run,
       all:all,watch:watch,forget:forget,kick:kick,beforePrint:beforePrint,
-      warm:warm,
+      warm:warm,arrive:arrive,
       ready:function(){return ready;},
       pending:function(root){return pendingIn(root||document).length;}};
   })();
@@ -1284,6 +1298,82 @@
       .observe(document.body,{attributes:true,attributeFilter:['class']});
     homeTabsRow();
     applyFilesAt();
+  }
+  /* ---- THE READER'S FILE MENU OPENS AT ONCE ---------------------------
+     (2026-10-11 review.) Its toggle was the editor's (wireMenuToggle,
+     wired by the editor's boot), so once the editor came to load on
+     first use (jvDeck) File was a door, and its first click waited for
+     the whole editor to be fetched, compiled and booted before the menu
+     showed: 187 ms became 429 ms at 4x CPU (measured again: 310 ms to
+     the menu's paint, 50 ms once it is this file's). The menu is this
+     file's markup and most of its rows are this file's (Open a
+     notebook, Theme, How to use, Support), so it is this file's to
+     open. Only New's rows and Open a presentation are the editor's, and
+     they stay doors: a click on one before the editor is there is held
+     and made again once it has booted. The editor's own menus have one
+     owner (overlayShow, 45-images.js); this keeps the same rules by
+     itself: floated under its button (the bar scrolls), closed by a
+     pick, by a click anywhere else -- in capture, so a menu button that
+     stops its click still closes it -- and by Escape, which goes no
+     further (the editor's Escape ladder can be under it, beside the side
+     panel) and gives the keyboard back to File. aria-expanded follows
+     the menu however it closes: a New row hides it through the editor's
+     owner. Nothing is listened for while it is shut. */
+  function fileMenuBoot(){
+    var btn=$('#app-file'),menu=$('#app-file-menu');
+    if(!btn||!menu) return;
+    var on=false;
+    function outside(e){
+      var t=e.target;
+      if(!menu.contains(t)&&!btn.contains(t)) shut();
+    }
+    function esc(e){
+      if(e.key!=='Escape'||menu.hidden) return;
+      /* ...unless the keyboard has gone on into something opened over
+         the menu (Ctrl+K's Open dialog covers it): that Escape is the
+         dialog's, and the menu under it just goes with it. Taken here,
+         it shut a menu nobody could see and put the keyboard on File
+         behind the dialog, which stayed up (2026-10-12 review). */
+      var ae=document.activeElement;
+      var mine=!ae||ae===document.body||menu.contains(ae)||btn.contains(ae);
+      shut();
+      if(!mine) return;
+      e.preventDefault();e.stopPropagation();
+      try{btn.focus();}catch(err){}
+    }
+    function sync(){
+      var open=!menu.hidden;
+      if(open===on) return;
+      on=open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      var f=open?'addEventListener':'removeEventListener';
+      document[f]('click',outside,true);
+      window[f]('keydown',esc,true);
+    }
+    function shut(){menu.hidden=true;sync();}
+    /* as floatMenu (45-images.js) places the editor's */
+    function place(){
+      var s=menu.style;
+      s.position='fixed';s.zIndex='240';s.right='auto';s.bottom='auto';
+      var r=btn.getBoundingClientRect(),mw=menu.offsetWidth||170;
+      s.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
+      var mh=menu.offsetHeight||0,top=r.bottom+4;
+      if(mh&&top+mh>window.innerHeight-8)
+        top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
+      s.top=top+'px';
+    }
+    btn.addEventListener('click',function(){
+      if(!menu.hidden){shut();return;}
+      menu.hidden=false;place();sync();
+    });
+    /* a pick closes it before the row acts -- in capture, because two
+       rows stop their click (Theme; New's, which press the rail's) */
+    menu.addEventListener('click',function(e){
+      var t=e.target;
+      if(t&&t.closest&&t.closest('.dc-mi')) shut();
+    },true);
+    if(window.MutationObserver) new MutationObserver(sync)
+      .observe(menu,{attributes:true,attributeFilter:['hidden']});
   }
   /* ---- T602: THE TABS SIT IN THE TITLE ROW --------------------------
      (2026-09-30, user: "there is to many layers to our ribbon ... Its too
@@ -1801,7 +1891,9 @@
     if(pageBy[stem]){setPage(stem,'',false);return;}
     var runs=pageRuns(sh.el);
     if(runs.length<2){
-      if(APP.toast) APP.toast('This notebook has one section, so it is one page');
+      /* the reader's own toast: APP.toast was never defined, so this
+         said nothing and the button seemed dead (2026-10-11) */
+      docToast('This notebook has one section, so it is one page');
       return;
     }
     /* start on the page you are looking at */
@@ -4387,7 +4479,15 @@
       if(open){
         giveBack();
         var vp=currentPanel();
-        if(!vp){toast?toast('No notebook open'):0;return;}
+        /* said through the reader's own toast: this called a bare
+           `toast`, the editor's, which is not in scope here -- it threw
+           "toast is not defined" and the button did nothing on a
+           notebook whose code binds no names (2026-10-11) */
+        if(!vp){
+          docToast(document.querySelector('.shell:not([hidden])')
+            ?'Nothing on this tab defines a variable':'No notebook open');
+          return;
+        }
         home={parent:vp.parentNode,next:vp.nextSibling};
         body.appendChild(vp);
         vp.hidden=false;
@@ -4489,6 +4589,7 @@
   var FIND_SKIP={SCRIPT:1,STYLE:1,SVG:1,CANVAS:1,TEXTAREA:1,INPUT:1};
   var findHits=[],findAt=-1,findTerm='',findOpened=[];
   var findRoot=null;   /* what findRun last searched (findFollow) */
+  var findStem='';     /* ...and the notebook it is (findAgain) */
   /* ---- T245: PUT BACK EXACTLY WHAT FIND OPENED ------------------------
      findGo un-hides the card a hit is in and forces it expanded, which is
      the whole point of finding inside folded content; before this, only
@@ -4550,6 +4651,7 @@
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
     }
+    if(findLand) findLand.stop();   /* its match is going */
     marks.forEach(unwrap);
     findRestore();
     /* ...and any copy of one, wherever a copied card took it */
@@ -4639,11 +4741,70 @@
         }
       }
     }
-    m.scrollIntoView({block:'center',behavior:'smooth'});
+    findShow(m);
     var nEl=$('#docfind-n');
     if(nEl) nEl.textContent=(findAt+1)+' / '+findHits.length;
   }
-  function findRun(term){
+  /* ---- WHERE A MATCH LANDS: ON SCREEN, BELOW THE CHROME (2026-10-11) ---
+     The glide is aimed once, at the page as it is laid out when it
+     starts -- and that page is still settling under it: the cards it
+     passes and the ones it lands among are laid out for the first time
+     as they come on screen (content-visibility holds an unseen card at
+     300px), a long note decides its clamp, maths typesets. At 1280x600
+     an ordinary match on a page of short notes landed at y 95, under the
+     ribbon, every time. So where it landed is looked at once the page
+     has stopped moving, and a match not wholly on screen below the fixed
+     chrome (the header, and the Find bar over it) is glided to again --
+     from close by, where the cards around it are real now. At most three
+     more times, and never against the reader: a wheel, a key, a press or
+     a touch meanwhile leaves the page where they put it. Nothing is
+     measured while the page moves: a scroll only re-arms the quiet
+     timer, the fallback where there is no scrollend. Reload's reading
+     hold (readingBack) yields to a landing in progress, so the two never
+     fight over the page. */
+  var findLand=null;
+  function findBandTop(){
+    var top=0,hd=$('#apptop'),fb=$('#docfind');
+    if(hd) top=hd.getBoundingClientRect().bottom;
+    if(fb&&!fb.hidden) top=Math.max(top,fb.getBoundingClientRect().bottom);
+    return top;
+  }
+  function findShow(m){
+    if(findLand) findLand.stop();
+    var tries=0,quiet=0,me={stop:stop};
+    var EVS=['wheel','keydown','mousedown','touchstart'],
+      OPT={capture:true,passive:true};
+    findLand=me;
+    function stop(){
+      clearTimeout(quiet);
+      window.removeEventListener('scrollend',settled);
+      window.removeEventListener('scroll',moving,OPT);
+      EVS.forEach(function(t){window.removeEventListener(t,stop,OPT);});
+      if(findLand===me) findLand=null;
+    }
+    /* a glide that never moves fires no scrollend: the quiet timer is
+       armed from the start, and pushed back by every scroll */
+    function moving(){clearTimeout(quiet);quiet=setTimeout(settled,250);}
+    function glide(){
+      m.scrollIntoView({block:'center',behavior:'smooth'});
+      moving();
+    }
+    function settled(){
+      if(findLand!==me) return;
+      clearTimeout(quiet);
+      /* gone, or in text the page does not draw: nowhere to land */
+      if(!m.isConnected||!m.getClientRects().length){stop();return;}
+      var r=m.getBoundingClientRect();
+      if((r.top>=findBandTop()&&r.bottom<=window.innerHeight)||++tries>3){
+        stop();return;}
+      glide();
+    }
+    window.addEventListener('scrollend',settled);
+    window.addEventListener('scroll',moving,OPT);
+    EVS.forEach(function(t){window.addEventListener(t,stop,OPT);});
+    glide();
+  }
+  function findRun(term,keep){
     findClear();
     findTerm=term||'';
     var nEl=$('#docfind-n');
@@ -4662,6 +4823,8 @@
       ||document.querySelector('.nbshell .content');
     if(!sh){if(nEl) nEl.textContent='no notebook';return;}
     findRoot=sh;
+    var shell=sh.closest&&sh.closest('.nbshell');
+    findStem=(shell&&shell.dataset.nb)||'';
     /* THE MATHS FIRST. It is typeset as you read now, not all at load,
        so a card further down can still hold raw $..$ -- and a <mark>
        wrapped round words inside that would split it so it never
@@ -4670,24 +4833,37 @@
     if(jvMath.pending(sh)){
       var tok=findTok;
       jvMath.all(sh,4000).then(function(){
-        if(tok===findTok) findMarkAll(sh);});
+        if(tok===findTok) findMarkAll(sh,keep);});
       return;
     }
-    findMarkAll(sh);
+    findMarkAll(sh,keep);
   }
-  function findMarkAll(sh){
+  function findMarkAll(sh,keep){
     var nEl=$('#docfind-n');
     findHits=findMark(sh,findTerm);
     if(nEl) nEl.textContent=findHits.length
       ?('0 / '+findHits.length):'nothing found';
-    if(findHits.length){findAt=-1;findGo(1);}
+    /* `keep`: the match to stay on (findAgain), clamped to the new count */
+    if(findHits.length){
+      findAt=(keep>0?Math.min(keep,findHits.length-1):0)-1;
+      findGo(1);
+    }
   }
   /* the term again, over what is on screen now: another notebook (T247),
      or the same one turned to Raw or back while the bar is open */
-  function findAgain(){
+  function findAgain(e){
     var bar=$('#docfind'),inp=$('#docfind-in');
     if(!bar||bar.hidden) return;
-    findRun(((inp&&inp.value)||'').trim());
+    /* THE SAME NOTEBOOK AGAIN (a Reload, changed on disk or not, a
+       version) is the one you were stepping through: the match you were
+       on stays the one you are on, and is taken back on screen. Re-run
+       from the first, Reload with Find open showed "1 / 23" for a match
+       a screen and more away while the page stayed where you had been
+       (2026-10-11). Another tab, or Raw on or off, starts from the first:
+       what is searched is not what was. */
+    var keep=-1;
+    if(e&&e.detail&&findStem&&e.detail.stem===findStem) keep=findAt;
+    findRun(((inp&&inp.value)||'').trim(),keep);
   }
   /* ...when what was searched is no longer what is shown. Raw is left
      by more than its own button -- the Tree button, an outline or a
@@ -9752,10 +9928,12 @@
       return x.dataset.anchor===at.anchor;}):[];
     var c=cs[at&&at.n]||cs[0]||null;
     if(!c||!c.getClientRects().length){
-      if(y){
+      /* ...neither, while Find is taking you to its match (findShow):
+         an instant scroll here stops its glide where it is */
+      if(y&&!findLand){
         window.scrollTo(0,y);
         /* once more after images/math settle the layout */
-        setTimeout(function(){window.scrollTo(0,y);},150);
+        setTimeout(function(){if(!findLand) window.scrollTo(0,y);},150);
       }
       return;
     }
@@ -9764,7 +9942,10 @@
     function yours(){mine=false;}
     EVS.forEach(function(t){window.addEventListener(t,yours,OPT);});
     (function step(){
-      if(!mine||!c.isConnected||!c.getClientRects().length
+      /* ...or unless Find is taking you to its match: with the bar open
+         the match is where you are reading, and the hold's every-frame
+         correction stopped the glide to it dead (findShow) */
+      if(!mine||findLand||!c.isConnected||!c.getClientRects().length
          ||Date.now()-t0>1000){
         EVS.forEach(function(t){window.removeEventListener(t,yours,OPT);});
         return;
@@ -10274,21 +10455,41 @@
     var list=sh.trace?APP.traces:APP.order;
     var i=list.indexOf(stem);
     if(i>=0) list.splice(i,1);
+    var gone=false,tab='';
     if(APP.active===stem){
       APP.active=null;
       /* closing a trace tab returns to its source notebook; otherwise fall
-         back to the last remaining notebook (or trace) tab */
+         back to the last remaining notebook (or trace) tab -- and with
+         none left, to the last of the editor's tabs in the same row (a
+         collection, T606, or a presentation), as pressing it would.
+         Closing the last notebook beside one went Home, its tab still in
+         the row, unlit, and the address still naming the notebook closed
+         (2026-10-11). Home is where closing the last tab of all leads. */
       var back=(sh.trace&&APP.shells[sh.source])?sh.source
         :(APP.order[APP.order.length-1]||APP.traces[APP.traces.length-1]);
-      if(back) activate(back); else {renderRawBtn();renderViewBtns();}
+      if(back) activate(back);
+      else{
+        renderRawBtn();renderViewBtns();
+        /* ...not from Home, which a tab closed from there leaves where
+           it is (it opened the slide editor over Home, or a collection,
+           2026-10-12 review), nor while a deck is on screen: it owns the
+           window */
+        gone=!atHome;
+        if(gone&&!(APP.deckState&&APP.deckState())&&APP.deckLastTab)
+          tab=APP.deckLastTab();
+      }
     }
     renderTabs();
-    if(sh.trace) return;   /* a trace tab is not a notebook — no teardown */
-    document.dispatchEvent(new CustomEvent('sem:shellclosed',
-      {detail:{stem:stem}}));
-    if(APP.mode==='app'&&sh.path)
-      api('/api/close',{path:sh.path}).catch(function(){});
-    if(APP.mode==='web'&&sh.path) webUnnote(sh.path);
+    if(!sh.trace){   /* a trace tab is not a notebook — no teardown */
+      document.dispatchEvent(new CustomEvent('sem:shellclosed',
+        {detail:{stem:stem}}));
+      if(APP.mode==='app'&&sh.path)
+        api('/api/close',{path:sh.path}).catch(function(){});
+      if(APP.mode==='web'&&sh.path) webUnnote(sh.path);
+    }
+    /* once the editor has let the notebook go (sem:shellclosed) */
+    if(tab&&APP.deckChoose) APP.deckChoose(tab);
+    else if(gone) updateHash();   /* Home, or the deck: not the closed */
   }
 
   /* ================= web mode (Pyodide, fully client-side) ============ */
@@ -11333,6 +11534,7 @@
      only touches what is declared above it — but do not add more. */
   initRailAuto();
   initFilesAt();              /* T596: tabs or the side list, not both */
+  fileMenuBoot();             /* File opens before the editor is here */
   pagesBoot();                /* one section at a time (T390) */
   /* An update may arrive before the body exists; show the saved notice
      now that the application markup is ready (T206). */

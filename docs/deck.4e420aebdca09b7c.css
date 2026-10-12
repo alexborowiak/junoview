@@ -672,6 +672,10 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
   position:relative;}
 .deck-stage{flex:1;min-height:0;display:flex;padding:26px 78px 6px;
   overflow:hidden;}
+/* it holds the keyboard for the editor (deckFocusTake) -- the whole
+   canvas ringed every time a deck opened from the keyboard is no help;
+   the selection outline is what says where you are */
+.deck-stage:focus{outline:none;}
 
 /* editing: the slide is a real bounded page surface (16:9 by default —
    the Page dropdown can make it 4:3 or a poster), so you can see exactly
@@ -4553,6 +4557,17 @@ body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
 /* ...and a bare strip (Play's four tiles) wraps in the rail too, rather
    than running its last tile under the scrollbar */
 .deck.rbn-side .rbn-row>.fx-strip{flex-wrap:wrap;width:100%;height:auto;}
+/* ...and so does a cell frame's part picker (#fmt-parts): Figure, Code
+   and Split in two are one nowrap row wider than the rail, and Split in
+   two ran past its edge, cut off (2026-10-11 review). In the rail the
+   picker is a line of its own and its pills pair up like every other
+   control there -- each keeps its word and its icon. */
+.deck.rbn-side .rbn-partslot:not([hidden]){display:flex;flex:1 0 100%;
+  width:100%;height:auto;align-items:flex-start;}
+.deck.rbn-side #fmt-parts .cellparts{display:flex;flex-wrap:wrap;
+  width:100%;gap:3px;}
+.deck.rbn-side #fmt-parts .cellpartbtn{flex:1 0 auto;
+  justify-content:center;}
 
 /* ---------- full-screen EDITING (not presenting) ---------- */
 /* Present hides every tool, which is wrong for a poster: there is no
