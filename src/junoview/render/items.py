@@ -173,7 +173,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
         chips = "".join(
             f'<a class="depchip" href="#" data-dep="{html.escape(d)}">{html.escape(d)}</a>'
             for d in item.depends)
-        prov = f'<div class="prov"><span class="prov-l">derives from</span>{chips}</div>'
+        prov = f'<div class="prov"><span class="prov-l">uses</span>{chips}</div>'
 
     id_tag = ""
     if item.node_id:
@@ -186,8 +186,9 @@ def render_item(item: Item, sec_id: str = "") -> str:
         trace_btn = (
             f'<button class="plot-trace-btn" type="button" '
             f'data-trace="{html.escape(item.anchor or item.item_id)}" '
+            f'aria-label="Plot trace" '
             f'title="See every cell that builds this plot — as a code trace '
-            f'and a dependency graph">{_ic("tree")} Plot trace</button>')
+            f'and a dependency graph">{_ic("tree")} Trace</button>')
 
     body = out_html
     htmlsrc = ""
@@ -271,7 +272,8 @@ def render_nav(doc: Document) -> str:
     # key: one entry per item kind (incl. code subtypes) present, GROUPED
     # (markdown | plots | code | output) with a divider between groups — so the
     # two "print" dots (a CODE cell that prints vs a printed VALUE) read apart.
-    # Shown at the TOP of the sidebar.
+    # T624: it is the outline's "?" now, not a block of text at the top of
+    # every outline -- an inert template the "?" in shell.html clones.
     labels = {"k-figure": "figure", "k-dataset": "dataset",
               "k-transform": "transform", "k-metric": "print",
               "k-note": "markdown", "k-print": "print", "k-code": "code",
@@ -298,7 +300,8 @@ def render_nav(doc: Document) -> str:
             if kc not in seen:
                 seen.append(kc)
     if seen:
-        parts.append('<div class="navkey"><span class="navkey-h">key</span>')
+        parts.append('<template class="navkey-tpl">'
+                     '<div class="navkey"><span class="navkey-h">key</span>')
         first = True
         for grp in ("markdown", "plots", "code", "output"):
             kcs = [kc for kc in seen if _key_group(kc) == grp]
@@ -316,7 +319,7 @@ def render_nav(doc: Document) -> str:
                 shown.add(lab)
                 parts.append(f'<span class="nk {kc}"><span class="dot">'
                              f'</span>{lab}</span>')
-        parts.append('</div>')
+        parts.append('</div></template>')
     figs_own = [sum(1 for it in s.items
                     if it.kind in ("figure", "diagnostic"))
                 for s in doc.sections]

@@ -43,6 +43,22 @@ def test_settings_over_the_untouched_picture():
         in rend
 
 
+def test_the_export_says_a_saturation_stays_here():
+    """A saturation between none and double has no PowerPoint twin, so the
+    writer counts it -- and the toast must say so. It is not on the
+    "Export .pptx?" list (that would ask where 27be2a9 asked nothing), so
+    the toast is the only place it is reported; T624 dropped it once and
+    the export said only ".pptx saved" (review, 2026-10-12)."""
+    js = assets.load("js/deck/60-saving-and-export.js")
+    assert "            note.sat=(note.sat|0)+1;" in js
+    body = js.split("  function pptxBuildAndSave(orig){")[1].split("\n  }\n")[0]
+    assert ("    if(note.sat) tail.push(note.sat+' picture'\n"
+            "      +(note.sat===1?'\\u2019s':'s\\u2019')+' saturation not kept');"
+            ) in body
+    assert body.index("if(note.sat) tail.push") < body.index(
+        "if(tail.length) msg+=") < body.index("pptxDeliver(out.blob,fname,msg);")
+
+
 @pytest.mark.skipif(js_engine() is None, reason="no JS engine")
 def test_the_pptx_carries_what_powerpoint_can_show():
     from junoview.notebook.pptx_read import read_pptx

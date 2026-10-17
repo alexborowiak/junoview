@@ -299,9 +299,9 @@ def test_a_part_keeps_its_order_and_takes_no_slide_in(out):
 
 def test_the_parts_view_has_its_doors(out):
     deck = assets.deck_html()
-    assert 'id="mi-parts"' in deck and ">Parts of this talk&#8230;<" in deck
+    assert 'id="mi-parts"' in deck and ">Parts&#8230;<" in deck
     assert 'id="where-part"' in deck
-    assert "['parts','Parts of this talk…','Parts…']" in out
+    assert "['parts','Parts…','Parts…']" in out
     assert "      if(m==='parts'){openParts();return;}" in out
     assert "  partsBoot();" in out
     # the divider of a part says so, in words
@@ -319,5 +319,5 @@ def test_a_renamed_part_is_followed(out):
 def test_the_help_says_how():
     help_html = assets.help_html()
     assert "One talk made of parts." in help_html
-    assert "File &rarr; Parts of this\ntalk&hellip;" in help_html
+    assert "File &rsaquo;\nParts&hellip;" in help_html
     assert "\\input" in help_html

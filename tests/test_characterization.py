@@ -2476,8 +2476,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # after F5 and after the Open dialog (Tab still walks out to the ribbon),
 # the File menu opens at once without the editor, a .pptx export does
 # not wait on MathJax, Split in two fits the side rail.
-EXPECTED_MD5 = "1a7e98d9b9519f36cfb1a37409adaa18"
-EXPECTED_BYTES = 5700401
+# T624: shorter labels, toasts and notes; the ? help buttons;
+# its review: toasts, Help's Citations tab, the ?'s halo and ink.
+EXPECTED_MD5 = "bd5cee3807ec8473926f53abb9be8b9e"
+EXPECTED_BYTES = 5694289
 
 
 def _render_example() -> str:

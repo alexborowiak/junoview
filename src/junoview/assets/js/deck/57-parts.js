@@ -226,10 +226,8 @@
     return list.map(function(n){return '“'+n+'”';}).join(', ');
   }
   function partsTellUpdated(up){
-    toast('Brought up to date from '+(up.length===1?'its part ':'its parts ')
-      +partNames(up)+' — '+(up.length===1?'it has':'they have')
-      +' changed since this talk last showed '
-      +(up.length===1?'it':'them'),6000);
+    toast('Updated from '+(up.length===1?'part ':'parts ')+partNames(up),
+      6000);
   }
   /* loadPresentation's last step: a talk opens showing its parts as they
      are now. Not before the draft store has answered -- a part kept only
@@ -774,16 +772,14 @@
     runs.forEach(function(r,ri){body.appendChild(partGroup(r,runs,ri));});
     if(!ids.length){
       var p=document.createElement('p');p.className='prt-none';
-      p.textContent='No parts yet. Add a presentation you already have, '
-        +'start a new one, or turn a section of this talk into a part.';
+      p.textContent='No parts yet.';
       body.insertBefore(p,body.firstChild);
     }
   }
   function openParts(){
     if(!pres||isViewPres(pres)) return;
     if(pageOf().poster){
-      toast('A poster\u2019s pages are versions of one sheet \u2014 parts '
-        +'are for a talk made of other presentations',6000);
+      toast('Posters have no parts',6000);
       return;
     }
     overviewClose();partsClose();
@@ -806,6 +802,12 @@
     var head=document.createElement('div');head.className='ovw-head prt-head';
     var t=document.createElement('span');t.className='ovw-t';t.id='prt-title';
     head.appendChild(t);
+    /* T624: what a part is, behind the title's "?" (a sibling: the
+       title's words are rewritten on every draw) */
+    head.appendChild(qBtn('A part is another presentation shown here as a '
+      +'section, like \\input in LaTeX. You edit it on its own, and this '
+      +'talk picks up its changes each time it opens. Its slides are '
+      +'locked here; Edit opens it.','Parts'));
     var sp=document.createElement('span');sp.className='deck-spring';
     head.appendChild(sp);
     var back=partBtn('return','Back to the parts','The parts of this talk',
@@ -836,12 +838,6 @@
     var cl=partBtn('exit','Close','Esc',partsClose);
     head.appendChild(cl);
     ov.appendChild(head);
-    var intro=document.createElement('p');intro.className='prt-intro';
-    intro.textContent='A part is another presentation that this talk shows '
-      +'as a section, like \\input in LaTeX: you edit it on its own, and '
-      +'this talk picks up its changes each time it opens. Its slides are '
-      +'locked here — Edit opens it.';
-    ov.appendChild(intro);
     var say=document.createElement('div');say.className='prt-say';
     say.id='prt-say';say.hidden=true;say.setAttribute('role','status');
     ov.appendChild(say);

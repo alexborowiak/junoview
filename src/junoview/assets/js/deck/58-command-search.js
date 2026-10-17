@@ -108,8 +108,24 @@
     'fmt-back':'send to back',
     'fmt-crop':'crop picture trim',
     'fmt-sizepos':'size position format shape width height',
-    'mi-pdf':'export pdf print save as pdf',
-    'mi-pptx':'export powerpoint pptx save as',
+    'mi-pdf':'export pdf print save as pdf export pdf print handout '
+      +'notes pages',
+    'mi-pptx':'export powerpoint pptx save as export pptx export to '
+      +'powerpoint',
+    /* T624: the File rows lost their verbs ("Open a presentation..."
+       is "Presentation..." under the heading "open"), so the words
+       people still type find them */
+    'mi-open':'open presentation library recent',
+    'mi-load':'open junoview file',
+    'mi-review':'export for review markdown md',
+    'mi-html':'export standalone html web page',
+    'mi-dl':'download a copy save a copy junoview',
+    'deck-howto':'how to use help docs documentation',
+    'pr-talk':'play with talk settings',
+    'pr-tap':'click to enlarge figures zoom',
+    'pl-tap':'click to enlarge figures zoom',
+    'pl-trace':'show code trail',
+    'hm-lay-give':'copy layout to slides give layout',
     'mi-import-pptx':'open powerpoint import pptx',
     /* T601: what Overleaf and LaTeX call it, and what Word calls it */
     'mi-parts':'parts include input subfile master document linked '
@@ -142,6 +158,17 @@
       var sh=$('#rbn-shelf'); if(sh&&sh.contains(b)) g=rbnShelfFor;}
     return g;
   }
+  /* T624: a menu row's place is its menu AND the heading above it:
+     "File \u203a open" tells "Presentation..." (open one) from
+     "Presentation" (make one) under "new" */
+  function cmdHeadOf(b){
+    for(var p=b.previousElementSibling;p;p=p.previousElementSibling){
+      var c=p.classList;
+      if(c&&(c.contains('dc-mhead')||c.contains('hd-lab')))
+        return p.textContent.replace(/\s+/g,' ').trim();
+    }
+    return '';
+  }
   function cmdIndex(){
     var out=[],seen=[];
     function add(b,where,tab,g){
@@ -171,9 +198,12 @@
         +(g?' › '+rbnGroupName(g):'');
       add(b,where,tab,g);
     });
-    $$('#dc-menu .dc-mi').forEach(function(b){add(b,'File',null,null);});
+    $$('#dc-menu .dc-mi').forEach(function(b){
+      var h=cmdHeadOf(b);
+      add(b,'File'+(h?' \u203a '+h:''),null,null);});
     $$('#play-menu .dc-mi').forEach(function(b){
-      add(b,'Present ▾',null,null);});
+      var h=cmdHeadOf(b);
+      add(b,'Present ▾'+(h?' \u203a '+h:''),null,null);});
     ['#dc-save','#qat-find','#dc-play','#vw-full','#dc-undo','#dc-redo']
       .forEach(function(id){add($(id),'Top bar',null,null);});
     /* T619: the zoom, in the tab row since it left the canvas */
@@ -231,7 +261,7 @@
       if(inp.value.trim()){
         var none=document.createElement('div');
         none.className='rbn-search-none';
-        none.textContent='No command called that — try another word';
+        none.textContent='No match';
         list.appendChild(none);
         list.hidden=false;
       } else list.hidden=true;

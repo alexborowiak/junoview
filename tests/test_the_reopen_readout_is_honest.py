@@ -15,8 +15,8 @@ def test_boot_says_where_the_deck_is(out):
     fn = out.split("  function rememberedFileBoot(h,forName){")[1].split("\n  }")[0]
     assert ("          fileWaits='reopen';status();\n"
             "          /* T431: SAID OUT LOUD.") in fn
-    assert ("            +' \\u2014 click \\u201cclick to reopen\\u201d "
-            "beside Save to '") in fn
+    assert ("is in its file \\u2014 reopen it '\n"
+            "            +'beside Save',12000);") in fn
 
 
 def test_binding_a_file_settles_the_wait(out):

@@ -11977,3 +11977,106 @@ work was running on `main` at the time.
   after a slide change, in the show, the strip and the exported HTML.
   Tests in tests/test_lists_and_indent.py and, opt-in,
   tests/test_lists_and_indent_in_a_browser.py.
+
+## Group 26 — the 2026-10-11 round
+
+- [x] **T624 — Less text, and the rest behind a ?.** "there is a lot of
+  unnecessary text still. I think some things have text that is not
+  needed at all, then some text is too long and should be behind a ?
+  button, with just either no text or something simple there instead."
+  *Done 2026-10-11.* Four finders read every surface (about 330
+  proposals); the editor-in-chief plan deduplicated them to ~400 items
+  with a house voice (sentence-case labels, an ellipsis only where more
+  input follows, keys in tooltips, toasts of about eight words, one-line
+  empty states, menu paths with " › ", Help called Help everywhere).
+  **What changed, by surface:** Home and the web build 15 (the tagline,
+  "How it works", the four steps and the dead Resume link gone; Tour,
+  Example, Help, Install app; "Presentations" / "None yet"; the demo reel
+  and testimonial are web-only, captions down to their titles); Open
+  dialog, drop overlay and app toasts 12; the reader 50 (File menu
+  Presentation… / Notebook… / Help… / Support ♥, the theme picker one
+  line a row so its 13 rows fit without scrolling at both laptop sizes,
+  Trace, "uses", Options, filter menus, Info rows, Version history,
+  notes, custom view bar, and two bug fixes: the note dialog's git row
+  honours `hidden`, and Present is hidden while presenting); the
+  editor's File menu, library, New presentation and saving 42; the
+  editor's dialogs, panes and toasts 191; Present, the show, the talk
+  pane, narration and the presenter window 49 ("End show" is the one
+  name for that action); the tours 11; the Help dialog 10 (its shortcut
+  table, and "What this is" now carries Home's four steps). Kept on
+  purpose (the plan's overrules): Collapse/Expand on section heads
+  (T501), Which plots / Which code / Which output (T566), the Review
+  pane's tool names, the View › Pages group, "Follow system", and every
+  hint that is the only way to find a feature (PDF's "Save as PDF", the
+  microphone fix, right-click to add slides to a custom show, {fig} in a
+  caption, the rcParams fix). A local notebook's per-cell Versions shows
+  only inside a git repository, from one idle /api/gitstate per shell
+  (never on the load path). The rename ripple runs through help.html,
+  the tours, toasts, tooltips and command search (File › / Present ▾ ›
+  context on every menu row, and aliases so "open", "export", "how to
+  use" and the old names still find the renamed rows).
+  **The "?" (app.js THE "?", app.css `.jv-q`/`.jv-qpop`):** the one
+  icon-only button the user allows, right after the heading or control
+  it explains, 24 of them live (the 25th, Quick animate, waits for T625):
+  New presentation, the save-where prompt, the custom view bar, the
+  outline's colour key (a cloned template), an empty Version history,
+  History, Images, Check consistency (overlay and pane, one text), Tidy
+  page, Before you print, Saved layouts, Slide master, Copy layout to
+  slides, Header and Footer, Deck colours, Markdown, Style system, Export
+  .pptx?, Export for review, Parts, Ribbon layouts, This talk, Keep your
+  ink?, Keep the narration?. Nothing is set up per button: one click
+  listener on document and one keydown on window, both in capture (the
+  keydown first of all and returning at once while nothing is open);
+  the popover is built on open, set as text, inserted after its button
+  (so every outside-click owner counts it as inside), placed on screen
+  with one measure, and closed by Escape (alone -- a second Escape closes
+  the host), a click elsewhere, another "?", a resize or a scroll that
+  carries the "?" away. aria-expanded / aria-controls; no role, never on
+  hover. The ask dialog takes `help` (askText/askYes/askTell/furnEdit).
+  Never in a ribbon or toolbar row. **Also fixed while driving it:** the
+  talk pane was 266px fixed and its Ink row's Eraser ran out past the
+  edge (at 27be2a9 too); it is as wide as its widest row now.
+  **Driven** at 1366x657 and 1280x600, light and dark, against 27be2a9:
+  45 surfaces (Home web and app, the reader, its File, Theme, three filter
+  menus, Info, outline and custom view, the editor, File, Present ▾, dock,
+  library, the seven ribbon tabs, every "?" host, Notes, the talk pane)
+  -- 180 states, no label that did not wrap now wraps, no new wordless
+  button, nothing new off screen or clipped, and two wraps of 27be2a9
+  gone (Home's Recent presentations head, the Review pane's Update
+  figures button). Every ribbon row still fits (the no-wrap test).
+  Tests: tests/test_help_buttons.py (where a "?" may go, that each is a
+  real disclosure, no per-button work, the ask dialog's `help`, and the
+  component's click, keys, aria, placement and scroll rule in node), and
+  opt-in tests/test_help_buttons_in_a_browser.py (every "?" at both
+  sizes in both schemes: on screen, Enter/Space, Escape alone then the
+  host, outside click, one at a time, focus back, the ribbon's fit
+  unchanged, the talk pane's controls inside it; and a text guard: no
+  visible block on Home, the reader, the editor or any "?" host carries
+  more than 30 words outside a popover, about two lines of a dialog).
+  **Review (2026-10-12), twelve findings, all fixed:** a .pptx toast
+  says again when a picture's saturation did not travel (".pptx saved
+  (1 picture's saturation not kept)"); the talk pane's two switches are
+  named by their row and state ("Narration Off", not "Narration,
+  pressed"); "then press Present" only before the show, not on the
+  audience's screen; Help sends Citations to Text, not Design (a test
+  now checks every "Tab ›" path Help gives against the ribbon); the
+  review's "?" quotes DENSE_WORDS (55, not "about 60") and the row says
+  "1 thing"; Arrange keeps "Centre on page across/down"; Headings view
+  says "empty slide" again (no picture there); a short run that went
+  past slide 1 says "Too short to count as a rehearsal"; copying filters
+  says "their section tweaks cleared"; Saved layouts' halves are
+  "Layouts" and "Apply to"; Images' "?" keeps 6px from "Every slide"
+  (its halo took two thirds of that button's left edge); and the "?" in
+  Markdown, This talk and an empty Version history wears the chrome's
+  ink (they were 2.05-2.28:1 at rest, now 11.69 dark / 16.46 light).
+  The browser test now fails any "?" whose halo takes a neighbour's
+  pixels or that reads under 3:1 at rest, at both sizes and schemes (Q5
+  in both schemes too).
+  **Left for later** (plan section 7): the collection text in
+  64-collections.js -- New collection's sentence behind a `help`, "With
+  its code", "add 20 cells to" (and that heading running past the window
+  at 1366), "Open a notebook first" -- and the Create slides dialog
+  (kicker, header Cancel, copy, "From", the sub-lines, "9 sections", its
+  toast), after T613 and T614 land; Quick animate and the animation
+  labels (48b-motion.js, 48-animation.js, "On a final click"), after
+  T625.

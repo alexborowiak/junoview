@@ -331,7 +331,7 @@ def test_the_card_controls_are_delegated_and_their_buttons_still_made():
     assert ("if(e.target.closest&&e.target.closest('.navitem-eye')) return;"
             in init)
     buttons = lift_fn(app, "wireCardButtons")
-    for made in ("hb.className='cell-history-btn';",
+    for made in ("hb.className='cell-history-btn'+(source.gh?'':' local');",
                  "b.className='cell-collect';",
                  "bc.className='fz-btn fz-copy';"):
         assert made in buttons

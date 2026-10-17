@@ -178,7 +178,7 @@ def test_a_chart_with_neither_is_named_not_dropped_silently(deck):
     got = read_pptx(buf.getvalue(), "empty.pptx")
     assert not [it for it in got["spec"]["slides"][0]["items"]
                 if it["t"] == "chart"]
-    assert any("workbook beside them" in ln for ln in got["lost"])
+    assert any("with no data (left out)" in ln for ln in got["lost"])
 
 
 def test_a_column_letter_counts_past_z():

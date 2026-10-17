@@ -111,7 +111,6 @@ def test_it_is_used_where_a_version_becomes_the_selected_one():
 def test_an_empty_answer_says_which_two_it_compared():
     js = assets.deck_js()
     assert "'These two versions are the same.'" in js
-    assert "'This version is the deck you are editing " in js
-    assert "see what you have done since then.'" in js
+    assert "'No changes since. Pick an older version.'" in js
     # the bare sentence that said neither is gone
     assert "Nothing is different between these two." not in js

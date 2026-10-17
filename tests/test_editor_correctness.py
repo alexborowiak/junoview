@@ -310,7 +310,7 @@ def test_a_poster_goes_to_the_printer_one_version_at_a_time(out):
     assert "var ents=outputSlides();" in out
     # never a silent choice
     assert "function outputNote(){" in out
-    assert "a poster '\n      +'goes out one version at a time" in out
+    assert "    return ' (this version only)';" in out
 
 
 def test_print_decisions_survive_being_saved(out):
@@ -1329,7 +1329,7 @@ def test_the_equation_editor_is_real(out):
     assert "var setOk=prev.querySelector('mjx-container');" in out
     assert "if(setOk&&!bad) return;" in out
     assert "That did not typeset" in out
-    assert "No maths renderer available" in out
+    assert "No preview offline \\u2014 the LaTeX is still " in out
 
 
 def test_locking_says_why_it_cannot(out):
@@ -1712,10 +1712,8 @@ def test_a_failed_browser_save_is_not_reported_as_a_save(out):
     assert "function lsIsFull(){return lsFull;}" in out
     # the Save button must not stamp a save that did not happen
     # T235: and it names the fix rather than only the failure
-    assert ("      toast('NOT saved \\u2014 this browser is full. "
-            "The \\u25be beside '") in out
-    assert ("        +'Save \\u203a \"A folder on this computer\" "
-            "keeps every '") in out
+    assert ("      toast('NOT saved \\u2014 browser full. File \\u203a Download '"
+            "\n        +'.junoview',11000);") in out
     # ...and the readout outranks every other reading while it is true
     assert "el.textContent='NOT saved — browser full';" in out
     # an image is the thing that fills it, so cap what can arrive
@@ -1870,7 +1868,12 @@ def test_each_lint_shows_what_it_counted(out):
     spelling appeared.
     """
     assert "var DENSE_WORDS=55, DENSE_ITEMS=12;" in out
-    assert "why:wc+' words and '+ic+' things on it." in out
+    # (T624 review: "57 words, 1 things." -- the count says thing/things)
+    assert "why:wc+' words, '+ic+' thing'+(ic===1?'':'s')+'.'" in out
+    # and the title's "?" quotes the threshold the check uses, not a
+    # number typed beside it (it said "about 60" while 55 triggered)
+    assert "+'figure will not follow it or renumber.\\nAbove about '+DENSE_WORDS" in out
+    assert "about 60 words" not in out
     assert "return '\\u201c'+f+'\\u201d \\u00d7'+surfaces[k][f];" in out \
         or "'” ×'+surfaces[k][f]" in out
 

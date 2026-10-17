@@ -30,7 +30,7 @@ def test_every_door_reads_the_picture_in(out):
     assert "      fetchDataUrl(addr).then(function(full){" in fn
     assert "          if(a&&a.k==='image'){a.psrc=addr;markDirty();showFmt();}" \
         in fn
-    assert "        placeImage(addr,0);\n        toast('That site did not let" in fn
+    assert "        placeImage(addr,0);\n        toast('Placed as a link to '" in fn
     # the paste doors go through the same door
     assert "    placeFromAddress(pic.src);\n    return true;" in out
     assert "        .then(function(b){flipAddFiles(bk,[b],said);})" in out

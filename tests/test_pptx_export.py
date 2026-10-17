@@ -82,11 +82,16 @@ def test_what_cannot_convert_is_reported_not_silently_dropped(out):
     assert "note.skipped++" in out and "if(a.crop&&a.crop.path)" in out
     # not "code or a table" any more: code has always come across as
     # text and tables do since T109, so the message names what is
-    # actually left
-    assert "could not convert (a rich output with " in out
-    assert "no picture and no text" in out
+    # actually left. T624: named before the export ("Export .pptx?",
+    # count plus result) and counted again in the toast
+    assert ("    if(note.skipped) lost.push(note.skipped+' placed cell'\n"
+            "      +(note.skipped===1?'':'s')+' (left out)');") in out
+    assert ("    if(note.skipped) tail.push(note.skipped+' cell'\n"
+            "      +(note.skipped===1?'':'s')+' not converted');") in out
+    assert "    if(tail.length) msg+=' ('+tail.join(', ')+')';" in out
     assert "skipped:note.skipped+out.skipped" in out
-    assert "hand-drawn crop" in out and "not carried" in out
+    assert ("    if(note.cropped) lost.push(note.cropped+' crop outline'\n"
+            "      +(note.cropped===1?'':'s')+' (trim kept)');") in out
 
 
 def test_a_crop_and_a_transition_are_handed_to_the_writer(out):
@@ -109,11 +114,13 @@ def test_a_crop_and_a_transition_are_handed_to_the_writer(out):
 def test_speaker_notes_are_handed_over_and_reported(out):
     """T108. The Notes page is plain text, so sl.notes -- what the Notes
     pane writes and the presenter console reads -- goes across as it is.
-    The toast says how many slides carried notes, because a silent
-    success reads the same as a silent loss.
+    T624: the toast says it is done and nothing more (2026-10-11, user:
+    "there is a lot of unnecessary text still"); notes are not a loss,
+    so they are not on the list asked about before the export.
     """
     assert "notes:ent.s.notes||''" in out
-    assert "Speaker notes came across on " in out
+    assert "    var msg='.pptx saved'+outputNote(),tail=[];" in out
+    assert "Speaker notes came across on " not in out
 
 
 def test_prose_and_code_frames_still_come_across_as_text(out):
@@ -233,9 +240,10 @@ def test_a_deck_equation_is_flattened_rather_than_shipped_as_latex(out):
     # it (T483: display and inline alike)
     assert out.count("note.maths++") == 2
     assert "note.maths+=node.querySelectorAll('mjx-container').length;" in out
-    # ...and the toast now counts them and says why
-    assert "came across as plain text \\u2014 " in out
-    assert "this writer has no LaTeX-to-.pptx path, so they were flattened" in out
+    # ...and the export counts them before it runs, and its "?" says why
+    assert ("    if(note.maths) lost.push(note.maths+' equation'\n"
+            "      +(note.maths===1?'':'s')+' (as plain text)');") in out
+    assert "help:'A .pptx has no LaTeX, no exit animations" in out
 
 
 def test_prose_dollars_are_not_mistaken_for_maths_by_the_export(out):

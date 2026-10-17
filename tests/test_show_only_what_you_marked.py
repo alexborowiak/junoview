@@ -137,7 +137,7 @@ def test_the_menu_is_a_compact_menu_not_a_new_wrapping_ribbon_row():
     app = assets.app_js()
     assert "function openLabelFilter(btn,shell,stem,have){" in app
     assert "function openCellLabels(btn,shell,stem,id){" in app
-    assert "Add a custom label…" in app
+    assert "New label…" in app
 
 
 def test_the_ribbon_never_wrap_rule_is_untouched():

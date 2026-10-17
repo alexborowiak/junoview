@@ -34,7 +34,7 @@ def test_the_highlighter_and_its_doors(out):
     fn = out.split("  function highlightSelection(col){")[1].split("\n  }\n")[0]
     assert "document.execCommand('hiliteColor',false,col||'transparent');" in fn
     assert "else sp.setAttribute('data-hl','1');" in fn
-    assert "hh.textContent='highlight behind the words';" in out
+    assert "hh.textContent='highlight';" in out
     assert "hlRow(hl,true);m.appendChild(hl);" in out      # mini toolbar
 
 

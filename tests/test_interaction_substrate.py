@@ -175,7 +175,7 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     heads = re.findall(r'class="dc-mhead[^"]*">([^<]+)<', menu)
     assert heads == ["new", "open", "this presentation",
                      "export &amp; share", "app",
-                     "careful — these lose work"], heads
+                     "careful"], heads
     # the fifteen rows from before (fourteen you can see, and
     # #mi-autosave, hidden unless the build has a project to save to),
     # plus T602's nine: Poster, Custom view, Folder, Open a

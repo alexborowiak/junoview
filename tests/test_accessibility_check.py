@@ -13,7 +13,9 @@ def _js():
 def test_the_review_centre_has_a_sixth_check():
     js = _js()
     assert "cat('Accessibility','whole deck',a11yFindings().length," in js
-    assert "across six checks" in js
+    # six categories, one count line over them all (T624: "1 to look at")
+    assert js.count("    cat('") == 6
+    assert "?(total+' to look at')" in js
     html = assets.load("html/deck.html")
     assert 'id="a11ypane"' in html
     ribbon = assets.load("js/deck/05-figures-and-ribbon.js")

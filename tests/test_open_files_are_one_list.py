@@ -85,7 +85,7 @@ def test_the_tab_row_carries_the_side_panels_doors():
     menu = menu[:menu.index("</span>")]
     for real in ("pr-new", "pr-newpost", "pr-newview", "pr-newfold"):
         assert f'data-for="{real}"' in menu, real
-    assert "Open a presentation&#8230;</button>" in menu
+    assert ">Presentation&#8230;</button>" in menu
     assert (bar.index('id="open-tabs-row"') < bar.index('id="file-dock"')
             < bar.index('id="doc-find"'))
     assert nav.index('id="app-file"') < nav.index('id="menubtn"')

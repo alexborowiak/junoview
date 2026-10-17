@@ -344,7 +344,7 @@
     var b=$('#vw-scroll'),l=$('#vw-scroll-lines'),t=$('#vw-scroll-lines-t');
     if(b) b.setAttribute('aria-pressed',svOn?'true':'false');
     if(l){
-      var v=scrollSepGet(),name='Faint line';
+      var v=scrollSepGet(),name='Faint';
       SCROLL_SEPS.forEach(function(o){if(o[0]===v) name=o[1];});
       l.disabled=!svOn;
       l.setAttribute('aria-label','Between slides: '+name);

@@ -92,7 +92,8 @@ def test_output_types_menu_is_per_type_tri_state_with_counts(out):
     # so a stale override in an untargeted section (or the default)
     # cannot survive it
     assert "typeMenuReset('ot','ot-reset')" in out
-    assert "rs.textContent='Reset: match '+MENU_LABEL[map];" in out
+    assert "rs.textContent='Reset';" in out
+    assert "rs.title='Reset: match '+MENU_LABEL[map]" in out
     assert "FDEFof(stem)[map]={};" in out
     assert "if(k.indexOf(pre)===0) secF[k][map]={};" in out
     # legacy 1 still reads as 'hidden', and map equality compares VALUES
@@ -341,6 +342,12 @@ def test_trace_tab_opens_unfiltered_and_filters_can_be_pushed(out):
     assert 'id="trace-inherit"' in out and "function copyFiltersTo" in out
     assert "function copyFiltersToAll" in out and ".scope-copy" in out
     assert "function renderFilterExtras" in out and "function docToast" in out
+    # pushing is not undoable, so the toast says what it overwrote (T624
+    # shortened it to "Filters copied to 1 notebook" and lost that; the
+    # review put it back, in fewer words than 27be2a9's)
+    body = out.split("  function copyFiltersToAll(){")[1].split("\n  }\n")[0]
+    assert ("    docToast('Filters copied to '+n+' notebook'+(n>1?'s':'')\n"
+            "      +' \\u2014 their section tweaks cleared');") in body
 
 
 def test_code_output_parts_are_independently_filterable(out):
@@ -464,7 +471,7 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     # of File, since the App menu's rows moved there).
     assert "#help-btn{padding:0;justify-content:center;" not in out
     assert 'id="app-file-menu"' in out
-    assert 'id="help-btn"' in out and "How to\n            use&#8230;</button>" in out
+    assert 'id="help-btn"' in out and ">Help&#8230;</button>" in out
     # the width comes from the column, so there is nothing to keep in sync
     assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
            "align-items:stretch;" in out

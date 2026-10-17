@@ -30,8 +30,8 @@
      A way of looking, like the scrolling page itself: remembered in this
      browser, never stored with the deck. */
   var SCROLL_SEP_KEY='junoview:deck:scrollsep';
-  var SCROLL_SEPS=[['faint','Faint line'],['strong','Strong line'],
-    ['none','No line'],['gap','Spaced']];
+  var SCROLL_SEPS=[['faint','Faint'],['strong','Strong'],
+    ['none','None'],['gap','Spaced']];
   function scrollSepGet(){
     var v=lsGet(SCROLL_SEP_KEY)||'';
     for(var i=0;i<SCROLL_SEPS.length;i++)
@@ -157,7 +157,7 @@
     scrollShowEl.remove();scrollShowEl=null;
   }
   function openScrollShow(){
-    if(!(pres.slides||[]).length){toast('No slides to scroll through yet');return;}
+    if(!(pres.slides||[]).length){toast('No slides yet');return;}
     closeScrollShow();
     var ents=outputSlides();
     var root=buildPrintRoot();
@@ -185,7 +185,7 @@
     t.textContent=pres.name||'presentation';
     var n=document.createElement('span');n.className='deck-scroll-n';
     var x=document.createElement('button');x.className='dbtn';
-    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.innerHTML=bic('exit')+' Close';x.title='Esc';
     x.addEventListener('click',function(e){e.stopPropagation();closeScrollShow();});
     /* T620: between the slides -- four worded choices, one pressed */
     var sg=document.createElement('span');sg.className='deck-scroll-sep';

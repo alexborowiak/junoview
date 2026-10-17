@@ -26,7 +26,7 @@ def web_or_out() -> str:
 
 def test_the_doors_are_one_group_that_can_wrap(web_or_out):
     html = web_or_out
-    for col in ("Recent presentations", "Notebooks"):
+    for col in ("Presentations", "Notebooks"):
         head = "<span" + html.split(f" {col}\n            <span")[1] \
             .split("</h2>")[0]
         assert head.lstrip().startswith('<span class="wj-doors">'), col

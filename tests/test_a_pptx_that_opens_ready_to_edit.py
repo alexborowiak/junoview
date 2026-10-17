@@ -186,7 +186,7 @@ def test_the_app_sends_it_to_the_server_and_the_browser_explains(out):
     # once, on Windows, where Protected View is
     assert "    var windows=/Windows/i.test(String(navigator.userAgent||''));" in body
     assert "    if(windows&&lsGet(PV_TOLD_KEY)!=='1'){" in body
-    assert "[['Why, and how to stop it\\u2026',pptxProtectedHelp]]" in body
+    assert "[['Why?',pptxProtectedHelp]]" in body
     help_ = out.split("  function pptxProtectedHelp(){")[1].split("\n  }\n")[0]
     assert "Trusted Locations" in help_ and "Unblock" in help_
     save = out.split("  function pptxBuildAndSave(orig){")[1] \

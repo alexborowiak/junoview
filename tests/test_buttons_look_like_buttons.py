@@ -127,14 +127,20 @@ def test_saved_layouts_says_what_it_is_for(out):
     the empty states in plain words."""
     i = out.index('id="ar-dlg"')
     dlg = out[i:out.index('id="ss-dlg"', i)]
-    assert ('<div class="aa-what">A saved layout is the way one slide is arranged,'
-            in dlg)
-    assert "<span class=\"eq-t\">1. Layouts you have saved</span>" in dlg
-    assert "<span class=\"eq-t\">2. Slides that will take one</span>" in dlg
+    # T624: the sentence is the title's "?", the halves named in a word
+    # each -- not the title again under the title, and the right half
+    # says what its slides are for (review 2026-10-12)
+    assert 'aria-label="Help: Saved layouts"' in dlg
+    assert 'data-q="A saved layout is how one slide is arranged' in dlg
+    assert "<span class=\"eq-t\">Layouts</span>" in dlg
+    assert "<span class=\"eq-t\">Apply to</span>" in dlg
+    assert dlg.count(">Saved layouts</span>") == 1      # the title alone
+    assert "<span class=\"eq-t\">Slides</span>" not in dlg
     assert dlg.index('id="ar-lib"') < dlg.index('id="ar-save"')
     assert 'class="dbtn ar-savebtn" id="ar-save"' in dlg
     assert ">Tick all</button>" in dlg and ">Untick all</button>" in dlg
     assert "Your saved layouts" not in dlg and "Apply it to these slides" not in dlg
-    assert "None saved yet. Arrange " in out
-    assert "Once a layout is saved, " in out
+    # T624: one line each; Save this slide's layout is the button under it
+    assert '<div class="selpane-empty">None saved yet.</div>' in out
+    assert "<div class=\"selpane-empty\">Save a layout first.'" in out
     assert "'No slides ticked'" in out and "'Nothing chosen'" not in out

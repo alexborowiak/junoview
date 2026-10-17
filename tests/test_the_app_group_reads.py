@@ -65,7 +65,7 @@ def test_reader_uses_the_editor_app_menu():
     assert heads == ["new", "open", "app"], heads
     assert 'id="ot-open"' in menu and 'id="tab-open" hidden' in menu
     assert 'id="scheme-btn"' in menu
-    assert 'id="help-btn"' in menu and "How to\n            use&#8230;" in menu
+    assert 'id="help-btn"' in menu and ">Help&#8230;</button>" in menu
     assert 'id="support-btn"' in menu
     assert "jv-files-at" not in menu and "jv-files-to" not in menu
 

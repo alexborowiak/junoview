@@ -144,7 +144,7 @@ def test_a_clip_no_browser_plays_is_named(written):
     got = read_pptx(buf.getvalue())
     items = got["spec"]["slides"][0]["items"]
     assert [it["t"] for it in items] == ["image", "video"]
-    assert any("no browser plays (wmv)" in ln for ln in got["lost"])
+    assert any("wmv clip (poster frame only)" in ln for ln in got["lost"])
 
 
 # --------------------------------------------------------- the arithmetic

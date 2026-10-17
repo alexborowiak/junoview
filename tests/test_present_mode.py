@@ -15,7 +15,9 @@ def test_present_bar_slides_in_and_docks(out):
     size so it can dock; leaving is always one labelled button away."""
     assert "translateY(-101%)" in out and "translateX(101%)" in out
     assert "function measurePb" in out and "function applyPbDock" in out
-    assert "Exit presentation</button>" in out
+    # T624: "End show", the editor's name for the same act
+    assert 'id="pb-exit"' in out and "End show</button>" in out
+    assert "Exit presentation</button>" not in out
 
 
 def test_present_mode_moves_the_real_controls_into_a_tray(out):
@@ -309,14 +311,22 @@ def test_not_every_run_counts_as_a_rehearsal(out):
     """Opening present mode to check a colour and pressing Escape is not
     a data point, and averaging it in would quietly halve every number
     on the page. A run is kept once it reached a second slide AND lasted
-    half a minute; anything shorter is dropped and says so.
+    half a minute; anything shorter is dropped.
 
-    Verified in a browser: a five-second run recorded nothing and raised
-    "Too short to record as a rehearsal"; a thirty-seven-second run over
-    two slides was kept.
+    Verified in a browser: a five-second run recorded nothing; a
+    thirty-seven-second run over two slides was kept. T624: the kept one
+    says so in a few words; a short run that went past the first slide
+    -- it looked like a rehearsal -- says in six why it was not kept
+    (the review found it dropped silently, with the rule only in a
+    tooltip); one that never left the first slide (checking a colour)
+    says nothing.
     """
     assert "if(rehSeen<2||total<REH_MIN_SEC){" in out
-    assert "toast('Too short to record as a rehearsal')" in out
+    assert ("    if(rehSeen<2||total<REH_MIN_SEC){\n"
+            "      if(rehSeen>=2&&total>2) toast('Too short to count as a "
+            "rehearsal');\n      return;\n    }") in out
+    assert "toast('Too short to record as a rehearsal')" not in out
+    assert "toast('Rehearsal: '+fmtMins(total/60)+', '" in out
 
 
 def test_the_clock_starts_and_stops_where_present_mode_does(out):
@@ -762,4 +772,32 @@ def test_skip_animations_means_transitions_too(out):
     transition player was not, so half the ask was quietly missing.
     Flip books still step, because their frames are content."""
     assert "if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;" in out
-    assert "Animations" in out and 'class="tk-state">playing' in out   # T469
+    assert "Animations" in out and 'class="tk-state">Playing' in out   # T469
+
+
+def test_the_talk_switches_are_named_by_what_they_show(out):
+    """A screen reader hears the row's word and the state on the button
+    -- "Animations Playing", "Narration Off" -- the words on screen. A
+    fixed aria-label ("Narration") hid the state, so "Narration, pressed"
+    was read while the screen said Off, and the visible words were not
+    in the accessible name (WCAG 2.5.3, label in name). T624 review,
+    2026-10-12; checked in Chromium's accessibility tree."""
+    assert '<span class="tk-lab" id="tk-lab-builds">Animations</span>' in out
+    assert '<span class="tk-lab" id="tk-lab-narr">Narration</span>' in out
+    for bid, lab in (("talk-builds", "tk-lab-builds"),
+                     ("talk-narr", "tk-lab-narr")):
+        i = out.index(f'id="{bid}"')
+        tag = out[out.rindex("<button", 0, i):out.index(">", i)]
+        assert f'aria-labelledby="{lab} {bid}"' in tag, tag
+        assert "aria-label=" not in tag, tag
+
+
+def test_the_presenter_toast_gives_the_present_step_only_before_the_show(out):
+    """Opened from the editor, the presenter view still needs the show
+    started; opened DURING the show (N, or Presenter in the talk pane)
+    the toast lands on the audience's screen, and "then press Present"
+    is a step that is already done. T624 review, 2026-10-12."""
+    body = out.split("  function openPresenter(){")[1].split("\n  }\n")[0]
+    assert ("    toast('Presenter view opened \\u2014 drag it to your other "
+            "screen'\n      +(mode==='view'?'':', then press Present'));"
+            ) in body

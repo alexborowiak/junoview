@@ -288,7 +288,9 @@ def test_chrome_toc_toggle_resizable_builder_dark_doc_no_refresh(out):
     assert 'id="dc-save"' in out
     # File identity is in the utility bar above the ribbon, alongside
     # Open / Info / Reload, not repeated inside each document.
-    assert 'id="nb-file-ident"' in out and 'id="nb-file-path"' in out
+    # T624: the name only; its path is the name's tooltip
+    assert 'id="nb-file-ident"' in out and 'id="nb-file-name"' in out
+    assert 'id="nb-file-path"' not in out and "name.title=p||base;" in out
     assert "font:700 15px var(--sans)" in out
     assert 'class="docbar"' not in out
     assert "body:not(.light) .card" in out
@@ -498,7 +500,7 @@ def test_app_buttons_share_the_file_utility_line(out):
     assert "--btn-bg:#ffffff12; --btn-border:#ffffff40;" in out
     assert "*{--cyan:var(--accent); --cyan-deep:var(--accent-deep);" in out
     assert "['light','light','Light','Light'," in out
-    assert "['forest-light','light th-lforest','Forest','Light'," in out
+    assert "['forest-light','light th-lforest','Forest light','Light'," in out
 
 
 def test_icon_tokens_cannot_fail_silently():

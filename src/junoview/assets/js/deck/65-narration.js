@@ -60,12 +60,10 @@
     if(narrRec||mode==='view'||!pres.slides[cur]) return;
     if(!narrCan()){
       askTell({title:'Recording is not available here',
-        what:'This browser cannot record from a microphone on this page.',
-        note:'Open Junoview in a current Chrome, Edge, Firefox or Safari, '
-          +'from the app or its web address, and try again.'});
+        what:'This browser cannot record.',
+        note:'Try a current Chrome, Edge, Firefox or Safari.'});
       return;
     }
-    toast('Asking for the microphone…');
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
       var mt=narrMime();
       narrRec={stream:stream,mime:mt,base:narrBase(mt),deck:pres,
@@ -83,12 +81,10 @@
         what:denied
           ?'The browser was not allowed to use the microphone, so '
             +'nothing was recorded.'
-          :'No microphone could be opened, so nothing was recorded.',
+          :'No microphone found.',
         note:denied
-          ?'Allow the microphone for this page (the icon at the left of '
-            +'the address bar) and press Record narration again.'
-          :'Plug one in or choose one in your system settings, then try '
-            +'again.'});
+          ?'Allow the microphone for this page, then try again.'
+          :'Plug one in, then try again.'});
     });
   }
   /* ---- TAKES ------------------------------------------------------------ */
@@ -168,8 +164,7 @@
       narrAudio.src=mediaBlobUrl(n.vkey);
       var p=narrAudio.play();
       if(p&&p.catch) p.catch(function(){
-        toast('The browser held the narration back — click the '
-          +'slide once and it will speak on the next one');
+        toast('Click the slide once to allow sound');
       });
     });
   }
@@ -217,8 +212,8 @@
     var takes=[];
     R.takes.forEach(function(v,s){takes.push([s,v]);});
     if(!takes.length){
-      toast('No narration was kept — a slide needs at least '
-        +NARR_MIN+' seconds of talking');
+      toast('Nothing kept \u2014 each slide needs '+NARR_MIN
+        +' s of talking');
       return;
     }
     /* after the ink's question, never over it */
@@ -227,9 +222,9 @@
     var total=0;
     takes.forEach(function(t){total+=t[1].dur;});
     askYes({title:'Keep the narration?',
-      what:'You recorded '+takes.length+' slide'
-        +(takes.length===1?'':'s')+', '+mediaClock(total)+' in all.',
-      note:'Kept, each slide speaks when it comes up in the show, and the '
+      what:takes.length+' slide'
+        +(takes.length===1?'':'s')+', '+mediaClock(total),
+      help:'Kept, each slide speaks when it comes up in the show, and the '
         +'recording travels with the deck. Ctrl+Z takes it all back off.',
       ok:'Keep narration',alt:'Discard'},
       function(v){
@@ -262,8 +257,7 @@
     if(!deckEl.hidden&&mode!=='view'&&typeof renderFilm==='function')
       renderFilm();
     if(typeof renderNotesPane==='function') renderNotesPane();
-    toast('Narration kept on '+n+' slide'+(n===1?'':'s')
-      +' — Ctrl+Z takes it back off');
+    toast('Narration kept on '+n+' slide'+(n===1?'':'s'));
   }
   /* ---- THE RECORDING BAR -------------------------------------------------
      On the page, not the stage (which is rebuilt on every build), at the
@@ -339,7 +333,7 @@
     var lab=document.createElement('span');lab.className='np-narr-lab';
     box.appendChild(lab);
     if(!n){
-      lab.textContent='No narration — Present › Record narration';
+      lab.textContent='No narration';
       return;
     }
     lab.innerHTML=bic('mic')+' Narration · '+mediaClock(n.dur);
@@ -357,7 +351,7 @@
       markDirty();
       if(typeof renderFilm==='function') renderFilm();
       narrPaneSync();
-      toast('Narration deleted from this slide — Ctrl+Z puts it back');
+      toast('Narration deleted — Ctrl+Z undoes');
     });
     box.appendChild(play);box.appendChild(del);
   }
@@ -369,8 +363,8 @@
     if(narrPrevKey===n.vkey&&!narrPrev.paused){
       narrPrev.pause();btn.innerHTML=bic('play')+' Play';return;}
     mediaGet(n.vkey).then(function(rec){
-      if(!rec){toast('This narration is not in this browser — open the '
-        +'deck from its saved file or project to hear it');return;}
+      if(!rec){toast('Not in this browser — open the saved file to hear '
+        +'it');return;}
       if(narrPrevKey!==n.vkey){narrPrev.src=mediaBlobUrl(n.vkey);
         narrPrevKey=n.vkey;}
       var p=narrPrev.play(); if(p&&p.catch) p.catch(function(){});
@@ -383,7 +377,7 @@
     var b=$('#talk-narr'); if(!b) return;
     b.setAttribute('aria-pressed',narrMute?'true':'false');
     var st=b.querySelector('.tk-state');
-    if(st) st.textContent=narrMute?'off':'playing';
+    if(st) st.textContent=narrMute?'Off':'Playing';
     b.title=narrMute?'Recorded narration is off for this talk. Press '
       +'again to let each slide speak':'Each slide with recorded narration '
       +'speaks when it comes up. Press to give the talk yourself';
@@ -397,9 +391,8 @@
       e.stopPropagation();
       narrMute=!narrMute;
       if(narrMute) narrStopPlay(); else narrPlay(pres.slides[cur]);
+      /* T624: no toast -- the button says Off or Playing */
       narrTalkSync();
-      toast(narrMute?'Narration off — the slides are silent'
-        :'Narration on — each slide speaks when it comes up');
     });
     narrTalkSync();
   }

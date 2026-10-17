@@ -23,7 +23,7 @@
   /* T475: the editor's own question -- cb(url) once it is a good one */
   function askWebUrl(current,cb){
     askText({title:current?'The page\u2019s address':'A live web page',
-      label:'Web address (http or https)',value:current||'https://',
+      label:'Web address',value:current||'https://',
       ok:current?'Change it':'Place it',select:!current},function(u){
       if(u==null) return;
       u=String(u).trim();
@@ -40,8 +40,7 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
     if(typeof renderFilm==='function') renderFilm();
-    toast('Web page placed — it is live in the show. Change the '
-      +'address from the Object tab');
+    toast('Web page placed');
   }
   function webBoot(){
     var et=$('#et-web');

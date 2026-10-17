@@ -56,10 +56,12 @@ def test_the_readout_is_a_zoom_percentage_not_the_word_fit():
     user: "the fit button is confusing... I think you mean zoom"). The
     same word must not come back on a second zoom control."""
     page = assets.load("html/page.html")
-    assert ">Zoom 100%</button>" in page
+    assert 'aria-label="Zoom 100%">100%</button>' in page
     assert ">Fit</button>" not in page
     app = assets.app_js()
-    assert "    if(v) v.textContent='Zoom '+Math.round(fmZoom*100)+'%';" in app
+    assert "      v.textContent=Math.round(fmZoom*100)+'%';" in app
+    assert "      v.setAttribute('aria-label','Zoom '+Math.round(fmZoom*100)+'%');" \
+        in app
 
 
 def test_the_zoom_grows_the_layout_box_so_the_viewer_can_pan():

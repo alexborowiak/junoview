@@ -4,7 +4,7 @@
       <!-- The outline owns only section navigation. Open documents are
            available in the top tabs and the app rail, not a third list. -->
       <details class="outline-tools">
-        <summary class="rf-btn"><i data-ic="outline"></i>Outline options</summary>
+        <summary class="rf-btn" aria-label="Outline options"><i data-ic="outline"></i>Options</summary>
         <div class="outline-options-menu">
           <button class="rf-btn outline-collapse" type="button"><i data-ic="minus"></i>Collapse all</button>
           <button class="rf-btn outline-expand" type="button"><i data-ic="plus"></i>Expand all</button>
@@ -13,6 +13,10 @@
             title="Temporarily reveal hidden sections, headings and cells without changing what is saved as hidden"><i data-ic="eye"></i>Peek at hidden</button>
         </div>
       </details>
+      <!-- T624: the colour key, behind a "?" (render_nav puts it in a
+           template); it was a block of text at the top of every outline -->
+      <button type="button" class="jv-q" aria-expanded="false"
+        aria-label="Help: colour key" data-q-tpl=".navkey-tpl">?</button>
       <div class="railfile">
         <!-- Info is docked in the compact file utility line. Keeping the
              label short avoids repeating the same file identity. -->

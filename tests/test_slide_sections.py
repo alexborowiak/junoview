@@ -375,7 +375,7 @@ def test_the_deck_background_can_really_be_pushed_to_every_slide(out):
     """
     # T479: the verb says what it does, on the shelf
     assert 'id="bg-push"' in out
-    assert "Make every slide match this one" in out
+    assert "Use on all slides" in out
     assert "(pres.slides||[]).forEach(function(x){if(x) delete x.bg;});" in out
 
 
@@ -562,7 +562,12 @@ def test_headings_mode_is_a_real_outline(out):
     assert "function filmText(s){" in out
     # ONE source for the words, so refreshThumb cannot rename a row back
     # to the other function's answer on the first edit
-    assert "if(tt) tt.textContent=filmText(s);" in out
+    assert "if(tt) tt.textContent=filmStripText(s);" in out
+    # T624: blank under a thumbnail, "empty slide" in headings mode,
+    # which builds no thumbnail (review 2026-10-12: the row was a bare
+    # number)
+    assert ("    var t=filmText(s);\n"
+            "    return (t==='empty slide'&&filmMode()!=='head')?'':t;") in out
 
 
 def test_the_mode_and_the_width_are_preferences_not_document_state(out):

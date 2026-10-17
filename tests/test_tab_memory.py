@@ -55,7 +55,7 @@ def test_the_words_on_the_tabs_say_what_happens(out):
     # still say the whole thing)
     assert "Saved layouts&#8230;" in out
     assert "Save layout&#8230;" in out
-    assert "Copy layout to slides&#8230;" in out
+    assert "Copy layout&#8230;" in out
     assert "Arrangements&#8230;</button>" not in out
     # The consistency check says what it looks for, and that it does not
     # alter a slide until a specific suggested fix is chosen.
@@ -63,7 +63,8 @@ def test_the_words_on_the_tabs_say_what_happens(out):
     # count table and its Check consistency button
     assert ('title="Find text or figures that look like they should match\n'
             ' but have different formatting"') in out
-    assert "Nothing changes until you choose a" in out
+    # T624: said in the pane's "?"
+    assert "Nothing changes until you press a card&rsquo;s button" in out
     assert "<span>Fix mismatched text</span></button>" not in out
     # masters, in one sentence, at its one door: Page furniture (Home's
     # left in T202, the Layouts menu's row in T204)

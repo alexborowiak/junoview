@@ -78,13 +78,13 @@ def test_the_bar_lists_three_kinds_and_you_choose_which(out):
     three sections, each with a heading and each switchable from the
     dock menu's second half."""
     for head in ("      head('presentations');", "      head('notebooks');",
-                 "      head('versions of this presentation');"):
+                 "      head('versions');"):
         assert head in out, head
     assert "    if(c.pres){" in out
     assert "    if(c.nb){" in out
     assert "    if(c.vers&&typeof histIndex==='function'){" in out
-    assert "    menuHead(m,'where this bar sits');" in out
-    assert "    menuHead(m,'what it lists');" in out
+    assert "    menuHead(m,'position');" in out
+    assert "    menuHead(m,'show');" in out
     assert "    [['pres','Presentations'],['nb','Notebooks']," in out
     # the six newest versions, newest first, opened in the history panel
     assert "        var rows=(ix||[]).slice(-6).reverse();" in out

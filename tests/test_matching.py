@@ -67,7 +67,7 @@ def test_one_slide_can_be_given_to_several(out):
     assert 'id="ms-dlg"' in out and 'id="ms-scope"' in out
     assert "window.SemDeckMatchMany=open;" in out
     # it is the FIRST row of the Match menu, above the existing pull
-    assert "Give this slide’s layout to…" in out
+    assert "push.innerHTML=bic('inherit')+' Copy layout to…';" in out
     assert "menuHead(m,'take the layout of…');" in out
 
 
@@ -100,8 +100,8 @@ def test_an_object_match_can_be_armed_in_both_directions(out):
     the first click finishes it, because there is only one model to find.
     """
     assert "function armMatch(dir){" in out
-    assert "'Copy this look to objects I click…'" in out
-    assert "'Take the look of an object I click…'" in out
+    assert "[['to','Copy look to…'," in out
+    assert "['from','Take look from…'," in out
     assert "if(matchArm.dir==='from') cancelMatch();" in out
     # 'to' takes the primary selection only: three models and one target is
     # a question with no answer
@@ -201,7 +201,7 @@ def test_the_object_copy_follows_the_same_rule_as_every_other(out):
 def test_object_matching_costs_the_ribbon_nothing(out):
     """Both verbs are rows in the EXISTING Arrange menu, which is shown for
     every kind of item and already carries the make-things-match rows."""
-    assert "['x:to','Copy this look to objects I click…']," in out
+    assert "['x:to','Copy look to…']," in out
     assert "if(what.indexOf('x:')===0){armMatch(what.slice(2));return;}" in out
 
 

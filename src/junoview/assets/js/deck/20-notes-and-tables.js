@@ -18,8 +18,7 @@
     host.innerHTML='';
     var items=padList();
     if(!items.length){
-      host.innerHTML='<div class="selpane-empty">Nothing here yet. '
-        +'Notes you put here belong to the talk, not to a slide.</div>';
+      host.innerHTML='<div class="selpane-empty">Nothing here yet.</div>';
       return;
     }
     /* folders first, each with the notes filed under it, then the loose
@@ -114,9 +113,7 @@
     host.innerHTML='';
     var st=rehStats();
     if(!st.runs.length){
-      host.innerHTML='<div class="selpane-empty">No rehearsals yet. '
-        +'Present the deck and this fills in — a run counts once it '
-        +'reaches a second slide and lasts half a minute.</div>';
+      host.innerHTML='<div class="selpane-empty">No rehearsals yet.</div>';
       return;
     }
     function line(cls,label,secs,extra){
@@ -669,7 +666,7 @@
          do afterwards. The old menu offered only the second (2026-08-22). */
       var sets=document.createElement('button');
       sets.className='dbtn vw-opt';
-      sets.textContent='\u25f1 Style sets \u2014 restyle the whole deck\u2026';
+      sets.textContent='\u25f1 Style sets\u2026';
       sets.title='Ready-made looks, and any you have saved. Works even '
         +'on a deck that has never used a named style.';
       sets.addEventListener('click',function(e){
@@ -686,7 +683,7 @@
         (sl.annots||[]).forEach(function(a){
           if(a&&a.k==='text'&&a.style) worn[a.style]=1;});});
       var ids=styleOrder().filter(function(id){return worn[id]||id===openEdit;});
-      menuHead(list,'styles used in this presentation');
+      menuHead(list,'in this deck');
       if(!ids.length){
         var none=document.createElement('div');
         none.className='stm-empty';
@@ -768,7 +765,7 @@
          nowhere to put one */
       var add=document.createElement('button');
       add.className='dbtn vw-opt';
-      add.textContent='\uff0b New style of my own';
+      add.textContent='\uff0b New style';
       add.title='Add a type of your own \u2014 a Quote, a Source note, '
         +'whatever this deck needs';
       add.addEventListener('click',function(e){
@@ -780,7 +777,7 @@
       list.appendChild(add);
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
-      rst.innerHTML=bic('reset')+' Back to the built-in sizes';
+      rst.innerHTML=bic('reset')+' Reset sizes';
       rst.disabled=!ids.length&&!pres.styles;   /* T470: nothing to reset */
       /* it clears the OVERRIDES, and it must never touch pres.types:
          "back to the built-in sizes" is not "throw away the types I
@@ -2888,9 +2885,8 @@
       });
       paraDecorate(el);
       commitNow(true);
-      toast((kind==='bullet'?'Bullet list \u2014 Tab indents, Shift+Tab goes '
-        +'back':'Numbered list \u2014 Tab indents')+'; Ctrl+Z gives back the '
-        +'\u201c'+m4[1]+'\u201d you typed');
+      toast((kind==='bullet'?'Bullet list':'Numbered list')
+        +' \u2014 Ctrl+Z undoes');
     }
     /* ...and what the browser's own steps did to the paragraphs: a <div>
        or bare words taken into a <p>, the numbers and the places worked
@@ -3199,8 +3195,7 @@
       markDirty();
       var l5=stage.querySelector('.annot-layer');
       if(l5){renderAnnots(l5,s5);selectAnnot(l5,idx);}
-      toast('Pasted as code — Ctrl+Z undoes it, or '
-        +'Ctrl+Shift+V pastes it as plain text');
+      toast('Pasted as code — Ctrl+Z undoes');
     });
     el.addEventListener('mousedown',function(e){
       if(tool!=='select') return;   /* placing mode: draw over me */
@@ -4413,7 +4408,7 @@
              on a fitted slide (2026-09-15 review) */
           pb.style.fontSize='max(10px,'+fontPx(layer,1.15)+')';
           pb.textContent=a.ref?('missing: '+a.ref)
-            :'Click to choose what goes here';
+            :'Click to fill';
           pb.addEventListener('mousedown',function(e){
             if(tool==='select') e.stopPropagation();});
           pb.addEventListener('click',function(e){

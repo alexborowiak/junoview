@@ -24,7 +24,7 @@ def test_home_has_recent_presentations_and_notebooks_in_that_order():
     order = ["wj-pres", "wj-nb"]
     at = [web.index(f'id="{s}"') for s in order]
     assert at == sorted(at), order
-    titles = ("Recent presentations", "Notebooks")
+    titles = ("Presentations", "Notebooks")
     for sid, word in zip(order, titles, strict=True):
         head = web[web.index(f'id="{sid}"'):]
         head = head[:head.index("</h2>")]

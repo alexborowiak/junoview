@@ -55,7 +55,7 @@ def test_the_words_the_review_asked_for(out):
     assert "<span>Animation</span>" in out   # T445: the pane's own name
     assert "Deck colours&#8230;</button>" in out   # T444
     assert "Palette&#8230;" not in out
-    assert "menuHead(m,'deck colours');" in out
+    assert "menuHead(m,'deck colours').appendChild(qBtn(" in out
     # T265 replaced the panel's 195-character paragraph with one line
     # that depends on what is actually there, plus a per-colour count.
     # T208's contract is on the DOOR's tooltip -- "its tooltip says what
@@ -72,8 +72,9 @@ def test_the_words_the_review_asked_for(out):
     # times that the text doesn't make sense up the top")
     # T444: the note names the five colours the rows are, over a preview
     # made of exactly those five
-    assert ("    note.textContent='The five colours every slide is built from. "
-            "Change '") in out
+    # T624: and those words are the heading's "?" now
+    assert ("    menuHead(m,'deck colours').appendChild(qBtn('The five colours "
+            "every '") in out
     assert "    var pv=document.createElement('div');pv.className='tok-preview';" \
         in out
 
@@ -131,4 +132,5 @@ def test_mismatched_text_in_plain_words(out):
     assert "act.textContent='Give all '+f.band.boxes.length+' the '" in out
     assert "alt.textContent='Just make them match, no style';" in out
     assert "+'longer match the style'," in out
-    assert "Each card is a group of text or figures that" in out
+    # T624: what a card is, in the title's "?"
+    assert "Finds text and figures that look as if they should match" in out

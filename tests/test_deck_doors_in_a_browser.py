@@ -119,9 +119,10 @@ def _page(app, w=1366, h=657, init=""):
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(app["url"], wait_until="load")
     pg.wait_for_selector(".nbshell .card")
-    # the editor loads on first use (app.js jvDeck), and these drive its
-    # API (deckChoose, deckClose) directly: have it fetched first
-    pg.evaluate("window.SemApp.deckLoad()")
+    # the editor arrives on first use (e2bee88): the doors below are its
+    # own functions, so it is fetched first, as a first click would
+    pg.evaluate("window.SemApp.deckLoad&&window.SemApp.deckLoad()")
+    pg.wait_for_function("typeof window.SemApp.deckChoose==='function'")
     pg.wait_for_timeout(800)
     return ctx, pg, errs
 

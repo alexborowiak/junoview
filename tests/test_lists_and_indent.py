@@ -283,10 +283,8 @@ def test_the_paragraph_window_says_what_moves(out):
     # what it moves -- it used to say only "indent the whole box", and
     # with the caret in one bullet every line moved
     assert menu.index('id="fmt-para-lvl"') < menu.index('id="fmt-para-ind"')
-    assert "level &#8212; the line(s) you are\n                    in, like Tab" \
-        in menu
-    assert "box indent &#8212; moves the whole\n                    box, every line" \
-        in menu
+    assert '<div class="hd-lab">level</div>' in menu
+    assert '<div class="hd-lab">box indent</div>' in menu
     fmt = assets.load("js/deck/30-format-bar.js")
     assert "optChip(lvlRow,'+ Level',false," in fmt
     assert "optChip(ind,'+ Box in',false," in fmt

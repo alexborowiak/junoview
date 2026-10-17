@@ -177,8 +177,7 @@
     altOpen[gid]=1;
     cur=at;activePane=-1;selAnnot=null;selSet=[];
     normSections();markDirty();refresh();
-    toast('\u201c'+cp.label+'\u201d added \u2014 the talk still shows '
-      +'the starred one. Right-click a version to make it the main.',6000);
+    toast('\u201c'+cp.label+'\u201d added',6000);
   }
   function starVersion(i){
     var r=altRun(i); if(!r||i===r.at) return;
@@ -188,7 +187,14 @@
     cur=pres.slides.indexOf(keep);
     normSections();markDirty();refresh();
     toast('\u201c'+(s.label||slideTitle(s)||'This version')+'\u201d is the '
-      +'main version now \u2014 it is what the talk shows. Ctrl+Z undoes it.');
+      +'main version');
+  }
+  /* T624: an untitled slide's thumbnail says nothing under it -- the
+     picture shows it is empty. Headings mode and the lists with no
+     picture (links, find, history) keep "empty slide". */
+  function filmStripText(s){
+    var t=filmText(s);
+    return (t==='empty slide'&&filmMode()!=='head')?'':t;
   }
   function sectionPos(i){
     var runs=sectionRuns();
@@ -495,7 +501,7 @@
           :filmLazyBox(s,row,list));
       }
       var tt=document.createElement('span');tt.className='film-t';
-      tt.textContent=filmText(s);lbl.appendChild(tt);
+      tt.textContent=filmStripText(s);lbl.appendChild(tt);
       var marks=document.createElement('span');marks.className='film-marks';
       function mark(cls,text,title){
         var tag=document.createElement('span');
@@ -1240,7 +1246,7 @@
         goTo();armSlideMatch('from');},
         'Then click the thumbnail this slide should sit like. Positions '
         +'and sizes travel; the words and figures stay','swap');
-      row('Give this slide\u2019s layout to slides I click\u2026',function(){
+      row('Copy layout to\u2026',function(){
         goTo();armSlideMatch('to');},
         'Then click each thumbnail that should sit like this one; Esc '
         +'when you are done','swap');
@@ -1653,8 +1659,8 @@
       /* This bar is shown only while presenting. Keeping its wording fixed
          means it cannot briefly describe a different, destructive-sounding
          action while the editor changes mode. */
-      xb.innerHTML=bic('return')+' Stop presenting';
-      xb.title='Stop presenting and go back to the builder (Esc). Nothing '
+      xb.innerHTML=bic('return')+' End show';
+      xb.title='End the show and go back to the builder (Esc). Nothing '
         +'is closed or lost.';
     }
     syncLateButton();
@@ -2166,8 +2172,7 @@
     var all=(pres.slides||[]).length;
     if(!pageOf().poster||all<2) return '';
     var s=pres.slides[Math.min(Math.max(cur,0),all-1)];
-    return ' Sent "'+((s&&s.label)||slideTitle(s||{}))+'" only — a poster '
-      +'goes out one version at a time; open Versions to switch.';
+    return ' (this version only)';
   }
   function closeDeck(){
     /* A TAB BUTTON LETS GO FIRST (2026-10-09, speed). The deck's tab or
@@ -2364,7 +2369,7 @@
         menu.insertBefore(el,anchor);
       }
       var hd=document.createElement('div');
-      hd.className='hd-lab';hd.textContent='which custom show';
+      hd.className='hd-lab';hd.textContent='custom show';
       add(hd);
       function opt(id,label,why){
         var b=document.createElement('button');
@@ -2410,14 +2415,12 @@
         +'second file, no diverging copies';
       nb.addEventListener('click',function(e){
         e.stopPropagation();overlayHide(menu);
-        askText({title:'A new custom show',label:'Call it',
-          value:'20-min',ok:'Make it',note:'Then right-click a slide to '
-            +'put it in'},function(nm){
+        askText({title:'New custom show',label:'Name',
+          value:'20-min',ok:'Create',note:'Then right-click slides to '
+            +'add them'},function(nm){
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
         var id=newCut(nm);if(!id) return;
-        toast('“'+nm+'” created — right-click a '
-          +'slide to put it in');
         setCut(id);syncCuts();
         });
       });
@@ -2460,13 +2463,12 @@
     var nvb=$('#pr-newversion');
     if(nvb) nvb.addEventListener('click',function(e){
       e.stopPropagation();
-      askText({title:'A new custom show',label:'Call it',
-        value:'20-min',ok:'Make it',note:'Then right-click a slide to '
-          +'put it in'},function(nm){
+      askText({title:'New custom show',label:'Name',
+        value:'20-min',ok:'Create',note:'Then right-click slides to '
+          +'add them'},function(nm){
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
         var id=newCut(nm);if(!id) return;
-        toast('\u201c'+nm+'\u201d created \u2014 right-click a slide to put it in');
         setCut(id);cutsSync();
       });
     });
@@ -2485,7 +2487,7 @@
         if(window.SemDeckTalk) window.SemDeckTalk.open(true);},200);});
     function syncTap(){
       var b=$('#pl-tap'); if(!b) return;
-      b.textContent='Click a figure to enlarge it: '
+      b.textContent='Enlarge on click: '
         +(pres&&pres.tapzoom?'on':'off');
       b.title=pres&&pres.tapzoom
         ?'Clicking an item during the talk blows it up. Clicking anywhere '
@@ -2496,9 +2498,7 @@
     mi('#pl-tap',function(){
       if(pres.tapzoom) delete pres.tapzoom; else pres.tapzoom=1;
       markDirty();syncTap();
-      toast(pres.tapzoom
-        ?'Clicking a figure or a text box now enlarges it while presenting'
-        :'Back to a plain click moving the talk on');
+      toast(pres.tapzoom?'Enlarge on click: on':'Enlarge on click: off');
     });
     /* THE CODE TRAIL DOOR (T69). ONE flag suppresses the trail, the
        "Show code" pill, the up/down arrows and the scroll region
@@ -2509,7 +2509,7 @@
        deck already saved keeps the trail it has with no migration. */
     function syncTrace(){
       var b=$('#pl-trace'); if(!b) return;
-      b.textContent='Show the code trail under the slide: '
+      b.textContent='Code trail: '
         +(pres&&pres.hideTrace?'off':'on');
       b.title=pres&&pres.hideTrace
         ?'Off: the slide is the whole screen and nothing scrolls under '
@@ -2523,9 +2523,7 @@
       /* the menu lives in the builder chrome, so this is normally set
          between talks -- but re-render if it somehow fires mid-talk */
       if(mode==='view') renderSlide();
-      toast(pres.hideTrace
-        ?'The code trail is hidden while presenting'
-        :'The code trail is back under every slide');
+      toast(pres.hideTrace?'Code trail: off':'Code trail: on');
     });
     var plBtn=$('#dc-playmore');
     if(plBtn) plBtn.addEventListener('click',function(){
@@ -3540,8 +3538,7 @@
       else if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey
               &&(e.key==='c'||e.key==='C')){
         e.preventDefault();
-        if(copyLook()) toast('Look copied \u2014 select what should wear '
-          +'it and press Ctrl+Shift+V');
+        if(copyLook()) toast('Look copied \u2014 Ctrl+Shift+V pastes it');
         else toast('Select the object whose look you want first');
       }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='c'||e.key==='C')){
@@ -4131,7 +4128,7 @@
      asked in points, the editor's currency everywhere else, and stored
      as the percent of page height the painter reads. */
   var FURN_PT=5.4;   /* pt per percent of page height, as the tooltips */
-  function furnEdit(key,label,hint,dflt){
+  function furnEdit(key,label,hint,dflt,help){
     var cur_=pres[key]||{};
     var lines=String(hint).split('\n');
     var isW=(key==='wmark');
@@ -4157,7 +4154,7 @@
     rows.push({k:'color',label:'Colour',type:'color',value:curCol,clear:true});
     if(!isW) rows.push({k:'skipFirst',label:'Not on the first slide',
       type:'check',value:!!cur_.skipFirst});
-    askText({title:label,what:lines[0],rows:rows,
+    askText({title:label,what:lines[0],rows:rows,help:help,
       ok:on?'Change it':'Add it',alt:on?'Turn it off':''},
     function(v,why){
       if(why==='alt'||(v&&!String(v.text||'').trim())){
@@ -4198,27 +4195,23 @@
   }
   var wmB=$('#dc-wmark');
   if(wmB) wmB.addEventListener('click',function(){
-    furnEdit('wmark','Watermark',
-      'One word or phrase, printed faintly across every page and always '
-      +'BEHIND your content.\nLeave it empty to remove it.','DRAFT');
+    furnEdit('wmark','Watermark','Leave it empty to remove it.','DRAFT');
   });
+  /* T624: the codes stay in sight under the field; what each one
+     means is the dialog's "?" */
+  var FURN_NOTE='\n{name} {date} {n} {N} {sec} \u00b7 empty removes it';
+  var FURN_HELP='{name} the presentation\u2019s name\n{date} today\u2019s '
+    +'date ({date:long} writes it out; type a date to keep it fixed)\n'
+    +'{n} this page, {N} the number of pages\n{sn} / {sN} the page and '
+    +'page count within the section\n{sec} the section\u2019s name\n\n'
+    +'Leave the words empty to remove the line.';
   var hdB=$('#dc-head');
   if(hdB) hdB.addEventListener('click',function(){
-    furnEdit('head','Header',
-      'A line along the top of every page.\n'
-      +'{name} the presentation, {date} today ({date:long} written out; '
-      +'type a date instead to keep it fixed), {n} this page, {N} the '
-      +'total, {sn}/{sN} the number and count within the section, '
-      +'{sec} its name.\nLeave it empty to remove it.','{name}');
+    furnEdit('head','Header',FURN_NOTE,'{name}',FURN_HELP);
   });
   var ftB=$('#dc-foot');
   if(ftB) ftB.addEventListener('click',function(){
-    furnEdit('foot','Footer',
-      'A line along the bottom of every page.\n'
-      +'{name} the presentation, {date} today ({date:long} written out; '
-      +'type a date instead to keep it fixed), {n} this page, {N} the '
-      +'total, {sn}/{sN} the number and count within the section, '
-      +'{sec} its name.\nLeave it empty to remove it.','{n} / {N}');
+    furnEdit('foot','Footer',FURN_NOTE,'{n} / {N}',FURN_HELP);
   });
   var numB=$('#dc-nums');
   if(numB) numB.addEventListener('click',function(){

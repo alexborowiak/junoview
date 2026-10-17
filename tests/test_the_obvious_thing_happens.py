@@ -18,8 +18,8 @@ def test_the_browser_is_offered_as_a_temporary_answer(out):
     the row is marked so it does not look like the two that keep a file.
     Amber and not red, because choosing it is reasonable and nothing is
     broken -- the same distinction, and the same token, as T279."""
-    assert "    var br=row('Keep it in this browser for now'," in out
-    assert "      'Nothing is written to a file." in out
+    assert "    var br=row('This browser, for now'," in out
+    assert "      'Not a file \\u2014 clearing site data loses it'," in out
     assert "    if(br) br.classList.add('sa-warn');" in out
     assert ".save-ask .sa-opt.sa-warn{border-left:2px solid var(--warning);}" in out
     # ...and the two that DO keep a file are not marked

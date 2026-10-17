@@ -37,7 +37,8 @@ def test_view_commands_are_inside_ribbon_and_identity_is_not_in_outline(out):
     assert 'class="railtitle"' not in shell
     assert 'class="railmeta"' not in shell
     assert 'class="outline-hidden"' in shell
-    assert 'aria-label="View full file path"' in out
+    # T624: the path is the file name's tooltip, not a second line
+    assert "name.title=p||base;" in out
 
 
 def test_section_collapse_changes_no_hidden_flags():

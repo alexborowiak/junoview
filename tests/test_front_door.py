@@ -143,7 +143,10 @@ def test_the_front_door_is_recent_presentations_and_notebooks():
 
 def test_the_tagline_leads_with_presenting():
     web = render_page([], mode="web")
-    assert "Build a presentation, or open a notebook" in web
+    # T624: no tagline at all now (2026-10-11, user: "there is a lot of
+    # unnecessary text still"); presentations still lead, as a column
+    assert 'class="welcome-tag"' not in web
+    assert web.index('id="wj-pres"') < web.index('id="wj-nb"')
     assert "Filter, view and present your Jupyter notebooks" not in web
 
 

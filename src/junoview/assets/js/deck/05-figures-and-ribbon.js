@@ -137,9 +137,7 @@
       out.push({kind:'figzoom',sev:'warn',
         head:rest.length+' frame'+(rest.length===1?'':'s')
           +' zoom their contents differently',
-        why:'Most are at '+(+most*100).toFixed(0)+'%. A frame\u2019s '
-          +'content zoom multiplies everything inside it, so two frames '
-          +'at different zooms cannot have matching labels.',
+        why:'Most are at '+(+most*100).toFixed(0)+'%.',
         list:rest,
         act:'Put '+(rest.length===1?'it':'them')+' at '
           +(+most*100).toFixed(0)+'%',
@@ -180,12 +178,8 @@
       out.push({kind:'figsize',sev:'info',
         head:odds.length+' figure'+(odds.length===1?' uses':'s use')
           +' different type sizes from the rest',
-        why:'Most are set at '+szk[0].replace(/\|/g,', ')+'. Read from '
-          +'the SVG itself, so only the '+read+' vector figure'
-          +(read===1?'':'s')+' could be asked. Two figures shown at the '
-          +'same width whose type differs like this will not look like '
-          +'a pair \u2014 and the fix is one rcParams in the notebook, '
-          +'which is why there is no button here.',
+        why:'Most are set at '+szk[0].replace(/\|/g,', ')+'. Fix it in '
+          +'the notebook with one rcParams font size.',
         list:odds,
         act:null});
     }
@@ -222,10 +216,7 @@
         head:odd2.length+' figure'+(odd2.length===1?' is':'s are')
           +(few?' trimmed and the rest are not'
                :' untrimmed and the rest are'),
-        why:'A trim changes how much white space a figure carries round '
-          +'its plot, so a trimmed figure and an untrimmed one at the '
-          +'same width put their axes at different sizes. This is the '
-          +'deck\u2019s own trim, not anything inside the file.',
+        why:'Trimmed differently from the rest.',
         list:odd2,
         act:few?null:'Clear the trims',
         fix:few?null:(function(o){return function(){
@@ -600,8 +591,7 @@
       out.push({kind:'named',style:id,list:list,odd:odd,sev:'warn',
         head:odd.length+' of '+list.length+' '+d.label+' boxes no '
           +'longer match the style',
-        why:'They have the '+d.label+' style but were changed by hand '
-          +'afterwards. Putting the style back makes them match again.'});
+        why:'Changed by hand since the style was set.'});
     });
     /* PASS TWO — the boxes wearing nothing, which on most decks is all of
        them. Bands first, names second, drift within a band third. */
@@ -828,8 +818,8 @@
       act.textContent='Line all '+f.g.all.length+' up';
       act.addEventListener('click',function(){stdAlign(f.g);});
     } else if(f.kind==='named'){
-      act.textContent='Put the '+styleDef(f.style).label+' style back on '
-        +'these '+f.odd.length;
+      act.textContent='Reset these '+f.odd.length;
+      act.title='Put the '+styleDef(f.style).label+' style back on them';
       act.addEventListener('click',function(){
         stdFix(f.odd,function(a){applyStyleTo(a,f.style);},
           f.odd.length+' box'+(f.odd.length===1?'':'es')+' put back');
@@ -1500,7 +1490,7 @@
        look at this deck — so it is the same menu (T26) */
     ['overview','Overview map…','Overview map…'],
     /* T601: the talk as its parts -- the other presentations it shows */
-    ['parts','Parts of this talk…','Parts…']];
+    ['parts','Parts…','Parts…']];
   var filmView=null;
   function filmMode(){
     if(filmView===null){
@@ -3152,8 +3142,7 @@
     if(cgv) cgv.addEventListener('click',function(){
       var on=!guidesShown();
       showCustomGuides(on);
-      if(!on) toast('Guides hidden \u2014 still in the deck, and they '
-        +'stop snapping until you show them again');});
+      if(!on) toast('Guides hidden');});
     if(sd) sd.addEventListener('click',function(){
       guides.side=!wantSide();guides.sideSet=true;
       saveGuides();applySideRibbon();});

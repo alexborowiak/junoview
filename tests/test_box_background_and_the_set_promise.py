@@ -22,9 +22,11 @@ def test_a_notebook_frame_is_a_box(out):
 
 
 def test_the_note_says_what_is_true(out):
-    assert ("'one and everything that has no colour of its own follows. "
-            "A style '") in out
-    assert "+'set you save carries this palette with it.';" in out
+    # T624: the note is the heading's "?" now, the same true promise
+    assert ("+'slide is built from. Change one and everything without a "
+            "colour '") in out
+    assert ("+'of its own follows. A style set you save carries this "
+            "palette '") in out
     # the old sentence is gone from the note (the comment above it
     # quotes it, which is why this looks for the rendered form)
     assert "+'at once.';" not in out

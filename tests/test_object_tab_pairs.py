@@ -139,14 +139,16 @@ def test_the_palette_door_says_what_a_named_colour_is():
     # but none of it means anything to me").
     # T444: the note names the five colours the rows are; the extra
     # colours get their own note, which depends on whether any is worn
-    assert ("    note.textContent='The five colours every slide is built from. "
-            "Change '") in js
-    assert "      menuHead(m,'extra colours, for things you choose');" in js
-    assert "        :'Nothing wears one yet. Put one on any box from the Deck '" \
-        in js   # (T467: "the Deck colours row", the menu row's own name)
+    # T624: the five are named in the heading's "?"; the extra colours'
+    # note still depends on whether any is worn
+    assert ("    menuHead(m,'deck colours').appendChild(qBtn('The five colours "
+            "every '") in js
+    assert "      menuHead(m,'extra colours');" in js
+    assert "        :'None used yet.';" in js
     # ...and each row says what that colour is on
     assert "  function tokUses(k){" in js
     # T455 tells the five base colours apart: they are what everything
     # without a colour of its own falls back to, never "not used yet"
     assert "      use.textContent=tokUsesLabel(u,base);" in js
-    assert "    if(base) bits.push('everything else');" in js
+    assert "    return bits.length?bits.join(' \\u00b7 '):(base?'':'not used yet');" \
+        in js

@@ -496,9 +496,9 @@
     if(!keep.length) return;
     var n=keep.reduce(function(t,k){return t+k[1].length;},0);
     askYes({title:'Keep your ink?',
-      what:'You drew '+n+' stroke'+(n===1?'':'s')+' on '+keep.length
-        +' slide'+(keep.length===1?'':'s')+' during the talk.',
-      note:'Kept, each stroke becomes a drawing on its slide that you can '
+      what:n+' stroke'+(n===1?'':'s')+' on '+keep.length
+        +' slide'+(keep.length===1?'':'s'),
+      help:'Kept, each stroke becomes a drawing on its slide that you can '
         +'move, recolour or delete. Ctrl+Z takes them all back off.',
       ok:'Keep ink',cancel:'Discard'},function(yes){
       if(!yes) return;
@@ -515,7 +515,7 @@
         markDirty();renderSlide();
         if(typeof renderFilm==='function') renderFilm();
       } else talkKeepInto(deck);
-      toast(made+' ink stroke'+(made===1?'':'s')+' kept as drawings'
+      toast('Ink kept'
         +(deck===pres?'':' on \u201c'+(deck.name||'untitled')+'\u201d'));
     });
   }

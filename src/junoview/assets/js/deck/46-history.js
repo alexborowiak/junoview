@@ -417,7 +417,7 @@
       ren.addEventListener('click',function(ev){
         ev.stopPropagation();
         askText({title:'Name this version',value:e.nm||histClock(e.at),
-          ok:'Name it',note:'Empty goes back to the time it was saved'},
+          placeholder:histClock(e.at),ok:'Name it'},
         function(v){
         if(v===null) return;
         v=v.trim();
@@ -672,8 +672,8 @@
       branch.addEventListener('click',function(){
         var suggest=ent.br?(ent.br+' 2'):'alternative';
         askText({title:'Branch from '+histLabel(ent),label:'Call this branch',
-          value:suggest,ok:'Branch',note:'What you save next descends '
-            +'from that version, not from where you are'},function(nm){
+          value:suggest,ok:'Branch',note:'Your next save builds on this '
+            +'version'},function(nm){
         if(nm===null) return;
         nm=nm.trim()||suggest;
         snapTake('before branching').then(function(){
@@ -682,9 +682,7 @@
           /* T499: the branch's first dot is where a redo of this lands
              the head, not the version it forked from */
           snapTake('branched: '+nm).then(histMarkHeadNow);
-          toast('On branch \u201c'+nm+'\u201d \u2014 what you save next '
-            +'descends from '+histLabel(ent)+', not from where you '
-            +'were');
+          toast('On branch \u201c'+nm+'\u201d');
         });
         });
       });
@@ -733,9 +731,7 @@
         list2.innerHTML='<div class="selpane-empty">'
           +(histAgainst
             ?'These two versions are the same.'
-            :'This version is the deck you are editing \u2014 nothing '
-             +'has changed since. Pick an older version on the left to '
-             +'see what you have done since then.')
+            :'No changes since. Pick an older version.')
           +'</div>';
       } else if(histView==='slide') chBySlide(list2,list);
       else if(histView==='type') chByType(list2,list);
@@ -874,16 +870,15 @@
     if(undoStack.length>depthWas)
       histMarkHead(headWas,{h:histHead,br:histBranch});
     refresh();renderFilm();renderPresTabs();renderPresRow();
-    toast('Back to the older version \u2014 the deck as it was is in the '
-      +'history too, so this is undoable');
+    toast('Back to the older version \u2014 Ctrl+Z undoes');
   }
   /* T225: the one gesture the tree was missing. It is an ordinary
      snapshot with a name and a mark, so going back to it and
      branching from it are the buttons that already exist. */
   function histCheckpoint(ov){
     askText({title:'Checkpoint',label:'Call this checkpoint',
-      value:'before the rewrite',ok:'Save',note:'Kept even when older '
-        +'versions are dropped'},function(nm){
+      value:'before the rewrite',ok:'Save',note:'Kept for good'},
+      function(nm){
     if(nm===null) return;
     nm=nm.trim()||'checkpoint';
     snapTake('checkpoint',undefined,undefined,1).then(function(){
@@ -891,8 +886,7 @@
          the one version you definitely meant to be able to find */
       return histSetName(histHead,nm);
     }).then(function(){
-      toast('Checkpoint \u201c'+nm+'\u201d saved \u2014 it is kept '
-        +'even when older versions are dropped');
+      toast('Checkpoint \u201c'+nm+'\u201d saved');
       histLiveAtHead=true;   /* T499: the deck is the checkpoint, just taken */
       if(ov&&document.body.contains(ov))
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
@@ -919,14 +913,8 @@
       +'</div><div class="dh-main">'
       +'<div class="dh-rail" id="dh-list"></div>'
       +'<div class="dh-body" id="dh-body">'
-      +'<div class="selpane-empty">Pick a version on the left to see '
-      +'what is different about it.</div></div></div>'
-      +'<div class="dh-when-note">A version is kept when you open this '
-      +'deck, when you save it, when you take a checkpoint, before '
-      +'anything that replaces the deck, and once you have been working '
-      +'for five minutes and then pause for half a minute. Not every '
-      +'change \u2014 a session of work is one dot, not four hundred.'
-      +'</div>';
+      +'<div class="selpane-empty">Pick a version on the left.</div>'
+      +'</div></div>';
     /* WHERE GIT IS. A deck is not a file on disk -- it lives inside the
        notebook or the project file -- so the deck's own history is this
        local store, and the repository's history of the file it is saved
@@ -934,15 +922,17 @@
        opens. Naming that rather than duplicating it is the honest hook:
        two histories that answer different questions, and neither
        pretending to be the other. */
-    if(APP.mode==='app'){
-      var git=document.createElement('div');
-      git.className='dh-git';
-      git.textContent='This is the deck\u2019s own history \u2014 the '
-        +'moments between commits. The repository\u2019s history of the '
-        +'file it is saved into is the notebook\u2019s: its Version '
-        +'history menu lists the git commits and opens them.';
-      ov.querySelector('.dh-main').appendChild(git);
-    }
+    /* T624: when a version is kept, and (in the app) where git is,
+       behind the title's "?" -- they were two standing paragraphs */
+    var dht=ov.querySelector('.dh-t');
+    if(dht) dht.parentNode.insertBefore(qBtn('A version is kept when you '
+      +'open the deck, save it or take a checkpoint, before anything that '
+      +'replaces it, and when you pause for half a minute after five '
+      +'minutes of work. A session of work is one dot, not one per change.'
+      +(APP.mode==='app'?'\n\nThis is the deck\u2019s own history. Git '
+        +'commits of the file it is saved in are in the notebook\u2019s '
+        +'Info \u25be \u203a Version history.':''),'History'),
+      dht.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#dh-close').addEventListener('click',histPanelClose);
     ov.querySelector('#dh-check')

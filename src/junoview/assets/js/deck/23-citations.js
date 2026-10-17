@@ -341,8 +341,7 @@
       var a=used[x]||9e9,b=used[y]||9e9;
       return a===b?x.localeCompare(y):a-b;});
     if(!keys.length){
-      lab('Nothing here yet. Import a .bib, or add one by DOI, then '
-        +'cite it in any text box as [@key].','ct-hint');
+      lab('No references yet. Cite with [@key].','ct-hint');
     }
     keys.forEach(function(k){
       var r=row('ct-entry');
@@ -391,8 +390,7 @@
     if(a.html) a.html=String(a.html)+' [@'+key+']';
     markDirty();renderSlide();
     citePaneSync();   /* T465: the pane's own column follows the Cite */
-    toast('Cited — the number comes from where the slide sits, so '
-      +'moving the slide renumbers it');
+    toast('Cited');
   }
   function citeInsertBibBox(){
     var s=pres.slides[cur]; if(!s) return;
@@ -402,13 +400,11 @@
     setTool('select');
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-    toast('A references box — it draws what the deck cites, in '
-      +'order, and stays right on its own');
+    toast('References box added');
   }
   function citeAddByDoi(){
     if(APP.mode!=='app'){
-      toast('Looking a DOI up reaches doi.org, so it needs the '
-        +'Junoview app. Import a .bib instead.',6000);
+      toast('DOI lookup needs the app \u2014 import a .bib instead',6000);
       return;
     }
     askText({title:'Add a reference by DOI',label:'The DOI, or a doi.org link',

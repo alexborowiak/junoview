@@ -80,7 +80,10 @@ def test_a_dot_is_a_session_not_a_keystroke(out):
     # a save inside the window means the pause after it is not a second dot
     assert "  function histNoteWrite(){histLastAt=Date.now();}" in out
     assert "    histNoteWrite();      /* the idle rule's clock (T237) */" in out
-    assert "+'<div class=\"dh-when-note\">A version is kept when you open this '" in out
+    # T624: said once, in the history title's "?"
+    assert "qBtn('A version is kept when you '" in out
+    assert "+'minutes of work. A session of work is one dot, not one per change.'" \
+        in out
 
 
 def test_what_changed_not_only_which_slides(out):

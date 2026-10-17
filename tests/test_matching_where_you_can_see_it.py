@@ -27,8 +27,7 @@ def test_the_object_tab_has_a_match_tile():
 def test_the_thumbnail_menu_arms_match_slide_both_ways(out):
     assert "      row('Match this slide to another\\u2026',function(){" in out
     assert "        goTo();armSlideMatch('from');}," in out
-    assert ("      row('Give this slide\\u2019s layout to slides I "
-            "click\\u2026',function(){") in out
+    assert "      row('Copy layout to\\u2026',function(){" in out
     assert "        goTo();armSlideMatch('to');}," in out
     # the slide you right-clicked is the one that takes, or gives
     assert ("        if(cur!==i){cur=i;activePane=-1;selAnnot=null;"

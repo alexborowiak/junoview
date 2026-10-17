@@ -45,7 +45,7 @@ def test_the_menu_offers_a_scope_and_the_inventory(out):
     assert "       ['The whole presentation',false," in out
     # ..."take you to the images tab": the inventory that answers which
     # of these even has a source
-    assert "      inv.innerHTML=bic('image')+' Where each one came from';" in out
+    assert "      inv.innerHTML=bic('image')+' Sources\\u2026';" in out
     assert "        var ib=$('#hm-images'); if(ib) ib.click();" in out
 
 

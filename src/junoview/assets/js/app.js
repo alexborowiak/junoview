@@ -27,6 +27,162 @@
                              thing's own, beside the presentations */
   function tabList(){return APP.order.concat(APP.traces,APP.cols);}
 
+  /* ---- T624: THE "?" -- THE LONGER EXPLANATION, ONE CLICK AWAY -------
+     (2026-10-11, user: "some text is too long and should be behind a ?
+     button, with just either no text or something simple there
+     instead.") A small round "?" sits right after the heading or control
+     it explains. A click, Enter or Space opens a popover with the long
+     text; the same again, Escape, a click elsewhere, another "?", a
+     scroll or a resize closes it. It is the ONE icon-only button the
+     user allows -- every other button is words plus an icon.
+
+     NOTHING IS SET UP PER BUTTON: one click listener on document and one
+     keydown listener on window, both in capture, and the popover is
+     built when it opens and removed when it closes. Capture, because the
+     ask dialog and the menus stop their own clicks bubbling, and a "?"
+     inside them must still be heard. The keys on WINDOW capture, added
+     here before any other key listener the page has, so Escape closes
+     the popover alone and a second Escape closes the dialog under it
+     (the deck's window-capture listeners are added later, on first use).
+     The popover goes in right after its button -- inside whatever menu,
+     dialog or pane holds it -- so every outside-click owner counts a
+     click in it as inside, a fullscreen element holds it with its
+     button, and a screen reader reaches it next. It never opens on
+     hover, and it carries no role: this is a disclosure, not a tooltip.
+
+     Static markup: <button type="button" class="jv-q"
+     aria-expanded="false" aria-label="Help: <topic>" data-q="...">?
+     </button>. data-q is plain text (a blank line starts a paragraph, a
+     single newline breaks the line) and is set as text, never as HTML;
+     data-q-tpl="<selector>" clones a <template> from the button's shell
+     instead; data-q-more="<help id>" adds a last line that opens Help at
+     that section. Built in script: APP.qBtn(text, topic). */
+  var openQ=null,qSeq=0;
+  function qText(pop,text){
+    String(text||'').split(/\n[ \t]*\n/).forEach(function(para){
+      var p=document.createElement('p');
+      para.split('\n').forEach(function(line,i){
+        if(i) p.appendChild(document.createElement('br'));
+        p.appendChild(document.createTextNode(line));
+      });
+      pop.appendChild(p);
+    });
+  }
+  function qClose(refocus){
+    var o=openQ;
+    if(!o) return;
+    openQ=null;
+    window.removeEventListener('scroll',qScroll,true);
+    window.removeEventListener('resize',qGone);
+    if(o.pop.parentNode) o.pop.parentNode.removeChild(o.pop);
+    o.btn.setAttribute('aria-expanded','false');
+    o.btn.removeAttribute('aria-controls');
+    if(refocus&&o.btn.isConnected){try{o.btn.focus();}catch(e){}}
+  }
+  function qGone(){qClose(false);}
+  function qScroll(e){
+    /* only a scroll that carries the "?" away closes it: the popover's
+       own scroll (a long text at a small height), or a list or preview
+       beside it re-rendering, is not the page moving out from under it */
+    var t=e.target;
+    if(openQ&&t&&t.nodeType===1&&!t.contains(openQ.btn)) return;
+    qClose(false);
+  }
+  /* the popover is open AND on screen: a host that hid itself (a menu
+     closed by its own owner) takes the popover's box with it, and an
+     Escape must then reach whatever is really open */
+  function qLive(){
+    if(!openQ) return false;
+    if(!openQ.pop.isConnected||!openQ.pop.getClientRects().length){
+      qClose(false);return false;}
+    return true;
+  }
+  function qOpen(btn){
+    qClose(false);
+    if(!btn.parentNode) return;
+    var pop=document.createElement('div');
+    pop.className='jv-qpop';
+    pop.id='jv-qpop-'+(++qSeq);
+    var tpl=btn.getAttribute('data-q-tpl');
+    if(tpl){
+      var host=btn.closest('.shell')||document;
+      var t=host.querySelector(tpl)||document.querySelector(tpl);
+      if(t&&t.content) pop.appendChild(t.content.cloneNode(true));
+    } else qText(pop,btn.getAttribute('data-q'));
+    /* nothing to say (a notebook with no cells has no colour key) */
+    if(!pop.textContent.trim()) return;
+    var more=btn.getAttribute('data-q-more');
+    if(more){
+      var mp=document.createElement('p'),ma=document.createElement('a');
+      ma.href='#';ma.setAttribute('data-q-help',more);
+      ma.textContent='More in Help ›';
+      mp.appendChild(ma);pop.appendChild(mp);
+    }
+    /* PLACED ONCE, ON SCREEN at the smallest laptop (1280x600): under
+       the "?", or above it when there is no room below, or pinned to
+       the top with its own scroll when there is room for neither. The
+       one forced layout is the measure after it goes in; it also
+       catches a transformed ancestor, which makes position:fixed
+       relative to itself, and is corrected by the difference. */
+    var vw=window.innerWidth,vh=window.innerHeight;
+    var r=btn.getBoundingClientRect();
+    var w=Math.min(320,vw-16);
+    var left=Math.max(8,Math.min(r.left-8,vw-w-8)),top=r.bottom+6;
+    pop.style.left=left+'px';pop.style.top=top+'px';
+    btn.parentNode.insertBefore(pop,btn.nextSibling);
+    var pr=pop.getBoundingClientRect();
+    var dx=left-pr.left,dy=top-pr.top,h=pr.height;
+    if(top+h>vh-8){
+      top=r.top-6-h;
+      if(top<8) top=8;
+    }
+    pop.style.left=(left+dx)+'px';pop.style.top=(top+dy)+'px';
+    openQ={btn:btn,pop:pop};
+    btn.setAttribute('aria-expanded','true');
+    btn.setAttribute('aria-controls',pop.id);
+    window.addEventListener('scroll',qScroll,{capture:true,passive:true});
+    window.addEventListener('resize',qGone);
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target,b=t&&t.closest?t.closest('.jv-q'):null;
+    if(b){
+      /* the host menu or dialog stays open: no outside-click closer
+         hears this one */
+      e.preventDefault();e.stopPropagation();
+      if(openQ&&openQ.btn===b) qClose(false);
+      else qOpen(b);
+      return;
+    }
+    if(!openQ) return;
+    if(t&&t.nodeType===1&&openQ.pop.contains(t)){
+      var m=t.closest('[data-q-help]');
+      if(m){
+        e.preventDefault();e.stopPropagation();
+        var id=m.getAttribute('data-q-help');
+        qClose(false);
+        if(typeof APP.showHelp==='function') APP.showHelp(id);
+      }
+      return;
+    }
+    qClose(false);
+  },true);
+  window.addEventListener('keydown',function(e){
+    if(!openQ) return;
+    if(e.key!=='Escape'||!qLive()) return;
+    e.preventDefault();e.stopImmediatePropagation();
+    qClose(true);
+  },true);
+  APP.qBtn=function(text,topic){
+    var b=document.createElement('button');
+    b.type='button';b.className='jv-q';
+    b.setAttribute('aria-expanded','false');
+    b.setAttribute('aria-label','Help: '+(topic||''));
+    b.setAttribute('data-q',String(text||''));
+    b.textContent='?';
+    return b;
+  };
+  APP.qClose=function(){qClose(false);};
+
   function api(path,body){
     var url=path+(path.indexOf('?')<0?'?':'&')
       +'t='+encodeURIComponent(APP.token||'');
@@ -866,9 +1022,9 @@
   /* HOME IS A PLACE, not just the state of having nothing open. The
      wordmark is a home button now (2026-08-21, user: "clicking the
      Junoview logo should take you back to that screen"), so the welcome
-     has to be reachable with notebooks still loaded — and once it can be,
-     it needs a way out, which is #welcome-back. Nothing is closed either
-     way: this only decides what is on top. */
+     has to be reachable with notebooks still loaded; the open tabs are
+     the way back out. Nothing is closed either way: this only decides
+     what is on top. */
   var atHome=false;
   function goHome(on){
     atHome=!!on&&(APP.mode==='app'||APP.mode==='web');
@@ -915,8 +1071,6 @@
        does or does not (a window resized at Home changes it) */
     if(wasWelcoming&&!welcoming&&APP.measureChrome) APP.measureChrome();
     syncHomeTab();   /* T596: Home is lit while it is on screen */
-    var back=$('#welcome-back');
-    if(back) back.hidden=!(welcoming&&APP.order.length);
     /* T264: the example is a link in the row below the cards now, and
        its separator hides with it so the row does not keep a stray dot */
     var demo=$('#welcome-demo-wrap');
@@ -929,8 +1083,6 @@
   (function(){
     var home=$('#presrail-home');
     if(home) home.addEventListener('click',function(){goHome(true);});
-    var back=$('#welcome-back');
-    if(back) back.addEventListener('click',function(){goHome(false);});
   })();
   /* ---- the tab's Version-history menu: automatic snapshots per
      open/reload */
@@ -984,12 +1136,11 @@
           /* prose stays WORDS — reload / Version history are button
              names, and glyphs inline in a sentence are what the icon
              sweep removed (2026-08-23) */
-          docToast(toastMsg+' — reload, or the Version history menu, '
-            +'returns to live');
+          docToast(toastMsg);
         }).catch(function(err){
           jvTell('Open failed: '+err.message);});
       }
-      row('● Live — the file on disk',!sh.version,function(){
+      row('● Live',!sh.version,function(){
         openPath(sh.path);});
       /* the notebook's GIT history: hash + message per commit */
       var commits=j.commits||[];
@@ -998,8 +1149,7 @@
         h1.textContent='git commits';m.appendChild(h1);
         commits.forEach(function(cm){
           row(cm.id+' · '+cm.msg,sh.version==='git:'+cm.id,function(){
-            openVer({path:sh.path,commit:cm.id},
-              'Viewing commit '+cm.id+' “'+cm.msg+'”');
+            openVer({path:sh.path,commit:cm.id},'Viewing commit '+cm.id);
           },cm.date);
         });
       }
@@ -1009,15 +1159,15 @@
       }
       (j.versions||[]).forEach(function(v){
         row(v.label,sh.version===v.id,function(){
-          openVer({path:sh.path,id:v.id},
-            'Viewing the snapshot from '+v.label);
+          openVer({path:sh.path,id:v.id},'Viewing an earlier snapshot');
         });
       });
       if(!(j.versions||[]).length&&!commits.length){
         var d=document.createElement('div');d.className='ckf-empty';
-        d.textContent='No history yet — a snapshot is kept every time '
-          +'this notebook is opened or refreshed, and git commits show '
-          +'here when the notebook is in a repository.';
+        d.textContent='No history yet';
+        d.appendChild(APP.qBtn('A snapshot is kept each time this notebook '
+          +'is opened or refreshed. Git commits show here too when the '
+          +'notebook is in a git repository.','Version history'));
         m.appendChild(d);
       }
     }).catch(function(err){
@@ -2125,14 +2275,14 @@
     var cnt2=document.createElement('span');
     cnt2.className='ckf-count';
     var picked=nodes.filter(function(n){return !!secScope[n.id];}).length;
-    cnt2.textContent=picked+' of '+nodes.length+' ticked';
+    cnt2.textContent=picked+'/'+nodes.length;
     bulk.appendChild(cnt2);
     m.appendChild(bulk);
     /* …and, at the foot, send these filters to the other notebooks */
     var many=(APP.order||[]).length>1;
     var cp=document.createElement('button');
     cp.className='ckf-all scope-copy';
-    cp.textContent='Copy these filters to all notebooks';
+    cp.textContent='Copy to all notebooks';
     cp.disabled=!many;
     cp.title=many
       ?'Every other open notebook gets the filters this one is using '
@@ -2262,7 +2412,9 @@
   function renderFilterExtras(){
     var sh=APP.active&&APP.shells[APP.active];
     var isTrace=!!(sh&&sh.trace);
-    /* "Present" is meaningless while you are already presenting */
+    /* "Present" is meaningless while you are already presenting (and
+       app.css hides it then too: this does not run when presenting
+       starts) */
     var dp=$('#doc-present');
     if(dp) dp.hidden=document.body.classList.contains('doc-presenting');
     var ti=$('#trace-inherit');
@@ -2784,7 +2936,7 @@
      it. The whole row cycles, like the old full-row checkbox label. */
   /* a few rows are not code/output TYPES but questions about the cell,
      and their slug is not a phrase anyone would say out loud */
-  var TYPE_LABEL={nooutput:'that produced nothing'};
+  var TYPE_LABEL={nooutput:'no output'};
   function typeMenuRow(map,t,count,dotClass){
     var key=MENU_KEY[map];
     var row=document.createElement('div');
@@ -2820,9 +2972,10 @@
   function typeMenuReset(map,id){
     var rs=document.createElement('button');rs.type='button';
     rs.id=id;rs.className='ckf-reset';
-    rs.textContent='Reset: match '+MENU_LABEL[map];
-    rs.title='Clear every per-type state above, so all types follow '
-      +'the '+MENU_LABEL[map]+' filter again';
+    rs.textContent='Reset';
+    rs.title='Reset: match '+MENU_LABEL[map]+'. Clear every per-type '
+      +'state above, so all types follow the '+MENU_LABEL[map]
+      +' filter again';
     rs.addEventListener('click',function(){
       var stem=activeStem();
       FDEFof(stem)[map]={};
@@ -3147,7 +3300,7 @@
   var rsBtn=$('#filters-reset');
   if(rsBtn) rsBtn.addEventListener('click',function(){
     resetFilters();
-    docToast('Filters reset for this notebook');
+    docToast('Filters reset');
   });
   /* a trace opens unfiltered; this pulls its source document's filters in
      (its clones carry the source's section ids, so the per-section tweaks
@@ -3172,8 +3325,9 @@
     });
     if(!n){docToast('No other notebooks are open');return;}
     applyFilters();applyCodeState();
-    docToast('Applied these filters to '+n+' other notebook'
-      +(n>1?'s':'')+' — their per-section tweaks were cleared');
+    /* no undo, so the toast says what it overwrote (T624 review) */
+    docToast('Filters copied to '+n+' notebook'+(n>1?'s':'')
+      +' \u2014 their section tweaks cleared');
   }
   renderTypeButtons();
 
@@ -3371,8 +3525,7 @@
       else{
         /* never silently nothing: say the mirror is missing */
         ph.classList.add('rawph-missing');
-        ph.textContent='This output could not be mirrored from the '
-          +'formatted view. Reload the notebook to rebuild the page.';
+        ph.textContent='Output missing — reload the notebook';
       }
     });
     /* clones of not-yet-drawn plotly embeds carry their data-plotly spec:
@@ -4241,7 +4394,7 @@
       ['#eef2f6','#ffffff','#16202b','#116d83']],
     ['forest','th-forest','Forest','Dark',
       ['#08130f','#14271f','#e5f1eb','#61d3a4']],
-    ['forest-light','light th-lforest','Forest','Light',
+    ['forest-light','light th-lforest','Forest light','Light',
       ['#eaf3ed','#ffffff','#17261e','#197250']],
     ['forest-blue','th-forestblue','Forest blue','Dark',
       ['#08130f','#14271f','#e5f1eb','#7ea6ff']],
@@ -4257,7 +4410,7 @@
       ['#140d1b','#281b33','#f2eaf5','#d39af0']],
     ['dim','th-dim','Neutral dim','Dark',
       ['#181a1d','#292d33','#e2e5e9','#9eb6c7']],
-    ['contrast-light','light th-lcontrast','High contrast',
+    ['contrast-light','light th-lcontrast','High contrast light',
       'Light · High contrast',['#ffffff','#f0f0f0','#000000','#005a73']]
   ];
   var ALL_TH=['light','th-forest','th-lforest','th-forestblue',
@@ -4396,10 +4549,11 @@
       var copy=document.createElement('span');copy.className='jv-scheme-copy';
       var name=document.createElement('span');name.className='jv-scheme-name';
       name.textContent=sc[2];
-      var family=document.createElement('span');family.className='jv-scheme-family';
-      family.textContent=sc[3]+(sc[0]==='system'
-        ?' · currently '+(systemIsLight()?'light':'dark'):'');
-      copy.appendChild(name);copy.appendChild(family);
+      /* T624: one line, the name. The family line under it ("Dark",
+         "Light · High contrast") was a second line on every row, and
+         the swatches beside it already show it; the two names it told
+         apart say it themselves now (Forest light, High contrast light) */
+      copy.appendChild(name);
       o.appendChild(preview);o.appendChild(copy);
       o.addEventListener('click',function(){
         applyScheme(sc[0]);close(true);});
@@ -5179,8 +5333,7 @@
      skippable, shown once, or re-run from "Take a tour" ---- */
   var TOUR_STEPS=[
     {title:'Welcome to Junoview',
-     text:'A figure-first view of your notebooks, plus a presentation '
-       +'builder. Here is a quick tour — skip it anytime.'},
+     text:'A quick tour. Skip it any time.'},
     /* T596: the tabs, or the side list when that is where they are */
     {sel:'#top-tabstrip,#tabstrip',title:'Notebooks are tabs',
      text:'Every notebook you open is a tab. Drop .ipynb files anywhere on '
@@ -5194,22 +5347,23 @@
        +'filters, pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
     {sel:'.rail .nav,#presrail-home,.rail',title:'The sidebar',
-     text:'A key at the top; collapse or hide a whole section (also from its '
-       +'heading in the document), and an eye beside every cell to hide just '
-       +'that one — hidden things stay here so you can bring them back.'},
+     text:'The ? at the top is the colour key; collapse or hide a whole '
+       +'section (also from its heading in the document), and an eye beside '
+       +'every cell to hide just that one — hidden things stay here so you '
+       +'can bring them back.'},
     {sel:'.plot-trace-btn',title:'Trace a plot',
-     text:'Plot trace opens a new tab with just the cells that build a '
+     text:'Trace opens a new tab with just the cells that build a '
        +'plot — its whole lineage — plus a dependency graph. Every filter '
        +'still works there.'},
-    /* T602: New, Open, How to use and Support are rows of File */
+    /* T602: New, Open, Help and Support are rows of File */
     {sel:'#app-file,#pr-newbtn',title:'Build presentations',
-     text:'File > New makes a presentation or a poster, and File > Open '
+     text:'File › New makes a presentation or a poster, and File › Open '
        +'finds one you made before; the ones you have open are tabs beside '
        +'your notebooks. Lay out slides, drop in cards from any open '
        +'notebook, and present full screen.'},
     {sel:'#app-file,#help-btn',title:'Help & support',
-     text:'File > How to use has the full docs, and File > Theme the '
-       +'colours. If Junoview helps you, File > Support funds a hosted '
+     text:'File › Help… has the full docs, and File › Theme… the '
+       +'colours. If Junoview helps you, File › Support funds a hosted '
        +'version with accounts — thank you!'}
   ];
   /* ---- T567: THE EDITOR'S OWN TOUR -------------------------------------
@@ -5223,38 +5377,26 @@
      machine, two lists. */
   var EDITOR_TOUR_STEPS=[
     {title:'The slide editor',
-     text:'A short look round — it works the way PowerPoint does. Skip '
-       +'it any time; File > How to use > Take a tour brings it back.'},
+     text:'It works like PowerPoint. Skip any time — File › Help… › Take '
+       +'a tour brings it back.'},
     {sel:'#rbn-tabs',title:'The ribbon',
-     text:'Home, Images, Text, Design, Animation, View and Present, as in '
-       +'PowerPoint. Select something and Style and Object join them, '
-       +'holding what it can do. ▴ at the end folds the ribbon away.'},
+     text:'Select something and the Style and Object tabs appear. ▴ folds '
+       +'the ribbon away.'},
     {sel:'#rbn-tab-images',title:'Your figures',
-     text:'Images > From notebook draws a frame and fills it with a '
-       +'figure from any open notebook. It stays linked: Home > Update '
-       +'brings in the new one when you re-run. Pictures, shapes and icons '
-       +'are on Images too; text boxes, tables and equations on Text.'},
+     text:'Images › From notebook places a figure that stays linked — '
+       +'Home › Update refreshes it.'},
     {sel:'#film-list',title:'Your slides',
-     text:'Drag a slide to move it; right-click one for duplicate, hide, '
-       +'sections and the rest. + Add slide and § Section are at the foot.'},
+     text:'Drag to reorder; right-click for more.'},
     {sel:'#deck-stage .slide',title:'The slide',
-     text:'Click to select, drag to move, pull a corner to resize, '
-       +'double-click words to type. Right-click for paste here and more.'},
+     text:'Double-click words to type; right-click for more.'},
     {sel:'#rbn-search',title:'Find any command',
-     text:'Press Alt+Q, or click here, and type what you want to do — every '
-       +'button on every tab can be found by its name.'},
+     text:'Alt+Q, then type any command.'},
     {sel:'#dc-save',title:'Saving',
-     text:'Save keeps the presentation in your project; the chip beside it '
-       +'says Saved, Saving… or Not saved, and Autosave counts down to '
-       +'the next one. ▾ chooses where it saves.'},
+     text:'Saves into your project. ▾ chooses where.'},
     {sel:'#where-btn',title:'Where you are',
-     text:'Which slide you are on, of how many, at the head of the slide '
-       +'list — click it to see every slide at once and rearrange them. '
-       +'The zoom is in the tab row, beside Auto-hide.'},
+     text:'Click to see every slide at once.'},
     {sel:'#dc-play',title:'Present',
-     text:'Present plays from the start; ▾ beside it has presenter view '
-       +'and the other ways to play. With nothing selected, Escape steps '
-       +'back to your notebook with the slides beside it.'}
+     text:'▾ has presenter view. Esc goes back to the notebook.'}
   ];
   var EDITOR_TOUR_KEY='plotline-tour-editor';
   var tourSteps=TOUR_STEPS,tourKey='plotline-tour';
@@ -5522,7 +5664,16 @@
   });
   /* ---- help overlay ---- */
   var helpDlg=$('#helpdlg');
-  function showHelp(){if(helpDlg) helpDlg.hidden=false;}
+  /* T624: showHelp(id) opens it AT a section -- a "?"'s "More in Help"
+     line names the <h3> it continues (a click handler's event is not an
+     id, so it opens at the top as before) */
+  function showHelp(id){
+    if(!helpDlg) return;
+    helpDlg.hidden=false;
+    var h=typeof id==='string'&&id?document.getElementById(id):null;
+    if(h&&helpDlg.contains(h)){try{h.scrollIntoView({block:'start'});}catch(e){}}
+  }
+  APP.showHelp=showHelp;
   function hideHelp(){if(helpDlg) helpDlg.hidden=true;}
   /* two doors: the app bar's Help, and the deck editor's — editing hides
      the app bar entirely, so without the second one the help was
@@ -5997,8 +6148,7 @@
     if(!sh||!sh.path||/^https?:/i.test(sh.path)) return;
     var e=noteEls(); if(!e.dlg) return;
     noteCtx={stem:stem,path:sh.path,anchor:anchor};
-    e.sub.textContent='after “'+title+'” · saved into '
-      +sh.path;
+    e.sub.textContent='after “'+title+'”';
     e.src.value='';e.err.textContent='';
     e.gitrow.hidden=true;e.commit.checked=false;
     e.dlg.hidden=false;e.src.focus();
@@ -6047,7 +6197,7 @@
         else if(g&&!g.ok)
           docToast('Note saved ✓ · git commit failed: '
             +(g.error||''),'','',9000);
-        else docToast('Note saved into the notebook ✓');
+        else docToast('Note saved ✓');
         var card=noteInPlace(j,stem);
         if(card){noteFlash(card);return;}
         /* re-mounted from the shell the server rendered -- which it sends
@@ -6061,9 +6211,9 @@
           noteFlash(sh2&&sh2.el.querySelector(
             '.card[data-anchor="cell:'+j.cell+'"]'));
         }).catch(function(err){
-          docToast('The note is saved, but the notebook could not be '
-            +'shown again: '+((err&&err.message)||err)
-            +' — reload it to see the note','','',9000);
+          if(window.console) console.warn('note: could not show the '
+            +'notebook again',err);
+          docToast('Note saved — reload to see it','','',9000);
         });
       }).catch(function(err){
         e.save.disabled=false;
@@ -6578,7 +6728,10 @@
     if(fmZoom===1) sc.style.removeProperty('--fmz');
     else sc.style.setProperty('--fmz',fmZoom);
     host.classList.toggle('zoomed',fmZoom>1);
-    if(v) v.textContent='Zoom '+Math.round(fmZoom*100)+'%';
+    if(v){
+      v.textContent=Math.round(fmZoom*100)+'%';
+      v.setAttribute('aria-label','Zoom '+Math.round(fmZoom*100)+'%');
+    }
     var zo=$('#figmax-zout'),zi=$('#figmax-zin');
     if(zo) zo.disabled=fmZoom<=FM_MIN+0.001;
     if(zi) zi.disabled=fmZoom>=FM_MAX-0.001;
@@ -6961,7 +7114,7 @@
     closeLabelMenu();
     var m=document.createElement('div');m.className='mark-menu';
     m.setAttribute('role','menu');
-    labelHead(m,'Show only labelled cells');
+    labelHead(m,'Show only');
     var picked=onlyFor(stem);
     if(have.pin) labelRow(m,{k:'pin',ic:'pin',lab:'Pinned'},
       picked.indexOf('pin')>=0,have.pin,function(){toggle('pin');});
@@ -7002,7 +7155,7 @@
     addLabelGroups(m,stem,picked,null,change,picked);
     var add=document.createElement('button');add.type='button';
     add.className='mark-menu-row mark-menu-clear';
-    add.innerHTML=bic('plus')+'<span class="mark-menu-name">Add a custom label…</span>';
+    add.innerHTML=bic('plus')+'<span class="mark-menu-name">New label…</span>';
     add.addEventListener('click',function(e){
       e.stopPropagation();
       /* T527: the editor's own question, not the browser's prompt() */
@@ -7168,6 +7321,10 @@
         n++;});
     if(b){
       if(b.disabled) b.disabled=false;
+      /* T624: nothing hidden and no peek on: nothing to peek at, and a
+         "Peek at hidden (0)" was a row that could only say so */
+      var none=!n&&!peeking;
+      if(b.hidden!==none) b.hidden=none;
       setAttrIf(b,'aria-pressed',peeking?'true':'false');
       var html=bic('eye')+(peeking?'End peek':'Peek at hidden')+' ('+n+')';
       if(b.__jvHtml!==html||!b.firstChild){b.innerHTML=html;b.__jvHtml=html;}
@@ -7399,7 +7556,7 @@
       +'aria-label="Notebook commits"></nav><div class="ch-compare">'
       +'<section><h3>Current</h3><div class="ch-output ch-current"></div>'
       +'</section><section><h3 class="ch-version-title">Earlier version</h3>'
-      +'<div class="ch-output ch-version">Choose a commit</div>'
+      +'<div class="ch-output ch-version"></div>'
       +'<p class="ch-source"></p></section></div></div>';
     dialog.querySelector('h2').textContent=
       (card.querySelector('.cardtitle')||{}).textContent||'Cell';
@@ -7502,8 +7659,10 @@
       if(cellHistoryDialog!==dialog) return;
       timeline.replaceChildren();
       if(!list.length){
-        timeline.textContent='No Git commits for this notebook yet';return;
+        timeline.textContent='No commits yet';return;
       }
+      /* T624: the prompt only where there is something to choose */
+      if(!version.firstChild) version.textContent='Choose a commit';
       list.slice(0,25).forEach(function(cm){
         var row=document.createElement('button');row.type='button';
         row.className='ch-commit';
@@ -7960,10 +8119,39 @@
       shell.addEventListener('focusin',warm);
     }
   }
+  /* ---- T624: VERSIONS ONLY WHERE IT CAN WORK -------------------------
+     A local notebook's per-cell Versions compares git commits, so outside
+     a repository it opened onto "No commits yet" every time. The button
+     is still made with the card (CSS keeps a .local one hidden), and ONE
+     /api/gitstate per shell, at idle -- never on the load path -- shows
+     them with `git-yes`. The same reply answers the GitHub page a Copy
+     links to (cellGitWeb), so the pointer reaching a Copy later asks
+     nothing more. */
+  function gitPage(g){
+    function seg(p){return String(p).split('/').map(encodeURIComponent)
+      .join('/');}
+    return (g&&g.github&&g.rel)?(g.github+'/blob/'+seg(g.branch
+      &&g.branch!=='HEAD'?g.branch:((g.commit||{}).id||'HEAD'))+'/'
+      +seg(g.rel)):'';
+  }
+  function gitProbe(shell,stem,path){
+    if(!shell||shell.__jvGitProbe||APP.mode!=='app'||!path||isUrl(path)
+       ||!APP.api) return;
+    shell.__jvGitProbe=1;
+    var ric=window.requestIdleCallback||function(f){return setTimeout(f,300);};
+    ric(function(){
+      APP.api('/api/gitstate',{path:path}).then(function(g){
+        if(g&&g.repo) shell.classList.add('git-yes');
+        var sh=APP.shells[stem];
+        if(sh&&sh.path===path&&sh.gitweb===undefined) sh.gitweb=gitPage(g);
+      }).catch(function(){});
+    });
+  }
   /* the per-card buttons; `cards` defaults to every card under the root */
   function wireCardButtons(shell,stem,cards){
     /* The button is cheap; no history or image is fetched until it opens. */
     var source=historySource(shell.dataset.path||'');
+    if(source&&!source.gh) gitProbe(shell,stem,source.path);
     /* ---- T606: COLLECT -- this cell into a collection. On a notebook's
        cards and a trace's clones (they file the real notebook's cell);
        never on a collection's own cards, which are already kept. ---- */
@@ -7978,7 +8166,10 @@
       var head=card.querySelector('.cardhead');
       if(head&&source){
         var hb=document.createElement('button');hb.type='button';
-        hb.className='cell-history-btn';
+        /* T624: a local notebook's Versions shows only once its shell
+           is known to be in a git repository (gitProbe); a GitHub one
+           always can */
+        hb.className='cell-history-btn'+(source.gh?'':' local');
         hb.innerHTML=bic('history')+' Versions';
         hb.title='Compare this cell across Git commits';
         head.insertBefore(hb,head.querySelector('.cell-pin')||null);
@@ -8045,14 +8236,11 @@
     if(!sh||sh.gitweb!==undefined||APP.mode!=='app'||!sh.path
        ||/^https?:/i.test(sh.path)||!APP.api) return;
     sh.gitweb='';
-    /* each path segment escaped on its own: encodeURI leaves '#' and '?'
-       in, and "run #2.ipynb" linked to "run " (2026-10-08 review) */
-    function seg(p){return String(p).split('/').map(encodeURIComponent)
-      .join('/');}
+    /* each path segment escaped on its own (gitPage): encodeURI leaves
+       '#' and '?' in, and "run #2.ipynb" linked to "run " (2026-10-08
+       review) */
     APP.api('/api/gitstate',{path:sh.path}).then(function(g){
-      if(g&&g.github&&g.rel)
-        sh.gitweb=g.github+'/blob/'+seg(g.branch&&g.branch!=='HEAD'
-          ?g.branch:((g.commit||{}).id||'HEAD'))+'/'+seg(g.rel);
+      sh.gitweb=gitPage(g);
     }).catch(function(){});
   }
   function cellCopyPayload(shell,stem,card){
@@ -8105,9 +8293,7 @@
         window.SemDeckCellCopied(p.meta);
     });
     if(done){
-      docToast('Copied “'+p.meta.title+'” — paste it on a '
-        +'slide for the figure; anywhere else it is the link and its code',
-        null,null,3500);
+      docToast('Copied — paste it on a slide',null,null,3500);
       return;
     }
     /* no copy event (an old engine): the words still carry the marker */
@@ -8242,10 +8428,13 @@
       +(shellEl.dataset.nb||'')+'"]');
   }
   function syncFileBarIdentity(cur){
-    var box=$('#nb-file-ident'),name=$('#nb-file-name'),path=$('#nb-file-path');
-    if(!box||!name||!path) return;
+    /* T624: the name only. The path under it was a second line of
+       chrome; it is the name's tooltip now, and Info beside it has it in
+       full */
+    var box=$('#nb-file-ident'),name=$('#nb-file-name');
+    if(!box||!name) return;
     if(!cur){
-      box.hidden=true;name.textContent='';path.textContent='';path.title='';
+      box.hidden=true;name.textContent='';name.title='';
       return;
     }
     var p=String(cur.path||((cur.el||{}).dataset||{}).path||'');
@@ -8253,12 +8442,7 @@
     try{base=decodeURIComponent(base);}catch(e){}
     base=base||String(cur.label||cur.title||APP.active||'Untitled');
     name.textContent=base;
-    path.textContent=p;
-    path.onclick=function(){
-      var bar=rfBarFor(cur.el),info=bar&&bar.querySelector('.rf-info');
-      if(info) info.click();
-    };
-    path.title=p||base;
+    name.title=p||base;
     box.title=p||base;
     var railTitle=cur.el&&cur.el.querySelector('.railtitle');
     if(railTitle) railTitle.title=p||base;
@@ -8364,18 +8548,16 @@
       /* the NAME first, then where it lives — not a wrapped raw URL */
       panel.appendChild(row('file',baseName(path)||'untitled'));
       if(path) panel.appendChild(row('Full path',path,'rf-sub'));
-      panel.appendChild(row(isUrlPath?'from':'folder',
-        ghp?(ghp.owner+'/'+ghp.repo)
-          :(path?folderOf(path):'not saved to a file')));
+      /* T624: a local file's folder is in the Full path right above */
+      if(isUrlPath) panel.appendChild(row('from',
+        ghp?(ghp.owner+'/'+ghp.repo):folderOf(path)));
+      else if(!path) panel.appendChild(row('folder','not saved to a file'));
       /* which version of the notebook you are looking at right now */
+      /* only when it is NOT the latest: the usual case needs no row */
       var ver=sh.version||'';
-      var vrow;
-      if(ver){
-        vrow=row('showing',
-          /^git:/.test(ver)?('an earlier commit — '+ver.slice(4))
-            :'an earlier snapshot','rf-old');
-      } else vrow=row('showing','the latest version','rf-live');
-      panel.appendChild(vrow);
+      if(ver) panel.appendChild(row('showing',
+        /^git:/.test(ver)?('an earlier commit — '+ver.slice(4))
+          :'an earlier snapshot','rf-old'));
       var acts=document.createElement('div');acts.className='rf-acts';
       panel.appendChild(acts);
       if(APP.mode==='app'&&path&&!isUrlPath){
@@ -8489,7 +8671,7 @@
       APP.api('/api/gitstate',{path:path}).then(function(g){
         var v=$('.rf-v',gr);
         if(!g||!g.repo){
-          v.textContent='not in a git repository';
+          v.textContent='none';
           return;
         }
         v.textContent=(g.branch?('branch '+g.branch):'in a git repository');
@@ -8746,8 +8928,7 @@
       return;
     }
     if(!APP.deckAuto){
-      jvTell('The presentation editor has not loaded yet \u2014 try again '
-        +'in a moment.');
+      jvTell('Editor still loading \u2014 try again.');
       return;
     }
     if(!plan.sections.length){
@@ -9702,9 +9883,13 @@
     h.textContent='style '+(t.kind==='all'?'all markdown'
       :t.kind==='head'?'all headings':t.kind==='doc'?'page':t.kind);
     p.appendChild(h);
-    var sub=document.createElement('div');sub.className='sp-sub';
-    sub.textContent='Applies to '+styTitleFor(t)+'.';
-    p.appendChild(sub);
+    /* T624: the view-wide panels say what they style in their heading;
+       one section or cell names just it */
+    if(t.kind==='sec'||t.kind==='cell'){
+      var sub=document.createElement('div');sub.className='sp-sub';
+      sub.textContent=styTitleFor(t).replace(/^(section|the cell) /,'');
+      p.appendChild(sub);
+    }
     props.forEach(function(pr){
       var row=document.createElement('div');row.className='sp-row';
       var lab=document.createElement('span');lab.className='sp-rl';
@@ -9777,7 +9962,7 @@
     }
     var btns=document.createElement('div');btns.className='sp-btns';
     var clr=document.createElement('button');clr.className='toggle';
-    clr.type='button';clr.textContent='Clear this style';
+    clr.type='button';clr.textContent='Clear';
     clr.addEventListener('click',function(){
       if(t.kind==='sec'&&STY.sec) delete STY.sec[t.id];
       else if(t.kind==='cell'&&STY.cell) delete STY.cell[t.id];
@@ -10098,7 +10283,7 @@
     var h=document.createElement('h2');h.className='tracetab-t';
     h.textContent=title||'Plot trace';
     var sub=document.createElement('span');sub.className='tracetab-sub';
-    sub.textContent='the cells that build this plot, from '+stem;
+    sub.textContent='from '+stem;
     head.appendChild(eb);head.appendChild(h);head.appendChild(sub);
     /* view switcher IN the header: the same lineage as a readable LIST of
        cells or as an expandable dependency TREE (columns by step). The
@@ -10208,8 +10393,7 @@
     jvDeck.then(function(){   /* the importer is the editor (jvDeck) */
       try{
         if(window.SemDeckImport) window.SemDeckImport(txt,false);
-        else jvTell('The presentation editor has not loaded yet — '
-          +'try again in a moment.');
+        else jvTell('Editor still loading — try again.');
       }catch(e){
         jvTell('Could not open '+(label||'that file')+': '
           +((e&&e.message)||e));
@@ -10249,8 +10433,7 @@
         url.split('?')[0].split('/').pop()||'deck.pptx');
       jvDeck.then(function(){
         if(APP.deckImportPptx) APP.deckImportPptx(new File([b],nm,{type:b.type}));
-        else jvTell('The presentation editor has not loaded yet — '
-          +'try again in a moment.');
+        else jvTell('Editor still loading — try again.');
       });
     }).catch(function(e){
       setDlgBusy(false);
@@ -10309,15 +10492,13 @@
       if(isUrl(path)||APP.mode==='web'){fetchPptxUrl(path);return;}
       if(APP.mode!=='app') return;
       if(!APP.deckImportPptxPath&&!jvDeck.pending()){
-        jvTell('The presentation editor has not loaded yet — '
-          +'try again in a moment.');
+        jvTell('Editor still loading — try again.');
         return;
       }
       hideDlg();
       jvDeck.then(function(){
         if(APP.deckImportPptxPath) APP.deckImportPptxPath(path);
-        else jvTell('The presentation editor has not loaded yet — '
-          +'try again in a moment.');
+        else jvTell('Editor still loading — try again.');
       });
       return;
     }
@@ -10365,8 +10546,7 @@
         if(APP.noteRecent) APP.noteRecent(j.path||path);
         activate(j.stem);
         /* the remount used to be the only sign a Reload had landed */
-        if(wasActive) docToast('Up to date — nothing in this file '
-          +'has changed on disk',null,null,3500);
+        if(wasActive) docToast('Already up to date',null,null,3500);
       } else mountShellHTML(j.shell,j.path||path);
       if(!keep) hideDlg();
     }).catch(function(e){
@@ -10703,9 +10883,8 @@
     clearTimeout(restoreMissT);
     restoreMissT=setTimeout(function(){
       var n=restoreMissed;restoreMissed=0;
-      docToast(n+' notebook'+(n===1?'':'s')+' could not be reloaded'
-        +(navigator.onLine?'':' — you are offline')
-        +'. Still remembered; they return when you reconnect.');
+      docToast(n+' notebook'+(n===1?'':'s')+' could not reopen'
+        +(navigator.onLine?'':' offline')+' — kept for later');
     },600);
   }
   /* ---- T435: PINNED NOTEBOOKS (2026-09-14, user: "would be cool to be
@@ -10728,9 +10907,9 @@
     if(on) pins.unshift(p);
     try{localStorage.setItem(nbPinKey(),JSON.stringify(pins.slice(0,40)));}
     catch(e){}
+    /* T624: no toast -- the row moving to the top, with its pin lit, is
+       the answer (Home's presentation pin has none either) */
     renderRecent();renderDlgRecent();
-    docToast(on?(splitPath(p).name+' pinned \u2014 it stays at the top of '
-      +'Recent'):(splitPath(p).name+' unpinned'));
     return on;
   }
   /* the recent list with the pins in front of it */
@@ -10791,7 +10970,7 @@
     if(!rec.length){host.hidden=true;return;}
     host.hidden=false;
     var h=document.createElement('div');h.className='odlg-recent-h';
-    h.textContent='recent — reopen';host.appendChild(h);
+    h.textContent='recent';host.appendChild(h);
     rec.slice(0,12+pins.length).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='odlg-r';
@@ -10831,19 +11010,14 @@
       if(up) up.hidden=true;
       if(fb) fb.hidden=false;
       if(dlgPath) dlgPath.textContent='Open notebooks';
-      if(inp) inp.placeholder='…or paste a notebook, .md, .tex or '
-        +'.csv URL (GitHub links work) and hit Open';
-      dlgList.innerHTML='<div class="odlg-empty">Drop notebooks, '
-        +'Markdown, LaTeX or csv files anywhere in the window, use '
-        +'&#8220;Choose files&#8230;&#8221;, '
-        +'or paste a URL below.<br><br>Everything runs in your browser '
-        +'&#8212; nothing is ever uploaded anywhere.</div>';
+      if(inp) inp.placeholder='Paste a link (GitHub links work)';
+      dlgList.innerHTML='<div class="odlg-empty">Drop files anywhere, '
+        +'or paste a link below. Nothing is uploaded.</div>';
       return;
     }
     /* this line, not page.html's placeholder attribute, is what a
        user reads: showDlg overwrites it on every open (T100). */
-    if(inp) inp.placeholder='…or paste a folder, a notebook/.md/.tex/'
-      +'.csv path, or a URL, and hit Open';
+    if(inp) inp.placeholder='Paste a path or link';
     listDir(dlgDir||APP.root||'');
   }
   function listDir(dir){
@@ -10856,7 +11030,7 @@
       if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length
          &&!(j.sources||[]).length)
         dlgList.innerHTML='<div class="odlg-empty">'
-          +'Nothing here this can open.</div>';
+          +'Nothing to open here</div>';
       j.dirs.forEach(function(d){
         var b=document.createElement('button');b.className='odlg-i';
         b.innerHTML='<span class="ic">'+bic('open')+'</span>';
@@ -10956,8 +11130,8 @@
     var ic=document.createElement('span');
     ic.className='recent-ic';ic.innerHTML=bic('reload');
     var nm=document.createElement('span');nm.className='recent-nm';
-    nm.textContent='Open the '+last.length+' notebook'
-      +(last.length===1?'':'s')+' you had open';
+    nm.textContent='Reopen '+last.length+' notebook'
+      +(last.length===1?'':'s');
     b.appendChild(ic);b.appendChild(nm);
     b.addEventListener('click',function(){
       if(APP.openLastSession) APP.openLastSession();});
@@ -11180,7 +11354,7 @@
     function paint(){
       t.classList.toggle('lite',!on);
       btn.setAttribute('aria-pressed',on?'true':'false');
-      btn.textContent=on?'Hide the demos':'Play the demos';
+      btn.textContent=on?'Hide demos':'Play demos';
       if(!on||armed) return;
       armed=true;
       var imgs=$$('img[data-src]',t);
@@ -11260,9 +11434,7 @@
       var v=inp.value.trim(); if(!v) return;
       if(isWeb){
         if(isUrl(v)) webOpenUrl(v,false);
-        else jvTell('Paste an http(s) link to a notebook, .md, .tex '
-          +'or .csv file, or use '
-          +'Choose files / drag-and-drop.');
+        else jvTell('Paste an http(s) link.');
         return;
       }
       /* a path that names a source OPENS; anything else is still
@@ -11347,8 +11519,7 @@
         .forEach(function(f){
           jvDeck.then(function(){   /* the importer is the editor's */
             if(APP.deckImportPptx) APP.deckImportPptx(f);
-            else jvTell('The presentation editor has not loaded yet — '
-              +'try again in a moment.');
+            else jvTell('Editor still loading — try again.');
           });
         });
       /* a dropped saved presentation imports, in either mode */
@@ -11459,7 +11630,7 @@
       if(wInst){
         wInst.hidden=!on;
         wInst.textContent=window.__jvInstall
-          ?'Install as an app':'Install as an app\u2026';
+          ?'Install app':'Install app\u2026';
       }
       if(wInstSep) wInstSep.hidden=!on;
     }
@@ -11474,10 +11645,8 @@
       /* NO PROMPT TO REPLAY. Say what to do instead of doing nothing --
          the browsers that never fire the event still install a PWA, they
          just make you ask for it from their own menu. */
-      docToast('Junoview installs from your browser\u2019s own menu: '
-        +'look for Install Junoview, Install this site as an app, or '
-        +'Add to Home Screen. It then opens in its own window and works '
-        +'offline. There is no separate download.');
+      docToast('Install it from your browser\u2019s menu: Install app, '
+        +'or Add to Home Screen.');
     });
     window.addEventListener('beforeinstallprompt',function(e){
       e.preventDefault();window.__jvInstall=e;paintInstall();
@@ -11492,8 +11661,7 @@
       var K=WEBKEY+':offline-ready';
       try{if(localStorage.getItem(K)) return;
         localStorage.setItem(K,'1');}catch(e){}
-      docToast('Saved for offline — Junoview now opens here even '
-        +'without internet');
+      docToast('Ready to use offline');
     }
     if(window.__jvOffline) offlineReady();
     else document.addEventListener('sem:offline',offlineReady);

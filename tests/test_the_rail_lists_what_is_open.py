@@ -19,7 +19,7 @@ def test_the_presentations_label_is_simple_and_has_the_two_doors():
     assert 'id="pr-recent"' in html and 'id="pr-library"' in html
     # words plus icons, never icon-only
     assert '<span class="pr-t">Recents</span>' in html
-    assert '<span class="pr-t">All presentations&#8230;</span>' in html
+    assert '<span class="pr-t">All&#8230;</span>' in html
 
 
 def test_the_open_list_is_per_tab_and_survives_a_reload(out):

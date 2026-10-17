@@ -89,7 +89,7 @@ def test_import_counts_only_what_was_actually_stored():
     # ...and says so rather than reporting a clean success
     assert "would not fit and " in fn
     assert "There was no room to store them" in fn
-    assert "too big for a '" in fn and "'browser copy, so it lives in its file" in fn
+    assert "first.name+'\\u201d \\u2014 saves to its file'" in fn
 
 
 def test_a_browser_with_no_save_picker_is_not_told_it_has_one():
@@ -99,7 +99,7 @@ def test_a_browser_with_no_save_picker_is_not_told_it_has_one():
     assert "        if(canPickFile){" in fallback
     assert "          setTarget('file');" in fallback
     assert "          setTarget('browser');" in fallback
-    assert "this browser cannot save straight back " in fallback
+    assert "toast('Opened as a draft \\u2014 Download to save');" in fallback
     # the guard that made saveTarget='file' unreachable-but-silent
     # (T598: the guard lives in the default, and in each deck's home)
     assert "    if(t==='file'&&!canPickFile) t='browser';" in deck

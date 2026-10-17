@@ -309,9 +309,10 @@ def test_the_two_histories_do_not_pretend_to_be_each_other(out):
     it is saved into is the notebook's, which server/vcs.py already
     lists and opens. The panel names that rather than duplicating it.
     """
-    assert "class=\"dh-git\"" in out or "git.className='dh-git'" in out
-    assert "the '\n        +'moments between commits." in out
-    assert ("its Version '\n" "        +'history menu lists the git commits") in out
+    # T624: said in the app's history "?", not a standing paragraph
+    assert "(APP.mode==='app'?'\\n\\nThis is the deck\\u2019s own history. Git '" \
+        in out
+    assert "+'Info \\u25be \\u203a Version history.':'')" in out
 
 # ---------------------------------------------------------------------------
 # branches (T90)

@@ -38,7 +38,8 @@ def test_pinned_presentations_lead_recent_and_never_drop(out):
 def test_the_pin_is_on_every_row(out):
     # the library dialog
     assert "    pin.className='presentation-hub-pin'+(pinned?' on':'');" in out
-    assert "      var on=togglePinPresentation(p.name);" in out
+    assert ("      /* T624: no toast -- the row moves, and its pin lights */\n"
+            "      togglePinPresentation(p.name);") in out
     # Home's presentations, through the deck's own toggle
     assert "    window.SemApp.deckPinToggle=togglePinPresentation;" in out
     assert "        if(APP.deckPinToggle) APP.deckPinToggle(p.name);" in out

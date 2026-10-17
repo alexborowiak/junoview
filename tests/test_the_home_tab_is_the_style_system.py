@@ -47,7 +47,7 @@ def test_the_deck_wide_doors_are_on_design(out):
     # the panel: a preview of the five, and a note that says what they are
     assert "    var pv=document.createElement('div');pv.className='tok-preview';" \
         in out
-    assert "    menuHead(m,'deck colours');" in out
+    assert "    menuHead(m,'deck colours').appendChild(qBtn(" in out
 
 
 def test_the_style_system_never_folds(out):

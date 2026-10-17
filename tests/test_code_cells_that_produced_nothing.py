@@ -97,7 +97,7 @@ def test_it_rides_the_code_types_map():
 
 def test_the_row_is_first_and_reads_as_a_phrase():
     app = assets.app_js()
-    assert "  var TYPE_LABEL={nooutput:'that produced nothing'};" in app
+    assert "  var TYPE_LABEL={nooutput:'no output'};" in app
     assert "    tx.textContent=(TYPE_LABEL[t]||t)+' ('+count+')';" in app
     # the heading covers the whole list, because not every row is a "type"
     assert "    h.textContent='show code cells';m.appendChild(h);" in app

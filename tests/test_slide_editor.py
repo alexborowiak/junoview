@@ -810,7 +810,7 @@ def test_equations_reuse_the_text_box_and_mathjax(out):
     # MathJax comes from a CDN, so on a locked-down network there is no
     # renderer at all -- a blank preview would read as "your LaTeX is
     # wrong" rather than "nothing here can draw it"
-    assert "No maths renderer available" in out
+    assert "No preview offline \\u2014 the LaTeX is still " in out
     # and an existing equation goes back to the editor it came from
     assert 'id="fmt-eqedit"' in out
     assert "function isMaths(a){" in out
@@ -989,7 +989,7 @@ def test_match_another_slides_layout(out):
     # the styling of the one bullet there
     assert "var m=from[Math.min(n,from.length-1)].a;" in out
     # and it says so when there was nothing to match
-    assert "have no matching items" in out
+    assert "toast('Nothing on those slides matched');" in out
 
 
 def test_arrange_is_thorough(out):
@@ -1377,7 +1377,7 @@ def test_select_by_has_two_doors_and_neither_costs_ribbon_width(out):
     this one" verbs, and the ribbon has no width for a button of its own.
     """
     assert "function openSelectByMenu(anchor,ev){" in out
-    assert "['s:by','Select everything on this slide like this…']]" in out
+    assert "['s:by','Select all like this']]" in out
     assert "if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}" \
         in out
     assert "menuHead(m,'select on this slide');" in out
@@ -1581,7 +1581,7 @@ def test_a_slide_wide_object_is_not_part_of_every_row(out):
     assert "var row=bandMates(layer,s,idx,true);" in out
     # armed and reported through the existing match bar, not a new one
     assert "if(dir==='layout'&&idxs.length<2){" in out
-    assert "['x:layout','Lay these out like a group I click…']," in out
+    assert "['x:layout','Lay out like…']," in out
 
 
 def test_tidy_up_reports_before_it_rearranges(out):
@@ -2680,9 +2680,13 @@ def test_the_furniture_prompts_name_every_token_they_accept(out):
     is standing when they need them, listed four tokens and stopped
     (2026-08-26 audit, T57).
     """
-    assert out.count("{sn}/{sN} the number and count within the section, ") \
-        == 2
-    assert out.count("+'{sec} its name.\\nLeave it empty to remove it.'") == 2
+    # T624: every token is named in the prompts' shared "?", and the
+    # codes are under the field of both
+    assert "+'{n} this page, {N} the number of pages\\n{sn} / {sN} the page and '" \
+        in out
+    assert "+'page count within the section\\n{sec} the section\\u2019s name\\n\\n'" \
+        in out
+    assert out.count(",FURN_HELP);") == 2
     # ...and the ribbon tooltips, which are the other place you read
     # before clicking
     # (T555: the two tooltips now word them alike, and name the date)

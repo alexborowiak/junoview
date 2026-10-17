@@ -453,7 +453,8 @@
       lnBtn.title='Line thickness — '+swSay;
       /* ...and on the Weight section's heading inside the Line window,
          which is where the reader is looking now (T177) */
-      if(swL) swL.textContent='weight — '+swSay;
+      if(swL) swL.textContent='weight \u00b7 '
+        +swPt(a).toFixed(2).replace(/\.?0+$/,'')+' pt';
     }
     if(swW&&swL) swL.hidden=swW.hidden;
     /* every drawn menu shows which option the selection is ON */
@@ -2222,8 +2223,7 @@
     ctLast={x:x,y:y,idx:next};
     if(!ctHinted){
       ctHinted=true;
-      toast('The object underneath — click again to go deeper. Tab '
-        +'walks every object on the slide',5000);
+      toast('Object underneath \u2014 click again to go deeper',5000);
     }
   }
   /* ---- TOUCH AND PEN (T575) -------------------------------------------
@@ -2572,8 +2572,7 @@
       b.addEventListener('mousedown',function(e){
         if(activeTextEditable()) e.preventDefault();});
       b.addEventListener('click',function(){
-        if(!linkNow()) toast('Select an object, or highlight words in a '
-          +'text box, to link it');
+        if(!linkNow()) toast('Select something to link first');
       });
     }
     /* in the editor a click on linked words selects and types, never
@@ -2835,8 +2834,8 @@
           menuHead(m,'figure');
           row('Make this the figure’s caption','',function(){
             if(tieCaption(figI,txI))
-              toast('Tied — the caption follows its figure now. '
-                +'Type {fig} in it for its number');},
+              toast('Tied \u2014 {fig} in the caption writes its '
+                +'number');},
             'It moves with the figure and takes its width when the '
             +'figure is resized. It is still an ordinary text box you '
             +'can select and restyle on its own.','link');
@@ -3186,7 +3185,7 @@
         if(anA&&anA.k!=='arrow'){
           menuHead(m,'pinned to');
           var nowAn=anA.anch||'';
-          row('Nothing — measured from the top left','',
+          row('Not pinned','',
             function(){setAnchor(anI,'');},
             'The default, and what every object in every deck did '
             +'before this existed').classList.toggle('on',!nowAn);
@@ -3408,14 +3407,14 @@
          three verbs as matchMenuAt, armed directly: armMatch validates
          the selection itself and says what it needs. */
       menuHead(m,'match');
-      row('Copy this look to objects I click\u2026','',
+      row('Copy look to\u2026','',
         function(){armMatch('to');},
         'Then click each object that should take it','swap');
-      row('Take the look of an object I click\u2026','',
+      row('Take look from\u2026','',
         function(){armMatch('from');},
         'Then click the one object whose look you want here','swap');
       if(n>=2)
-        row('Lay these out like a group I click\u2026','',
+        row('Lay out like\u2026','',
           function(){armMatch('layout');},
           'Then click a group whose arrangement these should copy. The '
           +'look does not travel \u2014 only positions and sizes','group');
@@ -3516,8 +3515,7 @@
           {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
         {x:Math.max(2,Math.min(64,(at.x||40)-16)),
          y:Math.max(2,Math.min(58,(at.y||35)-17))});
-      if(na) toast('Chart placed \u2014 right-click it to edit the '
-        +'numbers or change its type');},
+      if(na) toast('Chart placed');},
       'A bar chart with sample numbers to replace \u2014 or select a '
       +'placed table and \u201cTurn into a chart\u201d. Exports to '
       +'a .pptx as an editable chart.','plots');
@@ -3640,9 +3638,9 @@
     t2.className='dbtn vw-opt cm-moret';t2.type='button';
     t2.setAttribute('aria-expanded','false');
     t2.setAttribute('role','menuitem');
-    t2.innerHTML=(bic('menu')||'')+' More \u2014 '+n+' option'
-      +(n===1?'':'s')+' \u25be';
-    t2.title='Anchoring, components, matching, visibility, reading '
+    t2.innerHTML=(bic('menu')||'')+' More \u25be';
+    t2.title=n+' more option'+(n===1?'':'s')+': anchoring, components, '
+      +'matching, visibility, reading '
       +'order, master, chart and guide rows \u2014 everything less '
       +'everyday, one click away';
     t2.addEventListener('click',function(e){
@@ -3999,8 +3997,8 @@
         word=shp?shp[1]:pendingShape;
       }
       var how=(t==='text'||t==='cell'||t==='table')
-        ?'Drag to draw, or click for the usual size'
-        :'Drag on '+pw+' to draw it';
+        ?'Drag, or click'
+        :'Drag on '+pw;
       var drawing='<span><b>Drawing: '+esc(word)+'</b></span>'
         +'<span>'+esc(how)+'</span>';
       /* only when it changes: every Escape re-arms select, and the same

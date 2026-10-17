@@ -1969,13 +1969,13 @@
       'Pictures with no alt text, slides whose heading is not read '
       +'first, and words too faint to read -- each with a fix');
     cat('Source freshness','whole deck',staleFigures().length,
-      bic('reload')+' Update figures from their sources',
+      bic('reload')+' Update figures',
       function(){resyncAllFigures();},
       'Placed figures whose notebook or file has moved on \u2014 one '
       +'click re-reads them, keeping position, size and crop');
     if(head) head.textContent=total
-      ?(total+' to look at, across six checks')
-      :'Six checks, all clear';
+      ?(total+' to look at')
+      :'All clear';
   }
   /* ---- T565: THE ACCESSIBILITY CHECK -----------------------------------
      PowerPoint's Check Accessibility, for the three things it finds most:
@@ -2031,10 +2031,8 @@
         if(ord.length>1&&ord[0]!==hd){
           out.push({sev:'warn',si:si,i:hd,
             what:'The heading is not read first',
-            why:'A screen reader starts with “'+(annotLabel(
-              sl.annots[ord[0]])||'another object')+'” and reaches '
-              +'the heading later. Put the heading first in the reading '
-              +'order.',
+            why:'Read before the heading: “'+(annotLabel(
+              sl.annots[ord[0]])||'another object')+'”.',
             fix:'Read the heading first',
             run:function(){
               ensureOids(sl);
@@ -2092,12 +2090,8 @@
       ?(found.length+' to look at'+(errs?' \u00b7 '+errs+' serious':''))
       :'Nothing to fix';
     list.innerHTML='';
-    if(!found.length){
-      list.innerHTML='<div class="pf-ok">Every picture says what it '
-        +'shows, every heading is read first, and the words can be '
-        +'read against what is behind them.</div>';
-      return;
-    }
+    /* T624: nothing found says so once, in the count line above */
+    if(!found.length) return;
     found.forEach(function(f){
       var row=document.createElement('div');
       row.className='pf-row pf-'+f.sev+' a11y-row';
@@ -2131,9 +2125,7 @@
       :'Nothing to fix';
     list.innerHTML='';
     if(!issues.length){
-      list.innerHTML='<div class="pf-ok">This page is ready to print. '
-        +'Figures are sharp enough, nothing runs off the page or into '
-        +'the margin, and the text has enough contrast.</div>';
+      list.innerHTML='<div class="pf-ok">Ready to print.</div>';
       return;
     }
     issues.forEach(function(x){
@@ -2373,7 +2365,7 @@
     var hist=objHistory(ohOid);
     if(head) head.textContent=!live
       ?'this object is gone'
-      :(hist.length===1?'one state — nothing has changed yet'
+      :(hist.length===1?'No changes yet'
         :hist.length+' states');
     if(!live){
       var g=document.createElement('div');
@@ -2618,8 +2610,7 @@
         var f={kind:'align',sev:'warn',sp:sp,
           list:cl.map(function(m){return {si:cur,ai:m.x.i,a:m.x.a};}),
           head:cl.length+' objects nearly share their '+e[1],
-          why:'They are '+gapMm(sp,e[3])+' apart across '+e[1]
-            +'. Close enough to look like a mistake, far enough to see.',
+          why:gapMm(sp,e[3])+' apart across '+e[1]+'.',
           act:'Line up their '+e[1],
           fix:(function(cl2,rd,horiz,tgt){return function(){
             cl2.forEach(function(m){
@@ -2661,10 +2652,8 @@
           list:rs.map(function(y){return {si:cur,ai:y.i,a:y.a};}),
           head:rs.length+' objects '+(horiz?'across':'down')
             +' with uneven gaps',
-          why:'The gaps run '+gaps.map(function(g){
-            return gapMm(g,horiz);}).join(', ')
-            +'. Uneven whitespace is what reads as sloppy even when '
-            +'everything is aligned.',
+          why:'Gaps: '+gaps.map(function(g){
+            return gapMm(g,horiz);}).join(', ')+'.',
           act:'Space them evenly',
           fix:(function(rs2,horiz2){return function(){
             /* the OUTER two do not move: distributing between them is
@@ -2703,9 +2692,7 @@
       out.push({kind:'dup',sev:'warn',sp:Math.max(dx,dy),
         list:[{si:cur,ai:A.i,a:A.a},{si:cur,ai:B.i,a:B.a}],
         head:'Two copies of '+annotLabel(A.a),
-        why:'Same content, same size, almost the same place — the shape '
-          +'a paste that happened twice leaves behind. Only the one '
-          +'underneath is doing anything.',
+        why:'Pasted twice, one on top of the other.',
         act:'Delete the copy on top',
         fix:(function(k){return function(){
           var sl=pres.slides[cur];
@@ -2763,14 +2750,12 @@
     var f=tidyFindings();
     if(head) head.textContent=f.length
       ?(f.length+' to look at')
-      :'nothing out of true';
+      :'';
     list.innerHTML='';
     if(!f.length){
       var msg=document.createElement('div');
       msg.className='pf-ok';
-      msg.textContent='This page is tidy. Nothing is nearly-but-not-'
-        +'quite lined up, the gaps are even, and nothing has been '
-        +'pasted twice on top of itself.';
+      msg.textContent='Nothing to tidy.';
       list.appendChild(msg);
       return;
     }

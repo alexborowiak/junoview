@@ -198,6 +198,18 @@ def test_align_and_distribute_measure_the_visual_rect(out):
     assert 'id="fmt-align-menu"' in out
 
 
+def test_centring_on_the_page_says_on_the_page(out):
+    """Three rows centre on the PAGE, two above them align to each other.
+    The row's tooltip is its label, so the label is the only place the
+    difference is said: "Centre across" beside "Align centres (side to
+    side)" read as the same action (T624 review, 2026-10-12)."""
+    for key, label in (("p:hcenter", "Centre on page across"),
+                       ("p:vmiddle", "Centre on page down"),
+                       ("p:both", "Centre on page")):
+        assert f"['{key}','{label}']" in out, key
+    assert "'Centre across'" not in out and "'Centre down'" not in out
+
+
 def test_equal_gap_guides_while_dragging(out):
     """Only items on the same band count as neighbours, and an edge snap
     beats a gap snap: agreeing with a line is a stronger intention than

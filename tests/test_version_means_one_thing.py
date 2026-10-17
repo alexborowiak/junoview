@@ -21,16 +21,19 @@ from __future__ import annotations
 
 def test_the_present_tab_says_custom_show(out):
     assert '<span class="rbn-lab">Custom show</span>' in out
-    assert "<span>New custom show&#8230;</span></button>" in out
+    # T624: the tile in the Custom show group says "New..."; its full name
+    # is its accessible name
+    assert 'aria-label="New custom show"' in out
+    assert "<span>New&#8230;</span></button>" in out
     assert 'aria-label="Which custom show to play"' in out
     assert '<span class="rbn-lab">Version</span>' not in out
 
 
 def test_every_word_about_a_subset_says_custom_show(out):
     for now in ("menuHead(m,'in these custom shows');",
-                "hd.textContent='which custom show';",
+                "hd.textContent='custom show';",
                 "nb.textContent='New custom show…';",
-                "askText({title:'A new custom show',label:'Call it',",
+                "askText({title:'New custom show',label:'Name',",
                 "toast('Custom show renamed to “'+v+'”');",
                 "askText({title:'Name this custom show',value:old,",
                 "ok:'Delete custom show',cancel:'Keep it',danger:true}",

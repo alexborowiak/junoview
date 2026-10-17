@@ -14,8 +14,8 @@ def _js():
 
 def test_the_four_layouts_are_offered_and_remembered():
     js = _js()
-    for k in ("['slides','Full-page slides']", "['ho3','Handouts",
-              "['ho6','Handouts", "['notes','Notes pages"):
+    for k in ("['slides','Slides']", "['ho3','Handout, 3 a page",
+              "['ho6','Handout, 6 a page", "['notes','Notes pages']"):
         assert k in js, k
     body = js.split("menuAction('#mi-pdf',function(){")[1].split("\n  });")[0]
     assert "localStorage.getItem('jv-print-layout')" in body

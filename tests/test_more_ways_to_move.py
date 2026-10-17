@@ -317,7 +317,7 @@ def test_background_is_a_chooser_on_the_shelf(out):
     assert "        g.setAttribute('data-say',name+(bw?' \\u00b7 border':''));" in out
     # the border's colours say their names; the verb says what it does
     assert "  var BG_BORDER_COLS=[['#39a9c0','Teal'],['#ff6b57','Coral']," in out
-    assert "Make every slide match this one" in out
+    assert "Use on all slides" in out
     assert "wireMenuToggle('bg-drop','bg-btn','bg-menu')" not in out
 
 
@@ -479,7 +479,7 @@ def test_the_small_ends_of_the_second_pass(out):
     assert "        document.fonts.addEventListener('loadingdone',function(e){" in out
     assert "      if(typeof fitQat==='function') requestAnimationFrame(fitQat);" in out
     # [22] the download says how it IS opened
-    assert "    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '" in out
+    assert "    toast('Downloaded '+a.download);" in out
     assert "Keep it next to the .ipynb and it loads itself" not in out
     # [43] the standalone page carries the equation fonts it used
     assert "  function inlineFontUrls(css){" in out
@@ -488,7 +488,7 @@ def test_the_small_ends_of_the_second_pass(out):
     assert ("      pageCssText(document.head).then(inlineFontUrls)"
             ".then(function(fo){") in out
     assert "        if(f.status==='loaded'||f.status==='loading'){" in out
-    assert "could not be packed in, so equations '" in out
+    assert "?'HTML saved \\u2014 equations need a network the first time'" in out
 
 
 def test_a_deck_named_after_itself_loads_beside_its_notebook(tmp_path):
@@ -782,8 +782,7 @@ def test_the_ribbon_fit_after_the_third_pass(out):
     assert "  var rbnClipTold=false;" in out
     assert "  function rbnOverflowNotice(bar,quiet){" in out
     assert "    if(clipped&&!note&&!quiet&&!rbnClipTold" in out
-    assert ("      toastUndo('The ribbon is wider than the window \\u2014 the '\n"
-            "        +'right-hand toolbar keeps every control reachable.',\n"
+    assert ("      toastUndo('Ribbon wider than the window',\n"
             "        'Use Side toolbar',function(){") in out
     assert "    var clipped=rbnOverflowNotice(bar,true);" in out
     # [9] a poster hides every chooser's FRAME, so the groups empty and

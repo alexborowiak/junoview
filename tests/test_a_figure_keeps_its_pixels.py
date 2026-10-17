@@ -231,8 +231,7 @@ def test_refresh_is_one_figure_and_says_so(out):
     # told why in terms of what that means -- the deck holds the only
     # copy, so there is nothing to re-read AND nothing to lose
     assert "      if(picState(a2)==='kept'){" in out
-    assert ("        toast('This picture was pasted or dropped, so the deck "
-            "holds the '") in out
+    assert "        toast('Pasted \\u2014 no source file');" in out
 
 
 def test_a_figure_update_is_reviewed_before_it_writes(out):
@@ -1092,7 +1091,7 @@ def test_a_web_address_is_read_in_too(out):
     fn = out.split("  function placeFromAddress(addr){")[1].split("\n  }")[0]
     assert "    if(isUrl){" in fn
     assert "      fetchDataUrl(addr).then(function(full){" in fn
-    assert "        toast('That site did not let this page read the picture, " \
+    assert "        toast('Placed as a link to '+midElide(addr,40),9000);" \
         in fn
     # a local path still needs the app to read it
     assert "    if(!picCanEmbed()){" in fn

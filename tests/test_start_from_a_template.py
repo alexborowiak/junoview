@@ -90,7 +90,7 @@ def test_new_presentation_asks_and_blank_is_the_verb(out):
     assert '<div class="aa-dlg" id="nt-dlg" hidden role="dialog"' in html
     assert ('<button class="dbtn primary" id="nt-blank"\n'
             '        title="An empty presentation (Enter)">'
-            'Blank presentation</button>') in html
+            'Blank</button>') in html
     js = assets.deck_js()
     # the shared Esc / Enter keys know the dialog
     assert "+'#nt-dlg," in js and "#chart-data';" in js

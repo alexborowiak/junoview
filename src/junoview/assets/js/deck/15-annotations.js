@@ -97,7 +97,7 @@
     });
     var x=document.createElement('button');
     x.className='dbtn jv-spot-x';
-    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.innerHTML=bic('exit')+' Close';x.title='Esc';
     x.addEventListener('click',function(e){e.stopPropagation();closeSpot();});
     wrap.appendChild(x);
     wrap.addEventListener('click',function(e){e.stopPropagation();closeSpot();});
@@ -149,7 +149,7 @@
     /* the way out has to be visible or it does not exist */
     var x=document.createElement('button');
     x.className='dbtn jv-spot-x';
-    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.innerHTML=bic('exit')+' Close';x.title='Esc';
     x.addEventListener('click',function(e){
       e.stopPropagation();closeSpot();});
     wrap.appendChild(x);
@@ -3075,9 +3075,10 @@
     if(u.other) bits.push('the deck');
     /* T455: one of the five BASE colours is never unused -- it is what
        everything falls back to. Saying "not used yet" beside a slide
-       full of colour is what made the panel read as broken. */
-    if(base) bits.push('everything else');
-    return bits.length?bits.join(' \u00b7 '):'not used yet';
+       full of colour is what made the panel read as broken. T624: and
+       "everything else" on all five said nothing either; a base colour
+       shows only its real counts, or nothing */
+    return bits.length?bits.join(' \u00b7 '):(base?'':'not used yet');
   }
   /* changing a token is an ordinary edit: one markDirty, one undo step,
      and a refresh — which is the cascade, since nothing held a copy */
@@ -3173,7 +3174,11 @@
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'deck colours');
+    /* T624: what the panel is, behind its heading's "?" */
+    menuHead(m,'deck colours').appendChild(qBtn('The five colours every '
+      +'slide is built from. Change one and everything without a colour '
+      +'of its own follows. A style set you save carries this palette '
+      +'with it.','Deck colours'));
     var t=tokens();
     /* T444: A PICTURE OF WHAT THE ROWS ARE (2026-09-14, user: "this
        still makes no sense to me whatever this is doing ... This needs
@@ -3203,8 +3208,6 @@
        mechanism works, it is that nothing is wearing one yet. */
     var anyUse=Object.keys(t.c).some(function(k){
       var u=tokUses(k);return !!(u.boxes||u.slides||u.other);});
-    var note=document.createElement('div');
-    note.className='ff-none';
     /* T367: what the panel IS, not how the mechanism works. T208 asked
        for an explanation here and T265 gave it the mechanism; the user,
        2026-09-07: "I have told you so many times that the text doesn't
@@ -3217,10 +3220,7 @@
        that ships has ever kept. A set you SAVE does capture this palette
        (40-captions-and-components.js, tokens:deep(tokens())), which is
        the sentence worth telling somebody. */
-    note.textContent='The five colours every slide is built from. Change '
-      +'one and everything that has no colour of its own follows. A style '
-      +'set you save carries this palette with it.';
-    m.appendChild(note);
+    /* T624: those words are the heading's "?" now */
     function tokRow(k){
       var row=document.createElement('div');row.className='ff-row';
       var sw=document.createElement('span');
@@ -3268,14 +3268,13 @@
       (TOKEN_SPARE[k]?spare:jobs).push(k);});
     jobs.forEach(function(k){m.appendChild(tokRow(k));});
     if(spare.length){
-      menuHead(m,'extra colours, for things you choose');
+      menuHead(m,'extra colours');
       var note2=document.createElement('div');
       note2.className='ff-none';
       note2.textContent=anyUse
         ?'Put one on any box from the Deck colours row of its colour '
           +'menu; change it here and every box wearing it follows.'
-        :'Nothing wears one yet. Put one on any box from the Deck '
-          +'colours row of its colour menu.';
+        :'None used yet.';
       m.appendChild(note2);
       var used=[],idle=[];
       spare.forEach(function(k){
@@ -3319,11 +3318,6 @@
     m.className='sh-menu canvas-menu tok-pop deck-layout-pop';
     m.id='deck-layout-pop';
     menuHead(m,'deck layout defaults');
-    var note=document.createElement('div');
-    note.className='ff-none';
-    note.textContent='Defaults shared across this deck. Individual object '
-      +'size and position stay in Object.';
-    m.appendChild(note);
     var t=tokens();
     menuHead(m,'box corners');
     var rr=document.createElement('div');rr.className='ff-row';
@@ -4633,15 +4627,16 @@
     var total=0;
     Object.keys(spent).forEach(function(k){total+=spent[k];});
     /* a run that never left the first slide, or lasted under half a
-       minute, is someone checking a colour -- not a rehearsal */
+       minute, is someone checking a colour -- not a rehearsal. One that
+       moved through the slides says why it was not kept (T624 review) */
     if(rehSeen<2||total<REH_MIN_SEC){
-      if(total>2) toast('Too short to record as a rehearsal');
+      if(rehSeen>=2&&total>2) toast('Too short to count as a rehearsal');
       return;
     }
     var runs=rehRuns();
     runs.push({at:Date.now(),total:total,s:spent});
     rehSave(runs);
-    toast('Rehearsal recorded — '+fmtMins(total/60)+' over '
+    toast('Rehearsal: '+fmtMins(total/60)+', '
       +rehSeen+' slide'+(rehSeen===1?'':'s'));
     /* renderNotesPane deliberately does not own tab bodies. Refresh the
        history itself so an already-open Rehearsals tab stops saying

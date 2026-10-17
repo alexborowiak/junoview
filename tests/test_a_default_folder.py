@@ -94,8 +94,8 @@ def test_the_menu_names_the_folder_and_can_undo_it():
 
 def test_the_full_browser_names_the_fix(out):
     """It said what had gone wrong and offered a one-off download; the
-    thing that stops it happening again is the folder."""
-    assert ("      toast('NOT saved \\u2014 this browser is full. "
-            "The \\u25be beside '") in out
-    assert ("        +'Save \\u203a \"A folder on this computer\" "
-            "keeps every '") in out
+    thing that stops it happening again is the folder. T624: the toast
+    is the fact and the one action that saves the work now; the folder
+    is the save-where prompt's row, and its "?" says why."""
+    assert ("      toast('NOT saved \\u2014 browser full. File \\u203a Download '"
+            "\n        +'.junoview',11000);") in out

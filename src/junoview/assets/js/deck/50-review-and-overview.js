@@ -222,9 +222,7 @@
         if(named) return;
         out.push({sev:'warn',si:si,i:i,
           head:'Slide '+(si+1)+': a figure nothing mentions',
-          why:(num?('Figure '+num):'This figure')+' has no caption, and '
-            +'no text or note on the slide names it. An audience does '
-            +'not know what they are looking at.'});
+          why:'No caption, and nothing on the slide names it.'});
       });
       /* --- 2. a caption with no figure --- */
       (sl.annots||[]).forEach(function(a,i){
@@ -235,16 +233,13 @@
           if(figOfCap(sl,a)>=0) return;
           out.push({sev:'err',si:si,i:i,
             head:'Slide '+(si+1)+': a caption whose figure is gone',
-            why:'“'+t.slice(0,60)+'” is tied to a figure that is no '
-              +'longer on this slide. It will number as [missing '
-              +'figure] and read as a caption for nothing.'});
+            why:'“'+t.slice(0,60)+'” — its figure is gone (numbers as '
+              +'[missing figure]).'});
         } else if(looks){
           out.push({sev:'warn',si:si,i:i,
             head:'Slide '+(si+1)+': a caption that is not tied to '
               +'anything',
-            why:'“'+t.slice(0,60)+'” reads like a caption but belongs '
-              +'to no figure, so it will not follow one, and its '
-              +'number will not update when the slides move.'});
+            why:'“'+t.slice(0,60)+'” is not tied to a figure.'});
         }
       });
       /* --- 4. a slide with a lot on it --- */
@@ -254,9 +249,7 @@
       if(wc>DENSE_WORDS||ic>DENSE_ITEMS)
         out.push({sev:'warn',si:si,i:null,
           head:'Slide '+(si+1)+': a lot on one slide',
-          why:wc+' words and '+ic+' things on it. Above about '
-            +DENSE_WORDS+' words an audience reads instead of '
-            +'listening.'});
+          why:wc+' words, '+ic+' thing'+(ic===1?'':'s')+'.'});
       /* COLLECT THE SURFACES for lint 3. Single words AND adjacent
          pairs, because the whole point is that "sea-level" and "sea
          level" are the same term written two ways -- and one of those
@@ -297,9 +290,7 @@
       out.push({sev:'warn',si:null,i:null,
         head:'Two spellings of one thing',
         why:forms.map(function(f){
-          return '“'+f+'” ×'+surfaces[k][f];}).join(', ')
-          +'. Pick one — an audience reads the difference as a '
-          +'distinction.'});
+          return '“'+f+'” ×'+surfaces[k][f];}).join(', ')+'.'});
     });
     /* --- 4. a picture nobody has described (T105) ---
        Deliberately NOT "has no alt text": a picture is allowed to carry
@@ -317,11 +308,8 @@
         var what=a.k==='chart'?'chart':'picture';
         out.push({sev:'warn',si:si,i:i,
           head:'This '+what+' does not say what it shows',
-          why:'Somebody who cannot see it gets “'
-            +(annotLabel(a)||what)+'” — the name of the box, not '
-            +'what is in it. Select it and use Object › Alt text '
-            +'(or right-click it), or leave that empty to mark it '
-            +'decorative if it really carries nothing.'});
+          why:'Read aloud as “'+(annotLabel(a)||what)+'”. Add alt '
+            +'text.'});
       });
     });
     /* --- 5. the talk does not fit the time it has (T121) ---
@@ -366,9 +354,7 @@
         if(linkSlideIdx(l.sid)>=0) return;
         out.push({sev:'err',si:si,i:i,
           head:'This link goes nowhere',
-          why:'It points at a slide that is no longer in the deck. '
-            +'Clicking it while presenting says so and stays put, '
-            +'which is not what you want an audience to see.'});
+          why:'Its slide is no longer in the deck.'});
       });
     });
     /* --- 7. two slides that are the same slide --- */
@@ -383,10 +369,7 @@
       if(seen[key]!=null){
         out.push({sev:'warn',si:si,i:null,
           head:'This slide is a copy of an earlier one',
-          why:'Slide '+(seen[key]+1)+' has the same objects and the '
-            +'same words. A duplicate left in by accident reads as a '
-            +'stutter; one left in on purpose usually wants a build '
-            +'instead.'});
+          why:'Same as slide '+(seen[key]+1)+'.'});
       } else seen[key]=si;
     });
     return out;
@@ -440,7 +423,7 @@
     var ov=document.createElement('div');
     ov.className='deck-review';ov.id='deck-review';
     ov.innerHTML='<div class="rv-head">'
-      +'<span class="rv-t">Send this deck out to be read</span>'
+      +'<span class="rv-t">Export for review</span>'
       +'<span class="deck-spring"></span>'
       +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
       +'<button class="dbtn" id="rv-dl">'+bic('markdown')
@@ -454,9 +437,22 @@
       +'<div class="rv-main">'
       +'<div class="rv-lints" id="rv-lints"></div>'
       +'<div class="rv-textwrap"><span class="rv-lab">'
-      +'what a reader gets — markdown, so it pastes anywhere</span>'
+      +'Markdown</span>'
       +'<textarea class="rv-text" id="rv-text" readonly '
       +'spellcheck="false"></textarea></div></div>';
+    /* T624: why each finding matters, once, behind the title's "?" --
+       every row used to carry its own reason */
+    var rvt=ov.querySelector('.rv-t');
+    if(rvt) rvt.parentNode.insertBefore(qBtn('A figure nothing names '
+      +'leaves the audience guessing what it shows.\nA caption tied to no '
+      +'figure will not follow it or renumber.\nAbove about '+DENSE_WORDS
+      +' words a slide gets read, not listened to.\nTwo spellings of one thing '
+      +'read as two different things.\nA picture without alt text is '
+      +'read aloud as its box\u2019s name: select it and use Object \u203a '
+      +'Alt text, or leave that empty to mark it decorative.\nA link to a '
+      +'deleted slide goes nowhere while you present.\nA repeated slide '
+      +'reads as a stutter; if it is on purpose, a build may be better.',
+      'Export for review'),rvt.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#rv-text').value=text;
     var host=ov.querySelector('#rv-lints');
@@ -468,11 +464,6 @@
         +(errs?(' · '+errs+' serious'):''))
       :'Nothing looks wrong with the content';
     host.appendChild(hd);
-    var note=document.createElement('div');
-    note.className='rv-note';
-    note.textContent='About what the deck says. “Before you print” '
-      +'is the other list — that one is about ink and millimetres.';
-    host.appendChild(note);
     lints.forEach(function(l){
       var b=document.createElement('button');
       b.className='rv-lint sev-'+l.sev;
@@ -500,8 +491,8 @@
       try{done=document.execCommand('copy');}catch(e){}
       if(!done&&navigator.clipboard)
         navigator.clipboard.writeText(text).then(function(){
-          toast('Copied — paste it wherever it is being read');});
-      else toast(done?'Copied — paste it wherever it is being read'
+          toast('Copied');});
+      else toast(done?'Copied'
         :'Select the text and copy it');
     });
     ov.querySelector('#rv-dl').addEventListener('click',function(){
@@ -514,7 +505,7 @@
       a.download=(pres.name||'deck')+'.review.md';
       a.click();
       setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
-      toast('Saved — it travels; junoview stays here');
+      toast('Saved .md');
     });
     ov.querySelector('#rv-json').addEventListener('click',function(){
       var blob=new Blob([reviewJson(lints)],{type:'application/json'});
@@ -693,12 +684,10 @@
       var copyOf=filmThumbSource();
       var runs=sectionRuns();
       var n=(pres.slides||[]).length;
-      t.textContent=(sorting?'Slide sorter \u2014 ':'')
-        +(pres.name||'This deck')+' \u2014 '+n+' slide'+(n===1?'':'s')
-        +(function(){
-          var ns=runs.filter(function(r){return r.id;}).length;
-          return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
-        })();
+      /* T624: the name and the count; the sections are the groups
+         below, each with its own heading */
+      t.textContent=(pres.name||'This deck')+' \u00b7 '+n+' slide'
+        +(n===1?'':'s');
       runs.forEach(function(r){
         var grp=document.createElement('div');
         grp.className='ovw-grp';
@@ -1165,8 +1154,8 @@
     }
     presenterSync&&presenterSync();
     renderFilm();
-    toast(id?('Showing the custom show \u201c'+(cutMap()[id]||{}).name
-      +'\u201d'):'Showing every slide');
+    toast(id?('Showing \u201c'+(cutMap()[id]||{}).name+'\u201d')
+      :'Showing every slide');
   }
   /* T25. One control, mid-talk, that drops the rest of the optional
      slides. From HERE onward: what you have already shown is not the
@@ -1197,8 +1186,8 @@
     var n=0;
     (pres.slides||[]).forEach(function(sl,i){
       if(i>cur&&sl&&sl.opt&&inCut(sl,cut)) n++;});
-    toast(n?(n+' optional slide'+(n===1?'':'s')
-      +' will be skipped from here'):'No optional slides left to skip');
+    toast(n?('Skipping '+n+' optional slide'+(n===1?'':'s'))
+      :'No optional slides left');
     return n;
   }
   function toggleOptional(i){
@@ -1216,8 +1205,8 @@
     if(sl.hide) delete sl.hide; else sl.hide=1;
     markDirty();renderFilm();
     if(typeof syncHomeDoors==='function') syncHomeDoors();
-    toast(sl.hide?'Hidden — the show goes straight past it, and it '
-      +'stays out of a PDF':'Shown again');
+    /* T624: no toast -- the strip marks it hidden and the button stays
+       pressed */
   }
   function toggleSlideCut(i,id){
     var sl=(pres.slides||[])[i]; if(!sl||!id||!hasCut(id)) return;
@@ -1293,7 +1282,7 @@
           +'one click is one slide and nothing moves. Flip books still '
           +'step (A)';
       var lab=b.querySelector('.tk-state');
-      if(lab) lab.textContent=talkNoBuilds?'skipped':'playing';
+      if(lab) lab.textContent=talkNoBuilds?'Skipped':'Playing';
     }
     /* the reset button IS the readout: the current size, click to put
        it back. It used to say 100% forever while the real number sat
@@ -1316,11 +1305,8 @@
     /* a slide part-way through its builds must not be left showing
        fewer things than it now claims to have */
     if(talkNoBuilds) revealCount=0;
+    /* T624: no toast -- the button beside it says Skipped or Playing */
     syncTalk();renderSlide();presenterSync();
-    toast(talkNoBuilds
-      ? 'Animations skipped \u2014 slides arrive complete, and change '
-        +'with a plain cut'
-      : 'Animations are playing again');
   }
   /* bucket===undefined scales everything; a bucket name scales that
      kind of text on top of the global size. 0 always means "put it
@@ -2147,8 +2133,8 @@
       var can=!!window.showDirectoryPicker||!!deckDir;
       btn.hidden=!can;
       btn.innerHTML=bic('open')+' '+((deckDir&&!hubDirRows)
-        ?('Show the files in '+esc(deckDirName||'your folder'))
-        :'Look in a folder\u2026');
+        ?('Files in '+esc(deckDirName||'your folder'))
+        :'Browse folder\u2026');
     }
     if(!host||!head) return [];
     host.innerHTML='';
@@ -2164,7 +2150,7 @@
     }
     var rows=hubDirRows.filter(function(r){return hubDirMatch(r,q);});
     if(!rows.length) emptyPresentationList(host,
-      q?'No file here matches.':'No presentation files in this folder.');
+      q?'No match':'No presentations here');
     rows.forEach(function(r){host.appendChild(hubDirRow(r));});
     return rows;
   }
@@ -2252,9 +2238,8 @@
     pin.setAttribute('aria-label',pin.title);
     function flip(e){
       e.stopPropagation();e.preventDefault();
-      var on=togglePinPresentation(p.name);
-      toast(on?('\u201c'+p.name+'\u201d pinned \u2014 it stays at the top '
-        +'of Recent'):('\u201c'+p.name+'\u201d unpinned'),4000);
+      /* T624: no toast -- the row moves, and its pin lights */
+      togglePinPresentation(p.name);
     }
     pin.addEventListener('click',flip);
     pin.addEventListener('keydown',function(e){
@@ -2297,8 +2282,7 @@
       if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
         noteSessionOpen(p.name);
         renderPresTabs();
-        toast('\u201c'+p.name+'\u201d is on the open list \u2014 Ctrl+click '
-          +'adds more; a plain click opens one',5000);
+        toast('\u201c'+p.name+'\u201d added to open tabs',5000);
         return;
       }
       click(e);
@@ -2436,8 +2420,7 @@
       return hubMatch(p,q);});
     var all=libraryRows().filter(function(p){return hubMatch(p,q);});
     if(!recent.length) emptyPresentationList(recentHost,
-      q?'No recent presentation matches.':
-      'No recent presentations yet. Create one or open a saved deck.');
+      q?'No match':'None yet');
     recent.forEach(function(p){
       recentHost.appendChild(presentationLibraryRow(p,function(){
         closePresentationHub();choosePresentation(p.name);
@@ -2473,7 +2456,7 @@
       return b;
     }
     if(!all.length&&!order.length&&!q) emptyPresentationList(allHost,
-      'No saved presentations yet.');
+      'None yet');
     loose.forEach(function(p){allHost.appendChild(rowFor(p));});
     order.sort().forEach(function(f){
       /* a folder with nothing matching is not listed while finding */
@@ -2489,8 +2472,7 @@
     /* found nowhere at all: said once, where the eye starts */
     if(q&&!recent.length&&!all.length&&!dirRows.length){
       recentHost.innerHTML='';
-      emptyPresentationList(recentHost,
-        'Nothing is called \u201c'+q+'\u201d or has it on a slide.');
+      emptyPresentationList(recentHost,'No match');
     }
     var names=recent.concat(all).map(function(p){return p.name;});
     if(!root.hidden){  /* a list re-drawn behind a closed dialog paints none */
@@ -2769,9 +2751,14 @@
       var ic=document.createElement('span');ic.innerHTML=icon;
       var nm=document.createElement('span');nm.className='deck-pres-row-name';
       nm.textContent=name;
-      var kd=document.createElement('span');kd.className='deck-pres-row-kind';
-      kd.textContent=kind;
-      b.appendChild(ic);b.appendChild(nm);b.appendChild(kd);
+      b.appendChild(ic);b.appendChild(nm);
+      /* T624: "presentation" under Presentations and "notebook" under
+         Notebooks said nothing; a poster or a custom view still says so */
+      if(kind&&kind!=='presentation'&&kind!=='notebook'){
+        var kd=document.createElement('span');kd.className='deck-pres-row-kind';
+        kd.textContent=kind;
+        b.appendChild(kd);
+      }
       host.appendChild(b);
       return b;
     }
@@ -2846,7 +2833,7 @@
       var nbs=openNotebookRows();
       nbs.forEach(function(n){
         var r=row('',bic('doc'),n.label,n.kind,
-          'Stop presenting and show this notebook'
+          'End the show and show this notebook'
           +(n.path?(' ('+n.path+')'):''),
           function(){
             if(!barDocked()) closeDeckPresentationDrawer();
@@ -2868,7 +2855,7 @@
     }
     /* ---- this deck's saved versions (T448: "and version") ---- */
     if(c.vers&&typeof histIndex==='function'){
-      head('versions of this presentation');
+      head('versions');
       var vh=document.createElement('div');
       vh.className='deck-pres-empty';vh.textContent='Looking…';
       host.appendChild(vh);
@@ -2878,8 +2865,7 @@
         if(!pres||pres.name!==want||!vh.parentNode) return;
         var rows=(ix||[]).slice(-6).reverse();
         if(!rows.length){
-          vh.textContent='No versions yet — one is kept when you save, '
-            +'open or checkpoint this deck.';
+          vh.textContent='No versions yet';
           return;
         }
         vh.remove();
@@ -2917,15 +2903,15 @@
     var m=document.createElement('div');
     m.className='sh-menu vw-menu';m.id='openbar-menu';
     var c=barCfg();
-    menuHead(m,'where this bar sits');
-    [['pop','A pop-up',
+    menuHead(m,'position');
+    [['pop','Pop-up',
       (APP.filesAt&&APP.filesAt()==='top')
         ?'It opens from Open now, and closes when you leave it'
         :'It opens from the chevron beside Home and when you reach the '
           +'left edge, and closes when you leave it'],
-     ['left','A rail down the left',
+     ['left','Left rail',
       'It stays open and the slide makes room for it'],
-     ['top','A strip across the top',
+     ['top','Top strip',
       'It stays open above the slide']].forEach(function(o){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';b.type='button';
@@ -2937,7 +2923,7 @@
         e.stopPropagation();overlayDrop(m);barSet('dock',o[0]);});
       m.appendChild(b);
     });
-    menuHead(m,'what it lists');
+    menuHead(m,'show');
     [['pres','Presentations'],['nb','Notebooks'],
      ['vers','Versions']].forEach(function(o){
       var b=document.createElement('button');
@@ -3214,8 +3200,7 @@
      slide] pairs. */
   var DECK_TEMPLATES=[
     {id:'talk',label:'Conference talk',stem:'talk',
-     blurb:'The question, what you did, two results and the take-home, '
-       +'in the order a twelve-minute talk runs.',
+     blurb:'Question, method, results, take-home',
      secs:[['Introduction',0],['Methods',2],['Results',3],
        ['Conclusions',5]],
      slides:[
@@ -3231,8 +3216,7 @@
         +'line each.'}]],
       ['section',['Thank you \u2014 questions?']]]},
     {id:'lab',label:'Lab meeting',stem:'lab meeting',
-     blurb:'Since last time, a result or two, where you are stuck and '
-       +'what is next.',
+     blurb:'Progress, results, blockers, next steps',
      slides:[
       ['title',[{ph:'What I have been working on'},
         {ph:'Your name \u00b7 Lab meeting, date'}]],
@@ -3246,8 +3230,7 @@
       ['title-body',['Next steps',{ph:'What you will do before the '
         +'next meeting.'}]]]},
     {id:'defence',label:'Thesis defence',stem:'defence',
-     blurb:'The question, a section and a result for each chapter, '
-       +'contributions and future work.',
+     blurb:'A section per chapter, then contributions',
      secs:[['Introduction',0],['Chapter 1',4],['Chapter 2',6],
        ['Chapter 3',8],['Conclusions',10]],
      slides:[
@@ -3279,8 +3262,7 @@
        template from Layouts, on the white page a new poster gets */
     {id:'poster',label:'Poster',stem:'poster',page:'a0p',
      tokens:{c:{page:'#ffffff'}},
-     blurb:'An A0 conference poster in three numbered columns, ready '
-       +'for your figures.',
+     blurb:'A0 poster in three columns',
      slides:[['poster-3col',[]]]}
   ];
   function tplSlide(spec){
@@ -3370,9 +3352,12 @@
       +(d.slides.length===1?'':'s');
     nm.appendChild(n);
     b.appendChild(nm);
-    var bl=document.createElement('span');bl.className='nt-blurb';
-    bl.textContent=t?t.blurb:'One empty slide.';
-    b.appendChild(bl);
+    /* T624: Blank's card says "Blank · 1 slide" already */
+    if(t){
+      var bl=document.createElement('span');bl.className='nt-blurb';
+      bl.textContent=t.blurb;
+      b.appendChild(bl);
+    }
     b.title='Make a '+(t?t.label.toLowerCase():'blank presentation')
       +(t?' presentation':'');
     b.addEventListener('click',function(){ntClose();newPresentationFrom(t);});
@@ -3410,7 +3395,7 @@
     var A=window.SemApp||{};
     var stem=A.active;
     if(!stem||!A.enterStyling){
-      toast('Open a notebook first — a custom view restyles a notebook');
+      toast('Open a notebook first');
       return;
     }
     var n2=1,name='custom view';
@@ -3545,7 +3530,7 @@
     var cells=slideCells(s);
     if(!cells.length){
       ed.innerHTML='<div class="pane empty"><span class="pane-t">'
-        +'pick a layout above, or click a card in the document'
+        +'Pick a layout or a card'
         +'</span></div>';
       return ed;
     }
@@ -5797,6 +5782,14 @@
     try{ov.style.setProperty('--page-bg',
       getComputedStyle(deckEl).getPropertyValue('--page-bg')||deckPageBg());
     }catch(err){}
+    /* T624: what a variation is -- the toasts that make one no longer
+       explain it, so this screen's "?" does */
+    var dgt=ov.querySelector('.dh-t');
+    if(dgt) dgt.parentNode.insertBefore(qBtn('A variation is a style based '
+      +'on another, such as Title. It follows its parent for everything '
+      +'you did not change, so changing Title changes it too.\n\nCheck '
+      +'consistency finds boxes that have drifted from their style.',
+      'Style system'),dgt.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#dg-close').addEventListener('click',dgClose);
     /* T384: the door had no handler behind it. Same route the ribbon's

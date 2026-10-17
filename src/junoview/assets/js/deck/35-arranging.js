@@ -301,8 +301,7 @@
      appearing to be broken (2026-08-07 audit). */
   function needTwo(items,what){
     if(items.length>=2) return false;
-    toast('Select at least two items to '+what
-      +' — arrows, locked and hidden items don’t count');
+    toast('Select at least two items');
     return true;
   }
   /* The Arrange menu contains both one-object actions and multi-selection
@@ -1262,7 +1261,7 @@
          (T194: layout, not arrangement) */
       askText({title:'Save this slide\u2019s layout',label:'Call this layout',
         value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -1319,8 +1318,7 @@
     closeLayoutIdeas();
     var sl=pres.slides[cur];
     if(!sl||!(sl.annots||[]).length){
-      toast('Put something on this slide first — ideas are computed '
-        +'from what is there');
+      toast('Put something on this slide first');
       return;
     }
     /* FULL SCREEN (T209): a header like the other full-screen views,
@@ -1331,10 +1329,8 @@
     var h=document.createElement('div');h.className='img-ov-h';
     var ht=document.createElement('span');ht.className='img-ov-t';
     ht.textContent='Ways to lay this slide out';h.appendChild(ht);
-    var hs=document.createElement('span');hs.className='img-ov-sub';
-    hs.textContent='Worked out from what is on the slide. Click one; '
-      +'Ctrl+Z undoes it.';
-    h.appendChild(hs);
+    /* T624: no sub-line -- the cards are plainly ideas to click, and
+       Ctrl+Z undoes one like anything else */
     var hc=document.createElement('button');hc.className='dbtn rbn-sm';
     hc.innerHTML=bic('exit')+' Close';hc.title='Close (Esc)';
     hc.addEventListener('click',function(e){
@@ -1613,12 +1609,11 @@
     var old=$('#objmatch-menu'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu match-menu';m.id='objmatch-menu';
-    menuHead(m,'point at what to match');
-    [['to','Copy this look to objects I click…',
+    [['to','Copy look to…',
       'Then click each object that should take it'],
-     ['from','Take the look of an object I click…',
+     ['from','Take look from…',
       'Then click the one object whose look you want here'],
-     ['layout','Lay these out like a group I click…',
+     ['layout','Lay out like…',
       'Then click a group whose arrangement these should copy. The '
       +'look does not travel — only the positions and sizes']]
       .forEach(function(o){
@@ -1711,8 +1706,7 @@
     var r=matchSlide(from,to);
     if(!r) return true;
     if(!r.moved){
-      toast('Slide '+(i+1)+' and slide '+(slideArm.slide+1)
-        +' have no matching items \u2014 nothing to copy a layout from');
+      toast('Nothing on those slides matched');
       return true;
     }
     slideArm.n+=1;
@@ -2980,9 +2974,8 @@
     markDirty();showFmt();sizePaneSync();
     /* nothing is stored about WHAT the shape is: the ratio is read off
        the box when a drag starts, so locking never resizes anything */
-    toast(on?'Shape kept — drag any handle and it stays this shape '
-      +'(hold Shift to stretch it anyway)'
-      :'Shape free — width and height move independently again');
+    /* T624: the Shift tip is the button's tooltip */
+    toast(on?'Aspect ratio locked':'Aspect ratio free');
   }
   function showSizePane(on){
     var p=$('#sizepane'); if(!p) return;

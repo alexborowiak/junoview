@@ -260,16 +260,14 @@
     comp.appendChild(lab);
     var ta=document.createElement('textarea');
     ta.className='ask-in ask-area cmt-ta';ta.id='cmt-new';ta.rows=3;
-    ta.placeholder='Select an object to comment on it, or leave nothing '
-      +'selected to comment on the slide';
+    ta.placeholder='Write a comment\u2026';
     ta.value=cmtDraft;
     ta.addEventListener('input',function(){cmtDraft=ta.value;});
     comp.appendChild(ta);
     var row=document.createElement('div');row.className='cmt-row';
-    var hint=document.createElement('span');hint.className='cmt-hint';
-    hint.textContent='Ctrl+Enter posts';
     var post=document.createElement('button');
     post.type='button';post.className='dbtn primary';post.textContent='Post';
+    post.title='Post (Ctrl+Enter)';
     function doPost(){
       if(!ta.value.trim()){ta.focus();return;}
       var c=cmtAdd(ta.value);
@@ -281,7 +279,7 @@
       if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();doPost();}
       if(e.key==='Escape'){e.preventDefault();ta.blur();}
     });
-    row.appendChild(hint);row.appendChild(post);
+    row.appendChild(post);
     comp.appendChild(row);
     body.appendChild(comp);
     /* the list */

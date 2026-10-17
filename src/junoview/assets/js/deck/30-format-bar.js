@@ -15,11 +15,10 @@
        button does exactly what Done does. Say Stop instead of promising
        an undo that already happened (2026-09-05, found wiring #pick-done,
        which had no handler at all). */
-    if(c) c.textContent=(pickMulti&&pickAdded)?'Stop (Esc)':'Cancel (Esc)';
+    if(c) c.textContent=(pickMulti&&pickAdded)?'Stop':'Cancel';
     if(!w) return;
     if(!pickMulti){
-      w.innerHTML=bic('pin')+' Click a card in the notebook to place it '
-        +'in the slide';
+      w.innerHTML=bic('pin')+' Click a card to place it';
       return;
     }
     w.innerHTML=bic('pin')+' Click each figure you want in the flip '
@@ -326,7 +325,7 @@
       if(target==='text'){
         var hb=document.createElement('div');hb.className='hl-block';
         var hh=document.createElement('div');hh.className='hd-lab';
-        hh.textContent='highlight behind the words';
+        hh.textContent='highlight';
         hb.appendChild(hh);hlRow(hb,false);menu.appendChild(hb);
       }
       overlayShow(btn,menu);       /* on the stack (T213) */
@@ -957,8 +956,7 @@
         }
         if(ff==='s') a.fit='shrink'; else delete a.fit;
       });
-      if(unSat) toast('A box that grows has no middle or bottom — the '
-        +'words sit at the top again',4000);
+      if(unSat) toast('A growing box keeps words at the top',4000);
       return;
     }
     /* T547: TEXT IN COLUMNS. One, two or three; the words flow down the
@@ -1568,13 +1566,13 @@
     var a=tblCur(),p=tblPick(a);
     var m=document.createElement('div');
     m.className='sh-menu tbl-menu';
-    menuHead(m,'split the chosen cell');
     var merged=!!(a&&p&&tableMergeAt(a,p.r0,p.c0));
     function row(label,note,on,fn){
       var b=document.createElement('button');
       b.type='button';b.className='dbtn vw-opt';
-      b.innerHTML='<span class="sa-t">'+esc(label)+'</span>'
-        +'<span class="sa-n">'+esc(note)+'</span>';
+      /* T624: the label says it; what it does is the tooltip */
+      b.innerHTML='<span class="sa-t">'+esc(label)+'</span>';
+      b.title=note;
       b.disabled=!on;
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayDrop(m);fn();});
@@ -1712,7 +1710,9 @@
       });
       lab.appendChild(ck);
       var tx=document.createElement('span');
-      tx.innerHTML='<b>'+esc(o[1])+'</b> '+esc(o[2]);
+      /* T624: the name alone; what it does is the tooltip */
+      tx.innerHTML='<b>'+esc(o[1])+'</b>';
+      lab.title=o[2];
       lab.appendChild(tx);
       m.appendChild(lab);
     });
@@ -1814,9 +1814,8 @@
               if(x.k==='text'){applyStyleTo(x,vid);n2++;}});
             markDirty();renderSlide();showFmt();
             menu.hidden=true;
-            toast('\u201c'+look.label+'\u201d is now a variation of '
-              +(d.label||base)+(n2?' \u2014 on '+n2+' box'+(n2===1?'':'es'):'')
-              +'. Find it in the Style system to give it to more.',6000);
+            toast('\u201c'+look.label+'\u201d added to '+(d.label||base)
+              +(n2?' \u2014 '+n2+' box'+(n2===1?'':'es'):''),6000);
           });
           familyHost.appendChild(b);
         });
@@ -1904,9 +1903,7 @@
           if(Object.keys(o).length) deckStyles()[v.id]=o;
           applyStyleTo(a5,v.id);
           markDirty();renderSlide();showFmt();
-          toast('\u201c'+nm+'\u201d is a variation of '
-            +p.label+' \u2014 it follows '+p.label
-            +' for everything you did not change.',6000);
+          toast('\u201c'+nm+'\u201d (a '+p.label+' variation)',6000);
           });
         });
         menu.appendChild(mkv);
@@ -1914,7 +1911,7 @@
       menuHead(menu,'this deck');
       var upd=document.createElement('button');
       upd.className='dbtn vw-opt';
-      upd.innerHTML=bic('reload')+' Update the style from this box';
+      upd.innerHTML=bic('reload')+' Update style from this box';
       upd.title='Take this box\u2019s size, weight, font and colour and '
         +'make them the style \u2014 every other box wearing it follows';
       upd.disabled=!curId;
@@ -1934,7 +1931,7 @@
       menu.appendChild(upd);
       var all=document.createElement('button');
       all.className='dbtn vw-opt';
-      all.innerHTML=bic('inherit')+' Apply this look to ALL headings';
+      all.innerHTML=bic('inherit')+' Apply to all headings';
       all.title='Push this box\u2019s weight, font, colour, background '
         +'and edge to Title and Headings 1\u20133, keeping each one\u2019s '
         +'own size';
@@ -2020,8 +2017,7 @@
       if(lockMode(a)==='all'){full++;return;}
       n++;
       if(pin) a.lock='pos'; else delete a.lock;});
-    if(full&&!n) toast('Fully locked \u2014 "Not locked" in the '
-      +'right-click menu or the Layers pane takes it off');
+    if(full&&!n) toast('Fully locked');
     else toast((pin?'Position locked':'Not locked')
       +(n>1?(' \u2014 '+n+' items'):''));
   });
@@ -2128,15 +2124,17 @@
     var rows=[
       {k:'col',label:'Colour',type:'color',
        value:p0.lc?tokVal(p0.lc):'',clear:true,
-       note:'Default is the words\u2019 own colour'},
+       clearTitle:'The words\u2019 own colour'},
       {k:'sz',label:'Size',type:'select',value:String(p0.ls||1),
        options:LIST_SIZES.map(function(p){return [String(p[0]),p[1]];})}];
     if(ord) rows.push({k:'start',label:'Start at',type:'number',
       value:num||1,min:1,max:999,step:1});
     askText({title:ord?'Numbering':'Bullets',
-      what:(ord?'How the numbers look, and where they start':
-        'How the bullets look')+(only?' \u2014 for the paragraph'
-        +(only.length===1?'':'s')+' you were in.':'.'),
+      what:ord?('How the numbers look, and where they start'
+        +(only?' \u2014 for the paragraph'+(only.length===1?'':'s')
+        +' you were in.':'.'))
+        :(only?'For the paragraph'+(only.length===1?'':'s')
+        +' you were in.':''),
       rows:rows,ok:'Apply'},function(v){
       if(!v) return;
       var fam=ord?(lastNumber||'number'):(lastBullet||'bullet');
@@ -2642,8 +2640,9 @@
       menu.appendChild(b);
     });
     var k=document.createElement('div');k.className='case-key';
-    k.textContent='Shift+F3 steps through lowercase, Capitalise Each '
-      +'Word and UPPERCASE';
+    k.textContent='Shift+F3 cycles';
+    k.title='Shift+F3 steps through lowercase, Capitalise Each Word and '
+      +'UPPERCASE';
     menu.appendChild(k);
   }
   var opRangeEl=$('#fmt-op');
@@ -2866,8 +2865,7 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,made);}
-    if(freed) toast('Copied as a free object \u2014 clones of that set '
-      +'share one spot, so the copy is not one of them');
+    if(freed) toast('Copied as a free object');
     /* SAY SO. A stripped picture looks identical to the original at the
        moment it lands -- only its Refresh link is gone -- so the one
        difference that matters is the one thing nobody can see. The
@@ -3005,8 +3003,7 @@
       return;
     }
     if(which==='look'){
-      if(copyLook()) toast('Look copied \u2014 select what should wear '
-        +'it and press Ctrl+Shift+V, or Paste \u25be Paste look');
+      if(copyLook()) toast('Look copied \u2014 Ctrl+Shift+V pastes it');
       else toast('Select the object whose look you want first');
       return;
     }
@@ -3038,8 +3035,7 @@
       slidePaste(cur);toast('Slide pasted');return;}
     var cb=navigator.clipboard;
     function outside(){
-      toast('The browser keeps the clipboard for a key press here \u2014 '
-        +'press Ctrl+V to paste from outside Junoview',7000);
+      toast('Press Ctrl+V to paste from outside',7000);
     }
     if(!cb){outside();return;}
     if(which==='paste'&&cb.read){
@@ -3556,8 +3552,7 @@
           bk.at=bk.frames.length-1;
           markDirty();renderSlide();
           if(typeof renderFlipPane==='function') renderFlipPane();
-          toast('Pasted as page '+flipFrames(bk).length+' by its address '
-            +'\u2014 that site did not let the page read it',6000);
+          toast('Pasted as page '+flipFrames(bk).length+' (linked)',6000);
         });
     }
     return true;

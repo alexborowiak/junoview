@@ -42,8 +42,8 @@ def test_the_offer_is_a_row_on_the_welcome_screen():
     app = assets.app_js()
     assert "  function renderLastSession(){" in app
     assert "    h.textContent='last time';host.appendChild(h);" in app
-    assert ("    nm.textContent='Open the '+last.length+' notebook'\n"
-            "      +(last.length===1?'':'s')+' you had open';") in app
+    assert ("    nm.textContent='Reopen '+last.length+' notebook'\n"
+            "      +(last.length===1?'':'s');") in app
     # one button for the lot: "where I was" is one thought
     assert "      if(APP.openLastSession) APP.openLastSession();});" in app
     # The band stays available as the front door even when its Recent

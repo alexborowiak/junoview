@@ -27,4 +27,8 @@ def test_both_doors_list_the_fields():
         btn = html.split(f'id="{bid}"')[1].split("</button>")[0]
         assert "{name}, {date}, {n}/{N}" in btn, bid
     js = assets.load("js/deck/55-sections-and-strip.js")
-    assert js.count("({date:long} written out; ") == 2
+    # T624: both prompts show the codes, and share one "?" that says
+    # what each means
+    assert "({date:long} writes it out; type a date to keep it fixed)" in js
+    assert "furnEdit('head','Header',FURN_NOTE,'{name}',FURN_HELP);" in js
+    assert "furnEdit('foot','Footer',FURN_NOTE,'{n} / {N}',FURN_HELP);" in js

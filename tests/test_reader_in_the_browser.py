@@ -48,6 +48,8 @@ from __future__ import annotations
 import copy
 import json
 import os
+import shutil
+import subprocess
 import threading
 from http.server import ThreadingHTTPServer
 from pathlib import Path
@@ -107,9 +109,24 @@ def _serve(root: Path):
     return srv, f"http://127.0.0.1:{srv.server_address[1]}/?t={st.token}"
 
 
+def _git_repo(folder: Path) -> bool:
+    """commit what is in `folder`: a local notebook's Versions is offered
+    only inside a git repository (T624), so the Versions checks below need
+    one to open it"""
+    if not shutil.which("git"):
+        return False
+    for args in (["init", "-q"], ["add", "-A"],
+                 ["-c", "user.name=t", "-c", "user.email=t@example.org",
+                  "commit", "-qm", "the notebooks"]):
+        subprocess.run(["git", "-C", str(folder), *args], check=True,
+                       capture_output=True)
+    return True
+
+
 @pytest.fixture
 def two(browser, tmp_path):
-    """the example notebook and the widget one, both open"""
+    """the example notebook and the widget one, both open, in a git
+    repository"""
     nb = tmp_path / NB.name
     nb.write_bytes(NB.read_bytes())
     nb2 = tmp_path / NB2.name
@@ -117,9 +134,11 @@ def two(browser, tmp_path):
     (tmp_path / _PROJECT_FILE).write_text(json.dumps(
         {"presentations": [], "open": [str(nb), str(nb2)],
          "recent": [str(nb), str(nb2)]}, indent=1) + "\n", encoding="utf-8")
+    git = _git_repo(tmp_path)
     srv, url = _serve(tmp_path)
     try:
-        yield {"b": browser, "url": url, "stem": nb.stem, "stem2": nb2.stem}
+        yield {"b": browser, "url": url, "stem": nb.stem, "stem2": nb2.stem,
+               "git": git}
     finally:
         srv.shutdown()
         srv.server_close()
@@ -159,6 +178,11 @@ def _page(app, w=1366, h=657, plotly=None):
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.goto(app["url"])
     pg.wait_for_selector(".nbshell .card")
+    if app.get("git"):
+        # Versions shows once the shell's one idle /api/gitstate says
+        # the notebook is in a repository (T624)
+        pg.wait_for_selector(".nbshell:not([hidden]).git-yes "
+                             ".card .cell-history-btn", state="visible")
     pg.wait_for_timeout(600)
     return ctx, pg, errors
 
@@ -332,6 +356,8 @@ def test_find_marks_and_closing_takes_every_mark_back(two):
 
 
 def test_versions_is_not_modal_but_keeps_the_keyboard(two):
+    if not two["git"]:
+        pytest.skip("no git here: Versions is offered only in a repository")
     ctx, pg, errors = _page(two)
     btn = pg.evaluate(
         "(()=>{const b=document.querySelector('.nbshell:not([hidden]) "
@@ -400,6 +426,8 @@ def test_versions_keeps_the_page_from_a_screen_reader(two):
     """aria-modal is not honoured on a dialog shown with show(): the page
     behind was the screen reader's to wander, as it was not behind the
     modal (review, 2026-10-10)"""
+    if not two["git"]:
+        pytest.skip("no git here: Versions is offered only in a repository")
     ctx, pg, errors = _page(two)
     before = _ax_buttons(pg)
     assert "Find" in before
@@ -419,6 +447,8 @@ def test_versions_keeps_the_page_from_a_screen_reader(two):
 
 
 def test_versions_is_seen_over_a_full_screen_presentation(two):
+    if not two["git"]:
+        pytest.skip("no git here: Versions is offered only in a repository")
     ctx, pg, errors = _page(two)
     pg.click("#doc-present")
     pg.wait_for_timeout(500)
@@ -646,6 +676,8 @@ def _aim(pg, js):
 
 
 def test_a_press_on_the_sheet_is_the_press_the_browser_would_send(two):
+    if not two["git"]:
+        pytest.skip("no git here: Versions is offered only in a repository")
     ctx, pg, errors = _page(two)
     # an ICON: half of every button's face, and all of an eye's -- an SVG
     # element, which has no click() to hand the press to

@@ -26,7 +26,9 @@ def test_the_field_is_in_the_strip_markup():
     qat = html.split('<div class="deck-qat" id="deck-qat"')[1] \
         .split('<div class="rbn-tabs" id="rbn-tabs"')[0]
     assert 'id="rbn-search-in"' in qat
-    assert 'placeholder="Search commands (Alt+Q)"' in qat
+    # T624: the key is in the tooltip, not the words
+    assert 'placeholder="Search commands"' in qat
+    assert 'title="Search commands (Alt+Q)"' in qat
     assert (qat.index('id="qat-name"') < qat.index('id="rbn-search"')
             < qat.index('id="dc-save"'))
     assert 'id="rbn-search"' not in html.split(

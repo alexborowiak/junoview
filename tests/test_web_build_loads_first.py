@@ -168,9 +168,9 @@ def test_the_web_build_is_sent_as_its_welcome_screen():
         < page.index('<script type="application/json" id="app-data">')
     assert '<span id="welcome-demo-wrap"><a href="#" id="welcome-demo"' \
         in page
-    assert '<a href="#" id="welcome-install">Install as an app</a>' in page
+    assert '<a href="#" id="welcome-install">Install app</a>' in page
     # what app.js puts up at once on an empty Home is there already
-    assert '<div class="wj-none" id="wj-none-pres">No recent' in page
+    assert '<div class="wj-none" id="wj-none-pres">None yet</div>' in page
     # a saved side list still turns into one before the first paint
     assert "document.body.classList.contains('files-top')" in page
     # every other page with nothing open is what it was: app.js decides

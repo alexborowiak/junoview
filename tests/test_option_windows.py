@@ -100,7 +100,7 @@ def test_the_line_window_lays_four_drawn_menus_flat(out):
     assert "rbn-stack rbn-cols" not in out
     # the printed thickness moved from the old door's tooltip to the
     # section heading, where the reader is looking now
-    assert "if(swL) swL.textContent='weight — '+swSay;" in out
+    assert "if(swL) swL.textContent='weight \\u00b7 '" in out
 
 
 def test_the_source_window_holds_the_provenance_family(out):

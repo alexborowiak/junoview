@@ -340,9 +340,11 @@ def test_escape_on_ctrl_k_over_an_open_file_menu_closes_the_dialog(app):
 
 # --------------------------------------------------------------------- 5
 
-def _export(pg, name, timeout=40.0):
+def _export(pg, name, timeout=40.0, asked=None):
     """SemDeckPptx, answering its question if it asks, until the file is
-    saved and said so; (seconds, what was said)"""
+    saved and said so; (seconds, what was said). What the question
+    listed goes into `asked` when one is given (T624: what will not come
+    across is said there, before the export, not again in the toast)"""
     t0 = time.time()
     pg.evaluate("()=>{const t=document.getElementById('deck-toast');"
                 "if(t) t.textContent='';window.SemDeckPptx();}")
@@ -350,6 +352,9 @@ def _export(pg, name, timeout=40.0):
     while time.time() - t0 < timeout:
         if pg.evaluate("(()=>{const d=document.getElementById('ask-dlg');"
                        "return !!(d&&!d.hidden)})()"):
+            if asked is not None:
+                asked.append(pg.evaluate(
+                    "document.getElementById('ask-dlg').textContent"))
             pg.click("#ask-ok")
         said = pg.evaluate(
             "(document.getElementById('deck-toast')||{}).textContent||''")
@@ -366,9 +371,10 @@ def test_a_pptx_with_maths_does_not_wait_for_mathjax_that_cannot_come(
     assert not pg.evaluate("window.jvMath.ready()")
     # a text box's equation never needed MathJax: no wait at all
     _open(pg, "eq")
-    took, said = _export(pg, "eq")
+    asked: list = []
+    took, said = _export(pg, "eq", asked=asked)
     assert took < 4, f"{took:.1f}s for a deck with a text-box equation"
-    assert "Saved" in said and "equation" in said
+    assert "Saved" in said and "equation" in " ".join(asked)
     # a cell live from its notebook: a short wait, and the TeX goes as
     # written, said so
     _open(pg, "mlive")
@@ -436,8 +442,9 @@ def test_mathjax_that_arrives_late_still_sets_a_live_cell(app):
         pg.wait_for_timeout(100)
     assert pg.evaluate("window.jvMath.ready()")
     # set -- cloned again, not the frame cloned while it was away -- so
-    # its equations came across as characters, not as TeX
-    assert "came across as plain text" in said
+    # its equations came across as characters, not as TeX (the toast
+    # names TeX kept, and only that, since T624)
+    assert "Saved mlive" in said
     assert "LaTeX they were written in" not in said
     assert errs == [], errs
     ctx.close()
@@ -460,7 +467,6 @@ def test_mathjax_that_came_before_the_export_sets_a_frame_drawn_without_it(
     pg.wait_for_timeout(500)
     took, said = _export(pg, "mlive")
     assert "Saved mlive" in said
-    assert "came across as plain text" in said
     assert "LaTeX they were written in" not in said
     assert errs == [], errs
     ctx.close()

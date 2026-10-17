@@ -202,7 +202,7 @@ def test_a_metafile_picture_is_named_not_faked(fixture_bytes):
     edit.extra = {"ppt/media/image1.emf": b"\x01\x00\x00\x00EMF"}
     got = read_pptx(_rezip(fixture_bytes, edit))
     assert not [it for it in _items(got, 1) if it["t"] == "image"]
-    assert any("Windows metafile" in ln for ln in got["lost"])
+    assert any("EMF/WMF picture" in ln for ln in got["lost"])
 
 
 def test_bytes_that_are_not_their_suffix_are_refused(fixture_bytes):
@@ -212,7 +212,7 @@ def test_bytes_that_are_not_their_suffix_are_refused(fixture_bytes):
         return body
     got = read_pptx(_rezip(fixture_bytes, edit))
     assert not [it for it in _items(got, 1) if it["t"] == "image"]
-    assert any("not the format they claim" in ln for ln in got["lost"])
+    assert any("broken picture" in ln for ln in got["lost"])
 
 
 def test_a_shape_this_has_no_outline_for_is_named(fixture_bytes):
@@ -622,7 +622,7 @@ def test_the_doors(out):
     html = assets.deck_html()
     assert 'id="mi-import-pptx"' in html
     assert '>Import .pptx&#8230;</button>' in html
-    assert '>Export .pptx</button>' in html
+    assert '>PowerPoint (.pptx)</button>' in html
     boot = out.split("function pptxImportBoot(){")[1].split("\n  }")[0]
     assert "    menuAction('#mi-import-pptx',openPptxFile);" in boot
     assert "document.getElementById('pptxfile')" in boot
@@ -633,7 +633,7 @@ def test_the_doors(out):
     assert "62-pptx-import" in assets.DECK_PARTS
     page = assets.page_template()
     assert 'data-for="pptxfile"' in page
-    assert 'Import a .pptx file&#8230;</button>' in page
+    assert 'Import .pptx&#8230;</button>' in page
     assert '<input type="file" id="pptxfile" accept=".pptx,.potx,' in page
     assert ".junoview,.html,.pptx\"" in page
     app = assets.app_js()
@@ -669,7 +669,7 @@ def test_the_import_says_what_it_will_cost_first(out):
 def test_a_rendered_export_says_it_cannot(out):
     body = out.split("function importPptxFile(file){")[1].split("\n  }")[0]
     assert "if(APP.mode!=='app'&&!web){" in body
-    assert "needs the Junoview app or the web build" in body
+    assert "needs the Junoview app or web build" in body
 
 
 def test_pictures_settle_like_a_paste(out):
@@ -738,7 +738,7 @@ def test_the_web_build_reaches_the_reader(tmp_path):
 def test_the_help_page_says_so():
     help_html = assets.help_html()
     assert "File &rarr; Import .pptx" in help_html
-    assert "File &rarr; Export .pptx" in help_html
+    assert "File &rsaquo; PowerPoint (.pptx)" in help_html
     assert "Microsoft PowerPoint" in help_html
     assert "not affiliated with, endorsed by, sponsored by, or approved" in \
         help_html

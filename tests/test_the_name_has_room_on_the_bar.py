@@ -30,7 +30,7 @@ def test_global_deck_options_are_one_quiet_app_menu():
     assert 'id="deck-scheme"' in menu
     assert 'id="deck-howto"' in menu
     assert '<a class="dc-mi" id="deck-support" target="_blank" rel="noopener"' in menu
-    assert 'Support Junoview &#9829;</a>' in menu
+    assert 'title="Support Junoview on Ko-fi">Support &#9829;</a>' in menu
     # Theme, Help and Support are no longer loose top-bar buttons.
     assert '<a class="dbtn qat-btn" id="deck-support"' not in html
 

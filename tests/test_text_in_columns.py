@@ -94,5 +94,5 @@ def test_an_imported_box_keeps_its_columns(out):
     assert "a.ncol=Math.min(3,Math.round(it.ncol));" in imp
     from junoview.notebook import pptx_read
     src = open(pptx_read.__file__, encoding="utf-8").read()
-    assert '"manycols": "{n} text box{es} in more than three columns' in src
+    assert '"manycols": "{n} text box{es} in 4+ columns (three)"' in src
     assert 'self.ctx.tally.add("manycols")' in src

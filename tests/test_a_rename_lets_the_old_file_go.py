@@ -26,6 +26,5 @@ def test_the_old_file_is_let_go(out):
     assert "    function say(){\n      fileHandles[nm]=null;" in fn
     assert "      if(fileFor===nm){fileHandle=null;fileName='';}" in fn
     assert "      if(saveTarget==='file') fileWaits='pick';" in fn
-    assert ("      toast('Renamed to \\u201c'+nm+'\\u201d. '+oldFile+' keeps "
-            "the old '") in fn
+    assert "      toast('Renamed \\u2014 the next Save asks where',10000);" in fn
     assert "Still writing " not in out

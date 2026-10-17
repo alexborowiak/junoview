@@ -54,6 +54,19 @@
      otherwise -- so every caller is a callback, which is what a
      dialog that is not modal to the whole browser has to be. */
   var askCb=null,askWired=false;
+  /* T624: the app's "?" (app.js, THE "?"), for what the editor builds in
+     script. The component is the page's, not the editor's: it works
+     before the editor loads, and one listener pair serves both. A page
+     without app.js (none ships one today) gets an empty comment, never
+     a dead button. */
+  function qBtn(text,topic){
+    var A=window.SemApp;
+    return A&&A.qBtn?A.qBtn(text,topic):document.createComment('q');
+  }
+  function qShut(){
+    var A=window.SemApp;
+    if(A&&A.qClose) A.qClose();
+  }
   /* T488: A SMALL FORM. `o.rows` is a list of {k,label,type,value,...}
      -- text (default), number (min/max/step, unit), select (options
      [[value,label]]), check, color (clear:true adds a Default button;
@@ -100,6 +113,7 @@
           clearBtn=document.createElement('button');
           clearBtn.type='button';clearBtn.className='dbtn ask-clear';
           clearBtn.textContent='Default';
+          if(r.clearTitle) clearBtn.title=r.clearTitle;
           clearBtn.setAttribute('aria-pressed',hex?'false':'true');
           clearBtn.addEventListener('click',function(e){
             e.stopPropagation();
@@ -203,6 +217,14 @@
     var multi=!yes&&!!o.multi,rows=!yes&&Array.isArray(o.rows)&&o.rows.length;
     var inp=$('#ask-in'),area=$('#ask-area'),rowsEl=$('#ask-rows');
     $('#ask-t').textContent=o.title||'Name';
+    /* T624: the longer explanation, behind the title's "?" */
+    var askQ=$('#ask-q');
+    qShut();
+    if(askQ){
+      askQ.hidden=!o.help;
+      askQ.setAttribute('data-q',o.help||'');
+      askQ.setAttribute('aria-label','Help: '+(o.title||''));
+    }
     var what=$('#ask-what');
     what.textContent=o.what||'';what.hidden=!o.what;
     var lab=$('#ask-lab');
@@ -249,6 +271,7 @@
     if(askWired) return;
     askWired=true;
     function done(v,why){
+      qShut();
       dlg.hidden=true;
       var f=askCb;askCb=null;
       if(f) f(v,why||'');
@@ -296,7 +319,7 @@
      verb, cb(false) for cancel, Escape or the shade, cb('alt') for a
      third button when o.alt names one. */
   function askYes(o,cb){
-    askText({yes:true,title:o.title,what:o.what,note:o.note,
+    askText({yes:true,title:o.title,what:o.what,note:o.note,help:o.help,
       ok:o.ok||'OK',cancel:o.cancel,alt:o.alt,danger:o.danger},
       function(v,why){cb(why==='alt'?'alt':v!==null);});
   }
@@ -304,7 +327,7 @@
   function askTell(o,cb){
     if(typeof o==='string') o={title:'Junoview',what:o};
     askText({tell:true,title:o.title||'Junoview',what:o.what,
-      note:o.note,ok:o.ok||'OK'},function(){if(cb) cb();});
+      note:o.note,help:o.help,ok:o.ok||'OK'},function(){if(cb) cb();});
   }
   /* ---- T568: EVERY DIALOG ANSWERS THE SAME KEYS -----------------------
      Cancel on the left and the verb on the right was already the markup's
@@ -605,7 +628,7 @@
       docToastOnce('Another window changed this project — merged '
         +'its changes in. Your "'+savedName+'" is intact.');
     } else if(!silent){
-      toast('Saved "'+savedName+'" to junoview_project.json'+embNote());
+      toast('Saved');
     }
     return true;
   }
@@ -697,7 +720,7 @@
                 savedName,savedSig);
             }).catch(function(e2){
               toast('Save failed after a conflict: '
-                +((e2&&e2.message)||e2)+' — use File › Download a copy.',
+                +((e2&&e2.message)||e2)+' — use File › Download .junoview.',
                 9000);
               return false;
             });
@@ -989,12 +1012,6 @@
     return list;
   }
   var lastEmbCount=0;
-  function embNote(){
-    return lastEmbCount
-      ?' — with '+lastEmbCount+' card'+(lastEmbCount===1?'':'s')
-        +' embedded, so it opens without the notebook'
-      :'';
-  }
   /* ---- T433: A FILE HOLDS ONE PRESENTATION ----------------------------
      (2026-09-14, user: "The files on local keep seeming to just save to
      project junoview. Even though that is not the file name which gets
@@ -1227,7 +1244,7 @@
             if(stillSaved(savedName,savedSig)) source='saved';
             else {source='draft';scheduleDraftWrite();}
             status();renderTargetBtn();renderPresRow();
-            if(!silent) toast('Saved to '+(fileName||'your file')+embNote());
+            if(!silent) toast('Saved to '+(fileName||'your file'));
             return true;
           });
         });
@@ -1301,7 +1318,7 @@
     var tf=$('#tg-file');
     if(tf) tf.textContent=canPickFile
       ?'A file on your computer…'
-      :'A file (this browser can’t — use Download a copy)';
+      :'A file (this browser can’t — use Download .junoview)';
     if(tf) tf.disabled=!canPickFile;
     [['#tg-project','project'],['#tg-browser','browser'],
      ['#tg-file','file']].forEach(function(p){
@@ -1335,7 +1352,7 @@
   function chooseSaveFolder(){
     if(!canPickDir){
       toast('This browser cannot pick a folder \u2014 use File \u203a '
-        +'Download a copy');
+        +'Download .junoview');
       return Promise.resolve(false);
     }
     if(!requireName()) return Promise.resolve(false);
@@ -1346,9 +1363,7 @@
       bindFile(pres.name,null);
       setTarget('file');
       return saveToFile(false).then(function(){
-        toast('Every presentation now saves itself into '
-          +deckDirName+' \u2014 this one is '+(fileName||'there')
-          +' already.',6000);
+        toast('Presentations now save to '+deckDirName,6000);
         return true;
       });
     }).catch(function(e){
@@ -1385,7 +1400,15 @@
     if(saveAskEl){overlayHide(saveAskEl);saveAskEl.remove();}
     var m=document.createElement('div');
     m.className='sh-menu save-ask';saveAskEl=m;
-    menuHead(m,'where should this be kept?');
+    var sah=menuHead(m,'save where?');
+    sah.appendChild(qBtn((APP.mode==='app'?'This project: saved next to the '
+      +'notebook it came from.\n\n':'')
+      +(canPickDir?'A folder on this computer: pick it once and every new '
+        +'presentation saves there too, with no size limit.\n\n':'')
+      +'This browser: nothing is written to a file. Clearing the '
+      +'browser\u2019s site data loses the deck, and a deck with many '
+      +'figures can fill the space a browser allows.\n\nChange it any '
+      +'time with \u25be beside Save.','Where to save'));
     function row(label,note,fn){
       var b=document.createElement('button');
       b.className='dbtn vw-opt sa-opt';
@@ -1401,15 +1424,12 @@
       return b;
     }
     if(APP.mode==='app')
-      row('This project','Beside the notebook it came from, on this '
-        +'computer.',function(){
+      row('This project','Next to the notebook',function(){
         setTarget('project');
-        toast('Saving to this project. Change it beside Save.',5000);
       });
     if(canPickDir)
-      row('A folder on this computer','Pick it once. Every presentation '
-        +'after this one saves itself there too, with nothing to answer '
-        +'and no size limit.',function(){chooseSaveFolder();});
+      row('A folder on this computer','No size limit',
+        function(){chooseSaveFolder();});
     /* T296: FOR NOW, AND IT SAYS SO. This read as a third peer choice
        when it is the one answer that can lose your work -- and it is
        still the right default for somebody who just wants to start
@@ -1417,15 +1437,11 @@
        something with a warning attached to that"). The label carries
        the provisional, the note carries the warning, and the row is
        marked so it does not look like the two that keep a file. */
-    var br=row('Keep it in this browser for now',
-      'Nothing is written to a file. Clearing your browser\u2019s site '
-      +'data loses the deck, and one with figures can fill the space a '
-      +'browser allows. Change it beside Save whenever you like.',
+    var br=row('This browser, for now',
+      'Not a file \u2014 clearing site data loses it',
       function(){
       setTarget('browser');
-      toast('Kept in this browser for now \u2014 nothing is on disk. '
-        +'Change it beside Save; a folder on your computer has no size '
-        +'limit and cannot be cleared by accident.',7000);
+      toast('Kept in this browser, not in a file',7000);
     });
     if(br) br.classList.add('sa-warn');
     deckEl.appendChild(m);
@@ -1576,6 +1592,11 @@
     },20000);
   }
   var embedTimer=null;
+  /* T624: "15s", "1m" or "off" -- the File row and the bar's chip say
+     the same short thing */
+  function autoShort(on){
+    return on?(autoSecs<60?(autoSecs+'s'):((autoSecs/60)+'m')):'off';
+  }
   function renderAutosaveItem(){
     /* Two doors, one state: the File menu (where it has always been) and
        the top bar, where you can READ it without opening a menu. A save
@@ -1586,8 +1607,8 @@
     var mi=$('#mi-autosave');
     if(mi){
       mi.hidden=false;
-      mi.textContent='Autosave: '
-        +(on?('every '+autoSecsLabel(autoSecs)):'off');
+      mi.textContent='Autosave: '+autoShort(on);
+      mi.title=on?('Saving every '+autoSecsLabel(autoSecs)):'Autosave is off';
     }
     var qa=$('#qat-auto');
     if(qa){
@@ -1600,8 +1621,7 @@
          characters a second without re-measuring the bar. */
       qa.innerHTML=bic('reload')
         +' <span class="qat-long">Autosave</span>'
-        +'<span class="qat-short">Auto</span> '
-        +(on?(autoSecs<60?(autoSecs+'s'):((autoSecs/60)+'m')):'off')
+        +'<span class="qat-short">Auto</span> '+autoShort(on)
         +'<span class="qat-tick" id="qat-tick"></span>';
       qa.setAttribute('aria-pressed',on?'true':'false');
       qa.title=on
@@ -1787,10 +1807,8 @@
          that threw on quota still rendered "saved to browser · 14:32"
          (2026-08-22). */
       status();
-      toast('NOT saved \u2014 this browser is full. The \u25be beside '
-        +'Save \u203a "A folder on this computer" keeps every '
-        +'presentation as a file instead, with no limit; File \u203a '
-        +'Download a copy saves this one right now.',11000);
+      toast('NOT saved \u2014 browser full. File \u203a Download '
+        +'.junoview',11000);
       return;
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
@@ -1845,7 +1863,7 @@
       close();
       if(!canPickFile){
         toast('This browser can’t save straight to a file — '
-          +'use File › Download a copy');
+          +'use File › Download .junoview');
         return;
       }
       if(!requireName()) return;
@@ -1880,8 +1898,7 @@
       deckDir=null;deckDirName='';
       lsDel(DNKEY);idbDel(DKEY).catch(function(){});
       renderTargetBtn();renderSaveBtn();
-      toast('Junoview will ask which file from now on. The file it '
-        +'already made is still there.',6000);
+      toast('Save will ask for a file from now on',6000);
     });
     /* the folder is remembered between visits, like the file */
     idbGet(DKEY).then(function(d){
@@ -1944,9 +1961,8 @@
           /* T431: SAID OUT LOUD. The page has just opened on a default
              deck in this one's place, and the pill beside Save was the
              only thing that knew where the real one was. */
-          toast('\u201c'+forName+'\u201d is in '+(h.name||'its file')
-            +' \u2014 click \u201cclick to reopen\u201d beside Save to '
-            +'bring it back',12000);
+          toast('\u201c'+forName+'\u201d is in its file \u2014 reopen it '
+            +'beside Save',12000);
         }
       });
     }).catch(function(){});
@@ -1986,9 +2002,8 @@
     importDeckText(txt,true);
     if(saveTarget==='file'&&!fileHandle) fileWaits='pick';
     status();renderTargetBtn();renderSaveBtn();renderPresTabs();
-    toast(nm+' holds '+n+' presentations. A file holds one now, so '
-      +'they are in this browser and Save asks where to write '
-      +'\u201c'+(forName||pres.name)+'\u201d.',12000);
+    toast(n+' presentations opened \u2014 Save asks where to write each',
+      12000);
     return true;
   }
   function fileRestore(txt,forName,force){
@@ -2121,9 +2136,7 @@
        review); loader.py now takes every .junoview.html beside the
        notebook that is not another notebook's, and the toast names
        the other door. */
-    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '
-      +'itself; File \u2192 Open a .junoview file\u2026 opens it anywhere.'
-      +embNote());
+    toast('Downloaded '+a.download);
   });
   menuAction('#mi-load',openDeckFile);
   window.SemDeckOpenFile=openDeckFile;   /* the rail's "+ New" row */
@@ -2341,10 +2354,10 @@
      exactly as the PDF does, and these lay those pages out, scaled, on A4
      sheets, so a handout can never show a slide the PDF would not. The
      sheets are white, with the deck's name and the page along the top. */
-  var PRINT_LAYOUTS=[['slides','Full-page slides'],
-    ['ho3','Handouts \u2014 3 slides a page, with lines for notes'],
-    ['ho6','Handouts \u2014 6 slides a page'],
-    ['notes','Notes pages \u2014 each slide above its speaker notes']];
+  var PRINT_LAYOUTS=[['slides','Slides'],
+    ['ho3','Handout, 3 a page, with note lines'],
+    ['ho6','Handout, 6 a page'],
+    ['notes','Notes pages']];
   var SHEET_W=794,SHEET_H=1123;     /* A4 at 96 px to the inch */
   function handoutify(root,kind){
     var pages=$$('.print-page',root);
@@ -2399,8 +2412,7 @@
         var nt=document.createElement('div');nt.className='ho-notes';
         var txt=sl&&String(sl.notes||'').trim();
         if(txt) nt.innerHTML=notesHtml(sl.notes);
-        else {nt.textContent='No notes for this slide.';
-          nt.classList.add('ho-nonotes');}
+        else nt.classList.add('ho-nonotes');   /* T624: blank on paper */
         row.appendChild(nt);
       }
       body.appendChild(row);
@@ -2474,10 +2486,10 @@
   menuAction('#mi-pdf',function(){
     var last='slides';
     try{last=localStorage.getItem('jv-print-layout')||'slides';}catch(e){}
-    askText({title:'Export PDF / print',
-      what:'What goes on each sheet. In the print dialog, choose "Save as '
-        +'PDF" for a file.',
-      rows:[{k:'lay',label:'Print',type:'select',value:last,
+    askText({title:'PDF / print',
+      what:'For a PDF file, choose \u201cSave as PDF\u201d in the print '
+        +'dialog.',
+      rows:[{k:'lay',label:'Each sheet',type:'select',value:last,
         options:PRINT_LAYOUTS}],ok:'Print\u2026'},function(v){
       if(!v) return;
       try{localStorage.setItem('jv-print-layout',v.lay);}catch(e){}
@@ -2633,11 +2645,8 @@
       setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
       if(root.parentNode) root.remove();   /* by reference, never by id */
       toast(fo.missed
-        ?('Standalone HTML saved \u2014 '+fo.missed+' equation font'
-          +(fo.missed===1?'':'s')+' could not be packed in, so equations '
-          +'need a network connection the first time it is opened')
-        :'Standalone HTML saved — opens anywhere; Ctrl+P there '
-          +'prints at page size');
+        ?'HTML saved \u2014 equations need a network the first time'
+        :'HTML saved');
       });
     });
   }
@@ -3604,33 +3613,24 @@
       pptxItems(s,note,'#ffffff',null);
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
-      +(note.skipped===1?'':'s')+' with no .pptx shape to become');
+      +(note.skipped===1?'':'s')+' (left out)');
     if(note.web) lost.push(note.web+' live web page'
-      +(note.web===1?'':'s')+' \u2014 a .pptx cannot carry a live page; '
-      +'add a screenshot if it matters');
+      +(note.web===1?'':'s')+' (left out)');
     if(note.maths) lost.push(note.maths+' equation'
-      +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
-      +'path, so they arrive as plain characters');
+      +(note.maths===1?'':'s')+' (as plain text)');
     if(note.tex) lost.push(pptxTexNote(note.tex));
     /* T486: Markdown and rich boxes travel as paragraphs and runs now;
        only a link inside the words is still words alone */
     if(note.links) lost.push(note.links+' link'+(note.links===1?'':'s')
-      +' inside the words of a text box \u2014 the words arrive, the '
-      +'link does not');
-    if(note.exits) lost.push(note.exits+' object'
-      +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
-      +'writer emits entrances only, so they arrive and then stay, '
-      +'stacked over whatever was meant to replace them');
-    if(note.tied) lost.push(note.tied+' item'+(note.tied===1?'':'s')
-      +' tied to a chart series with “only” or “until” '
-      +'— the .pptx is given no way to take them away again, so '
-      +'they stay on the slide once shown');
-    if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
-      +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
-      +'is not');
+      +' in text (words only)');
+    if(note.exits) lost.push(note.exits+' exit animation'
+      +(note.exits===1?'':'s')+' (they stay on)');
+    if(note.tied) lost.push(note.tied+' series-tied item'
+      +(note.tied===1?'':'s')+' (they stay on)');
+    if(note.cropped) lost.push(note.cropped+' crop outline'
+      +(note.cropped===1?'':'s')+' (trim kept)');
     if(note.bands) lost.push(note.bands+' confidence band'
-      +(note.bands===1?'':'s')+' on a chart — a .pptx chart has no band, '
-      +'so the line arrives without it');
+      +(note.bands===1?'':'s')+' (line only)');
     /* builds TRAVEL now (T110) \u2014 what is still approximate is
        the entrance on the two effects PowerPoint spells differently */
     var soft=0;
@@ -3640,8 +3640,7 @@
           soft++;});
     });
     if(soft) lost.push(soft+' rise/zoom build'
-      +(soft===1?'':'s')+' — the click timing is kept, the entrance '
-      +'plays as a fade');
+      +(soft===1?'':'s')+' (as fades)');
     /* TEXT BUILDS. Bullet by bullet TRAVELS -- it leaves as a real
        PowerPoint paragraph build. The other two are named. */
     var sent=0,mdpara=0;
@@ -3652,14 +3651,10 @@
         else if(a.anim.by==='para'&&a.md
                 &&/(^|\n)[ \t]*(\n|$)/.test(String(a.text||''))) mdpara++;
       });});
-    if(sent) lost.push(sent+' sentence-by-sentence text build'
-      +(sent===1?'':'s')+' — a .pptx builds text by PARAGRAPH and '
-      +'has no smaller unit, so each of these arrives as a whole box on '
-      +'one click');
-    if(mdpara) lost.push(mdpara+' Markdown box'+(mdpara===1?'':'es')
-      +' built bullet by bullet — a blank line in the source is a '
-      +'paragraph in the .pptx and not a bullet here, so it takes a few '
-      +'more clicks there than it does on this slide');
+    if(sent) lost.push(sent+' sentence build'
+      +(sent===1?'':'s')+' (whole box)');
+    if(mdpara) lost.push(mdpara+' Markdown bullet build'
+      +(mdpara===1?'':'s')+' (more clicks)');
     return lost;
   }
   function pptxConfirmLosses(orig){
@@ -3667,9 +3662,14 @@
     if(!lost.length) return Promise.resolve(true);
     return new Promise(function(res){
       askYes({title:'Export .pptx?',
-        what:'Everything else comes across, but this will not:\n\n\u2022 '
+        what:'These will not come across:\n\n\u2022 '
           +lost.join('\n\u2022 '),
-        note:'Export PDF keeps all of it exactly as you see it.',
+        note:'PDF keeps all of it.',
+        help:'A .pptx has no LaTeX, no exit animations, no live web pages '
+          +'and no chart bands, and it builds text a paragraph at a time, '
+          +'so these arrive simplified. A link inside a text box arrives '
+          +'as plain words.\n\nExport a PDF to keep everything exactly as '
+          +'you see it.',
         ok:'Export .pptx',cancel:'Not now'},function(y){res(y===true);});
     });
   }
@@ -3718,8 +3718,7 @@
           APP.api('/api/reveal',{path:j.path,how:how}).catch(function(e){
             toast('Could not open it: '+((e&&e.message)||e),8000);});
         }
-        toastActs(msg.replace('.pptx saved','Saved '+j.name+' in '
-          +(j.folder||'Downloads'))+' \u2014 it opens ready to edit.',
+        toastActs(msg.replace('.pptx saved','Saved '+j.name),
           [['Open it',function(){reveal('open');}],
            ['Show in folder',function(){reveal('folder');}]],12000);
       }).catch(function(e){
@@ -3734,9 +3733,8 @@
     var windows=/Windows/i.test(String(navigator.userAgent||''));
     if(windows&&lsGet(PV_TOLD_KEY)!=='1'){
       lsSet(PV_TOLD_KEY,'1',true);
-      toastActs(msg+'. PowerPoint will open it in Protected View \u2014 '
-        +'press Enable Editing there.',
-        [['Why, and how to stop it\u2026',pptxProtectedHelp]],14000);
+      toastActs(msg+' \u2014 press Enable Editing in PowerPoint',
+        [['Why?',pptxProtectedHelp]],14000);
       return;
     }
     toast(msg);
@@ -3813,32 +3811,16 @@
       }),
     });
     var fname=(pres.name||'presentation')+'.pptx';
-    var msg='.pptx saved — text stays editable'+outputNote();
-    var noted=outputSlides(true).filter(function(e){
-      return e.s&&e.s.notes&&e.s.notes.trim();}).length;
-    if(noted) msg+='. Speaker notes came across on '+noted+' slide'
-      +(noted===1?'':'s');
-    /* tables convert now (T109), so naming them here would send
-       people to the PDF for something that already worked */
-    if(note.skipped) msg+='. '+note.skipped+' cell'
-      +(note.skipped===1?'':'s')+' could not convert (a rich output with '
-      +'no picture and no text — use Export PDF for those)';
-    if(note.exits) msg+='. '+note.exits+' object'
-      +(note.exits===1?'':'s')+' meant to leave on a later click will '
-      +'stay \u2014 the .pptx gets entrances only from here';
-    if(note.tied) msg+='. '+note.tied+' series-tied item'
-      +(note.tied===1?'':'s')+' will stay once shown — '
-      +'“only” and “until” need an exit this '
-      +'writer does not have';
-    if(note.sat) msg+='. '+note.sat+' picture'+(note.sat===1?'':'s')
-      +' keep their colour saturation only here \u2014 the .pptx has the '
-      +'brightness, contrast and greyscale';
-    if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
-      +(note.cropped===1?'':'s')+' not carried (the .pptx keeps the '
-      +'trim, not the outline)';
-    if(note.maths) msg+='. '+note.maths+' equation'
-      +(note.maths===1?'':'s')+' came across as plain text \u2014 '
-      +'this writer has no LaTeX-to-.pptx path, so they were flattened';
+    /* T624: what did not travel was asked about before (Export
+       .pptx?); the toast adds the two counts not on that list */
+    var msg='.pptx saved'+outputNote(),tail=[];
+    if(note.skipped) tail.push(note.skipped+' cell'
+      +(note.skipped===1?'':'s')+' not converted');
+    if(note.sat) tail.push(note.sat+' picture'
+      +(note.sat===1?'\u2019s':'s\u2019')+' saturation not kept');
+    if(tail.length) msg+=' ('+tail.join(', ')+')';
+    /* equations kept as their TeX because MathJax was away are learnt
+       only while the file is written, so the toast says so too */
     if(note.tex) msg+='. '+pptxTexNote(note.tex);
     pptxDeliver(out.blob,fname,msg);
     /* one honest tally for the caller: the builder counts items IT could not
@@ -4097,8 +4079,7 @@
         +(dropped?(' \u2014 '+dropped+' would not fit and '
           +(dropped>1?'were':'was')+' not kept'):''));
     else
-      toast('Opened \u201c'+first.name+'\u201d \u2014 too big for a '
-        +'browser copy, so it lives in its file: Save writes it there'
+      toast('Opened \u201c'+first.name+'\u201d \u2014 saves to its file'
         +(imported>1?(' \u2014 '+(imported-1)+' smaller deck'
           +(imported>2?'s':'')+' from the file went into the library'):'')
         +(dropped?(' \u2014 '+dropped+' other'+(dropped>1?'s':'')
@@ -4107,6 +4088,7 @@
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
+  window.SemDeckAsk=askText;   /* browser-verification hook (T624: a question's "?") */
   window.SemDeckImportAsk=importDeckTextAsk; /* ...and the asking door (T527) */
   window.SemDeckFileHtml=function(){return junoviewFileHtml();};
   /* ---- T597: A SAVED FILE HANDS ITS PRESENTATION OVER ------------------
@@ -4130,8 +4112,7 @@
     catch(e){}
     var src=window.opener;
     if(!src){
-      toast('Nothing was handed over \u2014 to open a saved presentation, '
-        +'use Open\u2026 or drop the file onto this window',9000);
+      toast('Nothing to open \u2014 drop the file again',9000);
       return;
     }
     window.addEventListener('message',function(e){
@@ -4210,8 +4191,7 @@
       /* the folder Junoview saves into mints this deck's file there */
       setTarget('file');
       if(same&&dir&&dir===deckDirName&&file===deckFileName())
-        toast('Opened \u2014 Save writes back to '+file+' in your '+dir
-          +' folder',8000);
+        toast('Opened \u2014 saves to '+dir+'/'+file,8000);
       else
         toast('Opened from '+file+'. It saves into your '+deckDirName
           +' folder as '+deckFileName()+' \u2014 to keep using '+file
@@ -4222,14 +4202,11 @@
     fileName=file;
     if(canPickFile){
       setTarget('file');
-      toast('Opened from '+file+'. A browser page cannot write to a file '
-        +'it did not pick itself, so the first Save asks where \u2014 '
-        +'choose '+file+(dir?(' in '+dir):'')+' to keep saving to it.',
-        12000);
+      toast('Opened \u2014 the first Save asks where',12000);
     } else {
       setTarget('browser');
       toast('Opened from '+file+' \u2014 kept in this browser. Use '
-        +'Download a copy to write it back out.',10000);
+        +'Download .junoview to write it back out.',10000);
     }
   }
   /* ---- OPENING A .junoview FILE ---------------------------------------
@@ -4251,9 +4228,7 @@
     if(n<2) return false;
     if(saveTarget==='file'&&!fileHandle) fileWaits='pick';
     status();renderTargetBtn();renderSaveBtn();
-    toast('Opened '+n+' presentations from '+(name||'that file')
-      +' into this browser. A file holds one presentation now, so each '
-      +'saves to its own file \u2014 Save asks where the first time.',
+    toast(n+' presentations opened \u2014 Save asks where to write each',
       10000);
     return true;
   }
@@ -4366,9 +4341,7 @@
             +'computer');
         } else {
           setTarget('browser');
-          toast('Opened \u2014 this browser cannot save straight back '
-            +'to a file, so it is kept here as a draft. Use Download to '
-            +'write it out.');
+          toast('Opened as a draft \u2014 Download to save');
         }
     }
   })();
@@ -4383,8 +4356,7 @@
        away every change since the last save. It says what it goes back
        to, and there is nothing to ask about when nothing has changed. */
     if(source==='saved'||saveKind==='manual'){
-      toast('Nothing to discard — “'+nm+'” is as it was '
-        +'last saved');
+      toast('Nothing to discard');
       return;
     }
     if(saveTarget==='file'&&fileHandle&&fileHandle.getFile){
@@ -4756,9 +4728,7 @@
       deckMetaSet(nm,{file:null});
       if(saveTarget==='file') fileWaits='pick';
       renderTargetBtn();renderSaveBtn();status();
-      toast('Renamed to \u201c'+nm+'\u201d. '+oldFile+' keeps the old '
-        +'name \u2014 press Save once and it asks where to write '
-        +newName+'; every autosave after that goes there.',10000);
+      toast('Renamed \u2014 the next Save asks where',10000);
       return false;
     }
     function moveOrSay(){

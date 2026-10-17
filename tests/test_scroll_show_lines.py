@@ -33,8 +33,9 @@ PART = assets.load("js/deck/54-scroll-show.js")
 
 
 def test_four_worded_choices_faint_first():
-    assert ("  var SCROLL_SEPS=[['faint','Faint line'],['strong','Strong line'],\n"
-            "    ['none','No line'],['gap','Spaced']];") in PART
+    # T624: one word each -- they sit under the "Between slides" label
+    assert ("  var SCROLL_SEPS=[['faint','Faint'],['strong','Strong'],\n"
+            "    ['none','None'],['gap','Spaced']];") in PART
     # a labelled group of buttons, each pressed or not
     assert ("sg.setAttribute('role','group');"
             "sg.setAttribute('aria-label','Between slides');") in PART
@@ -56,8 +57,8 @@ def test_an_unknown_or_missing_choice_is_the_faint_line(tmp_path):
         pytest.skip("no JS engine")
     cmd, env = eng
     code = (
-        "var SCROLL_SEPS=[['faint','Faint line'],['strong','Strong line'],"
-        "['none','No line'],['gap','Spaced']];\n"
+        "var SCROLL_SEPS=[['faint','Faint'],['strong','Strong'],"
+        "['none','None'],['gap','Spaced']];\n"
         "var SCROLL_SEP_KEY='junoview:deck:scrollsep';\n"
         "var STORED=null;function lsGet(k){return STORED;}\n"
         + lift_fn(PART, "scrollSepGet") + "\n"

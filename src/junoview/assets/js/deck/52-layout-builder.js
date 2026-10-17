@@ -138,7 +138,7 @@
     });
     var del=document.createElement('button');
     del.className='dbtn dg-b dbtn-warn';
-    del.innerHTML=bic('exit')+' Remove the chosen slot';
+    del.innerHTML=bic('exit')+' Remove slot';
     del.disabled=lbSel<0;
     del.title='Take the highlighted slot off the layout';
     del.addEventListener('click',function(){
@@ -209,8 +209,7 @@
       renderLayoutPicker();
       renderControls();
       lbClose();
-      toast('“'+label+'” saved — it is in the New slide '
-        +'gallery and in Change layout');
+      toast('“'+label+'” saved to New slide');
     });
     foot.appendChild(save);
     body.appendChild(foot);

@@ -119,11 +119,10 @@
       if(acTell.done) return;
       acTell.done=true;
     }
-    toastUndo('AutoCorrect: '+was+' became '+now+' \u2014 Ctrl+Z straight '
-      +'after puts back what you typed.','Turn AutoCorrect off',function(){
+    toastUndo('AutoCorrect changed \u201c'+was+'\u201d to \u201c'+now
+      +'\u201d \u2014 Ctrl+Z undoes','Turn AutoCorrect off',function(){
         acSet(false);
-        toast('AutoCorrect is off \u2014 Text \u203a AutoCorrect turns it '
-          +'back on');
+        toast('AutoCorrect off');
       },10000);
   }
   /* the switch, from THE BOOT SEQUENCE */
@@ -136,8 +135,7 @@
     b.addEventListener('click',function(){
       var on=!acOn();
       acSet(on);
-      toast(on?'AutoCorrect is on \u2014 straight quotes curl, -- is a dash, '
-        +'(c) is \u00a9 and -> is \u2192 as you type'
-        :'AutoCorrect is off \u2014 what you type stays as typed');
+      /* T624: the rules are the button's tooltip */
+      toast(on?'AutoCorrect on':'AutoCorrect off');
     });
   }

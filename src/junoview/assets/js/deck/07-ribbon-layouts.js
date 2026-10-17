@@ -186,7 +186,7 @@
   }
   function rbnLayouts(){
     return [{id:'default',name:'Default',
-      blurb:'The arrangement the app ships with: Home, Insert, Design, Animation, View, and focused Style and Object tabs.',
+      blurb:'',
       selTab:'style',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'images',label:'Images'},
             {id:'text',label:'Text'},
@@ -210,9 +210,8 @@
         try{localStorage.removeItem(RIBBON_LAYOUT_KEY);}catch(e){}
         setTimeout(function(){
           if(typeof toast==='function')
-            toast('The toolbar arrangement you had chosen was retired '
-              +'\u2014 you are on Default now. Ribbon layouts holds '
-              +'the nine that stayed.');},600);
+            toast('Your ribbon layout was retired \u2014 back to '
+              +'Default');},600);
         s='';
       }
       rbnLayoutId=s||'default';
@@ -256,8 +255,7 @@
     if(clipped&&!note&&!quiet&&!rbnClipTold
        &&typeof toastUndo==='function'){
       rbnClipTold=true;
-      toastUndo('The ribbon is wider than the window \u2014 the '
-        +'right-hand toolbar keeps every control reachable.',
+      toastUndo('Ribbon wider than the window',
         'Use Side toolbar',function(){
           var side=$('#vw-side'); if(side) side.click();});
     }
@@ -410,8 +408,8 @@
        and name the existing remedy instead of clipping buttons silently. */
     var clipped=rbnOverflowNotice(bar,true);
     if(clipped&&!$('#rbn-gal-warn'))
-      toast('This ribbon layout is wider than the window \u2014 '
-        +'turn on Side toolbar to reach all of it.');
+      toastUndo('Ribbon wider than the window','Use Side toolbar',
+        function(){var side=$('#vw-side'); if(side) side.click();});
     else if(!quiet) toast('Ribbon layout: '+lay.name);
   }
   /* WHAT A LAYOUT MISSED, for the tests to read. Reports; changes
@@ -534,7 +532,7 @@
       if(!mine.length) return;
       var h=document.createElement('div');
       h.className='rbn-gfam';
-      h.textContent=rbnFamilyLabel(fam)+' · '+mine.length;
+      h.textContent=rbnFamilyLabel(fam);
       host.appendChild(h);
       var grid=document.createElement('div');
       grid.className='rbn-ggrid';
@@ -563,14 +561,10 @@
       var tl=document.createElement('span');
       tl.className='rbn-ctabl';tl.textContent=t.label;
       trow.appendChild(tl);
+      /* Default's groups live in the markup, not in the catalogue: its
+         tabs show alone (T624: an "as it ships" chip on every one of its
+         nine rows said nothing the card's name does not) */
       var gs=(lay.groups||[]).filter(function(g){return g.tab===t.id;});
-      if(!gs.length&&lay.fromMarkup){
-        /* Default's groups live in the markup, not in the catalogue */
-        var d=document.createElement('span');
-        d.className='rbn-cgrp rbn-cgrp-dim';
-        d.textContent='as it ships';
-        trow.appendChild(d);
-      }
       gs.forEach(function(g){
         var c=document.createElement('span');
         c.className='rbn-cgrp';c.textContent=g.label;
@@ -600,17 +594,19 @@
       +'placeholder="Filter\u2026" aria-label="Filter the layouts">'
       +'<button class="dbtn" id="rbn-gal-close">'+bic('exit')
       +' Done</button></div>'
-      +'<div class="rbn-gnote">Click one to try it — the ribbon '
-      +'changes straight away and this stays open, so you can flick '
-      +'through. Nothing is lost either way: every layout holds the same '
-      +'controls, and <b>Default</b> puts them back exactly as they '
-      +'ship.</div>'
       +'<div class="rbn-gwarn" id="rbn-gal-warn" role="status" hidden>'
       +'<span><b>This ribbon layout is wider than the window.</b> The '
       +'right-hand toolbar keeps every control reachable.</span>'
       +'<button class="dbtn" id="rbn-gal-side">'+bic('dockright')
       +' Use Side toolbar</button></div>'
       +'<div class="rbn-gal" id="rbn-gal-list"></div>';
+    /* T624: how the gallery works, behind its title's "?". This is a
+       full-screen overlay, not the ribbon: the one qBtn in this file */
+    var gt=ov.querySelector('.rbn-gt');
+    if(gt) gt.parentNode.insertBefore(qBtn('Click a layout to try it. The '
+      +'ribbon changes at once and this stays open, so you can try '
+      +'several. Every layout has the same buttons, and Default puts them '
+      +'back as they ship.','Ribbon layouts'),gt.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#rbn-gal-close')
       .addEventListener('click',rbnGalleryClose);
@@ -666,7 +662,7 @@
 
     {id:'familiar-office-ribbon',
      name:'Familiar ribbon',
-     blurb:'A familiar Home, Insert, Design and Animate arrangement with clearly named groups.',
+     blurb:'PowerPoint-style tabs',
      family:'familiar',
      selTab:'home',
      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},{id:'design',label:'Design'},{id:'animate',label:'Animate'}],
@@ -729,7 +725,7 @@
      ]},
     {id:'scope-deck-slide-object',
      name:'Deck, slide, object',
-     blurb:'Try this if you want to know before clicking whether a button changes the whole deck, just this slide, or only what you selected.',
+     blurb:'Tabs by what a button changes',
      family:'principles',
      selTab:'object',
      tabs:[{id:'deck',label:'Deck'},{id:'slide',label:'Slide'},{id:'object',label:'Object'}],
@@ -785,7 +781,7 @@
      ]},
     {id:'sources-own-tab',
      name:'Sources tab',
-     blurb:'Try this if your figures come from a live notebook: a whole tab for where content came from and whether it is still fresh.',
+     blurb:'A tab for notebook sources',
      family:'principles',
      selTab:'format',
      tabs:[{id:'slides',label:'Slides'},{id:'sources',label:'Sources'},{id:'format',label:'Format'},{id:'deck',label:'Deck'}],
@@ -846,7 +842,7 @@
      ]},
     {id:'density-everyday-first',
      name:'Everyday first',
-     blurb:'Try this if the deck gets handed to colleagues who only ever do six things: fifteen everyday buttons, a Format tab that fills itself in, and one drawer for the rest.',
+     blurb:'15 everyday buttons, the rest in a drawer',
      family:'principles',
      selTab:'format',
      tabs:[{id:'start',label:'Everyday'},{id:'format',label:'Format'},{id:'more',label:'Everything else'}],
@@ -902,7 +898,7 @@
      ]},
     {id:'journey-poster-first',
      name:'Poster first',
-     blurb:'Try this for A0 posters and other one-page work: page setup, guides and Review lead, and everything that only exists for a talk is quarantined.',
+     blurb:'For one-page posters: guides and Review lead',
      family:'principles',
      selTab:'content',
      tabs:[{id:'page',label:'Page'},{id:'content',label:'Content'},{id:'talk',label:'Talk'}],
@@ -958,7 +954,7 @@
      ]},
     {id:'density-one-row',
      name:'Everything in one row',
-     blurb:'Try this if tabs themselves are the problem: all 94 controls on a single row, ruthlessly clustered, nothing hidden behind a tab you are not on.',
+     blurb:'No tabs, one row',
      family:'principles',
      selTab:'all',
      tabs:[{id:'all',label:'All tools'}],
@@ -1002,7 +998,7 @@
      ]},
     {id:'web-canvas-rail',
      name:'Canvas rail',
-     blurb:'Try this if a whiteboard app is home: a standing rail of making tools, a Selection tab that behaves like the bubble popping over whatever you clicked, and board-wide settings kept off both.',
+     blurb:'Whiteboard-style tool rail',
      family:'web',
      selTab:'mi-sel',
      tabs:[{id:'mi-rail',label:'Tools'},{id:'mi-sel',label:'Selection'},{id:'mi-board',label:'Board'}],
@@ -1060,7 +1056,7 @@
      ]},
     {id:'radical-ten-then-more',
      name:'Ten things, then More',
-     blurb:'Ten buttons on Start \u2014 make a slide, put a figure on it, show it. Format fills in when you select something, and the rest is under More.',
+     blurb:'Ten buttons, the rest under More',
      family:'radical',
      selTab:'tt-fmt',
      tabs:[{id:'tt-start',label:'Start'},{id:'tt-fmt',label:'Format'},{id:'tt-more',label:'More'}],

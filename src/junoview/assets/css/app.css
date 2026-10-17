@@ -131,10 +131,6 @@ body.presrail-min{--presrail-w:46px;}
 .nb-file-name{flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font:700 15px var(--sans);letter-spacing:-.01em;
   color:var(--chrome-ink,#d7e3ec);}
-.nb-file-path{min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;font:10px var(--mono);color:var(--chrome-ink-2,#8ba0b2);
-  background:none;border:0;padding:0;text-align:left;cursor:pointer;}
-.nb-file-path:hover{text-decoration:underline;}
 /* T602: Info and Reload keep their width -- beside the tabs, a dock that
    could shrink let Reload's word run under Find in a narrow column; the
    tabs give way instead (their strip scrolls) */
@@ -634,7 +630,6 @@ body.light .tab-ver{color:var(--cyan-deep);}
 .presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
   z-index:95;background:var(--chrome-0,#0a141d);border-right:1px solid #ffffff1f;
   display:flex;flex-direction:column;padding:8px 6px;gap:2px;}
-#welcome-back{display:none!important;} /* Open tabs are the return route. */
 .presrail .tab .tab-t,.presrail .pr-t{white-space:normal;
   overflow-wrap:anywhere;line-height:1.35;font-size:13px;}
 .presrail .pr-label{font-size:10px;letter-spacing:.06em;
@@ -828,21 +823,8 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-load[hidden]{display:none;}
 .welcome-load span{position:absolute;left:-38%;top:0;width:38%;height:100%;
   background:var(--cyan);animation:odlg-slide 1.05s ease-in-out infinite;}
-/* the way out of Home when notebooks are still open. TOP RIGHT, not
-   left: the welcome spans the full window and the presentations rail is
-   drawn over its left edge, so a left-anchored control sits underneath
-   the rail and is half-hidden. */
-.welcome-back{position:absolute;top:14px;right:18px;z-index:3;
-  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
-  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
-  background:color-mix(in srgb,var(--accent) 10%,transparent);
-  color:var(--cyan-deep);padding:7px 12px;border-radius:7px;
-  cursor:pointer;}
-.welcome-back:hover{border-color:var(--cyan);
-  background:color-mix(in srgb,var(--accent) 18%,transparent);}
-.welcome-back[hidden]{display:none;}
-/* the hero fills the first screen; the numbered steps sit below it, seen on
-   scroll (with a small "How it works" cue) */
+/* the hero fills the first screen; in the web build the demo reel sits
+   below it, seen on scroll */
 .welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
   flex-direction:column;justify-content:center;padding:24px 0;
   /* `safe` centring: on a short window the hero is taller than its box, and
@@ -851,18 +833,16 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
      logo gets sliced off. `safe` falls back to flex-start in that case.
      Declared second so browsers that do not parse it keep plain `center`. */
   justify-content:safe center;}
-.welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
-/* wide enough for the demo reel; the numbered steps keep their own narrow
-   measure below. The reel used to break OUT of this 560px column using a
+/* wide enough for the demo reel. The reel used to break OUT of a 560px
+   column using a
    VIEWPORT-relative width — on a page inset by the rail that overflowed
    to the left and slid under the fixed rail, which is what clipped
    "Hide the code" to "ide the code" (2026-07-31). */
 .welcome-more{padding:36px 0 10px;border-top:1px solid var(--line);
   max-width:900px;margin:0 auto;}
-.welcome-steps{max-width:560px;margin-left:auto;margin-right:auto;}
-/* ONE lockup, not three stacked rows: the mark on the left, the name and
-   the tagline beside it. A 132px logo row, a 66px wordmark row and a
+.welcome-more[hidden]{display:none;}
+/* ONE lockup, not three stacked rows: the mark on the left, the name
+   beside it (T624: the tagline under the name is gone). A 132px logo row, a 66px wordmark row and a
    tagline row were ~300px of identity before the first button, and the
    rail's own brand button already shows the same mark and the same word
    (2026-08-29, T77). Grid, so the mark spans both text rows and stays
@@ -871,7 +851,7 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-id{display:grid;grid-template-columns:auto minmax(0,1fr);
   column-gap:20px;row-gap:3px;align-items:center;justify-content:center;
   text-align:left;margin:0 0 26px;}
-.welcome-hero{grid-row:1 / span 2;display:flex;align-items:center;
+.welcome-hero{display:flex;align-items:center;
   justify-content:center;margin:0;}
 .welcome-hero .jv-logo{width:clamp(54px,7vw,78px);height:auto;
   filter:drop-shadow(0 4px 12px #0006);}
@@ -893,11 +873,6 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .ww-dot{display:none;}
 /* the Junoview mark (peacock-eye ocellus) — sized by context */
 .jv-logo{flex:none;display:inline-block;vertical-align:middle;}
-/* the tagline is the lockup's second row now, so it neither centres
-   itself nor carries the gap down to the buttons -- .welcome-id does */
-.welcome-tag{font-size:clamp(15.5px,1.7vw,18px);line-height:1.45;
-  font-weight:500;color:var(--ink-2);margin:0;max-width:44ch;}
-@media (max-width:640px){.welcome-tag{margin:0 auto;}}
 .welcome-lead{font-size:15.5px;line-height:1.65;color:var(--ink-3);
   margin:0 auto 30px;max-width:580px;}
 .welcome-lead b{color:var(--ink-2);}
@@ -906,8 +881,6 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
   background:color-mix(in srgb,var(--accent) 6%,transparent);border:1px solid color-mix(in srgb,var(--accent) 15%,transparent);
   border-left:3px solid var(--cyan);border-radius:10px;padding:13px 16px;}
 .welcome-note b{color:var(--cyan-deep);}
-.welcome-steps{list-style:none;margin:0 auto 30px;padding:0;max-width:560px;
-  text-align:left;display:flex;flex-direction:column;gap:15px;}
 /* the welcome-screen demo reel */
 /* the demos are the point of this section, so they get the width: the
    welcome box is narrow, the reel breaks out of it */
@@ -952,11 +925,6 @@ body.light .wtour figcaption b{color:var(--ink);}
 body:not(.light) .wquote blockquote{color:#eef4f8;}
 .wtour figcaption b{display:block;color:var(--ink);font-weight:700;
   font-size:19px;line-height:1.35;margin-bottom:7px;}
-.welcome-steps li{display:flex;align-items:flex-start;gap:15px;
-  font-size:16.5px;line-height:1.5;color:var(--ink-2);}
-.ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);
-  color:var(--cyan-deep);font-family:var(--mono);font-size:15px;font-weight:600;
-  display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
 /* T364: the drop hint is not a line on this screen any more. What
    formats parse and that you may drop them is a fact about Open, so it
    is Open's tooltip (2026-09-07, user: "The open screen still has way
@@ -1233,7 +1201,7 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
 .auto-slides-head,.auto-slides-foot{display:flex;align-items:center;gap:9px;}
 .auto-slides-head h2{margin:1px 0 0;font-size:19px;line-height:1.1;
   color:var(--chrome-ink);}
-.auto-slides-kicker,.presentation-hub-kicker{font:600 9px var(--mono);
+.auto-slides-kicker{font:600 9px var(--mono);
   letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);}
 .auto-slides-close{margin-left:auto;}
 .auto-slides-copy{margin:0;color:var(--chrome-ink-2);font-size:13px;
@@ -1731,6 +1699,9 @@ body.light .ckf-row:hover{background:var(--surface-hover);}
 #note-dlg-src:focus{outline:none;border-color:var(--cyan);}
 .note-dlg-git{display:flex;align-items:center;gap:8px;font-size:12.5px;
   color:var(--chrome-ink-2);cursor:pointer;}
+/* T624: display:flex above beat the [hidden] the row carries outside a
+   git repository, so "also commit to git" showed for every notebook */
+.note-dlg-git[hidden]{display:none;}
 .note-dlg-btns{display:flex;gap:8px;justify-content:flex-end;
   align-items:center;}
 .note-dlg-err{flex:1;font-size:11.5px;color:var(--danger);}
@@ -1986,25 +1957,16 @@ body:not(.light) .rawmd h3,body:not(.light) .rawmd h4,
 body:not(.light) .rawmd h5,body:not(.light) .rawmd h6{color:var(--ink);}
 body:not(.light) .welcome{background:var(--paper-2);}
 body:not(.light) .welcome-wordmark{color:var(--accent);}
-body:not(.light) .welcome-tag{color:var(--ink-2);}
 body:not(.light) .welcome-lead{color:var(--ink-3);}
 body:not(.light) .welcome-lead b{color:var(--ink-2);}
 body:not(.light) .welcome-note{background:color-mix(in srgb,var(--accent) 9%,transparent);border-color:color-mix(in srgb,var(--accent) 20%,transparent);
   border-left-color:var(--accent);color:var(--ink-2);}
 body:not(.light) .welcome-note b{color:var(--accent);}
-/* the numbered steps, in the dark default. This whole demo-reel
-   block was duplicated here behind a dangling `body:not(.light)`
-   selector, which glued itself to the next rule and left THIS one
-   unscoped -- so the light theme drew its steps in dark-theme grey.
-   The reel's own rules live once, above. */
-body:not(.light) .welcome-steps li{color:var(--ink-2);}
-body:not(.light) .ws-n{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
 body:not(.light) .recent-i{background:var(--paper);
   border-color:var(--line);color:var(--accent);}
 body:not(.light) .recent-i:hover{background:color-mix(in srgb,
   var(--accent) 15%,var(--paper));border-color:var(--accent);}
 body:not(.light) .recent-h{color:var(--ink-3);}
-body:not(.light) .welcome-back{color:var(--accent);}
 body:not(.light) .welcome-links a{color:var(--accent);}
 
 /* ---------- drag-drop hint ---------- */
@@ -2167,6 +2129,9 @@ body.doc-presenting{--presrail-w:0px;padding-top:0;padding-left:0;
 body.doc-presenting .apptop,
 body.doc-presenting .presrail,
 body.doc-presenting .presrail-show{display:none!important;}
+/* T624: Present is meaningless while presenting, and renderFilterExtras
+   (which hides it) is not run again when presenting starts */
+body.doc-presenting #doc-present{display:none;}
 body.doc-presenting .docs{position:fixed;inset:0;z-index:82;overflow:auto;
   background:var(--paper-2);}
 body.doc-presenting .shell{grid-template-columns:1fr;display:block;}
@@ -2441,3 +2406,45 @@ body.light .vars-menubtn{color:var(--ink-2);}
 /* no room for a field at 46px, the rule .prb-full already follows */
 body.presrail-min .pr-find,
 body.presrail-min .pr-find-none{display:none;}
+
+/* ---- T624: THE "?" AND ITS POPOVER ------------------------------------
+   The one icon-only button the user allows (2026-10-11): a small round
+   "?" right after what it explains, opening the longer text. It takes
+   currentColor, so it suits a paper surface or a chrome one in every
+   scheme; the popover wears the chrome tokens every scheme redefines.
+   Here and not in deck.css, so it works before the editor has loaded.
+   button.jv-q, not .jv-q: menus and dialog heads style their buttons as
+   rows, and this must stay a small circle wherever it sits. */
+button.jv-q{flex:none;display:inline-flex;align-items:center;
+  justify-content:center;box-sizing:border-box;width:18px;min-width:0;
+  height:18px;min-height:0;margin:0 0 0 6px;padding:0;border-radius:50%;
+  border:1px solid color-mix(in srgb,currentColor 45%,transparent);
+  background:transparent;color:inherit;opacity:.75;cursor:help;
+  font:600 11px/1 var(--sans);text-transform:none;letter-spacing:0;
+  vertical-align:middle;position:relative;box-shadow:none;
+  white-space:nowrap;}
+button.jv-q::after{content:"";position:absolute;inset:-4px;}
+button.jv-q:hover,button.jv-q[aria-expanded="true"]{opacity:1;
+  border-color:var(--accent);background:transparent;}
+button.jv-q:focus-visible{outline:2px solid var(--focus);
+  outline-offset:1px;opacity:1;}
+button.jv-q[hidden]{display:none;}
+/* the halo paints over a plain button beside it: 6px on the right too */
+.selpane-h>button.jv-q{margin-right:6px;}
+/* muted hint hosts dimmed it under 3:1: the chrome's ink, undimmed */
+.md-help>button.jv-q,.tk-h>button.jv-q,.ckf-empty>button.jv-q{
+  color:var(--chrome-ink);opacity:1;}
+.jv-qpop{position:fixed;z-index:2147483000;
+  width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);
+  overflow:auto;box-sizing:border-box;padding:10px 12px;margin:0;
+  border-radius:var(--rad);background:var(--chrome-2);
+  color:var(--chrome-ink);border:1px solid var(--chrome-line);
+  box-shadow:0 8px 24px var(--shadow);font:400 12.5px/1.45 var(--sans);
+  text-transform:none;letter-spacing:normal;white-space:normal;
+  text-align:left;cursor:auto;}
+.jv-qpop p{margin:0 0 6px;}
+.jv-qpop p:last-child{margin:0;}
+.jv-qpop a{color:var(--accent);}
+/* the outline's colour key, cloned in from its template */
+.jv-qpop .navkey{margin:0;padding:0;border:0;}
+@media print{.jv-q,.jv-qpop{display:none!important;}}

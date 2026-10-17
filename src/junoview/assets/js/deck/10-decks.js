@@ -770,9 +770,8 @@
         lsFull=true;
         if(typeof status==='function') status();
         if(!quiet&&typeof toast==='function')
-          toast('This browser is full — that edit was NOT kept. Use '
-            +'File › Download a copy, or the \u25be beside Save to keep '
-            +'a file on your computer.',9000);
+          toast('Browser full — edit NOT kept. File › Download '
+            +'.junoview',9000);
       }
       return false;
     }
@@ -826,9 +825,8 @@
         draftsDbFull=true;
         if(typeof status==='function') status();
         if(!quiet&&typeof toast==='function')
-          toast('This browser is refusing to keep drafts \u2014 that edit '
-            +'is NOT kept. Use File \u203a Download a copy, or the \u25be '
-            +'beside Save to save to a file.',9000);
+          toast('Browser full \u2014 edit NOT kept. File \u203a Download '
+            +'.junoview',9000);
       }
     });
     lsDel(PFX+name);   /* the legacy copy: one source, and its quota back */
@@ -1634,7 +1632,7 @@
       el.textContent='NOT saved — browser full';
       el.className='deck-status unsaved lsfull';
       el.title='Browser storage is full, so edits are not being kept. '
-        +'Use File \u203a Download a copy, or the \u25be beside Save to '
+        +'Use File \u203a Download .junoview, or the \u25be beside Save to '
         +'save to a file.';
       return;
     }
@@ -1857,7 +1855,7 @@
       /* filmText, not slideTitle: in headings mode the row is named by
          the slide's heading, and refreshing it with the other function
          would rename it back on the first edit */
-      if(tt) tt.textContent=filmText(s);
+      if(tt) tt.textContent=filmStripText(s);
       row.dataset.lvl=headLevel(s);
       syncFilmBuild(i);
     },140);

@@ -169,57 +169,35 @@ def _hexpair(v: str) -> str:
 # the loss report
 # ---------------------------------------------------------------------------
 
+# T624: a count and what becomes of them, nothing more -- the import
+# dialog's "?" says why (2026-10-11, user: "there is a lot of
+# unnecessary text still").
 _LOST_TEXT = {
-    "shape": "{n} shape{s} of kinds this editor has no outline for "
-             "({kinds}) — {they} arrive{s3} as {rect}",
-    "metafile": "{n} picture{s} in a Windows metafile (EMF/WMF) — no "
-                "browser can draw one, so {they} {are} left out",
-    "picfmt": "{n} picture{s} in a format this cannot carry ({kinds}) "
-              "— left out",
-    "piclink": "{n} picture{s} linked to a file outside the deck — "
-               "left out",
-    "picbig": "{n} picture{s} over the {cap} MB a deck will carry — "
-              "left out",
-    "picbad": "{n} picture{s} whose bytes are not the format they claim "
-              "— left out",
-    "media": "{n} video or audio clip{s} whose file is missing from the "
-             "deck — the poster frame arrives as a picture; the clip does "
-             "not",
-    "medialink": "{n} video or audio clip{s} linked to a file outside "
-                 "the deck — the poster frame arrives as a picture; the "
-                 "clip does not",
-    "mediafmt": "{n} clip{s} in a format no browser plays ({kinds}) — the "
-                "poster frame arrives as a picture; the clip does not",
-    "chartkind": "{n} chart{s} of a kind this cannot read ({kinds}) — "
-                 "left out; save {it} as a picture first and "
-                 "place that",
-    "chartcache": "{n} chart{s} with neither cached values nor a "
-                  "workbook beside them — left out",
-    "ole": "{n} embedded object{s} (spreadsheets, equations or other "
-           "documents) — left out",
-    "smartart": "{n} slide{s} with a diagram — its words arrive as a "
-                "bulleted list; the drawing does not",
-    "anim": "{n} entrance{s} of kinds this deck does not have — "
-            "{they} arrive{s3} as fades on the same click",
-    "emph": "{n} emphasis or motion-path effect{s} — not carried",
-    "trans": "{n} slide transition{s} this deck does not have ({kinds}) "
-             "— {they} arrive{s3} as fades",
-    "mixsize": "{n} text box{es} whose words change size part-way "
-               "— each box takes the size of its first words",
-    "hiddenobj": "{n} hidden object{s} — left out",
-    "merged": "{n} merged table cell{s} — split back into single "
-              "cells",
-    "asymerr": "{n} chart series with different error above and below "
-               "— this deck has one error per point, so the upper one "
-               "is kept",
-    "curve": "{n} freehand curve{s} drawn with straight segments",
-    "picfill": "{n} shape{s} filled with a picture — the outline "
-               "arrives, the picture does not",
-    "vertical": "{n} text box{es} set vertically — shown horizontal",
-    "manycols": "{n} text box{es} in more than three columns — set in "
-                "three",
-    "gradtext": "{n} text box{es} with gradient or patterned letters "
-                "— shown in one colour",
+    "shape": "{n} unknown shape{s}: {kinds} (as {rect})",
+    "metafile": "{n} EMF/WMF picture{s} (left out)",
+    "picfmt": "{n} {kinds} picture{s} (left out)",
+    "piclink": "{n} linked picture{s} (left out)",
+    "picbig": "{n} picture{s} over {cap} MB (left out)",
+    "picbad": "{n} broken picture{s} (left out)",
+    "media": "{n} clip{s} with no file (poster frame only)",
+    "medialink": "{n} linked clip{s} (poster frame only)",
+    "mediafmt": "{n} {kinds} clip{s} (poster frame only)",
+    "chartkind": "{n} {kinds} chart{s} (left out)",
+    "chartcache": "{n} chart{s} with no data (left out)",
+    "ole": "{n} embedded object{s} (left out)",
+    "smartart": "{n} SmartArt diagram{s} (as bullets)",
+    "anim": "{n} entrance{s} (as fades)",
+    "emph": "{n} emphasis or motion effect{s} (left out)",
+    "trans": "{n} {kinds} transition{s} (as fades)",
+    "mixsize": "{n} mixed-size text box{es} (one size)",
+    "hiddenobj": "{n} hidden object{s} (left out)",
+    "merged": "{n} merged table cell{s} (split)",
+    "asymerr": "{n} chart series with uneven error bars (upper kept)",
+    "curve": "{n} freehand curve{s} (straight segments)",
+    "picfill": "{n} picture-filled shape{s} (outline only)",
+    "vertical": "{n} vertical text box{es} (horizontal)",
+    "manycols": "{n} text box{es} in 4+ columns (three)",
+    "gradtext": "{n} gradient-text box{es} (one colour)",
 }
 
 

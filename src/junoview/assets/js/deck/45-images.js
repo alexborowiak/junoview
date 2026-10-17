@@ -147,9 +147,7 @@
       /* suppressed under the merged verb: on a deck that is all figures
          this sentence is exactly the wrong thing to say */
       if(!quiet)
-        toast('No pictures on this deck are linked to a file on this '
-          +'computer. Insert one with Image and it will remember where it '
-          +'came from.');
+        toast('No linked pictures to update');
       return Promise.resolve({ok:0,lost:[],n:0});
     }
     if(!quiet) toast('Re-reading '+n+' picture'+(n===1?'':'s')+'…');
@@ -198,9 +196,7 @@
     if(!pics.length&&!figs){
       /* say WHICH of the two it looked for, or "nothing to update" reads
          as "this button is broken" on a deck full of pasted pictures */
-      toast('Nothing on '+where+' has a source to re-read \u2014 a figure '
-        +'remembers its notebook and a picture remembers the file it came '
-        +'from, and neither is here yet.');
+      toast('Nothing here to update');
       return;
     }
     toast('Re-reading '+where+'\u2026');
@@ -379,15 +375,12 @@
          CAN be re-read, and the only picture in the deck that can go
          missing. Only the third state is genuinely sourceless. */
       if(picState(a2)==='kept'){
-        toast('This picture was pasted or dropped, so the deck holds the '
-          +'only copy — there is no file to re-read, and nothing to lose');
+        toast('Pasted \u2014 no source file');
         return;
       }
       if(picState(a2)==='link'&&!picCanEmbed()
          &&!/^https?:\/\//i.test(picAddr(a2))){
-        toast('This picture is loaded from '+picAddr(a2)+' every time the '
-          +'deck opens, so it is always as current as that address is.',
-          7000);
+        toast('Loaded from '+midElide(picAddr(a2),40),7000);
         return;
       }
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
@@ -397,8 +390,7 @@
       if(!got.n){
         if(got.same) toast('This figure already matches its source');
         else if(got.cancelled) toast('Kept the current figure');
-        else toast('Its notebook is not open, so there is nothing newer '
-          +'to read — the copy in the deck is being shown');
+        else toast('Notebook not open \u2014 showing the saved copy');
         return;
       }
       if(a2.k==='chart'){
@@ -575,8 +567,7 @@
     list.innerHTML='';
     var rows=imgSurvey(cur);
     if(!rows.length){
-      list.innerHTML='<div class="selpane-empty">No pictures or figures '
-        +'on this slide.</div>';
+      list.innerHTML='<div class="selpane-empty">None on this slide.</div>';
       return;
     }
     rows.forEach(function(r){list.appendChild(imgRow(r));});
@@ -609,8 +600,7 @@
     if(sub) sub.textContent=total?(total+' on '+withAny+' slide'
       +(withAny===1?'':'s')):'';
     if(!total)
-      body.innerHTML='<div class="selpane-empty">No pictures or figures '
-        +'on any slide yet.</div>';
+      body.innerHTML='<div class="selpane-empty">None in this deck.</div>';
   }
   function imgPaneBoot(){
     var btn=$('#hm-images'),pane=$('#imgpane');
@@ -668,7 +658,7 @@
          heading, not a rule (menuHead / .hd-lab) */
       var inv=document.createElement('button');
       inv.className='dbtn vw-opt';
-      inv.innerHTML=bic('image')+' Where each one came from';
+      inv.innerHTML=bic('image')+' Sources\u2026';
       inv.title='The pictures and figures on this slide, what each was '
         +'made from, and whether it is locked in place';
       inv.addEventListener('click',function(){
@@ -766,9 +756,8 @@
       a.src=addr;delete a.psrc;
       if(a.okey){try{idbDel(a.okey);}catch(e){}delete a.okey;}
       markDirty();refresh();imgPaneRefresh();
-      toast('Link only: the deck keeps just the address, so it is smaller '
-        +'\u2014 and the picture is missing wherever '+midElide(addr,40)
-        +' cannot be reached. Refresh puts the bytes back.',9000);
+      toast('Link only \u2014 missing when '+midElide(addr,40)
+        +' is offline',9000);
       return Promise.resolve(true);
     }
     if(picState(a)!=='link') return Promise.resolve(true);
@@ -799,16 +788,12 @@
         });
       }).catch(function(){
         placeImage(addr,0);
-        toast('That site did not let this page read the picture, so it '
-          +'is a link: loaded from '+midElide(addr,40)+' each time, and '
-          +'missing wherever that cannot be reached.',9000);
+        toast('Placed as a link to '+midElide(addr,40),9000);
       });
       return;
     }
     if(!picCanEmbed()){
-      toast('A file on this computer can only be read by the Junoview '
-        +'app. Here, use a web address \u2014 or Insert \u203a Picture to '
-        +'choose the file.',7000);
+      toast('Choose the file with Images \u203a Image',7000);
       placeImage(addr,0);
       return;
     }
@@ -1405,8 +1390,7 @@
   function pasteObjImage(){
     function giveUp(){
       objInto=-1;
-      toast('This browser will not hand over the clipboard on its own '
-        +'\u2014 click the frame and press Ctrl+V instead');
+      toast('Click the frame and press Ctrl+V');
     }
     if(!navigator.clipboard||!navigator.clipboard.read){giveUp();return;}
     navigator.clipboard.read().then(function(items){
@@ -1902,8 +1886,7 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,f.idx);}
-    toast('Cropped to your outline \u2014 Ctrl+Z undoes it, and Reset '
-      +'in the Crop menu clears it');
+    toast('Cropped to shape');
   }
   /* ---- T387: A ZOOM CALLOUT ------------------------------------------
      (2026-09-12, user: "a zoom on a feature in an image, like a new box
@@ -2064,8 +2047,7 @@
       (s.annots||[]).forEach(function(a){
         if(a&&a.sync!=null&&a.sync>=next) next=a.sync+1;});
       idxs.forEach(function(i){s.annots[i].sync=next;});
-      toast(idxs.length+' pictures zoom together now \u2014 enlarge one '
-        +'in the show and they all come up');
+      toast(idxs.length+' pictures zoom together');
     }
     markDirty();
     var l=stage.querySelector('.annot-layer');
@@ -2320,8 +2302,7 @@
     rdClose();
     var s=pres.slides[cur];
     if(!s||!(s.annots||[]).length){
-      toast('Put something on this slide first \u2014 reading order '
-        +'is read off what is there');
+      toast('Put something on this slide first');
       return;
     }
     ensureOids(s);
@@ -2577,7 +2558,7 @@
        deck that arrived from someone else be read here at all. */
     if(nt) nt.innerHTML=(sl.notes||'').trim()
       ?notesHtml(sl.notes)
-      :'<p class="jvp-nonotes">No notes for this slide.</p>';
+      :'<p class="jvp-nonotes">No notes</p>';
     var ct=doc.getElementById('jvp-count');
     if(ct) ct.textContent=(shownAt>=0?shownAt+1:0)+' / '+shown.length;
     var gl=doc.getElementById('jvp-goal');
@@ -2733,14 +2714,15 @@
       +'<button class="jvp-b" id="jvp-late" aria-pressed="false">'
       +'Running late</button>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
-      +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
+      +'<button class="jvp-b" id="jvp-reset" title="Reset the clock">'
+      +'Reset</button>'
       /* T574: what PowerPoint's presenter view also has -- the time of
          day, a black screen for the room, and a way to end the show */
       +'<span class="jvp-sub" id="jvp-tod" title="The time now"></span>'
       +'<button class="jvp-b" id="jvp-black" aria-pressed="false" '
       +'title="Black the screen the audience sees (B). Again to bring it '
       +'back">Black screen</button>'
-      +'<button class="jvp-b" id="jvp-end" title="Stop presenting">'
+      +'<button class="jvp-b" id="jvp-end" title="End the show">'
       +'End show</button>'
       +'</div>'
       +'<div class="jvp-stage" id="jvp-now"></div>'
@@ -2763,8 +2745,6 @@
       +'<button class="jvp-b" id="jvp-prev">&#8592; Back</button>'
       +'<button class="jvp-b primary" id="jvp-next-b">Next &#8594;</button>'
       +'<span class="jvp-sp"></span>'
-      +'<span class="jvp-lab">drag this window to your other screen, then '
-      +'press Present on the first one</span>'
       +'</div></div></body></html>';
   }
   function openPresenter(){
@@ -2855,7 +2835,7 @@
       if(!found.length){
         if(hits.firstChild) return;   /* the number found one */
         var no=d.createElement('div');
-        no.className='jvp-nohit';no.textContent='No slide says that.';
+        no.className='jvp-nohit';no.textContent='No match';
         hits.appendChild(no);return;
       }
       found.forEach(function(h){
@@ -2967,7 +2947,11 @@
       }
     },250);
     presenterPush();
-    toast('Presenter view opened — drag it to your other screen');
+    /* T624: the window's own footer said this; it is said once, here,
+       when it is needed -- the Present step only before the show (during
+       one this toast is on the audience's screen) */
+    toast('Presenter view opened \u2014 drag it to your other screen'
+      +(mode==='view'?'':', then press Present'));
   }
   /* the main window tells the presenter whenever anything moves */
   function presenterSync(){

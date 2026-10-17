@@ -1073,10 +1073,8 @@
       delete a.ref;
       p._putBack=null;   /* applied: nothing to put back */
       markDirty();refresh();chartDlgClose();
-      toast('Chart updated — Ctrl+Z undoes it'
-        +(orph?('. '+orph+' item'+(orph===1?'':'s')+' tied to a series '
-          +'that is no longer in the numbers — '
-          +(orph===1?'it shows':'they show')+' all the time now'):''));
+      toast('Chart updated'+(orph?(' \u2014 '+orph+' animation'
+        +(orph===1?' now always shows':'s now always show')):''));
     });
     var no=document.createElement('button');
     no.className='dbtn';no.textContent='Cancel';

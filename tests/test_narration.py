@@ -53,7 +53,7 @@ def test_the_part_the_door_and_the_switch():
     talk = html.split('class="rbn-grp rbn-talk"', 1)[1].split(
         '<span class="rbn-lab">', 1)[0]
     assert 'id="pr-narrate"' in talk
-    assert '<i data-ic="mic"></i> Record narration&#8230;</button>' in talk
+    assert '<i data-ic="mic"></i> Narrate&#8230;</button>' in talk
     assert 'id="talk-narr"' in html and 'id="np-narr"' in html
     assert "'pr-narrate':'record narration narrate voice over" in js
     from junoview import branding

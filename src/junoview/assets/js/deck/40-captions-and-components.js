@@ -494,6 +494,12 @@
     var p=document.createElement('div');
     p.className='sh-menu mast-panel';p.id='mast-panel';
     var head=menuHead(p,'masters');
+    /* T624: what a master is, behind the heading's "?" */
+    head.appendChild(qBtn('A master is a look slides inherit, live: a '
+      +'background and objects such as a logo or a footer band, drawn '
+      +'behind every slide that uses it. Change the master, or push a new '
+      +'look to its component, and every slide using it follows.',
+      'Slide master'));
     var x=document.createElement('button');
     x.className='dbtn dc-icon rd-close';x.type='button';
     x.setAttribute('aria-label','Close');x.title='Close';
@@ -501,13 +507,6 @@
     x.addEventListener('click',function(e){e.stopPropagation();
       mastClose();});
     head.appendChild(x);
-    var note=document.createElement('div');note.className='rd-note';
-    note.textContent='A look slides inherit, live: a background and a '
-      +'set of objects (a logo, a footer band) drawn behind every slide '
-      +'that wears it. '
-      +'Change the master \u2014 or push a new look to its component '
-      +'\u2014 and every wearer follows.';
-    p.appendChild(note);
     var body=document.createElement('div');
     p.appendChild(body);
     function act(label,title,fn){
@@ -523,8 +522,7 @@
       var s2=pres.slides[cur];
       var state=document.createElement('div');state.className='rd-state';
       var cm=mastOf(s2);
-      state.textContent='This slide wears: '
-        +(cm?(cm.name||'a master'):'nothing');
+      state.textContent='Master: '+(cm?(cm.name||'a master'):'none');
       body.appendChild(state);
       Object.keys(st).forEach(function(id){
         var m=st[id];
@@ -878,9 +876,7 @@
       overlayDrop(m);
       var id=cmpDefine(name,idxs,link);
       if(!id){toast('Nothing there that could be saved');return;}
-      toast('\u201c'+name+'\u201d is a set of clones \u2014 '
-        +'\u201cAdd a clone\u201d puts another on this slide or on '
-        +'every slide');
+      toast('\u201c'+name+'\u201d is now a set of clones');
       if(typeof renderSelPane==='function') renderSelPane();
       if(typeof showFmt==='function') showFmt();
     }
@@ -1059,8 +1055,7 @@
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayDrop(m);
         var k=cmpPlace(c.id,null,cur,null,false);
-        toast(k?('A clone of \u201c'+c.name+'\u201d is on this slide'
-          +(cmpHasPlace(def)?'':' \u2014 drag it where you want it'))
+        toast(k?('Clone of \u201c'+c.name+'\u201d added')
           :'Nothing was added');
       });
       m.appendChild(b);
@@ -1306,9 +1301,7 @@
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">None saved yet. Arrange '
-          +'a slide the way you like it, then press Save this slide’s '
-          +'layout, below.</div>';
+        host.innerHTML='<div class="selpane-empty">None saved yet.</div>';
         return;
       }
       list.forEach(function(a){
@@ -1368,9 +1361,8 @@
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">Once a layout is saved, '
-          +'every slide is listed here, with the one that fits it best '
-          +'already ticked.</div>';
+        host.innerHTML='<div class="selpane-empty">Save a layout first.'
+          +'</div>';
         return;
       }
       (pres.slides||[]).forEach(function(sl,i){
@@ -1441,7 +1433,7 @@
         toast('Lay something out on this slide first');return;}
       askText({title:'Save this slide\u2019s layout',label:'Call this layout',
         value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -1609,11 +1601,9 @@
         markDirty();refresh();build();
         if(onClose) onClose();   /* T470 */
         toast('\u201c'+t.label+'\u201d colours applied'
-          +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
-            +'undoes it.':' \u2014 the '+(kept?'':'page and the ')
-            +'deck\u2019s colours changed; nothing here wears a named '
-            +'style yet, so pick a style set above to recolour the text '
-            +'too.')
+          +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured':'')
+          /* T595: a sentence of its own when the page kept its colour */
+          +(kept?'.':'')
           +(kept?(' The slide background stayed as it was'
             +(themeReadsOnPage()?'.':' \u2014 and these colours were '
               +'made for another page, so some text is hard to read on '
@@ -1641,13 +1631,13 @@
           var m=deep(t);m.mine=1;cg.appendChild(themeCard(m));});
       }
       var w=$('#ss-what'),n=unstyledCount();
-      if(w) w.textContent=n
-        ? (n+' text box'+(n===1?' on this deck wears':'es on this deck wear')
-          +' no named style. Picking a set below will name '
-          +(n===1?'it':'them')+' from '+(n===1?'its':'their')
-          +' size and then style '+(n===1?'it':'them')+'.')
-        : 'Everything here already wears a named style, so a set restyles '
-          +'it straight away.';
+      /* T624: the count, or nothing -- the tick box under it says what
+         happens to them */
+      if(w){
+        w.textContent=n?(n+' text box'+(n===1?' has':'es have')
+          +' no style yet.'):'';
+        w.hidden=!n;
+      }
       var aw=$('#ss-autowrap'); if(aw) aw.hidden=!n;
     }
     /* T470: THE CARD YOU JUST MADE IS THE ONE YOU CANNOT SEE. Your own
@@ -1690,7 +1680,7 @@
       e.stopPropagation();
       askText({title:'Save this deck\u2019s type as a set',
         label:'Call this style set',value:'My set',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var st={};
@@ -1724,7 +1714,7 @@
       e.stopPropagation();
       askText({title:'Save this deck\u2019s colours as a theme',
         label:'Call this colour theme',value:'My colours',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       saveColourTheme(nm);
@@ -1772,10 +1762,8 @@
     }
     function build(){
       var w=$('#ms-what');
-      if(w) w.innerHTML='Every one of them takes the layout of '
-        +'<span class="aa-chip">slide '+(cur+1)+'</span> — the position, '
-        +'size and styling of what is on it, matched up by kind. '
-        +'Content never moves.';
+      if(w) w.innerHTML='Takes the layout of '
+        +'<span class="aa-chip">slide '+(cur+1)+'</span>.';
       var host=$('#ms-scope'); if(!host) return;
       host.innerHTML='';
       sectionRuns().forEach(function(r){
@@ -1844,8 +1832,7 @@
         if(r.moved) moved+=r.moved; else none++;
       });
       close();
-      if(!moved){toast('Nothing on those slides matched what is on this '
-        +'one — only items of the same kind travel');return;}
+      if(!moved){toast('Nothing on those slides matched');return;}
       var msg=moved+' item'+(moved===1?'':'s')+' re-laid out across '
         +list.length+' slide'+(list.length===1?'':'s');
       if(none) msg+=' — '+none+' had nothing in common with this one';
@@ -1881,11 +1868,11 @@
        referencing at all (T66). The dialog and the by-name list below
        both stay: knowing the number is still faster than hunting for
        it in a sixty-slide strip. */
-    [['to','Lay other slides out like this one\u2026',
+    [['to','Match others to this\u2026',
       'Then click each thumbnail in the strip that should take this '
       +'slide\u2019s arrangement. It stays armed, so one look can go '
       +'to a dozen slides'],
-     ['from','Lay this slide out like another\u2026',
+     ['from','Match this to another\u2026',
       'Then click the one thumbnail in the strip whose arrangement '
       +'this slide should copy']].forEach(function(o){
       var b=document.createElement('button');
@@ -1899,7 +1886,7 @@
     });
     var push=document.createElement('button');
     push.className='dbtn vw-opt';
-    push.innerHTML=bic('inherit')+' Give this slide’s layout to…';
+    push.innerHTML=bic('inherit')+' Copy layout to…';
     push.title='Choose which slides take the arrangement of this one, '
       +'from a list with tick boxes — the same job as pointing at '
       +'them, when you would rather read the names';
@@ -1938,8 +1925,7 @@
         var r=matchSlide(i,cur);
         if(!r) return;
         if(!r.moved){
-          toast('Slide '+(i+1)+' and this one have no matching items — '
-            +'nothing to copy a layout from');
+          toast('Nothing on those slides matched');
           return;
         }
         markDirty();refresh();
@@ -1969,10 +1955,10 @@
         the right thing on their own — these are for centring a whole
         group on the page without first selecting something at its edge
         (2026-08-20, user asked for arrange "like what there is in photo
-        shop editors ... really thorough") */
-     ['p:hcenter','Centre on the page, side to side'],
-     ['p:vmiddle','Centre on the page, top to bottom'],
-     ['p:both','Centre on the page, both ways'],
+        shop editors ... really thorough"). T624: "on page" stays */
+     ['p:hcenter','Centre on page across'],
+     ['p:vmiddle','Centre on page down'],
+     ['p:both','Centre on page'],
      ['d:h','Equal gaps across (3+ items)'],
      ['d:v','Equal gaps down (3+ items)'],
      ['g:h','Close the gaps across'],
@@ -1985,9 +1971,9 @@
      ['f:v','Flip top to bottom'],
      ['o:rotl','Rotate left 15°'],
      ['o:rotr','Rotate right 15°'],
-     ['r:90','Turn a quarter turn right'],
-     ['r:-90','Turn a quarter turn left'],
-     ['r:0','Straighten (no rotation)'],
+     ['r:90','Rotate right 90°'],
+     ['r:-90','Rotate left 90°'],
+     ['r:0','Straighten'],
      ['o:row','Tidy into a row'],
      ['o:grid','Tidy into a grid'],
      ['m:w','Match widths to the widest'],
@@ -1998,19 +1984,19 @@
         where "make these things match" is kept, and it is shown for
         every kind of item, which the Styles menu beside it is not
         (2026-08-22) */
-     ['a:type','Apply this look to every one of its type…'],
+     ['a:type','Apply look to all of its type…'],
      /* the two POINT-AT-IT verbs. They live here, with the other
         make-things-match rows, and cost the ribbon nothing (2026-08-22) */
-     ['x:to','Copy this look to objects I click…'],
-     ['x:from','Take the look of an object I click…'],
+     ['x:to','Copy look to…'],
+     ['x:from','Take look from…'],
      /* the LAYOUT sibling of the two rows above: same gesture, but what
         travels is the arrangement rather than the look (TASKS T8) */
-     ['x:layout','Lay these out like a group I click…'],
+     ['x:layout','Lay out like…'],
      /* SELECTING is not arranging, but this is the menu that is shown
         for every kind of item and already keeps the "everything like
         this one" verbs — and the ribbon has no width to spare for a
         button of its own (TASKS T5) */
-     ['s:by','Select everything on this slide like this…']],'al',
+     ['s:by','Select all like this']],'al',
     function(what){
       if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}
       if(what.indexOf('a:')===0){
@@ -2377,10 +2363,8 @@
              would read as "your LaTeX is wrong" rather than "nothing here
              can draw it" (2026-08-20). */
           warn.hidden=false;
-          warn.textContent='No maths renderer available — MathJax is '
-            +'loaded from the internet and could not be reached. The '
-            +'LaTeX is still saved with the slide and will typeset '
-            +'anywhere that can load it.';
+          warn.textContent='No preview offline \u2014 the LaTeX is still '
+            +'saved.';
         });
       },160);
     }
@@ -2471,7 +2455,7 @@
       if(!pal.childNodes.length) buildPal();
       dlg.hidden=false;
       $('#eq-ok').textContent=(editIdx!=null)?'Update it'
-        :'Put it on the slide';
+        :'Insert';
       src.focus();src.select();
       render();
     }
@@ -2554,7 +2538,7 @@
         +'- a point\n- another one';
       dlg.hidden=false;
       $('#md-ok').textContent=(editIdx!=null)?'Update it'
-        :'Put it on the slide';
+        :'Insert';
       src.focus();src.select();
       render();
     }
@@ -2931,9 +2915,7 @@
       markDirty();refresh();
       close();
       toast(hits.length+' '+typeLabel(srcKey,hits.length!==1,samp)
-        +' now wear \u201c'+nm+'\u201d, a variation of '+p.label
-        +' \u2014 change '+p.label+' and they follow. Ctrl+Z undoes '
-        +'the lot.',7000);
+        +' now wear \u201c'+nm+'\u201d \u2014 Ctrl+Z undoes',7000);
       });
     }
     $('#aa-ok').addEventListener('click',commit);

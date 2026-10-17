@@ -77,7 +77,7 @@ def test_standardise_says_what_it_does(out):
 
 
 def test_images_are_per_slide_in_the_pane_and_every_slide_full_screen(out):
-    assert "<span>Images on this slide</span>" in out
+    assert '<div class="selpane-h"><span>Images</span>' in out
     assert 'id="imgpane-all"' in out and 'id="img-ov"' in out
     assert "function imgSurvey(si){" in out
     assert "function imgRow(r,after){" in out

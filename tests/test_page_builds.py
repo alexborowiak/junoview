@@ -213,7 +213,7 @@ def test_a_failed_silent_restore_never_forgets_the_notebook():
     # the status has to be ON the error for that test to ever be true
     assert "he.status=r.status;throw he;" in js
     # and a kept-but-unreachable notebook says so, rather than vanishing
-    assert "could not be reloaded" in js and "when you reconnect" in js
+    assert "could not reopen" in js and "kept for later" in js
 
 
 def test_web_session_restore_survives_an_early_pyready():

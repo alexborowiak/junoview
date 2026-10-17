@@ -38,7 +38,9 @@ def test_web_mode_page_chrome_and_welcome_hero(out):
     # the tagline LEADS with presenting (2026-08-22): the front door used
     # to offer only ways of opening a notebook, so a presentation was
     # something you reached only after loading one
-    assert "Build a presentation, or open a notebook" in web_page
+    # T624: no tagline under the name any more (2026-10-11, user:
+    # "there is a lot of unnecessary text still")
+    assert 'class="welcome-tag"' not in web_page
     # The card grid became a concise Recent presentations + Notebooks
     # launcher; the full presentation library has its own Open button.
     assert 'class="welcome-jump"' in web_page \
@@ -76,7 +78,7 @@ def test_welcome_tour_reel_is_deferred_and_laid_out_in_column(out):
     # inside a rail-inset column overflows left, under the fixed rail
     assert (".wtour{margin-top:30px;display:grid;gap:40px;"
             "text-align:left;\n  width:100%;max-width:880px;") in out
-    assert 'it updates straight away in the' in out
+    assert "<b>Re-run the notebook and the slides catch up</b>" in out
     assert "<img src=\"gifs/" not in out          # never fetched eagerly
     assert ".wtour.lite img{display:none;}" in out
     # offered where the build put the clips beside the page (web.demos),
@@ -95,8 +97,14 @@ def test_welcome_open_button_and_getting_started_steps(out):
     assert ("Open .ipynb, .md, .tex or .csv from this computer "
             "&mdash; or drop them anywhere in this window") in flat
     web_page = _web_page()
+    # T624: the four "how it works" steps are Help's "What this is" now;
+    # the web build's lower half is the reel and the testimonial
     assert ('class="welcome-more"' in web_page
-            and web_page.count('class="ws-n"') == 4)
+            and 'class="welcome-steps"' not in web_page)
+    help_html = assets.help_html()
+    for step in ("Open notebooks from files or a GitHub link.",
+                 "Re-run the notebook and refresh: the slides catch up."):
+        assert step in help_html, step
 
 
 def test_guided_tour_and_help_content(out):

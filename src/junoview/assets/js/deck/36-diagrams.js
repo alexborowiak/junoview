@@ -231,9 +231,7 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,idxs);}
     if(typeof renderFilm==='function') renderFilm();
-    toast(diagName(kind)+' added — ordinary boxes and arrows in one '
-      +'group: double-click a box to type in it'
-      +(cut?' (the first '+max+' lines; more would not read)':''));
+    toast(diagName(kind)+' added'+(cut?' (first '+max+' lines)':''));
     return idxs.length;
   }
   /* ---- THE DIALOG ------------------------------------------------------ */

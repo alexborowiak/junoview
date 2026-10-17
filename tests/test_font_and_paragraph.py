@@ -39,7 +39,7 @@ def test_the_presentation_style_system_is_on_home(out):
     assert '<span class="rbn-lab">Whole deck</span>' in out
     for cid in ("dsg-styles", "dsg-tokens", "dsg-std", "dsg-design-btn"):
         assert f'id="{cid}"' in out, cid
-    assert "styles used in this presentation" in out
+    assert "menuHead(list,'in this deck');" in out
     assert ("var ids=styleOrder().filter(function(id){return "
             "worn[id]||id===openEdit;});") in out
     # Design keeps the four groups that are about the page itself

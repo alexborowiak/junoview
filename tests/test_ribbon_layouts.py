@@ -53,7 +53,7 @@ def test_the_catalogue_is_a_pile_not_a_handful(out):
                    "journey-poster-first", "density-one-row",
                    "web-canvas-rail", "radical-ten-then-more"], ids
     # a stored id from the old hundred lands on Default, said out loud
-    assert "you are on Default now" in out
+    assert "Your ribbon layout was retired \\u2014 back to " in out
 
 
 def test_every_layout_places_exactly_the_same_controls(out):
@@ -305,8 +305,7 @@ def test_an_oversized_layout_names_the_existing_remedy(out):
     notice = out[notice_i:out.index("\n  function ", notice_i + 20)]
     assert "bar.scrollWidth>bar.clientWidth+1" in notice
     assert "!deckEl.classList.contains('rbn-side')" in notice
-    assert "This ribbon layout is wider than the window" in body
-    assert "turn on Side toolbar to reach all of it" in body
+    assert "toastUndo('Ribbon wider than the window','Use Side toolbar'," in body
     # While the chooser is open its z-index is above the deck (and its
     # toast), so the same warning must also live inside the gallery.
     assert 'id="rbn-gal-warn" role="status" hidden' in out
@@ -513,7 +512,7 @@ def test_layout_ideas_previews_are_the_real_computation_on_a_clone(out):
     assert "return {arr:arr,fit:arrScore(arr,sl)};" in out
     assert ".sort(function(x,y){return y.fit-x.fit;})" in out
     # an empty slide gets a sentence, not an empty panel
-    assert "ideas are computed " in out
+    assert "      toast('Put something on this slide first');\n      return;" in out
 
 
 def test_the_chooser_closes_like_the_menus_it_lives_beside(out):

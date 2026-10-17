@@ -50,7 +50,12 @@ NB = ROOT / "examples" / "example_climate_analysis.ipynb"
 EDITOR_UP = "!!window.SemDeckImport"
 HUB_OPEN = ("(()=>{const h=document.getElementById('presentation-hub');"
             "return !!(h&&!h.hidden)})()")
-NEW_DIALOG = "document.body.innerText.includes('Blank presentation')"
+# the New presentation dialog, on screen, with its Blank button (T624:
+# "Blank presentation" became "Blank"; its title still says what it does)
+NEW_DIALOG = ("(()=>{const b=document.getElementById('nt-blank');"
+              "return !!(b&&b.getClientRects().length"
+              "&&b.innerText.trim()==='Blank'"
+              "&&b.title.startsWith('An empty presentation'))})()")
 EDITING = "document.body.classList.contains('slide-editing')"
 
 

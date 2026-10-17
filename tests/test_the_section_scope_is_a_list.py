@@ -39,7 +39,7 @@ def test_both_directions_and_a_count():
     assert "    bulkBtn('Select all','Every section in this notebook'," in app
     assert ("    bulkBtn('Select none',"
             "'Clear them all, then tick the ones you want',") in app
-    assert "    cnt2.textContent=picked+' of '+nodes.length+' ticked';" in app
+    assert "    cnt2.textContent=picked+'/'+nodes.length;" in app
 
 
 def test_the_tick_is_a_thing_you_can_see():

@@ -789,8 +789,7 @@
         rr2.appendChild(ciCol);
       }
     } else {
-      lab('A text column is left as it was typed. Set it to Numbers to '
-        +'align it, format it, total it or colour it.','tp-hint');
+      lab('Numbers can be aligned and totalled.','tp-hint');
     }
     /* the spanning row above the header */
     lab('Header groups');

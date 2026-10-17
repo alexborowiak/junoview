@@ -24,7 +24,7 @@ def test_the_paragraph_window_has_the_row():
     panel = html.split('id="fmt-para-menu"')[1].split(
         "</div>\n              </span>")[0]
     assert 'id="fmt-para-fit"' in panel
-    assert "autofit &#8212; when the words" in panel
+    assert '<div class="hd-lab">autofit</div>' in panel
     # beside where the words sit: the two halves of the box's height
     assert panel.index('id="fmt-para-va"') < panel.index('id="fmt-para-fit"')
     js = assets.load("js/deck/30-format-bar.js")

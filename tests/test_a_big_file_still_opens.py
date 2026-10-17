@@ -26,8 +26,9 @@ def test_no_room_in_the_browser_is_not_cannot_open(out):
     assert "    } else loadPresentationObj(first.pres);   /* T414 */" in out
     assert "  function loadPresentationObj(np){" in out
     assert "    pres=np;source='draft';" in out
-    assert ("      toast('Opened \\u201c'+first.name+'\\u201d \\u2014 too big "
-            "for a '") in out
+    # T624: said in five words -- where it saves
+    assert ("      toast('Opened \\u201c'+first.name+'\\u201d \\u2014 saves to "
+            "its file'") in out
 
 
 def test_the_deck_that_did_not_fit_is_the_one_that_opens(out):

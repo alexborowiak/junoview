@@ -6,6 +6,13 @@ notes as cards, code folded underneath, sections in a sidebar, and a
 provenance graph of how each result derives from the data. On top of
 that sits a <b>presentation builder</b>: turn any notebooks into slides
 and present straight from the browser.</p>
+<ul>
+<li>Open notebooks from files or a GitHub link.</li>
+<li>Filter by cell type, and trace every cell that builds a plot.</li>
+<li>Build presentations from the notebook&rsquo;s figures, markdown and
+code.</li>
+<li>Re-run the notebook and refresh: the slides catch up.</li>
+</ul>
 <p>Everything runs locally &mdash; in the web version, notebooks are
 processed <i>in your browser</i> and never uploaded anywhere.</p>
 
@@ -13,7 +20,7 @@ processed <i>in your browser</i> and never uploaded anywhere.</p>
 <ul>
 <li><b>Drag &amp; drop</b> one or more <code>.ipynb</code> files
 anywhere onto the window.</li>
-<li><b>File &#9662;</b> &rarr; <b>Open a notebook&#8230;</b> (File starts the row under
+<li><b>File &#9662;</b> &rsaquo; <b>Notebook&#8230;</b> (under Open; File starts the row under
 the tabs) &mdash; a file picker, or paste a
 <b>URL</b> to a notebook (GitHub links are converted automatically).</li>
 <li>Notebooks must be <b>executed</b> (run once in Jupyter so outputs
@@ -122,7 +129,7 @@ redefines or reads it.</li>
 </ul>
 
 <h3>Plot trace</h3>
-<p>Every figure has a <b><i data-ic="tree"></i> Plot trace</b>
+<p>Every figure has a <b><i data-ic="tree"></i> Trace</b>
 button. It opens a new
 tab holding just the cells that build that plot &mdash; its whole
 lineage, load &rarr; transform &rarr; plot &mdash; with a dependency
@@ -137,8 +144,6 @@ authored &mdash; cells in order, directives visible &mdash; so you can
 always see where a title or caption came from.</p>
 
 <h3>Keyboard shortcuts</h3>
-<p>Every shortcut also shows as a key chip in its button&rsquo;s
-tooltip.</p>
 <div class="help-keys">
 <span><kbd>P</kbd> <kbd>M</kbd> <kbd>C</kbd> <kbd>O</kbd></span>
 <span>Cycle the Plots / Markdown / Code / Output filters</span>
@@ -162,33 +167,28 @@ sidebar</span>
 <span><kbd>Ctrl</kbd>+<kbd>D</kbd></span><span>Duplicate the
 selection (or <kbd>Alt</kbd>-drag it to drag a clone)</span>
 <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd></span>
-<span>Paste <b>in place</b> &mdash; the coordinates it was copied
-from (or, if you last copied a <i>look</i>, paste that look)</span>
+<span>Paste in place (or paste a copied look)</span>
 <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd></span>
-<span>Copy the selected object's <b>look</b> &mdash; its typeface, size,
-colours, fill and line &mdash; for <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
-to put on whatever you select next</span>
+<span>Copy the selected object&rsquo;s look</span>
 <span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>V</kbd></span>
 <span>Paste <b>here</b> &mdash; centred on the pointer</span>
 <span><kbd>Ctrl</kbd>+<kbd>A</kbd></span>
-<span>Select everything on the slide (hold <kbd>Alt</kbd> as well to
-sweep in fully locked items, the same as an <kbd>Alt</kbd>-marquee)</span>
+<span>Select everything on the slide (+<kbd>Alt</kbd>: locked items
+too)</span>
 <span><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></span>
 <span>Group / ungroup</span>
 <span><kbd>Del</kbd></span><span>Remove the selection</span>
 <span>Arrows / <kbd>Shift</kbd>+arrows</span>
 <span>Nudge the selection (fine / coarse)</span>
 <span><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></span>
-<span>Zoom the page in / out / fit (trackpad pinch works too;
-<kbd>Ctrl</kbd>+scroll zooms at the pointer and <kbd>Ctrl</kbd>+<kbd>0</kbd>
-fits)</span>
+<span>Zoom in / out / fit (<kbd>Ctrl</kbd>+scroll zooms at the
+pointer)</span>
 <span><kbd>R</kbd> <kbd>G</kbd></span>
 <span>Rulers / the margin-and-column grid</span>
 <span><kbd>H</kbd> <kbd>B</kbd></span>
 <span>Show or hide the guides you drew / draw a guide box</span>
 <span><kbd>Alt</kbd>+<kbd>Q</kbd></span>
-<span>Search the commands &mdash; type what you want ("format painter",
-"slide number", "fade") and Enter runs it, on its own tab</span>
+<span>Search the commands</span>
 <span><kbd>F2</kbd> / <kbd>Enter</kbd></span>
 <span>Start typing in the selected text box (an equation opens its
 editor)</span>
@@ -212,16 +212,13 @@ selected box</span>
 <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>=</kbd></span>
 <span>Superscript / subscript the highlighted characters</span>
 <span><kbd>Ctrl</kbd>+<kbd>K</kbd></span>
-<span>Link the highlighted words, or the selected object, to a web page
-or another slide (with nothing selected it finds a notebook or a
-presentation)</span>
+<span>Link to a web page or slide (nothing selected: find a notebook or
+deck)</span>
 <span><kbd>Ctrl</kbd>+<kbd>Space</kbd></span>
 <span>Clear formatting &mdash; the highlighted words, or the whole box
 back to its text style</span>
 <span><kbd>Shift</kbd>+<kbd>F3</kbd></span>
-<span>Change case: lowercase, Capitalise Each Word, UPPERCASE in turn
-(<b>Style &rarr; Case &#9662;</b> holds Sentence case and tOGGLE cASE
-too)</span>
+<span>Change case (cycles lower / Title / UPPER)</span>
 <span><kbd>Ctrl</kbd>+<kbd>]</kbd> / <kbd>Ctrl</kbd>+<kbd>[</kbd></span>
 <span>Bring forward / send backward one place (add <kbd>Shift</kbd> for
 the front / the back)</span>
@@ -283,7 +280,7 @@ notebooks</b> takes the current copy of every cell whose notebook is
 open. It saves, opens, renames and deletes like a presentation.</li>
 </ul>
 
-<h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
+<h3 id="help-custom-views">Custom views &mdash; a styled, filtered copy of the notebook</h3>
 <ul>
 <li><b>File &#9662;</b> &rarr; <b>Custom view</b> (under New), or
 <b>Save as view</b> on the Filters tab,
@@ -295,8 +292,8 @@ ribbon.</li>
 heading to style just that one. Colour, size, background, border, corner
 radius, padding, font and alignment.</li>
 <li>Narrowest wins: a cell beats its section, a section beats the whole
-view. Anything carrying its own style is marked, and <b>Override N
-individual styles</b> clears them so they follow the view again.</li>
+view. Anything carrying its own style is marked, and <b>Clear cell
+styles</b> clears them so they follow the view again.</li>
 <li>Your <b>filters</b>, hidden cells, hidden headings, collapsed
 sections, figure sizes and text size are saved <i>with</i> the view
 &mdash; so it is also the place to keep an elaborate filter setup you
@@ -516,7 +513,11 @@ opens the kinds of marker; <i>Bullet options&hellip;</i> or
 <i>Numbering options&hellip;</i> at its foot sets the marker's own
 <b>colour</b> and <b>size</b> (the words keep theirs), and where a
 numbered list <b>starts</b>. A .pptx keeps all of it, and the marker's
-kind, both ways.</li>
+kind, both ways. A line you start with <code>- </code> or <code>1. </code>
+becomes a list as you type: <kbd>Tab</kbd> indents it,
+<kbd>Shift</kbd>+<kbd>Tab</kbd> takes it back out. Code pasted into an
+empty box becomes a code block, and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
+pastes it as plain text instead.</li>
 <li><b>Find a shape.</b> On <i>Images &rarr; Shapes</i>, the &#9662; at the
 gallery's edge shows every shape with a search at the top: type
 <i>circle</i>, <i>callout</i> or <i>arrow</i> (a shape is found by the
@@ -583,7 +584,7 @@ words &mdash; and it is skipped. The button's tooltip says what is written
 so far, and <i>Review</i> lists every picture and chart nobody has
 decided about.</li>
 <li><b>Lay these out like those.</b> Select some objects, then
-<i>Arrange &#9662; &rarr; Lay these out like a group I click</i> and click
+<i>Arrange &#9662; &rsaquo; Lay out like&hellip;</i> and click
 one member of a tidy row or column. What travels is the <b>pattern</b>
 &mdash; the axis it runs along, the edge or centre its members agree on,
 the rhythm of its gaps, and where the run starts &mdash; and nothing
@@ -612,7 +613,7 @@ its <b>typeface</b>, at its <b>size</b>, in its <b>colour</b>, with its
 <b>fill</b> or its <b>line thickness</b>. Each row says how many it will
 take before you click it, so the count is never a surprise; rows that
 would take only the thing you already have are not offered.
-<i>Arrange &#9662; &rarr; Select everything on this slide like this</i>
+<i>Arrange &#9662; &rsaquo; Select all like this</i>
 is the same list from the ribbon.</li>
 <li><b>Find &amp; replace</b> (<kbd>Ctrl+F</kbd>) has two halves.
 <b>Text</b> searches every text box, title and subtitle on every slide
@@ -644,8 +645,8 @@ under the next while you build, so you scroll through the deck instead of
 clicking from slide to slide. The slide that settles in the middle of the
 view is the one you are editing, and a click on any slide edits it there
 (with what you clicked selected). The tile beside it says what sits
-between the slides &mdash; <i>Faint line</i>, <i>Strong line</i>, <i>No
-line</i> or <i>Spaced</i>; click it for the next. It is the same choice
+between the slides &mdash; <i>Faint</i>, <i>Strong</i>, <i>None</i> or
+<i>Spaced</i>; click it for the next. It is the same choice
 as the scrolling page&rsquo;s, and it is remembered.</li>
 <li><b>The ribbon, arranged your way.</b> There is no one right
 grouping, so there are nine. <i>File &rarr; Ribbon layouts&hellip;</i>
@@ -669,8 +670,8 @@ through. Nothing is ever lost: every layout holds the same controls, and
 <b>Change layout</b> on Design choose a template for a slide.
 Tuning individual buttons (right-click the ribbon) still works on top,
 and is remembered per layout.</li>
-<li><b>Have the content read.</b> <i>File &rarr; Export for
-review&#8230;</i> writes the deck out as markdown &mdash; every slide's
+<li><b>Have the content read.</b> <i>File &rsaquo; For review
+(.md)&#8230;</i> writes the deck out as markdown &mdash; every slide's
 words in reading order, its figures with the notebook anchor each came
 from, captions, notes and timings &mdash; so a colleague or a language
 model can review what it <i>says</i>. Copy it or save it as a
@@ -717,7 +718,7 @@ slide &mdash; its text, a table cell, a caption or your speaker notes
 the first. The presenter view has the same search under the notes. A hit
 that is only in your notes says so, so you never jump expecting to see a
 word on the screen that is not there.</li>
-<li><b>Handouts and notes pages.</b> <i>File &rarr; Export PDF /
+<li><b>Handouts and notes pages.</b> <i>File &rsaquo; PDF /
 print&hellip;</i> asks what goes on each sheet: full-page slides,
 handouts of three slides a page with lines to write beside each, six a
 page, or notes pages &mdash; each slide above its speaker notes. Choose
@@ -726,20 +727,20 @@ remembered.</li>
 <li><b>The presenter view</b> (<i>Present &rarr; Presenter view</i>, or
 <kbd>N</kbd> while presenting) shows this slide and the next, your notes
 (<i>A&minus; smaller</i> / <i>A+ larger</i> sizes them, and the size is
-remembered), the talk's clock with <i>Pause</i> and <i>Reset clock</i>,
+remembered), the talk's clock with <i>Pause</i> and <i>Reset</i>,
 the time now, where you are against your plan, <i>Running late</i>,
 <i>Black screen</i> for the room (<kbd>B</kbd>) and <i>End show</i>.
 Type a slide's number and <kbd>Enter</kbd> &mdash; in the show or in the
 presenter view &mdash; to go straight there, as in PowerPoint (a hidden
 slide too); the search under the notes takes a number as well.</li>
-<li><b>The scrolling page.</b> <i>Present &rarr; Scrolling page</i>
-(or <i>Play as a scrolling page</i> under the &#9662; beside the Present
+<li><b>The scrolling page.</b> <i>Present &rsaquo; Scrolling page</i>
+(or <i>Scrolling page</i> under the &#9662; beside the Present
 button) puts every slide
 one under the next, so you scroll through the talk instead of clicking;
 each slide&rsquo;s animations play the first time it comes into view.
 <i>Between slides</i> in its top bar runs them edge to edge with a
-<i>Faint line</i>, a <i>Strong line</i> or <i>No line</i> at each join,
-or <i>Spaced</i> as separate cards; the choice is remembered. The arrow
+<i>Faint</i> or <i>Strong</i> line at each join, <i>None</i>, or
+<i>Spaced</i> as separate cards; the choice is remembered. The arrow
 keys step a slide, <kbd>Esc</kbd> closes it.</li>
 <li><b>Ink while you talk.</b> In the show, <kbd>I</kbd> picks up a pen,
 <kbd>H</kbd> a highlighter and <kbd>X</kbd> an eraser that rubs out the
@@ -760,7 +761,7 @@ slide and per section. The Notes pane then tells you what you
 lists the lot with the sections totalled &mdash; a section is the unit
 you cut. The last twelve runs are kept, and they stay on this computer:
 sending someone your deck does not send them your rehearsal.</li>
-<li><b>Record narration.</b> <i>Present &rarr; Record narration&hellip;</i>
+<li><b>Record narration.</b> <i>Present &rsaquo; Narrate&hellip;</i>
 asks for the microphone and starts the show from this slide; whatever
 you say on each slide is kept as that slide&rsquo;s own recording, split
 where you move on (a slide you only pass through is not recorded, and a
@@ -786,8 +787,8 @@ renumbered. <i>Bigger editor</i> in the Notes pane puts the slide, the
 text and the rendered result side by side.</li>
 <li><b>One deck, several lengths.</b> Right-click a slide to mark it
 <b>optional</b>, or to put it in a named <b>custom show</b> (a 20-minute
-talk, a 5-minute one) &mdash; make one from <i>Present &rarr; Custom show
-&#9662; &rarr; New custom show&#8230;</i>. A slide that names no
+talk, a 5-minute one) &mdash; make one from <i>Present &rsaquo; Custom show
+&#9662; &rsaquo; New&#8230;</i>. A slide that names no
 custom shows is in <b>all</b> of them, so an existing deck is already a
 complete "everything" show and turning one on excludes nothing until
 you say so. Pick which custom show to play, rename it or delete it from the
@@ -797,7 +798,7 @@ in none of them returns to all of them. The strip labels slides
 file, and nothing to keep in step.</li>
 <li><b>The presenting bar is folded away.</b> While you present, only a
 faint <i>Controls</i> tab shows at the top edge. Move the pointer to the
-top of the screen to bring the bar (Stop presenting, Open now, Running
+top of the screen to bring the bar (End show, Open now, Running
 late) for a moment, or click the tab to keep it until <i>Hide</i>.
 <kbd>Esc</kbd> stops presenting either way.</li>
 <li><b>Hide a slide.</b> <i>Present &rarr; Hide slide</i> (or right-click
@@ -807,6 +808,27 @@ Slide. The strip strikes its number through and says <b>hidden</b>. It is
 left out of a PDF and a scrolling page; a .pptx keeps it, hidden there
 too, and a hidden slide in a .pptx you import stays hidden. That is not
 <b>optional</b>, which plays unless you are running late.</li>
+<!-- T624: what the toasts used to say on the spot, said once here -->
+<li><b>Enlarge on click.</b> With <i>Present &rsaquo; Enlarge on
+click</i> on, a click on a figure or a text box while presenting blows it
+up and a click anywhere else moves the talk on; with it off,
+<kbd>Alt</kbd>+click (or <kbd>Z</kbd>) enlarges whatever is under the
+pointer. Pictures set to <i>Zoom together</i> all come up when one
+does.</li>
+<li><b>Versions of a slide.</b> A slide can have versions: the talk shows
+the starred one, and right-clicking a version makes it the main one. A
+poster exports one version at a time, the one you are on.</li>
+<li><b>Clones.</b> <i>Make clones&hellip;</i> turns a selection into a set
+of clones (same look, same place, or both), and <i>Add a clone&hellip;</i>
+puts another on this slide or on every slide.</li>
+<li><b>Citations.</b> <i>Text &rsaquo; Citations&hellip;</i> imports a
+<code>.bib</code> (or, in the app, adds a reference by DOI); cite in any
+text box as <code>[@key]</code>. The number comes from where the slide
+sits, so moving a slide renumbers it, and a references box lists what the
+deck cites, in order.</li>
+<li><b>A live web page.</b> <i>Web page</i> places a page by its address;
+it is live in the show and in an exported page, and its address changes
+from the Object tab.</li>
 <li><b>Running late.</b> Mid-talk, use <i>Running late</i> in the
 presentation bar (or press <kbd>L</kbd>) to skip every remaining
 <b>optional</b> slide from where you are now &mdash; the ones you have
@@ -833,8 +855,8 @@ parts.</li>
 <li><b>One talk made of parts.</b> Like <code>\input</code> in a LaTeX
 document: a section of a talk can <i>show another presentation</i>, which
 you write on its own &mdash; so a long talk is a handful of short ones and
-you never need them all open at once. <i>File &rarr; Parts of this
-talk&hellip;</i> (or the strip's <i>Thumbnails</i> menu) lists the talk
+you never need them all open at once. <i>File &rsaquo;
+Parts&hellip;</i> (or the strip's <i>Thumbnails</i> menu) lists the talk
 as its parts, in order: <b>Add a presentation</b> you already have (with
 a preview of its slides), start a <b>New part</b>, or turn a section of
 this talk into a presentation of its own with <b>Make it a part</b>.
@@ -979,7 +1001,7 @@ drag), <kbd>Ctrl+Shift+D</kbd> duplicate without its source (the copy
 points at no notebook cell, ready to aim at a different figure),
 <kbd>Ctrl+G</kbd> group, <kbd>Del</kbd>
 remove, <b>arrow keys</b> nudge (hold <kbd>Shift</kbd> for bigger steps).
-<i>File &rarr; Export PDF</i> saves the whole deck as a PDF (or prints
+<i>File &rsaquo; PDF / print&hellip;</i> saves the whole deck as a PDF (or prints
 it) at the page's <b>true size</b> &mdash; an A0 poster comes out as a
 real 841&#215;1189mm page, ready for the print shop.</li>
 <li><i>Create slides</i>, beside <i>Present</i> in a notebook, opens one
@@ -1007,13 +1029,13 @@ it exports as a real media shape in the <code>.pptx</code> and plays in the stan
 HTML.</li>
 <li><i>File &rarr; Import .pptx</i> brings a <code>.pptx</code>
 IN as a new presentation (so does dropping one on the window, the
-launcher's <i>New &rarr; Import a .pptx file</i>, and a
+launcher's <i>New &rsaquo; Import .pptx&hellip;</i>, and a
 <code>.pptx</code> row in the Open dialog). Text stays <b>editable</b>
 &mdash; bold, colour and bullets inside a box included &mdash; shapes,
 lines, pictures, tables, charts, speaker notes, sections, links and
 builds come across, and whatever cannot is listed <i>before</i> the deck
 lands. The <code>.pptx</code> itself is never changed.</li>
-<li><i>File &rarr; Export .pptx</i> writes a <code>.pptx</code>.
+<li><i>File &rsaquo; PowerPoint (.pptx)</i> writes a <code>.pptx</code>.
 Text stays <b>editable</b> in compatible presentation software, including
 Microsoft PowerPoint; figures and images come across as pictures, boxes
 and arrows become real shapes, placed tables become editable tables, and
@@ -1027,7 +1049,7 @@ their shape, and slide transitions come across at their own length
 (<i>Move matching objects</i> becomes PowerPoint's Morph). What does <b>not</b> travel: a crop you
 drew freehand, and equations (they arrive as plain text). Everything lost
 is counted and named when you export, not silently dropped &mdash; use
-Export PDF when any of it matters.</li>
+<i>PDF / print&hellip;</i> when any of it matters.</li>
 <li><b>Opened in Protected View?</b> Nothing is wrong with the file:
 Windows marks everything a web browser downloads as coming from the
 internet, and PowerPoint opens those read-only until you press
@@ -1062,19 +1084,19 @@ no re-picking, no downloads folder full of near-identical JSON.</li>
 <code>junoview_project.json</code> next to where you launched it,
 along with your open tabs.</li>
 </ul></li>
-<li><b>See one before you open it.</b> In <b>File &rarr; Open a
-presentation&#8230;</b> (Ctrl+K), point at
+<li><b>See one before you open it.</b> In <b>File &rsaquo;
+Presentation&#8230;</b> (Ctrl+K), point at
 a presentation (or tab to it) and its slides appear beside the list,
 drawn as the thumbnail strip draws them; <b>Find</b> keeps the ones whose
 name or slides hold your words, and lights those slides. On Home, pointing
 at a recent presentation shows the same preview in a card you can scroll.
-<b>Look in a folder&#8230;</b> lists the presentation files in a folder
+<b>Browse folder&#8230;</b> lists the presentation files in a folder
 &mdash; the one Junoview saves into shows by itself &mdash; previewed and
 searchable before any is opened, and one opened from there saves back to
 its file.</li>
 <li><b>Each presentation remembers its own place</b>, between visits
 too: one can live in a file and the next in this browser, and switching
-between them never moves either. <b>Open a presentation&#8230;</b> and Home's recent
+between them never moves either. <b>File &rsaquo; Presentation&#8230;</b> and Home's recent
 list say where each one is and when you last worked on it &mdash;
 <i>talk.junoview.html &middot; 2 h ago &middot; 12 slides</i>.</li>
 <li>A saved presentation is a <code>.junoview.html</code> file: a page
@@ -1085,9 +1107,10 @@ file onto a Junoview window: in Chrome and Edge that keeps it tied to
 the file, so Save writes back to it. Keep one next to its notebook as
 <code><i>notebook</i>.junoview.html</code> and it loads itself the next
 time you open that notebook.</li>
-<li><i>File &rarr; Download a copy</i> gives you a standalone
-<code>.junoview</code> to share; <i>File &rarr; Open a .junoview
-file</i> brings one back &mdash; later, or on another computer.</li>
+<li><i>File &rsaquo; Download .junoview</i> gives you a standalone
+<code>.junoview</code> to share; <i>File &rsaquo; .junoview
+file&hellip;</i> (under Open) brings one back &mdash; later, or on
+another computer.</li>
 <li>Decks are robust to notebook edits: slides reference cells by
 <b>stable ids</b>, never position &mdash; re-upload an edited notebook
 and everything still resolves; a deleted cell just leaves an empty
@@ -1096,8 +1119,8 @@ frame you can refill.</li>
 
 <h3>Install it as an app</h3>
 <p>There is no separate download, because there is nothing to
-download: the web version <b>is</b> the app. Use <b>Install as an
-app</b> on the welcome screen, or your browser&rsquo;s own menu
+download: the web version <b>is</b> the app. Use <b>Install app</b> on
+the welcome screen, or your browser&rsquo;s own menu
 &mdash; <i>Install Junoview</i>, <i>Install this site as an app</i>,
 or <i>Add to Home Screen</i>. It then opens in its own window with no
 browser chrome, keeps working with no internet, and your notebooks

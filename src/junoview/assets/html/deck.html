@@ -23,8 +23,8 @@
          drawing tool looks like the way out of that tool, and it is not:
          Cancel is. -->
     <button class="dbtn" id="deck-exit"
-      title="Stop presenting and return to the builder (Esc)."><i data-ic="return"></i>
-        Stop presenting</button>
+      title="End the show and return to the builder (Esc)."><i data-ic="return"></i>
+        End show</button>
     <!-- The global rail is intentionally inert while a deck fills the
          screen. This is its working, deck-owned replacement: what is open
          right now (this presentation, the other open ones and the open
@@ -66,7 +66,7 @@
        Esc still stops presenting. -->
   <button class="deck-top-handle" id="deck-top-handle" type="button"
     aria-expanded="false" aria-controls="deck-top-bar"
-    title="Show the presenting controls: Stop presenting, Open now,
+    title="Show the presenting controls: End show, Open now,
  Running late"><i data-ic="menu"></i> Controls</button>
   <!-- T382: no Close button. It closed the drawer, not the deck, beside a
        heading that repeated the words on the button that opened it
@@ -163,7 +163,8 @@
     <span class="rbn-search" id="rbn-search">
       <i data-ic="find"></i>
       <input id="rbn-search-in" type="search" autocomplete="off"
-        spellcheck="false" placeholder="Search commands (Alt+Q)"
+        spellcheck="false" placeholder="Search commands"
+        title="Search commands (Alt+Q)"
         aria-label="Search commands" role="combobox"
         aria-controls="rbn-search-list" aria-expanded="false">
       <div class="rbn-search-list" id="rbn-search-list" role="listbox"
@@ -412,19 +413,19 @@
           >Folder</button>
         <div class="dc-mhead">open</div>
         <!-- the library: recents, everything saved here, a file -->
-        <button class="dc-mi" id="mi-open"
+        <button class="dc-mi" id="mi-open" aria-label="Open a presentation"
           title="The recent ones, everything saved here, or a file from
- this computer (Ctrl+K)">Open a presentation&#8230;</button>
+ this computer (Ctrl+K)">Presentation&#8230;</button>
         <!-- T610: the reader's File has had this row since T602; the
              editor's never did, so a notebook could only be opened from
              Home. It presses the one real door (#tab-open). -->
         <button class="dc-mi" type="button" id="mi-open-nb" data-for="tab-open"
-          data-kbd="Ctrl+O" hidden
+          data-kbd="Ctrl+O" hidden aria-label="Open a notebook"
           title="A notebook (.ipynb, .md, .tex or .csv) from this computer
  or a URL. It opens as a tab beside this presentation"
-          >Open a notebook&#8230;</button>
-        <button class="dc-mi" id="mi-load">Open a .junoview
-          file&#8230;</button>
+          >Notebook&#8230;</button>
+        <button class="dc-mi" id="mi-load" aria-label="Open a .junoview file"
+          >.junoview file&#8230;</button>
         <!-- T320: .pptx IMPORT. Beside Open because it is the other
              way a deck arrives from disk; it lands as a NEW presentation
              and the .pptx is never written to. -->
@@ -441,7 +442,7 @@
         <button class="dc-mi" id="mi-parts"
           title="A talk made of other presentations: each part is edited on
  its own and shown here as a section"
-          >Parts of this talk&#8230;</button>
+          >Parts&#8230;</button>
         <!-- T236: HISTORY AND CHECKPOINTS MOVED TO HOME (2026-09-04,
              user: "the history as well I don’t like here, should be
              a button on the home tab"). They are things you do WHILE
@@ -449,8 +450,7 @@
              which is what the rest of this menu is. -->
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
         <button class="dc-mi" id="mi-autosave" hidden></button>
-        <button class="dc-mi" id="mi-dl">Download a copy
-          (.junoview)</button>
+        <button class="dc-mi" id="mi-dl">Download .junoview</button>
         <!-- T236: NO "sources" SECTION. Both refresh rows have had
              buttons on Home since T196 and the menu copies were the
              ones nobody found (2026-09-04, user: "some of these have
@@ -465,12 +465,12 @@
         <!-- THE CONTENT, as text (T35). -->
         <button class="dc-mi" id="mi-review"
           title="Save the deck as markdown — every title, text box,
- caption and note — for a colleague or an AI to read">Export for
- review&#8230;</button>
+ caption and note — for a colleague or an AI to read">For review
+ (.md)&#8230;</button>
         <button class="dc-mi" id="mi-pdf"
           title="Save as PDF at the page's TRUE size — an A0 poster
- exports as a real 841&#215;1189mm page, ready for the print shop">Export
- PDF / print&#8230;</button>
+ exports as a real 841&#215;1189mm page, ready for the print shop">PDF /
+ print&#8230;</button>
         <!-- T236: crop marks sit with the export they are for. They
              were the other half of a "page" section whose first row,
              slide numbers, is a button on Design. -->
@@ -481,11 +481,11 @@
         <button class="dc-mi" id="mi-pptx"
           title="Save as a .pptx file. Text stays editable and
  figures come across as pictures; a placed cell showing code or a table
- cannot convert — use PDF for those">Export .pptx</button>
+ cannot convert — use PDF for those">PowerPoint (.pptx)</button>
         <button class="dc-mi" id="mi-html"
           title="A single .html file anyone can open — no Junoview
- needed. Arrow keys page through it; Ctrl+P prints at page size">Export
- standalone HTML</button>
+ needed. Arrow keys page through it; Ctrl+P prints at page size">Standalone
+ HTML</button>
         <!-- T602: the App menu's rows. They were a menu of their own at
              the far end of this bar; app.js owns what each one does. -->
         <div class="dc-mhead">app</div>
@@ -502,11 +502,11 @@
           title="Choose a different arrangement of the ribbon"
           >Ribbon layouts&#8230;</button>
         <button class="dc-mi" id="deck-howto"
-          title="How to use this, and everything it can do (?)">How to
-          use&#8230;</button>
+          title="How to use this, and everything it can do (?)"
+          >Help&#8230;</button>
         <a class="dc-mi" id="deck-support" target="_blank" rel="noopener"
-          title="Support Junoview on Ko-fi">Support Junoview &#9829;</a>
-        <div class="dc-mhead dc-mhead-warn">careful — these lose work</div>
+          title="Support Junoview on Ko-fi">Support &#9829;</a>
+        <div class="dc-mhead dc-mhead-warn">careful</div>
         <button class="dc-mi dc-mi-warn" id="mi-discard">Discard
           changes</button>
         <button class="dc-mi dc-mi-warn" id="mi-del">Delete
@@ -609,15 +609,14 @@
           aria-label="Presenting options"
           title="Presenting options">&#9662;</button>
         <div class="dc-menu" id="play-menu" hidden>
-          <div class="dc-mhead">present</div>
-          <button class="dc-mi" id="pl-here">Play from this slide</button>
-          <button class="dc-mi" id="pl-start">Play from the start</button>
+          <button class="dc-mi" id="pl-here">From this slide</button>
+          <button class="dc-mi" id="pl-start">From the start</button>
           <!-- T389: every slide on one scrolling page, each animating
                the first time it scrolls into view and then staying. -->
           <button class="dc-mi" id="pl-scroll"
             title="Every slide on one page you scroll through. Each slide's
- animations play the first time it comes into view, then stay">Play as a
-            scrolling page</button>
+ animations play the first time it comes into view, then stay"
+            >Scrolling page</button>
           <div class="dc-msep"></div>
           <button class="dc-mi" id="pl-presenter"
             title="Opens a second window with your notes, the next slide
@@ -636,8 +635,7 @@
                advancing the talk is a standing instruction from
                2026-08-07 and this would overload it. Only the item itself
                is claimed; the rest of the slide still advances. -->
-          <button class="dc-mi" id="pl-tap">Click a figure to enlarge it:
-            off</button>
+          <button class="dc-mi" id="pl-tap">Enlarge on click: off</button>
           <!-- THE CODE TRAIL, on or off. It is the whole point of a
                Junoview deck for some talks and unwanted noise for the
                rest, and until now there was no door at all: the trail,
@@ -647,8 +645,7 @@
                arrow that appears with something in presentations").
                A menu row and not a ribbon button, so it costs no ribbon
                width and no arrangement in 07-ribbon-layouts.js. -->
-          <button class="dc-mi" id="pl-trace">Show the code trail under
-            the slide: on</button>
+          <button class="dc-mi" id="pl-trace">Code trail: on</button>
         </div>
       </span>
     </span>
@@ -824,7 +821,7 @@
               title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
               &#9662;</button>
               <button class="dbtn rbn-sm" id="hm-lay-give"
-              title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy layout to slides&#8230;</button>
+              title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy layout&#8230;</button>
             </span>
             <span class="rbn-lab">Apply to other slides</span>
           </span>
@@ -862,7 +859,7 @@
                 </span>
                 <button class="dbtn rbn-sm bg-push" id="bg-push" type="button"
                   title="Slides with a background of their own keep showing it
- until this clears them"><i data-ic="forward"></i> Make every slide match this one</button>
+ until this clears them"><i data-ic="forward"></i> Use on all slides</button>
               </span>
             </span>
             <span class="rbn-lab">Background</span>
@@ -1987,7 +1984,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 hidden></span>
               <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
                 title="Stop drawing and go back to selecting (Esc)"
-                ><i data-ic="exit"></i> Cancel (Esc)</button>
+                ><i data-ic="exit"></i> Cancel</button>
             </span>
             <span class="rbn-lab">Drawing</span>
           </span>
@@ -2046,7 +2043,8 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="fx-tile big-tile rbn-tall" id="pr-newversion"
                 title="Name a shorter talk made from this same deck &mdash; no
  second file, no diverging copies. Then right-click a slide to put it in"
-                ><i data-ic="plus"></i><span>New custom show&#8230;</span></button>
+                aria-label="New custom show"
+                ><i data-ic="plus"></i><span>New&#8230;</span></button>
             </span>
             <!-- T532: a named subset of the deck for a shorter talk is
                  PowerPoint's Custom show. It said Version, which is also
@@ -2060,7 +2058,7 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn rbn-sm" id="pr-talk"
                 title="Play from this slide with the talk settings open: skip
  the animations, or size headings, body text and captions for the room"
-                ><i data-ic="theme"></i> Play with talk settings&#8230;</button>
+                ><i data-ic="theme"></i> Talk settings&#8230;</button>
               <!-- T222: two buttons, not one (2026-09-03, user:
                    "notes and timing should be two different buttons").
                    They open the same pane on different tabs, which is
@@ -2076,7 +2074,7 @@ items snap to both. Guides, not ink: never printed or exported"
                 ><i data-ic="clock"></i> Timing</button>
               <button class="dbtn rbn-sm" id="pr-tap" aria-pressed="false"
                 title="While presenting, a click on a figure enlarges it"
-                ><i data-ic="zoom"></i> Click to enlarge figures</button>
+                ><i data-ic="zoom"></i> Enlarge on click</button>
               <button class="dbtn rbn-sm" id="pr-trace" aria-pressed="false"
                 title="Show the code trail under each slide while presenting"
                 ><i data-ic="code"></i> Code trail</button>
@@ -2092,7 +2090,7 @@ items snap to both. Guides, not ink: never printed or exported"
               <button class="dbtn rbn-sm" id="pr-narrate"
                 title="Present from this slide and record what you say on
  each one; it plays when that slide comes up in the show"
-                ><i data-ic="mic"></i> Record narration&#8230;</button>
+                ><i data-ic="mic"></i> Narrate&#8230;</button>
             </span>
             <span class="rbn-lab">During the talk</span>
           </span>
@@ -2683,11 +2681,9 @@ items snap to both. Guides, not ink: never printed or exported"
                   <!-- T623: the line's level (PowerPoint's Increase /
                        Decrease List Level), then the box's own indent,
                        each named for what it moves -->
-                  <div class="hd-lab">level &#8212; the line(s) you are
-                    in, like Tab</div>
+                  <div class="hd-lab">level</div>
                   <div class="opt-row" id="fmt-para-lvl"></div>
-                  <div class="hd-lab">box indent &#8212; moves the whole
-                    box, every line</div>
+                  <div class="hd-lab">box indent</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
                   <div class="hd-lab">curve</div>
                   <div class="opt-row" id="fmt-para-curve"></div>
@@ -2697,13 +2693,12 @@ items snap to both. Guides, not ink: never printed or exported"
                   <!-- T572: AutoFit -- the box grows, the words shrink,
                        or neither -- beside where the words sit, which is
                        the other half of the box's height -->
-                  <div class="hd-lab">autofit &#8212; when the words
-                    outgrow the box</div>
+                  <div class="hd-lab">autofit</div>
                   <div class="opt-row" id="fmt-para-fit"></div>
                   <!-- T547: one, two or three columns, and their gap -->
                   <div class="hd-lab">columns</div>
                   <div class="opt-row" id="fmt-para-cols"></div>
-                  <div class="hd-lab">gap between the columns</div>
+                  <div class="hd-lab">column gap</div>
                   <div class="opt-row" id="fmt-para-colgap"></div>
                 </div>
               </span>
@@ -3256,16 +3251,17 @@ items snap to both. Guides, not ink: never printed or exported"
              mismatched text makes no sense"; the Style system's button
              says Check consistency, and now so does what it opens. -->
         <div class="selpane-h"><span>Check consistency</span>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Check consistency"
+          data-q="Finds text and figures that look as if they should match but do not; the odd ones out are marked. Nothing changes until you press a card&rsquo;s button, and Ctrl+Z puts it back.&#10;&#10;Zoom: a frame&rsquo;s zoom scales everything inside it, so frames at different zooms cannot have matching labels.&#10;&#10;Trim: a trimmed and an untrimmed figure at the same width draw their axes at different sizes. The trim is the deck&rsquo;s own, not the file&rsquo;s.">?</button>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
-        <!-- WHAT THIS IS, in one line (T194; 2026-09-02, user: "how
-             things like standardise work... I find the text and how
-             it looks confusing"). A check with no sentence saying what
-             it checks is a list of complaints. -->
-        <div class="pf-intro">Find text or figures that look like they should
-          match but do not. Nothing changes until you choose a card&rsquo;s fix.</div>
+        <!-- WHAT THIS IS (T194; 2026-09-02, user: "how things like
+             standardise work... I find the text and how it looks
+             confusing"). T624: behind the title's "?" now, the same
+             words as the full-screen view's. -->
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
@@ -3276,7 +3272,10 @@ items snap to both. Guides, not ink: never printed or exported"
            and its lock -- toggled from the row. Rendered on open and on
            the reload button, never from markDirty. -->
       <aside class="selpane imgpane" id="imgpane" hidden>
-        <div class="selpane-h"><span>Images on this slide</span>
+        <div class="selpane-h"><span>Images</span>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Images"
+          data-q="The pictures and figures on this slide, where each came from, and whether it is locked. Click a row to select it; the pin locks or unlocks it. Every slide lists the whole deck.">?</button>
           <button class="dbtn rbn-sm" id="imgpane-all" aria-expanded="false"
             title="Every picture and figure on every slide, full screen,
  under a heading per slide"><i data-ic="objects"></i> Every slide</button>
@@ -3285,9 +3284,6 @@ items snap to both. Guides, not ink: never printed or exported"
             title="Update this list"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="imgpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
-        <div class="pf-intro">The pictures and figures on this slide, where
-          each came from, and whether it is locked in place. Click one
-          to select it; the pin locks or unlocks it.</div>
         <div class="selpane-list" id="imgpane-list"></div>
       </aside>
       <!-- ALL IMAGES, FULL SCREEN (T204; 2026-09-02, user: "there needs
@@ -3313,8 +3309,7 @@ items snap to both. Guides, not ink: never printed or exported"
         aria-label="Make a slide layout">
         <div class="img-ov-h"><span class="img-ov-t">Make a slide
           layout</span>
-          <span class="img-ov-sub">Put the slots where you want them,
-            give it a name, and it joins the New slide gallery.</span>
+          <span class="img-ov-sub">Place the slots, then name it.</span>
           <button class="dbtn rbn-sm" id="lay-make-new"
             title="Start again from a blank board">Start again</button>
           <button class="dbtn rbn-sm" id="lay-make-close"
@@ -3343,28 +3338,27 @@ items snap to both. Guides, not ink: never printed or exported"
       <div class="img-ov" id="std-ov" hidden role="dialog"
         aria-label="Check consistency">
         <div class="img-ov-h"><span class="img-ov-t">Check consistency</span>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Check consistency"
+          data-q="Finds text and figures that look as if they should match but do not; the odd ones out are marked. Nothing changes until you press a card&rsquo;s button, and Ctrl+Z puts it back.&#10;&#10;Zoom: a frame&rsquo;s zoom scales everything inside it, so frames at different zooms cannot have matching labels.&#10;&#10;Trim: a trimmed and an untrimmed figure at the same width draw their axes at different sizes. The trim is the deck&rsquo;s own, not the file&rsquo;s.">?</button>
           <span class="img-ov-sub" id="std-ov-sub"></span>
           <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Each card is a group of text or figures that
-          look like they should match but do not, with the odd ones out
-          marked. A card&rsquo;s button makes them match; nothing changes
-          until you press it, and Ctrl+Z puts it back.</div>
         <div class="img-ov-body std-list" id="std-ov-body"></div>
       </div>
       <div class="img-ov" id="tidy-ov" hidden role="dialog"
         aria-label="Tidy up this page">
         <div class="img-ov-h"><span class="img-ov-t">Tidy up this page</span>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Tidy page"
+          data-q="Finds things that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix.">?</button>
           <span class="img-ov-sub" id="tidy-ov-sub"></span>
           <button class="dbtn rbn-sm" id="tidy-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="tidy-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Things on this page that are nearly lined up,
-          gaps that are nearly even, and copies pasted on top of each
-          other. Nothing moves until you press a fix.</div>
         <div class="img-ov-body std-list" id="tidy-ov-body"></div>
       </div>
       <!-- BEFORE YOU PRINT, FULL SCREEN (T214): the third card list of the
@@ -3372,14 +3366,14 @@ items snap to both. Guides, not ink: never printed or exported"
       <div class="img-ov" id="pf-ov" hidden role="dialog"
         aria-label="Before you print">
         <div class="img-ov-h"><span class="img-ov-t">Before you print</span>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Before you print"
+          data-q="Checks this page for soft figures, things off the page or inside the margin, low contrast and empty frames. Click a row to select the thing.">?</button>
           <span class="img-ov-sub" id="pf-ov-sub"></span>
           <button class="dbtn rbn-sm" id="pf-ov-rerun" title="Check again"
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="pf-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Whether this page will print well: soft
-          figures, things off the page or inside the margin, thin
-          contrast, empty frames. A row selects the thing.</div>
         <div class="img-ov-body std-list pf-list" id="pf-ov-body"></div>
       </div>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
@@ -3627,14 +3621,14 @@ items snap to both. Guides, not ink: never printed or exported"
             title="Loose notes, in folders, attached to no slide">Scratchpad</button>
           <button class="anim-tab np-tab" data-np="reh" type="button"
             role="tab" aria-selected="false" aria-controls="notespane-reh"
-            title="Every run of this talk, and how long each took">Rehearsals</button>
+            title="Every run of this talk, and how long each took. A run
+ counts once it reaches a second slide and lasts half a minute"
+            >Rehearsals</button>
         </div>
         <div class="selpane-list" id="notespane-body">
-          <label class="np-lab" for="np-notes">Speaker notes for this
-            slide</label>
+          <label class="np-lab" for="np-notes">Speaker notes</label>
           <textarea id="np-notes" class="np-notes" spellcheck="true"
-            placeholder="What you want to say here. Only you see this —
- it never goes on the slide."></textarea>
+            placeholder="Only you see these"></textarea>
           <!-- The pane is right for CHECKING a note and wrong for
                writing one. The big editor puts the slide, the text and
                the rendered markdown side by side (T28). -->
@@ -3645,8 +3639,7 @@ items snap to both. Guides, not ink: never printed or exported"
           <div class="np-narr" id="np-narr"></div>
         </div>
         <div class="selpane-list" id="notespane-time" hidden>
-          <label class="np-lab" for="np-goal">How long you want to spend
-            here</label>
+          <label class="np-lab" for="np-goal">Time on this slide</label>
           <div class="np-row">
             <!-- T228: minutes AND seconds. It was one field stepping
                  in halves of a minute, so a two-and-a-half-minute
@@ -3679,10 +3672,8 @@ items snap to both. Guides, not ink: never printed or exported"
              — the argument, the questions you expect, what to cut if you
              run late (2026-08-20). -->
         <div class="selpane-list" id="notespane-deck" hidden>
-          <label class="np-lab" for="np-decknotes">Notes about the whole
-            talk</label>
           <textarea id="np-decknotes" class="np-notes np-tall"
-            spellcheck="true"
+            spellcheck="true" aria-label="Notes about the whole talk"
             placeholder="The argument. Questions you expect. What to cut
  if you run late."></textarea>
         </div>
@@ -3798,22 +3789,26 @@ items snap to both. Guides, not ink: never printed or exported"
       <aside class="talkpane" id="talkpane" hidden role="dialog"
         aria-label="Talk settings">
         <div class="tk-h"><span>This talk</span>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: This talk"
+          data-q="None of this is saved with the deck. It is for the room you are in, so nothing here reaches a PDF, a .pptx or anyone else&rsquo;s copy.">?</button>
           <button class="dbtn dc-icon" id="talkpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
         <div class="tk-row">
-          <span class="tk-lab">Animations</span>
+          <span class="tk-lab" id="tk-lab-builds">Animations</span>
           <!-- T469: one word for the state beside a word for the thing:
-               "Skip animations · PLAYING" read as two states at once -->
+               "Skip animations · PLAYING" read as two states at once.
+               T624: named by the row's word and its own -->
           <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
-            ><i data-ic="stagger"></i> Animations
-            <span class="tk-state">playing</span></button>
+            aria-labelledby="tk-lab-builds talk-builds"><i data-ic="stagger"></i>
+            <span class="tk-state">Playing</span></button>
         </div>
         <!-- T564: recorded narration, on or off for the talk -->
         <div class="tk-row">
-          <span class="tk-lab">Narration</span>
+          <span class="tk-lab" id="tk-lab-narr">Narration</span>
           <button class="dbtn tk-b" id="talk-narr" aria-pressed="false"
-            ><i data-ic="mic"></i> Narration
-            <span class="tk-state">playing</span></button>
+            aria-labelledby="tk-lab-narr talk-narr"><i data-ic="mic"></i>
+            <span class="tk-state">Playing</span></button>
         </div>
         <!-- T386: the talk's tools. A laser dot, a magnifier, a black
              screen -- each one key, none of them stored. -->
@@ -3849,7 +3844,7 @@ items snap to both. Guides, not ink: never printed or exported"
           <span class="tk-grp">
           <button class="dbtn tk-b" id="talk-black" aria-pressed="false"
             title="Black the screen so the room looks at you (B). B, Esc
- or a click brings the slide back"><i data-ic="blackout"></i> Black screen</button>
+ or a click brings the slide back"><i data-ic="blackout"></i> Black</button>
           <!-- T476: PRESENTER VIEW FROM INSIDE THE SHOW (2026-09-15
                review: "Presenter view has no door from inside the show
                ... you must set it up BEFORE F5"). The same window the
@@ -3858,7 +3853,7 @@ items snap to both. Guides, not ink: never printed or exported"
           <button class="dbtn tk-b" id="talk-presenter" type="button"
             title="A second window with your notes, the next slide and a
  clock (N). Drag it to the other screen"><i data-ic="dockright"></i>
-            Presenter view</button>
+            Presenter</button>
           </span>
         </div>
         <div class="tk-row">
@@ -3921,9 +3916,6 @@ items snap to both. Guides, not ink: never printed or exported"
               aria-label="Bigger captions">+</button>
           </span>
         </div>
-        <p class="tk-note">None of this is saved with the deck &mdash;
-          it is about the room you are in, so nothing here reaches a
-          PDF, a .pptx or anyone else&rsquo;s copy.</p>
       </aside>
       <!-- T619: nothing floats over the canvas's foot any more. The zoom
            is in the tab row (#deck-zoombar) and "Slide 3 of 14" heads
@@ -3949,6 +3941,11 @@ items snap to both. Guides, not ink: never printed or exported"
     <div class="aa-box ask-box">
       <div class="aa-head">
         <span class="eq-t" id="ask-t">Name</span>
+        <!-- T624: the question's "?" (askText's o.help). A sibling of
+             #ask-t, never inside it: the title is rewritten on every
+             question. -->
+        <button type="button" class="jv-q" id="ask-q" hidden
+          aria-expanded="false" aria-label="Help">?</button>
         <span class="deck-spring"></span>
         <button class="dbtn dc-icon" id="ask-close" type="button"
           aria-label="Cancel" title="Cancel (Esc)"><i data-ic="exit"></i></button>
@@ -3986,17 +3983,16 @@ items snap to both. Guides, not ink: never printed or exported"
       title="Which properties travel">What travels &#9662;</button>
     <div class="dc-menu mp-menu" id="match-props-menu" hidden></div>
   </span>
-  <button class="dbtn" id="match-cancel">Cancel (Esc)</button>
+  <button class="dbtn" id="match-cancel" title="Esc">Cancel</button>
 </div>
 <div class="pickbar" id="pickbar" hidden>
-  <span id="pick-what"><i data-ic="pin"></i> Click a card in the notebook
-  to place it in the slide</span>
+  <span id="pick-what"><i data-ic="pin"></i> Click a card to place it</span>
   <span class="deck-spring"></span>
   <!-- filling a flip book means clicking SEVERAL cards, so that mode
        stays open until you say it is finished. Hidden for the single-pick
        flow, where the first click IS the answer (2026-08-22). -->
   <button class="dbtn primary" id="pick-done" hidden>Done</button>
-  <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
+  <button class="dbtn" id="pick-cancel" title="Esc">Cancel</button>
 </div>
 <!-- THE EQUATION EDITOR. "Insert equation" used to drop a text box
      containing "$$ E = mc^2 $$" and leave you to it — no preview, no
@@ -4031,10 +4027,10 @@ items snap to both. Guides, not ink: never printed or exported"
     </div>
     <div class="eq-foot">
       <label class="find-ck"><input type="checkbox" id="eq-display" checked>
-        On its own line (display style)</label>
+        Display style</label>
       <span class="deck-spring"></span>
       <button class="dbtn" id="eq-cancel">Cancel</button>
-      <button class="dbtn primary" id="eq-ok">Put it on the slide</button>
+      <button class="dbtn primary" id="eq-ok">Insert</button>
     </div>
   </div>
 </div>
@@ -4061,8 +4057,11 @@ items snap to both. Guides, not ink: never printed or exported"
           <b>1. number</b> &middot; <b>**bold**</b> &middot;
           <b>*italic*</b> &middot; <b>`code`</b> &middot;
           <b>&gt; quote</b> &middot; <b>---</b> &middot;
-          <b>[words](https://…)</b> &middot; <b>[words](#7)</b> jumps to
-          slide 7 &middot; <b>{fig:id}</b> is a figure number
+          <b>[words](url)</b> &middot; <b>[words](#7)</b> &middot;
+          <b>{fig:id}</b>
+          <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Markdown"
+          data-q="[words](#7) makes a link that jumps to slide 7.&#10;{fig:id} writes the number of the figure with that id, and keeps it right when slides move.&#10;In a caption, {fig} writes its own figure&rsquo;s number.">?</button>
         </div>
       </div>
       <div class="eq-right">
@@ -4073,7 +4072,7 @@ items snap to both. Guides, not ink: never printed or exported"
     <div class="eq-foot">
       <span class="deck-spring"></span>
       <button class="dbtn" id="md-cancel">Cancel</button>
-      <button class="dbtn primary" id="md-ok">Put it on the slide</button>
+      <button class="dbtn primary" id="md-ok">Insert</button>
     </div>
   </div>
 </div>
@@ -4162,20 +4161,21 @@ items snap to both. Guides, not ink: never printed or exported"
   <div class="aa-box ar-box">
     <div class="aa-head">
       <span class="eq-t">Saved layouts</span>
+      <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Saved layouts"
+          data-q="A saved layout is how one slide is arranged, kept under a name. Give it to other slides and their boxes move into that arrangement; the words and figures stay as they are.">?</button>
       <span class="deck-spring"></span>
       <button class="dbtn dc-icon" id="ar-close" aria-label="Cancel" title="Cancel (Esc)"
         ><i data-ic="exit"></i></button>
     </div>
-    <!-- T219: what the dialog is FOR, in one sentence at the top, then
-         the two halves named as steps (2026-09-03, user: "the most
-         unclear thing ever and I cannot tell what is going on") -->
-    <div class="aa-what">A saved layout is the way one slide is arranged,
-      kept under a name. Give it to other slides and their boxes move into
-      that arrangement; the words and figures stay as they are.</div>
+    <!-- T219: what the dialog is FOR (2026-09-03, user: "the most
+         unclear thing ever and I cannot tell what is going on"). T624:
+         that sentence is the title's "?" now, and the halves are named
+         in a word each. -->
     <div class="aa-main">
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">1. Layouts you have saved</span>
+          <span class="eq-t">Layouts</span>
         </div>
         <div class="ar-lib" id="ar-lib"></div>
         <button class="dbtn ar-savebtn" id="ar-save"
@@ -4184,7 +4184,7 @@ items snap to both. Guides, not ink: never printed or exported"
       </div>
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">2. Slides that will take one</span>
+          <span class="eq-t">Apply to</span>
           <span class="deck-spring"></span>
           <button class="dbtn aa-b" id="ar-all"
             title="Tick every slide, each with the layout that fits it best">Tick all</button>
@@ -4241,12 +4241,12 @@ items snap to both. Guides, not ink: never printed or exported"
            first, then stamp the set over them -->
       <label class="find-ck" id="ss-autowrap">
         <input type="checkbox" id="ss-auto" checked>
-        Name the text that has no style yet, from its size</label>
+        Name unstyled text by size</label>
       <span class="deck-spring"></span>
-      <button class="dbtn" id="ss-csave">Save this deck&#8217;s colours as a
-        theme&#8230;</button>
-      <button class="dbtn" id="ss-save">Save this deck&#8217;s type as a
-        set&#8230;</button>
+      <button class="dbtn" id="ss-csave"
+        title="Save this deck&#8217;s colours as a theme">Save colours&#8230;</button>
+      <button class="dbtn" id="ss-save"
+        title="Save this deck&#8217;s type as a set">Save type&#8230;</button>
       <button class="dbtn" id="ss-cancel">Close</button>
     </div>
   </div>
@@ -4262,6 +4262,9 @@ items snap to both. Guides, not ink: never printed or exported"
   <div class="aa-box ms-box">
     <div class="aa-head">
       <span class="eq-t">Copy layout to slides</span>
+      <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: Copy layout to slides"
+          data-q="Each item takes the position, size and styling of the matching item on that slide, matched by kind: title to title, figure to figure. Words and figures never change, and items with no match stay where they are.">?</button>
       <span class="deck-spring"></span>
       <button class="dbtn dc-icon" id="ms-close" aria-label="Cancel" title="Cancel (Esc)"
         ><i data-ic="exit"></i></button>
@@ -4331,19 +4334,19 @@ items snap to both. Guides, not ink: never printed or exported"
   <div class="aa-box nt-box">
     <div class="aa-head">
       <span class="eq-t" id="nt-title">New presentation</span>
+      <button type="button" class="jv-q" aria-expanded="false"
+          aria-label="Help: New presentation"
+          data-q="Start blank, or from a template laid out the way that kind of talk runs.&#10;&#10;The faint words on a template are prompts. They never show when you present or export, and they go as soon as you type.">?</button>
       <span class="deck-spring"></span>
       <button class="dbtn dc-icon" id="nt-close" aria-label="Cancel"
         title="Cancel (Esc)"><i data-ic="exit"></i></button>
     </div>
-    <p class="nt-lead">Start blank, or from a deck already laid out the
-      way that kind of talk runs. The faint words are prompts: they are
-      never shown, and they go as soon as you type.</p>
     <div class="nt-grid" id="nt-grid" role="list"></div>
     <div class="aa-foot">
       <span class="deck-spring"></span>
       <button class="dbtn" id="nt-cancel">Cancel</button>
       <button class="dbtn primary" id="nt-blank"
-        title="An empty presentation (Enter)">Blank presentation</button>
+        title="An empty presentation (Enter)">Blank</button>
     </div>
   </div>
 </div>
@@ -4363,8 +4366,7 @@ items snap to both. Guides, not ink: never printed or exported"
       aria-label="Kind of diagram"></div>
     <div class="dgm-body">
       <label class="dgm-col">
-        <span class="dgm-lab">One step to a line &mdash; Tab puts a line
-          under the one above</span>
+        <span class="dgm-lab">One step per line &middot; Tab indents</span>
         <textarea class="ask-in ask-area dgm-text" id="dgm-text" rows="7"
           spellcheck="true"></textarea>
       </label>
@@ -4375,8 +4377,6 @@ items snap to both. Guides, not ink: never printed or exported"
       </div>
     </div>
     <div class="aa-foot">
-      <span class="dgm-hint">Placed as boxes and arrows in one group: edit,
-        move or recolour any of them afterwards.</span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="dgm-cancel">Cancel</button>
       <button class="dbtn primary" id="dgm-insert"

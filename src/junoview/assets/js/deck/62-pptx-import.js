@@ -282,8 +282,7 @@
     lost=lost||[];
     var pg=pptPagePreset(spec.widthMm,spec.heightMm);
     if(pg.off) lost.push('a '+Math.round(spec.widthMm||0)+'×'
-      +Math.round(spec.heightMm||0)+' mm page — shown at the nearest '
-      +'of this editor’s page sizes ('+pg.label+')');
+      +Math.round(spec.heightMm||0)+' mm page (as '+pg.label+')');
     var nm=String(name||spec.title||'presentation')
       .replace(/\.[A-Za-z0-9]+$/,'');
     var pr={name:nm||'presentation',page:pg.id,slides:[]};
@@ -321,9 +320,13 @@
     if(!lost.length) return Promise.resolve(true);
     return new Promise(function(res){
       askYes({title:'Import \u201c'+name+'\u201d?',
-        what:'Everything else comes across, but this will not:\n\n\u2022 '
+        what:'These will not come across:\n\n\u2022 '
           +lost.join('\n\u2022 '),
         note:'The .pptx itself is not changed.',
+        help:'A .pptx can hold things this editor does not have, so these '
+          +'arrive simplified or are left out; everything else comes '
+          +'across editable.\n\nA chart of a kind this cannot read comes '
+          +'across if you save it as a picture in PowerPoint first.',
         ok:'Import it',cancel:'Not now'},function(y){res(y===true);});
     });
   }
@@ -385,11 +388,9 @@
       fileName=pr.name+'.junoview.html';
       if(canPickFile) setTarget('file');
       toast('Imported '+pr.slides.length+' slide'
-        +(pr.slides.length===1?'':'s')+' from '+nm
-        +' — text, shapes, pictures and notes stay editable'
-        +(lost.length?'. '+lost.length+' thing'
-          +(lost.length===1?'':'s')+' did not come across (you saw the '
-          +'list)':''),6000);
+        +(pr.slides.length===1?'':'s')
+        +(lost.length?' \u2014 '+lost.length+' thing'
+          +(lost.length===1?'':'s')+' skipped':''),6000);
     });
   }
   function pptxFileB64(file){
@@ -408,8 +409,7 @@
     var name=file.name||'presentation.pptx';
     var web=!!(window.semPy&&window.semPy.importPptx);
     if(APP.mode!=='app'&&!web){
-      toast('.pptx import needs the Junoview app or the web build '
-        +'— this page has no reader for a .pptx',6000);
+      toast('.pptx import needs the Junoview app or web build',6000);
       return true;
     }
     toast('Reading '+name+'…');

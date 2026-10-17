@@ -58,7 +58,10 @@ def test_a_base_colour_is_never_reported_as_unused(out):
     panel read as broken. One of the five is what everything without a
     colour of its own falls back to."""
     assert "  function tokUsesLabel(u,base){" in out
-    assert "    if(base) bits.push('everything else');" in out
+    # T624: and not "everything else" either -- a base colour shows only
+    # its real counts, or nothing
+    assert ("    return bits.length?bits.join(' \\u00b7 '):"
+            "(base?'':'not used yet');") in out
     assert "      var u=tokUses(k),base=!!TOK_BASE[k];" in out
     assert "      use.textContent=tokUsesLabel(u,base);" in out
     assert ("        ?('Everything that has not been given a colour of "

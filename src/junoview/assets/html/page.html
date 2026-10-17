@@ -48,15 +48,14 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
        stay live rather than being copied (2026-09-11). -->
   <div class="nb-filebar" id="nb-filebar"{bar_hidden}>
     <!-- The file itself belongs with Info / Reload.  Keeping the
-         visible name and the (ellipsised) path here means there is one
-         stable place to answer “what am I looking at?”, rather than a
-         second identity strip inside the document (2026-09-11). While the
-         open files are tabs, the tab answers it (its tooltip is the path)
-         and this steps aside (T602). -->
+         visible name here means there is one stable place to answer
+         “what am I looking at?”, rather than a second identity strip
+         inside the document (2026-09-11). Its path is the name's tooltip
+         and Info's first rows (T624: the path line under the name went).
+         While the open files are tabs, the tab answers it (its tooltip
+         is the path) and this steps aside (T602). -->
     <span class="nb-file-ident" id="nb-file-ident" hidden>
       <span class="nb-file-name" id="nb-file-name"></span>
-      <button type="button" class="nb-file-path" id="nb-file-path" dir="ltr"
-        aria-label="View full file path"></button>
     </span>
     <!-- T596: ONE LIST OF WHAT IS OPEN -- these tabs, or the list down
          the side, never both. Home first, then the open files. T602: in
@@ -125,21 +124,23 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
             >Folder</button>
           <div class="dc-mhead">open</div>
           <button class="dc-mi" type="button" id="ot-open"
+            aria-label="Open a presentation"
             title="The recent ones, everything saved here, or a file from
- this computer (Ctrl+K)">Open a presentation&#8230;</button>
+ this computer (Ctrl+K)">Presentation&#8230;</button>
           <button class="dc-mi" type="button" id="tab-open" hidden
+            aria-label="Open a notebook"
             title="Open a notebook (.ipynb) from your computer or a
- URL">Open a notebook&#8230;</button>
+ URL">Notebook&#8230;</button>
           <div class="dc-mhead">app</div>
           <button class="dc-mi" id="scheme-btn" aria-haspopup="menu"
             aria-expanded="false" aria-controls="jv-scheme-menu"
             title="Choose a colour scheme">Theme&#8230;</button>
           <button class="dc-mi" id="help-btn"
-            title="How to use this, and everything it can do (?)">How to
-            use&#8230;</button>
+            title="How to use this, and everything it can do (?)"
+            >Help&#8230;</button>
           <a class="dc-mi" id="support-btn" href="{kofi}"
             target="_blank" rel="noopener" title="Support Junoview on Ko-fi"
-            >Support Junoview &#9829;</a>
+            >Support &#9829;</a>
         </div>
       </span>
       <span class="ab-tablist" role="tablist" aria-label="Ribbon tabs">
@@ -356,8 +357,13 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
        insets the document by it automatically, and so the normal filter
        ribbon stays available (a custom view saves your filters too) -->
   <div class="stylebar" id="stylebar" hidden>
-    <span class="sb-lab">custom view</span>
     <span class="sb-name" id="sb-name"></span>
+    <!-- T624: the bar's how-to, behind a "?". The STYLE buttons on the
+         headings and the dashed hover outline still invite the click. -->
+    <button type="button" class="jv-q" aria-expanded="false"
+      aria-label="Help: Custom view" data-q-more="help-custom-views"
+      data-q="Click a markdown cell or a heading to style just that one. All markdown, All headings and Document style the whole view."
+      >?</button>
     <span class="appbar-div"></span>
     <button class="toggle" id="sb-md" type="button"
       title="Style EVERY markdown cell in this view">All markdown</button>
@@ -368,13 +374,11 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
     <span class="appbar-div"></span>
     <button class="toggle" id="sb-override" type="button" hidden
       title="Clear the styles set on individual sections and cells, so
- they follow the view-wide style again">Override individual styles</button>
+ they follow the view-wide style again">Clear cell styles</button>
     <button class="toggle" id="sb-reset" type="button"
       title="Remove every style in this view (filters and hidden cells
- are kept)">Reset styling</button>
+ are kept)">Reset</button>
     <span class="sb-spring"></span>
-    <span class="sb-hint">click a markdown cell or heading to style just
-      that one</span>
     <button class="toggle primary" id="sb-done" type="button"
       title="Stop editing this custom view and go back to your notebooks"
       >Done</button>
@@ -435,7 +439,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
   <!-- the wordmark is the HOME button, the thing everyone tries first
        (2026-08-21, user: "clicking the Junoview logo should take you
        back to that screen"). It shows the welcome without closing
-       anything; #welcome-back undoes it. -->
+       anything; a tab or the rail goes back. -->
   <button class="presrail-brand" id="presrail-home" type="button"
     title="Home — the Junoview welcome screen. Nothing is closed."
     >{logo}<span class="prb-full">Junoview</span></button>
@@ -481,7 +485,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
   <button class="pr-item pr-door" id="pr-library" type="button"
     title="Every saved presentation, folders, new decks and imports">
     <span class="pr-ico"><i data-ic="open"></i></span>
-    <span class="pr-t">All presentations&#8230;</span></button>
+    <span class="pr-t">All&#8230;</span></button>
   <!-- ONE way to make things. Four "+ New ..." buttons in a column were
        most of the rail (2026-08-18, user: "I don't like down the right
        hand side how there is all the new options. Just one new button,
@@ -507,13 +511,13 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
            of a file-saved presentation the night before a talk) -->
       <button class="pr-mi" data-for="deckfile"
         title="Open a .junoview.html presentation saved on your computer">
-        Open a .junoview file&#8230;</button>
+        Open .junoview&#8230;</button>
       <!-- T320: the other deck on disk. It imports as a new
            presentation; the .pptx is not changed. -->
       <button class="pr-mi" data-for="pptxfile"
         title="Bring a .pptx presentation in as a new presentation &mdash;
  text, shapes, pictures, tables, charts, notes and builds come across">
-        Import a .pptx file&#8230;</button>
+        Import .pptx&#8230;</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -592,8 +596,8 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
  to its edge. Switch it off to keep the bar where it is."
       ><i data-ic="autohide"></i><span class="btxt">Auto-hide</span></button>
     <button class="toggle pb-exit" id="pb-exit"
-      title="Stop presenting and go back to the document (Esc). Nothing is
- closed or lost."><i data-ic="exit"></i>Exit presentation</button>
+      title="End the show and go back to the document (Esc). Nothing is
+ closed or lost."><i data-ic="exit"></i>End show</button>
   </div>
 </div>
 <!-- ONE button does both fold and unfold, and it never moves: it is
@@ -615,12 +619,6 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
        user: "clicking on a recent loads, but you can't tell it's
        loading"). Driven by the same busy counter as the dialog's. -->
   <div class="welcome-load" id="welcome-load" hidden><span></span></div>
-  <!-- the way BACK. The logo is a home button now, so the welcome can be
-       reached with notebooks still open; without this you would be
-       looking at a screen with no exit (2026-08-21). -->
-  <button class="welcome-back" id="welcome-back" hidden type="button"
-    title="Back to the notebook you were reading. Nothing was closed.">
-    &#8592; Resume last document</button>
   <div class="welcome-box">
     <div class="welcome-top">
       <!-- ONE identity block, not three stacked rows. The mark, the
@@ -639,8 +637,6 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
              then on hover a last updated so I can keep track of this").
              Empty in a rendered notebook; see build_info.py. -->
         <div class="welcome-wordmark">Junoview{build}</div>
-        <p class="welcome-tag">Build a presentation, or open a notebook and
-          pull the figures straight out of your analysis.</p>
       </div>
       <!-- START HERE, whichever "here" you meant. The front door used to
            offer only ways of opening a NOTEBOOK, so a presentation was
@@ -679,15 +675,15 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
            cards in a two-column grid -- one alone on a ragged second
            row, which is what T240 set out to stop. -->
       <div class="welcome-links">
-        <a href="#" id="welcome-tour">Take a tour</a>
+        <a href="#" id="welcome-tour">Tour</a>
         <span class="wl-sep">&middot;</span>
         <!-- T264: the example lives here now, beside the other two ways
              of being shown around, instead of as a fourth primary card.
              Still web-build only -- app.js hides the separator with it. -->
         <span id="welcome-demo-wrap"{web_hidden}><a href="#" id="welcome-demo"
-          >Try the example notebook</a>
+          >Example</a>
         <span class="wl-sep">&middot;</span></span>
-        <a href="#" id="welcome-help">How to use</a>
+        <a href="#" id="welcome-help">Help</a>
         <span class="wl-sep">&middot;</span>
         <!-- T364: the ribbon is hidden on this screen (body.welcoming),
              so the App group's Full screen cannot be reached from here.
@@ -703,7 +699,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
              offer pending, which meant no door at all on the browsers
              that never fire that event (2026-08-29, T85). -->
         <span class="wl-sep" id="welcome-install-sep"{web_hidden}>&middot;</span>
-        <a href="#" id="welcome-install"{web_hidden}>Install as an app</a>
+        <a href="#" id="welcome-install"{web_hidden}>Install app</a>
       </div>
       <!-- The start screen is a launch point, not a second copy of the
            presentation rail.  It shows the presentations actually used
@@ -711,7 +707,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
            imports and every saved presentation belong. -->
       <div class="welcome-jump" id="welcome-jump">
         <section class="wj-col" id="wj-pres">
-          <h2 class="wj-h"><i data-ic="present"></i> Recent presentations
+          <h2 class="wj-h"><i data-ic="present"></i> Presentations
             <span class="wj-doors">
             <button class="wj-new" id="welcome-presentations" type="button"
               title="Open presentations, recent work and folders"
@@ -723,8 +719,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
               title="Create a presentation folder"
               ><i data-ic="open"></i> Folder</button></span></h2>
           <div class="wpres" id="welcome-pres" hidden></div>
-          <div class="wj-none" id="wj-none-pres"{web_hidden}>No recent
-            presentations</div>
+          <div class="wj-none" id="wj-none-pres"{web_hidden}>None yet</div>
         </section>
         <section class="wj-col" id="wj-nb">
           <h2 class="wj-h"><i data-ic="nb"></i> Notebooks
@@ -750,20 +745,12 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
                and it belongs on Open. -->
         </section>
       </div>
-      <div class="welcome-scrollcue" aria-hidden="true">How it works
-        &#8595;</div>
     </div>{welcome_reveal}
-    <div class="welcome-more">
-      <ol class="welcome-steps">
-        <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from
-          local files or a GitHub URL.</span></li>
-        <li><span class="ws-n">2</span><span>Filter by cell type, and trace
-          back every cell that builds a plot.</span></li>
-        <li><span class="ws-n">3</span><span>Build presentations from figures,
-          markdown and code straight out of the notebook.</span></li>
-        <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
-          latest changes into your slides &mdash; automatically.</span></li>
-      </ol>
+    <div class="welcome-more"{web_hidden}>
+      <!-- T624: the reel and the testimonial are the public landing
+           page's, so the block is the web build's only. The four "how
+           it works" steps are in Help, "What this is" (2026-10-11,
+           user: "there is a lot of unnecessary text still"). -->
       <!-- The demo reel, simplest first. The GIFs live beside the page
            (docs/gifs/); a local render has no such folder, so each figure
            removes itself if its image 404s and the whole block hides when
@@ -773,55 +760,44 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
         <div class="wtour-head">
           <span class="wtour-t">See it work</span>
           <button class="dbtn ghost" id="wtour-toggle" type="button"
-            aria-pressed="false">Show the demos</button>
+            aria-pressed="false">Play demos</button>
         </div>
         <figure>
           <img data-src="gifs/code_folding.gif" alt="Folding code away">
-          <figcaption><b>Hide the code &mdash; see just the results</b>
-          Every cell's code folds away behind one click.</figcaption>
+          <figcaption><b>Hide the code</b></figcaption>
         </figure>
         <figure>
           <img data-src="gifs/code_types.gif" alt="Filtering by code type">
-          <figcaption><b>Filter your notebook &mdash; show only the cells
-          you want</b> Imports, plotting and prints are told apart, so you
-          can switch off the housekeeping.</figcaption>
+          <figcaption><b>Show only the cells you want</b></figcaption>
         </figure>
         <figure>
           <img data-src="gifs/remove_what_you_dont_want.gif"
             alt="Hiding cells and sections">
-          <figcaption><b>Get rid of what you don't need</b> Hide any cell,
-          heading or whole section. Nothing is deleted.</figcaption>
+          <figcaption><b>Hide what you don't need</b></figcaption>
         </figure>
         <figure>
           <img data-src="gifs/make_figure_and_text_bigger_and_present_them.gif"
             alt="Resizing figures and text">
-          <figcaption><b>Make it big enough to read</b> Grow the figures
-          and the text, then go full screen and talk to it.</figcaption>
+          <figcaption><b>Make it big enough to read</b></figcaption>
         </figure>
         <figure>
           <img data-src="gifs/plot_trace.gif" alt="Tracing a plot">
-          <figcaption><b>Ask any plot where it came from</b> Plot trace
-          opens the exact chain of cells that made it.</figcaption>
+          <figcaption><b>Trace any plot</b></figcaption>
         </figure>
         <figure>
           <img data-src="gifs/tree_view.gif" alt="The analysis as a map">
-          <figcaption><b>See the whole analysis at once</b> Your notebook
-          as a map of what depends on what.</figcaption>
+          <figcaption><b>See the whole analysis</b></figcaption>
         </figure>
         <figure>
           <img data-src="gifs/create_presentation.gif"
             alt="Building a slide deck">
-          <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag
-          your figures onto slides, arrange them, present.</figcaption>
+          <figcaption><b>Turn it into a talk or a poster</b></figcaption>
         </figure>
         <!-- no GIF for this one: it is the promise the whole thing rests
              on, and it reads better as a plain statement -->
         <figure class="wtour-said">
           <figcaption><b>Re-run the notebook and the slides catch up</b>
-          Your figures stay linked to the cells that made them, so when
-          you update your notebook it updates straight away in the
-          presentation &mdash; no re-exporting, no re-pasting
-          screenshots.</figcaption>
+          </figcaption>
         </figure>
       </div>
       <figure class="wquote">
@@ -843,7 +819,6 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
   <section class="presentation-hub-card">
     <header class="presentation-hub-head">
       <div>
-        <div class="presentation-hub-kicker">presentations</div>
         <h2 id="presentation-hub-title">Open or create</h2>
       </div>
       <button class="dbtn" id="presentation-hub-close" type="button"
@@ -857,34 +832,33 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
       <button class="dbtn" id="presentation-hub-folder" type="button"
         ><i data-ic="open"></i> New folder</button>
       <button class="dbtn" id="presentation-hub-file" type="button"
-        ><i data-ic="open"></i> Open a file</button>
+        aria-label="Open a file"><i data-ic="open"></i> File&#8230;</button>
       <button class="dbtn" id="presentation-hub-pptx" type="button"
         ><i data-ic="open"></i> Import .pptx</button>
       <!-- T610: the Open dialog Ctrl+K lands in opens a notebook too -->
       <button class="dbtn" id="presentation-hub-nb" type="button" hidden
         title="A notebook (.ipynb, .md, .tex or .csv) from this computer
  or a URL. It opens as a tab (Ctrl+O)"
-        ><i data-ic="nb"></i> Open a notebook&#8230;</button>
+        aria-label="Open a notebook"><i data-ic="nb"></i> Notebook&#8230;</button>
       <!-- T599: the presentation files in a folder, listed and previewed
            before any is opened -->
       <button class="dbtn" id="presentation-hub-dirbtn" type="button" hidden
         title="List the presentation files in a folder on this computer, and
  see each one's slides before you open it"
-        ><i data-ic="open"></i> Look in a folder&#8230;</button>
+        ><i data-ic="open"></i> Browse folder&#8230;</button>
       <!-- T599: find the one you mean -- by its name, or by any words on
            its slides -- without opening a dozen to look -->
       <label class="presentation-hub-find"><i data-ic="find"></i><input
         type="search" id="presentation-hub-find" autocomplete="off"
-        spellcheck="false" placeholder="Find by name or by words on a slide"
+        spellcheck="false" placeholder="Find in names and slides"
         aria-label="Find a presentation by its name or by words on its
  slides"></label>
     </div>
     <form class="presentation-hub-folderform" id="presentation-hub-folderform"
       hidden>
-      <label for="presentation-hub-foldername">Folder name</label>
       <input id="presentation-hub-foldername" type="text" maxlength="80"
-        autocomplete="off" placeholder="e.g. Conference 2026">
-      <button class="dbtn primary" type="submit">Create folder</button>
+        autocomplete="off" placeholder="Folder name" aria-label="Folder name">
+      <button class="dbtn primary" type="submit">Create</button>
     </form>
     <div class="presentation-hub-columns">
       <section>
@@ -895,7 +869,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
         <div class="presentation-hub-list" id="presentation-hub-dir" hidden></div>
       </section>
       <section>
-        <h3>All presentations</h3>
+        <h3>All</h3>
         <div class="presentation-hub-list" id="presentation-hub-all"></div>
       </section>
       <!-- T599: the slides of the row under the pointer (or the keyboard),
@@ -910,7 +884,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
 <div class="helpdlg" id="helpdlg" hidden>
   <div class="help-box">
     <div class="help-head">
-      <span class="help-title">How to use</span>
+      <span class="help-title">Help</span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="help-tour" title="Take the guided
  tour of what is open: the slide editor's while it is up, the
@@ -955,7 +929,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
       <div class="odlg-inrow">
         <input id="odlg-input" type="text" spellcheck="false"
           autocomplete="off"
-          placeholder="&#8230;or paste a folder or file path">
+          placeholder="Paste a path or link">
         <button class="dbtn" id="odlg-go"
           title="Open the path or URL typed on the left">Open</button>
       </div>
@@ -963,7 +937,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
     </div>
   </div>
 </div>
-<div class="drophint" id="drophint" hidden>Drop .ipynb files to open</div>
+<div class="drophint" id="drophint" hidden>Drop to open</div>
 <!-- T255: full screen is where you go to LOOK at a plot, and looking
      closely was the one thing it could not do (2026-09-04, user: "when
      viewing plots in full screen you can't zoom in"). The bar is words
@@ -976,7 +950,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
       ><i data-ic="minus"></i> Smaller</button>
     <button class="figmax-b figmax-val" id="figmax-zval" type="button"
       title="Zoom level — click to go back to 100% (0)"
-      >Zoom 100%</button>
+      aria-label="Zoom 100%">100%</button>
     <button class="figmax-b" id="figmax-zin" type="button"
       title="Zoom in (+ or the wheel)" aria-label="Zoom in"
       ><i data-ic="plus"></i> Bigger</button>
@@ -993,7 +967,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
 <div class="docfind" id="docfind" hidden>
   <i data-ic="find"></i>
   <input type="search" id="docfind-in" class="docfind-in"
-    placeholder="find in this notebook" aria-label="Find in this notebook"
+    placeholder="Find" aria-label="Find in this notebook"
     autocomplete="off" spellcheck="false">
   <span class="docfind-n" id="docfind-n"></span>
   <button class="docfind-b" id="docfind-prev" type="button"
@@ -1013,8 +987,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
     <div class="note-dlg-h">Add a markdown note</div>
     <div class="note-dlg-sub" id="note-dlg-sub"></div>
     <textarea id="note-dlg-src" rows="6" spellcheck="true"
-      placeholder="Write markdown &mdash; a comment, an interpretation, a
- TODO&#8230;"></textarea>
+      placeholder="Markdown&#8230;"></textarea>
     <label class="note-dlg-git" id="note-dlg-gitrow" hidden>
       <input type="checkbox" id="note-dlg-commit">
       <span id="note-dlg-gitlab">also commit to git</span>

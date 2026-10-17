@@ -292,9 +292,9 @@ def _encoded(text: str) -> bytes:
 #: (see _first_layout). It is a field VALUE, not template text, so its
 #: braces are its own. ONLY AS SENT: a visitor coming back has Recent
 #: rows, the last-session offer and their presentations, which app.js
-#: puts in; shown before that, the screen said "No recent presentations"
-#: to someone who has some, and then the whole centred block jumped up
-#: as the lists arrived (layout shift 0.079 with six recents, vs 0). F5
+#: puts in; shown before that, the screen said "None yet" under
+#: Presentations to someone who has some, and then the whole centred
+#: block jumped up as the lists arrived (layout shift 0.079 with six recents, vs 0). F5
 #: on a presentation's address (#/pres/...) is a deck about to open, not
 #: Home. Those wait for app.js, which shows the screen complete; an
 #: installed app is never offered to install itself, even for a moment.
@@ -341,8 +341,8 @@ def _first_layout(has_docs: bool, mode: str = "static") -> dict[str, str]:
     place, and the welcome text -- the largest thing on it -- appeared
     only once every script had run, 0.4 s after the first paint at 4x CPU
     (load-static #11). Its web-only links (the example, Install) and the
-    empty "No recent presentations" line app.js puts up at once are sent
-    shown for the same reason; app.js still hides Install when running
+    empty "None yet" line app.js puts up at once are sent shown for the
+    same reason; app.js still hides Install when running
     installed, and a saved side list still turns into one before the
     first paint (page.html). It is shown by a line of script the moment
     its first screen has been parsed, not before: shown while still

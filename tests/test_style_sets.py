@@ -280,7 +280,7 @@ def test_both_libraries_are_reachable_from_the_match_menu(out):
     assert "window.SemDeckArrange=open;" in out
     # the glyphs in this one are written as \\u escapes in the source, so
     # match the ASCII the label is actually made of
-    assert "restyle the whole deck" in out
+    assert "sets.textContent='\\u25f1 Style sets\\u2026';" in out
     assert "window.SemDeckStyleSets=open;" in out
 
 

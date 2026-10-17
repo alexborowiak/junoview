@@ -29,7 +29,8 @@ def test_the_editors_file_opens_a_notebook():
         < menu.index('id="mi-load"')
     row = menu[menu.index('id="mi-open-nb"'):]
     row = row[:row.index("</button>")]
-    assert " hidden" in row and "Open a notebook&#8230;" in row
+    assert " hidden" in row and "Notebook&#8230;" in row
+    assert 'aria-label="Open a notebook"' in row
 
 
 def test_a_door_shows_only_where_a_notebook_can_open():
@@ -66,7 +67,7 @@ def test_escape_over_the_open_dialog_keeps_the_editor():
 def test_the_open_library_offers_a_notebook():
     page = assets.page_template()
     assert 'id="presentation-hub-nb"' in page
-    assert '<i data-ic="nb"></i> Open a notebook&#8230;</button>' in page
+    assert '<i data-ic="nb"></i> Notebook&#8230;</button>' in page
     hub = lift_fn(assets.deck_js(), "presentationHubBoot")
     assert ("closePresentationHub();var t=$('#tab-open');if(t) t.click();"
             in hub)

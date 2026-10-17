@@ -48,4 +48,6 @@ def test_it_is_drawn_and_exported_for_the_new_kinds():
 def test_the_review_asks_about_charts_and_names_the_door():
     js = assets.load("js/deck/50-review-and-overview.js")
     assert "if(a.k!=='image'&&a.k!=='flip'&&a.k!=='chart') return;" in js
-    assert "Select it and use Object \u203a Alt text" in js
+    # T624: the door is named once, in the review's "?"
+    assert "select it and use Object \\u203a '\n      +'Alt text" in js \
+        or "select it and use Object \\u203a Alt text" in js

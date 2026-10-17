@@ -479,12 +479,15 @@ def test_the_doors_say_what_they_accept():
     """Three strings promised .ipynb only. The one in page.html that a
     user never sees is deliberately NOT the fix: showDlg overwrites the
     placeholder on every open, so editing the attribute alone would have
-    changed nothing."""
+    changed nothing. T624: the field says what it takes -- a path or a
+    link -- and no longer lists formats at all; Open's tooltip and the
+    picker's accept list carry them."""
     from junoview import assets
 
     js, page = assets.app_js(), assets.page_template()
-    assert ".md/.tex/" in js or "notebook/.md/.tex/" in js
-    assert "Markdown, LaTeX or csv files anywhere" in js
+    assert "if(inp) inp.placeholder='Paste a path or link';" in js
+    assert "if(inp) inp.placeholder='Paste a link (GitHub links work)';" in js
+    assert ".ipynb only" not in js
     # T364: the front door says it on Open's own tooltip rather than in
     # a line of prose under the section
     assert "Open .ipynb, .md, .tex or .csv from this computer" in page

@@ -116,7 +116,9 @@ parser's internals.
 
 - Toolbar/ribbon buttons NEVER wrap to a second row. `fitRibbon` (app.js)
   and `fitEditRibbon` (deck.js) compact the ribbon instead.
-- Buttons are words PLUS icons, never icon-only (rejected twice).
+- Buttons are words PLUS icons, never icon-only (rejected twice) --
+  except the small ? help buttons the user asked for, 2026-10-11
+  (T624: `.jv-q`, app.js THE "?"; never in a ribbon or toolbar row).
 
 ## Behavioural invariants
 
