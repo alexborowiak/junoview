@@ -793,10 +793,6 @@ body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
   border-bottom:1px solid #ffffff14;}
 .selpane-list{flex:1;overflow-y:auto;padding:5px;}
 .selpane-empty{color:#7f93a5;font-size:12.5px;line-height:1.5;padding:12px;}
-/* T194: the sentence at the top of a check pane that says what it checks */
-.pf-intro{font-size:11.5px;line-height:1.45;color:var(--chrome-ink-2);
-  padding:9px 12px 2px;}
-body.light .pf-intro{color:var(--ink-2);}
 .sp-row{display:flex;align-items:center;gap:7px;
   border-radius:7px;padding:6px 7px;color:#c9d6e2;font-size:12px;
   cursor:pointer;}
@@ -3481,8 +3477,6 @@ body.slide-editing .an-item.sel[class*="an-move-"]:not(.an-mo-preview){
 .dh-chwhat{font-family:var(--sans);font-size:12.5px;color:#dbe7ef;
   line-height:1.5;}
 .dh-chlead{font-weight:600;}
-.dh-when-note{padding:8px 16px 12px;border-top:1px solid #ffffff14;
-  font-family:var(--sans);font-size:11px;line-height:1.55;color:var(--chrome-ink-2);}
 body.light .dh-h2t,body.light .dh-chwhat{color:var(--ink);}
 body.light .dh-ch{border-bottom-color:var(--line);}
 
@@ -4007,9 +4001,6 @@ body.light .fp-tielab{color:var(--ink-3);}
 .rbn-gh{display:flex;align-items:center;gap:10px;padding:9px 16px;
   border-bottom:1px solid #ffffff14;}
 .rbn-gt{font-size:13px;color:#dbe7ef;}
-.rbn-gnote{font-size:11px;line-height:1.55;color:var(--chrome-ink-2);
-  padding:8px 16px 0;}
-.rbn-gnote b{color:var(--chrome-ink);font-weight:600;}   /* T469: the theme's ink */
 .rbn-gwarn{margin:8px 16px 0;padding:7px 10px;border-radius:6px;
   border:1px solid #ef9f2766;background:#ef9f2714;color:#e8c88f;
   font-size:11px;line-height:1.45;display:flex;align-items:center;gap:10px;}
@@ -4051,7 +4042,6 @@ body.light .rbn-gfind{background:var(--input-bg);color:var(--ink);
   text-transform:uppercase;color:var(--chrome-ink-2);min-width:52px;}
 .rbn-cgrp{font-size:9.5px;background:#ffffff14;border-radius:4px;
   padding:1px 5px;color:#b9cad8;white-space:nowrap;}
-.rbn-cgrp-dim{color:var(--chrome-ink-2);font-style:italic;background:transparent;}
 body.light .rbn-gallery{background:var(--chrome-2);}
 body.light .rbn-gt,body.light .rbn-card{color:var(--ink);}
 body.light .rbn-card{background:var(--chrome-3);
@@ -4092,8 +4082,6 @@ body.light .rbn-gwarn b{color:var(--warning);}
   padding:12px 16px 18px;}
 .rv-lints{overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
 .rv-lhead{font-size:12px;color:#dbe7ef;}
-.rv-note{font-size:10.5px;line-height:1.5;color:var(--chrome-ink-2);
-  margin-bottom:4px;}
 .rv-lint{text-align:left;background:#ffffff08;border:1px solid #ffffff17;
   border-left-width:3px;border-radius:7px;padding:7px 10px;
   cursor:pointer;display:flex;flex-direction:column;gap:3px;}
@@ -4174,8 +4162,6 @@ body.light .rv-text{background:var(--input-bg);color:var(--ink);
   transform-origin:top left;pointer-events:none;}
 .dh-fullmissing{display:grid;place-items:center;color:var(--chrome-ink-2);
   font-family:var(--mono);font-size:10px;}
-.dh-git{grid-column:1/-1;font-size:10.5px;line-height:1.55;
-  color:var(--chrome-ink-2);padding:8px 16px;border-top:1px solid #ffffff14;}
 body.light .deck-history{background:var(--chrome-0);}
 body.light .dh-t,body.light .dh-snap.on{color:var(--ink);}
 body.light .dh-snap,body.light .dh-head2{color:var(--ink-2);}
@@ -4357,8 +4343,6 @@ body.light .ovw-lab{color:var(--ink-2);}
    is up to date, and carries what can be done with it. */
 .deck-parts .prt-head{flex-wrap:wrap;row-gap:6px;}
 .deck-parts .dbtn[hidden]{display:none;}
-.prt-intro{margin:10px 16px 0;font-size:12px;line-height:1.45;
-  color:var(--chrome-ink-2);max-width:86ch;}
 .prt-say{margin:8px 16px 0;padding:6px 10px;border-radius:6px;font-size:12px;
   color:#dbe7ef;background:color-mix(in srgb,var(--cyan) 12%,transparent);
   border:1px solid color-mix(in srgb,var(--cyan) 40%,transparent);}
@@ -6160,7 +6144,10 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .talkbtn:hover,.talkbtn[aria-expanded="true"]{opacity:1;}
 .deck.creating .talkbtn,.deck.editing .talkbtn,
 .deck.creating .talkpane,.deck.editing .talkpane{display:none;}
-.talkpane{position:absolute;right:18px;bottom:74px;z-index:9;width:266px;
+/* T624: as wide as its widest row (the Ink row's three tools), never
+   narrower than it was -- at 266px fixed, Eraser ran out of the pane */
+.talkpane{position:absolute;right:18px;bottom:74px;z-index:9;
+  width:max-content;min-width:266px;max-width:calc(100% - 58px);
   background:var(--chrome-2,#16273a);border:1px solid #ffffff26;
   border-radius:10px;padding:10px;box-shadow:0 18px 44px #000a;
   display:flex;flex-direction:column;gap:8px;}
@@ -6175,9 +6162,11 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .tk-b{display:flex;align-items:center;gap:6px;font-size:11px;}
 .tk-b[aria-pressed="true"]{background:var(--amber);color:#241a05;
   border-color:transparent;}
-.tk-state{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
-  text-transform:uppercase;opacity:.75;}
-.tk-note{margin:0;font-size:10px;line-height:1.5;color:var(--chrome-ink-3);}
+/* T624: the state IS the button's word now (the row's label names the
+   thing), so it reads as one */
+.tk-state{font:inherit;letter-spacing:normal;text-transform:none;}
+/* the heading's "?" sits beside "This talk", not mid-row */
+.tk-h>button.jv-q{margin-right:auto;}
 @media print{.talkbtn,.talkpane{display:none !important;}}
 /* ---- T391: THE ANIMATION STORY -----------------------------------------
    A strip between the ribbon and the stage. Each stop is a real render
@@ -7479,7 +7468,6 @@ body.light .rbn-geom input{color:var(--ink-2);background:var(--input-bg);
 /* ---- T209: THE REVIEW VIEWS, FULL SCREEN --------------------------------
    Mismatched text and Tidy page draw their cards into a grid with room
    to read, under the same header the All images view has. */
-.img-ov .pf-intro{margin:-4px 0 14px;max-width:760px;font-size:13px;}
 .std-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
   gap:10px;align-content:start;}
 .img-ov .std-find{margin:0;background:#ffffff05;border:1px solid #ffffff14;
@@ -7597,8 +7585,6 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
    its one page), its name and slide count, and one line on what it is
    for. Wraps to two rows below ~1000px; never a screen of its own. */
 .aa-box.nt-box{width:min(980px,94vw);}
-.nt-lead{margin:0;font-size:12.5px;line-height:1.5;
-  color:var(--chrome-ink-2);}
 .nt-grid{display:grid;gap:10px;overflow-y:auto;min-height:0;
   grid-template-columns:repeat(auto-fill,minmax(176px,1fr));}
 .nt-card{display:flex;flex-direction:column;gap:6px;text-align:left;
@@ -7720,7 +7706,6 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 .cmt-on{font:11.5px var(--sans);color:var(--chrome-ink-2);}
 .cmt-ta{min-height:54px;font:12.5px/1.45 var(--sans);}
 .cmt-row{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
-.cmt-hint{margin-right:auto;font:10.5px var(--mono);color:var(--chrome-ink-3);}
 .cmt-link{background:none;border:0;padding:0;cursor:pointer;
   color:var(--accent,var(--cyan));font:inherit;text-align:left;}
 .cmt-link:hover{text-decoration:underline;}
@@ -7773,7 +7758,6 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 .dgm-preview .dgm-svg{display:block;border-radius:6px;
   border:1px solid var(--chrome-line);}
 .dgm-count{font:10.5px var(--mono);color:var(--chrome-ink-3);}
-.dgm-hint{font-size:11px;line-height:1.35;color:var(--chrome-ink-3);}
 @media (max-width:560px){
   .dgm-kinds{grid-template-columns:repeat(2,1fr);}
   .dgm-body{grid-template-columns:minmax(0,1fr);}

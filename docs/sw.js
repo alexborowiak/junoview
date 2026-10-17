@@ -19,11 +19,11 @@
    takes over the old one's runtime files instead of fetching them again
    (activate), and its own new files at install.
 
-   d76f5accfc4b is replaced by build_web() with a hash of junoview.zip:
+   db9598ffb7b9 is replaced by build_web() with a hash of junoview.zip:
    a new build retires the old cache on activate, and an unchanged package
    produces an unchanged worker, so the committed docs/ build stays
    diff-free (same rule as the zip itself). */
-var VERSION = 'd76f5accfc4b';
+var VERSION = 'db9598ffb7b9';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
@@ -33,7 +33,7 @@ var CACHE = 'junoview-' + VERSION;
    marker. The page is './' and only './': index.html is the same page,
    and an offline navigation to it is answered with './' below. */
 var CORE = ['./', 'web-worker.js', 'LICENSE', 'NOTICE',
-  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg', 'core.8aa7e1037606dfef.css', 'app.d52c1951a81f55ae.css', 'deck.4e420aebdca09b7c.css', 'icons.5377b0f92bbbc947.js', 'app.3e63ef300826cba5.js', 'pptx.b8b9671325057718.js', 'deck.ff77ebca10718c21.js'];
+  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg', 'core.3be3f8535f619bc0.css', 'app.15d468737f1c521d.css', 'deck.bd5a64596e22fa3f.css', 'icons.5377b0f92bbbc947.js', 'app.e3fbfc73dc5fdc22.js', 'pptx.b8b9671325057718.js', 'deck.b5152150bb379d9b.js'];
 /* ...and a content-hashed name can never hold anything else, so a cached
    copy of one is final, like a CDN file: no refresh behind it */
 var HASHED_RE = /\.[0-9a-f]{16}\.(css|js|html)$/;
@@ -59,7 +59,7 @@ var WARM = CRITICAL.concat([
      picks the next free one) -- served live whenever there is a
      network, see DATA_RE: build_web writes their names in at the
      marker. A build made without the example has none. */
-  , 'example_climate_analysis.shell.a9349022b9db1506.html', 'example_climate_analysis.ipynb'
+  , 'example_climate_analysis.shell.13dbfc80a1a85520.html', 'example_climate_analysis.ipynb'
 ]);
 /* MathJax's CHTML fonts load lazily per glyph through @font-face.
    Precaching the known set is what keeps equations rendering offline

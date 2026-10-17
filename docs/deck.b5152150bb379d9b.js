@@ -1969,13 +1969,13 @@
       'Pictures with no alt text, slides whose heading is not read '
       +'first, and words too faint to read -- each with a fix');
     cat('Source freshness','whole deck',staleFigures().length,
-      bic('reload')+' Update figures from their sources',
+      bic('reload')+' Update figures',
       function(){resyncAllFigures();},
       'Placed figures whose notebook or file has moved on \u2014 one '
       +'click re-reads them, keeping position, size and crop');
     if(head) head.textContent=total
-      ?(total+' to look at, across six checks')
-      :'Six checks, all clear';
+      ?(total+' to look at')
+      :'All clear';
   }
   /* ---- T565: THE ACCESSIBILITY CHECK -----------------------------------
      PowerPoint's Check Accessibility, for the three things it finds most:
@@ -2031,10 +2031,8 @@
         if(ord.length>1&&ord[0]!==hd){
           out.push({sev:'warn',si:si,i:hd,
             what:'The heading is not read first',
-            why:'A screen reader starts with “'+(annotLabel(
-              sl.annots[ord[0]])||'another object')+'” and reaches '
-              +'the heading later. Put the heading first in the reading '
-              +'order.',
+            why:'Read before the heading: “'+(annotLabel(
+              sl.annots[ord[0]])||'another object')+'”.',
             fix:'Read the heading first',
             run:function(){
               ensureOids(sl);
@@ -2092,12 +2090,8 @@
       ?(found.length+' to look at'+(errs?' \u00b7 '+errs+' serious':''))
       :'Nothing to fix';
     list.innerHTML='';
-    if(!found.length){
-      list.innerHTML='<div class="pf-ok">Every picture says what it '
-        +'shows, every heading is read first, and the words can be '
-        +'read against what is behind them.</div>';
-      return;
-    }
+    /* T624: nothing found says so once, in the count line above */
+    if(!found.length) return;
     found.forEach(function(f){
       var row=document.createElement('div');
       row.className='pf-row pf-'+f.sev+' a11y-row';
@@ -2131,9 +2125,7 @@
       :'Nothing to fix';
     list.innerHTML='';
     if(!issues.length){
-      list.innerHTML='<div class="pf-ok">This page is ready to print. '
-        +'Figures are sharp enough, nothing runs off the page or into '
-        +'the margin, and the text has enough contrast.</div>';
+      list.innerHTML='<div class="pf-ok">Ready to print.</div>';
       return;
     }
     issues.forEach(function(x){
@@ -2373,7 +2365,7 @@
     var hist=objHistory(ohOid);
     if(head) head.textContent=!live
       ?'this object is gone'
-      :(hist.length===1?'one state — nothing has changed yet'
+      :(hist.length===1?'No changes yet'
         :hist.length+' states');
     if(!live){
       var g=document.createElement('div');
@@ -2618,8 +2610,7 @@
         var f={kind:'align',sev:'warn',sp:sp,
           list:cl.map(function(m){return {si:cur,ai:m.x.i,a:m.x.a};}),
           head:cl.length+' objects nearly share their '+e[1],
-          why:'They are '+gapMm(sp,e[3])+' apart across '+e[1]
-            +'. Close enough to look like a mistake, far enough to see.',
+          why:gapMm(sp,e[3])+' apart across '+e[1]+'.',
           act:'Line up their '+e[1],
           fix:(function(cl2,rd,horiz,tgt){return function(){
             cl2.forEach(function(m){
@@ -2661,10 +2652,8 @@
           list:rs.map(function(y){return {si:cur,ai:y.i,a:y.a};}),
           head:rs.length+' objects '+(horiz?'across':'down')
             +' with uneven gaps',
-          why:'The gaps run '+gaps.map(function(g){
-            return gapMm(g,horiz);}).join(', ')
-            +'. Uneven whitespace is what reads as sloppy even when '
-            +'everything is aligned.',
+          why:'Gaps: '+gaps.map(function(g){
+            return gapMm(g,horiz);}).join(', ')+'.',
           act:'Space them evenly',
           fix:(function(rs2,horiz2){return function(){
             /* the OUTER two do not move: distributing between them is
@@ -2703,9 +2692,7 @@
       out.push({kind:'dup',sev:'warn',sp:Math.max(dx,dy),
         list:[{si:cur,ai:A.i,a:A.a},{si:cur,ai:B.i,a:B.a}],
         head:'Two copies of '+annotLabel(A.a),
-        why:'Same content, same size, almost the same place — the shape '
-          +'a paste that happened twice leaves behind. Only the one '
-          +'underneath is doing anything.',
+        why:'Pasted twice, one on top of the other.',
         act:'Delete the copy on top',
         fix:(function(k){return function(){
           var sl=pres.slides[cur];
@@ -2763,14 +2750,12 @@
     var f=tidyFindings();
     if(head) head.textContent=f.length
       ?(f.length+' to look at')
-      :'nothing out of true';
+      :'';
     list.innerHTML='';
     if(!f.length){
       var msg=document.createElement('div');
       msg.className='pf-ok';
-      msg.textContent='This page is tidy. Nothing is nearly-but-not-'
-        +'quite lined up, the gaps are even, and nothing has been '
-        +'pasted twice on top of itself.';
+      msg.textContent='Nothing to tidy.';
       list.appendChild(msg);
       return;
     }
@@ -2955,9 +2940,7 @@
       out.push({kind:'figzoom',sev:'warn',
         head:rest.length+' frame'+(rest.length===1?'':'s')
           +' zoom their contents differently',
-        why:'Most are at '+(+most*100).toFixed(0)+'%. A frame\u2019s '
-          +'content zoom multiplies everything inside it, so two frames '
-          +'at different zooms cannot have matching labels.',
+        why:'Most are at '+(+most*100).toFixed(0)+'%.',
         list:rest,
         act:'Put '+(rest.length===1?'it':'them')+' at '
           +(+most*100).toFixed(0)+'%',
@@ -2998,12 +2981,8 @@
       out.push({kind:'figsize',sev:'info',
         head:odds.length+' figure'+(odds.length===1?' uses':'s use')
           +' different type sizes from the rest',
-        why:'Most are set at '+szk[0].replace(/\|/g,', ')+'. Read from '
-          +'the SVG itself, so only the '+read+' vector figure'
-          +(read===1?'':'s')+' could be asked. Two figures shown at the '
-          +'same width whose type differs like this will not look like '
-          +'a pair \u2014 and the fix is one rcParams in the notebook, '
-          +'which is why there is no button here.',
+        why:'Most are set at '+szk[0].replace(/\|/g,', ')+'. Fix it in '
+          +'the notebook with one rcParams font size.',
         list:odds,
         act:null});
     }
@@ -3040,10 +3019,7 @@
         head:odd2.length+' figure'+(odd2.length===1?' is':'s are')
           +(few?' trimmed and the rest are not'
                :' untrimmed and the rest are'),
-        why:'A trim changes how much white space a figure carries round '
-          +'its plot, so a trimmed figure and an untrimmed one at the '
-          +'same width put their axes at different sizes. This is the '
-          +'deck\u2019s own trim, not anything inside the file.',
+        why:'Trimmed differently from the rest.',
         list:odd2,
         act:few?null:'Clear the trims',
         fix:few?null:(function(o){return function(){
@@ -3418,8 +3394,7 @@
       out.push({kind:'named',style:id,list:list,odd:odd,sev:'warn',
         head:odd.length+' of '+list.length+' '+d.label+' boxes no '
           +'longer match the style',
-        why:'They have the '+d.label+' style but were changed by hand '
-          +'afterwards. Putting the style back makes them match again.'});
+        why:'Changed by hand since the style was set.'});
     });
     /* PASS TWO — the boxes wearing nothing, which on most decks is all of
        them. Bands first, names second, drift within a band third. */
@@ -3646,8 +3621,8 @@
       act.textContent='Line all '+f.g.all.length+' up';
       act.addEventListener('click',function(){stdAlign(f.g);});
     } else if(f.kind==='named'){
-      act.textContent='Put the '+styleDef(f.style).label+' style back on '
-        +'these '+f.odd.length;
+      act.textContent='Reset these '+f.odd.length;
+      act.title='Put the '+styleDef(f.style).label+' style back on them';
       act.addEventListener('click',function(){
         stdFix(f.odd,function(a){applyStyleTo(a,f.style);},
           f.odd.length+' box'+(f.odd.length===1?'':'es')+' put back');
@@ -4318,7 +4293,7 @@
        look at this deck — so it is the same menu (T26) */
     ['overview','Overview map…','Overview map…'],
     /* T601: the talk as its parts -- the other presentations it shows */
-    ['parts','Parts of this talk…','Parts…']];
+    ['parts','Parts…','Parts…']];
   var filmView=null;
   function filmMode(){
     if(filmView===null){
@@ -5970,8 +5945,7 @@
     if(cgv) cgv.addEventListener('click',function(){
       var on=!guidesShown();
       showCustomGuides(on);
-      if(!on) toast('Guides hidden \u2014 still in the deck, and they '
-        +'stop snapping until you show them again');});
+      if(!on) toast('Guides hidden');});
     if(sd) sd.addEventListener('click',function(){
       guides.side=!wantSide();guides.sideSet=true;
       saveGuides();applySideRibbon();});
@@ -7446,7 +7420,7 @@
   }
   function rbnLayouts(){
     return [{id:'default',name:'Default',
-      blurb:'The arrangement the app ships with: Home, Insert, Design, Animation, View, and focused Style and Object tabs.',
+      blurb:'',
       selTab:'style',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'images',label:'Images'},
             {id:'text',label:'Text'},
@@ -7470,9 +7444,8 @@
         try{localStorage.removeItem(RIBBON_LAYOUT_KEY);}catch(e){}
         setTimeout(function(){
           if(typeof toast==='function')
-            toast('The toolbar arrangement you had chosen was retired '
-              +'\u2014 you are on Default now. Ribbon layouts holds '
-              +'the nine that stayed.');},600);
+            toast('Your ribbon layout was retired \u2014 back to '
+              +'Default');},600);
         s='';
       }
       rbnLayoutId=s||'default';
@@ -7516,8 +7489,7 @@
     if(clipped&&!note&&!quiet&&!rbnClipTold
        &&typeof toastUndo==='function'){
       rbnClipTold=true;
-      toastUndo('The ribbon is wider than the window \u2014 the '
-        +'right-hand toolbar keeps every control reachable.',
+      toastUndo('Ribbon wider than the window',
         'Use Side toolbar',function(){
           var side=$('#vw-side'); if(side) side.click();});
     }
@@ -7670,8 +7642,8 @@
        and name the existing remedy instead of clipping buttons silently. */
     var clipped=rbnOverflowNotice(bar,true);
     if(clipped&&!$('#rbn-gal-warn'))
-      toast('This ribbon layout is wider than the window \u2014 '
-        +'turn on Side toolbar to reach all of it.');
+      toastUndo('Ribbon wider than the window','Use Side toolbar',
+        function(){var side=$('#vw-side'); if(side) side.click();});
     else if(!quiet) toast('Ribbon layout: '+lay.name);
   }
   /* WHAT A LAYOUT MISSED, for the tests to read. Reports; changes
@@ -7794,7 +7766,7 @@
       if(!mine.length) return;
       var h=document.createElement('div');
       h.className='rbn-gfam';
-      h.textContent=rbnFamilyLabel(fam)+' · '+mine.length;
+      h.textContent=rbnFamilyLabel(fam);
       host.appendChild(h);
       var grid=document.createElement('div');
       grid.className='rbn-ggrid';
@@ -7823,14 +7795,10 @@
       var tl=document.createElement('span');
       tl.className='rbn-ctabl';tl.textContent=t.label;
       trow.appendChild(tl);
+      /* Default's groups live in the markup, not in the catalogue: its
+         tabs show alone (T624: an "as it ships" chip on every one of its
+         nine rows said nothing the card's name does not) */
       var gs=(lay.groups||[]).filter(function(g){return g.tab===t.id;});
-      if(!gs.length&&lay.fromMarkup){
-        /* Default's groups live in the markup, not in the catalogue */
-        var d=document.createElement('span');
-        d.className='rbn-cgrp rbn-cgrp-dim';
-        d.textContent='as it ships';
-        trow.appendChild(d);
-      }
       gs.forEach(function(g){
         var c=document.createElement('span');
         c.className='rbn-cgrp';c.textContent=g.label;
@@ -7860,17 +7828,19 @@
       +'placeholder="Filter\u2026" aria-label="Filter the layouts">'
       +'<button class="dbtn" id="rbn-gal-close">'+bic('exit')
       +' Done</button></div>'
-      +'<div class="rbn-gnote">Click one to try it — the ribbon '
-      +'changes straight away and this stays open, so you can flick '
-      +'through. Nothing is lost either way: every layout holds the same '
-      +'controls, and <b>Default</b> puts them back exactly as they '
-      +'ship.</div>'
       +'<div class="rbn-gwarn" id="rbn-gal-warn" role="status" hidden>'
       +'<span><b>This ribbon layout is wider than the window.</b> The '
       +'right-hand toolbar keeps every control reachable.</span>'
       +'<button class="dbtn" id="rbn-gal-side">'+bic('dockright')
       +' Use Side toolbar</button></div>'
       +'<div class="rbn-gal" id="rbn-gal-list"></div>';
+    /* T624: how the gallery works, behind its title's "?". This is a
+       full-screen overlay, not the ribbon: the one qBtn in this file */
+    var gt=ov.querySelector('.rbn-gt');
+    if(gt) gt.parentNode.insertBefore(qBtn('Click a layout to try it. The '
+      +'ribbon changes at once and this stays open, so you can try '
+      +'several. Every layout has the same buttons, and Default puts them '
+      +'back as they ship.','Ribbon layouts'),gt.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#rbn-gal-close')
       .addEventListener('click',rbnGalleryClose);
@@ -7926,7 +7896,7 @@
 
     {id:'familiar-office-ribbon',
      name:'Familiar ribbon',
-     blurb:'A familiar Home, Insert, Design and Animate arrangement with clearly named groups.',
+     blurb:'PowerPoint-style tabs',
      family:'familiar',
      selTab:'home',
      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},{id:'design',label:'Design'},{id:'animate',label:'Animate'}],
@@ -7989,7 +7959,7 @@
      ]},
     {id:'scope-deck-slide-object',
      name:'Deck, slide, object',
-     blurb:'Try this if you want to know before clicking whether a button changes the whole deck, just this slide, or only what you selected.',
+     blurb:'Tabs by what a button changes',
      family:'principles',
      selTab:'object',
      tabs:[{id:'deck',label:'Deck'},{id:'slide',label:'Slide'},{id:'object',label:'Object'}],
@@ -8045,7 +8015,7 @@
      ]},
     {id:'sources-own-tab',
      name:'Sources tab',
-     blurb:'Try this if your figures come from a live notebook: a whole tab for where content came from and whether it is still fresh.',
+     blurb:'A tab for notebook sources',
      family:'principles',
      selTab:'format',
      tabs:[{id:'slides',label:'Slides'},{id:'sources',label:'Sources'},{id:'format',label:'Format'},{id:'deck',label:'Deck'}],
@@ -8106,7 +8076,7 @@
      ]},
     {id:'density-everyday-first',
      name:'Everyday first',
-     blurb:'Try this if the deck gets handed to colleagues who only ever do six things: fifteen everyday buttons, a Format tab that fills itself in, and one drawer for the rest.',
+     blurb:'15 everyday buttons, the rest in a drawer',
      family:'principles',
      selTab:'format',
      tabs:[{id:'start',label:'Everyday'},{id:'format',label:'Format'},{id:'more',label:'Everything else'}],
@@ -8162,7 +8132,7 @@
      ]},
     {id:'journey-poster-first',
      name:'Poster first',
-     blurb:'Try this for A0 posters and other one-page work: page setup, guides and Review lead, and everything that only exists for a talk is quarantined.',
+     blurb:'For one-page posters: guides and Review lead',
      family:'principles',
      selTab:'content',
      tabs:[{id:'page',label:'Page'},{id:'content',label:'Content'},{id:'talk',label:'Talk'}],
@@ -8218,7 +8188,7 @@
      ]},
     {id:'density-one-row',
      name:'Everything in one row',
-     blurb:'Try this if tabs themselves are the problem: all 94 controls on a single row, ruthlessly clustered, nothing hidden behind a tab you are not on.',
+     blurb:'No tabs, one row',
      family:'principles',
      selTab:'all',
      tabs:[{id:'all',label:'All tools'}],
@@ -8262,7 +8232,7 @@
      ]},
     {id:'web-canvas-rail',
      name:'Canvas rail',
-     blurb:'Try this if a whiteboard app is home: a standing rail of making tools, a Selection tab that behaves like the bubble popping over whatever you clicked, and board-wide settings kept off both.',
+     blurb:'Whiteboard-style tool rail',
      family:'web',
      selTab:'mi-sel',
      tabs:[{id:'mi-rail',label:'Tools'},{id:'mi-sel',label:'Selection'},{id:'mi-board',label:'Board'}],
@@ -8320,7 +8290,7 @@
      ]},
     {id:'radical-ten-then-more',
      name:'Ten things, then More',
-     blurb:'Ten buttons on Start \u2014 make a slide, put a figure on it, show it. Format fills in when you select something, and the rest is under More.',
+     blurb:'Ten buttons, the rest under More',
      family:'radical',
      selTab:'tt-fmt',
      tabs:[{id:'tt-start',label:'Start'},{id:'tt-fmt',label:'Format'},{id:'tt-more',label:'More'}],
@@ -9147,9 +9117,8 @@
         lsFull=true;
         if(typeof status==='function') status();
         if(!quiet&&typeof toast==='function')
-          toast('This browser is full — that edit was NOT kept. Use '
-            +'File › Download a copy, or the \u25be beside Save to keep '
-            +'a file on your computer.',9000);
+          toast('Browser full — edit NOT kept. File › Download '
+            +'.junoview',9000);
       }
       return false;
     }
@@ -9203,9 +9172,8 @@
         draftsDbFull=true;
         if(typeof status==='function') status();
         if(!quiet&&typeof toast==='function')
-          toast('This browser is refusing to keep drafts \u2014 that edit '
-            +'is NOT kept. Use File \u203a Download a copy, or the \u25be '
-            +'beside Save to save to a file.',9000);
+          toast('Browser full \u2014 edit NOT kept. File \u203a Download '
+            +'.junoview',9000);
       }
     });
     lsDel(PFX+name);   /* the legacy copy: one source, and its quota back */
@@ -10011,7 +9979,7 @@
       el.textContent='NOT saved — browser full';
       el.className='deck-status unsaved lsfull';
       el.title='Browser storage is full, so edits are not being kept. '
-        +'Use File \u203a Download a copy, or the \u25be beside Save to '
+        +'Use File \u203a Download .junoview, or the \u25be beside Save to '
         +'save to a file.';
       return;
     }
@@ -10234,7 +10202,7 @@
       /* filmText, not slideTitle: in headings mode the row is named by
          the slide's heading, and refreshing it with the other function
          would rename it back on the first edit */
-      if(tt) tt.textContent=filmText(s);
+      if(tt) tt.textContent=filmStripText(s);
       row.dataset.lvl=headLevel(s);
       syncFilmBuild(i);
     },140);
@@ -12544,7 +12512,7 @@
     });
     var x=document.createElement('button');
     x.className='dbtn jv-spot-x';
-    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.innerHTML=bic('exit')+' Close';x.title='Esc';
     x.addEventListener('click',function(e){e.stopPropagation();closeSpot();});
     wrap.appendChild(x);
     wrap.addEventListener('click',function(e){e.stopPropagation();closeSpot();});
@@ -12596,7 +12564,7 @@
     /* the way out has to be visible or it does not exist */
     var x=document.createElement('button');
     x.className='dbtn jv-spot-x';
-    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.innerHTML=bic('exit')+' Close';x.title='Esc';
     x.addEventListener('click',function(e){
       e.stopPropagation();closeSpot();});
     wrap.appendChild(x);
@@ -15522,9 +15490,10 @@
     if(u.other) bits.push('the deck');
     /* T455: one of the five BASE colours is never unused -- it is what
        everything falls back to. Saying "not used yet" beside a slide
-       full of colour is what made the panel read as broken. */
-    if(base) bits.push('everything else');
-    return bits.length?bits.join(' \u00b7 '):'not used yet';
+       full of colour is what made the panel read as broken. T624: and
+       "everything else" on all five said nothing either; a base colour
+       shows only its real counts, or nothing */
+    return bits.length?bits.join(' \u00b7 '):(base?'':'not used yet');
   }
   /* changing a token is an ordinary edit: one markDirty, one undo step,
      and a refresh — which is the cascade, since nothing held a copy */
@@ -15620,7 +15589,11 @@
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'deck colours');
+    /* T624: what the panel is, behind its heading's "?" */
+    menuHead(m,'deck colours').appendChild(qBtn('The five colours every '
+      +'slide is built from. Change one and everything without a colour '
+      +'of its own follows. A style set you save carries this palette '
+      +'with it.','Deck colours'));
     var t=tokens();
     /* T444: A PICTURE OF WHAT THE ROWS ARE (2026-09-14, user: "this
        still makes no sense to me whatever this is doing ... This needs
@@ -15650,8 +15623,6 @@
        mechanism works, it is that nothing is wearing one yet. */
     var anyUse=Object.keys(t.c).some(function(k){
       var u=tokUses(k);return !!(u.boxes||u.slides||u.other);});
-    var note=document.createElement('div');
-    note.className='ff-none';
     /* T367: what the panel IS, not how the mechanism works. T208 asked
        for an explanation here and T265 gave it the mechanism; the user,
        2026-09-07: "I have told you so many times that the text doesn't
@@ -15664,10 +15635,7 @@
        that ships has ever kept. A set you SAVE does capture this palette
        (40-captions-and-components.js, tokens:deep(tokens())), which is
        the sentence worth telling somebody. */
-    note.textContent='The five colours every slide is built from. Change '
-      +'one and everything that has no colour of its own follows. A style '
-      +'set you save carries this palette with it.';
-    m.appendChild(note);
+    /* T624: those words are the heading's "?" now */
     function tokRow(k){
       var row=document.createElement('div');row.className='ff-row';
       var sw=document.createElement('span');
@@ -15715,14 +15683,13 @@
       (TOKEN_SPARE[k]?spare:jobs).push(k);});
     jobs.forEach(function(k){m.appendChild(tokRow(k));});
     if(spare.length){
-      menuHead(m,'extra colours, for things you choose');
+      menuHead(m,'extra colours');
       var note2=document.createElement('div');
       note2.className='ff-none';
       note2.textContent=anyUse
         ?'Put one on any box from the Deck colours row of its colour '
           +'menu; change it here and every box wearing it follows.'
-        :'Nothing wears one yet. Put one on any box from the Deck '
-          +'colours row of its colour menu.';
+        :'None used yet.';
       m.appendChild(note2);
       var used=[],idle=[];
       spare.forEach(function(k){
@@ -15766,11 +15733,6 @@
     m.className='sh-menu canvas-menu tok-pop deck-layout-pop';
     m.id='deck-layout-pop';
     menuHead(m,'deck layout defaults');
-    var note=document.createElement('div');
-    note.className='ff-none';
-    note.textContent='Defaults shared across this deck. Individual object '
-      +'size and position stay in Object.';
-    m.appendChild(note);
     var t=tokens();
     menuHead(m,'box corners');
     var rr=document.createElement('div');rr.className='ff-row';
@@ -17080,15 +17042,16 @@
     var total=0;
     Object.keys(spent).forEach(function(k){total+=spent[k];});
     /* a run that never left the first slide, or lasted under half a
-       minute, is someone checking a colour -- not a rehearsal */
+       minute, is someone checking a colour -- not a rehearsal. One that
+       moved through the slides says why it was not kept (T624 review) */
     if(rehSeen<2||total<REH_MIN_SEC){
-      if(total>2) toast('Too short to record as a rehearsal');
+      if(rehSeen>=2&&total>2) toast('Too short to count as a rehearsal');
       return;
     }
     var runs=rehRuns();
     runs.push({at:Date.now(),total:total,s:spent});
     rehSave(runs);
-    toast('Rehearsal recorded — '+fmtMins(total/60)+' over '
+    toast('Rehearsal: '+fmtMins(total/60)+', '
       +rehSeen+' slide'+(rehSeen===1?'':'s'));
     /* renderNotesPane deliberately does not own tab bodies. Refresh the
        history itself so an already-open Rehearsals tab stops saying
@@ -17517,8 +17480,7 @@
     host.innerHTML='';
     var items=padList();
     if(!items.length){
-      host.innerHTML='<div class="selpane-empty">Nothing here yet. '
-        +'Notes you put here belong to the talk, not to a slide.</div>';
+      host.innerHTML='<div class="selpane-empty">Nothing here yet.</div>';
       return;
     }
     /* folders first, each with the notes filed under it, then the loose
@@ -17613,9 +17575,7 @@
     host.innerHTML='';
     var st=rehStats();
     if(!st.runs.length){
-      host.innerHTML='<div class="selpane-empty">No rehearsals yet. '
-        +'Present the deck and this fills in — a run counts once it '
-        +'reaches a second slide and lasts half a minute.</div>';
+      host.innerHTML='<div class="selpane-empty">No rehearsals yet.</div>';
       return;
     }
     function line(cls,label,secs,extra){
@@ -18168,7 +18128,7 @@
          do afterwards. The old menu offered only the second (2026-08-22). */
       var sets=document.createElement('button');
       sets.className='dbtn vw-opt';
-      sets.textContent='\u25f1 Style sets \u2014 restyle the whole deck\u2026';
+      sets.textContent='\u25f1 Style sets\u2026';
       sets.title='Ready-made looks, and any you have saved. Works even '
         +'on a deck that has never used a named style.';
       sets.addEventListener('click',function(e){
@@ -18185,7 +18145,7 @@
         (sl.annots||[]).forEach(function(a){
           if(a&&a.k==='text'&&a.style) worn[a.style]=1;});});
       var ids=styleOrder().filter(function(id){return worn[id]||id===openEdit;});
-      menuHead(list,'styles used in this presentation');
+      menuHead(list,'in this deck');
       if(!ids.length){
         var none=document.createElement('div');
         none.className='stm-empty';
@@ -18267,7 +18227,7 @@
          nowhere to put one */
       var add=document.createElement('button');
       add.className='dbtn vw-opt';
-      add.textContent='\uff0b New style of my own';
+      add.textContent='\uff0b New style';
       add.title='Add a type of your own \u2014 a Quote, a Source note, '
         +'whatever this deck needs';
       add.addEventListener('click',function(e){
@@ -18279,7 +18239,7 @@
       list.appendChild(add);
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
-      rst.innerHTML=bic('reset')+' Back to the built-in sizes';
+      rst.innerHTML=bic('reset')+' Reset sizes';
       rst.disabled=!ids.length&&!pres.styles;   /* T470: nothing to reset */
       /* it clears the OVERRIDES, and it must never touch pres.types:
          "back to the built-in sizes" is not "throw away the types I
@@ -20387,9 +20347,8 @@
       });
       paraDecorate(el);
       commitNow(true);
-      toast((kind==='bullet'?'Bullet list \u2014 Tab indents, Shift+Tab goes '
-        +'back':'Numbered list \u2014 Tab indents')+'; Ctrl+Z gives back the '
-        +'\u201c'+m4[1]+'\u201d you typed');
+      toast((kind==='bullet'?'Bullet list':'Numbered list')
+        +' \u2014 Ctrl+Z undoes');
     }
     /* ...and what the browser's own steps did to the paragraphs: a <div>
        or bare words taken into a <p>, the numbers and the places worked
@@ -20698,8 +20657,7 @@
       markDirty();
       var l5=stage.querySelector('.annot-layer');
       if(l5){renderAnnots(l5,s5);selectAnnot(l5,idx);}
-      toast('Pasted as code — Ctrl+Z undoes it, or '
-        +'Ctrl+Shift+V pastes it as plain text');
+      toast('Pasted as code — Ctrl+Z undoes');
     });
     el.addEventListener('mousedown',function(e){
       if(tool!=='select') return;   /* placing mode: draw over me */
@@ -21912,7 +21870,7 @@
              on a fitted slide (2026-09-15 review) */
           pb.style.fontSize='max(10px,'+fontPx(layer,1.15)+')';
           pb.textContent=a.ref?('missing: '+a.ref)
-            :'Click to choose what goes here';
+            :'Click to fill';
           pb.addEventListener('mousedown',function(e){
             if(tool==='select') e.stopPropagation();});
           pb.addEventListener('click',function(e){
@@ -23748,8 +23706,7 @@
         rr2.appendChild(ciCol);
       }
     } else {
-      lab('A text column is left as it was typed. Set it to Numbers to '
-        +'align it, format it, total it or colour it.','tp-hint');
+      lab('Numbers can be aligned and totalled.','tp-hint');
     }
     /* the spanning row above the header */
     lab('Header groups');
@@ -23914,11 +23871,10 @@
       if(acTell.done) return;
       acTell.done=true;
     }
-    toastUndo('AutoCorrect: '+was+' became '+now+' \u2014 Ctrl+Z straight '
-      +'after puts back what you typed.','Turn AutoCorrect off',function(){
+    toastUndo('AutoCorrect changed \u201c'+was+'\u201d to \u201c'+now
+      +'\u201d \u2014 Ctrl+Z undoes','Turn AutoCorrect off',function(){
         acSet(false);
-        toast('AutoCorrect is off \u2014 Text \u203a AutoCorrect turns it '
-          +'back on');
+        toast('AutoCorrect off');
       },10000);
   }
   /* the switch, from THE BOOT SEQUENCE */
@@ -23931,9 +23887,8 @@
     b.addEventListener('click',function(){
       var on=!acOn();
       acSet(on);
-      toast(on?'AutoCorrect is on \u2014 straight quotes curl, -- is a dash, '
-        +'(c) is \u00a9 and -> is \u2192 as you type'
-        :'AutoCorrect is off \u2014 what you type stays as typed');
+      /* T624: the rules are the button's tooltip */
+      toast(on?'AutoCorrect on':'AutoCorrect off');
     });
   }
   /* ================================================================
@@ -24279,8 +24234,7 @@
       var a=used[x]||9e9,b=used[y]||9e9;
       return a===b?x.localeCompare(y):a-b;});
     if(!keys.length){
-      lab('Nothing here yet. Import a .bib, or add one by DOI, then '
-        +'cite it in any text box as [@key].','ct-hint');
+      lab('No references yet. Cite with [@key].','ct-hint');
     }
     keys.forEach(function(k){
       var r=row('ct-entry');
@@ -24329,8 +24283,7 @@
     if(a.html) a.html=String(a.html)+' [@'+key+']';
     markDirty();renderSlide();
     citePaneSync();   /* T465: the pane's own column follows the Cite */
-    toast('Cited — the number comes from where the slide sits, so '
-      +'moving the slide renumbers it');
+    toast('Cited');
   }
   function citeInsertBibBox(){
     var s=pres.slides[cur]; if(!s) return;
@@ -24340,13 +24293,11 @@
     setTool('select');
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-    toast('A references box — it draws what the deck cites, in '
-      +'order, and stays right on its own');
+    toast('References box added');
   }
   function citeAddByDoi(){
     if(APP.mode!=='app'){
-      toast('Looking a DOI up reaches doi.org, so it needs the '
-        +'Junoview app. Import a .bib instead.',6000);
+      toast('DOI lookup needs the app \u2014 import a .bib instead',6000);
       return;
     }
     askText({title:'Add a reference by DOI',label:'The DOI, or a doi.org link',
@@ -24872,7 +24823,8 @@
       lnBtn.title='Line thickness — '+swSay;
       /* ...and on the Weight section's heading inside the Line window,
          which is where the reader is looking now (T177) */
-      if(swL) swL.textContent='weight — '+swSay;
+      if(swL) swL.textContent='weight \u00b7 '
+        +swPt(a).toFixed(2).replace(/\.?0+$/,'')+' pt';
     }
     if(swW&&swL) swL.hidden=swW.hidden;
     /* every drawn menu shows which option the selection is ON */
@@ -26641,8 +26593,7 @@
     ctLast={x:x,y:y,idx:next};
     if(!ctHinted){
       ctHinted=true;
-      toast('The object underneath — click again to go deeper. Tab '
-        +'walks every object on the slide',5000);
+      toast('Object underneath \u2014 click again to go deeper',5000);
     }
   }
   /* ---- TOUCH AND PEN (T575) -------------------------------------------
@@ -26991,8 +26942,7 @@
       b.addEventListener('mousedown',function(e){
         if(activeTextEditable()) e.preventDefault();});
       b.addEventListener('click',function(){
-        if(!linkNow()) toast('Select an object, or highlight words in a '
-          +'text box, to link it');
+        if(!linkNow()) toast('Select something to link first');
       });
     }
     /* in the editor a click on linked words selects and types, never
@@ -27254,8 +27204,8 @@
           menuHead(m,'figure');
           row('Make this the figure’s caption','',function(){
             if(tieCaption(figI,txI))
-              toast('Tied — the caption follows its figure now. '
-                +'Type {fig} in it for its number');},
+              toast('Tied \u2014 {fig} in the caption writes its '
+                +'number');},
             'It moves with the figure and takes its width when the '
             +'figure is resized. It is still an ordinary text box you '
             +'can select and restyle on its own.','link');
@@ -27605,7 +27555,7 @@
         if(anA&&anA.k!=='arrow'){
           menuHead(m,'pinned to');
           var nowAn=anA.anch||'';
-          row('Nothing — measured from the top left','',
+          row('Not pinned','',
             function(){setAnchor(anI,'');},
             'The default, and what every object in every deck did '
             +'before this existed').classList.toggle('on',!nowAn);
@@ -27827,14 +27777,14 @@
          three verbs as matchMenuAt, armed directly: armMatch validates
          the selection itself and says what it needs. */
       menuHead(m,'match');
-      row('Copy this look to objects I click\u2026','',
+      row('Copy look to\u2026','',
         function(){armMatch('to');},
         'Then click each object that should take it','swap');
-      row('Take the look of an object I click\u2026','',
+      row('Take look from\u2026','',
         function(){armMatch('from');},
         'Then click the one object whose look you want here','swap');
       if(n>=2)
-        row('Lay these out like a group I click\u2026','',
+        row('Lay out like\u2026','',
           function(){armMatch('layout');},
           'Then click a group whose arrangement these should copy. The '
           +'look does not travel \u2014 only positions and sizes','group');
@@ -27935,8 +27885,7 @@
           {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
         {x:Math.max(2,Math.min(64,(at.x||40)-16)),
          y:Math.max(2,Math.min(58,(at.y||35)-17))});
-      if(na) toast('Chart placed \u2014 right-click it to edit the '
-        +'numbers or change its type');},
+      if(na) toast('Chart placed');},
       'A bar chart with sample numbers to replace \u2014 or select a '
       +'placed table and \u201cTurn into a chart\u201d. Exports to '
       +'a .pptx as an editable chart.','plots');
@@ -28059,9 +28008,9 @@
     t2.className='dbtn vw-opt cm-moret';t2.type='button';
     t2.setAttribute('aria-expanded','false');
     t2.setAttribute('role','menuitem');
-    t2.innerHTML=(bic('menu')||'')+' More \u2014 '+n+' option'
-      +(n===1?'':'s')+' \u25be';
-    t2.title='Anchoring, components, matching, visibility, reading '
+    t2.innerHTML=(bic('menu')||'')+' More \u25be';
+    t2.title=n+' more option'+(n===1?'':'s')+': anchoring, components, '
+      +'matching, visibility, reading '
       +'order, master, chart and guide rows \u2014 everything less '
       +'everyday, one click away';
     t2.addEventListener('click',function(e){
@@ -28418,8 +28367,8 @@
         word=shp?shp[1]:pendingShape;
       }
       var how=(t==='text'||t==='cell'||t==='table')
-        ?'Drag to draw, or click for the usual size'
-        :'Drag on '+pw+' to draw it';
+        ?'Drag, or click'
+        :'Drag on '+pw;
       var drawing='<span><b>Drawing: '+esc(word)+'</b></span>'
         +'<span>'+esc(how)+'</span>';
       /* only when it changes: every Escape re-arms select, and the same
@@ -28608,11 +28557,10 @@
        button does exactly what Done does. Say Stop instead of promising
        an undo that already happened (2026-09-05, found wiring #pick-done,
        which had no handler at all). */
-    if(c) c.textContent=(pickMulti&&pickAdded)?'Stop (Esc)':'Cancel (Esc)';
+    if(c) c.textContent=(pickMulti&&pickAdded)?'Stop':'Cancel';
     if(!w) return;
     if(!pickMulti){
-      w.innerHTML=bic('pin')+' Click a card in the notebook to place it '
-        +'in the slide';
+      w.innerHTML=bic('pin')+' Click a card to place it';
       return;
     }
     w.innerHTML=bic('pin')+' Click each figure you want in the flip '
@@ -28919,7 +28867,7 @@
       if(target==='text'){
         var hb=document.createElement('div');hb.className='hl-block';
         var hh=document.createElement('div');hh.className='hd-lab';
-        hh.textContent='highlight behind the words';
+        hh.textContent='highlight';
         hb.appendChild(hh);hlRow(hb,false);menu.appendChild(hb);
       }
       overlayShow(btn,menu);       /* on the stack (T213) */
@@ -29550,8 +29498,7 @@
         }
         if(ff==='s') a.fit='shrink'; else delete a.fit;
       });
-      if(unSat) toast('A box that grows has no middle or bottom — the '
-        +'words sit at the top again',4000);
+      if(unSat) toast('A growing box keeps words at the top',4000);
       return;
     }
     /* T547: TEXT IN COLUMNS. One, two or three; the words flow down the
@@ -30161,13 +30108,13 @@
     var a=tblCur(),p=tblPick(a);
     var m=document.createElement('div');
     m.className='sh-menu tbl-menu';
-    menuHead(m,'split the chosen cell');
     var merged=!!(a&&p&&tableMergeAt(a,p.r0,p.c0));
     function row(label,note,on,fn){
       var b=document.createElement('button');
       b.type='button';b.className='dbtn vw-opt';
-      b.innerHTML='<span class="sa-t">'+esc(label)+'</span>'
-        +'<span class="sa-n">'+esc(note)+'</span>';
+      /* T624: the label says it; what it does is the tooltip */
+      b.innerHTML='<span class="sa-t">'+esc(label)+'</span>';
+      b.title=note;
       b.disabled=!on;
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayDrop(m);fn();});
@@ -30305,7 +30252,9 @@
       });
       lab.appendChild(ck);
       var tx=document.createElement('span');
-      tx.innerHTML='<b>'+esc(o[1])+'</b> '+esc(o[2]);
+      /* T624: the name alone; what it does is the tooltip */
+      tx.innerHTML='<b>'+esc(o[1])+'</b>';
+      lab.title=o[2];
       lab.appendChild(tx);
       m.appendChild(lab);
     });
@@ -30407,9 +30356,8 @@
               if(x.k==='text'){applyStyleTo(x,vid);n2++;}});
             markDirty();renderSlide();showFmt();
             menu.hidden=true;
-            toast('\u201c'+look.label+'\u201d is now a variation of '
-              +(d.label||base)+(n2?' \u2014 on '+n2+' box'+(n2===1?'':'es'):'')
-              +'. Find it in the Style system to give it to more.',6000);
+            toast('\u201c'+look.label+'\u201d added to '+(d.label||base)
+              +(n2?' \u2014 '+n2+' box'+(n2===1?'':'es'):''),6000);
           });
           familyHost.appendChild(b);
         });
@@ -30497,9 +30445,7 @@
           if(Object.keys(o).length) deckStyles()[v.id]=o;
           applyStyleTo(a5,v.id);
           markDirty();renderSlide();showFmt();
-          toast('\u201c'+nm+'\u201d is a variation of '
-            +p.label+' \u2014 it follows '+p.label
-            +' for everything you did not change.',6000);
+          toast('\u201c'+nm+'\u201d (a '+p.label+' variation)',6000);
           });
         });
         menu.appendChild(mkv);
@@ -30507,7 +30453,7 @@
       menuHead(menu,'this deck');
       var upd=document.createElement('button');
       upd.className='dbtn vw-opt';
-      upd.innerHTML=bic('reload')+' Update the style from this box';
+      upd.innerHTML=bic('reload')+' Update style from this box';
       upd.title='Take this box\u2019s size, weight, font and colour and '
         +'make them the style \u2014 every other box wearing it follows';
       upd.disabled=!curId;
@@ -30527,7 +30473,7 @@
       menu.appendChild(upd);
       var all=document.createElement('button');
       all.className='dbtn vw-opt';
-      all.innerHTML=bic('inherit')+' Apply this look to ALL headings';
+      all.innerHTML=bic('inherit')+' Apply to all headings';
       all.title='Push this box\u2019s weight, font, colour, background '
         +'and edge to Title and Headings 1\u20133, keeping each one\u2019s '
         +'own size';
@@ -30613,8 +30559,7 @@
       if(lockMode(a)==='all'){full++;return;}
       n++;
       if(pin) a.lock='pos'; else delete a.lock;});
-    if(full&&!n) toast('Fully locked \u2014 "Not locked" in the '
-      +'right-click menu or the Layers pane takes it off');
+    if(full&&!n) toast('Fully locked');
     else toast((pin?'Position locked':'Not locked')
       +(n>1?(' \u2014 '+n+' items'):''));
   });
@@ -30721,15 +30666,17 @@
     var rows=[
       {k:'col',label:'Colour',type:'color',
        value:p0.lc?tokVal(p0.lc):'',clear:true,
-       note:'Default is the words\u2019 own colour'},
+       clearTitle:'The words\u2019 own colour'},
       {k:'sz',label:'Size',type:'select',value:String(p0.ls||1),
        options:LIST_SIZES.map(function(p){return [String(p[0]),p[1]];})}];
     if(ord) rows.push({k:'start',label:'Start at',type:'number',
       value:num||1,min:1,max:999,step:1});
     askText({title:ord?'Numbering':'Bullets',
-      what:(ord?'How the numbers look, and where they start':
-        'How the bullets look')+(only?' \u2014 for the paragraph'
-        +(only.length===1?'':'s')+' you were in.':'.'),
+      what:ord?('How the numbers look, and where they start'
+        +(only?' \u2014 for the paragraph'+(only.length===1?'':'s')
+        +' you were in.':'.'))
+        :(only?'For the paragraph'+(only.length===1?'':'s')
+        +' you were in.':''),
       rows:rows,ok:'Apply'},function(v){
       if(!v) return;
       var fam=ord?(lastNumber||'number'):(lastBullet||'bullet');
@@ -31235,8 +31182,9 @@
       menu.appendChild(b);
     });
     var k=document.createElement('div');k.className='case-key';
-    k.textContent='Shift+F3 steps through lowercase, Capitalise Each '
-      +'Word and UPPERCASE';
+    k.textContent='Shift+F3 cycles';
+    k.title='Shift+F3 steps through lowercase, Capitalise Each Word and '
+      +'UPPERCASE';
     menu.appendChild(k);
   }
   var opRangeEl=$('#fmt-op');
@@ -31459,8 +31407,7 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,made);}
-    if(freed) toast('Copied as a free object \u2014 clones of that set '
-      +'share one spot, so the copy is not one of them');
+    if(freed) toast('Copied as a free object');
     /* SAY SO. A stripped picture looks identical to the original at the
        moment it lands -- only its Refresh link is gone -- so the one
        difference that matters is the one thing nobody can see. The
@@ -31598,8 +31545,7 @@
       return;
     }
     if(which==='look'){
-      if(copyLook()) toast('Look copied \u2014 select what should wear '
-        +'it and press Ctrl+Shift+V, or Paste \u25be Paste look');
+      if(copyLook()) toast('Look copied \u2014 Ctrl+Shift+V pastes it');
       else toast('Select the object whose look you want first');
       return;
     }
@@ -31631,8 +31577,7 @@
       slidePaste(cur);toast('Slide pasted');return;}
     var cb=navigator.clipboard;
     function outside(){
-      toast('The browser keeps the clipboard for a key press here \u2014 '
-        +'press Ctrl+V to paste from outside Junoview',7000);
+      toast('Press Ctrl+V to paste from outside',7000);
     }
     if(!cb){outside();return;}
     if(which==='paste'&&cb.read){
@@ -32149,8 +32094,7 @@
           bk.at=bk.frames.length-1;
           markDirty();renderSlide();
           if(typeof renderFlipPane==='function') renderFlipPane();
-          toast('Pasted as page '+flipFrames(bk).length+' by its address '
-            +'\u2014 that site did not let the page read it',6000);
+          toast('Pasted as page '+flipFrames(bk).length+' (linked)',6000);
         });
     }
     return true;
@@ -33032,8 +32976,7 @@
      appearing to be broken (2026-08-07 audit). */
   function needTwo(items,what){
     if(items.length>=2) return false;
-    toast('Select at least two items to '+what
-      +' — arrows, locked and hidden items don’t count');
+    toast('Select at least two items');
     return true;
   }
   /* The Arrange menu contains both one-object actions and multi-selection
@@ -33993,7 +33936,7 @@
          (T194: layout, not arrangement) */
       askText({title:'Save this slide\u2019s layout',label:'Call this layout',
         value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -34050,8 +33993,7 @@
     closeLayoutIdeas();
     var sl=pres.slides[cur];
     if(!sl||!(sl.annots||[]).length){
-      toast('Put something on this slide first — ideas are computed '
-        +'from what is there');
+      toast('Put something on this slide first');
       return;
     }
     /* FULL SCREEN (T209): a header like the other full-screen views,
@@ -34062,10 +34004,8 @@
     var h=document.createElement('div');h.className='img-ov-h';
     var ht=document.createElement('span');ht.className='img-ov-t';
     ht.textContent='Ways to lay this slide out';h.appendChild(ht);
-    var hs=document.createElement('span');hs.className='img-ov-sub';
-    hs.textContent='Worked out from what is on the slide. Click one; '
-      +'Ctrl+Z undoes it.';
-    h.appendChild(hs);
+    /* T624: no sub-line -- the cards are plainly ideas to click, and
+       Ctrl+Z undoes one like anything else */
     var hc=document.createElement('button');hc.className='dbtn rbn-sm';
     hc.innerHTML=bic('exit')+' Close';hc.title='Close (Esc)';
     hc.addEventListener('click',function(e){
@@ -34344,12 +34284,11 @@
     var old=$('#objmatch-menu'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu match-menu';m.id='objmatch-menu';
-    menuHead(m,'point at what to match');
-    [['to','Copy this look to objects I click…',
+    [['to','Copy look to…',
       'Then click each object that should take it'],
-     ['from','Take the look of an object I click…',
+     ['from','Take look from…',
       'Then click the one object whose look you want here'],
-     ['layout','Lay these out like a group I click…',
+     ['layout','Lay out like…',
       'Then click a group whose arrangement these should copy. The '
       +'look does not travel — only the positions and sizes']]
       .forEach(function(o){
@@ -34442,8 +34381,7 @@
     var r=matchSlide(from,to);
     if(!r) return true;
     if(!r.moved){
-      toast('Slide '+(i+1)+' and slide '+(slideArm.slide+1)
-        +' have no matching items \u2014 nothing to copy a layout from');
+      toast('Nothing on those slides matched');
       return true;
     }
     slideArm.n+=1;
@@ -35711,9 +35649,8 @@
     markDirty();showFmt();sizePaneSync();
     /* nothing is stored about WHAT the shape is: the ratio is read off
        the box when a drag starts, so locking never resizes anything */
-    toast(on?'Shape kept — drag any handle and it stays this shape '
-      +'(hold Shift to stretch it anyway)'
-      :'Shape free — width and height move independently again');
+    /* T624: the Shift tip is the button's tooltip */
+    toast(on?'Aspect ratio locked':'Aspect ratio free');
   }
   function showSizePane(on){
     var p=$('#sizepane'); if(!p) return;
@@ -36061,9 +35998,7 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,idxs);}
     if(typeof renderFilm==='function') renderFilm();
-    toast(diagName(kind)+' added — ordinary boxes and arrows in one '
-      +'group: double-click a box to type in it'
-      +(cut?' (the first '+max+' lines; more would not read)':''));
+    toast(diagName(kind)+' added'+(cut?' (first '+max+' lines)':''));
     return idxs.length;
   }
   /* ---- THE DIALOG ------------------------------------------------------ */
@@ -36697,6 +36632,12 @@
     var p=document.createElement('div');
     p.className='sh-menu mast-panel';p.id='mast-panel';
     var head=menuHead(p,'masters');
+    /* T624: what a master is, behind the heading's "?" */
+    head.appendChild(qBtn('A master is a look slides inherit, live: a '
+      +'background and objects such as a logo or a footer band, drawn '
+      +'behind every slide that uses it. Change the master, or push a new '
+      +'look to its component, and every slide using it follows.',
+      'Slide master'));
     var x=document.createElement('button');
     x.className='dbtn dc-icon rd-close';x.type='button';
     x.setAttribute('aria-label','Close');x.title='Close';
@@ -36704,13 +36645,6 @@
     x.addEventListener('click',function(e){e.stopPropagation();
       mastClose();});
     head.appendChild(x);
-    var note=document.createElement('div');note.className='rd-note';
-    note.textContent='A look slides inherit, live: a background and a '
-      +'set of objects (a logo, a footer band) drawn behind every slide '
-      +'that wears it. '
-      +'Change the master \u2014 or push a new look to its component '
-      +'\u2014 and every wearer follows.';
-    p.appendChild(note);
     var body=document.createElement('div');
     p.appendChild(body);
     function act(label,title,fn){
@@ -36726,8 +36660,7 @@
       var s2=pres.slides[cur];
       var state=document.createElement('div');state.className='rd-state';
       var cm=mastOf(s2);
-      state.textContent='This slide wears: '
-        +(cm?(cm.name||'a master'):'nothing');
+      state.textContent='Master: '+(cm?(cm.name||'a master'):'none');
       body.appendChild(state);
       Object.keys(st).forEach(function(id){
         var m=st[id];
@@ -37081,9 +37014,7 @@
       overlayDrop(m);
       var id=cmpDefine(name,idxs,link);
       if(!id){toast('Nothing there that could be saved');return;}
-      toast('\u201c'+name+'\u201d is a set of clones \u2014 '
-        +'\u201cAdd a clone\u201d puts another on this slide or on '
-        +'every slide');
+      toast('\u201c'+name+'\u201d is now a set of clones');
       if(typeof renderSelPane==='function') renderSelPane();
       if(typeof showFmt==='function') showFmt();
     }
@@ -37262,8 +37193,7 @@
       b.addEventListener('click',function(e){
         e.stopPropagation();overlayDrop(m);
         var k=cmpPlace(c.id,null,cur,null,false);
-        toast(k?('A clone of \u201c'+c.name+'\u201d is on this slide'
-          +(cmpHasPlace(def)?'':' \u2014 drag it where you want it'))
+        toast(k?('Clone of \u201c'+c.name+'\u201d added')
           :'Nothing was added');
       });
       m.appendChild(b);
@@ -37509,9 +37439,7 @@
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">None saved yet. Arrange '
-          +'a slide the way you like it, then press Save this slide’s '
-          +'layout, below.</div>';
+        host.innerHTML='<div class="selpane-empty">None saved yet.</div>';
         return;
       }
       list.forEach(function(a){
@@ -37571,9 +37499,8 @@
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">Once a layout is saved, '
-          +'every slide is listed here, with the one that fits it best '
-          +'already ticked.</div>';
+        host.innerHTML='<div class="selpane-empty">Save a layout first.'
+          +'</div>';
         return;
       }
       (pres.slides||[]).forEach(function(sl,i){
@@ -37644,7 +37571,7 @@
         toast('Lay something out on this slide first');return;}
       askText({title:'Save this slide\u2019s layout',label:'Call this layout',
         value:slideTitle(sl).slice(0,30)||'Layout',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var l=arrList();
@@ -37812,11 +37739,9 @@
         markDirty();refresh();build();
         if(onClose) onClose();   /* T470 */
         toast('\u201c'+t.label+'\u201d colours applied'
-          +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured. Ctrl+Z '
-            +'undoes it.':' \u2014 the '+(kept?'':'page and the ')
-            +'deck\u2019s colours changed; nothing here wears a named '
-            +'style yet, so pick a style set above to recolour the text '
-            +'too.')
+          +(n?' \u2014 '+n+' box'+(n===1?'':'es')+' recoloured':'')
+          /* T595: a sentence of its own when the page kept its colour */
+          +(kept?'.':'')
           +(kept?(' The slide background stayed as it was'
             +(themeReadsOnPage()?'.':' \u2014 and these colours were '
               +'made for another page, so some text is hard to read on '
@@ -37844,13 +37769,13 @@
           var m=deep(t);m.mine=1;cg.appendChild(themeCard(m));});
       }
       var w=$('#ss-what'),n=unstyledCount();
-      if(w) w.textContent=n
-        ? (n+' text box'+(n===1?' on this deck wears':'es on this deck wear')
-          +' no named style. Picking a set below will name '
-          +(n===1?'it':'them')+' from '+(n===1?'its':'their')
-          +' size and then style '+(n===1?'it':'them')+'.')
-        : 'Everything here already wears a named style, so a set restyles '
-          +'it straight away.';
+      /* T624: the count, or nothing -- the tick box under it says what
+         happens to them */
+      if(w){
+        w.textContent=n?(n+' text box'+(n===1?' has':'es have')
+          +' no style yet.'):'';
+        w.hidden=!n;
+      }
       var aw=$('#ss-autowrap'); if(aw) aw.hidden=!n;
     }
     /* T470: THE CARD YOU JUST MADE IS THE ONE YOU CANNOT SEE. Your own
@@ -37893,7 +37818,7 @@
       e.stopPropagation();
       askText({title:'Save this deck\u2019s type as a set',
         label:'Call this style set',value:'My set',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       var st={};
@@ -37927,7 +37852,7 @@
       e.stopPropagation();
       askText({title:'Save this deck\u2019s colours as a theme',
         label:'Call this colour theme',value:'My colours',ok:'Save',
-        note:'Offered on every deck you open here'},function(nm){
+        note:'Shared across decks'},function(nm){
       if(nm==null) return;
       nm=nm.trim(); if(!nm) return;
       saveColourTheme(nm);
@@ -37975,10 +37900,8 @@
     }
     function build(){
       var w=$('#ms-what');
-      if(w) w.innerHTML='Every one of them takes the layout of '
-        +'<span class="aa-chip">slide '+(cur+1)+'</span> — the position, '
-        +'size and styling of what is on it, matched up by kind. '
-        +'Content never moves.';
+      if(w) w.innerHTML='Takes the layout of '
+        +'<span class="aa-chip">slide '+(cur+1)+'</span>.';
       var host=$('#ms-scope'); if(!host) return;
       host.innerHTML='';
       sectionRuns().forEach(function(r){
@@ -38047,8 +37970,7 @@
         if(r.moved) moved+=r.moved; else none++;
       });
       close();
-      if(!moved){toast('Nothing on those slides matched what is on this '
-        +'one — only items of the same kind travel');return;}
+      if(!moved){toast('Nothing on those slides matched');return;}
       var msg=moved+' item'+(moved===1?'':'s')+' re-laid out across '
         +list.length+' slide'+(list.length===1?'':'s');
       if(none) msg+=' — '+none+' had nothing in common with this one';
@@ -38084,11 +38006,11 @@
        referencing at all (T66). The dialog and the by-name list below
        both stay: knowing the number is still faster than hunting for
        it in a sixty-slide strip. */
-    [['to','Lay other slides out like this one\u2026',
+    [['to','Match others to this\u2026',
       'Then click each thumbnail in the strip that should take this '
       +'slide\u2019s arrangement. It stays armed, so one look can go '
       +'to a dozen slides'],
-     ['from','Lay this slide out like another\u2026',
+     ['from','Match this to another\u2026',
       'Then click the one thumbnail in the strip whose arrangement '
       +'this slide should copy']].forEach(function(o){
       var b=document.createElement('button');
@@ -38102,7 +38024,7 @@
     });
     var push=document.createElement('button');
     push.className='dbtn vw-opt';
-    push.innerHTML=bic('inherit')+' Give this slide’s layout to…';
+    push.innerHTML=bic('inherit')+' Copy layout to…';
     push.title='Choose which slides take the arrangement of this one, '
       +'from a list with tick boxes — the same job as pointing at '
       +'them, when you would rather read the names';
@@ -38141,8 +38063,7 @@
         var r=matchSlide(i,cur);
         if(!r) return;
         if(!r.moved){
-          toast('Slide '+(i+1)+' and this one have no matching items — '
-            +'nothing to copy a layout from');
+          toast('Nothing on those slides matched');
           return;
         }
         markDirty();refresh();
@@ -38172,10 +38093,10 @@
         the right thing on their own — these are for centring a whole
         group on the page without first selecting something at its edge
         (2026-08-20, user asked for arrange "like what there is in photo
-        shop editors ... really thorough") */
-     ['p:hcenter','Centre on the page, side to side'],
-     ['p:vmiddle','Centre on the page, top to bottom'],
-     ['p:both','Centre on the page, both ways'],
+        shop editors ... really thorough"). T624: "on page" stays */
+     ['p:hcenter','Centre on page across'],
+     ['p:vmiddle','Centre on page down'],
+     ['p:both','Centre on page'],
      ['d:h','Equal gaps across (3+ items)'],
      ['d:v','Equal gaps down (3+ items)'],
      ['g:h','Close the gaps across'],
@@ -38188,9 +38109,9 @@
      ['f:v','Flip top to bottom'],
      ['o:rotl','Rotate left 15°'],
      ['o:rotr','Rotate right 15°'],
-     ['r:90','Turn a quarter turn right'],
-     ['r:-90','Turn a quarter turn left'],
-     ['r:0','Straighten (no rotation)'],
+     ['r:90','Rotate right 90°'],
+     ['r:-90','Rotate left 90°'],
+     ['r:0','Straighten'],
      ['o:row','Tidy into a row'],
      ['o:grid','Tidy into a grid'],
      ['m:w','Match widths to the widest'],
@@ -38201,19 +38122,19 @@
         where "make these things match" is kept, and it is shown for
         every kind of item, which the Styles menu beside it is not
         (2026-08-22) */
-     ['a:type','Apply this look to every one of its type…'],
+     ['a:type','Apply look to all of its type…'],
      /* the two POINT-AT-IT verbs. They live here, with the other
         make-things-match rows, and cost the ribbon nothing (2026-08-22) */
-     ['x:to','Copy this look to objects I click…'],
-     ['x:from','Take the look of an object I click…'],
+     ['x:to','Copy look to…'],
+     ['x:from','Take look from…'],
      /* the LAYOUT sibling of the two rows above: same gesture, but what
         travels is the arrangement rather than the look (TASKS T8) */
-     ['x:layout','Lay these out like a group I click…'],
+     ['x:layout','Lay out like…'],
      /* SELECTING is not arranging, but this is the menu that is shown
         for every kind of item and already keeps the "everything like
         this one" verbs — and the ribbon has no width to spare for a
         button of its own (TASKS T5) */
-     ['s:by','Select everything on this slide like this…']],'al',
+     ['s:by','Select all like this']],'al',
     function(what){
       if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}
       if(what.indexOf('a:')===0){
@@ -38580,10 +38501,8 @@
              would read as "your LaTeX is wrong" rather than "nothing here
              can draw it" (2026-08-20). */
           warn.hidden=false;
-          warn.textContent='No maths renderer available — MathJax is '
-            +'loaded from the internet and could not be reached. The '
-            +'LaTeX is still saved with the slide and will typeset '
-            +'anywhere that can load it.';
+          warn.textContent='No preview offline \u2014 the LaTeX is still '
+            +'saved.';
         });
       },160);
     }
@@ -38674,7 +38593,7 @@
       if(!pal.childNodes.length) buildPal();
       dlg.hidden=false;
       $('#eq-ok').textContent=(editIdx!=null)?'Update it'
-        :'Put it on the slide';
+        :'Insert';
       src.focus();src.select();
       render();
     }
@@ -38757,7 +38676,7 @@
         +'- a point\n- another one';
       dlg.hidden=false;
       $('#md-ok').textContent=(editIdx!=null)?'Update it'
-        :'Put it on the slide';
+        :'Insert';
       src.focus();src.select();
       render();
     }
@@ -39134,9 +39053,7 @@
       markDirty();refresh();
       close();
       toast(hits.length+' '+typeLabel(srcKey,hits.length!==1,samp)
-        +' now wear \u201c'+nm+'\u201d, a variation of '+p.label
-        +' \u2014 change '+p.label+' and they follow. Ctrl+Z undoes '
-        +'the lot.',7000);
+        +' now wear \u201c'+nm+'\u201d \u2014 Ctrl+Z undoes',7000);
       });
     }
     $('#aa-ok').addEventListener('click',commit);
@@ -39360,9 +39277,7 @@
       /* suppressed under the merged verb: on a deck that is all figures
          this sentence is exactly the wrong thing to say */
       if(!quiet)
-        toast('No pictures on this deck are linked to a file on this '
-          +'computer. Insert one with Image and it will remember where it '
-          +'came from.');
+        toast('No linked pictures to update');
       return Promise.resolve({ok:0,lost:[],n:0});
     }
     if(!quiet) toast('Re-reading '+n+' picture'+(n===1?'':'s')+'…');
@@ -39411,9 +39326,7 @@
     if(!pics.length&&!figs){
       /* say WHICH of the two it looked for, or "nothing to update" reads
          as "this button is broken" on a deck full of pasted pictures */
-      toast('Nothing on '+where+' has a source to re-read \u2014 a figure '
-        +'remembers its notebook and a picture remembers the file it came '
-        +'from, and neither is here yet.');
+      toast('Nothing here to update');
       return;
     }
     toast('Re-reading '+where+'\u2026');
@@ -39592,15 +39505,12 @@
          CAN be re-read, and the only picture in the deck that can go
          missing. Only the third state is genuinely sourceless. */
       if(picState(a2)==='kept'){
-        toast('This picture was pasted or dropped, so the deck holds the '
-          +'only copy — there is no file to re-read, and nothing to lose');
+        toast('Pasted \u2014 no source file');
         return;
       }
       if(picState(a2)==='link'&&!picCanEmbed()
          &&!/^https?:\/\//i.test(picAddr(a2))){
-        toast('This picture is loaded from '+picAddr(a2)+' every time the '
-          +'deck opens, so it is always as current as that address is.',
-          7000);
+        toast('Loaded from '+midElide(picAddr(a2),40),7000);
         return;
       }
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
@@ -39610,8 +39520,7 @@
       if(!got.n){
         if(got.same) toast('This figure already matches its source');
         else if(got.cancelled) toast('Kept the current figure');
-        else toast('Its notebook is not open, so there is nothing newer '
-          +'to read — the copy in the deck is being shown');
+        else toast('Notebook not open \u2014 showing the saved copy');
         return;
       }
       if(a2.k==='chart'){
@@ -39788,8 +39697,7 @@
     list.innerHTML='';
     var rows=imgSurvey(cur);
     if(!rows.length){
-      list.innerHTML='<div class="selpane-empty">No pictures or figures '
-        +'on this slide.</div>';
+      list.innerHTML='<div class="selpane-empty">None on this slide.</div>';
       return;
     }
     rows.forEach(function(r){list.appendChild(imgRow(r));});
@@ -39822,8 +39730,7 @@
     if(sub) sub.textContent=total?(total+' on '+withAny+' slide'
       +(withAny===1?'':'s')):'';
     if(!total)
-      body.innerHTML='<div class="selpane-empty">No pictures or figures '
-        +'on any slide yet.</div>';
+      body.innerHTML='<div class="selpane-empty">None in this deck.</div>';
   }
   function imgPaneBoot(){
     var btn=$('#hm-images'),pane=$('#imgpane');
@@ -39881,7 +39788,7 @@
          heading, not a rule (menuHead / .hd-lab) */
       var inv=document.createElement('button');
       inv.className='dbtn vw-opt';
-      inv.innerHTML=bic('image')+' Where each one came from';
+      inv.innerHTML=bic('image')+' Sources\u2026';
       inv.title='The pictures and figures on this slide, what each was '
         +'made from, and whether it is locked in place';
       inv.addEventListener('click',function(){
@@ -39979,9 +39886,8 @@
       a.src=addr;delete a.psrc;
       if(a.okey){try{idbDel(a.okey);}catch(e){}delete a.okey;}
       markDirty();refresh();imgPaneRefresh();
-      toast('Link only: the deck keeps just the address, so it is smaller '
-        +'\u2014 and the picture is missing wherever '+midElide(addr,40)
-        +' cannot be reached. Refresh puts the bytes back.',9000);
+      toast('Link only \u2014 missing when '+midElide(addr,40)
+        +' is offline',9000);
       return Promise.resolve(true);
     }
     if(picState(a)!=='link') return Promise.resolve(true);
@@ -40012,16 +39918,12 @@
         });
       }).catch(function(){
         placeImage(addr,0);
-        toast('That site did not let this page read the picture, so it '
-          +'is a link: loaded from '+midElide(addr,40)+' each time, and '
-          +'missing wherever that cannot be reached.',9000);
+        toast('Placed as a link to '+midElide(addr,40),9000);
       });
       return;
     }
     if(!picCanEmbed()){
-      toast('A file on this computer can only be read by the Junoview '
-        +'app. Here, use a web address \u2014 or Insert \u203a Picture to '
-        +'choose the file.',7000);
+      toast('Choose the file with Images \u203a Image',7000);
       placeImage(addr,0);
       return;
     }
@@ -40618,8 +40520,7 @@
   function pasteObjImage(){
     function giveUp(){
       objInto=-1;
-      toast('This browser will not hand over the clipboard on its own '
-        +'\u2014 click the frame and press Ctrl+V instead');
+      toast('Click the frame and press Ctrl+V');
     }
     if(!navigator.clipboard||!navigator.clipboard.read){giveUp();return;}
     navigator.clipboard.read().then(function(items){
@@ -41115,8 +41016,7 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,f.idx);}
-    toast('Cropped to your outline \u2014 Ctrl+Z undoes it, and Reset '
-      +'in the Crop menu clears it');
+    toast('Cropped to shape');
   }
   /* ---- T387: A ZOOM CALLOUT ------------------------------------------
      (2026-09-12, user: "a zoom on a feature in an image, like a new box
@@ -41277,8 +41177,7 @@
       (s.annots||[]).forEach(function(a){
         if(a&&a.sync!=null&&a.sync>=next) next=a.sync+1;});
       idxs.forEach(function(i){s.annots[i].sync=next;});
-      toast(idxs.length+' pictures zoom together now \u2014 enlarge one '
-        +'in the show and they all come up');
+      toast(idxs.length+' pictures zoom together');
     }
     markDirty();
     var l=stage.querySelector('.annot-layer');
@@ -41533,8 +41432,7 @@
     rdClose();
     var s=pres.slides[cur];
     if(!s||!(s.annots||[]).length){
-      toast('Put something on this slide first \u2014 reading order '
-        +'is read off what is there');
+      toast('Put something on this slide first');
       return;
     }
     ensureOids(s);
@@ -41790,7 +41688,7 @@
        deck that arrived from someone else be read here at all. */
     if(nt) nt.innerHTML=(sl.notes||'').trim()
       ?notesHtml(sl.notes)
-      :'<p class="jvp-nonotes">No notes for this slide.</p>';
+      :'<p class="jvp-nonotes">No notes</p>';
     var ct=doc.getElementById('jvp-count');
     if(ct) ct.textContent=(shownAt>=0?shownAt+1:0)+' / '+shown.length;
     var gl=doc.getElementById('jvp-goal');
@@ -41946,14 +41844,15 @@
       +'<button class="jvp-b" id="jvp-late" aria-pressed="false">'
       +'Running late</button>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
-      +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
+      +'<button class="jvp-b" id="jvp-reset" title="Reset the clock">'
+      +'Reset</button>'
       /* T574: what PowerPoint's presenter view also has -- the time of
          day, a black screen for the room, and a way to end the show */
       +'<span class="jvp-sub" id="jvp-tod" title="The time now"></span>'
       +'<button class="jvp-b" id="jvp-black" aria-pressed="false" '
       +'title="Black the screen the audience sees (B). Again to bring it '
       +'back">Black screen</button>'
-      +'<button class="jvp-b" id="jvp-end" title="Stop presenting">'
+      +'<button class="jvp-b" id="jvp-end" title="End the show">'
       +'End show</button>'
       +'</div>'
       +'<div class="jvp-stage" id="jvp-now"></div>'
@@ -41976,8 +41875,6 @@
       +'<button class="jvp-b" id="jvp-prev">&#8592; Back</button>'
       +'<button class="jvp-b primary" id="jvp-next-b">Next &#8594;</button>'
       +'<span class="jvp-sp"></span>'
-      +'<span class="jvp-lab">drag this window to your other screen, then '
-      +'press Present on the first one</span>'
       +'</div></div></body></html>';
   }
   function openPresenter(){
@@ -42068,7 +41965,7 @@
       if(!found.length){
         if(hits.firstChild) return;   /* the number found one */
         var no=d.createElement('div');
-        no.className='jvp-nohit';no.textContent='No slide says that.';
+        no.className='jvp-nohit';no.textContent='No match';
         hits.appendChild(no);return;
       }
       found.forEach(function(h){
@@ -42180,7 +42077,11 @@
       }
     },250);
     presenterPush();
-    toast('Presenter view opened — drag it to your other screen');
+    /* T624: the window's own footer said this; it is said once, here,
+       when it is needed -- the Present step only before the show (during
+       one this toast is on the audience's screen) */
+    toast('Presenter view opened \u2014 drag it to your other screen'
+      +(mode==='view'?'':', then press Present'));
   }
   /* the main window tells the presenter whenever anything moves */
   function presenterSync(){
@@ -43683,7 +43584,7 @@
       ren.addEventListener('click',function(ev){
         ev.stopPropagation();
         askText({title:'Name this version',value:e.nm||histClock(e.at),
-          ok:'Name it',note:'Empty goes back to the time it was saved'},
+          placeholder:histClock(e.at),ok:'Name it'},
         function(v){
         if(v===null) return;
         v=v.trim();
@@ -43938,8 +43839,8 @@
       branch.addEventListener('click',function(){
         var suggest=ent.br?(ent.br+' 2'):'alternative';
         askText({title:'Branch from '+histLabel(ent),label:'Call this branch',
-          value:suggest,ok:'Branch',note:'What you save next descends '
-            +'from that version, not from where you are'},function(nm){
+          value:suggest,ok:'Branch',note:'Your next save builds on this '
+            +'version'},function(nm){
         if(nm===null) return;
         nm=nm.trim()||suggest;
         snapTake('before branching').then(function(){
@@ -43948,9 +43849,7 @@
           /* T499: the branch's first dot is where a redo of this lands
              the head, not the version it forked from */
           snapTake('branched: '+nm).then(histMarkHeadNow);
-          toast('On branch \u201c'+nm+'\u201d \u2014 what you save next '
-            +'descends from '+histLabel(ent)+', not from where you '
-            +'were');
+          toast('On branch \u201c'+nm+'\u201d');
         });
         });
       });
@@ -43999,9 +43898,7 @@
         list2.innerHTML='<div class="selpane-empty">'
           +(histAgainst
             ?'These two versions are the same.'
-            :'This version is the deck you are editing \u2014 nothing '
-             +'has changed since. Pick an older version on the left to '
-             +'see what you have done since then.')
+            :'No changes since. Pick an older version.')
           +'</div>';
       } else if(histView==='slide') chBySlide(list2,list);
       else if(histView==='type') chByType(list2,list);
@@ -44140,16 +44037,15 @@
     if(undoStack.length>depthWas)
       histMarkHead(headWas,{h:histHead,br:histBranch});
     refresh();renderFilm();renderPresTabs();renderPresRow();
-    toast('Back to the older version \u2014 the deck as it was is in the '
-      +'history too, so this is undoable');
+    toast('Back to the older version \u2014 Ctrl+Z undoes');
   }
   /* T225: the one gesture the tree was missing. It is an ordinary
      snapshot with a name and a mark, so going back to it and
      branching from it are the buttons that already exist. */
   function histCheckpoint(ov){
     askText({title:'Checkpoint',label:'Call this checkpoint',
-      value:'before the rewrite',ok:'Save',note:'Kept even when older '
-        +'versions are dropped'},function(nm){
+      value:'before the rewrite',ok:'Save',note:'Kept for good'},
+      function(nm){
     if(nm===null) return;
     nm=nm.trim()||'checkpoint';
     snapTake('checkpoint',undefined,undefined,1).then(function(){
@@ -44157,8 +44053,7 @@
          the one version you definitely meant to be able to find */
       return histSetName(histHead,nm);
     }).then(function(){
-      toast('Checkpoint \u201c'+nm+'\u201d saved \u2014 it is kept '
-        +'even when older versions are dropped');
+      toast('Checkpoint \u201c'+nm+'\u201d saved');
       histLiveAtHead=true;   /* T499: the deck is the checkpoint, just taken */
       if(ov&&document.body.contains(ov))
         histIndex().then(function(ix){histIxCache=ix;histRows(ov,ix);});
@@ -44185,14 +44080,8 @@
       +'</div><div class="dh-main">'
       +'<div class="dh-rail" id="dh-list"></div>'
       +'<div class="dh-body" id="dh-body">'
-      +'<div class="selpane-empty">Pick a version on the left to see '
-      +'what is different about it.</div></div></div>'
-      +'<div class="dh-when-note">A version is kept when you open this '
-      +'deck, when you save it, when you take a checkpoint, before '
-      +'anything that replaces the deck, and once you have been working '
-      +'for five minutes and then pause for half a minute. Not every '
-      +'change \u2014 a session of work is one dot, not four hundred.'
-      +'</div>';
+      +'<div class="selpane-empty">Pick a version on the left.</div>'
+      +'</div></div>';
     /* WHERE GIT IS. A deck is not a file on disk -- it lives inside the
        notebook or the project file -- so the deck's own history is this
        local store, and the repository's history of the file it is saved
@@ -44200,15 +44089,17 @@
        opens. Naming that rather than duplicating it is the honest hook:
        two histories that answer different questions, and neither
        pretending to be the other. */
-    if(APP.mode==='app'){
-      var git=document.createElement('div');
-      git.className='dh-git';
-      git.textContent='This is the deck\u2019s own history \u2014 the '
-        +'moments between commits. The repository\u2019s history of the '
-        +'file it is saved into is the notebook\u2019s: its Version '
-        +'history menu lists the git commits and opens them.';
-      ov.querySelector('.dh-main').appendChild(git);
-    }
+    /* T624: when a version is kept, and (in the app) where git is,
+       behind the title's "?" -- they were two standing paragraphs */
+    var dht=ov.querySelector('.dh-t');
+    if(dht) dht.parentNode.insertBefore(qBtn('A version is kept when you '
+      +'open the deck, save it or take a checkpoint, before anything that '
+      +'replaces it, and when you pause for half a minute after five '
+      +'minutes of work. A session of work is one dot, not one per change.'
+      +(APP.mode==='app'?'\n\nThis is the deck\u2019s own history. Git '
+        +'commits of the file it is saved in are in the notebook\u2019s '
+        +'Info \u25be \u203a Version history.':''),'History'),
+      dht.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#dh-close').addEventListener('click',histPanelClose);
     ov.querySelector('#dh-check')
@@ -45304,10 +45195,8 @@
       delete a.ref;
       p._putBack=null;   /* applied: nothing to put back */
       markDirty();refresh();chartDlgClose();
-      toast('Chart updated — Ctrl+Z undoes it'
-        +(orph?('. '+orph+' item'+(orph===1?'':'s')+' tied to a series '
-          +'that is no longer in the numbers — '
-          +(orph===1?'it shows':'they show')+' all the time now'):''));
+      toast('Chart updated'+(orph?(' \u2014 '+orph+' animation'
+        +(orph===1?' now always shows':'s now always show')):''));
     });
     var no=document.createElement('button');
     no.className='dbtn';no.textContent='Cancel';
@@ -49152,9 +49041,7 @@
         if(named) return;
         out.push({sev:'warn',si:si,i:i,
           head:'Slide '+(si+1)+': a figure nothing mentions',
-          why:(num?('Figure '+num):'This figure')+' has no caption, and '
-            +'no text or note on the slide names it. An audience does '
-            +'not know what they are looking at.'});
+          why:'No caption, and nothing on the slide names it.'});
       });
       /* --- 2. a caption with no figure --- */
       (sl.annots||[]).forEach(function(a,i){
@@ -49165,16 +49052,13 @@
           if(figOfCap(sl,a)>=0) return;
           out.push({sev:'err',si:si,i:i,
             head:'Slide '+(si+1)+': a caption whose figure is gone',
-            why:'“'+t.slice(0,60)+'” is tied to a figure that is no '
-              +'longer on this slide. It will number as [missing '
-              +'figure] and read as a caption for nothing.'});
+            why:'“'+t.slice(0,60)+'” — its figure is gone (numbers as '
+              +'[missing figure]).'});
         } else if(looks){
           out.push({sev:'warn',si:si,i:i,
             head:'Slide '+(si+1)+': a caption that is not tied to '
               +'anything',
-            why:'“'+t.slice(0,60)+'” reads like a caption but belongs '
-              +'to no figure, so it will not follow one, and its '
-              +'number will not update when the slides move.'});
+            why:'“'+t.slice(0,60)+'” is not tied to a figure.'});
         }
       });
       /* --- 4. a slide with a lot on it --- */
@@ -49184,9 +49068,7 @@
       if(wc>DENSE_WORDS||ic>DENSE_ITEMS)
         out.push({sev:'warn',si:si,i:null,
           head:'Slide '+(si+1)+': a lot on one slide',
-          why:wc+' words and '+ic+' things on it. Above about '
-            +DENSE_WORDS+' words an audience reads instead of '
-            +'listening.'});
+          why:wc+' words, '+ic+' thing'+(ic===1?'':'s')+'.'});
       /* COLLECT THE SURFACES for lint 3. Single words AND adjacent
          pairs, because the whole point is that "sea-level" and "sea
          level" are the same term written two ways -- and one of those
@@ -49227,9 +49109,7 @@
       out.push({sev:'warn',si:null,i:null,
         head:'Two spellings of one thing',
         why:forms.map(function(f){
-          return '“'+f+'” ×'+surfaces[k][f];}).join(', ')
-          +'. Pick one — an audience reads the difference as a '
-          +'distinction.'});
+          return '“'+f+'” ×'+surfaces[k][f];}).join(', ')+'.'});
     });
     /* --- 4. a picture nobody has described (T105) ---
        Deliberately NOT "has no alt text": a picture is allowed to carry
@@ -49247,11 +49127,8 @@
         var what=a.k==='chart'?'chart':'picture';
         out.push({sev:'warn',si:si,i:i,
           head:'This '+what+' does not say what it shows',
-          why:'Somebody who cannot see it gets “'
-            +(annotLabel(a)||what)+'” — the name of the box, not '
-            +'what is in it. Select it and use Object › Alt text '
-            +'(or right-click it), or leave that empty to mark it '
-            +'decorative if it really carries nothing.'});
+          why:'Read aloud as “'+(annotLabel(a)||what)+'”. Add alt '
+            +'text.'});
       });
     });
     /* --- 5. the talk does not fit the time it has (T121) ---
@@ -49296,9 +49173,7 @@
         if(linkSlideIdx(l.sid)>=0) return;
         out.push({sev:'err',si:si,i:i,
           head:'This link goes nowhere',
-          why:'It points at a slide that is no longer in the deck. '
-            +'Clicking it while presenting says so and stays put, '
-            +'which is not what you want an audience to see.'});
+          why:'Its slide is no longer in the deck.'});
       });
     });
     /* --- 7. two slides that are the same slide --- */
@@ -49313,10 +49188,7 @@
       if(seen[key]!=null){
         out.push({sev:'warn',si:si,i:null,
           head:'This slide is a copy of an earlier one',
-          why:'Slide '+(seen[key]+1)+' has the same objects and the '
-            +'same words. A duplicate left in by accident reads as a '
-            +'stutter; one left in on purpose usually wants a build '
-            +'instead.'});
+          why:'Same as slide '+(seen[key]+1)+'.'});
       } else seen[key]=si;
     });
     return out;
@@ -49370,7 +49242,7 @@
     var ov=document.createElement('div');
     ov.className='deck-review';ov.id='deck-review';
     ov.innerHTML='<div class="rv-head">'
-      +'<span class="rv-t">Send this deck out to be read</span>'
+      +'<span class="rv-t">Export for review</span>'
       +'<span class="deck-spring"></span>'
       +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
       +'<button class="dbtn" id="rv-dl">'+bic('markdown')
@@ -49384,9 +49256,22 @@
       +'<div class="rv-main">'
       +'<div class="rv-lints" id="rv-lints"></div>'
       +'<div class="rv-textwrap"><span class="rv-lab">'
-      +'what a reader gets — markdown, so it pastes anywhere</span>'
+      +'Markdown</span>'
       +'<textarea class="rv-text" id="rv-text" readonly '
       +'spellcheck="false"></textarea></div></div>';
+    /* T624: why each finding matters, once, behind the title's "?" --
+       every row used to carry its own reason */
+    var rvt=ov.querySelector('.rv-t');
+    if(rvt) rvt.parentNode.insertBefore(qBtn('A figure nothing names '
+      +'leaves the audience guessing what it shows.\nA caption tied to no '
+      +'figure will not follow it or renumber.\nAbove about '+DENSE_WORDS
+      +' words a slide gets read, not listened to.\nTwo spellings of one thing '
+      +'read as two different things.\nA picture without alt text is '
+      +'read aloud as its box\u2019s name: select it and use Object \u203a '
+      +'Alt text, or leave that empty to mark it decorative.\nA link to a '
+      +'deleted slide goes nowhere while you present.\nA repeated slide '
+      +'reads as a stutter; if it is on purpose, a build may be better.',
+      'Export for review'),rvt.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#rv-text').value=text;
     var host=ov.querySelector('#rv-lints');
@@ -49398,11 +49283,6 @@
         +(errs?(' · '+errs+' serious'):''))
       :'Nothing looks wrong with the content';
     host.appendChild(hd);
-    var note=document.createElement('div');
-    note.className='rv-note';
-    note.textContent='About what the deck says. “Before you print” '
-      +'is the other list — that one is about ink and millimetres.';
-    host.appendChild(note);
     lints.forEach(function(l){
       var b=document.createElement('button');
       b.className='rv-lint sev-'+l.sev;
@@ -49430,8 +49310,8 @@
       try{done=document.execCommand('copy');}catch(e){}
       if(!done&&navigator.clipboard)
         navigator.clipboard.writeText(text).then(function(){
-          toast('Copied — paste it wherever it is being read');});
-      else toast(done?'Copied — paste it wherever it is being read'
+          toast('Copied');});
+      else toast(done?'Copied'
         :'Select the text and copy it');
     });
     ov.querySelector('#rv-dl').addEventListener('click',function(){
@@ -49444,7 +49324,7 @@
       a.download=(pres.name||'deck')+'.review.md';
       a.click();
       setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
-      toast('Saved — it travels; junoview stays here');
+      toast('Saved .md');
     });
     ov.querySelector('#rv-json').addEventListener('click',function(){
       var blob=new Blob([reviewJson(lints)],{type:'application/json'});
@@ -49623,12 +49503,10 @@
       var copyOf=filmThumbSource();
       var runs=sectionRuns();
       var n=(pres.slides||[]).length;
-      t.textContent=(sorting?'Slide sorter \u2014 ':'')
-        +(pres.name||'This deck')+' \u2014 '+n+' slide'+(n===1?'':'s')
-        +(function(){
-          var ns=runs.filter(function(r){return r.id;}).length;
-          return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
-        })();
+      /* T624: the name and the count; the sections are the groups
+         below, each with its own heading */
+      t.textContent=(pres.name||'This deck')+' \u00b7 '+n+' slide'
+        +(n===1?'':'s');
       runs.forEach(function(r){
         var grp=document.createElement('div');
         grp.className='ovw-grp';
@@ -50095,8 +49973,8 @@
     }
     presenterSync&&presenterSync();
     renderFilm();
-    toast(id?('Showing the custom show \u201c'+(cutMap()[id]||{}).name
-      +'\u201d'):'Showing every slide');
+    toast(id?('Showing \u201c'+(cutMap()[id]||{}).name+'\u201d')
+      :'Showing every slide');
   }
   /* T25. One control, mid-talk, that drops the rest of the optional
      slides. From HERE onward: what you have already shown is not the
@@ -50127,8 +50005,8 @@
     var n=0;
     (pres.slides||[]).forEach(function(sl,i){
       if(i>cur&&sl&&sl.opt&&inCut(sl,cut)) n++;});
-    toast(n?(n+' optional slide'+(n===1?'':'s')
-      +' will be skipped from here'):'No optional slides left to skip');
+    toast(n?('Skipping '+n+' optional slide'+(n===1?'':'s'))
+      :'No optional slides left');
     return n;
   }
   function toggleOptional(i){
@@ -50146,8 +50024,8 @@
     if(sl.hide) delete sl.hide; else sl.hide=1;
     markDirty();renderFilm();
     if(typeof syncHomeDoors==='function') syncHomeDoors();
-    toast(sl.hide?'Hidden — the show goes straight past it, and it '
-      +'stays out of a PDF':'Shown again');
+    /* T624: no toast -- the strip marks it hidden and the button stays
+       pressed */
   }
   function toggleSlideCut(i,id){
     var sl=(pres.slides||[])[i]; if(!sl||!id||!hasCut(id)) return;
@@ -50223,7 +50101,7 @@
           +'one click is one slide and nothing moves. Flip books still '
           +'step (A)';
       var lab=b.querySelector('.tk-state');
-      if(lab) lab.textContent=talkNoBuilds?'skipped':'playing';
+      if(lab) lab.textContent=talkNoBuilds?'Skipped':'Playing';
     }
     /* the reset button IS the readout: the current size, click to put
        it back. It used to say 100% forever while the real number sat
@@ -50246,11 +50124,8 @@
     /* a slide part-way through its builds must not be left showing
        fewer things than it now claims to have */
     if(talkNoBuilds) revealCount=0;
+    /* T624: no toast -- the button beside it says Skipped or Playing */
     syncTalk();renderSlide();presenterSync();
-    toast(talkNoBuilds
-      ? 'Animations skipped \u2014 slides arrive complete, and change '
-        +'with a plain cut'
-      : 'Animations are playing again');
   }
   /* bucket===undefined scales everything; a bucket name scales that
      kind of text on top of the global size. 0 always means "put it
@@ -51077,8 +50952,8 @@
       var can=!!window.showDirectoryPicker||!!deckDir;
       btn.hidden=!can;
       btn.innerHTML=bic('open')+' '+((deckDir&&!hubDirRows)
-        ?('Show the files in '+esc(deckDirName||'your folder'))
-        :'Look in a folder\u2026');
+        ?('Files in '+esc(deckDirName||'your folder'))
+        :'Browse folder\u2026');
     }
     if(!host||!head) return [];
     host.innerHTML='';
@@ -51094,7 +50969,7 @@
     }
     var rows=hubDirRows.filter(function(r){return hubDirMatch(r,q);});
     if(!rows.length) emptyPresentationList(host,
-      q?'No file here matches.':'No presentation files in this folder.');
+      q?'No match':'No presentations here');
     rows.forEach(function(r){host.appendChild(hubDirRow(r));});
     return rows;
   }
@@ -51182,9 +51057,8 @@
     pin.setAttribute('aria-label',pin.title);
     function flip(e){
       e.stopPropagation();e.preventDefault();
-      var on=togglePinPresentation(p.name);
-      toast(on?('\u201c'+p.name+'\u201d pinned \u2014 it stays at the top '
-        +'of Recent'):('\u201c'+p.name+'\u201d unpinned'),4000);
+      /* T624: no toast -- the row moves, and its pin lights */
+      togglePinPresentation(p.name);
     }
     pin.addEventListener('click',flip);
     pin.addEventListener('keydown',function(e){
@@ -51227,8 +51101,7 @@
       if(e&&(e.ctrlKey||e.metaKey||e.shiftKey)){
         noteSessionOpen(p.name);
         renderPresTabs();
-        toast('\u201c'+p.name+'\u201d is on the open list \u2014 Ctrl+click '
-          +'adds more; a plain click opens one',5000);
+        toast('\u201c'+p.name+'\u201d added to open tabs',5000);
         return;
       }
       click(e);
@@ -51366,8 +51239,7 @@
       return hubMatch(p,q);});
     var all=libraryRows().filter(function(p){return hubMatch(p,q);});
     if(!recent.length) emptyPresentationList(recentHost,
-      q?'No recent presentation matches.':
-      'No recent presentations yet. Create one or open a saved deck.');
+      q?'No match':'None yet');
     recent.forEach(function(p){
       recentHost.appendChild(presentationLibraryRow(p,function(){
         closePresentationHub();choosePresentation(p.name);
@@ -51403,7 +51275,7 @@
       return b;
     }
     if(!all.length&&!order.length&&!q) emptyPresentationList(allHost,
-      'No saved presentations yet.');
+      'None yet');
     loose.forEach(function(p){allHost.appendChild(rowFor(p));});
     order.sort().forEach(function(f){
       /* a folder with nothing matching is not listed while finding */
@@ -51419,8 +51291,7 @@
     /* found nowhere at all: said once, where the eye starts */
     if(q&&!recent.length&&!all.length&&!dirRows.length){
       recentHost.innerHTML='';
-      emptyPresentationList(recentHost,
-        'Nothing is called \u201c'+q+'\u201d or has it on a slide.');
+      emptyPresentationList(recentHost,'No match');
     }
     var names=recent.concat(all).map(function(p){return p.name;});
     if(!root.hidden){  /* a list re-drawn behind a closed dialog paints none */
@@ -51699,9 +51570,14 @@
       var ic=document.createElement('span');ic.innerHTML=icon;
       var nm=document.createElement('span');nm.className='deck-pres-row-name';
       nm.textContent=name;
-      var kd=document.createElement('span');kd.className='deck-pres-row-kind';
-      kd.textContent=kind;
-      b.appendChild(ic);b.appendChild(nm);b.appendChild(kd);
+      b.appendChild(ic);b.appendChild(nm);
+      /* T624: "presentation" under Presentations and "notebook" under
+         Notebooks said nothing; a poster or a custom view still says so */
+      if(kind&&kind!=='presentation'&&kind!=='notebook'){
+        var kd=document.createElement('span');kd.className='deck-pres-row-kind';
+        kd.textContent=kind;
+        b.appendChild(kd);
+      }
       host.appendChild(b);
       return b;
     }
@@ -51776,7 +51652,7 @@
       var nbs=openNotebookRows();
       nbs.forEach(function(n){
         var r=row('',bic('doc'),n.label,n.kind,
-          'Stop presenting and show this notebook'
+          'End the show and show this notebook'
           +(n.path?(' ('+n.path+')'):''),
           function(){
             if(!barDocked()) closeDeckPresentationDrawer();
@@ -51798,7 +51674,7 @@
     }
     /* ---- this deck's saved versions (T448: "and version") ---- */
     if(c.vers&&typeof histIndex==='function'){
-      head('versions of this presentation');
+      head('versions');
       var vh=document.createElement('div');
       vh.className='deck-pres-empty';vh.textContent='Looking…';
       host.appendChild(vh);
@@ -51808,8 +51684,7 @@
         if(!pres||pres.name!==want||!vh.parentNode) return;
         var rows=(ix||[]).slice(-6).reverse();
         if(!rows.length){
-          vh.textContent='No versions yet — one is kept when you save, '
-            +'open or checkpoint this deck.';
+          vh.textContent='No versions yet';
           return;
         }
         vh.remove();
@@ -51847,15 +51722,15 @@
     var m=document.createElement('div');
     m.className='sh-menu vw-menu';m.id='openbar-menu';
     var c=barCfg();
-    menuHead(m,'where this bar sits');
-    [['pop','A pop-up',
+    menuHead(m,'position');
+    [['pop','Pop-up',
       (APP.filesAt&&APP.filesAt()==='top')
         ?'It opens from Open now, and closes when you leave it'
         :'It opens from the chevron beside Home and when you reach the '
           +'left edge, and closes when you leave it'],
-     ['left','A rail down the left',
+     ['left','Left rail',
       'It stays open and the slide makes room for it'],
-     ['top','A strip across the top',
+     ['top','Top strip',
       'It stays open above the slide']].forEach(function(o){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';b.type='button';
@@ -51867,7 +51742,7 @@
         e.stopPropagation();overlayDrop(m);barSet('dock',o[0]);});
       m.appendChild(b);
     });
-    menuHead(m,'what it lists');
+    menuHead(m,'show');
     [['pres','Presentations'],['nb','Notebooks'],
      ['vers','Versions']].forEach(function(o){
       var b=document.createElement('button');
@@ -52144,8 +52019,7 @@
      slide] pairs. */
   var DECK_TEMPLATES=[
     {id:'talk',label:'Conference talk',stem:'talk',
-     blurb:'The question, what you did, two results and the take-home, '
-       +'in the order a twelve-minute talk runs.',
+     blurb:'Question, method, results, take-home',
      secs:[['Introduction',0],['Methods',2],['Results',3],
        ['Conclusions',5]],
      slides:[
@@ -52161,8 +52035,7 @@
         +'line each.'}]],
       ['section',['Thank you \u2014 questions?']]]},
     {id:'lab',label:'Lab meeting',stem:'lab meeting',
-     blurb:'Since last time, a result or two, where you are stuck and '
-       +'what is next.',
+     blurb:'Progress, results, blockers, next steps',
      slides:[
       ['title',[{ph:'What I have been working on'},
         {ph:'Your name \u00b7 Lab meeting, date'}]],
@@ -52176,8 +52049,7 @@
       ['title-body',['Next steps',{ph:'What you will do before the '
         +'next meeting.'}]]]},
     {id:'defence',label:'Thesis defence',stem:'defence',
-     blurb:'The question, a section and a result for each chapter, '
-       +'contributions and future work.',
+     blurb:'A section per chapter, then contributions',
      secs:[['Introduction',0],['Chapter 1',4],['Chapter 2',6],
        ['Chapter 3',8],['Conclusions',10]],
      slides:[
@@ -52209,8 +52081,7 @@
        template from Layouts, on the white page a new poster gets */
     {id:'poster',label:'Poster',stem:'poster',page:'a0p',
      tokens:{c:{page:'#ffffff'}},
-     blurb:'An A0 conference poster in three numbered columns, ready '
-       +'for your figures.',
+     blurb:'A0 poster in three columns',
      slides:[['poster-3col',[]]]}
   ];
   function tplSlide(spec){
@@ -52300,9 +52171,12 @@
       +(d.slides.length===1?'':'s');
     nm.appendChild(n);
     b.appendChild(nm);
-    var bl=document.createElement('span');bl.className='nt-blurb';
-    bl.textContent=t?t.blurb:'One empty slide.';
-    b.appendChild(bl);
+    /* T624: Blank's card says "Blank · 1 slide" already */
+    if(t){
+      var bl=document.createElement('span');bl.className='nt-blurb';
+      bl.textContent=t.blurb;
+      b.appendChild(bl);
+    }
     b.title='Make a '+(t?t.label.toLowerCase():'blank presentation')
       +(t?' presentation':'');
     b.addEventListener('click',function(){ntClose();newPresentationFrom(t);});
@@ -52340,7 +52214,7 @@
     var A=window.SemApp||{};
     var stem=A.active;
     if(!stem||!A.enterStyling){
-      toast('Open a notebook first — a custom view restyles a notebook');
+      toast('Open a notebook first');
       return;
     }
     var n2=1,name='custom view';
@@ -52475,7 +52349,7 @@
     var cells=slideCells(s);
     if(!cells.length){
       ed.innerHTML='<div class="pane empty"><span class="pane-t">'
-        +'pick a layout above, or click a card in the document'
+        +'Pick a layout or a card'
         +'</span></div>';
       return ed;
     }
@@ -54727,6 +54601,14 @@
     try{ov.style.setProperty('--page-bg',
       getComputedStyle(deckEl).getPropertyValue('--page-bg')||deckPageBg());
     }catch(err){}
+    /* T624: what a variation is -- the toasts that make one no longer
+       explain it, so this screen's "?" does */
+    var dgt=ov.querySelector('.dh-t');
+    if(dgt) dgt.parentNode.insertBefore(qBtn('A variation is a style based '
+      +'on another, such as Title. It follows its parent for everything '
+      +'you did not change, so changing Title changes it too.\n\nCheck '
+      +'consistency finds boxes that have drifted from their style.',
+      'Style system'),dgt.nextSibling);
     document.body.appendChild(ov);
     ov.querySelector('#dg-close').addEventListener('click',dgClose);
     /* T384: the door had no handler behind it. Same route the ribbon's
@@ -55798,9 +55680,9 @@
     if(!keep.length) return;
     var n=keep.reduce(function(t,k){return t+k[1].length;},0);
     askYes({title:'Keep your ink?',
-      what:'You drew '+n+' stroke'+(n===1?'':'s')+' on '+keep.length
-        +' slide'+(keep.length===1?'':'s')+' during the talk.',
-      note:'Kept, each stroke becomes a drawing on its slide that you can '
+      what:n+' stroke'+(n===1?'':'s')+' on '+keep.length
+        +' slide'+(keep.length===1?'':'s'),
+      help:'Kept, each stroke becomes a drawing on its slide that you can '
         +'move, recolour or delete. Ctrl+Z takes them all back off.',
       ok:'Keep ink',cancel:'Discard'},function(yes){
       if(!yes) return;
@@ -55817,7 +55699,7 @@
         markDirty();renderSlide();
         if(typeof renderFilm==='function') renderFilm();
       } else talkKeepInto(deck);
-      toast(made+' ink stroke'+(made===1?'':'s')+' kept as drawings'
+      toast('Ink kept'
         +(deck===pres?'':' on \u201c'+(deck.name||'untitled')+'\u201d'));
     });
   }
@@ -56042,7 +55924,7 @@
     });
     var del=document.createElement('button');
     del.className='dbtn dg-b dbtn-warn';
-    del.innerHTML=bic('exit')+' Remove the chosen slot';
+    del.innerHTML=bic('exit')+' Remove slot';
     del.disabled=lbSel<0;
     del.title='Take the highlighted slot off the layout';
     del.addEventListener('click',function(){
@@ -56113,8 +55995,7 @@
       renderLayoutPicker();
       renderControls();
       lbClose();
-      toast('“'+label+'” saved — it is in the New slide '
-        +'gallery and in Change layout');
+      toast('“'+label+'” saved to New slide');
     });
     foot.appendChild(save);
     body.appendChild(foot);
@@ -56221,7 +56102,7 @@
   /* T475: the editor's own question -- cb(url) once it is a good one */
   function askWebUrl(current,cb){
     askText({title:current?'The page\u2019s address':'A live web page',
-      label:'Web address (http or https)',value:current||'https://',
+      label:'Web address',value:current||'https://',
       ok:current?'Change it':'Place it',select:!current},function(u){
       if(u==null) return;
       u=String(u).trim();
@@ -56238,8 +56119,7 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
     if(typeof renderFilm==='function') renderFilm();
-    toast('Web page placed — it is live in the show. Change the '
-      +'address from the Object tab');
+    toast('Web page placed');
   }
   function webBoot(){
     var et=$('#et-web');
@@ -56290,8 +56170,8 @@
      A way of looking, like the scrolling page itself: remembered in this
      browser, never stored with the deck. */
   var SCROLL_SEP_KEY='junoview:deck:scrollsep';
-  var SCROLL_SEPS=[['faint','Faint line'],['strong','Strong line'],
-    ['none','No line'],['gap','Spaced']];
+  var SCROLL_SEPS=[['faint','Faint'],['strong','Strong'],
+    ['none','None'],['gap','Spaced']];
   function scrollSepGet(){
     var v=lsGet(SCROLL_SEP_KEY)||'';
     for(var i=0;i<SCROLL_SEPS.length;i++)
@@ -56417,7 +56297,7 @@
     scrollShowEl.remove();scrollShowEl=null;
   }
   function openScrollShow(){
-    if(!(pres.slides||[]).length){toast('No slides to scroll through yet');return;}
+    if(!(pres.slides||[]).length){toast('No slides yet');return;}
     closeScrollShow();
     var ents=outputSlides();
     var root=buildPrintRoot();
@@ -56445,7 +56325,7 @@
     t.textContent=pres.name||'presentation';
     var n=document.createElement('span');n.className='deck-scroll-n';
     var x=document.createElement('button');x.className='dbtn';
-    x.innerHTML=bic('exit')+' Close (Esc)';
+    x.innerHTML=bic('exit')+' Close';x.title='Esc';
     x.addEventListener('click',function(e){e.stopPropagation();closeScrollShow();});
     /* T620: between the slides -- four worded choices, one pressed */
     var sg=document.createElement('span');sg.className='deck-scroll-sep';
@@ -56861,7 +56741,7 @@
     var b=$('#vw-scroll'),l=$('#vw-scroll-lines'),t=$('#vw-scroll-lines-t');
     if(b) b.setAttribute('aria-pressed',svOn?'true':'false');
     if(l){
-      var v=scrollSepGet(),name='Faint line';
+      var v=scrollSepGet(),name='Faint';
       SCROLL_SEPS.forEach(function(o){if(o[0]===v) name=o[1];});
       l.disabled=!svOn;
       l.setAttribute('aria-label','Between slides: '+name);
@@ -57087,8 +56967,7 @@
     altOpen[gid]=1;
     cur=at;activePane=-1;selAnnot=null;selSet=[];
     normSections();markDirty();refresh();
-    toast('\u201c'+cp.label+'\u201d added \u2014 the talk still shows '
-      +'the starred one. Right-click a version to make it the main.',6000);
+    toast('\u201c'+cp.label+'\u201d added',6000);
   }
   function starVersion(i){
     var r=altRun(i); if(!r||i===r.at) return;
@@ -57098,7 +56977,14 @@
     cur=pres.slides.indexOf(keep);
     normSections();markDirty();refresh();
     toast('\u201c'+(s.label||slideTitle(s)||'This version')+'\u201d is the '
-      +'main version now \u2014 it is what the talk shows. Ctrl+Z undoes it.');
+      +'main version');
+  }
+  /* T624: an untitled slide's thumbnail says nothing under it -- the
+     picture shows it is empty. Headings mode and the lists with no
+     picture (links, find, history) keep "empty slide". */
+  function filmStripText(s){
+    var t=filmText(s);
+    return (t==='empty slide'&&filmMode()!=='head')?'':t;
   }
   function sectionPos(i){
     var runs=sectionRuns();
@@ -57405,7 +57291,7 @@
           :filmLazyBox(s,row,list));
       }
       var tt=document.createElement('span');tt.className='film-t';
-      tt.textContent=filmText(s);lbl.appendChild(tt);
+      tt.textContent=filmStripText(s);lbl.appendChild(tt);
       var marks=document.createElement('span');marks.className='film-marks';
       function mark(cls,text,title){
         var tag=document.createElement('span');
@@ -58150,7 +58036,7 @@
         goTo();armSlideMatch('from');},
         'Then click the thumbnail this slide should sit like. Positions '
         +'and sizes travel; the words and figures stay','swap');
-      row('Give this slide\u2019s layout to slides I click\u2026',function(){
+      row('Copy layout to\u2026',function(){
         goTo();armSlideMatch('to');},
         'Then click each thumbnail that should sit like this one; Esc '
         +'when you are done','swap');
@@ -58563,8 +58449,8 @@
       /* This bar is shown only while presenting. Keeping its wording fixed
          means it cannot briefly describe a different, destructive-sounding
          action while the editor changes mode. */
-      xb.innerHTML=bic('return')+' Stop presenting';
-      xb.title='Stop presenting and go back to the builder (Esc). Nothing '
+      xb.innerHTML=bic('return')+' End show';
+      xb.title='End the show and go back to the builder (Esc). Nothing '
         +'is closed or lost.';
     }
     syncLateButton();
@@ -59076,8 +58962,7 @@
     var all=(pres.slides||[]).length;
     if(!pageOf().poster||all<2) return '';
     var s=pres.slides[Math.min(Math.max(cur,0),all-1)];
-    return ' Sent "'+((s&&s.label)||slideTitle(s||{}))+'" only — a poster '
-      +'goes out one version at a time; open Versions to switch.';
+    return ' (this version only)';
   }
   function closeDeck(){
     /* A TAB BUTTON LETS GO FIRST (2026-10-09, speed). The deck's tab or
@@ -59274,7 +59159,7 @@
         menu.insertBefore(el,anchor);
       }
       var hd=document.createElement('div');
-      hd.className='hd-lab';hd.textContent='which custom show';
+      hd.className='hd-lab';hd.textContent='custom show';
       add(hd);
       function opt(id,label,why){
         var b=document.createElement('button');
@@ -59320,14 +59205,12 @@
         +'second file, no diverging copies';
       nb.addEventListener('click',function(e){
         e.stopPropagation();overlayHide(menu);
-        askText({title:'A new custom show',label:'Call it',
-          value:'20-min',ok:'Make it',note:'Then right-click a slide to '
-            +'put it in'},function(nm){
+        askText({title:'New custom show',label:'Name',
+          value:'20-min',ok:'Create',note:'Then right-click slides to '
+            +'add them'},function(nm){
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
         var id=newCut(nm);if(!id) return;
-        toast('“'+nm+'” created — right-click a '
-          +'slide to put it in');
         setCut(id);syncCuts();
         });
       });
@@ -59370,13 +59253,12 @@
     var nvb=$('#pr-newversion');
     if(nvb) nvb.addEventListener('click',function(e){
       e.stopPropagation();
-      askText({title:'A new custom show',label:'Call it',
-        value:'20-min',ok:'Make it',note:'Then right-click a slide to '
-          +'put it in'},function(nm){
+      askText({title:'New custom show',label:'Name',
+        value:'20-min',ok:'Create',note:'Then right-click slides to '
+          +'add them'},function(nm){
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
         var id=newCut(nm);if(!id) return;
-        toast('\u201c'+nm+'\u201d created \u2014 right-click a slide to put it in');
         setCut(id);cutsSync();
       });
     });
@@ -59395,7 +59277,7 @@
         if(window.SemDeckTalk) window.SemDeckTalk.open(true);},200);});
     function syncTap(){
       var b=$('#pl-tap'); if(!b) return;
-      b.textContent='Click a figure to enlarge it: '
+      b.textContent='Enlarge on click: '
         +(pres&&pres.tapzoom?'on':'off');
       b.title=pres&&pres.tapzoom
         ?'Clicking an item during the talk blows it up. Clicking anywhere '
@@ -59406,9 +59288,7 @@
     mi('#pl-tap',function(){
       if(pres.tapzoom) delete pres.tapzoom; else pres.tapzoom=1;
       markDirty();syncTap();
-      toast(pres.tapzoom
-        ?'Clicking a figure or a text box now enlarges it while presenting'
-        :'Back to a plain click moving the talk on');
+      toast(pres.tapzoom?'Enlarge on click: on':'Enlarge on click: off');
     });
     /* THE CODE TRAIL DOOR (T69). ONE flag suppresses the trail, the
        "Show code" pill, the up/down arrows and the scroll region
@@ -59419,7 +59299,7 @@
        deck already saved keeps the trail it has with no migration. */
     function syncTrace(){
       var b=$('#pl-trace'); if(!b) return;
-      b.textContent='Show the code trail under the slide: '
+      b.textContent='Code trail: '
         +(pres&&pres.hideTrace?'off':'on');
       b.title=pres&&pres.hideTrace
         ?'Off: the slide is the whole screen and nothing scrolls under '
@@ -59433,9 +59313,7 @@
       /* the menu lives in the builder chrome, so this is normally set
          between talks -- but re-render if it somehow fires mid-talk */
       if(mode==='view') renderSlide();
-      toast(pres.hideTrace
-        ?'The code trail is hidden while presenting'
-        :'The code trail is back under every slide');
+      toast(pres.hideTrace?'Code trail: off':'Code trail: on');
     });
     var plBtn=$('#dc-playmore');
     if(plBtn) plBtn.addEventListener('click',function(){
@@ -60450,8 +60328,7 @@
       else if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey
               &&(e.key==='c'||e.key==='C')){
         e.preventDefault();
-        if(copyLook()) toast('Look copied \u2014 select what should wear '
-          +'it and press Ctrl+Shift+V');
+        if(copyLook()) toast('Look copied \u2014 Ctrl+Shift+V pastes it');
         else toast('Select the object whose look you want first');
       }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='c'||e.key==='C')){
@@ -61041,7 +60918,7 @@
      asked in points, the editor's currency everywhere else, and stored
      as the percent of page height the painter reads. */
   var FURN_PT=5.4;   /* pt per percent of page height, as the tooltips */
-  function furnEdit(key,label,hint,dflt){
+  function furnEdit(key,label,hint,dflt,help){
     var cur_=pres[key]||{};
     var lines=String(hint).split('\n');
     var isW=(key==='wmark');
@@ -61067,7 +60944,7 @@
     rows.push({k:'color',label:'Colour',type:'color',value:curCol,clear:true});
     if(!isW) rows.push({k:'skipFirst',label:'Not on the first slide',
       type:'check',value:!!cur_.skipFirst});
-    askText({title:label,what:lines[0],rows:rows,
+    askText({title:label,what:lines[0],rows:rows,help:help,
       ok:on?'Change it':'Add it',alt:on?'Turn it off':''},
     function(v,why){
       if(why==='alt'||(v&&!String(v.text||'').trim())){
@@ -61108,27 +60985,23 @@
   }
   var wmB=$('#dc-wmark');
   if(wmB) wmB.addEventListener('click',function(){
-    furnEdit('wmark','Watermark',
-      'One word or phrase, printed faintly across every page and always '
-      +'BEHIND your content.\nLeave it empty to remove it.','DRAFT');
+    furnEdit('wmark','Watermark','Leave it empty to remove it.','DRAFT');
   });
+  /* T624: the codes stay in sight under the field; what each one
+     means is the dialog's "?" */
+  var FURN_NOTE='\n{name} {date} {n} {N} {sec} \u00b7 empty removes it';
+  var FURN_HELP='{name} the presentation\u2019s name\n{date} today\u2019s '
+    +'date ({date:long} writes it out; type a date to keep it fixed)\n'
+    +'{n} this page, {N} the number of pages\n{sn} / {sN} the page and '
+    +'page count within the section\n{sec} the section\u2019s name\n\n'
+    +'Leave the words empty to remove the line.';
   var hdB=$('#dc-head');
   if(hdB) hdB.addEventListener('click',function(){
-    furnEdit('head','Header',
-      'A line along the top of every page.\n'
-      +'{name} the presentation, {date} today ({date:long} written out; '
-      +'type a date instead to keep it fixed), {n} this page, {N} the '
-      +'total, {sn}/{sN} the number and count within the section, '
-      +'{sec} its name.\nLeave it empty to remove it.','{name}');
+    furnEdit('head','Header',FURN_NOTE,'{name}',FURN_HELP);
   });
   var ftB=$('#dc-foot');
   if(ftB) ftB.addEventListener('click',function(){
-    furnEdit('foot','Footer',
-      'A line along the bottom of every page.\n'
-      +'{name} the presentation, {date} today ({date:long} written out; '
-      +'type a date instead to keep it fixed), {n} this page, {N} the '
-      +'total, {sn}/{sN} the number and count within the section, '
-      +'{sec} its name.\nLeave it empty to remove it.','{n} / {N}');
+    furnEdit('foot','Footer',FURN_NOTE,'{n} / {N}',FURN_HELP);
   });
   var numB=$('#dc-nums');
   if(numB) numB.addEventListener('click',function(){
@@ -61702,10 +61575,8 @@
     return list.map(function(n){return '“'+n+'”';}).join(', ');
   }
   function partsTellUpdated(up){
-    toast('Brought up to date from '+(up.length===1?'its part ':'its parts ')
-      +partNames(up)+' — '+(up.length===1?'it has':'they have')
-      +' changed since this talk last showed '
-      +(up.length===1?'it':'them'),6000);
+    toast('Updated from '+(up.length===1?'part ':'parts ')+partNames(up),
+      6000);
   }
   /* loadPresentation's last step: a talk opens showing its parts as they
      are now. Not before the draft store has answered -- a part kept only
@@ -62250,16 +62121,14 @@
     runs.forEach(function(r,ri){body.appendChild(partGroup(r,runs,ri));});
     if(!ids.length){
       var p=document.createElement('p');p.className='prt-none';
-      p.textContent='No parts yet. Add a presentation you already have, '
-        +'start a new one, or turn a section of this talk into a part.';
+      p.textContent='No parts yet.';
       body.insertBefore(p,body.firstChild);
     }
   }
   function openParts(){
     if(!pres||isViewPres(pres)) return;
     if(pageOf().poster){
-      toast('A poster\u2019s pages are versions of one sheet \u2014 parts '
-        +'are for a talk made of other presentations',6000);
+      toast('Posters have no parts',6000);
       return;
     }
     overviewClose();partsClose();
@@ -62282,6 +62151,12 @@
     var head=document.createElement('div');head.className='ovw-head prt-head';
     var t=document.createElement('span');t.className='ovw-t';t.id='prt-title';
     head.appendChild(t);
+    /* T624: what a part is, behind the title's "?" (a sibling: the
+       title's words are rewritten on every draw) */
+    head.appendChild(qBtn('A part is another presentation shown here as a '
+      +'section, like \\input in LaTeX. You edit it on its own, and this '
+      +'talk picks up its changes each time it opens. Its slides are '
+      +'locked here; Edit opens it.','Parts'));
     var sp=document.createElement('span');sp.className='deck-spring';
     head.appendChild(sp);
     var back=partBtn('return','Back to the parts','The parts of this talk',
@@ -62312,12 +62187,6 @@
     var cl=partBtn('exit','Close','Esc',partsClose);
     head.appendChild(cl);
     ov.appendChild(head);
-    var intro=document.createElement('p');intro.className='prt-intro';
-    intro.textContent='A part is another presentation that this talk shows '
-      +'as a section, like \\input in LaTeX: you edit it on its own, and '
-      +'this talk picks up its changes each time it opens. Its slides are '
-      +'locked here — Edit opens it.';
-    ov.appendChild(intro);
     var say=document.createElement('div');say.className='prt-say';
     say.id='prt-say';say.hidden=true;say.setAttribute('role','status');
     ov.appendChild(say);
@@ -62447,8 +62316,24 @@
     'fmt-back':'send to back',
     'fmt-crop':'crop picture trim',
     'fmt-sizepos':'size position format shape width height',
-    'mi-pdf':'export pdf print save as pdf',
-    'mi-pptx':'export powerpoint pptx save as',
+    'mi-pdf':'export pdf print save as pdf export pdf print handout '
+      +'notes pages',
+    'mi-pptx':'export powerpoint pptx save as export pptx export to '
+      +'powerpoint',
+    /* T624: the File rows lost their verbs ("Open a presentation..."
+       is "Presentation..." under the heading "open"), so the words
+       people still type find them */
+    'mi-open':'open presentation library recent',
+    'mi-load':'open junoview file',
+    'mi-review':'export for review markdown md',
+    'mi-html':'export standalone html web page',
+    'mi-dl':'download a copy save a copy junoview',
+    'deck-howto':'how to use help docs documentation',
+    'pr-talk':'play with talk settings',
+    'pr-tap':'click to enlarge figures zoom',
+    'pl-tap':'click to enlarge figures zoom',
+    'pl-trace':'show code trail',
+    'hm-lay-give':'copy layout to slides give layout',
     'mi-import-pptx':'open powerpoint import pptx',
     /* T601: what Overleaf and LaTeX call it, and what Word calls it */
     'mi-parts':'parts include input subfile master document linked '
@@ -62481,6 +62366,17 @@
       var sh=$('#rbn-shelf'); if(sh&&sh.contains(b)) g=rbnShelfFor;}
     return g;
   }
+  /* T624: a menu row's place is its menu AND the heading above it:
+     "File \u203a open" tells "Presentation..." (open one) from
+     "Presentation" (make one) under "new" */
+  function cmdHeadOf(b){
+    for(var p=b.previousElementSibling;p;p=p.previousElementSibling){
+      var c=p.classList;
+      if(c&&(c.contains('dc-mhead')||c.contains('hd-lab')))
+        return p.textContent.replace(/\s+/g,' ').trim();
+    }
+    return '';
+  }
   function cmdIndex(){
     var out=[],seen=[];
     function add(b,where,tab,g){
@@ -62510,9 +62406,12 @@
         +(g?' › '+rbnGroupName(g):'');
       add(b,where,tab,g);
     });
-    $$('#dc-menu .dc-mi').forEach(function(b){add(b,'File',null,null);});
+    $$('#dc-menu .dc-mi').forEach(function(b){
+      var h=cmdHeadOf(b);
+      add(b,'File'+(h?' \u203a '+h:''),null,null);});
     $$('#play-menu .dc-mi').forEach(function(b){
-      add(b,'Present ▾',null,null);});
+      var h=cmdHeadOf(b);
+      add(b,'Present ▾'+(h?' \u203a '+h:''),null,null);});
     ['#dc-save','#qat-find','#dc-play','#vw-full','#dc-undo','#dc-redo']
       .forEach(function(id){add($(id),'Top bar',null,null);});
     /* T619: the zoom, in the tab row since it left the canvas */
@@ -62570,7 +62469,7 @@
       if(inp.value.trim()){
         var none=document.createElement('div');
         none.className='rbn-search-none';
-        none.textContent='No command called that — try another word';
+        none.textContent='No match';
         list.appendChild(none);
         list.hidden=false;
       } else list.hidden=true;
@@ -62723,6 +62622,19 @@
      otherwise -- so every caller is a callback, which is what a
      dialog that is not modal to the whole browser has to be. */
   var askCb=null,askWired=false;
+  /* T624: the app's "?" (app.js, THE "?"), for what the editor builds in
+     script. The component is the page's, not the editor's: it works
+     before the editor loads, and one listener pair serves both. A page
+     without app.js (none ships one today) gets an empty comment, never
+     a dead button. */
+  function qBtn(text,topic){
+    var A=window.SemApp;
+    return A&&A.qBtn?A.qBtn(text,topic):document.createComment('q');
+  }
+  function qShut(){
+    var A=window.SemApp;
+    if(A&&A.qClose) A.qClose();
+  }
   /* T488: A SMALL FORM. `o.rows` is a list of {k,label,type,value,...}
      -- text (default), number (min/max/step, unit), select (options
      [[value,label]]), check, color (clear:true adds a Default button;
@@ -62769,6 +62681,7 @@
           clearBtn=document.createElement('button');
           clearBtn.type='button';clearBtn.className='dbtn ask-clear';
           clearBtn.textContent='Default';
+          if(r.clearTitle) clearBtn.title=r.clearTitle;
           clearBtn.setAttribute('aria-pressed',hex?'false':'true');
           clearBtn.addEventListener('click',function(e){
             e.stopPropagation();
@@ -62872,6 +62785,14 @@
     var multi=!yes&&!!o.multi,rows=!yes&&Array.isArray(o.rows)&&o.rows.length;
     var inp=$('#ask-in'),area=$('#ask-area'),rowsEl=$('#ask-rows');
     $('#ask-t').textContent=o.title||'Name';
+    /* T624: the longer explanation, behind the title's "?" */
+    var askQ=$('#ask-q');
+    qShut();
+    if(askQ){
+      askQ.hidden=!o.help;
+      askQ.setAttribute('data-q',o.help||'');
+      askQ.setAttribute('aria-label','Help: '+(o.title||''));
+    }
     var what=$('#ask-what');
     what.textContent=o.what||'';what.hidden=!o.what;
     var lab=$('#ask-lab');
@@ -62918,6 +62839,7 @@
     if(askWired) return;
     askWired=true;
     function done(v,why){
+      qShut();
       dlg.hidden=true;
       var f=askCb;askCb=null;
       if(f) f(v,why||'');
@@ -62965,7 +62887,7 @@
      verb, cb(false) for cancel, Escape or the shade, cb('alt') for a
      third button when o.alt names one. */
   function askYes(o,cb){
-    askText({yes:true,title:o.title,what:o.what,note:o.note,
+    askText({yes:true,title:o.title,what:o.what,note:o.note,help:o.help,
       ok:o.ok||'OK',cancel:o.cancel,alt:o.alt,danger:o.danger},
       function(v,why){cb(why==='alt'?'alt':v!==null);});
   }
@@ -62973,7 +62895,7 @@
   function askTell(o,cb){
     if(typeof o==='string') o={title:'Junoview',what:o};
     askText({tell:true,title:o.title||'Junoview',what:o.what,
-      note:o.note,ok:o.ok||'OK'},function(){if(cb) cb();});
+      note:o.note,help:o.help,ok:o.ok||'OK'},function(){if(cb) cb();});
   }
   /* ---- T568: EVERY DIALOG ANSWERS THE SAME KEYS -----------------------
      Cancel on the left and the verb on the right was already the markup's
@@ -63274,7 +63196,7 @@
       docToastOnce('Another window changed this project — merged '
         +'its changes in. Your "'+savedName+'" is intact.');
     } else if(!silent){
-      toast('Saved "'+savedName+'" to junoview_project.json'+embNote());
+      toast('Saved');
     }
     return true;
   }
@@ -63366,7 +63288,7 @@
                 savedName,savedSig);
             }).catch(function(e2){
               toast('Save failed after a conflict: '
-                +((e2&&e2.message)||e2)+' — use File › Download a copy.',
+                +((e2&&e2.message)||e2)+' — use File › Download .junoview.',
                 9000);
               return false;
             });
@@ -63658,12 +63580,6 @@
     return list;
   }
   var lastEmbCount=0;
-  function embNote(){
-    return lastEmbCount
-      ?' — with '+lastEmbCount+' card'+(lastEmbCount===1?'':'s')
-        +' embedded, so it opens without the notebook'
-      :'';
-  }
   /* ---- T433: A FILE HOLDS ONE PRESENTATION ----------------------------
      (2026-09-14, user: "The files on local keep seeming to just save to
      project junoview. Even though that is not the file name which gets
@@ -63896,7 +63812,7 @@
             if(stillSaved(savedName,savedSig)) source='saved';
             else {source='draft';scheduleDraftWrite();}
             status();renderTargetBtn();renderPresRow();
-            if(!silent) toast('Saved to '+(fileName||'your file')+embNote());
+            if(!silent) toast('Saved to '+(fileName||'your file'));
             return true;
           });
         });
@@ -63970,7 +63886,7 @@
     var tf=$('#tg-file');
     if(tf) tf.textContent=canPickFile
       ?'A file on your computer…'
-      :'A file (this browser can’t — use Download a copy)';
+      :'A file (this browser can’t — use Download .junoview)';
     if(tf) tf.disabled=!canPickFile;
     [['#tg-project','project'],['#tg-browser','browser'],
      ['#tg-file','file']].forEach(function(p){
@@ -64004,7 +63920,7 @@
   function chooseSaveFolder(){
     if(!canPickDir){
       toast('This browser cannot pick a folder \u2014 use File \u203a '
-        +'Download a copy');
+        +'Download .junoview');
       return Promise.resolve(false);
     }
     if(!requireName()) return Promise.resolve(false);
@@ -64015,9 +63931,7 @@
       bindFile(pres.name,null);
       setTarget('file');
       return saveToFile(false).then(function(){
-        toast('Every presentation now saves itself into '
-          +deckDirName+' \u2014 this one is '+(fileName||'there')
-          +' already.',6000);
+        toast('Presentations now save to '+deckDirName,6000);
         return true;
       });
     }).catch(function(e){
@@ -64054,7 +63968,15 @@
     if(saveAskEl){overlayHide(saveAskEl);saveAskEl.remove();}
     var m=document.createElement('div');
     m.className='sh-menu save-ask';saveAskEl=m;
-    menuHead(m,'where should this be kept?');
+    var sah=menuHead(m,'save where?');
+    sah.appendChild(qBtn((APP.mode==='app'?'This project: saved next to the '
+      +'notebook it came from.\n\n':'')
+      +(canPickDir?'A folder on this computer: pick it once and every new '
+        +'presentation saves there too, with no size limit.\n\n':'')
+      +'This browser: nothing is written to a file. Clearing the '
+      +'browser\u2019s site data loses the deck, and a deck with many '
+      +'figures can fill the space a browser allows.\n\nChange it any '
+      +'time with \u25be beside Save.','Where to save'));
     function row(label,note,fn){
       var b=document.createElement('button');
       b.className='dbtn vw-opt sa-opt';
@@ -64070,15 +63992,12 @@
       return b;
     }
     if(APP.mode==='app')
-      row('This project','Beside the notebook it came from, on this '
-        +'computer.',function(){
+      row('This project','Next to the notebook',function(){
         setTarget('project');
-        toast('Saving to this project. Change it beside Save.',5000);
       });
     if(canPickDir)
-      row('A folder on this computer','Pick it once. Every presentation '
-        +'after this one saves itself there too, with nothing to answer '
-        +'and no size limit.',function(){chooseSaveFolder();});
+      row('A folder on this computer','No size limit',
+        function(){chooseSaveFolder();});
     /* T296: FOR NOW, AND IT SAYS SO. This read as a third peer choice
        when it is the one answer that can lose your work -- and it is
        still the right default for somebody who just wants to start
@@ -64086,15 +64005,11 @@
        something with a warning attached to that"). The label carries
        the provisional, the note carries the warning, and the row is
        marked so it does not look like the two that keep a file. */
-    var br=row('Keep it in this browser for now',
-      'Nothing is written to a file. Clearing your browser\u2019s site '
-      +'data loses the deck, and one with figures can fill the space a '
-      +'browser allows. Change it beside Save whenever you like.',
+    var br=row('This browser, for now',
+      'Not a file \u2014 clearing site data loses it',
       function(){
       setTarget('browser');
-      toast('Kept in this browser for now \u2014 nothing is on disk. '
-        +'Change it beside Save; a folder on your computer has no size '
-        +'limit and cannot be cleared by accident.',7000);
+      toast('Kept in this browser, not in a file',7000);
     });
     if(br) br.classList.add('sa-warn');
     deckEl.appendChild(m);
@@ -64245,6 +64160,11 @@
     },20000);
   }
   var embedTimer=null;
+  /* T624: "15s", "1m" or "off" -- the File row and the bar's chip say
+     the same short thing */
+  function autoShort(on){
+    return on?(autoSecs<60?(autoSecs+'s'):((autoSecs/60)+'m')):'off';
+  }
   function renderAutosaveItem(){
     /* Two doors, one state: the File menu (where it has always been) and
        the top bar, where you can READ it without opening a menu. A save
@@ -64255,8 +64175,8 @@
     var mi=$('#mi-autosave');
     if(mi){
       mi.hidden=false;
-      mi.textContent='Autosave: '
-        +(on?('every '+autoSecsLabel(autoSecs)):'off');
+      mi.textContent='Autosave: '+autoShort(on);
+      mi.title=on?('Saving every '+autoSecsLabel(autoSecs)):'Autosave is off';
     }
     var qa=$('#qat-auto');
     if(qa){
@@ -64269,8 +64189,7 @@
          characters a second without re-measuring the bar. */
       qa.innerHTML=bic('reload')
         +' <span class="qat-long">Autosave</span>'
-        +'<span class="qat-short">Auto</span> '
-        +(on?(autoSecs<60?(autoSecs+'s'):((autoSecs/60)+'m')):'off')
+        +'<span class="qat-short">Auto</span> '+autoShort(on)
         +'<span class="qat-tick" id="qat-tick"></span>';
       qa.setAttribute('aria-pressed',on?'true':'false');
       qa.title=on
@@ -64456,10 +64375,8 @@
          that threw on quota still rendered "saved to browser · 14:32"
          (2026-08-22). */
       status();
-      toast('NOT saved \u2014 this browser is full. The \u25be beside '
-        +'Save \u203a "A folder on this computer" keeps every '
-        +'presentation as a file instead, with no limit; File \u203a '
-        +'Download a copy saves this one right now.',11000);
+      toast('NOT saved \u2014 browser full. File \u203a Download '
+        +'.junoview',11000);
       return;
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
@@ -64514,7 +64431,7 @@
       close();
       if(!canPickFile){
         toast('This browser can’t save straight to a file — '
-          +'use File › Download a copy');
+          +'use File › Download .junoview');
         return;
       }
       if(!requireName()) return;
@@ -64549,8 +64466,7 @@
       deckDir=null;deckDirName='';
       lsDel(DNKEY);idbDel(DKEY).catch(function(){});
       renderTargetBtn();renderSaveBtn();
-      toast('Junoview will ask which file from now on. The file it '
-        +'already made is still there.',6000);
+      toast('Save will ask for a file from now on',6000);
     });
     /* the folder is remembered between visits, like the file */
     idbGet(DKEY).then(function(d){
@@ -64613,9 +64529,8 @@
           /* T431: SAID OUT LOUD. The page has just opened on a default
              deck in this one's place, and the pill beside Save was the
              only thing that knew where the real one was. */
-          toast('\u201c'+forName+'\u201d is in '+(h.name||'its file')
-            +' \u2014 click \u201cclick to reopen\u201d beside Save to '
-            +'bring it back',12000);
+          toast('\u201c'+forName+'\u201d is in its file \u2014 reopen it '
+            +'beside Save',12000);
         }
       });
     }).catch(function(){});
@@ -64655,9 +64570,8 @@
     importDeckText(txt,true);
     if(saveTarget==='file'&&!fileHandle) fileWaits='pick';
     status();renderTargetBtn();renderSaveBtn();renderPresTabs();
-    toast(nm+' holds '+n+' presentations. A file holds one now, so '
-      +'they are in this browser and Save asks where to write '
-      +'\u201c'+(forName||pres.name)+'\u201d.',12000);
+    toast(n+' presentations opened \u2014 Save asks where to write each',
+      12000);
     return true;
   }
   function fileRestore(txt,forName,force){
@@ -64790,9 +64704,7 @@
        review); loader.py now takes every .junoview.html beside the
        notebook that is not another notebook's, and the toast names
        the other door. */
-    toast('Downloaded '+a.download+'. Next to its .ipynb it loads '
-      +'itself; File \u2192 Open a .junoview file\u2026 opens it anywhere.'
-      +embNote());
+    toast('Downloaded '+a.download);
   });
   menuAction('#mi-load',openDeckFile);
   window.SemDeckOpenFile=openDeckFile;   /* the rail's "+ New" row */
@@ -65010,10 +64922,10 @@
      exactly as the PDF does, and these lay those pages out, scaled, on A4
      sheets, so a handout can never show a slide the PDF would not. The
      sheets are white, with the deck's name and the page along the top. */
-  var PRINT_LAYOUTS=[['slides','Full-page slides'],
-    ['ho3','Handouts \u2014 3 slides a page, with lines for notes'],
-    ['ho6','Handouts \u2014 6 slides a page'],
-    ['notes','Notes pages \u2014 each slide above its speaker notes']];
+  var PRINT_LAYOUTS=[['slides','Slides'],
+    ['ho3','Handout, 3 a page, with note lines'],
+    ['ho6','Handout, 6 a page'],
+    ['notes','Notes pages']];
   var SHEET_W=794,SHEET_H=1123;     /* A4 at 96 px to the inch */
   function handoutify(root,kind){
     var pages=$$('.print-page',root);
@@ -65068,8 +64980,7 @@
         var nt=document.createElement('div');nt.className='ho-notes';
         var txt=sl&&String(sl.notes||'').trim();
         if(txt) nt.innerHTML=notesHtml(sl.notes);
-        else {nt.textContent='No notes for this slide.';
-          nt.classList.add('ho-nonotes');}
+        else nt.classList.add('ho-nonotes');   /* T624: blank on paper */
         row.appendChild(nt);
       }
       body.appendChild(row);
@@ -65143,10 +65054,10 @@
   menuAction('#mi-pdf',function(){
     var last='slides';
     try{last=localStorage.getItem('jv-print-layout')||'slides';}catch(e){}
-    askText({title:'Export PDF / print',
-      what:'What goes on each sheet. In the print dialog, choose "Save as '
-        +'PDF" for a file.',
-      rows:[{k:'lay',label:'Print',type:'select',value:last,
+    askText({title:'PDF / print',
+      what:'For a PDF file, choose \u201cSave as PDF\u201d in the print '
+        +'dialog.',
+      rows:[{k:'lay',label:'Each sheet',type:'select',value:last,
         options:PRINT_LAYOUTS}],ok:'Print\u2026'},function(v){
       if(!v) return;
       try{localStorage.setItem('jv-print-layout',v.lay);}catch(e){}
@@ -65302,11 +65213,8 @@
       setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
       if(root.parentNode) root.remove();   /* by reference, never by id */
       toast(fo.missed
-        ?('Standalone HTML saved \u2014 '+fo.missed+' equation font'
-          +(fo.missed===1?'':'s')+' could not be packed in, so equations '
-          +'need a network connection the first time it is opened')
-        :'Standalone HTML saved — opens anywhere; Ctrl+P there '
-          +'prints at page size');
+        ?'HTML saved \u2014 equations need a network the first time'
+        :'HTML saved');
       });
     });
   }
@@ -66273,33 +66181,24 @@
       pptxItems(s,note,'#ffffff',null);
     });
     if(note.skipped) lost.push(note.skipped+' placed cell'
-      +(note.skipped===1?'':'s')+' with no .pptx shape to become');
+      +(note.skipped===1?'':'s')+' (left out)');
     if(note.web) lost.push(note.web+' live web page'
-      +(note.web===1?'':'s')+' \u2014 a .pptx cannot carry a live page; '
-      +'add a screenshot if it matters');
+      +(note.web===1?'':'s')+' (left out)');
     if(note.maths) lost.push(note.maths+' equation'
-      +(note.maths===1?'':'s')+' — this writer has no LaTeX-to-.pptx '
-      +'path, so they arrive as plain characters');
+      +(note.maths===1?'':'s')+' (as plain text)');
     if(note.tex) lost.push(pptxTexNote(note.tex));
     /* T486: Markdown and rich boxes travel as paragraphs and runs now;
        only a link inside the words is still words alone */
     if(note.links) lost.push(note.links+' link'+(note.links===1?'':'s')
-      +' inside the words of a text box \u2014 the words arrive, the '
-      +'link does not');
-    if(note.exits) lost.push(note.exits+' object'
-      +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
-      +'writer emits entrances only, so they arrive and then stay, '
-      +'stacked over whatever was meant to replace them');
-    if(note.tied) lost.push(note.tied+' item'+(note.tied===1?'':'s')
-      +' tied to a chart series with “only” or “until” '
-      +'— the .pptx is given no way to take them away again, so '
-      +'they stay on the slide once shown');
-    if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
-      +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
-      +'is not');
+      +' in text (words only)');
+    if(note.exits) lost.push(note.exits+' exit animation'
+      +(note.exits===1?'':'s')+' (they stay on)');
+    if(note.tied) lost.push(note.tied+' series-tied item'
+      +(note.tied===1?'':'s')+' (they stay on)');
+    if(note.cropped) lost.push(note.cropped+' crop outline'
+      +(note.cropped===1?'':'s')+' (trim kept)');
     if(note.bands) lost.push(note.bands+' confidence band'
-      +(note.bands===1?'':'s')+' on a chart — a .pptx chart has no band, '
-      +'so the line arrives without it');
+      +(note.bands===1?'':'s')+' (line only)');
     /* builds TRAVEL now (T110) \u2014 what is still approximate is
        the entrance on the two effects PowerPoint spells differently */
     var soft=0;
@@ -66309,8 +66208,7 @@
           soft++;});
     });
     if(soft) lost.push(soft+' rise/zoom build'
-      +(soft===1?'':'s')+' — the click timing is kept, the entrance '
-      +'plays as a fade');
+      +(soft===1?'':'s')+' (as fades)');
     /* TEXT BUILDS. Bullet by bullet TRAVELS -- it leaves as a real
        PowerPoint paragraph build. The other two are named. */
     var sent=0,mdpara=0;
@@ -66321,14 +66219,10 @@
         else if(a.anim.by==='para'&&a.md
                 &&/(^|\n)[ \t]*(\n|$)/.test(String(a.text||''))) mdpara++;
       });});
-    if(sent) lost.push(sent+' sentence-by-sentence text build'
-      +(sent===1?'':'s')+' — a .pptx builds text by PARAGRAPH and '
-      +'has no smaller unit, so each of these arrives as a whole box on '
-      +'one click');
-    if(mdpara) lost.push(mdpara+' Markdown box'+(mdpara===1?'':'es')
-      +' built bullet by bullet — a blank line in the source is a '
-      +'paragraph in the .pptx and not a bullet here, so it takes a few '
-      +'more clicks there than it does on this slide');
+    if(sent) lost.push(sent+' sentence build'
+      +(sent===1?'':'s')+' (whole box)');
+    if(mdpara) lost.push(mdpara+' Markdown bullet build'
+      +(mdpara===1?'':'s')+' (more clicks)');
     return lost;
   }
   function pptxConfirmLosses(orig){
@@ -66336,9 +66230,14 @@
     if(!lost.length) return Promise.resolve(true);
     return new Promise(function(res){
       askYes({title:'Export .pptx?',
-        what:'Everything else comes across, but this will not:\n\n\u2022 '
+        what:'These will not come across:\n\n\u2022 '
           +lost.join('\n\u2022 '),
-        note:'Export PDF keeps all of it exactly as you see it.',
+        note:'PDF keeps all of it.',
+        help:'A .pptx has no LaTeX, no exit animations, no live web pages '
+          +'and no chart bands, and it builds text a paragraph at a time, '
+          +'so these arrive simplified. A link inside a text box arrives '
+          +'as plain words.\n\nExport a PDF to keep everything exactly as '
+          +'you see it.',
         ok:'Export .pptx',cancel:'Not now'},function(y){res(y===true);});
     });
   }
@@ -66387,8 +66286,7 @@
           APP.api('/api/reveal',{path:j.path,how:how}).catch(function(e){
             toast('Could not open it: '+((e&&e.message)||e),8000);});
         }
-        toastActs(msg.replace('.pptx saved','Saved '+j.name+' in '
-          +(j.folder||'Downloads'))+' \u2014 it opens ready to edit.',
+        toastActs(msg.replace('.pptx saved','Saved '+j.name),
           [['Open it',function(){reveal('open');}],
            ['Show in folder',function(){reveal('folder');}]],12000);
       }).catch(function(e){
@@ -66403,9 +66301,8 @@
     var windows=/Windows/i.test(String(navigator.userAgent||''));
     if(windows&&lsGet(PV_TOLD_KEY)!=='1'){
       lsSet(PV_TOLD_KEY,'1',true);
-      toastActs(msg+'. PowerPoint will open it in Protected View \u2014 '
-        +'press Enable Editing there.',
-        [['Why, and how to stop it\u2026',pptxProtectedHelp]],14000);
+      toastActs(msg+' \u2014 press Enable Editing in PowerPoint',
+        [['Why?',pptxProtectedHelp]],14000);
       return;
     }
     toast(msg);
@@ -66482,32 +66379,16 @@
       }),
     });
     var fname=(pres.name||'presentation')+'.pptx';
-    var msg='.pptx saved — text stays editable'+outputNote();
-    var noted=outputSlides(true).filter(function(e){
-      return e.s&&e.s.notes&&e.s.notes.trim();}).length;
-    if(noted) msg+='. Speaker notes came across on '+noted+' slide'
-      +(noted===1?'':'s');
-    /* tables convert now (T109), so naming them here would send
-       people to the PDF for something that already worked */
-    if(note.skipped) msg+='. '+note.skipped+' cell'
-      +(note.skipped===1?'':'s')+' could not convert (a rich output with '
-      +'no picture and no text — use Export PDF for those)';
-    if(note.exits) msg+='. '+note.exits+' object'
-      +(note.exits===1?'':'s')+' meant to leave on a later click will '
-      +'stay \u2014 the .pptx gets entrances only from here';
-    if(note.tied) msg+='. '+note.tied+' series-tied item'
-      +(note.tied===1?'':'s')+' will stay once shown — '
-      +'“only” and “until” need an exit this '
-      +'writer does not have';
-    if(note.sat) msg+='. '+note.sat+' picture'+(note.sat===1?'':'s')
-      +' keep their colour saturation only here \u2014 the .pptx has the '
-      +'brightness, contrast and greyscale';
-    if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
-      +(note.cropped===1?'':'s')+' not carried (the .pptx keeps the '
-      +'trim, not the outline)';
-    if(note.maths) msg+='. '+note.maths+' equation'
-      +(note.maths===1?'':'s')+' came across as plain text \u2014 '
-      +'this writer has no LaTeX-to-.pptx path, so they were flattened';
+    /* T624: what did not travel was asked about before (Export
+       .pptx?); the toast adds the two counts not on that list */
+    var msg='.pptx saved'+outputNote(),tail=[];
+    if(note.skipped) tail.push(note.skipped+' cell'
+      +(note.skipped===1?'':'s')+' not converted');
+    if(note.sat) tail.push(note.sat+' picture'
+      +(note.sat===1?'\u2019s':'s\u2019')+' saturation not kept');
+    if(tail.length) msg+=' ('+tail.join(', ')+')';
+    /* equations kept as their TeX because MathJax was away are learnt
+       only while the file is written, so the toast says so too */
     if(note.tex) msg+='. '+pptxTexNote(note.tex);
     pptxDeliver(out.blob,fname,msg);
     /* one honest tally for the caller: the builder counts items IT could not
@@ -66766,8 +66647,7 @@
         +(dropped?(' \u2014 '+dropped+' would not fit and '
           +(dropped>1?'were':'was')+' not kept'):''));
     else
-      toast('Opened \u201c'+first.name+'\u201d \u2014 too big for a '
-        +'browser copy, so it lives in its file: Save writes it there'
+      toast('Opened \u201c'+first.name+'\u201d \u2014 saves to its file'
         +(imported>1?(' \u2014 '+(imported-1)+' smaller deck'
           +(imported>2?'s':'')+' from the file went into the library'):'')
         +(dropped?(' \u2014 '+dropped+' other'+(dropped>1?'s':'')
@@ -66776,6 +66656,7 @@
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
+  window.SemDeckAsk=askText;   /* browser-verification hook (T624: a question's "?") */
   window.SemDeckImportAsk=importDeckTextAsk; /* ...and the asking door (T527) */
   window.SemDeckFileHtml=function(){return junoviewFileHtml();};
   /* ---- T597: A SAVED FILE HANDS ITS PRESENTATION OVER ------------------
@@ -66799,8 +66680,7 @@
     catch(e){}
     var src=window.opener;
     if(!src){
-      toast('Nothing was handed over \u2014 to open a saved presentation, '
-        +'use Open\u2026 or drop the file onto this window',9000);
+      toast('Nothing to open \u2014 drop the file again',9000);
       return;
     }
     window.addEventListener('message',function(e){
@@ -66879,8 +66759,7 @@
       /* the folder Junoview saves into mints this deck's file there */
       setTarget('file');
       if(same&&dir&&dir===deckDirName&&file===deckFileName())
-        toast('Opened \u2014 Save writes back to '+file+' in your '+dir
-          +' folder',8000);
+        toast('Opened \u2014 saves to '+dir+'/'+file,8000);
       else
         toast('Opened from '+file+'. It saves into your '+deckDirName
           +' folder as '+deckFileName()+' \u2014 to keep using '+file
@@ -66891,14 +66770,11 @@
     fileName=file;
     if(canPickFile){
       setTarget('file');
-      toast('Opened from '+file+'. A browser page cannot write to a file '
-        +'it did not pick itself, so the first Save asks where \u2014 '
-        +'choose '+file+(dir?(' in '+dir):'')+' to keep saving to it.',
-        12000);
+      toast('Opened \u2014 the first Save asks where',12000);
     } else {
       setTarget('browser');
       toast('Opened from '+file+' \u2014 kept in this browser. Use '
-        +'Download a copy to write it back out.',10000);
+        +'Download .junoview to write it back out.',10000);
     }
   }
   /* ---- OPENING A .junoview FILE ---------------------------------------
@@ -66920,9 +66796,7 @@
     if(n<2) return false;
     if(saveTarget==='file'&&!fileHandle) fileWaits='pick';
     status();renderTargetBtn();renderSaveBtn();
-    toast('Opened '+n+' presentations from '+(name||'that file')
-      +' into this browser. A file holds one presentation now, so each '
-      +'saves to its own file \u2014 Save asks where the first time.',
+    toast(n+' presentations opened \u2014 Save asks where to write each',
       10000);
     return true;
   }
@@ -67035,9 +66909,7 @@
             +'computer');
         } else {
           setTarget('browser');
-          toast('Opened \u2014 this browser cannot save straight back '
-            +'to a file, so it is kept here as a draft. Use Download to '
-            +'write it out.');
+          toast('Opened as a draft \u2014 Download to save');
         }
     }
   })();
@@ -67052,8 +66924,7 @@
        away every change since the last save. It says what it goes back
        to, and there is nothing to ask about when nothing has changed. */
     if(source==='saved'||saveKind==='manual'){
-      toast('Nothing to discard — “'+nm+'” is as it was '
-        +'last saved');
+      toast('Nothing to discard');
       return;
     }
     if(saveTarget==='file'&&fileHandle&&fileHandle.getFile){
@@ -67425,9 +67296,7 @@
       deckMetaSet(nm,{file:null});
       if(saveTarget==='file') fileWaits='pick';
       renderTargetBtn();renderSaveBtn();status();
-      toast('Renamed to \u201c'+nm+'\u201d. '+oldFile+' keeps the old '
-        +'name \u2014 press Save once and it asks where to write '
-        +newName+'; every autosave after that goes there.',10000);
+      toast('Renamed \u2014 the next Save asks where',10000);
       return false;
     }
     function moveOrSay(){
@@ -68259,8 +68128,7 @@
     lost=lost||[];
     var pg=pptPagePreset(spec.widthMm,spec.heightMm);
     if(pg.off) lost.push('a '+Math.round(spec.widthMm||0)+'×'
-      +Math.round(spec.heightMm||0)+' mm page — shown at the nearest '
-      +'of this editor’s page sizes ('+pg.label+')');
+      +Math.round(spec.heightMm||0)+' mm page (as '+pg.label+')');
     var nm=String(name||spec.title||'presentation')
       .replace(/\.[A-Za-z0-9]+$/,'');
     var pr={name:nm||'presentation',page:pg.id,slides:[]};
@@ -68298,9 +68166,13 @@
     if(!lost.length) return Promise.resolve(true);
     return new Promise(function(res){
       askYes({title:'Import \u201c'+name+'\u201d?',
-        what:'Everything else comes across, but this will not:\n\n\u2022 '
+        what:'These will not come across:\n\n\u2022 '
           +lost.join('\n\u2022 '),
         note:'The .pptx itself is not changed.',
+        help:'A .pptx can hold things this editor does not have, so these '
+          +'arrive simplified or are left out; everything else comes '
+          +'across editable.\n\nA chart of a kind this cannot read comes '
+          +'across if you save it as a picture in PowerPoint first.',
         ok:'Import it',cancel:'Not now'},function(y){res(y===true);});
     });
   }
@@ -68362,11 +68234,9 @@
       fileName=pr.name+'.junoview.html';
       if(canPickFile) setTarget('file');
       toast('Imported '+pr.slides.length+' slide'
-        +(pr.slides.length===1?'':'s')+' from '+nm
-        +' — text, shapes, pictures and notes stay editable'
-        +(lost.length?'. '+lost.length+' thing'
-          +(lost.length===1?'':'s')+' did not come across (you saw the '
-          +'list)':''),6000);
+        +(pr.slides.length===1?'':'s')
+        +(lost.length?' \u2014 '+lost.length+' thing'
+          +(lost.length===1?'':'s')+' skipped':''),6000);
     });
   }
   function pptxFileB64(file){
@@ -68385,8 +68255,7 @@
     var name=file.name||'presentation.pptx';
     var web=!!(window.semPy&&window.semPy.importPptx);
     if(APP.mode!=='app'&&!web){
-      toast('.pptx import needs the Junoview app or the web build '
-        +'— this page has no reader for a .pptx',6000);
+      toast('.pptx import needs the Junoview app or web build',6000);
       return true;
     }
     toast('Reading '+name+'…');
@@ -68711,16 +68580,14 @@
     comp.appendChild(lab);
     var ta=document.createElement('textarea');
     ta.className='ask-in ask-area cmt-ta';ta.id='cmt-new';ta.rows=3;
-    ta.placeholder='Select an object to comment on it, or leave nothing '
-      +'selected to comment on the slide';
+    ta.placeholder='Write a comment\u2026';
     ta.value=cmtDraft;
     ta.addEventListener('input',function(){cmtDraft=ta.value;});
     comp.appendChild(ta);
     var row=document.createElement('div');row.className='cmt-row';
-    var hint=document.createElement('span');hint.className='cmt-hint';
-    hint.textContent='Ctrl+Enter posts';
     var post=document.createElement('button');
     post.type='button';post.className='dbtn primary';post.textContent='Post';
+    post.title='Post (Ctrl+Enter)';
     function doPost(){
       if(!ta.value.trim()){ta.focus();return;}
       var c=cmtAdd(ta.value);
@@ -68732,7 +68599,7 @@
       if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();doPost();}
       if(e.key==='Escape'){e.preventDefault();ta.blur();}
     });
-    row.appendChild(hint);row.appendChild(post);
+    row.appendChild(post);
     comp.appendChild(row);
     body.appendChild(comp);
     /* the list */
@@ -69929,12 +69796,10 @@
     if(narrRec||mode==='view'||!pres.slides[cur]) return;
     if(!narrCan()){
       askTell({title:'Recording is not available here',
-        what:'This browser cannot record from a microphone on this page.',
-        note:'Open Junoview in a current Chrome, Edge, Firefox or Safari, '
-          +'from the app or its web address, and try again.'});
+        what:'This browser cannot record.',
+        note:'Try a current Chrome, Edge, Firefox or Safari.'});
       return;
     }
-    toast('Asking for the microphone…');
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
       var mt=narrMime();
       narrRec={stream:stream,mime:mt,base:narrBase(mt),deck:pres,
@@ -69952,12 +69817,10 @@
         what:denied
           ?'The browser was not allowed to use the microphone, so '
             +'nothing was recorded.'
-          :'No microphone could be opened, so nothing was recorded.',
+          :'No microphone found.',
         note:denied
-          ?'Allow the microphone for this page (the icon at the left of '
-            +'the address bar) and press Record narration again.'
-          :'Plug one in or choose one in your system settings, then try '
-            +'again.'});
+          ?'Allow the microphone for this page, then try again.'
+          :'Plug one in, then try again.'});
     });
   }
   /* ---- TAKES ------------------------------------------------------------ */
@@ -70037,8 +69900,7 @@
       narrAudio.src=mediaBlobUrl(n.vkey);
       var p=narrAudio.play();
       if(p&&p.catch) p.catch(function(){
-        toast('The browser held the narration back — click the '
-          +'slide once and it will speak on the next one');
+        toast('Click the slide once to allow sound');
       });
     });
   }
@@ -70086,8 +69948,8 @@
     var takes=[];
     R.takes.forEach(function(v,s){takes.push([s,v]);});
     if(!takes.length){
-      toast('No narration was kept — a slide needs at least '
-        +NARR_MIN+' seconds of talking');
+      toast('Nothing kept \u2014 each slide needs '+NARR_MIN
+        +' s of talking');
       return;
     }
     /* after the ink's question, never over it */
@@ -70096,9 +69958,9 @@
     var total=0;
     takes.forEach(function(t){total+=t[1].dur;});
     askYes({title:'Keep the narration?',
-      what:'You recorded '+takes.length+' slide'
-        +(takes.length===1?'':'s')+', '+mediaClock(total)+' in all.',
-      note:'Kept, each slide speaks when it comes up in the show, and the '
+      what:takes.length+' slide'
+        +(takes.length===1?'':'s')+', '+mediaClock(total),
+      help:'Kept, each slide speaks when it comes up in the show, and the '
         +'recording travels with the deck. Ctrl+Z takes it all back off.',
       ok:'Keep narration',alt:'Discard'},
       function(v){
@@ -70131,8 +69993,7 @@
     if(!deckEl.hidden&&mode!=='view'&&typeof renderFilm==='function')
       renderFilm();
     if(typeof renderNotesPane==='function') renderNotesPane();
-    toast('Narration kept on '+n+' slide'+(n===1?'':'s')
-      +' — Ctrl+Z takes it back off');
+    toast('Narration kept on '+n+' slide'+(n===1?'':'s'));
   }
   /* ---- THE RECORDING BAR -------------------------------------------------
      On the page, not the stage (which is rebuilt on every build), at the
@@ -70208,7 +70069,7 @@
     var lab=document.createElement('span');lab.className='np-narr-lab';
     box.appendChild(lab);
     if(!n){
-      lab.textContent='No narration — Present › Record narration';
+      lab.textContent='No narration';
       return;
     }
     lab.innerHTML=bic('mic')+' Narration · '+mediaClock(n.dur);
@@ -70226,7 +70087,7 @@
       markDirty();
       if(typeof renderFilm==='function') renderFilm();
       narrPaneSync();
-      toast('Narration deleted from this slide — Ctrl+Z puts it back');
+      toast('Narration deleted — Ctrl+Z undoes');
     });
     box.appendChild(play);box.appendChild(del);
   }
@@ -70238,8 +70099,8 @@
     if(narrPrevKey===n.vkey&&!narrPrev.paused){
       narrPrev.pause();btn.innerHTML=bic('play')+' Play';return;}
     mediaGet(n.vkey).then(function(rec){
-      if(!rec){toast('This narration is not in this browser — open the '
-        +'deck from its saved file or project to hear it');return;}
+      if(!rec){toast('Not in this browser — open the saved file to hear '
+        +'it');return;}
       if(narrPrevKey!==n.vkey){narrPrev.src=mediaBlobUrl(n.vkey);
         narrPrevKey=n.vkey;}
       var p=narrPrev.play(); if(p&&p.catch) p.catch(function(){});
@@ -70252,7 +70113,7 @@
     var b=$('#talk-narr'); if(!b) return;
     b.setAttribute('aria-pressed',narrMute?'true':'false');
     var st=b.querySelector('.tk-state');
-    if(st) st.textContent=narrMute?'off':'playing';
+    if(st) st.textContent=narrMute?'Off':'Playing';
     b.title=narrMute?'Recorded narration is off for this talk. Press '
       +'again to let each slide speak':'Each slide with recorded narration '
       +'speaks when it comes up. Press to give the talk yourself';
@@ -70266,9 +70127,8 @@
       e.stopPropagation();
       narrMute=!narrMute;
       if(narrMute) narrStopPlay(); else narrPlay(pres.slides[cur]);
+      /* T624: no toast -- the button says Off or Playing */
       narrTalkSync();
-      toast(narrMute?'Narration off — the slides are silent'
-        :'Narration on — each slide speaks when it comes up');
     });
     narrTalkSync();
   }
