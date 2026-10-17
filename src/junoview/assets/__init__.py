@@ -122,6 +122,7 @@ DECK_PARTS = (
     "47-charts",
     "48-animation",
     "48b-motion",
+    "48c-anim-rule",
     "49-media",
     "50-review-and-overview",
     "51-talk-tools",

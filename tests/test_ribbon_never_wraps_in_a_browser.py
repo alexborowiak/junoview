@@ -19,12 +19,21 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 import pytest
 
 PROBE = Path(__file__).with_name("ribbon_fit_probe.js")
-LAYOUTS = ("default", "familiar-office-ribbon", "side")
+# EVERY ribbon layout (2026-10-12: a door added to three generated layouts
+# squeezed a tile into a group of small buttons and forced a third row in
+# one of them, and this walk -- which only knew Default, Familiar and the
+# side rail -- never saw it). test_every_ribbon_layout_is_walked keeps
+# this list whole.
+LAYOUTS = ("default", "familiar-office-ribbon", "scope-deck-slide-object",
+           "sources-own-tab", "density-everyday-first",
+           "journey-poster-first", "density-one-row", "web-canvas-rail",
+           "radical-ten-then-more", "side")
 
 
 def _deck(pg) -> dict:
@@ -123,6 +132,17 @@ def _tabs(pg):
         "[...document.querySelectorAll('#rbn-tabs .rbn-tab')]"
         ".filter(b=>b.getClientRects().length"
         "&&!b.classList.contains('rbn-tab-off')).map(b=>b.id)")
+
+
+def test_every_ribbon_layout_is_walked():
+    """Not opt-in: a layout added to 07-ribbon-layouts.js and not to the
+    walk above fails here, in the ordinary suite."""
+    src = (Path(__file__).resolve().parent.parent / "src" / "junoview"
+           / "assets" / "js" / "deck" / "07-ribbon-layouts.js").read_text(
+               encoding="utf-8")
+    ids = re.findall(r"\{id:'([a-z0-9-]+)',\s*name:'", src)
+    assert len(ids) >= 9, ids
+    assert set(ids) | {"side"} == set(LAYOUTS), set(ids) ^ set(LAYOUTS)
 
 
 def _widths() -> list[tuple[int, int]]:

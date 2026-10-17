@@ -126,11 +126,14 @@
     var o=moOpt(a);
     el.style.setProperty('--mo-amp',String(o.amp));
     var inL='',inSec=0;
+    /* T625: an entrance with a length of its own (anim.dur) keeps it */
+    var own=(a.anim&&+a.anim.dur>0)?Math.min(10,+a.anim.dur):0;
     Object.keys(MO_IN).forEach(function(t){
       if(!el.classList.contains('an-anim-'+t)) return;
       var e=MO_IN[t];
       inL=e[0]+' '+e[1]+'s '+e[2];
       inSec=e[1];
+      if(own){inL=e[0]+' '+own+'s '+e[2];inSec=own;}
     });
     var layer='an-'+a.motion+' '+(b[2]/(o.sp||1)).toFixed(2)+'s '
       +(o.ease||b[3])+' '+(inSec+o.dl).toFixed(2)+'s '

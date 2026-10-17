@@ -340,7 +340,14 @@
   function syncFilmBuild(i){
     var row=$('#film-list .film-row[data-idx="'+i+'"]');
     var s=pres.slides[i];if(!row||!s) return;
-    row._key=null;   /* redrawn here: never kept as it was filed */
+    /* redrawn here: never kept as it was filed -- but its PICTURE still
+       is what it was filed with (_fk), so the next build can keep the
+       row and count its clicks again (filmSameBut, T625) */
+    row._key=null;
+    filmMarks(row,s);
+  }
+  /* the row's count of clicks, from the slide as it is now */
+  function filmMarks(row,s){
     var marks=row.querySelector('.film-marks'),tag=row.querySelector('.film-mark.anim');
     var n=slideStops(s);
     if(!n){
@@ -390,7 +397,7 @@
        the rows that stayed are never taken out and put back. A row's
        handlers read its index off the row, never out of the loop,
        because a kept row can be standing somewhere else now. */
-    var old=filmRows,next=new Map(),nodes=[];
+    var old=filmRows,next=new Map(),nodes=[],taken=new Set(),byIdx=null;
     /* the strip changes its rows, so a context menu left open is
        holding an index into rows that may mean another slide now */
     var om=$('#film-menu'); if(om) om.remove();
@@ -438,7 +445,31 @@
         [fold[i]?1:0,skipped?1:0,isAlt?(i-ar.at)+'/'+no:'',
          ar?ar.n+(altOpen[ar.gid]?'+':'-'):''].join(','));
       var kept=key?filmTake(old,key):null;
+      /* T625: A SLIDE WHOSE CLICKS ALONE CHANGED KEEPS ITS ROW. The key
+         is the slide as JSON, so an animation applied to sixty slides --
+         or its undo, which hands back sixty new slide objects -- missed
+         every row and drew sixty thumbnails again (2026-10-12 review:
+         renderFilm 179 ms at 4x on the undo, 61 on the first slide
+         change after the apply). The picture draws nothing of an
+         animation (miniDiagram), so the row that stood at this index,
+         filed from a slide that differs from this one in its entrances,
+         exits and focuses only, is kept, and its count of clicks
+         redone. */
+      if(!kept&&key&&s.layout!=='title'){
+        if(!byIdx){
+          byIdx={};
+          old.forEach(function(rows){rows.forEach(function(r){
+            if(r._fk&&!taken.has(r)) byIdx[r.dataset.idx]=r;});});
+        }
+        var cand=byIdx[i];
+        if(cand&&!taken.has(cand)&&filmSameBut(cand,key,s)){
+          kept=cand;kept._key=key;kept._fk=key;
+          if(kept._ph) kept._js=key.split('\u0001')[5];
+          filmMarks(kept,s);
+        }
+      }
       if(kept){
+        taken.add(kept);
         filmRowMoved(kept,i,isAlt?null:no);
         filmPut(next,key,kept);nodes.push(kept);
         return;
@@ -616,7 +647,7 @@
         if(s.layout==='title')
           key=filmRowKey(base,s,s.sec?secOrd[s.sec]:'',
             key.slice(key.lastIndexOf('\u0002')+1));
-        row._key=key;filmPut(next,key,row);
+        row._key=key;row._fk=key;row._pj=null;filmPut(next,key,row);
       }
       nodes.push(row);
     });
@@ -624,7 +655,8 @@
     filmReconcile(list,nodes);
     /* the rows that did not come round again are gone from the list:
        their boxes no longer wait to be drawn */
-    old.forEach(function(rows){rows.forEach(filmUnlazy);});
+    old.forEach(function(rows){rows.forEach(function(r){
+      if(!taken.has(r)) filmUnlazy(r);});});
     filmRows=next;
     list.scrollTop=keepTop;list.scrollLeft=keepLeft;   /* T412 */
     filmKeepCurrent(list);
@@ -732,6 +764,8 @@
     var o={};
     Object.keys(pres).sort().forEach(function(k){
       if(k==='slides'||k==='notes'||k==='pad'||k==='emb'||k==='media') return;
+      /* T625: the rule new slides get draws nothing on any row */
+      if(k==='animRule') return;
       var v=pres[k];
       if(v==null||(typeof v==='object'&&!Object.keys(v).length)) return;
       /* whether a section is folded is the strip's place, not what any
@@ -798,6 +832,65 @@
   }
   function filmRowKey(base,s,sord,place){
     return filmThumbKey(base,s,sord)+'\u0002'+place;
+  }
+  /* T625: whether this row, filed under `fk`, draws what `key` -- the
+     slide `s` as it is now -- would, but for the slide's animations:
+     every part of the keys the same, and the slides the same once their
+     objects' entrances, exits and focuses are set aside (the slide is
+     the sixth part: the base is five). The row's own slide, so set
+     aside, is worked out once and kept on it (_pj) for the next time:
+     an undo straight after an apply then reads sixty strings it already
+     has rather than parsing sixty slides again. */
+  var FILM_ANIM_KEYS={anim:1,out:1,focus:1};
+  function filmSameBut(row,key,s){
+    var fk=row._fk;
+    if(!fk||!key) return false;
+    var a=fk.split('\u0001'),b=key.split('\u0001');
+    if(a.length!==b.length||a.length<8) return false;
+    for(var k=0;k<a.length;k++) if(k!==5&&a[k]!==b[k]) return false;
+    var was=row._pj;
+    if(was==null){
+      try{was=filmPicJson(JSON.parse(a[5]));}catch(e){return false;}
+      row._pj=was;
+    }
+    var now=filmPicJson(s);
+    if(was!==now) return false;
+    row._pj=now;
+    return true;
+  }
+  /* ...and worked out ahead, in idle moments a few rows at a time, for
+     the rows whose slides an apply has just changed (T625): the first
+     slide change after it then compares strings it already has, as the
+     undo does, rather than parsing sixty slides while you wait */
+  function filmPrimePics(idxs){
+    var left=(idxs||[]).slice();
+    var ric=window.requestIdleCallback||function(f){
+      return setTimeout(function(){f({timeRemaining:function(){return 8;}});},50);};
+    function step(dl){
+      while(left.length&&dl.timeRemaining()>3){
+        var row=$('#film-list .film-row[data-idx="'+left.shift()+'"]');
+        if(!row||!row._fk||row._pj!=null) continue;
+        var a=row._fk.split('\u0001');
+        if(a.length<8) continue;
+        try{row._pj=filmPicJson(JSON.parse(a[5]));}catch(e){}
+      }
+      if(left.length) ric(step,{timeout:2000});
+    }
+    if(left.length) ric(step,{timeout:2000});
+  }
+  /* the slide as JSON with its objects' animations set aside; the slide
+     itself is not touched */
+  function filmPicJson(s){
+    if(!s||!Array.isArray(s.annots)) return JSON.stringify(s);
+    var c={};
+    for(var k in s) if(Object.prototype.hasOwnProperty.call(s,k)) c[k]=s[k];
+    c.annots=s.annots.map(function(a){
+      if(!a||typeof a!=='object') return a;
+      var o={};
+      for(var q in a) if(!FILM_ANIM_KEYS[q]) o[q]=a[q];
+      return o;
+    });
+    return JSON.stringify(c);
   }
   /* THE SORTER DRAWS WITH THE STRIP'S PICTURES (editor #11). A function
      that hands back a copy of the strip's thumbnail of a slide, when
@@ -968,7 +1061,7 @@
        was filed under (an edit that redrew no strip, a title's
        defaults filled in by the drawing), the row is redrawn whole at
        the next build rather than kept */
-    if(JSON.stringify(s)!==row._js) row._key=null;
+    if(JSON.stringify(s)!==row._js){row._key=null;row._fk=null;row._pj=null;}
     row._js=null;
   }
   function filmUnlazy(row){

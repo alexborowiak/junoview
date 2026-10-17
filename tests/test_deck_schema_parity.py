@@ -126,6 +126,8 @@ DECK_SENTINELS = {
     # T368: which type a layout slot actually gets, so a variation you
     # chose survives into the next new slide
     "slot": {"h1": "t7"},
+    # T625: the animation rule New slide gives the slides it makes
+    "animRule": {"k": {"text": {"fx": "fade", "st": "click"}}, "nw": 1},
 }
 
 SLIDE_SENTINELS = {

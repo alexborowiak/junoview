@@ -259,16 +259,29 @@
         if(a.k==='cell'&&typeof embedIfAbsent==='function') embedIfAbsent(a);
       });
     });
+    /* T625: animations asked for BY A RULE the dialog named -- a
+       presentation that keeps one for new slides -- in place of the
+       plain one per click. Never the rule of whichever deck the editor
+       had last: nothing on screen says which that is. */
+    var ruleFrom=(plan&&plan.animations&&plan.animRuleFrom)||'';
+    var ruled=(ruleFrom&&typeof animRuleForNew==='function')
+      ?animRuleForNew(pr,animRuleOfDeck(ruleFrom)):0;
     /* 'keep': a deck made from the notebook is always a NEW deck, so a
        name that is taken takes the next free one (T236, T527) */
     var n=importDeckText(JSON.stringify({presentations:[pr]}),false,'keep');
     if(n) toast(pr.slides.length+' slide'+(pr.slides.length===1?'':'s')
       +' from '+where+' — section headings as titles, the markdown '
-      +'and figures placed beneath. It is a new presentation; edit away.',
+      +'and figures placed beneath. It is a new presentation; edit away.'
+      +(ruled?' Animated by the rule of \u201c'+ruleFrom+'\u201d.':''),
       6000);
     return n;
   }
   function autoDeckBoot(){
     window.SemApp.deckAuto=autoDeckImport;
+    /* T625: the decks whose animation rule Create slides may name. Here,
+       at load, with deckAuto -- the editor's tools boot only when it is
+       first entered, and a reader that had not opened a deck was
+       offered no rule at all (2026-10-17 review) */
+    window.SemApp.deckAnimRules=animRuleNames;
     window.SemDeckAutoBuild=autoDeckBuild;    /* browser-verification hook */
   }

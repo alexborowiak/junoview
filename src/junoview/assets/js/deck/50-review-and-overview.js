@@ -633,6 +633,9 @@
          +'(Ctrl+D)'],
        ['sec','plus','New section','Start a section at the first picked '
          +'slide'],
+       /* T625: the picked slides are the "some slides" of the rule */
+       ['anim','stagger','Animate\u2026','Give the picked slides an '
+         +'animation rule'],
        ['del','exit','Delete','Delete the picked slides (Delete). Ctrl+Z '
          +'brings them back']].forEach(function(b){
         var x=document.createElement('button');
@@ -765,6 +768,7 @@
       var k=pickedIdx().length,many=k>1?(' '+k):'';
       tb.open.disabled=k!==1;
       tb.dup.disabled=!k;tb.sec.disabled=!k;tb.del.disabled=!k;
+      tb.anim.disabled=!k||(pageOf&&!!pageOf().poster);
       tb.dup.innerHTML=bic('copy')+' Duplicate'+many;
       tb.del.innerHTML=bic('exit')+' Delete'+many;
     }
@@ -828,6 +832,11 @@
     function act(what){
       var idxs=pickedIdx(); if(!idxs.length&&what!=='all') return;
       if(what==='open'){openAt(idxs[0]);return;}
+      if(what==='anim'){
+        overviewClose();
+        if(typeof animRuleOpen==='function') animRuleOpen(idxs);
+        return;
+      }
       if(what==='dup'){
         var copies=[];
         /* last first, so each copy lands after its own slide and the
@@ -6124,6 +6133,10 @@
         if(lay&&!lay.poster) applyLayout(ns,lay);
       }
       pres.slides.splice(at,0,ns);
+      /* T625: a deck that keeps an animation rule for new slides gives
+         it to this one now, before the markDirty below -- the slide and
+         its animation are one undo step */
+      if(typeof animRuleNewSlide==='function') animRuleNewSlide(ns);
     } else {
       var src=pres.slides[cur];
       /* name the page you were already on first, so the two read as a

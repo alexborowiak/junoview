@@ -12080,3 +12080,148 @@ work was running on `main` at the time.
   toast), after T613 and T614 land; Quick animate and the animation
   labels (48b-motion.js, 48-animation.js, "On a final click"), after
   T625.
+
+- [x] **T625 — One animation rule for many slides.** The user
+  (2026-10-11): "animation rule that can be applied to all slides and
+  or slide selection". Animating a talk meant doing every slide by hand,
+  though the answer is nearly always the same on every slide: the title
+  is there, the bullets come in one at a time, then the figure.
+  *Done 2026-10-11.* (Its two reviews' findings, fixed 2026-10-12 and
+  2026-10-17, are below.) **Animation → Apply to
+  slides…** (a tile of its own, "Many slides", after Whole slide; in a
+  generated ribbon layout that files it among small two-row buttons it
+  is one of them, icon and words on one line) opens one dialog. A row
+  per KIND of thing on a slide -- titles (the slide's best heading), text
+  boxes (whole, or a bullet at a time), figures & charts (notebook
+  figures and outputs, flip books, charts), pictures & media, tables,
+  code, shapes & diagrams (a group arrives as one) -- each with its
+  entrance from the gallery's set or None, On click / With previous /
+  After 1, 2, 3 or 5 s, a speed (Normal, Fast 0.25 s, Slow 1 s,
+  Slower 2 s), and At a time: one by one, or All together on one click
+  (text: Whole box, By bullet or All together); the order the kinds come in (↑ Earlier on a row), or Top
+  to bottom as placed; the slide transition, or leave it; and a slide
+  the apply reaches drawn small in the kinds' colours, with the click
+  each thing arrives on and Play. It goes to this slide, some slides
+  (typed, "2-4, 7", or picked in the slide sorter, whose bar has
+  **Animate…** -- the strip keeps no selection of slides to read), or
+  all of them. Every open starts on this slide (or the sorter's picks,
+  for that open only) with Keep theirs, the default, which animates only
+  what has no animation -- and leaves a group alone when any of it is
+  animated; Replace redoes the entrances, keeps each exit and focus with
+  the arrival it shared a click with, and says -- in the dialog before
+  Apply and in the toast after -- how many entrances it takes off for a
+  kind on None. Text that starts After a few seconds arrives whole (a
+  stop that runs itself is the stop a box begins on, T169), so By bullet
+  is greyed while After is chosen, with the reason. **Copy this slide**
+  fills the rule in from what the slide already does, kind by kind; a
+  kind is With previous exactly when something of an earlier kind
+  arrives on its first click, so a slide whose kinds each arrive one
+  by one or all together comes back unchanged (a kind half together,
+  or kinds that interleave, copy as the nearest rule -- a rule has one
+  order of kinds). **New slides too** keeps the rule on the
+  deck (`animRule`, in DECK-FORMAT.md and the schema): a slide New slide
+  makes arrives by it -- its empty slots claim no click in the show until
+  they are filled -- and so do the fresh slots a layout change makes; a
+  duplicate or a version keeps its own. Create slides is pressed in the
+  reader, where no deck is open, so it never takes a rule unseen: under
+  Add animations it offers, by name, each presentation that keeps one
+  ("The animation rule of “Talk”"), and the plain one per click is the
+  default. The rule writes ordinary `anim`s through the one list of
+  clicks (timelineOf / timelineWrite, T577), so the pane, Earlier /
+  Later, a bullet's own click, the show, the presenter view, the
+  scrolling page and the .pptx read it as if it were set by hand. The
+  one new fact is `anim.dur`, how long the entrance takes, which the
+  show, a movement's shorthand, the preview, the scrolling page and the
+  .pptx (as the effect's duration) all keep. The whole apply is one undo
+  step: every slide is worked out on a copy, a slice at a time, and the
+  ones that change take it in one task with one markDirty (an apply that
+  changes nothing makes no undo step). The strip keeps a row whose slide
+  changed only its clicks (filmSameBut: its picture draws no animation),
+  so neither the first slide change after an apply nor its undo draws
+  every thumbnail again. The code is `assets/js/deck/48c-anim-rule.js` (a
+  new part, in DECK_PARTS, booted from 99-boot.js), the dialog `#anr-dlg`
+  in deck.html, its styles at the foot of deck.css. In the light theme a
+  dialog's title is now the theme's ink; it was the dark theme's
+  near-white in every dialog.
+  The 2026-10-12 review's fifteen findings, all reproduced on its own
+  scripts and fixed: Copy split things that arrive together; Replace
+  with kinds on None removed hand-made entrances while saying "Nothing
+  new to animate"; the dialog kept All slides + Replace (or the sorter's
+  range) for the next ribbon open; Keep theirs split a half-animated
+  group; After with By bullet ran only the first bullet by itself; a
+  layout change dropped a new slide's rule; Create slides used the last
+  open deck's rule unseen; the tile was squeezed over its neighbours in
+  three ribbon layouts and forced a third row in one; Enter on Earlier
+  dropped the focus so the next Enter applied the rule; the speeds were
+  cut off; the help was a bare "?" (now "How it works" with an icon);
+  the preview and Copy read the editor's slide, not a picked one; and
+  the speed of the apply, its undo and the slide change after it, below.
+  The never-wraps walk now covers all ten ribbon layouts, and a test in
+  the ordinary suite keeps that list whole.
+  The 2026-10-17 review's two findings, both reproduced on its scripts
+  and fixed. (1) Create slides offered no deck's rule until a deck had
+  been opened in the editor: SemApp.deckAnimRules was set by
+  animRuleBoot, one of the tools initEditorTools wires on the editor's
+  first ENTRY, while Create slides only LOADS the editor. It is set by
+  autoDeckBoot now, at load beside deckAuto, so a fresh reader's dialog
+  offers "The animation rule of “Talk”" as soon as its own load of the
+  editor lands; a test in the ordinary suite
+  (test_the_editor_loads_on_first_use.py) refuses any hook the notebook
+  side calls being set by a first-entry tool, naming the one that may
+  (SemDeckLinkable, a selection on a slide). (2) Copy this slide split
+  things of ONE kind that arrive together -- two columns fading in on
+  one click came back on two, three clicks for two. A rule could not say
+  it: each kind's things each had a click of their own. Every kind now
+  has At a time -- One by one or All together (text: Whole box, By
+  bullet or All together; `by` 'all' in DECK-FORMAT.md and the schema):
+  the kind's first thing starts the click as its start says and the
+  rest join it, a wait included. Copy reads a kind as All together when
+  every one of its animated things arrives on one click, so the
+  review's slide copied and given back changes nothing (its preview says
+  2 clicks, and Apply "nothing to change"); a kind half together and
+  half not can say neither and stays one by one. After now greys only
+  By bullet, not the whole column -- whole boxes, one or all, may run
+  themselves. The column took its room from the three before it, each
+  of which still reads its longest choice whole at both laptop sizes.
+  Speed, 4x CPU, on the shared box. A busy 60-slide deck (14 objects a
+  slide), Replace on all 60: from the click to the slide redrawn with
+  its new clicks 154-292 ms, median 215 (five runs), no task over 78 ms
+  -- the click is answered first (the dialog goes in the next frame),
+  the slides are worked out in 16 ms slices, and the slide on screen is
+  redrawn in a task of its own. Interleaved against the first version
+  of this work (four runs each, medians): the apply's longest task 162
+  -> 51 ms; the first slide change after it 292 -> 184 ms to the next
+  paint (longest task 238 -> 132; the second change is 128); its undo
+  248 -> 216 (202 -> 167); redo 236 -> 220. On a lighter 60-slide deck:
+  118 -> 26, 184 -> 172, undo 180 -> 152 (146 -> 120), redo 184 -> 172;
+  the undo's strip rebuild is 32 ms in a profile, against 179. Opening
+  the dialog: 84 ms to the next paint the first time, 68 after. An
+  ordinary slide change, select, nudge and undo, interleaved against
+  27be2a9, are the same within the noise (slide change 96 against 100,
+  undo 128 against 120). After the 2026-10-17 fixes, interleaved against
+  1e30ee4 on the busy deck at 4x with the box loaded by other work (load
+  3-4): Replace on all 60 from the click to the paint 262 against 284 ms
+  (medians of six each; longest task 0 against 26), and in a second run
+  of four 392 against 314 (97 against 66) -- the same code path, the
+  noise of a shared box; opening the dialog the first time 84-92 ms to
+  the next paint against 92-120.
+  Driven with a real mouse and keys at 1366x657 and 1280x600, light and
+  dark: the dialog fits both without a scroll, its help open too; three
+  slides picked in the sorter, then all of them with Keep theirs; the
+  show, and the presenter view stepping it, in the rule's order; the
+  pane's Earlier moving the figure in among the bullets; Ctrl+Z and
+  Ctrl+Y; Earlier by keyboard; Replace with every kind on None; New
+  slide, a layout change, Ctrl+D, a save and a reload; Create slides
+  with a deck's rule named; the door in the journey-poster-first
+  layout; the scrolling page; a .pptx export, its timing carrying the
+  durations and the waits; and, for the 2026-10-17 fixes, Create slides
+  in a reader that has opened no deck (the deck's rule offered and
+  used, the editor loaded and never entered) and Copy this slide on a
+  two-column reveal (All together read, nothing moved when given back,
+  the columns of a bare slide arriving on one click), both at 1366x657
+  dark and 1280x600 light, with the dialog's help open too. Found while driving and left as it was: a
+  by-bullet build reaches the .pptx as a whole-box build -- pptx.js has
+  written paragraph builds since T172, but nothing hands it `by` and
+  `paras`.
+  Tests in tests/test_animation_rule.py and, opt-in,
+  tests/test_animation_rule_in_a_browser.py.

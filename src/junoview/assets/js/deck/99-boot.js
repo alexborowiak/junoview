@@ -40,6 +40,7 @@
     rbnShelfBoot();             /* and open into the ribbon's shelf (T453) */
     animBoot();
     animCfgBoot();              /* the Animation panel (T445) */
+    animRuleBoot();             /* one rule for many slides (T625) */
     seqBoot();       /* the sequencing mode's bar (T168) */
     galBoot();       /* the effect gallery's door (T171) */
     txStripBoot();              /* the kinds of text box, as tiles (T188) */

@@ -2478,8 +2478,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # not wait on MathJax, Split in two fits the side rail.
 # T624: shorter labels, toasts and notes; the ? help buttons;
 # its review: toasts, Help's Citations tab, the ?'s halo and ink.
-EXPECTED_MD5 = "bd5cee3807ec8473926f53abb9be8b9e"
-EXPECTED_BYTES = 5694289
+# T625: the animation rule's part, its dialog and door, anim.dur,
+# animRule, and the Create slides choice.
+EXPECTED_MD5 = "3ad1372a1ba79f4012fd7a6ffa620b25"
+EXPECTED_BYTES = 5771743
 
 
 def _render_example() -> str:

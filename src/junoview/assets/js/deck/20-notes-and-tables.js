@@ -5270,6 +5270,11 @@
             /* T385: the typewriter is for words; anything else fades */
             atype=(atype==='type'&&ba.k!=='text')?'fade':atype;
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
+            /* T625: how long it takes, when it says (motionPaint folds
+               the same number into a movement's shorthand) */
+            var adur=+ba.anim.dur;
+            if(atype!=='appear'&&adur>0)
+              el.style.animationDuration=Math.min(10,adur)+'s';
             if(atype==='type'&&typeof typeInto==='function'
                &&!(typeof storyPaint!=='undefined'&&storyPaint))
               typeInto(el,(typeof textBy==='function'&&textBy(ba)

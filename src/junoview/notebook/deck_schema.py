@@ -121,6 +121,15 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                     "hand still wins; a style set keeps it."),
     "tokens": (dict, "The deck's design tokens: {c:{name:colour}, rad, "
                      "gap}. An item referencing one stores '@name'."),
+    "animRule": (dict, "The animation rule (T625): how each kind of thing "
+                       "on a slide arrives -- `k` maps title, text, "
+                       "figure, image, shape, table and code to {fx, st, "
+                       "w, dur, by} (`by` 'para' for text a bullet at a "
+                       "time, 'all' for every one of a kind on one "
+                       "click); `ord` the order the kinds come in, "
+                       "or `by` 'place' for top to bottom; `tr` the "
+                       "transition it sets; `nw` 1 when New slide gives "
+                       "it to the slides it makes."),
     "components": (dict, "{id: {name, w, h, items, link, x, y}}. Named "
                          "groups that can be placed repeatedly; every "
                          "instance stays linked to the definition. link "
@@ -365,6 +374,8 @@ ANNOT_COMMON: dict[str, tuple[type | tuple[type, ...], str]] = {
                    " `hl` 1 shows every piece from the start and lights "
                    "the piece each click is about; 2 hides the pieces "
                    "still to come and lights each one as it arrives."
+                   " `dur` is how long the entrance takes, in seconds; "
+                   "absent is the effect's own length (T625)."
                    " `after` is a whole number of seconds: this build "
                    "runs that long after the one before it, with no "
                    "click."),

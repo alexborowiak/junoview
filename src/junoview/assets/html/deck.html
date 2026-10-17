@@ -1509,6 +1509,24 @@ items snap to both. Guides, not ink: never printed or exported"
             </span>
             <span class="rbn-lab">Whole slide</span>
           </span>
+          <!-- T625: ONE RULE FOR MANY SLIDES (2026-10-11, user:
+               "animation rule that can be applied to all slides and
+               or slide selection"). Its own tile beside Whole slide,
+               on the tab whether or not anything is selected -- the
+               one verb here about more than this slide. A short row
+               folds it to a door like any other group. -->
+          <span class="rbn-grp rbn-rule" data-tab="animation"
+            data-fold-ic="sorter">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile" id="anim-rule"
+                title="Say once how each kind of thing arrives -- titles,
+ text, figures, pictures, shapes, tables, code -- then give it to this
+ slide, some slides or every slide"
+                ><i data-ic="sorter"></i><span>Apply to
+                slides&hellip;</span></button>
+            </span>
+            <span class="rbn-lab">Many slides</span>
+          </span>
           <!-- T445: "BUILD ORDER", AND NEVER SQUASHED (2026-09-14, user:
                "buttons like those in 'Order' (horrible name for this
                collection) are not getting squashed out ... people will
@@ -4353,6 +4371,93 @@ items snap to both. Guides, not ink: never printed or exported"
 <!-- T561: a diagram, from steps typed one to a line. The kinds as tiles
      drawn by the layout itself, the words, and a preview that is the
      layout Insert places. -->
+<!-- T625: ONE ANIMATION RULE FOR MANY SLIDES. A row per kind of thing
+     on a slide (built by 48c-anim-rule.js), the order they come in, the
+     current slide drawn small with the click each thing arrives on, and
+     which slides get it. -->
+<div class="aa-dlg" id="anr-dlg" hidden role="dialog"
+  aria-labelledby="anr-title">
+  <div class="aa-box anr-box">
+    <div class="aa-head">
+      <span class="eq-t" id="anr-title">Animate slides</span>
+      <button class="dbtn anr-q" id="anr-q" type="button"
+        aria-expanded="false" aria-controls="anr-help"
+        title="How the rule works"><i data-ic="info"></i> How it
+        works</button>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="anr-copy" type="button"
+        title="Fill the rule in from what this slide already does"
+        ><i data-ic="copy"></i> <span id="anr-copy-t">Copy this
+        slide</span></button>
+      <button class="dbtn dc-icon" id="anr-close" type="button"
+        aria-label="Cancel" title="Cancel (Esc)"><i data-ic="exit"></i></button>
+    </div>
+    <p class="anr-help" id="anr-help" hidden>Each kind of thing arrives
+      as its row says, kinds in the order listed (or top to bottom as
+      placed). Things that already have an animation keep it unless you
+      choose Replace -- which also takes the entrance off a kind set to
+      None. <b>All together</b> brings every one of a kind on one click
+      (two columns, two figures side by side). Text that starts after a
+      few seconds arrives whole.
+      <b>Copy this slide</b> fills the rule in from a slide you animated
+      by hand; <b>New slides too</b> keeps it on the deck for every slide
+      New slide makes. Ctrl+Z undoes the whole apply.</p>
+    <div class="anr-body">
+      <div class="anr-main">
+        <div class="anr-order" role="group" aria-label="Order">
+          <span class="anr-lab">Order</span>
+          <button class="cfg-chip anr-ordby" type="button" data-by="kind"
+            aria-pressed="true" title="Kinds in the order listed below"
+            ><i data-ic="numlist"></i><span>As listed</span></button>
+          <button class="cfg-chip anr-ordby" type="button" data-by="place"
+            aria-pressed="false" title="Top to bottom, as things are placed (or
+ the slide&rsquo;s reading order)"><i data-ic="down"></i><span>Top to
+            bottom</span></button>
+        </div>
+        <div class="anr-heads" aria-hidden="true"><span></span>
+          <span>Arrives</span><span>Starts</span><span>Speed</span>
+          <span>At a time</span><span></span></div>
+        <div class="anr-rows" id="anr-rows"></div>
+      </div>
+      <div class="anr-side">
+        <div class="anr-pv" id="anr-pv" aria-label="This slide, with the
+          click each thing arrives on"></div>
+        <div class="anr-pvfoot">
+          <button class="dbtn" id="anr-play" type="button"
+            title="Play the rule on this slide"><i data-ic="play"></i>
+            Play</button>
+          <span class="anr-pvn" id="anr-pvn"></span>
+        </div>
+      </div>
+    </div>
+    <div class="anr-opts">
+      <label class="anr-opt"><span class="anr-lab">Slides</span>
+        <select class="anr-sel" id="anr-scope">
+          <option value="cur">This slide</option>
+          <option value="some">Some slides</option>
+          <option value="all" id="anr-scope-all">All slides</option>
+        </select>
+        <input class="anr-range" id="anr-range" type="text" hidden
+          placeholder="2-4, 7" aria-label="Which slides" spellcheck="false"></label>
+      <label class="anr-opt"><span class="anr-lab">Already animated</span>
+        <select class="anr-sel" id="anr-how">
+          <option value="new">Keep theirs</option>
+          <option value="replace">Replace</option>
+        </select></label>
+      <label class="anr-opt"><span class="anr-lab">Transition</span>
+        <select class="anr-sel" id="anr-trans"></select></label>
+      <label class="aa-tie anr-opt"><input type="checkbox" id="anr-new">
+        New slides too</label>
+    </div>
+    <div class="aa-foot">
+      <span class="anr-sum" id="anr-sum"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="anr-cancel" type="button">Cancel</button>
+      <button class="dbtn primary" id="anr-apply" type="button"
+        ><i data-ic="tick"></i> Apply</button>
+    </div>
+  </div>
+</div>
 <div class="aa-dlg" id="dgm-dlg" hidden role="dialog"
   aria-labelledby="dgm-title">
   <div class="aa-box dgm-box">

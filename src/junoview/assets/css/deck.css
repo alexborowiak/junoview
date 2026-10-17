@@ -1874,6 +1874,7 @@ body.slide-editing .presrail,body.slide-editing .presrail-show{z-index:134;}
    pack from the left (2026-09-15, user: "the animations tab still
    looks odd"). */
 .rbn-build{order:8;}
+.rbn-rule{order:9;}   /* T625: the verb about many slides, after them */
 /* T594: BUILD ORDER LEADS. With four groups on the tab there is no row
    to squeeze it out of, and the Animation panel is the one door that
    holds everything the tab no longer shows, so it comes first, where a
@@ -5911,6 +5912,9 @@ body.light .eq-box{background:var(--chrome-2);
   outline-offset:2px;}
 body.light .aa-box{background:var(--chrome-2);
   border-color:var(--chrome-line);}
+/* T625: a dialog's title in the light theme is the theme's ink -- it was
+   the dark theme's near-white on a light box, in every dialog */
+body.light .aa-head .eq-t,body.light .eq-head .eq-t{color:var(--chrome-ink);}
 body.light .aa-what{background:var(--chrome-1,#f4f7fa);
   border-color:var(--line);color:var(--ink);}
 body.light .aa-props .find-ck:hover,
@@ -7761,6 +7765,97 @@ body.light .deck-notesed,body.light .img-ov,body.light .vfull{
 @media (max-width:560px){
   .dgm-kinds{grid-template-columns:repeat(2,1fr);}
   .dgm-body{grid-template-columns:minmax(0,1fr);}
+}
+
+/* ---- T625: one animation rule for many slides ----------------------
+   A row per kind of thing (its colour, its name, how many there are in
+   the slides chosen, then four choices and Earlier), the current slide
+   drawn small beside them with the click each thing arrives on, and
+   which slides get it underneath. Every colour is the theme's own, so
+   the dialog is right in every theme; the seven kind colours are the
+   only colours of its own, and they sit on the slide's own page colour
+   in the preview. Laid out to fit 1280x600 without a scroll. */
+.aa-box.anr-box{width:min(940px,96vw);gap:8px;}
+.anr-q{font:12px var(--sans);padding:3px 9px;white-space:nowrap;}
+.anr-q[aria-expanded="true"]{border-color:var(--accent);color:var(--accent);}
+.anr-help{margin:0;font-size:12px;line-height:1.45;color:var(--chrome-ink-2);
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  border-radius:8px;padding:7px 10px;}
+.anr-help[hidden]{display:none;}
+.anr-body{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
+  min-height:0;}
+.anr-main{flex:1 1 560px;min-width:0;display:flex;flex-direction:column;
+  gap:5px;}
+.anr-side{flex:0 0 200px;display:flex;flex-direction:column;gap:6px;}
+.anr-lab{font-size:11.5px;color:var(--chrome-ink-2);white-space:nowrap;}
+.anr-order{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.anr-order .cfg-chip{margin:0;}
+/* the fourth choice is every kind's now (One by one / All together,
+   2026-10-17): its column takes a little from the three before it, each
+   of which still reads its longest choice whole */
+.anr-heads,.anr-row{display:grid;align-items:center;gap:6px;
+  grid-template-columns:minmax(170px,1.6fr) minmax(0,.92fr) minmax(0,1.1fr)
+    minmax(0,.96fr) minmax(0,1.02fr) auto;}
+.anr-heads{font-size:10.5px;color:var(--chrome-ink-3);padding:0 2px;}
+.anr-rows{display:flex;flex-direction:column;gap:3px;}
+.anr-row{padding:2px 2px;border-radius:6px;}
+.anr-row:hover{background:var(--surface-hover);}
+.anr-kind{display:flex;align-items:center;gap:6px;min-width:0;
+  font-size:12.5px;color:var(--chrome-ink);}
+.anr-kind .bic{width:13px;height:13px;flex:none;color:var(--chrome-ink-2);}
+.anr-kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.anr-n{font:10.5px var(--mono);color:var(--chrome-ink-3);flex:none;}
+.anr-sw{width:10px;height:10px;border-radius:3px;flex:none;
+  background:var(--anr-c);}
+.anr-row.anr-none .anr-kind{color:var(--chrome-ink-3);}
+.anr-row.anr-off .anr-sel:not(.anr-fx){opacity:.45;}
+.anr-sel{width:100%;min-width:0;box-sizing:border-box;font:12px var(--sans);
+  padding:4px 6px;border-radius:6px;color:var(--chrome-ink);
+  background:var(--input-bg);border:1px solid var(--border-strong);}
+.anr-sel:focus-visible,.anr-range:focus-visible{outline:2px solid var(--focus);
+  outline-offset:1px;}
+.anr-sel:disabled{cursor:default;opacity:.55;}
+.anr-up{font:11.5px var(--sans);padding:3px 8px;white-space:nowrap;}
+.anr-up:disabled{opacity:.35;cursor:default;}
+.anr-rows.anr-place .anr-up{visibility:hidden;}
+/* the seven kinds: one hue each, the same in the legend and the preview */
+.anr-k-title{--anr-c:#e0a33a;}
+.anr-k-text{--anr-c:#4fb3d9;}
+.anr-k-figure{--anr-c:#7cc46a;}
+.anr-k-image{--anr-c:#b38cf0;}
+.anr-k-shape{--anr-c:#f08a6c;}
+.anr-k-table{--anr-c:#46b8a8;}
+.anr-k-code{--anr-c:#9aa9b6;}
+.anr-pv{position:relative;width:100%;aspect-ratio:16 / 9;overflow:hidden;
+  border-radius:6px;border:1px solid var(--chrome-line);
+  background:var(--chrome-0);}
+.anr-o{position:absolute;box-sizing:border-box;border-radius:2px;
+  background:color-mix(in srgb,var(--anr-c) 42%,transparent);
+  border:1px solid var(--anr-c);}
+.anr-o b{position:absolute;left:1px;top:1px;font:700 9px/1 var(--mono);
+  color:#0b141d;background:var(--anr-c);border-radius:3px;padding:1px 3px;}
+.anr-o.anr-wait{opacity:0;}
+.anr-pvfoot{display:flex;align-items:center;gap:8px;}
+.anr-pvn{font:10.5px var(--mono);color:var(--chrome-ink-3);}
+.anr-opts{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;
+  padding-top:7px;border-top:1px solid var(--chrome-line);}
+.anr-opt{display:flex;align-items:center;gap:6px;}
+.anr-opts .anr-sel{width:auto;}
+.anr-range{width:96px;box-sizing:border-box;font:12px var(--mono);
+  padding:4px 6px;border-radius:6px;color:var(--chrome-ink);
+  background:var(--input-bg);border:1px solid var(--border-strong);}
+.anr-range[hidden]{display:none;}
+.anr-sum{font-size:12px;color:var(--chrome-ink-2);}
+/* Replace taking entrances off is said in the danger ink, before Apply */
+.anr-sum.anr-sum-warn{color:var(--danger);}
+@media (max-width:760px){
+  .anr-side{flex:1 1 100%;flex-direction:row;align-items:flex-end;}
+  .anr-pv{width:180px;}
+}
+@media (max-height:640px){
+  .aa-box.anr-box{gap:6px;padding:9px 12px 9px;}
+  .anr-row{padding:1px 2px;}
+  .anr-sel{padding:3px 6px;}
 }
 
 /* ---- T564: narration -- the recording bar, the strip mark, the pane --

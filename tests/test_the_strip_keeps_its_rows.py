@@ -427,7 +427,10 @@ def test_what_redraws_a_row_outside_a_build_unfiles_it():
     sync = film[film.index("  function syncFilmBuild(i){"):]
     assert "row._key=null;" in sync[:400]
     fill = film[film.index("  function filmFill(ph){"):]
-    assert "if(JSON.stringify(s)!==row._js) row._key=null;" in fill[:1200]
+    # ...picture and all (_fk, T625: a row filed from a slide that
+    # differs only in its clicks is kept by the next build)
+    assert ("if(JSON.stringify(s)!==row._js){row._key=null;row._fk=null;"
+            "row._pj=null;}") in fill[:1200]
 
 
 def test_the_current_slide_is_always_drawn():

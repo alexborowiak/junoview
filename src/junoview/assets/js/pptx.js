@@ -1287,11 +1287,11 @@ window.JunoPptx = (function () {
                     /* the wait rides along, or the group loop below
                        reads nothing and the delay is silently
                        dropped -- caught by T169's own test */
-                    after: an.after | 0 });
+                    after: an.after | 0, dur: an.dur || 0 });
       } else {
         (steps[an.step] = steps[an.step] || [])
           .push({ spid: an.spid, type: an.type, para: -1,
-            after: an.after | 0 });
+            after: an.after | 0, dur: an.dur || 0 });
       }
     });
     var order = Object.keys(steps).map(Number).sort(function (a, b) {
@@ -1325,7 +1325,9 @@ window.JunoPptx = (function () {
           + '</p:tgtEl>';
         var eff = an.type === 'appear' ? ''
           : '<p:animEffect transition="in" filter="fade"><p:cBhvr>'
-            + '<p:cTn id="' + nid() + '" dur="500"/>'
+            /* T625: the entrance's own length, when the deck gives one */
+            + '<p:cTn id="' + nid() + '" dur="'
+            + (an.dur > 0 ? String(Math.round(an.dur * 1000)) : '500') + '"/>'
             + tgt
             + '</p:cBhvr></p:animEffect>';
         return '<p:par><p:cTn id="' + nid() + '" presetID="' + preset
@@ -1625,6 +1627,8 @@ window.JunoPptx = (function () {
             /* the wait travels with the build, or the writer below has
                nothing to read and the delay is silently dropped (T169) */
             after: (item.after | 0) || 0 });
+          /* T625: and how long the entrance takes, when it says */
+          if (+item.animDur > 0) anims[anims.length - 1].dur = +item.animDur;
         }
       });
       var bg = '<p:bg><p:bgPr>' + solidFill(slide.bg, null, '0B141D')

@@ -370,9 +370,12 @@ def as_presentations(obj: Any) -> list:
         # variation you chose survives into the next new slide (T368).
         # "scale" is the page's type scale, seeded by a poster template
         # and read under the deck's style overrides (T278).
+        # "animRule" is the animation rule New slide gives the slides it
+        # makes (T625); dropping it here would quietly stop new slides
+        # animating after the next save-and-reopen.
         for key in ("wmark", "head", "foot", "styles", "sections",
                     "tokens", "components", "cuts", "guides", "masters",
-                    "live", "bib", "cite", "slot", "scale"):
+                    "live", "bib", "cite", "slot", "scale", "animRule"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

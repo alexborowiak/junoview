@@ -426,6 +426,13 @@ document.documentElement.style.removeProperty('--chrome-h');}}}}catch(e){{}}</sc
     <label class="auto-anim"><input type="checkbox" id="auto-animations">
       <span><b>Add animations</b><small>Reveal each slide's objects in the
         same order as the notebook</small></span></label>
+    <!-- T625: a presentation that keeps an animation rule for new slides
+         can lend it -- named, never taken silently -->
+    <label class="auto-anim-how" id="auto-anim-how-wrap" hidden>
+      <span>Animate by</span>
+      <select id="auto-anim-how" disabled>
+        <option value="">One per click, in notebook order</option>
+      </select></label>
     <div class="auto-slides-foot">
       <span class="auto-slides-summary" id="auto-slides-summary"></span>
       <span class="deck-spring"></span>

@@ -783,6 +783,7 @@
     var poster=!!(pageOf&&pageOf().poster);
     ['anim-stagger','anim-together','anim-clear'].forEach(function(id){
       var el=$('#'+id); if(el) el.hidden=on||poster;});
+    var arb=$('#anim-rule'); if(arb) arb.hidden=on||poster;   /* T625 */
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
   }
   /* ---- THE EFFECT GALLERY (T171) -----------------------------------
@@ -825,7 +826,8 @@
     if(galPvT){clearTimeout(galPvT);galPvT=null;}
     galPvEls.forEach(function(el){
       el.classList.remove('an-anim-fade','an-anim-rise','an-anim-zoom',
-        'an-anim-slide','an-anim-turn','an-anim-type');});
+        'an-anim-slide','an-anim-turn','an-anim-type');
+      el.style.animationDuration='';});
     galPvEls=[];
     typeStop();
   }
@@ -853,12 +855,24 @@
     /* Restart every selected entrance with one layout flush. */
     if(previews.length) void layer.offsetWidth;
     previews.forEach(function(p){
+      /* T625: at its own length, when it has one */
+      var d=p.a.anim&&+p.a.anim.dur;
+      if(d>0) p.el.style.animationDuration=Math.min(10,d)+'s';
       p.el.classList.add('an-anim-'+p.fx);galPvEls.push(p.el);
       if(p.fx==='type'&&p.a.k==='text') typeInto(p.el);
     });
     /* animationend is not reliable enough to be the only cleanup */
     galPvT=setTimeout(galPreviewStop,
       previews.some(function(p){return p.fx==='type';})?2800:900);
+    /* T625: an entrance with a length of its own runs to its end */
+    var longest=0;
+    previews.forEach(function(p){
+      var d=p.a.anim&&+p.a.anim.dur; if(d>longest) longest=Math.min(10,d);});
+    if(longest*1000+300>900){
+      clearTimeout(galPvT);
+      galPvT=setTimeout(galPreviewStop,Math.max(longest*1000+300,
+        previews.some(function(p){return p.fx==='type';})?2800:900));
+    }
   }
   /* THE STRIP (T182): tiles in the ribbon's own row, icon over word,
      the one that is on lit. Reuse the buttons so selection updates do

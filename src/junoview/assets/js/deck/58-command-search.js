@@ -39,6 +39,10 @@
        find the door onto it */
     'vw-anim':'animation pane animations list focus blur zoom magnify '
       +'motion movement wobble float pulse spin sway shake',
+    /* T625: one rule for many slides, by the words people ask with */
+    'anim-rule':'animation rule apply animations to all slides every slide '
+      +'selected slides same animation default animation animate slides '
+      +'animate all slides new slides',
     /* T579: the words people look for it by */
     'anim-out':'disappear exit animation hide leave go away fade out '
       +'remove from slide vanish',

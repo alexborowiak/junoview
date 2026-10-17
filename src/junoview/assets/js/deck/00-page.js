@@ -634,7 +634,11 @@
             return;
           }
           var s=pres.slides[cur]; if(!s) return;
+          var had=(s.annots||[]).slice();
           applyLayout(s,layout);
+          /* T625: the fresh slots it made get the deck's animation
+             rule for new slides, as New slide's do -- same undo step */
+          if(typeof animRuleFresh==='function') animRuleFresh(s,had);
           /* the next New slide takes this layout (T193); a poster
              template is a page, not a slide, and is not remembered */
           if(!layout.poster) lsSet(newLayKey(),layout.id);
@@ -991,6 +995,8 @@
      '#anim-seq','#anim-layers','#anim-story','#anim-focus','#anim-move',
      '#trans-frame','#trans-scopewrap'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
+    /* T625: a rule of clicks, for a page that has none */
+    var arb2=$('#anim-rule'); if(arb2) arb2.hidden=!!pg.poster;
     /* ...AND THE GROUPS ARE JUDGED WHEN THE KIND FLIPS. Nothing on the
        page-size tile, New poster or a deck switch re-ran
        syncRibbonGroups, so a poster made while standing on Animation

@@ -418,6 +418,11 @@ HOOKS: dict[str, list[tuple[str, str]]] = {k: v if isinstance(v, list)
     "deckRowWords": ("absent", "Home's rows, as deckPreview"),
     "deckHub": [("waits", ""), ("door", "#welcome-presentations")],
     "deckAuto": ("waits", ""),
+    # T625: Create slides asks which decks keep an animation rule; with no
+    # editor it offers none, and asks again once the editor is here --
+    # which is its boot, not its first entry (autoDeckBoot registers it)
+    "deckAnimRules": ("absent", "no deck's rule to offer until the editor "
+                                "is here; the dialog asks again then"),
     "deckImportPptx": ("waits", ""),
     "deckImportPptxPath": ("waits", ""),
     "deckOpenHandles": ("waits", ""),
@@ -468,6 +473,36 @@ def test_every_editor_hook_the_notebook_side_calls_is_accounted_for():
             assert how in ("door", "waits", "absent"), name
             if how == "door":
                 assert what in doors, (name, what)
+
+
+def test_no_hook_waits_for_the_editor_to_be_entered():
+    """A hook the notebook side calls is there once the editor has BOOTED
+    -- never registered by one of the tools initEditorTools wires on the
+    editor's first entry. Create slides asked SemApp.deckAnimRules for
+    the decks that keep an animation rule; animRuleBoot, which set it,
+    runs on first entry, so a reader that had not opened a deck was
+    never offered one, however long it waited (T625, 2026-10-17
+    review). autoDeckBoot, in the boot sequence, sets it now. A hook that
+    means something only inside an entered editor is named here, with
+    why."""
+    entered_only = {
+        "SemDeckLinkable": "a selection on a slide to link, which only an "
+                           "entered editor has",
+    }
+    deck = assets.deck_js()
+    tools = lift_fn(deck, "initEditorTools")
+    late = re.findall(r"^\s+(\w+)\(\);", tools, re.M)
+    assert "animRuleBoot" in late and len(late) > 30   # still finds them
+    for fn in late:
+        body = lift_fn(deck, fn)
+        found = ({a or b for a, b in _EXPORT.findall(body)} & set(HOOKS)) \
+            - set(entered_only)
+        assert not found, (fn, sorted(found))
+    assert "window.SemApp.deckAnimRules=animRuleNames;" \
+        in lift_fn(deck, "autoDeckBoot")
+    boot = deck[deck.index("THE BOOT SEQUENCE ="):]
+    boot = boot[boot.index("  window.SemDeckCellCopied=cellCopied;"):]
+    assert "\n  autoDeckBoot();" in boot
 
 
 def test_a_door_is_one_the_notebook_page_draws():

@@ -1228,6 +1228,14 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
 .auto-slide-scope small,.auto-anim small{font:11px var(--sans);
   color:var(--chrome-ink-2);}
 .auto-slide-scope.disabled{opacity:.48;cursor:not-allowed;}
+/* T625: which animation, when a presentation keeps a rule to lend */
+.auto-anim-how{display:flex;align-items:center;gap:8px;padding:0 2px 0 34px;
+  font:12px var(--sans);color:var(--chrome-ink-2);}
+.auto-anim-how[hidden]{display:none;}
+.auto-anim-how select{flex:1 1 auto;min-width:0;font:12px var(--sans);
+  padding:4px 6px;border-radius:6px;color:var(--chrome-ink);
+  background:var(--input-bg);border:1px solid var(--border-strong);}
+.auto-anim-how select:disabled{opacity:.55;}
 .auto-slides-foot{margin-top:1px;}
 .auto-slides-summary{min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font:10.5px var(--mono);color:var(--chrome-ink-2);}

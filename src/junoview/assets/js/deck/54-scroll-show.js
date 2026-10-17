@@ -100,6 +100,8 @@
       if(type==='type') type='fade';
       el.classList.add('an-prebuild','an-scrollin');
       el.dataset.sanim=type;
+      /* T625: its own length, when it has one */
+      if(+a.anim.dur>0) el.style.animationDuration=Math.min(10,+a.anim.dur)+'s';
       el.dataset.srank=String(orders.indexOf(a.anim.order||0));
       n++;
     });

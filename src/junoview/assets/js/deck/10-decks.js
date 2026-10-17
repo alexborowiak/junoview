@@ -607,6 +607,8 @@
       .forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
+    /* T625: the animation rule New slide gives the slides it makes */
+    if(p.animRule&&typeof p.animRule==='object') out.animRule=deep(p.animRule);
     /* T465: A SAVED pres.pageBg BECOMES THE PAGE TOKEN. It was the
        second store for one colour and it won over the token at render
        time, so it takes the token's place here -- a deck renders
@@ -1840,8 +1842,9 @@
       var row=$('#film-list .film-row[data-idx="'+i+'"]');
       if(!row) return;
       /* redrawn here, so no longer what the strip filed it under: the
-         next build draws it afresh rather than keeping it (renderFilm) */
-      row._key=null;
+         next build draws it afresh rather than keeping it (renderFilm) --
+         its picture included (_fk, T625) */
+      row._key=null;row._fk=null;row._pj=null;
       var old=row.querySelector('.mini-diagram');
       /* the CURRENT row in notebook view is the big inline pane editor,
          not a thumbnail — leave that alone. In headings mode there is no
@@ -2066,6 +2069,9 @@
       cite:(pres.cite&&Object.keys(pres.cite).length)?pres.cite:null,
       bib:(pres.bib&&Object.keys(pres.bib).length)?pres.bib:null,
       slot:(pres.slot&&Object.keys(pres.slot).length)?pres.slot:null,
+      /* T625: the animation rule new slides get is the deck's, and
+         keeping or forgetting it is an edit Ctrl+Z reaches */
+      animRule:pres.animRule||null,
       page:pres.page||null,
       cropMarks:pres.cropMarks||0});
   }
@@ -2216,6 +2222,8 @@
     /* T494: read back what histState now saves (see the note there) */
     ['cite','bib','slot'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
+    /* T625: and the animation rule, which an apply can keep or forget */
+    if(d.animRule) pres.animRule=d.animRule; else delete pres.animRule;
     /* sections get their own merge rather than joining the list above:
        that loop deletes what the snapshot lacks, and the snapshot
        deliberately lacks the fold flags — so it would collapse-or-expand

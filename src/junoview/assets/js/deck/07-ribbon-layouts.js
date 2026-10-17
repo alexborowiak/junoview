@@ -392,6 +392,8 @@
       try{lsSet(tabKey(),curTab);}catch(e){}
     }
     applyRibbonPrefs();      /* T11's hiding and ordering, on top */
+    /* T625: a tile placed among small two-row buttons is one of them */
+    if(typeof arDoorShape==='function') arDoorShape();
     /* THROUGH showFmt, not straight to syncRibbonGroups. The contextual
        controls' visibility is recomputed for whatever is selected right
        now — without it, a control that had never been through showFmt
@@ -718,7 +720,7 @@
       {id:'of-fx',label:'Effects',tab:'animate',
        items:['anim-strip-frame']},
       {id:'of-seq',label:'Sequence',tab:'animate',
-       items:['anim-stagger','anim-together']},
+       items:['anim-stagger','anim-together','anim-rule']},
       {id:'of-time',label:'Animations',tab:'animate',
        items:['vw-anim','anim-clear']},
       {id:'of-rest',label:'Everything else',tab:'home',rest:1,items:[]},
@@ -751,7 +753,7 @@
        items:['shape-strip-frame','icon-strip-frame','dc-diagram','dc-line','dc-draw','et-table','et-flip','et-clone',
          'et-arrow','et-cancel']},
       {id:'sl-anim',label:'Build order',tab:'slide',
-       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-rule','anim-clear']},
       {id:'ob-arrange',label:'Arrange',tab:'object',
        items:['objects-btn','fmt-dup','fmt-group','fmt-ungroup',
          'fmt-alignwrap','fmt-samewrap','fmt-arline','fmt-argrid',
@@ -790,7 +792,7 @@
        items:['hm-newslide','hm-dupslide','hm-version','hm-main','hm-laywrap','hm-match',
          'hm-delslide','lay-drop','dsg-tidy']},
       {id:'s1-anim',label:'Animate',tab:'slides',
-       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-rule','anim-clear']},
       {id:'s1-view',label:'View',tab:'slides',rest:1,
        items:['vw-full','vw-side','vw-morewrap','notes-btn','comments-btn']},
       {id:'s1-link',label:'Notebook link',tab:'sources',
@@ -882,7 +884,7 @@
          'fmt-tbl-fillwrap','fmt-tbl-stylewrap','fmt-tbl-head',
          'fmt-tbl-grid']},
       {id:'day-anim',label:'Animation',tab:'format',
-       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-rule','anim-clear']},
       {id:'day-page',label:'Page, header & footer',tab:'more',
        items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'day-deck-styling',label:'Deck styling',tab:'more',
@@ -946,7 +948,7 @@
        items:['hm-newslide','hm-dupslide','hm-version','hm-main','hm-laywrap','hm-match',
          'hm-delslide']},
       {id:'j3-buildorder',label:'Build order',tab:'talk',
-       items:['vw-anim','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-stagger','anim-together','anim-rule','anim-clear']},
       {id:'j3-effects',label:'Effects',tab:'talk',
        items:['anim-strip-frame']},
       {id:'j3-delivery',label:'Delivery',tab:'talk',
@@ -992,7 +994,7 @@
          'fmt-tbl-grid']},
       {id:'one-view',label:'Animate and view',tab:'all',rest:1,
        items:['vw-anim','anim-strip-frame',
-         'anim-stagger','anim-together','anim-clear','vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers',
+         'anim-stagger','anim-together','anim-rule','anim-clear','vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers',
          'vw-grid','vw-guides','vw-guidebox','vw-full','vw-side',
          'vw-check','objects-btn','notes-btn','comments-btn','vw-morewrap']},
      ]},
@@ -1052,7 +1054,7 @@
       {id:'mi-panes',label:'Panes',tab:'mi-board',
        items:['objects-btn','notes-btn','comments-btn']},
       {id:'mi-play',label:'Play',tab:'mi-board',
-       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-rule','anim-clear']},
      ]},
     {id:'radical-ten-then-more',
      name:'Ten things, then More',
@@ -1105,7 +1107,7 @@
        items:['dsg-sets','dsg-cites','dsg-stylewrap','dsg-tokens','dsg-layout','tx-autocorrect','tx-link','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'tt-anim',label:'Animate',tab:'tt-more',
-       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-rule','anim-clear']},
       {id:'tt-rest',label:'The rest',tab:'tt-more',rest:1,
        items:['vw-sorter','vw-scroll','vw-scroll-lines','vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn','vw-check','vw-versions']},

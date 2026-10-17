@@ -188,7 +188,8 @@ def test_the_viewer_owns_one_complete_create_slides_dialog(out):
     assert '.sec-slides' not in css
     app = assets.app_js()
     assert "function autoPlan(stem,scope,sid,countOnly){" in app
-    assert "function autoSlidesFrom(stem,scope,sid,animations){" in app
+    assert "function autoSlidesFrom(stem,scope,sid,animations,ruleFrom){" \
+        in app
     assert "function autoSlidesDialogOpen(){" in app
     assert "function autoSlidesDialogClose(){" in app
     assert "$$('.sec-slides',shell)" not in app
@@ -208,7 +209,7 @@ def test_the_viewer_owns_one_complete_create_slides_dialog(out):
     # a visible label which can drift away from the builder.
     assert "e.preventDefault();autoSlidesDialogOpen();" in app
     assert "var create=$('#auto-slides-create');" in app
-    assert "autoSlidesFrom(stem,scope,sid,animations);" in app
+    assert "autoSlidesFrom(stem,scope,sid,animations,ruleFrom);" in app
     # the deck's half: a pure builder, a new presentation, one boot call
     assert "11-autodeck" in assets.DECK_PARTS
     assert "  autoDeckBoot();" in (SRC / "assets" / "js" / "deck"

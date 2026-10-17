@@ -1812,7 +1812,7 @@
        must go on telling the truth about what the deck contains. */
     if(talkNoBuilds&&mode==='view')
       return {map:{},sub:{},last:{},count:0};
-    var seen={};
+    var seen={},show=(mode==='view');
     (s&&s.annots||[]).forEach(function(a){
       /* T404: a hidden object is not on the slide, so it claims no
          click -- or the show would stop on nothing */
@@ -1822,6 +1822,8 @@
          arrives on the first of them. T577: a box whose pieces were
          given clicks of their own (anim.parts) claims one click on
          each of those orders instead, so pieceClaims says which. */
+      /* T625: nor does an empty slot, in the show (emptySlot) */
+      if(show&&emptySlot(a)) return;
       pieceClaims(a).forEach(function(c){
         var need=c.sub+1;
         if(!(c.o in seen)||need>seen[c.o]) seen[c.o]=need;});});
@@ -1832,6 +1834,7 @@
        end while the object was still there. */
     (s&&s.annots||[]).forEach(function(a){
       if(!a||a.hide) return;
+      if(show&&emptySlot(a)) return;   /* T625 */
       var o=animOut(a);
       if(o!=null&&!(o in seen)) seen[o]=1;
       /* T472: and a focus, which is a click of its own the same way */
@@ -1842,6 +1845,15 @@
     keys.forEach(function(o){
       map[o]=at;sub[o]=seen[o];at+=seen[o];last[o]=at-1;});
     return {map:map,sub:sub,last:last,count:at};
+  }
+  /* T625: AN EMPTY SLOT CLAIMS NO CLICK IN THE SHOW. A placeholder's
+     words and an empty frame are drawn only while editing (T366), so an
+     entrance on one -- which a deck's animation rule gives every new
+     slide's slots as it is made -- would be a click on which nothing
+     appears. Editing still counts it: the badge and the pane show the
+     click it takes once it is filled in. */
+  function emptySlot(a){
+    return !!a&&((a.k==='text'&&!!a.ph)||(a.k==='cell'&&!a.ref));
   }
   /* ordered list of steps for the animation pane: [{order, items:[idx,…]}] */
   function animSeq(s){
