@@ -269,7 +269,7 @@
        (fileMenuBoot); only its New rows and Open a presentation are
        the editor's. */
     var DOORS='#deck,#matchbar,#pickbar,#eq-dlg,#md-dlg,#aa-dlg,#ar-dlg,'
-      +'#ss-dlg,#ms-dlg,#ts-dlg,#nt-dlg,#dgm-dlg,#find-pop,#color-pop,'
+      +'#ss-dlg,#ms-dlg,#ts-dlg,#nt-dlg,#dgm-dlg,#anr-dlg,#find-pop,#color-pop,'
       +'#presentation-hub,#app-file-menu .dc-mi[data-for],'
       +'#ot-open,#ab-collect,.cell-collect,.plot-trace-btn,#ot-home,'
       +'#presrail-home,'
@@ -8916,7 +8916,7 @@
     });
     return plan;
   }
-  function autoSlidesFrom(stem,scope,sid,animations){
+  function autoSlidesFrom(stem,scope,sid,animations,ruleFrom){
     var plan=autoPlan(stem,scope,sid);
     if(!plan){
       jvTell('Open a notebook first \u2014 the slides are made from its '
@@ -8924,7 +8924,7 @@
       return;
     }
     if(!APP.deckAuto&&jvDeck.pending()){
-      jvDeck.then(function(){autoSlidesFrom(stem,scope,sid,animations);});
+      jvDeck.then(function(){autoSlidesFrom(stem,scope,sid,animations,ruleFrom);});
       return;
     }
     if(!APP.deckAuto){
@@ -8939,6 +8939,8 @@
       return;
     }
     plan.animations=!!animations;
+    /* T625: the presentation whose animation rule the dialog named */
+    if(animations&&ruleFrom) plan.animRuleFrom=String(ruleFrom);
     APP.deckAuto(plan);
   }
   /* the section on screen: the sidebar's highlighted row, else the first */
@@ -8950,6 +8952,27 @@
     return secs.filter(function(s){return s.id===sid;})[0]||null;
   }
   var autoDialogStem='',autoDialogSection='';
+  /* T625: THE RULE IS NAMED, OR NOT USED. Create slides is pressed here,
+     where no presentation is open, so the editor's last one is no deck
+     anybody can see; a presentation that keeps an animation rule for
+     new slides is offered by its name under Add animations, and only
+     when one does. The editor answers (APP.deckAnimRules) once it is
+     on the page; the dialog's open fetches it. */
+  function autoRuleChoices(){
+    var w=$('#auto-anim-how-wrap'),sel=$('#auto-anim-how');
+    var box=$('#auto-animations');
+    if(!w||!sel) return;
+    var names=APP.deckAnimRules?APP.deckAnimRules():[],was=sel.value;
+    while(sel.options.length>1) sel.remove(1);
+    names.forEach(function(n){
+      var o=document.createElement('option');
+      o.value=n;o.textContent='The animation rule of \u201c'+n+'\u201d';
+      sel.appendChild(o);
+    });
+    sel.value=names.indexOf(was)>=0?was:'';
+    w.hidden=!names.length;
+    sel.disabled=!(box&&box.checked);
+  }
   function autoSlidesDialogClose(){
     var d=$('#auto-slides-dialog'),b=$('#doc-autoslides');
     if(d) d.hidden=true;
@@ -8990,6 +9013,7 @@
       if(all) all.checked=true;
     }
     autoSlidesDialogSummary();
+    autoRuleChoices();
     d.hidden=false;
     var b=$('#doc-autoslides');
     if(b) b.setAttribute('aria-expanded','true');
@@ -8998,6 +9022,8 @@
     /* the slides are the editor's to make: fetch it while the choices
        are read, so Create does not wait for it (jvDeck) */
     jvDeck.load();
+    if(!APP.deckAnimRules) jvDeck.then(function(){
+      if(!d.hidden) autoRuleChoices();});
   }
   (function(){
     var d=$('#auto-slides-dialog');
@@ -9010,16 +9036,21 @@
     });
     $$('.auto-slides-dialog input[name="auto-slides-scope"]').forEach(
       function(inp){inp.addEventListener('change',autoSlidesDialogSummary);});
+    var animBox=$('#auto-animations'),animHow=$('#auto-anim-how');
+    if(animBox&&animHow) animBox.addEventListener('change',function(){
+      animHow.disabled=!animBox.checked;});
     var create=$('#auto-slides-create');
     if(create) create.addEventListener('click',function(){
       var chosen=$('input[name="auto-slides-scope"]:checked');
       var scope=chosen?chosen.value:'all';
       var animationBox=$('#auto-animations');
       var animations=!!(animationBox&&animationBox.checked);
+      var how=$('#auto-anim-how'),wrap=$('#auto-anim-how-wrap');
+      var ruleFrom=(animations&&how&&wrap&&!wrap.hidden)?how.value:'';
       var stem=autoDialogStem||APP.active||APP.order[0];
       var sid=scope==='section'?autoDialogSection:'';
       autoSlidesDialogClose();
-      autoSlidesFrom(stem,scope,sid,animations);
+      autoSlidesFrom(stem,scope,sid,animations,ruleFrom);
     });
     d.addEventListener('click',function(e){
       if(e.target===d) autoSlidesDialogClose();

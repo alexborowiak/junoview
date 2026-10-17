@@ -19,11 +19,11 @@
    takes over the old one's runtime files instead of fetching them again
    (activate), and its own new files at install.
 
-   db9598ffb7b9 is replaced by build_web() with a hash of junoview.zip:
+   1647ab77deb1 is replaced by build_web() with a hash of junoview.zip:
    a new build retires the old cache on activate, and an unchanged package
    produces an unchanged worker, so the committed docs/ build stays
    diff-free (same rule as the zip itself). */
-var VERSION = 'db9598ffb7b9';
+var VERSION = '1647ab77deb1';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
@@ -33,7 +33,7 @@ var CACHE = 'junoview-' + VERSION;
    marker. The page is './' and only './': index.html is the same page,
    and an offline navigation to it is answered with './' below. */
 var CORE = ['./', 'web-worker.js', 'LICENSE', 'NOTICE',
-  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg', 'core.3be3f8535f619bc0.css', 'app.15d468737f1c521d.css', 'deck.bd5a64596e22fa3f.css', 'icons.5377b0f92bbbc947.js', 'app.e3fbfc73dc5fdc22.js', 'pptx.b8b9671325057718.js', 'deck.b5152150bb379d9b.js'];
+  'THIRD_PARTY_NOTICES.html', 'manifest.webmanifest', 'icon.svg', 'core.3be3f8535f619bc0.css', 'app.d1a4d7bc1a3cea09.css', 'deck.fefe3bd17ae1803b.css', 'icons.5377b0f92bbbc947.js', 'app.88bd399cb643e895.js', 'pptx.4f8b3b064af19c08.js', 'deck.39e6628cbb4427aa.js'];
 /* ...and a content-hashed name can never hold anything else, so a cached
    copy of one is final, like a CDN file: no refresh behind it */
 var HASHED_RE = /\.[0-9a-f]{16}\.(css|js|html)$/;

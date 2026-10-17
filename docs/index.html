@@ -45,8 +45,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0a141d">
 <link rel="stylesheet" href="core.3be3f8535f619bc0.css">
-<link rel="stylesheet" href="app.15d468737f1c521d.css">
-<link rel="stylesheet" href="deck.bd5a64596e22fa3f.css">
+<link rel="stylesheet" href="app.d1a4d7bc1a3cea09.css">
+<link rel="stylesheet" href="deck.fefe3bd17ae1803b.css">
 <script>
 window.MathJax = {
   tex: {inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -58,7 +58,7 @@ window.MathJax = {
 </script>
 <script async id="jv-mathjax" data-src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js" onload="this.setAttribute('data-state','loaded')" onerror="this.setAttribute('data-state','failed')"></script>
 
-<meta name="junoview-build" content="db9598ffb7b9">
+<meta name="junoview-build" content="1647ab77deb1">
 <script>/* The generated application is already on the page. This bridge is
    installed before app.js -- build_web writes it INTO the page's <head>,
    where a separate file cost a round trip before the body could parse --
@@ -146,7 +146,7 @@ window.MathJax = {
     else window.addEventListener('load',idle);
   }
   settled(function(){idleDue=true;if(!holds) start();});
-  window.__jvBuild='db9598ffb7b9';
+  window.__jvBuild='1647ab77deb1';
   window.__jvUpdateBar=function(){
     if(document.getElementById('jv-newbuild')||!document.body) return;
     var bar=document.createElement('div');bar.id='jv-newbuild';
@@ -615,6 +615,13 @@ document.documentElement.style.removeProperty('--chrome-h');}}catch(e){}</script
     <label class="auto-anim"><input type="checkbox" id="auto-animations">
       <span><b>Add animations</b><small>Reveal each slide's objects in the
         same order as the notebook</small></span></label>
+    <!-- T625: a presentation that keeps an animation rule for new slides
+         can lend it -- named, never taken silently -->
+    <label class="auto-anim-how" id="auto-anim-how-wrap" hidden>
+      <span>Animate by</span>
+      <select id="auto-anim-how" disabled>
+        <option value="">One per click, in notebook order</option>
+      </select></label>
     <div class="auto-slides-foot">
       <span class="auto-slides-summary" id="auto-slides-summary"></span>
       <span class="deck-spring"></span>
@@ -825,7 +832,7 @@ document.documentElement.style.removeProperty('--chrome-h');}}catch(e){}</script
              to be able to see a version number on the home page, maybe and
              then on hover a last updated so I can keep track of this").
              Empty in a rendered notebook; see build_info.py. -->
-        <div class="welcome-wordmark">Junoview<span class="welcome-ver" title="Last updated 17 Oct 2026 at 16:48 (commit ec78ff0)">v0.2.0 · build 621</span></div>
+        <div class="welcome-wordmark">Junoview<span class="welcome-ver" title="Last updated 17 Oct 2026 at 22:09 (commit e89c2f6)">v0.2.0 · build 623</span></div>
       </div>
       <!-- START HERE, whichever "here" you meant. The front door used to
            offer only ways of opening a NOTEBOOK, so a presentation was
@@ -1460,6 +1467,21 @@ Layers) and the <b>Add animation</b> gallery. Pick an effect and
 <b>Timing</b> and <b>Disappear</b> appear beside it; Focus and Motion are
 in the Animation panel&rsquo;s Configure tab, and how a slide arrives is
 <b>Slide transition</b> on the Present tab.</li>
+<li><b>One rule for many slides:</b> <i>Animation &rarr; Apply to
+slides&hellip;</i> says once how each kind of thing arrives (titles, text
+-- whole or a bullet at a time -- figures, pictures, tables, code, shapes):
+its entrance or none, when it starts, how fast, one at a time or
+<b>All together</b> on one click (two columns of words, two figures side
+by side), and the order the kinds
+come in (or top to bottom as placed), with a small preview of this slide
+to play. It goes to this slide, some slides (<i>2-4, 7</i>) or all of
+them. Things that already have an animation keep it unless you pick
+<b>Replace</b>; <b>Copy this slide</b> starts from a slide you have
+animated by hand, and <b>New slides too</b> gives the rule to every slide
+New slide makes, and to the empty slots a new layout makes; Create slides
+can borrow it too, by the presentation&rsquo;s name under <b>Add
+animations</b>. In the slide sorter, pick slides and press
+<b>Animate&hellip;</b>. One Ctrl+Z undoes it.</li>
 <li><b>Slide transitions.</b> <i>Present &rarr; Slide transition</i>:
 <b>Cut</b>, <b>Fade</b> (the old slide fades into the new one),
 <b>Push</b> (the new slide pushes the old one off), <b>Wipe</b> (the new
@@ -3877,6 +3899,24 @@ items snap to both. Guides, not ink: never printed or exported"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove all</button>
             </span>
             <span class="rbn-lab">Whole slide</span>
+          </span>
+          <!-- T625: ONE RULE FOR MANY SLIDES (2026-10-11, user:
+               "animation rule that can be applied to all slides and
+               or slide selection"). Its own tile beside Whole slide,
+               on the tab whether or not anything is selected -- the
+               one verb here about more than this slide. A short row
+               folds it to a door like any other group. -->
+          <span class="rbn-grp rbn-rule" data-tab="animation"
+            data-fold-ic="sorter">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile" id="anim-rule"
+                title="Say once how each kind of thing arrives -- titles,
+ text, figures, pictures, shapes, tables, code -- then give it to this
+ slide, some slides or every slide"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="2.6" width="5.6" height="4.2" rx=".6"/><rect x="8.8" y="2.6" width="5.6" height="4.2" rx=".6"/><rect x="1.6" y="9.2" width="5.6" height="4.2" rx=".6"/><rect x="8.8" y="9.2" width="5.6" height="4.2" rx=".6"/></svg><span>Apply to
+                slides&hellip;</span></button>
+            </span>
+            <span class="rbn-lab">Many slides</span>
           </span>
           <!-- T445: "BUILD ORDER", AND NEVER SQUASHED (2026-09-14, user:
                "buttons like those in 'Order' (horrible name for this
@@ -6722,6 +6762,93 @@ items snap to both. Guides, not ink: never printed or exported"
 <!-- T561: a diagram, from steps typed one to a line. The kinds as tiles
      drawn by the layout itself, the words, and a preview that is the
      layout Insert places. -->
+<!-- T625: ONE ANIMATION RULE FOR MANY SLIDES. A row per kind of thing
+     on a slide (built by 48c-anim-rule.js), the order they come in, the
+     current slide drawn small with the click each thing arrives on, and
+     which slides get it. -->
+<div class="aa-dlg" id="anr-dlg" hidden role="dialog"
+  aria-labelledby="anr-title">
+  <div class="aa-box anr-box">
+    <div class="aa-head">
+      <span class="eq-t" id="anr-title">Animate slides</span>
+      <button class="dbtn anr-q" id="anr-q" type="button"
+        aria-expanded="false" aria-controls="anr-help"
+        title="How the rule works"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/><path d="M8 4.9v.1"/></svg> How it
+        works</button>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="anr-copy" type="button"
+        title="Fill the rule in from what this slide already does"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> <span id="anr-copy-t">Copy this
+        slide</span></button>
+      <button class="dbtn dc-icon" id="anr-close" type="button"
+        aria-label="Cancel" title="Cancel (Esc)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
+    </div>
+    <p class="anr-help" id="anr-help" hidden>Each kind of thing arrives
+      as its row says, kinds in the order listed (or top to bottom as
+      placed). Things that already have an animation keep it unless you
+      choose Replace -- which also takes the entrance off a kind set to
+      None. <b>All together</b> brings every one of a kind on one click
+      (two columns, two figures side by side). Text that starts after a
+      few seconds arrives whole.
+      <b>Copy this slide</b> fills the rule in from a slide you animated
+      by hand; <b>New slides too</b> keeps it on the deck for every slide
+      New slide makes. Ctrl+Z undoes the whole apply.</p>
+    <div class="anr-body">
+      <div class="anr-main">
+        <div class="anr-order" role="group" aria-label="Order">
+          <span class="anr-lab">Order</span>
+          <button class="cfg-chip anr-ordby" type="button" data-by="kind"
+            aria-pressed="true" title="Kinds in the order listed below"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg><span>As listed</span></button>
+          <button class="cfg-chip anr-ordby" type="button" data-by="place"
+            aria-pressed="false" title="Top to bottom, as things are placed (or
+ the slide&rsquo;s reading order)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3v9.6"/><path d="m4.2 8.8 3.8 3.8 3.8-3.8"/></svg><span>Top to
+            bottom</span></button>
+        </div>
+        <div class="anr-heads" aria-hidden="true"><span></span>
+          <span>Arrives</span><span>Starts</span><span>Speed</span>
+          <span>At a time</span><span></span></div>
+        <div class="anr-rows" id="anr-rows"></div>
+      </div>
+      <div class="anr-side">
+        <div class="anr-pv" id="anr-pv" aria-label="This slide, with the
+          click each thing arrives on"></div>
+        <div class="anr-pvfoot">
+          <button class="dbtn" id="anr-play" type="button"
+            title="Play the rule on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg>
+            Play</button>
+          <span class="anr-pvn" id="anr-pvn"></span>
+        </div>
+      </div>
+    </div>
+    <div class="anr-opts">
+      <label class="anr-opt"><span class="anr-lab">Slides</span>
+        <select class="anr-sel" id="anr-scope">
+          <option value="cur">This slide</option>
+          <option value="some">Some slides</option>
+          <option value="all" id="anr-scope-all">All slides</option>
+        </select>
+        <input class="anr-range" id="anr-range" type="text" hidden
+          placeholder="2-4, 7" aria-label="Which slides" spellcheck="false"></label>
+      <label class="anr-opt"><span class="anr-lab">Already animated</span>
+        <select class="anr-sel" id="anr-how">
+          <option value="new">Keep theirs</option>
+          <option value="replace">Replace</option>
+        </select></label>
+      <label class="anr-opt"><span class="anr-lab">Transition</span>
+        <select class="anr-sel" id="anr-trans"></select></label>
+      <label class="aa-tie anr-opt"><input type="checkbox" id="anr-new">
+        New slides too</label>
+    </div>
+    <div class="aa-foot">
+      <span class="anr-sum" id="anr-sum"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="anr-cancel" type="button">Cancel</button>
+      <button class="dbtn primary" id="anr-apply" type="button"
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m3 8.4 3.2 3.2L13 4.8"/></svg> Apply</button>
+    </div>
+  </div>
+</div>
 <div class="aa-dlg" id="dgm-dlg" hidden role="dialog"
   aria-labelledby="dgm-title">
   <div class="aa-box dgm-box">
@@ -6841,8 +6968,8 @@ items snap to both. Guides, not ink: never printed or exported"
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
 <script src="icons.5377b0f92bbbc947.js"></script>
-<script src="app.e3fbfc73dc5fdc22.js"></script>
-<script src="pptx.b8b9671325057718.js"></script>
+<script src="app.88bd399cb643e895.js"></script>
+<script src="pptx.4f8b3b064af19c08.js"></script>
 <!-- T597: what a saved .junoview.html runs when it is opened -- inert
      text here, read by the save and written into the file -->
 <script type="text/plain" id="jv-savedfile-js">/* saved-file.js -- the script a saved presentation file carries (T597).
@@ -6966,6 +7093,6 @@ items snap to both. Guides, not ink: never printed or exported"
   });
 })();
 </script>
-<script src="deck.b5152150bb379d9b.js"></script>
+<script src="deck.39e6628cbb4427aa.js"></script>
 </body>
 </html>
